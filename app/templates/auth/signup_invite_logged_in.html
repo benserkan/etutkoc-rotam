@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Davetiye — Önce çıkış yap — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center py-6">
+  <div class="w-full max-w-md">
+    <div class="flex flex-col items-center mb-6">
+      <img src="/static/img/etutkoc-logo.png" alt="" class="h-16 w-16 object-contain mb-3" />
+      <div class="brand-wordmark text-xl">
+        <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-1">·</span><span class="b-rotam">rotam</span>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+      <div class="flex items-start gap-3 mb-4">
+        <div class="text-3xl">👤</div>
+        <div>
+          <h1 class="text-lg font-semibold text-slate-900">Zaten giriş yapmışsın</h1>
+          <p class="text-sm text-slate-600 mt-1">
+            Şu an <b>{{ user.full_name }}</b> ({{ user.email }}) olarak oturum açıksın.
+            Bu davetiye linki yeni bir hesap oluşturmak içindir — kabul etmek için
+            önce mevcut oturumdan çıkman gerekiyor.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-violet-50 border border-violet-200 rounded p-3 text-xs text-violet-900 space-y-1">
+        <div><b>📨 Davetiye:</b>
+          {% if invitation.institution %}<b>{{ invitation.institution.name }}</b> kurumuna {% endif %}
+          <b>{{ {'teacher':'öğretmen','institution_admin':'kurum yöneticisi'}.get(invitation.role.value, invitation.role.value) }}</b> rolü.
+        </div>
+        {% if invitation.email %}
+        <div>E-posta: <span class="font-mono">{{ invitation.email }}</span></div>
+        {% endif %}
+      </div>
+
+      <div class="mt-5 flex gap-2">
+        <form method="post" action="/logout" class="flex-1">
+          <button type="submit"
+                  class="w-full text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded">
+            Çıkış yap
+          </button>
+        </form>
+        <a href="/" class="flex-1 text-center text-sm border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-2 rounded">
+          Vazgeç
+        </a>
+      </div>
+      <p class="text-[11px] text-slate-500 mt-3 text-center">
+        Çıkış sonrası bu sayfaya tekrar geleceksin — link aynı kalıyor.
+      </p>
+    </div>
+  </div>
+</div>
+{% endblock %}

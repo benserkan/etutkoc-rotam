@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}Davetiye geçersiz — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="min-h-[80vh] flex items-center justify-center py-6">
+  <div class="w-full max-w-md">
+    <div class="flex flex-col items-center mb-6">
+      <img src="/static/img/etutkoc-logo.png" alt="" class="h-16 w-16 object-contain mb-3 opacity-60" />
+      <div class="brand-wordmark text-xl">
+        <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-1">·</span><span class="b-rotam">rotam</span>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+      {% set st = invitation.status.value %}
+      <div class="flex items-start gap-3 mb-4">
+        <div class="text-3xl">
+          {% if st == 'consumed' %}✅
+          {% elif st == 'expired' %}⏳
+          {% elif st == 'revoked' %}🚫
+          {% else %}⚠️{% endif %}
+        </div>
+        <div>
+          <h1 class="text-lg font-semibold text-slate-900">
+            {% if st == 'consumed' %}Bu davetiye zaten kullanıldı
+            {% elif st == 'expired' %}Davetiyenin süresi geçmiş
+            {% elif st == 'revoked' %}Davetiye iptal edilmiş
+            {% else %}Davetiye kullanılamaz durumda{% endif %}
+          </h1>
+          <p class="text-sm text-slate-600 mt-1">
+            {% if st == 'consumed' %}
+              Bu link bir hesaba dönüştürüldü. Eğer hesap senin olmalıysa, giriş ekranından şifreni kullanarak giriş yap.
+            {% elif st == 'expired' %}
+              Davetiye linkleri {{ 7 }} gün geçerlidir. Süre dolmuş — kurum yöneticinden yeni bir davetiye iste.
+            {% elif st == 'revoked' %}
+              Bu davetiye kurum yöneticisi tarafından iptal edilmiş. Yeni davetiye için yöneticinle görüş.
+            {% else %}
+              Davetiye geçerli değil. Linkin doğru olduğundan emin ol.
+            {% endif %}
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-slate-50 border border-slate-200 rounded p-3 text-xs text-slate-700 space-y-1">
+        {% if invitation.institution %}
+        <div><span class="text-slate-500">Kurum:</span> <b>{{ invitation.institution.name }}</b></div>
+        {% endif %}
+        <div><span class="text-slate-500">Rol:</span>
+          <b>{{ {'teacher':'öğretmen','institution_admin':'kurum yöneticisi'}.get(invitation.role.value, invitation.role.value) }}</b>
+        </div>
+        {% if invitation.email %}
+        <div><span class="text-slate-500">E-posta:</span> <span class="font-mono">{{ invitation.email }}</span></div>
+        {% endif %}
+      </div>
+
+      <div class="mt-5 flex gap-2">
+        <a href="/login" class="flex-1 text-center text-sm bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded">
+          Giriş ekranı
+        </a>
+        <a href="/signup/teacher" class="flex-1 text-center text-sm border border-slate-300 hover:bg-slate-50 text-slate-700 font-medium py-2 rounded">
+          Bağımsız kayıt
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

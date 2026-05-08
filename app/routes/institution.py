@@ -21,7 +21,15 @@ from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session, joinedload
 
 from app.deps import get_db, require_institution_admin
-from app.models import AuditAction, Institution, User, UserRole
+from app.models import (
+    AuditAction,
+    Institution,
+    Invitation,
+    InvitationStatus,
+    User,
+    UserRole,
+    invitation_default_expiry,
+)
 from app.services.audit import log_action
 from app.services.auth_security import generate_strong_password
 from app.services.institution_view import (
@@ -297,6 +305,146 @@ def teacher_card(
             "total_completed": total_completed,
             "overall_rate": overall_rate,
         },
+    )
+
+
+# ---------------------------- Davetiye yönetimi (Sprint 5) ----------------------------
+
+
+@router.get("/invitations")
+def list_invitations(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+    ok: str | None = None,
+    err: str | None = None,
+):
+    """Bu kurumun davetiyelerini listele — tüm statüler."""
+    invs = (
+        db.query(Invitation)
+        .filter(Invitation.institution_id == user.institution_id)
+        .order_by(Invitation.created_at.desc())
+        .all()
+    )
+    inst = db.get(Institution, user.institution_id)
+    # Frontend tam URL'yi oluşturmak için origin lazım (dev'de localhost)
+    origin = f"{request.url.scheme}://{request.url.netloc}"
+    return templates.TemplateResponse(
+        "institution/invitations.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "invitations": invs,
+            "origin": origin,
+            "flash_ok": ok,
+            "flash_err": err,
+        },
+    )
+
+
+@router.post("/invitations")
+def create_invitation(
+    request: Request,
+    full_name: str = Form(""),
+    email: str = Form(""),
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Yeni öğretmen davetiyesi üret. E-posta opsiyonel — boşsa "açık davetiye"
+    olur (linki olan herkes kullanabilir, dolu olursa sadece o e-posta).
+
+    NOT: Şu an pre-fill için email/name boş olabilir; signup formunda kullanıcı
+    düzenleyebilir. İleride email zorunlu + email gönderme entegrasyonu.
+    """
+    full_name_clean = (full_name or "").strip() or None
+    email_clean = (email or "").strip().lower() or None
+    # E-posta zaten var mı kontrol — açık davetiye için skip
+    if email_clean and db.query(User).filter(User.email == email_clean).first():
+        return RedirectResponse(
+            url="/institution/invitations?err=" + quote(
+                f"{email_clean} zaten kayıtlı — davetiye gerekmez."
+            ),
+            status_code=303,
+        )
+
+    token = secrets.token_urlsafe(32)
+    inv = Invitation(
+        token=token,
+        email=email_clean,
+        full_name=full_name_clean,
+        role=UserRole.TEACHER,
+        institution_id=user.institution_id,
+        created_by_user_id=user.id,
+        expires_at=invitation_default_expiry(),
+    )
+    db.add(inv)
+    db.flush()
+    log_action(
+        db,
+        action=AuditAction.USER_CREATE,  # davetiye = potansiyel user oluşturma
+        actor_id=user.id,
+        target_type="invitation",
+        target_id=inv.id,
+        request=request,
+        details={
+            "type": "invitation_created",
+            "role": "teacher",
+            "institution_id": user.institution_id,
+            "email": email_clean,
+        },
+        autocommit=False,
+    )
+    db.commit()
+    return RedirectResponse(
+        url="/institution/invitations?ok=" + quote(
+            f"Davetiye oluşturuldu — link aşağıdaki tabloda. {('E-posta: ' + email_clean) if email_clean else 'Açık davetiye'}"
+        ),
+        status_code=303,
+    )
+
+
+@router.post("/invitations/{invitation_id}/revoke")
+def revoke_invitation(
+    invitation_id: int,
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Bekleyen davetiyeyi iptal et."""
+    inv = (
+        db.query(Invitation)
+        .filter(
+            Invitation.id == invitation_id,
+            Invitation.institution_id == user.institution_id,
+        )
+        .first()
+    )
+    if not inv:
+        raise HTTPException(status_code=404)
+    if not inv.is_usable:
+        return RedirectResponse(
+            url="/institution/invitations?err=" + quote(
+                "Bu davetiye zaten kullanılmış, süresi geçmiş veya iptal edilmiş."
+            ),
+            status_code=303,
+        )
+    inv.revoked_at = datetime.now(timezone.utc)
+    inv.revoked_by_user_id = user.id
+    log_action(
+        db,
+        action=AuditAction.USER_DEACTIVATE,
+        actor_id=user.id,
+        target_type="invitation",
+        target_id=inv.id,
+        request=request,
+        details={"type": "invitation_revoked"},
+        autocommit=False,
+    )
+    db.commit()
+    return RedirectResponse(
+        url="/institution/invitations?ok=" + quote("Davetiye iptal edildi."),
+        status_code=303,
     )
 
 

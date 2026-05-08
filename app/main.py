@@ -14,6 +14,7 @@ from app.models import User, UserRole
 logger = logging.getLogger(__name__)
 from app.routes import auth as auth_routes
 from app.routes import password as password_routes
+from app.routes import signup as signup_routes
 from app.routes import (
     admin,
     health,
@@ -110,6 +111,7 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 app.include_router(health.router)
 app.include_router(auth_routes.router)
 app.include_router(password_routes.router)
+app.include_router(signup_routes.router)
 app.include_router(admin.router)
 app.include_router(institution.router)
 app.include_router(partials.router)

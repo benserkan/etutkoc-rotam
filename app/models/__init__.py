@@ -21,6 +21,12 @@ from app.models.book import (
 )
 from app.models.cron import CronSchedule
 from app.models.institution import Institution
+from app.models.invitation import (
+    INVITATION_TTL_DAYS,
+    Invitation,
+    InvitationStatus,
+    default_expiry as invitation_default_expiry,
+)
 from app.models.curriculum import (
     CURRICULUM_MODEL_LABELS,
     EXAM_SECTION_LABELS,
@@ -95,7 +101,11 @@ __all__ = [
     "estimate_entry_year_grade9",
     "GRADUATE_MODE_LABELS",
     "GraduateMode",
+    "INVITATION_TTL_DAYS",
     "Institution",
+    "Invitation",
+    "InvitationStatus",
+    "invitation_default_expiry",
     "NOTIFICATION_KIND_LABELS",
     "NotificationChannel",
     "NotificationKind",
