@@ -26,6 +26,7 @@ from app.models import (
     UserRole,
 )
 from app.services.audit import log_action
+from app.services.auth_security import generate_strong_password
 from app.services.security import hash_password
 from app.templating import templates
 
@@ -46,9 +47,9 @@ def _slugify(text: str) -> str:
     return text[:64] or "kurum"
 
 
-def _gen_password(n: int = 12) -> str:
-    alphabet = string.ascii_letters + string.digits
-    return "".join(secrets.choice(alphabet) for _ in range(n))
+# Eski yardımcı kaldırıldı — generate_strong_password (auth_security.py)
+# kullanılır; rol-bazlı güçlü şifre üretir, must_change_password=True ile
+# birlikte kullanıcının ilk girişte kendi şifresini belirlemesini zorunlu kılar.
 
 
 # ---------------------------- Dashboard ----------------------------
@@ -403,11 +404,16 @@ def create_user(
     email: str = Form(...),
     role: str = Form(...),
     institution_id: str = Form(""),
-    password: str = Form(""),
     user: User = Depends(require_super_admin),
     db: Session = Depends(get_db),
 ):
-    """Süper admin yeni kullanıcı oluşturur. Şifre boşsa otomatik üretilir."""
+    """Süper admin yeni kullanıcı oluşturur.
+
+    Güvenlik: şifre admin tarafından belirlenmez — sistem rol-bazlı güçlü
+    şifre üretir, kullanıcı ilk girişte zorunlu olarak kendi şifresini
+    belirler (must_change_password=True). Ücretli üyelik akışında bu yer
+    davetiye token'ı ile değiştirilecek.
+    """
     full_name_clean = (full_name or "").strip()
     email_clean = (email or "").strip().lower()
     if not full_name_clean or not email_clean:
@@ -435,7 +441,6 @@ def create_user(
                 iid = None
         except ValueError:
             iid = None
-    # INSTITUTION_ADMIN için kurum zorunlu
     if role_enum == UserRole.INSTITUTION_ADMIN and iid is None:
         return RedirectResponse(
             url="/admin/users?err=" + quote(
@@ -444,7 +449,8 @@ def create_user(
             status_code=303,
         )
 
-    pwd = (password or "").strip() or _gen_password()
+    # Rol-bazlı güçlü geçici şifre — tek seferlik, kullanıcı ilk girişte değişecek
+    pwd = generate_strong_password(role_enum)
     new_user = User(
         email=email_clean,
         password_hash=hash_password(pwd),
@@ -453,6 +459,7 @@ def create_user(
         institution_id=iid,
         is_active=True,
         password_changed_at=datetime.now(timezone.utc),
+        must_change_password=True,  # ilk girişte zorunlu değişim
     )
     db.add(new_user)
     db.flush()
@@ -467,13 +474,15 @@ def create_user(
             "email": email_clean,
             "role": role_enum.value,
             "institution_id": iid,
+            "temp_password_issued": True,
         },
         autocommit=False,
     )
     db.commit()
     return RedirectResponse(
         url="/admin/users?ok=" + quote(
-            f"{full_name_clean} oluşturuldu — şifre: {pwd}"
+            f"{full_name_clean} oluşturuldu — geçici şifre: {pwd} "
+            f"(ilk girişte kendi şifresini belirleyecek)"
         ),
         status_code=303,
     )
@@ -602,17 +611,19 @@ def edit_user(
 def reset_user_password(
     user_id: int,
     request: Request,
-    new_password: str = Form(""),
     user: User = Depends(require_super_admin),
     db: Session = Depends(get_db),
 ):
+    """Şifreyi sıfırla — sistem güçlü geçici şifre üretir, kullanıcı ilk
+    girişte değiştirmeye zorlanır. Kilit varsa açılır.
+    """
     target = db.get(User, user_id)
     if not target:
         raise HTTPException(status_code=404)
-    pwd = (new_password or "").strip() or _gen_password()
+    pwd = generate_strong_password(target.role)
     target.password_hash = hash_password(pwd)
     target.password_changed_at = datetime.now(timezone.utc)
-    # Kilidi de aç
+    target.must_change_password = True
     target.failed_login_count = 0
     target.locked_until = None
     log_action(
@@ -622,12 +633,14 @@ def reset_user_password(
         target_type="user",
         target_id=target.id,
         request=request,
-        details={"forced_by_admin": True},
+        details={"forced_by_admin": True, "temp_password_issued": True},
         autocommit=False,
     )
     db.commit()
     return RedirectResponse(
-        url=f"/admin/users/{user_id}?ok=" + quote(f"Şifre sıfırlandı: {pwd}"),
+        url=f"/admin/users/{user_id}?ok=" + quote(
+            f"Geçici şifre üretildi: {pwd} (kullanıcı ilk girişte değiştirecek)"
+        ),
         status_code=303,
     )
 

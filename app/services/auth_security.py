@@ -1,4 +1,4 @@
-"""Auth güvenlik politikaları — login lockout, session hardening sabitleri.
+"""Auth güvenlik politikaları — login lockout, session hardening, şifre üretme/doğrulama.
 
 Kullanıcı tipine göre farklı eşikler:
 - SUPER_ADMIN: en sıkı (3 başarısız → 30 dk kilit)
@@ -95,3 +95,86 @@ def register_successful_login(
 
 def session_max_age_for(user: User) -> int:
     return SESSION_MAX_AGE_SECONDS.get(user.role, DEFAULT_SESSION_MAX_AGE)
+
+
+# ---------------------------- Şifre üretme ve politikası ----------------------------
+
+import secrets
+import string
+
+# Rol bazlı minimum şifre uzunluğu
+PASSWORD_MIN_LENGTH: dict[UserRole, int] = {
+    UserRole.SUPER_ADMIN: 14,
+    UserRole.INSTITUTION_ADMIN: 12,
+    UserRole.TEACHER: 10,
+    UserRole.STUDENT: 8,
+    UserRole.PARENT: 8,
+}
+DEFAULT_PASSWORD_MIN = 8
+
+# Karışıklığa neden olan karakterler hariç (0/O, 1/l/I, vb.)
+_AMBIGUOUS = set("0O1lI")
+_LOWER = "".join(c for c in string.ascii_lowercase if c not in _AMBIGUOUS)
+_UPPER = "".join(c for c in string.ascii_uppercase if c not in _AMBIGUOUS)
+_DIGITS = "".join(c for c in string.digits if c not in _AMBIGUOUS)
+_SPECIAL = "@#$%&*+-="
+
+
+def generate_strong_password(role: UserRole | None = None) -> str:
+    """Role uygun, güçlü, kullanıcı dostu şifre üret.
+
+    Yapı:
+    - Min uzunluk role bazlı (14/12/10/8)
+    - En az 1 büyük, 1 küçük, 1 rakam, 1 özel karakter (admin/teacher için)
+    - Karışık karakterler (0/O, 1/l/I) çıkarılmış — okurken yanılma yok
+
+    Bu şifre TEK SEFERLİK — kullanıcı ilk girişte must_change_password ile
+    zorunlu yeniden belirler.
+    """
+    if role is None:
+        length = DEFAULT_PASSWORD_MIN + 4  # default 12
+    else:
+        length = PASSWORD_MIN_LENGTH.get(role, DEFAULT_PASSWORD_MIN) + 2
+    # Çekirdek: en az 1 her gruptan
+    parts = [
+        secrets.choice(_UPPER),
+        secrets.choice(_LOWER),
+        secrets.choice(_DIGITS),
+    ]
+    if role in (UserRole.SUPER_ADMIN, UserRole.INSTITUTION_ADMIN, UserRole.TEACHER):
+        parts.append(secrets.choice(_SPECIAL))
+    pool = _LOWER + _UPPER + _DIGITS + (_SPECIAL if len(parts) == 4 else "")
+    while len(parts) < length:
+        parts.append(secrets.choice(pool))
+    secrets.SystemRandom().shuffle(parts)
+    return "".join(parts)
+
+
+def validate_password_strength(
+    password: str, role: UserRole | None = None
+) -> str | None:
+    """Şifreyi politikaya göre doğrula.
+
+    Returns:
+        None: şifre yeterince güçlü
+        str: hata mesajı (kullanıcıya gösterilir)
+    """
+    if not password:
+        return "Şifre boş olamaz."
+    min_len = PASSWORD_MIN_LENGTH.get(role, DEFAULT_PASSWORD_MIN) if role else DEFAULT_PASSWORD_MIN
+    if len(password) < min_len:
+        return f"Şifre en az {min_len} karakter olmalı."
+    has_lower = any(c.islower() for c in password)
+    has_upper = any(c.isupper() for c in password)
+    has_digit = any(c.isdigit() for c in password)
+    if not (has_lower and has_upper and has_digit):
+        return "Şifre en az 1 büyük harf, 1 küçük harf ve 1 rakam içermeli."
+    # Admin/teacher rolleri için özel karakter zorunlu
+    if role in (UserRole.SUPER_ADMIN, UserRole.INSTITUTION_ADMIN, UserRole.TEACHER):
+        if not any(not c.isalnum() for c in password):
+            return "Bu rol için şifrede en az 1 özel karakter (örn @#$%) bulunmalı."
+    # Çok yaygın paternleri eleyelim (basit blacklist)
+    lowered = password.lower()
+    if lowered in {"password", "12345678", "qwerty12", "ogretmen123", "admin1234"}:
+        return "Bu şifre çok yaygın — daha rastgele bir tane seçin."
+    return None

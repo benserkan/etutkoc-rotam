@@ -4,7 +4,7 @@ import enum
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -123,6 +123,13 @@ class User(Base):
     # için (session.password_stamp ile karşılaştırma yapılır).
     password_changed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
+    )
+    # Admin tarafından oluşturulan veya şifresi sıfırlanan hesap için True;
+    # ilk girişte kullanıcı /password/change'a zorunlu yönlendirilir. Şifre
+    # değiştirilince False olur. İleride üyelik/davetiye akışında token-flow
+    # bunu da temsil edecek (token kullanılıp şifre belirlenince True→False).
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=text("0")
     )
 
     teacher: Mapped["User | None"] = relationship(

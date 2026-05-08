@@ -59,6 +59,16 @@ def require_user(
             detail="Oturum gerekli",
             headers={"Location": "/login"},
         )
+    # Zorunlu şifre değişimi — /password/change dışındaki her route engellensin
+    if user.must_change_password:
+        path = request.url.path
+        # /password/change ve /logout serbest, diğerleri yönlensin
+        if not (path.startswith("/password/change") or path == "/logout"):
+            raise HTTPException(
+                status_code=status.HTTP_303_SEE_OTHER,
+                detail="Şifre değişimi zorunlu",
+                headers={"Location": "/password/change"},
+            )
     return user
 
 

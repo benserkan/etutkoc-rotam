@@ -106,12 +106,9 @@
         </div>
       </dl>
       <form method="post" action="/admin/users/{{ target.id }}/reset-password"
-            onsubmit="return confirm('{{ target.full_name }} için yeni şifre üretilsin mi? (Diğer aktif oturumları geçersiz olur)');"
-            class="flex gap-2">
-        <input name="new_password" placeholder="Yeni şifre (boş = otomatik üret)"
-               class="flex-1 px-2 py-1.5 border border-slate-300 rounded text-xs font-mono" />
+            onsubmit="return confirm('{{ target.full_name }} için güçlü geçici şifre üretilsin mi? Kullanıcı ilk girişte kendi şifresini belirleyecek.');">
         <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white text-xs py-1.5 px-3 rounded">
-          🔑 Şifre Sıfırla
+          🔑 Şifre Sıfırla (geçici üretip kullanıcıya zorla değiştir)
         </button>
       </form>
     </div>

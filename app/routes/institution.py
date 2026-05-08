@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.deps import get_db, require_institution_admin
 from app.models import AuditAction, Institution, User, UserRole
 from app.services.audit import log_action
+from app.services.auth_security import generate_strong_password
 from app.services.institution_view import (
     institution_aggregate,
     institution_roster,
@@ -35,9 +36,9 @@ from app.templating import templates
 router = APIRouter(prefix="/institution")
 
 
-def _gen_password(n: int = 12) -> str:
-    alphabet = string.ascii_letters + string.digits
-    return "".join(secrets.choice(alphabet) for _ in range(n))
+# Eski yardımcı kaldırıldı — generate_strong_password (auth_security.py)
+# kullanılır; rol-bazlı güçlü şifre üretir, must_change_password=True ile
+# birlikte kullanıcının ilk girişte kendi şifresini belirlemesini zorunlu kılar.
 
 
 @router.get("")
@@ -93,12 +94,15 @@ def create_teacher(
     request: Request,
     full_name: str = Form(...),
     email: str = Form(...),
-    password: str = Form(""),
     user: User = Depends(require_institution_admin),
     db: Session = Depends(get_db),
 ):
-    """Kurum yöneticisi yeni öğretmen ekler. Hesap institution_id=admin'in kurumu
-    olarak yaratılır.
+    """Kurum yöneticisi yeni öğretmen ekler.
+
+    Güvenlik: şifre admin tarafından belirlenmez — sistem güçlü rastgele
+    üretir, öğretmen ilk girişte kendi şifresini belirlemek zorunda
+    (must_change_password=True). Ücretli üyelik akışında bu yer davetiye
+    token'ı + ödeme akışı ile değiştirilecek.
     """
     full_name_clean = (full_name or "").strip()
     email_clean = (email or "").strip().lower()
@@ -112,7 +116,7 @@ def create_teacher(
             url="/institution/teachers?err=" + quote("Bu e-posta zaten kayıtlı."),
             status_code=303,
         )
-    pwd = (password or "").strip() or _gen_password()
+    pwd = generate_strong_password(UserRole.TEACHER)
     new_teacher = User(
         email=email_clean,
         password_hash=hash_password(pwd),
@@ -121,6 +125,7 @@ def create_teacher(
         institution_id=user.institution_id,
         is_active=True,
         password_changed_at=datetime.now(timezone.utc),
+        must_change_password=True,
     )
     db.add(new_teacher)
     db.flush()
@@ -136,13 +141,15 @@ def create_teacher(
             "role": "teacher",
             "institution_id": user.institution_id,
             "created_by_role": "institution_admin",
+            "temp_password_issued": True,
         },
         autocommit=False,
     )
     db.commit()
     return RedirectResponse(
         url="/institution/teachers?ok=" + quote(
-            f"{full_name_clean} eklendi — geçici şifre: {pwd}"
+            f"{full_name_clean} eklendi — geçici şifre: {pwd} "
+            f"(ilk girişte kendi şifresini belirleyecek)"
         ),
         status_code=303,
     )
