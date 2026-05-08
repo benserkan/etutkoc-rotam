@@ -81,6 +81,18 @@ def _student_url_path(student_id: int) -> str:
     return f"/parent/students/{student_id}"
 
 
+def _student_url_full(student_id: int) -> str:
+    """WhatsApp link variable'ları için: tam URL (app_base_url + path).
+
+    Meta WA mesajlarında body variable olarak gönderilen relative path
+    tıklanamaz. Email tarafında relative OK çünkü template_renderer
+    base_url ile prefix'liyor.
+    """
+    from app.config import settings
+    base = (settings.app_base_url or "").rstrip("/")
+    return f"{base}{_student_url_path(student_id)}"
+
+
 # ---------------------------- DAILY_SUMMARY (email-only) ----------------------------
 
 
@@ -159,7 +171,6 @@ def produce_weekly_report(
     planned: int,
     rate_pct: int | None,
 ) -> list[NotificationLog]:
-    student_path = _student_url_path(student.id)
     base_payload: dict[str, Any] = {
         "__template": "parent_weekly_report",
         "student_id": student.id,
@@ -195,7 +206,7 @@ def produce_weekly_report(
                 {"type": "text", "text": str(completed)},
                 {"type": "text", "text": str(planned)},
                 {"type": "text", "text": str(rate_pct if rate_pct is not None else "—")},
-                {"type": "text", "text": student_path},
+                {"type": "text", "text": _student_url_full(student.id)},
             ],
         }]
         logs.append(
@@ -226,7 +237,6 @@ def produce_drop_alert(
     last_week_label: str,
     prev_week_label: str,
 ) -> list[NotificationLog]:
-    student_path = _student_url_path(student.id)
     base_payload: dict[str, Any] = {
         "__template": "parent_drop_alert",
         "student_id": student.id,
@@ -260,7 +270,7 @@ def produce_drop_alert(
             "parameters": [
                 {"type": "text", "text": student.full_name},
                 {"type": "text", "text": str(drop_pct)},
-                {"type": "text", "text": student_path},
+                {"type": "text", "text": _student_url_full(student.id)},
             ],
         }]
         logs.append(
@@ -295,7 +305,6 @@ def produce_new_program(
     daily_breakdown: [{"date": "2026-05-06", "label": "Salı", "task_count": 5}, ...]
     Sadece önümüzdeki 7 güne bakar (geçmiş özet vermez — locked design).
     """
-    student_path = _student_url_path(student.id)
     base_payload: dict[str, Any] = {
         "__template": "parent_new_program",
         "student_id": student.id,
@@ -328,7 +337,7 @@ def produce_new_program(
             "parameters": [
                 {"type": "text", "text": student.full_name},
                 {"type": "text", "text": str(total_tasks)},
-                {"type": "text", "text": student_path},
+                {"type": "text", "text": _student_url_full(student.id)},
             ],
         }]
         logs.append(
@@ -371,7 +380,6 @@ def produce_exam_approaching(
     olmalı; aksi halde dispatch hata verir ama email yine gider.
     """
     exam_date_label = exam_date.strftime("%d.%m.%Y")
-    student_path = _student_url_path(student.id)
     base_payload: dict[str, Any] = {
         "__template": "parent_exam_approaching",
         "student_id": student.id,
@@ -416,7 +424,7 @@ def produce_exam_approaching(
                 {"type": "text", "text": exam_label},
                 {"type": "text", "text": str(days_left)},
                 {"type": "text", "text": exam_date_label},
-                {"type": "text", "text": student_path},
+                {"type": "text", "text": _student_url_full(student.id)},
             ],
         }]
         logs.append(
@@ -449,7 +457,6 @@ def produce_teacher_note(
 
     body: notun ham metni (max 2000 char). Email'de tam, WA'da kısaltılır + link.
     """
-    student_path = _student_url_path(student.id)
     base_payload: dict[str, Any] = {
         "__template": "parent_teacher_note",
         "student_id": student.id,
@@ -480,7 +487,7 @@ def produce_teacher_note(
             "type": "body",
             "parameters": [
                 {"type": "text", "text": student.full_name},
-                {"type": "text", "text": student_path},
+                {"type": "text", "text": _student_url_full(student.id)},
             ],
         }]
         logs.append(
