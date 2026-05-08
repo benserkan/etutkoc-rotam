@@ -5,7 +5,7 @@
 
 services:
   - type: web
-    name: lgs-takip
+    name: etutkoc-rotam
     runtime: docker
     plan: free  # ileride: starter ($7/ay)
     healthCheckPath: /healthz
@@ -18,17 +18,21 @@ services:
         generateValue: true   # Render rastgele güvenli değer üretir
       - key: DATABASE_URL
         fromDatabase:
-          name: lgs-takip-db
+          name: etutkoc-rotam-db
           property: connectionString
       - key: APP_BASE_URL
-        sync: false   # deploy sonrası kendi URL'ni gir (https://lgs-takip.onrender.com)
+        sync: false   # deploy sonrası kendi URL'ni gir (https://etutkoc-rotam.onrender.com)
       # Email (opsiyonel — başlangıçta devre dışı)
       - key: EMAIL_ENABLED
         value: "false"
       # SMTP_* değerlerini ileride dashboard'dan ekle
+      # Anthropic Claude — kitap şablonu AI önerisi (Faz B). Yoksa AI butonu
+      # friendly hata mesajı verir, şablon manuel akışı çalışır.
+      - key: ANTHROPIC_API_KEY
+        sync: false   # secret — Render dashboard'dan manuel gir
 
 databases:
-  - name: lgs-takip-db
+  - name: etutkoc-rotam-db
     plan: free   # 1GB, 90 gün retention; ileride starter ($7/ay)
-    databaseName: lgs
-    user: lgs
+    databaseName: etutkoc
+    user: etutkoc

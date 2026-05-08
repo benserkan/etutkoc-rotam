@@ -26,6 +26,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models import (
+    CronSchedule,
     CurriculumModel,
     ExamSection,
     Subject,
@@ -126,6 +127,45 @@ def seed_curriculum(db: Session, *, only_model: str | None = None) -> dict[str, 
     return counts
 
 
+def seed_cron_schedules(db: Session) -> int:
+    """Bildirim cron job'larını idempotent olarak ekle.
+
+    Production deploy sonrası bunlar olmadan veli bildirimleri tetiklenmez.
+    job_key UniqueConstraint koruyor — varsa atlar, yoksa ekler.
+    """
+    schedules = [
+        ("daily_summary", 21, 0, None,
+         "Her akşam 21:00 UTC — günlük özet + boş gün uyarısı"),
+        ("weekly_backstop", 23, 55, None,
+         "Her gece 23:55 UTC — haftalık rapor backstop"),
+        ("drop_alert", 6, 0, 0,
+         "Pazartesi 06:00 UTC — geçen haftaya göre %30+ düşüş"),
+        ("exam_approaching", 8, 15, None,
+         "Her gün 08:15 UTC — D-30/D-7/D-1 sınav yaklaşıyor"),
+    ]
+    added = 0
+    for job_key, hour, minute, dow, desc in schedules:
+        existing = (
+            db.query(CronSchedule)
+            .filter(CronSchedule.job_key == job_key)
+            .first()
+        )
+        if existing:
+            continue
+        db.add(CronSchedule(
+            job_key=job_key,
+            description=desc,
+            hour=hour,
+            minute=minute,
+            day_of_week=dow,
+            enabled=True,
+        ))
+        added += 1
+    db.commit()
+    print(f"  + {added} yeni cron schedule eklendi (toplam {len(schedules)})")
+    return added
+
+
 def seed_demo_teacher(db: Session) -> None:
     email = "ogretmen@lgs.local"
     existing = db.query(User).filter(User.email == email).first()
@@ -158,6 +198,8 @@ def main() -> None:
         print("Müfredat seed başlıyor...")
         counts = seed_curriculum(db, only_model=args.only)
         print(f"Özet: {counts}")
+        print("Cron schedules seed...")
+        seed_cron_schedules(db)
         if args.teacher:
             seed_demo_teacher(db)
         print("Tamamlandı.")

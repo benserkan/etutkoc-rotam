@@ -162,6 +162,7 @@ class BookSetItem(Base):
     order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     set: Mapped["BookSet"] = relationship("BookSet", back_populates="items")
+    book: Mapped["Book"] = relationship("Book")
 
 
 class BookTemplate(Base):
@@ -229,4 +230,3 @@ class BookTemplateSection(Base):
 
     def __repr__(self) -> str:
         return f"<BookTemplateSection {self.label} x{self.default_test_count}>"
-    book: Mapped["Book"] = relationship("Book")
