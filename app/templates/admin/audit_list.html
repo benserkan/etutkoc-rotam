@@ -71,7 +71,8 @@
     </thead>
     <tbody class="divide-y divide-slate-100">
       {% for a in audits %}
-      <tr>
+      {% set via_admin_id = via_admin_map.get(a.id) %}
+      <tr {% if via_admin_id %}class="bg-violet-50 border-l-4 border-violet-400" title="Sahte oturum sırasında yapıldı"{% endif %}>
         <td class="px-3 py-2 text-slate-500 whitespace-nowrap">{{ a.created_at.strftime('%d.%m %H:%M:%S') }}</td>
         <td class="px-3 py-2">
           {% set color = 'text-slate-700' %}
@@ -95,6 +96,14 @@
             #{{ a.actor_id }}
           {% else %}
             —
+          {% endif %}
+          {% if via_admin_id %}
+            <div class="text-[10px] text-violet-700 mt-0.5 flex items-center gap-1">
+              🎭 sahte oturum:
+              {% if actors_map.get(via_admin_id) %}
+              <a href="/admin/users/{{ via_admin_id }}" class="font-medium hover:underline">{{ actors_map[via_admin_id].full_name }}</a>
+              {% else %}admin #{{ via_admin_id }}{% endif %}
+            </div>
           {% endif %}
         </td>
         <td class="px-3 py-2 text-slate-600 font-mono">{{ a.email_attempted or '—' }}</td>

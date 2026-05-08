@@ -55,13 +55,30 @@ def log_action(
     autocommit=False çağıran tarafın bir transaction içinde topluca commit
     etmesine olanak verir (örn. login akışında user.last_login_at update +
     audit insert tek transaction).
+
+    Imitate ayrımı: request.session.impersonator_id varsa details_json'a
+    `_via_admin: <admin_id>` enjekte edilir. Audit viewer bu işaret üzerinden
+    sahte oturum sırasında yapılmış aksiyonları ayrı renkte gösterir
+    (admin'in target adı altında çalıştığı periyot).
     """
     try:
         ip, ua = _extract_request_meta(request)
-        details_json: str | None = None
-        if details:
+        # Imitate periyodu: request.session.impersonator_id varsa bunu
+        # otomatik details'e ekle. Caller'a bağımlı değil — log_action
+        # her çağrıda kontrol eder.
+        merged_details = dict(details) if details else {}
+        if request is not None:
             try:
-                details_json = json.dumps(details, ensure_ascii=False, default=str)
+                impersonator_id = request.session.get("impersonator_id")
+                if impersonator_id:
+                    merged_details["_via_admin"] = int(impersonator_id)
+            except (AttributeError, AssertionError):
+                # SessionMiddleware bağlı değilse veya request.session erişilemezse
+                pass
+        details_json: str | None = None
+        if merged_details:
+            try:
+                details_json = json.dumps(merged_details, ensure_ascii=False, default=str)
             except (TypeError, ValueError) as e:
                 logger.warning("audit details serialize hatası: %s", e)
         entry = AuditLog(

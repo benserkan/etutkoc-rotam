@@ -941,8 +941,26 @@ def audit_list(
         .limit(PER_PAGE)
         .all()
     )
-    # Actor isim eşlemesi (tek toplu sorgu)
-    actor_ids = {a.actor_id for a in audits if a.actor_id}
+    # Actor isim eşlemesi (tek toplu sorgu) + sahte oturum ile yapılan
+    # aksiyonların admin'lerini de aynı sorguda topla
+    actor_ids: set[int] = {a.actor_id for a in audits if a.actor_id}
+    via_admin_map: dict[int, int] = {}  # audit.id -> admin_id (eğer impersonate ise)
+    import json as _json
+    for a in audits:
+        if not a.details_json:
+            continue
+        try:
+            d = _json.loads(a.details_json)
+        except (ValueError, TypeError):
+            continue
+        if isinstance(d, dict) and d.get("_via_admin"):
+            try:
+                admin_id = int(d["_via_admin"])
+                via_admin_map[a.id] = admin_id
+                actor_ids.add(admin_id)
+            except (ValueError, TypeError):
+                pass
+
     actors_map: dict[int, User] = {}
     if actor_ids:
         for u in db.query(User).filter(User.id.in_(actor_ids)).all():
@@ -957,6 +975,7 @@ def audit_list(
             "user": user,
             "audits": audits,
             "actors_map": actors_map,
+            "via_admin_map": via_admin_map,
             "total": total,
             "page": page,
             "total_pages": total_pages,
