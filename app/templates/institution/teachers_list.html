@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Öğretmenler — {{ institution.name }}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">Öğretmenler</h1>
+    <p class="text-sm text-slate-500 mt-1">{{ institution.name }} — {{ teacher_summaries|length }} öğretmen</p>
+  </div>
+  <button type="button" onclick="document.getElementById('new-teacher').showModal()"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+    + Öğretmen Ekle
+  </button>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800 break-all">
+  ✓ {{ flash_ok }}
+</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+{% if not teacher_summaries %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+  Henüz öğretmen yok. Sağ üstten ekle.
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Öğretmen</th>
+        <th class="text-right px-4 py-2">Öğrenci</th>
+        <th class="text-right px-4 py-2">Plan</th>
+        <th class="text-right px-4 py-2">Tamamlanan</th>
+        <th class="text-right px-4 py-2">Oran</th>
+        <th class="text-right px-4 py-2">Son Giriş</th>
+        <th class="text-right px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for s in teacher_summaries %}
+      <tr {% if not s.teacher.is_active %}class="bg-slate-50 text-slate-500"{% endif %}>
+        <td class="px-4 py-2">
+          <a href="/institution/teachers/{{ s.teacher.id }}" class="font-medium hover:text-indigo-600">
+            {{ s.teacher.full_name }}
+          </a>
+          {% if not s.teacher.is_active %}
+          <span class="text-[10px] ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">pasif</span>
+          {% endif %}
+          <div class="text-[11px] text-slate-500 font-mono">{{ s.teacher.email }}</div>
+        </td>
+        <td class="px-4 py-2 text-right">{{ s.student_count }}</td>
+        <td class="px-4 py-2 text-right">{{ s.planned }}</td>
+        <td class="px-4 py-2 text-right">{{ s.completed }}</td>
+        <td class="px-4 py-2 text-right">
+          {% if s.rate_pct is not none %}
+          {% set color = 'text-rose-700' %}
+          {% if s.rate_pct >= 70 %}{% set color = 'text-emerald-700' %}
+          {% elif s.rate_pct >= 40 %}{% set color = 'text-amber-700' %}{% endif %}
+          <span class="font-semibold {{ color }}">%{{ s.rate_pct }}</span>
+          {% else %}
+          <span class="text-slate-400">—</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2 text-right text-xs text-slate-500">
+          {% if s.last_login_days is none %}<span class="text-slate-400">hiç</span>
+          {% elif s.last_login_days == 0 %}bugün
+          {% elif s.last_login_days == 1 %}dün
+          {% else %}{{ s.last_login_days }}g{% endif %}
+        </td>
+        <td class="px-4 py-2 text-right">
+          {% if s.teacher.is_active %}
+          <form method="post" action="/institution/teachers/{{ s.teacher.id }}/deactivate" class="inline"
+                onsubmit="return confirm('{{ s.teacher.full_name }} pasifleştirilsin mi? Giriş yapamaz, verisi korunur.');">
+            <button type="submit" class="text-[11px] text-rose-600 hover:text-rose-800">Pasifleştir</button>
+          </form>
+          {% else %}
+          <form method="post" action="/institution/teachers/{{ s.teacher.id }}/activate" class="inline">
+            <button type="submit" class="text-[11px] text-emerald-600 hover:text-emerald-800">Aktifleştir</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{# Yeni öğretmen modal #}
+<dialog id="new-teacher" class="rounded-xl shadow-2xl backdrop:bg-slate-900/60 w-[95vw] max-w-md p-0 border border-slate-200">
+  <form method="post" action="/institution/teachers" class="bg-white">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="font-semibold text-slate-900">Yeni Öğretmen</h3>
+      <button type="button" onclick="document.getElementById('new-teacher').close()"
+              class="text-slate-400 hover:text-slate-700 text-xl">×</button>
+    </div>
+    <div class="p-5 space-y-3">
+      <div>
+        <label class="block text-sm text-slate-700 mb-1 font-medium">Ad Soyad <span class="text-rose-500">*</span></label>
+        <input name="full_name" required autofocus
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-700 mb-1 font-medium">E-posta <span class="text-rose-500">*</span></label>
+        <input type="email" name="email" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-700 mb-1 font-medium">Geçici Şifre <span class="text-slate-400 text-xs">(boş = otomatik üret)</span></label>
+        <input type="text" name="password"
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono" />
+        <p class="text-[11px] text-slate-500 mt-1">Şifre kaydedildikten sonra mesaj kutusunda gösterilir — öğretmene iletin.</p>
+      </div>
+    </div>
+    <div class="px-5 py-3 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
+      <button type="button" onclick="document.getElementById('new-teacher').close()"
+              class="text-sm py-2 px-4 rounded text-slate-600 hover:bg-slate-200">İptal</button>
+      <button type="submit"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+        Oluştur
+      </button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block title %}{{ teacher.full_name }} — Kurum Yöneticisi{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/institution/teachers" class="text-sm text-slate-500 hover:text-slate-700">← Öğretmenler</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">{{ teacher.full_name }}</h1>
+  <div class="text-sm text-slate-500 mt-1 font-mono">{{ teacher.email }}</div>
+</div>
+
+{# Gizlilik notu — yöneticinin sınırını netleştir #}
+<div class="mb-5 p-3 rounded border border-sky-200 bg-sky-50 text-xs text-sky-800 flex items-start gap-2">
+  <span class="text-base">🔒</span>
+  <div>
+    Bu sayfada öğretmenin programını, veli notlarını veya öğrenci görev detaylarını görme yetkin yok.
+    Yalnızca <b>roster</b> ve <b>haftalık tamamlama yüzdesi</b> görünür. Ayrıntı için doğrudan iletişime geç.
+  </div>
+</div>
+
+{# Üst özet #}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Öğrenci</div>
+    <div class="text-2xl font-semibold text-slate-900 mt-1">{{ student_rows|length }}</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Planlanan (7 gün)</div>
+    <div class="text-2xl font-semibold text-slate-900 mt-1">{{ total_planned }}</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Tamamlanan</div>
+    <div class="text-2xl font-semibold text-slate-900 mt-1">{{ total_completed }}</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    {% set color = '#94a3b8' %}
+    {% if overall_rate is not none %}
+      {% if overall_rate >= 70 %}{% set color = '#059669' %}
+      {% elif overall_rate >= 40 %}{% set color = '#E8AC2D' %}
+      {% else %}{% set color = '#dc2626' %}{% endif %}
+    {% endif %}
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Tamamlama Oranı</div>
+    <div class="text-2xl font-semibold mt-1" style="color: {{ color }};">
+      {% if overall_rate is not none %}%{{ overall_rate }}{% else %}—{% endif %}
+    </div>
+  </div>
+</div>
+
+{# Öğrenci listesi #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-100">
+    <h2 class="font-medium text-slate-900">Öğrenciler</h2>
+  </div>
+  {% if not student_rows %}
+  <p class="px-4 py-12 text-center text-slate-500 italic">Bu öğretmenin henüz öğrencisi yok.</p>
+  {% else %}
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Öğrenci</th>
+        <th class="text-left px-4 py-2">Sınıf</th>
+        <th class="text-right px-4 py-2">Plan</th>
+        <th class="text-right px-4 py-2">Tamamlanan</th>
+        <th class="text-right px-4 py-2">Oran</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in student_rows %}
+      <tr {% if not r.student.is_active %}class="bg-slate-50 text-slate-500"{% endif %}>
+        <td class="px-4 py-2">
+          {{ r.student.full_name }}
+          {% if not r.student.is_active %}<span class="text-[10px] text-slate-500 ml-1">(pasif)</span>{% endif %}
+        </td>
+        <td class="px-4 py-2 text-slate-600">{{ r.student.display_grade_label }}</td>
+        <td class="px-4 py-2 text-right">{{ r.planned }}</td>
+        <td class="px-4 py-2 text-right">{{ r.completed }}</td>
+        <td class="px-4 py-2 text-right">
+          {% if r.rate_pct is not none %}
+          {% set c = 'text-rose-700' %}
+          {% if r.rate_pct >= 70 %}{% set c = 'text-emerald-700' %}
+          {% elif r.rate_pct >= 40 %}{% set c = 'text-amber-700' %}{% endif %}
+          <span class="font-semibold {{ c }}">%{{ r.rate_pct }}</span>
+          {% else %}<span class="text-slate-400">—</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block title %}{{ institution.name }} — Yönetici Paneli{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold text-slate-900">{{ institution.name }}</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Hoş geldin, <b>{{ user.full_name }}</b>. Kurum genel durumu ve öğretmenlerin haftalık performansı.
+  </p>
+</div>
+
+{# Gizlilik notu — kurum admin'ine ne görebileceğini hatırlatır #}
+<div class="mb-6 p-3 rounded border border-sky-200 bg-sky-50 text-xs text-sky-800 flex items-start gap-2">
+  <span class="text-base">ℹ️</span>
+  <div>
+    <b>Gizlilik:</b> Bu panelde öğretmenlerin programı, veli notları veya öğrenci detayları
+    GÖRÜNMEZ — sadece roster ve agregat istatistikler. Detay verilerine erişim için
+    öğretmenle doğrudan iletişime geçin.
+  </div>
+</div>
+
+{# Sayım kartları #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Öğretmen</div>
+    <div class="text-3xl font-semibold text-slate-900 mt-1">{{ agg.teacher_count }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">{{ agg.active_teacher_count }} son 7 günde aktif</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Öğrenci</div>
+    <div class="text-3xl font-semibold text-slate-900 mt-1">{{ agg.student_count }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">aktif kayıt</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Bu Hafta Plan</div>
+    <div class="text-3xl font-semibold text-slate-900 mt-1">{{ agg.total_planned }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">{{ agg.total_completed }} tamamlandı</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    {% set rate_color = '#94a3b8' %}
+    {% if agg.weekly_rate_pct is not none %}
+      {% if agg.weekly_rate_pct >= 70 %}{% set rate_color = '#059669' %}
+      {% elif agg.weekly_rate_pct >= 40 %}{% set rate_color = '#E8AC2D' %}
+      {% else %}{% set rate_color = '#dc2626' %}{% endif %}
+    {% endif %}
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Tamamlama Oranı</div>
+    <div class="text-3xl font-semibold mt-1" style="color: {{ rate_color }};">
+      {% if agg.weekly_rate_pct is not none %}%{{ agg.weekly_rate_pct }}{% else %}—{% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">son 7 gün, kurum geneli</div>
+  </div>
+</div>
+
+{# Öğretmen özet tablosu #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+    <h2 class="font-medium text-slate-900">Öğretmenler — Bu Haftaki Performans</h2>
+    <a href="/institution/teachers" class="text-xs text-indigo-600 hover:text-indigo-800">Yönet →</a>
+  </div>
+  {% if not teacher_summaries %}
+  <div class="px-4 py-12 text-center text-slate-500">
+    Henüz kuruma bağlı öğretmen yok.
+    <a href="/institution/teachers" class="text-indigo-600 hover:underline ml-1">Öğretmen ekle →</a>
+  </div>
+  {% else %}
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Öğretmen</th>
+        <th class="text-right px-4 py-2">Öğrenci</th>
+        <th class="text-right px-4 py-2">Plan</th>
+        <th class="text-right px-4 py-2">Tamamlanan</th>
+        <th class="text-right px-4 py-2">Oran</th>
+        <th class="text-right px-4 py-2">Son Giriş</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for s in teacher_summaries %}
+      <tr {% if not s.teacher.is_active %}class="bg-slate-50 text-slate-500"{% endif %}>
+        <td class="px-4 py-2">
+          <a href="/institution/teachers/{{ s.teacher.id }}" class="font-medium hover:text-indigo-600">
+            {{ s.teacher.full_name }}
+          </a>
+          {% if not s.teacher.is_active %}
+          <span class="text-[10px] ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">pasif</span>
+          {% endif %}
+          <div class="text-[11px] text-slate-500 font-mono">{{ s.teacher.email }}</div>
+        </td>
+        <td class="px-4 py-2 text-right text-slate-700">{{ s.student_count }}</td>
+        <td class="px-4 py-2 text-right text-slate-700">{{ s.planned }}</td>
+        <td class="px-4 py-2 text-right text-slate-700">{{ s.completed }}</td>
+        <td class="px-4 py-2 text-right">
+          {% if s.rate_pct is not none %}
+          {% set color = 'text-rose-700' %}
+          {% if s.rate_pct >= 70 %}{% set color = 'text-emerald-700' %}
+          {% elif s.rate_pct >= 40 %}{% set color = 'text-amber-700' %}{% endif %}
+          <span class="font-semibold {{ color }}">%{{ s.rate_pct }}</span>
+          {% else %}
+          <span class="text-slate-400">—</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2 text-right text-xs text-slate-500">
+          {% if s.last_login_days is none %}<span class="text-slate-400">hiç</span>
+          {% elif s.last_login_days == 0 %}bugün
+          {% elif s.last_login_days == 1 %}dün
+          {% else %}{{ s.last_login_days }} gün önce{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}
