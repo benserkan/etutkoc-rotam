@@ -73,6 +73,21 @@
   {% block head %}{% endblock %}
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800">
+  {# Imitate user banner — admin başka kullanıcı olarak görüntülerken uyarı #}
+  {% if request.session.get('impersonator_id') %}
+  <div class="bg-rose-600 text-white px-4 py-2 text-sm flex items-center justify-between gap-3">
+    <span>
+      🎭 <b>Sahte oturum aktif:</b> Şu an
+      <b>{{ user.full_name if user else '?' }}</b>
+      olarak görüntülüyorsun (admin: #{{ request.session.get('impersonator_id') }}).
+    </span>
+    <form method="post" action="/admin/impersonate/end" class="inline">
+      <button type="submit" class="bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-xs font-medium">
+        ← Admin'e geri dön
+      </button>
+    </form>
+  </div>
+  {% endif %}
   {% if user %}
   <header class="bg-white border-b border-slate-200">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
@@ -85,7 +100,16 @@
           </span>
         </a>
         <nav class="hidden md:flex items-center gap-4 text-sm">
-          {% if user.role.value == 'teacher' %}
+          {% if user.role.value == 'super_admin' %}
+            <a href="/admin" class="text-slate-600 hover:text-slate-900">Panel</a>
+            <a href="/admin/institutions" class="text-slate-600 hover:text-slate-900">Kurumlar</a>
+            <a href="/admin/users" class="text-slate-600 hover:text-slate-900">Kullanıcılar</a>
+            <a href="/admin/audit" class="text-slate-600 hover:text-slate-900">📜 Audit</a>
+          {% elif user.role.value == 'institution_admin' %}
+            <a href="/institution" class="text-slate-600 hover:text-slate-900">Panel</a>
+            <a href="/institution/teachers" class="text-slate-600 hover:text-slate-900">Öğretmenler</a>
+            <a href="/institution/roster" class="text-slate-600 hover:text-slate-900">Roster</a>
+          {% elif user.role.value == 'teacher' %}
             <a href="/teacher" class="text-slate-600 hover:text-slate-900">Panel</a>
             <a href="/teacher/students" class="text-slate-600 hover:text-slate-900">Öğrenciler</a>
             <a href="/teacher/books" class="text-slate-600 hover:text-slate-900">Kitap Kütüphanesi</a>

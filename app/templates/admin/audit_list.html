@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block title %}Audit Log — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Audit Log</h1>
+  <p class="text-sm text-slate-500 mt-1">Toplam <b>{{ total }}</b> kayıt — sayfa {{ page }}/{{ total_pages }}</p>
+</div>
+
+{# Filtreler #}
+<form method="get" class="bg-white border border-slate-200 rounded-lg p-3 mb-4 flex items-end gap-3 flex-wrap">
+  <div>
+    <label class="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">Olay tipi</label>
+    <select name="action" class="px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+      <option value="">— Tümü —</option>
+      {% for a in all_actions %}
+      <option value="{{ a.value }}" {% if filter_action == a.value %}selected{% endif %}>{{ a.value }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">Aktör ID</label>
+    <input name="actor_id" value="{{ filter_actor_id or '' }}" placeholder="user.id" type="number"
+           class="px-3 py-2 border border-slate-300 rounded text-sm w-28" />
+  </div>
+  <div>
+    <button type="submit" class="bg-slate-700 hover:bg-slate-800 text-white text-sm py-2 px-4 rounded">Filtrele</button>
+    <a href="/admin/audit" class="text-xs text-slate-500 hover:text-slate-700 ml-2">Temizle</a>
+  </div>
+</form>
+
+{% if not audits %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+  Filtreyle eşleşen kayıt yok.
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-xs">
+    <thead class="bg-slate-50 text-slate-600">
+      <tr>
+        <th class="text-left px-3 py-2">Zaman</th>
+        <th class="text-left px-3 py-2">Olay</th>
+        <th class="text-left px-3 py-2">Aktör</th>
+        <th class="text-left px-3 py-2">E-posta</th>
+        <th class="text-left px-3 py-2">Hedef</th>
+        <th class="text-left px-3 py-2">IP</th>
+        <th class="text-left px-3 py-2">Detay</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in audits %}
+      <tr>
+        <td class="px-3 py-2 text-slate-500 whitespace-nowrap">{{ a.created_at.strftime('%d.%m %H:%M:%S') }}</td>
+        <td class="px-3 py-2">
+          {% set color = 'text-slate-700' %}
+          {% if a.action.value in ['login_failed', 'login_locked', 'permission_denied', 'user_delete', 'institution_delete'] %}
+            {% set color = 'text-rose-700 font-medium' %}
+          {% elif a.action.value in ['login_success', 'logout'] %}
+            {% set color = 'text-emerald-700' %}
+          {% elif a.action.value.startswith('impersonate') %}
+            {% set color = 'text-violet-700 font-semibold' %}
+          {% elif a.action.value.startswith('user_') or a.action.value.startswith('institution_') or a.action.value == 'role_change' %}
+            {% set color = 'text-indigo-700' %}
+          {% endif %}
+          <span class="{{ color }}">{{ a.action.value }}</span>
+        </td>
+        <td class="px-3 py-2">
+          {% if a.actor_id and actors_map.get(a.actor_id) %}
+            <a href="/admin/users/{{ a.actor_id }}" class="text-indigo-600 hover:text-indigo-800">
+              {{ actors_map[a.actor_id].full_name }}
+            </a>
+          {% elif a.actor_id %}
+            #{{ a.actor_id }}
+          {% else %}
+            —
+          {% endif %}
+        </td>
+        <td class="px-3 py-2 text-slate-600 font-mono">{{ a.email_attempted or '—' }}</td>
+        <td class="px-3 py-2 text-slate-500">
+          {% if a.target_type %}
+            {% if a.target_type == 'user' and a.target_id %}
+              <a href="/admin/users/{{ a.target_id }}" class="hover:text-indigo-600">user #{{ a.target_id }}</a>
+            {% elif a.target_type == 'institution' and a.target_id %}
+              <a href="/admin/institutions/{{ a.target_id }}" class="hover:text-indigo-600">inst #{{ a.target_id }}</a>
+            {% else %}
+              {{ a.target_type }} {% if a.target_id %}#{{ a.target_id }}{% endif %}
+            {% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td class="px-3 py-2 text-slate-500 font-mono">{{ a.ip_address or '—' }}</td>
+        <td class="px-3 py-2 text-slate-500 max-w-md truncate" title="{{ a.details_json or '' }}">
+          {{ a.details_json or '—' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# Pagination #}
+{% if total_pages > 1 %}
+<div class="mt-4 flex items-center justify-center gap-2 text-sm">
+  {% set qs_extra = (('&action=' + filter_action) if filter_action else '') ~ (('&actor_id=' + filter_actor_id) if filter_actor_id else '') %}
+  {% if page > 1 %}
+  <a href="?page={{ page-1 }}{{ qs_extra }}" class="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">← Önceki</a>
+  {% endif %}
+  <span class="text-slate-600">{{ page }} / {{ total_pages }}</span>
+  {% if page < total_pages %}
+  <a href="?page={{ page+1 }}{{ qs_extra }}" class="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">Sonraki →</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endif %}
+{% endblock %}

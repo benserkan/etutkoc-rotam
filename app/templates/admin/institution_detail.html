@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}{{ institution.name }} — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/institutions" class="text-sm text-slate-500 hover:text-slate-700">← Kurumlar</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1 flex items-center gap-3">
+    {{ institution.name }}
+    {% if institution.is_active %}
+    <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Aktif</span>
+    {% else %}
+    <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">Pasif</span>
+    {% endif %}
+    <span class="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">{{ institution.plan }}</span>
+  </h1>
+  <div class="text-sm text-slate-500 mt-1 font-mono">{{ institution.slug }}</div>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">✓ {{ flash_ok }}</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+  {# Bilgi düzenleme #}
+  <div class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="font-medium text-slate-900 mb-3">Kurum Bilgileri</h2>
+    <form method="post" action="/admin/institutions/{{ institution.id }}/edit" class="space-y-3">
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Ad</label>
+        <input name="name" value="{{ institution.name }}" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">İletişim E-posta</label>
+        <input type="email" name="contact_email" value="{{ institution.contact_email or '' }}"
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Plan</label>
+        <select name="plan" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          {% for p in ['free','starter','professional'] %}
+          <option value="{{ p }}" {% if institution.plan == p %}selected{% endif %}>{{ p|capitalize }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" name="is_active" value="on" {% if institution.is_active %}checked{% endif %}
+                 class="accent-indigo-600" />
+          <span>Aktif (pasif yapılırsa kullanıcılar giriş yapamaz)</span>
+        </label>
+      </div>
+      <div class="pt-2 flex justify-end">
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+          Güncelle
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# Sayım + tehlikeli işlem #}
+  <div class="space-y-4">
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="font-medium text-slate-900 mb-3">Kurumdaki Kullanıcılar</h2>
+      <dl class="grid grid-cols-3 gap-3 text-center">
+        <div>
+          <dd class="text-2xl font-semibold text-slate-900">{{ institution_admins|length }}</dd>
+          <dt class="text-xs text-slate-500 mt-0.5">Yönetici</dt>
+        </div>
+        <div>
+          <dd class="text-2xl font-semibold text-slate-900">{{ teachers|length }}</dd>
+          <dt class="text-xs text-slate-500 mt-0.5">Öğretmen</dt>
+        </div>
+        <div>
+          <dd class="text-2xl font-semibold text-slate-900">{{ student_count }}</dd>
+          <dt class="text-xs text-slate-500 mt-0.5">Öğrenci</dt>
+        </div>
+      </dl>
+    </div>
+
+    <div class="bg-rose-50 border border-rose-200 rounded-lg p-5">
+      <h2 class="font-medium text-rose-900 mb-2">Tehlikeli Bölge</h2>
+      <p class="text-xs text-rose-800 mb-3">
+        Kurumu silmek tüm kullanıcıların <code>institution_id</code>'sini NULL yapar
+        (kullanıcılar silinmez — bağımsız öğretmen olarak yaşamaya devam ederler).
+      </p>
+      <form method="post" action="/admin/institutions/{{ institution.id }}/delete"
+            onsubmit="return confirm('{{ institution.name }} kurumunu silmek istediğine emin misin? {{ teachers|length }} öğretmen bağımsız olacak.');">
+        <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium py-1.5 px-3 rounded">
+          Kurumu Sil
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+
+{# Yöneticiler + Öğretmenler #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="font-medium text-slate-900">Kurum Yöneticileri</h2>
+      <span class="text-xs text-slate-500">{{ institution_admins|length }}</span>
+    </div>
+    {% if not institution_admins %}
+    <p class="px-4 py-6 text-center text-sm text-slate-500 italic">
+      Bu kurumda henüz yönetici yok.<br>
+      <a href="/admin/users?institution_id={{ institution.id }}&role=institution_admin" class="text-indigo-600 hover:underline">Yönetici ekle →</a>
+    </p>
+    {% else %}
+    <ul class="divide-y divide-slate-100 text-sm">
+      {% for u in institution_admins %}
+      <li class="px-4 py-2 flex items-center justify-between">
+        <span>
+          <b>{{ u.full_name }}</b>
+          <span class="text-slate-500 font-mono text-xs ml-2">{{ u.email }}</span>
+        </span>
+        {% if not u.is_active %}<span class="text-xs text-slate-500">(pasif)</span>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+      <h2 class="font-medium text-slate-900">Öğretmenler</h2>
+      <span class="text-xs text-slate-500">{{ teachers|length }}</span>
+    </div>
+    {% if not teachers %}
+    <p class="px-4 py-6 text-center text-sm text-slate-500 italic">
+      Henüz öğretmen yok.
+    </p>
+    {% else %}
+    <ul class="divide-y divide-slate-100 text-sm">
+      {% for t in teachers %}
+      <li class="px-4 py-2 flex items-center justify-between">
+        <span>
+          <b>{{ t.full_name }}</b>
+          <span class="text-slate-500 font-mono text-xs ml-2">{{ t.email }}</span>
+        </span>
+        <span class="text-xs text-slate-500">
+          {% if t.last_login_at %}son: {{ t.last_login_at.strftime('%d.%m %H:%M') }}{% else %}hiç giriş yok{% endif %}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

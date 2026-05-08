@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block title %}Kullanıcılar — Admin{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kullanıcılar</h1>
+  </div>
+  <button type="button" onclick="document.getElementById('new-user').showModal()"
+          class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+    + Yeni Kullanıcı
+  </button>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800 break-all">
+  ✓ {{ flash_ok }}
+</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+{# Filtreler #}
+<form method="get" class="bg-white border border-slate-200 rounded-lg p-3 mb-4 flex items-end gap-3 flex-wrap">
+  <div class="flex-1 min-w-[200px]">
+    <label class="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">Arama</label>
+    <input name="q" value="{{ filter_q or '' }}" placeholder="ad veya e-posta"
+           class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+  </div>
+  <div>
+    <label class="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">Rol</label>
+    <select name="role" class="px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+      <option value="">— Tümü —</option>
+      {% for r, label in ROLE_LABELS.items() %}
+      <option value="{{ r.value }}" {% if filter_role == r.value %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <label class="block text-[11px] uppercase tracking-wide text-slate-500 mb-1">Kurum</label>
+    <select name="institution_id" class="px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+      <option value="">— Tümü —</option>
+      {% for i in institutions %}
+      <option value="{{ i.id }}" {% if filter_institution_id == i.id|string %}selected{% endif %}>{{ i.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div>
+    <button type="submit" class="bg-slate-700 hover:bg-slate-800 text-white text-sm py-2 px-4 rounded">Filtrele</button>
+    <a href="/admin/users" class="text-xs text-slate-500 hover:text-slate-700 ml-2">Temizle</a>
+  </div>
+</form>
+
+{% if not users %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+  Filtreyle eşleşen kullanıcı yok.
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Ad</th>
+        <th class="text-left px-4 py-2">E-posta</th>
+        <th class="text-left px-4 py-2">Rol</th>
+        <th class="text-left px-4 py-2">Kurum</th>
+        <th class="text-left px-4 py-2">Son Giriş</th>
+        <th class="text-left px-4 py-2">Durum</th>
+        <th class="text-right px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for u in users %}
+      <tr {% if not u.is_active %}class="bg-slate-50 text-slate-500"{% endif %}>
+        <td class="px-4 py-2 font-medium">
+          <a href="/admin/users/{{ u.id }}" class="hover:text-indigo-600">{{ u.full_name }}</a>
+        </td>
+        <td class="px-4 py-2 font-mono text-xs">{{ u.email }}</td>
+        <td class="px-4 py-2">
+          {% set role_color = {
+            'super_admin': 'bg-rose-50 text-rose-700 border-rose-200',
+            'institution_admin': 'bg-violet-50 text-violet-700 border-violet-200',
+            'teacher': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+            'student': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+            'parent': 'bg-sky-50 text-sky-700 border-sky-200'
+          } %}
+          <span class="text-[10px] px-1.5 py-0.5 rounded border {{ role_color.get(u.role.value, 'bg-slate-50 text-slate-600 border-slate-200') }}">
+            {{ ROLE_LABELS[u.role] }}
+          </span>
+        </td>
+        <td class="px-4 py-2 text-slate-600">
+          {% if u.institution %}{{ u.institution.name }}{% else %}<span class="text-slate-400 italic">bağımsız</span>{% endif %}
+        </td>
+        <td class="px-4 py-2 text-slate-500 text-xs">
+          {% if u.last_login_at %}{{ u.last_login_at.strftime('%d.%m %H:%M') }}{% else %}—{% endif %}
+        </td>
+        <td class="px-4 py-2">
+          {% if u.locked_until %}
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">🔒 kilitli</span>
+          {% elif u.is_active %}
+          <span class="text-[10px] text-emerald-700">●</span>
+          {% else %}
+          <span class="text-[10px] text-slate-500">pasif</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2 text-right">
+          <a href="/admin/users/{{ u.id }}" class="text-xs text-indigo-600 hover:text-indigo-800">Detay →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% if users|length >= 500 %}
+  <div class="px-4 py-2 text-xs text-slate-500 italic border-t border-slate-100">
+    İlk 500 kullanıcı gösteriliyor — daha dar filtre uygula.
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{# Yeni kullanıcı modal #}
+<dialog id="new-user" class="rounded-xl shadow-2xl backdrop:bg-slate-900/60 w-[95vw] max-w-md p-0 border border-slate-200">
+  <form method="post" action="/admin/users" class="bg-white">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="font-semibold text-slate-900">Yeni Kullanıcı</h3>
+      <button type="button" onclick="document.getElementById('new-user').close()"
+              class="text-slate-400 hover:text-slate-700 text-xl">×</button>
+    </div>
+    <div class="p-5 space-y-3">
+      <div>
+        <label class="block text-sm text-slate-700 mb-1 font-medium">Ad Soyad <span class="text-rose-500">*</span></label>
+        <input name="full_name" required autofocus class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-700 mb-1 font-medium">E-posta <span class="text-rose-500">*</span></label>
+        <input type="email" name="email" required class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-700 mb-1 font-medium">Rol <span class="text-rose-500">*</span></label>
+        <select name="role" required class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          {% for r, label in ROLE_LABELS.items() %}
+          <option value="{{ r.value }}">{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-slate-700 mb-1 font-medium">Kurum <span class="text-slate-400 text-xs">(institution_admin için zorunlu)</span></label>
+        <select name="institution_id" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <option value="">— Bağımsız —</option>
+          {% for i in institutions %}
+          <option value="{{ i.id }}">{{ i.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-slate-700 mb-1 font-medium">Şifre <span class="text-slate-400 text-xs">(boş = otomatik üret)</span></label>
+        <input type="text" name="password" class="w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono" />
+      </div>
+    </div>
+    <div class="px-5 py-3 border-t border-slate-100 bg-slate-50 flex justify-end gap-2">
+      <button type="button" onclick="document.getElementById('new-user').close()"
+              class="text-sm py-2 px-4 rounded text-slate-600 hover:bg-slate-200">İptal</button>
+      <button type="submit"
+              class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+        Oluştur
+      </button>
+    </div>
+  </form>
+</dialog>
+{% endblock %}

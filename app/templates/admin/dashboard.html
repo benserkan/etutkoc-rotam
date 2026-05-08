@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Süper Admin Panel{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold text-slate-900">Süper Admin Paneli</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Hoş geldin, <b>{{ user.full_name }}</b>. Tüm sistemi buradan yönetebilirsin.
+  </p>
+</div>
+
+{# Sayım kartları #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <a href="/admin/institutions" class="bg-white border border-slate-200 hover:border-indigo-400 rounded-lg p-4 transition">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Kurumlar</div>
+    <div class="text-3xl font-semibold text-slate-900 mt-1">{{ counts.institutions }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">{{ counts.active_institutions }} aktif</div>
+  </a>
+  <a href="/admin/users?role=teacher" class="bg-white border border-slate-200 hover:border-indigo-400 rounded-lg p-4 transition">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Öğretmenler</div>
+    <div class="text-3xl font-semibold text-slate-900 mt-1">{{ counts.teachers }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">{{ counts.independent_teachers }} bağımsız</div>
+  </a>
+  <a href="/admin/users?role=student" class="bg-white border border-slate-200 hover:border-indigo-400 rounded-lg p-4 transition">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Öğrenciler</div>
+    <div class="text-3xl font-semibold text-slate-900 mt-1">{{ counts.students }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">{{ counts.parents }} veli</div>
+  </a>
+  <a href="/admin/users?role=institution_admin" class="bg-white border border-slate-200 hover:border-indigo-400 rounded-lg p-4 transition">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Yöneticiler</div>
+    <div class="text-3xl font-semibold text-slate-900 mt-1">{{ counts.institution_admins }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">{{ counts.super_admins }} süper admin</div>
+  </a>
+</div>
+
+{# Güvenlik özeti #}
+{% if failed_logins_24h > 10 %}
+<div class="mb-6 p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
+  <span class="text-amber-700 text-xl">⚠</span>
+  <div class="flex-1">
+    <div class="font-semibold text-amber-900">Yüksek başarısız giriş hareketi</div>
+    <div class="text-sm text-amber-800 mt-1">
+      Son 24 saatte <b>{{ failed_logins_24h }}</b> başarısız giriş veya kilitleme olayı kaydedildi.
+      <a href="/admin/audit?action=login_failed" class="underline">Audit log'u incele</a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# Son audit olayları #}
+<div class="bg-white border border-slate-200 rounded-lg">
+  <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+    <h2 class="font-medium text-slate-900">Son Audit Olayları</h2>
+    <a href="/admin/audit" class="text-xs text-indigo-600 hover:text-indigo-800">Tümünü gör →</a>
+  </div>
+  {% if not recent_audits %}
+  <div class="px-4 py-8 text-center text-slate-500 text-sm italic">
+    Henüz audit kaydı yok.
+  </div>
+  {% else %}
+  <table class="w-full text-xs">
+    <thead class="bg-slate-50 text-slate-600">
+      <tr>
+        <th class="text-left px-4 py-2">Zaman</th>
+        <th class="text-left px-4 py-2">Olay</th>
+        <th class="text-left px-4 py-2">Kim</th>
+        <th class="text-left px-4 py-2">Hedef</th>
+        <th class="text-left px-4 py-2">IP</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in recent_audits %}
+      <tr>
+        <td class="px-4 py-2 text-slate-500">{{ a.created_at.strftime('%d.%m %H:%M') }}</td>
+        <td class="px-4 py-2">
+          {% set color = 'text-slate-700' %}
+          {% if a.action.value in ['login_failed', 'login_locked', 'permission_denied'] %}
+            {% set color = 'text-rose-700 font-medium' %}
+          {% elif a.action.value in ['login_success', 'logout'] %}
+            {% set color = 'text-emerald-700' %}
+          {% elif a.action.value.startswith('impersonate') %}
+            {% set color = 'text-violet-700 font-semibold' %}
+          {% elif a.action.value.startswith('user_') or a.action.value.startswith('institution_') or a.action.value == 'role_change' %}
+            {% set color = 'text-indigo-700' %}
+          {% endif %}
+          <span class="{{ color }}">{{ a.action.value }}</span>
+        </td>
+        <td class="px-4 py-2 text-slate-700">
+          {% if a.actor_id %}#{{ a.actor_id }}{% else %}—{% endif %}
+          {% if a.email_attempted %}<span class="text-slate-400">· {{ a.email_attempted }}</span>{% endif %}
+        </td>
+        <td class="px-4 py-2 text-slate-500">
+          {% if a.target_type %}{{ a.target_type }}{% if a.target_id %} #{{ a.target_id }}{% endif %}{% else %}—{% endif %}
+        </td>
+        <td class="px-4 py-2 text-slate-500 font-mono text-[10px]">{{ a.ip_address or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}

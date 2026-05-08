@@ -1,0 +1,221 @@
+{% extends "base.html" %}
+{% block title %}{{ target.full_name }} — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/users" class="text-sm text-slate-500 hover:text-slate-700">← Kullanıcılar</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1 flex items-center gap-3 flex-wrap">
+    {{ target.full_name }}
+    {% set role_color = {
+      'super_admin': 'bg-rose-50 text-rose-700 border-rose-200',
+      'institution_admin': 'bg-violet-50 text-violet-700 border-violet-200',
+      'teacher': 'bg-indigo-50 text-indigo-700 border-indigo-200',
+      'student': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'parent': 'bg-sky-50 text-sky-700 border-sky-200'
+    } %}
+    <span class="text-xs px-2 py-0.5 rounded border {{ role_color.get(target.role.value, 'bg-slate-50 text-slate-600 border-slate-200') }}">
+      {{ ROLE_LABELS[target.role] }}
+    </span>
+    {% if target.institution %}
+    <span class="text-xs text-slate-600">{{ target.institution.name }}</span>
+    {% else %}
+    <span class="text-xs text-slate-400 italic">bağımsız</span>
+    {% endif %}
+    {% if target.locked_until %}
+    <span class="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300">🔒 kilitli</span>
+    {% endif %}
+    {% if not target.is_active %}
+    <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">pasif</span>
+    {% endif %}
+  </h1>
+  <div class="text-sm text-slate-500 mt-1 font-mono">{{ target.email }}</div>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800 break-all">✓ {{ flash_ok }}</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
+
+  {# Bilgi düzenleme #}
+  <div class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="font-medium text-slate-900 mb-3">Bilgiler</h2>
+    <form method="post" action="/admin/users/{{ target.id }}/edit" class="space-y-3">
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Ad Soyad</label>
+        <input name="full_name" value="{{ target.full_name }}" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">E-posta</label>
+        <input type="email" name="email" value="{{ target.email }}" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Kurum</label>
+        <select name="institution_id" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <option value="">— Bağımsız —</option>
+          {% for i in institutions %}
+          <option value="{{ i.id }}" {% if target.institution_id == i.id %}selected{% endif %}>{{ i.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="flex items-center gap-2 text-sm text-slate-700">
+          <input type="checkbox" name="is_active" value="on" {% if target.is_active %}checked{% endif %}
+                 class="accent-indigo-600" />
+          <span>Aktif (kapatılırsa giriş yapamaz)</span>
+        </label>
+      </div>
+      <div class="pt-2 flex justify-end">
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+          Güncelle
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# Güvenlik aksiyonları #}
+  <div class="space-y-4">
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="font-medium text-slate-900 mb-3">Güvenlik</h2>
+      <dl class="text-xs text-slate-600 space-y-1.5 mb-3">
+        <div class="flex justify-between">
+          <dt>Son giriş:</dt>
+          <dd>{% if target.last_login_at %}{{ target.last_login_at.strftime('%d.%m.%Y %H:%M') }}{% else %}—{% endif %}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt>Son IP:</dt>
+          <dd class="font-mono">{{ target.last_login_ip or '—' }}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt>Başarısız giriş sayısı:</dt>
+          <dd>{{ target.failed_login_count or 0 }}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt>Kilit bitişi:</dt>
+          <dd>{% if target.locked_until %}{{ target.locked_until.strftime('%d.%m %H:%M') }}{% else %}yok{% endif %}</dd>
+        </div>
+        <div class="flex justify-between">
+          <dt>Şifre değişimi:</dt>
+          <dd>{% if target.password_changed_at %}{{ target.password_changed_at.strftime('%d.%m.%Y') }}{% else %}—{% endif %}</dd>
+        </div>
+      </dl>
+      <form method="post" action="/admin/users/{{ target.id }}/reset-password"
+            onsubmit="return confirm('{{ target.full_name }} için yeni şifre üretilsin mi? (Diğer aktif oturumları geçersiz olur)');"
+            class="flex gap-2">
+        <input name="new_password" placeholder="Yeni şifre (boş = otomatik üret)"
+               class="flex-1 px-2 py-1.5 border border-slate-300 rounded text-xs font-mono" />
+        <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-white text-xs py-1.5 px-3 rounded">
+          🔑 Şifre Sıfırla
+        </button>
+      </form>
+    </div>
+
+    {# Rol değişimi #}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="font-medium text-slate-900 mb-3">Rol Değişimi</h2>
+      {% if target.id == user.id %}
+      <p class="text-xs text-slate-500 italic">Kendi rolünü buradan değiştiremezsin.</p>
+      {% else %}
+      <form method="post" action="/admin/users/{{ target.id }}/change-role" class="space-y-2"
+            onsubmit="return confirm('Rol değişimi audit log\'a kaydedilir. Devam edilsin mi?');">
+        <div>
+          <select name="new_role" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+            {% for r in ROLES %}
+            <option value="{{ r.value }}" {% if target.role == r %}selected{% endif %}>
+              {{ ROLE_LABELS[r] }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <select name="institution_id" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+            <option value="">— Bağımsız —</option>
+            {% for i in institutions %}
+            <option value="{{ i.id }}" {% if target.institution_id == i.id %}selected{% endif %}>{{ i.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="flex justify-end pt-1">
+          <button type="submit"
+                  class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded">
+            Rolü Değiştir
+          </button>
+        </div>
+      </form>
+      {% endif %}
+    </div>
+
+    {# Imitate (sahte oturum) #}
+    {% if target.id != user.id and target.role.value != 'super_admin' and target.is_active %}
+    <div class="bg-violet-50 border border-violet-200 rounded-lg p-5">
+      <h2 class="font-medium text-violet-900 mb-2">🎭 Sahte Oturum</h2>
+      <p class="text-xs text-violet-800 mb-3">
+        {{ target.full_name }} olarak sisteme giriş yapmış gibi görüntüle.
+        Tüm aksiyonların target adı altında çalışır; üst banner ile her zaman
+        gerçek admin'e dönebilirsin. <b>Audit log'a kayıt edilir.</b>
+      </p>
+      <form method="post" action="/admin/users/{{ target.id }}/impersonate"
+            onsubmit="return confirm('{{ target.full_name }} olarak sahte oturum başlat?');">
+        <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded">
+          🎭 Sahte oturum başlat
+        </button>
+      </form>
+    </div>
+    {% endif %}
+
+    {# Tehlikeli işlem #}
+    {% if target.id != user.id %}
+    <div class="bg-rose-50 border border-rose-200 rounded-lg p-5">
+      <h2 class="font-medium text-rose-900 mb-2">Tehlikeli</h2>
+      <p class="text-xs text-rose-800 mb-3">
+        Kullanıcıyı tamamen siler. CASCADE ile bağlı veriler de silinir
+        (öğrenci silinirse görevleri/ilerlemesi gider).
+      </p>
+      <form method="post" action="/admin/users/{{ target.id }}/delete"
+            onsubmit="return confirm('{{ target.full_name }} hesabını ve tüm verisini SİLMEK istediğine emin misin? Geri alınamaz.');">
+        <button type="submit" class="bg-rose-600 hover:bg-rose-700 text-white text-xs font-medium py-1.5 px-3 rounded">
+          Hesabı Sil
+        </button>
+      </form>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{# Bu kullanıcının son audit aktivitesi #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-100">
+    <h2 class="font-medium text-slate-900">Son Aktivitesi</h2>
+  </div>
+  {% if not recent_audits %}
+  <p class="px-4 py-6 text-center text-sm text-slate-500 italic">Henüz aktivite kaydı yok.</p>
+  {% else %}
+  <table class="w-full text-xs">
+    <thead class="bg-slate-50 text-slate-600">
+      <tr>
+        <th class="text-left px-4 py-2">Zaman</th>
+        <th class="text-left px-4 py-2">Olay</th>
+        <th class="text-left px-4 py-2">Hedef</th>
+        <th class="text-left px-4 py-2">IP</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in recent_audits %}
+      <tr>
+        <td class="px-4 py-2 text-slate-500">{{ a.created_at.strftime('%d.%m %H:%M') }}</td>
+        <td class="px-4 py-2 font-medium">{{ a.action.value }}</td>
+        <td class="px-4 py-2 text-slate-500">{{ a.target_type or '—' }}{% if a.target_id %} #{{ a.target_id }}{% endif %}</td>
+        <td class="px-4 py-2 text-slate-500 font-mono">{{ a.ip_address or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+{% endblock %}
