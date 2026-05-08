@@ -1,0 +1,46 @@
+{# Öğrenci anahtar performans metrikleri — yatay şerit.
+   Bağlam: snapshot (StudentSnapshot), hit_rate_percent (float 0..100+) #}
+{% set sn = snapshot %}
+{% set today_pct = (100 * sn.today.completed // sn.today.planned) if sn.today.planned > 0 else 0 %}
+{% set week_pct = (100 * sn.week.completed // sn.week.planned) if sn.week.planned > 0 else 0 %}
+
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Bugün</div>
+    <div class="text-xl font-semibold text-slate-900 mt-1">{{ sn.today.completed }}<span class="text-sm text-slate-400">/{{ sn.today.planned }}</span></div>
+    <div class="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div class="bg-emerald-500 h-full" style="width: {{ today_pct }}%"></div>
+    </div>
+    <div class="text-[10px] text-slate-400 mt-1">%{{ today_pct }} tamamlandı</div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Son 7 Gün</div>
+    <div class="text-xl font-semibold text-slate-900 mt-1">{{ sn.week.completed }}<span class="text-sm text-slate-400">/{{ sn.week.planned }}</span></div>
+    <div class="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+      <div class="bg-emerald-500 h-full" style="width: {{ week_pct if week_pct <= 100 else 100 }}%"></div>
+    </div>
+    <div class="text-[10px] text-slate-400 mt-1">%{{ week_pct }} tamamlandı</div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Hız (7 gün)</div>
+    <div class="text-xl font-semibold text-slate-900 mt-1">{{ "%.1f" | format(sn.rate_7d) }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">test / gün</div>
+    <div class="text-[10px] text-slate-400">30 gün ort: {{ "%.1f" | format(sn.rate_30d) }}</div>
+  </div>
+
+  {% set cons_pct = (sn.consistency_7d * 100) | round | int %}
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Tutarlılık</div>
+    <div class="text-xl font-semibold mt-1" style="color: {% if cons_pct >= 80 %}#059669{% elif cons_pct >= 50 %}#d97706{% else %}#dc2626{% endif %};">%{{ cons_pct }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">son 7 günün kaçında aktif</div>
+  </div>
+
+  {% set hit_pct = (sn.hit_rate_7d * 100) | round | int %}
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Hedef Tutturma</div>
+    <div class="text-xl font-semibold mt-1" style="color: {% if hit_pct >= 80 %}#059669{% elif hit_pct >= 50 %}#d97706{% else %}#dc2626{% endif %};">%{{ hit_pct }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">planlanan→tamamlanan (7g)</div>
+  </div>
+</div>

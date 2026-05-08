@@ -1,0 +1,72 @@
+{# Ortak partial — Kaynak Durumu panelinin ders-kitap listesi.
+   Bağlam: subjects, assignments_by_subject, subject_summary, focused_subject_id (opsiyonel)
+#}
+{% if focused_subject_id and subjects %}
+<div class="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] flex items-center justify-between gap-2">
+  <span class="text-indigo-700 truncate">Filtre: <b>{{ subjects[0].name }}</b></span>
+  <span class="text-slate-400">diğer dersler gizli</span>
+</div>
+{% endif %}
+
+{% for subject in subjects %}
+  {% set sbs = assignments_by_subject[subject.id] %}
+  {% set summ = subject_summary[subject.id] %}
+  {% set s_pct_done = (100 * summ.completed // summ.total) if summ.total > 0 else 0 %}
+  {% set s_pct_res = (100 * summ.reserved // summ.total) if summ.total > 0 else 0 %}
+<details class="group resource-subject" data-subject-id="{{ subject.id }}" {% if focused_subject_id %}open{% endif %}>
+  <summary class="px-4 py-2.5 cursor-pointer hover:bg-slate-50">
+    <div class="flex items-baseline justify-between gap-2">
+      <span class="font-medium text-sm text-slate-900 truncate">{{ subject.name }}</span>
+      <span class="text-[10px] text-slate-400 whitespace-nowrap">{{ summ.books }} kitap</span>
+    </div>
+    <div class="mt-1.5 h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
+      <div class="bg-emerald-500 h-full" style="width: {{ s_pct_done }}%"></div>
+      <div class="bg-amber-400 h-full" style="width: {{ s_pct_res }}%"></div>
+    </div>
+    <div class="mt-1 text-[11px] text-slate-500 flex gap-2">
+      <span class="text-emerald-600" title="çözüldü">✓{{ summ.completed }}</span>
+      <span class="text-amber-600" title="rezerv">⏳{{ summ.reserved }}</span>
+      <span class="font-medium text-slate-900" title="kalan">⎯{{ summ.remaining }}</span>
+      <span class="text-slate-400 ml-auto">/ {{ summ.total }}</span>
+    </div>
+  </summary>
+  <div class="px-4 pb-3 pt-1 space-y-1.5 bg-slate-50">
+    {% set is_teacher_view = (user.role.value == 'teacher') %}
+    {% set grid_url_base = ('/teacher/students/' ~ student.id ~ '/book-grid') if (is_teacher_view and student is defined) else '/student/book-grid' %}
+    {% for sb in sbs %}
+      {% set total = sb.total_tests %}
+      {% set done = sb.completed_tests %}
+      {% set res = sb.reserved_tests %}
+      {% set rem = total - done - res %}
+      {% set pct_done = (100 * done // total) if total > 0 else 0 %}
+      {% set pct_res = (100 * res // total) if total > 0 else 0 %}
+      {% set is_deneme = sb.book.type.value in ['brans_denemesi', 'genel_deneme'] %}
+      {% set unit_word = 'deneme' if is_deneme else 'test' %}
+    <button type="button"
+            hx-get="{{ grid_url_base }}?book_id={{ sb.book.id }}"
+            hx-target="#book-grid-content"
+            hx-swap="innerHTML"
+            class="block w-full text-left bg-white rounded px-2.5 py-2 border border-slate-200 hover:border-indigo-400 hover:shadow-sm transition cursor-pointer"
+            title="Test detayını sinema-koltuğu görünümüyle aç">
+      <div class="flex items-baseline justify-between gap-2">
+        <div class="text-[13px] text-slate-900 leading-tight truncate">{{ sb.book.name }}</div>
+        <div class="text-[10px] text-slate-400 whitespace-nowrap">{{ total }} {{ unit_word }}</div>
+      </div>
+      <div class="mt-1 h-1.5 bg-slate-100 rounded-full overflow-hidden flex">
+        <div class="bg-emerald-500 h-full" style="width: {{ pct_done }}%"></div>
+        <div class="bg-amber-400 h-full" style="width: {{ pct_res }}%"></div>
+      </div>
+      <div class="mt-0.5 text-[11px] text-slate-500 flex gap-1.5">
+        <span class="text-emerald-600">✓{{ done }}</span>
+        <span class="text-amber-600">⏳{{ res }}</span>
+        <span class="font-medium text-slate-900 ml-auto">kalan {{ rem }}</span>
+      </div>
+    </button>
+    {% endfor %}
+  </div>
+</details>
+{% else %}
+<div class="px-4 py-6 text-center text-xs text-slate-400">
+  {% if focused_subject_id %}Bu derse atanmış kitap yok.{% else %}Atanmış kitap yok.{% endif %}
+</div>
+{% endfor %}

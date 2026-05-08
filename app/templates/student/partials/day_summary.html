@@ -1,0 +1,13 @@
+{# Öğrenci günlük özet pilini render eder. id=day-summary-inner ile OOB swap edilir. #}
+{% set pct = (100 * completed_count // planned_count) if planned_count > 0 else 0 %}
+{% if planned_count > 0 %}
+<div class="flex items-center gap-3">
+  <div class="text-2xl font-semibold text-slate-900">{{ completed_count }}<span class="text-base text-slate-400"> / {{ planned_count }}</span></div>
+  <div class="flex-1 h-2 bg-slate-100 rounded-full overflow-hidden">
+    <div class="bg-emerald-500 h-full transition-all" style="width: {{ pct }}%"></div>
+  </div>
+  <div class="text-sm text-slate-500 whitespace-nowrap">%{{ pct }} tamamlandı</div>
+</div>
+{% else %}
+<div class="text-sm text-slate-400">Bu gün için görev atanmamış.</div>
+{% endif %}

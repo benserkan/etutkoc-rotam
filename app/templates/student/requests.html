@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Taleplerim{% endblock %}
+{% block content %}
+{% from "_macros.html" import status_pill with context %}
+
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold text-slate-900">Taleplerim</h1>
+  <div class="text-sm text-slate-500 mt-1">Öğretmenine gönderdiğin değişiklik / soru / ekleme talepleri</div>
+</div>
+
+{% if requests %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden divide-y divide-slate-100">
+  {% for r in requests %}
+  {% set status_color = {'pending':'#d97706','approved':'#059669','rejected':'#dc2626','withdrawn':'#64748b','resolved':'#0ea5e9'}[r.status.value] %}
+  {% set status_bg = {'pending':'#fffbeb','approved':'#ecfdf5','rejected':'#fef2f2','withdrawn':'#f1f5f9','resolved':'#e0f2fe'}[r.status.value] %}
+  <div class="px-5 py-3">
+    <div class="flex items-center justify-between gap-3 flex-wrap">
+      <div class="flex items-center gap-2">
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium uppercase tracking-wide"
+              style="background: {{ status_bg }}; color: {{ status_color }};">
+          {{ {'change':'Sayı değiştir','replace':'Kaynağı değiştir','remove':'Çıkar','add':'Ekle','question':'Soru'}[r.type.value] }}
+        </span>
+        <span class="text-xs px-2 py-0.5 rounded-full" style="background: {{ status_bg }}; color: {{ status_color }};">
+          {{ {'pending':'⏳ Bekliyor','approved':'✓ Onaylandı','rejected':'✗ Reddedildi','withdrawn':'Geri çekildi','resolved':'💬 Cevaplandı'}[r.status.value] }}
+        </span>
+        <span class="text-xs text-slate-500">{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+      </div>
+      {% if r.status.value == 'pending' %}
+      <form method="post" action="/student/requests/{{ r.id }}/withdraw"
+            onsubmit="return confirm('Talep geri çekilsin mi?');">
+        <button type="submit" class="text-xs text-slate-500 hover:text-red-600">Geri çek</button>
+      </form>
+      {% endif %}
+    </div>
+    <div class="mt-2 text-sm">
+      {% if r.task %}
+      <div class="text-slate-700">İlgili görev: <b>{{ r.task.title }}</b> ({{ r.task.date.strftime('%d.%m.%Y') }})</div>
+      {% endif %}
+      {% if r.type.value == 'add' and r.proposed_book %}
+      <div class="text-slate-700">Önerin: <b>{{ r.proposed_book.name }}</b> · {{ r.proposed_section.label if r.proposed_section else '—' }} · {{ r.proposed_count }} test · {{ r.proposed_date.strftime('%d.%m.%Y') if r.proposed_date else '—' }}</div>
+      {% endif %}
+      {% if r.type.value == 'change' and r.proposed_count is not none %}
+      <div class="text-slate-700">Yeni sayı önerin: <b>{{ r.proposed_count }}</b></div>
+      {% endif %}
+      {% if r.type.value == 'replace' and r.proposed_book %}
+      <div class="text-slate-700">Yeni kaynak önerin: <b>{{ r.proposed_book.name }}</b> · {{ r.proposed_section.label if r.proposed_section else '—' }} · {{ r.proposed_count }} test</div>
+      {% endif %}
+      {% if r.message %}
+      <div class="mt-1 text-slate-600 italic">"{{ r.message }}"</div>
+      {% endif %}
+      {% if r.teacher_response %}
+      <div class="mt-2 p-2 rounded bg-slate-50 border-l-4 border-indigo-300 text-sm">
+        <div class="text-[11px] text-slate-500 mb-0.5">Öğretmenin cevabı:</div>
+        <div class="text-slate-800">{{ r.teacher_response }}</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg p-8 text-center text-slate-500">
+  Henüz hiç talep göndermedin. Günlük görev sayfasında bir göreve "💬 Talep" diyerek değişiklik ya da soru iletebilirsin.
+</div>
+{% endif %}
+{% endblock %}

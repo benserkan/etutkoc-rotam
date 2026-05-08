@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{# Veli paneli base — header'a "Veli Görünümü" rozeti ve sade nav. #}
+
+{% block content %}
+{% if user and user.role.value == 'parent' %}
+<div class="bg-gradient-to-r from-[#117A86] to-[#0E5F69] text-white -mx-4 sm:-mx-6 lg:-mx-8 -mt-6 mb-6 px-4 sm:px-6 lg:px-8 py-3">
+  <div class="max-w-7xl mx-auto flex items-center justify-between flex-wrap gap-2">
+    <div class="flex items-center gap-2 text-sm">
+      <span class="bg-white/20 text-white text-[11px] uppercase tracking-wider font-semibold px-2 py-0.5 rounded">
+        Veli Görünümü
+      </span>
+      <span class="text-white/80 text-xs">{{ user.full_name }}</span>
+    </div>
+    <nav class="flex items-center gap-4 text-sm">
+      <a href="/parent" class="text-white/90 hover:text-white">Panel</a>
+      <a href="/parent/notifications" class="text-white/90 hover:text-white">Bildirimler</a>
+      <a href="/parent/settings" class="text-white/90 hover:text-white">Ayarlar</a>
+    </nav>
+  </div>
+</div>
+{% endif %}
+
+{% block parent_content %}{% endblock %}
+{% endblock %}

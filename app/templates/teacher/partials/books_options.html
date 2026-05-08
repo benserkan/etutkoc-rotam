@@ -1,0 +1,7 @@
+{# HTMX fragment — seçilen derse ait kitap seçenekleri #}
+<option value="">
+  {% if subject_id %}— kitap seç —{% else %}— önce ders seç —{% endif %}
+</option>
+{% for b in books %}
+<option value="{{ b.id }}">{{ b.name }}</option>
+{% endfor %}

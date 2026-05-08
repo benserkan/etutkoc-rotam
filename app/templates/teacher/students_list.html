@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+{% block title %}Öğrenciler{% endblock %}
+
+{% block content %}
+{# Müfredat / sınav badge renk haritası #}
+{% set CM_COLOR = {
+  'lgs':         'bg-sky-50 text-sky-700 border-sky-200',
+  'klasik_lise': 'bg-amber-50 text-amber-700 border-amber-200',
+  'maarif_lise': 'bg-emerald-50 text-emerald-700 border-emerald-200'
+} %}
+{% set CM_LABEL = {
+  'lgs':         'LGS',
+  'klasik_lise': 'Klasik',
+  'maarif_lise': 'Maarif'
+} %}
+{% set TRACK_LABEL = {
+  'sayisal': 'Sayısal',
+  'ea':      'Eşit Ağırlık',
+  'sozel':   'Sözel',
+  'dil':     'Dil'
+} %}
+
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-semibold text-slate-900">Öğrenciler</h1>
+  <span class="text-sm text-slate-500">{{ students|length }} öğrenci</span>
+</div>
+
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800 flex items-start gap-2">
+  <span class="text-lg">⚠️</span><span>{{ flash_err }}</span>
+</div>
+{% endif %}
+
+{% if created_email and temp_password %}
+<div class="mb-6 p-4 rounded border border-emerald-200 bg-emerald-50 text-sm">
+  <div class="font-medium text-emerald-900">✓ Öğrenci eklendi — Geçici şifre oluşturuldu</div>
+  <div class="text-emerald-800 mt-1">
+    <span class="font-mono">{{ created_email }}</span> için geçici şifre:
+    <span class="font-mono bg-white px-2 py-0.5 rounded border border-emerald-300">{{ temp_password }}</span>
+    — bu şifreyi öğrenciyle paylaşın, ilk girişte değiştirmesini söyleyin.
+  </div>
+</div>
+{% endif %}
+
+<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
+  <h2 class="font-medium text-slate-900 mb-3">Yeni Öğrenci Ekle</h2>
+  <form method="post" action="/teacher/students" id="new-student-form" class="space-y-3">
+
+    {# Satır 1: Kimlik #}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">Ad Soyad <span class="text-rose-500">*</span></label>
+        <input name="full_name" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">E-posta <span class="text-rose-500">*</span></label>
+        <input type="email" name="email" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+    </div>
+
+    {# Satır 2: Akademik #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">Sınıf / Mezun <span class="text-rose-500">*</span></label>
+        <select name="grade" id="ns-grade" required
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          {% for value, label in GRADE_CHOICES %}
+          <option value="{{ value }}" {% if value=='8' %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">Akademik Yıl</label>
+        <select name="academic_year_id" id="ns-year"
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <option value="">— Seçiniz —</option>
+          {% for y in years %}
+          <option value="{{ y.id }}"
+                  data-start="{{ y.start_year or '' }}">{{ y.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      {# Alan — sadece 11+ ve mezun için görünür (JS toggle) #}
+      <div id="ns-track-wrap" class="hidden">
+        <label class="block text-sm text-slate-600 mb-1">
+          Alan (YKS) <span class="text-rose-500">*</span>
+        </label>
+        <select name="track" id="ns-track"
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <option value="">— Seçiniz —</option>
+          {% for name, val in TRACK_CHOICES %}
+          <option value="{{ name }}">{{ TRACK_LABEL.get(val, name) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    {# Satır 3: Mezun-spesifik (graduate_mode) — sadece "Mezun" seçilince görünür #}
+    <div id="ns-graduate-wrap" class="hidden">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">
+            Mezun Çalışma Şekli <span class="text-rose-500">*</span>
+          </label>
+          <select name="graduate_mode"
+                  class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+            <option value="">— Seçiniz —</option>
+            <option value="FULL_TIME">Tam-zamanlı (okul yok, 8-10 saat/gün)</option>
+            <option value="DERSHANE">Dershane / Etüt Merkezi (etüt saati var)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-sm text-slate-600 mb-1">
+            9. Sınıfa Giriş Yılı <span class="text-slate-400 text-xs">(opsiyonel — boş bırakılırsa otomatik tahmin)</span>
+          </label>
+          <input type="number" name="entry_year_grade9" min="2000" max="2100" placeholder="Örn: 2022"
+                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+        </div>
+      </div>
+    </div>
+
+    {# Müfredat tahmini önizlemesi — JS ile canlı dolar #}
+    <div id="ns-curriculum-preview"
+         class="hidden text-xs bg-slate-50 border border-slate-200 rounded px-3 py-2">
+      <span class="text-slate-500">Sistem tahmini:</span>
+      <span id="ns-cm-label" class="font-medium text-slate-800">—</span>
+      <span class="text-slate-400 mx-1">·</span>
+      <span id="ns-cm-explain" class="text-slate-600">—</span>
+    </div>
+
+    <div class="flex justify-end pt-2 border-t border-slate-100">
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+        Öğrenci Ekle
+      </button>
+    </div>
+  </form>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="min-w-full text-sm">
+    <thead class="bg-slate-50 text-xs text-slate-600 uppercase tracking-wider">
+      <tr>
+        <th class="text-left px-4 py-2 font-medium">Ad Soyad</th>
+        <th class="text-left px-4 py-2 font-medium">E-posta</th>
+        <th class="text-left px-4 py-2 font-medium">Profil</th>
+        <th class="text-left px-4 py-2 font-medium">Akademik Yıl</th>
+        <th class="text-right px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for s in students %}
+      <tr>
+        <td class="px-4 py-3 font-medium align-top">
+          <a href="/teacher/students/{{ s.id }}" class="text-indigo-600 hover:text-indigo-800 hover:underline">
+            {{ s.full_name }}
+          </a>
+        </td>
+        <td class="px-4 py-3 text-slate-600 font-mono text-xs align-top">{{ s.email }}</td>
+        <td class="px-4 py-3 align-top">
+          <div class="flex flex-wrap items-center gap-1.5">
+            {# Sınıf veya Mezun rozeti #}
+            <span class="text-sm font-medium text-slate-800">{{ s.display_grade_label }}</span>
+
+            {# Alan (track) — sadece varsa #}
+            {% if s.track %}
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+              {{ TRACK_LABEL.get(s.track.value, s.track.value) }}
+            </span>
+            {% endif %}
+
+            {# Müfredat modeli — kohort-türetilmiş #}
+            {% set cm = s.effective_curriculum_model %}
+            {% if cm %}
+            <span class="text-[10px] px-1.5 py-0.5 rounded border {{ CM_COLOR.get(cm.value, 'bg-slate-50 text-slate-600 border-slate-200') }}">
+              {{ CM_LABEL.get(cm.value, cm.value) }}
+            </span>
+            {% endif %}
+
+            {# Hedef sınav (LGS / YKS) #}
+            {% if s.effective_exam_target %}
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+              🎯 {{ s.effective_exam_target }}
+            </span>
+            {% endif %}
+
+            {# Mezun çalışma şekli #}
+            {% if s.is_graduate and s.graduate_mode %}
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+              {% if s.graduate_mode.value == 'full_time' %}Tam-zamanlı{% else %}Dershane{% endif %}
+            </span>
+            {% endif %}
+
+            {# Track gerekiyor ama yok uyarı #}
+            {% if s.requires_track and not s.track %}
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300" title="Bu öğrenci için alan (Sayısal/EA/Sözel/Dil) seçilmemiş">
+              ⚠ Alan eksik
+            </span>
+            {% endif %}
+          </div>
+        </td>
+        <td class="px-4 py-3 text-slate-600 align-top">{{ s.academic_year.name if s.academic_year else '—' }}</td>
+        <td class="px-4 py-3 text-right space-x-3 align-top whitespace-nowrap">
+          <form method="post" action="/teacher/students/{{ s.id }}/reset-password" class="inline">
+            <button type="submit" class="text-indigo-600 hover:text-indigo-800 text-sm">Şifre Sıfırla</button>
+          </form>
+          <form method="post" action="/teacher/students/{{ s.id }}/delete" class="inline"
+                onsubmit="return confirm('{{ s.full_name }} silinsin mi?');">
+            <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Sil</button>
+          </form>
+        </td>
+      </tr>
+      {% else %}
+      <tr><td colspan="5" class="px-4 py-6 text-center text-slate-500">Henüz öğrenci eklenmedi.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<script>
+(function () {
+  // Form etkileşimi: sınıf seçimine göre koşullu alanları göster/gizle,
+  // müfredat modelini canlı tahmin et.
+  const gradeSel = document.getElementById('ns-grade');
+  const trackWrap = document.getElementById('ns-track-wrap');
+  const trackSel = document.getElementById('ns-track');
+  const gradWrap = document.getElementById('ns-graduate-wrap');
+  const yearSel = document.getElementById('ns-year');
+  const cmPreview = document.getElementById('ns-curriculum-preview');
+  const cmLabel = document.getElementById('ns-cm-label');
+  const cmExplain = document.getElementById('ns-cm-explain');
+
+  // Maarif Modeli'nin 9'da ilk uygulandığı yıl (Python sabitiyle aynı).
+  const MAARIF_FIRST_GRADE9_YEAR = 2024;
+
+  function deriveCurriculum(grade, isGrad, ayStart) {
+    // Python'daki derive_curriculum_model fonksiyonunun JS karşılığı.
+    if (grade === null && !isGrad) return null;
+    if (!isGrad && grade !== null && grade <= 8) return ['lgs', 'LGS Müfredatı (5-8)'];
+    if (!isGrad && (grade === 9 || grade === 10)) return ['maarif_lise', 'Maarif Modeli — 9-10 her zaman Maarif kohortu'];
+    let entryYear = null;
+    if (ayStart !== null) {
+      if (isGrad) entryYear = ayStart - 4;
+      else if (grade !== null) entryYear = ayStart - (grade - 9);
+    }
+    if (entryYear === null) return null;
+    if (entryYear >= MAARIF_FIRST_GRADE9_YEAR) {
+      return ['maarif_lise', `9'a ${entryYear}'te girdi → Maarif kohortu`];
+    }
+    return ['klasik_lise', `9'a ${entryYear}'te girdi → Klasik (son nesil)`];
+  }
+
+  function update() {
+    const gradeValue = gradeSel.value;
+    const isGrad = gradeValue === 'graduate';
+    const grade = isGrad ? null : (parseInt(gradeValue, 10) || null);
+    const requiresTrack = isGrad || (grade !== null && grade >= 11);
+
+    trackWrap.classList.toggle('hidden', !requiresTrack);
+    if (requiresTrack) trackSel.setAttribute('required', '');
+    else trackSel.removeAttribute('required');
+
+    gradWrap.classList.toggle('hidden', !isGrad);
+    gradWrap.querySelectorAll('select[name=graduate_mode]').forEach(el => {
+      if (isGrad) el.setAttribute('required', ''); else el.removeAttribute('required');
+    });
+
+    // Müfredat tahmini
+    const yearOpt = yearSel.options[yearSel.selectedIndex];
+    const ayStartRaw = yearOpt && yearOpt.dataset ? yearOpt.dataset.start : '';
+    const ayStart = ayStartRaw ? parseInt(ayStartRaw, 10) : null;
+    const result = deriveCurriculum(grade, isGrad, ayStart);
+
+    if (result) {
+      const [cmKey, explain] = result;
+      const labels = { lgs: 'LGS Müfredatı', klasik_lise: 'Klasik Lise', maarif_lise: 'Maarif Modeli' };
+      cmLabel.textContent = labels[cmKey] || cmKey;
+      cmExplain.textContent = explain;
+      cmPreview.classList.remove('hidden');
+    } else {
+      // Akademik yıl seçilmemiş ve 11+ ise: bilgi eksik
+      if (requiresTrack && ayStart === null) {
+        cmLabel.textContent = '—';
+        cmExplain.textContent = 'Akademik yıl seçilince Maarif/Klasik tahmini yapılır';
+        cmPreview.classList.remove('hidden');
+      } else {
+        cmPreview.classList.add('hidden');
+      }
+    }
+  }
+
+  gradeSel.addEventListener('change', update);
+  yearSel.addEventListener('change', update);
+  update(); // ilk durum
+})();
+</script>
+{% endblock %}

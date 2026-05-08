@@ -1,0 +1,67 @@
+{% extends "parent/base_parent.html" %}
+{% block title %}Bildirim Geçmişi — Veli Paneli{% endblock %}
+
+{% set kind_labels = {
+  'daily_summary':'Günlük özet',
+  'empty_day':'Boş gün uyarısı',
+  'weekly_report':'Haftalık rapor',
+  'new_program':'Yeni program',
+  'drop_alert':'Düşüş alarmı',
+  'teacher_note':'Öğretmen notu',
+  'invitation':'Davet',
+  'otp':'Doğrulama kodu',
+} %}
+{% set channel_labels = {'email':'E-posta', 'whatsapp':'WhatsApp', 'sms':'SMS'} %}
+{% set status_meta = {
+  'sent':       ('emerald', 'Gönderildi'),
+  'queued':     ('amber',   'Sırada'),
+  'failed':     ('red',     'Başarısız'),
+  'suppressed': ('slate',   'Engellendi'),
+} %}
+
+{% block parent_content %}
+<div class="mb-5">
+  <h1 class="text-2xl font-semibold text-slate-900">Bildirim Geçmişi</h1>
+  <p class="text-sm text-slate-500 mt-1">Size gönderilen son 100 bildirim</p>
+</div>
+
+{% if items %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <ul class="divide-y divide-slate-100">
+    {% for it in items %}
+    {% set sm = status_meta.get(it.status, ('slate', it.status or '—')) %}
+    <li class="px-5 py-3 flex items-start justify-between gap-3">
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-sm font-medium text-slate-900">{{ kind_labels.get(it.kind, it.kind) }}</span>
+          <span class="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
+            {{ channel_labels.get(it.channel, it.channel) }}
+          </span>
+          <span class="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded
+                       {% if sm[0] == 'emerald' %}bg-emerald-50 text-emerald-700
+                       {% elif sm[0] == 'amber' %}bg-amber-50 text-amber-700
+                       {% elif sm[0] == 'red' %}bg-red-50 text-red-700
+                       {% else %}bg-slate-100 text-slate-600{% endif %}">
+            {{ sm[1] }}
+          </span>
+        </div>
+        {% if it.subject %}
+        <div class="text-sm text-slate-700 mt-1 truncate">{{ it.subject }}</div>
+        {% endif %}
+        <div class="text-[11px] text-slate-500 mt-1">
+          {% if it.student_name %}{{ it.student_name }} · {% endif %}
+          {% set when = it.sent_at or it.queued_at %}
+          {% if when %}{{ when[:10].replace('-','.') }} {{ when[11:16] }}{% endif %}
+        </div>
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% else %}
+<div class="bg-slate-50 border border-slate-200 rounded-lg p-6 text-center text-sm text-slate-500">
+  Henüz size gönderilmiş bir bildirim yok. Bildirim altyapısı hazırlanıyor; öğrencinizin ilk
+  haftalık özeti hazır olduğunda burada görebileceksiniz.
+</div>
+{% endif %}
+{% endblock %}

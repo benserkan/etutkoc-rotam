@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+{% block title %}Görev Düzenle{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/teacher/students/{{ student.id }}/week?start={{ task.date }}" class="text-sm text-slate-500 hover:text-slate-700">
+    ← {{ student.full_name }} haftalık programı
+  </a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Görev Düzenle</h1>
+</div>
+
+{% if flash_err %}
+<div class="bg-rose-50 border border-rose-300 rounded-lg p-3 mb-4 flex items-start gap-2">
+  <div class="text-lg flex-shrink-0">⚠️</div>
+  <div class="flex-1 text-sm text-rose-800">{{ flash_err }}</div>
+  <a href="/teacher/tasks/{{ task.id }}/edit" class="text-rose-500 hover:text-rose-700 text-xl px-1 leading-none">×</a>
+</div>
+{% endif %}
+
+{% set single_item = task.book_items|length == 1 %}
+
+{% if single_item %}
+{# === TEK KALEMLİ GÖREV — birleşik form === #}
+<form method="post" action="/teacher/tasks/{{ task.id }}/edit"
+      class="bg-white border border-slate-200 rounded-lg p-5 space-y-5 max-w-3xl">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Tarih</label>
+      <input type="date" name="task_date" value="{{ task.date }}" required
+             class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm" />
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Tip</label>
+      <select name="type" class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm">
+        {% for tt in task_types %}
+        <option value="{{ tt.value }}" {% if tt == task.type %}selected{% endif %}>{{ TASK_TYPE_LABELS[tt] }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="flex items-end">
+      <div class="text-xs text-slate-500">
+        Tamamlanan: <b class="text-emerald-600">{{ task.book_items[0].completed_count }}</b> / {{ task.book_items[0].planned_count }}
+        {% if task.book_items[0].completed_count > 0 %}
+        <div class="text-[10px] text-amber-600">⚠️ Çözülmüş test var — kaynak değişikliği bloke</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+  <div class="border-t border-slate-100 pt-4">
+    <h2 class="font-semibold text-slate-900 mb-3">Görev İçeriği</h2>
+
+    <div class="grid grid-cols-1 md:grid-cols-12 gap-3">
+      <div class="md:col-span-3">
+        <label class="block text-xs font-medium text-slate-600 mb-1">Ders</label>
+        <select name="subject_id"
+                hx-get="/teacher/students/{{ student.id }}/books-by-subject"
+                hx-target="next select[name='book_id']"
+                hx-trigger="change"
+                hx-include="this"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm">
+          <option value="">— ders seç —</option>
+          {% for s in subjects %}
+          <option value="{{ s.id }}" {% if s.id == current_subject_id %}selected{% endif %}>{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-4">
+        <label class="block text-xs font-medium text-slate-600 mb-1">Kitap</label>
+        <select name="book_id" required
+                hx-get="/teacher/students/{{ student.id }}/book-sections"
+                hx-target="next select[name='section_id']"
+                hx-trigger="change"
+                hx-include="this"
+                class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm">
+          <option value="">— önce ders —</option>
+          {% for sb in assignments %}
+            {% if sb.book.subject_id == current_subject_id %}
+            <option value="{{ sb.book.id }}" {% if sb.book.id == current_book_id %}selected{% endif %}>{{ sb.book.name }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-3">
+        <label class="block text-xs font-medium text-slate-600 mb-1">Ünite / Deneme</label>
+        <select name="section_id" required class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm">
+          <option value="">— önce kitap —</option>
+          {% for sb in assignments %}
+            {% if sb.book.id == current_book_id %}
+              {% for sec in sb.book.sections %}
+              <option value="{{ sec.id }}" {% if sec.id == current_section_id %}selected{% endif %}>{{ sec.label }}</option>
+              {% endfor %}
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-slate-600 mb-1">Test Sayısı</label>
+        <input type="number" name="planned_count" min="1" required
+               value="{{ task.book_items[0].planned_count }}"
+               class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-right" />
+      </div>
+    </div>
+
+    {% if current_section_remaining is not none %}
+    <div class="text-[11px] text-slate-500 mt-2">
+      Mevcut bölümde kalan kapasite: <b>{{ current_section_remaining }}</b>
+      (kaynak değişmezse en fazla {{ task.book_items[0].planned_count + current_section_remaining }} test)
+    </div>
+    {% endif %}
+    <div class="text-[11px] text-slate-400 italic mt-1">
+      Kitap/ünite değiştirirseniz eski rezervler iade edilir, yeni kaynaktan rezerv açılır. Başlık otomatik güncellenir.
+    </div>
+  </div>
+
+  <div class="flex justify-between items-center pt-4 border-t border-slate-100">
+    <button type="submit"
+            formaction="/teacher/tasks/{{ task.id }}/delete"
+            formnovalidate
+            onclick="return confirm('Görev silinsin mi? Rezerv iade edilecek.');"
+            class="text-sm text-rose-600 hover:text-rose-800">
+      Bu görevi sil
+    </button>
+    <button type="submit"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-5 rounded">
+      Kaydet
+    </button>
+  </div>
+</form>
+
+{% else %}
+{# === ÇOK KALEMLİ GÖREV — eski yapı (kalem ekle/kaldır) === #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <div class="lg:col-span-1 bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="font-medium text-slate-900 mb-4">Görev Bilgisi</h2>
+    <form method="post" action="/teacher/tasks/{{ task.id }}/edit" class="space-y-3">
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">Tarih</label>
+        <input type="date" name="task_date" value="{{ task.date }}" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">Tip</label>
+        <select name="type" class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+          {% for tt in task_types %}
+          <option value="{{ tt.value }}" {% if tt == task.type %}selected{% endif %}>{{ TASK_TYPE_LABELS[tt] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">Başlık (çok kalemli görevde elle)</label>
+        <input name="title" value="{{ task.title }}" class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div class="flex justify-between pt-2">
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+          Kaydet
+        </button>
+      </div>
+    </form>
+
+    <form method="post" action="/teacher/tasks/{{ task.id }}/delete" class="mt-6 pt-4 border-t border-slate-100"
+          onsubmit="return confirm('Görev silinsin mi? Rezerv iade edilecek.');">
+      <button type="submit" class="text-sm text-rose-600 hover:text-rose-800">Bu görevi sil</button>
+    </form>
+  </div>
+
+  <div class="lg:col-span-2 bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="font-medium text-slate-900 mb-4">Kitap Kalemleri</h2>
+
+    <div class="space-y-2 mb-5">
+      {% for it in task.book_items %}
+      <div class="flex items-center justify-between p-3 rounded border border-slate-200">
+        <div class="text-sm">
+          <div class="font-medium text-slate-900">{{ it.book.name }}</div>
+          <div class="text-xs text-slate-500">
+            {{ it.section.label }}
+            {% if it.section.topic %}· {{ it.section.topic.name }}{% endif %}
+            · planlanan: <b>{{ it.planned_count }}</b>
+            {% if it.completed_count %}· tamamlanan: <b class="text-emerald-600">{{ it.completed_count }}</b>{% endif %}
+          </div>
+        </div>
+        <form method="post" action="/teacher/tasks/{{ task.id }}/items/{{ it.id }}/delete"
+              onsubmit="return confirm('Kalem silinsin mi? Rezerv iade edilecek.');">
+          <button type="submit" class="text-rose-600 hover:text-rose-800 text-sm">Kaldır</button>
+        </form>
+      </div>
+      {% else %}
+      <div class="text-center text-slate-400 text-sm py-6">Henüz kalem yok.</div>
+      {% endfor %}
+    </div>
+
+    <form method="post" action="/teacher/tasks/{{ task.id }}/items"
+          class="pt-4 border-t border-slate-100 grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+      <div class="md:col-span-3">
+        <label class="block text-xs text-slate-600 mb-1">Ders</label>
+        <select name="subject_id"
+                hx-get="/teacher/students/{{ student.id }}/books-by-subject"
+                hx-target="next select[name='book_id']"
+                hx-trigger="change"
+                hx-include="this"
+                class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          <option value="">— ders seç —</option>
+          {% for s in subjects %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-xs text-slate-600 mb-1">Kitap</label>
+        <select name="book_id" required
+                hx-get="/teacher/students/{{ student.id }}/book-sections"
+                hx-target="next select[name='section_id']"
+                hx-trigger="change"
+                hx-include="this"
+                class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          <option value="">— önce ders —</option>
+        </select>
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-xs text-slate-600 mb-1">Ünite / Deneme</label>
+        <select name="section_id" required class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          <option value="">— önce kitap —</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-xs text-slate-600 mb-1">Adet</label>
+        <input type="number" name="planned_count" min="1" required
+               class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-right" />
+      </div>
+      <div class="md:col-span-1">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
+          Ekle
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

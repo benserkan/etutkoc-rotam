@@ -1,0 +1,643 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — Öğrenci{% endblock %}
+
+{% block content %}
+<div class="flex items-start justify-between mb-6 gap-4 flex-wrap">
+  <div>
+    <a href="/teacher/students" class="text-sm text-slate-500 hover:text-slate-700">← Öğrenciler</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1 flex items-center gap-3">
+      {{ student.full_name }}
+      {% set lvl = snapshot.worst_warning_level %}
+      <span class="inline-block w-3 h-3 rounded-full"
+            title="{% if lvl == 'red' %}Kritik uyarı var{% elif lvl == 'amber' %}Dikkat{% else %}Yolunda{% endif %}"
+            style="background: {% if lvl == 'red' %}#dc2626{% elif lvl == 'amber' %}#d97706{% else %}#059669{% endif %};"></span>
+    </h1>
+    <div class="text-sm text-slate-500 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span class="font-mono text-xs">{{ student.email }}</span>
+      <span class="text-slate-300">·</span>
+      <span>{{ student.display_grade_label }}</span>
+
+      {% if student.track %}
+      {% set track_labels = {'sayisal': 'Sayısal', 'ea': 'Eşit Ağırlık', 'sozel': 'Sözel', 'dil': 'Dil'} %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-700 border border-indigo-200">
+        {{ track_labels.get(student.track.value, student.track.value) }}
+      </span>
+      {% endif %}
+
+      {% set cm = student.effective_curriculum_model %}
+      {% if cm %}
+      {% set cm_color = {'lgs':'bg-sky-50 text-sky-700 border-sky-200','klasik_lise':'bg-amber-50 text-amber-700 border-amber-200','maarif_lise':'bg-emerald-50 text-emerald-700 border-emerald-200'} %}
+      {% set cm_label = {'lgs':'LGS Müfredatı','klasik_lise':'Klasik Lise','maarif_lise':'Maarif Modeli'} %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded border {{ cm_color.get(cm.value, 'bg-slate-50 text-slate-600 border-slate-200') }}">
+        {{ cm_label.get(cm.value, cm.value) }}
+      </span>
+      {% endif %}
+
+      {% if student.effective_exam_target %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">
+        🎯 {{ student.effective_exam_target }}
+      </span>
+      {% endif %}
+
+      {% if student.is_graduate and student.graduate_mode %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">
+        {% if student.graduate_mode.value == 'full_time' %}Tam-zamanlı{% else %}Dershane{% endif %}
+      </span>
+      {% endif %}
+
+      {% if student.requires_track and not student.track %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300" title="Bu öğrenci için alan seçilmemiş">
+        ⚠ Alan eksik
+      </span>
+      {% endif %}
+
+      {% if student.academic_year %}
+      <span class="text-slate-300">·</span>
+      <span>{{ student.academic_year.name }}{% if student.effective_exam_date %} ({{ student.effective_exam_label }}: {{ student.effective_exam_date.strftime('%d.%m.%Y') }}){% endif %}</span>
+
+      {# Bugün aktif olan dönem (yaz kampı, tatil, vb.) #}
+      {% if student.academic_year.phases %}
+        {% set _active_phase = student.academic_year.active_phase_on(today_date()) %}
+        {% if _active_phase %}
+        {% set _phase_color = {
+          'regular':      'bg-slate-50 text-slate-700 border-slate-200',
+          'winter_break': 'bg-sky-50 text-sky-700 border-sky-200',
+          'summer_camp':  'bg-amber-50 text-amber-700 border-amber-200',
+          'exam_prep':    'bg-rose-50 text-rose-700 border-rose-200'
+        } %}
+        <span class="text-[10px] px-1.5 py-0.5 rounded border {{ _phase_color.get(_active_phase.kind.value, '') }}"
+              title="{{ _active_phase.name }}: {{ _active_phase.start_date.strftime('%d.%m') }} - {{ _active_phase.end_date.strftime('%d.%m') }}">
+          {{ _active_phase.kind_badge }} · {{ _active_phase.name }}
+        </span>
+        {% endif %}
+      {% endif %}
+      {% endif %}
+    </div>
+  </div>
+  <div class="flex gap-2">
+    <button type="button"
+            hx-get="{{ request.url.path }}"
+            hx-target="body"
+            hx-swap="outerHTML"
+            class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">
+      ↻ Yenile
+    </button>
+    <a href="/teacher/students/{{ student.id }}/promote"
+       class="px-3 py-2 rounded border border-violet-300 text-sm text-violet-700 hover:bg-violet-50"
+       title="{% if student.is_graduate %}Yeni öğretim yılı için akademik yıl, alan ve çalışma şeklini güncelleyin{% else %}Yeni akademik yıl başında öğrenciyi bir sonraki sınıfa taşır{% endif %}">
+      ↗ {% if student.is_graduate %}Yeni Yıl{% else %}Sınıf Yükselt{% endif %}
+    </a>
+    <a href="/teacher/students/{{ student.id }}/week"
+       class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+      Haftalık Program →
+    </a>
+  </div>
+</div>
+
+{# Flash mesajları (sınıf yükseltme, veli ekleme/silme vb.) #}
+{% set flash_ok = request.query_params.get('ok') or request.query_params.get('flash') %}
+{% set flash_err = request.query_params.get('err') %}
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800 flex items-start gap-2">
+  <span>✓</span><span>{{ flash_ok }}</span>
+</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800 flex items-start gap-2">
+  <span>⚠️</span><span>{{ flash_err }}</span>
+</div>
+{% endif %}
+
+{# Sekme navigasyonu #}
+<div class="border-b border-slate-200 mb-5">
+  <nav class="flex gap-1" role="tablist">
+    <button type="button" data-tab="overview" class="detail-tab px-4 py-2.5 text-sm font-medium border-b-2 border-indigo-600 text-indigo-700">
+      Genel
+    </button>
+    <button type="button" data-tab="analytics" class="detail-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900">
+      Analitik
+    </button>
+    <button type="button" data-tab="books" class="detail-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900">
+      Kitaplar
+      {% if by_subject %}<span class="ml-1 text-[10px] text-slate-400">{{ by_subject.values()|map('length')|sum }}</span>{% endif %}
+    </button>
+    <button type="button" data-tab="parents" class="detail-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900">
+      Veliler
+      {% if parent_links is defined and parent_links %}<span class="ml-1 text-[10px] text-slate-400">{{ parent_links|length }}</span>{% endif %}
+    </button>
+  </nav>
+</div>
+
+{# === GENEL === #}
+<section class="detail-panel" data-tab="overview">
+  {# Faz 7+: Track uyumsuzluğu — alan değişti ama eski kitaplar duruyor #}
+  {% if track_mismatches %}
+  <div class="mb-4 p-4 bg-amber-50 border border-amber-300 rounded-lg">
+    <div class="flex items-start gap-2">
+      <span class="text-amber-700 text-lg leading-none">⚠</span>
+      <div class="flex-1 text-sm">
+        <div class="font-semibold text-amber-900">
+          {{ track_mismatches|length }} kitap mevcut alan/sınıfla eşleşmiyor
+        </div>
+        <p class="text-amber-800 mt-1 text-xs leading-relaxed">
+          Öğrencinin profilindeki sınav bölümleri ile bu kitapların ders ataması farklı —
+          öneri motoru bunları zaten süzüyor, ama listenin sade kalması için kütüphaneden
+          çıkarmak isteyebilirsiniz. (Geçmiş veriler korunur.)
+        </p>
+        <details class="mt-2">
+          <summary class="cursor-pointer text-xs text-amber-700 hover:text-amber-900">
+            {{ track_mismatches|length }} kitabı görüntüle
+          </summary>
+          <ul class="mt-2 text-xs text-amber-900 space-y-0.5 list-disc list-inside">
+            {% for m in track_mismatches %}
+            <li>
+              <b>{{ m.book_name }}</b>
+              <span class="text-amber-700">· {{ m.subject_name }} ({{ m.exam_section_label }})</span>
+            </li>
+            {% endfor %}
+          </ul>
+        </details>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Faz 7+: Mezun diagnostic — son 28 günde dokunulmamış dersler #}
+  {% if diagnostic_subjects %}
+  <div class="mb-4 p-4 bg-violet-50 border border-violet-300 rounded-lg">
+    <div class="flex items-start gap-2">
+      <span class="text-violet-700 text-lg leading-none">🎯</span>
+      <div class="flex-1 text-sm">
+        <div class="font-semibold text-violet-900">
+          Diagnostic ipucu — {{ diagnostic_subjects|length }} ders henüz dokunulmadı
+        </div>
+        <p class="text-violet-800 mt-1 text-xs leading-relaxed">
+          Mezun YKS hazırlığında geniş bir kütüphane var. Son 28 günde program eklenmemiş bu
+          dersler ilk hafta seviye tespiti için iyi bir başlangıç olabilir.
+        </p>
+        <ul class="mt-2 text-xs text-violet-900 flex flex-wrap gap-1.5">
+          {% for s in diagnostic_subjects %}
+          <li class="px-2 py-0.5 bg-white border border-violet-200 rounded">
+            {{ s.subject_name }}
+            <span class="text-violet-500">· {{ s.exam_section_label }} · {{ s.book_count }} kitap</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="mb-5">
+    {% include "teacher/partials/metrics_strip.html" %}
+  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="lg:col-span-2">
+      {% set exam_label = student.effective_exam_label %}
+      {% set exam_target = (student.effective_exam_target or 'none').lower() %}
+      {% include "teacher/partials/projection_panel.html" %}
+    </div>
+    <div>
+      {% include "teacher/partials/warnings_list.html" %}
+    </div>
+  </div>
+</section>
+
+{# === ANALİTİK === #}
+<section class="detail-panel hidden" data-tab="analytics">
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    {% set chart_id = 'trend-chart-' ~ student.id %}
+    {% include "teacher/partials/daily_trend_chart.html" %}
+    {% include "teacher/partials/subject_chart.html" %}
+  </div>
+</section>
+
+{# === KİTAPLAR === #}
+<section class="detail-panel hidden" data-tab="books">
+<div class="flex items-center justify-between mt-6 mb-3">
+  <h2 class="text-lg font-semibold text-slate-900">Kitap Envanteri</h2>
+  <button type="button" id="open-add-books-modal"
+          {% if not library_by_subject %}disabled{% endif %}
+          class="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium py-1.5 px-3 rounded">
+    + Kitap Ekle
+  </button>
+</div>
+{% if by_subject %}
+  {% for subject, sbs in by_subject.items() %}
+  <h3 class="text-base font-medium text-slate-800 mt-4 mb-2">{{ subject.name }}</h3>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+    {% for sb in sbs %}
+      {% set pmap = progress_map(sb) %}
+      {% set total = sb.total_tests %}
+      {% set done = sb.completed_tests %}
+      {% set res = sb.reserved_tests %}
+      {% set rem = total - done - res %}
+      {% set pct_done = (100 * done // total) if total > 0 else 0 %}
+      {% set pct_res = (100 * res // total) if total > 0 else 0 %}
+      {% set is_deneme = sb.book.type.value in ['brans_denemesi', 'genel_deneme'] %}
+      {% set unit_word = 'deneme' if is_deneme else 'test' %}
+    <div class="bg-white border border-slate-200 rounded-lg p-4">
+      <div class="flex items-start justify-between">
+        <div>
+          <div class="font-medium text-slate-900">{{ sb.book.name }}</div>
+          <div class="text-xs text-slate-500">
+            {{ sb.book.publisher or '—' }} · {{ BOOK_TYPE_LABELS[sb.book.type] }}
+          </div>
+        </div>
+        <div class="text-right text-sm">
+          <div class="text-slate-900 font-semibold">{{ rem }} / {{ total }}</div>
+          <div class="text-xs text-slate-500">kalan / toplam</div>
+        </div>
+      </div>
+      <div class="mt-3 h-2 w-full bg-slate-100 rounded-full overflow-hidden flex">
+        <div class="bg-emerald-500 h-full" style="width: {{ pct_done }}%"></div>
+        <div class="bg-amber-400 h-full" style="width: {{ pct_res }}%"></div>
+      </div>
+      <div class="flex gap-3 mt-2 text-xs text-slate-500">
+        <span><span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1"></span>Çözüldü: {{ done }}</span>
+        <span><span class="inline-block w-2 h-2 rounded-full bg-amber-400 mr-1"></span>Rezerv: {{ res }}</span>
+      </div>
+      <details class="mt-3">
+        <summary class="text-xs text-slate-500 cursor-pointer hover:text-slate-700">
+          {% if is_deneme %}Deneme kırılımı{% else %}Ünite kırılımı{% endif %}
+        </summary>
+        <div class="mt-2 space-y-1.5">
+          {% for section in sb.book.sections %}
+            {% set sp = pmap.get(section.id) %}
+            {% set s_res = sp.reserved_count if sp else 0 %}
+            {% set s_done = sp.completed_count if sp else 0 %}
+            {% set s_rem = section.test_count - s_res - s_done %}
+          <div class="flex items-center justify-between text-xs border-t border-slate-100 pt-1.5">
+            <div class="flex-1">
+              <div class="text-slate-700">{{ section.label }}</div>
+              {% if not is_deneme and section.topic %}
+              <div class="text-slate-400">{{ section.topic.name }}</div>
+              {% endif %}
+            </div>
+            <div class="text-slate-600 whitespace-nowrap ml-2">
+              {{ s_rem }}/{{ section.test_count }} kalan
+              {% if s_res %}<span class="text-amber-600 ml-1">({{ s_res }} rezerv)</span>{% endif %}
+              {% if s_done %}<span class="text-emerald-600 ml-1">({{ s_done }} çöz.)</span>{% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </details>
+    </div>
+    {% endfor %}
+  </div>
+  {% endfor %}
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg p-8 text-center text-slate-500">
+  Bu öğrenciye henüz kitap atanmamış. Yukarıdaki <span class="font-medium">+ Kitap Ekle</span> butonuyla kütüphaneden seçim yapabilirsiniz.
+</div>
+{% endif %}
+</section>
+
+{# === VELİLER === #}
+<section class="detail-panel hidden" data-tab="parents">
+  {% include "teacher/partials/student_parents_tab.html" %}
+</section>
+
+{# === KİTAP EKLE MODAL === #}
+<dialog id="add-books-dialog"
+        class="comm-modal rounded-xl shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm w-[95vw] max-w-3xl p-0 border border-slate-200">
+  <div class="flex flex-col max-h-[85vh]">
+    <header class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+      <div>
+        <h3 class="text-lg font-semibold text-slate-900">Öğrenciye Kitap Ata</h3>
+        <p class="text-xs text-slate-500 mt-0.5">{{ student.full_name }}</p>
+      </div>
+      <button type="button" id="close-add-books-modal"
+              class="text-slate-400 hover:text-slate-700 text-xl leading-none">×</button>
+    </header>
+
+    {# Sekme navigasyonu #}
+    <div class="px-5 border-b border-slate-200 flex gap-1">
+      <button type="button" data-add-tab="manual"
+              class="add-tab px-4 py-2.5 text-sm font-medium border-b-2 border-indigo-600 text-indigo-700">
+        Tek tek seç
+      </button>
+      <button type="button" data-add-tab="set"
+              class="add-tab px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-slate-600 hover:text-slate-900">
+        Set'ten uygula
+        <span class="ml-1 text-[10px] text-slate-400">{{ book_sets|length }}</span>
+      </button>
+    </div>
+
+    {# === MANUEL SEÇİM === #}
+    <form method="post" action="/teacher/students/{{ student.id }}/books/assign"
+          class="add-panel flex flex-col flex-1 min-h-0" data-add-tab="manual">
+      <div class="px-5 py-3 border-b border-slate-100 flex flex-wrap gap-2 items-center">
+        <input type="text" id="add-books-search" placeholder="Kitap adı veya yayınevi ara…"
+               class="flex-1 min-w-[200px] px-3 py-2 border border-slate-300 rounded text-sm" />
+        <button type="button" id="add-books-select-all"
+                class="text-xs text-indigo-600 hover:text-indigo-800">Tümünü seç</button>
+        <span class="text-slate-300">|</span>
+        <button type="button" id="add-books-clear-all"
+                class="text-xs text-slate-500 hover:text-slate-700">Temizle</button>
+        <span id="add-books-count" class="text-xs text-slate-500 ml-2">0 seçili</span>
+      </div>
+
+      <div class="px-5 pt-2 pb-1 text-xs text-slate-500 flex flex-wrap gap-3">
+        <span><span class="inline-block w-2.5 h-2.5 rounded-sm border border-slate-300 mr-1 align-middle"></span>Atanabilir: {{ available_count }}</span>
+        <span><span class="inline-block w-2.5 h-2.5 rounded-sm bg-slate-200 mr-1 align-middle"></span>Zaten atanmış: {{ assigned_book_ids|length }}</span>
+        <label class="ml-auto inline-flex items-center gap-1 cursor-pointer">
+          <input type="checkbox" id="hide-assigned" />
+          <span>Atanmışları gizle</span>
+        </label>
+      </div>
+      <div class="flex-1 overflow-y-auto px-5 py-3" id="add-books-list">
+        {% if library_by_subject %}
+          {% for subject, books in library_by_subject.items() %}
+          <div class="add-books-group mb-4" data-subject="{{ subject.name|lower }}">
+            <div class="flex items-center gap-2 mb-2">
+              <h4 class="text-sm font-medium text-slate-800">{{ subject.name }}</h4>
+              <button type="button" class="add-books-group-toggle text-xs text-indigo-600 hover:text-indigo-800"
+                      data-subject-id="{{ subject.id }}">tümünü seç</button>
+              <span class="text-xs text-slate-400">({{ books|length }} kitap)</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+              {% for b in books %}
+                {% set already = b.id in assigned_book_ids %}
+              <label class="add-books-item flex items-start gap-2 p-2 rounded border text-sm
+                            {% if already %}border-slate-100 bg-slate-50 cursor-not-allowed{% else %}border-slate-200 hover:border-indigo-300 cursor-pointer{% endif %}"
+                     data-name="{{ b.name|lower }}"
+                     data-publisher="{{ (b.publisher or '')|lower }}"
+                     data-subject-id="{{ subject.id }}"
+                     data-assigned="{{ '1' if already else '0' }}">
+                <input type="checkbox" name="book_ids" value="{{ b.id }}" class="add-books-cb mt-0.5"
+                       {% if already %}disabled{% endif %} />
+                <span class="flex-1 min-w-0 {% if already %}text-slate-400{% endif %}">
+                  <span class="block truncate">{{ b.name }}</span>
+                  <span class="block text-xs truncate {% if already %}text-slate-400{% else %}text-slate-500{% endif %}">
+                    {{ b.publisher or '—' }} · {{ BOOK_TYPE_LABELS[b.type] }}
+                    · {{ b.sections|length }} bölüm / {{ b.total_tests }} test
+                    {% if already %}<span class="ml-1">· zaten atanmış</span>{% endif %}
+                  </span>
+                </span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="text-center text-slate-500 py-12 text-sm">
+            Kütüphane boş.
+            <a href="/teacher/books" class="text-indigo-600 hover:underline">Önce kitap ekleyin.</a>
+          </div>
+        {% endif %}
+      </div>
+
+      <footer class="px-5 py-3 border-t border-slate-200 flex justify-end gap-2 bg-slate-50">
+        <button type="button" class="cancel-add-books px-4 py-2 text-sm text-slate-600 hover:text-slate-900">İptal</button>
+        <button type="submit" id="submit-add-books" disabled
+                class="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium py-2 px-4 rounded">
+          Seçilenleri Ata
+        </button>
+      </footer>
+    </form>
+
+    {# === SET'TEN UYGULA === #}
+    <form method="post" action="/teacher/students/{{ student.id }}/books/assign"
+          class="add-panel hidden flex-col flex-1 min-h-0" data-add-tab="set">
+      <div class="px-5 py-3 border-b border-slate-100 flex flex-wrap gap-2 items-center">
+        <label class="text-sm text-slate-600">Set:</label>
+        <select id="set-picker" class="flex-1 min-w-[200px] px-3 py-2 border border-slate-300 rounded text-sm">
+          <option value="">— Set seç —</option>
+          {% for s in book_sets %}
+          <option value="{{ s.id }}">{{ s.name }} ({{ s.items|length }} kitap)</option>
+          {% endfor %}
+        </select>
+        <a href="/teacher/book-sets" class="text-xs text-indigo-600 hover:text-indigo-800 ml-2">Setleri yönet →</a>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-5 py-3" id="set-apply-area">
+        {% if not book_sets %}
+        <div class="text-center text-slate-500 py-12 text-sm">
+          Henüz kitap seti yok.<br/>
+          <a href="/teacher/book-sets" class="text-indigo-600 hover:underline">Set oluşturmak için tıkla.</a>
+        </div>
+        {% else %}
+        <div id="set-empty-hint" class="text-center text-slate-500 py-12 text-sm">
+          Yukarıdan bir set seç; kitaplar listelenecek.<br/>
+          İstemediğin kitapları işaretten kaldırarak özel bir uygulama yapabilirsin.
+        </div>
+
+        {% for s in book_sets %}
+        <div class="set-content hidden" data-set-id="{{ s.id }}">
+          {% if s.notes %}<p class="text-xs text-slate-500 mb-3 italic">{{ s.notes }}</p>{% endif %}
+          {% set new_count = s.items | rejectattr("book_id", "in", assigned_book_ids) | list | length %}
+          <div class="text-xs text-slate-500 mb-2">
+            Toplam {{ s.items|length }} kitap · bu öğrenciye yeni eklenecek: <span class="font-medium text-slate-700">{{ new_count }}</span>
+          </div>
+          <div class="space-y-1.5">
+            {% for it in s.items %}
+              {% set already = it.book_id in assigned_book_ids %}
+            <label class="flex items-start gap-2 p-2 rounded border {% if already %}border-slate-100 bg-slate-50{% else %}border-slate-200 hover:border-indigo-300 cursor-pointer{% endif %} text-sm">
+              <input type="checkbox" name="book_ids" value="{{ it.book.id }}"
+                     class="set-apply-cb mt-0.5"
+                     {% if not already %}checked{% endif %}
+                     {% if already %}disabled{% endif %} />
+              <span class="flex-1 min-w-0 {% if already %}text-slate-400{% endif %}">
+                <span class="block truncate">{{ it.book.name }}</span>
+                <span class="block text-xs truncate">
+                  {{ it.book.subject.name }} · {{ it.book.publisher or '—' }} · {{ BOOK_TYPE_LABELS[it.book.type] }}
+                  {% if already %}<span class="ml-1 text-slate-400">(zaten atanmış)</span>{% endif %}
+                </span>
+              </span>
+            </label>
+            {% endfor %}
+          </div>
+        </div>
+        {% endfor %}
+        {% endif %}
+      </div>
+
+      <footer class="px-5 py-3 border-t border-slate-200 flex justify-between items-center gap-2 bg-slate-50">
+        <span class="text-xs text-slate-500">Set kaydı değişmez — sadece bu öğrenciye atama yapılır.</span>
+        <div class="flex gap-2">
+          <button type="button" class="cancel-add-books px-4 py-2 text-sm text-slate-600 hover:text-slate-900">İptal</button>
+          <button type="submit" id="submit-set-apply" disabled
+                  class="bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-300 disabled:cursor-not-allowed text-white text-sm font-medium py-2 px-4 rounded">
+            Seçilenleri Ata
+          </button>
+        </div>
+      </footer>
+    </form>
+  </div>
+</dialog>
+
+<script>
+  (function() {
+    document.querySelectorAll('.detail-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.dataset.tab;
+        document.querySelectorAll('.detail-tab').forEach(b => {
+          const active = b.dataset.tab === target;
+          b.classList.toggle('border-indigo-600', active);
+          b.classList.toggle('text-indigo-700', active);
+          b.classList.toggle('border-transparent', !active);
+          b.classList.toggle('text-slate-600', !active);
+        });
+        document.querySelectorAll('.detail-panel').forEach(p => {
+          p.classList.toggle('hidden', p.dataset.tab !== target);
+        });
+        // URL hash güncellemesi (paylaşılabilir state)
+        if (history.replaceState) history.replaceState(null, '', '#' + target);
+      });
+    });
+    // Sayfa açılışında hash varsa o sekmeye geç
+    const hash = window.location.hash.replace('#', '');
+    if (hash) {
+      const btn = document.querySelector('.detail-tab[data-tab=\"' + hash + '\"]');
+      if (btn) btn.click();
+    }
+  })();
+
+  // Kitap Ekle modal davranışı
+  (function() {
+    const dlg = document.getElementById('add-books-dialog');
+    if (!dlg) return;
+    const openBtn = document.getElementById('open-add-books-modal');
+    const closeBtn = document.getElementById('close-add-books-modal');
+    const search = document.getElementById('add-books-search');
+    const list = document.getElementById('add-books-list');
+    const submitBtn = document.getElementById('submit-add-books');
+    const countLabel = document.getElementById('add-books-count');
+    const selectAll = document.getElementById('add-books-select-all');
+    const clearAll = document.getElementById('add-books-clear-all');
+    const hideAssigned = document.getElementById('hide-assigned');
+    const setPicker = document.getElementById('set-picker');
+    const setApplyArea = document.getElementById('set-apply-area');
+    const setEmptyHint = document.getElementById('set-empty-hint');
+    const submitSetBtn = document.getElementById('submit-set-apply');
+
+    function getCheckboxes() {
+      return list ? list.querySelectorAll('.add-books-cb') : [];
+    }
+    function refreshCount() {
+      const cbs = getCheckboxes();
+      let n = 0;
+      cbs.forEach(cb => { if (cb.checked && !cb.disabled) n++; });
+      if (countLabel) countLabel.textContent = n + ' seçili';
+      if (submitBtn) submitBtn.disabled = (n === 0);
+    }
+    function applyFilter() {
+      if (!list) return;
+      const q = (search && search.value || '').trim().toLowerCase();
+      const hideAssignedOn = hideAssigned && hideAssigned.checked;
+      list.querySelectorAll('.add-books-item').forEach(it => {
+        const name = it.dataset.name || '';
+        const pub = it.dataset.publisher || '';
+        const isAssigned = it.dataset.assigned === '1';
+        const matchText = !q || name.indexOf(q) >= 0 || pub.indexOf(q) >= 0;
+        const matchAssigned = !hideAssignedOn || !isAssigned;
+        const visible = matchText && matchAssigned;
+        it.classList.toggle('hidden', !visible);
+      });
+      list.querySelectorAll('.add-books-group').forEach(g => {
+        const visible = g.querySelectorAll('.add-books-item:not(.hidden)').length;
+        g.classList.toggle('hidden', visible === 0);
+      });
+    }
+    function refreshSetCount() {
+      if (!setApplyArea || !submitSetBtn) return;
+      const visible = setApplyArea.querySelector('.set-content:not(.hidden)');
+      if (!visible) { submitSetBtn.disabled = true; return; }
+      const checked = visible.querySelectorAll('.set-apply-cb:checked:not([disabled])');
+      submitSetBtn.disabled = checked.length === 0;
+    }
+
+    function switchTab(target) {
+      document.querySelectorAll('.add-tab').forEach(b => {
+        const active = b.dataset.addTab === target;
+        b.classList.toggle('border-indigo-600', active);
+        b.classList.toggle('text-indigo-700', active);
+        b.classList.toggle('border-transparent', !active);
+        b.classList.toggle('text-slate-600', !active);
+      });
+      document.querySelectorAll('.add-panel').forEach(p => {
+        const show = p.dataset.addTab === target;
+        p.classList.toggle('hidden', !show);
+        p.classList.toggle('flex', show);
+      });
+    }
+
+    if (openBtn) openBtn.addEventListener('click', () => {
+      if (dlg.showModal) dlg.showModal();
+      switchTab('manual');
+      refreshCount();
+      refreshSetCount();
+    });
+    if (closeBtn) closeBtn.addEventListener('click', () => dlg.close());
+    document.querySelectorAll('.cancel-add-books').forEach(b => {
+      b.addEventListener('click', () => dlg.close());
+    });
+
+    dlg.addEventListener('click', (e) => {
+      if (e.target === dlg) dlg.close();
+    });
+
+    document.querySelectorAll('.add-tab').forEach(b => {
+      b.addEventListener('click', () => switchTab(b.dataset.addTab));
+    });
+
+    if (search) search.addEventListener('input', applyFilter);
+
+    if (list) list.addEventListener('change', (e) => {
+      if (e.target && e.target.classList.contains('add-books-cb')) refreshCount();
+    });
+
+    if (selectAll) selectAll.addEventListener('click', () => {
+      list.querySelectorAll('.add-books-item:not(.hidden)').forEach(it => {
+        const cb = it.querySelector('.add-books-cb');
+        if (cb && !cb.disabled) cb.checked = true;
+      });
+      refreshCount();
+    });
+    if (clearAll) clearAll.addEventListener('click', () => {
+      getCheckboxes().forEach(cb => { if (!cb.disabled) cb.checked = false; });
+      refreshCount();
+    });
+
+    if (hideAssigned) hideAssigned.addEventListener('change', applyFilter);
+
+    if (list) list.addEventListener('click', (e) => {
+      const t = e.target;
+      if (t && t.classList.contains('add-books-group-toggle')) {
+        const sid = t.dataset.subjectId;
+        const items = list.querySelectorAll('.add-books-item[data-subject-id="' + sid + '"]:not(.hidden)');
+        let allChecked = true;
+        items.forEach(it => {
+          const cb = it.querySelector('.add-books-cb');
+          if (cb && !cb.disabled && !cb.checked) allChecked = false;
+        });
+        items.forEach(it => {
+          const cb = it.querySelector('.add-books-cb');
+          if (cb && !cb.disabled) cb.checked = !allChecked;
+        });
+        refreshCount();
+      }
+    });
+
+    // Set seçimi
+    if (setPicker) setPicker.addEventListener('change', () => {
+      const v = setPicker.value;
+      if (setEmptyHint) setEmptyHint.classList.toggle('hidden', !!v);
+      if (setApplyArea) {
+        setApplyArea.querySelectorAll('.set-content').forEach(c => {
+          c.classList.toggle('hidden', c.dataset.setId !== v);
+        });
+      }
+      refreshSetCount();
+    });
+    if (setApplyArea) setApplyArea.addEventListener('change', (e) => {
+      if (e.target && e.target.classList.contains('set-apply-cb')) refreshSetCount();
+    });
+
+    refreshCount();
+    refreshSetCount();
+  })();
+</script>
+{% endblock %}

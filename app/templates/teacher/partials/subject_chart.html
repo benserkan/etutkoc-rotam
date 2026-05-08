@@ -1,0 +1,30 @@
+{# Ders bazında çubuk grafik (ham HTML/CSS — Chart.js'e gerek yok).
+   Bağlam: subject_stats (list[dict]) #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="font-semibold text-slate-900">Ders Bazında İlerleme</h2>
+      <div class="text-xs text-slate-500">Her ders için tamamlanma (yeşil) ve rezerv (sarı) oranı</div>
+    </div>
+  </div>
+  <div class="p-5 space-y-3">
+    {% for s in subject_stats %}
+    <div>
+      <div class="flex items-baseline justify-between text-sm mb-1">
+        <div class="font-medium text-slate-800">{{ s.name }}</div>
+        <div class="text-xs text-slate-500">
+          <b class="text-emerald-600">{{ s.completed }}</b> / <b>{{ s.total }}</b>
+          <span class="text-slate-400 ml-1">(%{{ s.percent_done }})</span>
+        </div>
+      </div>
+      <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden flex">
+        <div class="bg-emerald-500 h-full" style="width: {{ s.percent_done }}%"></div>
+        <div class="bg-amber-400 h-full" style="width: {{ s.percent_reserved }}%"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="px-5 py-2 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+    <b>Nasıl okunur:</b> Yeşil bant o derse ait tamamlanan test oranını gösterir; sarı bant o anda bir göreve rezerv edilmiş (henüz tiklenmemiş) testleri temsil eder. Sarı çubuğun uzunca kalması rezerv biriktiği anlamına gelir — tiklenmesi için dikkat gerekir.
+  </div>
+</div>

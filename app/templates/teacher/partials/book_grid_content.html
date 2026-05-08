@@ -1,0 +1,77 @@
+{# Bir kitabın "sinema koltuğu" grid görünümü (modal içeriği).
+   Bağlam: book, sections_data (list of {section, completed, reserved}),
+           total_completed, total_reserved #}
+{% set total_tests = book.sections | sum(attribute='test_count') %}
+{% set total_remaining = total_tests - total_completed - total_reserved %}
+{% set is_deneme = book.type.value in ['brans_denemesi', 'genel_deneme'] %}
+{% set unit_word = 'deneme' if is_deneme else 'test' %}
+
+<header class="px-5 py-3 border-b border-slate-200 flex items-start justify-between gap-3 bg-gradient-to-r from-indigo-50 to-white">
+  <div class="min-w-0">
+    <h2 class="text-base font-semibold text-slate-900 truncate" title="{{ book.name }}">{{ book.name }}</h2>
+    <p class="text-xs text-slate-500 mt-0.5">
+      {{ book.subject.name }} · {{ BOOK_TYPE_LABELS[book.type] }}
+      {% if book.publisher %} · {{ book.publisher }}{% endif %}
+      · Toplam <b>{{ total_tests }}</b> {{ unit_word }}
+    </p>
+  </div>
+  <button type="button"
+          onclick="document.getElementById('book-grid-dialog').close()"
+          aria-label="Kapat"
+          class="text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-full w-8 h-8 flex items-center justify-center text-2xl leading-none transition flex-shrink-0">×</button>
+</header>
+
+<div class="px-5 py-2 border-b border-slate-100 bg-slate-50 flex items-center gap-4 text-xs">
+  <span class="text-emerald-700 font-medium">✓ {{ total_completed }} çözüldü</span>
+  <span class="text-amber-700 font-medium">⏳ {{ total_reserved }} rezerv</span>
+  <span class="text-slate-700 font-medium">⎯ {{ total_remaining }} boş</span>
+  <span class="ml-auto text-slate-500">
+    {% if total_tests > 0 %}%{{ (100 * total_completed // total_tests) }} tamamlandı{% endif %}
+  </span>
+</div>
+
+<div class="p-5 max-h-[70vh] overflow-y-auto space-y-5">
+  {% for sd in sections_data %}
+    {% set sec = sd.section %}
+    {% set comp = sd.completed %}
+    {% set res = sd.reserved %}
+    {% set remaining = sec.test_count - comp - res %}
+  <section>
+    <div class="flex items-baseline justify-between mb-2 gap-2">
+      <h3 class="text-sm font-semibold text-slate-900">
+        {{ sec.label }}
+        {% if sec.topic %}<span class="text-slate-500 italic font-normal">· {{ sec.topic.name }}</span>{% endif %}
+      </h3>
+      <div class="text-xs text-slate-500 whitespace-nowrap">
+        <span class="text-emerald-600">{{ comp }}</span> /
+        <span class="text-amber-600">{{ res }}</span> /
+        <b>{{ remaining }}</b>
+        <span class="text-slate-400">· toplam {{ sec.test_count }}</span>
+      </div>
+    </div>
+    <div class="grid gap-1" style="grid-template-columns: repeat(auto-fill, minmax(22px, 1fr));">
+      {% for i in range(comp) %}
+      <div class="aspect-square rounded-sm bg-emerald-500 hover:scale-110 transition-transform"
+           title="{{ unit_word | capitalize }} {{ i + 1 }}: çözüldü"></div>
+      {% endfor %}
+      {% for i in range(res) %}
+      <div class="aspect-square rounded-sm bg-amber-400 hover:scale-110 transition-transform"
+           title="{{ unit_word | capitalize }} {{ comp + i + 1 }}: rezervde (göreve atanmış, henüz tıklanmamış)"></div>
+      {% endfor %}
+      {% for i in range(remaining) %}
+      <div class="aspect-square rounded-sm bg-slate-200 border border-slate-300 hover:scale-110 transition-transform"
+           title="{{ unit_word | capitalize }} {{ comp + res + i + 1 }}: henüz boş"></div>
+      {% endfor %}
+    </div>
+  </section>
+  {% else %}
+  <div class="text-center text-sm text-slate-400 italic py-8">Bu kitabın bölümü tanımlanmamış.</div>
+  {% endfor %}
+</div>
+
+<footer class="px-5 py-2 border-t border-slate-200 bg-slate-50 flex flex-wrap gap-3 text-[11px] text-slate-500">
+  <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm bg-emerald-500"></span>çözüldü</span>
+  <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm bg-amber-400"></span>rezervde (görev atanmış)</span>
+  <span class="flex items-center gap-1"><span class="inline-block w-3 h-3 rounded-sm bg-slate-200 border border-slate-300"></span>henüz boş</span>
+  <span class="ml-auto italic">Her kutu bir {{ unit_word }} · üzerine gelince numarayı görürsünüz</span>
+</footer>

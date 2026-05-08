@@ -1,0 +1,25 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.db
+*.db.backup*
+*.db.backup-*
+*.db.backup_*
+*.sqlite3
+.env
+.venv/
+venv/
+env/
+.idea/
+.vscode/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Araştırma scratch — MEB PDF/transkript dosyaları (kod artefaktı değil)
+_meb_research/

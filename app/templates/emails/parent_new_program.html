@@ -1,0 +1,57 @@
+Subject: ETÜTKOÇ Rotam · {{ student_name }} için yeni haftalık program
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 20px;">
+      <img src="{{ app_base_url }}/static/img/etutkoc-logo.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
+      <span style="font-size: 18px; font-weight: 800;">
+        <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
+      </span>
+    </div>
+
+    <h2 style="font-size: 16px; color: #0f172a; margin: 0 0 6px;">{{ student_name }} — Yeni Haftalık Program</h2>
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 16px;">
+      {{ week_start }} — {{ week_end }}
+    </div>
+
+    <p style="margin: 0 0 12px; line-height: 1.55;">
+      Önümüzdeki 7 gün için <b>{{ student_name }}</b> adına toplam <b>{{ total_tasks }} görev</b> planlandı.
+    </p>
+
+    {% if daily_breakdown %}
+    <div style="background: #f1f5f9; border-radius: 8px; padding: 12px 16px; margin: 14px 0;">
+      <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">Günlük dağılım</div>
+      <ul style="list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.8;">
+        {% for d in daily_breakdown %}
+        <li style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 4px 0;">
+          <span style="color: #334155;">{{ d.label }}</span>
+          <span style="color: #117A86; font-weight: 600;">{{ d.task_count }} görev</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <p style="margin: 14px 0; font-size: 13px; color: #475569; line-height: 1.55;">
+      Programın kişiye özel hazırlandığını ve hafta içinde gerektiğinde öğretmen tarafından
+      güncellenebileceğini unutmayın.
+    </p>
+
+    <p style="margin: 20px 0 0;">
+      <a href="{{ app_base_url }}/parent/students/{{ student_id }}/week"
+         style="display: inline-block; background: #117A86; color: white; padding: 11px 22px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
+        Programı görüntüle →
+      </a>
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 14px;">
+    <p style="margin: 0; font-size: 10px; color: #94a3b8; line-height: 1.55;">
+      Bu mail otomatik gönderildi · ETÜTKOÇ Rotam · {{ app_base_url }}<br>
+      Bildirimleri kapatmak için: <a href="{{ app_base_url }}/parent/unsubscribe/{{ unsubscribe_token }}" style="color: #94a3b8;">tek tıkla kapat</a>
+    </p>
+  </div>
+</body>
+</html>

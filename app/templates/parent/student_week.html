@@ -1,0 +1,117 @@
+{% extends "parent/base_parent.html" %}
+{% block title %}{{ data.student.full_name }} — Haftalık Program{% endblock %}
+
+{% set tr_weekdays = ['Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi','Pazar'] %}
+{% set tr_months = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'] %}
+
+{% set type_labels = {'test':'Test','video':'Video','ozet':'Özet','tekrar':'Tekrar','konu':'Konu','deneme':'Deneme'} %}
+
+{% block parent_content %}
+<div class="flex flex-wrap items-start justify-between gap-3 mb-5">
+  <div>
+    <a href="/parent/students/{{ data.student.id }}" class="text-sm text-slate-500 hover:text-slate-700">← {{ data.student.full_name }}</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">7 Günlük Program</h1>
+    <p class="text-xs text-slate-500 mt-1">
+      {% set s_y = data.start[:4] %}{% set s_m = data.start[5:7]|int %}{% set s_d = data.start[8:10]|int %}
+      {% set e_y = data.end[:4] %}{% set e_m = data.end[5:7]|int %}{% set e_d = data.end[8:10]|int %}
+      {{ s_d }} {{ tr_months[s_m-1] }} – {{ e_d }} {{ tr_months[e_m-1] }} {{ e_y }}
+    </p>
+  </div>
+  <div class="flex gap-2">
+    <a href="/parent/students/{{ data.student.id }}/week?start={{ data.prev_start }}"
+       class="px-3 py-1.5 rounded border border-slate-300 text-xs text-slate-600 hover:bg-slate-50">← 7 gün</a>
+    <a href="/parent/students/{{ data.student.id }}/week"
+       class="px-3 py-1.5 rounded border border-slate-300 text-xs text-slate-600 hover:bg-slate-50">Bu hafta</a>
+    <a href="/parent/students/{{ data.student.id }}/week?start={{ data.next_start }}"
+       class="px-3 py-1.5 rounded border border-slate-300 text-xs text-slate-600 hover:bg-slate-50">7 gün →</a>
+  </div>
+</div>
+
+<div class="space-y-3">
+  {% for day in data.days %}
+  {% set y = day.date[:4]|int %}{% set m = day.date[5:7]|int %}{% set d = day.date[8:10]|int %}
+  {% set ratio = (day.completed_total / day.planned_total) if day.planned_total else 0 %}
+  {% set day_color = '#059669' if ratio >= 0.8 else ('#d97706' if ratio >= 0.4 else '#dc2626' if day.planned_total else '#94a3b8') %}
+
+  <details class="bg-white border border-slate-200 rounded-lg overflow-hidden" {% if day.task_count %}open{% endif %}>
+    <summary class="px-5 py-3 cursor-pointer hover:bg-slate-50 list-none flex items-center justify-between">
+      <div class="flex items-baseline gap-3">
+        <span class="font-semibold text-slate-900">{{ tr_weekdays[day.weekday] }}</span>
+        <span class="text-sm text-slate-500">{{ d }} {{ tr_months[m-1] }}</span>
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        {% if day.task_count %}
+          <span class="text-slate-700">{{ day.task_count }} görev</span>
+          {% if day.planned_total %}
+          <span class="text-slate-400">·</span>
+          <span class="font-semibold" style="color: {{ day_color }};">
+            {{ day.completed_total }}/{{ day.planned_total }} test
+          </span>
+          {% endif %}
+        {% else %}
+          <span class="text-slate-400 italic">boş</span>
+        {% endif %}
+      </div>
+    </summary>
+
+    {% if day.tasks %}
+    <ul class="divide-y divide-slate-100 border-t border-slate-100">
+      {% for t in day.tasks %}
+      {% set first_subj_id = t.book_items[0].subject_id if t.book_items else None %}
+      {% set hue = (first_subj_id * 67) % 360 if first_subj_id else 0 %}
+      {% set is_completed = t.status == 'completed' %}
+      {% set is_partial = t.status == 'partial' %}
+      <li class="px-5 py-2.5 flex items-start justify-between gap-3 border-l-4"
+          {% if first_subj_id %}style="background: hsl({{ hue }}, 70%, 98%); border-left-color: hsl({{ hue }}, 60%, 60%);"
+          {% else %}style="border-left-color: transparent;"{% endif %}>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            {% if t.book_items and t.book_items[0].subject_name %}
+            <span class="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded"
+                  style="background: hsl({{ hue }}, 70%, 90%); color: hsl({{ hue }}, 60%, 25%);">
+              {{ t.book_items[0].subject_name }}
+            </span>
+            {% endif %}
+            <span class="text-[10px] uppercase tracking-wide bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">
+              {{ type_labels.get(t.type, t.type) }}
+            </span>
+            <span class="text-sm font-medium text-slate-900">{{ t.title }}</span>
+            {% if is_completed %}
+              <span class="text-xs text-emerald-600">✓ tamamlandı</span>
+            {% elif is_partial %}
+              <span class="text-xs text-amber-600">kısmen</span>
+            {% endif %}
+          </div>
+          {% if t.book_items|length > 1 %}
+          <ul class="mt-1 text-xs text-slate-600 space-y-0.5">
+            {% for it in t.book_items %}
+            <li>• {{ it.book_name }} — {{ it.section_label }}
+              {% if it.topic_name %}<span class="text-slate-400">({{ it.topic_name }})</span>{% endif %}
+              : <b>{{ it.completed_count }}/{{ it.planned_count }}</b>
+            </li>
+            {% endfor %}
+          </ul>
+          {% elif t.book_items %}
+          {% set it = t.book_items[0] %}
+          <div class="text-xs text-slate-500 mt-0.5">
+            {{ it.book_name }} · {{ it.section_label }}
+            {% if it.topic_name %}({{ it.topic_name }}){% endif %}
+            <span class="ml-2 font-medium text-slate-700">{{ it.completed_count }}/{{ it.planned_count }}</span>
+          </div>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="px-5 py-3 text-sm text-slate-400 italic border-t border-slate-100">Bu güne görev planlanmamış.</p>
+    {% endif %}
+  </details>
+  {% endfor %}
+</div>
+
+<p class="text-center text-[11px] text-slate-400 italic mt-6">
+  Bu görünüm salt-okunurdur. Görevler öğretmen tarafından planlanır, öğrenci tarafından
+  tamamlandı olarak işaretlenir.
+</p>
+{% endblock %}

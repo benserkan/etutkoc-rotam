@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block title %}{{ tr_weekdays[day.weekday()] }} {{ day.day }} {{ tr_months[day.month - 1] }}{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap items-start justify-between gap-4 mb-5">
+  <div>
+    <h1 class="text-2xl font-semibold text-slate-900">
+      {{ tr_weekdays[day.weekday()] }}
+      <span class="text-slate-400">·</span>
+      {{ day.day }} {{ tr_months[day.month - 1] }}
+      {% if day.year != today.year %}<span class="text-slate-400">{{ day.year }}</span>{% endif %}
+      {% if day == today %}
+      <span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full ml-2 align-middle">bugün</span>
+      {% endif %}
+    </h1>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="/student/day?date={{ prev_date }}" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">←</a>
+    <a href="/student/day" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">Bugün</a>
+    <a href="/student/day?date={{ next_date }}" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">→</a>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
+  <div class="min-w-0">
+
+    {# Günlük özet — kompakt, her zaman üstte #}
+    {% if assignments %}
+    <div class="bg-white border border-slate-200 rounded-lg px-4 py-3 mb-4">
+      <div id="day-summary-inner">
+        {% include "student/partials/day_summary.html" %}
+      </div>
+      {% if day == today and snapshot.warnings %}
+      {% set top = snapshot.warnings[0] %}
+      {% set col = {'green':'#059669','amber':'#d97706','red':'#dc2626'}[top.level] %}
+      <div class="mt-2 pt-2 border-t border-slate-100 text-xs">
+        <span class="font-medium" style="color: {{ col }};">{{ top.title }}</span>
+        <span class="text-slate-600">— {{ top.detail }}</span>
+      </div>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# === ASIL İŞ: Görev listesi === #}
+    {% if tasks %}
+    <div class="space-y-2.5 mb-3">
+      {% for task in tasks %}
+        {% include "student/partials/task_card.html" %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white border border-slate-200 rounded-lg p-8 text-center text-slate-500 mb-3">
+      Bu güne atanmış görev yok.
+    </div>
+    {% endif %}
+
+    {# Ek görev öner — katlı #}
+    {% if assignments %}
+    <details class="bg-white border border-dashed border-indigo-300 rounded-lg mb-4">
+      <summary class="px-4 py-2.5 cursor-pointer text-sm text-indigo-700 hover:bg-indigo-50">
+        + Bu güne ek görev öner
+      </summary>
+      <form method="post" action="/student/day/{{ day.isoformat() }}/request-add"
+            class="px-4 py-3 grid grid-cols-1 md:grid-cols-12 gap-2 items-end border-t border-indigo-100">
+        <div class="md:col-span-3">
+          <label class="block text-[11px] text-slate-600 mb-0.5">Ders</label>
+          <select name="subject_id"
+                  hx-get="/student/books-by-subject"
+                  hx-target="next select[name='book_id']"
+                  hx-trigger="change"
+                  hx-include="this"
+                  class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+            <option value="">— ders —</option>
+            {% for s in subject_list %}<option value="{{ s.id }}">{{ s.name }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-[11px] text-slate-600 mb-0.5">Kitap</label>
+          <select name="book_id" required
+                  hx-get="/student/book-sections"
+                  hx-target="next select[name='section_id']"
+                  hx-trigger="change"
+                  hx-include="this"
+                  class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+            <option value="">— önce ders —</option>
+          </select>
+        </div>
+        <div class="md:col-span-3">
+          <label class="block text-[11px] text-slate-600 mb-0.5">Ünite / Deneme</label>
+          <select name="section_id" required class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+            <option value="">— önce kitap —</option>
+          </select>
+        </div>
+        <div class="md:col-span-1">
+          <label class="block text-[11px] text-slate-600 mb-0.5">Adet</label>
+          <input type="number" name="proposed_count" min="1" required
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-right" />
+        </div>
+        <div class="md:col-span-2 flex justify-end">
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
+            Talep
+          </button>
+        </div>
+        <div class="md:col-span-12">
+          <input type="text" name="message" placeholder="(opsiyonel) neden eklemek istiyorsun?"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs" />
+        </div>
+      </form>
+    </details>
+    {% endif %}
+
+    {# === İSTATİSTİKLER (katlı, varsayılan kapalı) === #}
+    {% if day == today and assignments %}
+    <details class="bg-white border border-slate-200 rounded-lg mb-4">
+      <summary class="px-4 py-2.5 cursor-pointer text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-between">
+        <span class="font-medium">📊 İstatistiklerim</span>
+        <span class="text-xs text-slate-500">projeksiyon, trend, ders kırılımı</span>
+      </summary>
+      <div class="border-t border-slate-100 p-4 space-y-4">
+        {# Projeksiyon #}
+        {% set exam_label = user.effective_exam_label %}
+        {% set exam_target = (user.effective_exam_target or 'none').lower() %}
+        {% include "teacher/partials/projection_panel.html" %}
+        {# Trend ve ders #}
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {% set chart_id = 'student-trend' %}
+          {% include "teacher/partials/daily_trend_chart.html" %}
+          {% include "teacher/partials/subject_chart.html" %}
+        </div>
+      </div>
+    </details>
+    {% endif %}
+  </div>
+
+  {# Kaynak Durumu sidebar — sticky, lg+ ekranlarda yan #}
+  {% if assignments %}
+  <aside class="xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto bg-white border border-slate-200 rounded-lg">
+    <div class="px-4 py-3 border-b border-slate-100 sticky top-0 bg-white z-10">
+      <div class="font-medium text-slate-900">İlerlemem</div>
+      <div class="text-xs text-slate-500">Ders bazında kitap durumu</div>
+    </div>
+    <div id="resource-subjects" class="divide-y divide-slate-100">
+      {% include "teacher/partials/resource_sidebar_items.html" %}
+    </div>
+    <div class="px-4 py-2 text-[10px] text-slate-400 border-t border-slate-100 flex gap-3 bg-white sticky bottom-0">
+      <span class="text-emerald-600">✓ çöz.</span>
+      <span class="text-amber-600">⏳ rez.</span>
+      <span class="text-slate-700">⎯ kalan</span>
+    </div>
+  </aside>
+  {% endif %}
+</div>
+{% endblock %}

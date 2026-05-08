@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Panel{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-5 flex-wrap gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold text-slate-900">Koçluk Paneli</h1>
+    <div class="text-sm text-slate-500 mt-1">Merhaba {{ user.full_name }} · {{ today.strftime('%d.%m.%Y') }}</div>
+  </div>
+</div>
+
+{% if fleet_total == 0 %}
+<div class="bg-white border border-slate-200 rounded-lg p-8 text-center text-slate-500">
+  Henüz öğrenciniz yok. <a href="/teacher/students" class="text-indigo-600 hover:underline">Öğrenci ekle</a>.
+</div>
+{% else %}
+
+{# ============================================================ #}
+{# Birincil Eylem — Bekleyen talepler + Riskli öğrenciler         #}
+{# ============================================================ #}
+{% set risky_snapshots = snapshots | selectattr('worst_warning_level', 'equalto', 'red') | list %}
+
+{% if pending_requests_total > 0 or risky_snapshots %}
+<section class="mb-6">
+  <h2 class="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-2">⚡ Şimdi ilgilenmen gerekenler</h2>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+
+    {# Bekleyen talepler #}
+    {% if pending_requests_total > 0 %}
+    <a href="/teacher/requests" class="block bg-amber-50 border border-amber-300 rounded-lg p-4 hover:shadow-sm transition">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl flex-shrink-0">📬</div>
+          <div class="min-w-0">
+            <div class="font-semibold text-amber-900">{{ pending_requests_total }} bekleyen öğrenci talebi</div>
+            <div class="text-xs text-amber-700 mt-0.5 truncate">
+              {% for r in pending_requests %}{% if not loop.first %} · {% endif %}<span class="font-medium">{{ r.student.full_name.split()[0] }}</span>{% endfor %}
+            </div>
+          </div>
+        </div>
+        <span class="text-amber-700 text-lg flex-shrink-0">→</span>
+      </div>
+    </a>
+    {% endif %}
+
+    {# Riskli öğrenciler özet #}
+    {% if risky_snapshots %}
+    <a href="#students-list" class="block bg-rose-50 border border-rose-300 rounded-lg p-4 hover:shadow-sm transition">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <div class="text-2xl flex-shrink-0">🚨</div>
+          <div class="min-w-0">
+            <div class="font-semibold text-rose-900">{{ risky_snapshots|length }} öğrenci risk altında</div>
+            <div class="text-xs text-rose-700 mt-0.5 truncate">
+              {% for sn in risky_snapshots[:5] %}{% if not loop.first %} · {% endif %}<span class="font-medium">{{ sn.student.full_name.split()[0] }}</span>{% endfor %}{% if risky_snapshots|length > 5 %} +{{ risky_snapshots|length - 5 }} daha{% endif %}
+            </div>
+          </div>
+        </div>
+        <span class="text-rose-700 text-lg flex-shrink-0">↓</span>
+      </div>
+    </a>
+    {% endif %}
+
+  </div>
+</section>
+{% endif %}
+
+{# ============================================================ #}
+{# İkincil Özet — Tek şerit, kompakt                            #}
+{# ============================================================ #}
+<section class="mb-6">
+  {% set today_pct = (100 * today_completed // today_planned) if today_planned > 0 else 0 %}
+  {% set week_pct = (100 * week_completed // week_planned) if week_planned > 0 else 0 %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="grid grid-cols-2 md:grid-cols-5 divide-x divide-slate-100">
+      {# Filo özet #}
+      <div class="p-3 flex items-center gap-3">
+        <div class="text-xs text-slate-500">
+          <div class="font-medium">Filo</div>
+          <div class="mt-1 flex gap-1.5 text-[11px]">
+            <span class="text-emerald-600 font-semibold">{{ fleet_green }}</span>
+            <span class="text-amber-600 font-semibold">{{ fleet_amber }}</span>
+            <span class="text-rose-600 font-semibold">{{ fleet_red }}</span>
+            <span class="text-slate-400">/ {{ fleet_total }}</span>
+          </div>
+        </div>
+      </div>
+      {# Bugün #}
+      <div class="p-3">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wide">Bugün</div>
+        <div class="text-lg font-semibold mt-0.5">{{ today_completed }}<span class="text-xs text-slate-400">/{{ today_planned }}</span></div>
+        <div class="mt-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div class="bg-emerald-500 h-full" style="width: {{ today_pct }}%"></div>
+        </div>
+      </div>
+      {# Hafta #}
+      <div class="p-3">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wide">Son 7 Gün</div>
+        <div class="text-lg font-semibold mt-0.5">{{ week_completed }}<span class="text-xs text-slate-400">/{{ week_planned }}</span></div>
+        <div class="mt-1 h-1 bg-slate-100 rounded-full overflow-hidden">
+          <div class="bg-emerald-500 h-full" style="width: {{ week_pct if week_pct <= 100 else 100 }}%"></div>
+        </div>
+      </div>
+      {# Toplam uyarı #}
+      <div class="p-3">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wide">Aktif Uyarı</div>
+        <div class="text-lg font-semibold text-slate-900 mt-0.5">{{ total_warnings }}</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">tüm öğrencilerde</div>
+      </div>
+      {# Bekleyen talep #}
+      <div class="p-3">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wide">Talep</div>
+        <div class="text-lg font-semibold mt-0.5" style="color: {% if pending_requests_total %}#d97706{% else %}#94a3b8{% endif %};">{{ pending_requests_total }}</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">bekleyen</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ============================================================ #}
+{# Detay — Öğrenciler (risk-sırası) + Uyarı akışı (katlanır)     #}
+{# ============================================================ #}
+<section id="students-list">
+  <div class="flex items-baseline justify-between mb-3">
+    <h2 class="text-lg font-semibold text-slate-900">Öğrenciler</h2>
+    <div class="flex items-center gap-3 text-xs">
+      <button type="button" id="filter-risky" class="text-rose-600 hover:underline" onclick="filterStudents('red')">Riskli ({{ fleet_red }})</button>
+      <button type="button" id="filter-attn" class="text-amber-600 hover:underline" onclick="filterStudents('amber')">Dikkat ({{ fleet_amber }})</button>
+      <button type="button" id="filter-all" class="text-slate-500 hover:underline" onclick="filterStudents('all')">Tümü ({{ fleet_total }})</button>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    {# Sol: öğrenci kartları (kompakt) #}
+    <div class="lg:col-span-2 space-y-2.5" id="students-grid">
+      {% for sn in snapshots %}
+        {% set st = sn.student %}
+        {% set lvl = sn.worst_warning_level %}
+        {% set lvl_color = {'green':'#059669','amber':'#d97706','red':'#dc2626'}[lvl] %}
+        {% set lvl_bg = {'green':'#ecfdf5','amber':'#fffbeb','red':'#fef2f2'}[lvl] %}
+        {% set hit_pct = (sn.hit_rate_7d * 100) | round | int %}
+        {% set p = sn.projection %}
+      <a href="/teacher/students/{{ st.id }}"
+         class="student-card block bg-white border rounded-lg overflow-hidden hover:shadow-sm transition"
+         data-level="{{ lvl }}"
+         style="border-color: {{ lvl_color }}33;">
+        <div class="flex items-stretch">
+          <div class="w-1 flex-shrink-0" style="background: {{ lvl_color }};"></div>
+          <div class="flex-1 p-3">
+            <div class="flex items-center justify-between gap-3">
+              <div class="min-w-0 flex-1">
+                <div class="font-medium text-slate-900 truncate">{{ st.full_name }}</div>
+                <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
+                  <span>Bugün <b class="text-slate-700">{{ sn.today.completed }}/{{ sn.today.planned or 0 }}</b></span>
+                  <span class="text-slate-300">·</span>
+                  <span>Tutturma <b style="color: {% if hit_pct >= 80 %}#059669{% elif hit_pct >= 50 %}#d97706{% else %}#dc2626{% endif %};">%{{ hit_pct }}</b></span>
+                  <span class="text-slate-300">·</span>
+                  <span>Projeksiyon <b style="color: {% if p.gap >= 0 %}#059669{% else %}#dc2626{% endif %};">{% if p.gap >= 0 %}+{% endif %}{{ p.gap }}</b></span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 flex-shrink-0">
+                {% if sn.warnings %}
+                <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold" style="background: {{ lvl_bg }}; color: {{ lvl_color }};">{{ sn.warnings|length }} uyarı</span>
+                {% endif %}
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold" style="background: {{ lvl_bg }}; color: {{ lvl_color }};">
+                  {{ {'green':'✓','amber':'!','red':'⚠'}[lvl] }}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+      <div id="students-empty" class="hidden text-center text-sm text-slate-400 italic py-8">Bu filtrede öğrenci yok.</div>
+    </div>
+
+    {# Sağ: Uyarı akışı - katlanır #}
+    <aside>
+      <details class="bg-white border border-slate-200 rounded-lg" {% if total_warnings > 0 %}open{% endif %}>
+        <summary class="px-4 py-2.5 cursor-pointer hover:bg-slate-50 flex items-center justify-between">
+          <span class="font-semibold text-slate-900">Uyarı Akışı</span>
+          <span class="text-xs text-slate-500">{{ total_warnings }} toplam</span>
+        </summary>
+        {% if top_warnings %}
+        <div class="border-t border-slate-100 divide-y divide-slate-100 max-h-[60vh] overflow-y-auto">
+          {% for s, w in top_warnings %}
+            {% set color = {'green':'#059669','amber':'#d97706','red':'#dc2626'}[w.level] %}
+            {% set bg = {'green':'#ecfdf5','amber':'#fffbeb','red':'#fef2f2'}[w.level] %}
+          <a href="/teacher/students/{{ s.id }}" class="block px-3 py-2 hover:bg-slate-50 flex items-start gap-2" style="background: {{ bg }};">
+            <div class="w-2 h-2 mt-1.5 rounded-full flex-shrink-0" style="background: {{ color }};"></div>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-baseline justify-between gap-2">
+                <div class="font-medium text-xs truncate" style="color: {{ color }};">{{ w.title }}</div>
+                <div class="text-[10px] text-slate-500 whitespace-nowrap">{{ s.full_name.split()[0] }}</div>
+              </div>
+              <div class="text-[11px] text-slate-600 mt-0.5 truncate">{{ w.detail }}</div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="border-t border-slate-100 px-4 py-3 text-xs text-emerald-700 bg-emerald-50">
+          🎉 Aktif uyarı yok.
+        </div>
+        {% endif %}
+      </details>
+    </aside>
+  </div>
+</section>
+
+<script>
+  function filterStudents(level) {
+    const cards = document.querySelectorAll('#students-grid .student-card');
+    let visible = 0;
+    cards.forEach(c => {
+      const show = (level === 'all') || (c.dataset.level === level);
+      c.classList.toggle('hidden', !show);
+      if (show) visible++;
+    });
+    document.getElementById('students-empty').classList.toggle('hidden', visible > 0);
+    // Aktif filtre vurgusu
+    ['filter-risky', 'filter-attn', 'filter-all'].forEach(id => {
+      document.getElementById(id).classList.remove('font-semibold', 'underline');
+    });
+    const map = {'red':'filter-risky','amber':'filter-attn','all':'filter-all'};
+    document.getElementById(map[level]).classList.add('font-semibold', 'underline');
+  }
+</script>
+
+{% endif %}
+{% endblock %}

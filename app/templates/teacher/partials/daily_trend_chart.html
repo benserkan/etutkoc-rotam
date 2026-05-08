@@ -1,0 +1,65 @@
+{# Son 30 gün günlük çizgi grafik (Chart.js).
+   Bağlam: trend_labels (list[str]), trend_completed (list[int]), trend_planned (list[int]), chart_id (str) #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-5 py-3 border-b border-slate-100">
+    <h2 class="font-semibold text-slate-900">Son 30 Gün Aktivite</h2>
+    <div class="text-xs text-slate-500">Günlük tamamlanan test (yeşil) ile o güne atanan plan (gri kesik)</div>
+  </div>
+  <div class="p-4">
+    <div class="relative" style="height: 180px;">
+      <canvas id="{{ chart_id }}"></canvas>
+    </div>
+  </div>
+  <div class="px-5 py-2 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+    <b>Nasıl okunur:</b> Yeşil çizgi günlük çözülen test sayısı; kesik gri çizgi o güne planlanan hedef. Yeşil, grinin üstündeyse o gün hedef tutturulmuştur. Dalgalanmanın azalması tutarlılığın arttığını gösterir.
+  </div>
+</div>
+
+<script>
+  (function() {
+    const ctx = document.getElementById('{{ chart_id }}');
+    if (!ctx) return;
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: {{ trend_labels | tojson }},
+        datasets: [
+          {
+            label: 'Tamamlanan',
+            data: {{ trend_completed | tojson }},
+            borderColor: '#059669',
+            backgroundColor: 'rgba(5, 150, 105, 0.1)',
+            borderWidth: 2,
+            tension: 0.25,
+            fill: true,
+            pointRadius: 2,
+            pointHoverRadius: 4,
+          },
+          {
+            label: 'Planlanan',
+            data: {{ trend_planned | tojson }},
+            borderColor: '#94a3b8',
+            borderDash: [4, 4],
+            borderWidth: 1.5,
+            tension: 0.25,
+            fill: false,
+            pointRadius: 0,
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, boxWidth: 12 } },
+          tooltip: { enabled: true },
+        },
+        scales: {
+          x: { ticks: { font: { size: 9 }, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 }, grid: { display: false } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 }, precision: 0 }, grid: { color: 'rgba(0,0,0,0.05)' } },
+        },
+      },
+    });
+  })();
+</script>

@@ -1,0 +1,134 @@
+{# Öneri paneli — gün bazında. Bağlam: student_id, target_date, suggestions, maturity_value, maturity_label, weeks_observed, days_observed, confidence_label (func) #}
+{% set mat_pct = (maturity_value * 100) | round | int %}
+{% set mat_color = '#94a3b8' if maturity_value < 0.3 else ('#6366f1' if maturity_value < 0.7 else '#059669') %}
+
+<div id="suggestions-{{ target_date.isoformat() }}" class="border-t border-slate-100 bg-indigo-50/30">
+  <div class="px-5 py-2.5 flex items-center justify-between border-b border-indigo-100">
+    <div class="flex items-center gap-2 flex-wrap">
+      <span class="text-sm font-semibold text-indigo-900">✨ Öneriler</span>
+      {% if suggestions %}
+      <span class="text-xs text-indigo-700">{{ suggestions|length }} öneri</span>
+      {% endif %}
+      <span class="ml-2 inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border" style="border-color: {{ mat_color }}; color: {{ mat_color }};">
+        <span class="w-1.5 h-1.5 rounded-full" style="background: {{ mat_color }};"></span>
+        Öğrenme: {{ maturity_label }} (%{{ mat_pct }})
+      </span>
+      {# Aktif phase ipucu — kapasite çarpanı uygulandığında öğretmen bilsin #}
+      {% if active_phase is defined and active_phase and active_phase.kind.value != 'regular' %}
+      {% set phase_color = {
+        'winter_break': 'border-sky-300 bg-sky-50 text-sky-700',
+        'summer_camp':  'border-amber-300 bg-amber-50 text-amber-700',
+        'exam_prep':    'border-rose-300 bg-rose-50 text-rose-700'
+      } %}
+      <span class="text-[10px] px-2 py-0.5 rounded-full border {{ phase_color.get(active_phase.kind.value, '') }}"
+            title="Bu dönemde günlük öneri sayısı {{ '%.1f' | format(active_phase.capacity_multiplier) }}x kapasiteyle hesaplanır">
+        {{ active_phase.kind_badge }} · {{ '%.1fx' | format(active_phase.capacity_multiplier) }}
+      </span>
+      {% endif %}
+      {# Faz 7: Track rozet — 11+/mezun için aktif alan görünür #}
+      {% if track_label is defined and track_label %}
+      <span class="text-[10px] px-2 py-0.5 rounded-full border border-violet-300 bg-violet-50 text-violet-700"
+            title="Bu öğrenci {{ track_label }} alanında çalışıyor — TYT + AYT ({{ track_label }}) dersleri öneriliyor">
+        🎯 {{ track_label }}
+      </span>
+      {% endif %}
+    </div>
+    {% if suggestions %}
+    <form hx-post="/teacher/students/{{ student_id }}/suggestions/accept-all"
+          hx-target="closest .day-card"
+          hx-swap="outerHTML"
+          hx-confirm="{{ suggestions|length }} öneriyi tamamen ekle?"
+          class="flex items-center gap-2">
+      <input type="hidden" name="date" value="{{ target_date.isoformat() }}" />
+      {% for s in suggestions %}
+      <input type="hidden" name="book_id" value="{{ s.book_id }}" />
+      <input type="hidden" name="section_id" value="{{ s.section_id }}" />
+      <input type="hidden" name="planned_count" value="{{ s.planned_count }}" />
+      {% endfor %}
+      <button type="submit"
+              class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded font-medium">
+        ✓ Tümünü ekle ({{ suggestions|length }})
+      </button>
+    </form>
+    {% endif %}
+  </div>
+
+  {# Faz 7: Track eksik uyarısı — 11+/mezun için zorunlu #}
+  {% if track_missing is defined and track_missing %}
+  <div class="px-5 py-2.5 bg-amber-50 border-b border-amber-200 text-xs text-amber-900 flex items-start gap-2">
+    <span class="text-amber-600">⚠️</span>
+    <div class="flex-1">
+      <b>Alan seçimi eksik</b> — bu öğrenci 11. sınıf veya üstü, AYT alanı (Sayısal/EA/Sözel/Dil) belirlenmemiş.
+      Şu an yalnızca <b>TYT</b> dersleri öneriliyor; AYT içeriği için öğrenci profilinden alan seçin.
+      <a href="/teacher/students/{{ student_id }}" class="text-amber-700 hover:text-amber-900 font-medium underline ml-1">
+        Profili düzenle →
+      </a>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if weeks_observed == 0 and days_observed == 0 %}
+  <div class="px-5 py-3 text-xs text-slate-500 italic">
+    Henüz geçmiş plan verisi yok. Siz plan yapmaya başladıkça sistem öğrenecek ve öneriler bu bölümde görünmeye başlayacak.
+  </div>
+  {% elif not suggestions %}
+  <div class="px-5 py-3 text-xs text-slate-500 italic">
+    Bu güne ek öneri bulunamadı — mevcut plan tipik düzende görünüyor veya tüm olası bölümler zaten eklenmiş.
+  </div>
+  {% else %}
+  <div class="px-5 py-3 space-y-1.5">
+    {% for s in suggestions %}
+      {% set conf = s.confidence %}
+      {% set conf_pct = (conf * 100) | round | int %}
+      {% set conf_lbl = confidence_label(conf) %}
+      {# Opacity basamakları: <20% => 0.4, 20-40% => 0.55, 40-60% => 0.75, 60-80% => 0.9, >80% => 1.0 #}
+      {% if conf < 0.2 %}{% set op = '0.45' %}
+      {% elif conf < 0.4 %}{% set op = '0.6' %}
+      {% elif conf < 0.6 %}{% set op = '0.78' %}
+      {% elif conf < 0.8 %}{% set op = '0.92' %}
+      {% else %}{% set op = '1.0' %}{% endif %}
+      {% set border_style = 'dashed' if conf < 0.5 else 'solid' %}
+      {% set border_color = '#94a3b8' if conf < 0.3 else ('#6366f1' if conf < 0.7 else '#4338ca') %}
+    <div class="suggestion-card flex items-center gap-3 rounded px-2.5 py-1.5 bg-white"
+         style="opacity: {{ op }}; border: 1.5px {{ border_style }} {{ border_color }};">
+      <span class="text-[9px] uppercase tracking-wide px-1.5 py-0.5 rounded flex-shrink-0"
+            style="background: {{ border_color }}; color: white;">
+        {{ conf_lbl }}
+      </span>
+      <div class="flex-1 min-w-0">
+        <div class="text-[13px] leading-snug">
+          <b>{{ s.book_name }}</b>
+          <span class="text-slate-500"> · {{ s.section_label }}</span>
+          {% if s.topic_name %}<span class="text-slate-400"> ({{ s.topic_name }})</span>{% endif %}
+          <span class="ml-1 text-xs text-slate-500">· {{ s.subject_name }}</span>
+        </div>
+        <div class="text-[10px] text-slate-500 truncate">
+          {{ s.reasons | join(' · ') }} · güven %{{ conf_pct }}
+        </div>
+      </div>
+      <form hx-post="/teacher/students/{{ student_id }}/suggestions/accept"
+            hx-target="closest .day-card"
+            hx-swap="outerHTML"
+            class="flex items-center gap-1.5 flex-shrink-0">
+        <input type="hidden" name="date" value="{{ target_date.isoformat() }}" />
+        <input type="hidden" name="book_id" value="{{ s.book_id }}" />
+        <input type="hidden" name="section_id" value="{{ s.section_id }}" />
+        <input type="number" name="planned_count" value="{{ s.planned_count }}" min="1" max="{{ s.remaining }}"
+               class="w-12 px-1.5 py-0.5 border border-slate-300 rounded text-xs text-right" />
+        <button type="submit" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded">+ Ekle</button>
+        <button type="button"
+                hx-post="/teacher/students/{{ student_id }}/suggestions/reject"
+                hx-vals='{"date": "{{ target_date.isoformat() }}", "book_id": "{{ s.book_id }}", "section_id": "{{ s.section_id }}"}'
+                hx-target="closest .suggestion-card"
+                hx-swap="outerHTML swap:200ms"
+                class="text-slate-400 hover:text-red-600 text-sm px-1"
+                title="Bu öneriyi reddet (sistem öğrensin)">×</button>
+      </form>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="px-5 pb-2.5 text-[10px] text-slate-400 italic">
+    <b>Nasıl okunur:</b> Önerilerin yoğunluğu ve kenarlıkları güveni temsil eder — soluk ve kesik çizgili olanlar zayıf, koyu ve tam çizgili olanlar güçlüdür. Sistem daha çok plan öğrendikçe öneriler belirginleşir. <b>Zayıf</b>/<b>Orta</b> etiketi üstte; <b>×</b> ile reddedilir, <b>+ Ekle</b> ile gerçek göreve dönüşür, sayıyı değiştirip kaydedebilirsiniz.
+  </div>
+  {% endif %}
+</div>

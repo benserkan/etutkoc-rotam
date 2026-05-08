@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}Bildirimler Kapatıldı — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+  <div class="w-full max-w-md">
+    <div class="flex flex-col items-center mb-5">
+      <img src="/static/img/etutkoc-logo.png" alt="" class="h-16 w-16 object-contain mb-2 grayscale opacity-70" />
+      <div class="brand-wordmark text-xl">
+        <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-1">·</span><span class="b-rotam">rotam</span>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-7 text-center">
+      {% if status == 'unsubscribed' %}
+        <div class="text-5xl mb-3">🔕</div>
+        <h1 class="text-lg font-semibold text-slate-900 mb-2">Bildirimleriniz kapatıldı</h1>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Bu hesaba artık günlük özet, haftalık rapor veya uyarı bildirimleri göndermeyeceğiz.
+          Davet ve doğrulama mesajları (örn. hesap güvenliği için) gönderilmeye devam edebilir.
+        </p>
+        <p class="text-xs text-slate-500 mt-4">
+          Fikrinizi değiştirirseniz panele giriş yaparak bildirim tercihlerinizi tekrar açabilirsiniz.
+        </p>
+        <a href="/login" class="inline-block mt-5 px-5 py-2 border border-slate-300 hover:bg-slate-50 text-sm rounded">Giriş yap</a>
+
+      {% elif status == 'already' %}
+        <div class="text-5xl mb-3">✓</div>
+        <h1 class="text-lg font-semibold text-slate-900 mb-2">Bildirimleriniz zaten kapalı</h1>
+        <p class="text-sm text-slate-600">Şu anda size sadece davet/doğrulama gibi sistem mesajları gönderiyoruz.</p>
+
+      {% else %}
+        <div class="text-5xl mb-3">⚠</div>
+        <h1 class="text-lg font-semibold text-slate-900 mb-2">Bağlantı tanınmıyor</h1>
+        <p class="text-sm text-slate-600">Lütfen bildirim e-postanızdaki "kapat" linkine tekrar tıklayın.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

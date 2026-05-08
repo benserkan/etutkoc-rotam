@@ -1,0 +1,418 @@
+"""Cron job fonksiyonları — kuyruğa bildirim atan scheduled aksiyonlar.
+
+Her job: `def job(db: Session, *, now: datetime) -> dict`. Bildirim üretmez,
+`enqueue_notification` çağırır. Asıl gönderim dispatcher'a aittir.
+
+Kayıt: `JOB_REGISTRY` dict'ine `job_key → callable` eşlenir; cron_runner
+tick'i `CronSchedule.job_key`'e bakıp bu sözlükten fonksiyonu bulur.
+"""
+
+from __future__ import annotations
+
+import logging
+from datetime import date, datetime, timedelta, timezone
+from typing import Callable
+
+from sqlalchemy.orm import Session, joinedload
+
+from app.models import (
+    NotificationChannel,
+    NotificationKind,
+    NotificationLog,
+    NotificationStatus,
+    ParentNotificationPref,
+    ParentStudentLink,
+    Task,
+    TaskBookItem,
+    User,
+    UserRole,
+)
+from app.services.analytics import (
+    daily_stats_for,
+    week_stats_for,
+    subject_breakdown,
+)
+from app.services.notification_producers import (
+    produce_daily_summary,
+    produce_drop_alert,
+    produce_empty_day,
+    produce_exam_approaching,
+    produce_weekly_report,
+)
+
+
+# Faz 8: sınav yaklaşıyor eşikleri (gün cinsinden, sıralı). Cron her gün
+# çalışır, days_left bu sette ise bir defaya mahsus bildirim gönderir.
+EXAM_APPROACHING_THRESHOLDS: tuple[int, ...] = (30, 7, 1)
+
+
+logger = logging.getLogger(__name__)
+
+
+# ---------------------------- Yardımcılar ----------------------------
+
+
+def _today_utc(now: datetime) -> date:
+    return now.astimezone(timezone.utc).date()
+
+
+def _has_recent_notification(
+    db: Session, *, parent_id: int, student_id: int, kind: NotificationKind, within: timedelta
+) -> bool:
+    """Aynı veliye/öğrenciye/türe son N saatte/günde bildirim gitti mi?
+    Spam koruması — örn günlük özetin aynı gün ikinci kez atılmasını engeller.
+    """
+    cutoff = datetime.now(timezone.utc) - within
+    return (
+        db.query(NotificationLog)
+        .filter(
+            NotificationLog.parent_id == parent_id,
+            NotificationLog.student_id == student_id,
+            NotificationLog.kind == kind,
+            NotificationLog.status.in_([
+                NotificationStatus.SENT, NotificationStatus.QUEUED,
+            ]),
+            NotificationLog.queued_at >= cutoff,
+        )
+        .first()
+        is not None
+    )
+
+
+def _consecutive_empty_days(db: Session, student_id: int, today_date: date, lookback: int = 5) -> int:
+    """Bugün dahil son N günde planlı ama tamamlanmamış (boş) gün sayısı (üst üste).
+
+    "Üst üste boş gün uyarısı 3'ten sonra atma" mantığı için.
+    """
+    count = 0
+    for i in range(lookback):
+        d = today_date - timedelta(days=i)
+        stats = daily_stats_for(db, student_id, d)
+        if stats.planned > 0 and stats.completed == 0:
+            count += 1
+        else:
+            break
+    return count
+
+
+def _parent_prefs_map(db: Session) -> dict[int, ParentNotificationPref]:
+    rows = db.query(ParentNotificationPref).all()
+    return {p.parent_id: p for p in rows}
+
+
+def _all_parent_student_pairs(db: Session) -> list[tuple[User, User, ParentStudentLink]]:
+    """Aktif (parent, student, link) üçlüleri."""
+    links = (
+        db.query(ParentStudentLink)
+        .options(
+            joinedload(ParentStudentLink.parent),
+            joinedload(ParentStudentLink.student),
+        )
+        .all()
+    )
+    out = []
+    for link in links:
+        if not link.parent or not link.student:
+            continue
+        if not link.parent.is_active or not link.student.is_active:
+            continue
+        if link.parent.role != UserRole.PARENT or link.student.role != UserRole.STUDENT:
+            continue
+        out.append((link.parent, link.student, link))
+    return out
+
+
+# ---------------------------- Job: günlük özet + boş gün ----------------------------
+
+
+def daily_summary(db: Session, *, now: datetime) -> dict:
+    """Her aktif veli/öğrenci çifti için günlük özet bildirimi üret.
+
+    İçerik:
+      - planned > 0 ve completed > 0 → DAILY_SUMMARY (tamamlama yüzdesi)
+      - planned > 0 ve completed = 0 → EMPTY_DAY (3 günden fazla üst üste ise atla)
+      - planned = 0 → atla (gürültü)
+    """
+    today = _today_utc(now)
+    pairs = _all_parent_student_pairs(db)
+    counts = {"daily": 0, "empty": 0, "skipped_recent": 0, "skipped_streak": 0, "skipped_zero": 0}
+
+    for parent, student, link in pairs:
+        stats = daily_stats_for(db, student.id, today)
+
+        if stats.planned == 0:
+            counts["skipped_zero"] += 1
+            continue
+
+        if stats.completed > 0:
+            # Aynı gün ikinci özet atma
+            if _has_recent_notification(
+                db, parent_id=parent.id, student_id=student.id,
+                kind=NotificationKind.DAILY_SUMMARY, within=timedelta(hours=18),
+            ):
+                counts["skipped_recent"] += 1
+                continue
+
+            subjects = subject_breakdown(db, student.id)
+            sb = [
+                {
+                    "subject": s["name"],
+                    "completed": s["completed"],
+                    "planned": s["completed"] + s["remaining"] + s["reserved"],
+                    "unit": "test",
+                }
+                for s in subjects[:6]
+            ]
+            produce_daily_summary(
+                db, parent=parent, student=student,
+                completed=stats.completed, planned=stats.planned,
+                subject_breakdown=sb,
+            )
+            counts["daily"] += 1
+        else:
+            # Boş gün uyarısı — ama 3 günden fazla üst üste ise sus
+            streak = _consecutive_empty_days(db, student.id, today)
+            if streak > 3:
+                counts["skipped_streak"] += 1
+                continue
+            if _has_recent_notification(
+                db, parent_id=parent.id, student_id=student.id,
+                kind=NotificationKind.EMPTY_DAY, within=timedelta(hours=18),
+            ):
+                counts["skipped_recent"] += 1
+                continue
+            produce_empty_day(
+                db, parent=parent, student=student,
+                planned=stats.planned, consecutive_empty_days=streak,
+            )
+            counts["empty"] += 1
+
+    db.flush()
+    logger.info("daily_summary cron: %s", counts)
+    return counts
+
+
+# ---------------------------- Job: haftalık döngü-son backstop ----------------------------
+
+
+def weekly_backstop(db: Session, *, now: datetime) -> dict:
+    """Her gün gece 23:55 — son 7 günde haftalık rapor gönderilmemiş öğrenci varsa
+    bunlar için weekly_report üret.
+
+    Asıl trigger Sprint 8'de olay tabanlı: öğrencinin döngü-son gününde son
+    görev işaretlendiği an. Bu cron backstop — düşmüş tetikleyicileri yakalar.
+
+    Tek kural: bir öğrenciye 7 gün içinde 1 weekly_report yeterli.
+    """
+    today = _today_utc(now)
+    pairs = _all_parent_student_pairs(db)
+    counts = {"sent": 0, "skipped_recent": 0, "skipped_no_tasks": 0}
+
+    for parent, student, link in pairs:
+        if _has_recent_notification(
+            db, parent_id=parent.id, student_id=student.id,
+            kind=NotificationKind.WEEKLY_REPORT, within=timedelta(days=6),
+        ):
+            counts["skipped_recent"] += 1
+            continue
+
+        # Son 7 günde hiç görev yoksa hafta raporu da boş; atla
+        week_start = today - timedelta(days=6)
+        any_task = (
+            db.query(Task.id)
+            .filter(
+                Task.student_id == student.id,
+                Task.date >= week_start,
+                Task.date <= today,
+            )
+            .first()
+        )
+        if not any_task:
+            counts["skipped_no_tasks"] += 1
+            continue
+
+        wstats = week_stats_for(db, student.id, today)
+        rate = (
+            int(round(100 * wstats.completed / wstats.planned)) if wstats.planned > 0 else None
+        )
+        produce_weekly_report(
+            db, parent=parent, student=student,
+            week_start=week_start, week_end=today,
+            completed=wstats.completed, planned=wstats.planned, rate_pct=rate,
+        )
+        counts["sent"] += 1
+
+    db.flush()
+    logger.info("weekly_backstop cron: %s", counts)
+    return counts
+
+
+# ---------------------------- Job: düşüş alarmı ----------------------------
+
+
+def drop_alert(db: Session, *, now: datetime) -> dict:
+    """Pazartesi 06:00 — geçen hafta vs önceki hafta tamamlama oranı kıyas.
+
+    %30+ düşüş varsa DROP_ALERT enqueue. Veli pref'i kapalıysa producer suppresses.
+    """
+    today = _today_utc(now)
+    last_week_end = today - timedelta(days=1)
+    last_week_start = last_week_end - timedelta(days=6)
+    prev_week_end = last_week_start - timedelta(days=1)
+    prev_week_start = prev_week_end - timedelta(days=6)
+
+    pairs = _all_parent_student_pairs(db)
+    counts = {"sent": 0, "skipped_no_drop": 0, "skipped_no_data": 0, "skipped_recent": 0}
+
+    for parent, student, link in pairs:
+        if _has_recent_notification(
+            db, parent_id=parent.id, student_id=student.id,
+            kind=NotificationKind.DROP_ALERT, within=timedelta(days=6),
+        ):
+            counts["skipped_recent"] += 1
+            continue
+
+        last_w = week_stats_for(db, student.id, last_week_end)
+        prev_w = week_stats_for(db, student.id, prev_week_end)
+
+        # Veri yetersiz
+        if last_w.planned == 0 or prev_w.planned == 0:
+            counts["skipped_no_data"] += 1
+            continue
+
+        last_rate = last_w.completed / last_w.planned
+        prev_rate = prev_w.completed / prev_w.planned
+        drop = prev_rate - last_rate
+
+        if prev_rate < 0.10 or drop < 0.30:
+            counts["skipped_no_drop"] += 1
+            continue
+
+        produce_drop_alert(
+            db, parent=parent, student=student,
+            last_rate_pct=int(round(last_rate * 100)),
+            prev_rate_pct=int(round(prev_rate * 100)),
+            drop_pct=int(round(drop * 100)),
+            last_week_label=f"{last_week_start.isoformat()} – {last_week_end.isoformat()}",
+            prev_week_label=f"{prev_week_start.isoformat()} – {prev_week_end.isoformat()}",
+        )
+        counts["sent"] += 1
+
+    db.flush()
+    logger.info("drop_alert cron: %s", counts)
+    return counts
+
+
+# ---------------------------- Job: sınav yaklaşıyor (Faz 8) ----------------------------
+
+
+def _exam_threshold_already_sent(
+    db: Session,
+    *,
+    parent_id: int,
+    student_id: int,
+    threshold: int,
+    exam_year: int,
+) -> bool:
+    """Bu (parent, student, threshold, exam_year) için EXAM_APPROACHING zaten
+    gönderildi mi?
+
+    Subject prefix `[D-{threshold}/Y{year}]` üzerinden LIKE ile sorgulanır. Bu
+    işaret `produce_exam_approaching` tarafından konuyor; iki yer beraber
+    değişmeli. Year suffix: aynı öğrenci 2 yıl üst üste mezun/12. sınıf
+    kalırsa her yıl için ayrı kayıt — önceki yılın bildirimi yeni yılı
+    bastırmaz.
+    """
+    marker = f"[D-{threshold}/Y{exam_year}]%"
+    return (
+        db.query(NotificationLog)
+        .filter(
+            NotificationLog.parent_id == parent_id,
+            NotificationLog.student_id == student_id,
+            NotificationLog.kind == NotificationKind.EXAM_APPROACHING,
+            NotificationLog.subject.like(marker),
+            NotificationLog.status.in_([
+                NotificationStatus.SENT, NotificationStatus.QUEUED,
+            ]),
+        )
+        .first()
+        is not None
+    )
+
+
+def exam_approaching(db: Session, *, now: datetime) -> dict:
+    """Her gün — efektif sınav tarihi {30, 7, 1} gün uzağa düşen öğrenciler için
+    EXAM_APPROACHING bildirimi.
+
+    İdempotency: aynı (parent, student, threshold) için bir kez. Yıl döndüğünde
+    yeniden hak kazanır mı? — Hayır; aynı subject prefix'iyle önceden satır varsa
+    geçilir. Pratikte: bir sınav cycle'ı bittikten sonra öğrenci bir sonraki
+    yıla aynı target ile kalırsa farklı `student_id` veya farklı threshold
+    eşleşmesiyle yeni satır üretir; aynı student_id+aynı threshold yıllar
+    sonra bile gönderilmiş kalır. Mevcut kullanım için bu kabul edilebilir
+    (üst üste 2 yıl YKS kalan mezun için yeniden bildirim istenirse subject
+    suffix'ine year ekleyip filtreyi sıkılaştırmak gerekir).
+
+    Hedef sınavı olmayan (5-7, 9-11) öğrenciler atlanır.
+    """
+    today = _today_utc(now)
+    pairs = _all_parent_student_pairs(db)
+    counts = {
+        "sent": 0,
+        "skipped_no_target": 0,
+        "skipped_no_date": 0,
+        "skipped_past": 0,
+        "skipped_far": 0,
+        "skipped_already": 0,
+    }
+
+    for parent, student, link in pairs:
+        target = student.effective_exam_target  # 'LGS' / 'YKS' / None
+        if target is None:
+            counts["skipped_no_target"] += 1
+            continue
+        exam_date = student.effective_exam_date
+        if exam_date is None:
+            counts["skipped_no_date"] += 1
+            continue
+        days_left = (exam_date - today).days
+        if days_left < 0:
+            counts["skipped_past"] += 1
+            continue
+        if days_left not in EXAM_APPROACHING_THRESHOLDS:
+            counts["skipped_far"] += 1
+            continue
+        if _exam_threshold_already_sent(
+            db,
+            parent_id=parent.id,
+            student_id=student.id,
+            threshold=days_left,
+            exam_year=exam_date.year,
+        ):
+            counts["skipped_already"] += 1
+            continue
+        produce_exam_approaching(
+            db,
+            parent=parent,
+            student=student,
+            days_left=days_left,
+            threshold=days_left,
+            exam_label=student.effective_exam_label,
+            exam_date=exam_date,
+        )
+        counts["sent"] += 1
+
+    db.flush()
+    logger.info("exam_approaching cron: %s", counts)
+    return counts
+
+
+# ---------------------------- Job registry ----------------------------
+
+
+JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
+    "daily_summary": daily_summary,
+    "weekly_backstop": weekly_backstop,
+    "drop_alert": drop_alert,
+    "exam_approaching": exam_approaching,
+}

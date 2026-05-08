@@ -1,0 +1,269 @@
+{% extends "base.html" %}
+{% block title %}Öneri Sistemi — AI Performansı{% endblock %}
+
+{% block content %}
+{% set ins = insights %}
+{% set overall_color = HEALTH_COLORS[ins.health.overall] %}
+{% set overall_text = HEALTH_LABELS.overall[ins.health.overall] %}
+{% set act_color = HEALTH_COLORS[ins.health.activity] %}
+{% set act_text = HEALTH_LABELS.activity[ins.health.activity] %}
+
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold text-slate-900">AI Öneri Sistemi — Performans</h1>
+    <div class="text-sm text-slate-500 mt-1">Modelin öğrenme durumu, kabul/red oranları, trend ve sağlık ışıkları</div>
+  </div>
+  <a href="/teacher" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">← Panel</a>
+</div>
+
+{# 1) Sağlık ışıkları (üst şerit) #}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-5">
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Filo Olgunluğu</div>
+    <div class="flex items-baseline gap-2 mt-1">
+      <div class="text-2xl font-semibold" style="color: {{ overall_color }};">{{ overall_text }}</div>
+      <span class="text-xs text-slate-400">%{{ (ins.avg_maturity * 100) | round | int }}</span>
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">{{ ins.students_with_data }} öğrencide gözlem var</div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Son Etkileşim</div>
+    <div class="flex items-baseline gap-2 mt-1">
+      <div class="text-lg font-semibold" style="color: {{ act_color }};">{{ act_text }}</div>
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">
+      {% if ins.last_activity_at %}{{ ins.last_activity_at.strftime('%d.%m.%Y %H:%M') }}{% else %}—{% endif %}
+    </div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Kabul Oranı</div>
+    <div class="flex items-baseline gap-2 mt-1">
+      {% if ins.fleet_acceptance_rate is none %}
+      <div class="text-2xl font-semibold text-slate-400">—</div>
+      <span class="text-xs text-slate-400">veri yok</span>
+      {% else %}
+      {% set rate_pct = (ins.fleet_acceptance_rate * 100) | round | int %}
+      {% set rate_color = '#059669' if rate_pct >= 60 else ('#d97706' if rate_pct >= 30 else '#dc2626') %}
+      <div class="text-2xl font-semibold" style="color: {{ rate_color }};">%{{ rate_pct }}</div>
+      <span class="text-xs text-slate-400">{{ ins.fleet_total_accepted }} / {{ ins.fleet_total_accepted + ins.fleet_total_rejected }}</span>
+      {% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">kabul / (kabul + red)</div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500">Toplam Geribildirim</div>
+    <div class="flex items-baseline gap-2 mt-1">
+      <div class="text-2xl font-semibold text-slate-900">{{ ins.fleet_total_accepted + ins.fleet_total_rejected }}</div>
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">
+      <span class="text-emerald-600">✓ {{ ins.fleet_total_accepted }}</span> ·
+      <span class="text-rose-600">✗ {{ ins.fleet_total_rejected }}</span>
+    </div>
+  </div>
+</div>
+
+{# 2) Kabul/red trendi #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-5">
+  <div class="lg:col-span-2 bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">5 Hafta Trendi</h2>
+      <div class="text-xs text-slate-500">Haftalık kabul (yeşil) ve red (kırmızı) sayıları</div>
+    </div>
+    <div class="p-4">
+      <div class="relative" style="height: 200px;">
+        <canvas id="ai-trend"></canvas>
+      </div>
+    </div>
+    <div class="px-5 py-2 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+      <b>Nasıl okunur:</b> Yeşil çubukların büyümesi modelin öneri kalitesinin arttığını gösterir; kırmızı azalıyorsa öğretmenin önerilere itirazı düşüyor demektir. İlk haftalarda kırmızının baskın olması doğal — sistem ders alıyor.
+    </div>
+  </div>
+
+  {# Sağ: Sistem durumu kısa özet #}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">Sistem Durumu</h2>
+    </div>
+    <div class="p-4 space-y-3 text-sm">
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full" style="background: {{ overall_color }};"></span>
+        <span class="font-medium">Olgunluk:</span>
+        <span class="text-slate-700">{{ overall_text }} (%{{ (ins.avg_maturity * 100) | round | int }})</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full" style="background: {{ act_color }};"></span>
+        <span class="font-medium">Aktivite:</span>
+        <span class="text-slate-700">{{ act_text }}</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="w-2.5 h-2.5 rounded-full" style="background: {% if ins.fleet_acceptance_rate and ins.fleet_acceptance_rate >= 0.6 %}#059669{% elif ins.fleet_acceptance_rate and ins.fleet_acceptance_rate >= 0.3 %}#d97706{% elif ins.fleet_acceptance_rate %}#dc2626{% else %}#94a3b8{% endif %};"></span>
+        <span class="font-medium">Kabul oranı:</span>
+        <span class="text-slate-700">
+          {% if ins.fleet_acceptance_rate is none %}veri yok{% else %}%{{ (ins.fleet_acceptance_rate * 100) | round | int }}{% endif %}
+        </span>
+      </div>
+      <div class="text-[11px] text-slate-500 pt-3 border-t border-slate-100 italic">
+        <b>Kuvvetli model:</b> Olgunluk yüksek + kabul oranı %60+ + aktivite "Bugün aktif". Bu durumda ✨ önerilerinin çoğu kabul edilebilir niteliktedir.
+      </div>
+    </div>
+  </div>
+</div>
+
+{# 3) Öğrenci Olgunluk Tablosu #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-5">
+  <div class="px-5 py-3 border-b border-slate-100">
+    <h2 class="font-semibold text-slate-900">Öğrenci Bazında Olgunluk</h2>
+    <div class="text-xs text-slate-500">Her öğrencinin model olgunluk skoru ve geribildirim sayıları</div>
+  </div>
+  {% if ins.students %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50">
+        <tr class="text-slate-700">
+          <th class="text-left px-4 py-2 font-medium">Öğrenci</th>
+          <th class="text-left px-4 py-2 font-medium">Olgunluk</th>
+          <th class="text-right px-4 py-2 font-medium">Hafta</th>
+          <th class="text-right px-4 py-2 font-medium">Gün</th>
+          <th class="text-right px-4 py-2 font-medium">Kabul</th>
+          <th class="text-right px-4 py-2 font-medium">Red</th>
+          <th class="text-right px-4 py-2 font-medium pr-4">Kabul %</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in ins.students %}
+        {% set mat_pct = (r.maturity_value * 100) | round | int %}
+        {% set mat_color = '#94a3b8' if mat_pct < 15 else ('#d97706' if mat_pct < 40 else ('#0ea5e9' if mat_pct < 70 else '#059669')) %}
+        <tr>
+          <td class="px-4 py-2.5 font-medium">
+            <a href="/teacher/students/{{ r.student_id }}" class="text-indigo-600 hover:underline">{{ r.full_name }}</a>
+            <a href="/teacher/students/{{ r.student_id }}/suggestions-diagnostics"
+               class="ml-2 text-[11px] text-slate-500 hover:text-indigo-700 hover:underline"
+               title="Öneri motoru sayısal tanı">tanı →</a>
+          </td>
+          <td class="px-4 py-2.5">
+            <div class="flex items-center gap-2">
+              <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+                <div style="background: {{ mat_color }}; width: {{ mat_pct }}%; height: 100%;"></div>
+              </div>
+              <span class="text-xs" style="color: {{ mat_color }};">{{ r.maturity_text }} (%{{ mat_pct }})</span>
+            </div>
+          </td>
+          <td class="px-4 py-2.5 text-right text-slate-600">{{ r.weeks_observed }}</td>
+          <td class="px-4 py-2.5 text-right text-slate-600">{{ r.days_observed }}</td>
+          <td class="px-4 py-2.5 text-right text-emerald-600 font-medium">{{ r.accepted_count }}</td>
+          <td class="px-4 py-2.5 text-right text-rose-600 font-medium">{{ r.rejected_count }}</td>
+          <td class="px-4 py-2.5 text-right pr-4 font-semibold">
+            {% if r.acceptance_rate is none %}
+            <span class="text-slate-400">—</span>
+            {% else %}
+            {% set rp = (r.acceptance_rate * 100) | round | int %}
+            <span style="color: {% if rp >= 60 %}#059669{% elif rp >= 30 %}#d97706{% else %}#dc2626{% endif %};">%{{ rp }}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="px-5 py-2 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+    <b>Nasıl okunur:</b> Olgunluk barı dolduğunda model o öğrenci için "olgun" sayılır ve önerileri daha güçlü güvenle gelir. Kabul %'si %60 üstü ise model o öğrencinin paterniyle uyumlu; %30 altı ise model henüz öğretmenin tercihlerini yakalayamamış demektir — siz reddettikçe öğrenir.
+  </div>
+  {% else %}
+  <div class="px-5 py-8 text-center text-slate-500 text-sm">Öğrenci yok.</div>
+  {% endif %}
+</div>
+
+{# 4) Top patternler #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+  {# Top kabul edilen #}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">En Çok Kabul Edilen 5 Pattern</h2>
+      <div class="text-xs text-slate-500">Modelin doğru tahminleri</div>
+    </div>
+    {% if ins.top_accepted %}
+    <div class="divide-y divide-slate-100">
+      {% for p in ins.top_accepted %}
+      <div class="px-5 py-2.5 flex items-center gap-3">
+        <span class="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center text-xs flex-shrink-0">{{ loop.index }}</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium text-slate-900 truncate">{{ p.book_name }}</div>
+          <div class="text-xs text-slate-500 truncate">{{ p.section_label }} · {{ p.subject_name }}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-emerald-600 font-bold">{{ p.count }}</div>
+          <div class="text-[10px] text-slate-400">{{ p.students }} öğrenci</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-8 text-center text-sm text-slate-400 italic">Henüz kabul edilmiş öneri yok.</div>
+    {% endif %}
+    <div class="px-5 py-2 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+      <b>Nasıl okunur:</b> Bu kombinasyonlar sizin onayınızla program rutinine girmiş; model bunları bir sonraki seferde daha yüksek güvenle önerecek.
+    </div>
+  </div>
+
+  {# Top reddedilen #}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">En Çok Reddedilen 5 Pattern</h2>
+      <div class="text-xs text-slate-500">Modelin yanlış tahminleri (öğrenildi)</div>
+    </div>
+    {% if ins.top_rejected %}
+    <div class="divide-y divide-slate-100">
+      {% for p in ins.top_rejected %}
+      <div class="px-5 py-2.5 flex items-center gap-3">
+        <span class="w-7 h-7 rounded-full bg-rose-100 text-rose-700 font-bold flex items-center justify-center text-xs flex-shrink-0">{{ loop.index }}</span>
+        <div class="flex-1 min-w-0">
+          <div class="text-sm font-medium text-slate-900 truncate">{{ p.book_name }}</div>
+          <div class="text-xs text-slate-500 truncate">{{ p.section_label }} · {{ p.subject_name }}</div>
+        </div>
+        <div class="text-right flex-shrink-0">
+          <div class="text-rose-600 font-bold">{{ p.count }}</div>
+          <div class="text-[10px] text-slate-400">{{ p.students }} öğrenci</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="px-5 py-8 text-center text-sm text-slate-400 italic">Henüz reddedilmiş öneri yok.</div>
+    {% endif %}
+    <div class="px-5 py-2 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+      <b>Nasıl okunur:</b> 3+ kez reddedilen kombinasyonlar otomatik olarak öneri listesinden çıkar. Sayım sıfırlanmaz; 60 günde zamanla soluklaşır.
+    </div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    try {
+      const ctx = document.getElementById('ai-trend');
+      if (!ctx) return;
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: {{ trend_labels | tojson }},
+          datasets: [
+            { label: 'Kabul', data: {{ trend_accepted | tojson }}, backgroundColor: '#059669', borderRadius: 4 },
+            { label: 'Red',   data: {{ trend_rejected | tojson }}, backgroundColor: '#dc2626', borderRadius: 4 },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 11 } } } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: { beginAtZero: true, grid: { color: 'rgba(0,0,0,0.05)' }, ticks: { precision: 0, font: { size: 10 } } },
+          },
+        },
+      });
+    } catch (e) { console.warn('ai-insights trend chart:', e); }
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,34 @@
+# Render.com Blueprint — bu repo'yu Render'a bağladığında otomatik kurulur.
+# 1) https://render.com hesabı aç
+# 2) New > Blueprint > GitHub repo bağla
+# 3) Bu dosya bulunur ve aşağıdaki servisler kurulur
+
+services:
+  - type: web
+    name: lgs-takip
+    runtime: docker
+    plan: free  # ileride: starter ($7/ay)
+    healthCheckPath: /healthz
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: DEBUG
+        value: "false"
+      - key: SESSION_SECRET
+        generateValue: true   # Render rastgele güvenli değer üretir
+      - key: DATABASE_URL
+        fromDatabase:
+          name: lgs-takip-db
+          property: connectionString
+      - key: APP_BASE_URL
+        sync: false   # deploy sonrası kendi URL'ni gir (https://lgs-takip.onrender.com)
+      # Email (opsiyonel — başlangıçta devre dışı)
+      - key: EMAIL_ENABLED
+        value: "false"
+      # SMTP_* değerlerini ileride dashboard'dan ekle
+
+databases:
+  - name: lgs-takip-db
+    plan: free   # 1GB, 90 gün retention; ileride starter ($7/ay)
+    databaseName: lgs
+    user: lgs

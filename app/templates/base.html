@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}ETÜTKOÇ Rotam{% endblock %}</title>
+  <link rel="icon" type="image/png" href="/static/img/etutkoc-logo.png" />
+  <link rel="apple-touch-icon" href="/static/img/etutkoc-logo.png" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // ETÜTKOÇ Rotam — kurumsal renk paleti
+    // Tailwind'in default `indigo` paletini brand-teal ile override ediyoruz;
+    // böylece kod genelindeki `indigo-*` sınıfları otomatik olarak kurumsal renge döner.
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            indigo: {
+              50:  '#E6F3F5',
+              100: '#C3E2E7',
+              200: '#9CCED7',
+              300: '#6FB7C2',
+              400: '#3D9CAB',
+              500: '#1A8898',
+              600: '#117A86',
+              700: '#0E5F69',
+              800: '#0C4F58',
+              900: '#093F47',
+            },
+            brand: {
+              teal:        '#117A86',
+              tealDark:    '#0E5F69',
+              tealLight:   '#3D9CAB',
+              yellow:      '#E8AC2D',
+              yellowDark:  '#C68A1A',
+              yellowLight: '#F0BD55',
+            },
+          },
+          fontFamily: {
+            brand: ['"Segoe UI"', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+    /* Marka kelime işareti — etütkoç + rotam */
+    .brand-wordmark { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-weight: 800; letter-spacing: -0.01em; }
+    .brand-wordmark .b-etut { color: #117A86; }
+    .brand-wordmark .b-rotam { color: #E8AC2D; }
+    /* Details summary — varsayılan disclosure üçgenini gizle */
+    summary.list-none::-webkit-details-marker { display: none; }
+    summary.list-none { list-style: none; }
+    /* Comm modal animasyonu */
+    dialog.comm-modal[open] {
+      animation: comm-fade-in 0.15s ease-out;
+    }
+    @keyframes comm-fade-in {
+      from { opacity: 0; transform: translateY(-8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    dialog.comm-modal::backdrop {
+      animation: comm-backdrop-in 0.15s ease-out;
+    }
+    @keyframes comm-backdrop-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+  </style>
+  {% block head %}{% endblock %}
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-800">
+  {% if user %}
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <div class="flex items-center gap-6">
+        <a href="/" class="flex items-center gap-2.5 group">
+          <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam"
+               class="h-9 w-9 object-contain group-hover:scale-105 transition-transform" />
+          <span class="brand-wordmark text-base leading-none">
+            <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-0.5">·</span><span class="b-rotam">rotam</span>
+          </span>
+        </a>
+        <nav class="hidden md:flex items-center gap-4 text-sm">
+          {% if user.role.value == 'teacher' %}
+            <a href="/teacher" class="text-slate-600 hover:text-slate-900">Panel</a>
+            <a href="/teacher/students" class="text-slate-600 hover:text-slate-900">Öğrenciler</a>
+            <a href="/teacher/books" class="text-slate-600 hover:text-slate-900">Kitap Kütüphanesi</a>
+            <a href="/teacher/book-sets" class="text-slate-600 hover:text-slate-900">Setler</a>
+            <a href="/teacher/requests" class="text-slate-600 hover:text-slate-900 flex items-center gap-1">
+              📬 Talepler
+              <span hx-get="/_partial/teacher-pending-count" hx-trigger="load, every 30s" hx-swap="outerHTML"></span>
+            </a>
+            <a href="/teacher/ai-insights" class="text-slate-600 hover:text-slate-900">🤖 AI Performans</a>
+            <a href="/teacher/years" class="text-slate-600 hover:text-slate-900">Akademik Yıllar</a>
+            <a href="/teacher/settings" class="text-slate-600 hover:text-slate-900">⚙️</a>
+          {% else %}
+            <a href="/student" class="text-slate-600 hover:text-slate-900">Bugün</a>
+            <a href="/student/week" class="text-slate-600 hover:text-slate-900">Haftam</a>
+            <a href="/student/books" class="text-slate-600 hover:text-slate-900">Kitaplarım</a>
+            <a href="/student/requests" class="text-slate-600 hover:text-slate-900 flex items-center gap-1">
+              💬 Taleplerim
+              <span hx-get="/_partial/student-pending-count" hx-trigger="load, every 60s" hx-swap="outerHTML"></span>
+            </a>
+          {% endif %}
+        </nav>
+      </div>
+      <div class="flex items-center gap-3 text-sm">
+        <span class="text-slate-600">{{ user.full_name }}</span>
+        <form action="/logout" method="post">
+          <button type="submit" class="text-slate-500 hover:text-red-600">Çıkış</button>
+        </form>
+      </div>
+    </div>
+  </header>
+  {% endif %}
+
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    {% block content %}{% endblock %}
+  </main>
+
+  {# Global "sinema koltuğu" book-grid modal — HTMX ile dolar #}
+  <dialog id="book-grid-dialog"
+          class="comm-modal book-grid-modal rounded-xl shadow-2xl backdrop:bg-slate-900/60 backdrop:backdrop-blur-sm w-[95vw] max-w-3xl p-0 border border-slate-200">
+    <div id="book-grid-content"></div>
+  </dialog>
+
+  <script>
+    (function() {
+      // Comm modal — sekme geçişi + backdrop kapama (defensive: hata olursa sayfayı bozmasın)
+      try {
+        document.addEventListener('click', function(e) {
+          try {
+            const tab = e.target && e.target.closest && e.target.closest('.comm-tab');
+            if (tab) {
+              e.preventDefault();
+              const dlg = tab.closest('dialog.comm-modal');
+              if (!dlg) return;
+              const target = tab.dataset.tab;
+              dlg.querySelectorAll('.comm-tab').forEach(b => {
+                const active = b.dataset.tab === target;
+                b.classList.toggle('border-indigo-500', active);
+                b.classList.toggle('text-indigo-700', active);
+                b.classList.toggle('font-medium', active);
+                b.classList.toggle('border-transparent', !active);
+                b.classList.toggle('text-slate-600', !active);
+              });
+              dlg.querySelectorAll('.comm-panel').forEach(p => {
+                p.classList.toggle('hidden', p.dataset.tab !== target);
+              });
+              return;
+            }
+            // Backdrop tıkla kapat
+            if (e.target && e.target.tagName === 'DIALOG' && e.target.classList && e.target.classList.contains('comm-modal')) {
+              e.target.close();
+            }
+          } catch (innerErr) {
+            console.warn('comm-modal click handler:', innerErr);
+          }
+        });
+      } catch (err) {
+        console.error('comm-modal init:', err);
+      }
+
+      // Sinema-koltuk modal — HTMX swap sonrası dialog'ı aç
+      // (hx-on::after-settle yerine global event listener — daha güvenli)
+      try {
+        document.body.addEventListener('htmx:afterSettle', function(evt) {
+          try {
+            const tgt = evt.detail && evt.detail.target;
+            if (tgt && tgt.id === 'book-grid-content') {
+              const dlg = document.getElementById('book-grid-dialog');
+              if (dlg && typeof dlg.showModal === 'function' && !dlg.open) {
+                dlg.showModal();
+              }
+            }
+          } catch (e) {
+            console.warn('book-grid showModal:', e);
+          }
+        });
+      } catch (err) {
+        console.warn('book-grid init:', err);
+      }
+    })();
+  </script>
+</body>
+</html>

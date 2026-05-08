@@ -1,0 +1,192 @@
+{# Öğrenci × veliler sekmesi — student_detail.html'in bir paneli.
+
+Bağlam: student, parent_links (list of ParentStudentLink with parent loaded),
+        parent_invitations (list of ParentInvitation, henüz consumed_at=NULL ve
+        expires_at > now olanlar), PARENT_RELATION_LABELS, flash (str|None)
+#}
+<div class="space-y-5">
+
+  {% if flash %}
+  {% set flash_meta = {
+    'invited':        ('emerald', 'Davet maili gönderildi.'),
+    'invited_log_only': ('amber', 'Davet kaydı oluşturuldu ama mail gönderimi devre dışı (log only).'),
+    'invalid_email':  ('red', 'Geçerli bir e-posta adresi girin.'),
+    'conflict_teacher': ('red', 'Bu e-posta sistemde öğretmen olarak kullanılıyor. Farklı bir adres kullanın.'),
+    'conflict_student': ('red', 'Bu e-posta sistemde öğrenci olarak kullanılıyor. Farklı bir adres kullanın.'),
+    'already_invited':('amber', 'Bu e-posta için zaten açık bir davet var. Önce iptal edin veya kullanıcıyı bekleyin.'),
+    'already_linked': ('amber', 'Bu e-posta zaten bu öğrenciye veli olarak bağlı.'),
+    'cancelled':      ('slate', 'Davet iptal edildi.'),
+    'cancel_not_found': ('red', 'İptal edilecek davet bulunamadı.'),
+    'unlinked':       ('slate', 'Veli bağlantısı kaldırıldı. Veli hesabı silinmedi.'),
+    'unlink_not_found': ('red', 'Bağ bulunamadı.'),
+  }.get(flash) %}
+  {% if flash_meta %}
+  <div class="px-4 py-2.5 rounded-md text-sm
+              {% if flash_meta[0] == 'emerald' %}bg-emerald-50 text-emerald-800 border border-emerald-200
+              {% elif flash_meta[0] == 'amber' %}bg-amber-50 text-amber-800 border border-amber-200
+              {% elif flash_meta[0] == 'red' %}bg-red-50 text-red-800 border border-red-200
+              {% else %}bg-slate-50 text-slate-700 border border-slate-200{% endif %}">
+    {{ flash_meta[1] }}
+  </div>
+  {% else %}
+  {# Tanımlı slug değilse ham metin olarak göster (örn. note gönderim sonucu) #}
+  <div class="px-4 py-2.5 rounded-md text-sm bg-slate-50 text-slate-700 border border-slate-200">
+    {{ flash }}
+  </div>
+  {% endif %}
+  {% endif %}
+
+  {# Mevcut veliler #}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h2 class="font-semibold text-slate-900">Bağlı Veliler</h2>
+        <p class="text-xs text-slate-500">Bu öğrencinin sistemdeki veli hesapları</p>
+      </div>
+      <span class="text-xs text-slate-500">{{ parent_links|length }} kişi</span>
+    </div>
+    {% if parent_links %}
+    <ul class="divide-y divide-slate-100">
+      {% for link in parent_links %}
+      <li class="px-5 py-3 flex items-center justify-between gap-3">
+        <div class="min-w-0">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-sm font-medium text-slate-900 truncate">{{ link.parent.full_name }}</span>
+            {% if link.is_primary %}
+            <span class="text-[10px] uppercase tracking-wider bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded">Birincil</span>
+            {% endif %}
+            <span class="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">{{ PARENT_RELATION_LABELS.get(link.relation, '—') }}</span>
+          </div>
+          <div class="text-xs text-slate-500 mt-0.5 truncate">{{ link.parent.email }}</div>
+        </div>
+        <form method="post" action="/teacher/students/{{ student.id }}/parents/unlink/{{ link.id }}"
+              onsubmit="return confirm('Veli bağlantısını kaldırmak istediğinizden emin misiniz? Veli hesabı silinmeyecek; sadece bu öğrenciyle olan bağ kaldırılacak.');">
+          <button type="submit" class="text-xs text-red-600 hover:text-red-800">Bağlantıyı kaldır</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div class="px-5 py-8 text-center text-sm text-slate-400 italic">Henüz bağlı veli yok.</div>
+    {% endif %}
+  </div>
+
+  {# Bekleyen davetler #}
+  {% if parent_invitations %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">Bekleyen Davetler</h2>
+      <p class="text-xs text-slate-500">Henüz kabul edilmemiş, süresi geçmemiş davetler</p>
+    </div>
+    <ul class="divide-y divide-slate-100">
+      {% for inv in parent_invitations %}
+      <li class="px-5 py-3">
+        <div class="flex items-center justify-between gap-3">
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-sm text-slate-900 truncate">{{ inv.invited_email }}</span>
+              <span class="text-[10px] uppercase tracking-wider bg-slate-100 text-slate-700 px-1.5 py-0.5 rounded">{{ PARENT_RELATION_LABELS.get(inv.relation, '—') }}</span>
+              {% if inv.is_primary %}<span class="text-[10px] uppercase tracking-wider bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded">Birincil</span>{% endif %}
+            </div>
+            <div class="text-xs text-slate-500 mt-0.5">
+              Gönderildi: {{ inv.created_at.strftime('%d.%m.%Y %H:%M') }} ·
+              Bitiş: {{ inv.expires_at.strftime('%d.%m.%Y') }}
+            </div>
+          </div>
+          <form method="post" action="/teacher/students/{{ student.id }}/parents/cancel-invitation/{{ inv.id }}"
+                onsubmit="return confirm('Daveti iptal etmek istediğinizden emin misiniz?');">
+            <button type="submit" class="text-xs text-slate-500 hover:text-red-600">İptal</button>
+          </form>
+        </div>
+        {% set inv_link = (request.base_url|string).rstrip('/') + '/parent/invitation/' + inv.token %}
+        <div class="mt-2 flex items-center gap-2">
+          <input type="text" readonly value="{{ inv_link }}"
+                 onclick="this.select()"
+                 class="flex-1 px-2 py-1 text-[11px] bg-slate-50 border border-slate-200 rounded font-mono text-slate-600" />
+          <button type="button"
+                  onclick="navigator.clipboard.writeText('{{ inv_link }}').then(() => { this.textContent='✓ Kopyalandı'; setTimeout(() => this.textContent='🔗 Linki Kopyala', 1500); });"
+                  class="text-[11px] bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 py-1 px-2 rounded whitespace-nowrap">
+            🔗 Linki Kopyala
+          </button>
+        </div>
+        <p class="text-[10px] text-slate-400 mt-1 italic">
+          Mail gönderimi devre dışıysa bu linki davet edilen kişiyle elden paylaşabilirsiniz.
+        </p>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Yeni veli davet et formu #}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">+ Yeni Veli Davet Et</h2>
+      <p class="text-xs text-slate-500">Davet bağlantısı 7 gün geçerli olacak şekilde e-posta ile gönderilecek</p>
+    </div>
+    <form method="post" action="/teacher/students/{{ student.id }}/parents/invite"
+          class="px-5 py-4 grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+      <div class="md:col-span-5">
+        <label class="block text-xs text-slate-600 mb-1">E-posta</label>
+        <input type="email" name="invited_email" required
+               class="w-full px-2.5 py-1.5 border border-slate-300 rounded text-sm" />
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-xs text-slate-600 mb-1">İlişki</label>
+        <select name="relation" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          <option value="anne">Anne</option>
+          <option value="baba">Baba</option>
+          <option value="vasi">Vasi</option>
+          <option value="diger">Diğer</option>
+        </select>
+      </div>
+      <div class="md:col-span-2">
+        <label class="flex items-center gap-2 text-xs text-slate-700 cursor-pointer h-[34px]">
+          <input type="checkbox" name="is_primary" value="yes" class="accent-indigo-600" />
+          <span>Birincil veli</span>
+        </label>
+      </div>
+      <div class="md:col-span-2">
+        <button type="submit"
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded">
+          Davet Gönder
+        </button>
+      </div>
+    </form>
+  </div>
+
+  {# Veliye özel not gönder #}
+  {% if parent_links %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">Veliye Not Gönder</h2>
+      <p class="text-xs text-slate-500">
+        Yazdığınız not, bağlı tüm velilere e-posta + (varsa) WhatsApp ile iletilir.
+        Öğrenci bu notu görmez.
+      </p>
+    </div>
+    <form method="post" action="/teacher/students/{{ student.id }}/parent-note"
+          class="px-5 py-4 space-y-3"
+          onsubmit="return confirm('Notu {{ parent_links|length }} veliye göndermek istediğinizden emin misiniz?');">
+      <textarea name="body" required minlength="10" maxlength="2000" rows="4"
+                placeholder="Velilere özel not (10–2000 karakter)..."
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm
+                       focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"></textarea>
+      <div class="flex items-center justify-between">
+        <p class="text-[11px] text-slate-500 italic">
+          Not içeriği bu öğretmen-veli ekseninde kalıcıdır; öğrenci tarafına sızdırılmaz.
+        </p>
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+          📨 Velilere Gönder
+        </button>
+      </div>
+    </form>
+  </div>
+  {% endif %}
+
+  <p class="text-[11px] text-slate-400 leading-relaxed px-1">
+    Veli sadece <b>tamamlama oranı, görev tipi dağılımı, streak ve projeksiyon</b> gibi özet
+    metrikleri görür. Deneme net sayıları ve konu bazında doğru-yanlış oranları paylaşılmaz.
+  </p>
+</div>

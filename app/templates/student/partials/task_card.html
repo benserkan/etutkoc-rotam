@@ -1,0 +1,114 @@
+{# Tek görev kartı. id'si = task-<id>. HTMX swap hedefi. #}
+{% set done = task.status.value == 'completed' %}
+{% set partial = task.status.value == 'partial' %}
+{% set total_planned = task.book_items | sum(attribute='planned_count') %}
+{% set total_done = task.book_items | sum(attribute='completed_count') %}
+{% set single = task.book_items|length == 1 %}
+{% set it = task.book_items[0] if single else None %}
+{% set today_date = today if today is defined else (now().date() if now is defined else task.date) %}
+{% set is_future = task.date > today_date %}
+<div id="task-{{ task.id }}"
+     class="bg-white border {% if done %}border-emerald-200 bg-emerald-50/30{% elif partial %}border-amber-200{% else %}border-slate-200{% endif %} rounded-lg">
+  <div class="px-4 py-3 flex items-center gap-3">
+    {# Checkbox — gelecek tarihli görevde devre dışı #}
+    {% if is_future %}
+    <button type="button"
+            disabled
+            title="Bu görev {{ task.date.strftime('%d.%m.%Y') }} tarihli — o gün gelince tikleyebilirsin"
+            class="w-6 h-6 rounded flex items-center justify-center bg-slate-50 border-2 border-dashed border-slate-300 text-slate-300 cursor-not-allowed">
+      <span class="text-[10px] leading-none">🗓</span>
+    </button>
+    {% else %}
+    <form method="post"
+          action="/student/tasks/{{ task.id }}/{{ 'uncomplete' if done else 'complete' }}"
+          hx-post="/student/tasks/{{ task.id }}/{{ 'uncomplete' if done else 'complete' }}"
+          hx-target="#task-{{ task.id }}"
+          hx-swap="outerHTML">
+      <button type="submit"
+              title="{{ 'Geri al' if done else 'Tamamla' }}"
+              class="w-6 h-6 rounded flex items-center justify-center transition
+                     {% if done %}bg-emerald-500 text-white border border-emerald-600
+                     {% elif partial %}bg-amber-100 border-2 border-amber-400 text-amber-700
+                     {% else %}bg-white border-2 border-slate-300 hover:border-indigo-500{% endif %}">
+        {% if done %}
+          <span class="text-sm leading-none">✓</span>
+        {% elif partial %}
+          <span class="text-[10px] leading-none font-bold">½</span>
+        {% endif %}
+      </button>
+    </form>
+    {% endif %}
+
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded
+          {% if task.type.value == 'test' %}bg-indigo-50 text-indigo-700
+          {% elif task.type.value == 'video' %}bg-sky-50 text-sky-700
+          {% elif task.type.value == 'ozet' %}bg-emerald-50 text-emerald-700
+          {% elif task.type.value == 'tekrar' %}bg-amber-50 text-amber-700
+          {% else %}bg-slate-100 text-slate-700{% endif %}">
+          {{ TASK_TYPE_LABELS[task.type] }}
+        </span>
+        <span class="text-sm font-medium {% if done %}line-through text-slate-400{% else %}text-slate-900{% endif %}">
+          {{ task.title }}
+        </span>
+        {% if single and it.section.topic %}
+          <span class="text-xs text-slate-400">({{ it.section.topic.name }})</span>
+        {% endif %}
+        {% if total_planned %}
+          <span class="text-xs text-slate-500">· {{ total_done }}/{{ total_planned }}</span>
+        {% endif %}
+      </div>
+      {% if task.book_items and not single %}
+      <div class="mt-1 text-xs text-slate-600 space-y-0.5">
+        {% for it in task.book_items %}
+        <div>
+          • {{ it.book.name }} — {{ it.section.label }}
+          {% if it.section.topic %}<span class="text-slate-400">({{ it.section.topic.name }})</span>{% endif %}
+          : <span class="font-medium">{{ it.planned_count }}</span>
+          {% if it.completed_count %}<span class="text-emerald-600"> ({{ it.completed_count }} çöz.)</span>{% endif %}
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# Kısmen (partial) açılır panel #}
+    {% if task.book_items and task.type.value == 'test' %}
+    <details class="relative">
+      <summary class="text-xs text-slate-500 hover:text-indigo-600 cursor-pointer px-2 py-1">Kısmen</summary>
+      <div class="absolute right-0 top-full mt-1 z-20 w-80 bg-white border border-slate-200 rounded-lg shadow-lg p-3 space-y-2">
+        <div class="text-xs text-slate-500 mb-1">Her kalem için kaç test çözdüğünüzü girin:</div>
+        {% for it in task.book_items %}
+        <form method="post"
+              action="/student/tasks/{{ task.id }}/items/{{ it.id }}/set-completed"
+              hx-post="/student/tasks/{{ task.id }}/items/{{ it.id }}/set-completed"
+              hx-target="#task-{{ task.id }}"
+              hx-swap="outerHTML"
+              class="flex items-center gap-2">
+          <div class="flex-1 text-xs">
+            <div class="text-slate-700 truncate" title="{{ it.book.name }}">{{ it.book.name }}</div>
+            <div class="text-[10px] text-slate-400">{{ it.section.label }}</div>
+          </div>
+          <input type="number" name="completed" min="0" max="{{ it.planned_count }}" value="{{ it.completed_count }}"
+                 class="w-16 px-2 py-1 border border-slate-300 rounded text-sm text-right" />
+          <span class="text-xs text-slate-400">/ {{ it.planned_count }}</span>
+          <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-800">Kaydet</button>
+        </form>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
+
+    {# Talep gönderme — modal tetikleyici #}
+    <button type="button"
+            onclick="document.getElementById('comm-modal-{{ task.id }}').showModal()"
+            class="text-xs text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 px-2 py-1 rounded transition flex items-center gap-1"
+            title="Öğretmene talep / soru gönder">
+      <span class="text-base leading-none">💬</span>
+    </button>
+  </div>
+</div>
+
+{# Modal — task_card render edilince DOM'a eklenir, sayfa başında bir kez yüklenir #}
+{% include "student/partials/task_comm_modal.html" %}

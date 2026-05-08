@@ -1,0 +1,221 @@
+{% extends "parent/base_parent.html" %}
+{% block title %}Ayarlar — Veli Paneli{% endblock %}
+
+{% block parent_content %}
+<div class="mb-5">
+  <h1 class="text-2xl font-semibold text-slate-900">Bildirim Tercihleri</h1>
+  <p class="text-sm text-slate-500 mt-1">Hangi bildirimleri, hangi kanaldan ve ne zaman alacağınızı buradan yönetin.</p>
+</div>
+
+{% if flash_err %}
+<div class="bg-rose-50 border border-rose-300 rounded-lg p-3 mb-4 flex items-start gap-2">
+  <div class="text-lg">⚠️</div>
+  <div class="flex-1 text-sm text-rose-800">{{ flash_err }}</div>
+</div>
+{% endif %}
+{% if flash_ok %}
+<div class="bg-emerald-50 border border-emerald-300 rounded-lg p-3 mb-4 flex items-center gap-2">
+  <div class="text-lg">✓</div>
+  <div class="flex-1 text-sm text-emerald-800">{{ flash_ok }}</div>
+</div>
+{% endif %}
+
+{% if pref and pref.unsubscribed_at %}
+<div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4 text-sm text-amber-900">
+  <b>Tüm bildirimler kapalı.</b> Aşağıdan yeniden tercihlerinizi kaydederseniz bildirim akışı tekrar açılır
+  (kapatma kaydınız: {{ pref.unsubscribed_at.strftime('%d.%m.%Y %H:%M') }}).
+</div>
+{% endif %}
+
+{# === Bildirim türleri + sessiz saatler === #}
+<form method="post" action="/parent/settings/preferences" class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-4">
+  <div class="px-5 py-3 border-b border-slate-100">
+    <h2 class="font-semibold text-slate-900">Bildirim Türleri</h2>
+    <div class="text-xs text-slate-500">İstemediğiniz bildirim türlerini kapatabilirsiniz</div>
+  </div>
+
+  <div class="divide-y divide-slate-100">
+    {% set rows = [
+      ('daily_summary',  'Günlük özet',           'Çocuğun bugünkü tamamlama özeti', pref and pref.daily_summary_enabled),
+      ('empty_day',      'Boş gün uyarısı',       'Hiç görev tamamlamadığında bilgi verir (3 günü aşan üst üste suskunluk için sus)', pref and pref.empty_day_alert_enabled),
+      ('weekly_report',  'Haftalık rapor',        'Her 7 günlük döngünün sonunda gönderilir', pref and pref.weekly_report_enabled),
+      ('new_program',    'Yeni program duyurusu', 'Öğretmen yeni haftalık programı yayınladığında', pref and pref.new_program_alert_enabled),
+      ('drop_alert',     'Düşüş alarmı',          'Geçen haftaya göre %30+ düşüş olduğunda', pref and pref.drop_alert_enabled),
+      ('teacher_note',   'Öğretmen notu',         'Öğretmen size özel not gönderdiğinde', pref and pref.teacher_note_enabled),
+      ('exam_approaching','Sınav yaklaşıyor',     'Sınav tarihine 30, 7 ve 1 gün kala bilgilendirme (LGS / YKS)', pref and pref.exam_approaching_enabled),
+    ] %}
+    {% for key, title, desc, enabled in rows %}
+    <label class="flex items-start gap-3 px-5 py-3 cursor-pointer hover:bg-slate-50">
+      <input type="checkbox" name="{{ key }}" value="yes" {% if enabled %}checked{% endif %}
+             class="mt-1 accent-indigo-600 w-4 h-4" />
+      <div class="flex-1">
+        <div class="text-sm font-medium text-slate-900">{{ title }}</div>
+        <div class="text-xs text-slate-500 mt-0.5">{{ desc }}</div>
+      </div>
+    </label>
+    {% endfor %}
+  </div>
+
+  <div class="px-5 py-4 border-t border-slate-100 bg-slate-50">
+    <h3 class="text-sm font-medium text-slate-900 mb-3">Sessiz saatler</h3>
+    <div class="flex items-center gap-3">
+      <label class="text-xs text-slate-600">Başlangıç:</label>
+      <input type="time" name="quiet_start"
+             value="{{ '%02d:%02d'|format(pref.quiet_hours_start.hour, pref.quiet_hours_start.minute) if pref else '22:00' }}"
+             class="px-2 py-1.5 border border-slate-300 rounded text-sm" />
+      <span class="text-xs text-slate-500">→</span>
+      <label class="text-xs text-slate-600">Bitiş:</label>
+      <input type="time" name="quiet_end"
+             value="{{ '%02d:%02d'|format(pref.quiet_hours_end.hour, pref.quiet_hours_end.minute) if pref else '07:00' }}"
+             class="px-2 py-1.5 border border-slate-300 rounded text-sm" />
+    </div>
+    <p class="text-[11px] text-slate-500 mt-2 italic">
+      Bu saatlerde tetiklenen bildirimler sessiz saat bitimine ertelenir. Sistem mesajları (davet, doğrulama kodu) bu kuraldan etkilenmez.
+    </p>
+  </div>
+
+  <div class="px-5 py-3 border-t border-slate-100 flex justify-end">
+    <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+      Tercihleri Kaydet
+    </button>
+  </div>
+</form>
+
+{# === Çocuk başına sustur === #}
+{% if child_links %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-4">
+  <div class="px-5 py-3 border-b border-slate-100">
+    <h2 class="font-semibold text-slate-900">Çocuk Başına Bildirim</h2>
+    <div class="text-xs text-slate-500">Belirli bir çocuk için tüm bildirimleri sustur</div>
+  </div>
+  <ul class="divide-y divide-slate-100">
+    {% for link in child_links %}
+    <li class="px-5 py-3 flex items-center justify-between gap-3">
+      <div class="min-w-0">
+        <div class="text-sm font-medium text-slate-900 truncate">{{ link.student.full_name }}</div>
+        <div class="text-[11px] text-slate-500 mt-0.5">
+          {{ PARENT_RELATION_LABELS.get(link.relation, '—') }}
+          {% if link.is_primary %}· Birincil veli{% endif %}
+        </div>
+      </div>
+      <form method="post" action="/parent/settings/students/{{ link.student_id }}/mute"
+            class="flex items-center gap-2">
+        {% if link.muted %}
+        <span class="text-[11px] uppercase tracking-wider bg-amber-100 text-amber-700 px-2 py-0.5 rounded">Susturulmuş</span>
+        <input type="hidden" name="muted" value="" />
+        <button type="submit" class="text-xs bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 py-1 px-3 rounded">
+          Tekrar aç
+        </button>
+        {% else %}
+        <span class="text-[11px] uppercase tracking-wider bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded">Aktif</span>
+        <input type="hidden" name="muted" value="yes" />
+        <button type="submit" class="text-xs bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-1 px-3 rounded"
+                onclick="return confirm('Bu çocuk için tüm bildirimleri kapatmak istediğinizden emin misiniz?');">
+          Sustur
+        </button>
+        {% endif %}
+      </form>
+    </li>
+    {% endfor %}
+  </ul>
+</div>
+{% endif %}
+
+{# === WhatsApp kanalı === #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-4">
+  <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
+    <div>
+      <h2 class="font-semibold text-slate-900">WhatsApp Bildirimleri</h2>
+      <div class="text-xs text-slate-500">Telefonunuzu doğrulayarak haftalık raporları WhatsApp'tan da alabilirsiniz</div>
+    </div>
+    {% if pref and pref.whatsapp_enabled and pref.whatsapp_phone_verified_at %}
+    <span class="px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700">✓ Aktif</span>
+    {% elif pending_verify %}
+    <span class="px-2 py-0.5 text-xs rounded-full bg-amber-100 text-amber-700">⏳ Kod beklenen</span>
+    {% else %}
+    <span class="px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600">— Kapalı</span>
+    {% endif %}
+  </div>
+
+  <div class="p-5">
+    {% if pref and pref.whatsapp_enabled and pref.whatsapp_phone_verified_at %}
+      <div class="text-sm text-slate-700 mb-3">
+        Doğrulanan numara:
+        <code class="bg-slate-100 px-1.5 py-0.5 rounded text-slate-900">+{{ pref.whatsapp_phone }}</code>
+      </div>
+      <div class="text-xs text-slate-500 mb-3">
+        Doğrulama tarihi: {{ pref.whatsapp_phone_verified_at.strftime('%d.%m.%Y %H:%M') }}
+      </div>
+      <form method="post" action="/parent/settings/whatsapp/disable"
+            onsubmit="return confirm('WhatsApp bildirimlerini kapatmak istediğinizden emin misiniz?');">
+        <button type="submit" class="text-sm bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 py-1.5 px-3 rounded">
+          WhatsApp'ı kapat
+        </button>
+      </form>
+
+    {% elif pending_verify %}
+      <div class="bg-amber-50 border border-amber-200 rounded p-3 text-sm text-amber-900 mb-3">
+        <code>+{{ pending_verify.phone }}</code> numarasına 6 haneli kod gönderildi.
+        WhatsApp uygulamanızı açıp kodu girin (geçerlilik 10 dakika).
+      </div>
+      {% if settings.debug and not settings.whatsapp_enabled %}
+      <div class="bg-slate-100 border border-slate-300 rounded p-2 mb-3 text-xs text-slate-700 flex items-center gap-2">
+        <span class="font-semibold">🔧 DEV:</span>
+        <span>WhatsApp gönderim devre dışı (stub mode). Test kodu:</span>
+        <code class="bg-white px-2 py-0.5 rounded border border-slate-300 font-mono text-sm">{{ pending_verify.code }}</code>
+      </div>
+      {% endif %}
+      <form method="post" action="/parent/settings/whatsapp/verify" class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Doğrulama kodu</label>
+          <input type="text" name="code" inputmode="numeric" pattern="\d{6}" maxlength="6"
+                 placeholder="6 haneli kod" required autocomplete="one-time-code"
+                 class="w-40 px-3 py-2 border border-slate-300 rounded-md text-lg tracking-widest font-mono text-center
+                        focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+        </div>
+        <div class="flex gap-2">
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+            Kodu Doğrula
+          </button>
+          <a href="/parent/settings" class="text-sm text-slate-600 hover:text-slate-800 self-center">İptal</a>
+        </div>
+      </form>
+      <form method="post" action="/parent/settings/whatsapp/start" class="mt-4 pt-3 border-t border-slate-100">
+        <input type="hidden" name="phone" value="{{ pending_verify.phone }}" />
+        <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-800">
+          ↻ Yeni kod gönder
+        </button>
+      </form>
+
+    {% else %}
+      <p class="text-sm text-slate-600 mb-3">
+        WhatsApp ile bildirim almak için telefon numaranızı girin. Numaraya 6 haneli bir doğrulama kodu göndereceğiz.
+      </p>
+      <form method="post" action="/parent/settings/whatsapp/start" class="space-y-3">
+        <div>
+          <label class="block text-sm font-medium text-slate-700 mb-1">Telefon numarası</label>
+          <input type="tel" name="phone" placeholder="+90 532 ..." required
+                 class="w-full max-w-sm px-3 py-2 border border-slate-300 rounded-md text-sm
+                        focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+          <p class="text-[11px] text-slate-500 mt-1">Türkiye için <code>0532...</code> veya <code>+90 532...</code> formatı kabul edilir.</p>
+        </div>
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+          Doğrulama Kodu Gönder
+        </button>
+      </form>
+    {% endif %}
+  </div>
+
+  <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+    WhatsApp gönderimi yalnızca onaylanmış şablonlarla yapılır. Numaranız sadece bildirim için kullanılır,
+    üçüncü taraflarla paylaşılmaz.
+  </div>
+</div>
+
+{% if pref and pref.unsubscribe_token %}
+<div class="bg-rose-50 border border-rose-200 rounded-lg p-4 text-xs text-rose-800 leading-relaxed">
+  <b>Tek tıkla tüm bildirimleri kapatmak için:</b>
+  e-postaların altındaki "tek tıkla kapat" linkini kullanabilirsiniz. Tüm türler kapanır; bu sayfadan tekrar aktive edebilirsiniz.
+</div>
+{% endif %}
+{% endblock %}

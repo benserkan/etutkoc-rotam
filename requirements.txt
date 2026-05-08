@@ -1,0 +1,18 @@
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+sqlalchemy==2.0.36
+alembic==1.14.0
+jinja2==3.1.4
+python-multipart==0.0.19
+passlib[bcrypt]==1.7.4
+bcrypt==4.0.1
+itsdangerous==2.2.0
+pydantic==2.10.4
+pydantic-settings==2.7.1
+python-dotenv==1.0.1
+httpx==0.28.1
+
+# Production
+gunicorn==23.0.0
+psycopg2-binary==2.9.10  # Postgres sürücüsü (prod'da kullanılır)
+

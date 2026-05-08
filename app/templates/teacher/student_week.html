@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — Haftalık{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+  <div>
+    <a href="/teacher/students/{{ student.id }}" class="text-sm text-slate-500 hover:text-slate-700">← {{ student.full_name }}</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">7 Günlük Program</h1>
+    <div class="text-sm text-slate-500 mt-1">
+      {{ start.day }} {{ tr_months[start.month - 1] }}
+      {% if start.year != end.year %} {{ start.year }}{% endif %}
+      –
+      {{ end.day }} {{ tr_months[end.month - 1] }} {{ end.year }}
+      <span class="text-slate-400">· {{ tr_weekdays[start.weekday()] }} başlangıçlı</span>
+    </div>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <form method="get" action="/teacher/students/{{ student.id }}/week"
+          class="flex items-center gap-2 px-2 py-1.5 rounded border border-slate-300 bg-white">
+      <label class="text-xs text-slate-500">Başlangıç:</label>
+      <input type="date" name="start" value="{{ start }}"
+             class="px-2 py-1 text-sm border-0 focus:outline-none" />
+      <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-800">Uygula</button>
+    </form>
+    <a href="/teacher/students/{{ student.id }}/week?start={{ prev_date }}"
+       class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">← 7 gün</a>
+    <a href="/teacher/students/{{ student.id }}/week"
+       class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">Bugünden</a>
+    <a href="/teacher/students/{{ student.id }}/week?start={{ next_date }}"
+       class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">7 gün →</a>
+    <a href="/teacher/students/{{ student.id }}/suggestions-diagnostics"
+       class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50"
+       title="Öneri motorunun sayısal iç durumunu gör">🔬 Tanı</a>
+    <form method="post" action="/teacher/students/{{ student.id }}/program/notify-parents"
+          onsubmit="return confirm('Bu hafta {{ start }} – {{ end }} programını bağlı velilere bildirim olarak göndermek istediğinizden emin misiniz?');"
+          class="inline">
+      <input type="hidden" name="start" value="{{ start }}" />
+      <button type="submit"
+              class="px-3 py-2 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-sm"
+              title="Bu haftalık programı bağlı velilere e-posta/WhatsApp ile duyur">
+        📣 Veliye duyur
+      </button>
+    </form>
+  </div>
+</div>
+
+{% set _ok = request.query_params.get('ok') %}
+{% set _err = request.query_params.get('err') %}
+{% if _err %}
+<div class="bg-rose-50 border border-rose-300 rounded-lg p-3 mb-4 flex items-start gap-2">
+  <div class="text-lg">⚠️</div>
+  <div class="flex-1 text-sm text-rose-800">{{ _err }}</div>
+</div>
+{% endif %}
+{% if _ok %}
+<div class="bg-emerald-50 border border-emerald-300 rounded-lg p-3 mb-4 flex items-center gap-2">
+  <div class="text-lg">✓</div>
+  <div class="flex-1 text-sm text-emerald-800">{{ _ok }}</div>
+</div>
+{% endif %}
+
+{% if not assignments %}
+<div class="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6 text-sm text-amber-800">
+  Bu öğrenciye henüz kitap atanmamış. <a href="/teacher/books" class="underline">Kitap kütüphanesinden</a> atama yapın.
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
+<div class="space-y-4 min-w-0">
+  {% for day in days %}
+    {% with day=day, day_tasks=tasks_by_day[day], is_today=(day == today),
+            planned_total=day_planned_totals[day], day_suggestions=suggestions_by_day[day],
+            day_subject_summary=day_subject_summary_by_day[day],
+            keep_open=None %}
+      {% include "teacher/partials/day_card.html" %}
+    {% endwith %}
+  {% endfor %}
+
+  <div class="flex gap-3 text-xs text-slate-500 mt-2">
+    <button type="button" onclick="document.querySelectorAll('details.day-card').forEach(d => d.open = true)"
+            class="hover:text-slate-900 hover:underline">Tümünü aç</button>
+    <span class="text-slate-300">·</span>
+    <button type="button" onclick="document.querySelectorAll('details.day-card').forEach(d => d.open = false)"
+            class="hover:text-slate-900 hover:underline">Tümünü kapat</button>
+  </div>
+</div>
+
+{# Sticky Kaynak Durumu sidebar #}
+{% if assignments %}
+<aside class="xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto bg-white border border-slate-200 rounded-lg">
+  <div class="px-4 py-3 border-b border-slate-100 sticky top-0 bg-white z-10 flex items-center justify-between">
+    <div>
+      <div class="font-medium text-slate-900">Kaynak Durumu</div>
+      <div class="text-xs text-slate-500">Ders bazında kitap ilerlemesi</div>
+    </div>
+    <button type="button"
+            hx-get="/teacher/students/{{ student.id }}/sidebar-items"
+            hx-target="#resource-subjects"
+            hx-swap="innerHTML"
+            class="text-[11px] text-indigo-600 hover:text-indigo-800 underline">Tümü</button>
+  </div>
+
+  <div id="resource-subjects" class="divide-y divide-slate-100">
+    {% include "teacher/partials/resource_sidebar_items.html" %}
+  </div>
+
+  <div class="px-4 py-2 text-[10px] text-slate-400 border-t border-slate-100 flex gap-3 bg-white sticky bottom-0">
+    <span class="text-emerald-600">✓ çöz.</span>
+    <span class="text-amber-600">⏳ rez.</span>
+    <span class="text-slate-700">⎯ kalan</span>
+  </div>
+</aside>
+{% endif %}
+</div>  {# /grid #}
+
+<script>
+  // Sidebar'da hangi ders <details>'leri açık — refresh öncesi yakala, sonrası geri uygula
+  function captureOpenSubjects() {
+    return Array.from(
+      document.querySelectorAll('#resource-subjects details.resource-subject[data-subject-id]')
+    ).filter(function(d) { return d.open; })
+     .map(function(d) { return d.dataset.subjectId; });
+  }
+  function restoreOpenSubjects(ids) {
+    if (!ids || !ids.length) return;
+    ids.forEach(function(id) {
+      var d = document.querySelector(
+        '#resource-subjects details.resource-subject[data-subject-id="' + id + '"]'
+      );
+      if (d) d.open = true;
+    });
+  }
+  function refreshSidebar(url) {
+    if (!window.htmx) return;
+    var openIds = captureOpenSubjects();
+    // afterSwap dinleyicisi — swap tamamlandıktan SONRA, yeni DOM hazır iken restore
+    var onSettle = function(e) {
+      var t = e.detail && e.detail.target;
+      if (t && t.id === 'resource-subjects') {
+        restoreOpenSubjects(openIds);
+        document.body.removeEventListener('htmx:afterSettle', onSettle);
+      }
+    };
+    document.body.addEventListener('htmx:afterSettle', onSettle);
+    // Güvenlik ağı: 1.5sn içinde afterSettle gelmezse listener'ı temizle
+    setTimeout(function() {
+      document.body.removeEventListener('htmx:afterSettle', onSettle);
+    }, 1500);
+    window.htmx.ajax('GET', url, {target: '#resource-subjects', swap: 'innerHTML'});
+  }
+
+  // Subject filter — books-by-subject endpoint'i HX-Trigger:'subject-changed' yayınlar.
+  document.body.addEventListener('subject-changed', function(e) {
+    try {
+      var sid = (e.detail && e.detail.subject_id) || '';
+      var url = '/teacher/students/{{ student.id }}/sidebar-items'
+              + (sid ? ('?subject_id=' + encodeURIComponent(sid)) : '');
+      refreshSidebar(url);
+    } catch (err) { console.warn('subject-changed listener:', err); }
+  });
+
+  // Görev ekle/sil/öneri kabul sonrası sidebar (rezerv/kalan) yenilemesi
+  document.body.addEventListener('tasks-changed', function() {
+    try {
+      refreshSidebar('/teacher/students/{{ student.id }}/sidebar-items');
+    } catch (err) { console.warn('tasks-changed listener:', err); }
+  });
+</script>
+{% endblock %}

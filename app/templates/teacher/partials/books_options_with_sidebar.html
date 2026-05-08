@@ -1,0 +1,7 @@
+{# Birincil hedef: kitap dropdown seçenekleri #}
+{% include "teacher/partials/books_options.html" %}
+
+{# OOB: sağ panel ders/kitap listesini de güncelle #}
+<div id="resource-subjects" hx-swap-oob="innerHTML" class="divide-y divide-slate-100">
+  {% include "teacher/partials/resource_sidebar_items.html" %}
+</div>

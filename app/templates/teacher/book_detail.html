@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block title %}{{ book.name }}{% endblock %}
+
+{% set is_deneme = book.type.value in ['brans_denemesi', 'genel_deneme'] %}
+{% set unit_term = 'Deneme' if is_deneme else 'Ünite' %}
+{% set count_term = 'Deneme Sayısı' if is_deneme else 'Test Sayısı' %}
+
+{% block content %}
+<div class="flex items-start justify-between mb-6">
+  <div>
+    <a href="/teacher/books" class="text-sm text-slate-500 hover:text-slate-700">← Kitap Kütüphanesi</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">{{ book.name }}</h1>
+    <div class="text-sm text-slate-500 mt-1">
+      {{ book.subject.name }} · {{ BOOK_TYPE_LABELS[book.type] }}
+      {% if book.publisher %}· {{ book.publisher }}{% endif %}
+      {% if book.avg_questions_per_test %}· ~{{ book.avg_questions_per_test }} soru/{{ unit_term|lower }}{% endif %}
+    </div>
+  </div>
+  <form method="post" action="/teacher/books/{{ book.id }}/delete"
+        onsubmit="return confirm('Kitap silinsin mi? Atamalar ve ilerlemeler de kaybolur.');">
+    <button type="submit" class="text-red-600 hover:text-red-800 text-sm">Kitabı Sil</button>
+  </form>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  <!-- Sol: Üniteler/Denemeler -->
+  <div class="lg:col-span-2 bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="font-medium text-slate-900 mb-4">
+      {% if is_deneme %}Denemeler{% else %}Üniteler ve Test Sayıları{% endif %}
+    </h2>
+
+    {% if is_deneme %}
+    <!-- Deneme tipi için sadeleştirilmiş form -->
+    <form method="post" action="/teacher/books/{{ book.id }}/sections"
+          class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end mb-5 pb-5 border-b border-slate-100">
+      <div class="md:col-span-4">
+        <label class="block text-sm text-slate-600 mb-1">Etiket</label>
+        <input name="label" value="Denemeler" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">{{ count_term }}</label>
+        <input type="number" name="test_count" min="1" required
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <input type="hidden" name="topic_id" value="" />
+      <div class="md:col-span-1 flex justify-end">
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded">
+          Deneme Ekle
+        </button>
+      </div>
+    </form>
+    {% else %}
+    <!-- Normal (soru bankası / fasikül / konu anlatımlı) -->
+    <form method="post" action="/teacher/books/{{ book.id }}/sections"
+          class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end mb-5 pb-5 border-b border-slate-100">
+      <div class="md:col-span-2">
+        <label class="block text-sm text-slate-600 mb-1">Etiket (ör. "1. Ünite")</label>
+        <input name="label" required class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div class="md:col-span-3">
+        <label class="block text-sm text-slate-600 mb-1">Konu</label>
+        <select name="topic_id" class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+          <option value="">— Konu seçiniz (opsiyonel) —</option>
+          {% for t in topics %}<option value="{{ t.id }}">{{ t.name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">{{ count_term }}</label>
+        <input type="number" name="test_count" min="1" required class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div class="md:col-span-6 flex justify-end">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded">
+          Ünite Ekle
+        </button>
+      </div>
+    </form>
+    {% endif %}
+
+    <div class="space-y-2">
+      {% for section in book.sections %}
+      <form method="post" action="/teacher/books/{{ book.id }}/sections/{{ section.id }}/edit"
+            class="flex flex-wrap items-center gap-2 p-3 rounded border border-slate-200">
+        <input name="label" value="{{ section.label }}" class="flex-1 min-w-[160px] px-2 py-1.5 border border-slate-300 rounded text-sm" />
+        {% if not is_deneme %}
+        <div class="text-xs text-slate-500">
+          {{ section.topic.name if section.topic else '(konu atanmamış)' }}
+        </div>
+        {% endif %}
+        <input type="number" name="test_count" value="{{ section.test_count }}" min="1"
+               class="w-20 px-2 py-1.5 border border-slate-300 rounded text-sm text-right"
+               title="{{ count_term }}" />
+        <button type="submit" class="text-indigo-600 hover:text-indigo-800 text-sm">Kaydet</button>
+        <button type="submit" formaction="/teacher/books/{{ book.id }}/sections/{{ section.id }}/delete"
+                formnovalidate onclick="return confirm('{{ unit_term }} silinsin mi?');"
+                class="text-red-600 hover:text-red-800 text-sm">Sil</button>
+      </form>
+      {% else %}
+      <div class="text-center text-slate-500 py-6 text-sm">
+        {% if is_deneme %}Henüz deneme eklenmedi.{% else %}Henüz ünite eklenmedi.{% endif %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="mt-4 text-sm text-slate-600">
+      Toplam: <span class="font-medium">{{ book.total_tests }} {{ unit_term|lower }}</span>
+    </div>
+  </div>
+
+  <!-- Sağ: Öğrenci ataması -->
+  <div class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="font-medium text-slate-900 mb-4">Bu Kitabı Atanmış Öğrenciler</h2>
+    <form method="post" action="/teacher/books/{{ book.id }}/assign" class="space-y-2">
+      {% for s in students %}
+      <label class="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="student_ids" value="{{ s.id }}"
+               {% if s.id in assigned_ids %}checked{% endif %} />
+        <span>{{ s.full_name }}</span>
+      </label>
+      {% else %}
+      <div class="text-sm text-slate-500">Önce öğrenci ekleyin.</div>
+      {% endfor %}
+      {% if students %}
+      <div class="pt-3 flex justify-end">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded">
+          Atamayı Kaydet
+        </button>
+      </div>
+      <div class="text-xs text-slate-400 pt-2">
+        Not: İlerlemesi olan öğrencinin işaretini kaldırmak atamayı silmez; önce ilerlemeyi sıfırlayın.
+      </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}

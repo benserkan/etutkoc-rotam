@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block title %}Öğretmen Paneli{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-semibold text-slate-900 mb-6">Hoş geldiniz, {{ user.full_name }}</h1>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <a href="/teacher/students" class="bg-white border border-slate-200 rounded-lg p-5 hover:border-indigo-400 hover:shadow-sm transition">
+    <h2 class="font-semibold text-slate-900 mb-1">Öğrenciler</h2>
+    <p class="text-sm text-slate-500">Öğrenci ekle, programlarını yönet.</p>
+  </a>
+  <a href="/teacher/books" class="bg-white border border-slate-200 rounded-lg p-5 hover:border-indigo-400 hover:shadow-sm transition">
+    <h2 class="font-semibold text-slate-900 mb-1">Kitap Kütüphanesi</h2>
+    <p class="text-sm text-slate-500">Soru bankası, fasikül ve denemeleri kaydet.</p>
+  </a>
+  <a href="/teacher/years" class="bg-white border border-slate-200 rounded-lg p-5 hover:border-indigo-400 hover:shadow-sm transition">
+    <h2 class="font-semibold text-slate-900 mb-1">Akademik Yıllar</h2>
+    <p class="text-sm text-slate-500">Sınav tarihini ve dönemleri tanımla.</p>
+  </a>
+</div>
+{% endblock %}

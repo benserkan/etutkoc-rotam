@@ -1,0 +1,107 @@
+{% extends "parent/base_parent.html" %}
+{% block title %}Veli Paneli — ETÜTKOÇ Rotam{% endblock %}
+
+{% block parent_content %}
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold text-slate-900">Hoş geldiniz, {{ user.full_name }}</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    {% if students|length == 1 %}Velisi olduğunuz öğrencinin bugünkü ve haftalık durumu aşağıda.
+    {% else %}Velisi olduğunuz {{ students|length }} öğrencinin durumu aşağıda.{% endif %}
+  </p>
+</div>
+
+{% if students %}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+  {% for s in students %}
+  {% set wl = s.warning_level %}
+  {% set bar_color = '#dc2626' if wl == 'red' else ('#d97706' if wl == 'amber' else '#059669') %}
+  {% set bar_bg = '#fef2f2' if wl == 'red' else ('#fffbeb' if wl == 'amber' else '#f0fdf4') %}
+  <a href="/parent/students/{{ s.student_id }}"
+     class="block bg-white border border-slate-200 hover:border-indigo-300 hover:shadow-sm rounded-lg overflow-hidden transition">
+    <div class="px-5 py-3 flex items-center justify-between gap-3"
+         style="background: {{ bar_bg }}; border-bottom: 3px solid {{ bar_color }};">
+      <div class="min-w-0">
+        <div class="text-base font-semibold text-slate-900 truncate">{{ s.full_name }}</div>
+        <div class="text-xs text-slate-600 mt-0.5">
+          {% if s.grade_level %}{{ s.grade_level }}. Sınıf{% endif %}
+          {% if s.academic_year %} · {{ s.academic_year }}{% endif %}
+        </div>
+      </div>
+      <div class="text-right text-xs">
+        {% if s.is_primary %}
+        <span class="inline-block bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider">Birincil</span>
+        {% endif %}
+        <div class="text-slate-500 mt-1">{{ {'anne':'Anne','baba':'Baba','vasi':'Vasi','diger':'Diğer'}[s.relation] if s.relation else '' }}</div>
+      </div>
+    </div>
+
+    <div class="p-5 space-y-4">
+      {# Bugün şeridi #}
+      <div class="flex items-center justify-between">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">Bugün</div>
+        <div class="text-sm">
+          {% if s.today_planned %}
+            <span class="font-semibold text-slate-900">{{ s.today_completed }}</span>
+            <span class="text-slate-400">/</span>
+            <span class="text-slate-600">{{ s.today_planned }}</span>
+            <span class="text-slate-500 text-xs ml-1">görev</span>
+          {% else %}
+            <span class="text-slate-400 italic">bugün görev yok</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Hafta tamamlama oranı #}
+      <div>
+        <div class="flex items-center justify-between text-xs mb-1.5">
+          <span class="text-slate-500 uppercase tracking-wider">Bu hafta</span>
+          <span class="text-slate-700 font-semibold">
+            {% if s.week_planned %}
+              {{ s.week_completed }}/{{ s.week_planned }} görev
+              {% if s.week_completion_rate is not none %}<span class="text-slate-400 ml-1">· %{{ s.week_completion_rate }}</span>{% endif %}
+            {% else %}—{% endif %}
+          </span>
+        </div>
+        {% if s.week_planned %}
+        <div class="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+          <div style="width: {{ s.week_completion_rate or 0 }}%; background: {{ bar_color }};" class="h-full"></div>
+        </div>
+        {% endif %}
+      </div>
+
+      {# 7-günlük oran ve istikrar #}
+      <div class="grid grid-cols-2 gap-3 text-center pt-1">
+        <div>
+          <div class="text-[10px] text-slate-500 uppercase tracking-wider">Son 7 Gün Oran</div>
+          <div class="text-lg font-semibold mt-0.5"
+               style="color: {{ bar_color if s.rate_7d is not none else '#94a3b8' }};">
+            {% if s.rate_7d is not none %}%{{ s.rate_7d }}{% else %}—{% endif %}
+          </div>
+        </div>
+        <div>
+          <div class="text-[10px] text-slate-500 uppercase tracking-wider">İstikrar</div>
+          <div class="text-lg font-semibold mt-0.5 text-slate-700">
+            {% if s.consistency_7d is not none %}%{{ s.consistency_7d }}{% else %}—{% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="pt-2 border-t border-slate-100 text-xs text-indigo-600 hover:text-indigo-800">
+        Detayları gör →
+      </div>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+{% else %}
+<div class="bg-amber-50 border border-amber-200 rounded-lg p-6 text-center">
+  <p class="text-sm text-amber-800">Henüz size bağlı bir öğrenci yok. Lütfen sizi davet eden eğitim koçunuzla iletişime geçin.</p>
+</div>
+{% endif %}
+
+<div class="mt-8 bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-600 leading-relaxed">
+  <b class="text-slate-700">Bilgi:</b> Bu panelde size sadece görev tamamlama oranı, ders bazında dağılım,
+  istikrar ve genel ilerleme metrikleri gösterilir. Deneme net sayıları ve konu bazında doğru-yanlış
+  oranları öğrenci-öğretmen arasındaki çalışma alanına aittir, gizlilik gereği paylaşılmaz.
+</div>
+{% endblock %}

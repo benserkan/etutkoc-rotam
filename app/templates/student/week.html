@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}Haftam{% endblock %}
+
+{% block content %}
+<div class="flex flex-wrap items-start justify-between gap-4 mb-6">
+  <div>
+    <h1 class="text-2xl font-semibold text-slate-900">Haftam</h1>
+    <div class="text-sm text-slate-500 mt-1">
+      {{ start.day }} {{ tr_months[start.month - 1] }}
+      {% if start.year != end.year %} {{ start.year }}{% endif %}
+      –
+      {{ end.day }} {{ tr_months[end.month - 1] }} {{ end.year }}
+    </div>
+  </div>
+  <div class="flex flex-wrap items-center gap-2">
+    <a href="/student/week/print?start={{ start }}" target="_blank"
+       class="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium">
+      🖨️ Program
+    </a>
+    <a href="/student/weekly-report/print?start={{ start }}" target="_blank"
+       class="px-3 py-2 rounded bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium">
+      📊 Veli Raporu
+    </a>
+    <a href="/student/week?start={{ prev_date }}" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">← 7 gün</a>
+    <a href="/student/week" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">Bugünden</a>
+    <a href="/student/week?start={{ next_date }}" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">7 gün →</a>
+  </div>
+</div>
+
+<div class="space-y-3">
+  {% for day in days %}
+    {% set day_tasks = tasks_by_day[day] %}
+    {% set is_today = (day == today) %}
+    {% set planned = day_planned[day] %}
+    {% set done = day_completed[day] %}
+    {% set pct = (100 * done // planned) if planned > 0 else 0 %}
+  <details {% if is_today %}open{% endif %}
+           class="day-card bg-white border {% if is_today %}border-indigo-300 ring-1 ring-indigo-100{% else %}border-slate-200{% endif %} rounded-lg group">
+    <summary class="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 list-none">
+      <div class="flex items-baseline gap-3">
+        <span class="inline-block w-4 text-slate-400 select-none transition-transform group-open:rotate-90">▸</span>
+        <a href="/student/day?date={{ day }}" class="font-semibold text-slate-900 hover:text-indigo-700 hover:underline"
+           onclick="event.stopPropagation()">{{ tr_weekdays[day.weekday()] }}</a>
+        <div class="text-sm text-slate-500">{{ day.day }} {{ tr_months[day.month - 1] }}</div>
+        {% if is_today %}<span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">bugün</span>{% endif %}
+      </div>
+      <div class="flex items-center gap-3 text-xs">
+        {% if day_tasks %}
+        <span class="text-slate-700 font-medium">{{ day_tasks|length }} görev</span>
+        {% if planned %}
+        <div class="flex items-center gap-2">
+          <div class="w-24 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div class="bg-emerald-500 h-full" style="width: {{ pct }}%"></div>
+          </div>
+          <span class="text-emerald-600 font-medium">{{ done }}/{{ planned }}</span>
+        </div>
+        {% endif %}
+        {% else %}
+        <span class="text-slate-400 italic">boş</span>
+        {% endif %}
+      </div>
+    </summary>
+
+    <div class="divide-y divide-slate-100 border-t border-slate-100">
+      {% for task in day_tasks %}
+        {% set single = task.book_items|length == 1 %}
+        {% set it = task.book_items[0] if single else None %}
+        {% set t_done = task.status.value == 'completed' %}
+        {% set t_partial = task.status.value == 'partial' %}
+      <div class="px-5 py-2.5 flex items-center gap-3">
+        <div class="w-5 h-5 rounded flex items-center justify-center text-xs
+          {% if t_done %}bg-emerald-500 text-white{% elif t_partial %}bg-amber-100 border border-amber-400 text-amber-700 font-bold{% else %}bg-white border-2 border-slate-300{% endif %}">
+          {% if t_done %}✓{% elif t_partial %}½{% endif %}
+        </div>
+        <span class="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded
+          {% if task.type.value == 'test' %}bg-indigo-50 text-indigo-700
+          {% elif task.type.value == 'video' %}bg-sky-50 text-sky-700
+          {% elif task.type.value == 'ozet' %}bg-emerald-50 text-emerald-700
+          {% elif task.type.value == 'tekrar' %}bg-amber-50 text-amber-700
+          {% else %}bg-slate-100 text-slate-700{% endif %}">
+          {{ TASK_TYPE_LABELS[task.type] }}
+        </span>
+        <span class="text-sm flex-1 {% if t_done %}line-through text-slate-400{% else %}text-slate-900{% endif %} truncate">
+          {{ task.title }}
+          {% if single and it.section.topic %}<span class="text-xs text-slate-400">({{ it.section.topic.name }})</span>{% endif %}
+        </span>
+        <a href="/student/day?date={{ day }}" class="text-xs text-indigo-600 hover:text-indigo-800">Aç</a>
+      </div>
+      {% else %}
+      <div class="px-5 py-3 text-sm text-slate-400 italic">görev yok</div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+</div>
+{% endblock %}

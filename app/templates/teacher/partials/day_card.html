@@ -1,0 +1,225 @@
+{# Tek bir günün kartı — HTMX outerHTML swap için kendine yeter.
+Bağlam: day, day_tasks, is_today, planned_total, day_suggestions, student, assignments,
+subjects, task_types, target_date (=day), keep_open (str|None),
+maturity_value, maturity_label, weeks_observed, days_observed, confidence_label,
+tr_weekdays, tr_months
+#}
+{% set should_open = is_today or keep_open %}
+<details {% if should_open %}open{% endif %}
+         class="day-card bg-white border {% if is_today %}border-indigo-300 ring-1 ring-indigo-100{% else %}border-slate-200{% endif %} rounded-lg group"
+         data-day="{{ day.isoformat() }}"
+         {% if keep_open %}data-keep-open="{{ keep_open }}"{% endif %}>
+  <summary class="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 list-none">
+    <div class="flex items-baseline gap-3">
+      <span class="inline-block w-4 text-slate-400 select-none transition-transform group-open:rotate-90">▸</span>
+      <div class="font-semibold text-slate-900">{{ tr_weekdays[day.weekday()] }}</div>
+      <div class="text-sm text-slate-500">{{ day.day }} {{ tr_months[day.month - 1] }}</div>
+      {% if is_today %}<span class="text-xs text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full">bugün</span>{% endif %}
+    </div>
+    <div class="flex items-center gap-3 text-xs text-slate-500">
+      {% if day_tasks %}
+      <span class="text-slate-700 font-medium">{{ day_tasks|length }} görev</span>
+      {% if planned_total %}<span class="text-amber-600">· {{ planned_total }} test planlı</span>{% endif %}
+      {% else %}
+      <span class="text-slate-400 italic">boş</span>
+      {% endif %}
+    </div>
+  </summary>
+
+  <!-- Ders bazında özet kartı -->
+  {% if day_subject_summary %}
+  <div class="day-subject-summary px-5 py-2.5 border-t border-slate-100 bg-slate-50/50 flex flex-wrap gap-1.5">
+    {% for ent in day_subject_summary %}
+      {% set sid = ent.subject.id %}
+      {# Subject id'den deterministik hue (mod 360) — her ders ayrı, kalıcı renk #}
+      {% set hue = (sid * 67) % 360 %}
+      {% set has_tasks = ent.task_count > 0 %}
+    <div class="flex items-center gap-1.5 text-[11px] px-2 py-1 rounded-md border"
+         {% if has_tasks %}
+         style="background: hsl({{ hue }}, 70%, 96%); border-color: hsl({{ hue }}, 60%, 75%);"
+         {% else %}
+         style="background: #f8fafc; border: 1px dashed #cbd5e1;"
+         {% endif %}
+         title="{{ ent.subject.name }}{% if has_tasks %} — {{ ent.task_count }} görev{% if ent.tests %} · {{ ent.tests }} test{% endif %}{% if ent.denemeler %} · {{ ent.denemeler }} deneme{% endif %}{% else %} — bu güne görev seçilmedi{% endif %}">
+      <span class="font-semibold whitespace-nowrap"
+            style="{% if has_tasks %}color: hsl({{ hue }}, 60%, 30%);{% else %}color: #94a3b8;{% endif %}">
+        {{ ent.subject.name }}
+      </span>
+      {% if has_tasks %}
+        <span class="text-slate-700 whitespace-nowrap">{{ ent.task_count }} görev</span>
+        {% if ent.tests %}
+          <span class="text-slate-400">·</span>
+          <span class="text-emerald-700 whitespace-nowrap">{{ ent.tests }} test</span>
+        {% endif %}
+        {% if ent.denemeler %}
+          <span class="text-slate-400">·</span>
+          <span class="text-indigo-700 whitespace-nowrap">{{ ent.denemeler }} deneme</span>
+        {% endif %}
+      {% else %}
+        <span class="text-slate-400 italic">—</span>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <!-- Görev listesi -->
+  <div class="divide-y divide-slate-100 border-t border-slate-100">
+    {% for task in day_tasks %}
+      {% set single = task.book_items|length == 1 %}
+      {% set it = task.book_items[0] if single else None %}
+      {% set primary_subject = task.book_items[0].book.subject if task.book_items else None %}
+      {% set hue = (primary_subject.id * 67) % 360 if primary_subject else 0 %}
+    <div class="px-5 py-2.5 flex items-start justify-between gap-3 hover:bg-slate-100/50 border-l-4"
+         {% if primary_subject %}
+         style="background: hsl({{ hue }}, 70%, 98%); border-left-color: hsl({{ hue }}, 60%, 60%);"
+         {% else %}
+         style="border-left-color: transparent;"
+         {% endif %}>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          {% if primary_subject %}
+          <span class="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded whitespace-nowrap"
+                style="background: hsl({{ hue }}, 70%, 90%); color: hsl({{ hue }}, 60%, 25%);"
+                title="{{ primary_subject.name }}">
+            {{ primary_subject.name }}
+          </span>
+          {% endif %}
+          <span class="text-[10px] uppercase tracking-wide px-1.5 py-0.5 rounded
+            {% if task.type.value == 'test' %}bg-indigo-50 text-indigo-700
+            {% elif task.type.value == 'video' %}bg-sky-50 text-sky-700
+            {% elif task.type.value == 'ozet' %}bg-emerald-50 text-emerald-700
+            {% elif task.type.value == 'tekrar' %}bg-amber-50 text-amber-700
+            {% else %}bg-slate-100 text-slate-700{% endif %}">
+            {{ TASK_TYPE_LABELS[task.type] }}
+          </span>
+          <span class="text-sm font-medium text-slate-900">{{ task.title }}</span>
+          {% if single and it.section.topic %}
+            <span class="text-xs text-slate-400">({{ it.section.topic.name }})</span>
+          {% endif %}
+          {% if single and it.completed_count %}
+            <span class="text-xs text-emerald-600">· {{ it.completed_count }}/{{ it.planned_count }} çöz.</span>
+          {% endif %}
+          {% if task.status.value == 'completed' %}
+            <span class="text-xs text-emerald-600">✓ tamamlandı</span>
+          {% elif task.status.value == 'partial' %}
+            <span class="text-xs text-amber-600">kısmen</span>
+          {% endif %}
+        </div>
+        {% if task.book_items and not single %}
+        <div class="mt-1 text-xs text-slate-600 space-y-0.5">
+          {% for it in task.book_items %}
+          <div>
+            • {{ it.book.name }} — {{ it.section.label }}
+            {% if it.section.topic %}<span class="text-slate-400">({{ it.section.topic.name }})</span>{% endif %}
+            : <span class="font-medium">{{ it.planned_count }}</span>
+            {% if it.completed_count %}<span class="text-emerald-600"> ({{ it.completed_count }} çöz.)</span>{% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-3 text-xs whitespace-nowrap">
+        <a href="/teacher/tasks/{{ task.id }}/edit" class="text-indigo-600 hover:text-indigo-800">Düzenle</a>
+        <button type="button"
+                hx-post="/teacher/tasks/{{ task.id }}/delete"
+                hx-target="closest .day-card"
+                hx-swap="outerHTML"
+                hx-confirm="Görev silinsin mi? Rezerv edilen testler iade edilecek."
+                class="text-red-600 hover:text-red-800 bg-transparent border-0 p-0 cursor-pointer">Sil</button>
+      </div>
+    </div>
+    {% else %}
+    <div class="px-5 py-3 text-sm text-slate-400 italic">görev yok</div>
+    {% endfor %}
+  </div>
+
+  <!-- + Görev ekle formu (öneri panelinin üstünde, ayrı kart şeklinde) -->
+  {% if assignments %}
+  {% set day_iso = day.isoformat() %}
+  <div class="px-5 py-3 border-t-4 border-double border-slate-200 bg-white">
+    <details class="day-add-form rounded-lg border border-dashed border-indigo-300 bg-indigo-50/20 open:bg-indigo-50/40 open:border-solid open:border-indigo-400 open:shadow-sm transition"
+             {% if keep_open == 'add-form' %}open{% endif %}>
+      <summary class="px-4 py-2.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100/60 cursor-pointer rounded-lg flex items-center gap-2 select-none">
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-indigo-600 text-white text-xs font-bold">+</span>
+        <span>Yeni görev ekle</span>
+        <span class="ml-auto text-[10px] text-slate-400 font-normal">tıkla → form açılır</span>
+      </summary>
+    <form hx-post="/teacher/students/{{ student.id }}/tasks"
+          hx-target="closest .day-card"
+          hx-swap="outerHTML"
+          hx-vals='{"keep_open":"add-form"}'
+          class="px-4 py-4 grid grid-cols-1 md:grid-cols-12 gap-3 items-end border-t border-indigo-200/60">
+      <input type="hidden" name="task_date" value="{{ day_iso }}" />
+
+      <div class="md:col-span-2">
+        <label class="block text-xs text-slate-600 mb-1">Tip</label>
+        <select name="type" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          {% for tt in task_types %}
+          <option value="{{ tt.value }}">{{ TASK_TYPE_LABELS[tt] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-2">
+        <label class="block text-xs text-slate-600 mb-1">Ders</label>
+        <select name="subject_id"
+                hx-get="/teacher/students/{{ student.id }}/books-by-subject"
+                hx-target="#book-sel-{{ day_iso }}"
+                hx-swap="innerHTML"
+                hx-trigger="change"
+                hx-include="this"
+                class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          <option value="">— ders seç —</option>
+          {% for s in subjects %}
+          <option value="{{ s.id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="md:col-span-3">
+        <label class="block text-xs text-slate-600 mb-1">Kitap</label>
+        <select name="book_id"
+                id="book-sel-{{ day_iso }}"
+                hx-get="/teacher/students/{{ student.id }}/book-sections"
+                hx-target="#sect-sel-{{ day_iso }}"
+                hx-swap="innerHTML"
+                hx-trigger="change"
+                hx-include="this"
+                class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          <option value="">— önce ders seç —</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-3">
+        <label class="block text-xs text-slate-600 mb-1">Ünite / Deneme</label>
+        <select name="section_id"
+                id="sect-sel-{{ day_iso }}"
+                class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          <option value="">— önce kitap seç —</option>
+        </select>
+      </div>
+
+      <div class="md:col-span-1">
+        <label class="block text-xs text-slate-600 mb-1">Adet</label>
+        <input type="number" name="planned_count" min="1"
+               class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-right" />
+      </div>
+
+      <div class="md:col-span-1 flex justify-end">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
+          Ekle
+        </button>
+      </div>
+    </form>
+    </details>
+  </div>
+  {% endif %}
+
+  <!-- Öneri paneli (formun altında, görsel olarak ayrı) -->
+  {% if assignments and (day_suggestions or weeks_observed == 0) %}
+    {% with suggestions=day_suggestions, target_date=day, student_id=student.id %}
+      {% include "teacher/partials/suggestions_panel.html" %}
+    {% endwith %}
+  {% endif %}
+</details>

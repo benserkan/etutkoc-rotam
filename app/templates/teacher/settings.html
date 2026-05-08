@@ -1,0 +1,241 @@
+{% extends "base.html" %}
+{% block title %}Sistem Ayarları{% endblock %}
+{% block content %}
+
+<div class="mb-6">
+  <h1 class="text-2xl font-semibold text-slate-900">Sistem Ayarları</h1>
+  <div class="text-sm text-slate-500 mt-1">E-posta yapılandırması ve uygulama bilgisi</div>
+</div>
+
+{% if flash_err %}
+<div class="bg-rose-50 border border-rose-300 rounded-lg p-3 mb-4 flex items-start gap-2">
+  <div class="text-lg">⚠️</div>
+  <div class="flex-1 text-sm text-rose-800">{{ flash_err }}</div>
+</div>
+{% endif %}
+{% if flash_ok %}
+<div class="bg-emerald-50 border border-emerald-300 rounded-lg p-3 mb-4 flex items-center gap-2">
+  <div class="text-lg">✓</div>
+  <div class="flex-1 text-sm text-emerald-800">{{ flash_ok }}</div>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  {# Mevcut yapılandırma #}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">E-posta Yapılandırması</h2>
+      <div class="text-xs text-slate-500">.env dosyasından okunur, çalışma esnasında değişmez</div>
+    </div>
+    <div class="p-5 space-y-2 text-sm">
+      <div class="flex items-center justify-between">
+        <span class="text-slate-600">Durum</span>
+        {% if settings.email_enabled and settings.smtp_host %}
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">✓ Aktif</span>
+        {% elif settings.email_enabled %}
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">⚠ SMTP eksik</span>
+        {% else %}
+        <span class="px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-600">— Devre dışı (log-only)</span>
+        {% endif %}
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-600">SMTP Host</span>
+        <code class="text-xs">{{ settings.smtp_host or '(boş)' }}</code>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-600">SMTP Port</span>
+        <code class="text-xs">{{ settings.smtp_port }}</code>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-600">SMTP User</span>
+        <code class="text-xs">{{ settings.smtp_user or '(boş)' }}</code>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-600">From</span>
+        <code class="text-xs">{{ settings.smtp_from or '(boş)' }}</code>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-600">TLS / SSL</span>
+        <span class="text-xs">{{ 'TLS' if settings.smtp_use_tls else '' }}{% if settings.smtp_use_ssl %} SSL{% endif %}{% if not (settings.smtp_use_tls or settings.smtp_use_ssl) %}—{% endif %}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        <span class="text-slate-600">Public URL</span>
+        <code class="text-xs">{{ settings.app_base_url }}</code>
+      </div>
+    </div>
+    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+      Değişiklik için <code>.env</code> dosyasını güncelleyip sunucuyu yeniden başlatın. Devre dışı modda yeni talep/onay/red mailleri sadece sunucu logu'na yazılır.
+    </div>
+  </div>
+
+  {# Test e-posta gönderimi #}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 border-b border-slate-100">
+      <h2 class="font-semibold text-slate-900">Test E-postası Gönder</h2>
+      <div class="text-xs text-slate-500">SMTP yapılandırmanızı doğrulamak için</div>
+    </div>
+    <form method="post" action="/teacher/settings/test-email" class="p-5 space-y-3">
+      <div>
+        <label class="block text-sm font-medium text-slate-700 mb-1">Alıcı e-posta</label>
+        <input type="email" name="to" value="{{ user.email }}" required
+               class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500" />
+        <p class="text-[11px] text-slate-500 mt-1">Varsayılan: kendi adresiniz ({{ user.email }})</p>
+      </div>
+      <div class="flex justify-end">
+        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
+          📧 Test E-postası Gönder
+        </button>
+      </div>
+    </form>
+    <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 italic">
+      <b>Devre dışı modda:</b> Mail gönderilmez, sunucu logu'nda <code>[EMAIL] (devre dışı) → ...</code> satırı görünür.<br>
+      <b>Aktif modda:</b> Mail gerçekten gönderilir; spam klasörünü de kontrol edin.
+    </div>
+  </div>
+</div>
+
+{# === Veli Bildirim Zamanlamaları === #}
+<div class="mt-8 bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-5 py-3 border-b border-slate-100 flex items-start justify-between gap-4">
+    <div class="flex-1">
+      <h2 class="font-semibold text-slate-900">Veli Bildirim Zamanlamaları</h2>
+      <div class="text-xs text-slate-500 mt-1">
+        Sistem-genel <b>tarama saatleridir</b> — her gün bu saatte sistem tüm öğrencileri tek tek dolaşır.
+      </div>
+    </div>
+    <a href="?cron-test=1#bildirim"
+       onclick="return confirm('Tüm açık bildirim türleri zorla şimdi çalıştırılsın mı?\n\nSadece kriterleri sağlayan öğrencilere bildirim gider; kuyruktaki bildirimler gerçekten gönderilebilir.');"
+       class="shrink-0 text-xs bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded px-3 py-1.5">⚡ Şimdi çalıştır</a>
+  </div>
+
+  {# Üst banner — sık karıştırılan noktayı baştan netleştir #}
+  <div id="bildirim" class="bg-amber-50 border-b border-amber-200 px-5 py-3 text-xs text-amber-900 leading-relaxed">
+    <b>Önemli:</b> Buradaki saatler tek bir öğrenci için <i>bireysel bildirim saati değildir</i>.
+    Sistem her gün bu saatte tüm öğrenciler için kontrol yapar. Hangi öğrenciye bildirim gideceğine
+    her zaman <b>öğrencinin kendi durumu</b> karar verir:
+    <ul class="list-disc list-inside mt-1 space-y-0.5">
+      <li>Salı programı olan öğrenciye <b>sadece Salı</b> günü günlük özet gider.</li>
+      <li>O gün hiç planlı görevi olmayan öğrenciye bildirim gitmez (gürültüyü engeller).</li>
+      <li>Haftalık rapor öğrencinin <b>kendi 7-günlük döngüsünün son gününde</b> tetiklenir; aşağıdaki "yedek" cron sadece düşen tetikleyicileri yakalar.</li>
+    </ul>
+    Yani aşağıdaki saatleri <b>"sistemin tüm öğrencileri tarayacağı an"</b> olarak düşünün; günün sonu (akşam saatleri) en uygun zamandır.
+  </div>
+
+  {% if cron_schedules %}
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-xs text-slate-600 uppercase tracking-wider">
+      <tr>
+        <th class="text-left px-4 py-2 font-medium" style="width:38%">Bildirim Türü</th>
+        <th class="text-left px-4 py-2 font-medium">Tarama Saati</th>
+        <th class="text-left px-4 py-2 font-medium">Hangi Gün</th>
+        <th class="text-left px-4 py-2 font-medium">Durum</th>
+        <th class="text-left px-4 py-2 font-medium">Son Tarama</th>
+        <th class="px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for sch in cron_schedules %}
+      {% set info = job_info.get(sch.job_key) %}
+      <tr>
+        <form method="post" action="/teacher/settings/cron/{{ sch.id }}" class="contents">
+          <td class="px-4 py-3 align-top">
+            <div class="text-sm font-semibold text-slate-900">
+              {{ info.title if info else sch.job_key }}
+            </div>
+            {% if info %}
+            <div class="text-[11px] text-slate-600 mt-1 leading-relaxed">{{ info.what }}</div>
+            <div class="text-[11px] text-slate-500 mt-1.5 leading-relaxed">
+              <span class="font-medium text-slate-600">Öğrenci-bazlı kural:</span> {{ info.applies }}
+            </div>
+            <div class="text-[10px] text-indigo-600 mt-1.5 italic">{{ info.default_hint }}</div>
+            <div class="text-[10px] text-slate-400 mt-1 font-mono">id: {{ sch.job_key }}</div>
+            {% else %}
+            <div class="text-[11px] text-slate-500 mt-0.5">{{ sch.description or '' }}</div>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 align-top">
+            <div class="flex items-center gap-1">
+              <input type="number" name="hour" min="0" max="23" required
+                     value="{{ '%02d'|format(sch.hour) }}"
+                     class="w-14 px-2 py-1 border border-slate-300 rounded text-sm text-center" />
+              <span class="text-slate-400">:</span>
+              <input type="number" name="minute" min="0" max="59" required
+                     value="{{ '%02d'|format(sch.minute) }}"
+                     class="w-14 px-2 py-1 border border-slate-300 rounded text-sm text-center" />
+              <span class="text-[10px] text-slate-400 ml-1">UTC</span>
+            </div>
+            <div class="text-[10px] text-slate-500 mt-1">
+              ≈ TR <span class="font-medium text-slate-700">{{ utc_to_tr(sch.hour, sch.minute) }}</span>
+            </div>
+          </td>
+          <td class="px-4 py-3 align-top">
+            <select name="day_of_week" class="px-2 py-1 border border-slate-300 rounded text-sm">
+              <option value="" {% if sch.day_of_week is none %}selected{% endif %}>Her gün</option>
+              {% for i, name in [(0,'Pazartesi'),(1,'Salı'),(2,'Çarşamba'),(3,'Perşembe'),(4,'Cuma'),(5,'Cumartesi'),(6,'Pazar')] %}
+              <option value="{{ i }}" {% if sch.day_of_week == i %}selected{% endif %}>{{ name }}</option>
+              {% endfor %}
+            </select>
+          </td>
+          <td class="px-4 py-3 align-top">
+            <label class="inline-flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" name="enabled" value="yes"
+                     {% if sch.enabled %}checked{% endif %}
+                     class="accent-indigo-600" />
+              <span class="text-xs text-slate-700">{{ 'Açık' if sch.enabled else 'Kapalı' }}</span>
+            </label>
+          </td>
+          <td class="px-4 py-3 text-xs align-top">
+            {% if sch.last_run_at %}
+            <div class="text-slate-700">{{ sch.last_run_at.strftime('%d.%m.%Y %H:%M') }} UTC</div>
+            <div class="mt-0.5">
+              {% if sch.last_status == 'success' %}
+              <span class="text-emerald-600">✓ başarılı</span>
+              {% elif sch.last_status == 'failed' %}
+              <span class="text-rose-600" title="{{ sch.last_error or '' }}">✗ hata</span>
+              {% else %}
+              <span class="text-slate-500">{{ sch.last_status }}</span>
+              {% endif %}
+            </div>
+            {% else %}
+            <span class="text-slate-400 italic">henüz çalışmadı</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-3 text-right align-top">
+            <button type="submit" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white py-1 px-3 rounded">
+              Kaydet
+            </button>
+          </td>
+        </form>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="px-5 py-4 text-sm text-slate-400 italic">Cron schedule kaydı yok. Migration çalıştırılmamış olabilir.</p>
+  {% endif %}
+
+  <div class="px-5 py-3 bg-slate-50 border-t border-slate-100 text-[11px] text-slate-500 leading-relaxed">
+    <b>İşleyiş:</b> Sistem her dakika tabloyu yoklar; tarama saati gelmiş ve o gün henüz çalışmamış olan
+    bir tür tetiklenir → ürettiği bildirimler kuyruğa düşer → dispatcher gerçek gönderimi yapar.
+    Servis bir süre kapalı kalmışsa kalkar kalkmaz <i>o günün</i> kaçırılmış taramasını yapar
+    (geçmiş günler atlanır). <b>"⚡ Şimdi çalıştır"</b> butonu saat kontrolünü atlatıp tüm açık
+    türleri anında tetikler — geliştirme/test için.
+  </div>
+</div>
+
+<div class="mt-6 bg-amber-50 border border-amber-200 rounded-lg p-4 text-sm">
+  <div class="font-semibold text-amber-900 mb-2">📌 .env örneği — Gmail SMTP</div>
+  <pre class="text-xs bg-white rounded p-3 border border-amber-200 overflow-x-auto"><code>EMAIL_ENABLED=true
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-account@gmail.com
+SMTP_PASSWORD=your-app-password   # Gmail için "uygulama şifresi" üretilmeli
+SMTP_FROM=ETÜTKOÇ &lt;your-account@gmail.com&gt;
+SMTP_USE_TLS=true
+APP_BASE_URL=https://etutkoc.example.com</code></pre>
+  <p class="text-[11px] text-amber-800 mt-2">
+    Gmail kullanıyorsanız "Uygulama Şifresi" üretmek için Google hesabı → Güvenlik → 2 adımlı doğrulama → App passwords. Sunucu deploy ettikten sonra gerçek değerleri girin.
+  </p>
+</div>
+
+{% endblock %}

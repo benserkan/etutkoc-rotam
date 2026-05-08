@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+{% block title %}Akademik Yıllar{% endblock %}
+
+{% block content %}
+{% set PHASE_BADGE = {
+  'regular':      'bg-slate-50 text-slate-700 border-slate-200',
+  'winter_break': 'bg-sky-50 text-sky-700 border-sky-200',
+  'summer_camp':  'bg-amber-50 text-amber-700 border-amber-200',
+  'exam_prep':    'bg-rose-50 text-rose-700 border-rose-200'
+} %}
+{% set PHASE_LABEL = {
+  'regular':      '📚 Olağan',
+  'winter_break': '❄️ Tatil',
+  'summer_camp':  '🌞 Yaz Kampı',
+  'exam_prep':    '🎯 Sınav Hazırlık'
+} %}
+
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-semibold text-slate-900">Akademik Yıllar</h1>
+</div>
+
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800 flex items-start gap-2">
+  <span>⚠️</span><span>{{ flash_err }}</span>
+</div>
+{% endif %}
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800 flex items-start gap-2">
+  <span>✓</span><span>{{ flash_ok }}</span>
+</div>
+{% endif %}
+
+<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
+  <h2 class="font-medium text-slate-900 mb-3">Yeni Yıl Ekle</h2>
+  <p class="text-xs text-slate-500 mb-3">
+    Akademik yıl saf takvimdir — bu yıla bağlı öğrenciler kendi sınıf/seviyesi ile LGS, YKS veya yıl sonu hedefini belirler. Aynı yıl altında 8. sınıf LGS, 12. sınıf YKS ve mezun öğrenciler birlikte yer alabilir.
+  </p>
+  <form method="post" action="/teacher/years" class="space-y-3">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 items-end">
+      <div class="md:col-span-2">
+        <label class="block text-sm text-slate-600 mb-1">Yıl <span class="text-rose-500">*</span></label>
+        <select name="start_year" required
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          {% for c in year_choices %}
+          <option value="{{ c.start_year }}"
+                  {% if c.start_year == current_start_year %}selected{% endif %}>
+            {{ c.label }}{% if c.exists %} · zaten kayıtlı{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <p class="text-[11px] text-slate-500 mt-1">Maarif/Klasik müfredat ayrımı bu seçime bağlı.</p>
+      </div>
+      <div class="flex md:justify-end">
+        <button type="submit"
+                class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded w-full md:w-auto">
+          Ekle
+        </button>
+      </div>
+    </div>
+  </form>
+</div>
+
+<div class="space-y-4">
+  {% for year in years %}
+  {% set active_phase = year.active_phase_on(today) %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    {# Yıl başlığı — saf takvim, hedef sınav öğrenci seviyesinde #}
+    {% set _lgs_n = year.students | selectattr('effective_exam_target', 'equalto', 'LGS') | list | length %}
+    {% set _yks_n = year.students | selectattr('effective_exam_target', 'equalto', 'YKS') | list | length %}
+    {% set _none_n = year.students | length - _lgs_n - _yks_n %}
+    <div class="px-5 py-3 flex items-center gap-3 flex-wrap border-b border-slate-100">
+      <h3 class="font-semibold text-slate-900">{{ year.name }}</h3>
+      <span class="text-xs text-slate-500">{{ year.students|length }} öğrenci</span>
+      {% if year.students %}
+      <span class="text-[10px] text-slate-500 flex items-center gap-1.5">
+        {% if _lgs_n %}<span class="px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">LGS · {{ _lgs_n }}</span>{% endif %}
+        {% if _yks_n %}<span class="px-1.5 py-0.5 rounded bg-purple-50 text-purple-700 border border-purple-200">YKS · {{ _yks_n }}</span>{% endif %}
+        {% if _none_n %}<span class="px-1.5 py-0.5 rounded bg-slate-50 text-slate-600 border border-slate-200">Yıl Sonu · {{ _none_n }}</span>{% endif %}
+      </span>
+      {% endif %}
+      {% if active_phase %}
+      <span class="ml-auto text-xs px-2 py-0.5 rounded border {{ PHASE_BADGE.get(active_phase.kind.value, '') }}">
+        Bugün: {{ PHASE_LABEL.get(active_phase.kind.value, active_phase.kind.value) }} · {{ active_phase.name }}
+      </span>
+      {% endif %}
+      <form method="post" action="/teacher/years/{{ year.id }}/delete" class="ml-auto inline"
+            onsubmit="return confirm('Yılı silmek istediğine emin misin? Bu yıla bağlı öğrenciler yıl ataması kaybeder.');">
+        <button type="submit" class="text-red-600 hover:text-red-800 text-xs">Yılı Sil</button>
+      </form>
+    </div>
+
+    {# Dönemler (phases) — genişletilebilir #}
+    <details class="group">
+      <summary class="px-5 py-2.5 cursor-pointer text-sm text-slate-700 hover:bg-slate-50 flex items-center justify-between">
+        <span class="font-medium">
+          Dönemler
+          <span class="ml-2 text-xs text-slate-500">{{ year.phases|length }} dönem tanımlı</span>
+        </span>
+        <span class="text-xs text-indigo-600 group-open:hidden">+ ekle / yönet</span>
+        <span class="text-xs text-slate-400 hidden group-open:inline">kapat</span>
+      </summary>
+      <div class="border-t border-slate-100 p-4 bg-slate-50/50">
+        {# Mevcut dönemler #}
+        {% if year.phases %}
+        <table class="w-full text-xs mb-4 bg-white border border-slate-200 rounded">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="text-left px-3 py-2 font-medium text-slate-600">Tip</th>
+              <th class="text-left px-3 py-2 font-medium text-slate-600">Ad</th>
+              <th class="text-left px-3 py-2 font-medium text-slate-600">Başlangıç</th>
+              <th class="text-left px-3 py-2 font-medium text-slate-600">Bitiş</th>
+              <th class="text-right px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-100">
+            {% for ph in year.phases %}
+            <tr {% if active_phase and active_phase.id == ph.id %}class="bg-emerald-50/40"{% endif %}>
+              <td class="px-3 py-2">
+                <span class="px-1.5 py-0.5 rounded border text-[10px] {{ PHASE_BADGE.get(ph.kind.value, '') }}">
+                  {{ PHASE_LABEL.get(ph.kind.value, ph.kind.value) }}
+                </span>
+              </td>
+              <td class="px-3 py-2 font-medium text-slate-800">
+                {{ ph.name }}
+                {% if active_phase and active_phase.id == ph.id %}
+                <span class="ml-1 text-[10px] text-emerald-700">(şu an aktif)</span>
+                {% endif %}
+                {% if ph.notes %}<div class="text-[10px] text-slate-500">{{ ph.notes }}</div>{% endif %}
+              </td>
+              <td class="px-3 py-2 text-slate-600">{{ ph.start_date.strftime('%d.%m.%Y') }}</td>
+              <td class="px-3 py-2 text-slate-600">{{ ph.end_date.strftime('%d.%m.%Y') }}</td>
+              <td class="px-3 py-2 text-right">
+                <form method="post" action="/teacher/years/{{ year.id }}/phases/{{ ph.id }}/delete" class="inline"
+                      onsubmit="return confirm('{{ ph.name }} dönemi silinsin mi?');">
+                  <button type="submit" class="text-red-600 hover:text-red-800 text-xs">Sil</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}
+        <p class="text-xs text-slate-500 italic mb-3">Henüz dönem tanımlanmadı. Aşağıdan ekleyebilirsiniz.</p>
+        {% endif %}
+
+        {# Yeni dönem ekleme formu #}
+        <form method="post" action="/teacher/years/{{ year.id }}/phases" class="space-y-2 bg-white border border-slate-200 rounded p-3">
+          <div class="text-xs font-medium text-slate-700 mb-1">Yeni Dönem Ekle</div>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+            <div>
+              <label class="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">Tip</label>
+              <select name="kind" class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs bg-white">
+                {% for value, label in PHASE_KIND_CHOICES %}
+                <option value="{{ value }}" {% if value == 'REGULAR' %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">Ad</label>
+              <input name="name" required placeholder="Örn: 1. Dönem, Yaz Kampı"
+                     class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">Başlangıç</label>
+              <input type="date" name="start_date" required
+                     class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs" />
+            </div>
+            <div>
+              <label class="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">Bitiş</label>
+              <input type="date" name="end_date" required
+                     class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs" />
+            </div>
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-5 gap-2 items-end">
+            <div class="md:col-span-4">
+              <label class="block text-[10px] uppercase tracking-wider text-slate-500 mb-1">Not <span class="text-slate-400">(opsiyonel)</span></label>
+              <input name="notes" placeholder="Ek açıklama"
+                     class="w-full px-2 py-1.5 border border-slate-300 rounded text-xs" />
+            </div>
+            <button type="submit"
+                    class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-medium py-1.5 px-3 rounded">
+              + Dönem Ekle
+            </button>
+          </div>
+        </form>
+      </div>
+    </details>
+  </div>
+  {% else %}
+  <div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+    Henüz akademik yıl eklenmedi. Yukarıdaki formdan başlayın.
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

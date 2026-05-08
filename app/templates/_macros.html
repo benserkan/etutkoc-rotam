@@ -1,0 +1,7 @@
+{# Yardımcı makrolar — diğer şablonlar tarafından kullanılır #}
+
+{% macro status_pill(text, color, bg) %}
+<span class="text-xs px-2 py-0.5 rounded-full" style="background: {{ bg }}; color: {{ color }};">
+  {{ text }}
+</span>
+{% endmacro %}

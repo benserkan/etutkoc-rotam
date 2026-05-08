@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Talepler{% endblock %}
+{% block content %}
+
+{% set flash_err = request.query_params.get('err') %}
+{% set flash_ok = request.query_params.get('ok') %}
+
+{% if flash_err %}
+<div class="bg-rose-50 border border-rose-300 rounded-lg p-4 mb-5 flex items-start gap-3">
+  <div class="text-2xl flex-shrink-0">⚠️</div>
+  <div class="flex-1">
+    <div class="font-semibold text-rose-900">İşlem başarısız</div>
+    <div class="text-sm text-rose-800 mt-0.5">{{ flash_err }}</div>
+  </div>
+  <a href="/teacher/requests" class="text-rose-500 hover:text-rose-700 text-xl px-2 leading-none flex-shrink-0">×</a>
+</div>
+{% endif %}
+
+{% if flash_ok %}
+<div class="bg-emerald-50 border border-emerald-300 rounded-lg p-3 mb-5 flex items-center gap-3">
+  <div class="text-xl flex-shrink-0">✓</div>
+  <div class="flex-1 text-sm text-emerald-800 font-medium">{{ flash_ok }}</div>
+  <a href="/teacher/requests" class="text-emerald-600 hover:text-emerald-800 text-xl px-2 leading-none flex-shrink-0">×</a>
+</div>
+{% endif %}
+
+<div class="flex items-center justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <h1 class="text-2xl font-semibold text-slate-900">Öğrenci Talepleri</h1>
+    <div class="text-sm text-slate-500 mt-1">Bekleyen: <b>{{ pending_total }}</b></div>
+  </div>
+  <div class="flex gap-2">
+    {% if only_pending %}
+    <a href="/teacher/requests?only_pending=0" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">Tümünü göster</a>
+    {% else %}
+    <a href="/teacher/requests" class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">Sadece bekleyenler</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if requests %}
+<div class="space-y-3">
+  {% for r in requests %}
+  {% set st = r.status.value %}
+  {% set status_color = {'pending':'#d97706','approved':'#059669','rejected':'#dc2626','withdrawn':'#64748b','resolved':'#0ea5e9'}[st] %}
+  {% set status_bg = {'pending':'#fffbeb','approved':'#ecfdf5','rejected':'#fef2f2','withdrawn':'#f1f5f9','resolved':'#e0f2fe'}[st] %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-5 py-3 flex items-center justify-between gap-3 flex-wrap" style="background: {{ status_bg }};">
+      <div class="flex items-center gap-2">
+        <span class="text-xs px-2 py-0.5 rounded-full font-medium uppercase tracking-wide bg-white" style="color: {{ status_color }}; border: 1px solid {{ status_color }}33;">
+          {{ {'change':'Sayı değiştir','replace':'Kaynağı değiştir','remove':'Çıkar','add':'Ekle','question':'Soru'}[r.type.value] }}
+        </span>
+        <span class="font-medium text-slate-900">
+          <a href="/teacher/students/{{ r.student.id }}" class="hover:underline">{{ r.student.full_name }}</a>
+        </span>
+        <span class="text-xs text-slate-500">{{ r.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+      </div>
+      <span class="text-xs px-2 py-0.5 rounded-full font-semibold" style="color: {{ status_color }};">
+        {{ {'pending':'⏳ Bekliyor','approved':'✓ Onaylandı','rejected':'✗ Reddedildi','withdrawn':'Geri çekildi','resolved':'💬 Cevaplandı'}[st] }}
+      </span>
+    </div>
+
+    <div class="px-5 py-3 text-sm">
+      {% if r.task %}
+      <div class="mb-1">İlgili görev: <a href="/teacher/tasks/{{ r.task.id }}/edit" class="text-indigo-600 hover:underline"><b>{{ r.task.title }}</b></a> · {{ r.task.date.strftime('%d.%m.%Y') }}</div>
+      {% endif %}
+
+      {% if r.type.value == 'change' and r.proposed_count is not none %}
+      <div class="text-slate-700"><b>Yeni sayı önerisi:</b> {{ r.proposed_count }}</div>
+      {% elif r.type.value == 'replace' and r.proposed_book %}
+      <div class="text-slate-700">
+        <b>Yeni kaynak önerisi:</b> {{ r.proposed_book.name }} · {{ r.proposed_section.label if r.proposed_section else '—' }} · {{ r.proposed_count }} test
+      </div>
+      {% elif r.type.value == 'add' and r.proposed_book %}
+      <div class="text-slate-700">
+        <b>Eklenmesi istenen:</b> {{ r.proposed_book.name }} · {{ r.proposed_section.label if r.proposed_section else '—' }} · {{ r.proposed_count }} test · {{ r.proposed_date.strftime('%d.%m.%Y') if r.proposed_date else '—' }}
+      </div>
+      {% endif %}
+
+      {% if r.message %}
+      <div class="mt-2 p-2.5 rounded bg-slate-50 border-l-4 border-slate-300">
+        <div class="text-[11px] text-slate-500 mb-0.5">Öğrencinin notu:</div>
+        <div class="text-slate-800">"{{ r.message }}"</div>
+      </div>
+      {% endif %}
+
+      {% if r.teacher_response %}
+      <div class="mt-2 p-2.5 rounded bg-indigo-50 border-l-4 border-indigo-400">
+        <div class="text-[11px] text-indigo-700 mb-0.5">Cevabınız:</div>
+        <div class="text-slate-800">{{ r.teacher_response }}</div>
+      </div>
+      {% endif %}
+
+      {% if st == 'pending' %}
+      <div class="mt-3 pt-3 border-t border-slate-100">
+        {% if r.type.value == 'question' %}
+        <form method="post" action="/teacher/requests/{{ r.id }}/respond" class="space-y-2">
+          <textarea name="response" rows="2" required placeholder="Cevabınızı yazın..."
+                    class="w-full px-3 py-2 border border-slate-300 rounded text-sm"></textarea>
+          <div class="flex justify-end gap-2">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm px-3 py-1.5 rounded">Cevapla</button>
+          </div>
+        </form>
+        {% else %}
+        <form method="post" action="/teacher/requests/{{ r.id }}/approve" class="space-y-2 mb-2">
+          <textarea name="response" rows="1" placeholder="(opsiyonel) öğrenciye not..."
+                    class="w-full px-3 py-2 border border-slate-300 rounded text-sm"></textarea>
+          <div class="flex justify-between items-center">
+            <button type="submit" formaction="/teacher/requests/{{ r.id }}/reject"
+                    formnovalidate
+                    onclick="return confirm('Talep reddedilecek. Devam edilsin mi?');"
+                    class="text-sm text-red-600 hover:text-red-800">✗ Reddet</button>
+            <button type="submit"
+                    onclick="return confirm('Talep onaylanacak ve uygulanacak. Devam edilsin mi?');"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium px-4 py-1.5 rounded">
+              ✓ Onayla ve uygula
+            </button>
+          </div>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg p-8 text-center text-slate-500">
+  {% if only_pending %}🎉 Bekleyen talep yok.{% else %}Henüz talep alınmadı.{% endif %}
+</div>
+{% endif %}
+{% endblock %}

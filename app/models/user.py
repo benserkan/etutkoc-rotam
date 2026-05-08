@@ -1,0 +1,206 @@
+from __future__ import annotations
+
+import enum
+from datetime import datetime
+from typing import TYPE_CHECKING
+
+from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func
+from sqlalchemy.orm import Mapped, mapped_column, relationship
+
+from app.database import Base
+
+if TYPE_CHECKING:
+    from app.models.academic import AcademicYear
+    from app.models.book import Book
+    from app.models.progress import StudentBook
+    from app.models.task import Task
+
+
+class UserRole(str, enum.Enum):
+    TEACHER = "teacher"
+    STUDENT = "student"
+    PARENT = "parent"
+
+
+class Track(str, enum.Enum):
+    """YKS alan seçimi — 11. sınıf+ ve mezunlar için zorunlu."""
+    SAYISAL = "sayisal"
+    EA = "ea"  # Eşit Ağırlık
+    SOZEL = "sozel"
+    DIL = "dil"
+
+
+class GraduateMode(str, enum.Enum):
+    """Mezun öğrencinin günlük programının çalışma şekli."""
+    FULL_TIME = "full_time"      # Okul yok, 8-10 saat/gün tam-zamanlı
+    DERSHANE = "dershane"         # Etüt merkezine gider, kalan zamanda program
+
+
+TRACK_LABELS: dict[Track, str] = {
+    Track.SAYISAL: "Sayısal",
+    Track.EA: "Eşit Ağırlık",
+    Track.SOZEL: "Sözel",
+    Track.DIL: "Dil",
+}
+
+GRADUATE_MODE_LABELS: dict[GraduateMode, str] = {
+    GraduateMode.FULL_TIME: "Tam-zamanlı (okul yok)",
+    GraduateMode.DERSHANE: "Dershane / etüt merkezi",
+}
+
+
+class User(Base):
+    __tablename__ = "users"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    email: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    full_name: Mapped[str] = mapped_column(String(255), nullable=False)
+    role: Mapped[UserRole] = mapped_column(Enum(UserRole), nullable=False)
+
+    teacher_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    academic_year_id: Mapped[int | None] = mapped_column(
+        ForeignKey("academic_years.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    grade_level: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Mezun (üniversiteye girecek) öğrenci işareti — grade_level NULL kalabilir.
+    # is_graduate=True iken track zorunlu sayılır (UI/route düzeyinde).
+    is_graduate: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    # YKS alan tercihi — 11. sınıf, 12. sınıf ve mezunlar için zorunlu;
+    # 9-10. sınıf NULL (henüz seçilmemiş), 5-8 her zaman NULL (LGS).
+    track: Mapped[Track | None] = mapped_column(Enum(Track), nullable=True)
+    # Sadece is_graduate=True olduğunda anlamlı.
+    graduate_mode: Mapped[GraduateMode | None] = mapped_column(
+        Enum(GraduateMode), nullable=True
+    )
+    # 9. sınıfa giriş yılı (Eylül-yılı). Maarif/Klasik müfredat ayrımının
+    # kohort bazlı türetilmesi için. 5-8. sınıf öğrencisi için NULL.
+    # Mezunlar için 9'a giriş yılı (12'den geriye 3 yıl kuralıyla tahmin
+    # edilebilir veya öğretmen elle girer).
+    entry_year_grade9: Mapped[int | None] = mapped_column(Integer, nullable=True)
+
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    teacher: Mapped["User | None"] = relationship(
+        "User", remote_side="User.id", backref="students", foreign_keys=[teacher_id]
+    )
+    academic_year: Mapped["AcademicYear | None"] = relationship(
+        "AcademicYear", back_populates="students", foreign_keys=[academic_year_id]
+    )
+
+    owned_books: Mapped[list["Book"]] = relationship(
+        "Book", back_populates="owner", cascade="all, delete-orphan", foreign_keys="Book.teacher_id"
+    )
+    student_books: Mapped[list["StudentBook"]] = relationship(
+        "StudentBook", back_populates="student", cascade="all, delete-orphan",
+        foreign_keys="StudentBook.student_id",
+    )
+    tasks: Mapped[list["Task"]] = relationship(
+        "Task", back_populates="student", cascade="all, delete-orphan",
+        foreign_keys="Task.student_id",
+    )
+
+    @property
+    def display_grade_label(self) -> str:
+        """UI'da gösterilecek seviye etiketi: '8. sınıf' veya 'Mezun'."""
+        if self.is_graduate:
+            return "Mezun"
+        if self.grade_level is None:
+            return "—"
+        return f"{self.grade_level}. sınıf"
+
+    @property
+    def effective_exam_target(self) -> str | None:
+        """Öğrencinin hedef sınavı: 'LGS', 'YKS' veya None (ara sınıflar).
+
+        - 8. sınıf → LGS
+        - 12. sınıf → YKS
+        - Mezun (is_graduate=True) → YKS
+        - 5,6,7,9,10,11 → None (yıl sonu hedefli, sınav-spesifik tetik yok)
+        """
+        if self.is_graduate:
+            return "YKS"
+        if self.grade_level == 8:
+            return "LGS"
+        if self.grade_level == 12:
+            return "YKS"
+        return None
+
+    @property
+    def effective_exam_label(self) -> str:
+        """UI rozet etiketi — 'LGS', 'YKS' veya 'Yıl Sonu' (ara sınıflar)."""
+        t = self.effective_exam_target
+        return t if t else "Yıl Sonu"
+
+    @property
+    def effective_exam_date(self):
+        """Öğrenci-spesifik sınav tarihi (date | None).
+
+        Akademik yıl seviyesinde tek bir 'sınav tarihi' tutmak yanıltıcı:
+        bir öğretmenin aynı yılda hem LGS (Haziran başı) hem YKS (Haziran ortası)
+        öğrencisi olabilir. Bu yüzden tarihi öğrenci seviyesinde, hedef sınav +
+        akademik yılın bitiş yılına göre türetiyoruz. Tarihler her yıl MEB/ÖSYM
+        takvimine göre değişebilir; aşağıdaki sabitler güncel takvime yaklaşık
+        denk gelir, kesin tarih için öğretmen istisna girebilir (gelecekte).
+        """
+        from datetime import date as _date
+
+        target = self.effective_exam_target
+        if target is None or self.academic_year is None:
+            return None
+        end_year = (
+            (self.academic_year.start_year + 1) if self.academic_year.start_year else None
+        )
+        if not end_year:
+            return None
+        # Yaklaşık takvim: LGS Haziran ilk Pazar, YKS Haziran üçüncü hafta sonu.
+        # Kesinlik gerekirse ileride bir EXAM_CALENDAR sözlüğü eklenebilir.
+        if target == "LGS":
+            return _date(end_year, 6, 7)
+        if target == "YKS":
+            return _date(end_year, 6, 20)
+        return None
+
+    @property
+    def effective_curriculum_model(self):
+        """Müfredat modelini akademik yıl + sınıf bilgisinden türet.
+
+        Öncelik:
+          1. entry_year_grade9 elle girildiyse onu kullan (sınıf tekrarı vb.
+             override durumlar için)
+          2. Yoksa academic_year.start_year + grade_level'dan tahmin et
+          3. Hiçbiri yoksa None (UI öğretmenden manuel seçmesini ister)
+        """
+        from app.models.curriculum import derive_curriculum_model
+
+        ay_start = None
+        if self.academic_year is not None:
+            ay_start = self.academic_year.start_year
+
+        return derive_curriculum_model(
+            grade_level=self.grade_level,
+            is_graduate=self.is_graduate,
+            entry_year_grade9=self.entry_year_grade9,
+            academic_year_start=ay_start,
+        )
+
+    @property
+    def requires_track(self) -> bool:
+        """Track (alan) seçimi bu öğrenci için zorunlu mu?
+
+        Karar (2026-05-08): 11. sınıf+ ve mezunlar için zorunlu.
+        9-10. sınıf opsiyonel; 5-8 hiç sorulmaz (LGS, alan kavramı yok).
+        """
+        if self.is_graduate:
+            return True
+        if self.grade_level is None:
+            return False
+        return self.grade_level >= 11
+
+    def __repr__(self) -> str:
+        return f"<User {self.id} {self.email} {self.role.value}>"

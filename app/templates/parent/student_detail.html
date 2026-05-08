@@ -1,0 +1,209 @@
+{% extends "parent/base_parent.html" %}
+{% block title %}{{ data.student.full_name }} — Veli Paneli{% endblock %}
+
+{% block parent_content %}
+{% set s = data.student %}
+{% set wl = data.warning_level %}
+{% set color = '#dc2626' if wl == 'red' else ('#d97706' if wl == 'amber' else '#059669') %}
+
+<div class="mb-5">
+  <a href="/parent" class="text-sm text-slate-500 hover:text-slate-700">← Tüm öğrenciler</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">{{ s.full_name }}</h1>
+  <div class="text-sm text-slate-500 mt-1">
+    {% if s.display_grade_label %}{{ s.display_grade_label }}{% endif %}
+    {% if s.academic_year %} · {{ s.academic_year }}{% endif %}
+    {% if s.exam_date %} · {{ s.exam_label }}: {{ s.exam_date.replace('-','.') }}{% endif %}
+  </div>
+</div>
+
+{# 4 metrik kart #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-[10px] text-slate-500 uppercase tracking-wider">Bugün</div>
+    <div class="text-2xl font-semibold mt-1 text-slate-900">
+      {% if data.today.planned %}{{ data.today.completed }}<span class="text-slate-400 text-base">/{{ data.today.planned }}</span>
+      {% else %}<span class="text-slate-400">—</span>{% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">
+      {% if data.today.planned %}görev tamamlandı{% else %}bugün görev yok{% endif %}
+    </div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-[10px] text-slate-500 uppercase tracking-wider">Bu Hafta</div>
+    <div class="text-2xl font-semibold mt-1 text-slate-900">
+      {% if data.week.rate is not none %}%{{ data.week.rate }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">
+      {% if data.week.planned %}{{ data.week.completed }} / {{ data.week.planned }} görev{% else %}bu hafta görev yok{% endif %}
+    </div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-[10px] text-slate-500 uppercase tracking-wider">Son 7 Gün Oran</div>
+    <div class="text-2xl font-semibold mt-1" style="color: {{ color }};">
+      {% if data.rate_7d_pct is not none %}%{{ data.rate_7d_pct }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">tamamlama</div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-[10px] text-slate-500 uppercase tracking-wider">İstikrar</div>
+    <div class="text-2xl font-semibold mt-1 text-slate-700">
+      {% if data.consistency_7d_pct is not none %}%{{ data.consistency_7d_pct }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">7 günde aktif gün</div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-6">
+
+  {# Projeksiyon paneli — sadece veli için anlamlı kısım #}
+  <div class="lg:col-span-2 bg-white border border-slate-200 rounded-lg p-5">
+    <div class="flex items-center justify-between mb-3">
+      <h2 class="font-semibold text-slate-900">
+        {% if s.exam_target == 'none' or s.exam_label == 'Yıl Sonu' %}
+          Yıl Sonuna Doğru Projeksiyon
+        {% else %}
+          {{ s.exam_label }}'e Doğru Projeksiyon
+        {% endif %}
+      </h2>
+      {% set p = data.projection %}
+      {% set p_color = '#dc2626' if p.status == 'red' else ('#d97706' if p.status == 'amber' else '#059669') %}
+      <span class="text-xs px-2 py-1 rounded-full"
+            style="background: {{ p_color }}1A; color: {{ p_color }};">
+        {% if p.status == 'red' %}Hedefin gerisinde{% elif p.status == 'amber' %}Tedbirli ilerliyor{% else %}Hedefe yakın{% endif %}
+      </span>
+    </div>
+    <div class="grid grid-cols-3 gap-3 text-sm">
+      <div>
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Toplam Hedef</div>
+        <div class="text-base font-semibold text-slate-900 mt-0.5">{{ p.total_tests }}</div>
+      </div>
+      <div>
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Tamamlandı</div>
+        <div class="text-base font-semibold text-emerald-700 mt-0.5">{{ p.completed_tests }}</div>
+      </div>
+      <div>
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Kalan</div>
+        <div class="text-base font-semibold text-slate-900 mt-0.5">{{ p.remaining_tests }}</div>
+      </div>
+      {% if p.days_left_to_exam is not none %}
+      <div>
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">
+          {% if s.exam_target == 'none' or s.exam_label == 'Yıl Sonu' %}Yıl sonuna{% else %}{{ s.exam_label }}'e{% endif %}
+        </div>
+        <div class="text-base font-semibold text-slate-900 mt-0.5">{{ p.days_left_to_exam }} gün</div>
+      </div>
+      <div>
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Günlük Hız</div>
+        <div class="text-base font-semibold text-slate-900 mt-0.5">{{ p.rate_per_day or '—' }}</div>
+      </div>
+      <div>
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Beklenen Erim</div>
+        <div class="text-base font-semibold mt-0.5"
+             style="color: {{ p_color }};">{{ p.expected_completed_by_exam }}</div>
+      </div>
+      {% endif %}
+    </div>
+    <p class="text-[11px] text-slate-500 italic mt-3 leading-relaxed">
+      Bu projeksiyon mevcut günlük çalışma temposuna ve geçmiş 28 günlük desene göre hesaplanır.
+      {% if s.exam_target == 'none' or s.exam_label == 'Yıl Sonu' %}Yıl sonuna{% else %}{{ s.exam_label }}'e{% endif %} kadar tutarlı çalışma sürdürülürse erişilebilecek tahmini görev sayısını gösterir.
+    </p>
+  </div>
+
+  {# Ders bazında ilerleme #}
+  <div class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="font-semibold text-slate-900 mb-3">Ders Bazında İlerleme</h2>
+    {% if data.subjects %}
+    <div class="space-y-2.5">
+      {% for sub in data.subjects %}
+      {% set hue = (sub.subject_id * 67) % 360 %}
+      <div>
+        <div class="flex items-center justify-between text-xs mb-1">
+          <span class="font-medium text-slate-700">{{ sub.name }}</span>
+          <span class="text-slate-500">%{{ sub.percent_done }}</span>
+        </div>
+        <div class="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+          <div style="width: {{ sub.percent_done }}%; background: hsl({{ hue }}, 60%, 50%);" class="h-full"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-xs text-slate-400 italic">Henüz atanmış kitap yok.</p>
+    {% endif %}
+  </div>
+</div>
+
+{# 30 günlük trend grafiği #}
+{% if data.trend %}
+<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
+  <h2 class="font-semibold text-slate-900 mb-1">Son 30 Gün Tamamlama</h2>
+  <p class="text-xs text-slate-500 mb-3">Yeşil: tamamlanan görev sayısı · Gri: planlanan</p>
+  <div style="height: 180px; position: relative;">
+    <canvas id="parent-trend"></canvas>
+  </div>
+</div>
+{% endif %}
+
+{# Öğretmen notları #}
+<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
+  <h2 class="font-semibold text-slate-900 mb-3">Öğretmen Notları</h2>
+  {% if data.teacher_notes %}
+  <div class="space-y-3">
+    {% for note in data.teacher_notes %}
+    <div class="border-l-4 border-indigo-300 bg-indigo-50/30 pl-4 py-2.5">
+      <p class="text-sm text-slate-800 whitespace-pre-line">{{ note.body }}</p>
+      <div class="text-[11px] text-slate-500 mt-1.5">
+        {{ note.teacher_name or '—' }}
+        {% if note.created_at %}· {{ note.created_at[:10].replace('-','.') }}{% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="text-xs text-slate-400 italic">Henüz öğretmen tarafından sizinle paylaşılmış bir not yok.</p>
+  {% endif %}
+</div>
+
+{# Hafta linki #}
+<div class="text-center">
+  <a href="/parent/students/{{ s.id }}/week"
+     class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded">
+    Haftalık Programı Gör →
+  </a>
+</div>
+
+{% if data.trend %}
+<script>
+(function() {
+  try {
+    var ctx = document.getElementById('parent-trend');
+    if (!ctx || typeof Chart === 'undefined') return;
+    var labels = {{ data.trend|map(attribute='label')|list|tojson }};
+    var completed = {{ data.trend|map(attribute='completed')|list|tojson }};
+    var planned = {{ data.trend|map(attribute='planned')|list|tojson }};
+    new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Planlanan', data: planned, backgroundColor: 'rgba(148,163,184,0.45)' },
+          { label: 'Tamamlanan', data: completed, backgroundColor: 'rgba(5,150,105,0.85)' },
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: true, position: 'bottom', labels: { font: {size: 10} } } },
+        scales: {
+          x: { ticks: { font: {size: 9}, maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } },
+          y: { beginAtZero: true, ticks: { font: {size: 10} } },
+        }
+      }
+    });
+  } catch (e) { console.warn('parent-trend chart:', e); }
+})();
+</script>
+{% endif %}
+{% endblock %}

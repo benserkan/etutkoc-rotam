@@ -1,0 +1,191 @@
+{# Projeksiyon göstergesi — gerçekçi DOW-bazlı model.
+   Bağlam: projection (Projection) #}
+{% set p = projection %}
+{% set remaining_overall = p.total_tests - p.completed %}
+{% set status_level = 'green' %}
+{% if p.effective_days and p.effective_days > 0 %}
+  {% if p.rate_per_day == 0 and remaining_overall > 0 %}
+    {% set status_level = 'red' %}
+  {% elif p.gap < 0 %}
+    {% set status_level = 'red' if (p.gap | abs) > remaining_overall * 0.2 else 'amber' %}
+  {% elif p.gap < remaining_overall * 0.1 %}
+    {% set status_level = 'amber' %}
+  {% endif %}
+{% endif %}
+{% set status_color = {'green':'#059669','amber':'#d97706','red':'#dc2626'}[status_level] %}
+{% set status_bg = {'green':'#ecfdf5','amber':'#fef3c7','red':'#fef2f2'}[status_level] %}
+{% set status_label = {'green':'Yolunda','amber':'Dikkat','red':'Riskli'}[status_level] %}
+{% set conf_color = {'high':'#059669','medium':'#d97706','low':'#94a3b8'}[p.confidence_level] %}
+{% set conf_label = {'high':'Yüksek güven','medium':'Orta güven','low':'Düşük güven (az veri)'}[p.confidence_level] %}
+{% set tr_dow = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'] %}
+
+{# Tutturma analizi — sadece ÖLÇÜLEBİLMİŞ günleri al #}
+{% set low_hit_days = [] %}
+{% set high_hit_days = [] %}
+{% set unmeasured_planned_days = [] %}
+{% for dow in range(7) %}
+  {% set planned = p.dow_planned_rates.get(dow, 0) %}
+  {% set hit = p.dow_hit_rates.get(dow, 0) %}
+  {% set measured = p.dow_hit_measured.get(dow, False) %}
+  {% if measured %}
+    {% if hit < 0.4 %}{% set _ = low_hit_days.append(tr_dow[dow]) %}
+    {% elif hit >= 0.7 %}{% set _ = high_hit_days.append(tr_dow[dow]) %}
+    {% endif %}
+  {% elif planned >= 1 %}
+    {# Plan var ama geçmişte ölçülmedi — gelecek planlardan biliniyor #}
+    {% set _ = unmeasured_planned_days.append(tr_dow[dow]) %}
+  {% endif %}
+{% endfor %}
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-5 py-3 border-b border-slate-100 flex items-center justify-between flex-wrap gap-2">
+    <div>
+      {# exam_label çağıran template tarafından set edilir; yoksa generic "Sınav" #}
+      {% set _el = exam_label|default('Sınav') %}
+      {% set _is_none = (exam_target|default('') == 'none') or _el == 'Yıl Sonu' %}
+      <h2 class="font-semibold text-slate-900">
+        {% if _is_none %}Yıl Sonuna Projeksiyon{% else %}{{ _el }}'a Projeksiyon{% endif %}
+      </h2>
+      <div class="text-xs text-slate-500">
+        {{ p.window_days }} günlük tarihçe · DOW-bazlı tahmin ·
+        {% if _is_none %}yıl sonundan{% else %}sınavdan{% endif %}
+        {{ p.buffer_days }} gün önce tampon
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span class="px-2 py-0.5 rounded-full text-[10px] border" style="border-color: {{ conf_color }}; color: {{ conf_color }};" title="Verinin yeterliliği">
+        {{ conf_label }}
+      </span>
+      <span class="px-3 py-1 rounded-full text-xs font-semibold" style="background: {{ status_bg }}; color: {{ status_color }};">
+        {{ status_label }}
+      </span>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-slate-100 border-b border-slate-100">
+    <div class="p-4">
+      <div class="text-xs text-slate-500">{% if _is_none %}Yıl Sonuna{% else %}{{ _el }}'a{% endif %} Kalan</div>
+      <div class="text-2xl font-semibold text-slate-900 mt-1">
+        {% if p.days_left is not none %}{{ p.days_left }}<span class="text-sm font-normal text-slate-400"> gün</span>{% else %}—{% endif %}
+      </div>
+      <div class="text-[11px] text-slate-400 mt-0.5">
+        {% if p.exam_date %}{{ p.exam_date.strftime('%d.%m.%Y') }}{% endif %}
+        {% if p.effective_days %} · etkili: <b class="text-slate-600">{{ p.effective_days }}g</b>{% endif %}
+      </div>
+    </div>
+    <div class="p-4">
+      <div class="text-xs text-slate-500">Tahmini Tamamlanacak</div>
+      <div class="text-2xl font-semibold mt-1" style="color: {{ status_color }};">
+        {{ p.projected_completable }}
+      </div>
+      <div class="text-[11px] text-slate-400 mt-0.5">
+        {{ p.window_days }}g DOW-deseni
+        {% if p.simple_projected and p.simple_projected != p.projected_completable %}
+        · naif: <span class="text-slate-500">{{ p.simple_projected }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="p-4">
+      <div class="text-xs text-slate-500">Gerekli Hız</div>
+      <div class="text-2xl font-semibold mt-1" style="color: {{ status_color }};">
+        {{ "%.1f" | format(p.required_rate) }}<span class="text-sm font-normal text-slate-400"> /gün</span>
+      </div>
+      <div class="text-[11px] text-slate-400 mt-0.5">etkili günlere bölünmüş</div>
+    </div>
+    <div class="p-4">
+      <div class="text-xs text-slate-500">Açık / Fazla</div>
+      <div class="text-2xl font-semibold mt-1" style="color: {{ status_color }};">
+        {% if p.gap >= 0 %}+{% endif %}{{ p.gap }}
+      </div>
+      <div class="text-[11px] text-slate-400 mt-0.5">
+        {% if p.gap >= 0 %}fazla bitirebilir{% else %}eksik kalır{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# Haftagünü deseni — Planlanan + Tamamlanan + Tutturma % #}
+  {% if p.dow_planned_rates %}
+  {% set max_planned = (p.dow_planned_rates.values() | list | max) or 1 %}
+  <div class="px-5 py-3 border-b border-slate-100 bg-slate-50/40">
+    <div class="text-[11px] text-slate-500 mb-2 font-medium">
+      Haftagünü deseni (son {{ p.window_days }} gün) — gri: planlanan ortalama, yeşil: tamamlanan ortalama
+    </div>
+    <div class="flex items-end gap-1.5 h-16">
+      {% for dow in range(7) %}
+        {% set planned = p.dow_planned_rates.get(dow, 0) %}
+        {% set completed = p.dow_rates.get(dow, 0) %}
+        {% set hit = p.dow_hit_rates.get(dow, 0) %}
+        {% set h_planned = (planned / max_planned * 100) if max_planned > 0 else 0 %}
+        {% set h_completed = (completed / max_planned * 100) if max_planned > 0 else 0 %}
+      <div class="flex-1 flex items-end gap-0.5 relative">
+        <div class="w-1/2 rounded-t bg-slate-300" style="height: {{ h_planned }}%; min-height: 1px;"
+             title="{{ tr_dow[dow] }} planlanan ortalama: {{ '%.1f' | format(planned) }} test"></div>
+        <div class="w-1/2 rounded-t bg-emerald-500" style="height: {{ h_completed }}%; min-height: 1px;"
+             title="{{ tr_dow[dow] }} tamamlanan ortalama: {{ '%.1f' | format(completed) }} test"></div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="flex gap-1.5 mt-1.5">
+      {% for dow in range(7) %}
+        {% set hit = p.dow_hit_rates.get(dow, 0) %}
+        {% set measured = p.dow_hit_measured.get(dow, False) %}
+        {% set hit_pct = (hit * 100) | round | int %}
+        {% if not measured %}{% set hit_color = '#94a3b8' %}
+        {% elif hit_pct >= 70 %}{% set hit_color = '#059669' %}
+        {% elif hit_pct >= 40 %}{% set hit_color = '#d97706' %}
+        {% else %}{% set hit_color = '#dc2626' %}{% endif %}
+      <div class="flex-1 text-center">
+        <div class="text-[10px] text-slate-700 font-medium">{{ tr_dow[dow] }}</div>
+        <div class="text-[9px]" style="color: {{ hit_color }};"
+             title="{% if measured %}geçmiş tutturma yüzdesi{% else %}geçmişte plan yok — tutturma henüz ölçülmedi{% endif %}">
+          {% if measured %}%{{ hit_pct }}{% else %}—{% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-2 flex flex-wrap gap-3 text-[10px] text-slate-500">
+      <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-slate-300"></span>planlanan</span>
+      <span class="flex items-center gap-1"><span class="inline-block w-2 h-2 rounded-sm bg-emerald-500"></span>tamamlanan</span>
+      <span class="text-slate-400">· altta günün tutturma yüzdesi</span>
+    </div>
+  </div>
+  {% endif %}
+
+  {# Toplam ilerleme barı + yorumlu özet #}
+  {% set pct_done = (100 * p.completed // p.total_tests) if p.total_tests > 0 else 0 %}
+  {% set pct_res = (100 * p.reserved // p.total_tests) if p.total_tests > 0 else 0 %}
+  <div class="px-5 py-4">
+    <div class="flex items-baseline justify-between mb-1.5">
+      <div class="text-xs text-slate-600">Toplam ilerleme</div>
+      <div class="text-xs text-slate-500">
+        <b class="text-emerald-600">{{ p.completed }}</b> çöz ·
+        <b class="text-amber-600">{{ p.reserved }}</b> rez ·
+        <b class="text-slate-700">{{ p.remaining }}</b> kalan / {{ p.total_tests }}
+      </div>
+    </div>
+    <div class="h-3 bg-slate-100 rounded-full overflow-hidden flex">
+      <div class="bg-emerald-500 h-full" style="width: {{ pct_done }}%"></div>
+      <div class="bg-amber-400 h-full" style="width: {{ pct_res }}%"></div>
+    </div>
+    <div class="mt-2.5 text-[12px] text-slate-700 leading-relaxed">
+      {% if status_level == 'green' %}
+        <b>Değerlendirme:</b> Mevcut tutturma deseniyle {% if _is_none %}yıl sonu öncesi{% else %}sınav haftasından{% endif %} {{ p.buffer_days }} gün öncesine kadar <b>{{ p.projected_completable }}</b> test tamamlanabilir; hedef <b>{{ remaining_overall }}</b>, projeksiyon <b style="color: {{ status_color }};">+{{ p.gap }}</b> fazla.
+        {% if high_hit_days %} Tutturma oranı yüksek günler: <b>{{ high_hit_days | join(', ') }}</b>.{% endif %}
+      {% elif status_level == 'amber' %}
+        <b>Değerlendirme:</b> Mevcut tutturma deseniyle <b>{{ p.projected_completable }}</b> test tamamlanır; hedefe ulaşmak için <b style="color: {{ status_color }};">{{ p.gap | abs }}</b> test eksik kalıyor.
+        {% if low_hit_days %} Düşük tutturma günleri: <b>{{ low_hit_days | join(', ') }}</b> — bu günlerde plan-gerçekleşme oranını yükseltmek açığı kapatabilir.{% endif %}
+      {% else %}
+        <b>Değerlendirme:</b> Etkili {{ p.effective_days }} günde projeksiyon <b>{{ p.projected_completable }}</b> test; hedefe <b style="color: {{ status_color }};">{{ p.gap | abs }}</b> eksik. Günde ortalama <b>{{ "%.1f" | format(p.required_rate) }}</b> test gerekli.
+        {% if low_hit_days %} Düşük tutturma günleri: <b>{{ low_hit_days | join(', ') }}</b> — bu günlerde plan-gerçekleşme oranını yükseltmek (örn. okul sonrası akşam saatlerinin verimli kullanımı) açığı kapatabilir.{% endif %}
+      {% endif %}
+      {% if unmeasured_planned_days %}
+      <span class="block mt-1 text-slate-500 text-[11px]">
+        Şu günler için <b>henüz tutturma ölçülmedi</b> ({{ unmeasured_planned_days | join(', ') }}); bu günlerde plan var ama geçmişte tamamlama verisi yok. Önümüzdeki haftalarda bu günlere ait tutturma oranları belirlendikçe projeksiyon netleşecek.
+      </span>
+      {% endif %}
+    </div>
+    <div class="mt-2 text-[10px] text-slate-400 italic leading-relaxed">
+      <b>Yöntem:</b> Her haftagünü için <b>geçmişte ölçülmüş tutturma oranı</b> + <b>planlanan ortalama</b> kullanılarak gelecek günler için tamamlama tahmini yapılır (planned × hit). Tutturma ölçülemediği günlerde genel ortalama tutturma oranı uygulanır. {% if _is_none %}Yıl sonunun{% else %}Sınav haftasının{% endif %} son {{ p.buffer_days }} günü tampon kabul edilir.
+    </div>
+  </div>
+</div>

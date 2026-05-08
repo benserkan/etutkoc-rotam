@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — {% if student.is_graduate %}Yeni Öğretim Yılı{% else %}Sınıf Yükselt{% endif %}{% endblock %}
+
+{% block content %}
+{% set flash_err = request.query_params.get('err') %}
+
+<div class="mb-6">
+  <a href="/teacher/students/{{ student.id }}" class="text-sm text-slate-500 hover:text-slate-700">← {{ student.full_name }} sayfası</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">
+    {% if student.is_graduate %}Yeni Öğretim Yılı{% else %}Sınıf Yükselt{% endif %}
+  </h1>
+  <p class="text-sm text-slate-500 mt-1">
+    {% if student.is_graduate %}
+      Mezun öğrenciler için sınıf değişmez; yeni öğretim yılına geçerken akademik yıl,
+      alan ve çalışma şekli güncellenebilir (ikinci yıl YKS hazırlığı, alan değişikliği vb.).
+    {% else %}
+      Yeni akademik yıla geçişte öğrencinin sınıf, alan ve müfredat bilgilerini güncelleyin.
+    {% endif %}
+    <b>Görev tarihçesi ve kitap kütüphanesi korunur</b>; yeni yılda gerekirse kitapları manuel ekler veya çıkarırsınız.
+  </p>
+</div>
+
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800 flex items-start gap-2">
+  <span>⚠️</span><span>{{ flash_err }}</span>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+  {# ─── Mevcut durum ─── #}
+  <div class="bg-slate-50 border border-slate-200 rounded-lg p-5">
+    <h2 class="text-xs uppercase tracking-wider text-slate-500 mb-3">Mevcut Durum</h2>
+    <dl class="space-y-2 text-sm">
+      <div class="flex gap-2">
+        <dt class="w-32 text-slate-500">Sınıf:</dt>
+        <dd class="font-medium">{{ student.display_grade_label }}</dd>
+      </div>
+      <div class="flex gap-2">
+        <dt class="w-32 text-slate-500">Akademik yıl:</dt>
+        <dd class="font-medium">
+          {% if student.academic_year %}{{ student.academic_year.name }}{% else %}—{% endif %}
+        </dd>
+      </div>
+      <div class="flex gap-2">
+        <dt class="w-32 text-slate-500">Alan:</dt>
+        <dd class="font-medium">
+          {% if student.track %}
+            {% set track_labels = {'sayisal':'Sayısal','ea':'Eşit Ağırlık','sozel':'Sözel','dil':'Dil'} %}
+            {{ track_labels.get(student.track.value, student.track.value) }}
+          {% else %}—{% endif %}
+        </dd>
+      </div>
+      <div class="flex gap-2">
+        <dt class="w-32 text-slate-500">Müfredat:</dt>
+        <dd class="font-medium">
+          {% set cm = student.effective_curriculum_model %}
+          {% if cm %}
+            {% set cm_label = {'lgs':'LGS','klasik_lise':'Klasik Lise','maarif_lise':'Maarif Modeli'} %}
+            {{ cm_label.get(cm.value, cm.value) }}
+          {% else %}—{% endif %}
+        </dd>
+      </div>
+      <div class="flex gap-2">
+        <dt class="w-32 text-slate-500">Hedef sınav:</dt>
+        <dd class="font-medium">{{ student.effective_exam_label }}</dd>
+      </div>
+      {% if student.is_graduate and student.graduate_mode %}
+      <div class="flex gap-2">
+        <dt class="w-32 text-slate-500">Çalışma şekli:</dt>
+        <dd class="font-medium">
+          {% if student.graduate_mode.value == 'full_time' %}Tam-zamanlı (okul yok){% else %}Dershane / etüt merkezi{% endif %}
+        </dd>
+      </div>
+      {% endif %}
+    </dl>
+  </div>
+
+  {# ─── Yeni profil formu ─── #}
+  <form method="post" action="/teacher/students/{{ student.id }}/promote"
+        class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="text-xs uppercase tracking-wider text-violet-700 mb-3">Yeni Durum</h2>
+
+    <div class="space-y-4">
+      <div>
+        <label class="block text-sm text-slate-700 mb-1">Akademik yıl</label>
+        <select name="academic_year_id" id="pr-year"
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <option value="" data-start="">— Değişiklik yok —</option>
+          {% for y in years %}
+          <option value="{{ y.id }}" data-start="{{ y.start_year or '' }}"
+                  {% if y.id == suggested_year_id %}selected{% endif %}>
+            {{ y.name }}{% if y.id == student.academic_year_id %} · şu anki{% endif %}
+          </option>
+          {% endfor %}
+        </select>
+        <p class="text-[11px] text-slate-500 mt-1">
+          Bir sonraki öğretim yılı varsa otomatik seçili. Listede yoksa önce
+          <a href="/teacher/years" class="text-indigo-600 hover:underline">akademik yıllar</a>
+          sayfasından ekleyin.
+        </p>
+      </div>
+
+      <div>
+        <label class="block text-sm text-slate-700 mb-1">Yeni sınıf <span class="text-rose-500">*</span></label>
+        <select name="grade" id="pr-grade" required
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          {% for value, label in GRADE_CHOICES %}
+          <option value="{{ value }}" {% if value == suggested_grade %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div id="pr-track-wrap" class="hidden">
+        <label class="block text-sm text-slate-700 mb-1">
+          Alan (YKS) <span class="text-rose-500">*</span>
+        </label>
+        <select name="track" id="pr-track"
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <option value="">— Seçiniz —</option>
+          {% for value, lower in TRACK_CHOICES %}
+          {% set track_labels = {'sayisal':'Sayısal','ea':'Eşit Ağırlık','sozel':'Sözel','dil':'Dil'} %}
+          <option value="{{ value }}"
+                  {% if student.track and student.track.value == lower %}selected{% endif %}>
+            {{ track_labels.get(lower, lower) }}
+          </option>
+          {% endfor %}
+        </select>
+        <p class="text-[11px] text-slate-500 mt-1">11. sınıf, 12. sınıf ve mezunlar için zorunlu.</p>
+      </div>
+
+      <div id="pr-graduate-wrap" class="hidden">
+        <label class="block text-sm text-slate-700 mb-1">
+          Çalışma şekli <span class="text-rose-500">*</span>
+        </label>
+        <select name="graduate_mode"
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <option value="">— Seçiniz —</option>
+          {% for value, lower in GRADUATE_MODE_CHOICES %}
+          {% set gm_labels = {'full_time':'Tam-zamanlı (okul yok)','dershane':'Dershane / etüt merkezi'} %}
+          <option value="{{ value }}"
+                  {% if student.graduate_mode and student.graduate_mode.value == lower %}selected{% endif %}>
+            {{ gm_labels.get(lower, lower) }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <details class="border-t border-slate-100 pt-3">
+        <summary class="cursor-pointer text-xs text-slate-500 hover:text-slate-700">
+          İleri: 9'a giriş yılı override (sınıf tekrarı vb.)
+        </summary>
+        <div class="mt-2">
+          <input type="number" name="entry_year_grade9" min="2000" max="2100" step="1"
+                 value="{{ student.entry_year_grade9 or '' }}"
+                 placeholder="örn 2023"
+                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+          <p class="text-[11px] text-slate-500 mt-1">
+            Boş bırakılırsa akademik yıl + sınıftan otomatik tahmin edilir.
+            Maarif/Klasik kohort kararını override eder.
+          </p>
+        </div>
+      </details>
+
+      {# Müfredat canlı tahmin önizleme #}
+      <div id="pr-curriculum-preview"
+           class="hidden border border-violet-200 bg-violet-50 rounded p-3">
+        <div class="text-xs text-violet-700 font-semibold mb-1">Yeni müfredat tahmini</div>
+        <div class="text-sm font-bold" id="pr-cm-label">—</div>
+        <div class="text-[11px] text-violet-700 mt-0.5" id="pr-cm-explain"></div>
+        <div id="pr-cm-warning" class="hidden mt-2 text-[11px] text-amber-800 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+          ⚠ Müfredat modeli değişiyor — kütüphanedeki bazı kitap/dersler artık eşleşmeyebilir.
+          Yeni yılda kitapları gözden geçirip gerekirse manuel ayarlayın.
+        </div>
+      </div>
+
+    </div>
+
+    <div class="flex justify-between items-center pt-5 mt-4 border-t border-slate-100">
+      <a href="/teacher/students/{{ student.id }}"
+         class="text-sm text-slate-500 hover:text-slate-700">Vazgeç</a>
+      <button type="submit"
+              class="bg-violet-600 hover:bg-violet-700 text-white text-sm font-medium py-2 px-4 rounded">
+        {% if student.is_graduate %}↗ Yeni yıla geç ve kaydet{% else %}↗ Yükselt ve kaydet{% endif %}
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+(function () {
+  const gradeSel = document.getElementById('pr-grade');
+  const yearSel = document.getElementById('pr-year');
+  const trackWrap = document.getElementById('pr-track-wrap');
+  const trackSel = document.getElementById('pr-track');
+  const gradWrap = document.getElementById('pr-graduate-wrap');
+  const cmPreview = document.getElementById('pr-curriculum-preview');
+  const cmLabel = document.getElementById('pr-cm-label');
+  const cmExplain = document.getElementById('pr-cm-explain');
+  const cmWarning = document.getElementById('pr-cm-warning');
+
+  const MAARIF_FIRST_GRADE9_YEAR = 2024;
+  const CURRENT_CM = {{ ('"' ~ student.effective_curriculum_model.value ~ '"') if student.effective_curriculum_model else 'null' }};
+
+  function deriveCurriculum(grade, isGrad, ayStart) {
+    if (grade === null && !isGrad) return null;
+    if (!isGrad && grade !== null && grade <= 8) return ['lgs', 'LGS Müfredatı (5-8)'];
+    if (!isGrad && (grade === 9 || grade === 10)) return ['maarif_lise', 'Maarif Modeli — 9-10 her zaman Maarif'];
+    let entryYear = null;
+    if (ayStart !== null) {
+      if (isGrad) entryYear = ayStart - 4;
+      else if (grade !== null) entryYear = ayStart - (grade - 9);
+    }
+    if (entryYear === null) return null;
+    if (entryYear >= MAARIF_FIRST_GRADE9_YEAR) {
+      return ['maarif_lise', `9'a ${entryYear}'te girdi → Maarif kohortu`];
+    }
+    return ['klasik_lise', `9'a ${entryYear}'te girdi → Klasik (son nesil)`];
+  }
+
+  function update() {
+    const gradeValue = gradeSel.value;
+    const isGrad = gradeValue === 'graduate';
+    const grade = isGrad ? null : (parseInt(gradeValue, 10) || null);
+    const requiresTrack = isGrad || (grade !== null && grade >= 11);
+
+    trackWrap.classList.toggle('hidden', !requiresTrack);
+    if (requiresTrack) trackSel.setAttribute('required', ''); else trackSel.removeAttribute('required');
+
+    gradWrap.classList.toggle('hidden', !isGrad);
+    gradWrap.querySelectorAll('select[name=graduate_mode]').forEach(el => {
+      if (isGrad) el.setAttribute('required', ''); else el.removeAttribute('required');
+    });
+
+    const yearOpt = yearSel.options[yearSel.selectedIndex];
+    const ayStartRaw = yearOpt && yearOpt.dataset ? yearOpt.dataset.start : '';
+    const ayStart = ayStartRaw ? parseInt(ayStartRaw, 10) : null;
+    const result = deriveCurriculum(grade, isGrad, ayStart);
+
+    if (result) {
+      const [cmKey, explain] = result;
+      const labels = { lgs: 'LGS Müfredatı', klasik_lise: 'Klasik Lise', maarif_lise: 'Maarif Modeli' };
+      cmLabel.textContent = labels[cmKey] || cmKey;
+      cmExplain.textContent = explain;
+      cmPreview.classList.remove('hidden');
+      cmWarning.classList.toggle('hidden', !(CURRENT_CM && CURRENT_CM !== cmKey));
+    } else {
+      if (requiresTrack && ayStart === null) {
+        cmLabel.textContent = '—';
+        cmExplain.textContent = 'Akademik yıl seçilince Maarif/Klasik tahmini yapılır';
+        cmPreview.classList.remove('hidden');
+        cmWarning.classList.add('hidden');
+      } else {
+        cmPreview.classList.add('hidden');
+      }
+    }
+  }
+
+  gradeSel.addEventListener('change', update);
+  yearSel.addEventListener('change', update);
+  update();
+})();
+</script>
+{% endblock %}

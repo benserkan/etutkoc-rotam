@@ -1,0 +1,59 @@
+Subject: ETÜTKOÇ Rotam · {{ student.full_name }} için veli daveti
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 22px; display: flex; align-items: center;">
+      <img src="{{ app_base_url }}/static/img/etutkoc-logo.png" alt="" width="44" height="44" style="object-fit: contain; margin-right: 12px; vertical-align: middle;" />
+      <div style="display: inline-block; vertical-align: middle;">
+        <div style="font-size: 22px; font-weight: 800; line-height: 1;">
+          <span style="color: #117A86;">etütkoç</span>
+          <span style="color: #94a3b8; margin: 0 3px;">·</span>
+          <span style="color: #E8AC2D;">rotam</span>
+        </div>
+        <div style="font-size: 10px; color: #64748b; text-transform: uppercase; letter-spacing: 0.18em; margin-top: 4px;">Çalışma Takip Sistemi</div>
+      </div>
+    </div>
+
+    <h2 style="font-size: 17px; color: #0f172a; margin: 0 0 12px;">Sayın Veli,</h2>
+
+    <p style="margin: 0 0 14px; line-height: 1.55;">
+      <b>{{ teacher.full_name }}</b>, velisi olduğunuz <b>{{ student.full_name }}</b> adlı öğrencinin
+      sınav hazırlık sürecini birlikte takip edebilmek için sizi <b>ETÜTKOÇ Rotam</b>'a davet etti.
+    </p>
+
+    <p style="margin: 0 0 14px; line-height: 1.55;">
+      Aşağıdaki butona tıklayarak hesabınızı oluşturun. Hesabınız hazır olduğunda
+      öğrencinizin haftalık programını, tamamlama oranını ve öğretmenin sizinle paylaştığı
+      notları görebileceksiniz.
+    </p>
+
+    <div style="text-align: center; margin: 28px 0;">
+      <a href="{{ app_base_url }}/parent/invitation/{{ invitation.token }}"
+         style="display: inline-block; background: #117A86; color: white; padding: 13px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">
+        Daveti Kabul Et →
+      </a>
+    </div>
+
+    <div style="background: #f1f5f9; border-radius: 8px; padding: 14px 18px; margin: 20px 0;">
+      <p style="margin: 0 0 6px; font-size: 12px; color: #475569;"><b>Bağlantı 7 gün geçerlidir.</b></p>
+      <p style="margin: 0; font-size: 12px; color: #64748b; line-height: 1.55;">
+        Bu daveti siz beklemiyorsanız mesajı silebilirsiniz; hesap açılmaz.
+      </p>
+    </div>
+
+    <p style="margin: 16px 0 0; font-size: 12px; color: #64748b; line-height: 1.5;">
+      İlişki tipi: <b>{{ relation_label }}</b>{% if invitation.is_primary %} · <b>Birincil veli</b>{% endif %}<br>
+      Davet tarihi: {{ invitation.created_at.strftime('%d.%m.%Y %H:%M') }}
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 26px 0 14px;">
+    <p style="margin: 0; font-size: 10px; color: #94a3b8; line-height: 1.55;">
+      Bu mail otomatik gönderildi · ETÜTKOÇ Rotam · {{ app_base_url }}<br>
+      Daveti kabul ederken aydınlatma metnini ve KVKK onayını okuyup onaylamanız gerekecektir.
+    </p>
+  </div>
+</body>
+</html>

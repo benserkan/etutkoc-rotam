@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}Veli Aydınlatma Metni — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white border border-slate-200 rounded-lg p-8 my-6">
+  <h1 class="text-2xl font-bold text-slate-900 mb-1">Veli Aydınlatma Metni</h1>
+  <p class="text-sm text-slate-500 mb-6">6698 Sayılı KVKK Çerçevesinde Veri İşleme</p>
+
+  <div class="prose prose-sm max-w-none text-slate-700 space-y-4 leading-relaxed">
+
+    <section>
+      <h2 class="text-base font-semibold text-slate-900 mt-4 mb-2">1. Veri Sorumlusu</h2>
+      <p>
+        ETÜTKOÇ Rotam (bundan sonra "Platform" olarak anılacaktır) tarafından, 6698 sayılı
+        Kişisel Verilerin Korunması Kanunu ("KVKK") kapsamında veri sorumlusu sıfatıyla,
+        veli olarak sizin ve bağlantılı öğrencinin kişisel verileri aşağıda açıklanan
+        çerçevede işlenmektedir. Sistemi kullanan eğitim koçunuz/öğretmeniniz, ilgili
+        verilerin işlenmesinde birlikte veri sorumlusu konumunda olabilir.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-base font-semibold text-slate-900 mt-4 mb-2">2. İşlenen Kişisel Veriler</h2>
+      <ul class="list-disc pl-5 space-y-1">
+        <li><b>Veliye ait:</b> Ad-soyad, e-posta adresi, (isteğe bağlı olarak) telefon
+          numarası, IP adresi, oturum kayıtları, bildirim tercihleri.</li>
+        <li><b>Öğrenciye ait, veli ile paylaşılan:</b> Görev tamamlama oranı, görev tipi
+          dağılımı, çalışma istikrarı (streak), tahmini ilerleme, öğretmenin sizinle
+          özel olarak paylaştığı notlar.</li>
+        <li><b>Veli ile paylaşılmayan:</b> Deneme net sayıları, ham puanlar, konu bazında
+          doğru-yanlış oranları, öğrenci-öğretmen arasındaki özel mesajlar. Bu veriler
+          sistemde tutulsa dahi veli arayüzünde gösterilmez.</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-base font-semibold text-slate-900 mt-4 mb-2">3. İşleme Amaçları</h2>
+      <p>Kişisel verileriniz aşağıdaki amaçlarla işlenmektedir:</p>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>Velinin, öğrencisinin haftalık çalışma programını ve ilerlemesini takip etmesini sağlamak.</li>
+        <li>Velinin tercihine göre günlük özet, haftalık rapor ve önemli durum bildirimlerini
+          e-posta ve/veya WhatsApp üzerinden iletmek.</li>
+        <li>Hesap güvenliğini sağlamak, oturum geçmişini izlemek, kötüye kullanımı önlemek.</li>
+        <li>Yasal yükümlülükleri yerine getirmek (KVKK ve ilgili mevzuat).</li>
+      </ul>
+    </section>
+
+    <section>
+      <h2 class="text-base font-semibold text-slate-900 mt-4 mb-2">4. Aktarım</h2>
+      <p>
+        Kişisel verileriniz; (i) bildirim gönderim altyapısı için kullanılan üçüncü taraf
+        e-posta sağlayıcıları ve Meta WhatsApp Cloud API hizmetine yalnızca size mesaj
+        iletmek için gerekli olan asgari ölçüde, (ii) yasal zorunluluk halinde yetkili
+        kamu kurumlarına aktarılabilir. Verileriniz pazarlama amaçlı üçüncü kişilerle
+        paylaşılmaz.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-base font-semibold text-slate-900 mt-4 mb-2">5. Saklama Süresi</h2>
+      <p>
+        Veli hesabı aktif olduğu sürece veriler işlenir. Hesap silindikten sonra
+        kimliği belirsiz hale getirilemeyen kayıtlar (bildirim günlüğü vb.) yasal
+        saklama süresi sonunda silinir.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-base font-semibold text-slate-900 mt-4 mb-2">6. Haklarınız</h2>
+      <p>KVKK 11. madde kapsamında:</p>
+      <ul class="list-disc pl-5 space-y-1">
+        <li>Verilerinizin işlenip işlenmediğini öğrenme,</li>
+        <li>İşlenen verileriniz hakkında bilgi talep etme,</li>
+        <li>Düzeltilmesini, silinmesini veya yok edilmesini isteme,</li>
+        <li>Otomatik sistemlerle yapılan analizlere itiraz etme,</li>
+        <li>Bildirimlere konu olan kanal/iletişim tercihinizi her zaman değiştirme</li>
+      </ul>
+      <p class="mt-2">
+        haklarına sahipsiniz. Talepleriniz için sizi davet eden eğitim koçunuza ya da
+        Platform üzerindeki "Bildirim Tercihleri" sayfasına ulaşabilirsiniz.
+      </p>
+    </section>
+
+    <section>
+      <h2 class="text-base font-semibold text-slate-900 mt-4 mb-2">7. Onay</h2>
+      <p>
+        Davet kabulü sırasında "Aydınlatma metnini okudum, anladım ve kabul ediyorum"
+        kutusunu işaretlemeniz, bu metnin tarafınızca okunduğu ve verilerin işlenmesine
+        rıza gösterildiğine dair açık irade beyanı olarak kabul edilecektir.
+      </p>
+    </section>
+
+    <p class="text-xs text-slate-500 italic mt-6 pt-4 border-t border-slate-100">
+      Not: Bu metin, hukuki danışmanlık niteliği taşımaz. Kurumsal kullanımda mevzuat
+      değişiklikleri ve sözleşme özelinde gözden geçirilmesi gerekebilir.
+    </p>
+  </div>
+
+  <div class="mt-6 pt-4 border-t border-slate-100 flex justify-between text-sm">
+    <a href="javascript:history.back()" class="text-indigo-600 hover:underline">← Geri dön</a>
+    <span class="text-slate-400">Son güncelleme: 2026-05-05</span>
+  </div>
+</div>
+{% endblock %}

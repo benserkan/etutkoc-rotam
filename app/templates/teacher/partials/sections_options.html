@@ -1,0 +1,7 @@
+{# HTMX fragment — seçilen kitabın bölümleri, kalan kapasitesiyle #}
+<option value="">— seçiniz —</option>
+{% for s in sections %}
+<option value="{{ s.id }}" {% if s.remaining <= 0 %}disabled{% endif %}>
+  {{ s.label }}{% if s.topic %} · {{ s.topic }}{% endif %} — kalan: {{ s.remaining }}/{{ s.total }}
+</option>
+{% endfor %}

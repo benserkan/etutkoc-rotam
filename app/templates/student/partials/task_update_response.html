@@ -1,0 +1,10 @@
+{# HTMX yanıtı: birincil = güncellenmiş görev kartı; OOB = sidebar + günlük özet. #}
+{% include "student/partials/task_card.html" %}
+
+<div id="resource-subjects" hx-swap-oob="innerHTML">
+  {% include "teacher/partials/resource_sidebar_items.html" %}
+</div>
+
+<div id="day-summary-inner" hx-swap-oob="innerHTML">
+  {% include "student/partials/day_summary.html" %}
+</div>

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}Davet Geçersiz — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="min-h-[70vh] flex items-center justify-center">
+  <div class="w-full max-w-md">
+
+    <div class="flex flex-col items-center mb-5">
+      <img src="/static/img/etutkoc-logo.png" alt="" class="h-16 w-16 object-contain mb-2 grayscale opacity-60" />
+      <div class="brand-wordmark text-xl">
+        <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-1">·</span><span class="b-rotam">rotam</span>
+      </div>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
+      {% if reason == 'not_found' %}
+      <div class="text-center">
+        <div class="text-5xl mb-3">🔗</div>
+        <h1 class="text-lg font-semibold text-slate-900 mb-2">Bu davet bağlantısı tanınmıyor</h1>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Bağlantı eksik veya bozulmuş olabilir. Lütfen size gelen e-postadaki linki kopyalayıp
+          tarayıcınıza yapıştırarak tekrar deneyin.
+        </p>
+      </div>
+      {% elif reason == 'expired' %}
+      <div class="text-center">
+        <div class="text-5xl mb-3">⏰</div>
+        <h1 class="text-lg font-semibold text-slate-900 mb-2">Davetin süresi dolmuş</h1>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Veli davetleri 7 gün geçerlidir. Lütfen sizi davet eden eğitim koçunuzla iletişime
+          geçerek yeni bir davet talep edin.
+        </p>
+      </div>
+      {% elif reason == 'consumed' %}
+      <div class="text-center">
+        <div class="text-5xl mb-3">✅</div>
+        <h1 class="text-lg font-semibold text-slate-900 mb-2">Bu davet zaten kullanılmış</h1>
+        <p class="text-sm text-slate-600 leading-relaxed">
+          Bu link daha önce kabul edilerek bir hesap oluşturuldu. Aşağıdaki butondan giriş
+          yapabilirsiniz.
+        </p>
+        <a href="/login" class="inline-block mt-4 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium rounded">
+          Giriş Yap
+        </a>
+      </div>
+      {% else %}
+      <div class="text-center">
+        <h1 class="text-lg font-semibold text-slate-900 mb-2">Davet kullanılamıyor</h1>
+        <p class="text-sm text-slate-600">Bilinmeyen bir hata. Lütfen koçunuzla iletişime geçin.</p>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+{% endblock %}
