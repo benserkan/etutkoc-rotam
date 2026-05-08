@@ -12,14 +12,29 @@ from app.database import Base
 if TYPE_CHECKING:
     from app.models.academic import AcademicYear
     from app.models.book import Book
+    from app.models.institution import Institution
     from app.models.progress import StudentBook
     from app.models.task import Task
 
 
 class UserRole(str, enum.Enum):
+    """Kullanıcı rolü.
+
+    Hiyerarşi (Sprint 11+ multi-tenant):
+        SUPER_ADMIN > INSTITUTION_ADMIN > TEACHER > STUDENT
+                                                  > PARENT (yatay — öğrenciye bağlı)
+
+    - SUPER_ADMIN: tüm sistemi yönetir, kurumlar arası görür, "imitate user" yapar
+    - INSTITUTION_ADMIN: sadece kendi kurumunun roster + agrega verisini görür;
+      öğretmen verilerine doğrudan erişimi YOK (gizlilik).
+    - TEACHER: kendi öğrencilerini yönetir (kurum-altı veya bağımsız)
+    - STUDENT, PARENT: mevcut davranış değişmedi
+    """
     TEACHER = "teacher"
     STUDENT = "student"
     PARENT = "parent"
+    INSTITUTION_ADMIN = "institution_admin"
+    SUPER_ADMIN = "super_admin"
 
 
 class Track(str, enum.Enum):
@@ -61,6 +76,12 @@ class User(Base):
     teacher_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    # Multi-tenant (Sprint 11+): kullanıcının bağlı olduğu kurum.
+    # NULL = bağımsız (yalnız teacher rolü için anlamlı; admin/student için
+    # her zaman dolu). Kurum kapatılırsa SET NULL — teacher bağımsız olur.
+    institution_id: Mapped[int | None] = mapped_column(
+        ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     academic_year_id: Mapped[int | None] = mapped_column(
         ForeignKey("academic_years.id", ondelete="SET NULL"), nullable=True, index=True
     )
@@ -88,6 +109,9 @@ class User(Base):
 
     teacher: Mapped["User | None"] = relationship(
         "User", remote_side="User.id", backref="students", foreign_keys=[teacher_id]
+    )
+    institution: Mapped["Institution | None"] = relationship(
+        "Institution", back_populates="users", foreign_keys=[institution_id]
     )
     academic_year: Mapped["AcademicYear | None"] = relationship(
         "AcademicYear", back_populates="students", foreign_keys=[academic_year_id]

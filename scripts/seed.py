@@ -183,6 +183,26 @@ def seed_demo_teacher(db: Session) -> None:
     print(f"  + Demo öğretmen oluşturuldu: {email} / şifre: ogretmen123")
 
 
+def seed_super_admin(
+    db: Session, *, email: str, password: str, full_name: str = "Süper Admin"
+) -> None:
+    """İlk SUPER_ADMIN hesabını oluştur (idempotent — varsa atla)."""
+    from app.models import UserRole
+    existing = db.query(User).filter(User.email == email.lower().strip()).first()
+    if existing:
+        print(f"  = SUPER_ADMIN zaten var: {email}")
+        return
+    admin = User(
+        email=email.lower().strip(),
+        password_hash=hash_password(password),
+        full_name=full_name,
+        role=UserRole.SUPER_ADMIN,
+    )
+    db.add(admin)
+    db.commit()
+    print(f"  + SUPER_ADMIN oluşturuldu: {email}")
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--teacher", action="store_true", help="Demo öğretmen oluştur")
@@ -190,6 +210,12 @@ def main() -> None:
         "--only",
         choices=["LGS", "MAARIF_LISE", "KLASIK_LISE"],
         help="Sadece belirli müfredat modelini seed et",
+    )
+    parser.add_argument(
+        "--super-admin",
+        nargs=2,
+        metavar=("EMAIL", "PASSWORD"),
+        help="İlk SUPER_ADMIN hesabını oluştur (örn: --super-admin you@x.com pass123)",
     )
     args = parser.parse_args()
 
@@ -202,6 +228,9 @@ def main() -> None:
         seed_cron_schedules(db)
         if args.teacher:
             seed_demo_teacher(db)
+        if args.super_admin:
+            email, password = args.super_admin
+            seed_super_admin(db, email=email, password=password)
         print("Tamamlandı.")
     finally:
         db.close()

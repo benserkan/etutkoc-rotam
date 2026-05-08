@@ -19,6 +19,7 @@ from app.models.book import (
     BookType,
 )
 from app.models.cron import CronSchedule
+from app.models.institution import Institution
 from app.models.curriculum import (
     CURRICULUM_MODEL_LABELS,
     EXAM_SECTION_LABELS,
@@ -90,6 +91,7 @@ __all__ = [
     "estimate_entry_year_grade9",
     "GRADUATE_MODE_LABELS",
     "GraduateMode",
+    "Institution",
     "NOTIFICATION_KIND_LABELS",
     "NotificationChannel",
     "NotificationKind",
