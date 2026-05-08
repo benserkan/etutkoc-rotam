@@ -15,6 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.database import SessionLocal
 from app.models import AuditAction, User, UserRole
+from app.services.audit import log_action
 
 
 def get_db() -> Generator[Session, None, None]:
@@ -77,46 +78,106 @@ def _deny(reason: str = "Yetkisiz") -> HTTPException:
     return HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=reason)
 
 
-def require_teacher(user: User = Depends(require_user)) -> User:
+def _log_permission_denied(
+    db: Session, user: User, request: Request, *, required: str, reason: str
+) -> None:
+    """PERMISSION_DENIED audit kaydı yaz — require_* guard'ları yetkisiz erişim
+    teşebbüsünde 403 fırlatmadan önce çağırır.
+
+    Hata olursa sessizce yutulur (log_action zaten swallow ediyor); audit
+    yokluğunda 403 yine atılır.
+    """
+    log_action(
+        db,
+        action=AuditAction.PERMISSION_DENIED,
+        actor_id=user.id,
+        request=request,
+        details={
+            "required": required,
+            "actual_role": user.role.value,
+            "reason": reason,
+            "path": request.url.path,
+            "method": request.method,
+        },
+    )
+
+
+def require_teacher(
+    request: Request,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> User:
     if user.role != UserRole.TEACHER:
+        _log_permission_denied(db, user, request, required="teacher", reason="wrong_role")
         raise _deny("Sadece öğretmenler")
     return user
 
 
-def require_student(user: User = Depends(require_user)) -> User:
+def require_student(
+    request: Request,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> User:
     if user.role != UserRole.STUDENT:
+        _log_permission_denied(db, user, request, required="student", reason="wrong_role")
         raise _deny("Sadece öğrenciler")
     return user
 
 
-def require_parent(user: User = Depends(require_user)) -> User:
+def require_parent(
+    request: Request,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> User:
     if user.role != UserRole.PARENT:
+        _log_permission_denied(db, user, request, required="parent", reason="wrong_role")
         raise _deny("Sadece veliler")
     return user
 
 
-def require_super_admin(user: User = Depends(require_user)) -> User:
+def require_super_admin(
+    request: Request,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> User:
     """Yalnız SUPER_ADMIN. /admin altındaki tüm route'lar bunu kullanır."""
     if user.role != UserRole.SUPER_ADMIN:
+        _log_permission_denied(db, user, request, required="super_admin", reason="wrong_role")
         raise _deny("Sadece süper admin")
     return user
 
 
-def require_institution_admin(user: User = Depends(require_user)) -> User:
+def require_institution_admin(
+    request: Request,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> User:
     """Yalnız INSTITUTION_ADMIN. /institution altındaki tüm route'lar.
 
     institution_id'siz INSTITUTION_ADMIN olamaz — bu durum bir bug, 403 dön.
     """
     if user.role != UserRole.INSTITUTION_ADMIN:
+        _log_permission_denied(
+            db, user, request, required="institution_admin", reason="wrong_role"
+        )
         raise _deny("Sadece kurum yöneticisi")
     if user.institution_id is None:
+        _log_permission_denied(
+            db, user, request,
+            required="institution_admin", reason="institution_id_missing",
+        )
         raise _deny("Kurum yöneticisi bir kuruma bağlı olmalı (config hatası)")
     return user
 
 
-def require_admin(user: User = Depends(require_user)) -> User:
+def require_admin(
+    request: Request,
+    user: User = Depends(require_user),
+    db: Session = Depends(get_db),
+) -> User:
     """SUPER_ADMIN veya INSTITUTION_ADMIN — admin paneli paylaşılan helper'lar için."""
     if user.role not in (UserRole.SUPER_ADMIN, UserRole.INSTITUTION_ADMIN):
+        _log_permission_denied(db, user, request, required="any_admin", reason="wrong_role")
         raise _deny("Sadece adminler")
     return user
 

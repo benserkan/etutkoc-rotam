@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 from pathlib import Path
 
 from fastapi.templating import Jinja2Templates
@@ -22,3 +22,7 @@ templates.env.globals["REQUEST_STATUS_LABELS"] = REQUEST_STATUS_LABELS
 templates.env.globals["settings"] = settings
 # Today helper — phase aktif olup olmadığı kontrolü için
 templates.env.globals["today_date"] = lambda: date.today()
+# Audit list "son N gün" kısayolları için: today_iso(-7) → "2026-05-02"
+templates.env.globals["today_iso"] = lambda offset_days=0: (
+    date.today() + timedelta(days=offset_days)
+).isoformat()

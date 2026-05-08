@@ -407,6 +407,53 @@ def exam_approaching(db: Session, *, now: datetime) -> dict:
     return counts
 
 
+# ---------------------------- Audit log retention ----------------------------
+
+
+# Audit log saklama süresi — bu yaştan eski kayıtlar silinir.
+# Forensic değer + DB boyutu dengesi: 6 ay ortalama.
+AUDIT_LOG_RETENTION_DAYS = 180
+
+
+def audit_cleanup(db: Session, *, now: datetime) -> dict:
+    """AUDIT_LOG_RETENTION_DAYS'dan eski audit kayıtlarını sil.
+
+    Bu job kalıcı veriyi silen TEK cron job — geri alınamaz. retention
+    suresinden önce çalışırsa veri kaybı. Bu yüzden:
+    - retention sabiti açıkça tanımlı (üstte)
+    - silinen sayıyı log'a yaz (operatöre güven için)
+    - DELETE öncesi count() ile doğrula
+
+    Çalışma sıklığı: Günde 1 kez (gece 03:00 UTC) yeterli — audit log INSERT
+    yoğun değil, hourly cron overkill.
+    """
+    from app.models import AuditLog
+    cutoff = now - timedelta(days=AUDIT_LOG_RETENTION_DAYS)
+    # Önce kaç kayıt etkilenecek say (operatör gözle kontrol için)
+    n_to_delete = (
+        db.query(AuditLog).filter(AuditLog.created_at < cutoff).count()
+    )
+    if n_to_delete == 0:
+        logger.info("audit_cleanup: silinecek kayıt yok (cutoff=%s)", cutoff.isoformat())
+        return {"deleted": 0, "cutoff": cutoff.isoformat(), "retention_days": AUDIT_LOG_RETENTION_DAYS}
+
+    deleted = (
+        db.query(AuditLog)
+        .filter(AuditLog.created_at < cutoff)
+        .delete(synchronize_session=False)
+    )
+    db.flush()
+    logger.info(
+        "audit_cleanup: %d kayıt silindi (cutoff=%s, retention=%dgün)",
+        deleted, cutoff.isoformat(), AUDIT_LOG_RETENTION_DAYS,
+    )
+    return {
+        "deleted": deleted,
+        "cutoff": cutoff.isoformat(),
+        "retention_days": AUDIT_LOG_RETENTION_DAYS,
+    }
+
+
 # ---------------------------- Job registry ----------------------------
 
 
@@ -415,4 +462,5 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "weekly_backstop": weekly_backstop,
     "drop_alert": drop_alert,
     "exam_approaching": exam_approaching,
+    "audit_cleanup": audit_cleanup,
 }

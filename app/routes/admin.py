@@ -876,6 +876,20 @@ def end_impersonation(
 # ---------------------------- Audit Log Viewer ----------------------------
 
 
+def _parse_date_filter(s: str | None) -> "date | None":
+    """YYYY-MM-DD parse et; geçersizse None döner (sessizce)."""
+    if not s:
+        return None
+    s = s.strip()
+    if not s:
+        return None
+    try:
+        from datetime import date as _date
+        return _date.fromisoformat(s)
+    except ValueError:
+        return None
+
+
 @router.get("/audit")
 def audit_list(
     request: Request,
@@ -883,9 +897,17 @@ def audit_list(
     db: Session = Depends(get_db),
     action: str | None = None,
     actor_id: str | None = None,
+    start_date: str | None = None,
+    end_date: str | None = None,
     page: int = 1,
 ):
-    """Audit olaylarını listele — filtre + sayfalama (50 per page)."""
+    """Audit olaylarını listele — filtre + sayfalama (50 per page).
+
+    Filtreler: action (enum value), actor_id (int), start_date/end_date
+    (YYYY-MM-DD). Tarih aralığı INCLUSIVE: end_date günü dahil (cutoff
+    end_date+1 gün UTC).
+    """
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
     PER_PAGE = 50
     page = max(1, page)
     query = db.query(AuditLog)
@@ -901,6 +923,16 @@ def audit_list(
             query = query.filter(AuditLog.actor_id == aid)
         except ValueError:
             pass
+
+    sd = _parse_date_filter(start_date)
+    ed = _parse_date_filter(end_date)
+    if sd is not None:
+        sd_dt = _dt.combine(sd, _dt.min.time(), tzinfo=_tz.utc)
+        query = query.filter(AuditLog.created_at >= sd_dt)
+    if ed is not None:
+        # Inclusive: o günün sonu = ertesi günün başı
+        ed_dt = _dt.combine(ed + _td(days=1), _dt.min.time(), tzinfo=_tz.utc)
+        query = query.filter(AuditLog.created_at < ed_dt)
 
     total = query.count()
     audits = (
@@ -931,6 +963,8 @@ def audit_list(
             "per_page": PER_PAGE,
             "filter_action": action,
             "filter_actor_id": actor_id,
+            "filter_start_date": (sd.isoformat() if sd else ""),
+            "filter_end_date": (ed.isoformat() if ed else ""),
             "all_actions": list(AuditAction),
         },
     )
