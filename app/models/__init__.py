@@ -9,6 +9,7 @@ from app.models.academic import (
     AcademicYear,
     ExamTarget,
 )
+from app.models.audit_log import AUDIT_ACTION_LABELS, AuditAction, AuditLog
 from app.models.book import (
     Book,
     BookSection,
@@ -68,9 +69,12 @@ from app.models.user import (
 __all__ = [
     "ACADEMIC_PHASE_KIND_BADGES",
     "ACADEMIC_PHASE_KIND_LABELS",
+    "AUDIT_ACTION_LABELS",
     "AcademicPhase",
     "AcademicPhaseKind",
     "AcademicYear",
+    "AuditAction",
+    "AuditLog",
     "Book",
     "BookSection",
     "BookSet",

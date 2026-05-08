@@ -107,6 +107,24 @@ class User(Base):
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
+    # Güvenlik (Sprint 2 multi-tenant security):
+    # Brute-force koruması: ardışık başarısız login sayısı + opsiyonel kilit
+    # bitiş zamanı. Başarılı login'de sıfırlanır.
+    failed_login_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    locked_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # Son başarılı giriş — UI'da kullanıcıya "son giriş" gösterimi + audit
+    last_login_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    last_login_ip: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Şifre değişimi zaman damgası — diğer aktif oturumları geçersiz kılmak
+    # için (session.password_stamp ile karşılaştırma yapılır).
+    password_changed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     teacher: Mapped["User | None"] = relationship(
         "User", remote_side="User.id", backref="students", foreign_keys=[teacher_id]
     )

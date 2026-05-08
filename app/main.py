@@ -83,7 +83,20 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
-app.add_middleware(SessionMiddleware, secret_key=settings.session_secret, same_site="lax")
+
+# Session güvenliği (Sprint 2 multi-tenant security):
+# - max_age: 24 saat default. Admin oturumları rol-bazlı daha kısa
+#   tutulabilir ileride (deps.py içinde session.login_at kontrolüyle).
+# - https_only: production'da True olmalı (DEBUG=false → Secure flag)
+# - same_site=lax: CSRF temel koruması (POST'larda 3rd-party origin engellenir)
+# - HttpOnly: Starlette SessionMiddleware default'u (her zaman açık)
+app.add_middleware(
+    SessionMiddleware,
+    secret_key=settings.session_secret,
+    same_site="lax",
+    max_age=24 * 60 * 60,
+    https_only=not settings.debug,  # prod (DEBUG=false) → Secure cookie
+)
 
 # Static
 from pathlib import Path
