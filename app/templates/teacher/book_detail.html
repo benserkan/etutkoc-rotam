@@ -22,6 +22,119 @@
   </form>
 </div>
 
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800 flex items-start gap-2">
+  <span>✓</span><span>{{ flash_ok }}</span>
+</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800 flex items-start gap-2">
+  <span>⚠️</span><span>{{ flash_err }}</span>
+</div>
+{% endif %}
+
+{# Faz B: Şablon araç çubuğu — uygula / şablon olarak kaydet / AI öner #}
+<div class="mb-5 bg-violet-50 border border-violet-200 rounded-lg p-4">
+  <div class="flex items-center justify-between gap-4 flex-wrap">
+    <div class="text-sm text-violet-900">
+      <b>📋 Şablon araçları:</b>
+      <span class="text-violet-700">
+        Bu kitabı şablon olarak kaydet, bir şablondan üniteleri uygula veya AI'dan öneri al.
+      </span>
+    </div>
+    <div class="flex gap-2 items-center">
+      {% if book.sections %}
+      <form method="post" action="/teacher/books/{{ book.id }}/clear-sections" class="inline"
+            onsubmit="return confirm('Tüm üniteleri silip sıfırdan başlamak istediğine emin misin? (İlerlemesi olan ünite varsa engellenecek.)');">
+        <button type="submit" class="text-xs px-2 py-1 rounded border border-rose-300 text-rose-700 hover:bg-rose-50">
+          🗑 Sıfırdan başla
+        </button>
+      </form>
+      {% endif %}
+      <a href="/teacher/books/templates" class="text-xs text-violet-600 hover:text-violet-800 underline">
+        Şablonları yönet →
+      </a>
+    </div>
+  </div>
+
+  {# AI önerisi — sadece sections boşsa #}
+  {% if not book.sections %}
+  <form method="post" action="/teacher/books/{{ book.id }}/ai-suggest"
+        class="mt-3 bg-white border border-amber-300 rounded p-3"
+        onsubmit="this.querySelector('button[type=submit]').disabled = true; this.querySelector('.ai-spinner').classList.remove('hidden');">
+    <div class="text-xs font-medium text-amber-900 mb-2">
+      ✨ AI ile ünite önerisi al
+      <span class="text-amber-700 font-normal">— üniteler ve default test sayıları otomatik gelir, sonradan düzeltirsin</span>
+    </div>
+    <div class="flex gap-2 items-end">
+      <input name="grade_hint" placeholder="Sınıf ipucu (örn '8. sınıf', boş bırakılabilir)"
+             class="flex-1 px-2 py-1.5 border border-slate-300 rounded text-xs" />
+      <button type="submit"
+              class="bg-amber-500 hover:bg-amber-600 text-white text-xs font-medium py-1.5 px-3 rounded flex items-center gap-2">
+        <span class="ai-spinner hidden">⏳</span>
+        ✨ AI'dan öner
+      </button>
+    </div>
+    <p class="mt-2 text-[11px] text-slate-500">
+      Claude Haiku kullanılır (~penny maliyet). Yanıt genelde 5-15 saniye sürer.
+      .env dosyasında <code class="bg-slate-100 px-1">ANTHROPIC_API_KEY</code> tanımlı olmalı.
+    </p>
+  </form>
+  {% endif %}
+
+  <div class="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+    {# Şablon uygula #}
+    {% if applicable_templates %}
+    <form method="post" action="/teacher/books/{{ book.id }}/apply-template"
+          class="bg-white border border-violet-200 rounded p-3">
+      <div class="text-xs font-medium text-violet-900 mb-2">Şablondan ünite uygula</div>
+      <div class="flex gap-2 items-end">
+        <select name="template_id" required class="flex-1 px-2 py-1.5 border border-slate-300 rounded text-xs bg-white">
+          <option value="">— Şablon seçiniz —</option>
+          {% for t in applicable_templates %}
+          <option value="{{ t.id }}">
+            {{ t.name }}
+            ({{ t.sections|length }} ünite{% if t.is_ai_generated and not t.is_verified %} · ✨ AI{% endif %})
+          </option>
+          {% endfor %}
+        </select>
+        <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded">
+          Uygula
+        </button>
+      </div>
+      <label class="mt-2 flex items-center gap-2 text-[11px] text-slate-600">
+        <input type="checkbox" name="overwrite" value="on" class="accent-violet-600" />
+        <span>Mevcut üniteleri sil ve üzerine yaz <i>(ilerlemesi olan ünite varsa engellenir)</i></span>
+      </label>
+    </form>
+    {% else %}
+    <div class="bg-white border border-violet-200 rounded p-3 text-xs text-slate-500 italic">
+      Henüz şablonun yok. Sağ taraftaki butonla bu kitabı ilk şablonun olarak kaydedebilirsin.
+    </div>
+    {% endif %}
+
+    {# Şablon olarak kaydet #}
+    <form method="post" action="/teacher/books/{{ book.id }}/save-as-template"
+          class="bg-white border border-violet-200 rounded p-3"
+          {% if not book.sections %}onsubmit="return false;"{% endif %}>
+      <div class="text-xs font-medium text-violet-900 mb-2">Bu kitabı şablon olarak kaydet</div>
+      <div class="flex gap-2 items-end">
+        <input name="template_name" placeholder="Şablon adı (boş = kitap adı)"
+               class="flex-1 px-2 py-1.5 border border-slate-300 rounded text-xs" />
+        <button type="submit"
+                class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded
+                       {% if not book.sections %}opacity-50 cursor-not-allowed{% endif %}"
+                {% if not book.sections %}disabled title="Önce ünite eklemelisin"{% endif %}>
+          💾 Kaydet
+        </button>
+      </div>
+      <p class="mt-2 text-[11px] text-slate-500">
+        Mevcut {{ book.sections|length }} ünite ve test sayıları yeniden kullanılabilir şablona dönüşür.
+      </p>
+    </form>
+  </div>
+</div>
+
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
   <!-- Sol: Üniteler/Denemeler -->
   <div class="lg:col-span-2 bg-white border border-slate-200 rounded-lg p-5">

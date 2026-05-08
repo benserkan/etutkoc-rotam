@@ -162,4 +162,71 @@ class BookSetItem(Base):
     order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     set: Mapped["BookSet"] = relationship("BookSet", back_populates="items")
+
+
+class BookTemplate(Base):
+    """Yeniden kullanılabilir kitap yapı şablonu (ünite isimleri + default test sayıları).
+
+    Yeni bir kitap eklerken sıfırdan ünite girmek yerine bir şablona uygulanarak
+    hızla doldurulabilir. AI önerileri de bu modele "is_ai_generated=True" ile
+    kaydedilir; kullanıcı düzenleyip "is_verified=True"a yükselttiğinde
+    güvenilir şablon olur.
+
+    Şu an sadece teacher_id'ye bağlı (kişisel kütüphane). İleride paylaşım
+    açılırsa NULL teacher_id system-template olarak yorumlanabilir.
+    """
+
+    __tablename__ = "book_templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    teacher_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    name: Mapped[str] = mapped_column(String(255), nullable=False)
+    publisher: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    type: Mapped[BookType] = mapped_column(Enum(BookType), nullable=False)
+    subject_id: Mapped[int | None] = mapped_column(
+        ForeignKey("subjects.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    target_grade_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    target_grade_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    target_graduate: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    avg_questions_per_test: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # AI tarafından oluşturuldu mu? UI'da "doğrulanmadı" rozetiyle gösterilir
+    # ta ki kullanıcı düzenleme/onayla aksiyonu yapana dek.
+    is_ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    sections: Mapped[list["BookTemplateSection"]] = relationship(
+        "BookTemplateSection",
+        back_populates="template",
+        cascade="all, delete-orphan",
+        order_by="BookTemplateSection.order",
+    )
+
+    def __repr__(self) -> str:
+        return f"<BookTemplate {self.name}>"
+
+
+class BookTemplateSection(Base):
+    __tablename__ = "book_template_sections"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    template_id: Mapped[int] = mapped_column(
+        ForeignKey("book_templates.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    label: Mapped[str] = mapped_column(String(255), nullable=False)
+    default_test_count: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
+    order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+
+    template: Mapped["BookTemplate"] = relationship("BookTemplate", back_populates="sections")
+
+    def __repr__(self) -> str:
+        return f"<BookTemplateSection {self.label} x{self.default_test_count}>"
     book: Mapped["Book"] = relationship("Book")

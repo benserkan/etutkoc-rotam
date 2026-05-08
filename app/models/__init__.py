@@ -9,7 +9,15 @@ from app.models.academic import (
     AcademicYear,
     ExamTarget,
 )
-from app.models.book import Book, BookSection, BookSet, BookSetItem, BookType
+from app.models.book import (
+    Book,
+    BookSection,
+    BookSet,
+    BookSetItem,
+    BookTemplate,
+    BookTemplateSection,
+    BookType,
+)
 from app.models.cron import CronSchedule
 from app.models.curriculum import (
     CURRICULUM_MODEL_LABELS,
@@ -66,6 +74,8 @@ __all__ = [
     "BookSection",
     "BookSet",
     "BookSetItem",
+    "BookTemplate",
+    "BookTemplateSection",
     "BookType",
     "CronSchedule",
     "CURRICULUM_MODEL_LABELS",

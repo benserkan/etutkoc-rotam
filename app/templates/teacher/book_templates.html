@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}Kitap Şablonları{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <a href="/teacher/books" class="text-sm text-slate-500 hover:text-slate-700">← Kitaplar</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kitap Şablonları</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Bir kitabın ünite yapısını şablon olarak kaydet — sonraki benzer kitapları
+      tek tıkla doldur. Yeni kitap eklerken "Şablonlardan başla" seçeneğinden
+      kullanılır veya mevcut bir kitaba "Şablon uygula" diyerek üniteleri yükle.
+    </p>
+  </div>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800 flex items-start gap-2">
+  <span>✓</span><span>{{ flash_ok }}</span>
+</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800 flex items-start gap-2">
+  <span>⚠️</span><span>{{ flash_err }}</span>
+</div>
+{% endif %}
+
+{% if not templates %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+  <p class="text-base mb-2">Henüz şablon yok.</p>
+  <p class="text-xs">
+    Bir kitap detayında ünite ekledikten sonra <b>"Şablon olarak kaydet"</b>
+    butonuyla burada birikir. AI önerileri de buraya gelir.
+  </p>
+</div>
+{% else %}
+<div class="space-y-3">
+  {% for t in templates %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <div class="px-4 py-3 flex items-center gap-3 flex-wrap border-b border-slate-100">
+      <h3 class="font-semibold text-slate-900">{{ t.name }}</h3>
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
+        {{ BOOK_TYPE_LABELS.get(t.type, t.type.value) }}
+      </span>
+      {% if t.publisher %}
+      <span class="text-xs text-slate-500">{{ t.publisher }}</span>
+      {% endif %}
+      {% if t.target_grade_min or t.target_grade_max %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
+        {% if t.target_grade_min == t.target_grade_max %}{{ t.target_grade_min }}. sn
+        {% else %}{{ t.target_grade_min or '?' }}-{{ t.target_grade_max or '?' }}{% endif %}
+      </span>
+      {% endif %}
+      {% if t.target_graduate %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">🎓 Mezun</span>
+      {% endif %}
+
+      {% if t.is_ai_generated and not t.is_verified %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300"
+            title="AI önerisi · doğrulanmadı">
+        ✨ AI · doğrulanmadı
+      </span>
+      {% elif t.is_ai_generated and t.is_verified %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200"
+            title="AI önerisi · kullanıcı doğrulamış">
+        ✨ AI · doğrulandı
+      </span>
+      {% else %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200">
+        Manuel
+      </span>
+      {% endif %}
+
+      <span class="text-xs text-slate-500">{{ t.sections|length }} ünite</span>
+      <span class="ml-auto flex gap-2">
+        {% if t.is_ai_generated and not t.is_verified %}
+        <form method="post" action="/teacher/books/templates/{{ t.id }}/verify" class="inline">
+          <button type="submit" class="text-xs px-2 py-1 rounded border border-emerald-300 text-emerald-700 hover:bg-emerald-50">
+            ✓ Doğrula
+          </button>
+        </form>
+        {% endif %}
+        <form method="post" action="/teacher/books/templates/{{ t.id }}/delete" class="inline"
+              onsubmit="return confirm('{{ t.name }} şablonunu silmek istediğine emin misin?');">
+          <button type="submit" class="text-xs text-red-600 hover:text-red-800">Sil</button>
+        </form>
+      </span>
+    </div>
+    <details>
+      <summary class="px-4 py-2 text-xs text-slate-600 cursor-pointer hover:bg-slate-50">
+        Üniteleri görüntüle
+      </summary>
+      <ul class="px-4 pb-3 text-xs text-slate-700 divide-y divide-slate-100">
+        {% for s in t.sections %}
+        <li class="py-1.5 flex items-center justify-between">
+          <span><span class="text-slate-400 mr-2">{{ loop.index }}.</span>{{ s.label }}</span>
+          <span class="text-slate-500">{{ s.default_test_count }} test</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </details>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

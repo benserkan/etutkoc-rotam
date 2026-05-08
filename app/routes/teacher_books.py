@@ -1,3 +1,5 @@
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session, joinedload
@@ -8,6 +10,8 @@ from app.models import (
     BookSection,
     BookSet,
     BookSetItem,
+    BookTemplate,
+    BookTemplateSection,
     BookType,
     SectionProgress,
     StudentBook,
@@ -148,6 +152,14 @@ def list_books(
             "subjects": seen_models[None],
         })
 
+    # Faz B: Şablonlar — yeni kitap modal'ında "Şablondan başla" select için
+    teacher_templates = (
+        db.query(BookTemplate)
+        .filter(BookTemplate.teacher_id == user.id)
+        .order_by(BookTemplate.created_at.desc())
+        .all()
+    )
+
     return templates.TemplateResponse(
         "teacher/books_list.html",
         {
@@ -161,6 +173,7 @@ def list_books(
             "type_counts": type_counts,
             "grade_counts": grade_counts,
             "overall": overall,
+            "teacher_templates": teacher_templates,
         },
     )
 
@@ -175,6 +188,7 @@ def create_book(
     target_grade_min: str = Form(""),
     target_grade_max: str = Form(""),
     target_graduate: str = Form(""),
+    template_id: str = Form(""),
     user: User = Depends(require_teacher),
     db: Session = Depends(get_db),
 ):
@@ -189,7 +203,6 @@ def create_book(
         except ValueError:
             avg_q = None
 
-    # Hedef sınıf aralığı — boş bırakılabilir (her seviyeye uygun)
     def _parse_grade(s: str) -> int | None:
         s = (s or "").strip()
         if not s:
@@ -202,11 +215,27 @@ def create_book(
 
     g_min = _parse_grade(target_grade_min)
     g_max = _parse_grade(target_grade_max)
-    # min > max ise normalize et (kullanıcı yanlış girmiş olabilir)
     if g_min is not None and g_max is not None and g_min > g_max:
         g_min, g_max = g_max, g_min
 
     is_for_graduate = target_graduate.strip().lower() in ("on", "1", "true", "yes")
+
+    # Şablon (opsiyonel) — sections kopyalanır
+    template: BookTemplate | None = None
+    if template_id.strip():
+        try:
+            tid = int(template_id)
+            template = (
+                db.query(BookTemplate)
+                .options(joinedload(BookTemplate.sections))
+                .filter(
+                    BookTemplate.id == tid,
+                    BookTemplate.teacher_id == user.id,
+                )
+                .first()
+            )
+        except ValueError:
+            template = None
 
     book = Book(
         teacher_id=user.id,
@@ -220,8 +249,395 @@ def create_book(
         target_graduate=is_for_graduate,
     )
     db.add(book)
+    db.flush()  # book.id lazım
+
+    if template:
+        for ts in template.sections:
+            db.add(BookSection(
+                book_id=book.id,
+                label=ts.label,
+                test_count=ts.default_test_count,
+                order=ts.order,
+            ))
+
     db.commit()
     return RedirectResponse(url=f"/teacher/books/{book.id}", status_code=status.HTTP_303_SEE_OTHER)
+
+
+# ---------------------------- Şablonlar (Faz B) ----------------------------
+
+
+@router.get("/templates")
+def list_templates(
+    request: Request,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+    ok: str | None = None,
+    err: str | None = None,
+):
+    tpls = (
+        db.query(BookTemplate)
+        .options(joinedload(BookTemplate.sections))
+        .filter(BookTemplate.teacher_id == user.id)
+        .order_by(BookTemplate.created_at.desc())
+        .all()
+    )
+    return templates.TemplateResponse(
+        "teacher/book_templates.html",
+        {
+            "request": request,
+            "user": user,
+            "templates": tpls,
+            "BOOK_TYPE_LABELS": __import__("app.models.book", fromlist=["BOOK_TYPE_LABELS"]).BOOK_TYPE_LABELS,
+            "flash_ok": ok,
+            "flash_err": err,
+        },
+    )
+
+
+@router.post("/{book_id}/save-as-template")
+def save_book_as_template(
+    book_id: int,
+    template_name: str = Form(""),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Mevcut kitabı (sections dahil) yeniden kullanılabilir şablon olarak kaydet."""
+    book = (
+        db.query(Book)
+        .options(joinedload(Book.sections))
+        .filter(Book.id == book_id, Book.teacher_id == user.id)
+        .first()
+    )
+    if not book:
+        raise HTTPException(status_code=404, detail="Kitap bulunamadı")
+    if not book.sections:
+        return RedirectResponse(
+            url=f"/teacher/books/{book_id}?err=" + quote(
+                "Şablon olarak kaydetmek için önce ünite eklemelisiniz."
+            ),
+            status_code=303,
+        )
+
+    name = (template_name or "").strip() or book.name
+
+    tpl = BookTemplate(
+        teacher_id=user.id,
+        name=name,
+        publisher=book.publisher,
+        type=book.type,
+        subject_id=book.subject_id,
+        target_grade_min=book.target_grade_min,
+        target_grade_max=book.target_grade_max,
+        target_graduate=book.target_graduate,
+        avg_questions_per_test=book.avg_questions_per_test,
+        is_ai_generated=False,
+        is_verified=True,  # Manuel oluşturulmuş = doğrulanmış
+    )
+    db.add(tpl)
+    db.flush()
+    for s in book.sections:
+        db.add(BookTemplateSection(
+            template_id=tpl.id,
+            label=s.label,
+            default_test_count=s.test_count,
+            order=s.order,
+        ))
+    db.commit()
+    return RedirectResponse(
+        url=f"/teacher/books/{book_id}?ok=" + quote(f"'{name}' şablon olarak kaydedildi."),
+        status_code=303,
+    )
+
+
+@router.post("/{book_id}/apply-template")
+def apply_template_to_book(
+    book_id: int,
+    template_id: int = Form(...),
+    overwrite: str = Form(""),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Mevcut kitaba (boş veya değil) şablondan ünite uygula.
+
+    overwrite=on ise mevcut ünitelerin hepsi silinir; aksi halde sadece şablonda
+    olup kitapta olmayanlar eklenir (label-bazlı eşleştirme).
+    """
+    book = (
+        db.query(Book)
+        .options(joinedload(Book.sections))
+        .filter(Book.id == book_id, Book.teacher_id == user.id)
+        .first()
+    )
+    if not book:
+        raise HTTPException(status_code=404, detail="Kitap bulunamadı")
+    tpl = (
+        db.query(BookTemplate)
+        .options(joinedload(BookTemplate.sections))
+        .filter(BookTemplate.id == template_id, BookTemplate.teacher_id == user.id)
+        .first()
+    )
+    if not tpl:
+        raise HTTPException(status_code=404, detail="Şablon bulunamadı")
+
+    do_overwrite = overwrite.strip().lower() in ("on", "1", "true", "yes")
+
+    if do_overwrite:
+        # Mevcut sections'ları sil — fakat ilerleme/rezerv varsa engelle
+        for s in book.sections:
+            progresses = (
+                db.query(SectionProgress)
+                .filter(SectionProgress.book_section_id == s.id)
+                .all()
+            )
+            if any(p.completed_count > 0 or p.reserved_count > 0 for p in progresses):
+                return RedirectResponse(
+                    url=f"/teacher/books/{book_id}?err=" + quote(
+                        "Üzerine yazma yapılamıyor: bazı ünitelerde tamamlanan/rezerv test var. "
+                        "Önce manuel temizleyin veya 'Üzerine yazma' kapalı olarak uygulayın."
+                    ),
+                    status_code=303,
+                )
+        for s in list(book.sections):
+            db.delete(s)
+        db.flush()
+
+    existing_labels = {s.label.strip().lower() for s in book.sections}
+    max_order = max((s.order for s in book.sections), default=-1)
+
+    added = 0
+    for ts in tpl.sections:
+        if ts.label.strip().lower() in existing_labels:
+            continue
+        max_order += 1
+        sec = BookSection(
+            book_id=book.id,
+            label=ts.label,
+            test_count=ts.default_test_count,
+            order=max_order,
+        )
+        db.add(sec)
+        db.flush()
+        # Atanmış öğrenciler için progress kaydı aç
+        for sb in book.student_books:
+            db.add(SectionProgress(
+                student_book_id=sb.id,
+                book_section_id=sec.id,
+                reserved_count=0,
+                completed_count=0,
+            ))
+        added += 1
+
+    db.commit()
+    msg = f"'{tpl.name}' şablonundan {added} ünite eklendi."
+    return RedirectResponse(
+        url=f"/teacher/books/{book_id}?ok=" + quote(msg),
+        status_code=303,
+    )
+
+
+@router.post("/templates/{template_id}/delete")
+def delete_template(
+    template_id: int,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    tpl = (
+        db.query(BookTemplate)
+        .filter(BookTemplate.id == template_id, BookTemplate.teacher_id == user.id)
+        .first()
+    )
+    if tpl:
+        db.delete(tpl)
+        db.commit()
+    return RedirectResponse(url="/teacher/books/templates", status_code=303)
+
+
+@router.post("/templates/{template_id}/verify")
+def verify_template(
+    template_id: int,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """AI önerisi şablonu kullanıcı tarafından doğrulanmış olarak işaretle."""
+    tpl = (
+        db.query(BookTemplate)
+        .filter(BookTemplate.id == template_id, BookTemplate.teacher_id == user.id)
+        .first()
+    )
+    if tpl:
+        tpl.is_verified = True
+        db.commit()
+    return RedirectResponse(url="/teacher/books/templates", status_code=303)
+
+
+@router.post("/{book_id}/ai-suggest")
+def ai_suggest_sections(
+    book_id: int,
+    grade_hint: str = Form(""),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """AI ile ünite önerisi al, kitaba uygula + draft şablon olarak kaydet.
+
+    Mevcut sections varsa tekrar uygulamaz (yanlışlıkla üzerine yazma engeli);
+    önce 'Sıfırdan başla' ile temizlenmesi gerekir.
+    """
+    from app.models.book import BOOK_TYPE_LABELS
+    from app.services.ai_book_template import (
+        AIInvalidResponse,
+        AIServiceUnavailable,
+        suggest_sections,
+    )
+
+    book = (
+        db.query(Book)
+        .options(joinedload(Book.sections), joinedload(Book.subject))
+        .filter(Book.id == book_id, Book.teacher_id == user.id)
+        .first()
+    )
+    if not book:
+        raise HTTPException(status_code=404, detail="Kitap bulunamadı")
+    if book.sections:
+        return RedirectResponse(
+            url=f"/teacher/books/{book_id}?err=" + quote(
+                "Mevcut üniteler var — önce 'Sıfırdan başla' ile temizleyin."
+            ),
+            status_code=303,
+        )
+
+    # Sınıf etiketi: kitabın target_grade veya kullanıcının verdiği hint
+    grade_label = (grade_hint or "").strip()
+    if not grade_label:
+        if book.target_grade_min and book.target_grade_max:
+            if book.target_grade_min == book.target_grade_max:
+                grade_label = f"{book.target_grade_min}. sınıf"
+            else:
+                grade_label = (
+                    f"{book.target_grade_min}-{book.target_grade_max}. sınıf"
+                )
+        elif book.target_graduate:
+            grade_label = "Mezun (YKS)"
+        else:
+            grade_label = "belirtilmemiş"
+
+    try:
+        suggestions = suggest_sections(
+            book_name=book.name,
+            publisher=book.publisher,
+            subject_name=book.subject.name if book.subject else "",
+            book_type_label=BOOK_TYPE_LABELS.get(book.type, book.type.value),
+            grade_label=grade_label,
+        )
+    except AIServiceUnavailable as e:
+        return RedirectResponse(
+            url=f"/teacher/books/{book_id}?err=" + quote(
+                f"AI servisi kullanılamıyor: {e}. .env'deki ANTHROPIC_API_KEY'i kontrol edin."
+            ),
+            status_code=303,
+        )
+    except AIInvalidResponse as e:
+        return RedirectResponse(
+            url=f"/teacher/books/{book_id}?err=" + quote(
+                f"AI yanıtı parse edilemedi: {e}. Tekrar deneyin veya manuel girin."
+            ),
+            status_code=303,
+        )
+
+    # Sections'ları kitaba ekle
+    for i, sec in enumerate(suggestions):
+        new_sec = BookSection(
+            book_id=book.id,
+            label=sec["label"],
+            test_count=sec["default_test_count"],
+            order=i,
+        )
+        db.add(new_sec)
+        db.flush()
+        # Atanmış öğrencilere progress aç
+        for sb in book.student_books:
+            db.add(SectionProgress(
+                student_book_id=sb.id,
+                book_section_id=new_sec.id,
+                reserved_count=0,
+                completed_count=0,
+            ))
+
+    # Draft şablon olarak da kaydet — kullanıcı sonra doğrulayabilir
+    tpl = BookTemplate(
+        teacher_id=user.id,
+        name=book.name,
+        publisher=book.publisher,
+        type=book.type,
+        subject_id=book.subject_id,
+        target_grade_min=book.target_grade_min,
+        target_grade_max=book.target_grade_max,
+        target_graduate=book.target_graduate,
+        avg_questions_per_test=book.avg_questions_per_test,
+        is_ai_generated=True,
+        is_verified=False,
+    )
+    db.add(tpl)
+    db.flush()
+    for i, sec in enumerate(suggestions):
+        db.add(BookTemplateSection(
+            template_id=tpl.id,
+            label=sec["label"],
+            default_test_count=sec["default_test_count"],
+            order=i,
+        ))
+    db.commit()
+
+    return RedirectResponse(
+        url=f"/teacher/books/{book_id}?ok=" + quote(
+            f"✨ AI {len(suggestions)} ünite önerdi. Lütfen kontrol edip düzeltin; "
+            f"şablon olarak da kaydedildi (doğrulanmadı işaretiyle)."
+        ),
+        status_code=303,
+    )
+
+
+@router.post("/{book_id}/clear-sections")
+def clear_book_sections(
+    book_id: int,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Tüm sections'ları sil — 'Sıfırdan başla' escape. İlerlemesi olan ünite
+    varsa engellenir (öğrenci verilerini koru).
+    """
+    book = (
+        db.query(Book)
+        .options(joinedload(Book.sections))
+        .filter(Book.id == book_id, Book.teacher_id == user.id)
+        .first()
+    )
+    if not book:
+        raise HTTPException(status_code=404, detail="Kitap bulunamadı")
+
+    # Güvenlik: ilerlemesi olan section silinmez
+    for s in book.sections:
+        progresses = (
+            db.query(SectionProgress)
+            .filter(SectionProgress.book_section_id == s.id)
+            .all()
+        )
+        if any(p.completed_count > 0 or p.reserved_count > 0 for p in progresses):
+            return RedirectResponse(
+                url=f"/teacher/books/{book_id}?err=" + quote(
+                    "Bazı ünitelerde tamamlanan/rezerv test var — sıfırlanamaz. "
+                    "Önce o üniteleri tek tek silin veya verileri taşıyın."
+                ),
+                status_code=303,
+            )
+    n = len(book.sections)
+    for s in list(book.sections):
+        db.delete(s)
+    db.commit()
+    return RedirectResponse(
+        url=f"/teacher/books/{book_id}?ok=" + quote(f"{n} ünite silindi."),
+        status_code=303,
+    )
 
 
 @router.get("/{book_id}")
@@ -247,6 +663,20 @@ def book_detail(
         .all()
     )
     assigned_student_ids = {sb.student_id for sb in book.student_books}
+
+    # Faz B: Bu kitabın dersine eşleşen veya teacher'ın tüm şablonları (apply seçimi)
+    applicable_templates = (
+        db.query(BookTemplate)
+        .filter(BookTemplate.teacher_id == user.id)
+        .order_by(BookTemplate.created_at.desc())
+        .all()
+    )
+
+    from app.models.book import BOOK_TYPE_LABELS
+
+    flash_ok = request.query_params.get("ok")
+    flash_err = request.query_params.get("err")
+
     return templates.TemplateResponse(
         "teacher/book_detail.html",
         {
@@ -256,6 +686,10 @@ def book_detail(
             "topics": topics,
             "students": all_students,
             "assigned_ids": assigned_student_ids,
+            "applicable_templates": applicable_templates,
+            "BOOK_TYPE_LABELS": BOOK_TYPE_LABELS,
+            "flash_ok": flash_ok,
+            "flash_err": flash_err,
         },
     )
 
