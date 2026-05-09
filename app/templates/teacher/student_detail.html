@@ -87,6 +87,11 @@
        title="{% if student.is_graduate %}Yeni öğretim yılı için akademik yıl, alan ve çalışma şeklini güncelleyin{% else %}Yeni akademik yıl başında öğrenciyi bir sonraki sınıfa taşır{% endif %}">
       ↗ {% if student.is_graduate %}Yeni Yıl{% else %}Sınıf Yükselt{% endif %}
     </a>
+    <a href="/teacher/students/{{ student.id }}/goals"
+       class="px-3 py-2 rounded border border-amber-300 text-sm text-amber-700 hover:bg-amber-50"
+       title="Bu öğrenci için sınav, ders ve operasyonel hedef ağacını yönet">
+      🎯 Hedefler
+    </a>
     <a href="/teacher/students/{{ student.id }}/week"
        class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
       Haftalık Program →

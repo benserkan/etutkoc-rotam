@@ -208,6 +208,10 @@
         </td>
         <td class="px-4 py-3 text-slate-600 align-top">{{ s.academic_year.name if s.academic_year else '—' }}</td>
         <td class="px-4 py-3 text-right space-x-3 align-top whitespace-nowrap">
+          <a href="/teacher/students/{{ s.id }}/goals"
+             class="text-amber-700 hover:text-amber-900 text-sm" title="Hedef ağacı">
+            🎯 Hedefler
+          </a>
           <form method="post" action="/teacher/students/{{ s.id }}/reset-password" class="inline">
             <button type="submit" class="text-indigo-600 hover:text-indigo-800 text-sm">Şifre Sıfırla</button>
           </form>
