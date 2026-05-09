@@ -4,8 +4,11 @@
 {% block content %}
 <div class="mb-6">
   <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Sistem Kullanımı & Krediler</h1>
-  <p class="text-sm text-slate-500 mt-1">{{ period }} dönemi · tüm kurumlar + bağımsız öğretmenler.</p>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">💳 Kredi Kullanımı — Sistem Geneli</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    {{ period }} ayı boyunca her kurum ve bağımsız öğretmenin yapay zeka, e-posta ve WhatsApp
+    kullanımı. Burada kimin kotaya yaklaştığını görebilir, gerektiğinde ekstra kredi tanımlayabilirsin.
+  </p>
 </div>
 
 {% if flash_ok %}
@@ -33,10 +36,10 @@
     <div class="text-[11px] text-slate-500 mt-0.5">/ {{ totals.indep_alloc }} kredi · {{ indep_rows|length }} öğretmen</div>
   </div>
   <div class="bg-white border border-slate-200 rounded-lg p-4">
-    <div class="text-[11px] text-slate-500 uppercase tracking-wider">Birim Maliyetler</div>
+    <div class="text-[11px] text-slate-500 uppercase tracking-wider">Her İşlem Kaç Kredi?</div>
     <div class="text-[11px] text-slate-700 mt-1 leading-relaxed">
       {% for kind_enum, cost in kind_costs.items() %}
-      <div>{{ kind_labels[kind_enum] }}: <b>{{ cost }}c</b></div>
+      <div>{{ kind_labels[kind_enum] }}: <b>{{ cost }} kredi</b></div>
       {% endfor %}
     </div>
   </div>
@@ -73,7 +76,7 @@
         <th class="text-left px-4 py-2">Plan</th>
         <th class="text-left px-4 py-2">Kullanım</th>
         <th class="text-right px-4 py-2">Kalan</th>
-        <th class="text-left px-4 py-2">Hard-block</th>
+        <th class="text-left px-4 py-2">Tam Durdurma</th>
         <th class="text-right px-4 py-2">İşlem</th>
       </tr>
     </thead>
@@ -114,7 +117,7 @@
         <td class="px-4 py-2">
           {% if acc.hard_block_enabled %}
           <span class="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">
-            🛑 AKTİF
+            🛑 Erişim Kapalı
           </span>
           {% else %}
           <span class="text-xs text-slate-500">kapalı</span>
@@ -127,11 +130,11 @@
             </summary>
             <div class="absolute right-0 mt-1 w-64 bg-white border border-slate-200 rounded-lg shadow-lg z-10 p-3 space-y-2">
               <form method="post" action="/admin/usage/institution/{{ inst.id }}/hard-block"
-                    onsubmit="return confirm('Hard-block durumu değiştirilsin mi? Aktive edilirse AI/email/WhatsApp çağrıları reddedilir.');">
+                    onsubmit="return confirm('Bu kurumun yapay zeka, e-posta ve WhatsApp özellikleri tamamen durdurulsun mu? (Krediden bağımsız, sen tekrar açana kadar kapalı kalır.)');">
                 <button type="submit" class="w-full text-xs px-3 py-1.5 rounded font-medium
                     {% if acc.hard_block_enabled %}bg-emerald-600 hover:bg-emerald-700 text-white
                     {% else %}bg-rose-600 hover:bg-rose-700 text-white{% endif %}">
-                  {% if acc.hard_block_enabled %}Hard-block kapat{% else %}Hard-block aktive et{% endif %}
+                  {% if acc.hard_block_enabled %}Erişimi Tekrar Aç{% else %}Erişimi Tamamen Durdur{% endif %}
                 </button>
               </form>
               <form method="post" action="/admin/usage/institution/{{ inst.id }}/bonus" class="flex gap-1">
@@ -163,7 +166,7 @@
         <th class="text-left px-4 py-2">Plan</th>
         <th class="text-left px-4 py-2">Kullanım</th>
         <th class="text-right px-4 py-2">Kalan</th>
-        <th class="text-left px-4 py-2">Cooldown</th>
+        <th class="text-left px-4 py-2">Bekleme Süresi</th>
         <th class="text-right px-4 py-2">İşlem</th>
       </tr>
     </thead>
@@ -226,6 +229,8 @@
 {% endif %}
 
 <div class="mt-5 text-xs text-slate-500">
-  💡 Hard-block sadece kurumlar için manuel toggle. Bağımsız öğretmenler %100'e ulaşınca otomatik 5 saatlik cooldown'a girer.
+  💡 <b>Tam durdurma</b> yalnızca kurumlar için ve sen elle açıp kapatırsın — kredi bittiğinde bile sistem çalışır,
+  durdurma istisnai bir karardır. <b>Bağımsız öğretmenler</b> krediyi bitirince otomatik olarak 5 saat boyunca yeni
+  AI/e-posta/WhatsApp işlemi yapamaz; süre dolunca kendiliğinden devam eder.
 </div>
 {% endblock %}

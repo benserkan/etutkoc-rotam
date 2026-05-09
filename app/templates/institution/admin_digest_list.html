@@ -6,13 +6,14 @@
   <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
   <div class="flex items-start justify-between mt-1">
     <div>
-      <h1 class="text-2xl font-semibold text-slate-900">Haftalık Yönetici Özeti</h1>
+      <h1 class="text-2xl font-semibold text-slate-900">📨 Haftalık Yönetici Özeti</h1>
       <p class="text-sm text-slate-500 mt-1">
-        {{ institution.name }} — son 12 haftalık özet arşivi. Otomatik gönderim her Pazartesi 09:00 UTC.
+        {{ institution.name }} kurumunda her hafta öğretmen ve öğrenci performans özeti otomatik
+        olarak yöneticilere e-posta ile gönderilir. Aşağıda son 12 haftanın arşivi var.
       </p>
     </div>
     <form method="post" action="/institution/admin-digest/send-now"
-          onsubmit="return confirm('Bu haftaki özet şimdi gönderilsin mi? (Aynı haftaya zaten gönderildiyse yeniden gönderilir.)');">
+          onsubmit="return confirm('Bu haftaki özet hemen yöneticilere e-posta ile gönderilsin mi? (Daha önce gönderildiyse yeniden gönderilir.)');">
       <button type="submit" class="text-sm bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded font-medium whitespace-nowrap">
         ✉️ Şimdi Gönder
       </button>
@@ -30,8 +31,10 @@
 <div class="mb-5 p-3 rounded border border-sky-200 bg-sky-50 text-xs text-sky-800 flex items-start gap-2">
   <span class="text-base">ℹ️</span>
   <div>
-    <b>Otomatik gönderim:</b> Her Pazartesi 09:00 UTC (TR 12:00 öğle) tüm aktif kurum yöneticilerine e-posta atılır.
-    Aynı haftaya 2. gönderim yapılmaz (idempotent). E-posta servisi devre dışıyken (dev) "log_only" durumu gözükür ama snapshot kaydedilir.
+    <b>Otomatik gönderim:</b> Her Pazartesi öğlen saat 12:00'de (Türkiye saatiyle) tüm aktif yöneticilere
+    e-posta gönderilir. Aynı haftaya tekrar otomatik gönderim yapılmaz; ama "Şimdi Gönder" tuşuyla
+    sen tekrar tetikleyebilirsin. Eğer e-posta servisi devre dışıysa, özet kayıt edilir ama
+    e-posta atılmaz — bu sayfada "log-only" olarak görünür.
   </div>
 </div>
 
@@ -61,13 +64,13 @@
         </td>
         <td class="px-4 py-2">
           {% if d.send_status == 'sent' %}
-            <span class="text-emerald-700 font-medium">✓ gönderildi</span>
+            <span class="text-emerald-700 font-medium">✓ Gönderildi</span>
           {% elif d.send_status == 'log_only' %}
-            <span class="text-slate-600">📝 log-only (e-posta servisi kapalı)</span>
+            <span class="text-slate-600" title="E-posta servisi kapalı olduğu için sadece kayıt tutuldu">📝 Sadece kayıt</span>
           {% elif d.send_status == 'failed' %}
-            <span class="text-rose-700 font-medium">⚠ başarısız</span>
+            <span class="text-rose-700 font-medium">⚠ Gönderilemedi</span>
           {% elif d.send_status == 'skipped_no_admin' %}
-            <span class="text-amber-700">↪ admin yok</span>
+            <span class="text-amber-700" title="Bu kurumda alıcı yönetici yok">↪ Yönetici tanımsız</span>
           {% else %}
             <span class="text-slate-500">{{ d.send_status }}</span>
           {% endif %}

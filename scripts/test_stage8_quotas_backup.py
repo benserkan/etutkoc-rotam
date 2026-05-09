@@ -288,7 +288,7 @@ def main() -> int:
         r = c.get("/admin/quota")
         check("GET /admin/quota 200", r.status_code == 200, f"got {r.status_code}")
         body = r.text
-        check("'Kuota Yönetimi' başlığı", "Kuota Yönetimi" in body)
+        check("'Kurum Limitleri' başlığı", "Kurum Limitleri" in body)
         check("inst_a tabloda", f"{PFX}_a" in body)
         check("inst_b tabloda", f"{PFX}_b" in body)
 

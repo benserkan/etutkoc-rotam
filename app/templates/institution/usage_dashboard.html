@@ -4,9 +4,10 @@
 {% block content %}
 <div class="mb-6">
   <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Aylık Kredi Kullanımı</h1>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">💳 Aylık Kredi Kullanımın</h1>
   <p class="text-sm text-slate-500 mt-1">
-    {{ institution.name }} · {{ period }} · plan: <b>{{ account.plan_code }}</b>
+    Yapay zeka önerileri, veliye giden e-posta ve WhatsApp mesajları belirli sayıda "kredi" tüketir.
+    {{ institution.name }} · {{ period }} ayı · plan: <b>{{ account.plan_code|capitalize }}</b>
   </p>
 </div>
 
@@ -15,10 +16,11 @@
 <div class="mb-5 p-4 bg-rose-50 border border-rose-300 rounded-lg flex items-start gap-3">
   <span class="text-rose-700 text-xl">🛑</span>
   <div>
-    <div class="font-semibold text-rose-900">Kullanım engellendi</div>
+    <div class="font-semibold text-rose-900">Kullanım geçici olarak durduruldu</div>
     <div class="text-sm text-rose-800 mt-1">
-      Süper admin tarafından sert blok aktive edildi. AI/email/WhatsApp çağrıları reddedilir.
-      Çözüm için iletişime geçin.
+      ETÜTKOÇ ekibi tarafından kurumunuzun yapay zeka, e-posta ve WhatsApp özellikleri
+      manuel olarak durdurulmuş. Görevlerin oluşturulması ve diğer normal işlemler etkilenmez.
+      Açtırmak için <a href="mailto:destek@etutkoc.com" class="underline font-medium">destek@etutkoc.com</a>'a yazın.
     </div>
   </div>
 </div>
@@ -29,9 +31,10 @@
 <div class="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
   <span class="text-amber-700 text-xl">⚠️</span>
   <div>
-    <div class="font-semibold text-amber-900">Kredi kullanımı %{{ account.usage_pct }}'e ulaştı</div>
+    <div class="font-semibold text-amber-900">Aylık kredinin %{{ account.usage_pct }}'i kullanıldı</div>
     <div class="text-sm text-amber-800 mt-1">
-      Aylık kotanın {{ account.remaining_credits }} kredisi kaldı. Kullanım dengesini gözden geçirin.
+      Bu ay sonuna kadar <b>{{ account.remaining_credits }}</b> kredin kaldı.
+      Yapay zeka kullanımı veya WhatsApp mesaj gönderimi yoğunsa hızlı tükenebilir.
     </div>
   </div>
 </div>
@@ -42,11 +45,11 @@
 <div class="mb-5 p-4 bg-rose-50 border border-rose-300 rounded-lg flex items-start gap-3">
   <span class="text-rose-700 text-xl">🔴</span>
   <div>
-    <div class="font-semibold text-rose-900">Aylık kredi tükendi</div>
+    <div class="font-semibold text-rose-900">Aylık kredin tükendi</div>
     <div class="text-sm text-rose-800 mt-1">
-      Kullanım %{{ account.usage_pct }} (aşım: {{ account.used_credits - account.total_allocated }} kredi).
-      Sistem çalışmaya devam ediyor; süper admin manuel hard-block aktive edebilir.
-      Yeni dönemde kotanız sıfırlanır.
+      Bu ay {{ account.used_credits - account.total_allocated }} kredi aşım yaptın (toplam %{{ account.usage_pct }}).
+      Sistem çalışmaya devam ediyor — kurum üyeliklerinde aşımda otomatik durdurma yok.
+      <b>Bir sonraki ayın 1'inde</b> krediniz otomatik yenilenecek. Daha yüksek limit için plan yükseltmeyi düşünebilirsin.
     </div>
   </div>
 </div>
@@ -56,7 +59,7 @@
 <div class="bg-white border border-slate-200 rounded-lg p-5 mb-5">
   <div class="flex items-baseline justify-between mb-3">
     <div>
-      <div class="text-xs uppercase tracking-wider text-slate-500">Bu Ay Tüketim</div>
+      <div class="text-xs uppercase tracking-wider text-slate-500">Bu Ay Kullandığın</div>
       <div class="flex items-baseline gap-2 mt-1">
         <span class="text-4xl font-bold text-slate-900">{{ account.used_credits }}</span>
         <span class="text-lg text-slate-500">/ {{ account.total_allocated }} kredi</span>
@@ -96,9 +99,9 @@
 {# Tip kırılımı + 30 günlük seri #}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
   <div class="bg-white border border-slate-200 rounded-lg p-5">
-    <h3 class="text-sm font-medium text-slate-700 mb-3">Tip Kırılımı (bu ay)</h3>
+    <h3 class="text-sm font-medium text-slate-700 mb-3">Hangi İşlem Ne Kadar Kullanıldı?</h3>
     {% if not breakdown %}
-    <p class="text-sm text-slate-500 italic">Bu ay henüz kullanım yok.</p>
+    <p class="text-sm text-slate-500 italic">Bu ay henüz kredi tüketen işlem yapılmadı.</p>
     {% else %}
     <ul class="space-y-2">
       {% for kind_value, total in breakdown.items() %}
@@ -121,7 +124,7 @@
   </div>
 
   <div class="bg-white border border-slate-200 rounded-lg p-5">
-    <h3 class="text-sm font-medium text-slate-700 mb-3">Son 30 Gün</h3>
+    <h3 class="text-sm font-medium text-slate-700 mb-3">Son 30 Gün — Günlük Tüketim</h3>
     <canvas id="usage-chart" height="160"></canvas>
   </div>
 </div>
@@ -130,24 +133,24 @@
 <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mb-5 text-xs text-slate-600">
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
     <div>
-      <div class="uppercase tracking-wider text-slate-500">Mevcut Plan</div>
-      <div class="text-base font-semibold text-slate-900 mt-0.5">{{ account.plan_code }}</div>
+      <div class="uppercase tracking-wider text-slate-500">Plan</div>
+      <div class="text-base font-semibold text-slate-900 mt-0.5">{{ account.plan_code|capitalize }}</div>
     </div>
     <div>
-      <div class="uppercase tracking-wider text-slate-500">Aylık Tahsis</div>
+      <div class="uppercase tracking-wider text-slate-500">Aylık Limit</div>
       <div class="text-base font-semibold text-slate-900 mt-0.5">{{ account.allocated_credits }} kredi</div>
     </div>
     <div>
-      <div class="uppercase tracking-wider text-slate-500">Bonus</div>
+      <div class="uppercase tracking-wider text-slate-500">Hediye Kredi</div>
       <div class="text-base font-semibold text-violet-700 mt-0.5">+{{ account.bonus_credits }}</div>
     </div>
     <div>
-      <div class="uppercase tracking-wider text-slate-500">Period</div>
+      <div class="uppercase tracking-wider text-slate-500">Bu Ay</div>
       <div class="text-base font-semibold text-slate-900 mt-0.5">{{ period }}</div>
     </div>
   </div>
   <div class="mt-3 pt-3 border-t border-slate-200">
-    <div class="text-[11px] text-slate-500 mb-1">Birim maliyetler:</div>
+    <div class="text-[11px] text-slate-500 mb-1">Her bir işlem kaç kredi tüketir:</div>
     <div class="flex flex-wrap gap-2 text-[11px]">
       {% for kind_enum, cost in kind_costs.items() %}
       <span class="px-2 py-0.5 bg-white rounded border border-slate-200">
@@ -161,7 +164,7 @@
 {# Son eventler #}
 <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
   <div class="px-4 py-2 border-b border-slate-100 bg-slate-50">
-    <h3 class="text-sm font-medium text-slate-700">Son 50 Kullanım</h3>
+    <h3 class="text-sm font-medium text-slate-700">Son 50 İşlem</h3>
   </div>
   {% if not events %}
   <p class="p-6 text-center text-sm text-slate-500 italic">Henüz kayıt yok.</p>
@@ -169,10 +172,10 @@
   <table class="w-full text-xs">
     <thead class="bg-slate-50 text-slate-600">
       <tr>
-        <th class="text-left px-4 py-2">Zaman</th>
-        <th class="text-left px-4 py-2">Tip</th>
-        <th class="text-right px-4 py-2">Kredi</th>
-        <th class="text-left px-4 py-2">Aktör</th>
+        <th class="text-left px-4 py-2">Ne Zaman</th>
+        <th class="text-left px-4 py-2">Ne Yapıldı</th>
+        <th class="text-right px-4 py-2">Tüketilen Kredi</th>
+        <th class="text-left px-4 py-2">Kim Yaptı</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-100">
@@ -182,7 +185,7 @@
         <td class="px-4 py-1.5 font-medium text-slate-800">{{ kind_labels.get(e.kind, e.kind.value) }}</td>
         <td class="px-4 py-1.5 text-right font-mono text-slate-700">{{ e.credits }}</td>
         <td class="px-4 py-1.5 text-slate-500">
-          {% if e.actor_user_id %}#{{ e.actor_user_id }}{% else %}sistem{% endif %}
+          {% if e.actor_user_id %}Kullanıcı #{{ e.actor_user_id }}{% else %}Otomatik (sistem){% endif %}
         </td>
       </tr>
       {% endfor %}

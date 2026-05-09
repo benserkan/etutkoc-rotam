@@ -7,7 +7,8 @@
     <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
     <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kurumlar</h1>
     <p class="text-sm text-slate-500 mt-1">
-      Tüm kurumların sağlık skoru, churn riski ve aktivite özeti.
+      Hangi kurumlar sistemi aktif kullanıyor, hangileri sessiz kalmış? Risk durumu ve son 7 günlük
+      öğretmen/öğrenci aktivitesi burada özetlenir; "ayrılma riski" yüksek olanlar üstte gösterilir.
     </p>
   </div>
   <button type="button" onclick="document.getElementById('new-inst').showModal()"
@@ -35,11 +36,11 @@
     <div class="text-2xl font-semibold text-yellow-700 mt-1">{{ summary.watch }}</div>
   </div>
   <div class="bg-white border border-amber-200 rounded-lg p-3">
-    <div class="text-[11px] text-slate-500 uppercase tracking-wider">🟠 Riskli</div>
+    <div class="text-[11px] text-slate-500 uppercase tracking-wider">🟠 Risk Altında</div>
     <div class="text-2xl font-semibold text-amber-700 mt-1">{{ summary.risk }}</div>
   </div>
   <div class="bg-white border border-rose-200 rounded-lg p-3">
-    <div class="text-[11px] text-slate-500 uppercase tracking-wider">🔴 Kritik</div>
+    <div class="text-[11px] text-slate-500 uppercase tracking-wider">🔴 Acil İlgi</div>
     <div class="text-2xl font-semibold text-rose-700 mt-1">{{ summary.critical }}</div>
   </div>
 </div>
@@ -48,7 +49,7 @@
 {# Sıralama + filtre çubuğu #}
 <div class="flex flex-wrap items-center gap-2 mb-4 text-xs">
   <span class="text-slate-500 font-medium uppercase tracking-wider mr-2">Sırala:</span>
-  {% set sort_opts = [('health','Sağlık'), ('name','Ad'), ('created','Oluşturma')] %}
+  {% set sort_opts = [('health','Sağlık Durumu'), ('name','Ada Göre'), ('created','En Yeniler Üstte')] %}
   {% for code, label in sort_opts %}
     <a href="?sort={{ code }}{% if filter_level %}&filter_level={{ filter_level }}{% endif %}"
        class="px-2 py-1 rounded border
@@ -59,7 +60,7 @@
   {% endfor %}
   <span class="text-slate-300 mx-2">|</span>
   <span class="text-slate-500 font-medium uppercase tracking-wider mr-2">Filtre:</span>
-  {% set filter_opts = [(none,'Tümü'), ('unhealthy','Sorunlu'), ('critical','Sadece Kritik')] %}
+  {% set filter_opts = [(none,'Hepsi'), ('unhealthy','Sorunlu Olanlar'), ('critical','Sadece Acil')] %}
   {% for code, label in filter_opts %}
     <a href="?sort={{ sort }}{% if code %}&filter_level={{ code }}{% endif %}"
        class="px-2 py-1 rounded border
@@ -86,9 +87,9 @@
         <th class="text-left px-4 py-2">Sağlık</th>
         <th class="text-left px-4 py-2">Ad</th>
         <th class="text-left px-4 py-2">Plan</th>
-        <th class="text-right px-4 py-2">Öğrt.</th>
-        <th class="text-right px-4 py-2">Öğr.</th>
-        <th class="text-left px-4 py-2">Aktivite (7g)</th>
+        <th class="text-right px-4 py-2">Öğretmen</th>
+        <th class="text-right px-4 py-2">Öğrenci</th>
+        <th class="text-left px-4 py-2">Son 7 Gün Aktivite</th>
         <th class="text-left px-4 py-2">Durum</th>
         <th class="text-right px-4 py-2"></th>
       </tr>
@@ -111,14 +112,14 @@
           {% if a.indicators %}
           <details class="mt-1">
             <summary class="text-[10px] text-slate-400 cursor-pointer hover:text-slate-600 list-none">
-              {{ a.indicators|length }} sebep ▾
+              Neden bu durumda? ({{ a.indicators|length }} sebep) ▾
             </summary>
             <ul class="mt-1 text-[11px] text-slate-600 space-y-0.5 pl-1">
               {% for ind in a.indicators %}
               <li title="{{ ind.detail }}">
                 <span class="text-rose-600">●</span>
                 {{ ind.title }}
-                <span class="text-slate-400">(+{{ ind.weight }})</span>
+                <span class="text-slate-400" title="Bu uyarının skora katkısı">+{{ ind.weight }} puan</span>
               </li>
               {% endfor %}
             </ul>

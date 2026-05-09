@@ -6,7 +6,8 @@
   <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
   <h1 class="text-2xl font-semibold text-slate-900 mt-1">🩺 Sistem Sağlığı</h1>
   <p class="text-sm text-slate-500 mt-1">
-    Cron job'lar, bildirim dispatcher ve DB durumu — gerçek zamanlı.
+    Otomatik görevlerin (haftalık özet, kredi yenileme, eski kayıt temizlik gibi) ne zaman çalıştığı,
+    veliye gidecek bildirimlerin kuyruğu ve veritabanı boyutu — anlık tablo.
   </p>
 </div>
 
@@ -31,7 +32,7 @@
         {% else %}Sistem sağlıklı{% endif %}
       </div>
       <div class="text-xs text-slate-600 mt-0.5">
-        {{ snapshot.crons|length }} cron · dispatcher · DB
+        {{ snapshot.crons|length }} otomatik görev · bildirim sistemi · veritabanı
       </div>
     </div>
   </div>
@@ -40,19 +41,19 @@
 {# Cron jobs #}
 <div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-5">
   <div class="px-4 py-3 border-b border-slate-100 bg-slate-50">
-    <h2 class="text-sm font-medium text-slate-700">⏰ Cron Job'lar ({{ snapshot.crons|length }})</h2>
+    <h2 class="text-sm font-medium text-slate-700">⏰ Otomatik Görevler ({{ snapshot.crons|length }})</h2>
   </div>
   {% if not snapshot.crons %}
-  <p class="p-6 text-center text-sm text-slate-500 italic">Hiç cron yok.</p>
+  <p class="p-6 text-center text-sm text-slate-500 italic">Tanımlı otomatik görev yok.</p>
   {% else %}
   <table class="w-full text-sm">
     <thead class="bg-slate-50 text-slate-600 text-xs">
       <tr>
-        <th class="text-left px-4 py-2">Job</th>
-        <th class="text-left px-4 py-2">Program</th>
-        <th class="text-left px-4 py-2">Son Çalışma</th>
+        <th class="text-left px-4 py-2">Görev</th>
+        <th class="text-left px-4 py-2">Ne Zaman Çalışır</th>
+        <th class="text-left px-4 py-2">Son Çalıştırma</th>
+        <th class="text-left px-4 py-2">Sonuç</th>
         <th class="text-left px-4 py-2">Durum</th>
-        <th class="text-left px-4 py-2">Sağlık</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-100">
@@ -96,15 +97,15 @@
         </td>
         <td class="px-4 py-2 text-xs">
           {% if c.health == 'crit' %}
-            <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">🔴 Kritik</span>
+            <span class="px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium" title="Çok geç çalıştı, müdahale gerekebilir">🔴 Kritik gecikme</span>
           {% elif c.health == 'warn' %}
-            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">🟡 Gecikmiş</span>
+            <span class="px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium" title="Beklenenden geç">🟡 Gecikmiş</span>
           {% elif c.health == 'never' %}
             <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">⚪ Hiç çalışmadı</span>
           {% elif c.health == 'disabled' %}
-            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">⏸ Devre dışı</span>
+            <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200">⏸ Kapalı</span>
           {% else %}
-            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">🟢 OK</span>
+            <span class="px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">🟢 Sağlıklı</span>
           {% endif %}
         </td>
       </tr>
@@ -118,26 +119,26 @@
 {% if snapshot.dispatcher %}
 {% set d = snapshot.dispatcher %}
 <div class="bg-white border border-slate-200 rounded-lg p-5 mb-5">
-  <h2 class="text-sm font-medium text-slate-700 mb-3">📬 Notification Dispatcher</h2>
+  <h2 class="text-sm font-medium text-slate-700 mb-3">📬 Veliye Bildirim Kuyruğu</h2>
   <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
     <div>
-      <div class="text-[10px] text-slate-500 uppercase tracking-wider">Bekleyen</div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider">Şu An Sırada Bekleyen</div>
       <div class="text-2xl font-semibold mt-0.5
           {% if d.health == 'crit' %}text-rose-700
           {% elif d.health == 'warn' %}text-amber-700
           {% else %}text-slate-900{% endif %}">{{ d.queued_count }}</div>
     </div>
     <div>
-      <div class="text-[10px] text-slate-500 uppercase tracking-wider">Başarısız (toplam)</div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider">Başarısız (geçmiş toplam)</div>
       <div class="text-2xl font-semibold text-slate-700 mt-0.5">{{ d.failed_count }}</div>
     </div>
     <div>
-      <div class="text-[10px] text-slate-500 uppercase tracking-wider">En Eski Bekleyen</div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider">En Uzun Süredir Bekleyen</div>
       <div class="text-sm font-semibold text-slate-700 mt-1">
         {% if d.oldest_queued_at %}
           {{ d.oldest_queued_at.strftime('%d.%m %H:%M') }}
           {% if d.oldest_queued_age_hours is not none %}
-            <div class="text-[11px] text-slate-500">{{ d.oldest_queued_age_hours|round(1) }}h önce</div>
+            <div class="text-[11px] text-slate-500">{{ d.oldest_queued_age_hours|round(1) }} saat önce</div>
           {% endif %}
         {% else %}
           <span class="text-slate-400">—</span>
@@ -145,20 +146,22 @@
       </div>
     </div>
     <div>
-      <div class="text-[10px] text-slate-500 uppercase tracking-wider">Sağlık</div>
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider">Durum</div>
       <div class="mt-1">
         {% if d.health == 'crit' %}
-          <span class="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">🔴 Kritik</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">🔴 Acil bakın</span>
         {% elif d.health == 'warn' %}
-          <span class="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">🟡 Gecikmiş</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">🟡 Yığılma var</span>
         {% else %}
-          <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">🟢 OK</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">🟢 Akıcı</span>
         {% endif %}
       </div>
     </div>
   </div>
   <div class="mt-3 text-[11px] text-slate-500">
-    💡 Eşikler: 100+ bekleyen veya 6h+ eski → sarı; 500+ veya 24h+ → kırmızı.
+    💡 100'den fazla bekleyen veya 6 saatten eski mesaj varsa <b>sarı</b> uyarı,
+    500+ bekleyen veya 24+ saatlik mesaj varsa <b>kırmızı</b> uyarı.
+    Bekleyenler genellikle <b>WhatsApp/e-posta servis darboğazı</b> demektir.
   </div>
 </div>
 {% endif %}
@@ -170,7 +173,7 @@
   <h2 class="text-sm font-medium text-slate-700 mb-3">🗄️ Veritabanı</h2>
   <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
     <div>
-      <div class="text-xs text-slate-500 mb-2">Dosya bilgisi</div>
+      <div class="text-xs text-slate-500 mb-2">Veritabanı dosyası</div>
       {% if db.file_path %}
       <div class="text-xs font-mono text-slate-700 mb-2 truncate" title="{{ db.file_path }}">{{ db.file_path }}</div>
       <div class="flex items-baseline gap-2">
@@ -181,21 +184,21 @@
         <span class="text-sm text-slate-500">MB</span>
       </div>
       <div class="text-[11px] text-slate-500 mt-2">
-        Eşik: 500MB sarı · 1GB kırmızı
+        500 MB üzerinde <b>sarı</b>, 1 GB üzerinde <b>kırmızı</b> uyarı.
       </div>
       {% else %}
-      <div class="text-sm text-slate-500 italic">SQLite dışı backend (boyut yok)</div>
+      <div class="text-sm text-slate-500 italic">Dosya tabanlı veritabanı kullanılmıyor (boyut bilgisi yok)</div>
       {% endif %}
     </div>
     <div>
-      <div class="text-xs text-slate-500 mb-2">Tablo satır sayıları</div>
+      <div class="text-xs text-slate-500 mb-2">Kayıt sayıları</div>
       <table class="w-full text-xs">
         <tbody class="divide-y divide-slate-100">
           {% for tbl, cnt in db.table_counts.items() %}
           <tr>
             <td class="py-1 font-mono text-slate-700">{{ tbl }}</td>
             <td class="py-1 text-right font-semibold text-slate-900">
-              {% if cnt < 0 %}<span class="text-rose-600">err</span>{% else %}{{ '{:,}'.format(cnt) }}{% endif %}
+              {% if cnt < 0 %}<span class="text-rose-600">hata</span>{% else %}{{ '{:,}'.format(cnt) }}{% endif %}
             </td>
           </tr>
           {% endfor %}

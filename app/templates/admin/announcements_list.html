@@ -4,9 +4,11 @@
 {% block content %}
 <div class="mb-6">
   <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📢 Sistem Duyuruları</h1>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📢 Duyurular</h1>
   <p class="text-sm text-slate-500 mt-1">
-    Tüm kullanıcılara üst banner ile mesaj ilet. Severity rengi, kitle filtresi ve zaman aralığı tanımlanır.
+    Sistemi kullanan herkese veya belirli rollere (yöneticiler, öğretmenler, veliler, öğrenciler)
+    sayfaların üstünde renkli bir mesaj göstermek için kullanılır. Bakım uyarısı, yeni özellik
+    duyurusu, kritik hata bildirimi gibi durumlar için idealdir.
   </p>
 </div>
 
@@ -27,7 +29,7 @@
         <input type="text" name="title" maxlength="255" class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
       </div>
       <div>
-        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Severity</label>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Önem Düzeyi (renk)</label>
         <select name="severity" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
           {% for s in severities %}
           <option value="{{ s.value }}" {% if s.value == 'info' %}selected{% endif %}>{{ severity_labels[s] }}</option>
@@ -42,7 +44,7 @@
     </div>
     <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
       <div>
-        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Kitle</label>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Kimler Görsün</label>
         <select name="audience" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
           {% for a in audiences %}
           <option value="{{ a.value }}" {% if a.value == 'all' %}selected{% endif %}>{{ audience_labels[a] }}</option>
@@ -50,25 +52,26 @@
         </select>
       </div>
       <div>
-        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Başlangıç (opsiyonel — boş = hemen)</label>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Ne Zaman Başlasın? (boş = hemen)</label>
         <input type="datetime-local" name="starts_at" class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
       </div>
       <div>
-        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Bitiş (opsiyonel — boş = süresiz)</label>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Ne Zaman Bitsin? (boş = süresiz)</label>
         <input type="datetime-local" name="ends_at" class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
       </div>
     </div>
     <div class="flex items-center justify-between">
       <label class="flex items-center gap-2 text-sm text-slate-700">
         <input type="checkbox" name="dismissible" value="on" checked class="accent-indigo-600" />
-        <span>Kullanıcı kapatabilsin (localStorage'a yazılır)</span>
+        <span>Kullanıcı kendi tarafında kapatabilsin (kapattığında bu cihazda bir daha görmez)</span>
       </label>
       <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-5 rounded">
         Duyuru Yayınla
       </button>
     </div>
     <p class="text-[11px] text-slate-500">
-      💡 Tüm zamanlar UTC saatiyle yorumlanır. TR saati için 3 saat çıkarın.
+      💡 Tüm zamanlar UTC saatine göre yorumlanır. Türkiye saatinden <b>3 saat çıkar</b>:
+      örneğin 12:00 yazarsan duyuru Türkiye'de 15:00'te aktif olur.
     </p>
   </form>
 </div>
@@ -84,10 +87,10 @@
     <thead class="bg-slate-50 text-slate-600 text-xs">
       <tr>
         <th class="text-left px-4 py-2">Mesaj</th>
-        <th class="text-left px-4 py-2">Severity</th>
-        <th class="text-left px-4 py-2">Kitle</th>
-        <th class="text-left px-4 py-2">Aralık</th>
-        <th class="text-left px-4 py-2">Durum</th>
+        <th class="text-left px-4 py-2">Önem</th>
+        <th class="text-left px-4 py-2">Kimler Görüyor</th>
+        <th class="text-left px-4 py-2">Yayın Aralığı</th>
+        <th class="text-left px-4 py-2">Şu An</th>
         <th class="text-right px-4 py-2"></th>
       </tr>
     </thead>
@@ -115,9 +118,9 @@
         </td>
         <td class="px-4 py-3">
           {% if is_active %}
-          <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">● AKTİF</span>
+          <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">● Yayında</span>
           {% else %}
-          <span class="text-xs text-slate-500">geçti / planlı</span>
+          <span class="text-xs text-slate-500">yayında değil</span>
           {% endif %}
         </td>
         <td class="px-4 py-3 text-right">

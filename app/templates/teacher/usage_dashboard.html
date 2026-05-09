@@ -4,9 +4,10 @@
 {% block content %}
 <div class="mb-6">
   <a href="/teacher" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kullanım & Kredilerim</h1>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">💳 Aylık Kredi Kullanımım</h1>
   <p class="text-sm text-slate-500 mt-1">
-    {{ period }} dönemi · plan: <b>{{ account.plan_code }}</b>
+    Yapay zeka önerileri, veliye e-posta ve WhatsApp mesajları kredi tüketir.
+    {{ period }} ayı · plan: <b>{{ account.plan_code|capitalize }}</b>
   </p>
 </div>
 
@@ -15,18 +16,19 @@
 <div class="mb-5 p-4 bg-rose-50 border border-rose-300 rounded-lg flex items-start gap-3">
   <span class="text-rose-700 text-2xl">⏰</span>
   <div class="flex-1">
-    <div class="font-semibold text-rose-900">Aylık kredin tükendi — soğuma süresinde</div>
+    <div class="font-semibold text-rose-900">Aylık kredin tükendi — bekleme süresindesin</div>
     <div class="text-sm text-rose-800 mt-1">
-      AI/email/WhatsApp çağrıları geçici olarak askıya alındı.
-      <b>{{ account.blocked_until.strftime('%d.%m.%Y %H:%M') }}</b> itibarıyla otomatik açılır.
+      Yapay zeka önerisi, e-posta ve WhatsApp mesajı geçici olarak duruyor.
+      <b>{{ account.blocked_until.strftime('%d.%m.%Y %H:%M') }}</b>'da otomatik olarak tekrar açılacak
+      (yaklaşık 5 saat). Bu sırada görev oluşturma ve diğer normal işlemler etkilenmez.
     </div>
     <div class="mt-3 flex gap-2 flex-wrap">
       <a href="mailto:destek@etutkoc.com?subject=Plan%20Y%C3%BCkseltme&body=Hesab%C4%B1m%C4%B1%20y%C3%BCkseltmek%20istiyorum"
          class="text-xs bg-violet-600 hover:bg-violet-700 text-white px-3 py-1.5 rounded font-medium">
-        ⬆️ Plan yükselt (iletişime geç)
+        ⬆️ Hemen Yükselt
       </a>
       <span class="text-xs text-rose-700 self-center">
-        veya {{ account.blocked_until.strftime('%H:%M') }}'i bekle
+        veya saat {{ account.blocked_until.strftime('%H:%M') }}'a kadar bekle
       </span>
     </div>
   </div>
@@ -38,9 +40,10 @@
 <div class="mb-5 p-4 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3">
   <span class="text-amber-700 text-xl">⚠️</span>
   <div>
-    <div class="font-semibold text-amber-900">Kredi kullanımı %{{ account.usage_pct }}'e ulaştı</div>
+    <div class="font-semibold text-amber-900">Aylık kredinin %{{ account.usage_pct }}'i kullanıldı</div>
     <div class="text-sm text-amber-800 mt-1">
-      Aylık kotanın <b>{{ account.remaining_credits }}</b> kredisi kaldı. Tükenirse 5 saatlik soğuma başlar.
+      <b>{{ account.remaining_credits }}</b> kredin kaldı. Tükenirse 5 saat boyunca yapay zeka ve
+      WhatsApp özelliklerini kullanamazsın — sonra otomatik açılır.
     </div>
   </div>
 </div>
@@ -50,7 +53,7 @@
 <div class="bg-white border border-slate-200 rounded-lg p-5 mb-5">
   <div class="flex items-baseline justify-between mb-3">
     <div>
-      <div class="text-xs uppercase tracking-wider text-slate-500">Bu Ay</div>
+      <div class="text-xs uppercase tracking-wider text-slate-500">Bu Ay Kullandığın</div>
       <div class="flex items-baseline gap-2 mt-1">
         <span class="text-4xl font-bold text-slate-900">{{ account.used_credits }}</span>
         <span class="text-lg text-slate-500">/ {{ account.total_allocated }} kredi</span>
@@ -84,7 +87,7 @@
 {# Tip kırılımı + 30 gün #}
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-5">
   <div class="bg-white border border-slate-200 rounded-lg p-5">
-    <h3 class="text-sm font-medium text-slate-700 mb-3">Tip Kırılımı</h3>
+    <h3 class="text-sm font-medium text-slate-700 mb-3">Hangi İşlem Ne Kadar Kullanıldı?</h3>
     {% if not breakdown %}
     <p class="text-sm text-slate-500 italic">Bu ay henüz kullanım yok.</p>
     {% else %}
@@ -122,20 +125,20 @@
       <div class="text-base font-semibold text-slate-900 mt-0.5">{{ account.plan_code }}</div>
     </div>
     <div>
-      <div class="uppercase tracking-wider text-slate-500">Aylık Tahsis</div>
+      <div class="uppercase tracking-wider text-slate-500">Aylık Limit</div>
       <div class="text-base font-semibold text-slate-900 mt-0.5">{{ account.allocated_credits }} kredi</div>
     </div>
     <div>
-      <div class="uppercase tracking-wider text-slate-500">Bonus</div>
+      <div class="uppercase tracking-wider text-slate-500">Hediye Kredi</div>
       <div class="text-base font-semibold text-violet-700 mt-0.5">+{{ account.bonus_credits }}</div>
     </div>
     <div>
-      <div class="uppercase tracking-wider text-slate-500">Period</div>
+      <div class="uppercase tracking-wider text-slate-500">Bu Ay</div>
       <div class="text-base font-semibold text-slate-900 mt-0.5">{{ period }}</div>
     </div>
   </div>
   <div class="mt-3 pt-3 border-t border-slate-200">
-    <div class="text-[11px] text-slate-500 mb-1">Birim maliyetler:</div>
+    <div class="text-[11px] text-slate-500 mb-1">Her bir işlem kaç kredi tüketir:</div>
     <div class="flex flex-wrap gap-2 text-[11px]">
       {% for kind_enum, cost in kind_costs.items() %}
       <span class="px-2 py-0.5 bg-white rounded border border-slate-200">
@@ -149,7 +152,7 @@
 {# Son eventler #}
 <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
   <div class="px-4 py-2 border-b border-slate-100 bg-slate-50">
-    <h3 class="text-sm font-medium text-slate-700">Son 50 Kullanım</h3>
+    <h3 class="text-sm font-medium text-slate-700">Son 50 İşlem</h3>
   </div>
   {% if not events %}
   <p class="p-6 text-center text-sm text-slate-500 italic">Henüz kayıt yok.</p>
@@ -157,9 +160,9 @@
   <table class="w-full text-xs">
     <thead class="bg-slate-50 text-slate-600">
       <tr>
-        <th class="text-left px-4 py-2">Zaman</th>
-        <th class="text-left px-4 py-2">Tip</th>
-        <th class="text-right px-4 py-2">Kredi</th>
+        <th class="text-left px-4 py-2">Ne Zaman</th>
+        <th class="text-left px-4 py-2">Ne Yapıldı</th>
+        <th class="text-right px-4 py-2">Tüketilen</th>
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-100">

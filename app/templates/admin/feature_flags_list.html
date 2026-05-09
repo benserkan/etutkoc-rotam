@@ -4,10 +4,11 @@
 {% block content %}
 <div class="mb-6">
   <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🚦 Feature Flags</h1>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🚦 Özellik Anahtarları</h1>
   <p class="text-sm text-slate-500 mt-1">
-    Sistem özelliklerini global olarak veya kuruma özel aç/kapa.
-    Toggle değişiklikleri ~60 saniye içinde tüm process'lerde etkili olur.
+    Yapay zeka önerisi, veliye e-posta, WhatsApp gibi özellikleri burada açıp kapatabilirsin.
+    "Hepsine açık" veya "Sadece şu kuruma açık/kapalı" şeklinde ayar yapabilirsin.
+    Yapılan değişiklik 1 dakika içinde tüm sistemde geçerli olur.
   </p>
 </div>
 
@@ -20,17 +21,17 @@
 
 {% if not flags_data %}
 <div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
-  Henüz feature flag tanımlanmamış. Migration ile seed edilenleri kontrol edin.
+  Henüz tanımlı özellik anahtarı yok.
 </div>
 {% else %}
 <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
   <table class="w-full text-sm">
     <thead class="bg-slate-50 text-slate-600 text-xs">
       <tr>
-        <th class="text-left px-4 py-2">Anahtar</th>
+        <th class="text-left px-4 py-2">Özellik</th>
         <th class="text-left px-4 py-2">Açıklama</th>
-        <th class="text-left px-4 py-2">Global</th>
-        <th class="text-left px-4 py-2">Override'lar</th>
+        <th class="text-left px-4 py-2">Genel Durum</th>
+        <th class="text-left px-4 py-2">Kuruma Özel</th>
         <th class="text-right px-4 py-2"></th>
       </tr>
     </thead>
@@ -45,12 +46,12 @@
         <td class="px-4 py-3 text-slate-600 text-xs">{{ f.description }}</td>
         <td class="px-4 py-3">
           <form method="post" action="/admin/feature-flags/{{ f.id }}/toggle"
-                onsubmit="return confirm('{{ f.key }} {% if f.enabled_globally %}KAPATILSIN{% else %}AÇILSIN{% endif %} mı? Tüm kurumları etkiler.');">
+                onsubmit="return confirm('{{ f.key }} özelliği herkese {% if f.enabled_globally %}KAPATILSIN{% else %}AÇILSIN{% endif %} mı? Tüm kurumları etkiler (kuruma özel ayar varsa o korunur).');">
             <button type="submit"
                     class="text-xs px-3 py-1 rounded font-medium
                            {% if f.enabled_globally %}bg-emerald-100 text-emerald-700 border border-emerald-300 hover:bg-emerald-200
                            {% else %}bg-rose-100 text-rose-700 border border-rose-300 hover:bg-rose-200{% endif %}">
-              {% if f.enabled_globally %}● AÇIK{% else %}○ KAPALI{% endif %}
+              {% if f.enabled_globally %}● Açık{% else %}○ Kapalı{% endif %}
             </button>
           </form>
         </td>
@@ -68,7 +69,7 @@
           {% endif %}
         </td>
         <td class="px-4 py-3 text-right">
-          <a href="/admin/feature-flags/{{ f.id }}" class="text-xs text-indigo-600 hover:text-indigo-800">Override'ları yönet →</a>
+          <a href="/admin/feature-flags/{{ f.id }}" class="text-xs text-indigo-600 hover:text-indigo-800">Kuruma özel ayar →</a>
         </td>
       </tr>
       {% endfor %}
@@ -77,8 +78,10 @@
 </div>
 {% endif %}
 
-<div class="mt-5 text-xs text-slate-500">
-  💡 Override önceliği: kuruma override varsa o kullanılır; yoksa global ayar geçerli.
-  Tanımsız flag → defansif True (yeni özellik eklenip migration koşmamış senaryosunda davranış patlamasın).
+<div class="mt-5 text-xs text-slate-500 space-y-1">
+  <p>💡 <b>Nasıl çalışır?</b> Bir özelliği "herkese aç" veya "kapat" diye işaretleyebilirsin (Genel Durum).
+  İstersen tek bir kuruma özel olarak farklı ayar verebilirsin (örnek: bir kuruma WhatsApp özel olarak açıkken
+  diğerlerine genel ayar uygulanır).</p>
+  <p>💡 <b>Öncelik sırası:</b> Önce kuruma özel ayar bakılır; o yoksa genel duruma bakılır.</p>
 </div>
 {% endblock %}

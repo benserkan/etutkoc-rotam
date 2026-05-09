@@ -263,7 +263,7 @@ def main() -> int:
         r = c.get("/admin/feature-flags")
         check("GET /admin/feature-flags 200", r.status_code == 200, f"got {r.status_code}")
         body = r.text
-        check("'Feature Flags' başlığı", "Feature Flags" in body)
+        check("'Özellik Anahtarları' başlığı", "Özellik Anahtarları" in body)
         for k in ["ai_book_template", "parent_notifications_email", "parent_notifications_whatsapp", "weekly_admin_digest"]:
             check(f"flag '{k}' tabloda", k in body)
 
@@ -273,7 +273,7 @@ def main() -> int:
             ai_flag_id = ai_flag.id
         r = c.get(f"/admin/feature-flags/{ai_flag_id}")
         check("GET /admin/feature-flags/{id} 200", r.status_code == 200)
-        check("'Global Varsayılan' panel", "Global Varsayılan" in r.text)
+        check("'Genel Durum' panel", "Genel Durum (tüm kurumlar)" in r.text or "Global Varsayılan" in r.text)
 
         # Toggle global
         r = c.post(f"/admin/feature-flags/{ai_flag_id}/toggle", follow_redirects=False)
@@ -314,7 +314,7 @@ def main() -> int:
         # Announcements list
         r = c.get("/admin/announcements")
         check("GET /admin/announcements 200", r.status_code == 200)
-        check("'Sistem Duyuruları' başlığı", "Sistem Duyuruları" in r.text)
+        check("'Duyurular' başlığı", "Duyurular" in r.text)
         check("PFX aktif duyuru tabloda", f"{PFX} aktif" in r.text)
 
         # Yeni duyuru oluştur
@@ -345,8 +345,8 @@ def main() -> int:
         check("GET /admin/system-health 200", r.status_code == 200)
         body = r.text
         check("'Sistem Sağlığı' başlığı", "Sistem Sağlığı" in body)
-        check("Cron Job'lar bölümü", "Cron Job" in body)
-        check("Notification Dispatcher", "Notification Dispatcher" in body)
+        check("Otomatik Görevler bölümü", "Otomatik Görevler" in body)
+        check("Bildirim Kuyruğu", "Bildirim Kuyruğu" in body)
         check("Veritabanı bölümü", "Veritabanı" in body)
 
         # Middleware: aktif duyuru herhangi bir HTML sayfasında render olmalı

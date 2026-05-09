@@ -45,12 +45,14 @@ Subject: ETÜTKOÇ Rotam · Kredi kullanımı %{{ pct }} — {{ owner_name }}
       Mevcut planınız: <b>{{ plan_code }}</b>
       {% if is_institution %}
       <br><br>
-      Aylık kredi tükendiğinde sistem çalışmaya devam eder; süper admin manuel olarak hard-block aktive edebilir.
-      Daha yüksek limit için ileride plan yükseltme seçeneği olacak.
+      Aylık krediniz tükense bile sistem çalışmaya <b>devam eder</b> — kurum üyeliklerinde otomatik
+      durdurma yoktur. Bir sonraki ayın 1'inde krediniz otomatik yenilenir. Daha yüksek limit için
+      yakında plan yükseltme seçenekleri sunulacak.
       {% else %}
       <br><br>
-      Bağımsız öğretmen olarak krediniz tükendiğinde, sistem 5 saat soğuma süresine girer ve sonra otomatik açılır.
-      Daha kalıcı çözüm için plan yükseltme seçenekleri yakında.
+      Krediniz tükendiğinde yapay zeka, e-posta ve WhatsApp özellikleri 5 saat boyunca duracak,
+      ardından otomatik olarak tekrar çalışmaya başlayacak. Görev oluşturma ve diğer normal
+      işlemleriniz etkilenmez.
       {% endif %}
     </p>
 
@@ -62,7 +64,8 @@ Subject: ETÜTKOÇ Rotam · Kredi kullanımı %{{ pct }} — {{ owner_name }}
     </div>
 
     <p style="font-size: 11px; color: #94a3b8; margin-top: 20px; line-height: 1.5;">
-      Bu uyarıyı her dönem için yalnızca bir kez alırsınız. Kalan ay boyunca yeni eşikleri panelden takip edebilirsiniz.
+      Bu uyarıyı her ay yalnızca bir kez alırsınız. Ay sonuna kadar kullanımınızı kullanım panelinden
+      izleyebilir, gerekirse plan yükseltebilirsiniz.
     </p>
   </div>
 </body>

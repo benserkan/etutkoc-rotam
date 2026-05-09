@@ -39,8 +39,11 @@
 <div class="mb-6 p-3 rounded border border-sky-200 bg-sky-50 text-xs text-sky-800 flex items-start gap-2">
   <span class="text-base">ℹ️</span>
   <div>
-    <b>Aktivite skoru:</b> giriş + öğrencilerine yeni görev oluşturma + veliye not yazma. Hücreye <b>hover</b>'la günlük detayını gör.
-    <span class="block mt-1">"Pasif" rozeti = son {{ inactive_threshold_days }} gündür hiç aktivite yok.</span>
+    <b>Aktivite nasıl ölçülür?</b> Öğretmen o gün sisteme girmiş (1 puan) + öğrencisine yeni görev
+    oluşturmuş (her görev için 1 puan, en fazla 10) + veliye not yazmış (her not için 1 puan, en fazla 5).
+    Toplam puan ne kadar yüksekse hücre o kadar koyu yeşildir. <b>Hücreye fareyle dokun</b> — o günkü
+    detay (kaç görev, kaç not, giriş var mı) görünür.
+    <span class="block mt-1">"Pasif" işareti = son {{ inactive_threshold_days }} gündür sisteme hiç dokunmamış.</span>
   </div>
 </div>
 

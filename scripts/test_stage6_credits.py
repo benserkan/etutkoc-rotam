@@ -390,13 +390,13 @@ def main() -> int:
         r = c.get("/institution/usage")
         check("GET /institution/usage 200", r.status_code == 200, f"got {r.status_code}")
         body = r.text
-        check("'Aylık Kredi Kullanımı' başlığı", "Aylık Kredi Kullanımı" in body)
+        check("'Aylık Kredi Kullanımın' başlığı", "Aylık Kredi Kullanımın" in body)
         check("Free kurum adı görünüyor", f"{PFX}_free" in body)
         check("Plan 'free' yazıyor", "free" in body)
 
         # Aşım oldu — %100 banner görünmeli
-        check("'Aylık kredi tükendi' uyarısı (free %100+)",
-              "Aylık kredi tükendi" in body or "tükendi" in body)
+        check("'Aylık kredin tükendi' uyarısı (free %100+)",
+              "kredin tükendi" in body or "tükendi" in body)
     finally:
         app.dependency_overrides.clear()
 
@@ -417,7 +417,7 @@ def main() -> int:
         r = c.get("/admin/usage")
         check("GET /admin/usage 200", r.status_code == 200, f"got {r.status_code}")
         body = r.text
-        check("'Sistem Kullanımı' başlığı", "Sistem Kullanımı" in body)
+        check("'Kredi Kullanımı' başlığı", "Kredi Kullanımı" in body)
         check("Kurumlar tab", "Kurumlar (" in body)
         check("Bağımsız Öğretmenler tab", "Bağımsız Öğretmenler (" in body)
         check("Free kurum tabloda", f"{PFX}_free" in body)
@@ -473,7 +473,7 @@ def main() -> int:
               r.status_code == 200, f"got {r.status_code}")
         body = r.text
         check("Indep teacher kullanım başlığı",
-              "Kullanım & Kredilerim" in body)
+              "Aylık Kredi Kullanımım" in body or "Kullanım & Kredilerim" in body)
     finally:
         app.dependency_overrides.clear()
 

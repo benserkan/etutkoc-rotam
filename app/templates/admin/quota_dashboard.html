@@ -4,9 +4,10 @@
 {% block content %}
 <div class="mb-6">
   <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📐 Kuota Yönetimi</h1>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📐 Kurum Limitleri</h1>
   <p class="text-sm text-slate-500 mt-1">
-    Tüm kurumların entity sayım/limit tablosu. Override ile per-kurum manuel ayar yapılır.
+    Hangi kurumda kaç öğretmen, kaç öğrenci ve kaç yönetici olabilir? Burada hem mevcut sayıları
+    hem plana göre üst sınırı görürsün; bir kuruma özel sınır vermek istersen "Özel Limit" ekleyebilirsin.
   </p>
 </div>
 
@@ -68,7 +69,7 @@
               </div>
             {% endif %}
             {% if c.has_override %}
-              <span class="text-[9px] px-1 rounded bg-violet-50 text-violet-700 border border-violet-200" title="{{ c.note or '' }}">öz</span>
+              <span class="text-[9px] px-1 rounded bg-violet-50 text-violet-700 border border-violet-200" title="{{ c.note or 'Bu kuruma özel limit verilmiş' }}">özel</span>
             {% endif %}
           </div>
         </td>
@@ -76,7 +77,7 @@
         <td class="px-4 py-2 text-right">
           <details class="inline-block relative">
             <summary class="cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 list-none">
-              ⚙️ Override
+              ⚙️ Özel Limit Ver
             </summary>
             <div class="absolute right-0 mt-1 w-72 bg-white border border-slate-200 rounded-lg shadow-lg z-10 p-3 space-y-2">
               <form method="post" action="/admin/quota/{{ inst.id }}/override" class="space-y-2">
@@ -86,16 +87,16 @@
                     <option value="{{ k }}">{{ quota_labels[k] }}</option>
                     {% endfor %}
                   </select>
-                  <input type="number" name="override_value" min="-1" step="1" placeholder="-1=∞" required
+                  <input type="number" name="override_value" min="-1" step="1" placeholder="örn 50" required
                          class="w-20 text-xs px-2 py-1 border border-slate-300 rounded" />
                 </div>
-                <input type="text" name="note" placeholder="Not (opsiyonel)" maxlength="255"
+                <input type="text" name="note" placeholder="Neden (örn: pilot dönem)" maxlength="255"
                        class="w-full text-xs px-2 py-1 border border-slate-300 rounded" />
                 <button type="submit" class="w-full text-xs px-3 py-1.5 rounded bg-violet-600 hover:bg-violet-700 text-white font-medium">
-                  Override Ekle/Güncelle
+                  Özel Limiti Kaydet
                 </button>
                 <p class="text-[10px] text-slate-500">
-                  Değerler: <code>-1</code> sınırsız · <code>0</code> kapalı · <code>N</code> sayı limiti
+                  <b>50</b> yazarsan: en fazla 50 olur. <b>-1</b>: sınırsız. <b>0</b>: hiç eklenemez.
                 </p>
               </form>
             </div>
@@ -110,7 +111,7 @@
 
 {# Plan default'ları #}
 <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mt-5 text-xs text-slate-600">
-  <div class="font-medium text-slate-700 mb-2">Plan default kuotaları (override yokken):</div>
+  <div class="font-medium text-slate-700 mb-2">Plana göre standart limitler (özel ayar yapmadığında geçerli):</div>
   <table class="w-full">
     <thead>
       <tr class="text-slate-500">

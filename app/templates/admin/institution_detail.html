@@ -40,7 +40,8 @@
           </span>
         </div>
         <div class="text-xs text-slate-500 mt-1">
-          Yüksek skor = churn riski. 0-29 sağlıklı, 30-49 gözlem, 50-69 riskli, 70+ kritik.
+          Yüksek puan = kurumun sistemi terk etme (ayrılma) riski yüksek demek.
+          0-29 sağlıklı · 30-49 göz at · 50-69 ilgi göster · 70+ acil müdahale.
         </div>
       </div>
     </div>
@@ -84,13 +85,13 @@
 
   {% if health.indicators %}
   <div class="mt-4 pt-4 border-t border-slate-100">
-    <div class="text-xs font-medium text-slate-700 mb-2">⚠️ Risk göstergeleri ({{ health.indicators|length }})</div>
+    <div class="text-xs font-medium text-slate-700 mb-2">⚠️ Bu Skoru Yükselten Sebepler ({{ health.indicators|length }})</div>
     <ul class="space-y-1.5">
       {% for ind in health.indicators %}
       <li class="flex items-start gap-2 text-sm">
         <span class="text-rose-600 mt-0.5">●</span>
         <div class="flex-1">
-          <div class="font-medium text-slate-800">{{ ind.title }} <span class="text-xs text-slate-400 font-mono">+{{ ind.weight }}</span></div>
+          <div class="font-medium text-slate-800">{{ ind.title }} <span class="text-xs text-slate-400 font-mono" title="Bu sebebin skora katkısı">+{{ ind.weight }} puan</span></div>
           <div class="text-xs text-slate-600">{{ ind.detail }}</div>
         </div>
       </li>
@@ -100,7 +101,7 @@
   {% else %}
   <div class="mt-4 pt-4 border-t border-slate-100 text-sm text-emerald-700 flex items-center gap-2">
     <span class="text-base">✓</span>
-    <span>Bu kurumda risk göstergesi yok — sağlıklı görünüyor.</span>
+    <span>Bu kurum aktif kullanılıyor — herhangi bir risk uyarısı yok.</span>
   </div>
   {% endif %}
 </div>
@@ -166,23 +167,24 @@
     </div>
 
     <div class="bg-violet-50 border border-violet-200 rounded-lg p-5">
-      <h2 class="font-medium text-violet-900 mb-2">📥 Yedekleme & Veri Taşıma</h2>
+      <h2 class="font-medium text-violet-900 mb-2">📥 Kurum Yedeği İndir</h2>
       <p class="text-xs text-violet-800 mb-3">
-        Kurumun tüm verisini tek JSON dosyası olarak indirir
-        (KVKK madde 11 — veri taşıma hakkı).
-        <code>password_hash</code> redact edilir; audit log son 90 gün, bildirim son 30 gün dahil.
+        Bu kuruma ait tüm verileri (kullanıcılar, kitaplar, görevler, geçmiş bildirimler ve son 90 günün
+        etkinlik geçmişi) tek bir <code>.json</code> dosyası olarak indirir. Şifreler güvenlik nedeniyle
+        gizli tutulur. Veri taşıma talebi (KVKK madde 11) veya yedek arşivleme için kullanılır.
       </p>
       <a href="/admin/institutions/{{ institution.id }}/backup"
          class="inline-block bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded">
-        📥 Snapshot İndir (.json)
+        📥 Yedeği İndir (.json)
       </a>
     </div>
 
     <div class="bg-rose-50 border border-rose-200 rounded-lg p-5">
       <h2 class="font-medium text-rose-900 mb-2">Tehlikeli Bölge</h2>
       <p class="text-xs text-rose-800 mb-3">
-        Kurumu silmek tüm kullanıcıların <code>institution_id</code>'sini NULL yapar
-        (kullanıcılar silinmez — bağımsız öğretmen olarak yaşamaya devam ederler).
+        Kurumu silersen kullanıcılar <b>silinmez</b> — kurumdan ayrılırlar. Öğretmenler
+        bağımsız öğretmen olarak sisteme devam eder, başka bir kuruma katılabilir veya kendi
+        başına çalışabilir. Bu işlem geri alınamaz.
       </p>
       <form method="post" action="/admin/institutions/{{ institution.id }}/delete"
             onsubmit="return confirm('{{ institution.name }} kurumunu silmek istediğine emin misin? {{ teachers|length }} öğretmen bağımsız olacak.');">

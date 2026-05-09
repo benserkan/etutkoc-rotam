@@ -298,8 +298,8 @@ def main() -> int:
         check("CRITICAL detail: Sağlık Skoru paneli",
               "Sağlık Skoru" in body)
         check("CRITICAL detail: 'Kritik' etiketi", "Kritik" in body)
-        check("CRITICAL detail: Risk göstergeleri başlığı",
-              "Risk göstergeleri" in body)
+        check("CRITICAL detail: Yükselten Sebepler başlığı",
+              "Bu Skoru Yükselten Sebepler" in body or "Risk göstergeleri" in body)
 
         # HEALTHY detayı — sağlıklı mesajı
         r = c.get(f"/admin/institutions/{h_id}")

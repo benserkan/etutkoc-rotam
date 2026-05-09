@@ -4,9 +4,10 @@
 {% block content %}
 <div class="mb-6">
   <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kullanım Kotaları</h1>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📐 Kurum Limitlerin</h1>
   <p class="text-sm text-slate-500 mt-1">
-    {{ institution.name }} · plan: <b>{{ institution.plan }}</b>
+    {{ institution.name }} kurumunda planına göre en fazla kaç öğretmen, öğrenci ve yöneticin olabilir.
+    Aktif olarak şu an kaç tane var, ne kadar yer kalmış burada görürsün. Plan: <b>{{ institution.plan|capitalize }}</b>
   </p>
 </div>
 
@@ -19,8 +20,8 @@
     <div class="flex items-baseline justify-between">
       <h3 class="text-sm font-medium text-slate-700">{{ q.label }}</h3>
       {% if q.has_override %}
-      <span class="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200" title="{{ q.override_note or '' }}">
-        özel
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200" title="{{ q.override_note or 'ETÜTKOÇ ekibi tarafından kuruma özel limit verilmiş' }}">
+        size özel
       </span>
       {% endif %}
     </div>
@@ -40,8 +41,8 @@
     </div>
     <div class="text-[11px] text-slate-500 mt-1">
       %{{ q.pct }} dolu
-      {% if q.is_at_limit %}— <b class="text-rose-700">DOLDU</b>{% endif %}
-      {% if q.is_warn and not q.is_at_limit %}— <b class="text-amber-700">eşik yakın</b>{% endif %}
+      {% if q.is_at_limit %}— <b class="text-rose-700">Limit doldu, yeni ekleyemezsin</b>{% endif %}
+      {% if q.is_warn and not q.is_at_limit %}— <b class="text-amber-700">limite yaklaşıyor</b>{% endif %}
     </div>
     {% endif %}
   </div>
@@ -50,7 +51,7 @@
 
 {# Plan bilgisi #}
 <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-600 mb-5">
-  <div class="font-medium text-slate-700 mb-2">Plan kotaları (default):</div>
+  <div class="font-medium text-slate-700 mb-2">Planlara göre standart limitler:</div>
   <table class="w-full">
     <thead>
       <tr class="text-slate-500">
@@ -63,7 +64,7 @@
     <tbody>
       {% for plan_code, quotas in plan_quotas.items() %}
       <tr class="border-t border-slate-200 {% if plan_code == institution.plan %}bg-indigo-50/30 font-medium{% endif %}">
-        <td class="py-1 capitalize">{{ plan_code }}{% if plan_code == institution.plan %} ←{% endif %}</td>
+        <td class="py-1 capitalize">{{ plan_code }}{% if plan_code == institution.plan %} ← <span class="text-indigo-700 not-italic">sizin planınız</span>{% endif %}</td>
         {% for q in summary %}
         <td class="py-1 text-right font-mono">
           {% set v = quotas.get(q.key, 0) %}
@@ -76,8 +77,10 @@
   </table>
 </div>
 
-<div class="text-xs text-slate-500">
-  💡 Aktif kullanıcılar sayılır. Pasif (deaktive) kullanıcılar kotaya dahil değil.
-  Limit dolduğunda yeni öğretmen/öğrenci eklenmez; pasif kayıtları silebilir veya plan yükseltebilirsiniz.
+<div class="text-xs text-slate-500 space-y-1">
+  <p>💡 <b>Sayım nasıl yapılır?</b> Sadece <b>aktif</b> (kullanımda olan) kullanıcılar limite dahildir.
+  Bir öğrenciyi/öğretmeni "pasife" çekersen yer açılır — kayıt korunur ama sayılmaz.</p>
+  <p>💡 <b>Limit dolduğunda ne olur?</b> Yeni öğrenci/öğretmen ekleyemezsin. İki seçenek vardır:
+  artık aktif olmayan kullanıcıları pasif yap veya planı yükselt.</p>
 </div>
 {% endblock %}
