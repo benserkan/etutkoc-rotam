@@ -399,6 +399,18 @@ def create_invitation(
             status_code=303,
         )
 
+    # Stage 8 — kuota kontrolü (öğretmen davet ediliyor)
+    inst = db.get(Institution, user.institution_id)
+    if inst is not None:
+        from app.services.quotas import check_quota_for_create, QuotaExceeded
+        try:
+            check_quota_for_create(db, institution=inst, quota_key="teachers")
+        except QuotaExceeded as e:
+            return RedirectResponse(
+                url="/institution/invitations?err=" + quote(e.message),
+                status_code=303,
+            )
+
     token = secrets.token_urlsafe(32)
     inv = Invitation(
         token=token,
@@ -820,6 +832,31 @@ def cohort_panel(
             "tab_labels": tab_labels,
             "cohorts": cohorts,
             "wow": wow,
+        },
+    )
+
+
+# ---------------------------- Stage 8 — Kuota ----------------------------
+
+
+@router.get("/quota")
+def quota_dashboard(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Kurumun aktif entity kuotaları — öğretmen / öğrenci / yönetici sayım+limit."""
+    from app.services.quotas import get_quota_summary, PLAN_QUOTAS
+    inst = db.get(Institution, user.institution_id)
+    summary = get_quota_summary(db, institution=inst)
+    return templates.TemplateResponse(
+        "institution/quota_dashboard.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "summary": summary,
+            "plan_quotas": PLAN_QUOTAS,
         },
     )
 

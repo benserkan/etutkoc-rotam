@@ -253,6 +253,29 @@ def signup_invite_submit(
             status_code=status.HTTP_400_BAD_REQUEST,
         )
 
+    # Stage 8 — kuota kontrolü (davet kabul aşamasında)
+    if inv.institution_id is not None:
+        from app.models import Institution
+        from app.services.quotas import check_quota_for_create, QuotaExceeded
+        inst = db.get(Institution, inv.institution_id)
+        if inst is not None:
+            qkey = (
+                "institution_admins" if inv.role.value == "institution_admin"
+                else "teachers" if inv.role.value == "teacher"
+                else "students" if inv.role.value == "student"
+                else None
+            )
+            if qkey:
+                try:
+                    check_quota_for_create(db, institution=inst, quota_key=qkey)
+                except QuotaExceeded as e:
+                    return templates.TemplateResponse(
+                        "auth/signup_invite.html",
+                        {"request": request, "invitation": inv,
+                         "error": f"Kuota: {e.message}", "filled": filled},
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                    )
+
     # Atomik akış: kullanıcıyı oluştur + davetiyeyi tüket
     new_user = User(
         email=email_clean,

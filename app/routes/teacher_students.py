@@ -127,6 +127,19 @@ def create_student(
             status_code=status.HTTP_303_SEE_OTHER,
         )
 
+    # Stage 8 — kurum kuotası kontrolü (kurumlu öğretmen için)
+    if user.institution_id is not None and user.institution is not None:
+        from app.services.quotas import check_quota_for_create, QuotaExceeded
+        try:
+            check_quota_for_create(
+                db, institution=user.institution, quota_key="students",
+            )
+        except QuotaExceeded as e:
+            return RedirectResponse(
+                url="/teacher/students?err=" + quote(e.message),
+                status_code=status.HTTP_303_SEE_OTHER,
+            )
+
     grade_level, is_graduate = _parse_grade_input(grade)
 
     # Validation: 11+ ve mezun için track zorunlu
@@ -509,6 +522,30 @@ def import_confirm(
         )
 
     valid_rows = [r for r in parse_result.rows if r.is_valid]
+
+    # Stage 8 — kurum kuotası kontrolü (toplu import için extra_count)
+    if user.institution_id is not None and user.institution is not None and valid_rows:
+        from app.services.quotas import check_quota_for_create, QuotaExceeded
+        try:
+            check_quota_for_create(
+                db, institution=user.institution, quota_key="students",
+                extra_count=len(valid_rows),
+            )
+        except QuotaExceeded as e:
+            # Hata mesajını preview ekranında göster (header_errors fatal sayılır)
+            parse_result.header_errors.append(
+                f"Kuota: {e.message}"
+            )
+            return templates.TemplateResponse(
+                "teacher/students_import_preview.html",
+                {
+                    "request": request,
+                    "user": user,
+                    "parse_result": parse_result,
+                    "csv_text": csv_text,
+                },
+            )
+
     bulk_result = bulk_create_students(
         db, teacher=user, parsed_rows=valid_rows, request=request,
     )

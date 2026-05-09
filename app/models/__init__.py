@@ -68,6 +68,7 @@ from app.models.parent import (
     TeacherNoteToParent,
 )
 from app.models.progress import SectionProgress, StudentBook
+from app.models.quota import InstitutionQuotaOverride
 from app.models.suggestion_feedback import FeedbackAction, SuggestionFeedback
 from app.models.task import Task, TaskBookItem, TaskStatus, TaskType
 from app.models.task_request import (
@@ -165,6 +166,7 @@ __all__ = [
     "AnnouncementSeverity",
     "FeatureFlag",
     "FeatureFlagOverride",
+    "InstitutionQuotaOverride",
     "SEVERITY_LABELS_TR",
     "SystemAnnouncement",
     "USAGE_KIND_LABELS_TR",

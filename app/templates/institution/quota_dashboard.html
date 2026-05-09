@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}Kuota — {{ institution.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kullanım Kotaları</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    {{ institution.name }} · plan: <b>{{ institution.plan }}</b>
+  </p>
+</div>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  {% for q in summary %}
+  <div class="bg-white border rounded-lg p-5
+      {% if q.is_at_limit %}border-rose-300
+      {% elif q.is_warn %}border-amber-300
+      {% else %}border-slate-200{% endif %}">
+    <div class="flex items-baseline justify-between">
+      <h3 class="text-sm font-medium text-slate-700">{{ q.label }}</h3>
+      {% if q.has_override %}
+      <span class="text-[10px] px-1.5 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200" title="{{ q.override_note or '' }}">
+        özel
+      </span>
+      {% endif %}
+    </div>
+    <div class="flex items-baseline gap-2 mt-2">
+      <span class="text-3xl font-bold text-slate-900">{{ q.current }}</span>
+      <span class="text-base text-slate-500">
+        / {% if q.is_unlimited %}∞ sınırsız{% elif q.limit == 0 %}KAPALI{% else %}{{ q.limit }}{% endif %}
+      </span>
+    </div>
+    {% if not q.is_unlimited and q.limit > 0 %}
+    <div class="w-full h-2 bg-slate-100 rounded-full mt-3 overflow-hidden">
+      <div class="h-full
+          {% if q.is_at_limit %}bg-rose-500
+          {% elif q.is_warn %}bg-amber-500
+          {% else %}bg-emerald-500{% endif %}"
+          style="width: {{ q.pct if q.pct <= 100 else 100 }}%"></div>
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">
+      %{{ q.pct }} dolu
+      {% if q.is_at_limit %}— <b class="text-rose-700">DOLDU</b>{% endif %}
+      {% if q.is_warn and not q.is_at_limit %}— <b class="text-amber-700">eşik yakın</b>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{# Plan bilgisi #}
+<div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-600 mb-5">
+  <div class="font-medium text-slate-700 mb-2">Plan kotaları (default):</div>
+  <table class="w-full">
+    <thead>
+      <tr class="text-slate-500">
+        <th class="text-left py-1">Plan</th>
+        {% for q in summary %}
+        <th class="text-right py-1">{{ q.label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for plan_code, quotas in plan_quotas.items() %}
+      <tr class="border-t border-slate-200 {% if plan_code == institution.plan %}bg-indigo-50/30 font-medium{% endif %}">
+        <td class="py-1 capitalize">{{ plan_code }}{% if plan_code == institution.plan %} ←{% endif %}</td>
+        {% for q in summary %}
+        <td class="py-1 text-right font-mono">
+          {% set v = quotas.get(q.key, 0) %}
+          {% if v == -1 %}∞{% elif v == 0 %}—{% else %}{{ v }}{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="text-xs text-slate-500">
+  💡 Aktif kullanıcılar sayılır. Pasif (deaktive) kullanıcılar kotaya dahil değil.
+  Limit dolduğunda yeni öğretmen/öğrenci eklenmez; pasif kayıtları silebilir veya plan yükseltebilirsiniz.
+</div>
+{% endblock %}

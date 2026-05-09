@@ -284,6 +284,58 @@ def institution_detail(
     )
 
 
+# Stage 8 — Tenant backup snapshot (KVKK madde 11 veri taşıma + manuel yedekleme)
+
+
+@router.get("/institutions/{institution_id}/backup")
+def institution_backup_download(
+    institution_id: int,
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Kurumun tüm verisini JSON olarak indir.
+
+    İçerik: institution + users (password_hash REDACTED) + books + tasks +
+    notifications (son 30g) + audit (son 90g) + credits + digests +
+    feature_flag/quota overrides + parent links.
+    """
+    from datetime import date as _date
+    from fastapi.responses import Response
+    from app.services.tenant_backup import export_tenant_json
+
+    inst = db.get(Institution, institution_id)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Kurum bulunamadı")
+
+    payload = export_tenant_json(db, institution=inst)
+    today_str = _date.today().isoformat()
+    filename = f"{inst.slug}-backup-{today_str}.json"
+
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="institution_backup",
+        target_id=inst.id,
+        request=request,
+        details={
+            "action": "backup_downloaded",
+            "institution_slug": inst.slug,
+            "size_bytes": len(payload.encode("utf-8")),
+        },
+    )
+
+    return Response(
+        content=payload,
+        media_type="application/json",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"',
+            "Cache-Control": "no-store",
+        },
+    )
+
+
 @router.post("/institutions/{institution_id}/edit")
 def edit_institution(
     institution_id: int,
@@ -1547,6 +1599,156 @@ def announcements_create(
     _inv_ann()
     return RedirectResponse(
         url="/admin/announcements?ok=" + quote("Duyuru oluşturuldu"),
+        status_code=303,
+    )
+
+
+# ---------------------------- Stage 8 — Kuota ----------------------------
+
+
+@router.get("/quota")
+def super_admin_quota(
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+    ok: str | None = None,
+    err: str | None = None,
+):
+    """Tüm kurumların kuota tablosu + override yönetimi."""
+    from app.models import InstitutionQuotaOverride
+    from app.services.quotas import (
+        QUOTA_KEYS, QUOTA_LABELS_TR, PLAN_QUOTAS,
+        count_current_usage, get_quota_limit,
+    )
+    insts = db.query(Institution).filter(Institution.is_active.is_(True)).all()
+    rows = []
+    for inst in insts:
+        cells = []
+        max_pct = 0
+        for key in QUOTA_KEYS:
+            limit, has_override, note = get_quota_limit(
+                db, institution=inst, quota_key=key,
+            )
+            current = count_current_usage(
+                db, institution_id=inst.id, quota_key=key,
+            )
+            is_unlimited = limit == -1
+            if is_unlimited:
+                pct = 0
+            elif limit == 0:
+                pct = 100 if current > 0 else 0
+            else:
+                pct = int(round(100 * current / limit)) if limit > 0 else 0
+            max_pct = max(max_pct, pct if not is_unlimited else 0)
+            cells.append({
+                "key": key,
+                "label": QUOTA_LABELS_TR.get(key, key),
+                "limit": limit,
+                "current": current,
+                "pct": pct,
+                "is_unlimited": is_unlimited,
+                "is_at_limit": (not is_unlimited) and current >= limit,
+                "has_override": has_override,
+                "note": note,
+            })
+        rows.append({
+            "institution": inst,
+            "cells": cells,
+            "max_pct": max_pct,
+        })
+    rows.sort(key=lambda r: -r["max_pct"])
+
+    return templates.TemplateResponse(
+        "admin/quota_dashboard.html",
+        {
+            "request": request,
+            "user": user,
+            "rows": rows,
+            "quota_keys": QUOTA_KEYS,
+            "quota_labels": QUOTA_LABELS_TR,
+            "plan_quotas": PLAN_QUOTAS,
+            "flash_ok": ok,
+            "flash_err": err,
+        },
+    )
+
+
+@router.post("/quota/{institution_id}/override")
+def super_admin_quota_set_override(
+    institution_id: int,
+    request: Request,
+    quota_key: str = Form(...),
+    override_value: int = Form(...),
+    note: str = Form(""),
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Kuruma kuota override koy (veya güncelle)."""
+    from app.services.quotas import set_override, QUOTA_KEYS
+    inst = db.get(Institution, institution_id)
+    if not inst:
+        raise HTTPException(status_code=404, detail="Kurum bulunamadı")
+    if quota_key not in QUOTA_KEYS:
+        return RedirectResponse(
+            url="/admin/quota?err=" + quote("Geçersiz kuota anahtarı"),
+            status_code=303,
+        )
+    if override_value < -1 or override_value > 1000000:
+        return RedirectResponse(
+            url="/admin/quota?err=" + quote("override_value -1 (sınırsız), 0 (kapalı) veya 1-1M"),
+            status_code=303,
+        )
+    o = set_override(
+        db, institution_id=institution_id, quota_key=quota_key,
+        override_value=override_value, note=note.strip() or None,
+    )
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="quota_override",
+        target_id=o.id,
+        request=request,
+        details={
+            "institution_id": institution_id,
+            "quota_key": quota_key,
+            "override_value": override_value,
+        },
+    )
+    return RedirectResponse(
+        url="/admin/quota?ok=" + quote(
+            f"{inst.name} {quota_key} → "
+            f"{'sınırsız' if override_value == -1 else 'kapalı' if override_value == 0 else override_value}"
+        ),
+        status_code=303,
+    )
+
+
+@router.post("/quota/overrides/{override_id}/delete")
+def super_admin_quota_remove_override(
+    override_id: int,
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Override sil — kurum plan default'una döner."""
+    from app.models import InstitutionQuotaOverride
+    from app.services.quotas import remove_override
+    o = db.get(InstitutionQuotaOverride, override_id)
+    if not o:
+        raise HTTPException(status_code=404, detail="Override bulunamadı")
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="quota_override",
+        target_id=override_id,
+        request=request,
+        details={"deleted": True, "institution_id": o.institution_id, "quota_key": o.quota_key},
+    )
+    remove_override(db, override_id)
+    return RedirectResponse(
+        url="/admin/quota?ok=" + quote("Override silindi (plan default'a döndü)"),
         status_code=303,
     )
 

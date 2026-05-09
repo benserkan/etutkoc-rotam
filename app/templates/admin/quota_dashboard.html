@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block title %}Kuota Yönetimi — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📐 Kuota Yönetimi</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Tüm kurumların entity sayım/limit tablosu. Override ile per-kurum manuel ayar yapılır.
+  </p>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">✓ {{ flash_ok }}</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+{% if not rows %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+  Aktif kurum yok.
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Kurum</th>
+        <th class="text-left px-4 py-2">Plan</th>
+        {% for k in quota_keys %}
+        <th class="text-left px-4 py-2">{{ quota_labels[k] }}</th>
+        {% endfor %}
+        <th class="text-right px-4 py-2">İşlem</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in rows %}
+      {% set inst = r.institution %}
+      <tr>
+        <td class="px-4 py-2">
+          <a href="/admin/institutions/{{ inst.id }}" class="font-medium text-slate-900 hover:text-indigo-600">{{ inst.name }}</a>
+          <div class="text-[11px] text-slate-500 font-mono">{{ inst.slug }}</div>
+        </td>
+        <td class="px-4 py-2">
+          <span class="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">{{ inst.plan }}</span>
+        </td>
+        {% for c in r.cells %}
+        <td class="px-4 py-2 text-xs">
+          <div class="flex items-center gap-2">
+            {% if c.is_unlimited %}
+              <span class="font-mono text-slate-700">{{ c.current }} / <b>∞</b></span>
+            {% elif c.limit == 0 %}
+              <span class="font-mono text-rose-700">{{ c.current }} / <b>KAPALI</b></span>
+            {% else %}
+              <span class="font-mono
+                  {% if c.is_at_limit %}text-rose-700 font-bold
+                  {% elif c.pct >= 80 %}text-amber-700 font-semibold
+                  {% else %}text-slate-700{% endif %}">
+                {{ c.current }} / {{ c.limit }}
+              </span>
+              <div class="w-12 h-1 bg-slate-100 rounded">
+                <div class="h-full
+                    {% if c.is_at_limit %}bg-rose-500
+                    {% elif c.pct >= 80 %}bg-amber-500
+                    {% else %}bg-emerald-500{% endif %}"
+                    style="width: {{ c.pct if c.pct <= 100 else 100 }}%"></div>
+              </div>
+            {% endif %}
+            {% if c.has_override %}
+              <span class="text-[9px] px-1 rounded bg-violet-50 text-violet-700 border border-violet-200" title="{{ c.note or '' }}">öz</span>
+            {% endif %}
+          </div>
+        </td>
+        {% endfor %}
+        <td class="px-4 py-2 text-right">
+          <details class="inline-block relative">
+            <summary class="cursor-pointer text-xs text-indigo-600 hover:text-indigo-800 list-none">
+              ⚙️ Override
+            </summary>
+            <div class="absolute right-0 mt-1 w-72 bg-white border border-slate-200 rounded-lg shadow-lg z-10 p-3 space-y-2">
+              <form method="post" action="/admin/quota/{{ inst.id }}/override" class="space-y-2">
+                <div class="flex gap-1">
+                  <select name="quota_key" required class="flex-1 text-xs px-2 py-1 border border-slate-300 rounded bg-white">
+                    {% for k in quota_keys %}
+                    <option value="{{ k }}">{{ quota_labels[k] }}</option>
+                    {% endfor %}
+                  </select>
+                  <input type="number" name="override_value" min="-1" step="1" placeholder="-1=∞" required
+                         class="w-20 text-xs px-2 py-1 border border-slate-300 rounded" />
+                </div>
+                <input type="text" name="note" placeholder="Not (opsiyonel)" maxlength="255"
+                       class="w-full text-xs px-2 py-1 border border-slate-300 rounded" />
+                <button type="submit" class="w-full text-xs px-3 py-1.5 rounded bg-violet-600 hover:bg-violet-700 text-white font-medium">
+                  Override Ekle/Güncelle
+                </button>
+                <p class="text-[10px] text-slate-500">
+                  Değerler: <code>-1</code> sınırsız · <code>0</code> kapalı · <code>N</code> sayı limiti
+                </p>
+              </form>
+            </div>
+          </details>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{# Plan default'ları #}
+<div class="bg-slate-50 border border-slate-200 rounded-lg p-4 mt-5 text-xs text-slate-600">
+  <div class="font-medium text-slate-700 mb-2">Plan default kuotaları (override yokken):</div>
+  <table class="w-full">
+    <thead>
+      <tr class="text-slate-500">
+        <th class="text-left py-1">Plan</th>
+        {% for k in quota_keys %}
+        <th class="text-right py-1">{{ quota_labels[k] }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for plan_code, quotas in plan_quotas.items() %}
+      <tr class="border-t border-slate-200">
+        <td class="py-1 font-mono capitalize">{{ plan_code }}</td>
+        {% for k in quota_keys %}
+        <td class="py-1 text-right font-mono">
+          {% set v = quotas.get(k, 0) %}
+          {% if v == -1 %}∞{% elif v == 0 %}—{% else %}{{ v }}{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

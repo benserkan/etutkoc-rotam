@@ -165,6 +165,19 @@
       </dl>
     </div>
 
+    <div class="bg-violet-50 border border-violet-200 rounded-lg p-5">
+      <h2 class="font-medium text-violet-900 mb-2">📥 Yedekleme & Veri Taşıma</h2>
+      <p class="text-xs text-violet-800 mb-3">
+        Kurumun tüm verisini tek JSON dosyası olarak indirir
+        (KVKK madde 11 — veri taşıma hakkı).
+        <code>password_hash</code> redact edilir; audit log son 90 gün, bildirim son 30 gün dahil.
+      </p>
+      <a href="/admin/institutions/{{ institution.id }}/backup"
+         class="inline-block bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded">
+        📥 Snapshot İndir (.json)
+      </a>
+    </div>
+
     <div class="bg-rose-50 border border-rose-200 rounded-lg p-5">
       <h2 class="font-medium text-rose-900 mb-2">Tehlikeli Bölge</h2>
       <p class="text-xs text-rose-800 mb-3">
