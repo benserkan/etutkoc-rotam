@@ -521,13 +521,31 @@ def ai_suggest_sections(
         else:
             grade_label = "belirtilmemiş"
 
+    # Stage 6 — kredi kontrolü (AI çağrısı pahalı; pre-check + post-record)
+    from app.models import UsageKind
+    from app.services.credits import (
+        CreditBlocked, CreditOwner, consume_credits,
+    )
+    owner = CreditOwner.for_user(user)
     try:
-        suggestions = suggest_sections(
-            book_name=book.name,
-            publisher=book.publisher,
-            subject_name=book.subject.name if book.subject else "",
-            book_type_label=BOOK_TYPE_LABELS.get(book.type, book.type.value),
-            grade_label=grade_label,
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_BOOK_TEMPLATE,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            suggestions = suggest_sections(
+                book_name=book.name,
+                publisher=book.publisher,
+                subject_name=book.subject.name if book.subject else "",
+                book_type_label=BOOK_TYPE_LABELS.get(book.type, book.type.value),
+                grade_label=grade_label,
+            )
+            ctx.set_metadata({"book_id": book.id, "subject": book.subject.name if book.subject else None})
+    except CreditBlocked as e:
+        return RedirectResponse(
+            url=f"/teacher/books/{book_id}?err=" + quote(
+                f"Kredi sınırı: {e.message}"
+            ),
+            status_code=303,
         )
     except AIServiceUnavailable as e:
         return RedirectResponse(

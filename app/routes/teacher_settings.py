@@ -127,6 +127,50 @@ def _summarize_run(results: dict[str, dict]) -> str:
     return " · ".join(parts)
 
 
+@router.get("/usage")
+def teacher_usage(
+    request: Request,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğretmen kredi paneli — kurumlu için kurum havuzu link'i, bağımsız için kendi havuzu."""
+    from app.models import USAGE_KIND_LABELS_TR
+    from app.services.credits import (
+        CreditOwner, current_period, daily_usage_series,
+        get_or_create_account, recent_events, usage_breakdown_by_kind,
+        KIND_CREDITS, PLAN_ALLOCATIONS,
+    )
+
+    # Kurumlu öğretmen → kurumun usage paneline yönlendir
+    if user.institution_id is not None:
+        return RedirectResponse(url="/teacher/settings", status_code=303)
+
+    owner = CreditOwner.for_user(user)
+    period = current_period()
+    account = get_or_create_account(db, owner=owner, period=period)
+    db.commit()
+
+    breakdown = usage_breakdown_by_kind(db, owner=owner, period=period)
+    series = daily_usage_series(db, owner=owner, days=30)
+    events = recent_events(db, owner=owner, limit=50)
+
+    return templates.TemplateResponse(
+        "teacher/usage_dashboard.html",
+        {
+            "request": request,
+            "user": user,
+            "account": account,
+            "period": period,
+            "breakdown": breakdown,
+            "series": series,
+            "events": events,
+            "kind_labels": USAGE_KIND_LABELS_TR,
+            "plan_allocations": PLAN_ALLOCATIONS,
+            "kind_costs": KIND_CREDITS,
+        },
+    )
+
+
 @router.get("/settings")
 def settings_page(
     request: Request,

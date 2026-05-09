@@ -89,6 +89,28 @@ def teacher_dashboard(
     at_risk_count = len(visible_at_risk)
     at_risk_critical = sum(1 for a in visible_at_risk if a.level == "critical")
 
+    # Stage 6 — bağımsız öğretmen için kredi durumu (banner gösterimi için)
+    credit_banner = None
+    if user.institution_id is None:
+        from app.services.credits import (
+            CreditOwner, current_period, get_or_create_account,
+        )
+        owner = CreditOwner.for_user(user)
+        acc = get_or_create_account(db, owner=owner, period=current_period())
+        db.commit()
+        if acc.is_currently_blocked():
+            credit_banner = {
+                "level": "blocked",
+                "blocked_until": acc.blocked_until,
+                "remaining": acc.remaining_credits,
+            }
+        elif acc.usage_pct >= 80:
+            credit_banner = {
+                "level": "warn",
+                "pct": acc.usage_pct,
+                "remaining": acc.remaining_credits,
+            }
+
     return templates.TemplateResponse(
         "teacher/dashboard.html",
         {
@@ -110,5 +132,6 @@ def teacher_dashboard(
             "pending_requests_total": pending_requests_total,
             "at_risk_count": at_risk_count,
             "at_risk_critical": at_risk_critical,
+            "credit_banner": credit_banner,
         },
     )

@@ -504,6 +504,29 @@ def audit_cleanup(db: Session, *, now: datetime) -> dict:
 # ---------------------------- Job registry ----------------------------
 
 
+# ---------------------------- Stage 6 — kredi aylık refill ----------------------------
+
+
+def credits_monthly_refill(db: Session, *, now: datetime) -> dict:
+    """Her ayın 1'inde tüm aktif kurum + bağımsız öğretmene yeni period satırı.
+
+    Cron her gün 00:30 UTC çalışır; sadece ayın 1. gününde efektif iş yapar
+    (cron_schedules tablosunda day_of_month yok, bu yüzden "günlük çalış,
+    kendin filtre uygula" yaklaşımı). İdempotent: aynı period için satır
+    varsa atlanır.
+
+    İlk satırlar zaten lazy-create ediliyor (get_or_create_account on demand);
+    bu cron sadece "henüz hiç kullanım yapmamış" sahipler için yeni period
+    satırını açar — UI'da "0 / 50 kredi" görmek için.
+    """
+    from app.services.credits import monthly_refill
+    today = now.astimezone(timezone.utc).date()
+    if today.day != 1:
+        logger.debug("credits_monthly_refill skipped (day=%s, only runs on day 1)", today.day)
+        return {"skipped": "not_first_of_month", "today": today.isoformat()}
+    return monthly_refill(db, now=now)
+
+
 JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "daily_summary": daily_summary,
     "weekly_backstop": weekly_backstop,
@@ -511,4 +534,5 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "exam_approaching": exam_approaching,
     "audit_cleanup": audit_cleanup,
     "admin_weekly_digest": admin_weekly_digest,
+    "credits_monthly_refill": credits_monthly_refill,
 }

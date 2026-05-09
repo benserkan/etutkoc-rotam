@@ -1024,3 +1024,231 @@ def audit_list(
             "all_actions": list(AuditAction),
         },
     )
+
+
+# ---------------------------- Stage 6 — Süper admin kullanım paneli ----------------------------
+
+
+@router.get("/usage")
+def super_admin_usage(
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+    tab: str = "institutions",  # 'institutions' | 'independents'
+    ok: str | None = None,
+    err: str | None = None,
+):
+    """Sistem geneli kullanım paneli — tüm kurumlar + bağımsız öğretmenler.
+
+    Her satır: kullanılan/tahsis, plan, hard-block durumu, son aktivite.
+    Hard-block toggle ve bonus kredi ekleme buradan yapılır.
+    """
+    from app.models import (
+        CreditAccount, USAGE_KIND_LABELS_TR, UsageOwnerType,
+    )
+    from app.services.credits import (
+        CreditOwner, current_period, get_or_create_account, KIND_CREDITS,
+        PLAN_ALLOCATIONS,
+    )
+
+    period = current_period()
+
+    # Kurumlar
+    insts = db.query(Institution).filter(Institution.is_active.is_(True)).all()
+    inst_rows = []
+    total_used_inst = 0
+    total_alloc_inst = 0
+    for inst in insts:
+        owner = CreditOwner.for_institution(inst)
+        acc = get_or_create_account(db, owner=owner, period=period)
+        inst_rows.append({
+            "institution": inst,
+            "account": acc,
+        })
+        total_used_inst += acc.used_credits or 0
+        total_alloc_inst += acc.total_allocated
+    db.commit()
+    inst_rows.sort(key=lambda r: -(r["account"].usage_pct))
+
+    # Bağımsız öğretmenler
+    indeps = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.TEACHER,
+            User.institution_id.is_(None),
+            User.is_active.is_(True),
+        )
+        .order_by(User.full_name)
+        .all()
+    )
+    indep_rows = []
+    total_used_indep = 0
+    total_alloc_indep = 0
+    for u in indeps:
+        owner = CreditOwner.for_user(u)
+        acc = get_or_create_account(db, owner=owner, period=period)
+        indep_rows.append({
+            "user": u,
+            "account": acc,
+        })
+        total_used_indep += acc.used_credits or 0
+        total_alloc_indep += acc.total_allocated
+    db.commit()
+    indep_rows.sort(key=lambda r: -(r["account"].usage_pct))
+
+    return templates.TemplateResponse(
+        "admin/usage_dashboard.html",
+        {
+            "request": request,
+            "user": user,
+            "tab": tab,
+            "period": period,
+            "inst_rows": inst_rows,
+            "indep_rows": indep_rows,
+            "totals": {
+                "inst_used": total_used_inst,
+                "inst_alloc": total_alloc_inst,
+                "indep_used": total_used_indep,
+                "indep_alloc": total_alloc_indep,
+                "grand_used": total_used_inst + total_used_indep,
+                "grand_alloc": total_alloc_inst + total_alloc_indep,
+            },
+            "kind_labels": USAGE_KIND_LABELS_TR,
+            "kind_costs": KIND_CREDITS,
+            "plan_allocations": PLAN_ALLOCATIONS,
+            "flash_ok": ok,
+            "flash_err": err,
+        },
+    )
+
+
+@router.post("/usage/{owner_type}/{owner_id}/hard-block")
+def super_admin_hard_block_toggle(
+    owner_type: str,
+    owner_id: int,
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Hard-block toggle — sadece kurumlar için (bağımsız zaten cooldown'a tabi).
+
+    POST: hard_block_enabled flag'ini ters çevir.
+    """
+    from app.models import CreditAccount, UsageOwnerType
+    from app.services.credits import current_period
+
+    if owner_type != "institution":
+        return RedirectResponse(
+            url="/admin/usage?err=" + quote("Hard-block sadece kurumlar için"),
+            status_code=303,
+        )
+
+    period = current_period()
+    acc = (
+        db.query(CreditAccount)
+        .filter(
+            CreditAccount.owner_type == UsageOwnerType.INSTITUTION,
+            CreditAccount.owner_id == owner_id,
+            CreditAccount.period_year_month == period,
+        )
+        .first()
+    )
+    if not acc:
+        return RedirectResponse(
+            url="/admin/usage?err=" + quote("Hesap bulunamadı"),
+            status_code=303,
+        )
+
+    new_state = not acc.hard_block_enabled
+    acc.hard_block_enabled = new_state
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="credit_account",
+        target_id=acc.id,
+        request=request,
+        details={
+            "hard_block_enabled": new_state,
+            "institution_id": owner_id,
+            "period": period,
+        },
+        autocommit=False,
+    )
+    db.commit()
+    msg = (
+        f"Kurum #{owner_id} hard-block aktif edildi"
+        if new_state else f"Kurum #{owner_id} hard-block kapatıldı"
+    )
+    return RedirectResponse(
+        url="/admin/usage?ok=" + quote(msg),
+        status_code=303,
+    )
+
+
+@router.post("/usage/{owner_type}/{owner_id}/bonus")
+def super_admin_add_bonus(
+    owner_type: str,
+    owner_id: int,
+    request: Request,
+    bonus_amount: int = Form(...),
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Bonus kredi ekle — kurum veya bağımsız öğretmen için (manuel)."""
+    from app.models import CreditAccount, UsageOwnerType
+    from app.services.credits import current_period
+
+    if owner_type not in ("institution", "user"):
+        return RedirectResponse(
+            url="/admin/usage?err=" + quote("Geçersiz sahip türü"),
+            status_code=303,
+        )
+    if bonus_amount <= 0 or bonus_amount > 100000:
+        return RedirectResponse(
+            url="/admin/usage?err=" + quote("Bonus 1-100000 arasında olmalı"),
+            status_code=303,
+        )
+
+    period = current_period()
+    owner_enum = (
+        UsageOwnerType.INSTITUTION if owner_type == "institution"
+        else UsageOwnerType.USER
+    )
+    acc = (
+        db.query(CreditAccount)
+        .filter(
+            CreditAccount.owner_type == owner_enum,
+            CreditAccount.owner_id == owner_id,
+            CreditAccount.period_year_month == period,
+        )
+        .first()
+    )
+    if not acc:
+        return RedirectResponse(
+            url="/admin/usage?err=" + quote("Hesap bulunamadı"),
+            status_code=303,
+        )
+
+    acc.bonus_credits = (acc.bonus_credits or 0) + bonus_amount
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="credit_account",
+        target_id=acc.id,
+        request=request,
+        details={
+            "bonus_added": bonus_amount,
+            "new_bonus_total": acc.bonus_credits,
+            "owner_type": owner_type,
+            "owner_id": owner_id,
+            "period": period,
+        },
+        autocommit=False,
+    )
+    db.commit()
+    return RedirectResponse(
+        url="/admin/usage?ok=" + quote(f"+{bonus_amount} bonus kredi eklendi"),
+        status_code=303,
+    )

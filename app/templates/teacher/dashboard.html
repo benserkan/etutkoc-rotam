@@ -9,6 +9,32 @@
   </div>
 </div>
 
+{# Stage 6 — bağımsız öğretmen için kredi durumu banner'ı #}
+{% if credit_banner %}
+{% if credit_banner.level == 'blocked' %}
+<div class="mb-5 p-4 bg-rose-50 border border-rose-300 rounded-lg flex items-start gap-3">
+  <span class="text-rose-700 text-xl">⏰</span>
+  <div class="flex-1">
+    <div class="font-semibold text-rose-900">Aylık kredin tükendi — soğuma süresinde</div>
+    <div class="text-sm text-rose-800 mt-1">
+      {% if credit_banner.blocked_until %}
+      AI/email/WhatsApp çağrıları geçici olarak askıya alındı. <b>{{ credit_banner.blocked_until.strftime('%d.%m %H:%M') }}</b>'e kadar.
+      {% endif %}
+      <a href="/teacher/usage" class="underline ml-1">detay</a>
+    </div>
+  </div>
+</div>
+{% elif credit_banner.level == 'warn' %}
+<div class="mb-5 p-3 bg-amber-50 border border-amber-300 rounded-lg flex items-start gap-3 text-sm">
+  <span class="text-amber-700">⚠️</span>
+  <div class="flex-1 text-amber-900">
+    Kredi kullanımın <b>%{{ credit_banner.pct }}</b> seviyesinde — kalan {{ credit_banner.remaining }} kredi.
+    <a href="/teacher/usage" class="underline">Detay →</a>
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
 {% if fleet_total == 0 %}
 <div class="bg-white border border-slate-200 rounded-lg p-8 text-center text-slate-500">
   Henüz öğrenciniz yok. <a href="/teacher/students" class="text-indigo-600 hover:underline">Öğrenci ekle</a>.

@@ -258,7 +258,10 @@ def send_admin_weekly_digest(
         db.commit()
         return digest
 
-    # E-postaları gönder
+    # E-postaları gönder + Stage 6 kredi tüketimi (sadece gerçekten gönderilen)
+    from app.models import UsageKind
+    from app.services.credits import CreditOwner, record_usage
+    owner = CreditOwner.for_institution(institution)
     sent_any = False
     failed_emails: list[str] = []
     for email in admin_emails:
@@ -273,6 +276,15 @@ def send_admin_weekly_digest(
             )
             if ok:
                 sent_any = True
+                # Kredi düş — log_only'da tüketmeyiz (gerçek maliyet yok)
+                try:
+                    record_usage(
+                        db, owner=owner, kind=UsageKind.EMAIL_SEND,
+                        metadata={"template": "admin_weekly_summary", "to": email},
+                        autocommit=False,
+                    )
+                except Exception as ce:
+                    logger.warning("credit record_usage failed (non-fatal): %s", ce)
             else:
                 # log_only mode: send_email False döner, hata yok
                 pass

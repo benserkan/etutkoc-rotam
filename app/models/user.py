@@ -132,6 +132,13 @@ class User(Base):
         Boolean, default=False, nullable=False, server_default=text("0")
     )
 
+    # Stage 6 — bağımsız öğretmen için kredi planı (institution_id NULL ise
+    # anlamlı). Kurumlu kullanıcılarda yok sayılır; onların planı
+    # Institution.plan'dan okunur. Default 'free' başlangıç tier'ı.
+    plan: Mapped[str] = mapped_column(
+        String(32), nullable=False, default="free", server_default=text("'free'"),
+    )
+
     teacher: Mapped["User | None"] = relationship(
         "User", remote_side="User.id", backref="students", foreign_keys=[teacher_id]
     )

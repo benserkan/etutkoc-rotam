@@ -69,6 +69,13 @@ from app.models.task_request import (
     RequestType,
     TaskRequest,
 )
+from app.models.usage import (
+    USAGE_KIND_LABELS_TR,
+    CreditAccount,
+    UsageEvent,
+    UsageKind,
+    UsageOwnerType,
+)
 from app.models.user import (
     GRADUATE_MODE_LABELS,
     TRACK_LABELS,
@@ -145,6 +152,11 @@ __all__ = [
     "TeacherNoteToParent",
     "Topic",
     "Track",
+    "USAGE_KIND_LABELS_TR",
+    "CreditAccount",
+    "UsageEvent",
+    "UsageKind",
+    "UsageOwnerType",
     "User",
     "UserRole",
 ]

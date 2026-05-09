@@ -824,6 +824,50 @@ def cohort_panel(
     )
 
 
+# ---------------------------- Stage 6 — Kullanım & krediler ----------------------------
+
+
+@router.get("/usage")
+def usage_dashboard(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Kurumun aylık kredi tüketimi paneli — bu ay X / Y kredi + kırılım + son eventler."""
+    from app.models import USAGE_KIND_LABELS_TR
+    from app.services.credits import (
+        CreditOwner, current_period, daily_usage_series,
+        get_or_create_account, recent_events, usage_breakdown_by_kind,
+        PLAN_ALLOCATIONS, KIND_CREDITS,
+    )
+    inst = db.get(Institution, user.institution_id)
+    owner = CreditOwner.for_institution(inst)
+    period = current_period()
+    account = get_or_create_account(db, owner=owner, period=period)
+    db.commit()  # yeni satır oluştuysa kaydet
+
+    breakdown = usage_breakdown_by_kind(db, owner=owner, period=period)
+    series = daily_usage_series(db, owner=owner, days=30)
+    events = recent_events(db, owner=owner, limit=50)
+
+    return templates.TemplateResponse(
+        "institution/usage_dashboard.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "account": account,
+            "period": period,
+            "breakdown": breakdown,
+            "series": series,
+            "events": events,
+            "kind_labels": USAGE_KIND_LABELS_TR,
+            "plan_allocations": PLAN_ALLOCATIONS,
+            "kind_costs": KIND_CREDITS,
+        },
+    )
+
+
 @router.get("/roster")
 def roster(
     request: Request,

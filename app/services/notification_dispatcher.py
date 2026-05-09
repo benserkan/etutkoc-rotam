@@ -203,6 +203,31 @@ def _dispatch_one(
         log.external_id = ext_id
         log.error = None
         log.next_attempt_at = None
+        # Stage 6 — kredi tüket. Sahip = öğretmenin kurumu (varsa) ya da öğretmen.
+        # student → teacher_id → owner. Student yoksa parent'tan teacher zinciri yok;
+        # bu durumda atla (defansif — fatura tutarsızlığı oluşturmamak için).
+        try:
+            from app.models import UsageKind, User as _User
+            from app.services.credits import CreditOwner, record_usage
+            student_id = log.student_id
+            if student_id:
+                stu = db.get(_User, student_id)
+                if stu and stu.teacher_id:
+                    teacher = db.get(_User, stu.teacher_id)
+                    if teacher:
+                        owner = CreditOwner.for_user(teacher)
+                        kind = (
+                            UsageKind.WHATSAPP_SEND
+                            if log.channel == NotificationChannel.WHATSAPP
+                            else UsageKind.EMAIL_SEND
+                        )
+                        record_usage(
+                            db, owner=owner, kind=kind,
+                            metadata={"notification_id": log.id, "kind": log.kind.value if log.kind else None},
+                            autocommit=False,
+                        )
+        except Exception as ce:
+            logger.warning("notification credit record failed (non-fatal): %s", ce)
         return
 
     # Başarısız — retry kararı
