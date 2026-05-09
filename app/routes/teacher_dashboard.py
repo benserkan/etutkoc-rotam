@@ -7,6 +7,11 @@ from app.deps import get_db, require_teacher
 from app.models import User, UserRole
 from app.services.analytics import StudentSnapshot, student_snapshot
 from app.services.request_service import pending_count_for_teacher
+from app.services.risk_analysis import (
+    bulk_risk_assessment,
+    filter_at_risk,
+    get_active_mutes,
+)
 from app.templating import templates
 from sqlalchemy.orm import joinedload
 from app.models import RequestStatus, TaskRequest
@@ -73,6 +78,17 @@ def teacher_dashboard(
     )
     pending_requests_total = pending_count_for_teacher(db, user.id)
 
+    # Risk paneli özeti — sadece aktif öğrenciler, mute'lu olanlar dışta
+    active_students = [s for s in students if s.is_active]
+    risk_assessments = bulk_risk_assessment(db, students=active_students, today=today)
+    muted_ids = get_active_mutes(db, user.id)
+    visible_at_risk = [
+        a for a in filter_at_risk(risk_assessments, min_level="medium")
+        if a.student.id not in muted_ids
+    ]
+    at_risk_count = len(visible_at_risk)
+    at_risk_critical = sum(1 for a in visible_at_risk if a.level == "critical")
+
     return templates.TemplateResponse(
         "teacher/dashboard.html",
         {
@@ -92,5 +108,7 @@ def teacher_dashboard(
             "today_completed": today_completed,
             "pending_requests": pending_requests,
             "pending_requests_total": pending_requests_total,
+            "at_risk_count": at_risk_count,
+            "at_risk_critical": at_risk_critical,
         },
     )

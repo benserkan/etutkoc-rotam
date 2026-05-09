@@ -56,11 +56,32 @@ def institution_dashboard(
     db: Session = Depends(get_db),
 ):
     """Kurum geneli özet dashboard."""
+    from app.services.risk_analysis import bulk_risk_assessment, filter_at_risk
     inst = db.get(Institution, user.institution_id)
     if not inst or not inst.is_active:
         raise HTTPException(status_code=403, detail="Kurum aktif değil")
     agg = institution_aggregate(db, institution_id=inst.id)
     summaries = teacher_summaries(db, institution_id=inst.id)
+
+    # Risk paneli özet — kurumdaki tüm aktif öğrencileri skorla
+    teacher_ids = [s.teacher.id for s in summaries]
+    at_risk_count = 0
+    at_risk_critical = 0
+    if teacher_ids:
+        active_students = (
+            db.query(User)
+            .filter(
+                User.role == UserRole.STUDENT,
+                User.teacher_id.in_(teacher_ids),
+                User.is_active.is_(True),
+            )
+            .all()
+        )
+        risk_assessments = bulk_risk_assessment(db, students=active_students)
+        at_risk = filter_at_risk(risk_assessments, min_level="medium")
+        at_risk_count = len(at_risk)
+        at_risk_critical = sum(1 for a in at_risk if a.level == "critical")
+
     return templates.TemplateResponse(
         "institution/dashboard.html",
         {
@@ -69,6 +90,8 @@ def institution_dashboard(
             "institution": inst,
             "agg": agg,
             "teacher_summaries": summaries,
+            "at_risk_count": at_risk_count,
+            "at_risk_critical": at_risk_critical,
         },
     )
 

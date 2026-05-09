@@ -17,6 +17,7 @@ from app.routes import password as password_routes
 from app.routes import signup as signup_routes
 from app.routes import (
     admin,
+    at_risk,
     health,
     institution,
     parent,
@@ -114,6 +115,7 @@ app.include_router(password_routes.router)
 app.include_router(signup_routes.router)
 app.include_router(admin.router)
 app.include_router(institution.router)
+app.include_router(at_risk.router)
 app.include_router(partials.router)
 app.include_router(teacher_dashboard.router)
 app.include_router(teacher_ai_insights.router)

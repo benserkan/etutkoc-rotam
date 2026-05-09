@@ -19,6 +19,24 @@
   </div>
 </div>
 
+{# Risk callout — yüksek görünürlük, dikkat çekici #}
+{% if at_risk_count > 0 %}
+<a href="/institution/at-risk" class="block mb-4 bg-rose-50 border border-rose-300 rounded-lg p-4 hover:shadow-sm transition">
+  <div class="flex items-center justify-between gap-3">
+    <div class="flex items-center gap-3">
+      <div class="text-3xl flex-shrink-0">⚠️</div>
+      <div>
+        <div class="font-semibold text-rose-900">{{ at_risk_count }} öğrenci risk altında</div>
+        <div class="text-xs text-rose-700 mt-0.5">
+          {% if at_risk_critical > 0 %}🔴 {{ at_risk_critical }} kritik · {% endif %}detayları görmek için tıkla
+        </div>
+      </div>
+    </div>
+    <span class="text-rose-700 text-lg flex-shrink-0">→</span>
+  </div>
+</a>
+{% endif %}
+
 {# Sayım kartları #}
 <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
   <div class="bg-white border border-slate-200 rounded-lg p-4">

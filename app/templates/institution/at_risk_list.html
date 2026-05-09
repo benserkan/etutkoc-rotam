@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+{% block title %}Risk altındaki öğrenciler — {{ institution.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Risk altındaki öğrenciler</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    {{ institution.name }} — kurum genelinde {{ at_risk|length }}/{{ total_students }} öğrenci risk altında, {{ healthy_count }} tanesi sağlıklı.
+  </p>
+</div>
+
+<div class="mb-6 p-3 rounded border border-sky-200 bg-sky-50 text-xs text-sky-800 flex items-start gap-2">
+  <span class="text-base">ℹ️</span>
+  <div>
+    <b>Gizlilik:</b> Bu panel öğrenci programını veya öğretmen notlarını GÖSTERMEZ — sadece "kim risk altında ve niye" bilgisini sunar.
+    Müdahale gerekiyorsa öğretmenle <b>doğrudan iletişime geçin</b>.
+  </div>
+</div>
+
+{# Sayım kartları seviye başına #}
+<div class="grid grid-cols-3 gap-3 mb-6">
+  <div class="bg-white border border-rose-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">🔴 Kritik</div>
+    <div class="text-3xl font-semibold text-rose-700 mt-1">{{ counts.critical }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">acil müdahale önerilir</div>
+  </div>
+  <div class="bg-white border border-orange-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">🟠 Risk</div>
+    <div class="text-3xl font-semibold text-orange-700 mt-1">{{ counts.high }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">öğretmen takip ediyor olmalı</div>
+  </div>
+  <div class="bg-white border border-amber-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">🟡 Dikkat</div>
+    <div class="text-3xl font-semibold text-amber-700 mt-1">{{ counts.medium }}</div>
+    <div class="text-[11px] text-slate-500 mt-1">erken sinyal — izlemde</div>
+  </div>
+</div>
+
+{% if not at_risk %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+  <div class="text-5xl mb-3">🎉</div>
+  <h2 class="text-lg font-semibold text-slate-900 mb-1">Tüm öğrenciler sağlıklı</h2>
+  <p class="text-sm text-slate-500">Şu an hiçbir öğrenci risk altında değil. Sürekli izlemde — bir şey değişirse burada görüneceksin.</p>
+</div>
+{% else %}
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Öğrenci</th>
+        <th class="text-left px-4 py-2">Öğretmen</th>
+        <th class="text-left px-4 py-2">Seviye</th>
+        <th class="text-right px-4 py-2">Skor</th>
+        <th class="text-left px-4 py-2">Niye risk altında</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in at_risk %}
+      <tr {% if r.level == 'critical' %}class="bg-rose-50/40"{% elif r.level == 'high' %}class="bg-orange-50/30"{% endif %}>
+        <td class="px-4 py-3">
+          <div class="font-medium text-slate-900">{{ r.student.full_name }}</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">
+            {% if r.student.grade_level %}{{ r.student.grade_level }}. sınıf{% endif %}
+            {% if r.weekly_planned > 0 %}
+            · {{ r.weekly_completed }}/{{ r.weekly_planned }} (%{{ r.weekly_rate_pct }})
+            {% else %}· plan yok{% endif %}
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          {% set t = teacher_map.get(r.student.teacher_id) %}
+          {% if t %}
+          <div class="text-sm text-slate-800">{{ t.full_name }}</div>
+          <div class="text-[11px] text-slate-500 font-mono">{{ t.email }}</div>
+          {% else %}
+          <span class="text-slate-400 text-xs">öğretmensiz</span>
+          {% endif %}
+          {% if r.student.id in muted_map %}
+          <div class="text-[10px] text-slate-500 mt-0.5">
+            🔕 öğretmen susturmuş
+          </div>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3">
+          <span class="text-base">{{ r.level_emoji }}</span>
+          <span class="text-xs font-medium {% if r.level == 'critical' %}text-rose-700{% elif r.level == 'high' %}text-orange-700{% else %}text-amber-700{% endif %}">{{ r.level_label }}</span>
+        </td>
+        <td class="px-4 py-3 text-right">
+          <span class="text-lg font-semibold {% if r.score >= 80 %}text-rose-700{% elif r.score >= 60 %}text-orange-700{% else %}text-amber-700{% endif %}">{{ r.score }}</span>
+          <span class="text-xs text-slate-400">/100</span>
+        </td>
+        <td class="px-4 py-3">
+          <div class="flex flex-wrap gap-1">
+            {% for ind in r.indicators %}
+            <span class="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200" title="{{ ind.detail }}">
+              {{ ind.title }}
+            </span>
+            {% endfor %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

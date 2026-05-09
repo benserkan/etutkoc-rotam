@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Risk altındaki öğrenciler — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <a href="/teacher" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">Risk altındaki öğrenciler</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Toplam {{ total_students }} öğrencin var. {{ at_risk|length }} tanesi risk altında, {{ healthy_count }} tanesi sağlıklı.
+    </p>
+  </div>
+  <div class="flex items-center gap-2 text-xs">
+    {% if show_muted_flag %}
+    <a href="/teacher/at-risk" class="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">
+      Sustulanları gizle
+    </a>
+    {% else %}
+    <a href="/teacher/at-risk?show_muted=1" class="px-3 py-1.5 border border-slate-300 rounded hover:bg-slate-50">
+      Sustulanları da göster ({{ muted_ids|length }})
+    </a>
+    {% endif %}
+  </div>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">
+  ✓ {{ flash_ok }}
+</div>
+{% endif %}
+
+{% if not at_risk %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+  <div class="text-5xl mb-3">🎉</div>
+  <h2 class="text-lg font-semibold text-slate-900 mb-1">Risk altında öğrenci yok</h2>
+  <p class="text-sm text-slate-500">Tüm öğrencilerin izlemde, sürekli izleniyor — bir şey değişirse burada görüneceksin.</p>
+</div>
+{% else %}
+
+{# Bilgilendirme — risk skoru nasıl hesaplanır #}
+<details class="mb-4 bg-sky-50 border border-sky-200 rounded p-3 text-sm text-sky-900">
+  <summary class="cursor-pointer font-medium">ℹ️ Risk skoru nasıl hesaplanır?</summary>
+  <div class="mt-2 text-xs text-sky-800 space-y-1">
+    <div>• 5+ gündür giriş yok → +25</div>
+    <div>• Haftalık tamamlama < %40 → +30</div>
+    <div>• Üst üste 3+ gün boş → +20</div>
+    <div>• Geçen haftaya göre %30+ düşüş → +15</div>
+    <div>• Bu hafta planlı görev yok → +10</div>
+    <div class="mt-2 pt-2 border-t border-sky-200">
+      <b>Seviyeler:</b> 🟢 0-29 sağlıklı · 🟡 30-59 dikkat · 🟠 60-79 risk · 🔴 80+ kritik
+    </div>
+  </div>
+</details>
+
+<div class="space-y-3">
+  {% for r in at_risk %}
+  {% set is_muted = r.student.id in muted_ids %}
+  <div class="bg-white border {% if r.level == 'critical' %}border-rose-300{% elif r.level == 'high' %}border-orange-300{% elif r.level == 'medium' %}border-amber-300{% else %}border-slate-200{% endif %} rounded-lg overflow-hidden {% if is_muted %}opacity-60{% endif %}">
+    <details class="group">
+      <summary class="cursor-pointer p-4 flex items-center justify-between hover:bg-slate-50 list-none">
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">{{ r.level_emoji }}</span>
+          <div>
+            <div class="font-semibold text-slate-900 flex items-center gap-2">
+              {{ r.student.full_name }}
+              {% if is_muted %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">susturulmuş</span>
+              {% endif %}
+            </div>
+            <div class="text-xs text-slate-500 mt-0.5">
+              <span class="font-medium {% if r.level == 'critical' %}text-rose-700{% elif r.level == 'high' %}text-orange-700{% elif r.level == 'medium' %}text-amber-700{% else %}text-slate-600{% endif %}">{{ r.level_label }}</span>
+              · skor {{ r.score }}/100
+              {% if r.weekly_planned > 0 %}
+              · {{ r.weekly_completed }}/{{ r.weekly_planned }} (%{{ r.weekly_rate_pct }})
+              {% else %}
+              · plan yok
+              {% endif %}
+              {% if r.last_login_days is not none %}
+              · son giriş {{ r.last_login_days }}g
+              {% else %}
+              · hiç girmemiş
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="/teacher/students/{{ r.student.id }}" class="text-xs text-indigo-600 hover:text-indigo-800 px-3 py-1.5 border border-indigo-200 rounded hover:bg-indigo-50">
+            Detay →
+          </a>
+          <span class="text-slate-400 text-xs group-open:rotate-180 transition-transform">▼</span>
+        </div>
+      </summary>
+      <div class="border-t border-slate-100 bg-slate-50/50 p-4 space-y-2">
+        {% for ind in r.indicators %}
+        <div class="flex items-start gap-3">
+          <div class="text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-700 font-mono shrink-0 mt-0.5">+{{ ind.weight }}</div>
+          <div>
+            <div class="text-sm font-medium text-slate-800">{{ ind.title }}</div>
+            <div class="text-xs text-slate-600">{{ ind.detail }}</div>
+          </div>
+        </div>
+        {% endfor %}
+
+        <div class="pt-2 mt-2 border-t border-slate-200 flex items-center justify-end gap-2">
+          {% if is_muted %}
+          <form method="post" action="/teacher/at-risk/{{ r.student.id }}/unmute" class="inline">
+            <button type="submit" class="text-xs px-3 py-1.5 border border-slate-300 text-slate-700 rounded hover:bg-slate-100">
+              Susturmayı kaldır
+            </button>
+          </form>
+          {% else %}
+          <form method="post" action="/teacher/at-risk/{{ r.student.id }}/mute" class="inline flex items-center gap-2"
+                onsubmit="return confirm('{{ r.student.full_name }} için 7 gün boyunca risk uyarısı gizlensin mi? (Yanlış alarm olduğunu düşünüyorsan)');">
+            <input type="text" name="reason" placeholder="neden? (opsiyonel)" maxlength="100"
+                   class="text-xs px-2 py-1 border border-slate-200 rounded w-44" />
+            <button type="submit" class="text-xs px-3 py-1.5 border border-amber-300 text-amber-700 rounded hover:bg-amber-50">
+              7 gün sustur (yanlış alarm)
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+    </details>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}

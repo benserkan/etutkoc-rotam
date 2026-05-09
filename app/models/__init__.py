@@ -9,6 +9,11 @@ from app.models.academic import (
     AcademicYear,
     ExamTarget,
 )
+from app.models.at_risk_mute import (
+    AT_RISK_MUTE_DAYS,
+    AtRiskMute,
+    default_mute_expiry as at_risk_mute_default_expiry,
+)
 from app.models.audit_log import AUDIT_ACTION_LABELS, AuditAction, AuditLog
 from app.models.book import (
     Book,
@@ -75,12 +80,15 @@ from app.models.user import (
 __all__ = [
     "ACADEMIC_PHASE_KIND_BADGES",
     "ACADEMIC_PHASE_KIND_LABELS",
+    "AT_RISK_MUTE_DAYS",
     "AUDIT_ACTION_LABELS",
     "AcademicPhase",
     "AcademicPhaseKind",
     "AcademicYear",
+    "AtRiskMute",
     "AuditAction",
     "AuditLog",
+    "at_risk_mute_default_expiry",
     "Book",
     "BookSection",
     "BookSet",
