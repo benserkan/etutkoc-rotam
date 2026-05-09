@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+{% block title %}KVKK Denetim — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-xs uppercase tracking-[0.2em] text-rose-700 font-semibold">Süper Admin</p>
+  <h1 class="text-2xl font-bold text-slate-900 mt-1">KVKK Denetim Paneli</h1>
+  <p class="text-sm text-slate-600 mt-1 max-w-3xl">
+    KVKK madde 11 kapsamında alınan veri sahibi taleplerini ve sistem geneli kişisel
+    veri envanterini izleyin. Beklemede olan silme talepleri 30 gün sonunda otomatik
+    uygulanır; aciliyet hâlinde aşağıdan manuel uygulayabilirsiniz.
+  </p>
+</div>
+
+{% set qs = request.query_params %}
+{% if qs.get('ok') %}
+<div class="mb-4 p-3 rounded bg-emerald-50 text-emerald-800 text-sm border border-emerald-200">
+  ✓ {{ qs.get('ok') }}
+</div>
+{% endif %}
+{% if qs.get('err') %}
+<div class="mb-4 p-3 rounded bg-rose-50 text-rose-800 text-sm border border-rose-200">
+  {{ qs.get('err') }}
+</div>
+{% endif %}
+
+{# ---------- DURUM SAYIM KARTLARI ---------- #}
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  <div class="bg-white border border-slate-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-slate-500">Toplam Talep</p>
+    <p class="text-2xl font-bold text-slate-900 mt-1">{{ summary.total }}</p>
+  </div>
+  <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-amber-800">İşleniyor</p>
+    <p class="text-2xl font-bold text-amber-900 mt-1">{{ summary.processing or 0 }}</p>
+  </div>
+  <div class="bg-sky-50 border border-sky-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-sky-800">Bekliyor</p>
+    <p class="text-2xl font-bold text-sky-900 mt-1">{{ summary.pending or 0 }}</p>
+  </div>
+  <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-emerald-800">Tamamlandı</p>
+    <p class="text-2xl font-bold text-emerald-900 mt-1">{{ summary.completed or 0 }}</p>
+  </div>
+  <div class="bg-slate-50 border border-slate-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-slate-700">İptal/Red</p>
+    <p class="text-2xl font-bold text-slate-900 mt-1">{{ (summary.cancelled or 0) + (summary.rejected or 0) }}</p>
+  </div>
+</div>
+
+{# ---------- BEKLEYEN TALEPLER ---------- #}
+<section class="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+  <h2 class="font-semibold text-slate-900 mb-3">Bekleyen Talepler</h2>
+  {% if pending_rows %}
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-xs text-slate-500 uppercase border-b border-slate-200">
+          <th class="text-left py-2 font-medium">Tip</th>
+          <th class="text-left py-2 font-medium">Hesap</th>
+          <th class="text-left py-2 font-medium">Talep Tarihi</th>
+          <th class="text-left py-2 font-medium">İşleme Tarihi</th>
+          <th class="text-left py-2 font-medium">Sebep</th>
+          <th class="text-right py-2 font-medium">İşlem</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in pending_rows %}
+        <tr>
+          <td class="py-2.5 text-slate-700">
+            {% if r.kind.value == 'delete' %}<span class="text-rose-700">{{ kind_labels[r.kind] }}</span>
+            {% elif r.kind.value == 'export' %}<span class="text-sky-700">{{ kind_labels[r.kind] }}</span>
+            {% else %}{{ kind_labels[r.kind] }}{% endif %}
+          </td>
+          <td class="py-2.5 text-slate-700">
+            {% if r.target_user %}
+              {{ r.target_user.full_name }}
+              <span class="text-xs text-slate-500">({{ r.target_user.email }})</span>
+            {% else %}
+              <span class="text-slate-400">— (silinmiş)</span>
+            {% endif %}
+          </td>
+          <td class="py-2.5 text-xs text-slate-500">
+            {% if r.created_at %}{{ r.created_at.strftime('%d %b %Y %H:%M') }}{% endif %}
+          </td>
+          <td class="py-2.5 text-xs text-slate-500">
+            {% if r.process_after %}{{ r.process_after.strftime('%d %b %Y') }}{% else %}—{% endif %}
+          </td>
+          <td class="py-2.5 text-xs text-slate-600 max-w-xs">
+            {{ r.reason or '—' }}
+          </td>
+          <td class="py-2.5 text-right">
+            {% if r.kind.value == 'delete' %}
+            <form method="post" action="/admin/kvkk/requests/{{ r.id }}/apply" class="inline">
+              <button type="submit"
+                      class="text-xs text-rose-600 hover:text-rose-800 font-medium px-2"
+                      onclick="return confirm('Bu silme talebini hemen uygulamak istediğinize emin misiniz? Kullanıcı anonimleştirilecek.')">
+                Hemen Uygula
+              </button>
+            </form>
+            <span class="text-slate-300">·</span>
+            {% endif %}
+            <form method="post" action="/admin/kvkk/requests/{{ r.id }}/reject" class="inline">
+              <input type="hidden" name="note" value="Süper admin reddetti">
+              <button type="submit"
+                      class="text-xs text-slate-600 hover:text-slate-900 font-medium px-2"
+                      onclick="return confirm('Bu talebi reddetmek istediğinize emin misiniz?')">
+                Reddet
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="text-sm text-slate-500 italic">Bekleyen talep yok 🎉</p>
+  {% endif %}
+</section>
+
+{# ---------- VERI ENVANTERI ---------- #}
+<section class="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+  <h2 class="font-semibold text-slate-900 mb-1">Sistem Veri Envanteri</h2>
+  <p class="text-xs text-slate-600 mb-4">
+    KVKK madde 10 aydınlatma metni kaynağı. Hangi tablo, hangi amaçla, hangi hukuki temelle
+    işliyor + saklama süreleri.
+  </p>
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="text-xs text-slate-500 uppercase border-b border-slate-200">
+          <th class="text-left py-2 font-medium">Tablo</th>
+          <th class="text-left py-2 font-medium">Etiket</th>
+          <th class="text-left py-2 font-medium">Kişisel Veri?</th>
+          <th class="text-left py-2 font-medium">Saklama</th>
+          <th class="text-left py-2 font-medium">Hukuki Temel</th>
+          <th class="text-left py-2 font-medium">Amaç</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for item in data_inventory %}
+        <tr>
+          <td class="py-2 text-xs text-slate-500 font-mono">{{ item.table_name }}</td>
+          <td class="py-2 text-slate-800">{{ item.label }}</td>
+          <td class="py-2">
+            {% if item.contains_pii %}
+            <span class="text-xs text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded">PII</span>
+            {% else %}
+            <span class="text-xs text-slate-500">Anonim</span>
+            {% endif %}
+          </td>
+          <td class="py-2 text-xs text-slate-600">
+            {% if item.retention_days %}{{ item.retention_days }} gün{% else %}Sözleşme süresince{% endif %}
+          </td>
+          <td class="py-2 text-xs text-slate-600">{{ item.legal_basis }}</td>
+          <td class="py-2 text-xs text-slate-600">{{ item.purpose }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{# ---------- SON İŞLENMİŞ ---------- #}
+<section class="bg-white border border-slate-200 rounded-xl p-6">
+  <h2 class="font-semibold text-slate-900 mb-3">Son Talepler (20)</h2>
+  {% if recent_rows %}
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-xs text-slate-500 uppercase border-b border-slate-200">
+        <th class="text-left py-2 font-medium">Tip</th>
+        <th class="text-left py-2 font-medium">Hesap</th>
+        <th class="text-left py-2 font-medium">Durum</th>
+        <th class="text-left py-2 font-medium">Tarih</th>
+        <th class="text-left py-2 font-medium">Not</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in recent_rows %}
+      <tr>
+        <td class="py-2 text-slate-700">{{ kind_labels[r.kind] }}</td>
+        <td class="py-2 text-slate-700">
+          {% if r.target_user %}{{ r.target_user.full_name }}
+          {% else %}<span class="text-slate-400">—</span>{% endif %}
+        </td>
+        <td class="py-2">
+          <span class="text-xs px-1.5 py-0.5 rounded
+                       {% if r.status.value == 'completed' %}bg-emerald-50 text-emerald-700
+                       {% elif r.status.value == 'processing' %}bg-amber-50 text-amber-700
+                       {% elif r.status.value == 'cancelled' %}bg-slate-100 text-slate-600
+                       {% elif r.status.value == 'rejected' %}bg-rose-50 text-rose-700
+                       {% else %}bg-sky-50 text-sky-700{% endif %}">
+            {{ status_labels[r.status] }}
+          </span>
+        </td>
+        <td class="py-2 text-xs text-slate-500">
+          {% if r.created_at %}{{ r.created_at.strftime('%d %b %Y') }}{% endif %}
+        </td>
+        <td class="py-2 text-xs text-slate-500">{{ r.admin_note or '—' }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="text-sm text-slate-500 italic">Henüz talep yok.</p>
+  {% endif %}
+</section>
+{% endblock %}

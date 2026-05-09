@@ -207,6 +207,7 @@
             <a href="/admin/feature-flags" class="text-slate-600 hover:text-slate-900">🚦 Özellikler</a>
             <a href="/admin/announcements" class="text-slate-600 hover:text-slate-900">📢 Duyuru</a>
             <a href="/admin/system-health" class="text-slate-600 hover:text-slate-900">🩺 Sağlık</a>
+            <a href="/admin/kvkk" class="text-slate-600 hover:text-slate-900">⚖️ KVKK</a>
             <a href="/admin/audit" class="text-slate-600 hover:text-slate-900">📜 Audit</a>
           {% elif user.role.value == 'institution_admin' %}
             <a href="/institution" class="text-slate-600 hover:text-slate-900">Panel</a>
@@ -267,6 +268,9 @@
           </span>
         {% endif %}
         <span class="text-slate-600">{{ user.full_name }}</span>
+        {% if user.role.value != 'super_admin' %}
+        <a href="/me" class="text-slate-500 hover:text-brand-tealDark text-xs" title="Hesabım ve KVKK haklarım">⚖️</a>
+        {% endif %}
         <form action="/logout" method="post">
           <button type="submit" class="text-slate-500 hover:text-red-600">Çıkış</button>
         </form>

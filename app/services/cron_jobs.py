@@ -534,6 +534,17 @@ def trial_expire(db: Session, *, now: datetime) -> dict:
     return expire_trials(db, now=now)
 
 
+def kvkk_apply_expired_deletions(db: Session, *, now: datetime) -> dict:
+    """Cron: 30g grace period'u dolmuş silme taleplerini uygular.
+
+    Günlük 02:00 UTC. PROCESSING durumundaki delete talepleri için
+    process_after <= now ise apply_deletion çağrılır (kullanıcı anonimleştirilir).
+    İdempotent — bir kez uygulanan kayıt COMPLETED'a geçer.
+    """
+    from app.services.kvkk import cron_apply_expired_deletions
+    return cron_apply_expired_deletions(db, now=now)
+
+
 def subscription_resume(db: Session, *, now: datetime) -> dict:
     """Cron: pause_until'i geçmiş kurumları otomatik akademik yıla resume eder.
 
@@ -608,4 +619,5 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "addons_monthly_renewal": addons_monthly_renewal,
     "subscription_resume": subscription_resume,
     "subscription_guarantee_eval": subscription_guarantee_eval,
+    "kvkk_apply_expired_deletions": kvkk_apply_expired_deletions,
 }

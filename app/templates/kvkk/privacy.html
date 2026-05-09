@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}Gizlilik Politikası — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto prose prose-slate">
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Veri Koruma</p>
+  <h1 class="text-3xl font-bold text-slate-900 mt-2 mb-2">Gizlilik Politikası</h1>
+  <p class="text-sm text-slate-500 mb-8">Son güncelleme: 9 Mayıs 2026</p>
+
+  <div class="bg-white border border-slate-200 rounded-xl p-6 space-y-5 text-sm text-slate-700 leading-relaxed">
+    <p>
+      ETÜTKOÇ Rotam olarak, hizmetimizi kullanan tüm öğretmen, öğrenci, veli ve kurum
+      yöneticilerinin gizliliğini en yüksek öncelikte tutuyoruz. Bu politika sistemde
+      hangi verileri topladığımızı, nasıl kullandığımızı ve nasıl koruduğumuzu açıklar.
+      Detaylı veri kategorileri, hukuki temeller ve haklarınız için
+      <a href="/kvkk" class="text-brand-teal hover:text-brand-tealDark">KVKK Aydınlatma Metni</a>
+      sayfasını ziyaret edebilirsiniz.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">Topladığımız Bilgiler</h2>
+    <ul class="space-y-1 list-disc pl-5">
+      <li>Hesap oluşturma sırasında: ad, soyad, e-posta, şifre (kriptografik hash olarak saklanır).</li>
+      <li>Kullanım sırasında: çalışma planları, görev tamamlama bilgisi, oturum açma kayıtları.</li>
+      <li>Veli onayıyla: telefon numarası (yalnızca WhatsApp bildirimi için).</li>
+      <li>İsteğe bağlı: alan tercihi, hedef sınav, sınıf seviyesi.</li>
+    </ul>
+
+    <h2 class="text-base font-semibold text-slate-900">Verilerinizi Nasıl Kullanırız</h2>
+    <ul class="space-y-1 list-disc pl-5">
+      <li>Hizmetin sağlanması ve iyileştirilmesi.</li>
+      <li>Hesap güvenliği ve dolandırıcılık önleme.</li>
+      <li>Yapay zeka ile çalışma planı önerisi (anonimleştirilmiş veriyle).</li>
+      <li>Yasal yükümlülükler ve denetim.</li>
+    </ul>
+    <p>
+      <b>Verilerinizi asla satmayız.</b> Reklam ağlarına aktarmayız. Üçüncü taraf
+      pazarlama amaçlı paylaşmayız.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">Veri Güvenliği</h2>
+    <ul class="space-y-1 list-disc pl-5">
+      <li>HTTPS şifreli iletişim (tüm veri trafiği).</li>
+      <li>Güçlü şifre politikası (rol bazlı minimum karmaşıklık).</li>
+      <li>Bcrypt ile şifre hash (geri çevrilemez).</li>
+      <li>Kurum bazlı tenant izolasyonu (cross-tenant erişim kapalı).</li>
+      <li>Kapsamlı denetim logu (180 gün saklama).</li>
+      <li>Süper admin sahte oturum (impersonate) açıkça loglanır ve banner ile gösterilir.</li>
+    </ul>
+
+    <h2 class="text-base font-semibold text-slate-900">Çerezler</h2>
+    <p>
+      Yalnızca oturum yönetimi için zorunlu çerezler kullanılır (HttpOnly + SameSite=Lax +
+      production'da Secure). Pazarlama veya analitik çerezi kullanmıyoruz.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">Çocukların Gizliliği</h2>
+    <p>
+      Sistem 13 yaş altı kullanıcılar için tasarlanmamıştır. 13-18 yaş arası öğrencilerin
+      kayıtları yalnızca veli onayı veya kurum davetiyesi ile yapılır.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">Politika Değişiklikleri</h2>
+    <p>
+      Bu politika güncellendiğinde "Son güncelleme" tarihi değiştirilir. Önemli değişiklikler
+      e-posta veya panel duyurusu ile aktif kullanıcılara bildirilir.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">İletişim</h2>
+    <p>
+      Sorularınız için:
+      <a href="mailto:kvkk@etutkocrotam.app" class="text-brand-teal hover:text-brand-tealDark">
+        kvkk@etutkocrotam.app
+      </a>
+    </p>
+  </div>
+</article>
+{% endblock %}

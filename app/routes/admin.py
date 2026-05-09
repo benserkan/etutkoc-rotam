@@ -1804,3 +1804,118 @@ def announcements_delete(
         url="/admin/announcements?ok=" + quote("Duyuru silindi"),
         status_code=303,
     )
+
+
+# ============ Stage 10 — KVKK denetim paneli ============
+
+
+@router.get("/kvkk")
+def admin_kvkk_dashboard(
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """KVKK denetim genel bakış: durum sayım + bekleyen talepler + envanter linki."""
+    from app.models import (
+        DATA_REQUEST_KIND_LABELS_TR, DATA_REQUEST_STATUS_LABELS_TR,
+        DataSubjectRequest,
+    )
+    from app.services.kvkk import DATA_INVENTORY, request_summary
+
+    summary = request_summary(db)
+    pending_rows = (
+        db.query(DataSubjectRequest)
+        .options(
+            joinedload(DataSubjectRequest.target_user),
+            joinedload(DataSubjectRequest.requester_user),
+        )
+        .filter(DataSubjectRequest.status.in_(["pending", "processing"]))
+        .order_by(DataSubjectRequest.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    recent_rows = (
+        db.query(DataSubjectRequest)
+        .options(joinedload(DataSubjectRequest.target_user))
+        .order_by(DataSubjectRequest.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "admin/kvkk_dashboard.html",
+        {
+            "request": request,
+            "user": user,
+            "summary": summary,
+            "pending_rows": pending_rows,
+            "recent_rows": recent_rows,
+            "data_inventory": DATA_INVENTORY,
+            "kind_labels": DATA_REQUEST_KIND_LABELS_TR,
+            "status_labels": DATA_REQUEST_STATUS_LABELS_TR,
+        },
+    )
+
+
+@router.post("/kvkk/requests/{request_id}/apply")
+def admin_kvkk_apply(
+    request_id: int,
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Bekleyen silme talebini hemen uygula (admin override — 30g grace'i atla).
+
+    Yalnız delete tipi için. Export tipleri zaten oluşturulduğunda tamamlanır.
+    """
+    from app.models import DataSubjectRequest, DataRequestKind, DataRequestStatus
+    from app.services.kvkk import apply_deletion
+
+    req = db.get(DataSubjectRequest, request_id)
+    if req is None:
+        raise HTTPException(status_code=404)
+    if req.kind != DataRequestKind.DELETE:
+        return RedirectResponse(
+            url="/admin/kvkk?err=" + quote("Yalnız silme talepleri uygulanabilir"),
+            status_code=303,
+        )
+    if req.status not in (DataRequestStatus.PENDING, DataRequestStatus.PROCESSING):
+        return RedirectResponse(
+            url="/admin/kvkk?err=" + quote("Bu talep zaten kapatıldı"),
+            status_code=303,
+        )
+
+    apply_deletion(db, request=req, by_user=user)
+    return RedirectResponse(
+        url="/admin/kvkk?ok=" + quote("Silme talebi uygulandı"),
+        status_code=303,
+    )
+
+
+@router.post("/kvkk/requests/{request_id}/reject")
+def admin_kvkk_reject(
+    request_id: int,
+    request: Request,
+    note: str = Form(""),
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Talebi reddet — admin gerekçe yazar."""
+    from app.models import DataSubjectRequest, DataRequestStatus
+
+    req = db.get(DataSubjectRequest, request_id)
+    if req is None:
+        raise HTTPException(status_code=404)
+    if req.status not in (DataRequestStatus.PENDING, DataRequestStatus.PROCESSING):
+        return RedirectResponse(
+            url="/admin/kvkk?err=" + quote("Bu talep zaten kapatıldı"),
+            status_code=303,
+        )
+    req.status = DataRequestStatus.REJECTED
+    req.processed_by_user_id = user.id
+    req.processed_at = datetime.now(timezone.utc)
+    req.admin_note = (note or "").strip()[:500] or "Admin reddetti"
+    db.commit()
+    return RedirectResponse(
+        url="/admin/kvkk?ok=" + quote("Talep reddedildi"),
+        status_code=303,
+    )

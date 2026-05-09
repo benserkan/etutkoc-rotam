@@ -41,6 +41,14 @@ from app.models.book import (
     BookType,
 )
 from app.models.cron import CronSchedule
+from app.models.data_subject_request import (
+    DATA_REQUEST_KIND_LABELS_TR,
+    DATA_REQUEST_STATUS_LABELS_TR,
+    DELETE_GRACE_PERIOD_DAYS,
+    DataRequestKind,
+    DataRequestStatus,
+    DataSubjectRequest,
+)
 from app.models.feature_flag import FeatureFlag, FeatureFlagOverride
 from app.models.institution import Institution
 from app.models.invitation import (
@@ -128,6 +136,12 @@ __all__ = [
     "BookTemplateSection",
     "BookType",
     "CronSchedule",
+    "DATA_REQUEST_KIND_LABELS_TR",
+    "DATA_REQUEST_STATUS_LABELS_TR",
+    "DELETE_GRACE_PERIOD_DAYS",
+    "DataRequestKind",
+    "DataRequestStatus",
+    "DataSubjectRequest",
     "CURRICULUM_MODEL_LABELS",
     "CurriculumModel",
     "EXAM_SECTION_LABELS",
