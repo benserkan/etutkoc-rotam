@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Hedeflerim — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Hedef Ağacım</p>
+  <h1 class="text-2xl font-bold text-slate-900 mt-1">Hedeflerim</h1>
+  <p class="text-sm text-slate-600 mt-1">
+    Sınav hedefinizden günlük çalışmaya kadar tüm hedeflerinizin ağaç görünümü.
+    Yaprak hedeflerin ilerlemesi otomatik üst hedeflere yansır.
+  </p>
+</div>
+
+{# ---------- ÖZET KART ---------- #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="bg-white border border-slate-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-slate-500">Toplam Hedef</p>
+    <p class="text-2xl font-bold text-slate-900 mt-1">{{ summary.total }}</p>
+  </div>
+  <div class="bg-white border border-emerald-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-emerald-700">Tamamlanan</p>
+    <p class="text-2xl font-bold text-emerald-700 mt-1">{{ summary.achieved }}</p>
+  </div>
+  <div class="bg-white border border-sky-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-sky-700">Genel İlerleme</p>
+    <p class="text-2xl font-bold text-sky-700 mt-1">
+      {% if summary.overall_pct is not none %}%{{ summary.overall_pct }}{% else %}—{% endif %}
+    </p>
+  </div>
+  <div class="bg-white border border-amber-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-amber-700">Yaklaşan Tarih</p>
+    <p class="text-sm font-bold text-amber-700 mt-1">
+      {% if summary.next_target_date %}{{ summary.next_target_date }}{% else %}—{% endif %}
+    </p>
+  </div>
+</div>
+
+{# ---------- AĞAÇ ---------- #}
+<div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+  {% if roots %}
+    {% for root in roots %}
+    {% set node = root %}{% set depth = 0 %}
+    {% include 'goals/_tree_node.html' %}
+    {% endfor %}
+  {% else %}
+  <div class="text-center py-12">
+    <span class="text-4xl block mb-3">🎯</span>
+    <h3 class="text-lg font-semibold text-slate-900">Henüz hedefiniz yok</h3>
+    <p class="text-sm text-slate-600 mt-2 max-w-md mx-auto">
+      Öğretmeniniz size hedef tanımlayabilir veya sistem sınav hedefinizden
+      otomatik türetebilir. Hedefleriniz hazır olduğunda buradan göreceksiniz.
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="mt-6 text-center">
+  <a href="{{ back_url }}" class="text-sm text-slate-600 hover:text-slate-900">
+    ← Bugüne Dön
+  </a>
+</div>
+{% endblock %}

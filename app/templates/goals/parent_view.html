@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — Hedefler{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Veli Görünümü</p>
+  <h1 class="text-2xl font-bold text-slate-900 mt-1">
+    {{ student.full_name }} — Hedef Ağacı
+  </h1>
+  <p class="text-sm text-slate-600 mt-1">
+    Çocuğunuzun sınav, ders ve operasyonel hedefleri. Bu görünüm yalnız okuma —
+    hedef değişiklikleri öğretmen tarafından yapılır.
+  </p>
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="bg-white border border-slate-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-slate-500">Toplam</p>
+    <p class="text-2xl font-bold text-slate-900 mt-1">{{ summary.total }}</p>
+  </div>
+  <div class="bg-white border border-emerald-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-emerald-700">Tamam</p>
+    <p class="text-2xl font-bold text-emerald-700 mt-1">{{ summary.achieved }}</p>
+  </div>
+  <div class="bg-white border border-sky-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-sky-700">Genel İlerleme</p>
+    <p class="text-2xl font-bold text-sky-700 mt-1">
+      {% if summary.overall_pct is not none %}%{{ summary.overall_pct }}{% else %}—{% endif %}
+    </p>
+  </div>
+  <div class="bg-white border border-amber-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-amber-700">Yaklaşan</p>
+    <p class="text-sm font-bold text-amber-700 mt-1">
+      {% if summary.next_target_date %}{{ summary.next_target_date }}{% else %}—{% endif %}
+    </p>
+  </div>
+</div>
+
+<div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+  {% if roots %}
+    {% for root in roots %}
+    {% set node = root %}{% set depth = 0 %}
+    {% include 'goals/_tree_node.html' %}
+    {% endfor %}
+  {% else %}
+  <div class="text-center py-12">
+    <span class="text-4xl block mb-3">🎯</span>
+    <p class="text-sm text-slate-600">Henüz hedef tanımlanmamış. Öğretmen yakında ekleyecek.</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="mt-6 text-center">
+  <a href="{{ back_url }}" class="text-sm text-slate-600 hover:text-slate-900">
+    ← {{ student.full_name }} özetine dön
+  </a>
+</div>
+{% endblock %}

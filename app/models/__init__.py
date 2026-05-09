@@ -90,6 +90,14 @@ from app.models.plan_history import (
 )
 from app.models.progress import SectionProgress, StudentBook
 from app.models.quota import InstitutionQuotaOverride
+from app.models.student_goal import (
+    GOAL_KIND_EMOJIS,
+    GOAL_KIND_LABELS_TR,
+    GOAL_STATUS_LABELS_TR,
+    GoalKind,
+    GoalStatus,
+    StudentGoal,
+)
 from app.models.suggestion_feedback import FeedbackAction, SuggestionFeedback
 from app.models.task import Task, TaskBookItem, TaskStatus, TaskType
 from app.models.task_request import (
@@ -176,6 +184,12 @@ __all__ = [
     "RequestStatus",
     "RequestType",
     "SectionProgress",
+    "GOAL_KIND_EMOJIS",
+    "GOAL_KIND_LABELS_TR",
+    "GOAL_STATUS_LABELS_TR",
+    "GoalKind",
+    "GoalStatus",
+    "StudentGoal",
     "StudentBook",
     "Subject",
     "SuggestionFeedback",

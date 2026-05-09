@@ -21,6 +21,7 @@ from app.routes import signup as signup_routes
 from app.routes import (
     admin,
     at_risk,
+    goals,
     health,
     institution,
     parent,
@@ -196,6 +197,7 @@ app.include_router(teacher_requests.router)
 app.include_router(student.router)
 app.include_router(student_requests.router)
 app.include_router(parent.router)
+app.include_router(goals.router)
 app.include_router(whatsapp_webhook.router)
 
 

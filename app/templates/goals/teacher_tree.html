@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — Hedef Ağacı{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Hedef Yönetimi</p>
+  <h1 class="text-2xl font-bold text-slate-900 mt-1">
+    {{ student.full_name }} — Hedef Ağacı
+  </h1>
+  <p class="text-sm text-slate-600 mt-1">
+    Bu öğrenci için sınav, ders, konu ve operasyonel hedef düğümlerini yönetin.
+    Yaprak hedeflerdeki ilerleme otomatik üst düğümlere yansır.
+  </p>
+</div>
+
+{% set qs = request.query_params %}
+{% if qs.get('ok') %}
+<div class="mb-4 p-3 rounded bg-emerald-50 text-emerald-800 text-sm border border-emerald-200">
+  ✓ İşlem başarılı: {{ qs.get('ok') }}
+</div>
+{% endif %}
+{% if qs.get('err') %}
+<div class="mb-4 p-3 rounded bg-rose-50 text-rose-800 text-sm border border-rose-200">
+  Hata: {{ qs.get('err') }}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  {# ---------- AĞAÇ ---------- #}
+  <div class="lg:col-span-2 space-y-4">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white border border-slate-200 rounded-xl p-3">
+        <p class="text-xs text-slate-500">Toplam</p>
+        <p class="text-xl font-bold text-slate-900 mt-1">{{ summary.total }}</p>
+      </div>
+      <div class="bg-white border border-sky-200 rounded-xl p-3">
+        <p class="text-xs text-sky-700">Aktif</p>
+        <p class="text-xl font-bold text-sky-700 mt-1">{{ summary.active }}</p>
+      </div>
+      <div class="bg-white border border-emerald-200 rounded-xl p-3">
+        <p class="text-xs text-emerald-700">Tamam</p>
+        <p class="text-xl font-bold text-emerald-700 mt-1">{{ summary.achieved }}</p>
+      </div>
+      <div class="bg-white border border-slate-200 rounded-xl p-3">
+        <p class="text-xs text-slate-500">İlerleme</p>
+        <p class="text-xl font-bold text-slate-900 mt-1">
+          {% if summary.overall_pct is not none %}%{{ summary.overall_pct }}{% else %}—{% endif %}
+        </p>
+      </div>
+    </div>
+
+    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
+      {% if roots %}
+        {% for root in roots %}
+        {% set node = root %}{% set depth = 0 %}
+        {% include 'goals/_tree_node.html' %}
+        {% endfor %}
+      {% else %}
+      <div class="text-center py-10">
+        <span class="text-3xl block mb-2">🎯</span>
+        <p class="text-sm text-slate-700 font-medium">Henüz hedef yok</p>
+        <p class="text-xs text-slate-500 mt-1 mb-4 max-w-md mx-auto">
+          Öğrencinin sınav hedefinden ({{ student.effective_exam_label or '—' }}) otomatik
+          ders ağacı türetebilir veya sağdaki formla manuel hedef ekleyebilirsiniz.
+        </p>
+        {% if student.effective_exam_target %}
+        <form method="post" action="/teacher/students/{{ student.id }}/goals/seed" class="inline">
+          <button type="submit"
+                  class="px-4 py-2 bg-brand-teal text-white rounded text-sm hover:bg-brand-tealDark"
+                  onclick="return confirm('{{ student.effective_exam_label }} sınavından otomatik ders ağacı oluşturulsun mu?')">
+            🤖 Sınav Hedefinden Otomatik Türet
+          </button>
+        </form>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# ---------- YENI HEDEF FORM ---------- #}
+  <aside>
+    <div class="bg-white border border-slate-200 rounded-xl p-5 sticky top-4">
+      <h3 class="font-semibold text-slate-900 mb-3">+ Yeni Hedef Ekle</h3>
+      <form method="post" action="/teacher/students/{{ student.id }}/goals/create"
+            class="space-y-3 text-sm">
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Hedef Türü</label>
+          <select name="kind" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+            {% for k in kind_options %}
+            <option value="{{ k.value }}">{{ kind_labels[k] }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Üst Hedef (opsiyonel)</label>
+          <select name="parent_id" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+            <option value="">— Kök hedef —</option>
+            {% macro flatten_options(nodes, depth=0) %}
+              {% for n in nodes %}
+              <option value="{{ n.goal.id }}">{{ '— ' * depth }}{{ kind_emojis.get(n.goal.kind, '⭐') }} {{ n.goal.title }}</option>
+              {{ flatten_options(n.children, depth + 1) }}
+              {% endfor %}
+            {% endmacro %}
+            {{ flatten_options(roots) }}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Başlık *</label>
+          <input type="text" name="title" required maxlength="200"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm"
+                 placeholder="Ör. Matematik 36/40 net" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-600 mb-1">Açıklama</label>
+          <textarea name="description" rows="2" maxlength="500"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm"></textarea>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Hedef</label>
+            <input type="text" name="target_value" inputmode="decimal"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm"
+                   placeholder="36" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Şu an</label>
+            <input type="text" name="current_value" inputmode="decimal"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm"
+                   placeholder="0" />
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Birim</label>
+            <input type="text" name="unit" maxlength="20"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm"
+                   placeholder="net / % / saat" />
+          </div>
+          <div>
+            <label class="block text-xs font-medium text-slate-600 mb-1">Hedef Tarih</label>
+            <input type="date" name="target_date"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+          </div>
+        </div>
+        <button type="submit"
+                class="w-full px-3 py-2 bg-brand-teal text-white rounded text-sm font-medium hover:bg-brand-tealDark">
+          Hedefi Oluştur
+        </button>
+      </form>
+    </div>
+  </aside>
+</div>
+
+<div class="mt-6 text-center">
+  <a href="{{ back_url }}" class="text-sm text-slate-600 hover:text-slate-900">
+    ← {{ student.full_name }} öğrenci profiline dön
+  </a>
+</div>
+{% endblock %}

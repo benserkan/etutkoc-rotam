@@ -1,0 +1,124 @@
+{# Tek hedef düğümü — kendisi ve altları rekürsif render.
+   Kullanım:
+     {% include 'goals/_tree_node.html' with context %}
+   Beklenen: node (GoalNode), is_owner (bool), kind_emojis, kind_labels,
+             status_labels. Eğer öğretmen modunda ise extra editing butonları
+             görünür (is_owner=False ve user.role=teacher senaryosu) #}
+
+{% set g = node.goal %}
+{% set is_leaf = not node.children %}
+{% set pct = node.aggregated_pct %}
+
+<details class="goal-node ml-{{ depth * 4 if depth else 0 }} mb-2"
+         {% if g.status.value == 'active' %}open{% endif %}>
+  <summary class="cursor-pointer list-none flex items-start gap-3 p-3 bg-white border
+                  {% if g.status.value == 'achieved' %}border-emerald-300 bg-emerald-50
+                  {% elif g.status.value == 'abandoned' %}border-slate-200 bg-slate-50 opacity-70
+                  {% else %}border-slate-200{% endif %}
+                  rounded-lg hover:shadow-sm transition">
+    <span class="text-2xl flex-shrink-0">{{ kind_emojis.get(g.kind, '⭐') }}</span>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <span class="font-medium text-slate-900">{{ g.title }}</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 uppercase">
+          {{ kind_labels.get(g.kind, g.kind.value) }}
+        </span>
+        {% if g.status.value == 'achieved' %}
+        <span class="text-xs px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 font-semibold">
+          ✓ Tamamlandı
+        </span>
+        {% elif g.status.value == 'abandoned' %}
+        <span class="text-xs px-1.5 py-0.5 rounded bg-slate-200 text-slate-600">
+          Bırakıldı
+        </span>
+        {% endif %}
+        {% if g.is_auto_generated %}
+        <span class="text-[10px] text-slate-400" title="Sistem türetti">🤖</span>
+        {% endif %}
+      </div>
+      {% if g.description %}
+      <p class="text-sm text-slate-600 mt-1">{{ g.description }}</p>
+      {% endif %}
+      <div class="mt-2 flex items-center gap-3 text-xs text-slate-500 flex-wrap">
+        {% if g.target_value is not none %}
+        <span>
+          <b class="text-slate-700">{{ '%g' % g.current_value if g.current_value else 0 }}</b> /
+          <b>{{ '%g' % g.target_value }}</b>
+          {% if g.unit %} <span>{{ g.unit }}</span>{% endif %}
+        </span>
+        {% endif %}
+        {% if g.target_date %}
+        <span>📅 {{ g.target_date.strftime('%d %b %Y') }}</span>
+        {% endif %}
+        {% if node.total_count > 1 %}
+        <span>🌿 {{ node.achieved_count }}/{{ node.total_count }} alt hedef tamam</span>
+        {% endif %}
+      </div>
+      {% if pct is not none %}
+      <div class="mt-2 h-1.5 bg-slate-100 rounded overflow-hidden">
+        <div class="h-full
+                    {% if pct >= 100 %}bg-emerald-500
+                    {% elif pct >= 60 %}bg-brand-teal
+                    {% elif pct >= 30 %}bg-brand-yellow
+                    {% else %}bg-rose-400{% endif %}"
+             style="width: {{ pct }}%"></div>
+      </div>
+      <div class="text-[11px] text-slate-500 mt-0.5">
+        İlerleme: <b>%{{ pct }}</b>
+      </div>
+      {% endif %}
+    </div>
+    {% if not is_leaf %}
+    <span class="chev text-slate-400 text-xs flex-shrink-0">▼</span>
+    {% endif %}
+  </summary>
+
+  {# Eylem butonları (sadece sayfa içinde, summary'nin dışında) #}
+  {% if is_owner and is_leaf and g.status.value == 'active' and g.target_value is not none %}
+  <form method="post" action="/student/goals/{{ g.id }}/update-progress"
+        class="mt-2 ml-12 flex items-center gap-2 text-sm">
+    <label class="text-xs text-slate-600">Güncel değerimi gir:</label>
+    <input type="text" name="current_value" inputmode="decimal"
+           value="{{ '%g' % g.current_value if g.current_value else '' }}"
+           class="px-2 py-1 border border-slate-300 rounded w-24 text-sm" />
+    {% if g.unit %}<span class="text-xs text-slate-500">{{ g.unit }}</span>{% endif %}
+    <button type="submit" class="px-3 py-1 bg-brand-teal text-white rounded text-xs">
+      Kaydet
+    </button>
+  </form>
+  {% endif %}
+
+  {% if not is_owner and user.role.value == 'teacher' and g.status.value == 'active' %}
+  <div class="mt-2 ml-12 flex flex-wrap gap-2 text-sm">
+    <form method="post" action="/teacher/goals/{{ g.id }}/achieve" class="inline">
+      <button type="submit" class="px-3 py-1 bg-emerald-500 text-white rounded text-xs hover:bg-emerald-600"
+              onclick="return confirm('Bu hedefi tamamlandı olarak işaretlemek istiyor musunuz?')">
+        ✓ Tamamlandı İşaretle
+      </button>
+    </form>
+    <form method="post" action="/teacher/goals/{{ g.id }}/abandon" class="inline">
+      <button type="submit" class="px-3 py-1 bg-slate-300 text-slate-700 rounded text-xs hover:bg-slate-400"
+              onclick="return confirm('Bu hedefi bırakıldı olarak işaretlemek istiyor musunuz?')">
+        Bırak
+      </button>
+    </form>
+    <form method="post" action="/teacher/goals/{{ g.id }}/delete" class="inline">
+      <button type="submit" class="px-3 py-1 bg-rose-100 text-rose-700 rounded text-xs hover:bg-rose-200"
+              onclick="return confirm('Bu hedefi tamamen silmek istiyor musunuz? Alt hedefler de silinir.')">
+        Sil
+      </button>
+    </form>
+  </div>
+  {% endif %}
+
+  {# Alt hedefler — rekürsif #}
+  {% if node.children %}
+  <div class="mt-2 pl-8 border-l-2 border-slate-100">
+    {% for child in node.children %}
+    {% set _save_node = node %}{% set node = child %}{% set _save_depth = depth %}{% set depth = (depth or 0) + 1 %}
+    {% include 'goals/_tree_node.html' %}
+    {% set node = _save_node %}{% set depth = _save_depth %}
+    {% endfor %}
+  </div>
+  {% endif %}
+</details>

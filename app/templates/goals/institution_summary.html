@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Hedef Analizi — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Kurum Geneli</p>
+  <h1 class="text-2xl font-bold text-slate-900 mt-1">Hedef Analizi</h1>
+  <p class="text-sm text-slate-600 mt-1 max-w-3xl">
+    Kurumdaki tüm öğrencilerin hedef ağaçlarının agregat özeti. Detaylı öğrenci-bazlı
+    görünüm gizlilik kuralı gereği yalnızca öğretmen panelinde görünür.
+  </p>
+</div>
+
+{# ---------- ÖZET KART ---------- #}
+<div class="grid grid-cols-2 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white border border-slate-200 rounded-xl p-5">
+    <p class="text-xs uppercase text-slate-500">Hedefli Öğrenci</p>
+    <p class="text-3xl font-bold text-slate-900 mt-1">{{ summary.students_with_goals }}</p>
+    <p class="text-xs text-slate-500 mt-1">
+      Toplam {{ summary.students_with_goals + summary.students_without_goals }} öğrenciden
+    </p>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-xl p-5">
+    <p class="text-xs uppercase text-slate-500">Toplam Hedef</p>
+    <p class="text-3xl font-bold text-slate-900 mt-1">{{ summary.total_goals }}</p>
+    <div class="mt-2 text-xs text-slate-600">
+      {{ summary.active_goals }} aktif · {{ summary.achieved_goals }} tamam
+    </div>
+  </div>
+  <div class="bg-white border border-brand-teal/30 rounded-xl p-5">
+    <p class="text-xs uppercase text-brand-tealDark">Ortalama İlerleme</p>
+    <p class="text-3xl font-bold text-brand-tealDark mt-1">
+      {% if summary.avg_overall_pct is not none %}%{{ summary.avg_overall_pct }}{% else %}—{% endif %}
+    </p>
+    <p class="text-xs text-slate-500 mt-1">
+      Tüm hedefli öğrencilerin ortalaması
+    </p>
+  </div>
+</div>
+
+{# ---------- HEDEFSIZ ÖĞRENCI UYARISI ---------- #}
+{% if summary.students_without_goals > 0 %}
+<div class="bg-amber-50 border border-amber-300 rounded-xl p-5 mb-6">
+  <div class="flex items-start gap-3">
+    <span class="text-2xl">⚠️</span>
+    <div>
+      <h3 class="font-semibold text-amber-900">{{ summary.students_without_goals }} öğrenci hedefsiz</h3>
+      <p class="text-sm text-amber-800 mt-1">
+        Hedef koymak motivasyonu artırır ve ilerlemeyi ölçülebilir kılar. Öğretmenlerinize
+        öğrencilerinin hedef ağacını tanımlamasını öneriniz.
+      </p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="bg-white border border-slate-200 rounded-xl p-5">
+  <h3 class="font-semibold text-slate-900 mb-2">Bilgi notu</h3>
+  <p class="text-sm text-slate-700 leading-relaxed">
+    Bu sayfada öğrenci-bazlı detay görünmez (gizlilik kuralı). Detaylı hedef yönetimi
+    için öğretmen, öğrenci profil sayfası → "Hedef Ağacı" sekmesinden işlem yapar.
+    İleride bir sürümde "en geride kalan top-3 öğrenci" gibi öncelikli müdahale
+    kartları eklenecek.
+  </p>
+</div>
+{% endblock %}
