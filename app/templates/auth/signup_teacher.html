@@ -1,73 +1,132 @@
 {% extends "base.html" %}
-{% block title %}Bağımsız Öğretmen Kaydı — ETÜTKOÇ Rotam{% endblock %}
+{% block title %}14 Gün Ücretsiz — Bağımsız Öğretmen Kaydı{% endblock %}
 
 {% block content %}
-<div class="min-h-[80vh] flex items-center justify-center py-6">
-  <div class="w-full max-w-md">
-    <div class="flex flex-col items-center mb-6">
-      <img src="/static/img/etutkoc-logo.png" alt="" class="h-20 w-20 object-contain mb-3" />
-      <div class="brand-wordmark text-xl">
-        <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-1">·</span><span class="b-rotam">rotam</span>
-      </div>
-      <p class="text-xs text-slate-500 uppercase tracking-[0.2em] mt-1">Bağımsız Öğretmen Kaydı</p>
-    </div>
+<style>
+  body > main { max-width: none !important; padding: 0 !important; }
+</style>
 
-    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-      <h1 class="text-lg font-semibold text-slate-900 mb-1">Hesap oluştur</h1>
-      <p class="text-sm text-slate-500 mb-5">
-        Kurum bağı olmadan tek başına çalışan öğretmen olarak kayıt olabilirsin.
-        Daha sonra istersen bir kuruma katılabilirsin.
+<div class="min-h-screen grid lg:grid-cols-5">
+  {# Sol: Form (3 kolon) #}
+  <div class="lg:col-span-3 flex items-center justify-center px-6 py-12 bg-surface-sunk">
+    <div class="w-full max-w-md">
+      <a href="/" class="flex items-center gap-2.5 mb-8 hover:opacity-80 transition">
+        <img src="/static/img/etutkoc-logo.png" alt="" class="h-9 w-9 object-contain" />
+        <span class="brand-wordmark text-base">
+          <span class="b-etut">etütkoç</span><span class="text-stone-400 mx-0.5">·</span><span class="b-rotam">rotam</span>
+        </span>
+      </a>
+
+      <div class="badge badge-accent mb-4">🎁 14 Gün Ücretsiz Pro Deneme</div>
+      <h1 class="text-display-md text-ink mb-3">Hesabınızı oluşturalım</h1>
+      <p class="text-ink-muted mb-8">
+        Kurum bağı olmadan tek başına çalışan öğretmen olarak hemen başlayın.
+        Süre sonunda Solo Ücretsiz tier'a düşersiniz; verileriniz korunur.
       </p>
 
       {% if error %}
-      <div class="mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200">
-        ⚠ {{ error }}
+      <div class="mb-5 p-3 rounded-lg bg-rose-50 text-rose-700 text-sm border border-rose-200 flex items-start gap-2">
+        <span>⚠</span><span>{{ error }}</span>
       </div>
       {% endif %}
 
       <form method="post" action="/signup/teacher" class="space-y-4">
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Ad Soyad <span class="text-rose-500">*</span></label>
+          <label class="block text-sm font-medium text-ink mb-1.5">Ad Soyad <span class="text-rose-500">*</span></label>
           <input name="full_name" required autofocus value="{{ filled.full_name or '' }}"
-                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500" />
+                 class="w-full px-3.5 py-2.5 border border-stone-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">E-posta <span class="text-rose-500">*</span></label>
+          <label class="block text-sm font-medium text-ink mb-1.5">E-posta <span class="text-rose-500">*</span></label>
           <input type="email" name="email" required value="{{ filled.email or '' }}"
-                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500" />
+                 class="w-full px-3.5 py-2.5 border border-stone-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition" />
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Şifre <span class="text-rose-500">*</span></label>
+          <label class="block text-sm font-medium text-ink mb-1.5">Şifre <span class="text-rose-500">*</span></label>
           <input type="password" name="password" required minlength="10"
-                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500" />
-          <p class="text-[11px] text-slate-500 mt-1">
-            En az 10 karakter — büyük + küçük harf, rakam ve özel karakter (@#$%) içermeli.
+                 class="w-full px-3.5 py-2.5 border border-stone-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition" />
+          <p class="text-[11px] text-ink-subtle mt-1.5">
+            En az 10 karakter · büyük + küçük harf · rakam · özel karakter (@#$%)
           </p>
         </div>
         <div>
-          <label class="block text-sm font-medium text-slate-700 mb-1">Şifre (tekrar) <span class="text-rose-500">*</span></label>
+          <label class="block text-sm font-medium text-ink mb-1.5">Şifre (tekrar) <span class="text-rose-500">*</span></label>
           <input type="password" name="password_confirm" required minlength="10"
-                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm focus:ring-2 focus:ring-indigo-500" />
+                 class="w-full px-3.5 py-2.5 border border-stone-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition" />
         </div>
-        <div>
-          <label class="flex items-start gap-2 text-sm text-slate-700 cursor-pointer">
-            <input type="checkbox" name="accept_terms" value="yes" required class="mt-0.5 accent-indigo-600" />
-            <span>
-              <b>ETÜTKOÇ Rotam Kullanım Şartları</b>'nı ve gizlilik politikasını okudum, kabul ediyorum.
-            </span>
-          </label>
-        </div>
-        <button type="submit"
-                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded">
-          Hesap Oluştur
+        <label class="flex items-start gap-2.5 text-sm text-ink-muted cursor-pointer pt-2">
+          <input type="checkbox" name="accept_terms" value="yes" required class="mt-0.5 accent-brand" />
+          <span>
+            <a href="/kvkk" target="_blank" class="text-brand hover:text-brand-deep underline">KVKK Aydınlatma</a> ve
+            <a href="/privacy" target="_blank" class="text-brand hover:text-brand-deep underline">Gizlilik Politikası</a>'nı
+            okudum, kabul ediyorum.
+          </span>
+        </label>
+        <button type="submit" class="btn-primary w-full py-3 text-base mt-2">
+          🎁 14 Gün Ücretsiz Hesap Oluştur →
         </button>
       </form>
-    </div>
 
-    <p class="text-center text-sm text-slate-500 mt-5">
-      Zaten hesabın var mı?
-      <a href="/login" class="text-indigo-600 hover:text-indigo-800 font-medium">Giriş yap →</a>
-    </p>
+      <p class="text-center text-sm text-ink-muted mt-6">
+        Zaten hesabınız var mı?
+        <a href="/login" class="text-brand hover:text-brand-deep font-medium">Giriş yap →</a>
+      </p>
+    </div>
+  </div>
+
+  {# Sağ: Trial avantaj listesi (2 kolon) #}
+  <div class="hidden lg:flex lg:col-span-2 items-center justify-center bg-aurora-anim relative overflow-hidden">
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22><circle cx=%221%22 cy=%221%22 r=%221%22 fill=%22rgba(17,122,134,0.10)%22/></svg>')] opacity-50"></div>
+    <div class="relative max-w-sm px-8">
+      <h2 class="text-display-md text-ink mb-3">14 günde neler açık?</h2>
+      <p class="text-ink-muted mb-6">Pro özelliklerin tamamı, kredi kartı talep etmeden.</p>
+
+      <ul class="space-y-3.5 text-sm">
+        <li class="flex gap-3 items-start">
+          <span class="text-brand text-lg flex-shrink-0">✓</span>
+          <div>
+            <p class="font-semibold text-ink">Sınırsız öğrenci</p>
+            <p class="text-ink-muted text-xs">Trial boyunca kapasitan yok</p>
+          </div>
+        </li>
+        <li class="flex gap-3 items-start">
+          <span class="text-brand text-lg flex-shrink-0">✓</span>
+          <div>
+            <p class="font-semibold text-ink">AI Plan Şablonu</p>
+            <p class="text-ink-muted text-xs">Claude ile haftalık plan önerisi</p>
+          </div>
+        </li>
+        <li class="flex gap-3 items-start">
+          <span class="text-brand text-lg flex-shrink-0">✓</span>
+          <div>
+            <p class="font-semibold text-ink">Veli WhatsApp Bildirimi</p>
+            <p class="text-ink-muted text-xs">Otomatik haftalık özet + drop alarmı</p>
+          </div>
+        </li>
+        <li class="flex gap-3 items-start">
+          <span class="text-brand text-lg flex-shrink-0">✓</span>
+          <div>
+            <p class="font-semibold text-ink">Hedef Ağacı + Risk Paneli</p>
+            <p class="text-ink-muted text-xs">5 göstergede risk skoru, hiyerarşik hedefler</p>
+          </div>
+        </li>
+        <li class="flex gap-3 items-start">
+          <span class="text-brand text-lg flex-shrink-0">✓</span>
+          <div>
+            <p class="font-semibold text-ink">CSV Toplu İçe Aktarım</p>
+            <p class="text-ink-muted text-xs">Mevcut listenizi dakikalar içinde aktarın</p>
+          </div>
+        </li>
+      </ul>
+
+      <div class="mt-8 p-4 rounded-xl bg-white/70 border border-brand/20 backdrop-blur-sm">
+        <p class="text-xs text-ink-muted">
+          <span class="text-brand font-semibold">14 gün sonra:</span>
+          Hesabınız Solo Ücretsiz'e (3 öğrenci limit) kibarca düşer; verileriniz korunur.
+          İstediğiniz an Solo Pro'ya yükseltebilirsiniz.
+        </p>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

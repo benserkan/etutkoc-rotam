@@ -6,51 +6,257 @@
   <title>{% block title %}ETÜTKOÇ Rotam{% endblock %}</title>
   <link rel="icon" type="image/png" href="/static/img/etutkoc-logo.png" />
   <link rel="apple-touch-icon" href="/static/img/etutkoc-logo.png" />
+
+  {# Stage 11+ Theme System — Plus Jakarta Sans (display) + Inter (body) + JetBrains Mono (numeric) #}
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap&subset=latin,latin-ext" rel="stylesheet">
+
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // ETÜTKOÇ Rotam — kurumsal renk paleti
-    // Tailwind'in default `indigo` paletini brand-teal ile override ediyoruz;
-    // böylece kod genelindeki `indigo-*` sınıfları otomatik olarak kurumsal renge döner.
+    // ETÜTKOÇ Rotam — Tema sistemi
+    // - Mevcut indigo override + brand korunur (geri uyumluluk)
+    // - Yeni semantic tokenlar (surface/ink/role) eklendi
+    // - Display/Body/Mono font ailesi, motion keyframes, gradient mesh BG
     tailwind.config = {
       theme: {
         extend: {
           colors: {
+            // Geri uyumluluk: mevcut indigo* sınıfları teal palette'e maplenmiş
             indigo: {
-              50:  '#E6F3F5',
-              100: '#C3E2E7',
-              200: '#9CCED7',
-              300: '#6FB7C2',
-              400: '#3D9CAB',
-              500: '#1A8898',
-              600: '#117A86',
-              700: '#0E5F69',
-              800: '#0C4F58',
-              900: '#093F47',
+              50:'#E6F3F5', 100:'#C3E2E7', 200:'#9CCED7', 300:'#6FB7C2',
+              400:'#3D9CAB', 500:'#1A8898', 600:'#117A86', 700:'#0E5F69',
+              800:'#0C4F58', 900:'#093F47',
             },
+            // Marka teal genişletildi
             brand: {
-              teal:        '#117A86',
-              tealDark:    '#0E5F69',
-              tealLight:   '#3D9CAB',
-              yellow:      '#E8AC2D',
-              yellowDark:  '#C68A1A',
-              yellowLight: '#F0BD55',
+              teal:'#117A86', tealDark:'#0E5F69', tealLight:'#3D9CAB',
+              yellow:'#E8AC2D', yellowDark:'#C68A1A', yellowLight:'#F0BD55',
+              // Yeni: semantic teal scale
+              50:'#E6F2F4', 100:'#CFE9EC', 200:'#9FD3D9', 300:'#6FBDC6',
+              400:'#3BA3B0', 500:'#117A86', 600:'#0B5560', 700:'#073D45',
+              900:'#042026',
             },
+            // Stage 11+ amber accent ölçeği
+            accent: {
+              50:'#FEF6E0', 100:'#FEEAB9', 200:'#F5D689', 400:'#F0BD55',
+              500:'#E8AC2D', 600:'#C68A18', 700:'#9C6A0F', 900:'#5C3D08',
+            },
+            // Rol ambient accent'ları — landing'in "5 rol, 1 platform" + dashboard ambient
+            role: {
+              teacher:'#117A86', student:'#6366F1',
+              parent:'#D97706',  admin:'#059669',
+              super:'#E11D48',
+            },
+            // Stone-warm neutral surface sistemi (Tailwind default slate'ten farklı, daha sıcak)
+            surface: { DEFAULT:'#FFFFFF', elev:'#F5F5F4', sunk:'#FAFAF9' },
+            ink: { DEFAULT:'#1C1917', muted:'#57534E', subtle:'#A8A29E' },
           },
           fontFamily: {
-            brand: ['"Segoe UI"', 'system-ui', '-apple-system', 'sans-serif'],
+            display: ['"Plus Jakarta Sans"','system-ui','-apple-system','sans-serif'],
+            sans:    ['Inter','"Plus Jakarta Sans"','system-ui','sans-serif'],
+            mono:    ['"JetBrains Mono"','ui-monospace','SFMono-Regular','monospace'],
+            brand:   ['"Plus Jakarta Sans"','"Segoe UI"','system-ui','sans-serif'],
+          },
+          fontSize: {
+            'display-xl': ['clamp(2.5rem, 5vw + 1rem, 4.5rem)', { lineHeight:'1.05', letterSpacing:'-0.025em', fontWeight:'800' }],
+            'display-lg': ['clamp(2rem, 4vw + 0.5rem, 3.5rem)',  { lineHeight:'1.1',  letterSpacing:'-0.02em',  fontWeight:'700' }],
+            'display-md': ['clamp(1.5rem, 3vw + 0.5rem, 2.25rem)',{ lineHeight:'1.2',  letterSpacing:'-0.015em', fontWeight:'700' }],
+          },
+          keyframes: {
+            'fade-up':       { '0%':{opacity:'0',transform:'translateY(24px)'}, '100%':{opacity:'1',transform:'translateY(0)'} },
+            'fade-in':       { '0%':{opacity:'0'}, '100%':{opacity:'1'} },
+            'gradient-shift':{ '0%,100%':{backgroundPosition:'0% 50%'}, '50%':{backgroundPosition:'100% 50%'} },
+            'marquee':       { '0%':{transform:'translateX(0)'}, '100%':{transform:'translateX(-50%)'} },
+            'shimmer':       { '0%':{backgroundPosition:'-200% 0'}, '100%':{backgroundPosition:'200% 0'} },
+            'soft-bounce':   { '0%,100%':{transform:'translateY(0)'}, '50%':{transform:'translateY(-4px)'} },
+          },
+          animation: {
+            'fade-up':        'fade-up 600ms cubic-bezier(0.22, 1, 0.36, 1) both',
+            'fade-up-slow':   'fade-up 900ms cubic-bezier(0.22, 1, 0.36, 1) both',
+            'fade-in':        'fade-in 500ms ease-out both',
+            'gradient-shift': 'gradient-shift 40s ease infinite',
+            'marquee':        'marquee 30s linear infinite',
+            'shimmer':        'shimmer 2s linear infinite',
+            'soft-bounce':    'soft-bounce 2s ease-in-out infinite',
+          },
+          backgroundImage: {
+            'aurora':
+              'radial-gradient(ellipse 80% 60% at 20% 0%, rgba(17,122,134,0.18), transparent 60%),'+
+              'radial-gradient(ellipse 60% 50% at 80% 30%, rgba(232,172,45,0.12), transparent 60%),'+
+              'radial-gradient(ellipse 50% 40% at 50% 100%, rgba(17,122,134,0.08), transparent 60%)',
+            'aurora-deep':
+              'radial-gradient(ellipse 90% 60% at 30% 0%, rgba(17,122,134,0.32), transparent 65%),'+
+              'radial-gradient(ellipse 70% 50% at 80% 40%, rgba(232,172,45,0.18), transparent 65%),'+
+              'linear-gradient(180deg, #042026 0%, #073D45 100%)',
+            'mesh-teacher': 'radial-gradient(ellipse at top left, rgba(17,122,134,0.10), transparent 70%)',
+            'mesh-student': 'radial-gradient(ellipse at top left, rgba(99,102,241,0.10), transparent 70%)',
+            'mesh-parent':  'radial-gradient(ellipse at top left, rgba(217,119,6,0.10), transparent 70%)',
+            'mesh-admin':   'radial-gradient(ellipse at top left, rgba(5,150,105,0.10), transparent 70%)',
+            'mesh-super':   'radial-gradient(ellipse at top left, rgba(225,29,72,0.10), transparent 70%)',
+            'dots':         'radial-gradient(circle at 1px 1px, rgba(17,122,134,0.15) 1px, transparent 0)',
+          },
+          backgroundSize: {
+            'aurora-lg':'200% 200%', 'dots-sm':'24px 24px',
+          },
+          boxShadow: {
+            'card':       '0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04)',
+            'card-hover': '0 2px 4px rgba(0,0,0,0.06), 0 12px 24px rgba(0,0,0,0.08)',
+            'glow-brand': '0 0 0 1px rgba(17,122,134,0.20), 0 8px 32px rgba(17,122,134,0.18)',
+            'glow-amber': '0 0 0 1px rgba(232,172,45,0.25), 0 8px 32px rgba(232,172,45,0.18)',
+          },
+          borderRadius: {
+            'xl':  '0.875rem',
+            '2xl': '1.25rem',
           },
         },
       },
     };
   </script>
   <script src="https://unpkg.com/htmx.org@2.0.3"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.14.1/dist/cdn.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
   <style>
     [x-cloak] { display: none !important; }
-    /* Marka kelime işareti — etütkoç + rotam */
-    .brand-wordmark { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; font-weight: 800; letter-spacing: -0.01em; }
+    /* ETÜTKOÇ Tema Sistemi — design tokens (CSS değişkenleri) */
+    :root {
+      --bg: #FAFAF9;
+      --surface: #FFFFFF;
+      --surface-elev: #F5F5F4;
+      --border: #E7E5E4;
+      --border-strong: #D6D3D1;
+      --ink: #1C1917;
+      --ink-muted: #57534E;
+      --ink-subtle: #A8A29E;
+      --brand: #117A86;
+      --brand-deep: #0B5560;
+      --brand-soft: #CFE9EC;
+      --accent: #E8AC2D;
+      --accent-deep: #C68A18;
+      /* Rol accent'ı — body[data-role="X"] ile override edilir */
+      --role-accent: #117A86;
+      --role-accent-soft: rgba(17,122,134,0.10);
+    }
+    body[data-role="teacher"]    { --role-accent:#117A86; --role-accent-soft:rgba(17,122,134,0.08); }
+    body[data-role="student"]    { --role-accent:#6366F1; --role-accent-soft:rgba(99,102,241,0.08); }
+    body[data-role="parent"]     { --role-accent:#D97706; --role-accent-soft:rgba(217,119,6,0.08); }
+    body[data-role="institution_admin"] { --role-accent:#059669; --role-accent-soft:rgba(5,150,105,0.08); }
+    body[data-role="super_admin"]{ --role-accent:#E11D48; --role-accent-soft:rgba(225,29,72,0.08); }
+
+    /* Tipografi — body Inter (cv11+ss01 stylistic set: tek-katlı a, kalkık i noktası) */
+    body {
+      font-family: 'Inter','Plus Jakarta Sans',system-ui,sans-serif;
+      font-feature-settings: 'cv11','ss01','ss03';
+      color: var(--ink);
+      background: var(--bg);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    h1, h2, h3, h4, .display { font-family:'Plus Jakarta Sans','Inter',system-ui,sans-serif; letter-spacing:-0.015em; }
+    .num, code, kbd { font-family:'JetBrains Mono',ui-monospace,monospace; font-feature-settings:'tnum'; }
+
+    /* Marka kelime işareti — etütkoç + rotam (Plus Jakarta Sans) */
+    .brand-wordmark { font-family:'Plus Jakarta Sans','Segoe UI',system-ui,sans-serif; font-weight:800; letter-spacing:-0.02em; }
     .brand-wordmark .b-etut { color: #117A86; }
     .brand-wordmark .b-rotam { color: #E8AC2D; }
+
+    /* Component utility class'ları — tema diline tek noktadan giriş */
+    .card-elevated {
+      background: var(--surface); border:1px solid var(--border);
+      border-radius: 0.875rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.04);
+      transition: box-shadow 0.2s, transform 0.2s, border-color 0.2s;
+    }
+    .card-elevated:hover {
+      box-shadow: 0 2px 4px rgba(0,0,0,0.06), 0 12px 24px rgba(0,0,0,0.08);
+      border-color: var(--border-strong);
+    }
+    .card-hover-lift:hover { transform: translateY(-2px); }
+
+    .btn-primary {
+      display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+      padding: 0.625rem 1.125rem; border-radius: 0.625rem;
+      background: var(--brand); color:#fff; font-weight:600; font-size:0.9375rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 12px rgba(17,122,134,0.18);
+      transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { background: var(--brand-deep); transform: translateY(-1px); box-shadow: 0 0 0 1px rgba(17,122,134,0.20), 0 8px 32px rgba(17,122,134,0.18); }
+    .btn-secondary {
+      display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+      padding: 0.625rem 1.125rem; border-radius: 0.625rem;
+      background: var(--surface); color: var(--ink); font-weight:600; font-size:0.9375rem;
+      border:1px solid var(--border-strong);
+      transition: background 0.2s, transform 0.2s, border-color 0.2s;
+    }
+    .btn-secondary:hover { background: var(--surface-elev); border-color: var(--brand); transform: translateY(-1px); }
+    .btn-accent {
+      display:inline-flex; align-items:center; justify-content:center; gap:0.5rem;
+      padding: 0.625rem 1.125rem; border-radius: 0.625rem;
+      background: var(--accent); color:#1C1917; font-weight:700; font-size:0.9375rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05), 0 4px 12px rgba(232,172,45,0.25);
+      transition: background 0.2s, transform 0.2s;
+    }
+    .btn-accent:hover { background: var(--accent-deep); transform: translateY(-1px); }
+
+    .badge { display:inline-flex; align-items:center; gap:0.25rem; padding:0.125rem 0.625rem; border-radius:9999px; font-size:0.75rem; font-weight:500; line-height:1.4; }
+    .badge-brand { background: var(--brand-soft); color: var(--brand-deep); }
+    .badge-accent { background:#FEEAB9; color:#9C6A0F; }
+    .badge-success { background:#D1FAE5; color:#065F46; }
+    .badge-danger { background:#FEE2E2; color:#991B1B; }
+
+    /* Bento grid — landing'in ana feature gösterim ızgarası */
+    .bento-grid { display:grid; gap:1rem; grid-template-columns: repeat(12, 1fr); grid-auto-rows: minmax(140px, auto); }
+    .bento-cell { grid-column: span 12; }
+    @media (min-width: 640px) { .bento-cell { grid-column: span 6; } .bento-cell-wide { grid-column: span 12; } .bento-cell-tall { grid-row: span 2; } }
+    @media (min-width: 1024px) { .bento-cell { grid-column: span 4; } .bento-cell-wide { grid-column: span 8; } .bento-cell-full { grid-column: span 12; } }
+
+    /* Aurora hero arka planı — animated gradient mesh */
+    .bg-aurora-anim {
+      background-image:
+        radial-gradient(ellipse 80% 60% at 20% 0%, rgba(17,122,134,0.18), transparent 60%),
+        radial-gradient(ellipse 60% 50% at 80% 30%, rgba(232,172,45,0.12), transparent 60%),
+        radial-gradient(ellipse 50% 40% at 50% 100%, rgba(17,122,134,0.08), transparent 60%);
+      background-size: 200% 200%;
+      animation: gradient-shift 40s ease infinite;
+    }
+    @keyframes gradient-shift {
+      0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; }
+    }
+    @keyframes fade-up-kf {
+      0% { opacity:0; transform: translateY(24px); }
+      100% { opacity:1; transform: translateY(0); }
+    }
+    /* Scroll-driven fade-up — JS ile .reveal-now class'ı eklenince animate olur */
+    .reveal { opacity:0; transform: translateY(24px); transition: opacity 600ms cubic-bezier(0.22,1,0.36,1), transform 600ms cubic-bezier(0.22,1,0.36,1); }
+    .reveal.reveal-now { opacity:1; transform: translateY(0); }
+    .reveal-stagger > * { opacity:0; transform: translateY(16px); transition: opacity 500ms ease, transform 500ms ease; transition-delay: calc(var(--i, 0) * 80ms); }
+    .reveal-stagger.reveal-now > * { opacity:1; transform: translateY(0); }
+    @media (prefers-reduced-motion: reduce) {
+      .reveal, .reveal-stagger > *, .bg-aurora-anim { animation: none !important; transition: none !important; opacity:1 !important; transform:none !important; }
+    }
+
+    /* Role-bazlı subtle ambient — dashboard sayfalarında main üst kısma uygulanır */
+    .role-ambient {
+      background-image: radial-gradient(ellipse 60% 40% at 50% -10%, var(--role-accent-soft), transparent 70%);
+    }
+    .role-accent-text { color: var(--role-accent); }
+    .role-accent-bg { background-color: var(--role-accent); }
+    .role-accent-border { border-color: var(--role-accent); }
+    .role-accent-soft-bg { background-color: var(--role-accent-soft); }
+
+    /* Numeric/counter — JetBrains Mono + tabular nums */
+    .counter { font-family:'JetBrains Mono',ui-monospace,monospace; font-feature-settings:'tnum'; font-weight:600; letter-spacing:-0.02em; }
+
+    /* Marquee — logo wall / sayım şeridi */
+    .marquee-track { display:flex; gap:3rem; animation: marquee-kf 30s linear infinite; }
+    @keyframes marquee-kf { 0%{transform:translateX(0);} 100%{transform:translateX(-50%);} }
+    .marquee-mask { mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); -webkit-mask-image: linear-gradient(to right, transparent, black 10%, black 90%, transparent); }
+
+    /* Scroll-snap carousel (testimonial vb.) */
+    .snap-x-track { display:flex; overflow-x:auto; scroll-snap-type: x mandatory; gap:1rem; scrollbar-width: thin; scrollbar-color: #d6d3d1 transparent; padding-bottom:0.5rem; }
+    .snap-x-track > * { scroll-snap-align: center; flex-shrink:0; }
+    .snap-x-track::-webkit-scrollbar { height:6px; }
+    .snap-x-track::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 3px; }
     /* Details summary — varsayılan disclosure üçgenini gizle */
     summary.list-none::-webkit-details-marker { display: none; }
     summary.list-none { list-style: none; }
@@ -121,7 +327,8 @@
   </style>
   {% block head %}{% endblock %}
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-800">
+<body class="min-h-screen bg-surface-sunk text-ink"
+      {% if user %}data-role="{{ user.role.value }}"{% endif %}>
   {# Stage 7 — Sistem geneli duyuru bandı (middleware inject) #}
   {% set _anns = request.state.announcements if request.state and request.state.announcements is defined else [] %}
   {% if _anns %}
@@ -531,9 +738,66 @@
   </script>
   {% endif %}
 
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+  {# Logged-in user için header altı role ambient şeridi (subtle) #}
+  {% if user %}
+  <div class="role-ambient h-32 -mb-32 pointer-events-none" aria-hidden="true"></div>
+  {% endif %}
+
+  <main class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
     {% block content %}{% endblock %}
   </main>
+
+  {# Theme — IntersectionObserver scroll-reveal (.reveal & .reveal-stagger sınıflarını izler) #}
+  <script>
+    (function(){
+      try {
+        if (!('IntersectionObserver' in window)) {
+          document.querySelectorAll('.reveal, .reveal-stagger').forEach(function(el){ el.classList.add('reveal-now'); });
+          return;
+        }
+        var io = new IntersectionObserver(function(entries){
+          entries.forEach(function(entry){
+            if (entry.isIntersecting) {
+              entry.target.classList.add('reveal-now');
+              io.unobserve(entry.target);
+            }
+          });
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        document.querySelectorAll('.reveal, .reveal-stagger').forEach(function(el){
+          // Stagger child'larına --i index ata
+          if (el.classList.contains('reveal-stagger')) {
+            Array.prototype.forEach.call(el.children, function(child, i){
+              child.style.setProperty('--i', i);
+            });
+          }
+          io.observe(el);
+        });
+        // Counter animasyonu — .counter-animate elementleri görünür olunca 0->target
+        var coIo = new IntersectionObserver(function(entries){
+          entries.forEach(function(entry){
+            if (!entry.isIntersecting) return;
+            var el = entry.target;
+            var target = parseFloat(el.dataset.target || el.textContent);
+            var dur = parseInt(el.dataset.duration || '1500', 10);
+            var start = performance.now();
+            var prefix = el.dataset.prefix || '';
+            var suffix = el.dataset.suffix || '';
+            function tick(now){
+              var t = Math.min(1, (now - start) / dur);
+              // ease-out-cubic
+              var e = 1 - Math.pow(1 - t, 3);
+              var v = Math.round(target * e);
+              el.textContent = prefix + v.toLocaleString('tr-TR') + suffix;
+              if (t < 1) requestAnimationFrame(tick);
+            }
+            requestAnimationFrame(tick);
+            coIo.unobserve(el);
+          });
+        }, { threshold: 0.4 });
+        document.querySelectorAll('.counter-animate').forEach(function(el){ coIo.observe(el); });
+      } catch(e) { console.warn('reveal init', e); }
+    })();
+  </script>
 
   {# Global "sinema koltuğu" book-grid modal — HTMX ile dolar #}
   <dialog id="book-grid-dialog"

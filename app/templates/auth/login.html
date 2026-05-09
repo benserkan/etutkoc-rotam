@@ -2,65 +2,99 @@
 {% block title %}Giriş — ETÜTKOÇ Rotam{% endblock %}
 
 {% block content %}
-<div class="min-h-[80vh] flex items-center justify-center">
-  <div class="w-full max-w-sm">
-    <div class="flex flex-col items-center mb-6">
-      <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam"
-           class="h-24 w-24 object-contain mb-3 drop-shadow-sm" />
-      <div class="brand-wordmark text-2xl">
-        <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-1">·</span><span class="b-rotam">rotam</span>
-      </div>
-      <p class="text-xs text-slate-500 uppercase tracking-[0.2em] mt-1">Çalışma Takip Sistemi</p>
-    </div>
+<style>
+  body > main { max-width: none !important; padding: 0 !important; }
+</style>
 
-    <div class="bg-white border border-slate-200 rounded-xl shadow-sm p-6">
-      <h1 class="text-lg font-semibold text-slate-900 mb-1">Hoş geldiniz</h1>
-      <p class="text-sm text-slate-500 mb-6">Hesabınıza giriş yapın</p>
-
-    {% if error %}
-    <div class="mb-4 p-3 rounded bg-red-50 text-red-700 text-sm border border-red-200">
-      {{ error }}
-    </div>
-    {% endif %}
-
-    <form method="post" action="/login" class="space-y-4">
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">E-posta</label>
-        <input type="email" name="email" required autofocus
-               class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-slate-700 mb-1">Şifre</label>
-        <input type="password" name="password" required
-               class="w-full px-3 py-2 border border-slate-300 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500" />
-      </div>
-      <button type="submit"
-              class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded">
-        Giriş Yap
-      </button>
-    </form>
-
-    <div class="mt-5 pt-4 border-t border-slate-100 text-center">
-      <p class="text-xs text-slate-500 mb-2">Hesabınız yok mu?</p>
-      <a href="/signup/teacher"
-         class="inline-block text-sm text-indigo-600 hover:text-indigo-800 font-medium">
-        Bağımsız öğretmen olarak kayıt ol →
+<div class="min-h-screen grid lg:grid-cols-2">
+  {# Sol: Form #}
+  <div class="flex items-center justify-center px-6 py-12 bg-surface-sunk">
+    <div class="w-full max-w-sm">
+      <a href="/" class="flex items-center gap-2.5 mb-10 hover:opacity-80 transition">
+        <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam"
+             class="h-10 w-10 object-contain" />
+        <span class="brand-wordmark text-xl">
+          <span class="b-etut">etütkoç</span><span class="text-stone-400 mx-1">·</span><span class="b-rotam">rotam</span>
+        </span>
       </a>
-      <p class="text-[11px] text-slate-400 mt-2">
-        Kurum yöneticinizden davetiye aldıysanız link üzerinden ilerleyin.
-      </p>
-      <p class="text-[11px] text-slate-400 mt-3">
-        <a href="/pricing" class="text-slate-500 hover:text-indigo-700">Planları ve fiyatları gör →</a>
-      </p>
-      <p class="text-[11px] text-slate-400 mt-1">
-        <a href="/kvkk" class="text-slate-500 hover:text-indigo-700">KVKK</a>
-        <span class="mx-1">·</span>
-        <a href="/privacy" class="text-slate-500 hover:text-indigo-700">Gizlilik Politikası</a>
-      </p>
-    </div>
-    </div>
 
-    <p class="text-center text-[11px] text-slate-400 mt-6">© ETÜTKOÇ Rotam · Çalışma Takip Sistemi</p>
+      <h1 class="text-display-md text-ink mb-2">Hoş geldiniz</h1>
+      <p class="text-ink-muted mb-8">Hesabınıza giriş yapın</p>
+
+      {% if error %}
+      <div class="mb-5 p-3 rounded-lg bg-rose-50 text-rose-700 text-sm border border-rose-200 flex items-start gap-2">
+        <span>⚠</span><span>{{ error }}</span>
+      </div>
+      {% endif %}
+
+      <form method="post" action="/login" class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-ink mb-1.5">E-posta</label>
+          <input type="email" name="email" required autofocus
+                 class="w-full px-3.5 py-2.5 border border-stone-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition" />
+        </div>
+        <div>
+          <label class="block text-sm font-medium text-ink mb-1.5">Şifre</label>
+          <input type="password" name="password" required
+                 class="w-full px-3.5 py-2.5 border border-stone-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition" />
+        </div>
+        <button type="submit" class="btn-primary w-full py-2.5 text-base">
+          Giriş Yap →
+        </button>
+      </form>
+
+      <div class="mt-7 pt-5 border-t border-stone-200">
+        <p class="text-xs text-ink-subtle mb-2.5">Hesabınız yok mu?</p>
+        <a href="/signup/teacher" class="block w-full text-center px-4 py-2 rounded-lg bg-stone-100 hover:bg-stone-200 text-ink font-medium text-sm transition">
+          14 Gün Ücretsiz Öğretmen Hesabı →
+        </a>
+        <p class="text-[11px] text-ink-subtle mt-3 text-center">
+          Kurum yöneticinizden davetiye aldıysanız link üzerinden ilerleyin.
+        </p>
+      </div>
+
+      <div class="mt-8 flex items-center justify-center gap-3 text-xs text-ink-subtle">
+        <a href="/" class="hover:text-ink">Anasayfa</a>
+        <span>·</span>
+        <a href="/pricing" class="hover:text-ink">Planlar</a>
+        <span>·</span>
+        <a href="/kvkk" class="hover:text-ink">KVKK</a>
+        <span>·</span>
+        <a href="/privacy" class="hover:text-ink">Gizlilik</a>
+      </div>
+    </div>
+  </div>
+
+  {# Sağ: Brand panel — landing'ten esinli, dingin otorite hissi #}
+  <div class="hidden lg:flex items-center justify-center bg-aurora-anim relative overflow-hidden">
+    <div class="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22><circle cx=%221%22 cy=%221%22 r=%221%22 fill=%22rgba(17,122,134,0.10)%22/></svg>')] opacity-50"></div>
+    <div class="relative max-w-md px-8 text-center">
+      <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-brand/20 text-xs font-medium text-brand mb-6 backdrop-blur-sm">
+        <span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+        LGS &amp; YKS koçluk omurgası
+      </div>
+      <h2 class="text-display-md text-ink mb-4">
+        Türk eğitim takvimine
+        <span class="bg-gradient-to-r from-brand-teal to-accent-500 bg-clip-text text-transparent">özel SaaS.</span>
+      </h2>
+      <p class="text-ink-muted leading-relaxed mb-8">
+        Maarif kohortu, AYT alan-filtreli plan, veli WhatsApp bildirimi, hedef ağacı, KVKK uyumlu &mdash; tek platformda.
+      </p>
+      <div class="grid grid-cols-3 gap-3 text-center">
+        <div class="card-elevated p-4">
+          <div class="counter text-2xl text-brand-deep">3.5K+</div>
+          <div class="text-[10px] text-ink-muted uppercase mt-1">Öğretmen</div>
+        </div>
+        <div class="card-elevated p-4">
+          <div class="counter text-2xl text-brand-deep">120+</div>
+          <div class="text-[10px] text-ink-muted uppercase mt-1">Kurum</div>
+        </div>
+        <div class="card-elevated p-4">
+          <div class="counter text-2xl text-brand-deep">47K+</div>
+          <div class="text-[10px] text-ink-muted uppercase mt-1">Öğrenci</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

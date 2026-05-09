@@ -202,16 +202,24 @@ app.include_router(whatsapp_webhook.router)
 
 
 @app.get("/")
-def index(user: User | None = Depends(get_current_user)):
-    if not user:
-        return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)
-    if user.role == UserRole.TEACHER:
-        dest = "/teacher"
-    elif user.role == UserRole.PARENT:
-        dest = "/parent"
-    else:
-        dest = "/student"
-    return RedirectResponse(url=dest, status_code=status.HTTP_303_SEE_OTHER)
+def index(request: Request, user: User | None = Depends(get_current_user)):
+    """Public landing (vitrin). Logged-in user için role-bazlı dashboard redirect."""
+    if user:
+        if user.role == UserRole.TEACHER:
+            dest = "/teacher"
+        elif user.role == UserRole.PARENT:
+            dest = "/parent"
+        elif user.role == UserRole.SUPER_ADMIN:
+            dest = "/admin"
+        elif user.role == UserRole.INSTITUTION_ADMIN:
+            dest = "/institution"
+        else:
+            dest = "/student"
+        return RedirectResponse(url=dest, status_code=status.HTTP_303_SEE_OTHER)
+    return templates.TemplateResponse(
+        "landing/index.html",
+        {"request": request, "user": None},
+    )
 
 
 

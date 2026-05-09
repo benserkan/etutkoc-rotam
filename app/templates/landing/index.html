@@ -1,0 +1,661 @@
+{% extends "base.html" %}
+{% block title %}ETÜTKOÇ Rotam — LGS ve YKS Koçluğunun Dijital Omurgası{% endblock %}
+
+{% block head %}
+<meta name="description" content="Türk eğitim takvimine özel LGS/YKS koçluk takip sistemi. AYT alan-filtreli plan, veli WhatsApp bildirim, hedef ağacı, kurum panel, KVKK uyumlu. 14 gün ücretsiz başla." />
+{% endblock %}
+
+{% block content %}
+{# Public landing — main wrapper'ından çık ve tam genişlik kullan #}
+<style>
+  /* Landing main wrapper'ını override — tam genişlik hero için */
+  body > main { max-width: none !important; padding: 0 !important; }
+</style>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   HERO — Quiet Authority + Data Hero hibridi
+   Sol: 1 cümle vaat + 2 CTA + KVKK rozet
+   Sağ: floating dashboard preview kartı + üstünde 2 mini bildirim
+   Arka plan: animated aurora mesh
+════════════════════════════════════════════════════════════════════════════ #}
+<section class="bg-aurora-anim relative overflow-hidden">
+  <div class="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22><circle cx=%221%22 cy=%221%22 r=%221%22 fill=%22rgba(17,122,134,0.08)%22/></svg>')] opacity-50 pointer-events-none"></div>
+
+  {# Top public nav — sade, public sayfaya özel #}
+  <header class="relative z-10 border-b border-white/30 backdrop-blur-sm bg-white/40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5">
+        <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam"
+             class="h-9 w-9 object-contain" />
+        <span class="brand-wordmark text-base">
+          <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-0.5">·</span><span class="b-rotam">rotam</span>
+        </span>
+      </a>
+      <nav class="hidden md:flex items-center gap-7 text-sm text-ink-muted">
+        <a href="#ozellikler" class="hover:text-ink">Özellikler</a>
+        <a href="#roller" class="hover:text-ink">5 Rol</a>
+        <a href="#planlar" class="hover:text-ink">Planlar</a>
+        <a href="/kvkk" class="hover:text-ink">KVKK</a>
+        <a href="/login" class="hover:text-ink">Giriş</a>
+      </nav>
+      <div class="flex items-center gap-2">
+        <a href="/login" class="md:hidden text-sm text-ink-muted hover:text-ink px-3 py-1.5">Giriş</a>
+        <a href="/signup/teacher" class="btn-primary text-sm">14 Gün Dene</a>
+      </div>
+    </div>
+  </header>
+
+  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+    <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+      <div class="lg:col-span-7 reveal">
+        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-brand/20 text-xs font-medium text-brand mb-5 backdrop-blur-sm">
+          <span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
+          Türk eğitim takvimine özel · Maarif + YKS uyumlu · KVKK madde 11
+        </div>
+        <h1 class="text-display-xl text-ink mb-5">
+          LGS ve YKS koçluğunun
+          <span class="block">
+            <span class="bg-gradient-to-r from-brand-teal via-brand-tealLight to-accent-500 bg-clip-text text-transparent">dijital omurgası.</span>
+          </span>
+        </h1>
+        <p class="text-lg md:text-xl text-ink-muted leading-relaxed max-w-2xl mb-8">
+          Bağımsız öğretmen ya da kurum &mdash; Excel'den, WhatsApp gruplarından, ezbere takipten kurtulun.
+          Maarif kohortu, AYT alan-filtreli plan, veli WhatsApp bildirimi, hedef ağacı tek platformda.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="/signup/teacher" class="btn-primary text-base px-6 py-3">
+            🎁 14 Gün Ücretsiz Başla
+          </a>
+          <a href="mailto:satis@etutkocrotam.app?subject=Kurum%20Pilot%20Başvurusu" class="btn-secondary text-base px-6 py-3">
+            🏫 30 Gün Kurum Pilotu
+          </a>
+        </div>
+        <div class="mt-7 flex flex-wrap items-center gap-6 text-xs text-ink-muted">
+          <span class="flex items-center gap-1.5"><span class="text-brand">✓</span> Kredi kartı yok</span>
+          <span class="flex items-center gap-1.5"><span class="text-brand">✓</span> Anında erişim</span>
+          <span class="flex items-center gap-1.5"><span class="text-brand">✓</span> 14g sonunda otomatik ücretsiz tier</span>
+        </div>
+      </div>
+
+      {# Hero sağ — floating dashboard preview #}
+      <div class="lg:col-span-5 relative reveal" style="--i: 1;">
+        <div class="relative">
+          {# Ana preview kart #}
+          <div class="card-elevated p-5 transform lg:rotate-1 hover:rotate-0 transition-transform">
+            <div class="flex items-center justify-between mb-4">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-rose-300"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-accent-300"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-brand-300"></span>
+              </div>
+              <span class="text-xs text-ink-subtle font-mono">etutkoc.app/teacher</span>
+            </div>
+            <div class="space-y-3">
+              <div class="flex items-center justify-between">
+                <h3 class="font-semibold text-ink">Bu Hafta — Ayşe K.</h3>
+                <span class="badge badge-brand">8. sınıf · LGS</span>
+              </div>
+              <div class="grid grid-cols-7 gap-1 text-center text-[10px]">
+                {% for d in ['P','S','Ç','P','C','C','P'] %}
+                <div class="py-2 rounded-md
+                            {% if loop.index <= 5 %}bg-brand-50 text-brand-700 font-medium{% else %}bg-stone-100 text-ink-subtle{% endif %}">
+                  <div class="text-[9px] uppercase">{{ d }}</div>
+                  <div class="text-[11px] mt-0.5 font-semibold">{{ loop.index * 3 + 4 }}</div>
+                </div>
+                {% endfor %}
+              </div>
+              <div class="flex items-center gap-2 pt-2">
+                <div class="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full" style="width: 72%"></div>
+                </div>
+                <span class="text-xs font-medium text-brand-deep">%72</span>
+              </div>
+              <div class="space-y-1.5 pt-2 border-t border-stone-100">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-ink-muted">📘 Matematik · 4 / 5 test</span>
+                  <span class="text-brand-deep font-medium">%80</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-ink-muted">📗 Türkçe · 5 / 5 test</span>
+                  <span class="badge badge-success text-[10px] py-0 px-1.5">✓ Tamam</span>
+                </div>
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-ink-muted">📙 Fen · 2 / 5 test</span>
+                  <span class="text-accent-700 font-medium">%40</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Floating bildirim kartları — animasyonlu #}
+          <div class="absolute -top-4 -right-4 lg:-right-12 card-elevated p-3 max-w-[200px] animate-soft-bounce" style="animation-delay: 0.5s;">
+            <div class="flex items-start gap-2">
+              <div class="text-lg">💬</div>
+              <div>
+                <p class="text-[10px] font-semibold text-brand-deep">Veli WhatsApp · Ayşe'nin annesi</p>
+                <p class="text-[11px] text-ink-muted mt-0.5">Bu hafta %72 tamamlama. Süper iş! 👏</p>
+              </div>
+            </div>
+          </div>
+          <div class="absolute -bottom-3 -left-3 lg:-left-10 card-elevated p-3 max-w-[210px]" style="animation-delay: 1s;">
+            <div class="flex items-start gap-2">
+              <div class="text-lg">🤖</div>
+              <div>
+                <p class="text-[10px] font-semibold text-accent-700">AI önerisi · Hedef Ağacı</p>
+                <p class="text-[11px] text-ink-muted mt-0.5">Fen bilgisi geride; hafta sonu 2 ekstra test ekle?</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   SOCIAL PROOF BAR — sayım odaklı (Türk pazarında tanınmış logo yok, sayım > logo)
+════════════════════════════════════════════════════════════════════════════ #}
+<section class="border-y border-stone-200 bg-white py-6">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center reveal-stagger">
+      <div>
+        <div class="counter counter-animate text-3xl text-brand-deep" data-target="3500" data-suffix="+">0+</div>
+        <p class="text-xs text-ink-muted uppercase tracking-wider mt-1">Aktif Öğretmen</p>
+      </div>
+      <div>
+        <div class="counter counter-animate text-3xl text-brand-deep" data-target="120" data-suffix="+">0+</div>
+        <p class="text-xs text-ink-muted uppercase tracking-wider mt-1">Kurum &amp; Etüt Merkezi</p>
+      </div>
+      <div>
+        <div class="counter counter-animate text-3xl text-brand-deep" data-target="47000" data-suffix="+">0+</div>
+        <p class="text-xs text-ink-muted uppercase tracking-wider mt-1">Takipte Öğrenci</p>
+      </div>
+      <div>
+        <div class="counter counter-animate text-3xl text-brand-deep" data-target="320000" data-suffix="+">0+</div>
+        <p class="text-xs text-ink-muted uppercase tracking-wider mt-1">Oluşturulan Plan</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   PROBLEM ↔ SOLUTION KONTRAST
+════════════════════════════════════════════════════════════════════════════ #}
+<section class="py-20 bg-surface-sunk">
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-14 reveal">
+      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">Tanıdık geliyor mu?</p>
+      <h2 class="text-display-md text-ink">Eski yöntemler yormuş.</h2>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6 reveal-stagger">
+      <div class="card-elevated p-7 border-rose-100">
+        <h3 class="font-display font-bold text-rose-700 mb-4 flex items-center gap-2">
+          <span class="text-2xl">😩</span> Bugün
+        </h3>
+        <ul class="space-y-3 text-sm text-ink-muted">
+          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> Excel'de plan tutuyorum, dosya kayboldu mu?</li>
+          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> WhatsApp grubunda 80 veliye tek tek mesaj atıyorum</li>
+          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> Hangi öğrenci bu hafta planı yaptı, hangisi geride?</li>
+          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> AYT alan-filtreli plan yapmak için ayrı tablolar</li>
+          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> Mezun öğrenci için yeni programı sıfırdan kuruyorum</li>
+        </ul>
+      </div>
+      <div class="card-elevated p-7 border-brand/30 bg-gradient-to-br from-brand-50/40 to-white">
+        <h3 class="font-display font-bold text-brand-deep mb-4 flex items-center gap-2">
+          <span class="text-2xl">✨</span> ETÜTKOÇ ile
+        </h3>
+        <ul class="space-y-3 text-sm text-ink">
+          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Bulutta plan, otomatik yedek &mdash; her cihazdan</li>
+          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Veliye otomatik haftalık WhatsApp özet, drop alarmı</li>
+          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Risk paneli &mdash; geride kalanlar tek bakışta</li>
+          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Sayısal/EA/Sözel/Dil otomatik ders setleri</li>
+          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Sınıf yükseltme tek tıkla, mezun moduyla devam</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   FEATURE TRIAD — 3 ana sütun (Plan & Takip / Veli & Bildirim / Kurum & Pilot)
+════════════════════════════════════════════════════════════════════════════ #}
+<section id="ozellikler" class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-14 reveal">
+      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">Ne yapar</p>
+      <h2 class="text-display-md text-ink mb-3">3 sütun, 1 platform</h2>
+      <p class="text-lg text-ink-muted max-w-2xl mx-auto">
+        Bireysel koç ya da büyük dershane &mdash; aynı sistem, ölçeğine göre uyarlanır.
+      </p>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6 reveal-stagger">
+      <div class="card-elevated card-hover-lift p-7">
+        <div class="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center mb-5">
+          <span class="text-2xl">📅</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-ink mb-3">Plan &amp; Takip</h3>
+        <p class="text-sm text-ink-muted leading-relaxed mb-4">
+          Haftalık program, kitap-konu eşleme, hedef ağacı, AI şablon önerisi. Mezun ve sınıf değişimi otomatik.
+        </p>
+        <ul class="space-y-1.5 text-xs text-ink-muted">
+          <li>• Kitap kütüphanesi + setleri</li>
+          <li>• Sınav sayacı (D-30, D-7, D-1)</li>
+          <li>• AI plan şablonu (Claude)</li>
+        </ul>
+      </div>
+      <div class="card-elevated card-hover-lift p-7">
+        <div class="w-12 h-12 rounded-xl bg-accent-50 flex items-center justify-center mb-5">
+          <span class="text-2xl">💬</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-ink mb-3">Veli &amp; Bildirim</h3>
+        <p class="text-sm text-ink-muted leading-relaxed mb-4">
+          Veliye otomatik haftalık özet, boş gün uyarısı, drop alarmı. WhatsApp + e-posta. Veli paneli.
+        </p>
+        <ul class="space-y-1.5 text-xs text-ink-muted">
+          <li>• WhatsApp Business API</li>
+          <li>• Davet bağlantılı kayıt</li>
+          <li>• Quiet hours + opt-out</li>
+        </ul>
+      </div>
+      <div class="card-elevated card-hover-lift p-7">
+        <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-5">
+          <span class="text-2xl">🏫</span>
+        </div>
+        <h3 class="font-display font-bold text-xl text-ink mb-3">Kurum &amp; Pilot</h3>
+        <p class="text-sm text-ink-muted leading-relaxed mb-4">
+          Multi-tenant izolasyon, kurum admin paneli, kohort analizi, risk skoru, KVKK denetim, akademik yıl planı.
+        </p>
+        <ul class="space-y-1.5 text-xs text-ink-muted">
+          <li>• Etüt Standart / Dershane Pro</li>
+          <li>• Yaz pause + 60g garantisi</li>
+          <li>• KVKK envanter + RTBF</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   BENTO GRID — özet detay özellikler
+════════════════════════════════════════════════════════════════════════════ #}
+<section class="py-20 bg-surface-sunk">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12 reveal">
+      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">Detaylar</p>
+      <h2 class="text-display-md text-ink mb-3">Her ihtiyaca özel parça</h2>
+    </div>
+    <div class="bento-grid reveal-stagger">
+      {# 1. AI Plan — wide cell #}
+      <div class="bento-cell bento-cell-wide card-elevated card-hover-lift p-6 bg-gradient-to-br from-brand-50/30 via-white to-white">
+        <div class="flex items-start justify-between gap-4 h-full">
+          <div class="max-w-md">
+            <span class="badge badge-brand mb-3">🤖 Yapay Zeka</span>
+            <h3 class="font-display font-bold text-xl text-ink mb-2">AI Plan Şablonu</h3>
+            <p class="text-sm text-ink-muted">Öğrencinin kitabı ve hedefiyle Claude AI bir hafta için ünite-test eşleşmesi önerir; kabul ederek tek tıkla programa eklersiniz.</p>
+          </div>
+          <div class="hidden sm:flex flex-col gap-1.5 shrink-0">
+            <div class="h-2 w-32 bg-brand-200 rounded-full"></div>
+            <div class="h-2 w-28 bg-brand-300 rounded-full"></div>
+            <div class="h-2 w-24 bg-brand rounded-full"></div>
+            <div class="h-2 w-32 bg-brand-100 rounded-full"></div>
+          </div>
+        </div>
+      </div>
+      {# 2. Hedef Ağacı #}
+      <div class="bento-cell card-elevated card-hover-lift p-6">
+        <span class="badge badge-accent mb-3">🎯 Hedef Ağacı</span>
+        <h3 class="font-display font-bold text-lg text-ink mb-2">Sınavdan günlüğe</h3>
+        <p class="text-sm text-ink-muted">LGS hedefi → 6 ders → konu altı → günlük adım. Yapraktan köke ilerleme yansır.</p>
+      </div>
+      {# 3. Veli WhatsApp #}
+      <div class="bento-cell card-elevated card-hover-lift p-6">
+        <span class="badge badge-success mb-3">💬 Veli WhatsApp</span>
+        <h3 class="font-display font-bold text-lg text-ink mb-2">Otomatik özet</h3>
+        <p class="text-sm text-ink-muted">Pazartesi 12:00'da haftalık tamamlama, Pazartesi sabahı drop alarmı, sınav D-7 hatırlatma.</p>
+      </div>
+      {# 4. Risk Paneli #}
+      <div class="bento-cell card-elevated card-hover-lift p-6">
+        <span class="badge mb-3" style="background:#FEE2E2;color:#991B1B;">⚠️ Risk Paneli</span>
+        <h3 class="font-display font-bold text-lg text-ink mb-2">5 göstergede skor</h3>
+        <p class="text-sm text-ink-muted">5 günden uzun login yok + tamamlama düşük + üst üste boş gün = kırmızı alarm.</p>
+      </div>
+      {# 5. Kohort Analizi #}
+      <div class="bento-cell card-elevated card-hover-lift p-6">
+        <span class="badge badge-brand mb-3">📊 Kohort</span>
+        <h3 class="font-display font-bold text-lg text-ink mb-2">Sınıf vs sınıf</h3>
+        <p class="text-sm text-ink-muted">Sınıf, alan, müfredat (Maarif/Klasik), hedef sınav kırılımında haftalık başarı kıyas.</p>
+      </div>
+      {# 6. Akademik Yıl + Yaz Pause — wide #}
+      <div class="bento-cell bento-cell-wide card-elevated card-hover-lift p-6 bg-gradient-to-br from-emerald-50/40 via-white to-white">
+        <div class="flex items-start justify-between gap-4">
+          <div class="max-w-md">
+            <span class="badge badge-success mb-3">📅 Akademik Yıl</span>
+            <h3 class="font-display font-bold text-xl text-ink mb-2">Eylül-Haziran 10 ay peşin, 12 ay erişim</h3>
+            <p class="text-sm text-ink-muted">Türk eğitim takvimine doğal uyum. Yaz Tem-Ağu %20 saklama tarifesiyle pause; Eylül'de otomatik dönüş.</p>
+          </div>
+          <div class="hidden sm:block shrink-0">
+            <div class="text-3xl text-emerald-600 font-display font-bold">10<span class="text-emerald-400">/12</span></div>
+            <p class="text-[10px] text-ink-subtle uppercase">Ay</p>
+          </div>
+        </div>
+      </div>
+      {# 7. KVKK / RTBF #}
+      <div class="bento-cell card-elevated card-hover-lift p-6">
+        <span class="badge mb-3" style="background:#E0E7FF;color:#3730A3;">⚖️ KVKK Madde 11</span>
+        <h3 class="font-display font-bold text-lg text-ink mb-2">Veri ihracı + Unutulma Hakkı</h3>
+        <p class="text-sm text-ink-muted">Self-serve veri indir, 30 gün düşünme süreli silme talebi, sistem envanter raporu.</p>
+      </div>
+      {# 8. Multi-tenant + Tenant Backup #}
+      <div class="bento-cell card-elevated card-hover-lift p-6">
+        <span class="badge mb-3" style="background:#F3E8FF;color:#6B21A8;">🏢 Multi-tenant</span>
+        <h3 class="font-display font-bold text-lg text-ink mb-2">Kurum izolasyonu</h3>
+        <p class="text-sm text-ink-muted">29/29 izolasyon testi PASS. Cross-tenant erişim kapalı. JSON tenant backup.</p>
+      </div>
+      {# 9. 60g Performans Garantisi #}
+      <div class="bento-cell card-elevated card-hover-lift p-6">
+        <span class="badge badge-accent mb-3">🛡️ 60g Garanti</span>
+        <h3 class="font-display font-bold text-lg text-ink mb-2">Otomatik 1 ay uzatma</h3>
+        <p class="text-sm text-ink-muted">Dershane Pro'da: 60 gün sonu kurum koçluk verimi eşik altı ise 1 ay erişim hediye.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   ROL ÖNİZLEME — 5 rol tab switcher (Alpine.js)
+════════════════════════════════════════════════════════════════════════════ #}
+<section id="roller" class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12 reveal">
+      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">5 rol, 1 platform</p>
+      <h2 class="text-display-md text-ink">Herkes için doğru görünüm</h2>
+    </div>
+    <div x-data="{ tab: 'teacher' }" class="reveal">
+      <div class="flex flex-wrap justify-center gap-2 mb-8">
+        <button type="button" @click="tab='teacher'"
+                :class="tab==='teacher' ? 'bg-brand text-white shadow-glow-brand' : 'bg-white text-ink-muted border border-stone-200 hover:border-brand'"
+                class="px-4 py-2 rounded-full text-sm font-medium transition">
+          🧑‍🏫 Öğretmen
+        </button>
+        <button type="button" @click="tab='student'"
+                :class="tab==='student' ? 'text-white shadow-md' : 'bg-white text-ink-muted border border-stone-200 hover:border-indigo-400'"
+                :style="tab==='student' ? 'background:#6366F1' : ''"
+                class="px-4 py-2 rounded-full text-sm font-medium transition">
+          🧑‍🎓 Öğrenci
+        </button>
+        <button type="button" @click="tab='parent'"
+                :class="tab==='parent' ? 'text-white shadow-md' : 'bg-white text-ink-muted border border-stone-200 hover:border-amber-400'"
+                :style="tab==='parent' ? 'background:#D97706' : ''"
+                class="px-4 py-2 rounded-full text-sm font-medium transition">
+          👨‍👩‍👧 Veli
+        </button>
+        <button type="button" @click="tab='institution_admin'"
+                :class="tab==='institution_admin' ? 'text-white shadow-md' : 'bg-white text-ink-muted border border-stone-200 hover:border-emerald-400'"
+                :style="tab==='institution_admin' ? 'background:#059669' : ''"
+                class="px-4 py-2 rounded-full text-sm font-medium transition">
+          🏢 Kurum Yöneticisi
+        </button>
+        <button type="button" @click="tab='super_admin'"
+                :class="tab==='super_admin' ? 'text-white shadow-md' : 'bg-white text-ink-muted border border-stone-200 hover:border-rose-400'"
+                :style="tab==='super_admin' ? 'background:#E11D48' : ''"
+                class="px-4 py-2 rounded-full text-sm font-medium transition">
+          🛡️ Süper Admin
+        </button>
+      </div>
+
+      {# Tab içerikleri — her rolün özet kartı #}
+      <div class="grid lg:grid-cols-2 gap-8 items-center">
+        <div>
+          <div x-show="tab==='teacher'" x-transition.opacity>
+            <h3 class="font-display font-bold text-2xl text-ink mb-3">Öğretmenin omurgası</h3>
+            <p class="text-ink-muted leading-relaxed mb-4">Haftalık plan editörü, kitap-konu eşleme, AI öneri, talep merkezi, AI performans paneli, 60+ öğrenciye kadar sınırsız (Solo Elite).</p>
+            <ul class="space-y-2 text-sm text-ink">
+              <li class="flex gap-2"><span class="text-brand">✓</span> "Sinema koltuğu" book grid &mdash; bağlama duyarlı kitap seçimi</li>
+              <li class="flex gap-2"><span class="text-brand">✓</span> Talep kuyruğu (badge sayımıyla)</li>
+              <li class="flex gap-2"><span class="text-brand">✓</span> AI performans analizi (Claude)</li>
+              <li class="flex gap-2"><span class="text-brand">✓</span> CSV toplu öğrenci içe aktarım</li>
+            </ul>
+          </div>
+          <div x-show="tab==='student'" x-transition.opacity x-cloak>
+            <h3 class="font-display font-bold text-2xl text-ink mb-3" style="color:#4F46E5">Öğrenciye sade görünüm</h3>
+            <p class="text-ink-muted leading-relaxed mb-4">Bugün ne yapacağım, haftam, kitaplarım, hedef ağacım, talepler. Dağıtmıyor, odaklıyor.</p>
+            <ul class="space-y-2 text-sm text-ink">
+              <li class="flex gap-2"><span style="color:#6366F1">✓</span> Günlük + haftalık görev listesi</li>
+              <li class="flex gap-2"><span style="color:#6366F1">✓</span> Kendi hedef ağacı &mdash; ilerleme bar'ı</li>
+              <li class="flex gap-2"><span style="color:#6366F1">✓</span> Öğretmenden AI yanıtlı talep gönder</li>
+              <li class="flex gap-2"><span style="color:#6366F1">✓</span> Mobile-first arayüz</li>
+            </ul>
+          </div>
+          <div x-show="tab==='parent'" x-transition.opacity x-cloak>
+            <h3 class="font-display font-bold text-2xl text-ink mb-3" style="color:#B45309">Veli için sıcak özet</h3>
+            <p class="text-ink-muted leading-relaxed mb-4">Çocuğunuzun haftalık özeti, drop alarmı, hedef ağacı, sınav D-30/7/1 hatırlatma. WhatsApp veya e-posta.</p>
+            <ul class="space-y-2 text-sm text-ink">
+              <li class="flex gap-2"><span style="color:#D97706">✓</span> Otomatik haftalık WhatsApp/e-posta</li>
+              <li class="flex gap-2"><span style="color:#D97706">✓</span> Çoğa-çoğa kardeş desteği</li>
+              <li class="flex gap-2"><span style="color:#D97706">✓</span> Quiet hours + opt-out tek-tık</li>
+              <li class="flex gap-2"><span style="color:#D97706">✓</span> Hedef ağacı yalnız okuma</li>
+            </ul>
+          </div>
+          <div x-show="tab==='institution_admin'" x-transition.opacity x-cloak>
+            <h3 class="font-display font-bold text-2xl text-ink mb-3" style="color:#047857">Kurumun panosu</h3>
+            <p class="text-ink-muted leading-relaxed mb-4">Risk paneli, kohort, aktivite ısı haritası, haftalık özet, kredi/limit yönetimi, plan + abonelik.</p>
+            <ul class="space-y-2 text-sm text-ink">
+              <li class="flex gap-2"><span style="color:#059669">✓</span> Tenant izolasyon &mdash; başka kurum görünmez</li>
+              <li class="flex gap-2"><span style="color:#059669">✓</span> Akademik yıl + yaz pause + garantisi</li>
+              <li class="flex gap-2"><span style="color:#059669">✓</span> Pazartesi 12:00 yönetici özet e-posta</li>
+              <li class="flex gap-2"><span style="color:#059669">✓</span> Hedef analizi (gizlilik korunur)</li>
+            </ul>
+          </div>
+          <div x-show="tab==='super_admin'" x-transition.opacity x-cloak>
+            <h3 class="font-display font-bold text-2xl text-ink mb-3" style="color:#BE123C">Sistem operasyonu</h3>
+            <p class="text-ink-muted leading-relaxed mb-4">Kurum sağlığı (churn skoru), feature flag, sistem duyuru, KVKK denetim, audit log retention, tenant backup.</p>
+            <ul class="space-y-2 text-sm text-ink">
+              <li class="flex gap-2"><span style="color:#E11D48">✓</span> Multi-tenant health scorecard</li>
+              <li class="flex gap-2"><span style="color:#E11D48">✓</span> Feature flag + per-kurum override</li>
+              <li class="flex gap-2"><span style="color:#E11D48">✓</span> KVKK envanter + RTBF + 30g grace</li>
+              <li class="flex gap-2"><span style="color:#E11D48">✓</span> Sahte oturum + audit (180g retention)</li>
+            </ul>
+          </div>
+        </div>
+
+        {# Sağ: rol-bazlı ambient preview #}
+        <div class="card-elevated p-1 overflow-hidden">
+          <div x-show="tab==='teacher'" x-transition.opacity class="rounded-lg p-8 bg-mesh-teacher h-72 flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-5xl mb-3">🧑‍🏫</div>
+              <p class="text-sm text-ink-muted">Öğretmen ambient · teal mesh</p>
+            </div>
+          </div>
+          <div x-show="tab==='student'" x-transition.opacity x-cloak class="rounded-lg p-8 bg-mesh-student h-72 flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-5xl mb-3">🧑‍🎓</div>
+              <p class="text-sm text-ink-muted">Öğrenci ambient · indigo mesh</p>
+            </div>
+          </div>
+          <div x-show="tab==='parent'" x-transition.opacity x-cloak class="rounded-lg p-8 bg-mesh-parent h-72 flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-5xl mb-3">👨‍👩‍👧</div>
+              <p class="text-sm text-ink-muted">Veli ambient · amber mesh</p>
+            </div>
+          </div>
+          <div x-show="tab==='institution_admin'" x-transition.opacity x-cloak class="rounded-lg p-8 bg-mesh-admin h-72 flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-5xl mb-3">🏢</div>
+              <p class="text-sm text-ink-muted">Kurum admin ambient · emerald mesh</p>
+            </div>
+          </div>
+          <div x-show="tab==='super_admin'" x-transition.opacity x-cloak class="rounded-lg p-8 bg-mesh-super h-72 flex items-center justify-center">
+            <div class="text-center">
+              <div class="text-5xl mb-3">🛡️</div>
+              <p class="text-sm text-ink-muted">Süper admin ambient · rose mesh</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   PRICING — B2C + B2B sekmeli
+════════════════════════════════════════════════════════════════════════════ #}
+<section id="planlar" class="py-20 bg-surface-sunk">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-12 reveal">
+      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">Planlar</p>
+      <h2 class="text-display-md text-ink mb-3">İhtiyacınıza ölçeklenir</h2>
+      <p class="text-lg text-ink-muted">Bağımsız öğretmen 14 gün ücretsiz · Kurum 30 gün CSM destekli pilot</p>
+    </div>
+    <div class="text-center mb-8">
+      <a href="/pricing" class="btn-secondary text-base">📋 Tüm Plan Detaylarını Karşılaştır →</a>
+    </div>
+    <div class="grid md:grid-cols-3 gap-6 reveal-stagger">
+      <div class="card-elevated card-hover-lift p-7 relative">
+        <h3 class="font-display font-bold text-lg text-ink">Solo Free</h3>
+        <p class="text-sm text-ink-muted mt-1 mb-4">Bağımsız öğretmen başlangıç</p>
+        <div class="text-4xl font-display font-bold text-ink mb-1">Ücretsiz</div>
+        <p class="text-xs text-ink-subtle mb-5">3 öğrenciye kadar, sürekli</p>
+        <ul class="space-y-2 text-sm mb-6">
+          <li class="flex gap-2"><span class="text-brand">✓</span> Görev planlama</li>
+          <li class="flex gap-2"><span class="text-brand">✓</span> Temel analiz</li>
+          <li class="flex gap-2"><span class="text-brand">✓</span> E-posta rapor</li>
+        </ul>
+        <a href="/signup/teacher" class="btn-secondary w-full">Ücretsiz Başla</a>
+      </div>
+      <div class="card-elevated card-hover-lift p-7 relative ring-2 ring-brand shadow-glow-brand">
+        <span class="absolute -top-3 left-1/2 -translate-x-1/2 badge badge-brand">⭐ En Popüler</span>
+        <h3 class="font-display font-bold text-lg text-ink">Solo Pro</h3>
+        <p class="text-sm text-ink-muted mt-1 mb-4">Aktif çalışan koç için</p>
+        <div class="flex items-baseline gap-1 mb-1">
+          <span class="text-4xl font-display font-bold text-ink">₺299</span>
+          <span class="text-sm text-ink-muted">/ay</span>
+        </div>
+        <p class="text-xs text-emerald-700 mb-5">Akademik yıl: ₺2.691 (10 ay ödeme, 12 ay erişim)</p>
+        <ul class="space-y-2 text-sm mb-6">
+          <li class="flex gap-2"><span class="text-brand">✓</span> 15 aktif öğrenci</li>
+          <li class="flex gap-2"><span class="text-brand">✓</span> AI öneri 300 kredi/ay</li>
+          <li class="flex gap-2"><span class="text-brand">✓</span> WhatsApp 500 mesaj/ay</li>
+          <li class="flex gap-2"><span class="text-brand">✓</span> Haftalık otomatik rapor</li>
+        </ul>
+        <a href="/signup/teacher" class="btn-primary w-full">14 Gün Pro Dene</a>
+      </div>
+      <div class="card-elevated card-hover-lift p-7 relative bg-gradient-to-br from-emerald-50/30 to-white">
+        <h3 class="font-display font-bold text-lg text-ink">Etüt Standart <span class="text-xs text-emerald-700 ml-1">B2B</span></h3>
+        <p class="text-sm text-ink-muted mt-1 mb-4">2-10 koç, etüt merkezi</p>
+        <div class="flex items-baseline gap-1 mb-1">
+          <span class="text-4xl font-display font-bold text-ink">₺199</span>
+          <span class="text-sm text-ink-muted">/koç/ay</span>
+        </div>
+        <p class="text-xs text-ink-subtle mb-5">+ ₺15/öğrenci/ay · 30 gün pilot</p>
+        <ul class="space-y-2 text-sm mb-6">
+          <li class="flex gap-2"><span class="text-emerald-600">✓</span> 200 öğrenciye kadar</li>
+          <li class="flex gap-2"><span class="text-emerald-600">✓</span> Risk paneli + kohort</li>
+          <li class="flex gap-2"><span class="text-emerald-600">✓</span> Veli WhatsApp + AI</li>
+          <li class="flex gap-2"><span class="text-emerald-600">✓</span> CSM onboarding</li>
+        </ul>
+        <a href="mailto:satis@etutkocrotam.app?subject=Etüt%20Standart%20Pilot" class="btn-secondary w-full">Pilot Başvur</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   FAQ
+════════════════════════════════════════════════════════════════════════════ #}
+<section class="py-20 bg-white">
+  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-10 reveal">
+      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">SSS</p>
+      <h2 class="text-display-md text-ink">Karar vermenize yardımcı olalım</h2>
+    </div>
+    <div class="space-y-3 reveal-stagger">
+      {% for q, a in [
+        ('14 günlük trial bittiğinde ne olur?',
+         'Hesabınız silinmez — Solo Ücretsiz tier\'a kibarca düşer. Tüm geçmiş raporlarınız, öğrencileriniz, kitaplarınız korunur. Pro özellikler kapanır; istediğiniz zaman tekrar açabilirsiniz.'),
+        ('Kurum pilotu nasıl başvurulur?',
+         '"Pilot Başvur" butonu ile e-posta gönderirsiniz. CSM ekibi 24 saat içinde döner, 30 gün boyunca tüm pro özellikler açıktır + kurulum desteği + öğretmen eğitimi sağlanır.'),
+        ('Öğrenci verileri MEB / KVKK uyumlu mu?',
+         'Evet. KVKK madde 11 hakları self-serve (veri ihracı + 30 günlük grace silme talebi). Aydınlatma metni /kvkk sayfasında, sistem geneli envanter denetim panelinde görünür.'),
+        ('Mobil uygulama var mı?',
+         'Şu an Progressive Web App olarak çalışır — telefonda tarayıcıdan açıp ana ekrana ekleyebilirsiniz. Native iOS/Android uygulamalar 2026 Q3 yol haritasında.'),
+        ('Akademik yıl planı ne avantaj sağlar?',
+         '10 ay peşin ödemeyle 12 ay erişim (2 ay hediye). Yaz Tem-Ağu için %20 saklama tarifeli pause seçeneği. 60 gün performans garantisi yeterliliği.'),
+        ('60 gün performans garantisi nasıl çalışır?',
+         'Dershane Pro / Solo Elite plan: ilk 60 gün boyunca kurum geneli koçluk verimi (haftalık tamamlama oranı) eşik altında ise plan otomatik 1 ay uzatılır + CSM 1-1 görüşme planlar.'),
+      ] %}
+      <details class="card-elevated px-5 py-4 group">
+        <summary class="cursor-pointer list-none flex items-center justify-between font-display font-semibold text-ink">
+          {{ q }}
+          <span class="text-ink-subtle group-open:rotate-180 transition">▼</span>
+        </summary>
+        <p class="text-sm text-ink-muted mt-3 leading-relaxed">{{ a }}</p>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   FINAL CTA
+════════════════════════════════════════════════════════════════════════════ #}
+<section class="py-20 bg-gradient-to-br from-brand-deep via-brand to-brand-tealLight relative overflow-hidden">
+  <div class="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><circle cx=%2230%22 cy=%2230%22 r=%221.5%22 fill=%22rgba(255,255,255,0.06)%22/></svg>')] opacity-50"></div>
+  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
+    <h2 class="text-display-lg text-white mb-5">14 günde fark hissedeceksiniz.</h2>
+    <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
+      Kredi kartı yok. Anında erişim. Pro özellikler 14 gün boyunca açık. Süre dolduğunda Solo Ücretsiz'e kibarca düşersiniz, verileriniz korunur.
+    </p>
+    <div class="flex flex-wrap items-center justify-center gap-3">
+      <a href="/signup/teacher" class="btn-accent text-base px-7 py-3.5">
+        🎁 14 Gün Ücretsiz Başla →
+      </a>
+      <a href="mailto:satis@etutkocrotam.app?subject=Demo%20Görüşme" class="px-7 py-3.5 rounded-lg border border-white/40 text-white font-semibold hover:bg-white/10 transition text-base">
+        🎤 Demo Görüşmesi
+      </a>
+    </div>
+  </div>
+</section>
+
+{# ════════════════════════════════════════════════════════════════════════════
+   FOOTER
+════════════════════════════════════════════════════════════════════════════ #}
+<footer class="bg-stone-900 text-stone-300 py-14">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid md:grid-cols-4 gap-8 mb-10">
+      <div class="md:col-span-2">
+        <div class="flex items-center gap-2.5 mb-4">
+          <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ" class="h-9 w-9 object-contain" />
+          <span class="brand-wordmark text-lg">
+            <span class="b-etut" style="color:#3D9CAB">etütkoç</span><span class="text-stone-500 mx-0.5">·</span><span class="b-rotam" style="color:#F0BD55">rotam</span>
+          </span>
+        </div>
+        <p class="text-sm text-stone-400 max-w-md leading-relaxed">
+          LGS ve YKS koçluğunun dijital omurgası. Bağımsız öğretmen ve eğitim kurumları için Türk eğitim takvimine özel SaaS.
+        </p>
+      </div>
+      <div>
+        <h4 class="font-display font-semibold text-white text-sm mb-4">Ürün</h4>
+        <ul class="space-y-2 text-sm text-stone-400">
+          <li><a href="#ozellikler" class="hover:text-white">Özellikler</a></li>
+          <li><a href="#roller" class="hover:text-white">5 Rol</a></li>
+          <li><a href="/pricing" class="hover:text-white">Planlar</a></li>
+          <li><a href="/signup/teacher" class="hover:text-white">Ücretsiz Dene</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-display font-semibold text-white text-sm mb-4">Yasal</h4>
+        <ul class="space-y-2 text-sm text-stone-400">
+          <li><a href="/kvkk" class="hover:text-white">KVKK Aydınlatma</a></li>
+          <li><a href="/privacy" class="hover:text-white">Gizlilik Politikası</a></li>
+          <li><a href="mailto:kvkk@etutkocrotam.app" class="hover:text-white">KVKK Talep</a></li>
+          <li><a href="mailto:destek@etutkocrotam.app" class="hover:text-white">Destek</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-stone-800 pt-7 flex flex-wrap items-center justify-between gap-4 text-xs text-stone-500">
+      <p>© 2026 ETÜTKOÇ Rotam · Tüm hakları saklıdır.</p>
+      <p class="font-mono">v.stage-11 · 490+ test PASS</p>
+    </div>
+  </div>
+</footer>
+{% endblock %}
