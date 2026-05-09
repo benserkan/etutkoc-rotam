@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Kohort Karşılaştırma — {{ institution.name }}{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kohort Karşılaştırma</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    {{ institution.name }} — öğrencileri farklı kategorilerde gruplayıp performansını kıyasla.
+  </p>
+</div>
+
+<div class="mb-6 p-3 rounded border border-sky-200 bg-sky-50 text-xs text-sky-800 flex items-start gap-2">
+  <span class="text-base">ℹ️</span>
+  <div>
+    <b>Gizlilik:</b> Bu sayfa sadece <b>kohort agregaları</b> gösterir — bireysel öğrenci adı veya programı YOKTUR.
+    Tamamlama oranı = bu hafta tamamlanan / planlanan. Risk yüzdesi = 'medium ve üstü' risk skoru olan öğrenci oranı.
+  </div>
+</div>
+
+{# Hafta-üzeri delta — kurum geneli #}
+<div class="mb-6 grid grid-cols-1 md:grid-cols-3 gap-3">
+  {# Bu hafta #}
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Bu hafta</div>
+    <div class="text-3xl font-semibold mt-1
+        {% if wow.this_week_rate is none %}text-slate-400
+        {% elif wow.this_week_rate >= 70 %}text-emerald-700
+        {% elif wow.this_week_rate >= 40 %}text-amber-700
+        {% else %}text-rose-700{% endif %}">
+      {% if wow.this_week_rate is not none %}%{{ wow.this_week_rate }}{% else %}—{% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">son 7 gün, kurum geneli tamamlama</div>
+  </div>
+  {# Geçen hafta #}
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Geçen hafta</div>
+    <div class="text-3xl font-semibold text-slate-700 mt-1">
+      {% if wow.last_week_rate is not none %}%{{ wow.last_week_rate }}{% else %}—{% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">önceki 7 gün, kıyas için</div>
+  </div>
+  {# Delta #}
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Değişim</div>
+    <div class="text-3xl font-semibold mt-1
+        {% if wow.direction == 'up' %}text-emerald-700
+        {% elif wow.direction == 'down' %}text-rose-700
+        {% else %}text-slate-600{% endif %}">
+      {% if wow.delta_pct is not none %}
+        {% if wow.direction == 'up' %}↑ +{{ wow.delta_pct }}
+        {% elif wow.direction == 'down' %}↓ {{ wow.delta_pct }}
+        {% else %}— 0{% endif %}
+      {% else %}
+        —
+      {% endif %}
+    </div>
+    <div class="text-[11px] text-slate-500 mt-1">
+      {% if wow.direction == 'up' %}iyileşme yönünde 👍
+      {% elif wow.direction == 'down' %}düşüş — dikkat 👀
+      {% elif wow.direction == 'flat' %}stabil
+      {% else %}veri yetersiz{% endif %}
+    </div>
+  </div>
+</div>
+
+{# Tab navigasyonu #}
+<div class="border-b border-slate-200 mb-4">
+  <nav class="flex gap-6 text-sm">
+    {% for key, label in tab_labels.items() %}
+    <a href="/institution/cohorts?tab={{ key }}"
+       class="pb-2 border-b-2 transition-colors {% if active_tab == key %}border-indigo-600 text-indigo-700 font-medium{% else %}border-transparent text-slate-600 hover:text-slate-900{% endif %}">
+      {{ label }}
+    </a>
+    {% endfor %}
+  </nav>
+</div>
+
+{% if not cohorts %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+  <div class="text-5xl mb-3">📊</div>
+  <h2 class="text-lg font-semibold text-slate-900 mb-1">Bu kategoride veri yok</h2>
+  <p class="text-sm text-slate-500">
+    {% if active_tab == 'track' %}
+      Alan bilgisi sadece 11+ ve mezun öğrencilerde aranır. Şu an kurumda bu seviyede aktif öğrenci yok.
+    {% elif active_tab == 'exam_target' %}
+      Hedef sınav bilgisi öğrencinin sınıfından türetilir. Aktif öğrenci yoksa bu görünüm boş kalır.
+    {% else %}
+      Aktif öğrenci yok ya da kategori bilgisi eksik.
+    {% endif %}
+  </p>
+</div>
+{% else %}
+
+{# Bar chart #}
+<div class="bg-white border border-slate-200 rounded-lg p-4 mb-4">
+  <h3 class="text-sm font-medium text-slate-700 mb-3">Tamamlama oranı (% son 7 gün)</h3>
+  <div style="position: relative; height: 240px;">
+    <canvas id="cohortChart"></canvas>
+  </div>
+</div>
+
+{# Tablo #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Kohort</th>
+        <th class="text-right px-4 py-2">Öğrenci</th>
+        <th class="text-right px-4 py-2">Plan</th>
+        <th class="text-right px-4 py-2">Tamamlanan</th>
+        <th class="text-right px-4 py-2">Oran</th>
+        <th class="text-right px-4 py-2">Risk</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for c in cohorts %}
+      <tr>
+        <td class="px-4 py-2 font-medium text-slate-900">{{ c.cohort_label }}</td>
+        <td class="px-4 py-2 text-right text-slate-700">{{ c.student_count }}</td>
+        <td class="px-4 py-2 text-right text-slate-700">{{ c.weekly_planned }}</td>
+        <td class="px-4 py-2 text-right text-slate-700">{{ c.weekly_completed }}</td>
+        <td class="px-4 py-2 text-right">
+          {% if c.weekly_rate_pct is not none %}
+          <span class="font-semibold
+            {% if c.rate_color == 'green' %}text-emerald-700
+            {% elif c.rate_color == 'amber' %}text-amber-700
+            {% elif c.rate_color == 'red' %}text-rose-700
+            {% else %}text-slate-500{% endif %}">%{{ c.weekly_rate_pct }}</span>
+          {% else %}
+          <span class="text-slate-400">—</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2 text-right">
+          {% if c.at_risk_pct is not none and c.at_risk_pct > 0 %}
+          <span class="text-rose-700 font-medium">%{{ c.at_risk_pct }}</span>
+          <span class="text-xs text-slate-500">({{ c.at_risk_count }})</span>
+          {% else %}
+          <span class="text-emerald-700">✓ 0</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# Chart.js #}
+<script>
+(function() {
+  const ctx = document.getElementById('cohortChart');
+  if (!ctx) return;
+  const labels = [{% for c in cohorts %}{{ c.cohort_label|tojson }}{% if not loop.last %},{% endif %}{% endfor %}];
+  const rates = [{% for c in cohorts %}{{ c.weekly_rate_pct if c.weekly_rate_pct is not none else 0 }}{% if not loop.last %},{% endif %}{% endfor %}];
+  const colors = [{% for c in cohorts %}
+    {% if c.rate_color == 'green' %}'#059669'
+    {% elif c.rate_color == 'amber' %}'#d97706'
+    {% elif c.rate_color == 'red' %}'#dc2626'
+    {% else %}'#94a3b8'{% endif %}
+    {% if not loop.last %},{% endif %}
+  {% endfor %}];
+  const counts = [{% for c in cohorts %}{{ c.student_count }}{% if not loop.last %},{% endif %}{% endfor %}];
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: 'Tamamlama %',
+        data: rates,
+        backgroundColor: colors,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            afterBody: function(items) {
+              const i = items[0].dataIndex;
+              return 'Öğrenci: ' + counts[i];
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          max: 100,
+          ticks: { callback: v => v + '%' }
+        }
+      }
+    }
+  });
+})();
+</script>
+
+{% endif %}
+{% endblock %}

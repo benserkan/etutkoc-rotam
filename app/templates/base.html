@@ -108,8 +108,10 @@
           {% elif user.role.value == 'institution_admin' %}
             <a href="/institution" class="text-slate-600 hover:text-slate-900">Panel</a>
             <a href="/institution/teachers" class="text-slate-600 hover:text-slate-900">Öğretmenler</a>
-            <a href="/institution/at-risk" class="text-slate-600 hover:text-slate-900">⚠️ Risk Paneli</a>
-            <a href="/institution/invitations" class="text-slate-600 hover:text-slate-900">📨 Davetiyeler</a>
+            <a href="/institution/at-risk" class="text-slate-600 hover:text-slate-900">⚠️ Risk</a>
+            <a href="/institution/cohorts" class="text-slate-600 hover:text-slate-900">📊 Kohort</a>
+            <a href="/institution/activity-heatmap" class="text-slate-600 hover:text-slate-900">🗺️ Aktivite</a>
+            <a href="/institution/invitations" class="text-slate-600 hover:text-slate-900">📨 Davet</a>
             <a href="/institution/roster" class="text-slate-600 hover:text-slate-900">Roster</a>
           {% elif user.role.value == 'teacher' %}
             <a href="/teacher" class="text-slate-600 hover:text-slate-900">Panel</a>

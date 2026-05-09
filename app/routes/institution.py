@@ -82,6 +82,12 @@ def institution_dashboard(
         at_risk_count = len(at_risk)
         at_risk_critical = sum(1 for a in at_risk if a.level == "critical")
 
+    # Pasif öğretmen sayısı — son 7 günde hiç aktivite yok
+    from app.services.teacher_activity import inactive_teachers
+    inactives = inactive_teachers(db, institution_id=user.institution_id, days=7)
+    inactive_teacher_count = len(inactives)
+    inactive_teacher_names = [t.full_name for t in inactives[:3]]   # en fazla 3 isim
+
     return templates.TemplateResponse(
         "institution/dashboard.html",
         {
@@ -92,6 +98,8 @@ def institution_dashboard(
             "teacher_summaries": summaries,
             "at_risk_count": at_risk_count,
             "at_risk_critical": at_risk_critical,
+            "inactive_teacher_count": inactive_teacher_count,
+            "inactive_teacher_names": inactive_teacher_names,
         },
     )
 
@@ -468,6 +476,105 @@ def revoke_invitation(
     return RedirectResponse(
         url="/institution/invitations?ok=" + quote("Davetiye iptal edildi."),
         status_code=303,
+    )
+
+
+@router.get("/activity-heatmap")
+def activity_heatmap_panel(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+    weeks: int = 4,
+):
+    """Öğretmen aktivite ısı haritası — son N hafta (4 default, 12 max-istek).
+
+    Aktivite kaynakları: login + task oluşturma + öğretmen-veli notu.
+    Hücre rengi 0..1 skoruna göre yeşilin tonunu değiştirir.
+    """
+    from app.services.teacher_activity import teacher_activity_heatmap, INACTIVE_DAYS
+    inst = db.get(Institution, user.institution_id)
+    if not inst:
+        raise HTTPException(status_code=403)
+
+    # 4 veya 12 hafta — kötü inputs için 4'e düş
+    if weeks not in (4, 12):
+        weeks = 4
+
+    heatmaps = teacher_activity_heatmap(
+        db, institution_id=user.institution_id, weeks=weeks,
+    )
+    inactive_count = sum(1 for h in heatmaps if h.is_inactive)
+
+    return templates.TemplateResponse(
+        "institution/activity_heatmap.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "heatmaps": heatmaps,
+            "weeks": weeks,
+            "days_count": weeks * 7,
+            "inactive_threshold_days": INACTIVE_DAYS,
+            "inactive_count": inactive_count,
+        },
+    )
+
+
+@router.get("/cohorts")
+def cohort_panel(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+    tab: str = "grade",
+):
+    """Kohort karşılaştırma — sınıf / alan / müfredat / hedef sınav.
+
+    `tab` query param ile aktif sekme seçilir; default 'grade'.
+    """
+    from app.services.cohort_analysis import (
+        cohort_by_curriculum,
+        cohort_by_exam_target,
+        cohort_by_grade,
+        cohort_by_track,
+        institution_week_over_week,
+    )
+    inst = db.get(Institution, user.institution_id)
+    if not inst:
+        raise HTTPException(status_code=403)
+
+    # Geçerli tab — bilinmiyorsa grade
+    valid_tabs = {"grade", "track", "curriculum", "exam_target"}
+    if tab not in valid_tabs:
+        tab = "grade"
+
+    # Sadece aktif tab'ın verisini hesapla — performans için
+    cohort_fns = {
+        "grade": cohort_by_grade,
+        "track": cohort_by_track,
+        "curriculum": cohort_by_curriculum,
+        "exam_target": cohort_by_exam_target,
+    }
+    cohorts = cohort_fns[tab](db, institution_id=user.institution_id)
+    wow = institution_week_over_week(db, institution_id=user.institution_id)
+
+    tab_labels = {
+        "grade": "Sınıf",
+        "track": "Alan",
+        "curriculum": "Müfredat",
+        "exam_target": "Hedef Sınav",
+    }
+
+    return templates.TemplateResponse(
+        "institution/cohorts.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "active_tab": tab,
+            "tab_labels": tab_labels,
+            "cohorts": cohorts,
+            "wow": wow,
+        },
     )
 
 

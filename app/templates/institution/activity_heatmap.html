@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block title %}Öğretmen Aktivite Haritası — {{ institution.name }}{% endblock %}
+
+{% block head %}
+<style>
+  .heatmap-grid { display: grid; gap: 2px; }
+  .heatmap-cell {
+    width: 11px; height: 11px;
+    border-radius: 2px;
+    background: #f1f5f9;          /* slate-100 — hiç aktivite yok */
+    transition: transform 0.1s;
+  }
+  .heatmap-cell:hover { transform: scale(1.6); cursor: pointer; }
+  /* Skor seviyesine göre yeşilin tonu — GitHub contribution stili */
+  .heatmap-cell.lvl-1 { background: #d1fae5; }   /* emerald-100 */
+  .heatmap-cell.lvl-2 { background: #6ee7b7; }   /* emerald-300 */
+  .heatmap-cell.lvl-3 { background: #10b981; }   /* emerald-500 */
+  .heatmap-cell.lvl-4 { background: #047857; }   /* emerald-700 */
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Öğretmen Aktivite Haritası</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    {{ institution.name }} — son {{ weeks }} hafta. Her kare bir gün; daha koyu yeşil = daha fazla aktivite.
+  </p>
+</div>
+
+<div class="mb-6 p-3 rounded border border-sky-200 bg-sky-50 text-xs text-sky-800 flex items-start gap-2">
+  <span class="text-base">ℹ️</span>
+  <div>
+    <b>Aktivite skoru:</b> giriş + öğrencilerine yeni görev oluşturma + veliye not yazma. Hücreye <b>hover</b>'la günlük detayını gör.
+    <span class="block mt-1">"Pasif" rozeti = son {{ inactive_threshold_days }} gündür hiç aktivite yok.</span>
+  </div>
+</div>
+
+{# Üst kontrol şeridi: hafta seçici + pasif öğretmen sayısı #}
+<div class="mb-4 flex items-center justify-between flex-wrap gap-3">
+  <div class="flex items-center gap-2 text-sm">
+    <span class="text-slate-500">Periyot:</span>
+    <a href="?weeks=4" class="px-3 py-1 rounded text-xs {% if weeks == 4 %}bg-indigo-600 text-white{% else %}border border-slate-300 hover:bg-slate-50{% endif %}">4 hafta</a>
+    <a href="?weeks=12" class="px-3 py-1 rounded text-xs {% if weeks == 12 %}bg-indigo-600 text-white{% else %}border border-slate-300 hover:bg-slate-50{% endif %}">12 hafta</a>
+  </div>
+  {% if inactive_count > 0 %}
+  <div class="text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded">
+    🚨 {{ inactive_count }} öğretmen son {{ inactive_threshold_days }} gündür pasif
+  </div>
+  {% endif %}
+</div>
+
+{# Renk skala lejantı #}
+<div class="mb-4 flex items-center gap-2 text-[10px] text-slate-500">
+  <span>Az aktif</span>
+  <div class="heatmap-cell" style="width:11px;height:11px;"></div>
+  <div class="heatmap-cell lvl-1" style="width:11px;height:11px;"></div>
+  <div class="heatmap-cell lvl-2" style="width:11px;height:11px;"></div>
+  <div class="heatmap-cell lvl-3" style="width:11px;height:11px;"></div>
+  <div class="heatmap-cell lvl-4" style="width:11px;height:11px;"></div>
+  <span>Çok aktif</span>
+</div>
+
+{% if not heatmaps %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+  <div class="text-5xl mb-3">👥</div>
+  <h2 class="text-lg font-semibold text-slate-900 mb-1">Henüz öğretmen yok</h2>
+  <p class="text-sm text-slate-500">
+    Aktivite haritası için en az bir öğretmen eklenmiş olmalı.
+    <a href="/institution/teachers" class="text-indigo-600 hover:underline">Öğretmen ekle →</a>
+  </p>
+</div>
+{% else %}
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2 w-48">Öğretmen</th>
+        <th class="text-left px-4 py-2">Son {{ weeks }} hafta</th>
+        <th class="text-right px-4 py-2 whitespace-nowrap">Toplam</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for h in heatmaps %}
+      <tr {% if h.is_inactive %}class="bg-rose-50/30"{% endif %}>
+        <td class="px-4 py-3 align-top">
+          <div class="font-medium text-slate-900 flex items-center gap-2">
+            {{ h.teacher.full_name }}
+            {% if h.is_inactive %}
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 border border-rose-200">pasif</span>
+            {% endif %}
+            {% if not h.teacher.is_active %}
+            <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">deaktif hesap</span>
+            {% endif %}
+          </div>
+          <div class="text-[11px] text-slate-500 mt-0.5">
+            {% if h.last_active_day %}son aktivite {{ h.days_since_active }}g önce{% else %}hiç aktivite yok{% endif %}
+          </div>
+        </td>
+        <td class="px-4 py-3">
+          <div class="heatmap-grid" style="grid-template-columns: repeat({{ days_count }}, 11px);">
+            {% for cell in h.cells %}
+            {% set lvl = (cell.activity_score * 4) | round(0, 'ceil') | int %}
+            {% if lvl > 4 %}{% set lvl = 4 %}{% endif %}
+            {% if cell.activity_score == 0 %}{% set lvl = 0 %}{% endif %}
+            <div class="heatmap-cell {% if lvl > 0 %}lvl-{{ lvl }}{% endif %}"
+                 title="{{ cell.day.strftime('%d.%m.%Y') }} — {{ cell.login_count }} giriş, {{ cell.tasks_created }} task, {{ cell.notes_created }} not"></div>
+            {% endfor %}
+          </div>
+        </td>
+        <td class="px-4 py-3 text-right text-xs whitespace-nowrap align-top">
+          <div class="text-slate-700"><b>{{ h.total_logins }}</b> giriş</div>
+          <div class="text-slate-500 mt-0.5">{{ h.total_tasks }} task · {{ h.total_notes }} not</div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% endif %}
+{% endblock %}
