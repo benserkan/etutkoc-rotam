@@ -73,6 +73,55 @@
   {% block head %}{% endblock %}
 </head>
 <body class="min-h-screen bg-slate-50 text-slate-800">
+  {# Stage 7 — Sistem geneli duyuru bandı (middleware inject) #}
+  {% set _anns = request.state.announcements if request.state and request.state.announcements is defined else [] %}
+  {% if _anns %}
+  <div id="system-announcements">
+    {% for a in _anns %}
+    {% set ann_id = 'announce_dismissed_' ~ a.id %}
+    <div data-announcement-id="{{ a.id }}"
+         data-dismissible="{{ '1' if a.dismissible else '0' }}"
+         class="announcement-banner px-4 py-2 text-sm flex items-center justify-between gap-3
+                {% if a.severity.value == 'critical' %}bg-rose-700 text-white
+                {% elif a.severity.value == 'warn' %}bg-amber-500 text-amber-950
+                {% else %}bg-sky-600 text-white{% endif %}">
+      <span class="flex-1 flex items-center gap-2">
+        {% if a.severity.value == 'critical' %}<span>🔴</span>
+        {% elif a.severity.value == 'warn' %}<span>⚠️</span>
+        {% else %}<span>📢</span>{% endif %}
+        {% if a.title %}<b>{{ a.title }}</b> ·{% endif %}
+        <span>{{ a.message }}</span>
+      </span>
+      {% if a.dismissible %}
+      <button type="button" onclick="dismissAnnouncement({{ a.id }})"
+              class="text-white/80 hover:text-white text-lg leading-none px-2"
+              title="Kapat">×</button>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  <script>
+    (function() {
+      // Kullanıcı tarafından kapatılan duyuruları gizle (per-cihaz, localStorage)
+      try {
+        document.querySelectorAll('.announcement-banner').forEach(function(el) {
+          var aid = el.dataset.announcementId;
+          if (localStorage.getItem('announce_dismissed_' + aid) === '1') {
+            el.style.display = 'none';
+          }
+        });
+      } catch (e) { console.warn('announcement init', e); }
+    })();
+    function dismissAnnouncement(id) {
+      try {
+        localStorage.setItem('announce_dismissed_' + id, '1');
+        var el = document.querySelector('[data-announcement-id="' + id + '"]');
+        if (el) el.style.display = 'none';
+      } catch (e) { console.warn(e); }
+    }
+  </script>
+  {% endif %}
+
   {# Imitate user banner — admin başka kullanıcı olarak görüntülerken uyarı #}
   {% if request.session.get('impersonator_id') %}
   <div class="bg-rose-600 text-white px-4 py-2 text-sm flex items-center justify-between gap-3">
@@ -105,6 +154,9 @@
             <a href="/admin/institutions" class="text-slate-600 hover:text-slate-900">Kurumlar</a>
             <a href="/admin/users" class="text-slate-600 hover:text-slate-900">Kullanıcılar</a>
             <a href="/admin/usage" class="text-slate-600 hover:text-slate-900">💳 Kullanım</a>
+            <a href="/admin/feature-flags" class="text-slate-600 hover:text-slate-900">🚦 Flags</a>
+            <a href="/admin/announcements" class="text-slate-600 hover:text-slate-900">📢 Duyuru</a>
+            <a href="/admin/system-health" class="text-slate-600 hover:text-slate-900">🩺 Sağlık</a>
             <a href="/admin/audit" class="text-slate-600 hover:text-slate-900">📜 Audit</a>
           {% elif user.role.value == 'institution_admin' %}
             <a href="/institution" class="text-slate-600 hover:text-slate-900">Panel</a>

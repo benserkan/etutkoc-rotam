@@ -10,6 +10,13 @@ from app.models.academic import (
     ExamTarget,
 )
 from app.models.admin_digest import AdminWeeklyDigest
+from app.models.announcement import (
+    AUDIENCE_LABELS_TR,
+    SEVERITY_LABELS_TR,
+    AnnouncementAudience,
+    AnnouncementSeverity,
+    SystemAnnouncement,
+)
 from app.models.at_risk_mute import (
     AT_RISK_MUTE_DAYS,
     AtRiskMute,
@@ -26,6 +33,7 @@ from app.models.book import (
     BookType,
 )
 from app.models.cron import CronSchedule
+from app.models.feature_flag import FeatureFlag, FeatureFlagOverride
 from app.models.institution import Institution
 from app.models.invitation import (
     INVITATION_TTL_DAYS,
@@ -152,6 +160,13 @@ __all__ = [
     "TeacherNoteToParent",
     "Topic",
     "Track",
+    "AUDIENCE_LABELS_TR",
+    "AnnouncementAudience",
+    "AnnouncementSeverity",
+    "FeatureFlag",
+    "FeatureFlagOverride",
+    "SEVERITY_LABELS_TR",
+    "SystemAnnouncement",
     "USAGE_KIND_LABELS_TR",
     "CreditAccount",
     "UsageEvent",

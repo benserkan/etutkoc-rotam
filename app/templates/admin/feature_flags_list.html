@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Feature Flags — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🚦 Feature Flags</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Sistem özelliklerini global olarak veya kuruma özel aç/kapa.
+    Toggle değişiklikleri ~60 saniye içinde tüm process'lerde etkili olur.
+  </p>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">✓ {{ flash_ok }}</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+{% if not flags_data %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+  Henüz feature flag tanımlanmamış. Migration ile seed edilenleri kontrol edin.
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Anahtar</th>
+        <th class="text-left px-4 py-2">Açıklama</th>
+        <th class="text-left px-4 py-2">Global</th>
+        <th class="text-left px-4 py-2">Override'lar</th>
+        <th class="text-right px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for fd in flags_data %}
+      {% set f = fd.flag %}
+      <tr>
+        <td class="px-4 py-3">
+          <a href="/admin/feature-flags/{{ f.id }}"
+             class="font-mono text-sm font-medium text-slate-900 hover:text-indigo-600">{{ f.key }}</a>
+        </td>
+        <td class="px-4 py-3 text-slate-600 text-xs">{{ f.description }}</td>
+        <td class="px-4 py-3">
+          <form method="post" action="/admin/feature-flags/{{ f.id }}/toggle"
+                onsubmit="return confirm('{{ f.key }} {% if f.enabled_globally %}KAPATILSIN{% else %}AÇILSIN{% endif %} mı? Tüm kurumları etkiler.');">
+            <button type="submit"
+                    class="text-xs px-3 py-1 rounded font-medium
+                           {% if f.enabled_globally %}bg-emerald-100 text-emerald-700 border border-emerald-300 hover:bg-emerald-200
+                           {% else %}bg-rose-100 text-rose-700 border border-rose-300 hover:bg-rose-200{% endif %}">
+              {% if f.enabled_globally %}● AÇIK{% else %}○ KAPALI{% endif %}
+            </button>
+          </form>
+        </td>
+        <td class="px-4 py-3 text-xs">
+          {% if fd.override_total == 0 %}
+            <span class="text-slate-400">—</span>
+          {% else %}
+            {% if fd.override_enabled_count %}
+              <span class="text-emerald-700">{{ fd.override_enabled_count }} açık</span>
+            {% endif %}
+            {% if fd.override_disabled_count %}
+              {% if fd.override_enabled_count %}<span class="text-slate-400 mx-1">·</span>{% endif %}
+              <span class="text-rose-700">{{ fd.override_disabled_count }} kapalı</span>
+            {% endif %}
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 text-right">
+          <a href="/admin/feature-flags/{{ f.id }}" class="text-xs text-indigo-600 hover:text-indigo-800">Override'ları yönet →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="mt-5 text-xs text-slate-500">
+  💡 Override önceliği: kuruma override varsa o kullanılır; yoksa global ayar geçerli.
+  Tanımsız flag → defansif True (yeni özellik eklenip migration koşmamış senaryosunda davranış patlamasın).
+</div>
+{% endblock %}

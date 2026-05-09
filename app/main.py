@@ -95,6 +95,55 @@ app = FastAPI(title=settings.app_name, lifespan=lifespan)
 # - https_only: production'da True olmalı (DEBUG=false → Secure flag)
 # - same_site=lax: CSRF temel koruması (POST'larda 3rd-party origin engellenir)
 # - HttpOnly: Starlette SessionMiddleware default'u (her zaman açık)
+# Stage 7 — Sistem geneli duyuruları her request'e inject et.
+# Middleware ile request.state.announcements set edilir; base.html okur.
+# Sıralama önemli: bu middleware @app.middleware ile EKLENEN ilk middleware
+# olmalı (Starlette user_middleware listesinde ilk eleman = INNER → session
+# middleware'in ALTINDA çalışır → request.session erişilebilir).
+@app.middleware("http")
+async def inject_announcements(request, call_next):
+    """Aktif duyuruları request.state.announcements'a koy.
+
+    Statik/health gibi yollar için atlanır (template render etmiyorlar
+    ve DB query maliyetinden kaçınmak iyi). 60sn cache'li olduğu için
+    pratikte SQL ucuz ama yine de defansif.
+    """
+    path = request.url.path
+    skip = (
+        path.startswith("/static")
+        or path.startswith("/health")
+        or path.startswith("/_partial")
+        or path.endswith(".css")
+        or path.endswith(".js")
+        or path.endswith(".png")
+        or path.endswith(".ico")
+    )
+    if not skip:
+        try:
+            from app.database import SessionLocal
+            from app.services.announcements import active_for_user
+            uid = request.session.get("user_id") if hasattr(request, "session") else None
+            with SessionLocal() as _db:
+                u = None
+                if uid:
+                    from app.models import User as _User
+                    u = _db.get(_User, uid)
+                request.state.announcements = active_for_user(_db, u)
+        except Exception as e:
+            # Defansif — duyuru sistemi sayfayı bozmasın
+            import logging
+            logging.getLogger(__name__).warning("announcement middleware fail (non-fatal): %s", e)
+            request.state.announcements = []
+    else:
+        request.state.announcements = []
+
+    response = await call_next(request)
+    return response
+
+
+# SessionMiddleware EN SONA add_middleware ile eklenir → user_middleware
+# listesinde son eleman → reversed iter'da ilk wrap → en OUTERMOST →
+# request.session inject_announcements çağrılmadan önce hazır.
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.session_secret,

@@ -415,19 +415,33 @@ def admin_weekly_digest(db: Session, *, now: datetime) -> dict:
 
     Idempotency: aynı (institution, week_start) için 2. kez gönderilmez.
     Cron Pazartesi 09:00 UTC'de çalışır → "geçen hafta" özeti hazır.
+    Stage 7: weekly_admin_digest flag KAPALIYSA hiç çalışmaz; per-kurum
+    override KAPALIYSA o kurum atlanır.
     """
     from app.models import Institution
     from app.services.admin_digest import send_admin_weekly_digest
+    from app.services.feature_flags import is_enabled
 
     today = now.astimezone(timezone.utc).date()
+
+    # Stage 7 — global flag kontrolü
+    if not is_enabled(db, "weekly_admin_digest"):
+        logger.info("admin_weekly_digest cron: global flag KAPALI, atlandı")
+        return {"skipped": "feature_flag_global_disabled", "total_institutions": 0}
+
     institutions = (
         db.query(Institution)
         .filter(Institution.is_active.is_(True))
         .all()
     )
     counts = {"sent": 0, "skipped_duplicate": 0, "skipped_no_admin": 0,
-              "log_only": 0, "failed": 0, "total_institutions": len(institutions)}
+              "log_only": 0, "failed": 0, "skipped_flag": 0,
+              "total_institutions": len(institutions)}
     for inst in institutions:
+        # Stage 7 — per-kurum override kontrolü
+        if not is_enabled(db, "weekly_admin_digest", institution=inst):
+            counts["skipped_flag"] += 1
+            continue
         try:
             digest = send_admin_weekly_digest(
                 db, institution=inst, week_end=today, force=False,

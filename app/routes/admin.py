@@ -1252,3 +1252,353 @@ def super_admin_add_bonus(
         url="/admin/usage?ok=" + quote(f"+{bonus_amount} bonus kredi eklendi"),
         status_code=303,
     )
+
+
+# ---------------------------- Stage 7 — Feature flags ----------------------------
+
+
+@router.get("/feature-flags")
+def feature_flags_list(
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+    ok: str | None = None,
+    err: str | None = None,
+):
+    """Tüm feature flag'ler + global toggle + override sayımı."""
+    from app.services.feature_flags import all_flags_for_admin
+    flags_data = all_flags_for_admin(db)
+    institutions = (
+        db.query(Institution)
+        .filter(Institution.is_active.is_(True))
+        .order_by(Institution.name)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "admin/feature_flags_list.html",
+        {
+            "request": request,
+            "user": user,
+            "flags_data": flags_data,
+            "institutions": institutions,
+            "flash_ok": ok,
+            "flash_err": err,
+        },
+    )
+
+
+@router.get("/feature-flags/{flag_id}")
+def feature_flag_detail(
+    flag_id: int,
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+    ok: str | None = None,
+    err: str | None = None,
+):
+    """Tek flag detayı + tüm override'larının yönetimi."""
+    from app.models import FeatureFlag
+    from app.services.feature_flags import get_overrides_for_flag
+    flag = db.get(FeatureFlag, flag_id)
+    if not flag:
+        raise HTTPException(status_code=404, detail="Flag bulunamadı")
+    overrides = get_overrides_for_flag(db, flag_id)
+    institutions = (
+        db.query(Institution)
+        .filter(Institution.is_active.is_(True))
+        .order_by(Institution.name)
+        .all()
+    )
+    overridden_inst_ids = {o.institution_id for o in overrides}
+    available_institutions = [i for i in institutions if i.id not in overridden_inst_ids]
+    return templates.TemplateResponse(
+        "admin/feature_flag_detail.html",
+        {
+            "request": request,
+            "user": user,
+            "flag": flag,
+            "overrides": overrides,
+            "available_institutions": available_institutions,
+            "flash_ok": ok,
+            "flash_err": err,
+        },
+    )
+
+
+@router.post("/feature-flags/{flag_id}/toggle")
+def feature_flag_toggle_global(
+    flag_id: int,
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Global enabled flag'i toggle et."""
+    from app.models import FeatureFlag
+    from app.services.feature_flags import set_global
+    flag = db.get(FeatureFlag, flag_id)
+    if not flag:
+        raise HTTPException(status_code=404, detail="Flag bulunamadı")
+    new_state = not flag.enabled_globally
+    set_global(db, flag.key, new_state)
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="feature_flag",
+        target_id=flag.id,
+        request=request,
+        details={"key": flag.key, "enabled_globally": new_state},
+    )
+    msg = (
+        f"'{flag.key}' AÇILDI" if new_state else f"'{flag.key}' KAPATILDI"
+    )
+    return RedirectResponse(
+        url="/admin/feature-flags?ok=" + quote(msg),
+        status_code=303,
+    )
+
+
+@router.post("/feature-flags/{flag_id}/overrides")
+def feature_flag_add_override(
+    flag_id: int,
+    request: Request,
+    institution_id: int = Form(...),
+    enabled: str = Form("on"),  # "on" / "off"
+    note: str = Form(""),
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Bir kuruma özel override ekle/güncelle."""
+    from app.models import FeatureFlag
+    from app.services.feature_flags import set_override
+    flag = db.get(FeatureFlag, flag_id)
+    if not flag:
+        raise HTTPException(status_code=404, detail="Flag bulunamadı")
+    inst = db.get(Institution, institution_id)
+    if not inst:
+        return RedirectResponse(
+            url=f"/admin/feature-flags/{flag_id}?err=" + quote("Kurum bulunamadı"),
+            status_code=303,
+        )
+    enabled_bool = enabled == "on"
+    o = set_override(
+        db, flag_id=flag_id, institution_id=institution_id,
+        enabled=enabled_bool, note=note.strip() or None,
+    )
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="feature_flag_override",
+        target_id=o.id,
+        request=request,
+        details={
+            "flag_key": flag.key, "institution_id": institution_id,
+            "enabled": enabled_bool,
+        },
+    )
+    return RedirectResponse(
+        url=f"/admin/feature-flags/{flag_id}?ok=" + quote(
+            f"'{inst.name}' için override {'AÇIK' if enabled_bool else 'KAPALI'}"
+        ),
+        status_code=303,
+    )
+
+
+@router.post("/feature-flags/overrides/{override_id}/delete")
+def feature_flag_remove_override(
+    override_id: int,
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Override sil — kurum global ayara döner."""
+    from app.models import FeatureFlagOverride
+    from app.services.feature_flags import remove_override
+    o = db.get(FeatureFlagOverride, override_id)
+    if not o:
+        raise HTTPException(status_code=404, detail="Override bulunamadı")
+    flag_id = o.feature_flag_id
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="feature_flag_override",
+        target_id=override_id,
+        request=request,
+        details={"deleted": True, "flag_id": flag_id, "institution_id": o.institution_id},
+    )
+    remove_override(db, override_id)
+    return RedirectResponse(
+        url=f"/admin/feature-flags/{flag_id}?ok=" + quote("Override silindi (global ayara döndü)"),
+        status_code=303,
+    )
+
+
+# ---------------------------- Stage 7 — Sistem duyuruları ----------------------------
+
+
+@router.get("/announcements")
+def announcements_list(
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+    ok: str | None = None,
+    err: str | None = None,
+):
+    """Tüm sistem duyuruları listesi (aktif + geçmiş)."""
+    from app.models import (
+        AUDIENCE_LABELS_TR, AnnouncementAudience, AnnouncementSeverity,
+        SEVERITY_LABELS_TR, SystemAnnouncement,
+    )
+    items = (
+        db.query(SystemAnnouncement)
+        .order_by(SystemAnnouncement.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    now_dt = datetime.now(timezone.utc)
+    return templates.TemplateResponse(
+        "admin/announcements_list.html",
+        {
+            "request": request,
+            "user": user,
+            "items": items,
+            "now": now_dt,
+            "severities": list(AnnouncementSeverity),
+            "audiences": list(AnnouncementAudience),
+            "severity_labels": SEVERITY_LABELS_TR,
+            "audience_labels": AUDIENCE_LABELS_TR,
+            "flash_ok": ok,
+            "flash_err": err,
+        },
+    )
+
+
+@router.post("/announcements")
+def announcements_create(
+    request: Request,
+    title: str = Form(""),
+    message: str = Form(...),
+    severity: str = Form("info"),
+    audience: str = Form("all"),
+    starts_at: str = Form(""),
+    ends_at: str = Form(""),
+    dismissible: str = Form("on"),
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Yeni duyuru oluştur."""
+    from app.models import (
+        AnnouncementAudience, AnnouncementSeverity, SystemAnnouncement,
+    )
+    msg_clean = (message or "").strip()
+    if not msg_clean:
+        return RedirectResponse(
+            url="/admin/announcements?err=" + quote("Mesaj zorunlu"),
+            status_code=303,
+        )
+    try:
+        sev = AnnouncementSeverity(severity)
+    except ValueError:
+        sev = AnnouncementSeverity.INFO
+    try:
+        aud = AnnouncementAudience(audience)
+    except ValueError:
+        aud = AnnouncementAudience.ALL
+
+    sa: datetime | None = None
+    ea: datetime | None = None
+    try:
+        if starts_at:
+            sa = datetime.fromisoformat(starts_at).replace(tzinfo=timezone.utc)
+        if ends_at:
+            ea = datetime.fromisoformat(ends_at).replace(tzinfo=timezone.utc)
+    except ValueError:
+        return RedirectResponse(
+            url="/admin/announcements?err=" + quote("Tarih formatı hatalı (YYYY-MM-DDTHH:MM)"),
+            status_code=303,
+        )
+
+    ann = SystemAnnouncement(
+        title=(title or "").strip() or None,
+        message=msg_clean,
+        severity=sev,
+        audience=aud,
+        starts_at=sa or datetime.now(timezone.utc),
+        ends_at=ea,
+        dismissible=(dismissible == "on"),
+        created_by=user.id,
+    )
+    db.add(ann)
+    db.flush()
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="announcement",
+        target_id=ann.id,
+        request=request,
+        details={"severity": sev.value, "audience": aud.value},
+        autocommit=False,
+    )
+    db.commit()
+    from app.services.announcements import invalidate_cache as _inv_ann
+    _inv_ann()
+    return RedirectResponse(
+        url="/admin/announcements?ok=" + quote("Duyuru oluşturuldu"),
+        status_code=303,
+    )
+
+
+# ---------------------------- Stage 7 — System health ----------------------------
+
+
+@router.get("/system-health")
+def system_health(
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Cron + dispatcher + DB sağlık paneli."""
+    from app.services.system_health import collect_snapshot
+    snapshot = collect_snapshot(db)
+    return templates.TemplateResponse(
+        "admin/system_health.html",
+        {
+            "request": request,
+            "user": user,
+            "snapshot": snapshot,
+        },
+    )
+
+
+@router.post("/announcements/{announcement_id}/delete")
+def announcements_delete(
+    announcement_id: int,
+    request: Request,
+    user: User = Depends(require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Duyuru sil."""
+    from app.models import SystemAnnouncement
+    ann = db.get(SystemAnnouncement, announcement_id)
+    if not ann:
+        raise HTTPException(status_code=404, detail="Duyuru bulunamadı")
+    log_action(
+        db,
+        action=AuditAction.INSTITUTION_UPDATE,
+        actor_id=user.id,
+        target_type="announcement",
+        target_id=announcement_id,
+        request=request,
+        details={"deleted": True},
+    )
+    db.delete(ann)
+    db.commit()
+    from app.services.announcements import invalidate_cache as _inv_ann
+    _inv_ann()
+    return RedirectResponse(
+        url="/admin/announcements?ok=" + quote("Duyuru silindi"),
+        status_code=303,
+    )

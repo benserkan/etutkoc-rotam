@@ -189,10 +189,30 @@ def _dispatch_one(
 
     log.attempts += 1
 
+    # Stage 7 — feature flag kontrolü (kanal bazında)
+    from app.services.feature_flags import is_enabled
+    institution = None
+    if log.student_id:
+        student = db.get(User, log.student_id)
+        if student and student.teacher_id:
+            teacher = db.get(User, student.teacher_id)
+            if teacher and teacher.institution:
+                institution = teacher.institution
+
     # Kanal seç
     if log.channel == NotificationChannel.EMAIL:
+        if not is_enabled(db, "parent_notifications_email", institution=institution):
+            log.status = NotificationStatus.FAILED
+            log.error = "feature_flag_disabled"
+            log.next_attempt_at = None
+            return
         ok, ext_id, err = _send_email(parent, log)
     elif log.channel == NotificationChannel.WHATSAPP:
+        if not is_enabled(db, "parent_notifications_whatsapp", institution=institution):
+            log.status = NotificationStatus.FAILED
+            log.error = "feature_flag_disabled"
+            log.next_attempt_at = None
+            return
         ok, ext_id, err = _send_whatsapp(pref, log)
     else:
         ok, ext_id, err = False, None, f"unknown_channel:{log.channel}"

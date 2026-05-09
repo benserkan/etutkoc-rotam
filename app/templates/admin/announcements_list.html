@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}Sistem Duyuruları — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📢 Sistem Duyuruları</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Tüm kullanıcılara üst banner ile mesaj ilet. Severity rengi, kitle filtresi ve zaman aralığı tanımlanır.
+  </p>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">✓ {{ flash_ok }}</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+{# Yeni duyuru formu #}
+<div class="bg-white border border-slate-200 rounded-lg p-5 mb-5">
+  <h2 class="text-sm font-medium text-slate-700 mb-3">+ Yeni Duyuru</h2>
+  <form method="post" action="/admin/announcements" class="space-y-3">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Başlık (opsiyonel)</label>
+        <input type="text" name="title" maxlength="255" class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Severity</label>
+        <select name="severity" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          {% for s in severities %}
+          <option value="{{ s.value }}" {% if s.value == 'info' %}selected{% endif %}>{{ severity_labels[s] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div>
+      <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Mesaj <span class="text-rose-500">*</span></label>
+      <textarea name="message" required rows="3" placeholder="örn: 14 Mayıs 22:00-23:00 arasında planlı bakım yapılacaktır."
+                class="w-full px-3 py-2 border border-slate-300 rounded text-sm font-sans"></textarea>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Kitle</label>
+        <select name="audience" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          {% for a in audiences %}
+          <option value="{{ a.value }}" {% if a.value == 'all' %}selected{% endif %}>{{ audience_labels[a] }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Başlangıç (opsiyonel — boş = hemen)</label>
+        <input type="datetime-local" name="starts_at" class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-xs uppercase tracking-wide text-slate-500 mb-1">Bitiş (opsiyonel — boş = süresiz)</label>
+        <input type="datetime-local" name="ends_at" class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+    </div>
+    <div class="flex items-center justify-between">
+      <label class="flex items-center gap-2 text-sm text-slate-700">
+        <input type="checkbox" name="dismissible" value="on" checked class="accent-indigo-600" />
+        <span>Kullanıcı kapatabilsin (localStorage'a yazılır)</span>
+      </label>
+      <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-5 rounded">
+        Duyuru Yayınla
+      </button>
+    </div>
+    <p class="text-[11px] text-slate-500">
+      💡 Tüm zamanlar UTC saatiyle yorumlanır. TR saati için 3 saat çıkarın.
+    </p>
+  </form>
+</div>
+
+{# Liste #}
+{% if not items %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+  Henüz duyuru yok.
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-4 py-2">Mesaj</th>
+        <th class="text-left px-4 py-2">Severity</th>
+        <th class="text-left px-4 py-2">Kitle</th>
+        <th class="text-left px-4 py-2">Aralık</th>
+        <th class="text-left px-4 py-2">Durum</th>
+        <th class="text-right px-4 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for a in items %}
+      {% set is_active = a.is_active(now) %}
+      <tr class="{% if is_active %}bg-amber-50/30{% endif %}">
+        <td class="px-4 py-3">
+          {% if a.title %}<div class="font-medium text-slate-900">{{ a.title }}</div>{% endif %}
+          <div class="text-xs text-slate-700 mt-0.5 max-w-md">{{ a.message }}</div>
+        </td>
+        <td class="px-4 py-3">
+          {% if a.severity.value == 'critical' %}
+          <span class="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">🔴 {{ severity_labels[a.severity] }}</span>
+          {% elif a.severity.value == 'warn' %}
+          <span class="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200">🟡 {{ severity_labels[a.severity] }}</span>
+          {% else %}
+          <span class="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">🔵 {{ severity_labels[a.severity] }}</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 text-xs text-slate-600">{{ audience_labels[a.audience] }}</td>
+        <td class="px-4 py-3 text-xs text-slate-500">
+          {{ a.starts_at.strftime('%d.%m %H:%M') }}
+          → {% if a.ends_at %}{{ a.ends_at.strftime('%d.%m %H:%M') }}{% else %}<span class="italic">süresiz</span>{% endif %}
+        </td>
+        <td class="px-4 py-3">
+          {% if is_active %}
+          <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">● AKTİF</span>
+          {% else %}
+          <span class="text-xs text-slate-500">geçti / planlı</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-3 text-right">
+          <form method="post" action="/admin/announcements/{{ a.id }}/delete" class="inline"
+                onsubmit="return confirm('Duyuru silinsin mi?');">
+            <button type="submit" class="text-xs text-rose-600 hover:text-rose-800">Sil</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

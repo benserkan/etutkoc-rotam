@@ -521,6 +521,16 @@ def ai_suggest_sections(
         else:
             grade_label = "belirtilmemiş"
 
+    # Stage 7 — feature flag kontrolü
+    from app.services.feature_flags import is_enabled
+    if not is_enabled(db, "ai_book_template", institution=user.institution):
+        return RedirectResponse(
+            url=f"/teacher/books/{book_id}?err=" + quote(
+                "AI ünite önerisi şu an kapalı (sistem yöneticisi)."
+            ),
+            status_code=303,
+        )
+
     # Stage 6 — kredi kontrolü (AI çağrısı pahalı; pre-check + post-record)
     from app.models import UsageKind
     from app.services.credits import (
