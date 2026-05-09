@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}İçe Aktarım Önizleme — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/teacher/students/import" class="text-sm text-slate-500 hover:text-slate-700">← CSV girişi</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">2/3 Önizleme</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Toplam {{ parse_result.rows|length }} satır işlendi.
+    <span class="text-emerald-700 font-medium">{{ parse_result.valid_count }} eklenecek</span> ·
+    <span class="text-rose-700 font-medium">{{ parse_result.invalid_count }} hatalı</span>
+  </p>
+</div>
+
+{% if parse_result.has_fatal_error %}
+<div class="bg-rose-50 border border-rose-300 rounded-lg p-4 mb-4">
+  <div class="font-semibold text-rose-900 mb-2">🚨 CSV başlıkları geçersiz</div>
+  {% for err in parse_result.header_errors %}
+  <div class="text-sm text-rose-800">• {{ err }}</div>
+  {% endfor %}
+  <p class="mt-3 text-xs text-rose-700">
+    <a href="/teacher/students/import" class="underline">← geri dön</a> ve formatı kontrol et veya
+    <a href="/teacher/students/import/template.csv" download class="underline">örnek CSV'yi indir</a>.
+  </p>
+</div>
+{% else %}
+
+{% if parse_result.invalid_count > 0 %}
+<div class="bg-amber-50 border border-amber-300 rounded-lg p-4 mb-4">
+  <div class="font-semibold text-amber-900 mb-1">⚠️ {{ parse_result.invalid_count }} satırda hata var — bunlar oluşturulmayacak</div>
+  <p class="text-xs text-amber-800">
+    Hatalı satırları aşağıda incele. Onaylarsan sadece <b>geçerli {{ parse_result.valid_count }} satır</b> oluşturulacak.
+    Hatalı satırları düzeltmek için <a href="/teacher/students/import" class="underline">geri dön</a>.
+  </p>
+</div>
+{% endif %}
+
+{% if parse_result.valid_count == 0 and parse_result.invalid_count > 0 %}
+<div class="bg-rose-50 border border-rose-300 rounded-lg p-4 mb-4">
+  <div class="font-semibold text-rose-900">Hiç geçerli satır yok — düzeltip tekrar deneyin.</div>
+</div>
+{% endif %}
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-4">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-xs">
+      <tr>
+        <th class="text-left px-3 py-2">#</th>
+        <th class="text-left px-3 py-2">Durum</th>
+        <th class="text-left px-3 py-2">Ad Soyad</th>
+        <th class="text-left px-3 py-2">E-posta</th>
+        <th class="text-left px-3 py-2">Sınıf</th>
+        <th class="text-left px-3 py-2">Alan</th>
+        <th class="text-left px-3 py-2">Detay</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for row in parse_result.rows %}
+      <tr class="{% if not row.is_valid %}bg-rose-50/40{% endif %}">
+        <td class="px-3 py-2 text-slate-500 text-xs font-mono">{{ row.row_num }}</td>
+        <td class="px-3 py-2 text-xs">
+          {% if row.is_valid %}
+            <span class="text-emerald-700 font-medium">✓ uygun</span>
+          {% else %}
+            <span class="text-rose-700 font-medium">⚠ hatalı</span>
+          {% endif %}
+        </td>
+        <td class="px-3 py-2 text-slate-800">{{ row.full_name or '—' }}</td>
+        <td class="px-3 py-2 text-slate-600 font-mono text-xs">{{ row.email or '—' }}</td>
+        <td class="px-3 py-2 text-xs">
+          {% if row.is_graduate %}🎓 Mezun
+          {% elif row.grade_level %}{{ row.grade_level }}. sınıf
+          {% else %}—{% endif %}
+        </td>
+        <td class="px-3 py-2 text-xs">
+          {% if row.track %}{{ row.track.value | upper }}{% else %}—{% endif %}
+        </td>
+        <td class="px-3 py-2">
+          {% if row.errors %}
+            {% for e in row.errors %}
+            <div class="text-xs text-rose-700">• {{ e }}</div>
+            {% endfor %}
+          {% endif %}
+          {% if row.warnings %}
+            {% for w in row.warnings %}
+            <div class="text-xs text-amber-700">• {{ w }}</div>
+            {% endfor %}
+          {% endif %}
+          {% if row.is_valid and not row.warnings %}
+            <span class="text-xs text-slate-400">—</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="flex items-center justify-between">
+  <a href="/teacher/students/import" class="text-sm text-slate-500 hover:text-slate-700">← Geri dön / düzenle</a>
+  {% if parse_result.valid_count > 0 %}
+  <form method="post" action="/teacher/students/import/confirm" class="inline"
+        onsubmit="return confirm('{{ parse_result.valid_count }} öğrenci oluşturulsun mu? Geçici şifreler bir sonraki ekranda görünecek.');">
+    <input type="hidden" name="csv_text" value="{{ csv_text }}" />
+    <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2 px-5 rounded">
+      ✓ {{ parse_result.valid_count }} Öğrenciyi Oluştur
+    </button>
+  </form>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

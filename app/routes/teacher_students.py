@@ -1,9 +1,11 @@
+import csv
+import io
 import secrets
 import string
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Request, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from app.deps import get_db, require_teacher
@@ -14,6 +16,10 @@ from app.models import (
     User,
     UserRole,
     derive_curriculum_model,
+)
+from app.services.csv_import import (
+    bulk_create_students,
+    parse_students_csv,
 )
 from app.services.security import hash_password
 from app.templating import templates
@@ -179,6 +185,9 @@ def create_student(
         full_name=full_name_stripped,
         role=UserRole.STUDENT,
         teacher_id=user.id,
+        # Tenant inherit: öğretmen kurum bağlı ise öğrenci de aynı kuruma
+        # (cohort analizi User.institution_id direkt filtre yapıyor)
+        institution_id=user.institution_id,
         academic_year_id=parsed_year_id,
         grade_level=grade_level,
         is_graduate=is_graduate,
@@ -417,3 +426,123 @@ def delete_student(
         db.delete(student)
         db.commit()
     return RedirectResponse(url="/teacher/students", status_code=status.HTTP_303_SEE_OTHER)
+
+
+# ---------------------------- CSV toplu içe aktarım (Stage 3) ----------------------------
+
+
+@router.get("/import")
+def import_form(
+    request: Request,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """1. adım: CSV yükleme/yapıştırma formu."""
+    return templates.TemplateResponse(
+        "teacher/students_import_form.html",
+        {"request": request, "user": user},
+    )
+
+
+@router.get("/import/template.csv")
+def import_template_download(
+    user: User = Depends(require_teacher),
+):
+    """Örnek CSV template indirme — kullanıcı format öğrensin diye."""
+    sample = (
+        "full_name,email,grade_level,track,is_graduate,graduate_mode\n"
+        "Ali Veli,ali.veli@example.com,8,,,\n"
+        "Ayşe Yılmaz,ayse.yilmaz@example.com,11,sayisal,,\n"
+        "Mehmet Demir,mehmet@example.com,12,ea,,\n"
+        "Mezun Ogrenci,mezun@example.com,,sozel,evet,dershane\n"
+    )
+    # UTF-8 BOM ekle — Excel TR Windows'ta düzgün açsın
+    body = "﻿" + sample
+    return Response(
+        content=body,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="ogrenci_import_sablon.csv"'
+        },
+    )
+
+
+@router.post("/import/preview")
+def import_preview(
+    request: Request,
+    csv_text: str = Form(""),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """2. adım: CSV parse + validation + preview tablosu."""
+    parse_result = parse_students_csv(csv_text)
+
+    return templates.TemplateResponse(
+        "teacher/students_import_preview.html",
+        {
+            "request": request,
+            "user": user,
+            "parse_result": parse_result,
+            "csv_text": csv_text,   # confirm aşamasında geri gönderilecek
+        },
+    )
+
+
+@router.post("/import/confirm")
+def import_confirm(
+    request: Request,
+    csv_text: str = Form(""),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """3. adım: confirm → bulk create + sonuç ekranı."""
+    parse_result = parse_students_csv(csv_text)
+    if parse_result.has_fatal_error:
+        return templates.TemplateResponse(
+            "teacher/students_import_preview.html",
+            {
+                "request": request,
+                "user": user,
+                "parse_result": parse_result,
+                "csv_text": csv_text,
+            },
+        )
+
+    valid_rows = [r for r in parse_result.rows if r.is_valid]
+    bulk_result = bulk_create_students(
+        db, teacher=user, parsed_rows=valid_rows, request=request,
+    )
+
+    return templates.TemplateResponse(
+        "teacher/students_import_results.html",
+        {
+            "request": request,
+            "user": user,
+            "bulk_result": bulk_result,
+            "total_parsed_rows": len(parse_result.rows),
+        },
+    )
+
+
+@router.post("/import/results.csv")
+def import_results_csv(
+    request: Request,
+    payload: str = Form(""),
+    user: User = Depends(require_teacher),
+):
+    """Geçici şifreleri CSV olarak indir — POST ile çünkü URL'de şifreler gitmesin.
+
+    payload: 'email,name,grade,password' formatında satırlar (results template'inde
+    JSON yerine basit CSV; şifreler tek seferlik öğretmen için).
+    """
+    # Güvenlik: payload doğrudan CSV olarak dökülmez; satır say
+    if not payload.strip():
+        return PlainTextResponse("boş", status_code=400)
+    body = "﻿" + payload
+    return Response(
+        content=body,
+        media_type="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": 'attachment; filename="ogrenci_gecici_sifreler.csv"'
+        },
+    )

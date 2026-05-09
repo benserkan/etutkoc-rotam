@@ -4,10 +4,18 @@
 {% block content %}
 <div class="mb-6">
   <a href="/institution" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kohort Karşılaştırma</h1>
-  <p class="text-sm text-slate-500 mt-1">
-    {{ institution.name }} — öğrencileri farklı kategorilerde gruplayıp performansını kıyasla.
-  </p>
+  <div class="flex items-start justify-between">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kohort Karşılaştırma</h1>
+      <p class="text-sm text-slate-500 mt-1">
+        {{ institution.name }} — öğrencileri farklı kategorilerde gruplayıp performansını kıyasla.
+      </p>
+    </div>
+    <a href="/institution/cohorts/print" target="_blank"
+       class="text-xs px-3 py-1.5 border border-slate-300 rounded text-slate-700 hover:bg-slate-50 whitespace-nowrap">
+      🖨️ Yazdır / PDF
+    </a>
+  </div>
 </div>
 
 <div class="mb-6 p-3 rounded border border-sky-200 bg-sky-50 text-xs text-sky-800 flex items-start gap-2">

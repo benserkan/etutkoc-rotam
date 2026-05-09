@@ -520,6 +520,150 @@ def activity_heatmap_panel(
     )
 
 
+@router.get("/cohorts/print")
+def cohort_panel_print(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Tüm 4 kohort tipini birleşik tek A4 landscape sayfada — yazdırılabilir."""
+    from datetime import date as _date
+    from app.services.cohort_analysis import (
+        cohort_by_curriculum,
+        cohort_by_exam_target,
+        cohort_by_grade,
+        cohort_by_track,
+        institution_week_over_week,
+    )
+    inst = db.get(Institution, user.institution_id)
+    if not inst:
+        raise HTTPException(status_code=403)
+
+    all_cohorts = [
+        {"label": "Sınıf seviyesi", "cohorts": cohort_by_grade(db, institution_id=inst.id)},
+        {"label": "Alan (11+/Mezun)", "cohorts": cohort_by_track(db, institution_id=inst.id)},
+        {"label": "Müfredat modeli", "cohorts": cohort_by_curriculum(db, institution_id=inst.id)},
+        {"label": "Hedef sınav", "cohorts": cohort_by_exam_target(db, institution_id=inst.id)},
+    ]
+    wow = institution_week_over_week(db, institution_id=inst.id)
+
+    return templates.TemplateResponse(
+        "institution/cohorts_print.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "all_cohorts": all_cohorts,
+            "wow": wow,
+            "today": _date.today(),
+        },
+    )
+
+
+@router.get("/at-risk/print")
+def at_risk_print(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Risk altındaki öğrenciler — yazdırılabilir A4 portrait."""
+    from datetime import date as _date
+    from app.services.risk_analysis import (
+        bulk_risk_assessment,
+        filter_at_risk,
+        get_active_mutes_for_students,
+    )
+    inst = db.get(Institution, user.institution_id)
+    if not inst:
+        raise HTTPException(status_code=403)
+
+    teacher_ids_q = (
+        db.query(User.id).filter(
+            User.role == UserRole.TEACHER,
+            User.institution_id == user.institution_id,
+        )
+    )
+    teacher_ids = [t[0] for t in teacher_ids_q.all()]
+
+    students = []
+    if teacher_ids:
+        students = (
+            db.query(User)
+            .filter(
+                User.role == UserRole.STUDENT,
+                User.teacher_id.in_(teacher_ids),
+                User.is_active.is_(True),
+            )
+            .order_by(User.full_name)
+            .all()
+        )
+
+    teacher_map = {}
+    if teacher_ids:
+        for t in db.query(User).filter(User.id.in_(teacher_ids)).all():
+            teacher_map[t.id] = t
+
+    assessments = bulk_risk_assessment(db, students=students)
+    at_risk = filter_at_risk(assessments, min_level="medium")
+    counts = {
+        "critical": sum(1 for a in at_risk if a.level == "critical"),
+        "high":     sum(1 for a in at_risk if a.level == "high"),
+        "medium":   sum(1 for a in at_risk if a.level == "medium"),
+    }
+
+    return templates.TemplateResponse(
+        "institution/at_risk_print.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "at_risk": at_risk,
+            "teacher_map": teacher_map,
+            "counts": counts,
+            "today": _date.today(),
+        },
+    )
+
+
+@router.get("/activity-heatmap/print")
+def activity_heatmap_print(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+    weeks: int = 4,
+):
+    """Öğretmen aktivite haritası — yazdırılabilir A4 landscape."""
+    from datetime import date as _date
+    from app.services.teacher_activity import (
+        teacher_activity_heatmap,
+        INACTIVE_DAYS,
+    )
+    inst = db.get(Institution, user.institution_id)
+    if not inst:
+        raise HTTPException(status_code=403)
+    if weeks not in (4, 12):
+        weeks = 4
+    heatmaps = teacher_activity_heatmap(
+        db, institution_id=user.institution_id, weeks=weeks,
+    )
+    inactive_count = sum(1 for h in heatmaps if h.is_inactive)
+
+    return templates.TemplateResponse(
+        "institution/activity_heatmap_print.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "heatmaps": heatmaps,
+            "weeks": weeks,
+            "days_count": weeks * 7,
+            "inactive_threshold_days": INACTIVE_DAYS,
+            "inactive_count": inactive_count,
+            "today": _date.today(),
+        },
+    )
+
+
 @router.get("/cohorts")
 def cohort_panel(
     request: Request,

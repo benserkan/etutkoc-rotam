@@ -43,7 +43,12 @@
 {% endif %}
 
 <div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
-  <h2 class="font-medium text-slate-900 mb-3">Yeni Öğrenci Ekle</h2>
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-medium text-slate-900">Yeni Öğrenci Ekle</h2>
+    <a href="/teacher/students/import" class="text-xs px-3 py-1.5 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded font-medium">
+      📥 Toplu CSV ile Aktar
+    </a>
+  </div>
   <form method="post" action="/teacher/students" id="new-student-form" class="space-y-3">
 
     {# Satır 1: Kimlik #}
