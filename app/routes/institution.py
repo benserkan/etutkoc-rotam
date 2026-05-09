@@ -520,6 +520,108 @@ def activity_heatmap_panel(
     )
 
 
+@router.get("/admin-digest")
+def admin_digest_archive(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+    ok: str | None = None,
+    err: str | None = None,
+):
+    """Haftalık yönetici özetleri arşivi — son 12 hafta + manuel tetik butonu."""
+    from app.models import AdminWeeklyDigest
+    inst = db.get(Institution, user.institution_id)
+    digests = (
+        db.query(AdminWeeklyDigest)
+        .filter(AdminWeeklyDigest.institution_id == user.institution_id)
+        .order_by(AdminWeeklyDigest.week_start_date.desc())
+        .limit(12)
+        .all()
+    )
+    return templates.TemplateResponse(
+        "institution/admin_digest_list.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "digests": digests,
+            "flash_ok": ok,
+            "flash_err": err,
+        },
+    )
+
+
+@router.post("/admin-digest/send-now")
+def admin_digest_send_now(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Manuel tetik — bu hafta için özet üret + e-posta gönder.
+
+    Idempotency: aynı hafta için zaten varsa, force=True ile yeniden gönderir
+    (test/güncelleme amaçlı). Çoklu tetik audit log'da görünür.
+    """
+    from urllib.parse import quote
+    from app.services.admin_digest import send_admin_weekly_digest
+    inst = db.get(Institution, user.institution_id)
+    try:
+        digest = send_admin_weekly_digest(
+            db, institution=inst, force=True,
+        )
+        msg = (
+            f"Haftalık özet üretildi. Durum: {digest.send_status}, "
+            f"alıcı: {digest.recipient_count}"
+        )
+        return RedirectResponse(
+            url="/institution/admin-digest?ok=" + quote(msg),
+            status_code=303,
+        )
+    except Exception as e:
+        return RedirectResponse(
+            url="/institution/admin-digest?err=" + quote(f"Hata: {type(e).__name__}: {e}"),
+            status_code=303,
+        )
+
+
+@router.get("/admin-digest/{digest_id}")
+def admin_digest_detail(
+    digest_id: int,
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Tek bir özet kaydının detayı — payload'ı snapshot olarak göster."""
+    import json as _json
+    from app.models import AdminWeeklyDigest
+    digest = (
+        db.query(AdminWeeklyDigest)
+        .filter(
+            AdminWeeklyDigest.id == digest_id,
+            AdminWeeklyDigest.institution_id == user.institution_id,
+        )
+        .first()
+    )
+    if not digest:
+        raise HTTPException(status_code=404)
+    payload = {}
+    if digest.payload_json:
+        try:
+            payload = _json.loads(digest.payload_json)
+        except (ValueError, TypeError):
+            pass
+    return templates.TemplateResponse(
+        "institution/admin_digest_detail.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": db.get(Institution, user.institution_id),
+            "digest": digest,
+            "payload": payload,
+        },
+    )
+
+
 @router.get("/cohorts/print")
 def cohort_panel_print(
     request: Request,

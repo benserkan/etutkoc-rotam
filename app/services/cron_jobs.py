@@ -407,6 +407,53 @@ def exam_approaching(db: Session, *, now: datetime) -> dict:
     return counts
 
 
+# ---------------------------- Admin haftalık özet ----------------------------
+
+
+def admin_weekly_digest(db: Session, *, now: datetime) -> dict:
+    """Her aktif kurum için haftalık yönetici özeti gönder.
+
+    Idempotency: aynı (institution, week_start) için 2. kez gönderilmez.
+    Cron Pazartesi 09:00 UTC'de çalışır → "geçen hafta" özeti hazır.
+    """
+    from app.models import Institution
+    from app.services.admin_digest import send_admin_weekly_digest
+
+    today = now.astimezone(timezone.utc).date()
+    institutions = (
+        db.query(Institution)
+        .filter(Institution.is_active.is_(True))
+        .all()
+    )
+    counts = {"sent": 0, "skipped_duplicate": 0, "skipped_no_admin": 0,
+              "log_only": 0, "failed": 0, "total_institutions": len(institutions)}
+    for inst in institutions:
+        try:
+            digest = send_admin_weekly_digest(
+                db, institution=inst, week_end=today, force=False,
+            )
+            status = digest.send_status
+            if status == "sent":
+                counts["sent"] += 1
+            elif status == "log_only":
+                counts["log_only"] += 1
+            elif status == "skipped_no_admin":
+                counts["skipped_no_admin"] += 1
+            elif status == "failed":
+                counts["failed"] += 1
+            else:
+                # 'pending' (yeni satır ama gönderim henüz başlamadı) — burada olmamalı
+                pass
+        except Exception as e:
+            logger.exception(
+                "admin_weekly_digest cron: institution=%s hata: %s",
+                inst.id, e,
+            )
+            counts["failed"] += 1
+    logger.info("admin_weekly_digest cron: %s", counts)
+    return counts
+
+
 # ---------------------------- Audit log retention ----------------------------
 
 
@@ -463,4 +510,5 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "drop_alert": drop_alert,
     "exam_approaching": exam_approaching,
     "audit_cleanup": audit_cleanup,
+    "admin_weekly_digest": admin_weekly_digest,
 }

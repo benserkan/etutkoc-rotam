@@ -9,6 +9,7 @@ from app.models.academic import (
     AcademicYear,
     ExamTarget,
 )
+from app.models.admin_digest import AdminWeeklyDigest
 from app.models.at_risk_mute import (
     AT_RISK_MUTE_DAYS,
     AtRiskMute,
@@ -85,6 +86,7 @@ __all__ = [
     "AcademicPhase",
     "AcademicPhaseKind",
     "AcademicYear",
+    "AdminWeeklyDigest",
     "AtRiskMute",
     "AuditAction",
     "AuditLog",
