@@ -28,6 +28,12 @@ from app.models import (
 from app.services.audit import log_action
 from app.services.auth_security import generate_strong_password
 from app.services.security import hash_password
+from app.services.tenant_health import (
+    bulk_health_assessment,
+    churn_summary,
+    compute_health_score,
+    filter_unhealthy,
+)
 from app.templating import templates
 
 
@@ -74,6 +80,11 @@ def admin_dashboard(
             User.role == UserRole.TEACHER, User.institution_id.is_(None)
         ).count(),
     }
+    # Stage 5.4 — kurum sağlık özeti + en kritik 3 kurum
+    all_insts = db.query(Institution).all()
+    health_assessments = bulk_health_assessment(db, institutions=all_insts)
+    health_summary = churn_summary(health_assessments)
+    top_unhealthy = filter_unhealthy(health_assessments, min_level="risk")[:3]
     # Son 10 audit olayı
     recent_audits = (
         db.query(AuditLog)
@@ -101,6 +112,8 @@ def admin_dashboard(
             "counts": counts,
             "recent_audits": recent_audits,
             "failed_logins_24h": failed_logins_24h,
+            "health_summary": health_summary,
+            "top_unhealthy": top_unhealthy,
         },
     )
 
@@ -115,13 +128,12 @@ def list_institutions(
     db: Session = Depends(get_db),
     ok: str | None = None,
     err: str | None = None,
+    sort: str = "health",  # 'health' (default, en kritik üstte) | 'name' | 'created'
+    filter_level: str | None = None,  # None | 'unhealthy' | 'critical'
 ):
-    institutions = (
-        db.query(Institution)
-        .order_by(Institution.created_at.desc())
-        .all()
-    )
-    # Her kuruma teacher sayısı + öğrenci sayısı
+    institutions = db.query(Institution).all()
+
+    # Her kuruma teacher sayısı (üst kart için kalıyor; assessment de hesaplıyor)
     iids = [i.id for i in institutions]
     teacher_counts: dict[int, int] = {}
     if iids:
@@ -132,13 +144,34 @@ def list_institutions(
             .all()
         )
         teacher_counts = {iid: cnt for iid, cnt in rows}
+
+    # Sağlık skorları — bulk
+    assessments = bulk_health_assessment(db, institutions=institutions)
+    summary = churn_summary(assessments)
+
+    # Filtreleme
+    if filter_level == "unhealthy":
+        assessments = filter_unhealthy(assessments, min_level="watch")
+    elif filter_level == "critical":
+        assessments = filter_unhealthy(assessments, min_level="critical")
+
+    # Sıralama (bulk_health_assessment skor desc döner; alternatifleri uygula)
+    if sort == "name":
+        assessments.sort(key=lambda a: a.institution.name.lower())
+    elif sort == "created":
+        assessments.sort(key=lambda a: a.institution.created_at, reverse=True)
+    # 'health' default — bulk_health_assessment zaten doğru sırada
+
     return templates.TemplateResponse(
         "admin/institutions_list.html",
         {
             "request": request,
             "user": user,
-            "institutions": institutions,
+            "assessments": assessments,
+            "summary": summary,
             "teacher_counts": teacher_counts,
+            "sort": sort,
+            "filter_level": filter_level,
             "flash_ok": ok,
             "flash_err": err,
         },
@@ -232,6 +265,9 @@ def institution_detail(
             .count()
         )
 
+    # Sağlık skoru — Stage 5.3
+    health = compute_health_score(db, institution=inst)
+
     return templates.TemplateResponse(
         "admin/institution_detail.html",
         {
@@ -241,6 +277,7 @@ def institution_detail(
             "teachers": teachers,
             "institution_admins": institution_admins,
             "student_count": student_count,
+            "health": health,
             "flash_ok": ok,
             "flash_err": err,
         },

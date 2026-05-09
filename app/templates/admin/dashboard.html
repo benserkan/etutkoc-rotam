@@ -47,6 +47,55 @@
 </div>
 {% endif %}
 
+{# Stage 5.4 — Churn / sağlık callout #}
+{% if health_summary and (health_summary.unhealthy_total > 0 or health_summary.healthy > 0) %}
+<div class="mb-6 bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">
+    <h2 class="font-medium text-slate-900">🏥 Kurum Sağlığı</h2>
+    <a href="/admin/institutions" class="text-xs text-indigo-600 hover:text-indigo-800">Tümünü gör →</a>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-0 divide-x divide-slate-100">
+    <a href="/admin/institutions" class="px-4 py-3 hover:bg-slate-50 transition">
+      <div class="text-[11px] text-slate-500 uppercase tracking-wider">🟢 Sağlıklı</div>
+      <div class="text-2xl font-semibold text-emerald-700 mt-1">{{ health_summary.healthy }}</div>
+    </a>
+    <a href="/admin/institutions?filter_level=unhealthy" class="px-4 py-3 hover:bg-slate-50 transition">
+      <div class="text-[11px] text-slate-500 uppercase tracking-wider">🟡 Gözlem</div>
+      <div class="text-2xl font-semibold text-yellow-700 mt-1">{{ health_summary.watch }}</div>
+    </a>
+    <a href="/admin/institutions?filter_level=unhealthy" class="px-4 py-3 hover:bg-slate-50 transition">
+      <div class="text-[11px] text-slate-500 uppercase tracking-wider">🟠 Riskli</div>
+      <div class="text-2xl font-semibold text-amber-700 mt-1">{{ health_summary.risk }}</div>
+    </a>
+    <a href="/admin/institutions?filter_level=critical" class="px-4 py-3 hover:bg-slate-50 transition">
+      <div class="text-[11px] text-slate-500 uppercase tracking-wider">🔴 Kritik</div>
+      <div class="text-2xl font-semibold text-rose-700 mt-1">{{ health_summary.critical }}</div>
+    </a>
+  </div>
+  {% if top_unhealthy %}
+  <div class="border-t border-slate-100 bg-rose-50/30 px-4 py-3">
+    <div class="text-xs font-medium text-slate-700 mb-2">⚠️ En çok dikkat isteyen kurumlar</div>
+    <ul class="space-y-1">
+      {% for h in top_unhealthy %}
+      <li class="flex items-center gap-3 text-sm">
+        <span>{{ h.level_emoji }}</span>
+        <a href="/admin/institutions/{{ h.institution.id }}" class="font-medium text-slate-900 hover:text-indigo-700 flex-1">
+          {{ h.institution.name }}
+        </a>
+        <span class="text-xs text-slate-500">
+          {{ h.indicators|length }} sebep
+        </span>
+        <span class="text-xs px-2 py-0.5 rounded font-mono font-semibold bg-{{ h.level_color }}-50 text-{{ h.level_color }}-700 border border-{{ h.level_color }}-200">
+          {{ h.score }}
+        </span>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
 {# Son audit olayları #}
 <div class="bg-white border border-slate-200 rounded-lg">
   <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between">

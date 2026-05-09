@@ -6,6 +6,9 @@
   <div>
     <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
     <h1 class="text-2xl font-semibold text-slate-900 mt-1">Kurumlar</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Tüm kurumların sağlık skoru, churn riski ve aktivite özeti.
+    </p>
   </div>
   <button type="button" onclick="document.getElementById('new-inst').showModal()"
           class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-2 px-4 rounded">
@@ -20,36 +23,143 @@
 <div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
 {% endif %}
 
-{% if not institutions %}
+{# Churn özet kartları #}
+{% if assessments or summary.unhealthy_total > 0 %}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+  <div class="bg-white border border-emerald-200 rounded-lg p-3">
+    <div class="text-[11px] text-slate-500 uppercase tracking-wider">🟢 Sağlıklı</div>
+    <div class="text-2xl font-semibold text-emerald-700 mt-1">{{ summary.healthy }}</div>
+  </div>
+  <div class="bg-white border border-yellow-200 rounded-lg p-3">
+    <div class="text-[11px] text-slate-500 uppercase tracking-wider">🟡 Gözlem</div>
+    <div class="text-2xl font-semibold text-yellow-700 mt-1">{{ summary.watch }}</div>
+  </div>
+  <div class="bg-white border border-amber-200 rounded-lg p-3">
+    <div class="text-[11px] text-slate-500 uppercase tracking-wider">🟠 Riskli</div>
+    <div class="text-2xl font-semibold text-amber-700 mt-1">{{ summary.risk }}</div>
+  </div>
+  <div class="bg-white border border-rose-200 rounded-lg p-3">
+    <div class="text-[11px] text-slate-500 uppercase tracking-wider">🔴 Kritik</div>
+    <div class="text-2xl font-semibold text-rose-700 mt-1">{{ summary.critical }}</div>
+  </div>
+</div>
+{% endif %}
+
+{# Sıralama + filtre çubuğu #}
+<div class="flex flex-wrap items-center gap-2 mb-4 text-xs">
+  <span class="text-slate-500 font-medium uppercase tracking-wider mr-2">Sırala:</span>
+  {% set sort_opts = [('health','Sağlık'), ('name','Ad'), ('created','Oluşturma')] %}
+  {% for code, label in sort_opts %}
+    <a href="?sort={{ code }}{% if filter_level %}&filter_level={{ filter_level }}{% endif %}"
+       class="px-2 py-1 rounded border
+              {% if sort == code %}bg-indigo-50 text-indigo-700 border-indigo-200 font-medium
+              {% else %}bg-white text-slate-600 border-slate-200 hover:border-slate-400{% endif %}">
+      {{ label }}
+    </a>
+  {% endfor %}
+  <span class="text-slate-300 mx-2">|</span>
+  <span class="text-slate-500 font-medium uppercase tracking-wider mr-2">Filtre:</span>
+  {% set filter_opts = [(none,'Tümü'), ('unhealthy','Sorunlu'), ('critical','Sadece Kritik')] %}
+  {% for code, label in filter_opts %}
+    <a href="?sort={{ sort }}{% if code %}&filter_level={{ code }}{% endif %}"
+       class="px-2 py-1 rounded border
+              {% if filter_level == code %}bg-rose-50 text-rose-700 border-rose-200 font-medium
+              {% else %}bg-white text-slate-600 border-slate-200 hover:border-slate-400{% endif %}">
+      {{ label }}
+    </a>
+  {% endfor %}
+</div>
+
+{% if not assessments %}
 <div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
-  Henüz kurum yok. Sağ üstten ekle.
+  {% if filter_level %}
+    Bu filtreye uyan kurum yok. <a href="?sort={{ sort }}" class="text-indigo-600 hover:underline">Tümünü gör</a>
+  {% else %}
+    Henüz kurum yok. Sağ üstten ekle.
+  {% endif %}
 </div>
 {% else %}
 <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
   <table class="w-full text-sm">
     <thead class="bg-slate-50 text-slate-600 text-xs">
       <tr>
+        <th class="text-left px-4 py-2">Sağlık</th>
         <th class="text-left px-4 py-2">Ad</th>
-        <th class="text-left px-4 py-2">Slug</th>
-        <th class="text-left px-4 py-2">İletişim</th>
         <th class="text-left px-4 py-2">Plan</th>
-        <th class="text-left px-4 py-2">Öğretmen</th>
+        <th class="text-right px-4 py-2">Öğrt.</th>
+        <th class="text-right px-4 py-2">Öğr.</th>
+        <th class="text-left px-4 py-2">Aktivite (7g)</th>
         <th class="text-left px-4 py-2">Durum</th>
         <th class="text-right px-4 py-2"></th>
       </tr>
     </thead>
     <tbody class="divide-y divide-slate-100">
-      {% for i in institutions %}
+      {% for a in assessments %}
+      {% set i = a.institution %}
       <tr>
-        <td class="px-4 py-3 font-medium text-slate-900">
-          <a href="/admin/institutions/{{ i.id }}" class="hover:text-indigo-600">{{ i.name }}</a>
+        <td class="px-4 py-3">
+          {# Skor rozeti — seviye rengiyle #}
+          {% set color = a.level_color %}
+          <div class="inline-flex items-center gap-1.5">
+            <span class="text-base">{{ a.level_emoji }}</span>
+            <span class="text-xs px-1.5 py-0.5 rounded font-mono font-semibold
+                  bg-{{ color }}-50 text-{{ color }}-700 border border-{{ color }}-200">
+              {{ a.score }}
+            </span>
+            <span class="text-[11px] text-slate-500">{{ a.level_label }}</span>
+          </div>
+          {% if a.indicators %}
+          <details class="mt-1">
+            <summary class="text-[10px] text-slate-400 cursor-pointer hover:text-slate-600 list-none">
+              {{ a.indicators|length }} sebep ▾
+            </summary>
+            <ul class="mt-1 text-[11px] text-slate-600 space-y-0.5 pl-1">
+              {% for ind in a.indicators %}
+              <li title="{{ ind.detail }}">
+                <span class="text-rose-600">●</span>
+                {{ ind.title }}
+                <span class="text-slate-400">(+{{ ind.weight }})</span>
+              </li>
+              {% endfor %}
+            </ul>
+          </details>
+          {% endif %}
         </td>
-        <td class="px-4 py-3 text-slate-500 font-mono text-xs">{{ i.slug }}</td>
-        <td class="px-4 py-3 text-slate-600">{{ i.contact_email or '—' }}</td>
+        <td class="px-4 py-3">
+          <a href="/admin/institutions/{{ i.id }}" class="font-medium text-slate-900 hover:text-indigo-600">{{ i.name }}</a>
+          <div class="text-[11px] text-slate-500 font-mono">{{ i.slug }}</div>
+        </td>
         <td class="px-4 py-3">
           <span class="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">{{ i.plan }}</span>
         </td>
-        <td class="px-4 py-3 text-slate-700">{{ teacher_counts.get(i.id, 0) }}</td>
+        <td class="px-4 py-3 text-right text-slate-700">{{ a.teacher_count }}</td>
+        <td class="px-4 py-3 text-right text-slate-700">{{ a.student_count }}</td>
+        <td class="px-4 py-3 text-xs">
+          {# Aktif öğretmen / öğrenci yüzdesi — sade çubuk #}
+          {% set tp = a.teacher_active_pct %}
+          {% set sp = a.student_active_pct %}
+          {% if tp is not none %}
+          <div class="flex items-center gap-1.5 mb-0.5" title="Son 7 günde giriş yapan öğretmen oranı">
+            <span class="text-[10px] text-slate-500 w-4">Ö</span>
+            <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-indigo-500" style="width: {{ tp }}%"></div>
+            </div>
+            <span class="text-[10px] text-slate-600 font-mono">%{{ tp }}</span>
+          </div>
+          {% endif %}
+          {% if sp is not none %}
+          <div class="flex items-center gap-1.5" title="Son 7 günde giriş yapan öğrenci oranı">
+            <span class="text-[10px] text-slate-500 w-4">Ö</span>
+            <div class="w-20 h-1.5 bg-slate-100 rounded-full overflow-hidden">
+              <div class="h-full bg-emerald-500" style="width: {{ sp }}%"></div>
+            </div>
+            <span class="text-[10px] text-slate-600 font-mono">%{{ sp }}</span>
+          </div>
+          {% endif %}
+          {% if tp is none and sp is none %}
+          <span class="text-slate-400">—</span>
+          {% endif %}
+        </td>
         <td class="px-4 py-3">
           {% if i.is_active %}
           <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Aktif</span>

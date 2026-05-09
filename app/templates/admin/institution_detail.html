@@ -23,6 +23,89 @@
 <div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
 {% endif %}
 
+{# Sağlık skoru paneli — Stage 5.3 #}
+{% if health %}
+{% set color = health.level_color %}
+<div class="bg-white border border-{{ color }}-300 rounded-lg p-5 mb-6">
+  <div class="flex items-start justify-between gap-4 flex-wrap">
+    <div class="flex items-center gap-4">
+      <div class="text-5xl">{{ health.level_emoji }}</div>
+      <div>
+        <div class="text-xs uppercase tracking-wider text-slate-500">Sağlık Skoru</div>
+        <div class="flex items-baseline gap-2 mt-0.5">
+          <span class="text-4xl font-bold text-{{ color }}-700">{{ health.score }}</span>
+          <span class="text-base text-slate-500">/ 100</span>
+          <span class="ml-3 text-base px-2.5 py-0.5 rounded font-semibold bg-{{ color }}-50 text-{{ color }}-700 border border-{{ color }}-200">
+            {{ health.level_label }}
+          </span>
+        </div>
+        <div class="text-xs text-slate-500 mt-1">
+          Yüksek skor = churn riski. 0-29 sağlıklı, 30-49 gözlem, 50-69 riskli, 70+ kritik.
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+      <div class="px-3 py-2 bg-slate-50 rounded">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Öğretmen</div>
+        <div class="text-lg font-semibold text-slate-900 mt-0.5">{{ health.teacher_count }}</div>
+        <div class="text-[10px] text-slate-500">
+          {% if health.teacher_active_pct is not none %}
+            7g aktif: %{{ health.teacher_active_pct }}
+          {% else %}—{% endif %}
+        </div>
+      </div>
+      <div class="px-3 py-2 bg-slate-50 rounded">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Öğrenci</div>
+        <div class="text-lg font-semibold text-slate-900 mt-0.5">{{ health.student_count }}</div>
+        <div class="text-[10px] text-slate-500">
+          {% if health.student_active_pct is not none %}
+            7g aktif: %{{ health.student_active_pct }}
+          {% else %}—{% endif %}
+        </div>
+      </div>
+      <div class="px-3 py-2 bg-slate-50 rounded">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Tamamlama</div>
+        <div class="text-lg font-semibold text-slate-900 mt-0.5">
+          {% if health.weekly_completion_rate is not none %}%{{ health.weekly_completion_rate }}{% else %}—{% endif %}
+        </div>
+        <div class="text-[10px] text-slate-500">bu hafta</div>
+      </div>
+      <div class="px-3 py-2 bg-slate-50 rounded">
+        <div class="text-[10px] text-slate-500 uppercase tracking-wider">Son giriş</div>
+        <div class="text-lg font-semibold text-slate-900 mt-0.5">
+          {% if health.last_teacher_login %}
+            {{ health.last_teacher_login.strftime('%d.%m') }}
+          {% else %}—{% endif %}
+        </div>
+        <div class="text-[10px] text-slate-500">öğretmen</div>
+      </div>
+    </div>
+  </div>
+
+  {% if health.indicators %}
+  <div class="mt-4 pt-4 border-t border-slate-100">
+    <div class="text-xs font-medium text-slate-700 mb-2">⚠️ Risk göstergeleri ({{ health.indicators|length }})</div>
+    <ul class="space-y-1.5">
+      {% for ind in health.indicators %}
+      <li class="flex items-start gap-2 text-sm">
+        <span class="text-rose-600 mt-0.5">●</span>
+        <div class="flex-1">
+          <div class="font-medium text-slate-800">{{ ind.title }} <span class="text-xs text-slate-400 font-mono">+{{ ind.weight }}</span></div>
+          <div class="text-xs text-slate-600">{{ ind.detail }}</div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <div class="mt-4 pt-4 border-t border-slate-100 text-sm text-emerald-700 flex items-center gap-2">
+    <span class="text-base">✓</span>
+    <span>Bu kurumda risk göstergesi yok — sağlıklı görünüyor.</span>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
 <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mb-6">
   {# Bilgi düzenleme #}
   <div class="bg-white border border-slate-200 rounded-lg p-5">
