@@ -167,11 +167,15 @@
   {% endif %}
 </div>
 
-{# Hafta linki #}
-<div class="text-center">
+{# Hafta + hedef linkleri #}
+<div class="text-center flex flex-wrap items-center justify-center gap-3">
   <a href="/parent/students/{{ s.id }}/week"
      class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 px-6 rounded">
     Haftalık Programı Gör →
+  </a>
+  <a href="/parent/students/{{ s.id }}/goals"
+     class="inline-block bg-amber-50 border border-amber-300 hover:bg-amber-100 text-amber-800 font-medium py-2.5 px-6 rounded">
+    🎯 Hedef Ağacını Gör
   </a>
 </div>
 
