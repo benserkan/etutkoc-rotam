@@ -1,0 +1,254 @@
+{% extends "base.html" %}
+{% block title %}Abonelik Yönetimi — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Üyelik</p>
+  <h1 class="text-2xl font-bold text-slate-900 mt-1">Abonelik Yönetimi</h1>
+  <p class="text-sm text-slate-600 mt-1 max-w-3xl">
+    Akademik yıl planı, yaz pause modu ve 60 gün performans garantisi seçeneklerini buradan
+    yönetin. Tüm değişiklikler plan değişim geçmişinde kayıt altına alınır.
+  </p>
+</div>
+
+{% set qs = request.query_params %}
+{% if qs.get('switched') %}
+<div class="mb-4 p-3 rounded bg-emerald-50 text-emerald-800 text-sm border border-emerald-200">
+  ✓ Akademik yıl planına geçildi.
+</div>
+{% endif %}
+{% if qs.get('paused') %}
+<div class="mb-4 p-3 rounded bg-sky-50 text-sky-800 text-sm border border-sky-200">
+  ✓ Yaz pause moduna geçildi.
+</div>
+{% endif %}
+{% if qs.get('resumed') %}
+<div class="mb-4 p-3 rounded bg-emerald-50 text-emerald-800 text-sm border border-emerald-200">
+  ✓ Akademik yıl planına geri dönüldü.
+</div>
+{% endif %}
+{% if qs.get('guarantee_enabled') %}
+<div class="mb-4 p-3 rounded bg-amber-50 text-amber-900 text-sm border border-amber-300">
+  🛡️ 60 gün performans garantisi aktive edildi. 60 gün sonunda kurum geneli koçluk verimi
+  ölçülecek; eşiğin altında ise plan otomatik 1 ay uzatılır.
+</div>
+{% endif %}
+{% if qs.get('err') %}
+<div class="mb-4 p-3 rounded bg-rose-50 text-rose-800 text-sm border border-rose-200">
+  {{ qs.get('err') }}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+  {# ---------- ABONELİK DURUMU ---------- #}
+  <div class="lg:col-span-2 space-y-6">
+
+    <div class="bg-white border border-slate-200 rounded-xl p-6">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-slate-500">Mevcut abonelik tipi</p>
+          <h2 class="text-2xl font-bold text-slate-900 mt-1">{{ status.kind_label }}</h2>
+        </div>
+        {% if status.kind == 'academic_year' %}
+          <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-300">
+            ✓ Yıllık peşin
+          </span>
+        {% elif status.kind == 'paused' %}
+          <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-sky-100 text-sky-800 border border-sky-300">
+            ⏸ Yaz pause
+          </span>
+        {% else %}
+          <span class="inline-block px-3 py-1 text-xs font-semibold rounded-full bg-slate-100 text-slate-700 border border-slate-300">
+            Aylık
+          </span>
+        {% endif %}
+      </div>
+
+      <dl class="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-3 text-sm">
+        {% if status.period_end %}
+        <div>
+          <dt class="text-xs font-medium text-slate-500 uppercase">Dönem bitişi</dt>
+          <dd class="text-slate-900 mt-0.5">
+            {{ status.period_end.strftime('%d %b %Y') }}
+            {% if status.days_until_period_end is not none %}
+              <span class="text-xs text-slate-500">({{ status.days_until_period_end }} gün kaldı)</span>
+            {% endif %}
+          </dd>
+        </div>
+        {% endif %}
+        {% if status.pause_until %}
+        <div>
+          <dt class="text-xs font-medium text-slate-500 uppercase">Pause dönüş tarihi</dt>
+          <dd class="text-slate-900 mt-0.5">{{ status.pause_until.strftime('%d %b %Y') }}</dd>
+        </div>
+        {% endif %}
+        <div>
+          <dt class="text-xs font-medium text-slate-500 uppercase">Plan</dt>
+          <dd class="text-slate-900 mt-0.5">{{ institution.plan }}</dd>
+        </div>
+        <div>
+          <dt class="text-xs font-medium text-slate-500 uppercase">60g performans garantisi</dt>
+          <dd class="text-slate-900 mt-0.5">
+            {% if status.performance_guarantee %}
+              <span class="text-emerald-700">✓ Aktif</span>
+              {% if status.guarantee_extended_at %}
+                <span class="text-xs text-slate-500">— uzatma uygulandı {{ status.guarantee_extended_at.strftime('%d %b %Y') }}</span>
+              {% endif %}
+            {% else %}
+              <span class="text-slate-500">Pasif</span>
+            {% endif %}
+          </dd>
+        </div>
+      </dl>
+    </div>
+
+    {# ---------- AKADEMIK YIL ----------#}
+    {% if status.can_switch_to_academic_year %}
+    <div class="bg-gradient-to-br from-brand-teal/10 to-brand-yellow/5 border border-brand-teal/30 rounded-xl p-6">
+      <div class="flex items-start gap-4">
+        <span class="text-4xl">📅</span>
+        <div class="flex-1">
+          <h3 class="text-lg font-bold text-slate-900">Akademik Yıl Planına Geçin</h3>
+          <p class="text-sm text-slate-700 mt-1">
+            Eylül-Haziran 10 ay peşin ödemeyle 12 ay erişim. 2 ay tasarruf
+            avantajı + yaz pause seçeneği + 60 gün performans garantisi
+            yeterlilik. Türk eğitim takvimine uyumlu.
+          </p>
+          <form method="post" action="/institution/subscription/switch-academic-year" class="mt-3">
+            <button type="submit"
+                    class="px-5 py-2.5 rounded-lg bg-brand-teal text-white font-medium hover:bg-brand-tealDark"
+                    onclick="return confirm('Akademik yıl planına geçişi onaylıyor musunuz?')">
+              Akademik Yıl Planına Geç →
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ---------- YAZ PAUSE ----------#}
+    {% if status.kind == 'academic_year' or status.kind == 'paused' %}
+    <div class="bg-white border border-slate-200 rounded-xl p-6">
+      <div class="flex items-start gap-4">
+        <span class="text-4xl">☀️</span>
+        <div class="flex-1">
+          <h3 class="text-lg font-bold text-slate-900">Yaz Pause Modu</h3>
+          <p class="text-sm text-slate-700 mt-1 mb-3">
+            Temmuz-Ağustos boyunca aboneliğinizi pause moduna alabilirsiniz. Bu süre boyunca
+            <b>%20 saklama ücreti</b> alınır; tüm verileriniz, programlarınız ve raporlarınız
+            korunur. 31 Ağustos sonunda otomatik olarak akademik yıl planına geri dönülür.
+          </p>
+          {% if status.can_pause %}
+          <form method="post" action="/institution/subscription/pause">
+            <button type="submit"
+                    class="px-5 py-2.5 rounded-lg bg-sky-600 text-white font-medium hover:bg-sky-700"
+                    onclick="return confirm('Yaz pause moduna geçişi onaylıyor musunuz? 31 Ağustos sonuna kadar geçerli olur.')">
+              ⏸ Pause Moduna Geç
+            </button>
+          </form>
+          {% elif status.can_resume %}
+          <form method="post" action="/institution/subscription/resume">
+            <button type="submit"
+                    class="px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-medium hover:bg-emerald-700">
+              ▶ Pause'dan Çık (Akademik Yıla Dön)
+            </button>
+          </form>
+          {% elif status.in_summer_window %}
+          <p class="text-xs text-slate-500">Pause moduna geçmek için akademik yıl planında olmanız gerekir.</p>
+          {% else %}
+          <p class="text-xs text-slate-500">Pause moduna sadece yaz pencerede (Tem-Ağu) geçebilirsiniz.</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
+    {# ---------- 60g GARANTİ ----------#}
+    <div class="bg-white border border-slate-200 rounded-xl p-6">
+      <div class="flex items-start gap-4">
+        <span class="text-4xl">🛡️</span>
+        <div class="flex-1">
+          <h3 class="text-lg font-bold text-slate-900">60 Gün Performans Garantisi</h3>
+          <p class="text-sm text-slate-700 mt-1 mb-3">
+            Plana başlangıçtan itibaren 60 gün boyunca kurum geneli koçluk verimini ölçeriz
+            (öğrenci başına haftalık tamamlama oranı). Eğer ortalama
+            <b>%{{ guarantee_eval.threshold * 100 | round | int }} altındaysa</b>
+            otomatik olarak 1 ay ek erişim hediyemizdir; CSM ekibimiz neyin yanlış gittiğini
+            anlamak için 1-1 görüşme planlar. Tek seferlik — uzatma 1 kez uygulanır.
+          </p>
+          {% if guarantee_eval.eligible %}
+            <div class="bg-slate-50 border border-slate-200 rounded p-3 text-sm mb-3">
+              <div class="flex justify-between mb-1">
+                <span class="text-slate-600">Periyot başlangıcı:</span>
+                <span class="font-medium text-slate-900">
+                  {% if guarantee_eval.period_started_at %}{{ guarantee_eval.period_started_at.strftime('%d %b %Y') }}{% else %}—{% endif %}
+                </span>
+              </div>
+              <div class="flex justify-between mb-1">
+                <span class="text-slate-600">Geçen süre:</span>
+                <span class="font-medium text-slate-900">
+                  {% if guarantee_eval.days_into_period is not none %}{{ guarantee_eval.days_into_period }} gün / 60 gün{% else %}—{% endif %}
+                </span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-600">Ortalama tamamlama:</span>
+                <span class="font-medium text-slate-900">
+                  {% if guarantee_eval.average_completion_rate is not none %}
+                    %{{ (guarantee_eval.average_completion_rate * 100) | round | int }}
+                  {% else %}—{% endif %}
+                </span>
+              </div>
+            </div>
+            <p class="text-xs text-slate-600 mb-3">{{ guarantee_eval.note }}</p>
+            {% if guarantee_eval.already_extended %}
+              <p class="text-sm text-slate-700 bg-emerald-50 border border-emerald-200 rounded p-2">
+                ✓ Garanti hakkı kullanıldı — plan {{ status.guarantee_extended_at.strftime('%d %b %Y') if status.guarantee_extended_at else '' }} tarihinde 30 gün uzatıldı.
+              </p>
+            {% endif %}
+          {% else %}
+            <form method="post" action="/institution/subscription/guarantee/enable">
+              <button type="submit"
+                      class="px-5 py-2.5 rounded-lg bg-amber-500 text-slate-900 font-medium hover:bg-amber-400"
+                      onclick="return confirm('60 gün performans garantisini aktive etmek istediğinize emin misiniz?')">
+                🛡️ Garantiyi Aktive Et
+              </button>
+            </form>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ---------- SİDEBAR ---------- #}
+  <div class="space-y-4">
+    <div class="bg-gradient-to-br from-brand-yellow/10 to-brand-teal/5 border border-brand-yellow/30 rounded-xl p-5">
+      <p class="text-xs uppercase tracking-wide text-brand-tealDark font-semibold">Avantajlar</p>
+      <h3 class="text-base font-bold text-slate-900 mt-1 mb-3">Akademik yıl planında neler var?</h3>
+      <ul class="space-y-2 text-sm text-slate-700">
+        <li class="flex gap-2"><span class="text-emerald-600">✓</span><span>10 ay ödemesi, 12 ay erişim</span></li>
+        <li class="flex gap-2"><span class="text-emerald-600">✓</span><span>Yaz pause seçeneği (%20 saklama)</span></li>
+        <li class="flex gap-2"><span class="text-emerald-600">✓</span><span>60g performans garantisi yeterliliği</span></li>
+        <li class="flex gap-2"><span class="text-emerald-600">✓</span><span>Türk eğitim takvimine doğal uyum</span></li>
+      </ul>
+    </div>
+
+    <div class="bg-white border border-slate-200 rounded-xl p-5">
+      <p class="text-xs uppercase tracking-wide text-slate-500 font-semibold">Yardım</p>
+      <ul class="mt-3 space-y-2 text-sm">
+        <li>
+          <a href="/pricing" class="text-brand-teal hover:text-brand-tealDark font-medium">→ Plan karşılaştır</a>
+        </li>
+        <li>
+          <a href="/plans/me" class="text-brand-teal hover:text-brand-tealDark font-medium">→ Plan detayları</a>
+        </li>
+        <li>
+          <a href="mailto:destek@etutkocrotam.app" class="text-slate-600 hover:text-slate-900">
+            ✉ Destek iletişim
+          </a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

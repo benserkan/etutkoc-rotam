@@ -139,6 +139,19 @@ class User(Base):
         String(32), nullable=False, default="free", server_default=text("'free'"),
     )
 
+    # Stage 9 (Faz 2) — Reverse trial: yeni kayıtta 14 gün boyunca pro_solo
+    # özellikleri açık; trial_ends_at geçince plan='solo_free'ye düşer.
+    # Bağımsız öğretmenlere uygulanır; kurum kullanıcılarında Institution.trial_*
+    # kullanılır. NULL = trial geçerli değil (zaten free veya başka bir plana
+    # geçmiş).
+    trial_ends_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # Trial bittiğinde dönülecek plan (default 'solo_free')
+    post_trial_plan: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )
+
     teacher: Mapped["User | None"] = relationship(
         "User", remote_side="User.id", backref="students", foreign_keys=[teacher_id]
     )

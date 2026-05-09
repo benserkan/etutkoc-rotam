@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+{% block title %}Ek Paketler — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Üyelik</p>
+  <h1 class="text-2xl font-bold text-slate-900 mt-1">Ek Paketler</h1>
+  <p class="text-sm text-slate-600 mt-1 max-w-3xl">
+    Planınızı değiştirmeden üzerine ekleyebileceğiniz aylık paketler. Her ayın 1'inde otomatik
+    yenilenir, istediğiniz zaman iptal edebilirsiniz; iptal edilen paket dönem sonuna kadar
+    geçerli kalır, sonraki ay yenilenmez.
+  </p>
+</div>
+
+{% set qs = request.query_params %}
+{% if qs.get('activated') %}
+<div class="mb-4 p-3 rounded bg-emerald-50 text-emerald-800 text-sm border border-emerald-200">
+  ✓ Ek paket aktive edildi. Hesabınıza eklenen kotaları aşağıdan görebilirsiniz.
+</div>
+{% endif %}
+{% if qs.get('cancelled') %}
+<div class="mb-4 p-3 rounded bg-amber-50 text-amber-800 text-sm border border-amber-200">
+  Ek paket iptal edildi. Mevcut dönem sonuna kadar geçerli kalır, yenilenmez.
+</div>
+{% endif %}
+
+{# ---------- KATALOG ---------- #}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+  {% for item in catalog %}
+  <div class="bg-white border-2 {% if item.is_active %}border-emerald-300 ring-2 ring-emerald-100{% else %}border-slate-200{% endif %} rounded-xl p-5 flex flex-col">
+    <div class="flex items-start justify-between mb-3">
+      <div>
+        {% if item.kind_value == 'whatsapp_parent' %}<span class="text-3xl">💬</span>
+        {% elif item.kind_value == 'ai_plus' %}<span class="text-3xl">🤖</span>
+        {% else %}<span class="text-3xl">👨‍👩‍👧</span>{% endif %}
+      </div>
+      <div class="text-right">
+        <div class="text-xs text-slate-500">aylık</div>
+        <div class="text-xl font-bold text-slate-900">₺{{ item.price_try }}</div>
+      </div>
+    </div>
+
+    <h3 class="font-semibold text-slate-900 mb-2">{{ item.label }}</h3>
+    <p class="text-sm text-slate-600 leading-relaxed mb-3 flex-1">{{ item.description }}</p>
+
+    {% if item.quota %}
+    <div class="text-xs text-slate-500 border-t border-slate-100 pt-3 space-y-1 mb-4">
+      {% for k, v in item.quota.items() %}
+      <div class="flex justify-between">
+        <span>
+          {% if k == 'whatsapp_messages' %}WhatsApp mesajı / ay
+          {% elif k == 'credits' %}Ekstra AI kredisi / ay
+          {% else %}{{ k }}{% endif %}
+        </span>
+        <span class="font-medium text-slate-700">{{ v }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if item.is_active %}
+    <div class="bg-emerald-50 text-emerald-800 text-xs font-medium px-3 py-2 rounded text-center border border-emerald-200">
+      ✓ Aktif — bu paket sizde
+    </div>
+    {% else %}
+    <form method="post" action="/addons/{{ item.kind_value }}/activate">
+      <button type="submit"
+              class="w-full px-4 py-2.5 rounded-lg bg-brand-teal text-white font-medium hover:bg-brand-tealDark"
+              onclick="return confirm('{{ item.label }} ek paketini aktive etmek istediğinize emin misiniz? Aylık {{ item.price_try }} TL faturalandırılır; her ayın 1inde otomatik yenilenir. Her zaman iptal edebilirsiniz.')">
+        + Aktive Et
+      </button>
+    </form>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+{# ---------- AKTIF EK PAKETLER ---------- #}
+{% if active_addons %}
+<section class="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+  <h2 class="font-semibold text-slate-900 mb-4">Aktif Ek Paketleriniz</h2>
+  <ul class="divide-y divide-slate-100">
+    {% for ad in active_addons %}
+    <li class="py-3 flex items-center justify-between gap-4">
+      <div class="flex-1">
+        <div class="font-medium text-slate-800 flex items-center gap-2">
+          {{ addon_labels[ad.addon_kind] }}
+          {% if ad.cancelled_at %}
+          <span class="text-xs text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+            İptal edildi · dönem sonuna kadar geçerli
+          </span>
+          {% else %}
+          <span class="text-xs text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+            ✓ Aktif
+          </span>
+          {% endif %}
+        </div>
+        <div class="text-xs text-slate-500 mt-0.5">
+          Dönem: {{ ad.period_start.strftime('%d %b %Y') }} – {{ ad.period_end.strftime('%d %b %Y') }}
+          {% if ad.auto_renew %}· Otomatik yenilenir{% else %}· Yenilenmez{% endif %}
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="text-sm font-medium text-slate-700">₺{{ ad.price_try }}/ay</div>
+      </div>
+      {% if not ad.cancelled_at %}
+      {% set _end_label = ad.period_end.strftime('%d %b %Y') %}
+      <form method="post" action="/addons/{{ ad.id }}/cancel">
+        <button type="submit"
+                class="text-sm text-rose-600 hover:text-rose-800 font-medium"
+                onclick="return confirm('{{ addon_labels[ad.addon_kind] }} paketini iptal etmek istediğinize emin misiniz? Mevcut dönem sonuna ({{ _end_label }}) kadar kullanmaya devam edersiniz; sonraki ay yenilenmez.')">
+          İptal
+        </button>
+      </form>
+      {% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{# ---------- GEÇMİŞ ---------- #}
+{% if history %}
+<section class="bg-white border border-slate-200 rounded-xl p-6">
+  <h2 class="font-semibold text-slate-900 mb-3">Geçmiş Paketler</h2>
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="text-xs text-slate-500 uppercase border-b border-slate-200">
+        <th class="text-left py-2 font-medium">Paket</th>
+        <th class="text-left py-2 font-medium">Dönem</th>
+        <th class="text-left py-2 font-medium">Durum</th>
+        <th class="text-right py-2 font-medium">Tutar</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for ad in history %}
+      <tr>
+        <td class="py-2.5 text-slate-700">{{ addon_labels[ad.addon_kind] }}</td>
+        <td class="py-2.5 text-slate-500 text-xs">
+          {{ ad.period_start.strftime('%d %b %Y') }} – {{ ad.period_end.strftime('%d %b %Y') }}
+        </td>
+        <td class="py-2.5">
+          {% if ad.cancelled_at %}
+          <span class="text-xs text-amber-700">İptal edildi</span>
+          {% elif ad.is_active %}
+          <span class="text-xs text-emerald-700">Aktif</span>
+          {% else %}
+          <span class="text-xs text-slate-500">Bitti</span>
+          {% endif %}
+        </td>
+        <td class="py-2.5 text-right text-slate-700">₺{{ ad.price_try }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</section>
+{% endif %}
+
+<div class="mt-8 text-center">
+  <a href="/plans/me" class="text-sm text-brand-teal hover:text-brand-tealDark font-medium">
+    ← Plana Dön
+  </a>
+</div>
+{% endblock %}

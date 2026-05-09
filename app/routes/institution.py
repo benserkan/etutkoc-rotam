@@ -951,3 +951,119 @@ def roster(
             "filter_grade": grade,
         },
     )
+
+
+# ============ Stage 9 (Faz 2.5) — Abonelik yönetimi ============
+
+
+@router.get("/subscription")
+def subscription_page(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Akademik yıl + yaz pause + 60g garantisi yönetimi."""
+    inst = db.get(Institution, user.institution_id)
+    if inst is None:
+        raise HTTPException(status_code=404)
+
+    from app.services.subscription import (
+        evaluate_guarantee, get_status,
+    )
+    status_info = get_status(inst)
+    guarantee_eval = evaluate_guarantee(db, institution=inst)
+
+    return templates.TemplateResponse(
+        "institution/subscription.html",
+        {
+            "request": request,
+            "user": user,
+            "institution": inst,
+            "status": status_info,
+            "guarantee_eval": guarantee_eval,
+        },
+    )
+
+
+@router.post("/subscription/switch-academic-year")
+def subscription_switch_academic(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Aylık → akademik yıl planına geçiş."""
+    inst = db.get(Institution, user.institution_id)
+    if inst is None:
+        raise HTTPException(status_code=404)
+    from app.services.subscription import switch_to_academic_year
+    switch_to_academic_year(
+        db, institution=inst, actor_user_id=user.id,
+        note="Kurum yöneticisi akademik yıla geçti",
+    )
+    return RedirectResponse(
+        url="/institution/subscription?switched=1", status_code=303,
+    )
+
+
+@router.post("/subscription/pause")
+def subscription_pause(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Yaz pause moduna geçiş (Tem-Ağu pencerede)."""
+    inst = db.get(Institution, user.institution_id)
+    if inst is None:
+        raise HTTPException(status_code=404)
+    from app.services.subscription import is_summer_window, pause_for_summer
+    if not is_summer_window():
+        return RedirectResponse(
+            url="/institution/subscription?err=" + quote(
+                "Pause moduna sadece yaz aylarında (Tem-Ağu) geçilebilir"
+            ),
+            status_code=303,
+        )
+    try:
+        pause_for_summer(db, institution=inst, actor_user_id=user.id)
+    except ValueError as e:
+        return RedirectResponse(
+            url="/institution/subscription?err=" + quote(str(e)),
+            status_code=303,
+        )
+    return RedirectResponse(
+        url="/institution/subscription?paused=1", status_code=303,
+    )
+
+
+@router.post("/subscription/resume")
+def subscription_resume_action(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Pause modundan akademik yıla manuel geri dönüş."""
+    inst = db.get(Institution, user.institution_id)
+    if inst is None:
+        raise HTTPException(status_code=404)
+    from app.services.subscription import resume_from_pause
+    resume_from_pause(db, institution=inst, actor_user_id=user.id)
+    return RedirectResponse(
+        url="/institution/subscription?resumed=1", status_code=303,
+    )
+
+
+@router.post("/subscription/guarantee/enable")
+def subscription_guarantee_enable(
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """60g performans garantisini aktive et."""
+    inst = db.get(Institution, user.institution_id)
+    if inst is None:
+        raise HTTPException(status_code=404)
+    from app.services.subscription import enable_guarantee
+    enable_guarantee(db, institution=inst, actor_user_id=user.id)
+    return RedirectResponse(
+        url="/institution/subscription?guarantee_enabled=1", status_code=303,
+    )

@@ -122,6 +122,10 @@ def signup_teacher_submit(
     )
     db.add(new_user)
     db.flush()
+    # Stage 9 (Faz 2) — 14 günlük reverse trial otomatik başlat
+    from app.services.plans import start_solo_trial
+    start_solo_trial(db, user=new_user, autocommit=False)
+
     log_action(
         db,
         action=AuditAction.USER_CREATE,
@@ -132,6 +136,7 @@ def signup_teacher_submit(
         details={
             "email": email_clean, "role": "teacher", "self_signup": True,
             "institution_id": None,
+            "trial_started": True, "trial_days": 14,
         },
         autocommit=False,
     )

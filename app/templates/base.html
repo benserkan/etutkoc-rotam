@@ -122,6 +122,55 @@
   </script>
   {% endif %}
 
+  {# Stage 9 (Faz 2.4) — Trial countdown global banner #}
+  {% set _tb = request.state.trial_banner if request.state and request.state.trial_banner is defined else None %}
+  {% if _tb %}
+  <div data-trial-dismissed-key="trial_banner_dismiss_{{ _tb.plan_code }}"
+       class="trial-banner px-4 py-2 text-sm flex items-center justify-between gap-3
+              {% if _tb.is_critical %}bg-rose-600 text-white
+              {% else %}bg-gradient-to-r from-brand-yellow/95 via-brand-yellow to-brand-yellowLight text-slate-900{% endif %}">
+    <span class="flex items-center gap-2 flex-1">
+      <span class="text-lg">{% if _tb.is_critical %}⏰{% else %}🎁{% endif %}</span>
+      <span>
+        <b>{{ _tb.plan_label }}</b> ·
+        {% if _tb.days_left == 0 %}
+          Süreniz bugün doluyor — <a href="/pricing" class="underline font-semibold">planları gör</a>
+        {% elif _tb.days_left == 1 %}
+          Yarın {{ _tb.post_trial_label }}'a düşer.
+        {% else %}
+          <b>{{ _tb.days_left }} gün</b> sonra {{ _tb.post_trial_label }}'a düşer.
+        {% endif %}
+        Pro özelliklerini kaybetmemek için
+        <a href="/pricing" class="underline font-semibold hover:opacity-80">ücretli plana geçin →</a>
+      </span>
+    </span>
+    <button type="button"
+            onclick="(function(b){try{var k=b.parentElement.dataset.trialDismissedKey;localStorage.setItem(k,'1');b.parentElement.style.display='none';}catch(e){}})(this)"
+            class="opacity-70 hover:opacity-100 text-lg leading-none px-2"
+            title="Bugün için gizle">×</button>
+  </div>
+  <script>
+    (function(){
+      try {
+        document.querySelectorAll('.trial-banner').forEach(function(el){
+          var k = el.dataset.trialDismissedKey;
+          if (k && localStorage.getItem(k) === '1') {
+            // Aynı gün için gizle (gün başına reset)
+            var stamp = localStorage.getItem(k + '_stamp');
+            var today = new Date().toISOString().slice(0,10);
+            if (stamp === today) {
+              el.style.display = 'none';
+            } else {
+              localStorage.removeItem(k);
+              localStorage.setItem(k + '_stamp', today);
+            }
+          }
+        });
+      } catch(e){}
+    })();
+  </script>
+  {% endif %}
+
   {# Imitate user banner — admin başka kullanıcı olarak görüntülerken uyarı #}
   {% if request.session.get('impersonator_id') %}
   <div class="bg-rose-600 text-white px-4 py-2 text-sm flex items-center justify-between gap-3">
@@ -170,6 +219,8 @@
             <a href="/institution/quota" class="text-slate-600 hover:text-slate-900">📐 Limitler</a>
             <a href="/institution/invitations" class="text-slate-600 hover:text-slate-900">Davet</a>
             <a href="/institution/roster" class="text-slate-600 hover:text-slate-900">Roster</a>
+            <a href="/plans/me" class="text-slate-600 hover:text-slate-900">💎 Plan</a>
+            <a href="/institution/subscription" class="text-slate-600 hover:text-slate-900">📅 Abonelik</a>
           {% elif user.role.value == 'teacher' %}
             <a href="/teacher" class="text-slate-600 hover:text-slate-900">Panel</a>
             <a href="/teacher/students" class="text-slate-600 hover:text-slate-900">Öğrenciler</a>
@@ -182,6 +233,9 @@
             </a>
             <a href="/teacher/ai-insights" class="text-slate-600 hover:text-slate-900">🤖 AI Performans</a>
             <a href="/teacher/years" class="text-slate-600 hover:text-slate-900">Akademik Yıllar</a>
+            {% if not user.institution_id %}
+            <a href="/plans/me" class="text-slate-600 hover:text-slate-900">💎 Plan</a>
+            {% endif %}
             <a href="/teacher/settings" class="text-slate-600 hover:text-slate-900">⚙️</a>
           {% else %}
             <a href="/student" class="text-slate-600 hover:text-slate-900">Bugün</a>

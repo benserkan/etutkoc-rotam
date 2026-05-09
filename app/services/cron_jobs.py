@@ -521,6 +521,61 @@ def audit_cleanup(db: Session, *, now: datetime) -> dict:
 # ---------------------------- Stage 6 — kredi aylık refill ----------------------------
 
 
+# ---------------------------- Stage 9 (Faz 2) — Plan trial expire ----------------------------
+
+
+def trial_expire(db: Session, *, now: datetime) -> dict:
+    """Süresi dolmuş trial'ları otomatik post_trial_plan'a düşür.
+
+    Günlük çalışır (00:15 UTC). Hem bağımsız öğretmen (14g) hem kurum (30g)
+    trial'larını izler. İdempotent: zaten geçmişse no-op.
+    """
+    from app.services.plans import expire_trials
+    return expire_trials(db, now=now)
+
+
+def subscription_resume(db: Session, *, now: datetime) -> dict:
+    """Cron: pause_until'i geçmiş kurumları otomatik akademik yıla resume eder.
+
+    Her gün 01:00 UTC. İdempotent — hâlâ pause süresi devam eden kurumlar
+    atlanır. Yaz pause'dan Eylül'de otomatik dönüş için.
+    """
+    from app.services.subscription import cron_resume_paused_subscriptions
+    return cron_resume_paused_subscriptions(db, now=now)
+
+
+def subscription_guarantee_eval(db: Session, *, now: datetime) -> dict:
+    """Cron: 60g performans garantisi olan kurumları haftalık değerlendir.
+
+    Pazartesi 06:00 UTC. 60 gün geçen kurumlarda tamamlama oranı eşiğin
+    altındaysa 1 ay uzatma uygulanır (tek seferlik). İdempotent.
+    """
+    from app.services.subscription import cron_evaluate_guarantees
+    today = now.astimezone(timezone.utc).date()
+    if today.weekday() != 0:    # 0=Pazartesi
+        return {"skipped": "not_monday", "today": today.isoformat()}
+    return cron_evaluate_guarantees(db, now=now)
+
+
+def addons_monthly_renewal(db: Session, *, now: datetime) -> dict:
+    """Cron: dönemi biten auto_renew=True add-on'ları yeni aya yenile.
+
+    Cron her gün 00:30 UTC çalışır; sadece ayın 1'inde efektif iş yapar
+    (credits_monthly_refill ile paralel pattern). İdempotent: aynı (owner,
+    kind, period_start) için satır varsa atlanır. AI_PLUS yenilenirken
+    CreditAccount.bonus_credits +1000 eklenir.
+    """
+    from app.services.addons import monthly_addon_renewal
+    today = now.astimezone(timezone.utc).date()
+    if today.day != 1:
+        logger.debug(
+            "addons_monthly_renewal skipped (day=%s, only runs on day 1)",
+            today.day,
+        )
+        return {"skipped": "not_first_of_month", "today": today.isoformat()}
+    return monthly_addon_renewal(db, now=now)
+
+
 def credits_monthly_refill(db: Session, *, now: datetime) -> dict:
     """Her ayın 1'inde tüm aktif kurum + bağımsız öğretmene yeni period satırı.
 
@@ -549,4 +604,8 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "audit_cleanup": audit_cleanup,
     "admin_weekly_digest": admin_weekly_digest,
     "credits_monthly_refill": credits_monthly_refill,
+    "trial_expire": trial_expire,
+    "addons_monthly_renewal": addons_monthly_renewal,
+    "subscription_resume": subscription_resume,
+    "subscription_guarantee_eval": subscription_guarantee_eval,
 }

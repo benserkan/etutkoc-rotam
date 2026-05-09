@@ -9,6 +9,14 @@ from app.models.academic import (
     AcademicYear,
     ExamTarget,
 )
+from app.models.addon import (
+    ADDON_DESCRIPTIONS_TR,
+    ADDON_LABELS_TR,
+    ADDON_MONTHLY_PRICE_TRY,
+    ADDON_MONTHLY_QUOTA,
+    Addon,
+    AddonKind,
+)
 from app.models.admin_digest import AdminWeeklyDigest
 from app.models.announcement import (
     AUDIENCE_LABELS_TR,
@@ -66,6 +74,11 @@ from app.models.parent import (
     ParentSessionLog,
     ParentStudentLink,
     TeacherNoteToParent,
+)
+from app.models.plan_history import (
+    PlanChangeHistory,
+    PlanChangeReason,
+    PlanOwnerType,
 )
 from app.models.progress import SectionProgress, StudentBook
 from app.models.quota import InstitutionQuotaOverride
@@ -161,12 +174,21 @@ __all__ = [
     "TeacherNoteToParent",
     "Topic",
     "Track",
+    "ADDON_DESCRIPTIONS_TR",
+    "ADDON_LABELS_TR",
+    "ADDON_MONTHLY_PRICE_TRY",
+    "ADDON_MONTHLY_QUOTA",
+    "Addon",
+    "AddonKind",
     "AUDIENCE_LABELS_TR",
     "AnnouncementAudience",
     "AnnouncementSeverity",
     "FeatureFlag",
     "FeatureFlagOverride",
     "InstitutionQuotaOverride",
+    "PlanChangeHistory",
+    "PlanChangeReason",
+    "PlanOwnerType",
     "SEVERITY_LABELS_TR",
     "SystemAnnouncement",
     "USAGE_KIND_LABELS_TR",

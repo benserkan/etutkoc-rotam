@@ -1,0 +1,246 @@
+{% extends "base.html" %}
+{% block title %}Planlar ve Fiyatlar — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+{# ---------- HERO ---------- #}
+<section class="relative overflow-hidden rounded-2xl mb-8 bg-gradient-to-br from-brand-teal via-brand-tealDark to-slate-900 text-white">
+  <div class="absolute inset-0 opacity-10 pointer-events-none">
+    {# Hero arka plan görseli için slot — kullanıcı yüksek çözünürlükte ekleyecek.
+       Boş kalsa bile dekoratif gradient hero'yu taşır. #}
+    <img src="/static/img/pricing-hero.jpg" alt=""
+         class="w-full h-full object-cover"
+         onerror="this.style.display='none'" />
+  </div>
+  <div class="relative px-8 py-12 md:py-16 max-w-4xl">
+    <p class="text-xs uppercase tracking-[0.25em] text-brand-yellow font-semibold mb-3">
+      Tek Sözlük · İki Yol
+    </p>
+    <h1 class="text-3xl md:text-5xl font-bold mb-4 leading-tight">
+      Koçunuza yakışır, kurumunuza ölçeklenen plan.
+    </h1>
+    <p class="text-base md:text-lg text-white/80 max-w-2xl mb-6">
+      Bağımsız öğretmenler için <b class="text-brand-yellow">14 gün ücretsiz Pro deneyim</b>;
+      kurumlar için <b class="text-brand-yellow">30 gün CSM destekli pilot</b>. Süreniz dolduğunda
+      verileriniz korunur, ücretsiz tier'a kibarca düşersiniz.
+    </p>
+    <div class="flex flex-wrap gap-3">
+      {% if user %}
+      <a href="/plans/me"
+         class="inline-flex items-center gap-2 bg-white text-brand-tealDark font-semibold px-5 py-2.5 rounded-lg hover:bg-slate-100">
+        Mevcut Planınızı Görün →
+      </a>
+      {% else %}
+      <a href="/signup/teacher"
+         class="inline-flex items-center gap-2 bg-brand-yellow text-slate-900 font-semibold px-5 py-2.5 rounded-lg hover:bg-brand-yellowLight">
+        🎁 14 Gün Ücretsiz Başla
+      </a>
+      <a href="mailto:satis@etutkocrotam.app?subject=Kurum%20Pilot%20Başvurusu"
+         class="inline-flex items-center gap-2 bg-white/10 border border-white/30 text-white font-medium px-5 py-2.5 rounded-lg hover:bg-white/20">
+        🏫 Kurum Pilotu İste
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{# ---------- BENZERSİZ UNSURLAR (kampanya banner şeridi) ---------- #}
+<section class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-10">
+  <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+    <span class="text-2xl">🛡️</span>
+    <div>
+      <div class="font-semibold text-slate-900 text-sm">60 Gün Performans Garantisi</div>
+      <p class="text-xs text-slate-600 mt-1">
+        Dershane Pro'da: 60 gün boyunca koçluk verimini ölçeriz; hedeften aşağıdaysa 1 ay uzatma hediyemiz.
+      </p>
+    </div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+    <span class="text-2xl">📅</span>
+    <div>
+      <div class="font-semibold text-slate-900 text-sm">Akademik Yıl Planı</div>
+      <p class="text-xs text-slate-600 mt-1">
+        Eylül-Haziran 10 ay peşin ödemede 2 ay hediye. MEB takvimine doğal uyum.
+      </p>
+    </div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+    <span class="text-2xl">☀️</span>
+    <div>
+      <div class="font-semibold text-slate-900 text-sm">Yaz Pause Seçeneği</div>
+      <p class="text-xs text-slate-600 mt-1">
+        Tatilde durdurun, %20 saklama ücretiyle Eylül'de tüm verileriniz duruyor olsun.
+      </p>
+    </div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-xl p-4 flex items-start gap-3">
+    <span class="text-2xl">🤝</span>
+    <div>
+      <div class="font-semibold text-slate-900 text-sm">Referans Bonusu</div>
+      <p class="text-xs text-slate-600 mt-1">
+        Davet ettiğiniz öğretmen ücretli plana geçtiğinde 1 ay AI Plus hediye.
+      </p>
+    </div>
+  </div>
+</section>
+
+{# ---------- SEKMELER: B2C / B2B ---------- #}
+<div class="mb-6 border-b border-slate-200">
+  <div class="flex gap-1">
+    <button type="button" data-tab="solo"
+            class="pricing-tab px-5 py-3 font-medium text-slate-700 border-b-2 border-brand-teal text-brand-tealDark">
+      👤 Bireysel Koç (B2C)
+    </button>
+    <button type="button" data-tab="institution"
+            class="pricing-tab px-5 py-3 font-medium text-slate-500 border-b-2 border-transparent hover:text-slate-700">
+      🏫 Kurum (B2B)
+    </button>
+  </div>
+</div>
+
+{# ---------- BİREYSEL KARTLAR ---------- #}
+<section data-pane="solo" class="pricing-pane">
+  <p class="text-sm text-slate-600 mb-5">
+    Bağımsız öğretmenler için self-serve plan. Yeni kayıtta 14 gün boyunca tüm Pro özellikler açık;
+    sürenin sonunda verileriniz silinmez, sadece ücretsiz tier'ın özelliklerine düşer.
+  </p>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    {% for info in solo_cards %}
+      {% include "plans/_pricing_card.html" with context %}
+    {% endfor %}
+  </div>
+</section>
+
+{# ---------- KURUM KARTLARI ---------- #}
+<section data-pane="institution" class="pricing-pane hidden">
+  <p class="text-sm text-slate-600 mb-5">
+    Etüt merkezleri, butik dershaneler, büyük dershane zincirleri ve okullar için. 30 gün CSM destekli
+    pilot süreciyle başlar; pilot sonunda kurum kararına göre Etüt Standart, Dershane Pro veya Kurumsal
+    plana geçilir. Tüm planlar Türk eğitim takvimi ve KDV %20 dahil olacak şekilde fiyatlanmıştır.
+  </p>
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+    {% for info in institution_cards %}
+      {% include "plans/_pricing_card.html" with context %}
+    {% endfor %}
+  </div>
+</section>
+
+{# ---------- ADD-ON KATALOĞU ---------- #}
+<section class="mt-12">
+  <div class="flex items-end justify-between mb-4">
+    <div>
+      <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Ek Paketler</p>
+      <h2 class="text-2xl font-bold text-slate-900 mt-1">Planınızın üzerine ekleyebileceğiniz seçenekler</h2>
+      <p class="text-sm text-slate-600 mt-2 max-w-3xl">
+        Add-on'lar planınızı değiştirmez; her ay başında yenilenir, istediğiniz zaman iptal edebilirsiniz.
+        İptal anında dönem sonuna kadar geçerli kalır, sonraki ay yenilenmez.
+      </p>
+    </div>
+    {% if user %}
+    <a href="/addons" class="text-sm text-brand-teal hover:text-brand-tealDark font-medium">
+      Ek paketlerimi yönet →
+    </a>
+    {% endif %}
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    {% for addon in addon_catalog %}
+    <div class="bg-white border border-slate-200 rounded-xl p-5 hover:shadow-md transition">
+      <div class="flex items-start justify-between mb-3">
+        <div>
+          {% if addon.kind == 'whatsapp_parent' %}<span class="text-3xl">💬</span>
+          {% elif addon.kind == 'ai_plus' %}<span class="text-3xl">🤖</span>
+          {% else %}<span class="text-3xl">👨‍👩‍👧</span>{% endif %}
+        </div>
+        <div class="text-right">
+          <div class="text-xs text-slate-500">aylık</div>
+          <div class="text-xl font-bold text-slate-900">₺{{ addon.price_try }}</div>
+        </div>
+      </div>
+      <h3 class="font-semibold text-slate-900 mb-2">{{ addon.label }}</h3>
+      <p class="text-sm text-slate-600 leading-relaxed mb-4">{{ addon.description }}</p>
+      {% if addon.quota %}
+      <div class="text-xs text-slate-500 border-t border-slate-100 pt-3 space-y-1">
+        {% for k, v in addon.quota.items() %}
+        <div class="flex justify-between">
+          <span>
+            {% if k == 'whatsapp_messages' %}WhatsApp mesajı / ay
+            {% elif k == 'credits' %}Ekstra AI kredisi / ay
+            {% else %}{{ k }}{% endif %}
+          </span>
+          <span class="font-medium text-slate-700">{{ v }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+</section>
+
+{# ---------- SSS / KAMPANYA FOOTER ---------- #}
+<section class="mt-12 bg-gradient-to-br from-brand-yellow/10 to-brand-teal/10 border border-brand-yellow/30 rounded-2xl p-8">
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div>
+      <p class="text-xs uppercase tracking-[0.2em] text-brand-tealDark font-semibold">Sıkça Sorulanlar</p>
+      <h2 class="text-xl font-bold text-slate-900 mt-2">Karar vermenize yardımcı olalım</h2>
+    </div>
+    <details class="md:col-span-2 group">
+      <summary class="cursor-pointer font-medium text-slate-900 list-none flex justify-between items-center py-2 border-b border-slate-200">
+        Trial bittiğinde ne olur?
+        <span class="text-slate-400 group-open:rotate-180 transition">▼</span>
+      </summary>
+      <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+        Bireyselde 14 gün, kurumda 30 gün dolduğunda hesabınız silinmez —
+        ücretsiz tier'ın özelliklerine kibarca düşürülür. Geçmiş raporlarınız, öğrencileriniz,
+        plan geçmişiniz korunur. Pro özellikler kapanır; istediğiniz zaman ücretli plana geçince geri açılır.
+      </p>
+    </details>
+    <div></div>
+    <details class="md:col-span-2 group">
+      <summary class="cursor-pointer font-medium text-slate-900 list-none flex justify-between items-center py-2 border-b border-slate-200">
+        Akademik yıl planı vs aylık abonelik — hangisi avantajlı?
+        <span class="text-slate-400 group-open:rotate-180 transition">▼</span>
+      </summary>
+      <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+        Eylül-Haziran arası koçluk yapan kurumlar için akademik yıl peşin ödeme 2 ay hediye eder
+        (10 ödeme = 12 ay erişim). Yaz pause seçeneğiyle Temmuz-Ağustos %20 saklama ücretine düşer.
+        Yıl içinde plan değiştirmek isteyenler aylık aboneliği tercih edebilir.
+      </p>
+    </details>
+    <div></div>
+    <details class="md:col-span-2 group">
+      <summary class="cursor-pointer font-medium text-slate-900 list-none flex justify-between items-center py-2 border-b border-slate-200">
+        60 gün performans garantisi nasıl çalışır?
+        <span class="text-slate-400 group-open:rotate-180 transition">▼</span>
+      </summary>
+      <p class="text-sm text-slate-600 mt-2 leading-relaxed">
+        Dershane Pro ve Solo Elite planlarında geçerli. Plana başladıktan sonraki 60 gün boyunca
+        koçluk verimini ölçeriz (öğrenci başına haftalık tamamlama oranı, hedef yaklaşması).
+        Hedef metriklerin altındaysa otomatik olarak 1 ay ek erişim hediyemizdir — neden çalışmadığını
+        anlamak için CSM ekibi 1-1 görüşme planlar.
+      </p>
+    </details>
+  </div>
+</section>
+
+<script>
+  // Pricing tab toggle
+  (function() {
+    document.querySelectorAll('.pricing-tab').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = btn.dataset.tab;
+        document.querySelectorAll('.pricing-tab').forEach(function(b) {
+          var active = b.dataset.tab === target;
+          b.classList.toggle('border-brand-teal', active);
+          b.classList.toggle('text-brand-tealDark', active);
+          b.classList.toggle('border-transparent', !active);
+          b.classList.toggle('text-slate-500', !active);
+        });
+        document.querySelectorAll('.pricing-pane').forEach(function(p) {
+          p.classList.toggle('hidden', p.dataset.pane !== target);
+        });
+      });
+    });
+  })();
+</script>
+{% endblock %}

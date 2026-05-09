@@ -43,6 +43,38 @@ class Institution(Base):
     # Plan placeholder — billing entegrasyonu Sprint 14+ olabilir.
     plan: Mapped[str] = mapped_column(String(32), nullable=False, default="free")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # Stage 9 (Faz 2) — Pilot/trial: kurum başvurusunda 30 gün
+    # 'pilot' süreci aktif. Süre dolduğunda plana göre devam eder veya
+    # 'free' (institution_free) olur. NULL = trial yok / bitmiş.
+    trial_ends_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    post_trial_plan: Mapped[str | None] = mapped_column(
+        String(32), nullable=True
+    )
+    # Abonelik tipi: 'monthly' (varsayılan, aylık) | 'academic_year'
+    # (Eylül-Haziran 10 ay peşin) | 'paused' (yaz pause modunda, %20 saklama)
+    subscription_kind: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="monthly"
+    )
+    # Aboneliğin aktif olduğu dönem sonu (akademik yıl bitişi vb.)
+    subscription_period_end: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # Pause modunda dönüş tarihi
+    subscription_pause_until: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # 60 gün performans garantisi seçili mi (yıllık planlarda)
+    performance_guarantee: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    # Garanti hak kazanımı tarihi (uzatma uygulandı mı kontrolü için)
+    guarantee_extended_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

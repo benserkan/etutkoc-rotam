@@ -104,6 +104,7 @@ def _parse_grade_input(raw: str) -> tuple[int | None, bool]:
 
 @router.post("")
 def create_student(
+    request: Request,
     full_name: str = Form(...),
     email: str = Form(...),
     grade: str = Form("8"),  # "5"-"12" veya "graduate"
@@ -138,6 +139,41 @@ def create_student(
             return RedirectResponse(
                 url="/teacher/students?err=" + quote(e.message),
                 status_code=status.HTTP_303_SEE_OTHER,
+            )
+
+    # Stage 9 (Faz 2.4) — Solo plan kotası (bağımsız öğretmen için)
+    if user.institution_id is None and user.role == UserRole.TEACHER:
+        from app.services.plans import (
+            PLAN_CATALOG, check_solo_student_quota,
+        )
+        result = check_solo_student_quota(db, teacher=user, extra_count=1)
+        if not result.ok:
+            targets = []
+            if result.upgrade_target_code:
+                targets.append(PLAN_CATALOG[result.upgrade_target_code])
+                # SOLO_FREE → SOLO_PRO ÇIKAN sınırın yanı sıra Elite de göster
+                from app.services.plans import SOLO_ELITE
+                if result.upgrade_target_code != SOLO_ELITE:
+                    targets.append(PLAN_CATALOG[SOLO_ELITE])
+            return templates.TemplateResponse(
+                "plans/upgrade_required.html",
+                {
+                    "request": request,
+                    "user": user,
+                    "title": "Öğrenci Limiti Doldu",
+                    "message": (
+                        f"{result.plan_label} planında en fazla {result.limit} aktif "
+                        "öğrenci ekleyebilirsiniz. Yeni öğrenci eklemek için planınızı "
+                        "yükseltebilir veya bir öğrenciyi pasifleştirebilirsiniz."
+                    ),
+                    "current": result.current,
+                    "limit": result.limit,
+                    "requested": result.requested,
+                    "plan_label": result.plan_label,
+                    "upgrade_targets": targets,
+                    "back_url": "/teacher/students",
+                },
+                status_code=status.HTTP_402_PAYMENT_REQUIRED,
             )
 
     grade_level, is_graduate = _parse_grade_input(grade)

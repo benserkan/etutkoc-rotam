@@ -14,6 +14,7 @@ from app.models import User, UserRole
 logger = logging.getLogger(__name__)
 from app.routes import auth as auth_routes
 from app.routes import password as password_routes
+from app.routes import plans as plans_routes
 from app.routes import signup as signup_routes
 from app.routes import (
     admin,
@@ -122,6 +123,7 @@ async def inject_announcements(request, call_next):
         try:
             from app.database import SessionLocal
             from app.services.announcements import active_for_user
+            from app.services.plans import compute_trial_banner
             uid = request.session.get("user_id") if hasattr(request, "session") else None
             with SessionLocal() as _db:
                 u = None
@@ -129,13 +131,19 @@ async def inject_announcements(request, call_next):
                     from app.models import User as _User
                     u = _db.get(_User, uid)
                 request.state.announcements = active_for_user(_db, u)
+                # Stage 9 (Faz 2.4) — Trial countdown global banner
+                request.state.trial_banner = (
+                    compute_trial_banner(_db, user=u) if u else None
+                )
         except Exception as e:
             # Defansif — duyuru sistemi sayfayı bozmasın
             import logging
             logging.getLogger(__name__).warning("announcement middleware fail (non-fatal): %s", e)
             request.state.announcements = []
+            request.state.trial_banner = None
     else:
         request.state.announcements = []
+        request.state.trial_banner = None
 
     response = await call_next(request)
     return response
@@ -162,6 +170,7 @@ app.include_router(health.router)
 app.include_router(auth_routes.router)
 app.include_router(password_routes.router)
 app.include_router(signup_routes.router)
+app.include_router(plans_routes.router)
 app.include_router(admin.router)
 app.include_router(institution.router)
 app.include_router(at_risk.router)
