@@ -49,6 +49,9 @@ class UsageKind(str, enum.Enum):
     """
     AI_BOOK_TEMPLATE = "ai_book_template"   # Claude — kitap şablonu önerisi
     AI_INSIGHTS = "ai_insights"             # Claude — öğrenci performans analizi
+    AI_SESSION_CAPTURE = "ai_session_capture"  # Claude vision — foto seans yakalama (KS3a)
+    AI_SESSION_VOICE = "ai_session_voice"   # Whisper STT + Claude — sesli seans yakalama (KS3b)
+    AI_COACHING_INSIGHT = "ai_coaching_insight"  # Claude — seans geçmişi → koçluk içgörüsü (KS4)
     EMAIL_SEND = "email_send"               # SMTP/SendGrid e-posta
     WHATSAPP_SEND = "whatsapp_send"         # Meta Cloud API mesaj
     OTHER = "other"
@@ -57,6 +60,9 @@ class UsageKind(str, enum.Enum):
 USAGE_KIND_LABELS_TR: dict[UsageKind, str] = {
     UsageKind.AI_BOOK_TEMPLATE: "AI Kitap Şablonu",
     UsageKind.AI_INSIGHTS: "AI Performans Analizi",
+    UsageKind.AI_SESSION_CAPTURE: "AI Seans Yakalama (Foto)",
+    UsageKind.AI_SESSION_VOICE: "AI Seans Yakalama (Ses)",
+    UsageKind.AI_COACHING_INSIGHT: "AI Koçluk İçgörüsü",
     UsageKind.EMAIL_SEND: "E-posta",
     UsageKind.WHATSAPP_SEND: "WhatsApp Mesajı",
     UsageKind.OTHER: "Diğer",

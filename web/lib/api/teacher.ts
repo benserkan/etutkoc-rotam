@@ -27,6 +27,7 @@ import type {
   SessionPrefillResponse,
   BillingMonthResponse,
   StudentPaymentsResponse,
+  AiConsentResponse,
   StudentParentsResponse,
   TeacherBadgesResponse,
   TeacherBookListResponse,
@@ -187,6 +188,7 @@ export const teacherKeys = {
   billing: (month: string) => ["teacher", "me", "billing", month] as const,
   studentPayments: (id: number) =>
     ["teacher", "me", "students", String(id), "payments"] as const,
+  aiConsent: () => ["teacher", "me", "ai-consent"] as const,
 } as const;
 
 // =============================================================================
@@ -269,6 +271,10 @@ export function getTeacherStudentPayments(
   return api<StudentPaymentsResponse>(
     `/api/v2/teacher/students/${studentId}/payments`,
   );
+}
+
+export function getTeacherAiConsent(): Promise<AiConsentResponse> {
+  return api<AiConsentResponse>("/api/v2/teacher/ai-consent");
 }
 
 export function getTeacherStudents(

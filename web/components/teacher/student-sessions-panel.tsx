@@ -3,29 +3,45 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
+  AlertTriangle,
   CalendarCheck,
+  Camera,
   ChevronDown,
+  Lightbulb,
   Loader2,
+  Mic,
   Plus,
   Printer,
+  ShieldCheck,
+  Sparkles,
+  Square,
   Trash2,
 } from "lucide-react";
 
 import {
   getTeacherStudentSessions,
   getTeacherSessionPrefill,
+  getTeacherAiConsent,
   teacherKeys,
 } from "@/lib/api/teacher";
 import {
   useCreateSession,
   useUpdateSession,
   useDeleteSession,
+  useSetAiConsent,
+  useParseSessionPhoto,
+  useParseSessionVoice,
+  useCoachingInsight,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
+  AiConsentResponse,
+  CoachingInsightResponse,
   CoachingSessionCreateBody,
   CoachingSessionRow,
   SessionChannel,
+  SessionDraftResponse,
   SessionPrefillResponse,
   SessionStatus,
   StudentSessionListResponse,
@@ -65,35 +81,226 @@ interface Props {
   studentId: number;
 }
 
+function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function blobToBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(",")[1] ?? "");
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+const AUDIO_MIMES = ["audio/webm", "audio/mp4", "audio/ogg"];
+const ALLOWED_AUDIO = ["audio/webm", "audio/mp4", "audio/ogg", "audio/mpeg", "audio/wav"];
+
+function pickAudioMime(): string {
+  if (typeof MediaRecorder === "undefined") return "";
+  for (const m of AUDIO_MIMES) {
+    if (MediaRecorder.isTypeSupported(m)) return m;
+  }
+  return "";
+}
+
+type CaptureSource = "photo" | "voice";
+type DraftSource = CaptureSource | "insight";
+type PendingCapture = { b64: string; mt: string; source: CaptureSource };
+
 export function StudentSessionsPanel({ studentId }: Props) {
   const q = useQuery<StudentSessionListResponse>({
     queryKey: teacherKeys.studentSessions(studentId),
     queryFn: () => getTeacherStudentSessions(studentId),
     staleTime: 30_000,
   });
+  const consentQ = useQuery<AiConsentResponse>({
+    queryKey: teacherKeys.aiConsent(),
+    queryFn: getTeacherAiConsent,
+    staleTime: 300_000,
+  });
+  const parsePhoto = useParseSessionPhoto(studentId);
+  const parseVoice = useParseSessionVoice(studentId);
+  const insight = useCoachingInsight(studentId);
+  const setConsent = useSetAiConsent();
+  const fileRef = React.useRef<HTMLInputElement | null>(null);
+
   const [formOpen, setFormOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<CoachingSessionRow | null>(null);
+  const [draft, setDraft] = React.useState<SessionDraftResponse | null>(null);
+  const [draftSource, setDraftSource] = React.useState<DraftSource | null>(null);
+  const [consentOpen, setConsentOpen] = React.useState(false);
+  const [pendingAction, setPendingAction] = React.useState<(() => void) | null>(null);
+  const [insightData, setInsightData] = React.useState<CoachingInsightResponse | null>(null);
+  const [insightOpen, setInsightOpen] = React.useState(false);
+
+  // Ses kaydı durumu
+  const [recording, setRecording] = React.useState(false);
+  const [elapsed, setElapsed] = React.useState(0);
+  const recorderRef = React.useRef<MediaRecorder | null>(null);
+  const chunksRef = React.useRef<Blob[]>([]);
+  const streamRef = React.useRef<MediaStream | null>(null);
+  const timerRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
   const data = q.data;
+  const parsing = parsePhoto.isPending || parseVoice.isPending;
+  const busy = parsing || insight.isPending || recording;
+  const hasSessions = !!data && data.summary.total > 0;
 
   function openNew() {
     setEditing(null);
+    setDraft(null);
+    setDraftSource(null);
     setFormOpen(true);
   }
   function openEdit(row: CoachingSessionRow) {
     setEditing(row);
+    setDraft(null);
+    setDraftSource(null);
     setFormOpen(true);
+  }
+
+  function gateConsent(action: () => void) {
+    if (!consentQ.data?.consented) {
+      setPendingAction(() => action);
+      setConsentOpen(true);
+      return;
+    }
+    action();
+  }
+
+  function runParse(payload: PendingCapture) {
+    const onSuccess = (d: SessionDraftResponse) => {
+      setEditing(null);
+      setDraft(d);
+      setDraftSource(payload.source);
+      setFormOpen(true);
+    };
+    if (payload.source === "photo") {
+      parsePhoto.mutate({ imageBase64: payload.b64, mediaType: payload.mt }, { onSuccess });
+    } else {
+      parseVoice.mutate({ audioBase64: payload.b64, mediaType: payload.mt }, { onSuccess });
+    }
+  }
+
+  function runInsight() {
+    insight.mutate(undefined, {
+      onSuccess: (d) => { setInsightData(d); setInsightOpen(true); },
+    });
+  }
+
+  function startSessionFromInsight() {
+    if (!insightData) return;
+    setEditing(null);
+    setDraft({
+      agenda: insightData.agenda_suggestions.map((a) => `• ${a}`).join("\n"),
+      coach_note: "",
+      next_change: "",
+      mood: null,
+      tags: [],
+    });
+    setDraftSource("insight");
+    setInsightOpen(false);
+    setFormOpen(true);
+  }
+
+  function dispatch(payload: PendingCapture) {
+    gateConsent(() => runParse(payload));
+  }
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type)) {
+      toast.error("JPEG, PNG veya WebP seçin");
+      return;
+    }
+    const b64 = await fileToBase64(file);
+    dispatch({ b64, mt: file.type, source: "photo" });
+  }
+
+  function cleanupStream() {
+    if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+  }
+
+  React.useEffect(() => cleanupStream, []);
+
+  async function startRecording() {
+    const mime = pickAudioMime();
+    if (!mime) {
+      toast.error("Tarayıcınız ses kaydını desteklemiyor");
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      streamRef.current = stream;
+      chunksRef.current = [];
+      const rec = new MediaRecorder(stream, { mimeType: mime });
+      rec.ondataavailable = (ev) => { if (ev.data.size > 0) chunksRef.current.push(ev.data); };
+      rec.onstop = async () => {
+        const blob = new Blob(chunksRef.current, { type: mime });
+        cleanupStream();
+        setRecording(false);
+        setElapsed(0);
+        if (blob.size === 0) { toast.error("Kayıt boş"); return; }
+        const cleanMime = mime.split(";")[0];
+        const mt = ALLOWED_AUDIO.includes(cleanMime) ? cleanMime : "audio/webm";
+        const b64 = await blobToBase64(blob);
+        dispatch({ b64, mt, source: "voice" });
+      };
+      recorderRef.current = rec;
+      rec.start();
+      setRecording(true);
+      setElapsed(0);
+      timerRef.current = setInterval(() => setElapsed((s) => s + 1), 1000);
+    } catch {
+      toast.error("Mikrofon erişimi reddedildi");
+      cleanupStream();
+    }
+  }
+
+  function stopRecording() {
+    recorderRef.current?.stop();
+  }
+
+  function acceptConsent() {
+    setConsent.mutate(undefined, {
+      onSuccess: () => {
+        setConsentOpen(false);
+        const action = pendingAction;
+        setPendingAction(null);
+        action?.();
+      },
+    });
   }
 
   return (
     <div className="space-y-4">
+      <input
+        ref={fileRef}
+        type="file"
+        accept="image/jpeg,image/png,image/webp"
+        capture="environment"
+        className="hidden"
+        onChange={onFile}
+      />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h3 className="text-base font-medium">Koçluk Seansları</h3>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            Görüşme notları + kararlar. Tahsilat (yakında) yapılan seansları sayar.
+            Görüşme notları + kararlar. Tahsilat yapılan seansları sayar.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Link
             href={`/teacher/students/${studentId}/sessions/print`}
             target="_blank"
@@ -101,7 +308,38 @@ export function StudentSessionsPanel({ studentId }: Props) {
           >
             <Printer className="size-3.5" aria-hidden /> Boş form
           </Link>
-          <Button size="sm" onClick={openNew}>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-violet-200 text-violet-700 hover:bg-violet-50 hover:text-violet-800"
+            onClick={() => gateConsent(runInsight)}
+            disabled={busy || !hasSessions}
+            title={hasSessions ? "Seans geçmişinden bir sonraki seans için AI önerisi" : "Önce en az bir seans kaydı gerekir"}
+          >
+            {insight.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Lightbulb className="size-4" aria-hidden />}
+            İçgörü al
+          </Button>
+          {recording ? (
+            <Button size="sm" variant="destructive" onClick={stopRecording}>
+              <Square className="size-3.5 fill-current" aria-hidden />
+              Durdur · {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
+            </Button>
+          ) : (
+            <Button size="sm" variant="outline" onClick={startRecording} disabled={busy}>
+              {parseVoice.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Mic className="size-4" aria-hidden />}
+              Sesle doldur
+            </Button>
+          )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fileRef.current?.click()}
+            disabled={busy}
+          >
+            {parsePhoto.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Camera className="size-4" aria-hidden />}
+            Fotoğraftan doldur
+          </Button>
+          <Button size="sm" onClick={openNew} disabled={recording}>
             <Plus className="size-4" aria-hidden /> Yeni Seans
           </Button>
         </div>
@@ -141,15 +379,150 @@ export function StudentSessionsPanel({ studentId }: Props) {
       <Dialog open={formOpen} onOpenChange={setFormOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>{editing ? "Seansı düzenle" : "Yeni seans kaydı"}</DialogTitle>
+            <DialogTitle>
+              {editing
+                ? "Seansı düzenle"
+                : draft
+                  ? draftSource === "insight" ? "İçgörüden seans" : draftSource === "voice" ? "Sesten taslak" : "Fotoğraftan taslak"
+                  : "Yeni seans kaydı"}
+            </DialogTitle>
           </DialogHeader>
+          {draft ? (
+            <div className="-mt-1 mb-1 flex items-center gap-2 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">
+              <Sparkles className="size-4 shrink-0" aria-hidden />
+              {draftSource === "insight"
+                ? "Yapay zekâ önerisinden bir gündem taslağı hazırlandı. Düzenleyip kaydedin."
+                : `Yapay zekâ ${draftSource === "voice" ? "sesinizi" : "fotoğrafı"} okudu. Lütfen kontrol edip düzeltin — kaydetmeden hiçbir şey saklanmaz.`}
+            </div>
+          ) : null}
           <SessionForm
             studentId={studentId}
             editing={editing}
-            onDone={() => setFormOpen(false)}
+            draft={draft}
+            draftSource={draftSource}
+            onDone={() => {
+              setFormOpen(false);
+              setDraft(null);
+              setDraftSource(null);
+            }}
           />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={consentOpen} onOpenChange={(o) => { if (!o) { setConsentOpen(false); setPendingAction(null); } }}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="size-5 text-cyan-600" aria-hidden /> Yapay zekâ özellikleri onayı
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              Fotoğrafınız, ses kaydınız veya seans notlarınız; metne çevrilmek ya da
+              içgörü üretilmek üzere yapay zekâ hizmetlerine (Anthropic, OpenAI)
+              gönderilir. Devam etmek için onayınız gerekir.
+            </p>
+            <ul className="space-y-1.5 text-xs">
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Fotoğraf / ses <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Yalnızca <strong>siz</strong> görürsünüz; öğrenci ve veli erişemez.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600" aria-hidden /> İşleme yurt dışındaki hizmetler (Anthropic, OpenAI) tarafından yapılır.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Çıkan sonuç bir taslaktır; kaydetmeden önce kontrol edip düzeltebilirsiniz.</li>
+            </ul>
+            <p className="text-[11px]">Bu onayı dilediğinizde geri çekebilirsiniz; bu özellikleri kullanmadan da seansları elle girebilirsiniz.</p>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button variant="ghost" onClick={() => { setConsentOpen(false); setPendingAction(null); }} disabled={setConsent.isPending}>
+              Vazgeç
+            </Button>
+            <Button onClick={acceptConsent} disabled={setConsent.isPending}>
+              {setConsent.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ShieldCheck className="size-4" aria-hidden />}
+              Onaylıyorum, devam et
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={insightOpen} onOpenChange={setInsightOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Lightbulb className="size-5 text-violet-600" aria-hidden /> Koçluk içgörüsü
+            </DialogTitle>
+          </DialogHeader>
+          {insightData ? (
+            <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1 text-sm">
+              <p className="rounded-md bg-muted/50 px-3 py-2 leading-relaxed">{insightData.summary}</p>
+
+              {insightData.agenda_suggestions.length > 0 ? (
+                <InsightList
+                  title="Bir sonraki seansta konuş"
+                  icon={<CalendarCheck className="size-4 text-cyan-600" aria-hidden />}
+                  items={insightData.agenda_suggestions}
+                />
+              ) : null}
+              {insightData.psychological_tips.length > 0 ? (
+                <InsightList
+                  title="Yaklaşım ipuçları"
+                  icon={<Sparkles className="size-4 text-violet-600" aria-hidden />}
+                  items={insightData.psychological_tips}
+                />
+              ) : null}
+              {insightData.watch_outs.length > 0 ? (
+                <InsightList
+                  title="Dikkat"
+                  icon={<AlertTriangle className="size-4 text-amber-600" aria-hidden />}
+                  items={insightData.watch_outs}
+                  tone="warn"
+                />
+              ) : null}
+
+              <p className="text-[11px] text-muted-foreground">
+                {insightData.based_on_sessions} seans + güncel akademik durumdan üretildi.
+                Bu bir öneridir; klinik teşhis değildir. Yalnızca siz görürsünüz.
+              </p>
+              <div className="flex items-center justify-end gap-2 pt-1">
+                <Button variant="ghost" onClick={() => setInsightOpen(false)}>Kapat</Button>
+                {insightData.agenda_suggestions.length > 0 ? (
+                  <Button onClick={startSessionFromInsight}>
+                    <Plus className="size-4" aria-hidden /> Bu gündemle seans aç
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function InsightList({
+  title,
+  icon,
+  items,
+  tone,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  items: string[];
+  tone?: "warn";
+}) {
+  return (
+    <div>
+      <p className="mb-1.5 flex items-center gap-1.5 font-medium">{icon} {title}</p>
+      <ul className="space-y-1">
+        {items.map((it, i) => (
+          <li
+            key={i}
+            className={cn(
+              "rounded-md border px-2.5 py-1.5 text-sm",
+              tone === "warn" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-border bg-card",
+            )}
+          >
+            {it}
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }
@@ -257,10 +630,14 @@ const TODAY = () => new Date().toISOString().slice(0, 10);
 function SessionForm({
   studentId,
   editing,
+  draft,
+  draftSource,
   onDone,
 }: {
   studentId: number;
   editing: CoachingSessionRow | null;
+  draft?: SessionDraftResponse | null;
+  draftSource?: DraftSource | null;
   onDone: () => void;
 }) {
   const create = useCreateSession(studentId);
@@ -271,11 +648,11 @@ function SessionForm({
   const [stat, setStat] = React.useState<SessionStatus>(editing?.status ?? "done");
   const [channel, setChannel] = React.useState<SessionChannel | "">(editing?.channel ?? "");
   const [duration, setDuration] = React.useState(editing?.duration_min ? String(editing.duration_min) : "");
-  const [agenda, setAgenda] = React.useState(editing?.agenda ?? "");
-  const [note, setNote] = React.useState(editing?.coach_note ?? "");
-  const [nextChange, setNextChange] = React.useState(editing?.next_change ?? "");
-  const [mood, setMood] = React.useState<number | null>(editing?.mood ?? null);
-  const [tags, setTags] = React.useState((editing?.tags ?? []).join(", "));
+  const [agenda, setAgenda] = React.useState(editing?.agenda ?? draft?.agenda ?? "");
+  const [note, setNote] = React.useState(editing?.coach_note ?? draft?.coach_note ?? "");
+  const [nextChange, setNextChange] = React.useState(editing?.next_change ?? draft?.next_change ?? "");
+  const [mood, setMood] = React.useState<number | null>(editing?.mood ?? draft?.mood ?? null);
+  const [tags, setTags] = React.useState((editing?.tags ?? draft?.tags ?? []).join(", "));
   const [error, setError] = React.useState<string | null>(null);
 
   // Otomatik panel — yalnız yeni seansta çekilir
@@ -309,7 +686,8 @@ function SessionForm({
     if (isEdit && editing) {
       update.mutate({ sessionId: editing.id, body }, { onSuccess: () => onDone() });
     } else {
-      create.mutate({ body }, { onSuccess: () => onDone() });
+      const captureSource = draftSource === "photo" || draftSource === "voice" ? { capture_source: draftSource } : {};
+      create.mutate({ body: { ...body, ...captureSource } }, { onSuccess: () => onDone() });
     }
   }
 

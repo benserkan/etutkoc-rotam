@@ -167,6 +167,11 @@ class User(Base):
     totp_enabled_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # KS3 — bağımsız koç AI yakalama (ses/foto→metin) açık rızası. Dolunca koç
+    # AI işleme + yurt dışı alt-işleyen (Anthropic/OpenAI) onayını vermiş sayılır.
+    ai_capture_consent_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     @property
     def two_factor_enabled(self) -> bool:

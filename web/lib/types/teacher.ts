@@ -1355,6 +1355,7 @@ export interface CoachingSessionCreateBody {
   coach_note?: string | null;
   mood?: number | null;
   tags?: string[];
+  capture_source?: string;
 }
 
 export interface CoachingSessionRow {
@@ -1387,6 +1388,27 @@ export interface CoachingSessionSummary {
 export interface StudentSessionListResponse {
   summary: CoachingSessionSummary;
   rows: CoachingSessionRow[];
+}
+
+export interface AiConsentResponse {
+  consented: boolean;
+  consent_at: string | null;
+}
+
+export interface SessionDraftResponse {
+  agenda: string;
+  coach_note: string;
+  next_change: string;
+  mood: number | null;
+  tags: string[];
+}
+
+export interface CoachingInsightResponse {
+  summary: string;
+  agenda_suggestions: string[];
+  psychological_tips: string[];
+  watch_outs: string[];
+  based_on_sessions: number;
 }
 
 // =============================================================================

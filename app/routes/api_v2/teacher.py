@@ -79,6 +79,7 @@ from app.models import (
     CoachingChannel,
     CoachingSession,
     CoachingSessionStatus,
+    SessionCaptureSource,
     EXAM_SECTION_LABELS,
     ExamResult,
     ExamSection,
@@ -131,6 +132,11 @@ from app.routes.api_v2.schemas.teacher import (
     BillingStudentRow,
     BillingTotals,
     BillingMonthResponse,
+    AiConsentResponse,
+    CoachingInsightResponse,
+    ParsePhotoBody,
+    ParseVoiceBody,
+    SessionDraftResponse,
     DnaTrendInfo,
     FocusBadge,
     FocusSessionRow,
@@ -1068,6 +1074,8 @@ def _apply_session_body(s: CoachingSession, body: CoachingSessionCreateBody, sd:
     s.mood = body.mood
     clean_tags = [t.strip() for t in (body.tags or []) if t and t.strip()]
     s.tags = json.dumps(clean_tags, ensure_ascii=False) if clean_tags else None
+    if body.capture_source:
+        s.capture_source = SessionCaptureSource(body.capture_source)
 
 
 @router.get("/students/{student_id}/sessions", response_model=StudentSessionListResponse)
@@ -1194,6 +1202,286 @@ def teacher_delete_session_v2(
             f"teacher:{user.id}:students:{student_id}",
         ],
     )
+
+
+# =============================================================================
+# KS3a — AI yakalama (foto → metin)
+# =============================================================================
+
+
+@router.get("/ai-consent", response_model=AiConsentResponse)
+def teacher_ai_consent_get_v2(
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Koçun AI yakalama (ses/foto→metin) rıza durumu."""
+    at = user.ai_capture_consent_at
+    return AiConsentResponse(consented=at is not None, consent_at=at.isoformat() if at else None)
+
+
+@router.post("/ai-consent", response_model=MutationResponse[AiConsentResponse])
+def teacher_ai_consent_set_v2(
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """AI yakalama açık rızası ver (AI işleme + yurt dışı alt-işleyen onayı)."""
+    if user.ai_capture_consent_at is None:
+        user.ai_capture_consent_at = datetime.now(timezone.utc)
+        db.add(user)
+        db.commit()
+        db.refresh(user)
+    at = user.ai_capture_consent_at
+    return MutationResponse[AiConsentResponse](
+        data=AiConsentResponse(consented=True, consent_at=at.isoformat() if at else None),
+        invalidate=["teacher:me:ai-consent"],
+    )
+
+
+@router.post("/students/{student_id}/sessions/parse-photo", response_model=SessionDraftResponse)
+def teacher_parse_session_photo_v2(
+    student_id: int,
+    body: ParsePhotoBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kâğıt görüşme formu fotoğrafı → seans form taslağı (Claude vision).
+
+    GİZLİLİK: Görsel SAKLANMAZ — yalnız bu çağrıda işlenir. Sonuç taslaktır;
+    koç düzenleyip /sessions ile kaydeder. Rıza zorunlu + kredi tüketir.
+    """
+    from app.services.ai_session_capture import parse_session_photo
+    from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
+    from app.models import UsageKind
+    from app.services.credits import CreditBlocked, CreditOwner, consume_credits
+
+    _get_owned_student(db, student_id, user.id)  # sahiplik 404
+
+    if user.ai_capture_consent_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "consent_required",
+                    "message": "AI yakalama için önce açık rıza vermelisiniz."},
+        )
+
+    img = (body.image_base64 or "").strip()
+    if not img:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "image_required", "message": "Görsel boş."},
+        )
+    # ~7MB base64 üst sınırı (kabaca)
+    if len(img) > 9_500_000:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "image_too_large", "message": "Görsel çok büyük (max ~7MB)."},
+        )
+    if body.media_type not in ("image/jpeg", "image/png", "image/webp"):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_media_type",
+                    "message": "Desteklenmeyen görsel türü (jpeg/png/webp)."},
+        )
+
+    owner = CreditOwner.for_user(user)
+    draft: dict | None = None
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_SESSION_CAPTURE,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            draft = parse_session_photo(img, body.media_type)
+            ctx.set_metadata({"student_id": student_id, "source": "photo"})
+    except CreditBlocked as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={"error": "credit", "code": "ai_credit_exhausted", "message": f"Kredi sınırı: {e.message}"},
+        )
+    except AIInvalidResponse as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "photo_unreadable",
+                    "message": f"Fotoğraf okunamadı: {e}"},
+        )
+    except AIServiceUnavailable as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"error": "upstream_unavailable", "code": "ai_unavailable",
+                    "message": f"AI servisi şu an kullanılamıyor: {e}"},
+        )
+    db.commit()  # kredi kaydını sabitle
+    return SessionDraftResponse(**draft)
+
+
+@router.post("/students/{student_id}/sessions/parse-voice", response_model=SessionDraftResponse)
+def teacher_parse_session_voice_v2(
+    student_id: int,
+    body: ParseVoiceBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Sesli not (kayıt) → seans form taslağı (Whisper STT + Claude yapılandırma).
+
+    GİZLİLİK: Ses SAKLANMAZ — yalnız bu çağrıda işlenir. Sonuç taslaktır; koç
+    düzenleyip /sessions ile kaydeder. Rıza zorunlu + kredi tüketir.
+    """
+    from app.services.ai_session_capture import ALLOWED_AUDIO, parse_session_voice
+    from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
+    from app.models import UsageKind
+    from app.services.credits import CreditBlocked, CreditOwner, consume_credits
+
+    _get_owned_student(db, student_id, user.id)  # sahiplik 404
+
+    if user.ai_capture_consent_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "consent_required",
+                    "message": "AI yakalama için önce açık rıza vermelisiniz."},
+        )
+
+    audio = (body.audio_base64 or "").strip()
+    if not audio:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "audio_required", "message": "Ses kaydı boş."},
+        )
+    # ~18MB base64 üst sınırı (~13MB ham ses — birkaç dakikalık sıkıştırılmış kayıt fazlasıyla yeter)
+    if len(audio) > 18_000_000:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "audio_too_large", "message": "Ses kaydı çok uzun/büyük (max ~13MB)."},
+        )
+    if body.media_type not in ALLOWED_AUDIO:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_media_type",
+                    "message": "Desteklenmeyen ses türü (webm/mp4/ogg/mp3/wav)."},
+        )
+
+    owner = CreditOwner.for_user(user)
+    draft: dict | None = None
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_SESSION_VOICE,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            draft = parse_session_voice(audio, body.media_type)
+            ctx.set_metadata({"student_id": student_id, "source": "voice"})
+    except CreditBlocked as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={"error": "credit", "code": "ai_credit_exhausted", "message": f"Kredi sınırı: {e.message}"},
+        )
+    except AIInvalidResponse as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "voice_unreadable",
+                    "message": f"Ses anlaşılamadı: {e}"},
+        )
+    except AIServiceUnavailable as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"error": "upstream_unavailable", "code": "ai_unavailable",
+                    "message": f"AI servisi şu an kullanılamıyor: {e}"},
+        )
+    db.commit()  # kredi kaydını sabitle
+    return SessionDraftResponse(**draft)
+
+
+@router.post("/students/{student_id}/coaching-insight", response_model=CoachingInsightResponse)
+def teacher_coaching_insight_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Seans geçmişi + akademik durum → bir sonraki seans için AI koçluk içgörüsü (KS4).
+
+    GİZLİLİK: Sonuç ÖNERİDİR — kaydedilmez. Rıza zorunlu + kredi tüketir. En az
+    1 seans kaydı gerekir.
+    """
+    from app.services.ai_coaching_insight import generate_coaching_insight
+    from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
+    from app.models import UsageKind
+    from app.services.credits import CreditBlocked, CreditOwner, consume_credits
+
+    student = _get_owned_student(db, student_id, user.id)  # sahiplik 404
+
+    if user.ai_capture_consent_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "consent_required",
+                    "message": "AI özellikleri için önce açık rıza vermelisiniz."},
+        )
+
+    rows = (
+        db.query(CoachingSession)
+        .filter(CoachingSession.student_id == student.id)
+        .order_by(CoachingSession.session_date.desc(), CoachingSession.id.desc())
+        .limit(8)
+        .all()
+    )
+    if not rows:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "not_enough_data",
+                    "message": "İçgörü için en az bir seans kaydı gerekir."},
+        )
+
+    sessions_data: list[dict] = []
+    for r in rows:
+        tags: list[str] = []
+        if r.tags:
+            try:
+                tags = [str(t) for t in json.loads(r.tags)]
+            except (ValueError, TypeError):
+                tags = []
+        sessions_data.append({
+            "session_date": r.session_date.isoformat(),
+            "status_label": COACHING_STATUS_LABELS[r.status],
+            "agenda": r.agenda,
+            "coach_note": r.coach_note,
+            "next_change": r.next_change,
+            "mood": r.mood,
+            "tags": tags,
+        })
+    academic = _compute_session_prefill(db, student)
+
+    owner = CreditOwner.for_user(user)
+    insight: dict | None = None
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_COACHING_INSIGHT,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            insight = generate_coaching_insight(student.full_name, sessions_data, academic)
+            ctx.set_metadata({"student_id": student_id, "sessions": len(rows)})
+    except CreditBlocked as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_402_PAYMENT_REQUIRED,
+            detail={"error": "credit", "code": "ai_credit_exhausted", "message": f"Kredi sınırı: {e.message}"},
+        )
+    except AIInvalidResponse as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "insight_unreadable",
+                    "message": f"İçgörü üretilemedi: {e}"},
+        )
+    except AIServiceUnavailable as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"error": "upstream_unavailable", "code": "ai_unavailable",
+                    "message": f"AI servisi şu an kullanılamıyor: {e}"},
+        )
+    db.commit()  # kredi kaydını sabitle
+    return CoachingInsightResponse(based_on_sessions=len(rows), **insight)
 
 
 # =============================================================================

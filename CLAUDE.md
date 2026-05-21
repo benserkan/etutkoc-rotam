@@ -1475,10 +1475,11 @@ haritası (her biri ayrı migration + smoke + onay):
 - **KS1 — Seans kaydı çekirdeği** ✅ (aşağıda)
 - **KS2 — Tahsilat**: öğrenci başına ücret (genelde seans başı 2000-3000, aylık
   elden) + yapılan seans otomatik sayım + ödeme kaydı + "ayı kapat" + gelir panosu.
-- **KS3 — Zahmetsiz yakalama**: ses→metin + kâğıt form fotoğrafı→metin → AI taslak
-  doldur (3-tık ilkesi). STT + çok-modlu AI + dosya depolama + KVKK rıza.
-- **KS4 — AI koçluk içgörüsü**: birikmiş seanslardan bir sonraki seans için özet +
-  gündem + psikolog-vari ipuçları (kullanıcının Gemini akışı, sistem içinde).
+- **KS3 — Zahmetsiz yakalama** (2 alt-paket): **KS3a fotoğraf→metin** ✅ ·
+  **KS3b ses→metin** ✅ (aşağıda). Kâğıt form fotoğrafı / sesli dikte → AI taslak
+  doldur (3-tık ilkesi). Çok-modlu AI + KVKK rıza + medya saklanmaz.
+- **KS4 — AI koçluk içgörüsü** ✅ (aşağıda): birikmiş seanslardan bir sonraki
+  seans için özet + gündem + psikolog-vari ipuçları (sistem içinde, Claude).
 - **İlke (kullanıcı):** teknoloji koçun zamanını çalmasın; veri girmek + sonuca
   ulaşmak en fazla 3 tık. Notlar yalnız koça özel (KVKK).
 
@@ -1531,6 +1532,124 @@ haritası (her biri ayrı migration + smoke + onay):
   - Verify: tsc ✅ · eslint ✅ · build ✅ (`/teacher/billing`) · regresyon **12/12
     suite GREEN** (billing 15/15 + sessions + teacher + institution + admin +
     parent + auth + tenant).
+
+- **KS3a — Fotoğraftan yakalama (foto→metin, AI taslak)** ✅ (2026-05-21,
+  **migration `u2v4y7z8y66s`**):
+  - **Migration `u2v4y7z8y66s`** (down_revision t1u3x6y7x55r): `users.ai_capture_consent_at`
+    (nullable). **Additive**, downgrade'li, uygulandı. **Maliyet/KVKK planı kullanıcıya
+    sunuldu + onaylandı** (foto-önce, ses KS3b'ye; rıza akışı uygun).
+  - **KVKK kararı (kullanıcı 2026-05-21)**: el yazısı/not fotoğrafı yurt dışı alt-işleyene
+    (Anthropic Claude) gönderildiğinden **açık rıza zorunlu** (`ai_capture_consent_at`).
+    **Medya SAKLANMAZ** — bellekte işlenir, metne çevrilir, atılır. Yalnız koç görür.
+  - **Kredi**: yeni `UsageKind.AI_SESSION_CAPTURE` (5 kredi). `usage_events.kind` plain
+    VARCHAR (CHECK yok) → **migration gerekmedi**. `KIND_CREDITS` map'e eklendi.
+    Bağımsız koç Owner-pattern: `consume_credits(owner=CreditOwner.for_user(coach))`.
+  - Servis `ai_session_capture.py` — `parse_session_photo(image_base64, media_type)`
+    → Claude **vision** (httpx, `ai_book_template` deseni: ANTHROPIC_API_URL +
+    claude-haiku-4-5 + x-api-key) çok-modlu mesaj (image block + prompt) →
+    `{agenda, coach_note, next_change, mood, tags}`. `AIInvalidResponse`/
+    `AIServiceUnavailable` reuse. ALLOWED_MEDIA = jpeg/png/webp. Görsel kaydedilmez.
+  - Backend: `schemas/teacher.py` +AiConsentResponse/ParsePhotoBody/SessionDraftResponse ·
+    `api_v2/teacher.py` +GET/POST `/ai-consent` + POST `students/{id}/sessions/parse-photo`
+    (consent yok→403 consent_required · boş→422 image_required · tür→422
+    invalid_media_type · >7MB→422 image_too_large · CreditBlocked→402
+    ai_credit_exhausted · AIInvalidResponse→422 photo_unreadable · AIServiceUnavailable→
+    502 ai_unavailable). `_apply_session_body` capture_source set eder.
+  - `scripts/test_api_v2_teacher_ai_capture.py` — **10/10 yeşil** (parse_session_photo
+    monkeypatch — gerçek Claude çağrısı yok).
+  - Frontend (emoji yok — Lucide): types +AiConsentResponse/SessionDraftResponse +
+    CoachingSessionCreateBody.capture_source · api `aiConsent` key + getTeacherAiConsent ·
+    `use-teacher-mutations.ts` +useSetAiConsent/useParseSessionPhoto (kod-bazlı toast;
+    parse yan etkisiz → invalidate susturuldu) · `student-sessions-panel.tsx`'e
+    **"Fotoğraftan doldur"** butonu (gizli file input, `capture=environment` mobil
+    kamera) + **rıza modalı** (ShieldCheck: AI işleme + yurt dışı + saklanmaz +
+    yalnız-koç açıklaması; onay→useSetAiConsent→parse) + parse sonucu **taslak →
+    SessionForm prefill** (violet "AI okudu, kontrol edin" banner; kaydette
+    capture_source=photo). İlk denemede rıza yoksa modal, sonra otomatik parse.
+  - Verify: tsc ✅ · eslint ✅ · build ✅ · regresyon GREEN (ai_capture 10/10 +
+    exams 16 + sessions 14 + billing 15 + teacher_read 12 + teacher_students 14 +
+    tenant 29).
+
+- **KS3b — Sesten yakalama (ses→metin, AI taslak)** ✅ (2026-05-21,
+  **migration GEREKMEDİ**):
+  - **Migration YOK**: rıza (`ai_capture_consent_at`, KS3a) + `capture_source`
+    ("voice" değeri) + `usage_events.kind` plain VARCHAR (CHECK yok) zaten mevcut.
+  - **KVKK**: ses kaydı da yurt dışı alt-işleyene gönderildiğinden KS3a rızası
+    AYNEN kapsar (rıza metni "Anthropic, OpenAI" olarak genişletildi). **Ses
+    SAKLANMAZ** — bellekte işlenir, metne çevrilir, atılır. Yalnız koç görür.
+  - **Kredi**: yeni `UsageKind.AI_SESSION_VOICE` (**8 kredi** — Whisper STT +
+    Claude yapılandırma = 2 çağrı, foto'nun 5 kredisinden pahalı; maliyet
+    şeffaflığı). `KIND_CREDITS` + `USAGE_KIND_LABELS_TR` ("AI Seans Yakalama
+    (Ses)") güncellendi; foto label'ı "(Foto)" oldu. AI_SESSION_CAPTURE yorumu
+    "vision — foto (KS3a)" olarak netleştirildi.
+  - Servis `ai_session_capture.py` (KS3a dosyasına eklendi):
+    - `_claude_messages(content)` — Anthropic messages çağrısı tek helper'a
+      refactor (foto vision + metin yapılandırma paylaşır).
+    - `transcribe_audio(audio_base64, media_type)` → **OpenAI Whisper**
+      (`whisper-1`, httpx multipart `files=` + `language=tr`, `OPENAI_API_KEY`
+      env). ALLOWED_AUDIO = webm/mp4/ogg/mpeg/wav. Ses kaydedilmez.
+    - `_structure_text_to_draft(transcript)` → Claude metin (`_TEXT_PROMPT`) →
+      `{agenda, coach_note, next_change, mood, tags}`; boş yapılanırsa ham döküm
+      coach_note'a fallback (veri kaybetme).
+    - `parse_session_voice(audio, mt)` = transcribe → structure.
+  - Backend: `schemas/teacher.py` +ParseVoiceBody · `api_v2/teacher.py`
+    +POST `students/{id}/sessions/parse-voice` (consent yok→403 consent_required ·
+    boş→422 audio_required · tür→422 invalid_media_type · >18MB→422 audio_too_large ·
+    CreditBlocked→402 ai_credit_exhausted · AIInvalidResponse→422 voice_unreadable ·
+    AIServiceUnavailable→502 ai_unavailable). consume_credits AI_SESSION_VOICE.
+  - `scripts/test_api_v2_teacher_voice_capture.py` — **10/10 yeşil**
+    (parse_session_voice monkeypatch — gerçek Whisper/Claude çağrısı yok).
+  - Frontend (emoji yok — Lucide): `use-teacher-mutations.ts` +useParseSessionVoice
+    (kod-bazlı toast; invalidate susturuldu) · `student-sessions-panel.tsx`'e
+    **"Sesle doldur"** butonu (**MediaRecorder**: getUserMedia → kayıt → Durdur
+    butonu + canlı süre sayacı m:ss → blob→base64; `pickAudioMime` webm/mp4/ogg
+    desteklilik kontrolü) + paylaşılan rıza modalı (metin genişletildi) + parse
+    sonucu **taslak → SessionForm prefill** (kaynak-bilinçli banner "AI sesinizi/
+    fotoğrafı okudu"; kaydette `capture_source` foto/ses ayrı). `dispatch` ortak
+    akış (foto+ses): rıza yoksa modal → onay → parse.
+  - Verify: tsc ✅ · eslint ✅ · build ✅ · regresyon GREEN (voice 10/10 +
+    ai_capture 10 + sessions 14 + billing 15 + exams 16 + admin_usage 21 + tenant 29).
+  - **Yeni env (prod)**: `OPENAI_API_KEY` (Whisper). Tanımsızsa parse-voice 502
+    ai_unavailable döner (özellik bozulmaz, diğer akışlar etkilenmez).
+
+- **KS4 — AI koçluk içgörüsü** ✅ (2026-05-21, **migration GEREKMEDİ**):
+  - **Migration YOK**: rıza (`ai_capture_consent_at`) + `usage_events.kind`
+    VARCHAR zaten mevcut; KS4 yalnız okur + üretir (kalıcı yazma yok).
+  - **Amaç (kullanıcı)**: "bugün şu öğrenciyle şunu konuş" — birikmiş seans
+    notları + akademik durumdan koça bir sonraki seans için hazırlık. Sonuç
+    ÖNERİDİR, kaydedilmez; yalnız koç görür; klinik teşhis değil (koçluk dili).
+  - **Kredi**: yeni `UsageKind.AI_COACHING_INSIGHT` (**6 kredi** — tek Claude
+    çağrısı ama geniş bağlam). `KIND_CREDITS` + label ("AI Koçluk İçgörüsü").
+  - Servis `ai_coaching_insight.py` — `generate_coaching_insight(student_name,
+    sessions, academic)` → son ≤8 seans (gündem/not/değiştirilecek/ruh hali/
+    etiket) + akademik anlık görüntü (`_compute_session_prefill`) bir prompt'a
+    örülür → Claude → `{summary, agenda_suggestions[], psychological_tips[],
+    watch_outs[]}`. Anthropic plumbing (`_claude_messages`) + JSON parse
+    (`_extract_json_object`) `ai_session_capture`'dan reuse. "Uydurma, yalnız
+    verilen notlara dayan, teşhis koyma" kuralları prompt'ta.
+  - Backend: `schemas/teacher.py` +CoachingInsightResponse · `api_v2/teacher.py`
+    +POST `students/{id}/coaching-insight` (consent yok→403 · seans yok→422
+    not_enough_data · CreditBlocked→402 ai_credit_exhausted · AIInvalidResponse→
+    422 insight_unreadable · AIServiceUnavailable→502 ai_unavailable).
+    consume_credits AI_COACHING_INSIGHT. based_on_sessions response'ta.
+  - `scripts/test_api_v2_teacher_coaching_insight.py` — **8/8 yeşil** (monkeypatch).
+  - Frontend (emoji yok — Lucide): types +CoachingInsightResponse ·
+    `use-teacher-mutations.ts` +useCoachingInsight (kod-bazlı toast; invalidate
+    susturuldu) · `student-sessions-panel.tsx`'e **"İçgörü al"** butonu (violet
+    Lightbulb; seans yoksa disabled) + **sonuç dialog** (özet + "Bir sonraki
+    seansta konuş" gündem listesi + "Yaklaşım ipuçları" + amber "Dikkat" +
+    based_on_sessions notu) + **"Bu gündemle seans aç"** → agenda_suggestions
+    SessionForm'a taslak olarak akar (`draftSource="insight"`; capture_source
+    YOK — manual kalır). Rıza akışı tüm AI özelliklerine genelleştirildi
+    (`gateConsent(action)` callback deseni; pending media→pendingAction; modal
+    metni "fotoğraf/ses/seans notları" + Anthropic+OpenAI kapsayacak şekilde
+    genişletildi). DraftSource = photo|voice|insight.
+  - Verify: tsc ✅ · eslint ✅ · build ✅ · regresyon GREEN (insight 8/8 +
+    voice 10 + ai_capture 10 + sessions 14 + billing 15 + exams 16 +
+    admin_usage 21 + tenant 29).
+  - **Koçluk İşletme Modülü (KS1-KS4) tamamlandı.** Bağımsız koç artık seans
+    kaydı + tahsilat + zahmetsiz yakalama (foto/ses) + AI içgörü ile tam
+    operasyonel/ticari katmana sahip.
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

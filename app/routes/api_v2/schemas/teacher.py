@@ -1399,6 +1399,9 @@ SessionStatusLiteral = Literal["done", "postponed", "cancelled", "no_show"]
 SessionChannelLiteral = Literal["in_person", "online", "phone"]
 
 
+SessionCaptureSourceLiteral = Literal["manual", "voice", "photo"]
+
+
 class CoachingSessionCreateBody(BaseModel):
     session_date: str  # ISO YYYY-MM-DD
     status: SessionStatusLiteral = "done"
@@ -1409,6 +1412,7 @@ class CoachingSessionCreateBody(BaseModel):
     coach_note: str | None = None
     mood: int | None = None  # 1-5
     tags: list[str] = []
+    capture_source: SessionCaptureSourceLiteral | None = None
 
 
 class CoachingSessionRow(BaseModel):
@@ -1524,3 +1528,41 @@ class BillingMonthResponse(BaseModel):
     month: str  # "YYYY-MM"
     rows: list[BillingStudentRow]
     totals: BillingTotals
+
+
+# =============================================================================
+# KS3a — AI yakalama (foto → metin)
+# =============================================================================
+
+
+class AiConsentResponse(BaseModel):
+    consented: bool
+    consent_at: str | None = None
+
+
+class ParsePhotoBody(BaseModel):
+    image_base64: str
+    media_type: str  # image/jpeg | image/png | image/webp
+
+
+class ParseVoiceBody(BaseModel):
+    audio_base64: str
+    media_type: str  # audio/webm | audio/mp4 | audio/ogg | audio/mpeg | audio/wav
+
+
+class SessionDraftResponse(BaseModel):
+    """AI'dan dönen seans form taslağı (KAYDEDİLMEZ — koç onaylar)."""
+    agenda: str
+    coach_note: str
+    next_change: str
+    mood: int | None = None
+    tags: list[str]
+
+
+class CoachingInsightResponse(BaseModel):
+    """AI koçluk içgörüsü — bir sonraki seans hazırlığı (KAYDEDİLMEZ — öneri)."""
+    summary: str
+    agenda_suggestions: list[str]
+    psychological_tips: list[str]
+    watch_outs: list[str]
+    based_on_sessions: int

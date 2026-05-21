@@ -16,6 +16,9 @@ import type {
   CoachingSessionCreateBody,
   CoachingSessionRow,
   PaymentCreateBody,
+  AiConsentResponse,
+  SessionDraftResponse,
+  CoachingInsightResponse,
   GoalNodeRow,
   ParentInviteBody,
   ParentInviteResult,
@@ -1197,6 +1200,83 @@ export function useDeletePayment() {
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       toast.success("Ödeme silindi");
+    },
+  });
+}
+
+// =============================================================================
+// KS3a — AI yakalama (foto → metin)
+// =============================================================================
+
+export function useSetAiConsent() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<AiConsentResponse>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<AiConsentResponse>>("/api/v2/teacher/ai-consent", { method: "POST" }),
+    onError: (err) => showError(err, "Onay kaydedilemedi"),
+    onSuccess: (res) => applyInvalidate(qc, res.invalidate),
+  });
+}
+
+export function useParseSessionPhoto(studentId: number) {
+  // Fotoğraf yalnızca metne çevrilir; DB'ye hiçbir şey yazılmaz (taslak döner).
+  // Bu yüzden cache bayatlatması gerekmez; kural bilerek susturuldu.
+  // eslint-disable-next-line lgs/missing-invalidate -- parse yan etkisiz, taslak döner
+  return useMutation<SessionDraftResponse, ApiError, { imageBase64: string; mediaType: string }>({
+    mutationFn: ({ imageBase64, mediaType }) =>
+      api<SessionDraftResponse>(
+        `/api/v2/teacher/students/${studentId}/sessions/parse-photo`,
+        { method: "POST", body: JSON.stringify({ image_base64: imageBase64, media_type: mediaType }) },
+      ),
+    onError: (err) => {
+      const code = errorCode(err);
+      if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
+      else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
+      else if (code === "photo_unreadable") toast.error("Fotoğraf okunamadı", { description: "Daha net bir fotoğraf deneyin." });
+      else if (code === "invalid_media_type") toast.error("Desteklenmeyen görsel türü (JPEG/PNG/WebP)");
+      else if (code === "image_too_large") toast.error("Görsel çok büyük");
+      else if (code === "ai_unavailable") toast.error("AI servisi şu an kullanılamıyor");
+      else showError(err, "Fotoğraf işlenemedi");
+    },
+  });
+}
+
+export function useParseSessionVoice(studentId: number) {
+  // Ses yalnızca metne çevrilir; DB'ye hiçbir şey yazılmaz (taslak döner).
+  // eslint-disable-next-line lgs/missing-invalidate -- parse yan etkisiz, taslak döner
+  return useMutation<SessionDraftResponse, ApiError, { audioBase64: string; mediaType: string }>({
+    mutationFn: ({ audioBase64, mediaType }) =>
+      api<SessionDraftResponse>(
+        `/api/v2/teacher/students/${studentId}/sessions/parse-voice`,
+        { method: "POST", body: JSON.stringify({ audio_base64: audioBase64, media_type: mediaType }) },
+      ),
+    onError: (err) => {
+      const code = errorCode(err);
+      if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
+      else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
+      else if (code === "voice_unreadable") toast.error("Ses anlaşılamadı", { description: "Daha sessiz bir ortamda, net konuşarak tekrar deneyin." });
+      else if (code === "invalid_media_type") toast.error("Desteklenmeyen ses türü");
+      else if (code === "audio_too_large") toast.error("Ses kaydı çok uzun");
+      else if (code === "ai_unavailable") toast.error("AI servisi şu an kullanılamıyor");
+      else showError(err, "Ses işlenemedi");
+    },
+  });
+}
+
+export function useCoachingInsight(studentId: number) {
+  // Salt-üretim — DB'ye yazılmaz (öneri döner); cache bayatlatması gerekmez.
+  // eslint-disable-next-line lgs/missing-invalidate -- içgörü yan etkisiz, öneri döner
+  return useMutation<CoachingInsightResponse, ApiError, void>({
+    mutationFn: () =>
+      api<CoachingInsightResponse>(`/api/v2/teacher/students/${studentId}/coaching-insight`, { method: "POST" }),
+    onError: (err) => {
+      const code = errorCode(err);
+      if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
+      else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
+      else if (code === "not_enough_data") toast.error("İçgörü için en az bir seans kaydı gerekir");
+      else if (code === "insight_unreadable") toast.error("İçgörü üretilemedi", { description: "Lütfen tekrar deneyin." });
+      else if (code === "ai_unavailable") toast.error("AI servisi şu an kullanılamıyor");
+      else showError(err, "İçgörü alınamadı");
     },
   });
 }
