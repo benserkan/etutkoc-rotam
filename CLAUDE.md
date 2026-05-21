@@ -1732,18 +1732,21 @@ GET ücretsiz / POST kredi, migration `v3w5z8a9z77t`).
 - Verify: tsc ✅ · eslint ✅ · build ✅ · regresyon (entitlement 12 + ai_capture 10 +
   voice 10 + insight 11 + sessions 14 + api_keys 10 + admin 13 + tenant 29) GREEN.
 
-**Paket D — Gerçek Gemini anahtarıyla simülasyon** ⏳ SIRADA (kullanıcının anahtarını bekliyor):
-- Kullanıcı `GEMINI_PAID_API_KEY` (+ ops. `GEMINI_FREE_API_KEYS`) değerini `.env`'e
-  veya süper admin → AI Ayarları'na girer.
-- `scripts/simulate_ai_real.py` hazır (guard'lı, Gemini'ye güncellendi): anahtar yoksa
-  atlar; varsa paid+free koç + seans → free=403 (maliyetsiz) + paid GERÇEK Gemini
-  coaching-insight → kredi before/after + AI çıktısı + maliyet özeti. Foto: PIL sentetik
-  görselle gerçek Gemini vision. Ses: gerçek kayıt gerektiğinden UI'dan (mic) test.
-- Çalıştırma: `PYTHONPATH=. python scripts/simulate_ai_real.py` (anahtar girilince).
+**Paket D — Gerçek Gemini anahtarıyla simülasyon** ✅ (2026-05-21, GERÇEK çağrı doğrulandı):
+- **`.env` kolaylığı**: tek `GEMINI_API_KEY`'e **virgülle** birden çok anahtar girilebilir
+  → ilk = ücretli (öğrenci verisi), kalan = ücretsiz (kitap şablonu). Tek anahtar =
+  hepsi ücretli. (Veya açık `GEMINI_PAID_API_KEY`/`GEMINI_FREE_API_KEYS` / süper admin.)
+- **Gemini 503** (model yoğunluk) geçici → `gemini.py` kısa backoff retry (1.5s/3s).
+- `scripts/simulate_ai_real.py` ile **gerçek** uçtan uca çalıştırıldı:
+  - free koç (solo_free) → AI 403 (kapı), **maliyetsiz**.
+  - paid koç → GERÇEK Gemini içgörü (6 kredi, kaliteli psikolog-vari çıktı) + cache GET
+    ücretsiz (6→6) + sentetik formdan GERÇEK foto okuma (5 kredi). Toplam 11/50 kredi.
+  - Ses: gerçek mikrofon kaydı gerektiğinden UI'dan test (Gemini tek çağrı).
 
-**DURUM (2026-05-21):** A + B + C BİTTİ + **tek sağlayıcı Gemini geçişi BİTTİ**,
-doğrulandı (tsc/eslint/build + ai_settings 11 + ai_capture 10 + voice 10 + insight 11 +
-entitlement 12 + sessions 14 + admin 13 + tenant 29 + api_v1 47 yeşil).
+**DURUM (2026-05-21):** A + B + C + D BİTTİ + **tek sağlayıcı Gemini geçişi BİTTİ**,
+GERÇEK anahtarla doğrulandı. Smoke: ai_settings 11 + ai_capture 10 + voice 10 + insight 11
++ entitlement 12 + sessions 14 + admin 13 + tenant 29 + api_v1 47. tsc/eslint/build temiz.
+Commit'ler: `94d9c92` (AI altyapı+Gemini+kapı) · `b2aaa43` (virgül-ayırma+503 retry) — pushed.
 **Commit EDİLMEDİ** — kullanıcı "topluca commit ederiz" dedi; çalışma diskte. Resume: D
 (kullanıcı anahtar girince sim çalıştır). Migration'lar: `v3w5z8a9z77t` (coaching_insights),
 `w4x6a9b0a88u` (system_secrets) — uygulandı, alembic head = `w4x6a9b0a88u`.
