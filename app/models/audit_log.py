@@ -61,6 +61,8 @@ class AuditAction(str, enum.Enum):
     FEATURE_CARD_PIN = "feature_card_pin"
     FEATURE_CARD_AUTO_DISCOVERED = "feature_card_auto_discovered"  # Katman 3 — keşif
     FEATURE_CARD_DISCOVERY_REJECTED = "feature_card_discovery_rejected"  # Katman 4 — onay kuyruğu
+    # Süper admin sistem ayarı (API anahtarı vb.)
+    SYSTEM_SETTING_UPDATE = "system_setting_update"
     # User pause / resume — manuel + otonom
     USER_PAUSE_ALERTS = "user_pause_alerts"        # manuel pasifleştirme
     USER_RESUME_ALERTS = "user_resume_alerts"      # manuel resume
@@ -96,6 +98,7 @@ AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
     AuditAction.FEATURE_CARD_PIN: "Vitrin kartı sabitlendi/serbest bırakıldı",
     AuditAction.FEATURE_CARD_AUTO_DISCOVERED: "Vitrin kartı otomatik keşfedildi (taslak)",
     AuditAction.FEATURE_CARD_DISCOVERY_REJECTED: "Otomatik keşif adayı reddedildi (gizlendi)",
+    AuditAction.SYSTEM_SETTING_UPDATE: "Sistem ayarı güncellendi (API anahtarı)",
     AuditAction.USER_PAUSE_ALERTS: "Kullanıcı uyarıları susturuldu (manuel)",
     AuditAction.USER_RESUME_ALERTS: "Kullanıcı uyarıları açıldı (manuel)",
     AuditAction.USER_AUTO_PAUSE: "Kullanıcı otomatik pasifleştirildi (sessizlik)",

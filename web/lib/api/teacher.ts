@@ -28,6 +28,8 @@ import type {
   BillingMonthResponse,
   StudentPaymentsResponse,
   AiConsentResponse,
+  CoachingInsightCacheResponse,
+  TeacherPlanResponse,
   StudentParentsResponse,
   TeacherBadgesResponse,
   TeacherBookListResponse,
@@ -189,6 +191,9 @@ export const teacherKeys = {
   studentPayments: (id: number) =>
     ["teacher", "me", "students", String(id), "payments"] as const,
   aiConsent: () => ["teacher", "me", "ai-consent"] as const,
+  coachingInsight: (id: number) =>
+    ["teacher", "me", "students", String(id), "coaching-insight"] as const,
+  plan: () => ["teacher", "me", "plan"] as const,
 } as const;
 
 // =============================================================================
@@ -275,6 +280,18 @@ export function getTeacherStudentPayments(
 
 export function getTeacherAiConsent(): Promise<AiConsentResponse> {
   return api<AiConsentResponse>("/api/v2/teacher/ai-consent");
+}
+
+export function getTeacherCoachingInsight(
+  studentId: number,
+): Promise<CoachingInsightCacheResponse> {
+  return api<CoachingInsightCacheResponse>(
+    `/api/v2/teacher/students/${studentId}/coaching-insight`,
+  );
+}
+
+export function getTeacherPlan(): Promise<TeacherPlanResponse> {
+  return api<TeacherPlanResponse>("/api/v2/teacher/plan");
 }
 
 export function getTeacherStudents(

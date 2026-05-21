@@ -18,7 +18,9 @@ import type {
   PaymentCreateBody,
   AiConsentResponse,
   SessionDraftResponse,
-  CoachingInsightResponse,
+  CoachingInsightCacheResponse,
+  TeacherPlanResponse,
+  PlanUpgradeBody,
   GoalNodeRow,
   ParentInviteBody,
   ParentInviteResult,
@@ -1231,6 +1233,7 @@ export function useParseSessionPhoto(studentId: number) {
     onError: (err) => {
       const code = errorCode(err);
       if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
+      else if (code === "plan_upgrade_required") toast.error("Bu özellik ücretli pakette", { description: "Paketinizi yükseltin." });
       else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
       else if (code === "photo_unreadable") toast.error("Fotoğraf okunamadı", { description: "Daha net bir fotoğraf deneyin." });
       else if (code === "invalid_media_type") toast.error("Desteklenmeyen görsel türü (JPEG/PNG/WebP)");
@@ -1253,6 +1256,7 @@ export function useParseSessionVoice(studentId: number) {
     onError: (err) => {
       const code = errorCode(err);
       if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
+      else if (code === "plan_upgrade_required") toast.error("Bu özellik ücretli pakette", { description: "Paketinizi yükseltin." });
       else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
       else if (code === "voice_unreadable") toast.error("Ses anlaşılamadı", { description: "Daha sessiz bir ortamda, net konuşarak tekrar deneyin." });
       else if (code === "invalid_media_type") toast.error("Desteklenmeyen ses türü");
@@ -1263,15 +1267,43 @@ export function useParseSessionVoice(studentId: number) {
   });
 }
 
-export function useCoachingInsight(studentId: number) {
-  // Salt-üretim — DB'ye yazılmaz (öneri döner); cache bayatlatması gerekmez.
-  // eslint-disable-next-line lgs/missing-invalidate -- içgörü yan etkisiz, öneri döner
-  return useMutation<CoachingInsightResponse, ApiError, void>({
+export function useUpgradePlan() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<TeacherPlanResponse>, ApiError, PlanUpgradeBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<TeacherPlanResponse>>("/api/v2/teacher/plan/upgrade", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.setQueryData(teacherKeys.plan(), res.data);
+      toast.success(`${res.data.plan_label} paketine geçildi`);
+    },
+    onError: (err) => {
+      const code = errorCode(err);
+      if (code === "managed_by_institution") toast.error("Paketiniz kurumunuz tarafından yönetilir");
+      else if (code === "invalid_plan") toast.error("Geçersiz paket seçimi");
+      else showError(err, "Paket yükseltilemedi");
+    },
+  });
+}
+
+export function useGenerateCoachingInsight(studentId: number) {
+  const qc = useQueryClient();
+  // POST = üret/yenile (KREDİ DÜŞER). Sonuç DB'ye cache'lenir; GET ücretsiz okur.
+  // Başarıda cache query'sini setQueryData ile günceller (invalidate yerine doğrudan yaz).
+  // eslint-disable-next-line lgs/missing-invalidate -- setQueryData ile cache güncelleniyor
+  return useMutation<CoachingInsightCacheResponse, ApiError, void>({
     mutationFn: () =>
-      api<CoachingInsightResponse>(`/api/v2/teacher/students/${studentId}/coaching-insight`, { method: "POST" }),
+      api<CoachingInsightCacheResponse>(`/api/v2/teacher/students/${studentId}/coaching-insight`, { method: "POST" }),
+    onSuccess: (data) => {
+      qc.setQueryData(teacherKeys.coachingInsight(studentId), data);
+    },
     onError: (err) => {
       const code = errorCode(err);
       if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
+      else if (code === "plan_upgrade_required") toast.error("Bu özellik ücretli pakette", { description: "Paketinizi yükseltin." });
       else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
       else if (code === "not_enough_data") toast.error("İçgörü için en az bir seans kaydı gerekir");
       else if (code === "insight_unreadable") toast.error("İçgörü üretilemedi", { description: "Lütfen tekrar deneyin." });

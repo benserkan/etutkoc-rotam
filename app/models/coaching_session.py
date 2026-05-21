@@ -22,6 +22,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    Boolean,
     Date,
     DateTime,
     Enum,
@@ -30,6 +31,7 @@ from sqlalchemy import (
     Integer,
     String,
     Text,
+    false as sa_false,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -128,3 +130,46 @@ class CoachingSession(Base):
 
     def __repr__(self) -> str:
         return f"<CoachingSession s={self.student_id} {self.session_date} {self.status.value}>"
+
+
+class CoachingInsight(Base):
+    """AI koçluk içgörüsü cache (KS4) — öğrenci başına TEK güncel kayıt.
+
+    KREDİ GÜVENLİĞİ: İçgörü pahalı Claude çağrısıyla bir kez üretilir + burada
+    saklanır. Sonraki görüntülemeler DB'den okunur (ücretsiz). Yalnız koç "Yenile"
+    derse yeniden üretilir (kredi düşer). Yeni/değişen seans → `is_stale=True`
+    (AI çağrısı YOK; sadece bayraklanır, koç isterse yeniler).
+
+    Gizlilik (KVKK): yalnız ilgili koç erişir; veli/öğrenci görmez. Öneri/taslaktır.
+    """
+    __tablename__ = "coaching_insights"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    student_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    generated_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    summary: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    agenda_suggestions: Mapped[str | None] = mapped_column(Text, nullable=True)   # JSON list
+    psychological_tips: Mapped[str | None] = mapped_column(Text, nullable=True)   # JSON list
+    watch_outs: Mapped[str | None] = mapped_column(Text, nullable=True)           # JSON list
+    based_on_sessions: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
+    is_stale: Mapped[bool] = mapped_column(
+        # Yeni seans/güncelleme sonrası True — koça "yenile" önerilir
+        Boolean, nullable=False, server_default=sa_false()
+    )
+
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<CoachingInsight s={self.student_id} stale={self.is_stale}>"

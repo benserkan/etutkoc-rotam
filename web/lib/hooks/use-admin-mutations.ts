@@ -68,6 +68,8 @@ import type {
   QuotaOverrideBody,
   UsageBonusBody,
   UsageMutationResult,
+  AiSettingsResponse,
+  SetAiSettingBody,
 } from "@/lib/types/admin";
 
 /**
@@ -1685,4 +1687,47 @@ export function useAbuseRemediate() {
     null,
     "Aksiyon uygulanamadı",
   );
+}
+
+// =============================================================================
+// Sistem ayarları — API anahtarları
+// =============================================================================
+
+export function useSetAiSetting() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<AiSettingsResponse>, ApiError, SetAiSettingBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<AiSettingsResponse>>("/api/v2/admin/settings/ai", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Ayar kaydedildi");
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Ayar kaydedilemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+export function useDeleteAiSetting() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<AiSettingsResponse>, ApiError, { name: string }>({
+    mutationFn: ({ name }) =>
+      api<MutationResponse<AiSettingsResponse>>(`/api/v2/admin/settings/ai/${name}/delete`, {
+        method: "POST",
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Ayar silindi");
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Ayar silinemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
 }

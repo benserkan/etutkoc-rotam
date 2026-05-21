@@ -1,15 +1,21 @@
-"""API v2 /teacher AI koçluk içgörüsü smoke (KS4).
+"""API v2 /teacher AI koçluk içgörüsü smoke (KS4 — cache'li).
 
 Gerçek Claude çağrısı YAPILMAZ — generate_coaching_insight monkeypatch'lenir.
 
+KREDİ GÜVENLİĞİ vurgusu: POST üretir + DB'ye cache'ler + kredi düşer; GET cache'den
+okur + KREDİ DÜŞMEZ; yeni seans → is_stale True; POST yenile → kredi tekrar düşer.
+
 Senaryolar:
-   1. Anonim → 401
-   2. parse rıza yok → 403 consent_required
-   3. consent ver → true
-   4. seans yokken → 422 not_enough_data
-   5. seans ekle + içgörü happy → summary/agenda/tips + based_on_sessions
-   6. kredi tüketildi (UsageEvent AI_COACHING_INSIGHT)
-   7. başka öğretmenin öğrencisi → 404
+   1. Anonim POST → 401
+   2. GET üretilmemiş → insight null (kredi yok)
+   3. POST rıza yok → 403 consent_required
+   4. consent ver → true
+   5. POST seans yok → 422 not_enough_data
+   6. seans ekle + POST üret → insight + based_on=1 + is_stale False; kredi=1
+   7. GET → cache döner, KREDİ DÜŞMEZ (hâlâ 1)
+   8. yeni seans ekle → GET is_stale True
+   9. POST yenile → kredi=2 + is_stale False
+  10. başka öğretmenin öğrencisi → 404 (GET + POST)
 """
 from __future__ import annotations
 
@@ -27,7 +33,7 @@ from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
 from app.main import app
-from app.models import CoachingSession, User, UserRole
+from app.models import CoachingInsight, CoachingSession, User, UserRole
 from app.models.suspicious_ip import SuspiciousIp
 from app.models.usage import UsageEvent
 from app.services.rate_limit import get_login_limiter
@@ -77,6 +83,7 @@ def _cleanup(seed):
     with SessionLocal() as db:
         sids = [seed["s_id"], seed["s2_id"]]
         uids = [seed["t_id"], seed["t2_id"], *sids]
+        db.execute(sa_delete(CoachingInsight).where(CoachingInsight.student_id.in_(sids)))
         db.execute(sa_delete(CoachingSession).where(CoachingSession.student_id.in_(sids)))
         db.execute(sa_delete(UsageEvent).where(UsageEvent.owner_id.in_(uids)))
         db.execute(sa_delete(User).where(User.id.in_(uids)))
@@ -113,22 +120,34 @@ def main():
         "psychological_tips": ["Küçük başarıları kutla", "Baskı yerine merak dilini kullan"],
         "watch_outs": ["Uyku düzensizliği işaretleri"],
     }
+    def credit_count():
+        with SessionLocal() as db:
+            from app.models.usage import UsageKind
+            return db.query(UsageEvent).filter(
+                UsageEvent.owner_id == seed["t_id"],
+                UsageEvent.kind == UsageKind.AI_COACHING_INSIGHT).count()
+
     try:
         tc = _login(T_EMAIL)
         url = f"/api/v2/teacher/students/{sid}/coaching-insight"
 
         r = TestClient(app).post(url)
-        check("1. Anonim → 401", r.status_code == 401, f"status={r.status_code}")
+        check("1. Anonim POST → 401", r.status_code == 401, f"status={r.status_code}")
+
+        r = tc.get(url)
+        check("2. GET üretilmemiş → insight null (kredi yok)",
+              r.status_code == 200 and r.json()["insight"] is None and credit_count() == 0,
+              f"status={r.status_code} {r.text[:120]}")
 
         r = tc.post(url)
-        check("2. rıza yok → 403 consent_required",
+        check("3. rıza yok → 403 consent_required",
               r.status_code == 403 and r.json()["detail"]["code"] == "consent_required", f"status={r.status_code}")
 
         r = tc.post("/api/v2/teacher/ai-consent")
-        check("3. consent ver → true", r.status_code == 200 and r.json()["data"]["consented"] is True, f"status={r.status_code}")
+        check("4. consent ver → true", r.status_code == 200 and r.json()["data"]["consented"] is True, f"status={r.status_code}")
 
         r = tc.post(url)
-        check("4. seans yok → 422 not_enough_data",
+        check("5. seans yok → 422 not_enough_data",
               r.status_code == 422 and r.json()["detail"]["code"] == "not_enough_data", f"status={r.status_code}")
 
         # Seans ekle
@@ -140,22 +159,40 @@ def main():
 
         r = tc.post(url)
         j = r.json()
-        check("5. happy → içgörü (summary+agenda+based_on)",
-              r.status_code == 200 and j.get("summary", "").startswith("Öğrenci")
-              and len(j.get("agenda_suggestions", [])) == 2
-              and j.get("based_on_sessions") == 1, f"status={r.status_code} {r.text[:160]}")
-        check("5b. psikolojik ipuçları + dikkat",
-              len(j.get("psychological_tips", [])) == 2 and len(j.get("watch_outs", [])) == 1,
-              f"{j.get('psychological_tips')} {j.get('watch_outs')}")
+        ins = j.get("insight") or {}
+        check("6. POST üret → içgörü + based_on=1 + is_stale False",
+              r.status_code == 200 and ins.get("summary", "").startswith("Öğrenci")
+              and len(ins.get("agenda_suggestions", [])) == 2
+              and ins.get("based_on_sessions") == 1 and j.get("is_stale") is False
+              and credit_count() == 1, f"status={r.status_code} count={credit_count()} {r.text[:160]}")
 
-        with SessionLocal() as db:
-            from app.models.usage import UsageKind
-            cnt = db.query(UsageEvent).filter(
-                UsageEvent.owner_id == seed["t_id"], UsageEvent.kind == UsageKind.AI_COACHING_INSIGHT).count()
-        check("6. kredi tüketildi (UsageEvent INSIGHT)", cnt >= 1, f"count={cnt}")
+        r = tc.get(url)
+        j = r.json()
+        check("7. GET → cache döner, KREDİ DÜŞMEZ (hâlâ 1)",
+              r.status_code == 200 and (j.get("insight") or {}).get("summary", "").startswith("Öğrenci")
+              and credit_count() == 1, f"status={r.status_code} count={credit_count()}")
+
+        # Yeni seans ekle → cache bayatlar
+        r = tc.post(f"/api/v2/teacher/students/{sid}/sessions", json={
+            "session_date": "2026-05-21", "status": "done", "agenda": "Takip"})
+        if r.status_code != 200:
+            raise RuntimeError(f"seans2 create fail {r.status_code} {r.text[:120]}")
+        r = tc.get(url)
+        check("8. yeni seans → GET is_stale True (kredi hâlâ 1)",
+              r.status_code == 200 and r.json().get("is_stale") is True and credit_count() == 1,
+              f"status={r.status_code} stale={r.json().get('is_stale')} count={credit_count()}")
+
+        r = tc.post(url)
+        j = r.json()
+        check("9. POST yenile → kredi=2 + is_stale False + based_on=2",
+              r.status_code == 200 and j.get("is_stale") is False
+              and (j.get("insight") or {}).get("based_on_sessions") == 2
+              and credit_count() == 2, f"status={r.status_code} count={credit_count()}")
 
         r = tc.post(f"/api/v2/teacher/students/{seed['s2_id']}/coaching-insight")
-        check("7. başka öğr. öğrencisi → 404", r.status_code == 404, f"status={r.status_code}")
+        check("10a. başka öğr. POST → 404", r.status_code == 404, f"status={r.status_code}")
+        r = tc.get(f"/api/v2/teacher/students/{seed['s2_id']}/coaching-insight")
+        check("10b. başka öğr. GET → 404", r.status_code == 404, f"status={r.status_code}")
 
     finally:
         ai_insight.generate_coaching_insight = orig

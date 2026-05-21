@@ -3138,3 +3138,26 @@ class AbuseRemediateResult(BaseModel):
     action: str
     affected_count: int
     note: str
+
+
+# =============================================================================
+# Süper Admin — Sistem ayarları (API anahtarları)
+# =============================================================================
+
+
+class AiSettingItem(BaseModel):
+    name: str               # gemini_paid_api_key | gemini_free_api_key | *_model
+    kind: str               # secret (maskeli) | config (düz)
+    label: str
+    is_set: bool
+    source: str             # db | env | none | default
+    value: str              # secret → maskeli; config → düz değer
+
+
+class AiSettingsResponse(BaseModel):
+    items: list[AiSettingItem]
+
+
+class SetAiSettingBody(BaseModel):
+    name: str               # SECRET_NAMES + CONFIG_NAMES içinden
+    value: str              # düz değer (secret ise şifreli saklanır)

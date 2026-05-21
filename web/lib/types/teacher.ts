@@ -1393,6 +1393,34 @@ export interface StudentSessionListResponse {
 export interface AiConsentResponse {
   consented: boolean;
   consent_at: string | null;
+  ai_premium: boolean;
+  plan_code: string | null;
+}
+
+export interface TeacherPlanOption {
+  code: string;
+  label: string;
+  short_description: string;
+  price_monthly_try: number;
+  tier_rank: number;
+  ai_included: boolean;
+  is_current: boolean;
+  is_upgrade: boolean;
+}
+
+export interface TeacherPlanResponse {
+  plan_code: string;
+  plan_label: string;
+  is_solo: boolean;
+  ai_premium: boolean;
+  trial_active: boolean;
+  trial_days_left: number | null;
+  options: TeacherPlanOption[];
+  note: string | null;
+}
+
+export interface PlanUpgradeBody {
+  plan: string;
 }
 
 export interface SessionDraftResponse {
@@ -1409,6 +1437,12 @@ export interface CoachingInsightResponse {
   psychological_tips: string[];
   watch_outs: string[];
   based_on_sessions: number;
+  generated_at: string | null;
+}
+
+export interface CoachingInsightCacheResponse {
+  insight: CoachingInsightResponse | null;
+  is_stale: boolean;
 }
 
 // =============================================================================

@@ -9,6 +9,7 @@ import {
   BellRing,
   Building2,
   CalendarDays,
+  KeyRound,
   CircleDollarSign,
   ClipboardList,
   DatabaseZap,
@@ -134,6 +135,12 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/security-monitor/alarms", label: "Alarmlar", icon: AlertOctagon },
       { href: "/admin/security-monitor/abuse", label: "Suistimal", icon: Flame },
       { href: "/admin/security-monitor/activity", label: "Aktivite", icon: CalendarDays },
+    ],
+  },
+  {
+    title: "Sistem",
+    links: [
+      { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
     ],
   },
 ];

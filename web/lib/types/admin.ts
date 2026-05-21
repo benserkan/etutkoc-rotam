@@ -2904,3 +2904,25 @@ export interface AbuseRemediateResult {
   affected_count: number;
   note: string;
 }
+
+// =============================================================================
+// Süper Admin — Sistem ayarları (API anahtarları)
+// =============================================================================
+
+export interface AiSettingItem {
+  name: string; // gemini_paid_api_key | gemini_free_api_key | *_model
+  kind: string; // secret | config
+  label: string;
+  is_set: boolean;
+  source: string; // db | env | none | default
+  value: string; // secret → maskeli; config → düz
+}
+
+export interface AiSettingsResponse {
+  items: AiSettingItem[];
+}
+
+export interface SetAiSettingBody {
+  name: string;
+  value: string;
+}

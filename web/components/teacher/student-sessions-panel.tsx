@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Lightbulb,
   Loader2,
+  Lock,
   Mic,
   Plus,
   Printer,
@@ -24,6 +25,7 @@ import {
   getTeacherStudentSessions,
   getTeacherSessionPrefill,
   getTeacherAiConsent,
+  getTeacherCoachingInsight,
   teacherKeys,
 } from "@/lib/api/teacher";
 import {
@@ -33,11 +35,11 @@ import {
   useSetAiConsent,
   useParseSessionPhoto,
   useParseSessionVoice,
-  useCoachingInsight,
+  useGenerateCoachingInsight,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
   AiConsentResponse,
-  CoachingInsightResponse,
+  CoachingInsightCacheResponse,
   CoachingSessionCreateBody,
   CoachingSessionRow,
   SessionChannel,
@@ -127,7 +129,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
   });
   const parsePhoto = useParseSessionPhoto(studentId);
   const parseVoice = useParseSessionVoice(studentId);
-  const insight = useCoachingInsight(studentId);
+  const generateInsight = useGenerateCoachingInsight(studentId);
   const setConsent = useSetAiConsent();
   const fileRef = React.useRef<HTMLInputElement | null>(null);
 
@@ -137,8 +139,16 @@ export function StudentSessionsPanel({ studentId }: Props) {
   const [draftSource, setDraftSource] = React.useState<DraftSource | null>(null);
   const [consentOpen, setConsentOpen] = React.useState(false);
   const [pendingAction, setPendingAction] = React.useState<(() => void) | null>(null);
-  const [insightData, setInsightData] = React.useState<CoachingInsightResponse | null>(null);
   const [insightOpen, setInsightOpen] = React.useState(false);
+
+  // İçgörü cache'i — açılınca okunur, KREDİ DÜŞMEZ (yalnız "Oluştur/Yenile" düşer)
+  const insightQ = useQuery<CoachingInsightCacheResponse>({
+    queryKey: teacherKeys.coachingInsight(studentId),
+    queryFn: () => getTeacherCoachingInsight(studentId),
+    enabled: insightOpen,
+    staleTime: 60_000,
+  });
+  const cachedInsight = insightQ.data?.insight ?? null;
 
   // Ses kaydı durumu
   const [recording, setRecording] = React.useState(false);
@@ -150,8 +160,10 @@ export function StudentSessionsPanel({ studentId }: Props) {
 
   const data = q.data;
   const parsing = parsePhoto.isPending || parseVoice.isPending;
-  const busy = parsing || insight.isPending || recording;
+  const busy = parsing || generateInsight.isPending || recording;
   const hasSessions = !!data && data.summary.total > 0;
+  // Ücretli paket kapısı: trial/free koçta AI özellikleri kilitli.
+  const aiLocked = !!consentQ.data && consentQ.data.ai_premium === false;
 
   function openNew() {
     setEditing(null);
@@ -189,17 +201,15 @@ export function StudentSessionsPanel({ studentId }: Props) {
     }
   }
 
-  function runInsight() {
-    insight.mutate(undefined, {
-      onSuccess: (d) => { setInsightData(d); setInsightOpen(true); },
-    });
+  function generateNow() {
+    gateConsent(() => generateInsight.mutate());
   }
 
   function startSessionFromInsight() {
-    if (!insightData) return;
+    if (!cachedInsight) return;
     setEditing(null);
     setDraft({
-      agenda: insightData.agenda_suggestions.map((a) => `• ${a}`).join("\n"),
+      agenda: cachedInsight.agenda_suggestions.map((a) => `• ${a}`).join("\n"),
       coach_note: "",
       next_change: "",
       mood: null,
@@ -312,12 +322,11 @@ export function StudentSessionsPanel({ studentId }: Props) {
             size="sm"
             variant="outline"
             className="border-violet-200 text-violet-700 hover:bg-violet-50 hover:text-violet-800"
-            onClick={() => gateConsent(runInsight)}
-            disabled={busy || !hasSessions}
-            title={hasSessions ? "Seans geçmişinden bir sonraki seans için AI önerisi" : "Önce en az bir seans kaydı gerekir"}
+            onClick={() => setInsightOpen(true)}
+            disabled={!hasSessions || aiLocked}
+            title={aiLocked ? "Ücretli pakette kullanılabilir" : hasSessions ? "Seans geçmişinden bir sonraki seans için AI önerisi" : "Önce en az bir seans kaydı gerekir"}
           >
-            {insight.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Lightbulb className="size-4" aria-hidden />}
-            İçgörü al
+            {aiLocked ? <Lock className="size-4" aria-hidden /> : <Lightbulb className="size-4" aria-hidden />} İçgörü
           </Button>
           {recording ? (
             <Button size="sm" variant="destructive" onClick={stopRecording}>
@@ -325,8 +334,9 @@ export function StudentSessionsPanel({ studentId }: Props) {
               Durdur · {Math.floor(elapsed / 60)}:{String(elapsed % 60).padStart(2, "0")}
             </Button>
           ) : (
-            <Button size="sm" variant="outline" onClick={startRecording} disabled={busy}>
-              {parseVoice.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Mic className="size-4" aria-hidden />}
+            <Button size="sm" variant="outline" onClick={startRecording} disabled={busy || aiLocked}
+              title={aiLocked ? "Ücretli pakette kullanılabilir" : undefined}>
+              {aiLocked ? <Lock className="size-4" aria-hidden /> : parseVoice.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Mic className="size-4" aria-hidden />}
               Sesle doldur
             </Button>
           )}
@@ -334,9 +344,10 @@ export function StudentSessionsPanel({ studentId }: Props) {
             size="sm"
             variant="outline"
             onClick={() => fileRef.current?.click()}
-            disabled={busy}
+            disabled={busy || aiLocked}
+            title={aiLocked ? "Ücretli pakette kullanılabilir" : undefined}
           >
-            {parsePhoto.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Camera className="size-4" aria-hidden />}
+            {aiLocked ? <Lock className="size-4" aria-hidden /> : parsePhoto.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Camera className="size-4" aria-hidden />}
             Fotoğraftan doldur
           </Button>
           <Button size="sm" onClick={openNew} disabled={recording}>
@@ -344,6 +355,17 @@ export function StudentSessionsPanel({ studentId }: Props) {
           </Button>
         </div>
       </div>
+
+      {aiLocked ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+          <Lock className="size-4 shrink-0" aria-hidden />
+          Yapay zekâ özellikleri (sesle/fotoğraftan doldurma, koçluk içgörüsü) ücretli
+          pakette açıktır.
+          <Link href="/teacher/plan" className="ml-auto font-medium text-amber-900 underline">
+            Paketi görüntüle
+          </Link>
+        </div>
+      ) : null}
 
       {q.isLoading && !data ? (
         <p className="text-sm text-muted-foreground">Yükleniyor…</p>
@@ -449,47 +471,81 @@ export function StudentSessionsPanel({ studentId }: Props) {
               <Lightbulb className="size-5 text-violet-600" aria-hidden /> Koçluk içgörüsü
             </DialogTitle>
           </DialogHeader>
-          {insightData ? (
-            <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1 text-sm">
-              <p className="rounded-md bg-muted/50 px-3 py-2 leading-relaxed">{insightData.summary}</p>
 
-              {insightData.agenda_suggestions.length > 0 ? (
+          {insightQ.isLoading ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">Yükleniyor…</p>
+          ) : !cachedInsight ? (
+            <div className="space-y-4 py-2 text-sm">
+              <p className="text-muted-foreground">
+                Bu öğrenci için henüz içgörü oluşturulmadı. Seans geçmişi + güncel
+                akademik durumdan bir sonraki seans için özet, gündem ve yaklaşım
+                önerileri üretilir.
+              </p>
+              <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">
+                Bu işlem yapay zekâ kullanır ve <strong>kredi düşer</strong>. Üretilen
+                içgörü kaydedilir; sonraki görüntülemeler ücretsizdir.
+              </div>
+              <div className="flex items-center justify-end gap-2">
+                <Button variant="ghost" onClick={() => setInsightOpen(false)}>Kapat</Button>
+                <Button onClick={generateNow} disabled={generateInsight.isPending}>
+                  {generateInsight.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}
+                  İçgörü oluştur
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1 text-sm">
+              {insightQ.data?.is_stale ? (
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                  <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
+                  Bu içgörü oluşturulduktan sonra seans bilgisi değişti. Güncel öneri için
+                  yeniden oluşturabilirsiniz (kredi düşer).
+                </div>
+              ) : null}
+              <p className="rounded-md bg-muted/50 px-3 py-2 leading-relaxed">{cachedInsight.summary}</p>
+
+              {cachedInsight.agenda_suggestions.length > 0 ? (
                 <InsightList
                   title="Bir sonraki seansta konuş"
                   icon={<CalendarCheck className="size-4 text-cyan-600" aria-hidden />}
-                  items={insightData.agenda_suggestions}
+                  items={cachedInsight.agenda_suggestions}
                 />
               ) : null}
-              {insightData.psychological_tips.length > 0 ? (
+              {cachedInsight.psychological_tips.length > 0 ? (
                 <InsightList
                   title="Yaklaşım ipuçları"
                   icon={<Sparkles className="size-4 text-violet-600" aria-hidden />}
-                  items={insightData.psychological_tips}
+                  items={cachedInsight.psychological_tips}
                 />
               ) : null}
-              {insightData.watch_outs.length > 0 ? (
+              {cachedInsight.watch_outs.length > 0 ? (
                 <InsightList
                   title="Dikkat"
                   icon={<AlertTriangle className="size-4 text-amber-600" aria-hidden />}
-                  items={insightData.watch_outs}
+                  items={cachedInsight.watch_outs}
                   tone="warn"
                 />
               ) : null}
 
               <p className="text-[11px] text-muted-foreground">
-                {insightData.based_on_sessions} seans + güncel akademik durumdan üretildi.
+                {cachedInsight.based_on_sessions} seans + güncel akademik durumdan üretildi
+                {cachedInsight.generated_at ? ` (${formatTRDate(cachedInsight.generated_at.slice(0, 10))})` : ""}.
                 Bu bir öneridir; klinik teşhis değildir. Yalnızca siz görürsünüz.
               </p>
-              <div className="flex items-center justify-end gap-2 pt-1">
+              <div className="flex flex-wrap items-center justify-end gap-2 pt-1">
                 <Button variant="ghost" onClick={() => setInsightOpen(false)}>Kapat</Button>
-                {insightData.agenda_suggestions.length > 0 ? (
+                <Button variant="outline" onClick={generateNow} disabled={generateInsight.isPending}>
+                  {generateInsight.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}
+                  Yenile
+                </Button>
+                {cachedInsight.agenda_suggestions.length > 0 ? (
                   <Button onClick={startSessionFromInsight}>
                     <Plus className="size-4" aria-hidden /> Bu gündemle seans aç
                   </Button>
                 ) : null}
               </div>
             </div>
-          ) : null}
+          )}
         </DialogContent>
       </Dialog>
     </div>

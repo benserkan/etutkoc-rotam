@@ -1612,44 +1612,141 @@ haritası (her biri ayrı migration + smoke + onay):
   - **Yeni env (prod)**: `OPENAI_API_KEY` (Whisper). Tanımsızsa parse-voice 502
     ai_unavailable döner (özellik bozulmaz, diğer akışlar etkilenmez).
 
-- **KS4 — AI koçluk içgörüsü** ✅ (2026-05-21, **migration GEREKMEDİ**):
-  - **Migration YOK**: rıza (`ai_capture_consent_at`) + `usage_events.kind`
-    VARCHAR zaten mevcut; KS4 yalnız okur + üretir (kalıcı yazma yok).
+- **KS4 — AI koçluk içgörüsü** ✅ (2026-05-21, **migration `v3w5z8a9z77t`** —
+  cache'li; KREDİ GÜVENLİĞİ revizyonu):
   - **Amaç (kullanıcı)**: "bugün şu öğrenciyle şunu konuş" — birikmiş seans
-    notları + akademik durumdan koça bir sonraki seans için hazırlık. Sonuç
-    ÖNERİDİR, kaydedilmez; yalnız koç görür; klinik teşhis değil (koçluk dili).
-  - **Kredi**: yeni `UsageKind.AI_COACHING_INSIGHT` (**6 kredi** — tek Claude
-    çağrısı ama geniş bağlam). `KIND_CREDITS` + label ("AI Koçluk İçgörüsü").
+    notları + akademik durumdan koça bir sonraki seans için hazırlık. Öneri/
+    taslak; yalnız koç görür; klinik teşhis değil (koçluk dili).
+  - **KREDİ GÜVENLİĞİ (kullanıcı 2026-05-21 — kritik)**: içgörü **DB'ye cache'lenir**.
+    İlk sürüm her görüntülemede Claude'a gidiyordu (her seferinde kredi) → düzeltildi.
+    **Migration `v3w5z8a9z77t`** (down_revision u2v4y7z8y66s): `coaching_insights`
+    tablosu (öğrenci başına TEK kayıt, unique). Additive, downgrade'li, uygulandı.
+    - **GET** `students/{id}/coaching-insight` → cache'den okur, **KREDİ DÜŞMEZ**
+      (insight null = henüz üretilmemiş).
+    - **POST** `students/{id}/coaching-insight` → üret/**yenile**, **kredi düşer**,
+      cache'i upsert eder (is_stale=False).
+    - Seans create/update/delete → `_mark_insight_stale` cache'i `is_stale=True`
+      yapar (AI çağrısı YOK; koça "yenile" önerilir).
+  - **Kredi**: `UsageKind.AI_COACHING_INSIGHT` (**6 kredi** — tek Claude çağrısı,
+    geniş bağlam). `KIND_CREDITS` + label ("AI Koçluk İçgörüsü").
+  - Model `coaching_session.py`'a `CoachingInsight` (student_id unique + summary +
+    3 JSON liste + based_on_sessions + is_stale + generated_at/by). models/__init__
+    export.
   - Servis `ai_coaching_insight.py` — `generate_coaching_insight(student_name,
-    sessions, academic)` → son ≤8 seans (gündem/not/değiştirilecek/ruh hali/
-    etiket) + akademik anlık görüntü (`_compute_session_prefill`) bir prompt'a
-    örülür → Claude → `{summary, agenda_suggestions[], psychological_tips[],
-    watch_outs[]}`. Anthropic plumbing (`_claude_messages`) + JSON parse
-    (`_extract_json_object`) `ai_session_capture`'dan reuse. "Uydurma, yalnız
-    verilen notlara dayan, teşhis koyma" kuralları prompt'ta.
-  - Backend: `schemas/teacher.py` +CoachingInsightResponse · `api_v2/teacher.py`
-    +POST `students/{id}/coaching-insight` (consent yok→403 · seans yok→422
-    not_enough_data · CreditBlocked→402 ai_credit_exhausted · AIInvalidResponse→
-    422 insight_unreadable · AIServiceUnavailable→502 ai_unavailable).
-    consume_credits AI_COACHING_INSIGHT. based_on_sessions response'ta.
-  - `scripts/test_api_v2_teacher_coaching_insight.py` — **8/8 yeşil** (monkeypatch).
-  - Frontend (emoji yok — Lucide): types +CoachingInsightResponse ·
-    `use-teacher-mutations.ts` +useCoachingInsight (kod-bazlı toast; invalidate
-    susturuldu) · `student-sessions-panel.tsx`'e **"İçgörü al"** butonu (violet
-    Lightbulb; seans yoksa disabled) + **sonuç dialog** (özet + "Bir sonraki
-    seansta konuş" gündem listesi + "Yaklaşım ipuçları" + amber "Dikkat" +
-    based_on_sessions notu) + **"Bu gündemle seans aç"** → agenda_suggestions
-    SessionForm'a taslak olarak akar (`draftSource="insight"`; capture_source
-    YOK — manual kalır). Rıza akışı tüm AI özelliklerine genelleştirildi
-    (`gateConsent(action)` callback deseni; pending media→pendingAction; modal
-    metni "fotoğraf/ses/seans notları" + Anthropic+OpenAI kapsayacak şekilde
-    genişletildi). DraftSource = photo|voice|insight.
-  - Verify: tsc ✅ · eslint ✅ · build ✅ · regresyon GREEN (insight 8/8 +
-    voice 10 + ai_capture 10 + sessions 14 + billing 15 + exams 16 +
-    admin_usage 21 + tenant 29).
+    sessions, academic)` → son ≤8 seans + akademik anlık görüntü
+    (`_compute_session_prefill`) → Claude → `{summary, agenda_suggestions[],
+    psychological_tips[], watch_outs[]}`. `_claude_messages` + `_extract_json_object`
+    `ai_session_capture`'dan reuse. "Uydurma, yalnız notlara dayan, teşhis koyma".
+  - Backend: `schemas/teacher.py` +CoachingInsightResponse (+generated_at) +
+    CoachingInsightCacheResponse {insight, is_stale} · `api_v2/teacher.py` GET+POST
+    + `_insight_to_response`/`_mark_insight_stale` helper'ları.
+  - `scripts/test_api_v2_teacher_coaching_insight.py` — **11/11 yeşil**
+    (GET ücretsiz · POST kredi=1 · GET tekrar kredi=1 · yeni seans→stale · POST
+    yenile kredi=2; monkeypatch).
+  - Frontend (emoji yok — Lucide): types +CoachingInsightCacheResponse · api
+    `coachingInsight` queryKey + getTeacherCoachingInsight · `use-teacher-mutations.ts`
+    `useGenerateCoachingInsight` (POST → setQueryData ile cache güncelle) ·
+    `student-sessions-panel.tsx` "İçgörü" butonu dialog açar (ücretsiz GET);
+    dialog: yoksa "İçgörü oluştur (kredi)" · varsa göster + stale ise amber uyarı +
+    "Yenile (kredi)" + "Bu gündemle seans aç" (`draftSource="insight"`; capture_source
+    YOK — manual). Rıza akışı tüm AI özelliklerine genelleştirildi
+    (`gateConsent(action)` callback; modal metni foto/ses/seans notları +
+    Anthropic+OpenAI). DraftSource = photo|voice|insight.
+  - Verify: tsc ✅ · eslint ✅ · build ✅ · regresyon GREEN (insight 11/11 +
+    voice 10 + ai_capture 10 + sessions 14 + tenant 29).
   - **Koçluk İşletme Modülü (KS1-KS4) tamamlandı.** Bağımsız koç artık seans
     kaydı + tahsilat + zahmetsiz yakalama (foto/ses) + AI içgörü ile tam
     operasyonel/ticari katmana sahip.
+
+- **AI özellikleri — kredi/paket notu (kullanıcı 2026-05-21, [[project-ai-credits-packaging]])**:
+  AI özellikleri (foto/ses yakalama + içgörü) ileride **yalnız ücretli pakette**
+  açık olacak; **trial/free → kapalı**; paket yükseltince açılır. Tüm AI çağrıları
+  kullanıcının kendi kredisinden düşer. Bu kapı (entitlement) + paket yükseltme UI'ı
+  **ücretlendirme/üyelik çalışmasında** yapılacak. API anahtarları (Anthropic/OpenAI)
+  **süper adminde merkezi** yönetilecek (DB, env fallback) — Süper Admin Ayarlar paketi.
+
+## AI Altyapısı — Süper Admin Anahtar + Ücretli Kapı + Simülasyon (2026-05-21, DEVAM EDİYOR)
+
+**Bağlam (kullanıcı 2026-05-21):** KS3/KS4 AI özellikleri pahalı (gerçek Anthropic/
+OpenAI çağrısı). 3 karar: (1) API anahtarları **süper adminde merkezi** yönetilsin
+(DB şifreli, env fallback); (2) AI özellikleri **yalnız ücretli pakette**, trial/free
+KAPALI, paket yükseltince açılsın; (3) gerçek anahtarla **uçtan uca ölçümlü simülasyon**.
+Detaylı ücretlendirme/üyelik ileride ([[project-ai-credits-packaging]] memory'si).
+
+**Paket A — KS4 kredi cache** ✅ (yukarıda KS4 bloğu — `coaching_insights` tablosu,
+GET ücretsiz / POST kredi, migration `v3w5z8a9z77t`).
+
+**Paket B — Süper Admin Merkezi AI Ayarları** ✅ (2026-05-21, **migration `w4x6a9b0a88u`**):
+- Model `system_secrets` (name unique, value_encrypted, updated_by) — additive,
+  downgrade'li, uygulandı. models/__init__ export `SystemSecret`.
+- Servis `system_secrets.py`: **Fernet** şifreleme (anahtar `settings.session_secret`
+  SHA256 türevi); `set_secret`/`delete_secret`/`get_db_value`/`mask`/`ai_settings_status`.
+- **TEK SAĞLAYICI = GEMINI'YE GEÇİLDİ (kullanıcı 2026-05-21).** Anthropic/OpenAI
+  kodu kaldırıldı; tüm AI işleri `app/services/gemini.py` üzerinden (generateContent,
+  `responseMimeType=application/json`). Erişimciler: `get_gemini_paid_key()` /
+  `get_gemini_free_keys()` (liste) / `get_gemini_model(paid)`.
+- **KVKK key yönlendirmesi (kullanıcı kararı)**: öğrenci verili işler (foto/ses/içgörü)
+  → `gemini.generate(personal_data=True)` = **ÜCRETLİ key** (no-training), fallback YOK.
+  Kişisel-veri-içermeyen kitap şablonu → `personal_data=False` = ücretsiz key(ler)
+  sırayla, kota (429) dolunca sıradakine, en son ücretliye.
+- config.py: `gemini_paid_api_key` / `gemini_free_api_keys` (virgülle çoklu) /
+  `gemini_paid_model` (vars. `gemini-2.5-pro`) / `gemini_free_model` (vars. `gemini-2.5-flash`).
+- **AI servisleri Gemini'ye taşındı**: `ai_session_capture` (foto vision + **ses tek
+  Gemini çağrısıyla** — Whisper ELENDİ) · `ai_coaching_insight` · `ai_book_template`
+  (free→paid). Anahtar yoksa AIServiceUnavailable ("süper admin → AI Ayarları").
+- `AuditAction.SYSTEM_SETTING_UPDATE` (değer ASLA loglanmaz).
+- Endpoint'ler: GET `/admin/settings/ai` (anahtarlar maskeli + modeller düz + source) ·
+  POST `/admin/settings/ai` (set, 400 invalid_setting/empty_value) · POST
+  `/admin/settings/ai/{name}/delete`. schemas: AiSettingItem/AiSettingsResponse/SetAiSettingBody.
+- `scripts/test_api_v2_admin_ai_settings.py` — **11/11 yeşil** (401/403 + şifreli
+  roundtrip + get_gemini_* resolve + model config + delete).
+- Frontend: types AiSetting* · api `aiSettings` key + getAdminAiSettings · use-admin-mutations
+  +useSetAiSetting/useDeleteAiSetting · `/admin/settings` + `admin-ai-settings-client.tsx`
+  (ücretli/ücretsiz key kartı maskeli + 2 model kartı düz + KVKK uyarısı) · admin-shell
+  "Sistem → AI Ayarları".
+- **.env değişken adları (kullanıcı bunları girecek)**: `GEMINI_PAID_API_KEY` (ilk/ücretli),
+  `GEMINI_FREE_API_KEYS` (diğerleri/ücretsiz, virgülle), opsiyonel `GEMINI_PAID_MODEL` /
+  `GEMINI_FREE_MODEL`. (Veya süper admin panelden.) Pillow + cryptography mevcut.
+- Verify: tsc ✅ · eslint ✅ · build ✅.
+
+**Paket C — AI ücretli paket kapısı (entitlement) + yükseltme** ✅ (2026-05-21, migration YOK):
+- `plans.py`: `effective_plan_for_user(db, user)` (institution_id varsa Institution.plan,
+  yoksa user.plan) + `ai_premium_allowed(db, user)` = `is_paid_plan(effective_plan)`.
+  Ücretli = solo_pro/solo_elite/etut_standart/dershane_pro/enterprise; **trial/free →
+  KAPALI** (is_paid_plan price!=0).
+- `api_v2/teacher.py`: `_require_ai_premium(db, user)` → parse-photo + parse-voice +
+  coaching-insight **POST**'una (sahiplik'ten sonra, consent/kredi'den önce) → 403
+  `plan_upgrade_required`. GET cached insight ücretsiz okuma — gate YOK.
+- `AiConsentResponse`'a `ai_premium` + `plan_code` eklendi (panel kilit göstergesi).
+- **Self-serve yükseltme**: GET `/teacher/plan` (mevcut plan + solo seçenekleri +
+  ai_premium) + POST `/teacher/plan/upgrade` (solo_pro|solo_elite, kurumlu → 403
+  managed_by_institution, change_plan UPGRADE). **NOT: ödeme entegrasyonu (Stripe) ayrı
+  iş — şimdilik doğrudan plan değişimi.**
+- `scripts/test_api_v2_teacher_ai_entitlement.py` — **12/12 yeşil** (free/trial→403,
+  paid→geçer, upgrade→açılır, kurumlu→403, geçersiz plan→400).
+- Frontend: types +TeacherPlan* · api `plan` key + getTeacherPlan · use-teacher-mutations
+  +useUpgradePlan + 3 AI hook'a `plan_upgrade_required` toast'ı · `student-sessions-panel`
+  AI butonları kilitli (Lock ikon + "ücretli pakette" + amber banner → /teacher/plan) ·
+  yeni `/teacher/plan` sayfa + `teacher-plan-client.tsx` (mevcut plan + 3 solo kart +
+  yükselt confirm) · teacher-shell "Paket" nav (Gem).
+- Verify: tsc ✅ · eslint ✅ · build ✅ · regresyon (entitlement 12 + ai_capture 10 +
+  voice 10 + insight 11 + sessions 14 + api_keys 10 + admin 13 + tenant 29) GREEN.
+
+**Paket D — Gerçek Gemini anahtarıyla simülasyon** ⏳ SIRADA (kullanıcının anahtarını bekliyor):
+- Kullanıcı `GEMINI_PAID_API_KEY` (+ ops. `GEMINI_FREE_API_KEYS`) değerini `.env`'e
+  veya süper admin → AI Ayarları'na girer.
+- `scripts/simulate_ai_real.py` hazır (guard'lı, Gemini'ye güncellendi): anahtar yoksa
+  atlar; varsa paid+free koç + seans → free=403 (maliyetsiz) + paid GERÇEK Gemini
+  coaching-insight → kredi before/after + AI çıktısı + maliyet özeti. Foto: PIL sentetik
+  görselle gerçek Gemini vision. Ses: gerçek kayıt gerektiğinden UI'dan (mic) test.
+- Çalıştırma: `PYTHONPATH=. python scripts/simulate_ai_real.py` (anahtar girilince).
+
+**DURUM (2026-05-21):** A + B + C BİTTİ + **tek sağlayıcı Gemini geçişi BİTTİ**,
+doğrulandı (tsc/eslint/build + ai_settings 11 + ai_capture 10 + voice 10 + insight 11 +
+entitlement 12 + sessions 14 + admin 13 + tenant 29 + api_v1 47 yeşil).
+**Commit EDİLMEDİ** — kullanıcı "topluca commit ederiz" dedi; çalışma diskte. Resume: D
+(kullanıcı anahtar girince sim çalıştır). Migration'lar: `v3w5z8a9z77t` (coaching_insights),
+`w4x6a9b0a88u` (system_secrets) — uygulandı, alembic head = `w4x6a9b0a88u`.
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

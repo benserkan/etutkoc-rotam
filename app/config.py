@@ -31,6 +31,22 @@ class Settings(BaseSettings):
     whatsapp_webhook_verify_token: str = "" # GET verify aşaması için (sen seç)
     whatsapp_default_language: str = "tr"
 
+    # AI sağlayıcı anahtarları — ÖNCELİK süper admin DB (system_secrets);
+    # bu alanlar yalnız env/.env fallback'i. Boş = yalnız DB'den okunur.
+    # (Eski sağlayıcılar — artık tek sağlayıcı Gemini; uyumluluk için tutuldu.)
+    anthropic_api_key: str = ""
+    openai_api_key: str = ""
+
+    # Gemini (tek AI sağlayıcı). ÜCRETLİ key = öğrenci verili işler (no-training,
+    # KVKK). FREE key(ler) = yalnız kişisel-veri-içermeyen iş (kitap şablonu);
+    # virgülle birden çok ("diğerleri ücretsiz"); kota dolunca sıradakine, en son
+    # ücretliye düşülür. Model adları panelden değiştirilebilir.
+    gemini_api_key: str = ""                # genel/ortak Gemini key (ücretli sayılır)
+    gemini_paid_api_key: str = ""           # açıkça ücretli (öncelikli)
+    gemini_free_api_keys: str = ""          # virgülle ayrılmış 0..N ücretsiz key
+    gemini_paid_model: str = "gemini-2.5-pro"
+    gemini_free_model: str = "gemini-2.5-flash"
+
     # Native mobile / external API katmanı
     jwt_secret: str = "dev-only-change-me-jwt"  # production'da güçlü random secret
     jwt_algorithm: str = "HS256"

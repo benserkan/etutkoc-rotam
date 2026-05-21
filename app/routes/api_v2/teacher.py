@@ -77,6 +77,7 @@ from app.models import (
     CoachPaymentMethod,
     CoachStudentRate,
     CoachingChannel,
+    CoachingInsight,
     CoachingSession,
     CoachingSessionStatus,
     SessionCaptureSource,
@@ -133,10 +134,14 @@ from app.routes.api_v2.schemas.teacher import (
     BillingTotals,
     BillingMonthResponse,
     AiConsentResponse,
+    CoachingInsightCacheResponse,
     CoachingInsightResponse,
     ParsePhotoBody,
     ParseVoiceBody,
+    PlanUpgradeBody,
     SessionDraftResponse,
+    TeacherPlanOption,
+    TeacherPlanResponse,
     DnaTrendInfo,
     FocusBadge,
     FocusSessionRow,
@@ -1143,6 +1148,7 @@ def teacher_create_session_v2(
     _apply_session_body(s, body, sd, agenda)
     s.auto_snapshot = json.dumps(_compute_session_prefill(db, student), ensure_ascii=False)
     db.add(s)
+    _mark_insight_stale(db, student.id)  # yeni seans → içgörü cache bayatlar (AI çağrısı yok)
     db.commit()
     db.refresh(s)
     return MutationResponse[CoachingSessionRow](
@@ -1174,6 +1180,7 @@ def teacher_update_session_v2(
     s = _get_owned_session(db, session_id, user.id)
     sd, agenda = _validate_session_body(body)
     _apply_session_body(s, body, sd, agenda)
+    _mark_insight_stale(db, s.student_id)  # seans değişti → içgörü cache bayatlar
     db.commit()
     db.refresh(s)
     return MutationResponse[CoachingSessionRow](
@@ -1194,6 +1201,7 @@ def teacher_delete_session_v2(
     s = _get_owned_session(db, session_id, user.id)
     student_id = s.student_id
     db.delete(s)
+    _mark_insight_stale(db, student_id)  # seans silindi → içgörü cache bayatlar
     db.commit()
     return MutationResponse[dict](
         data={"deleted": True, "id": session_id},
@@ -1209,14 +1217,32 @@ def teacher_delete_session_v2(
 # =============================================================================
 
 
+def _require_ai_premium(db: Session, user: User) -> None:
+    """AI premium kapısı: yalnız ücretli paket. trial/free → 403 plan_upgrade_required."""
+    from app.services.plans import ai_premium_allowed
+    if not ai_premium_allowed(db, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "plan_upgrade_required",
+                    "message": "Bu yapay zekâ özelliği ücretli pakette kullanılabilir. "
+                               "Lütfen paketinizi yükseltin."},
+        )
+
+
 @router.get("/ai-consent", response_model=AiConsentResponse)
 def teacher_ai_consent_get_v2(
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Koçun AI yakalama (ses/foto→metin) rıza durumu."""
+    """Koçun AI yakalama (ses/foto→metin) rıza durumu + ücretli paket erişimi."""
+    from app.services.plans import ai_premium_allowed, effective_plan_for_user
     at = user.ai_capture_consent_at
-    return AiConsentResponse(consented=at is not None, consent_at=at.isoformat() if at else None)
+    return AiConsentResponse(
+        consented=at is not None,
+        consent_at=at.isoformat() if at else None,
+        ai_premium=ai_premium_allowed(db, user),
+        plan_code=effective_plan_for_user(db, user),
+    )
 
 
 @router.post("/ai-consent", response_model=MutationResponse[AiConsentResponse])
@@ -1225,6 +1251,7 @@ def teacher_ai_consent_set_v2(
     db: Session = Depends(get_db),
 ):
     """AI yakalama açık rızası ver (AI işleme + yurt dışı alt-işleyen onayı)."""
+    from app.services.plans import ai_premium_allowed, effective_plan_for_user
     if user.ai_capture_consent_at is None:
         user.ai_capture_consent_at = datetime.now(timezone.utc)
         db.add(user)
@@ -1232,7 +1259,11 @@ def teacher_ai_consent_set_v2(
         db.refresh(user)
     at = user.ai_capture_consent_at
     return MutationResponse[AiConsentResponse](
-        data=AiConsentResponse(consented=True, consent_at=at.isoformat() if at else None),
+        data=AiConsentResponse(
+            consented=True, consent_at=at.isoformat() if at else None,
+            ai_premium=ai_premium_allowed(db, user),
+            plan_code=effective_plan_for_user(db, user),
+        ),
         invalidate=["teacher:me:ai-consent"],
     )
 
@@ -1255,6 +1286,7 @@ def teacher_parse_session_photo_v2(
     from app.services.credits import CreditBlocked, CreditOwner, consume_credits
 
     _get_owned_student(db, student_id, user.id)  # sahiplik 404
+    _require_ai_premium(db, user)  # ücretli paket kapısı
 
     if user.ai_capture_consent_at is None:
         raise HTTPException(
@@ -1333,6 +1365,7 @@ def teacher_parse_session_voice_v2(
     from app.services.credits import CreditBlocked, CreditOwner, consume_credits
 
     _get_owned_student(db, student_id, user.id)  # sahiplik 404
+    _require_ai_premium(db, user)  # ücretli paket kapısı
 
     if user.ai_capture_consent_at is None:
         raise HTTPException(
@@ -1393,16 +1426,58 @@ def teacher_parse_session_voice_v2(
     return SessionDraftResponse(**draft)
 
 
-@router.post("/students/{student_id}/coaching-insight", response_model=CoachingInsightResponse)
-def teacher_coaching_insight_v2(
+def _insight_to_response(ci: CoachingInsight) -> CoachingInsightResponse:
+    def _load(v: str | None) -> list[str]:
+        if not v:
+            return []
+        try:
+            return [str(x) for x in json.loads(v)]
+        except (ValueError, TypeError):
+            return []
+    return CoachingInsightResponse(
+        summary=ci.summary,
+        agenda_suggestions=_load(ci.agenda_suggestions),
+        psychological_tips=_load(ci.psychological_tips),
+        watch_outs=_load(ci.watch_outs),
+        based_on_sessions=ci.based_on_sessions,
+        generated_at=ci.generated_at.isoformat() if ci.generated_at else None,
+    )
+
+
+def _mark_insight_stale(db: Session, student_id: int) -> None:
+    """Seans değişince cache'lenmiş içgörüyü bayatla (AI çağrısı YOK — sadece bayrak)."""
+    ci = db.query(CoachingInsight).filter(CoachingInsight.student_id == student_id).first()
+    if ci is not None and not ci.is_stale:
+        ci.is_stale = True
+
+
+@router.get("/students/{student_id}/coaching-insight", response_model=CoachingInsightCacheResponse)
+def teacher_coaching_insight_get_v2(
     student_id: int,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Seans geçmişi + akademik durum → bir sonraki seans için AI koçluk içgörüsü (KS4).
+    """Cache'lenmiş AI koçluk içgörüsünü oku — KREDİ DÜŞMEZ. None = henüz üretilmemiş.
 
-    GİZLİLİK: Sonuç ÖNERİDİR — kaydedilmez. Rıza zorunlu + kredi tüketir. En az
-    1 seans kaydı gerekir.
+    Kredi yalnız POST (üret/yenile) ile düşer. Bu salt-okuma.
+    """
+    _get_owned_student(db, student_id, user.id)  # sahiplik 404
+    ci = db.query(CoachingInsight).filter(CoachingInsight.student_id == student_id).first()
+    if ci is None:
+        return CoachingInsightCacheResponse(insight=None, is_stale=False)
+    return CoachingInsightCacheResponse(insight=_insight_to_response(ci), is_stale=ci.is_stale)
+
+
+@router.post("/students/{student_id}/coaching-insight", response_model=CoachingInsightCacheResponse)
+def teacher_coaching_insight_generate_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Seans geçmişi + akademik durum → AI koçluk içgörüsü ÜRET/YENİLE (KS4).
+
+    KREDİ DÜŞER (her çağrıda yeni Claude isteği). Sonuç DB'ye cache'lenir; sonraki
+    görüntülemeler GET ile ücretsiz okunur. Rıza zorunlu + en az 1 seans gerekir.
     """
     from app.services.ai_coaching_insight import generate_coaching_insight
     from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
@@ -1410,6 +1485,7 @@ def teacher_coaching_insight_v2(
     from app.services.credits import CreditBlocked, CreditOwner, consume_credits
 
     student = _get_owned_student(db, student_id, user.id)  # sahiplik 404
+    _require_ai_premium(db, user)  # ücretli paket kapısı
 
     if user.ai_capture_consent_at is None:
         raise HTTPException(
@@ -1480,8 +1556,131 @@ def teacher_coaching_insight_v2(
             detail={"error": "upstream_unavailable", "code": "ai_unavailable",
                     "message": f"AI servisi şu an kullanılamıyor: {e}"},
         )
-    db.commit()  # kredi kaydını sabitle
-    return CoachingInsightResponse(based_on_sessions=len(rows), **insight)
+
+    # Cache'e yaz (öğrenci başına tek kayıt — upsert)
+    ci = db.query(CoachingInsight).filter(CoachingInsight.student_id == student.id).first()
+    if ci is None:
+        ci = CoachingInsight(student_id=student.id)
+        db.add(ci)
+    ci.generated_by_id = user.id
+    ci.summary = insight["summary"]
+    ci.agenda_suggestions = json.dumps(insight["agenda_suggestions"], ensure_ascii=False)
+    ci.psychological_tips = json.dumps(insight["psychological_tips"], ensure_ascii=False)
+    ci.watch_outs = json.dumps(insight["watch_outs"], ensure_ascii=False)
+    ci.based_on_sessions = len(rows)
+    ci.is_stale = False
+    ci.generated_at = datetime.now(timezone.utc)
+    db.commit()  # kredi kaydı + cache birlikte sabitlenir
+    db.refresh(ci)
+    return CoachingInsightCacheResponse(insight=_insight_to_response(ci), is_stale=False)
+
+
+# =============================================================================
+# Bağımsız koç — Paket (plan) görüntüleme + yükseltme
+# =============================================================================
+
+# Self-serve yükseltilebilir solo planlar (ücretli). NOT: ödeme entegrasyonu
+# (Stripe vb.) ayrı bir iştir; şimdilik yükseltme doğrudan plan değişimidir.
+_SOLO_UPGRADE_TARGETS = ("solo_pro", "solo_elite")
+
+
+def _build_plan_response(db: Session, user: User):
+    from app.services.plans import (
+        SOLO_ELITE, SOLO_FREE, SOLO_PRO,
+        ai_premium_allowed, effective_plan_for_user, get_plan_info,
+        is_paid_plan, is_trial_active, trial_days_left,
+    )
+    effective = effective_plan_for_user(db, user)
+    info = get_plan_info(effective)
+    is_solo = user.institution_id is None
+    options: list[TeacherPlanOption] = []
+    note: str | None = None
+
+    if is_solo:
+        cur_info = get_plan_info(effective)
+        cur_rank = cur_info.tier_rank if cur_info else 0
+        for code in (SOLO_FREE, SOLO_PRO, SOLO_ELITE):
+            pi = get_plan_info(code)
+            if pi is None:
+                continue
+            options.append(TeacherPlanOption(
+                code=code,
+                label=pi.label,
+                short_description=pi.short_description,
+                price_monthly_try=pi.price_monthly_try,
+                tier_rank=pi.tier_rank,
+                ai_included=is_paid_plan(code),
+                is_current=(code == effective),
+                is_upgrade=(code in _SOLO_UPGRADE_TARGETS and pi.tier_rank > cur_rank),
+            ))
+    else:
+        note = "Paketiniz kurumunuz tarafından yönetilir. Yapay zekâ özellikleri " \
+               "kurumunuzun planına bağlıdır."
+
+    return TeacherPlanResponse(
+        plan_code=effective,
+        plan_label=info.label if info else effective,
+        is_solo=is_solo,
+        ai_premium=ai_premium_allowed(db, user),
+        trial_active=is_trial_active(user) if is_solo else False,
+        trial_days_left=trial_days_left(owner=user) if is_solo else None,
+        options=options,
+        note=note,
+    )
+
+
+@router.get("/plan", response_model=TeacherPlanResponse)
+def teacher_plan_get_v2(
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Koçun mevcut paketi + yükseltilebilir solo planlar + AI premium durumu."""
+    return _build_plan_response(db, user)
+
+
+@router.post("/plan/upgrade", response_model=MutationResponse[TeacherPlanResponse])
+def teacher_plan_upgrade_v2(
+    body: PlanUpgradeBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bağımsız koç paket yükseltme (solo_pro | solo_elite).
+
+    NOT: Ödeme entegrasyonu ayrı bir iştir; bu uçta yükseltme doğrudan plan
+    değişimidir (audit'li). Kurumlu öğretmen self-serve yükseltemez.
+    """
+    from app.models import PlanChangeReason, PlanOwnerType
+    from app.services.plans import change_plan
+
+    if user.institution_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "managed_by_institution",
+                    "message": "Paketiniz kurumunuz tarafından yönetilir."},
+        )
+    target = (body.plan or "").strip()
+    if target not in _SOLO_UPGRADE_TARGETS:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "validation", "code": "invalid_plan",
+                    "message": "Yalnız Solo Pro veya Solo Elite seçilebilir."},
+        )
+
+    change_plan(
+        db,
+        owner_type=PlanOwnerType.USER,
+        owner_id=user.id,
+        new_plan=target,
+        reason=PlanChangeReason.UPGRADE,
+        actor_user_id=user.id,
+        note="Bağımsız koç self-serve paket yükseltme",
+        autocommit=True,
+    )
+    db.refresh(user)
+    return MutationResponse[TeacherPlanResponse](
+        data=_build_plan_response(db, user),
+        invalidate=["teacher:me:ai-consent", "teacher:me:plan"],
+    )
 
 
 # =============================================================================

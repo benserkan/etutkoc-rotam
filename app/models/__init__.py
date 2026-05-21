@@ -202,11 +202,13 @@ from app.models.coaching_session import (
     COACHING_CHANNEL_LABELS,
     COACHING_STATUS_LABELS,
     CoachingChannel,
+    CoachingInsight,
     CoachingSession,
     CoachingSessionStatus,
     SessionCaptureSource,
 )
 from app.models.exam_result import ExamResult, compute_net, section_penalty
+from app.models.system_secret import SystemSecret
 from app.models.owner_contact import OwnerContact
 from app.models.owner_tag import (
     OWNER_TAG_COLORS,
@@ -345,8 +347,10 @@ __all__ = [
     "COACHING_CHANNEL_LABELS",
     "COACHING_STATUS_LABELS",
     "CoachingChannel",
+    "CoachingInsight",
     "CoachingSession",
     "CoachingSessionStatus",
+    "SystemSecret",
     "SessionCaptureSource",
     "COACH_PAYMENT_METHOD_LABELS",
     "CoachPayment",

@@ -349,6 +349,23 @@ def is_trial_plan(plan_code: str) -> bool:
     return plan_code in (SOLO_TRIAL, INSTITUTION_TRIAL)
 
 
+def effective_plan_for_user(db: Session, user: User) -> str:
+    """Kullanıcının geçerli plan kodu. Kurumlu → Institution.plan; bağımsız → user.plan."""
+    if user.institution_id is not None:
+        inst = db.get(Institution, user.institution_id)
+        return inst.plan if inst else INSTITUTION_FREE
+    return user.plan or SOLO_FREE
+
+
+def ai_premium_allowed(db: Session, user: User) -> bool:
+    """Pahalı AI özellikleri (foto/ses yakalama + koçluk içgörüsü) bu kullanıcıya açık mı.
+
+    KURAL (kullanıcı 2026-05-21): yalnız ÜCRETLİ planlar. trial/free → KAPALI
+    (gerçek Anthropic/OpenAI maliyeti — deneme/ücretsiz kullanıcı yakamamalı).
+    """
+    return is_paid_plan(effective_plan_for_user(db, user))
+
+
 # ---------------------------- Solo plan kotaları ----------------------------
 
 

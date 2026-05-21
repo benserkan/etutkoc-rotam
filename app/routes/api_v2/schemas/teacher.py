@@ -1538,6 +1538,8 @@ class BillingMonthResponse(BaseModel):
 class AiConsentResponse(BaseModel):
     consented: bool
     consent_at: str | None = None
+    ai_premium: bool = False        # AI özellikleri ücretli pakette açık mı
+    plan_code: str | None = None    # geçerli plan kodu (UI yükseltme yönlendirmesi)
 
 
 class ParsePhotoBody(BaseModel):
@@ -1560,9 +1562,47 @@ class SessionDraftResponse(BaseModel):
 
 
 class CoachingInsightResponse(BaseModel):
-    """AI koçluk içgörüsü — bir sonraki seans hazırlığı (KAYDEDİLMEZ — öneri)."""
+    """AI koçluk içgörüsü — bir sonraki seans hazırlığı (DB'de cache'lenir — öneri)."""
     summary: str
     agenda_suggestions: list[str]
     psychological_tips: list[str]
     watch_outs: list[str]
     based_on_sessions: int
+    generated_at: str | None = None
+
+
+class CoachingInsightCacheResponse(BaseModel):
+    """İçgörü cache okuması — kredi düşmeden DB'den (None = henüz üretilmemiş)."""
+    insight: CoachingInsightResponse | None = None
+    is_stale: bool = False
+
+
+# =============================================================================
+# Bağımsız koç — Paket (plan) görüntüleme + yükseltme
+# =============================================================================
+
+
+class TeacherPlanOption(BaseModel):
+    code: str
+    label: str
+    short_description: str
+    price_monthly_try: int
+    tier_rank: int
+    ai_included: bool           # bu planda AI premium özellikleri açık mı
+    is_current: bool
+    is_upgrade: bool            # mevcut plandan yükseltme mi (UI buton)
+
+
+class TeacherPlanResponse(BaseModel):
+    plan_code: str
+    plan_label: str
+    is_solo: bool               # bağımsız koç mu (self-serve yükseltme uygun)
+    ai_premium: bool            # şu an AI premium açık mı
+    trial_active: bool
+    trial_days_left: int | None = None
+    options: list[TeacherPlanOption]
+    note: str | None = None     # kurumlu kullanıcı için açıklama
+
+
+class PlanUpgradeBody(BaseModel):
+    plan: str                   # hedef solo plan kodu (solo_pro | solo_elite)

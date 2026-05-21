@@ -339,6 +339,9 @@ from app.routes.api_v2.schemas.admin import (
     AlarmRuleUpdateBody,
     AlarmScanResult,
     AlarmsResponse,
+    AiSettingItem,
+    AiSettingsResponse,
+    SetAiSettingBody,
 )
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.services.account_history import (
@@ -7395,4 +7398,97 @@ def admin_security_abuse_remediate_v2(
             affected_count=result.affected_count, note=result.note,
         ),
         invalidate=_SECURITY_ABUSE_INVALIDATE,
+    )
+
+
+# =============================================================================
+# Süper Admin — AI Ayarları (Gemini anahtarları + modelleri, merkezi/şifreli)
+# =============================================================================
+
+_AI_SETTINGS_INVALIDATE = ["admin:settings:ai"]
+
+
+@router.get("/settings/ai", response_model=AiSettingsResponse)
+def admin_ai_settings_get_v2(
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Gemini AI ayarları — anahtarlar maskeli, modeller düz. Kaynak (db/env/default)."""
+    from app.services.system_secrets import ai_settings_status
+    return AiSettingsResponse(items=[AiSettingItem(**s) for s in ai_settings_status(db)])
+
+
+@router.post("/settings/ai", response_model=MutationResponse[AiSettingsResponse])
+def admin_ai_settings_set_v2(
+    body: SetAiSettingBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Gemini anahtarı/modeli kaydet/güncelle (anahtarlar şifreli). Tüm sistem kullanır."""
+    from app.services.system_secrets import (
+        CONFIG_NAMES, SECRET_NAMES, ai_settings_status, set_secret,
+    )
+
+    name = (body.name or "").strip()
+    if name not in SECRET_NAMES and name not in CONFIG_NAMES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "validation", "code": "invalid_setting",
+                    "message": "Geçersiz ayar adı."},
+        )
+    value = (body.value or "").strip()
+    if not value:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "validation", "code": "empty_value",
+                    "message": "Değer boş olamaz."},
+        )
+
+    set_secret(db, name, value, actor_user_id=user.id)
+    log_action(
+        db,
+        action=AuditAction.SYSTEM_SETTING_UPDATE,
+        actor_id=user.id,
+        target_type="system_secret",
+        request=request,
+        details={"name": name, "action": "set"},  # değer ASLA loglanmaz
+    )
+    return MutationResponse[AiSettingsResponse](
+        data=AiSettingsResponse(items=[AiSettingItem(**s) for s in ai_settings_status(db)]),
+        invalidate=_AI_SETTINGS_INVALIDATE,
+    )
+
+
+@router.post("/settings/ai/{name}/delete", response_model=MutationResponse[AiSettingsResponse])
+def admin_ai_settings_delete_v2(
+    name: str,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Gemini anahtarı/model override'ını sil (DB'den). Varsa env/default'a döner."""
+    from app.services.system_secrets import (
+        CONFIG_NAMES, SECRET_NAMES, ai_settings_status, delete_secret,
+    )
+
+    n = (name or "").strip()
+    if n not in SECRET_NAMES and n not in CONFIG_NAMES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "validation", "code": "invalid_setting",
+                    "message": "Geçersiz ayar adı."},
+        )
+    delete_secret(db, n)
+    log_action(
+        db,
+        action=AuditAction.SYSTEM_SETTING_UPDATE,
+        actor_id=user.id,
+        target_type="system_secret",
+        request=request,
+        details={"name": n, "action": "delete"},
+    )
+    return MutationResponse[AiSettingsResponse](
+        data=AiSettingsResponse(items=[AiSettingItem(**s) for s in ai_settings_status(db)]),
+        invalidate=_AI_SETTINGS_INVALIDATE,
     )

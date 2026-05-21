@@ -14,7 +14,7 @@ import logging
 from typing import Any
 
 from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
-from app.services.ai_session_capture import _claude_messages, _extract_json_object
+from app.services import gemini
 
 logger = logging.getLogger(__name__)
 
@@ -109,8 +109,8 @@ def generate_coaching_insight(
         AIInvalidResponse: parse hatası / boş yanıt
     """
     prompt = _build_prompt(student_name, sessions, academic)
-    text = _claude_messages([{"type": "text", "text": prompt}], timeout=timeout)
-    out = _normalize_insight(_extract_json_object(text))
+    text = gemini.generate([gemini.text_part(prompt)], personal_data=True, timeout=timeout)
+    out = _normalize_insight(gemini.extract_json(text))
     if not out["summary"] and not out["agenda_suggestions"]:
         raise AIInvalidResponse("İçgörü üretilemedi (boş yanıt)")
     return out

@@ -14,11 +14,8 @@ from __future__ import annotations
 
 import json
 import logging
-import os
 import re
 from typing import Any
-
-import httpx
 
 
 logger = logging.getLogger(__name__)
@@ -125,10 +122,11 @@ def suggest_sections(
     Raises:
         AIServiceUnavailable: API key yok veya HTTP hatası
         AIInvalidResponse: Model çıktısı parse edilemedi
+
+    Kişisel veri içermez (yalnız kitap adı/yayınevi) → Gemini ÜCRETSİZ key sırayla,
+    kota dolunca ücretliye düşer (personal_data=False).
     """
-    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
-    if not api_key:
-        raise AIServiceUnavailable("ANTHROPIC_API_KEY tanımlı değil (.env)")
+    from app.services import gemini
 
     prompt = _build_prompt(
         book_name=book_name,
@@ -137,42 +135,9 @@ def suggest_sections(
         book_type_label=book_type_label,
         grade_label=grade_label,
     )
-
-    try:
-        with httpx.Client(timeout=timeout) as client:
-            response = client.post(
-                ANTHROPIC_API_URL,
-                headers={
-                    "x-api-key": api_key,
-                    "anthropic-version": ANTHROPIC_VERSION,
-                    "content-type": "application/json",
-                },
-                json={
-                    "model": ANTHROPIC_MODEL,
-                    "max_tokens": 2048,
-                    "messages": [{"role": "user", "content": prompt}],
-                },
-            )
-    except httpx.HTTPError as e:
-        logger.warning("Anthropic API çağrısı başarısız: %s", e)
-        raise AIServiceUnavailable(f"API çağrısı başarısız: {e}")
-
-    if response.status_code != 200:
-        body_preview = response.text[:200] if response.text else ""
-        logger.warning(
-            "Anthropic API HTTP %s: %s", response.status_code, body_preview
-        )
-        raise AIServiceUnavailable(f"HTTP {response.status_code}")
-
-    data = response.json()
-    content = data.get("content", [])
-    if not content or not isinstance(content, list):
-        raise AIInvalidResponse("İçerik blokları boş")
-    text_blocks = [b.get("text", "") for b in content if b.get("type") == "text"]
-    full_text = "\n".join(text_blocks).strip()
-    if not full_text:
-        raise AIInvalidResponse("Metin yanıtı boş")
-
+    full_text = gemini.generate(
+        [gemini.text_part(prompt)], personal_data=False, timeout=timeout, json_mode=True,
+    )
     sections = _extract_json_array(full_text)
     if not sections:
         raise AIInvalidResponse("Hiç ünite çıkarılamadı")
