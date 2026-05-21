@@ -45,8 +45,12 @@ class FeatureDisabled(Exception):
 
 @dataclass
 class _CacheEntry:
-    flags_by_key: dict[str, FeatureFlag]
-    overrides_by_pair: dict[tuple[int, int], FeatureFlagOverride]   # (flag_id, inst_id)
+    # DÜZ veri tutulur — ORM nesnesi DEĞİL. ORM nesnesi cache'lenirse, onu yükleyen
+    # oturum commit edip kapandığında nesneler expire+detached olur ve sonraki
+    # request'te attribute erişimi DetachedInstanceError fırlatır (R: AI öneri 500).
+    globally_by_key: dict[str, bool]                 # key -> enabled_globally
+    flag_id_by_key: dict[str, int]                   # key -> flag.id
+    override_by_pair: dict[tuple[int, int], bool]    # (flag_id, inst_id) -> enabled
     ts: float
 
 
@@ -55,12 +59,15 @@ _cache: _CacheEntry | None = None
 
 
 def _load_cache(db: Session) -> _CacheEntry:
-    """DB'den tüm flagleri + overrideları çek, cache'e koy."""
+    """DB'den tüm flagleri + overrideları çek, DÜZ değer olarak cache'e koy."""
     flags = db.query(FeatureFlag).all()
     overrides = db.query(FeatureFlagOverride).all()
     return _CacheEntry(
-        flags_by_key={f.key: f for f in flags},
-        overrides_by_pair={(o.feature_flag_id, o.institution_id): o for o in overrides},
+        globally_by_key={f.key: bool(f.enabled_globally) for f in flags},
+        flag_id_by_key={f.key: f.id for f in flags},
+        override_by_pair={
+            (o.feature_flag_id, o.institution_id): bool(o.enabled) for o in overrides
+        },
         ts=time.monotonic(),
     )
 
@@ -96,8 +103,7 @@ def is_enabled(
     davranış patlamasın).
     """
     cache = _get_cache(db)
-    flag = cache.flags_by_key.get(key)
-    if flag is None:
+    if key not in cache.globally_by_key:
         logger.warning("is_enabled: tanımsız flag '%s' (defansif True)", key)
         return True
 
@@ -106,11 +112,13 @@ def is_enabled(
         iid = institution.id
 
     if iid is not None:
-        override = cache.overrides_by_pair.get((flag.id, iid))
-        if override is not None:
-            return bool(override.enabled)
+        flag_id = cache.flag_id_by_key.get(key)
+        if flag_id is not None:
+            override = cache.override_by_pair.get((flag_id, iid))
+            if override is not None:
+                return override
 
-    return bool(flag.enabled_globally)
+    return cache.globally_by_key[key]
 
 
 def require_enabled(
