@@ -20,6 +20,7 @@ import type { NextRequest } from "next/server";
 
 const PUBLIC_PATHS_EXACT = new Set<string>([
   "/",            // splash / preview — anonim giriş kapısı
+  "/pricing",     // public üyelik/fiyat sayfası
 ]);
 
 const PUBLIC_PATHS_PREFIX = [
@@ -27,6 +28,7 @@ const PUBLIC_PATHS_PREFIX = [
   "/signup",
   "/parent/invite",
   "/offers",
+  "/pricing",
   "/kvkk",
   "/privacy",
   "/legal",

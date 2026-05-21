@@ -169,6 +169,11 @@
         # Jinja offers_public.py dead-code halinde yayında bekliyor.
         reverse_proxy /offers/* next:3000
 
+        # ---------- Üyelik/Fiyat (public) — AÇIK (2026-05-22) ----------
+        # /pricing public üyelik sayfası (Next.js). Veri /api/v2/pricing'den
+        # (tek kaynak app/services/pricing.py). Jinja plans/pricing.html dead-code.
+        reverse_proxy /pricing next:3000
+
         # ---------- Dalga 7: /logout — KAPALI (Next.js çıkışı BFF ile) ----------
         #     reverse_proxy /logout next:3000
 
