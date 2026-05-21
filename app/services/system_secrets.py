@@ -139,18 +139,33 @@ def _resolve_raw(name: str) -> str | None:
 # ---------------------------- Gemini erişimcileri ----------------------------
 
 
+def _gemini_api_key_list() -> list[str]:
+    """Genel GEMINI_API_KEY — virgülle çoklu olabilir (ilk=ücretli, kalan=ücretsiz)."""
+    raw = (getattr(settings, "gemini_api_key", "") or "").strip()
+    return [k.strip() for k in raw.split(",") if k.strip()]
+
+
 def get_gemini_paid_key() -> str | None:
-    # DB/settings gemini_paid_api_key → genel GEMINI_API_KEY fallback.
-    return _resolve_raw("gemini_paid_api_key") or _settings_attr("gemini_api_key")
+    # Açık gemini_paid_api_key (DB/env) → GEMINI_API_KEY listesinin İLK elemanı.
+    explicit = _resolve_raw("gemini_paid_api_key")
+    if explicit:
+        return explicit
+    lst = _gemini_api_key_list()
+    return lst[0] if lst else None
 
 
 def get_gemini_free_keys() -> list[str]:
-    """Ücretsiz key listesi. DB tek key varsa onu; yoksa env çoklu (virgül)."""
+    """Ücretsiz key listesi. Öncelik: DB tek → env GEMINI_FREE_API_KEYS →
+    GEMINI_API_KEY listesinin İLK eleman dışındaki kalanı (ilk ücretli sayılır)."""
     db_single = _resolve_raw("gemini_free_api_key")
     if db_single:
         return [db_single]
     raw = (getattr(settings, "gemini_free_api_keys", "") or "").strip()
-    return [k.strip() for k in raw.split(",") if k.strip()]
+    explicit = [k.strip() for k in raw.split(",") if k.strip()]
+    if explicit:
+        return explicit
+    lst = _gemini_api_key_list()
+    return lst[1:] if len(lst) > 1 else []
 
 
 def get_gemini_model(*, paid: bool) -> str:
@@ -165,11 +180,10 @@ def ai_settings_status(db: Session) -> list[dict]:
     """Süper admin AI Ayarları paneli için durum (anahtarlar maskeli, modeller açık)."""
     out: list[dict] = []
 
-    # Ücretli key (gemini_paid_api_key → genel GEMINI_API_KEY fallback)
+    # Ücretli key (gemini_paid_api_key → GEMINI_API_KEY listesinin ilki)
     paid_db = get_db_value(db, "gemini_paid_api_key")
-    paid_env = _settings_attr("gemini_paid_api_key") or _settings_attr("gemini_api_key")
-    paid = paid_db or paid_env
-    paid_src = "db" if paid_db else ("env" if paid_env else "none")
+    paid = get_gemini_paid_key()
+    paid_src = "db" if paid_db else ("env" if paid else "none")
     out.append({"name": "gemini_paid_api_key", "kind": "secret", "label": "Gemini ÜCRETLİ anahtar (öğrenci verisi)",
                 "is_set": bool(paid), "source": paid_src, "value": mask(paid)})
 

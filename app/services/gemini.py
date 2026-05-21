@@ -16,6 +16,7 @@ from __future__ import annotations
 import json
 import logging
 import re
+import time
 from typing import Any
 
 import httpx
@@ -39,22 +40,35 @@ def inline_part(data_base64: str, mime_type: str) -> dict[str, Any]:
     return {"inline_data": {"mime_type": mime_type, "data": data_base64}}
 
 
+# 503 (model aşırı yük) geçici — kısa backoff ile yeniden dene.
+_RETRY_503 = (1.5, 3.0)
+
+
 def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_mode: bool) -> str:
     url = f"{GEMINI_BASE}/{model}:generateContent"
     gen_cfg: dict[str, Any] = {"temperature": 0.4, "maxOutputTokens": 2048}
     if json_mode:
         gen_cfg["responseMimeType"] = "application/json"
     body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": gen_cfg}
-    try:
-        with httpx.Client(timeout=timeout) as client:
-            resp = client.post(
-                url,
-                headers={"x-goog-api-key": api_key, "content-type": "application/json"},
-                json=body,
-            )
-    except httpx.HTTPError as e:
-        logger.warning("Gemini çağrısı başarısız: %s", e)
-        raise AIServiceUnavailable(f"Gemini çağrısı başarısız: {e}")
+
+    resp = None
+    for attempt in range(len(_RETRY_503) + 1):
+        try:
+            with httpx.Client(timeout=timeout) as client:
+                resp = client.post(
+                    url,
+                    headers={"x-goog-api-key": api_key, "content-type": "application/json"},
+                    json=body,
+                )
+        except httpx.HTTPError as e:
+            logger.warning("Gemini çağrısı başarısız: %s", e)
+            raise AIServiceUnavailable(f"Gemini çağrısı başarısız: {e}")
+
+        if resp.status_code == 503 and attempt < len(_RETRY_503):
+            logger.info("Gemini 503 (yoğunluk) — %s sn sonra yeniden", _RETRY_503[attempt])
+            time.sleep(_RETRY_503[attempt])
+            continue
+        break
 
     if resp.status_code == 429:
         raise _QuotaExceeded()
