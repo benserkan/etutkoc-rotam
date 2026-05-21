@@ -1,0 +1,623 @@
+{% extends "base.html" %}
+{% block title %}Odak — {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<style>
+  .pomo-timer {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: clamp(3rem, 8vw, 5rem);
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    color: #0B5560;
+  }
+  .pomo-progress {
+    position: relative;
+    width: 240px;
+    height: 240px;
+    margin: 0 auto;
+  }
+  .pomo-progress svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+  .pomo-progress circle.track { stroke: #E7E5E4; }
+  .pomo-progress circle.bar { stroke: #117A86; transition: stroke-dashoffset 1s linear; }
+  .pomo-progress .label {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+</style>
+
+<div class="flex items-start justify-between mb-6">
+  <div>
+    <a href="/student" class="text-sm text-stone-500 hover:text-stone-700">← Bugün</a>
+    <h1 class="text-2xl font-semibold text-stone-900 mt-1">🍅 Odak Modu (Pomodoro)</h1>
+    <p class="text-sm text-stone-500 mt-1">
+      25 dakika çalış, 5 dakika mola — basit ama kanıtlanmış odak tekniği.
+    </p>
+  </div>
+  <div class="flex items-center gap-3">
+    <a href="/demos?play=focus-pomodoro"
+       class="inline-flex items-center gap-1.5 text-sm font-bold px-3 py-2 rounded-lg text-white hover:brightness-110 shadow-sm transition"
+       style="background:linear-gradient(135deg,#117A86,#0B5560); box-shadow:0 4px 12px -4px rgba(11,85,96,0.45);"
+       title="2 dakikalık animasyonlu rehber — Pomodoro nasıl çalışır">
+      <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/20 text-[10px]">▶</span>
+      Demo İzle
+    </a>
+    <a href="/student/badges" class="text-sm text-indigo-600 hover:text-indigo-800">
+      🏅 Rozetlerim →
+    </a>
+  </div>
+</div>
+
+<div class="mb-6">
+  {% include "partials/_streak_indicator.html" %}
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">
+  ✓ {{ flash_ok }}
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+  {# Sol — Timer #}
+  <div class="lg:col-span-2 bg-white border border-stone-200 rounded-lg p-6">
+    {% if active_session %}
+      {# AKTİF SESSİON: sayaç ekranda, kullanıcı bitirebilir #}
+      {% set is_work = active_session.kind.value == 'work' %}
+      <div x-data="pomoActive({
+             sessionId: {{ active_session.id }},
+             planned: {{ active_session.planned_minutes }},
+             initialElapsedSec: {{ active_elapsed_seconds }},
+             isWork: {{ 'true' if is_work else 'false' }}
+           })"
+           x-init="start()"
+           class="pomo-root">
+        <div class="text-center mb-4">
+          <p class="text-xs uppercase tracking-wider text-stone-400 font-semibold">
+            {% if is_work %}🍅 Odakta{% elif active_session.kind.value == 'short_break' %}☕ Mola{% else %}🌿 Uzun Mola{% endif %}
+          </p>
+          {% if active_session.label %}
+          <p class="text-sm text-stone-700 mt-1">{{ active_session.label }}</p>
+          {% endif %}
+
+          {# Strict mode indikatörü #}
+          <div x-show="strict && isWork"
+               class="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full text-xs font-semibold"
+               style="background:#FEE2E2; color:#991B1B; border:1px solid #FCA5A5;">
+            🪟 Sıkı Odak Modu — sekmeden çıkma sıklığı izleniyor
+          </div>
+          <div x-show="distracted"
+               class="inline-flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full text-xs font-semibold animate-pulse"
+               style="background:#FECACA; color:#7F1D1D;">
+            ⚠ Odak kaybı tespit edildi · "Vazgeç" olarak kaydedilecek
+          </div>
+        </div>
+
+        {# Sıkı modda canlı sekme-takip metrikleri — kullanıcı algoritmayı görsün #}
+        <div x-show="strict && isWork && !timeUp"
+             class="max-w-md mx-auto mb-4 px-3 py-2.5 rounded-lg text-xs"
+             :style="focusLevel === 'bad' ? 'background:#FEE2E2; border:1px solid #FCA5A5; color:#7F1D1D;'
+                  : focusLevel === 'warning' ? 'background:#FEF3C7; border:1px solid #FCD34D; color:#92400E;'
+                  : 'background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46;'">
+          <div class="flex items-center justify-between gap-2">
+            <span class="font-semibold flex items-center gap-1">
+              <span x-text="focusLevel === 'bad' ? '🚨' : (focusLevel === 'warning' ? '⚠' : '✓')"></span>
+              <span x-text="focusLevel === 'bad' ? 'Odak kaybı' : (focusLevel === 'warning' ? 'Dikkat — sekme çok değişti' : 'Odakta')"></span>
+            </span>
+            <span class="text-[10px] opacity-75">eşik: 3× / %15 / 3 dk</span>
+          </div>
+          <div class="mt-1.5 grid grid-cols-3 gap-2 text-center">
+            <div>
+              <div class="font-bold text-sm" x-text="awayCount + '×'"></div>
+              <div class="text-[10px] opacity-75">sekme dışı</div>
+            </div>
+            <div>
+              <div class="font-bold text-sm" x-text="'%' + awayPercent"></div>
+              <div class="text-[10px] opacity-75">toplam oran</div>
+            </div>
+            <div>
+              <div class="font-bold text-sm" x-text="formatAwayDuration(maxAwayMs)"></div>
+              <div class="text-[10px] opacity-75">en uzun</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pomo-progress mb-6" :class="distracted ? 'opacity-60' : ''">
+          <svg viewBox="0 0 100 100">
+            <circle class="track" cx="50" cy="50" r="45" stroke-width="6" fill="none" />
+            <circle class="bar" cx="50" cy="50" r="45" stroke-width="6" fill="none"
+                    stroke-linecap="round"
+                    :stroke-dasharray="circumference"
+                    :stroke-dashoffset="dashOffset"
+                    :style="(timeUp ? 'stroke:#16A34A;' : (distracted ? 'stroke:#DC2626;' : ''))" />
+          </svg>
+          <div class="label">
+            <div class="pomo-timer" x-text="formatTime(secondsLeft)"
+                 :style="timeUp ? 'color:#16A34A;' : ''"></div>
+            <div class="text-xs uppercase tracking-wider text-stone-500 mt-2"
+                 x-text="timeUp ? 'süre doldu' : 'kalan'"></div>
+          </div>
+        </div>
+
+        {# Süre AKIYORKEN: sadece "Vazgeç" var. "Tamamlandı" yok — süre dolmadan
+           ön kayıt önlenir, sahte veri girilemez. Vazgeç = kesintili olarak kaydedilir. #}
+        <div class="max-w-md mx-auto" x-show="!timeUp">
+          <div class="text-center text-xs text-stone-500 mb-2.5">
+            <span x-text="'Geçen süre: ' + Math.floor(elapsedSec/60) + ':' + (elapsedSec%60 < 10 ? '0' : '') + (elapsedSec%60)"></span>
+            ·
+            <span x-text="Math.round(elapsedSec/(planned*60)*100) + '% tamamlandı'"></span>
+          </div>
+          <form method="post" action="/student/focus/{{ active_session.id }}/end"
+                @submit="cleanup()"
+                onsubmit="return confirm('Henüz süre dolmadı. Şu ana kadar geçen süre kaydedilecek ve seans kesintili olarak işaretlenecek. Emin misin?');">
+            <input type="hidden" name="actual_minutes" :value="elapsedMin" />
+            <input type="hidden" name="interrupted" value="on" />
+            <button type="submit"
+                    class="w-full font-semibold py-3 rounded-lg text-rose-700 border-2 border-rose-200 hover:bg-rose-50">
+              ✕ Vazgeç (süreyi dolmadan bitir)
+            </button>
+          </form>
+          <p class="text-[11px] text-stone-400 text-center mt-2 leading-relaxed">
+            Süre dolduğunda tamamlama seçenekleri aktif olur.<br/>
+            Erken çıkmak istersen Vazgeç bas — kesintili olarak kaydedilir.
+          </p>
+        </div>
+
+        {# Süre DOLDUKTAN sonra: olumlu tamamla seçenekleri + "yarıda kaldı" #}
+        <div class="max-w-md mx-auto space-y-2" x-show="timeUp">
+          {% if is_work %}
+          <form method="post" action="/student/focus/{{ active_session.id }}/end-and-break"
+                @submit="cleanup()">
+            <input type="hidden" name="actual_minutes" :value="elapsedMin" />
+            <input type="hidden" name="interrupted" :value="distracted ? 'on' : ''" />
+            <input type="hidden" name="break_kind" value="short_break" />
+            <input type="hidden" name="break_minutes" value="5" />
+            <button type="submit"
+                    class="w-full font-bold py-3.5 rounded-lg text-white hover:brightness-110 shadow-lg"
+                    style="background:linear-gradient(135deg,#0B5560,#117A86);">
+              ✓ Bitti · ☕ 5 dk Mola Başlat
+            </button>
+          </form>
+          <form method="post" action="/student/focus/{{ active_session.id }}/end-and-break"
+                @submit="cleanup()">
+            <input type="hidden" name="actual_minutes" :value="elapsedMin" />
+            <input type="hidden" name="interrupted" :value="distracted ? 'on' : ''" />
+            <input type="hidden" name="break_kind" value="long_break" />
+            <input type="hidden" name="break_minutes" value="15" />
+            <button type="submit"
+                    class="w-full font-semibold py-2.5 rounded-lg text-emerald-700 hover:bg-emerald-50 border border-emerald-300">
+              ✓ Bitti · 🌿 15 dk Uzun Mola
+            </button>
+          </form>
+          {% endif %}
+          <form method="post" action="/student/focus/{{ active_session.id }}/end"
+                @submit="cleanup()">
+            <input type="hidden" name="actual_minutes" :value="elapsedMin" />
+            <input type="hidden" name="interrupted" :value="distracted ? 'on' : ''" />
+            <button type="submit"
+                    class="w-full font-medium py-2.5 rounded-lg text-stone-700 hover:bg-stone-100 border border-stone-300">
+              ✓ Bitti · Direkt çık
+            </button>
+          </form>
+          {# 4. seçenek — süre dolsa bile dürüstçe "odaklanamadım" kaydı #}
+          <form method="post" action="/student/focus/{{ active_session.id }}/end"
+                @submit="cleanup()">
+            <input type="hidden" name="actual_minutes" :value="elapsedMin" />
+            <input type="hidden" name="interrupted" value="on" />
+            <button type="submit"
+                    class="w-full text-xs py-2 rounded-lg text-rose-600 hover:bg-rose-50 border border-rose-200">
+              ⚠ Süre doldu ama odaklanamadım — kesintili olarak kaydet
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <script>
+        function pomoActive(opts) {
+          // Strict flag'i çözümle
+          var key = 'pomo_strict_' + opts.sessionId;
+          var strictForSession = localStorage.getItem(key) === '1';
+          if (!strictForSession && localStorage.getItem('pomo_next_strict') === '1') {
+            localStorage.setItem(key, '1');
+            localStorage.removeItem('pomo_next_strict');
+            strictForSession = true;
+          }
+          // Başlangıç elapsed — server'dan (TZ-safe)
+          var initialElapsed = Math.max(0, opts.initialElapsedSec || 0);
+          var totalSec = opts.planned * 60;
+
+          // ─────────── Odak takip eşikleri (esnek, sayım ve oran tabanlı) ───────────
+          // Mantık: Tek bir hızlı sekme değişimi kesinti sayılmaz. Üçü bir araya
+          // gelince veya uzun süreler dışarıdaysa odak kaybı var.
+          //   1) Sayfaya 3 ve üzeri kez geri döndüyse  → kesinti
+          //   2) Toplam dışarıda kalma elapsed'in %15'inden fazlaysa → kesinti
+          //   3) Tek bir dışarıda kalma 3 dakikadan uzunsa → kesinti
+          var THRESHOLDS = { awayCount: 3, awayPercent: 15, singleAwayMs: 180000 };
+
+          return {
+            sessionId: opts.sessionId,
+            planned: opts.planned,
+            isWork: opts.isWork,
+            strict: !!strictForSession,
+            elapsedSec: initialElapsed,
+            elapsedMin: Math.max(0, Math.round(initialElapsed / 60)),
+            secondsLeft: Math.max(0, totalSec - initialElapsed),
+            circumference: 2 * Math.PI * 45,
+            timer: null,
+            timeUp: initialElapsed >= totalSec,
+            distracted: false,
+
+            // Sekme uzaklaşma metrikleri (sıkı modda görünür)
+            awayCount: 0,
+            awayMs: 0,            // toplam dışarıda kalma (ms)
+            maxAwayMs: 0,         // en uzun tek dışarıda kalma
+            _awayStartedAt: null,
+
+            _handlers: [],
+            _audioCtx: null,
+            _origTitle: document.title,
+
+            get dashOffset() {
+              var ratio = Math.min(1, this.elapsedSec / totalSec);
+              return this.circumference * (1 - ratio);
+            },
+            get awaySecondsRounded() {
+              return Math.floor(this.awayMs / 1000);
+            },
+            get awayPercent() {
+              if (this.elapsedSec === 0) return 0;
+              return Math.round((this.awayMs / 1000) / this.elapsedSec * 100);
+            },
+            // Yumuşak göstergeler — uyarı seviyesi
+            get focusLevel() {
+              // 'good' / 'warning' / 'bad'
+              if (this.distracted) return 'bad';
+              if (this.awayCount >= 2 || this.awayPercent >= 8) return 'warning';
+              return 'good';
+            },
+
+            formatTime(sec) {
+              sec = Math.max(0, sec);
+              var m = Math.floor(sec / 60);
+              var s = sec % 60;
+              return (m < 10 ? '0' : '') + m + ':' + (s < 10 ? '0' : '') + s;
+            },
+            formatAwayDuration(ms) {
+              var s = Math.floor(ms / 1000);
+              if (s < 60) return s + ' sn';
+              var m = Math.floor(s / 60);
+              s = s % 60;
+              return m + ' dk' + (s ? ' ' + s + ' sn' : '');
+            },
+
+            playAlarm() {
+              try {
+                if (!this._audioCtx) {
+                  var AC = window.AudioContext || window.webkitAudioContext;
+                  if (!AC) return;
+                  this._audioCtx = new AC();
+                }
+                var ctx = this._audioCtx;
+                if (ctx.state === 'suspended') ctx.resume();
+                [523.25, 659.25, 783.99].forEach(function(freq, i){
+                  var osc = ctx.createOscillator();
+                  var gain = ctx.createGain();
+                  osc.type = 'sine';
+                  osc.frequency.value = freq;
+                  var start = ctx.currentTime + i * 0.18;
+                  var end = start + 0.32;
+                  gain.gain.setValueAtTime(0, start);
+                  gain.gain.linearRampToValueAtTime(0.30, start + 0.03);
+                  gain.gain.exponentialRampToValueAtTime(0.001, end);
+                  osc.connect(gain).connect(ctx.destination);
+                  osc.start(start);
+                  osc.stop(end + 0.05);
+                });
+              } catch(e) {}
+            },
+
+            showNotification() {
+              try {
+                if (!('Notification' in window)) return;
+                if (Notification.permission !== 'granted') return;
+                var title = this.isWork ? '🍅 Odak süren bitti!' : '☕ Molanın sonu';
+                var body = this.isWork
+                  ? this.planned + ' dakikalık odak tamamlandı. Şimdi kısa bir mola hak ettin.'
+                  : 'Yeni bir odak seansına hazırsın.';
+                new Notification(title, { body: body, icon: '/static/img/etutkoc-logo.png', tag: 'pomodoro-end' });
+              } catch(e) {}
+            },
+
+            // Toplam metrikleri eşiklere göre değerlendir
+            evaluateFocus() {
+              if (!this.strict || !this.isWork || this.timeUp) return;
+              if (this.distracted) return;  // bir kez işaretlendiyse geri alınmaz
+              if (this.awayCount >= THRESHOLDS.awayCount) {
+                this.distracted = true; return;
+              }
+              if (this.awayPercent >= THRESHOLDS.awayPercent) {
+                this.distracted = true; return;
+              }
+              if (this.maxAwayMs >= THRESHOLDS.singleAwayMs) {
+                this.distracted = true; return;
+              }
+            },
+
+            // visibilitychange handler — uzaklaşma başlat veya bitir
+            onVisibility() {
+              if (!this.strict || !this.isWork || this.timeUp) return;
+              if (document.hidden) {
+                // Sekme arka plana geçti
+                this._awayStartedAt = Date.now();
+              } else if (this._awayStartedAt) {
+                // Sekmeye geri döndü → süreyi topla
+                var dur = Date.now() - this._awayStartedAt;
+                this._awayStartedAt = null;
+                if (dur < 1000) return;  // <1sn yanlış pozitif (örn. anlık ALT-TAB)
+                this.awayCount += 1;
+                this.awayMs += dur;
+                if (dur > this.maxAwayMs) this.maxAwayMs = dur;
+                this.evaluateFocus();
+              }
+            },
+
+            attachDistractionListeners() {
+              var self = this;
+              var visHandler = function(){ self.onVisibility(); };
+              var blurHandler = function(){
+                if (!self.strict || !self.isWork || self.timeUp) return;
+                if (!self._awayStartedAt) self._awayStartedAt = Date.now();
+              };
+              var focusHandler = function(){
+                if (!self.strict || !self.isWork || self.timeUp) return;
+                if (self._awayStartedAt) {
+                  var dur = Date.now() - self._awayStartedAt;
+                  self._awayStartedAt = null;
+                  if (dur < 1000) return;
+                  self.awayCount += 1;
+                  self.awayMs += dur;
+                  if (dur > self.maxAwayMs) self.maxAwayMs = dur;
+                  self.evaluateFocus();
+                }
+              };
+              document.addEventListener('visibilitychange', visHandler);
+              window.addEventListener('blur', blurHandler);
+              window.addEventListener('focus', focusHandler);
+              self._handlers = [
+                { target: document, ev: 'visibilitychange', handler: visHandler },
+                { target: window,   ev: 'blur',             handler: blurHandler },
+                { target: window,   ev: 'focus',            handler: focusHandler },
+              ];
+            },
+
+            cleanup() {
+              if (this.timer) { clearInterval(this.timer); this.timer = null; }
+              this._handlers.forEach(function(h){
+                try { h.target.removeEventListener(h.ev, h.handler); } catch(e){}
+              });
+              this._handlers = [];
+              document.title = this._origTitle;
+              localStorage.removeItem('pomo_strict_' + this.sessionId);
+            },
+
+            tick() {
+              this.elapsedSec += 1;
+              this.elapsedMin = Math.max(1, Math.round(this.elapsedSec / 60));
+              this.secondsLeft = Math.max(0, totalSec - this.elapsedSec);
+              // Eğer şu an dışarıdaysa elapsed büyüdükçe oran kontrolünü yine değerlendir
+              if (this._awayStartedAt) {
+                // Anlık dışarıda kalma uzun olursa erkenden tetikle
+                var liveAway = Date.now() - this._awayStartedAt;
+                if (liveAway >= THRESHOLDS.singleAwayMs) this.distracted = true;
+              }
+              if (this.elapsedSec >= totalSec && !this.timeUp) {
+                this.timeUp = true;
+                this.playAlarm();
+                this.showNotification();
+                document.title = '⏰ Süre doldu — ' + this._origTitle;
+                var self = this;
+                setTimeout(function(){ if (self.timeUp) self.playAlarm(); }, 3500);
+                clearInterval(this.timer);
+                this.timer = null;
+              }
+            },
+
+            start() {
+              try {
+                if ('Notification' in window && Notification.permission === 'default') {
+                  Notification.requestPermission();
+                }
+              } catch(e) {}
+              this.elapsedMin = Math.max(1, Math.round(this.elapsedSec / 60));
+              if (this.timeUp) {
+                document.title = '⏰ Süre doldu — ' + this._origTitle;
+                return;
+              }
+              // Sadece sekme görünürlüğünü dinle — fare/klavye/dokunmayı izleme
+              if (this.strict && this.isWork) {
+                this.attachDistractionListeners();
+              }
+              var self2 = this;
+              this.timer = setInterval(function(){ self2.tick(); }, 1000);
+            },
+          };
+        }
+      </script>
+
+    {% else %}
+      {# AKTİF SESSİON YOK: preset seçim + başlat formu #}
+      <div x-data="{ planned: 25, kind: 'work', label: '', strict: false }">
+        <p class="text-center text-sm text-stone-500 mb-4">Bir seans seç ve başlat:</p>
+        <div class="flex flex-wrap justify-center gap-2 mb-6">
+          <button type="button" @click="planned = 25; kind = 'work'"
+                  :class="planned === 25 && kind === 'work' ? 'text-white' : 'bg-stone-100 text-stone-700'"
+                  :style="planned === 25 && kind === 'work' ? 'background:#0B5560' : ''"
+                  class="px-4 py-2 rounded-full text-sm font-medium transition">
+            🍅 25 dk Odak
+          </button>
+          <button type="button" @click="planned = 50; kind = 'work'"
+                  :class="planned === 50 && kind === 'work' ? 'text-white' : 'bg-stone-100 text-stone-700'"
+                  :style="planned === 50 && kind === 'work' ? 'background:#0B5560' : ''"
+                  class="px-4 py-2 rounded-full text-sm font-medium transition">
+            🍅🍅 50 dk Odak
+          </button>
+          <button type="button" @click="planned = 5; kind = 'short_break'"
+                  :class="planned === 5 && kind === 'short_break' ? 'bg-emerald-600 text-white' : 'bg-stone-100 text-stone-700'"
+                  class="px-4 py-2 rounded-full text-sm font-medium transition">
+            ☕ 5 dk Mola
+          </button>
+          <button type="button" @click="planned = 15; kind = 'long_break'"
+                  :class="planned === 15 && kind === 'long_break' ? 'bg-emerald-600 text-white' : 'bg-stone-100 text-stone-700'"
+                  class="px-4 py-2 rounded-full text-sm font-medium transition">
+            🌿 15 dk Uzun Mola
+          </button>
+        </div>
+
+        <div class="pomo-progress mb-6">
+          <svg viewBox="0 0 100 100">
+            <circle class="track" cx="50" cy="50" r="45" stroke-width="6" fill="none" />
+            <circle class="bar" cx="50" cy="50" r="45" stroke-width="6" fill="none"
+                    stroke-linecap="round" stroke-dasharray="282.74" stroke-dashoffset="282.74" />
+          </svg>
+          <div class="label">
+            <div class="pomo-timer" x-text="(planned < 10 ? '0' : '') + planned + ':00'"></div>
+            <div class="text-xs uppercase tracking-wider text-stone-500 mt-2">hazır</div>
+          </div>
+        </div>
+
+        <form method="post" action="/student/focus/start" class="max-w-md mx-auto space-y-3"
+              @submit="if(strict && kind==='work') { localStorage.setItem('pomo_next_strict', '1'); } else { localStorage.removeItem('pomo_next_strict'); }">
+          <input type="hidden" name="planned_minutes" :value="planned" />
+          <input type="hidden" name="kind" :value="kind" />
+          <input type="text" name="label" x-model="label" placeholder="Ne çalışıyorsun? (opsiyonel)"
+                 maxlength="120"
+                 class="w-full px-3 py-2 border border-stone-300 rounded text-sm" />
+
+          {# Sıkı Odak Modu — sadece WORK seansları için anlamlı #}
+          <div x-show="kind === 'work'"
+               class="flex items-start gap-2.5 p-3 rounded-lg border"
+               :class="strict ? 'border-rose-300' : 'border-stone-200'"
+               :style="strict ? 'background:#FEF2F2;' : 'background:#F8FAFC;'">
+            <label class="flex items-start gap-2.5 cursor-pointer flex-1">
+              <input type="checkbox" x-model="strict"
+                     class="mt-0.5 w-4 h-4 rounded cursor-pointer"
+                     style="accent-color:#DC2626;" />
+              <div class="flex-1">
+                <div class="text-sm font-semibold flex items-center gap-1.5"
+                     :style="strict ? 'color:#7F1D1D;' : 'color:#1c1917;'">
+                  🔒 Sıkı Odak Modu
+                </div>
+                <div class="text-xs mt-0.5"
+                     :style="strict ? 'color:#991B1B;' : 'color:#64748B;'">
+                  <span x-show="!strict">Açarsan: sistem sekmeden ne sıklıkla çıktığını sayar. Fare/klavye/dokunma izlenmez — sadece sekmenin arka plana geçişi. Eşikler: <b>3× ayrılma</b>, toplam <b>%15</b> dışarıda, ya da tek seferde <b>3 dk+</b> dışarıdaysan "Vazgeç" olarak kaydedilir.</span>
+                  <span x-show="strict">⚠ Aktif. Kağıt-kalemle çalışırken sekmeye dokunma. Kısa bakışlar sayılmaz; tekrarlı/uzun sekme değişimleri odak kaybı sayılır.</span>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <button type="submit"
+                  class="w-full text-white font-semibold py-3 rounded-lg hover:brightness-110"
+                  style="background:#0B5560">
+            ▶ Başlat
+          </button>
+        </form>
+      </div>
+
+    {% endif %}
+  </div>
+
+  {# Sağ — Bugünkü özet + son rozetler #}
+  <div class="bg-white border border-stone-200 rounded-lg p-5">
+    <h2 class="font-medium text-stone-900 mb-4">📊 Bugün</h2>
+    <div class="space-y-3">
+      <div class="flex justify-between">
+        <span class="text-sm text-stone-600">Odak seansı</span>
+        <span class="text-xl font-bold text-stone-900">{{ summary.work_sessions }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-sm text-stone-600">Odak dakikası</span>
+        <span class="text-xl font-bold text-stone-900">{{ summary.work_minutes }}</span>
+      </div>
+      <div class="flex justify-between">
+        <span class="text-sm text-stone-600">Mola dakikası</span>
+        <span class="text-base text-stone-500">{{ summary.break_minutes }}</span>
+      </div>
+      {% if summary.interrupted_count %}
+      <div class="flex justify-between">
+        <span class="text-sm text-rose-600">Yarıda bırakılan</span>
+        <span class="text-base text-rose-700 font-medium">{{ summary.interrupted_count }}</span>
+      </div>
+      {% endif %}
+    </div>
+
+    {% if badges %}
+    <div class="mt-6 pt-4 border-t border-stone-100">
+      <h3 class="text-xs uppercase tracking-wider font-semibold text-stone-500 mb-3">Son Rozetler</h3>
+      <div class="grid grid-cols-3 gap-2">
+        {% for badge, rec in badges[:6] %}
+        <div class="text-center p-2 rounded bg-amber-50 border border-amber-200"
+             title="{{ badge.title }} — {{ badge.description }}">
+          <div class="text-2xl">{{ badge.emoji }}</div>
+          <div class="text-[10px] text-stone-600 mt-0.5 truncate">{{ badge.title }}</div>
+        </div>
+        {% endfor %}
+      </div>
+      <a href="/student/badges" class="block text-center text-xs text-indigo-600 hover:text-indigo-800 mt-3">
+        Tümünü gör →
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if recent_sessions %}
+<div class="mt-6 bg-white border border-stone-200 rounded-lg p-5">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-medium text-stone-900">Son Seanslar</h2>
+    <span class="text-[10px] text-stone-400">{{ recent_sessions|length }} kayıt · en yenisi üstte</span>
+  </div>
+  {# Scrollable container — uzun liste sayfayı dağıtmasın #}
+  <div class="space-y-1 max-h-72 overflow-y-auto pr-1 -mr-1">
+    {% for s in recent_sessions %}
+    <div class="flex items-center justify-between text-sm py-1.5 px-1 rounded hover:bg-stone-50 transition border-b border-stone-100 last:border-0 group">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="text-base flex-shrink-0">
+          {% if s.kind.value == 'work' %}🍅
+          {% elif s.kind.value == 'short_break' %}☕
+          {% else %}🌿{% endif %}
+        </span>
+        <span class="text-stone-700 truncate">
+          {{ s.label or ('Odak' if s.kind.value == 'work' else 'Mola') }}
+        </span>
+        {% if s.interrupted %}
+        <span class="text-[10px] text-rose-600 font-medium flex-shrink-0">YARIDA</span>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <span class="text-stone-500 text-xs">
+          {{ s.started_at.strftime('%H:%M') }} ·
+          {% if s.ended_at %}{{ s.actual_minutes }}/{{ s.planned_minutes }} dk{% else %}<span class="text-amber-600">devam ediyor</span>{% endif %}
+        </span>
+        {% if s.ended_at %}
+        {# Sil butonu — sadece bitmiş seanslarda. Aktif seans korumalı. #}
+        <form method="post" action="/student/focus/{{ s.id }}/delete"
+              onsubmit="return confirm('Bu {{ s.actual_minutes }} dk\nlık seans silinsin mi?\n\n⚠ Etki:\n• Bugünkü dakika/seans sayıları yeniden hesaplanır\n• Puanlar düşebilir, streak kırılabilir\n• Kazanılmış rozetler korunur\n\nDevam?');"
+              class="inline opacity-0 group-hover:opacity-100 transition">
+          <button type="submit"
+                  class="text-stone-300 hover:text-rose-600 text-base leading-none px-1"
+                  title="Bu seansı sil (geri alınamaz)">×</button>
+        </form>
+        {% else %}
+        <span class="opacity-0 px-1 text-base leading-none">·</span>
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  <p class="text-[10px] text-stone-400 mt-2 text-center italic">
+    💡 Bir seansı silmek için satırın üzerine gel · sağdaki × tıkla
+  </p>
+</div>
+{% endif %}
+{% endblock %}

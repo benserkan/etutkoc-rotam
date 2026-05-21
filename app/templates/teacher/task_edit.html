@@ -23,11 +23,19 @@
 {# === TEK KALEMLİ GÖREV — birleşik form === #}
 <form method="post" action="/teacher/tasks/{{ task.id }}/edit"
       class="bg-white border border-slate-200 rounded-lg p-5 space-y-5 max-w-3xl">
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
     <div>
       <label class="block text-xs font-medium text-slate-600 mb-1">Tarih</label>
       <input type="date" name="task_date" value="{{ task.date }}" required
              class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm" />
+    </div>
+    <div>
+      <label class="block text-xs font-medium text-slate-600 mb-1">Saat <span class="text-slate-400">(opsiyonel)</span></label>
+      <input type="number" name="scheduled_hour" min="0" max="23"
+             value="{{ task.scheduled_hour if task.scheduled_hour is not none else '' }}"
+             placeholder="—"
+             title="0-23 · Boş bırakırsan saatsiz görev"
+             class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm text-center font-mono" />
     </div>
     <div>
       <label class="block text-xs font-medium text-slate-600 mb-1">Tip</label>
@@ -116,6 +124,34 @@
     </div>
   </div>
 
+  {# Tip-spesifik alanlar — sadece video/özet/tekrar/diğer için gösterilir #}
+  {% if task.type.value != 'test' %}
+  <div class="border-t border-slate-100 pt-4">
+    <h2 class="font-semibold text-slate-900 mb-3">Tip-spesifik İçerik</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% if task.type.value == 'video' %}
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-slate-600 mb-1">🎥 Video bağlantısı (URL)</label>
+        <input type="url" name="link_url" value="{{ task.link_url or '' }}"
+               placeholder="https://youtube.com/watch?v=..."
+               class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm font-mono" />
+      </div>
+      {% endif %}
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-slate-600 mb-1">
+          {% if task.type.value == 'tekrar' %}🧠 Tekrar edilecek konu
+          {% elif task.type.value == 'ozet' %}📄 Özet çıkarılacak konu
+          {% elif task.type.value == 'video' %}Açıklama (opsiyonel)
+          {% else %}Açıklama{% endif %}
+        </label>
+        <input type="text" name="notes" value="{{ task.notes or '' }}"
+               maxlength="300"
+               class="w-full px-3 py-2 border border-slate-300 rounded-md text-sm" />
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
   <div class="flex justify-between items-center pt-4 border-t border-slate-100">
     <button type="submit"
             formaction="/teacher/tasks/{{ task.id }}/delete"
@@ -141,6 +177,12 @@
         <label class="block text-sm text-slate-600 mb-1">Tarih</label>
         <input type="date" name="task_date" value="{{ task.date }}" required
                class="w-full px-3 py-2 border border-slate-300 rounded text-sm" />
+      </div>
+      <div>
+        <label class="block text-sm text-slate-600 mb-1">Saat <span class="text-slate-400 text-xs">(opsiyonel · 0-23)</span></label>
+        <input type="number" name="scheduled_hour" min="0" max="23"
+               value="{{ task.scheduled_hour if task.scheduled_hour is not none else '' }}"
+               placeholder="—" class="w-full px-3 py-2 border border-slate-300 rounded text-sm text-center font-mono" />
       </div>
       <div>
         <label class="block text-sm text-slate-600 mb-1">Tip</label>

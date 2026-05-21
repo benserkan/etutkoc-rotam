@@ -1,236 +1,389 @@
 {% extends "base.html" %}
-{% block title %}Öneri Sistemi Tanı — {{ student.full_name }}{% endblock %}
+{% block title %}Bu Öğrencide Sistem Ne Öğrendi? — {{ student.full_name }}{% endblock %}
 
 {% block content %}
-<div class="flex items-start justify-between mb-6 gap-4 flex-wrap">
+{# ════════════════════════════════════════════════════════════════════
+   Tasarım: kompakt stat şeridi (hep görünür) + sticky tab bar + her tab
+   altında kendi içeriği. Alpine.js ile tab/filter state. Pattern tablosunda
+   canlı filtre, 7 günlük öneri accordion (bugün/yarın açık başlar).
+   ════════════════════════════════════════════════════════════════════ #}
+<div x-data="{
+       tab: '{{ 'reddedilen' if reject_rows else 'yogunluk' }}',
+       pattern_q: '',
+       pattern_all: false,
+     }">
+
+<!-- ─────────── ÜST ──────────── -->
+<div class="flex items-start justify-between mb-4 gap-4 flex-wrap">
   <div>
     <a href="/teacher/students/{{ student.id }}" class="text-sm text-slate-500 hover:text-slate-700">← {{ student.full_name }}</a>
-    <h1 class="text-2xl font-semibold text-slate-900 mt-1">Öneri Sistemi — Tanı</h1>
-    <p class="text-sm text-slate-500 mt-1">Öğrenme modelinin sayısal iç görüleri ({{ today.strftime('%d.%m.%Y') }})</p>
+    <h1 class="text-xl font-semibold text-slate-900 mt-1">Bu Öğrencide Sistem Ne Öğrendi?</h1>
+    <p class="text-xs text-slate-500 mt-0.5">
+      Önerilerin neden böyle olduğunu görmek için sistemin bu öğrenci hakkında topladığı bilgiler · {{ today.strftime('%d.%m.%Y') }}
+    </p>
   </div>
   <a href="/teacher/students/{{ student.id }}/week"
-     class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">Haftalık Program →</a>
+     class="px-3 py-1.5 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50 whitespace-nowrap">Haftalık Programa →</a>
 </div>
 
-<!-- Olgunluk kartı -->
-<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
-  <h2 class="font-semibold text-slate-900 mb-3">Olgunluk (Maturity)</h2>
-  <div class="grid grid-cols-2 md:grid-cols-5 gap-4 text-sm">
-    <div>
-      <div class="text-xs text-slate-500">Sonuç</div>
-      <div class="text-2xl font-bold text-indigo-700">%{{ maturity_pct }}</div>
-      <div class="text-xs text-slate-600">{{ maturity_label }}</div>
+<!-- ─────────── KOMPAKT STAT ŞERİDİ ──────────── -->
+<div class="bg-white border border-slate-200 rounded-lg p-3 mb-3">
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3">
+    <div class="flex flex-col">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500">Tanıma düzeyi</div>
+      <div class="text-xl font-bold text-indigo-700 leading-tight">%{{ maturity_pct }}</div>
+      <div class="text-[10px] text-slate-500">{{ maturity_label }}</div>
     </div>
-    <div>
-      <div class="text-xs text-slate-500">Gözlem haftası</div>
-      <div class="text-2xl font-semibold text-slate-900">{{ model.weeks_observed }}</div>
-      <div class="text-xs text-slate-400">/ {{ MATURITY_WEEKS }} hafta tavanı</div>
+    <div class="flex flex-col">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500">Plan haftası</div>
+      <div class="text-xl font-bold text-slate-900 leading-tight">{{ model.weeks_observed }}</div>
+      <div class="text-[10px] text-slate-400">{{ MATURITY_WEEKS }} hafta → %100</div>
     </div>
-    <div>
-      <div class="text-xs text-slate-500">Plan yapılan gün</div>
-      <div class="text-2xl font-semibold text-slate-900">{{ model.days_observed }}</div>
+    <div class="flex flex-col">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500">Plan günü</div>
+      <div class="text-xl font-bold text-slate-900 leading-tight">{{ model.days_observed }}</div>
+      <div class="text-[10px] text-slate-400">geçmiş kayıt</div>
     </div>
-    <div>
-      <div class="text-xs text-slate-500">Toplam pattern</div>
-      <div class="text-2xl font-semibold text-slate-900">{{ pattern_rows|length }}</div>
-      <div class="text-xs text-slate-400">benzersiz (gün, kitap, bölüm)</div>
+    <div class="flex flex-col">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500">Alışkanlık</div>
+      <div class="text-xl font-bold text-slate-900 leading-tight">{{ pattern_rows|length }}</div>
+      <div class="text-[10px] text-slate-400">farklı desen</div>
     </div>
-    <div>
-      <div class="text-xs text-slate-500">Geri bildirim</div>
-      <div class="text-sm">
-        <span class="text-emerald-600 font-medium">✓ {{ total_accepted }}</span> kabul ·
-        <span class="text-rose-600 font-medium">× {{ total_rejected }}</span> ret
+    <div class="flex flex-col">
+      <div class="text-[10px] uppercase tracking-wider text-slate-500">Geri bildirim</div>
+      <div class="text-sm font-medium leading-tight mt-0.5">
+        <span class="text-emerald-600">✓ {{ total_accepted }}</span>
+        <span class="text-slate-300 mx-0.5">·</span>
+        <span class="text-rose-600">× {{ total_rejected }}</span>
       </div>
+      <div class="text-[10px] text-slate-400">kabul · ret</div>
     </div>
   </div>
-
-  <details class="mt-4 text-sm">
-    <summary class="cursor-pointer text-indigo-600 hover:text-indigo-800">▸ Formül nasıl çalışıyor?</summary>
-    <div class="mt-2 p-3 bg-slate-50 rounded text-slate-700 space-y-1.5 font-mono text-xs leading-relaxed">
-      <div>weeks_observed = (en_yeni_plan - en_eski_plan).days // 7  &nbsp;= <b>{{ model.weeks_observed }}</b></div>
-      <div>base = min(1.0, weeks_observed / {{ MATURITY_WEEKS }})  &nbsp;= <b>{{ maturity_base }}</b></div>
-      <div>floor = {{ MATURITY_MIN_FLOOR }} (en az 1 gün plan varsa zemin)</div>
-      <div>maturity = max(base, floor) eğer base &lt; floor ve days_observed &gt; 0 &nbsp;= <b>{{ maturity_value|round(3) }}</b></div>
-      {% if maturity_floor_applied %}
-      <div class="text-amber-700 mt-2 not-mono" style="font-family: inherit;">
-        ⚠ Şu an taban (%{{ (MATURITY_MIN_FLOOR*100)|int }}) devrede — yeterli takvim verisi yok.
-      </div>
-      {% endif %}
-      <div class="mt-2 not-mono" style="font-family: inherit;">
-        <b>Önemli:</b> Maturity öneri kabul sayısına değil, planın takvim aralığına bağlıdır.
-        Aynı gün 50 öneri kabul etmek %12'yi yükseltmez; sistem haftadan haftaya tipik desenleri
-        ancak gerçek zaman geçerken öğrenir. ~8 hafta planlama geçmişi → %100.
-      </div>
+  <details class="mt-2 border-t border-slate-100 pt-2 text-xs">
+    <summary class="cursor-pointer text-indigo-600 hover:text-indigo-800 text-[11px]">▸ %{{ maturity_pct }} nasıl hesaplandı?</summary>
+    <div class="mt-2 p-2.5 bg-slate-50 rounded text-slate-700 space-y-1.5 leading-relaxed text-[12px]">
+      <p>
+        Sistem, <b>ilk plandan en son plana kadar geçen takvim hafta sayısını</b> sayar.
+        {{ MATURITY_WEEKS }} hafta plan yapılmışsa %100; daha az ise orantılı
+        (örn. {{ (MATURITY_WEEKS // 2) }} hafta ≈ %50).
+      </p>
+      <p>
+        <b>Önemli:</b> Aynı gün 50 öneri onaylasanız bu yüzde yükselmez — sistem,
+        haftadan haftaya gerçek deseni görmek için <b>takvim zamanını</b> sayar,
+        kabul sayısını değil.
+      </p>
+      <p>
+        Bu öğrenci: {{ model.weeks_observed }} hafta plan → tanıma %{{ maturity_pct }}.
+        {% if maturity_floor_applied %}
+        <span class="text-amber-700">(Tek günlük plan olsa bile sistem %{{ (MATURITY_MIN_FLOOR*100)|int }}'dan başlatır — taban devreye girdi.)</span>
+        {% endif %}
+      </p>
+      <p class="text-[10px] text-slate-500 mt-2 pt-1.5 border-t border-slate-200">
+        Teknik: <code>maturity = max(weeks/{{ MATURITY_WEEKS }}, {{ MATURITY_MIN_FLOOR }})</code>
+        — şu an <code>{{ maturity_value|round(3) }}</code>.
+      </p>
     </div>
   </details>
 </div>
 
-<!-- Tipik hacim per gün -->
-<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
-  <h2 class="font-semibold text-slate-900 mb-3">Haftagünü Bazında Tipik Hacim</h2>
-  <p class="text-xs text-slate-500 mb-3">Geçmiş plan medyanı: o gün için kaç görev kalemi ve kaç farklı ders.</p>
-  <div class="grid grid-cols-2 md:grid-cols-7 gap-2">
-    {% for r in volume_rows %}
-    <div class="border border-slate-200 rounded p-2 text-center
-                {% if r.items == 0 %}bg-slate-50 text-slate-400{% else %}bg-indigo-50/30{% endif %}">
-      <div class="text-xs text-slate-500">{{ r.dow_label }}</div>
-      <div class="text-sm font-semibold mt-1">{{ r.items }} kalem</div>
-      <div class="text-xs text-slate-500">{{ r.subjects }} ders</div>
-    </div>
+<!-- ─────────── SEKME ŞERİDİ ──────────── -->
+<div class="sticky top-0 z-10 bg-slate-50/95 backdrop-blur border-b border-slate-200 -mx-4 px-4 mb-4">
+  <nav class="flex flex-wrap gap-1 py-2 text-sm">
+    {% set tabs = [
+      ('yogunluk', '📊 Günlük yoğunluk', None),
+      ('aliskanlik', '🧠 Alışkanlıklar', pattern_rows|length),
+      ('reddedilen', '🚫 Reddedilenler', reject_rows|length if reject_rows else 0),
+      ('oneri', '🔮 7 günlük öneri', None),
+    ] %}
+    {% for slug, label, count in tabs %}
+    {% if not (slug == 'reddedilen' and not reject_rows) %}
+    <button type="button" @click="tab = '{{ slug }}'"
+            :class="tab === '{{ slug }}' ? 'bg-indigo-600 text-white' : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'"
+            class="px-3 py-1.5 rounded-md font-medium transition text-xs md:text-sm flex items-center gap-1.5">
+      <span>{{ label }}</span>
+      {% if count is not none and count > 0 %}
+      <span :class="tab === '{{ slug }}' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-600'"
+            class="text-[10px] font-bold px-1.5 py-0.5 rounded">{{ count }}</span>
+      {% endif %}
+    </button>
+    {% endif %}
     {% endfor %}
+  </nav>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TAB 1: GÜNLÜK YOĞUNLUK
+     ═══════════════════════════════════════════════════════════════════ -->
+<div x-show="tab === 'yogunluk'" x-cloak>
+  <div class="bg-white border border-slate-200 rounded-lg p-4 mb-4">
+    <h2 class="font-semibold text-slate-900 text-sm mb-1">Günlere Göre Tipik Görev Yoğunluğu</h2>
+    <p class="text-xs text-slate-500 mb-3">
+      Geçmiş planlarınızın ortalaması: hangi gün için <b>kaç farklı görev</b> ve <b>kaç farklı ders</b> koymaya alışıksınız.
+      Sistem yeni öneri üretirken bu sayıları referans alır.
+    </p>
+    <div class="grid grid-cols-2 md:grid-cols-7 gap-2">
+      {% for r in volume_rows %}
+      <div class="border rounded p-2 text-center transition
+                  {% if r.task_count == 0 %}bg-slate-50 text-slate-400 border-slate-200
+                  {% else %}bg-indigo-50/40 border-indigo-200{% endif %}">
+        <div class="text-[11px] text-slate-500">{{ r.dow_label }}</div>
+        <div class="text-base font-bold mt-1 {% if r.task_count == 0 %}text-slate-400{% else %}text-slate-900{% endif %}">
+          {{ r.task_count }}
+        </div>
+        <div class="text-[10px] text-slate-500">görev</div>
+        <div class="text-[10px] text-slate-500 mt-0.5">{{ r.subject_count }} ders</div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="text-[11px] text-slate-400 mt-3 italic">
+      "0 görev" → o güne hiç plan yapılmamış, sistem o gün için tipik bilmiyor.
+    </p>
   </div>
 </div>
 
-<!-- Ret sinyalleri -->
-{% if reject_rows %}
-<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
-  <h2 class="font-semibold text-slate-900 mb-3">Ret Sinyalleri (Negatif Geri Bildirim)</h2>
-  <p class="text-xs text-slate-500 mb-3">
-    Ret kayıtları {{ REJECT_DECAY_DAYS }} gün sonra etkisini kaybeder.
-    {{ REJECT_STRONG_COUNT }}+ ret → öneri tamamen bloke. Penalty katsayısı {{ REJECT_SCORE_PENALTY }}.
-  </p>
-  <div class="overflow-x-auto">
-    <table class="min-w-full text-sm">
-      <thead class="bg-slate-50 text-slate-600 text-left">
-        <tr>
-          <th class="px-3 py-2">Gün</th>
-          <th class="px-3 py-2">Ders</th>
-          <th class="px-3 py-2">Kitap</th>
-          <th class="px-3 py-2">Bölüm</th>
-          <th class="px-3 py-2 text-right">Sayı</th>
-          <th class="px-3 py-2 text-right">Ağırlık</th>
-          <th class="px-3 py-2">Durum</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100">
-        {% for r in reject_rows %}
-        <tr class="{% if r.blocked %}bg-rose-50{% endif %}">
-          <td class="px-3 py-2">{{ r.dow_label }}</td>
-          <td class="px-3 py-2">{{ r.subject_name }}</td>
-          <td class="px-3 py-2">{{ r.book_name }}</td>
-          <td class="px-3 py-2">{{ r.section_label }}</td>
-          <td class="px-3 py-2 text-right">{{ r.count }}</td>
-          <td class="px-3 py-2 text-right font-mono">{{ r.weight }}</td>
-          <td class="px-3 py-2 text-xs">
-            {% if r.blocked %}<span class="text-rose-700 font-medium">bloke</span>
-            {% else %}<span class="text-amber-700">cezalı</span>
-            {% endif %}
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
-{% endif %}
+<!-- ═══════════════════════════════════════════════════════════════════
+     TAB 2: YAKALANAN ALIŞKANLIKLAR (filter + top 10 + show all)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div x-show="tab === 'aliskanlik'" x-cloak>
+  <div class="bg-white border border-slate-200 rounded-lg p-4 mb-4">
+    <div class="flex items-start justify-between gap-3 mb-2 flex-wrap">
+      <div class="min-w-0">
+        <h2 class="font-semibold text-slate-900 text-sm">Yakalanan Çalışma Alışkanlıkları</h2>
+        <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+          Geçmiş planlarınızdan çıkarılan <b>(gün + kitap + bölüm)</b> deseni.
+          "Kaç kez yapıldı" yüksek olanlar yeni öneriyi daha güçlü etkiler.
+        </p>
+      </div>
+      {% if pattern_rows %}
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <input type="text" x-model="pattern_q" placeholder="🔍 ders / kitap / bölüm ara…"
+               class="px-2.5 py-1 border border-slate-300 rounded text-xs w-56 focus:outline-none focus:ring-1 focus:ring-indigo-400">
+      </div>
+      {% endif %}
+    </div>
 
-<!-- Pattern tablosu -->
-<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
-  <h2 class="font-semibold text-slate-900 mb-3">Öğrenilen Desenler (Patterns)</h2>
-  <p class="text-xs text-slate-500 mb-3">
-    (haftagünü, kitap, bölüm) için geçmişteki kullanım sıklığı ve tipik test adedi.
-    Frekans yüksek olanlar öneri sistemini daha güçlü etkiler.
-  </p>
-  {% if pattern_rows %}
-  <div class="overflow-x-auto">
-    <table class="min-w-full text-sm">
-      <thead class="bg-slate-50 text-slate-600 text-left">
-        <tr>
-          <th class="px-3 py-2">Gün</th>
-          <th class="px-3 py-2">Ders</th>
-          <th class="px-3 py-2">Kitap</th>
-          <th class="px-3 py-2">Bölüm</th>
-          <th class="px-3 py-2 text-right">Frekans</th>
-          <th class="px-3 py-2 text-right">Tipik adet</th>
-          <th class="px-3 py-2">Örnekler</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-slate-100">
-        {% for r in pattern_rows %}
-        <tr>
-          <td class="px-3 py-2 whitespace-nowrap">{{ r.dow_label }}</td>
-          <td class="px-3 py-2">{{ r.subject_name }}</td>
-          <td class="px-3 py-2">{{ r.book_name }}</td>
-          <td class="px-3 py-2">
-            {{ r.section_label }}
-            {% if r.topic_name %}<span class="text-xs text-slate-400">· {{ r.topic_name }}</span>{% endif %}
-          </td>
-          <td class="px-3 py-2 text-right font-semibold">{{ r.freq }}</td>
-          <td class="px-3 py-2 text-right">{{ r.typical_count }}</td>
-          <td class="px-3 py-2 text-xs text-slate-500">{{ r.samples|join(', ') }}</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-  {% else %}
-  <p class="text-sm text-slate-500 italic">Henüz pattern gözlemlenmedi.</p>
-  {% endif %}
-</div>
-
-<!-- Şu günkü öneriler — skor breakdown -->
-<div class="bg-white border border-slate-200 rounded-lg p-5 mb-6">
-  <h2 class="font-semibold text-slate-900 mb-3">Önümüzdeki 7 Gün — Anlık Öneriler</h2>
-  <p class="text-xs text-slate-500 mb-3">
-    score: pattern_strength × 0.55 + weakness × 0.45, ret cezasıyla çarpılır.
-    confidence: maturity ile çarpılı, görsel yoğunluk için.
-  </p>
-  {% for d in days_ahead %}
-    {% set sugs = suggestions_by_day[d] %}
-  <div class="mb-4">
-    <h3 class="text-sm font-medium text-slate-800 mb-1.5">
-      {{ DOW_LABELS[d.weekday()] }} · {{ d.strftime('%d.%m') }}
-      <span class="text-xs text-slate-400">({{ sugs|length }} öneri)</span>
-    </h3>
-    {% if sugs %}
+    {% if pattern_rows %}
     <div class="overflow-x-auto">
       <table class="min-w-full text-xs">
         <thead class="bg-slate-50 text-slate-600 text-left">
           <tr>
-            <th class="px-2 py-1">Ders</th>
-            <th class="px-2 py-1">Kitap</th>
-            <th class="px-2 py-1">Bölüm</th>
-            <th class="px-2 py-1 text-right">Tipik adet</th>
-            <th class="px-2 py-1 text-right">Kalan</th>
-            <th class="px-2 py-1 text-right">Score</th>
-            <th class="px-2 py-1 text-right">Conf.</th>
-            <th class="px-2 py-1">Etiket</th>
-            <th class="px-2 py-1">Gerekçeler</th>
+            <th class="px-2 py-1.5 whitespace-nowrap">Gün</th>
+            <th class="px-2 py-1.5">Ders</th>
+            <th class="px-2 py-1.5">Kitap</th>
+            <th class="px-2 py-1.5">Bölüm</th>
+            <th class="px-2 py-1.5 text-right whitespace-nowrap" title="Geçmişte aynı gün+bölüm için kaç plan kaydı var">Tekrar</th>
+            <th class="px-2 py-1.5 text-right whitespace-nowrap" title="Sistemin önerirken kullandığı tipik adet">Tipik adet</th>
+            <th class="px-2 py-1.5">Geçmiş</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
-          {% for s in sugs %}
-          <tr>
-            <td class="px-2 py-1">{{ s.subject }}</td>
-            <td class="px-2 py-1">{{ s.book }}</td>
-            <td class="px-2 py-1">{{ s.section }}</td>
-            <td class="px-2 py-1 text-right">{{ s.planned_count }}</td>
-            <td class="px-2 py-1 text-right">{{ s.remaining }}</td>
-            <td class="px-2 py-1 text-right font-mono">{{ s.score }}</td>
-            <td class="px-2 py-1 text-right font-mono">{{ s.confidence }}</td>
-            <td class="px-2 py-1">{{ s.confidence_label }}</td>
-            <td class="px-2 py-1 text-slate-500">{{ s.reasons|join(' · ') }}</td>
+          {% for r in pattern_rows %}
+          {% set row_key = (r.dow_label ~ '|' ~ r.subject_name ~ '|' ~ r.book_name ~ '|' ~ r.section_label ~ '|' ~ (r.topic_name or ''))|lower %}
+          <tr x-show="(pattern_q.length === 0 || '{{ row_key|replace("'", "")|e }}'.includes(pattern_q.toLowerCase()))
+                      && (pattern_all || {{ loop.index0 }} < 10)"
+              x-cloak>
+            <td class="px-2 py-1.5 whitespace-nowrap text-slate-600">{{ r.dow_label[:3] }}</td>
+            <td class="px-2 py-1.5 whitespace-nowrap">{{ r.subject_name }}</td>
+            <td class="px-2 py-1.5">{{ r.book_name }}</td>
+            <td class="px-2 py-1.5">
+              {{ r.section_label }}
+              {% if r.topic_name %}<span class="text-[10px] text-slate-400">· {{ r.topic_name }}</span>{% endif %}
+            </td>
+            <td class="px-2 py-1.5 text-right font-semibold">{{ r.freq }}</td>
+            <td class="px-2 py-1.5 text-right">{{ r.typical_count }}</td>
+            <td class="px-2 py-1.5 text-[10px] text-slate-500 whitespace-nowrap">{{ r.samples|join(', ') }}</td>
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
+    {% if pattern_rows|length > 10 %}
+    <div class="mt-3 flex items-center justify-between text-xs">
+      <span class="text-slate-500" x-show="!pattern_all && pattern_q.length === 0">
+        İlk 10 desen gösteriliyor (toplam <b>{{ pattern_rows|length }}</b>)
+      </span>
+      <span class="text-slate-500" x-show="pattern_q.length > 0">
+        Filtre aktif — eşleşen kayıtlar
+      </span>
+      <button type="button"
+              x-show="pattern_q.length === 0"
+              @click="pattern_all = !pattern_all"
+              class="text-indigo-600 hover:text-indigo-800 font-medium">
+        <span x-show="!pattern_all">▾ Tümünü göster ({{ pattern_rows|length }})</span>
+        <span x-show="pattern_all" x-cloak>▴ İlk 10'a daralt</span>
+      </button>
+    </div>
+    {% endif %}
     {% else %}
-    <p class="text-xs text-slate-400 italic">Bu gün için öneri üretilmedi.</p>
+    <p class="text-sm text-slate-500 italic py-6 text-center">
+      Henüz alışkanlık çıkarılamadı. Birkaç hafta plan yaptıkça sistem desenleri yakalamaya başlayacak.
+    </p>
     {% endif %}
   </div>
-  {% endfor %}
 </div>
 
-<!-- Sabitler kartı -->
-<div class="bg-slate-50 border border-slate-200 rounded-lg p-4 text-xs text-slate-600">
-  <div class="font-medium text-slate-700 mb-1">Sistem sabitleri</div>
-  <div class="grid grid-cols-2 md:grid-cols-5 gap-2 font-mono">
+<!-- ═══════════════════════════════════════════════════════════════════
+     TAB 3: REDDEDILENLER
+     ═══════════════════════════════════════════════════════════════════ -->
+{% if reject_rows %}
+<div x-show="tab === 'reddedilen'" x-cloak>
+  <div class="bg-white border border-slate-200 rounded-lg p-4 mb-4">
+    <h2 class="font-semibold text-slate-900 text-sm mb-1">Reddettiğiniz Bölümler</h2>
+    <p class="text-xs text-slate-500 mb-3">
+      Önerideki <b>×</b> ile reddettikleriniz. Sistem aynı şeyi tekrar önermesin diye not eder.
+      <b>{{ REJECT_DECAY_DAYS }} gün</b> kullanılmazsa not silinir;
+      aynı (gün + bölüm) için <b>{{ REJECT_STRONG_COUNT }}+ ret</b> olursa tamamen önerilmez.
+    </p>
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-xs">
+        <thead class="bg-slate-50 text-slate-600 text-left">
+          <tr>
+            <th class="px-2 py-1.5">Gün</th>
+            <th class="px-2 py-1.5">Ders</th>
+            <th class="px-2 py-1.5">Kitap</th>
+            <th class="px-2 py-1.5">Bölüm</th>
+            <th class="px-2 py-1.5 text-right whitespace-nowrap">Ret sayısı</th>
+            <th class="px-2 py-1.5 text-right whitespace-nowrap" title="Önerideki etkisi">Etki ağırlığı</th>
+            <th class="px-2 py-1.5">Durum</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for r in reject_rows %}
+          <tr class="{% if r.blocked %}bg-rose-50{% endif %}">
+            <td class="px-2 py-1.5 whitespace-nowrap text-slate-600">{{ r.dow_label[:3] }}</td>
+            <td class="px-2 py-1.5 whitespace-nowrap">{{ r.subject_name }}</td>
+            <td class="px-2 py-1.5">{{ r.book_name }}</td>
+            <td class="px-2 py-1.5">{{ r.section_label }}</td>
+            <td class="px-2 py-1.5 text-right">{{ r.count }}</td>
+            <td class="px-2 py-1.5 text-right font-mono">{{ r.weight }}</td>
+            <td class="px-2 py-1.5 text-[10px]">
+              {% if r.blocked %}
+                <span class="text-rose-700 font-medium">öneriden çıkarıldı</span>
+              {% else %}
+                <span class="text-amber-700">ağırlığı düşürüldü</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     TAB 4: 7 GÜNLÜK ÖNERİ (accordion per day)
+     ═══════════════════════════════════════════════════════════════════ -->
+<div x-show="tab === 'oneri'" x-cloak>
+  <div class="bg-white border border-slate-200 rounded-lg p-4 mb-4">
+    <div class="flex items-start justify-between gap-3 mb-3 flex-wrap">
+      <div>
+        <h2 class="font-semibold text-slate-900 text-sm">Şu An Üretilen Öneriler — 7 Günlük Önizleme</h2>
+        <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+          Bu öğrenci için sistemin <b>şu an</b> her gün ne önerdiği ve neden.
+          Onaylama/reddetme için haftalık programa geçin.
+        </p>
+      </div>
+      <details class="text-xs flex-shrink-0">
+        <summary class="cursor-pointer text-indigo-600 hover:text-indigo-800">▸ Skor / Güven ne anlama gelir?</summary>
+        <div class="mt-2 p-2.5 bg-slate-50 rounded text-slate-700 space-y-1.5 leading-relaxed text-[12px] w-80">
+          <p><b>Skor:</b> "Bu bölümü bu güne koymak ne kadar uygun?"</p>
+          <ul class="list-disc ml-5 space-y-0.5">
+            <li><b>%55</b> — geçmiş alışkanlık (yakalanan desenler ne kadar güçlü)</li>
+            <li><b>%45</b> — eksiklik / zayıflık (geride kalma, tekrar zorluğu)</li>
+          </ul>
+          <p>Reddedilenlere <b>{{ REJECT_SCORE_PENALTY }}</b> ceza uygulanır.</p>
+          <p><b>Güven:</b> Skor × tanıma düzeyi (%{{ maturity_pct }}). Sistem az tanırken solgun, iyi tanıdıkça belirgin.</p>
+        </div>
+      </details>
+    </div>
+
+    <div class="space-y-2">
+      {% for d in days_ahead %}
+        {% set sugs = suggestions_by_day[d] %}
+        {% set is_today = d == today %}
+        {% set is_tomorrow = (d - today).days == 1 %}
+      <details {% if is_today or is_tomorrow %}open{% endif %}
+               class="border border-slate-200 rounded-md group">
+        <summary class="px-3 py-2 cursor-pointer hover:bg-slate-50 list-none flex items-center justify-between text-sm">
+          <div class="flex items-baseline gap-2">
+            <span class="text-slate-400 transition-transform group-open:rotate-90">▸</span>
+            <span class="font-medium text-slate-800">{{ DOW_LABELS[d.weekday()] }}</span>
+            <span class="text-xs text-slate-500">{{ d.strftime('%d.%m') }}</span>
+            {% if is_today %}<span class="text-[10px] bg-indigo-100 text-indigo-700 px-1.5 py-0.5 rounded-full">bugün</span>
+            {% elif is_tomorrow %}<span class="text-[10px] bg-emerald-100 text-emerald-700 px-1.5 py-0.5 rounded-full">yarın</span>
+            {% endif %}
+          </div>
+          <span class="text-xs text-slate-500">
+            {% if sugs %}{{ sugs|length }} öneri{% else %}öneri yok{% endif %}
+          </span>
+        </summary>
+        <div class="border-t border-slate-100">
+        {% if sugs %}
+        <div class="overflow-x-auto">
+          <table class="min-w-full text-[11px]">
+            <thead class="bg-slate-50 text-slate-600 text-left">
+              <tr>
+                <th class="px-2 py-1.5">Ders</th>
+                <th class="px-2 py-1.5">Kitap</th>
+                <th class="px-2 py-1.5">Bölüm</th>
+                <th class="px-2 py-1.5 text-right whitespace-nowrap">Adet</th>
+                <th class="px-2 py-1.5 text-right whitespace-nowrap">Kalan</th>
+                <th class="px-2 py-1.5 text-right">Skor</th>
+                <th class="px-2 py-1.5 text-right">Güven</th>
+                <th class="px-2 py-1.5">Düzey</th>
+                <th class="px-2 py-1.5">Niçin</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              {% for s in sugs %}
+              <tr>
+                <td class="px-2 py-1 whitespace-nowrap">{{ s.subject }}</td>
+                <td class="px-2 py-1">{{ s.book }}</td>
+                <td class="px-2 py-1">{{ s.section }}</td>
+                <td class="px-2 py-1 text-right">{{ s.planned_count }}</td>
+                <td class="px-2 py-1 text-right text-slate-500">{{ s.remaining }}</td>
+                <td class="px-2 py-1 text-right font-mono">{{ s.score }}</td>
+                <td class="px-2 py-1 text-right font-mono">{{ s.confidence }}</td>
+                <td class="px-2 py-1 whitespace-nowrap">{{ s.confidence_label }}</td>
+                <td class="px-2 py-1 text-slate-500">{{ s.reasons|join(' · ') }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% else %}
+        <p class="text-xs text-slate-400 italic px-3 py-3">
+          Bu gün için ek öneri çıkmadı — mevcut plan tipik düzende veya tüm bölümler zaten eklenmiş.
+        </p>
+        {% endif %}
+        </div>
+      </details>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- ─────────── ALTBİLGİ: SİSTEM AYARLARI ──────────── -->
+<details class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-xs text-slate-600">
+  <summary class="cursor-pointer text-slate-700 font-medium">▸ Gelişmiş — Sistem ayar değerleri</summary>
+  <p class="mt-2 text-[11px] text-slate-500">
+    Sistem çapında geçerli sabitler. Yalnızca öneri davranışını ince ayar eden teknik değerler;
+    günlük kullanımda bilmenize gerek yok, hata gidermede destek olabilir.
+  </p>
+  <div class="mt-2 grid grid-cols-2 md:grid-cols-5 gap-2 font-mono text-[11px]">
     <span>MATURITY_WEEKS = {{ MATURITY_WEEKS }}</span>
     <span>MATURITY_MIN_FLOOR = {{ MATURITY_MIN_FLOOR }}</span>
     <span>REJECT_DECAY_DAYS = {{ REJECT_DECAY_DAYS }}</span>
     <span>REJECT_STRONG_COUNT = {{ REJECT_STRONG_COUNT }}</span>
     <span>REJECT_SCORE_PENALTY = {{ REJECT_SCORE_PENALTY }}</span>
   </div>
-</div>
+</details>
+
+</div>{# /x-data #}
+
+<style>
+  [x-cloak] { display: none !important; }
+</style>
 {% endblock %}

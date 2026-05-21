@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Yeni Kampanya — Ticari Pano{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/revenue/campaigns" class="text-sm text-slate-500 hover:text-slate-700">← Kampanyalar</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Yeni Toplu Kampanya</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Segment seç, teklif tasarla, A/B varyant ekle (opsiyonel). Kaydedildikten sonra önizle ve başlat.
+  </p>
+  <div class="mt-2 text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded px-3 py-2">
+    🏢 Kurumlar + 👤 bağımsız öğretmenler birlikte hedeflenir. "Önizle"de iki tip kırılımlı sayılır.
+    <span class="text-slate-500">("30+ gün duraklatma" segmenti yalnızca kurum içindir — bağımsız öğretmenlerde duraklatma yok.)</span>
+  </div>
+</div>
+
+{% set q = request.query_params %}
+{% if q.get('err') %}<div class="mb-4 p-3 rounded bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ q.get('err') }}</div>{% endif %}
+
+<form method="post" action="/admin/revenue/campaigns/create" class="space-y-6">
+
+  {# 1. Temel Bilgi #}
+  <section class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="text-sm font-semibold text-slate-900 mb-3">1️⃣ Temel Bilgi</h2>
+    <div class="space-y-3">
+      <div>
+        <label class="block text-xs font-medium text-slate-700 mb-1">Kampanya adı *</label>
+        <input type="text" name="name" required maxlength="255"
+               placeholder="ör. Trial sonu son uyarı — Mart 2026"
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-700 mb-1">Açıklama (admin için)</label>
+        <textarea name="description" rows="2" placeholder="Bu kampanyanın amacı..."
+                  class="w-full px-3 py-2 border border-slate-300 rounded text-sm"></textarea>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-700 mb-1">İç not (UI'da görünmez)</label>
+        <textarea name="admin_note" rows="2"
+                  class="w-full px-3 py-2 border border-slate-300 rounded text-sm"></textarea>
+      </div>
+    </div>
+  </section>
+
+  {# 2. Segment #}
+  <section class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="text-sm font-semibold text-slate-900 mb-3">2️⃣ Hedef Segment</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {% for s in segments %}
+      <label class="relative cursor-pointer">
+        <input type="radio" name="segment" value="{{ s.value }}" required
+               class="peer sr-only"
+               hx-post="/admin/revenue/campaigns/preview"
+               hx-target="#segment-preview"
+               hx-include="this, [name='filter_plan']"
+               hx-trigger="change">
+        <div class="p-3 border-2 border-slate-200 rounded-lg peer-checked:border-indigo-500 peer-checked:bg-indigo-50/50 hover:border-slate-300 transition-colors">
+          <div class="text-sm font-semibold text-slate-900">{{ segment_labels.get(s) }}</div>
+          <div class="text-xs text-slate-600 mt-1">{{ segment_descriptions.get(s) }}</div>
+          <div class="text-[10px] font-mono text-slate-400 mt-1">{{ s.value }}</div>
+        </div>
+      </label>
+      {% endfor %}
+    </div>
+    <div class="mt-3">
+      <label class="block text-xs font-medium text-slate-700 mb-1">
+        Custom plan filtresi (sadece "Belirli plandakiler" segmenti için)
+      </label>
+      <input type="text" name="filter_plan" maxlength="32"
+             placeholder="ör. solo_free"
+             class="w-full md:w-64 px-3 py-2 border border-slate-300 rounded text-sm font-mono">
+    </div>
+    <div id="segment-preview" class="mt-4">
+      <div class="text-xs text-slate-400 italic">Segment seç → eligible kurum sayısı burada görünür.</div>
+    </div>
+  </section>
+
+  {# 3. Varyant A #}
+  <section class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="text-sm font-semibold text-slate-900 mb-3">3️⃣ Teklif — Varyant A *</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div>
+        <label class="block text-xs font-medium text-slate-700 mb-1">Teklif türü *</label>
+        <select name="variant_a_kind" required class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          {% for k in offer_kinds %}
+          <option value="{{ k.value }}">{{ offer_kind_icons.get(k) }} {{ offer_kind_labels.get(k) }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-700 mb-1">Başlık *</label>
+        <input type="text" name="variant_a_title" required maxlength="255"
+               placeholder="ör. 3 ay %20 indirim"
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-700 mb-1">Değer</label>
+        <input type="number" name="variant_a_value" step="0.01" min="0"
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-slate-700 mb-1">Süre (ay)</label>
+        <input type="number" name="variant_a_duration_months" min="1" max="999"
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-slate-700 mb-1">Yeni plan (PLAN_UPGRADE için)</label>
+        <input type="text" name="variant_a_new_plan" maxlength="32" placeholder="solo_pro"
+               class="w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono">
+      </div>
+      <div class="md:col-span-2">
+        <label class="block text-xs font-medium text-slate-700 mb-1">Kuruma mesaj</label>
+        <textarea name="variant_a_public_message" rows="3"
+                  placeholder="Size özel hazırladığımız teklif..."
+                  class="w-full px-3 py-2 border border-slate-300 rounded text-sm"></textarea>
+      </div>
+    </div>
+  </section>
+
+  {# 4. Varyant B (opsiyonel) #}
+  <section class="bg-white border border-slate-200 rounded-lg p-5">
+    <label class="flex items-start gap-2 cursor-pointer">
+      <input type="checkbox" name="has_variant_b" value="1" id="has-variant-b"
+             class="mt-1 rounded"
+             onchange="document.getElementById('variant-b-block').classList.toggle('hidden', !this.checked)">
+      <div>
+        <div class="text-sm font-semibold text-slate-900">4️⃣ A/B Testi — Varyant B ekle (opsiyonel)</div>
+        <div class="text-xs text-slate-600 mt-1">
+          Hedef kurumların yarısına A, diğer yarısına B varyantı gider. Hangisinin daha çok kabul aldığı sonuç panelinde görünür.
+        </div>
+      </div>
+    </label>
+
+    <div id="variant-b-block" class="hidden mt-4 pt-4 border-t border-slate-200">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Teklif türü</label>
+          <select name="variant_b_kind" class="w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+            <option value="">(seçim yok)</option>
+            {% for k in offer_kinds %}
+            <option value="{{ k.value }}">{{ offer_kind_icons.get(k) }} {{ offer_kind_labels.get(k) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Başlık</label>
+          <input type="text" name="variant_b_title" maxlength="255"
+                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Değer</label>
+          <input type="number" name="variant_b_value" step="0.01" min="0"
+                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-slate-700 mb-1">Süre (ay)</label>
+          <input type="number" name="variant_b_duration_months" min="1" max="999"
+                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-slate-700 mb-1">Yeni plan</label>
+          <input type="text" name="variant_b_new_plan" maxlength="32"
+                 class="w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-xs font-medium text-slate-700 mb-1">Kuruma mesaj</label>
+          <textarea name="variant_b_public_message" rows="3"
+                    class="w-full px-3 py-2 border border-slate-300 rounded text-sm"></textarea>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# 5. Süre #}
+  <section class="bg-white border border-slate-200 rounded-lg p-5">
+    <h2 class="text-sm font-semibold text-slate-900 mb-3">5️⃣ Süre</h2>
+    <div>
+      <label class="block text-xs font-medium text-slate-700 mb-1">Teklif geçerlilik süresi (gün)</label>
+      <input type="number" name="offer_expires_in_days" min="1" max="365" value="14"
+             class="w-32 px-3 py-2 border border-slate-300 rounded text-sm">
+      <div class="text-xs text-slate-500 mt-1">Bu kampanyadan üretilecek her tekliftin yanıtlanma süresi.</div>
+    </div>
+  </section>
+
+  <div class="flex items-center gap-3">
+    <button type="submit"
+            class="px-5 py-2.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">
+      Taslak olarak kaydet
+    </button>
+    <a href="/admin/revenue/campaigns" class="text-sm text-slate-500 hover:text-slate-700">İptal</a>
+    <div class="text-xs text-slate-500">
+      💡 Kaydedildikten sonra detay sayfasında "Başlat" butonuna tıkla → e-postalar otomatik gider.
+    </div>
+  </div>
+</form>
+
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+{% endblock %}

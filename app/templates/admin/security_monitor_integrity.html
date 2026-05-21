@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+{% block title %}Veri Bütünlüğü — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/security-monitor" class="text-sm text-slate-500 hover:text-slate-700">← Güvenlik Kamerası</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🗄 Veri Bütünlüğü Kamerası</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Migration durumu, DB dosyası, orphan tutarsızlıklar, KVKK SLA geciken talepler, cron drift.
+  </p>
+</div>
+
+{# Migration + DB özet #}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  <div class="p-4 rounded-lg
+    {% if data.migration.pending %}bg-rose-50 border border-rose-200
+    {% elif data.migration.status == 'ok' %}bg-emerald-50 border border-emerald-200
+    {% else %}bg-amber-50 border border-amber-200{% endif %}">
+    <div class="flex items-center justify-between">
+      <div class="font-medium text-slate-900">📐 Migration Durumu</div>
+      <span class="text-xs px-2 py-0.5 rounded
+        {% if data.migration.pending %}bg-rose-200 text-rose-900
+        {% elif data.migration.status == 'ok' %}bg-emerald-200 text-emerald-900
+        {% else %}bg-amber-200 text-amber-900{% endif %}">
+        {{ data.migration.status }}
+      </span>
+    </div>
+    <div class="text-xs text-slate-700 mt-2 space-y-1">
+      <div>Head: <code class="text-[11px]">{{ data.migration.head or '—' }}</code></div>
+      <div>Current: <code class="text-[11px]">{{ data.migration.current or '—' }}</code></div>
+      {% if data.migration.error %}
+        <div class="text-rose-700 mt-1">⚠ {{ data.migration.error }}</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="p-4 rounded-lg
+    {% if data.db_file.level == 'critical' %}bg-rose-50 border border-rose-200
+    {% elif data.db_file.level == 'warn' %}bg-amber-50 border border-amber-200
+    {% else %}bg-emerald-50 border border-emerald-200{% endif %}">
+    <div class="flex items-center justify-between">
+      <div class="font-medium text-slate-900">💾 DB Dosyası</div>
+      <span class="text-xs px-2 py-0.5 rounded bg-slate-200 text-slate-800">{{ data.db_file.level }}</span>
+    </div>
+    <div class="text-xs text-slate-700 mt-2 space-y-1">
+      <div>Boyut: <b>{{ data.db_file.size_mb }} MB</b></div>
+      {% if data.db_file.modified_at %}
+        <div>Son değişim: {{ data.db_file.modified_at|dt_tr_full }}</div>
+      {% endif %}
+      {% if data.db_file.path %}
+        <div class="text-[11px] text-slate-500 truncate">{{ data.db_file.path }}</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+  {# Orphan findings #}
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">Orphan Tutarsızlıklar</h2>
+      <div class="text-xs text-slate-500">
+        Toplam <b>{{ data.orphans.total_findings }}</b> bulgu — örnek 5 satır gösteriliyor.
+      </div>
+    </div>
+    {% if not data.orphans.findings %}
+      <div class="px-4 py-10 text-center text-sm text-emerald-600">🟢 Veri bütünlüğü temiz.</div>
+    {% else %}
+      <div class="divide-y divide-slate-100">
+        {% for f in data.orphans.findings %}
+          <div class="px-4 py-3">
+            <div class="flex items-center justify-between mb-2">
+              <div class="text-sm font-medium text-slate-900">{{ f.label }}</div>
+              <span class="text-xs px-2 py-0.5 rounded bg-rose-100 text-rose-700">{{ f.count }} kayıt</span>
+            </div>
+            <code class="text-[11px] text-slate-400 mb-2 block">{{ f.kind }}</code>
+            <ul class="text-xs text-slate-600 space-y-0.5">
+              {% for s in f.samples %}
+                <li>· {{ s }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  {# KVKK SLA #}
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">KVKK SLA Kontrolü ({{ data.kvkk_sla.sla_days }}g)</h2>
+      <div class="text-xs text-slate-500">
+        {{ data.kvkk_sla.open_total }} açık talep · {{ data.kvkk_sla.overdue_count }} SLA aşıldı.
+      </div>
+    </div>
+    {% if not data.kvkk_sla.overdue_samples %}
+      <div class="px-4 py-10 text-center text-sm text-emerald-600">🟢 SLA aşan talep yok.</div>
+    {% else %}
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-3 py-2 text-left">Talep ID</th>
+            <th class="px-3 py-2 text-left">Tür</th>
+            <th class="px-3 py-2 text-left">Durum</th>
+            <th class="px-3 py-2 text-right">Yaş</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for r in data.kvkk_sla.overdue_samples %}
+            <tr class="hover:bg-slate-50">
+              <td class="px-3 py-2">
+                <a href="/admin/kvkk" class="text-indigo-600 hover:text-indigo-800">#{{ r.id }}</a>
+              </td>
+              <td class="px-3 py-2 text-xs">{{ r.kind }}</td>
+              <td class="px-3 py-2 text-xs">{{ r.status }}</td>
+              <td class="px-3 py-2 text-right">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-rose-100 text-rose-700">
+                  {{ r.age_days }} gün
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+</div>
+
+{# Cron drift #}
+<div class="mt-5 bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+    <div>
+      <h2 class="text-sm font-semibold text-slate-900">Cron Drift Kontrolü</h2>
+      <div class="text-xs text-slate-500">Aktif cron'ların son çalışma tazeliği. 25 saat = uyarı, 48 saat = kritik.</div>
+    </div>
+    <div class="flex items-center gap-2 text-xs">
+      <span class="inline-flex items-center gap-1">
+        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> {{ data.cron_drift.summary.ok }} ok
+      </span>
+      <span class="inline-flex items-center gap-1">
+        <span class="w-2 h-2 rounded-full bg-amber-500"></span> {{ data.cron_drift.summary.warn }} warn
+      </span>
+      <span class="inline-flex items-center gap-1">
+        <span class="w-2 h-2 rounded-full bg-rose-500"></span> {{ data.cron_drift.summary.critical }} crit
+      </span>
+    </div>
+  </div>
+  {% if not data.cron_drift.jobs %}
+    <div class="px-4 py-10 text-center text-sm text-slate-500">Hiç cron job yok.</div>
+  {% else %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">Job</th>
+          <th class="px-3 py-2 text-left">Son çalışma</th>
+          <th class="px-3 py-2 text-right">Yaş</th>
+          <th class="px-3 py-2 text-left">Durum</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for j in data.cron_drift.jobs %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2">
+              <code class="text-xs">{{ j.job_key }}</code>
+              {% if j.last_error %}
+                <div class="text-[11px] text-rose-600 mt-0.5 truncate max-w-xs">⚠ {{ j.last_error }}</div>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-xs text-slate-600">
+              {% if j.last_run_at %}{{ j.last_run_at|dt_dual }}{% else %}—{% endif %}
+            </td>
+            <td class="px-3 py-2 text-right text-xs">
+              {% if j.age_hours is not none %}{{ j.age_hours }} sa{% else %}—{% endif %}
+            </td>
+            <td class="px-3 py-2 text-xs">
+              {% set color = 'rose' if j.level == 'critical' else ('amber' if j.level == 'warn' else 'emerald') %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded bg-{{ color }}-100 text-{{ color }}-800">
+                {{ j.level }}
+              </span>
+              {% if j.last_status %}<span class="text-slate-500 ml-1">{{ j.last_status }}</span>{% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<div class="mt-6 text-xs text-slate-400">
+  Veri zamanı: {{ data.generated_at|dt_tr_full }}
+</div>
+{% endblock %}

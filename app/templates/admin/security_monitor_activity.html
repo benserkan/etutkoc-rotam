@@ -1,0 +1,1616 @@
+{% extends "base.html" %}
+{% block title %}Hesap Aktivitesi — Admin{% endblock %}
+
+{% block content %}
+{% from "_macros/section_panel.html" import panel %}
+
+{# Owner-tip rozeti — kurum vs bağımsız öğretmen ayırt eder #}
+{% macro owner_badge(r) -%}
+  {%- if r.owner_type == 'solo' -%}
+    <span class="text-purple-600 mr-1" title="Bağımsız öğretmen">👤</span>
+  {%- else -%}
+    <span class="text-blue-600 mr-1" title="Kurum">🏢</span>
+  {%- endif -%}
+{%- endmacro %}
+<div class="mb-6">
+  <a href="/admin/security-monitor" class="text-sm text-slate-500 hover:text-slate-700">← Güvenlik Kamerası</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📊 Hesap Aktivitesi Kamerası</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Sistemi günlük/haftalık/aylık kimler kullanıyor; en yoğun saatler hangileri; hangi
+    <b>kurumlar veya bağımsız öğretmenler</b> sessizleşmiş — bir bakışta gör.
+    Yukarıdaki "Görüntüle" düğmesiyle kurum/bağımsız ayrımı yapabilirsin.
+  </p>
+</div>
+
+{# "Bu sayfada ne yazıyor?" — sade açıklama #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Günlük Aktif Kullanıcı</b> — son 24 saatte sisteme en az 1 kez giriş yapan kişi sayısı.
+      (Teknik adı: <code class="text-xs">DAU</code>)
+    </div>
+    <div>
+      <b>Haftalık Aktif Kullanıcı</b> — son 7 günde en az 1 kez giriş yapan kişi sayısı.
+      (Teknik adı: <code class="text-xs">WAU</code>)
+    </div>
+    <div>
+      <b>Aylık Aktif Kullanıcı</b> — son 30 günde en az 1 kez giriş yapan kişi sayısı.
+      (Teknik adı: <code class="text-xs">MAU</code>)
+    </div>
+    <div>
+      <b>Yapışkanlık oranı</b> — Günlük Aktif ÷ Aylık Aktif. Yüksekse "kullanıcılar sık dönüyor",
+      düşükse "ayda bir defa girip kayboluyorlar". %30+ sağlıklı.
+    </div>
+    <div>
+      <b>Saat × Gün Isı Haritası</b> — hangi saatte / hangi günde sisteme yoğun giriş oluyor.
+      Koyu hücre = yoğun, açık hücre = boş. "Pazarlama e-postası ne zaman atalım"
+      sorusunun cevabı için.
+    </div>
+    <div>
+      <b>Sessizleşen kurum</b> — son 7 günde sisteme hiç giriş yapmamış kurum. "Terk etmek üzere
+      olabilir" sinyali — temas etmek için liste.
+    </div>
+  </div>
+</details>
+
+{# Toplu Aktif Kullanıcı kartları — sayılar tıklanabilir (Sprint 1 Faz I) #}
+{% if active_tab == 'today' %}
+<div class="grid grid-cols-1 md:grid-cols-4 gap-3 mb-6">
+  <div class="p-4 rounded-lg bg-indigo-50 border border-indigo-200">
+    <div class="text-xs text-indigo-700 uppercase tracking-wide flex items-center gap-1">
+      Günlük Aktif Kullanıcı
+      <span class="cursor-help text-indigo-500" title="Son 24 saatte en az 1 kez sisteme giriş yapan kişi sayısı (teknik: DAU)">ⓘ</span>
+    </div>
+    <button type="button"
+            hx-get="/admin/security-monitor/activity/drill/active-users?window=dau"
+            hx-target="#drill-host" hx-swap="innerHTML"
+            onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+            class="text-3xl font-semibold text-indigo-900 mt-1 hover:underline cursor-pointer">
+      {{ data.totals.dau }}
+    </button>
+    <div class="text-[11px] text-indigo-700 mt-1">son 24 saatte aktif · tıkla → liste</div>
+  </div>
+  <div class="p-4 rounded-lg bg-purple-50 border border-purple-200">
+    <div class="text-xs text-purple-700 uppercase tracking-wide flex items-center gap-1">
+      Haftalık Aktif Kullanıcı
+      <span class="cursor-help text-purple-500" title="Son 7 günde en az 1 kez sisteme giriş yapan kişi sayısı (teknik: WAU)">ⓘ</span>
+    </div>
+    <button type="button"
+            hx-get="/admin/security-monitor/activity/drill/active-users?window=wau"
+            hx-target="#drill-host" hx-swap="innerHTML"
+            onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+            class="text-3xl font-semibold text-purple-900 mt-1 hover:underline cursor-pointer">
+      {{ data.totals.wau }}
+    </button>
+    <div class="text-[11px] text-purple-700 mt-1">son 7 günde aktif · tıkla → liste</div>
+  </div>
+  <div class="p-4 rounded-lg bg-fuchsia-50 border border-fuchsia-200">
+    <div class="text-xs text-fuchsia-700 uppercase tracking-wide flex items-center gap-1">
+      Aylık Aktif Kullanıcı
+      <span class="cursor-help text-fuchsia-500" title="Son 30 günde en az 1 kez sisteme giriş yapan kişi sayısı (teknik: MAU)">ⓘ</span>
+    </div>
+    <button type="button"
+            hx-get="/admin/security-monitor/activity/drill/active-users?window=mau"
+            hx-target="#drill-host" hx-swap="innerHTML"
+            onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+            class="text-3xl font-semibold text-fuchsia-900 mt-1 hover:underline cursor-pointer">
+      {{ data.totals.mau }}
+    </button>
+    <div class="text-[11px] text-fuchsia-700 mt-1">son 30 günde aktif · tıkla → liste</div>
+  </div>
+  {# Yapışkanlık oranı kartı — basit hesap, DAU/MAU #}
+  {% set stickiness = (data.totals.dau * 100 / data.totals.mau)|round(1) if data.totals.mau > 0 else 0 %}
+  <div class="p-4 rounded-lg
+    {% if stickiness >= 30 %}bg-emerald-50 border border-emerald-200
+    {% elif stickiness >= 20 %}bg-amber-50 border border-amber-200
+    {% else %}bg-rose-50 border border-rose-200{% endif %}">
+    <div class="text-xs uppercase tracking-wide flex items-center gap-1
+      {% if stickiness >= 30 %}text-emerald-700
+      {% elif stickiness >= 20 %}text-amber-700
+      {% else %}text-rose-700{% endif %}">
+      Yapışkanlık Oranı
+      <span class="cursor-help" title="Günlük Aktif ÷ Aylık Aktif — kullanıcıların yüzde kaçı bugün de geldi. %30+ sağlıklı, %20 altı zayıf.">ⓘ</span>
+    </div>
+    <div class="text-3xl font-semibold mt-1
+      {% if stickiness >= 30 %}text-emerald-900
+      {% elif stickiness >= 20 %}text-amber-900
+      {% else %}text-rose-900{% endif %}">%{{ stickiness }}</div>
+    <div class="text-[11px] mt-1
+      {% if stickiness >= 30 %}text-emerald-700
+      {% elif stickiness >= 20 %}text-amber-700
+      {% else %}text-rose-700{% endif %}">
+      {% if stickiness >= 30 %}sağlıklı düzey
+      {% elif stickiness >= 20 %}orta — geliştirilebilir
+      {% else %}düşük — kullanıcılar geri dönmüyor{% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ========================================================================
+   KRİTİK ÖZET KARTI — her zaman görünür, tek bakışta "bugün acil ne var?"
+   ======================================================================== #}
+{% set cs = data.critical_summary %}
+<section class="mb-5 bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
+  <header class="px-5 py-3 bg-gradient-to-r from-rose-100 to-rose-50 border-b-2 border-rose-300">
+    <div class="text-[10px] uppercase tracking-wider text-rose-700 font-semibold mb-0.5">
+      Hızlı Bakış
+    </div>
+    <h2 class="text-base font-semibold text-slate-900">🚨 Kritik Özet</h2>
+    <p class="text-xs text-slate-700 mt-1">
+      Bugün acil ilgi gerektiren durumlar. Her sayıya tıklayınca ilgili sekmeye gidersin.
+    </p>
+  </header>
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 p-4 bg-slate-50/60">
+    {# Yapışkanlık #}
+    <a href="?tab=retention" class="p-3 rounded-lg bg-white border border-{{ cs.stickiness_color }}-300 hover:shadow-sm transition">
+      <div class="text-[10px] uppercase text-{{ cs.stickiness_color }}-700 font-semibold">Yapışkanlık</div>
+      <div class="text-2xl font-bold text-{{ cs.stickiness_color }}-900 mt-1">%{{ cs.stickiness_pct }}</div>
+      <div class="text-[10px] text-slate-500 mt-1">{{ cs.stickiness_label }}</div>
+    </a>
+    {# Kritik kurumlar #}
+    <a href="?tab=risk" class="p-3 rounded-lg bg-white border {% if cs.critical_institutions > 0 %}border-rose-300{% else %}border-emerald-200{% endif %} hover:shadow-sm transition">
+      <div class="text-[10px] uppercase {% if cs.critical_institutions > 0 %}text-rose-700{% else %}text-emerald-700{% endif %} font-semibold">🔴 Kritik Kurum</div>
+      <div class="text-2xl font-bold {% if cs.critical_institutions > 0 %}text-rose-900{% else %}text-emerald-900{% endif %} mt-1">{{ cs.critical_institutions }}</div>
+      <div class="text-[10px] text-slate-500 mt-1">14g+ sessiz</div>
+    </a>
+    {# Sharp drop #}
+    <a href="?tab=risk" class="p-3 rounded-lg bg-white border {% if cs.sharp_drop_count > 0 %}border-rose-300{% else %}border-slate-200{% endif %} hover:shadow-sm transition">
+      <div class="text-[10px] uppercase {% if cs.sharp_drop_count > 0 %}text-rose-700{% else %}text-slate-600{% endif %} font-semibold">📉 Sert Düşüş</div>
+      <div class="text-2xl font-bold {% if cs.sharp_drop_count > 0 %}text-rose-900{% else %}text-slate-700{% endif %} mt-1">{{ cs.sharp_drop_count }}</div>
+      <div class="text-[10px] text-slate-500 mt-1">%50+ aktivite kaybı</div>
+    </a>
+    {# Ödeyen ama pasif #}
+    <a href="?tab=risk" class="p-3 rounded-lg bg-white border {% if cs.paying_idle_count > 0 %}border-rose-300{% else %}border-emerald-200{% endif %} hover:shadow-sm transition">
+      <div class="text-[10px] uppercase {% if cs.paying_idle_count > 0 %}text-rose-700{% else %}text-emerald-700{% endif %} font-semibold">💰 Ödeyen ama Pasif</div>
+      <div class="text-2xl font-bold {% if cs.paying_idle_count > 0 %}text-rose-900{% else %}text-emerald-900{% endif %} mt-1">{{ cs.paying_idle_count }}</div>
+      <div class="text-[10px] text-slate-500 mt-1">terk riski</div>
+    </a>
+    {# Onboarding tıkanma #}
+    <a href="?tab=retention" class="p-3 rounded-lg bg-white border {% if cs.onboarding_stuck_count > 0 %}border-amber-300{% else %}border-emerald-200{% endif %} hover:shadow-sm transition">
+      <div class="text-[10px] uppercase {% if cs.onboarding_stuck_count > 0 %}text-amber-700{% else %}text-emerald-700{% endif %} font-semibold">🚀 Yavaş Onboarding</div>
+      <div class="text-2xl font-bold {% if cs.onboarding_stuck_count > 0 %}text-amber-900{% else %}text-emerald-900{% endif %} mt-1">{{ cs.onboarding_stuck_count }}</div>
+      <div class="text-[10px] text-slate-500 mt-1">yeni kurum %50 altı</div>
+    </a>
+    {# Champion #}
+    <a href="?tab=benchmark" class="p-3 rounded-lg bg-white border border-emerald-300 hover:shadow-sm transition">
+      <div class="text-[10px] uppercase text-emerald-700 font-semibold">🏆 Champion</div>
+      <div class="text-2xl font-bold text-emerald-900 mt-1">{{ cs.champion_count }}</div>
+      <div class="text-[10px] text-slate-500 mt-1">referans/case study adayı</div>
+    </a>
+  </div>
+</section>
+
+
+{# ========================================================================
+   SEGMENT TOGGLE — Hepsi / Kurumlar / Bağımsız öğretmenler
+   ======================================================================== #}
+{% set segments = [
+  ('all',         '🌐 Hepsi',              'indigo'),
+  ('institution', '🏢 Kurumlar',           'blue'),
+  ('solo',        '👤 Bağımsız Öğretmenler', 'purple'),
+] %}
+<div class="mb-3 flex items-center gap-2 text-sm flex-wrap">
+  <span class="text-slate-500">Görüntüle:</span>
+  {% for slug, label, color in segments %}
+  <a href="?tab={{ active_tab }}&segment={{ slug }}"
+     class="px-3 py-1.5 rounded-full font-medium transition border
+     {% if active_segment == slug %}bg-{{ color }}-600 text-white border-{{ color }}-700 shadow-sm
+     {% else %}bg-white text-slate-700 border-slate-300 hover:border-{{ color }}-300 hover:text-{{ color }}-700{% endif %}">
+    {{ label }}
+  </a>
+  {% endfor %}
+  <span class="text-xs text-slate-500 ml-2">
+    {% if active_segment == 'institution' %}
+      Sadece kurumsal hesaplar
+    {% elif active_segment == 'solo' %}
+      Sadece bağımsız öğretmenler — kurum gibi davranan tek-kişilik hesaplar
+    {% else %}
+      Tüm hesaplar (kurum + bağımsız öğretmen) birleşik
+    {% endif %}
+  </span>
+</div>
+
+{# ========================================================================
+   SEKME BARI — 6 sekme (segment ile çapraz çalışır)
+   ======================================================================== #}
+{% set tabs = [
+  ('today',     '🩺 Bugün',          'indigo'),
+  ('risk',      '🚨 Risk & Erken Uyarı', 'rose'),
+  ('retention', '🔁 Tutunma & Onboarding', 'blue'),
+  ('depth',     '🎨 Kullanım Derinliği',  'cyan'),
+  ('time',      '🗺 Zaman & Heatmap', 'slate'),
+  ('benchmark', '🏆 Karşılaştırma',  'emerald'),
+] %}
+<div class="mb-5 border-b border-slate-200 flex items-center gap-1 flex-wrap">
+  {% for slug, label, color in tabs %}
+  <a href="?tab={{ slug }}&segment={{ active_segment }}"
+     class="px-3 py-2 text-sm font-medium border-b-2 -mb-px transition
+     {% if active_tab == slug %}border-{{ color }}-500 text-{{ color }}-700 bg-{{ color }}-50/60
+     {% else %}border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300{% endif %}">
+    {{ label }}
+  </a>
+  {% endfor %}
+</div>
+
+
+{# Drill-down host — HTMX partial buraya gelir (sekmeden bağımsız) #}
+<div id="drill-host" class="mb-5"></div>
+
+
+{# Rol kırılımı kartları — Sprint 1 Faz B #}
+{% if active_tab == 'today' and data.role_breakdown %}
+<section class="mb-6 bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+  <header class="px-4 py-3 bg-gradient-to-r from-indigo-100 to-indigo-50 border-b-2 border-indigo-300">
+    <div class="text-[10px] uppercase tracking-wider text-indigo-700 font-semibold mb-0.5">
+      Pencere 1 — Sağlık
+    </div>
+    <h2 class="text-base font-semibold text-slate-900">👥 Bugün aktif — rol kırılımı</h2>
+    <p class="text-xs text-slate-700 mt-1">
+      Son 24 saatte sisteme en az 1 kez giriş yapan kişi sayısı, <b>kullanıcı rolüne göre</b>.
+      Dünkü değerle karşılaştırma (↑ artış, ↓ azalış) yan satırda. Bir sayıya tıklayınca o roldeki
+      aktif kişilerin listesi açılır.
+    </p>
+  </header>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 p-4">
+    {% for r in data.role_breakdown.rows %}
+    <div class="p-3 rounded-lg bg-{{ r.color }}-50 border border-{{ r.color }}-200">
+      <div class="text-[11px] uppercase text-{{ r.color }}-700 flex items-center gap-1">
+        <span>{{ r.icon }}</span>
+        {{ r.label }}
+      </div>
+      <button type="button"
+              hx-get="/admin/security-monitor/activity/drill/active-users?window=dau&role={{ r.role }}"
+              hx-target="#drill-host" hx-swap="innerHTML"
+              onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+              class="text-2xl font-semibold text-{{ r.color }}-900 mt-1 hover:underline cursor-pointer">
+        {{ r.today }}
+      </button>
+      <div class="text-[11px] mt-1
+        {% if r.delta > 0 %}text-emerald-700
+        {% elif r.delta < 0 %}text-rose-700
+        {% else %}text-slate-500{% endif %}">
+        Dün: {{ r.yesterday }}
+        {% if r.delta > 0 %}
+          · ↑ %{{ r.delta_pct }}
+        {% elif r.delta < 0 %}
+          · ↓ %{{ -r.delta_pct }}
+        {% else %}
+          · değişim yok
+        {% endif %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# Bağımsız öğretmen özel paneli (Sprint 5 — sadece solo/all segmentinde) #}
+{% if active_tab == 'today' and data.solo_special %}
+{% set sp = data.solo_special %}
+{% call panel(
+    color='purple',
+    category='Bağımsız Öğretmen Atletizmi',
+    icon='👤',
+    title='Bağımsız Öğretmene Özel Metrikler',
+    description='Kurum-merkezli metriklerin bağımsız öğretmen için anlamsız kalan kısımlarını tamamlar. <b>Veli iletişimi</b> öğretmenin destek kültürünü; <b>disiplin</b> öğrenci başına hazırlanan görev yoğunluğunu; <b>tutarlılık</b> öğretmenin sürekliliğini ölçer.',
+) %}
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+    {# Veli iletişim oranı #}
+    <div class="p-4 rounded-lg bg-white border border-{{ sp.parent_outreach.color }}-300">
+      <div class="text-[11px] uppercase text-{{ sp.parent_outreach.color }}-700 font-semibold flex items-center gap-1">
+        🎯 Veli İletişim Oranı
+      </div>
+      <div class="text-3xl font-semibold text-{{ sp.parent_outreach.color }}-900 mt-1">
+        %{{ sp.parent_outreach.ratio_pct }}
+      </div>
+      <div class="text-[11px] text-slate-600 mt-1">
+        {{ sp.parent_outreach.sent_count }} / {{ sp.parent_outreach.total }} öğretmen veli daveti göndermiş
+      </div>
+      <div class="text-[11px] text-{{ sp.parent_outreach.color }}-700 mt-1">{{ sp.parent_outreach.label }}</div>
+    </div>
+    {# Öğrenci başına haftalık görev #}
+    <div class="p-4 rounded-lg bg-white border border-{{ sp.discipline.color }}-300">
+      <div class="text-[11px] uppercase text-{{ sp.discipline.color }}-700 font-semibold">
+        📚 Öğrenci Başına Haftalık Görev
+      </div>
+      <div class="text-3xl font-semibold text-{{ sp.discipline.color }}-900 mt-1">
+        {{ sp.discipline.avg_per_student_per_week }}
+      </div>
+      <div class="text-[11px] text-slate-600 mt-1">
+        {{ sp.discipline.total_tasks }} görev / {{ sp.discipline.total_students }} öğrenci / son {{ sp.discipline.weeks }} hafta
+      </div>
+      <div class="text-[11px] text-{{ sp.discipline.color }}-700 mt-1">{{ sp.discipline.label }}</div>
+    </div>
+    {# Haftalık tutarlılık #}
+    <div class="p-4 rounded-lg bg-white border border-{{ sp.consistency.color }}-300">
+      <div class="text-[11px] uppercase text-{{ sp.consistency.color }}-700 font-semibold">
+        📅 Haftalık Tutarlılık
+      </div>
+      <div class="text-3xl font-semibold text-{{ sp.consistency.color }}-900 mt-1">
+        {{ sp.consistency.avg_missing_weeks }}
+      </div>
+      <div class="text-[11px] text-slate-600 mt-1">
+        Ort. kayıp hafta · {{ sp.consistency.consistent_count }} / {{ sp.consistency.total }} öğretmen tam tutarlı
+      </div>
+      <div class="text-[11px] text-{{ sp.consistency.color }}-700 mt-1">{{ sp.consistency.label }}</div>
+    </div>
+  </div>
+{% endcall %}
+{% endif %}
+
+{# Hafta karşılaştırma — Sprint 1 Faz B #}
+{% if active_tab == 'today' and data.wow %}
+{% set w = data.wow %}
+<section class="mb-6 bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+  <header class="px-4 py-3 bg-gradient-to-r from-blue-100 to-blue-50 border-b-2 border-blue-300">
+    <div class="text-[10px] uppercase tracking-wider text-blue-700 font-semibold mb-0.5">
+      Pencere 1 — Sağlık · Karşılaştırma
+    </div>
+    <h2 class="text-base font-semibold text-slate-900">
+      📈 Bu hafta vs Geçen hafta — Günlük Aktif Kullanıcı
+    </h2>
+    <p class="text-xs text-slate-700 mt-1">
+      Her gün için <b>iki çubuk</b>: <span class="font-semibold text-indigo-700">mavi</span> = bu hafta,
+      <span class="font-semibold text-slate-600">gri</span> = bir hafta önceki aynı gün.
+      Yan yana karşılaştırma "geçen haftaya göre büyüdük mü, küçüldük mü" cevabını verir.
+    </p>
+    <div class="text-xs text-slate-700 mt-2">
+      Bu hafta toplam <b>{{ w.this_total }}</b>, geçen hafta <b>{{ w.last_total }}</b>
+      {% if w.delta > 0 %}· <span class="text-emerald-700 font-semibold">↑ +{{ w.delta }} (%{{ w.delta_pct }})</span>
+      {% elif w.delta < 0 %}· <span class="text-rose-700 font-semibold">↓ {{ w.delta }} (%{{ w.delta_pct }})</span>
+      {% else %}· değişim yok{% endif %}
+    </div>
+  </header>
+  {% if w.max_value > 0 %}
+  <div class="p-3">
+    <div class="flex items-end gap-1 h-32">
+      {% for i in range(7) %}
+      {% set t = w.this_series[i] %}
+      {% set l = w.last_series[i] %}
+      {% set t_pct = (t * 100 / w.max_value)|int if w.max_value > 0 else 0 %}
+      {% set l_pct = (l * 100 / w.max_value)|int if w.max_value > 0 else 0 %}
+      <div class="flex-1 flex flex-col items-center justify-end h-full">
+        <div class="flex items-end gap-0.5 w-full h-full justify-center">
+          {# Geçen hafta — açık gri #}
+          <div class="w-1/2 bg-slate-300 hover:bg-slate-500 rounded-t"
+               style="height: {{ l_pct }}%; min-height: 1px;"
+               title="Geçen hafta {{ w.day_labels[i] }} ({{ w.last_dates[i] }}): {{ l }} aktif"></div>
+          {# Bu hafta — indigo #}
+          <div class="w-1/2 bg-indigo-500 hover:bg-indigo-700 rounded-t"
+               style="height: {{ t_pct }}%; min-height: 1px;"
+               title="Bu hafta {{ w.day_labels[i] }} ({{ w.this_dates[i] }}): {{ t }} aktif"></div>
+        </div>
+        <div class="text-[10px] text-slate-500 mt-1">{{ w.day_labels[i] }}</div>
+        <div class="text-[9px] text-slate-400">{{ t }}/{{ l }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    <div class="mt-2 flex items-center gap-3 text-[11px] text-slate-500">
+      <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-indigo-500"></span> Bu hafta</span>
+      <span class="inline-flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-300"></span> Geçen hafta</span>
+    </div>
+  </div>
+  {% else %}
+  <div class="px-4 py-8 text-center text-sm text-slate-500">Son 14 günde giriş kaydı yok.</div>
+  {% endif %}
+</section>
+{% endif %}
+
+{# Kurum kalp atışı — Sprint 1 Faz B #}
+{% if active_tab == 'risk' and data.heartbeats %}
+{% set hb = data.heartbeat_summary %}
+<section class="mb-6 bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm">
+  <header class="px-4 py-3 bg-gradient-to-r from-rose-100 to-rose-50 border-b-2 border-rose-300">
+    <div class="text-[10px] uppercase tracking-wider text-rose-700 font-semibold mb-0.5">
+      Pencere 1 — Sağlık · Erken Uyarı
+    </div>
+    <h2 class="text-base font-semibold text-slate-900">
+      {% if data.segment == 'solo' %}
+        ❤️ Öğretmen Kalp Atışı — Son Aktivite (kendisi veya öğrencileri)
+      {% elif data.segment == 'institution' %}
+        ❤️ Kurum Kalp Atışı — Yetkilinin Son Girişi
+      {% else %}
+        ❤️ Hesap Kalp Atışı — Son Giriş (kurum + bağımsız öğretmen)
+      {% endif %}
+    </h2>
+    <p class="text-xs text-slate-700 mt-1">
+      {% if data.segment == 'solo' %}
+        Her <b>bağımsız öğretmenin</b> kendisinin veya öğrencilerinin en son ne zaman
+        giriş yaptığı (max). Hiçbiri girmediyse hesap "sessiz" sayılır.
+      {% elif data.segment == 'institution' %}
+        Her kurumun <b>yöneticisi</b> (yoksa öğretmeni) en son ne zaman giriş yaptı.
+      {% else %}
+        Her <b>kurum</b> için yetkili son girişi; her <b>bağımsız öğretmen</b> için
+        kendi veya öğrencilerinin son aktivitesi (max). 🏢 = kurum, 👤 = bağımsız.
+      {% endif %}
+      7 günden eskiyse <span class="text-amber-700 font-semibold">sarı</span>,
+      14 günden eskiyse <span class="text-rose-700 font-semibold">kırmızı</span>,
+      30 günden eskiyse <span class="text-slate-700 font-semibold">"ölü"</span> kabul edilir.
+      {% if data.segment != 'solo' %}
+        Kuruma <b>🗺 Heatmap</b> butonuyla tıklayınca o kurumun saat × gün dağılımı açılır.
+      {% endif %}
+    </p>
+    <div class="text-xs text-slate-700 mt-2 flex items-center gap-3 flex-wrap">
+      <span><b>🟢 {{ hb.healthy }}</b> sağlıklı (&lt;3g)</span>
+      <span><b>🟡 {{ hb.watch }}</b> izle (3-7g)</span>
+      <span><b>🟠 {{ hb.warning }}</b> dikkat (7-14g)</span>
+      <span><b>🔴 {{ hb.critical }}</b> risk (14-30g)</span>
+      <span><b>⚫ {{ hb.dead }}</b> kayıp (30g+)</span>
+      <span><b>◯ {{ hb.no_login }}</b> hiç giriş yok</span>
+    </div>
+  </header>
+  <ul class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+    {% for r in data.heartbeats %}
+    <li class="px-4 py-2 flex items-center justify-between gap-3 hover:bg-slate-50">
+      <div class="min-w-0 flex-1 flex items-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-{{ r.band_color }}-500 shrink-0"></span>
+        <a href="{{ r.detail_url }}" target="_blank"
+           class="text-sm font-medium text-indigo-700 hover:underline truncate">
+          {{ owner_badge(r) }}{{ r.institution_name }}
+        </a>
+        <span class="text-[10px] font-mono text-slate-400">{{ r.plan }}</span>
+        {% if r.owner_type == 'solo' and r.student_count is defined %}
+        <span class="text-[10px] text-slate-400">· {{ r.student_count }} öğr.</span>
+        {% endif %}
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <span class="text-[11px] px-1.5 py-0.5 rounded bg-{{ r.band_color }}-100 text-{{ r.band_color }}-800 font-semibold">
+          {{ r.label }}
+        </span>
+        {% if r.last_source %}
+        <span class="text-[10px] text-slate-400" title="Son giriş kim tarafından">
+          {% if r.last_source == 'admin' %}(yön.){% elif r.last_source == 'teacher' %}(öğret.){% elif r.last_source == 'teacher_self' %}(öğret.){% elif r.last_source == 'students' %}(öğrenci){% endif %}
+        </span>
+        {% endif %}
+        {# Faz J — aksiyon önerisi popup #}
+        {% set sugg = data.action_suggestions.get(r.band, []) %}
+        {% if sugg %}
+        <details class="relative">
+          <summary class="list-none cursor-pointer text-[11px] text-amber-700 hover:text-amber-900 select-none">
+            💡 Öneri
+          </summary>
+          <div class="absolute right-0 top-6 z-20 w-64 p-2 bg-white border border-amber-300 rounded shadow-lg">
+            <div class="text-[10px] uppercase text-amber-700 font-semibold mb-1">Önerilen Aksiyonlar</div>
+            <ul class="space-y-1 text-[11px]">
+              {% for s in sugg %}
+              <li class="text-slate-700">
+                <span class="font-mono text-[10px] text-slate-500">{{ s.kind }}</span>
+                <b>{{ s.label }}</b>
+                <div class="text-[10px] text-slate-500">{{ s.hint }}</div>
+              </li>
+              {% endfor %}
+            </ul>
+            <a href="{{ r.detail_url }}?tab=actions" target="_blank"
+               class="block mt-2 pt-2 border-t border-amber-100 text-[11px] text-amber-700 hover:text-amber-900 text-center">
+              → Kurum 360 CRM aksiyonu oluştur
+            </a>
+          </div>
+        </details>
+        {% endif %}
+        {% if r.owner_type != 'solo' %}
+        <button type="button"
+                hx-get="/admin/security-monitor/activity/drill/heatmap?institution_id={{ r.institution_id }}"
+                hx-target="#drill-host" hx-swap="innerHTML"
+                onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+                class="text-[11px] text-slate-500 hover:text-indigo-700 underline">
+          🗺 Heatmap
+        </button>
+        {% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+
+{# ========================================================================
+   SPRINT 2 — FAZ C: Tutunma metrikleri (Stickiness + Week1 + Day30 + Geri dönenler)
+   ======================================================================== #}
+{% if active_tab == 'retention' and data.stickiness %}
+{% set s = data.stickiness %}
+{% set w1 = data.week1 %}
+{% set d30 = data.day30 %}
+{% set res = data.resurrected %}
+{% call panel(
+    color='blue',
+    category='Pencere 2 — Tutunma',
+    icon='🔁',
+    title='Tutunma Metrikleri',
+    description='Kullanıcılar gelip gidiyor mu, kalıyor mu? <b>Yapışkanlık</b> günlük geri dönüş oranıdır; <b>1. hafta</b> yeni kayıtların ilk haftada hâlâ aktif olma oranı; <b>30 gün</b> hayatta kalma onboarding sağlığını gösterir. <b>Geri dönen</b> kullanıcılar uzun sessizlik sonrası yeniden aktiflenmiş — kampanya/onboarding başarısı.',
+) %}
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    {# Yapışkanlık #}
+    <div class="p-4 rounded-lg bg-white border border-{{ s.color }}-200 hover:border-{{ s.color }}-400 hover:shadow-sm transition"
+         title="DAU/MAU = günlük aktif ÷ aylık aktif. %30 üstü sağlıklı, %20 altı zayıf.">
+      <div class="text-[11px] uppercase text-{{ s.color }}-700 font-semibold">Yapışkanlık</div>
+      <div class="text-3xl font-semibold text-{{ s.color }}-900 mt-1">%{{ s.ratio_pct }}</div>
+      <div class="text-[11px] text-slate-700 mt-1">
+        <b>{{ s.dau }}</b> / {{ s.mau }} (DAU/MAU)
+      </div>
+      <div class="text-[11px] text-{{ s.color }}-700 mt-1">{{ s.label }}</div>
+    </div>
+
+    {# Trend (mini sparkline) #}
+    <div class="p-4 rounded-lg bg-white border border-slate-200">
+      <div class="text-[11px] uppercase text-slate-600 font-semibold">Son 30 Gün Trendi</div>
+      {% set tr = data.stickiness_trend_30d %}
+      {% set max_r = (tr|map(attribute='ratio')|max) or 1 %}
+      <div class="flex items-end gap-px h-12 mt-2">
+        {% for d in tr %}
+        {% set hpct = (d.ratio * 100 / max_r)|int if max_r > 0 else 0 %}
+        <div class="flex-1 bg-blue-400 hover:bg-blue-600 rounded-sm"
+             style="height: {{ hpct }}%; min-height: 1px;"
+             title="{{ d.day }}: %{{ d.ratio }} ({{ d.dau }}/{{ d.mau }})"></div>
+        {% endfor %}
+      </div>
+      <div class="text-[10px] text-slate-500 mt-1">DAU/MAU oranı %, hücre üzerine gelince gün detayı</div>
+    </div>
+
+    {# 1. Hafta tutunma #}
+    <div class="p-4 rounded-lg bg-white border border-slate-200"
+         title="Geçen hafta kayıt olan {{ w1.total }} kullanıcının son 7g'de hâlâ aktif olma oranı.">
+      <div class="text-[11px] uppercase text-slate-600 font-semibold">1. Hafta Tutunma</div>
+      <div class="text-3xl font-semibold text-slate-900 mt-1">
+        {% if w1.ratio_pct is not none %}%{{ w1.ratio_pct }}{% else %}—{% endif %}
+      </div>
+      <div class="text-[11px] text-slate-500 mt-1">
+        {% if w1.total > 0 %}{{ w1.active }} / {{ w1.total }} aktif{% else %}geçen hafta yeni kayıt yok{% endif %}
+      </div>
+      <div class="text-[11px] text-slate-700 mt-1">
+        {% if w1.ratio_pct is none %}—
+        {% elif w1.ratio_pct >= 50 %}<span class="text-emerald-700">iyi onboarding</span>
+        {% elif w1.ratio_pct >= 25 %}<span class="text-amber-700">orta — geliştirilebilir</span>
+        {% else %}<span class="text-rose-700">zayıf — onboarding bozuk olabilir</span>{% endif %}
+      </div>
+    </div>
+
+    {# 30 Gün Hayatta Kalma #}
+    <div class="p-4 rounded-lg bg-white border border-{{ d30.color if d30.ratio_pct is not none else 'slate' }}-200"
+         title="30-37 gün önce kayıt olmuş {{ d30.total }} kullanıcının son 7g'de hâlâ aktif olma oranı. %50 altı = onboarding bozuk sinyali.">
+      <div class="text-[11px] uppercase text-slate-600 font-semibold">30 Gün Hayatta Kalma</div>
+      <div class="text-3xl font-semibold text-slate-900 mt-1">
+        {% if d30.ratio_pct is not none %}%{{ d30.ratio_pct }}{% else %}—{% endif %}
+      </div>
+      <div class="text-[11px] text-slate-500 mt-1">
+        {% if d30.total > 0 %}{{ d30.active }} / {{ d30.total }} aktif{% else %}30g önce kayıt yok{% endif %}
+      </div>
+      <div class="text-[11px] mt-1">
+        {% if d30.ratio_pct is none %}<span class="text-slate-400">veri yetersiz</span>
+        {% elif d30.health == 'healthy' %}<span class="text-emerald-700">sağlıklı</span>
+        {% elif d30.health == 'medium' %}<span class="text-amber-700">orta</span>
+        {% else %}<span class="text-rose-700">düşük — onboarding zayıf</span>{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {# Geri dönenler listesi #}
+  {% if res %}
+  <div class="mt-4 p-3 bg-white border border-emerald-200 rounded-lg">
+    <div class="flex items-center justify-between mb-2">
+      <h3 class="text-sm font-semibold text-emerald-900">
+        ✨ Geri Dönen Kullanıcılar ({{ res|length }})
+      </h3>
+      <span class="text-[11px] text-slate-500">14g+ sessizlik sonrası tekrar girdi</span>
+    </div>
+    <ul class="divide-y divide-slate-100 max-h-48 overflow-y-auto">
+      {% for u in res[:20] %}
+      <li class="px-2 py-1.5 flex items-center justify-between text-xs">
+        <div class="min-w-0 flex-1">
+          <span class="font-medium text-slate-900">{{ u.name }}</span>
+          <span class="text-slate-400">· {{ u.role }}</span>
+        </div>
+        <div class="text-[10px] text-emerald-700 whitespace-nowrap">
+          {{ u.gap_days }}g sessizlik → döndü
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% else %}
+  <div class="mt-4 px-3 py-2 bg-slate-50 border border-slate-200 rounded text-xs text-slate-500 italic">
+    Şu anda 14g+ sessizlik sonrası geri dönen kullanıcı yok.
+  </div>
+  {% endif %}
+{% endcall %}
+{% endif %}
+
+
+{# ========================================================================
+   SPRINT 2 — FAZ G: Plan × Aktivite çapraz tablosu (4-quadrant)
+   ======================================================================== #}
+{% if active_tab == 'risk' and data.plan_activity %}
+{% set m = data.plan_activity %}
+{% set t = m.totals %}
+{% call panel(
+    color='violet',
+    category='Pencere 6 — Erken Uyarı · Pencere 7 — Karşılaştırma',
+    icon='🎯',
+    title='Plan × Aktivite Tablosu',
+    description='4 quadrant: <b>Ödeyen ve Aktif</b> = champion (referans iste), <b>Ödeyen ama Pasif</b> = KRİTİK (terk riski), <b>Free ve Aktif</b> = upgrade adayı, <b>Free ve Pasif</b> = ihmal. Her hücreye tıklayınca o gruptaki kurumlar açılır. Aktiflik ölçütü: son ' ~ m.active_days ~ ' günde giriş.',
+) %}
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    {# Ödeyen × Pasif — KRİTİK #}
+    <details class="bg-white border-2 border-rose-300 rounded-lg overflow-hidden">
+      <summary class="px-4 py-3 cursor-pointer hover:bg-rose-50 flex items-center justify-between">
+        <div>
+          <div class="text-[10px] uppercase text-rose-700 font-semibold">🚨 KRİTİK</div>
+          <div class="text-sm font-semibold text-slate-900">Ödeyen ama Pasif</div>
+          <div class="text-[11px] text-slate-600">Para ödüyor ama kullanmıyor — kaybetmemek için acil temas</div>
+        </div>
+        <div class="text-3xl font-bold text-rose-700">{{ t.paying_idle }}</div>
+      </summary>
+      {% if m.paying_idle %}
+      <ul class="divide-y divide-slate-100 max-h-64 overflow-y-auto border-t border-rose-200">
+        {% for r in m.paying_idle %}
+        <li class="px-4 py-2 flex items-center justify-between text-xs">
+          <a href="{{ r.detail_url }}" target="_blank" class="text-rose-700 hover:underline font-medium truncate">
+            {{ owner_badge(r) }}{{ r.institution_name }}
+          </a>
+          <span class="text-slate-500 whitespace-nowrap">
+            <span class="font-mono text-[10px]">{{ r.plan }}</span> · {{ r.label }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="px-4 py-2 border-t border-rose-200 bg-rose-50/40 text-[11px]">
+        <div class="text-rose-700 font-semibold mb-1">💡 Önerilen aksiyonlar:</div>
+        <ul class="space-y-0.5 text-slate-700">
+          {% for s in data.action_suggestions.paying_idle %}
+          <li><b>{{ s.label }}</b> — {{ s.hint }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </details>
+
+    {# Ödeyen × Aktif — Champion #}
+    <details class="bg-white border-2 border-emerald-300 rounded-lg overflow-hidden">
+      <summary class="px-4 py-3 cursor-pointer hover:bg-emerald-50 flex items-center justify-between">
+        <div>
+          <div class="text-[10px] uppercase text-emerald-700 font-semibold">🏆 CHAMPION</div>
+          <div class="text-sm font-semibold text-slate-900">Ödeyen ve Aktif</div>
+          <div class="text-[11px] text-slate-600">En değerli müşteriler — referans/case study/yıllık plan aday</div>
+        </div>
+        <div class="text-3xl font-bold text-emerald-700">{{ t.paying_active }}</div>
+      </summary>
+      {% if m.paying_active %}
+      <ul class="divide-y divide-slate-100 max-h-64 overflow-y-auto border-t border-emerald-200">
+        {% for r in m.paying_active %}
+        <li class="px-4 py-2 flex items-center justify-between text-xs">
+          <a href="{{ r.detail_url }}" target="_blank" class="text-emerald-700 hover:underline font-medium truncate">
+            {{ owner_badge(r) }}{{ r.institution_name }}
+          </a>
+          <span class="text-slate-500 whitespace-nowrap">
+            <span class="font-mono text-[10px]">{{ r.plan }}</span> · {{ r.label }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="px-4 py-2 border-t border-emerald-200 bg-emerald-50/40 text-[11px]">
+        <div class="text-emerald-700 font-semibold mb-1">💡 Önerilen aksiyonlar:</div>
+        <ul class="space-y-0.5 text-slate-700">
+          {% for s in data.action_suggestions.paying_active %}
+          <li><b>{{ s.label }}</b> — {{ s.hint }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </details>
+
+    {# Free × Aktif — Upgrade Adayı #}
+    <details class="bg-white border-2 border-amber-300 rounded-lg overflow-hidden">
+      <summary class="px-4 py-3 cursor-pointer hover:bg-amber-50 flex items-center justify-between">
+        <div>
+          <div class="text-[10px] uppercase text-amber-700 font-semibold">⬆ UPGRADE ADAYI</div>
+          <div class="text-sm font-semibold text-slate-900">Free ve Aktif</div>
+          <div class="text-[11px] text-slate-600">Ücretsiz ama aktif kullanıyor — ödemeli plana geçiş şansı yüksek</div>
+        </div>
+        <div class="text-3xl font-bold text-amber-700">{{ t.free_active }}</div>
+      </summary>
+      {% if m.free_active %}
+      <ul class="divide-y divide-slate-100 max-h-64 overflow-y-auto border-t border-amber-200">
+        {% for r in m.free_active %}
+        <li class="px-4 py-2 flex items-center justify-between text-xs">
+          <a href="{{ r.detail_url }}" target="_blank" class="text-amber-700 hover:underline font-medium truncate">
+            {{ owner_badge(r) }}{{ r.institution_name }}
+          </a>
+          <span class="text-slate-500 whitespace-nowrap">
+            <span class="font-mono text-[10px]">{{ r.plan }}</span> · {{ r.label }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="px-4 py-2 border-t border-amber-200 bg-amber-50/40 text-[11px]">
+        <div class="text-amber-700 font-semibold mb-1">💡 Önerilen aksiyonlar:</div>
+        <ul class="space-y-0.5 text-slate-700">
+          {% for s in data.action_suggestions.free_active %}
+          <li><b>{{ s.label }}</b> — {{ s.hint }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </details>
+
+    {# Free × Pasif — İhmal #}
+    <details class="bg-white border-2 border-slate-200 rounded-lg overflow-hidden">
+      <summary class="px-4 py-3 cursor-pointer hover:bg-slate-50 flex items-center justify-between">
+        <div>
+          <div class="text-[10px] uppercase text-slate-600 font-semibold">◯ İHMAL</div>
+          <div class="text-sm font-semibold text-slate-900">Free ve Pasif</div>
+          <div class="text-[11px] text-slate-600">Ne ödüyor ne kullanıyor — düşük öncelik, yeniden aktivasyon kampanyası</div>
+        </div>
+        <div class="text-3xl font-bold text-slate-700">{{ t.free_idle }}</div>
+      </summary>
+      {% if m.free_idle %}
+      <ul class="divide-y divide-slate-100 max-h-64 overflow-y-auto border-t border-slate-200">
+        {% for r in m.free_idle %}
+        <li class="px-4 py-2 flex items-center justify-between text-xs">
+          <a href="{{ r.detail_url }}" target="_blank" class="text-slate-700 hover:underline font-medium truncate">
+            {{ owner_badge(r) }}{{ r.institution_name }}
+          </a>
+          <span class="text-slate-500 whitespace-nowrap">
+            <span class="font-mono text-[10px]">{{ r.plan }}</span> · {{ r.label }}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="px-4 py-2 border-t border-slate-200 bg-slate-50 text-[11px]">
+        <div class="text-slate-700 font-semibold mb-1">💡 Önerilen aksiyonlar:</div>
+        <ul class="space-y-0.5 text-slate-600">
+          {% for s in data.action_suggestions.free_idle %}
+          <li><b>{{ s.label }}</b> — {{ s.hint }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+    </details>
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# ========================================================================
+   SPRINT 2 — FAZ G: Kurum Sönüş Hızı (decay rate)
+   ======================================================================== #}
+{% if active_tab == 'risk' and data.decay_rates %}
+{% set decays = data.decay_rates %}
+{% set decay_title = (
+  'Bağımsız Öğretmen Sönüş Hızı' if data.segment == 'solo'
+  else ('Kurum Sönüş Hızı' if data.segment == 'institution'
+        else 'Hesap Sönüş Hızı (Kurum + Bağımsız)')
+) %}
+{% set decay_desc = (
+  'Her <b>bağımsız öğretmenin</b> (kendisi + öğrencilerinin) son 7g vs önceki 7g birleşik aktivite değişimi.'
+  if data.segment == 'solo'
+  else 'Her hesabın <b>son 7 gün</b> aktivitesinin <b>önceki 7 güne göre</b> değişimi. Solo öğretmenler için öğretmen+öğrenci birleşik.'
+) %}
+{% call panel(
+    color='amber',
+    category='Pencere 6 — Erken Uyarı',
+    icon='📉',
+    title=decay_title,
+    description=decay_desc ~ ' <span class="text-rose-700 font-semibold">Sert düşüş (≥%50)</span> = günler içinde kaybedebilirsin; <span class="text-amber-700 font-semibold">yavaş düşüş (%20-50)</span> = 2-3 hafta uyarı. En kötüler en üstte.',
+) %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Kurum</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="Önceki 7 günde aktif distinct kullanıcı">Önceki 7g</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="Son 7 günde aktif distinct kullanıcı">Son 7g</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">Değişim</th>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Durum</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for d in decays[:30] %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-3 py-2">
+            <a href="{{ d.detail_url }}" target="_blank"
+               class="text-indigo-700 hover:underline font-medium">{{ owner_badge(d) }}{{ d.institution_name }}</a>
+            <div class="text-[10px] font-mono text-slate-400">{{ d.plan }}</div>
+          </td>
+          <td class="px-3 py-2 text-right font-mono text-slate-600">{{ d.previous_7d }}</td>
+          <td class="px-3 py-2 text-right font-mono text-slate-900 font-semibold">{{ d.recent_7d }}</td>
+          <td class="px-3 py-2 text-right font-mono font-semibold
+            {% if d.change_pct < 0 %}text-rose-700
+            {% elif d.change_pct > 0 %}text-emerald-700
+            {% else %}text-slate-500{% endif %}">
+            {{ '+' if d.change_pct > 0 else '' }}{{ d.change_pct }}%
+          </td>
+          <td class="px-3 py-2">
+            <span class="text-[11px] px-2 py-0.5 rounded bg-{{ d.color }}-100 text-{{ d.color }}-800 font-semibold">
+              {{ d.label }}
+            </span>
+            {# Faz J — aksiyon önerisi #}
+            {% set sugg = data.action_suggestions.get(d.band, []) %}
+            {% if sugg %}
+            <details class="relative inline-block ml-2">
+              <summary class="list-none cursor-pointer text-[11px] text-amber-700 hover:text-amber-900 select-none">
+                💡
+              </summary>
+              <div class="absolute right-0 top-6 z-20 w-64 p-2 bg-white border border-amber-300 rounded shadow-lg text-left">
+                <div class="text-[10px] uppercase text-amber-700 font-semibold mb-1">Önerilen Aksiyonlar</div>
+                <ul class="space-y-1 text-[11px]">
+                  {% for s in sugg %}
+                  <li class="text-slate-700">
+                    <b>{{ s.label }}</b>
+                    <div class="text-[10px] text-slate-500">{{ s.hint }}</div>
+                  </li>
+                  {% endfor %}
+                </ul>
+                <a href="{{ d.detail_url }}?tab=actions" target="_blank"
+                   class="block mt-2 pt-2 border-t border-amber-100 text-[11px] text-amber-700 hover:text-amber-900 text-center">
+                  → Kurum 360 CRM aksiyonu
+                </a>
+              </div>
+            </details>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# ========================================================================
+   SPRINT 3 — FAZ D: Oturum Derinliği + Öğretmen/Öğrenci ratio
+   ======================================================================== #}
+{% if active_tab == 'depth' and data.session_duration %}
+{% set sd = data.session_duration %}
+{% call panel(
+    color='cyan',
+    category='Pencere 3 — Derinlik',
+    icon='⏱',
+    title='Oturum Süresi Dağılımı',
+    description='Son ' ~ sd.days_window ~ ' günde sonlanmış oturumların süre dağılımı. <b>1 dakika altı oran yüksekse</b> kullanıcılar "açıp kapıyor" demektir — onboarding/UX problemi sinyali. <b>30 dakika üstü</b> = aktif çalışma.',
+) %}
+  {% if sd.count == 0 %}
+  <div class="text-sm text-slate-500 italic py-4 text-center">
+    Bu pencerede sonlanmış oturum yok (kullanıcılar henüz çıkmamış olabilir).
+  </div>
+  {% else %}
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+    <div class="p-4 rounded-lg bg-white border border-cyan-200" title="Tüm sonlanmış oturumların ortalama süresi (dakika)">
+      <div class="text-[11px] uppercase text-cyan-700 font-semibold">Ortalama</div>
+      <div class="text-2xl font-semibold text-cyan-900 mt-1">{{ sd.avg_min }} dk</div>
+      <div class="text-[11px] text-slate-500">{{ sd.count }} oturum analiz edildi</div>
+    </div>
+    <div class="p-4 rounded-lg bg-white border border-slate-200" title="Medyan — ortadaki oturum süresi (uç değerlerden etkilenmez)">
+      <div class="text-[11px] uppercase text-slate-600 font-semibold">Medyan</div>
+      <div class="text-2xl font-semibold text-slate-900 mt-1">{{ sd.median_min }} dk</div>
+      <div class="text-[11px] text-slate-500">tipik kullanıcı</div>
+    </div>
+    <div class="p-4 rounded-lg bg-white border {% if sd.under_1_pct >= 40 %}border-rose-300{% else %}border-amber-200{% endif %}"
+         title="1 dakikadan kısa oturumlar — kullanıcı sisteme bakıp çıkmış (zayıf ilgi/UX problemi)">
+      <div class="text-[11px] uppercase {% if sd.under_1_pct >= 40 %}text-rose-700{% else %}text-amber-700{% endif %} font-semibold">
+        &lt; 1 dakika ("açtı kapattı")
+      </div>
+      <div class="text-2xl font-semibold {% if sd.under_1_pct >= 40 %}text-rose-900{% else %}text-amber-900{% endif %} mt-1">
+        %{{ sd.under_1_pct }}
+      </div>
+      <div class="text-[11px] text-slate-500">{{ sd.under_1min }} / {{ sd.count }}</div>
+    </div>
+    <div class="p-4 rounded-lg bg-white border border-emerald-200" title="30 dakika üstü oturumlar — kullanıcı aktif çalışıyor">
+      <div class="text-[11px] uppercase text-emerald-700 font-semibold">&gt; 30 dakika ("çalışıyor")</div>
+      <div class="text-2xl font-semibold text-emerald-900 mt-1">%{{ sd.over_30_pct }}</div>
+      <div class="text-[11px] text-slate-500">{{ sd.over_30min }} / {{ sd.count }}</div>
+    </div>
+  </div>
+  {# Süre bantları çubuk grafiği #}
+  <div class="bg-white border border-slate-200 rounded-lg p-3">
+    <div class="text-[11px] uppercase text-slate-600 font-semibold mb-2">Süre Bantları (oturum sayısı)</div>
+    {% set max_b = (sd.bands.values()|max) or 1 %}
+    {% set band_meta = [
+      ('under_1', '< 1 dk', 'rose'),
+      ('min_1_5', '1-5 dk', 'amber'),
+      ('min_5_15', '5-15 dk', 'cyan'),
+      ('min_15_30', '15-30 dk', 'sky'),
+      ('over_30', '> 30 dk', 'emerald'),
+    ] %}
+    <div class="space-y-1.5">
+      {% for key, label, color in band_meta %}
+      {% set v = sd.bands[key] %}
+      {% set pct = (v * 100 / max_b)|int if max_b > 0 else 0 %}
+      <div class="flex items-center gap-2 text-xs">
+        <div class="w-20 text-slate-600">{{ label }}</div>
+        <div class="flex-1 bg-slate-100 rounded h-5 relative overflow-hidden">
+          <div class="absolute left-0 top-0 bottom-0 bg-{{ color }}-400 rounded"
+               style="width: {{ pct }}%"></div>
+        </div>
+        <div class="w-12 text-right font-mono text-slate-700">{{ v }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+{% endcall %}
+{% endif %}
+
+
+{# Öğretmen × Öğrenci ratio (Faz D) #}
+{% if active_tab == 'depth' and data.teacher_student_ratios %}
+{% set ratio_title = (
+  'Bağımsız Öğretmen × Aktif Öğrenci Sayısı' if data.segment == 'solo'
+  else ('Aktif Öğretmen × Aktif Öğrenci Oranı' if data.segment == 'institution'
+        else 'Öğretmen × Öğrenci — Kurum Oranı + Solo Aktif Öğrenci Sayısı')
+) %}
+{% set ratio_desc = (
+  'Her <b>bağımsız öğretmenin</b> son 14 günde aktif kaç öğrencisi olduğunu gösterir. Öğretmen sayısı tanım gereği 1, ölçüm aktif öğrenci sayısı: <b>0</b> = ihmal edilen, <b>3+</b> = aktif kullanım, <b>10+</b> = yoğun. Sıralama: en az aktif üstte (en kritik).'
+  if data.segment == 'solo'
+  else ('Her kurum için son 14 günde aktif öğretmen başına düşen aktif öğrenci sayısı. <b>2 öğrenci/öğretmen altı</b> = öğretmenler öğrencilerini sisteme almıyor (kurum gerçekten kullanmıyor sinyali). Sıralama: en düşük oran üstte (en kritik).'
+        if data.segment == 'institution'
+        else 'Kurumlarda <b>aktif öğretmen ÷ aktif öğrenci</b> oranı; bağımsız öğretmenlerde aktif öğrenci sayısı (öğretmen=1 sabit). Düşük olanlar üstte.')
+) %}
+{% call panel(
+    color='cyan',
+    category='Pencere 3 — Derinlik',
+    icon='🎓',
+    title=ratio_title,
+    description=ratio_desc,
+) %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Kurum</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="Son 14 günde giriş yapmış öğretmen">Akt. Öğretmen</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="Son 14 günde giriş yapmış öğrenci">Akt. Öğrenci</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">Oran</th>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Durum</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in data.teacher_student_ratios[:30] %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-3 py-2">
+            <a href="{{ r.detail_url }}" target="_blank"
+               class="text-indigo-700 hover:underline font-medium">{{ owner_badge(r) }}{{ r.institution_name }}</a>
+            <div class="text-[10px] font-mono text-slate-400">{{ r.plan }}</div>
+          </td>
+          <td class="px-3 py-2 text-right font-mono text-slate-700">
+            {% if r.owner_type == 'solo' %}1 (öğretmenin kendisi){% else %}{{ r.active_teachers }}{% endif %}
+          </td>
+          <td class="px-3 py-2 text-right font-mono text-slate-700">{{ r.active_students }}</td>
+          <td class="px-3 py-2 text-right font-mono font-semibold text-slate-900">
+            {% if r.ratio is not none %}{{ r.ratio }}{% else %}—{% endif %}
+          </td>
+          <td class="px-3 py-2">
+            <span class="text-[11px] px-2 py-0.5 rounded bg-{{ r.color }}-100 text-{{ r.color }}-800 font-semibold">
+              {{ r.label }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# Power Kullanıcı Analizi (Faz D) #}
+{% if active_tab == 'depth' and data.power_users %}
+{% set pu = data.power_users %}
+{% call panel(
+    color='indigo',
+    category='Pencere 3 — Derinlik · Pencere 7 — Sıralama',
+    icon='⭐',
+    title='Power Kullanıcı Analizi',
+    description='Son ' ~ pu.days_window ~ ' günde <b>distinct giriş günü sayısına</b> göre en aktif ve en sessiz kullanıcılar. <b>Top 10</b> = referans/case study adayı; <b>Bottom 10</b> = aktif olduğu hâlde az kullanıyor, intervention listesi.',
+) %}
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-3">
+    {# Top — en aktif #}
+    <div class="bg-white border-2 border-emerald-300 rounded-lg overflow-hidden">
+      <div class="px-4 py-2 bg-emerald-50 border-b border-emerald-200">
+        <h3 class="text-sm font-semibold text-emerald-900">🔥 En Aktif (Top {{ pu.top|length }})</h3>
+        <div class="text-[11px] text-slate-600">Referans/case study adayı — memnun ve aktif</div>
+      </div>
+      {% if not pu.top %}
+      <div class="px-4 py-6 text-center text-sm text-slate-500">Aktif kullanıcı yok.</div>
+      {% else %}
+      <ul class="divide-y divide-slate-100">
+        {% for u in pu.top %}
+        <li class="px-4 py-2 flex items-center justify-between gap-2 text-xs">
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-medium text-slate-900 truncate">{{ u.name }}</div>
+            <div class="text-[11px] text-slate-500 truncate">
+              {{ u.role }}
+              {% if u.institution_name %}
+              · <a href="/admin/revenue/institutions/{{ u.institution_id }}"
+                   target="_blank" class="text-indigo-600 hover:underline">{{ u.institution_name }}</a>
+              {% endif %}
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-base font-bold text-emerald-700">{{ u.active_days }}g</div>
+            <div class="text-[10px] text-slate-400">%{{ u.activity_pct }} aktiflik</div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {# Bottom — en sessiz aktif #}
+    <div class="bg-white border-2 border-amber-300 rounded-lg overflow-hidden">
+      <div class="px-4 py-2 bg-amber-50 border-b border-amber-200">
+        <h3 class="text-sm font-semibold text-amber-900">😴 En Sessiz Aktifler (Bottom {{ pu.bottom|length }})</h3>
+        <div class="text-[11px] text-slate-600">Aktif ama az kullanıyor — intervention/eğitim listesi</div>
+      </div>
+      {% if not pu.bottom %}
+      <div class="px-4 py-6 text-center text-sm text-slate-500">—</div>
+      {% else %}
+      <ul class="divide-y divide-slate-100">
+        {% for u in pu.bottom %}
+        <li class="px-4 py-2 flex items-center justify-between gap-2 text-xs">
+          <div class="min-w-0 flex-1">
+            <div class="text-sm font-medium text-slate-900 truncate">{{ u.name }}</div>
+            <div class="text-[11px] text-slate-500 truncate">
+              {{ u.role }}
+              {% if u.institution_name %}
+              · <a href="/admin/revenue/institutions/{{ u.institution_id }}"
+                   target="_blank" class="text-indigo-600 hover:underline">{{ u.institution_name }}</a>
+              {% endif %}
+            </div>
+          </div>
+          <div class="text-right shrink-0">
+            <div class="text-base font-bold text-amber-700">{{ u.active_days }}g</div>
+            <div class="text-[10px] text-slate-400">%{{ u.activity_pct }} aktiflik</div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+  <div class="mt-2 text-[11px] text-slate-500 italic text-center">
+    Toplam <b>{{ pu.total_active_users }}</b> distinct kullanıcı son {{ pu.days_window }} gün'de aktif.
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# ========================================================================
+   SPRINT 3 — FAZ E: Özellik Popülerliği + Kullanım Matrisi
+   ======================================================================== #}
+{% if active_tab == 'depth' and data.feature_popularity %}
+{% call panel(
+    color='purple',
+    category='Pencere 4 — Genişlik',
+    icon='🎨',
+    title='Özellik Popülerliği',
+    description='Son 30 günde hangi özellik en çok kullanılmış. <b>Toplam olay</b> = ham kullanım sayısı; <b>Distinct kurum</b> = kaç farklı kurum kullandı; <b>Distinct kullanıcı</b> = kaç farklı kişi. Hiç kullanılmayan özellik = "kayıp özellik" sinyali.',
+) %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Özellik</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">Toplam Olay</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">Distinct Kurum</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">Distinct Kullanıcı</th>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Görsel</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% set max_total = (data.feature_popularity|map(attribute='total_events')|max) or 1 %}
+        {% for f in data.feature_popularity %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-3 py-2">
+            <span class="text-lg mr-1">{{ f.icon }}</span>
+            <span class="font-medium text-slate-900">{{ f.label }}</span>
+          </td>
+          <td class="px-3 py-2 text-right font-mono font-semibold
+            {% if f.total_events == 0 %}text-rose-700{% else %}text-slate-900{% endif %}">
+            {{ f.total_events }}
+          </td>
+          <td class="px-3 py-2 text-right font-mono text-slate-700">{{ f.distinct_institutions }}</td>
+          <td class="px-3 py-2 text-right font-mono text-slate-700">{{ f.distinct_users }}</td>
+          <td class="px-3 py-2 w-1/4">
+            {% set pct = (f.total_events * 100 / max_total)|int if max_total > 0 else 0 %}
+            <div class="h-3 bg-slate-100 rounded overflow-hidden">
+              <div class="h-full {% if f.total_events == 0 %}bg-rose-300{% else %}bg-purple-500{% endif %} rounded"
+                   style="width: {{ pct }}%"></div>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# Özellik Kullanım Matrisi (kurum × feature) #}
+{% if active_tab == 'depth' and data.feature_matrix and data.feature_matrix.rows %}
+{% set fm = data.feature_matrix %}
+{% set fm_title = (
+  'Özellik Kullanım Matrisi (Bağımsız Öğretmen × Özellik)' if data.segment == 'solo'
+  else ('Özellik Kullanım Matrisi (Kurum × Özellik)' if data.segment == 'institution'
+        else 'Özellik Kullanım Matrisi (Hesap × Özellik)')
+) %}
+{% set fm_desc = (
+  'Her <b>bağımsız öğretmenin</b> son ' ~ fm.days_window ~ ' günde hangi özelliği kullandığı. ✓ = kullandı, boş = kullanmadı. Adopsiyon %, öğretmenin kendisi veya öğrencileri üzerinden hesaplanır.'
+  if data.segment == 'solo'
+  else 'Her hesabın son ' ~ fm.days_window ~ ' günde hangi özelliği kullandığı. ✓ = kullandı, boş = kullanmadı. <b>Adopsiyon %</b> = hesabın kullandığı özellik oranı. Düşük adopsiyon = onboarding eksik.'
+) %}
+{% call panel(
+    color='purple',
+    category='Pencere 4 — Genişlik',
+    icon='🧩',
+    title=fm_title,
+    description=fm_desc,
+) %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-x-auto">
+    <table class="min-w-full text-xs">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-3 py-2 text-left font-semibold text-slate-600 uppercase sticky left-0 bg-slate-50 z-10 border-r border-slate-200">Kurum</th>
+          {% for f in fm.features %}
+          <th class="px-2 py-2 text-center font-semibold text-slate-600 min-w-[60px]" title="{{ f.label }}">
+            <div class="text-base">{{ f.icon }}</div>
+            <div class="text-[9px] text-slate-500 mt-0.5">{{ f.label|truncate(12, true, '…') }}</div>
+          </th>
+          {% endfor %}
+          <th class="px-3 py-2 text-right font-semibold text-slate-600 uppercase">Adop.</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in fm.rows %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-3 py-2 sticky left-0 bg-white z-10 border-r border-slate-100">
+            <a href="{{ r.detail_url }}" target="_blank"
+               class="text-indigo-700 hover:underline font-medium">{{ owner_badge(r) }}{{ r.institution_name }}</a>
+            <div class="text-[10px] font-mono text-slate-400">{{ r.plan }}</div>
+          </td>
+          {% for c in r.cells %}
+          <td class="px-2 py-2 text-center">
+            {% if c.used %}
+              <span class="inline-block w-5 h-5 leading-5 rounded bg-emerald-500 text-white font-bold">✓</span>
+            {% else %}
+              <span class="inline-block w-5 h-5 leading-5 rounded bg-slate-100 text-slate-300">·</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+          <td class="px-3 py-2 text-right font-mono font-semibold
+            {% if r.adoption_pct >= 60 %}text-emerald-700
+            {% elif r.adoption_pct >= 40 %}text-amber-700
+            {% else %}text-rose-700{% endif %}">
+            %{{ r.adoption_pct }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# Yeni Kurum Onboarding Milestone'ları #}
+{% if active_tab == 'retention' and data.onboarding %}
+{% set onb_title = (
+  'Yeni Bağımsız Öğretmen Onboarding Durumu' if data.segment == 'solo'
+  else ('Yeni Kurum Onboarding Durumu' if data.segment == 'institution'
+        else 'Yeni Hesap Onboarding Durumu (Kurum + Bağımsız)')
+) %}
+{% set onb_desc = (
+  'Son 14 günde kayıt olan <b>bağımsız öğretmenlerin</b> milestone tamamlama durumu: yetkili giriş, ilk öğrenci, ilk görev, veli daveti. "Öğretmen davet" adımı bağımsızda <b>—</b> (uygulanmaz).'
+  if data.segment == 'solo'
+  else ('Son 14 günde kayıt olan kurumların <b>5 kritik milestone</b> tamamlama durumu: yetkili giriş, öğretmen davet, öğrenci ekleme, ilk görev, veli daveti. Düşük tamamlama = onboarding desteği gerekli.'
+        if data.segment == 'institution'
+        else 'Son 14 günde kayıt olan kurumlar + bağımsız öğretmenlerin onboarding ilerlemesi. Bağımsız öğretmenler için "Öğretmen davet" adımı <b>—</b> (uygulanmaz).')
+) %}
+{% call panel(
+    color='amber',
+    category='Pencere 4 — Genişlik · Onboarding',
+    icon='🚀',
+    title=onb_title,
+    description=onb_desc,
+) %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Kurum</th>
+          <th class="px-3 py-2 text-center text-xs font-semibold text-slate-600 uppercase">Yaş</th>
+          {% for m in data.onboarding[0].milestones %}
+          <th class="px-2 py-2 text-center text-xs font-semibold text-slate-600 uppercase" title="{{ m.label }}">
+            {{ m.label.split(' ')[0] }}
+          </th>
+          {% endfor %}
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">İlerleme</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for o in data.onboarding %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-3 py-2">
+            <a href="{{ o.detail_url }}" target="_blank"
+               class="text-indigo-700 hover:underline font-medium">{{ owner_badge(o) }}{{ o.institution_name }}</a>
+            <div class="text-[10px] font-mono text-slate-400">{{ o.plan }}</div>
+          </td>
+          <td class="px-3 py-2 text-center text-xs text-slate-500">{{ o.age_days }}g</td>
+          {% for m in o.milestones %}
+          <td class="px-2 py-2 text-center" title="{{ m.label }}{% if m.done is none %} — bağımsız öğretmen için uygulanmaz{% endif %}">
+            {% if m.done is none %}
+              <span class="inline-block w-5 h-5 leading-5 rounded-full bg-slate-50 text-slate-300 text-xs" title="bağımsız öğretmende yok">—</span>
+            {% elif m.done %}
+              <span class="inline-block w-5 h-5 leading-5 rounded-full bg-emerald-500 text-white font-bold text-xs">✓</span>
+            {% else %}
+              <span class="inline-block w-5 h-5 leading-5 rounded-full bg-slate-200 text-slate-400 text-xs">·</span>
+            {% endif %}
+          </td>
+          {% endfor %}
+          <td class="px-3 py-2 text-right">
+            <div class="inline-flex items-center gap-1.5">
+              <div class="w-16 h-2 bg-slate-100 rounded overflow-hidden">
+                <div class="h-full {% if o.completion_pct >= 80 %}bg-emerald-500{% elif o.completion_pct >= 40 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
+                     style="width: {{ o.completion_pct }}%"></div>
+              </div>
+              <span class="font-mono font-semibold text-slate-700 text-xs">{{ o.done_count }}/{{ o.total_count }}</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# ========================================================================
+   SPRINT 4 — FAZ H: Plan Benchmark Tablosu
+   ======================================================================== #}
+{% if active_tab == 'benchmark' and data.plan_benchmark %}
+{% call panel(
+    color='blue',
+    category='Pencere 7 — Karşılaştırma',
+    icon='📊',
+    title='Plan Başına Benchmark Tablosu',
+    description='Her plan kodu için <b>ortalama metrikler</b> — yeni kayıt için hedef belirleme referansı. Bir kurum kendi planının ortalamasının altındaysa "altta", üstündeyse "üstte" sayılır. <b>Aktif</b> = son 30 günde giriş yapmış.',
+) %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-3 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Plan</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="Bu plandaki aktif kurum sayısı">Kurum</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="Plan başına ortalama aktif öğretmen sayısı (son 30g)">Akt. Öğretmen</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="Plan başına ortalama aktif öğrenci sayısı (son 30g)">Akt. Öğrenci</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="5 feature'dan ortalama kaçı kullanılıyor">Ort. Adopsiyon</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase" title="Ortalama oturum süresi (dakika)">Ort. Oturum</th>
+          <th class="px-3 py-2 text-right text-xs font-semibold text-slate-600 uppercase">Aylık Ücret</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in data.plan_benchmark %}
+        <tr class="hover:bg-slate-50 {% if r.monthly_price == 0 %}bg-slate-50/40{% endif %}">
+          <td class="px-3 py-2">
+            <div class="font-medium text-slate-900">{{ r.plan_label }}</div>
+            <div class="text-[10px] font-mono text-slate-400">{{ r.plan }}</div>
+          </td>
+          <td class="px-3 py-2 text-right font-mono text-slate-700">{{ r.institution_count }}</td>
+          <td class="px-3 py-2 text-right font-mono text-slate-700">{{ r.avg_active_teachers }}</td>
+          <td class="px-3 py-2 text-right font-mono text-slate-700">{{ r.avg_active_students }}</td>
+          <td class="px-3 py-2 text-right">
+            <div class="inline-flex items-center gap-1.5">
+              <span class="font-mono text-slate-900 font-semibold">{{ r.avg_feature_adoption }}/{{ r.feature_total }}</span>
+              <span class="text-[10px] text-slate-500">(%{{ r.avg_feature_adoption_pct }})</span>
+            </div>
+          </td>
+          <td class="px-3 py-2 text-right font-mono text-slate-700">
+            {% if r.avg_session_min > 0 %}{{ r.avg_session_min }}dk{% else %}—{% endif %}
+          </td>
+          <td class="px-3 py-2 text-right font-mono
+            {% if r.monthly_price > 0 %}text-emerald-700 font-semibold{% else %}text-slate-400{% endif %}">
+            {% if r.monthly_price > 0 %}{{ "{:,}".format(r.monthly_price) }} ₺{% else %}—{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# ========================================================================
+   SPRINT 4 — FAZ H: Champion Kurumlar (en üst %10)
+   ======================================================================== #}
+{% if active_tab == 'benchmark' and data.champions %}
+{% set champ_title = (
+  'Champion Bağımsız Öğretmenler — En Üst %10' if data.segment == 'solo'
+  else ('Champion Kurumlar — En Üst %10' if data.segment == 'institution'
+        else 'Champion Hesaplar — En Üst %10 (Kurum + Bağımsız)')
+) %}
+{% set champ_desc = (
+  'Birleşik skor = %40 son 7g aktivite yoğunluğu + %30 feature adopsiyonu + %20 ödeyen yaşı + %10 öğrenci sayısı (10 referans). Bu <b>bağımsız öğretmenler</b> referans/case study/testimonial adayı.'
+  if data.segment == 'solo'
+  else 'Birleşik skor = %40 son 7g aktivite yoğunluğu + %30 feature adopsiyonu + %20 ödeyen yaşı + %10 öğretmen×öğrenci oranı. Bu hesaplar <b>referans/case study/testimonial</b> adayı — yıllık plan teklif edilmesi için ideal.'
+) %}
+{% call panel(
+    color='emerald',
+    category='Pencere 7 — Karşılaştırma · En İyiler',
+    icon='🏆',
+    title=champ_title,
+    description=champ_desc,
+) %}
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+    {% for c in data.champions %}
+    <div class="p-4 rounded-lg bg-white border-2 border-emerald-300 hover:border-emerald-500 hover:shadow-md transition">
+      <div class="flex items-start justify-between gap-2 mb-2">
+        <div class="min-w-0 flex-1">
+          <div class="text-[10px] uppercase text-emerald-700 font-semibold">
+            🏆 CHAMPION{% if c.owner_type == 'solo' %} · 👤 Bağımsız{% else %} · 🏢 Kurum{% endif %}
+          </div>
+          <a href="{{ c.detail_url }}" target="_blank"
+             class="text-sm font-semibold text-slate-900 hover:text-emerald-700 hover:underline truncate block">
+            {{ c.institution_name }}
+          </a>
+          <div class="text-[10px] font-mono text-slate-400">
+            {{ c.plan }}{% if c.is_paying %} · 💰 ödeyen{% endif %}
+          </div>
+        </div>
+        <div class="text-right shrink-0">
+          <div class="text-2xl font-bold text-emerald-700">{{ c.score }}</div>
+          <div class="text-[9px] text-slate-500">skor / 100</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-2 text-[11px] mb-2">
+        <div>
+          <div class="text-slate-500">Yoğunluk</div>
+          <div class="font-semibold text-slate-900">{{ c.density }}g/kişi</div>
+        </div>
+        <div>
+          <div class="text-slate-500">Adopsiyon</div>
+          <div class="font-semibold text-slate-900">{{ c.feature_adoption }}/{{ c.feature_total }}</div>
+        </div>
+        <div>
+          <div class="text-slate-500">Yaş</div>
+          <div class="font-semibold text-slate-900">{{ c.age_months }}ay</div>
+        </div>
+        <div>
+          <div class="text-slate-500">Öğr/Öğret</div>
+          <div class="font-semibold text-slate-900">{{ c.student_teacher_ratio }}</div>
+        </div>
+      </div>
+      {# Champion için önerilen aksiyonlar #}
+      <details class="border-t border-emerald-100 pt-2 mt-2">
+        <summary class="text-[11px] text-emerald-700 cursor-pointer hover:text-emerald-900 font-medium">
+          💡 Önerilen aksiyonlar
+        </summary>
+        <ul class="mt-1.5 space-y-1">
+          {% for s in data.action_suggestions.champion %}
+          <li class="text-[11px] text-slate-700">
+            <span class="font-mono text-[10px] text-slate-500">{{ s.kind }}</span>
+            <b>{{ s.label }}</b> — {{ s.hint }}
+          </li>
+          {% endfor %}
+        </ul>
+        <a href="{{ c.detail_url }}?tab=actions" target="_blank"
+           class="inline-block mt-2 text-[11px] text-emerald-700 hover:text-emerald-900 underline">
+          → Kurum 360 CRM aksiyonu oluştur
+        </a>
+      </details>
+    </div>
+    {% endfor %}
+  </div>
+{% endcall %}
+{% endif %}
+
+
+{# Isı haritası #}
+{% if active_tab == 'time' %}
+<section class="bg-white rounded-lg border border-slate-200 overflow-hidden mb-5 shadow-sm">
+  <header class="px-4 py-3 bg-gradient-to-r from-slate-100 to-slate-50 border-b-2 border-slate-300">
+    <div class="text-[10px] uppercase tracking-wider text-slate-600 font-semibold mb-0.5">
+      Pencere 5 — Zaman Örüntüsü
+    </div>
+    <h2 class="text-base font-semibold text-slate-900">
+      🗺 Saat × Gün Isı Haritası — Son 7 Gün
+    </h2>
+    <p class="text-xs text-slate-700 mt-1">
+      <b>Hangi saatte / hangi günde</b> sisteme giriş yoğun? Koyu hücre = çok giriş,
+      açık hücre = az. Hücrenin üstüne gelince o saat-gün kombinasyonunun toplam girişini
+      görürsün. Saatler <b>dünya saati (UTC)</b> ile; Türkiye saati için <b>+3</b> ekle.
+    </p>
+    <div class="text-xs text-slate-700 mt-2">
+      Toplam <b>{{ data.heatmap.total }}</b> giriş kayıtlandı.
+    </div>
+  </header>
+  {% if data.heatmap.total == 0 %}
+    <div class="px-4 py-10 text-center text-sm text-slate-500">Bu pencerede giriş yok.</div>
+  {% else %}
+    {% set m = data.heatmap.max_value %}
+    <div class="overflow-x-auto p-3">
+      <table class="text-xs">
+        <thead>
+          <tr>
+            <th class="text-left text-slate-400 pr-2">Saat (UTC)</th>
+            {% for d in data.heatmap.day_labels %}
+              <th class="px-1 text-slate-600 font-medium text-center">{{ d }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in range(24) %}
+            <tr>
+              <td class="text-right text-slate-400 pr-2 font-mono">{{ "%02d"|format(h) }}</td>
+              {% for d in range(7) %}
+                {% set v = data.heatmap.matrix[h][d] %}
+                {% set intensity = (v * 100 / m)|int if m > 0 else 0 %}
+                <td class="text-center">
+                  <div class="w-8 h-5 rounded text-[10px] flex items-center justify-center
+                    {% if intensity == 0 %}bg-slate-50 text-slate-300
+                    {% elif intensity < 20 %}bg-indigo-100 text-indigo-700
+                    {% elif intensity < 50 %}bg-indigo-300 text-indigo-900
+                    {% elif intensity < 80 %}bg-indigo-500 text-white
+                    {% else %}bg-indigo-700 text-white font-semibold{% endif %}"
+                    title="{{ "%02d"|format(h) }}:00 UTC — {{ v }} giriş">
+                    {% if v > 0 %}{{ v }}{% endif %}
+                  </div>
+                </td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{# Günlük trend #}
+{% if active_tab == 'time' %}
+<section class="bg-white rounded-lg border border-slate-200 overflow-hidden mb-5 shadow-sm">
+  <header class="px-4 py-3 bg-gradient-to-r from-cyan-100 to-cyan-50 border-b-2 border-cyan-300">
+    <div class="text-[10px] uppercase tracking-wider text-cyan-700 font-semibold mb-0.5">
+      Pencere 1 — Sağlık · Trend
+    </div>
+    <h2 class="text-base font-semibold text-slate-900">
+      📊 Günlük Aktif Kullanıcı Trendi — Son 14 Gün
+    </h2>
+    <p class="text-xs text-slate-700 mt-1">
+      Her çubuk <b>bir gün</b>; çubuğun yüksekliği <b>o gün sisteme giriş yapan kişi sayısını</b> gösterir.
+      Çubuk üstündeki sayı = aktif kişi sayısı. Yükselen trend = sistem büyüyor;
+      düşen trend = kayıp riski (kullanıcılar geri dönmüyor).
+    </p>
+  </header>
+  {% set max_dau = data.dau_trend_14d|map(attribute='dau')|max %}
+  <div class="p-3 flex items-end gap-1 h-32">
+    {% for d in data.dau_trend_14d %}
+      {% set pct = (d.dau * 100 / max_dau)|int if max_dau > 0 else 0 %}
+      <div class="flex-1 flex flex-col items-center justify-end h-full" title="{{ d.day }}: {{ d.dau }} aktif kullanıcı">
+        <div class="text-[10px] text-slate-500 mb-0.5">{{ d.dau }}</div>
+        <div class="w-full bg-indigo-400 hover:bg-indigo-600 rounded-t"
+             style="height: {{ pct }}%; min-height: 1px;"></div>
+        <div class="text-[9px] text-slate-400 mt-1">{{ d.day[5:] }}</div>
+      </div>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
+
+{# Solo segmentinde time sekmesinde notlandırma #}
+{% if active_tab == 'time' and data.segment == 'solo' %}
+<div class="mb-5 px-4 py-3 bg-purple-50 border border-purple-200 rounded-lg text-sm text-purple-900">
+  ℹ️ Bu sekmedeki <b>Isı Haritası</b> ve <b>Günlük Trend</b> sistem genelindedir
+  (kurum + bağımsız öğretmen birleşik aktiviteyi gösterir).
+  En aktif bağımsız öğretmenleri görmek için
+  <a href="?tab=benchmark&segment=solo" class="font-semibold underline">🏆 Karşılaştırma sekmesinin Champion paneline</a> bak;
+  bireysel kalp atışı/sönüş için <a href="?tab=risk&segment=solo" class="font-semibold underline">🚨 Risk sekmesini</a> aç.
+</div>
+{% endif %}
+
+{# Kurum aktivite tablosu (en aktif) — time sekmesi, sadece kurum/all'da #}
+{% if active_tab == 'time' and data.segment != 'solo' %}
+<section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm mb-5">
+    <header class="px-4 py-3 bg-gradient-to-r from-emerald-100 to-emerald-50 border-b-2 border-emerald-300">
+      <div class="text-[10px] uppercase tracking-wider text-emerald-700 font-semibold mb-0.5">
+        Pencere 7 — Sıralama
+      </div>
+      <h2 class="text-base font-semibold text-slate-900">
+        🏆 En Aktif Kurumlar
+      </h2>
+      <p class="text-xs text-slate-700 mt-1">
+        <b>Aylık aktif kullanıcı</b> sayısına göre sıralı, yüksekten düşüğe. En aktif <b>20 kurum</b>.
+        Kurum adına tıklayınca <b>Kurum 360</b>'a gider; <b>🗺</b> butonuyla o kurumun saat×gün haritası açılır.
+        {% if data.segment == 'all' %}
+        <span class="block mt-1 text-amber-700">Bu liste yalnız kurumları içerir; bağımsız öğretmenleri "Champion" panelinde görebilirsin.</span>
+        {% endif %}
+      </p>
+    </header>
+    {% if not data.per_tenant %}
+      <div class="px-4 py-6 text-sm text-slate-500">Veri yok.</div>
+    {% else %}
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-3 py-2 text-left">Kurum</th>
+            <th class="px-3 py-2 text-right" title="Son 24 saatte aktif kişi">Bugün</th>
+            <th class="px-3 py-2 text-right" title="Son 7 günde aktif kişi">Bu hafta</th>
+            <th class="px-3 py-2 text-right" title="Son 30 günde aktif kişi">Bu ay</th>
+            <th class="px-3 py-2 text-center text-[10px]" title="Bu kurumun saat × gün heatmap'i">Heatmap</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for t in data.per_tenant %}
+            <tr class="hover:bg-slate-50">
+              <td class="px-3 py-2">
+                <a href="/admin/revenue/institutions/{{ t.tenant_id }}" target="_blank"
+                   class="text-indigo-600 hover:text-indigo-800 font-medium"
+                   title="Kurum 360'a git">{{ t.tenant_name }}</a>
+                <div class="text-[11px] text-slate-400">{{ t.plan }}</div>
+              </td>
+              <td class="px-3 py-2 text-right font-semibold
+                {% if t.dau == 0 %}text-rose-700
+                {% else %}text-slate-900{% endif %}">{{ t.dau }}</td>
+              <td class="px-3 py-2 text-right text-slate-700">{{ t.wau }}</td>
+              <td class="px-3 py-2 text-right text-slate-700">{{ t.mau }}</td>
+              <td class="px-3 py-2 text-center">
+                <button type="button"
+                        hx-get="/admin/security-monitor/activity/drill/heatmap?institution_id={{ t.tenant_id }}"
+                        hx-target="#drill-host" hx-swap="innerHTML"
+                        onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+                        class="text-xs text-slate-500 hover:text-indigo-700"
+                        title="Bu kurumun heatmap'ini drill-down">🗺</button>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </section>
+{% endif %}
+
+{# Sessiz kurum uyarısı — risk sekmesi #}
+{% if active_tab == 'risk' %}
+<section class="bg-white rounded-lg border border-slate-200 overflow-hidden shadow-sm mb-5">
+    <header class="px-4 py-3 bg-gradient-to-r from-amber-100 to-amber-50 border-b-2 border-amber-300">
+      <div class="text-[10px] uppercase tracking-wider text-amber-700 font-semibold mb-0.5">
+        Pencere 6 — Erken Uyarı
+      </div>
+      <h2 class="text-base font-semibold text-slate-900">
+        🔕 Sessizleşen Hesaplar — Son 7 Gün
+      </h2>
+      <p class="text-xs text-slate-700 mt-1">
+        Son 7 gün boyunca sisteme <b>hiç giriş yapmamış</b> aktif kurumlar ve bağımsız öğretmenler.
+        Bu hesaplar <b>terk etmek üzere</b> olabilir; temas için arama listesi olarak kullan.
+        Bağımsız öğretmen için "giriş yok" = öğretmenin kendisi <b>VE</b> öğrencilerinin hiçbiri 7 gündür giriş yapmamış.
+      </p>
+    </header>
+    {% if not data.silent_tenants_7d %}
+      <div class="px-4 py-10 text-center text-sm text-emerald-600">🟢 Tüm aktif hesaplar son 7 günde sisteme girdi.</div>
+    {% else %}
+      <ul class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+        {% for t in data.silent_tenants_7d %}
+          <li class="px-4 py-2 flex items-center justify-between">
+            <div>
+              <a href="{{ t.detail_url if t.detail_url else ('/admin/revenue/institutions/' ~ t.tenant_id) }}" target="_blank"
+                 class="text-sm text-rose-700 hover:text-rose-900 font-medium"
+                 title="360'a git">{{ owner_badge(t) }}{{ t.tenant_name }}</a>
+              <div class="text-[11px] text-slate-500">{{ t.plan }}</div>
+            </div>
+            <span class="text-xs text-rose-600">7 gündür sessiz</span>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+</section>
+{% endif %}
+
+<div class="mt-6 text-xs text-slate-400">
+  Veri zamanı: {{ data.generated_at|dt_tr_full }}
+</div>
+{% endblock %}

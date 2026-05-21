@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+{% block title %}Abuse Kamerası — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/security-monitor" class="text-sm text-slate-500 hover:text-slate-700">← Güvenlik Kamerası</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🚨 Kötüye Kullanım Kamerası</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Sistemde anormal davranış kalıplarını otomatik yakalar: aynı öğretmenin saatte 50+ veli daveti
+    yollaması, bir kurumun anormal bildirim üretimi, tek cihazdan birden çok hesap, toplu sessizleştirme gibi.
+  </p>
+</div>
+
+{# "Bu sayfada ne yazıyor?" #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Sinyal</b> — sistemin "burası şüpheli, bakar mısın" diye sana ilettiği uyarı. Otomatik
+      kurallar (dedektörler) çalışıp eşik aşılınca sinyal yazar.
+    </div>
+    <div>
+      <b>Açık sinyal</b> — henüz incelenip karara bağlanmamış sinyal. Sayı sıfır olmalı ideal.
+    </div>
+    <div>
+      <b>Şiddet</b> — sinyalin ciddiyet seviyesi: <code class="text-xs">info</code> (bilgi),
+      <code class="text-xs">warn</code> (uyarı), <code class="text-xs">critical</code> (kritik).
+    </div>
+    <div>
+      <b>Pencere</b> — sinyalin oluştuğu zaman aralığı (örn. "son 1 saat", "son 24 saat").
+      Aynı sinyal pencere içinde tekrarsa yeni satır eklenmez, mevcut satır sayacı artar.
+    </div>
+    <div>
+      <b>Şimdi tara</b> — beklemeden tüm dedektörleri anlık çalıştır; gerekirse yeni sinyal yazar.
+    </div>
+    <div>
+      <b>Toplu aksiyon</b> (⚡ kırmızı buton) — sinyalin türüne göre otomatik çözüm uygula
+      (davetleri iptal et, bildirimleri durdur, oturumları kapat). Aksiyon sonrası sinyal
+      otomatik "çözüldü" işaretlenir.
+    </div>
+    <div>
+      <b>Sadece çöz işaretle</b> — aksiyon almadan sinyali "incelendi, sorun yok" diye kapatmak için.
+    </div>
+  </div>
+</details>
+
+{% set q = request.query_params %}
+{% if q.get('ok') %}
+  <div class="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
+    ✓ {{ q.get('ok') }}
+  </div>
+{% endif %}
+{% if q.get('err') %}
+  <div class="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-800">
+    ⚠ {{ q.get('err') }}
+  </div>
+{% endif %}
+
+{# Üst aksiyon barı #}
+<div class="mb-5 flex items-center justify-between gap-3 flex-wrap">
+  <div class="text-sm text-slate-700">
+    <b>{{ open_count }}</b> açık sinyal
+    {% if filter_kind %}· filtre: <code class="text-xs">{{ kind_labels.get(filter_kind, filter_kind) }}</code>{% endif %}
+  </div>
+  <div class="flex items-center gap-2">
+    <form method="post" action="/admin/security-monitor/abuse/scan" class="inline">
+      <button class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs rounded font-medium">
+        🔍 Şimdi tara
+      </button>
+    </form>
+    <form method="get" class="inline-flex items-center gap-2 text-xs">
+      <select name="kind" class="px-2 py-1 border border-slate-300 rounded text-xs bg-white">
+        <option value="">— Tüm türler —</option>
+        {% for k, label in kind_labels.items() %}
+          <option value="{{ k }}" {% if filter_kind == k %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+      <label class="inline-flex items-center gap-1 text-slate-600">
+        <input type="checkbox" name="only_open" value="1" {% if filter_only_open %}checked{% endif %}>
+        Sadece açıklar
+      </label>
+      <button class="px-2 py-1 border border-slate-300 rounded hover:bg-slate-50">Filtrele</button>
+    </form>
+  </div>
+</div>
+
+{# Kural özetleri (üst bilgi kartları) #}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
+  {% for k, label in kind_labels.items() %}
+    <div class="p-3 rounded-lg bg-white border border-slate-200">
+      <div class="text-sm font-medium text-slate-900">{{ label }}</div>
+      <div class="text-xs text-slate-500 mt-1">{{ kind_descriptions.get(k, '') }}</div>
+    </div>
+  {% endfor %}
+</div>
+
+{# Sinyal listesi #}
+<div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Sinyaller</h2>
+  </div>
+  {% if not signals %}
+    <div class="px-4 py-10 text-center text-sm text-slate-500">
+      🟢 Açık sinyal yok. "Şimdi tara" ile en güncel veriyi kontrol edebilirsin.
+    </div>
+  {% else %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">Tür</th>
+          <th class="px-3 py-2 text-left">Şiddet</th>
+          <th class="px-3 py-2 text-left">Kim/Kurum</th>
+          <th class="px-3 py-2 text-left">Sayı</th>
+          <th class="px-3 py-2 text-left">Pencere</th>
+          <th class="px-3 py-2 text-left">Son tespit</th>
+          <th class="px-3 py-2 text-right">Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for s in signals %}
+          {% set color = severity_colors.get(s.severity, 'slate') %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2">
+              <div class="font-medium text-slate-900">{{ s.kind_label }}</div>
+              {% if s.details.ip %}
+                <div class="text-[11px] text-slate-500 font-mono mt-0.5">{{ s.details.ip }}</div>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-{{ color }}-100 text-{{ color }}-800">
+                {{ severity_labels.get(s.severity, s.severity) }}
+              </span>
+              {% if s.resolved_at %}
+                <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-emerald-100 text-emerald-700">çözüldü</span>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-xs">
+              {% if s.actor_full_name %}
+                <a href="/admin/users/{{ s.actor_user_id }}" class="font-medium text-indigo-600 hover:text-indigo-800">
+                  {{ s.actor_full_name }}
+                </a>
+                <div class="text-slate-500">{{ s.actor_email }}</div>
+              {% elif s.tenant_name %}
+                <a href="/admin/institutions/{{ s.tenant_id }}" class="font-medium text-indigo-600 hover:text-indigo-800">
+                  {{ s.tenant_name }}
+                </a>
+                <div class="text-slate-500">kurum #{{ s.tenant_id }}</div>
+              {% else %}
+                <span class="text-slate-500">—</span>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-sm font-semibold text-slate-900">{{ s.count }}</td>
+            <td class="px-3 py-2 text-xs text-slate-600">
+              {% if s.details.window_hours %}{{ s.details.window_hours }} saat{% else %}—{% endif %}
+              {% if s.details.threshold %}
+                <div class="text-[11px] text-slate-500">eşik: {{ s.details.threshold }}</div>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-xs text-slate-600 whitespace-nowrap">
+              {{ s.last_seen_at|dt_dual }}
+            </td>
+            <td class="px-3 py-2 text-right">
+              {% if not s.resolved_at %}
+                {% set act_label = action_button_labels.get(s.kind) %}
+                {% if act_label and act_label != '—' %}
+                  <form method="post"
+                        action="/admin/security-monitor/abuse/{{ s.id }}/remediate"
+                        class="inline"
+                        onsubmit="return confirm('Bu aksiyonu uygulamak istediğine emin misin?\n\n→ {{ act_label }}\n\nSinyal otomatik çözüldü olarak işaretlenecek.');">
+                    <button class="px-2 py-1 bg-rose-600 hover:bg-rose-700 text-white text-xs rounded font-medium"
+                            title="Bu sinyalin türüne uygun toplu aksiyonu çalıştır">
+                      ⚡ {{ act_label }}
+                    </button>
+                  </form>
+                {% endif %}
+                <details class="inline ml-1">
+                  <summary class="cursor-pointer text-xs text-emerald-600 hover:text-emerald-800 font-medium">Çöz</summary>
+                  <form method="post"
+                        action="/admin/security-monitor/abuse/{{ s.id }}/resolve"
+                        class="absolute right-3 mt-1 bg-white border border-slate-300 rounded shadow-lg p-2 z-10 w-64">
+                    <textarea name="note" rows="2" maxlength="500"
+                              placeholder="Açıklama (opsiyonel)"
+                              class="w-full px-2 py-1 border border-slate-300 rounded text-xs mb-2"></textarea>
+                    <button class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded">
+                      Sadece çöz işaretle (aksiyonsuz)
+                    </button>
+                  </form>
+                </details>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

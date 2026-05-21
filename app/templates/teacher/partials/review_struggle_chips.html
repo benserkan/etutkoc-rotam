@@ -1,0 +1,38 @@
+{# Bağlam: items (list of dicts), target_date, subject_id
+   Her chip Alpine üzerinden tıklanınca aynı form'daki notes input'unu doldurur.
+   Form içinde @click="notes = '...'" şeklinde Alpine context'i kullanılır.
+#}
+{% if items %}
+<div class="mt-2 p-2.5 rounded-md border-2 border-dashed" style="background:#FAF5FF; border-color:#D8B4FE;">
+  <div class="flex items-center gap-1.5 mb-1.5">
+    <span class="text-xs font-bold" style="color:#6B21A8;">🧠 Bugün vadesi gelen tekrar kartları</span>
+    <span class="text-[10px] text-slate-500">({{ items|length }} konu · skoru yüksek olanlar)</span>
+  </div>
+  <div class="flex flex-wrap gap-1.5">
+    {% for it in items %}
+    <button type="button"
+            @click="notes = $event.currentTarget.dataset.topic; reviewCardId = $event.currentTarget.dataset.cardId"
+            data-topic="{{ it.topic_name }}"
+            data-card-id="{{ it.card_id }}"
+            class="inline-flex items-center gap-1 px-2 py-1 rounded-md text-[11px] font-semibold border transition hover:scale-105 hover:shadow-sm"
+            :class="notes === '{{ it.topic_name|replace("'", "\\'") }}' ? 'ring-2 ring-purple-400' : ''"
+            style="background:#fff; border-color:#D8B4FE; color:#6B21A8;"
+            title="{{ it.reasons|join(' · ') }} · skor {{ it.score }}/100">
+      <span class="leading-none">{% if it.state == 'relearning' %}🔥{% elif it.lapse_count >= 2 %}⚠️{% else %}🧠{% endif %}</span>
+      <span>{{ it.topic_name }}</span>
+      <span class="text-[9px] font-bold px-1 py-0.5 rounded ml-0.5"
+            style="background:{% if it.score >= 60 %}#FCA5A5{% elif it.score >= 30 %}#FDE68A{% else %}#E5E7EB{% endif %}; color:{% if it.score >= 60 %}#7F1D1D{% elif it.score >= 30 %}#78350F{% else %}#374151{% endif %};">
+        {{ it.score }}
+      </span>
+    </button>
+    {% endfor %}
+  </div>
+  <p class="text-[10px] text-slate-500 mt-1.5 italic">
+    💡 Çipe tıklayarak konuyu otomatik doldurabilirsin. Bu konular tekrar kartlarında bugün gösterilmesi gerekenler arasından, en çok zorlanılanlar.
+  </p>
+</div>
+{% else %}
+<div class="mt-2 p-2 rounded-md border border-stone-200 text-xs text-slate-500 italic" style="background:#F8FAFC;">
+  Bu derste {{ target_date.strftime('%d.%m') }} için vadesi gelen, zorlanılan tekrar kartı yok. Konuyu elle yazabilirsin.
+</div>
+{% endif %}

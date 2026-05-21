@@ -1,0 +1,99 @@
+"""Anasayfa kartlarındaki sağ-yan mockup şablon kütüphanesi.
+
+Her mockup ayrı bir Jinja template fragment'ı (`app/templates/landing/mockups/`).
+Bu modül, admin formundaki "Görsel şablon seç" dropdown'u + Katman 2'de
+catalog-bazlı render için tek doğruluk kaynağı.
+
+Yeni mockup eklemek için:
+1. `app/templates/landing/mockups/<key>.html` dosyasını oluştur
+2. Aşağıdaki MOCKUP_TEMPLATES sözlüğüne kaydet (key, label, sample title)
+3. Migration GEREKMEZ — sadece text alanı (FeatureCard.mockup_type)
+
+Admin formunda dropdown bu kayıtlardan beslenir.
+Katman 2 render time'da: `{% include 'landing/mockups/' + key + '.html' %}`.
+
+NOT: Mockup içerikleri ŞU AN HARDCODED. Gelecekte mockup_data_json ile
+dinamikleştirilebilir (örn. öğrenci adı, tarih, görev satırları). Şimdiki
+versiyon mevcut anasayfa görüntüsünü birebir korumak için statik.
+"""
+
+from __future__ import annotations
+
+from dataclasses import dataclass
+from pathlib import Path
+
+
+@dataclass(frozen=True)
+class MockupTemplate:
+    """Bir mockup şablonunun kayıt bilgisi."""
+    key: str                 # FeatureCard.mockup_type değeri (örn. "daily_schedule")
+    label: str               # Admin dropdown'da görünen TR ad
+    description: str         # Kısa açıklama — koç hangi karta uygun
+    template_path: str       # "landing/mockups/<key>.html"
+    feature_card_slug: str   # Hangi anasayfa kartından çıkarıldı
+
+
+# Mevcut anasayfadaki 5 mockup'ın kayıtları.
+# Sıralama → admin dropdown sırası.
+MOCKUP_TEMPLATES: dict[str, MockupTemplate] = {
+    "daily_schedule": MockupTemplate(
+        key="daily_schedule",
+        label="Günlük Program Tablosu",
+        description="Saat + ders + görev satırlı tablo (Saniyeler İçinde Günlük Program kartının görseli)",
+        template_path="landing/mockups/daily_schedule.html",
+        feature_card_slug="daily-plan",
+    ),
+    "fsrs_rating": MockupTemplate(
+        key="fsrs_rating",
+        label="FSRS Rating Kartı",
+        description="Bugünkü kart + 4 rating butonu (Tekrar/Zor/İyi/Kolay)",
+        template_path="landing/mockups/fsrs_rating.html",
+        feature_card_slug="aralikli-tekrar",
+    ),
+    "burnout_gauge": MockupTemplate(
+        key="burnout_gauge",
+        label="Burnout Risk Gauge",
+        description="Yüzde gauge + bar + sinyal chipleri (Risk Radarı kartının görseli)",
+        template_path="landing/mockups/burnout_gauge.html",
+        feature_card_slug="dna-risk",
+    ),
+    "books_progress": MockupTemplate(
+        key="books_progress",
+        label="Kitap İlerleme Barları",
+        description="Ders bazında ilerleme yüzdeleri (Soru Bankası kartının görseli)",
+        template_path="landing/mockups/books_progress.html",
+        feature_card_slug="soru-bankasi",
+    ),
+    "whatsapp_chat": MockupTemplate(
+        key="whatsapp_chat",
+        label="WhatsApp Sohbet",
+        description="Veli mesaj balonu + haftalık karne (Veli Kanalı kartının görseli)",
+        template_path="landing/mockups/whatsapp_chat.html",
+        feature_card_slug="veli-kanali",
+    ),
+}
+
+
+def get_mockup(key: str | None) -> MockupTemplate | None:
+    """Verilen key için mockup bilgisini döndür; yoksa None."""
+    if not key:
+        return None
+    return MOCKUP_TEMPLATES.get(key)
+
+
+def list_mockups() -> list[MockupTemplate]:
+    """Admin dropdown için kayıt sırasında liste."""
+    return list(MOCKUP_TEMPLATES.values())
+
+
+def is_valid_key(key: str | None) -> bool:
+    """Mockup key'i geçerli mi (None veya "none" da kabul)."""
+    if not key or key == "none":
+        return True
+    return key in MOCKUP_TEMPLATES
+
+
+def template_path_for(key: str | None) -> str | None:
+    """Render için template path döndür; geçersiz/boş key None döner."""
+    tpl = get_mockup(key)
+    return tpl.template_path if tpl else None

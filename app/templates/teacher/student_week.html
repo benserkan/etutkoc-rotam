@@ -13,14 +13,33 @@
       {{ end.day }} {{ tr_months[end.month - 1] }} {{ end.year }}
       <span class="text-slate-400">· {{ tr_weekdays[start.weekday()] }} başlangıçlı</span>
     </div>
+    {# Hafta anchor'ı: minik bilgi rozeti — düzenlemek için öğrenci detay sayfasına yönlendirir.
+       Detaylı yönetim "Öğrenci detay > Genel" sekmesindeki Koçluk Takvimi kartında. #}
+    <a href="/teacher/students/{{ student.id }}#overview"
+       class="inline-flex items-center gap-1.5 mt-2 text-[11px] text-slate-500 hover:text-indigo-700"
+       title="Hafta anchor'ı — koçluk gününüz değiştiyse öğrenci ayarlarından düzenleyin">
+      {% if week_anchor %}
+        <span class="text-slate-400">⚓</span>
+        <span>an: <b class="text-slate-700">{{ week_anchor.strftime('%d.%m') }}
+          {{ tr_weekdays[week_anchor.weekday()][:3] }}</b></span>
+        {% if anchor_is_manual %}
+        <span class="text-indigo-500 text-[10px]">●</span>
+        {% endif %}
+      {% else %}
+        <span class="text-slate-400">⚓ anchor yok</span>
+      {% endif %}
+      <span class="text-slate-300">→ düzenle</span>
+    </a>
   </div>
   <div class="flex flex-wrap items-center gap-2">
     <form method="get" action="/teacher/students/{{ student.id }}/week"
-          class="flex items-center gap-2 px-2 py-1.5 rounded border border-slate-300 bg-white">
-      <label class="text-xs text-slate-500">Başlangıç:</label>
+          class="flex items-center gap-2 px-2 py-1.5 rounded border border-slate-300 bg-white"
+          title="Sadece bu açılışta pencereyi seçtiğin tarihten başlat. Kalıcı takvim ayarı için aşağıdaki ⚓ Hafta anchor'ı panelini kullan.">
+      <label class="text-xs text-slate-500">Geçici görüntüle:</label>
       <input type="date" name="start" value="{{ start }}"
              class="px-2 py-1 text-sm border-0 focus:outline-none" />
-      <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-800">Uygula</button>
+      <button type="submit" class="text-xs text-indigo-600 hover:text-indigo-800">Git</button>
+      <span class="text-[10px] text-slate-400 italic">(kalıcı değil)</span>
     </form>
     <a href="/teacher/students/{{ student.id }}/week?start={{ prev_date }}"
        class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50">← 7 gün</a>
@@ -31,17 +50,48 @@
     <a href="/teacher/students/{{ student.id }}/suggestions-diagnostics"
        class="px-3 py-2 rounded border border-slate-300 text-sm text-slate-600 hover:bg-slate-50"
        title="Öneri motorunun sayısal iç durumunu gör">🔬 Tanı</a>
+    {# OOB target — HTMX bunu day-card swap'lerinde günceller (week_draft_oob.html) #}
+    <div id="week-draft-button" class="inline-flex">
+      {% if week_draft_total %}
+      <form method="post" action="/teacher/students/{{ student.id }}/publish-week"
+            onsubmit="return confirm('{{ week_draft_total }} taslak görev yayına alınsın? Bu işlem öğrencinin paneline indirilecek (veli bildirimi YOK, ayrıca \&quot;Veliye duyur\&quot; basmalısın).');"
+            class="inline">
+        <input type="hidden" name="week_start" value="{{ start }}" />
+        <button type="submit"
+                class="px-3 py-2 rounded text-sm font-bold text-white shadow-sm hover:brightness-110"
+                style="background:linear-gradient(135deg,#D97706,#B45309);"
+                title="Tüm haftanın taslak görevlerini öğrenciye aç">
+          🚀 Tüm haftayı yayınla ({{ week_draft_total }})
+        </button>
+      </form>
+      {% endif %}
+    </div>
     <form method="post" action="/teacher/students/{{ student.id }}/program/notify-parents"
-          onsubmit="return confirm('Bu hafta {{ start }} – {{ end }} programını bağlı velilere bildirim olarak göndermek istediğinizden emin misiniz?');"
+          onsubmit="return confirm('Bu hafta {{ start }} – {{ end }} programını bağlı velilere bildirim olarak göndermek istediğinizden emin misiniz?{% if week_draft_total %}\n\nNOT: {{ week_draft_total }} taslak görev YAYINLANMAMIŞ; bildirimde sayılmaz.{% endif %}');"
           class="inline">
       <input type="hidden" name="start" value="{{ start }}" />
       <button type="submit"
               class="px-3 py-2 rounded bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-sm"
-              title="Bu haftalık programı bağlı velilere e-posta/WhatsApp ile duyur">
+              title="Yayınlanmış programı bağlı velilere e-posta/WhatsApp ile duyur (taslaklar dahil değil)">
         📣 Veliye duyur
       </button>
     </form>
   </div>
+</div>
+
+{# OOB target — HTMX bunu day-card swap'lerinde günceller (week_draft_oob.html).
+   Wrapper her zaman var, içerik conditional — OOB ile içeri/dışarı geçer. #}
+<div id="week-draft-banner">
+  {% if week_draft_total %}
+  <div class="mb-4 px-4 py-2.5 rounded-lg flex items-center gap-3 text-sm border"
+       style="background:linear-gradient(90deg,#FEF3C7,#FEF9C3); border-color:#FDE68A; color:#78350F;">
+    <span class="text-lg">📓</span>
+    <div class="flex-1">
+      <b>{{ week_draft_total }} görev taslak halinde</b> — öğretmen panelinde görünür, öğrenci paneline indirilmedi.
+      Hazır olunca yukarıdaki <b>🚀 Tüm haftayı yayınla</b> butonuna bas; veya gün bazında yayınlayabilirsin.
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 {% set _ok = request.query_params.get('ok') %}
@@ -67,10 +117,16 @@
 
 <div class="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
 <div class="space-y-4 min-w-0">
+  {# Hafta notları — gün kartlarının üstünde, kompakt amber kart #}
+  {% with student=student, week_start=start, notes=week_notes %}
+    {% include "teacher/partials/week_notes_card.html" %}
+  {% endwith %}
+
   {% for day in days %}
     {% with day=day, day_tasks=tasks_by_day[day], is_today=(day == today),
             planned_total=day_planned_totals[day], day_suggestions=suggestions_by_day[day],
             day_subject_summary=day_subject_summary_by_day[day],
+            day_draft_count=day_draft_counts[day],
             keep_open=None %}
       {% include "teacher/partials/day_card.html" %}
     {% endwith %}
@@ -112,6 +168,126 @@
 </aside>
 {% endif %}
 </div>  {# /grid #}
+
+{# ─────────── Görev kaydedildi toast (phone-style notification) ─────────── #}
+<div id="task-toast" aria-hidden="true"
+     class="fixed bottom-4 right-4 z-50 pointer-events-none opacity-0 translate-y-3 transition-all duration-300"
+     style="max-width: 320px;">
+  <div class="bg-slate-900 text-white rounded-xl shadow-2xl overflow-hidden border border-slate-700">
+    <div class="flex items-stretch">
+      {# Sol — telefon emoji küçük mockup #}
+      <div class="px-3 py-3 flex items-center justify-center" style="background:linear-gradient(135deg,#0B5560,#117A86);">
+        <span class="text-2xl">📱</span>
+      </div>
+      {# Sağ — mesaj #}
+      <div class="flex-1 px-3 py-2.5 min-w-0">
+        <div class="flex items-center gap-1.5 text-[10px] uppercase tracking-wider font-bold mb-0.5" style="color:#22D3EE;">
+          <span class="inline-block w-1.5 h-1.5 rounded-full" style="background:#22D3EE;"></span>
+          Kaydedildi
+        </div>
+        <div class="text-sm font-semibold leading-tight">{{ student.full_name }}</div>
+        <div class="text-[11px] text-slate-300 mt-0.5" id="task-toast-detail">Taslak ise yayınla, canlı ise öğrenci sonraki panel açışında görür</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{# SortableJS — drag-drop için (CDN, küçük kütüphane ~30KB) #}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
+
+<script>
+  // ─────────── Görev sıralaması — sürükle-bırak ───────────
+  // Her .day-tasks-list konteyneri Sortable.js ile draggable yapılır.
+  // Drop sonrası new order POST /teacher/students/<sid>/tasks/reorder ile iletilir.
+  function initDragSortable(root) {
+    if (!window.Sortable) return;
+    var lists = (root || document).querySelectorAll('.day-tasks-list');
+    lists.forEach(function(list) {
+      if (list._sortable) return;  // idempotent
+      list._sortable = new Sortable(list, {
+        animation: 160,
+        handle: '.task-drag-handle',
+        draggable: '.task-row',
+        ghostClass: 'task-row-ghost',
+        chosenClass: 'task-row-chosen',
+        dragClass: 'task-row-dragging',
+        onEnd: function(evt) {
+          if (evt.oldIndex === evt.newIndex) return;
+          var ids = Array.from(list.querySelectorAll('.task-row'))
+            .map(function(r) { return r.dataset.taskId; })
+            .filter(Boolean);
+          if (!ids.length) return;
+          var sid = list.dataset.studentId;
+          var day = list.dataset.day;
+          if (!window.htmx) return;
+          var form = new FormData();
+          form.append('task_date', day);
+          form.append('task_ids', ids.join(','));
+          fetch('/teacher/students/' + sid + '/tasks/reorder', {
+            method: 'POST',
+            body: form,
+            headers: { 'HX-Request': 'true' },
+          }).then(function(r){ return r.text(); }).then(function(html) {
+            // Yanıt yeni day-card HTML'i — DOM'a swap et
+            var dayCard = list.closest('.day-card');
+            if (!dayCard || !html) return;
+            var parser = new DOMParser();
+            var doc = parser.parseFromString(html, 'text/html');
+            var fresh = doc.querySelector('.day-card');
+            if (fresh) {
+              dayCard.replaceWith(fresh);
+              // Yeni eklenen kart için sortable'ı tekrar bağla
+              initDragSortable(document);
+              // tasks-changed event'i (sidebar refresh için)
+              document.body.dispatchEvent(new CustomEvent('tasks-changed'));
+            }
+          }).catch(function(){ /* sessiz */ });
+        }
+      });
+    });
+  }
+  document.addEventListener('DOMContentLoaded', function(){ initDragSortable(document); });
+  // HTMX swap sonrası yeni day-card için tekrar bağla
+  document.body.addEventListener('htmx:afterSwap', function(e){
+    var t = e.detail && e.detail.target;
+    if (t && (t.classList.contains('day-card') || t.querySelector('.day-tasks-list'))) {
+      initDragSortable(t);
+    }
+  });
+
+  // ─────────── Toast — görev eklendi/yenilendi ───────────
+  // _render_day_card "tasks-changed" event'i yayınlıyor (HX-Trigger header).
+  // Bunu dinleyip telefon-stili toast'u kısa süre göster.
+  (function(){
+    var toast = document.getElementById('task-toast');
+    var detail = document.getElementById('task-toast-detail');
+    var hideTimer = null;
+    function showToast(msg) {
+      if (!toast) return;
+      if (detail && msg) detail.textContent = msg;
+      toast.classList.remove('opacity-0', 'translate-y-3');
+      toast.classList.add('opacity-100', 'translate-y-0');
+      toast.setAttribute('aria-hidden', 'false');
+      if (hideTimer) clearTimeout(hideTimer);
+      hideTimer = setTimeout(function() {
+        toast.classList.add('opacity-0', 'translate-y-3');
+        toast.classList.remove('opacity-100', 'translate-y-0');
+        toast.setAttribute('aria-hidden', 'true');
+      }, 2400);
+    }
+    document.body.addEventListener('tasks-changed', function(){
+      showToast('Kaydedildi — taslak ise yayınla, canlı ise öğrenci paneli açtığında görür');
+    });
+  })();
+</script>
+
+<style>
+  /* Sürükle-bırak görsel ipuçları */
+  .task-row-ghost { opacity: 0.4; background: #E0E7FF !important; }
+  .task-row-chosen { background: #EEF2FF !important; }
+  .task-row-dragging { transform: rotate(-1deg); box-shadow: 0 8px 20px -4px rgba(15,23,42,0.25); }
+  .task-row .task-drag-handle { font-size: 1rem; line-height: 1; letter-spacing: -0.5px; transition: color 0.15s; }
+</style>
 
 <script>
   // Sidebar'da hangi ders <details>'leri açık — refresh öncesi yakala, sonrası geri uygula

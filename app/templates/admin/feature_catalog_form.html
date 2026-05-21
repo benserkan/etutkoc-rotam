@@ -1,0 +1,381 @@
+{% extends "base.html" %}
+{% set is_edit = card is not none %}
+{% block title %}{% if is_edit %}{{ card.title }}{% else %}Yeni Vitrin Kartı{% endif %} — Admin{% endblock %}
+
+{% block content %}
+{# Form değerleri (create modunda card None — boş defaults) #}
+{% set v_slug = card.slug if card else '' %}
+{% set v_title = card.title if card else '' %}
+{% set v_tagline = card.tagline if card else '' %}
+{% set v_desc = card.description_md if card else '' %}
+{% set v_icon = card.icon if card else 'sparkles' %}
+{% set v_color = card.accent_color if card else '#3b82f6' %}
+{% set v_cat_icon = card.category_icon if card else '✨' %}
+{% set v_cat_label = card.category_label if card else '' %}
+{% set v_demo_dur = card.demo_duration_label if card else '' %}
+{% set v_mockup = card.mockup_type if card else '' %}
+{% set v_roles = card.target_roles if card else [] %}
+{% set v_benefits = card.benefits|join('\n') if card else '' %}
+{% set v_pains = card.pain_points|join('\n') if card else '' %}
+{% set v_demo = card.demo_slug if card else '' %}
+{% set v_domain = card.domain if card else 'genel' %}
+{% set v_tier = card.tier if card else 'enhancement' %}
+{% set v_status = card.status if card else 'draft' %}
+{% set v_intro = card.introduced_at.strftime('%Y-%m-%dT%H:%M') if card and card.introduced_at else '' %}
+{% set v_commit = card.introduced_in_commit if card else '' %}
+{% set v_pr = card.pr_url if card else '' %}
+{% set v_priority = card.strategic_priority if card else 3 %}
+{% set v_pin = card.manual_pin if card else False %}
+{% set v_pin_until = card.pin_until.strftime('%Y-%m-%dT%H:%M') if card and card.pin_until else '' %}
+{% set v_hide = card.manual_hide if card else False %}
+{% set v_cta_label = card.cta_label if card else 'Detayları gör' %}
+{% set v_cta_url = card.cta_url if card else '' %}
+
+<div class="mb-6">
+  <a href="/admin/feature-catalog" class="text-sm text-slate-500 hover:text-slate-700">← Vitrin Kartları</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">
+    {% if is_edit %}{{ card.title }}{% else %}Yeni Vitrin Kartı{% endif %}
+  </h1>
+  {% if is_edit %}
+  <p class="text-xs text-slate-500 mt-1 font-mono">{{ card.slug }} · oluşturuldu {{ card.created_at.strftime('%d.%m.%Y') }}</p>
+  {% endif %}
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">✓ {{ flash_ok }}</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+<form method="post"
+      action="{% if is_edit %}/admin/feature-catalog/{{ card.id }}{% else %}/admin/feature-catalog/new{% endif %}"
+      class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+  {# ════════════════════════════════════════════════════════════════
+     Sol: Ana içerik (anasayfa kart sırasında)
+     ════════════════════════════════════════════════════════════════ #}
+  <div class="lg:col-span-2 space-y-4">
+
+    {# ---------- 1) KİMLİK ---------- #}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="text-sm font-medium text-slate-700 mb-3">1. Kimlik</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="block">
+          <span class="text-xs text-slate-600">Slug <span class="text-rose-500">*</span></span>
+          <input type="text" name="slug" value="{{ v_slug }}" required maxlength="80"
+                 placeholder="rotam"
+                 pattern="[a-z0-9\-]+"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono">
+          <span class="text-[11px] text-slate-500">URL'de ve programda kullanılır. Sadece a-z, 0-9, '-'.</span>
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">Ana başlık <span class="text-rose-500">*</span></span>
+          <input type="text" name="title" value="{{ v_title }}" required maxlength="160"
+                 placeholder="Saniyeler İçinde Günlük Program Oluşturma"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+          <span class="text-[11px] text-slate-500">Kartın büyük başlığı. <b>Anasayfada görünür.</b></span>
+        </label>
+      </div>
+    </div>
+
+    {# ---------- 2) ANASAYFA KART RENDER ---------- #}
+    <div class="bg-indigo-50/40 border-2 border-indigo-200 rounded-lg p-5">
+      <div class="flex items-baseline justify-between mb-3">
+        <h2 class="text-sm font-semibold text-indigo-900">🏠 2. Anasayfa Kart Görünümü</h2>
+        <span class="text-[10px] text-indigo-700 italic">aşağıdaki tüm alanlar anasayfada görünür</span>
+      </div>
+
+      {# Kategori rozeti #}
+      <div class="grid grid-cols-[80px_1fr] gap-3 mb-4">
+        <label class="block">
+          <span class="text-xs text-slate-600">İkon</span>
+          <input type="text" name="category_icon" value="{{ v_cat_icon }}" maxlength="16"
+                 placeholder="📅"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-lg text-center bg-white">
+          <span class="text-[11px] text-slate-500">Emoji</span>
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">Kategori rozeti metni</span>
+          <input type="text" name="category_label" value="{{ v_cat_label }}" maxlength="64"
+                 placeholder="Günlük Rota"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <span class="text-[11px] text-slate-500">Kart üstündeki küçük rozet — örn. "Günlük Rota", "FSRS", "Risk Radarı". UPPERCASE çevrilir.</span>
+        </label>
+      </div>
+
+      {# Açıklama paragrafı #}
+      <label class="block mb-4">
+        <span class="text-xs text-slate-600">Açıklama paragrafı</span>
+        <textarea name="tagline" rows="3" maxlength="400"
+                  placeholder="AI'ın önerdiği görevleri tek tıkla onaylayın..."
+                  class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">{{ v_tagline }}</textarea>
+        <span class="text-[11px] text-slate-500">2-3 cümle. <b>HTML kalın/italik destekler:</b> <code class="bg-white px-1 rounded">&lt;strong&gt;...&lt;/strong&gt;</code>, <code class="bg-white px-1 rounded">&lt;em&gt;...&lt;/em&gt;</code>. Maks 400 karakter.</span>
+      </label>
+
+      {# Özellik etiketleri (chipler) #}
+      <label class="block mb-4">
+        <span class="text-xs text-slate-600">Özellik etiketleri (chipler)</span>
+        <textarea name="benefits_text" rows="3"
+                  placeholder="⚡ Tek tıkla AI onayı&#10;🔀 Drag-and-drop sıralama&#10;📚 Kitap & bölüm seçimi"
+                  class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">{{ v_benefits }}</textarea>
+        <span class="text-[11px] text-slate-500">Her satıra bir chip. Emoji ile başlatın. 2-4 chip ideal — kart altında küçük etiketler olarak görünür.</span>
+      </label>
+
+      {# Demo bağlantısı + süre #}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <label class="block">
+          <span class="text-xs text-slate-600">Demo slug (opsiyonel)</span>
+          <div class="mt-1 flex items-center gap-2">
+            <input type="text" name="demo_slug" value="{{ v_demo }}" maxlength="80"
+                   placeholder="daily-plan"
+                   class="flex-1 px-3 py-2 border border-slate-300 rounded text-sm font-mono bg-white">
+            {% if v_demo %}
+            <a href="/demos?play={{ v_demo }}" target="_blank"
+               class="px-3 py-2 text-xs text-indigo-600 hover:text-indigo-800 border border-indigo-200 rounded bg-white whitespace-nowrap">
+              Önizle ↗
+            </a>
+            {% endif %}
+          </div>
+          <span class="text-[11px] text-slate-500">/demos?play=&lt;slug&gt; sayfasındaki demo. Boşsa "Demo İzle" butonu gizlenir.</span>
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">Demo süre etiketi (opsiyonel)</span>
+          <input type="text" name="demo_duration_label" value="{{ v_demo_dur }}" maxlength="64"
+                 placeholder="2 dk · 8 sahne"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <span class="text-[11px] text-slate-500">"Demo İzle" butonunun yanındaki küçük yazı.</span>
+        </label>
+      </div>
+
+      {# Sağ-yan görsel mockup şablonu #}
+      <label class="block">
+        <span class="text-xs text-slate-600">Sağ-yan görsel şablonu (opsiyonel)</span>
+        <select name="mockup_type" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm bg-white">
+          <option value="" {% if not v_mockup %}selected{% endif %}>— Görsel yok (geniş tek kolon kart) —</option>
+          {% for m in MOCKUPS %}
+          <option value="{{ m.key }}" {% if v_mockup == m.key %}selected{% endif %}>
+            {{ m.label }}
+          </option>
+          {% endfor %}
+        </select>
+        <span class="text-[11px] text-slate-500">
+          Anasayfa kartının sağ tarafındaki micro-UI mockup'ı. Şu an 5 hazır şablon var; yeni şablon eklemek geliştirici işi.
+          {% if v_mockup %}
+            <a href="#" onclick="document.getElementById('mockup-preview').classList.toggle('hidden'); return false;"
+               class="text-indigo-600 hover:text-indigo-800 ml-2">▾ Önizleme</a>
+          {% endif %}
+        </span>
+        {% if v_mockup %}
+        <div id="mockup-preview" class="hidden mt-3 p-4 bg-white border border-slate-200 rounded">
+          <div class="text-[10px] text-slate-400 uppercase tracking-wider mb-2">Mockup önizlemesi</div>
+          {% include "landing/mockups/" + v_mockup + ".html" ignore missing %}
+        </div>
+        {% endif %}
+      </label>
+    </div>
+
+    {# ---------- 3) ANASAYFA-DIŞI İÇERİK (detay sayfası / yönetim için) ---------- #}
+    <details class="bg-white border border-slate-200 rounded-lg">
+      <summary class="px-5 py-3 cursor-pointer hover:bg-slate-50 text-sm font-medium text-slate-700">
+        3. Detay sayfası içeriği <span class="text-[10px] text-slate-400">(anasayfada görünmez, opsiyonel)</span>
+      </summary>
+      <div class="px-5 pb-5 pt-2 space-y-3">
+        <label class="block">
+          <span class="text-xs text-slate-600">Uzun açıklama (Markdown)</span>
+          <textarea name="description_md" rows="6"
+                    placeholder="## Nasıl çalışır?&#10;- Hedef tarih..."
+                    class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono">{{ v_desc }}</textarea>
+          <span class="text-[11px] text-slate-500">İleride özellik detay sayfasında veya hover tooltip'te kullanılır.</span>
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">Hangi sorunu çözüyor</span>
+          <textarea name="pain_points_text" rows="3"
+                    placeholder="Her satıra bir madde:&#10;Manuel plan yapma yükü"
+                    class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">{{ v_pains }}</textarea>
+          <span class="text-[11px] text-slate-500">İç notlar / pazarlama materyali için. Anasayfada görünmez.</span>
+        </label>
+      </div>
+    </details>
+
+    {# ---------- 4) CTA (kart altı buton, opsiyonel) ---------- #}
+    <details class="bg-white border border-slate-200 rounded-lg">
+      <summary class="px-5 py-3 cursor-pointer hover:bg-slate-50 text-sm font-medium text-slate-700">
+        4. Detay düğmesi (CTA) <span class="text-[10px] text-slate-400">(opsiyonel)</span>
+      </summary>
+      <div class="px-5 pb-5 pt-2 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <label class="block">
+          <span class="text-xs text-slate-600">Buton metni</span>
+          <input type="text" name="cta_label" value="{{ v_cta_label }}" maxlength="80"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">Buton bağlantısı</span>
+          <input type="url" name="cta_url" value="{{ v_cta_url }}" maxlength="255"
+                 placeholder="/features/rotam"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+          <span class="text-[11px] text-slate-500">Boşsa buton gösterilmez.</span>
+        </label>
+      </div>
+    </details>
+
+    {# ---------- 5) KAYNAK (auto-discovery için) ---------- #}
+    <details class="bg-white border border-slate-200 rounded-lg">
+      <summary class="px-5 py-3 cursor-pointer hover:bg-slate-50 text-sm font-medium text-slate-700">
+        5. Kaynak <span class="text-[10px] text-slate-400">(Katman 3 — otomatik dolacak)</span>
+      </summary>
+      <div class="px-5 pb-5 pt-2 grid grid-cols-1 md:grid-cols-3 gap-3">
+        <label class="block">
+          <span class="text-xs text-slate-600">Eklenme tarihi</span>
+          <input type="datetime-local" name="introduced_at" value="{{ v_intro }}"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">İlk commit SHA</span>
+          <input type="text" name="introduced_in_commit" value="{{ v_commit }}" maxlength="40"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono">
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">PR URL</span>
+          <input type="url" name="pr_url" value="{{ v_pr }}" maxlength="255"
+                 class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+        </label>
+      </div>
+    </details>
+  </div>
+
+  {# ════════════════════════════════════════════════════════════════
+     Sağ: Yönetim ve görsel
+     ════════════════════════════════════════════════════════════════ #}
+  <div class="space-y-4">
+
+    {# ---------- Görsel tema ---------- #}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="text-sm font-medium text-slate-700 mb-3">🎨 Görsel tema</h2>
+      <label class="block mb-3">
+        <span class="text-xs text-slate-600">Vurgu rengi</span>
+        <div class="mt-1 flex items-center gap-2">
+          <input type="color" name="accent_color" value="{{ v_color }}"
+                 class="h-9 w-12 border border-slate-300 rounded">
+          <span class="text-xs font-mono text-slate-500">{{ v_color }}</span>
+        </div>
+        <span class="text-[11px] text-slate-500">Anasayfa kartının vurgu rengi (rozet, buton, kenar).</span>
+      </label>
+      <label class="block">
+        <span class="text-xs text-slate-600">İkon adı (Lucide, ileriye dönük)</span>
+        <input type="text" name="icon" value="{{ v_icon }}" maxlength="64"
+               placeholder="compass"
+               class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono">
+        <span class="text-[11px] text-slate-500">Detay sayfası için. Anasayfa kartında <b>kategori ikonu</b> kullanılır.</span>
+      </label>
+    </div>
+
+    {# ---------- Sınıflandırma ---------- #}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="text-sm font-medium text-slate-700 mb-3">🗂 Sınıflandırma</h2>
+
+      <label class="block mb-3">
+        <span class="text-xs text-slate-600">Alan</span>
+        <select name="domain" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+          {% for d in FeatureDomain %}
+          <option value="{{ d.value }}" {% if v_domain == d.value %}selected{% endif %}>{{ DOMAIN_LABELS[d] }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="block mb-3">
+        <span class="text-xs text-slate-600">Düzey</span>
+        <select name="tier" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+          {% for t in FeatureTier %}
+          <option value="{{ t.value }}" {% if v_tier == t.value %}selected{% endif %}>{{ TIER_LABELS[t] }}</option>
+          {% endfor %}
+        </select>
+      </label>
+
+      <label class="block mb-3">
+        <span class="text-xs text-slate-600">Yayın durumu</span>
+        <select name="status_field" class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+          {% for s in FeatureStatus %}
+          <option value="{{ s.value }}" {% if v_status == s.value %}selected{% endif %}>{{ STATUS_LABELS[s] }}</option>
+          {% endfor %}
+        </select>
+        <span class="text-[11px] text-slate-500">Sadece "Yayında" kartlar anasayfada görünür.</span>
+      </label>
+
+      <div class="block mb-3">
+        <span class="text-xs text-slate-600">Hedef rol(ler)</span>
+        <div class="mt-1 space-y-1">
+          {% for r in UserRole %}
+          <label class="flex items-center gap-2 text-sm">
+            <input type="checkbox" name="target_roles" value="{{ r.value }}"
+                   {% if r.value in v_roles %}checked{% endif %}>
+            <span>{{ r.value }}</span>
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+
+      <label class="block mb-2">
+        <span class="text-xs text-slate-600">Stratejik öncelik (1-5)</span>
+        <input type="range" name="strategic_priority" value="{{ v_priority }}" min="1" max="5" step="1"
+               oninput="this.nextElementSibling.textContent = this.value"
+               class="mt-1 w-full">
+        <span class="text-sm font-mono">{{ v_priority }}</span>
+      </label>
+    </div>
+
+    {# ---------- Görünürlük / Sabitleme ---------- #}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="text-sm font-medium text-slate-700 mb-3">⚙️ Görünürlük ve Sabitleme</h2>
+
+      <label class="flex items-start gap-2 mb-3">
+        <input type="checkbox" name="manual_pin" value="on" {% if v_pin %}checked{% endif %} class="mt-1">
+        <div>
+          <div class="text-sm">Manuel sabitle</div>
+          <div class="text-[11px] text-slate-500">Skorlama sıralamasından bağımsız sabit kalsın.</div>
+        </div>
+      </label>
+
+      <label class="block mb-3 ml-6">
+        <span class="text-xs text-slate-600">Sabit süresi (opsiyonel)</span>
+        <input type="datetime-local" name="pin_until" value="{{ v_pin_until }}"
+               class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+        <span class="text-[11px] text-slate-500">Boş → süresiz.</span>
+      </label>
+
+      <label class="flex items-start gap-2">
+        <input type="checkbox" name="manual_hide" value="on" {% if v_hide %}checked{% endif %} class="mt-1">
+        <div>
+          <div class="text-sm">Manuel gizle</div>
+          <div class="text-[11px] text-slate-500">Yayında olsa bile anasayfada gösterme.</div>
+        </div>
+      </label>
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <button type="submit"
+              class="w-full px-3 py-2 bg-indigo-600 text-white rounded font-medium text-sm hover:bg-indigo-700">
+        {% if is_edit %}💾 Değişiklikleri kaydet{% else %}✓ Kartı oluştur{% endif %}
+      </button>
+      <a href="/admin/feature-catalog"
+         class="w-full px-3 py-2 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-center text-sm">
+        Vazgeç
+      </a>
+    </div>
+  </div>
+</form>
+
+{% if is_edit %}
+{# Tehlikeli aksiyonlar — sadece düzenleme modunda #}
+<div class="mt-6 bg-rose-50 border border-rose-200 rounded-lg p-4">
+  <h3 class="text-sm font-medium text-rose-900 mb-2">⚠ Tehlikeli Aksiyonlar</h3>
+  <form method="post" action="/admin/feature-catalog/{{ card.id }}/delete"
+        onsubmit="return confirm('{{ card.slug }} kartı kalıcı olarak silinecek. Emin misin?');">
+    <button type="submit"
+            class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded text-sm font-medium">
+      Kartı kalıcı sil
+    </button>
+  </form>
+</div>
+{% endif %}
+{% endblock %}

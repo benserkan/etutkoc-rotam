@@ -74,6 +74,15 @@ class PlanChangeHistory(Base):
         nullable=False, index=True,
     )
 
+    # Arşivleme (soft archive) — 3 yıldan eski kayıtlar veya admin manuel arşiv
+    archived_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    archived_by_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
+    )
+    archive_note: Mapped[str | None] = mapped_column(String(500), nullable=True)
+
     def __repr__(self) -> str:
         return (
             f"<PlanChange {self.owner_type.value}#{self.owner_id} "

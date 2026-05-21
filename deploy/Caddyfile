@@ -1,0 +1,191 @@
+# =============================================================================
+# Caddy — Strangler Fig reverse proxy
+# Otomatik HTTPS (Let's Encrypt). PUBLIC_DOMAIN env'den okunur.
+#
+# Routing felsefesi:
+#   1. DOKUNULMAZ path'ler → daima FastAPI (web:8000)
+#   2. BFF + Next.js assets → daima Next.js (next:3000)
+#   3. Dalga-bazlı path'ler → Next.js (yorum satırı = kapalı, açma için #'i kaldır)
+#   4. DEFAULT FALLBACK → FastAPI (henüz Next.js'e açılmamış her şey eski Jinja'da)
+#
+# `route` bloğu kullanılır — Caddy direktiflerini SIRAYLA değerlendirir
+# (ilk eşleşen kazanır). Bu Strangler Fig için kritik.
+#
+# Dalga aç/kapa:
+#   1. İlgili `reverse_proxy ... next:3000` satırının #'ini kaldır
+#   2. `docker compose exec proxy caddy reload --config /etc/caddy/Caddyfile`
+#   3. Geri dönüş için tekrar # ekle → reload
+#   <60 saniye rollback (MIGRATION_RISKS R-020 garantisi)
+# =============================================================================
+
+{$PUBLIC_DOMAIN} {
+    encode gzip zstd
+
+    # Logging — JSON, stdout (Docker logs ile yakalanır)
+    log {
+        output stdout
+        format json
+        level INFO
+    }
+
+    # Üst düzey güvenlik header'ları
+    header {
+        # HSTS bir yıl, alt domain'ler dahil
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        # Tarayıcı XSS koruma
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "DENY"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Caddy sürümünü gizle
+        -Server
+    }
+
+    route {
+        # =====================================================================
+        # 1. DOKUNULMAZ — daima FastAPI (mobile/webhooks/print/legal)
+        # =====================================================================
+
+        # Health probe (Lightsail / Caddy / uptime monitor için)
+        reverse_proxy /healthz web:8000
+
+        # WhatsApp webhook — Meta Business Manager'da sabit URL (R-003)
+        # Path değişmez; DOKUNULMAZ.
+        reverse_proxy /webhooks/* web:8000
+
+        # API katmanları — v1 (mobile, kontrat dondurulmuş) + v2 (Next.js BFF tüketir)
+        reverse_proxy /api/v1/* web:8000
+        reverse_proxy /api/v2/* web:8000
+
+        # Statik dosyalar (logo, css/js artifact, vb.) — FastAPI servisi
+        reverse_proxy /static/* web:8000
+
+        # KVKK + Gizlilik + Legal — hibrit kalıcı Jinja
+        # NOT: /legal/kvkk-veli D5 P6'da Next.js'e taşındı; aşağıdaki
+        # `reverse_proxy /legal/kvkk-veli next:3000` (Dalga 5 bloğu) bu
+        # generic /legal/* matcher'ından ÖNCE eşleşmek üzere route bloğunda
+        # daha yukarıda yer alır. Caddy `route` bloğu ilk eşleşeni alır.
+        reverse_proxy /kvkk web:8000
+        reverse_proxy /privacy web:8000
+        # Dalga 5 veli KVKK Next.js'te
+        reverse_proxy /legal/kvkk-veli next:3000
+        reverse_proxy /legal/* web:8000
+
+        # Print sayfaları — tüm print akışları Next.js'e taşındı.
+        # Öğrenci + öğretmen print'leri Dalga 3 Paket 7 (2026-05-18),
+        # /institution/*/print (cohorts/at-risk/activity-heatmap) Dalga 4
+        # Paket 5'te `(print)` route group altında Next.js'te yapıldı; @prints
+        # istisnası Dalga 4 Paket 8'de kaldırıldı (2026-05-19).
+
+        # =====================================================================
+        # 2. NEXT.JS — BFF + asset'ler (daima Next.js)
+        # =====================================================================
+
+        # BFF auth route'ları (Next.js'in kendi API route'ları — /api/v2 değil)
+        reverse_proxy /api/auth/* next:3000
+
+        # Next.js build asset'leri ve favicon
+        reverse_proxy /_next/* next:3000
+        reverse_proxy /favicon.ico next:3000
+
+        # =====================================================================
+        # 3. STRANGLER FIG — dalga-bazlı Next.js açılışları
+        # Her dalga teslim edildiğinde ilgili reverse_proxy aktive edilir.
+        # =====================================================================
+
+        # ---------- Dalga 1: /me/account (profil + KVKK) — AÇIK ----------
+        reverse_proxy /me next:3000
+        reverse_proxy /me/* next:3000
+
+        # ---------- Dalga 2: Öğrenci paneli — AÇIK (2026-05-18, Paket 7) ----------
+        reverse_proxy /student next:3000
+        reverse_proxy /student/* next:3000
+
+        # ---------- Dalga 3: Öğretmen paneli — AÇIK (2026-05-18, Paket 7) ----------
+        reverse_proxy /teacher next:3000
+        reverse_proxy /teacher/* next:3000
+
+        # ---------- Dalga 4: Kurum yönetici paneli — AÇIK (2026-05-19, Paket 8) ----------
+        # 19 route: Panel + Kişiler (teachers list/[id]/roster/davet) + Analiz
+        # (at-risk/cohorts/heatmap/burnout/goals/admin-digest list+detay) +
+        # Üyelik (subscription/quota/usage) + 3 print sayfası
+        # ((print) route group altında). Jinja app/routes/institution.py +
+        # app/templates/institution/*.html dead-code olarak yayında bekliyor
+        # (kullanıcı kararı: "Jinja'ya dokunma, kalsın").
+        reverse_proxy /institution next:3000
+        reverse_proxy /institution/* next:3000
+
+        # ---------- Dalga 6: Süper admin paneli — AÇIK (2026-05-20) ----------
+        # Tüm D6 paketleri tamamlandı: P1-P6 (dashboard/kuruluşlar/kullanıcılar/
+        # denetim/limitler/vitrin) + P7 Ticari Pano (a-d) + Güvenlik Kamarası
+        # (G1 revenue dashboard + G2a overview/integrity/system/notifications +
+        # G2b activity + G3 sessions/live + G4 alarms/abuse). `/api/v2/admin/*`
+        # zaten yukarıdaki /api/v2/* matcher'ından FastAPI'ye (BFF backend) gider.
+        # Jinja app/routes/admin.py (6154 satır) + 50 template dead-code olarak
+        # yayında bekliyor (kullanıcı kararı: "Jinja'ya dokunma, kalsın").
+        reverse_proxy /admin next:3000
+        reverse_proxy /admin/* next:3000
+
+        # ---------- Dalga 5: Veli paneli — AÇIK (2026-05-19, Paket 6) ----------
+        # 8 route: /parent (dashboard) + /parent/students/[id] + .../week +
+        # /parent/notifications + /parent/settings + /parent/invitation/[token]
+        # (public davet kabul) + /parent/unsubscribe/[token] (public) +
+        # /legal/kvkk-veli (yukarıda — generic /legal/* öncesinde).
+        # Backend /api/v2/parent/* zaten /api/v2/* matcher'ından FastAPI'ye
+        # gider. Jinja app/routes/parent.py (767 satır) + 10 template dead-code
+        # olarak yayında bekliyor (kullanıcı kararı: "Jinja'ya dokunma, kalsın").
+        reverse_proxy /parent next:3000
+        reverse_proxy /parent/* next:3000
+
+        # ---------- Dalga 7 P1: Login + zorunlu şifre değiştirme — AÇIK (2026-05-20) ----------
+        # BFF login (/api/v2/auth/login) Jinja paritesine yükseltildi: IP blok +
+        # Turnstile CAPTCHA + SuspiciousIp besleme + ActiveSession kaydı (G2a/G3
+        # canlı panel) + auto-resume + süper admin alarmı. /login Next.js'te;
+        # /password/change zorunlu (must_change) + isteğe bağlı akışı kapsar.
+        # /logout AÇILMADI — Next.js çıkışı BFF (/api/v2/auth/logout) ile yapılır;
+        # Jinja /logout eski akış için yerinde kalır.
+        reverse_proxy /login next:3000
+
+        # ---------- Dalga 7 P2: şifre değiştir + sıfırla — AÇIK (2026-05-20) ----------
+        # /password/change (zorunlu/isteğe bağlı) + /password/forgot (istek) +
+        # /password/reset/[token] (yeni şifre). Hepsi Next.js'te; başka Jinja
+        # /password/* route'u yok. POST'lar /api/v2/auth/{forgot,reset}-password
+        # + /api/v2/me/password-change → FastAPI. PasswordResetToken (60 dk,
+        # tek kullanım) + HaveIBeenPwned breach + politika korunur.
+        reverse_proxy /password/* next:3000
+
+        # ---------- Dalga 7 P3: signup + email doğrulama — AÇIK (2026-05-20) ----------
+        # /signup/teacher (bağımsız öğretmen + 14g trial) + /signup/invite/[token]
+        # (davetli kayıt + kuota) + /verify-email/[token] (soft doğrulama). POST'lar
+        # /api/v2/auth/signup/* + /verify-email + /resend-verification → FastAPI.
+        # BFF auto-login (ActiveSession + cookie). EmailVerificationToken (7g) +
+        # users.email_verified_at (soft). Jinja signup.py + auth/signup_*.html
+        # dead-code halinde yayında bekliyor.
+        reverse_proxy /signup/* next:3000
+        reverse_proxy /verify-email/* next:3000
+
+        # ---------- Dalga 7 P5: public teklif — AÇIK (2026-05-20) ----------
+        # /offers/[token] (login'siz teklif görüntüle/kabul/ret). POST'lar
+        # /api/v2/offers/{token}/{accept,decline} → FastAPI (offers servisi).
+        # Jinja offers_public.py dead-code halinde yayında bekliyor.
+        reverse_proxy /offers/* next:3000
+
+        # ---------- Dalga 7: /logout — KAPALI (Next.js çıkışı BFF ile) ----------
+        #     reverse_proxy /logout next:3000
+
+        # ---------- Anasayfa vitrin — AÇIK (2026-05-20) ----------
+        # Yalnız TAM kök (/) Next.js'e gider; /demos, /kvkk, /privacy gibi alt
+        # path'ler aşağıdaki Jinja fallback'te kalır (@root = sadece "/").
+        # Giriş yapmış kullanıcı app/page.tsx içinde rol paneline redirect edilir;
+        # anonim ziyaretçi feature_catalog kartlı landing'i görür. Kartlar +
+        # A/B + telemetri /api/v2/landing(/telemetry) ile FastAPI'den beslenir.
+        # Jinja landing/index.html + /api/telemetry/event dead-code olarak kalır.
+        @root path /
+        reverse_proxy @root next:3000
+
+        # =====================================================================
+        # 4. DEFAULT FALLBACK — FastAPI Jinja
+        # Yukarıdakilere uymayan her path eski Jinja akışında.
+        # =====================================================================
+        reverse_proxy web:8000
+    }
+}

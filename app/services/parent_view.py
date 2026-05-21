@@ -241,6 +241,7 @@ def student_week(db: Session, parent: User, student_id: int, start: date) -> dic
             Task.student_id == student.id,
             Task.date >= start,
             Task.date <= end_inclusive,
+            Task.is_draft.is_(False),  # veli sadece yayınlanmış programı görür
         )
         .all()
     )

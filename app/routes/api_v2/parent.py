@@ -1,0 +1,1008 @@
+"""API v2 — Veli (PARENT) endpoint'leri (Dalga 5 Paket 1+2).
+
+Paket 1 (login-gerekli):
+  GET  /api/v2/parent/dashboard              → ParentDashboardResponse
+  GET  /api/v2/parent/students/{id}          → ParentStudentOverviewResponse
+  GET  /api/v2/parent/students/{id}/week     → ParentWeekResponse
+  GET  /api/v2/parent/notifications          → ParentNotificationsResponse
+  GET  /api/v2/parent/settings               → ParentSettingsResponse
+  POST /api/v2/parent/settings/preferences   → MutationResponse[ParentPreferencesInfo]
+  POST /api/v2/parent/settings/students/{id}/mute  → MutationResponse[ParentChildLink]
+  POST /api/v2/parent/settings/whatsapp/start      → MutationResponse[ParentWhatsAppInfo]
+  POST /api/v2/parent/settings/whatsapp/verify     → MutationResponse[ParentWhatsAppInfo]
+  POST /api/v2/parent/settings/whatsapp/disable    → MutationResponse[ParentWhatsAppInfo]
+
+Paket 2 (public endpoint'ler, P2'de doldurulacak):
+  GET  /api/v2/parent/invitation/{token}            → ParentInvitationInfo
+  POST /api/v2/parent/invitation/{token}/accept     → ParentInvitationAcceptResult
+  GET  /api/v2/parent/unsubscribe/{token}           → ParentUnsubscribeResult
+
+GİZLİLİK:
+- Tüm /students/{id} endpoint'leri parent_view.assert_parent_can_view() ile
+  KVKK guard'lar; bağ yoksa **404 not_found** (403 değil — sızıntı önleme).
+- Veri yapısı/sorgu Jinja services'le birebir aynı (kullanıcı kuralı).
+"""
+from __future__ import annotations
+
+import logging
+import secrets
+from datetime import date, datetime, time as dt_time, timedelta, timezone
+
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy.orm import Session, joinedload
+
+from app.deps import get_db
+from app.models import (
+    NOTIFICATION_KIND_LABELS,
+    NotificationChannel,
+    NotificationKind,
+    NotificationLog,
+    NotificationStatus,
+    PARENT_RELATION_LABELS,
+    ParentNotificationPref,
+    ParentPhoneVerification,
+    ParentSessionLog,
+    ParentStudentLink,
+    User,
+    UserRole,
+)
+from app.routes.api_v2.dependencies import (
+    _auth_error,
+    get_current_user_v2,
+)
+from app.routes.api_v2.schemas.common import MutationResponse
+from app.routes.api_v2.schemas.parent import (
+    ParentChildLink,
+    ParentDashboardResponse,
+    ParentInvitationAcceptBody,
+    ParentInvitationAcceptResult,
+    ParentInvitationInfo,
+    ParentMuteBody,
+    ParentNotificationItem,
+    ParentNotificationsResponse,
+    ParentPreferencesBody,
+    ParentPreferencesInfo,
+    ParentSettingsResponse,
+    ParentStudentOverviewResponse,
+    ParentUnsubscribeResult,
+    ParentWeekResponse,
+    ParentWhatsAppInfo,
+    ParentWhatsAppStartBody,
+    ParentWhatsAppVerifyBody,
+)
+from app.services.parent_invitation import (
+    can_register_parent_email,
+    consume_invitation,
+    find_user_by_email,
+    lookup_token,
+)
+from app.services.parent_view import (
+    ParentAccessDenied,
+    list_parent_students,
+    list_recent_notifications,
+    student_overview,
+    student_week,
+)
+from app.services.security import hash_password
+from app.services.whatsapp import normalize_phone, send_otp
+
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/parent", tags=["api-v2-parent"])
+
+
+# =============================================================================
+# Auth dep — _require_parent (rol kapısı)
+# =============================================================================
+
+
+def _require_parent(user: User = Depends(get_current_user_v2)) -> User:
+    """PARENT rolü zorunlu. Aksi halde 403 role_required."""
+    if user.role != UserRole.PARENT:
+        raise _auth_error(
+            "Bu işlem sadece veliler içindir.",
+            "role_required",
+            http_status=status.HTTP_403_FORBIDDEN,
+        )
+    return user
+
+
+def _client_meta(request) -> tuple[str | None, str | None]:
+    """ParentSessionLog audit için IP + UA."""
+    ip = request.client.host if request.client else None
+    ua = request.headers.get("user-agent", "")[:255] if request.headers else None
+    return ip, ua
+
+
+def _invalidate_self() -> list[str]:
+    """Veli mutation'larında invalidate edilecek queryKey prefix'leri."""
+    return ["parent:me"]
+
+
+# =============================================================================
+# Dashboard
+# =============================================================================
+
+
+@router.get("/dashboard", response_model=ParentDashboardResponse)
+def parent_dashboard_v2(
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veliye bağlı tüm çocuklar — dashboard kartları için.
+
+    Eşdeğer Jinja: parent.py:242-256 (parent_dashboard).
+    """
+    children = list_parent_students(db, user)
+    return ParentDashboardResponse(children=children)
+
+
+# =============================================================================
+# Student detail (read-only, KVKK guard'lı)
+# =============================================================================
+
+
+@router.get(
+    "/students/{student_id}",
+    response_model=ParentStudentOverviewResponse,
+)
+def parent_student_detail_v2(
+    student_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veliye gösterilecek öğrenci özet sayfası verisi.
+
+    Eşdeğer Jinja: parent.py:267-282 (parent_student_detail).
+    """
+    try:
+        data = student_overview(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "not_found",
+                "code": "student_not_found",
+                "message": "Öğrenci bulunamadı.",
+            },
+        )
+    return data
+
+
+@router.get(
+    "/students/{student_id}/week",
+    response_model=ParentWeekResponse,
+)
+def parent_student_week_v2(
+    student_id: int,
+    start: str | None = Query(None, description="YYYY-MM-DD; yoksa bugün"),
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """7 günlük read-only program.
+
+    Eşdeğer Jinja: parent.py:285-309 (parent_student_week).
+    """
+    if start:
+        try:
+            start_date = date.fromisoformat(start)
+        except ValueError:
+            start_date = date.today()
+    else:
+        start_date = date.today()
+    try:
+        data = student_week(db, user, student_id, start_date)
+    except ParentAccessDenied:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "not_found",
+                "code": "student_not_found",
+                "message": "Öğrenci bulunamadı.",
+            },
+        )
+    return data
+
+
+# =============================================================================
+# Notifications
+# =============================================================================
+
+
+@router.get("/notifications", response_model=ParentNotificationsResponse)
+def parent_notifications_v2(
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Bildirim geçmişi — son 100.
+
+    Eşdeğer Jinja: parent.py:315-325 (parent_notifications).
+    """
+    items = list_recent_notifications(db, user, limit=100)
+    return ParentNotificationsResponse(items=items, total=len(items))
+
+
+# =============================================================================
+# Settings — read
+# =============================================================================
+
+
+def _format_time(t: dt_time | None, default: str) -> str:
+    if t is None:
+        return default
+    return f"{t.hour:02d}:{t.minute:02d}"
+
+
+def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferencesInfo:
+    """ParentNotificationPref ORM → Pydantic."""
+    if pref is None:
+        # Yeni veli — varsayılan açık tüm bildirimler
+        return ParentPreferencesInfo(
+            daily_summary_enabled=True,
+            weekly_report_enabled=True,
+            empty_day_alert_enabled=True,
+            drop_alert_enabled=True,
+            new_program_alert_enabled=True,
+            teacher_note_enabled=True,
+            exam_approaching_enabled=True,
+            quiet_hours_start="22:00",
+            quiet_hours_end="07:00",
+            unsubscribed_at=None,
+        )
+    return ParentPreferencesInfo(
+        daily_summary_enabled=pref.daily_summary_enabled,
+        weekly_report_enabled=pref.weekly_report_enabled,
+        empty_day_alert_enabled=pref.empty_day_alert_enabled,
+        drop_alert_enabled=pref.drop_alert_enabled,
+        new_program_alert_enabled=pref.new_program_alert_enabled,
+        teacher_note_enabled=pref.teacher_note_enabled,
+        exam_approaching_enabled=pref.exam_approaching_enabled,
+        quiet_hours_start=_format_time(pref.quiet_hours_start, "22:00"),
+        quiet_hours_end=_format_time(pref.quiet_hours_end, "07:00"),
+        unsubscribed_at=pref.unsubscribed_at,
+    )
+
+
+def _build_whatsapp(
+    pref: ParentNotificationPref | None,
+    pending: ParentPhoneVerification | None,
+    *,
+    is_dev_stub: bool = False,
+) -> ParentWhatsAppInfo:
+    enabled = bool(pref and pref.whatsapp_enabled and pref.whatsapp_phone_verified_at)
+    return ParentWhatsAppInfo(
+        enabled=enabled,
+        phone=pref.whatsapp_phone if pref else None,
+        verified_at=pref.whatsapp_phone_verified_at if pref else None,
+        pending_verify=pending is not None,
+        pending_phone=pending.phone if pending else None,
+        pending_expires_at=pending.expires_at if pending else None,
+        # DEV stub mode: WA gönderim devre dışıysa veliye kodu kendi panelinde göster
+        dev_test_code=(pending.code if pending and is_dev_stub else None),
+    )
+
+
+def _build_children(
+    db: Session, parent_id: int,
+) -> list[ParentChildLink]:
+    links = (
+        db.query(ParentStudentLink)
+        .options(joinedload(ParentStudentLink.student))
+        .filter(ParentStudentLink.parent_id == parent_id)
+        .all()
+    )
+    out: list[ParentChildLink] = []
+    for link in links:
+        if not link.student:
+            continue
+        rel = link.relation
+        out.append(
+            ParentChildLink(
+                student_id=link.student_id,
+                full_name=link.student.full_name,
+                relation=rel.value if rel else None,
+                relation_label=PARENT_RELATION_LABELS.get(rel, "—") if rel else "—",
+                is_primary=link.is_primary,
+                muted=bool(link.muted),
+            )
+        )
+    return out
+
+
+@router.get("/settings", response_model=ParentSettingsResponse)
+def parent_settings_v2(
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Tercih + WhatsApp durumu + çocuk listesi (mute toggle için).
+
+    Eşdeğer Jinja: parent.py:384-428 (parent_settings).
+    """
+    pref = (
+        db.query(ParentNotificationPref)
+        .filter(ParentNotificationPref.parent_id == user.id)
+        .first()
+    )
+    pending = (
+        db.query(ParentPhoneVerification)
+        .filter(
+            ParentPhoneVerification.parent_id == user.id,
+            ParentPhoneVerification.consumed_at.is_(None),
+            ParentPhoneVerification.expires_at > datetime.now(timezone.utc),
+        )
+        .order_by(ParentPhoneVerification.id.desc())
+        .first()
+    )
+
+    from app.config import settings as app_settings
+    is_dev_stub = bool(
+        getattr(app_settings, "debug", False)
+        and not getattr(app_settings, "whatsapp_enabled", False)
+    )
+
+    return ParentSettingsResponse(
+        preferences=_build_preferences(pref),
+        whatsapp=_build_whatsapp(pref, pending, is_dev_stub=is_dev_stub),
+        children=_build_children(db, user.id),
+    )
+
+
+# =============================================================================
+# Settings — preferences mutation
+# =============================================================================
+
+
+def _parse_time_str(s: str | None) -> tuple[int, int] | None:
+    """'HH:MM' → (hour, minute) ya da None. Jinja parent.py:434-448 ile birebir."""
+    if not s:
+        return None
+    s = s.strip()
+    parts = s.split(":")
+    if len(parts) != 2:
+        return None
+    try:
+        h, m = int(parts[0]), int(parts[1])
+    except ValueError:
+        return None
+    if not (0 <= h <= 23 and 0 <= m <= 59):
+        return None
+    return h, m
+
+
+@router.post(
+    "/settings/preferences",
+    response_model=MutationResponse[ParentPreferencesInfo],
+)
+def update_preferences_v2(
+    body: ParentPreferencesBody,
+    request: Request,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """7 toggle + sessiz saatler. unsubscribed_at varsa otomatik kalkar.
+
+    Eşdeğer Jinja: parent.py:451-521 (update_preferences).
+    """
+    pref = (
+        db.query(ParentNotificationPref)
+        .filter(ParentNotificationPref.parent_id == user.id)
+        .first()
+    )
+    if pref is None:
+        pref = ParentNotificationPref(
+            parent_id=user.id,
+            unsubscribe_token=secrets.token_urlsafe(48),
+        )
+        db.add(pref)
+        db.flush()
+
+    pref.daily_summary_enabled = body.daily_summary
+    pref.weekly_report_enabled = body.weekly_report
+    pref.empty_day_alert_enabled = body.empty_day
+    pref.new_program_alert_enabled = body.new_program
+    pref.drop_alert_enabled = body.drop_alert
+    pref.teacher_note_enabled = body.teacher_note
+    pref.exam_approaching_enabled = body.exam_approaching
+
+    qs = _parse_time_str(body.quiet_start)
+    qe = _parse_time_str(body.quiet_end)
+    if qs is None or qe is None:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "invalid",
+                "code": "invalid_quiet_hours",
+                "message": "Sessiz saat formatı geçersiz (HH:MM bekleniyor).",
+            },
+        )
+    pref.quiet_hours_start = dt_time(qs[0], qs[1])
+    pref.quiet_hours_end = dt_time(qe[0], qe[1])
+
+    # Veli bu sayfadan tekrar ayar yapıyorsa unsubscribed durumu otomatik kalksın
+    if pref.unsubscribed_at is not None:
+        pref.unsubscribed_at = None
+
+    ip, ua = _client_meta(request)
+    db.add(ParentSessionLog(
+        parent_id=user.id, action="preferences_updated", ip=ip, user_agent=ua,
+    ))
+    db.commit()
+
+    return MutationResponse[ParentPreferencesInfo](
+        data=_build_preferences(pref),
+        invalidate=_invalidate_self(),
+    )
+
+
+# =============================================================================
+# Settings — child mute mutation
+# =============================================================================
+
+
+@router.post(
+    "/settings/students/{student_id}/mute",
+    response_model=MutationResponse[ParentChildLink],
+)
+def toggle_child_mute_v2(
+    student_id: int,
+    body: ParentMuteBody,
+    request: Request,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Belirli çocuk için tüm bildirimleri sustur/aç.
+
+    Eşdeğer Jinja: parent.py:524-565 (toggle_child_mute).
+    """
+    link = (
+        db.query(ParentStudentLink)
+        .options(joinedload(ParentStudentLink.student))
+        .filter(
+            ParentStudentLink.parent_id == user.id,
+            ParentStudentLink.student_id == student_id,
+        )
+        .first()
+    )
+    if not link:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "not_found",
+                "code": "child_not_found",
+                "message": "Çocuk bağlantısı bulunamadı.",
+            },
+        )
+
+    link.muted = body.muted
+    ip, ua = _client_meta(request)
+    db.add(ParentSessionLog(
+        parent_id=user.id,
+        action=f"child_{'muted' if body.muted else 'unmuted'}",
+        ip=ip, user_agent=ua,
+    ))
+    db.commit()
+
+    rel = link.relation
+    return MutationResponse[ParentChildLink](
+        data=ParentChildLink(
+            student_id=link.student_id,
+            full_name=link.student.full_name if link.student else f"#{student_id}",
+            relation=rel.value if rel else None,
+            relation_label=PARENT_RELATION_LABELS.get(rel, "—") if rel else "—",
+            is_primary=link.is_primary,
+            muted=bool(link.muted),
+        ),
+        invalidate=_invalidate_self(),
+    )
+
+
+# =============================================================================
+# Settings — WhatsApp OTP flow
+# =============================================================================
+
+
+OTP_TTL_MINUTES = 10
+OTP_MAX_ATTEMPTS = 5
+OTP_RESEND_COOLDOWN_SECONDS = 60
+
+
+def _generate_otp_code() -> str:
+    """6 haneli, kriptografik güvenli OTP kodu."""
+    return f"{secrets.randbelow(1_000_000):06d}"
+
+
+@router.post(
+    "/settings/whatsapp/start",
+    response_model=MutationResponse[ParentWhatsAppInfo],
+)
+def whatsapp_start_v2(
+    body: ParentWhatsAppStartBody,
+    request: Request,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """OTP gönder. 60 sn cooldown + 10dk TTL.
+
+    Eşdeğer Jinja: parent.py:580-656 (whatsapp_start).
+    """
+    normalized = normalize_phone(body.phone)
+    if not normalized:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "invalid",
+                "code": "invalid_phone",
+                "message": (
+                    "Telefon numarası geçersiz. Türkiye numarası için 0532... "
+                    "veya +90532... yazabilirsiniz."
+                ),
+            },
+        )
+
+    now = datetime.now(timezone.utc)
+    recent = (
+        db.query(ParentPhoneVerification)
+        .filter(
+            ParentPhoneVerification.parent_id == user.id,
+            ParentPhoneVerification.created_at
+            > now - timedelta(seconds=OTP_RESEND_COOLDOWN_SECONDS),
+        )
+        .order_by(ParentPhoneVerification.id.desc())
+        .first()
+    )
+    if recent and not recent.consumed_at:
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "rate_limited",
+                "code": "otp_cooldown",
+                "message": (
+                    "Az önce kod gönderildi. Lütfen 1 dakika bekleyip tekrar deneyin."
+                ),
+            },
+        )
+
+    code = _generate_otp_code()
+    ppv = ParentPhoneVerification(
+        parent_id=user.id,
+        phone=normalized,
+        code=code,
+        expires_at=now + timedelta(minutes=OTP_TTL_MINUTES),
+    )
+    db.add(ppv)
+    db.flush()
+
+    result = send_otp(to_phone=normalized, code=code)
+    if not result.success:
+        db.rollback()
+        logger.warning(
+            "WA OTP gönderimi başarısız: parent=%s phone=%s err=%s",
+            user.id, normalized, result.error,
+        )
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "bad_gateway",
+                "code": "otp_send_failed",
+                "message": (
+                    "WhatsApp kodu gönderilemedi. Numaranızı kontrol edin veya "
+                    "biraz sonra tekrar deneyin."
+                ),
+            },
+        )
+
+    # Audit log
+    nl = NotificationLog(
+        parent_id=user.id,
+        student_id=None,
+        kind=NotificationKind.OTP,
+        channel=NotificationChannel.WHATSAPP,
+        status=NotificationStatus.SENT,
+        external_id=result.external_id,
+        sent_at=now,
+        subject=f"OTP → {normalized}",
+    )
+    db.add(nl)
+    db.commit()
+
+    # Freshly built whatsapp info (with pending)
+    pref = (
+        db.query(ParentNotificationPref)
+        .filter(ParentNotificationPref.parent_id == user.id)
+        .first()
+    )
+    from app.config import settings as app_settings
+    is_dev_stub = bool(
+        getattr(app_settings, "debug", False)
+        and not getattr(app_settings, "whatsapp_enabled", False)
+    )
+    return MutationResponse[ParentWhatsAppInfo](
+        data=_build_whatsapp(pref, ppv, is_dev_stub=is_dev_stub),
+        invalidate=_invalidate_self(),
+    )
+
+
+@router.post(
+    "/settings/whatsapp/verify",
+    response_model=MutationResponse[ParentWhatsAppInfo],
+)
+def whatsapp_verify_v2(
+    body: ParentWhatsAppVerifyBody,
+    request: Request,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """OTP doğrula → pref güncelle.
+
+    Eşdeğer Jinja: parent.py:659-738 (whatsapp_verify).
+    """
+    code = (body.code or "").strip()
+    if not code or not code.isdigit() or len(code) != 6:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "invalid",
+                "code": "invalid_code",
+                "message": "Kod 6 hane olmalıdır.",
+            },
+        )
+
+    now = datetime.now(timezone.utc)
+    ppv = (
+        db.query(ParentPhoneVerification)
+        .filter(
+            ParentPhoneVerification.parent_id == user.id,
+            ParentPhoneVerification.consumed_at.is_(None),
+            ParentPhoneVerification.expires_at > now,
+        )
+        .order_by(ParentPhoneVerification.id.desc())
+        .first()
+    )
+    if not ppv:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "invalid",
+                "code": "no_active_otp",
+                "message": (
+                    "Aktif bir doğrulama oturumu bulunamadı. "
+                    "Lütfen tekrar telefonunuzu girin."
+                ),
+            },
+        )
+
+    if ppv.attempts >= OTP_MAX_ATTEMPTS:
+        ppv.expires_at = now
+        db.commit()
+        raise HTTPException(
+            status_code=429,
+            detail={
+                "error": "rate_limited",
+                "code": "otp_too_many_attempts",
+                "message": "Çok fazla yanlış deneme. Yeni bir kod isteyin.",
+            },
+        )
+
+    ppv.attempts += 1
+    if not secrets.compare_digest(ppv.code, code):
+        db.commit()
+        remaining = OTP_MAX_ATTEMPTS - ppv.attempts
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "invalid",
+                "code": "otp_mismatch",
+                "message": f"Kod yanlış. Kalan deneme hakkı: {max(remaining, 0)}.",
+            },
+        )
+
+    # Başarılı
+    ppv.consumed_at = now
+    pref = (
+        db.query(ParentNotificationPref)
+        .filter(ParentNotificationPref.parent_id == user.id)
+        .first()
+    )
+    if pref is None:
+        pref = ParentNotificationPref(
+            parent_id=user.id,
+            unsubscribe_token=secrets.token_urlsafe(48),
+        )
+        db.add(pref)
+        db.flush()
+
+    pref.whatsapp_phone = ppv.phone
+    pref.whatsapp_phone_verified_at = now
+    pref.whatsapp_enabled = True
+
+    ip, ua = _client_meta(request)
+    db.add(ParentSessionLog(
+        parent_id=user.id, action="whatsapp_verified", ip=ip, user_agent=ua,
+    ))
+    db.commit()
+
+    return MutationResponse[ParentWhatsAppInfo](
+        data=_build_whatsapp(pref, None),
+        invalidate=_invalidate_self(),
+    )
+
+
+@router.post(
+    "/settings/whatsapp/disable",
+    response_model=MutationResponse[ParentWhatsAppInfo],
+)
+def whatsapp_disable_v2(
+    request: Request,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """WhatsApp kanalını kapat. İdempotent.
+
+    Eşdeğer Jinja: parent.py:741-767 (whatsapp_disable).
+    """
+    pref = (
+        db.query(ParentNotificationPref)
+        .filter(ParentNotificationPref.parent_id == user.id)
+        .first()
+    )
+    if pref:
+        pref.whatsapp_enabled = False
+        pref.whatsapp_phone = None
+        pref.whatsapp_phone_verified_at = None
+
+        ip, ua = _client_meta(request)
+        db.add(ParentSessionLog(
+            parent_id=user.id, action="whatsapp_disabled", ip=ip, user_agent=ua,
+        ))
+        db.commit()
+
+    return MutationResponse[ParentWhatsAppInfo](
+        data=_build_whatsapp(pref, None),
+        invalidate=_invalidate_self(),
+    )
+
+
+# =============================================================================
+# Public — Davet & Unsubscribe (P2)
+# =============================================================================
+
+
+def _invitation_error_http(error_code: str) -> HTTPException:
+    """InvitationError → 400 with code + Turkish message."""
+    messages = {
+        "not_found": "Bu davet bağlantısı tanınmıyor.",
+        "expired": "Davetin süresi dolmuş (7 gün geçerli). Lütfen yeni davet talep edin.",
+        "consumed": "Bu davet zaten kullanılmış. Hesabınızı kullanarak giriş yapabilirsiniz.",
+        "email_in_use_other_role": (
+            "Bu e-posta adresi sistemde başka bir rolde kullanılıyor. "
+            "Lütfen sizi davet eden eğitim koçunuza farklı bir e-posta ile davet talep edin."
+        ),
+        "password_too_short": "Şifre en az 8 karakter olmalıdır.",
+        "kvkk_not_accepted": (
+            "Hesap oluşturmak için aydınlatma metnini onaylamanız gereklidir."
+        ),
+        "name_required": "Ad-soyad en az 3 karakter olmalıdır.",
+    }
+    return HTTPException(
+        status_code=400,
+        detail={
+            "error": "invalid",
+            "code": error_code,
+            "message": messages.get(error_code, "Davet kullanılamıyor."),
+        },
+    )
+
+
+@router.get(
+    "/invitation/{token}",
+    response_model=ParentInvitationInfo,
+)
+def parent_invitation_info_v2(
+    token: str,
+    db: Session = Depends(get_db),
+):
+    """Davet token bilgisi (form prefill için).
+
+    PUBLIC — auth gerekmez. Token'la bulunan davetin ad/email/student bilgisi
+    + relation_label döner. Token yok/expired/consumed → 400 + InvitationError code.
+
+    Eşdeğer Jinja: parent.py:95-113 (invitation_form).
+    """
+    result = lookup_token(db, token)
+    if result.error:
+        raise _invitation_error_http(result.error.value)
+
+    inv = result.invitation
+    return ParentInvitationInfo(
+        token=inv.token,
+        invited_email=inv.invited_email,
+        student_full_name=inv.student.full_name if inv.student else "—",
+        invited_by_full_name=inv.invited_by.full_name if inv.invited_by else "—",
+        relation=inv.relation.value,
+        relation_label=PARENT_RELATION_LABELS.get(inv.relation, "—"),
+        is_primary=inv.is_primary,
+        expires_at=inv.expires_at,
+    )
+
+
+@router.post(
+    "/invitation/{token}/accept",
+    response_model=ParentInvitationAcceptResult,
+)
+def parent_invitation_accept_v2(
+    token: str,
+    body: ParentInvitationAcceptBody,
+    request: Request,
+    response: Response,
+    db: Session = Depends(get_db),
+):
+    """Davet kabul + hesap oluşturma + auth cookie kurulumu.
+
+    Akış (Jinja parent.py:131-236 ile birebir):
+      1. Token doğrula
+      2. Form validasyonu (name ≥3, password ≥8, password_confirm == password, KVKK)
+      3. Email rol çakışması kontrolü (can_register_parent_email)
+      4. Mevcut PARENT → link ekle (şifre/ad değişmez)
+         Yeni email → User + ParentNotificationPref oluştur
+      5. ParentStudentLink kur (UNIQUE check)
+      6. consume_invitation
+      7. ParentSessionLog audit (invitation_accepted / added_link + login)
+      8. JWT token pair + cookies set
+    """
+    from app.services.jwt_auth import issue_token_pair
+    from app.routes.api_v2.auth import _set_access_cookie, _set_refresh_cookie
+
+    # 1. Token doğrula
+    result = lookup_token(db, token)
+    if result.error:
+        raise _invitation_error_http(result.error.value)
+    inv = result.invitation
+
+    # 2. Form validasyonu (Jinja birebir)
+    name = body.full_name.strip()
+    if not name or len(name) < 3:
+        raise _invitation_error_http("name_required")
+    if len(body.password) < 8:
+        raise _invitation_error_http("password_too_short")
+    if body.password != body.password_confirm:
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "invalid",
+                "code": "password_mismatch",
+                "message": "Şifreler eşleşmiyor.",
+            },
+        )
+    if not body.kvkk_accept:
+        raise _invitation_error_http("kvkk_not_accepted")
+
+    # 3. Email rol çakışması
+    can_reg, conflict_role = can_register_parent_email(db, inv.invited_email)
+    if not can_reg:
+        role_label = "öğretmen" if conflict_role == UserRole.TEACHER else "öğrenci"
+        raise HTTPException(
+            status_code=400,
+            detail={
+                "error": "invalid",
+                "code": "email_in_use_other_role",
+                "message": (
+                    f"Bu e-posta adresi sistemde {role_label} olarak kullanılıyor. "
+                    "Lütfen sizi davet eden eğitim koçunuza farklı bir e-posta ile davet talep edin."
+                ),
+            },
+        )
+
+    # 4. Mevcut PARENT mı yeni mi?
+    parent_user = find_user_by_email(db, inv.invited_email)
+    is_new_account = parent_user is None
+
+    now = datetime.now(timezone.utc)
+    if is_new_account:
+        parent_user = User(
+            email=inv.invited_email.strip().lower(),
+            password_hash=hash_password(body.password),
+            full_name=name,
+            role=UserRole.PARENT,
+            is_active=True,
+            password_changed_at=now,
+            must_change_password=False,
+        )
+        db.add(parent_user)
+        db.flush()
+
+        pref = ParentNotificationPref(
+            parent_id=parent_user.id,
+            unsubscribe_token=secrets.token_urlsafe(48),
+        )
+        db.add(pref)
+
+    # 5. ParentStudentLink — UNIQUE kontrolü
+    existing_link = (
+        db.query(ParentStudentLink)
+        .filter(
+            ParentStudentLink.parent_id == parent_user.id,
+            ParentStudentLink.student_id == inv.student_id,
+        )
+        .first()
+    )
+    if not existing_link:
+        link = ParentStudentLink(
+            parent_id=parent_user.id,
+            student_id=inv.student_id,
+            relation=inv.relation,
+            is_primary=inv.is_primary,
+            created_by_id=inv.invited_by_id,
+        )
+        db.add(link)
+
+    # 6. consume_invitation
+    consume_invitation(db, inv)
+
+    # 7. Audit
+    ip, ua = _client_meta(request)
+    db.add(ParentSessionLog(
+        parent_id=parent_user.id,
+        action="invitation_accepted" if is_new_account else "invitation_added_link",
+        ip=ip, user_agent=ua,
+    ))
+    db.add(ParentSessionLog(
+        parent_id=parent_user.id,
+        action="login", ip=ip, user_agent=ua,
+    ))
+
+    db.commit()
+
+    # 8. JWT cookies — BFF auth
+    pair = issue_token_pair(parent_user, now=now)
+    _set_access_cookie(response, pair.access_token, pair.access_expires_in)
+    _set_refresh_cookie(response, pair.refresh_token, pair.refresh_expires_in)
+
+    return ParentInvitationAcceptResult(
+        user_id=parent_user.id,
+        full_name=parent_user.full_name,
+        email=parent_user.email,
+        is_new_account=is_new_account,
+        redirect_url="/parent",
+    )
+
+
+@router.get("/unsubscribe/{token}", response_model=ParentUnsubscribeResult)
+def parent_unsubscribe_v2(
+    token: str,
+    request: Request,
+    db: Session = Depends(get_db),
+):
+    """Tek-tıkla bildirim kapatma — token-based, auth gerekmez.
+
+    Eşdeğer Jinja: parent.py:331-378 (parent_unsubscribe).
+    Tüm bildirim türlerini kapatır + WhatsApp'ı disable eder. INVITATION/OTP
+    sistem mesajları yine gönderilebilir.
+    """
+    pref = (
+        db.query(ParentNotificationPref)
+        .filter(ParentNotificationPref.unsubscribe_token == token)
+        .first()
+    )
+    if not pref:
+        return ParentUnsubscribeResult(status="invalid")
+
+    if pref.unsubscribed_at:
+        return ParentUnsubscribeResult(status="already")
+
+    pref.unsubscribed_at = datetime.now(timezone.utc)
+    pref.daily_summary_enabled = False
+    pref.weekly_report_enabled = False
+    pref.empty_day_alert_enabled = False
+    pref.drop_alert_enabled = False
+    pref.new_program_alert_enabled = False
+    pref.teacher_note_enabled = False
+    pref.exam_approaching_enabled = False
+    pref.whatsapp_enabled = False
+
+    ip, ua = _client_meta(request)
+    db.add(ParentSessionLog(
+        parent_id=pref.parent_id, action="unsubscribed", ip=ip, user_agent=ua,
+    ))
+    db.commit()
+
+    return ParentUnsubscribeResult(status="unsubscribed")

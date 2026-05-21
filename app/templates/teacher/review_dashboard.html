@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+{% block title %}Tekrar Yükü — Tüm Öğrenciler{% endblock %}
+
+{% block content %}
+<div class="flex items-start justify-between mb-6">
+  <div>
+    <a href="/teacher" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">🧠 Tekrar Yükü Panosu</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Tüm öğrencilerinizin aralıklı tekrar (FSRS) durumu.
+    </p>
+  </div>
+</div>
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  {% if not rows %}
+  <div class="p-12 text-center text-slate-500 text-sm">
+    Henüz öğrenciniz yok.
+  </div>
+  {% else %}
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 border-b border-slate-200">
+      <tr>
+        <th class="text-left px-4 py-2.5 font-medium text-slate-700">Öğrenci</th>
+        <th class="text-right px-4 py-2.5 font-medium text-slate-700 w-32">Vade Gelen</th>
+        <th class="text-right px-4 py-2.5 font-medium text-slate-700 w-28">Toplam Kart</th>
+        <th class="text-right px-4 py-2.5 font-medium text-slate-700 w-24"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for r in rows %}
+      <tr class="border-b border-slate-100 hover:bg-slate-50">
+        <td class="px-4 py-2.5 text-slate-900">{{ r.student.full_name }}</td>
+        <td class="px-4 py-2.5 text-right">
+          {% if r.due_now > 0 %}
+          <span class="inline-block px-2 py-0.5 rounded-full text-xs font-medium
+                       {% if r.due_now >= 20 %}bg-rose-100 text-rose-800
+                       {% elif r.due_now >= 10 %}bg-amber-100 text-amber-800
+                       {% else %}bg-emerald-100 text-emerald-800{% endif %}">
+            {{ r.due_now }}
+          </span>
+          {% else %}
+          <span class="text-slate-300">—</span>
+          {% endif %}
+        </td>
+        <td class="px-4 py-2.5 text-right text-slate-600">{{ r.total }}</td>
+        <td class="px-4 py-2.5 text-right">
+          <a href="/teacher/students/{{ r.student.id }}/review"
+             class="text-xs text-indigo-600 hover:text-indigo-800">Detay →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+<div class="mt-4 text-xs text-slate-500 leading-relaxed">
+  <b>Vade gelen</b>: bugün/şimdiye kadar tekrar edilmesi gereken kart sayısı.
+  Yüksekse öğrenciyi yönlendirin; öğrenci kendi panelinden tekrarları yapacak.
+</div>
+{% endblock %}

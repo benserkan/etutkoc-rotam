@@ -60,23 +60,44 @@ def main() -> int:
     r = client.get("/", follow_redirects=False)
     check("anonim → 200 (landing)", r.status_code == 200, f"got {r.status_code}")
     body = r.text
-    check("Hero başlık 'dijital omurgası'",
-          "dijital omurgası" in body)
-    check("Hero CTA 14 Gün Ücretsiz",
-          "14 Gün Ücretsiz Başla" in body)
-    check("Kurum pilotu CTA", "Kurum Pilotu" in body)
-    check("Sosyal proof counter (3500)",
-          'data-target="3500"' in body)
-    check("Bento grid section başlığı",
-          "Her ihtiyaca özel parça" in body)
-    check("5 rol tab section",
-          "5 rol, 1 platform" in body)
+    check("Hero başlık 'Dijitalleştir'",
+          "Dijitalleştir" in body)
+    check("Hero başlık 'Başarıyı Artır'",
+          "Başarıyı" in body and "Artır" in body)
+    check("Hero CTA 'Ücretsiz Dene'", "Ücretsiz Dene" in body)
+    check("Hero ikinci CTA 'Detaylı Bilgi Al'", "Detaylı Bilgi Al" in body)
+    check("Sosyal proof counter (10000)",
+          'data-target="10000"' in body)
+    check("Kullanıcı Memnuniyeti %95", 'data-target="95"' in body)
+    check("'Tüm Süreç Tek Platformda' başlığı",
+          "Tüm Süreç Tek Platformda" in body)
+    check("5 özellik kartı: Plan & Takip",
+          "Plan &amp; Takip" in body or "Plan & Takip" in body)
+    check("5 özellik kartı: Dijital Sınavlar",
+          "Dijital Sınavlar" in body)
+    check("5 özellik kartı: Kurumsal & Bireysel",
+          "Kurumsal &amp; Bireysel" in body or "Kurumsal & Bireysel" in body)
+    check("'Nasıl Çalışır?' bölümü",
+          "Nasıl Çalışır?" in body)
+    check("5 adım: Üye Ol, Plan Oluştur",
+          "Üye Ol" in body and "Plan Oluştur" in body and "Başarıyı Artır" in body)
+    check("Hero dashboard mockup",
+          "lp-mock" in body and "etutkoc.app/teacher" in body)
+    check("Hero floating notification kartları",
+          "lp-float-card" in body)
+    check("Trust strip logo marquee",
+          "lp-logo-marquee" in body and "Türkiye'nin önde gelen" in body)
+    check("Premium feature kart (lp-feature)",
+          "lp-feature" in body and body.count("lp-feature") >= 5)
     check("Pricing 3 plan kartı",
           "Solo Free" in body and "Solo Pro" in body and "Etüt Standart" in body)
-    check("FAQ accordion",
-          "Karar vermenize yardımcı" in body)
-    check("Final CTA section", "14 günde fark hissedeceksiniz" in body)
+    check("Pricing 'En Sevilen' badge",
+          "En Sevilen" in body)
+    check("Final CTA 'Başarıya Giden Yolda'",
+          "Başarıya Giden Yolda" in body)
     check("Footer KVKK link", '/kvkk' in body)
+    check("Footer Platform/Destek/Yasal/Bülten",
+          "Platform" in body and "Destek" in body and "Yasal" in body)
 
     # ============ STEP 2: / logged-in redirect ============
     print("\n=== STEP 2: / logged-in → dashboard redirect ===")
@@ -183,18 +204,24 @@ def main() -> int:
           'data-role="teacher"' in r.text)
     app.dependency_overrides.clear()
 
-    # ============ STEP 8: Bento grid + counter ============
+    # ============ STEP 8: Landing scroll/animation bileşenleri ============
     print("\n=== STEP 8: Landing bileşenleri ===")
     r = client.get("/")
     body = r.text
-    check("bento-grid sınıfı kullanılıyor",
-          "bento-grid" in body)
     check("counter-animate scroll-trigger",
           "counter-animate" in body)
     check("reveal scroll-trigger sınıfı",
-          'class="' + "reveal" in body or "reveal-stagger" in body)
-    check("Alpine x-data tab switcher",
-          "x-data" in body and "tab" in body)
+          "reveal" in body or "reveal-stagger" in body)
+    check("Nasıl Çalışır lp-step kartları",
+          "lp-step" in body and body.count("lp-step") >= 5)
+    check("Animasyonlu step arrow",
+          "lp-step-arrow" in body)
+    check("Pricing lp-price-pro Solo Pro glow",
+          "lp-price-pro" in body)
+    check("Scroll reveal sections (lp-section)",
+          "lp-section" in body)
+    check("Stagger reveal grids (lp-stagger)",
+          "lp-stagger" in body)
     check("CTA → /signup/teacher",
           "/signup/teacher" in body)
 

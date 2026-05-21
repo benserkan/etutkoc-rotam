@@ -1,0 +1,288 @@
+{% extends "base.html" %}
+{% block title %}Tahmin & Senaryo — Ticari Pano{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/security-monitor/revenue" class="text-sm text-slate-500 hover:text-slate-700">← Ticari Pano</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🔮 Tahmin & Senaryo</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    30/60/90 gün aylık gelir projeksiyonu, "kaybedilebilecek gelir", "müdahale edersen ne kazanırsın" senaryoları.
+  </p>
+</div>
+
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Aylık Gelir</b> — ödeyen kurumların her ay tekrarlayan toplam ödediği para.
+      Tahmin sayfası bu tutarın 30-90 gün sonra nereye gideceğine bakar.
+      (Teknik adı: <code class="text-xs">MRR — Monthly Recurring Revenue</code>)
+    </div>
+    <div>
+      <b>Risk Altında Aylık Gelir</b> — şu an "kötü sağlık skoru" olan ödeyen kurumların aylık toplam geliri.
+      Hiçbir şey yapılmazsa 90 günde bu paranın çoğunu kaybetme ihtimali yüksek.
+    </div>
+    <div>
+      <b>Deneme Dönüşüm Oranı</b> — denemesi biten kurumların ücretliye geçme yüzdesi (geçmiş 180 gün).
+      Tahmin yaparken yaklaşan deneme bitişlerine bu oran uygulanır.
+    </div>
+    <div>
+      <b>Aylık Ayrılma Oranı</b> — ödeyenlerin her ay ücretsize/inaktife düşme yüzdesi (geçmiş 90 gün).
+      Trend bazlı kayıp tahmininde kullanılır. (Teknik adı: <code class="text-xs">Churn rate</code>)
+    </div>
+    <div>
+      <b>Doğal Akış (hiçbir şey yapma)</b> — bugünden itibaren hiç müdahale edilmediği varsayımıyla projeksiyon.
+      (Teknik adı: <code class="text-xs">Status Quo</code>)
+    </div>
+    <div>
+      <b>Müdahale Et</b> — risk altındaki kurumların belli bir yüzdesi (aşağıda ayarlanabilir) "kurtarılır" senaryosu.
+    </div>
+    <div class="text-xs text-blue-700">
+      Not: Bu rakamlar geçmiş trendlerden ekstrapolasyon (uzatma). Marj/kâr içermez — brüt aylık gelir.
+    </div>
+  </div>
+</details>
+
+{# Save rate ayarı #}
+<form method="get" action="/admin/revenue/forecast" class="mb-5 bg-white border border-slate-200 rounded-lg px-4 py-3 flex items-center gap-3 flex-wrap text-sm">
+  <span class="font-semibold text-slate-700">Müdahale senaryosu:</span>
+  <span class="text-slate-600">Risk altındakilerin</span>
+  <select name="save_rate" class="px-2 py-1 border border-slate-300 rounded bg-white">
+    {% for opt in [0.25, 0.50, 0.75, 1.0] %}
+    <option value="{{ opt }}" {% if (save_rate * 100)|int == (opt * 100)|int %}selected{% endif %}>
+      %{{ (opt * 100)|int }}'ini kurtarırsam
+    </option>
+    {% endfor %}
+  </select>
+  <button class="px-3 py-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-medium">Uygula</button>
+  <span class="text-xs text-slate-500 ml-auto">
+    Şu anki müdahale oranı: <b>%{{ save_rate_pct }}</b>
+  </span>
+</form>
+
+{# Üst KPI'lar #}
+<section class="mb-6">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="p-4 rounded-lg bg-emerald-50 border border-emerald-200">
+      <div class="text-[10px] uppercase text-emerald-700">Bugünkü Aylık Gelir</div>
+      <div class="text-2xl font-semibold text-emerald-900 mt-1 font-mono">
+        {{ "{:,.0f}".format(proj_90.current_mrr).replace(',', '.') }} ₺
+      </div>
+      <div class="text-[11px] text-emerald-700">aylık tekrarlayan</div>
+    </div>
+    <div class="p-4 rounded-lg bg-rose-50 border border-rose-200"
+         title="Şu an kötü sağlık skoru olan ödeyen kurumların aylık toplam geliri — hiçbir şey yapılmazsa kaybedilme riski yüksek">
+      <div class="text-[10px] uppercase text-rose-700">Risk Altında Aylık Gelir</div>
+      <div class="text-2xl font-semibold text-rose-900 mt-1 font-mono">
+        {{ "{:,.0f}".format(risk.total_at_risk_mrr).replace(',', '.') }} ₺
+      </div>
+      <div class="text-[11px] text-rose-700">
+        {{ risk.critical_count }} kritik + {{ risk.risk_count }} risk
+      </div>
+    </div>
+    <div class="p-4 rounded-lg bg-amber-50 border border-amber-200"
+         title="Denemesi biten kurumların ücretliye geçme yüzdesi (son 180 gün ortalaması)">
+      <div class="text-[10px] uppercase text-amber-700">Deneme Dönüşüm</div>
+      <div class="text-2xl font-semibold text-amber-900 mt-1">
+        %{{ (proj_90.trial_conversion_rate * 100)|round(0)|int }}
+      </div>
+      <div class="text-[11px] text-amber-700">son 180 gün ortalaması</div>
+    </div>
+    <div class="p-4 rounded-lg bg-slate-50 border border-slate-200"
+         title="Ödeyenlerin her ay ücretsize/inaktife düşme yüzdesi (geçmiş 90 gün ortalaması). Teknik adı: Churn rate.">
+      <div class="text-[10px] uppercase text-slate-700">Aylık Ayrılma Oranı</div>
+      <div class="text-2xl font-semibold text-slate-900 mt-1">
+        %{{ (proj_90.monthly_churn_rate * 100)|round(1) }}
+      </div>
+      <div class="text-[11px] text-slate-700">ödeyenlerin aylık kaybı</div>
+    </div>
+  </div>
+</section>
+
+{# 30/60/90 projeksiyon #}
+<section class="mb-6">
+  <h2 class="text-base font-semibold text-slate-900 mb-2">Aylık Gelir Projeksiyonu — 30/60/90 Gün</h2>
+  <p class="text-xs text-slate-500 mb-3">
+    Her satır bir zaman penceresi. "Hiçbir şey yapmazsam" (Doğal Akış) ile "müdahale edersem" karşılaştırması.
+  </p>
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="min-w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 uppercase"
+              title="Tahminin yapıldığı zaman aralığı">Süre</th>
+          <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600 uppercase"
+              title="Bedava denemesi olan kurumların kaçının ücretliye geçeceği tahmini (geçmiş 180 gün oranıyla)">+ Deneme Dönüşümü</th>
+          <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600 uppercase"
+              title="Bu sürede ödeyenlerden ayrılan kurumlardan kaybedilen aylık gelir">− Beklenen Ayrılma</th>
+          <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600 uppercase"
+              title="Şu an kötü sağlık skoru olan ödeyen kurumların kaybedilme tahmini">− Risk Kaybı</th>
+          <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600 uppercase"
+              title="Hiçbir müdahale yapılmazsa sürenin sonunda beklenen aylık gelir">Doğal Akış</th>
+          <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600 uppercase"
+              title="Risk altındaki kurumların bir kısmı kurtarılırsa beklenen aylık gelir">Müdahale</th>
+          <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600 uppercase"
+              title="Müdahale ile kazanılan ek aylık gelir">Fark</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for proj in [proj_30, proj_60, proj_90] %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-4 py-3 font-medium text-slate-900">{{ proj.horizon_days }} gün</td>
+          <td class="px-4 py-3 text-right font-mono text-emerald-700">
+            +{{ "{:,.0f}".format(proj.expected_trial_conversions_mrr).replace(',', '.') }} ₺
+            <div class="text-[10px] text-slate-500">{{ proj.trial_ending_count }} trial bitiyor</div>
+          </td>
+          <td class="px-4 py-3 text-right font-mono text-rose-700">
+            −{{ "{:,.0f}".format(proj.expected_churn_mrr).replace(',', '.') }} ₺
+            <div class="text-[10px] text-slate-500">trend</div>
+          </td>
+          <td class="px-4 py-3 text-right font-mono text-rose-700">
+            −{{ "{:,.0f}".format(proj.expected_at_risk_loss_mrr).replace(',', '.') }} ₺
+            <div class="text-[10px] text-slate-500">sağlık skoru</div>
+          </td>
+          <td class="px-4 py-3 text-right font-mono font-semibold text-slate-900">
+            {{ "{:,.0f}".format(proj.projected_mrr_status_quo).replace(',', '.') }} ₺
+          </td>
+          <td class="px-4 py-3 text-right font-mono font-semibold text-indigo-700">
+            {{ "{:,.0f}".format(proj.projected_mrr_with_intervention).replace(',', '.') }} ₺
+          </td>
+          <td class="px-4 py-3 text-right font-mono font-bold
+            {% if proj.delta_mrr > 0 %}text-emerald-700{% else %}text-slate-400{% endif %}">
+            {% if proj.delta_mrr > 0 %}+{% endif %}{{ "{:,.0f}".format(proj.delta_mrr).replace(',', '.') }} ₺
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{# Risk altındaki kurumlar #}
+<section class="mb-6">
+  <h2 class="text-base font-semibold text-slate-900 mb-2">
+    Risk Altındaki Ödeyen Kurumlar
+    <span class="text-sm font-normal text-slate-500">({{ risk.institutions|length }} kurum, toplam {{ "{:,.0f}".format(risk.total_at_risk_mrr).replace(',', '.') }} ₺/ay)</span>
+  </h2>
+  <p class="text-xs text-slate-500 mb-3">
+    Sağlık skoru düşük olan ödeyen kurumlar. Bunları kurtarmak en yüksek ROI'li müdahale.
+  </p>
+
+  {% if not risk.institutions %}
+  <div class="bg-emerald-50 border border-emerald-200 rounded-lg px-4 py-10 text-center text-sm text-emerald-700">
+    🟢 Şu an risk altında ödeyen kurum yok — temiz.
+  </div>
+  {% else %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="min-w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Kurum</th>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Plan</th>
+          <th class="px-4 py-2 text-center text-xs font-semibold text-slate-600 uppercase">Sağlık</th>
+          <th class="px-4 py-2 text-center text-xs font-semibold text-slate-600 uppercase">Seviye</th>
+          <th class="px-4 py-2 text-right text-xs font-semibold text-slate-600 uppercase">Aylık ₺</th>
+          <th class="px-4 py-2 text-center text-xs font-semibold text-slate-600 uppercase">İşlem</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for inst in risk.institutions[:30] %}
+        {% set color = 'rose' if inst.severity == 'critical' else 'amber' %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-4 py-2">
+            <a href="{{ inst.detail_url }}"
+               class="text-indigo-700 hover:underline font-medium">{{ inst.name }}</a>
+            {% if inst.owner_type == 'user' %}
+            <span class="ml-1 text-[10px] px-1.5 py-0.5 rounded bg-purple-100 text-purple-700 font-semibold">👤</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 text-xs text-slate-500 font-mono">{{ inst.plan }}</td>
+          <td class="px-4 py-2 text-center font-mono">
+            {% if inst.health_score is not none %}
+            <span class="text-{{ color }}-700 font-semibold">{{ inst.health_score }}</span>
+            {% else %}—{% endif %}
+          </td>
+          <td class="px-4 py-2 text-center">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-{{ color }}-100 text-{{ color }}-800 font-semibold uppercase">
+              {{ 'Kritik' if inst.severity == 'critical' else 'Risk' }}
+            </span>
+          </td>
+          <td class="px-4 py-2 text-right font-mono text-slate-900">
+            {{ "{:,.0f}".format(inst.monthly_price_try).replace(',', '.') }} ₺
+          </td>
+          <td class="px-4 py-2 text-center">
+            {% if inst.owner_type == 'user' %}
+            <a href="/admin/revenue/users/{{ inst.institution_id }}"
+               class="text-xs text-indigo-600 hover:underline">Profil →</a>
+            {% else %}
+            <a href="/admin/revenue/institutions/{{ inst.institution_id }}?tab=offers"
+               class="text-xs text-indigo-600 hover:underline">🎁 Teklif yolla</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% if risk.institutions|length > 30 %}
+    <div class="px-4 py-2 text-xs text-slate-500 border-t border-slate-100 bg-slate-50">
+      … ve {{ risk.institutions|length - 30 }} kurum daha
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</section>
+
+{# Senaryo karşılaştırma görseli #}
+<section>
+  <h2 class="text-base font-semibold text-slate-900 mb-2">Senaryo Karşılaştırma</h2>
+  <p class="text-xs text-slate-500 mb-3">
+    Aynı 90 gün — iki farklı yol. Soldaki: hiçbir şey yapma. Sağdaki: risk altındakilerin %{{ save_rate_pct }}'ini kurtar.
+  </p>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    {# Status quo #}
+    <div class="p-5 rounded-lg bg-slate-50 border border-slate-200">
+      <div class="text-xs font-semibold text-slate-600 uppercase mb-2">😐 Hiçbir Şey Yapma</div>
+      <div class="space-y-2">
+        {% for h in scenario.horizons %}
+        <div class="flex items-baseline justify-between border-b border-slate-200 pb-1">
+          <span class="text-xs text-slate-700">{{ h.horizon_days }} gün sonra:</span>
+          <span class="text-base font-mono font-semibold text-slate-900">
+            {{ "{:,.0f}".format(h.status_quo_mrr).replace(',', '.') }} ₺
+          </span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Intervention #}
+    <div class="p-5 rounded-lg bg-indigo-50 border-2 border-indigo-300">
+      <div class="text-xs font-semibold text-indigo-700 uppercase mb-2">🚀 Müdahale Et (%{{ save_rate_pct }} kurtarma)</div>
+      <div class="space-y-2">
+        {% for h in scenario.horizons %}
+        <div class="flex items-baseline justify-between border-b border-indigo-200 pb-1">
+          <span class="text-xs text-indigo-700">{{ h.horizon_days }} gün sonra:</span>
+          <div class="text-right">
+            <span class="text-base font-mono font-semibold text-indigo-900">
+              {{ "{:,.0f}".format(h.intervention_mrr).replace(',', '.') }} ₺
+            </span>
+            <div class="text-[11px] text-emerald-700">
+              +{{ "{:,.0f}".format(h.delta_mrr).replace(',', '.') }} ₺ ek kazanç
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="mt-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-900">
+    💡 <b>Eylem önerisi:</b> Aksiyon Merkezi'nde risk altındaki kurumlara bugün ulaşırsan,
+    90 günde toplam <b class="font-mono">{{ "{:,.0f}".format(scenario.horizons[-1].delta_mrr).replace(',', '.') }} ₺</b>
+    ek aylık gelir koruyabilirsin.
+    <a href="/admin/revenue/action-center" class="ml-2 underline">→ Aksiyon Merkezi</a>
+  </div>
+</section>
+
+{% endblock %}

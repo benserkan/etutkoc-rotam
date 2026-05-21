@@ -1,0 +1,53 @@
+Subject: {{ subject }}
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+
+    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 20px;">
+      <img src="{{ app_base_url }}/static/img/etutkoc-logo.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
+      <span style="font-size: 18px; font-weight: 800;">
+        <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
+      </span>
+    </div>
+
+    <div style="background: linear-gradient(135deg, #ecfeff 0%, #e0f2fe 100%); border: 1px solid #38bdf8; border-radius: 12px; padding: 20px; margin-bottom: 18px; text-align: center;">
+      <div style="font-size: 12px; color: #075985; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px;">
+        🎁 Size özel teklif
+      </div>
+      <div style="font-size: 20px; font-weight: 800; color: #0c4a6e;">
+        {{ title }}
+      </div>
+    </div>
+
+    <p style="font-size: 14px; color: #334155; line-height: 1.6;">
+      {% if recipient_name %}{{ recipient_name }},<br><br>{% endif %}
+      Size özel hazırlanmış bir teklifimiz var. Detayları görmek ve kabul/ret kararı vermek için
+      aşağıdaki butona tıklayın.
+    </p>
+
+    {% if public_message %}
+    <div style="background: #f1f5f9; border-left: 4px solid #117A86; padding: 12px 16px; margin: 16px 0; font-size: 14px; color: #334155; line-height: 1.6; white-space: pre-wrap;">{{ public_message }}</div>
+    {% endif %}
+
+    <div style="margin-top: 22px; text-align: center;">
+      <a href="{{ app_base_url }}{{ offer_url_path }}"
+         style="display: inline-block; background: #117A86; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 15px;">
+        Teklifi gör →
+      </a>
+    </div>
+
+    {% if expires_at %}
+    <p style="font-size: 12px; color: #64748b; margin-top: 16px; text-align: center;">
+      Bu teklif {{ expires_at[:10] }} tarihine kadar geçerlidir.
+    </p>
+    {% endif %}
+
+    <p style="font-size: 11px; color: #94a3b8; margin-top: 20px; line-height: 1.5;">
+      Bu linki yalnızca kurum yetkilisiyle paylaşmanızı rica ederiz.
+    </p>
+  </div>
+</body>
+</html>

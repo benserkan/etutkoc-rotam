@@ -1,0 +1,22 @@
+{# Mockup: Kitap envanteri ilerleme barları (slug=soru-bankasi).
+
+   "Soru Bankası ve Hedef Takibi" kartının sağındaki 3 kitap progress
+   barı (Matematik 80%, Türkçe 100%, Fen 40%).
+   Mevcut anasayfa görüntüsü birebir korunur. #}
+<div class="flex-shrink-0 w-full sm:w-44 rounded-xl p-3 border" style="background:#F8FAFC; border-color:rgba(17,122,134,0.15);">
+  <div class="flex items-center justify-between mb-2">
+    <span class="text-[9px] uppercase tracking-wider font-bold text-stone-400">Kitap envanteri</span>
+    <span class="text-[9px] text-stone-400 font-mono">3/4</span>
+  </div>
+  {% for name, pct, color in [('Matematik', 80, '#117A86'), ('Türkçe', 100, '#15803D'), ('Fen', 40, '#C68A18')] %}
+  <div class="mb-1.5">
+    <div class="flex items-center justify-between mb-0.5">
+      <span class="text-[10px] font-semibold text-stone-700">{{ name }}</span>
+      <span class="text-[10px] font-bold" style="color:{{ color }}">%{{ pct }}</span>
+    </div>
+    <div class="h-1.5 bg-stone-200 rounded-full overflow-hidden">
+      <div class="h-full rounded-full" style="width:{{ pct }}%; background:{{ color }}"></div>
+    </div>
+  </div>
+  {% endfor %}
+</div>

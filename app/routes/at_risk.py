@@ -65,6 +65,10 @@ def teacher_at_risk_panel(
         .order_by(User.full_name)
         .all()
     )
+    # NOT: pasif öğrenciler de listede görünür, sadece template'de silik
+    # render edilir. Gerçek bildirim üreticileri (cron, event_triggers)
+    # zaten pasifleri atlıyor — burada filtre yok ki koç pasif öğrencisini
+    # ekranda görmeye devam etsin.
     assessments = bulk_risk_assessment(db, students=students)
 
     muted_ids = get_active_mutes(db, user.id)
@@ -203,6 +207,8 @@ def institution_at_risk_panel(
             .order_by(User.full_name)
             .all()
         )
+        # NOT: pasif öğrenciler kurum panelinde de görünür (silik render);
+        # bildirim/email üreticileri zaten pasifleri atlıyor.
 
     # Öğretmen ad eşlemesi
     teacher_map: dict[int, User] = {}

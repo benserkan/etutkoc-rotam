@@ -1,0 +1,106 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — Odak & Rozetler{% endblock %}
+
+{% block content %}
+<div class="flex items-start justify-between mb-6">
+  <div>
+    <a href="/teacher/students/{{ student.id }}" class="text-sm text-stone-500 hover:text-stone-700">← {{ student.full_name }} detay</a>
+    <h1 class="text-2xl font-semibold text-stone-900 mt-1">🍅 Odak & Rozetler</h1>
+    <p class="text-sm text-stone-500 mt-1">
+      {{ student.full_name }} için pomodoro istatistikleri ve gamification durumu.
+    </p>
+  </div>
+</div>
+
+{# Üst sayım kartları #}
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">Şu anki seri</div>
+    <div class="text-2xl font-bold text-amber-700 mt-1">{{ streak }} 🔥</div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">En uzun seri</div>
+    <div class="text-2xl font-bold text-stone-900 mt-1">{{ longest_streak }}</div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">30g odak</div>
+    <div class="text-2xl font-bold text-indigo-700 mt-1">{{ work_min_30d }} dk</div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">Rozet</div>
+    <div class="text-2xl font-bold text-emerald-700 mt-1">{{ badges|length }}</div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">Toplam puan</div>
+    <div class="text-2xl font-bold text-violet-700 mt-1">{{ points.total }}</div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+  {# Bugünkü pomodoro #}
+  <div class="bg-white border border-stone-200 rounded-lg p-5">
+    <h2 class="font-medium text-stone-900 mb-3">📊 Bugün</h2>
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between"><span class="text-stone-600">Odak seansı</span><span class="font-semibold">{{ summary.work_sessions }}</span></div>
+      <div class="flex justify-between"><span class="text-stone-600">Odak dakikası</span><span class="font-semibold">{{ summary.work_minutes }}</span></div>
+      <div class="flex justify-between"><span class="text-stone-600">Mola dakikası</span><span>{{ summary.break_minutes }}</span></div>
+      {% if summary.interrupted_count %}
+      <div class="flex justify-between"><span class="text-rose-600">Yarıda bırakılan</span><span class="text-rose-700 font-medium">{{ summary.interrupted_count }}</span></div>
+      {% endif %}
+    </div>
+  </div>
+
+  {# Kazanılmış rozetler #}
+  <div class="bg-white border border-stone-200 rounded-lg p-5">
+    <h2 class="font-medium text-stone-900 mb-3">🏅 Rozetler ({{ badges|length }})</h2>
+    {% if badges %}
+    <div class="grid grid-cols-3 gap-2">
+      {% for badge, rec in badges %}
+      <div class="text-center p-2 rounded bg-amber-50 border border-amber-200"
+           title="{{ badge.title }} — {{ badge.description }}">
+        <div class="text-2xl">{{ badge.emoji }}</div>
+        <div class="text-[10px] text-stone-600 mt-0.5">{{ badge.title }}</div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <p class="text-sm text-stone-500">Henüz rozet yok.</p>
+    {% endif %}
+  </div>
+</div>
+
+{# Son seanslar #}
+{% if recent_sessions %}
+<div class="mt-6 bg-white border border-stone-200 rounded-lg p-5">
+  <h2 class="font-medium text-stone-900 mb-3">Son 20 Seans</h2>
+  <table class="w-full text-sm">
+    <thead class="bg-stone-50 text-xs uppercase tracking-wider text-stone-500">
+      <tr>
+        <th class="text-left px-2 py-1.5">Tarih</th>
+        <th class="text-left px-2 py-1.5">Tür</th>
+        <th class="text-left px-2 py-1.5">Etiket</th>
+        <th class="text-right px-2 py-1.5">Dakika</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in recent_sessions %}
+      <tr class="border-b border-stone-100">
+        <td class="px-2 py-1.5 text-stone-600">{{ s.started_at.strftime('%d.%m %H:%M') }}</td>
+        <td class="px-2 py-1.5">
+          {% if s.kind.value == 'work' %}🍅 Odak
+          {% elif s.kind.value == 'short_break' %}☕ Kısa Mola
+          {% else %}🌿 Uzun Mola{% endif %}
+        </td>
+        <td class="px-2 py-1.5 text-stone-700">{{ s.label or '—' }}</td>
+        <td class="px-2 py-1.5 text-right text-stone-600">
+          {% if s.ended_at %}{{ s.actual_minutes }}/{{ s.planned_minutes }}
+            {% if s.interrupted %}<span class="text-rose-600 ml-1">(yarıda)</span>{% endif %}
+          {% else %}<span class="text-amber-600">devam</span>{% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

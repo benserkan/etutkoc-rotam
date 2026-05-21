@@ -1,0 +1,57 @@
+Subject: {{ subject }}
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+
+    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 20px;">
+      <img src="{{ app_base_url }}/static/img/etutkoc-logo.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
+      <span style="font-size: 18px; font-weight: 800;">
+        <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
+      </span>
+    </div>
+
+    {% set is_overdue = stage in ['d_plus_1', 'd_plus_3', 'd_plus_7'] %}
+    {% set is_urgent = stage in ['d_minus_1', 'd_plus_1', 'd_plus_3', 'd_plus_7'] %}
+
+    <div style="background: {% if is_overdue %}#fee2e2{% elif is_urgent %}#fef3c7{% else %}#dbeafe{% endif %};
+                border: 1px solid {% if is_overdue %}#f87171{% elif is_urgent %}#fbbf24{% else %}#60a5fa{% endif %};
+                border-radius: 8px; padding: 16px; margin-bottom: 18px;">
+      <div style="font-size: 16px; font-weight: 700; color: {% if is_overdue %}#991b1b{% elif is_urgent %}#92400e{% else %}#1e3a8a{% endif %}; margin-bottom: 6px;">
+        {% if stage == 'd_plus_7' %}🚨{% elif is_overdue %}⚠{% elif is_urgent %}⚠{% else %}🔔{% endif %}
+        {{ subject }}
+      </div>
+    </div>
+
+    <table cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-bottom: 18px;">
+      <tr>
+        <td style="background: #f1f5f9; padding: 14px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Tutar</div>
+          <div style="font-size: 22px; font-weight: 700; color: #0f172a; margin-top: 2px;">{{ "{:,}".format(amount_try) }} ₺</div>
+        </td>
+        <td style="width: 12px;"></td>
+        <td style="background: #f1f5f9; padding: 14px; border-radius: 8px; text-align: center;">
+          <div style="font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Vade</div>
+          <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin-top: 4px;">{{ due_at[:10] if due_at else '—' }}</div>
+        </td>
+      </tr>
+    </table>
+
+    <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: 'Segoe UI', Arial, sans-serif; font-size: 14px; color: #334155; line-height: 1.6; background: transparent; border: none; padding: 0; margin: 0;">{{ body }}</pre>
+
+    <div style="margin-top: 22px; padding-top: 16px; border-top: 1px solid #e2e8f0;">
+      <a href="{{ app_base_url }}/admin"
+         style="display: inline-block; background: #117A86; color: white; padding: 10px 18px; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 14px;">
+        Hesabımı aç →
+      </a>
+    </div>
+
+    <p style="font-size: 11px; color: #94a3b8; margin-top: 20px; line-height: 1.5;">
+      Bu, ödeme hatırlatma sistemimizden otomatik gönderilen bir e-postadır. Ödemeyi yaptıysanız bu mesajı yok sayabilirsiniz.
+      Sorununuz varsa yanıtlayarak destek alabilirsiniz.
+    </p>
+  </div>
+</body>
+</html>

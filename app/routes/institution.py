@@ -235,6 +235,90 @@ def deactivate_teacher(
     )
 
 
+@router.post("/teachers/{teacher_id}/pause-alerts")
+def pause_teacher_alerts(
+    teacher_id: int,
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Bir öğretmeni 'pasif' durumuna al — sadece UYARILARI susar.
+
+    is_active'ten FARKLI: öğretmen giriş yapmaya devam edebilir, öğrencilerine
+    erişimi sürer. Sadece kendi hesabına yönelik alert/notification akışı
+    durur (haftalık digest e-postası, kişisel uyarılar). Öğrencilerinin
+    uyarı akışı ETKİLENMEZ.
+    """
+    from app.services.pause import REASON_MANUAL, pause_user
+
+    teacher = (
+        db.query(User)
+        .filter(
+            User.id == teacher_id,
+            User.role == UserRole.TEACHER,
+            User.institution_id == user.institution_id,
+        )
+        .first()
+    )
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Öğretmen bulunamadı")
+    pause_user(db, teacher, actor=user, reason=REASON_MANUAL)
+    log_action(
+        db,
+        action=AuditAction.USER_PAUSE_ALERTS,
+        actor_id=user.id,
+        target_type="user",
+        target_id=teacher.id,
+        request=request,
+        details={"role": "teacher", "reason": REASON_MANUAL},
+    )
+    return RedirectResponse(
+        url="/institution/teachers?ok=" + quote(
+            f"{teacher.full_name} pasif — uyarıları susturuldu."
+        ),
+        status_code=303,
+    )
+
+
+@router.post("/teachers/{teacher_id}/resume-alerts")
+def resume_teacher_alerts(
+    teacher_id: int,
+    request: Request,
+    user: User = Depends(require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Pasif öğretmenin uyarılarını tekrar aç (manuel resume → 7 gün sticky)."""
+    from app.services.pause import resume_user
+
+    teacher = (
+        db.query(User)
+        .filter(
+            User.id == teacher_id,
+            User.role == UserRole.TEACHER,
+            User.institution_id == user.institution_id,
+        )
+        .first()
+    )
+    if not teacher:
+        raise HTTPException(status_code=404, detail="Öğretmen bulunamadı")
+    resume_user(db, teacher, actor=user, is_auto_resume=False)
+    log_action(
+        db,
+        action=AuditAction.USER_RESUME_ALERTS,
+        actor_id=user.id,
+        target_type="user",
+        target_id=teacher.id,
+        request=request,
+        details={"role": "teacher"},
+    )
+    return RedirectResponse(
+        url="/institution/teachers?ok=" + quote(
+            f"{teacher.full_name} aktif — uyarıları açıldı."
+        ),
+        status_code=303,
+    )
+
+
 @router.post("/teachers/{teacher_id}/activate")
 def activate_teacher(
     teacher_id: int,

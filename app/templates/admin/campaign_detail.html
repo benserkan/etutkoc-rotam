@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}{{ campaign.name }} — Kampanya{% endblock %}
+
+{% block content %}
+<div class="mb-5">
+  <a href="/admin/revenue/campaigns" class="text-sm text-slate-500 hover:text-slate-700">← Kampanyalar</a>
+  <div class="flex items-start justify-between gap-3 flex-wrap mt-1">
+    <div>
+      <h1 class="text-2xl font-semibold text-slate-900">{{ campaign.name }}</h1>
+      <div class="text-sm text-slate-600 mt-1 flex items-center gap-2 flex-wrap">
+        {% set scolor = status_colors.get(campaign.status, 'slate') %}
+        <span class="text-[10px] px-2 py-0.5 rounded bg-{{ scolor }}-100 text-{{ scolor }}-800 font-semibold">
+          {{ status_labels.get(campaign.status) }}
+        </span>
+        <span class="text-slate-400">·</span>
+        <span>{{ segment_labels.get(campaign.segment) }}</span>
+        {% if campaign.has_variant_b %}
+        <span class="text-slate-400">·</span>
+        <span class="text-[10px] px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-700 font-semibold">A/B</span>
+        {% endif %}
+      </div>
+      {% if campaign.description %}
+      <div class="text-sm text-slate-600 mt-2">{{ campaign.description }}</div>
+      {% endif %}
+    </div>
+    {# Aksiyon butonları #}
+    <div class="flex items-center gap-2 flex-wrap">
+      {% if campaign.status.value == 'draft' %}
+        <form method="post" action="/admin/revenue/campaigns/{{ campaign.id }}/launch"
+              onsubmit="return confirm('Kampanyayı başlatmak ve {{ stats.overall.total if stats.overall else 0 }} kuruma e-posta göndermek istiyor musun?');">
+          <button class="px-4 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold">
+            🚀 Başlat
+          </button>
+        </form>
+        <form method="post" action="/admin/revenue/campaigns/{{ campaign.id }}/cancel"
+              onsubmit="return confirm('Taslak kampanyayı iptal etmek istiyor musun?');">
+          <button class="px-3 py-2 rounded bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm">
+            İptal
+          </button>
+        </form>
+      {% elif campaign.status.value == 'running' %}
+        <form method="post" action="/admin/revenue/campaigns/{{ campaign.id }}/pause">
+          <button class="px-3 py-2 rounded bg-amber-500 hover:bg-amber-600 text-white text-sm">
+            ⏸ Duraklat
+          </button>
+        </form>
+        <form method="post" action="/admin/revenue/campaigns/{{ campaign.id }}/complete"
+              onsubmit="return confirm('Kampanyayı tamamlandı olarak işaretle?');">
+          <button class="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm">
+            ✓ Tamamla
+          </button>
+        </form>
+      {% elif campaign.status.value == 'paused' %}
+        <form method="post" action="/admin/revenue/campaigns/{{ campaign.id }}/resume">
+          <button class="px-3 py-2 rounded bg-emerald-600 hover:bg-emerald-700 text-white text-sm">
+            ▶ Devam Et
+          </button>
+        </form>
+        <form method="post" action="/admin/revenue/campaigns/{{ campaign.id }}/complete">
+          <button class="px-3 py-2 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm">
+            ✓ Tamamla
+          </button>
+        </form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% set q = request.query_params %}
+{% if q.get('ok') %}<div class="mb-4 p-3 rounded bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">✓ {{ q.get('ok') }}</div>{% endif %}
+{% if q.get('err') %}<div class="mb-4 p-3 rounded bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ q.get('err') }}</div>{% endif %}
+
+{# Funnel KPI'ları #}
+<section class="mb-6">
+  <h2 class="text-sm font-semibold text-slate-900 mb-2">Funnel — Genel</h2>
+  {% set ov = stats.overall %}
+  <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+    <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+      <div class="text-[10px] uppercase text-slate-600">Hedef</div>
+      <div class="text-2xl font-semibold text-slate-900 mt-1">{{ ov.total }}</div>
+    </div>
+    <div class="p-3 rounded-lg bg-blue-50 border border-blue-200">
+      <div class="text-[10px] uppercase text-blue-700">Gönderildi</div>
+      <div class="text-2xl font-semibold text-blue-900 mt-1">{{ ov.sent_total }}</div>
+    </div>
+    <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+      <div class="text-[10px] uppercase text-emerald-700">Kabul</div>
+      <div class="text-2xl font-semibold text-emerald-900 mt-1">{{ ov.accepted }}</div>
+    </div>
+    <div class="p-3 rounded-lg bg-rose-50 border border-rose-200">
+      <div class="text-[10px] uppercase text-rose-700">Ret</div>
+      <div class="text-2xl font-semibold text-rose-900 mt-1">{{ ov.declined }}</div>
+    </div>
+    <div class="p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[10px] uppercase text-amber-700">Süresi Doldu</div>
+      <div class="text-2xl font-semibold text-amber-900 mt-1">{{ ov.expired }}</div>
+    </div>
+    <div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200">
+      <div class="text-[10px] uppercase text-indigo-700">Dönüşüm</div>
+      <div class="text-2xl font-semibold text-indigo-900 mt-1">
+        {% if ov.accepted_pct is not none %}%{{ ov.accepted_pct }}{% else %}—{% endif %}
+      </div>
+      <div class="text-[10px] text-indigo-700">kabul / gönderim</div>
+    </div>
+  </div>
+</section>
+
+{# A/B varyant karşılaştırma #}
+{% if campaign.has_variant_b and stats.variant_b %}
+<section class="mb-6">
+  <h2 class="text-sm font-semibold text-slate-900 mb-2">A/B Karşılaştırma</h2>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+    {% set va = stats.variant_a %}
+    {% set vb = stats.variant_b %}
+    <div class="p-4 rounded-lg bg-white border-2 border-indigo-200">
+      <div class="text-xs font-semibold text-indigo-700 uppercase mb-1">Varyant A</div>
+      <div class="text-base font-semibold text-slate-900">{{ campaign.variant_a_title }}</div>
+      <div class="text-xs text-slate-600 mt-1">{{ offer_kind_labels.get(campaign.variant_a_kind) if campaign.variant_a_kind else campaign.variant_a_kind }}</div>
+      <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+        <div><div class="font-semibold text-slate-900">{{ va.total }}</div><div class="text-slate-500">Hedef</div></div>
+        <div><div class="font-semibold text-emerald-700">{{ va.accepted }}</div><div class="text-slate-500">Kabul</div></div>
+        <div>
+          <div class="font-semibold text-indigo-700">{% if va.accepted_pct is not none %}%{{ va.accepted_pct }}{% else %}—{% endif %}</div>
+          <div class="text-slate-500">Dönüşüm</div>
+        </div>
+      </div>
+    </div>
+    <div class="p-4 rounded-lg bg-white border-2 border-purple-200">
+      <div class="text-xs font-semibold text-purple-700 uppercase mb-1">Varyant B</div>
+      <div class="text-base font-semibold text-slate-900">{{ campaign.variant_b_title }}</div>
+      <div class="text-xs text-slate-600 mt-1">{{ offer_kind_labels.get(campaign.variant_b_kind) if campaign.variant_b_kind else campaign.variant_b_kind }}</div>
+      <div class="mt-3 grid grid-cols-3 gap-2 text-center text-xs">
+        <div><div class="font-semibold text-slate-900">{{ vb.total }}</div><div class="text-slate-500">Hedef</div></div>
+        <div><div class="font-semibold text-emerald-700">{{ vb.accepted }}</div><div class="text-slate-500">Kabul</div></div>
+        <div>
+          <div class="font-semibold text-purple-700">{% if vb.accepted_pct is not none %}%{{ vb.accepted_pct }}{% else %}—{% endif %}</div>
+          <div class="text-slate-500">Dönüşüm</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {# Kazanan #}
+  {% if va.accepted_pct is not none and vb.accepted_pct is not none %}
+    {% if va.accepted_pct > vb.accepted_pct %}
+    <div class="mt-3 p-2 rounded bg-indigo-50 border border-indigo-200 text-xs text-indigo-900 text-center">
+      🏆 Şu an Varyant A öne geçti (%{{ va.accepted_pct }} vs %{{ vb.accepted_pct }})
+    </div>
+    {% elif vb.accepted_pct > va.accepted_pct %}
+    <div class="mt-3 p-2 rounded bg-purple-50 border border-purple-200 text-xs text-purple-900 text-center">
+      🏆 Şu an Varyant B öne geçti (%{{ vb.accepted_pct }} vs %{{ va.accepted_pct }})
+    </div>
+    {% else %}
+    <div class="mt-3 p-2 rounded bg-slate-50 border border-slate-200 text-xs text-slate-700 text-center">
+      Şu an A ve B eşit (%{{ va.accepted_pct }})
+    </div>
+    {% endif %}
+  {% endif %}
+</section>
+{% else %}
+{# Tek varyant detayı #}
+<section class="mb-6">
+  <h2 class="text-sm font-semibold text-slate-900 mb-2">Teklif Detayı</h2>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase">Başlık</div>
+    <div class="text-base font-semibold text-slate-900">{{ campaign.variant_a_title }}</div>
+    <div class="text-xs text-slate-600 mt-1">{{ offer_kind_labels.get(campaign.variant_a_kind) if campaign.variant_a_kind else campaign.variant_a_kind }}</div>
+    {% if campaign.variant_a_public_message %}
+    <div class="mt-3 text-sm text-slate-700 italic bg-slate-50 px-3 py-2 rounded">"{{ campaign.variant_a_public_message }}"</div>
+    {% endif %}
+  </div>
+</section>
+{% endif %}
+
+{# Recipient listesi #}
+<section>
+  <div class="flex items-baseline justify-between gap-3 mb-2">
+    <h2 class="text-sm font-semibold text-slate-900">Hedefler ({{ recipients|length }})</h2>
+    {% if stats.institution_count or stats.user_count %}
+    <div class="text-xs text-slate-500">
+      🏢 {{ stats.institution_count }} kurum · 👤 {{ stats.user_count }} bağımsız öğretmen
+    </div>
+    {% endif %}
+  </div>
+  {% if not recipients %}
+  <div class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-10 text-center text-sm text-slate-500">
+    {% if campaign.status.value == 'draft' %}
+    Kampanya henüz başlatılmadı — başlattıktan sonra hedefler burada listelenir.
+    {% else %}
+    Bu kampanyada henüz recipient yok.
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+    <table class="min-w-full text-sm">
+      <thead class="bg-slate-50 border-b border-slate-200">
+        <tr>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Hedef</th>
+          <th class="px-4 py-2 text-center text-xs font-semibold text-slate-600 uppercase">Varyant</th>
+          <th class="px-4 py-2 text-center text-xs font-semibold text-slate-600 uppercase">Durum</th>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Gönderim</th>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Yanıt</th>
+          <th class="px-4 py-2 text-left text-xs font-semibold text-slate-600 uppercase">Teklif</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in recipients %}
+        {% if r.owner_type == 'user' %}
+          {% set entity = users_map.get(r.user_id) %}
+          {% set entity_url = '/admin/revenue/users/' ~ r.user_id %}
+          {% set entity_name = (entity.full_name or entity.email) if entity else None %}
+          {% set entity_plan = entity.plan if entity else None %}
+          {% set entity_icon = '👤' %}
+          {% set entity_missing_label = '(silinmiş öğretmen #' ~ r.user_id ~ ')' %}
+        {% else %}
+          {% set entity = inst_map.get(r.institution_id) %}
+          {% set entity_url = '/admin/revenue/institutions/' ~ r.institution_id %}
+          {% set entity_name = entity.name if entity else None %}
+          {% set entity_plan = entity.plan if entity else None %}
+          {% set entity_icon = '🏢' %}
+          {% set entity_missing_label = '(silinmiş kurum #' ~ r.institution_id ~ ')' %}
+        {% endif %}
+        {% set sval = r.status.value %}
+        {% set sc = 'emerald' if sval == 'accepted' else 'rose' if sval == 'declined' else 'amber' if sval == 'expired' else 'blue' if sval == 'sent' else 'slate' %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-4 py-2">
+            <span class="text-xs mr-1">{{ entity_icon }}</span>
+            {% if entity %}
+            <a href="{{ entity_url }}" target="_blank"
+               class="text-indigo-700 hover:underline font-medium">{{ entity_name }}</a>
+            {% if entity_plan %}<span class="text-[11px] text-slate-500 ml-1 font-mono">{{ entity_plan }}</span>{% endif %}
+            {% else %}
+            <span class="text-slate-400 italic">{{ entity_missing_label }}</span>
+            {% endif %}
+          </td>
+          <td class="px-4 py-2 text-center">
+            <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold
+              {% if r.variant == 'B' %}bg-purple-100 text-purple-700{% else %}bg-indigo-100 text-indigo-700{% endif %}">
+              {{ r.variant }}
+            </span>
+          </td>
+          <td class="px-4 py-2 text-center">
+            <span class="text-[10px] px-2 py-0.5 rounded bg-{{ sc }}-100 text-{{ sc }}-800 font-semibold">
+              {{ recipient_status_labels.get(r.status) }}
+            </span>
+          </td>
+          <td class="px-4 py-2 text-xs text-slate-500">
+            {% if r.sent_at %}{{ r.sent_at|dt_dual }}{% else %}—{% endif %}
+          </td>
+          <td class="px-4 py-2 text-xs text-slate-500">
+            {% if r.responded_at %}{{ r.responded_at|dt_dual }}{% else %}—{% endif %}
+          </td>
+          <td class="px-4 py-2 text-xs">
+            {% if r.offer_id and r.offer %}
+            <a href="/offers/{{ r.offer.token }}" target="_blank"
+               class="text-indigo-600 hover:underline">#{{ r.offer_id }} →</a>
+            {% else %}
+            <span class="text-slate-400">{% if r.error_note %}⚠ {{ r.error_note }}{% else %}—{% endif %}</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</section>
+
+{# Meta #}
+<div class="mt-6 text-xs text-slate-500 space-y-1">
+  <div>Oluşturuldu: {{ campaign.created_at|dt_dual }}</div>
+  {% if campaign.started_at %}<div>Başlatıldı: {{ campaign.started_at|dt_dual }}</div>{% endif %}
+  {% if campaign.completed_at %}<div>Tamamlandı: {{ campaign.completed_at|dt_dual }}</div>{% endif %}
+  {% if campaign.admin_note %}
+  <div class="mt-2 p-2 rounded bg-amber-50 border border-amber-200">
+    <b>İç not:</b> {{ campaign.admin_note }}
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}

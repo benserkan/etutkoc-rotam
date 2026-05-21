@@ -1,0 +1,41 @@
+{# Hafta header'ının taslak bağımlı parçaları — HTMX OOB swap için.
+
+Bağlam: student, start, week_draft_total, end (opsiyonel — banner mesajında).
+
+Bu partial iki ayrı id'li wrapper döner; HTMX her birini sayfadaki aynı id'li
+elemente outerHTML ile yerleştirir. publish-day / publish-week / accept /
+accept-all / create / delete / update gibi tüm day-card swap yapan
+endpoint'ler bu OOB blokunu response'larına ilave eder; böylece "Tüm haftayı
+yayınla (N)" butonu ve sarı banner backend ile senkron kalır.
+
+Conditional içeride — week_draft_total=0 ise wrapper boş kalır (target div
+sayfada her zaman duruyor olmalı, OOB swap onun içeriğini değiştirir).
+#}
+<div id="week-draft-button" hx-swap-oob="outerHTML" class="inline-flex">
+  {% if week_draft_total %}
+  <form method="post" action="/teacher/students/{{ student.id }}/publish-week"
+        onsubmit="return confirm('{{ week_draft_total }} taslak görev yayına alınsın? Bu işlem öğrencinin paneline indirilecek (veli bildirimi YOK, ayrıca \&quot;Veliye duyur\&quot; basmalısın).');"
+        class="inline">
+    <input type="hidden" name="week_start" value="{{ start }}" />
+    <button type="submit"
+            class="px-3 py-2 rounded text-sm font-bold text-white shadow-sm hover:brightness-110"
+            style="background:linear-gradient(135deg,#D97706,#B45309);"
+            title="Tüm haftanın taslak görevlerini öğrenciye aç">
+      🚀 Tüm haftayı yayınla ({{ week_draft_total }})
+    </button>
+  </form>
+  {% endif %}
+</div>
+
+<div id="week-draft-banner" hx-swap-oob="outerHTML">
+  {% if week_draft_total %}
+  <div class="mb-4 px-4 py-2.5 rounded-lg flex items-center gap-3 text-sm border"
+       style="background:linear-gradient(90deg,#FEF3C7,#FEF9C3); border-color:#FDE68A; color:#78350F;">
+    <span class="text-lg">📓</span>
+    <div class="flex-1">
+      <b>{{ week_draft_total }} görev taslak halinde</b> — öğretmen panelinde görünür, öğrenci paneline indirilmedi.
+      Hazır olunca yukarıdaki <b>🚀 Tüm haftayı yayınla</b> butonuna bas; veya gün bazında yayınlayabilirsin.
+    </div>
+  </div>
+  {% endif %}
+</div>

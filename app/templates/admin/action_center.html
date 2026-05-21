@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+{% block title %}Aksiyon Merkezi — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
+  <div>
+    <a href="/admin/security-monitor/revenue" class="text-sm text-slate-500 hover:text-slate-700">← Ticari Pano</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">🎯 Aksiyon Merkezi — Bugün Ne Yapmalıyım?</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Tüm sinyalleri tek listede topluyor: kritik kurumlar, trial bitiyor, ödeme gecikti.
+      En yüksek puanlı sinyal başlık olur, önerilen aksiyonu tek tıkla başlatabilirsin.
+    </p>
+  </div>
+</div>
+
+{% set q = request.query_params %}
+{% if q.get('ok') %}<div class="mb-4 p-3 rounded bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">✓ {{ q.get('ok') }}</div>{% endif %}
+{% if q.get('err') %}<div class="mb-4 p-3 rounded bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ q.get('err') }}</div>{% endif %}
+
+{# Bu sayfada ne yazıyor? #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Aksiyon Merkezi</b> — günlük "müşteri hattı" çalışma listesi. Tüm kurumlardan
+      en aciliyetli olanları çekip senin önüne koyar.
+    </div>
+    <div>
+      <b>Puan</b> — sinyalin önceliği. 100 = en kritik (acil müdahale).
+      Bir kurumun birden çok sinyali varsa puanlar birikir.
+    </div>
+    <div>
+      <b>Seviyeler</b>:
+      <span class="inline-block ml-1 px-2 py-0.5 rounded bg-rose-100 text-rose-800 text-[10px] font-semibold">KRİTİK</span>
+      acil aramaya değer ·
+      <span class="inline-block ml-1 px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px] font-semibold">YÜKSEK</span>
+      bu hafta temas ·
+      <span class="inline-block ml-1 px-2 py-0.5 rounded bg-slate-100 text-slate-800 text-[10px] font-semibold">ORTA</span>
+      izle / e-posta ·
+      <span class="inline-block ml-1 px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px] font-semibold">POZİTİF</span>
+      memnuniyet/upsell fırsatı
+    </div>
+    <div>
+      <b>Önerilen aksiyon</b> — her sinyal türüne uygun hazır aksiyon önerileri. Tıkla,
+      özet metin form'a otomatik gelsin, gerekirse düzenleyip Kurum 360'tan ekle.
+    </div>
+  </div>
+</details>
+
+{# Üst sayım kartları #}
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  {% set sc = data.severity_counts %}
+  <div class="p-3 rounded-lg bg-rose-50 border border-rose-200">
+    <div class="text-xs uppercase text-rose-700 tracking-wide">Kritik</div>
+    <div class="text-2xl font-semibold text-rose-900 mt-1">{{ sc.critical }}</div>
+    <div class="text-[11px] text-rose-700">acil müdahale</div>
+  </div>
+  <div class="p-3 rounded-lg bg-amber-50 border border-amber-200">
+    <div class="text-xs uppercase text-amber-700 tracking-wide">Yüksek</div>
+    <div class="text-2xl font-semibold text-amber-900 mt-1">{{ sc.high }}</div>
+    <div class="text-[11px] text-amber-700">bu hafta temas</div>
+  </div>
+  <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+    <div class="text-xs uppercase text-slate-700 tracking-wide">Orta</div>
+    <div class="text-2xl font-semibold text-slate-900 mt-1">{{ sc.medium }}</div>
+    <div class="text-[11px] text-slate-600">izle / e-posta</div>
+  </div>
+  <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+    <div class="text-xs uppercase text-emerald-700 tracking-wide">Pozitif</div>
+    <div class="text-2xl font-semibold text-emerald-900 mt-1">{{ sc.positive }}</div>
+    <div class="text-[11px] text-emerald-700">memnuniyet / upsell</div>
+  </div>
+  <div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200">
+    <div class="text-xs uppercase text-indigo-700 tracking-wide">Toplam</div>
+    <div class="text-2xl font-semibold text-indigo-900 mt-1">{{ data.total_count }}</div>
+    <div class="text-[11px] text-indigo-700">kurum listede</div>
+  </div>
+</div>
+
+{# Liste #}
+{% if not data['items'] %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-sm text-emerald-700">
+  🟢 Tebrikler — bugün için açık aksiyon yok. Tüm kurumlar sağlıklı, ödemeler güncel,
+  trial alarmı yok.
+</div>
+{% else %}
+<div class="space-y-3">
+  {% for it in data['items'] %}
+    {% set color = 'rose' if it.severity == 'critical' else 'amber' if it.severity == 'high' else 'slate' if it.severity == 'medium' else 'emerald' %}
+    {% set sev_label = 'KRİTİK' if it.severity == 'critical' else 'YÜKSEK' if it.severity == 'high' else 'ORTA' if it.severity == 'medium' else 'POZİTİF' if it.severity == 'positive' else 'DÜŞÜK' %}
+    <div class="bg-white border border-{{ color }}-200 rounded-lg overflow-hidden">
+      <div class="px-4 py-3 flex items-center justify-between gap-3 flex-wrap border-b border-{{ color }}-100 bg-{{ color }}-50/40">
+        <div class="flex items-center gap-3 flex-wrap min-w-0">
+          <span class="inline-flex items-center justify-center w-12 h-12 rounded-full bg-{{ color }}-100 text-{{ color }}-800 font-bold text-sm">
+            {{ it.total_score }}
+          </span>
+          <div class="min-w-0">
+            <div class="flex items-center gap-2 flex-wrap">
+              <a href="/admin/revenue/institutions/{{ it.institution_id }}"
+                 class="text-sm font-semibold text-slate-900 hover:text-indigo-700">
+                🏢 {{ it.institution_name }}
+              </a>
+              <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-{{ color }}-100 text-{{ color }}-800 font-bold">
+                {{ sev_label }}
+              </span>
+              <span class="text-[11px] text-slate-500">{{ it.plan_label }}</span>
+              {% if it.monthly_price_try > 0 %}
+                <span class="text-[11px] text-emerald-700 font-semibold">{{ "{:,}".format(it.monthly_price_try) }} ₺/ay</span>
+              {% endif %}
+            </div>
+            <div class="text-sm text-slate-700 mt-0.5">{{ it.primary_signal.title }}</div>
+            {% if it.primary_signal.description %}
+            <div class="text-xs text-slate-500">{{ it.primary_signal.description }}</div>
+            {% endif %}
+          </div>
+        </div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <a href="/admin/revenue/institutions/{{ it.institution_id }}"
+             class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-xs text-slate-700 font-medium">
+            Kurum 360 →
+          </a>
+        </div>
+      </div>
+
+      {% if it.other_signals %}
+      <div class="px-4 py-2 bg-slate-50/50 border-b border-slate-100">
+        <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-1">
+          + {{ it.other_signals|length }} başka sinyal
+        </div>
+        <ul class="text-xs text-slate-600 space-y-0.5">
+          {% for s in it.other_signals %}
+          <li>· {{ s.title }}{% if s.description %} <span class="text-slate-400">— {{ s.description }}</span>{% endif %}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <div class="px-4 py-3">
+        <div class="text-[10px] uppercase tracking-wide text-slate-500 mb-2">Önerilen aksiyonlar</div>
+        <div class="flex items-center gap-2 flex-wrap">
+          {% for sa in it.suggested_actions %}
+          <form method="post" action="/admin/revenue/action-center/quick-action" class="inline">
+            <input type="hidden" name="institution_id" value="{{ it.institution_id }}">
+            <input type="hidden" name="kind" value="{{ sa.kind }}">
+            <input type="hidden" name="summary" value="{{ sa.summary }}">
+            <input type="hidden" name="result" value="pending">
+            <input type="hidden" name="follow_up_days" value="3">
+            <button class="px-2.5 py-1 rounded border border-{{ sa.color }}-300 bg-{{ sa.color }}-50 hover:bg-{{ sa.color }}-100 text-xs text-{{ sa.color }}-800 font-medium"
+                    title="{{ sa.summary }} (3 gün takip)">
+              {{ sa.icon }} {{ sa.label }}
+            </button>
+          </form>
+          {% endfor %}
+          <a href="/admin/revenue/institutions/{{ it.institution_id }}?tab=actions"
+             class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-xs text-slate-700">
+            ⋯ Özelleştir
+          </a>
+        </div>
+        {% if it.last_action_at %}
+        <div class="text-[11px] text-slate-500 mt-2">
+          Son temas: {{ it.last_action_at|dt_dual }}
+          {% if it.last_action_summary %} — "{{ it.last_action_summary[:80] }}{% if it.last_action_summary|length > 80 %}…{% endif %}"{% endif %}
+        </div>
+        {% else %}
+        <div class="text-[11px] text-amber-700 mt-2">
+          ⚠ Bu kuruma daha önce hiç temas edilmemiş.
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="mt-6 text-xs text-slate-400">
+  Veri zamanı: {{ data.generated_at|dt_tr_full }} ·
+  En fazla 50 satır gösteriliyor ·
+  Bir öneri butonuna basınca seçilen aksiyon "Bekliyor + 3 gün takip" olarak Kurum 360'ta açılır;
+  oradan tamamlayabilirsin.
+</div>
+
+{# Ticari Pano'ya geri dön linki #}
+<div class="mt-6">
+  <a href="/admin/security-monitor/revenue" class="text-sm text-indigo-600 hover:text-indigo-800">
+    ← Ticari Pano
+  </a>
+</div>
+{% endblock %}

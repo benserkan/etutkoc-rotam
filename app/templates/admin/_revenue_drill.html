@@ -1,0 +1,103 @@
+{# Faz A — Drill-down partial: bir KPI'nin arkasındaki kurum listesi #}
+<div class="bg-white border border-slate-300 rounded-lg shadow-sm">
+  <div class="px-4 py-2.5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+    <div class="text-sm">
+      <span class="font-semibold text-slate-900">{{ data.icon }} {{ data.title }}</span>
+      <span class="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800 font-medium">
+        {{ data.count }} kurum
+      </span>
+    </div>
+    <button type="button"
+            onclick="this.closest('[data-drill-host]').innerHTML=''"
+            class="text-xs text-slate-500 hover:text-slate-700 px-2 py-1">
+      ✕ kapat
+    </button>
+  </div>
+
+  {% if not data.rows %}
+    <div class="px-4 py-6 text-center text-sm text-slate-500">
+      Bu kategoride kurum yok — temiz.
+    </div>
+  {% else %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-xs">
+        <thead class="bg-slate-50 text-slate-600">
+          <tr>
+            <th class="text-left px-3 py-2">Kurum</th>
+            <th class="text-left px-3 py-2">Paket</th>
+            <th class="text-right px-3 py-2" title="Bu kurumun aylık katkı miktarı (₺)">Aylık</th>
+            <th class="text-left px-3 py-2">Sebep / Detay</th>
+            <th class="text-right px-3 py-2"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for r in data.rows %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2">
+              <a href="/admin/institutions/{{ r.institution_id }}"
+                 class="text-indigo-700 hover:text-indigo-900 font-medium">
+                {{ r.institution_name }}
+              </a>
+              <div class="text-[10px] text-slate-400 font-mono">#{{ r.institution_id }}</div>
+            </td>
+            <td class="px-3 py-2">
+              <span class="text-slate-700">{{ r.plan_label }}</span>
+              <div class="text-[10px] text-slate-400 font-mono">{{ r.plan }}</div>
+            </td>
+            <td class="px-3 py-2 text-right">
+              {% if r.monthly_price_try and r.monthly_price_try > 0 %}
+                <span class="text-emerald-700 font-semibold">{{ "{:,}".format(r.monthly_price_try) }} ₺</span>
+              {% else %}
+                <span class="text-slate-400">—</span>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-slate-700 break-words max-w-md">
+              {% if r.reason %}
+                {{ r.reason }}
+              {% else %}
+                <span class="text-slate-400">—</span>
+              {% endif %}
+              {% if r.health_score is defined and r.health_score is not none %}
+                <div class="text-[10px] text-slate-500 mt-0.5">
+                  Sağlık skoru: <b>{{ r.health_score }}/100</b>
+                  {% if r.active_teacher_pct is not none %}
+                    · aktif öğretmen: %{{ r.active_teacher_pct }}
+                  {% endif %}
+                  {% if r.active_student_pct is not none %}
+                    · aktif öğrenci: %{{ r.active_student_pct }}
+                  {% endif %}
+                </div>
+              {% endif %}
+              {% if r.event_at %}
+                <div class="text-[10px] text-slate-500 mt-0.5">
+                  {{ r.event_at|dt_dual }}
+                  {% if r.event_days_ago is not none %}
+                    ({{ r.event_days_ago }} gün önce)
+                  {% endif %}
+                </div>
+              {% endif %}
+              {% if r.trial_ends_at %}
+                <div class="text-[10px] text-slate-500 mt-0.5">
+                  Deneme bitiş: {{ r.trial_ends_at|dt_dual }}
+                </div>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-right whitespace-nowrap">
+              <a href="/admin/revenue/institutions/{{ r.institution_id }}"
+                 class="text-xs text-indigo-600 hover:text-indigo-800 font-medium"
+                 title="Kurum 360 panosu — sağlık, kullanım, ödeme, notlar, aksiyonlar">
+                Kurum 360 →
+              </a>
+              <a href="{{ r.detail_url }}"
+                 class="ml-2 text-xs text-slate-500 hover:text-slate-700"
+                 title="Yönetim sayfası">
+                ⚙
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endif %}
+</div>

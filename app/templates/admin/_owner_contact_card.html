@@ -1,0 +1,168 @@
+{#
+  Owner iletişim metadata kartı (Faz B3).
+  Bekler: owner_contact (OwnerContact veya None),
+          ident.id (institution_id) VEYA u.id (user_id) — biri olmalı.
+#}
+{% set _is_user = (u is defined and u is not none) %}
+{% set _owner_id = (u.id if _is_user else (ident.id if ident is defined else None)) %}
+{% set _action = ('/admin/revenue/users/' ~ _owner_id ~ '/contact/save') if _is_user
+                 else ('/admin/revenue/institutions/' ~ _owner_id ~ '/contact/save') %}
+{% set c = owner_contact %}
+{% set _has_any = c and (c.responsible_person_name or c.phone or c.whatsapp or c.linkedin_url or c.billing_email or c.website or c.address or c.note) %}
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <details {% if not _has_any %}open{% endif %}>
+    <summary class="px-4 py-3 cursor-pointer flex items-center justify-between hover:bg-slate-50 border-b border-slate-200">
+      <div>
+        <h2 class="text-sm font-semibold text-slate-900">📞 İletişim Bilgileri</h2>
+        <div class="text-xs text-slate-500">
+          {% if _has_any %}
+            Yetkili kişi, telefon, LinkedIn, fatura e-postası vb.
+          {% else %}
+            Henüz ek iletişim bilgisi girilmemiş — eklemek için tıkla.
+          {% endif %}
+        </div>
+      </div>
+      <span class="text-xs text-slate-400">▾</span>
+    </summary>
+
+    {# Görüntüleme #}
+    {% if _has_any %}
+    <div class="px-4 py-3 grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2 text-sm">
+      {% if c.responsible_person_name %}
+      <div>
+        <div class="text-[10px] uppercase text-slate-500">Yetkili Kişi</div>
+        <div class="text-slate-900 font-medium">{{ c.responsible_person_name }}</div>
+        {% if c.responsible_person_title %}
+        <div class="text-xs text-slate-600">{{ c.responsible_person_title }}</div>
+        {% endif %}
+      </div>
+      {% endif %}
+      {% if c.billing_email %}
+      <div>
+        <div class="text-[10px] uppercase text-slate-500">Fatura E-postası</div>
+        <a href="mailto:{{ c.billing_email }}" class="text-indigo-700 hover:underline">{{ c.billing_email }}</a>
+      </div>
+      {% endif %}
+      {% if c.phone %}
+      <div>
+        <div class="text-[10px] uppercase text-slate-500">Telefon</div>
+        <a href="tel:{{ c.phone }}" class="text-slate-900">{{ c.phone }}</a>
+      </div>
+      {% endif %}
+      {% if c.whatsapp %}
+      <div>
+        <div class="text-[10px] uppercase text-slate-500">WhatsApp</div>
+        <a href="https://wa.me/{{ c.whatsapp|replace('+', '')|replace(' ', '') }}" target="_blank"
+           class="text-emerald-700 hover:underline">{{ c.whatsapp }}</a>
+      </div>
+      {% endif %}
+      {% if c.linkedin_url %}
+      <div>
+        <div class="text-[10px] uppercase text-slate-500">LinkedIn</div>
+        <a href="{{ c.linkedin_url }}" target="_blank"
+           class="text-blue-700 hover:underline truncate inline-block max-w-full">{{ c.linkedin_url }}</a>
+      </div>
+      {% endif %}
+      {% if c.website %}
+      <div>
+        <div class="text-[10px] uppercase text-slate-500">Web Sitesi</div>
+        <a href="{{ c.website }}" target="_blank"
+           class="text-blue-700 hover:underline truncate inline-block max-w-full">{{ c.website }}</a>
+      </div>
+      {% endif %}
+      {% if c.address %}
+      <div class="md:col-span-2">
+        <div class="text-[10px] uppercase text-slate-500">Adres</div>
+        <div class="text-slate-700 text-xs whitespace-pre-line">{{ c.address }}</div>
+      </div>
+      {% endif %}
+      {% if c.note %}
+      <div class="md:col-span-2">
+        <div class="text-[10px] uppercase text-slate-500">Özel Not</div>
+        <div class="text-slate-700 text-xs whitespace-pre-line bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+          {{ c.note }}
+        </div>
+      </div>
+      {% endif %}
+      <div class="md:col-span-2 text-[10px] text-slate-400 mt-1">
+        Son güncellenme: {{ c.updated_at|dt_dual }}
+      </div>
+    </div>
+    {% endif %}
+
+    {# Düzenleme formu #}
+    <details class="border-t border-slate-200">
+      <summary class="px-4 py-2 cursor-pointer text-xs text-indigo-700 hover:bg-slate-50 list-none select-none">
+        ✏️ {% if _has_any %}Düzenle{% else %}İletişim Bilgilerini Ekle{% endif %}
+      </summary>
+      <form method="post" action="{{ _action }}" class="px-4 py-3 grid grid-cols-1 md:grid-cols-2 gap-3 border-t border-slate-100 bg-slate-50/50">
+        <div>
+          <label class="block text-[11px] text-slate-600 mb-1">Yetkili kişi adı</label>
+          <input type="text" name="responsible_person_name" maxlength="255"
+                 value="{{ c.responsible_person_name if c else '' }}"
+                 placeholder="ör. Ayşe Yılmaz"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-600 mb-1">Unvan</label>
+          <input type="text" name="responsible_person_title" maxlength="120"
+                 value="{{ c.responsible_person_title if c else '' }}"
+                 placeholder="ör. Genel Müdür, CFO"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-600 mb-1">Fatura e-postası</label>
+          <input type="email" name="billing_email" maxlength="255"
+                 value="{{ c.billing_email if c else '' }}"
+                 placeholder="faturalar@..."
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-600 mb-1">Telefon</label>
+          <input type="text" name="phone" maxlength="50"
+                 value="{{ c.phone if c else '' }}"
+                 placeholder="+90 5xx xxx xx xx"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-600 mb-1">WhatsApp (farklıysa)</label>
+          <input type="text" name="whatsapp" maxlength="50"
+                 value="{{ c.whatsapp if c else '' }}"
+                 placeholder="+90 5xx ..."
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-600 mb-1">LinkedIn URL</label>
+          <input type="url" name="linkedin_url" maxlength="255"
+                 value="{{ c.linkedin_url if c else '' }}"
+                 placeholder="https://linkedin.com/in/..."
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-[11px] text-slate-600 mb-1">Web sitesi</label>
+          <input type="url" name="website" maxlength="255"
+                 value="{{ c.website if c else '' }}"
+                 placeholder="https://..."
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-[11px] text-slate-600 mb-1">Adres</label>
+          <textarea name="address" rows="2"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">{{ c.address if c else '' }}</textarea>
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-[11px] text-slate-600 mb-1">Özel not (sözleşme/anlaşma detayı, vb.)</label>
+          <textarea name="note" rows="2"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">{{ c.note if c else '' }}</textarea>
+        </div>
+        <div class="md:col-span-2 flex justify-end">
+          <button type="submit"
+                  class="px-4 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold">
+            Kaydet
+          </button>
+        </div>
+      </form>
+    </details>
+  </details>
+</div>

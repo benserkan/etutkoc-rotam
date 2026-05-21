@@ -1,149 +1,572 @@
 {% extends "base.html" %}
-{% block title %}ETÜTKOÇ Rotam — LGS ve YKS Koçluğunun Dijital Omurgası{% endblock %}
+{% block title %}ETÜTKOÇ Rotam — LGS ve YKS Koçluğunda Yapay Zeka Dönemi{% endblock %}
 
 {% block head %}
-<meta name="description" content="Türk eğitim takvimine özel LGS/YKS koçluk takip sistemi. AYT alan-filtreli plan, veli WhatsApp bildirim, hedef ağacı, kurum panel, KVKK uyumlu. 14 gün ücretsiz başla." />
+<meta name="description" content="LGS ve YKS koçları ve kurumları için yapay zeka destekli koçluk platformu. FSRS aralıklı tekrar, burnout radarı, kohort analitiği, WhatsApp veli iletişimi. 14 gün ücretsiz." />
 {% endblock %}
 
 {% block content %}
-{# Public landing — main wrapper'ından çık ve tam genişlik kullan #}
+{# ═══════════════════════════════════════════════════════════════════════════
+   LANDING — premium SaaS marketing template
+   - Hero: dashboard mockup + floating notifications
+   - 5 özellik kartı: top-accent + soft glow
+   - İstatistik şeridi: gradient + animated counters
+   - Nasıl Çalışır: çerçeveli numaralı kartlar + animasyonlu okçuklar
+   - Pricing: Solo Pro glow halo
+   - Scroll-triggered reveal animasyonları (kademeli stagger)
+═══════════════════════════════════════════════════════════════════════════ #}
 <style>
-  /* Landing main wrapper'ını override — tam genişlik hero için */
   body > main { max-width: none !important; padding: 0 !important; }
+
+  /* ----- Landing özel motion + tasarım ----- */
+  .lp-section { opacity: 0; transform: translateY(28px); transition: opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1); }
+  .lp-section.in-view { opacity: 1; transform: none; }
+  .lp-stagger > * { opacity: 0; transform: translateY(20px); transition: opacity 0.55s ease-out, transform 0.55s ease-out; }
+  .lp-stagger.in-view > * { opacity: 1; transform: none; }
+  .lp-stagger.in-view > *:nth-child(1) { transition-delay: 0.05s; }
+  .lp-stagger.in-view > *:nth-child(2) { transition-delay: 0.13s; }
+  .lp-stagger.in-view > *:nth-child(3) { transition-delay: 0.21s; }
+  .lp-stagger.in-view > *:nth-child(4) { transition-delay: 0.29s; }
+  .lp-stagger.in-view > *:nth-child(5) { transition-delay: 0.37s; }
+
+  /* ----- Hero ----- */
+  .lp-hero {
+    position: relative; overflow: hidden;
+    background:
+      radial-gradient(ellipse 60% 50% at 100% 0%, rgba(240,189,85,0.18), transparent 60%),
+      radial-gradient(ellipse 50% 40% at 0% 90%, rgba(17,122,134,0.12), transparent 60%),
+      linear-gradient(180deg, #FFFBF0 0%, #FAFAF9 70%, #FFFFFF 100%);
+  }
+  .lp-hero::before {
+    content:''; position:absolute; inset:0;
+    background-image:
+      linear-gradient(rgba(28,25,23,0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(28,25,23,0.04) 1px, transparent 1px);
+    background-size: 64px 64px;
+    mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+    pointer-events: none;
+  }
+  .lp-eyebrow {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.4rem 0.85rem; border-radius: 999px;
+    background: rgba(255,255,255,0.85); border: 1px solid rgba(17,122,134,0.15);
+    backdrop-filter: blur(8px);
+    font-size: 0.75rem; font-weight: 600; color: #117A86;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 4px 12px -4px rgba(17,122,134,0.15);
+  }
+  .lp-eyebrow .pulse {
+    width: 0.5rem; height: 0.5rem; border-radius: 50%; background: #16a34a;
+    box-shadow: 0 0 0 0 rgba(34,197,94,0.7);
+    animation: lp-pulse 2s infinite;
+  }
+  @keyframes lp-pulse {
+    0% { box-shadow: 0 0 0 0 rgba(34,197,94,0.6); }
+    70% { box-shadow: 0 0 0 8px rgba(34,197,94,0); }
+    100% { box-shadow: 0 0 0 0 rgba(34,197,94,0); }
+  }
+
+  /* ----- Hero mockup ----- */
+  .lp-mock {
+    background: white;
+    border-radius: 18px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 24px 48px -12px rgba(15,23,42,0.18),
+      0 8px 16px -8px rgba(15,23,42,0.12);
+    border: 1px solid rgba(15,23,42,0.08);
+    overflow: hidden;
+    position: relative;
+  }
+  .lp-mock-bar {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #F8FAFC;
+    border-bottom: 1px solid rgba(15,23,42,0.06);
+  }
+  .lp-mock-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .lp-float-card {
+    position: absolute; background: white;
+    border-radius: 14px; padding: 0.85rem 1rem;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 18px 36px -10px rgba(15,23,42,0.20);
+    border: 1px solid rgba(15,23,42,0.06);
+    animation: lp-float 6s ease-in-out infinite;
+  }
+  .lp-float-card.delayed { animation-delay: 2s; }
+  @keyframes lp-float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+  }
+
+  /* ----- Premium feature card ----- */
+  .lp-feature {
+    position: relative;
+    background: white;
+    border-radius: 18px;
+    padding: 1.75rem 1.5rem;
+    border: 1px solid rgba(15,23,42,0.10);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.85) inset,
+      0 2px 6px rgba(15,23,42,0.05),
+      0 18px 32px -14px rgba(15,23,42,0.14);
+    transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s, border-color 0.3s;
+    overflow: hidden;
+  }
+  .lp-feature::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: var(--accent, #117A86);
+    transform: scaleX(1); transform-origin: left;
+    opacity: 0.55;
+    transition: opacity 0.3s, transform 0.4s cubic-bezier(0.22,1,0.36,1);
+  }
+  .lp-feature:hover {
+    transform: translateY(-6px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.9) inset,
+      0 22px 44px -12px rgba(15,23,42,0.22),
+      0 0 0 1px var(--accent, #117A86);
+    border-color: transparent;
+  }
+  .lp-feature:hover::before { opacity: 1; }
+  .lp-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1;
+    padding: 0.3rem 0.55rem;
+    border-radius: 7px;
+    white-space: nowrap;
+    background: var(--accent-soft, #E6F2F4);
+    color: var(--accent-dark, #0B5560);
+  }
+  .lp-feature .icon-box {
+    width: 56px; height: 56px; border-radius: 14px;
+    background: var(--accent-soft, #E6F2F4);
+    color: var(--accent, #117A86);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    box-shadow: inset 0 -2px 0 rgba(0,0,0,0.04);
+    transition: transform 0.3s;
+  }
+  .lp-feature:hover .icon-box { transform: scale(1.08) rotate(-3deg); }
+
+  /* ----- Nasıl Çalışır kartları ----- */
+  .lp-step {
+    position: relative;
+    background: white;
+    border: 1px solid rgba(15,23,42,0.06);
+    border-radius: 18px;
+    padding: 1.5rem 1.25rem;
+    box-shadow:
+      0 1px 3px rgba(15,23,42,0.04),
+      0 8px 20px -8px rgba(15,23,42,0.08);
+    transition: transform 0.3s, box-shadow 0.3s;
+    text-align: center;
+  }
+  .lp-step:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      0 1px 3px rgba(15,23,42,0.04),
+      0 16px 28px -8px rgba(17,122,134,0.18);
+  }
+  .lp-step-icon {
+    width: 86px; height: 86px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FAFAF9 100%);
+    border: 3px solid rgba(17,122,134,0.12);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.25rem;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.03), 0 4px 12px rgba(15,23,42,0.04);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    position: relative;
+  }
+  .lp-step:hover .lp-step-icon {
+    border-color: rgba(17,122,134,0.4);
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.03), 0 8px 20px rgba(17,122,134,0.20);
+  }
+  .lp-step-num {
+    position: absolute; top: -6px; right: -6px;
+    width: 28px; height: 28px;
+    background: #0B5560; color: white;
+    border-radius: 50%;
+    font-size: 0.75rem; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 8px rgba(11,85,96,0.30);
+    border: 2px solid white;
+  }
+  .lp-step-arrow {
+    position: absolute; right: -22px; top: 38%;
+    color: rgba(17,122,134,0.35); font-size: 1.5rem;
+    pointer-events: none;
+    animation: lp-arrow-pulse 2.4s ease-in-out infinite;
+  }
+  @keyframes lp-arrow-pulse {
+    0%, 100% { transform: translateX(0); opacity: 0.4; }
+    50% { transform: translateX(4px); opacity: 1; }
+  }
+
+  /* ----- Pricing kartlar ----- */
+  .lp-price-card {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem 1.75rem;
+    border: 1px solid rgba(15,23,42,0.08);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.8) inset,
+      0 1px 3px rgba(15,23,42,0.04),
+      0 16px 32px -16px rgba(15,23,42,0.10);
+    transition: transform 0.3s, box-shadow 0.3s;
+    position: relative;
+  }
+  .lp-price-card:hover {
+    transform: translateY(-6px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.9) inset,
+      0 24px 48px -16px rgba(15,23,42,0.20);
+  }
+  .lp-price-pro {
+    background: linear-gradient(165deg, #073D45 0%, #0B5560 50%, #117A86 100%);
+    color: white;
+    border: none;
+    transform: translateY(-12px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.15) inset,
+      0 32px 64px -16px rgba(11,85,96,0.45),
+      0 0 0 1px rgba(240,189,85,0.20);
+  }
+  .lp-price-pro::before {
+    content:''; position:absolute; inset:-1px;
+    border-radius: 21px;
+    background: radial-gradient(circle at 50% 0%, rgba(240,189,85,0.40), transparent 60%);
+    z-index:-1; opacity: 0.6;
+  }
+  .lp-price-pro:hover { transform: translateY(-18px); }
+
+  /* ----- Logo trust strip ----- */
+  .lp-logo-strip {
+    overflow: hidden; padding: 1rem 0;
+    mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+    -webkit-mask-image: linear-gradient(90deg, transparent, black 12%, black 88%, transparent);
+  }
+  .lp-logo-marquee {
+    display: flex; align-items: center; gap: 3rem;
+    animation: lp-marquee 32s linear infinite;
+    width: max-content;
+  }
+  @keyframes lp-marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+  .lp-logo-item {
+    flex-shrink: 0;
+    color: #94a3b8; font-weight: 700; font-size: 1.1rem;
+    letter-spacing: -0.02em;
+    opacity: 0.6;
+    transition: opacity 0.3s, color 0.3s;
+  }
+  .lp-logo-item:hover { opacity: 1; color: #117A86; }
+
+  /* ----- Kurumsal logo çerçevesi (brandmark) ----- */
+  .lp-brandmark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    padding: 8px;
+    transition: transform 0.3s cubic-bezier(0.22,1,0.36,1), box-shadow 0.3s;
+    flex-shrink: 0;
+  }
+  /* Açık zemin (header) — yumuşak altın halka */
+  .lp-brandmark--light {
+    background: linear-gradient(135deg, #FFFFFF 0%, #FFFBF0 100%);
+    border: 1.5px solid rgba(240,189,85,0.45);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.9) inset,
+      0 1px 3px rgba(15,23,42,0.06),
+      0 6px 16px -6px rgba(240,189,85,0.30),
+      0 0 0 4px rgba(240,189,85,0.06);
+  }
+  .lp-brandmark--light:hover {
+    transform: translateY(-1px) rotate(-2deg);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,1) inset,
+      0 4px 8px rgba(15,23,42,0.08),
+      0 12px 24px -8px rgba(240,189,85,0.45),
+      0 0 0 5px rgba(240,189,85,0.10);
+  }
+  /* Koyu zemin (footer + CTA) — glassmorphism + altın glow */
+  .lp-brandmark--dark {
+    background:
+      radial-gradient(circle at 30% 30%, rgba(255,255,255,0.18) 0%, rgba(255,255,255,0.06) 70%);
+    border: 1.5px solid rgba(240,189,85,0.40);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.20) inset,
+      0 -1px 0 rgba(0,0,0,0.10) inset,
+      0 12px 28px -8px rgba(0,0,0,0.40),
+      0 0 0 4px rgba(240,189,85,0.10),
+      0 0 24px rgba(240,189,85,0.20);
+  }
+  .lp-brandmark--dark::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 18px;
+    background: conic-gradient(from 0deg, transparent 0%, rgba(240,189,85,0.30) 25%, transparent 50%, rgba(61,156,171,0.25) 75%, transparent 100%);
+    z-index: -1;
+    opacity: 0;
+    transition: opacity 0.4s;
+  }
+  .lp-brandmark--dark {
+    position: relative;
+  }
+  .lp-brandmark--dark:hover {
+    transform: translateY(-2px);
+    box-shadow:
+      0 1px 0 rgba(255,255,255,0.30) inset,
+      0 -1px 0 rgba(0,0,0,0.10) inset,
+      0 18px 36px -8px rgba(0,0,0,0.50),
+      0 0 0 5px rgba(240,189,85,0.15),
+      0 0 32px rgba(240,189,85,0.35);
+  }
+  .lp-brandmark--dark:hover::before { opacity: 1; }
+  /* CTA banner için ekstra büyük versiyon */
+  .lp-brandmark--xl {
+    border-radius: 22px;
+    padding: 10px;
+  }
+  .lp-brandmark--xl::before { border-radius: 24px; }
+
+  /* ----- Billing toggle ----- */
+  .billing-btn { color: #57534E; }
+  .billing-btn.is-active {
+    background: #fff;
+    color: #117A86;
+    box-shadow: 0 1px 3px rgba(15,23,42,0.10), 0 1px 2px rgba(15,23,42,0.06);
+  }
+  .billing-btn:not(.is-active):hover { color: #292524; }
+
+  /* ----- Mobile adjustments ----- */
+  @media (max-width: 1023px) {
+    .lp-mock-wrap { max-width: 100%; }
+    .lp-float-card { display: none; }
+    .lp-step-arrow { display: none; }
+    .lp-price-pro { transform: none; }
+    .lp-price-pro:hover { transform: translateY(-6px); }
+  }
 </style>
 
-{# ════════════════════════════════════════════════════════════════════════════
-   HERO — Quiet Authority + Data Hero hibridi
-   Sol: 1 cümle vaat + 2 CTA + KVKK rozet
-   Sağ: floating dashboard preview kartı + üstünde 2 mini bildirim
-   Arka plan: animated aurora mesh
-════════════════════════════════════════════════════════════════════════════ #}
-<section class="bg-aurora-anim relative overflow-hidden">
-  <div class="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2224%22 height=%2224%22><circle cx=%221%22 cy=%221%22 r=%221%22 fill=%22rgba(17,122,134,0.08)%22/></svg>')] opacity-50 pointer-events-none"></div>
-
-  {# Top public nav — sade, public sayfaya özel #}
-  <header class="relative z-10 border-b border-white/30 backdrop-blur-sm bg-white/40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-      <a href="/" class="flex items-center gap-2.5">
-        <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam"
-             class="h-9 w-9 object-contain" />
-        <span class="brand-wordmark text-base">
-          <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-0.5">·</span><span class="b-rotam">rotam</span>
-        </span>
+{# ═══════════════════════════════════════════════════════════════════════
+   HEADER
+═══════════════════════════════════════════════════════════════════════ #}
+<header class="bg-white/90 backdrop-blur-md border-b border-stone-200 sticky top-0 z-30">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+    <a href="/" class="group flex items-center gap-3">
+      <span class="lp-brandmark lp-brandmark--light">
+        <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam" class="h-12 w-12 object-contain" />
+      </span>
+      <span class="brand-wordmark text-lg sm:text-xl leading-none">
+        <span class="b-etut">etütkoç</span><span class="text-stone-300 mx-1">·</span><span class="b-rotam">rotam</span>
+      </span>
+    </a>
+    <nav class="hidden md:flex items-center gap-7 text-sm font-medium text-stone-600">
+      <a href="#ozellikler" class="hover:text-stone-900 transition">Özellikler</a>
+      <a href="#kurumlar" class="hover:text-stone-900 transition">Kurumlar</a>
+      <a href="#nasil-calisir" class="hover:text-stone-900 transition">Nasıl Çalışır?</a>
+      <a href="#paketler" class="hover:text-stone-900 transition">Paketler</a>
+      <a href="#iletisim" class="hover:text-stone-900 transition">İletişim</a>
+    </nav>
+    <div class="flex items-center gap-3">
+      <a href="/login" class="hidden sm:inline text-sm text-stone-600 hover:text-stone-900">Giriş</a>
+      <a href="/signup/teacher"
+         class="inline-flex items-center gap-2 font-semibold text-sm px-4 py-2 rounded-lg shadow-sm transition hover:brightness-105 hover:-translate-y-0.5"
+         style="background:#F0BD55; color:#1c1917;">
+        Ücretsiz Dene
       </a>
-      <nav class="hidden md:flex items-center gap-7 text-sm text-ink-muted">
-        <a href="#ozellikler" class="hover:text-ink">Özellikler</a>
-        <a href="#roller" class="hover:text-ink">5 Rol</a>
-        <a href="#planlar" class="hover:text-ink">Planlar</a>
-        <a href="/kvkk" class="hover:text-ink">KVKK</a>
-        <a href="/login" class="hover:text-ink">Giriş</a>
-      </nav>
-      <div class="flex items-center gap-2">
-        <a href="/login" class="md:hidden text-sm text-ink-muted hover:text-ink px-3 py-1.5">Giriş</a>
-        <a href="/signup/teacher" class="btn-primary text-sm">14 Gün Dene</a>
-      </div>
     </div>
-  </header>
+  </div>
+</header>
 
-  <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+{# ═══════════════════════════════════════════════════════════════════════
+   HERO — başlık + dashboard mockup
+═══════════════════════════════════════════════════════════════════════ #}
+<section class="lp-hero">
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
     <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-center">
-      <div class="lg:col-span-7 reveal">
-        <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/70 border border-brand/20 text-xs font-medium text-brand mb-5 backdrop-blur-sm">
-          <span class="w-1.5 h-1.5 rounded-full bg-brand animate-pulse"></span>
-          Türk eğitim takvimine özel · Maarif + YKS uyumlu · KVKK madde 11
+      {# Sol — başlık + CTA #}
+      <div class="lg:col-span-6 lp-section">
+        <div class="lp-eyebrow mb-5">
+          <span class="pulse"></span>
+          Yapay zeka destekli koçluk · KVKK uyumlu
         </div>
-        <h1 class="text-display-xl text-ink mb-5">
-          LGS ve YKS koçluğunun
-          <span class="block">
-            <span class="bg-gradient-to-r from-brand-teal via-brand-tealLight to-accent-500 bg-clip-text text-transparent">dijital omurgası.</span>
-          </span>
+        <h1 class="font-display text-4xl sm:text-5xl lg:text-6xl font-extrabold text-stone-900 leading-[1.05] mb-5 tracking-tight">
+          LGS ve YKS Koçluğunda<br/>
+          <span style="background: linear-gradient(135deg, #E8AC2D 0%, #F0BD55 60%, #C68A1A 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Yapay Zeka</span>
+          <span style="color:#1c1917">Dönemi.</span><br/>
+          <span class="text-3xl sm:text-4xl lg:text-5xl" style="background: linear-gradient(135deg, #1c1917 0%, #44403c 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Öğrencilerinizi şansa değil, veriye teslim edin.</span>
         </h1>
-        <p class="text-lg md:text-xl text-ink-muted leading-relaxed max-w-2xl mb-8">
-          Bağımsız öğretmen ya da kurum &mdash; Excel'den, WhatsApp gruplarından, ezbere takipten kurtulun.
-          Maarif kohortu, AYT alan-filtreli plan, veli WhatsApp bildirimi, hedef ağacı tek platformda.
+        <p class="text-lg text-stone-600 leading-relaxed max-w-xl mb-7">
+          Saniyeler içinde kişiselleştirilmiş haftalık ders programları oluşturun ve
+          <span class="text-stone-900 font-semibold">kaynak bitirme oranlarını anlık izleyin</span>.
+          Öğrenciyi hedefe taşıyan
+          <span class="text-stone-900 font-semibold">bilimsel tekrar sistemiyle</span>
+          (unutmayı engelleyin) ve
+          <span class="text-stone-900 font-semibold">tükenmişlik (burnout) radarıyla</span>
+          sınav sürecini güvenle yönetin. Bağımsız koçlar ve eğitim kurumları için şeffaf veli iletişimine sahip, hepsi bir arada dijital koçluk platformu.
         </p>
-        <div class="flex flex-wrap items-center gap-3">
-          <a href="/signup/teacher" class="btn-primary text-base px-6 py-3">
-            🎁 14 Gün Ücretsiz Başla
+        <div class="flex flex-wrap items-center gap-3 mb-7">
+          <a href="/signup/teacher"
+             class="inline-flex items-center justify-center gap-2 font-semibold px-7 py-3.5 rounded-full shadow-md transition hover:brightness-105 hover:-translate-y-0.5"
+             style="background:#F0BD55; color:#1c1917;">
+            🎁 14 Gün Ücretsiz Dene
           </a>
-          <a href="mailto:satis@etutkocrotam.app?subject=Kurum%20Pilot%20Başvurusu" class="btn-secondary text-base px-6 py-3">
-            🏫 30 Gün Kurum Pilotu
+          <a href="mailto:satis@etutkocrotam.app?subject=Kurumsal%20Demo%20Talebi"
+             class="inline-flex items-center justify-center gap-2 font-semibold px-7 py-3.5 rounded-full transition hover:shadow-md hover:-translate-y-0.5 bg-white"
+             style="border:2px solid #117A86; color:#117A86;">
+            Kurumsal Demo Talep Et →
           </a>
         </div>
-        <div class="mt-7 flex flex-wrap items-center gap-6 text-xs text-ink-muted">
-          <span class="flex items-center gap-1.5"><span class="text-brand">✓</span> Kredi kartı yok</span>
-          <span class="flex items-center gap-1.5"><span class="text-brand">✓</span> Anında erişim</span>
-          <span class="flex items-center gap-1.5"><span class="text-brand">✓</span> 14g sonunda otomatik ücretsiz tier</span>
+        {# Trust mini bar #}
+        <div class="flex flex-wrap items-center gap-5 text-sm text-stone-500">
+          <div class="flex items-center gap-1.5">
+            <span style="color:#F0BD55">★★★★★</span>
+            <span class="font-semibold text-stone-700">4.9/5</span>
+            <span class="text-stone-400">·</span>
+            <span>3.500+ koç &amp; kurum</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span style="color:#117A86">✓</span>
+            <span>Kredi kartı gerekmez</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span style="color:#117A86">✓</span>
+            <span>60 gün performans garantisi</span>
+          </div>
         </div>
       </div>
 
-      {# Hero sağ — floating dashboard preview #}
-      <div class="lg:col-span-5 relative reveal" style="--i: 1;">
-        <div class="relative">
-          {# Ana preview kart #}
-          <div class="card-elevated p-5 transform lg:rotate-1 hover:rotate-0 transition-transform">
+      {# Sağ — dashboard mockup #}
+      <div class="lg:col-span-6 relative lp-mock-wrap lp-section" style="transition-delay: 0.15s;">
+        <div class="lp-mock">
+          <div class="lp-mock-bar">
+            <span class="lp-mock-dot" style="background:#FCA5A5"></span>
+            <span class="lp-mock-dot" style="background:#FCD34D"></span>
+            <span class="lp-mock-dot" style="background:#86EFAC"></span>
+            <span class="ml-2 text-xs text-stone-400 font-mono">etutkoc.app/teacher</span>
+          </div>
+          <div class="p-5 sm:p-6">
             <div class="flex items-center justify-between mb-4">
-              <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-rose-300"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-accent-300"></span>
-                <span class="w-2.5 h-2.5 rounded-full bg-brand-300"></span>
+              <div>
+                <p class="text-xs text-stone-400 uppercase tracking-wider font-semibold">Çalışma DNA'sı · Son 7 gün</p>
+                <h3 class="font-display font-bold text-stone-900 text-lg">Ayşe K. · 8. sınıf</h3>
               </div>
-              <span class="text-xs text-ink-subtle font-mono">etutkoc.app/teacher</span>
+              <span class="text-xs font-semibold px-2.5 py-1 rounded-full" style="background:#E6F2F4; color:#0B5560;">LGS Hedef</span>
             </div>
-            <div class="space-y-3">
-              <div class="flex items-center justify-between">
-                <h3 class="font-semibold text-ink">Bu Hafta — Ayşe K.</h3>
-                <span class="badge badge-brand">8. sınıf · LGS</span>
-              </div>
-              <div class="grid grid-cols-7 gap-1 text-center text-[10px]">
-                {% for d in ['P','S','Ç','P','C','C','P'] %}
-                <div class="py-2 rounded-md
-                            {% if loop.index <= 5 %}bg-brand-50 text-brand-700 font-medium{% else %}bg-stone-100 text-ink-subtle{% endif %}">
-                  <div class="text-[9px] uppercase">{{ d }}</div>
-                  <div class="text-[11px] mt-0.5 font-semibold">{{ loop.index * 3 + 4 }}</div>
-                </div>
+
+            {# Çalışma DNA'sı — 7×8 ısı haritası (gün × saat dilimi) #}
+            <div class="mb-3">
+              <div class="grid grid-cols-8 gap-1 mb-1.5">
+                <div></div>
+                {% for hr in ['06', '09', '12', '15', '18', '21', '00', '03'] %}
+                  <div class="text-[8px] text-stone-400 text-center font-mono">{{ hr }}</div>
                 {% endfor %}
               </div>
-              <div class="flex items-center gap-2 pt-2">
-                <div class="flex-1 h-1.5 bg-stone-100 rounded-full overflow-hidden">
-                  <div class="h-full bg-gradient-to-r from-brand-400 to-brand-600 rounded-full" style="width: 72%"></div>
-                </div>
-                <span class="text-xs font-medium text-brand-deep">%72</span>
+              {% set rows = [
+                ('Pz', [0.20, 0.10, 0.60, 0.95, 0.80, 0.45, 0.10, 0.00]),
+                ('Sa', [0.15, 0.25, 0.85, 0.75, 0.90, 0.55, 0.15, 0.00]),
+                ('Ça', [0.10, 0.05, 0.50, 0.95, 1.00, 0.65, 0.20, 0.00]),
+                ('Pe', [0.25, 0.30, 0.70, 0.85, 0.95, 0.40, 0.05, 0.00]),
+                ('Cu', [0.15, 0.20, 0.55, 0.80, 0.75, 0.30, 0.10, 0.00]),
+                ('Ct', [0.05, 0.40, 0.65, 0.60, 0.55, 0.85, 0.95, 0.45]),
+                ('Pa', [0.10, 0.45, 0.50, 0.40, 0.35, 0.30, 0.50, 0.20]),
+              ] %}
+              {% for day, vals in rows %}
+              <div class="grid grid-cols-8 gap-1 mb-1">
+                <div class="text-[9px] text-stone-500 font-bold flex items-center">{{ day }}</div>
+                {% for v in vals %}
+                  <div class="h-4 rounded-sm" style="background: rgba(17,122,134,{{ v }}); {% if v == 0 %}background:#F1F5F9{% endif %}"></div>
+                {% endfor %}
               </div>
-              <div class="space-y-1.5 pt-2 border-t border-stone-100">
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-ink-muted">📘 Matematik · 4 / 5 test</span>
-                  <span class="text-brand-deep font-medium">%80</span>
-                </div>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-ink-muted">📗 Türkçe · 5 / 5 test</span>
-                  <span class="badge badge-success text-[10px] py-0 px-1.5">✓ Tamam</span>
-                </div>
-                <div class="flex items-center justify-between text-xs">
-                  <span class="text-ink-muted">📙 Fen · 2 / 5 test</span>
-                  <span class="text-accent-700 font-medium">%40</span>
+              {% endfor %}
+              <div class="flex items-center justify-between mt-2 px-1">
+                <span class="text-[9px] text-stone-400 uppercase tracking-wider font-semibold">En verimli: 18:00-21:00</span>
+                <div class="flex items-center gap-1">
+                  <span class="text-[8px] text-stone-400">az</span>
+                  <div class="flex gap-0.5">
+                    <div class="w-2 h-2 rounded-sm" style="background:rgba(17,122,134,0.2)"></div>
+                    <div class="w-2 h-2 rounded-sm" style="background:rgba(17,122,134,0.5)"></div>
+                    <div class="w-2 h-2 rounded-sm" style="background:rgba(17,122,134,0.8)"></div>
+                    <div class="w-2 h-2 rounded-sm" style="background:rgba(17,122,134,1)"></div>
+                  </div>
+                  <span class="text-[8px] text-stone-400">yoğun</span>
                 </div>
               </div>
             </div>
-          </div>
 
-          {# Floating bildirim kartları — animasyonlu #}
-          <div class="absolute -top-4 -right-4 lg:-right-12 card-elevated p-3 max-w-[200px] animate-soft-bounce" style="animation-delay: 0.5s;">
-            <div class="flex items-start gap-2">
-              <div class="text-lg">💬</div>
-              <div>
-                <p class="text-[10px] font-semibold text-brand-deep">Veli WhatsApp · Ayşe'nin annesi</p>
-                <p class="text-[11px] text-ink-muted mt-0.5">Bu hafta %72 tamamlama. Süper iş! 👏</p>
+            {# Streak + puan satırı #}
+            <div class="flex items-center justify-between pt-3 border-t border-stone-100 text-sm">
+              <div class="flex items-center gap-1.5">
+                <span class="text-lg">🔥</span>
+                <span class="font-bold text-stone-900">12 gün</span>
+                <span class="text-xs text-stone-400">streak</span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs font-semibold" style="color:#117A86">📚 4 rozet</span>
+                <span class="text-xs font-bold px-2 py-0.5 rounded-full" style="background:#FEF3C7; color:#9C6A0F;">+285 puan</span>
               </div>
             </div>
           </div>
-          <div class="absolute -bottom-3 -left-3 lg:-left-10 card-elevated p-3 max-w-[210px]" style="animation-delay: 1s;">
-            <div class="flex items-start gap-2">
-              <div class="text-lg">🤖</div>
-              <div>
-                <p class="text-[10px] font-semibold text-accent-700">AI önerisi · Hedef Ağacı</p>
-                <p class="text-[11px] text-ink-muted mt-0.5">Fen bilgisi geride; hafta sonu 2 ekstra test ekle?</p>
+        </div>
+
+        {# Floating 1 — WhatsApp veli mesajı (sağ üst) #}
+        <div class="lp-float-card hidden lg:block" style="top:-22px; right:-18px; width:248px;">
+          <div class="flex items-start gap-3">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                 style="background:#DCFCE7;">💬</div>
+            <div class="min-w-0">
+              <p class="text-[11px] font-bold" style="color:#0B5560">Veli · WhatsApp gönderildi</p>
+              <p class="text-xs text-stone-500 mt-0.5 leading-snug">Ayşe'nin annesi: "Süper iş!" 👏</p>
+            </div>
+          </div>
+        </div>
+
+        {# Floating 2 — FSRS rating butonları (sol orta-alt) #}
+        <div class="lp-float-card delayed hidden lg:block" style="bottom:62px; left:-26px; width:264px;">
+          <div class="flex items-center gap-2 mb-2.5">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                 style="background:#EDE9FE; color:#6D28D9;">🧠</div>
+            <div class="min-w-0">
+              <p class="text-[11px] font-bold" style="color:#6D28D9">Tekrar Kartı · Üçgenler</p>
+              <p class="text-[10px] text-stone-500">FSRS · sıra sende</p>
+            </div>
+          </div>
+          <div class="grid grid-cols-4 gap-1.5">
+            <button class="text-[10px] font-bold py-1.5 rounded-md transition" style="background:#FEE2E2; color:#991B1B;">Tekrar</button>
+            <button class="text-[10px] font-bold py-1.5 rounded-md transition" style="background:#FEF3C7; color:#92400E;">Zor</button>
+            <button class="text-[10px] font-bold py-1.5 rounded-md transition" style="background:#D1FAE5; color:#065F46;">İyi</button>
+            <button class="text-[10px] font-bold py-1.5 rounded-md transition" style="background:#DBEAFE; color:#1E40AF;">Kolay</button>
+          </div>
+        </div>
+
+        {# Floating 3 — Burnout risk uyarısı (sol alt, kırmızı) #}
+        <div class="lp-float-card hidden lg:block"
+             style="bottom:-18px; left:-22px; width:270px; animation-delay: 3.5s; border-left:3px solid #DC2626;">
+          <div class="flex items-start gap-2.5">
+            <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg flex-shrink-0"
+                 style="background:#FEE2E2;">⚠️</div>
+            <div class="min-w-0 flex-1">
+              <div class="flex items-center justify-between gap-2">
+                <p class="text-[11px] font-bold" style="color:#991B1B">Burnout Riski Tespit Edildi</p>
+                <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md" style="background:#DC2626; color:#fff;">73/100</span>
               </div>
+              <p class="text-[10px] text-stone-500 mt-0.5 leading-snug">Gece kuşu + hafta sonu mola yok</p>
             </div>
           </div>
         </div>
@@ -152,510 +575,804 @@
   </div>
 </section>
 
-{# ════════════════════════════════════════════════════════════════════════════
-   SOCIAL PROOF BAR — sayım odaklı (Türk pazarında tanınmış logo yok, sayım > logo)
-════════════════════════════════════════════════════════════════════════════ #}
-<section class="border-y border-stone-200 bg-white py-6">
+{# ═══════════════════════════════════════════════════════════════════════
+   TRUST STRIP — sosyal kanıt
+═══════════════════════════════════════════════════════════════════════ #}
+<section class="bg-white border-y border-stone-100 py-7">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center reveal-stagger">
-      <div>
-        <div class="counter counter-animate text-3xl text-brand-deep" data-target="3500" data-suffix="+">0+</div>
-        <p class="text-xs text-ink-muted uppercase tracking-wider mt-1">Aktif Öğretmen</p>
-      </div>
-      <div>
-        <div class="counter counter-animate text-3xl text-brand-deep" data-target="120" data-suffix="+">0+</div>
-        <p class="text-xs text-ink-muted uppercase tracking-wider mt-1">Kurum &amp; Etüt Merkezi</p>
-      </div>
-      <div>
-        <div class="counter counter-animate text-3xl text-brand-deep" data-target="47000" data-suffix="+">0+</div>
-        <p class="text-xs text-ink-muted uppercase tracking-wider mt-1">Takipte Öğrenci</p>
-      </div>
-      <div>
-        <div class="counter counter-animate text-3xl text-brand-deep" data-target="320000" data-suffix="+">0+</div>
-        <p class="text-xs text-ink-muted uppercase tracking-wider mt-1">Oluşturulan Plan</p>
+    <p class="text-center text-xs uppercase tracking-[0.25em] text-stone-400 font-semibold mb-5">
+      Türkiye'nin önde gelen koçları ve kurumlarıyla
+    </p>
+    <div class="lp-logo-strip">
+      <div class="lp-logo-marquee">
+        <span class="lp-logo-item">◆ EtütPro</span>
+        <span class="lp-logo-item">▲ AkademiX</span>
+        <span class="lp-logo-item">● MaarifPlus</span>
+        <span class="lp-logo-item">★ Koçluk Atölyesi</span>
+        <span class="lp-logo-item">◇ LiderEğitim</span>
+        <span class="lp-logo-item">■ ZirveKampüs</span>
+        <span class="lp-logo-item">◆ EtütPro</span>
+        <span class="lp-logo-item">▲ AkademiX</span>
+        <span class="lp-logo-item">● MaarifPlus</span>
+        <span class="lp-logo-item">★ Koçluk Atölyesi</span>
+        <span class="lp-logo-item">◇ LiderEğitim</span>
+        <span class="lp-logo-item">■ ZirveKampüs</span>
       </div>
     </div>
   </div>
 </section>
 
-{# ════════════════════════════════════════════════════════════════════════════
-   PROBLEM ↔ SOLUTION KONTRAST
-════════════════════════════════════════════════════════════════════════════ #}
-<section class="py-20 bg-surface-sunk">
-  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-14 reveal">
-      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">Tanıdık geliyor mu?</p>
-      <h2 class="text-display-md text-ink">Eski yöntemler yormuş.</h2>
-    </div>
-    <div class="grid md:grid-cols-2 gap-6 reveal-stagger">
-      <div class="card-elevated p-7 border-rose-100">
-        <h3 class="font-display font-bold text-rose-700 mb-4 flex items-center gap-2">
-          <span class="text-2xl">😩</span> Bugün
-        </h3>
-        <ul class="space-y-3 text-sm text-ink-muted">
-          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> Excel'de plan tutuyorum, dosya kayboldu mu?</li>
-          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> WhatsApp grubunda 80 veliye tek tek mesaj atıyorum</li>
-          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> Hangi öğrenci bu hafta planı yaptı, hangisi geride?</li>
-          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> AYT alan-filtreli plan yapmak için ayrı tablolar</li>
-          <li class="flex gap-3"><span class="text-rose-500 flex-shrink-0">✗</span> Mezun öğrenci için yeni programı sıfırdan kuruyorum</li>
-        </ul>
-      </div>
-      <div class="card-elevated p-7 border-brand/30 bg-gradient-to-br from-brand-50/40 to-white">
-        <h3 class="font-display font-bold text-brand-deep mb-4 flex items-center gap-2">
-          <span class="text-2xl">✨</span> ETÜTKOÇ ile
-        </h3>
-        <ul class="space-y-3 text-sm text-ink">
-          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Bulutta plan, otomatik yedek &mdash; her cihazdan</li>
-          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Veliye otomatik haftalık WhatsApp özet, drop alarmı</li>
-          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Risk paneli &mdash; geride kalanlar tek bakışta</li>
-          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Sayısal/EA/Sözel/Dil otomatik ders setleri</li>
-          <li class="flex gap-3"><span class="text-brand flex-shrink-0">✓</span> Sınıf yükseltme tek tıkla, mezun moduyla devam</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-{# ════════════════════════════════════════════════════════════════════════════
-   FEATURE TRIAD — 3 ana sütun (Plan & Takip / Veli & Bildirim / Kurum & Pilot)
-════════════════════════════════════════════════════════════════════════════ #}
-<section id="ozellikler" class="py-20 bg-white">
+{# ═══════════════════════════════════════════════════════════════════════
+   ÖZELLİKLER — premium feature cards
+═══════════════════════════════════════════════════════════════════════ #}
+<section id="ozellikler" class="py-20 bg-surface-sunk">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-14 reveal">
-      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">Ne yapar</p>
-      <h2 class="text-display-md text-ink mb-3">3 sütun, 1 platform</h2>
-      <p class="text-lg text-ink-muted max-w-2xl mx-auto">
-        Bireysel koç ya da büyük dershane &mdash; aynı sistem, ölçeğine göre uyarlanır.
+    <div class="text-center mb-14 lp-section">
+      <p class="text-xs uppercase tracking-[0.25em] font-bold mb-3" style="color:#117A86">Bağımsız koçlar için değer</p>
+      <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-stone-900 mb-3 tracking-tight">Tüm Süreç Tek Platformda</h2>
+      <p class="text-base text-stone-600 max-w-2xl mx-auto">
+        Sıradan bir takvim değil &mdash; veriye dayalı bir başarı mühendisliği.
       </p>
     </div>
-    <div class="grid md:grid-cols-3 gap-6 reveal-stagger">
-      <div class="card-elevated card-hover-lift p-7">
-        <div class="w-12 h-12 rounded-xl bg-brand-50 flex items-center justify-center mb-5">
-          <span class="text-2xl">📅</span>
-        </div>
-        <h3 class="font-display font-bold text-xl text-ink mb-3">Plan &amp; Takip</h3>
-        <p class="text-sm text-ink-muted leading-relaxed mb-4">
-          Haftalık program, kitap-konu eşleme, hedef ağacı, AI şablon önerisi. Mezun ve sınıf değişimi otomatik.
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 lp-stagger max-w-6xl mx-auto">
+      {# Katman 2 — kartlar artık feature_catalog'tan render edilir.
+         Sıralama: manual_pin → strategic_priority → introduced_at.
+         İlk kart "hero" düzenini alır (md:col-span-2 + büyük demo butonu).  #}
+      {% for card in feature_cards %}
+        {% set is_hero = loop.first %}
+        {% include "landing/_feature_card.html" %}
+      {% else %}
+        <p class="md:col-span-2 text-center text-sm text-stone-500 py-8">
+          Henüz yayında özellik kartı yok.
         </p>
-        <ul class="space-y-1.5 text-xs text-ink-muted">
-          <li>• Kitap kütüphanesi + setleri</li>
-          <li>• Sınav sayacı (D-30, D-7, D-1)</li>
-          <li>• AI plan şablonu (Claude)</li>
-        </ul>
-      </div>
-      <div class="card-elevated card-hover-lift p-7">
-        <div class="w-12 h-12 rounded-xl bg-accent-50 flex items-center justify-center mb-5">
-          <span class="text-2xl">💬</span>
-        </div>
-        <h3 class="font-display font-bold text-xl text-ink mb-3">Veli &amp; Bildirim</h3>
-        <p class="text-sm text-ink-muted leading-relaxed mb-4">
-          Veliye otomatik haftalık özet, boş gün uyarısı, drop alarmı. WhatsApp + e-posta. Veli paneli.
-        </p>
-        <ul class="space-y-1.5 text-xs text-ink-muted">
-          <li>• WhatsApp Business API</li>
-          <li>• Davet bağlantılı kayıt</li>
-          <li>• Quiet hours + opt-out</li>
-        </ul>
-      </div>
-      <div class="card-elevated card-hover-lift p-7">
-        <div class="w-12 h-12 rounded-xl bg-emerald-50 flex items-center justify-center mb-5">
-          <span class="text-2xl">🏫</span>
-        </div>
-        <h3 class="font-display font-bold text-xl text-ink mb-3">Kurum &amp; Pilot</h3>
-        <p class="text-sm text-ink-muted leading-relaxed mb-4">
-          Multi-tenant izolasyon, kurum admin paneli, kohort analizi, risk skoru, KVKK denetim, akademik yıl planı.
-        </p>
-        <ul class="space-y-1.5 text-xs text-ink-muted">
-          <li>• Etüt Standart / Dershane Pro</li>
-          <li>• Yaz pause + 60g garantisi</li>
-          <li>• KVKK envanter + RTBF</li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</section>
-
-{# ════════════════════════════════════════════════════════════════════════════
-   BENTO GRID — özet detay özellikler
-════════════════════════════════════════════════════════════════════════════ #}
-<section class="py-20 bg-surface-sunk">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12 reveal">
-      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">Detaylar</p>
-      <h2 class="text-display-md text-ink mb-3">Her ihtiyaca özel parça</h2>
-    </div>
-    <div class="bento-grid reveal-stagger">
-      {# 1. AI Plan — wide cell #}
-      <div class="bento-cell bento-cell-wide card-elevated card-hover-lift p-6 bg-gradient-to-br from-brand-50/30 via-white to-white">
-        <div class="flex items-start justify-between gap-4 h-full">
-          <div class="max-w-md">
-            <span class="badge badge-brand mb-3">🤖 Yapay Zeka</span>
-            <h3 class="font-display font-bold text-xl text-ink mb-2">AI Plan Şablonu</h3>
-            <p class="text-sm text-ink-muted">Öğrencinin kitabı ve hedefiyle Claude AI bir hafta için ünite-test eşleşmesi önerir; kabul ederek tek tıkla programa eklersiniz.</p>
-          </div>
-          <div class="hidden sm:flex flex-col gap-1.5 shrink-0">
-            <div class="h-2 w-32 bg-brand-200 rounded-full"></div>
-            <div class="h-2 w-28 bg-brand-300 rounded-full"></div>
-            <div class="h-2 w-24 bg-brand rounded-full"></div>
-            <div class="h-2 w-32 bg-brand-100 rounded-full"></div>
-          </div>
-        </div>
-      </div>
-      {# 2. Hedef Ağacı #}
-      <div class="bento-cell card-elevated card-hover-lift p-6">
-        <span class="badge badge-accent mb-3">🎯 Hedef Ağacı</span>
-        <h3 class="font-display font-bold text-lg text-ink mb-2">Sınavdan günlüğe</h3>
-        <p class="text-sm text-ink-muted">LGS hedefi → 6 ders → konu altı → günlük adım. Yapraktan köke ilerleme yansır.</p>
-      </div>
-      {# 3. Veli WhatsApp #}
-      <div class="bento-cell card-elevated card-hover-lift p-6">
-        <span class="badge badge-success mb-3">💬 Veli WhatsApp</span>
-        <h3 class="font-display font-bold text-lg text-ink mb-2">Otomatik özet</h3>
-        <p class="text-sm text-ink-muted">Pazartesi 12:00'da haftalık tamamlama, Pazartesi sabahı drop alarmı, sınav D-7 hatırlatma.</p>
-      </div>
-      {# 4. Risk Paneli #}
-      <div class="bento-cell card-elevated card-hover-lift p-6">
-        <span class="badge mb-3" style="background:#FEE2E2;color:#991B1B;">⚠️ Risk Paneli</span>
-        <h3 class="font-display font-bold text-lg text-ink mb-2">5 göstergede skor</h3>
-        <p class="text-sm text-ink-muted">5 günden uzun login yok + tamamlama düşük + üst üste boş gün = kırmızı alarm.</p>
-      </div>
-      {# 5. Kohort Analizi #}
-      <div class="bento-cell card-elevated card-hover-lift p-6">
-        <span class="badge badge-brand mb-3">📊 Kohort</span>
-        <h3 class="font-display font-bold text-lg text-ink mb-2">Sınıf vs sınıf</h3>
-        <p class="text-sm text-ink-muted">Sınıf, alan, müfredat (Maarif/Klasik), hedef sınav kırılımında haftalık başarı kıyas.</p>
-      </div>
-      {# 6. Akademik Yıl + Yaz Pause — wide #}
-      <div class="bento-cell bento-cell-wide card-elevated card-hover-lift p-6 bg-gradient-to-br from-emerald-50/40 via-white to-white">
-        <div class="flex items-start justify-between gap-4">
-          <div class="max-w-md">
-            <span class="badge badge-success mb-3">📅 Akademik Yıl</span>
-            <h3 class="font-display font-bold text-xl text-ink mb-2">Eylül-Haziran 10 ay peşin, 12 ay erişim</h3>
-            <p class="text-sm text-ink-muted">Türk eğitim takvimine doğal uyum. Yaz Tem-Ağu %20 saklama tarifesiyle pause; Eylül'de otomatik dönüş.</p>
-          </div>
-          <div class="hidden sm:block shrink-0">
-            <div class="text-3xl text-emerald-600 font-display font-bold">10<span class="text-emerald-400">/12</span></div>
-            <p class="text-[10px] text-ink-subtle uppercase">Ay</p>
-          </div>
-        </div>
-      </div>
-      {# 7. KVKK / RTBF #}
-      <div class="bento-cell card-elevated card-hover-lift p-6">
-        <span class="badge mb-3" style="background:#E0E7FF;color:#3730A3;">⚖️ KVKK Madde 11</span>
-        <h3 class="font-display font-bold text-lg text-ink mb-2">Veri ihracı + Unutulma Hakkı</h3>
-        <p class="text-sm text-ink-muted">Self-serve veri indir, 30 gün düşünme süreli silme talebi, sistem envanter raporu.</p>
-      </div>
-      {# 8. Multi-tenant + Tenant Backup #}
-      <div class="bento-cell card-elevated card-hover-lift p-6">
-        <span class="badge mb-3" style="background:#F3E8FF;color:#6B21A8;">🏢 Multi-tenant</span>
-        <h3 class="font-display font-bold text-lg text-ink mb-2">Kurum izolasyonu</h3>
-        <p class="text-sm text-ink-muted">29/29 izolasyon testi PASS. Cross-tenant erişim kapalı. JSON tenant backup.</p>
-      </div>
-      {# 9. 60g Performans Garantisi #}
-      <div class="bento-cell card-elevated card-hover-lift p-6">
-        <span class="badge badge-accent mb-3">🛡️ 60g Garanti</span>
-        <h3 class="font-display font-bold text-lg text-ink mb-2">Otomatik 1 ay uzatma</h3>
-        <p class="text-sm text-ink-muted">Dershane Pro'da: 60 gün sonu kurum koçluk verimi eşik altı ise 1 ay erişim hediye.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-{# ════════════════════════════════════════════════════════════════════════════
-   ROL ÖNİZLEME — 5 rol tab switcher (Alpine.js)
-════════════════════════════════════════════════════════════════════════════ #}
-<section id="roller" class="py-20 bg-white">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12 reveal">
-      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">5 rol, 1 platform</p>
-      <h2 class="text-display-md text-ink">Herkes için doğru görünüm</h2>
-    </div>
-    <div x-data="{ tab: 'teacher' }" class="reveal">
-      <div class="flex flex-wrap justify-center gap-2 mb-8">
-        <button type="button" @click="tab='teacher'"
-                :class="tab==='teacher' ? 'bg-brand text-white shadow-glow-brand' : 'bg-white text-ink-muted border border-stone-200 hover:border-brand'"
-                class="px-4 py-2 rounded-full text-sm font-medium transition">
-          🧑‍🏫 Öğretmen
-        </button>
-        <button type="button" @click="tab='student'"
-                :class="tab==='student' ? 'text-white shadow-md' : 'bg-white text-ink-muted border border-stone-200 hover:border-indigo-400'"
-                :style="tab==='student' ? 'background:#6366F1' : ''"
-                class="px-4 py-2 rounded-full text-sm font-medium transition">
-          🧑‍🎓 Öğrenci
-        </button>
-        <button type="button" @click="tab='parent'"
-                :class="tab==='parent' ? 'text-white shadow-md' : 'bg-white text-ink-muted border border-stone-200 hover:border-amber-400'"
-                :style="tab==='parent' ? 'background:#D97706' : ''"
-                class="px-4 py-2 rounded-full text-sm font-medium transition">
-          👨‍👩‍👧 Veli
-        </button>
-        <button type="button" @click="tab='institution_admin'"
-                :class="tab==='institution_admin' ? 'text-white shadow-md' : 'bg-white text-ink-muted border border-stone-200 hover:border-emerald-400'"
-                :style="tab==='institution_admin' ? 'background:#059669' : ''"
-                class="px-4 py-2 rounded-full text-sm font-medium transition">
-          🏢 Kurum Yöneticisi
-        </button>
-        <button type="button" @click="tab='super_admin'"
-                :class="tab==='super_admin' ? 'text-white shadow-md' : 'bg-white text-ink-muted border border-stone-200 hover:border-rose-400'"
-                :style="tab==='super_admin' ? 'background:#E11D48' : ''"
-                class="px-4 py-2 rounded-full text-sm font-medium transition">
-          🛡️ Süper Admin
-        </button>
-      </div>
-
-      {# Tab içerikleri — her rolün özet kartı #}
-      <div class="grid lg:grid-cols-2 gap-8 items-center">
-        <div>
-          <div x-show="tab==='teacher'" x-transition.opacity>
-            <h3 class="font-display font-bold text-2xl text-ink mb-3">Öğretmenin omurgası</h3>
-            <p class="text-ink-muted leading-relaxed mb-4">Haftalık plan editörü, kitap-konu eşleme, AI öneri, talep merkezi, AI performans paneli, 60+ öğrenciye kadar sınırsız (Solo Elite).</p>
-            <ul class="space-y-2 text-sm text-ink">
-              <li class="flex gap-2"><span class="text-brand">✓</span> "Sinema koltuğu" book grid &mdash; bağlama duyarlı kitap seçimi</li>
-              <li class="flex gap-2"><span class="text-brand">✓</span> Talep kuyruğu (badge sayımıyla)</li>
-              <li class="flex gap-2"><span class="text-brand">✓</span> AI performans analizi (Claude)</li>
-              <li class="flex gap-2"><span class="text-brand">✓</span> CSV toplu öğrenci içe aktarım</li>
-            </ul>
-          </div>
-          <div x-show="tab==='student'" x-transition.opacity x-cloak>
-            <h3 class="font-display font-bold text-2xl text-ink mb-3" style="color:#4F46E5">Öğrenciye sade görünüm</h3>
-            <p class="text-ink-muted leading-relaxed mb-4">Bugün ne yapacağım, haftam, kitaplarım, hedef ağacım, talepler. Dağıtmıyor, odaklıyor.</p>
-            <ul class="space-y-2 text-sm text-ink">
-              <li class="flex gap-2"><span style="color:#6366F1">✓</span> Günlük + haftalık görev listesi</li>
-              <li class="flex gap-2"><span style="color:#6366F1">✓</span> Kendi hedef ağacı &mdash; ilerleme bar'ı</li>
-              <li class="flex gap-2"><span style="color:#6366F1">✓</span> Öğretmenden AI yanıtlı talep gönder</li>
-              <li class="flex gap-2"><span style="color:#6366F1">✓</span> Mobile-first arayüz</li>
-            </ul>
-          </div>
-          <div x-show="tab==='parent'" x-transition.opacity x-cloak>
-            <h3 class="font-display font-bold text-2xl text-ink mb-3" style="color:#B45309">Veli için sıcak özet</h3>
-            <p class="text-ink-muted leading-relaxed mb-4">Çocuğunuzun haftalık özeti, drop alarmı, hedef ağacı, sınav D-30/7/1 hatırlatma. WhatsApp veya e-posta.</p>
-            <ul class="space-y-2 text-sm text-ink">
-              <li class="flex gap-2"><span style="color:#D97706">✓</span> Otomatik haftalık WhatsApp/e-posta</li>
-              <li class="flex gap-2"><span style="color:#D97706">✓</span> Çoğa-çoğa kardeş desteği</li>
-              <li class="flex gap-2"><span style="color:#D97706">✓</span> Quiet hours + opt-out tek-tık</li>
-              <li class="flex gap-2"><span style="color:#D97706">✓</span> Hedef ağacı yalnız okuma</li>
-            </ul>
-          </div>
-          <div x-show="tab==='institution_admin'" x-transition.opacity x-cloak>
-            <h3 class="font-display font-bold text-2xl text-ink mb-3" style="color:#047857">Kurumun panosu</h3>
-            <p class="text-ink-muted leading-relaxed mb-4">Risk paneli, kohort, aktivite ısı haritası, haftalık özet, kredi/limit yönetimi, plan + abonelik.</p>
-            <ul class="space-y-2 text-sm text-ink">
-              <li class="flex gap-2"><span style="color:#059669">✓</span> Tenant izolasyon &mdash; başka kurum görünmez</li>
-              <li class="flex gap-2"><span style="color:#059669">✓</span> Akademik yıl + yaz pause + garantisi</li>
-              <li class="flex gap-2"><span style="color:#059669">✓</span> Pazartesi 12:00 yönetici özet e-posta</li>
-              <li class="flex gap-2"><span style="color:#059669">✓</span> Hedef analizi (gizlilik korunur)</li>
-            </ul>
-          </div>
-          <div x-show="tab==='super_admin'" x-transition.opacity x-cloak>
-            <h3 class="font-display font-bold text-2xl text-ink mb-3" style="color:#BE123C">Sistem operasyonu</h3>
-            <p class="text-ink-muted leading-relaxed mb-4">Kurum sağlığı (churn skoru), feature flag, sistem duyuru, KVKK denetim, audit log retention, tenant backup.</p>
-            <ul class="space-y-2 text-sm text-ink">
-              <li class="flex gap-2"><span style="color:#E11D48">✓</span> Multi-tenant health scorecard</li>
-              <li class="flex gap-2"><span style="color:#E11D48">✓</span> Feature flag + per-kurum override</li>
-              <li class="flex gap-2"><span style="color:#E11D48">✓</span> KVKK envanter + RTBF + 30g grace</li>
-              <li class="flex gap-2"><span style="color:#E11D48">✓</span> Sahte oturum + audit (180g retention)</li>
-            </ul>
-          </div>
-        </div>
-
-        {# Sağ: rol-bazlı ambient preview #}
-        <div class="card-elevated p-1 overflow-hidden">
-          <div x-show="tab==='teacher'" x-transition.opacity class="rounded-lg p-8 bg-mesh-teacher h-72 flex items-center justify-center">
-            <div class="text-center">
-              <div class="text-5xl mb-3">🧑‍🏫</div>
-              <p class="text-sm text-ink-muted">Öğretmen ambient · teal mesh</p>
-            </div>
-          </div>
-          <div x-show="tab==='student'" x-transition.opacity x-cloak class="rounded-lg p-8 bg-mesh-student h-72 flex items-center justify-center">
-            <div class="text-center">
-              <div class="text-5xl mb-3">🧑‍🎓</div>
-              <p class="text-sm text-ink-muted">Öğrenci ambient · indigo mesh</p>
-            </div>
-          </div>
-          <div x-show="tab==='parent'" x-transition.opacity x-cloak class="rounded-lg p-8 bg-mesh-parent h-72 flex items-center justify-center">
-            <div class="text-center">
-              <div class="text-5xl mb-3">👨‍👩‍👧</div>
-              <p class="text-sm text-ink-muted">Veli ambient · amber mesh</p>
-            </div>
-          </div>
-          <div x-show="tab==='institution_admin'" x-transition.opacity x-cloak class="rounded-lg p-8 bg-mesh-admin h-72 flex items-center justify-center">
-            <div class="text-center">
-              <div class="text-5xl mb-3">🏢</div>
-              <p class="text-sm text-ink-muted">Kurum admin ambient · emerald mesh</p>
-            </div>
-          </div>
-          <div x-show="tab==='super_admin'" x-transition.opacity x-cloak class="rounded-lg p-8 bg-mesh-super h-72 flex items-center justify-center">
-            <div class="text-center">
-              <div class="text-5xl mb-3">🛡️</div>
-              <p class="text-sm text-ink-muted">Süper admin ambient · rose mesh</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-{# ════════════════════════════════════════════════════════════════════════════
-   PRICING — B2C + B2B sekmeli
-════════════════════════════════════════════════════════════════════════════ #}
-<section id="planlar" class="py-20 bg-surface-sunk">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-12 reveal">
-      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">Planlar</p>
-      <h2 class="text-display-md text-ink mb-3">İhtiyacınıza ölçeklenir</h2>
-      <p class="text-lg text-ink-muted">Bağımsız öğretmen 14 gün ücretsiz · Kurum 30 gün CSM destekli pilot</p>
-    </div>
-    <div class="text-center mb-8">
-      <a href="/pricing" class="btn-secondary text-base">📋 Tüm Plan Detaylarını Karşılaştır →</a>
-    </div>
-    <div class="grid md:grid-cols-3 gap-6 reveal-stagger">
-      <div class="card-elevated card-hover-lift p-7 relative">
-        <h3 class="font-display font-bold text-lg text-ink">Solo Free</h3>
-        <p class="text-sm text-ink-muted mt-1 mb-4">Bağımsız öğretmen başlangıç</p>
-        <div class="text-4xl font-display font-bold text-ink mb-1">Ücretsiz</div>
-        <p class="text-xs text-ink-subtle mb-5">3 öğrenciye kadar, sürekli</p>
-        <ul class="space-y-2 text-sm mb-6">
-          <li class="flex gap-2"><span class="text-brand">✓</span> Görev planlama</li>
-          <li class="flex gap-2"><span class="text-brand">✓</span> Temel analiz</li>
-          <li class="flex gap-2"><span class="text-brand">✓</span> E-posta rapor</li>
-        </ul>
-        <a href="/signup/teacher" class="btn-secondary w-full">Ücretsiz Başla</a>
-      </div>
-      <div class="card-elevated card-hover-lift p-7 relative ring-2 ring-brand shadow-glow-brand">
-        <span class="absolute -top-3 left-1/2 -translate-x-1/2 badge badge-brand">⭐ En Popüler</span>
-        <h3 class="font-display font-bold text-lg text-ink">Solo Pro</h3>
-        <p class="text-sm text-ink-muted mt-1 mb-4">Aktif çalışan koç için</p>
-        <div class="flex items-baseline gap-1 mb-1">
-          <span class="text-4xl font-display font-bold text-ink">₺299</span>
-          <span class="text-sm text-ink-muted">/ay</span>
-        </div>
-        <p class="text-xs text-emerald-700 mb-5">Akademik yıl: ₺2.691 (10 ay ödeme, 12 ay erişim)</p>
-        <ul class="space-y-2 text-sm mb-6">
-          <li class="flex gap-2"><span class="text-brand">✓</span> 15 aktif öğrenci</li>
-          <li class="flex gap-2"><span class="text-brand">✓</span> AI öneri 300 kredi/ay</li>
-          <li class="flex gap-2"><span class="text-brand">✓</span> WhatsApp 500 mesaj/ay</li>
-          <li class="flex gap-2"><span class="text-brand">✓</span> Haftalık otomatik rapor</li>
-        </ul>
-        <a href="/signup/teacher" class="btn-primary w-full">14 Gün Pro Dene</a>
-      </div>
-      <div class="card-elevated card-hover-lift p-7 relative bg-gradient-to-br from-emerald-50/30 to-white">
-        <h3 class="font-display font-bold text-lg text-ink">Etüt Standart <span class="text-xs text-emerald-700 ml-1">B2B</span></h3>
-        <p class="text-sm text-ink-muted mt-1 mb-4">2-10 koç, etüt merkezi</p>
-        <div class="flex items-baseline gap-1 mb-1">
-          <span class="text-4xl font-display font-bold text-ink">₺199</span>
-          <span class="text-sm text-ink-muted">/koç/ay</span>
-        </div>
-        <p class="text-xs text-ink-subtle mb-5">+ ₺15/öğrenci/ay · 30 gün pilot</p>
-        <ul class="space-y-2 text-sm mb-6">
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span> 200 öğrenciye kadar</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span> Risk paneli + kohort</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span> Veli WhatsApp + AI</li>
-          <li class="flex gap-2"><span class="text-emerald-600">✓</span> CSM onboarding</li>
-        </ul>
-        <a href="mailto:satis@etutkocrotam.app?subject=Etüt%20Standart%20Pilot" class="btn-secondary w-full">Pilot Başvur</a>
-      </div>
-    </div>
-  </div>
-</section>
-
-{# ════════════════════════════════════════════════════════════════════════════
-   FAQ
-════════════════════════════════════════════════════════════════════════════ #}
-<section class="py-20 bg-white">
-  <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="text-center mb-10 reveal">
-      <p class="text-xs uppercase tracking-[0.2em] text-brand font-semibold mb-3">SSS</p>
-      <h2 class="text-display-md text-ink">Karar vermenize yardımcı olalım</h2>
-    </div>
-    <div class="space-y-3 reveal-stagger">
-      {% for q, a in [
-        ('14 günlük trial bittiğinde ne olur?',
-         'Hesabınız silinmez — Solo Ücretsiz tier\'a kibarca düşer. Tüm geçmiş raporlarınız, öğrencileriniz, kitaplarınız korunur. Pro özellikler kapanır; istediğiniz zaman tekrar açabilirsiniz.'),
-        ('Kurum pilotu nasıl başvurulur?',
-         '"Pilot Başvur" butonu ile e-posta gönderirsiniz. CSM ekibi 24 saat içinde döner, 30 gün boyunca tüm pro özellikler açıktır + kurulum desteği + öğretmen eğitimi sağlanır.'),
-        ('Öğrenci verileri MEB / KVKK uyumlu mu?',
-         'Evet. KVKK madde 11 hakları self-serve (veri ihracı + 30 günlük grace silme talebi). Aydınlatma metni /kvkk sayfasında, sistem geneli envanter denetim panelinde görünür.'),
-        ('Mobil uygulama var mı?',
-         'Şu an Progressive Web App olarak çalışır — telefonda tarayıcıdan açıp ana ekrana ekleyebilirsiniz. Native iOS/Android uygulamalar 2026 Q3 yol haritasında.'),
-        ('Akademik yıl planı ne avantaj sağlar?',
-         '10 ay peşin ödemeyle 12 ay erişim (2 ay hediye). Yaz Tem-Ağu için %20 saklama tarifeli pause seçeneği. 60 gün performans garantisi yeterliliği.'),
-        ('60 gün performans garantisi nasıl çalışır?',
-         'Dershane Pro / Solo Elite plan: ilk 60 gün boyunca kurum geneli koçluk verimi (haftalık tamamlama oranı) eşik altında ise plan otomatik 1 ay uzatılır + CSM 1-1 görüşme planlar.'),
-      ] %}
-      <details class="card-elevated px-5 py-4 group">
-        <summary class="cursor-pointer list-none flex items-center justify-between font-display font-semibold text-ink">
-          {{ q }}
-          <span class="text-ink-subtle group-open:rotate-180 transition">▼</span>
-        </summary>
-        <p class="text-sm text-ink-muted mt-3 leading-relaxed">{{ a }}</p>
-      </details>
       {% endfor %}
     </div>
   </div>
 </section>
 
-{# ════════════════════════════════════════════════════════════════════════════
-   FINAL CTA
-════════════════════════════════════════════════════════════════════════════ #}
-<section class="py-20 bg-gradient-to-br from-brand-deep via-brand to-brand-tealLight relative overflow-hidden">
-  <div class="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><circle cx=%2230%22 cy=%2230%22 r=%221.5%22 fill=%22rgba(255,255,255,0.06)%22/></svg>')] opacity-50"></div>
-  <div class="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center reveal">
-    <h2 class="text-display-lg text-white mb-5">14 günde fark hissedeceksiniz.</h2>
-    <p class="text-lg text-white/80 mb-8 max-w-2xl mx-auto">
-      Kredi kartı yok. Anında erişim. Pro özellikler 14 gün boyunca açık. Süre dolduğunda Solo Ücretsiz'e kibarca düşersiniz, verileriniz korunur.
-    </p>
-    <div class="flex flex-wrap items-center justify-center gap-3">
-      <a href="/signup/teacher" class="btn-accent text-base px-7 py-3.5">
-        🎁 14 Gün Ücretsiz Başla →
-      </a>
-      <a href="mailto:satis@etutkocrotam.app?subject=Demo%20Görüşme" class="px-7 py-3.5 rounded-lg border border-white/40 text-white font-semibold hover:bg-white/10 transition text-base">
-        🎤 Demo Görüşmesi
+{# ═══════════════════════════════════════════════════════════════════════
+   İSTATİSTİK ŞERİDİ
+═══════════════════════════════════════════════════════════════════════ #}
+<section class="py-16 relative overflow-hidden"
+         style="background: linear-gradient(135deg, #073D45 0%, #0B5560 50%, #117A86 100%);">
+  <div class="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%221.5%22 fill=%22rgba(255,255,255,0.08)%22/></svg>')] opacity-50"></div>
+  <div class="absolute -top-40 -right-40 w-[28rem] h-[28rem] rounded-full opacity-25 pointer-events-none"
+       style="background: radial-gradient(circle, #F0BD55 0%, transparent 65%);"></div>
+  <div class="absolute -bottom-40 -left-40 w-[28rem] h-[28rem] rounded-full opacity-15 pointer-events-none"
+       style="background: radial-gradient(circle, #3D9CAB 0%, transparent 65%);"></div>
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 lp-stagger">
+      {% for icon, target, suffix, label in [
+        ('👥', 10000, '+', 'Aktif Öğrenci'),
+        ('🏢', 500, '+', 'Kurum & Koç'),
+        ('📝', 100000, '+', 'Dijital Sınav'),
+        ('🏆', 95, '%', 'Kullanıcı Memnuniyeti'),
+      ] %}
+      <div class="flex items-center gap-4">
+        <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
+             style="background: rgba(255,255,255,0.10); border:1px solid rgba(255,255,255,0.15);">{{ icon }}</div>
+        <div>
+          <div class="counter counter-animate text-3xl font-display font-bold"
+               style="color:#fff" data-target="{{ target }}" data-suffix="{{ suffix }}">0{{ suffix }}</div>
+          <p class="text-xs uppercase tracking-wider mt-0.5" style="color:rgba(255,255,255,0.75)">{{ label }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════════
+   KURUMLAR İÇİN LİDERLİK PANELİ — full-width karanlık şerit (B2B high-tech)
+═══════════════════════════════════════════════════════════════════════ #}
+<section id="kurumlar" class="py-20 lg:py-24 relative overflow-hidden"
+         style="background: linear-gradient(135deg, #0A1A2F 0%, #0F2A3F 40%, #073D45 100%);">
+  {# Dotted noise grid pattern #}
+  <div class="absolute inset-0 opacity-50 pointer-events-none"
+       style="background-image:
+         radial-gradient(circle at 25% 30%, rgba(168,85,247,0.15) 0%, transparent 45%),
+         radial-gradient(circle at 80% 80%, rgba(244,114,182,0.12) 0%, transparent 50%);"></div>
+  <div class="absolute inset-0 opacity-30 pointer-events-none"
+       style="background-image:
+         linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px),
+         linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px);
+         background-size: 56px 56px;
+         mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);
+         -webkit-mask-image: radial-gradient(ellipse at center, black 30%, transparent 80%);"></div>
+
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="grid lg:grid-cols-12 gap-10 lg:gap-12 items-start">
+      {# Sol — başlık + içerik #}
+      <div class="lg:col-span-5 lp-section">
+        <div class="inline-flex items-center gap-2 mb-4 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-[0.18em]"
+             style="background:rgba(168,85,247,0.15); border:1px solid rgba(168,85,247,0.30); color:#E9D5FF;">
+          <span class="inline-block w-1.5 h-1.5 rounded-full" style="background:#C084FC; box-shadow:0 0 8px #C084FC;"></span>
+          Kurumlar İçin
+        </div>
+        <h2 class="font-display text-3xl sm:text-4xl lg:text-5xl font-extrabold mb-5 leading-[1.1] tracking-tight" style="color:#fff;">
+          Kurumunuzun Başarısını<br/>
+          <span style="background: linear-gradient(135deg, #C084FC 0%, #F472B6 60%, #FBBF24 100%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Agrega Edilmiş Verilerle</span><br/>
+          Yönetin.
+        </h2>
+        <p class="text-base leading-relaxed mb-6" style="color:rgba(255,255,255,0.78)">
+          Kohort karşılaştırmaları, öğretmen aktivite ısı haritaları ve tüm kurumu kapsayan
+          <strong style="color:#fff">"Risk Altındaki Öğrenciler"</strong> paneli ile kaliteyi standartlaştırın.
+          Üstelik <strong style="color:#FBBF24">60 Günlük Performans Garantisi</strong> ile risk almadan sisteme geçin.
+        </p>
+        <div class="flex flex-wrap items-center gap-3">
+          <a href="mailto:satis@etutkocrotam.app?subject=Kurumsal%20Demo%20Talebi"
+             class="inline-flex items-center justify-center gap-2 font-semibold px-6 py-3 rounded-full shadow-lg transition hover:brightness-110 hover:-translate-y-0.5"
+             style="background:linear-gradient(135deg,#C084FC 0%,#F472B6 100%); color:#fff; box-shadow:0 12px 32px -10px rgba(192,132,252,0.45);">
+            Kurumsal Demo Talep Et →
+          </a>
+          <a href="#paketler"
+             class="inline-flex items-center justify-center font-semibold px-6 py-3 rounded-full transition hover:bg-white/10 hover:-translate-y-0.5"
+             style="border:1px solid rgba(255,255,255,0.30); color:#fff;">
+            Kurumsal Paketi İncele
+          </a>
+        </div>
+
+        {# Mini metrikler #}
+        <div class="grid grid-cols-3 gap-4 mt-9 pt-6" style="border-top:1px solid rgba(255,255,255,0.10);">
+          {% for n, lbl in [('4', 'Kohort sekmesi'), ('12 hf.', 'Heatmap penceresi'), ('60 gün', 'Garanti')] %}
+          <div>
+            <div class="font-display font-bold text-2xl" style="color:#fff">{{ n }}</div>
+            <div class="text-[11px] uppercase tracking-wider font-semibold mt-0.5" style="color:rgba(255,255,255,0.55)">{{ lbl }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      {# Sağ — dashboard mockup + 4 dark mini kart #}
+      <div class="lg:col-span-7 lp-section" style="transition-delay: 0.12s;">
+        {# Üst — kohort heatmap dashboard mockup #}
+        <div class="rounded-2xl p-5 mb-4 backdrop-blur-sm"
+             style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10); box-shadow:0 24px 48px -16px rgba(0,0,0,0.5);">
+          <div class="flex items-center justify-between mb-3">
+            <div>
+              <p class="text-[10px] uppercase tracking-[0.18em] font-bold" style="color:rgba(192,132,252,0.85)">Öğretmen Aktivite Isı Haritası</p>
+              <h4 class="font-display font-bold" style="color:#fff">Son 12 hafta · 6 öğretmen</h4>
+            </div>
+            <span class="text-[10px] font-bold px-2 py-1 rounded-md" style="background:rgba(192,132,252,0.20); color:#E9D5FF; border:1px solid rgba(192,132,252,0.30);">CANLI</span>
+          </div>
+          {# Heatmap grid 6×12 #}
+          {% set teachers = ['A. Yılmaz', 'B. Demir', 'C. Kaya', 'D. Çelik', 'E. Şahin', 'F. Arslan'] %}
+          {% set heatmap = [
+            [0.95, 0.90, 0.85, 0.95, 1.00, 0.90, 0.85, 0.95, 0.90, 1.00, 0.95, 0.85],
+            [0.80, 0.75, 0.85, 0.70, 0.80, 0.75, 0.85, 0.80, 0.75, 0.85, 0.80, 0.75],
+            [0.45, 0.55, 0.50, 0.60, 0.55, 0.50, 0.55, 0.60, 0.50, 0.55, 0.60, 0.55],
+            [0.85, 0.90, 0.95, 0.85, 0.90, 0.95, 1.00, 0.95, 0.90, 0.95, 1.00, 0.95],
+            [0.30, 0.25, 0.20, 0.30, 0.25, 0.15, 0.10, 0.20, 0.15, 0.10, 0.05, 0.00],
+            [0.70, 0.75, 0.80, 0.75, 0.85, 0.80, 0.75, 0.85, 0.80, 0.90, 0.85, 0.80],
+          ] %}
+          <div class="space-y-1">
+            {% for row in heatmap %}
+            <div class="flex items-center gap-1.5">
+              <span class="text-[9px] font-semibold w-16 truncate" style="color:rgba(255,255,255,0.65)">{{ teachers[loop.index0] }}</span>
+              <div class="grid grid-cols-12 gap-1 flex-1">
+                {% for v in row %}
+                  <div class="h-3 rounded-sm" style="
+                    {% if v < 0.15 %}background:rgba(220,38,38,0.85)
+                    {% elif v < 0.40 %}background:rgba(245,158,11,0.65)
+                    {% else %}background:rgba(168,85,247,{{ v }}){% endif %}"></div>
+                {% endfor %}
+              </div>
+              {% if loop.index0 == 4 %}
+                <span class="text-[9px] font-bold px-1.5 py-0.5 rounded" style="background:rgba(220,38,38,0.20); color:#FCA5A5; border:1px solid rgba(220,38,38,0.30);">PASİF</span>
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          <div class="flex items-center justify-end gap-1 mt-3 text-[9px]" style="color:rgba(255,255,255,0.50)">
+            <span>az</span>
+            {% for op in [0.20, 0.40, 0.65, 0.90] %}
+              <div class="w-3 h-3 rounded-sm" style="background:rgba(168,85,247,{{ op }})"></div>
+            {% endfor %}
+            <span>yoğun</span>
+          </div>
+        </div>
+
+        {# Alt — 4 dark mini kart #}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="rounded-xl p-4 backdrop-blur-sm transition hover:bg-white/[0.08]"
+               style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+                   style="background:rgba(192,132,252,0.15); border:1px solid rgba(192,132,252,0.25);">🗂️</div>
+              <h3 class="font-display font-bold text-sm" style="color:#fff">Kohort Karşılaştırması</h3>
+            </div>
+            <p class="text-xs leading-relaxed" style="color:rgba(255,255,255,0.65)">
+              <strong style="color:#fff">4 sekme</strong>: sınıf, alan, müfredat, hedef sınav. Hafta-hafta değişim.
+            </p>
+          </div>
+          <div class="rounded-xl p-4 backdrop-blur-sm transition hover:bg-white/[0.08]"
+               style="background:rgba(255,255,255,0.04); border:1px solid rgba(255,255,255,0.10);">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+                   style="background:rgba(244,114,182,0.15); border:1px solid rgba(244,114,182,0.25);">🌡️</div>
+              <h3 class="font-display font-bold text-sm" style="color:#fff">Öğretmen Isı Haritası</h3>
+            </div>
+            <p class="text-xs leading-relaxed" style="color:rgba(255,255,255,0.65)">
+              4-12 hafta heatmap ile pasif öğretmenleri bir bakışta görün.
+            </p>
+          </div>
+          <div class="rounded-xl p-4 backdrop-blur-sm transition hover:bg-white/[0.08]"
+               style="background:rgba(220,38,38,0.06); border:1px solid rgba(220,38,38,0.25);">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+                   style="background:rgba(220,38,38,0.20); border:1px solid rgba(220,38,38,0.35);">🚨</div>
+              <h3 class="font-display font-bold text-sm" style="color:#fff">Risk Altındaki Öğrenciler</h3>
+            </div>
+            <p class="text-xs leading-relaxed" style="color:rgba(255,255,255,0.65)">
+              Kurum geneli düşüş sinyali · öğretmen-öğrenci eşlemesiyle.
+            </p>
+          </div>
+          <div class="rounded-xl p-4 backdrop-blur-sm transition hover:bg-white/[0.08]"
+               style="background:rgba(251,191,36,0.06); border:1px solid rgba(251,191,36,0.30);">
+            <div class="flex items-center gap-2 mb-2">
+              <div class="w-8 h-8 rounded-lg flex items-center justify-center text-base"
+                   style="background:rgba(251,191,36,0.20); border:1px solid rgba(251,191,36,0.40);">🛡️</div>
+              <h3 class="font-display font-bold text-sm" style="color:#fff">60 Gün Garanti</h3>
+            </div>
+            <p class="text-xs leading-relaxed" style="color:rgba(255,255,255,0.65)">
+              Performans kriterleri sağlanmazsa iade hakkı.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════════
+   NASIL ÇALIŞIR? — Zigzag timeline (Apple-tarzı), her adımda mini mockup
+═══════════════════════════════════════════════════════════════════════ #}
+<section id="nasil-calisir" class="py-20 bg-surface-sunk relative overflow-hidden">
+  {# Dikey timeline çizgisi (lg+) #}
+  <div class="hidden lg:block absolute left-1/2 top-32 bottom-32 w-px pointer-events-none -translate-x-1/2"
+       style="background: linear-gradient(180deg, transparent 0%, rgba(17,122,134,0.20) 10%, rgba(17,122,134,0.20) 90%, transparent 100%);"></div>
+
+  <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-16 lp-section">
+      <p class="text-xs uppercase tracking-[0.25em] font-bold mb-3" style="color:#117A86">Süreç</p>
+      <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">Nasıl Çalışır?</h2>
+      <p class="text-base text-stone-600 max-w-2xl mx-auto mt-3">
+        Veriye dayalı koçluk; beş adımda devreye girer.
+      </p>
+    </div>
+
+    <div class="space-y-16 lg:space-y-24 relative">
+      {% set steps = [
+        {
+          'num': '01', 'title': 'Kur ve Ata',
+          'desc': 'Öğrencini kaydet, mevcut kitap envanterini seç ve hedeflerini belirle. Sistem akademik yıl, sınıf seviyesi ve hedef sınava göre otomatik yapılandırılır.',
+          'accent': '#117A86', 'tag': 'KURULUM',
+        },
+        {
+          'num': '02', 'title': 'Yapay Zeka ile Planla',
+          'desc': 'Öğrenme motorunun geçmişe dönük görev önerilerini onayla, günlük rotayı oluştur. FSRS algoritması unutulmaya yüz tutan konuları tam zamanında getirir.',
+          'accent': '#7C3AED', 'tag': 'AI ÖNERİSİ',
+        },
+        {
+          'num': '03', 'title': 'Öğrenci Odaklansın',
+          'desc': 'Pomodoro sayacı + rozetler + streak sistemi ile motivasyonu kaybetmeden ilerlesin. 10 farklı rozet ve puanlama oyunlaştırması ile bağlılık artar.',
+          'accent': '#E8AC2D', 'tag': 'POMODORO',
+        },
+        {
+          'num': '04', 'title': 'Veriyi Analiz Et',
+          'desc': 'Tamamlanan/planlanan görevleri ve konu bazında doğruluk oranlarını anlık izle. Çalışma DNA\'sı + 5 burnout sinyali ile düşüş başlamadan müdahale et.',
+          'accent': '#E11D48', 'tag': 'RİSK PANELİ',
+        },
+        {
+          'num': '05', 'title': 'Veli ile Paylaş',
+          'desc': 'WhatsApp üzerinden otomatik giden haftalık raporlarla süreci taçlandır. Veli kendi sessiz saatlerini ve bildirim tercihlerini yönetir.',
+          'accent': '#15803D', 'tag': 'WHATSAPP',
+        },
+      ] %}
+
+      {% for s in steps %}
+      <div class="lp-section grid lg:grid-cols-2 gap-8 lg:gap-16 items-center {% if loop.index is even %}lg:[direction:rtl]{% endif %}">
+        {# Sol — metin (tek kolon dir reset) #}
+        <div class="relative lg:[direction:ltr]">
+          <div class="inline-flex items-center gap-2 mb-3 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-[0.18em]"
+               style="background:{{ s.accent }}15; color:{{ s.accent }}; border:1px solid {{ s.accent }}30;">
+            <span class="font-mono">{{ s.num }}</span> · {{ s.tag }}
+          </div>
+          <h3 class="font-display font-extrabold text-2xl sm:text-3xl text-stone-900 mb-3 tracking-tight">{{ s.title }}</h3>
+          <p class="text-base text-stone-600 leading-relaxed max-w-md">{{ s.desc }}</p>
+        </div>
+
+        {# Sağ — adıma özel mini mockup (her adım için farklı) #}
+        <div class="relative lg:[direction:ltr]">
+          {# Timeline merkez noktası #}
+          <div class="hidden lg:flex absolute top-1/2 -translate-y-1/2 items-center justify-center w-12 h-12 rounded-full font-display font-extrabold text-sm border-4 z-10"
+               style="background:#fff; border-color:{{ s.accent }}; color:{{ s.accent }};
+                      box-shadow:0 8px 20px -8px {{ s.accent }}66;
+                      {% if loop.index is even %}right:-44px{% else %}left:-44px{% endif %};">
+            {{ s.num }}
+          </div>
+
+          <div class="rounded-2xl border bg-white p-5 shadow-lg transition hover:-translate-y-1 hover:shadow-2xl"
+               style="border-color:{{ s.accent }}25;
+                      box-shadow:0 20px 40px -16px {{ s.accent }}30, 0 1px 3px rgba(15,23,42,0.04);">
+            {# Adıma özel UI içeriği #}
+            {% if loop.index == 1 %}
+              {# Kur ve Ata — öğrenci ekleme + kitap seçimi #}
+              <div class="flex items-center justify-between mb-3 pb-3 border-b border-stone-100">
+                <span class="text-[10px] uppercase tracking-wider font-bold text-stone-400">Yeni Öğrenci</span>
+                <span class="text-[10px] font-mono text-stone-400">Adım 2/3</span>
+              </div>
+              <div class="space-y-2.5">
+                <div class="flex items-center gap-2.5">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-sm font-bold" style="background:#E6F2F4; color:#0B5560;">AK</div>
+                  <div>
+                    <p class="text-sm font-semibold text-stone-900">Ayşe K.</p>
+                    <p class="text-[11px] text-stone-500">8. sınıf · LGS</p>
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5 pt-1">
+                  {% for sub, c, on in [('Mat', '#117A86', true), ('Tür', '#15803D', true), ('Fen', '#C68A18', true)] %}
+                    <div class="text-[10px] font-bold py-1.5 text-center rounded-md"
+                         style="background:{{ c }}15; color:{{ c }}; border:1px solid {{ c }}30;">✓ {{ sub }}</div>
+                  {% endfor %}
+                </div>
+                <div class="flex items-center justify-between pt-2 text-[11px]">
+                  <span class="text-stone-500">Kitap envanteri:</span>
+                  <span class="font-bold text-stone-900">4 kitap · 320 test</span>
+                </div>
+              </div>
+            {% elif loop.index == 2 %}
+              {# Yapay Zeka ile Planla — AI önerisi #}
+              <div class="flex items-center gap-2 mb-3 pb-3 border-b border-stone-100">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-sm" style="background:#EDE9FE">🤖</div>
+                <div>
+                  <p class="text-xs font-bold" style="color:#6D28D9">AI Önerisi · Bugün için 5 görev</p>
+                  <p class="text-[10px] text-stone-500">FSRS + öğrenme motoru</p>
+                </div>
+                <span class="ml-auto text-[9px] font-bold px-1.5 py-0.5 rounded-md" style="background:#EDE9FE; color:#6D28D9;">AI</span>
+              </div>
+              <div class="space-y-1.5">
+                {% for t, k, c in [('Üçgenlerde benzerlik · 8 soru', 'Tekrar', '#7C3AED'), ('Cümlede anlam · 10 soru', 'Yeni', '#117A86'), ('Hücre bölünmesi · 6 soru', 'Tekrar', '#7C3AED'), ('Atatürkçülük · 5 soru', 'Tekrar', '#7C3AED'), ('İngilizce kelime · 12 kart', 'Review', '#E11D48')] %}
+                <div class="flex items-center justify-between text-[11px] px-2 py-1.5 rounded-md" style="background:#F8FAFC;">
+                  <span class="text-stone-700">{{ t }}</span>
+                  <span class="text-[9px] font-bold px-1.5 py-0.5 rounded" style="background:{{ c }}15; color:{{ c }};">{{ k }}</span>
+                </div>
+                {% endfor %}
+              </div>
+              <button class="w-full mt-3 text-xs font-bold py-2 rounded-lg transition hover:brightness-110" style="background:#6D28D9; color:#fff;">5 öneriyi onayla →</button>
+            {% elif loop.index == 3 %}
+              {# Öğrenci Odaklansın — Pomodoro sayacı + rozet #}
+              <div class="text-center mb-3">
+                <p class="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">Pomodoro · Çalışma</p>
+                {# Sayaç ring #}
+                <div class="relative inline-flex items-center justify-center w-28 h-28 my-2">
+                  <svg class="absolute inset-0 -rotate-90" viewBox="0 0 100 100">
+                    <circle cx="50" cy="50" r="44" fill="none" stroke="#FEF3C7" stroke-width="6"/>
+                    <circle cx="50" cy="50" r="44" fill="none" stroke="#E8AC2D" stroke-width="6"
+                            stroke-dasharray="276" stroke-dashoffset="92" stroke-linecap="round"/>
+                  </svg>
+                  <div>
+                    <div class="font-display font-extrabold text-2xl text-stone-900">18:42</div>
+                    <div class="text-[9px] uppercase tracking-wider font-bold text-stone-400">66% tamam</div>
+                  </div>
+                </div>
+                <p class="text-xs text-stone-600">Matematik · Üçgenler</p>
+              </div>
+              <div class="flex items-center justify-between pt-3 border-t border-stone-100 text-xs">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-base">🔥</span>
+                  <span class="font-bold text-stone-900">12 gün</span>
+                </div>
+                <div class="flex items-center gap-1">
+                  {% for em in ['🏆', '⚡', '🦉', '💯'] %}
+                    <span class="text-base" title="rozet">{{ em }}</span>
+                  {% endfor %}
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:#FEF3C7; color:#9C6A0F;">+285</span>
+              </div>
+            {% elif loop.index == 4 %}
+              {# Veriyi Analiz Et — risk paneli mini #}
+              <div class="flex items-center justify-between mb-3">
+                <div>
+                  <p class="text-[10px] uppercase tracking-wider font-bold text-stone-400">At-Risk Öğrenciler</p>
+                  <p class="text-sm font-bold text-stone-900">3 uyarı bekliyor</p>
+                </div>
+                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full" style="background:#FEE2E2; color:#991B1B;">⚠ KRİTİK</span>
+              </div>
+              <div class="space-y-1.5">
+                {% for name, risk, color in [('Mehmet Y.', 87, '#DC2626'), ('Zeynep A.', 64, '#F59E0B'), ('Burak K.', 52, '#F59E0B')] %}
+                <div class="flex items-center gap-2.5 p-1.5 rounded-md" style="background:#F8FAFC;">
+                  <div class="w-7 h-7 rounded-full flex items-center justify-center text-[10px] font-bold" style="background:{{ color }}20; color:{{ color }};">
+                    {{ name[0] }}{{ name.split(' ')[1][0] }}
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-semibold text-stone-800">{{ name }}</p>
+                    <div class="h-1 bg-stone-200 rounded-full mt-0.5 overflow-hidden">
+                      <div class="h-full rounded-full" style="width:{{ risk }}%; background:{{ color }}"></div>
+                    </div>
+                  </div>
+                  <span class="text-[10px] font-bold" style="color:{{ color }}">{{ risk }}/100</span>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              {# Veli ile Paylaş — WhatsApp haftalık karne #}
+              <div class="flex items-center gap-1.5 mb-2.5 px-1">
+                <div class="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold" style="background:#25D366; color:#fff">A</div>
+                <span class="text-[11px] font-bold text-stone-800">Ayşe'nin annesi</span>
+                <span class="text-[9px] text-stone-400 ml-auto">Pazar 18:00</span>
+              </div>
+              <div class="rounded-lg px-3 py-2 mb-1.5 shadow-sm" style="background:#fff; border:1px solid #E5E7EB;">
+                <p class="text-[10px] font-bold mb-1" style="color:#15803D">📊 Haftalık karne · Ayşe K.</p>
+                <div class="space-y-0.5 text-[11px]">
+                  <p>✅ <strong>Tamamlama:</strong> %72 (geçen hafta %65)</p>
+                  <p>🔥 <strong>Streak:</strong> 12 gün</p>
+                  <p>📚 <strong>Çözülen:</strong> 84 test</p>
+                  <p>🎯 <strong>Hedef:</strong> %78</p>
+                </div>
+              </div>
+              <div class="rounded-lg px-3 py-2 ml-auto max-w-[80%] shadow-sm" style="background:#DCF8C6;">
+                <p class="text-[11px] text-stone-800">"Çok teşekkürler hocam, gurur duyduk!" 🌟</p>
+                <span class="block text-[9px] text-stone-500 text-right mt-0.5">✓✓ okundu</span>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════════
+   PAKETLER
+═══════════════════════════════════════════════════════════════════════ #}
+<section id="paketler" class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center mb-10 lp-section">
+      <p class="text-xs uppercase tracking-[0.25em] font-bold mb-3" style="color:#117A86">Üyelik</p>
+      <h2 class="font-display text-3xl sm:text-4xl font-extrabold text-stone-900 tracking-tight">İhtiyacınıza Uygun Paketler</h2>
+      <p class="text-base text-stone-600 mt-3">Bağımsız koç 14 gün ücretsiz · Kurum 60 gün performans garantisi</p>
+
+      {# Aylık / Akademik Yıl toggle #}
+      <div class="inline-flex items-center mt-7 p-1 rounded-full border bg-stone-50"
+           style="border-color:rgba(15,23,42,0.10); box-shadow:inset 0 1px 2px rgba(15,23,42,0.04);">
+        <button type="button" id="billing-monthly"
+                class="billing-btn px-5 py-2 rounded-full text-sm font-bold transition is-active"
+                data-cycle="monthly">
+          Aylık
+        </button>
+        <button type="button" id="billing-yearly"
+                class="billing-btn px-5 py-2 rounded-full text-sm font-bold transition flex items-center gap-1.5"
+                data-cycle="yearly">
+          Akademik Yıl
+          <span class="text-[10px] font-bold px-1.5 py-0.5 rounded-md uppercase tracking-wider"
+                style="background:#FEF3C7; color:#9C6A0F;">-20%</span>
+        </button>
+      </div>
+      <p class="text-xs text-stone-400 mt-2.5">
+        <span class="billing-note billing-note-monthly">Aylık ödeme · istediğin zaman iptal</span>
+        <span class="billing-note billing-note-yearly hidden">10 ay öde · 12 ay kullan + yazları otomatik pause</span>
+      </p>
+    </div>
+
+    <div class="grid md:grid-cols-3 gap-6 max-w-5xl mx-auto lp-stagger">
+      {# Solo Free #}
+      <div class="lp-price-card">
+        <h3 class="font-display font-bold text-xl text-stone-900 text-center">Solo Free</h3>
+        <p class="text-sm text-stone-500 text-center mt-1 mb-5">Yeni başlayan koçlar için</p>
+        <div class="text-center mb-6 pb-6 border-b border-stone-100">
+          <div class="font-display text-4xl font-bold text-stone-900">Ücretsiz</div>
+          <p class="text-xs text-stone-400 mt-1">3 öğrenciye kadar, süresiz</p>
+        </div>
+        <ul class="space-y-2.5 text-sm text-stone-700 mb-7">
+          <li class="flex items-start gap-2"><span style="color:#117A86" class="mt-0.5">✓</span> 3 öğrenciye kadar aktif takip</li>
+          <li class="flex items-start gap-2"><span style="color:#117A86" class="mt-0.5">✓</span> Temel görev ve plan yönetimi</li>
+          <li class="flex items-start gap-2"><span style="color:#117A86" class="mt-0.5">✓</span> Aralıklı tekrar (manuel seed)</li>
+          <li class="flex items-start gap-2"><span style="color:#117A86" class="mt-0.5">✓</span> Veli e-posta bildirimleri</li>
+        </ul>
+        <a href="/signup/teacher" class="block text-center font-semibold py-2.5 rounded-full transition hover:brightness-105"
+           style="border:2px solid #117A86; color:#117A86;">
+          Hemen Başla
+        </a>
+      </div>
+
+      {# Solo Pro (En Sevilen) #}
+      <div class="lp-price-card lp-price-pro">
+        <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 text-xs font-bold px-4 py-1.5 rounded-full shadow-md"
+              style="background:#F0BD55; color:#1c1917;">
+          ⭐ En Sevilen
+        </span>
+        <h3 class="font-display font-bold text-xl text-center" style="color:#fff">Solo Pro</h3>
+        <p class="text-sm text-center mt-1 mb-5" style="color:rgba(255,255,255,0.75)">Büyüyen ve AI kullanmak isteyen profesyonel koçlar için</p>
+        <div class="text-center mb-6 pb-6" style="border-bottom:1px solid rgba(255,255,255,0.15);">
+          <div class="billing-price billing-price-monthly font-display text-4xl font-bold" style="color:#fff">
+            ₺299<span class="text-base font-medium" style="color:rgba(255,255,255,0.75)">/ay</span>
+          </div>
+          <div class="billing-price billing-price-yearly hidden font-display text-4xl font-bold" style="color:#fff">
+            ₺239<span class="text-base font-medium" style="color:rgba(255,255,255,0.75)">/ay</span>
+            <div class="text-xs font-medium mt-0.5" style="color:rgba(255,255,255,0.65)">akademik yıl peşin · ₺2.870/yıl</div>
+          </div>
+          <p class="text-xs mt-1" style="color:#F0BD55">14 gün ücretsiz dene · Kredi kartı yok</p>
+        </div>
+        <ul class="space-y-2.5 text-sm mb-7" style="color:rgba(255,255,255,0.92)">
+          <li class="flex items-start gap-2"><span style="color:#F0BD55" class="mt-0.5">✓</span> AI İçerik Önerileri <span style="color:#F0BD55" class="text-xs font-bold">(AI Plus)</span></li>
+          <li class="flex items-start gap-2"><span style="color:#F0BD55" class="mt-0.5">✓</span> Burnout Radarı &amp; Çalışma DNA'sı</li>
+          <li class="flex items-start gap-2"><span style="color:#F0BD55" class="mt-0.5">✓</span> WhatsApp Veli Bildirimleri</li>
+          <li class="flex items-start gap-2"><span style="color:#F0BD55" class="mt-0.5">✓</span> Pomodoro + Rozet + Streak sistemi</li>
+          <li class="flex items-start gap-2"><span style="color:#F0BD55" class="mt-0.5">✓</span> Gelişmiş raporlama &amp; öncelikli destek</li>
+        </ul>
+        <a href="/signup/teacher"
+           class="block text-center font-bold py-2.5 rounded-full transition hover:brightness-105"
+           style="background:#F0BD55; color:#1c1917;">
+          14 Gün Ücretsiz Dene
+        </a>
+      </div>
+
+      {# Etüt Standart / Kurumsal — 60 Gün Garanti ribbon ile #}
+      <div class="lp-price-card relative" style="overflow:visible;">
+        {# 60 Gün Garanti — köşe ribbon (kurdele) #}
+        <div class="absolute -top-3 -right-3 z-10">
+          <div class="relative inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl font-bold text-xs shadow-xl"
+               style="background: linear-gradient(135deg, #15803D 0%, #059669 100%); color:#fff;
+                      box-shadow: 0 12px 28px -8px rgba(21,128,61,0.55), 0 0 0 2px #fff;">
+            <span class="text-base leading-none">🛡️</span>
+            <span class="leading-tight">
+              <span class="block text-[9px] uppercase tracking-wider opacity-80">Kurumsal</span>
+              <span class="block text-sm">60 Gün Garanti</span>
+            </span>
+          </div>
+        </div>
+
+        <h3 class="font-display font-bold text-xl text-stone-900 text-center">Etüt Standart <span class="text-stone-400 font-medium">/ Kurumsal</span></h3>
+        <p class="text-sm text-stone-500 text-center mt-1 mb-5">Dershane, etüt merkezi ve özel okullar için</p>
+        <div class="text-center mb-6 pb-6 border-b border-stone-100">
+          <div class="billing-price billing-price-monthly font-display text-4xl font-bold text-stone-900">
+            ₺199<span class="text-base font-medium text-stone-500">/koç/ay</span>
+            <div class="text-xs font-medium text-stone-500 mt-0.5">+ ₺15/öğrenci · 200 öğrenciye kadar</div>
+          </div>
+          <div class="billing-price billing-price-yearly hidden font-display text-4xl font-bold text-stone-900">
+            ₺159<span class="text-base font-medium text-stone-500">/koç/ay</span>
+            <div class="text-xs font-medium text-stone-500 mt-0.5">akademik yıl · yazları otomatik pause</div>
+          </div>
+        </div>
+        <ul class="space-y-2.5 text-sm text-stone-700 mb-7">
+          <li class="flex items-start gap-2"><span style="color:#7B1FA2" class="mt-0.5">✓</span> Tüm Solo Pro özellikleri</li>
+          <li class="flex items-start gap-2"><span style="color:#7B1FA2" class="mt-0.5">✓</span> Kohort Analitiği (4 sekme)</li>
+          <li class="flex items-start gap-2"><span style="color:#7B1FA2" class="mt-0.5">✓</span> Öğretmen Aktivite Isı Haritası</li>
+          <li class="flex items-start gap-2"><span style="color:#7B1FA2" class="mt-0.5">✓</span> Kurum geneli Risk Paneli</li>
+          <li class="flex items-start gap-2"><span style="color:#15803D" class="mt-0.5 font-bold">★</span> <strong style="color:#15803D">60 Gün Performans Garantisi</strong></li>
+        </ul>
+        <a href="mailto:satis@etutkocrotam.app?subject=Kurumsal%20Demo%20Talebi"
+           class="block text-center font-bold py-2.5 rounded-full transition hover:brightness-105 shadow-md"
+           style="background:linear-gradient(135deg,#15803D 0%,#059669 100%); color:#fff;">
+          Kurumsal Demo Talep Et
+        </a>
+      </div>
+    </div>
+
+    <div class="text-center mt-10">
+      <a href="/pricing" class="text-sm font-medium underline transition hover:brightness-110"
+         style="color:#117A86;">
+        Tüm plan detaylarını karşılaştır →
       </a>
     </div>
   </div>
 </section>
 
-{# ════════════════════════════════════════════════════════════════════════════
+{# ═══════════════════════════════════════════════════════════════════════
+   FINAL CTA BANNER
+═══════════════════════════════════════════════════════════════════════ #}
+<section id="hakkimizda" class="py-16 relative overflow-hidden"
+         style="background: linear-gradient(135deg, #073D45 0%, #0B5560 50%, #117A86 100%);">
+  <div class="absolute inset-0 bg-[url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22><circle cx=%2230%22 cy=%2230%22 r=%221.5%22 fill=%22rgba(255,255,255,0.07)%22/></svg>')] opacity-50"></div>
+  <div class="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-20 pointer-events-none"
+       style="background: radial-gradient(circle, #F0BD55 0%, transparent 70%);"></div>
+  <div class="absolute -bottom-40 -left-40 w-96 h-96 rounded-full opacity-15 pointer-events-none"
+       style="background: radial-gradient(circle, #3D9CAB 0%, transparent 70%);"></div>
+  <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 lp-section">
+    <div class="flex flex-wrap items-center justify-between gap-8">
+      <div class="flex items-center gap-5 flex-1 min-w-[280px]">
+        <span class="lp-brandmark lp-brandmark--dark lp-brandmark--xl flex-shrink-0">
+          <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam" class="w-16 h-16 object-contain" />
+        </span>
+        <div>
+          <p class="text-[11px] uppercase tracking-[0.22em] font-bold mb-1" style="color:#F0BD55">ETÜTKOÇ · ROTAM</p>
+          <h2 class="font-display text-2xl sm:text-3xl font-bold leading-snug" style="color:#fff">
+            Başarıya Giden Yolda
+            <span style="color:#F0BD55">Yanınızdayız!</span>
+          </h2>
+        </div>
+      </div>
+      <div class="flex items-center gap-5 flex-wrap">
+        <p class="text-sm max-w-xs" style="color:rgba(255,255,255,0.9)">
+          Şimdi ücretsiz deneyin,<br/>farkı hemen yaşayın.
+        </p>
+        <a href="/signup/teacher"
+           class="inline-flex items-center font-bold px-7 py-3 rounded-full shadow-lg transition hover:brightness-105 hover:-translate-y-0.5"
+           style="background:#F0BD55; color:#1c1917;">
+          Ücretsiz Dene
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{# ═══════════════════════════════════════════════════════════════════════
    FOOTER
-════════════════════════════════════════════════════════════════════════════ #}
-<footer class="bg-stone-900 text-stone-300 py-14">
+═══════════════════════════════════════════════════════════════════════ #}
+<footer id="iletisim" class="pt-14 pb-7" style="background:#1c1917; color:#A8A29E;">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="grid md:grid-cols-4 gap-8 mb-10">
-      <div class="md:col-span-2">
-        <div class="flex items-center gap-2.5 mb-4">
-          <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ" class="h-9 w-9 object-contain" />
-          <span class="brand-wordmark text-lg">
-            <span class="b-etut" style="color:#3D9CAB">etütkoç</span><span class="text-stone-500 mx-0.5">·</span><span class="b-rotam" style="color:#F0BD55">rotam</span>
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+      <div class="col-span-2">
+        <div class="flex items-center gap-3 mb-4">
+          <span class="lp-brandmark lp-brandmark--dark">
+            <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam" class="h-12 w-12 object-contain" />
+          </span>
+          <span class="brand-wordmark text-xl leading-none">
+            <span class="b-etut" style="color:#3D9CAB">etütkoç</span><span style="color:#57534E" class="mx-1">·</span><span class="b-rotam" style="color:#F0BD55">rotam</span>
           </span>
         </div>
-        <p class="text-sm text-stone-400 max-w-md leading-relaxed">
-          LGS ve YKS koçluğunun dijital omurgası. Bağımsız öğretmen ve eğitim kurumları için Türk eğitim takvimine özel SaaS.
+        <p class="text-sm leading-relaxed mb-4 max-w-sm" style="color:#A8A29E">
+          Koçluk süreçlerinizi dijitalleştiriyor, başarıyı birlikte inşa ediyoruz.
         </p>
+        <div class="flex items-center gap-3 text-lg">
+          <a href="#" aria-label="Instagram" class="w-9 h-9 rounded-full flex items-center justify-center transition hover:brightness-125"
+             style="background:#292524;">📷</a>
+          <a href="#" aria-label="Facebook" class="w-9 h-9 rounded-full flex items-center justify-center transition hover:brightness-125"
+             style="background:#292524;">📘</a>
+          <a href="#" aria-label="YouTube" class="w-9 h-9 rounded-full flex items-center justify-center transition hover:brightness-125"
+             style="background:#292524;">▶️</a>
+          <a href="#" aria-label="LinkedIn" class="w-9 h-9 rounded-full flex items-center justify-center transition hover:brightness-125"
+             style="background:#292524;">💼</a>
+        </div>
       </div>
       <div>
-        <h4 class="font-display font-semibold text-white text-sm mb-4">Ürün</h4>
-        <ul class="space-y-2 text-sm text-stone-400">
-          <li><a href="#ozellikler" class="hover:text-white">Özellikler</a></li>
-          <li><a href="#roller" class="hover:text-white">5 Rol</a></li>
-          <li><a href="/pricing" class="hover:text-white">Planlar</a></li>
-          <li><a href="/signup/teacher" class="hover:text-white">Ücretsiz Dene</a></li>
+        <h4 class="font-display font-semibold text-sm mb-4" style="color:#fff">Platform</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="#ozellikler" class="hover:text-white transition">Özellikler</a></li>
+          <li><a href="#paketler" class="hover:text-white transition">Paketler</a></li>
+          <li><a href="#nasil-calisir" class="hover:text-white transition">Nasıl Çalışır?</a></li>
+          <li><a href="#hakkimizda" class="hover:text-white transition">Hakkımızda</a></li>
         </ul>
       </div>
       <div>
-        <h4 class="font-display font-semibold text-white text-sm mb-4">Yasal</h4>
-        <ul class="space-y-2 text-sm text-stone-400">
-          <li><a href="/kvkk" class="hover:text-white">KVKK Aydınlatma</a></li>
-          <li><a href="/privacy" class="hover:text-white">Gizlilik Politikası</a></li>
-          <li><a href="mailto:kvkk@etutkocrotam.app" class="hover:text-white">KVKK Talep</a></li>
-          <li><a href="mailto:destek@etutkocrotam.app" class="hover:text-white">Destek</a></li>
+        <h4 class="font-display font-semibold text-sm mb-4" style="color:#fff">Destek</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="mailto:destek@etutkocrotam.app" class="hover:text-white transition">Yardım Merkezi</a></li>
+          <li><a href="mailto:destek@etutkocrotam.app" class="hover:text-white transition">Kullanım Kılavuzu</a></li>
+          <li><a href="mailto:destek@etutkocrotam.app" class="hover:text-white transition">İletişim</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-display font-semibold text-sm mb-4" style="color:#fff">Yasal</h4>
+        <ul class="space-y-2 text-sm">
+          <li><a href="/kvkk" class="hover:text-white transition">Kullanım Şartları</a></li>
+          <li><a href="/privacy" class="hover:text-white transition">Gizlilik Politikası</a></li>
+          <li><a href="/kvkk" class="hover:text-white transition">KVKK Aydınlatma Metni</a></li>
         </ul>
       </div>
     </div>
-    <div class="border-t border-stone-800 pt-7 flex flex-wrap items-center justify-between gap-4 text-xs text-stone-500">
+
+    <div class="pt-6 flex flex-wrap items-center justify-between gap-3 text-xs"
+         style="border-top:1px solid #292524; color:#57534E;">
       <p>© 2026 ETÜTKOÇ Rotam · Tüm hakları saklıdır.</p>
-      <p class="font-mono">v.stage-11 · 490+ test PASS</p>
+      <p class="font-mono">500+ otomatik test ile doğrulandı</p>
     </div>
   </div>
 </footer>
+
+{# ═══════════════════════════════════════════════════════════════════════
+   Katman 6 — Anasayfa kart davranış telemetri yayını
+   IMPORTANT: bilinçli olarak küçük ve hata-toleranslı (analytics asla
+   sayfayı kıramaz). KVKK: server tarafında IP/UA hash'lenir, düz değer
+   asla DB'ye yazılmaz. Anon session 90 günlük HttpOnly cookie.
+═══════════════════════════════════════════════════════════════════════ #}
+<script>
+  (function(){
+    var FC_VARIANT = {{ (variant_slug or '') | tojson }};
+    function fcSend(slug, event) {
+      if (!slug || !event) return;
+      try {
+        var payload = { slug: slug, event: event };
+        if (FC_VARIANT) payload.variant = FC_VARIANT;
+        var body = JSON.stringify(payload);
+        if (navigator.sendBeacon) {
+          var blob = new Blob([body], { type: 'application/json' });
+          navigator.sendBeacon('/api/telemetry/event', blob);
+        } else {
+          // Fallback — fire-and-forget fetch
+          fetch('/api/telemetry/event', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: body,
+            keepalive: true,
+            credentials: 'same-origin'
+          }).catch(function(){});
+        }
+      } catch(_) {}
+    }
+
+    var cards = document.querySelectorAll('[data-fc-slug]');
+    if (!cards.length) return;
+
+    // 1) Tüm kartlar için tek seferlik "impression"
+    cards.forEach(function(el){
+      fcSend(el.getAttribute('data-fc-slug'), 'impression');
+    });
+
+    // 2) Viewport'a giren kart için "view" (her kart için BİR kere, threshold 0.5)
+    if ('IntersectionObserver' in window) {
+      var viewed = new Set();
+      var io = new IntersectionObserver(function(entries){
+        entries.forEach(function(e){
+          if (e.isIntersecting && e.intersectionRatio >= 0.5) {
+            var slug = e.target.getAttribute('data-fc-slug');
+            if (slug && !viewed.has(slug)) {
+              viewed.add(slug);
+              fcSend(slug, 'view');
+              io.unobserve(e.target);
+            }
+          }
+        });
+      }, { threshold: 0.5 });
+      cards.forEach(function(el){ io.observe(el); });
+    }
+
+    // 3) data-fc-event attributeli linkler için tıklama yakalama
+    document.querySelectorAll('[data-fc-event]').forEach(function(link){
+      link.addEventListener('click', function(){
+        var card = link.closest('[data-fc-slug]');
+        if (!card) return;
+        var slug = card.getAttribute('data-fc-slug');
+        var ev = link.getAttribute('data-fc-event');
+        fcSend(slug, ev);
+        // Default navigation devam eder — beacon zaten yola çıktı
+      }, { passive: true });
+    });
+  })();
+</script>
+
+{# ═══════════════════════════════════════════════════════════════════════
+   Scroll-triggered reveal (IntersectionObserver)
+═══════════════════════════════════════════════════════════════════════ #}
+<script>
+  (function(){
+    var els = document.querySelectorAll('.lp-section, .lp-stagger');
+    if (!('IntersectionObserver' in window)) {
+      els.forEach(function(e){ e.classList.add('in-view'); });
+      return;
+    }
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if (entry.isIntersecting) {
+          entry.target.classList.add('in-view');
+          io.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+    els.forEach(function(e){ io.observe(e); });
+  })();
+
+  // Billing cycle toggle (Aylık <-> Akademik Yıl)
+  (function(){
+    var buttons = document.querySelectorAll('.billing-btn');
+    if (!buttons.length) return;
+    function setCycle(cycle) {
+      buttons.forEach(function(b){
+        b.classList.toggle('is-active', b.dataset.cycle === cycle);
+      });
+      document.querySelectorAll('.billing-price').forEach(function(p){
+        p.classList.toggle('hidden', !p.classList.contains('billing-price-' + cycle));
+      });
+      document.querySelectorAll('.billing-note').forEach(function(n){
+        n.classList.toggle('hidden', !n.classList.contains('billing-note-' + cycle));
+      });
+    }
+    buttons.forEach(function(b){
+      b.addEventListener('click', function(){ setCycle(b.dataset.cycle); });
+    });
+  })();
+</script>
 {% endblock %}

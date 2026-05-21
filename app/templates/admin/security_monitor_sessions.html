@@ -1,0 +1,321 @@
+{% extends "base.html" %}
+{% block title %}Oturum & IP — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/security-monitor" class="text-sm text-slate-500 hover:text-slate-700">← Güvenlik Kamerası</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🔑 Oturumlar & IP'ler</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Şu an sisteme girmiş olan kullanıcılar, şüpheli IP adresleri, son 24 saatte başarısız
+    giriş denemeleri. Buradan uzaktan kullanıcı oturumu kapatabilir, IP engelleyebilirsin.
+  </p>
+</div>
+
+{# "Bu sayfada ne yazıyor?" #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Aktif oturum</b> — şu an sisteme girmiş ve aktif kullanan kullanıcı. Tarayıcı sekmesi
+      hâlâ açık demektir (son birkaç dakika içinde sayfa açtı).
+    </div>
+    <div>
+      <b>Sahte oturum</b> — süper adminin başka bir kullanıcının hesabına geçici olarak girmesi
+      ("o kullanıcı olarak görmek" için, destek/test amaçlı). 30 dakika sonra otomatik biter.
+      (Teknik: <code class="text-xs">impersonation</code>)
+    </div>
+    <div>
+      <b>IP adresi</b> — kullanıcının internet üzerinde benimsediği adres (örn. 1.2.3.4).
+      Aynı IP'den çok fazla başarısız giriş geliyorsa otomatik bloklanır.
+    </div>
+    <div>
+      <b>Bloklu IP</b> — bu adresten gelen giriş denemeleri reddediliyor. Süresi geçince
+      kalkar veya manuel kaldırılabilir.
+    </div>
+    <div>
+      <b>Başarısız giriş</b> — şifre yanlış girildi. 10+ farklı e-posta için aynı IP'den
+      gelirse "brute force" sayılır, IP bloklanır.
+    </div>
+    <div>
+      <b>Oturum kapat</b> — kullanıcı henüz çıkış yapmadıysa bile sen kapatabilirsin
+      (örn. çalınmış cihaz şüphesi). Kullanıcı yeniden şifreyle giriş yapar.
+    </div>
+  </div>
+</details>
+
+{% set q = request.query_params %}
+{% if q.get('ok') %}<div class="mb-3 p-2.5 rounded bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">✓ {{ q.get('ok') }}</div>{% endif %}
+{% if q.get('err') %}<div class="mb-3 p-2.5 rounded bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ q.get('err') }}</div>{% endif %}
+
+{# Aktif sahte oturumlar (impersonate) — varsa en üstte uyarı bandı #}
+{% if data.active_impersonations %}
+<div class="mb-5 bg-violet-50 border-2 border-violet-300 rounded-lg overflow-hidden">
+  <div class="px-4 py-2.5 border-b border-violet-200 text-sm font-semibold text-violet-900">
+    🎭 Aktif Sahte Oturumlar ({{ data.active_impersonations|length }})
+    <span class="text-xs font-normal text-violet-700 ml-2">— 30 dk sonra otomatik kapanır</span>
+  </div>
+  <table class="w-full text-sm">
+    <thead class="bg-violet-100/50 text-xs uppercase text-violet-700">
+      <tr>
+        <th class="px-3 py-2 text-left">Süper Admin</th>
+        <th class="px-3 py-2 text-left">Hedef</th>
+        <th class="px-3 py-2 text-left">Gerekçe</th>
+        <th class="px-3 py-2 text-left">Başlangıç</th>
+        <th class="px-3 py-2 text-left">Kalan</th>
+        <th class="px-3 py-2 text-right">Aksiyon</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-violet-200">
+      {% for i in data.active_impersonations %}
+        <tr>
+          <td class="px-3 py-2">
+            <div class="font-medium text-violet-900">{{ i.actor_full_name }}</div>
+            {% if i.actor_email %}<div class="text-xs text-violet-600">{{ i.actor_email }}</div>{% endif %}
+          </td>
+          <td class="px-3 py-2">
+            <div class="font-medium text-violet-900">{{ i.target_full_name }}</div>
+            {% if i.target_email %}<div class="text-xs text-violet-600">{{ i.target_email }}</div>{% endif %}
+          </td>
+          <td class="px-3 py-2 text-xs text-violet-800 max-w-xs">
+            <span class="italic">"{{ i.reason }}"</span>
+          </td>
+          <td class="px-3 py-2 text-xs text-violet-700">{{ i.started_at|dt_dual }}</td>
+          <td class="px-3 py-2 text-xs">
+            {% if i.is_expired_now %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded bg-rose-100 text-rose-700">Süre doldu</span>
+            {% else %}
+              <span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-800">
+                {{ (i.seconds_left // 60) }} dk
+              </span>
+            {% endif %}
+          </td>
+          <td class="px-3 py-2 text-right">
+            <form method="post" action="/admin/security-monitor/impersonations/{{ i.id }}/end"
+                  onsubmit="return confirm('Bu sahte oturumu uzaktan sonlandır?');" class="inline">
+              <button class="text-xs text-rose-600 hover:text-rose-800 font-medium">Sonlandır</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{# Üst özet #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+    <div class="text-xs text-emerald-700">Aktif oturum</div>
+    <div class="text-2xl font-semibold text-emerald-900 mt-1">{{ data.summary.active_sessions }}</div>
+  </div>
+  <div class="p-3 rounded-lg
+    {% if data.summary.blocked_ips > 0 %}bg-rose-50 border border-rose-200{% else %}bg-slate-50 border border-slate-200{% endif %}">
+    <div class="text-xs {% if data.summary.blocked_ips > 0 %}text-rose-700{% else %}text-slate-700{% endif %}">Bloklu IP</div>
+    <div class="text-2xl font-semibold {% if data.summary.blocked_ips > 0 %}text-rose-900{% else %}text-slate-900{% endif %} mt-1">{{ data.summary.blocked_ips }}</div>
+  </div>
+  <div class="p-3 rounded-lg bg-amber-50 border border-amber-200">
+    <div class="text-xs text-amber-700">İzlenen IP</div>
+    <div class="text-2xl font-semibold text-amber-900 mt-1">{{ data.summary.watched_ips }}</div>
+  </div>
+  <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+    <div class="text-xs text-slate-700">24h fail giriş</div>
+    <div class="text-2xl font-semibold text-slate-900 mt-1">{{ data.summary.failed_24h }}</div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+  {# Aktif oturumlar #}
+  <div class="lg:col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+      <div>
+        <h2 class="text-sm font-semibold text-slate-900">Aktif Oturumlar</h2>
+        <div class="text-xs text-slate-500">Son 24h içinde aktif, kapatılmamış oturumlar.</div>
+      </div>
+      <div class="text-xs text-slate-600">
+        {% for role, n in data.role_counts.items() %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded bg-slate-100 mr-1">{{ role }}: {{ n }}</span>
+        {% endfor %}
+      </div>
+    </div>
+    {% if not data.active_sessions %}
+      <div class="px-4 py-6 text-sm text-slate-500">Şu an aktif oturum yok.</div>
+    {% else %}
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-3 py-2 text-left">Kullanıcı</th>
+            <th class="px-3 py-2 text-left">Rol</th>
+            <th class="px-3 py-2 text-left">IP</th>
+            <th class="px-3 py-2 text-left">Son aktivite</th>
+            <th class="px-3 py-2 text-left">Yaş</th>
+            <th class="px-3 py-2 text-right">Aksiyon</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for s in data.active_sessions %}
+            <tr class="hover:bg-slate-50">
+              <td class="px-3 py-2">
+                <div class="font-medium text-slate-900">{{ s.user_full_name or s.user_email }}</div>
+                <div class="text-xs text-slate-500">{{ s.user_email }}</div>
+              </td>
+              <td class="px-3 py-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs
+                  {% if s.role == 'super_admin' %}bg-rose-100 text-rose-700
+                  {% elif s.role == 'institution_admin' %}bg-indigo-100 text-indigo-700
+                  {% elif s.role == 'teacher' %}bg-emerald-100 text-emerald-700
+                  {% elif s.role == 'parent' %}bg-amber-100 text-amber-700
+                  {% else %}bg-slate-100 text-slate-700{% endif %}">{{ s.role }}</span>
+              </td>
+              <td class="px-3 py-2 text-xs"><code class="text-slate-700">{{ s.ip or '—' }}</code></td>
+              <td class="px-3 py-2 text-xs text-slate-600">{{ humanize_ago(s.idle_seconds) }}</td>
+              <td class="px-3 py-2 text-xs text-slate-600">{{ humanize_ago(s.age_seconds) }}</td>
+              <td class="px-3 py-2 text-right">
+                <form method="post" action="/admin/security-monitor/sessions/{{ s.session_token }}/revoke"
+                      onsubmit="return confirm('Bu oturumu uzaktan kapat?');" class="inline">
+                  <button class="text-xs text-rose-600 hover:text-rose-800 font-medium">Kapat</button>
+                </form>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  {# 24h fail buckets #}
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">24h Başarısız Giriş (IP başına)</h2>
+      <div class="text-xs text-slate-500">Audit log üzerinden agregasyon.</div>
+    </div>
+    {% if not data.failed_login_buckets %}
+      <div class="px-4 py-6 text-sm text-slate-500">Son 24h fail yok.</div>
+    {% else %}
+      <ul class="divide-y divide-slate-100">
+        {% for b in data.failed_login_buckets %}
+          <li class="px-3 py-2 flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <div class="font-mono text-xs text-slate-900 truncate">{{ b.ip or '(IP yok)' }}</div>
+              <div class="text-xs text-slate-500">{{ b.fail_count }} deneme · {{ b.distinct_email_count }} farklı email</div>
+            </div>
+            {% if b.ip %}
+              <form method="post" action="/admin/security-monitor/ips/block" class="inline">
+                <input type="hidden" name="ip" value="{{ b.ip }}">
+                <input type="hidden" name="hours" value="1">
+                <input type="hidden" name="note" value="Bucket'tan manuel">
+                <button class="text-xs text-rose-600 hover:text-rose-800 font-medium">Bloka al</button>
+              </form>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+</div>
+
+{# Şüpheli/Bloklu IP listesi #}
+<div class="mt-5 bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
+    <div>
+      <h2 class="text-sm font-semibold text-slate-900">Şüpheli & Bloklu IP'ler</h2>
+      <div class="text-xs text-slate-500">Brute force eşiği aşılırsa otomatik 1 saat blok.</div>
+    </div>
+    <details class="text-xs">
+      <summary class="text-slate-600 cursor-pointer hover:text-slate-900">Manuel blok ekle</summary>
+      <form method="post" action="/admin/security-monitor/ips/block" class="mt-2 flex items-center gap-1">
+        <input type="text" name="ip" placeholder="IP" required class="px-2 py-1 border border-slate-300 rounded text-xs w-32">
+        <input type="number" name="hours" value="1" min="1" max="720" class="px-2 py-1 border border-slate-300 rounded text-xs w-16">
+        <button class="px-2 py-1 bg-rose-600 text-white rounded text-xs">Blok</button>
+      </form>
+    </details>
+  </div>
+  {% if not data.suspicious_ips %}
+    <div class="px-4 py-6 text-sm text-slate-500">Şu an şüpheli IP yok.</div>
+  {% else %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">IP</th>
+          <th class="px-3 py-2 text-left">Sinyal</th>
+          <th class="px-3 py-2 text-left">Durum</th>
+          <th class="px-3 py-2 text-left">Süre sonu</th>
+          <th class="px-3 py-2 text-right">Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for r in data.suspicious_ips %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 font-mono text-xs">{{ r.ip }}</td>
+            <td class="px-3 py-2 text-xs">
+              <div class="text-slate-700">{{ r.fail_count }} fail · {{ r.distinct_email_count }} farklı email</div>
+            </td>
+            <td class="px-3 py-2 text-xs">
+              {% if r.is_blocked %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded bg-rose-100 text-rose-700">Bloklu</span>
+                <div class="text-xs text-slate-500 mt-0.5">{{ block_reason_labels.get(r.block_reason, r.block_reason or '—') }}</div>
+              {% else %}
+                <span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-700">İzleniyor</span>
+              {% endif %}
+            </td>
+            <td class="px-3 py-2 text-xs text-slate-600">
+              {% if r.blocked_until %}{{ r.blocked_until|dt_dual }}{% else %}—{% endif %}
+            </td>
+            <td class="px-3 py-2 text-right">
+              {% if r.is_blocked %}
+                <form method="post" action="/admin/security-monitor/ips/unblock" class="inline">
+                  <input type="hidden" name="ip" value="{{ r.ip }}">
+                  <button class="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Serbest</button>
+                </form>
+              {% else %}
+                <form method="post" action="/admin/security-monitor/ips/block" class="inline">
+                  <input type="hidden" name="ip" value="{{ r.ip }}">
+                  <input type="hidden" name="hours" value="1">
+                  <button class="text-xs text-rose-600 hover:text-rose-800 font-medium">Bloka al</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+{# Süper admin login akışı #}
+<div class="mt-5 bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Süper Admin Girişleri (24h)</h2>
+    <div class="text-xs text-slate-500">Beklenmedik girişler veya gece yarısı oturumlar için.</div>
+  </div>
+  {% if not data.super_admin_logins %}
+    <div class="px-4 py-6 text-sm text-slate-500">Son 24h süper admin girişi yok.</div>
+  {% else %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">Aktör</th>
+          <th class="px-3 py-2 text-left">IP</th>
+          <th class="px-3 py-2 text-left">Tarayıcı</th>
+          <th class="px-3 py-2 text-left">Zaman</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for a in data.super_admin_logins %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2">
+              <div class="font-medium text-slate-900">aktör #{{ a.actor_id }}</div>
+              {% if a.email_attempted %}<div class="text-xs text-slate-500">{{ a.email_attempted }}</div>{% endif %}
+            </td>
+            <td class="px-3 py-2 font-mono text-xs">{{ a.ip_address or '—' }}</td>
+            <td class="px-3 py-2 text-xs text-slate-600 truncate max-w-xs">{{ a.user_agent or '—' }}</td>
+            <td class="px-3 py-2 text-xs text-slate-600">{{ a.created_at|dt_dual }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

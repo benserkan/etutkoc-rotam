@@ -1,0 +1,170 @@
+{# Stage 13 — Ortak DNA profil bilgi paneli partial
+   Beklenen: profile (StudyDnaProfile), chronotype_labels, chronotype_emoji, day_names
+#}
+{% if not profile.has_enough_data %}
+<div class="bg-stone-50 border border-stone-200 rounded-lg p-6 text-center">
+  <div class="text-3xl mb-2">📊</div>
+  <h3 class="text-base font-semibold text-stone-900 mb-1">Profil için yeterli veri yok</h3>
+  <p class="text-sm text-stone-500">
+    {{ profile.window_days }} günlük pencerede yalnızca <b>{{ profile.total_completed }}</b> görev tamamlandı.
+    DNA profili oluşması için en az 5 tamamlanmış görev gerekiyor.
+  </p>
+</div>
+{% else %}
+
+{# Saat veri güvenilirliği — toplu işaretleme tespit edildi mi
+   < 50%: saat metrikleri güvensiz, kullanıcıyı uyar
+   50-79%: kısmen güvenilir, küçük not
+   ≥ 80%: not gösterme (her şey iyi) #}
+{% if profile.hour_data_confidence < 80 %}
+<div class="mb-4 p-3 rounded-lg flex items-start gap-3 text-sm
+            {% if profile.hour_data_confidence < 50 %}bg-amber-50 border border-amber-200 text-amber-900
+            {% else %}bg-sky-50 border border-sky-200 text-sky-900{% endif %}">
+  <span class="text-xl flex-shrink-0">
+    {% if profile.hour_data_confidence < 50 %}⚠️{% else %}ℹ️{% endif %}
+  </span>
+  <div class="flex-1 leading-relaxed">
+    <b>Saat verisinin güvenilirliği: %{{ profile.hour_data_confidence }}</b> —
+    {% if profile.batch_completion_count > 0 %}
+      {{ profile.batch_completion_count }} görev <i>toplu işaretleme</i> kümesinde tespit edildi
+      (gün sonu topluca tikleme){% if profile.fallback_scheduled_count > 0 %},
+      {{ profile.fallback_scheduled_count }} tanesi planlanan saatine düşürülerek kurtarıldı{% endif %}.
+    {% endif %}
+    {% if profile.hour_data_confidence < 50 %}
+      Chronotype, en yoğun saat ve heatmap saat ekseni güvensiz olabilir — gün/sayı bazlı veriler etkilenmedi.
+      <span class="block text-[11px] mt-1 text-amber-800">
+        💡 Daha doğru saat profili için görevleri bittiği anda tek tek tiklemeyi dene.
+      </span>
+    {% else %}
+      Saat metriklerine kısmen güvenebilirsin; gün ve sayı bazlı her şey güvenilir.
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+{# Özet kartlar #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs uppercase tracking-wider text-stone-500">Chronotype</div>
+    <div class="text-lg font-bold text-stone-900 mt-1 flex items-center gap-1">
+      <span class="text-2xl">{{ chronotype_emoji[profile.chronotype] }}</span>
+      <span class="text-sm">{{ chronotype_labels[profile.chronotype] }}</span>
+    </div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs uppercase tracking-wider text-stone-500">En yoğun gün</div>
+    <div class="text-2xl font-bold text-stone-900 mt-1">
+      {{ profile.peak_day_name or '—' }}
+    </div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs uppercase tracking-wider text-stone-500">En yoğun saat</div>
+    <div class="text-2xl font-bold text-stone-900 mt-1">
+      {% if profile.peak_hour is not none %}{{ '%02d'|format(profile.peak_hour) }}:00{% else %}—{% endif %}
+    </div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4">
+    <div class="text-xs uppercase tracking-wider text-stone-500">Tamamlama</div>
+    <div class="text-2xl font-bold text-stone-900 mt-1">
+      {{ profile.total_completed }} / {{ profile.total_planned }}
+    </div>
+    <div class="text-xs text-stone-500 mt-0.5">
+      {{ (profile.completion_rate * 100)|int }}% verim
+    </div>
+  </div>
+</div>
+
+{# Heatmap #}
+<div class="bg-white border border-stone-200 rounded-lg p-5 mb-5">
+  <h3 class="font-medium text-stone-900 mb-3">
+    🗓️ Saat × Gün Çalışma Haritası ({{ profile.window_days }} gün)
+  </h3>
+  {% include "partials/_dna_heatmap.html" %}
+</div>
+
+{# Saat bandı dağılımı #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+  {% for label, count, color, emoji in [
+    ('Sabah (06-12)',      profile.morning_count,   'amber',    '🌅'),
+    ('Öğleden sonra',      profile.afternoon_count, 'sky',      '☀️'),
+    ('Akşam (18-22)',      profile.evening_count,   'orange',   '🌆'),
+    ('Gece (22-06)',       profile.night_count,     'indigo',   '🌙'),
+  ] %}
+  <div class="bg-white border border-stone-200 rounded-lg p-3 text-center">
+    <div class="text-2xl">{{ emoji }}</div>
+    <div class="text-xs text-stone-500 mt-1">{{ label }}</div>
+    <div class="text-xl font-bold text-stone-900 mt-0.5">{{ count }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+{# Ders bazlı + trend #}
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+  <div class="bg-white border border-stone-200 rounded-lg p-5">
+    <h3 class="font-medium text-stone-900 mb-3">📚 Ders Bazlı Çalışma</h3>
+    {% if not profile.by_subject %}
+    <p class="text-sm text-stone-500">Veri yok.</p>
+    {% else %}
+    <div class="space-y-2.5">
+      {% for s in profile.by_subject[:8] %}
+      <div>
+        <div class="flex items-center justify-between text-sm mb-1">
+          <span class="text-stone-700">{{ s.subject_name }}</span>
+          <span class="text-stone-500 text-xs">{{ s.completed }}/{{ s.planned }} · %{{ (s.completion_rate * 100)|int }}</span>
+        </div>
+        <div class="h-2 bg-stone-100 rounded-full overflow-hidden">
+          <div class="h-full bg-indigo-500 rounded-full" style="width: {{ (s.completion_rate * 100)|int }}%"></div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="bg-white border border-stone-200 rounded-lg p-5">
+    <h3 class="font-medium text-stone-900 mb-3">📈 Haftalık Eğilim</h3>
+    {% if profile.trend and profile.trend.direction != 'insufficient' %}
+    <div class="flex items-baseline gap-3">
+      <div class="text-3xl font-bold
+                  {% if profile.trend.direction == 'up' %}text-emerald-700
+                  {% elif profile.trend.direction == 'down' %}text-rose-700
+                  {% else %}text-stone-700{% endif %}">
+        {% if profile.trend.direction == 'up' %}↑
+        {% elif profile.trend.direction == 'down' %}↓
+        {% else %}→{% endif %}
+        {% if profile.trend.delta_pct is not none %}
+          {{ profile.trend.delta_pct|int }}%
+        {% endif %}
+      </div>
+      <div class="text-sm text-stone-500">
+        Bu hafta: <b class="text-stone-900">{{ profile.trend.this_week_completed }}</b>
+        · Geçen: <b class="text-stone-900">{{ profile.trend.last_week_completed }}</b>
+      </div>
+    </div>
+    <p class="text-xs text-stone-500 mt-2">
+      {% if profile.trend.direction == 'up' %}Verim artıyor.
+      {% elif profile.trend.direction == 'down' %}Verim düşüyor — neden olabilir?
+      {% else %}İstikrarlı tempo.{% endif %}
+    </p>
+    {% else %}
+    <p class="text-sm text-stone-500">İki haftalık karşılaştırma için yeterli veri yok.</p>
+    {% endif %}
+  </div>
+</div>
+
+<details class="mt-5 text-xs text-stone-500">
+  <summary class="cursor-pointer hover:text-stone-700">ℹ️ Çalışma DNA nedir, nasıl hesaplanır?</summary>
+  <div class="mt-3 p-4 bg-stone-50 rounded text-sm leading-relaxed text-stone-600">
+    <p>
+      Çalışma DNA'sı, son {{ profile.window_days }} günde tamamladığınız görevlerin
+      <b>saat × gün</b> dağılımından çıkar. Heatmap koyulaştıkça o saat aralığında
+      daha çok görev tamamlanmış demektir.
+    </p>
+    <ul class="list-disc list-inside mt-2 space-y-1">
+      <li><b>Chronotype</b>: hangi saat bandında (sabah/öğle/akşam/gece) en aktif olduğunuz</li>
+      <li><b>Peak gün/saat</b>: en yoğun çalışma penceresi</li>
+      <li><b>Trend</b>: bu hafta vs geçen hafta tamamlanan görev sayısı karşılaştırması</li>
+    </ul>
+  </div>
+</details>
+{% endif %}

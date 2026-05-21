@@ -489,6 +489,17 @@ def suggest_for_date(
 
     # 2) Zayıflık adayları — dersten/bölümden uzaklaşma, geride kalma
     weakness_scores: dict[tuple[int, int], float] = {}
+    # Review tekrar kartı sinyali — bu öğrencinin "zorlandığı" konu id'leri
+    # (Stage 12 ReviewCard verisi → AI önerisine boost). Topic→Section
+    # eşlemesi BookSection.topic_id üzerinden yapılır.
+    try:
+        from app.services.review_scheduler import struggling_topic_ids_map
+        review_struggle: dict[int, float] = struggling_topic_ids_map(
+            db, student_id=student_id, min_score=10.0
+        )
+    except Exception:
+        review_struggle = {}
+    review_weakness_keys: set[tuple[int, int]] = set()
     for section_id, sp in progress_by_section.items():
         section = sp.section
         if section.test_count == 0:
@@ -516,6 +527,12 @@ def suggest_for_date(
         elif last is None and (sp.reserved_count == 0 and sp.completed_count == 0):
             # Hiç dokunulmamış
             w += 0.10
+        # Review tekrar kartında zorlanan konu boost'u (Stage 12 → öneri besleme)
+        topic_id = section.topic_id
+        if topic_id is not None and topic_id in review_struggle:
+            review_boost = review_struggle[topic_id]  # 0..1
+            w += 0.50 * review_boost  # max +0.50 ekstra ağırlık
+            review_weakness_keys.add((book_id, section_id))
         if w > 0:
             weakness_scores[(book_id, section_id)] = min(1.0, w)
 
@@ -574,6 +591,8 @@ def suggest_for_date(
         reasons: list[str] = []
         if freq > 0:
             reasons.append(f"Bu güne {freq}× önceden atanmış")
+        if key in review_weakness_keys:
+            reasons.append("🧠 Tekrar kartında zorlanılan konu")
         if weakness > 0.3:
             reasons.append("Bu bölümde belirgin geride kalma var")
         elif weakness > 0:

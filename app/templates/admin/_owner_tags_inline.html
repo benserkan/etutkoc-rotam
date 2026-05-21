@@ -1,0 +1,62 @@
+{#
+  Owner etiket rozet şeridi + ekle/sil paneli.
+  Bekler: owner_tags (list of OwnerTag),
+          owner_tag_kinds, owner_tag_labels, owner_tag_colors, owner_tag_icons,
+                       owner_tag_descriptions,
+          ident.id (institution_id) VEYA u.id (user_id) — biri olmalı.
+#}
+{% set _is_user = (u is defined and u is not none) %}
+{% set _owner_id = (u.id if _is_user else (ident.id if ident is defined else None)) %}
+{% set _tag_base = ('/admin/revenue/users/' ~ _owner_id) if _is_user else ('/admin/revenue/institutions/' ~ _owner_id) %}
+
+<div class="mt-2 flex items-center gap-2 flex-wrap">
+  {% for t in owner_tags %}
+    {% set tc = owner_tag_colors.get(t.kind, 'slate') %}
+    <span class="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded-full
+                 bg-{{ tc }}-100 text-{{ tc }}-800 border border-{{ tc }}-200"
+          title="{{ owner_tag_descriptions.get(t.kind, '') }}{% if t.note %} — {{ t.note }}{% endif %}">
+      <span>{{ owner_tag_icons.get(t.kind, '🏷️') }}</span>
+      <span class="font-semibold">{{ owner_tag_labels.get(t.kind, t.kind.value) }}</span>
+      <form method="post" action="{{ _tag_base }}/tags/{{ t.id }}/delete" class="inline"
+            onsubmit="return confirm('Etiketi kaldırmak istiyor musun?');">
+        <button class="text-{{ tc }}-700 hover:text-rose-700 ml-0.5" title="Kaldır">×</button>
+      </form>
+    </span>
+  {% endfor %}
+
+  <details class="inline-block">
+    <summary class="text-[11px] px-2 py-0.5 rounded-full border border-dashed border-slate-300 text-slate-500
+                    hover:border-indigo-300 hover:text-indigo-600 cursor-pointer list-none select-none">
+      + Etiket ekle
+    </summary>
+    <div class="mt-2 p-3 bg-white border border-slate-200 rounded-lg shadow-lg w-72 z-10 absolute">
+      <form method="post" action="{{ _tag_base }}/tags/add" class="space-y-2">
+        <div>
+          <label class="block text-[11px] text-slate-600 mb-1">Etiket türü</label>
+          <select name="kind" required
+                  class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm bg-white">
+            {% set _existing = owner_tags|map(attribute='kind')|list %}
+            {% for k in owner_tag_kinds %}
+              {% if k not in _existing %}
+                <option value="{{ k.value }}">
+                  {{ owner_tag_icons.get(k, '🏷️') }} {{ owner_tag_labels.get(k, k.value) }}
+                </option>
+              {% endif %}
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="block text-[11px] text-slate-600 mb-1">Not (opsiyonel)</label>
+          <input type="text" name="note" maxlength="500" placeholder="ör. CFO Mehmet Bey aradı"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div class="flex justify-end">
+          <button type="submit"
+                  class="px-3 py-1.5 rounded bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold">
+            Ekle
+          </button>
+        </div>
+      </form>
+    </div>
+  </details>
+</div>

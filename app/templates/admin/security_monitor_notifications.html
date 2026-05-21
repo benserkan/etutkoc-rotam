@@ -1,0 +1,338 @@
+{% extends "base.html" %}
+{% block title %}Bildirim Teslimat — Admin{% endblock %}
+
+{% macro success_badge(pct) %}
+  {% if pct is none %}
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-slate-100 text-slate-600">— veri yok</span>
+  {% elif pct >= 95 %}
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800">%{{ pct }} başarı</span>
+  {% elif pct >= 80 %}
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800">%{{ pct }} başarı</span>
+  {% else %}
+    <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-rose-100 text-rose-800">%{{ pct }} başarı</span>
+  {% endif %}
+{% endmacro %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/security-monitor" class="text-sm text-slate-500 hover:text-slate-700">← Güvenlik Kamerası</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">📨 Bildirim Teslimat Kamerası</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Veliye giden e-posta, WhatsApp ve SMS bildirimlerinin sağlığı — başarı yüzdesi, kanal/tür
+    kırılımı, kuyrukta bekleme süresi ve gönderilmeyen mesajların sebepleri.
+  </p>
+</div>
+
+{# "Bu sayfada ne yazıyor?" — sade açıklama #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Gitti</b> — bildirim başarıyla gönderildi (e-posta sunucusuna teslim edildi veya
+      WhatsApp'ta görüldü). (Teknik: <code class="text-xs">sent</code>)
+    </div>
+    <div>
+      <b>Bekliyor</b> — sıradalar, henüz gönderilmedi. Normalde birkaç dakika içinde gider.
+      60 dk'yı geçerse sistem tıkanmış demektir. (Teknik: <code class="text-xs">queued</code>)
+    </div>
+    <div>
+      <b>Hata</b> — gönderim denendi ama başarısız oldu (sunucu cevap vermedi, yanlış numara,
+      WhatsApp engellendi vb.). (Teknik: <code class="text-xs">failed</code>)
+    </div>
+    <div>
+      <b>Bastırıldı</b> — gönderilmedi çünkü sistem politikası izin vermedi: kullanıcı
+      bildirimleri kapatmış, sessiz saatler içinde, günlük tavan aşıldı vb.
+      "Hata" değildir — kasıtlı olarak gönderilmedi. (Teknik: <code class="text-xs">suppressed</code>)
+    </div>
+    <div>
+      <b>Başarı yüzdesi</b> — Gitti ÷ (Gitti + Hata). Bastırılanlar hesaba katılmaz çünkü
+      onlar zaten amaçlı gönderilmedi. %95+ sağlıklı.
+    </div>
+    <div>
+      <b>Kanal</b> — bildirimin gönderildiği yer. <code class="text-xs">email</code> = e-posta,
+      <code class="text-xs">whatsapp</code> = WhatsApp mesajı, <code class="text-xs">sms</code> = telefon SMS.
+    </div>
+  </div>
+</details>
+
+{# Üst özet — 24h & 7d #}
+<div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+  {% for s in [data.summary_24h, data.summary_7d] %}
+    <div class="bg-white border border-slate-200 rounded-lg p-4">
+      <div class="flex items-center justify-between mb-3">
+        <div class="text-sm font-medium text-slate-900">{{ s.window_label }}</div>
+        {{ success_badge(s.success_pct) }}
+      </div>
+      <div class="grid grid-cols-4 gap-2 text-center">
+        <div>
+          <div class="text-xs text-slate-500">Toplam</div>
+          <div class="text-xl font-semibold text-slate-900">{{ s.total }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-emerald-600">Gitti</div>
+          <div class="text-xl font-semibold text-emerald-700">{{ s.sent }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-rose-600">Hata</div>
+          <div class="text-xl font-semibold text-rose-700">{{ s.failed }}</div>
+        </div>
+        <div>
+          <div class="text-xs text-amber-600">Bekliyor</div>
+          <div class="text-xl font-semibold text-amber-700">{{ s.queued }}</div>
+        </div>
+      </div>
+      {% if s.suppressed %}
+        <div class="text-xs text-slate-500 mt-2 text-center">
+          ({{ s.suppressed }} bildirim bastırıldı — politika gereği gönderilmedi)
+        </div>
+      {% endif %}
+    </div>
+  {% endfor %}
+</div>
+
+{# En eski queued + uyarı #}
+{% if data.oldest_queued_minutes is not none %}
+  <div class="mb-6 p-3 rounded-lg
+    {% if data.oldest_queued_minutes > 60 %}bg-rose-50 border border-rose-200 text-rose-800
+    {% elif data.oldest_queued_minutes > 15 %}bg-amber-50 border border-amber-200 text-amber-800
+    {% else %}bg-emerald-50 border border-emerald-200 text-emerald-800{% endif %}">
+    <span class="text-sm">
+      ⏱ Kuyrukta en uzun bekleyen bildirim: <b>{{ data.oldest_queued_minutes }} dk</b> öncesinden
+      {% if data.oldest_queued_minutes > 60 %}— bildirim gönderici servisi tıkanmış, kontrol et.
+      {% elif data.oldest_queued_minutes > 15 %}— takip et, biraz yavaş.
+      {% else %}— normal.
+      {% endif %}
+    </span>
+  </div>
+{% endif %}
+
+{# Son hatalar — kim, ne zaman, hangi kanal, hangi hata #}
+{% if data.recent_failures_24h %}
+<div class="mb-6 bg-white rounded-lg border border-rose-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-rose-200 bg-rose-50">
+    <div class="flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-rose-900">
+        ⚠ Son 24 saatte başarısız bildirimler ({{ data.recent_failures_24h|length }})
+      </h2>
+      <span class="text-[11px] text-rose-700">En yeni ilk · en fazla 30 satır</span>
+    </div>
+    <div class="text-xs text-rose-700 mt-0.5">
+      Hangi veliye, hangi kanaldan ne mesajla başarısız → bunları düzelt → başarı yüzdesi yükselir.
+    </div>
+  </div>
+  <table class="w-full text-xs">
+    <thead class="bg-slate-50 text-slate-600">
+      <tr>
+        <th class="text-left px-3 py-2">Zaman</th>
+        <th class="text-left px-3 py-2">Veli</th>
+        <th class="text-left px-3 py-2">Öğrenci</th>
+        <th class="text-left px-3 py-2">Tür</th>
+        <th class="text-left px-3 py-2">Kanal</th>
+        <th class="text-right px-3 py-2">Deneme</th>
+        <th class="text-left px-3 py-2">Hata mesajı</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for f in data.recent_failures_24h %}
+      <tr class="hover:bg-rose-50/30">
+        <td class="px-3 py-2 text-slate-600 whitespace-nowrap">{{ f.queued_at|dt_dual }}</td>
+        <td class="px-3 py-2">
+          {% if f.parent_id %}
+            <a href="/admin/users/{{ f.parent_id }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+              {{ f.parent_name or ('user #' ~ f.parent_id) }}
+            </a>
+            {% if f.parent_email %}
+              <div class="text-[10px] text-slate-500 font-mono">{{ f.parent_email }}</div>
+            {% endif %}
+          {% else %}—{% endif %}
+        </td>
+        <td class="px-3 py-2">
+          {% if f.student_id %}
+            <a href="/admin/users/{{ f.student_id }}" class="text-slate-700 hover:text-indigo-700">
+              {{ f.student_name or ('user #' ~ f.student_id) }}
+            </a>
+          {% else %}—{% endif %}
+        </td>
+        <td class="px-3 py-2 text-slate-700 font-mono">{{ f.kind }}</td>
+        <td class="px-3 py-2">
+          {% set ch_color = 'slate' %}
+          {% if f.channel == 'email' %}{% set ch_color = 'sky' %}
+          {% elif f.channel == 'whatsapp' %}{% set ch_color = 'emerald' %}
+          {% elif f.channel == 'sms' %}{% set ch_color = 'violet' %}{% endif %}
+          <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-{{ ch_color }}-100 text-{{ ch_color }}-800 font-medium">
+            {{ f.channel }}
+          </span>
+        </td>
+        <td class="px-3 py-2 text-right text-slate-600">{{ f.attempts }}</td>
+        <td class="px-3 py-2 text-rose-700 font-mono break-all max-w-md">
+          {{ f.error if f.error else '— (hata mesajı yok)' }}
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+  {# Kanal × Durum matrisi #}
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">Kanal × Durum (24h)</h2>
+      <div class="text-xs text-slate-500">Hangi kanal ne kadar gönderdi/hata aldı.</div>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">Kanal</th>
+          {% for s in data.channel_matrix_24h.statuses %}
+            <th class="px-3 py-2 text-right">{{ s }}</th>
+          {% endfor %}
+          <th class="px-3 py-2 text-right">Başarı</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for ch in data.channel_matrix_24h.channels %}
+          {% set row = data.channel_matrix_24h.matrix[ch] %}
+          {% set rollup = data.channel_matrix_24h.rollups[ch] %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 font-medium text-slate-900">{{ ch }}</td>
+            {% for s in data.channel_matrix_24h.statuses %}
+              <td class="px-3 py-2 text-right
+                {% if s == 'failed' and row[s] > 0 %}text-rose-700 font-semibold
+                {% elif s == 'sent' and row[s] > 0 %}text-emerald-700 font-semibold
+                {% elif s == 'queued' and row[s] > 0 %}text-amber-700
+                {% else %}text-slate-500{% endif %}">
+                {{ row[s] }}
+              </td>
+            {% endfor %}
+            <td class="px-3 py-2 text-right">{{ success_badge(rollup.success_pct) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {# Suppress reason dağılımı #}
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">Bastırma Nedenleri (24h)</h2>
+      <div class="text-xs text-slate-500">Politika gereği gönderilmeyen bildirimler kim neden gitmedi.</div>
+    </div>
+    {% if not data.suppress_distribution_24h %}
+      <div class="px-4 py-6 text-sm text-slate-500">Bastırma yok.</div>
+    {% else %}
+      <ul class="divide-y divide-slate-100">
+        {% set total = data.suppress_distribution_24h|sum(attribute='count') %}
+        {% for r in data.suppress_distribution_24h %}
+          {% set pct = (r.count * 100 / total)|round(1) if total else 0 %}
+          <li class="px-4 py-2">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-slate-800">{{ r.label }}</span>
+              <span class="text-slate-500 text-xs">{{ r.count }} · %{{ pct }}</span>
+            </div>
+            <div class="mt-1 h-2 bg-slate-100 rounded overflow-hidden">
+              <div class="h-full bg-slate-400" style="width: {{ pct }}%"></div>
+            </div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+</div>
+
+{# Bildirim türü × durum #}
+<div class="mt-5 bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Bildirim Türü × Durum (24h)</h2>
+    <div class="text-xs text-slate-500">Hangi tür bildirimde başarı düşük.</div>
+  </div>
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+      <tr>
+        <th class="px-3 py-2 text-left">Tür</th>
+        {% for s in data.kind_matrix_24h.statuses %}
+          <th class="px-3 py-2 text-right">{{ s }}</th>
+        {% endfor %}
+        <th class="px-3 py-2 text-right">Başarı</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for k in data.kind_matrix_24h.kinds %}
+        {% set row = data.kind_matrix_24h.matrix[k] %}
+        {% set rollup = data.kind_matrix_24h.rollups[k] %}
+        {% if rollup.total > 0 %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2">
+              <div class="text-slate-900">{{ k }}</div>
+            </td>
+            {% for s in data.kind_matrix_24h.statuses %}
+              <td class="px-3 py-2 text-right
+                {% if s == 'failed' and row[s] > 0 %}text-rose-700 font-semibold
+                {% elif s == 'sent' and row[s] > 0 %}text-emerald-700
+                {% elif s == 'queued' and row[s] > 0 %}text-amber-700
+                {% else %}text-slate-500{% endif %}">
+                {{ row[s] }}
+              </td>
+            {% endfor %}
+            <td class="px-3 py-2 text-right">{{ success_badge(rollup.success_pct) }}</td>
+          </tr>
+        {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# Günlük trend (son 7 gün) — basit ASCII bar #}
+<div class="mt-5 bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Son 7 Gün Trend</h2>
+    <div class="text-xs text-slate-500">Günlük gönderim hacmi ve başarı eğrisi.</div>
+  </div>
+  {% if not data.daily_trend_7d %}
+    <div class="px-4 py-6 text-sm text-slate-500">Veri yok.</div>
+  {% else %}
+    {% set max_total = data.daily_trend_7d|map(attribute='total')|max %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">Gün</th>
+          <th class="px-3 py-2 text-right">Toplam</th>
+          <th class="px-3 py-2 text-right">Gitti</th>
+          <th class="px-3 py-2 text-right">Hata</th>
+          <th class="px-3 py-2 text-right">Bekledi</th>
+          <th class="px-3 py-2 text-right">Başarı</th>
+          <th class="px-3 py-2 w-1/3">Hacim</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for d in data.daily_trend_7d %}
+          {% set pct = (d.total * 100 / max_total)|int if max_total else 0 %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2 text-slate-700 text-xs">{{ d.day }}</td>
+            <td class="px-3 py-2 text-right font-semibold text-slate-900">{{ d.total }}</td>
+            <td class="px-3 py-2 text-right text-emerald-700">{{ d.sent }}</td>
+            <td class="px-3 py-2 text-right
+              {% if d.failed > 0 %}text-rose-700 font-semibold{% else %}text-slate-500{% endif %}">{{ d.failed }}</td>
+            <td class="px-3 py-2 text-right text-amber-700">{{ d.queued }}</td>
+            <td class="px-3 py-2 text-right">{{ success_badge(d.success_pct) }}</td>
+            <td class="px-3 py-2">
+              <div class="h-2 bg-slate-100 rounded overflow-hidden">
+                <div class="h-full bg-indigo-400" style="width: {{ pct }}%"></div>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<div class="mt-6 text-xs text-slate-400">
+  Veri zamanı: {{ data.generated_at|dt_tr_full }}
+</div>
+{% endblock %}

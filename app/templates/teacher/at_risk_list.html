@@ -55,14 +55,27 @@
 <div class="space-y-3">
   {% for r in at_risk %}
   {% set is_muted = r.student.id in muted_ids %}
-  <div class="bg-white border {% if r.level == 'critical' %}border-rose-300{% elif r.level == 'high' %}border-orange-300{% elif r.level == 'medium' %}border-amber-300{% else %}border-slate-200{% endif %} rounded-lg overflow-hidden {% if is_muted %}opacity-60{% endif %}">
+  {% set is_paused = r.student.is_paused %}
+  {# Pasif öğrencinin risk satırı silik render edilir — opacity + grayscale.
+     Eski "muted" (7 günlük at-risk mute) ile bağımsız bir durum. #}
+  {% set dim_class = 'opacity-60 grayscale-[40%]' if is_paused else ('opacity-60' if is_muted else '') %}
+  <div class="bg-white border {% if r.level == 'critical' %}border-rose-300{% elif r.level == 'high' %}border-orange-300{% elif r.level == 'medium' %}border-amber-300{% else %}border-slate-200{% endif %} rounded-lg overflow-hidden {{ dim_class }}">
     <details class="group">
       <summary class="cursor-pointer p-4 flex items-center justify-between hover:bg-slate-50 list-none">
         <div class="flex items-center gap-3">
           <span class="text-2xl">{{ r.level_emoji }}</span>
           <div>
-            <div class="font-semibold text-slate-900 flex items-center gap-2">
+            <div class="font-semibold text-slate-900 flex items-center gap-2 flex-wrap">
               {{ r.student.full_name }}
+              {% if is_paused %}
+                {% if r.student.pause_reason and r.student.pause_reason.startswith('auto') %}
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300"
+                      title="Otomatik pasif — uyarılar susturulmuş, bilgi amaçlı görünür">🤖 pasif</span>
+                {% else %}
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300"
+                      title="Manuel pasif — uyarılar susturulmuş, bilgi amaçlı görünür">⏸ pasif</span>
+                {% endif %}
+              {% endif %}
               {% if is_muted %}
               <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">susturulmuş</span>
               {% endif %}

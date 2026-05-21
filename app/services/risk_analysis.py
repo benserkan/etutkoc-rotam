@@ -148,7 +148,10 @@ def compute_risk_score(
     indicators: list[RiskIndicator] = []
     score = 0
 
-    # Pasif öğrenci için skor hesaplama yok (panelden zaten filtrelenir)
+    # Pasif öğrenci için skor hesaplama yok (panelden zaten filtrelenir).
+    # NOT: is_paused öğrenci için risk skoru ÜRETMEYE devam ederiz — koç
+    # panelde silik gözükmüş halini görmek isteyebilir. Yalnız is_active=False
+    # tamamen kapalı hesaplar erken çıkış yapar.
     if not student.is_active or student.role != UserRole.STUDENT:
         return RiskAssessment(
             student=student, score=0, level="ok",

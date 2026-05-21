@@ -66,9 +66,28 @@
     </thead>
     <tbody class="divide-y divide-slate-100">
       {% for r in at_risk %}
-      <tr {% if r.level == 'critical' %}class="bg-rose-50/40"{% elif r.level == 'high' %}class="bg-orange-50/30"{% endif %}>
+      {% set is_paused = r.student.is_paused %}
+      {# Pasif öğrencinin satırı silik: arka plan grimsi, opacity düşer #}
+      {% set row_bg = '' %}
+      {% if is_paused %}
+        {% set row_bg = 'bg-slate-50/50 opacity-60 grayscale-[40%]' %}
+      {% elif r.level == 'critical' %}{% set row_bg = 'bg-rose-50/40' %}
+      {% elif r.level == 'high' %}{% set row_bg = 'bg-orange-50/30' %}
+      {% endif %}
+      <tr class="{{ row_bg }}">
         <td class="px-4 py-3">
-          <div class="font-medium text-slate-900">{{ r.student.full_name }}</div>
+          <div class="font-medium text-slate-900 flex items-center gap-2 flex-wrap">
+            {{ r.student.full_name }}
+            {% if is_paused %}
+              {% if r.student.pause_reason and r.student.pause_reason.startswith('auto') %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300"
+                    title="Otomatik pasif — uyarılar susturulmuş">🤖 pasif</span>
+              {% else %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300"
+                    title="Manuel pasif — uyarılar susturulmuş">⏸ pasif</span>
+              {% endif %}
+            {% endif %}
+          </div>
           <div class="text-[11px] text-slate-500 mt-0.5">
             {% if r.student.grade_level %}{{ r.student.grade_level }}. sınıf{% endif %}
             {% if r.weekly_planned > 0 %}

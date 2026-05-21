@@ -71,6 +71,21 @@
         {% endfor %}
       </div>
       {% endif %}
+      {# Tip-spesifik ek içerik — video linki, özet/tekrar açıklaması #}
+      {% if task.type.value == 'video' and task.link_url %}
+      <div class="mt-1 text-xs">
+        <a href="{{ task.link_url }}" target="_blank" rel="noopener noreferrer"
+           class="inline-flex items-center gap-1 text-sky-700 hover:text-sky-900 hover:underline font-medium">
+          🎥 Videoyu aç →
+        </a>
+      </div>
+      {% endif %}
+      {% if task.notes and task.type.value in ('ozet', 'tekrar', 'video', 'other') %}
+      <div class="mt-1 text-xs text-slate-600 italic">
+        {% if task.type.value == 'tekrar' %}🧠{% elif task.type.value == 'ozet' %}✍️{% else %}📝{% endif %}
+        {{ task.notes }}
+      </div>
+      {% endif %}
     </div>
 
     {# Kısmen (partial) açılır panel #}

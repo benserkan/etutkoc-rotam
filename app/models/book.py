@@ -131,6 +131,17 @@ class BookSet(Base):
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    # Hedef sınıf seviyesi — Book modelindekiyle aynı semantik. NULL/NULL/False
+    # birleşimi = "Tüm seviyeler" (set tüm sınıflar için uygundur).
+    # Set bir kitap koleksiyonu olduğundan içindeki kitapların kendi hedefleri
+    # ayrı (bu alan üst-set'e koçun "8. sınıf paketi" gibi etiket vermesi için).
+    target_grade_min: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    target_grade_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    target_graduate: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

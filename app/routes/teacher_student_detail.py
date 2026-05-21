@@ -150,6 +150,13 @@ def student_detail(
         if student.is_graduate else []
     )
 
+    # Koçluk takvimi (hafta anchor'ı) — overview sekmesinde gösterilir
+    from app.routes.teacher_program import _resolve_week_anchor
+    week_anchor = _resolve_week_anchor(db, student)
+    anchor_is_manual = student.program_anchor_date is not None
+    TR_WEEKDAYS_LOCAL = ["Pazartesi", "Salı", "Çarşamba", "Perşembe",
+                         "Cuma", "Cumartesi", "Pazar"]
+
     return templates.TemplateResponse(
         "teacher/student_detail.html",
         {
@@ -175,6 +182,9 @@ def student_detail(
             "flash": flash,
             "track_mismatches": track_mismatches,
             "diagnostic_subjects": diagnostic_subjects,
+            "week_anchor": week_anchor,
+            "anchor_is_manual": anchor_is_manual,
+            "tr_weekdays": TR_WEEKDAYS_LOCAL,
         },
     )
 
@@ -235,6 +245,22 @@ async def assign_books_to_student(
         .all()
     }
 
+    # Baseline (önceden çözülmüş test) kabul et:
+    # form alan adı: baseline_<book_id>_<section_id> = N (opsiyonel, default 0)
+    def _baseline(book_id: int, section_id: int, max_allowed: int) -> int:
+        raw = (form.get(f"baseline_{book_id}_{section_id}") or "").strip()
+        if not raw:
+            return 0
+        try:
+            v = int(raw)
+        except ValueError:
+            return 0
+        if v < 0:
+            return 0
+        if v > max_allowed:
+            return max_allowed
+        return v
+
     for book in valid_books:
         if book.id in already_assigned:
             continue
@@ -242,12 +268,13 @@ async def assign_books_to_student(
         db.add(sb)
         db.flush()
         for section in book.sections:
+            done = _baseline(book.id, section.id, section.test_count)
             db.add(
                 SectionProgress(
                     student_book_id=sb.id,
                     book_section_id=section.id,
                     reserved_count=0,
-                    completed_count=0,
+                    completed_count=done,
                 )
             )
 

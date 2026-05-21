@@ -1,0 +1,700 @@
+{% extends "base.html" %}
+{% block title %}Tekrar Et — {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="flex items-start justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <a href="/student" class="text-sm text-slate-500 hover:text-slate-700">← Bugün</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">🧠 Bugünkü Tekrar</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Hafızanda kalıcı olması için aralıklı tekrar (FSRS) algoritmasıyla seçilmiş konular.
+    </p>
+  </div>
+  <button type="button" onclick="document.getElementById('sg-toggle').checked = true; document.getElementById('student-guide').scrollIntoView({behavior:'smooth'});"
+          class="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-md border transition self-start"
+          style="background:#EDE9FE; border-color:#A78BFA; color:#5B21B6;">
+    🎬 Sana Özel Video Kılavuz
+  </button>
+</div>
+
+{# ═══════════════════════════════════════════════════════════════════════
+   ÖĞRENCİ VİDEO KILAVUZU — 3 bölüm, 7 sahne, Türkçe sesli
+   Ne işe yarar? → Sen ne yapacaksın? → Sonuçta ne olur?
+═══════════════════════════════════════════════════════════════════════ #}
+<style>
+  .sg-wrap { border: 1px solid #DDD6FE; border-radius: 14px; overflow: hidden; background: #fff; margin-bottom: 1.5rem; }
+  .sg-header { display:flex; align-items:center; gap:10px; padding:14px 18px; background:linear-gradient(135deg,#EDE9FE 0%,#DDD6FE 100%); border-bottom:1px solid #C4B5FD; cursor:pointer; user-select:none; }
+  .sg-header:hover { filter: brightness(0.98); }
+  .sg-toggle { display:none; }
+  .sg-chevron { transition: transform 0.3s; color:#5B21B6; }
+  .sg-toggle:checked ~ .sg-body { display: block; }
+  .sg-toggle:not(:checked) ~ .sg-body { display: none; }
+  .sg-toggle:checked + .sg-header .sg-chevron { transform: rotate(180deg); }
+  .sg-body { padding: 20px; }
+  /* Video player */
+  .sg-player { position: relative; background: linear-gradient(135deg,#1E1B4B 0%,#312E81 100%); border-radius: 12px; overflow: hidden; aspect-ratio: 16 / 9; }
+  .sg-scene { position: absolute; inset:0; opacity:0; transform: scale(1.02); transition: opacity 0.5s ease, transform 0.5s ease; padding: 24px; display: flex; flex-direction: column; }
+  .sg-scene.is-active { opacity: 1; transform: none; }
+  .sg-scene-label { display:inline-flex; align-items:center; gap:6px; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:0.15em; padding:4px 10px; border-radius:999px; background:rgba(167,139,250,0.20); color:#C4B5FD; border:1px solid rgba(167,139,250,0.30); align-self:flex-start; margin-bottom:14px; }
+  .sg-scene-title { font-size: 20px; font-weight: 800; color:#fff; margin-bottom: 8px; line-height:1.2; }
+  .sg-scene-desc { font-size: 13px; color: rgba(255,255,255,0.78); line-height:1.5; max-width: 95%; }
+  .sg-scene-mockup { margin-top: auto; background: rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.12); border-radius:10px; padding:12px; backdrop-filter: blur(8px); }
+  /* Controls */
+  .sg-controls { display:flex; align-items:center; gap:10px; padding: 10px 14px; background:#1E1B4B; border-top:1px solid rgba(255,255,255,0.10); }
+  .sg-btn { background:rgba(255,255,255,0.10); color:#fff; border:none; padding:6px 10px; border-radius:6px; cursor:pointer; font-size:14px; transition: background 0.2s; }
+  .sg-btn:hover { background:rgba(255,255,255,0.18); }
+  .sg-progress { flex:1; height:4px; background:rgba(255,255,255,0.15); border-radius:999px; position:relative; overflow:hidden; cursor:pointer; }
+  .sg-progress-fill { height:100%; background: linear-gradient(90deg,#A78BFA,#7C3AED); transition: width 0.1s linear; }
+  .sg-time { font-size: 11px; color: rgba(255,255,255,0.65); font-family: ui-monospace, monospace; min-width: 80px; text-align: right; }
+  /* Step list */
+  .sg-steps { display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; }
+  .sg-step { padding: 10px 12px; border:1px solid #E2E8F0; border-radius: 8px; background:#F8FAFC; cursor:pointer; transition: all 0.2s; }
+  .sg-step:hover { border-color:#A78BFA; background:#F5F3FF; }
+  .sg-step.is-active { border-color:#A78BFA; background:#EDE9FE; box-shadow: 0 2px 6px rgba(167,139,250,0.20); }
+  .sg-step-num { display:inline-block; width:22px; height:22px; line-height:22px; text-align:center; border-radius:50%; background:#7C3AED; color:#fff; font-size:11px; font-weight:700; margin-bottom:6px; }
+  .sg-step.is-active .sg-step-num { background:#5B21B6; }
+  .sg-step-title { font-size: 13px; font-weight:600; color:#0F172A; line-height: 1.3; }
+  .sg-step-desc { font-size: 11px; color:#64748B; margin-top:2px; line-height:1.4; }
+  .sg-rating-btn { font-size:11px; font-weight:700; padding:6px 0; text-align:center; border-radius:5px; }
+  @keyframes sgPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+  @keyframes sgGlow { 0%,100% { box-shadow: 0 0 0 0 rgba(167,139,250,0.6); } 50% { box-shadow: 0 0 12px 4px rgba(167,139,250,0.3); } }
+</style>
+
+<div id="student-guide" class="sg-wrap">
+  <input type="checkbox" id="sg-toggle" class="sg-toggle" />
+  <label for="sg-toggle" class="sg-header">
+    <span class="text-xl">🎬</span>
+    <div class="flex-1">
+      <div class="text-sm font-bold" style="color:#4C1D95">Sana Özel Video Kılavuz — Tekrar Sistemi Sana Nasıl Yardım Eder?</div>
+      <div class="text-xs" style="color:#5B21B6">3 bölüm · 7 sahne · ~80 sn Türkçe sesli interaktif tur</div>
+    </div>
+    <span class="sg-chevron">▼</span>
+  </label>
+  <div class="sg-body">
+    <div class="sg-player" id="sg-player">
+
+      {# ────────────── BÖLÜM 1: SANA NE FAYDA SAĞLAR? ────────────── #}
+
+      {# Sahne 0 — Problem: konular unutuluyor #}
+      <div class="sg-scene is-active" data-step="0">
+        <span class="sg-scene-label">🤔 1. Bölüm · Sana Ne Faydası Var?</span>
+        <div class="sg-scene-title">Öğrendiğin konuların çoğunu unutuyorsun</div>
+        <div class="sg-scene-desc">Bilim açık: Yeni öğrendiğin bir konunun <strong style="color:#FCA5A5">1 günde yarısından fazlasını</strong>, 1 haftada <strong style="color:#FCA5A5">%80'ini</strong> unutuyorsun. Yani sınav günü geldiğinde, aslında çalıştığın pek çok şeyi hatırlamıyor olabilirsin. Bu sayfa tam bu sorunu çözmek için var.</div>
+        <div class="sg-scene-mockup" style="padding: 14px;">
+          <div class="text-[10px] uppercase tracking-wider font-bold mb-1" style="color:rgba(167,139,250,0.85)">Hafızanda kalan oran — zamana göre</div>
+          <svg viewBox="0 0 320 90" style="width:100%; height:auto; display:block;">
+            <line x1="0" y1="80" x2="320" y2="80" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            <line x1="0" y1="50" x2="320" y2="50" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="2,3"/>
+            <line x1="0" y1="20" x2="320" y2="20" stroke="rgba(255,255,255,0.06)" stroke-width="1" stroke-dasharray="2,3"/>
+            <path d="M 5 12 Q 30 35, 60 55 T 160 75 T 315 79" stroke="#F87171" stroke-width="2" fill="none"/>
+            <text x="170" y="68" fill="#F87171" font-size="9" font-weight="700">Tekrar yapmazsan</text>
+            <path d="M 5 12 Q 30 30, 50 35 L 55 12 Q 75 22, 110 28 L 115 12 Q 140 18, 195 22 L 200 12 Q 230 14, 315 16"
+                  stroke="#A78BFA" stroke-width="2.2" fill="none"/>
+            <text x="170" y="40" fill="#A78BFA" font-size="9" font-weight="700">Aralıklı tekrarla → kalıcı</text>
+            <circle cx="55" cy="12" r="3" fill="#FBBF24"/>
+            <circle cx="115" cy="12" r="3" fill="#FBBF24"/>
+            <circle cx="200" cy="12" r="3" fill="#FBBF24"/>
+            <text x="5" y="89" fill="rgba(255,255,255,0.5)" font-size="8">öğrenme</text>
+            <text x="55" y="89" fill="rgba(255,255,255,0.5)" font-size="8">1 gün</text>
+            <text x="115" y="89" fill="rgba(255,255,255,0.5)" font-size="8">3 gün</text>
+            <text x="200" y="89" fill="rgba(255,255,255,0.5)" font-size="8">10 gün</text>
+            <text x="285" y="89" fill="rgba(255,255,255,0.5)" font-size="8">22 gün</text>
+          </svg>
+        </div>
+      </div>
+
+      {# Sahne 1 — 3 fayda #}
+      <div class="sg-scene" data-step="1">
+        <span class="sg-scene-label">💡 1. Bölüm · Üç Büyük Kazancın</span>
+        <div class="sg-scene-title">Bu sistem sana üç şey kazandırır</div>
+        <div class="sg-scene-desc">Aralıklı tekrar sadece "konuyu hatırla" değil — sınav yolculuğunda <strong style="color:#C4B5FD">senin için çalışan akıllı bir asistan</strong>. İşte üç somut faydası:</div>
+        <div class="sg-scene-mockup" style="padding: 10px;">
+          <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:6px;">
+            <div style="background:rgba(52,211,153,0.12); border:1px solid rgba(52,211,153,0.30); padding:8px; border-radius:6px; text-align:center;">
+              <div style="font-size:22px; line-height:1; margin-bottom:4px;">💪</div>
+              <div style="font-size:10px; color:#6EE7B7; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Kazanım 1</div>
+              <div style="font-size:11px; color:#fff; font-weight:700;">Daha Az Çalışma</div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.70); margin-top:3px;">Aynı konuyu tekrar tekrar ezberlemen gerekmez.</div>
+            </div>
+            <div style="background:rgba(167,139,250,0.12); border:1px solid rgba(167,139,250,0.30); padding:8px; border-radius:6px; text-align:center;">
+              <div style="font-size:22px; line-height:1; margin-bottom:4px;">🧠</div>
+              <div style="font-size:10px; color:#C4B5FD; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Kazanım 2</div>
+              <div style="font-size:11px; color:#fff; font-weight:700;">Kalıcı Bilgi</div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.70); margin-top:3px;">Konular sınava kadar hep taze kalır.</div>
+            </div>
+            <div style="background:rgba(251,191,36,0.12); border:1px solid rgba(251,191,36,0.30); padding:8px; border-radius:6px; text-align:center;">
+              <div style="font-size:22px; line-height:1; margin-bottom:4px;">😌</div>
+              <div style="font-size:10px; color:#FBBF24; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:2px;">Kazanım 3</div>
+              <div style="font-size:11px; color:#fff; font-weight:700;">Az Sınav Stresi</div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.70); margin-top:3px;">Son haftalarda panik yapmazsın.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ────────────── BÖLÜM 2: SEN NE YAPACAKSIN? ────────────── #}
+
+      {# Sahne 2 — Her gün aç, Bugün sayısını gör #}
+      <div class="sg-scene" data-step="2">
+        <span class="sg-scene-label">📅 2. Bölüm · Sen Ne Yapacaksın · Adım 1</span>
+        <div class="sg-scene-title">Her gün bu sayfayı aç</div>
+        <div class="sg-scene-desc">Yapacağın ilk şey çok basit: <strong style="color:#FBBF24">Her gün</strong> bu sayfayı aç. Üstte <strong>"Bugün"</strong> kartı, vadesi gelmiş yani bugün çözmen gereken kart sayısını gösterir. Genelde 3-10 kart olur, yarım saatten kısa sürer.</div>
+        <div class="sg-scene-mockup">
+          <div style="display:flex; justify-content:center;">
+            <div style="background:rgba(244,63,94,0.18); border:2px solid rgba(244,63,94,0.40); padding:14px 24px; border-radius:10px; text-align:center; animation: sgGlow 2s infinite;">
+              <div style="font-size:11px; color:#FCA5A5; font-weight:700; text-transform:uppercase; letter-spacing:0.1em;">Bugün</div>
+              <div style="font-size:42px; color:#fff; font-weight:800; line-height:1;">5</div>
+              <div style="font-size:10px; color:rgba(255,255,255,0.65); margin-top:2px;">vadesi gelen kart</div>
+            </div>
+          </div>
+          <div class="text-[10px] mt-3 text-center" style="color:rgba(255,255,255,0.55)">→ Yaklaşık 15-25 dakikalık çalışma</div>
+        </div>
+      </div>
+
+      {# Sahne 3 — Konuyu gör, kendine sor #}
+      <div class="sg-scene" data-step="3">
+        <span class="sg-scene-label">🤔 2. Bölüm · Adım 2</span>
+        <div class="sg-scene-title">Her konuyu gör ve kendine sor</div>
+        <div class="sg-scene-desc">Listedeki her konuyu gördüğünde kendine sor: <em style="color:#C4B5FD">"Bu konuyu şimdi biri sorsa anlatabilir miyim?"</em> Bu testle ilgili bir soru çıksa cevap verebilir miyim? <strong style="color:#FBBF24">Kendine dürüst ol</strong> — çünkü sistem cevabına göre planlama yapacak.</div>
+        <div class="sg-scene-mockup">
+          <div style="background:rgba(255,255,255,0.08); border:1px solid rgba(167,139,250,0.30); border-radius:8px; padding:10px; position:relative;">
+            <div style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+              <span style="font-size:9px; padding:2px 6px; border-radius:3px; background:rgba(245,158,11,0.20); color:#FBBF24; font-weight:700;">Öğreniliyor</span>
+              <span style="font-size:9px; color:rgba(255,255,255,0.55);">Matematik</span>
+            </div>
+            <div style="font-size:13px; color:#fff; font-weight:600;">Üçgenlerde Benzerlik</div>
+            <div style="font-size:9px; color:rgba(255,255,255,0.55); margin-top:2px;">Son tekrar: 7 gün önce · 2 kez çalışıldı</div>
+            <div style="position:absolute; top:-10px; right:8px; background:#FBBF24; color:#1E1B4B; padding:3px 8px; border-radius:999px; font-size:9px; font-weight:700; animation: sgPulse 1.6s infinite;">
+              💭 Hatırlıyor musun?
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# Sahne 4 — 4 butona bas #}
+      <div class="sg-scene" data-step="4">
+        <span class="sg-scene-label">🎯 2. Bölüm · Adım 3</span>
+        <div class="sg-scene-title">Cevabına göre dört butondan birine bas</div>
+        <div class="sg-scene-desc">Hatırlama durumuna göre <strong>dürüstçe</strong> tek bir butona bas. Her butonun anlamı farklı; doğru cevabı seçmek senin sınav yolunu doğrudan etkiler.</div>
+        <div class="sg-scene-mockup">
+          <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:6px;">
+            <div style="display:flex; align-items:center; gap:6px; padding:6px; background:rgba(244,63,94,0.10); border:1px solid rgba(244,63,94,0.30); border-radius:5px;">
+              <span class="sg-rating-btn" style="background:#FECACA; color:#991B1B; padding:5px 8px; flex-shrink:0;">🔁 Tekrar</span>
+              <span style="font-size:9px; color:rgba(255,255,255,0.78);">Hiç hatırlamadım</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; padding:6px; background:rgba(251,191,36,0.10); border:1px solid rgba(251,191,36,0.30); border-radius:5px;">
+              <span class="sg-rating-btn" style="background:#FEF3C7; color:#92400E; padding:5px 8px; flex-shrink:0;">😐 Zor</span>
+              <span style="font-size:9px; color:rgba(255,255,255,0.78);">Zorlandım ama hatırladım</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; padding:6px; background:rgba(52,211,153,0.10); border:1px solid rgba(52,211,153,0.30); border-radius:5px;">
+              <span class="sg-rating-btn" style="background:#D1FAE5; color:#065F46; padding:5px 8px; flex-shrink:0;">🙂 İyi</span>
+              <span style="font-size:9px; color:rgba(255,255,255,0.78);">İyi hatırladım</span>
+            </div>
+            <div style="display:flex; align-items:center; gap:6px; padding:6px; background:rgba(99,102,241,0.10); border:1px solid rgba(99,102,241,0.30); border-radius:5px;">
+              <span class="sg-rating-btn" style="background:#DBEAFE; color:#1E40AF; padding:5px 8px; flex-shrink:0;">😎 Kolay</span>
+              <span style="font-size:9px; color:rgba(255,255,255,0.78);">Çok kolay, su gibi</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {# ────────────── BÖLÜM 3: SONUÇTA NE OLUR? ────────────── #}
+
+      {# Sahne 5 — Sistem bir sonraki tarihi planlar #}
+      <div class="sg-scene" data-step="5">
+        <span class="sg-scene-label">⏰ 3. Bölüm · Sonuçta Ne Olur?</span>
+        <div class="sg-scene-title">Sistem bir sonraki tekrarı senin için planlar</div>
+        <div class="sg-scene-desc">Buton seçtiğin an sistem senin için bir sonraki tekrar tarihini otomatik hesaplar. Sen tekrar etmeyi unutsan bile <strong style="color:#FBBF24">sistem unutmaz</strong> — günü geldiğinde "Bugün" sayısında belirir.</div>
+        <div class="sg-scene-mockup">
+          <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:5px;">
+            <div style="background:rgba(244,63,94,0.10); padding:6px; border-radius:5px; text-align:center;">
+              <div style="font-size:9px; color:#FCA5A5; font-weight:700;">🔁 Tekrar</div>
+              <div style="font-size:8px; color:rgba(255,255,255,0.55); margin-top:2px;">→</div>
+              <div style="font-size:11px; color:#fff; font-weight:700; margin-top:2px;">1 gün</div>
+            </div>
+            <div style="background:rgba(251,191,36,0.10); padding:6px; border-radius:5px; text-align:center;">
+              <div style="font-size:9px; color:#FBBF24; font-weight:700;">😐 Zor</div>
+              <div style="font-size:8px; color:rgba(255,255,255,0.55); margin-top:2px;">→</div>
+              <div style="font-size:11px; color:#fff; font-weight:700; margin-top:2px;">4 gün</div>
+            </div>
+            <div style="background:rgba(52,211,153,0.10); padding:6px; border-radius:5px; text-align:center;">
+              <div style="font-size:9px; color:#6EE7B7; font-weight:700;">🙂 İyi</div>
+              <div style="font-size:8px; color:rgba(255,255,255,0.55); margin-top:2px;">→</div>
+              <div style="font-size:11px; color:#fff; font-weight:700; margin-top:2px;">10 gün</div>
+            </div>
+            <div style="background:rgba(99,102,241,0.10); padding:6px; border-radius:5px; text-align:center;">
+              <div style="font-size:9px; color:#A5B4FC; font-weight:700;">😎 Kolay</div>
+              <div style="font-size:8px; color:rgba(255,255,255,0.55); margin-top:2px;">→</div>
+              <div style="font-size:11px; color:#fff; font-weight:700; margin-top:2px;">22 gün</div>
+            </div>
+          </div>
+          <div class="text-[10px] mt-2 text-center" style="color:rgba(255,255,255,0.55)">Her tekrarda aralık biraz daha uzar — bilgi kalıcılaşır.</div>
+        </div>
+      </div>
+
+      {# Sahne 6 — Gamification + sınava taze giriş #}
+      <div class="sg-scene" data-step="6">
+        <span class="sg-scene-label">🏆 3. Bölüm · Senin İçin Sonuç</span>
+        <div class="sg-scene-title">Streak, rozet ve sınava taze giriş</div>
+        <div class="sg-scene-desc">Her gün düzenli geldiğinde <strong style="color:#FBBF24">streak (seri)</strong> sayın artar, <strong style="color:#FBBF24">rozetler</strong> kazanırsın. Aralıklar uzayarak bilgi kalıcılaşır. En önemlisi: <strong style="color:#C4B5FD">Sınava gittiğinde sana sürpriz yok</strong> — konular hep tazedir.</div>
+        <div class="sg-scene-mockup">
+          <div style="display:flex; align-items:center; justify-content:space-around; gap:10px;">
+            <div style="text-align:center;">
+              <div style="font-size:28px; line-height:1; margin-bottom:3px;">🔥</div>
+              <div style="font-size:14px; color:#fff; font-weight:800;">12 gün</div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.55); text-transform:uppercase;">Streak</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="display:flex; gap:3px; margin-bottom:3px; justify-content:center;">
+                <span style="font-size:22px;">🏆</span>
+                <span style="font-size:22px;">⚡</span>
+                <span style="font-size:22px;">🦉</span>
+                <span style="font-size:22px;">💯</span>
+              </div>
+              <div style="font-size:11px; color:#fff; font-weight:700;">4 rozet</div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.55); text-transform:uppercase;">Kazandın</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:28px; line-height:1; margin-bottom:3px;">🎯</div>
+              <div style="font-size:14px; color:#FBBF24; font-weight:800;">+285</div>
+              <div style="font-size:9px; color:rgba(255,255,255,0.55); text-transform:uppercase;">Puan</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Altyazı şeridi #}
+    <div id="sg-caption" class="text-sm leading-relaxed px-4 py-3"
+         style="background:#1E1B4B; color:rgba(255,255,255,0.92); border-top:1px solid rgba(255,255,255,0.08); min-height: 52px;">
+      <span style="color:#A78BFA;">●</span> <span id="sg-caption-text">Kılavuzu başlatmak için ▶ tuşuna bas. Türkçe seslendirme otomatik açılır.</span>
+    </div>
+
+    <div class="sg-controls">
+      <button type="button" class="sg-btn" id="sg-prev" title="Önceki sahne">⏮</button>
+      <button type="button" class="sg-btn" id="sg-play" title="Oynat / Duraklat">▶</button>
+      <button type="button" class="sg-btn" id="sg-next" title="Sonraki sahne">⏭</button>
+      <button type="button" class="sg-btn" id="sg-mute" title="Sesi aç / kapat" style="margin-left:4px;">🔊</button>
+      <button type="button" class="sg-btn" id="sg-rate" title="Konuşma hızı" style="font-size:11px; font-weight:700;">0.95×</button>
+      <div class="sg-progress" id="sg-progress">
+        <div class="sg-progress-fill" id="sg-progress-fill" style="width:0%"></div>
+      </div>
+      <span class="sg-time" id="sg-time">Sahne 1 / 7</span>
+      <button type="button" class="sg-btn" id="sg-restart" title="Baştan başlat" style="margin-left:4px;">↺</button>
+    </div>
+
+    {# Bölüm başlıkları + step listesi #}
+    <div class="text-[10px] uppercase tracking-[0.18em] font-bold mt-4 mb-2 flex items-center gap-2" style="color:#4C1D95;">
+      <span>🤔 1. Bölüm</span><span style="color:#94a3b8;">— Sana Ne Faydası Var?</span>
+    </div>
+    <div class="sg-steps">
+      <div class="sg-step is-active" data-step="0">
+        <div class="sg-step-num">0</div>
+        <div class="sg-step-title">Sorun: konular unutuluyor</div>
+        <div class="sg-step-desc">1 haftada %80'i unutuyorsun</div>
+      </div>
+      <div class="sg-step" data-step="1">
+        <div class="sg-step-num">1</div>
+        <div class="sg-step-title">Üç büyük kazancın</div>
+        <div class="sg-step-desc">Az çalış · kalıcı bilgi · az stres</div>
+      </div>
+    </div>
+
+    <div class="text-[10px] uppercase tracking-[0.18em] font-bold mt-4 mb-2 flex items-center gap-2" style="color:#4C1D95;">
+      <span>📅 2. Bölüm</span><span style="color:#94a3b8;">— Sen Ne Yapacaksın?</span>
+    </div>
+    <div class="sg-steps">
+      <div class="sg-step" data-step="2">
+        <div class="sg-step-num">2</div>
+        <div class="sg-step-title">Her gün bu sayfayı aç</div>
+        <div class="sg-step-desc">"Bugün" sayısını gör (15-25 dk)</div>
+      </div>
+      <div class="sg-step" data-step="3">
+        <div class="sg-step-num">3</div>
+        <div class="sg-step-title">Kendine sor</div>
+        <div class="sg-step-desc">"Bu konuyu anlatabilir miyim?"</div>
+      </div>
+      <div class="sg-step" data-step="4">
+        <div class="sg-step-num">4</div>
+        <div class="sg-step-title">4 butondan birini seç</div>
+        <div class="sg-step-desc">🔁 Tekrar · 😐 Zor · 🙂 İyi · 😎 Kolay</div>
+      </div>
+    </div>
+
+    <div class="text-[10px] uppercase tracking-[0.18em] font-bold mt-4 mb-2 flex items-center gap-2" style="color:#4C1D95;">
+      <span>⏰ 3. Bölüm</span><span style="color:#94a3b8;">— Sonuçta Ne Olur?</span>
+    </div>
+    <div class="sg-steps">
+      <div class="sg-step" data-step="5">
+        <div class="sg-step-num">5</div>
+        <div class="sg-step-title">Sistem tarihi planlar</div>
+        <div class="sg-step-desc">İyi → 10g · Kolay → 22g</div>
+      </div>
+      <div class="sg-step" data-step="6">
+        <div class="sg-step-num">6</div>
+        <div class="sg-step-title">Streak · rozet · taze sınav</div>
+        <div class="sg-step-desc">Her gün gelirsen tüm kazanımlar artar</div>
+      </div>
+    </div>
+
+    <div class="text-xs mt-3 px-2" style="color:#64748B; line-height:1.5;">
+      <strong style="color:#0F172A;">İpucu:</strong> Türkçe seslendirme tarayıcı sesi ile yapılır.
+      Ses gelmiyorsa <strong>🔊</strong> tuşunu kontrol et veya hızı <strong>1.0×</strong> tuşundan değiştir.
+    </div>
+  </div>
+</div>
+
+<script>
+  (function(){
+    // Telaffuz notları:
+    //  - Kısa cümleler + virgüllerle doğal nefes
+    //  - Kısaltmaları normal yaz (FSRS değil, "akıllı algoritma" diye geç)
+    //  - Sayılar yazıyla
+    var narrations = [
+      // ───── BÖLÜM 1: Sana ne faydası var? ─────
+      // 0 — Problem
+      "Merhaba. Bu sayfanın sana ne kadar yardımcı olacağını anlatmak istiyorum. " +
+      "Bilim açık. Yeni öğrendiğin bir konuyu, bir gün içinde yarısından fazlasını unutuyorsun. " +
+      "Bir hafta sonra ise, yüzde sekseninden fazlası... " +
+      "Yani sınav günü geldiğinde, aslında çalıştığın pek çok şeyi hatırlamıyor olabilirsin. " +
+      "İşte bu sayfa, tam bu sorunu çözmek için var.",
+      // 1 — Üç fayda
+      "Aralıklı tekrar sana üç büyük fayda sağlar. " +
+      "Birincisi: aynı konuyu tekrar tekrar ezberlemen gerekmez. " +
+      "Daha az çalışarak, daha çok hatırlarsın. " +
+      "İkincisi: bilgilerin sınava kadar taze kalır. " +
+      "Üçüncüsü: sınav haftalarında konuları baştan ezberlemek zorunda kalmazsın. " +
+      "Sistem, hangi konuyu ne zaman tekrar etmen gerektiğini, senin için hesaplar.",
+
+      // ───── BÖLÜM 2: Sen ne yapacaksın? ─────
+      // 2 — Her gün aç
+      "Senin yapman gereken ilk şey çok basit. " +
+      "Her gün, bu sayfayı aç. " +
+      "Sayfanın üstünde gördüğün Bugün kartı, vadesi gelen kart sayısını gösterir. " +
+      "Yani, bugün çözmen gereken kartlar. " +
+      "Genellikle bu sayı üç ile on arasında olur. Yarım saatten kısa sürer.",
+      // 3 — Kendine sor
+      "Listedeki her konuyu gördüğünde, kendine şu soruyu sor: " +
+      "Bu konuyu şimdi birine anlatabilir miyim? " +
+      "Bu testle ilgili bir soru çıksa, cevap verebilir miyim? " +
+      "Cevabını net olarak hissetmeden, buton seçme. " +
+      "Kendine dürüst ol. Çünkü sistem, cevabına göre senin için planlama yapacak.",
+      // 4 — 4 butona bas
+      "Cevabına göre, dört butondan birine bas. " +
+      "Tekrar: hiç hatırlamadım, baştan çalışmalıyım. " +
+      "Zor: hatırladım, ama zorlandım. Emin değildim. " +
+      "İyi: iyi hatırladım, çok da zorlanmadım. " +
+      "Kolay: su gibi geldi, çok rahattı. " +
+      "Doğru cevabı seçmek, senin sınava giden yolunu doğrudan etkiler.",
+
+      // ───── BÖLÜM 3: Sonuçta ne olur? ─────
+      // 5 — Sistem tarihi planlar
+      "Cevabını verdiğin an, sistem senin için bir sonraki tekrar tarihini otomatik hesaplar. " +
+      "İyi dersen, yaklaşık on gün sonraya planlanır. " +
+      "Kolay dersen, yirmi iki gün. " +
+      "Tekrar dersen, yarın yine gelir. Zor dersen, birkaç gün sonra. " +
+      "Sen tekrar etmeyi unutsan bile, sistem unutmaz. " +
+      "Günü geldiğinde, Bugün sayısında belirir.",
+      // 6 — Gamification + taze sınav
+      "Sonuçta ne olur? " +
+      "Her tekrar ettiğin konu, giderek daha uzun aralıklarla gelir ve hafızanda kalıcılaşır. " +
+      "Her gün düzenli açtığında, streak yani seri sayın artar. " +
+      "Hatırlama ustası, pomodoro pro gibi rozetler kazanırsın. Puan toplarsın. " +
+      "En önemlisi: sınava gittiğinde, sana sürpriz yok. " +
+      "Çünkü konuların hep tazeydi."
+    ];
+
+    var captions = [
+      "🤔 1. Bölüm · Sana ne faydası var — Yeni öğrendiğin konunun 1 haftada %80'i unutulur. Bu sayfa onu engeller.",
+      "💡 Üç kazanım — Daha az çalışma · Kalıcı bilgi · Sınav stresi azalır.",
+      "📅 2. Bölüm · Senin görevin · Adım 1 — Her gün bu sayfayı aç, \"Bugün\" sayısını gör.",
+      "🤔 Adım 2 — Her konuyu gördüğünde kendine sor: \"Bu konuyu anlatabilir miyim?\"",
+      "🎯 Adım 3 — Cevabına göre 4 butondan birini seç: 🔁 Tekrar · 😐 Zor · 🙂 İyi · 😎 Kolay.",
+      "⏰ 3. Bölüm · Sistem senin için tarihi planlar — İyi → 10 gün, Kolay → 22 gün sonra.",
+      "🏆 Sonuç — Streak artar, rozetler kazanırsın, sınava taze gidersin."
+    ];
+
+    var fallbackDurations = [13500, 12000, 10000, 11000, 12500, 12000, 11500];
+
+    var scenes = document.querySelectorAll('#student-guide .sg-scene');
+    var stepBtns = document.querySelectorAll('#student-guide .sg-step');
+    var playBtn = document.getElementById('sg-play');
+    var prevBtn = document.getElementById('sg-prev');
+    var nextBtn = document.getElementById('sg-next');
+    var muteBtn = document.getElementById('sg-mute');
+    var rateBtn = document.getElementById('sg-rate');
+    var restartBtn = document.getElementById('sg-restart');
+    var progressFill = document.getElementById('sg-progress-fill');
+    var progressBar = document.getElementById('sg-progress');
+    var timeEl = document.getElementById('sg-time');
+    var captionEl = document.getElementById('sg-caption-text');
+
+    var total = scenes.length;
+    var current = 0;
+    var playing = false;
+    var muted = false;
+    // Default 0.95 — daha doğal akıcı Türkçe ton (kullanıcı 1.0/1.25/1.5'e çekebilir)
+    var rate = 0.95;
+    var rateOptions = [0.95, 1.0, 1.25, 1.5];
+    var muteTimer = null;
+
+    var hasSpeech = typeof window !== 'undefined' && 'speechSynthesis' in window;
+    var trVoice = null;
+    function scoreVoice(v){
+      var n = (v.name || '').toLowerCase();
+      var s = 0;
+      if (n.indexOf('natural') >= 0) s += 100;
+      if (n.indexOf('neural') >= 0) s += 95;
+      if (n.indexOf('online') >= 0) s += 80;
+      if (n.indexOf('premium') >= 0) s += 70;
+      if (n.indexOf('enhanced') >= 0) s += 60;
+      if (n.indexOf('google') >= 0) s += 55;
+      if (n.indexOf('tolga') >= 0) s += 45;
+      if (n.indexOf('emel') >= 0) s += 42;
+      if (n.indexOf('filiz') >= 0) s += 40;
+      if (n.indexOf('yelda') >= 0) s += 38;
+      if (n.indexOf('aylin') >= 0) s += 35;
+      if (n.indexOf('ahmet') >= 0) s += 30;
+      if (v.lang && v.lang.toLowerCase() === 'tr-tr') s += 10;
+      if (v.localService) s += 5;
+      if (v.default) s += 3;
+      return s;
+    }
+    function loadVoices(){
+      if (!hasSpeech) return;
+      var voices = window.speechSynthesis.getVoices();
+      if (!voices.length) return;
+      var candidates = voices.filter(function(v){
+        return v.lang && v.lang.toLowerCase().indexOf('tr') === 0;
+      });
+      if (!candidates.length) {
+        candidates = voices.filter(function(v){
+          return v.name && /(turk|türk|tolga|filiz|yelda|emel|sedef|aylin|ahmet)/i.test(v.name);
+        });
+      }
+      if (!candidates.length) { trVoice = null; return; }
+      candidates.sort(function(a, b){ return scoreVoice(b) - scoreVoice(a); });
+      trVoice = candidates[0];
+    }
+    if (hasSpeech) {
+      loadVoices();
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = loadVoices;
+      }
+    }
+
+    function cancelSpeech(){
+      if (hasSpeech) try { window.speechSynthesis.cancel(); } catch(e){}
+      if (muteTimer) { clearTimeout(muteTimer); muteTimer = null; }
+    }
+
+    function show(idx, andSpeak){
+      current = ((idx % total) + total) % total;
+      scenes.forEach(function(sc,i){ sc.classList.toggle('is-active', i === current); });
+      stepBtns.forEach(function(b,i){ b.classList.toggle('is-active', i === current); });
+      progressFill.style.width = ((current + 1) / total * 100) + '%';
+      timeEl.textContent = 'Sahne ' + (current + 1) + ' / ' + total;
+      captionEl.textContent = captions[current] || '';
+      if (andSpeak && playing) speakCurrent();
+    }
+
+    function speakCurrent(){
+      cancelSpeech();
+      if (hasSpeech && !muted) {
+        var u = new SpeechSynthesisUtterance(narrations[current]);
+        if (trVoice) u.voice = trVoice;
+        u.lang = 'tr-TR';
+        u.rate = rate;
+        u.pitch = 0.98;
+        u.volume = 1.0;
+        u.onend = function(){
+          if (!playing) return;
+          if (current < total - 1) show(current + 1, true);
+          else { playing = false; playBtn.textContent = '▶'; }
+        };
+        u.onerror = function(){ startFallbackTimer(); };
+        try { window.speechSynthesis.speak(u); }
+        catch(e){ startFallbackTimer(); }
+      } else {
+        startFallbackTimer();
+      }
+    }
+
+    function startFallbackTimer(){
+      if (muteTimer) clearTimeout(muteTimer);
+      var dur = (fallbackDurations[current] || 11000) / rate;
+      muteTimer = setTimeout(function(){
+        if (!playing) return;
+        if (current < total - 1) show(current + 1, true);
+        else { playing = false; playBtn.textContent = '▶'; }
+      }, dur);
+    }
+
+    function play(){ playing = true; playBtn.textContent = '⏸'; speakCurrent(); }
+    function pause(){ playing = false; playBtn.textContent = '▶'; cancelSpeech(); }
+
+    playBtn.addEventListener('click', function(){ playing ? pause() : play(); });
+    prevBtn.addEventListener('click', function(){ var w = playing; pause(); show(current - 1, false); if (w) play(); });
+    nextBtn.addEventListener('click', function(){ var w = playing; pause(); show(current + 1, false); if (w) play(); });
+    stepBtns.forEach(function(b,i){ b.addEventListener('click', function(){ var w = playing; pause(); show(i, false); if (w) play(); }); });
+    progressBar.addEventListener('click', function(e){
+      var rect = progressBar.getBoundingClientRect();
+      var pct = (e.clientX - rect.left) / rect.width;
+      var idx = Math.min(total - 1, Math.max(0, Math.floor(pct * total)));
+      var w = playing; pause(); show(idx, false); if (w) play();
+    });
+    muteBtn.addEventListener('click', function(){
+      muted = !muted;
+      muteBtn.textContent = muted ? '🔇' : '🔊';
+      muteBtn.title = muted ? 'Sesi aç' : 'Sesi kapat';
+      if (playing) { cancelSpeech(); speakCurrent(); }
+    });
+    rateBtn.addEventListener('click', function(){
+      var idx = rateOptions.indexOf(rate);
+      rate = rateOptions[(idx + 1) % rateOptions.length];
+      var decimals = (rate * 100) % 10 === 0 ? 1 : 2;
+      rateBtn.textContent = rate.toFixed(decimals) + '×';
+      if (playing) { cancelSpeech(); speakCurrent(); }
+    });
+    restartBtn.addEventListener('click', function(){ pause(); show(0, false); play(); });
+
+    var toggle = document.getElementById('sg-toggle');
+    toggle.addEventListener('change', function(){
+      if (toggle.checked) { show(0, false); play(); }
+      else pause();
+    });
+
+    window.addEventListener('beforeunload', cancelSpeech);
+  })();
+</script>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">
+  ✓ {{ flash_ok }}
+</div>
+{% endif %}
+
+{# Sayım kartları #}
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Bugün</div>
+    <div class="text-2xl font-bold text-rose-700 mt-1">{{ breakdown.due_now }}</div>
+    <div class="text-xs text-slate-500">vade gelen</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Yeni</div>
+    <div class="text-2xl font-bold text-slate-900 mt-1">{{ breakdown.new }}</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Öğreniliyor</div>
+    <div class="text-2xl font-bold text-amber-700 mt-1">{{ breakdown.learning }}</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Pekiştirme</div>
+    <div class="text-2xl font-bold text-emerald-700 mt-1">{{ breakdown.review }}</div>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <div class="text-xs text-slate-500 uppercase tracking-wider">Toplam</div>
+    <div class="text-2xl font-bold text-slate-700 mt-1">{{ breakdown.total }}</div>
+  </div>
+</div>
+
+{% if due_cards %}
+<div class="bg-white border border-slate-200 rounded-lg p-6 mb-6">
+  <p class="text-sm text-slate-600 mb-5 leading-relaxed">
+    <b>Her konu için kendinizi değerlendirin:</b> Bu konuyu şimdi hatırlıyor musunuz?
+    Cevabınıza göre sistem bir sonraki tekrar zamanını hesaplar.
+  </p>
+
+  <div class="space-y-3">
+    {% for card in due_cards %}
+    <div class="border border-slate-200 rounded-lg p-4 hover:border-indigo-300 transition">
+      <div class="flex items-start justify-between gap-4 flex-wrap">
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-xs font-medium px-2 py-0.5 rounded
+                         {% if card.state == 'new' %}bg-slate-100 text-slate-700
+                         {% elif card.state == 'learning' %}bg-amber-100 text-amber-800
+                         {% elif card.state == 'relearning' %}bg-rose-100 text-rose-800
+                         {% else %}bg-emerald-100 text-emerald-800{% endif %}">
+              {{ state_labels[card.state] }}
+            </span>
+            <span class="text-xs text-slate-400">{{ card.topic.subject.name }}</span>
+          </div>
+          <div class="font-medium text-slate-900">{{ card.topic.name }}</div>
+          {% if card.last_reviewed_at %}
+          <div class="text-xs text-slate-500 mt-1">
+            Son tekrar: {{ card.last_reviewed_at.strftime('%d.%m.%Y') }}
+            · {{ card.review_count }} kez çalışıldı
+            {% if card.lapse_count %}· {{ card.lapse_count }} kez unutuldu{% endif %}
+          </div>
+          {% else %}
+          <div class="text-xs text-slate-500 mt-1">İlk kez çalışılıyor</div>
+          {% endif %}
+        </div>
+
+        <form method="post" action="/student/review/{{ card.id }}" class="flex gap-1.5 flex-shrink-0">
+          <button type="submit" name="rating" value="1"
+                  class="px-3 py-2 rounded text-xs font-medium bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200"
+                  title="Hatırlamadım, baştan çalışayım">
+            🔁 Tekrar
+          </button>
+          <button type="submit" name="rating" value="2"
+                  class="px-3 py-2 rounded text-xs font-medium bg-amber-50 hover:bg-amber-100 text-amber-700 border border-amber-200"
+                  title="Zorlandım ama hatırladım">
+            😐 Zor
+          </button>
+          <button type="submit" name="rating" value="3"
+                  class="px-3 py-2 rounded text-xs font-medium bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200"
+                  title="İyi hatırladım">
+            🙂 İyi
+          </button>
+          <button type="submit" name="rating" value="4"
+                  class="px-3 py-2 rounded text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200"
+                  title="Kolayca hatırladım">
+            😎 Kolay
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center">
+  {% if breakdown.total == 0 %}
+  <div class="text-5xl mb-3">📚</div>
+  <h2 class="text-lg font-semibold text-slate-900 mb-2">Henüz tekrar kartınız yok</h2>
+  <p class="text-sm text-slate-500 max-w-md mx-auto">
+    Öğretmeniniz size konu tekrar kartı atadığında burada görünecek.
+    Tekrar sistemi konuları aralıklarla hatırlatarak hafızada kalıcılığı artırır.
+  </p>
+  {% else %}
+  <div class="text-5xl mb-3">🎉</div>
+  <h2 class="text-lg font-semibold text-slate-900 mb-2">Bugünlük her şey tamam!</h2>
+  <p class="text-sm text-slate-500">
+    Vadesi gelen konunuz yok. Sonraki vade için sabırla bekleyin.
+  </p>
+  {% endif %}
+</div>
+{% endif %}
+
+<details class="mt-6 text-xs text-slate-500">
+  <summary class="cursor-pointer hover:text-slate-700">ℹ️ Aralıklı tekrar (FSRS) nasıl çalışır?</summary>
+  <div class="mt-3 p-4 bg-slate-50 rounded text-sm leading-relaxed text-slate-600">
+    <p>
+      <b>FSRS (Free Spaced Repetition Scheduler)</b>, Anki gibi araçlarda kullanılan modern
+      bir aralıklı tekrar algoritmasıdır.
+    </p>
+    <ul class="list-disc list-inside mt-2 space-y-1">
+      <li><b>Kolay</b> dediğinizde sistem konuyu uzun süreliğine "rafa kaldırır" (örn. haftalar sonra).</li>
+      <li><b>İyi</b> = standart yol; aralık tedrici büyür.</li>
+      <li><b>Zor</b> = aralık kısalır, daha sık tekrar.</li>
+      <li><b>Tekrar</b> = unutuldu, baştan çalışmak için yarın/öbürgün gelir.</li>
+    </ul>
+    <p class="mt-2">
+      Hedef: ortalama <b>%90</b> hatırlama oranı. Sistem her tekrarda hafıza modelinizi günceller.
+    </p>
+  </div>
+</details>
+{% endblock %}

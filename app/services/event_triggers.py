@@ -56,7 +56,16 @@ def _today_utc() -> date:
 
 
 def _active_parents_for(db: Session, student_id: int) -> list[User]:
-    """Bu öğrenciye bağlı, aktif PARENT kullanıcıları."""
+    """Bu öğrenciye bağlı, aktif PARENT kullanıcıları.
+
+    Pasif (is_paused=True) olanlar bildirim almaz — listeye girmez.
+    Ayrıca öğrencinin kendisi pasifse boş liste döner; o öğrenci için
+    hiç event-tetikli bildirim gitmez. Single point of control: tüm
+    on_* fonksiyonları bu helper'ı kullanır.
+    """
+    student = db.get(User, student_id)
+    if student is None or student.is_paused:
+        return []
     links = (
         db.query(ParentStudentLink)
         .options(joinedload(ParentStudentLink.parent))
@@ -66,7 +75,7 @@ def _active_parents_for(db: Session, student_id: int) -> list[User]:
     out = []
     for link in links:
         p = link.parent
-        if p and p.is_active and p.role == UserRole.PARENT:
+        if p and p.is_active and not p.is_paused and p.role == UserRole.PARENT:
             out.append(p)
     return out
 
@@ -193,6 +202,7 @@ def on_program_published(
     summary = {"fired": 0, "skipped_recent": 0, "no_tasks": False}
 
     days = [week_start + timedelta(days=i) for i in range((week_end - week_start).days + 1)]
+    # Sadece yayınlanmış görevler veli duyurusuna girer — taslaklar görmezden gelinir.
     tasks = (
         db.query(Task)
         .options(joinedload(Task.book_items))
@@ -200,6 +210,7 @@ def on_program_published(
             Task.student_id == student.id,
             Task.date >= week_start,
             Task.date <= week_end,
+            Task.is_draft.is_(False),
         )
         .all()
     )

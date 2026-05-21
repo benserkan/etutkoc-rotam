@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% block title %}Sistem Hataları — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/security-monitor" class="text-sm text-slate-500 hover:text-slate-700">← Güvenlik Kamerası</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🔧 Sistem Hata Kamerası</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Programın hangi sayfasında, kim için, ne hatasıyla çöktüğünü gösterir. Aynı bug birden çok
+    kullanıcıyı vurmuş olsa bile tek satırda toplanır ("27 kez oldu" gibi).
+  </p>
+</div>
+
+{# "Bu sayfada ne yazıyor?" — sade açıklama #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Hata grubu</b> — aynı bug farklı kullanıcıları vurursa, hepsi tek satırda toplanır
+      (örn. "şu sayfada bu hata 27 kez oldu"). Karışıklık olmasın diye.
+    </div>
+    <div>
+      <b>Açık / Çözüldü</b> — bug fix yapıp yayına alınca "çözüldü" işaretle. Daha sonra aynı
+      hata tekrar oluşursa otomatik açılır ("bug geri geldi" sinyali).
+    </div>
+    <div>
+      <b>500 hatası</b> — sunucu tarafında bir şey çöktü, kullanıcının suçu yok. Olduğu gibi
+      buraya kaydedilir. (Teknik: HTTP 5xx hataları)
+    </div>
+    <div>
+      <b>İstisna / Exception</b> — Python kodunun beklemediği bir durumla karşılaşması (örn.
+      "sayı yerine harf geldi", "bağlantı kesildi"). Yakalanmazsa sayfa çöker.
+    </div>
+    <div>
+      <b>Stack trace</b> — hatanın hangi kod satırından kaynaklandığını gösteren teknik döküm.
+      Geliştiriciye lazım, bug'ı bulmak için.
+    </div>
+    <div>
+      <b>İmza</b> — aynı bug'ı tanımak için kullanılan benzersiz parmak izi (sayfa + hata tipi
+      + kod konumu). Sayesinde dedup yapılır. (Teknik: <code class="text-xs">signature</code>)
+    </div>
+  </div>
+</details>
+
+{% set q = request.query_params %}
+{% if q.get('ok') %}
+  <div class="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">✓ {{ q.get('ok') }}</div>
+{% endif %}
+{% if q.get('err') %}
+  <div class="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ q.get('err') }}</div>
+{% endif %}
+
+<div class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
+  <div class="p-3 rounded-lg
+    {% if data.summary.open_groups > 5 %}bg-rose-50 border border-rose-200
+    {% elif data.summary.open_groups > 0 %}bg-amber-50 border border-amber-200
+    {% else %}bg-emerald-50 border border-emerald-200{% endif %}">
+    <div class="text-xs text-slate-700 flex items-center gap-1">
+      Çözülmemiş bug sayısı
+      <span class="cursor-help text-slate-400" title="Şu an aktif olan hata grupları — her grup bir farklı bug'dır. Sıfır olmalı ideal.">ⓘ</span>
+    </div>
+    <div class="text-2xl font-semibold mt-1">{{ data.summary.open_groups }}</div>
+  </div>
+  <div class="p-3 rounded-lg bg-orange-50 border border-orange-200">
+    <div class="text-xs text-orange-700 flex items-center gap-1">
+      Son 24 saatte yeni bug
+      <span class="cursor-help text-orange-500" title="Son 24 saatte ilk kez ortaya çıkan yeni hata grupları. Artıyorsa yayında deploy regresyonu olabilir.">ⓘ</span>
+    </div>
+    <div class="text-2xl font-semibold text-orange-900 mt-1">{{ data.summary.new_groups_24h }}</div>
+  </div>
+  <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+    <div class="text-xs text-slate-700 flex items-center gap-1">
+      Son 24 saatte mağdur sayısı
+      <span class="cursor-help text-slate-400" title="Son 24 saatte hata yüzünden sayfası çöken toplam kullanıcı sayısı (her ayrı çöküş bir olaydır).">ⓘ</span>
+    </div>
+    <div class="text-2xl font-semibold text-slate-900 mt-1">{{ data.summary.total_events_24h }}</div>
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+  {# Hata grupları (sol, geniş) #}
+  <div class="lg:col-span-2 bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">Açık Hata Grupları</h2>
+      <div class="text-xs text-slate-500">En son tetiklenen üstte. Çöz → resolved; tekrar tetiklenirse otomatik açılır.</div>
+    </div>
+    {% if not data.error_groups %}
+      <div class="px-4 py-10 text-center text-sm text-emerald-600">🟢 Açık hata grubu yok — temiz.</div>
+    {% else %}
+      <div class="divide-y divide-slate-100">
+        {% for g in data.error_groups %}
+          <details class="px-4 py-3 hover:bg-slate-50">
+            <summary class="cursor-pointer flex items-center gap-3">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs
+                {% if g.status_code >= 500 %}bg-rose-100 text-rose-800
+                {% else %}bg-amber-100 text-amber-800{% endif %}">
+                {{ g.status_code }}
+              </span>
+              <code class="text-xs text-indigo-700 font-mono">{{ g.method }} {{ g.endpoint }}</code>
+              <span class="text-sm text-slate-700 ml-auto">
+                <span class="font-semibold">{{ g.count }}</span> kez
+              </span>
+              <span class="text-xs text-slate-500 ml-3">{{ humanize_ago(g.age_seconds) }}</span>
+            </summary>
+            <div class="mt-3 ml-1 text-xs space-y-2">
+              <div>
+                <span class="text-slate-600 font-medium">{{ g.exception_type }}</span>
+                {% if g.exception_message %}
+                  <span class="text-slate-700">— {{ g.exception_message }}</span>
+                {% endif %}
+              </div>
+              {% if g.stack_trace %}
+                <pre class="bg-slate-900 text-slate-100 p-2 rounded overflow-x-auto text-[11px] leading-relaxed max-h-64">{{ g.stack_trace[:3000] }}{% if g.stack_trace|length > 3000 %}
+…
+[{{ g.stack_trace|length - 3000 }} karakter daha]{% endif %}</pre>
+              {% endif %}
+              <div class="flex items-center justify-between gap-3 pt-2">
+                <div class="text-slate-500">
+                  ilk: {{ g.first_seen_at|dt_dual }} ·
+                  son: {{ g.last_seen_at|dt_dual }}
+                  {% if g.last_ip %} · <code>{{ g.last_ip }}</code>{% endif %}
+                </div>
+                <form method="post" action="/admin/security-monitor/system/{{ g.id }}/resolve"
+                      class="flex items-center gap-2">
+                  <input type="text" name="note" maxlength="200" placeholder="Açıklama (opsiyonel)"
+                         class="px-2 py-1 border border-slate-300 rounded text-xs w-48">
+                  <button class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded">
+                    Çöz
+                  </button>
+                </form>
+              </div>
+            </div>
+          </details>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </div>
+
+  {# Endpoint top (sağ) #}
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">En Çok Hata Veren Endpoint'ler</h2>
+      <div class="text-xs text-slate-500">Son 24 saat — total event sayısına göre.</div>
+    </div>
+    {% if not data.endpoint_top %}
+      <div class="px-4 py-6 text-sm text-slate-500">—</div>
+    {% else %}
+      <ul class="divide-y divide-slate-100">
+        {% for e in data.endpoint_top %}
+          <li class="px-4 py-2">
+            <div class="flex items-center justify-between text-sm">
+              <code class="text-xs text-slate-700 truncate">{{ e.method }} {{ e.endpoint }}</code>
+              <span class="text-rose-700 font-semibold ml-2">{{ e.total }}</span>
+            </div>
+            <div class="text-[11px] text-slate-500">{{ e.groups }} farklı sebep</div>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+
+</div>
+
+{# Slow requests #}
+<div class="mt-5 bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Yavaş İstekler (24h, >1.5sn)</h2>
+    <div class="text-xs text-slate-500">En yavaş 20 istek — performans dar boğazı.</div>
+  </div>
+  {% if not data.slow_requests %}
+    <div class="px-4 py-6 text-sm text-emerald-600">🟢 Son 24 saatte yavaş istek yok.</div>
+  {% else %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">Endpoint</th>
+          <th class="px-3 py-2 text-right">Süre</th>
+          <th class="px-3 py-2 text-left">Durum</th>
+          <th class="px-3 py-2 text-left">Zaman</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for s in data.slow_requests %}
+          <tr class="hover:bg-slate-50">
+            <td class="px-3 py-2"><code class="text-xs text-slate-700">{{ s.method }} {{ s.endpoint }}</code></td>
+            <td class="px-3 py-2 text-right
+              {% if s.response_time_ms >= 5000 %}text-rose-700 font-semibold
+              {% elif s.response_time_ms >= 3000 %}text-amber-700 font-semibold
+              {% else %}text-slate-700{% endif %}">
+              {{ "%.2f"|format(s.response_time_ms / 1000) }}sn
+            </td>
+            <td class="px-3 py-2 text-xs">
+              <span class="inline-flex items-center px-2 py-0.5 rounded
+                {% if s.status_code >= 500 %}bg-rose-100 text-rose-700
+                {% elif s.status_code >= 400 %}bg-amber-100 text-amber-700
+                {% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                {{ s.status_code }}
+              </span>
+            </td>
+            <td class="px-3 py-2 text-xs text-slate-500">{{ s.recorded_at|dt_dual }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<div class="mt-6 text-xs text-slate-400">
+  Veri zamanı: {{ data.generated_at|dt_tr_full }}
+</div>
+{% endblock %}

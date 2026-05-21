@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+{% block title %}Yönetim Paneli — Vitrin Kataloğu{% endblock %}
+
+{% block content %}
+
+{# ─── Başlık ──────────────────────────────────────────────────── #}
+<div class="mb-6 flex items-start justify-between gap-4">
+  <div>
+    <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">Vitrin Yönetim Paneli</h1>
+    <p class="text-sm text-slate-500 mt-1 max-w-2xl">
+      Anasayfa kart kataloğunun tek noktadan görünümü. Tüm sıralama, öğrenme ve
+      deney mekanizmalarının özeti + dikkat gereken durumlar.
+    </p>
+    <p class="text-[11px] text-slate-400 mt-1">
+      Son güncelleme: {{ data.generated_at.strftime('%Y-%m-%d %H:%M UTC') }}
+    </p>
+  </div>
+  <div class="shrink-0 flex flex-wrap items-center gap-2">
+    <a href="/admin/feature-catalog"
+       class="inline-flex items-center gap-1 px-3 py-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-300">
+      Kart Listesi
+    </a>
+    <a href="/admin/feature-catalog/experiments"
+       class="inline-flex items-center gap-1 px-3 py-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-300">
+      A/B Deneyleri
+    </a>
+    <a href="/admin/feature-catalog/new"
+       class="inline-flex items-center gap-1 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+      ＋ Yeni Kart
+    </a>
+  </div>
+</div>
+
+{# ─── Üst sayım kartları ──────────────────────────────────────── #}
+{% set s = data.summary %}
+<div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 mb-5">
+  <a href="/admin/feature-catalog"
+     class="bg-white border border-slate-200 hover:border-slate-300 rounded-lg p-3 transition">
+    <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Toplam kart</div>
+    <div class="text-2xl font-semibold text-slate-800 mt-0.5">{{ s.total }}</div>
+  </a>
+  <a href="/admin/feature-catalog?status_filter=published"
+     class="bg-white border border-slate-200 hover:border-emerald-300 rounded-lg p-3 transition">
+    <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Yayında</div>
+    <div class="text-2xl font-semibold text-emerald-700 mt-0.5">{{ s.published }}</div>
+  </a>
+  <div class="bg-white border border-slate-200 rounded-lg p-3">
+    <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Anasayfada</div>
+    <div class="text-2xl font-semibold text-slate-800 mt-0.5">{{ s.landing }}</div>
+  </div>
+  <a href="/admin/feature-catalog?status_filter=draft"
+     class="bg-white border border-slate-200 hover:border-amber-300 rounded-lg p-3 transition">
+    <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Taslak</div>
+    <div class="text-2xl font-semibold text-amber-700 mt-0.5">{{ s.draft }}</div>
+  </a>
+  <a href="/admin/feature-catalog/discovery-queue"
+     class="bg-white border {% if s.queue_pending > 0 %}border-amber-300{% else %}border-slate-200{% endif %} hover:border-amber-400 rounded-lg p-3 transition">
+    <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Onay bekliyor</div>
+    <div class="text-2xl font-semibold {% if s.queue_pending > 0 %}text-amber-700{% else %}text-slate-400{% endif %} mt-0.5">
+      {{ s.queue_pending }}
+    </div>
+  </a>
+  <a href="/admin/feature-catalog/experiments"
+     class="bg-white border {% if s.active_experiment > 0 %}border-emerald-300{% else %}border-slate-200{% endif %} hover:border-emerald-400 rounded-lg p-3 transition">
+    <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Aktif deney</div>
+    <div class="text-2xl font-semibold {% if s.active_experiment > 0 %}text-emerald-700{% else %}text-slate-400{% endif %} mt-0.5">
+      {{ s.active_experiment }}
+    </div>
+  </a>
+</div>
+
+{# ─── 2-sütunlu grid: sol = anasayfa sağlığı + son 7 gün, sağ = anomaliler ─── #}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-5 mb-5">
+
+  {# Sol: Anasayfa sağlığı #}
+  <div class="lg:col-span-2 space-y-5">
+
+    {% set lh = data.landing_health %}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-700">Anasayfa Sağlığı</h2>
+          <p class="text-[11px] text-slate-500 mt-0.5">
+            Şu anda anasayfada görünen kartların yapısı.
+          </p>
+        </div>
+      </div>
+      {% if lh.diversity_pct >= 75 %}
+        {% set div_tone = 'emerald' %}{% set div_msg = 'Çeşitli — kartlar farklı temalardan' %}
+      {% elif lh.diversity_pct >= 50 %}
+        {% set div_tone = 'amber' %}{% set div_msg = 'Orta — bazı kartlar benzer temadan' %}
+      {% else %}
+        {% set div_tone = 'rose' %}{% set div_msg = 'Zayıf — kartlar birbirine çok yakın' %}
+      {% endif %}
+      <div class="grid grid-cols-3 gap-4">
+        <div>
+          <div class="text-[11px] uppercase tracking-wider text-slate-500">Kart sayısı</div>
+          <div class="text-3xl font-semibold text-slate-800 mt-0.5">{{ lh.landing_count }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] uppercase tracking-wider text-slate-500">Çeşitlilik</div>
+          <div class="text-3xl font-semibold text-{{ div_tone }}-700 mt-0.5">%{{ lh.diversity_pct }}</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">{{ div_msg }}</div>
+        </div>
+        <div>
+          <div class="text-[11px] uppercase tracking-wider text-slate-500">Öğrenme aktif</div>
+          <div class="text-3xl font-semibold text-slate-800 mt-0.5">
+            {{ lh.learning_count }}<span class="text-base text-slate-400 font-normal"> / {{ lh.landing_count }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {# Son 7 gün metrikleri #}
+    {% set w = data.last_7d %}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="text-sm font-semibold text-slate-700 mb-1">Son {{ w.window_days }} Gün</h2>
+      <p class="text-[11px] text-slate-500 mb-4">
+        Anasayfa trafiği, yeni keşfedilen adaylar ve öğrenme güncellemeleri.
+      </p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div class="text-center bg-slate-50 rounded p-2">
+          <div class="text-2xl font-semibold text-slate-800">{{ w.impressions }}</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 mt-0.5">Gösterim</div>
+        </div>
+        <div class="text-center bg-slate-50 rounded p-2">
+          <div class="text-2xl font-semibold text-slate-800">{{ w.views }}</div>
+          <div class="text-[10px] uppercase tracking-wider text-slate-500 mt-0.5">Görüntüleme</div>
+        </div>
+        <div class="text-center bg-indigo-50 rounded p-2">
+          <div class="text-2xl font-semibold text-indigo-700">{{ w.total_clicks }}</div>
+          <div class="text-[10px] uppercase tracking-wider text-indigo-700/70 mt-0.5">Tıklama</div>
+        </div>
+        <div class="text-center bg-emerald-50 rounded p-2">
+          <div class="text-2xl font-semibold text-emerald-700">%{{ w.ctr_pct }}</div>
+          <div class="text-[10px] uppercase tracking-wider text-emerald-700/70 mt-0.5">CTR</div>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3 mt-3 text-xs">
+        <div class="flex items-center gap-2 text-slate-600">
+          <span class="text-slate-400">🤖</span>
+          <span><strong class="text-slate-800">{{ w.new_discoveries }}</strong> yeni aday keşfedildi</span>
+        </div>
+        <div class="flex items-center gap-2 text-slate-600">
+          <span class="text-slate-400">🧠</span>
+          <span><strong class="text-slate-800">{{ w.bandit_updates }}</strong> öğrenme güncellemesi</span>
+        </div>
+      </div>
+    </div>
+
+    {# Aktif deney özeti #}
+    {% if data.experiment %}
+    {% set e = data.experiment %}
+    <div class="bg-white border border-emerald-200 rounded-lg p-5">
+      <div class="flex items-start justify-between gap-3 mb-3">
+        <div>
+          <h2 class="text-sm font-semibold text-slate-700">
+            Aktif A/B Deneyi
+            <span class="ml-2 text-[10px] uppercase tracking-wider text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">Çalışıyor</span>
+          </h2>
+          <div class="mt-1 font-medium text-slate-900">{{ e.name }}</div>
+          <div class="text-[11px] text-slate-400 font-mono">{{ e.slug }} · {{ e.started_days_ago }} gün önce başladı</div>
+        </div>
+        <a href="/admin/feature-catalog/experiments/{{ e.id }}"
+           class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Detay →</a>
+      </div>
+      <div class="grid grid-cols-{{ e.variants|length }} gap-3 mt-3">
+        {% for slug, info in e.variants.items() %}
+        <div class="bg-slate-50 border border-slate-200 rounded p-3">
+          <div class="flex items-center gap-1.5 mb-1">
+            <span class="text-xs font-medium text-slate-700">{{ info.label }}</span>
+            {% if info.is_control %}
+            <span class="text-[10px] px-1 rounded bg-slate-200 text-slate-600">kontrol</span>
+            {% endif %}
+          </div>
+          <div class="text-xl font-semibold text-slate-800">
+            %{{ (info.ctr * 100) | round(2) }}
+          </div>
+          <div class="text-[10px] text-slate-500">
+            {{ info.total_clicks }} / {{ info.impression }} tıklama
+          </div>
+          {% if info.vs_control_significant %}
+          <div class="mt-1 text-[10px] text-emerald-700 font-medium">
+            ✓ anlamlı fark
+          </div>
+          {% elif info.lift_pct is not none %}
+          <div class="mt-1 text-[10px] {% if info.lift_pct > 0 %}text-emerald-600{% elif info.lift_pct < 0 %}text-rose-600{% else %}text-slate-500{% endif %}">
+            {{ '+' if info.lift_pct >= 0 else '' }}{{ info.lift_pct | round(0) | int }}% kontrolden
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="bg-white border border-slate-200 rounded-lg p-5 text-center text-sm text-slate-500">
+      Şu anda çalışan A/B deney yok.
+      <a href="/admin/feature-catalog/experiments/new" class="text-indigo-600 hover:text-indigo-800 ml-1">Yeni deney oluştur →</a>
+    </div>
+    {% endif %}
+
+  </div>
+
+  {# Sağ: Anomaliler + son aktivite #}
+  <div class="space-y-5">
+
+    {# Anomaliler #}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="text-sm font-semibold text-slate-700 mb-1">Dikkat Gerekli</h2>
+      <p class="text-[11px] text-slate-500 mb-3">
+        Otomatik tespit edilen durumlar.
+      </p>
+      {% if not data.anomalies %}
+      <div class="text-sm text-emerald-700 py-2">
+        ✓ Sistem sağlıklı, bilinen sorun yok.
+      </div>
+      {% else %}
+      <div class="space-y-2">
+        {% for a in data.anomalies %}
+        <div class="border border-{{ a.severity }}-200 bg-{{ a.severity }}-50 rounded-lg p-3">
+          <div class="text-sm font-medium text-{{ a.severity }}-800">{{ a.title }}</div>
+          <div class="text-[11px] text-{{ a.severity }}-700 mt-1">{{ a.hint }}</div>
+          <a href="{{ a.action_url }}"
+             class="inline-block mt-1.5 text-xs text-{{ a.severity }}-700 underline underline-offset-2 hover:no-underline">
+            {{ a.action_label }} →
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    {# Son aktivite #}
+    <div class="bg-white border border-slate-200 rounded-lg p-5">
+      <h2 class="text-sm font-semibold text-slate-700 mb-3">Son Hareketler</h2>
+      {% if not data.recent_audit %}
+      <div class="text-sm text-slate-400 py-2">Henüz kayıt yok.</div>
+      {% else %}
+      <ol class="space-y-2.5">
+        {% for r in data.recent_audit %}
+        <li class="text-xs">
+          <div class="flex items-baseline gap-2">
+            <span class="text-slate-400 whitespace-nowrap">{{ humanize_ago(r.ago_seconds) }}</span>
+            <span class="text-slate-700">{{ r.action_label }}</span>
+          </div>
+          {% if r.target_slug %}
+          <div class="text-[10px] text-slate-400 font-mono pl-1 mt-0.5">{{ r.target_slug }}</div>
+          {% endif %}
+        </li>
+        {% endfor %}
+      </ol>
+      {% endif %}
+    </div>
+
+  </div>
+
+</div>
+
+<p class="mt-6 text-xs text-slate-500">
+  Bu panel salt-okunur; tüm değişiklikler ilgili sayfalarda yapılır (kart listesi, onay kuyruğu, deneyler).
+</p>
+
+{% endblock %}

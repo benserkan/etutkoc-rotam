@@ -39,11 +39,29 @@ logger = logging.getLogger(__name__)
 def _fire_task_completed_event(db: Session, student: User) -> None:
     """on_task_completed çağrısını try/except ile sarmala — bildirim hatası
     görev tamamlama akışını bozmasın. Çağrıdan sonra commit yapılır.
+
+    Ek: pasif öğrenci görev tamamladıysa otonom resume tetikle (auto_*
+    sebepli pause ise). Manuel pasif olan öğrenci etkilenmez.
     """
     try:
         on_task_completed(db, student)
     except Exception as e:
         logger.exception("on_task_completed event hatası (öğrenci=%s): %s", student.id, e)
+    try:
+        from app.models import AuditAction
+        from app.services.audit import log_action
+        from app.services.pause import maybe_auto_resume
+        if maybe_auto_resume(db, student):
+            log_action(
+                db,
+                action=AuditAction.USER_AUTO_RESUME,
+                actor_id=None,
+                target_type="user",
+                target_id=student.id,
+                details={"trigger": "task_completed"},
+            )
+    except Exception as e:
+        logger.exception("auto-resume task hatasi student=%s: %s", student.id, e)
 
 
 router = APIRouter(prefix="/student")
@@ -57,14 +75,20 @@ TR_MONTHS = [
 
 
 def _load_day_tasks(db: Session, student_id: int, d: date) -> list[Task]:
+    # is_draft=False filtresi: öğretmenin henüz yayınlamadığı taslak görevler
+    # öğrenciye gösterilmez. Yayınlanma anında bu filtre düşer.
     return (
         db.query(Task)
         .options(
             joinedload(Task.book_items).joinedload(TaskBookItem.book),
             joinedload(Task.book_items).joinedload(TaskBookItem.section).joinedload(BookSection.topic),
         )
-        .filter(Task.student_id == student_id, Task.date == d)
-        .order_by(Task.order, Task.id)
+        .filter(
+            Task.student_id == student_id,
+            Task.date == d,
+            Task.is_draft.is_(False),
+        )
+        .order_by(Task.scheduled_hour.is_(None), Task.scheduled_hour, Task.order, Task.id)
         .all()
     )
 
@@ -160,6 +184,17 @@ def student_day(
             except Exception:
                 task_max_counts[t.id] = t.book_items[0].planned_count
 
+    # Bu haftanın öğretmen notları (read-only). Hafta = öğrencinin anchor bloğu.
+    from app.models import WeekNote
+    from app.routes.teacher_program import _student_week_start
+    week_start_for_day = _student_week_start(db, user, d)
+    week_notes = (
+        db.query(WeekNote)
+        .filter(WeekNote.student_id == user.id, WeekNote.week_start == week_start_for_day)
+        .order_by(WeekNote.order.asc(), WeekNote.id.asc())
+        .all()
+    )
+
     return templates.TemplateResponse(
         "student/day.html",
         {
@@ -184,6 +219,8 @@ def student_day(
             "trend_planned": trend_planned,
             "subject_list": subject_list,
             "task_max_counts": task_max_counts,
+            "week_notes": week_notes,
+            "week_start_for_day": week_start_for_day,
             **ctx,
         },
     )
@@ -209,7 +246,11 @@ def student_week(
             joinedload(Task.book_items).joinedload(TaskBookItem.book),
             joinedload(Task.book_items).joinedload(TaskBookItem.section).joinedload(BookSection.topic),
         )
-        .filter(Task.student_id == user.id, Task.date.in_(days))
+        .filter(
+            Task.student_id == user.id,
+            Task.date.in_(days),
+            Task.is_draft.is_(False),  # taslak görevler öğrenciye gösterilmez
+        )
         .order_by(Task.date, Task.order, Task.id)
         .all()
     )
@@ -263,7 +304,11 @@ def weekly_report_print(
             joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject),
             joinedload(Task.book_items).joinedload(TaskBookItem.section).joinedload(BookSection.topic),
         )
-        .filter(Task.student_id == user.id, Task.date.in_(days))
+        .filter(
+            Task.student_id == user.id,
+            Task.date.in_(days),
+            Task.is_draft.is_(False),
+        )
         .order_by(Task.date, Task.order, Task.id)
         .all()
     )
@@ -374,6 +419,7 @@ def student_book_grid(
     db: Session = Depends(get_db),
 ):
     """Sinema-koltuk grid (öğrenci tarafı) — kendi kitap görünümü."""
+    from app.routes.teacher_program import build_book_grid_slots
     sb = (
         db.query(StudentBook)
         .options(
@@ -387,6 +433,8 @@ def student_book_grid(
     if not sb:
         raise HTTPException(status_code=404, detail="Bu kitap size atanmamış")
     pmap = {p.book_section_id: p for p in sb.section_progress}
+    section_ids = [sec.id for sec in sb.book.sections]
+    slots_map = build_book_grid_slots(db, user.id, section_ids, teacher_student_id=None)
     sections_data = []
     total_completed = 0
     total_reserved = 0
@@ -394,7 +442,12 @@ def student_book_grid(
         sp = pmap.get(sec.id)
         completed = sp.completed_count if sp else 0
         reserved = sp.reserved_count if sp else 0
-        sections_data.append({"section": sec, "completed": completed, "reserved": reserved})
+        sections_data.append({
+            "section": sec,
+            "completed": completed,
+            "reserved": reserved,
+            "slots": slots_map.get(sec.id, {"completed": [], "reserved": []}),
+        })
         total_completed += completed
         total_reserved += reserved
     return templates.TemplateResponse(
@@ -475,7 +528,11 @@ def student_week_print(
             joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject),
             joinedload(Task.book_items).joinedload(TaskBookItem.section).joinedload(BookSection.topic),
         )
-        .filter(Task.student_id == user.id, Task.date.in_(days))
+        .filter(
+            Task.student_id == user.id,
+            Task.date.in_(days),
+            Task.is_draft.is_(False),
+        )
         .order_by(Task.date, Task.order, Task.id)
         .all()
     )
@@ -483,11 +540,74 @@ def student_week_print(
     for t in tasks:
         tasks_by_day[t.date].append(t)
 
+    # Her gün için "geçmiş aynı haftagünündeki ortalama tamamlanma yüzdesi"
+    # (örn. Pazar için son 12 Pazar) ve şu anki görev sayısı.
+    PAST_WEEKS = 12
+    past_dates_by_day: dict[date, list[date]] = {
+        d: [d - timedelta(days=7 * i) for i in range(1, PAST_WEEKS + 1)] for d in days
+    }
+    all_past_dates: list[date] = []
+    for lst in past_dates_by_day.values():
+        all_past_dates.extend(lst)
+    past_items: list[tuple[date, int, int]] = []
+    if all_past_dates:
+        rows = (
+            db.query(Task.date, TaskBookItem.planned_count, TaskBookItem.completed_count)
+            .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+            .filter(
+                Task.student_id == user.id,
+                Task.date.in_(all_past_dates),
+                Task.is_draft.is_(False),
+            )
+            .all()
+        )
+        past_items = [(r[0], r[1] or 0, r[2] or 0) for r in rows]
+    day_stats: dict[date, dict] = {}
+    for d in days:
+        plist = past_dates_by_day[d]
+        pset = set(plist)
+        planned_sum = 0
+        completed_sum = 0
+        for dt, pc, cc in past_items:
+            if dt in pset:
+                planned_sum += pc
+                completed_sum += cc
+        pct = (
+            round(100 * completed_sum / planned_sum) if planned_sum > 0 else None
+        )
+        day_stats[d] = {
+            "history_pct": pct,
+            "history_samples": planned_sum,
+            "task_count": len(tasks_by_day[d]),
+        }
+
     # Academic year (opsiyonel)
     academic_year = None
     if user.academic_year_id:
         from app.models import AcademicYear
         academic_year = db.query(AcademicYear).filter(AcademicYear.id == user.academic_year_id).first()
+
+    # Hafta notları — pencere start tarihinde tam denk gelene öncelik;
+    # tam denk gelmiyorsa öğrencinin o günü içeren anchor bloğuna düş.
+    from app.models import WeekNote
+    from app.routes.teacher_program import _student_week_start
+    note_week_start = start
+    notes_q = (
+        db.query(WeekNote)
+        .filter(WeekNote.student_id == user.id, WeekNote.week_start == note_week_start)
+        .order_by(WeekNote.order.asc(), WeekNote.id.asc())
+        .all()
+    )
+    if not notes_q:
+        anchor_start = _student_week_start(db, user, start)
+        if anchor_start != start:
+            note_week_start = anchor_start
+            notes_q = (
+                db.query(WeekNote)
+                .filter(WeekNote.student_id == user.id, WeekNote.week_start == note_week_start)
+                .order_by(WeekNote.order.asc(), WeekNote.id.asc())
+                .all()
+            )
 
     return templates.TemplateResponse(
         "student/week_print.html",
@@ -500,6 +620,8 @@ def student_week_print(
             "end": days[-1],
             "days": days,
             "tasks_by_day": tasks_by_day,
+            "day_stats": day_stats,
+            "week_notes": notes_q,
             "tr_weekdays": TR_WEEKDAYS,
             "tr_months": TR_MONTHS,
         },
@@ -627,6 +749,12 @@ def set_item_completed(
         # Sadece yeni COMPLETED'a geçtiyse event fırlat (tekrar tetikleme yok)
         if not previously_completed:
             _fire_task_completed_event(db, user)
+            # Stage 14: rozet kontrolü (idempotent, hata sayfa render'ını etkilemez)
+            try:
+                from app.services.gamification import evaluate_badges_for_student
+                evaluate_badges_for_student(db, student_id=user.id)
+            except Exception as e:
+                logger.exception("badge eval error student=%s: %s", user.id, e)
     else:
         task.status = TaskStatus.PARTIAL
         task.completed_at = None

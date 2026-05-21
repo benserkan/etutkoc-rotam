@@ -1,0 +1,41 @@
+{% if error %}
+<div class="p-3 rounded bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ error }}</div>
+{% else %}
+<div class="p-3 rounded
+  {% if count > 0 %}bg-emerald-50 border border-emerald-200{% else %}bg-amber-50 border border-amber-200{% endif %}">
+  <div class="text-sm font-semibold
+    {% if count > 0 %}text-emerald-900{% else %}text-amber-900{% endif %}">
+    {% if count == 0 %}
+      Bu segmentte şu anda hedef bulunamadı.
+    {% else %}
+      {{ count }} hedef
+      {% if inst_count and user_count %}
+        ({{ inst_count }} kurum + {{ user_count }} bağımsız öğretmen)
+      {% elif inst_count %}
+        (kurum)
+      {% elif user_count %}
+        (bağımsız öğretmen)
+      {% endif %}
+    {% endif %}
+  </div>
+  {% if preview %}
+  <div class="text-xs text-slate-600 mt-1">Örnek (ilk {{ preview|length }}):</div>
+  <ul class="text-xs text-slate-700 mt-1 space-y-0.5">
+    {% for o in preview %}
+    <li class="flex items-center gap-2">
+      <span class="text-slate-400">·</span>
+      <span class="text-[10px]">
+        {% if o.owner_type == 'institution' %}🏢{% else %}👤{% endif %}
+      </span>
+      <a href="{{ o.url }}" target="_blank"
+         class="hover:text-indigo-700 hover:underline">{{ o.name }}</a>
+      <span class="font-mono text-[10px] text-slate-400">{{ o.plan }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+  {% if count > preview|length %}
+  <div class="text-xs text-slate-500 mt-1.5">… ve {{ count - preview|length }} hedef daha</div>
+  {% endif %}
+  {% endif %}
+</div>
+{% endif %}

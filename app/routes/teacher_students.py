@@ -4,19 +4,21 @@ import secrets
 import string
 from urllib.parse import quote
 
-from fastapi import APIRouter, Depends, Form, Request, status
+from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
 from fastapi.responses import PlainTextResponse, RedirectResponse, Response
 from sqlalchemy.orm import Session
 
 from app.deps import get_db, require_teacher
 from app.models import (
     AcademicYear,
+    AuditAction,
     GraduateMode,
     Track,
     User,
     UserRole,
     derive_curriculum_model,
 )
+from app.services.audit import log_action
 from app.services.csv_import import (
     bulk_create_students,
     parse_students_csv,
@@ -618,4 +620,87 @@ def import_results_csv(
         headers={
             "Content-Disposition": 'attachment; filename="ogrenci_gecici_sifreler.csv"'
         },
+    )
+
+
+# ---------------------------- Öğrenci pause / resume ----------------------------
+
+
+def _get_my_student(db: Session, teacher_id: int, student_id: int) -> User:
+    """Sadece kendi öğrencisi olmasını garantile (tenant isolation)."""
+    s = (
+        db.query(User)
+        .filter(
+            User.id == student_id,
+            User.role == UserRole.STUDENT,
+            User.teacher_id == teacher_id,
+        )
+        .first()
+    )
+    if not s:
+        raise HTTPException(status_code=404, detail="Öğrenci bulunamadı")
+    return s
+
+
+@router.post("/{student_id}/pause-alerts")
+def pause_student_alerts(
+    student_id: int,
+    request: Request,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrenciyi 'pasif' al — uyarılar susturulur.
+
+    is_active'ten FARKLI: öğrenci giriş yapabilir, planlarını görür ama
+    at-risk panel + burnout + veliye bildirim akışları durur. Manuel pause
+    sonrası cron 7 gün auto-pause girişimi yapmaz (sticky override
+    last_manual_resume_at ile değil; manuel pause zaten "kasten" yapıldı).
+    """
+    from app.services.pause import REASON_MANUAL, pause_user
+
+    student = _get_my_student(db, user.id, student_id)
+    pause_user(db, student, actor=user, reason=REASON_MANUAL)
+    log_action(
+        db,
+        action=AuditAction.USER_PAUSE_ALERTS,
+        actor_id=user.id,
+        target_type="user",
+        target_id=student.id,
+        request=request,
+        details={"role": "student", "reason": REASON_MANUAL},
+    )
+    return RedirectResponse(
+        url="/teacher/students?ok=" + quote(
+            f"{student.full_name} pasif — uyarıları susturuldu."
+        ),
+        status_code=303,
+    )
+
+
+@router.post("/{student_id}/resume-alerts")
+def resume_student_alerts(
+    student_id: int,
+    request: Request,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Pasif öğrencinin uyarılarını tekrar aç (manuel resume → 7 gün sticky)."""
+    from app.services.pause import resume_user
+
+    student = _get_my_student(db, user.id, student_id)
+    resume_user(db, student, actor=user, is_auto_resume=False)
+    log_action(
+        db,
+        action=AuditAction.USER_RESUME_ALERTS,
+        actor_id=user.id,
+        target_type="user",
+        target_id=student.id,
+        request=request,
+        details={"role": "student"},
+    )
+    return RedirectResponse(
+        url="/teacher/students?ok=" + quote(
+            f"{student.full_name} aktif — uyarıları açıldı."
+        ),
+        status_code=303,
     )

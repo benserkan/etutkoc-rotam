@@ -3,15 +3,125 @@
 
 {% block content %}
 <div class="mb-6">
-  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Hedef Yönetimi</p>
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Müfredat İlerleme + Kişisel Hedefler</p>
   <h1 class="text-2xl font-bold text-slate-900 mt-1">
-    {{ student.full_name }} — Hedef Ağacı
+    {{ student.full_name }} — Hedef Paneli
   </h1>
   <p class="text-sm text-slate-600 mt-1">
-    Bu öğrenci için sınav, ders, konu ve operasyonel hedef düğümlerini yönetin.
-    Yaprak hedeflerdeki ilerleme otomatik üst düğümlere yansır.
+    Sol: kitap envanterinden gerçek müfredat ilerlemesi (görevlerden otomatik beslenir).
+    Sağ: elle koyduğun haftalık/günlük/özel hedefler. Sınav netleri için ayrı bir sayfa kullan
+    (operasyonel hedefler ile karışmasın).
   </p>
 </div>
+
+<div class="mb-5 p-3 rounded-lg bg-sky-50 border border-sky-200 text-xs text-sky-900 leading-relaxed flex items-start gap-2">
+  <span class="text-base flex-shrink-0">ℹ️</span>
+  <div>
+    <b>Müfredat ilerlemesi</b>: test havuzu tamamlama yüzdesi — sınav neti tahmini değildir.
+    Her bölüm için varsayılan hedef <b>5 test</b> (kitap envanteri varsa onun sayısı).
+    Eski "Türkçe 20 net" tarzı sınav hedefleri bu görünümden kaldırıldı; sınav netlerini ayrı
+    bir alana taşıyoruz.
+  </div>
+</div>
+
+{# ---------- MÜFREDAT İLERLEME ÖZETİ ---------- #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+  <div class="bg-white border border-slate-200 rounded-xl p-3">
+    <p class="text-xs text-slate-500">Aktif Ders</p>
+    <p class="text-xl font-bold text-slate-900 mt-1">{{ subjects|length }}</p>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-xl p-3">
+    <p class="text-xs text-slate-500">Aktif Konu</p>
+    <p class="text-xl font-bold text-slate-900 mt-1">{{ topic_count }}</p>
+  </div>
+  <div class="bg-white border border-emerald-200 rounded-xl p-3">
+    <p class="text-xs text-emerald-700">Bitmiş Konu</p>
+    <p class="text-xl font-bold text-emerald-700 mt-1">
+      {% set finished = namespace(n=0) %}
+      {% for s in subjects %}{% for t in s.topics %}{% if t.progress_pct >= 100 %}{% set finished.n = finished.n + 1 %}{% endif %}{% endfor %}{% endfor %}
+      {{ finished.n }}
+    </p>
+  </div>
+  <div class="bg-white border border-brand-teal/30 rounded-xl p-3">
+    <p class="text-xs text-brand-teal">Genel İlerleme</p>
+    <p class="text-xl font-bold text-brand-teal mt-1">%{{ overall_pct }}</p>
+  </div>
+</div>
+
+{# ---------- DERSLER + KONU AĞACI (otomatik) ---------- #}
+{% if subjects %}
+<div class="space-y-2 mb-6">
+  {% for s in subjects %}
+  <details class="bg-white border border-slate-200 rounded-xl overflow-hidden"
+           {% if s.progress_pct < 100 %}open{% endif %}>
+    <summary class="cursor-pointer list-none px-4 py-3 flex items-center gap-3 hover:bg-slate-50">
+      <span class="text-2xl flex-shrink-0">📘</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <h2 class="font-semibold text-slate-900">{{ s.subject_name }}</h2>
+          <span class="text-sm font-bold
+                       {% if s.progress_pct >= 80 %}text-emerald-600
+                       {% elif s.progress_pct >= 50 %}text-brand-teal
+                       {% elif s.progress_pct >= 25 %}text-amber-600
+                       {% else %}text-rose-500{% endif %}">
+            %{{ s.progress_pct }}
+          </span>
+        </div>
+        <div class="mt-1.5 h-1.5 bg-slate-100 rounded overflow-hidden">
+          <div class="h-full
+                      {% if s.progress_pct >= 100 %}bg-emerald-500
+                      {% elif s.progress_pct >= 60 %}bg-brand-teal
+                      {% elif s.progress_pct >= 30 %}bg-amber-400
+                      {% else %}bg-rose-400{% endif %}"
+               style="width: {{ s.progress_pct }}%"></div>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">
+          {{ s.total_completed }} / {{ s.total_target }} test · {{ s.topics|length }} aktif konu
+        </div>
+      </div>
+      <span class="text-slate-400 text-xs">▼</span>
+    </summary>
+    <div class="border-t border-slate-100 bg-slate-50/30 p-3 space-y-1.5">
+      {% for t in s.topics %}
+      <div class="bg-white border border-slate-200 rounded-md p-2.5 flex items-center gap-3">
+        <span class="text-base">📖</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <span class="text-sm font-medium text-slate-800 truncate">{{ t.section_label }}</span>
+            <span class="text-xs font-semibold
+                         {% if t.progress_pct >= 100 %}text-emerald-600
+                         {% elif t.progress_pct >= 50 %}text-brand-teal
+                         {% else %}text-slate-500{% endif %}">
+              {{ t.completed_tests }}/{{ t.target_tests }}
+              <span class="text-[10px] text-slate-400">%{{ t.progress_pct }}</span>
+              {% if t.progress_pct >= 100 %}<span class="ml-1">✓</span>{% endif %}
+            </span>
+          </div>
+          <div class="mt-1 h-1 bg-slate-100 rounded overflow-hidden">
+            <div class="h-full
+                        {% if t.progress_pct >= 100 %}bg-emerald-500
+                        {% elif t.progress_pct >= 60 %}bg-brand-teal
+                        {% elif t.progress_pct >= 30 %}bg-amber-400
+                        {% else %}bg-rose-400{% endif %}"
+                 style="width: {{ t.progress_pct }}%"></div>
+          </div>
+          <div class="text-[10px] text-slate-400 mt-0.5">{{ t.book_name }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+</div>
+{% else %}
+<div class="bg-slate-50 rounded-xl p-6 text-center mb-6 border border-slate-200">
+  <span class="text-3xl block mb-2">📚</span>
+  <p class="text-sm text-slate-700 font-medium">Henüz aktif konu yok</p>
+  <p class="text-xs text-slate-500 mt-1">
+    Kitap ataması yapıp günlük programa görev koyduğunda burası otomatik dolacak.
+  </p>
+</div>
+{% endif %}
 
 {% set qs = request.query_params %}
 {% if qs.get('ok') %}
@@ -27,28 +137,13 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-  {# ---------- AĞAÇ ---------- #}
+  {# ---------- KİŞİSEL / OPERASYONEL HEDEFLER (elle) ---------- #}
   <div class="lg:col-span-2 space-y-4">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-      <div class="bg-white border border-slate-200 rounded-xl p-3">
-        <p class="text-xs text-slate-500">Toplam</p>
-        <p class="text-xl font-bold text-slate-900 mt-1">{{ summary.total }}</p>
-      </div>
-      <div class="bg-white border border-sky-200 rounded-xl p-3">
-        <p class="text-xs text-sky-700">Aktif</p>
-        <p class="text-xl font-bold text-sky-700 mt-1">{{ summary.active }}</p>
-      </div>
-      <div class="bg-white border border-emerald-200 rounded-xl p-3">
-        <p class="text-xs text-emerald-700">Tamam</p>
-        <p class="text-xl font-bold text-emerald-700 mt-1">{{ summary.achieved }}</p>
-      </div>
-      <div class="bg-white border border-slate-200 rounded-xl p-3">
-        <p class="text-xs text-slate-500">İlerleme</p>
-        <p class="text-xl font-bold text-slate-900 mt-1">
-          {% if summary.overall_pct is not none %}%{{ summary.overall_pct }}{% else %}—{% endif %}
-        </p>
-      </div>
-    </div>
+    <h2 class="text-lg font-semibold text-slate-900">⭐ Kişisel Hedefler</h2>
+    <p class="text-xs text-slate-500 -mt-2">
+      Haftalık (50 test çöz), günlük (4 saat çalış) ya da serbest hedefler. Üstte
+      müfredat ilerlemesi otomatik takip ediliyor — burası elle koyduğun hedefler için.
+    </p>
 
     <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
       {% if roots %}
@@ -58,21 +153,12 @@
         {% endfor %}
       {% else %}
       <div class="text-center py-10">
-        <span class="text-3xl block mb-2">🎯</span>
-        <p class="text-sm text-slate-700 font-medium">Henüz hedef yok</p>
-        <p class="text-xs text-slate-500 mt-1 mb-4 max-w-md mx-auto">
-          Öğrencinin sınav hedefinden ({{ student.effective_exam_label or '—' }}) otomatik
-          ders ağacı türetebilir veya sağdaki formla manuel hedef ekleyebilirsiniz.
+        <span class="text-3xl block mb-2">⭐</span>
+        <p class="text-sm text-slate-700 font-medium">Henüz kişisel hedef yok</p>
+        <p class="text-xs text-slate-500 mt-1 max-w-md mx-auto">
+          Sağdaki formla "Bu hafta 50 test çöz" veya "Bu ay deneme ortalamasını 5 yükselt"
+          gibi operasyonel hedefler ekleyebilirsin. Müfredat ilerlemesi zaten otomatik takip ediliyor.
         </p>
-        {% if student.effective_exam_target %}
-        <form method="post" action="/teacher/students/{{ student.id }}/goals/seed" class="inline">
-          <button type="submit"
-                  class="px-4 py-2 bg-brand-teal text-white rounded text-sm hover:bg-brand-tealDark"
-                  onclick="return confirm('{{ student.effective_exam_label }} sınavından otomatik ders ağacı oluşturulsun mu?')">
-            🤖 Sınav Hedefinden Otomatik Türet
-          </button>
-        </form>
-        {% endif %}
       </div>
       {% endif %}
     </div>

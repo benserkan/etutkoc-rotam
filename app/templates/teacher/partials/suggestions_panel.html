@@ -2,12 +2,14 @@
 {% set mat_pct = (maturity_value * 100) | round | int %}
 {% set mat_color = '#94a3b8' if maturity_value < 0.3 else ('#6366f1' if maturity_value < 0.7 else '#059669') %}
 
-<div id="suggestions-{{ target_date.isoformat() }}" class="border-t border-slate-100 bg-indigo-50/30">
+<div id="suggestions-{{ target_date.isoformat() }}" class="border-t border-slate-100 bg-indigo-50/30 ai-suggestions-block">
   <div class="px-5 py-2.5 flex items-center justify-between border-b border-indigo-100">
     <div class="flex items-center gap-2 flex-wrap">
       <span class="text-sm font-semibold text-indigo-900">✨ Öneriler</span>
       {% if suggestions %}
-      <span class="text-xs text-indigo-700">{{ suggestions|length }} öneri</span>
+      <span class="text-[10px] font-bold px-1.5 py-0.5 rounded ai-ready-badge" style="background:#10B981; color:#fff;">
+        🤖 AI hazır · {{ suggestions|length }} öneri
+      </span>
       {% endif %}
       <span class="ml-2 inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full border" style="border-color: {{ mat_color }}; color: {{ mat_color }};">
         <span class="w-1.5 h-1.5 rounded-full" style="background: {{ mat_color }};"></span>
@@ -102,8 +104,32 @@
           {% if s.topic_name %}<span class="text-slate-400"> ({{ s.topic_name }})</span>{% endif %}
           <span class="ml-1 text-xs text-slate-500">· {{ s.subject_name }}</span>
         </div>
-        <div class="text-[10px] text-slate-500 truncate">
-          {{ s.reasons | join(' · ') }} · güven %{{ conf_pct }}
+        {# Renkli emoji rozet seti — her reason string'i pattern eşleşmesiyle stillenir #}
+        <div class="flex flex-wrap items-center gap-1 mt-0.5">
+          {% for reason in s.reasons %}
+            {% set lower = reason|lower %}
+            {% if 'tekrar kartında' in lower or 'tekrar kartinda' in lower %}
+              {% set emoji = '🧠' %}{% set bg = '#FEE2E2' %}{% set fg = '#991B1B' %}{% set txt = 'Tekrar kartında zorlandı' %}
+            {% elif 'belirgin geride' in lower %}
+              {% set emoji = '📉' %}{% set bg = '#FECACA' %}{% set fg = '#7F1D1D' %}{% set txt = 'Geride kalma' %}
+            {% elif 'dikkat gerektir' in lower %}
+              {% set emoji = '⚠️' %}{% set bg = '#FEF3C7' %}{% set fg = '#92400E' %}{% set txt = 'Dikkat gerekiyor' %}
+            {% elif 'önceden atanmış' in lower or 'onceden atanmis' in lower %}
+              {% set emoji = '📅' %}{% set bg = '#DBEAFE' %}{% set fg = '#1E40AF' %}{% set txt = reason %}
+            {% elif 'reddet' in lower %}
+              {% set emoji = '🚫' %}{% set bg = '#FEE2E2' %}{% set fg = '#991B1B' %}{% set txt = reason %}
+            {% elif 'öğreniyor' in lower or 'ogreniyor' in lower %}
+              {% set emoji = '🌱' %}{% set bg = '#DCFCE7' %}{% set fg = '#166534' %}{% set txt = 'Sistem öğreniyor' %}
+            {% else %}
+              {% set emoji = '✨' %}{% set bg = '#F1F5F9' %}{% set fg = '#475569' %}{% set txt = reason %}
+            {% endif %}
+            <span class="inline-flex items-center gap-0.5 text-[9px] font-semibold px-1.5 py-0.5 rounded"
+                  style="background:{{ bg }}; color:{{ fg }};"
+                  title="{{ reason }}">
+              <span class="leading-none">{{ emoji }}</span><span>{{ txt }}</span>
+            </span>
+          {% endfor %}
+          <span class="text-[9px] text-slate-400 ml-1">güven %{{ conf_pct }}</span>
         </div>
       </div>
       <form hx-post="/teacher/students/{{ student_id }}/suggestions/accept"
@@ -132,3 +158,14 @@
   </div>
   {% endif %}
 </div>
+<style>
+  /* AI hazır rozeti — yumuşak nabız efekti (ilk yüklemede dikkat çeksin) */
+  .ai-ready-badge { animation: aiReady 1.6s ease-in-out 2; transform-origin: center; }
+  @keyframes aiReady {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(16,185,129,0.45); }
+    50% { box-shadow: 0 0 0 6px rgba(16,185,129,0); }
+  }
+  /* Önerilerin "hesaplandı" hissi — kart shimmer fade-in */
+  .ai-suggestions-block .suggestion-card { animation: aiShimmer 0.45s ease both; }
+  @keyframes aiShimmer { from { opacity: 0; transform: translateX(-6px); } to { opacity: var(--op, 1); transform: translateX(0); } }
+</style>

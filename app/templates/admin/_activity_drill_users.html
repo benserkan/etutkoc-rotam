@@ -1,0 +1,58 @@
+{#
+  Sprint 1 Faz I — Aktif kullanıcı drill-down partial.
+  Bekler: rows, window, window_label, role, role_label
+#}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden shadow-sm">
+
+  {# Belirgin başlık şeridi #}
+  <header class="px-4 py-3 bg-gradient-to-r from-indigo-100 to-indigo-50 border-b-2 border-indigo-300">
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+      <div class="min-w-0 flex-1">
+        <div class="text-[10px] uppercase tracking-wider text-indigo-700 font-semibold mb-0.5">
+          👥 Aktif Kullanıcı Listesi
+        </div>
+        <h3 class="text-base font-semibold text-slate-900">
+          {{ role_label }} — {{ window_label }}
+          <span class="text-slate-500 font-normal">({{ rows|length }} kişi)</span>
+        </h3>
+        <p class="text-xs text-slate-700 mt-1">
+          Bu pencerede sisteme en az 1 kez giriş yapan kullanıcılar.
+          En son giriş zamanına göre sıralı; kurum adına tıklayınca <b>Kurum 360</b>'a gider.
+        </p>
+      </div>
+      <button onclick="document.getElementById('drill-host').innerHTML=''"
+              class="px-2.5 py-1.5 rounded bg-white border border-slate-300 text-xs text-slate-600 hover:bg-slate-50 shrink-0">
+        Kapat ✕
+      </button>
+    </div>
+  </header>
+
+  {% if not rows %}
+  <div class="px-4 py-8 text-center text-sm text-slate-500">
+    Bu pencerede aktif {{ role_label|lower }} bulunamadı.
+  </div>
+  {% else %}
+  <ul class="divide-y divide-slate-100 max-h-96 overflow-y-auto">
+    {% for r in rows %}
+    <li class="px-4 py-2 flex items-center justify-between gap-3 hover:bg-slate-50">
+      <div class="min-w-0 flex-1">
+        <div class="text-sm font-medium text-slate-900 truncate">{{ r.name }}</div>
+        <div class="text-[11px] text-slate-500 truncate">
+          {{ r.email or '—' }}
+          {% if r.institution_name %}
+          · <a href="/admin/revenue/institutions/{{ r.institution_id }}"
+               class="text-indigo-600 hover:underline" target="_blank">{{ r.institution_name }}</a>
+          {% endif %}
+          {% if r.role %}
+          · <span class="text-slate-600">{{ r.role }}</span>
+          {% endif %}
+        </div>
+      </div>
+      <div class="text-[11px] text-slate-500 shrink-0 whitespace-nowrap">
+        {% if r.last_login_at %}{{ r.last_login_at|dt_dual }}{% else %}—{% endif %}
+      </div>
+    </li>
+    {% endfor %}
+  </ul>
+  {% endif %}
+</div>

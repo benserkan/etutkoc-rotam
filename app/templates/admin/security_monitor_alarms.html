@@ -1,0 +1,186 @@
+{% extends "base.html" %}
+{% block title %}Alarm Konfigürasyonu — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-start justify-between gap-3">
+  <div>
+    <a href="/admin/security-monitor" class="text-sm text-slate-500 hover:text-slate-700">← Güvenlik Kamerası</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">🔔 Alarm Ayarları</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Bir şey ters gittiğinde sana haber veren otomatik uyarı kuralları. Eşik aşıldığında
+      süper adminlere e-posta gider; sessizlik süresi (cooldown) ile alarm spam'ı engellenir.
+    </p>
+  </div>
+  <a href="/admin/security-monitor/live"
+     class="px-3 py-2 rounded-lg bg-purple-50 border border-purple-200 hover:bg-purple-100 text-sm text-purple-700 font-medium whitespace-nowrap">
+    🔴 Canlı Akış
+  </a>
+</div>
+
+{# "Bu sayfada ne yazıyor?" #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Alarm kuralı</b> — "Şu sayı şu kadarı aşarsa beni uyar" şeklinde önceden tanımlanmış
+      bir uyarı. Örnek: "Çözülmemiş güvenlik sinyali 0'dan fazlaysa uyar".
+    </div>
+    <div>
+      <b>Eşik</b> — alarmın tetiklenmesi için aşılması gereken sayı. Düşük eşik = sık alarm,
+      yüksek eşik = az alarm. (Teknik: <code class="text-xs">threshold</code>)
+    </div>
+    <div>
+      <b>Sessizlik süresi</b> — alarm bir kez tetiklendikten sonra, aynı kural için kaç dakika
+      tekrar tetiklenmez. Yangın alarmı dakikada bir çalsa kimse dinlemez; aynı mantık.
+      (Teknik: <code class="text-xs">cooldown</code>)
+    </div>
+    <div>
+      <b>Şimdi tara</b> — beklemeden tüm kuralları anlık değerlendir. Manuel kontrol için.
+    </div>
+    <div>
+      <b>Onaylanmamış</b> — alarm tetiklendi ama henüz "Gördüm" denmedi. "Gördüm" basılınca
+      onaylanır, mor/sarı badge'i kalkar.
+    </div>
+  </div>
+</details>
+
+{% set q = request.query_params %}
+{% if q.get('ok') %}<div class="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">✓ {{ q.get('ok') }}</div>{% endif %}
+{% if q.get('err') %}<div class="mb-4 p-3 rounded-lg bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ q.get('err') }}</div>{% endif %}
+
+<div class="mb-5 flex items-center justify-between">
+  <div class="text-sm">
+    <b>{{ unack_count }}</b> onaylanmamış alarm
+  </div>
+  <form method="post" action="/admin/security-monitor/alarms/scan" class="inline">
+    <button class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium">
+      🔍 Şimdi tara
+    </button>
+  </form>
+</div>
+
+{# Kurallar #}
+<div class="bg-white rounded-lg border border-slate-200 overflow-hidden mb-5">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Alarm Kuralları</h2>
+    <div class="text-xs text-slate-500">Her kuralın eşiğini, sessizlik süresini ve aktiflik durumunu değiştir.</div>
+  </div>
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+      <tr>
+        <th class="px-3 py-2 text-left">Kural</th>
+        <th class="px-3 py-2 text-right" title="Bu kuralın izlediği şu anki değer">Şu an</th>
+        <th class="px-3 py-2 text-right" title="Alarm tetiklenmesi için aşılması gereken sayı">Eşik</th>
+        <th class="px-3 py-2 text-right" title="Tetiklendikten sonra kaç dakika tekrar tetiklenmez">Sessizlik (dk)</th>
+        <th class="px-3 py-2 text-left" title="Alarm hangi kanaldan bildirilir">Kanal</th>
+        <th class="px-3 py-2 text-center">Aktif mi</th>
+        <th class="px-3 py-2 text-left">Son tetik zamanı</th>
+        <th class="px-3 py-2 text-right">Kaydet</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in rules %}
+        <tr>
+          <td class="px-3 py-2">
+            <form method="post" action="/admin/security-monitor/alarms/rules/{{ r.id }}/update" id="rule-form-{{ r.id }}"></form>
+            <div class="font-medium text-slate-900">{{ r.name }}</div>
+            <div class="text-xs text-slate-500">{{ r.description or '' }}</div>
+            <code class="text-[11px] text-slate-400">{{ r.key }}</code>
+          </td>
+          <td class="px-3 py-2 text-right">
+            {% set value = r.last_value or 0 %}
+            <span class="font-semibold
+              {% if value > r.threshold %}text-rose-700
+              {% elif r.last_value is none %}text-slate-400
+              {% else %}text-slate-900{% endif %}">{{ value }}</span>
+          </td>
+          <td class="px-3 py-2 text-right">
+            <input form="rule-form-{{ r.id }}" name="threshold" type="number" min="0" max="100000"
+                   value="{{ r.threshold }}"
+                   class="w-20 px-2 py-1 border border-slate-300 rounded text-xs text-right">
+          </td>
+          <td class="px-3 py-2 text-right">
+            <input form="rule-form-{{ r.id }}" name="cooldown_minutes" type="number" min="0" max="1440"
+                   value="{{ r.cooldown_minutes }}"
+                   class="w-20 px-2 py-1 border border-slate-300 rounded text-xs text-right">
+          </td>
+          <td class="px-3 py-2">
+            <input form="rule-form-{{ r.id }}" name="channels" type="text"
+                   value="{{ r.channels }}" placeholder="email,in_app"
+                   class="w-32 px-2 py-1 border border-slate-300 rounded text-xs">
+          </td>
+          <td class="px-3 py-2 text-center">
+            <input form="rule-form-{{ r.id }}" name="enabled" type="checkbox" value="1"
+                   {% if r.enabled %}checked{% endif %}>
+          </td>
+          <td class="px-3 py-2 text-xs text-slate-500">
+            {% if r.last_triggered_at %}{{ r.last_triggered_at|dt_dual }}{% else %}—{% endif %}
+          </td>
+          <td class="px-3 py-2 text-right">
+            <button form="rule-form-{{ r.id }}" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+              Kaydet
+            </button>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{# Son tetiklenenler #}
+<div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Son Tetiklenen Alarmlar</h2>
+    <div class="text-xs text-slate-500">Son 72 saat. "Gördüm" → acknowledged.</div>
+  </div>
+  {% if not events %}
+    <div class="px-4 py-10 text-center text-sm text-emerald-600">🟢 Son 72 saatte alarm yok.</div>
+  {% else %}
+    <table class="w-full text-sm">
+      <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">Şiddet</th>
+          <th class="px-3 py-2 text-left">Kural</th>
+          <th class="px-3 py-2 text-right">Değer/Eşik</th>
+          <th class="px-3 py-2 text-left">Zaman</th>
+          <th class="px-3 py-2 text-left">Teslim</th>
+          <th class="px-3 py-2 text-right">Aksiyon</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for e in events %}
+          {% set color = 'rose' if e.severity == 'critical' else ('amber' if e.severity == 'warn' else 'slate') %}
+          <tr class="hover:bg-slate-50 {% if not e.acknowledged_at %}bg-{{ color }}-50/30{% endif %}">
+            <td class="px-3 py-2">
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs bg-{{ color }}-100 text-{{ color }}-800">
+                {{ e.severity }}
+              </span>
+            </td>
+            <td class="px-3 py-2">
+              <div class="text-slate-900">{{ e.rule_name }}</div>
+              <code class="text-[11px] text-slate-400">{{ e.rule_key }}</code>
+            </td>
+            <td class="px-3 py-2 text-right text-sm">
+              <span class="font-semibold text-{{ color }}-700">{{ e.value }}</span>
+              <span class="text-slate-400 text-xs">/ {{ e.threshold }}</span>
+            </td>
+            <td class="px-3 py-2 text-xs text-slate-600">{{ e.triggered_at|dt_dual }}</td>
+            <td class="px-3 py-2 text-xs text-slate-500">{{ e.delivery_status }}</td>
+            <td class="px-3 py-2 text-right">
+              {% if not e.acknowledged_at %}
+                <form method="post" action="/admin/security-monitor/alarms/{{ e.id }}/ack" class="inline">
+                  <button class="text-xs text-emerald-600 hover:text-emerald-800 font-medium">Gördüm</button>
+                </form>
+              {% else %}
+                <span class="text-xs text-slate-400">✓ Onaylı</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+{% endblock %}

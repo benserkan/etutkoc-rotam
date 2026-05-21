@@ -31,6 +31,11 @@ class CronSchedule(Base):
     hour: Mapped[int] = mapped_column(Integer, nullable=False)
     minute: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     day_of_week: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Katman 11.J — interval_minutes dolu ise saatlik HH:MM yerine
+    # "her N dakikada bir" çalışır (last_run_at + N dakika geçtiyse due).
+    # hour/minute alanları yine yazılır (UI'da gösterilir) ama tetik kuralı
+    # interval_minutes mantığına geçer.
+    interval_minutes: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     enabled: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 

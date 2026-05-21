@@ -766,6 +766,88 @@ def add_section(
     )
 
 
+@router.post("/{book_id}/sections/bulk-from-catalog")
+async def bulk_add_sections_from_catalog(
+    book_id: int,
+    request: Request,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Subject'in Topic kataloğundan seçili konuları tek seferde BookSection olarak ekle.
+    Form: topic_ids[] = id, test_count_<id> = N (her seçili konu için)."""
+    book = (
+        db.query(Book)
+        .options(joinedload(Book.sections), joinedload(Book.student_books))
+        .filter(Book.id == book_id, Book.teacher_id == user.id)
+        .first()
+    )
+    if not book:
+        raise HTTPException(status_code=404, detail="Kitap bulunamadı")
+
+    form = await request.form()
+    raw_ids = form.getlist("topic_ids")
+    selected_topic_ids: list[int] = []
+    for v in raw_ids:
+        try:
+            selected_topic_ids.append(int(v))
+        except (TypeError, ValueError):
+            pass
+    if not selected_topic_ids:
+        return RedirectResponse(
+            url=f"/teacher/books/{book_id}?err=" + quote("Hiç konu seçilmedi."),
+            status_code=303,
+        )
+
+    accessible = {
+        t.id: t for t in _accessible_topics(db, book.subject_id, user.id)
+    }
+    existing_topic_ids = {s.topic_id for s in book.sections if s.topic_id is not None}
+    max_order = max((s.order for s in book.sections), default=-1)
+
+    added = 0
+    skipped_existing = 0
+    for tid in selected_topic_ids:
+        topic = accessible.get(tid)
+        if topic is None:
+            continue
+        if tid in existing_topic_ids:
+            skipped_existing += 1
+            continue
+        try:
+            tc = int(form.get(f"test_count_{tid}", "0") or "0")
+        except (TypeError, ValueError):
+            tc = 0
+        if tc < 1:
+            tc = book.avg_questions_per_test or 5
+        max_order += 1
+        section = BookSection(
+            book_id=book.id,
+            topic_id=tid,
+            label=topic.name,
+            test_count=tc,
+            order=max_order,
+        )
+        db.add(section)
+        db.flush()
+        for sb in book.student_books:
+            db.add(SectionProgress(
+                student_book_id=sb.id,
+                book_section_id=section.id,
+                reserved_count=0,
+                completed_count=0,
+            ))
+        added += 1
+
+    db.commit()
+    msg_parts = [f"{added} ünite eklendi"]
+    if skipped_existing:
+        msg_parts.append(f"{skipped_existing} konu zaten ekliydi (atlandı)")
+    return RedirectResponse(
+        url=f"/teacher/books/{book_id}?ok=" + quote(" · ".join(msg_parts)),
+        status_code=303,
+    )
+
+
 @router.post("/{book_id}/sections/{section_id}/edit")
 def edit_section(
     book_id: int,

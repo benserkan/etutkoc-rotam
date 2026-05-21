@@ -1,0 +1,8 @@
+[
+  {
+    "test": "e2e_institution",
+    "label": "B admin login 303",
+    "detail": "got 401; admin_b_id=68",
+    "severity": "high"
+  }
+]

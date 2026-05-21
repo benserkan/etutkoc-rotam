@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Çalışma DNA — {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="flex items-start justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <a href="/student" class="text-sm text-stone-500 hover:text-stone-700">← Bugün</a>
+    <h1 class="text-2xl font-semibold text-stone-900 mt-1">🧬 Çalışma DNA'm</h1>
+    <p class="text-sm text-stone-500 mt-1">
+      Son 28 gündeki çalışma örüntünüz ve tükenmişlik göstergeleriniz.
+    </p>
+  </div>
+  <a href="/demos?play=dna-profile"
+     class="inline-flex items-center gap-1.5 text-sm font-bold px-3 py-2 rounded-lg text-white hover:brightness-110 shadow-sm transition flex-shrink-0"
+     style="background:linear-gradient(135deg,#7C3AED,#5B21B6); box-shadow:0 4px 12px -4px rgba(91,33,182,0.45);"
+     title="2 dakikalık animasyonlu rehber — DNA panelini nasıl okuyacaksın">
+    <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/20 text-[10px]">▶</span>
+    Demo İzle
+  </a>
+</div>
+
+{# Burnout uyarıları üstte #}
+{% include "partials/_burnout_signals.html" %}
+
+{# DNA profil paneli #}
+<div class="mt-6">
+  {% include "partials/_dna_profile_panel.html" %}
+</div>
+{% endblock %}

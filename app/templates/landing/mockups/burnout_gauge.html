@@ -1,0 +1,21 @@
+{# Mockup: Burnout risk gauge + sinyal chipleri (slug=dna-risk).
+
+   "Çalışma DNA'sı ve Risk Paneli" kartının sağındaki yüzde gauge
+   (73/100) + 3 sinyal chip'i (Gece kuşu / Yoğunluk+ / Streak).
+   Mevcut anasayfa görüntüsü birebir korunur. #}
+<div class="flex-shrink-0 w-full sm:w-44 rounded-xl p-3 border" style="background:#F8FAFC; border-color:rgba(225,29,72,0.15);">
+  <div class="flex items-center justify-between mb-2">
+    <span class="text-[9px] uppercase tracking-wider font-bold text-stone-400">Burnout Risk</span>
+    <span class="text-xs font-extrabold" style="color:#DC2626">73<span class="text-stone-400 font-medium">/100</span></span>
+  </div>
+  {# Risk gauge bar #}
+  <div class="h-2 bg-stone-200 rounded-full overflow-hidden mb-2.5 relative">
+    <div class="h-full rounded-full"
+         style="width:73%; background: linear-gradient(90deg, #FCD34D 0%, #F97316 50%, #DC2626 100%);"></div>
+  </div>
+  <div class="flex flex-wrap gap-1">
+    <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded" style="background:#FEE2E2; color:#991B1B;">🦉 Gece kuşu</span>
+    <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded" style="background:#FEE2E2; color:#991B1B;">📈 Yoğunluk +</span>
+    <span class="text-[9px] font-semibold px-1.5 py-0.5 rounded" style="background:#FEF3C7; color:#92400E;">💔 Streak</span>
+  </div>
+</div>

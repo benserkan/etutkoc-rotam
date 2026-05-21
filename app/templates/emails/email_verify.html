@@ -1,0 +1,27 @@
+Subject: {{ app_name }} — E-posta adresinizi doğrulayın
+<div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; color: #1e293b;">
+  <h2 style="font-size: 18px; margin: 0 0 12px;">E-postanızı doğrulayın</h2>
+  <p style="font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
+    Merhaba {{ full_name }},
+  </p>
+  <p style="font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
+    {{ app_name }} hesabınızı oluşturduğunuz için teşekkürler. E-posta adresinizin
+    size ait olduğunu doğrulamak için aşağıdaki butona tıklayın. Bağlantı
+    <strong>{{ ttl_days }} gün</strong> geçerlidir.
+  </p>
+  <p style="margin: 0 0 20px;">
+    <a href="{{ verify_url }}"
+       style="display: inline-block; background: #4f46e5; color: #ffffff;
+              text-decoration: none; padding: 12px 22px; border-radius: 8px;
+              font-size: 14px; font-weight: 600;">
+      E-postamı doğrula
+    </a>
+  </p>
+  <p style="font-size: 12px; line-height: 1.6; color: #64748b; margin: 0 0 8px;">
+    Buton çalışmazsa bu bağlantıyı tarayıcınıza yapıştırın:<br />
+    <span style="word-break: break-all;">{{ verify_url }}</span>
+  </p>
+  <p style="font-size: 12px; line-height: 1.6; color: #64748b; margin: 16px 0 0;">
+    Bu hesabı siz oluşturmadıysanız bu e-postayı yok sayabilirsiniz.
+  </p>
+</div>

@@ -116,6 +116,12 @@ def _all_parent_student_pairs(db: Session) -> list[tuple[User, User, ParentStude
             continue
         if not link.parent.is_active or not link.student.is_active:
             continue
+        # is_paused: pasif öğrencinin velisine bildirim gitmez,
+        # pasif velinin kendisi de bildirim almaz. Tek noktada
+        # filtre — bu sayede tüm veli cron'ları (daily/empty/weekly/
+        # drop/exam-approaching/new-program) otomatik susar.
+        if link.parent.is_paused or link.student.is_paused:
+            continue
         if link.parent.role != UserRole.PARENT or link.student.role != UserRole.STUDENT:
             continue
         out.append((link.parent, link.student, link))
@@ -534,6 +540,38 @@ def trial_expire(db: Session, *, now: datetime) -> dict:
     return expire_trials(db, now=now)
 
 
+def dunning_send_reminders(db: Session, *, now: datetime) -> dict:
+    """Cron: tüm uygun faturalar için ödeme hatırlatma aşaması tetikle.
+
+    Günlük 09:00 UTC (TR 12:00). Her aşama bir kez gönderilir.
+    """
+    from app.services.dunning import run_dunning_for_all
+    return run_dunning_for_all(db, autocommit=True)
+
+
+def health_snapshot_daily(db: Session, *, now: datetime) -> dict:
+    """Cron: tüm aktif kurumlar için günlük sağlık skoru snapshot'ı kaydet.
+
+    Günlük 03:00 UTC. Sprint F.1 — Sağlık Skoru 2.0. "7 gün düşüş" + "öğretmen
+    kaybı" tetikleyicilerinin geçmiş karşılaştırması bu snapshot'lardan yapılır.
+    İdempotent — aynı (institution, date) için UPDATE eder.
+    """
+    from app.services.health_score_v2 import record_daily_snapshots
+    return record_daily_snapshots(db, snapshot_date=now.date(), autocommit=True)
+
+
+def invoices_mark_overdue(db: Session, *, now: datetime) -> dict:
+    """Cron: vadesi geçmiş PENDING faturaları OVERDUE'ya geçir.
+
+    Günlük 02:30 UTC. Sprint A.2 — ödeme takvimi banner ve drill için
+    bucket sınıflandırmasının doğru olması için PENDING + due_at < now
+    olan kayıtları OVERDUE'ye taşır. İdempotent.
+    """
+    from app.services.revenue_panel import mark_overdue
+    changed = mark_overdue(db, autocommit=True)
+    return {"marked_overdue": changed}
+
+
 def kvkk_apply_expired_deletions(db: Session, *, now: datetime) -> dict:
     """Cron: 30g grace period'u dolmuş silme taleplerini uygular.
 
@@ -607,6 +645,195 @@ def credits_monthly_refill(db: Session, *, now: datetime) -> dict:
     return monthly_refill(db, now=now)
 
 
+def auto_pause_inactive_users(db: Session, *, now: datetime) -> dict:
+    """Sessizleşen öğrenci/öğretmenleri otonom pasifleştir.
+
+    Eşik: öğrenci 21 gün, öğretmen 30 gün canlı sinyalsizse pasif.
+    Sinyaller: last_login_at + son tamamlanan görev + son oluşturulan görev.
+    Yeni hesap 14 gün, manuel resume sonrası 7 gün cooldown.
+    Panik koruyucu: aktif kullanıcının %5'inden fazlasını tek seferde pause etmez.
+
+    İlgili kayıtları audit log'a (USER_AUTO_PAUSE, actor=NULL) düşürür.
+    """
+    from app.models import AuditAction, UserRole
+    from app.services.audit import log_action
+    from app.services.pause import (
+        DAILY_AUTO_PAUSE_RATIO_LIMIT,
+        find_auto_pause_candidates,
+        pause_user,
+        REASON_AUTO_INACTIVITY,
+    )
+
+    candidates = find_auto_pause_candidates(db, now=now)
+    if not candidates:
+        return {"candidates": 0, "paused": 0}
+
+    active_total = (
+        db.query(User)
+        .filter(
+            User.is_active.is_(True),
+            User.is_paused.is_(False),
+            User.role.in_([UserRole.STUDENT, UserRole.TEACHER]),
+        )
+        .count()
+    )
+    # %5 panik koruyucu — en az 1 izin ver (küçük setlerde de çalışsın)
+    daily_limit = max(1, int(active_total * DAILY_AUTO_PAUSE_RATIO_LIMIT))
+    to_pause = candidates[:daily_limit]
+    over_limit = len(candidates) - len(to_pause)
+
+    paused_count = 0
+    errors: list[str] = []
+    for user, last_signal in to_pause:
+        try:
+            pause_user(db, user, actor=None, reason=REASON_AUTO_INACTIVITY)
+            log_action(
+                db,
+                action=AuditAction.USER_AUTO_PAUSE,
+                actor_id=None,
+                target_type="user",
+                target_id=user.id,
+                details={
+                    "role": user.role.value,
+                    "reason": REASON_AUTO_INACTIVITY,
+                    "last_signal_at": last_signal.isoformat() if last_signal else None,
+                },
+            )
+            paused_count += 1
+        except Exception as e:  # noqa: BLE001 - cron üst seviye
+            errors.append(f"user={user.id}: {e}")
+            logger.warning("auto_pause failed for user %s: %s", user.id, e)
+
+    return {
+        "candidates": len(candidates),
+        "paused": paused_count,
+        "over_limit_skipped": over_limit,
+        "daily_limit": daily_limit,
+        "errors": errors,
+    }
+
+
+# ---------------------------- Katman 11.J — Güvenlik Kamerası cron'ları ----------------------------
+
+
+def security_alarm_evaluate(db: Session, *, now: datetime) -> dict:
+    """5 dakikada bir alarm motorunu çalıştır.
+
+    Tüm enabled AlarmRule'lar değerlendirilir; eşik aşılırsa AlarmEvent +
+    email süper adminlere. Cooldown alarm_engine içinde uygulanır.
+    """
+    from app.services.alarm_engine import evaluate_all
+    results = evaluate_all(db)
+    triggered = sum(1 for r in results if r.triggered)
+    return {
+        "rules_evaluated": len(results),
+        "triggered": triggered,
+        "skipped_cooldown": sum(1 for r in results if r.skipped_reason == "cooldown"),
+        "skipped_disabled": sum(1 for r in results if r.skipped_reason == "disabled"),
+    }
+
+
+def abuse_scan(db: Session, *, now: datetime) -> dict:
+    """Saatlik abuse tespiti taraması.
+
+    4 dedektör (mass_invitation, mass_notification, multi_account, unsubscribe_spike)
+    çalıştırır; eşik aşılan kayıtlar AbuseSignal'a upsert edilir (24h dedup).
+    """
+    from app.services.abuse_detection import run_all
+    summary = run_all(db)
+    return {"detector_hits": summary, "total_hits": sum(summary.values())}
+
+
+# Retention sabitleri
+ERROR_EVENT_RETENTION_DAYS = 30
+SLOW_REQUEST_RETENTION_DAYS = 7
+
+
+def error_event_retention(db: Session, *, now: datetime) -> dict:
+    """30 günden eski resolved hata gruplarını sil. DB şişmesini önler.
+
+    Sadece resolved kayıtlar silinir — open hatalar korunur (henüz tetiklenirler).
+    """
+    from app.models import ErrorEvent
+    cutoff = now - timedelta(days=ERROR_EVENT_RETENTION_DAYS)
+    n_to_delete = (
+        db.query(ErrorEvent)
+        .filter(
+            ErrorEvent.resolved_at.isnot(None),
+            ErrorEvent.last_seen_at < cutoff,
+        )
+        .count()
+    )
+    deleted = (
+        db.query(ErrorEvent)
+        .filter(
+            ErrorEvent.resolved_at.isnot(None),
+            ErrorEvent.last_seen_at < cutoff,
+        )
+        .delete(synchronize_session=False)
+    )
+    db.flush()
+    logger.info(
+        "error_event_retention: %d resolved kayıt silindi (cutoff=%s)",
+        deleted, cutoff.isoformat(),
+    )
+    return {
+        "deleted": deleted,
+        "found": n_to_delete,
+        "cutoff": cutoff.isoformat(),
+        "retention_days": ERROR_EVENT_RETENTION_DAYS,
+    }
+
+
+def slow_request_retention(db: Session, *, now: datetime) -> dict:
+    """7 günden eski yavaş request log'larını sil (append-only tablo, hızla büyür)."""
+    from app.models import SlowRequestLog
+    cutoff = now - timedelta(days=SLOW_REQUEST_RETENTION_DAYS)
+    n_to_delete = (
+        db.query(SlowRequestLog)
+        .filter(SlowRequestLog.recorded_at < cutoff)
+        .count()
+    )
+    deleted = (
+        db.query(SlowRequestLog)
+        .filter(SlowRequestLog.recorded_at < cutoff)
+        .delete(synchronize_session=False)
+    )
+    db.flush()
+    logger.info(
+        "slow_request_retention: %d kayıt silindi (cutoff=%s)",
+        deleted, cutoff.isoformat(),
+    )
+    return {
+        "deleted": deleted,
+        "found": n_to_delete,
+        "cutoff": cutoff.isoformat(),
+        "retention_days": SLOW_REQUEST_RETENTION_DAYS,
+    }
+
+
+def security_integrity_scan(db: Session, *, now: datetime) -> dict:
+    """Günlük veri bütünlüğü taraması (orphan + KVKK SLA + cron drift özeti).
+
+    Sadece tespit yapar, otomatik düzeltme yok. Bulgu varsa
+    `last_error` field'ına özet yazılır (cron sağlık panosunda görülür).
+    """
+    from app.services.data_integrity import (
+        kvkk_sla_check,
+        orphan_scan,
+    )
+    orph = orphan_scan(db, limit=10)
+    sla = kvkk_sla_check(db)
+    summary = {
+        "orphan_findings": orph["total_findings"],
+        "kvkk_overdue": sla["overdue_count"],
+        "kvkk_open": sla["open_total"],
+    }
+    # Bulgular varsa hatayı işaretle (cron_runner success/fail mantığını
+    # bozmaz — exception fırlatmıyoruz; sadece dönen dict'te raporluyoruz).
+    return summary
+
+
 JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "daily_summary": daily_summary,
     "weekly_backstop": weekly_backstop,
@@ -616,8 +843,18 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "admin_weekly_digest": admin_weekly_digest,
     "credits_monthly_refill": credits_monthly_refill,
     "trial_expire": trial_expire,
+    "invoices_mark_overdue": invoices_mark_overdue,  # Sprint A.2 — ödeme takvimi
+    "dunning_send_reminders": dunning_send_reminders,  # Sprint C — dunning zinciri
+    "health_snapshot_daily": health_snapshot_daily,  # Sprint F.1 — sağlık snapshot
     "addons_monthly_renewal": addons_monthly_renewal,
     "subscription_resume": subscription_resume,
     "subscription_guarantee_eval": subscription_guarantee_eval,
     "kvkk_apply_expired_deletions": kvkk_apply_expired_deletions,
+    "auto_pause_inactive_users": auto_pause_inactive_users,
+    # Katman 11.J — Güvenlik Kamerası
+    "security_alarm_evaluate": security_alarm_evaluate,
+    "abuse_scan": abuse_scan,
+    "error_event_retention": error_event_retention,
+    "slow_request_retention": slow_request_retention,
+    "security_integrity_scan": security_integrity_scan,
 }

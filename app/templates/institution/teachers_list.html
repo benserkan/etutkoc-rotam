@@ -51,6 +51,20 @@
           {% if not s.teacher.is_active %}
           <span class="text-[10px] ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">pasif</span>
           {% endif %}
+          {# Uyarı susturma rozeti — is_active'ten ayrı, sadece alert susturma #}
+          {% if s.teacher.is_paused %}
+            {% if s.teacher.pause_reason and s.teacher.pause_reason.startswith('auto') %}
+            <span class="text-[10px] ml-1 px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300"
+                  title="Sistem tarafından sessizlik nedeniyle otomatik pasifleştirildi (uyarılar susturulmuş)">
+              🤖 Otomatik pasif
+            </span>
+            {% else %}
+            <span class="text-[10px] ml-1 px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300"
+                  title="Manuel olarak pasifleştirildi — uyarılar susturulmuş">
+              ⏸ Uyarılar sessiz
+            </span>
+            {% endif %}
+          {% endif %}
           <div class="text-[11px] text-slate-500 font-mono">{{ s.teacher.email }}</div>
         </td>
         <td class="px-4 py-2 text-right">{{ s.student_count }}</td>
@@ -72,15 +86,33 @@
           {% elif s.last_login_days == 1 %}dün
           {% else %}{{ s.last_login_days }}g{% endif %}
         </td>
-        <td class="px-4 py-2 text-right">
+        <td class="px-4 py-2 text-right space-x-2 whitespace-nowrap">
+          {# Uyarı susturma — yeni, is_active'ten ayrı (öğretmen giriş yapabilmeye devam eder) #}
+          {% if s.teacher.is_active %}
+            {% if s.teacher.is_paused %}
+            <form method="post" action="/institution/teachers/{{ s.teacher.id }}/resume-alerts" class="inline">
+              <button type="submit" class="text-[11px] text-emerald-600 hover:text-emerald-800"
+                      title="Uyarıları tekrar aç">▶ Aktif et</button>
+            </form>
+            {% else %}
+            <form method="post" action="/institution/teachers/{{ s.teacher.id }}/pause-alerts" class="inline"
+                  onsubmit="return confirm('{{ s.teacher.full_name }} pasife alınsın? Uyarıları susturulur, hesabı çalışmaya devam eder. Öğrencilerinin uyarıları ETKİLENMEZ.');">
+              <button type="submit" class="text-[11px] text-slate-600 hover:text-slate-800"
+                      title="Uyarıları sustur (giriş yapabilir)">⏸ Pasife al</button>
+            </form>
+            {% endif %}
+            <span class="text-slate-300">·</span>
+          {% endif %}
+          {# Mevcut "tamamen deaktif" (login engelli) — değişmedi #}
           {% if s.teacher.is_active %}
           <form method="post" action="/institution/teachers/{{ s.teacher.id }}/deactivate" class="inline"
-                onsubmit="return confirm('{{ s.teacher.full_name }} pasifleştirilsin mi? Giriş yapamaz, verisi korunur.');">
-            <button type="submit" class="text-[11px] text-rose-600 hover:text-rose-800">Pasifleştir</button>
+                onsubmit="return confirm('{{ s.teacher.full_name }} HESAP devre dışı bırakılsın? Giriş yapamaz, verisi korunur.');">
+            <button type="submit" class="text-[11px] text-rose-600 hover:text-rose-800"
+                    title="Hesap girişi engellenir">Hesabı kapat</button>
           </form>
           {% else %}
           <form method="post" action="/institution/teachers/{{ s.teacher.id }}/activate" class="inline">
-            <button type="submit" class="text-[11px] text-emerald-600 hover:text-emerald-800">Aktifleştir</button>
+            <button type="submit" class="text-[11px] text-emerald-600 hover:text-emerald-800">Hesabı aç</button>
           </form>
           {% endif %}
         </td>

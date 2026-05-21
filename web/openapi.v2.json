@@ -1,0 +1,4410 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "ETÜTKOÇ API v2",
+    "version": "0.1.0",
+    "description": "Next.js BFF için JSON-only endpoint katmanı. Mobile için /api/v1 ayrıdır."
+  },
+  "paths": {
+    "/api/v2/auth/login": {
+      "post": {
+        "tags": [
+          "api-v2",
+          "v2-auth"
+        ],
+        "summary": "V2 Login",
+        "description": "E-posta + şifre → Set-Cookie ile JWT'ler kuruldu. Body'de sade user özeti.\n\napi_v1/auth.py:api_login ile aynı lockout + audit + generic error mesajı\npolitikası — kullanıcı sızıntısı (e-posta enumeration) önlenir.",
+        "operationId": "v2_login_api_v2_auth_login_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/app__routes__api_v2__auth__LoginOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/refresh": {
+      "post": {
+        "tags": [
+          "api-v2",
+          "v2-auth"
+        ],
+        "summary": "V2 Refresh",
+        "description": "Refresh cookie → yeni access cookie.\n\nRefresh token rotation YOK (stateless, v1 ile aynı). Refresh süresi\ndolana kadar aynı refresh ile yeni access alınır. Şifre değişirse\npwd_stamp mismatch ile refresh de revoke olur.\n\nCevap body'sinde güncel user — frontend \"still logged in\" doğrulayabilir.",
+        "operationId": "v2_refresh_api_v2_auth_refresh_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPublic"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/logout": {
+      "post": {
+        "tags": [
+          "api-v2",
+          "v2-auth"
+        ],
+        "summary": "V2 Logout",
+        "description": "Cookie'leri sil + audit yaz.\n\nAuth ZORUNLU DEĞİL — geçersiz cookie ile de istek 200 döner (kullanıcı\ndeneyimi: \"logout\" her zaman çalışır, hata göstermez). Audit yalnız\ncookie'den user çözebilirse yazılır.",
+        "operationId": "v2_logout_api_v2_auth_logout_post",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v2/auth/me": {
+      "get": {
+        "tags": [
+          "api-v2",
+          "v2-auth"
+        ],
+        "summary": "V2 Auth Me",
+        "description": "Kolaylık endpoint'i — Next.js middleware kullanıcı çözmek için çağırır.\n\n`/api/v2/me` ile aynı user'ı döner ama Dalga 1'in MyAccountResponse şişmiş\npayload'ını taşımaz; sadece UserPublic. İstek başına maliyet minimum.",
+        "operationId": "v2_auth_me_api_v2_auth_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UserPublic"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/me": {
+      "get": {
+        "tags": [
+          "api-v2",
+          "v2-me"
+        ],
+        "summary": "Get Me",
+        "description": "Profil + kurum + veli bağları + KVKK durumu + son 20 talep.\n\nEşdeğer Jinja: app/routes/me.py:44-81 (me_page). Aynı veri, JSON şeklinde.",
+        "operationId": "get_me_api_v2_me_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MyAccountResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/me/data-export": {
+      "get": {
+        "tags": [
+          "api-v2",
+          "v2-me"
+        ],
+        "summary": "Export My Data",
+        "description": "KVKK madde 11 — kişisel veri ihracı.\n\nEşdeğer Jinja: app/routes/me.py:84-107. Anlık üretilir; DataSubjectRequest\nkayıt edilir (denetim izi). JSON dosyası attachment olarak iner.",
+        "operationId": "export_my_data_api_v2_me_data_export_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/me/data-delete": {
+      "post": {
+        "tags": [
+          "api-v2",
+          "v2-me"
+        ],
+        "summary": "Request Data Delete",
+        "description": "30 günlük grace period'lu silme talebi (RTBF).\n\nEşdeğer Jinja: app/routes/me.py:110-129. İdempotent (kvkk.py:348-361):\nbekleyen talep varsa onu döner.",
+        "operationId": "request_data_delete_api_v2_me_data_delete_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DataDeleteRequestBody"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResponse_DataDeleteResponse_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v2/me/data-delete/{request_id}/cancel": {
+      "post": {
+        "tags": [
+          "api-v2",
+          "v2-me"
+        ],
+        "summary": "Cancel My Delete Request",
+        "description": "Bekleyen silme talebini iptal et.\n\nEşdeğer Jinja: app/routes/me.py:132-151. Yetki kontrolü\n`app/services/kvkk.py:385-420` içinde (kendi talebi + admin yetkileri).",
+        "operationId": "cancel_my_delete_request_api_v2_me_data_delete__request_id__cancel_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "request_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Request Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MutationResponse_SimpleOk_"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "AccessTokenOut": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "Bearer"
+          },
+          "access_expires_in": {
+            "type": "integer",
+            "title": "Access Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "access_expires_in"
+        ],
+        "title": "AccessTokenOut"
+      },
+      "Body_accept_suggestion_teacher_students__student_id__suggestions_accept_post": {
+        "properties": {
+          "task_date": {
+            "type": "string",
+            "title": "Task Date"
+          },
+          "book_id": {
+            "type": "integer",
+            "title": "Book Id"
+          },
+          "section_id": {
+            "type": "integer",
+            "title": "Section Id"
+          },
+          "planned_count": {
+            "type": "integer",
+            "title": "Planned Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_date",
+          "book_id",
+          "section_id",
+          "planned_count"
+        ],
+        "title": "Body_accept_suggestion_teacher_students__student_id__suggestions_accept_post"
+      },
+      "Body_account_history_archive_admin_account_history_archive_post": {
+        "properties": {
+          "record_type": {
+            "type": "string",
+            "title": "Record Type"
+          },
+          "record_id": {
+            "type": "integer",
+            "title": "Record Id"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          },
+          "return_to": {
+            "type": "string",
+            "title": "Return To",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "record_type",
+          "record_id"
+        ],
+        "title": "Body_account_history_archive_admin_account_history_archive_post"
+      },
+      "Body_account_history_bulk_archive_admin_account_history_bulk_archive_post": {
+        "properties": {
+          "owner_type": {
+            "type": "string",
+            "title": "Owner Type"
+          },
+          "owner_id": {
+            "type": "integer",
+            "title": "Owner Id"
+          },
+          "years": {
+            "type": "integer",
+            "title": "Years",
+            "default": 3
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          },
+          "return_to": {
+            "type": "string",
+            "title": "Return To",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "owner_type",
+          "owner_id"
+        ],
+        "title": "Body_account_history_bulk_archive_admin_account_history_bulk_archive_post"
+      },
+      "Body_account_history_unarchive_admin_account_history_unarchive_post": {
+        "properties": {
+          "record_type": {
+            "type": "string",
+            "title": "Record Type"
+          },
+          "record_id": {
+            "type": "integer",
+            "title": "Record Id"
+          },
+          "return_to": {
+            "type": "string",
+            "title": "Return To",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "record_type",
+          "record_id"
+        ],
+        "title": "Body_account_history_unarchive_admin_account_history_unarchive_post"
+      },
+      "Body_add_item_teacher_tasks__task_id__items_post": {
+        "properties": {
+          "book_id": {
+            "type": "integer",
+            "title": "Book Id"
+          },
+          "section_id": {
+            "type": "integer",
+            "title": "Section Id"
+          },
+          "planned_count": {
+            "type": "integer",
+            "title": "Planned Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "book_id",
+          "section_id",
+          "planned_count"
+        ],
+        "title": "Body_add_item_teacher_tasks__task_id__items_post"
+      },
+      "Body_add_section_teacher_books__book_id__sections_post": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "topic_id": {
+            "type": "string",
+            "title": "Topic Id",
+            "default": ""
+          },
+          "test_count": {
+            "type": "integer",
+            "title": "Test Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "test_count"
+        ],
+        "title": "Body_add_section_teacher_books__book_id__sections_post"
+      },
+      "Body_admin_kvkk_reject_admin_kvkk_requests__request_id__reject_post": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_admin_kvkk_reject_admin_kvkk_requests__request_id__reject_post"
+      },
+      "Body_ai_suggest_sections_teacher_books__book_id__ai_suggest_post": {
+        "properties": {
+          "grade_hint": {
+            "type": "string",
+            "title": "Grade Hint",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_ai_suggest_sections_teacher_books__book_id__ai_suggest_post"
+      },
+      "Body_announcements_create_admin_announcements_post": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "severity": {
+            "type": "string",
+            "title": "Severity",
+            "default": "info"
+          },
+          "audience": {
+            "type": "string",
+            "title": "Audience",
+            "default": "all"
+          },
+          "starts_at": {
+            "type": "string",
+            "title": "Starts At",
+            "default": ""
+          },
+          "ends_at": {
+            "type": "string",
+            "title": "Ends At",
+            "default": ""
+          },
+          "dismissible": {
+            "type": "string",
+            "title": "Dismissible",
+            "default": "on"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "Body_announcements_create_admin_announcements_post"
+      },
+      "Body_apply_template_to_book_teacher_books__book_id__apply_template_post": {
+        "properties": {
+          "template_id": {
+            "type": "integer",
+            "title": "Template Id"
+          },
+          "overwrite": {
+            "type": "string",
+            "title": "Overwrite",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "template_id"
+        ],
+        "title": "Body_apply_template_to_book_teacher_books__book_id__apply_template_post"
+      },
+      "Body_approve_teacher_requests__req_id__approve_post": {
+        "properties": {
+          "response": {
+            "type": "string",
+            "title": "Response",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_approve_teacher_requests__req_id__approve_post"
+      },
+      "Body_ask_question_student_tasks__task_id__question_post": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "message"
+        ],
+        "title": "Body_ask_question_student_tasks__task_id__question_post"
+      },
+      "Body_change_user_role_admin_users__user_id__change_role_post": {
+        "properties": {
+          "new_role": {
+            "type": "string",
+            "title": "New Role"
+          },
+          "institution_id": {
+            "type": "string",
+            "title": "Institution Id",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_role"
+        ],
+        "title": "Body_change_user_role_admin_users__user_id__change_role_post"
+      },
+      "Body_create_book_teacher_books_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "publisher": {
+            "type": "string",
+            "title": "Publisher",
+            "default": ""
+          },
+          "subject_id": {
+            "type": "integer",
+            "title": "Subject Id"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type"
+          },
+          "avg_questions_per_test": {
+            "type": "string",
+            "title": "Avg Questions Per Test",
+            "default": ""
+          },
+          "target_grade_min": {
+            "type": "string",
+            "title": "Target Grade Min",
+            "default": ""
+          },
+          "target_grade_max": {
+            "type": "string",
+            "title": "Target Grade Max",
+            "default": ""
+          },
+          "target_graduate": {
+            "type": "string",
+            "title": "Target Graduate",
+            "default": ""
+          },
+          "template_id": {
+            "type": "string",
+            "title": "Template Id",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "subject_id",
+          "type"
+        ],
+        "title": "Body_create_book_teacher_books_post"
+      },
+      "Body_create_institution_admin_institutions_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "default": ""
+          },
+          "contact_email": {
+            "type": "string",
+            "title": "Contact Email",
+            "default": ""
+          },
+          "plan": {
+            "type": "string",
+            "title": "Plan",
+            "default": "free"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Body_create_institution_admin_institutions_post"
+      },
+      "Body_create_invitation_institution_invitations_post": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name",
+            "default": ""
+          },
+          "email": {
+            "type": "string",
+            "title": "Email",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_create_invitation_institution_invitations_post"
+      },
+      "Body_create_phase_teacher_years__year_id__phases_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "start_date": {
+            "type": "string",
+            "title": "Start Date"
+          },
+          "end_date": {
+            "type": "string",
+            "title": "End Date"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "REGULAR"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "start_date",
+          "end_date"
+        ],
+        "title": "Body_create_phase_teacher_years__year_id__phases_post"
+      },
+      "Body_create_set_teacher_book_sets_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Body_create_set_teacher_book_sets_post"
+      },
+      "Body_create_student_teacher_students_post": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "grade": {
+            "type": "string",
+            "title": "Grade",
+            "default": "8"
+          },
+          "academic_year_id": {
+            "type": "string",
+            "title": "Academic Year Id",
+            "default": ""
+          },
+          "track": {
+            "type": "string",
+            "title": "Track",
+            "default": ""
+          },
+          "graduate_mode": {
+            "type": "string",
+            "title": "Graduate Mode",
+            "default": ""
+          },
+          "entry_year_grade9": {
+            "type": "string",
+            "title": "Entry Year Grade9",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email"
+        ],
+        "title": "Body_create_student_teacher_students_post"
+      },
+      "Body_create_task_teacher_students__student_id__tasks_post": {
+        "properties": {
+          "task_date": {
+            "type": "string",
+            "title": "Task Date"
+          },
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": "test"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "book_id": {
+            "type": "string",
+            "title": "Book Id",
+            "default": ""
+          },
+          "section_id": {
+            "type": "string",
+            "title": "Section Id",
+            "default": ""
+          },
+          "planned_count": {
+            "type": "string",
+            "title": "Planned Count",
+            "default": ""
+          },
+          "scheduled_hour": {
+            "type": "string",
+            "title": "Scheduled Hour",
+            "default": ""
+          },
+          "link_url": {
+            "type": "string",
+            "title": "Link Url",
+            "default": ""
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          },
+          "subject_label": {
+            "type": "string",
+            "title": "Subject Label",
+            "default": ""
+          },
+          "keep_open": {
+            "type": "string",
+            "title": "Keep Open",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_date"
+        ],
+        "title": "Body_create_task_teacher_students__student_id__tasks_post"
+      },
+      "Body_create_teacher_institution_teachers_post": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email"
+        ],
+        "title": "Body_create_teacher_institution_teachers_post"
+      },
+      "Body_create_user_admin_users_post": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "institution_id": {
+            "type": "string",
+            "title": "Institution Id",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email",
+          "role"
+        ],
+        "title": "Body_create_user_admin_users_post"
+      },
+      "Body_create_year_teacher_years_post": {
+        "properties": {
+          "start_year": {
+            "type": "string",
+            "title": "Start Year"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start_year"
+        ],
+        "title": "Body_create_year_teacher_years_post"
+      },
+      "Body_crm_action_add_admin_revenue_institutions__institution_id__crm_actions_add_post": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          },
+          "result": {
+            "type": "string",
+            "title": "Result",
+            "default": "pending"
+          },
+          "follow_up_at": {
+            "type": "string",
+            "title": "Follow Up At",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "summary"
+        ],
+        "title": "Body_crm_action_add_admin_revenue_institutions__institution_id__crm_actions_add_post"
+      },
+      "Body_crm_action_complete_admin_revenue_institutions__institution_id__crm_actions__action_id__complete_post": {
+        "properties": {
+          "result": {
+            "type": "string",
+            "title": "Result"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "Body_crm_action_complete_admin_revenue_institutions__institution_id__crm_actions__action_id__complete_post"
+      },
+      "Body_crm_note_add_admin_revenue_institutions__institution_id__crm_notes_add_post": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "pinned": {
+            "type": "string",
+            "title": "Pinned",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "Body_crm_note_add_admin_revenue_institutions__institution_id__crm_notes_add_post"
+      },
+      "Body_edit_institution_admin_institutions__institution_id__edit_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "contact_email": {
+            "type": "string",
+            "title": "Contact Email",
+            "default": ""
+          },
+          "plan": {
+            "type": "string",
+            "title": "Plan",
+            "default": "free"
+          },
+          "is_active": {
+            "type": "string",
+            "title": "Is Active",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Body_edit_institution_admin_institutions__institution_id__edit_post"
+      },
+      "Body_edit_section_teacher_books__book_id__sections__section_id__edit_post": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "test_count": {
+            "type": "integer",
+            "title": "Test Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "test_count"
+        ],
+        "title": "Body_edit_section_teacher_books__book_id__sections__section_id__edit_post"
+      },
+      "Body_edit_set_teacher_book_sets__set_id__edit_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "Body_edit_set_teacher_book_sets__set_id__edit_post"
+      },
+      "Body_edit_task_teacher_tasks__task_id__edit_post": {
+        "properties": {
+          "type": {
+            "type": "string",
+            "title": "Type",
+            "default": "test"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "task_date": {
+            "type": "string",
+            "title": "Task Date"
+          },
+          "book_id": {
+            "type": "string",
+            "title": "Book Id",
+            "default": ""
+          },
+          "section_id": {
+            "type": "string",
+            "title": "Section Id",
+            "default": ""
+          },
+          "planned_count": {
+            "type": "string",
+            "title": "Planned Count",
+            "default": ""
+          },
+          "scheduled_hour": {
+            "type": "string",
+            "title": "Scheduled Hour",
+            "default": ""
+          },
+          "link_url": {
+            "type": "string",
+            "title": "Link Url",
+            "default": ""
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_date"
+        ],
+        "title": "Body_edit_task_teacher_tasks__task_id__edit_post"
+      },
+      "Body_edit_user_admin_users__user_id__edit_post": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "institution_id": {
+            "type": "string",
+            "title": "Institution Id",
+            "default": ""
+          },
+          "is_active": {
+            "type": "string",
+            "title": "Is Active",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email"
+        ],
+        "title": "Body_edit_user_admin_users__user_id__edit_post"
+      },
+      "Body_feature_catalog_create_admin_feature_catalog_new_post": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "default": ""
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline",
+            "default": ""
+          },
+          "description_md": {
+            "type": "string",
+            "title": "Description Md",
+            "default": ""
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon",
+            "default": "sparkles"
+          },
+          "accent_color": {
+            "type": "string",
+            "title": "Accent Color",
+            "default": "#3b82f6"
+          },
+          "category_icon": {
+            "type": "string",
+            "title": "Category Icon",
+            "default": "✨"
+          },
+          "category_label": {
+            "type": "string",
+            "title": "Category Label",
+            "default": ""
+          },
+          "demo_duration_label": {
+            "type": "string",
+            "title": "Demo Duration Label",
+            "default": ""
+          },
+          "mockup_type": {
+            "type": "string",
+            "title": "Mockup Type",
+            "default": ""
+          },
+          "target_roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Target Roles",
+            "default": []
+          },
+          "benefits_text": {
+            "type": "string",
+            "title": "Benefits Text",
+            "default": ""
+          },
+          "pain_points_text": {
+            "type": "string",
+            "title": "Pain Points Text",
+            "default": ""
+          },
+          "demo_slug": {
+            "type": "string",
+            "title": "Demo Slug",
+            "default": ""
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain",
+            "default": "genel"
+          },
+          "tier": {
+            "type": "string",
+            "title": "Tier",
+            "default": "enhancement"
+          },
+          "status_field": {
+            "type": "string",
+            "title": "Status Field",
+            "default": "draft"
+          },
+          "introduced_at": {
+            "type": "string",
+            "title": "Introduced At",
+            "default": ""
+          },
+          "introduced_in_commit": {
+            "type": "string",
+            "title": "Introduced In Commit",
+            "default": ""
+          },
+          "pr_url": {
+            "type": "string",
+            "title": "Pr Url",
+            "default": ""
+          },
+          "strategic_priority": {
+            "type": "integer",
+            "title": "Strategic Priority",
+            "default": 3
+          },
+          "manual_pin": {
+            "type": "string",
+            "title": "Manual Pin",
+            "default": ""
+          },
+          "pin_until": {
+            "type": "string",
+            "title": "Pin Until",
+            "default": ""
+          },
+          "manual_hide": {
+            "type": "string",
+            "title": "Manual Hide",
+            "default": ""
+          },
+          "cta_label": {
+            "type": "string",
+            "title": "Cta Label",
+            "default": "Detayları gör"
+          },
+          "cta_url": {
+            "type": "string",
+            "title": "Cta Url",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_feature_catalog_create_admin_feature_catalog_new_post"
+      },
+      "Body_feature_catalog_pin_admin_feature_catalog__card_id__pin_post": {
+        "properties": {
+          "pinned": {
+            "type": "string",
+            "title": "Pinned",
+            "default": ""
+          },
+          "pin_until": {
+            "type": "string",
+            "title": "Pin Until",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_feature_catalog_pin_admin_feature_catalog__card_id__pin_post"
+      },
+      "Body_feature_catalog_status_admin_feature_catalog__card_id__status_post": {
+        "properties": {
+          "status_field": {
+            "type": "string",
+            "title": "Status Field"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status_field"
+        ],
+        "title": "Body_feature_catalog_status_admin_feature_catalog__card_id__status_post"
+      },
+      "Body_feature_catalog_update_admin_feature_catalog__card_id__post": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "title": "Slug",
+            "default": ""
+          },
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "tagline": {
+            "type": "string",
+            "title": "Tagline",
+            "default": ""
+          },
+          "description_md": {
+            "type": "string",
+            "title": "Description Md",
+            "default": ""
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon",
+            "default": "sparkles"
+          },
+          "accent_color": {
+            "type": "string",
+            "title": "Accent Color",
+            "default": "#3b82f6"
+          },
+          "category_icon": {
+            "type": "string",
+            "title": "Category Icon",
+            "default": "✨"
+          },
+          "category_label": {
+            "type": "string",
+            "title": "Category Label",
+            "default": ""
+          },
+          "demo_duration_label": {
+            "type": "string",
+            "title": "Demo Duration Label",
+            "default": ""
+          },
+          "mockup_type": {
+            "type": "string",
+            "title": "Mockup Type",
+            "default": ""
+          },
+          "target_roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Target Roles",
+            "default": []
+          },
+          "benefits_text": {
+            "type": "string",
+            "title": "Benefits Text",
+            "default": ""
+          },
+          "pain_points_text": {
+            "type": "string",
+            "title": "Pain Points Text",
+            "default": ""
+          },
+          "demo_slug": {
+            "type": "string",
+            "title": "Demo Slug",
+            "default": ""
+          },
+          "domain": {
+            "type": "string",
+            "title": "Domain",
+            "default": "genel"
+          },
+          "tier": {
+            "type": "string",
+            "title": "Tier",
+            "default": "enhancement"
+          },
+          "status_field": {
+            "type": "string",
+            "title": "Status Field",
+            "default": "draft"
+          },
+          "introduced_at": {
+            "type": "string",
+            "title": "Introduced At",
+            "default": ""
+          },
+          "introduced_in_commit": {
+            "type": "string",
+            "title": "Introduced In Commit",
+            "default": ""
+          },
+          "pr_url": {
+            "type": "string",
+            "title": "Pr Url",
+            "default": ""
+          },
+          "strategic_priority": {
+            "type": "integer",
+            "title": "Strategic Priority",
+            "default": 3
+          },
+          "manual_pin": {
+            "type": "string",
+            "title": "Manual Pin",
+            "default": ""
+          },
+          "pin_until": {
+            "type": "string",
+            "title": "Pin Until",
+            "default": ""
+          },
+          "manual_hide": {
+            "type": "string",
+            "title": "Manual Hide",
+            "default": ""
+          },
+          "cta_label": {
+            "type": "string",
+            "title": "Cta Label",
+            "default": "Detayları gör"
+          },
+          "cta_url": {
+            "type": "string",
+            "title": "Cta Url",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_feature_catalog_update_admin_feature_catalog__card_id__post"
+      },
+      "Body_feature_flag_add_override_admin_feature_flags__flag_id__overrides_post": {
+        "properties": {
+          "institution_id": {
+            "type": "integer",
+            "title": "Institution Id"
+          },
+          "enabled": {
+            "type": "string",
+            "title": "Enabled",
+            "default": "on"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "institution_id"
+        ],
+        "title": "Body_feature_flag_add_override_admin_feature_flags__flag_id__overrides_post"
+      },
+      "Body_impersonate_user_admin_users__user_id__impersonate_post": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_impersonate_user_admin_users__user_id__impersonate_post"
+      },
+      "Body_import_confirm_teacher_students_import_confirm_post": {
+        "properties": {
+          "csv_text": {
+            "type": "string",
+            "title": "Csv Text",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_import_confirm_teacher_students_import_confirm_post"
+      },
+      "Body_import_preview_teacher_students_import_preview_post": {
+        "properties": {
+          "csv_text": {
+            "type": "string",
+            "title": "Csv Text",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_import_preview_teacher_students_import_preview_post"
+      },
+      "Body_import_results_csv_teacher_students_import_results_csv_post": {
+        "properties": {
+          "payload": {
+            "type": "string",
+            "title": "Payload",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_import_results_csv_teacher_students_import_results_csv_post"
+      },
+      "Body_institution_contact_save_admin_revenue_institutions__institution_id__contact_save_post": {
+        "properties": {
+          "responsible_person_name": {
+            "type": "string",
+            "title": "Responsible Person Name",
+            "default": ""
+          },
+          "responsible_person_title": {
+            "type": "string",
+            "title": "Responsible Person Title",
+            "default": ""
+          },
+          "billing_email": {
+            "type": "string",
+            "title": "Billing Email",
+            "default": ""
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone",
+            "default": ""
+          },
+          "whatsapp": {
+            "type": "string",
+            "title": "Whatsapp",
+            "default": ""
+          },
+          "linkedin_url": {
+            "type": "string",
+            "title": "Linkedin Url",
+            "default": ""
+          },
+          "website": {
+            "type": "string",
+            "title": "Website",
+            "default": ""
+          },
+          "address": {
+            "type": "string",
+            "title": "Address",
+            "default": ""
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_institution_contact_save_admin_revenue_institutions__institution_id__contact_save_post"
+      },
+      "Body_institution_tag_add_admin_revenue_institutions__institution_id__tags_add_post": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "Body_institution_tag_add_admin_revenue_institutions__institution_id__tags_add_post"
+      },
+      "Body_invitation_accept_parent_invitation__token__accept_post": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "password_confirm": {
+            "type": "string",
+            "title": "Password Confirm"
+          },
+          "kvkk_accept": {
+            "type": "string",
+            "title": "Kvkk Accept",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "password",
+          "password_confirm"
+        ],
+        "title": "Body_invitation_accept_parent_invitation__token__accept_post"
+      },
+      "Body_invite_parent_teacher_students__student_id__parents_invite_post": {
+        "properties": {
+          "invited_email": {
+            "type": "string",
+            "title": "Invited Email"
+          },
+          "relation": {
+            "type": "string",
+            "title": "Relation",
+            "default": "diger"
+          },
+          "is_primary": {
+            "type": "string",
+            "title": "Is Primary",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "invited_email"
+        ],
+        "title": "Body_invite_parent_teacher_students__student_id__parents_invite_post"
+      },
+      "Body_invoice_cancel_admin_invoices__invoice_id__cancel_post": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_invoice_cancel_admin_invoices__invoice_id__cancel_post"
+      },
+      "Body_invoice_mark_paid_admin_invoices__invoice_id__mark_paid_post": {
+        "properties": {
+          "method": {
+            "type": "string",
+            "title": "Method",
+            "default": "manual"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_invoice_mark_paid_admin_invoices__invoice_id__mark_paid_post"
+      },
+      "Body_invoice_postpone_admin_invoices__invoice_id__postpone_post": {
+        "properties": {
+          "days": {
+            "type": "integer",
+            "title": "Days",
+            "default": 7
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_invoice_postpone_admin_invoices__invoice_id__postpone_post"
+      },
+      "Body_invoice_send_reminder_admin_invoices__invoice_id__send_reminder_post": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "manual"
+          }
+        },
+        "type": "object",
+        "title": "Body_invoice_send_reminder_admin_invoices__invoice_id__send_reminder_post"
+      },
+      "Body_login_submit_login_post": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "cf_turnstile_response": {
+            "type": "string",
+            "title": "Cf Turnstile Response",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "Body_login_submit_login_post"
+      },
+      "Body_me_data_delete_request_me_data_delete_post": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          },
+          "confirm": {
+            "type": "string",
+            "title": "Confirm",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_me_data_delete_request_me_data_delete_post"
+      },
+      "Body_notify_parents_program_teacher_students__student_id__program_notify_parents_post": {
+        "properties": {
+          "start": {
+            "type": "string",
+            "title": "Start"
+          }
+        },
+        "type": "object",
+        "required": [
+          "start"
+        ],
+        "title": "Body_notify_parents_program_teacher_students__student_id__program_notify_parents_post"
+      },
+      "Body_offer_create_admin_revenue_institutions__institution_id__offers_create_post": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "default": ""
+          },
+          "duration_months": {
+            "type": "string",
+            "title": "Duration Months",
+            "default": ""
+          },
+          "new_plan": {
+            "type": "string",
+            "title": "New Plan",
+            "default": ""
+          },
+          "public_message": {
+            "type": "string",
+            "title": "Public Message",
+            "default": ""
+          },
+          "admin_note": {
+            "type": "string",
+            "title": "Admin Note",
+            "default": ""
+          },
+          "expires_in_days": {
+            "type": "integer",
+            "title": "Expires In Days",
+            "default": 14
+          },
+          "send_now": {
+            "type": "string",
+            "title": "Send Now",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "title"
+        ],
+        "title": "Body_offer_create_admin_revenue_institutions__institution_id__offers_create_post"
+      },
+      "Body_offer_public_decline_offers__token__decline_post": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_offer_public_decline_offers__token__decline_post"
+      },
+      "Body_password_change_submit_password_change_post": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "title": "Current Password",
+            "default": ""
+          },
+          "new_password": {
+            "type": "string",
+            "title": "New Password"
+          },
+          "confirm_password": {
+            "type": "string",
+            "title": "Confirm Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_password",
+          "confirm_password"
+        ],
+        "title": "Body_password_change_submit_password_change_post"
+      },
+      "Body_promote_student_teacher_students__student_id__promote_post": {
+        "properties": {
+          "grade": {
+            "type": "string",
+            "title": "Grade"
+          },
+          "academic_year_id": {
+            "type": "string",
+            "title": "Academic Year Id",
+            "default": ""
+          },
+          "track": {
+            "type": "string",
+            "title": "Track",
+            "default": ""
+          },
+          "graduate_mode": {
+            "type": "string",
+            "title": "Graduate Mode",
+            "default": ""
+          },
+          "entry_year_grade9": {
+            "type": "string",
+            "title": "Entry Year Grade9",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "grade"
+        ],
+        "title": "Body_promote_student_teacher_students__student_id__promote_post"
+      },
+      "Body_publish_day_tasks_teacher_students__student_id__publish_day_post": {
+        "properties": {
+          "task_date": {
+            "type": "string",
+            "title": "Task Date"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_date"
+        ],
+        "title": "Body_publish_day_tasks_teacher_students__student_id__publish_day_post"
+      },
+      "Body_publish_week_tasks_teacher_students__student_id__publish_week_post": {
+        "properties": {
+          "week_start": {
+            "type": "string",
+            "title": "Week Start"
+          }
+        },
+        "type": "object",
+        "required": [
+          "week_start"
+        ],
+        "title": "Body_publish_week_tasks_teacher_students__student_id__publish_week_post"
+      },
+      "Body_reject_suggestion_teacher_students__student_id__suggestions_reject_post": {
+        "properties": {
+          "task_date": {
+            "type": "string",
+            "title": "Task Date"
+          },
+          "book_id": {
+            "type": "integer",
+            "title": "Book Id"
+          },
+          "section_id": {
+            "type": "integer",
+            "title": "Section Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_date",
+          "book_id",
+          "section_id"
+        ],
+        "title": "Body_reject_suggestion_teacher_students__student_id__suggestions_reject_post"
+      },
+      "Body_reject_teacher_requests__req_id__reject_post": {
+        "properties": {
+          "response": {
+            "type": "string",
+            "title": "Response",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_reject_teacher_requests__req_id__reject_post"
+      },
+      "Body_reorder_tasks_teacher_students__student_id__tasks_reorder_post": {
+        "properties": {
+          "task_date": {
+            "type": "string",
+            "title": "Task Date"
+          },
+          "task_ids": {
+            "type": "string",
+            "title": "Task Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task_date",
+          "task_ids"
+        ],
+        "title": "Body_reorder_tasks_teacher_students__student_id__tasks_reorder_post"
+      },
+      "Body_request_add_student_day__day_iso__request_add_post": {
+        "properties": {
+          "book_id": {
+            "type": "integer",
+            "title": "Book Id"
+          },
+          "section_id": {
+            "type": "integer",
+            "title": "Section Id"
+          },
+          "proposed_count": {
+            "type": "integer",
+            "title": "Proposed Count"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "book_id",
+          "section_id",
+          "proposed_count"
+        ],
+        "title": "Body_request_add_student_day__day_iso__request_add_post"
+      },
+      "Body_request_change_student_tasks__task_id__request_change_post": {
+        "properties": {
+          "proposed_count": {
+            "type": "integer",
+            "title": "Proposed Count"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "proposed_count"
+        ],
+        "title": "Body_request_change_student_tasks__task_id__request_change_post"
+      },
+      "Body_request_remove_student_tasks__task_id__request_remove_post": {
+        "properties": {
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_request_remove_student_tasks__task_id__request_remove_post"
+      },
+      "Body_request_replace_student_tasks__task_id__request_replace_post": {
+        "properties": {
+          "new_book_id": {
+            "type": "integer",
+            "title": "New Book Id"
+          },
+          "new_section_id": {
+            "type": "integer",
+            "title": "New Section Id"
+          },
+          "new_count": {
+            "type": "integer",
+            "title": "New Count"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "new_book_id",
+          "new_section_id",
+          "new_count"
+        ],
+        "title": "Body_request_replace_student_tasks__task_id__request_replace_post"
+      },
+      "Body_respond_teacher_requests__req_id__respond_post": {
+        "properties": {
+          "response": {
+            "type": "string",
+            "title": "Response"
+          }
+        },
+        "type": "object",
+        "required": [
+          "response"
+        ],
+        "title": "Body_respond_teacher_requests__req_id__respond_post"
+      },
+      "Body_revenue_action_template_create_admin_revenue_action_templates_create_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "kind",
+          "body"
+        ],
+        "title": "Body_revenue_action_template_create_admin_revenue_action_templates_create_post"
+      },
+      "Body_revenue_action_template_update_admin_revenue_action_templates__template_id__update_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name",
+            "default": ""
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": ""
+          },
+          "body": {
+            "type": "string",
+            "title": "Body",
+            "default": ""
+          },
+          "subject": {
+            "type": "string",
+            "title": "Subject",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "is_active": {
+            "type": "string",
+            "title": "Is Active",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_revenue_action_template_update_admin_revenue_action_templates__template_id__update_post"
+      },
+      "Body_revenue_campaigns_create_admin_revenue_campaigns_create_post": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "segment": {
+            "type": "string",
+            "title": "Segment"
+          },
+          "variant_a_kind": {
+            "type": "string",
+            "title": "Variant A Kind"
+          },
+          "variant_a_title": {
+            "type": "string",
+            "title": "Variant A Title"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "admin_note": {
+            "type": "string",
+            "title": "Admin Note",
+            "default": ""
+          },
+          "filter_plan": {
+            "type": "string",
+            "title": "Filter Plan",
+            "default": ""
+          },
+          "variant_a_value": {
+            "type": "string",
+            "title": "Variant A Value",
+            "default": ""
+          },
+          "variant_a_duration_months": {
+            "type": "string",
+            "title": "Variant A Duration Months",
+            "default": ""
+          },
+          "variant_a_new_plan": {
+            "type": "string",
+            "title": "Variant A New Plan",
+            "default": ""
+          },
+          "variant_a_public_message": {
+            "type": "string",
+            "title": "Variant A Public Message",
+            "default": ""
+          },
+          "has_variant_b": {
+            "type": "string",
+            "title": "Has Variant B",
+            "default": ""
+          },
+          "variant_b_kind": {
+            "type": "string",
+            "title": "Variant B Kind",
+            "default": ""
+          },
+          "variant_b_title": {
+            "type": "string",
+            "title": "Variant B Title",
+            "default": ""
+          },
+          "variant_b_value": {
+            "type": "string",
+            "title": "Variant B Value",
+            "default": ""
+          },
+          "variant_b_duration_months": {
+            "type": "string",
+            "title": "Variant B Duration Months",
+            "default": ""
+          },
+          "variant_b_new_plan": {
+            "type": "string",
+            "title": "Variant B New Plan",
+            "default": ""
+          },
+          "variant_b_public_message": {
+            "type": "string",
+            "title": "Variant B Public Message",
+            "default": ""
+          },
+          "offer_expires_in_days": {
+            "type": "integer",
+            "title": "Offer Expires In Days",
+            "default": 14
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "segment",
+          "variant_a_kind",
+          "variant_a_title"
+        ],
+        "title": "Body_revenue_campaigns_create_admin_revenue_campaigns_create_post"
+      },
+      "Body_revenue_campaigns_preview_admin_revenue_campaigns_preview_post": {
+        "properties": {
+          "segment": {
+            "type": "string",
+            "title": "Segment"
+          },
+          "filter_plan": {
+            "type": "string",
+            "title": "Filter Plan",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "segment"
+        ],
+        "title": "Body_revenue_campaigns_preview_admin_revenue_campaigns_preview_post"
+      },
+      "Body_revenue_quick_action_admin_revenue_action_center_quick_action_post": {
+        "properties": {
+          "institution_id": {
+            "type": "integer",
+            "title": "Institution Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "result": {
+            "type": "string",
+            "title": "Result",
+            "default": "pending"
+          },
+          "follow_up_days": {
+            "type": "integer",
+            "title": "Follow Up Days",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "institution_id",
+          "kind",
+          "summary"
+        ],
+        "title": "Body_revenue_quick_action_admin_revenue_action_center_quick_action_post"
+      },
+      "Body_save_book_as_template_teacher_books__book_id__save_as_template_post": {
+        "properties": {
+          "template_name": {
+            "type": "string",
+            "title": "Template Name",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_save_book_as_template_teacher_books__book_id__save_as_template_post"
+      },
+      "Body_security_monitor_abuse_resolve_admin_security_monitor_abuse__signal_id__resolve_post": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_security_monitor_abuse_resolve_admin_security_monitor_abuse__signal_id__resolve_post"
+      },
+      "Body_security_monitor_alarms_update_rule_admin_security_monitor_alarms_rules__rule_id__update_post": {
+        "properties": {
+          "threshold": {
+            "type": "integer",
+            "title": "Threshold"
+          },
+          "cooldown_minutes": {
+            "type": "integer",
+            "title": "Cooldown Minutes"
+          },
+          "enabled": {
+            "type": "integer",
+            "title": "Enabled",
+            "default": 0
+          },
+          "channels": {
+            "type": "string",
+            "title": "Channels",
+            "default": "email,in_app"
+          }
+        },
+        "type": "object",
+        "required": [
+          "threshold",
+          "cooldown_minutes"
+        ],
+        "title": "Body_security_monitor_alarms_update_rule_admin_security_monitor_alarms_rules__rule_id__update_post"
+      },
+      "Body_security_monitor_block_ip_admin_security_monitor_ips_block_post": {
+        "properties": {
+          "ip": {
+            "type": "string",
+            "title": "Ip"
+          },
+          "hours": {
+            "type": "integer",
+            "title": "Hours",
+            "default": 1
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "ip"
+        ],
+        "title": "Body_security_monitor_block_ip_admin_security_monitor_ips_block_post"
+      },
+      "Body_security_monitor_system_resolve_admin_security_monitor_system__error_id__resolve_post": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_security_monitor_system_resolve_admin_security_monitor_system__error_id__resolve_post"
+      },
+      "Body_security_monitor_unblock_ip_admin_security_monitor_ips_unblock_post": {
+        "properties": {
+          "ip": {
+            "type": "string",
+            "title": "Ip"
+          }
+        },
+        "type": "object",
+        "required": [
+          "ip"
+        ],
+        "title": "Body_security_monitor_unblock_ip_admin_security_monitor_ips_unblock_post"
+      },
+      "Body_send_parent_note_teacher_students__student_id__parent_note_post": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "title": "Body_send_parent_note_teacher_students__student_id__parent_note_post"
+      },
+      "Body_set_item_completed_student_tasks__task_id__items__item_id__set_completed_post": {
+        "properties": {
+          "completed": {
+            "type": "integer",
+            "title": "Completed"
+          }
+        },
+        "type": "object",
+        "required": [
+          "completed"
+        ],
+        "title": "Body_set_item_completed_student_tasks__task_id__items__item_id__set_completed_post"
+      },
+      "Body_set_week_anchor_teacher_students__student_id__set_week_anchor_post": {
+        "properties": {
+          "anchor": {
+            "type": "string",
+            "title": "Anchor"
+          },
+          "return_to": {
+            "type": "string",
+            "title": "Return To",
+            "default": "week"
+          }
+        },
+        "type": "object",
+        "required": [
+          "anchor"
+        ],
+        "title": "Body_set_week_anchor_teacher_students__student_id__set_week_anchor_post"
+      },
+      "Body_signup_invite_submit_signup_invite__token__post": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "password_confirm": {
+            "type": "string",
+            "title": "Password Confirm"
+          },
+          "accept_terms": {
+            "type": "string",
+            "title": "Accept Terms",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email",
+          "password",
+          "password_confirm"
+        ],
+        "title": "Body_signup_invite_submit_signup_invite__token__post"
+      },
+      "Body_signup_teacher_submit_signup_teacher_post": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          },
+          "password_confirm": {
+            "type": "string",
+            "title": "Password Confirm"
+          },
+          "accept_terms": {
+            "type": "string",
+            "title": "Accept Terms",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "email",
+          "password",
+          "password_confirm"
+        ],
+        "title": "Body_signup_teacher_submit_signup_teacher_post"
+      },
+      "Body_student_focus_end_and_break_student_focus__session_id__end_and_break_post": {
+        "properties": {
+          "actual_minutes": {
+            "type": "integer",
+            "title": "Actual Minutes",
+            "default": 0
+          },
+          "interrupted": {
+            "type": "string",
+            "title": "Interrupted",
+            "default": ""
+          },
+          "break_kind": {
+            "type": "string",
+            "title": "Break Kind",
+            "default": "short_break"
+          },
+          "break_minutes": {
+            "type": "integer",
+            "title": "Break Minutes",
+            "default": 5
+          }
+        },
+        "type": "object",
+        "title": "Body_student_focus_end_and_break_student_focus__session_id__end_and_break_post"
+      },
+      "Body_student_focus_end_student_focus__session_id__end_post": {
+        "properties": {
+          "actual_minutes": {
+            "type": "integer",
+            "title": "Actual Minutes",
+            "default": 0
+          },
+          "interrupted": {
+            "type": "string",
+            "title": "Interrupted",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_student_focus_end_student_focus__session_id__end_post"
+      },
+      "Body_student_focus_start_student_focus_start_post": {
+        "properties": {
+          "planned_minutes": {
+            "type": "integer",
+            "title": "Planned Minutes",
+            "default": 25
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "work"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_student_focus_start_student_focus_start_post"
+      },
+      "Body_student_review_rate_student_review__card_id__post": {
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rating"
+        ],
+        "title": "Body_student_review_rate_student_review__card_id__post"
+      },
+      "Body_student_update_progress_student_goals__goal_id__update_progress_post": {
+        "properties": {
+          "current_value": {
+            "type": "string",
+            "title": "Current Value",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_student_update_progress_student_goals__goal_id__update_progress_post"
+      },
+      "Body_super_admin_add_bonus_admin_usage__owner_type___owner_id__bonus_post": {
+        "properties": {
+          "bonus_amount": {
+            "type": "integer",
+            "title": "Bonus Amount"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bonus_amount"
+        ],
+        "title": "Body_super_admin_add_bonus_admin_usage__owner_type___owner_id__bonus_post"
+      },
+      "Body_super_admin_quota_set_override_admin_quota__institution_id__override_post": {
+        "properties": {
+          "quota_key": {
+            "type": "string",
+            "title": "Quota Key"
+          },
+          "override_value": {
+            "type": "integer",
+            "title": "Override Value"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "quota_key",
+          "override_value"
+        ],
+        "title": "Body_super_admin_quota_set_override_admin_quota__institution_id__override_post"
+      },
+      "Body_teacher_create_goal_teacher_students__student_id__goals_create_post": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "custom"
+          },
+          "parent_id": {
+            "type": "string",
+            "title": "Parent Id",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "target_value": {
+            "type": "string",
+            "title": "Target Value",
+            "default": ""
+          },
+          "current_value": {
+            "type": "string",
+            "title": "Current Value",
+            "default": ""
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit",
+            "default": ""
+          },
+          "target_date": {
+            "type": "string",
+            "title": "Target Date",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "title"
+        ],
+        "title": "Body_teacher_create_goal_teacher_students__student_id__goals_create_post"
+      },
+      "Body_teacher_mute_at_risk_teacher_at_risk__student_id__mute_post": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "title": "Reason",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_teacher_mute_at_risk_teacher_at_risk__student_id__mute_post"
+      },
+      "Body_teacher_seed_subject_teacher_students__student_id__review_seed_post": {
+        "properties": {
+          "subject_id": {
+            "type": "integer",
+            "title": "Subject Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "subject_id"
+        ],
+        "title": "Body_teacher_seed_subject_teacher_students__student_id__review_seed_post"
+      },
+      "Body_teacher_student_dna_notify_parent_teacher_students__student_id__dna_notify_parent_post": {
+        "properties": {
+          "body": {
+            "type": "string",
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "body"
+        ],
+        "title": "Body_teacher_student_dna_notify_parent_teacher_students__student_id__dna_notify_parent_post"
+      },
+      "Body_teacher_update_goal_teacher_goals__goal_id__update_post": {
+        "properties": {
+          "title": {
+            "type": "string",
+            "title": "Title",
+            "default": ""
+          },
+          "description": {
+            "type": "string",
+            "title": "Description",
+            "default": ""
+          },
+          "target_value": {
+            "type": "string",
+            "title": "Target Value",
+            "default": ""
+          },
+          "current_value": {
+            "type": "string",
+            "title": "Current Value",
+            "default": ""
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit",
+            "default": ""
+          },
+          "target_date": {
+            "type": "string",
+            "title": "Target Date",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_teacher_update_goal_teacher_goals__goal_id__update_post"
+      },
+      "Body_test_email_teacher_settings_test_email_post": {
+        "properties": {
+          "to": {
+            "type": "string",
+            "title": "To"
+          }
+        },
+        "type": "object",
+        "required": [
+          "to"
+        ],
+        "title": "Body_test_email_teacher_settings_test_email_post"
+      },
+      "Body_toggle_child_mute_parent_settings_students__student_id__mute_post": {
+        "properties": {
+          "muted": {
+            "type": "string",
+            "title": "Muted",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_toggle_child_mute_parent_settings_students__student_id__mute_post"
+      },
+      "Body_update_cron_schedule_teacher_settings_cron__schedule_id__post": {
+        "properties": {
+          "hour": {
+            "type": "integer",
+            "title": "Hour"
+          },
+          "minute": {
+            "type": "integer",
+            "title": "Minute",
+            "default": 0
+          },
+          "day_of_week": {
+            "type": "string",
+            "title": "Day Of Week",
+            "default": ""
+          },
+          "enabled": {
+            "type": "string",
+            "title": "Enabled",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "hour"
+        ],
+        "title": "Body_update_cron_schedule_teacher_settings_cron__schedule_id__post"
+      },
+      "Body_update_preferences_parent_settings_preferences_post": {
+        "properties": {
+          "daily_summary": {
+            "type": "string",
+            "title": "Daily Summary",
+            "default": ""
+          },
+          "weekly_report": {
+            "type": "string",
+            "title": "Weekly Report",
+            "default": ""
+          },
+          "empty_day": {
+            "type": "string",
+            "title": "Empty Day",
+            "default": ""
+          },
+          "new_program": {
+            "type": "string",
+            "title": "New Program",
+            "default": ""
+          },
+          "drop_alert": {
+            "type": "string",
+            "title": "Drop Alert",
+            "default": ""
+          },
+          "teacher_note": {
+            "type": "string",
+            "title": "Teacher Note",
+            "default": ""
+          },
+          "exam_approaching": {
+            "type": "string",
+            "title": "Exam Approaching",
+            "default": ""
+          },
+          "quiet_start": {
+            "type": "string",
+            "title": "Quiet Start",
+            "default": "22:00"
+          },
+          "quiet_end": {
+            "type": "string",
+            "title": "Quiet End",
+            "default": "07:00"
+          }
+        },
+        "type": "object",
+        "title": "Body_update_preferences_parent_settings_preferences_post"
+      },
+      "Body_user_contact_save_admin_revenue_users__user_id__contact_save_post": {
+        "properties": {
+          "responsible_person_name": {
+            "type": "string",
+            "title": "Responsible Person Name",
+            "default": ""
+          },
+          "responsible_person_title": {
+            "type": "string",
+            "title": "Responsible Person Title",
+            "default": ""
+          },
+          "billing_email": {
+            "type": "string",
+            "title": "Billing Email",
+            "default": ""
+          },
+          "phone": {
+            "type": "string",
+            "title": "Phone",
+            "default": ""
+          },
+          "whatsapp": {
+            "type": "string",
+            "title": "Whatsapp",
+            "default": ""
+          },
+          "linkedin_url": {
+            "type": "string",
+            "title": "Linkedin Url",
+            "default": ""
+          },
+          "website": {
+            "type": "string",
+            "title": "Website",
+            "default": ""
+          },
+          "address": {
+            "type": "string",
+            "title": "Address",
+            "default": ""
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "Body_user_contact_save_admin_revenue_users__user_id__contact_save_post"
+      },
+      "Body_user_crm_action_add_admin_revenue_users__user_id__crm_actions_add_post": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          },
+          "result": {
+            "type": "string",
+            "title": "Result",
+            "default": "pending"
+          },
+          "follow_up_at": {
+            "type": "string",
+            "title": "Follow Up At",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "summary"
+        ],
+        "title": "Body_user_crm_action_add_admin_revenue_users__user_id__crm_actions_add_post"
+      },
+      "Body_user_crm_action_complete_admin_revenue_users__user_id__crm_actions__action_id__complete_post": {
+        "properties": {
+          "result": {
+            "type": "string",
+            "title": "Result"
+          },
+          "notes": {
+            "type": "string",
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "result"
+        ],
+        "title": "Body_user_crm_action_complete_admin_revenue_users__user_id__crm_actions__action_id__complete_post"
+      },
+      "Body_user_crm_note_add_admin_revenue_users__user_id__crm_notes_add_post": {
+        "properties": {
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "pinned": {
+            "type": "string",
+            "title": "Pinned",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "content"
+        ],
+        "title": "Body_user_crm_note_add_admin_revenue_users__user_id__crm_notes_add_post"
+      },
+      "Body_user_offer_create_admin_revenue_users__user_id__offers_create_post": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value",
+            "default": ""
+          },
+          "duration_months": {
+            "type": "string",
+            "title": "Duration Months",
+            "default": ""
+          },
+          "new_plan": {
+            "type": "string",
+            "title": "New Plan",
+            "default": ""
+          },
+          "public_message": {
+            "type": "string",
+            "title": "Public Message",
+            "default": ""
+          },
+          "admin_note": {
+            "type": "string",
+            "title": "Admin Note",
+            "default": ""
+          },
+          "expires_in_days": {
+            "type": "integer",
+            "title": "Expires In Days",
+            "default": 14
+          },
+          "send_now": {
+            "type": "string",
+            "title": "Send Now",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "title"
+        ],
+        "title": "Body_user_offer_create_admin_revenue_users__user_id__offers_create_post"
+      },
+      "Body_user_tag_add_admin_revenue_users__user_id__tags_add_post": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "title": "Body_user_tag_add_admin_revenue_users__user_id__tags_add_post"
+      },
+      "Body_week_notes_add_teacher_students__student_id__week_notes_add_post": {
+        "properties": {
+          "week_start": {
+            "type": "string",
+            "title": "Week Start"
+          },
+          "body": {
+            "type": "string",
+            "title": "Body"
+          }
+        },
+        "type": "object",
+        "required": [
+          "week_start",
+          "body"
+        ],
+        "title": "Body_week_notes_add_teacher_students__student_id__week_notes_add_post"
+      },
+      "Body_whatsapp_start_parent_settings_whatsapp_start_post": {
+        "properties": {
+          "phone": {
+            "type": "string",
+            "title": "Phone"
+          }
+        },
+        "type": "object",
+        "required": [
+          "phone"
+        ],
+        "title": "Body_whatsapp_start_parent_settings_whatsapp_start_post"
+      },
+      "Body_whatsapp_verify_parent_settings_whatsapp_verify_post": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "Body_whatsapp_verify_parent_settings_whatsapp_verify_post"
+      },
+      "DataDeleteRequestBody": {
+        "properties": {
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "confirm": {
+            "type": "boolean",
+            "title": "Confirm"
+          }
+        },
+        "type": "object",
+        "required": [
+          "confirm"
+        ],
+        "title": "DataDeleteRequestBody",
+        "description": "POST /api/v2/me/data-delete body."
+      },
+      "DataDeleteResponse": {
+        "properties": {
+          "request_id": {
+            "type": "integer",
+            "title": "Request Id"
+          },
+          "scheduled_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Scheduled At"
+          },
+          "can_cancel_until": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Can Cancel Until"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request_id",
+          "scheduled_at",
+          "can_cancel_until"
+        ],
+        "title": "DataDeleteResponse",
+        "description": "POST /api/v2/me/data-delete data alanı."
+      },
+      "DataRequestSummary": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "export",
+              "delete",
+              "rectify"
+            ],
+            "title": "Kind"
+          },
+          "kind_label_tr": {
+            "type": "string",
+            "title": "Kind Label Tr"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "pending",
+              "processing",
+              "completed",
+              "cancelled",
+              "rejected"
+            ],
+            "title": "Status"
+          },
+          "status_label_tr": {
+            "type": "string",
+            "title": "Status Label Tr"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "process_after": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Process After"
+          },
+          "processed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Processed At"
+          },
+          "can_cancel": {
+            "type": "boolean",
+            "title": "Can Cancel"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "kind_label_tr",
+          "status",
+          "status_label_tr",
+          "created_at",
+          "can_cancel"
+        ],
+        "title": "DataRequestSummary",
+        "description": "KVKK talep özeti — son 20 talep listesinde + detayda."
+      },
+      "DaySummaryOut": {
+        "properties": {
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "total_tasks": {
+            "type": "integer",
+            "title": "Total Tasks"
+          },
+          "total_items": {
+            "type": "integer",
+            "title": "Total Items"
+          },
+          "planned_count": {
+            "type": "integer",
+            "title": "Planned Count"
+          },
+          "completed_count": {
+            "type": "integer",
+            "title": "Completed Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "date",
+          "total_tasks",
+          "total_items",
+          "planned_count",
+          "completed_count"
+        ],
+        "title": "DaySummaryOut"
+      },
+      "FocusEndIn": {
+        "properties": {
+          "actual_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Minutes"
+          },
+          "interrupted": {
+            "type": "boolean",
+            "title": "Interrupted",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "FocusEndIn"
+      },
+      "FocusStartIn": {
+        "properties": {
+          "planned_minutes": {
+            "type": "integer",
+            "title": "Planned Minutes",
+            "default": 25
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": "work"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "title": "FocusStartIn"
+      },
+      "FocusTodayOut": {
+        "properties": {
+          "active_session": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PomodoroSessionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "work_minutes_today": {
+            "type": "integer",
+            "title": "Work Minutes Today"
+          },
+          "sessions_today": {
+            "type": "integer",
+            "title": "Sessions Today"
+          },
+          "streak_days": {
+            "type": "integer",
+            "title": "Streak Days"
+          },
+          "points": {
+            "type": "integer",
+            "title": "Points"
+          },
+          "recent_sessions": {
+            "items": {
+              "$ref": "#/components/schemas/PomodoroSessionOut"
+            },
+            "type": "array",
+            "title": "Recent Sessions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "active_session",
+          "work_minutes_today",
+          "sessions_today",
+          "streak_days",
+          "points",
+          "recent_sessions"
+        ],
+        "title": "FocusTodayOut"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "InstitutionRef": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "InstitutionRef",
+        "description": "Kurum özet referansı — /me yanıtında istisnasız."
+      },
+      "KvkkStatus": {
+        "properties": {
+          "has_pending_delete": {
+            "type": "boolean",
+            "title": "Has Pending Delete"
+          },
+          "pending_delete_request_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Delete Request Id"
+          },
+          "pending_delete_scheduled_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Delete Scheduled At"
+          },
+          "can_export": {
+            "type": "boolean",
+            "title": "Can Export",
+            "default": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "has_pending_delete"
+        ],
+        "title": "KvkkStatus",
+        "description": "Hesap KVKK durum özeti — pending delete varsa hangi tarih."
+      },
+      "LoginIn": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "password"
+        ],
+        "title": "LoginIn"
+      },
+      "MutationResponse_DataDeleteResponse_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/DataDeleteResponse"
+          },
+          "invalidate": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Invalidate",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "MutationResponse[DataDeleteResponse]"
+      },
+      "MutationResponse_SimpleOk_": {
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/SimpleOk"
+          },
+          "invalidate": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Invalidate",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "title": "MutationResponse[SimpleOk]"
+      },
+      "MyAccountResponse": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserPublic"
+          },
+          "institution": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/InstitutionRef"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "parent_links": {
+            "items": {
+              "$ref": "#/components/schemas/ParentLinkRef"
+            },
+            "type": "array",
+            "title": "Parent Links",
+            "default": []
+          },
+          "kvkk_status": {
+            "$ref": "#/components/schemas/KvkkStatus"
+          },
+          "recent_requests": {
+            "items": {
+              "$ref": "#/components/schemas/DataRequestSummary"
+            },
+            "type": "array",
+            "title": "Recent Requests",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "kvkk_status"
+        ],
+        "title": "MyAccountResponse",
+        "description": "GET /api/v2/me — sayfanın tek istekte ihtiyacı olan her şey."
+      },
+      "ParentLinkRef": {
+        "properties": {
+          "link_id": {
+            "type": "integer",
+            "title": "Link Id"
+          },
+          "counterpart_id": {
+            "type": "integer",
+            "title": "Counterpart Id"
+          },
+          "counterpart_name": {
+            "type": "string",
+            "title": "Counterpart Name"
+          },
+          "relation": {
+            "type": "string",
+            "enum": [
+              "anne",
+              "baba",
+              "vasi",
+              "diger"
+            ],
+            "title": "Relation"
+          },
+          "relation_label_tr": {
+            "type": "string",
+            "title": "Relation Label Tr"
+          },
+          "is_primary": {
+            "type": "boolean",
+            "title": "Is Primary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "link_id",
+          "counterpart_id",
+          "counterpart_name",
+          "relation",
+          "relation_label_tr",
+          "is_primary"
+        ],
+        "title": "ParentLinkRef",
+        "description": "Veli ↔ öğrenci eşleşmesi (yön role'a göre).\n\nVeli ise counterpart = öğrenci; öğrenci ise counterpart = veli."
+      },
+      "PomodoroSessionOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "planned_minutes": {
+            "type": "integer",
+            "title": "Planned Minutes"
+          },
+          "actual_minutes": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Minutes"
+          },
+          "started_at": {
+            "type": "string",
+            "title": "Started At"
+          },
+          "ended_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ended At"
+          },
+          "interrupted": {
+            "type": "boolean",
+            "title": "Interrupted"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "kind",
+          "label",
+          "planned_minutes",
+          "actual_minutes",
+          "started_at",
+          "ended_at",
+          "interrupted"
+        ],
+        "title": "PomodoroSessionOut"
+      },
+      "RatingIn": {
+        "properties": {
+          "rating": {
+            "type": "integer",
+            "title": "Rating"
+          }
+        },
+        "type": "object",
+        "required": [
+          "rating"
+        ],
+        "title": "RatingIn"
+      },
+      "ReviewBreakdownOut": {
+        "properties": {
+          "new": {
+            "type": "integer",
+            "title": "New"
+          },
+          "learning": {
+            "type": "integer",
+            "title": "Learning"
+          },
+          "review": {
+            "type": "integer",
+            "title": "Review"
+          },
+          "relearning": {
+            "type": "integer",
+            "title": "Relearning"
+          },
+          "due_now": {
+            "type": "integer",
+            "title": "Due Now"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "new",
+          "learning",
+          "review",
+          "relearning",
+          "due_now",
+          "total"
+        ],
+        "title": "ReviewBreakdownOut"
+      },
+      "ReviewCardOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "topic_id": {
+            "type": "integer",
+            "title": "Topic Id"
+          },
+          "topic_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic Name"
+          },
+          "subject_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Name"
+          },
+          "state": {
+            "type": "integer",
+            "title": "State"
+          },
+          "state_label": {
+            "type": "string",
+            "title": "State Label"
+          },
+          "due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due At"
+          },
+          "stability": {
+            "type": "number",
+            "title": "Stability"
+          },
+          "difficulty": {
+            "type": "number",
+            "title": "Difficulty"
+          },
+          "reps": {
+            "type": "integer",
+            "title": "Reps"
+          },
+          "lapses": {
+            "type": "integer",
+            "title": "Lapses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "topic_id",
+          "topic_name",
+          "subject_name",
+          "state",
+          "state_label",
+          "due_at",
+          "stability",
+          "difficulty",
+          "reps",
+          "lapses"
+        ],
+        "title": "ReviewCardOut"
+      },
+      "ReviewIndexOut": {
+        "properties": {
+          "due_cards": {
+            "items": {
+              "$ref": "#/components/schemas/ReviewCardOut"
+            },
+            "type": "array",
+            "title": "Due Cards"
+          },
+          "breakdown": {
+            "$ref": "#/components/schemas/ReviewBreakdownOut"
+          },
+          "rating_labels": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Rating Labels"
+          }
+        },
+        "type": "object",
+        "required": [
+          "due_cards",
+          "breakdown",
+          "rating_labels"
+        ],
+        "title": "ReviewIndexOut"
+      },
+      "ReviewResultOut": {
+        "properties": {
+          "card_id": {
+            "type": "integer",
+            "title": "Card Id"
+          },
+          "new_state": {
+            "type": "integer",
+            "title": "New State"
+          },
+          "new_state_label": {
+            "type": "string",
+            "title": "New State Label"
+          },
+          "next_due_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Due At"
+          },
+          "stability": {
+            "type": "number",
+            "title": "Stability"
+          }
+        },
+        "type": "object",
+        "required": [
+          "card_id",
+          "new_state",
+          "new_state_label",
+          "next_due_at",
+          "stability"
+        ],
+        "title": "ReviewResultOut"
+      },
+      "SimpleOk": {
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "title": "Ok",
+            "default": true
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "title": "SimpleOk",
+        "description": "Yan etkisi olmayan onay response'u."
+      },
+      "StudentDetailOut": {
+        "properties": {
+          "student": {
+            "$ref": "#/components/schemas/StudentSummaryOut"
+          },
+          "today_planned": {
+            "type": "integer",
+            "title": "Today Planned"
+          },
+          "today_completed": {
+            "type": "integer",
+            "title": "Today Completed"
+          },
+          "week_planned": {
+            "type": "integer",
+            "title": "Week Planned"
+          },
+          "week_completed": {
+            "type": "integer",
+            "title": "Week Completed"
+          },
+          "rate_7d": {
+            "type": "number",
+            "title": "Rate 7D"
+          },
+          "rate_30d": {
+            "type": "number",
+            "title": "Rate 30D"
+          },
+          "consistency_7d": {
+            "type": "number",
+            "title": "Consistency 7D"
+          },
+          "hit_rate_7d": {
+            "type": "number",
+            "title": "Hit Rate 7D"
+          },
+          "worst_warning_level": {
+            "type": "string",
+            "title": "Worst Warning Level"
+          },
+          "warnings": {
+            "items": {
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Warnings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "student",
+          "today_planned",
+          "today_completed",
+          "week_planned",
+          "week_completed",
+          "rate_7d",
+          "rate_30d",
+          "consistency_7d",
+          "hit_rate_7d",
+          "worst_warning_level",
+          "warnings"
+        ],
+        "title": "StudentDetailOut"
+      },
+      "StudentListOut": {
+        "properties": {
+          "students": {
+            "items": {
+              "$ref": "#/components/schemas/StudentSummaryOut"
+            },
+            "type": "array",
+            "title": "Students"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "students",
+          "total"
+        ],
+        "title": "StudentListOut"
+      },
+      "StudentSummaryOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "grade_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade Level"
+          },
+          "is_graduate": {
+            "type": "boolean",
+            "title": "Is Graduate"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "grade_label": {
+            "type": "string",
+            "title": "Grade Label"
+          },
+          "exam_label": {
+            "type": "string",
+            "title": "Exam Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "full_name",
+          "email",
+          "grade_level",
+          "is_graduate",
+          "is_active",
+          "grade_label",
+          "exam_label"
+        ],
+        "title": "StudentSummaryOut"
+      },
+      "TaskItemOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "book_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Book Id"
+          },
+          "book_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Book Title"
+          },
+          "section_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Id"
+          },
+          "section_title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section Title"
+          },
+          "topic_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Topic Name"
+          },
+          "planned_count": {
+            "type": "integer",
+            "title": "Planned Count"
+          },
+          "completed_count": {
+            "type": "integer",
+            "title": "Completed Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "book_id",
+          "book_title",
+          "section_id",
+          "section_title",
+          "topic_name",
+          "planned_count",
+          "completed_count"
+        ],
+        "title": "TaskItemOut"
+      },
+      "TaskOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "date": {
+            "type": "string",
+            "title": "Date"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          },
+          "order": {
+            "type": "integer",
+            "title": "Order"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaskItemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "completed_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "date",
+          "status",
+          "title",
+          "order",
+          "items",
+          "completed_at"
+        ],
+        "title": "TaskOut"
+      },
+      "TelemetryEventIn": {
+        "properties": {
+          "slug": {
+            "type": "string",
+            "maxLength": 80,
+            "minLength": 1,
+            "title": "Slug"
+          },
+          "event": {
+            "type": "string",
+            "maxLength": 20,
+            "minLength": 1,
+            "title": "Event"
+          },
+          "variant": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variant"
+          }
+        },
+        "type": "object",
+        "required": [
+          "slug",
+          "event"
+        ],
+        "title": "TelemetryEventIn",
+        "description": "Anasayfa kartı olay bildirimi (sendBeacon body'si)."
+      },
+      "TodayOut": {
+        "properties": {
+          "summary": {
+            "$ref": "#/components/schemas/DaySummaryOut"
+          },
+          "tasks": {
+            "items": {
+              "$ref": "#/components/schemas/TaskOut"
+            },
+            "type": "array",
+            "title": "Tasks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "summary",
+          "tasks"
+        ],
+        "title": "TodayOut"
+      },
+      "TokenPairOut": {
+        "properties": {
+          "access_token": {
+            "type": "string",
+            "title": "Access Token"
+          },
+          "refresh_token": {
+            "type": "string",
+            "title": "Refresh Token"
+          },
+          "token_type": {
+            "type": "string",
+            "title": "Token Type",
+            "default": "Bearer"
+          },
+          "access_expires_in": {
+            "type": "integer",
+            "title": "Access Expires In"
+          },
+          "refresh_expires_in": {
+            "type": "integer",
+            "title": "Refresh Expires In"
+          }
+        },
+        "type": "object",
+        "required": [
+          "access_token",
+          "refresh_token",
+          "access_expires_in",
+          "refresh_expires_in"
+        ],
+        "title": "TokenPairOut"
+      },
+      "UserOut": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "grade_level": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Grade Level"
+          },
+          "is_graduate": {
+            "type": "boolean",
+            "title": "Is Graduate",
+            "default": false
+          },
+          "institution_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Id"
+          },
+          "institution_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Name"
+          },
+          "must_change_password": {
+            "type": "boolean",
+            "title": "Must Change Password",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role"
+        ],
+        "title": "UserOut"
+      },
+      "UserPublic": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "super_admin",
+              "institution_admin",
+              "teacher",
+              "student",
+              "parent"
+            ],
+            "title": "Role"
+          },
+          "institution_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Institution Id"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "must_change_password": {
+            "type": "boolean",
+            "title": "Must Change Password"
+          },
+          "last_login_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Login At"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "is_active",
+          "must_change_password"
+        ],
+        "title": "UserPublic",
+        "description": "Kullanıcı kamuya açık alanları — password REDACTED."
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      },
+      "app__routes__api_v1__auth__LoginOut": {
+        "properties": {
+          "tokens": {
+            "$ref": "#/components/schemas/TokenPairOut"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserOut"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tokens",
+          "user"
+        ],
+        "title": "LoginOut"
+      },
+      "app__routes__api_v2__auth__LoginOut": {
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/UserPublic"
+          },
+          "must_change_password": {
+            "type": "boolean",
+            "title": "Must Change Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "user",
+          "must_change_password"
+        ],
+        "title": "LoginOut",
+        "description": "Login response — token gövdede yok, cookie'de.\n\n`must_change_password=True` ise frontend kullanıcıyı /password/change'e\nyönlendirmeli; `get_current_user_v2` aksi halde 403 atar (R-001 azaltması)."
+      }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "type": "http",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

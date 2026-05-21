@@ -24,6 +24,30 @@
 <div class="grid grid-cols-1 xl:grid-cols-[1fr_360px] gap-6">
   <div class="min-w-0">
 
+    {# Bu haftanın öğretmen notları (varsa) — günlük view'da en üstte #}
+    {% if week_notes %}
+    <div class="bg-amber-50/60 border border-amber-200 rounded-lg p-3 mb-4">
+      <div class="flex items-center gap-2 mb-1.5">
+        <span class="text-amber-600">📝</span>
+        <h3 class="text-xs font-semibold text-amber-900 uppercase tracking-wide">
+          Bu haftanın notları
+        </h3>
+        <span class="text-[10px] text-amber-700/70 italic">
+          ({{ week_start_for_day.strftime('%d.%m') }} haftası · {{ week_notes|length }} madde)
+        </span>
+      </div>
+      <ul class="space-y-0.5">
+        {% for n in week_notes %}
+        <li class="flex items-start gap-2 text-sm leading-relaxed">
+          <span class="text-amber-500 mt-1 flex-shrink-0">{% if n.is_done %}✓{% else %}•{% endif %}</span>
+          <span class="{% if n.is_done %}line-through text-amber-700/60{% else %}text-amber-900{% endif %}"
+                style="white-space: pre-wrap;">{{ n.body }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
     {# Günlük özet — kompakt, her zaman üstte #}
     {% if assignments %}
     <div class="bg-white border border-slate-200 rounded-lg px-4 py-3 mb-4">

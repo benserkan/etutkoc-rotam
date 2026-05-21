@@ -168,7 +168,10 @@
           <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">Pasif</span>
           {% endif %}
         </td>
-        <td class="px-4 py-3 text-right">
+        <td class="px-4 py-3 text-right whitespace-nowrap">
+          <a href="/admin/revenue/institutions/{{ i.id }}"
+             class="text-xs text-emerald-600 hover:text-emerald-800 mr-2"
+             title="Ticari 360 — sağlık, ödeme, CRM, teklif">💰 360</a>
           <a href="/admin/institutions/{{ i.id }}" class="text-xs text-indigo-600 hover:text-indigo-800">Detay →</a>
         </td>
       </tr>

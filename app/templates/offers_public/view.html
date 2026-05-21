@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{ offer.title }} — Size özel teklif</title>
+  <link rel="icon" type="image/png" href="/static/img/etutkoc-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap&subset=latin,latin-ext" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              teal: '#117A86',
+              tealDark: '#0E5F69',
+              tealLight: '#3D9CAB',
+              yellow: '#E8AC2D',
+              yellowDark: '#C68A1A',
+            },
+          },
+          fontFamily: {
+            display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    h1, h2, h3 { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  <div class="max-w-2xl mx-auto px-4 py-10">
+
+    {# Üst marka şeridi #}
+    <div class="flex items-center justify-center gap-2 mb-8">
+      <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ" class="w-9 h-9 object-contain" />
+      <span class="font-display font-extrabold text-lg">
+        <span class="text-brand-teal">etütkoç</span>
+        <span class="text-slate-400 mx-1">·</span>
+        <span class="text-brand-yellow">rotam</span>
+      </span>
+    </div>
+
+    {# Durum mesajları (query param) #}
+    {% if request.query_params.get('accepted') %}
+    <div class="mb-6 p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-sm flex items-start gap-3">
+      <span class="text-xl leading-none">✓</span>
+      <div>
+        <div class="font-semibold">Teklif kabul edildi.</div>
+        <div class="text-emerald-700">Ekibimiz en kısa sürede sizinle iletişime geçecek.</div>
+      </div>
+    </div>
+    {% endif %}
+    {% if request.query_params.get('declined') %}
+    <div class="mb-6 p-4 rounded-xl bg-slate-100 border border-slate-200 text-slate-700 text-sm flex items-start gap-3">
+      <span class="text-xl leading-none">✕</span>
+      <div>
+        <div class="font-semibold">Teklif reddedildi.</div>
+        <div class="text-slate-600">Geri bildiriminiz için teşekkür ederiz.</div>
+      </div>
+    </div>
+    {% endif %}
+    {% if request.query_params.get('err') %}
+    <div class="mb-6 p-4 rounded-xl bg-rose-50 border border-rose-200 text-rose-900 text-sm">
+      {% set err = request.query_params.get('err') %}
+      {% if err == 'expired' %}
+        Bu teklifin süresi dolmuş.
+      {% elif err == 'not_open' %}
+        Bu teklif artık yanıtlanamaz (zaten cevaplanmış veya iptal edilmiş).
+      {% elif err == 'not_found' %}
+        Teklif bulunamadı.
+      {% elif err == 'plan_change_failed' %}
+        Plan değişikliği uygulanırken bir sorun oluştu. Lütfen bizimle iletişime geçin.
+      {% else %}
+        İşlem tamamlanamadı: {{ err }}
+      {% endif %}
+    </div>
+    {% endif %}
+
+    {# Ana teklif kartı #}
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+
+      {# Başlık şeridi #}
+      <div class="bg-gradient-to-br from-cyan-50 via-sky-50 to-white px-6 py-6 border-b border-slate-100">
+        <div class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold flex items-center gap-2">
+          <span>{{ kind_icon }}</span>
+          <span>Size özel teklif</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-slate-900 mt-2 leading-tight">
+          {{ offer.title }}
+        </h1>
+        {% if institution %}
+        <div class="text-xs text-slate-500 mt-2">
+          Kurum: <span class="font-medium text-slate-700">{{ institution.name }}</span>
+        </div>
+        {% endif %}
+      </div>
+
+      {# Teklif detay #}
+      <div class="px-6 py-6">
+
+        {# Durum rozeti #}
+        {% set status_value = offer.status.value %}
+        <div class="mb-5">
+          {% if status_value == 'sent' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
+              <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span>
+              Cevap bekleniyor
+            </span>
+          {% elif status_value == 'accepted' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+              <span>✓</span> Kabul edildi
+            </span>
+          {% elif status_value == 'declined' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200">
+              <span>✕</span> Reddedildi
+            </span>
+          {% elif status_value == 'expired' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              ⏰ Süresi doldu
+            </span>
+          {% elif status_value == 'cancelled' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              İptal edildi
+            </span>
+          {% elif status_value == 'draft' %}
+            <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200">
+              Henüz gönderilmedi
+            </span>
+          {% endif %}
+        </div>
+
+        {# Tür etiketi #}
+        <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Teklif türü</div>
+        <div class="text-sm font-medium text-slate-900 mb-4">
+          {{ kind_icon }} {{ kind_label }}
+        </div>
+
+        {# Özet kutu #}
+        {% if description.summary and description.summary != offer.title %}
+        <div class="bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 mb-5">
+          <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Detay</div>
+          <div class="text-base font-semibold text-slate-900">{{ description.summary }}</div>
+        </div>
+        {% endif %}
+
+        {# Kuruma özel mesaj #}
+        {% if offer.public_message %}
+        <div class="bg-cyan-50/50 border-l-4 border-brand-teal rounded-r-lg px-4 py-3 mb-5">
+          <div class="text-xs text-brand-teal uppercase tracking-wider font-semibold mb-1">Size özel mesaj</div>
+          <div class="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{{ offer.public_message }}</div>
+        </div>
+        {% endif %}
+
+        {# Geçerlilik #}
+        {% if offer.expires_at and status_value == 'sent' %}
+        <div class="text-xs text-slate-500 mb-5 flex items-center gap-1.5">
+          <span>⏳</span>
+          <span>Bu teklif <b class="text-slate-700">{{ offer.expires_at.strftime('%d.%m.%Y') }}</b> tarihine kadar geçerlidir.</span>
+        </div>
+        {% endif %}
+
+        {# Aksiyon butonları — sadece SENT durumunda #}
+        {% if status_value == 'sent' %}
+        <div class="border-t border-slate-200 pt-5 mt-5">
+          <div class="text-xs text-slate-500 mb-3">Bu teklife yanıtınız:</div>
+          <div class="flex flex-col sm:flex-row gap-2">
+            <form method="post" action="/offers/{{ offer.token }}/accept" class="flex-1">
+              <button type="submit"
+                class="w-full px-5 py-3 rounded-lg bg-brand-teal hover:bg-brand-tealDark text-white font-semibold text-sm transition-colors flex items-center justify-center gap-2"
+                onclick="return confirm('Bu teklifi kabul etmek istediğinize emin misiniz?');">
+                <span>✓</span> Kabul ediyorum
+              </button>
+            </form>
+            <button type="button"
+              onclick="document.getElementById('decline-form').classList.toggle('hidden')"
+              class="flex-1 px-5 py-3 rounded-lg bg-white border border-slate-300 hover:border-rose-300 hover:bg-rose-50 text-slate-700 hover:text-rose-700 font-semibold text-sm transition-colors flex items-center justify-center gap-2">
+              <span>✕</span> Reddediyorum
+            </button>
+          </div>
+
+          <form id="decline-form" method="post" action="/offers/{{ offer.token }}/decline"
+                class="hidden mt-4 p-4 rounded-lg bg-rose-50/40 border border-rose-200">
+            <label for="reason" class="block text-xs font-semibold text-rose-900 mb-1.5">
+              Ret nedeniniz (isteğe bağlı)
+            </label>
+            <textarea id="reason" name="reason" rows="3"
+              class="w-full px-3 py-2 text-sm rounded-md border border-rose-200 focus:border-rose-400 focus:ring-1 focus:ring-rose-300 outline-none"
+              placeholder="Geri bildiriminiz hizmetimizi iyileştirmemize yardımcı olur."></textarea>
+            <div class="flex gap-2 mt-3">
+              <button type="submit"
+                class="px-4 py-2 rounded-md bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold">
+                Reddet
+              </button>
+              <button type="button"
+                onclick="document.getElementById('decline-form').classList.add('hidden')"
+                class="px-4 py-2 rounded-md bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-sm font-semibold">
+                Vazgeç
+              </button>
+            </div>
+          </form>
+        </div>
+        {% elif status_value == 'accepted' %}
+        <div class="border-t border-slate-200 pt-5 mt-5">
+          <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-900">
+            Bu teklifi {% if offer.responded_at %}{{ offer.responded_at.strftime('%d.%m.%Y') }} tarihinde {% endif %}kabul ettiniz. Teşekkürler!
+          </div>
+        </div>
+        {% elif status_value == 'declined' %}
+        <div class="border-t border-slate-200 pt-5 mt-5">
+          <div class="p-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700">
+            Bu teklifi {% if offer.responded_at %}{{ offer.responded_at.strftime('%d.%m.%Y') }} tarihinde {% endif %}reddettiniz.
+            {% if offer.decline_reason %}
+            <div class="mt-2 text-xs text-slate-500"><b>Belirttiğiniz neden:</b> {{ offer.decline_reason }}</div>
+            {% endif %}
+          </div>
+        </div>
+        {% elif status_value == 'expired' %}
+        <div class="border-t border-slate-200 pt-5 mt-5">
+          <div class="p-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700">
+            Bu teklifin yanıtlanma süresi dolmuş. Yeni bir teklif için bizimle iletişime geçebilirsiniz.
+          </div>
+        </div>
+        {% elif status_value == 'cancelled' %}
+        <div class="border-t border-slate-200 pt-5 mt-5">
+          <div class="p-3 rounded-lg bg-slate-100 border border-slate-200 text-sm text-slate-700">
+            Bu teklif geri çekildi.
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+
+      {# Alt bilgi #}
+      <div class="px-6 py-3 bg-slate-50 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center">
+        <span>Teklif tarihi: {{ offer.created_at.strftime('%d.%m.%Y') }}</span>
+        <span class="font-mono text-[10px]">#{{ offer.id }}</span>
+      </div>
+    </div>
+
+    {# Alt iletişim #}
+    <div class="mt-6 text-center text-xs text-slate-500">
+      Soru ve görüşleriniz için
+      <a href="mailto:destek@etutkocrotam.app" class="text-brand-teal hover:underline font-medium">destek@etutkocrotam.app</a>
+      adresine yazabilirsiniz.
+    </div>
+
+  </div>
+</body>
+</html>

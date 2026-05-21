@@ -31,5 +31,34 @@ class Settings(BaseSettings):
     whatsapp_webhook_verify_token: str = "" # GET verify aşaması için (sen seç)
     whatsapp_default_language: str = "tr"
 
+    # Native mobile / external API katmanı
+    jwt_secret: str = "dev-only-change-me-jwt"  # production'da güçlü random secret
+    jwt_algorithm: str = "HS256"
+    jwt_access_minutes: int = 60          # access token 1 saat
+    jwt_refresh_days: int = 30            # refresh token 30 gün
+    # CORS allowlist — virgülle ayrılmış, "*" hepsi (sadece dev). Production'da
+    # mobile app + web origin'leri yazılmalı.
+    cors_origins: str = "http://localhost:8081,http://127.0.0.1:8081"
+    # IP-bazlı rate limit — /api/v1/auth/login için
+    api_login_rate_per_min: int = 10
+
+    # ========================================================================
+    # API v2 BFF (Backend-for-Frontend) cookie ayarları — Next.js için
+    # ========================================================================
+    # NOT: __Host- prefix'i Secure flag zorunlu kıldığı için sadece HTTPS
+    # ardındaki production'da kullanılır. Dev/test'te lgs_* (plain) kalır.
+    #
+    # Production .env örneği (Caddy + Lightsail):
+    #   AUTH_COOKIE_ACCESS_NAME=__Host-access
+    #   AUTH_COOKIE_REFRESH_NAME=__Host-refresh
+    #   AUTH_COOKIE_SECURE=true
+    auth_cookie_access_name: str = "lgs_access"
+    auth_cookie_refresh_name: str = "lgs_refresh"
+    auth_cookie_secure: bool = False
+    # SameSite: access cross-site link'lerden gelen GET için Lax,
+    # refresh ise sadece /api/v2/auth/refresh'a gittiği için Strict.
+    auth_cookie_samesite_access: str = "lax"
+    auth_cookie_samesite_refresh: str = "strict"
+
 
 settings = Settings()

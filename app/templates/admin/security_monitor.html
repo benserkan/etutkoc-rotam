@@ -1,0 +1,280 @@
+{% extends "base.html" %}
+{% block title %}Güvenlik Kamerası — Admin{% endblock %}
+
+{% block content %}
+{# ---------- Başlık + alt-pano kısayolları ---------- #}
+<div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
+  <div>
+    <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">🔐 Güvenlik Kamerası</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Şu an dikkat gerektiren olaylar üstte; detaylar alt panolarda.
+    </p>
+  </div>
+  <div class="flex items-center gap-1.5 flex-wrap justify-end text-xs">
+    <a href="/admin/security-monitor/sessions" class="px-2.5 py-1.5 rounded border border-teal-200 bg-teal-50 hover:bg-teal-100 text-teal-700 font-medium whitespace-nowrap">🔑 Oturum & IP</a>
+    <a href="/admin/security-monitor/live" class="px-2.5 py-1.5 rounded border border-purple-200 bg-purple-50 hover:bg-purple-100 text-purple-700 font-medium whitespace-nowrap">🔴 Canlı</a>
+    <a href="/admin/security-monitor/alarms" class="px-2.5 py-1.5 rounded border border-yellow-200 bg-yellow-50 hover:bg-yellow-100 text-yellow-800 font-medium whitespace-nowrap">
+      🔔 Alarm{% if data.unack_alarm_count %}<span class="ml-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full bg-yellow-600 text-white">{{ data.unack_alarm_count }}</span>{% endif %}
+    </a>
+    <a href="/admin/security-monitor/revenue" class="px-2.5 py-1.5 rounded border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-medium whitespace-nowrap">💰 Ticari</a>
+    <a href="/admin/security-monitor/activity" class="px-2.5 py-1.5 rounded border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-medium whitespace-nowrap">📊 Aktivite</a>
+    <a href="/admin/security-monitor/integrity" class="px-2.5 py-1.5 rounded border border-stone-200 bg-stone-50 hover:bg-stone-100 text-stone-700 font-medium whitespace-nowrap">🗄 Bütünlük</a>
+    <a href="/admin/security-monitor/notifications" class="px-2.5 py-1.5 rounded border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium whitespace-nowrap">📨 Bildirim</a>
+    <a href="/admin/security-monitor/system" class="px-2.5 py-1.5 rounded border border-orange-200 bg-orange-50 hover:bg-orange-100 text-orange-700 font-medium whitespace-nowrap">
+      🔧 Hata{% if data.system_error_summary and data.system_error_summary.open_groups %}<span class="ml-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full bg-orange-600 text-white">{{ data.system_error_summary.open_groups }}</span>{% endif %}
+    </a>
+    <a href="/admin/security-monitor/abuse" class="px-2.5 py-1.5 rounded border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-700 font-medium whitespace-nowrap" title="Kötüye kullanım sinyalleri — toplu davet, toplu bildirim, çoklu hesap gibi anormal davranışlar">
+      🚨 Kötüye Kullanım{% if data.abuse_open_count %}<span class="ml-1 inline-flex items-center justify-center min-w-[1rem] h-4 px-1 rounded-full bg-rose-600 text-white">{{ data.abuse_open_count }}</span>{% endif %}
+    </a>
+  </div>
+</div>
+
+{% set q = request.query_params %}
+{% if q.get('ok') %}<div class="mb-3 p-2.5 rounded bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">✓ {{ q.get('ok') }}</div>{% endif %}
+{% if q.get('err') %}<div class="mb-3 p-2.5 rounded bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ q.get('err') }}</div>{% endif %}
+
+{# ---------- Mini KPI Şeridi (kompakt tek satır) ---------- #}
+<div class="mb-5 bg-white border border-slate-200 rounded-lg overflow-x-auto">
+  <div class="flex items-stretch divide-x divide-slate-100 min-w-fit">
+    <div class="px-3 py-2 flex-shrink-0">
+      <div class="text-[10px] uppercase tracking-wide text-slate-500">Oturum</div>
+      <div class="text-lg font-semibold text-slate-900">{{ data.summary.active_sessions }}</div>
+    </div>
+    <div class="px-3 py-2 flex-shrink-0
+      {% if data.summary.blocked_ips > 0 %}bg-rose-50{% endif %}">
+      <div class="text-[10px] uppercase tracking-wide
+        {% if data.summary.blocked_ips > 0 %}text-rose-600{% else %}text-slate-500{% endif %}">Bloklu IP</div>
+      <div class="text-lg font-semibold
+        {% if data.summary.blocked_ips > 0 %}text-rose-900{% else %}text-slate-900{% endif %}">{{ data.summary.blocked_ips }}</div>
+    </div>
+    <div class="px-3 py-2 flex-shrink-0
+      {% if data.summary.failed_24h > 30 %}bg-amber-50{% endif %}"
+      title="Son 24 saatte başarısız giriş denemesi sayısı">
+      <div class="text-[10px] uppercase tracking-wide
+        {% if data.summary.failed_24h > 30 %}text-amber-700{% else %}text-slate-500{% endif %}">24s başarısız giriş</div>
+      <div class="text-lg font-semibold
+        {% if data.summary.failed_24h > 30 %}text-amber-900{% else %}text-slate-900{% endif %}">{{ data.summary.failed_24h }}</div>
+    </div>
+    <div class="px-3 py-2 flex-shrink-0
+      {% if data.summary.critical_24h > 0 %}bg-orange-50{% endif %}"
+      title="Son 24 saatte gerçekleşen kritik güvenlik olayı sayısı (kilitlenme, izinsiz erişim denemesi vb.)">
+      <div class="text-[10px] uppercase tracking-wide
+        {% if data.summary.critical_24h > 0 %}text-orange-700{% else %}text-slate-500{% endif %}">24s kritik olay</div>
+      <div class="text-lg font-semibold
+        {% if data.summary.critical_24h > 0 %}text-orange-900{% else %}text-slate-900{% endif %}">{{ data.summary.critical_24h }}</div>
+    </div>
+    <div class="px-3 py-2 flex-shrink-0
+      {% if data.active_impersonations|length > 0 %}bg-violet-50{% endif %}">
+      <div class="text-[10px] uppercase tracking-wide
+        {% if data.active_impersonations|length > 0 %}text-violet-700{% else %}text-slate-500{% endif %}">Sahte oturum</div>
+      <div class="text-lg font-semibold
+        {% if data.active_impersonations|length > 0 %}text-violet-900{% else %}text-slate-900{% endif %}">{{ data.active_impersonations|length }}</div>
+    </div>
+    <div class="px-3 py-2 flex-shrink-0
+      {% if data.unack_alarm_count %}bg-yellow-50{% endif %}">
+      <div class="text-[10px] uppercase tracking-wide
+        {% if data.unack_alarm_count %}text-yellow-700{% else %}text-slate-500{% endif %}">Alarm</div>
+      <div class="text-lg font-semibold
+        {% if data.unack_alarm_count %}text-yellow-900{% else %}text-slate-900{% endif %}">{{ data.unack_alarm_count or 0 }}</div>
+    </div>
+    <div class="px-3 py-2 flex-shrink-0
+      {% if data.abuse_open_count %}bg-rose-50{% endif %}">
+      <div class="text-[10px] uppercase tracking-wide
+        {% if data.abuse_open_count %}text-rose-700{% else %}text-slate-500{% endif %}">Abuse</div>
+      <div class="text-lg font-semibold
+        {% if data.abuse_open_count %}text-rose-900{% else %}text-slate-900{% endif %}">{{ data.abuse_open_count or 0 }}</div>
+    </div>
+    <div class="px-3 py-2 flex-shrink-0
+      {% if data.system_error_summary and data.system_error_summary.open_groups %}bg-orange-50{% endif %}">
+      <div class="text-[10px] uppercase tracking-wide
+        {% if data.system_error_summary and data.system_error_summary.open_groups %}text-orange-700{% else %}text-slate-500{% endif %}">Açık hata</div>
+      <div class="text-lg font-semibold
+        {% if data.system_error_summary and data.system_error_summary.open_groups %}text-orange-900{% else %}text-slate-900{% endif %}">
+        {{ (data.system_error_summary.open_groups if data.system_error_summary else 0) or 0 }}
+      </div>
+    </div>
+    <div class="px-3 py-2 flex-shrink-0">
+      <div class="text-[10px] uppercase tracking-wide text-slate-500">SA login (24h)</div>
+      <div class="text-lg font-semibold text-slate-900">{{ data.summary.super_admin_logins_24h }}</div>
+    </div>
+  </div>
+</div>
+
+{# ---------- Şu An Dikkat Gerektiren (kalp atışı) ---------- #}
+{% set att = data.attention %}
+<div class="mb-5 bg-white rounded-lg border-2
+  {% if att.top_severity == 'critical' %}border-rose-300
+  {% elif att.top_severity == 'warn' %}border-amber-300
+  {% else %}border-slate-200{% endif %} overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-100 flex items-center justify-between
+    {% if att.top_severity == 'critical' %}bg-rose-50
+    {% elif att.top_severity == 'warn' %}bg-amber-50
+    {% endif %}">
+    <div>
+      <h2 class="text-base font-semibold text-slate-900">
+        {% if att.is_clean %}🟢 Şu an dikkat gerektiren bir şey yok
+        {% elif att.top_severity == 'critical' %}🚨 Şu an dikkat gerektiren olaylar ({{ att.total }})
+        {% else %}⚠️ Şu an dikkat gerektiren olaylar ({{ att.total }})
+        {% endif %}
+      </h2>
+      <div class="text-xs text-slate-600 mt-0.5">
+        {% if att.is_clean %}
+          Tüm kameralar yeşil. Bu sayfayı kapatabilirsin.
+        {% else %}
+          {% if att.by_severity.critical %}<span class="inline-flex items-center gap-1 mr-2"><span class="w-2 h-2 rounded-full bg-rose-500"></span>{{ att.by_severity.critical }} kritik</span>{% endif %}
+          {% if att.by_severity.warn %}<span class="inline-flex items-center gap-1 mr-2"><span class="w-2 h-2 rounded-full bg-amber-500"></span>{{ att.by_severity.warn }} uyarı</span>{% endif %}
+          {% if att.by_severity.info %}<span class="inline-flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-slate-400"></span>{{ att.by_severity.info }} bilgi</span>{% endif %}
+        {% endif %}
+      </div>
+    </div>
+    {% if not att.is_clean %}
+      <span class="text-xs px-2 py-1 rounded
+        {% if att.top_severity == 'critical' %}bg-rose-200 text-rose-900
+        {% elif att.top_severity == 'warn' %}bg-amber-200 text-amber-900
+        {% else %}bg-slate-200 text-slate-700{% endif %}">
+        En üst: {{ att.top_severity|upper }}
+      </span>
+    {% endif %}
+  </div>
+
+  {% if att.is_clean %}
+    <div class="px-4 py-8 text-center text-sm text-emerald-700">
+      <div class="text-4xl mb-2">✓</div>
+      <div>Aktif oturum, IP, alarm, hata, abuse, KVKK ve cron taramalarının hepsi temiz.</div>
+      <div class="text-xs text-slate-500 mt-2">Alt panolardan detaylara erişebilirsin.</div>
+    </div>
+  {% else %}
+    <ul class="divide-y divide-slate-100">
+      {% for it in att['items'] %}
+        {% set color = 'rose' if it.severity == 'critical' else ('amber' if it.severity == 'warn' else 'slate') %}
+        <li class="px-4 py-3 flex items-start gap-3 hover:bg-slate-50">
+          <div class="flex-shrink-0 w-9 h-9 rounded-full bg-{{ color }}-100 text-{{ color }}-700 flex items-center justify-center text-lg">
+            {{ it.icon }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-start justify-between gap-2">
+              <div class="text-sm font-semibold text-slate-900">{{ it.title }}</div>
+              <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] uppercase tracking-wide bg-{{ color }}-100 text-{{ color }}-800 whitespace-nowrap">
+                {{ it.severity }}
+              </span>
+            </div>
+            <div class="text-xs text-slate-600 mt-1">{{ it.description }}</div>
+            <div class="mt-2 flex items-center gap-3 text-xs flex-wrap">
+              <a href="{{ it.action_url }}" class="text-indigo-600 hover:text-indigo-800 font-medium">
+                {{ it.action_label }} →
+              </a>
+              {% if it.explainer %}
+                <details class="inline">
+                  <summary class="cursor-pointer text-slate-500 hover:text-slate-800 font-medium select-none">
+                    ⓘ Bu ne demek?
+                  </summary>
+                  <div class="mt-2 p-3 bg-slate-50 border-l-4 border-{{ color }}-300 rounded-r text-xs text-slate-700 leading-relaxed whitespace-pre-line">{{ it.explainer }}</div>
+                </details>
+              {% endif %}
+              {% if it.ts %}
+                <span class="text-slate-400">{{ it.ts|dt_dual }}</span>
+              {% endif %}
+              <span class="text-slate-400">· {{ it.category }}</span>
+            </div>
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+
+{# ---------- Aktif sahte oturum (varsa, hızlı eylem için üstte) ---------- #}
+{% if data.active_impersonations %}
+<div class="mb-5 bg-violet-50 border-2 border-violet-300 rounded-lg overflow-hidden">
+  <div class="px-4 py-2.5 border-b border-violet-200 text-sm font-semibold text-violet-900">
+    🎭 Aktif Sahte Oturumlar — hızlı eylem
+  </div>
+  <table class="w-full text-sm">
+    <tbody class="divide-y divide-violet-200">
+      {% for i in data.active_impersonations %}
+        <tr>
+          <td class="px-4 py-2">
+            <span class="text-slate-700">{{ i.actor_full_name }}</span>
+            <span class="text-slate-400 mx-1">→</span>
+            <span class="font-medium text-slate-900">{{ i.target_full_name }}</span>
+            <div class="text-[11px] text-slate-500 mt-0.5 italic">"{{ i.reason }}"</div>
+          </td>
+          <td class="px-4 py-2 text-right text-xs whitespace-nowrap">
+            {% if i.is_expired_now %}
+              <span class="px-2 py-0.5 rounded bg-rose-100 text-rose-700">Süre doldu</span>
+            {% else %}
+              <span class="px-2 py-0.5 rounded bg-amber-100 text-amber-800">{{ (i.seconds_left // 60) }} dk</span>
+            {% endif %}
+            <form method="post" action="/admin/security-monitor/impersonations/{{ i.id }}/end"
+                  onsubmit="return confirm('Bu sahte oturumu uzaktan sonlandır?');"
+                  class="inline ml-2">
+              <button class="text-rose-600 hover:text-rose-800 font-medium">Sonlandır</button>
+            </form>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+{# ---------- Yardım kutusu (en altta) — öğretici ---------- #}
+<details class="mt-6 bg-slate-50 border border-slate-200 rounded">
+  <summary class="px-4 py-2.5 cursor-pointer text-sm font-medium text-slate-700 hover:text-slate-900 select-none">
+    💡 Bu sayfa nasıl çalışır? (yeni süper adminler için)
+  </summary>
+  <div class="px-4 py-3 text-xs text-slate-700 leading-relaxed space-y-3 border-t border-slate-200">
+    <div>
+      <div class="font-semibold text-slate-800 mb-1">Mantık</div>
+      <p>
+        Bu sayfa <b>sadece şu an dikkat gerektiren</b> olayları toplar.
+        Sistem temizse "🟢 dikkat gerektiren bir şey yok" yazar — bu iyi haberdir, sayfayı kapatabilirsin.
+        100 kullanıcı da olsa 10.000 kullanıcı da olsa bu liste hep kısa kalır,
+        çünkü "her şey"i değil "sıra dışı olanı" gösterir.
+      </p>
+    </div>
+    <div>
+      <div class="font-semibold text-slate-800 mb-1">Şiddet (severity)</div>
+      <ul class="list-disc list-inside space-y-0.5">
+        <li><b class="text-rose-700">CRITICAL</b> — hemen müdahale: aktif sahte oturum, çok kez tekrar eden hata, 48h+ durmuş cron</li>
+        <li><b class="text-amber-700">WARN</b> — incele ve karar ver: IP blok, KVKK gecikme, idle admin oturumu</li>
+        <li><b class="text-slate-600">INFO</b> — bilgilendirme: yakın trial bitişi gibi fırsatlar</li>
+      </ul>
+    </div>
+    <div>
+      <div class="font-semibold text-slate-800 mb-1">Her kartın altında "ⓘ Bu ne demek?" linki vardır</div>
+      <p>
+        Bilmediğin terim varsa (sahte oturum, brute force, abuse, KVKK SLA, cron drift, vs.)
+        tıklayınca 3 paragraflı bir açıklama açılır: <b>ne olduğu</b>, <b>neden önemli</b>, <b>ne yapmalısın</b>.
+      </p>
+    </div>
+    <div>
+      <div class="font-semibold text-slate-800 mb-1">Alt panolar — detay için</div>
+      <p>
+        Yukarıdaki renkli butonlar her bir kameranın <b>tam tablosuna</b> götürür.
+        Bu sayfadaki kartlar sadece özet — detaya inmek için kartın "→" linkine ya da renkli butonlara bas:
+        <span class="font-medium">Canlı Akış</span> ·
+        <span class="font-medium">Alarmlar</span> ·
+        <span class="font-medium">Ticari Pano</span> ·
+        <span class="font-medium">Aktivite</span> ·
+        <span class="font-medium">Bütünlük</span> ·
+        <span class="font-medium">Bildirim Teslimat</span> ·
+        <span class="font-medium">Sistem Hataları</span> ·
+        <span class="font-medium">Abuse</span>.
+      </p>
+    </div>
+    <div>
+      <div class="font-semibold text-slate-800 mb-1">Otomatik mi çalışır?</div>
+      <p>
+        Evet. Arka planda 5 dakikada bir alarm motoru, her saat abuse tespiti, her gece veri bütünlüğü
+        taraması otomatik çalışır. Sen panele bakmasan bile kritik bir şey olursa süper adminlere e-posta gelir.
+      </p>
+    </div>
+  </div>
+</details>
+
+<div class="mt-3 text-xs text-slate-400">
+  Veri zamanı: {{ data.generated_at|dt_tr_full }}
+</div>
+{% endblock %}

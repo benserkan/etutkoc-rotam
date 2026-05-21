@@ -1,0 +1,31 @@
+{# Canlı feed partial — security_monitor_live.html'in hx-target'ı buraya yazar #}
+{% if not items %}
+  <div class="px-4 py-10 text-center text-sm text-slate-400">
+    Bu pencerede olay yok. Etrafta sessizlik 🔇
+  </div>
+{% else %}
+  <ul class="divide-y divide-slate-100">
+    {% for it in items %}
+      {% set color = 'rose' if it.severity == 'critical' else ('amber' if it.severity == 'warn' else 'slate') %}
+      <li class="px-4 py-2 flex items-start gap-3 hover:bg-slate-50">
+        <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-{{ color }}-100 text-{{ color }}-700 text-xs font-semibold mt-0.5">
+          {% if it.type == 'alarm' %}🔔{% else %}{% if it.severity == 'critical' %}!{% else %}·{% endif %}{% endif %}
+        </span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center gap-2">
+            <span class="text-sm text-slate-900 truncate">{{ it.title }}</span>
+            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-{{ color }}-50 text-{{ color }}-700">
+              {{ it.type }}
+            </span>
+          </div>
+          <div class="text-xs text-slate-500 mt-0.5">
+            {% if it.actor_id %}aktör #{{ it.actor_id }} · {% endif %}
+            {% if it.ip %}<code>{{ it.ip }}</code> · {% endif %}
+            {% if it.details %}{{ it.details }}{% endif %}
+          </div>
+        </div>
+        <div class="text-xs text-slate-400 whitespace-nowrap">{{ it.ts|dt_dual }}</div>
+      </li>
+    {% endfor %}
+  </ul>
+{% endif %}

@@ -5,8 +5,11 @@ maturity_value, maturity_label, weeks_observed, days_observed, confidence_label,
 tr_weekdays, tr_months
 #}
 {% set should_open = is_today or keep_open %}
+{# Açık kart (details[open]) → çevresinden net ayrılsın: hafif arka plan
+   tonu + daha belirgin kenarlık + ince gölge. is_today için indigo,
+   diğerleri için slate. Tailwind open: variant kullanılıyor (CDN destekler). #}
 <details {% if should_open %}open{% endif %}
-         class="day-card bg-white border {% if is_today %}border-indigo-300 ring-1 ring-indigo-100{% else %}border-slate-200{% endif %} rounded-lg group"
+         class="day-card bg-white border rounded-lg group transition-colors {% if is_today %}border-indigo-300 ring-1 ring-indigo-100 open:bg-indigo-50/30 open:ring-2 open:ring-indigo-200 open:shadow-sm{% else %}border-slate-200 open:border-slate-300 open:bg-slate-50/60 open:shadow-sm{% endif %}"
          data-day="{{ day.isoformat() }}"
          {% if keep_open %}data-keep-open="{{ keep_open }}"{% endif %}>
   <summary class="px-5 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-50 list-none">
@@ -20,11 +23,41 @@ tr_weekdays, tr_months
       {% if day_tasks %}
       <span class="text-slate-700 font-medium">{{ day_tasks|length }} görev</span>
       {% if planned_total %}<span class="text-amber-600">· {{ planned_total }} test planlı</span>{% endif %}
+      {% if day_draft_count is defined and day_draft_count %}
+      <span class="inline-flex items-center gap-1 text-[10px] font-bold px-1.5 py-0.5 rounded"
+            style="background:#FEF3C7; color:#92400E; border:1px solid #FDE68A;"
+            title="{{ day_draft_count }} görev henüz yayınlanmadı — öğrenci göremiyor">
+        📓 {{ day_draft_count }} taslak
+      </span>
+      {% endif %}
       {% else %}
       <span class="text-slate-400 italic">boş</span>
       {% endif %}
     </div>
   </summary>
+
+  {# Taslak varsa: "Yayınla" butonu yukarıda görünsün — öğretmen rahat bulsun #}
+  {% if day_draft_count is defined and day_draft_count and assignments %}
+  <div class="px-5 py-2 border-t border-slate-100 flex items-center justify-between gap-2"
+       style="background:linear-gradient(90deg,#FEF3C7,#FEF9C3);">
+    <div class="text-xs text-amber-900">
+      <b>📓 {{ day_draft_count }} taslak görev</b> — öğrenci henüz göremiyor.
+      Hazır olunca yayınla.
+    </div>
+    <form hx-post="/teacher/students/{{ student.id }}/publish-day"
+          hx-target="closest .day-card"
+          hx-swap="outerHTML"
+          hx-confirm="{{ day.day }} {{ tr_months[day.month - 1] }} günü için {{ day_draft_count }} taslak görev yayınlansın? Bu işlem öğrencinin paneline indirilecek."
+          class="flex-shrink-0">
+      <input type="hidden" name="task_date" value="{{ day.isoformat() }}" />
+      <button type="submit"
+              class="text-xs font-bold px-3 py-1.5 rounded-md text-white hover:brightness-110 shadow-sm"
+              style="background:linear-gradient(135deg,#D97706,#B45309);">
+        🚀 Bu günü yayınla
+      </button>
+    </form>
+  </div>
+  {% endif %}
 
   <!-- Ders bazında özet kartı -->
   {% if day_subject_summary %}
@@ -64,18 +97,33 @@ tr_weekdays, tr_months
   {% endif %}
 
   <!-- Görev listesi -->
-  <div class="divide-y divide-slate-100 border-t border-slate-100">
+  <div class="divide-y divide-slate-100 border-t border-slate-100 day-tasks-list"
+       data-student-id="{{ student.id }}"
+       data-day="{{ day.isoformat() }}">
     {% for task in day_tasks %}
       {% set single = task.book_items|length == 1 %}
       {% set it = task.book_items[0] if single else None %}
       {% set primary_subject = task.book_items[0].book.subject if task.book_items else None %}
       {% set hue = (primary_subject.id * 67) % 360 if primary_subject else 0 %}
-    <div class="px-5 py-2.5 flex items-start justify-between gap-3 hover:bg-slate-100/50 border-l-4"
+    <div id="task-{{ task.id }}"
+         class="px-3 py-2.5 flex items-start justify-between gap-3 hover:bg-slate-100/50 border-l-4 task-row"
+         data-task-id="{{ task.id }}"
          {% if primary_subject %}
          style="background: hsl({{ hue }}, 70%, 98%); border-left-color: hsl({{ hue }}, 60%, 60%);"
          {% else %}
          style="border-left-color: transparent;"
          {% endif %}>
+      {# Sürükle-bırak tutamacı — sadece saatsiz görevlerde aktif (saat varsa kronolojik sıralanır) #}
+      <span class="task-drag-handle select-none text-slate-300 hover:text-slate-600 cursor-grab flex-shrink-0 mt-0.5 font-mono leading-none"
+            title="{% if task.scheduled_hour is none %}Sürükle-bırak ile sırala{% else %}Saat atanmış: kronolojik sırada{% endif %}"
+            style="{% if task.scheduled_hour is not none %}opacity:0.25; cursor:not-allowed;{% endif %}">⋮⋮</span>
+      {# Saat etiketi (varsa) #}
+      {% if task.scheduled_hour is not none %}
+      <span class="inline-flex items-center justify-center text-[10px] font-bold font-mono px-1.5 py-0.5 rounded flex-shrink-0 mt-0.5"
+            style="background:#E0E7FF; color:#3730A3; min-width:42px;">
+        {{ '%02d'|format(task.scheduled_hour) }}:00
+      </span>
+      {% endif %}
       <div class="flex-1 min-w-0">
         <div class="flex items-center gap-2 flex-wrap">
           {% if primary_subject %}
@@ -93,6 +141,13 @@ tr_weekdays, tr_months
             {% else %}bg-slate-100 text-slate-700{% endif %}">
             {{ TASK_TYPE_LABELS[task.type] }}
           </span>
+          {% if task.is_draft %}
+          <span class="text-[10px] uppercase tracking-wide font-bold px-1.5 py-0.5 rounded"
+                style="background:#FEF3C7; color:#92400E; border:1px solid #FDE68A;"
+                title="Henüz yayınlanmadı — öğrenci paneline inmez">
+            📓 TASLAK
+          </span>
+          {% endif %}
           <span class="text-sm font-medium text-slate-900">{{ task.title }}</span>
           {% if single and it.section.topic %}
             <span class="text-xs text-slate-400">({{ it.section.topic.name }})</span>
@@ -116,6 +171,22 @@ tr_weekdays, tr_months
             {% if it.completed_count %}<span class="text-emerald-600"> ({{ it.completed_count }} çöz.)</span>{% endif %}
           </div>
           {% endfor %}
+        </div>
+        {% endif %}
+        {# Tip-spesifik ek içerik: video linki, özet/tekrar açıklaması #}
+        {% if task.type.value == 'video' and task.link_url %}
+        <div class="mt-1 text-xs">
+          <a href="{{ task.link_url }}" target="_blank" rel="noopener noreferrer"
+             class="inline-flex items-center gap-1 text-sky-700 hover:text-sky-900 hover:underline"
+             title="{{ task.link_url }}">
+            🎥 <span class="truncate max-w-md">{{ task.link_url[:60] }}{% if task.link_url|length > 60 %}…{% endif %}</span>
+          </a>
+        </div>
+        {% endif %}
+        {% if task.notes and task.type.value in ('ozet', 'tekrar', 'video', 'other') %}
+        <div class="mt-1 text-xs text-slate-600 italic truncate max-w-xl">
+          {% if task.type.value == 'tekrar' %}🧠{% elif task.type.value == 'ozet' %}✍️{% else %}📝{% endif %}
+          {{ task.notes }}
         </div>
         {% endif %}
       </div>
@@ -149,75 +220,253 @@ tr_weekdays, tr_months
           hx-target="closest .day-card"
           hx-swap="outerHTML"
           hx-vals='{"keep_open":"add-form"}'
-          class="px-4 py-4 grid grid-cols-1 md:grid-cols-12 gap-3 items-end border-t border-indigo-200/60">
+          x-data="{ selectedType: 'test', notes: '', subjectId: '', subjectLabel: '', reviewCardId: '' }"
+          class="px-4 py-4 border-t border-indigo-200/60">
       <input type="hidden" name="task_date" value="{{ day_iso }}" />
+      <input type="hidden" name="type" :value="selectedType" />
+      <input type="hidden" name="subject_label" :value="subjectLabel" />
 
-      <div class="md:col-span-2">
-        <label class="block text-xs text-slate-600 mb-1">Tip</label>
-        <select name="type" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
-          {% for tt in task_types %}
-          <option value="{{ tt.value }}">{{ TASK_TYPE_LABELS[tt] }}</option>
+      {# 5-tile görev tipi seçici (emoji + label) — dropdown'un yerini aldı #}
+      <div class="mb-3">
+        <label class="block text-xs text-slate-600 mb-1.5 font-medium">Görev tipi</label>
+        <div class="grid grid-cols-5 gap-1.5">
+          {% for tt, emoji in [('test','📝'), ('video','🎥'), ('ozet','📄'), ('tekrar','🔁'), ('other','📚')] %}
+          <button type="button" @click="selectedType='{{ tt }}'; notes=''"
+                  :class="selectedType === '{{ tt }}' ? 'border-indigo-500 bg-indigo-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-700 hover:border-indigo-300'"
+                  class="px-2 py-2 rounded-md text-[11px] font-semibold border-2 transition-all flex flex-col items-center gap-0.5">
+            <span class="text-base leading-none">{{ emoji }}</span>
+            <span>{{ {'test':'Test','video':'Video','ozet':'Özet','tekrar':'Tekrar','other':'Diğer'}[tt] }}</span>
+          </button>
           {% endfor %}
-        </select>
+        </div>
       </div>
 
-      <div class="md:col-span-2">
-        <label class="block text-xs text-slate-600 mb-1">Ders</label>
-        <select name="subject_id"
-                hx-get="/teacher/students/{{ student.id }}/books-by-subject"
-                hx-target="#book-sel-{{ day_iso }}"
-                hx-swap="innerHTML"
-                hx-trigger="change"
-                hx-include="this"
-                class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
-          <option value="">— ders seç —</option>
-          {% for s in subjects %}
-          <option value="{{ s.id }}">{{ s.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
+      {# ════════════════════════════════════════════════════════════════
+         TEST TİPİ — kitap + bölüm + adet (mevcut akış, dokunulmadı)
+         ════════════════════════════════════════════════════════════════ #}
+      <fieldset x-show="selectedType === 'test'" x-transition.opacity
+                :disabled="selectedType !== 'test'"
+                class="border-0 p-0 m-0">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div class="md:col-span-1">
+            <label class="block text-xs text-slate-600 mb-1">Saat</label>
+            <input type="number" name="scheduled_hour" min="0" max="23" placeholder="—"
+                   title="Opsiyonel — 0-23 (boş bırakırsan saatsiz)"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-center font-mono" />
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs text-slate-600 mb-1">Ders</label>
+            <select name="subject_id"
+                    hx-get="/teacher/students/{{ student.id }}/books-by-subject"
+                    hx-target="#book-sel-{{ day_iso }}"
+                    hx-swap="innerHTML"
+                    hx-trigger="change"
+                    hx-include="this"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+              <option value="">— ders seç —</option>
+              {% for s in subjects %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-xs text-slate-600 mb-1">Kitap</label>
+            <select name="book_id"
+                    id="book-sel-{{ day_iso }}"
+                    hx-get="/teacher/students/{{ student.id }}/book-sections"
+                    hx-target="#sect-sel-{{ day_iso }}"
+                    hx-swap="innerHTML"
+                    hx-trigger="change"
+                    hx-include="this"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+              <option value="">— önce ders seç —</option>
+            </select>
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-xs text-slate-600 mb-1">Ünite / Deneme</label>
+            <select name="section_id"
+                    id="sect-sel-{{ day_iso }}"
+                    hx-get="/teacher/students/{{ student.id }}/section-stats"
+                    hx-target="#sect-stats-{{ day_iso }}"
+                    hx-swap="innerHTML"
+                    hx-trigger="change"
+                    hx-include="this"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+              <option value="">— önce kitap seç —</option>
+            </select>
+          </div>
+          <div class="md:col-span-2">
+            <label class="block text-xs text-slate-600 mb-1">Adet</label>
+            <input type="number" name="planned_count" min="1"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-right" />
+          </div>
+          <div class="md:col-span-1 flex justify-end">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
+              Ekle
+            </button>
+          </div>
+        </div>
+        <div id="sect-stats-{{ day_iso }}" class="mt-2.5"></div>
+      </fieldset>
 
-      <div class="md:col-span-3">
-        <label class="block text-xs text-slate-600 mb-1">Kitap</label>
-        <select name="book_id"
-                id="book-sel-{{ day_iso }}"
-                hx-get="/teacher/students/{{ student.id }}/book-sections"
-                hx-target="#sect-sel-{{ day_iso }}"
-                hx-swap="innerHTML"
-                hx-trigger="change"
-                hx-include="this"
-                class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
-          <option value="">— önce ders seç —</option>
-        </select>
-      </div>
+      {# ════════════════════════════════════════════════════════════════
+         VIDEO TİPİ — YouTube/URL + başlık
+         ════════════════════════════════════════════════════════════════ #}
+      <fieldset x-show="selectedType === 'video'" x-transition.opacity
+                :disabled="selectedType !== 'video'"
+                class="border-0 p-0 m-0">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div class="md:col-span-1">
+            <label class="block text-xs text-slate-600 mb-1">Saat</label>
+            <input type="number" name="scheduled_hour" min="0" max="23" placeholder="—"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-center font-mono" />
+          </div>
+          <div class="md:col-span-7">
+            <label class="block text-xs text-slate-600 mb-1">🎥 Video bağlantısı (YouTube, Khan Academy vb.)</label>
+            <input type="url" name="link_url" placeholder="https://youtube.com/watch?v=..."
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm font-mono" />
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-xs text-slate-600 mb-1">Açıklama / Konu</label>
+            <input type="text" name="notes" placeholder="Örn. Trigonometri giriş"
+                   maxlength="200"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+          </div>
+          <div class="md:col-span-1 flex justify-end">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
+              Ekle
+            </button>
+          </div>
+        </div>
+        <p class="text-[10px] text-slate-500 mt-2 italic">💡 Öğrenci linke tıklayarak videoyu açabilir. Kısa açıklama ekleyerek konuyu netleştirin.</p>
+      </fieldset>
 
-      <div class="md:col-span-3">
-        <label class="block text-xs text-slate-600 mb-1">Ünite / Deneme</label>
-        <select name="section_id"
-                id="sect-sel-{{ day_iso }}"
-                class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
-          <option value="">— önce kitap seç —</option>
-        </select>
-      </div>
+      {# ════════════════════════════════════════════════════════════════
+         ÖZET TİPİ — ders + konu/açıklama
+         ════════════════════════════════════════════════════════════════ #}
+      <fieldset x-show="selectedType === 'ozet'" x-transition.opacity
+                :disabled="selectedType !== 'ozet'"
+                class="border-0 p-0 m-0">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div class="md:col-span-1">
+            <label class="block text-xs text-slate-600 mb-1">Saat</label>
+            <input type="number" name="scheduled_hour" min="0" max="23" placeholder="—"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-center font-mono" />
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-xs text-slate-600 mb-1">Ders</label>
+            <select name="subject_id" x-model="subjectId"
+                    @change="subjectLabel = $event.target.selectedOptions[0].text"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+              <option value="">— ders seç —</option>
+              {% for s in subjects %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="md:col-span-7">
+            <label class="block text-xs text-slate-600 mb-1">📄 Özet çıkarılacak konu</label>
+            <input type="text" name="notes" x-model="notes" placeholder="Örn. Atatürk ilkelerinin sınıflandırılması"
+                   maxlength="200"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+          </div>
+          <div class="md:col-span-1 flex justify-end">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
+              Ekle
+            </button>
+          </div>
+        </div>
+      </fieldset>
 
-      <div class="md:col-span-1">
-        <label class="block text-xs text-slate-600 mb-1">Adet</label>
-        <input type="number" name="planned_count" min="1"
-               class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-right" />
-      </div>
+      {# ════════════════════════════════════════════════════════════════
+         TEKRAR TİPİ — ders + konu + FSRS önerileri (vadesi gelmiş kartlar)
+         ════════════════════════════════════════════════════════════════ #}
+      <fieldset x-show="selectedType === 'tekrar'" x-transition.opacity
+                :disabled="selectedType !== 'tekrar'"
+                class="border-0 p-0 m-0">
+        <input type="hidden" name="review_card_id" :value="reviewCardId" />
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div class="md:col-span-1">
+            <label class="block text-xs text-slate-600 mb-1">Saat</label>
+            <input type="number" name="scheduled_hour" min="0" max="23" placeholder="—"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-center font-mono" />
+          </div>
+          <div class="md:col-span-3">
+            <label class="block text-xs text-slate-600 mb-1">Ders</label>
+            <select name="subject_id" x-model="subjectId"
+                    @change="subjectLabel = $event.target.selectedOptions[0].text; notes = ''; reviewCardId = ''"
+                    hx-get="/teacher/students/{{ student.id }}/review-struggle-suggestions"
+                    hx-target="#review-chips-{{ day_iso }}"
+                    hx-swap="innerHTML"
+                    hx-trigger="change"
+                    hx-include="this"
+                    hx-vals='{"target_date":"{{ day_iso }}"}'
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+              <option value="">— ders seç —</option>
+              {% for s in subjects %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="md:col-span-7">
+            <label class="block text-xs text-slate-600 mb-1">🔁 Tekrar edilecek konu</label>
+            <input type="text" name="notes" x-model="notes" placeholder="Örn. Üçgenlerde benzerlik"
+                   maxlength="200"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+          </div>
+          <div class="md:col-span-1 flex justify-end">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
+              Ekle
+            </button>
+          </div>
+        </div>
+        {# FSRS önerileri — ders değişince HTMX fragment yüklenir #}
+        <div id="review-chips-{{ day_iso }}"></div>
+      </fieldset>
 
-      <div class="md:col-span-1 flex justify-end">
-        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
-          Ekle
-        </button>
-      </div>
+      {# ════════════════════════════════════════════════════════════════
+         DİĞER TİPİ — sadece başlık + notlar
+         ════════════════════════════════════════════════════════════════ #}
+      <fieldset x-show="selectedType === 'other'" x-transition.opacity
+                :disabled="selectedType !== 'other'"
+                class="border-0 p-0 m-0">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+          <div class="md:col-span-1">
+            <label class="block text-xs text-slate-600 mb-1">Saat</label>
+            <input type="number" name="scheduled_hour" min="0" max="23" placeholder="—"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm text-center font-mono" />
+          </div>
+          <div class="md:col-span-4">
+            <label class="block text-xs text-slate-600 mb-1">📚 Başlık</label>
+            <input type="text" name="title" placeholder="Görev başlığı"
+                   maxlength="200"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+          </div>
+          <div class="md:col-span-6">
+            <label class="block text-xs text-slate-600 mb-1">Açıklama (opsiyonel)</label>
+            <input type="text" name="notes" placeholder="Detay açıklama"
+                   maxlength="300"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm" />
+          </div>
+          <div class="md:col-span-1 flex justify-end">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-medium py-1.5 px-3 rounded w-full">
+              Ekle
+            </button>
+          </div>
+        </div>
+      </fieldset>
     </form>
     </details>
   </div>
   {% endif %}
 
-  <!-- Öneri paneli (formun altında, görsel olarak ayrı) -->
-  {% if assignments and (day_suggestions or weeks_observed == 0) %}
+  <!-- Öneri paneli (formun altında, görsel olarak ayrı).
+       Sarmalayıcı koşul sadece `assignments` kontrol eder; "veri yok / öneri
+       yok / öneri var" 3 senaryosunu `suggestions_panel.html` kendi içinde
+       yönetir. Önceden `day_suggestions or weeks_observed == 0` koşulu vardı
+       ama o, motorun bir güne öneri çıkaramadığı durumlarda paneli tamamen
+       gizleyip öğretmeni "panel bazı günlerde yok" yanılgısına düşürüyordu. -->
+  {% if assignments %}
     {% with suggestions=day_suggestions, target_date=day, student_id=student.id %}
       {% include "teacher/partials/suggestions_panel.html" %}
     {% endwith %}

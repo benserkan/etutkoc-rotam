@@ -1,0 +1,66 @@
+{# Stage 13 — Burnout sinyal kartları partial
+   Beklenen: burnout (BurnoutReport)
+#}
+{% set lvl = burnout.risk_level %}
+<div class="rounded-lg p-4 mb-4 border
+            {% if lvl == 'critical' %}bg-rose-50 border-rose-300
+            {% elif lvl == 'warn' %}bg-amber-50 border-amber-300
+            {% elif lvl == 'watch' %}bg-sky-50 border-sky-300
+            {% else %}bg-emerald-50 border-emerald-300{% endif %}">
+  <div class="flex items-center justify-between gap-3 flex-wrap">
+    <div>
+      <div class="text-sm uppercase tracking-wider font-bold
+                  {% if lvl == 'critical' %}text-rose-700
+                  {% elif lvl == 'warn' %}text-amber-700
+                  {% elif lvl == 'watch' %}text-sky-700
+                  {% else %}text-emerald-700{% endif %}">
+        Tükenmişlik Riski
+      </div>
+      <div class="text-2xl font-bold mt-0.5
+                  {% if lvl == 'critical' %}text-rose-900
+                  {% elif lvl == 'warn' %}text-amber-900
+                  {% elif lvl == 'watch' %}text-sky-900
+                  {% else %}text-emerald-900{% endif %}">
+        {{ burnout.risk_score }} / 100
+        <span class="text-base font-medium ml-2">
+          {% if lvl == 'critical' %}🔴 Kritik
+          {% elif lvl == 'warn' %}🟠 Uyarı
+          {% elif lvl == 'watch' %}🟡 Dikkat
+          {% else %}🟢 Sağlıklı{% endif %}
+        </span>
+      </div>
+    </div>
+    <div class="text-xs text-stone-500">
+      {{ burnout.signals|length }} aktif sinyal
+    </div>
+  </div>
+</div>
+
+{% if burnout.signals %}
+<div class="space-y-2">
+  {% for sig in burnout.signals %}
+  <div class="border rounded-lg p-3 flex items-start gap-3
+              {% if sig.severity == 'high' %}border-rose-200 bg-rose-50/40
+              {% elif sig.severity == 'medium' %}border-amber-200 bg-amber-50/40
+              {% else %}border-sky-200 bg-sky-50/40{% endif %}">
+    <div class="text-2xl flex-shrink-0">{{ sig.emoji }}</div>
+    <div class="flex-1 min-w-0">
+      <div class="flex items-center gap-2">
+        <span class="font-semibold text-stone-900">{{ sig.label }}</span>
+        <span class="text-[10px] font-bold uppercase px-1.5 py-0.5 rounded
+                     {% if sig.severity == 'high' %}bg-rose-100 text-rose-700
+                     {% elif sig.severity == 'medium' %}bg-amber-100 text-amber-700
+                     {% else %}bg-sky-100 text-sky-700{% endif %}">
+          {{ sig.severity }}
+        </span>
+      </div>
+      <p class="text-sm text-stone-600 mt-1 leading-relaxed">{{ sig.detail }}</p>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="p-4 bg-emerald-50 border border-emerald-200 rounded-lg text-sm text-emerald-800">
+  ✓ Şu an çalışma örüntüsünde anomali yok. Sağlıklı bir tempodasınız.
+</div>
+{% endif %}

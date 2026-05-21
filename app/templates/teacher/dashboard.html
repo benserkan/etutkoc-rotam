@@ -166,16 +166,46 @@
         {% set lvl_bg = {'green':'#ecfdf5','amber':'#fffbeb','red':'#fef2f2'}[lvl] %}
         {% set hit_pct = (sn.hit_rate_7d * 100) | round | int %}
         {% set p = sn.projection %}
+      {# Avatar baş harfleri ve deterministik renk (isimden hash) #}
+      {% set parts = st.full_name.split() %}
+      {% set initials = ((parts[0][0] if parts else 'Ö') ~ (parts[-1][0] if parts|length > 1 else '')) | upper %}
+      {% set hue = (st.id * 67) % 360 %}
+      {# Pasif (manuel veya otomatik) öğrenci kartı silik render edilir;
+         renkler dimleştirilir, hover normal kalır. Uyarıları susturulduğunu
+         hatırlatan rozet eklenir. #}
+      {% set paused_style = 'opacity-60 grayscale-[40%]' if st.is_paused else '' %}
       <a href="/teacher/students/{{ st.id }}"
-         class="student-card block bg-white border rounded-lg overflow-hidden hover:shadow-sm transition"
+         class="student-card block bg-white border rounded-lg overflow-hidden hover:shadow-md hover:-translate-y-px transition-all duration-150 {{ paused_style }}"
          data-level="{{ lvl }}"
+         data-paused="{{ '1' if st.is_paused else '0' }}"
          style="border-color: {{ lvl_color }}33;">
         <div class="flex items-stretch">
           <div class="w-1 flex-shrink-0" style="background: {{ lvl_color }};"></div>
           <div class="flex-1 p-3">
             <div class="flex items-center justify-between gap-3">
+              {# Avatar #}
+              <div class="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm flex-shrink-0 shadow-sm"
+                   style="background: linear-gradient(135deg, hsl({{ hue }}, 70%, 55%), hsl({{ hue }}, 65%, 42%));"
+                   title="{{ st.full_name }}">
+                {{ initials }}
+              </div>
               <div class="min-w-0 flex-1">
-                <div class="font-medium text-slate-900 truncate">{{ st.full_name }}</div>
+                <div class="font-semibold text-slate-900 truncate flex items-center gap-1.5">
+                  <span>{{ st.full_name }}</span>
+                  <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded whitespace-nowrap"
+                        style="background: hsl({{ hue }}, 70%, 95%); color: hsl({{ hue }}, 60%, 30%);">
+                    {{ st.display_grade_label }}
+                  </span>
+                  {% if st.is_paused %}
+                    {% if st.pause_reason and st.pause_reason.startswith('auto') %}
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300 whitespace-nowrap"
+                          title="Otomatik pasif — uyarılar susturulmuş">🤖 pasif</span>
+                    {% else %}
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300 whitespace-nowrap"
+                          title="Manuel pasif — uyarılar susturulmuş">⏸ pasif</span>
+                    {% endif %}
+                  {% endif %}
+                </div>
                 <div class="text-[11px] text-slate-500 mt-0.5 flex items-center gap-2 flex-wrap">
                   <span>Bugün <b class="text-slate-700">{{ sn.today.completed }}/{{ sn.today.planned or 0 }}</b></span>
                   <span class="text-slate-300">·</span>
@@ -191,6 +221,7 @@
                 <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold" style="background: {{ lvl_bg }}; color: {{ lvl_color }};">
                   {{ {'green':'✓','amber':'!','red':'⚠'}[lvl] }}
                 </span>
+                <span class="text-[10px] text-slate-300 hover:text-indigo-500 transition" title="Haftalık program">→</span>
               </div>
             </div>
           </div>
@@ -212,12 +243,27 @@
           {% for s, w in top_warnings %}
             {% set color = {'green':'#059669','amber':'#d97706','red':'#dc2626'}[w.level] %}
             {% set bg = {'green':'#ecfdf5','amber':'#fffbeb','red':'#fef2f2'}[w.level] %}
-          <a href="/teacher/students/{{ s.id }}" class="block px-3 py-2 hover:bg-slate-50 flex items-start gap-2" style="background: {{ bg }};">
+            {# Pasif öğrencinin uyarısı silik render edilir; arka plan grimsi, opaklık düşer #}
+            {% set paused = s.is_paused %}
+            {% set row_class = 'opacity-50 grayscale' if paused else '' %}
+            {% set row_bg = '#f8fafc' if paused else bg %}
+          <a href="/teacher/students/{{ s.id }}"
+             class="block px-3 py-2 hover:bg-slate-50 flex items-start gap-2 {{ row_class }}"
+             style="background: {{ row_bg }};"
+             title="{% if paused %}{{ s.full_name }} pasif — uyarı sessiz{% else %}{{ s.full_name }}{% endif %}">
             <div class="w-2 h-2 mt-1.5 rounded-full flex-shrink-0" style="background: {{ color }};"></div>
             <div class="flex-1 min-w-0">
               <div class="flex items-baseline justify-between gap-2">
-                <div class="font-medium text-xs truncate" style="color: {{ color }};">{{ w.title }}</div>
-                <div class="text-[10px] text-slate-500 whitespace-nowrap">{{ s.full_name.split()[0] }}</div>
+                <div class="font-medium text-xs truncate" style="color: {{ color }};">
+                  {{ w.title }}
+                </div>
+                <div class="text-[10px] text-slate-500 whitespace-nowrap flex items-center gap-1">
+                  {% if paused %}
+                    {% if s.pause_reason and s.pause_reason.startswith('auto') %}<span title="Otomatik pasif">🤖</span>
+                    {% else %}<span title="Manuel pasif">⏸</span>{% endif %}
+                  {% endif %}
+                  <span>{{ s.full_name.split()[0] }}</span>
+                </div>
               </div>
               <div class="text-[11px] text-slate-600 mt-0.5 truncate">{{ w.detail }}</div>
             </div>

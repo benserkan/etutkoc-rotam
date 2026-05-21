@@ -2,8 +2,9 @@
 {% block title %}{{ target.full_name }} — Admin{% endblock %}
 
 {% block content %}
-<div class="mb-6">
-  <a href="/admin/users" class="text-sm text-slate-500 hover:text-slate-700">← Kullanıcılar</a>
+<div class="mb-6 flex items-start justify-between gap-3 flex-wrap">
+  <div>
+    <a href="/admin/users" class="text-sm text-slate-500 hover:text-slate-700">← Kullanıcılar</a>
   <h1 class="text-2xl font-semibold text-slate-900 mt-1 flex items-center gap-3 flex-wrap">
     {{ target.full_name }}
     {% set role_color = {
@@ -28,7 +29,18 @@
     <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">pasif</span>
     {% endif %}
   </h1>
-  <div class="text-sm text-slate-500 mt-1 font-mono">{{ target.email }}</div>
+    <div class="text-sm text-slate-500 mt-1 font-mono">{{ target.email }}</div>
+  </div>
+  {# Hesap hareketleri — sadece TEACHER ve INSTITUTION_ADMIN için anlamlı (plan history kayıtları olabilir) #}
+  {% if target.role.value in ['teacher', 'institution_admin', 'super_admin'] %}
+  <div class="flex items-center gap-2">
+    <a href="/admin/users/{{ target.id }}/account-history"
+       class="px-3 py-1.5 rounded border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-sm text-indigo-700 font-medium whitespace-nowrap"
+       title="Plan değişimleri — son 3 yıl">
+      📜 Hesap Hareketleri
+    </a>
+  </div>
+  {% endif %}
 </div>
 
 {% if flash_ok %}
@@ -155,10 +167,20 @@
       <p class="text-xs text-violet-800 mb-3">
         {{ target.full_name }} olarak sisteme giriş yapmış gibi görüntüle.
         Tüm aksiyonların target adı altında çalışır; üst banner ile her zaman
-        gerçek admin'e dönebilirsin. <b>Audit log'a kayıt edilir.</b>
+        gerçek admin'e dönebilirsin. <b>Audit log'a kaydedilir.</b>
+      </p>
+      <p class="text-[11px] text-violet-700 mb-2">
+        ⏱ 30 dakika sonra oturum otomatik kapanır. Gerekçe yazmak zorunludur (en az 10 karakter).
       </p>
       <form method="post" action="/admin/users/{{ target.id }}/impersonate"
-            onsubmit="return confirm('{{ target.full_name }} olarak sahte oturum başlat?');">
+            onsubmit="if(!this.reason.value || this.reason.value.length < 10){ alert('Gerekçe en az 10 karakter olmalı.'); return false; } return confirm('{{ target.full_name }} olarak sahte oturum başlat?');">
+        <label class="block text-[11px] text-violet-800 mb-1 font-medium">
+          Gerekçe (zorunlu, 10-200 karakter)
+        </label>
+        <textarea name="reason" rows="2" maxlength="200" required minlength="10"
+                  placeholder="örn. 'Ödevler görünmüyor şikayetini yerinde inceleme'"
+                  class="block w-full px-2 py-1.5 mb-2 text-xs border border-violet-300 rounded
+                         focus:border-violet-500 focus:ring-1 focus:ring-violet-300"></textarea>
         <button type="submit" class="bg-violet-600 hover:bg-violet-700 text-white text-xs font-medium py-1.5 px-3 rounded">
           🎭 Sahte oturum başlat
         </button>

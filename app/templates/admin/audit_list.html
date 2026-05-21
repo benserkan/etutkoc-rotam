@@ -4,9 +4,41 @@
 {% block content %}
 <div class="mb-6">
   <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
-  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Audit Log</h1>
-  <p class="text-sm text-slate-500 mt-1">Toplam <b>{{ total }}</b> kayıt — sayfa {{ page }}/{{ total_pages }}</p>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Denetim Kaydı (Audit Log)</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Sistemde kim ne yaptı izleyen kalıcı kayıt — kullanıcı oluşturma, silme, rol değişimi,
+    sahte oturum, başarısız giriş gibi güvenlik açısından kritik olaylar.
+    Toplam <b>{{ total }}</b> kayıt — sayfa {{ page }}/{{ total_pages }}
+  </p>
 </div>
+
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Denetim kaydı</b> — sistemde kim ne yaptı, ne zaman yaptı izleyen kalıcı log.
+      Silinemez, sadece eklenir. Bir hesap çalınırsa "ne oldu" sorusunun cevabı için.
+      (Teknik adı: <code class="text-xs">audit log</code>)
+    </div>
+    <div>
+      <b>Aktör</b> — eylemi yapan kullanıcı. Başarısız girişte yanlış e-posta girildiyse boş olabilir,
+      "Denenen e-posta" sütunu o durumda dolu olur.
+    </div>
+    <div>
+      <b>Hedef</b> — eylemin üzerinde yapıldığı nesne (örn. silinen kullanıcı, oluşturulan kurum).
+    </div>
+    <div>
+      <b>Sahte oturum</b> — süper adminin başka kullanıcı olarak sistemde dolaştığı zaman dilimi.
+      O sırada yapılan tüm aksiyonlar mor şeritle işaretlenir.
+    </div>
+    <div>
+      <b>Detay</b> — eylemin teknik ek bilgileri. Değişiklik yapıldıysa "önce → sonra" diff'i
+      yan yana gösterilir.
+    </div>
+  </div>
+</details>
 
 {# Filtreler #}
 <form method="get" class="bg-white border border-slate-200 rounded-lg p-3 mb-4 flex items-end gap-3 flex-wrap">
@@ -73,7 +105,7 @@
       {% for a in audits %}
       {% set via_admin_id = via_admin_map.get(a.id) %}
       <tr {% if via_admin_id %}class="bg-violet-50 border-l-4 border-violet-400" title="Sahte oturum sırasında yapıldı"{% endif %}>
-        <td class="px-3 py-2 text-slate-500 whitespace-nowrap">{{ a.created_at.strftime('%d.%m %H:%M:%S') }}</td>
+        <td class="px-3 py-2 text-slate-500 whitespace-nowrap">{{ a.created_at|dt_dual }}</td>
         <td class="px-3 py-2">
           {% set color = 'text-slate-700' %}
           {% if a.action.value in ['login_failed', 'login_locked', 'permission_denied', 'user_delete', 'institution_delete'] %}
@@ -85,7 +117,8 @@
           {% elif a.action.value.startswith('user_') or a.action.value.startswith('institution_') or a.action.value == 'role_change' %}
             {% set color = 'text-indigo-700' %}
           {% endif %}
-          <span class="{{ color }}">{{ a.action.value }}</span>
+          <span class="{{ color }}">{{ AUDIT_ACTION_LABELS.get(a.action, a.action.value) }}</span>
+          <div class="text-[10px] text-slate-400 font-mono">{{ a.action.value }}</div>
         </td>
         <td class="px-3 py-2">
           {% if a.actor_id and actors_map.get(a.actor_id) %}
@@ -119,8 +152,45 @@
           {% else %}—{% endif %}
         </td>
         <td class="px-3 py-2 text-slate-500 font-mono">{{ a.ip_address or '—' }}</td>
-        <td class="px-3 py-2 text-slate-500 max-w-md truncate" title="{{ a.details_json or '' }}">
-          {{ a.details_json or '—' }}
+        <td class="px-3 py-2 text-slate-500 max-w-md">
+          {% if a.details_json %}
+            {% set parsed = audit_details_parsed.get(a.id) %}
+            {% if parsed is mapping and (parsed.before is defined or parsed.after is defined) %}
+              {# Before/After diff — yan yana #}
+              <details class="group">
+                <summary class="cursor-pointer text-indigo-600 hover:text-indigo-800 text-xs font-medium">
+                  ↳ Değişim diff'i (önce / sonra)
+                </summary>
+                <div class="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+                  <div class="bg-rose-50 border border-rose-200 rounded p-2">
+                    <div class="text-rose-700 font-semibold mb-1">ÖNCE</div>
+                    <pre class="text-rose-900 whitespace-pre-wrap break-words font-mono">{{ parsed.before|tojson(indent=2) if parsed.before is defined else '—' }}</pre>
+                  </div>
+                  <div class="bg-emerald-50 border border-emerald-200 rounded p-2">
+                    <div class="text-emerald-700 font-semibold mb-1">SONRA</div>
+                    <pre class="text-emerald-900 whitespace-pre-wrap break-words font-mono">{{ parsed.after|tojson(indent=2) if parsed.after is defined else '—' }}</pre>
+                  </div>
+                </div>
+                {% set other_keys = parsed|reject('in', ['before','after','_via_admin'])|list %}
+                {% if other_keys %}
+                  <div class="mt-2 text-[11px] text-slate-600">
+                    <span class="font-semibold">Ek bilgi:</span>
+                    <span class="font-mono">{% for k in other_keys %}{{ k }}={{ parsed[k] }}{% if not loop.last %} · {% endif %}{% endfor %}</span>
+                  </div>
+                {% endif %}
+              </details>
+            {% elif parsed is mapping %}
+              {# Düz key=value gösterimi #}
+              <details>
+                <summary class="cursor-pointer text-slate-600 hover:text-slate-800 text-xs">↳ Detay</summary>
+                <div class="mt-1 text-[11px] text-slate-700 font-mono whitespace-pre-wrap">{{ parsed|tojson(indent=2) }}</div>
+              </details>
+            {% else %}
+              <span class="truncate inline-block max-w-md align-bottom" title="{{ a.details_json }}">{{ a.details_json }}</span>
+            {% endif %}
+          {% else %}
+            —
+          {% endif %}
         </td>
       </tr>
       {% endfor %}

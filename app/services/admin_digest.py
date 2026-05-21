@@ -98,6 +98,7 @@ def build_weekly_digest_payload(
                 User.role == UserRole.STUDENT,
                 User.teacher_id.in_(teacher_ids),
                 User.is_active.is_(True),
+                User.is_paused.is_(False),   # pasif öğrenci digest sayımına dahil değil
             )
             .all()
         )
@@ -225,13 +226,14 @@ def send_admin_weekly_digest(
         db, institution=institution, week_end=week_end,
     )
 
-    # Alıcı kurum admin'leri — aktif, e-posta sahibi
+    # Alıcı kurum admin'leri — aktif, e-posta sahibi (pasifler haftalık özet almaz)
     admins = (
         db.query(User)
         .filter(
             User.institution_id == institution.id,
             User.role == UserRole.INSTITUTION_ADMIN,
             User.is_active.is_(True),
+            User.is_paused.is_(False),
         )
         .all()
     )

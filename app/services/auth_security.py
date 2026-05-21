@@ -150,6 +150,50 @@ def generate_strong_password(role: UserRole | None = None) -> str:
     return "".join(parts)
 
 
+_COMMON_PASSWORDS: set[str] = {
+    # En çok kullanılan global şifreler (SecLists rockyou-top-200 + Türkçe varyantlar)
+    "password", "password1", "password123", "password12", "passw0rd",
+    "12345678", "123456789", "1234567890", "qwerty123", "qwerty12",
+    "qwertyuiop", "asdfghjkl", "abc12345", "abcd1234", "abcdefgh",
+    "admin1234", "admin123", "administrator", "root1234", "letmein1",
+    "welcome1", "welcome123", "iloveyou1", "monkey123", "dragon123",
+    "superman", "batman123", "footbal1", "football", "baseball1",
+    "master123", "shadow12", "trustno1", "internet1", "computer1",
+    # Türkçe yaygın
+    "sifre123", "sifre1234", "parola123", "parola1234", "guvenli123",
+    "ogretmen123", "ogrenci123", "ogrenci1234", "ogretmen1234",
+    "ahmet1234", "mehmet1234", "fatma1234", "ayse1234", "ali12345",
+    "hasan1234", "huseyin1", "ankara06", "istanbul1", "istanbul34",
+    "izmir1234", "bursa1234", "antalya1", "trabzon1", "konya1234",
+    "galatasaray1", "fenerbahce1", "besiktas1", "trabzonspor1",
+    "okul1234", "ders1234", "kitap1234", "dershane1", "etudkoc1",
+    "etutkoc123", "etutkoc1234", "rotam1234", "veli1234", "anne1234",
+    "baba1234", "deneme123", "deneme1234", "test1234", "test12345",
+    # Yıl varyantları (önümüzdeki birkaç yıl + son birkaç yıl)
+    "password2024", "password2025", "password2026", "password2027",
+    "qwerty2024", "qwerty2025", "qwerty2026",
+    "admin2024", "admin2025", "admin2026",
+    "ogretmen2024", "ogretmen2025", "ogretmen2026",
+    "ogrenci2024", "ogrenci2025", "ogrenci2026",
+    # Klavye desenleri
+    "1q2w3e4r", "1q2w3e4r5t", "qwer1234", "qwer12345",
+    "zaq12wsx", "1qaz2wsx", "!qaz2wsx",
+    "asdf1234", "asdf12345", "zxcv1234", "zxcvbnm1",
+    # Tek karakter tekrarları
+    "11111111", "22222222", "00000000",
+    "aaaaaaaa", "abcabc12",
+    # Yaygın isim+yıl
+    "ahmet2024", "mehmet2024", "ayse2024", "fatma2024",
+    "ahmet2025", "mehmet2025", "ayse2025", "fatma2025",
+    "ahmet2026", "mehmet2026", "ayse2026", "fatma2026",
+}
+
+
+def is_common_password(password: str) -> bool:
+    """Şifre yaygın liste içinde mi? case-insensitive."""
+    return password.lower() in _COMMON_PASSWORDS
+
+
 def validate_password_strength(
     password: str, role: UserRole | None = None
 ) -> str | None:
@@ -173,8 +217,7 @@ def validate_password_strength(
     if role in (UserRole.SUPER_ADMIN, UserRole.INSTITUTION_ADMIN, UserRole.TEACHER):
         if not any(not c.isalnum() for c in password):
             return "Bu rol için şifrede en az 1 özel karakter (örn @#$%) bulunmalı."
-    # Çok yaygın paternleri eleyelim (basit blacklist)
-    lowered = password.lower()
-    if lowered in {"password", "12345678", "qwerty12", "ogretmen123", "admin1234"}:
-        return "Bu şifre çok yaygın — daha rastgele bir tane seçin."
+    # Yaygın paternler — genişletilmiş kara liste
+    if is_common_password(password):
+        return "Bu şifre çok yaygın kullanılıyor — daha rastgele/özgün bir tane seç."
     return None

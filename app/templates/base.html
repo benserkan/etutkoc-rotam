@@ -30,11 +30,14 @@
             },
             // Marka teal genişletildi
             brand: {
+              DEFAULT:'#117A86',
+              deep:'#0B5560', soft:'#E6F2F4',
               teal:'#117A86', tealDark:'#0E5F69', tealLight:'#3D9CAB',
               yellow:'#E8AC2D', yellowDark:'#C68A1A', yellowLight:'#F0BD55',
               // Yeni: semantic teal scale
               50:'#E6F2F4', 100:'#CFE9EC', 200:'#9FD3D9', 300:'#6FBDC6',
               400:'#3BA3B0', 500:'#117A86', 600:'#0B5560', 700:'#073D45',
+              800:'#052E33',
               900:'#042026',
             },
             // Stage 11+ amber accent ölçeği
@@ -49,7 +52,7 @@
               super:'#E11D48',
             },
             // Stone-warm neutral surface sistemi (Tailwind default slate'ten farklı, daha sıcak)
-            surface: { DEFAULT:'#FFFFFF', elev:'#F5F5F4', sunk:'#FAFAF9' },
+            surface: { DEFAULT:'#FFFFFF', elev:'#F5F5F4', sunk:'#F5F1E8' },
             ink: { DEFAULT:'#1C1917', muted:'#57534E', subtle:'#A8A29E' },
           },
           fontFamily: {
@@ -120,7 +123,7 @@
     [x-cloak] { display: none !important; }
     /* ETÜTKOÇ Tema Sistemi — design tokens (CSS değişkenleri) */
     :root {
-      --bg: #FAFAF9;
+      --bg: #F5F1E8;  /* hafif kirli beyaz — warm off-white, body zemini */
       --surface: #FFFFFF;
       --surface-elev: #F5F5F4;
       --border: #E7E5E4;
@@ -294,10 +297,13 @@
     .nav-group-menu .menu-divider { border-top: 1px solid #e2e8f0; margin: 0.375rem 0; }
     /* Mobile nav drawer */
     .nav-mobile-toggle { display: none; }
+    .nav-mobile-drawer { display: none; }
+    .nav-mobile-backdrop { display: none; }
     @media (max-width: 767px) {
       .nav-desktop { display: none !important; }
       .nav-mobile-toggle { display: inline-flex; }
       .nav-mobile-drawer {
+        display: block;
         position: fixed; inset-inline-end: 0; top: 0; bottom: 0; width: min(85vw, 20rem);
         background: white; box-shadow: -10px 0 30px -5px rgb(0 0 0 / 0.20);
         transform: translateX(100%); transition: transform 0.2s ease-out;
@@ -308,7 +314,26 @@
         display: block; position: fixed; inset: 0; background: rgb(15 23 42 / 0.4); z-index: 59;
       }
     }
-    .nav-mobile-backdrop { display: none; }
+    /* Drawer menü hiyerarşi tasarımı (dropdown ayrı, daha kompakt) */
+    .nav-mobile-drawer .menu-section-title {
+      margin: 0.875rem 0 0.375rem;
+      padding: 0.375rem 0.75rem 0.375rem 0.625rem;
+      font-size: 0.6875rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.08em;
+      color: #117A86;
+      border-left: 3px solid #117A86;
+      background: linear-gradient(to right, rgba(17,122,134,0.08), transparent);
+      border-radius: 0 0.25rem 0.25rem 0;
+    }
+    .nav-mobile-drawer .menu-section-title:first-child { margin-top: 0; }
+    .nav-mobile-drawer nav > a,
+    .nav-mobile-drawer nav > form {
+      margin-left: 0.5rem;
+    }
+    .nav-mobile-drawer nav > a:first-of-type {
+      margin-left: 0; font-weight: 600; color: #0f172a;
+      background: #f8fafc; border: 1px solid #e2e8f0;
+    }
     /* Comm modal animasyonu */
     dialog.comm-modal[open] {
       animation: comm-fade-in 0.15s ease-out;
@@ -474,6 +499,7 @@
                 <a href="/admin/usage">💳 Kullanım</a>
                 <a href="/admin/quota">📐 Limitler</a>
                 <a href="/admin/feature-flags">🚦 Özellikler</a>
+                <a href="/admin/feature-catalog">🎴 Vitrin Kartları</a>
                 <a href="/admin/announcements">📢 Duyuru</a>
                 <a href="/admin/system-health">🩺 Sağlık</a>
               </div>
@@ -507,6 +533,7 @@
                 <a href="/institution/at-risk">⚠️ Risk Paneli</a>
                 <a href="/institution/cohorts">📊 Kohort</a>
                 <a href="/institution/activity-heatmap">🗺️ Aktivite</a>
+                <a href="/institution/burnout">🧬 Tükenmişlik</a>
                 <a href="/institution/goals">🎯 Hedef Analizi</a>
                 <a href="/institution/admin-digest">📨 Haftalık Özet</a>
               </div>
@@ -548,10 +575,15 @@
               📬 Talepler
               <span hx-get="/_partial/teacher-pending-count" hx-trigger="load, every 30s" hx-swap="outerHTML"></span>
             </a>
+            <a href="/teacher/review" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">🧠 Tekrar</a>
+            <a href="/teacher/burnout" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">🧬 DNA</a>
             <a href="/teacher/ai-insights" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">🤖 AI</a>
           {% else %}
             <a href="/student" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">Bugün</a>
             <a href="/student/week" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">Haftam</a>
+            <a href="/student/review" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">🧠 Tekrar</a>
+            <a href="/student/focus" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">🍅 Odak</a>
+            <a href="/student/dna" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">🧬 DNA'm</a>
             <a href="/student/goals" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">🎯 Hedeflerim</a>
             <a href="/student/books" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900">Kitaplarım</a>
             <a href="/student/requests" class="px-2.5 py-1.5 rounded-md text-slate-600 hover:bg-slate-100 hover:text-slate-900 flex items-center gap-1">
@@ -598,6 +630,7 @@
             {% if user.role.value == 'teacher' %}
             <a href="/teacher/settings">⚙️ Ayarlar</a>
             {% endif %}
+            <a href="/password/change">🔑 Şifre Değiştir</a>
             <div class="menu-divider"></div>
             <form action="/logout" method="post" class="m-0">
               <button type="submit"
@@ -636,6 +669,7 @@
         <a href="/admin/usage" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">💳 Kullanım</a>
         <a href="/admin/quota" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">📐 Limitler</a>
         <a href="/admin/feature-flags" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🚦 Özellikler</a>
+        <a href="/admin/feature-catalog" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🎴 Vitrin Kartları</a>
         <a href="/admin/announcements" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">📢 Duyuru</a>
         <a href="/admin/system-health" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🩺 Sağlık</a>
         <p class="menu-section-title px-3 mt-3">Denetim</p>
@@ -650,6 +684,7 @@
         <p class="menu-section-title px-3 mt-3">Analiz</p>
         <a href="/institution/at-risk" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">⚠️ Risk Paneli</a>
         <a href="/institution/cohorts" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">📊 Kohort</a>
+        <a href="/institution/burnout" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🧬 Tükenmişlik</a>
         <a href="/institution/activity-heatmap" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🗺️ Aktivite</a>
         <a href="/institution/goals" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🎯 Hedef Analizi</a>
         <a href="/institution/admin-digest" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">📨 Haftalık Özet</a>
@@ -669,6 +704,8 @@
         <a href="/teacher/book-sets" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">📦 Kitap Setleri</a>
         <p class="menu-section-title px-3 mt-3">Hızlı</p>
         <a href="/teacher/requests" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">📬 Talepler</a>
+        <a href="/teacher/review" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🧠 Tekrar Yükü</a>
+        <a href="/teacher/burnout" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🧬 Tükenmişlik Panosu</a>
         <a href="/teacher/ai-insights" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🤖 AI Performans</a>
         {% if not user.institution_id %}
         <a href="/plans/me" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">💎 Plan</a>
@@ -677,6 +714,10 @@
       {% else %}
         <a href="/student" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">Bugün</a>
         <a href="/student/week" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">Haftam</a>
+        <a href="/student/review" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🧠 Tekrar</a>
+        <a href="/student/focus" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🍅 Odak Modu</a>
+        <a href="/student/badges" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🏅 Rozetlerim</a>
+        <a href="/student/dna" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🧬 Çalışma DNA'm</a>
         <a href="/student/goals" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🎯 Hedeflerim</a>
         <a href="/student/books" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">Kitaplarım</a>
         <a href="/student/requests" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">💬 Taleplerim</a>
@@ -685,6 +726,7 @@
       {% if user.role.value != 'super_admin' %}
       <a href="/me" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">⚖️ Hesabım ve Verilerim</a>
       {% endif %}
+      <a href="/password/change" class="block px-3 py-2 rounded text-slate-700 hover:bg-slate-100">🔑 Şifre Değiştir</a>
       <form action="/logout" method="post" class="m-0">
         <button type="submit" class="w-full text-left px-3 py-2 rounded text-rose-600 hover:bg-rose-50">↪ Çıkış Yap</button>
       </form>
@@ -861,6 +903,56 @@
       } catch (err) {
         console.warn('book-grid init:', err);
       }
+    })();
+  </script>
+
+  {# #task-<id> anchor desteği: sayfa açılırken (veya hash değişirse) ilgili
+     görev kartını bul, içerdiği tüm <details> kartlarını aç, görünüme kaydır
+     ve kısa bir sarımsı vurgu göster. Sinema-koltuk linklerinden gelen kullanıcı
+     için kritik — kapalı day_card'lar bile otomatik açılır. #}
+  <script>
+    (function() {
+      function openAncestorDetails(el) {
+        var p = el && el.parentElement;
+        while (p) {
+          if (p.tagName === 'DETAILS' && !p.open) p.open = true;
+          p = p.parentElement;
+        }
+      }
+      function flash(el) {
+        try {
+          el.scrollIntoView({behavior: 'smooth', block: 'center'});
+        } catch (e) {
+          el.scrollIntoView();
+        }
+        var prevTransition = el.style.transition;
+        var prevBox = el.style.boxShadow;
+        var prevBg = el.style.backgroundColor;
+        el.style.transition = 'box-shadow .25s, background-color .25s';
+        el.style.boxShadow = '0 0 0 3px #fde68a, 0 6px 16px rgba(251,191,36,0.35)';
+        el.style.backgroundColor = 'rgba(252,211,77,0.22)';
+        setTimeout(function() {
+          el.style.boxShadow = prevBox;
+          el.style.backgroundColor = prevBg;
+          setTimeout(function() { el.style.transition = prevTransition; }, 280);
+        }, 1800);
+      }
+      function handleHash() {
+        var h = window.location.hash;
+        if (!h || h.indexOf('#task-') !== 0) return;
+        var id = h.substring(1);
+        var el = document.getElementById(id);
+        if (!el) return;
+        openAncestorDetails(el);
+        // Layout settle için kısa bekleme (details:open animasyonu) sonra scroll
+        setTimeout(function() { flash(el); }, 80);
+      }
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', handleHash);
+      } else {
+        handleHash();
+      }
+      window.addEventListener('hashchange', handleHash);
     })();
   </script>
 </body>

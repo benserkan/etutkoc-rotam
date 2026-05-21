@@ -1,0 +1,106 @@
+{# Anasayfa özellik kartı — tek partial, iki düzen:
+
+   - Hero (loop.first): md:col-span-2, sol metin + sağ mockup grid
+   - Standart (diğerleri): tek sütun, sol metin + sağ mockup flex-row
+
+   İçerik bloğu (her iki düzende de SOL kolonda) tek bir bütün olarak akar:
+     badge → başlık → açıklama → chip satırı → demo butonu
+
+   Aralarda ayırıcı yok; chip satırı tagline'ın hemen altına (mt-3) yerleşir
+   ve "Demo İzle" butonu chip satırının altına gelir.
+
+   Beklenen context:
+     card    -> FeatureCard
+     is_hero -> bool (template caller belirler; tipik: loop.first)
+
+   accent-soft ve accent-dark CSS color-mix ile türetilir.
+#}
+{% set accent = card.accent_color or "#3b82f6" %}
+{% set benefits = card.benefits %}
+{% if is_hero %}
+<div class="lp-feature md:col-span-2"
+     data-fc-slug="{{ card.slug }}"
+     style="--accent:{{ accent }};
+            --accent-soft: color-mix(in srgb, {{ accent }} 12%, white);
+            --accent-dark: color-mix(in srgb, {{ accent }} 78%, black);">
+  <div class="grid {% if card.mockup_type %}lg:grid-cols-2{% endif %} gap-6 lg:gap-8 items-center">
+    <div>
+      <div class="inline-flex items-center gap-1.5 mb-2.5 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+           style="background:var(--accent-soft); color:var(--accent-dark);">
+        {{ card.category_icon }} {{ card.category_label }}
+      </div>
+      <h3 class="font-display font-bold text-xl lg:text-2xl text-stone-900 mb-2">{{ card.title }}</h3>
+      <p class="text-sm text-stone-600 leading-relaxed">
+        {{ card.tagline|safe }}
+      </p>
+
+      {% if benefits %}
+      <div class="flex flex-wrap gap-1.5 mt-3">
+        {% for chip in benefits %}
+        <span class="lp-chip">{{ chip }}</span>
+        {% endfor %}
+      </div>
+      {% endif %}
+
+      {% if card.demo_slug %}
+      <a href="/demos?play={{ card.demo_slug }}"
+         data-fc-event="demo_click"
+         class="inline-flex items-center gap-2 text-sm font-bold px-4 py-2.5 rounded-lg text-white transition hover:brightness-110 shadow-md mt-4"
+         style="background:linear-gradient(135deg, {{ accent }}, var(--accent-dark)); box-shadow:0 8px 18px -8px {{ accent }};">
+        <span class="inline-flex items-center justify-center w-5 h-5 rounded-full bg-white/20">▶</span>
+        Demo İzle
+        {% if card.demo_duration_label %}
+        <span class="text-[10px] opacity-80 font-medium">· {{ card.demo_duration_label }}</span>
+        {% endif %}
+      </a>
+      {% endif %}
+    </div>
+
+    {% if card.mockup_type %}
+    {% include "landing/mockups/" ~ card.mockup_type ~ ".html" ignore missing %}
+    {% endif %}
+  </div>
+</div>
+{% else %}
+<div class="lp-feature flex flex-col gap-5 sm:flex-row sm:items-start"
+     data-fc-slug="{{ card.slug }}"
+     style="--accent:{{ accent }};
+            --accent-soft: color-mix(in srgb, {{ accent }} 12%, white);
+            --accent-dark: color-mix(in srgb, {{ accent }} 78%, black);">
+  <div class="flex-1 min-w-0">
+    <div class="inline-flex items-center gap-1.5 mb-2.5 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider"
+         style="background:var(--accent-soft); color:var(--accent-dark);">
+      {{ card.category_icon }} {{ card.category_label }}
+    </div>
+    <h3 class="font-display font-bold text-lg text-stone-900 mb-2">{{ card.title }}</h3>
+    <p class="text-sm text-stone-600 leading-relaxed">
+      {{ card.tagline|safe }}
+    </p>
+
+    {% if benefits %}
+    <div class="flex flex-wrap gap-1.5 mt-3">
+      {% for chip in benefits %}
+      <span class="lp-chip">{{ chip }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if card.demo_slug %}
+    <a href="/demos?play={{ card.demo_slug }}"
+       data-fc-event="demo_click"
+       class="inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-md text-white hover:brightness-110 transition mt-3"
+       style="background:linear-gradient(135deg, {{ accent }}, var(--accent-dark));"
+       title="Demo videosu — {{ card.title }}">
+      <span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-white/25 text-[8px]">▶</span>
+      Demo İzle
+      {% if card.demo_duration_label %}
+      <span class="text-[10px] opacity-85 font-medium">· {{ card.demo_duration_label }}</span>
+      {% endif %}
+    </a>
+    {% endif %}
+  </div>
+  {% if card.mockup_type %}
+  {% include "landing/mockups/" ~ card.mockup_type ~ ".html" ignore missing %}
+  {% endif %}
+</div>
+{% endif %}

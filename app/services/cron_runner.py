@@ -39,9 +39,27 @@ def _now_utc() -> datetime:
 
 
 def is_due(sch: CronSchedule, now: datetime) -> bool:
-    """Bu schedule şu anda due mı?"""
+    """Bu schedule şu anda due mı?
+
+    İki mod:
+      - interval_minutes dolu → "her N dakikada bir" (last_run_at + N <= now)
+      - interval_minutes NULL → "günde 1 kez HH:MM" (klasik davranış)
+    """
     if not sch.enabled:
         return False
+
+    # Katman 11.J — interval modu
+    interval = getattr(sch, "interval_minutes", None)
+    if interval is not None and interval > 0:
+        if sch.last_run_at is None:
+            return True  # hiç çalışmamış → hemen tetikle
+        last = sch.last_run_at
+        if last.tzinfo is None:
+            last = last.replace(tzinfo=timezone.utc)
+        elapsed_seconds = (now - last).total_seconds()
+        return elapsed_seconds >= interval * 60
+
+    # Klasik mod: günde 1 kez HH:MM
     # day_of_week: 0=Pzt..6=Paz; NULL = her gün. Python weekday() de 0=Pzt.
     if sch.day_of_week is not None and now.weekday() != sch.day_of_week:
         return False

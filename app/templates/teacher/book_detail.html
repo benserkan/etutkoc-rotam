@@ -165,6 +165,113 @@
       </div>
     </form>
     {% else %}
+    {% set existing_topic_ids = book.sections|map(attribute='topic_id')|reject('none')|list %}
+    {% set available_topics = topics|rejectattr('id', 'in', existing_topic_ids)|list %}
+    {% set default_test_count = book.avg_questions_per_test or 5 %}
+    {# Toplu kataloğdan ekleme — soru bankası/fasikül için hızlı doldurma #}
+    {% if topics %}
+    <div x-data="{ open: {{ 'true' if not book.sections else 'false' }}, allSel: true, defCount: {{ default_test_count }} }"
+         class="mb-5 border border-emerald-300 bg-emerald-50/40 rounded-lg overflow-hidden">
+      <button type="button" @click="open = !open"
+              class="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-emerald-50">
+        <div class="flex items-center gap-2">
+          <span class="text-xl">📚</span>
+          <div>
+            <div class="text-sm font-semibold text-emerald-900">
+              Müfredat kataloğundan toplu ekle
+            </div>
+            <div class="text-xs text-emerald-700">
+              {{ book.subject.name }} dersinin {{ topics|length }} hazır konusunu seçerek tek seferde ekle.
+              {% if existing_topic_ids %}<span class="text-emerald-600">({{ available_topics|length }} eklenmemiş)</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        <span class="text-emerald-700 text-lg" x-text="open ? '▴' : '▾'"></span>
+      </button>
+      <div x-show="open" x-transition.opacity x-cloak class="border-t border-emerald-200 bg-white px-4 py-4">
+        {% if available_topics %}
+        <form method="post" action="/teacher/books/{{ book.id }}/sections/bulk-from-catalog"
+              x-data="bulkCatalog()" x-init="init()">
+          {# Üst bar: hepsini seç + default test sayısı #}
+          <div class="flex flex-wrap items-center gap-3 pb-3 mb-3 border-b border-slate-200">
+            <label class="flex items-center gap-2 text-sm">
+              <input type="checkbox" x-model="allSelected" @change="toggleAll()" class="accent-emerald-600" />
+              <span class="font-medium text-slate-800">Hepsini seç (<span x-text="selectedCount"></span> / {{ available_topics|length }})</span>
+            </label>
+            <div class="flex items-center gap-2 text-sm ml-auto">
+              <label class="text-slate-600">Default {{ count_term|lower }}:</label>
+              <input type="number" min="1" x-model.number="defaultCount" @input="applyDefault()"
+                     class="w-20 px-2 py-1 border border-slate-300 rounded text-sm text-right" />
+              <button type="button" @click="applyDefault()" class="text-xs text-emerald-700 hover:text-emerald-900 underline">
+                Hepsine uygula
+              </button>
+            </div>
+          </div>
+
+          {# Konu listesi #}
+          <div class="space-y-1.5 max-h-96 overflow-y-auto pr-1">
+            {% for t in available_topics %}
+            <label class="flex items-center gap-3 px-2.5 py-1.5 rounded hover:bg-emerald-50/50 border border-transparent hover:border-emerald-200 cursor-pointer">
+              <input type="checkbox" name="topic_ids" value="{{ t.id }}" checked
+                     data-topic-cb @change="updateCount()" class="accent-emerald-600 flex-shrink-0" />
+              <span class="text-sm text-slate-800 flex-1 min-w-0 truncate" title="{{ t.name }}">
+                {% if t.parent_id %}<span class="text-slate-400">└</span>{% endif %} {{ t.name }}
+              </span>
+              <input type="number" name="test_count_{{ t.id }}" value="{{ default_test_count }}" min="1"
+                     data-topic-count
+                     class="w-20 px-2 py-1 border border-slate-300 rounded text-sm text-right flex-shrink-0" />
+              <span class="text-xs text-slate-500 flex-shrink-0">test</span>
+            </label>
+            {% endfor %}
+          </div>
+
+          {# Bilgi + buton #}
+          {% if existing_topic_ids %}
+          <p class="mt-3 text-xs text-slate-500">
+            ℹ️ Daha önce eklenmiş <b>{{ existing_topic_ids|length }}</b> konu listede gösterilmedi (zaten kitapta var).
+          </p>
+          {% endif %}
+          <div class="mt-4 flex justify-end">
+            <button type="submit"
+                    class="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-medium py-2 px-4 rounded">
+              ✓ Seçili Konuları Kitaba Ekle (<span x-text="selectedCount"></span>)
+            </button>
+          </div>
+        </form>
+        {% else %}
+        <p class="text-sm text-slate-500 italic py-4 text-center">
+          Bu kitabın dersinde olan tüm katalog konuları zaten ekli. Aşağıdaki formdan manuel yeni ünite ekleyebilirsiniz.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+    <script>
+      function bulkCatalog() {
+        return {
+          allSelected: true,
+          defaultCount: {{ default_test_count }},
+          selectedCount: 0,
+          init() { this.updateCount(); },
+          updateCount() {
+            var cbs = this.$el.querySelectorAll('[data-topic-cb]');
+            var sel = 0; cbs.forEach(function(c){ if(c.checked) sel++; });
+            this.selectedCount = sel;
+            this.allSelected = (sel === cbs.length);
+          },
+          toggleAll() {
+            var cbs = this.$el.querySelectorAll('[data-topic-cb]');
+            var v = this.allSelected;
+            cbs.forEach(function(c){ c.checked = v; });
+            this.updateCount();
+          },
+          applyDefault() {
+            var cnt = this.defaultCount || 1;
+            this.$el.querySelectorAll('[data-topic-count]').forEach(function(i){ i.value = cnt; });
+          },
+        };
+      }
+    </script>
+    {% endif %}
     <!-- Normal (soru bankası / fasikül / konu anlatımlı) -->
     <form method="post" action="/teacher/books/{{ book.id }}/sections"
           class="grid grid-cols-1 md:grid-cols-6 gap-3 items-end mb-5 pb-5 border-b border-slate-100">

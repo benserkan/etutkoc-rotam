@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Rozetlerim — {{ user.full_name }}{% endblock %}
+
+{% block content %}
+<div class="flex items-start justify-between mb-6">
+  <div>
+    <a href="/student/focus" class="text-sm text-stone-500 hover:text-stone-700">← Odak</a>
+    <h1 class="text-2xl font-semibold text-stone-900 mt-1">🏅 Rozetlerim</h1>
+    <p class="text-sm text-stone-500 mt-1">
+      Kazandığın rozetler ve sıradaki hedeflerin.
+    </p>
+  </div>
+</div>
+
+{# Streak + puan üstte #}
+<div class="mb-6">
+  {% include "partials/_streak_indicator.html" %}
+</div>
+
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
+  <div class="bg-white border border-stone-200 rounded-lg p-4 text-center">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">Şu anki seri</div>
+    <div class="text-2xl font-bold text-amber-700 mt-1">{{ streak }} 🔥</div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4 text-center">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">En uzun seri</div>
+    <div class="text-2xl font-bold text-stone-900 mt-1">{{ longest_streak }}</div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4 text-center">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">Kazanılan</div>
+    <div class="text-2xl font-bold text-emerald-700 mt-1">{{ earned|length }}</div>
+  </div>
+  <div class="bg-white border border-stone-200 rounded-lg p-4 text-center">
+    <div class="text-xs text-stone-500 uppercase tracking-wider">Toplam puan</div>
+    <div class="text-2xl font-bold text-violet-700 mt-1">{{ points.total }}</div>
+  </div>
+</div>
+
+{# Kazanılmış rozetler #}
+<h2 class="text-lg font-medium text-stone-900 mb-3">✨ Kazandıkların</h2>
+{% if earned %}
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-8">
+  {% for badge, rec in earned %}
+  <div class="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-300 rounded-xl p-4 text-center shadow-sm">
+    <div class="text-5xl mb-2">{{ badge.emoji }}</div>
+    <div class="font-semibold text-stone-900 text-sm">{{ badge.title }}</div>
+    <div class="text-xs text-stone-500 mt-1">{{ badge.description }}</div>
+    <div class="text-[10px] text-amber-700 mt-2 uppercase tracking-wider">
+      {{ rec.earned_at.strftime('%d.%m.%Y') }}
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="bg-stone-50 border border-stone-200 rounded-lg p-6 text-center text-sm text-stone-500 mb-8">
+  Henüz rozetin yok. Aşağıdaki hedeflere ulaşarak ilk rozetlerini kazanabilirsin.
+</div>
+{% endif %}
+
+{# Henüz kazanılmamış #}
+{% if locked %}
+<h2 class="text-lg font-medium text-stone-900 mb-3">🔒 Sıradaki Hedefler</h2>
+<div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+  {% for badge in locked %}
+  <div class="bg-stone-50 border border-stone-200 rounded-xl p-4 text-center grayscale opacity-70 hover:opacity-100 transition">
+    <div class="text-5xl mb-2">{{ badge.emoji }}</div>
+    <div class="font-semibold text-stone-700 text-sm">{{ badge.title }}</div>
+    <div class="text-xs text-stone-500 mt-1">{{ badge.description }}</div>
+    <div class="text-[10px] text-stone-400 mt-2 uppercase tracking-wider">{{ badge.tier }}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+{# Puan kırılımı #}
+<details class="mt-8 text-xs text-stone-500">
+  <summary class="cursor-pointer hover:text-stone-700">ℹ️ Puanlar nasıl hesaplanıyor?</summary>
+  <div class="mt-3 p-4 bg-stone-50 rounded text-sm leading-relaxed text-stone-600">
+    <ul class="list-disc list-inside space-y-1">
+      <li>Her tamamlanan görev: <b>10 puan</b> (toplam {{ points.tasks }})</li>
+      <li>Her bitmiş odak seansı (5+ dk): <b>5 puan</b> (toplam {{ points.pomodoros }})</li>
+      <li>Her tekrar değerlendirmesi: <b>2 puan</b> (toplam {{ points.reviews }})</li>
+      <li>Her kazanılan rozet: <b>25 puan</b> (toplam {{ points.badges }})</li>
+    </ul>
+    <p class="mt-2 font-medium">Toplam: {{ points.total }} puan</p>
+  </div>
+</details>
+{% endblock %}

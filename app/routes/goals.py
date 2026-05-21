@@ -47,6 +47,11 @@ from app.services.goals import (
     update_goal,
 )
 from app.services.goals_auto import seed_for_exam_target
+from app.services.goals_progress import (
+    compute_overall_progress,
+    compute_subject_progress,
+    list_active_topic_progress,
+)
 from app.templating import templates
 
 
@@ -100,18 +105,37 @@ def student_goals_page(
     user: User = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
-    """Öğrencinin kendi hedef ağacı."""
+    """Öğrencinin müfredat ilerleme ağacı + kişisel hedefler.
+
+    İki bölüm:
+    1. Müfredat ilerlemesi (otomatik): test havuzundan gerçek veri — ders/konu
+       bazlı %X. Elle giriş yok, görevlerden besleniyor (SectionProgress).
+    2. Kişisel hedefler (manuel): WEEKLY/DAILY/CUSTOM tipinde öğretmen/öğrenci
+       elle koyduğu hedefler. EXAM_TARGET ve auto-generated SUBJECT hedefleri
+       ağaçtan gizleniyor — sınav netleri ayrı sayfaya taşınacak.
+    """
     if user is None or user.role != UserRole.STUDENT:
         return RedirectResponse(url="/login", status_code=303)
 
+    # Müfredat ilerleme — gerçek veri
+    topics = list_active_topic_progress(db, student_id=user.id)
+    subjects = compute_subject_progress(topics)
+    overall_pct = compute_overall_progress(subjects)
+
+    # Manuel hedefler — sadece kişisel (operasyonel + custom)
     roots = build_tree(db, student_id=user.id)
+    personal_roots = _filter_personal_goals(roots)
     summary = student_goal_summary(db, student_id=user.id)
+
     return templates.TemplateResponse(
         "goals/student_tree.html",
         {
             "request": request,
             "user": user,
-            "roots": roots,
+            "subjects": subjects,
+            "overall_pct": overall_pct,
+            "topic_count": len(topics),
+            "roots": personal_roots,
             "summary": summary,
             "kind_labels": GOAL_KIND_LABELS_TR,
             "kind_emojis": GOAL_KIND_EMOJIS,
@@ -120,6 +144,26 @@ def student_goals_page(
             "back_url": "/student",
         },
     )
+
+
+def _filter_personal_goals(roots):
+    """EXAM_TARGET + auto-generated SUBJECT'leri gizle — kişisel hedefler kalsın.
+
+    Sınav netleri (LGS Türkçe 20 net) ayrı bir sayfaya taşınacak (Phase B);
+    burada operasyonel/kişisel hedefler odakta. Yine de elle eklenmiş SUBJECT
+    hedefleri (is_auto_generated=False) korunur.
+    """
+    out = []
+    for r in roots:
+        g = r.goal
+        # Otomatik üretilmiş sınav kökü ve onun children'larını yut
+        if g.kind == GoalKind.EXAM_TARGET and g.is_auto_generated:
+            continue
+        # SUBJECT auto-seed kalanları da yut (root düzeyinde gelirse)
+        if g.kind == GoalKind.SUBJECT and g.is_auto_generated:
+            continue
+        out.append(r)
+    return out
 
 
 @router.post("/student/goals/{goal_id}/update-progress")
@@ -154,19 +198,29 @@ def teacher_student_goals(
     user: User = Depends(require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Öğretmen öğrencinin hedef ağacını görüntüler ve yönetir."""
+    """Öğretmen: müfredat ilerleme görünümü + kişisel hedef yönetimi."""
     student = _ensure_teacher_can_access_student(
         db, teacher=user, student_id=student_id,
     )
+
+    topics = list_active_topic_progress(db, student_id=student.id)
+    subjects = compute_subject_progress(topics)
+    overall_pct = compute_overall_progress(subjects)
+
     roots = build_tree(db, student_id=student.id, include_abandoned=True)
+    personal_roots = _filter_personal_goals(roots)
     summary = student_goal_summary(db, student_id=student.id)
+
     return templates.TemplateResponse(
         "goals/teacher_tree.html",
         {
             "request": request,
             "user": user,
             "student": student,
-            "roots": roots,
+            "subjects": subjects,
+            "overall_pct": overall_pct,
+            "topic_count": len(topics),
+            "roots": personal_roots,
             "summary": summary,
             "kind_labels": GOAL_KIND_LABELS_TR,
             "kind_emojis": GOAL_KIND_EMOJIS,

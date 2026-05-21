@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, Form, HTTPException, Query, Request
 from fastapi.responses import RedirectResponse
@@ -175,6 +175,10 @@ def _create_task_from_suggestion(
     )
     next_order = (max_order[0] + 1) if max_order else 0
 
+    # Manuel form'la aynı mantık: yarın+ taslak, bugün/geçmiş yayında.
+    # Öğretmen "Tüm haftayı yayınla" / "Bu günü yayınla" ile sonradan kalkırır.
+    today = date.today()
+    is_draft_default = target_date > today
     task = Task(
         student_id=student_id,
         date=target_date,
@@ -182,6 +186,8 @@ def _create_task_from_suggestion(
         title=title,
         status=TaskStatus.PENDING,
         order=next_order,
+        is_draft=is_draft_default,
+        published_at=None if is_draft_default else datetime.now(timezone.utc),
     )
     db.add(task)
     db.flush()
@@ -202,13 +208,53 @@ def _is_htmx(request: Request) -> bool:
 
 
 def _render_day_card(request: Request, user: User, db: Session, student: User, day: date):
-    """Swap sonrası day-card render — kart açık kalsın, sidebar yenilensin."""
+    """Swap sonrası day-card render + OOB hafta header senkronizasyonu.
+
+    Kart açık kalır (keep_open='stay-open'); ek olarak görünmekte olan
+    7-günlük pencerenin taslak toplamı yeniden hesaplanır ve
+    week_draft_oob.html OOB swap ile response'a eklenir — banner ve
+    "Tüm haftayı yayınla (N)" butonu accept/accept-all sonrası senkron kalır.
+    """
+    from fastapi.responses import HTMLResponse
+    from urllib.parse import urlparse, parse_qs
+
     from app.routes.teacher_program import build_day_card_context
+
     ctx = build_day_card_context(db, student, day)
-    response = templates.TemplateResponse(
-        "teacher/partials/day_card.html",
-        {"request": request, "user": user, "keep_open": "stay-open", **ctx},
+
+    # 7-günlük pencere başlangıcı — HX-Current-URL'den, yoksa bugünden
+    start = date.today()
+    cur = request.headers.get("HX-Current-URL") or ""
+    if cur:
+        try:
+            qs = parse_qs(urlparse(cur).query)
+            raw = (qs.get("start") or qs.get("date") or [""])[0]
+            if raw:
+                start = date.fromisoformat(raw)
+        except (ValueError, TypeError):
+            pass
+    end = start + timedelta(days=6)
+
+    week_draft_total = (
+        db.query(Task)
+        .filter(
+            Task.student_id == student.id,
+            Task.date >= start,
+            Task.date <= end,
+            Task.is_draft.is_(True),
+        )
+        .count()
     )
+
+    day_card_html = templates.get_template("teacher/partials/day_card.html").render(
+        request=request, user=user, keep_open="stay-open", **ctx,
+    )
+    oob_html = templates.get_template("teacher/partials/week_draft_oob.html").render(
+        request=request, student=student, start=start, end=end,
+        week_draft_total=week_draft_total,
+    )
+
+    response = HTMLResponse(content=day_card_html + oob_html)
     response.headers["HX-Trigger"] = "tasks-changed"
     return response
 

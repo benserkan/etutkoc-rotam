@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import enum
-from datetime import datetime
+from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Enum, ForeignKey, Integer, String, func, text
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, func, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -103,6 +103,30 @@ class User(Base):
     entry_year_grade9: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # Uyarı susturma durumu (migration o3k0n2l3m11g) — is_active'ten AYRI.
+    # is_active=True kalmaya devam eder (auth login açık), ama is_paused=True
+    # iken at-risk panel + burnout + admin digest + veli bildirimi gibi alert
+    # üreticileri bu kullanıcıyı atlar. Manuel veya otonom (inaktivite cron'u)
+    # tetiklenir. pause_reason ile ayrılır: "manual" / "auto_inactivity".
+    is_paused: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=text("0"),
+    )
+    paused_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+    # actor — sistem ise NULL (cron tetiklediği auto-pause)
+    paused_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True,
+    )
+    # "manual" — koç/admin tarafından; "auto_inactivity" — cron tarafından
+    pause_reason: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    # Manuel resume yapıldığında doldurulur — sticky override 7 günlük
+    # cooldown ile cron bu süre içinde tekrar auto-pause yapmaz.
+    last_manual_resume_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -131,6 +155,22 @@ class User(Base):
     must_change_password: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, server_default=text("0")
     )
+    # E-posta doğrulama (Dalga 7 P3) — soft: NULL = doğrulanmamış (panelde banner),
+    # dolu = doğrulandı. Mevcut kullanıcılar migration'da geriye dönük doğrulanır.
+    email_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # İki faktörlü doğrulama / TOTP (Dalga 7 P4) — yalnız Süper Admin + Kurum
+    # Yöneticisi etkinleştirebilir. totp_secret: base32 (setup'ta üretilir,
+    # pending); totp_enabled_at dolunca 2FA aktif (login'de kod istenir).
+    totp_secret: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    totp_enabled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    @property
+    def two_factor_enabled(self) -> bool:
+        return self.totp_enabled_at is not None and bool(self.totp_secret)
 
     # Stage 6 — bağımsız öğretmen için kredi planı (institution_id NULL ise
     # anlamlı). Kurumlu kullanıcılarda yok sayılır; onların planı
@@ -151,6 +191,13 @@ class User(Base):
     post_trial_plan: Mapped[str | None] = mapped_column(
         String(32), nullable=True
     )
+
+    # Öğrencinin "hafta anchor" tarihi. Set ise: haftalık view bu tarihi
+    # bloğun başı sayar (ör. 24 Nisan Cuma → tüm haftalar Cuma-Perşembe).
+    # NULL ise: öğrencinin en eski Task.date'i fallback olarak kullanılır;
+    # o da yoksa bugünün ISO haftası (Pazartesi). Koçluk günü değişince
+    # öğretmen UI'dan bu alanı yeniden ayarlar.
+    program_anchor_date: Mapped[date | None] = mapped_column(Date, nullable=True)
 
     teacher: Mapped["User | None"] = relationship(
         "User", remote_side="User.id", backref="students", foreign_keys=[teacher_id]

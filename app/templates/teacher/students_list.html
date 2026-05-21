@@ -204,6 +204,21 @@
               ⚠ Alan eksik
             </span>
             {% endif %}
+
+            {# Pasif rozeti — manuel veya otonom #}
+            {% if s.is_paused %}
+              {% if s.pause_reason and s.pause_reason.startswith('auto') %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-800 border border-amber-300"
+                    title="Sistem tarafından sessizlik nedeniyle otomatik pasifleştirildi — herhangi bir aktivite ile otomatik açılır">
+                🤖 Otomatik pasif
+              </span>
+              {% else %}
+              <span class="text-[10px] px-1.5 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-300"
+                    title="Manuel olarak pasifleştirildi — uyarılar susturulmuş">
+                ⏸ Pasif (manuel)
+              </span>
+              {% endif %}
+            {% endif %}
           </div>
         </td>
         <td class="px-4 py-3 text-slate-600 align-top">{{ s.academic_year.name if s.academic_year else '—' }}</td>
@@ -212,6 +227,19 @@
              class="text-amber-700 hover:text-amber-900 text-sm" title="Hedef ağacı">
             🎯 Hedefler
           </a>
+          {# Pause/Resume toggle — manuel pause/resume #}
+          {% if s.is_paused %}
+          <form method="post" action="/teacher/students/{{ s.id }}/resume-alerts" class="inline">
+            <button type="submit" class="text-emerald-600 hover:text-emerald-800 text-sm"
+                    title="Uyarıları tekrar aç">▶ Aktif et</button>
+          </form>
+          {% else %}
+          <form method="post" action="/teacher/students/{{ s.id }}/pause-alerts" class="inline"
+                onsubmit="return confirm('{{ s.full_name }} pasife alınsın? Uyarılar susturulur, öğrenci hesabı çalışmaya devam eder.');">
+            <button type="submit" class="text-slate-600 hover:text-slate-800 text-sm"
+                    title="Bu öğrencinin uyarılarını sustur (öğrenci giriş yapmaya devam edebilir)">⏸ Pasife al</button>
+          </form>
+          {% endif %}
           <form method="post" action="/teacher/students/{{ s.id }}/reset-password" class="inline">
             <button type="submit" class="text-indigo-600 hover:text-indigo-800 text-sm">Şifre Sıfırla</button>
           </form>

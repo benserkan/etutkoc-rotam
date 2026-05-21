@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block title %}Yeni A/B Deneyi — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-5">
+  <a href="/admin/feature-catalog/experiments" class="text-sm text-slate-500 hover:text-slate-700">← Deney Listesi</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Yeni A/B Deneyi</h1>
+  <p class="text-sm text-slate-500 mt-1 max-w-2xl">
+    İki strateji karşılaştırması — ziyaretçilerin %X'i kontrol, %Y'si test grubuna düşer.
+    Deney oluşturulduktan sonra "Çalışıyor" durumuna alındığında atama başlar.
+  </p>
+</div>
+
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+<form method="post" action="/admin/feature-catalog/experiments/new"
+      class="bg-white border border-slate-200 rounded-lg p-5 max-w-3xl space-y-5">
+
+  <label class="block">
+    <span class="text-sm font-medium text-slate-700">Deney adı *</span>
+    <input type="text" name="name" required maxlength="160"
+           placeholder="Örn: Hibrit vs Sade Fuzzy"
+           class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm">
+    <span class="text-[11px] text-slate-500 mt-1 block">Kısa ve açıklayıcı; admin listede görünür.</span>
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-medium text-slate-700">Slug (opsiyonel)</span>
+    <input type="text" name="slug" maxlength="80"
+           placeholder="otomatik üretilir (örn: hibrit-vs-sade-fuzzy)"
+           class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm font-mono">
+    <span class="text-[11px] text-slate-500 mt-1 block">Boş bırakırsanız addan üretilir.</span>
+  </label>
+
+  <label class="block">
+    <span class="text-sm font-medium text-slate-700">Hipotez (opsiyonel)</span>
+    <textarea name="hypothesis" rows="3" maxlength="2000"
+              placeholder="Örn: Çeşitlilik filtresini kaldırırsak yüksek-skorlu kartlar üst üste gelir ve demo tıklama oranı artar."
+              class="mt-1 w-full px-3 py-2 border border-slate-300 rounded text-sm"></textarea>
+  </label>
+
+  {# Variantlar — sabit iki grup: control + test #}
+  <div class="border-t border-slate-200 pt-5">
+    <h3 class="text-sm font-semibold text-slate-700 mb-3">Variant'lar</h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+      <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
+        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Kontrol (ctrl)</div>
+        <label class="block mb-2">
+          <span class="text-xs text-slate-600">Strateji</span>
+          <select name="ctrl_strategy" required
+                  class="mt-1 w-full px-2 py-1.5 border border-slate-300 rounded text-sm bg-white">
+            {% for key in STRATEGY_KEYS %}
+            <option value="{{ key }}" {% if key == 'hybrid_full' %}selected{% endif %}>{{ STRATEGY_LABELS[key] }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">Ağırlık (%)</span>
+          <input type="number" name="weight_ctrl" min="1" max="99" value="50" required
+                 class="mt-1 w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </label>
+      </div>
+
+      <div class="border border-slate-200 rounded-lg p-3 bg-slate-50/50">
+        <div class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Test (test)</div>
+        <label class="block mb-2">
+          <span class="text-xs text-slate-600">Strateji</span>
+          <select name="test_strategy" required
+                  class="mt-1 w-full px-2 py-1.5 border border-slate-300 rounded text-sm bg-white">
+            {% for key in STRATEGY_KEYS %}
+            <option value="{{ key }}" {% if key == 'fuzzy_only' %}selected{% endif %}>{{ STRATEGY_LABELS[key] }}</option>
+            {% endfor %}
+          </select>
+        </label>
+        <label class="block">
+          <span class="text-xs text-slate-600">Ağırlık (%)</span>
+          <input type="number" name="weight_test" min="1" max="99" value="50" required
+                 class="mt-1 w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </label>
+      </div>
+
+    </div>
+    <p class="text-[11px] text-slate-500 mt-2">Toplam ağırlık 100 olmalı.</p>
+
+    {# Strateji açıklamaları #}
+    <details class="mt-3 text-xs text-slate-600">
+      <summary class="cursor-pointer font-medium">Strateji açıklamaları</summary>
+      <dl class="mt-2 space-y-2 pl-4">
+        {% for key in STRATEGY_KEYS %}
+        <div>
+          <dt class="font-mono text-slate-700">{{ key }}</dt>
+          <dd class="text-slate-500">{{ STRATEGY_DESCRIPTIONS[key] }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+    </details>
+  </div>
+
+  <div class="border-t border-slate-200 pt-4 flex items-center justify-between">
+    <a href="/admin/feature-catalog/experiments" class="text-sm text-slate-500 hover:text-slate-700">İptal</a>
+    <button type="submit"
+            class="px-4 py-2 bg-indigo-600 text-white rounded text-sm font-medium hover:bg-indigo-700">
+      Deneyi Oluştur (Taslak)
+    </button>
+  </div>
+</form>
+
+{% endblock %}

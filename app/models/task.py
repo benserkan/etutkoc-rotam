@@ -4,7 +4,7 @@ import enum
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, DateTime, Enum, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, Date, DateTime, Enum, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -53,6 +53,18 @@ class Task(Base):
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # Opsiyonel saat (0-23). NULL = saatsiz (eski davranış); set ise gün içi
+    # sıralamada öncelik kazanır (hour NULLS LAST, order, id).
+    scheduled_hour: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Tip-spesifik bağlantı (video URL vb.). notes ise konu/açıklama için.
+    link_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Taslak/yayın mantığı: True iken görev sadece öğretmende görünür; False iken
+    # öğrenci paneline iner ve veli duyurusuna aday olur. Smart default:
+    # bugün/geçmiş tarihliler False, gelecek tarihliler True.
+    is_draft: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    published_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

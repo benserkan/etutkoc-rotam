@@ -1,0 +1,125 @@
+{% extends "base.html" %}
+{% block title %}{{ student.full_name }} — Çalışma DNA{% endblock %}
+
+{% block content %}
+<div x-data="{ notifyOpen: false }">
+
+<div class="flex items-start justify-between mb-6 flex-wrap gap-3">
+  <div>
+    <a href="/teacher/students/{{ student.id }}" class="text-sm text-stone-500 hover:text-stone-700">← {{ student.full_name }} detay</a>
+    <h1 class="text-2xl font-semibold text-stone-900 mt-1">🧬 Çalışma DNA</h1>
+    <p class="text-sm text-stone-500 mt-1">
+      {{ student.full_name }} için 28 günlük çalışma örüntüsü ve tükenmişlik analizi.
+    </p>
+  </div>
+  <div class="flex items-center gap-2 flex-wrap">
+    {# Veliye duyur — sayı destekli mesaj şablonu, mevcut bildirim kuyruğuna düşer #}
+    {% if parent_count > 0 %}
+    <button type="button"
+            @click="notifyOpen = true"
+            class="inline-flex items-center gap-1.5 text-sm font-bold px-3 py-2 rounded-lg text-white hover:brightness-110 shadow-sm transition flex-shrink-0"
+            style="background:linear-gradient(135deg,#15803D,#166534);"
+            title="DNA verilerinden sayı destekli mesaj üret, veliye duyur">
+      📣 Veliye duyur
+      <span class="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-white/25">{{ parent_count }} veli</span>
+    </button>
+    {% else %}
+    <span class="inline-flex items-center gap-1.5 text-sm font-bold px-3 py-2 rounded-lg bg-stone-200 text-stone-500 cursor-not-allowed"
+          title="Bu öğrenciye bağlı aktif veli yok">
+      📣 Veliye duyur
+      <span class="text-[10px]">(veli yok)</span>
+    </span>
+    {% endif %}
+
+    <a href="/demos?play=teacher-dna"
+       class="inline-flex items-center gap-1.5 text-sm font-bold px-3 py-2 rounded-lg text-white hover:brightness-110 shadow-sm transition flex-shrink-0"
+       style="background:linear-gradient(135deg,#6D28D9,#4C1D95); box-shadow:0 4px 12px -4px rgba(76,29,149,0.45);"
+       title="2 dakikalık animasyonlu rehber — DNA panelini öğretmen olarak nasıl yöneteceksin">
+      <span class="inline-flex items-center justify-center w-4 h-4 rounded-full bg-white/20 text-[10px]">▶</span>
+      Demo İzle
+    </a>
+    <a href="/teacher/burnout" class="text-sm text-indigo-600 hover:text-indigo-800">
+      → Tüm öğrenciler risk listesi
+    </a>
+  </div>
+</div>
+
+{% if flash_ok == 'parent_notified' %}
+<div class="mb-4 p-3 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800 flex items-center gap-2">
+  <span class="text-lg">✓</span>
+  <span>Veli bilgilendirme kuyruğa düştü — bağlı tüm aktif velilere gönderiliyor.</span>
+</div>
+{% endif %}
+
+{% include "partials/_burnout_signals.html" %}
+
+<div class="mt-6">
+  {% include "partials/_dna_profile_panel.html" %}
+</div>
+
+{# ─────────────────── Veliye duyur — modal ─────────────────── #}
+{% if parent_count > 0 %}
+<div x-show="notifyOpen"
+     x-transition.opacity
+     @keydown.escape.window="notifyOpen = false"
+     class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+     style="display: none;">
+  <div @click.outside="notifyOpen = false"
+       class="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+    <div class="px-5 py-4 border-b border-stone-200 flex items-center justify-between bg-stone-50">
+      <div>
+        <h3 class="text-lg font-bold text-stone-900">📣 Veliye duyur</h3>
+        <p class="text-xs text-stone-500 mt-0.5">
+          {{ student.full_name }} için DNA verisinden hazırlanan mesaj.
+          {{ parent_count }} aktif veliye gönderilecek (email + WhatsApp tercihlerine göre).
+        </p>
+      </div>
+      <button type="button" @click="notifyOpen = false" class="text-stone-400 hover:text-stone-700 text-xl px-2">×</button>
+    </div>
+
+    <form method="post" action="/teacher/students/{{ student.id }}/dna/notify-parent" class="flex-1 overflow-auto px-5 py-4">
+      {% if profile.hour_data_confidence < 50 %}
+      <div class="mb-3 p-2.5 rounded-md bg-amber-50 border border-amber-200 text-xs text-amber-900 leading-relaxed">
+        <b>⚠️ Saat verisi güvensiz (%{{ profile.hour_data_confidence }})</b> —
+        bu öğrencide toplu işaretleme örüntüsü tespit edildi ({{ profile.batch_completion_count }} görev).
+        Otomatik mesajdan <i>chronotype, en yoğun saat ve gece kuşu</i> ifadeleri çıkarıldı;
+        sadece sayı/gün bazlı veriler kullanıldı. Yine de göndermeden önce metni gözden geçir.
+      </div>
+      {% endif %}
+      <label class="block text-xs font-semibold text-stone-700 uppercase tracking-wider mb-2">
+        Mesaj önizleme — değiştirebilirsin
+      </label>
+      <textarea name="body"
+                rows="14"
+                required
+                maxlength="2000"
+                class="w-full px-3 py-2 border border-stone-300 rounded-lg text-sm font-mono leading-relaxed focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-500"
+                placeholder="Veliye iletilecek metin...">{{ parent_message_preview }}</textarea>
+      <p class="text-[11px] text-stone-500 mt-2 leading-relaxed">
+        💡 Bu metin DNA panelindeki risk skoru, sinyaller{% if profile.hour_data_confidence >= 50 %}, chronotype{% endif %} ve tamamlama oranı verilerinden otomatik oluşturuldu.
+        Gönderim öncesi dilediğin gibi düzenleyebilirsin (maks 2000 karakter).
+      </p>
+
+      <div class="mt-5 pt-4 border-t border-stone-200 flex items-center justify-between gap-3 flex-wrap">
+        <span class="text-[11px] text-stone-500">
+          🔒 Öğrenci bu mesajı görmez — sadece veli kanalına düşer.
+        </span>
+        <div class="flex items-center gap-2">
+          <button type="button" @click="notifyOpen = false"
+                  class="px-4 py-2 text-sm font-semibold text-stone-600 hover:text-stone-900">
+            Vazgeç
+          </button>
+          <button type="submit"
+                  class="px-5 py-2 text-sm font-bold text-white rounded-lg hover:brightness-110 shadow-sm"
+                  style="background:linear-gradient(135deg,#15803D,#166534);">
+            ✉ Veliye gönder
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

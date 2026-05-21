@@ -1,0 +1,8 @@
+[
+  {
+    "test": "e2e_independent_teacher",
+    "label": "duplicate email red (4xx)",
+    "detail": "got 303",
+    "severity": "high"
+  }
+]

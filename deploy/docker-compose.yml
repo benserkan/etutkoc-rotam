@@ -1,0 +1,202 @@
+# =============================================================================
+# ETÜTKOÇ — Lightsail VPS Docker Compose
+# 5 servis: web (FastAPI) + next (Next.js) + worker + db (Postgres) + proxy (Caddy)
+#
+# Kullanım (deploy/.env hazırlandıktan sonra):
+#   cd deploy
+#   docker compose up -d --build
+#
+# İlk açılışta:
+#   1. db ayağa kalkar, healthcheck bekler
+#   2. web başlar → start.sh: alembic upgrade head + seed + gunicorn
+#   3. worker web sağlıklı olduğunda başlar (migration tamamlandı sayılır)
+#   4. next başlar → SSR Server Component'leri internal network'ten web'e fetch eder
+#   5. proxy Caddy HTTPS otomatik (Let's Encrypt) sertifikası alır + path-based routing
+# =============================================================================
+
+services:
+  # ===========================================================================
+  # PostgreSQL — SQLite'tan göç. Volume'da kalıcı.
+  # ===========================================================================
+  db:
+    image: postgres:16-alpine
+    container_name: lgs-db
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lgs}
+      POSTGRES_USER: ${POSTGRES_USER:-lgs}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lgs} -d ${POSTGRES_DB:-lgs}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+    restart: unless-stopped
+
+  # ===========================================================================
+  # FastAPI web — Jinja sayfaları + /api/v1 + /api/v2 + webhooks
+  # NOT: BACKGROUND görevler KAPALI (cron + dispatcher worker'da çalışır)
+  # ===========================================================================
+  web:
+    build:
+      context: ..                # proje kökü (Dockerfile burada)
+      dockerfile: Dockerfile
+    image: lgs-backend:latest
+    container_name: lgs-web
+    command: ["./start.sh"]      # alembic upgrade + seed + gunicorn
+    environment:
+      # ---- DB ----
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-lgs}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-lgs}
+      # ---- Genel ----
+      DEBUG: "false"
+      SESSION_SECRET: ${SESSION_SECRET}
+      APP_BASE_URL: https://${PUBLIC_DOMAIN}
+      # ---- Auth ----
+      JWT_SECRET: ${JWT_SECRET}
+      CORS_ORIGINS: https://${PUBLIC_DOMAIN}
+      # ---- BFF cookie (Next.js için) ----
+      AUTH_COOKIE_ACCESS_NAME: __Host-access
+      AUTH_COOKIE_REFRESH_NAME: __Host-refresh
+      AUTH_COOKIE_SECURE: "true"     # HTTPS ardında — __Host- prefix aktive
+      # ---- Email (SMTP) ----
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_USE_TLS: "true"
+      SMTP_USE_SSL: "false"
+      # ---- WhatsApp ----
+      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-true}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET}
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN}  # GET /webhooks/whatsapp verify aşaması
+      # ---- Worker'la çakışma önlemi ----
+      LGS_RUN_BACKGROUND: "false"    # web'de cron/dispatcher KAPALI
+      # ---- Gunicorn ----
+      WORKERS: ${WEB_WORKERS:-2}
+      PORT: "8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks: [internal]
+    restart: unless-stopped
+    # Web sağlıklı olduğunda worker + next bağlanabilir
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 60s   # alembic upgrade + seed zaman alabilir
+
+  # ===========================================================================
+  # Worker — Cron + notification dispatcher
+  # KRİTİK: replicas: 1 — duplicate gönderim olmaması için ASLA scale etme
+  # (R-004: notification_log'da SELECT...FOR UPDATE SKIP LOCKED henüz yok)
+  # ===========================================================================
+  worker:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: lgs-backend:latest     # web ile aynı image
+    container_name: lgs-worker
+    command: ["python", "-m", "app.dispatcher", "--loop"]
+    environment:
+      DATABASE_URL: postgresql+psycopg2://${POSTGRES_USER:-lgs}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:-lgs}
+      DEBUG: "false"
+      SESSION_SECRET: ${SESSION_SECRET}
+      APP_BASE_URL: https://${PUBLIC_DOMAIN}
+      JWT_SECRET: ${JWT_SECRET}
+      EMAIL_ENABLED: ${EMAIL_ENABLED:-true}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      SMTP_FROM: ${SMTP_FROM}
+      SMTP_USE_TLS: "true"
+      WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-true}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}
+      WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET}
+      WHATSAPP_WEBHOOK_VERIFY_TOKEN: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN}  # config tutarlılığı için (worker webhook karşılamaz)
+      LGS_RUN_BACKGROUND: "true"    # SADECE worker'da açık
+    depends_on:
+      db:
+        condition: service_healthy
+      web:
+        condition: service_healthy  # migration tamamlanmış sayılır
+    networks: [internal]
+    restart: unless-stopped
+    # scale: 1 (compose default) — manuel scale ETMEYİN
+    deploy:
+      replicas: 1
+
+  # ===========================================================================
+  # Next.js — App Router (RSC) + BFF route'ları
+  # SSR fetch'leri internal:// http://web:8000 üzerinden
+  # ===========================================================================
+  next:
+    build:
+      context: ../web
+      dockerfile: Dockerfile
+    image: lgs-next:latest
+    container_name: lgs-next
+    environment:
+      NODE_ENV: production
+      # Server Component fetch hedefi (internal network)
+      INTERNAL_API_URL: http://web:8000
+      # Tarayıcı tarafı — same-origin (Caddy aynı domain'i sunar)
+      NEXT_PUBLIC_PUBLIC_API_URL: ""
+      PORT: "3000"
+      HOSTNAME: "0.0.0.0"
+    depends_on:
+      web:
+        condition: service_healthy
+    networks: [internal]
+    restart: unless-stopped
+
+  # ===========================================================================
+  # Caddy reverse proxy + otomatik HTTPS (Let's Encrypt)
+  # Tek dışa açık servis — 80/443 portları
+  # ===========================================================================
+  proxy:
+    image: caddy:2-alpine
+    container_name: lgs-proxy
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PUBLIC_DOMAIN: ${PUBLIC_DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data            # certifikalar burada
+      - caddy-config:/config
+    depends_on:
+      web:
+        condition: service_healthy
+      next:
+        condition: service_started
+    networks: [internal]
+    restart: unless-stopped
+
+# =============================================================================
+# Network — sadece internal; proxy hariç dışa kapalı
+# =============================================================================
+networks:
+  internal:
+    driver: bridge
+
+# =============================================================================
+# Volumes — host'ta kalıcı veri
+# =============================================================================
+volumes:
+  db-data:
+    name: lgs-db-data
+  caddy-data:
+    name: lgs-caddy-data
+  caddy-config:
+    name: lgs-caddy-config

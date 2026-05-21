@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block title %}Faturalar — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6">
+  <a href="/admin/security-monitor/revenue" class="text-sm text-slate-500 hover:text-slate-700">← Ticari Pano</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">🧾 Faturalar</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Kurumların ödeme kayıtları — durum, vade, tahsilat geçmişi. Filtrele, kuruma git, durum gör.
+  </p>
+</div>
+
+{# Bu sayfada ne yazıyor? #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Fatura</b> — bir kurumun bir dönem (örn. 2026-09-01 → 2026-10-01) için ödeyeceği tutar
+      kaydı. Plan + dönem + miktar + vade.
+    </div>
+    <div>
+      <b>Bekliyor</b> — vade gelmedi, henüz tahsil edilmedi.
+    </div>
+    <div>
+      <b>Ödendi</b> — tahsilat başarılı, kayıt kapandı.
+    </div>
+    <div>
+      <b>Gecikti</b> — vade geçti, hâlâ ödenmedi. Otomatik dunning hatırlatma
+      zincirine giren faturalar.
+    </div>
+    <div>
+      <b>Tahsilat başarısız</b> — otomatik denemede kart reddedildi veya hesap kapalı.
+      Genelde 24 saatte tekrar denenir.
+    </div>
+  </div>
+</details>
+
+{# Üst KPI özet — status başına #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  {% for st in all_statuses %}
+    {% set c = status_counts.get(st.value, {'count': 0, 'total_try': 0}) %}
+    {% if c.count > 0 %}
+    {% set color = status_colors.get(st, 'slate') %}
+    <a href="?status_filter={{ st.value }}"
+       class="block p-3 rounded-lg border bg-{{ color }}-50 border-{{ color }}-200 hover:bg-{{ color }}-100">
+      <div class="text-[10px] uppercase tracking-wide text-{{ color }}-700">
+        {{ status_labels.get(st, st.value) }}
+      </div>
+      <div class="mt-1 flex items-baseline gap-2">
+        <span class="text-2xl font-semibold text-{{ color }}-900">{{ c.count }}</span>
+        <span class="text-[11px] text-{{ color }}-700">fatura</span>
+      </div>
+      <div class="text-xs text-{{ color }}-700 mt-0.5">{{ "{:,}".format(c.total_try) }} ₺</div>
+    </a>
+    {% endif %}
+  {% endfor %}
+</div>
+
+{% if status_filter %}
+<div class="mb-4 text-sm text-slate-600">
+  Filtre: <code class="text-xs bg-slate-100 px-2 py-0.5 rounded">{{ status_filter }}</code>
+  <a href="/admin/security-monitor/revenue/invoices" class="ml-2 text-xs text-indigo-600 hover:text-indigo-800">× temizle</a>
+</div>
+{% endif %}
+
+{% if not rows %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-sm text-slate-500">
+  Bu filtreye uyan fatura yok.
+</div>
+{% else %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-xs">
+    <thead class="bg-slate-50 text-slate-600 uppercase">
+      <tr>
+        <th class="text-left px-3 py-2">Kurum</th>
+        <th class="text-left px-3 py-2">Paket</th>
+        <th class="text-right px-3 py-2">Tutar</th>
+        <th class="text-left px-3 py-2">Vade</th>
+        <th class="text-left px-3 py-2">Ödendi</th>
+        <th class="text-left px-3 py-2">Durum</th>
+        <th class="text-left px-3 py-2">Yöntem</th>
+        <th class="text-right px-3 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for r in rows %}
+        {% set color = status_colors.get(r.status, 'slate') %}
+        {% set is_user_owner = (r.owner_type == 'user') %}
+        {% set inst = insts_map.get(r.institution_id) if not is_user_owner else None %}
+        {% set u = (users_map.get(r.user_id) if (is_user_owner and users_map is defined) else None) %}
+        {% set owner_url = ('/admin/revenue/users/' ~ r.user_id) if is_user_owner else ('/admin/revenue/institutions/' ~ r.institution_id) %}
+        <tr class="hover:bg-slate-50">
+          <td class="px-3 py-2">
+            <div class="flex items-center gap-1.5">
+              <span class="text-[10px] px-1.5 py-0.5 rounded font-semibold
+                           {% if is_user_owner %}bg-purple-100 text-purple-700{% else %}bg-indigo-100 text-indigo-700{% endif %}"
+                    title="{% if is_user_owner %}Bağımsız öğretmen{% else %}Kurum{% endif %}">
+                {% if is_user_owner %}👤{% else %}🏢{% endif %}
+              </span>
+              {% if is_user_owner and u %}
+                <a href="{{ owner_url }}" class="text-purple-700 hover:text-purple-900 font-medium">{{ u.full_name or u.email }}</a>
+              {% elif inst %}
+                <a href="{{ owner_url }}" class="text-indigo-700 hover:text-indigo-900 font-medium">{{ inst.name }}</a>
+              {% elif is_user_owner %}
+                <span class="text-slate-400">Öğretmen #{{ r.user_id }}</span>
+              {% else %}
+                <span class="text-slate-400">Kurum #{{ r.institution_id }}</span>
+              {% endif %}
+            </div>
+          </td>
+          <td class="px-3 py-2 text-slate-700 font-mono">{{ r.plan }}</td>
+          <td class="px-3 py-2 text-right font-semibold text-slate-900">{{ "{:,}".format(r.amount_try) }} ₺</td>
+          <td class="px-3 py-2 text-slate-600">{{ r.due_at|dt_dual }}</td>
+          <td class="px-3 py-2 text-slate-600">
+            {% if r.paid_at %}{{ r.paid_at|dt_dual }}{% else %}<span class="text-slate-400">—</span>{% endif %}
+          </td>
+          <td class="px-3 py-2">
+            <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] bg-{{ color }}-100 text-{{ color }}-800 font-medium">
+              {{ status_labels.get(r.status, r.status.value) }}
+            </span>
+          </td>
+          <td class="px-3 py-2 text-slate-500">
+            {% if r.payment_method %}{{ r.payment_method.value }}{% else %}—{% endif %}
+          </td>
+          <td class="px-3 py-2 text-right">
+            <a href="{{ owner_url }}" class="text-xs text-indigo-600 hover:text-indigo-800">Detay →</a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+{% endblock %}

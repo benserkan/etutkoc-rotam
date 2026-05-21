@@ -49,7 +49,23 @@ class AuditAction(str, enum.Enum):
     INSTITUTION_DELETE = "institution_delete"
     IMPERSONATE_START = "impersonate_start"  # super admin sahte oturum aç
     IMPERSONATE_END = "impersonate_end"
+    IMPERSONATE_EXPIRED = "impersonate_expired"  # 30 dk doldu, auto-end (Katman 11.B)
+    IMPERSONATE_REVOKED = "impersonate_revoked"  # başka admin sonlandırdı (Katman 11.B)
+    ABUSE_REMEDIATION = "abuse_remediation"  # Katman 11.C+: abuse sinyali → toplu aksiyon
     ROLE_CHANGE = "role_change"            # rol değişimi (super admin only)
+    # Katman 1 — Feature Catalog (özellik vitrin kartları)
+    FEATURE_CARD_CREATE = "feature_card_create"
+    FEATURE_CARD_UPDATE = "feature_card_update"
+    FEATURE_CARD_DELETE = "feature_card_delete"
+    FEATURE_CARD_STATUS_CHANGE = "feature_card_status_change"
+    FEATURE_CARD_PIN = "feature_card_pin"
+    FEATURE_CARD_AUTO_DISCOVERED = "feature_card_auto_discovered"  # Katman 3 — keşif
+    FEATURE_CARD_DISCOVERY_REJECTED = "feature_card_discovery_rejected"  # Katman 4 — onay kuyruğu
+    # User pause / resume — manuel + otonom
+    USER_PAUSE_ALERTS = "user_pause_alerts"        # manuel pasifleştirme
+    USER_RESUME_ALERTS = "user_resume_alerts"      # manuel resume
+    USER_AUTO_PAUSE = "user_auto_pause"            # cron tetikli auto-pause
+    USER_AUTO_RESUME = "user_auto_resume"          # login/task ile auto-resume
 
 
 AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
@@ -69,7 +85,21 @@ AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
     AuditAction.INSTITUTION_DELETE: "Kurum silindi",
     AuditAction.IMPERSONATE_START: "Sahte oturum başlatıldı",
     AuditAction.IMPERSONATE_END: "Sahte oturum bitti",
+    AuditAction.IMPERSONATE_EXPIRED: "Sahte oturum süresi doldu (30 dk)",
+    AuditAction.IMPERSONATE_REVOKED: "Sahte oturum başka admin tarafından kapatıldı",
+    AuditAction.ABUSE_REMEDIATION: "Kötüye kullanım sinyali — toplu aksiyon uygulandı",
     AuditAction.ROLE_CHANGE: "Rol değiştirildi",
+    AuditAction.FEATURE_CARD_CREATE: "Vitrin kartı oluşturuldu",
+    AuditAction.FEATURE_CARD_UPDATE: "Vitrin kartı güncellendi",
+    AuditAction.FEATURE_CARD_DELETE: "Vitrin kartı silindi",
+    AuditAction.FEATURE_CARD_STATUS_CHANGE: "Vitrin kartı durumu değişti",
+    AuditAction.FEATURE_CARD_PIN: "Vitrin kartı sabitlendi/serbest bırakıldı",
+    AuditAction.FEATURE_CARD_AUTO_DISCOVERED: "Vitrin kartı otomatik keşfedildi (taslak)",
+    AuditAction.FEATURE_CARD_DISCOVERY_REJECTED: "Otomatik keşif adayı reddedildi (gizlendi)",
+    AuditAction.USER_PAUSE_ALERTS: "Kullanıcı uyarıları susturuldu (manuel)",
+    AuditAction.USER_RESUME_ALERTS: "Kullanıcı uyarıları açıldı (manuel)",
+    AuditAction.USER_AUTO_PAUSE: "Kullanıcı otomatik pasifleştirildi (sessizlik)",
+    AuditAction.USER_AUTO_RESUME: "Kullanıcı otomatik aktifleştirildi (aktivite)",
 }
 
 

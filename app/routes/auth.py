@@ -1,4 +1,7 @@
+import logging
 from datetime import datetime, timezone
+
+logger = logging.getLogger(__name__)
 
 from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import RedirectResponse
@@ -15,6 +18,10 @@ from app.services.auth_security import (
     session_max_age_for,
 )
 from app.services.security import verify_password
+from app.services import security_monitor as secmon
+from app.services.turnstile import get_site_key as turnstile_site_key
+from app.services.turnstile import is_enabled as turnstile_enabled
+from app.services.turnstile import verify_token as turnstile_verify
 from app.templating import templates
 
 
@@ -45,7 +52,14 @@ def _request_ip(request: Request) -> str | None:
 def login_form(request: Request, user: User | None = Depends(get_current_user)):
     if user:
         return RedirectResponse(url=_home_for(user), status_code=status.HTTP_303_SEE_OTHER)
-    return templates.TemplateResponse("auth/login.html", {"request": request, "error": None})
+    return templates.TemplateResponse(
+        "auth/login.html",
+        {
+            "request": request,
+            "error": None,
+            "turnstile_site_key": turnstile_site_key(),
+        },
+    )
 
 
 @router.post("/login")
@@ -53,11 +67,13 @@ def login_submit(
     request: Request,
     email: str = Form(...),
     password: str = Form(...),
+    cf_turnstile_response: str = Form("", alias="cf-turnstile-response"),
     db: Session = Depends(get_db),
 ):
     """Login akışı — lockout + audit + last_login tracking ile sertleştirilmiş.
 
     Akış:
+      0. Turnstile CAPTCHA kontrol (aktifse) — bot/script saldırı koruması
       1. E-posta normalize, kullanıcı bul
       2. Kullanıcı yoksa: audit (login_failed, actor=NULL), generic mesaj
       3. Lockout kontrol: aktif kilitli ise audit (login_locked) + retry sonrası dakikayı söyle
@@ -71,6 +87,51 @@ def login_submit(
 
     GENERIC_ERR = "E-posta veya şifre hatalı."
 
+    # 0a) IP brute-force blok kontrolü (auth_security'den önce — hesap bile
+    # tespit edilmeden önce reddet)
+    blocked, _row = secmon.is_ip_blocked(db, ip=ip)
+    if blocked:
+        log_action(
+            db,
+            action=AuditAction.LOGIN_FAILED,
+            actor_id=user.id if user else None,
+            email_attempted=email_norm,
+            request=request,
+            details={"reason": "ip_blocked"},
+        )
+        return templates.TemplateResponse(
+            "auth/login.html",
+            {
+                "request": request,
+                "error": (
+                    "Bu IP geçici olarak engellendi. Lütfen daha sonra tekrar deneyin."
+                ),
+                "turnstile_site_key": turnstile_site_key(),
+            },
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+        )
+
+    # 0) CAPTCHA — sadece Turnstile aktifse kontrol edilir; disabled ise geçilir
+    if turnstile_enabled():
+        if not turnstile_verify(cf_turnstile_response, ip=ip):
+            log_action(
+                db,
+                action=AuditAction.LOGIN_FAILED,
+                actor_id=user.id if user else None,
+                email_attempted=email_norm,
+                request=request,
+                details={"reason": "captcha_failed"},
+            )
+            return templates.TemplateResponse(
+                "auth/login.html",
+                {
+                    "request": request,
+                    "error": "Bot doğrulaması başarısız. Sayfayı yenile ve tekrar dene.",
+                    "turnstile_site_key": turnstile_site_key(),
+                },
+                status_code=status.HTTP_401_UNAUTHORIZED,
+            )
+
     # 1) Kullanıcı yok
     if not user:
         log_action(
@@ -81,6 +142,7 @@ def login_submit(
             request=request,
             details={"reason": "user_not_found"},
         )
+        secmon.record_failed_login_ip(db, ip=ip, email_attempted=email_norm)
         return templates.TemplateResponse(
             "auth/login.html",
             {"request": request, "error": GENERIC_ERR},
@@ -144,6 +206,9 @@ def login_submit(
             },
             autocommit=False,
         )
+        secmon.record_failed_login_ip(
+            db, ip=ip, email_attempted=email_norm, autocommit=False
+        )
         db.commit()
         if triggered_lock:
             seconds = lockout_seconds_remaining(user)
@@ -175,6 +240,24 @@ def login_submit(
         details={"role": user.role.value},
         autocommit=False,
     )
+    # Otonom resume: pasif user "auto_*" sebepliyse giriş = aktivite sinyali
+    # → derhal aktife alınır. Manuel pasif olanlar etkilenmez (koç kararı korunur).
+    try:
+        from app.services.pause import maybe_auto_resume
+        if maybe_auto_resume(db, user):
+            log_action(
+                db,
+                action=AuditAction.USER_AUTO_RESUME,
+                actor_id=None,
+                target_type="user",
+                target_id=user.id,
+                request=request,
+                details={"trigger": "login"},
+                autocommit=False,
+            )
+    except Exception:
+        # auto-resume hatası login akışını bozmasın
+        logger.exception("auto-resume login hatasi user=%s", user.id)
     db.commit()
 
     # Session bind: password rotation invalidate işareti + role bilgisi
@@ -185,7 +268,26 @@ def login_submit(
     )
     request.session["role"] = user.role.value
     request.session["login_at"] = datetime.now(timezone.utc).isoformat()
-    # Sliding session: kullanıcı aktivitesi olduğunda last_seen_at güncellenir (deps.py)
+    # Katman 11.A — ActiveSession kaydı + heartbeat için unique token
+    session_token = secmon.generate_session_token()
+    request.session["session_token"] = session_token
+    try:
+        secmon.record_session_start(
+            db,
+            user=user,
+            session_token=session_token,
+            ip=ip,
+            user_agent=request.headers.get("user-agent"),
+        )
+    except Exception:
+        logger.exception("active_session record fail user=%s", user.id)
+    # Süper admin login alarmı (in-app rozet için audit kalır; email isteğe bağlı)
+    if user.role == UserRole.SUPER_ADMIN:
+        try:
+            from app.services.security_monitor_alerts import notify_super_admin_login
+            notify_super_admin_login(db, user=user, ip=ip, request=request)
+        except Exception:
+            logger.exception("super_admin login alarm fail user=%s", user.id)
 
     response = RedirectResponse(url=_home_for(user), status_code=status.HTTP_303_SEE_OTHER)
     return response
@@ -194,6 +296,7 @@ def login_submit(
 @router.post("/logout")
 def logout(request: Request, db: Session = Depends(get_db)):
     uid = request.session.get("user_id")
+    token = request.session.get("session_token")
     if uid:
         log_action(
             db,
@@ -201,5 +304,10 @@ def logout(request: Request, db: Session = Depends(get_db)):
             actor_id=uid,
             request=request,
         )
+    if token:
+        try:
+            secmon.terminate_session(db, session_token=token, reason="logout")
+        except Exception:
+            logger.exception("active_session terminate (logout) fail")
     request.session.clear()
     return RedirectResponse(url="/login", status_code=status.HTTP_303_SEE_OTHER)

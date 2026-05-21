@@ -3,58 +3,142 @@
 
 {% block content %}
 <div class="mb-6">
-  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Hedef Ağacım</p>
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Müfredat İlerleme</p>
   <h1 class="text-2xl font-bold text-slate-900 mt-1">Hedeflerim</h1>
   <p class="text-sm text-slate-600 mt-1">
-    Sınav hedefinizden günlük çalışmaya kadar tüm hedeflerinizin ağaç görünümü.
-    Yaprak hedeflerin ilerlemesi otomatik üst hedeflere yansır.
+    Sana atanan kitap envanterinden ne kadarını çözdüğün, ders ve konu bazında.
+    Görev tikledikçe burası otomatik dolar — elle bir şey girmene gerek yok.
   </p>
 </div>
 
-{# ---------- ÖZET KART ---------- #}
-<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
-  <div class="bg-white border border-slate-200 rounded-xl p-4">
-    <p class="text-xs uppercase text-slate-500">Toplam Hedef</p>
-    <p class="text-2xl font-bold text-slate-900 mt-1">{{ summary.total }}</p>
-  </div>
-  <div class="bg-white border border-emerald-200 rounded-xl p-4">
-    <p class="text-xs uppercase text-emerald-700">Tamamlanan</p>
-    <p class="text-2xl font-bold text-emerald-700 mt-1">{{ summary.achieved }}</p>
-  </div>
-  <div class="bg-white border border-sky-200 rounded-xl p-4">
-    <p class="text-xs uppercase text-sky-700">Genel İlerleme</p>
-    <p class="text-2xl font-bold text-sky-700 mt-1">
-      {% if summary.overall_pct is not none %}%{{ summary.overall_pct }}{% else %}—{% endif %}
-    </p>
-  </div>
-  <div class="bg-white border border-amber-200 rounded-xl p-4">
-    <p class="text-xs uppercase text-amber-700">Yaklaşan Tarih</p>
-    <p class="text-sm font-bold text-amber-700 mt-1">
-      {% if summary.next_target_date %}{{ summary.next_target_date }}{% else %}—{% endif %}
-    </p>
+{# Dürüstlük notu — "%X net çıkacaksın" demek değil #}
+<div class="mb-5 p-3 rounded-lg bg-sky-50 border border-sky-200 text-xs text-sky-900 leading-relaxed flex items-start gap-2">
+  <span class="text-base flex-shrink-0">ℹ️</span>
+  <div>
+    Buradaki yüzdeler <b>test havuzu ilerlemen</b>dir — sana atanan kitap envanterinin
+    ne kadarını çözdüğünü gösterir. Sınav netini değil! Sınav neti için deneme sonuçlarına bakman gerek.
+    Her bölüm için varsayılan hedef: <b>{{ '%s test'|format(5) }}</b>
+    (kitabın gerçek envanteri varsa o sayı kullanılır).
   </div>
 </div>
 
-{# ---------- AĞAÇ ---------- #}
-<div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
-  {% if roots %}
+{# ---------- GENEL ÖZET ---------- #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="bg-white border border-slate-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-slate-500">Ders Sayısı</p>
+    <p class="text-2xl font-bold text-slate-900 mt-1">{{ subjects|length }}</p>
+  </div>
+  <div class="bg-white border border-slate-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-slate-500">Aktif Konu</p>
+    <p class="text-2xl font-bold text-slate-900 mt-1">{{ topic_count }}</p>
+  </div>
+  <div class="bg-white border border-emerald-200 rounded-xl p-4">
+    <p class="text-xs uppercase text-emerald-700">Bitmiş Konu</p>
+    <p class="text-2xl font-bold text-emerald-700 mt-1">
+      {% set finished = namespace(n=0) %}
+      {% for s in subjects %}{% for t in s.topics %}{% if t.progress_pct >= 100 %}{% set finished.n = finished.n + 1 %}{% endif %}{% endfor %}{% endfor %}
+      {{ finished.n }}
+    </p>
+  </div>
+  <div class="bg-white border border-brand-teal/30 rounded-xl p-4">
+    <p class="text-xs uppercase text-brand-teal">Genel İlerleme</p>
+    <p class="text-2xl font-bold text-brand-teal mt-1">%{{ overall_pct }}</p>
+  </div>
+</div>
+
+{# ---------- DERSLER + KONU AĞACI ---------- #}
+{% if subjects %}
+<div class="space-y-3 mb-8">
+  {% for s in subjects %}
+  <details class="bg-white border border-slate-200 rounded-xl overflow-hidden"
+           {% if s.progress_pct < 100 %}open{% endif %}>
+    <summary class="cursor-pointer list-none px-4 py-3 flex items-center gap-3 hover:bg-slate-50">
+      <span class="text-2xl flex-shrink-0">📘</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center justify-between gap-2 flex-wrap">
+          <h2 class="font-semibold text-slate-900">{{ s.subject_name }}</h2>
+          <span class="text-sm font-bold
+                       {% if s.progress_pct >= 80 %}text-emerald-600
+                       {% elif s.progress_pct >= 50 %}text-brand-teal
+                       {% elif s.progress_pct >= 25 %}text-amber-600
+                       {% else %}text-rose-500{% endif %}">
+            %{{ s.progress_pct }}
+          </span>
+        </div>
+        <div class="mt-1.5 h-1.5 bg-slate-100 rounded overflow-hidden">
+          <div class="h-full
+                      {% if s.progress_pct >= 100 %}bg-emerald-500
+                      {% elif s.progress_pct >= 60 %}bg-brand-teal
+                      {% elif s.progress_pct >= 30 %}bg-amber-400
+                      {% else %}bg-rose-400{% endif %}"
+               style="width: {{ s.progress_pct }}%"></div>
+        </div>
+        <div class="text-[11px] text-slate-500 mt-1">
+          {{ s.total_completed }} / {{ s.total_target }} test · {{ s.topics|length }} aktif konu
+        </div>
+      </div>
+      <span class="text-slate-400 text-xs">▼</span>
+    </summary>
+
+    {# Konu kartları #}
+    <div class="border-t border-slate-100 bg-slate-50/30 p-3 space-y-1.5">
+      {% for t in s.topics %}
+      <div class="bg-white border border-slate-200 rounded-md p-2.5 flex items-center gap-3">
+        <span class="text-base">📖</span>
+        <div class="flex-1 min-w-0">
+          <div class="flex items-center justify-between gap-2 flex-wrap">
+            <span class="text-sm font-medium text-slate-800 truncate">{{ t.section_label }}</span>
+            <span class="text-xs font-semibold
+                         {% if t.progress_pct >= 100 %}text-emerald-600
+                         {% elif t.progress_pct >= 50 %}text-brand-teal
+                         {% else %}text-slate-500{% endif %}">
+              {{ t.completed_tests }}/{{ t.target_tests }}
+              <span class="text-[10px] text-slate-400">%{{ t.progress_pct }}</span>
+              {% if t.progress_pct >= 100 %}<span class="ml-1">✓</span>{% endif %}
+            </span>
+          </div>
+          <div class="mt-1 h-1 bg-slate-100 rounded overflow-hidden">
+            <div class="h-full
+                        {% if t.progress_pct >= 100 %}bg-emerald-500
+                        {% elif t.progress_pct >= 60 %}bg-brand-teal
+                        {% elif t.progress_pct >= 30 %}bg-amber-400
+                        {% else %}bg-rose-400{% endif %}"
+                 style="width: {{ t.progress_pct }}%"></div>
+          </div>
+          <div class="text-[10px] text-slate-400 mt-0.5">{{ t.book_name }}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </details>
+  {% endfor %}
+</div>
+{% else %}
+<div class="bg-slate-50 rounded-xl p-8 text-center mb-8 border border-slate-200">
+  <span class="text-4xl block mb-3">📚</span>
+  <h3 class="text-lg font-semibold text-slate-900">Henüz aktif konu yok</h3>
+  <p class="text-sm text-slate-600 mt-2 max-w-md mx-auto">
+    Öğretmenin sana kitap atayıp günlük programa görev koyduğunda, çözdüğün her test
+    burada otomatik birikecek. Müfredat ilerlemen ders ve konu bazında görünecek.
+  </p>
+</div>
+{% endif %}
+
+{# ---------- KİŞİSEL / OPERASYONEL HEDEFLER ---------- #}
+{% if roots %}
+<div class="mb-6">
+  <h2 class="text-lg font-semibold text-slate-900 mb-2">⭐ Kişisel Hedeflerim</h2>
+  <p class="text-xs text-slate-500 mb-3">
+    Öğretmenin veya senin elle koyduğun haftalık/günlük ya da serbest hedefler.
+  </p>
+  <div class="bg-slate-50 rounded-xl p-4 border border-slate-200">
     {% for root in roots %}
     {% set node = root %}{% set depth = 0 %}
     {% include 'goals/_tree_node.html' %}
     {% endfor %}
-  {% else %}
-  <div class="text-center py-12">
-    <span class="text-4xl block mb-3">🎯</span>
-    <h3 class="text-lg font-semibold text-slate-900">Henüz hedefiniz yok</h3>
-    <p class="text-sm text-slate-600 mt-2 max-w-md mx-auto">
-      Hedefleriniz öğretmeniniz tarafından tanımlanır. Öğretmeniniz panelinde
-      <b>Öğrenci Detay → 🎯 Hedefler</b> adımıyla size hedef ağacı oluşturabilir
-      veya sınav hedefinizden otomatik türetebilir. Hazır olduğunda buradan
-      görürsünüz.
-    </p>
   </div>
-  {% endif %}
 </div>
+{% endif %}
 
 <div class="mt-6 text-center">
   <a href="{{ back_url }}" class="text-sm text-slate-600 hover:text-slate-900">

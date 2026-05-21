@@ -1,0 +1,979 @@
+{% extends "base.html" %}
+{% block title %}{{ data.identity.name }} — Kurum 360{% endblock %}
+
+{% block content %}
+{% set ident = data.identity %}
+{% set health = data.health %}
+{% set billing = data.billing %}
+{% set usage = data.usage_30d %}
+{% set q = request.query_params %}
+{% set active_tab = q.get('tab', 'health') %}
+
+{# Üst bar — kimlik + butonlar #}
+<div class="mb-5 flex items-start justify-between gap-3 flex-wrap">
+  <div>
+    <a href="/admin/security-monitor/revenue" class="text-sm text-slate-500 hover:text-slate-700">← Ticari Pano</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1 flex items-center gap-3 flex-wrap">
+      🏢 {{ ident.name }}
+      {% if ident.is_active %}
+        <span class="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Aktif</span>
+      {% else %}
+        <span class="text-xs px-2 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">Pasif</span>
+      {% endif %}
+      <span class="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">{{ ident.plan_label }}</span>
+    </h1>
+    <div class="text-sm text-slate-500 mt-1 font-mono">{{ ident.slug }}{% if ident.contact_email %} · {{ ident.contact_email }}{% endif %}</div>
+    {% include "admin/_owner_tags_inline.html" with context %}
+  </div>
+  <div class="flex items-center gap-2">
+    <a href="/admin/institutions/{{ ident.id }}/account-history"
+       class="px-3 py-1.5 rounded border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-sm text-indigo-700 font-medium whitespace-nowrap">
+      📜 Hesap Hareketleri
+    </a>
+    <a href="/admin/institutions/{{ ident.id }}"
+       class="px-3 py-1.5 rounded border border-slate-200 bg-white hover:bg-slate-50 text-sm text-slate-700 font-medium whitespace-nowrap">
+      ⚙ Yönetim
+    </a>
+  </div>
+</div>
+
+{% if q.get('ok') %}<div class="mb-4 p-3 rounded bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">✓ {{ q.get('ok') }}</div>{% endif %}
+{% if q.get('err') %}<div class="mb-4 p-3 rounded bg-rose-50 border border-rose-200 text-sm text-rose-800">⚠ {{ q.get('err') }}</div>{% endif %}
+
+{# Bu sayfada ne yazıyor? #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Kurum 360</b> — bir kurumla ilgili her şeyin tek panoda toplandığı sayfa.
+      Sağlık + kullanım + ödeme + notlar + aksiyonlar.
+    </div>
+    <div>
+      <b>Sağlık skoru</b> — 0-100 arası. 100 = mükemmel, düşerse risk artar.
+      80+ Sağlıklı, 60-79 İzle, 40-59 Dikkat, &lt;40 Kritik.
+    </div>
+    <div>
+      <b>Aylık katkı</b> — bu kurumun aylık ödediği para (paketin fiyatı).
+      Ücretsiz/deneme planlarda 0.
+    </div>
+    <div>
+      <b>CRM notları</b> — müşteriyle ilgili admin notları (telefon görüşmesi
+      özetleri, niyet bilgileri, hatırlatma vb.). Önemli notlar sabitlenebilir.
+    </div>
+    <div>
+      <b>Aksiyon</b> — bu kuruma yapılan/yapılacak temas (arama, e-posta,
+      teklif sunma, onboarding). Takip tarihi konabilir, tamamlanabilir.
+    </div>
+    <div>
+      <b>Açık riskler</b> — şu an "dikkat" gerektiren durumlar (ödeme gecikti,
+      deneme bitiyor, kullanım düşük vb.).
+    </div>
+  </div>
+</details>
+
+{# Üst KPI şeridi — 4 kart #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  {# Sağlık skoru #}
+  <div class="p-4 rounded-lg border bg-{{ health.color }}-50 border-{{ health.color }}-200">
+    <div class="text-xs text-{{ health.color }}-700 uppercase tracking-wide">Sağlık Skoru</div>
+    <div class="flex items-baseline gap-2 mt-1">
+      <span class="text-3xl font-semibold text-{{ health.color }}-900">
+        {% if health.score is not none %}{{ health.score }}{% else %}—{% endif %}
+      </span>
+      <span class="text-sm text-{{ health.color }}-700">/ 100</span>
+    </div>
+    <div class="text-[11px] text-{{ health.color }}-700 mt-1">
+      {{ health.emoji }} {{ health.label }}
+    </div>
+  </div>
+
+  {# Aylık katkı (MRR) #}
+  <div class="p-4 rounded-lg border bg-emerald-50 border-emerald-200">
+    <div class="text-xs text-emerald-700 uppercase tracking-wide">Aylık Katkı</div>
+    <div class="text-3xl font-semibold text-emerald-900 mt-1">
+      {{ "{:,}".format(ident.plan_monthly_price_try) }} ₺
+    </div>
+    <div class="text-[11px] text-emerald-700 mt-1">
+      {% if ident.plan_monthly_price_try > 0 %}{{ ident.plan_label }} · aylık{% else %}ücretsiz / deneme{% endif %}
+    </div>
+  </div>
+
+  {# Aktif kullanıcı #}
+  <div class="p-4 rounded-lg border bg-indigo-50 border-indigo-200">
+    <div class="text-xs text-indigo-700 uppercase tracking-wide">Son 30g Aktif</div>
+    <div class="text-3xl font-semibold text-indigo-900 mt-1">
+      {{ usage.active_teacher_count + usage.active_student_count }}
+    </div>
+    <div class="text-[11px] text-indigo-700 mt-1">
+      {{ usage.active_teacher_count }}/{{ usage.total_teacher_count }} öğretmen · {{ usage.active_student_count }}/{{ usage.total_student_count }} öğrenci
+    </div>
+  </div>
+
+  {# Ödeme durumu #}
+  <div class="p-4 rounded-lg border
+    {% if billing.overdue_count > 0 %}bg-rose-50 border-rose-200
+    {% elif billing.next_due_at %}bg-amber-50 border-amber-200
+    {% else %}bg-slate-50 border-slate-200{% endif %}">
+    <div class="text-xs uppercase tracking-wide
+      {% if billing.overdue_count > 0 %}text-rose-700
+      {% elif billing.next_due_at %}text-amber-700
+      {% else %}text-slate-700{% endif %}">Ödeme Durumu</div>
+    <div class="text-3xl font-semibold mt-1
+      {% if billing.overdue_count > 0 %}text-rose-900
+      {% elif billing.next_due_at %}text-amber-900
+      {% else %}text-slate-900{% endif %}">
+      {% if billing.overdue_count > 0 %}
+        {{ billing.overdue_count }} ⚠
+      {% elif billing.next_due_at %}
+        ✓
+      {% else %}
+        —
+      {% endif %}
+    </div>
+    <div class="text-[11px] mt-1
+      {% if billing.overdue_count > 0 %}text-rose-700
+      {% elif billing.next_due_at %}text-amber-700
+      {% else %}text-slate-600{% endif %}">
+      {% if billing.overdue_count > 0 %}
+        {{ "{:,}".format(billing.overdue_total_try) }} ₺ gecikmiş
+      {% elif billing.next_due_at %}
+        sonraki: {{ billing.next_due_at.strftime('%d.%m.%Y') }}
+      {% else %}
+        ödeme yok / ücretsiz
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# Yatay sekme bar #}
+{% macro tab_btn(slug, label, badge=None) -%}
+  <a href="?tab={{ slug }}"
+     class="px-3 py-2 text-sm font-medium border-b-2
+     {% if active_tab == slug %}border-indigo-500 text-indigo-700
+     {% else %}border-transparent text-slate-600 hover:text-slate-900 hover:border-slate-300{% endif %}">
+    {{ label }}
+    {% if badge is not none and badge > 0 %}
+      <span class="ml-1 inline-flex items-center justify-center min-w-[1.25rem] h-5 px-1 text-[10px] rounded-full
+        {% if active_tab == slug %}bg-indigo-100 text-indigo-800{% else %}bg-slate-100 text-slate-700{% endif %}">
+        {{ badge }}
+      </span>
+    {% endif %}
+  </a>
+{%- endmacro %}
+
+<div class="mb-5 border-b border-slate-200 flex items-center gap-1 flex-wrap">
+  {{ tab_btn('health', '❤️ Sağlık ve Riskler', data.risks|length) }}
+  {{ tab_btn('usage', '📊 Kullanım') }}
+  {{ tab_btn('billing', '💳 Plan & Ödeme') }}
+  {{ tab_btn('notes', '📝 Notlar', data.crm_notes|length) }}
+  {{ tab_btn('actions', '🎯 Aksiyonlar', data.crm_actions|length) }}
+  {{ tab_btn('offers', '🎁 Teklifler', offers|length) }}
+</div>
+
+{# ---------------- SEKME: SAĞLIK & RİSKLER ---------------- #}
+{% if active_tab == 'health' %}
+
+{# Sağlık Skoru 2.0 — kullanım bazlı (Sprint F.1) #}
+{% if health_v2 %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden mb-4">
+  <div class="px-4 py-3 border-b border-slate-200 flex items-center justify-between flex-wrap gap-2">
+    <div>
+      <h2 class="text-sm font-semibold text-slate-900">Sağlık Skoru 2.0 — Kullanım Bazlı</h2>
+      <div class="text-xs text-slate-500">
+        6 bileşenden ağırlıklı hesaplama. Yüksek = sağlıklı.
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <div class="text-right">
+        <div class="text-3xl font-bold text-{{ health_v2.band_color }}-700 leading-none">
+          {{ health_v2.score }}
+        </div>
+        <div class="text-[10px] text-slate-500 mt-0.5">/ 100</div>
+      </div>
+      <div class="px-3 py-1.5 rounded-lg bg-{{ health_v2.band_color }}-100 text-{{ health_v2.band_color }}-800 font-semibold text-sm">
+        {{ health_v2.band_emoji }} {{ health_v2.band_label }}
+      </div>
+    </div>
+  </div>
+
+  {# Erken uyarı tetikleyiciler #}
+  {% if health_triggers %}
+  <div class="px-4 py-3 bg-rose-50 border-b border-rose-200">
+    <div class="text-xs font-semibold text-rose-900 uppercase mb-2">⚠️ Erken Uyarı</div>
+    <ul class="space-y-1.5">
+      {% for t in health_triggers %}
+      <li class="flex items-start gap-2 text-sm">
+        <span class="flex-shrink-0 text-base">
+          {% if t.severity == 'critical' %}🔴{% elif t.severity == 'warning' %}🟠{% else %}🔵{% endif %}
+        </span>
+        <div>
+          <b class="text-rose-900">{{ t.title }}</b>
+          <div class="text-xs text-rose-700">{{ t.detail }}</div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Component breakdown #}
+  <div class="px-4 py-3">
+    <div class="text-xs text-slate-500 mb-2">Skor bileşenleri:</div>
+    <div class="space-y-2">
+      {% for c in health_v2.components %}
+      <div>
+        <div class="flex items-center justify-between text-xs mb-0.5">
+          <span class="text-slate-700">{{ c.label }}</span>
+          <span class="text-slate-500">
+            <span class="font-mono">%{{ c.value_pct }}</span>
+            <span class="text-slate-400">·</span>
+            <span class="text-slate-400">ağırlık %{{ c.weight_pct }}</span>
+            <span class="text-slate-400">→</span>
+            <b class="text-slate-700 font-mono">+{{ c.contribution }} puan</b>
+          </span>
+        </div>
+        <div class="h-1.5 bg-slate-100 rounded overflow-hidden">
+          <div class="h-full
+            {% if c.value_pct >= 80 %}bg-emerald-500
+            {% elif c.value_pct >= 60 %}bg-lime-500
+            {% elif c.value_pct >= 40 %}bg-amber-500
+            {% elif c.value_pct >= 20 %}bg-orange-500
+            {% else %}bg-rose-500{% endif %}"
+            style="width: {{ c.value_pct }}%"></div>
+        </div>
+        {% if c.note %}
+        <div class="text-[10px] text-slate-400 mt-0.5">{{ c.note }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {# 14-day score history sparkline #}
+  {% if health_history and health_history|length >= 2 %}
+  <div class="px-4 py-3 border-t border-slate-100 bg-slate-50">
+    <div class="text-xs text-slate-500 mb-2">Son {{ health_history|length }} gün skor seyri:</div>
+    <div class="flex items-end gap-1 h-12">
+      {% for s in health_history %}
+      <div class="flex-1 flex flex-col items-center justify-end gap-0.5"
+           title="{{ s.snapshot_date }}: {{ s.score }}/100 ({{ s.band }})">
+        <div class="w-full rounded-t
+          {% if s.score >= 80 %}bg-emerald-500
+          {% elif s.score >= 60 %}bg-lime-500
+          {% elif s.score >= 40 %}bg-amber-500
+          {% elif s.score >= 20 %}bg-orange-500
+          {% else %}bg-rose-500{% endif %}"
+          style="height: {{ s.score }}%"></div>
+        <div class="text-[9px] text-slate-400 font-mono">{{ s.snapshot_date.strftime('%d') }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Açık Riskler ({{ data.risks|length }})</h2>
+    <div class="text-xs text-slate-500">Bu kuruma şu an dikkat gerektiren durumlar.</div>
+  </div>
+  {% if not data.risks %}
+    <div class="px-4 py-10 text-center text-sm text-emerald-700">🟢 Açık risk yok — temiz.</div>
+  {% else %}
+    <ul class="divide-y divide-slate-100">
+      {% for r in data.risks %}
+      {% set color = 'rose' if r.severity == 'critical' else 'amber' if r.severity == 'risk' else 'slate' %}
+      <li class="px-4 py-3 flex items-start gap-3">
+        <div class="flex-shrink-0 w-2 self-stretch rounded bg-{{ color }}-500"></div>
+        <div class="flex-1">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="text-sm font-medium text-slate-900">{{ r.title }}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-{{ color }}-100 text-{{ color }}-800 uppercase font-semibold">
+              {{ r.severity }}
+            </span>
+            <span class="text-[10px] text-slate-400 font-mono">{{ r.kind }}</span>
+          </div>
+          {% if r.message %}
+          <div class="text-xs text-slate-600 mt-0.5">{{ r.message }}</div>
+          {% endif %}
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</div>
+{% endif %}
+
+{# ---------------- SEKME: KULLANIM ---------------- #}
+{% if active_tab == 'usage' %}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Son 30 Gün Kullanım</h2>
+    <div class="text-xs text-slate-500">Kurumun gerçek aktivitesi — kim kullanıyor, ne kadar.</div>
+  </div>
+  <div class="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
+    {# Aktif öğretmen #}
+    <div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200">
+      <div class="text-[10px] uppercase text-indigo-700">Aktif Öğretmen</div>
+      <div class="text-2xl font-semibold text-indigo-900 mt-1">{{ usage.active_teacher_count }}</div>
+      <div class="text-[11px] text-indigo-700">
+        {{ usage.total_teacher_count }} kayıtlı
+        {% if usage.teacher_active_pct is not none %}· %{{ usage.teacher_active_pct }}{% endif %}
+      </div>
+    </div>
+    {# Aktif öğrenci #}
+    <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+      <div class="text-[10px] uppercase text-emerald-700">Aktif Öğrenci</div>
+      <div class="text-2xl font-semibold text-emerald-900 mt-1">{{ usage.active_student_count }}</div>
+      <div class="text-[11px] text-emerald-700">
+        {{ usage.total_student_count }} kayıtlı
+        {% if usage.student_active_pct is not none %}· %{{ usage.student_active_pct }}{% endif %}
+      </div>
+    </div>
+    {# Bildirim gönderildi #}
+    <div class="p-3 rounded-lg bg-sky-50 border border-sky-200">
+      <div class="text-[10px] uppercase text-sky-700">Bildirim — Gitti</div>
+      <div class="text-2xl font-semibold text-sky-900 mt-1">{{ usage.notification_sent }}</div>
+      <div class="text-[11px] text-sky-700">son 30 günde</div>
+    </div>
+    {# Bildirim hata #}
+    <div class="p-3 rounded-lg
+      {% if usage.notification_failed > 0 %}bg-rose-50 border border-rose-200
+      {% else %}bg-slate-50 border border-slate-200{% endif %}">
+      <div class="text-[10px] uppercase
+        {% if usage.notification_failed > 0 %}text-rose-700{% else %}text-slate-700{% endif %}">Bildirim — Hata</div>
+      <div class="text-2xl font-semibold mt-1
+        {% if usage.notification_failed > 0 %}text-rose-900{% else %}text-slate-900{% endif %}">
+        {{ usage.notification_failed }}
+      </div>
+      <div class="text-[11px]
+        {% if usage.notification_failed > 0 %}text-rose-700{% else %}text-slate-600{% endif %}">
+        son 30 günde
+      </div>
+    </div>
+  </div>
+  <div class="px-4 py-3 border-t border-slate-200 text-xs text-slate-500">
+    💡 Bu metrikler kullanıcının son giriş tarihi temelinde hesaplanıyor.
+    Soru çözüm trendi ve içerik kullanımı Sprint B sonrası eklenecek
+    (mevcut <code class="text-[10px]">study_sessions: 0</code>).
+  </div>
+</div>
+{% endif %}
+
+{# ---------------- SEKME: PLAN & ÖDEME ---------------- #}
+{% if active_tab == 'billing' %}
+<div class="space-y-4">
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <h2 class="text-sm font-semibold text-slate-900 mb-3">Mevcut Plan</h2>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+      <div>
+        <div class="text-xs text-slate-500">Plan</div>
+        <div class="font-medium text-slate-900">{{ ident.plan_label }}</div>
+        <div class="text-[11px] text-slate-400 font-mono">{{ ident.plan }}</div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Aylık fiyat</div>
+        <div class="font-medium text-slate-900">
+          {% if ident.plan_monthly_price_try > 0 %}{{ "{:,}".format(ident.plan_monthly_price_try) }} ₺{% else %}<span class="text-slate-400">—</span>{% endif %}
+        </div>
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Abonelik tipi</div>
+        <div class="font-medium text-slate-900">{{ ident.subscription_kind }}</div>
+      </div>
+      {% if ident.trial_ends_at %}
+      <div>
+        <div class="text-xs text-slate-500">Deneme bitiş</div>
+        <div class="font-medium text-amber-700">{{ ident.trial_ends_at.strftime('%d.%m.%Y') }}</div>
+      </div>
+      {% endif %}
+      {% if ident.post_trial_plan %}
+      <div>
+        <div class="text-xs text-slate-500">Sonrası plan</div>
+        <div class="font-medium text-slate-900">{{ ident.post_trial_plan }}</div>
+      </div>
+      {% endif %}
+      {% if ident.subscription_period_end %}
+      <div>
+        <div class="text-xs text-slate-500">Akademik yıl bitiş</div>
+        <div class="font-medium text-slate-900">{{ ident.subscription_period_end.strftime('%d.%m.%Y') }}</div>
+      </div>
+      {% endif %}
+      {% if ident.performance_guarantee %}
+      <div>
+        <div class="text-xs text-slate-500">Garanti</div>
+        <div class="font-medium text-emerald-700">60 gün performans aktif</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <h2 class="text-sm font-semibold text-slate-900 mb-3">Fatura Özeti</h2>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+      <div>
+        <div class="text-xs text-slate-500">Son ödeme</div>
+        {% if billing.last_paid_at %}
+          <div class="font-medium text-slate-900">{{ billing.last_paid_at.strftime('%d.%m.%Y') }}</div>
+          <div class="text-[11px] text-emerald-700">{{ "{:,}".format(billing.last_paid_amount_try) }} ₺</div>
+        {% else %}
+          <div class="text-slate-400">—</div>
+        {% endif %}
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Sonraki vade</div>
+        {% if billing.next_due_at %}
+          <div class="font-medium text-amber-700">{{ billing.next_due_at.strftime('%d.%m.%Y') }}</div>
+          <div class="text-[11px] text-slate-500">{{ "{:,}".format(billing.next_due_amount_try) }} ₺</div>
+        {% else %}
+          <div class="text-slate-400">yok</div>
+        {% endif %}
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Gecikmiş</div>
+        {% if billing.overdue_count > 0 %}
+          <div class="font-medium text-rose-700">{{ billing.overdue_count }} adet</div>
+          <div class="text-[11px] text-rose-600">{{ "{:,}".format(billing.overdue_total_try) }} ₺</div>
+        {% else %}
+          <div class="text-emerald-700">yok</div>
+        {% endif %}
+      </div>
+      <div>
+        <div class="text-xs text-slate-500">Yaşam boyu ödenmiş</div>
+        <div class="font-medium text-slate-900">{{ "{:,}".format(billing.lifetime_paid_try) }} ₺</div>
+      </div>
+    </div>
+    <div class="mt-3 text-xs">
+      <a href="/admin/institutions/{{ ident.id }}/account-history"
+         class="text-indigo-600 hover:text-indigo-800">
+        📜 Detaylı hesap hareketleri →
+      </a>
+    </div>
+  </div>
+
+  {# Açık (PENDING / OVERDUE) faturalar — manuel müdahale #}
+  {% if data.billing.overdue_count > 0 or data.billing.next_due_at %}
+  <div class="bg-white border border-amber-200 rounded-lg overflow-hidden">
+    <div class="px-4 py-3 border-b border-amber-200 bg-amber-50/40">
+      <h2 class="text-sm font-semibold text-amber-900">Açık Faturalar — Manuel Müdahale</h2>
+      <div class="text-xs text-amber-700">Vadesi gelmemiş veya gecikmiş faturalar; aşağıda her birine özel aksiyon alabilirsin.</div>
+    </div>
+    <ul class="divide-y divide-amber-100">
+      {% for inv in data.open_invoices or [] %}
+      <li class="px-4 py-3">
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium text-slate-900">
+              {{ "{:,}".format(inv.amount_try) }} ₺
+              <span class="ml-2 text-[11px] px-1.5 py-0.5 rounded
+                {% if inv.status.value == 'overdue' %}bg-rose-100 text-rose-800
+                {% else %}bg-slate-100 text-slate-700{% endif %} font-semibold">
+                {{ inv.status.value }}
+              </span>
+            </div>
+            <div class="text-xs text-slate-600 mt-0.5">
+              Vade: {{ inv.due_at|dt_dual }}
+              {% if inv.last_reminder_kind %}
+                · son hatırlatma: <code class="text-[10px]">{{ inv.last_reminder_kind }}</code> ({{ inv.last_reminder_at|dt_dual }})
+              {% endif %}
+            </div>
+          </div>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <form method="post" action="/admin/invoices/{{ inv.id }}/send-reminder" class="inline">
+              <input type="hidden" name="kind" value="manual">
+              <button class="px-2 py-1 text-xs rounded border border-sky-300 bg-sky-50 hover:bg-sky-100 text-sky-700"
+                      title="Manuel hatırlatma e-postası">
+                ✉️ Hatırlat
+              </button>
+            </form>
+            <details class="inline-block">
+              <summary class="px-2 py-1 text-xs rounded border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 cursor-pointer list-none">
+                ⏰ Ötele
+              </summary>
+              <form method="post" action="/admin/invoices/{{ inv.id }}/postpone"
+                    class="absolute mt-1 bg-white border border-slate-300 rounded shadow-lg p-2 z-10 w-64">
+                <label class="text-[11px] text-slate-600">Kaç gün?</label>
+                <input name="days" type="number" min="1" max="90" value="7" required
+                       class="w-full px-2 py-1 border border-slate-300 rounded text-xs mb-1">
+                <label class="text-[11px] text-slate-600">Sebep (opsiyonel)</label>
+                <input name="note" type="text" maxlength="200"
+                       placeholder="Örn: yarıyıl tatili"
+                       class="w-full px-2 py-1 border border-slate-300 rounded text-xs mb-2">
+                <button class="w-full px-2 py-1 bg-amber-600 hover:bg-amber-700 text-white text-xs rounded">
+                  Vadeyi ötele
+                </button>
+              </form>
+            </details>
+            <details class="inline-block">
+              <summary class="px-2 py-1 text-xs rounded border border-emerald-300 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 cursor-pointer list-none">
+                ✓ Manuel öden
+              </summary>
+              <form method="post" action="/admin/invoices/{{ inv.id }}/mark-paid"
+                    class="absolute mt-1 bg-white border border-slate-300 rounded shadow-lg p-2 z-10 w-64">
+                <label class="text-[11px] text-slate-600">Ödeme yöntemi</label>
+                <select name="method" class="w-full px-2 py-1 border border-slate-300 rounded text-xs mb-1 bg-white">
+                  <option value="bank_transfer">EFT / Havale</option>
+                  <option value="card">Kredi kartı</option>
+                  <option value="manual" selected>Manuel kayıt</option>
+                </select>
+                <label class="text-[11px] text-slate-600">Not (opsiyonel)</label>
+                <input name="note" type="text" maxlength="200"
+                       placeholder="Örn: 14 Mayıs Garanti Bankası havale"
+                       class="w-full px-2 py-1 border border-slate-300 rounded text-xs mb-2">
+                <button class="w-full px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded">
+                  Ödendi olarak işaretle
+                </button>
+              </form>
+            </details>
+            <details class="inline-block">
+              <summary class="px-2 py-1 text-xs rounded border border-slate-300 bg-white hover:bg-slate-50 text-slate-600 cursor-pointer list-none">
+                🗑 İptal
+              </summary>
+              <form method="post" action="/admin/invoices/{{ inv.id }}/cancel"
+                    class="absolute mt-1 bg-white border border-slate-300 rounded shadow-lg p-2 z-10 w-64"
+                    onsubmit="return confirm('Bu faturayı iptal etmek istediğine emin misin?');">
+                <label class="text-[11px] text-slate-600">İptal sebebi</label>
+                <input name="note" type="text" maxlength="200" required
+                       placeholder="Örn: çift kayıt"
+                       class="w-full px-2 py-1 border border-slate-300 rounded text-xs mb-2">
+                <button class="w-full px-2 py-1 bg-slate-600 hover:bg-slate-700 text-white text-xs rounded">
+                  Faturayı iptal et
+                </button>
+              </form>
+            </details>
+          </div>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {# Plan değişiklik timeline'ı (Faz B2) #}
+  <div class="bg-white border border-slate-200 rounded-lg p-4">
+    <h2 class="text-sm font-semibold text-slate-900 mb-3">Plan Değişiklik Geçmişi</h2>
+    {% include "admin/_plan_history_timeline.html" with context %}
+  </div>
+
+  {# Genişletilmiş iletişim metadata (Faz B3) #}
+  {% include "admin/_owner_contact_card.html" with context %}
+</div>
+{% endif %}
+
+{# ---------------- SEKME: NOTLAR ---------------- #}
+{% if active_tab == 'notes' %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  {# Sol: not ekleme formu #}
+  <div class="md:col-span-1">
+    <div class="bg-white border border-slate-200 rounded-lg p-4 sticky top-4">
+      <h2 class="text-sm font-semibold text-slate-900 mb-2">Yeni Not</h2>
+      <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/crm/notes/add">
+        <textarea name="content" rows="5" maxlength="5000" required
+                  placeholder="Görüşme özeti, hatırlatma, niyet bilgisi..."
+                  class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm mb-2"></textarea>
+        <label class="flex items-center gap-1.5 text-xs text-slate-600 mb-2">
+          <input type="checkbox" name="pinned" value="1">
+          📌 Sabitle (en üstte kalsın)
+        </label>
+        <button class="w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium">
+          Not ekle
+        </button>
+      </form>
+    </div>
+  </div>
+  {# Sağ: not listesi #}
+  <div class="md:col-span-2">
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200">
+        <h2 class="text-sm font-semibold text-slate-900">Notlar ({{ data.crm_notes|length }})</h2>
+      </div>
+      {% if not data.crm_notes %}
+        <div class="px-4 py-10 text-center text-sm text-slate-500">Bu kurum için henüz not yok.</div>
+      {% else %}
+      <ul class="divide-y divide-slate-100">
+        {% for n in data.crm_notes %}
+        <li class="px-4 py-3 {% if n.pinned %}bg-amber-50/40{% endif %}">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              {% if n.pinned %}<span class="text-[10px] text-amber-700 font-semibold">📌 SABİT</span>{% endif %}
+              <div class="text-sm text-slate-800 mt-0.5 whitespace-pre-wrap break-words">{{ n.content }}</div>
+              <div class="text-[11px] text-slate-500 mt-1.5">
+                {{ n.created_at|dt_dual }}
+                {% if n.created_by %} · {{ n.created_by.full_name }}{% endif %}
+              </div>
+            </div>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/crm/notes/{{ n.id }}/pin">
+                <button class="text-xs text-slate-500 hover:text-amber-700"
+                        title="{% if n.pinned %}Sabitlemeyi kaldır{% else %}Sabitle{% endif %}">
+                  {% if n.pinned %}📌{% else %}📍{% endif %}
+                </button>
+              </form>
+              <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/crm/notes/{{ n.id }}/delete"
+                    onsubmit="return confirm('Notu silmek istiyor musun?');">
+                <button class="text-xs text-slate-400 hover:text-rose-700" title="Sil">🗑</button>
+              </form>
+            </div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ---------------- SEKME: AKSİYONLAR ---------------- #}
+{% if active_tab == 'actions' %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  {# Sol: aksiyon ekleme formu #}
+  <div class="md:col-span-1">
+    <div class="bg-white border border-slate-200 rounded-lg p-4 sticky top-4">
+      <div class="flex items-center justify-between mb-2">
+        <h2 class="text-sm font-semibold text-slate-900">Yeni Aksiyon</h2>
+        <a href="/admin/revenue/action-templates" target="_blank"
+           class="text-[11px] text-indigo-700 hover:underline">📋 Şablonları yönet</a>
+      </div>
+
+      {# Şablondan doldur (Faz B4) #}
+      {% if action_templates %}
+      <div class="mb-3 p-2 bg-indigo-50/40 border border-indigo-200 rounded">
+        <label class="text-[11px] text-indigo-900 font-semibold">📋 Hazır şablondan doldur</label>
+        <select id="action-tpl-picker-inst"
+                data-owner-type="institution" data-owner-id="{{ ident.id }}"
+                onchange="window._fillActionTemplate(this)"
+                class="w-full mt-1 px-2 py-1.5 border border-indigo-200 rounded text-sm bg-white">
+          <option value="">— Şablon seç (otomatik dolar) —</option>
+          {% for t in action_templates %}
+          <option value="{{ t.id }}">{{ crm_kind_icons.get(t.kind) }} {{ t.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
+
+      <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/crm/actions/add" class="space-y-2">
+        <div>
+          <label class="text-xs text-slate-600">Tür</label>
+          <select name="kind" required class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm bg-white">
+            {% for k in crm_kinds %}
+              <option value="{{ k.value }}">{{ crm_kind_icons.get(k) }} {{ crm_kind_labels.get(k) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Özet</label>
+          <input type="text" name="summary" maxlength="500" required
+                 placeholder="Kısa açıklama..."
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Detay (opsiyonel)</label>
+          <textarea name="notes" rows="3"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm"></textarea>
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Sonuç</label>
+          <select name="result" class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm bg-white">
+            {% for r in crm_results %}
+              <option value="{{ r.value }}" {% if r.value == 'pending' %}selected{% endif %}>
+                {{ crm_result_labels.get(r) }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Takip tarihi (opsiyonel)</label>
+          <input type="date" name="follow_up_at"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <button class="w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium">
+          Aksiyon ekle
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {# Sağ: aksiyon listesi #}
+  <div class="md:col-span-2">
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200">
+        <h2 class="text-sm font-semibold text-slate-900">Aksiyonlar ({{ data.crm_actions|length }})</h2>
+        <div class="text-xs text-slate-500">Bekleyenler ve son aksiyonlar üstte.</div>
+      </div>
+      {% if not data.crm_actions %}
+        <div class="px-4 py-10 text-center text-sm text-slate-500">Henüz aksiyon yok.</div>
+      {% else %}
+      <ul class="divide-y divide-slate-100">
+        {% for a in data.crm_actions %}
+        {% set rcolor = crm_result_colors.get(a.result, 'slate') %}
+        <li class="px-4 py-3 {% if not a.completed_at %}bg-indigo-50/30{% endif %}">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-lg">{{ crm_kind_icons.get(a.kind) }}</span>
+                <span class="text-sm font-medium text-slate-900">{{ crm_kind_labels.get(a.kind) }}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-{{ rcolor }}-100 text-{{ rcolor }}-800 font-semibold">
+                  {{ crm_result_labels.get(a.result) }}
+                </span>
+              </div>
+              <div class="text-sm text-slate-800 mt-1">{{ a.summary }}</div>
+              {% if a.notes %}
+              <div class="text-xs text-slate-600 mt-1 whitespace-pre-wrap break-words">{{ a.notes }}</div>
+              {% endif %}
+              <div class="text-[11px] text-slate-500 mt-1.5">
+                {{ a.created_at|dt_dual }}
+                {% if a.created_by %} · {{ a.created_by.full_name }}{% endif %}
+                {% if a.follow_up_at %}
+                  · 🔔 takip: <b>{{ a.follow_up_at.strftime('%d.%m.%Y') }}</b>
+                {% endif %}
+                {% if a.completed_at %}
+                  · ✓ tamamlandı {{ a.completed_at|dt_dual }}
+                {% endif %}
+              </div>
+
+              {% if not a.completed_at %}
+              {# Tamamla formu (inline) #}
+              <details class="mt-2">
+                <summary class="cursor-pointer text-xs text-emerald-700 hover:text-emerald-900">Tamamla / sonuç gir</summary>
+                <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/crm/actions/{{ a.id }}/complete"
+                      class="mt-2 flex items-center gap-2 flex-wrap">
+                  <select name="result" class="px-2 py-1 border border-slate-300 rounded text-xs bg-white">
+                    {% for r in crm_results %}
+                      <option value="{{ r.value }}">{{ crm_result_labels.get(r) }}</option>
+                    {% endfor %}
+                  </select>
+                  <input type="text" name="notes" maxlength="500"
+                         placeholder="Sonuç notu (opsiyonel)"
+                         class="px-2 py-1 border border-slate-300 rounded text-xs flex-1 min-w-[200px]">
+                  <button class="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded">
+                    Tamamla
+                  </button>
+                </form>
+              </details>
+              {% endif %}
+            </div>
+            <form method="post"
+                  action="/admin/revenue/institutions/{{ ident.id }}/crm/actions/{{ a.id }}/delete"
+                  onsubmit="return confirm('Aksiyonu silmek istiyor musun?');"
+                  class="flex-shrink-0">
+              <button class="text-xs text-slate-400 hover:text-rose-700" title="Sil">🗑</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# ---------------- SEKME: TEKLİFLER ---------------- #}
+{% if active_tab == 'offers' %}
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  {# Sol: yeni teklif formu #}
+  <div class="md:col-span-1">
+    <div class="bg-white border border-slate-200 rounded-lg p-4 sticky top-4">
+      <h2 class="text-sm font-semibold text-slate-900 mb-2">Yeni Teklif</h2>
+      <p class="text-xs text-slate-500 mb-3">
+        Kuruma özel indirim, deneme uzatma veya plan yükseltme tekliflerini buradan oluştur.
+        Gönderdiğinde public link e-posta ile iletilir.
+      </p>
+      <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/offers/create" class="space-y-2">
+        <div>
+          <label class="text-xs text-slate-600">Tür</label>
+          <select name="kind" required class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm bg-white">
+            {% for k in offer_kinds %}
+              <option value="{{ k.value }}">{{ offer_kind_icons.get(k) }} {{ offer_kind_labels.get(k) }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Başlık (kuruma görünür)</label>
+          <input type="text" name="title" required maxlength="255"
+                 placeholder="ör. 3 ay %20 indirim"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs text-slate-600">Değer</label>
+            <input type="number" name="value" step="0.01" min="0"
+                   placeholder="20"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          </div>
+          <div>
+            <label class="text-xs text-slate-600">Süre (ay)</label>
+            <input type="number" name="duration_months" min="1" max="999"
+                   placeholder="3"
+                   class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+          </div>
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Yeni plan (PLAN_UPGRADE için)</label>
+          <input type="text" name="new_plan" maxlength="32"
+                 placeholder="kurumsal_max"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm font-mono">
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Kuruma mesaj</label>
+          <textarea name="public_message" rows="3"
+                    placeholder="Size özel hazırladığımız teklif..."
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm"></textarea>
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Admin notu (kuruma görünmez)</label>
+          <textarea name="admin_note" rows="2"
+                    class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm"></textarea>
+        </div>
+        <div>
+          <label class="text-xs text-slate-600">Geçerlilik (gün)</label>
+          <input type="number" name="expires_in_days" min="0" max="365" value="14"
+                 class="w-full px-2 py-1.5 border border-slate-300 rounded text-sm">
+        </div>
+        <label class="flex items-center gap-2 text-xs text-slate-700 pt-1">
+          <input type="checkbox" name="send_now" value="1" class="rounded">
+          Oluşturduktan sonra hemen gönder (e-posta)
+        </label>
+        <button class="w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-sm rounded font-medium">
+          Teklifi kaydet
+        </button>
+      </form>
+    </div>
+  </div>
+
+  {# Sağ: teklif listesi #}
+  <div class="md:col-span-2">
+    <div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+      <div class="px-4 py-3 border-b border-slate-200">
+        <h2 class="text-sm font-semibold text-slate-900">Teklifler ({{ offers|length }})</h2>
+        <div class="text-xs text-slate-500">En yeniden eskiye doğru.</div>
+      </div>
+      {% if not offers %}
+        <div class="px-4 py-10 text-center text-sm text-slate-500">Henüz teklif yok.</div>
+      {% else %}
+      <ul class="divide-y divide-slate-100">
+        {% for o in offers %}
+        {% set scolor = offer_status_colors.get(o.status, 'slate') %}
+        {% set summary = offer_summaries.get(o.id) %}
+        <li class="px-4 py-3 {% if o.status.value == 'sent' %}bg-amber-50/30{% endif %}">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center gap-2 flex-wrap">
+                <span class="text-lg">{{ offer_kind_icons.get(o.kind) }}</span>
+                <span class="text-sm font-medium text-slate-900">{{ o.title }}</span>
+                <span class="text-[10px] px-2 py-0.5 rounded bg-{{ scolor }}-100 text-{{ scolor }}-800 font-semibold">
+                  {{ offer_status_labels.get(o.status) }}
+                </span>
+              </div>
+              <div class="text-xs text-slate-600 mt-1">
+                {{ offer_kind_labels.get(o.kind) }}
+                {% if summary and summary.summary and summary.summary != o.title %}
+                  · {{ summary.summary }}
+                {% endif %}
+              </div>
+              {% if o.public_message %}
+              <div class="text-xs text-slate-500 mt-1 italic whitespace-pre-wrap break-words">"{{ o.public_message }}"</div>
+              {% endif %}
+              {% if o.admin_note %}
+              <div class="text-[11px] text-amber-700 mt-1 bg-amber-50 border border-amber-200 rounded px-2 py-1">
+                <b>Not (iç):</b> {{ o.admin_note }}
+              </div>
+              {% endif %}
+              <div class="text-[11px] text-slate-500 mt-1.5 flex items-center gap-3 flex-wrap">
+                <span>Oluşturuldu: {{ o.created_at|dt_dual }}</span>
+                {% if o.sent_at %}<span>· 📤 Gönderildi: {{ o.sent_at|dt_dual }}</span>{% endif %}
+                {% if o.responded_at %}<span>· ✉️ Cevap: {{ o.responded_at|dt_dual }}</span>{% endif %}
+                {% if o.expires_at %}<span>· ⏳ Son: {{ o.expires_at.strftime('%d.%m.%Y') }}</span>{% endif %}
+              </div>
+              {% if o.decline_reason %}
+              <div class="text-xs text-rose-700 mt-1.5 bg-rose-50 border border-rose-200 rounded px-2 py-1">
+                <b>Ret nedeni:</b> {{ o.decline_reason }}
+              </div>
+              {% endif %}
+
+              {# Aksiyonlar #}
+              <div class="flex items-center gap-2 mt-2 flex-wrap">
+                {% if o.status.value == 'draft' %}
+                  <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/offers/{{ o.id }}/send"
+                        onsubmit="return confirm('Bu teklifi kuruma e-posta ile göndermek istiyor musun?');">
+                    <button class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs rounded font-medium">
+                      📤 Gönder
+                    </button>
+                  </form>
+                  <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/offers/{{ o.id }}/cancel"
+                        onsubmit="return confirm('Taslak teklifi iptal etmek istiyor musun?');">
+                    <button class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs rounded">
+                      İptal
+                    </button>
+                  </form>
+                {% elif o.status.value == 'sent' %}
+                  <a href="/offers/{{ o.token }}" target="_blank"
+                     class="px-2.5 py-1 bg-white border border-indigo-300 hover:bg-indigo-50 text-indigo-700 text-xs rounded font-medium">
+                    🔗 Public link
+                  </a>
+                  <form method="post" action="/admin/revenue/institutions/{{ ident.id }}/offers/{{ o.id }}/cancel"
+                        onsubmit="return confirm('Gönderilen teklifi iptal etmek istiyor musun?');">
+                    <button class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-rose-50 hover:border-rose-300 text-slate-700 hover:text-rose-700 text-xs rounded">
+                      Geri çek
+                    </button>
+                  </form>
+                {% elif o.status.value in ('accepted', 'declined', 'expired') %}
+                  <a href="/offers/{{ o.token }}" target="_blank"
+                     class="px-2.5 py-1 bg-white border border-slate-300 hover:bg-slate-50 text-slate-600 text-xs rounded">
+                    🔗 Public link
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+            <div class="flex-shrink-0 text-[10px] font-mono text-slate-400">#{{ o.id }}</div>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{# Aksiyon şablonu prefill (Faz B4) #}
+<script>
+window._fillActionTemplate = async function(sel) {
+  const tplId = sel.value;
+  if (!tplId) return;
+  const ownerType = sel.dataset.ownerType;
+  const ownerId = sel.dataset.ownerId;
+  try {
+    const resp = await fetch(
+      `/admin/revenue/action-templates/${tplId}/render?owner_type=${ownerType}&owner_id=${ownerId}`,
+      { credentials: 'same-origin' }
+    );
+    if (!resp.ok) { sel.value = ''; return; }
+    const data = await resp.json();
+    if (!data.ok) { sel.value = ''; return; }
+    const form = sel.closest('.bg-white').querySelector('form');
+    if (!form) return;
+    const kindSel = form.querySelector('select[name="kind"]');
+    const summary = form.querySelector('input[name="summary"]');
+    const notes = form.querySelector('textarea[name="notes"]');
+    if (kindSel && data.kind) {
+      for (const opt of kindSel.options) {
+        if (opt.value === data.kind) { kindSel.value = data.kind; break; }
+      }
+    }
+    if (summary) summary.value = data.subject || data.name || '';
+    if (notes) notes.value = data.body || '';
+    // Pickeri sıfırla ki ikinci kez seçilebilsin
+    sel.value = '';
+  } catch (e) {
+    console.error('Şablon render hata:', e);
+    sel.value = '';
+  }
+};
+</script>
+
+{% endblock %}

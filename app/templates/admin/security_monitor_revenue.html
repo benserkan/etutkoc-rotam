@@ -1,0 +1,545 @@
+{% extends "base.html" %}
+{% block title %}Ticari Pano — Admin{% endblock %}
+
+{% block content %}
+<div class="mb-6 flex items-start justify-between gap-3 flex-wrap">
+  <div>
+    <a href="/admin/security-monitor" class="text-sm text-slate-500 hover:text-slate-700">← Güvenlik Kamerası</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">💰 Ticari Pano</h1>
+    <p class="text-sm text-slate-500 mt-1">
+      Aylık gelir, plan dağılımı, denemesi bitenler, son 30 gündeki plan hareketleri ve terk riski olan kurumlar — bir bakışta.
+    </p>
+  </div>
+  <div class="flex items-center gap-2 flex-wrap">
+    <a href="/admin/revenue/forecast"
+       class="px-3 py-2 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-sm text-emerald-700 font-medium whitespace-nowrap"
+       title="30/60/90 gün MRR projeksiyonu + senaryo karşılaştırma">
+      🔮 Tahmin
+    </a>
+    <a href="/admin/revenue/campaigns"
+       class="px-3 py-2 rounded-lg border border-purple-200 bg-purple-50 hover:bg-purple-100 text-sm text-purple-700 font-medium whitespace-nowrap"
+       title="Toplu kampanya — segment + teklif + A/B varyant">
+      📣 Kampanyalar
+    </a>
+    <a href="/admin/revenue/cohort"
+       class="px-3 py-2 rounded-lg border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 text-sm text-indigo-700 font-medium whitespace-nowrap"
+       title="Aylık kayıt cohort'u + LTV tahmini">
+      📊 Kohort & LTV
+    </a>
+    <a href="/admin/revenue/action-center"
+       class="px-3 py-2 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-sm text-rose-700 font-medium whitespace-nowrap"
+       title="Bugünün arama listesi — kritik kurumlar + önerilen aksiyonlar">
+      🎯 Aksiyon Merkezi
+    </a>
+  </div>
+</div>
+
+{# "Bu sayfada ne yazıyor?" — sade açıklama #}
+<details class="mb-5 bg-blue-50 border border-blue-200 rounded-lg">
+  <summary class="cursor-pointer px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100">
+    💡 Bu sayfada ne yazıyor? (terim açıklamaları)
+  </summary>
+  <div class="px-4 py-3 text-sm text-blue-900 space-y-2 border-t border-blue-200">
+    <div>
+      <b>Aylık Gelir</b> — ödeyen kurumların aylık ödediği toplam para. Her ay tekrarlayan,
+      garantili gelir. (Teknik adı: <code class="text-xs">MRR — Monthly Recurring Revenue</code>)
+    </div>
+    <div>
+      <b>Plan</b> — bir kurumun hangi paketi kullandığı (Free, Trial, Standart, Pro vb.).
+      Her planın aylık fiyatı farklı.
+    </div>
+    <div>
+      <b>Deneme (Trial)</b> — kurumun bedava deneme süresi. Genelde 7-30 gün. Bittiğinde
+      ya ödemeye geçer ya da hesabı pasifleşir.
+    </div>
+    <div>
+      <b>Yükseltme / Alçaltma</b> — kurum daha pahalı pakete geçtiyse yükseltme, daha
+      ucuz / bedava pakete döndüyse alçaltma. Yükseltme iyi sinyal, alçaltma kötü.
+    </div>
+    <div>
+      <b>Net Büyüme</b> — son 30 günde yeni gelen + yükseltme − alçaltma − terk eden.
+      Pozitif = sistem büyüyor, negatif = küçülüyor.
+    </div>
+    <div>
+      <b>Terk Riski</b> — kurumun sistemden ayrılma ihtimali. "Kritik" = an meselesi,
+      "Risk" = 1-2 hafta var, "Dikkat" = izle. (Teknik adı: <code class="text-xs">Churn</code>)
+    </div>
+  </div>
+</details>
+
+{#
+  Drill-down macro — her sayının altına eklenecek "→ Listeyi gör" linki.
+  HTMX ile #drill-host'a kurum listesi çeker.
+#}
+{% macro drill_link(key, label, classes="text-indigo-700 hover:text-indigo-900") -%}
+  <button type="button"
+          hx-get="/admin/security-monitor/revenue/drill?key={{ key }}"
+          hx-target="#drill-host"
+          hx-swap="innerHTML"
+          onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+          class="text-[11px] underline underline-offset-2 {{ classes }}">
+    {{ label }}
+  </button>
+{%- endmacro %}
+
+{# Sprint F.2 — Owner-aware kompozit görünüm (kurum + bağımsız öğretmen)
+   Sprint F.3 — segment toggle (Hepsi / Kurumlar / Bağımsız) #}
+{% if mrr_combined %}
+{% set seg_titles = {
+  'all': '🏢 + 👤 Birleşik Görünüm (Kurum + Bağımsız Öğretmen)',
+  'institution': '🏢 Sadece Kurumlar',
+  'user': '👤 Sadece Bağımsız Öğretmenler',
+} %}
+{% set seg_descriptions = {
+  'all': 'Toplam para resmi — hem kurumlar hem bağımsız öğretmenler tek tabloda.',
+  'institution': 'Sadece kurumların (institution_id) verisi — bağımsız öğretmenler hariç.',
+  'user': 'Sadece bağımsız öğretmenlerin (institution_id=NULL) verisi — kurumlar hariç.',
+} %}
+<section class="mb-5 bg-white border border-slate-200 rounded-lg p-4">
+  <div class="flex items-start justify-between gap-3 flex-wrap mb-3">
+    <div>
+      <h2 class="text-sm font-semibold text-slate-900">{{ seg_titles[segment] }}</h2>
+      <p class="text-xs text-slate-500 mt-0.5">{{ seg_descriptions[segment] }}</p>
+    </div>
+    {# Segment toggle — pill buton grubu #}
+    <div class="inline-flex rounded-lg border border-slate-300 bg-slate-50 p-0.5 text-xs">
+      {% for seg_key, seg_label in [
+        ('all', 'Hepsi'),
+        ('institution', '🏢 Kurumlar'),
+        ('user', '👤 Bağımsız'),
+      ] %}
+      <a href="?segment={{ seg_key }}"
+         class="px-3 py-1.5 rounded-md font-medium transition
+                {% if segment == seg_key %}
+                  bg-white text-indigo-700 shadow-sm border border-indigo-200
+                {% else %}
+                  text-slate-600 hover:text-slate-900 hover:bg-white/60
+                {% endif %}">
+        {{ seg_label }}
+        <span class="text-[10px] {% if segment == seg_key %}text-indigo-500{% else %}text-slate-400{% endif %} ml-0.5">
+          ({{ segment_counts[seg_key] }})
+        </span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+      <div class="text-[10px] uppercase text-emerald-700">Toplam Aylık Gelir</div>
+      <div class="text-xl font-semibold text-emerald-900 mt-1 font-mono">
+        {{ "{:,.0f}".format(mrr_combined.total_try).replace(',', '.') }} ₺
+      </div>
+      <div class="text-[11px] text-emerald-700">
+        {% if segment == 'all' %}
+          Kurum: <b>{{ "{:,.0f}".format(mrr_combined.institution_mrr_try).replace(',', '.') }}</b> ·
+          Öğretmen: <b>{{ "{:,.0f}".format(mrr_combined.user_mrr_try).replace(',', '.') }}</b>
+        {% elif segment == 'institution' %}
+          Sadece kurum geliri
+        {% else %}
+          Sadece bağımsız öğretmen geliri
+        {% endif %}
+      </div>
+    </div>
+    <div class="p-3 rounded-lg bg-indigo-50 border border-indigo-200">
+      <div class="text-[10px] uppercase text-indigo-700">Toplam Aktif Sahip</div>
+      <div class="text-xl font-semibold text-indigo-900 mt-1">{{ mrr_combined.total_owners }}</div>
+      <div class="text-[11px] text-indigo-700">
+        {% if segment == 'all' %}
+          {{ mrr_combined.institution_count }} kurum + {{ mrr_combined.user_count }} öğretmen
+        {% elif segment == 'institution' %}
+          {{ mrr_combined.institution_count }} aktif kurum
+        {% else %}
+          {{ mrr_combined.user_count }} aktif bağımsız öğretmen
+        {% endif %}
+      </div>
+    </div>
+    <div class="p-3 rounded-lg bg-amber-50 border border-amber-200">
+      <div class="text-[10px] uppercase text-amber-700">Ödeyen</div>
+      <div class="text-xl font-semibold text-amber-900 mt-1">{{ mrr_combined.paying_count }}</div>
+      <div class="text-[11px] text-amber-700">
+        {% if segment == 'all' %}
+          {{ mrr_combined.institution_paying_count }} kurum + {{ mrr_combined.user_paying_count }} öğretmen
+        {% elif segment == 'institution' %}
+          {{ mrr_combined.institution_paying_count }} ödeyen kurum
+        {% else %}
+          {{ mrr_combined.user_paying_count }} ödeyen öğretmen
+        {% endif %}
+      </div>
+    </div>
+    <div class="p-3 rounded-lg bg-sky-50 border border-sky-200">
+      <div class="text-[10px] uppercase text-sky-700">Ortalama Aylık</div>
+      <div class="text-xl font-semibold text-sky-900 mt-1 font-mono">
+        {{ "{:,.0f}".format(mrr_combined.avg_per_paying).replace(',', '.') }} ₺
+      </div>
+      <div class="text-[11px] text-sky-700">ödeyen başına</div>
+    </div>
+  </div>
+
+  {# Trial bitiyor — birleşik #}
+  {% if trial_combined %}
+  <div class="mt-4 pt-3 border-t border-slate-200">
+    <div class="text-xs font-semibold text-slate-700 mb-2">
+      ⏰ 7 gün içinde denemesi bitenler ({{ trial_combined|length }})
+    </div>
+    <ul class="text-xs text-slate-700 space-y-1">
+      {% for o in trial_combined[:10] %}
+      <li class="flex items-center gap-2">
+        <span class="text-[10px] px-1.5 py-0.5 rounded
+          {% if o.owner_type == 'institution' %}bg-indigo-100 text-indigo-700{% else %}bg-purple-100 text-purple-700{% endif %} font-semibold">
+          {% if o.owner_type == 'institution' %}🏢{% else %}👤{% endif %}
+        </span>
+        <a href="{{ o.url }}" class="text-slate-700 hover:text-indigo-700 hover:underline">{{ o.name }}</a>
+        <span class="text-slate-400">·</span>
+        <span class="font-mono text-[10px]">{{ o.plan }}</span>
+        {% if o.trial_ends_at %}
+        <span class="text-slate-400">·</span>
+        <span class="text-amber-700">{{ o.trial_ends_at.strftime('%d.%m') }}</span>
+        {% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{# Ödeme Takvimi — yaklaşan ve gecikmiş faturalar (Faz F-1) #}
+{% set pc = data.payment_calendar %}
+{% if pc.total_count > 0 %}
+<div class="mb-5 rounded-lg border
+  {% if pc.overdue_total_try > 0 %}border-rose-300 bg-rose-50
+  {% else %}border-amber-200 bg-amber-50{% endif %}">
+  <div class="px-4 py-3 border-b
+    {% if pc.overdue_total_try > 0 %}border-rose-200{% else %}border-amber-200{% endif %}
+    flex items-center justify-between flex-wrap gap-2">
+    <div>
+      <h2 class="text-sm font-semibold
+        {% if pc.overdue_total_try > 0 %}text-rose-900{% else %}text-amber-900{% endif %}">
+        ⏰ Ödeme Takvimi — Önümüzdeki {{ pc.days_horizon }} Gün
+      </h2>
+      <div class="text-xs
+        {% if pc.overdue_total_try > 0 %}text-rose-700{% else %}text-amber-700{% endif %} mt-0.5">
+        Vade yaklaşan veya gecikmiş <b>{{ pc.total_count }}</b> fatura ·
+        toplam <b>{{ "{:,}".format(pc.total_amount_try) }} ₺</b>
+        {% if pc.overdue_total_try > 0 %}
+          (gecikti: <b>{{ "{:,}".format(pc.overdue_total_try) }} ₺</b>)
+        {% endif %}
+      </div>
+    </div>
+    <a href="/admin/security-monitor/revenue/invoices"
+       class="text-xs px-2.5 py-1.5 rounded border
+       {% if pc.overdue_total_try > 0 %}border-rose-300 hover:bg-rose-100 text-rose-700
+       {% else %}border-amber-300 hover:bg-amber-100 text-amber-700{% endif %} font-medium">
+      Tüm faturalar →
+    </a>
+  </div>
+  <div class="p-3 grid grid-cols-2 md:grid-cols-4 gap-2">
+    {% for b in pc.buckets %}
+    <button type="button"
+            hx-get="/admin/security-monitor/revenue/drill?key=invoice_bucket:{{ b.key }}"
+            hx-target="#drill-host"
+            hx-swap="innerHTML"
+            onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+            class="text-left p-2 rounded border
+            {% if b.key.startswith('overdue') %}bg-rose-100 border-rose-200 hover:bg-rose-200 text-rose-900
+            {% elif b.key in ['due_today','due_tomorrow'] %}bg-amber-100 border-amber-200 hover:bg-amber-200 text-amber-900
+            {% else %}bg-white border-slate-200 hover:bg-slate-50 text-slate-900{% endif %}">
+      <div class="text-[10px] uppercase tracking-wide opacity-75">{{ b.label }}</div>
+      <div class="flex items-baseline gap-2 mt-0.5">
+        <span class="text-xl font-semibold">{{ b.count }}</span>
+        <span class="text-[10px] opacity-75">fatura</span>
+      </div>
+      <div class="text-xs font-medium mt-0.5">{{ "{:,}".format(b.total_try) }} ₺</div>
+    </button>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+{# Üst özet kartları — her sayı tıklanabilir, drill-down açar #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+  <div class="p-4 rounded-lg bg-gradient-to-br from-emerald-50 to-emerald-100 border border-emerald-200">
+    <div class="text-xs text-emerald-700 uppercase tracking-wide flex items-center gap-1">
+      Aylık Gelir
+      <span class="cursor-help text-emerald-500" title="Ödeyen kurumların aylık ödediği toplam — her ay tekrarlayan gelir (teknik: MRR)">ⓘ</span>
+    </div>
+    <div class="text-2xl font-semibold text-emerald-900 mt-1">
+      {{ "{:,}".format(data.mrr.total_try) }} ₺
+    </div>
+    <div class="text-[11px] text-emerald-700 mt-1">
+      {{ data.mrr.paying_institutions }} ödeyen kurum
+      {% if data.mrr.paying_institutions > 0 %}
+        · {{ drill_link('paying', '→ Listeyi gör', 'text-emerald-800 hover:text-emerald-900') }}
+      {% endif %}
+    </div>
+  </div>
+  <div class="p-4 rounded-lg bg-blue-50 border border-blue-200">
+    <div class="text-xs text-blue-700 uppercase tracking-wide">Toplam Kurum</div>
+    <div class="text-2xl font-semibold text-blue-900 mt-1">{{ data.mrr.total_institutions }}</div>
+    <div class="text-[11px] text-blue-700 mt-1">
+      {{ data.mrr.free_institutions }} ücretsiz
+      {% if data.mrr.free_institutions > 0 %}
+        · {{ drill_link('free', '→ Ücretsiz liste', 'text-blue-800 hover:text-blue-900') }}
+      {% endif %}
+    </div>
+  </div>
+  <div class="p-4 rounded-lg bg-amber-50 border border-amber-200">
+    <div class="text-xs text-amber-700 uppercase tracking-wide flex items-center gap-1">
+      Denemesi Yakın
+      <span class="cursor-help text-amber-500" title="Önümüzdeki 7 gün içinde deneme süresi dolacak kurumlar — iletişim fırsatı">ⓘ</span>
+    </div>
+    <div class="text-2xl font-semibold text-amber-900 mt-1">{{ data.trial_ending_soon|length }}</div>
+    <div class="text-[11px] text-amber-700 mt-1">
+      son 30 günde {{ data.trial_expired_30d }} deneme bitti
+      {% if data.trial_expired_30d > 0 %}
+        · {{ drill_link('trial:expired_30d', '→ Dönüşmeyenler', 'text-amber-800 hover:text-amber-900') }}
+      {% endif %}
+    </div>
+  </div>
+  <div class="p-4 rounded-lg
+    {% if data.churn_proxy.critical > 0 %}bg-rose-50 border border-rose-200
+    {% elif data.churn_proxy.unhealthy_total > 0 %}bg-amber-50 border border-amber-200
+    {% else %}bg-emerald-50 border border-emerald-200{% endif %}">
+    <div class="text-xs uppercase tracking-wide text-slate-700 flex items-center gap-1">
+      Terk Riski
+      <span class="cursor-help text-slate-500" title="Sistemden ayrılma olasılığı yüksek kurumların toplamı (teknik: Churn risk)">ⓘ</span>
+    </div>
+    <div class="text-2xl font-semibold mt-1">{{ data.churn_proxy.unhealthy_total }}</div>
+    <div class="text-[11px] mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5">
+      {% if data.churn_proxy.critical > 0 %}
+        <span class="text-rose-700">{{ data.churn_proxy.critical }} kritik</span>
+        {{ drill_link('health:critical', '→', 'text-rose-800 hover:text-rose-900 font-bold no-underline') }}
+      {% endif %}
+      {% if data.churn_proxy.risk > 0 %}
+        <span class="text-amber-700">{{ data.churn_proxy.risk }} risk</span>
+        {{ drill_link('health:risk', '→', 'text-amber-800 hover:text-amber-900 font-bold no-underline') }}
+      {% endif %}
+      {% if data.churn_proxy.watch > 0 %}
+        <span class="text-slate-600">{{ data.churn_proxy.watch }} izle</span>
+        {{ drill_link('health:watch', '→', 'text-slate-700 hover:text-slate-900 font-bold no-underline') }}
+      {% endif %}
+      {% if data.churn_proxy.unhealthy_total == 0 %}
+        <span class="text-emerald-700">temiz</span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{# Plan hareketleri özeti (son 30 gün) #}
+<div class="mb-2 text-xs text-slate-600 font-medium">
+  Son 30 günde plan hareketleri
+  <span class="cursor-help text-slate-400" title="Kurumların paket değişimleri ve giriş-çıkışları">ⓘ</span>
+</div>
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  {% set cs = data.change_summary_30d %}
+  <div class="p-3 rounded-lg bg-white border border-slate-200">
+    <div class="text-xs text-slate-500 flex items-center gap-1">
+      Yeni kayıt
+      <span class="cursor-help text-slate-400" title="Son 30 günde sisteme katılan yeni kurum sayısı">ⓘ</span>
+    </div>
+    <div class="text-xl font-semibold text-slate-900 mt-0.5">{{ cs.signups }}</div>
+    {% if cs.signups > 0 %}
+      <div class="mt-1">{{ drill_link('plan_change:signup', '→ Listeyi gör') }}</div>
+    {% endif %}
+  </div>
+  <div class="p-3 rounded-lg bg-emerald-50 border border-emerald-200">
+    <div class="text-xs text-emerald-700 flex items-center gap-1">
+      Pakete yükselen
+      <span class="cursor-help text-emerald-500" title="Daha pahalı / kapsamlı bir pakete geçen kurum sayısı. İyi sinyal.">ⓘ</span>
+    </div>
+    <div class="text-xl font-semibold text-emerald-900 mt-0.5">↑ {{ cs.upgrades }}</div>
+    {% if cs.upgrades > 0 %}
+      <div class="mt-1">{{ drill_link('plan_change:upgrade', '→ Listeyi gör', 'text-emerald-800 hover:text-emerald-900') }}</div>
+    {% endif %}
+  </div>
+  <div class="p-3 rounded-lg bg-rose-50 border border-rose-200">
+    <div class="text-xs text-rose-700 flex items-center gap-1">
+      Paket düşüren
+      <span class="cursor-help text-rose-500" title="Daha ucuz / bedava pakete dönen kurum sayısı. Kötü sinyal.">ⓘ</span>
+    </div>
+    <div class="text-xl font-semibold text-rose-900 mt-0.5">↓ {{ cs.downgrades }}</div>
+    {% if cs.downgrades > 0 %}
+      <div class="mt-1">{{ drill_link('plan_change:downgrade', '→ Listeyi gör', 'text-rose-800 hover:text-rose-900') }}</div>
+    {% endif %}
+  </div>
+  <div class="p-3 rounded-lg
+    {% if cs.net_growth > 0 %}bg-emerald-50 border border-emerald-200
+    {% elif cs.net_growth < 0 %}bg-rose-50 border border-rose-200
+    {% else %}bg-slate-50 border border-slate-200{% endif %}">
+    <div class="text-xs uppercase tracking-wide flex items-center gap-1">
+      Net Büyüme
+      <span class="cursor-help text-slate-400" title="Yeni kayıt + yükselen − alçaltan − terk eden. Pozitif = büyüyor, negatif = küçülüyor.">ⓘ</span>
+    </div>
+    <div class="text-xl font-semibold mt-0.5">
+      {% if cs.net_growth >= 0 %}+{% endif %}{{ cs.net_growth }}
+    </div>
+    <div class="mt-1 text-[10px] text-slate-500">
+      = {{ cs.upgrades }} yükseltme − {{ cs.downgrades }} alçaltma
+    </div>
+  </div>
+  <div class="p-3 rounded-lg bg-slate-50 border border-slate-200">
+    <div class="text-xs text-slate-700 flex items-center gap-1">
+      Duraklatma
+      <span class="cursor-help text-slate-400" title="Hesabını geçici olarak donduran kurum sayısı (yaz tatili, ara dönem vb.)">ⓘ</span>
+    </div>
+    <div class="text-xl font-semibold text-slate-900 mt-0.5">{{ cs.pauses }}</div>
+    {% if cs.pauses > 0 %}
+      <div class="mt-1">{{ drill_link('plan_change:pause', '→ Listeyi gör') }}</div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+  {# Plan dağılımı #}
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">Plan Dağılımı</h2>
+      <div class="text-xs text-slate-500">Her pakette kaç kurum var ve bu paket aylık ne kadar gelir getiriyor.</div>
+    </div>
+    {% if not data.plan_distribution %}
+      <div class="px-4 py-6 text-sm text-slate-500">Veri yok.</div>
+    {% else %}
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-3 py-2 text-left">Paket</th>
+            <th class="px-3 py-2 text-right">Kurum sayısı</th>
+            <th class="px-3 py-2 text-right">Aylık fiyat</th>
+            <th class="px-3 py-2 text-right" title="Bu paketten gelen aylık gelir (kurum sayısı × fiyat)">Aylık katkı</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for p in data.plan_distribution %}
+            <tr class="hover:bg-slate-50 cursor-pointer"
+                hx-get="/admin/security-monitor/revenue/drill?key=plan:{{ p.plan }}"
+                hx-target="#drill-host"
+                hx-swap="innerHTML"
+                onclick="setTimeout(()=>{document.getElementById('drill-host')?.scrollIntoView({behavior:'smooth',block:'start'});},150)"
+                title="Bu paketteki kurumların listesini gör">
+              <td class="px-3 py-2">
+                <div class="text-slate-900">{{ p.label }}</div>
+                <code class="text-[11px] text-slate-400">{{ p.plan }}</code>
+              </td>
+              <td class="px-3 py-2 text-right font-semibold text-indigo-700">{{ p.count }} →</td>
+              <td class="px-3 py-2 text-right text-sm text-slate-700">
+                {% if p.monthly_price_try > 0 %}{{ p.monthly_price_try }} ₺
+                {% else %}<span class="text-slate-400">—</span>{% endif %}
+              </td>
+              <td class="px-3 py-2 text-right
+                {% if p.estimated_mrr > 0 %}font-semibold text-emerald-700
+                {% else %}text-slate-400{% endif %}">
+                {% if p.estimated_mrr > 0 %}{{ "{:,}".format(p.estimated_mrr) }} ₺
+                {% else %}—{% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+  {# Denemesi bitmek üzere olanlar #}
+  <div class="bg-white rounded-lg border border-slate-200 overflow-hidden">
+    <div class="px-4 py-3 border-b border-slate-200">
+      <h2 class="text-sm font-semibold text-slate-900">Denemesi Bitmek Üzere — Önümüzdeki 7 Gün</h2>
+      <div class="text-xs text-slate-500">Bu kurumlarla iletişime geç — ödeyen müşteriye dönüşüm fırsatı.</div>
+    </div>
+    {% if not data.trial_ending_soon %}
+      <div class="px-4 py-10 text-center text-sm text-slate-500">7 gün içinde denemesi biten kurum yok.</div>
+    {% else %}
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-xs uppercase text-slate-500">
+          <tr>
+            <th class="px-3 py-2 text-left">Kurum</th>
+            <th class="px-3 py-2 text-left">Şu anki paket</th>
+            <th class="px-3 py-2 text-left">Deneme bitince geçeceği paket</th>
+            <th class="px-3 py-2 text-right">Kalan süre</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          {% for t in data.trial_ending_soon %}
+            <tr class="hover:bg-slate-50
+              {% if t.days_left <= 1 %}bg-rose-50/40
+              {% elif t.days_left <= 3 %}bg-amber-50/40{% endif %}">
+              <td class="px-3 py-2">
+                <a href="/admin/institutions/{{ t.institution_id }}"
+                   class="text-indigo-600 hover:text-indigo-800 font-medium">{{ t.institution_name }}</a>
+              </td>
+              <td class="px-3 py-2 text-xs"><code>{{ t.plan }}</code></td>
+              <td class="px-3 py-2 text-xs text-slate-600">{{ t.post_trial_plan or '—' }}</td>
+              <td class="px-3 py-2 text-right">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs
+                  {% if t.days_left <= 1 %}bg-rose-100 text-rose-800
+                  {% elif t.days_left <= 3 %}bg-amber-100 text-amber-800
+                  {% else %}bg-blue-100 text-blue-800{% endif %}">
+                  {{ t.days_left }} gün
+                </span>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+</div>
+
+{# Günlük plan hareketleri trendi (son 30 gün) #}
+<div class="mt-5 bg-white rounded-lg border border-slate-200 overflow-hidden">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 class="text-sm font-semibold text-slate-900">Günlük Plan Hareketleri — Son 30 Gün</h2>
+    <div class="text-xs text-slate-500">Her gün ne kadar yeni kayıt, paket yükseltme, alçaltma, deneme bitişi veya duraklatma oldu.</div>
+  </div>
+  {% if not data.daily_changes_30d %}
+    <div class="px-4 py-6 text-sm text-slate-500">Veri yok.</div>
+  {% else %}
+    {% set max_total = data.daily_changes_30d|map(attribute='total')|max %}
+    <table class="w-full text-xs">
+      <thead class="bg-slate-50 uppercase text-slate-500">
+        <tr>
+          <th class="px-3 py-2 text-left">Gün</th>
+          <th class="px-3 py-2 text-right" title="Yeni kayıt olan kurum sayısı">Yeni kayıt</th>
+          <th class="px-3 py-2 text-right" title="Daha pahalı pakete geçen kurum sayısı">Yükseltme</th>
+          <th class="px-3 py-2 text-right" title="Daha ucuz pakete dönen kurum sayısı">Alçaltma</th>
+          <th class="px-3 py-2 text-right" title="Deneme süresi biten kurum sayısı">Deneme bitti</th>
+          <th class="px-3 py-2 text-right" title="Hesabını duraklatan kurum sayısı">Duraklatma</th>
+          <th class="px-3 py-2 text-right">Toplam</th>
+          <th class="px-3 py-2 w-1/4">Hacim</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-slate-100">
+        {% for d in data.daily_changes_30d %}
+          {% if d.total > 0 %}
+            {% set pct = (d.total * 100 / max_total)|int if max_total else 0 %}
+            <tr class="hover:bg-slate-50">
+              <td class="px-3 py-1 text-slate-700">{{ d.day }}</td>
+              <td class="px-3 py-1 text-right text-emerald-700">{{ d.signup }}</td>
+              <td class="px-3 py-1 text-right text-emerald-700">{{ d.upgrade }}</td>
+              <td class="px-3 py-1 text-right text-rose-700">{{ d.downgrade }}</td>
+              <td class="px-3 py-1 text-right text-amber-700">{{ d.trial_expired }}</td>
+              <td class="px-3 py-1 text-right text-slate-600">{{ d.pause }}</td>
+              <td class="px-3 py-1 text-right font-semibold">{{ d.total }}</td>
+              <td class="px-3 py-1">
+                <div class="h-2 bg-slate-100 rounded overflow-hidden">
+                  <div class="h-full bg-indigo-400" style="width: {{ pct }}%"></div>
+                </div>
+              </td>
+            </tr>
+          {% endif %}
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+{# Drill-down sonuçlarının render edileceği alan #}
+<div id="drill-host" data-drill-host class="mt-6"></div>
+
+<div class="mt-6 text-xs text-slate-400">
+  Veri zamanı: {{ data.generated_at|dt_tr_full }}
+  <span class="ml-2 px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-[10px]">
+    💡 KPI sayılarına ve plan satırlarına tıkla — arkasındaki kurum listesi açılır.
+  </span>
+</div>
+{% endblock %}

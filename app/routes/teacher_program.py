@@ -16,6 +16,7 @@ from app.models import (
     TaskType,
     User,
     UserRole,
+    WeekNote,
 )
 from app.services.event_triggers import on_program_published
 from app.services.suggestions import (
@@ -35,6 +36,39 @@ TR_MONTHS = [
     "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
     "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
 ]
+
+
+def _resolve_week_anchor(db: Session, student: User) -> date | None:
+    """Öğrencinin hafta anchor'ını çözer. Sıra:
+    1) user.program_anchor_date (öğretmen manuel ayarladıysa)
+    2) en eski Task.date (otomatik)
+    3) None (hiç görev yok)
+    """
+    if getattr(student, "program_anchor_date", None):
+        return student.program_anchor_date
+    anchor_row = (
+        db.query(Task.date)
+        .filter(Task.student_id == student.id)
+        .order_by(Task.date.asc())
+        .first()
+    )
+    return anchor_row[0] if anchor_row else None
+
+
+def _student_week_start(db: Session, student: User, target: date) -> date:
+    """`target`'i içeren, öğrenciye özel 7-günlük bloğun ilk gününü döndürür.
+
+    Anchor sırası: `user.program_anchor_date` → en eski Task.date → bugünün
+    Pazartesi'si. Mantık: anchor'dan target'a kaç tam 7-günlük blok geçtiyse
+    o blok başlar (Python floor division negatif tarafa da doğru çeker).
+    Örn anchor=24.04 Cuma → bloklar [24.04, 01.05, 08.05, 15.05, 22.05, ...].
+    target=17.05 → blok = 15.05 (Cuma), pencere 15-21.05.
+    """
+    anchor = _resolve_week_anchor(db, student)
+    if anchor is None:
+        return target - timedelta(days=target.weekday())
+    block = (target - anchor).days // 7
+    return anchor + timedelta(days=block * 7)
 
 
 def _ensure_student(db: Session, teacher_id: int, student_id: int) -> User:
@@ -105,9 +139,12 @@ def build_day_card_context(db: Session, student: User, day: date) -> dict:
         .order_by(Task.order, Task.id)
         .all()
     )
-    # Aynı dersler alt alta: birincil ders (ilk book_item'ın dersi) ve sonra orijinal sıra
+    # Sıralama: scheduled_hour (NULLS LAST) → ders → manuel order → id.
+    # Saat atanmışsa kronolojik; değilse ders bazında alt alta (eski davranış).
     day_tasks.sort(
         key=lambda t: (
+            0 if t.scheduled_hour is not None else 1,
+            t.scheduled_hour if t.scheduled_hour is not None else 0,
             (t.book_items[0].book.subject.order, t.book_items[0].book.subject.id)
             if t.book_items else (10**9, 10**9),
             t.order,
@@ -115,6 +152,7 @@ def build_day_card_context(db: Session, student: User, day: date) -> dict:
         )
     )
     planned_total = sum(it.planned_count for t in day_tasks for it in t.book_items)
+    day_draft_count = sum(1 for t in day_tasks if t.is_draft)
 
     # Öğrencinin kitap envanteri (form için)
     assignments = (
@@ -150,6 +188,7 @@ def build_day_card_context(db: Session, student: User, day: date) -> dict:
         "day_tasks": day_tasks,
         "is_today": day == today,
         "planned_total": planned_total,
+        "day_draft_count": day_draft_count,
         "day_suggestions": day_suggestions,
         "student": student,
         "assignments": assignments,
@@ -183,10 +222,16 @@ def week_view(
     """
     student = _ensure_student(db, user.id, student_id)
     raw = start_param or date_param
-    try:
-        start = date.fromisoformat(raw) if raw else date.today()
-    except ValueError:
-        start = date.today()
+    if raw:
+        try:
+            start = date.fromisoformat(raw)
+        except ValueError:
+            # Geçersiz parametre: öğrencinin bugünkü haftasına düş
+            start = _student_week_start(db, student, date.today())
+    else:
+        # Default: bugünü içeren öğrenci-haftası bloğunun başı.
+        # Anchor = öğrencinin en eski Task.date'i. Görev yoksa Pazartesi.
+        start = _student_week_start(db, student, date.today())
     days = [start + timedelta(days=i) for i in range(7)]
     end = days[-1]
 
@@ -204,10 +249,13 @@ def week_view(
     tasks_by_day: dict[date, list[Task]] = {d: [] for d in days}
     for t in tasks:
         tasks_by_day[t.date].append(t)
-    # Her gün içinde, aynı dersler alt alta gelsin (birincil dersin order/id'sine göre)
+    # Sıralama: önce scheduled_hour (NULLS LAST), sonra ders sırası, sonra manuel order/id.
+    # Saat atanmış görevler önce gelir (gün boyu kronolojik); saatsizler ders bazında dipten.
     for d in days:
         tasks_by_day[d].sort(
             key=lambda t: (
+                0 if t.scheduled_hour is not None else 1,
+                t.scheduled_hour if t.scheduled_hour is not None else 0,
                 (t.book_items[0].book.subject.order, t.book_items[0].book.subject.id)
                 if t.book_items else (10**9, 10**9),
                 t.order,
@@ -220,6 +268,12 @@ def week_view(
         d: sum(it.planned_count for t in tasks_by_day[d] for it in t.book_items)
         for d in days
     }
+
+    # Gün bazında taslak sayısı + tüm hafta toplam taslak
+    day_draft_counts: dict[date, int] = {
+        d: sum(1 for t in tasks_by_day[d] if t.is_draft) for d in days
+    }
+    week_draft_total = sum(day_draft_counts.values())
 
     # Her gün için ders bazında görev özeti (subjects yukarıda hazır)
     # NOT: subjects, assignments_by_subject hesaplandıktan sonra dolduracağız.
@@ -281,6 +335,14 @@ def week_view(
         d: compute_day_subject_summary(tasks_by_day[d], subjects) for d in days
     }
 
+    # Anchor görünürlüğü: kullanıcıya "şu an hangi anchor'a göre 7'lik bloklar
+    # yürüyor" göster. None ise "anchor yok, ISO Pazartesi" anlamına gelir.
+    week_anchor = _resolve_week_anchor(db, student)
+    anchor_is_manual = student.program_anchor_date is not None
+
+    # Hafta notları (madde madde) — bu pencerenin start'ına bağlı
+    week_notes = _load_week_notes(db, student.id, start)
+
     return templates.TemplateResponse(
         "teacher/student_week.html",
         {
@@ -291,8 +353,13 @@ def week_view(
             "end": end,
             "days": days,
             "today": date.today(),
+            "week_anchor": week_anchor,
+            "anchor_is_manual": anchor_is_manual,
+            "week_notes": week_notes,
             "tasks_by_day": tasks_by_day,
             "day_planned_totals": day_planned_totals,
+            "day_draft_counts": day_draft_counts,
+            "week_draft_total": week_draft_total,
             "day_subject_summary_by_day": day_subject_summary_by_day,
             "prev_date": (start - timedelta(days=7)).isoformat(),
             "next_date": (start + timedelta(days=7)).isoformat(),
@@ -333,6 +400,155 @@ def day_card_fragment(
     return templates.TemplateResponse(
         "teacher/partials/day_card.html",
         {"request": request, "user": user, "keep_open": keep_open or None, **ctx},
+    )
+
+
+def _load_week_notes(db: Session, student_id: int, week_start: date) -> list[WeekNote]:
+    return (
+        db.query(WeekNote)
+        .filter(WeekNote.student_id == student_id, WeekNote.week_start == week_start)
+        .order_by(WeekNote.order.asc(), WeekNote.id.asc())
+        .all()
+    )
+
+
+def _render_week_notes_partial(
+    request: Request, db: Session, student: User, week_start: date,
+):
+    notes = _load_week_notes(db, student.id, week_start)
+    return templates.TemplateResponse(
+        "teacher/partials/week_notes_card.html",
+        {
+            "request": request,
+            "student": student,
+            "week_start": week_start,
+            "notes": notes,
+        },
+    )
+
+
+@router.get("/{student_id}/week-notes")
+def week_notes_fragment(
+    student_id: int,
+    request: Request,
+    week_start: str = Query(...),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    student = _ensure_student(db, user.id, student_id)
+    try:
+        ws = date.fromisoformat(week_start)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Geçersiz tarih")
+    return _render_week_notes_partial(request, db, student, ws)
+
+
+@router.post("/{student_id}/week-notes/add")
+def week_notes_add(
+    student_id: int,
+    request: Request,
+    week_start: str = Form(...),
+    body: str = Form(...),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    student = _ensure_student(db, user.id, student_id)
+    body = body.strip()
+    if not body:
+        raise HTTPException(status_code=400, detail="Not metni boş olamaz")
+    try:
+        ws = date.fromisoformat(week_start)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Geçersiz tarih")
+    existing = _load_week_notes(db, student.id, ws)
+    next_order = (existing[-1].order + 1) if existing else 0
+    db.add(WeekNote(
+        student_id=student.id,
+        week_start=ws,
+        body=body,
+        order=next_order,
+    ))
+    db.commit()
+    return _render_week_notes_partial(request, db, student, ws)
+
+
+@router.post("/{student_id}/week-notes/{note_id}/delete")
+def week_notes_delete(
+    student_id: int,
+    note_id: int,
+    request: Request,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    student = _ensure_student(db, user.id, student_id)
+    note = (
+        db.query(WeekNote)
+        .filter(WeekNote.id == note_id, WeekNote.student_id == student.id)
+        .first()
+    )
+    if not note:
+        raise HTTPException(status_code=404)
+    ws = note.week_start
+    db.delete(note)
+    db.commit()
+    return _render_week_notes_partial(request, db, student, ws)
+
+
+@router.post("/{student_id}/week-notes/{note_id}/toggle")
+def week_notes_toggle(
+    student_id: int,
+    note_id: int,
+    request: Request,
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    student = _ensure_student(db, user.id, student_id)
+    note = (
+        db.query(WeekNote)
+        .filter(WeekNote.id == note_id, WeekNote.student_id == student.id)
+        .first()
+    )
+    if not note:
+        raise HTTPException(status_code=404)
+    note.is_done = not note.is_done
+    db.commit()
+    return _render_week_notes_partial(request, db, student, note.week_start)
+
+
+@router.post("/{student_id}/set-week-anchor")
+def set_week_anchor(
+    student_id: int,
+    anchor: str = Form(...),
+    return_to: str = Form("week"),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin hafta anchor'ını manuel ayarla. Koçluk günü değişince
+    haftalık bloklar buradan kayar. `anchor='clear'` ile manuel anchor
+    silinir → fallback (en eski Task tarihi) devreye girer.
+
+    return_to: 'week' (default) → haftalık view'a yeni bloğa git;
+               'detail' → öğrenci detay sayfasının coaching tab'ına dön.
+    """
+    student = _ensure_student(db, user.id, student_id)
+    if anchor.strip().lower() == "clear":
+        student.program_anchor_date = None
+    else:
+        try:
+            student.program_anchor_date = date.fromisoformat(anchor)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Geçersiz tarih")
+    db.commit()
+    if return_to == "detail":
+        return RedirectResponse(
+            url=f"/teacher/students/{student.id}#overview",
+            status_code=303,
+        )
+    # Default: pencereyi yeni anchor'ın bugünü içerdiği bloğa götür
+    new_start = _student_week_start(db, student, date.today())
+    return RedirectResponse(
+        url=f"/teacher/students/{student.id}/week?start={new_start.isoformat()}",
+        status_code=303,
     )
 
 
@@ -455,6 +671,73 @@ def sidebar_items_fragment(
     )
 
 
+def _build_slot_url(iso_date: str, task_id: int, *, teacher_student_id: int | None) -> str:
+    """Sinema-koltuk kutusu için hedef URL: o günün Pazartesi'sinden başlayan
+    hafta penceresi + ilgili task anchor'ı. Öğretmen ve öğrenci paneli için ayrı.
+    """
+    d = date.fromisoformat(iso_date)
+    monday = (d - timedelta(days=d.weekday())).isoformat()
+    if teacher_student_id is not None:
+        return f"/teacher/students/{teacher_student_id}/week?start={monday}#task-{task_id}"
+    # Öğrenci tarafı: gün view'ı zaten tek gün gösteriyor
+    return f"/student/day?date={iso_date}#task-{task_id}"
+
+
+def build_book_grid_slots(
+    db: Session,
+    student_id: int,
+    section_ids: list[int],
+    *,
+    teacher_student_id: int | None = None,
+) -> dict[int, dict]:
+    """Section ID -> {"completed": [...], "reserved": [...]}.
+
+    Her slot: {date: 'YYYY-MM-DD', label: 'dd.mm.yyyy', task_id: int, url: str}.
+    Tarihe göre sıralı; aynı task içinde önce completed slot'lar, sonra rezerve.
+    Cinema-seat'in n'inci kutucuğunun hangi göreve / tarihe ait olduğunu ve
+    hedef hafta+anchor URL'sini taşır.
+
+    teacher_student_id: None ise öğrenci tarafı URL'si üretilir;
+    aksi halde öğretmen panelinin haftalık görüntüsü için URL üretilir.
+    """
+    out: dict[int, dict] = {sid: {"completed": [], "reserved": []} for sid in section_ids}
+    if not section_ids:
+        return out
+    rows = (
+        db.query(
+            TaskBookItem.book_section_id,
+            TaskBookItem.planned_count,
+            TaskBookItem.completed_count,
+            Task.id,
+            Task.date,
+        )
+        .join(Task, TaskBookItem.task_id == Task.id)
+        .filter(
+            Task.student_id == student_id,
+            TaskBookItem.book_section_id.in_(section_ids),
+            Task.is_draft.is_(False),
+        )
+        .order_by(Task.date.asc(), Task.id.asc())
+        .all()
+    )
+    for sid, planned_n, completed_n, tid, tdate in rows:
+        if sid not in out:
+            continue
+        iso = tdate.isoformat()
+        label = tdate.strftime("%d.%m.%Y")
+        url = _build_slot_url(iso, tid, teacher_student_id=teacher_student_id)
+        for _ in range(completed_n or 0):
+            out[sid]["completed"].append({
+                "date": iso, "label": label, "task_id": tid, "url": url,
+            })
+        remaining = max(0, (planned_n or 0) - (completed_n or 0))
+        for _ in range(remaining):
+            out[sid]["reserved"].append({
+                "date": iso, "label": label, "task_id": tid, "url": url,
+            })
+    return out
+
+
 @router.get("/{student_id}/book-grid")
 def book_grid_modal(
     student_id: int,
@@ -478,6 +761,10 @@ def book_grid_modal(
     if not sb:
         raise HTTPException(status_code=404, detail="Kitap bu öğrenciye atanmamış")
     pmap = {p.book_section_id: p for p in sb.section_progress}
+    section_ids = [sec.id for sec in sb.book.sections]
+    slots_map = build_book_grid_slots(
+        db, student_id, section_ids, teacher_student_id=student_id,
+    )
     sections_data = []
     total_completed = 0
     total_reserved = 0
@@ -485,7 +772,12 @@ def book_grid_modal(
         sp = pmap.get(sec.id)
         completed = sp.completed_count if sp else 0
         reserved = sp.reserved_count if sp else 0
-        sections_data.append({"section": sec, "completed": completed, "reserved": reserved})
+        sections_data.append({
+            "section": sec,
+            "completed": completed,
+            "reserved": reserved,
+            "slots": slots_map.get(sec.id, {"completed": [], "reserved": []}),
+        })
         total_completed += completed
         total_reserved += reserved
     return templates.TemplateResponse(
@@ -535,6 +827,139 @@ def book_sections_fragment(
     return templates.TemplateResponse(
         "teacher/partials/sections_options.html",
         {"request": request, "sections": items, "is_deneme": sb.book.type.value in ("brans_denemesi", "genel_deneme")},
+    )
+
+
+@router.get("/{student_id}/section-stats")
+def section_stats_fragment(
+    student_id: int,
+    request: Request,
+    section_id: int = Query(...),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """HTMX fragment — seçilen bölümün test yükü kartları (Bölümde / Çözülmüş / Kalan).
+
+    Görev ekleme formunda Ünite/Deneme seçildiğinde tetiklenir; öğretmen
+    o bölümde kaç test olduğunu, kaçının çözüldüğünü ve kaçının kaldığını
+    görsel olarak görsün diye.
+    """
+    _ensure_student(db, user.id, student_id)
+    sec = (
+        db.query(BookSection)
+        .options(joinedload(BookSection.topic), joinedload(BookSection.book))
+        .filter(BookSection.id == section_id)
+        .first()
+    )
+    if not sec:
+        return templates.TemplateResponse(
+            "teacher/partials/section_stats.html",
+            {"request": request, "section": None},
+        )
+    sb = (
+        db.query(StudentBook)
+        .options(joinedload(StudentBook.section_progress))
+        .filter(StudentBook.student_id == student_id, StudentBook.book_id == sec.book_id)
+        .first()
+    )
+    completed = 0
+    reserved = 0
+    if sb:
+        for sp in sb.section_progress:
+            if sp.book_section_id == sec.id:
+                completed = sp.completed_count
+                reserved = sp.reserved_count
+                break
+    total = sec.test_count
+    remaining = max(0, total - completed - reserved)
+    return templates.TemplateResponse(
+        "teacher/partials/section_stats.html",
+        {
+            "request": request,
+            "section": sec,
+            "total": total,
+            "completed": completed,
+            "reserved": reserved,
+            "remaining": remaining,
+        },
+    )
+
+
+@router.get("/{student_id}/review-struggle-suggestions")
+def review_struggle_suggestions(
+    student_id: int,
+    request: Request,
+    subject_id: int = Query(...),
+    target_date: str = Query(..., alias="target_date"),
+    user: User = Depends(require_teacher),
+    db: Session = Depends(get_db),
+):
+    """HTMX fragment — Tekrar tipi seçildi + ders seçildiğinde FSRS'ten gelen öneri chip'leri.
+
+    Filtreler:
+      - Sadece bu öğrencinin kartları
+      - Sadece bu derse ait topic'ler
+      - Sadece **vadesi gelmiş** kartlar (due_at <= target_date, gün bazında)
+      - Minimum zorlanma skoru (>=10) — sıradan kartlarla öğretmeni yormamak için
+      - Skor azalan sırada en fazla 8 öneri
+
+    target_date günlük programdaki ilgili günün tarihi. Bu gün için tekrar
+    görevi planlanırken sadece "bugün gösterilmesi gereken kart"ları sunuyoruz.
+    """
+    from datetime import datetime, time, timezone, timedelta
+    from app.models.review import ReviewCard
+    from app.models.curriculum import Topic
+    from app.services.review_scheduler import _struggle_score
+    from app.services.study_dna import TR_OFFSET_HOURS
+
+    _ensure_student(db, user.id, student_id)
+    try:
+        td = date.fromisoformat(target_date)
+    except ValueError:
+        td = date.today()
+
+    # Target günün TR sonu (UTC'ye çevir): kartın due_at değeri bu sınırı geçmiyorsa
+    # "bugün için vadesi geldi" sayılır (yarın için yapılan plan yarın geçer).
+    tr = timezone(timedelta(hours=TR_OFFSET_HOURS))
+    end_of_day_local = datetime.combine(td, time(23, 59, 59, 999_999), tzinfo=tr)
+    cutoff_utc = end_of_day_local.astimezone(timezone.utc)
+
+    cards = (
+        db.query(ReviewCard)
+        .options(joinedload(ReviewCard.topic).joinedload(Topic.subject))
+        .join(Topic, Topic.id == ReviewCard.topic_id)
+        .filter(
+            ReviewCard.student_id == student_id,
+            Topic.subject_id == subject_id,
+            ReviewCard.review_count > 0,         # hiç çalışılmamış değil
+            ReviewCard.due_at.isnot(None),
+            ReviewCard.due_at <= cutoff_utc,     # bugün için vadesi geldi
+        )
+        .all()
+    )
+
+    items: list[dict] = []
+    for c in cards:
+        if not c.topic:
+            continue
+        score, reasons = _struggle_score(c)
+        if score < 10.0:
+            continue
+        items.append({
+            "topic_id": c.topic_id,
+            "topic_name": c.topic.name,
+            "score": round(score),
+            "reasons": reasons,
+            "state": c.state,
+            "lapse_count": c.lapse_count or 0,
+            "card_id": c.id,
+        })
+    items.sort(key=lambda x: -x["score"])
+    items = items[:8]
+
+    return templates.TemplateResponse(
+        "teacher/partials/review_struggle_chips.html",
+        {"request": request, "items": items, "target_date": td, "subject_id": subject_id},
     )
 
 

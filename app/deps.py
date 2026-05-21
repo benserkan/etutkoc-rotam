@@ -33,6 +33,55 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User | 
     uid = request.session.get("user_id")
     if not uid:
         return None
+
+    # Katman 11.B — Impersonation auto-expire (30 dk).
+    # Süresi dolmuşsa admin'e restore et + IMPERSONATE_EXPIRED audit + return admin.
+    imp_id = request.session.get("impersonation_id")
+    if imp_id:
+        try:
+            from app.services.impersonation import expire_if_needed
+            if expire_if_needed(db, session_id=imp_id):
+                impersonator_id = request.session.get("impersonator_id")
+                admin = (
+                    db.get(User, impersonator_id) if impersonator_id else None
+                )
+                if (
+                    admin
+                    and admin.is_active
+                    and admin.role == UserRole.SUPER_ADMIN
+                ):
+                    # Audit: süresi doldu, admin'e restore edildi
+                    try:
+                        log_action(
+                            db,
+                            action=AuditAction.IMPERSONATE_EXPIRED,
+                            actor_id=admin.id,
+                            target_type="user",
+                            target_id=uid,
+                            request=request,
+                            details={
+                                "impersonation_id": imp_id,
+                                "auto_restored": True,
+                            },
+                        )
+                    except Exception:
+                        pass
+                    request.session.clear()
+                    request.session["user_id"] = admin.id
+                    request.session["role"] = admin.role.value
+                    request.session["password_stamp"] = (
+                        admin.password_changed_at.isoformat()
+                        if admin.password_changed_at else None
+                    )
+                    request.session["login_at"] = datetime.now(timezone.utc).isoformat()
+                    return admin
+                # Admin bulunamadı / pasif → tam logout
+                request.session.clear()
+                return None
+        except Exception:
+            # Auto-expire hatası sayfa açılışını bozmasın
+            pass
+
     user = db.get(User, uid)
     if not user or not user.is_active:
         return None
@@ -48,6 +97,18 @@ def get_current_user(request: Request, db: Session = Depends(get_db)) -> User | 
         return None
     # Last activity zamanını touch et (sliding expiration için ileride)
     request.session["last_seen_at"] = datetime.now(timezone.utc).isoformat()
+    # Katman 11.A — ActiveSession heartbeat. Admin uzaktan revoke yapmışsa
+    # terminated_at set'lidir → False döner, session.clear() yapılır.
+    token = request.session.get("session_token")
+    if token:
+        try:
+            from app.services.security_monitor import heartbeat as _hb
+            if not _hb(db, session_token=token):
+                request.session.clear()
+                return None
+        except Exception:
+            # Heartbeat hatası login akışını bozmasın (defansif)
+            pass
     return user
 
 

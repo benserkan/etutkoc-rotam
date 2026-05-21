@@ -27,7 +27,7 @@
       </div>
       {% endif %}
 
-      <form method="post" action="/login" class="space-y-4">
+      <form method="post" action="/login" class="space-y-4" x-data="{ showPwd: false }">
         <div>
           <label class="block text-sm font-medium text-ink mb-1.5">E-posta</label>
           <input type="email" name="email" required autofocus
@@ -35,13 +35,33 @@
         </div>
         <div>
           <label class="block text-sm font-medium text-ink mb-1.5">Şifre</label>
-          <input type="password" name="password" required
-                 class="w-full px-3.5 py-2.5 border border-stone-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition" />
+          <div class="relative">
+            <input :type="showPwd ? 'text' : 'password'" name="password" required
+                   class="w-full px-3.5 py-2.5 pr-10 border border-stone-300 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand transition" />
+            <button type="button" @click="showPwd = !showPwd"
+                    class="absolute inset-y-0 right-0 px-3 text-stone-400 hover:text-stone-700"
+                    :title="showPwd ? 'Gizle' : 'Göster'">
+              <span x-text="showPwd ? '🙈' : '👁'"></span>
+            </button>
+          </div>
         </div>
+
+        {% if turnstile_site_key %}
+        {# Cloudflare Turnstile — invisible/managed CAPTCHA #}
+        <div class="cf-turnstile" data-sitekey="{{ turnstile_site_key }}" data-theme="light"></div>
+        {% endif %}
+
         <button type="submit" class="btn-primary w-full py-2.5 text-base">
           Giriş Yap →
         </button>
+        <p class="text-[10px] text-ink-subtle text-center mt-2">
+          <a href="/password/change" class="hover:text-ink">🔑 Şifremi değiştir</a>
+        </p>
       </form>
+
+      {% if turnstile_site_key %}
+      <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+      {% endif %}
 
       <div class="mt-7 pt-5 border-t border-stone-200">
         <p class="text-xs text-ink-subtle mb-2.5">Hesabınız yok mu?</p>

@@ -1,0 +1,75 @@
+{#
+  Plan değişikliği timeline (Faz B2).
+  Bekler: plan_changes (list of PlanChangeHistory, occurred_at DESC sorted)
+#}
+{% if not plan_changes %}
+<div class="text-xs text-slate-500 italic px-3 py-4 bg-slate-50 border border-slate-200 rounded text-center">
+  Henüz plan değişikliği yok — kayıttan bu yana aynı planda.
+</div>
+{% else %}
+<div class="relative pl-6">
+  {# Dikey çizgi #}
+  <div class="absolute left-2 top-1 bottom-1 w-0.5 bg-slate-200"></div>
+
+  {% for ch in plan_changes %}
+  {% set r = ch.reason.value %}
+  {% set rcolor = (
+       'emerald' if r == 'upgrade'
+       else 'amber' if r == 'trial_expired'
+       else 'rose' if r == 'downgrade'
+       else 'slate' if r == 'pause'
+       else 'indigo' if r == 'resume'
+       else 'sky' if r == 'signup'
+       else 'purple' if r == 'admin_override'
+       else 'teal' if r == 'guarantee_extend'
+       else 'blue' if r == 'academic_year_renewal'
+       else 'slate'
+     ) %}
+  {% set rlabel = (
+       'Yükseltme ↑' if r == 'upgrade'
+       else 'Deneme bitti' if r == 'trial_expired'
+       else 'Alçaltma ↓' if r == 'downgrade'
+       else 'Duraklatıldı' if r == 'pause'
+       else 'Devam etti' if r == 'resume'
+       else 'Kayıt' if r == 'signup'
+       else 'Admin değiştirdi' if r == 'admin_override'
+       else 'Garanti uzatma' if r == 'guarantee_extend'
+       else 'Yıllık yenileme' if r == 'academic_year_renewal'
+       else r
+     ) %}
+  {% set ricon = (
+       '🔺' if r == 'upgrade'
+       else '⏰' if r == 'trial_expired'
+       else '🔻' if r == 'downgrade'
+       else '⏸' if r == 'pause'
+       else '▶' if r == 'resume'
+       else '🎉' if r == 'signup'
+       else '🛠' if r == 'admin_override'
+       else '🛡' if r == 'guarantee_extend'
+       else '📅' if r == 'academic_year_renewal'
+       else '•'
+     ) %}
+  <div class="relative mb-4 last:mb-0">
+    <span class="absolute -left-[14px] top-1 w-4 h-4 rounded-full bg-{{ rcolor }}-500 border-2 border-white shadow"></span>
+    <div class="text-xs text-slate-500">{{ ch.occurred_at|dt_dual }}</div>
+    <div class="text-sm text-slate-900 mt-0.5">
+      <span class="text-[11px] mr-1">{{ ricon }}</span>
+      <span class="font-mono text-[12px] text-slate-600">{{ ch.from_plan or 'yeni' }}</span>
+      <span class="text-slate-400 mx-1">→</span>
+      <span class="font-mono text-[12px] font-semibold text-slate-900">{{ ch.to_plan }}</span>
+      <span class="ml-2 text-[10px] px-1.5 py-0.5 rounded bg-{{ rcolor }}-100 text-{{ rcolor }}-800 font-semibold">
+        {{ rlabel }}
+      </span>
+    </div>
+    {% if ch.note %}
+    <div class="text-xs text-slate-600 mt-1 italic">{{ ch.note }}</div>
+    {% endif %}
+    {% if ch.actor_user_id %}
+    <div class="text-[10px] text-slate-400 mt-0.5">
+      yapan: user #{{ ch.actor_user_id }}
+    </div>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+{% endif %}

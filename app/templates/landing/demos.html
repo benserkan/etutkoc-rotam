@@ -1,0 +1,2273 @@
+{% extends "base.html" %}
+{% block title %}Demolar — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+{# ════════════════════════════════════════════════════════════════
+   Multi-demo player. play_slug parametresine göre aktif demo seçilir.
+   Mevcut demolar:
+     • daily-plan       — öğretmen: günlük program oluşturma (8 sahne)
+     • focus-pomodoro   — öğrenci: pomodoro odak modu (8 sahne)
+     • dna-profile      — öğrenci: çalışma DNA'sı + burnout (8 sahne)
+     • teacher-dna      — öğretmen: filo + müdahale (8 sahne)
+   Playlist login durumuna göre filtrelenir: öğrenci öğrenci demolarını,
+   öğretmen öğretmen demolarını görür. Login yoksa hepsi listelenir.
+   ════════════════════════════════════════════════════════════════ #}
+{% set is_daily = play_slug == 'daily-plan' %}
+{% set is_focus = play_slug == 'focus-pomodoro' %}
+{% set is_dna = play_slug == 'dna-profile' %}
+{% set is_teacher_dna = play_slug == 'teacher-dna' %}
+{# Role-based playlist filtering #}
+{% set user_role = user.role.value if user else None %}
+{% set show_student_demos = (user_role is none) or (user_role == 'student') %}
+{% set show_teacher_demos = (user_role is none) or (user_role == 'teacher') %}
+
+<style>
+  .demo-page { max-width: 1280px; margin: 0 auto; padding: 12px; }
+  @media (min-width: 1024px) { .demo-page { padding: 24px; } }
+
+  .demo-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+  @media (min-width: 1024px) {
+    .demo-grid { grid-template-columns: minmax(0, 1fr) 340px; gap: 20px; }
+  }
+
+  .demo-player {
+    background: #0F172A;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 16px 36px -10px rgba(15,23,42,0.45);
+  }
+  .demo-stage {
+    position: relative;
+    aspect-ratio: 16/9;
+    background: linear-gradient(135deg,#0F172A 0%,#1E293B 100%);
+    overflow: hidden;
+  }
+  .demo-scene {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    padding: clamp(12px, 3vw, 32px);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.45s ease;
+  }
+  .demo-scene.is-active { opacity: 1; pointer-events: auto; }
+  .demo-scene-inner {
+    width: 100%; max-width: 880px;
+    color: #1c1917;
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 12px 32px -8px rgba(15,23,42,0.5);
+    overflow: hidden;
+  }
+  .demo-scene-inner.transparent { background: transparent; box-shadow: none; }
+
+  .demo-caption {
+    background: rgba(0,0,0,0.85);
+    color: #fff;
+    padding: 10px 14px;
+    font-size: 0.85rem;
+    line-height: 1.45;
+    min-height: 44px;
+    backdrop-filter: blur(4px);
+  }
+  .demo-controls {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 12px;
+    background: #1E293B;
+    color: #fff;
+    flex-wrap: wrap;
+  }
+  .demo-controls button {
+    background: rgba(255,255,255,0.10);
+    color: #fff;
+    border: 0;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .demo-controls button:hover { background: rgba(255,255,255,0.20); }
+  .demo-controls .play-btn {
+    background: #fff; color: #0F172A;
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    font-size: 0.95rem;
+    padding: 0;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .demo-controls .play-btn:hover { background: #F1F5F9; }
+  .demo-progress {
+    flex: 1; min-width: 120px;
+    height: 6px; background: rgba(255,255,255,0.15);
+    border-radius: 3px; overflow: hidden;
+    cursor: pointer; position: relative;
+  }
+  .demo-progress-fill {
+    height: 100%; width: 0%;
+    background: linear-gradient(90deg,#0EA5E9,#22D3EE);
+    transition: width 0.6s linear;
+  }
+  .demo-time { font-size: 0.72rem; opacity: 0.7; min-width: 70px; text-align: right; }
+
+  .demo-steps {
+    display: flex; flex-wrap: wrap; gap: 4px;
+    padding: 8px 12px;
+    background: #0F172A;
+    border-top: 1px solid rgba(255,255,255,0.08);
+  }
+  .demo-step {
+    background: rgba(255,255,255,0.08);
+    color: #94A3B8;
+    border: 0;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .demo-step:hover { background: rgba(255,255,255,0.16); color: #fff; }
+  .demo-step.is-active {
+    {% if is_focus %}background: #117A86;
+    {% elif is_dna %}background: #7C3AED;
+    {% elif is_teacher_dna %}background: #6D28D9;
+    {% else %}background: #0EA5E9;{% endif %}
+    color: #fff;
+  }
+
+  .demo-playlist {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    overflow: hidden;
+    height: fit-content;
+  }
+  .demo-playlist-header {
+    padding: 14px 16px;
+    background: linear-gradient(135deg,#F8FAFC,#F1F5F9);
+    border-bottom: 1px solid #E2E8F0;
+  }
+  .demo-playlist-item {
+    display: flex; gap: 10px;
+    padding: 10px 12px;
+    cursor: pointer;
+    border-bottom: 1px solid #F1F5F9;
+    transition: background 0.15s;
+    text-decoration: none;
+    color: inherit;
+  }
+  .demo-playlist-item:hover { background: #F8FAFC; }
+  .demo-playlist-item.is-active {
+    background: linear-gradient(90deg,#E0F2FE,#F0F9FF);
+    {% if is_focus %}background: linear-gradient(90deg,#D1FAE5,#ECFDF5); border-left: 3px solid #117A86;
+    {% elif is_dna %}background: linear-gradient(90deg,#EDE9FE,#F5F3FF); border-left: 3px solid #7C3AED;
+    {% elif is_teacher_dna %}background: linear-gradient(90deg,#DDD6FE,#EDE9FE); border-left: 3px solid #6D28D9;
+    {% else %}border-left: 3px solid #0EA5E9;{% endif %}
+    padding-left: 9px;
+  }
+  .demo-playlist-thumb {
+    flex-shrink: 0;
+    width: 80px; height: 48px;
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+    color: #fff;
+  }
+  .demo-playlist-meta { flex: 1; min-width: 0; }
+  .demo-playlist-title {
+    font-size: 0.82rem; font-weight: 700;
+    color: #0F172A;
+    line-height: 1.25;
+    margin-bottom: 2px;
+  }
+  .demo-playlist-desc {
+    font-size: 0.7rem; color: #64748B;
+    line-height: 1.3;
+  }
+  .demo-playlist-duration {
+    font-size: 0.65rem; color: #94A3B8;
+    margin-top: 3px;
+    font-family: monospace;
+  }
+  .demo-playlist-item.is-coming-soon {
+    cursor: default;
+    opacity: 0.55;
+  }
+  .demo-playlist-item.is-coming-soon:hover { background: transparent; }
+
+  .demo-meta {
+    background: #fff;
+    border: 1px solid #E2E8F0;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-top: 14px;
+  }
+
+  .mu-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #F1F5F9; background:#FAFAF9; }
+  .mu-bar-title { font-weight: 700; font-size: 0.85rem; color:#0F172A; }
+  .mu-tag { font-size: 0.62rem; font-weight: 700; padding: 2px 6px; border-radius: 4px; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .mu-card {
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    padding: 10px 12px;
+    background: #fff;
+    transition: all 0.25s;
+  }
+  .mu-card.highlight {
+    border-color: #0EA5E9;
+    box-shadow: 0 6px 18px -6px rgba(14,165,233,0.4);
+    transform: translateY(-1px);
+  }
+  .mu-card.highlight-focus {
+    border-color: #117A86;
+    box-shadow: 0 6px 18px -6px rgba(17,122,134,0.5);
+    transform: translateY(-1px);
+  }
+
+  @keyframes mu-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(14,165,233,0.55); }
+    50% { box-shadow: 0 0 0 12px rgba(14,165,233,0); }
+  }
+  .mu-pulse { animation: mu-pulse 1.6s infinite; }
+  @keyframes mu-pulse-tomato {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(220,38,38,0.55); }
+    50% { box-shadow: 0 0 0 12px rgba(220,38,38,0); }
+  }
+  .mu-pulse-tomato { animation: mu-pulse-tomato 1.6s infinite; }
+
+  @keyframes mu-spin { to { transform: rotate(360deg); } }
+  .mu-spinner {
+    width: 28px; height: 28px;
+    border: 3px solid #E2E8F0;
+    border-top-color: #0EA5E9;
+    border-radius: 50%;
+    animation: mu-spin 0.8s linear infinite;
+  }
+
+  @keyframes mu-fade-up {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .demo-scene.is-active .mu-fade { animation: mu-fade-up 0.5s ease both; }
+  .demo-scene.is-active .mu-fade-1 { animation-delay: 0.15s; }
+  .demo-scene.is-active .mu-fade-2 { animation-delay: 0.30s; }
+  .demo-scene.is-active .mu-fade-3 { animation-delay: 0.45s; }
+  .demo-scene.is-active .mu-fade-4 { animation-delay: 0.60s; }
+  .demo-scene.is-active .mu-fade-5 { animation-delay: 0.75s; }
+
+  /* Pomodoro çember mockup */
+  .pomo-ring {
+    width: 130px; height: 130px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: conic-gradient(#117A86 0deg 270deg, #E7E5E4 270deg 360deg);
+    position: relative;
+  }
+  .pomo-ring::before {
+    content: ""; position: absolute; inset: 8px;
+    background: #fff; border-radius: 50%;
+  }
+  .pomo-ring-text {
+    position: relative; z-index: 1;
+    font-family: ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 1.6rem;
+    color: #0B5560;
+  }
+  .pomo-ring.done {
+    background: conic-gradient(#16A34A 0deg 360deg);
+  }
+  .pomo-ring.done .pomo-ring-text { color: #16A34A; }
+</style>
+
+<div class="demo-page">
+
+  {# Üst bar #}
+  <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+    <div>
+      <a href="/" class="text-sm text-stone-500 hover:text-stone-700 inline-flex items-center gap-1">
+        ← Ana sayfa
+      </a>
+      <h1 class="text-2xl font-bold text-stone-900 mt-1">🎬 Demo Videoları</h1>
+      <p class="text-sm text-stone-500 mt-0.5">
+        ETÜTKOÇ Rotam'ı satın almadan önce aşama aşama nasıl çalıştığını izle.
+      </p>
+    </div>
+    <a href="/register"
+       class="inline-flex items-center gap-2 text-sm font-bold px-4 py-2 rounded-lg text-white"
+       style="background:linear-gradient(135deg,#0B5560,#117A86);">
+      14 gün ücretsiz dene →
+    </a>
+  </div>
+
+  <div class="demo-grid">
+
+    {# ════════ ANA OYNATICI ════════ #}
+    <div>
+      <div class="demo-player" id="demo-player">
+
+        <div class="demo-stage" id="demo-stage">
+
+        {# ═══════════════ DEMO: GÜNLÜK PROGRAM (mevcut) ═══════════════ #}
+        {% if is_daily %}
+
+          {# Sahne 1: INTRO #}
+          <div class="demo-scene is-active" data-scene="0">
+            <div class="demo-scene-inner transparent text-center">
+              <div class="mu-fade" style="color:#fff;">
+                <div class="text-6xl mb-3">🎓</div>
+                <div class="text-xs uppercase tracking-[0.3em] font-bold mb-2" style="color:#22D3EE;">ETÜTKOÇ ROTAM · DEMO</div>
+                <h2 class="text-4xl font-extrabold mb-2" style="color:#fff;">Günlük Program Oluşturma</h2>
+                <p class="text-base mb-5" style="color:#94A3B8;">Aşama aşama — 8 sahnede kişisel öğrenci programı</p>
+                <div class="flex items-center justify-center gap-2 text-sm" style="color:#22D3EE;">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full" style="background:rgba(34,211,238,0.20);">▶</span>
+                  <span class="font-semibold">Başlatmak için oynatma tuşuna bas</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 2: Öğrenci seç #}
+          <div class="demo-scene" data-scene="1">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🧑‍🏫</span>
+                <span class="mu-bar-title">Öğrencilerim · Öğretmen Paneli</span>
+                <span class="mu-tag ml-auto" style="background:#E0F2FE; color:#0369A1;">4 öğrenci</span>
+              </div>
+              <div class="p-3 space-y-2">
+                <div class="mu-card highlight mu-pulse mu-fade mu-fade-1 flex items-center gap-3">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style="background:#0EA5E9;">AK</div>
+                  <div class="flex-1">
+                    <div class="font-bold text-sm text-stone-900">Ayşe K.</div>
+                    <div class="text-xs text-stone-500">8. sınıf · LGS · Bugün 0/0 görev</div>
+                  </div>
+                  <span class="mu-tag" style="background:#DCFCE7; color:#15803D;">▶ SEÇİLDİ</span>
+                </div>
+                <div class="mu-card mu-fade mu-fade-2 flex items-center gap-3 opacity-60">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style="background:#7C3AED;">MY</div>
+                  <div class="flex-1">
+                    <div class="font-bold text-sm text-stone-900">Mehmet Y.</div>
+                    <div class="text-xs text-stone-500">7. sınıf · LGS</div>
+                  </div>
+                </div>
+                <div class="mu-card mu-fade mu-fade-3 flex items-center gap-3 opacity-60">
+                  <div class="w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style="background:#E11D48;">EB</div>
+                  <div class="flex-1">
+                    <div class="font-bold text-sm text-stone-900">Elif B.</div>
+                    <div class="text-xs text-stone-500">11. sınıf · YKS · Sayısal</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 3: Boş + AI yükleniyor #}
+          <div class="demo-scene" data-scene="2">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">📅</span>
+                <span class="mu-bar-title">Salı, 12 Mayıs · Ayşe K. — Günlük Rota</span>
+                <span class="mu-tag ml-auto" style="background:#FEF3C7; color:#92400E;">Boş gün</span>
+              </div>
+              <div class="grid grid-cols-2 gap-3 p-3">
+                <div>
+                  <div class="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-2">Bugünkü görevler</div>
+                  <div class="border-2 border-dashed border-stone-200 rounded-lg p-6 text-center mu-fade mu-fade-1">
+                    <div class="text-3xl mb-1 opacity-40">📭</div>
+                    <p class="text-xs text-stone-400">Henüz görev yok</p>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] uppercase tracking-wider font-bold text-stone-400">✨ Öneriler</span>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-full mu-pulse" style="background:#0EA5E9; color:#fff;">AI çalışıyor</span>
+                  </div>
+                  <div class="rounded-lg p-5 text-center mu-fade mu-fade-2" style="background:#F0F9FF; border:1px dashed #BAE6FD;">
+                    <div class="mu-spinner mx-auto mb-2"></div>
+                    <p class="text-xs font-semibold" style="color:#0369A1;">Öneriler hazırlanıyor...</p>
+                    <p class="text-[10px] text-stone-500 mt-1">FSRS · zorlanılan konular · haftalık eksikler</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 4: Öneriler geldi #}
+          <div class="demo-scene" data-scene="3">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">✨</span>
+                <span class="mu-bar-title">Öneriler hazır · Ayşe K.</span>
+                <button class="ml-auto text-[11px] font-bold px-3 py-1.5 rounded-md text-white mu-pulse" style="background:#15803D;">
+                  ✓ Tümünü ekle (5)
+                </button>
+              </div>
+              <div class="p-3 space-y-1.5 text-xs">
+                <div class="mu-card mu-fade mu-fade-1" style="border-color:#10B981;">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-stone-800">📘 Matematik · Üçgenlerde benzerlik</span>
+                    <span class="mu-tag" style="background:#DCFCE7; color:#15803D;">Güçlü 92%</span>
+                  </div>
+                  <div class="text-[10px] text-stone-500">Karekök · Bölüm 4 · 8 soru</div>
+                  <div class="mt-1 flex gap-1.5 text-[9px]">
+                    <span class="px-1.5 py-0.5 rounded" style="background:#FEE2E2; color:#991B1B;">🧠 Tekrar kartında zorlanılan</span>
+                    <span class="px-1.5 py-0.5 rounded" style="background:#FEF3C7; color:#92400E;">📉 Geçen hafta düşük</span>
+                  </div>
+                </div>
+                <div class="mu-card mu-fade mu-fade-2" style="border-color:#10B981;">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-stone-800">📗 Türkçe · Cümlede anlam</span>
+                    <span class="mu-tag" style="background:#DCFCE7; color:#15803D;">Güçlü 88%</span>
+                  </div>
+                </div>
+                <div class="mu-card mu-fade mu-fade-3" style="border-color:#F59E0B;">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-stone-800">📙 Fen · Hücre bölünmesi</span>
+                    <span class="mu-tag" style="background:#FEF3C7; color:#92400E;">Orta 65%</span>
+                  </div>
+                </div>
+                <div class="mu-card mu-fade mu-fade-4" style="border-color:#7C3AED;">
+                  <div class="flex items-center justify-between mb-1">
+                    <span class="font-bold text-stone-800">🌍 İngilizce · Kelime tekrarı</span>
+                    <span class="mu-tag" style="background:#EDE9FE; color:#6D28D9;">FSRS bugün</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 5: Görevler düştü, drag-drop #}
+          <div class="demo-scene" data-scene="4">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">📅</span>
+                <span class="mu-bar-title">Salı, 12 Mayıs · 5 görev planlandı</span>
+                <span class="mu-tag ml-auto" style="background:#DCFCE7; color:#15803D;">✓ Eklendi</span>
+              </div>
+              <div class="p-3 space-y-1.5">
+                {% for hr, icon, subj, topic, count, color in [
+                  ('09:00', '📘', 'Matematik', 'Üçgenlerde benzerlik', '8 soru', '#117A86'),
+                  ('11:00', '📗', 'Türkçe', 'Cümlede anlam', '10 soru', '#15803D'),
+                  ('14:00', '📙', 'Fen', 'Hücre bölünmesi', '6 soru', '#C68A18'),
+                  ('20:00', '🌍', 'İngilizce', 'Kelime tekrarı', '12 kart', '#7C3AED'),
+                ] %}
+                <div class="flex items-center gap-2 px-2 py-2 rounded-md mu-fade mu-fade-{{ loop.index }}" style="background:#F8FAFC; border:1px solid #E2E8F0;">
+                  <span class="text-stone-400 cursor-grab text-sm">⋮⋮</span>
+                  <input type="text" value="{{ hr }}" readonly class="w-14 text-xs font-mono font-bold text-center rounded border border-stone-200 py-1" style="color:#0F172A;" />
+                  <span class="text-base">{{ icon }}</span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-[11px] font-semibold text-stone-800 truncate">{{ subj }} · <span class="text-stone-500 font-normal">{{ topic }}</span></p>
+                  </div>
+                  <span class="text-[10px] font-bold text-stone-600">{{ count }}</span>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 6: Manuel + tip seçici #}
+          <div class="demo-scene" data-scene="5">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">➕</span>
+                <span class="mu-bar-title">Yeni görev ekle · 5 tip</span>
+              </div>
+              <div class="p-4">
+                <div class="grid grid-cols-5 gap-1.5 mu-fade mu-fade-1">
+                  <button class="px-2 py-2 rounded-md text-[10px] font-bold border-2 mu-pulse" style="background:#0EA5E9; color:#fff; border-color:#0EA5E9;"><div class="text-base">📝</div>Test</button>
+                  <button class="px-2 py-2 rounded-md text-[10px] font-semibold border border-stone-200 text-stone-700"><div class="text-base">🎥</div>Video</button>
+                  <button class="px-2 py-2 rounded-md text-[10px] font-semibold border border-stone-200 text-stone-700"><div class="text-base">📄</div>Özet</button>
+                  <button class="px-2 py-2 rounded-md text-[10px] font-semibold border border-stone-200 text-stone-700"><div class="text-base">🔁</div>Tekrar</button>
+                  <button class="px-2 py-2 rounded-md text-[10px] font-semibold border border-stone-200 text-stone-700"><div class="text-base">📚</div>Diğer</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 7: Kitap & bölüm #}
+          <div class="demo-scene" data-scene="6">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">📚</span>
+                <span class="mu-bar-title">Kitap & Bölüm seç</span>
+              </div>
+              <div class="p-4">
+                <div class="grid grid-cols-3 gap-2 mu-fade mu-fade-3">
+                  <div class="text-center p-2 rounded-md" style="background:#F0F9FF; border:1px solid #BAE6FD;">
+                    <div class="text-[9px] text-stone-500 uppercase">Bölümde</div>
+                    <div class="text-base font-bold" style="color:#0369A1;">24 test</div>
+                  </div>
+                  <div class="text-center p-2 rounded-md" style="background:#FEF3C7; border:1px solid #FCD34D;">
+                    <div class="text-[9px] text-stone-500 uppercase">Çözülmüş</div>
+                    <div class="text-base font-bold" style="color:#92400E;">12</div>
+                  </div>
+                  <div class="text-center p-2 rounded-md" style="background:#DCFCE7; border:1px solid #86EFAC;">
+                    <div class="text-[9px] text-stone-500 uppercase">Hedef</div>
+                    <div class="text-base font-bold" style="color:#15803D;">+8</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 8: Telefon + CTA #}
+          <div class="demo-scene" data-scene="7">
+            <div class="demo-scene-inner transparent">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center text-left">
+                <div class="flex justify-center mu-fade mu-fade-1">
+                  <div style="width: 200px; background:#0F172A; border-radius:28px; padding:8px;">
+                    <div style="background:#fff; border-radius:22px; overflow:hidden;">
+                      <div style="background:linear-gradient(135deg,#0B5560,#117A86); padding:12px; color:#fff;">
+                        <div class="text-[9px] uppercase tracking-wider opacity-80">Salı 12 Mayıs</div>
+                        <div class="text-sm font-bold">Bugünkü Rotam</div>
+                      </div>
+                      <div class="p-2 space-y-1 text-[9px]">
+                        <div class="flex items-center gap-1.5 p-1 rounded" style="background:#F0F9FF;"><span>📘</span><span class="flex-1 font-semibold">Matematik</span><span>09:00</span></div>
+                        <div class="flex items-center gap-1.5 p-1 rounded" style="background:#F0FDF4;"><span>📗</span><span class="flex-1 font-semibold">Türkçe</span><span>11:00</span></div>
+                        <div class="flex items-center gap-1.5 p-1 rounded" style="background:#FFFBEB;"><span>📙</span><span class="flex-1 font-semibold">Fen</span><span>14:00</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="color:#fff;" class="mu-fade mu-fade-2">
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold mb-3" style="background:rgba(34,211,238,0.15); color:#22D3EE;">✓ DEMO TAMAMLANDI</div>
+                  <h3 class="text-2xl font-extrabold mb-2" style="color:#fff;">Sen de aynısını yap.</h3>
+                  <p class="text-sm mb-4" style="color:#94A3B8;">Hiç manuel takvim açma. AI önerilerle 30 saniyede hafta dolar.</p>
+                  <a href="/register" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm" style="background:linear-gradient(135deg,#0EA5E9,#0369A1); color:#fff;">14 gün ücretsiz dene →</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {# ═══════════════ DEMO: POMODORO ODAK (yeni) ═══════════════ #}
+        {% elif is_focus %}
+
+          {# Sahne 1: INTRO #}
+          <div class="demo-scene is-active" data-scene="0">
+            <div class="demo-scene-inner transparent text-center">
+              <div class="mu-fade" style="color:#fff;">
+                <div class="text-6xl mb-3">🍅</div>
+                <div class="text-xs uppercase tracking-[0.3em] font-bold mb-2" style="color:#5EEAD4;">ETÜTKOÇ ROTAM · ÖĞRENCİ DEMO</div>
+                <h2 class="text-4xl font-extrabold mb-2" style="color:#fff;">Pomodoro Odak Modu</h2>
+                <p class="text-base mb-5" style="color:#94A3B8;">Aşama aşama — 8 sahnede odak yöntemi · rozet · streak</p>
+                <div class="flex items-center justify-center gap-2 text-sm" style="color:#5EEAD4;">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full" style="background:rgba(94,234,212,0.20);">▶</span>
+                  <span class="font-semibold">Oynatmak için ▶ tuşuna bas</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 2: Pomodoro nedir? #}
+          <div class="demo-scene" data-scene="1">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">💡</span>
+                <span class="mu-bar-title">Pomodoro tekniği nedir?</span>
+              </div>
+              <div class="p-4">
+                <div class="flex items-center justify-center gap-3 mb-4">
+                  <div class="text-center mu-fade mu-fade-1">
+                    <div style="width: 110px; height: 90px; background:linear-gradient(135deg,#FEE2E2,#FCA5A5); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1.5rem; font-weight:bold; color:#7F1D1D;">25 dk</div>
+                    <div class="text-[10px] font-bold text-rose-700 mt-1">🍅 ODAK</div>
+                  </div>
+                  <div class="text-2xl text-stone-400">→</div>
+                  <div class="text-center mu-fade mu-fade-2">
+                    <div style="width: 70px; height: 55px; background:linear-gradient(135deg,#DCFCE7,#86EFAC); border-radius:8px; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:bold; color:#14532D;">5 dk</div>
+                    <div class="text-[10px] font-bold text-emerald-700 mt-1">☕ MOLA</div>
+                  </div>
+                  <div class="text-2xl text-stone-400">↻</div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 mt-4 text-xs mu-fade mu-fade-3">
+                  <div class="p-2 rounded-md text-center" style="background:#F0FDF4;">
+                    <div class="text-base">🧠</div>
+                    <div class="font-bold text-emerald-800 text-[11px]">Beyin yorulmaz</div>
+                    <div class="text-[10px] text-stone-500">Kısa odak + dinlenme</div>
+                  </div>
+                  <div class="p-2 rounded-md text-center" style="background:#F0F9FF;">
+                    <div class="text-base">⏱</div>
+                    <div class="font-bold text-sky-800 text-[11px]">Zaman bilinci</div>
+                    <div class="text-[10px] text-stone-500">25 dk somut hedef</div>
+                  </div>
+                  <div class="p-2 rounded-md text-center" style="background:#FEF3C7;">
+                    <div class="text-base">📊</div>
+                    <div class="font-bold text-amber-800 text-[11px]">Ölçülebilir</div>
+                    <div class="text-[10px] text-stone-500">Kaç pomodoro yaptın?</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 3: Seansa başla #}
+          <div class="demo-scene" data-scene="2">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🎯</span>
+                <span class="mu-bar-title">Odak Seansı Başlat</span>
+              </div>
+              <div class="p-4">
+                <p class="text-center text-xs text-stone-500 mb-3">Bir seans seç ve başlat:</p>
+                <div class="flex flex-wrap justify-center gap-2 mb-4">
+                  <button class="px-4 py-2 rounded-full text-xs font-bold text-white mu-pulse-tomato mu-fade mu-fade-1" style="background:#0B5560;">🍅 25 dk Odak</button>
+                  <button class="px-4 py-2 rounded-full text-xs font-medium bg-stone-100 text-stone-700 mu-fade mu-fade-2">🍅🍅 50 dk Odak</button>
+                  <button class="px-4 py-2 rounded-full text-xs font-medium bg-stone-100 text-stone-700 mu-fade mu-fade-3">☕ 5 dk Mola</button>
+                  <button class="px-4 py-2 rounded-full text-xs font-medium bg-stone-100 text-stone-700 mu-fade mu-fade-4">🌿 15 dk Uzun Mola</button>
+                </div>
+                <div class="max-w-md mx-auto space-y-2 mu-fade mu-fade-5">
+                  <input type="text" placeholder="Ne çalışıyorsun? (örn: Matematik — Üçgenler)" value="Matematik — Üçgenler" readonly class="w-full px-3 py-2 border border-stone-300 rounded text-xs" />
+                  <button class="w-full text-white font-semibold py-2.5 rounded text-sm" style="background:#0B5560;">▶ Başlat</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 4: Sıkı Odak Modu #}
+          <div class="demo-scene" data-scene="3">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🔒</span>
+                <span class="mu-bar-title">Sıkı Odak Modu (opsiyonel)</span>
+                <span class="mu-tag ml-auto" style="background:#FEE2E2; color:#991B1B;">YENİ</span>
+              </div>
+              <div class="p-4">
+                <div class="flex items-start gap-3 p-3 rounded-lg mb-3 mu-fade mu-fade-1" style="background:#FEF2F2; border:1px solid #FCA5A5;">
+                  <span class="text-xl">🔒</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-sm" style="color:#7F1D1D;">Sıkı Odak Modu açık</div>
+                    <div class="text-xs text-rose-900 mt-0.5">Sayaç süresince sekmeden ne sıklıkla ayrıldığın izlenir — fare/klavye izlenmez.</div>
+                  </div>
+                  <span class="mu-tag" style="background:#DC2626; color:#fff;">✓ AÇIK</span>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-center text-xs mu-fade mu-fade-2">
+                  <div class="p-2 rounded-md" style="background:#F8FAFC; border:1px solid #E2E8F0;">
+                    <div class="font-extrabold text-lg" style="color:#0B5560;">3×</div>
+                    <div class="text-[10px] text-stone-600 mt-0.5">sekmeden ayrılma</div>
+                  </div>
+                  <div class="p-2 rounded-md" style="background:#F8FAFC; border:1px solid #E2E8F0;">
+                    <div class="font-extrabold text-lg" style="color:#0B5560;">%15</div>
+                    <div class="text-[10px] text-stone-600 mt-0.5">toplam dışarıda</div>
+                  </div>
+                  <div class="p-2 rounded-md" style="background:#F8FAFC; border:1px solid #E2E8F0;">
+                    <div class="font-extrabold text-lg" style="color:#0B5560;">3 dk+</div>
+                    <div class="text-[10px] text-stone-600 mt-0.5">tek seferde</div>
+                  </div>
+                </div>
+                <p class="text-[10px] text-stone-500 text-center mt-3 italic mu-fade mu-fade-3">
+                  Bu eşiklerden biri aşılırsa seans "Kesintili" olarak işaretlenir. Kağıt-kalem çalışmasında odağı zorlar.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 5: Sayaç çalışıyor #}
+          <div class="demo-scene" data-scene="4">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🍅</span>
+                <span class="mu-bar-title">Odakta · Matematik — Üçgenler</span>
+                <span class="mu-tag ml-auto" style="background:#FEE2E2; color:#991B1B;">🔒 Sıkı mod</span>
+              </div>
+              <div class="p-4 flex flex-col items-center">
+                <div class="pomo-ring mb-3 mu-fade mu-fade-1">
+                  <span class="pomo-ring-text">18:42</span>
+                </div>
+                <div class="text-[10px] uppercase tracking-wider text-stone-500 mb-3">kalan süre</div>
+                {# Sıkı mod canlı metrikleri #}
+                <div class="w-full max-w-sm rounded-lg p-2.5 mb-3 text-xs mu-fade mu-fade-2"
+                     style="background:#ECFDF5; border:1px solid #A7F3D0; color:#065F46;">
+                  <div class="flex items-center justify-between mb-1.5">
+                    <span class="font-bold">✓ Odakta</span>
+                    <span class="text-[10px] opacity-75">eşik: 3× / %15 / 3 dk</span>
+                  </div>
+                  <div class="grid grid-cols-3 gap-2 text-center">
+                    <div><div class="font-bold">0×</div><div class="text-[9px] opacity-75">sekme dışı</div></div>
+                    <div><div class="font-bold">%0</div><div class="text-[9px] opacity-75">toplam oran</div></div>
+                    <div><div class="font-bold">0 sn</div><div class="text-[9px] opacity-75">en uzun</div></div>
+                  </div>
+                </div>
+                <button class="text-rose-700 border-2 border-rose-200 hover:bg-rose-50 font-semibold py-2 px-6 rounded-lg text-xs mu-fade mu-fade-3">✕ Vazgeç (kesintili kaydet)</button>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 6: Süre doldu + 4 seçenek #}
+          <div class="demo-scene" data-scene="5">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">⏰</span>
+                <span class="mu-bar-title">Süre doldu! 🎉</span>
+                <span class="mu-tag ml-auto" style="background:#DCFCE7; color:#15803D;">25/25 dk</span>
+              </div>
+              <div class="p-4 grid grid-cols-2 gap-4 items-center">
+                <div class="flex flex-col items-center mu-fade mu-fade-1">
+                  <div class="pomo-ring done mb-2">
+                    <span class="pomo-ring-text">00:00</span>
+                  </div>
+                  {# Bildirim mockup'ı #}
+                  <div class="mt-2 text-[10px] flex items-center gap-1.5 px-2 py-1 rounded-md" style="background:#0F172A; color:#fff;">
+                    <span>🔔</span> <span>"Odak süren bitti!" — bildirim</span>
+                  </div>
+                  <div class="mt-1 text-[10px] flex items-center gap-1.5 px-2 py-1 rounded-md" style="background:#F0F9FF; color:#0369A1; border:1px solid #BAE6FD;">
+                    <span>🎵</span> <span>3 tonlu melodik alarm</span>
+                  </div>
+                </div>
+                <div class="space-y-1.5 text-xs">
+                  <button class="w-full font-bold py-2.5 rounded-lg text-white mu-fade mu-fade-2" style="background:linear-gradient(135deg,#0B5560,#117A86);">✓ Bitti · ☕ 5 dk Mola Başlat</button>
+                  <button class="w-full font-semibold py-2 rounded text-emerald-700 border border-emerald-300 mu-fade mu-fade-3">✓ Bitti · 🌿 15 dk Uzun Mola</button>
+                  <button class="w-full font-medium py-2 rounded text-stone-700 border border-stone-300 mu-fade mu-fade-4">✓ Bitti · Direkt çık</button>
+                  <button class="w-full text-[10px] py-1.5 rounded text-rose-600 border border-rose-200 mu-fade mu-fade-5">⚠ Odaklanamadım — kesintili kaydet</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 7: Bugünkü özet + otomatik kapanma #}
+          <div class="demo-scene" data-scene="6">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">📊</span>
+                <span class="mu-bar-title">Bugünün Özeti</span>
+              </div>
+              <div class="p-4 grid grid-cols-2 gap-4">
+                <div class="space-y-2.5 text-sm mu-fade mu-fade-1">
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-stone-600">Odak seansı</span>
+                    <span class="text-2xl font-extrabold" style="color:#0B5560;">4</span>
+                  </div>
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-stone-600">Odak dakikası</span>
+                    <span class="text-2xl font-extrabold" style="color:#0B5560;">100</span>
+                  </div>
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-stone-600">Mola dakikası</span>
+                    <span class="text-base text-stone-500">20</span>
+                  </div>
+                  <div class="flex justify-between items-baseline">
+                    <span class="text-rose-600 text-xs">Yarıda bırakılan</span>
+                    <span class="text-base text-rose-700 font-medium">1</span>
+                  </div>
+                </div>
+                <div class="space-y-2 text-xs mu-fade mu-fade-2">
+                  <div class="rounded-lg p-2.5" style="background:#FEF3C7; border:1px solid #FCD34D;">
+                    <div class="font-bold mb-0.5" style="color:#92400E;">🤖 Otomatik kapanma</div>
+                    <p class="text-[10px] text-amber-900 leading-relaxed">3 saat boyunca açık kalan seans sistem tarafından "kesintili" olarak kapatılır. Veri kalitesi bozulmaz.</p>
+                  </div>
+                  <div class="rounded-lg p-2.5" style="background:#F0FDF4; border:1px solid #86EFAC;">
+                    <div class="font-bold mb-0.5" style="color:#15803D;">🎯 Tek tıkla mola</div>
+                    <p class="text-[10px] text-emerald-900 leading-relaxed">"Bitti + 5 dk Mola" tek tıkla iki adımı birden yapar. Pomodoro döngüsünü kesintisiz sürdür.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 8: Streak + Rozet + CTA #}
+          <div class="demo-scene" data-scene="7">
+            <div class="demo-scene-inner transparent">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                {# Sol: Streak + rozet kart #}
+                <div class="mu-fade mu-fade-1">
+                  <div class="bg-white rounded-xl p-4 shadow-xl">
+                    <div class="flex items-center gap-3 mb-3 pb-3 border-b border-stone-100">
+                      <div class="text-4xl">🔥</div>
+                      <div>
+                        <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500">Streak</div>
+                        <div class="text-2xl font-extrabold text-stone-900">7 gün üst üste</div>
+                      </div>
+                      <div class="ml-auto text-right">
+                        <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500">Puan</div>
+                        <div class="text-xl font-extrabold" style="color:#0B5560;">245</div>
+                      </div>
+                    </div>
+                    <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500 mb-2">Kazanılan Rozetler</div>
+                    <div class="grid grid-cols-4 gap-1.5">
+                      <div class="text-center p-1.5 rounded bg-amber-50 border border-amber-200"><div class="text-xl">🌱</div><div class="text-[9px] font-bold text-amber-800">Acemi</div></div>
+                      <div class="text-center p-1.5 rounded bg-amber-50 border border-amber-200"><div class="text-xl">🔥</div><div class="text-[9px] font-bold text-amber-800">7 Gün</div></div>
+                      <div class="text-center p-1.5 rounded bg-amber-50 border border-amber-200"><div class="text-xl">⏱</div><div class="text-[9px] font-bold text-amber-800">Sabırlı</div></div>
+                      <div class="text-center p-1.5 rounded bg-amber-50 border border-amber-200"><div class="text-xl">🔒</div><div class="text-[9px] font-bold text-amber-800">Strict</div></div>
+                    </div>
+                  </div>
+                </div>
+                {# Sağ: CTA mesajı #}
+                <div style="color:#fff;" class="mu-fade mu-fade-2">
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold mb-3" style="background:rgba(94,234,212,0.15); color:#5EEAD4;">
+                    ✓ DEMO TAMAMLANDI
+                  </div>
+                  <h3 class="text-2xl font-extrabold mb-2" style="color:#fff;">Odaklanmayı oyuna çevir.</h3>
+                  <p class="text-sm mb-4" style="color:#94A3B8;">
+                    Her 25 dakika bir kazanım. Streak'in büyüdükçe rozetler açılır, öğretmen filo görünümünde takip eder.
+                    Disipline edilmiş çalışma — ölçülebilir odak.
+                  </p>
+                  <a href="/student/focus"
+                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm"
+                     style="background:linear-gradient(135deg,#0B5560,#117A86); color:#fff;">
+                    🍅 İlk Pomodoro'mu başlat →
+                  </a>
+                  <p class="text-[10px] mt-2" style="color:#64748B;">Kayıtlı isen direkt başlatır · değilsen 14 gün ücretsiz dene</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {# ═══════════════ DEMO: ÇALIŞMA DNA (yeni) ═══════════════ #}
+        {% elif is_dna %}
+
+          {# Sahne 1: INTRO #}
+          <div class="demo-scene is-active" data-scene="0">
+            <div class="demo-scene-inner transparent text-center">
+              <div class="mu-fade" style="color:#fff;">
+                <div class="text-6xl mb-3">🧬</div>
+                <div class="text-xs uppercase tracking-[0.3em] font-bold mb-2" style="color:#C4B5FD;">ETÜTKOÇ ROTAM · ÖĞRENCİ DEMO</div>
+                <h2 class="text-4xl font-extrabold mb-2" style="color:#fff;">Çalışma DNA'm</h2>
+                <p class="text-base mb-5" style="color:#94A3B8;">Aşama aşama — 8 sahnede kendi çalışma profilini keşfet</p>
+                <div class="flex items-center justify-center gap-2 text-sm" style="color:#C4B5FD;">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full" style="background:rgba(196,181,253,0.20);">▶</span>
+                  <span class="font-semibold">Oynatmak için ▶ tuşuna bas</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 2: DNA nedir? #}
+          <div class="demo-scene" data-scene="1">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">💡</span>
+                <span class="mu-bar-title">Çalışma DNA'sı nedir?</span>
+              </div>
+              <div class="p-4">
+                <p class="text-sm text-stone-700 leading-relaxed mb-4 mu-fade mu-fade-1">
+                  Son <b>28 günde</b> ne zaman, hangi günler, hangi derslerde çalıştığın → senin <b>özgün</b> profilin.
+                  Tıpkı parmak izi gibi sana özel.
+                </p>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <div class="p-3 rounded-md text-center mu-fade mu-fade-2" style="background:#F5F3FF; border:1px solid #DDD6FE;">
+                    <div class="text-2xl">🧠</div>
+                    <div class="font-bold mt-1" style="color:#5B21B6;">Kendini tanı</div>
+                    <div class="text-[10px] text-stone-500 mt-0.5">Sabahcı mısın, akşamcı mısın? Veri söyler.</div>
+                  </div>
+                  <div class="p-3 rounded-md text-center mu-fade mu-fade-3" style="background:#F0F9FF; border:1px solid #BAE6FD;">
+                    <div class="text-2xl">⏱</div>
+                    <div class="font-bold mt-1" style="color:#0369A1;">Verimli saatini bul</div>
+                    <div class="text-[10px] text-stone-500 mt-0.5">En çok hangi saatte odak yakalıyorsun?</div>
+                  </div>
+                  <div class="p-3 rounded-md text-center mu-fade mu-fade-4" style="background:#FEF2F2; border:1px solid #FCA5A5;">
+                    <div class="text-2xl">🚨</div>
+                    <div class="font-bold mt-1" style="color:#991B1B;">Tükenmişlik sinyali</div>
+                    <div class="text-[10px] text-stone-500 mt-0.5">Aşırı çalışma seni vurmadan önce uyarır.</div>
+                  </div>
+                </div>
+                <p class="text-[11px] text-stone-500 mt-3 italic text-center mu-fade mu-fade-5">
+                  💡 Profil için en az <b>5 tamamlanmış görev</b> gerekiyor. Daha az ise "yetersiz veri" yazar.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 3: Risk skoru kartı #}
+          <div class="demo-scene" data-scene="2">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🚨</span>
+                <span class="mu-bar-title">Sayfa açıldığında — Risk Skoru</span>
+              </div>
+              <div class="p-4">
+                {# Risk banner mockup'ı #}
+                <div class="rounded-lg p-4 mb-3 border mu-fade mu-fade-1" style="background:#FFFBEB; border-color:#FCD34D;">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <div class="text-xs uppercase tracking-wider font-bold" style="color:#92400E;">TÜKENMİŞLİK RİSKİ</div>
+                      <div class="text-3xl font-extrabold mt-1" style="color:#78350F;">
+                        58 / 100 <span class="text-base font-medium ml-2">🟠 Uyarı</span>
+                      </div>
+                    </div>
+                    <div class="text-xs text-stone-500">3 aktif sinyal</div>
+                  </div>
+                </div>
+                {# 4 seviye legend #}
+                <div class="grid grid-cols-4 gap-2 text-xs mu-fade mu-fade-2">
+                  <div class="p-2 rounded text-center" style="background:#ECFDF5; border:1px solid #A7F3D0;">
+                    <div class="text-base">🟢</div>
+                    <div class="font-bold text-emerald-800 text-[10px]">Sağlıklı</div>
+                    <div class="text-[9px] text-stone-500">0–24</div>
+                  </div>
+                  <div class="p-2 rounded text-center" style="background:#F0F9FF; border:1px solid #BAE6FD;">
+                    <div class="text-base">🟡</div>
+                    <div class="font-bold text-sky-800 text-[10px]">Dikkat</div>
+                    <div class="text-[9px] text-stone-500">25–49</div>
+                  </div>
+                  <div class="p-2 rounded text-center mu-pulse" style="background:#FFFBEB; border:1px solid #FCD34D;">
+                    <div class="text-base">🟠</div>
+                    <div class="font-bold text-amber-800 text-[10px]">Uyarı</div>
+                    <div class="text-[9px] text-stone-500">50–74</div>
+                  </div>
+                  <div class="p-2 rounded text-center" style="background:#FEF2F2; border:1px solid #FCA5A5;">
+                    <div class="text-base">🔴</div>
+                    <div class="font-bold text-rose-800 text-[10px]">Kritik</div>
+                    <div class="text-[9px] text-stone-500">75–100</div>
+                  </div>
+                </div>
+                <p class="text-[10px] text-stone-500 mt-3 italic mu-fade mu-fade-3">
+                  Skor, en şiddetli 3 sinyalinin ağırlıklı ortalaması. Endişelenme — uyarı seni vurmasın diye var, ceza değil.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 4: 5 burnout sinyali #}
+          <div class="demo-scene" data-scene="3">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">📊</span>
+                <span class="mu-bar-title">5 Tükenmişlik Sinyali</span>
+              </div>
+              <div class="p-3 grid grid-cols-1 gap-1.5 text-xs">
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-1" style="background:#F5F3FF; border:1px solid #DDD6FE;">
+                  <span class="text-xl">🌙</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Gece kuşu (night_owl)</div>
+                    <div class="text-[10px] text-stone-500">14 günde gece 22-04 arası çalışmaların %20'yi aştıysa</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-2" style="background:#FEF3C7; border:1px solid #FDE68A;">
+                  <span class="text-xl">📅</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Mola yok (weekend_no_break)</div>
+                    <div class="text-[10px] text-stone-500">21 günde hiç hafta sonu dinlenmediysen</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-3" style="background:#FEE2E2; border:1px solid #FCA5A5;">
+                  <span class="text-xl">🔥</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Yoğunluk patlaması (intensity_spike)</div>
+                    <div class="text-[10px] text-stone-500">Bu hafta geçen haftadan %50+ fazla çalıştıysan</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-4" style="background:#FEF2F2; border:1px solid #FECACA;">
+                  <span class="text-xl">📉</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Düşüş (completion_drop)</div>
+                    <div class="text-[10px] text-stone-500">Bu hafta geçen haftadan %50+ az çalıştıysan</div>
+                  </div>
+                </div>
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-5" style="background:#F1F5F9; border:1px solid #CBD5E1;">
+                  <span class="text-xl">⛓️‍💥</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Seri kırılması (streak_break)</div>
+                    <div class="text-[10px] text-stone-500">5+ gün üst üste çalıştıktan sonra 3 gün hiç çalışmazsan</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 5: Heatmap (saat × gün) #}
+          <div class="demo-scene" data-scene="4">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🗓️</span>
+                <span class="mu-bar-title">Saat × Gün Çalışma Haritası</span>
+                <span class="mu-tag ml-auto" style="background:#EDE9FE; color:#6D28D9;">28 GÜN</span>
+              </div>
+              <div class="p-3">
+                {# Mini heatmap mockup'ı — 7 satır × 24 sütun, renkli #}
+                <div style="display:grid; grid-template-columns: 28px repeat(24, 1fr); gap:2px; font-size:9px; color:#57534E;" class="mu-fade mu-fade-1">
+                  <div></div>
+                  {% for h in [0,3,6,9,12,15,18,21] %}
+                    <div style="grid-column: span 3; text-align:center; color:#A8A29E;">{{ '%02d'|format(h) }}</div>
+                  {% endfor %}
+                  {% set heat = [
+                    [0,0,0,0,0,0,1,1,2,2,1,1,2,3,3,2,1,2,4,4,3,2,1,0],
+                    [0,0,0,0,0,0,1,1,1,2,2,1,2,4,4,3,2,2,3,3,2,1,1,0],
+                    [0,0,0,0,0,0,0,1,1,2,3,2,1,3,4,3,2,2,3,4,3,2,1,1],
+                    [0,0,0,0,0,0,1,2,2,3,2,1,2,3,4,4,3,2,3,3,2,1,1,0],
+                    [0,0,0,0,0,0,1,1,2,3,3,2,1,2,3,3,2,2,4,4,3,2,1,0],
+                    [0,0,0,0,0,0,0,0,1,2,2,1,2,3,3,2,1,1,2,3,3,3,2,1],
+                    [0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,1,1,1,2,3,3,2,1,0],
+                  ] %}
+                  {% set day_lbls = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'] %}
+                  {% for r in range(7) %}
+                    <div style="padding:2px 4px; text-align:right;">{{ day_lbls[r] }}</div>
+                    {% for c in range(24) %}
+                      {% set v = heat[r][c] %}
+                      {% set bg = ['#F5F5F4','#CFE9EC','#9FD3D9','#3BA3B0','#117A86'][v] %}
+                      <div style="aspect-ratio:1/1; border-radius:3px; background:{{ bg }}; border:1px solid rgba(0,0,0,0.04);"></div>
+                    {% endfor %}
+                  {% endfor %}
+                </div>
+                <div class="flex items-center justify-end gap-1 mt-2 text-[10px] text-stone-400 mu-fade mu-fade-2">
+                  <span>Az</span>
+                  {% for c in ['#F5F5F4','#CFE9EC','#9FD3D9','#3BA3B0','#117A86'] %}
+                    <span style="display:inline-block; width:10px; height:10px; background:{{ c }}; border-radius:2px;"></span>
+                  {% endfor %}
+                  <span>Çok</span>
+                </div>
+                <p class="text-[10px] text-stone-500 mt-2 italic text-center mu-fade mu-fade-3">
+                  Renk koyulaştıkça o saat aralığında daha çok görev tamamlamışsın. En verimli saatini gör.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 6: Chronotype + 4 özet kart #}
+          <div class="demo-scene" data-scene="5">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🎯</span>
+                <span class="mu-bar-title">Senin Tempo Profilin</span>
+              </div>
+              <div class="p-4">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-4">
+                  <div class="bg-white border border-stone-200 rounded-lg p-3 mu-fade mu-fade-1">
+                    <div class="text-[10px] uppercase tracking-wider text-stone-500">Chronotype</div>
+                    <div class="text-base font-bold text-stone-900 mt-1 flex items-center gap-1">
+                      <span class="text-2xl">🌆</span>
+                      <span class="text-xs">Akşamcı (18-22)</span>
+                    </div>
+                  </div>
+                  <div class="bg-white border border-stone-200 rounded-lg p-3 mu-fade mu-fade-2">
+                    <div class="text-[10px] uppercase tracking-wider text-stone-500">En yoğun gün</div>
+                    <div class="text-2xl font-bold text-stone-900 mt-1">Sal</div>
+                  </div>
+                  <div class="bg-white border border-stone-200 rounded-lg p-3 mu-fade mu-fade-3">
+                    <div class="text-[10px] uppercase tracking-wider text-stone-500">En yoğun saat</div>
+                    <div class="text-2xl font-bold text-stone-900 mt-1">19:00</div>
+                  </div>
+                  <div class="bg-white border border-stone-200 rounded-lg p-3 mu-fade mu-fade-4">
+                    <div class="text-[10px] uppercase tracking-wider text-stone-500">Tamamlama</div>
+                    <div class="text-2xl font-bold text-stone-900 mt-1">84/120</div>
+                    <div class="text-[10px] text-stone-500">%70 verim</div>
+                  </div>
+                </div>
+                {# 4 saat bandı dağılımı #}
+                <div class="grid grid-cols-4 gap-2 mu-fade mu-fade-5">
+                  {% for emoji, label, count, color in [
+                    ('🌅','Sabah (06-12)', 18, '#92400E'),
+                    ('☀️','Öğle (12-18)', 22, '#0369A1'),
+                    ('🌆','Akşam (18-22)', 38, '#C2410C'),
+                    ('🌙','Gece (22-06)', 6, '#5B21B6'),
+                  ] %}
+                  <div class="bg-stone-50 border border-stone-200 rounded-lg p-2 text-center">
+                    <div class="text-xl">{{ emoji }}</div>
+                    <div class="text-[10px] text-stone-500 mt-0.5">{{ label }}</div>
+                    <div class="text-lg font-bold" style="color:{{ color }};">{{ count }}</div>
+                  </div>
+                  {% endfor %}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 7: Ders bazlı + Haftalık trend #}
+          <div class="demo-scene" data-scene="6">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">📚</span>
+                <span class="mu-bar-title">Ders Dağılımı + Haftalık Trend</span>
+              </div>
+              <div class="p-4 grid grid-cols-2 gap-4">
+                {# Sol — ders progress barları #}
+                <div class="mu-fade mu-fade-1">
+                  <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500 mb-2">Ders Bazlı Çalışma</div>
+                  <div class="space-y-2 text-xs">
+                    {% for name, completed, planned, pct in [
+                      ('Matematik', 28, 32, 87),
+                      ('Türkçe', 22, 28, 78),
+                      ('Fen', 18, 24, 75),
+                      ('Sosyal', 10, 18, 55),
+                      ('İngilizce', 6, 12, 50),
+                    ] %}
+                    <div>
+                      <div class="flex justify-between items-baseline mb-0.5">
+                        <span class="text-stone-700 font-medium">{{ name }}</span>
+                        <span class="text-stone-500 text-[10px]">{{ completed }}/{{ planned }} · %{{ pct }}</span>
+                      </div>
+                      <div class="h-1.5 bg-stone-100 rounded-full overflow-hidden">
+                        <div class="h-full rounded-full" style="width: {{ pct }}%; background:#7C3AED;"></div>
+                      </div>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {# Sağ — haftalık trend #}
+                <div class="mu-fade mu-fade-2">
+                  <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500 mb-2">Haftalık Eğilim</div>
+                  <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-2">
+                    <div class="text-4xl font-extrabold text-emerald-700">↑ %39</div>
+                    <div class="text-xs text-emerald-900 mt-1">Verim artıyor 🎉</div>
+                    <div class="text-[11px] text-stone-600 mt-2">
+                      Bu hafta: <b class="text-stone-900">25 görev</b>
+                    </div>
+                    <div class="text-[11px] text-stone-600">
+                      Geçen hafta: <b class="text-stone-900">18 görev</b>
+                    </div>
+                  </div>
+                  <p class="text-[10px] text-stone-500 italic leading-relaxed">
+                    Sistem bu hafta vs geçen hafta tamamlama sayısını kıyaslar. ±%10 üzerinde sapma "trend" sayılır.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 8: Sonuç + CTA #}
+          <div class="demo-scene" data-scene="7">
+            <div class="demo-scene-inner transparent">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                {# Sol — DNA kart özet #}
+                <div class="mu-fade mu-fade-1">
+                  <div class="bg-white rounded-xl p-4 shadow-xl">
+                    <div class="flex items-center gap-3 mb-3 pb-3 border-b border-stone-100">
+                      <div class="text-4xl">🧬</div>
+                      <div>
+                        <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500">Senin DNA'n</div>
+                        <div class="text-base font-extrabold text-stone-900">🌆 Akşamcı · Sal 19:00 · %70 verim</div>
+                      </div>
+                    </div>
+                    <div class="text-xs text-stone-600 leading-relaxed">
+                      <p class="mb-2">
+                        DNA'n her gün <b>otomatik güncellenir</b> — sen çalıştıkça öğrenir.
+                      </p>
+                      <p>
+                        Bunu bilmek, çalışmayı <b>kendi tempona</b> uydurmanı sağlar. Sabahcı isen sabah ağır dersleri,
+                        gececi isen gece tekrar konularını koyarsın.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {# Sağ — CTA #}
+                <div style="color:#fff;" class="mu-fade mu-fade-2">
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold mb-3" style="background:rgba(196,181,253,0.15); color:#C4B5FD;">
+                    ✓ DEMO TAMAMLANDI
+                  </div>
+                  <h3 class="text-2xl font-extrabold mb-2" style="color:#fff;">Kendini tanı, daha iyi çalış.</h3>
+                  <p class="text-sm mb-4" style="color:#94A3B8;">
+                    Çalışma DNA'sı bir tahminmeke değil, gerçek verinin aynası. Heatmap'ine, chronotype'ına,
+                    risk skoruna düzenli bak. Tükenmişlik sinyalleri seni vurmadan önce uyarsın.
+                  </p>
+                  <a href="/student/dna"
+                     class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm"
+                     style="background:linear-gradient(135deg,#7C3AED,#5B21B6); color:#fff;">
+                    🧬 DNA'mı incele →
+                  </a>
+                  <p class="text-[10px] mt-2" style="color:#64748B;">Profil hazırsa açar · değilse "yetersiz veri" mesajı gösterir</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {# ═══════════════ DEMO: ÖĞRETMEN DNA — Filo + Müdahale ═══════════════ #}
+        {% elif is_teacher_dna %}
+
+          {# Sahne 1: INTRO #}
+          <div class="demo-scene is-active" data-scene="0">
+            <div class="demo-scene-inner transparent text-center">
+              <div class="mu-fade" style="color:#fff;">
+                <div class="text-6xl mb-3">🧬</div>
+                <div class="text-xs uppercase tracking-[0.3em] font-bold mb-2" style="color:#DDD6FE;">ETÜTKOÇ ROTAM · ÖĞRETMEN DEMO</div>
+                <h2 class="text-4xl font-extrabold mb-2" style="color:#fff;">Öğrenci DNA & Müdahale</h2>
+                <p class="text-base mb-5" style="color:#94A3B8;">8 sahne — risk filo görünümü · sinyalleri okuma · doğru zamanda doğru söz</p>
+                <div class="flex items-center justify-center gap-2 text-sm" style="color:#DDD6FE;">
+                  <span class="inline-flex items-center justify-center w-8 h-8 rounded-full" style="background:rgba(221,214,254,0.20);">▶</span>
+                  <span class="font-semibold">Oynatmak için ▶ tuşuna bas</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 2: Öğretmen neden DNA okumalı? #}
+          <div class="demo-scene" data-scene="1">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🎯</span>
+                <span class="mu-bar-title">Öğretmen DNA panelinden ne kazanır?</span>
+              </div>
+              <div class="p-4">
+                <p class="text-sm text-stone-700 leading-relaxed mb-4 mu-fade mu-fade-1">
+                  Çalışan öğrencini takip etmek, sadece görev sayısına bakmak değil. <br>
+                  <b>Çalışma ritmi</b>, <b>uyku düzeni</b>, <b>tükenme sinyalleri</b> — bunlar görev sayısında saklı kalır.
+                </p>
+                <div class="grid grid-cols-3 gap-2 text-xs">
+                  <div class="p-3 rounded-md text-center mu-fade mu-fade-2" style="background:#F5F3FF; border:1px solid #DDD6FE;">
+                    <div class="text-2xl">🔮</div>
+                    <div class="font-bold mt-1" style="color:#5B21B6;">Erken uyarı</div>
+                    <div class="text-[10px] text-stone-500 mt-0.5">Tükenmişlik düşüş yaşanmadan 1 hafta önce sinyal verir.</div>
+                  </div>
+                  <div class="p-3 rounded-md text-center mu-fade mu-fade-3" style="background:#F0F9FF; border:1px solid #BAE6FD;">
+                    <div class="text-2xl">📋</div>
+                    <div class="font-bold mt-1" style="color:#0369A1;">Akıllı planla</div>
+                    <div class="text-[10px] text-stone-500 mt-0.5">Verimli saatlerini bilirsen, programı ona göre kurarsın.</div>
+                  </div>
+                  <div class="p-3 rounded-md text-center mu-fade mu-fade-4" style="background:#FEF3C7; border:1px solid #FDE68A;">
+                    <div class="text-2xl">💬</div>
+                    <div class="font-bold mt-1" style="color:#92400E;">Veliye somut konuş</div>
+                    <div class="text-[10px] text-stone-500 mt-0.5">"Bu hafta gece 02'lerde çalışıyor" — sayıyla destekli.</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 3: Filo görünümü — bulk burnout dashboard #}
+          <div class="demo-scene" data-scene="2">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">📊</span>
+                <span class="mu-bar-title">Tüm Öğrenciler Risk Listesi</span>
+                <span class="mu-tag ml-auto" style="background:#FEE2E2; color:#991B1B;">/teacher/burnout</span>
+              </div>
+              <div class="p-3 space-y-1.5 text-xs">
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-1" style="background:#FEF2F2; border-left:3px solid #DC2626;">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style="background:#DC2626;">EB</div>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Elif B.</div>
+                    <div class="text-[10px] text-stone-500">Gece kuşu · Yoğunluk patlaması · Hafta sonu mola yok</div>
+                  </div>
+                  <span class="text-base font-extrabold" style="color:#991B1B;">82</span>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:#DC2626; color:#fff;">🔴 KRİTİK</span>
+                </div>
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-2" style="background:#FFFBEB; border-left:3px solid #F59E0B;">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style="background:#F59E0B;">MY</div>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Mehmet Y.</div>
+                    <div class="text-[10px] text-stone-500">Düşüş · Seri kırılması</div>
+                  </div>
+                  <span class="text-base font-extrabold" style="color:#92400E;">63</span>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:#F59E0B; color:#fff;">🟠 UYARI</span>
+                </div>
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-3" style="background:#F0F9FF; border-left:3px solid #0EA5E9;">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style="background:#0EA5E9;">AK</div>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Ayşe K.</div>
+                    <div class="text-[10px] text-stone-500">Gece kuşu (low)</div>
+                  </div>
+                  <span class="text-base font-extrabold" style="color:#0369A1;">32</span>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:#0EA5E9; color:#fff;">🟡 DİKKAT</span>
+                </div>
+                <div class="flex items-center gap-2 p-2 rounded-md mu-fade mu-fade-4 opacity-60" style="background:#F0FDF4; border-left:3px solid #16A34A;">
+                  <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-xs flex-shrink-0" style="background:#16A34A;">SD</div>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Selin D.</div>
+                    <div class="text-[10px] text-stone-500">Sinyal yok</div>
+                  </div>
+                  <span class="text-base font-extrabold" style="color:#15803D;">8</span>
+                  <span class="text-[10px] font-bold px-1.5 py-0.5 rounded" style="background:#16A34A; color:#fff;">🟢 SAĞLIKLI</span>
+                </div>
+                <p class="text-[10px] text-stone-500 mt-2 italic text-center mu-fade mu-fade-5">
+                  Risk skoruna göre azalan sıra · En kritik olan en üstte · Öğrenciye tıkla → detay sayfası
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 4: Tek öğrenci DNA — risk kartı #}
+          <div class="demo-scene" data-scene="3">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🚨</span>
+                <span class="mu-bar-title">Elif B. — DNA Detay Sayfası</span>
+                <span class="mu-tag ml-auto" style="background:#FEE2E2; color:#991B1B;">11. SINIF · YKS</span>
+              </div>
+              <div class="p-4">
+                <div class="rounded-lg p-4 mb-3 border mu-fade mu-fade-1" style="background:#FEF2F2; border-color:#FCA5A5;">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <div class="text-xs uppercase tracking-wider font-bold" style="color:#7F1D1D;">TÜKENMİŞLİK RİSKİ</div>
+                      <div class="text-3xl font-extrabold mt-1" style="color:#7F1D1D;">
+                        82 / 100 <span class="text-base font-medium ml-2">🔴 Kritik</span>
+                      </div>
+                    </div>
+                    <div class="text-right">
+                      <div class="text-xs text-stone-500">3 aktif sinyal</div>
+                      <div class="text-[10px] text-rose-700 font-bold mt-1">🚨 Hemen iletişim aç</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2 text-xs mu-fade mu-fade-2">
+                  <div class="p-2 rounded text-center" style="background:#F5F3FF; border:1px solid #DDD6FE;">
+                    <div class="text-[9px] uppercase text-stone-500">Chronotype</div>
+                    <div class="text-sm font-bold mt-0.5" style="color:#5B21B6;">🌙 Gececi</div>
+                  </div>
+                  <div class="p-2 rounded text-center" style="background:#F0F9FF; border:1px solid #BAE6FD;">
+                    <div class="text-[9px] uppercase text-stone-500">En yoğun saat</div>
+                    <div class="text-sm font-bold mt-0.5" style="color:#0369A1;">02:00</div>
+                  </div>
+                  <div class="p-2 rounded text-center" style="background:#FEF2F2; border:1px solid #FCA5A5;">
+                    <div class="text-[9px] uppercase text-stone-500">Trend</div>
+                    <div class="text-sm font-bold mt-0.5" style="color:#7F1D1D;">↑ %180</div>
+                  </div>
+                </div>
+                <p class="text-[10px] text-stone-500 mt-3 italic mu-fade mu-fade-3">
+                  Öğrenci son hafta yoğunluğunu üç katına çıkardı, ortalama uyku saati 02'yi geçti. Konuşma zamanı.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 5: 5 sinyal — öğretmenin yorumu #}
+          <div class="demo-scene" data-scene="4">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">💡</span>
+                <span class="mu-bar-title">Sinyali okudun — şimdi ne diyeceksin?</span>
+              </div>
+              <div class="p-3 grid grid-cols-1 gap-1 text-xs">
+                <div class="flex items-start gap-2 p-2 rounded-md mu-fade mu-fade-1" style="background:#F5F3FF; border:1px solid #DDD6FE;">
+                  <span class="text-lg">🌙</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Gece kuşu</div>
+                    <div class="text-[10px] text-stone-600">→ <i>"Velisi ile saat sınırı konuşalım. Ders saatlerini 20'ye kadar tamamla."</i></div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-2 p-2 rounded-md mu-fade mu-fade-2" style="background:#FEF3C7; border:1px solid #FDE68A;">
+                  <span class="text-lg">📅</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Hafta sonu mola yok</div>
+                    <div class="text-[10px] text-stone-600">→ <i>"Bir gün tamamen boş bırak. Dinlemek de çalışmadır."</i></div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-2 p-2 rounded-md mu-fade mu-fade-3" style="background:#FEE2E2; border:1px solid #FCA5A5;">
+                  <span class="text-lg">🔥</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Yoğunluk patlaması</div>
+                    <div class="text-[10px] text-stone-600">→ <i>"Bu hafta görevleri %20 azaltayım. Acele etme."</i></div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-2 p-2 rounded-md mu-fade mu-fade-4" style="background:#FEF2F2; border:1px solid #FECACA;">
+                  <span class="text-lg">📉</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Düşüş</div>
+                    <div class="text-[10px] text-stone-600">→ <i>"Bir şey mi oldu? Demotivasyon mu, hasta mı? İletişim aç."</i></div>
+                  </div>
+                </div>
+                <div class="flex items-start gap-2 p-2 rounded-md mu-fade mu-fade-5" style="background:#F1F5F9; border:1px solid #CBD5E1;">
+                  <span class="text-lg">⛓️‍💥</span>
+                  <div class="flex-1">
+                    <div class="font-bold text-stone-800">Seri kırılması</div>
+                    <div class="text-[10px] text-stone-600">→ <i>"Geri dönüşü yumuşat. Küçük görevle başlat, alışkanlığı kur."</i></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 6: Heatmap → program planlamada kullan #}
+          <div class="demo-scene" data-scene="5">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">🗓️</span>
+                <span class="mu-bar-title">Heatmap → Program kararı</span>
+              </div>
+              <div class="p-3">
+                <div style="display:grid; grid-template-columns: 28px repeat(24, 1fr); gap:2px; font-size:9px; color:#57534E;" class="mu-fade mu-fade-1">
+                  <div></div>
+                  {% for h in [0,3,6,9,12,15,18,21] %}
+                    <div style="grid-column: span 3; text-align:center; color:#A8A29E;">{{ '%02d'|format(h) }}</div>
+                  {% endfor %}
+                  {% set heat = [
+                    [3,2,1,0,0,0,0,0,0,0,0,0,0,0,1,2,2,2,3,3,4,4,4,4],
+                    [3,3,2,1,0,0,0,0,0,0,0,0,0,0,0,1,2,2,3,4,4,4,4,4],
+                    [3,2,1,0,0,0,0,0,0,0,0,0,0,0,1,1,2,2,3,3,4,4,4,3],
+                    [2,2,1,0,0,0,0,0,0,0,0,0,0,0,0,1,2,2,3,4,4,4,4,4],
+                    [3,3,2,1,0,0,0,0,0,0,0,0,0,0,1,2,2,2,3,4,4,4,4,3],
+                    [2,1,1,0,0,0,0,0,0,0,0,0,0,1,2,2,1,1,2,3,3,3,3,2],
+                    [2,2,1,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,2,1],
+                  ] %}
+                  {% set day_lbls = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'] %}
+                  {% for r in range(7) %}
+                    <div style="padding:2px 4px; text-align:right;">{{ day_lbls[r] }}</div>
+                    {% for c in range(24) %}
+                      {% set v = heat[r][c] %}
+                      {% set bg = ['#F5F5F4','#CFE9EC','#9FD3D9','#3BA3B0','#117A86'][v] %}
+                      <div style="aspect-ratio:1/1; border-radius:3px; background:{{ bg }};"></div>
+                    {% endfor %}
+                  {% endfor %}
+                </div>
+                <div class="mt-3 p-2.5 rounded-md mu-fade mu-fade-2" style="background:#F5F3FF; border-left:3px solid #7C3AED;">
+                  <div class="text-xs font-bold mb-1" style="color:#5B21B6;">📊 Bu öğrenci için karar</div>
+                  <p class="text-[11px] text-stone-700 leading-relaxed">
+                    Verimli pencere: <b>19:00–02:00 + sabah 06–08</b>. <br>
+                    Karar: Görevlerin saatlerini bu pencerelere koy. <b>09:00–14:00 boş aralık</b> — okul + dinlenme.
+                    Gece çalışma fazla, sınırlama gerekli.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 7: Veli iletişimi mockup #}
+          <div class="demo-scene" data-scene="6">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
+                <span class="text-base">💬</span>
+                <span class="mu-bar-title">Veliye Somut Mesaj — Sayılarla Destekli</span>
+              </div>
+              <div class="p-4 grid grid-cols-2 gap-4">
+                <div class="mu-fade mu-fade-1">
+                  <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500 mb-2">WhatsApp / E-posta örneği</div>
+                  <div class="rounded-lg p-3 text-xs leading-relaxed" style="background:#F0FDF4; border:1px solid #86EFAC; color:#14532D;">
+                    "Merhaba,<br>
+                    Elif'in son 2 hafta verisine baktım. <b>Risk skoru 82/100</b>, üç sinyal aktif:<br><br>
+                    • Gece 22-04 arası tamamlamaların yüzde 45'i (sağlıklı sınır %20)<br>
+                    • 21 gündür hiç hafta sonu boş geçmedi<br>
+                    • Bu hafta yoğunluk geçen haftadan %180 arttı<br><br>
+                    Bu hafta görevleri %20 azaltıp, hafta sonu bir gün tamamen boş bıraktım.
+                    Yaklaşımımız hakkında 10 dakika konuşabilir miyiz?"
+                  </div>
+                </div>
+                <div class="mu-fade mu-fade-2">
+                  <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500 mb-2">Sistemin sana sunduğu</div>
+                  <div class="space-y-2 text-xs">
+                    <div class="p-2.5 rounded" style="background:#F5F3FF; border:1px solid #DDD6FE;">
+                      <div class="font-bold mb-0.5" style="color:#5B21B6;">📊 Filo görünümü</div>
+                      <p class="text-[10px] text-stone-600">Tüm öğrencileri tek ekranda risk skoruna göre sırala.</p>
+                    </div>
+                    <div class="p-2.5 rounded" style="background:#F0F9FF; border:1px solid #BAE6FD;">
+                      <div class="font-bold mb-0.5" style="color:#0369A1;">🧬 Tek öğrenci DNA</div>
+                      <p class="text-[10px] text-stone-600">Heatmap + sinyaller + ders dağılımı tek sayfada.</p>
+                    </div>
+                    <div class="p-2.5 rounded" style="background:#FEF3C7; border:1px solid #FDE68A;">
+                      <div class="font-bold mb-0.5" style="color:#92400E;">📣 Veli kanalı</div>
+                      <p class="text-[10px] text-stone-600">"Veliye duyur" butonuyla otomatik bildirim.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 8: Outro + CTA #}
+          <div class="demo-scene" data-scene="7">
+            <div class="demo-scene-inner transparent">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                <div class="mu-fade mu-fade-1">
+                  <div class="bg-white rounded-xl p-4 shadow-xl">
+                    <div class="flex items-center gap-3 mb-3 pb-3 border-b border-stone-100">
+                      <div class="text-4xl">🧑‍🏫</div>
+                      <div>
+                        <div class="text-[10px] uppercase tracking-wider font-bold text-stone-500">Haftalık ritüel</div>
+                        <div class="text-base font-extrabold text-stone-900">Pazartesi 09:00 — Filoya bak</div>
+                      </div>
+                    </div>
+                    <div class="text-xs text-stone-600 leading-relaxed space-y-2">
+                      <p>1. <b>/teacher/burnout</b> aç — kim kritik, kim uyarıda?</p>
+                      <p>2. Kırmızı renkli öğrencilere tek tek tıkla — DNA detayını oku.</p>
+                      <p>3. Programdaki saatleri öğrencinin heatmap'ine göre ayarla.</p>
+                      <p>4. Risk yüksekse veliye sayı destekli kısa bir mesaj at.</p>
+                      <p class="text-stone-400 italic">30 saniye + 3 mesaj = bir hafta huzur.</p>
+                    </div>
+                  </div>
+                </div>
+                <div style="color:#fff;" class="mu-fade mu-fade-2">
+                  <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold mb-3" style="background:rgba(221,214,254,0.15); color:#DDD6FE;">
+                    ✓ DEMO TAMAMLANDI
+                  </div>
+                  <h3 class="text-2xl font-extrabold mb-2" style="color:#fff;">Veri konuşur, sen yön ver.</h3>
+                  <p class="text-sm mb-4" style="color:#94A3B8;">
+                    İyi öğretmen, görev sayısına bakmaz — ritme bakar. DNA paneli, görmeyeceğin verileri görmeni sağlar.
+                    Düşmeden önce yakala, yumuşat, yönlendir.
+                  </p>
+                  <div class="flex gap-2 flex-wrap">
+                    <a href="/teacher/burnout"
+                       class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm"
+                       style="background:linear-gradient(135deg,#6D28D9,#5B21B6); color:#fff;">
+                      📊 Filo görünümüne git →
+                    </a>
+                    <a href="/teacher"
+                       class="inline-flex items-center gap-2 px-3 py-2.5 rounded-lg font-bold text-sm border"
+                       style="border-color:rgba(255,255,255,0.2); color:#fff;">
+                      Panel
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        {% endif %}
+
+        </div>
+
+        {# Caption #}
+        <div class="demo-caption" id="demo-caption-text">
+          🎬 Demo başlatmak için aşağıdaki ▶ tuşuna bas. Türkçe sesli anlatım.
+        </div>
+
+        {# Kontroller #}
+        <div class="demo-controls">
+          <button id="dp-play" class="play-btn" title="Oynat/Duraklat">▶</button>
+          <button id="dp-prev" title="Önceki sahne">⏮</button>
+          <button id="dp-next" title="Sonraki sahne">⏭</button>
+          <div class="demo-progress" id="dp-progress">
+            <div class="demo-progress-fill" id="dp-progress-fill"></div>
+          </div>
+          <div class="demo-time" id="dp-time">Sahne 1 / 8</div>
+          <button id="dp-mute" title="Sesi aç/kapat">🔊</button>
+          <button id="dp-rate" title="Konuşma hızı">1.0×</button>
+          <button id="dp-restart" title="Baştan başlat">↻</button>
+        </div>
+
+        {# Sahne adımları #}
+        <div class="demo-steps" id="dp-steps">
+          {% if is_daily %}
+            <button class="demo-step is-active" data-step="0">1 · Tanıtım</button>
+            <button class="demo-step" data-step="1">2 · Öğrenci seç</button>
+            <button class="demo-step" data-step="2">3 · AI başlat</button>
+            <button class="demo-step" data-step="3">4 · Önerileri oku</button>
+            <button class="demo-step" data-step="4">5 · Düzenle</button>
+            <button class="demo-step" data-step="5">6 · Manuel görev</button>
+            <button class="demo-step" data-step="6">7 · Kitap & bölüm</button>
+            <button class="demo-step" data-step="7">8 · Sonuç + CTA</button>
+          {% elif is_focus %}
+            <button class="demo-step is-active" data-step="0">1 · Tanıtım</button>
+            <button class="demo-step" data-step="1">2 · Pomodoro nedir</button>
+            <button class="demo-step" data-step="2">3 · Seansa başla</button>
+            <button class="demo-step" data-step="3">4 · Sıkı Odak Modu</button>
+            <button class="demo-step" data-step="4">5 · Sayaç + canlı</button>
+            <button class="demo-step" data-step="5">6 · Süre doldu</button>
+            <button class="demo-step" data-step="6">7 · Özet + otomatik</button>
+            <button class="demo-step" data-step="7">8 · Rozet + CTA</button>
+          {% elif is_dna %}
+            <button class="demo-step is-active" data-step="0">1 · Tanıtım</button>
+            <button class="demo-step" data-step="1">2 · DNA nedir</button>
+            <button class="demo-step" data-step="2">3 · Risk skoru</button>
+            <button class="demo-step" data-step="3">4 · 5 sinyal</button>
+            <button class="demo-step" data-step="4">5 · Heatmap</button>
+            <button class="demo-step" data-step="5">6 · Tempo profili</button>
+            <button class="demo-step" data-step="6">7 · Ders + trend</button>
+            <button class="demo-step" data-step="7">8 · CTA</button>
+          {% elif is_teacher_dna %}
+            <button class="demo-step is-active" data-step="0">1 · Tanıtım</button>
+            <button class="demo-step" data-step="1">2 · Neden DNA?</button>
+            <button class="demo-step" data-step="2">3 · Filo görünümü</button>
+            <button class="demo-step" data-step="3">4 · Tek öğrenci</button>
+            <button class="demo-step" data-step="4">5 · 5 sinyal</button>
+            <button class="demo-step" data-step="5">6 · Heatmap kararı</button>
+            <button class="demo-step" data-step="6">7 · Veli mesajı</button>
+            <button class="demo-step" data-step="7">8 · Ritüel + CTA</button>
+          {% endif %}
+        </div>
+      </div>
+
+      {# Açıklama #}
+      <div class="demo-meta" id="demo-meta">
+        {% if is_daily %}
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 class="text-lg font-bold text-stone-900">Günlük Program Oluşturma</h2>
+            <p class="text-xs text-stone-500 mt-1">8 sahne · ~2 dakika · Türkçe sesli anlatım</p>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="px-2 py-1 rounded-full" style="background:#E0F2FE; color:#0369A1;">Öğretmen rehberi</span>
+            <span class="px-2 py-1 rounded-full" style="background:#F0FDF4; color:#15803D;">Başlangıç</span>
+          </div>
+        </div>
+        <p class="text-sm text-stone-600 mt-3 leading-relaxed">
+          Öğrenci seç → AI öneriyi kabul et → saat/sıra düzenle → manuel görev ekle → kitap & bölüm ata → öğrenci paneline indir.
+        </p>
+        {% elif is_focus %}
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 class="text-lg font-bold text-stone-900">🍅 Pomodoro Odak Modu</h2>
+            <p class="text-xs text-stone-500 mt-1">8 sahne · ~2 dakika · Türkçe sesli anlatım · "sen" tonunda</p>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="px-2 py-1 rounded-full" style="background:#D1FAE5; color:#065F46;">Öğrenci rehberi</span>
+            <span class="px-2 py-1 rounded-full" style="background:#FEF3C7; color:#92400E;">Stage 14</span>
+          </div>
+        </div>
+        <p class="text-sm text-stone-600 mt-3 leading-relaxed">
+          25 dk odak + 5 dk mola döngüsünden Sıkı Odak Modu'na, melodik alarmdan rozet/streak sistemine kadar
+          ETÜTKOÇ Rotam'daki odak özelliklerinin tamamı — uygulamalı, sesli anlatımla.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-4 text-xs">
+          <div class="p-2.5 rounded-lg" style="background:#F0FDF4;">
+            <div class="font-bold mb-0.5" style="color:#15803D;">🍅 Klasik Pomodoro</div>
+            <p class="text-stone-600 text-[11px]">25 dk odak → 5 dk mola → tekrar. Tek tıkla zincir.</p>
+          </div>
+          <div class="p-2.5 rounded-lg" style="background:#FEF2F2;">
+            <div class="font-bold mb-0.5" style="color:#991B1B;">🔒 Sıkı Odak Modu</div>
+            <p class="text-stone-600 text-[11px]">Sekme takibi · 3 eşik · fare/klavye izlenmez.</p>
+          </div>
+          <div class="p-2.5 rounded-lg" style="background:#FEF3C7;">
+            <div class="font-bold mb-0.5" style="color:#92400E;">🏆 Rozet & Streak</div>
+            <p class="text-stone-600 text-[11px]">Her seans puan, ardışık günler streak, hedeflerle rozet.</p>
+          </div>
+        </div>
+        {% elif is_dna %}
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 class="text-lg font-bold text-stone-900">🧬 Çalışma DNA'm</h2>
+            <p class="text-xs text-stone-500 mt-1">8 sahne · ~2 dakika · Türkçe sesli anlatım · "sen" tonunda</p>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="px-2 py-1 rounded-full" style="background:#EDE9FE; color:#5B21B6;">Öğrenci rehberi</span>
+            <span class="px-2 py-1 rounded-full" style="background:#F0F9FF; color:#0369A1;">Stage 13</span>
+          </div>
+        </div>
+        <p class="text-sm text-stone-600 mt-3 leading-relaxed">
+          Risk skorundan tükenmişlik sinyallerine, saat × gün haritasından chronotype'a kadar
+          DNA panelinin tüm özelliklerini nasıl okuyacağını adım adım göster. Kendini tanıyan öğrenci daha iyi planlar.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-4 text-xs">
+          <div class="p-2.5 rounded-lg" style="background:#F5F3FF;">
+            <div class="font-bold mb-0.5" style="color:#5B21B6;">🧬 Çalışma DNA'sı</div>
+            <p class="text-stone-600 text-[11px]">28 gün · saat × gün heatmap · chronotype · peak hour.</p>
+          </div>
+          <div class="p-2.5 rounded-lg" style="background:#FFFBEB;">
+            <div class="font-bold mb-0.5" style="color:#92400E;">🚨 Tükenmişlik Sinyalleri</div>
+            <p class="text-stone-600 text-[11px]">5 sinyal · risk skoru 0–100 · 4 seviye.</p>
+          </div>
+          <div class="p-2.5 rounded-lg" style="background:#F0F9FF;">
+            <div class="font-bold mb-0.5" style="color:#0369A1;">📈 Trend & Ders Bazlı</div>
+            <p class="text-stone-600 text-[11px]">Bu hafta vs geçen hafta · ders bazlı tamamlama.</p>
+          </div>
+        </div>
+        {% elif is_teacher_dna %}
+        <div class="flex items-start justify-between gap-3 flex-wrap">
+          <div>
+            <h2 class="text-lg font-bold text-stone-900">🧬 Öğrenci DNA & Müdahale</h2>
+            <p class="text-xs text-stone-500 mt-1">8 sahne · ~2 dakika · Türkçe sesli anlatım · öğretmen perspektifi</p>
+          </div>
+          <div class="flex items-center gap-1.5 text-[10px]">
+            <span class="px-2 py-1 rounded-full" style="background:#DDD6FE; color:#5B21B6;">Öğretmen rehberi</span>
+            <span class="px-2 py-1 rounded-full" style="background:#FEE2E2; color:#991B1B;">Risk yönetimi</span>
+          </div>
+        </div>
+        <p class="text-sm text-stone-600 mt-3 leading-relaxed">
+          Filo görünümünden tek öğrenci DNA detayına, sinyal okumadan veli iletişimine kadar
+          tükenmişlik panelinin nasıl yönetileceğini adım adım göster. Veri konuşur, sen yön ver.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-4 text-xs">
+          <div class="p-2.5 rounded-lg" style="background:#F5F3FF;">
+            <div class="font-bold mb-0.5" style="color:#5B21B6;">📊 Filo görünümü</div>
+            <p class="text-stone-600 text-[11px]">Tüm öğrenciler risk skoruna göre tek panelde · kritik üstte.</p>
+          </div>
+          <div class="p-2.5 rounded-lg" style="background:#FEF2F2;">
+            <div class="font-bold mb-0.5" style="color:#991B1B;">🚨 5 sinyal · 4 risk seviyesi</div>
+            <p class="text-stone-600 text-[11px]">Gece kuşu · mola yok · patlama · düşüş · seri kırılması.</p>
+          </div>
+          <div class="p-2.5 rounded-lg" style="background:#FEF3C7;">
+            <div class="font-bold mb-0.5" style="color:#92400E;">💬 Veliye somut konuş</div>
+            <p class="text-stone-600 text-[11px]">Sayı destekli WhatsApp/email örnekleri · tek tık paylaş.</p>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    {# Playlist sidebar #}
+    <aside class="demo-playlist">
+      <div class="demo-playlist-header">
+        <h3 class="font-bold text-stone-900 text-sm">📺 Oynatma Listesi</h3>
+        <p class="text-[11px] text-stone-500 mt-0.5">ETÜTKOÇ Rotam demo serisi</p>
+      </div>
+      <div>
+        {# Rol bazlı filtreleme: öğrenci → öğrenci demolarını, öğretmen → öğretmen demolarını;
+           login yoksa hepsini göster (landing ziyaretçileri için). #}
+        {% if show_teacher_demos %}
+        {# Günlük Program — öğretmen demosu #}
+        <a href="/demos?play=daily-plan" class="demo-playlist-item {% if is_daily %}is-active{% endif %}">
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#0EA5E9,#0369A1);">📅</div>
+          <div class="demo-playlist-meta">
+            <div class="demo-playlist-title">Günlük Program Oluşturma</div>
+            <div class="demo-playlist-desc">AI öneri · sürükle-bırak · kitap atama</div>
+            <div class="demo-playlist-duration">▶ 8 sahne · ~2 dk · öğretmen</div>
+          </div>
+        </a>
+
+        {# Öğretmen DNA — öğretmen demosu #}
+        <a href="/demos?play=teacher-dna" class="demo-playlist-item {% if is_teacher_dna %}is-active{% endif %}">
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#6D28D9,#4C1D95);">🧬</div>
+          <div class="demo-playlist-meta">
+            <div class="demo-playlist-title">Öğrenci DNA & Müdahale</div>
+            <div class="demo-playlist-desc">Filo görünümü · sinyal okuma · veliye somut mesaj</div>
+            <div class="demo-playlist-duration">▶ 8 sahne · ~2 dk · öğretmen</div>
+          </div>
+        </a>
+        {% endif %}
+
+        {% if show_student_demos %}
+        {# Pomodoro — öğrenci demosu #}
+        <a href="/demos?play=focus-pomodoro" class="demo-playlist-item {% if is_focus %}is-active{% endif %}">
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#0B5560,#117A86);">🍅</div>
+          <div class="demo-playlist-meta">
+            <div class="demo-playlist-title">Pomodoro & Sıkı Odak Modu</div>
+            <div class="demo-playlist-desc">25/5 döngü · sekme takibi · streak · rozet</div>
+            <div class="demo-playlist-duration">▶ 8 sahne · ~2 dk · öğrenci</div>
+          </div>
+        </a>
+
+        {# Çalışma DNA — öğrenci demosu #}
+        <a href="/demos?play=dna-profile" class="demo-playlist-item {% if is_dna %}is-active{% endif %}">
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#7C3AED,#5B21B6);">🧬</div>
+          <div class="demo-playlist-meta">
+            <div class="demo-playlist-title">Çalışma DNA'sı + Risk</div>
+            <div class="demo-playlist-desc">Heatmap · chronotype · 5 tükenmişlik sinyali</div>
+            <div class="demo-playlist-duration">▶ 8 sahne · ~2 dk · öğrenci</div>
+          </div>
+        </a>
+        {% endif %}
+
+        {# Coming soon #}
+        <div class="demo-playlist-item is-coming-soon">
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#A855F7,#6B21A8);">🧠</div>
+          <div class="demo-playlist-meta">
+            <div class="demo-playlist-title">Tekrar Kartları (FSRS)</div>
+            <div class="demo-playlist-desc">Aralıklı tekrar nasıl çalışır</div>
+            <div class="demo-playlist-duration">🔜 yakında</div>
+          </div>
+        </div>
+        <div class="demo-playlist-item is-coming-soon">
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#15803D,#14532D);">👨‍👩‍👧</div>
+          <div class="demo-playlist-meta">
+            <div class="demo-playlist-title">Veli Bilgilendirme</div>
+            <div class="demo-playlist-desc">WhatsApp/email otomatik bildirim</div>
+            <div class="demo-playlist-duration">🔜 yakında</div>
+          </div>
+        </div>
+        <div class="demo-playlist-item is-coming-soon">
+          <div class="demo-playlist-thumb" style="background:linear-gradient(135deg,#0F766E,#134E4A);">📊</div>
+          <div class="demo-playlist-meta">
+            <div class="demo-playlist-title">Filo Raporları</div>
+            <div class="demo-playlist-desc">Tüm öğrenciler tek panelde</div>
+            <div class="demo-playlist-duration">🔜 yakında</div>
+          </div>
+        </div>
+      </div>
+      <div class="px-3 py-3 text-[10px] text-stone-500 border-t border-stone-100 leading-relaxed">
+        💡 Demolar Web Speech API kullanır. Chrome/Edge'de en kaliteli Türkçe sesleri duyabilirsin.
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  // ═══════════════ Narration & captions (koşullu) ═══════════════
+  {% if is_daily %}
+  // TTS notu: ETÜTKOÇ büyük harfli olunca TTS karıştırıyor → "Etütkoç" şeklinde yazıyoruz
+  var narrations = [
+    "Merhaba. Bu kısa demoda, Etütkoç Rotam'da bir öğrenciye günlük çalışma programı nasıl oluşturulur, aşama aşama göstereceğiz. Sekiz kısa sahne.",
+    "Birinci adım. Öğretmen panelinden, programını oluşturacağın öğrenciyi seç. Sınıf ve müfredat tipi otomatik filtrelenecek.",
+    "İkinci adım. Öğrencinin günlük rotası boştur. Sistem; tekrar kartı verilerini, geçmiş başarıyı ve haftalık eksikleri birleştirerek, yapay zeka önerilerini arka planda hazırlar.",
+    "Üçüncü adım. Beş öneri hazır. Her kartta dersi, konuyu, kitabı, soru sayısını ve neden önerildiğini görürsün. Tümünü ekle düğmesiyle tek seferde, ya da tek tek kabul edebilirsin.",
+    "Dördüncü adım. Görevler günlük rotaya düştü. Sürükle bırak ile yeniden sıralayabilirsin, saatlere dokunarak değiştirebilirsin.",
+    "Beşinci adım, opsiyonel. Yeni görev ekle düğmesi sana beş tip sunar: test, video, özet, konu tekrarı, ya da diğer.",
+    "Altıncı adım. Her göreve kitap ve bölüm ata. Bölümde kaç test var, kaçı çözülmüş, hedef ne — hepsi tek bakışta görünür.",
+    "Yedinci ve son adım. Program kaydedildi. Öğrencinin paneline anlık iner. Veli bilgilendirme açıksa, veliye de gider. On dört gün ücretsiz deneyebilirsin."
+  ];
+  var captions = [
+    "🎬 Tanıtım — Günlük Program · 8 sahne · ~2 dk",
+    "1️⃣ Adım 1 — Öğretmen panelinden öğrenci seç",
+    "2️⃣ Adım 2 — Günlük rota açıldı, yapay zeka önerileri arka planda",
+    "3️⃣ Adım 3 — 5 öneri hazır, '✓ Tümünü ekle (5)'",
+    "4️⃣ Adım 4 — Görevler rotada · sürükle-bırak · saat editle",
+    "5️⃣ Adım 5 — '+ Yeni görev ekle' · 5 tip seçici",
+    "6️⃣ Adım 6 — Kitap & bölüm · sayım kartları",
+    "7️⃣ Adım 7 — Öğrenci paneline iner · 14 gün ücretsiz dene"
+  ];
+  var fallbackDurations = [11000, 9500, 11000, 13500, 10500, 10500, 12000, 13500];
+  var initialCaption = "🎬 Demo başlatmak için aşağıdaki ▶ tuşuna bas. Günlük program oluşturma — 8 sahne.";
+
+  {% elif is_focus %}
+  // TTS notu: ETÜTKOÇ → "Etütkoç"; "DO MI SOL" gibi solfejler → tarif et;
+  // "streak" → "seri"; "%15" → "yüzde on beş"; cümleler kısa, virgülle nefes.
+  var narrations = [
+    // 0 — INTRO
+    "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki Pomodoro Odak Modu'nu sana aşama aşama anlatacağım. " +
+    "Sekiz kısa sahne, yaklaşık iki dakika. " +
+    "Sonunda kendi ilk pomodoronu başlatabilirsin. Hadi başlayalım.",
+
+    // 1 — Pomodoro nedir?
+    "Önce şunu konuşalım: Pomodoro nedir? " +
+    "Yirmi beş dakika yoğunlaşmış çalışma, ardından beş dakika mola. " +
+    "Bu küçük döngü, beyninin yorulmadan, kısa kısa zirveler yapmasını sağlar. " +
+    "Üç tane faydası var. " +
+    "Birincisi, beynin daha taze kalır. " +
+    "İkincisi, ne kadar çalıştığın somut bir hedefe bağlanır. " +
+    "Üçüncüsü, kaç pomodoro tamamladığını sayarak ilerlemeni ölçebilirsin.",
+
+    // 2 — Seansa başla
+    "Şimdi nasıl başlatacağına bakalım. " +
+    "Odak sayfasını açtığında dört hazır seçenek var. " +
+    "Yirmi beş dakikalık standart pomodoro, " +
+    "elli dakikalık uzun odak, " +
+    "beş dakikalık kısa mola, " +
+    "ya da on beş dakikalık uzun mola. " +
+    "Ne çalıştığını yazarsın — örneğin Matematik üçgenler — sonra başlat düğmesine basarsın.",
+
+    // 3 — Sıkı Odak Modu
+    "Sıkı Odak Modu çok özel bir özellik. " +
+    "Açtığında sistem, yirmi beş dakika boyunca sekme arka plana ne sıklıkla geçtiğini sayar. " +
+    "Fare hareketi veya klavye izlenmez. Sadece sekme görünürlüğü izlenir. " +
+    "Üç eşik var. " +
+    "Bir, üç kez sekmeden ayrılırsan. " +
+    "İki, toplam dışarıda kalman yüzde on beşi aşarsa. " +
+    "Üç, tek seferde üç dakikadan uzun başka bir yere geçersen. " +
+    "Bu eşiklerden biri aşılırsa, seans Kesintili olarak işaretlenir. " +
+    "Kağıt kalemle çalışmak için ideal mod. Telefon kontrolünü tutmana yardımcı olur.",
+
+    // 4 — Sayaç çalışıyor
+    "Sayaç başladı. " +
+    "Yeşil çember her saniye küçülür, kalan süreyi büyük rakamlarla görürsün. " +
+    "Sıkı mod açıksa altta canlı metrik kart belirir. " +
+    "Sekmeden kaç kez ayrıldığını, toplam yüzde kaç dışarıda kaldığını, " +
+    "ve en uzun ayrılmanın kaç saniye olduğunu gösterir. " +
+    "Çalışmayı yarıda bırakmak istersen, Vazgeç düğmesi her zaman aktif. " +
+    "Seans kesintili olarak kaydedilir — hiçbir kayıp olmaz.",
+
+    // 5 — Süre doldu
+    "Yirmi beş dakika doldu! " +
+    "Sistem aynı anda üç şey yapar. " +
+    "Birincisi, üç tonlu yumuşak melodik bir alarm çalar — dikkat çekici ama rahatsız etmeyen bir ses. " +
+    "İkincisi, tarayıcı bildirimi açıksa kilit ekranına 'Odak süren bitti' diye düşer. " +
+    "Üçüncüsü, sana dört seçenek sunar. " +
+    "Beş dakikalık molaya geç, " +
+    "ya da on beş dakikalık uzun molaya, " +
+    "ya da direkt çık, " +
+    "ya da dürüstçe odaklanamadım diyerek kesintili kaydet. " +
+    "Karar tamamen senin.",
+
+    // 6 — Özet + otomatik kapanma
+    "Günün sonunda kaç pomodoro tamamladın, toplam kaç dakika odaklandın — hepsi tek panelde. " +
+    "Yarıda bıraktığın seanslar da ayrı sayılır. Dürüst veri için. " +
+    "Bir ekstra koruma daha var. " +
+    "Eğer bir seansı başlatıp bilgisayar başından kalktıysan, " +
+    "üç saatten uzun açık kalan seanslar otomatik olarak Kesintili damgasıyla kapatılır. " +
+    "Veri kalitesi bozulmaz, yarım kalmış seanslar günler boyu sürmez.",
+
+    // 7 — Streak + Rozet + CTA
+    "İşin en eğlenceli kısmı: oyunlaştırma. " +
+    "Her seansta puan kazanırsın. " +
+    "Gün üst üste çalışırsan seri büyür. " +
+    "Şu an gördüğün ekrandaki gibi: yedi gün üst üste çalışmış birinin " +
+    "acemi, yedi gün, sabırlı ve sıkı mod rozetleri açılmış. " +
+    "Öğretmenin de filo görünümünde senin serini görür. " +
+    "Disipline edilmiş çalışma, ölçülebilir odak. " +
+    "Hadi şimdi ilk pomodoronu başlat — odak sayfasına dönüp yirmi beş dakikalık bir oturumla başla."
+  ];
+  var captions = [
+    "🎬 Tanıtım — Pomodoro Odak Modu · 8 sahne · ~2 dk",
+    "1️⃣ Pomodoro nedir? — 25 dk odak + 5 dk mola · beyin yorulmaz · ölçülebilir",
+    "2️⃣ Başlat — 4 hazır seçenek (25/50 dk odak · 5/15 dk mola) + 'Ne çalışıyorsun' etiketi",
+    "3️⃣ Sıkı Odak Modu — sekme takibi · 3 eşik (3× / %15 / 3 dk) · fare/klavye izlenmez",
+    "4️⃣ Sayaç çalışıyor — yeşil çember + canlı metrik kart + 'Vazgeç' güvencesi",
+    "5️⃣ Süre doldu — 3 tonlu alarm + tarayıcı bildirimi + 4 seçenek (mola/uzun mola/çık/kesintili)",
+    "6️⃣ Özet — kaç seans · kaç dk · 3+ saat açık kalanlar otomatik kapanır",
+    "7️⃣ Streak + Rozet — 7 gün üst üste · 245 puan · 4 kazanılmış rozet · öğretmen takibi"
+  ];
+  var fallbackDurations = [11500, 13000, 12000, 14000, 13500, 14000, 12000, 14500];
+  var initialCaption = "🎬 Pomodoro demo başlatmak için aşağıdaki ▶ tuşuna bas. Türkçe sesli anlatımla 8 sahne.";
+
+  {% elif is_dna %}
+  var narrations = [
+    // 0 — INTRO
+    // TTS notu: "DNA" tek mırıltıya dönüşüyor; narrasyonda "çalışma profili"
+    // ifadesini tercih ediyoruz, ilk sahnede ne olduğunu açıklıyoruz.
+    "Merhaba. Bu kısa demoda, sana özel bir şeyi göstereceğim: " +
+    "Çalışma Profilin, yani sistemde D, N, A diye geçen panel. " +
+    "Sekiz kısa sahne, yaklaşık iki dakika. " +
+    "Sonunda kendi profilini açıp tüm grafikleri rahatlıkla okuyabileceksin. Başlayalım.",
+
+    // 1 — DNA nedir?
+    "Çalışma profilin nedir, kısaca konuşalım. " +
+    "Sistem, son yirmi sekiz gün boyunca senin ne zaman, hangi günler ve hangi derslerde çalıştığını topluyor. " +
+    "Sonra bu verilerden sana özel bir profil çıkarıyor — tıpkı parmak izi gibi, başkasında olmayan bir profil. " +
+    "Üç şey öğretir. " +
+    "Birincisi, kendini tanırsın. Sabahcı mısın, akşamcı mısın, gececi misin? " +
+    "İkincisi, gün içinde en verimli olduğun saati görürsün. " +
+    "Üçüncüsü, aşırı çalışma seni tüketmeden önce uyarı sinyalleri gönderir. " +
+    "Profil için en az beş tamamlanmış görev gerekiyor. " +
+    "Daha azsa sayfa, yetersiz veri yazar.",
+
+    // 2 — Risk skoru kartı
+    "Sayfayı açtığında, en üstte ilk göreceğin şey: Tükenmişlik Risk Kartı. " +
+    "Sıfırdan yüze kadar bir skor, ve dört renk kategorisinden biri. " +
+    "Sıfırla yirmi dört arası yeşildir, sağlıklı demektir. " +
+    "Yirmi beş ile kırk dokuz arası sarıdır, dikkat. " +
+    "Elli ile yetmiş dört arası turuncudur, uyarı. " +
+    "Yetmiş beş ve üstü kırmızıdır, kritik. " +
+    "Skor, aktif sinyallerinden en şiddetli üçünün ortalamasıdır. " +
+    "Endişelenmene gerek yok. " +
+    "Bu uyarı, seni vurmasın diye var — ceza değil.",
+
+    // 3 — 5 sinyal
+    "Sistem beş farklı tükenmişlik sinyalini izler. " +
+    "Birincisi gece kuşu. " +
+    "Gece saat onda başlayıp sabah dörte kadar yapılan çalışmaların oranı, yüzde yirmiyi aştıysa tetiklenir. " +
+    "İkincisi hafta sonu mola yok. " +
+    "Üç hafta üst üste, hiçbir hafta sonu dinlenmediysen aktif olur. " +
+    "Üçüncüsü yoğunluk patlaması. " +
+    "Bu hafta, geçen haftadan yüzde elli daha fazla çalıştıysan uyarı verir. " +
+    "Dördüncüsü düşüş. " +
+    "Bu hafta, geçen haftadan yüzde elli az çalıştıysa devreye girer. " +
+    "Beşincisi seri kırılması. " +
+    "Beş gün üst üste çalıştıktan sonra, son üç gün hiç görev tamamlamamışsan açılır. " +
+    "Her sinyalin altında açıklama var. " +
+    "Neden tetiklendiğini, hangi sayıları gördüğünü, sade bir cümleyle anlatır.",
+
+    // 4 — Heatmap
+    "Aşağı kaydırırsan Saat ile Gün Çalışma Haritasını görürsün. " +
+    "Yedi satır, pazartesiden pazara. " +
+    "Yirmi dört sütun, gün boyu saatler. " +
+    "Her hücre, o saat aralığında kaç görev tamamladığını gösterir. " +
+    "Renk açık griden başlar, koyu petrol yeşiline doğru ilerler. " +
+    "Koyulaştıkça o saat aralığı yoğunlaşır. " +
+    "Bu harita sana iki şey söyler. " +
+    "Birincisi, hangi saatlerde gerçekten verimlisin. " +
+    "İkincisi, hangi saatler tamamen boş geçiyor. " +
+    "Bir hücrenin üzerine fareyi getirirsen, o saat için tam sayı açılır.",
+
+    // 5 — Tempo profili
+    "Haritanın altında dört özet kart var. " +
+    "Birinci kart, çalışma saatin: sabahcı, öğleden sonra çalışan, akşamcı ya da gececi. " +
+    "Yeterli veri yoksa, yetersiz veri yazar. " +
+    "İkinci kart, haftanın en yoğun günü: hangi gün en çok görev bitirdin? " +
+    "Üçüncü kart, en yoğun saat: gün içindeki tepe noktan kaçta? " +
+    "Dördüncü kart, tamamlama oranı: yirmi sekiz günde toplam kaç görevi bitirdin ve bu yüzde kaç? " +
+    "Bunlar senin kendi tempo profilin. " +
+    "Sabahcı isen sabaha ağır dersleri koy. " +
+    "Gececi isen gece için tekrar konularını seç. " +
+    "Profil sana en uygun planı kurmanı öğretir.",
+
+    // 6 — Ders bazlı + trend
+    "İki kart daha kaldı: ders bazlı çalışma, ve haftalık eğilim. " +
+    "Sol tarafta her ders için bir mor çubuk var. " +
+    "Çubuk uzunluğu, o derste tamamlama yüzdeni gösterir. " +
+    "Mesela Matematikte yüzde seksen yedi, Sosyalde yüzde elli beş. " +
+    "Bu sayılar sana nerede güçlü, nerede ihmal var, açıkça söyler. " +
+    "Sağ tarafta haftalık trend grafiği. " +
+    "Bu hafta tamamlanan görev sayısı, geçen haftayla kıyaslanır. " +
+    "Yukarı ok artıyor demek, aşağı ok düşüyor demek, yatay ok istikrarlı demek. " +
+    "Yüzde on'dan fazla sapma, trend sayılır. " +
+    "Bu kart, verimin gidişatını tek bakışta anlamanı sağlar.",
+
+    // 7 — CTA
+    "Demo burada bitiyor. " +
+    "Çalışma profilin her gün otomatik güncellenir. " +
+    "Sen çalıştıkça sistem öğrenir, profilin de değişir. " +
+    "Yapman gereken tek şey: " +
+    "Yatağa girmeden önce, ya da yeni bir hafta başlarken kısa bir bakış at. " +
+    "Haritanın koyuluğu, çalışma saatin, risk skorun — hepsi sana büyük dersler verir. " +
+    "Şimdi kendi profiline bak. " +
+    "Sol menüden Çalışma Profilim sekmesini aç, hadi başla."
+  ];
+  var captions = [
+    "🎬 Tanıtım — Çalışma DNA'm · 8 sahne · ~2 dk",
+    "1️⃣ DNA nedir? — 28 gün veri · sana özgün profil · kendini tanı · verimli saatini bul · sinyal",
+    "2️⃣ Risk skoru — 0-100 · 4 seviye (🟢🟡🟠🔴) · en şiddetli 3 sinyalin ortalaması",
+    "3️⃣ 5 sinyal — 🌙 gece · 📅 mola yok · 🔥 patlama · 📉 düşüş · ⛓️‍💥 seri kırılması",
+    "4️⃣ Heatmap — 7×24 grid · koyulaştıkça yoğun · hover ile tam sayı",
+    "5️⃣ Tempo profili — 4 kart: chronotype · peak gün · peak saat · tamamlama oranı",
+    "6️⃣ Ders + trend — mor barlar (ders bazlı) · ↑↓→ haftalık karşılaştırma",
+    "7️⃣ Sonuç — DNA otomatik güncellenir · kendini tanıyan iyi planlar · 'DNA'mı incele →'"
+  ];
+  var fallbackDurations = [11500, 17000, 16500, 17500, 15000, 16500, 16000, 13500];
+  var initialCaption = "🎬 DNA demosunu başlatmak için aşağıdaki ▶ tuşuna bas. Türkçe sesli anlatımla 8 sahne.";
+
+  {% elif is_teacher_dna %}
+  // TTS notu: öğretmen tonunda, "DNA" yerine "öğrenci profili / çalışma profili" tercih ediliyor;
+  // "ETÜTKOÇ" → "Etütkoç"; sayılar yazıyla; cümleler kısa, virgülle nefes.
+  var narrations = [
+    // 0 — INTRO
+    "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki Öğrenci Çalışma Profili panelini, " +
+    "yani sistemde D, N, A diye geçen ekranı, öğretmen tarafından nasıl yöneteceğini göstereceğim. " +
+    "Sekiz kısa sahne, yaklaşık iki dakika. " +
+    "Sonunda kendi öğrencilerinin profillerini okuyabilir, doğru zamanda doğru sözü söyleyebilirsin.",
+
+    // 1 — Öğretmen neden DNA okumalı?
+    "Önce şunu konuşalım. " +
+    "Bir öğretmen olarak öğrencini sadece görev sayısıyla takip edersen, yorulmuş ya da yanmış öğrenciyi geç fark edersin. " +
+    "Çalışma profili sana üç şey kazandırır. " +
+    "Birincisi, erken uyarı. " +
+    "Tükenmişlik düşüş yaşanmadan bir hafta öncesinden sinyal verir. " +
+    "İkincisi, akıllı planlama. " +
+    "Öğrencinin verimli saatlerini bilirsen, programı ona göre kurarsın. " +
+    "Üçüncüsü, veliye somut konuşma. " +
+    "Sayılarla destekli mesaj, hisle yapılan konuşmadan çok daha ikna edici.",
+
+    // 2 — Filo görünümü (bulk dashboard)
+    "Sistemde öğretmen burnout sayfasına girdiğinde, " +
+    "tüm öğrencilerin tek listede risk skoruna göre sıralanmış olarak karşına çıkar. " +
+    "En kritik öğrenci en üstte, en sağlıklı en altta. " +
+    "Her satırda öğrencinin adı, aktif sinyalleri, ve sıfırdan yüze kadar bir risk skoru var. " +
+    "Renkler dört kategoride. " +
+    "Kırmızı, kritik, yetmiş beş ve üstü. " +
+    "Turuncu, uyarı, elli ile yetmiş dört arası. " +
+    "Sarı, dikkat, yirmi beş ile kırk dokuz arası. " +
+    "Yeşil, sağlıklı, yirmi dört ve altı. " +
+    "Bir bakışta filonun durumunu görürsün, kim acil müdahale gerekiyor anlarsın.",
+
+    // 3 — Tek öğrenci detay sayfası
+    "Risk listesinde bir öğrenciye tıkladığında, o öğrencinin detay sayfası açılır. " +
+    "En üstte risk kartı. " +
+    "Elif örneğinde, sıfırdan yüze kadar olan skala üzerinden seksen iki almış, kırmızı kategori, kritik. " +
+    "Üç aktif sinyali var. " +
+    "Hemen yanında Chronotype kartı: bu öğrenci gececi tipte, en yoğun çalıştığı saat gece iki. " +
+    "Trend kartı diyor ki, bu hafta yoğunluk geçen haftadan yüzde yüz seksen arttı. " +
+    "Tek bakışta resmin tamamını görüyorsun. " +
+    "Konuşma zamanı.",
+
+    // 4 — 5 sinyal + öğretmen yorumu
+    "Şimdi en kritik bilgi: sinyali okudun, peki ne diyeceksin? " +
+    "Sistem beş farklı tükenmişlik sinyalini izler, her birinin altına öğretmen olarak söyleyebileceğin örnek bir cümle var. " +
+    "Gece kuşu sinyali için, velisi ile saat sınırı konuşmalısın. " +
+    "Hafta sonu mola yok sinyali için, bir gün tamamen boş bırakmalı. " +
+    "Yoğunluk patlaması sinyali için, görevleri yüzde yirmi azaltmalı. " +
+    "Düşüş sinyali için, iletişim açmalı, bir şey olmuş olabilir. " +
+    "Seri kırılması sinyali için, geri dönüşü yumuşatmalı, küçük görevle başlatmalı. " +
+    "Sistem sinyali tespit eder, sen sözcüğü seçersin.",
+
+    // 5 — Heatmap → program kararı
+    "Sayfada aşağı kaydırdığında, öğrencinin saat ile gün çalışma haritasını görürsün. " +
+    "Yedi satır, pazartesiden pazara. " +
+    "Yirmi dört sütun, gün boyu saatler. " +
+    "Koyu petrol yeşili hücreler, o saatte yoğun çalışıldığını gösterir. " +
+    "Bu harita sana program kararında çok değerli. " +
+    "Elif örneğinde, verimli pencere on dokuzdan gece ikiye, ek olarak sabah altı ile sekiz arası. " +
+    "Sabah dokuzdan öğleden sonra ikiye kadar tamamen boş — okul + dinlenme. " +
+    "Karar: bu öğrencinin yeni görevlerinin saatlerini bu yoğun pencerelere yerleştir. " +
+    "Gece çalışma fazla, yumuşat. " +
+    "Profil sana program kararını verir.",
+
+    // 6 — Veli mesajı mockup
+    "Öğretmenin en zorlu işi, veliye somut konuşmak. " +
+    "Profil paneli sana hazır cümleler sunar. " +
+    "Mesela Elif için şöyle yazabilirsin: " +
+    "Merhaba, Elif'in son iki hafta verisine baktım. " +
+    "Risk skoru seksen iki üzerinden yüz, üç sinyal aktif. " +
+    "Gece yirmi ikiyle dört arası tamamlamaların yüzde kırk beşi, " +
+    "yirmi bir gündür hiç hafta sonu boş geçmedi, " +
+    "bu hafta yoğunluk geçen haftadan yüzde yüz seksen arttı. " +
+    "Bu hafta görevleri yüzde yirmi azaltıp, hafta sonu bir gün boş bıraktım. " +
+    "Yaklaşımımız hakkında on dakika konuşabilir miyiz? " +
+    "Sayılarla destekli mesaj, herkes için güven verici. " +
+    "Sistem veriyi hazırlar, sen kelimeyi seçersin.",
+
+    // 7 — Outro + haftalık ritüel
+    "Demo burada bitiyor. " +
+    "Sana bir öneri: " +
+    "Her pazartesi sabah dokuzda, beş dakika ayır. " +
+    "Filo görünümünü aç, kırmızı renkli öğrencilere bak. " +
+    "Tek tek detay sayfalarına gir, sinyalleri oku. " +
+    "Riski yüksek olanların programındaki saatleri öğrencinin haritasına göre yeniden düzenle. " +
+    "Risk skoru yetmiş beş ve üstü olanların velilerine kısa, sayı destekli bir mesaj at. " +
+    "Otuz saniye plus üç mesaj, bir hafta huzur. " +
+    "Şimdi kendi öğrencilerinin profillerini incelemeye başla. " +
+    "Veri konuşur, sen yön verirsin."
+  ];
+  var captions = [
+    "🎬 Tanıtım — Öğrenci DNA & Müdahale · 8 sahne · ~2 dk",
+    "1️⃣ Neden DNA? — 🔮 erken uyarı · 📋 akıllı planla · 💬 veliye somut konuş",
+    "2️⃣ Filo görünümü — tüm öğrenciler risk skoruna göre · 4 renk · kritik üstte",
+    "3️⃣ Tek öğrenci DNA — Elif B. · 82/100 kritik · 🌙 gececi · 🔥 ↑%180",
+    "4️⃣ 5 sinyal + yorum — sinyali oku, doğru sözcüğü seç · örnek cümleler",
+    "5️⃣ Heatmap → program kararı — verimli pencereye saat koy · gece sınırla",
+    "6️⃣ Veliye somut mesaj — sayılarla destekli WhatsApp/email örneği",
+    "7️⃣ Pazartesi 09:00 ritüeli — filoya bak · 30 sn + 3 mesaj = 1 hafta huzur"
+  ];
+  var fallbackDurations = [13000, 16500, 17500, 14500, 17000, 17500, 19000, 16500];
+  var initialCaption = "🎬 Öğretmen DNA demosunu başlatmak için aşağıdaki ▶ tuşuna bas. Türkçe sesli anlatımla 8 sahne.";
+
+  {% else %}
+  var narrations = [];
+  var captions = [];
+  var fallbackDurations = [];
+  var initialCaption = "Demo bulunamadı.";
+  {% endif %}
+
+  // ═══════════════ DOM + player kontrolü (ortak) ═══════════════
+  var scenes = document.querySelectorAll('.demo-scene');
+  var stepBtns = document.querySelectorAll('.demo-step');
+  var playBtn = document.getElementById('dp-play');
+  var prevBtn = document.getElementById('dp-prev');
+  var nextBtn = document.getElementById('dp-next');
+  var muteBtn = document.getElementById('dp-mute');
+  var rateBtn = document.getElementById('dp-rate');
+  var restartBtn = document.getElementById('dp-restart');
+  var progressFill = document.getElementById('dp-progress-fill');
+  var progressBar = document.getElementById('dp-progress');
+  var timeEl = document.getElementById('dp-time');
+  var captionEl = document.getElementById('demo-caption-text');
+
+  var total = scenes.length;
+  if (total === 0) return;
+  var current = 0;
+  var playing = false;
+  var muted = false;
+  var rate = 0.95;
+  var rateOptions = [0.95, 1.0, 1.25, 1.5];
+  var fallbackTimer = null;
+
+  var hasSpeech = typeof window !== 'undefined' && 'speechSynthesis' in window;
+  var trVoice = null;
+
+  function scoreVoice(v){
+    var n = (v.name || '').toLowerCase();
+    var s = 0;
+    if (n.indexOf('natural') >= 0) s += 100;
+    if (n.indexOf('neural') >= 0) s += 95;
+    if (n.indexOf('online') >= 0) s += 80;
+    if (n.indexOf('premium') >= 0) s += 70;
+    if (n.indexOf('enhanced') >= 0) s += 60;
+    if (n.indexOf('google') >= 0) s += 55;
+    if (n.indexOf('tolga') >= 0) s += 45;
+    if (n.indexOf('emel') >= 0) s += 42;
+    if (n.indexOf('filiz') >= 0) s += 40;
+    if (n.indexOf('yelda') >= 0) s += 38;
+    if (n.indexOf('aylin') >= 0) s += 35;
+    if (n.indexOf('ahmet') >= 0) s += 30;
+    if (v.lang && v.lang.toLowerCase() === 'tr-tr') s += 10;
+    if (v.localService) s += 5;
+    if (v.default) s += 3;
+    return s;
+  }
+  function loadVoices(){
+    if (!hasSpeech) return;
+    var voices = window.speechSynthesis.getVoices();
+    if (!voices.length) return;
+    var candidates = voices.filter(function(v){
+      return v.lang && v.lang.toLowerCase().indexOf('tr') === 0;
+    });
+    if (!candidates.length) {
+      candidates = voices.filter(function(v){
+        return v.name && /(turk|türk|tolga|filiz|yelda|emel|sedef|aylin|ahmet)/i.test(v.name);
+      });
+    }
+    if (!candidates.length) { trVoice = null; return; }
+    candidates.sort(function(a, b){ return scoreVoice(b) - scoreVoice(a); });
+    trVoice = candidates[0];
+  }
+  if (hasSpeech) {
+    loadVoices();
+    if (window.speechSynthesis.onvoiceschanged !== undefined) {
+      window.speechSynthesis.onvoiceschanged = loadVoices;
+    }
+  }
+
+  function cancelSpeech(){
+    if (hasSpeech) try { window.speechSynthesis.cancel(); } catch(e){}
+    if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+  }
+
+  function show(idx, andSpeak){
+    current = ((idx % total) + total) % total;
+    scenes.forEach(function(sc, i){ sc.classList.toggle('is-active', i === current); });
+    stepBtns.forEach(function(b, i){ b.classList.toggle('is-active', i === current); });
+    progressFill.style.width = ((current + 1) / total * 100) + '%';
+    timeEl.textContent = 'Sahne ' + (current + 1) + ' / ' + total;
+    captionEl.textContent = captions[current] || '';
+    if (andSpeak && playing) speakCurrent();
+  }
+
+  function speakCurrent(){
+    cancelSpeech();
+    if (hasSpeech && !muted) {
+      var u = new SpeechSynthesisUtterance(narrations[current] || '');
+      if (trVoice) u.voice = trVoice;
+      u.lang = 'tr-TR';
+      u.rate = rate;
+      u.pitch = 0.98;
+      u.volume = 1.0;
+      u.onend = function(){
+        if (!playing) return;
+        if (current < total - 1) show(current + 1, true);
+        else { playing = false; playBtn.textContent = '▶'; }
+      };
+      u.onerror = function(){ startFallbackTimer(); };
+      try { window.speechSynthesis.speak(u); }
+      catch(e){ startFallbackTimer(); }
+    } else {
+      startFallbackTimer();
+    }
+  }
+
+  function startFallbackTimer(){
+    if (fallbackTimer) clearTimeout(fallbackTimer);
+    var dur = (fallbackDurations[current] || 10000) / rate;
+    fallbackTimer = setTimeout(function(){
+      if (!playing) return;
+      if (current < total - 1) show(current + 1, true);
+      else { playing = false; playBtn.textContent = '▶'; }
+    }, dur);
+  }
+
+  function play(){ playing = true; playBtn.textContent = '⏸'; speakCurrent(); }
+  function pause(){ playing = false; playBtn.textContent = '▶'; cancelSpeech(); }
+
+  playBtn.addEventListener('click', function(){ playing ? pause() : play(); });
+  prevBtn.addEventListener('click', function(){ var w = playing; pause(); show(current - 1, false); if (w) play(); });
+  nextBtn.addEventListener('click', function(){ var w = playing; pause(); show(current + 1, false); if (w) play(); });
+  stepBtns.forEach(function(b, i){
+    b.addEventListener('click', function(){ var w = playing; pause(); show(i, false); if (w) play(); });
+  });
+  muteBtn.addEventListener('click', function(){
+    muted = !muted;
+    muteBtn.textContent = muted ? '🔇' : '🔊';
+    if (playing) { cancelSpeech(); speakCurrent(); }
+  });
+  rateBtn.addEventListener('click', function(){
+    var idx = rateOptions.indexOf(rate);
+    rate = rateOptions[(idx + 1) % rateOptions.length];
+    rateBtn.textContent = rate.toFixed(rate < 1 ? 2 : 1) + '×';
+    if (playing) { cancelSpeech(); speakCurrent(); }
+  });
+  restartBtn.addEventListener('click', function(){ var w = playing; pause(); show(0, false); if (w) play(); });
+  progressBar.addEventListener('click', function(e){
+    var rect = progressBar.getBoundingClientRect();
+    var ratio = (e.clientX - rect.left) / rect.width;
+    var target = Math.min(total - 1, Math.max(0, Math.floor(ratio * total)));
+    var w = playing; pause(); show(target, false); if (w) play();
+  });
+
+  document.addEventListener('keydown', function(e){
+    if (e.target && /input|textarea|select/i.test(e.target.tagName)) return;
+    if (e.code === 'Space') { e.preventDefault(); playing ? pause() : play(); }
+    else if (e.code === 'ArrowRight') { var w = playing; pause(); show(current + 1, false); if (w) play(); }
+    else if (e.code === 'ArrowLeft') { var w2 = playing; pause(); show(current - 1, false); if (w2) play(); }
+    else if (e.key === 'm' || e.key === 'M') { muteBtn.click(); }
+  });
+
+  // ═══════════════ Sayfa kapanış temizliği ═══════════════
+  // window.speechSynthesis sekme bazında çalışır, sayfa unload olduğunda
+  // queue otomatik temizlenmez. Linke tıklama, refresh, back butonu —
+  // hepsinde TTS susmasın diye explicit cancel ediyoruz.
+  function hardCancelSpeech() {
+    try {
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        // Bazı Chrome sürümlerinde cancel sonrası "pending" queue kalabilir;
+        // çift cancel ile garanti.
+        setTimeout(function(){ try { window.speechSynthesis.cancel(); } catch(e){} }, 50);
+      }
+    } catch(e) {}
+    if (fallbackTimer) { clearTimeout(fallbackTimer); fallbackTimer = null; }
+    playing = false;
+  }
+  // beforeunload: normal navigation + refresh
+  window.addEventListener('beforeunload', hardCancelSpeech);
+  // pagehide: mobil Safari + back/forward cache (bfcache)
+  window.addEventListener('pagehide', hardCancelSpeech);
+  // Sekme kapatma / arka plana atma (opsiyonel — sesi de durdurabiliriz)
+  document.addEventListener('visibilitychange', function(){
+    if (document.hidden && playing) {
+      // Sekme arka plana geçti — TTS Chrome'da bazen donar; pause ediyoruz
+      pause();
+    }
+  });
+
+  show(0, false);
+  captionEl.textContent = initialCaption;
+})();
+</script>
+{% endblock %}

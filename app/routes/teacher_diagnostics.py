@@ -92,13 +92,16 @@ def suggestions_diagnostics(
     pattern_rows.sort(key=lambda r: (-r["freq"], r["dow"], r["subject_name"]))
 
     # Tipik hacim per dow
+    # NOT: anahtarı "items" KOYMAYIN — Python dict'in built-in .items() metodu
+    # ile çakışır ve Jinja attribute lookup'ı metodu döndürür ("<built-in method
+    # items of dict object at 0x...>"). task_count / subject_count kullanıyoruz.
     volume_rows = []
     for dow in range(7):
         volume_rows.append({
             "dow": dow,
             "dow_label": DOW_LABELS[dow],
-            "items": model.typical_items_per_day.get(dow, 0),
-            "subjects": model.typical_subjects_per_day.get(dow, 0),
+            "task_count": model.typical_items_per_day.get(dow, 0),
+            "subject_count": model.typical_subjects_per_day.get(dow, 0),
         })
 
     # Ret sinyalleri

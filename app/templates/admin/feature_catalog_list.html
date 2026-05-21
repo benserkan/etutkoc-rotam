@@ -1,0 +1,329 @@
+{% extends "base.html" %}
+{% block title %}Vitrin Kartları — Admin{% endblock %}
+
+{% block content %}
+
+{# ─── Başlık + Aksiyon butonları ─────────────────────────────── #}
+<div class="mb-5 flex items-start justify-between gap-4">
+  <div>
+    <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Panel</a>
+    <h1 class="text-2xl font-semibold text-slate-900 mt-1">Vitrin Kartları</h1>
+    <p class="text-sm text-slate-500 mt-1 max-w-2xl">
+      Anasayfada öne çıkan özellik kartlarının tek doğruluk kaynağı.
+      Yeni özellik eklendikçe buraya kart açılır; sıralama otomatik.
+    </p>
+  </div>
+  <div class="shrink-0 flex items-center gap-2">
+    <a href="/admin/feature-catalog/dashboard"
+       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-300"
+       title="Vitrin yönetim paneli — özet + dikkat gereken durumlar">
+      Yönetim Paneli
+    </a>
+    <a href="/admin/feature-catalog/experiments"
+       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium border border-slate-300"
+       title="A/B test deneyleri">
+      A/B Deneyleri
+    </a>
+    {% if discovery_pending and discovery_pending > 0 %}
+    <a href="/admin/feature-catalog/discovery-queue"
+       class="inline-flex items-center gap-1.5 px-3 py-2 rounded-md bg-amber-50 hover:bg-amber-100 text-amber-800 text-sm font-medium border border-amber-300"
+       title="Otomatik bulunan ve onay bekleyen kart adayları">
+      Onay Bekleyenler
+      <span class="inline-flex items-center justify-center min-w-[1.4em] h-5 px-1.5 rounded-full bg-amber-600 text-white text-[11px] font-bold">
+        {{ discovery_pending }}
+      </span>
+    </a>
+    {% endif %}
+    <a href="/admin/feature-catalog/new"
+       class="inline-flex items-center gap-1 px-3 py-2 rounded-md bg-indigo-600 text-white text-sm font-medium hover:bg-indigo-700">
+      ＋ Yeni Kart
+    </a>
+  </div>
+</div>
+
+{% if flash_ok %}
+<div class="mb-4 p-3 rounded border border-emerald-300 bg-emerald-50 text-sm text-emerald-800">✓ {{ flash_ok }}</div>
+{% endif %}
+{% if flash_err %}
+<div class="mb-4 p-3 rounded border border-rose-300 bg-rose-50 text-sm text-rose-800">⚠ {{ flash_err }}</div>
+{% endif %}
+
+{# ─── Anasayfa Sağlığı bandı (Katman 8) ───────────────────────────
+   5 kart yayına çıktığı için bu özet anlamlı; veri biriktikçe
+   "öğrenme aktif" kartları artar.
+─────────────────────────────────────────────────────────────────── #}
+{% set div_pct = (overall_diversity * 100) | round(0) | int %}
+{% if div_pct >= 75 %}
+  {% set div_tone = 'emerald' %}
+  {% set div_msg = 'Çeşitli — kartlar farklı temalardan' %}
+{% elif div_pct >= 50 %}
+  {% set div_tone = 'amber' %}
+  {% set div_msg = 'Orta — bazı kartlar benzer temadan' %}
+{% else %}
+  {% set div_tone = 'rose' %}
+  {% set div_msg = 'Zayıf — kartlar birbirine çok yakın' %}
+{% endif %}
+<div class="mb-5 bg-white border border-slate-200 rounded-lg px-4 py-3">
+  <div class="flex flex-wrap items-center gap-6 text-sm">
+    <div>
+      <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Anasayfada</div>
+      <div class="text-2xl font-semibold text-slate-800 leading-none mt-1">
+        {{ landing_card_count }}
+        <span class="text-sm text-slate-400 font-normal">kart</span>
+      </div>
+    </div>
+    <div class="h-10 w-px bg-slate-200"></div>
+    <div>
+      <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium"
+           title="Anasayfa kartları arasındaki ortalama tema farklılığı. 100% = hepsi farklı tema, 0% = hepsi aynı."
+      >Çeşitlilik puanı</div>
+      <div class="text-2xl font-semibold text-{{ div_tone }}-700 leading-none mt-1">
+        %{{ div_pct }}
+      </div>
+      <div class="text-[11px] text-slate-500 mt-0.5">{{ div_msg }}</div>
+    </div>
+    <div class="h-10 w-px bg-slate-200"></div>
+    <div>
+      <div class="text-[11px] uppercase tracking-wider text-slate-500 font-medium"
+           title="Ziyaretçi davranışından beslenen 'öğrenen sıralama' (LinUCB) için veri birikmiş kart sayısı.">
+        Öğrenme aktif
+      </div>
+      <div class="text-2xl font-semibold text-slate-800 leading-none mt-1">
+        {{ learning_count }}<span class="text-sm text-slate-400 font-normal"> / {{ landing_card_count }}</span>
+      </div>
+      <div class="text-[11px] text-slate-500 mt-0.5">
+        {% if learning_count == 0 %}Henüz ziyaret yok — kartlar normal sırada.
+        {% elif learning_count < landing_card_count %}Birkaç kart öğrenmeye başladı.
+        {% else %}Tüm kartlar öğreniyor.{% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{# ─── Durum sayım kartları ────────────────────────────────────── #}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+  {% for st in FeatureStatus %}
+  {% set badge = STATUS_BADGES[st] %}
+  <a href="/admin/feature-catalog?status_filter={{ st.value }}"
+     class="bg-white border border-slate-200 hover:border-{{ badge }}-400 rounded-lg p-3 transition
+            {% if status_filter == st.value %}ring-2 ring-{{ badge }}-300{% endif %}">
+    <div class="text-[11px] text-slate-500 uppercase tracking-wider font-medium">{{ STATUS_LABELS[st] }}</div>
+    <div class="text-2xl font-semibold text-{{ badge }}-700 mt-0.5">{{ counts[st.value] }}</div>
+  </a>
+  {% endfor %}
+</div>
+
+{# ─── Filtre çubuğu ───────────────────────────────────────────── #}
+<form method="get" action="/admin/feature-catalog"
+      class="mb-4 flex flex-wrap items-center gap-2 bg-white border border-slate-200 rounded-lg p-3">
+  <input type="text" name="q" value="{{ q }}"
+         placeholder="Slug veya başlık ara…"
+         class="px-3 py-1.5 border border-slate-300 rounded text-sm flex-1 min-w-[180px]">
+  <select name="domain_filter" class="px-2 py-1.5 border border-slate-300 rounded text-sm">
+    <option value="">Tüm alanlar</option>
+    {% for d in FeatureDomain %}
+    <option value="{{ d.value }}" {% if domain_filter == d.value %}selected{% endif %}>{{ DOMAIN_LABELS[d] }}</option>
+    {% endfor %}
+  </select>
+  <select name="tier_filter" class="px-2 py-1.5 border border-slate-300 rounded text-sm">
+    <option value="">Tüm düzeyler</option>
+    {% for t in FeatureTier %}
+    <option value="{{ t.value }}" {% if tier_filter == t.value %}selected{% endif %}>{{ TIER_LABELS[t] }}</option>
+    {% endfor %}
+  </select>
+  {% if status_filter %}
+  <input type="hidden" name="status_filter" value="{{ status_filter }}">
+  {% endif %}
+  <button type="submit"
+          class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 border border-slate-300 rounded text-sm font-medium">Filtrele</button>
+  {% if q or domain_filter or tier_filter or status_filter %}
+  <a href="/admin/feature-catalog" class="text-xs text-slate-500 hover:text-slate-700 ml-1">temizle ×</a>
+  {% endif %}
+</form>
+
+{% if not cards %}
+<div class="bg-white border border-slate-200 rounded-lg p-12 text-center text-slate-500">
+  Filtreye uyan kart bulunamadı. <a href="/admin/feature-catalog/new" class="text-indigo-600 hover:text-indigo-800">Yeni kart oluştur →</a>
+</div>
+{% else %}
+
+{# ─── Liste tablosu ───────────────────────────────────────────── #}
+<div class="bg-white border border-slate-200 rounded-lg overflow-hidden">
+  <table class="w-full text-sm">
+    <thead class="bg-slate-50 text-slate-600 text-[11px] uppercase tracking-wider">
+      <tr>
+        <th class="text-left px-4 py-2 w-1"></th>
+        <th class="text-left px-3 py-2 font-medium">Kart</th>
+        <th class="text-left px-3 py-2 font-medium">Alan · Düzey</th>
+        <th class="text-left px-3 py-2 font-medium">Durum</th>
+        <th class="text-center px-3 py-2 font-medium" title="1 (düşük) … 5 (kritik)">Öncelik</th>
+        <th class="text-center px-3 py-2 font-medium"
+            title="Anasayfada hangi sırada görüneceğini belirleyen 0-100 puan. 5 farklı sinyal birleştirilir: tazelik, öncelik, içerik bütünlüğü, düzey, rol uyumu.">
+          Vitrin Skoru
+        </th>
+        <th class="text-left px-3 py-2 font-medium"
+            title="Ziyaretçi davranışından gelen sayımlar. Şu an: anasayfa açıldığında JS otomatik gönderir.">
+          Ziyaret
+        </th>
+        <th class="text-left px-3 py-2 font-medium">Demo</th>
+        <th class="text-right px-3 py-2"></th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-slate-100">
+      {% for c in cards %}
+      {% set badge = STATUS_BADGES[c.status_enum] %}
+      {% set is_landing = (c.id in landing_ids) %}
+      <tr class="hover:bg-slate-50/60 transition-colors">
+
+        {# Accent çubuğu (sol ince çizgi) #}
+        <td class="px-0 py-3 align-top">
+          <div class="w-1 h-12 rounded-r" style="background:{{ c.accent_color }}; opacity: {% if is_landing %}1{% else %}0.35{% endif %};"
+               title="{% if is_landing %}Anasayfada görünüyor{% else %}Anasayfada görünmüyor{% endif %}"></div>
+        </td>
+
+        {# Kart başlık + slug + kısa tagline #}
+        <td class="px-3 py-3 align-top max-w-md">
+          <div class="flex items-baseline gap-1.5 flex-wrap">
+            <a href="/admin/feature-catalog/{{ c.id }}"
+               class="font-medium text-slate-900 hover:text-indigo-700 leading-snug">{{ c.title }}</a>
+            {% if c.manual_pin %}
+            <span class="text-amber-600 text-xs" title="Manuel sabitlendi — her zaman tepede">📌</span>
+            {% endif %}
+            {% if is_landing %}
+            <span class="text-[10px] px-1.5 py-px rounded-sm bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Anasayfada</span>
+            {% endif %}
+          </div>
+          <div class="text-[11px] text-slate-400 font-mono mt-0.5">{{ c.slug }}</div>
+          {% if c.tagline %}
+          <div class="text-xs text-slate-500 mt-1 line-clamp-2 max-w-md">{{ c.tagline | safe }}</div>
+          {% endif %}
+        </td>
+
+        {# Alan + Düzey (birleşik) #}
+        <td class="px-3 py-3 align-top">
+          <div class="text-xs text-slate-700">{{ DOMAIN_LABELS[c.domain_enum] }}</div>
+          <div class="text-[11px] text-slate-500 mt-0.5">{{ TIER_LABELS[c.tier_enum] }}</div>
+        </td>
+
+        {# Durum #}
+        <td class="px-3 py-3 align-top">
+          <span class="text-[11px] px-2 py-0.5 rounded-full font-medium bg-{{ badge }}-50 text-{{ badge }}-700 border border-{{ badge }}-200 whitespace-nowrap">
+            {{ STATUS_LABELS[c.status_enum] }}
+          </span>
+          {% if c.manual_hide %}
+          <div class="text-[10px] text-rose-600 mt-1" title="Anasayfada gösterilmiyor (manuel gizli)">gizli</div>
+          {% endif %}
+        </td>
+
+        {# Öncelik #}
+        <td class="px-3 py-3 align-top text-center">
+          <span class="font-mono text-xs text-slate-700">{{ c.strategic_priority }}<span class="text-slate-400">/5</span></span>
+        </td>
+
+        {# Vitrin Skoru — ana skor + alt rozetler #}
+        <td class="px-3 py-3 align-top text-center">
+          {% set sb = scores.get(c.id) if scores else None %}
+          {% if sb %}
+            {% set p = sb.prominence_int %}
+            {% if p >= 70 %}{% set tone = 'emerald' %}
+            {% elif p >= 45 %}{% set tone = 'amber' %}
+            {% else %}{% set tone = 'rose' %}{% endif %}
+            {% set tooltip_lines = [
+              'Skor: ' ~ p ~ '/100',
+              '',
+              'Hesaplama girdileri:',
+              '  • Tazelik (gün): ' ~ (sb.inputs.freshness | round(1)),
+              '  • Stratejik öncelik: ' ~ sb.inputs.priority,
+              '  • Düzey gücü: ' ~ (sb.inputs.tier_strength | round(2)),
+              '  • Bütünlük: ' ~ (sb.inputs.completeness | round(2)),
+              '  • Rol uyumu: ' ~ (sb.inputs.role_match | round(2)),
+              '',
+              'En güçlü kurallar:',
+            ] %}
+            {% for label, strength in sb.fired_rules[:3] %}
+            {% set tooltip_lines = tooltip_lines + ['  [' ~ ('%.2f' % strength) ~ '] ' ~ label] %}
+            {% endfor %}
+            <div
+                class="inline-flex items-center justify-center min-w-[2.25rem] px-2 py-1 rounded-md text-sm font-semibold bg-{{ tone }}-50 text-{{ tone }}-700 border border-{{ tone }}-200 cursor-help"
+                title="{{ tooltip_lines | join('\n') }}">
+              {{ p }}
+            </div>
+            {% set bi = bandit_info.get(c.id) if bandit_info else None %}
+            {% set ns = neighbor_sim.get(c.id) if neighbor_sim else None %}
+            {% if (bi and bi.obs > 0) or (is_landing and ns is not none and ns > 0) %}
+            <div class="mt-1.5 flex items-center justify-center gap-1 text-[10px] font-mono">
+              {% if bi and bi.obs > 0 %}
+              <span class="inline-flex items-center gap-0.5 text-teal-700 bg-teal-50 border border-teal-200 px-1 rounded cursor-help"
+                    title="Akıllı sıralama (LinUCB) bu kart için&#10;{{ bi.obs }} ziyaretçi gözleminden öğrendi.&#10;Beklenen ilgi puanı: {{ '%.2f' % bi.mean }}">
+                🧠 {{ bi.obs }}
+              </span>
+              {% endif %}
+              {% if is_landing and ns is not none and ns > 0 %}
+              {% set diff_pct = ((1.0 - ns) * 100) | round(0) | int %}
+              <span class="inline-flex items-center gap-0.5 text-stone-600 bg-stone-100 border border-stone-200 px-1 rounded cursor-help"
+                    title="Anasayfada bir üst kartla tema farklılığı.&#10;100% = tamamen farklı, 0% = aynı tema.&#10;Çeşitlilik filtresi bu sayıyı yüksek tutmaya çalışır.">
+                🎨 %{{ diff_pct }}
+              </span>
+              {% endif %}
+            </div>
+            {% endif %}
+          {% else %}
+            <span class="text-xs text-slate-400">—</span>
+          {% endif %}
+        </td>
+
+        {# Ziyaret (telemetri sayımları, sade) #}
+        <td class="px-3 py-3 align-top">
+          {% set ts = telemetry_stats.get(c.id) if telemetry_stats else None %}
+          {% if ts and (ts.impression or ts.view or ts.demo_click or ts.cta_click) %}
+            {% set total_clicks = (ts.demo_click or 0) + (ts.cta_click or 0) %}
+            <div class="space-y-0.5 text-xs"
+                 title="Gösterim (kart yüklendi): {{ ts.impression }}&#10;Görüntüleme (ekrana tam girdi): {{ ts.view }}&#10;Demo tıklama: {{ ts.demo_click }}&#10;Bağlantı tıklaması: {{ ts.cta_click }}">
+              <div class="text-slate-700">
+                <span class="font-semibold">{{ ts.impression }}</span>
+                <span class="text-[10px] text-slate-500">gösterim</span>
+              </div>
+              {% if ts.view %}
+              <div class="text-[11px] text-slate-500">
+                {{ ts.view }} görüntüleme
+              </div>
+              {% endif %}
+              {% if total_clicks %}
+              <div class="text-[11px] text-indigo-700 font-medium">
+                {{ total_clicks }} tıklama
+              </div>
+              {% endif %}
+            </div>
+          {% else %}
+            <span class="text-xs text-slate-400">—</span>
+          {% endif %}
+        </td>
+
+        {# Demo #}
+        <td class="px-3 py-3 align-top">
+          {% if c.demo_slug %}
+          <a href="/demos?play={{ c.demo_slug }}" target="_blank"
+             class="text-xs text-indigo-600 hover:text-indigo-800">
+            ▶ {{ c.demo_slug }}
+          </a>
+          {% else %}
+          <span class="text-xs text-slate-400">—</span>
+          {% endif %}
+        </td>
+
+        {# Düzenle #}
+        <td class="px-3 py-3 align-top text-right">
+          <a href="/admin/feature-catalog/{{ c.id }}"
+             class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Düzenle →</a>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+<p class="mt-3 text-xs text-slate-500">
+  Toplam {{ cards|length }} kart gösteriliyor. Sol kenardaki renk şeridi
+  yoğun olanlar şu an anasayfada görünüyor.
+</p>
+{% endif %}
+{% endblock %}

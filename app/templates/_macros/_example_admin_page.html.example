@@ -1,0 +1,101 @@
+{# ÖRNEK ADMIN SAYFASI ŞABLONU — kopyala, yapıyı bozmadan içeriği değiştir.
+   Adı: _example_admin_page.html.example (.example uzantısı sayesinde Jinja
+   tarafından yüklenmez, sadece referans örnek dosyadır). #}
+
+{% extends "base.html" %}
+{% block title %}Sayfa Adı — Admin{% endblock %}
+
+{% block content %}
+{% from "_macros/section_panel.html" import panel %}
+
+{# Sayfa başlığı + opsiyonel geri linki #}
+<div class="mb-6">
+  <a href="/admin" class="text-sm text-slate-500 hover:text-slate-700">← Üst sayfa</a>
+  <h1 class="text-2xl font-semibold text-slate-900 mt-1">Sayfa Başlığı</h1>
+  <p class="text-sm text-slate-500 mt-1">
+    Sayfanın 1-2 cümlelik tanımı.
+  </p>
+</div>
+
+
+{# ---------- BÖLÜM 1: 4 KPI Kartı ---------- #}
+{% call panel(
+    color='indigo',
+    category='Genel Bakış',
+    icon='📊',
+    title='KPI Özeti',
+    description='Bu bölümdeki sayılar son 24 saatte... Sayıya tıklayınca detay liste açılır.',
+) %}
+<div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+  {# Her iç kart: beyaz arka plan + renkli kenarlık + hover efekti #}
+  <div class="p-4 rounded-lg bg-white border border-indigo-200 hover:border-indigo-400 hover:shadow-sm transition">
+    <div class="text-xs text-indigo-700 uppercase tracking-wide">Metrik 1</div>
+    <div class="text-3xl font-semibold text-indigo-900 mt-1">{{ metric_1 }}</div>
+    <div class="text-[11px] text-indigo-700 mt-1">açıklayıcı alt-metin</div>
+  </div>
+  {# ... diğer kartlar ... #}
+</div>
+{% endcall %}
+
+
+{# ---------- BÖLÜM 2: Aksiyon merkezi (panel içi link grid) ---------- #}
+{% call panel(
+    color='emerald',
+    category='Operasyonlar',
+    icon='💰',
+    title='Eylemler',
+    description='Günlük operasyon kısayolları. Her kart bir alt-pano açar.',
+    action_url='/admin/x',
+    action_label='Tümünü aç',
+) %}
+<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+  <a href="/admin/x/y" class="p-3 rounded-lg bg-white border border-indigo-200 hover:border-indigo-400 hover:shadow-sm transition"
+     title="Bu kartın ne yaptığını gösteren kısa tooltip">
+    <div class="text-xl">🎯</div>
+    <div class="text-sm font-medium text-slate-900 mt-1">Kart Başlığı</div>
+    <div class="text-xs text-slate-500">Alt-açıklama</div>
+  </a>
+</div>
+{% endcall %}
+
+
+{# ---------- BÖLÜM 3: Tablo (inner_bg='none' önemli!) ---------- #}
+{% call panel(
+    color='violet',
+    category='Sistem Olayları',
+    icon='📜',
+    title='Son Olaylar',
+    description='Tablo padding\'i kendinde olduğu için inner_bg=none.',
+    action_url='/admin/audit',
+    action_label='Tümünü gör',
+    inner_bg='none',
+) %}
+<table class="w-full text-xs">
+  <thead class="bg-slate-50 text-slate-600">
+    <tr>
+      <th class="text-left px-4 py-2">Kolon</th>
+    </tr>
+  </thead>
+  <tbody class="divide-y divide-slate-100">
+    {% for row in rows %}
+    <tr>
+      <td class="px-4 py-2">{{ row }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endcall %}
+
+
+{# ---------- Renk kullanım rehberi ----------
+  indigo  — Genel/varsayılan (hesap özeti, sağlık)
+  emerald — Satış/ticari/başarı
+  rose    — Müşteri sağlığı/erken uyarı/kritik
+  amber   — Sessizleşme/dikkat/uyarı
+  slate   — Sistem/altyapı/nötr
+  violet  — Audit/olaylar/kayıt
+  cyan    — Trend/zaman serisi
+  blue    — Karşılaştırma/analiz
+  purple  — Bağımsız öğretmen/özel kategori
+#}
+{% endblock %}
