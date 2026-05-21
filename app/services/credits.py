@@ -63,8 +63,9 @@ KIND_CREDITS: dict[UsageKind, int] = {
     UsageKind.AI_BOOK_TEMPLATE: 5,
     UsageKind.AI_INSIGHTS: 5,
     UsageKind.AI_SESSION_CAPTURE: 5,
-    UsageKind.AI_SESSION_VOICE: 8,  # Whisper STT + Claude yapılandırma = 2 çağrı
-    UsageKind.AI_COACHING_INSIGHT: 6,  # Claude — geniş bağlam (seans geçmişi + akademik)
+    UsageKind.AI_SESSION_VOICE: 8,  # (eski) — kullanılmıyor
+    UsageKind.AI_TRANSCRIBE: 3,     # saf ses→metin dikte (alan başına)
+    UsageKind.AI_COACHING_INSIGHT: 6,  # Gemini — geniş bağlam (seans geçmişi + akademik)
     UsageKind.EMAIL_SEND: 1,
     UsageKind.WHATSAPP_SEND: 5,
     UsageKind.OTHER: 1,

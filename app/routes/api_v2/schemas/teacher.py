@@ -1552,6 +1552,11 @@ class ParseVoiceBody(BaseModel):
     media_type: str  # audio/webm | audio/mp4 | audio/ogg | audio/mpeg | audio/wav
 
 
+class TranscribeResponse(BaseModel):
+    """Saf ses→metin dikte sonucu (alan doldurma için)."""
+    text: str
+
+
 class SessionDraftResponse(BaseModel):
     """AI'dan dönen seans form taslağı (KAYDEDİLMEZ — koç onaylar)."""
     agenda: str

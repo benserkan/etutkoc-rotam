@@ -39,17 +39,10 @@ _PROMPT = (
     "Okunamayan alanı boş/null bırak. Uydurma. Türkçe yaz."
 )
 
-_VOICE_PROMPT = (
-    "Aşağıdaki ses kaydı, bir öğrenci koçunun bir seans hakkında SESLİ olarak "
-    "dikte ettiği nottur. Sesi anla ve YALNIZ şu JSON nesnesini döndür:\n"
-    "{\n"
-    '  "agenda": "bu/gelecek seansta konuşulacak ana konular (kısa)",\n'
-    '  "coach_note": "görüşme notu: gözlem, başarı, zorluk (anlatılanın özeti)",\n'
-    '  "next_change": "gelecek hafta değiştirilecek 1 şey (yoksa boş)",\n'
-    '  "mood": 1-5 arası tam sayı veya null,\n'
-    '  "tags": ["kısa etiketler: kaygı, motivasyon, düzensizlik..."]\n'
-    "}\n"
-    "Söylenmeyeni uydurma; boş bırak. Türkçe yaz."
+_TRANSCRIBE_PROMPT = (
+    "Bu ses kaydını OLDUĞU GİBI Türkçe metne çevir (dikte). Başlık, yorum, "
+    "açıklama, madde işareti EKLEME — yalnız konuşulan metni düz yazı olarak döndür. "
+    "Anlaşılmayan kısa kısımları atla; uydurma."
 )
 
 
@@ -90,10 +83,13 @@ def parse_session_photo(
     return _normalize(gemini.extract_json(text))
 
 
-def parse_session_voice(
+def transcribe_audio(
     audio_base64: str, media_type: str, *, timeout: float = 60.0
-) -> dict[str, Any]:
-    """Ses (base64) → seans form taslağı (Gemini audio, tek çağrı, ücretli key). Ses saklanmaz."""
+) -> str:
+    """Ses (base64) → DÜZ METİN dikte (Gemini audio, ücretli key). Ses saklanmaz.
+
+    Yapılandırma YOK — konuşulanı olduğu gibi metne çevirir (alan dikte için).
+    """
     if media_type not in ALLOWED_AUDIO:
         raise AIInvalidResponse("Desteklenmeyen ses türü (webm/mp4/ogg/mp3/wav).")
     try:
@@ -102,7 +98,7 @@ def parse_session_voice(
     except (binascii.Error, ValueError) as e:
         raise AIInvalidResponse(f"Ses verisi çözülemedi: {e}")
     text = gemini.generate(
-        [gemini.inline_part(audio_base64, media_type), gemini.text_part(_VOICE_PROMPT)],
-        personal_data=True, timeout=timeout,
+        [gemini.inline_part(audio_base64, media_type), gemini.text_part(_TRANSCRIBE_PROMPT)],
+        personal_data=True, timeout=timeout, json_mode=False,
     )
-    return _normalize(gemini.extract_json(text))
+    return text.strip()

@@ -1431,6 +1431,10 @@ export interface SessionDraftResponse {
   tags: string[];
 }
 
+export interface TranscribeResponse {
+  text: string;
+}
+
 export interface CoachingInsightResponse {
   summary: string;
   agenda_suggestions: string[];

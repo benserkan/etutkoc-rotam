@@ -6,7 +6,7 @@ Senaryolar:
    1. free koç GET /plan → ai_premium False + solo_pro option is_upgrade True
    2. free koç ai-consent POST → ai_premium False
    3. free koç parse-photo → 403 plan_upgrade_required
-   4. free koç parse-voice → 403 plan_upgrade_required
+   4. free koç transcribe → 403 plan_upgrade_required
    5. free koç coaching-insight POST → 403 plan_upgrade_required
    6. trial koç parse-photo → 403 (trial de kapalı)
    7. paid koç (solo_pro) GET /plan → ai_premium True
@@ -153,9 +153,9 @@ def main():
         check("3. free parse-photo → 403 plan_upgrade_required",
               r.status_code == 403 and r.json()["detail"]["code"] == "plan_upgrade_required", f"status={r.status_code}")
 
-        r = free.post(f"/api/v2/teacher/students/{free_s}/sessions/parse-voice",
+        r = free.post(f"/api/v2/teacher/students/{free_s}/sessions/transcribe",
                       json={"audio_base64": "Zm9v", "media_type": "audio/webm"})
-        check("4. free parse-voice → 403", r.status_code == 403 and r.json()["detail"]["code"] == "plan_upgrade_required", f"status={r.status_code}")
+        check("4. free transcribe → 403", r.status_code == 403 and r.json()["detail"]["code"] == "plan_upgrade_required", f"status={r.status_code}")
 
         r = free.post(f"/api/v2/teacher/students/{free_s}/coaching-insight")
         check("5. free coaching-insight → 403", r.status_code == 403 and r.json()["detail"]["code"] == "plan_upgrade_required", f"status={r.status_code}")

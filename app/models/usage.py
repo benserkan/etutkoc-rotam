@@ -49,9 +49,10 @@ class UsageKind(str, enum.Enum):
     """
     AI_BOOK_TEMPLATE = "ai_book_template"   # Claude — kitap şablonu önerisi
     AI_INSIGHTS = "ai_insights"             # Claude — öğrenci performans analizi
-    AI_SESSION_CAPTURE = "ai_session_capture"  # Claude vision — foto seans yakalama (KS3a)
-    AI_SESSION_VOICE = "ai_session_voice"   # Whisper STT + Claude — sesli seans yakalama (KS3b)
-    AI_COACHING_INSIGHT = "ai_coaching_insight"  # Claude — seans geçmişi → koçluk içgörüsü (KS4)
+    AI_SESSION_CAPTURE = "ai_session_capture"  # Gemini vision — foto seans yakalama (KS3a)
+    AI_SESSION_VOICE = "ai_session_voice"   # (eski) sesli yapılandırma — yerini AI_TRANSCRIBE aldı
+    AI_TRANSCRIBE = "ai_transcribe"         # Gemini — alan dikte (saf ses→metin, KS3b)
+    AI_COACHING_INSIGHT = "ai_coaching_insight"  # Gemini — seans geçmişi → koçluk içgörüsü (KS4)
     EMAIL_SEND = "email_send"               # SMTP/SendGrid e-posta
     WHATSAPP_SEND = "whatsapp_send"         # Meta Cloud API mesaj
     OTHER = "other"
@@ -62,6 +63,7 @@ USAGE_KIND_LABELS_TR: dict[UsageKind, str] = {
     UsageKind.AI_INSIGHTS: "AI Performans Analizi",
     UsageKind.AI_SESSION_CAPTURE: "AI Seans Yakalama (Foto)",
     UsageKind.AI_SESSION_VOICE: "AI Seans Yakalama (Ses)",
+    UsageKind.AI_TRANSCRIBE: "AI Sesli Dikte",
     UsageKind.AI_COACHING_INSIGHT: "AI Koçluk İçgörüsü",
     UsageKind.EMAIL_SEND: "E-posta",
     UsageKind.WHATSAPP_SEND: "WhatsApp Mesajı",

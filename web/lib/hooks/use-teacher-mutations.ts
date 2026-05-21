@@ -18,6 +18,7 @@ import type {
   PaymentCreateBody,
   AiConsentResponse,
   SessionDraftResponse,
+  TranscribeResponse,
   CoachingInsightCacheResponse,
   TeacherPlanResponse,
   PlanUpgradeBody,
@@ -1244,13 +1245,13 @@ export function useParseSessionPhoto(studentId: number) {
   });
 }
 
-export function useParseSessionVoice(studentId: number) {
-  // Ses yalnızca metne çevrilir; DB'ye hiçbir şey yazılmaz (taslak döner).
-  // eslint-disable-next-line lgs/missing-invalidate -- parse yan etkisiz, taslak döner
-  return useMutation<SessionDraftResponse, ApiError, { audioBase64: string; mediaType: string }>({
+export function useTranscribeAudio(studentId: number) {
+  // Ses → DÜZ METİN (alan dikte). DB'ye yazmaz; sonuç form alanına eklenir.
+  // eslint-disable-next-line lgs/missing-invalidate -- transkripsiyon yan etkisiz
+  return useMutation<TranscribeResponse, ApiError, { audioBase64: string; mediaType: string }>({
     mutationFn: ({ audioBase64, mediaType }) =>
-      api<SessionDraftResponse>(
-        `/api/v2/teacher/students/${studentId}/sessions/parse-voice`,
+      api<TranscribeResponse>(
+        `/api/v2/teacher/students/${studentId}/sessions/transcribe`,
         { method: "POST", body: JSON.stringify({ audio_base64: audioBase64, media_type: mediaType }) },
       ),
     onError: (err) => {

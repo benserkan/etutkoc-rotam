@@ -250,7 +250,7 @@ def main():
         line()
         print("  MALİYET ÖZETİ (kredi)")
         line()
-        print("  AI_COACHING_INSIGHT = 6 · AI_SESSION_CAPTURE(foto) = 5 · AI_SESSION_VOICE(ses) = 8")
+        print("  AI_COACHING_INSIGHT = 6 · AI_SESSION_CAPTURE(foto) = 5 · AI_TRANSCRIBE(dikte) = 3")
         print(f"  solo_free aylık tahsis örn: ücretsiz planda AI KAPALI (kapı 403).")
         print(f"  solo_pro koç bu simülasyonda {_used_credits(seed['paid_t'])} kredi tüketti.")
 

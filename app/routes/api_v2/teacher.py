@@ -140,6 +140,7 @@ from app.routes.api_v2.schemas.teacher import (
     ParseVoiceBody,
     PlanUpgradeBody,
     SessionDraftResponse,
+    TranscribeResponse,
     TeacherPlanOption,
     TeacherPlanResponse,
     DnaTrendInfo,
@@ -1347,19 +1348,19 @@ def teacher_parse_session_photo_v2(
     return SessionDraftResponse(**draft)
 
 
-@router.post("/students/{student_id}/sessions/parse-voice", response_model=SessionDraftResponse)
-def teacher_parse_session_voice_v2(
+@router.post("/students/{student_id}/sessions/transcribe", response_model=TranscribeResponse)
+def teacher_transcribe_v2(
     student_id: int,
     body: ParseVoiceBody,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Sesli not (kayıt) → seans form taslağı (Whisper STT + Claude yapılandırma).
+    """Sesli dikte → DÜZ METİN (alan doldurma için). Gemini saf transkripsiyon.
 
-    GİZLİLİK: Ses SAKLANMAZ — yalnız bu çağrıda işlenir. Sonuç taslaktır; koç
-    düzenleyip /sessions ile kaydeder. Rıza zorunlu + kredi tüketir.
+    GİZLİLİK: Ses SAKLANMAZ — yalnız bu çağrıda işlenir. Sonuç düz metindir; koç
+    ilgili form alanına ekler. Rıza zorunlu + kredi tüketir (ücretli paket).
     """
-    from app.services.ai_session_capture import ALLOWED_AUDIO, parse_session_voice
+    from app.services.ai_session_capture import ALLOWED_AUDIO, transcribe_audio
     from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
     from app.models import UsageKind
     from app.services.credits import CreditBlocked, CreditOwner, consume_credits
@@ -1380,8 +1381,7 @@ def teacher_parse_session_voice_v2(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={"error": "validation", "code": "audio_required", "message": "Ses kaydı boş."},
         )
-    # ~18MB base64 üst sınırı (~13MB ham ses — birkaç dakikalık sıkıştırılmış kayıt fazlasıyla yeter)
-    if len(audio) > 18_000_000:
+    if len(audio) > 18_000_000:  # ~13MB ham ses
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={"error": "validation", "code": "audio_too_large", "message": "Ses kaydı çok uzun/büyük (max ~13MB)."},
@@ -1394,14 +1394,14 @@ def teacher_parse_session_voice_v2(
         )
 
     owner = CreditOwner.for_user(user)
-    draft: dict | None = None
+    text: str = ""
     try:
         with consume_credits(
-            db, owner=owner, kind=UsageKind.AI_SESSION_VOICE,
+            db, owner=owner, kind=UsageKind.AI_TRANSCRIBE,
             actor_user_id=user.id, autocommit=False,
         ) as ctx:
-            draft = parse_session_voice(audio, body.media_type)
-            ctx.set_metadata({"student_id": student_id, "source": "voice"})
+            text = transcribe_audio(audio, body.media_type)
+            ctx.set_metadata({"student_id": student_id, "source": "dictation"})
     except CreditBlocked as e:
         db.rollback()
         raise HTTPException(
@@ -1423,7 +1423,7 @@ def teacher_parse_session_voice_v2(
                     "message": f"AI servisi şu an kullanılamıyor: {e}"},
         )
     db.commit()  # kredi kaydını sabitle
-    return SessionDraftResponse(**draft)
+    return TranscribeResponse(text=text)
 
 
 def _insight_to_response(ci: CoachingInsight) -> CoachingInsightResponse:
