@@ -31,6 +31,7 @@ from app.routes.api_v2 import library as v2_library
 from app.routes.api_v2 import me as v2_me
 from app.routes.api_v2 import offers_public as v2_offers_public
 from app.routes.api_v2 import parent as v2_parent
+from app.routes.api_v2 import pricing_public as v2_pricing_public
 from app.routes.api_v2 import settings as v2_settings
 from app.routes.api_v2 import student as v2_student
 from app.routes.api_v2 import teacher as v2_teacher
@@ -47,6 +48,7 @@ router.include_router(v2_institution.router)
 router.include_router(v2_parent.router)
 router.include_router(v2_offers_public.router)
 router.include_router(v2_landing_public.router)
+router.include_router(v2_pricing_public.router)
 router.include_router(v2_library.router)
 router.include_router(v2_insights.router)
 router.include_router(v2_settings.router)

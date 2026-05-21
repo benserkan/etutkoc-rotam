@@ -373,8 +373,8 @@ def ai_premium_allowed(db: Session, user: User) -> bool:
 # -1 = sınırsız, 0 = kapalı.
 SOLO_STUDENT_LIMITS: dict[str, int] = {
     SOLO_TRIAL: -1,        # trial sırasında pro deneyim — sınırsız
-    SOLO_FREE: 3,          # ücretsiz tier — 3 öğrenci
-    SOLO_PRO: 15,
+    SOLO_FREE: 3,          # ücretsiz tier — 3 öğrenci (sert sınır)
+    SOLO_PRO: -1,          # ücretli — öğrenci bandına göre fiyatlanır (sert sınır YOK)
     SOLO_ELITE: -1,        # sınırsız
 }
 
