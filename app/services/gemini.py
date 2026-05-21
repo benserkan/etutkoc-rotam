@@ -46,7 +46,9 @@ _RETRY_503 = (1.5, 3.0)
 
 def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_mode: bool) -> str:
     url = f"{GEMINI_BASE}/{model}:generateContent"
-    gen_cfg: dict[str, Any] = {"temperature": 0.4, "maxOutputTokens": 2048}
+    # 2.5 modelleri "düşünme" tokenı tüketir; düşük bütçe çıktıyı yarıda keser
+    # (yarım JSON → parse hatası). Yapılandırılmış çıktılarımız küçük; bol bütçe ver.
+    gen_cfg: dict[str, Any] = {"temperature": 0.4, "maxOutputTokens": 8192}
     if json_mode:
         gen_cfg["responseMimeType"] = "application/json"
     body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": gen_cfg}
