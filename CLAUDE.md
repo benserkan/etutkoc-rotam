@@ -1747,9 +1747,27 @@ GET ücretsiz / POST kredi, migration `v3w5z8a9z77t`).
 GERÇEK anahtarla doğrulandı. Smoke: ai_settings 11 + ai_capture 10 + voice 10 + insight 11
 + entitlement 12 + sessions 14 + admin 13 + tenant 29 + api_v1 47. tsc/eslint/build temiz.
 Commit'ler: `94d9c92` (AI altyapı+Gemini+kapı) · `b2aaa43` (virgül-ayırma+503 retry) — pushed.
-**Commit EDİLMEDİ** — kullanıcı "topluca commit ederiz" dedi; çalışma diskte. Resume: D
-(kullanıcı anahtar girince sim çalıştır). Migration'lar: `v3w5z8a9z77t` (coaching_insights),
-`w4x6a9b0a88u` (system_secrets) — uygulandı, alembic head = `w4x6a9b0a88u`.
+Migration'lar: `v3w5z8a9z77t` (coaching_insights), `w4x6a9b0a88u` (system_secrets) —
+uygulandı, alembic head = `w4x6a9b0a88u`.
+
+**UX iterasyonları (2026-05-22, kullanıcı geri bildirimi — pushed):**
+- **`.env` GEMINI_API_KEY virgülle çoklu**: ilk=ücretli, kalan=ücretsiz (`_gemini_api_key_list`).
+- **`.venv`'de cryptography eksikti** → AI 500; kuruldu + requirements'a eklendi.
+- **Gemini 2.5 maxOutputTokens 2048→8192**: düşünme tokenı çıktıyı kesip JSON
+  parse hatası veriyordu (AI ünite önerisi).
+- **feature_flags cache ORM yerine düz veri**: commit sonrası detached ORM →
+  DetachedInstanceError (is_enabled). Tüm is_enabled'ı etkiliyordu.
+- **KS4 içgörü**: "Bu gündemle seans aç" butonu KALDIRILDI (erken "Yapıldı" seans
+  yaratıyordu); içgörü yalnız okuma/hazırlık. Bayat uyarısı "N seansa dayanıyor,
+  şu an M seans var" gösterir.
+- **KS3b yeniden tasarım**: "Sesle doldur" üst butonu kaldırıldı → Yeni Seans
+  formunda Gündem+Görüşme notu yanında **alan-bazlı 🎤 dikte** (SAF ses→metin,
+  `POST /sessions/transcribe`, `UsageKind.AI_TRANSCRIBE`=3 kredi). "Fotoğraftan
+  doldur" da form içine taşındı (tüm formu doldurur). Eski parse-voice (yapılandıran)
+  kaldırıldı. Kredi: foto=5, dikte=3, içgörü=6.
+- Commit'ler: `d954af4`/`94d9c92`/`b2aaa43`/`d373369`/`deb7345` (cryptography)/
+  `3cecdd3` (feature_flags)/`3849985` (insight buton)/`0529903` (bayat banner)/
+  `da91723` (token)/`dc79947` (dikte+foto form içine).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
