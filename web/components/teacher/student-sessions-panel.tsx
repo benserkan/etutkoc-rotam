@@ -481,8 +481,11 @@ export function StudentSessionsPanel({ studentId }: Props) {
               {insightQ.data?.is_stale ? (
                 <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
-                  Bu içgörü oluşturulduktan sonra seans bilgisi değişti. Güncel öneri için
-                  yeniden oluşturabilirsiniz (kredi düşer).
+                  <span>
+                    Bu içgörü <strong>{cachedInsight.based_on_sessions} seansa</strong> dayanıyor;
+                    şu an <strong>{data?.summary.total ?? cachedInsight.based_on_sessions} seans</strong> var.
+                    Güncel öneri için <strong>Yenile</strong> (kredi düşer).
+                  </span>
                 </div>
               ) : null}
               <p className="rounded-md bg-muted/50 px-3 py-2 leading-relaxed">{cachedInsight.summary}</p>
