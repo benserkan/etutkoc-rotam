@@ -113,7 +113,7 @@ function pickAudioMime(): string {
 }
 
 type CaptureSource = "photo" | "voice";
-type DraftSource = CaptureSource | "insight";
+type DraftSource = CaptureSource;
 type PendingCapture = { b64: string; mt: string; source: CaptureSource };
 
 export function StudentSessionsPanel({ studentId }: Props) {
@@ -203,21 +203,6 @@ export function StudentSessionsPanel({ studentId }: Props) {
 
   function generateNow() {
     gateConsent(() => generateInsight.mutate());
-  }
-
-  function startSessionFromInsight() {
-    if (!cachedInsight) return;
-    setEditing(null);
-    setDraft({
-      agenda: cachedInsight.agenda_suggestions.map((a) => `• ${a}`).join("\n"),
-      coach_note: "",
-      next_change: "",
-      mood: null,
-      tags: [],
-    });
-    setDraftSource("insight");
-    setInsightOpen(false);
-    setFormOpen(true);
   }
 
   function dispatch(payload: PendingCapture) {
@@ -405,16 +390,14 @@ export function StudentSessionsPanel({ studentId }: Props) {
               {editing
                 ? "Seansı düzenle"
                 : draft
-                  ? draftSource === "insight" ? "İçgörüden seans" : draftSource === "voice" ? "Sesten taslak" : "Fotoğraftan taslak"
+                  ? draftSource === "voice" ? "Sesten taslak" : "Fotoğraftan taslak"
                   : "Yeni seans kaydı"}
             </DialogTitle>
           </DialogHeader>
           {draft ? (
             <div className="-mt-1 mb-1 flex items-center gap-2 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">
               <Sparkles className="size-4 shrink-0" aria-hidden />
-              {draftSource === "insight"
-                ? "Yapay zekâ önerisinden bir gündem taslağı hazırlandı. Düzenleyip kaydedin."
-                : `Yapay zekâ ${draftSource === "voice" ? "sesinizi" : "fotoğrafı"} okudu. Lütfen kontrol edip düzeltin — kaydetmeden hiçbir şey saklanmaz.`}
+              {`Yapay zekâ ${draftSource === "voice" ? "sesinizi" : "fotoğrafı"} okudu. Lütfen kontrol edip düzeltin — kaydetmeden hiçbir şey saklanmaz.`}
             </div>
           ) : null}
           <SessionForm
@@ -538,11 +521,6 @@ export function StudentSessionsPanel({ studentId }: Props) {
                   {generateInsight.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}
                   Yenile
                 </Button>
-                {cachedInsight.agenda_suggestions.length > 0 ? (
-                  <Button onClick={startSessionFromInsight}>
-                    <Plus className="size-4" aria-hidden /> Bu gündemle seans aç
-                  </Button>
-                ) : null}
               </div>
             </div>
           )}
