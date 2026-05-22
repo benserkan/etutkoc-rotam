@@ -1611,6 +1611,8 @@ def _build_plan_response(db: Session, user: User):
         status = "managed"
     elif is_trial_active(user):
         status = "trialing"
+    elif getattr(user, "subscription_status", None) == "past_due":
+        status = "past_due"
     elif is_paid_plan(effective):
         status = "active"
     else:
@@ -1651,6 +1653,11 @@ def _build_plan_response(db: Session, user: User):
         solo_monthly_price=solo_monthly_price,
         annual_paid_months=int(catalog["annual_paid_months"]),
         sales_email=str(catalog.get("contact", {}).get("sales_email", "")),
+        subscription_period_end=(
+            user.subscription_period_end.isoformat()
+            if is_solo and user.subscription_period_end else None
+        ),
+        subscription_cycle=user.subscription_cycle if is_solo else None,
     )
 
 

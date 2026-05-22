@@ -197,6 +197,16 @@ class User(Base):
         String(32), nullable=True
     )
 
+    # Solo abonelik durumu (migration z7a9d2e3d11x) — bağımsız koç (institution_id
+    # NULL) için. Kurum aboneliği Institution modelinde. status: active/past_due/
+    # canceled (None = abonelik yok, trial/free). period_end: yenileme tarihi.
+    # cycle: monthly | academic_year.
+    subscription_status: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    subscription_period_end: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    subscription_cycle: Mapped[str | None] = mapped_column(String(20), nullable=True)
+
     # Öğrencinin "hafta anchor" tarihi. Set ise: haftalık view bu tarihi
     # bloğun başı sayar (ör. 24 Nisan Cuma → tüm haftalar Cuma-Perşembe).
     # NULL ise: öğrencinin en eski Task.date'i fallback olarak kullanılır;

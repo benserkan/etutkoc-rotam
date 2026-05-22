@@ -1918,11 +1918,28 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
     change_plan UPGRADE + audit). `AdminUserListItem`'a `plan` eklendi.
   - Smoke `test_api_v2_subscription_request.py` **11/11**; admin_users 25 +
     contact 11 + entitlement 13 regresyon temiz; tsc/eslint/build temiz.
-- **Faz 3 ⏳ solo abonelik durumu (migration)**: User'a subscription_status/
-  period_end/cycle + yenileme hatırlatma + dönem sonu past_due/paywall.
-- **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme.
+- **Faz 3 ✅ solo abonelik durumu + yenileme** (**migration `z7a9d2e3d11x`** —
+  users +subscription_status/period_end/cycle, additive nullable):
+  - `activate-plan` artık `cycle` alır → ücretli planı active + period_end
+    (aylık 30g / akademik yıl 365g) + cycle set eder; free → temizler. Admin
+    kartına döngü seçici eklendi.
+  - `/teacher/plan` aktif durumda **yenileme tarihi** gösterir.
+  - `trial_notifications.process_renewals`: gün-3 yenileme hatırlatma e-postası +
+    dönem sonu geçince `past_due` işaretle + "ödeme gerekli" e-postası. Mevcut
+    `trial_expire` cron'una bağlandı. Şablonlar `renewal_reminder/overdue.html`.
+  - **past_due → paywall**: `solo_trial_status` + `assert_active_coaching`
+    past_due'yu da kapsar (koçluk write 403 paywall_active, mesaj "yenileme
+    gerekli"); teacher-shell banner + /teacher/plan past_due durumu ("Aboneliğini
+    yenile").
+  - **İletişim Talepleri "koç sayfasına git" linki**: subscription_request'in
+    mesajından `koç_id` parse edilip `linked_user_id` döner → admin tek tıkla
+    koç user-detail'e gidip aktive eder.
+  - Smoke `test_api_v2_subscription_renewal.py` **6/6**; subscription_request 11 +
+    trial-status 6 + paywall 5 + entitlement 13 + admin_users 25 + trial_notif 4
+    regresyon temiz; tsc/eslint/build temiz.
+- **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge).
 
-Migration head: `y6z8c1d2c00w`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
+Migration head: `z7a9d2e3d11x`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
 `8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup) ·
 `62c1d7f`/`3a6738e`/`4cb7363`/`4eb9c80` (trial yaşam döngüsü Faz 1-4).

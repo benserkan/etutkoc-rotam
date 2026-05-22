@@ -211,13 +211,16 @@ const SOLO_PLAN_LABELS: Record<string, string> = {
 function SubscriptionCard({ userId, currentPlan }: { userId: number; currentPlan: string }) {
   const mut = useActivateUserPlan(userId);
   const [plan, setPlan] = React.useState("solo_pro");
+  const [cycle, setCycle] = React.useState("monthly");
+  const paid = plan === "solo_pro" || plan === "solo_elite";
   return (
     <Card className="border-cyan-200">
       <CardContent className="space-y-3 p-5">
         <h3 className="text-sm font-medium">Abonelik aktivasyonu</h3>
         <p className="text-xs text-muted-foreground">
           Koçun &quot;öde ve devam et&quot; talebi <strong>İletişim Talepleri</strong>&apos;nde
-          görünür. Ödeme alındıktan sonra planı buradan aktive et.
+          görünür. Ödeme alındıktan sonra planı buradan aktive et (dönem sonu otomatik
+          hesaplanır).
         </p>
         <p className="text-xs">
           Mevcut plan:{" "}
@@ -233,8 +236,18 @@ function SubscriptionCard({ userId, currentPlan }: { userId: number; currentPlan
               <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
+          {paid ? (
+            <select
+              value={cycle}
+              onChange={(e) => setCycle(e.target.value)}
+              className="rounded border border-input bg-card px-3 py-2 text-sm"
+            >
+              <option value="monthly">Aylık (30 gün)</option>
+              <option value="academic_year">Akademik yıl (365 gün)</option>
+            </select>
+          ) : null}
           <Button
-            onClick={() => mut.mutate({ plan })}
+            onClick={() => mut.mutate({ plan, cycle })}
             disabled={mut.isPending}
             className="bg-cyan-700 text-white hover:bg-cyan-800"
           >

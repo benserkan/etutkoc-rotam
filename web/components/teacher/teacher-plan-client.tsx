@@ -72,8 +72,14 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
             <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
               <CheckCircle2 className="size-4" aria-hidden /> Aboneliğin aktif — tüm yapay zekâ özellikleri açık.
             </p>
+            {data.subscription_period_end ? (
+              <p className="text-sm">
+                Sonraki yenileme: <strong>{fmtDate(data.subscription_period_end)}</strong>
+                {data.subscription_cycle === "academic_year" ? " (akademik yıl)" : " (aylık)"}
+              </p>
+            ) : null}
             <p className="text-xs text-muted-foreground">
-              Yenileme ve plan yönetimi (değiştir/iptal) çok yakında bu sayfada olacak.
+              Plan yönetimi (değiştir/iptal) çok yakında bu sayfada olacak.
             </p>
           </CardContent>
         </Card>
@@ -89,6 +95,12 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
   );
 }
 
+function fmtDate(iso: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+}
+
 function StatusLine({ status, daysLeft }: { status: string; daysLeft: number | null }) {
   if (status === "trialing") {
     const d = daysLeft ?? 0;
@@ -96,6 +108,9 @@ function StatusLine({ status, daysLeft }: { status: string; daysLeft: number | n
   }
   if (status === "active") {
     return <p className="text-xs text-emerald-700">Aktif abonelik</p>;
+  }
+  if (status === "past_due") {
+    return <p className="text-xs text-rose-700">Aboneliğin yenilenmedi — yenileme gerekli</p>;
   }
   if (status === "free") {
     return <p className="text-xs text-slate-500">Ücretsiz — 3 öğrenci, yapay zekâ kapalı</p>;
@@ -145,11 +160,15 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
       <CardContent className="space-y-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <p className="font-display text-lg font-bold">Solo&apos;ya geç</p>
+            <p className="font-display text-lg font-bold">
+              {data.status === "past_due" ? "Aboneliğini yenile" : "Solo'ya geç"}
+            </p>
             <p className="text-sm text-muted-foreground">
               {data.status === "trialing"
                 ? "Denemen bitmeden geç; tüm öğrencilerin ve yapay zekâ kesintisiz devam etsin."
-                : "Sınırsız öğrenci ve yapay zekâ özellikleriyle koçluğa devam et."}
+                : data.status === "past_due"
+                  ? "Aboneliğin yenilenmedi. Ödeyip yenileyerek aktif koçluğa devam et."
+                  : "Sınırsız öğrenci ve yapay zekâ özellikleriyle koçluğa devam et."}
             </p>
           </div>
           {/* Aylık / Akademik yıl toggle */}
@@ -190,7 +209,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         </ul>
 
         <Button className="w-full bg-cyan-700 text-white hover:bg-cyan-800" onClick={() => setOpen(true)}>
-          Solo&apos;ya geç (öde)
+          {data.status === "past_due" ? "Yenile (öde)" : "Solo'ya geç (öde)"}
         </Button>
       </CardContent>
 

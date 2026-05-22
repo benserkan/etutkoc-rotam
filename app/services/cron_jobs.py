@@ -558,8 +558,16 @@ def trial_expire(db: Session, *, now: datetime) -> dict:
     except Exception:
         logger.exception("trial_expire: expired emails fail")
 
+    renewals = {"reminded": 0, "past_due": 0}
+    try:
+        renewals = tn.process_renewals(db, now=now)
+    except Exception:
+        logger.exception("trial_expire: renewals fail")
+
     result["reminders_sent"] = reminders
     result["expired_emails"] = expired_emails
+    result["renewals_reminded"] = renewals["reminded"]
+    result["renewals_past_due"] = renewals["past_due"]
     return result
 
 

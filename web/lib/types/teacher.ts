@@ -1417,11 +1417,13 @@ export interface TeacherPlanResponse {
   trial_days_left: number | null;
   options: TeacherPlanOption[];
   note: string | null;
-  status: string;              // trialing | active | free | managed
+  status: string;              // trialing | active | past_due | free | managed
   student_count: number;
   solo_monthly_price: number;  // öğrenci bandına göre Solo aylık (₺)
   annual_paid_months: number;
   sales_email: string;
+  subscription_period_end: string | null;
+  subscription_cycle: string | null;
 }
 
 export interface PlanUpgradeBody {
@@ -1450,6 +1452,8 @@ export interface TrialStatusResponse {
   student_limit: number;   // -1 = sınırsız
   over_limit: boolean;
   paywall: boolean;
+  subscription_status: string | null;
+  past_due: boolean;
   upgrade_target: string | null;
 }
 

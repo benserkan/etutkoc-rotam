@@ -1608,11 +1608,13 @@ class TeacherPlanResponse(BaseModel):
     options: list[TeacherPlanOption]
     note: str | None = None     # kurumlu kullanıcı için açıklama
     # Uygulama-içi abonelik ekranı (Faz 1) — /pricing ile tutarlı tek kaynak.
-    status: str = "free"        # trialing | active | free | managed
+    status: str = "free"        # trialing | active | past_due | free | managed
     student_count: int = 0      # bağımsız koçun aktif öğrenci sayısı
     solo_monthly_price: int = 0 # öğrenci bandına göre Solo aylık ücret (₺)
     annual_paid_months: int = 10  # akademik yıl = N ay öde (2 ay bedava)
     sales_email: str = ""       # manuel aktivasyon iletişimi (pricing.contact)
+    subscription_period_end: str | None = None  # aktif abonede yenileme tarihi (ISO)
+    subscription_cycle: str | None = None        # monthly | academic_year
 
 
 class PlanUpgradeBody(BaseModel):
@@ -1642,5 +1644,7 @@ class TrialStatusResponse(BaseModel):
     student_count: int
     student_limit: int              # -1 = sınırsız
     over_limit: bool
-    paywall: bool                   # ücretsiz + limit aşıldı → salt-okunur
+    paywall: bool                   # ücretsiz+limit aşıldı VEYA past_due → salt-okunur
+    subscription_status: str | None = None  # active | past_due | canceled | None
+    past_due: bool = False          # abonelik yenilenmedi
     upgrade_target: str | None = None

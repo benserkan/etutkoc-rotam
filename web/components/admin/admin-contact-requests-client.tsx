@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ArrowUpRight,
   Building2,
   Inbox,
   Loader2,
@@ -252,6 +253,14 @@ function ManageDialog({ item }: { item: ContactRequestItem }) {
               <div className="font-medium">{item.name} · {item.email}</div>
               {item.institution_name ? <div className="text-muted-foreground">{item.institution_name}{item.coach_count != null ? ` · ${item.coach_count} koç` : ""}</div> : null}
               {item.message ? <p className="mt-1 text-muted-foreground">{item.message}</p> : null}
+              {item.linked_user_id ? (
+                <Link
+                  href={`/admin/users/${item.linked_user_id}`}
+                  className="mt-2 inline-flex items-center gap-1 font-medium text-indigo-600 hover:underline"
+                >
+                  <ArrowUpRight className="size-3.5" aria-hidden /> Koç sayfasına git (aboneliği aktive et)
+                </Link>
+              ) : null}
             </div>
             <div>
               <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">Durum</label>

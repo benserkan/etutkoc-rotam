@@ -454,6 +454,7 @@ class AdminUserMutationResult(BaseModel):
 class AdminActivatePlanBody(BaseModel):
     """Süper admin — bağımsız koç abonelik aktivasyonu (manuel ödeme sonrası)."""
     plan: str = Field(..., max_length=32)  # solo_pro | solo_elite | solo_free
+    cycle: str = "monthly"                 # monthly | academic_year
 
 
 # =============================================================================
@@ -3226,6 +3227,7 @@ class ContactRequestItem(BaseModel):
     handled_by_id: int | None = None
     handled_at: str | None = None
     admin_note: str | None = None
+    linked_user_id: int | None = None   # abonelik talebinde koç user_id (mesajdan)
 
 
 class ContactRequestListResponse(BaseModel):

@@ -253,15 +253,16 @@ def assert_active_coaching(db: Session, user: User) -> None:
 
     st = solo_trial_status(db, user=user)
     if st.get("paywall"):
+        if st.get("past_due"):
+            msg = ("Aboneliğinizin yenileme zamanı geldi. Koçluğa devam etmek için "
+                   "ödeme yapıp aboneliğinizi yenileyin.")
+        else:
+            msg = (
+                f"Deneme süreniz bitti ve {st['student_count']} öğrenciniz var; "
+                f"ücretsiz sürüm {st['student_limit']} öğrenci destekler. Devam "
+                f"için paketi yükseltin ya da öğrenci sayınızı düşürün."
+            )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail={
-                "error": "forbidden",
-                "code": "paywall_active",
-                "message": (
-                    f"Deneme süreniz bitti ve {st['student_count']} öğrenciniz var; "
-                    f"ücretsiz sürüm {st['student_limit']} öğrenci destekler. Devam "
-                    f"için paketi yükseltin ya da öğrenci sayınızı düşürün."
-                ),
-            },
+            detail={"error": "forbidden", "code": "paywall_active", "message": msg},
         )

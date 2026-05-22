@@ -42,8 +42,29 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
 
   if (!data || !data.is_solo) return null;
 
-  // 1) Ödeme duvarı — deneme bitti, öğrenci limiti aşıldı (kapatılamaz)
+  // 1) Ödeme duvarı — past_due (abonelik yenilenmedi) VEYA deneme bitti+limit aşımı
   if (data.paywall) {
+    if (data.past_due) {
+      return (
+        <div className="border-b border-rose-200 bg-rose-50">
+          <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-2.5 text-sm text-rose-900">
+              <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
+              <span>
+                <strong>Aboneliğin yenilenmedi.</strong> Öğrencilerin ve verilerin
+                duruyor; aktif koçluğa devam etmek için aboneliğini yenile.
+              </span>
+            </div>
+            <Link
+              href="/teacher/plan"
+              className="inline-flex shrink-0 items-center justify-center rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-rose-700"
+            >
+              Aboneliği yenile
+            </Link>
+          </div>
+        </div>
+      );
+    }
     return (
       <div className="border-b border-rose-200 bg-rose-50">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">

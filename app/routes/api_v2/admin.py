@@ -1856,11 +1856,26 @@ def admin_activate_user_plan_v2(
             detail={"error": "invalid", "code": "invalid_plan",
                     "message": "Geçersiz solo plan."},
         )
+    cycle = (body.cycle or "monthly").strip()
+    if cycle not in ("monthly", "academic_year"):
+        cycle = "monthly"
     change_plan(
         db, owner_type=PlanOwnerType.USER, owner_id=target.id, new_plan=plan,
         reason=PlanChangeReason.UPGRADE, actor_user_id=user.id,
         note="Süper admin abonelik aktivasyonu (manuel ödeme)", autocommit=False,
     )
+    # Abonelik durumu: ücretli plan → active + dönem sonu (yenileme); free → temizle.
+    from app.services.plans import is_paid_plan as _is_paid
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    if _is_paid(plan):
+        target.subscription_status = "active"
+        target.subscription_cycle = cycle
+        days = 365 if cycle == "academic_year" else 30
+        target.subscription_period_end = _dt.now(_tz.utc) + _td(days=days)
+    else:
+        target.subscription_status = None
+        target.subscription_cycle = None
+        target.subscription_period_end = None
     log_action(
         db, action=AuditAction.USER_UPDATE, actor_id=user.id,
         target_type="user", target_id=target.id, request=request,
@@ -7642,10 +7657,17 @@ _CONTACT_INVALIDATE = ["admin:contact-requests"]
 
 
 def _contact_item(cr) -> ContactRequestItem:
+    import re
+
     from app.models.contact_request import (
         CONTACT_SOURCE_LABELS_TR,
         CONTACT_STATUS_LABELS_TR,
     )
+    linked_user_id = None
+    if cr.source == "subscription_request" and cr.message:
+        m = re.search(r"koç_id=(\d+)", cr.message)
+        if m:
+            linked_user_id = int(m.group(1))
     return ContactRequestItem(
         id=cr.id,
         created_at=cr.created_at.isoformat() if cr.created_at else "",
@@ -7662,6 +7684,7 @@ def _contact_item(cr) -> ContactRequestItem:
         handled_by_id=cr.handled_by_id,
         handled_at=cr.handled_at.isoformat() if cr.handled_at else None,
         admin_note=cr.admin_note,
+        linked_user_id=linked_user_id,
     )
 
 

@@ -2976,6 +2976,7 @@ export interface ContactRequestItem {
   handled_by_id: number | null;
   handled_at: string | null;
   admin_note: string | null;
+  linked_user_id?: number | null;
 }
 
 export interface ContactRequestListResponse {

@@ -692,7 +692,10 @@ def solo_trial_status(
     count = count_solo_students(db, teacher_id=user.id)
     limit = solo_student_limit(plan)
     over_limit = (limit != -1 and count > limit)
-    paywall = (plan == SOLO_FREE and over_limit)
+    sub_status = getattr(user, "subscription_status", None)
+    past_due = (sub_status == "past_due")
+    # Ödeme duvarı: ücretsiz + limit aşıldı VEYA abonelik yenilenmedi (past_due).
+    paywall = (plan == SOLO_FREE and over_limit) or past_due
     trial_critical = (active and days_left is not None and days_left <= 3)
     return {
         "is_solo": True,
@@ -705,6 +708,8 @@ def solo_trial_status(
         "student_limit": limit,
         "over_limit": over_limit,
         "paywall": paywall,
+        "subscription_status": sub_status,
+        "past_due": past_due,
         "upgrade_target": SOLO_PRO if plan in (SOLO_FREE, SOLO_TRIAL) else None,
     }
 

@@ -508,7 +508,7 @@ export function useActivateUserPlan(userId: number) {
   return useMutation<
     MutationResponse<AdminUserMutationResult>,
     Error,
-    { plan: string }
+    { plan: string; cycle?: string }
   >({
     mutationFn: (body) =>
       api<MutationResponse<AdminUserMutationResult>>(

@@ -116,6 +116,71 @@ def send_trial_reminders(db: Session, *, now: datetime | None = None) -> int:
     return processed
 
 
+def process_renewals(db: Session, *, now: datetime | None = None) -> dict:
+    """Aktif solo aboneliklerin yenileme döngüsü.
+
+    - Yenilemeye 3 gün kala → "yenileme yaklaşıyor" e-postası (gün-3 penceresi,
+      bir kez).
+    - Dönem sonu geçti → `subscription_status='past_due'` (plan düşmez; paywall
+      devreye girer) + "ödeme gerekli" e-postası.
+    Returns: {"reminded": N, "past_due": N}
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+    reminded = 0
+    past_due = 0
+
+    # Yaklaşan yenileme (gün-3 penceresi — bir kez tetiklenir)
+    upcoming = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.TEACHER,
+            User.institution_id.is_(None),
+            User.subscription_status == "active",
+            User.subscription_period_end.isnot(None),
+            User.subscription_period_end > now + timedelta(days=2),
+            User.subscription_period_end <= now + timedelta(days=3),
+        )
+        .all()
+    )
+    for u in upcoming:
+        try:
+            send_email(
+                to=u.email, template="renewal_reminder",
+                ctx={"full_name": u.full_name or u.email, "upgrade_url_path": "/teacher/plan"},
+            )
+        except Exception:
+            logger.exception("renewal reminder fail user=%s", u.id)
+        reminded += 1
+
+    # Dönem sonu geçti → past_due
+    overdue = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.TEACHER,
+            User.institution_id.is_(None),
+            User.subscription_status == "active",
+            User.subscription_period_end.isnot(None),
+            User.subscription_period_end <= now,
+        )
+        .all()
+    )
+    for u in overdue:
+        u.subscription_status = "past_due"
+        try:
+            send_email(
+                to=u.email, template="renewal_overdue",
+                ctx={"full_name": u.full_name or u.email, "upgrade_url_path": "/teacher/plan"},
+            )
+        except Exception:
+            logger.exception("renewal overdue fail user=%s", u.id)
+        past_due += 1
+
+    db.commit()
+    logger.info("process_renewals: reminded=%s past_due=%s", reminded, past_due)
+    return {"reminded": reminded, "past_due": past_due}
+
+
 def notify_trial_expired(db: Session, *, user_ids: list[int]) -> int:
     """Trial'ı yeni dolmuş koçlara "deneme bitti" e-postası. Returns: gönderilen."""
     if not user_ids:
