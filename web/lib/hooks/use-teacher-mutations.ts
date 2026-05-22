@@ -106,6 +106,8 @@ function errorTitle(e: unknown, fallback: string): string {
       return "Kitap zaten atalı";
     case "plan_quota_exceeded":
       return "Plan kotası dolu";
+    case "paywall_active":
+      return "Deneme bitti — paketi yükseltin";
     case "track_required":
     case "graduate_mode_required":
     case "full_name_required":

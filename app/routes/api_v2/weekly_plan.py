@@ -38,7 +38,7 @@ from app.models import (
     UserRole,
     WeekNote,
 )
-from app.routes.api_v2.dependencies import _auth_error, get_current_user_v2
+from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import (
     BookOption,
@@ -284,6 +284,7 @@ def publish_day(
     db: Session = Depends(get_db),
 ) -> MutationResponse[PublishResult]:
     student = _get_owned_student(db, student_id, user.id)
+    assert_active_coaching(db, user)
     target = _parse_iso(body.task_date)
     now = datetime.now(timezone.utc)
     drafts = (
@@ -320,6 +321,7 @@ def publish_week(
     db: Session = Depends(get_db),
 ) -> MutationResponse[PublishResult]:
     student = _get_owned_student(db, student_id, user.id)
+    assert_active_coaching(db, user)
     start = _parse_iso(body.week_start, "invalid_week_start")
     end = start + timedelta(days=6)
     now = datetime.now(timezone.utc)

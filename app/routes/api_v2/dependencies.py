@@ -239,3 +239,29 @@ def require_role_v2(*allowed_roles: UserRole):
             )
         return user
     return _checker
+
+
+def assert_active_coaching(db: Session, user: User) -> None:
+    """Yumuşak ödeme duvarı: bağımsız koç deneme bitip ücretsiz limit aşıldıysa
+    aktif koçluk write'larını (program yayınla / görev oluştur) engelle → 403.
+
+    Salt-okuma + öğrenci yönetimi (pasifleştirme) serbest kalır; koç ya yükseltir
+    ya öğrenci sayısını limite indirir. Endpoint gövdesinden çağrılır (dependency
+    değil — teacher.py ve weekly_plan.py kendi _require_teacher'larını kullanıyor).
+    """
+    from app.services.plans import solo_trial_status
+
+    st = solo_trial_status(db, user=user)
+    if st.get("paywall"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "forbidden",
+                "code": "paywall_active",
+                "message": (
+                    f"Deneme süreniz bitti ve {st['student_count']} öğrenciniz var; "
+                    f"ücretsiz sürüm {st['student_limit']} öğrenci destekler. Devam "
+                    f"için paketi yükseltin ya da öğrenci sayınızı düşürün."
+                ),
+            },
+        )

@@ -1864,9 +1864,18 @@ pasiflik + ödeme duvarı.
   - E-posta şablonları: `trial_reminder.html` + `trial_expired.html`.
   - Smoke `test_trial_notifications.py` **4/4**; offers 19/19 + trial-status 6/6
     regresyon temiz.
-- **Faz 3 ⏳ — yumuşak ödeme duvarı backend** (salt-okunur enforcement: limit
-  aşımında koçluk write'ları engellenir; arşivle akışı).
-- **AI-in-trial kararı ⏳** (ayrı onay): pro/deneme'de AI açılırsa kredi tavanı.
+- **Faz 3 ✅ yumuşak ödeme duvarı backend** (migration YOK):
+  - `dependencies.assert_active_coaching(db, user)` → paywall aktifse (solo_free +
+    limit aşıldı) 403 `paywall_active`. Çekirdek koçluk write'larına eklendi:
+    teacher `POST /students/{id}/tasks` + `/bulk-tasks`, weekly_plan
+    `publish-day` + `publish-week`. Salt-okuma + öğrenci pasifleştirme (limite
+    inme) SERBEST → "arşivle akışı" mevcut `deactivate` ile çözülür.
+  - Frontend: teacher mutations `paywall_active` → "Deneme bitti — paketi
+    yükseltin" toast (banner Faz 1'de zaten var).
+  - Smoke `test_api_v2_teacher_paywall.py` **5/5**; teacher_read 12 + weekly_plan
+    14 + teacher_students 14 regresyon temiz.
+- **AI-in-trial kararı ⏳** (ayrı onay bekliyor): pro/deneme'de AI açılırsa kredi
+  tavanı. Şu an AI trial'da KAPALI (mevcut davranış korundu).
 
 Migration head: `y6z8c1d2c00w`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·

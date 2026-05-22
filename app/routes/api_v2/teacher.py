@@ -103,7 +103,7 @@ from app.models import (
     WeekNote,
     compute_net,
 )
-from app.routes.api_v2.dependencies import _auth_error, get_current_user_v2
+from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import (
     BulkResult,
@@ -2689,6 +2689,7 @@ def teacher_create_task_v2(
 ):
     """Yeni görev + kalem(ler) oluştur. Rezervleri açar, kapasite aşımında 422."""
     student = _get_owned_student(db, student_id, user.id)
+    assert_active_coaching(db, user)
     try:
         task = _create_task_with_items(db, student=student, payload=body)
     except ReservationError as e:
@@ -3071,6 +3072,7 @@ def teacher_bulk_tasks_v2(
       - SAVEPOINT (db.begin_nested) — outer transaction rollback ile sağlama
     """
     student = _get_owned_student(db, student_id, user.id)
+    assert_active_coaching(db, user)
     if not body.tasks:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
