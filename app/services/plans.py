@@ -360,10 +360,19 @@ def effective_plan_for_user(db: Session, user: User) -> str:
 def ai_premium_allowed(db: Session, user: User) -> bool:
     """Pahalı AI özellikleri (foto/ses yakalama + koçluk içgörüsü) bu kullanıcıya açık mı.
 
-    KURAL (kullanıcı 2026-05-21): yalnız ÜCRETLİ planlar. trial/free → KAPALI
-    (gerçek Anthropic/OpenAI maliyeti — deneme/ücretsiz kullanıcı yakamamalı).
+    KURAL (kullanıcı 2026-05-22): ÜCRETLİ planlar + AKTİF solo deneme.
+    - Ücretli plan → açık.
+    - Solo deneme (solo_trial, trial aktif) → açık ama 50 kredi tavanıyla sınırlı
+      (PLAN_ALLOCATIONS["solo_trial"]); tükenince consume_credits 402 verir →
+      kullanıcı ücretliye yönlendirilir. Deneme bitince (solo_free) → KAPALI.
+    - Ücretsiz (solo_free) / kurum ücretsiz → KAPALI.
     """
-    return is_paid_plan(effective_plan_for_user(db, user))
+    plan = effective_plan_for_user(db, user)
+    if is_paid_plan(plan):
+        return True
+    if plan == SOLO_TRIAL and is_trial_active(user):
+        return True
+    return False
 
 
 # ---------------------------- Solo plan kotaları ----------------------------

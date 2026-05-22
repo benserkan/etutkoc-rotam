@@ -1220,7 +1220,9 @@ def teacher_delete_session_v2(
 
 
 def _require_ai_premium(db: Session, user: User) -> None:
-    """AI premium kapısı: yalnız ücretli paket. trial/free → 403 plan_upgrade_required."""
+    """AI premium kapısı: ücretli paket + aktif solo deneme (50 kredi tavanlı).
+    Ücretsiz / deneme bitmiş → 403 plan_upgrade_required. Kredi tükenince
+    consume_credits ayrıca 402 ai_credit_exhausted verir."""
     from app.services.plans import ai_premium_allowed
     if not ai_premium_allowed(db, user):
         raise HTTPException(

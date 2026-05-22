@@ -1874,8 +1874,18 @@ pasiflik + ödeme duvarı.
     yükseltin" toast (banner Faz 1'de zaten var).
   - Smoke `test_api_v2_teacher_paywall.py` **5/5**; teacher_read 12 + weekly_plan
     14 + teacher_students 14 regresyon temiz.
-- **AI-in-trial kararı ⏳** (ayrı onay bekliyor): pro/deneme'de AI açılırsa kredi
-  tavanı. Şu an AI trial'da KAPALI (mevcut davranış korundu).
+- **Faz 4 ✅ AI-in-trial** (kullanıcı 2026-05-22: "50 kredi; tükenince ücretliye
+  yönlendir; bitince AI iptal"; migration YOK):
+  - `ai_premium_allowed` = ücretli plan **VEYA aktif solo_trial**. Deneme bitince
+    (solo_free) AI gate kapanır (otomatik). `PLAN_ALLOCATIONS` solo planları
+    explicit: solo_trial=50 (kredi tavanı), solo_free=50, solo_pro=500, solo_elite
+    =2000 (pro/elite "yükselince daha fazla" — ücretlendirmede ayarlanabilir).
+  - Akış: trial koç AI kullanır → consume_credits 50 havuzdan düşer → tükenince
+    402 `ai_credit_exhausted` (frontend "yükselt" toast) → 14 gün bitince gate
+    403 `plan_upgrade_required`.
+  - `test_api_v2_teacher_ai_entitlement.py` **13/13** (trial→200 + tükenince→402 +
+    free/expired→403 + paid→200 + upgrade); ai_capture 10 + insight 11 +
+    trial-status 6 regresyon temiz.
 
 Migration head: `y6z8c1d2c00w`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·

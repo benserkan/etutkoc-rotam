@@ -8,7 +8,8 @@ Senaryolar:
    3. free koç parse-photo → 403 plan_upgrade_required
    4. free koç transcribe → 403 plan_upgrade_required
    5. free koç coaching-insight POST → 403 plan_upgrade_required
-   6. trial koç parse-photo → 403 (trial de kapalı)
+   6. aktif trial koç parse-photo → 200 (deneme AI açık, 50 kredi tavanı)
+   6b. trial koç kredi tükenmiş → 402 ai_credit_exhausted
    7. paid koç (solo_pro) GET /plan → ai_premium True
    8. paid koç ai-consent + parse-photo (monkeypatch) → 200 (kapı geçilir)
    9. free koç POST /plan/upgrade solo_pro → ai_premium True olur, parse-photo 200
@@ -25,6 +26,7 @@ except Exception:
     pass
 
 import secrets
+from datetime import datetime, timedelta, timezone
 
 from fastapi.testclient import TestClient
 from sqlalchemy import delete as sa_delete
@@ -56,10 +58,10 @@ def check(label, cond, detail=""):
         print(f"  [FAIL] {label}  ({detail})")
 
 
-def _mk_teacher(db, key, plan, institution_id=None):
+def _mk_teacher(db, key, plan, institution_id=None, trial_ends_at=None):
     t = User(email=f"{PFX}_{key}@test.invalid", password_hash=hash_password(PASSWORD),
              full_name=f"{PFX} {key}", role=UserRole.TEACHER, is_active=True,
-             plan=plan, institution_id=institution_id)
+             plan=plan, institution_id=institution_id, trial_ends_at=trial_ends_at)
     db.add(t); db.flush()
     s = User(email=f"{PFX}_{key}_s@test.invalid", password_hash=hash_password(PASSWORD),
              full_name=f"{PFX} {key} Öğr", role=UserRole.STUDENT, is_active=True,
@@ -73,13 +75,15 @@ def _seed():
         inst = Institution(name=f"{PFX} Inst", slug=f"{PFX}-inst",
                            contact_email=f"{PFX}@test.invalid", plan="institution_free", is_active=True)
         db.add(inst); db.flush()
+        now = datetime.now(timezone.utc)
         free_t, free_s = _mk_teacher(db, "free", "solo_free")
         paid_t, paid_s = _mk_teacher(db, "paid", "solo_pro")
-        trial_t, trial_s = _mk_teacher(db, "trial", "solo_trial")
+        trial_t, trial_s = _mk_teacher(db, "trial", "solo_trial", trial_ends_at=now + timedelta(days=10))
         inst_t, inst_s = _mk_teacher(db, "inst", "institution_free", institution_id=inst.id)
         from app.services.credits import CreditOwner, get_or_create_account
         get_or_create_account(db, owner=CreditOwner.for_user(paid_t))
         get_or_create_account(db, owner=CreditOwner.for_user(free_t))  # yükseltme sonrası
+        get_or_create_account(db, owner=CreditOwner.for_user(trial_t))  # 50 kredi tavanı
         out = {
             "inst_id": inst.id,
             "free_t": free_t.id, "free_s": free_s.id,
@@ -161,8 +165,23 @@ def main():
         check("5. free coaching-insight → 403", r.status_code == 403 and r.json()["detail"]["code"] == "plan_upgrade_required", f"status={r.status_code}")
 
         trial = _login(email("trial"))
+        trial.post("/api/v2/teacher/ai-consent")
         r = trial.post(f"/api/v2/teacher/students/{seed['trial_s']}/sessions/parse-photo", json=IMG)
-        check("6. trial parse-photo → 403", r.status_code == 403 and r.json()["detail"]["code"] == "plan_upgrade_required", f"status={r.status_code}")
+        check("6. aktif trial parse-photo → 200 (deneme AI açık)",
+              r.status_code == 200 and r.json().get("agenda") == "x", f"status={r.status_code} {r.text[:140]}")
+
+        # 6b. trial kredi tükenmiş → 402 ai_credit_exhausted
+        with SessionLocal() as db:
+            from app.models import CreditAccount
+            acc = db.query(CreditAccount).filter(
+                CreditAccount.owner_id == seed["trial_t"]).first()
+            if acc:
+                acc.used_credits = acc.allocated_credits + acc.bonus_credits
+                db.commit()
+        r = trial.post(f"/api/v2/teacher/students/{seed['trial_s']}/sessions/parse-photo", json=IMG)
+        check("6b. trial kredi tükenince → 402 ai_credit_exhausted",
+              r.status_code == 402 and r.json()["detail"]["code"] == "ai_credit_exhausted",
+              f"status={r.status_code} {r.text[:140]}")
 
         paid = _login(email("paid"))
         r = paid.get("/api/v2/teacher/plan")

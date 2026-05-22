@@ -55,6 +55,14 @@ PLAN_ALLOCATIONS: dict[str, int] = {
     "starter": 500,
     "professional": 5000,
     "enterprise": 50000,  # ileride büyük müşteri için
+    # Bağımsız koç (solo) planları — period (ay) başına kredi.
+    # solo_trial=50 (kullanıcı 2026-05-22): 14 gün denemede AI tavanı; tükenince
+    # ücretliye yönlendirilir, deneme bitince AI gate kapanır. solo_pro/elite
+    # "yükselince daha fazla" için (öneri — ücretlendirmede ayarlanabilir).
+    "solo_free": 50,
+    "solo_trial": 50,
+    "solo_pro": 500,
+    "solo_elite": 2000,
 }
 
 # Çağrı tipi başına kredi maliyeti (TUNABLE).
