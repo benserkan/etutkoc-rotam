@@ -1769,6 +1769,33 @@ uygulandı, alembic head = `w4x6a9b0a88u`.
   `3cecdd3` (feature_flags)/`3849985` (insight buton)/`0529903` (bayat banner)/
   `da91723` (token)/`dc79947` (dikte+foto form içine).
 
+## Üyelik & Fiyatlandırma (2026-05-22, DEVAM EDİYOR)
+
+**Onaylanan model (kullanıcı 2026-05-22):** Değer-bazlı. Solo öğrenci bandı:
+ücretsiz 3 öğr · 1-5=2.000 · 6-15=4.000 · 16-30=6.000 · 30+ öğr başı +200 ₺/ay.
+Kurum koç-başı (≤30 öğr/koç): Etüt 4.000/koç · Dershane 3.000/koç · Özel Okul/
+Enterprise 2.500/koç + white-label; ücretsiz 2 öğretmen/20 öğrenci. Yıllık=10 ay
+peşin. AI yalnız ücretli. Ödeme: **manuel aktivasyon** (Stripe/iyzico ertelendi).
+Rakip kıyas: TR koçluk hizmeti 2.5-7.5K/ay; uluslararası tutor-SaaS ~$15-40/ay.
+
+- **M1 ✅ tek kaynak** `app/services/pricing.py` (kod default + DB override) +
+  public `GET /api/v2/pricing`. Hesaplayıcılar: compute_solo_monthly / 
+  compute_institution_monthly / institution_tier_for_coaches. is_paid_plan_code.
+  solo_pro sert öğrenci sınırı kaldırıldı (band-fiyatlı). Smoke 7/7.
+- **M2 ✅ süper admin override** — `app_settings` tablosu (migration `x5y7b0c1b99v`,
+  additive) + `app_settings.py` (generic JSON, kod default+DB). Süper admin
+  GET/POST/reset `/admin/settings/pricing` → düzenleme her yere yansır (tek kaynak).
+  UI `/admin/pricing` (Sistem nav). Koç Paket sayfası eski 299/599 kaldırıldı →
+  /pricing linki (tutarlılık) + manuel aktivasyon notu. Smoke 8/8.
+- **M3 ✅ public `/pricing` Next.js** — anasayfa kırık linki giderildi (proxy public
+  allowlist + Caddy). Sekmeli (Koç/Kurum) + aylık/yıllık toggle, /api/v2/pricing'den.
+- **M4 ⏳ SIRADA — üyelik/seçim akışı + uçtan uca test:** signup → plan seç →
+  **manuel aktivasyon** (süper admin user plan-change ile) → koç sürece başlar →
+  AI kapısı testi. Self-serve instant upgrade kaldırıldı (manuel aktivasyon kararı).
+
+Migration head: `x5y7b0c1b99v`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
+`df60ec0` (M2 backend) · `b0926a8` (M2 UI).
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**
