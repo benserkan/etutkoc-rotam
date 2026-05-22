@@ -17,6 +17,7 @@ import {
   Flame,
   Gauge,
   Heart,
+  Inbox,
   LayoutDashboard,
   Lightbulb,
   ListChecks,
@@ -142,6 +143,7 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
       { href: "/admin/pricing", label: "Ücretlendirme", icon: CircleDollarSign },
+      { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox },
     ],
   },
 ];

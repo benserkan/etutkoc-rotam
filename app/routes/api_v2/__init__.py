@@ -22,6 +22,7 @@ from fastapi import APIRouter
 from app.routes.api_v2 import academic as v2_academic
 from app.routes.api_v2 import admin as v2_admin
 from app.routes.api_v2 import auth as v2_auth
+from app.routes.api_v2 import contact_public as v2_contact_public
 from app.routes.api_v2 import csv_ops as v2_csv
 from app.routes.api_v2 import grade_advance as v2_grade
 from app.routes.api_v2 import insights as v2_insights
@@ -49,6 +50,7 @@ router.include_router(v2_parent.router)
 router.include_router(v2_offers_public.router)
 router.include_router(v2_landing_public.router)
 router.include_router(v2_pricing_public.router)
+router.include_router(v2_contact_public.router)
 router.include_router(v2_library.router)
 router.include_router(v2_insights.router)
 router.include_router(v2_settings.router)

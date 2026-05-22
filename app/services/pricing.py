@@ -46,6 +46,13 @@ _DEFAULTS: dict[str, Any] = {
          "max_coaches": None, "per_coach_monthly": 2500, "white_label": True,
          "short": "Özel okul, zincir ve kurumlar için özel sözleşme + white-label."},
     ],
+    # --- İletişim (kurumsal talep + destek) ---
+    "contact": {
+        "sales_email": "satis@etutkocrotam.app",
+        "support_email": "destek@etutkocrotam.app",
+        "whatsapp": "",   # boş → gizli. Örn: "+905xxxxxxxxx"
+        "phone": "",      # boş → gizli. Örn: "+902xxxxxxxxx"
+    },
 }
 
 # Ücretli plan kodları (entitlement — AI premium açık). Düzenlenebilir değil.
@@ -115,12 +122,81 @@ def is_paid_plan_code(plan_code: str | None) -> bool:
 # ----------------------------- Katalog (UI için) -----------------------------
 
 
+# Pazarlama kopyası (fayda-odaklı, sade dil) — kod kaynaklı (fiyat sayıları
+# override'dan gelir, metin buradan). Hem anasayfa hem /pricing aynısını gösterir.
+def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
+    solo_entry = int(cfg["solo_bands"][0]["monthly"])
+    inst_entry = int(cfg["institution_tiers"][0]["per_coach_monthly"])
+    free_students = int(cfg["solo_free_students"])
+    return [
+        {
+            "key": "free", "audience": "solo", "plan": "solo_free",
+            "name": "Ücretsiz", "tagline": "Yeni başlayan koç için",
+            "monthly": 0, "price_label": "Ücretsiz", "tone": "plain",
+            "price_hidden": False, "price_caption": "",
+            "price_note": f"{free_students} öğrenciye kadar, süresiz",
+            "highlight": False, "badge": None, "corner": None,
+            "cta": "Ücretsiz başla", "cta_href": "",
+            "features": [
+                f"{free_students} öğrenciye kadar tam takip",
+                "Haftalık plan + günlük görev yönetimi",
+                "Veliye e-posta ile ilerleme bildirimi",
+                "Aralıklı tekrar ile kalıcı öğrenme",
+            ],
+            "excluded": ["Yapay zekâ özellikleri", "Sınırsız öğrenci"],
+        },
+        {
+            "key": "solo", "audience": "solo", "plan": "solo_pro",
+            "name": "Solo", "tagline": "Büyüyen, yapay zekâ kullanan koç için",
+            "monthly": solo_entry, "price_label": f"{solo_entry:,}".replace(",", ".") + " ₺’den",
+            "price_unit": "/ay", "tone": "featured",
+            "price_hidden": False, "price_caption": "",
+            "price_note": "öğrenci sayına göre · 14 gün ücretsiz dene",
+            "highlight": True, "badge": "En popüler", "corner": None,
+            "cta": "14 gün ücretsiz dene", "cta_href": "",
+            "features": [
+                "Sınırsız öğrenci — koçluğun büyüdükçe öde",
+                "Her görüşme öncesi yapay zekâ 'bugün şunu konuş' özetini hazırlar",
+                "Görüşmeyi sesle anlat ya da formu fotoğrafla — notlar kendiliğinden yazılır",
+                "Tükenen veya uzaklaşan öğrenciyi geç olmadan gör",
+                "Veliye otomatik ilerleme bildirimi + deneme/net gelişim grafiği",
+            ],
+            "excluded": [],
+        },
+        {
+            "key": "institution", "audience": "institution", "plan": "etut_standart",
+            "name": "Kurum", "tagline": "Etüt, dershane ve özel okullar için",
+            "monthly": inst_entry, "price_label": "", "tone": "dark",
+            "price_hidden": True, "price_caption": "Kurumunuza özel teklif",
+            "price_unit": "", "price_note": "30 gün ücretsiz pilot · birkaç saatte kurulum",
+            "highlight": False, "badge": None, "corner": "60 Gün Garanti",
+            "cta": "Kurumsal teklif al", "cta_href": "/pricing?type=kurum#kurumsal",
+            "features": [
+                "Koçların tüm araçları + kurum gözü",
+                "Hangi koç aktif, hangi öğrenci ihmal ediliyor — tek bakışta",
+                "Risk altındaki öğrenci ve sınıfı erken gör (kıyaslamalı)",
+                "Veliyle güçlü iletişim → kayıt yenileme ve memnuniyet",
+                "60 gün performans garantisi",
+            ],
+            "excluded": [],
+        },
+    ]
+
+
 def get_pricing_catalog() -> dict[str, Any]:
-    """`/pricing` + süper admin için tam yapı. Tek kaynak (override uygulanmış)."""
+    """`/pricing` + anasayfa + süper admin için tam yapı. Tek kaynak (override uygulanmış)."""
     cfg = _cfg()
+    contact = cfg.get("contact") or _DEFAULTS["contact"]
     return {
+        "cards": _marketing_cards(cfg),
         "currency": cfg["currency"],
         "annual_paid_months": int(cfg["annual_paid_months"]),
+        "contact": {
+            "sales_email": str(contact.get("sales_email") or _DEFAULTS["contact"]["sales_email"]),
+            "support_email": str(contact.get("support_email") or _DEFAULTS["contact"]["support_email"]),
+            "whatsapp": str(contact.get("whatsapp") or ""),
+            "phone": str(contact.get("phone") or ""),
+        },
         "solo": {
             "trial_days": int(cfg["solo_trial_days"]),
             "free": {"students": int(cfg["solo_free_students"]), "ai_included": False},

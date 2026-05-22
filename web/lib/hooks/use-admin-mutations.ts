@@ -72,6 +72,7 @@ import type {
   SetAiSettingBody,
   PricingAdminResponse,
   PricingConfig,
+  ContactRequestMutationResult,
 } from "@/lib/types/admin";
 
 /**
@@ -607,6 +608,39 @@ export function useDeleteAnnouncement(announcementId: number) {
     },
     onError: (e) => {
       toast.error(errorTitle(e, "Duyuru silinemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+// =============================================================================
+// İletişim talepleri
+// =============================================================================
+
+export interface ContactRequestUpdateBody {
+  status: string;
+  admin_note?: string;
+}
+
+export function useUpdateContactRequest(requestId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<ContactRequestMutationResult>,
+    Error,
+    ContactRequestUpdateBody
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<ContactRequestMutationResult>>(
+        `/api/v2/admin/contact-requests/${requestId}`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Talep güncellendi");
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Güncelleme başarısız"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
       });
     },

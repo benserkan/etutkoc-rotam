@@ -344,6 +344,10 @@ from app.routes.api_v2.schemas.admin import (
     SetAiSettingBody,
     PricingAdminResponse,
     PricingConfigBody,
+    ContactRequestItem,
+    ContactRequestListResponse,
+    ContactRequestUpdateBody,
+    ContactRequestMutationResult,
 )
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.services.account_history import (
@@ -7564,6 +7568,126 @@ def admin_pricing_set_v2(
             defaults=_pricing_editable(pricing.defaults()),
         ),
         invalidate=_PRICING_INVALIDATE,
+    )
+
+
+# =============================================================================
+# Süper Admin — İletişim Talepleri (kurumsal/genel form gönderimleri)
+# =============================================================================
+
+_CONTACT_INVALIDATE = ["admin:contact-requests"]
+
+
+def _contact_item(cr) -> ContactRequestItem:
+    from app.models.contact_request import (
+        CONTACT_SOURCE_LABELS_TR,
+        CONTACT_STATUS_LABELS_TR,
+    )
+    return ContactRequestItem(
+        id=cr.id,
+        created_at=cr.created_at.isoformat() if cr.created_at else "",
+        name=cr.name,
+        email=cr.email,
+        phone=cr.phone,
+        institution_name=cr.institution_name,
+        coach_count=cr.coach_count,
+        message=cr.message,
+        source=cr.source,
+        source_label=CONTACT_SOURCE_LABELS_TR.get(cr.source, cr.source),
+        status=cr.status,
+        status_label=CONTACT_STATUS_LABELS_TR.get(cr.status, cr.status),
+        handled_by_id=cr.handled_by_id,
+        handled_at=cr.handled_at.isoformat() if cr.handled_at else None,
+        admin_note=cr.admin_note,
+    )
+
+
+@router.get("/contact-requests", response_model=ContactRequestListResponse)
+def admin_contact_requests_list_v2(
+    status: str | None = Query(default=None),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """İletişim talepleri (en yeni üstte) + durum sayımları."""
+    from app.models.contact_request import (
+        CONTACT_STATUS_CLOSED,
+        CONTACT_STATUS_CONTACTED,
+        CONTACT_STATUS_LABELS_TR,
+        CONTACT_STATUS_NEW,
+        ContactRequest,
+    )
+
+    q = db.query(ContactRequest)
+    if status in (CONTACT_STATUS_NEW, CONTACT_STATUS_CONTACTED, CONTACT_STATUS_CLOSED):
+        q = q.filter(ContactRequest.status == status)
+    rows = q.order_by(ContactRequest.created_at.desc()).limit(500).all()
+
+    def _count(st: str) -> int:
+        return db.query(ContactRequest).filter(ContactRequest.status == st).count()
+
+    counts = {
+        "new": _count(CONTACT_STATUS_NEW),
+        "contacted": _count(CONTACT_STATUS_CONTACTED),
+        "closed": _count(CONTACT_STATUS_CLOSED),
+    }
+    counts["total"] = counts["new"] + counts["contacted"] + counts["closed"]
+
+    return ContactRequestListResponse(
+        items=[_contact_item(r) for r in rows],
+        counts=counts,
+        status_labels=dict(CONTACT_STATUS_LABELS_TR),
+    )
+
+
+@router.post(
+    "/contact-requests/{request_id}",
+    response_model=MutationResponse[ContactRequestMutationResult],
+)
+def admin_contact_request_update_v2(
+    request_id: int,
+    body: ContactRequestUpdateBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Talebin durumunu güncelle + yönetim notu ekle."""
+    from datetime import datetime, timezone
+
+    from app.models.contact_request import (
+        CONTACT_STATUS_CLOSED,
+        CONTACT_STATUS_CONTACTED,
+        CONTACT_STATUS_NEW,
+        ContactRequest,
+    )
+
+    cr = db.get(ContactRequest, request_id)
+    if cr is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "contact_request_not_found",
+                    "message": "İletişim talebi bulunamadı."},
+        )
+    if body.status not in (CONTACT_STATUS_NEW, CONTACT_STATUS_CONTACTED, CONTACT_STATUS_CLOSED):
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "validation", "code": "invalid_status",
+                    "message": "Geçersiz durum."},
+        )
+
+    cr.status = body.status
+    cr.admin_note = (body.admin_note or "").strip() or None
+    cr.handled_by_id = user.id
+    cr.handled_at = datetime.now(timezone.utc)
+    db.commit()
+
+    log_action(
+        db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+        target_type="contact_request", target_id=cr.id, request=request,
+        details={"status": cr.status},
+    )
+    return MutationResponse[ContactRequestMutationResult](
+        data=ContactRequestMutationResult(id=cr.id, status=cr.status),
+        invalidate=_CONTACT_INVALIDATE,
     )
 
 

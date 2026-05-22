@@ -15,9 +15,40 @@ export interface InstitutionTier {
   short: string;
 }
 
+export interface PricingCard {
+  key: string;            // free | solo | institution
+  audience: string;       // solo | institution
+  plan: string;           // plan kodu (signup ?plan=)
+  name: string;
+  tagline: string;
+  monthly: number;        // 0 = ücretsiz; "from" referans aylık
+  price_label: string;    // "Ücretsiz" | "2.000 ₺’den"
+  price_unit?: string;    // "/ay"
+  price_note?: string;
+  tone?: string;          // plain | featured | dark (görsel ton)
+  price_hidden?: boolean; // kurum → fiyat gizli, teklif al
+  price_caption?: string; // fiyat yerine "Kurumunuza özel teklif"
+  cta_href?: string;      // boş ise /signup/teacher?plan=...
+  highlight: boolean;
+  badge: string | null;   // "En popüler"
+  corner: string | null;  // "60 Gün Garanti"
+  cta: string;
+  features: string[];
+  excluded: string[];
+}
+
+export interface PricingContact {
+  sales_email: string;
+  support_email: string;
+  whatsapp: string;       // boş → gizli
+  phone: string;          // boş → gizli
+}
+
 export interface PricingCatalog {
+  cards: PricingCard[];
   currency: string;
   annual_paid_months: number;
+  contact: PricingContact;
   solo: {
     trial_days: number;
     free: { students: number; ai_included: boolean };

@@ -2957,3 +2957,33 @@ export interface PricingAdminResponse {
   config: PricingConfig;
   defaults: PricingConfig;
 }
+
+// İletişim talepleri
+export interface ContactRequestItem {
+  id: number;
+  created_at: string;
+  name: string;
+  email: string;
+  phone: string | null;
+  institution_name: string | null;
+  coach_count: number | null;
+  message: string | null;
+  source: string;
+  source_label: string;
+  status: string;
+  status_label: string;
+  handled_by_id: number | null;
+  handled_at: string | null;
+  admin_note: string | null;
+}
+
+export interface ContactRequestListResponse {
+  items: ContactRequestItem[];
+  counts: Record<string, number>;     // new/contacted/closed/total
+  status_labels: Record<string, string>;
+}
+
+export interface ContactRequestMutationResult {
+  id: number;
+  status: string;
+}

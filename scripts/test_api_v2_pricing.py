@@ -46,6 +46,15 @@ def main():
           len(j.get("solo", {}).get("bands", [])) == 3 and len(j.get("institution", {}).get("tiers", [])) == 3
           and j.get("solo", {}).get("free", {}).get("students") == 3,
           f"{j}")
+    cards = j.get("cards", [])
+    card_keys = {c.get("key") for c in cards}
+    solo_card = next((c for c in cards if c.get("key") == "solo"), {})
+    check("1d. pazarlama kartları (free/solo/institution) + fayda metni",
+          card_keys == {"free", "solo", "institution"}
+          and solo_card.get("highlight") is True
+          and len(solo_card.get("features", [])) >= 4
+          and solo_card.get("plan") == "solo_pro",
+          f"keys={card_keys} solo={solo_card.get('plan')}")
     check("1c. AI free=kapalı, ücretli=açık",
           j.get("solo", {}).get("free", {}).get("ai_included") is False
           and j.get("solo", {}).get("ai_included") is True, f"{j.get('solo')}")

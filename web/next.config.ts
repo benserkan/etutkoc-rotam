@@ -18,6 +18,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   output: "standalone",  // Docker multi-stage build için
 
+  // Next.js 16: dev kaynaklarına (HMR vb.) farklı host'tan erişimi varsayılan
+  // engelliyor. 127.0.0.1 / localhost / LAN IP'sinden geliştirmeye izin ver —
+  // aksi halde HMR WebSocket bloklanır ve sayfa hydrate olmaz (landing kartları
+  // "yükleniyor"da takılır). Yalnız dev'i etkiler.
+  allowedDevOrigins: ["127.0.0.1", "localhost", "192.168.1.26"],
+
   async rewrites() {
     const apiTarget = process.env.INTERNAL_API_URL || "http://127.0.0.1:8081";
     return [

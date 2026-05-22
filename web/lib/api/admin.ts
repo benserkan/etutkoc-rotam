@@ -57,6 +57,7 @@ import type {
   AbuseResponse,
   AiSettingsResponse,
   PricingAdminResponse,
+  ContactRequestListResponse,
 } from "@/lib/types/admin";
 
 // =============================================================================
@@ -227,6 +228,8 @@ export const adminKeys = {
     ["admin", "security", "abuse", onlyOpen ? "1" : "0", kind ?? ""] as const,
   aiSettings: () => ["admin", "settings", "ai"] as const,
   pricing: () => ["admin", "settings", "pricing"] as const,
+  contactRequests: (status: string | null) =>
+    ["admin", "contact-requests", status ?? ""] as const,
 };
 
 // =============================================================================
@@ -243,6 +246,11 @@ export function getAdminAiSettings() {
 
 export function getAdminPricing() {
   return api<PricingAdminResponse>("/api/v2/admin/settings/pricing");
+}
+
+export function getAdminContactRequests(status: string | null = null) {
+  const qs = status ? `?status=${encodeURIComponent(status)}` : "";
+  return api<ContactRequestListResponse>(`/api/v2/admin/contact-requests${qs}`);
 }
 
 export function getAdminInstitutions(

@@ -17,7 +17,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # =============================================================================
@@ -3199,3 +3199,40 @@ class PricingConfigBody(BaseModel):
 class PricingAdminResponse(BaseModel):
     config: dict          # etkin düzenlenebilir yapı (override dahil)
     defaults: dict        # kod varsayılanı (sıfırlama için)
+
+
+# ----------------------------- İletişim talepleri -----------------------------
+
+
+class ContactRequestItem(BaseModel):
+    id: int
+    created_at: str
+    name: str
+    email: str
+    phone: str | None = None
+    institution_name: str | None = None
+    coach_count: int | None = None
+    message: str | None = None
+    source: str
+    source_label: str
+    status: str
+    status_label: str
+    handled_by_id: int | None = None
+    handled_at: str | None = None
+    admin_note: str | None = None
+
+
+class ContactRequestListResponse(BaseModel):
+    items: list[ContactRequestItem]
+    counts: dict[str, int]      # status → adet (new/contacted/closed/total)
+    status_labels: dict[str, str]
+
+
+class ContactRequestUpdateBody(BaseModel):
+    status: str = Field(..., max_length=20)
+    admin_note: str | None = Field(default=None, max_length=2000)
+
+
+class ContactRequestMutationResult(BaseModel):
+    id: int
+    status: str

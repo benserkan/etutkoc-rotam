@@ -208,6 +208,14 @@ from app.models.coaching_session import (
     SessionCaptureSource,
 )
 from app.models.app_setting import AppSetting
+from app.models.contact_request import (
+    CONTACT_SOURCE_LABELS_TR,
+    CONTACT_STATUS_CLOSED,
+    CONTACT_STATUS_CONTACTED,
+    CONTACT_STATUS_LABELS_TR,
+    CONTACT_STATUS_NEW,
+    ContactRequest,
+)
 from app.models.exam_result import ExamResult, compute_net, section_penalty
 from app.models.system_secret import SystemSecret
 from app.models.owner_contact import OwnerContact
@@ -352,6 +360,12 @@ __all__ = [
     "CoachingSession",
     "CoachingSessionStatus",
     "AppSetting",
+    "ContactRequest",
+    "CONTACT_STATUS_NEW",
+    "CONTACT_STATUS_CONTACTED",
+    "CONTACT_STATUS_CLOSED",
+    "CONTACT_STATUS_LABELS_TR",
+    "CONTACT_SOURCE_LABELS_TR",
     "SystemSecret",
     "SessionCaptureSource",
     "COACH_PAYMENT_METHOD_LABELS",

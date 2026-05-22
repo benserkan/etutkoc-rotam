@@ -1789,12 +1789,40 @@ Rakip kıyas: TR koçluk hizmeti 2.5-7.5K/ay; uluslararası tutor-SaaS ~$15-40/a
   /pricing linki (tutarlılık) + manuel aktivasyon notu. Smoke 8/8.
 - **M3 ✅ public `/pricing` Next.js** — anasayfa kırık linki giderildi (proxy public
   allowlist + Caddy). Sekmeli (Koç/Kurum) + aylık/yıllık toggle, /api/v2/pricing'den.
-- **M4 ⏳ SIRADA — üyelik/seçim akışı + uçtan uca test:** signup → plan seç →
-  **manuel aktivasyon** (süper admin user plan-change ile) → koç sürece başlar →
-  AI kapısı testi. Self-serve instant upgrade kaldırıldı (manuel aktivasyon kararı).
+- **M5 ✅ tek-kaynak pazarlama kopyası + anasayfa/`/pricing` birleşimi + kurumsal
+  iletişim** (2026-05-22, **migration `y6z8c1d2c00w`** — contact_requests, additive):
+  - **Tek kaynak kart kopyası**: `pricing.py` `_marketing_cards` → fayda-odaklı
+    sade-dil 3 kart (free/solo/institution). Anasayfa + `/pricing` AYNI paylaşılan
+    `PricingCards` bileşenini + `/api/v2/pricing`'i kullanır (tutarlılık). Anasayfa
+    eski sabit-kodlu kartlar silindi.
+  - **Solo kopyası sadeleşti** (eğitimci şıp diye anlasın): sınırsız öğrenci /
+    "bugün şunu konuş" AI hazırlığı / sesle-fotoğrafla not / kopan öğrenci uyarısı /
+    veli otomatik bildirim + net grafiği.
+  - **Kurum kartı**: fiyat **kaldırıldı** ("Kurumunuza özel teklif") + ayrı **koyu
+    slate** zemin (dikkat çeker) + CTA `/pricing?type=kurum#kurumsal`'a gider.
+  - **Kurumsal iletişim akışı**: `/pricing?type=kurum` → kurum bölümüne kayar,
+    fiyat yok, detaylı anlatım + **iletişim formu** + WhatsApp/telefon/e-posta
+    alternatifi. Talep → `contact_requests` + satışa e-posta (`contact_request_admin.html`)
+    + süper admin **İletişim Talepleri** sayfası (sayım/filtre/Yönet diyaloğu).
+    Backend: model + public `POST /api/v2/contact` + admin GET/POST. Smoke
+    `test_api_v2_contact.py` 11/11. İletişim ayarları `pricing.contact` (sales/
+    support email + whatsapp/phone, boş→gizli) süper adminden doldurulabilir.
+  - **14-gün uygulaması doğrulandı (kullanıcı sorusu)**: AI = `is_paid_plan`
+    (trial/free dahil KAPALI, istek anında); öğrenci limiti `trial_expire` cron'u
+    (`c1x7a0z1a00u`, günlük 00:15 UTC) ile solo_trial→solo_free düşünce sertleşir.
+    Kısıt gerçek.
+  - Verify: pricing 8/8 · contact 11/11 · tsc/eslint/build ✅ · admin 13/13 ·
+    tenant 29/29.
+- **M4 ⏳ SIRADA (P6/P7) — pakete özel signup + üyelik bilgisi tamamlama:**
+  - **P6**: `/signup/teacher?plan=X` → seçilen paketin (solo_pro) detayları +
+    **dürüst 14-gün çerçevesi** (trial=sınırsız öğrenci+tüm takip; AI=Solo'ya
+    geçince) anasayfa kartıyla çelişmesin; form pakete göre özelleşsin.
+  - **P7**: login sonrası üyelik bilgisi tamamlama uyarı bandı (kurumsa firma
+    bilgisi) + güncelleme alanı.
+  - Self-serve instant upgrade kaldırıldı (manuel aktivasyon kararı).
 
-Migration head: `x5y7b0c1b99v`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
-`df60ec0` (M2 backend) · `b0926a8` (M2 UI).
+Migration head: `y6z8c1d2c00w`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
+`df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

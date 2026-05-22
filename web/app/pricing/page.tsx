@@ -12,7 +12,14 @@ export const metadata = {
   description: "Bağımsız koç ve kurumlar için üyelik planları ve fiyatları.",
 };
 
-export default async function PricingPage() {
-  const catalog = await apiServer<PricingCatalog>("/api/v2/pricing");
-  return <PricingClient catalog={catalog} />;
+export default async function PricingPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ type?: string }>;
+}) {
+  const [catalog, sp] = await Promise.all([
+    apiServer<PricingCatalog>("/api/v2/pricing"),
+    searchParams,
+  ]);
+  return <PricingClient catalog={catalog} initialType={sp.type ?? ""} />;
 }

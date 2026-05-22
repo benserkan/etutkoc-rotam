@@ -35,7 +35,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { cn } from "@/lib/utils";
 import {
   getLandingCards,
   landingKeys,
@@ -44,6 +43,7 @@ import {
 import type { LandingCard, LandingResponse } from "@/lib/types/landing";
 import { Reveal } from "@/components/landing/reveal";
 import { MockupByType } from "@/components/landing/mockups";
+import { PricingCards } from "@/components/pricing/pricing-cards";
 import { BrandLogo } from "@/components/brand-logo";
 
 const NAV = [
@@ -812,78 +812,16 @@ function HowItWorks() {
 /* ───────────────────────── Pricing ───────────────────────── */
 
 function Pricing() {
-  const [yearly, setYearly] = React.useState(false);
   return (
     <section id="paketler" className="bg-background py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <Reveal className="mx-auto mb-10 max-w-2xl text-center">
           <p className="mb-3 text-xs font-bold uppercase tracking-[0.25em] text-amber-600">Üyelik</p>
           <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">İhtiyacınıza uygun paketler</h2>
-          <p className="mt-3 text-muted-foreground">Bağımsız koç 14 gün ücretsiz · Kurum 60 gün performans garantisi</p>
-          <div className="mt-7 inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50/60 p-1">
-            <button
-              type="button"
-              onClick={() => setYearly(false)}
-              className={cn("rounded-full px-5 py-2 text-sm font-bold transition", !yearly ? "bg-white text-cyan-800 shadow-sm" : "text-muted-foreground")}
-            >
-              Aylık
-            </button>
-            <button
-              type="button"
-              onClick={() => setYearly(true)}
-              className={cn("inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-sm font-bold transition", yearly ? "bg-white text-cyan-800 shadow-sm" : "text-muted-foreground")}
-            >
-              Akademik Yıl
-              <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-bold uppercase text-amber-700">-20%</span>
-            </button>
-          </div>
-          <p className="mt-2.5 text-xs text-muted-foreground">
-            {yearly ? "10 ay öde · 12 ay kullan + yazları otomatik pause" : "Aylık ödeme · istediğin zaman iptal"}
-          </p>
+          <p className="mt-3 text-muted-foreground">Bağımsız koç 14 gün ücretsiz · Kurum 30 gün pilot + 60 gün performans garantisi</p>
         </Reveal>
 
-        <div className="grid items-start gap-6 md:grid-cols-3">
-          <Reveal>
-            <PlanCard
-              name="Solo Free"
-              desc="Yeni başlayan koçlar için"
-              price="Ücretsiz"
-              priceNote="3 öğrenciye kadar, süresiz"
-              features={["3 öğrenciye kadar aktif takip", "Temel görev ve plan yönetimi", "Aralıklı tekrar (manuel seed)", "Veli e-posta bildirimleri"]}
-              cta="Hemen Başla"
-              href="/signup/teacher"
-              variant="outline"
-            />
-          </Reveal>
-          <Reveal delayMs={80}>
-            <PlanCard
-              name="Solo Pro"
-              desc="Büyüyen, AI kullanan profesyonel koçlar için"
-              price={yearly ? "₺239" : "₺299"}
-              priceUnit="/ay"
-              priceNote={yearly ? "akademik yıl peşin · ₺2.870/yıl" : "14 gün ücretsiz · kredi kartı yok"}
-              features={["AI İçerik Önerileri (AI Plus)", "Burnout Radarı & Çalışma DNA'sı", "WhatsApp Veli Bildirimleri", "Pomodoro + Rozet + Streak", "Gelişmiş raporlama & öncelikli destek"]}
-              cta="14 Gün Ücretsiz Dene"
-              href="/signup/teacher"
-              variant="featured"
-              badge="En Sevilen"
-            />
-          </Reveal>
-          <Reveal delayMs={160}>
-            <PlanCard
-              name="Etüt Standart / Kurumsal"
-              desc="Dershane, etüt merkezi ve özel okullar için"
-              price={yearly ? "₺159" : "₺199"}
-              priceUnit="/koç/ay"
-              priceNote={yearly ? "akademik yıl · yazları otomatik pause" : "+ ₺15/öğrenci · 200 öğrenciye kadar"}
-              features={["Tüm Solo Pro özellikleri", "Kohort Analitiği (4 sekme)", "Öğretmen Aktivite Isı Haritası", "Kurum geneli Risk Paneli", "60 Gün Performans Garantisi"]}
-              cta="Kurumsal Demo Talep Et"
-              href={DEMO_MAIL}
-              variant="outline"
-              corner="60 Gün Garanti"
-            />
-          </Reveal>
-        </div>
+        <PricingCards />
 
         <div className="mt-10 text-center">
           <Link href="/pricing" className="inline-flex items-center gap-1 text-sm font-medium text-cyan-700 underline-offset-4 hover:underline">
@@ -892,81 +830,6 @@ function Pricing() {
         </div>
       </div>
     </section>
-  );
-}
-
-function PlanCard({
-  name,
-  desc,
-  price,
-  priceUnit,
-  priceNote,
-  features,
-  cta,
-  href,
-  variant,
-  badge,
-  corner,
-}: {
-  name: string;
-  desc: string;
-  price: string;
-  priceUnit?: string;
-  priceNote?: string;
-  features: string[];
-  cta: string;
-  href: string;
-  variant: "outline" | "featured";
-  badge?: string;
-  corner?: string;
-}) {
-  const featured = variant === "featured";
-  return (
-    <div
-      className={cn(
-        "relative h-full rounded-2xl border p-7 transition hover:-translate-y-1.5",
-        featured
-          ? "border-transparent bg-gradient-to-br from-cyan-700 to-cyan-900 text-white shadow-lg shadow-cyan-700/25 hover:shadow-2xl md:-translate-y-3"
-          : "lp-card border-slate-200 bg-card hover:border-cyan-300",
-      )}
-    >
-      {badge ? (
-        <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-4 py-1 text-xs font-bold text-cyan-950 shadow-md">
-          {badge}
-        </span>
-      ) : null}
-      {corner ? (
-        <span className="absolute -right-2 -top-2 inline-flex items-center gap-1 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 px-3 py-1.5 text-[11px] font-bold text-white shadow-lg ring-2 ring-background">
-          <ShieldCheck className="size-3.5" aria-hidden /> {corner}
-        </span>
-      ) : null}
-      <h3 className="text-center font-display text-xl font-bold">{name}</h3>
-      <p className={cn("mt-1 text-center text-sm", featured ? "text-cyan-100/75" : "text-muted-foreground")}>{desc}</p>
-      <div className={cn("mb-6 mt-5 border-b pb-6 text-center", featured ? "border-white/15" : "border-border")}>
-        <div className="font-display text-4xl font-bold">
-          {price}
-          {priceUnit ? <span className={cn("text-base font-medium", featured ? "text-cyan-100/75" : "text-muted-foreground")}>{priceUnit}</span> : null}
-        </div>
-        {priceNote ? <p className={cn("mt-1 text-xs", featured ? "text-amber-300" : "text-muted-foreground")}>{priceNote}</p> : null}
-      </div>
-      <ul className="mb-7 space-y-2.5 text-sm">
-        {features.map((f) => (
-          <li key={f} className="flex items-start gap-2">
-            <Check className={cn("mt-0.5 size-4 shrink-0", featured ? "text-amber-300" : "text-cyan-600")} aria-hidden />
-            <span className={featured ? "text-cyan-50/90" : ""}>{f}</span>
-          </li>
-        ))}
-      </ul>
-      <Link
-        href={href}
-        className={cn(
-          "block rounded-full py-2.5 text-center font-bold transition hover:brightness-105",
-          featured ? "bg-amber-400 text-cyan-950" : "border-2 border-cyan-600 text-cyan-700 hover:bg-cyan-50",
-        )}
-      >
-        {cta}
-      </Link>
-    </div>
   );
 }
 
