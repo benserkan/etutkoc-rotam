@@ -70,6 +70,8 @@ import type {
   UsageMutationResult,
   AiSettingsResponse,
   SetAiSettingBody,
+  PricingAdminResponse,
+  PricingConfig,
 } from "@/lib/types/admin";
 
 /**
@@ -1726,6 +1728,43 @@ export function useDeleteAiSetting() {
     },
     onError: (e) => {
       toast.error(errorTitle(e, "Ayar silinemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+export function useSavePricing() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PricingAdminResponse>, ApiError, PricingConfig>({
+    mutationFn: (body) =>
+      api<MutationResponse<PricingAdminResponse>>("/api/v2/admin/settings/pricing", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Fiyatlandırma kaydedildi");
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Kaydedilemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+export function useResetPricing() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PricingAdminResponse>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<PricingAdminResponse>>("/api/v2/admin/settings/pricing/reset", { method: "POST" }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Varsayılana sıfırlandı");
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Sıfırlanamadı"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
       });
     },

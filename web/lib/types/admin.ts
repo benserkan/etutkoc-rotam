@@ -2926,3 +2926,34 @@ export interface SetAiSettingBody {
   name: string;
   value: string;
 }
+
+// Üyelik/fiyat yapılandırması (tek kaynak override)
+export interface SoloBandCfg {
+  max_students: number;
+  monthly: number;
+}
+export interface InstitutionTierCfg {
+  code: string;
+  label: string;
+  min_coaches: number;
+  max_coaches: number | null;
+  per_coach_monthly: number;
+  white_label: boolean;
+  short: string;
+}
+export interface PricingConfig {
+  annual_paid_months: number;
+  solo_trial_days: number;
+  solo_free_students: number;
+  solo_bands: SoloBandCfg[];
+  solo_over_cap_per_student: number;
+  institution_trial_days: number;
+  institution_free_teachers: number;
+  institution_free_students: number;
+  institution_students_per_coach: number;
+  institution_tiers: InstitutionTierCfg[];
+}
+export interface PricingAdminResponse {
+  config: PricingConfig;
+  defaults: PricingConfig;
+}

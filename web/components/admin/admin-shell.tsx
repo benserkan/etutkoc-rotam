@@ -141,6 +141,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Sistem",
     links: [
       { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
+      { href: "/admin/pricing", label: "Ücretlendirme", icon: CircleDollarSign },
     ],
   },
 ];

@@ -56,6 +56,7 @@ import type {
   AlarmsResponse,
   AbuseResponse,
   AiSettingsResponse,
+  PricingAdminResponse,
 } from "@/lib/types/admin";
 
 // =============================================================================
@@ -225,6 +226,7 @@ export const adminKeys = {
   securityAbuse: (onlyOpen: boolean, kind: string | null) =>
     ["admin", "security", "abuse", onlyOpen ? "1" : "0", kind ?? ""] as const,
   aiSettings: () => ["admin", "settings", "ai"] as const,
+  pricing: () => ["admin", "settings", "pricing"] as const,
 };
 
 // =============================================================================
@@ -237,6 +239,10 @@ export function getAdminDashboard() {
 
 export function getAdminAiSettings() {
   return api<AiSettingsResponse>("/api/v2/admin/settings/ai");
+}
+
+export function getAdminPricing() {
+  return api<PricingAdminResponse>("/api/v2/admin/settings/pricing");
 }
 
 export function getAdminInstitutions(
