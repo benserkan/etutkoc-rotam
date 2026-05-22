@@ -1,142 +1,147 @@
-"""Üyelik/fiyat yapısı — TEK KAYNAK (single source of truth).
+"""Üyelik/fiyat yapısı — TEK KAYNAK (single source of truth) + süper admin override.
 
 İki kitle:
 - B2C bağımsız koç: öğrenci bandına göre fiyat (1-5/6-15/16-30/30+).
 - B2B kurum: koç başına fiyat (koç sayısı tier'ına göre), her koç ≤30 öğrenci.
 
-Bu modül `/pricing` sayfası + teacher Paket + süper admin ücret paneli + entitlement
-tarafından okunur. Sayılar süper adminden düzenlenebilir olacak (M2 DB override);
-şimdilik kod default + `_override` kancası. **Veri tutarlılığı: her yer buradan okur.**
-
-KURAL: AI özellikleri yalnız ücretli planlarda; free → kapalı.
+Kod default + DB override (`app_settings` key="pricing"). Süper admin panelden
+düzenler; override yoksa kod varsayılanı geçerli. /pricing sayfası, teacher Paket,
+süper admin paneli — hepsi buradan okur (veri tutarlılığı). AI yalnız ücretli.
 """
 
 from __future__ import annotations
 
 from typing import Any
 
-CURRENCY = "TRY"
-# Yıllık abonelik: 10 ay öde, 12 ay kullan (2 ay bedava — akademik yıl ritmi).
-ANNUAL_PAID_MONTHS = 10
+from app.services import app_settings
 
-SOLO_TRIAL_DAYS = 14
-INSTITUTION_TRIAL_DAYS = 30
+PRICING_KEY = "pricing"
 
-# ----------------------------- Solo (B2C) -----------------------------
+# Süper adminden düzenlenebilen tüm sayılar — kod varsayılanı.
+_DEFAULTS: dict[str, Any] = {
+    "currency": "TRY",
+    "annual_paid_months": 10,           # yıllık = 10 ay öde (2 ay bedava)
+    # --- Solo (B2C) ---
+    "solo_trial_days": 14,
+    "solo_free_students": 3,
+    "solo_bands": [
+        {"max_students": 5, "monthly": 2000},
+        {"max_students": 15, "monthly": 4000},
+        {"max_students": 30, "monthly": 6000},
+    ],
+    "solo_over_cap_per_student": 200,
+    # --- Kurum (B2B) ---
+    "institution_trial_days": 30,
+    "institution_free_teachers": 2,
+    "institution_free_students": 20,
+    "institution_students_per_coach": 30,
+    "institution_tiers": [
+        {"code": "etut_standart", "label": "Etüt Standart", "min_coaches": 2,
+         "max_coaches": 10, "per_coach_monthly": 4000, "white_label": False,
+         "short": "Etüt merkezleri ve butik dershaneler için."},
+        {"code": "dershane_pro", "label": "Dershane Pro", "min_coaches": 11,
+         "max_coaches": 50, "per_coach_monthly": 3000, "white_label": False,
+         "short": "Büyüyen dershaneler için hacim avantajı + 60 gün garanti."},
+        {"code": "enterprise", "label": "Özel Okul / Enterprise", "min_coaches": 51,
+         "max_coaches": None, "per_coach_monthly": 2500, "white_label": True,
+         "short": "Özel okul, zincir ve kurumlar için özel sözleşme + white-label."},
+    ],
+}
 
-SOLO_FREE_STUDENTS = 3
-
-# Öğrenci bantları — üst sınıra kadar düz aylık ücret (₺/ay). Sıralı artan.
-SOLO_BANDS: list[dict[str, int]] = [
-    {"max_students": 5, "monthly": 2000},
-    {"max_students": 15, "monthly": 4000},
-    {"max_students": 30, "monthly": 6000},
-]
-# 30 üstü her öğrenci için son bandın üstüne eklenen ücret (₺/ay).
-SOLO_OVER_CAP_PER_STUDENT = 200
-
-# ----------------------------- Kurum (B2B) -----------------------------
-
-INSTITUTION_FREE_TEACHERS = 2
-INSTITUTION_FREE_STUDENTS = 20
-INSTITUTION_STUDENTS_PER_COACH = 30
-
-# Koç sayısı tier'ları — koç başına aylık ücret (₺). max_coaches None = sınırsız.
-INSTITUTION_TIERS: list[dict[str, Any]] = [
-    {
-        "code": "etut_standart", "label": "Etüt Standart",
-        "min_coaches": 2, "max_coaches": 10, "per_coach_monthly": 4000,
-        "white_label": False,
-        "short": "Etüt merkezleri ve butik dershaneler için.",
-    },
-    {
-        "code": "dershane_pro", "label": "Dershane Pro",
-        "min_coaches": 11, "max_coaches": 50, "per_coach_monthly": 3000,
-        "white_label": False,
-        "short": "Büyüyen dershaneler için hacim avantajı + 60 gün garanti.",
-    },
-    {
-        "code": "enterprise", "label": "Özel Okul / Enterprise",
-        "min_coaches": 51, "max_coaches": None, "per_coach_monthly": 2500,
-        "white_label": True,
-        "short": "Özel okul, zincir ve kurumlar için özel sözleşme + white-label.",
-    },
-]
-
-# Ücretli plan kodları (entitlement — AI premium açık).
+# Ücretli plan kodları (entitlement — AI premium açık). Düzenlenebilir değil.
 PAID_PLAN_CODES = {"solo_pro", "solo_elite", "etut_standart", "dershane_pro", "enterprise"}
 TRIAL_PLAN_CODES = {"solo_trial", "institution_trial"}
+
+
+def defaults() -> dict[str, Any]:
+    """Kod varsayılanı (sıfırlama için)."""
+    import copy
+    return copy.deepcopy(_DEFAULTS)
+
+
+def _cfg() -> dict[str, Any]:
+    """Etkin yapılandırma = kod default + DB override (shallow merge)."""
+    override = app_settings.get_json(PRICING_KEY, {}) or {}
+    cfg = dict(_DEFAULTS)
+    if isinstance(override, dict):
+        cfg.update(override)
+    return cfg
 
 
 # ----------------------------- Hesaplayıcılar -----------------------------
 
 
 def compute_solo_monthly(student_count: int) -> int:
-    """Aktif öğrenci sayısına göre solo aylık ücret (₺). 0/negatif → 0."""
+    cfg = _cfg()
+    bands = cfg["solo_bands"]
+    over = int(cfg["solo_over_cap_per_student"])
     n = max(0, int(student_count))
     if n == 0:
         return 0
-    last = SOLO_BANDS[-1]
+    last = bands[-1]
     if n > last["max_students"]:
-        return last["monthly"] + (n - last["max_students"]) * SOLO_OVER_CAP_PER_STUDENT
-    for band in SOLO_BANDS:
+        return int(last["monthly"]) + (n - last["max_students"]) * over
+    for band in bands:
         if n <= band["max_students"]:
-            return band["monthly"]
-    return last["monthly"]
+            return int(band["monthly"])
+    return int(last["monthly"])
 
 
 def institution_tier_for_coaches(coach_count: int) -> dict[str, Any]:
-    """Koç sayısına uyan kurum tier'ı (en küçük min altı → ilk tier)."""
+    tiers = _cfg()["institution_tiers"]
     n = max(1, int(coach_count))
-    for tier in INSTITUTION_TIERS:
+    for tier in tiers:
         mx = tier["max_coaches"]
         if mx is None or n <= mx:
             return tier
-    return INSTITUTION_TIERS[-1]
+    return tiers[-1]
 
 
 def compute_institution_monthly(coach_count: int) -> int:
-    """Koç sayısına göre kurum aylık ücret (₺) = koç × tier koç-başı ücret."""
     n = max(0, int(coach_count))
     if n == 0:
         return 0
-    tier = institution_tier_for_coaches(n)
-    return n * int(tier["per_coach_monthly"])
+    return n * int(institution_tier_for_coaches(n)["per_coach_monthly"])
 
 
 def annual_total(monthly: int) -> int:
-    """Yıllık peşin tutar (10 ay öde)."""
-    return monthly * ANNUAL_PAID_MONTHS
+    return monthly * int(_cfg()["annual_paid_months"])
+
+
+def is_paid_plan_code(plan_code: str | None) -> bool:
+    return (plan_code or "") in PAID_PLAN_CODES
 
 
 # ----------------------------- Katalog (UI için) -----------------------------
 
 
 def get_pricing_catalog() -> dict[str, Any]:
-    """`/pricing` + süper admin için tam yapı. Tek kaynak."""
+    """`/pricing` + süper admin için tam yapı. Tek kaynak (override uygulanmış)."""
+    cfg = _cfg()
     return {
-        "currency": CURRENCY,
-        "annual_paid_months": ANNUAL_PAID_MONTHS,
+        "currency": cfg["currency"],
+        "annual_paid_months": int(cfg["annual_paid_months"]),
         "solo": {
-            "trial_days": SOLO_TRIAL_DAYS,
-            "free": {"students": SOLO_FREE_STUDENTS, "ai_included": False},
-            "bands": [dict(b) for b in SOLO_BANDS],
-            "over_cap_per_student": SOLO_OVER_CAP_PER_STUDENT,
+            "trial_days": int(cfg["solo_trial_days"]),
+            "free": {"students": int(cfg["solo_free_students"]), "ai_included": False},
+            "bands": [dict(b) for b in cfg["solo_bands"]],
+            "over_cap_per_student": int(cfg["solo_over_cap_per_student"]),
             "ai_included": True,
         },
         "institution": {
-            "trial_days": INSTITUTION_TRIAL_DAYS,
+            "trial_days": int(cfg["institution_trial_days"]),
             "free": {
-                "teachers": INSTITUTION_FREE_TEACHERS,
-                "students": INSTITUTION_FREE_STUDENTS,
+                "teachers": int(cfg["institution_free_teachers"]),
+                "students": int(cfg["institution_free_students"]),
                 "ai_included": False,
             },
-            "students_per_coach": INSTITUTION_STUDENTS_PER_COACH,
-            "tiers": [dict(t) for t in INSTITUTION_TIERS],
+            "students_per_coach": int(cfg["institution_students_per_coach"]),
+            "tiers": [dict(t) for t in cfg["institution_tiers"]],
             "ai_included": True,
         },
     }
 
 
-def is_paid_plan_code(plan_code: str | None) -> bool:
-    return (plan_code or "") in PAID_PLAN_CODES
+def get_effective_config() -> dict[str, Any]:
+    """Süper admin editörü için düzenlenebilir etkin yapı (override dahil)."""
+    return _cfg()

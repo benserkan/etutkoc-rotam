@@ -3161,3 +3161,41 @@ class AiSettingsResponse(BaseModel):
 class SetAiSettingBody(BaseModel):
     name: str               # SECRET_NAMES + CONFIG_NAMES içinden
     value: str              # düz değer (secret ise şifreli saklanır)
+
+
+# =============================================================================
+# Süper Admin — Üyelik/Fiyat yapılandırması (tek kaynak override)
+# =============================================================================
+
+
+class SoloBandIn(BaseModel):
+    max_students: int
+    monthly: int
+
+
+class InstitutionTierIn(BaseModel):
+    code: str
+    label: str
+    min_coaches: int
+    max_coaches: int | None = None
+    per_coach_monthly: int
+    white_label: bool = False
+    short: str = ""
+
+
+class PricingConfigBody(BaseModel):
+    annual_paid_months: int
+    solo_trial_days: int
+    solo_free_students: int
+    solo_bands: list[SoloBandIn]
+    solo_over_cap_per_student: int
+    institution_trial_days: int
+    institution_free_teachers: int
+    institution_free_students: int
+    institution_students_per_coach: int
+    institution_tiers: list[InstitutionTierIn]
+
+
+class PricingAdminResponse(BaseModel):
+    config: dict          # etkin düzenlenebilir yapı (override dahil)
+    defaults: dict        # kod varsayılanı (sıfırlama için)

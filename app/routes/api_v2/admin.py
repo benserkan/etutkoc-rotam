@@ -342,6 +342,8 @@ from app.routes.api_v2.schemas.admin import (
     AiSettingItem,
     AiSettingsResponse,
     SetAiSettingBody,
+    PricingAdminResponse,
+    PricingConfigBody,
 )
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.services.account_history import (
@@ -7491,4 +7493,97 @@ def admin_ai_settings_delete_v2(
     return MutationResponse[AiSettingsResponse](
         data=AiSettingsResponse(items=[AiSettingItem(**s) for s in ai_settings_status(db)]),
         invalidate=_AI_SETTINGS_INVALIDATE,
+    )
+
+
+# =============================================================================
+# Süper Admin — Üyelik/Fiyat yapılandırması (tek kaynak: services/pricing.py)
+# =============================================================================
+
+_PRICING_INVALIDATE = ["admin:settings:pricing", "pricing"]
+
+_PRICING_EDITABLE_KEYS = (
+    "annual_paid_months", "solo_trial_days", "solo_free_students", "solo_bands",
+    "solo_over_cap_per_student", "institution_trial_days", "institution_free_teachers",
+    "institution_free_students", "institution_students_per_coach", "institution_tiers",
+)
+
+
+def _pricing_editable(cfg: dict) -> dict:
+    return {k: cfg[k] for k in _PRICING_EDITABLE_KEYS if k in cfg}
+
+
+@router.get("/settings/pricing", response_model=PricingAdminResponse)
+def admin_pricing_get_v2(
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Etkin üyelik/fiyat yapısı (override dahil) + kod varsayılanı (sıfırlama için)."""
+    from app.services import pricing
+    return PricingAdminResponse(
+        config=_pricing_editable(pricing.get_effective_config()),
+        defaults=_pricing_editable(pricing.defaults()),
+    )
+
+
+@router.post("/settings/pricing", response_model=MutationResponse[PricingAdminResponse])
+def admin_pricing_set_v2(
+    body: PricingConfigBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Üyelik/fiyat override'ını kaydet. Tüm sistem (/pricing, Paket, entitlement) buradan okur."""
+    from app.services import app_settings, pricing
+
+    payload = body.model_dump()
+    # Basit doğrulama: negatif fiyat/sayı yok; en az 1 bant + 1 tier.
+    if not payload["solo_bands"] or not payload["institution_tiers"]:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "validation", "code": "invalid_pricing",
+                    "message": "En az bir öğrenci bandı ve bir kurum tier'ı gerekir."},
+        )
+    for b in payload["solo_bands"]:
+        if b["max_students"] <= 0 or b["monthly"] < 0:
+            raise HTTPException(status_code=400, detail={"error": "validation", "code": "invalid_pricing",
+                    "message": "Bant değerleri geçersiz."})
+    for t in payload["institution_tiers"]:
+        if t["per_coach_monthly"] < 0 or t["min_coaches"] <= 0:
+            raise HTTPException(status_code=400, detail={"error": "validation", "code": "invalid_pricing",
+                    "message": "Tier değerleri geçersiz."})
+
+    app_settings.set_json(db, pricing.PRICING_KEY, payload, actor_user_id=user.id)
+    log_action(
+        db, action=AuditAction.SYSTEM_SETTING_UPDATE, actor_id=user.id,
+        target_type="pricing", request=request, details={"action": "set"},
+    )
+    return MutationResponse[PricingAdminResponse](
+        data=PricingAdminResponse(
+            config=_pricing_editable(pricing.get_effective_config()),
+            defaults=_pricing_editable(pricing.defaults()),
+        ),
+        invalidate=_PRICING_INVALIDATE,
+    )
+
+
+@router.post("/settings/pricing/reset", response_model=MutationResponse[PricingAdminResponse])
+def admin_pricing_reset_v2(
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Override'ı sil → kod varsayılanına dön."""
+    from app.services import app_settings, pricing
+    app_settings.delete(db, pricing.PRICING_KEY)
+    log_action(
+        db, action=AuditAction.SYSTEM_SETTING_UPDATE, actor_id=user.id,
+        target_type="pricing", request=request, details={"action": "reset"},
+    )
+    return MutationResponse[PricingAdminResponse](
+        data=PricingAdminResponse(
+            config=_pricing_editable(pricing.get_effective_config()),
+            defaults=_pricing_editable(pricing.defaults()),
+        ),
+        invalidate=_PRICING_INVALIDATE,
     )

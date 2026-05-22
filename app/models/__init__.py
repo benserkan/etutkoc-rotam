@@ -207,6 +207,7 @@ from app.models.coaching_session import (
     CoachingSessionStatus,
     SessionCaptureSource,
 )
+from app.models.app_setting import AppSetting
 from app.models.exam_result import ExamResult, compute_net, section_penalty
 from app.models.system_secret import SystemSecret
 from app.models.owner_contact import OwnerContact
@@ -350,6 +351,7 @@ __all__ = [
     "CoachingInsight",
     "CoachingSession",
     "CoachingSessionStatus",
+    "AppSetting",
     "SystemSecret",
     "SessionCaptureSource",
     "COACH_PAYMENT_METHOD_LABELS",
