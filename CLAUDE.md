@@ -1907,8 +1907,17 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
   - Frontend: Solo yükseltme kartı (aylık/akademik-yıl toggle, bant fiyatı, mevcut
     durum) + manuel-aktivasyon dialog (sales_email mailto). Verify tsc/eslint/build
     + entitlement 13/13 + trial-status 6/6.
-- **Faz 2 ⏳ ödeme/devam akışı** (uygulama-içi checkout → manuel aktivasyon talebi →
-  süper admin aktive eder; plan=solo_pro + dönem sonu).
+- **Faz 2 ✅ ödeme/devam akışı** (manuel aktivasyon, migration YOK):
+  - Koç: `/teacher/plan` "Öde ve devam et" → `POST /teacher/subscription-request`
+    {plan, cycle} → `contact_requests`'e (source=`subscription_request`, mesajda
+    plan/döngü/fiyat/koç_id) düşer; idempotent (bekleyen talep varsa tekrar
+    yaratmaz). Dialog "Talebin alındı" durumu gösterir.
+  - Süper admin: talep **İletişim Talepleri**'nde "Abonelik talebi (koç)" olarak
+    görünür → ödeme alınınca admin user-detail'deki **Abonelik aktivasyonu**
+    kartından `POST /admin/users/{id}/activate-plan` {plan} (yalnız solo koç;
+    change_plan UPGRADE + audit). `AdminUserListItem`'a `plan` eklendi.
+  - Smoke `test_api_v2_subscription_request.py` **11/11**; admin_users 25 +
+    contact 11 + entitlement 13 regresyon temiz; tsc/eslint/build temiz.
 - **Faz 3 ⏳ solo abonelik durumu (migration)**: User'a subscription_status/
   period_end/cycle + yenileme hatırlatma + dönem sonu past_due/paywall.
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme.

@@ -503,6 +503,30 @@ export function useChangeUserRole(userId: number) {
   });
 }
 
+export function useActivateUserPlan(userId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<AdminUserMutationResult>,
+    Error,
+    { plan: string }
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<AdminUserMutationResult>>(
+        `/api/v2/admin/users/${userId}/activate-plan`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data.message);
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Aktivasyon başarısız"), {
+        description: errorMessage(e, "Plan aktive edilemedi."),
+      });
+    },
+  });
+}
+
 export function useDeleteAdminUser(userId: number) {
   const qc = useQueryClient();
   return useMutation<

@@ -1619,6 +1619,18 @@ class PlanUpgradeBody(BaseModel):
     plan: str                   # hedef solo plan kodu (solo_pro | solo_elite)
 
 
+class SubscriptionRequestBody(BaseModel):
+    """Koç uygulama-içi abonelik talebi (manuel aktivasyon akışı)."""
+    plan: str = "solo_pro"          # solo_pro | solo_elite
+    cycle: str = "monthly"          # monthly | academic_year
+
+
+class SubscriptionRequestResult(BaseModel):
+    ok: bool = True
+    message: str
+    already_pending: bool = False
+
+
 class TrialStatusResponse(BaseModel):
     """Bağımsız koç trial/ödeme-duvarı durumu — teacher-shell banner için."""
     is_solo: bool

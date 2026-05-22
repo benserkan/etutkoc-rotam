@@ -1428,6 +1428,17 @@ export interface PlanUpgradeBody {
   plan: string;
 }
 
+export interface SubscriptionRequestBody {
+  plan: string;    // solo_pro | solo_elite
+  cycle: string;   // monthly | academic_year
+}
+
+export interface SubscriptionRequestResult {
+  ok: boolean;
+  message: string;
+  already_pending: boolean;
+}
+
 export interface TrialStatusResponse {
   is_solo: boolean;
   plan_code: string;

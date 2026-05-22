@@ -140,6 +140,8 @@ from app.routes.api_v2.schemas.teacher import (
     ParseVoiceBody,
     PlanUpgradeBody,
     SessionDraftResponse,
+    SubscriptionRequestBody,
+    SubscriptionRequestResult,
     TranscribeResponse,
     TeacherPlanOption,
     TeacherPlanResponse,
@@ -1669,6 +1671,86 @@ def teacher_trial_status_v2(
     """Bağımsız koç trial geri-sayım + ödeme-duvarı durumu (teacher-shell banner)."""
     from app.services.plans import solo_trial_status
     return TrialStatusResponse(**solo_trial_status(db, user=user))
+
+
+@router.post("/subscription-request", response_model=MutationResponse[SubscriptionRequestResult])
+def teacher_subscription_request_v2(
+    body: SubscriptionRequestBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Uygulama-içi 'öde ve devam et' — abonelik aktivasyon talebi.
+
+    Manuel aktivasyon: talep `contact_requests`'e (source=subscription_request)
+    düşer → süper admin İletişim Talepleri'nde görür → ödeme alınınca
+    /admin/users/{id}/activate-plan ile aktive eder. Migration YOK.
+    """
+    from app.models.contact_request import ContactRequest
+    from app.services import pricing
+    from app.services.plans import count_solo_students
+
+    if user.institution_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "managed_by_institution",
+                    "message": "Paketin kurumun tarafından yönetilir."},
+        )
+    plan = (body.plan or "solo_pro").strip()
+    if plan not in ("solo_pro", "solo_elite"):
+        plan = "solo_pro"
+    cycle = (body.cycle or "monthly").strip()
+    if cycle not in ("monthly", "academic_year"):
+        cycle = "monthly"
+
+    # Aynı koç için bekleyen talep varsa tekrar oluşturma (idempotent).
+    existing = (
+        db.query(ContactRequest)
+        .filter(
+            ContactRequest.email == user.email,
+            ContactRequest.source == "subscription_request",
+            ContactRequest.status == "new",
+        )
+        .first()
+    )
+    if existing is not None:
+        return MutationResponse[SubscriptionRequestResult](
+            data=SubscriptionRequestResult(
+                ok=True, already_pending=True,
+                message="Zaten bekleyen bir abonelik talebin var. En kısa sürede aktive edilecek.",
+            ),
+            invalidate=["teacher:me:plan"],
+        )
+
+    count = count_solo_students(db, teacher_id=user.id)
+    monthly = pricing.compute_solo_monthly(count)
+    catalog = pricing.get_pricing_catalog()
+    months = int(catalog["annual_paid_months"])
+    cycle_label = "Akademik yıl (peşin)" if cycle == "academic_year" else "Aylık"
+    price_note = (
+        f"~{monthly * months:,} ₺/yıl ({months} ay)".replace(",", ".")
+        if cycle == "academic_year"
+        else f"~{monthly:,} ₺/ay".replace(",", ".")
+    )
+    cr = ContactRequest(
+        name=user.full_name or user.email,
+        email=user.email,
+        coach_count=count,
+        source="subscription_request",
+        message=(
+            f"Solo Pro abonelik talebi · {cycle_label} · {count} öğrenci · "
+            f"{price_note} · koç_id={user.id}"
+        ),
+    )
+    db.add(cr)
+    db.commit()
+
+    return MutationResponse[SubscriptionRequestResult](
+        data=SubscriptionRequestResult(
+            ok=True,
+            message="Talebin alındı. Ödeme/aktivasyon için en kısa sürede iletişime geçeceğiz.",
+        ),
+        invalidate=["teacher:me:plan", "admin:contact-requests"],
+    )
 
 
 @router.post("/plan/upgrade", response_model=MutationResponse[TeacherPlanResponse])

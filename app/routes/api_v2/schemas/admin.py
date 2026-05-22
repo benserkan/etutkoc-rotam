@@ -395,6 +395,7 @@ class AdminUserListItem(BaseModel):
     failed_login_count: int = 0
     must_change_password: bool = False
     created_at: datetime | None = None
+    plan: str | None = None     # bağımsız koç plan kodu (abonelik aktivasyonu için)
 
 
 class AdminUserListResponse(BaseModel):
@@ -448,6 +449,11 @@ class AdminUserMutationResult(BaseModel):
     user: AdminUserListItem | None = None
     message: str
     temp_password: str | None = None  # reset-password için
+
+
+class AdminActivatePlanBody(BaseModel):
+    """Süper admin — bağımsız koç abonelik aktivasyonu (manuel ödeme sonrası)."""
+    plan: str = Field(..., max_length=32)  # solo_pro | solo_elite | solo_free
 
 
 # =============================================================================

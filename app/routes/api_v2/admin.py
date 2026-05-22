@@ -56,6 +56,7 @@ from app.routes.api_v2.schemas.admin import (
     AdminImpersonateEndResult,
     AdminImpersonateResult,
     AdminIndependentTeachersResponse,
+    AdminActivatePlanBody,
     AdminUserChangeRoleBody,
     AdminUserCreateBody,
     AdminUserCreateResult,
@@ -1378,6 +1379,7 @@ def _user_to_admin_item(u: User) -> AdminUserListItem:
         failed_login_count=u.failed_login_count or 0,
         must_change_password=bool(u.must_change_password),
         created_at=u.created_at,
+        plan=u.plan if u.institution_id is None else None,
     )
 
 
@@ -1810,6 +1812,67 @@ def admin_change_user_role_v2(
                 f"Rol değişti: {ROLE_LABELS_TR_USERS[old_role]} → "
                 f"{ROLE_LABELS_TR_USERS[role_enum]}"
             ),
+        ),
+        invalidate=_users_invalidate(),
+    )
+
+
+@router.post(
+    "/users/{user_id}/activate-plan",
+    response_model=MutationResponse[AdminUserMutationResult],
+)
+def admin_activate_user_plan_v2(
+    user_id: int,
+    body: AdminActivatePlanBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Bağımsız koç abonelik aktivasyonu (manuel ödeme sonrası).
+
+    Koç uygulama-içinden talep eder (subscription-request → İletişim Talepleri);
+    süper admin ödemeyi aldıktan sonra buradan planı aktive eder.
+    """
+    from app.models import PlanChangeReason, PlanOwnerType
+    from app.services.plans import SOLO_PLANS, change_plan, get_plan_info
+
+    target = db.get(User, user_id)
+    if not target:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "user_not_found",
+                    "message": "Kullanıcı bulunamadı."},
+        )
+    if target.role != UserRole.TEACHER or target.institution_id is not None:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "not_solo_teacher",
+                    "message": "Yalnız bağımsız koç planı aktive edilebilir."},
+        )
+    plan = (body.plan or "").strip()
+    if plan not in SOLO_PLANS:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "invalid_plan",
+                    "message": "Geçersiz solo plan."},
+        )
+    change_plan(
+        db, owner_type=PlanOwnerType.USER, owner_id=target.id, new_plan=plan,
+        reason=PlanChangeReason.UPGRADE, actor_user_id=user.id,
+        note="Süper admin abonelik aktivasyonu (manuel ödeme)", autocommit=False,
+    )
+    log_action(
+        db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+        target_type="user", target_id=target.id, request=request,
+        details={"action": "activate_plan", "plan": plan}, autocommit=False,
+    )
+    db.commit()
+    db.refresh(target)
+    info = get_plan_info(plan)
+    return MutationResponse[AdminUserMutationResult](
+        data=AdminUserMutationResult(
+            user=_user_to_admin_item(target),
+            message=f"Abonelik aktive edildi: {info.label if info else plan}",
         ),
         invalidate=_users_invalidate(),
     )

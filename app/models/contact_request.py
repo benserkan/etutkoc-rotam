@@ -30,6 +30,7 @@ CONTACT_STATUS_LABELS_TR: dict[str, str] = {
 CONTACT_SOURCE_LABELS_TR: dict[str, str] = {
     "pricing_institution": "Fiyatlandırma — Kurumsal",
     "pricing_general": "Fiyatlandırma — Genel",
+    "subscription_request": "Abonelik talebi (koç)",
     "other": "Diğer",
 }
 

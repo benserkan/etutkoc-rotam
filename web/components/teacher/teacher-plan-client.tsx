@@ -1,10 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Check, CheckCircle2, Clock, Gem, Lock, Mail, Sparkles } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { Check, CheckCircle2, Clock, Gem, Loader2, Lock, Mail, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { ApiError } from "@/lib/api";
+import { applyInvalidate } from "@/lib/invalidate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -14,7 +16,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getTeacherPlan, teacherKeys } from "@/lib/api/teacher";
+import { getTeacherPlan, submitSubscriptionRequest, teacherKeys } from "@/lib/api/teacher";
 import type { TeacherPlanResponse } from "@/lib/types/teacher";
 
 function tl(n: number): string {
@@ -195,6 +197,8 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
       <UpgradeDialog
         open={open}
         onClose={() => setOpen(false)}
+        plan="solo_pro"
+        cycle={yearly ? "academic_year" : "monthly"}
         priceLabel={`${tl(shownMonthly)}/ay (${yearly ? "akademik yıl" : "aylık"})`}
         salesEmail={data.sales_email}
       />
@@ -205,45 +209,86 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
 function UpgradeDialog({
   open,
   onClose,
+  plan,
+  cycle,
   priceLabel,
   salesEmail,
 }: {
   open: boolean;
   onClose: () => void;
+  plan: string;
+  cycle: string;
   priceLabel: string;
   salesEmail: string;
 }) {
+  const qc = useQueryClient();
+  const [done, setDone] = React.useState(false);
+  const mut = useMutation({
+    mutationFn: () => submitSubscriptionRequest({ plan, cycle }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      setDone(true);
+    },
+  });
   const mailto = salesEmail
     ? `mailto:${salesEmail}?subject=${encodeURIComponent("Solo abonelik aktivasyonu")}`
     : "";
+  const errMsg = mut.error instanceof ApiError ? mut.error.detail.message : "Bir hata oluştu, tekrar deneyin.";
+
   return (
-    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setDone(false); } }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gem className="size-4 text-cyan-700" aria-hidden /> Solo&apos;ya geç
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-3 text-sm">
-          <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3">
-            <span className="text-muted-foreground">Seçilen:</span>{" "}
-            <span className="font-semibold text-cyan-900">Solo · {priceLabel}</span>
+        {done ? (
+          <div className="space-y-3 py-2 text-center">
+            <CheckCircle2 className="mx-auto size-10 text-emerald-500" aria-hidden />
+            <p className="text-sm font-medium">Talebin alındı</p>
+            <p className="text-sm text-muted-foreground">
+              Ödeme/aktivasyon için en kısa sürede iletişime geçeceğiz. Onaylanınca
+              hesabın Solo&apos;ya geçer.
+            </p>
           </div>
-          <p className="flex items-start gap-2 text-muted-foreground">
-            <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
-            Şu an aktivasyon manuel yapılıyor. Hesabını Solo&apos;ya almak için bizimle
-            iletişime geç; çok yakında ödemeyi doğrudan buradan yapabileceksin.
-          </p>
-        </div>
+        ) : (
+          <div className="space-y-3 text-sm">
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3">
+              <span className="text-muted-foreground">Seçilen:</span>{" "}
+              <span className="font-semibold text-cyan-900">Solo · {priceLabel}</span>
+            </div>
+            <p className="flex items-start gap-2 text-muted-foreground">
+              <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+              &quot;Öde ve devam et&quot; talebini gönder; ödeme/aktivasyon manuel
+              yapılıyor — onaylanınca hesabın Solo&apos;ya geçer. (Yakında ödeme
+              doğrudan buradan olacak.)
+            </p>
+            {mut.isError ? (
+              <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{errMsg}</p>
+            ) : null}
+          </div>
+        )}
         <DialogFooter className="gap-2 pt-2">
-          <Button variant="ghost" onClick={onClose}>Kapat</Button>
-          {mailto ? (
-            <Button asChild className="bg-cyan-700 text-white hover:bg-cyan-800">
-              <a href={mailto}>
-                <Mail className="size-4" aria-hidden /> İletişime geç
-              </a>
-            </Button>
-          ) : null}
+          {done ? (
+            <Button onClick={() => { onClose(); setDone(false); }}>Tamam</Button>
+          ) : (
+            <>
+              {mailto ? (
+                <Button asChild variant="ghost">
+                  <a href={mailto}><Mail className="size-4" aria-hidden /> İletişim</a>
+                </Button>
+              ) : null}
+              <Button
+                className="bg-cyan-700 text-white hover:bg-cyan-800"
+                disabled={mut.isPending}
+                onClick={() => mut.mutate()}
+              >
+                {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                Öde ve devam et
+              </Button>
+            </>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -12,7 +12,7 @@
  * queryKey üretebilsin diye. Backend invalidate'inde gerçek teacher_id geçer
  * ama uzunluk eşleşmesi yapılmaz; her queryKey o teacher'a özeldir (cookie).
  */
-import { api } from "@/lib/api";
+import { api, type MutationResponse } from "@/lib/api";
 import type {
   BookOptionsResponse,
   DashboardWarningsFeedResponse,
@@ -31,6 +31,8 @@ import type {
   CoachingInsightCacheResponse,
   TeacherPlanResponse,
   TrialStatusResponse,
+  SubscriptionRequestBody,
+  SubscriptionRequestResult,
   StudentParentsResponse,
   TeacherBadgesResponse,
   TeacherBookListResponse,
@@ -298,6 +300,15 @@ export function getTeacherPlan(): Promise<TeacherPlanResponse> {
 
 export function getTeacherTrialStatus(): Promise<TrialStatusResponse> {
   return api<TrialStatusResponse>("/api/v2/teacher/trial-status");
+}
+
+export function submitSubscriptionRequest(
+  body: SubscriptionRequestBody,
+): Promise<MutationResponse<SubscriptionRequestResult>> {
+  return api<MutationResponse<SubscriptionRequestResult>>(
+    "/api/v2/teacher/subscription-request",
+    { method: "POST", body: JSON.stringify(body) },
+  );
 }
 
 export function getTeacherStudents(

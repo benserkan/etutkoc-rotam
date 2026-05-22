@@ -31,6 +31,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { adminKeys, getAdminUser } from "@/lib/api/admin";
 import {
+  useActivateUserPlan,
   useChangeUserRole,
   useDeleteAdminUser,
   useEditAdminUser,
@@ -150,6 +151,9 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
             target={t}
             passwordChangedAt={data.password_changed_at}
           />
+          {t.role === "teacher" && !t.institution && (
+            <SubscriptionCard userId={t.id} currentPlan={t.plan ?? "solo_free"} />
+          )}
           {!data.is_self && (
             <>
               <ChangeRoleCard
@@ -184,6 +188,62 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
 
       <RecentActivityCard audits={data.recent_audits} />
     </div>
+  );
+}
+
+// ============================================================================
+// Abonelik aktivasyonu (solo koç — manuel ödeme sonrası)
+// ============================================================================
+
+const SOLO_PLAN_OPTIONS: { value: string; label: string }[] = [
+  { value: "solo_pro", label: "Solo Pro" },
+  { value: "solo_elite", label: "Solo Elite" },
+  { value: "solo_free", label: "Solo Ücretsiz" },
+];
+
+const SOLO_PLAN_LABELS: Record<string, string> = {
+  solo_trial: "14 Günlük Deneme",
+  solo_free: "Solo Ücretsiz",
+  solo_pro: "Solo Pro",
+  solo_elite: "Solo Elite",
+};
+
+function SubscriptionCard({ userId, currentPlan }: { userId: number; currentPlan: string }) {
+  const mut = useActivateUserPlan(userId);
+  const [plan, setPlan] = React.useState("solo_pro");
+  return (
+    <Card className="border-cyan-200">
+      <CardContent className="space-y-3 p-5">
+        <h3 className="text-sm font-medium">Abonelik aktivasyonu</h3>
+        <p className="text-xs text-muted-foreground">
+          Koçun &quot;öde ve devam et&quot; talebi <strong>İletişim Talepleri</strong>&apos;nde
+          görünür. Ödeme alındıktan sonra planı buradan aktive et.
+        </p>
+        <p className="text-xs">
+          Mevcut plan:{" "}
+          <span className="font-medium">{SOLO_PLAN_LABELS[currentPlan] ?? currentPlan}</span>
+        </p>
+        <div className="flex flex-wrap items-center gap-2">
+          <select
+            value={plan}
+            onChange={(e) => setPlan(e.target.value)}
+            className="rounded border border-input bg-card px-3 py-2 text-sm"
+          >
+            {SOLO_PLAN_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
+          </select>
+          <Button
+            onClick={() => mut.mutate({ plan })}
+            disabled={mut.isPending}
+            className="bg-cyan-700 text-white hover:bg-cyan-800"
+          >
+            {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+            Aktive et
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

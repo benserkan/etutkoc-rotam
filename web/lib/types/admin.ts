@@ -322,6 +322,7 @@ export interface AdminUserListItem {
   failed_login_count: number;
   must_change_password: boolean;
   created_at: string | null;
+  plan?: string | null;   // bağımsız koç plan kodu (abonelik aktivasyonu)
 }
 
 export interface AdminUserListResponse {
