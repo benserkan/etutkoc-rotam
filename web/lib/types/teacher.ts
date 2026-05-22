@@ -1417,6 +1417,11 @@ export interface TeacherPlanResponse {
   trial_days_left: number | null;
   options: TeacherPlanOption[];
   note: string | null;
+  status: string;              // trialing | active | free | managed
+  student_count: number;
+  solo_monthly_price: number;  // öğrenci bandına göre Solo aylık (₺)
+  annual_paid_months: number;
+  sales_email: string;
 }
 
 export interface PlanUpgradeBody {

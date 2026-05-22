@@ -1607,6 +1607,12 @@ class TeacherPlanResponse(BaseModel):
     trial_days_left: int | None = None
     options: list[TeacherPlanOption]
     note: str | None = None     # kurumlu kullanıcı için açıklama
+    # Uygulama-içi abonelik ekranı (Faz 1) — /pricing ile tutarlı tek kaynak.
+    status: str = "free"        # trialing | active | free | managed
+    student_count: int = 0      # bağımsız koçun aktif öğrenci sayısı
+    solo_monthly_price: int = 0 # öğrenci bandına göre Solo aylık ücret (₺)
+    annual_paid_months: int = 10  # akademik yıl = N ay öde (2 ay bedava)
+    sales_email: str = ""       # manuel aktivasyon iletişimi (pricing.contact)
 
 
 class PlanUpgradeBody(BaseModel):

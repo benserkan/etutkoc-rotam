@@ -1887,9 +1887,36 @@ pasiflik + ödeme duvarı.
     free/expired→403 + paid→200 + upgrade); ai_capture 10 + insight 11 +
     trial-status 6 regresyon temiz.
 
+### Abonelik Sistemi — uygulama-içi billing (2026-05-23, DEVAM EDİYOR)
+
+**Bağlam (kullanıcı 2026-05-23):** Üye olmuş koç `/teacher/plan`'dan "Planları gör"
+ile **public /pricing**'e (edinme/pazarlama sayfası, "14 gün ücretsiz dene")
+gidiyordu — yanlış. Olgun SaaS ilkesi: **edinme (public /pricing) ≠ hesap yönetimi
+(uygulama-içi abonelik)**. Onaylanan model: durum-bilinçli uygulama-içi abonelik +
+ödeme/devam akışı + yenileme; public /pricing edinme-only kalır. Ödeme döngüsü
+aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe sonra).
+
+- **Faz 1 ✅ durum-bilinçli uygulama-içi abonelik ekranı** (migration YOK):
+  - `/teacher/plan` artık **public /pricing'e yönlendirmiyor**; kendi içinde
+    durum-bilinçli. `TeacherPlanResponse` +`status`(trialing/active/free/managed)
+    +`student_count` +`solo_monthly_price`(öğrenci-bandı, pricing.py tek kaynak)
+    +`annual_paid_months` +`sales_email`.
+  - **Hata düzeltildi**: trial koça "Ücretli paketin aktif" diyordu (Faz4'te trial
+    AI=açık olunca ai_premium ile karıştı) → artık trialing/active/free ayrı; AI
+    rozeti "denemede açık (N gün)" / "açık" / "kapalı".
+  - Frontend: Solo yükseltme kartı (aylık/akademik-yıl toggle, bant fiyatı, mevcut
+    durum) + manuel-aktivasyon dialog (sales_email mailto). Verify tsc/eslint/build
+    + entitlement 13/13 + trial-status 6/6.
+- **Faz 2 ⏳ ödeme/devam akışı** (uygulama-içi checkout → manuel aktivasyon talebi →
+  süper admin aktive eder; plan=solo_pro + dönem sonu).
+- **Faz 3 ⏳ solo abonelik durumu (migration)**: User'a subscription_status/
+  period_end/cycle + yenileme hatırlatma + dönem sonu past_due/paywall.
+- **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme.
+
 Migration head: `y6z8c1d2c00w`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
-`8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup).
+`8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup) ·
+`62c1d7f`/`3a6738e`/`4cb7363`/`4eb9c80` (trial yaşam döngüsü Faz 1-4).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

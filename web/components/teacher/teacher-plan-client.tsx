@@ -1,15 +1,32 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ExternalLink, Gem, Lock, Sparkles } from "lucide-react";
+import { Check, CheckCircle2, Clock, Gem, Lock, Mail, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getTeacherPlan, teacherKeys } from "@/lib/api/teacher";
 import type { TeacherPlanResponse } from "@/lib/types/teacher";
+
+function tl(n: number): string {
+  return `${n.toLocaleString("tr-TR")} ₺`;
+}
+
+const SOLO_FEATURES = [
+  "Sınırsız öğrenci — koçluğun büyüdükçe öde",
+  "Yapay zekâ: sesli dikte + fotoğraftan not + koçluk içgörüsü",
+  "Veliye otomatik ilerleme bildirimi + deneme/net takibi",
+  "Aylık kredi dahil",
+];
 
 export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse }) {
   const q = useQuery<TeacherPlanResponse>({
@@ -24,73 +41,211 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
     <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-xl font-semibold">
-          <Gem className="size-5 text-cyan-700" aria-hidden /> Paket
+          <Gem className="size-5 text-cyan-700" aria-hidden /> Abonelik
         </h1>
         <p className="text-sm text-muted-foreground">
-          Mevcut paketiniz ve yapay zekâ özelliklerine erişim durumu.
+          Mevcut paketin, durumu ve yapay zekâ erişimin.
         </p>
       </header>
 
+      {/* Mevcut durum */}
       <Card>
         <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Mevcut paket</p>
             <p className="text-lg font-semibold">{data.plan_label}</p>
-            {data.trial_active && data.trial_days_left != null ? (
-              <p className="text-xs text-amber-700">Deneme sürümü — {data.trial_days_left} gün kaldı</p>
-            ) : null}
+            <StatusLine status={data.status} daysLeft={data.trial_days_left} />
           </div>
-          <span
-            className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium",
-              data.ai_premium
-                ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                : "border-amber-200 bg-amber-50 text-amber-800",
-            )}
-          >
-            {data.ai_premium ? <Sparkles className="size-3.5" aria-hidden /> : <Lock className="size-3.5" aria-hidden />}
-            Yapay zekâ özellikleri {data.ai_premium ? "açık" : "kapalı"}
-          </span>
+          <AiPill aiPremium={data.ai_premium} status={data.status} daysLeft={data.trial_days_left} />
         </CardContent>
       </Card>
 
-      {!data.is_solo ? (
+      {data.status === "managed" || !data.is_solo ? (
         <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-          {data.note ?? "Paketiniz kurumunuz tarafından yönetilir."}
+          {data.note ?? "Paketin kurumun tarafından yönetilir."}
         </div>
-      ) : (
+      ) : data.status === "active" ? (
         <Card>
-          <CardContent className="space-y-3 p-4">
-            {data.ai_premium ? (
-              <p className="text-sm text-emerald-700">
-                Ücretli paketiniz aktif — tüm yapay zekâ özellikleri açık.
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                Şu an ücretsiz paktesiniz. Daha fazla öğrenci + yapay zekâ özellikleri
-                (sesli dikte, fotoğraftan doldurma, koçluk içgörüsü) için ücretli pakete geçin.
-                Öğrenci sayınıza göre fiyatları planlar sayfasında görebilirsiniz.
-              </p>
-            )}
-            <div className="flex flex-wrap gap-2">
-              <Button asChild>
-                <Link href="/pricing">
-                  <ExternalLink className="size-4" aria-hidden /> Planları ve fiyatları gör
-                </Link>
-              </Button>
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              Yükseltme manuel aktivasyonla yapılır — planı seçtikten sonra hesabınız
-              aktive edilir. Sorular için bizimle iletişime geçin.
+          <CardContent className="space-y-2 p-4">
+            <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+              <CheckCircle2 className="size-4" aria-hidden /> Aboneliğin aktif — tüm yapay zekâ özellikleri açık.
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Yenileme ve plan yönetimi (değiştir/iptal) çok yakında bu sayfada olacak.
             </p>
           </CardContent>
         </Card>
+      ) : (
+        <SoloUpgradeCard data={data} />
       )}
 
       <p className="text-[11px] text-muted-foreground">
         Yapay zekâ özellikleri (sesli dikte, fotoğraftan seans doldurma, koçluk içgörüsü)
-        yalnız ücretli paketlerde açıktır ve kendi kredinizden düşer.
+        ücretli pakette ve aktif denemede açıktır; kullanım kendi kredinden düşer.
       </p>
     </div>
+  );
+}
+
+function StatusLine({ status, daysLeft }: { status: string; daysLeft: number | null }) {
+  if (status === "trialing") {
+    const d = daysLeft ?? 0;
+    return <p className="text-xs text-amber-700">Deneme sürümü — {d <= 0 ? "bugün bitiyor" : `${d} gün kaldı`}</p>;
+  }
+  if (status === "active") {
+    return <p className="text-xs text-emerald-700">Aktif abonelik</p>;
+  }
+  if (status === "free") {
+    return <p className="text-xs text-slate-500">Ücretsiz — 3 öğrenci, yapay zekâ kapalı</p>;
+  }
+  return null;
+}
+
+function AiPill({
+  aiPremium,
+  status,
+  daysLeft,
+}: {
+  aiPremium: boolean;
+  status: string;
+  daysLeft: number | null;
+}) {
+  let label = "Yapay zekâ kapalı";
+  if (aiPremium && status === "trialing") {
+    label = `Yapay zekâ — denemede açık${daysLeft != null ? ` (${daysLeft} gün)` : ""}`;
+  } else if (aiPremium) {
+    label = "Yapay zekâ açık";
+  }
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium",
+        aiPremium ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-800",
+      )}
+    >
+      {aiPremium ? <Sparkles className="size-3.5" aria-hidden /> : <Lock className="size-3.5" aria-hidden />}
+      {label}
+    </span>
+  );
+}
+
+function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
+  const [yearly, setYearly] = React.useState(false);
+  const [open, setOpen] = React.useState(false);
+  const months = data.annual_paid_months || 10;
+  const monthly = data.solo_monthly_price || 0;
+  const shownMonthly = yearly ? Math.round((monthly * months) / 12) : monthly;
+  const cycleLabel = yearly ? "akademik yıl peşin · 2 ay bedava" : "aylık · istediğin zaman iptal";
+
+  return (
+    <Card className="overflow-hidden border-cyan-200">
+      <div className="h-1 w-full bg-gradient-to-r from-cyan-600 to-cyan-800" aria-hidden />
+      <CardContent className="space-y-4 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="font-display text-lg font-bold">Solo&apos;ya geç</p>
+            <p className="text-sm text-muted-foreground">
+              {data.status === "trialing"
+                ? "Denemen bitmeden geç; tüm öğrencilerin ve yapay zekâ kesintisiz devam etsin."
+                : "Sınırsız öğrenci ve yapay zekâ özellikleriyle koçluğa devam et."}
+            </p>
+          </div>
+          {/* Aylık / Akademik yıl toggle */}
+          <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50/60 p-1 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setYearly(false)}
+              className={cn("rounded-full px-3 py-1.5 transition", !yearly ? "bg-white text-cyan-800 shadow-sm" : "text-muted-foreground")}
+            >
+              Aylık
+            </button>
+            <button
+              type="button"
+              onClick={() => setYearly(true)}
+              className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition", yearly ? "bg-white text-cyan-800 shadow-sm" : "text-muted-foreground")}
+            >
+              Akademik Yıl
+              <span className="rounded bg-amber-100 px-1 py-0.5 text-[9px] uppercase text-amber-700">2 ay bedava</span>
+            </button>
+          </div>
+        </div>
+
+        <div>
+          <span className="font-display text-3xl font-extrabold">{tl(shownMonthly)}</span>
+          <span className="text-sm text-muted-foreground">/ay</span>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {data.student_count} öğrenci için · {cycleLabel}
+          </p>
+        </div>
+
+        <ul className="space-y-2 text-sm">
+          {SOLO_FEATURES.map((f) => (
+            <li key={f} className="flex items-start gap-2.5">
+              <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+              <span className="text-foreground/85">{f}</span>
+            </li>
+          ))}
+        </ul>
+
+        <Button className="w-full bg-cyan-700 text-white hover:bg-cyan-800" onClick={() => setOpen(true)}>
+          Solo&apos;ya geç (öde)
+        </Button>
+      </CardContent>
+
+      <UpgradeDialog
+        open={open}
+        onClose={() => setOpen(false)}
+        priceLabel={`${tl(shownMonthly)}/ay (${yearly ? "akademik yıl" : "aylık"})`}
+        salesEmail={data.sales_email}
+      />
+    </Card>
+  );
+}
+
+function UpgradeDialog({
+  open,
+  onClose,
+  priceLabel,
+  salesEmail,
+}: {
+  open: boolean;
+  onClose: () => void;
+  priceLabel: string;
+  salesEmail: string;
+}) {
+  const mailto = salesEmail
+    ? `mailto:${salesEmail}?subject=${encodeURIComponent("Solo abonelik aktivasyonu")}`
+    : "";
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Gem className="size-4 text-cyan-700" aria-hidden /> Solo&apos;ya geç
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 text-sm">
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3">
+            <span className="text-muted-foreground">Seçilen:</span>{" "}
+            <span className="font-semibold text-cyan-900">Solo · {priceLabel}</span>
+          </div>
+          <p className="flex items-start gap-2 text-muted-foreground">
+            <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+            Şu an aktivasyon manuel yapılıyor. Hesabını Solo&apos;ya almak için bizimle
+            iletişime geç; çok yakında ödemeyi doğrudan buradan yapabileceksin.
+          </p>
+        </div>
+        <DialogFooter className="gap-2 pt-2">
+          <Button variant="ghost" onClick={onClose}>Kapat</Button>
+          {mailto ? (
+            <Button asChild className="bg-cyan-700 text-white hover:bg-cyan-800">
+              <a href={mailto}>
+                <Mail className="size-4" aria-hidden /> İletişime geç
+              </a>
+            </Button>
+          ) : null}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1590,14 +1590,29 @@ _SOLO_UPGRADE_TARGETS = ("solo_pro", "solo_elite")
 def _build_plan_response(db: Session, user: User):
     from app.services.plans import (
         SOLO_ELITE, SOLO_FREE, SOLO_PRO,
-        ai_premium_allowed, effective_plan_for_user, get_plan_info,
-        is_paid_plan, is_trial_active, trial_days_left,
+        ai_premium_allowed, count_solo_students, effective_plan_for_user,
+        get_plan_info, is_paid_plan, is_trial_active, trial_days_left,
     )
+    from app.services import pricing
+
     effective = effective_plan_for_user(db, user)
     info = get_plan_info(effective)
     is_solo = user.institution_id is None
     options: list[TeacherPlanOption] = []
     note: str | None = None
+
+    # Abonelik durumu + öğrenci-bandı fiyatı (uygulama-içi ekran — tek kaynak)
+    catalog = pricing.get_pricing_catalog()
+    student_count = count_solo_students(db, teacher_id=user.id) if is_solo else 0
+    solo_monthly_price = pricing.compute_solo_monthly(student_count) if is_solo else 0
+    if not is_solo:
+        status = "managed"
+    elif is_trial_active(user):
+        status = "trialing"
+    elif is_paid_plan(effective):
+        status = "active"
+    else:
+        status = "free"
 
     if is_solo:
         cur_info = get_plan_info(effective)
@@ -1629,6 +1644,11 @@ def _build_plan_response(db: Session, user: User):
         trial_days_left=trial_days_left(owner=user) if is_solo else None,
         options=options,
         note=note,
+        status=status,
+        student_count=student_count,
+        solo_monthly_price=solo_monthly_price,
+        annual_paid_months=int(catalog["annual_paid_months"]),
+        sales_email=str(catalog.get("contact", {}).get("sales_email", "")),
     )
 
 
