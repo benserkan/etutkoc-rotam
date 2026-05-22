@@ -1937,6 +1937,15 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
   - Smoke `test_api_v2_subscription_renewal.py` **6/6**; subscription_request 11 +
     trial-status 6 + paywall 5 + entitlement 13 + admin_users 25 + trial_notif 4
     regresyon temiz; tsc/eslint/build temiz.
+- **Bütüncül düzeltme** (2026-05-23, kullanıcı bildirdi — [[feedback-holistic-change-propagation]]):
+  aktivasyonda `change_plan` `trial_ends_at`'i temizlemiyordu → koç solo_pro olsa
+  bile is_trial_active True kalıp /teacher/plan + banner + AI rozeti "deneme"
+  gösteriyordu. Düzeltildi: `change_plan` (USER+ücretli→trial temizle) + activate-plan
+  (defensive). Admin SubscriptionCard artık durum rozeti (Aktif·yenileme/past_due/
+  deneme) + "Güncelle/Yenile" butonu gösterir (`AdminUserListItem` +subscription_status/
+  period_end/trial_active). renewal smoke 7/7 (trial-temizleme regresyonu dahil).
+  **KURAL: bundan sonra bir alan/durum değişince etkilenen tüm yüzeyler aynı
+  commit'te güncellenir.**
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge).
 
 Migration head: `z7a9d2e3d11x`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·

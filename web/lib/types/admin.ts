@@ -323,6 +323,9 @@ export interface AdminUserListItem {
   must_change_password: boolean;
   created_at: string | null;
   plan?: string | null;   // bağımsız koç plan kodu (abonelik aktivasyonu)
+  subscription_status?: string | null;
+  subscription_period_end?: string | null;
+  trial_active?: boolean;
 }
 
 export interface AdminUserListResponse {

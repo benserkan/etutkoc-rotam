@@ -743,6 +743,10 @@ def change_plan(
         return owner   # değişiklik yok
 
     owner.plan = new_plan
+    # Bağımsız koç ücretli plana geçince deneme biter — trial_ends_at temizlenir
+    # (yoksa is_trial_active True kalır → /teacher/plan + banner "deneme" sanır).
+    if owner_type == PlanOwnerType.USER and is_paid_plan(new_plan):
+        owner.trial_ends_at = None
     _log_change(
         db, owner_type=owner_type, owner_id=owner_id,
         from_plan=from_plan, to_plan=new_plan, reason=reason,

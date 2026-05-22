@@ -396,6 +396,9 @@ class AdminUserListItem(BaseModel):
     must_change_password: bool = False
     created_at: datetime | None = None
     plan: str | None = None     # bağımsız koç plan kodu (abonelik aktivasyonu için)
+    subscription_status: str | None = None       # active | past_due | canceled | None
+    subscription_period_end: datetime | None = None  # yenileme tarihi
+    trial_active: bool = False   # solo deneme aktif mi (kart durumu için)
 
 
 class AdminUserListResponse(BaseModel):

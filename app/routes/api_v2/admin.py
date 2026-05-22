@@ -1365,6 +1365,7 @@ def _institution_to_ref_brief(inst: Institution | None) -> InstitutionRefBrief |
 
 
 def _user_to_admin_item(u: User) -> AdminUserListItem:
+    from app.services.plans import is_trial_active
     return AdminUserListItem(
         id=u.id,
         email=u.email,
@@ -1380,6 +1381,11 @@ def _user_to_admin_item(u: User) -> AdminUserListItem:
         must_change_password=bool(u.must_change_password),
         created_at=u.created_at,
         plan=u.plan if u.institution_id is None else None,
+        subscription_status=u.subscription_status if u.institution_id is None else None,
+        subscription_period_end=u.subscription_period_end if u.institution_id is None else None,
+        trial_active=(
+            u.institution_id is None and is_trial_active(u)
+        ),
     )
 
 
@@ -1872,6 +1878,7 @@ def admin_activate_user_plan_v2(
         target.subscription_cycle = cycle
         days = 365 if cycle == "academic_year" else 30
         target.subscription_period_end = _dt.now(_tz.utc) + _td(days=days)
+        target.trial_ends_at = None  # deneme bitti (aktif ücretli abonelik)
     else:
         target.subscription_status = None
         target.subscription_cycle = None

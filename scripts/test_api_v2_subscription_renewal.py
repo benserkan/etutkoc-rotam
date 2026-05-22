@@ -59,7 +59,9 @@ def main() -> int:
         with SessionLocal() as db:
             coach = User(email=coach_email, password_hash=PWD, full_name=f"{PFX} Koç",
                          role=UserRole.TEACHER, institution_id=None, is_active=True,
-                         plan="solo_free", password_changed_at=now, must_change_password=False)
+                         plan="solo_trial", trial_ends_at=now + timedelta(days=5),
+                         post_trial_plan="solo_free",
+                         password_changed_at=now, must_change_password=False)
             db.add(coach); db.flush()
             stu = User(email=f"{PFX}_s@test.invalid", password_hash=PWD,
                        full_name=f"{PFX} Öğr", role=UserRole.STUDENT, teacher_id=coach.id,
@@ -91,7 +93,10 @@ def main() -> int:
             c = db.get(User, ids["coach"])
             pe_ok = c.subscription_period_end is not None and 28 <= (c.subscription_period_end.replace(tzinfo=timezone.utc) - now).days <= 31
             ok1 = ok1 and c.plan == "solo_pro" and c.subscription_status == "active" and c.subscription_cycle == "monthly" and pe_ok
+            trial_cleared = c.trial_ends_at is None
         check("1. activate solo_pro monthly → active + ~30g period_end + cycle", ok1, f"{r.text[:120]}")
+        check("1b. aktivasyon trial_ends_at'i temizledi (trialing'e düşmez)", trial_cleared,
+              "trial_ends_at hâlâ dolu")
 
         # 2. /teacher/plan
         r = coach_cli.get("/api/v2/teacher/plan")

@@ -152,7 +152,7 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
             passwordChangedAt={data.password_changed_at}
           />
           {t.role === "teacher" && !t.institution && (
-            <SubscriptionCard userId={t.id} currentPlan={t.plan ?? "solo_free"} />
+            <SubscriptionCard target={t} />
           )}
           {!data.is_self && (
             <>
@@ -208,11 +208,47 @@ const SOLO_PLAN_LABELS: Record<string, string> = {
   solo_elite: "Solo Elite",
 };
 
-function SubscriptionCard({ userId, currentPlan }: { userId: number; currentPlan: string }) {
-  const mut = useActivateUserPlan(userId);
+function fmtShortDate(iso: string | null | undefined): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+}
+
+function SubscriptionCard({ target }: { target: AdminUserListItem }) {
+  const mut = useActivateUserPlan(target.id);
   const [plan, setPlan] = React.useState("solo_pro");
   const [cycle, setCycle] = React.useState("monthly");
   const paid = plan === "solo_pro" || plan === "solo_elite";
+  const sub = target.subscription_status;
+  const isActive = sub === "active";
+
+  let stateBadge: React.ReactNode;
+  if (isActive) {
+    stateBadge = (
+      <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+        Aktif{target.subscription_period_end ? ` · yenileme ${fmtShortDate(target.subscription_period_end)}` : ""}
+      </span>
+    );
+  } else if (sub === "past_due") {
+    stateBadge = (
+      <span className="inline-flex items-center rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
+        Yenileme gerekli (süresi doldu)
+      </span>
+    );
+  } else if (target.trial_active) {
+    stateBadge = (
+      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+        Deneme aktif
+      </span>
+    );
+  } else {
+    stateBadge = (
+      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
+        {SOLO_PLAN_LABELS[target.plan ?? "solo_free"] ?? target.plan}
+      </span>
+    );
+  }
+
   return (
     <Card className="border-cyan-200">
       <CardContent className="space-y-3 p-5">
@@ -222,9 +258,8 @@ function SubscriptionCard({ userId, currentPlan }: { userId: number; currentPlan
           görünür. Ödeme alındıktan sonra planı buradan aktive et (dönem sonu otomatik
           hesaplanır).
         </p>
-        <p className="text-xs">
-          Mevcut plan:{" "}
-          <span className="font-medium">{SOLO_PLAN_LABELS[currentPlan] ?? currentPlan}</span>
+        <p className="flex flex-wrap items-center gap-2 text-xs">
+          <span className="text-muted-foreground">Mevcut durum:</span> {stateBadge}
         </p>
         <div className="flex flex-wrap items-center gap-2">
           <select
@@ -252,7 +287,7 @@ function SubscriptionCard({ userId, currentPlan }: { userId: number; currentPlan
             className="bg-cyan-700 text-white hover:bg-cyan-800"
           >
             {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-            Aktive et
+            {isActive ? "Güncelle / Yenile" : "Aktive et"}
           </Button>
         </div>
       </CardContent>
