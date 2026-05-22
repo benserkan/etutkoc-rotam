@@ -1813,16 +1813,25 @@ Rakip kıyas: TR koçluk hizmeti 2.5-7.5K/ay; uluslararası tutor-SaaS ~$15-40/a
     Kısıt gerçek.
   - Verify: pricing 8/8 · contact 11/11 · tsc/eslint/build ✅ · admin 13/13 ·
     tenant 29/29.
-- **M4 ⏳ SIRADA (P6/P7) — pakete özel signup + üyelik bilgisi tamamlama:**
-  - **P6**: `/signup/teacher?plan=X` → seçilen paketin (solo_pro) detayları +
-    **dürüst 14-gün çerçevesi** (trial=sınırsız öğrenci+tüm takip; AI=Solo'ya
-    geçince) anasayfa kartıyla çelişmesin; form pakete göre özelleşsin.
-  - **P7**: login sonrası üyelik bilgisi tamamlama uyarı bandı (kurumsa firma
-    bilgisi) + güncelleme alanı.
-  - Self-serve instant upgrade kaldırıldı (manuel aktivasyon kararı).
+- **M6 (P6) ✅ pakete duyarlı signup** (2026-05-22, frontend-only, migration YOK):
+  - `/signup/teacher?plan=X` artık `/api/v2/pricing` kataloğundan okur (anasayfa
+    kartıyla TUTARLI). Panel: seçilen Solo paketinin ad+tagline'ı + **"denemende
+    hemen açık"** listesi (sınırsız öğrenci + tüm takip/veli/deneme — yapay zekâ
+    HARİÇ) + ayrı **amber "Yapay zekâ — Solo aboneliğinde"** notu (dürüst: AI
+    trial/free'de KAPALI) + "14 gün sonra Solo Ücretsiz'e (N öğrenci) düşer".
+  - Eski yanıltıcı liste ("Yapay zeka plan şablonu / Veli WhatsApp" = 14 günde
+    açık) kaldırıldı — AI ücretli gerçeğiyle çelişiyordu.
+  - Panel hep Solo (pro) kartını gösterir (free/no-plan dahil; deneme Pro
+    deneyimi verir). Kurum planıyla gelinirse `/pricing?type=kurum`'a yönlendiren
+    bilgi bandı. Signup backend'i DEĞİŞMEDİ (solo trial açar; plan görüntüleme-
+    amaçlı, aktivasyon manuel). Verify: tsc/eslint/build ✅.
+- **M4 ⏳ SIRADA (P7) — login sonrası üyelik bilgisi tamamlama:** uyarı bandı
+  (kurumsa firma bilgisi) + güncelleme alanı. Self-serve instant upgrade
+  kaldırıldı (manuel aktivasyon kararı).
 
 Migration head: `y6z8c1d2c00w`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
-`df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs).
+`df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
+`8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
