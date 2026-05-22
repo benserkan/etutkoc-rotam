@@ -28,6 +28,7 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { getTeacherBadges, teacherKeys } from "@/lib/api/teacher";
+import { TrialBanner } from "@/components/teacher/trial-banner";
 import type { TeacherBadgesResponse } from "@/lib/types/teacher";
 import type { UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
@@ -129,6 +130,7 @@ export function TeacherShell({ user, children }: Props) {
       </header>
 
       <main className="flex-1 min-w-0">
+        <TrialBanner enabled={user.role === "teacher"} />
         <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</div>
       </main>
 

@@ -1611,3 +1611,18 @@ class TeacherPlanResponse(BaseModel):
 
 class PlanUpgradeBody(BaseModel):
     plan: str                   # hedef solo plan kodu (solo_pro | solo_elite)
+
+
+class TrialStatusResponse(BaseModel):
+    """Bağımsız koç trial/ödeme-duvarı durumu — teacher-shell banner için."""
+    is_solo: bool
+    plan_code: str
+    plan_label: str
+    trial_active: bool
+    days_left: int | None = None
+    trial_critical: bool            # trial aktif ve ≤3 gün kaldı (uyarı bandı)
+    student_count: int
+    student_limit: int              # -1 = sınırsız
+    over_limit: bool
+    paywall: bool                   # ücretsiz + limit aşıldı → salt-okunur
+    upgrade_target: str | None = None

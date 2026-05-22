@@ -1423,6 +1423,20 @@ export interface PlanUpgradeBody {
   plan: string;
 }
 
+export interface TrialStatusResponse {
+  is_solo: boolean;
+  plan_code: string;
+  plan_label: string;
+  trial_active: boolean;
+  days_left: number | null;
+  trial_critical: boolean;
+  student_count: number;
+  student_limit: number;   // -1 = sınırsız
+  over_limit: boolean;
+  paywall: boolean;
+  upgrade_target: string | null;
+}
+
 export interface SessionDraftResponse {
   agenda: string;
   coach_note: string;

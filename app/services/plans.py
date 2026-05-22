@@ -656,6 +656,49 @@ def expire_trials(db: Session, *, now: datetime | None = None) -> dict:
     return counts
 
 
+def solo_trial_status(
+    db: Session, *, user: User, now: datetime | None = None,
+) -> dict:
+    """Bağımsız koç trial/ödeme-duvarı durumu — Next.js banner için.
+
+    Kurumlu öğretmen / diğer roller → is_solo=False (banner gösterilmez).
+    paywall = ücretsiz plana düşmüş + öğrenci limiti aşılmış (deneme bitti,
+    fazla öğrenci) → aktif koçluk salt-okunur olmalı.
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+    is_solo = user.role == UserRole.TEACHER and user.institution_id is None
+    if not is_solo:
+        return {
+            "is_solo": False, "plan_code": effective_plan_for_user(db, user),
+            "plan_label": "", "trial_active": False, "days_left": None,
+            "trial_critical": False, "student_count": 0, "student_limit": -1,
+            "over_limit": False, "paywall": False, "upgrade_target": None,
+        }
+    plan = user.plan or SOLO_FREE
+    info = get_plan_info(plan)
+    active = is_trial_active(user, now)
+    days_left = trial_days_left(owner=user, now=now)
+    count = count_solo_students(db, teacher_id=user.id)
+    limit = solo_student_limit(plan)
+    over_limit = (limit != -1 and count > limit)
+    paywall = (plan == SOLO_FREE and over_limit)
+    trial_critical = (active and days_left is not None and days_left <= 3)
+    return {
+        "is_solo": True,
+        "plan_code": plan,
+        "plan_label": info.label if info else plan,
+        "trial_active": active,
+        "days_left": days_left,
+        "trial_critical": trial_critical,
+        "student_count": count,
+        "student_limit": limit,
+        "over_limit": over_limit,
+        "paywall": paywall,
+        "upgrade_target": SOLO_PRO if plan in (SOLO_FREE, SOLO_TRIAL) else None,
+    }
+
+
 # ---------------------------- Plan değişiklik ----------------------------
 
 

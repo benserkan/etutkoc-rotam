@@ -143,6 +143,7 @@ from app.routes.api_v2.schemas.teacher import (
     TranscribeResponse,
     TeacherPlanOption,
     TeacherPlanResponse,
+    TrialStatusResponse,
     DnaTrendInfo,
     FocusBadge,
     FocusSessionRow,
@@ -1636,6 +1637,16 @@ def teacher_plan_get_v2(
 ):
     """Koçun mevcut paketi + yükseltilebilir solo planlar + AI premium durumu."""
     return _build_plan_response(db, user)
+
+
+@router.get("/trial-status", response_model=TrialStatusResponse)
+def teacher_trial_status_v2(
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bağımsız koç trial geri-sayım + ödeme-duvarı durumu (teacher-shell banner)."""
+    from app.services.plans import solo_trial_status
+    return TrialStatusResponse(**solo_trial_status(db, user=user))
 
 
 @router.post("/plan/upgrade", response_model=MutationResponse[TeacherPlanResponse])

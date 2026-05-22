@@ -30,6 +30,7 @@ import type {
   AiConsentResponse,
   CoachingInsightCacheResponse,
   TeacherPlanResponse,
+  TrialStatusResponse,
   StudentParentsResponse,
   TeacherBadgesResponse,
   TeacherBookListResponse,
@@ -194,6 +195,7 @@ export const teacherKeys = {
   coachingInsight: (id: number) =>
     ["teacher", "me", "students", String(id), "coaching-insight"] as const,
   plan: () => ["teacher", "me", "plan"] as const,
+  trialStatus: () => ["teacher", "me", "trial-status"] as const,
 } as const;
 
 // =============================================================================
@@ -292,6 +294,10 @@ export function getTeacherCoachingInsight(
 
 export function getTeacherPlan(): Promise<TeacherPlanResponse> {
   return api<TeacherPlanResponse>("/api/v2/teacher/plan");
+}
+
+export function getTeacherTrialStatus(): Promise<TrialStatusResponse> {
+  return api<TrialStatusResponse>("/api/v2/teacher/trial-status");
 }
 
 export function getTeacherStudents(

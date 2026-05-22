@@ -1825,13 +1825,44 @@ Rakip kıyas: TR koçluk hizmeti 2.5-7.5K/ay; uluslararası tutor-SaaS ~$15-40/a
     deneyimi verir). Kurum planıyla gelinirse `/pricing?type=kurum`'a yönlendiren
     bilgi bandı. Signup backend'i DEĞİŞMEDİ (solo trial açar; plan görüntüleme-
     amaçlı, aktivasyon manuel). Verify: tsc/eslint/build ✅.
-- **M4 ⏳ SIRADA (P7) — login sonrası üyelik bilgisi tamamlama:** uyarı bandı
-  (kurumsa firma bilgisi) + güncelleme alanı. Self-serve instant upgrade
-  kaldırıldı (manuel aktivasyon kararı).
+- **P7 (firma bilgisi tamamlama) İPTAL** (kullanıcı 2026-05-22): bağımsız koça
+  firma bilgisi gerekmez; kurumlar self-signup yapmaz (iletişim formundan gelir,
+  süper admin panelden girilir). Yerine **Koç Trial Yaşam Döngüsü** işine geçildi.
+
+### Koç Trial Yaşam Döngüsü (2026-05-22, DEVAM EDİYOR)
+
+**Bağlam:** Üyelik sistemi yalnız bağımsız koçlar için. Simülasyonla
+(`scripts/simulate_trial_lifecycle.py`) doğrulanan mevcut durum: signup→`solo_trial`
+(14g sınırsız öğrenci, AI yok; `?plan` backend'de yok sayılıyor) → `expire_trials`
+(günlük cron) `solo_free`'ye düşürür (3 sert sınır). **Öğrenciler PASİF OLMAZ** —
+aktif kalır, sadece yeni eklenemez. **Trial bitiş uyarısı YOKTU** (ne banner ne
+e-posta — `compute_trial_banner` yalnız ölü Jinja base.html'de).
+
+**Onaylanan model (kullanıcı 2026-05-22):** tek "14 gün Pro deneme" (herkes alır,
+AI kredi-tavanlı — *ayrı onay bekliyor*); 14 gün sonunda yükseltmezse **yumuşak
+ödeme duvarı**: veri silinmez, öğrenciler görünür kalır ama limit aşıldıysa aktif
+koçluk salt-okunur → koç ya yükseltir ya **kendisi 3 öğrenci tutup gerisini
+arşivler** (sistem otomatik pasifleştirmez, "hangi 3" sorununu koç çözer).
+**Zamanlama:** son 3 gün → banner + e-posta + offer + admin bildirimi; 14. gün →
+pasiflik + ödeme duvarı.
+
+- **Faz 1 ✅ Trial durum servisi + Next.js banner** (migration YOK):
+  - `plans.solo_trial_status(db, user)` → is_solo/plan/trial_active/days_left/
+    trial_critical(≤3g)/student_count/student_limit/over_limit/**paywall**/upgrade_target.
+  - `GET /api/v2/teacher/trial-status` (`TrialStatusResponse`). Smoke
+    `test_api_v2_teacher_trial_status.py` **6/6**.
+  - `teacher-shell` üstünde `TrialBanner`: paywall (kırmızı, kapatılamaz →
+    yükselt/arşivle) · son-3-gün (amber, kapatılabilir geri-sayım). Verify ✅.
+- **Faz 2 ⏳ SIRADA — proaktif uyarı:** `trial_reminder` cron (son 3 gün:
+  "3 gün kaldı" e-posta + offer + süper admin bildirimi) + `expire_trials`'a
+  "deneme bitti" e-postası. Offer kaydı dedup anahtarı (migration'sız).
+- **Faz 3 ⏳ — yumuşak ödeme duvarı backend** (salt-okunur enforcement: limit
+  aşımında koçluk write'ları engellenir; arşivle akışı).
+- **AI-in-trial kararı ⏳** (ayrı onay): pro/deneme'de AI açılırsa kredi tavanı.
 
 Migration head: `y6z8c1d2c00w`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
-`8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim).
+`8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
