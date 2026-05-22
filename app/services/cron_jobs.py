@@ -531,13 +531,36 @@ def audit_cleanup(db: Session, *, now: datetime) -> dict:
 
 
 def trial_expire(db: Session, *, now: datetime) -> dict:
-    """Süresi dolmuş trial'ları otomatik post_trial_plan'a düşür.
+    """Süresi dolmuş trial'ları otomatik post_trial_plan'a düşür + trial bildirimleri.
 
     Günlük çalışır (00:15 UTC). Hem bağımsız öğretmen (14g) hem kurum (30g)
     trial'larını izler. İdempotent: zaten geçmişse no-op.
+
+    Ek (2026-05-22): son 3 gün hatırlatma (e-posta + otomatik teklif) + bitiş
+    e-postası. Yeni cron/migration yok — bu mevcut job'a bağlandı.
     """
     from app.services.plans import expire_trials
-    return expire_trials(db, now=now)
+    from app.services import trial_notifications as tn
+
+    reminders = 0
+    try:
+        reminders = tn.send_trial_reminders(db, now=now)
+    except Exception:
+        logger.exception("trial_expire: reminders fail")
+
+    result = expire_trials(db, now=now)
+
+    expired_emails = 0
+    try:
+        expired_emails = tn.notify_trial_expired(
+            db, user_ids=result.get("expired_user_ids", []),
+        )
+    except Exception:
+        logger.exception("trial_expire: expired emails fail")
+
+    result["reminders_sent"] = reminders
+    result["expired_emails"] = expired_emails
+    return result
 
 
 def dunning_send_reminders(db: Session, *, now: datetime) -> dict:

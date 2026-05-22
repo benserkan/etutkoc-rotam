@@ -1853,9 +1853,17 @@ pasiflik + ödeme duvarı.
     `test_api_v2_teacher_trial_status.py` **6/6**.
   - `teacher-shell` üstünde `TrialBanner`: paywall (kırmızı, kapatılamaz →
     yükselt/arşivle) · son-3-gün (amber, kapatılabilir geri-sayım). Verify ✅.
-- **Faz 2 ⏳ SIRADA — proaktif uyarı:** `trial_reminder` cron (son 3 gün:
-  "3 gün kaldı" e-posta + offer + süper admin bildirimi) + `expire_trials`'a
-  "deneme bitti" e-postası. Offer kaydı dedup anahtarı (migration'sız).
+- **Faz 2 ✅ proaktif uyarı** (migration YOK, yeni cron YOK):
+  - `trial_notifications.py`: `send_trial_reminders` (≤3 gün koçlara "3 gün kaldı"
+    e-postası + otomatik **DRAFT PLAN_UPGRADE teklifi** = süper admin CRM/360
+    bildirimi; dedup = açık teklif varlığı) + `notify_trial_expired` ("deneme
+    bitti" e-postası).
+  - Mevcut **`trial_expire` günlük cron'una bağlandı** (cron_jobs): önce
+    reminders → expire → expired e-postaları. `expire_trials` artık
+    `expired_user_ids` döndürür.
+  - E-posta şablonları: `trial_reminder.html` + `trial_expired.html`.
+  - Smoke `test_trial_notifications.py` **4/4**; offers 19/19 + trial-status 6/6
+    regresyon temiz.
 - **Faz 3 ⏳ — yumuşak ödeme duvarı backend** (salt-okunur enforcement: limit
   aşımında koçluk write'ları engellenir; arşivle akışı).
 - **AI-in-trial kararı ⏳** (ayrı onay): pro/deneme'de AI açılırsa kredi tavanı.

@@ -602,7 +602,7 @@ def expire_trials(db: Session, *, now: datetime | None = None) -> dict:
     """
     if now is None:
         now = datetime.now(timezone.utc)
-    counts = {"users_expired": 0, "institutions_expired": 0}
+    counts: dict = {"users_expired": 0, "institutions_expired": 0, "expired_user_ids": []}
 
     # Bağımsız öğretmen trial'ları
     expired_users = (
@@ -627,6 +627,7 @@ def expire_trials(db: Session, *, now: datetime | None = None) -> dict:
             note="14 günlük trial bitti — Solo Ücretsiz'e geçildi",
         )
         counts["users_expired"] += 1
+        counts["expired_user_ids"].append(u.id)
 
     # Kurum trial'ları
     expired_insts = (
