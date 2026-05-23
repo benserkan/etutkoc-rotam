@@ -626,13 +626,12 @@ def generate_warnings(
         remaining_overall = projection.total_tests - projection.completed
         if remaining_overall > 0 and projection.rate_per_day > 0:
             if projection.gap < 0:
-                deficit_pct = (
-                    abs(projection.gap) / remaining_overall * 100
-                    if remaining_overall > 0 else 0
-                )
-                level = "red" if deficit_pct > 20 else "amber"
+                # İleriye-dönük projeksiyon açığı: öğrenci AKTİF çalışıyor
+                # (rate_per_day > 0) ama tempoca geride → 'dikkat' (amber), acil
+                # hareketsizlik (red) ile aynı şiddette değil. Tamamen durmuş
+                # öğrenci için ayrı 'projection_zero_rate' (red) var.
                 out.append(Warning(
-                    level=level,
+                    level="amber",
                     code="projection_shortfall",
                     title="Sınava yetişmeyecek",
                     detail=(

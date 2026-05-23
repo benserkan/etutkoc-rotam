@@ -19,7 +19,7 @@ import { Label } from "@/components/ui/label";
 function defaultLandingFor(role: UserRole): string {
   if (role === "super_admin") return "/admin";
   if (role === "institution_admin") return "/institution";
-  if (role === "teacher") return "/teacher";
+  if (role === "teacher") return "/teacher/dashboard";
   if (role === "parent") return "/parent";
   return "/student";
 }

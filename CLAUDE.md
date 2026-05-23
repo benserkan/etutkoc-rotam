@@ -2226,6 +2226,20 @@ tonu** alsın (D4 eşikleri: <%40 kırmızı acil · %40–69 turuncu dikkat · 
   NOT: "Sınava yetişmeyecek" stratejik bir uyarı RED'tir; istenirse şiddeti
   (red→amber) ayrı tartışılır.
 
+## Projeksiyon uyarı şiddeti + koç login yönlendirme (2026-05-23)
+
+- **Projeksiyon uyarısı şiddeti** (`analytics.generate_warnings`): `projection_shortfall`
+  ("Sınava yetişmeyecek") artık **her zaman amber (dikkat)** — yalnız `rate_per_day>0`
+  iken (öğrenci AKTİF çalışırken) tetiklenir; acil hareketsizlikle (red) aynı şiddette
+  değil. Tamamen durmuş öğrenci için ayrı `projection_zero_rate` **red** kalır.
+  (Eski: deficit>%20 → red.) Gerekçe: aktif ama tempoca geride olan öğrenci kritik
+  değil, dikkat. Warning smokes (alert 9/9 · warn-ack 9/9) temiz.
+- **Koç login yönlendirme bug fix**: bağımsız koç (TEACHER) login/signup/şifre-değiştir/
+  kök sonrası boş `/teacher` index'ine düşüyordu (canlıda `/teacher`→`/teacher/dashboard`
+  redirect'i tetiklenmiyordu → panele inemiyordu). 5 yön (login-form · page.tsx roleHome ·
+  password-change · signup-teacher · signup-invite) artık **doğrudan `/teacher/dashboard`**.
+  Canlı doğrulama: GET / → /teacher/dashboard (dashboard içeriğiyle).
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

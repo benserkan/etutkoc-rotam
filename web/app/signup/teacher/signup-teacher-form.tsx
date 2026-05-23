@@ -94,7 +94,7 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey }: Props)
           : undefined,
       });
       router.refresh();
-      router.push("/teacher");
+      router.push("/teacher/dashboard");
     } catch (e) {
       if (showCaptcha && window.turnstile) window.turnstile.reset();
       if (e instanceof ApiError) {
