@@ -2104,9 +2104,18 @@ kapsam = önce backend+test, sonra frontend.
     10 + institution 18 temiz.
   - **Test notu**: 16 login testclient IP rate-limit'e (429) takılıyordu → login
     öncesi `get_login_limiter().reset()` (test artefaktı).
-- **Frontend ⏳** (sıradaki): 3 panel UI — koç "Talepler" · kurum "Taleplerim" +
-  "Gelen Talepler" · admin "Talepler". invalidate key'leri: `support:mine` /
-  `support:inbox`.
+- **Frontend ✅** (2026-05-23): paylaşılan `components/support/support-center.tsx`
+  (master-detail: liste + filtre chip'leri + thread + yanıt kutusu + rol-temelli
+  aksiyonlar [talep eden: geri çek · muhatap: incele/çözümle] + yeni-talep dialog).
+  `lib/types/support.ts` + `lib/api/support.ts` (supportKeys mine/inbox/detail) +
+  `lib/hooks/use-support-mutations.ts` (create/reply/withdraw/review/resolve).
+  4 route: `/teacher/support` ("Destek" — koç↔öğrenci `/teacher/requests`'ten
+  AYRI) · `/institution/support` ("Taleplerim") · `/institution/support-inbox`
+  ("Gelen Talepler") · `/admin/support` ("Talepler"). 3 shell'e nav (teacher
+  "Destek"; institution yeni "Talepler" bölümü; admin "Sistem" grubu). Durum
+  tonları purge-safe explicit (koyu temada okunur). invalidate: `support:mine` /
+  `support:inbox`. Verify: tsc ✅ · eslint ✅ · build ✅ (4 route). **NOT: tarayıcı
+  testi yapılmadı (ortam yok) — yalnız derleme doğrulandı; canlı smoke kullanıcıya.**
 
 Migration head: `b9c2f4g5f33z`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·

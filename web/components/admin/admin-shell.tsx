@@ -19,6 +19,7 @@ import {
   Heart,
   Inbox,
   LayoutDashboard,
+  LifeBuoy,
   Lightbulb,
   ListChecks,
   LogOut,
@@ -144,6 +145,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
       { href: "/admin/pricing", label: "Ücretlendirme", icon: CircleDollarSign },
       { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox },
+      { href: "/admin/support", label: "Talepler", icon: LifeBuoy },
     ],
   },
 ];

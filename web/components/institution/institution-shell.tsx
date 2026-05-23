@@ -15,7 +15,9 @@ import {
   CalendarDays,
   Flame,
   Gauge,
+  Inbox,
   LayoutDashboard,
+  LifeBuoy,
   LineChart,
   LogOut,
   Mail,
@@ -69,6 +71,13 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/institution/teachers", label: "Öğretmenler", icon: Users },
       { href: "/institution/invitations", label: "Davet", icon: Mail },
       { href: "/institution/roster", label: "Roster", icon: ScrollText },
+    ],
+  },
+  {
+    title: "Talepler",
+    links: [
+      { href: "/institution/support-inbox", label: "Gelen Talepler", icon: Inbox },
+      { href: "/institution/support", label: "Taleplerim", icon: LifeBuoy },
     ],
   },
   {
