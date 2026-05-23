@@ -1422,6 +1422,7 @@ export interface TeacherPlanResponse {
   solo_monthly_price: number;  // öğrenci bandına göre Solo aylık (₺)
   annual_paid_months: number;
   sales_email: string;
+  subscription_status: string | null;   // active | canceled | past_due | null
   subscription_period_end: string | null;
   subscription_cycle: string | null;
 }

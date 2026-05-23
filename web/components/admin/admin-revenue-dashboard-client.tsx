@@ -8,6 +8,7 @@ import {
   Building2,
   CircleDollarSign,
   ClipboardList,
+  Clock,
   Heart,
   ListChecks,
   Loader2,
@@ -35,6 +36,12 @@ import { tl } from "@/components/admin/revenue-360-shared";
 
 interface Props {
   initial: RevenueDashboardResponse;
+}
+
+function daysUntil(iso: string | null): number | null {
+  if (!iso) return null;
+  const diff = new Date(iso).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / 86_400_000));
 }
 
 const SEGMENTS: { value: string; label: string }[] = [
@@ -136,19 +143,45 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
             <Kpi label="Ortalama Aylık" value={tl(d.mrr_combined.avg_per_paying)} tone="sky" sub="ödeyen başına" />
           </div>
           {d.trial_combined.length > 0 ? (
-            <div className="mt-4 border-t border-border pt-3">
-              <div className="mb-2 text-xs font-semibold text-muted-foreground">
-                7 gün içinde denemesi bitenler ({d.trial_combined.length})
+            <div className="mt-4 border-t border-border pt-4">
+              <div className="mb-2.5 flex items-center gap-2 text-sm font-semibold">
+                <Clock className="size-4 text-amber-600" aria-hidden />
+                7 gün içinde denemesi bitenler
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-800">
+                  {d.trial_combined.length}
+                </span>
+                <span className="text-xs font-normal text-muted-foreground">— dönüşüm fırsatı</span>
               </div>
-              <ul className="space-y-1 text-xs">
-                {d.trial_combined.slice(0, 10).map((o) => (
-                  <li key={`${o.owner_type}-${o.owner_id}`} className="flex items-center gap-2">
-                    {o.owner_type === "institution" ? <Building2 className="size-3.5 text-muted-foreground" aria-hidden /> : <UserRound className="size-3.5 text-muted-foreground" aria-hidden />}
-                    <Link href={o.url} className="hover:text-indigo-700">{o.name}</Link>
-                    <span className="font-mono text-[10px] text-muted-foreground">{o.plan}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                {d.trial_combined.slice(0, 12).map((o, idx) => {
+                  const dl = daysUntil(o.trial_ends_at);
+                  return (
+                    <Link
+                      key={`${o.owner_type}-${o.owner_id}-${idx}`}
+                      href={o.url}
+                      className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 transition hover:bg-amber-100"
+                    >
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        {o.owner_type === "institution"
+                          ? <Building2 className="size-4 shrink-0 opacity-70" aria-hidden />
+                          : <UserRound className="size-4 shrink-0 opacity-70" aria-hidden />}
+                        <span className="truncate text-sm font-medium">{o.name}</span>
+                      </span>
+                      {dl != null ? (
+                        <span className={cn(
+                          "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-bold",
+                          dl <= 1 ? "bg-rose-200 text-rose-900" : dl <= 3 ? "bg-amber-200 text-amber-900" : "bg-white text-amber-800",
+                        )}>
+                          {dl} gün
+                        </span>
+                      ) : null}
+                    </Link>
+                  );
+                })}
+              </div>
+              {d.trial_combined.length > 12 ? (
+                <p className="mt-2 text-xs text-muted-foreground">+{d.trial_combined.length - 12} daha</p>
+              ) : null}
             </div>
           ) : null}
         </Card>
@@ -177,14 +210,14 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
             {d.payment_calendar.buckets.map((b) => (
               <button key={b.key} type="button" onClick={() => openDrill(`invoice_bucket:${b.key}`)}
                       className={cn(
-                        "rounded border p-2 text-left transition",
-                        b.key.startsWith("overdue") ? "border-rose-200 bg-rose-50 hover:bg-rose-100"
-                          : ["due_today", "due_tomorrow"].includes(b.key) ? "border-amber-200 bg-amber-50 hover:bg-amber-100"
-                          : "border-border bg-card hover:bg-muted",
+                        "rounded-lg border p-2.5 text-left transition",
+                        b.key.startsWith("overdue") ? "border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100"
+                          : ["due_today", "due_tomorrow"].includes(b.key) ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
+                          : "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100",
                       )}>
-                <div className="text-[10px] uppercase tracking-wide opacity-75">{b.label}</div>
-                <div className="mt-0.5 text-xl font-semibold">{b.count}</div>
-                <div className="text-xs font-medium">{tl(b.total_try)}</div>
+                <div className="text-[10px] font-semibold uppercase tracking-wide opacity-80">{b.label}</div>
+                <div className="mt-0.5 text-2xl font-bold">{b.count}</div>
+                <div className="text-xs font-semibold opacity-90">{tl(b.total_try)}</div>
               </button>
             ))}
           </div>
@@ -273,8 +306,8 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {d.trial_ending_soon.map((t) => (
-                  <tr key={t.institution_id} className="hover:bg-muted/40">
+                {d.trial_ending_soon.map((t, idx) => (
+                  <tr key={`${t.institution_id}-${idx}`} className="hover:bg-muted/40">
                     <td className="px-3 py-2">
                       <Link href={`/admin/revenue/institutions/${t.institution_id}`} className="font-medium hover:text-indigo-700">
                         {t.institution_name}
@@ -328,8 +361,8 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {drill.rows.map((r) => (
-                      <tr key={r.institution_id} className="hover:bg-muted/40">
+                    {drill.rows.map((r, idx) => (
+                      <tr key={`${r.institution_id}-${idx}`} className="hover:bg-muted/40">
                         <td className="px-3 py-2">
                           <div className="font-medium">{r.institution_name}</div>
                           <div className="font-mono text-[10px] text-muted-foreground">#{r.institution_id}</div>
@@ -350,7 +383,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                           ) : null}
                         </td>
                         <td className="whitespace-nowrap px-3 py-2 text-right">
-                          <Link href={`/admin/revenue/institutions/${r.institution_id}`}
+                          <Link href={r.detail_url || `/admin/revenue/institutions/${r.institution_id}`}
                                 className="inline-flex items-center gap-0.5 font-medium text-indigo-600 hover:text-indigo-800">
                             360 <ArrowUpRight className="size-3" aria-hidden />
                           </Link>

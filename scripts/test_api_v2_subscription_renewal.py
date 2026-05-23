@@ -138,6 +138,40 @@ def main() -> int:
               r.status_code == 200 and ok5 and r2.json().get("paywall") is False,
               f"activate={r.status_code} ts_paywall={r2.json().get('paywall')}")
 
+        # 6. koç iptal → canceled (plan korunur)
+        r = coach_cli.post("/api/v2/teacher/subscription/cancel")
+        with SessionLocal() as db:
+            c = db.get(User, ids["coach"])
+            ok6 = c.subscription_status == "canceled" and c.plan == "solo_pro"
+        check("6. iptal → canceled + plan solo_pro korunur", r.status_code == 200 and ok6, f"{r.text[:120]}")
+
+        # 7. /teacher/plan → status active + subscription_status canceled
+        j = coach_cli.get("/api/v2/teacher/plan").json()
+        check("7. /teacher/plan → active + subscription_status canceled",
+              j.get("status") == "active" and j.get("subscription_status") == "canceled", f"{j.get('status')}/{j.get('subscription_status')}")
+
+        # 8. geri al → active
+        r = coach_cli.post("/api/v2/teacher/subscription/resume")
+        with SessionLocal() as db:
+            ok8 = db.get(User, ids["coach"]).subscription_status == "active"
+        check("8. resume → active", r.status_code == 200 and ok8, f"{r.text[:120]}")
+
+        # 9. iptal + dönem sonu geçmiş → process_renewals → solo_free + temizlenir
+        coach_cli.post("/api/v2/teacher/subscription/cancel")
+        with SessionLocal() as db:
+            c = db.get(User, ids["coach"]); c.subscription_period_end = now - timedelta(days=1); db.commit()
+        with SessionLocal() as db:
+            res = tn.process_renewals(db, now=now)
+            c = db.get(User, ids["coach"])
+            ok9 = c.plan == "solo_free" and c.subscription_status is None and c.subscription_period_end is None
+        check("9. iptal+dönem sonu → solo_free + sub temizlendi (past_due DEĞİL)", ok9,
+              f"plan={c.plan} status={c.subscription_status} res={res}")
+
+        # 10. aktif abonelik yokken iptal → 400
+        r = coach_cli.post("/api/v2/teacher/subscription/cancel")
+        check("10. aktif abonelik yokken iptal → 400 no_active_subscription",
+              r.status_code == 400 and r.json()["detail"]["code"] == "no_active_subscription", f"status={r.status_code}")
+
     finally:
         with SessionLocal() as db:
             db.execute(sa_delete(User).where(User.id == ids.get("stu", 0)))

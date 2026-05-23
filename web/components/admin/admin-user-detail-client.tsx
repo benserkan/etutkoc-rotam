@@ -229,6 +229,12 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
         Aktif{target.subscription_period_end ? ` · yenileme ${fmtShortDate(target.subscription_period_end)}` : ""}
       </span>
     );
+  } else if (sub === "canceled") {
+    stateBadge = (
+      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+        İptal edildi{target.subscription_period_end ? ` · ${fmtShortDate(target.subscription_period_end)}'de biter` : ""}
+      </span>
+    );
   } else if (sub === "past_due") {
     stateBadge = (
       <span className="inline-flex items-center rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">

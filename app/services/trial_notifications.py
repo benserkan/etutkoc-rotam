@@ -153,32 +153,48 @@ def process_renewals(db: Session, *, now: datetime | None = None) -> dict:
             logger.exception("renewal reminder fail user=%s", u.id)
         reminded += 1
 
-    # Dönem sonu geçti → past_due
+    # Dönem sonu geçti
+    canceled_dropped = 0
     overdue = (
         db.query(User)
         .filter(
             User.role == UserRole.TEACHER,
             User.institution_id.is_(None),
-            User.subscription_status == "active",
+            User.subscription_status.in_(["active", "canceled"]),
             User.subscription_period_end.isnot(None),
             User.subscription_period_end <= now,
         )
         .all()
     )
+    from app.models import PlanChangeReason, PlanOwnerType
+    from app.services.plans import SOLO_FREE, change_plan
     for u in overdue:
-        u.subscription_status = "past_due"
-        try:
-            send_email(
-                to=u.email, template="renewal_overdue",
-                ctx={"full_name": u.full_name or u.email, "upgrade_url_path": "/teacher/plan"},
+        if u.subscription_status == "canceled":
+            # İptal edilmişti → dönem sonunda ücretsize düş (past_due değil).
+            change_plan(
+                db, owner_type=PlanOwnerType.USER, owner_id=u.id, new_plan=SOLO_FREE,
+                reason=PlanChangeReason.DOWNGRADE, note="Abonelik iptali — dönem sonu",
+                autocommit=False,
             )
-        except Exception:
-            logger.exception("renewal overdue fail user=%s", u.id)
-        past_due += 1
+            u.subscription_status = None
+            u.subscription_period_end = None
+            u.subscription_cycle = None
+            canceled_dropped += 1
+        else:
+            u.subscription_status = "past_due"
+            try:
+                send_email(
+                    to=u.email, template="renewal_overdue",
+                    ctx={"full_name": u.full_name or u.email, "upgrade_url_path": "/teacher/plan"},
+                )
+            except Exception:
+                logger.exception("renewal overdue fail user=%s", u.id)
+            past_due += 1
 
     db.commit()
-    logger.info("process_renewals: reminded=%s past_due=%s", reminded, past_due)
-    return {"reminded": reminded, "past_due": past_due}
+    logger.info("process_renewals: reminded=%s past_due=%s canceled_dropped=%s",
+                reminded, past_due, canceled_dropped)
+    return {"reminded": reminded, "past_due": past_due, "canceled_dropped": canceled_dropped}
 
 
 def notify_trial_expired(db: Session, *, user_ids: list[int]) -> int:

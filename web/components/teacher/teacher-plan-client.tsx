@@ -16,7 +16,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { getTeacherPlan, submitSubscriptionRequest, teacherKeys } from "@/lib/api/teacher";
+import {
+  cancelSubscription,
+  getTeacherPlan,
+  resumeSubscription,
+  submitSubscriptionRequest,
+  teacherKeys,
+} from "@/lib/api/teacher";
 import type { TeacherPlanResponse } from "@/lib/types/teacher";
 
 function tl(n: number): string {
@@ -56,7 +62,7 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Mevcut paket</p>
             <p className="text-lg font-semibold">{data.plan_label}</p>
-            <StatusLine status={data.status} daysLeft={data.trial_days_left} />
+            <StatusLine status={data.status} daysLeft={data.trial_days_left} subStatus={data.subscription_status} />
           </div>
           <AiPill aiPremium={data.ai_premium} status={data.status} daysLeft={data.trial_days_left} />
         </CardContent>
@@ -67,22 +73,7 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
           {data.note ?? "Paketin kurumun tarafından yönetilir."}
         </div>
       ) : data.status === "active" ? (
-        <Card>
-          <CardContent className="space-y-2 p-4">
-            <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
-              <CheckCircle2 className="size-4" aria-hidden /> Aboneliğin aktif — tüm yapay zekâ özellikleri açık.
-            </p>
-            {data.subscription_period_end ? (
-              <p className="text-sm">
-                Sonraki yenileme: <strong>{fmtDate(data.subscription_period_end)}</strong>
-                {data.subscription_cycle === "academic_year" ? " (akademik yıl)" : " (aylık)"}
-              </p>
-            ) : null}
-            <p className="text-xs text-muted-foreground">
-              Plan yönetimi (değiştir/iptal) çok yakında bu sayfada olacak.
-            </p>
-          </CardContent>
-        </Card>
+        <ActiveSubscriptionCard data={data} />
       ) : (
         <SoloUpgradeCard data={data} />
       )}
@@ -101,12 +92,15 @@ function fmtDate(iso: string | null): string {
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
 }
 
-function StatusLine({ status, daysLeft }: { status: string; daysLeft: number | null }) {
+function StatusLine({ status, daysLeft, subStatus }: { status: string; daysLeft: number | null; subStatus?: string | null }) {
   if (status === "trialing") {
     const d = daysLeft ?? 0;
     return <p className="text-xs text-amber-700">Deneme sürümü — {d <= 0 ? "bugün bitiyor" : `${d} gün kaldı`}</p>;
   }
   if (status === "active") {
+    if (subStatus === "canceled") {
+      return <p className="text-xs text-amber-700">İptal edildi — dönem sonunda sona erecek</p>;
+    }
     return <p className="text-xs text-emerald-700">Aktif abonelik</p>;
   }
   if (status === "past_due") {
@@ -143,6 +137,94 @@ function AiPill({
       {aiPremium ? <Sparkles className="size-3.5" aria-hidden /> : <Lock className="size-3.5" aria-hidden />}
       {label}
     </span>
+  );
+}
+
+function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
+  const qc = useQueryClient();
+  const [confirmCancel, setConfirmCancel] = React.useState(false);
+  const canceled = data.subscription_status === "canceled";
+
+  const cancelMut = useMutation({
+    mutationFn: () => cancelSubscription(),
+    onSuccess: (res) => { applyInvalidate(qc, res.invalidate); setConfirmCancel(false); },
+  });
+  const resumeMut = useMutation({
+    mutationFn: () => resumeSubscription(),
+    onSuccess: (res) => applyInvalidate(qc, res.invalidate),
+  });
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4">
+        {canceled ? (
+          <>
+            <p className="flex items-start gap-2 text-sm font-medium text-amber-800">
+              <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Aboneliğin iptal edildi
+              {data.subscription_period_end ? <> — <strong>{fmtDate(data.subscription_period_end)}</strong> tarihinde sona erecek.</> : "."}
+            </p>
+            <p className="text-xs text-muted-foreground">
+              O tarihe kadar tüm özellikler açık. Devam etmek istersen iptali geri alabilirsin.
+            </p>
+            <Button
+              onClick={() => resumeMut.mutate()}
+              disabled={resumeMut.isPending}
+              className="bg-cyan-700 text-white hover:bg-cyan-800"
+            >
+              {resumeMut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+              İptali geri al
+            </Button>
+          </>
+        ) : (
+          <>
+            <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+              <CheckCircle2 className="size-4" aria-hidden /> Aboneliğin aktif — tüm yapay zekâ özellikleri açık.
+            </p>
+            {data.subscription_period_end ? (
+              <p className="text-sm">
+                Sonraki yenileme: <strong>{fmtDate(data.subscription_period_end)}</strong>
+                {data.subscription_cycle === "academic_year" ? " (akademik yıl)" : " (aylık)"}
+              </p>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setConfirmCancel(true)}
+              className="text-xs text-rose-600 underline-offset-2 hover:underline"
+            >
+              Aboneliği iptal et
+            </button>
+          </>
+        )}
+      </CardContent>
+
+      <Dialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Aboneliği iptal et</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Aboneliğin yenilenmeyecek. <strong>Dönem sonuna kadar
+            ({data.subscription_period_end ? fmtDate(data.subscription_period_end) : "süre dolana kadar"})
+            tüm özellikler açık kalır</strong>; sonra ücretsiz sürüme döner.
+            Öğrencilerin ve verilerin silinmez.
+          </p>
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setConfirmCancel(false)} disabled={cancelMut.isPending}>
+              Vazgeç
+            </Button>
+            <Button
+              onClick={() => cancelMut.mutate()}
+              disabled={cancelMut.isPending}
+              className="bg-rose-600 text-white hover:bg-rose-700"
+            >
+              {cancelMut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+              Aboneliği iptal et
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
   );
 }
 

@@ -371,7 +371,7 @@ const COMMERCIAL_SHORTCUTS = [
     tone: "rose" as const,
   },
   {
-    href: "/admin/revenue/invoices",
+    href: "/admin/security-monitor/revenue/invoices",
     icon: CalendarDays,
     label: "Ödeme Takvimi",
     desc: "Faturalar · vade · gecikme",
@@ -430,7 +430,7 @@ function CommercialShortcuts() {
       </header>
       <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
         {COMMERCIAL_SHORTCUTS.map((s) => (
-          <ShortcutTile key={s.href} {...s} disabled />
+          <ShortcutTile key={s.href} {...s} />
         ))}
       </div>
     </section>
@@ -484,7 +484,7 @@ function SystemShortcuts() {
       </h2>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {SYSTEM_SHORTCUTS.map((s) => (
-          <ShortcutTile key={s.href} {...s} disabled />
+          <ShortcutTile key={s.href} {...s} />
         ))}
       </div>
     </section>

@@ -1946,7 +1946,25 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
   period_end/trial_active). renewal smoke 7/7 (trial-temizleme regresyonu dahil).
   **KURAL: bundan sonra bir alan/durum değişince etkilenen tüm yüzeyler aynı
   commit'te güncellenir.**
-- **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge).
+- **Abonelik iptal/geri-al** ✅ (2026-05-23, migration YOK): aktif abonede
+  `/teacher/plan` "Aboneliği iptal et" (onaylı) → `subscription_status=canceled`
+  (plan + erişim dönem sonuna kadar sürer) + "İptali geri al" (resume).
+  `process_renewals` dönem sonunda canceled → **solo_free**'ye düşürür (past_due
+  DEĞİL) + sub alanlarını temizler. Endpoint'ler `POST /teacher/subscription/
+  cancel|resume`. Bütüncül: /teacher/plan (ActiveSubscriptionCard + StatusLine)
+  + admin user-detail kartı "İptal edildi" rozeti + cron. renewal smoke **12/12**.
+- **Admin dashboard kısayolları** ✅: `/admin`'de "Ticari & Ödemeler" (7) +
+  "Sistem & Güvenlik" (4) kartları "YAKINDA"/disabled idi ama sayfalar mevcut →
+  `disabled` kaldırıldı, tıklanır oldu. "Ödeme Takvimi" hedefi düzeltildi
+  (`/admin/security-monitor/revenue/invoices`).
+- **Ticari Pano (`/admin/security-monitor/revenue`) düzeltmeleri** ✅:
+  - **Crash giderildi**: drill tablosu `key={institution_id}` mükerrer (owner-pattern/
+    çoklu fatura) → `${institution_id}-${idx}`; 360 linki owner-aware `detail_url`.
+  - **Okunabilirlik**: ödeme-takvimi bucket'larına açık metin rengi (rose/amber/
+    emerald-900) — koyu temada beyaz-metin-açık-zemin görünmezliği giderildi.
+  - **"7 gün içinde denemesi bitenler"** dar listeden belirgin kart-ızgarasına
+    (gün-kaldı rozeti + owner-aware link) yükseltildi.
+- **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge) — kalan tek faz.
 
 Migration head: `z7a9d2e3d11x`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·

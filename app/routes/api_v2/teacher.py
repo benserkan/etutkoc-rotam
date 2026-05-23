@@ -1653,6 +1653,7 @@ def _build_plan_response(db: Session, user: User):
         solo_monthly_price=solo_monthly_price,
         annual_paid_months=int(catalog["annual_paid_months"]),
         sales_email=str(catalog.get("contact", {}).get("sales_email", "")),
+        subscription_status=user.subscription_status if is_solo else None,
         subscription_period_end=(
             user.subscription_period_end.isoformat()
             if is_solo and user.subscription_period_end else None
@@ -1757,6 +1758,62 @@ def teacher_subscription_request_v2(
             message="Talebin alındı. Ödeme/aktivasyon için en kısa sürede iletişime geçeceğiz.",
         ),
         invalidate=["teacher:me:plan", "admin:contact-requests"],
+    )
+
+
+@router.post("/subscription/cancel", response_model=MutationResponse[SubscriptionRequestResult])
+def teacher_subscription_cancel_v2(
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Aktif aboneliği iptal et (yenilenmez). Dönem sonuna kadar erişim sürer,
+    sonra ücretsize düşer. Ödeme gerektirmez → self-serve."""
+    if user.institution_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "managed_by_institution",
+                    "message": "Paketin kurumun tarafından yönetilir."},
+        )
+    if user.subscription_status != "active":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "validation", "code": "no_active_subscription",
+                    "message": "İptal edilecek aktif abonelik yok."},
+        )
+    user.subscription_status = "canceled"
+    db.commit()
+    return MutationResponse[SubscriptionRequestResult](
+        data=SubscriptionRequestResult(
+            ok=True,
+            message="Aboneliğin iptal edildi. Dönem sonuna kadar erişimin sürer; sonra ücretsize döner.",
+        ),
+        invalidate=["teacher:me:plan", "teacher:me:trial-status"],
+    )
+
+
+@router.post("/subscription/resume", response_model=MutationResponse[SubscriptionRequestResult])
+def teacher_subscription_resume_v2(
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """İptal edilmiş aboneliği geri al (dönem sonunda yenilenmeye devam eder)."""
+    if user.institution_id is not None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "managed_by_institution",
+                    "message": "Paketin kurumun tarafından yönetilir."},
+        )
+    if user.subscription_status != "canceled":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "validation", "code": "not_canceled",
+                    "message": "Geri alınacak iptal edilmiş abonelik yok."},
+        )
+    user.subscription_status = "active"
+    db.commit()
+    return MutationResponse[SubscriptionRequestResult](
+        data=SubscriptionRequestResult(ok=True, message="İptal geri alındı. Aboneliğin aktif."),
+        invalidate=["teacher:me:plan", "teacher:me:trial-status"],
     )
 
 

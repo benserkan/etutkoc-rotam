@@ -311,6 +311,18 @@ export function submitSubscriptionRequest(
   );
 }
 
+export function cancelSubscription(): Promise<MutationResponse<SubscriptionRequestResult>> {
+  return api<MutationResponse<SubscriptionRequestResult>>(
+    "/api/v2/teacher/subscription/cancel", { method: "POST" },
+  );
+}
+
+export function resumeSubscription(): Promise<MutationResponse<SubscriptionRequestResult>> {
+  return api<MutationResponse<SubscriptionRequestResult>>(
+    "/api/v2/teacher/subscription/resume", { method: "POST" },
+  );
+}
+
 export function getTeacherStudents(
   params: TeacherStudentsListParams,
 ): Promise<TeacherStudentListResponse> {

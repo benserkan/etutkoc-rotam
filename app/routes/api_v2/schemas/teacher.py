@@ -1613,6 +1613,7 @@ class TeacherPlanResponse(BaseModel):
     solo_monthly_price: int = 0 # öğrenci bandına göre Solo aylık ücret (₺)
     annual_paid_months: int = 10  # akademik yıl = N ay öde (2 ay bedava)
     sales_email: str = ""       # manuel aktivasyon iletişimi (pricing.contact)
+    subscription_status: str | None = None       # active | canceled | past_due | None
     subscription_period_end: str | None = None  # aktif abonede yenileme tarihi (ISO)
     subscription_cycle: str | None = None        # monthly | academic_year
 
