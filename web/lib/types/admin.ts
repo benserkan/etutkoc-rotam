@@ -111,6 +111,8 @@ export interface AuditLogItem {
 export interface AdminDashboardResponse {
   counts: AdminDashboardCounts;
   failed_logins_24h: number;
+  pending_subscription_requests?: number;
+  pending_contact_requests?: number;
   health_summary: HealthSummary;
   top_unhealthy: HealthAssessmentItem[];
   teacher_activity_summary: IndependentTeacherActivitySummary;

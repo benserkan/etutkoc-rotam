@@ -159,6 +159,8 @@ class AdminDashboardResponse(BaseModel):
     """
     counts: AdminDashboardCounts
     failed_logins_24h: int
+    pending_subscription_requests: int = 0   # koç "öde ve devam et" → onay bekliyor
+    pending_contact_requests: int = 0        # tüm bekleyen iletişim talepleri
     health_summary: HealthSummary
     top_unhealthy: list[HealthAssessmentItem]
     teacher_activity_summary: IndependentTeacherActivitySummary

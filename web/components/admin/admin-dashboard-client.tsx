@@ -12,6 +12,7 @@ import {
   FileText,
   GraduationCap,
   Heart,
+  Inbox,
   Megaphone,
   Send,
   Shield,
@@ -83,6 +84,13 @@ export function AdminDashboardClient({ initial }: Props) {
 
       {data.failed_logins_24h > 10 && (
         <FailedLoginsBanner count={data.failed_logins_24h} />
+      )}
+
+      {(data.pending_contact_requests ?? 0) > 0 && (
+        <PendingRequestsBanner
+          subscription={data.pending_subscription_requests ?? 0}
+          total={data.pending_contact_requests ?? 0}
+        />
       )}
 
       <CommercialShortcuts />
@@ -344,6 +352,32 @@ function FailedLoginsBanner({ count }: { count: number }) {
             className="underline font-medium hover:text-amber-950"
           >
             Audit log
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PendingRequestsBanner({ subscription, total }: { subscription: number; total: number }) {
+  return (
+    <div className="rounded-md border border-indigo-300 bg-indigo-50 px-4 py-3 flex items-start gap-3">
+      <Inbox className="size-5 shrink-0 mt-0.5 text-indigo-700" aria-hidden />
+      <div className="flex-1 text-sm">
+        <div className="font-semibold text-indigo-900">
+          {subscription > 0
+            ? `${subscription} abonelik aktivasyon talebi onay bekliyor`
+            : `${total} iletişim talebi bekliyor`}
+        </div>
+        <div className="text-indigo-800 mt-1">
+          {subscription > 0
+            ? "Koç(lar) “öde ve devam et” ile aktivasyon istedi. Ödemeyi alıp planı aktive edin."
+            : "Fiyatlandırma/iletişim formundan gelen talepler var."}{" "}
+          <Link
+            href="/admin/contact-requests"
+            className="underline font-medium hover:text-indigo-950"
+          >
+            İletişim Talepleri&apos;ni aç
           </Link>
         </div>
       </div>

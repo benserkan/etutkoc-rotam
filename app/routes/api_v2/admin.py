@@ -601,6 +601,20 @@ def admin_dashboard_v2(
     )
     audit_items = [_audit_log_to_item(a) for a in recent_audits]
 
+    # Bekleyen abonelik aktivasyon talepleri (koç "öde ve devam et" → onay bekliyor)
+    from app.models.contact_request import ContactRequest
+    pending_subscription_requests = (
+        db.query(ContactRequest)
+        .filter(
+            ContactRequest.source == "subscription_request",
+            ContactRequest.status == "new",
+        )
+        .count()
+    )
+    pending_contact_requests = (
+        db.query(ContactRequest).filter(ContactRequest.status == "new").count()
+    )
+
     # 24h failed logins
     cutoff = datetime.now(timezone.utc) - timedelta(hours=24)
     failed_logins_24h = (
@@ -617,6 +631,8 @@ def admin_dashboard_v2(
     return AdminDashboardResponse(
         counts=counts,
         failed_logins_24h=failed_logins_24h,
+        pending_subscription_requests=pending_subscription_requests,
+        pending_contact_requests=pending_contact_requests,
         health_summary=health_summary,
         top_unhealthy=top_unhealthy,
         teacher_activity_summary=teacher_summary,
