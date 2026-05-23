@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
+import { uploadSupportAttachment } from "@/lib/api/support";
 import type {
   SupportRequestCreateBody,
   SupportRequestDetail,
@@ -88,6 +89,19 @@ export function useReviewSupport(requestId: number) {
       applyInvalidate(qc, res.invalidate);
       qc.setQueryData(["support", "detail", String(requestId)], res.data);
       toast.success("İncelemeye alındı");
+    },
+  });
+}
+
+export function useUploadAttachment(requestId: number) {
+  const qc = useQueryClient();
+  return useMutation<Detail, ApiError, { file: File }>({
+    mutationFn: ({ file }) => uploadSupportAttachment(requestId, file),
+    onError: (e) => showError(e, "Dosya yüklenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.setQueryData(["support", "detail", String(requestId)], res.data);
+      toast.success("Dosya eklendi");
     },
   });
 }

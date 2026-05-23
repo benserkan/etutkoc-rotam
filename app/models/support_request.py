@@ -19,7 +19,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import DateTime, ForeignKey, Integer, LargeBinary, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -71,6 +71,18 @@ SUPPORT_CATEGORY_LABELS_TR: dict[str, str] = {
     "billing": "Üyelik / ödeme",
     "feature": "Öneri / istek",
     "other": "Diğer",
+}
+
+# ----------------------------- Ek (dosya) -----------------------------
+SUPPORT_ATTACH_MAX_BYTES = 10 * 1024 * 1024  # 10 MB
+SUPPORT_ATTACH_MAX_PER_REQUEST = 10
+# Ekran görüntüsü (jpg/png/webp/gif) + fatura/belge (pdf)
+SUPPORT_ATTACH_ALLOWED_TYPES: dict[str, str] = {
+    "image/jpeg": "jpg",
+    "image/png": "png",
+    "image/webp": "webp",
+    "image/gif": "gif",
+    "application/pdf": "pdf",
 }
 
 
@@ -135,6 +147,12 @@ class SupportRequest(Base):
         cascade="all, delete-orphan",
         order_by="SupportRequestMessage.created_at",
     )
+    attachments: Mapped[list["SupportAttachment"]] = relationship(
+        "SupportAttachment",
+        back_populates="request",
+        cascade="all, delete-orphan",
+        order_by="SupportAttachment.created_at",
+    )
 
     def __repr__(self) -> str:
         return f"<SupportRequest #{self.id} {self.audience} {self.status}>"
@@ -160,3 +178,36 @@ class SupportRequestMessage(Base):
 
     def __repr__(self) -> str:
         return f"<SupportRequestMessage #{self.id} req={self.request_id}>"
+
+
+class SupportAttachment(Base):
+    """Talebe eklenen dosya (ekran görüntüsü jpg/png, fatura pdf vb.).
+
+    Veri DB'de saklanır (LargeBinary, deferred — listeleme/detay sorgusunda
+    yüklenmez; yalnız indirme ucu okur). KVKK: yalnız talebin tarafları
+    (talep eden / aktif muhatap / yönlendiren) erişebilir; saklama talebin
+    yaşam döngüsüyle sınırlı (talep silinince CASCADE ile silinir).
+    """
+
+    __tablename__ = "support_attachments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    request_id: Mapped[int] = mapped_column(
+        ForeignKey("support_requests.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    uploaded_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    filename: Mapped[str] = mapped_column(String(255), nullable=False)
+    content_type: Mapped[str] = mapped_column(String(100), nullable=False)
+    size_bytes: Mapped[int] = mapped_column(Integer, nullable=False)
+    data: Mapped[bytes] = mapped_column(LargeBinary, nullable=False, deferred=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    request: Mapped["SupportRequest"] = relationship("SupportRequest", back_populates="attachments")
+    uploaded_by: Mapped["User | None"] = relationship("User", foreign_keys=[uploaded_by_id])
+
+    def __repr__(self) -> str:
+        return f"<SupportAttachment #{self.id} req={self.request_id} {self.filename}>"

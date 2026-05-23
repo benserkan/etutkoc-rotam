@@ -28,7 +28,14 @@ import httpx
 from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
-from app.models import Institution, SupportRequest, SupportRequestMessage, User, UserRole
+from app.models import (
+    Institution,
+    SupportAttachment,
+    SupportRequest,
+    SupportRequestMessage,
+    User,
+    UserRole,
+)
 from app.models.suspicious_ip import SuspiciousIp
 from app.services.rate_limit import get_login_limiter
 from app.services.security import hash_password
@@ -186,6 +193,34 @@ def main() -> int:
         r = sa.post(f"/api/v2/support/requests/{C}/resolve")
         check("C7 süper admin çözümledi → Çözümlendi", r.json()["data"]["status"] == "resolved", "")
 
+        # ── AKIŞ D: Dosya eki + profil linki + rol rengi ──
+        print("\nAKIŞ D — Dosya eki + profil linki + rol(renk):")
+        r = create(coach, "Faturamda hata var", "Ekteki faturayı inceleyin", "billing")
+        D = r.json()["data"]["id"]
+        PNG = b"\x89PNG\r\n\x1a\nLIVE-FATURA-PNG"
+        r = coach.post(f"/api/v2/support/requests/{D}/attachments",
+                       files={"file": ("fatura.png", PNG, "image/png")})
+        det = r.json().get("data", {}) if r.status_code == 200 else {}
+        atts = det.get("attachments", [])
+        check("D1 koç dosya ekledi → 200 + ek listede (is_image)",
+              r.status_code == 200 and len(atts) == 1 and atts[0]["is_image"], f"status={r.status_code} {r.text[:120]}")
+        traffic("KOÇ talebe fatura.png ekledi")
+        if atts:
+            url = atts[0]["download_url"]
+            rr = coach.get(url)
+            check("D2 yükleyen dosyayı indirir → içerik birebir",
+                  rr.status_code == 200 and rr.content == PNG, f"{rr.status_code}")
+            rr = tch.get(url)
+            check("D3 yetkisiz (taraf olmayan) indiremez → 404", rr.status_code == 404, f"{rr.status_code}")
+            rr = sa.get(url)
+            check("D4 muhatap süper admin indirir → 200", rr.status_code == 200, f"{rr.status_code}")
+        dd = sa.get(f"/api/v2/support/requests/{D}").json()
+        m0 = dd["messages"][0]
+        check("D5 gönderen rol(renk) + tıklanabilir profil linki (süper admin görünümü)",
+              m0.get("sender_role") == "teacher" and (m0.get("sender_profile_url") or "").startswith("/admin/users/"),
+              f"role={m0.get('sender_role')} url={m0.get('sender_profile_url')}")
+        traffic("SüperAdmin: koç mesajı 'teacher' renginde + isim → /admin/users/ profil linki")
+
         # ── Sayfa render kontrolü (yalnız :3000'e karşı anlamlı) ──
         if BASE.endswith(":3000"):
             print("\nSayfa render (Next.js :3000):")
@@ -203,6 +238,7 @@ def main() -> int:
             if uids:
                 rids = [r[0] for r in db.query(SupportRequest.id).filter(SupportRequest.requester_id.in_(uids)).all()]
                 if rids:
+                    db.execute(sa_delete(SupportAttachment).where(SupportAttachment.request_id.in_(rids)))
                     db.execute(sa_delete(SupportRequestMessage).where(SupportRequestMessage.request_id.in_(rids)))
                     db.execute(sa_delete(SupportRequest).where(SupportRequest.id.in_(rids)))
                 db.execute(sa_delete(User).where(User.id.in_(uids)))

@@ -21,6 +21,9 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import (
+    SUPPORT_ATTACH_ALLOWED_TYPES,
+    SUPPORT_ATTACH_MAX_BYTES,
+    SUPPORT_ATTACH_MAX_PER_REQUEST,
     SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
     SUPPORT_AUDIENCE_SUPER_ADMIN,
     SUPPORT_RECIPIENT_PENDING_STATUSES,
@@ -30,6 +33,7 @@ from app.models import (
     SUPPORT_STATUS_UNDER_REVIEW,
     SUPPORT_STATUS_WITHDRAWN,
     SUPPORT_TERMINAL_STATUSES,
+    SupportAttachment,
     SupportRequest,
     SupportRequestMessage,
     User,
@@ -115,7 +119,9 @@ def create_request(
 _LOAD = (
     joinedload(SupportRequest.requester),
     joinedload(SupportRequest.handled_by),
+    joinedload(SupportRequest.escalated_by),
     joinedload(SupportRequest.messages).joinedload(SupportRequestMessage.sender),
+    joinedload(SupportRequest.attachments).joinedload(SupportAttachment.uploaded_by),
 )
 
 
@@ -311,6 +317,64 @@ def withdraw_request(db: Session, *, req: SupportRequest, requester: User) -> No
     req.status = SUPPORT_STATUS_WITHDRAWN
     _touch(req)
     db.flush()
+
+
+# ----------------------------- Ekler (dosya) -----------------------------
+
+
+def _sanitize_filename(name: str) -> str:
+    name = (name or "").strip().replace("\\", "/").split("/")[-1]
+    name = name.replace("\r", "").replace("\n", "").replace('"', "")
+    return name[:255] or "dosya"
+
+
+def add_attachment(
+    db: Session, *, req: SupportRequest, uploader: User, filename: str,
+    content_type: str, data: bytes,
+) -> SupportAttachment:
+    """Talebe dosya eki ekle (ekran görüntüsü / fatura). Boyut + tür + adet
+    doğrulanır. Erişim/açık-olma kontrolü endpoint'te (get_viewable + terminal)."""
+    if req.status in SUPPORT_TERMINAL_STATUSES:
+        raise SupportError("request_closed", "Kapanmış talebe dosya eklenemez.")
+    ctype = (content_type or "").split(";")[0].strip().lower()
+    if ctype not in SUPPORT_ATTACH_ALLOWED_TYPES:
+        raise SupportError(
+            "invalid_file_type",
+            "Yalnız resim (jpg/png/webp/gif) ve PDF dosyası eklenebilir.",
+        )
+    if not data:
+        raise SupportError("empty_file", "Dosya boş.")
+    if len(data) > SUPPORT_ATTACH_MAX_BYTES:
+        mb = SUPPORT_ATTACH_MAX_BYTES // (1024 * 1024)
+        raise SupportError("file_too_large", f"Dosya en fazla {mb} MB olabilir.")
+    count = (
+        db.query(SupportAttachment)
+        .filter(SupportAttachment.request_id == req.id)
+        .count()
+    )
+    if count >= SUPPORT_ATTACH_MAX_PER_REQUEST:
+        raise SupportError(
+            "too_many_files",
+            f"Bir talebe en fazla {SUPPORT_ATTACH_MAX_PER_REQUEST} dosya eklenebilir.",
+        )
+    att = SupportAttachment(
+        request_id=req.id,
+        uploaded_by_id=uploader.id,
+        filename=_sanitize_filename(filename),
+        content_type=ctype,
+        size_bytes=len(data),
+        data=data,
+    )
+    db.add(att)
+    _touch(req)
+    db.flush()
+    return att
+
+
+def get_attachment(db: Session, att_id: int) -> SupportAttachment | None:
+    """Eki (data dahil) getirir. Erişim kontrolü çağıran tarafta: ekin talebine
+    get_viewable ile bakılır."""
+    return db.query(SupportAttachment).filter(SupportAttachment.id == att_id).first()
 
 
 # ----------------------------- Sayımlar -----------------------------

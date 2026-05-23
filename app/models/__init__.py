@@ -218,6 +218,9 @@ from app.models.contact_request import (
 )
 from app.models.exam_result import ExamResult, compute_net, section_penalty
 from app.models.support_request import (
+    SUPPORT_ATTACH_ALLOWED_TYPES,
+    SUPPORT_ATTACH_MAX_BYTES,
+    SUPPORT_ATTACH_MAX_PER_REQUEST,
     SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
     SUPPORT_AUDIENCE_LABELS_TR,
     SUPPORT_AUDIENCE_SUPER_ADMIN,
@@ -231,6 +234,7 @@ from app.models.support_request import (
     SUPPORT_STATUS_UNDER_REVIEW,
     SUPPORT_STATUS_WITHDRAWN,
     SUPPORT_TERMINAL_STATUSES,
+    SupportAttachment,
     SupportRequest,
     SupportRequestMessage,
 )
@@ -380,6 +384,10 @@ __all__ = [
     "ContactRequest",
     "SupportRequest",
     "SupportRequestMessage",
+    "SupportAttachment",
+    "SUPPORT_ATTACH_ALLOWED_TYPES",
+    "SUPPORT_ATTACH_MAX_BYTES",
+    "SUPPORT_ATTACH_MAX_PER_REQUEST",
     "SUPPORT_AUDIENCE_SUPER_ADMIN",
     "SUPPORT_AUDIENCE_INSTITUTION_ADMIN",
     "SUPPORT_AUDIENCE_LABELS_TR",

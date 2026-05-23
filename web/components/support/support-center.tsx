@@ -1,14 +1,18 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   ArrowUpRight,
   CheckCircle2,
+  Download,
+  FileText,
   Inbox,
   Loader2,
   MessageSquarePlus,
+  Paperclip,
   Send,
 } from "lucide-react";
 
@@ -34,6 +38,7 @@ import {
   useReplySupport,
   useResolveSupport,
   useReviewSupport,
+  useUploadAttachment,
   useWithdrawSupport,
 } from "@/lib/hooks/use-support-mutations";
 import type {
@@ -54,6 +59,28 @@ const STATUS_TONE: Record<SupportStatus, string> = {
   resolved: "border-emerald-300 bg-emerald-50 text-emerald-900",
   withdrawn: "border-slate-300 bg-slate-100 text-slate-700",
 };
+
+// Gönderen rolüne göre mesaj balonu tonu (kim yazdı bir bakışta — purge-safe)
+const ROLE_TONE: Record<string, { bubble: string; name: string }> = {
+  teacher: { bubble: "border-sky-200 bg-sky-50 text-sky-950", name: "text-sky-800" },
+  institution_admin: { bubble: "border-amber-200 bg-amber-50 text-amber-950", name: "text-amber-800" },
+  super_admin: { bubble: "border-violet-200 bg-violet-50 text-violet-950", name: "text-violet-800" },
+};
+const ROLE_TONE_DEFAULT = { bubble: "border-border bg-muted text-foreground", name: "text-foreground" };
+
+const ROLE_LABEL: Record<string, string> = {
+  teacher: "Koç / Öğretmen",
+  institution_admin: "Kurum Yöneticisi",
+  super_admin: "Süper Yönetici",
+  parent: "Veli",
+  student: "Öğrenci",
+};
+
+function fmtSize(n: number): string {
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${Math.round(n / 1024)} KB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 const STATUS_FILTERS: { value: string; label: string }[] = [
   { value: "", label: "Tümü" },
@@ -281,9 +308,17 @@ function RequestDetail({
   const review = useReviewSupport(requestId);
   const resolve = useResolveSupport(requestId);
   const escalate = useEscalateSupport(requestId);
+  const upload = useUploadAttachment(requestId);
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [replyBody, setReplyBody] = React.useState("");
   const [escalateOpen, setEscalateOpen] = React.useState(false);
   const [escalateNote, setEscalateNote] = React.useState("");
+
+  function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (f) upload.mutate({ file: f });
+    e.target.value = "";
+  }
 
   const data = q.data;
   const terminal = data ? data.status === "resolved" || data.status === "withdrawn" : false;
@@ -337,39 +372,80 @@ function RequestDetail({
         </div>
       </div>
 
-      {/* Thread */}
+      {/* Thread — balon rengi GÖNDEREN ROLÜNE göre */}
       <div className="max-h-[420px] space-y-3 overflow-y-auto p-3">
-        {(data?.messages ?? []).map((m) => (
-          <div
-            key={m.id}
-            className={cn("flex", m.is_me ? "justify-end" : "justify-start")}
-          >
-            <div
-              className={cn(
-                "max-w-[85%] rounded-lg px-3 py-2 text-sm",
-                m.is_me
-                  ? "bg-foreground text-background"
-                  : "bg-muted text-foreground",
-              )}
-            >
-              {!m.is_me ? (
-                <p className="mb-0.5 text-[11px] font-semibold opacity-70">
-                  {m.sender_name}
-                </p>
-              ) : null}
-              <p className="whitespace-pre-wrap break-words">{m.body}</p>
-              <p
-                className={cn(
-                  "mt-1 text-[10px]",
-                  m.is_me ? "text-background/60" : "text-muted-foreground",
-                )}
-              >
-                {fmt(m.created_at)}
-              </p>
+        {(data?.messages ?? []).map((m) => {
+          const tone = (m.sender_role && ROLE_TONE[m.sender_role]) || ROLE_TONE_DEFAULT;
+          const roleLabel = m.sender_role ? ROLE_LABEL[m.sender_role] ?? "" : "";
+          return (
+            <div key={m.id} className={cn("flex", m.is_me ? "justify-end" : "justify-start")}>
+              <div className={cn("max-w-[85%] rounded-lg border px-3 py-2 text-sm", tone.bubble)}>
+                <div className="mb-1 flex flex-wrap items-center gap-1.5 text-[11px]">
+                  {m.sender_profile_url ? (
+                    <Link
+                      href={m.sender_profile_url}
+                      className={cn("font-semibold underline-offset-2 hover:underline", tone.name)}
+                    >
+                      {m.sender_name}
+                    </Link>
+                  ) : (
+                    <span className={cn("font-semibold", tone.name)}>{m.sender_name}</span>
+                  )}
+                  {roleLabel ? (
+                    <span className="rounded-full bg-black/5 px-1.5 py-0.5 text-[9px] font-medium">
+                      {roleLabel}
+                    </span>
+                  ) : null}
+                  {m.is_me ? <span className="text-[9px] opacity-60">(siz)</span> : null}
+                </div>
+                <p className="whitespace-pre-wrap break-words">{m.body}</p>
+                <p className="mt-1 text-[10px] opacity-60">{fmt(m.created_at)}</p>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
+
+      {/* Ekler */}
+      {data && (data.attachments?.length ?? 0) > 0 ? (
+        <div className="border-t border-border p-3">
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            Ekler ({data.attachments.length})
+          </p>
+          <div className="flex flex-wrap gap-2">
+            {data.attachments.map((a) => (
+              <a
+                key={a.id}
+                href={a.download_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center gap-2 rounded-lg border border-border bg-card px-2.5 py-2 text-xs transition hover:bg-muted"
+                title={`${a.filename} · ${fmtSize(a.size_bytes)} · ${a.uploaded_by_name}`}
+              >
+                {a.is_image ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- küçük önizleme, auth'lu BFF ucu
+                  <img
+                    src={a.download_url}
+                    alt={a.filename}
+                    className="size-9 rounded object-cover"
+                  />
+                ) : (
+                  <span className="flex size-9 items-center justify-center rounded bg-rose-100 text-rose-700">
+                    <FileText className="size-4" aria-hidden />
+                  </span>
+                )}
+                <span className="max-w-[140px]">
+                  <span className="block truncate font-medium">{a.filename}</span>
+                  <span className="block text-[10px] text-muted-foreground">
+                    {fmtSize(a.size_bytes)} · {a.uploaded_by_name}
+                  </span>
+                </span>
+                <Download className="size-3.5 shrink-0 text-muted-foreground opacity-0 transition group-hover:opacity-100" aria-hidden />
+              </a>
+            ))}
+          </div>
+        </div>
+      ) : null}
 
       {/* Aksiyonlar + yanıt */}
       <div className="space-y-2 border-t border-border p-3">
@@ -434,14 +510,37 @@ function RequestDetail({
                   </Button>
                 ) : null}
               </div>
-              <Button size="sm" onClick={submitReply} disabled={reply.isPending || !replyBody.trim()}>
-                {reply.isPending ? (
-                  <Loader2 className="size-4 animate-spin" aria-hidden />
-                ) : (
-                  <Send className="size-4" aria-hidden />
-                )}
-                Gönder
-              </Button>
+              <div className="flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,application/pdf"
+                  className="hidden"
+                  onChange={onPickFile}
+                />
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={upload.isPending}
+                  title="Dosya ekle (görsel / PDF, en fazla 10 MB)"
+                >
+                  {upload.isPending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Paperclip className="size-4" aria-hidden />
+                  )}
+                  Dosya
+                </Button>
+                <Button size="sm" onClick={submitReply} disabled={reply.isPending || !replyBody.trim()}>
+                  {reply.isPending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Send className="size-4" aria-hidden />
+                  )}
+                  Gönder
+                </Button>
+              </div>
             </div>
           </>
         ) : data ? (

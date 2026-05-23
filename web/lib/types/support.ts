@@ -17,9 +17,22 @@ export interface SupportMessageItem {
   sender_id: number | null;
   sender_name: string;
   sender_role: string | null;
+  sender_profile_url: string | null;
   is_me: boolean;
   body: string;
   created_at: string;
+}
+
+export interface SupportAttachmentItem {
+  id: number;
+  filename: string;
+  content_type: string;
+  size_bytes: number;
+  is_image: boolean;
+  uploaded_by_name: string;
+  uploaded_by_role: string | null;
+  created_at: string;
+  download_url: string;
 }
 
 export interface SupportRequestListItem {
@@ -52,6 +65,7 @@ export interface SupportRequestListItem {
 
 export interface SupportRequestDetail extends SupportRequestListItem {
   messages: SupportMessageItem[];
+  attachments: SupportAttachmentItem[];
 }
 
 export interface SupportCategoryOption {

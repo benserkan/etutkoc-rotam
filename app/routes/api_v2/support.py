@@ -11,7 +11,9 @@ get_for_recipient + list_inbox_institution_admin içinde.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from urllib.parse import quote
+
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Response, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
@@ -242,6 +244,61 @@ def get_request_v2(
 ):
     req, _ = _resolve_access(db, user, request_id)
     return build_detail(req, user)
+
+
+@router.post("/requests/{request_id}/attachments", response_model=MutationResponse[SupportRequestDetail])
+async def upload_attachment_v2(
+    request_id: int,
+    file: UploadFile = File(...),
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Talebe dosya eki yükle (ekran görüntüsü / fatura). Talebin tarafları
+    (talep eden / aktif muhatap / yönlendiren) yükleyebilir."""
+    req = svc.get_viewable(db, user, request_id)
+    if req is None:
+        raise _not_found()
+    data = await file.read()
+    try:
+        svc.add_attachment(
+            db, req=req, uploader=user,
+            filename=file.filename or "dosya",
+            content_type=file.content_type or "",
+            data=data,
+        )
+    except svc.SupportError as e:
+        db.rollback()
+        raise _svc_error(e)
+    db.commit()
+    db.refresh(req)
+    return MutationResponse[SupportRequestDetail](
+        data=build_detail(req, user), invalidate=["support:mine", "support:inbox"],
+    )
+
+
+@router.get("/requests/{request_id}/attachments/{attachment_id}")
+def download_attachment_v2(
+    request_id: int,
+    attachment_id: int,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Eki indir/göster — yalnız talebin tarafları (get_viewable)."""
+    req = svc.get_viewable(db, user, request_id)
+    if req is None:
+        raise _not_found()
+    att = svc.get_attachment(db, attachment_id)
+    if att is None or att.request_id != request_id:
+        raise _not_found()
+    return Response(
+        content=att.data,
+        media_type=att.content_type,
+        headers={
+            "Content-Disposition": f"inline; filename*=UTF-8''{quote(att.filename)}",
+            "Content-Length": str(att.size_bytes),
+            "Cache-Control": "private, no-store",
+        },
+    )
 
 
 @router.post("/requests/{request_id}/reply", response_model=MutationResponse[SupportRequestDetail])

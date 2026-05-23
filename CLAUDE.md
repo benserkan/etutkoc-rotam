@@ -2140,8 +2140,27 @@ kapsam = önce backend+test, sonra frontend.
     kurum yöneticisi / öğretmen→yönlendir→süper admin) + 4 sayfa render → **17/17**
     kullanıcının canlı stack'inde. API smoke `test_api_v2_support_requests.py` **46/46**
     (ESC.4 kutuda kalır · ESC.8 yönlendiren cevabı görür · ESC.9 talep eden görür).
+- **Dosya eki + rol-renk + tıklanabilir profil ✅** (2026-05-23, **migration
+  `d1e4h6i7h55b`** — support_attachments, additive):
+  - **Dosya eki**: ekran görüntüsü (jpg/png/webp/gif) + fatura (pdf). `support_attachments`
+    (data LargeBinary **deferred** — liste/detayda yüklenmez; DB'de saklanır → dev
+    SQLite + prod Postgres taşınabilir, volume/S3 yok). `POST /requests/{id}/attachments`
+    (multipart, get_viewable + kapanmamış; 10 MB / 10 ek / tür beyaz liste) ·
+    `GET /requests/{id}/attachments/{att_id}` (stream inline, get_viewable + request_id
+    eşleşmesi → yetkisiz 404). Frontend: `uploadSupportAttachment` (multipart bare fetch
+    — gerekçeli eslint-disable) + `useUploadAttachment` + "Dosya" butonu + "Ekler"
+    bölümü (görsel önizleme / pdf ikon + indirme).
+  - **Rol-renk**: mesaj balonu gönderen rolüne göre (koç/öğretmen sky · kurum yöneticisi
+    amber · süper admin violet — purge-safe ROLE_TONE) + rol etiketi.
+  - **Tıklanabilir profil**: `sender_profile_url` viewer-erişimli (süper admin→
+    /admin/users/{id} · kurum yöneticisi→kendi öğretmeni /institution/teachers/{id} ·
+    diğer→link yok). Koç/öğretmen başka profillere erişemez → rol etiketi 'kim bu'yu yanıtlar.
+  - **Test**: API smoke **54/54** (ATT.1–5 + PROF.1–3) · CANLI `live_support_flow.py`
+    :3000 **22/22** (D1–5 ek yükle/indir/yetkisiz-404 + profil/renk + 4 sayfa render).
+    **Cleanup notu**: SQLite FK CASCADE devrede değil → smoke/live cleanup'a
+    SupportAttachment silme eklendi (id-reuse ile yetim ek mirası — ürün hatası DEĞİL).
 
-Migration head: `c0d3g5h6g44a`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
+Migration head: `d1e4h6i7h55b`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
 `8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup) ·
 `62c1d7f`/`3a6738e`/`4cb7363`/`4eb9c80` (trial yaşam döngüsü Faz 1-4) ·
@@ -2150,7 +2169,8 @@ Migration head: `c0d3g5h6g44a`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 mesaj güncellemeleri) · `b5749f5` (abonelik iptal akışı testi) ·
 `38035b8` (rol-bazlı talep sistemi backend + 32/32 test) ·
 `863aeed` (talep sistemi frontend 3 panel) · `268a967` (talep yönlendirme) ·
-talep yönlendirme DÜZELTME (escalated_by izleme + cevap geri düşer, canlı 17/17).
+talep yönlendirme DÜZELTME (escalated_by izleme + cevap geri düşer, canlı 17/17) ·
+talep dosya eki + rol-renk + tıklanabilir profil (54/54 + canlı 22/22).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

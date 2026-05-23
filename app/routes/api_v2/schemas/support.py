@@ -32,9 +32,22 @@ class SupportMessageItem(BaseModel):
     sender_id: int | None
     sender_name: str
     sender_role: str | None
+    sender_profile_url: str | None  # viewer erişebiliyorsa profil linki
     is_me: bool
     body: str
     created_at: datetime
+
+
+class SupportAttachmentItem(BaseModel):
+    id: int
+    filename: str
+    content_type: str
+    size_bytes: int
+    is_image: bool
+    uploaded_by_name: str
+    uploaded_by_role: str | None
+    created_at: datetime
+    download_url: str
 
 
 class SupportRequestListItem(BaseModel):
@@ -67,6 +80,7 @@ class SupportRequestListItem(BaseModel):
 
 class SupportRequestDetail(SupportRequestListItem):
     messages: list[SupportMessageItem]
+    attachments: list[SupportAttachmentItem]
 
 
 class SupportListResponse(BaseModel):
@@ -107,6 +121,27 @@ def _name(u: User | None) -> str:
     return (u.full_name or u.email or "—")
 
 
+def _profile_url(sender: User | None, viewer: User) -> str | None:
+    """Gönderenin profil linki — YALNIZ viewer'ın erişebildiği rota.
+
+    Süper admin → /admin/users/{id} (her gönderen). Kurum yöneticisi → kendi
+    kurumundaki öğretmen için /institution/teachers/{id}. Diğer durumlar None
+    (koç/öğretmen başka profillere erişemez; rol etiketi 'kim bu' sorusunu yanıtlar).
+    """
+    if sender is None:
+        return None
+    if viewer.role == UserRole.SUPER_ADMIN:
+        return f"/admin/users/{sender.id}"
+    if (
+        viewer.role == UserRole.INSTITUTION_ADMIN
+        and sender.role == UserRole.TEACHER
+        and sender.institution_id is not None
+        and sender.institution_id == viewer.institution_id
+    ):
+        return f"/institution/teachers/{sender.id}"
+    return None
+
+
 def message_item(msg: SupportRequestMessage, viewer: User) -> SupportMessageItem:
     sender = msg.sender
     return SupportMessageItem(
@@ -114,9 +149,24 @@ def message_item(msg: SupportRequestMessage, viewer: User) -> SupportMessageItem
         sender_id=msg.sender_id,
         sender_name=_name(sender),
         sender_role=(sender.role.value if sender else None),
+        sender_profile_url=_profile_url(sender, viewer),
         is_me=(msg.sender_id == viewer.id),
         body=msg.body,
         created_at=msg.created_at,
+    )
+
+
+def attachment_item(att, request_id: int) -> "SupportAttachmentItem":
+    return SupportAttachmentItem(
+        id=att.id,
+        filename=att.filename,
+        content_type=att.content_type,
+        size_bytes=att.size_bytes,
+        is_image=att.content_type.startswith("image/"),
+        uploaded_by_name=_name(att.uploaded_by),
+        uploaded_by_role=(att.uploaded_by.role.value if att.uploaded_by else None),
+        created_at=att.created_at,
+        download_url=f"/api/v2/support/requests/{request_id}/attachments/{att.id}",
     )
 
 
@@ -188,6 +238,7 @@ def detail(req: SupportRequest, viewer: User) -> SupportRequestDetail:
     return SupportRequestDetail(
         **base.model_dump(),
         messages=[message_item(m, viewer) for m in (req.messages or [])],
+        attachments=[attachment_item(a, req.id) for a in (req.attachments or [])],
     )
 
 

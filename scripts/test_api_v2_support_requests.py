@@ -32,6 +32,7 @@ from app.database import SessionLocal
 from app.main import app
 from app.models import (
     Institution,
+    SupportAttachment,
     SupportRequest,
     SupportRequestMessage,
     User,
@@ -338,6 +339,48 @@ def main() -> int:
         r = coach_clis[3].post("/api/v2/support/requests", json={"subject": "konu", "body": ""})
         check("VAL.2 boş gövde → 400 body_required", r.status_code == 400 and _code(r) == "body_required", f"{r.status_code}")
 
+        # ── EK (dosya) ──
+        print("\nDosya eki:")
+        PNG = b"\x89PNG\r\n\x1a\nHELLO-PNG-DATA"
+        rid = coach_reqs[3]
+        r = coach_clis[3].post(f"/api/v2/support/requests/{rid}/attachments",
+                               files={"file": ("ekran.png", PNG, "image/png")})
+        atts = r.json()["data"]["attachments"] if r.status_code == 200 else []
+        check("ATT.1 png yükle → 200 + ek listede + is_image",
+              r.status_code == 200 and len(atts) == 1 and atts[0]["is_image"] is True
+              and atts[0]["download_url"], f"status={r.status_code} len(atts)={len(atts)}")
+        if atts:
+            url = atts[0]["download_url"]
+            r = coach_clis[3].get(url)
+            check("ATT.2 yükleyen indirir → 200 + içerik birebir + content-type",
+                  r.status_code == 200 and r.content == PNG and "image/png" in r.headers.get("content-type", ""),
+                  f"status={r.status_code} ct={r.headers.get('content-type')}")
+            r = coach_clis[0].get(url)
+            check("ATT.3 BAŞKA koç indiremez → 404 (erişim)", r.status_code == 404, f"{r.status_code}")
+            r = sa.get(url)
+            check("ATT.4 muhatap (süper admin) indirir → 200", r.status_code == 200, f"{r.status_code}")
+        r = coach_clis[3].post(f"/api/v2/support/requests/{rid}/attachments",
+                               files={"file": ("not.txt", b"merhaba", "text/plain")})
+        check("ATT.5 geçersiz tür (txt) → 400 invalid_file_type",
+              r.status_code == 400 and _code(r) == "invalid_file_type", f"{r.status_code}")
+
+        # ── PROFİL LİNKİ (gönderen ismi tıklanır) ──
+        print("\nProfil linki:")
+        d = sa.get(f"/api/v2/support/requests/{rid}").json()
+        first = d["messages"][0]
+        check("PROF.1 süper admin gönderen ismi → /admin/users/{id}",
+              first.get("sender_profile_url") == f"/admin/users/{ctx['coach_ids'][3]}",
+              f"{first.get('sender_profile_url')}")
+        d = admin_clis[3].get(f"/api/v2/support/requests/{teacher_reqs[3]}").json()
+        first = d["messages"][0]
+        check("PROF.2 kurum yöneticisi öğretmen ismi → /institution/teachers/{id}",
+              first.get("sender_profile_url") == f"/institution/teachers/{ctx['teacher_ids'][3]}",
+              f"{first.get('sender_profile_url')}")
+        d = coach_clis[0].get(f"/api/v2/support/requests/{coach_reqs[0]}").json()
+        sa_msg = next((m for m in d["messages"] if m["sender_role"] == "super_admin"), None)
+        check("PROF.3 koç, süper admin mesajında profil linki GÖRMEZ (None)",
+              sa_msg is not None and sa_msg.get("sender_profile_url") is None, f"{sa_msg}")
+
     finally:
         with SessionLocal() as db:
             ids = [r[0] for r in db.query(User.id).filter(User.email.like(f"{PFX}_%")).all()]
@@ -345,6 +388,7 @@ def main() -> int:
                 reqids = [r[0] for r in db.query(SupportRequest.id).filter(
                     SupportRequest.requester_id.in_(ids)).all()]
                 if reqids:
+                    db.execute(sa_delete(SupportAttachment).where(SupportAttachment.request_id.in_(reqids)))
                     db.execute(sa_delete(SupportRequestMessage).where(SupportRequestMessage.request_id.in_(reqids)))
                     db.execute(sa_delete(SupportRequest).where(SupportRequest.id.in_(reqids)))
                 db.execute(sa_delete(User).where(User.id.in_(ids)))
