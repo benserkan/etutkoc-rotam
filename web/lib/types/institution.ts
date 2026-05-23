@@ -767,3 +767,9 @@ export interface InstitutionAcademicResponse {
   declining: AcademicMoverRow[];
   no_exam_program: AcademicNoExamRow[];
 }
+
+export interface InstitutionBadgesResponse {
+  support_inbox_pending: number;
+  support_answered: number;
+  checked_at: string;
+}

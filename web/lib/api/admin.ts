@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import type {
   AccountHistoryResponse,
   AccountOwnerType,
+  AdminBadgesResponse,
   AdminDashboardResponse,
   AdminIndependentTeachersResponse,
   AdminQuotaResponse,
@@ -67,6 +68,7 @@ import type {
 
 export const adminKeys = {
   root: () => ["admin"] as const,
+  badges: () => ["admin", "badges"] as const,
   dashboard: () => ["admin", "dashboard"] as const,
   institutions: (
     sort: InstitutionSort,
@@ -239,6 +241,10 @@ export const adminKeys = {
 
 export function getAdminDashboard() {
   return api<AdminDashboardResponse>("/api/v2/admin/dashboard");
+}
+
+export function getAdminBadges() {
+  return api<AdminBadgesResponse>("/api/v2/admin/badges");
 }
 
 export function getAdminAiSettings() {

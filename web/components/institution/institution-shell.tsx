@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
   AlertTriangle,
@@ -34,8 +35,20 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { useLogout } from "@/lib/hooks/use-logout";
+import { getInstitutionBadges, institutionKeys } from "@/lib/api/institution";
+import type { InstitutionBadgesResponse } from "@/lib/types/institution";
 import type { InstitutionRef, UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
+
+type BadgeKey = "support_inbox_pending" | "support_answered";
+
+function badgeValue(
+  badges: InstitutionBadgesResponse | undefined,
+  key: BadgeKey | undefined,
+): number {
+  if (!key || !badges) return 0;
+  return badges[key] ?? 0;
+}
 
 interface NavLink {
   href: string;
@@ -46,6 +59,7 @@ interface NavLink {
    * sidebar iskeletini erkenden gösterir, kullanıcı "yakında" sezer.
    */
   disabled?: boolean;
+  badgeKey?: BadgeKey;
 }
 
 interface NavSection {
@@ -76,8 +90,8 @@ const NAV_SECTIONS: NavSection[] = [
   {
     title: "Talepler",
     links: [
-      { href: "/institution/support-inbox", label: "Gelen Talepler", icon: Inbox },
-      { href: "/institution/support", label: "Taleplerim", icon: LifeBuoy },
+      { href: "/institution/support-inbox", label: "Gelen Talepler", icon: Inbox, badgeKey: "support_inbox_pending" },
+      { href: "/institution/support", label: "Taleplerim", icon: LifeBuoy, badgeKey: "support_answered" },
     ],
   },
   {
@@ -169,6 +183,15 @@ export function InstitutionShell({ user, institution, children }: Props) {
   const logout = useLogout();
   const [navOpen, setNavOpen] = React.useState(false);
 
+  const badgesQ = useQuery<InstitutionBadgesResponse>({
+    queryKey: institutionKeys.badges(),
+    queryFn: getInstitutionBadges,
+    enabled: user.role === "institution_admin",
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const badges = badgesQ.data;
+
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
       {/* Sidebar (lg+) */}
@@ -188,6 +211,7 @@ export function InstitutionShell({ user, institution, children }: Props) {
               key={`${section.title}-${idx}`}
               section={section}
               pathname={pathname}
+              badges={badges}
             />
           ))}
         </nav>
@@ -232,6 +256,7 @@ export function InstitutionShell({ user, institution, children }: Props) {
           onClose={() => setNavOpen(false)}
           pathname={pathname}
           user={user}
+          badges={badges}
           institution={institution}
           onLogout={() => logout.mutate()}
         />
@@ -258,10 +283,12 @@ function NavGroup({
   section,
   pathname,
   onItemClick,
+  badges,
 }: {
   section: NavSection;
   pathname: string;
   onItemClick?: () => void;
+  badges?: InstitutionBadgesResponse;
 }) {
   return (
     <div>
@@ -277,6 +304,7 @@ function NavGroup({
             link={link}
             pathname={pathname}
             onClick={onItemClick}
+            badge={badgeValue(badges, link.badgeKey)}
           />
         ))}
       </div>
@@ -284,14 +312,28 @@ function NavGroup({
   );
 }
 
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground"
+      aria-label={`${count} bekliyor`}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 function SidebarLink({
   link,
   pathname,
   onClick,
+  badge = 0,
 }: {
   link: NavLink;
   pathname: string;
   onClick?: () => void;
+  badge?: number;
 }) {
   const Icon = link.icon;
   // /institution (panel) sadece exact match; sub-route'lar (teachers vs.) startsWith
@@ -328,6 +370,7 @@ function SidebarLink({
     >
       <Icon className="size-4 shrink-0" aria-hidden />
       <span className="flex-1 truncate">{link.label}</span>
+      <NavBadge count={badge} />
     </Link>
   );
 }
@@ -371,12 +414,14 @@ function MobileDrawer({
   user,
   institution,
   onLogout,
+  badges,
 }: {
   onClose: () => void;
   pathname: string;
   user: UserPublic;
   institution: InstitutionRef | null;
   onLogout: () => void;
+  badges?: InstitutionBadgesResponse;
 }) {
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -435,6 +480,7 @@ function MobileDrawer({
               section={section}
               pathname={pathname}
               onItemClick={onClose}
+              badges={badges}
             />
           ))}
         </nav>

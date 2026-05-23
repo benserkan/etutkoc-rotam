@@ -50,6 +50,7 @@ from app.routes.api_v2.schemas.admin import (
     AccountHistoryResponse,
     AccountOwnerTypeLiteral,
     AccountUnarchiveBody,
+    AdminBadgesResponse,
     AdminDashboardCounts,
     AdminDashboardResponse,
     AdminImpersonateBody,
@@ -385,6 +386,31 @@ def _require_super_admin(user: User = Depends(get_current_user_v2)) -> User:
             http_status=status.HTTP_403_FORBIDDEN,
         )
     return user
+
+
+@router.get("/badges", response_model=AdminBadgesResponse)
+def admin_badges_v2(
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Sol menü rozetleri — 'işleyince azalır' (60s polling).
+
+    Talepler: koç/kurum yöneticilerinden bekleyen talep (incele/cevapla/çöz → düşer).
+    İletişim Talepleri: yeni (ilgilenilmemiş) talep (işlenince → düşer).
+    """
+    from app.models import CONTACT_STATUS_NEW, ContactRequest
+    from app.services import support_request_service as support_svc
+
+    contact_new = (
+        db.query(ContactRequest)
+        .filter(ContactRequest.status == CONTACT_STATUS_NEW)
+        .count()
+    )
+    return AdminBadgesResponse(
+        support_pending=support_svc.pending_count_super_admin(db),
+        contact_new=contact_new,
+        checked_at=datetime.now(timezone.utc),
+    )
 
 
 # =============================================================================

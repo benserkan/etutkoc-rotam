@@ -36,17 +36,20 @@ interface Props {
   enableBadges?: boolean;
 }
 
+type StudentBadgeKey = "pending_count" | "today_open_count";
+
 interface NavLink {
   href: string;
   label: string;
   icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  badgeKey?: StudentBadgeKey;
 }
 
 const STUDENT_NAV: NavLink[] = [
-  { href: "/student/day", label: "Bugün", icon: CalendarDays },
+  { href: "/student/day", label: "Bugün", icon: CalendarDays, badgeKey: "today_open_count" },
   { href: "/student/week", label: "Hafta", icon: CalendarRange },
   { href: "/student/books", label: "Kitaplar", icon: BookOpenCheck },
-  { href: "/student/requests", label: "Talepler", icon: ListChecks },
+  { href: "/student/requests", label: "Talepler", icon: ListChecks, badgeKey: "pending_count" },
   { href: "/student/focus", label: "Odak", icon: Timer },
   { href: "/student/dna", label: "Çalışma DNA", icon: BarChart3 },
   { href: "/student/review", label: "Tekrar", icon: RotateCcw },
@@ -93,6 +96,7 @@ export function SiteHeader({ user, enableBadges = true }: Props) {
               const active =
                 pathname === n.href || pathname.startsWith(`${n.href}/`);
               const Icon = n.icon;
+              const count = n.badgeKey ? badges.data?.[n.badgeKey] ?? 0 : 0;
               return (
                 <Link
                   key={n.href}
@@ -106,6 +110,11 @@ export function SiteHeader({ user, enableBadges = true }: Props) {
                 >
                   <Icon className="size-3.5" aria-hidden />
                   {n.label}
+                  {count > 0 ? (
+                    <span className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground">
+                      {count > 99 ? "99+" : count}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}

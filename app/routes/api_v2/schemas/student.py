@@ -346,6 +346,7 @@ class PendingBadgesResponse(BaseModel):
     `/_partial/student-pending-count` ile aynı sayım.
     """
     pending_count: int
+    today_open_count: int = 0   # bugünün tamamlanmamış görevleri (tikleyince düşer)
     checked_at: datetime
 
 

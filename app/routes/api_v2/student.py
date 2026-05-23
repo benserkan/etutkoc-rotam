@@ -878,9 +878,24 @@ def student_badges_v2(
     Eşdeğer Jinja: app/routes/partials.py:48 (student_pending_count, HTMX).
     """
     from app.services.request_service import pending_count_for_student
+    from app.models.task import Task, TaskBookItem
     count = pending_count_for_student(db, user.id)
+    # 'Bugün' rozeti: bugünün YAYINLANMIŞ + tamamlanmamış görev sayısı (tikleyince düşer)
+    today_open = (
+        db.query(TaskBookItem.task_id)
+        .join(Task, Task.id == TaskBookItem.task_id)
+        .filter(
+            Task.student_id == user.id,
+            Task.date == date.today(),
+            Task.is_draft.is_(False),
+            TaskBookItem.completed_count < TaskBookItem.planned_count,
+        )
+        .distinct()
+        .count()
+    )
     return PendingBadgesResponse(
         pending_count=count,
+        today_open_count=today_open,
         checked_at=datetime.now(timezone.utc),
     )
 

@@ -3255,3 +3255,20 @@ class ContactRequestUpdateBody(BaseModel):
 class ContactRequestMutationResult(BaseModel):
     id: int
     status: str
+
+
+# =============================================================================
+# Sol menü rozetleri — "işleyince azalır" (handle-to-clear)
+# =============================================================================
+
+
+class AdminBadgesResponse(BaseModel):
+    """GET /api/v2/admin/badges — 60s polling.
+
+    - support_pending: koç/kurum yöneticilerinden BEKLEYEN talep → incele/cevapla/
+      çöz yapınca düşer.
+    - contact_new: YENİ iletişim/abonelik talebi (henüz ilgilenilmemiş) → işlenince düşer.
+    """
+    support_pending: int
+    contact_new: int = 0
+    checked_at: datetime

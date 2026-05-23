@@ -262,6 +262,7 @@ export interface BookGridResponse {
 
 export interface PendingBadgesResponse {
   pending_count: number;
+  today_open_count: number;
   checked_at: string;
 }
 

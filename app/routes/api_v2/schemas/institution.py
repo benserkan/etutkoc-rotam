@@ -773,3 +773,21 @@ class InstitutionAcademicResponse(BaseModel):
     improving: list[AcademicMoverRow]
     declining: list[AcademicMoverRow]
     no_exam_program: list[AcademicNoExamRow]
+
+
+# =============================================================================
+# Sol menü rozetleri — "işleyince azalır" (handle-to-clear)
+# =============================================================================
+
+
+class InstitutionBadgesResponse(BaseModel):
+    """GET /api/v2/institution/badges — 60s polling.
+
+    - support_inbox_pending: öğretmenlerden gelen, BEKLEYEN (açık/değerlendiriliyor)
+      talep → incele/cevapla/çöz yapınca düşer.
+    - support_answered: kurum yöneticisinin süper admine açtığı, süper adminin
+      CEVAPLADIĞI talep → yanıtlayınca/çözülünce düşer.
+    """
+    support_inbox_pending: int
+    support_answered: int = 0
+    checked_at: datetime

@@ -2255,9 +2255,20 @@ Kapsam: önce koç paneli.
 - Frontend: teacher-shell "Destek" nav'ına `badgeKey: support_answered_count`; badgeKey
   union + tip güncellendi. Test: `test_api_v2_teacher_warning_ack.py` **11/11** (R1 ack
   öncesi at_risk≥1 · R2 tüm uyarılar ack'lenince at_risk=0 = işleyince azalır).
-- **Sırada (onaya bağlı):** kurum yöneticisi + süper admin + öğrenci panolarına aynı
-  desen. **NOT:** badges poll'u artık student_snapshot döngüsü yapıyor (60s) — çok
-  öğrencide maliyet; gerekirse paylaşılan cache ile optimize edilir.
+- **3 panele YAYILDI ✅** (2026-05-23, migration YOK):
+  - **Kurum yöneticisi** (`GET /institution/badges`): "Gelen Talepler" =
+    support_inbox_pending (öğretmenlerden bekleyen, cevapla/çöz→düşer) · "Taleplerim"
+    = support_answered (süper adminin cevapladığı kendi talepleri).
+  - **Süper admin** (`GET /admin/badges`): "Talepler" = support_pending · "İletişim
+    Talepleri" = contact_new (yeni iletişim/abonelik talebi).
+  - **Öğrenci** (site-header, mevcut badge'e ek): "Bugün" = today_open_count (bugünün
+    tamamlanmamış görevleri, tikleyince düşer) · "Talepler" = pending_count (koç yanıtı).
+  - institution-shell + admin-shell'e badge altyapısı eklendi (useQuery 60s + NavGroup/
+    SidebarLink/MobileDrawer'a badge threading + NavBadge). Canlı: 3 endpoint 200 +
+    doğru alanlar. Regresyon: institution 18 · admin 13 · contact 11 · support 54 ·
+    tenant 29. tsc/eslint/build temiz.
+  - **NOT:** koç + kurum badges poll'u student_snapshot/sorgu döngüsü yapıyor (60s) —
+    çok öğrencide maliyet; gerekirse paylaşılan cache ile optimize edilir.
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

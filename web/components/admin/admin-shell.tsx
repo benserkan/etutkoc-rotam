@@ -41,12 +41,26 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+import { useQuery } from "@tanstack/react-query";
+
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { useLogout } from "@/lib/hooks/use-logout";
+import { adminKeys, getAdminBadges } from "@/lib/api/admin";
+import type { AdminBadgesResponse } from "@/lib/types/admin";
 import type { UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
+
+type AdminBadgeKey = "support_pending" | "contact_new";
+
+function adminBadgeValue(
+  badges: AdminBadgesResponse | undefined,
+  key: AdminBadgeKey | undefined,
+): number {
+  if (!key || !badges) return 0;
+  return badges[key] ?? 0;
+}
 
 interface NavLink {
   href: string;
@@ -57,6 +71,7 @@ interface NavLink {
    * erkenden gösterir. Her paket teslim oldukça disabled kalkar.
    */
   disabled?: boolean;
+  badgeKey?: AdminBadgeKey;
 }
 
 interface NavSection {
@@ -144,8 +159,8 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
       { href: "/admin/pricing", label: "Ücretlendirme", icon: CircleDollarSign },
-      { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox },
-      { href: "/admin/support", label: "Talepler", icon: LifeBuoy },
+      { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox, badgeKey: "contact_new" },
+      { href: "/admin/support", label: "Talepler", icon: LifeBuoy, badgeKey: "support_pending" },
     ],
   },
 ];
@@ -159,6 +174,15 @@ export function AdminShell({ user, children }: Props) {
   const pathname = usePathname();
   const logout = useLogout();
   const [navOpen, setNavOpen] = React.useState(false);
+
+  const badgesQ = useQuery<AdminBadgesResponse>({
+    queryKey: adminKeys.badges(),
+    queryFn: getAdminBadges,
+    enabled: user.role === "super_admin",
+    refetchInterval: 60_000,
+    staleTime: 30_000,
+  });
+  const badges = badgesQ.data;
 
   return (
     <div className="min-h-screen bg-background flex flex-col lg:flex-row">
@@ -179,6 +203,7 @@ export function AdminShell({ user, children }: Props) {
               key={`${section.title}-${idx}`}
               section={section}
               pathname={pathname}
+              badges={badges}
             />
           ))}
         </nav>
@@ -219,6 +244,7 @@ export function AdminShell({ user, children }: Props) {
           pathname={pathname}
           user={user}
           onLogout={() => logout.mutate()}
+          badges={badges}
         />
       ) : null}
     </div>
@@ -229,10 +255,12 @@ function NavGroup({
   section,
   pathname,
   onItemClick,
+  badges,
 }: {
   section: NavSection;
   pathname: string;
   onItemClick?: () => void;
+  badges?: AdminBadgesResponse;
 }) {
   return (
     <div>
@@ -248,6 +276,7 @@ function NavGroup({
             link={link}
             pathname={pathname}
             onClick={onItemClick}
+            badge={adminBadgeValue(badges, link.badgeKey)}
           />
         ))}
       </div>
@@ -255,14 +284,28 @@ function NavGroup({
   );
 }
 
+function NavBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <span
+      className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold leading-none text-destructive-foreground"
+      aria-label={`${count} bekliyor`}
+    >
+      {count > 99 ? "99+" : count}
+    </span>
+  );
+}
+
 function SidebarLink({
   link,
   pathname,
   onClick,
+  badge = 0,
 }: {
   link: NavLink;
   pathname: string;
   onClick?: () => void;
+  badge?: number;
 }) {
   const Icon = link.icon;
   const active =
@@ -298,6 +341,7 @@ function SidebarLink({
     >
       <Icon className="size-4 shrink-0" aria-hidden />
       <span className="flex-1 truncate">{link.label}</span>
+      <NavBadge count={badge} />
     </Link>
   );
 }
@@ -341,11 +385,13 @@ function MobileDrawer({
   pathname,
   user,
   onLogout,
+  badges,
 }: {
   onClose: () => void;
   pathname: string;
   user: UserPublic;
   onLogout: () => void;
+  badges?: AdminBadgesResponse;
 }) {
   React.useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -400,6 +446,7 @@ function MobileDrawer({
               section={section}
               pathname={pathname}
               onItemClick={onClose}
+              badges={badges}
             />
           ))}
         </nav>

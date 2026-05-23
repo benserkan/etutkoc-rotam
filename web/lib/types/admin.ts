@@ -3000,3 +3000,9 @@ export interface ContactRequestMutationResult {
   id: number;
   status: string;
 }
+
+export interface AdminBadgesResponse {
+  support_pending: number;
+  contact_new: number;
+  checked_at: string;
+}

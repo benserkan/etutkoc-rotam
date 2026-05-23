@@ -112,6 +112,7 @@ from app.routes.api_v2.schemas.institution import (
     GuaranteeEvaluationInfo,
     HeatmapCellData,
     InstitutionAggregateInfo,
+    InstitutionBadgesResponse,
     InstitutionBrief,
     InstitutionDashboardResponse,
     InstitutionGoalsResponse,
@@ -282,6 +283,34 @@ def _days_since(dt: datetime | None) -> int | None:
     now = datetime.now(timezone.utc)
     src = dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
     return max(0, (now - src).days)
+
+
+@router.get("/badges", response_model=InstitutionBadgesResponse)
+def institution_badges_v2(
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Sol menü rozetleri — 'işleyince azalır' (60s polling).
+
+    Gelen Talepler: öğretmenlerden bekleyen talep (cevapla/çöz → düşer).
+    Taleplerim: süper adminin cevapladığı kendi talepleri (yanıtla/çöz → düşer).
+    """
+    from app.models import SUPPORT_STATUS_ANSWERED, SupportRequest
+    from app.services import support_request_service as support_svc
+
+    answered = (
+        db.query(SupportRequest)
+        .filter(
+            SupportRequest.requester_id == user.id,
+            SupportRequest.status == SUPPORT_STATUS_ANSWERED,
+        )
+        .count()
+    )
+    return InstitutionBadgesResponse(
+        support_inbox_pending=support_svc.pending_count_institution_admin(db, user),
+        support_answered=answered,
+        checked_at=datetime.now(timezone.utc),
+    )
 
 
 def _teacher_summary_to_item(s: TeacherSummary) -> TeacherSummaryItem:

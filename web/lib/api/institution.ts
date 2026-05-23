@@ -15,6 +15,7 @@ import type {
   AdminDigestListResponse,
   AtRiskResponse,
   BurnoutResponse,
+  InstitutionBadgesResponse,
   ActionCenterResponse,
   TeacherScorecardResponse,
   ParentTrustResponse,
@@ -40,6 +41,7 @@ import type {
 
 export const institutionKeys = {
   root: () => ["institution", "me"] as const,
+  badges: () => ["institution", "me", "badges"] as const,
   dashboard: () => ["institution", "me", "dashboard"] as const,
   teachers: () => ["institution", "me", "teachers"] as const,
   teacher: (id: number) =>
@@ -85,6 +87,10 @@ export const institutionKeys = {
 
 export function getInstitutionDashboard() {
   return api<InstitutionDashboardResponse>("/api/v2/institution/dashboard");
+}
+
+export function getInstitutionBadges() {
+  return api<InstitutionBadgesResponse>("/api/v2/institution/badges");
 }
 
 export function getInstitutionTeachers() {
