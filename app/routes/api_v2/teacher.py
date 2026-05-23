@@ -554,6 +554,7 @@ def teacher_students_v2(
         s.id: student_snapshot(db, s, today=today) for s in page_students
     }
 
+    _wrank = {"red": 0, "amber": 1, "green": 2}
     items: list[TeacherStudentListItem] = []
     for s in page_students:
         sn = snapshots_by_id.get(s.id)
@@ -561,6 +562,11 @@ def teacher_students_v2(
             (sn.week.completed / sn.week.planned)
             if sn and sn.week.planned > 0 else 0.0
         )
+        # Satırın NEDEN kırmızı/sarı olduğunu göster: en kötü uyarının başlığı
+        ww_title = ww_detail = None
+        if sn and sn.warnings:
+            ww = min(sn.warnings, key=lambda x: _wrank.get(x.level, 9))
+            ww_title, ww_detail = ww.title, ww.detail
         items.append(TeacherStudentListItem(
             id=s.id,
             full_name=s.full_name,
@@ -569,6 +575,8 @@ def teacher_students_v2(
             is_active=bool(s.is_active),
             last_login_at=s.last_login_at,
             worst_warning_level=(sn.worst_warning_level if sn else "green"),
+            worst_warning_title=ww_title,
+            worst_warning_detail=ww_detail,
             today_planned=(sn.today.planned if sn else 0),
             today_completed=(sn.today.completed if sn else 0),
             week_pct=week_pct,

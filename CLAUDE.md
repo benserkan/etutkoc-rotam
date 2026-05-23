@@ -2216,7 +2216,15 @@ tonu** alsın (D4 eşikleri: <%40 kırmızı acil · %40–69 turuncu dikkat · 
 - **Öğrenci listesi** (`teacher/students-list-client.tsx`): `levelRowClass(
   worst_warning_level)` — **kırmızı + turuncu** satırlar belirgin tonlanır,
   **yeşil temiz** bırakılır (uzun listede gürültü/alarm körlüğü olmasın; sorunlar
-  öne çıkar). Frontend-only (mevcut alanlar). tsc/eslint/build temiz.
+  öne çıkar).
+- **"Neden kırmızı?" görünürlüğü** (kullanıcı sordu): satır renginin SEBEBİ
+  görünmüyordu (sadece nokta/renk). Örn. Yiğit %86 haftalık ama kırmızı —
+  sebep `projection_shortfall` "Sınava yetişmeyecek" (ileriye dönük). List item'a
+  `worst_warning_title`/`worst_warning_detail` eklendi (endpoint en kötü uyarıyı
+  level-rank ile seçer); satırda e-postanın altında kırmızı/sarı **uyarı başlığı**
+  gösterilir (detay hover). tsc/eslint/build temiz · students smoke 14/14.
+  NOT: "Sınava yetişmeyecek" stratejik bir uyarı RED'tir; istenirse şiddeti
+  (red→amber) ayrı tartışılır.
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

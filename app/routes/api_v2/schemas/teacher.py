@@ -97,6 +97,8 @@ class TeacherStudentListItem(BaseModel):
 
     # Hızlı durum göstergeleri (StudentSnapshot'tan üretilir)
     worst_warning_level: WarningLevelLiteral
+    worst_warning_title: str | None = None   # satırın NEDEN kırmızı/sarı olduğu
+    worst_warning_detail: str | None = None
     today_planned: int
     today_completed: int
     week_pct: float                     # 0..1

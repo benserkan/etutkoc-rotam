@@ -172,6 +172,19 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
           <span className="block text-xs text-muted-foreground truncate">
             {s.email}
           </span>
+          {s.is_active && s.worst_warning_level !== "green" && s.worst_warning_title ? (
+            <span
+              className={cn(
+                "block text-[11px] mt-0.5 truncate font-medium",
+                s.worst_warning_level === "red"
+                  ? "text-rose-600 dark:text-rose-400"
+                  : "text-amber-600 dark:text-amber-400",
+              )}
+              title={s.worst_warning_detail ?? undefined}
+            >
+              {s.worst_warning_title}
+            </span>
+          ) : null}
         </Link>
         <span className="hidden sm:block sm:col-span-2 text-sm text-muted-foreground">
           {s.grade_level !== null ? `${s.grade_level}. sınıf` : "Mezun"}
