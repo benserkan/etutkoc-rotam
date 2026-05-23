@@ -9,6 +9,7 @@ import {
   ArrowUpCircle,
   Brain,
   CalendarRange,
+  CheckCircle2,
   Dna,
   Loader2,
   RefreshCw,
@@ -19,7 +20,7 @@ import {
 import { teacherKeys } from "@/lib/api/teacher";
 import { useTeacherStudent } from "@/lib/hooks/use-teacher-queries";
 import { useSetWeekAnchor } from "@/lib/hooks/use-teacher-mutations";
-import type { TeacherStudentDetailResponse, WarningItem } from "@/lib/types/teacher";
+import type { TeacherStudentDetailResponse } from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { StudentBooksPanel } from "@/components/teacher/student-books-panel";
@@ -520,6 +521,22 @@ function ActionLink({
 // Durum Özeti — bir bakışta program durumu + linkli uyarılar (kanıt sayfaları)
 // =============================================================================
 
+// Açık-zemin ton sınıfları (koyu temada da okunur — explicit, purge-safe)
+const SUMMARY_TONE: Record<string, { card: string; title: string; text: string; icon: string }> = {
+  red: { card: "border-rose-300 bg-rose-50 hover:bg-rose-100", title: "text-rose-900", text: "text-rose-800", icon: "text-rose-600" },
+  amber: { card: "border-amber-300 bg-amber-50 hover:bg-amber-100", title: "text-amber-900", text: "text-amber-800", icon: "text-amber-600" },
+  green: { card: "border-emerald-300 bg-emerald-50 hover:bg-emerald-100", title: "text-emerald-900", text: "text-emerald-800", icon: "text-emerald-600" },
+};
+
+interface SummaryRow {
+  tone: "red" | "amber" | "green";
+  title: string;
+  detail: string;
+  link: string;
+  linkLabel: string;
+  good?: boolean;
+}
+
 function StatusSummary({
   studentId,
   data,
@@ -528,11 +545,43 @@ function StatusSummary({
   data: TeacherStudentDetailResponse;
 }) {
   const ps = data.program_summary;
+  const base = `/teacher/students/${studentId}`;
   const todayPct = ps.today_planned > 0 ? Math.round((ps.today_pct ?? 0) * 100) : null;
   const weekPct = ps.week_planned > 0 ? Math.round((ps.week_pct ?? 0) * 100) : null;
   const consistency = Math.round((ps.consistency_7d ?? 0) * 100);
+  const hitRate = Math.round((ps.hit_rate_7d ?? 0) * 100);
   const items = data.warning_items ?? [];
   const lvl = data.worst_warning_level;
+
+  // İyi giden (başarı) sinyalleri — program_summary'den türetilir, linkli.
+  const positives: SummaryRow[] = [];
+  if (ps.today_planned > 0 && ps.today_completed >= ps.today_planned) {
+    positives.push({ tone: "green", title: "Bugünkü programı tamamladı",
+      detail: `${ps.today_completed}/${ps.today_planned} görev bitti`,
+      link: `${base}/day`, linkLabel: "Günü gör", good: true });
+  } else if (ps.today_planned > 0 && (todayPct ?? 0) >= 50) {
+    positives.push({ tone: "green", title: "Bugün iyi gidiyor",
+      detail: `${ps.today_completed}/${ps.today_planned} görev (%${todayPct})`,
+      link: `${base}/day`, linkLabel: "Günü gör", good: true });
+  }
+  if (ps.week_planned > 0 && (weekPct ?? 0) >= 70) {
+    positives.push({ tone: "green", title: `Haftalık tempo iyi (%${weekPct})`,
+      detail: `${ps.week_completed}/${ps.week_planned} görev tamamlandı`,
+      link: `${base}/week`, linkLabel: "Haftalık planı gör", good: true });
+  }
+  if (consistency >= 80) {
+    positives.push({ tone: "green", title: `Tutarlı çalışıyor (%${consistency})`,
+      detail: "Son 7 günün çoğunda aktif", link: `${base}/dna`, linkLabel: "Analizi gör", good: true });
+  }
+  if (hitRate >= 80) {
+    positives.push({ tone: "green", title: `Hedefleri tutturuyor (%${hitRate})`,
+      detail: "Planlanan görevlerin büyük kısmı tamamlanıyor", link: `${base}/week`, linkLabel: "Planı gör", good: true });
+  }
+
+  const warnings: SummaryRow[] = items.map((w) => ({
+    tone: (w.level === "red" ? "red" : w.level === "amber" ? "amber" : "green"),
+    title: w.title, detail: w.detail, link: w.link, linkLabel: w.link_label,
+  }));
 
   const verdict = {
     red: { cls: "border-rose-300 bg-rose-50 text-rose-900", title: "Acil müdahale gerekiyor" },
@@ -557,43 +606,52 @@ function StatusSummary({
           </p>
         </div>
 
-        {items.length > 0 ? (
-          <div className="grid gap-2 sm:grid-cols-2">
-            {items.map((w, i) => (
-              <WarningCard key={`${w.code}-${i}`} w={w} />
-            ))}
+        {warnings.length > 0 ? (
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Dikkat gerektirenler
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {warnings.map((w, i) => <SummaryCard key={`w-${i}`} row={w} />)}
+            </div>
           </div>
-        ) : (
-          <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 text-sm text-emerald-800">
-            Bu öğrenci için aktif uyarı yok — program yolunda görünüyor.{" "}
-            <Link
-              href={`/teacher/students/${studentId}/week`}
-              className="font-medium underline underline-offset-4"
-            >
-              Haftalık planı gör →
+        ) : null}
+
+        {positives.length > 0 ? (
+          <div>
+            <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              İyi giden
+            </p>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {positives.map((p, i) => <SummaryCard key={`p-${i}`} row={p} />)}
+            </div>
+          </div>
+        ) : null}
+
+        {warnings.length === 0 && positives.length === 0 ? (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+            Henüz yeterli veri yok — program oluşturuldukça durum burada özetlenir.{" "}
+            <Link href={`${base}/week`} className="font-medium underline underline-offset-4">
+              Haftalık planı aç →
             </Link>
           </div>
-        )}
+        ) : null}
       </CardContent>
     </Card>
   );
 }
 
-function WarningCard({ w }: { w: WarningItem }) {
-  const tone =
-    w.level === "red" ? "border-rose-300 bg-rose-50 hover:bg-rose-100"
-      : w.level === "amber" ? "border-amber-300 bg-amber-50 hover:bg-amber-100"
-        : "border-emerald-300 bg-emerald-50 hover:bg-emerald-100";
-  const dot =
-    w.level === "red" ? "text-rose-600" : w.level === "amber" ? "text-amber-600" : "text-emerald-600";
+function SummaryCard({ row }: { row: SummaryRow }) {
+  const t = SUMMARY_TONE[row.tone] ?? SUMMARY_TONE.amber;
+  const Icon = row.good ? CheckCircle2 : AlertTriangle;
   return (
-    <Link href={w.link} className={cn("block rounded-lg border p-3 transition", tone)}>
+    <Link href={row.link} className={cn("block rounded-lg border p-3 transition", t.card)}>
       <div className="flex items-start gap-2">
-        <AlertTriangle className={cn("mt-0.5 size-4 shrink-0", dot)} aria-hidden />
+        <Icon className={cn("mt-0.5 size-4 shrink-0", t.icon)} aria-hidden />
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-foreground">{w.title}</p>
-          <p className="mt-0.5 text-xs text-foreground/70">{w.detail}</p>
-          <p className="mt-1.5 text-xs font-medium text-foreground/80">{w.link_label} →</p>
+          <p className={cn("text-sm font-semibold", t.title)}>{row.title}</p>
+          <p className={cn("mt-0.5 text-xs", t.text)}>{row.detail}</p>
+          <p className={cn("mt-1.5 text-xs font-medium", t.title)}>{row.linkLabel} →</p>
         </div>
       </div>
     </Link>
