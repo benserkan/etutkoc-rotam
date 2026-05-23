@@ -2066,13 +2066,56 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
   demo/gerçek koçları past_due yapar/düşürür).
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge) — kalan tek faz.
 
-Migration head: `a8b1e3f4e22y`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
+## Rol-bazlı Talep Sistemi (SupportRequest) — 2026-05-23, DEVAM EDİYOR
+
+**Bağlam (kullanıcı 2026-05-23):** Koç↔öğrenci `TaskRequest` var ama (a) kurum
+yöneticisi ↔ kuruma bağlı öğretmen, (b) süper admin ↔ (bağımsız koç + kurum
+yöneticisi) arasında talep mekanizması eksikti. Yeni **genel** talep/iletişim
+sistemi kuruldu (TaskRequest [programa özel] + ContactRequest [public form]
+DOKUNULMADI).
+
+**Kullanıcı kararları:** yön = yukarı yönlü oluşturma + çift yönlü thread ·
+kapsam = önce backend+test, sonra frontend.
+
+- **Backend ✅** (2026-05-23, **migration `b9c2f4g5f33z`** — additive, downgrade'li,
+  uygulandı; alembic head = `b9c2f4g5f33z`):
+  - 2 tablo: `support_requests` (requester_id, requester_role, audience
+    [super_admin|institution_admin], institution_id, category, subject, status,
+    handled_by_id/at, resolved_at, last_activity_at) + `support_request_messages`
+    (thread). Model `app/models/support_request.py` (+ institution ilişkisi).
+  - **Yön rolden türer** (`audience_for_requester`): bağımsız koç (TEACHER+inst
+    NULL) → super_admin · kurum yöneticisi → super_admin (institution_id bağlam) ·
+    kuruma bağlı öğretmen (TEACHER+inst) → institution_admin (kendi kurumu).
+  - **Yaşam döngüsü**: open(Açık) → under_review(Değerlendiriliyor) →
+    answered(Cevaplandı) → resolved(Çözümlendi) + withdrawn(Geri çekildi). Talep
+    eden yanıt yazınca answered→under_review (yeniden). Terminal'de mesaj 400.
+  - Servis `support_request_service.py` (create/list/inbox/get_for_requester/
+    get_for_recipient/add_message/review/resolve/withdraw + sayımlar). **Tenant
+    izolasyonu** get_for_recipient + list_inbox_institution_admin'de.
+  - **TEK paylaşılan router** `api_v2/support.py` (`/support`, 8 uç) — 3 panele
+    dağıtmak yerine rol-temelli: `GET/POST /requests` (talep eden) · `withdraw` ·
+    `GET /inbox` (muhatap: süper admin→super_admin kuyruğu, kurum yöneticisi→kendi
+    kurumu) · `review`/`resolve` (muhatap) · `GET /requests/{id}` + `reply` (ortak,
+    by_recipient erişimden türer). Şema `schemas/support.py` (serileştiriciler +
+    is_me/is_mine viewer'a göre).
+  - `scripts/test_api_v2_support_requests.py` — **32/32** (1 süper admin + 5 kurum
+    [5 yönetici + 5 öğretmen] + 5 bağımsız koç; 3 yön tam döngü + geri çekme +
+    tenant izolasyonu + yetki + sayım + validasyon). Regresyon: tenant 29 + auth_p1
+    10 + institution 18 temiz.
+  - **Test notu**: 16 login testclient IP rate-limit'e (429) takılıyordu → login
+    öncesi `get_login_limiter().reset()` (test artefaktı).
+- **Frontend ⏳** (sıradaki): 3 panel UI — koç "Talepler" · kurum "Taleplerim" +
+  "Gelen Talepler" · admin "Talepler". invalidate key'leri: `support:mine` /
+  `support:inbox`.
+
+Migration head: `b9c2f4g5f33z`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
 `8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup) ·
 `62c1d7f`/`3a6738e`/`4cb7363`/`4eb9c80` (trial yaşam döngüsü Faz 1-4) ·
 `352e6fc`/`93bd059` (öğrenci detay Durum Özeti + kontrast/başarı kartları) ·
 `0641ef9` (AI ücretli kapı FIRE + yükseltmede reaktivasyon) · `4369630` (paywall
-mesaj güncellemeleri) · `b5749f5` (abonelik iptal akışı testi).
+mesaj güncellemeleri) · `b5749f5` (abonelik iptal akışı testi) ·
+`38035b8` (rol-bazlı talep sistemi backend + 32/32 test).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
