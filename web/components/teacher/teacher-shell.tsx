@@ -39,14 +39,14 @@ interface NavLink {
   label: string;
   icon: LucideIcon;
   // Badge gösterimi için anahtar — badges response'unun field adı
-  badgeKey?: "pending_request_count" | "at_risk_count";
+  badgeKey?: "pending_request_count" | "at_risk_count" | "support_answered_count";
 }
 
 const TEACHER_NAV: NavLink[] = [
   { href: "/teacher/dashboard", label: "Pano", icon: LayoutDashboard },
   { href: "/teacher/students", label: "Öğrenciler", icon: Users, badgeKey: "at_risk_count" },
   { href: "/teacher/requests", label: "Talepler", icon: Inbox, badgeKey: "pending_request_count" },
-  { href: "/teacher/support", label: "Destek", icon: LifeBuoy },
+  { href: "/teacher/support", label: "Destek", icon: LifeBuoy, badgeKey: "support_answered_count" },
   { href: "/teacher/billing", label: "Tahsilat", icon: Wallet },
   { href: "/teacher/plan", label: "Paket", icon: Gem },
   { href: "/teacher/library", label: "Kitaplar", icon: BookOpen },

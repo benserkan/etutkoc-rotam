@@ -126,6 +126,12 @@ def main() -> int:
               row0["age_days"] >= 0, f"age={row0['age_days']}")
         active_before = feed["total"]
 
+        # rozet: ack ÖNCESİ "Öğrenciler" rozeti (at_risk) >= 1 + destek alanı var
+        badges = c.get("/api/v2/teacher/badges").json()
+        check("R1 ack öncesi at_risk_count >= 1 + support_answered_count alanı var",
+              badges["at_risk_count"] >= 1 and "support_answered_count" in badges,
+              f"{badges}")
+
         # ack (gördüm/ertele)
         r = c.post("/api/v2/teacher/dashboard/warnings/ack",
                    json={"student_id": sid, "code": code, "snooze_days": 3})
@@ -148,6 +154,16 @@ def main() -> int:
         check("7. geri alınınca aktif akışa DÖNDÜ",
               any(w["student_id"] == sid and w["code"] == code for w in feed["rows"])
               and feed["total"] == active_before, f"total={feed['total']}")
+
+        # R2 rozet 'işleyince azalır': öğrencinin TÜM aktif uyarıları ack'lenince
+        # at_risk_count düşer (tek öğrenci → 0).
+        feed = c.get("/api/v2/teacher/dashboard/warnings-feed").json()
+        for w in [x for x in feed["rows"] if x["student_id"] == sid]:
+            c.post("/api/v2/teacher/dashboard/warnings/ack",
+                   json={"student_id": sid, "code": w["code"], "snooze_days": 3})
+        badges = c.get("/api/v2/teacher/badges").json()
+        check("R2 tüm uyarılar ack'lenince at_risk_count düşer (işleyince azalır)",
+              badges["at_risk_count"] == 0, f"at_risk={badges['at_risk_count']}")
 
         # sahiplik: başka öğrenci id ile ack → 404
         r = c.post("/api/v2/teacher/dashboard/warnings/ack",

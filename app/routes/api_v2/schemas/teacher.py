@@ -212,9 +212,18 @@ class SetWeekAnchorBody(BaseModel):
 
 
 class TeacherBadgesResponse(BaseModel):
-    """GET /api/v2/teacher/badges — 60s polling."""
+    """GET /api/v2/teacher/badges — 60s polling.
+
+    Rozetler 'işleyince azalır' (alarm körlüğü önleme):
+      - at_risk_count: aktif (ERTELENMEMİŞ) uyarısı olan öğrenci sayısı →
+        Gördüm/Ertele yapınca düşer.
+      - pending_request_count: bekleyen öğrenci talebi → cevaplayınca düşer.
+      - support_answered_count: süper adminin cevapladığı, koçu bekleyen destek
+        talebi → koç yanıtlayınca/çözülünce düşer.
+    """
     pending_request_count: int
     at_risk_count: int
+    support_answered_count: int = 0
     checked_at: datetime
 
 

@@ -2169,7 +2169,11 @@ def teacher_badges_v2(
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Polling — bekleyen talep + risk altındaki öğrenci sayısı."""
+    """Polling — bekleyen talep + (ertelenmemiş) uyarısı olan öğrenci + cevaplanmış
+    destek talebi. Rozetler 'işleyince azalır' (Gördüm/Ertele · cevapla · çöz)."""
+    from app.models import SUPPORT_STATUS_ANSWERED, SupportRequest, WarningState
+
+    now = datetime.now(timezone.utc)
     today = date.today()
     students = (
         db.query(User)
@@ -2181,15 +2185,38 @@ def teacher_badges_v2(
         .all()
     )
     muted_ids = get_active_mutes(db, user.id)
-    assessments = bulk_risk_assessment(db, students=students, today=today)
-    at_risk = sum(
-        1 for a in filter_at_risk(assessments, min_level="medium")
-        if a.student.id not in muted_ids
+
+    # Ertelenmiş (aktif snooze) uyarı anahtarları → bu uyarılar rozeti tetiklemez
+    snoozed_keys = {
+        (w.student_id, w.code)
+        for w in db.query(WarningState).filter(
+            WarningState.actor_id == user.id,
+            WarningState.snooze_until.isnot(None),
+            WarningState.snooze_until > now,
+        ).all()
+    }
+    # 'Öğrenciler' rozeti = en az bir AKTİF (ertelenmemiş) uyarısı olan öğrenci
+    at_risk = 0
+    for s in students:
+        if s.id in muted_ids:
+            continue
+        sn = student_snapshot(db, s, today=today)
+        if any((s.id, w.code) not in snoozed_keys for w in sn.warnings):
+            at_risk += 1
+
+    support_answered = (
+        db.query(SupportRequest)
+        .filter(
+            SupportRequest.requester_id == user.id,
+            SupportRequest.status == SUPPORT_STATUS_ANSWERED,
+        )
+        .count()
     )
     return TeacherBadgesResponse(
         pending_request_count=pending_count_for_teacher(db, user.id),
         at_risk_count=at_risk,
-        checked_at=datetime.now(timezone.utc),
+        support_answered_count=support_answered,
+        checked_at=now,
     )
 
 

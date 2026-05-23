@@ -2240,6 +2240,25 @@ tonu** alsın (D4 eşikleri: <%40 kırmızı acil · %40–69 turuncu dikkat · 
   password-change · signup-teacher · signup-invite) artık **doğrudan `/teacher/dashboard`**.
   Canlı doğrulama: GET / → /teacher/dashboard (dashboard içeriğiyle).
 
+## Sol menü "işleyince azalan" rozetler — koç paneli (2026-05-23)
+
+**Karar (kullanıcı):** Rozet = ele alınmamış sayı; **sadece tıklayınca değil
+İŞLEYİNCE azalır** (alarm körlüğü önleme — e-posta tarzı "görünce sıfırla" REDDEDİLDİ).
+Kapsam: önce koç paneli.
+- `GET /teacher/badges` rozet semantiği değişti (warning_states/ack altyapısına bağlandı):
+  - **at_risk_count** ("Öğrenciler") artık = en az bir **AKTİF (ertelenmemiş)** uyarısı
+    olan öğrenci sayısı → koç "Gördüm/Ertele" yapınca düşer (eski: risk-assessment).
+    Hesap: student_snapshot + WarningState snooze anahtarları (muted hariç).
+  - **support_answered_count** ("Destek", yeni) = koçun süper admine açtığı,
+    **süper adminin cevapladığı (answered)** talep sayısı → koç yanıtlayınca/çözülünce düşer.
+  - **pending_request_count** ("Talepler") değişmedi (cevaplayınca azalır — zaten işleyince-azalan).
+- Frontend: teacher-shell "Destek" nav'ına `badgeKey: support_answered_count`; badgeKey
+  union + tip güncellendi. Test: `test_api_v2_teacher_warning_ack.py` **11/11** (R1 ack
+  öncesi at_risk≥1 · R2 tüm uyarılar ack'lenince at_risk=0 = işleyince azalır).
+- **Sırada (onaya bağlı):** kurum yöneticisi + süper admin + öğrenci panolarına aynı
+  desen. **NOT:** badges poll'u artık student_snapshot döngüsü yapıyor (60s) — çok
+  öğrencide maliyet; gerekirse paylaşılan cache ile optimize edilir.
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

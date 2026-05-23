@@ -236,6 +236,7 @@ export interface SetWeekAnchorResult {
 export interface TeacherBadgesResponse {
   pending_request_count: number;
   at_risk_count: number;
+  support_answered_count: number;
   checked_at: string;
 }
 
