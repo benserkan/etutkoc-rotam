@@ -2019,6 +2019,18 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
     eşiği, eski programlı 3-gün-boş→inactive_3d, aktif→temiz. Gerçek sinyaller
     hâlâ doğru üretiliyor; yanlış-pozitif yok.
   - Regresyon: institution_p2 19 + action_center 8 + scorecard 7 + compliance 10.
+- **Öğrenci detay "Durum Özeti"** ✅ (2026-05-23, migration YOK): koç öğrenci
+  profilini açınca düz metin uyarı listesi yerine **bir-bakışta linkli özet**.
+  - Backend: `TeacherStudentDetailResponse.warning_items` (yapısal: level/code/
+    title/detail + **kanıt sayfası link'i**). Kod→sayfa eşlemesi (today/yesterday→
+    /day, inactive_3d/weekly→/week, projection→/dna).
+  - Frontend: `StatusSummary` (verdict bandı "Acil/Dikkat/Yolunda" + bugün/hafta/
+    tutarlılık tek satır) + uyarı kartları (renk + başlık + detay + "→ link_label",
+    tıkla→kanıt sayfası); MetricsStrip KPI'ları tıklanır (Bugün→/day, Hafta→/week,
+    Hız/Tutarlılık→/dna). Verify: teacher_students 14/14 · tsc/eslint/build temiz.
+  - NOT: teacher_students smoke'unda görülen 13/14, institution smoke'larının
+    sızdırdığı 3 orphan BookSection (id-reuse) kontaminasyonuydu — temizlendi,
+    kod değişikliğiyle ilgisizdi.
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge) — kalan tek faz.
 
 Migration head: `a8b1e3f4e22y`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·

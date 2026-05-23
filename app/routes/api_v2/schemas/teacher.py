@@ -172,12 +172,23 @@ class StudentActivePhase(BaseModel):
     end_date: str
 
 
+class WarningItem(BaseModel):
+    """Durum özeti uyarısı — yapısal + kanıt sayfasına link."""
+    level: str                          # red | amber | green
+    code: str
+    title: str
+    detail: str
+    link: str                           # /teacher/students/{id}/<sayfa>
+    link_label: str                     # "Haftalık planı incele" vb.
+
+
 class TeacherStudentDetailResponse(BaseModel):
     """GET /api/v2/teacher/students/{id}"""
     student: StudentBriefProfile
     program_summary: StudentProgramSummary
     worst_warning_level: WarningLevelLiteral
-    warnings: list[str]                 # detail/title metinleri
+    warnings: list[str]                 # (geriye uyum) detail/title metinleri
+    warning_items: list[WarningItem] = []   # yapısal + linkli durum özeti
     pending_request_count: int          # bu öğrencinin bekleyen talepleri
     # Paket 3.5b — header için aktif dönem rozeti
     active_phase: StudentActivePhase | None = None

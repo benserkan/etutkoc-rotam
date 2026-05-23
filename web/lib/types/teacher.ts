@@ -195,11 +195,21 @@ export interface StudentActivePhase {
   end_date: string;
 }
 
+export interface WarningItem {
+  level: string;          // red | amber | green
+  code: string;
+  title: string;
+  detail: string;
+  link: string;           // /teacher/students/{id}/<sayfa>
+  link_label: string;
+}
+
 export interface TeacherStudentDetailResponse {
   student: StudentBriefProfile;
   program_summary: StudentProgramSummary;
   worst_warning_level: WarningLevel;
   warnings: string[];
+  warning_items?: WarningItem[];
   pending_request_count: number;
   // Paket 3.5b
   active_phase?: StudentActivePhase | null;

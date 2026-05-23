@@ -611,6 +611,24 @@ def teacher_student_detail_v2(
     week_pct = (sn.week.completed / sn.week.planned) if sn.week.planned > 0 else 0.0
     warnings_text = [f"{w.title}: {w.detail}" for w in sn.warnings]
 
+    # Uyarı kodu → kanıt sayfası (koç tek tıkla detaya gitsin)
+    from app.routes.api_v2.schemas.teacher import WarningItem
+    _WARN_LINK = {
+        "today_no_tick": ("day", "Bugünü incele"),
+        "yesterday_no_tick": ("day", "Günü incele"),
+        "inactive_3d": ("week", "Haftalık planı incele"),
+        "weekly_miss": ("week", "Haftalık planı incele"),
+        "weekly_zero": ("week", "Haftalık planı incele"),
+        "projection_shortfall": ("dna", "Çalışma analizini gör"),
+    }
+    warning_items: list[WarningItem] = []
+    for w in sn.warnings:
+        suffix, label = _WARN_LINK.get(w.code, ("week", "Programı incele"))
+        warning_items.append(WarningItem(
+            level=w.level, code=w.code, title=w.title, detail=w.detail,
+            link=f"/teacher/students/{student.id}/{suffix}", link_label=label,
+        ))
+
     # Paket 3.5b — anchor durumu + aktif dönem rozeti
     week_anchor = _resolve_week_anchor(db, student)
     anchor_is_manual = student.program_anchor_date is not None
@@ -643,6 +661,7 @@ def teacher_student_detail_v2(
         ),
         worst_warning_level=sn.worst_warning_level,
         warnings=warnings_text,
+        warning_items=warning_items,
         pending_request_count=_pending_request_count_for_student(db, student.id),
         active_phase=active_phase,
         week_anchor=week_anchor.isoformat() if week_anchor else None,

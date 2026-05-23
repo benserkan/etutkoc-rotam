@@ -19,8 +19,7 @@ import {
 import { teacherKeys } from "@/lib/api/teacher";
 import { useTeacherStudent } from "@/lib/hooks/use-teacher-queries";
 import { useSetWeekAnchor } from "@/lib/hooks/use-teacher-mutations";
-import type { TeacherStudentDetailResponse } from "@/lib/types/teacher";
-import { WARNING_LABELS_TR } from "@/lib/types/teacher";
+import type { TeacherStudentDetailResponse, WarningItem } from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { StudentBooksPanel } from "@/components/teacher/student-books-panel";
@@ -170,24 +169,10 @@ export function StudentTabs({ studentId, initial }: Props) {
             rate7d={rate7d}
             consistency={consistency}
             hitRate={hitRate}
+            studentId={studentId}
           />
 
-          {data.warnings.length > 0 ? (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base">
-                  Uyarılar · {WARNING_LABELS_TR[data.worst_warning_level]}
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="list-disc pl-5 space-y-1 text-sm">
-                  {data.warnings.map((w, i) => (
-                    <li key={i}>{w}</li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
-          ) : null}
+          <StatusSummary studentId={studentId} data={data} />
 
           <AnchorEditCard
             studentId={studentId}
@@ -532,6 +517,90 @@ function ActionLink({
 }
 
 // =============================================================================
+// Durum Özeti — bir bakışta program durumu + linkli uyarılar (kanıt sayfaları)
+// =============================================================================
+
+function StatusSummary({
+  studentId,
+  data,
+}: {
+  studentId: number;
+  data: TeacherStudentDetailResponse;
+}) {
+  const ps = data.program_summary;
+  const todayPct = ps.today_planned > 0 ? Math.round((ps.today_pct ?? 0) * 100) : null;
+  const weekPct = ps.week_planned > 0 ? Math.round((ps.week_pct ?? 0) * 100) : null;
+  const consistency = Math.round((ps.consistency_7d ?? 0) * 100);
+  const items = data.warning_items ?? [];
+  const lvl = data.worst_warning_level;
+
+  const verdict = {
+    red: { cls: "border-rose-300 bg-rose-50 text-rose-900", title: "Acil müdahale gerekiyor" },
+    amber: { cls: "border-amber-300 bg-amber-50 text-amber-900", title: "Dikkat gerekiyor" },
+    green: { cls: "border-emerald-300 bg-emerald-50 text-emerald-900", title: "Program yolunda" },
+  }[lvl] ?? { cls: "border-slate-300 bg-slate-50 text-slate-900", title: "Durum" };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-base">Durum Özeti</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className={cn("rounded-lg border p-3", verdict.cls)}>
+          <p className="font-semibold">{verdict.title}</p>
+          <p className="mt-0.5 text-sm opacity-90">
+            Bugün <strong>{ps.today_completed}/{ps.today_planned}</strong> görev
+            {todayPct != null ? ` (%${todayPct})` : ""} ·{" "}
+            Bu hafta <strong>{ps.week_completed}/{ps.week_planned}</strong>
+            {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
+            Tutarlılık %{consistency}
+          </p>
+        </div>
+
+        {items.length > 0 ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {items.map((w, i) => (
+              <WarningCard key={`${w.code}-${i}`} w={w} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 text-sm text-emerald-800">
+            Bu öğrenci için aktif uyarı yok — program yolunda görünüyor.{" "}
+            <Link
+              href={`/teacher/students/${studentId}/week`}
+              className="font-medium underline underline-offset-4"
+            >
+              Haftalık planı gör →
+            </Link>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function WarningCard({ w }: { w: WarningItem }) {
+  const tone =
+    w.level === "red" ? "border-rose-300 bg-rose-50 hover:bg-rose-100"
+      : w.level === "amber" ? "border-amber-300 bg-amber-50 hover:bg-amber-100"
+        : "border-emerald-300 bg-emerald-50 hover:bg-emerald-100";
+  const dot =
+    w.level === "red" ? "text-rose-600" : w.level === "amber" ? "text-amber-600" : "text-emerald-600";
+  return (
+    <Link href={w.link} className={cn("block rounded-lg border p-3 transition", tone)}>
+      <div className="flex items-start gap-2">
+        <AlertTriangle className={cn("mt-0.5 size-4 shrink-0", dot)} aria-hidden />
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground">{w.title}</p>
+          <p className="mt-0.5 text-xs text-foreground/70">{w.detail}</p>
+          <p className="mt-1.5 text-xs font-medium text-foreground/80">{w.link_label} →</p>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+// =============================================================================
 // Metrik şeridi (5 KPI — Jinja metrics_strip.html parite)
 // =============================================================================
 
@@ -545,6 +614,7 @@ function MetricsStrip({
   rate7d,
   consistency,
   hitRate,
+  studentId,
 }: {
   today: number;
   todayCompleted: number;
@@ -555,24 +625,29 @@ function MetricsStrip({
   rate7d: number;
   consistency: number;
   hitRate: number;
+  studentId: number;
 }) {
+  const base = `/teacher/students/${studentId}`;
   return (
     <section className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       <Kpi
         label="Bugün"
         value={`%${today}`}
         sub={`${todayCompleted}/${todayPlanned}`}
+        href={`${base}/day`}
       />
       <Kpi
         label="Son 7 Gün"
         value={`%${week}`}
         sub={`${weekCompleted}/${weekPlanned}`}
+        href={`${base}/week`}
       />
       <Kpi
         label="Hız (7g)"
         value={rate7d.toFixed(1)}
         sub="test / gün"
         icon={<Activity className="size-3.5 text-muted-foreground" aria-hidden />}
+        href={`${base}/dna`}
       />
       <Kpi
         label="Tutarlılık"
@@ -581,12 +656,14 @@ function MetricsStrip({
         emphasize={
           consistency >= 80 ? "good" : consistency >= 50 ? "warn" : "bad"
         }
+        href={`${base}/dna`}
       />
       <Kpi
         label="Hedef Tutturma"
         value={`%${hitRate}`}
         sub="planlanan→tamamlanan (7g)"
         emphasize={hitRate >= 80 ? "good" : hitRate >= 50 ? "warn" : "bad"}
+        href={`${base}/week`}
       />
     </section>
   );
@@ -598,37 +675,38 @@ function Kpi({
   sub,
   emphasize,
   icon,
+  href,
 }: {
   label: string;
   value: string | number;
   sub?: string;
   emphasize?: "good" | "warn" | "bad";
   icon?: React.ReactNode;
+  href?: string;
 }) {
   const valueClass = {
     good: "text-emerald-600",
     warn: "text-amber-600",
     bad: "text-rose-600",
   }[emphasize ?? ("none" as never)];
-  return (
-    <Card>
-      <CardContent className="p-4 space-y-1">
-        <p className="text-xs uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1.5">
-          {icon}
-          {label}
-        </p>
-        <p
-          className={cn(
-            "text-2xl font-semibold tabular-nums",
-            valueClass,
-          )}
-        >
-          {value}
-        </p>
-        {sub ? <p className="text-xs text-muted-foreground">{sub}</p> : null}
-      </CardContent>
-    </Card>
+  const inner = (
+    <CardContent className="p-4 space-y-1">
+      <p className="text-xs uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1.5">
+        {icon}
+        {label}
+      </p>
+      <p className={cn("text-2xl font-semibold tabular-nums", valueClass)}>{value}</p>
+      {sub ? <p className="text-xs text-muted-foreground">{sub}</p> : null}
+    </CardContent>
   );
+  if (href) {
+    return (
+      <Card className="transition hover:border-cyan-300 hover:shadow-sm">
+        <Link href={href} className="block">{inner}</Link>
+      </Card>
+    );
+  }
+  return <Card>{inner}</Card>;
 }
 
 // =============================================================================
