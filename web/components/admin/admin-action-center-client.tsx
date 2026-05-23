@@ -10,6 +10,7 @@ import {
   Loader2,
   Target,
   TriangleAlert,
+  UserRound,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -100,7 +101,7 @@ export function AdminActionCenterClient({ initial }: Props) {
       ) : (
         <div className="space-y-3">
           {data.items.map((it) => (
-            <ActionRow key={it.institution_id} it={it} />
+            <ActionRow key={`${it.owner_type ?? "institution"}-${it.owner_id ?? it.institution_id}`} it={it} />
           ))}
         </div>
       )}
@@ -119,11 +120,17 @@ function ActionRow({ it }: { it: ActionCenterItem }) {
   const quick = useRevenueQuickAction();
   const [pendingKind, setPendingKind] = React.useState<string | null>(null);
 
+  const ownerType = it.owner_type ?? "institution";
+  const ownerId = it.owner_id ?? it.institution_id;
+  const detailUrl = it.detail_url || `/admin/revenue/institutions/${it.institution_id}`;
+
   function runQuick(kind: string, summary: string) {
     setPendingKind(kind);
     quick.mutate(
       {
-        institution_id: it.institution_id,
+        owner_type: ownerType,
+        owner_id: ownerId,
+        institution_id: ownerType === "institution" ? ownerId : 0,
         kind,
         summary,
         result: "pending",
@@ -143,12 +150,20 @@ function ActionRow({ it }: { it: ActionCenterItem }) {
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <Link
-                href={`/admin/revenue/institutions/${it.institution_id}`}
+                href={detailUrl}
                 className="inline-flex items-center gap-1 text-sm font-semibold hover:text-indigo-700"
               >
-                <Building2 className="size-4 text-muted-foreground" aria-hidden />
+                {ownerType === "user"
+                  ? <UserRound className="size-4 text-muted-foreground" aria-hidden />
+                  : <Building2 className="size-4 text-muted-foreground" aria-hidden />}
                 {it.institution_name}
               </Link>
+              <span className={cn(
+                "rounded px-1.5 py-0.5 text-[10px] font-medium",
+                ownerType === "user" ? "bg-cyan-100 text-cyan-800" : "bg-violet-100 text-violet-800",
+              )}>
+                {ownerType === "user" ? "Bağımsız koç" : "Kurum"}
+              </span>
               <SeverityBadge severity={it.severity} />
               <span className="text-[11px] text-muted-foreground">{it.plan_label}</span>
               {it.monthly_price_try > 0 ? (
@@ -211,10 +226,10 @@ function ActionRow({ it }: { it: ActionCenterItem }) {
             );
           })}
           <Link
-            href={`/admin/revenue/institutions/${it.institution_id}`}
+            href={detailUrl}
             className="inline-flex items-center gap-0.5 rounded border border-border bg-card px-2.5 py-1 text-xs text-muted-foreground hover:bg-muted"
           >
-            Kurum 360 <ArrowRight className="size-3" aria-hidden />
+            {ownerType === "user" ? "Koç 360" : "Kurum 360"} <ArrowRight className="size-3" aria-hidden />
           </Link>
         </div>
         {it.last_action_at ? (

@@ -4684,6 +4684,9 @@ def admin_revenue_action_center_v2(
             ],
             last_action_at=it.last_action_at,
             last_action_summary=it.last_action_summary,
+            owner_type=getattr(it, "owner_type", "institution"),
+            owner_id=getattr(it, "owner_id", it.institution_id),
+            detail_url=getattr(it, "detail_url", "") or f"/admin/revenue/institutions/{it.institution_id}",
         )
         for it in data["items"]
     ]
@@ -4705,15 +4708,21 @@ def admin_revenue_quick_action_v2(
     user: User = Depends(_require_super_admin),
     db: Session = Depends(get_db),
 ):
-    """Önerilen aksiyon → hızlı CrmAction. Jinja: admin.py:3981-4021."""
+    """Önerilen aksiyon → hızlı CrmAction (owner-aware). Jinja: admin.py:3981-4021."""
     from app.services.institution_360 import create_action
 
     follow_dt = None
     if body.follow_up_days and body.follow_up_days > 0:
         follow_dt = datetime.now(timezone.utc) + timedelta(days=int(body.follow_up_days))
+    # Owner çözümleme: owner_type=user → bağımsız koç; aksi → kurum (legacy institution_id de kabul).
+    owner_kw: dict = {}
+    if body.owner_type == "user" and body.owner_id > 0:
+        owner_kw = {"user_id": body.owner_id}
+    else:
+        owner_kw = {"institution_id": body.owner_id or body.institution_id}
     action = create_action(
         db,
-        institution_id=body.institution_id,
+        **owner_kw,
         kind=body.kind,
         summary=(body.summary or "").strip(),
         by_user_id=user.id,
@@ -4732,7 +4741,8 @@ def admin_revenue_quick_action_v2(
         target_type="crm_action",
         target_id=action.id,
         request=request,
-        details={"action": "quick_create", "kind": body.kind, "institution_id": body.institution_id},
+        details={"action": "quick_create", "kind": body.kind,
+                 "owner_type": body.owner_type, "owner_id": body.owner_id or body.institution_id},
     )
     return MutationResponse[RevenueMutationResult](
         data=RevenueMutationResult(message="Aksiyon eklendi"),

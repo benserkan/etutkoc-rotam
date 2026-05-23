@@ -177,9 +177,10 @@ class ActionSignal:
 
 @dataclass
 class ActionItem:
-    """Aksiyon merkezinde bir satır — bir kurum + tüm sinyalleri + öneriler."""
-    institution_id: int
-    institution_name: str
+    """Aksiyon merkezinde bir satır — bir owner (kurum VEYA bağımsız koç) +
+    tüm sinyalleri + öneriler. Owner-pattern: owner_type/owner_id + detail_url."""
+    institution_id: int             # owner=user ise 0 (geriye uyum)
+    institution_name: str           # owner adı (kurum adı veya koç ad/e-posta)
     plan: str
     plan_label: str
     monthly_price_try: int
@@ -188,6 +189,9 @@ class ActionItem:
     suggested_actions: list[SuggestedAction] = field(default_factory=list)
     last_action_at: datetime | None = None
     last_action_summary: str | None = None
+    owner_type: str = "institution"     # institution | user
+    owner_id: int = 0                   # kurum id veya koç user id
+    detail_url: str = ""                # 360 detay sayfası
 
     @property
     def total_score(self) -> int:
@@ -396,11 +400,110 @@ def build_action_list(
             suggested_actions=suggestions,
             last_action_at=last_at,
             last_action_summary=last_summary,
+            owner_type="institution",
+            owner_id=inst.id,
+            detail_url=f"/admin/revenue/institutions/{inst.id}",
         ))
+
+    # Bağımsız koç (solo) sinyalleri — owner-pattern (kurum-merkezli boşluk kapatıldı)
+    try:
+        items.extend(_build_solo_items(db))
+    except Exception:
+        logger.exception("solo action items fail")
 
     # Total skor azalan sıraya göre sırala
     items.sort(key=lambda x: -x.total_score)
     return items[:limit]
+
+
+# Solo sinyallere özel öneriler (kurum ACTION_SUGGESTIONS'a ek)
+_SOLO_SUGGESTIONS: dict[str, list[SuggestedAction]] = {
+    "subscription_past_due": [
+        SuggestedAction(kind="call", icon="📞", label="Yenileme görüşmesi",
+                        summary="Abonelik yenilenmedi — ödeme/yenileme için ara", color="rose"),
+        SuggestedAction(kind="email", icon="✉️", label="Yenileme e-postası",
+                        summary="Ödeme bağlantısı + yenileme hatırlatması gönder", color="amber"),
+    ],
+    "over_student_limit": [
+        SuggestedAction(kind="call", icon="📞", label="Yükseltme görüşmesi",
+                        summary="Deneme bitti, limit aşıldı — Solo'ya geçiş için ara", color="indigo"),
+        SuggestedAction(kind="offer_sent", icon="🎁", label="Yükseltme teklifi",
+                        summary="Solo Pro yükseltme teklifi sun", color="emerald"),
+    ],
+}
+
+
+def _build_solo_items(db: Session) -> list["ActionItem"]:
+    """Bağımsız koç (institution_id NULL) için aksiyon sinyalleri:
+    deneme bitiyor / abonelik past_due / ücretsiz limit aşımı."""
+    from app.models import User, UserRole
+    from app.services import pricing
+    from app.services.plans import (
+        SOLO_FREE, SOLO_TRIAL, count_solo_students, get_plan_info,
+        is_trial_active, trial_days_left,
+    )
+
+    now = _now()
+    coaches = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.TEACHER,
+            User.institution_id.is_(None),
+            User.is_active.is_(True),
+        )
+        .all()
+    )
+    items: list[ActionItem] = []
+    for c in coaches:
+        plan = c.plan or SOLO_FREE
+        signals: list[ActionSignal] = []
+        if plan == SOLO_TRIAL and is_trial_active(c, now):
+            dl = trial_days_left(owner=c, now=now) or 0
+            if dl <= 7:
+                if dl <= 2:
+                    kind, sev, score = "trial_ending_imminent", "critical", 85
+                else:
+                    kind, sev, score = "trial_ending_week", "medium", 60
+                signals.append(ActionSignal(
+                    kind=kind, severity=sev, score=score,
+                    title=f"Deneme {dl} gün içinde bitiyor",
+                    description="Bağımsız koç — ödemeli plana dönüşüm fırsatı"))
+        if getattr(c, "subscription_status", None) == "past_due":
+            signals.append(ActionSignal(
+                kind="subscription_past_due", severity="critical", score=90,
+                title="Abonelik yenilenmedi (ödeme gecikti)",
+                description="Aktif koçluk kilitli — yenileme görüşmesi"))
+        if plan == SOLO_FREE:
+            cnt = count_solo_students(db, teacher_id=c.id)
+            if cnt > 3:
+                signals.append(ActionSignal(
+                    kind="over_student_limit", severity="high", score=70,
+                    title=f"Deneme bitti, {cnt} öğrenci (limit 3 aşıldı)",
+                    description="Yükseltme veya öğrenci azaltma gerek"))
+        if not signals:
+            continue
+        signals.sort(key=lambda s: -s.score)
+        primary, others = signals[0], signals[1:]
+        suggestions = (ACTION_SUGGESTIONS.get(primary.kind)
+                       or _SOLO_SUGGESTIONS.get(primary.kind)
+                       or [SuggestedAction(kind="call", icon="📞", label="Ara",
+                                           summary="Koçla görüşme", color="indigo")])
+        info = get_plan_info(plan)
+        monthly = pricing.compute_solo_monthly(count_solo_students(db, teacher_id=c.id))
+        items.append(ActionItem(
+            institution_id=0,
+            institution_name=(c.full_name or c.email),
+            plan=plan,
+            plan_label=info.label if info else plan,
+            monthly_price_try=monthly,
+            primary_signal=primary,
+            other_signals=others,
+            suggested_actions=suggestions,
+            owner_type="user",
+            owner_id=c.id,
+            detail_url=f"/admin/revenue/users/{c.id}",
+        ))
+    return items
 
 
 def action_center_data(db: Session) -> dict:

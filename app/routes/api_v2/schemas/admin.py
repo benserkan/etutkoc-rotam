@@ -1355,6 +1355,9 @@ class ActionCenterItem(BaseModel):
     suggested_actions: list[SuggestedActionItem]
     last_action_at: datetime | None = None
     last_action_summary: str | None = None
+    owner_type: str = "institution"   # institution | user (bağımsız koç)
+    owner_id: int = 0
+    detail_url: str = ""
 
 
 class ActionCenterResponse(BaseModel):
@@ -1366,7 +1369,9 @@ class ActionCenterResponse(BaseModel):
 
 
 class QuickActionBody(BaseModel):
-    institution_id: int
+    institution_id: int = 0          # legacy (owner_type=institution)
+    owner_type: str = "institution"  # institution | user
+    owner_id: int = 0                # owner_type=user ise koç user id
     kind: str
     summary: str
     result: str = "pending"

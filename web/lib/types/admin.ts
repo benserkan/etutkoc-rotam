@@ -1191,6 +1191,9 @@ export interface ActionCenterItem {
   suggested_actions: SuggestedActionItem[];
   last_action_at: string | null;
   last_action_summary: string | null;
+  owner_type?: string;     // institution | user
+  owner_id?: number;
+  detail_url?: string;
 }
 
 export interface ActionCenterResponse {
@@ -1201,7 +1204,9 @@ export interface ActionCenterResponse {
 }
 
 export interface QuickActionBody {
-  institution_id: number;
+  institution_id?: number;
+  owner_type?: string;     // institution | user
+  owner_id?: number;
   kind: string;
   summary: string;
   result?: string;

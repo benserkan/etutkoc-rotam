@@ -1991,6 +1991,21 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
     göndermeden DÜZENLEYEMİYOR — iptal+yeniden oluştur gerekir.)
   - Verify: paywall 5/5 + offers 19/19 + renewal 12/12 + admin 13 + 360 18 +
     dashboard 11 + tenant 29; tsc/eslint/build temiz.
+- **Kalıcı demo senaryolar + DRAFT teklif düzenleme + Aksiyon Merkezi solo desteği**
+  ✅ (2026-05-23, migration YOK):
+  - `seed_demo_revenue_scenarios.py`: 5 kalıcı örnek koç (A limit-aşımı / B normal /
+    C past_due / D iptal / E 2 SENT teklif [1 açılmış]) — UI inceleme için (idempotent,
+    `--delete`). Şifre: DemoRevenue2026!. URL: /admin/revenue/users/{id}.
+  - **DRAFT teklif düzenleme**: `offers.update_offer` (yalnız DRAFT) + `POST
+    /revenue/offers/{id}`; 360 OffersPanel'de DRAFT'a "Düzenle" (başlık/mesaj/not
+    satır-içi → kaydet). SENT → 400 not_draft.
+  - **Aksiyon Merkezi owner-aware (bağımsız koç desteği)** — kurum-merkezli boşluk
+    kapatıldı: `action_center._build_solo_items` solo koç sinyalleri (deneme bitiyor /
+    past_due / ücretsiz limit-aşımı) → `ActionItem` owner_type/owner_id/detail_url;
+    endpoint + quick-action owner-aware (user_id ile CrmAction); frontend
+    "Kurum/Bağımsız koç" rozeti + "Koç 360" linki. Doğrulandı: demo C (past_due
+    skor 90) + A (limit-aşımı skor 70) artık Aksiyon Merkezi'nde görünüyor.
+  - Verify: analytics 9/9 + offers 19/19 + admin 13 + tenant 29; tsc/eslint/build temiz.
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge) — kalan tek faz.
 
 Migration head: `a8b1e3f4e22y`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
