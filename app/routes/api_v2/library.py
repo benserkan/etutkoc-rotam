@@ -913,7 +913,10 @@ def library_ai_suggest_v2(
     from app.services.credits import CreditBlocked, CreditOwner, consume_credits
     from app.services.feature_flags import is_enabled
 
+    from app.routes.api_v2.dependencies import assert_ai_premium
+
     book = _get_owned_book(db, book_id, user.id)
+    assert_ai_premium(db, user)  # ücretli paket kapısı (diğer AI uçlarıyla tutarlı)
     if book.sections:
         raise _conflict(
             "sections_exist",

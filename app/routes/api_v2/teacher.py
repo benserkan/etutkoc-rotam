@@ -1241,17 +1241,10 @@ def teacher_delete_session_v2(
 
 
 def _require_ai_premium(db: Session, user: User) -> None:
-    """AI premium kapısı: ücretli paket + aktif solo deneme (50 kredi tavanlı).
-    Ücretsiz / deneme bitmiş → 403 plan_upgrade_required. Kredi tükenince
-    consume_credits ayrıca 402 ai_credit_exhausted verir."""
-    from app.services.plans import ai_premium_allowed
-    if not ai_premium_allowed(db, user):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={"error": "forbidden", "code": "plan_upgrade_required",
-                    "message": "Bu yapay zekâ özelliği ücretli pakette kullanılabilir. "
-                               "Lütfen paketinizi yükseltin."},
-        )
+    """AI premium kapısı — paylaşılan dependencies.assert_ai_premium'e delege eder
+    (kitap-AI önerisiyle aynı kapı; tutarlılık için tek kaynak)."""
+    from app.routes.api_v2.dependencies import assert_ai_premium
+    assert_ai_premium(db, user)
 
 
 @router.get("/ai-consent", response_model=AiConsentResponse)
@@ -1848,7 +1841,11 @@ def teacher_plan_upgrade_v2(
     değişimidir (audit'li). Kurumlu öğretmen self-serve yükseltemez.
     """
     from app.models import PlanChangeReason, PlanOwnerType
-    from app.services.plans import change_plan
+    from app.services.plans import (
+        change_plan,
+        is_paid_plan,
+        reactivate_solo_students,
+    )
 
     if user.institution_id is not None:
         raise HTTPException(
@@ -1864,6 +1861,12 @@ def teacher_plan_upgrade_v2(
                     "message": "Yalnız Solo Pro veya Solo Elite seçilebilir."},
         )
 
+    # Ödeme duvarından / ücretsizden geliyorsa (aktif-ücretli DEĞİLSE) pasif
+    # öğrenciler yükseltmede otomatik geri açılır (banner'da verilen söz).
+    was_paid_active = (
+        is_paid_plan(user.plan or "")
+        and getattr(user, "subscription_status", None) == "active"
+    )
     change_plan(
         db,
         owner_type=PlanOwnerType.USER,
@@ -1874,6 +1877,8 @@ def teacher_plan_upgrade_v2(
         note="Bağımsız koç self-serve paket yükseltme",
         autocommit=True,
     )
+    if not was_paid_active:
+        reactivate_solo_students(db, user, autocommit=True)
     db.refresh(user)
     return MutationResponse[TeacherPlanResponse](
         data=_build_plan_response(db, user),

@@ -259,10 +259,30 @@ def assert_active_coaching(db: Session, user: User) -> None:
         else:
             msg = (
                 f"Deneme süreniz bitti ve {st['student_count']} öğrenciniz var; "
-                f"ücretsiz sürüm {st['student_limit']} öğrenci destekler. Devam "
-                f"için paketi yükseltin ya da öğrenci sayınızı düşürün."
+                f"ücretsiz sürüm {st['student_limit']} öğrenci destekler. Devam için "
+                f"paketi yükseltin ya da {st['student_limit']} öğrenci tutup gerisini "
+                f"pasif duruma geçirin. Paketi yükselttiğinizde pasif öğrencileriniz "
+                f"otomatik olarak yeniden aktif olur."
             )
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={"error": "forbidden", "code": "paywall_active", "message": msg},
+        )
+
+
+def assert_ai_premium(db: Session, user: User) -> None:
+    """AI premium kapısı: ücretli paket + aktif solo deneme (50 kredi tavanlı).
+    Ücretsiz / deneme bitmiş → 403 plan_upgrade_required. Tüm AI yazma
+    uçlarında (foto/ses yakalama, koçluk içgörüsü, kitap-AI ünite önerisi)
+    AYNI kapı kullanılır — tutarlılık için tek kaynak. Kredi tükenince
+    consume_credits ayrıca 402 ai_credit_exhausted verir.
+    """
+    from app.services.plans import ai_premium_allowed
+
+    if not ai_premium_allowed(db, user):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "plan_upgrade_required",
+                    "message": "Bu yapay zekâ özelliği ücretli pakette kullanılabilir. "
+                               "Lütfen paketinizi yükseltin."},
         )

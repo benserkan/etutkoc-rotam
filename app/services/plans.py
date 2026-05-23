@@ -408,6 +408,35 @@ def count_solo_students(db: Session, *, teacher_id: int) -> int:
     )
 
 
+def reactivate_solo_students(db: Session, coach: User, *, autocommit: bool = False) -> int:
+    """Bağımsız koçun TÜM pasif öğrencilerini yeniden aktif yapar.
+
+    Paket yükseltme / abonelik aktivasyonunda çağrılır: ödeme duvarındayken
+    (ücretsiz + limit aşımı / past_due) koç limite inmek için öğrencilerini
+    pasifleştirmiş olabilir; ücretli/aktif duruma geçince banner'da verilen söz
+    gereği bunlar OTOMATİK geri açılır. Ücretli planda öğrenci limiti yok
+    (band-fiyatlı) → kota engeli oluşmaz. Aktif öğrenciye dokunmaz (idempotent).
+    Kaç öğrencinin yeniden aktifleştiğini döndürür.
+    """
+    if coach.role != UserRole.TEACHER or coach.institution_id is not None:
+        return 0
+    passive = (
+        db.query(User)
+        .filter(
+            User.role == UserRole.STUDENT,
+            User.is_active.is_(False),
+            User.institution_id.is_(None),
+            User.teacher_id == coach.id,
+        )
+        .all()
+    )
+    for s in passive:
+        s.is_active = True
+    if autocommit and passive:
+        db.commit()
+    return len(passive)
+
+
 @dataclass
 class SoloQuotaCheckResult:
     """Solo öğrenci kotası kontrolünün ayrıntılı sonucu — UI için."""
