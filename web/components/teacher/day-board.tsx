@@ -3,21 +3,25 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { BookmarkPlus, LayoutTemplate, Loader2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
 
 import {
+  getTaskTemplates,
   getTeacherStudentBooks,
   getTeacherStudentDay,
   teacherKeys,
 } from "@/lib/api/teacher";
 import {
+  useApplyTaskTemplate,
   useCreateTask,
   useDeleteTask,
   usePatchTask,
   usePatchTaskItem,
+  useTaskTemplateFromTask,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
   StudentBookListResponse,
+  TaskTemplateListResponse,
   TeacherStudentDayResponse,
   TeacherTask,
   TeacherTaskItem,
@@ -70,6 +74,14 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
   });
 
   const createMut = useCreateTask(studentId);
+  const [tplOpen, setTplOpen] = React.useState(false);
+  const applyTplMut = useApplyTaskTemplate(studentId);
+  const templatesQ = useQuery<TaskTemplateListResponse>({
+    queryKey: teacherKeys.taskTemplates(),
+    queryFn: getTaskTemplates,
+    enabled: tplOpen,
+    staleTime: 60_000,
+  });
 
   return (
     <div className="space-y-6">
@@ -114,6 +126,10 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
               {data.next_date} →
             </Link>
           </nav>
+          <Button variant="outline" onClick={() => setTplOpen(true)}>
+            <LayoutTemplate className="size-4" aria-hidden />
+            Şablondan
+          </Button>
           <Button onClick={() => setCreateOpen(true)}>
             <Plus className="size-4" aria-hidden />
             Görev ekle
@@ -168,6 +184,60 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
           />
         </DialogContent>
       </Dialog>
+
+      <Dialog open={tplOpen} onOpenChange={(o) => { if (!applyTplMut.isPending) setTplOpen(o); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Şablondan görev ekle · {dateIso}</DialogTitle>
+          </DialogHeader>
+          {templatesQ.isLoading ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              <Loader2 className="mx-auto size-5 animate-spin" aria-hidden />
+            </p>
+          ) : (templatesQ.data?.items.length ?? 0) === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              Henüz görev şablonun yok.{" "}
+              <Link href="/teacher/library/task-templates" className="underline">
+                Şablon oluştur →
+              </Link>
+            </p>
+          ) : (
+            <ul className="max-h-[420px] space-y-2 overflow-y-auto">
+              {templatesQ.data!.items.map((t) => (
+                <li
+                  key={t.id}
+                  className="flex items-center justify-between gap-3 rounded-lg border border-border p-3"
+                >
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold truncate">{t.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {t.item_count} kalem · {t.total_planned} test ·{" "}
+                      {t.items.map((i) => `${i.book_name} (${i.planned_count})`).join(", ")}
+                    </p>
+                  </div>
+                  <Button
+                    size="sm"
+                    disabled={applyTplMut.isPending}
+                    onClick={() =>
+                      applyTplMut.mutate(
+                        { body: { template_id: t.id, date: dateIso } },
+                        { onSuccess: () => setTplOpen(false) },
+                      )
+                    }
+                  >
+                    {applyTplMut.isPending ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                    ) : (
+                      <Plus className="size-4" aria-hidden />
+                    )}
+                    Uygula
+                  </Button>
+                </li>
+              ))}
+            </ul>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -186,12 +256,23 @@ function TaskCardEditable({
 
   const deleteMut = useDeleteTask(studentId, dateIso);
   const patchMut = usePatchTask(studentId, dateIso);
+  const saveTplMut = useTaskTemplateFromTask();
 
   function onDelete() {
     if (!window.confirm(`"${task.title}" görevini silmek istiyor musunuz?`)) {
       return;
     }
     deleteMut.mutate({ taskId: task.id });
+  }
+
+  function onSaveTemplate() {
+    const name = window.prompt(
+      "Görev şablonu adı (sık kullandığın bu görevi kaydet):",
+      task.title || "Görev şablonu",
+    );
+    if (name && name.trim()) {
+      saveTplMut.mutate({ taskId: task.id, name: name.trim() });
+    }
   }
 
   return (
@@ -208,6 +289,20 @@ function TaskCardEditable({
             </p>
           </div>
           <div className="flex items-center gap-1 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onSaveTemplate}
+              disabled={saveTplMut.isPending}
+              title="Şablon olarak kaydet"
+              aria-label="Şablon olarak kaydet"
+            >
+              {saveTplMut.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <BookmarkPlus className="size-4" aria-hidden />
+              )}
+            </Button>
             <Button
               variant="ghost"
               size="sm"

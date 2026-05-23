@@ -184,6 +184,7 @@ export const teacherKeys = {
 
   // Paket 3.5d.2 — Dashboard warnings feed
   warningsFeed: () => ["teacher", "me", "dashboard", "warnings-feed"] as const,
+  taskTemplates: () => ["teacher", "me", "task-templates"] as const,
   studentExams: (id: number) =>
     ["teacher", "me", "students", String(id), "exams"] as const,
   studentSessions: (id: number) =>
@@ -547,5 +548,13 @@ export function getTeacherReviewFleet(): Promise<TeacherReviewFleetResponse> {
 export function getTeacherWarningsFeed(): Promise<DashboardWarningsFeedResponse> {
   return api<DashboardWarningsFeedResponse>(
     "/api/v2/teacher/dashboard/warnings-feed",
+  );
+}
+
+export function getTaskTemplates(): Promise<
+  import("@/lib/types/teacher").TaskTemplateListResponse
+> {
+  return api<import("@/lib/types/teacher").TaskTemplateListResponse>(
+    "/api/v2/teacher/task-templates",
   );
 }

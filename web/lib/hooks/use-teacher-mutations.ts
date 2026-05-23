@@ -1359,3 +1359,87 @@ export function useUnackWarning() {
     },
   });
 }
+
+// =============================================================================
+// Görev şablonları (TaskTemplate)
+// =============================================================================
+
+export function useCreateTaskTemplate() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<import("@/lib/types/teacher").TaskTemplateModel>,
+    ApiError,
+    { body: import("@/lib/types/teacher").TaskTemplateCreateBody }
+  >({
+    mutationFn: ({ body }) =>
+      api<MutationResponse<import("@/lib/types/teacher").TaskTemplateModel>>(
+        "/api/v2/teacher/task-templates",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (e) => showError(e, "Şablon oluşturulamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Görev şablonu oluşturuldu");
+    },
+  });
+}
+
+export function useTaskTemplateFromTask() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<import("@/lib/types/teacher").TaskTemplateModel>,
+    ApiError,
+    { taskId: number; name: string }
+  >({
+    mutationFn: ({ taskId, name }) =>
+      api<MutationResponse<import("@/lib/types/teacher").TaskTemplateModel>>(
+        `/api/v2/teacher/task-templates/from-task/${taskId}`,
+        { method: "POST", body: JSON.stringify({ name }) },
+      ),
+    onError: (e) => showError(e, "Şablon kaydedilemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Görev şablon olarak kaydedildi");
+    },
+  });
+}
+
+export function useDeleteTaskTemplate() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<{ deleted: number }>, ApiError, { id: number }>({
+    mutationFn: ({ id }) =>
+      api<MutationResponse<{ deleted: number }>>(
+        `/api/v2/teacher/task-templates/${id}`,
+        { method: "DELETE" },
+      ),
+    onError: (e) => showError(e, "Şablon silinemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Şablon silindi");
+    },
+  });
+}
+
+export function useApplyTaskTemplate(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<import("@/lib/types/teacher").TeacherTask>,
+    ApiError,
+    { body: import("@/lib/types/teacher").ApplyTaskTemplateBody }
+  >({
+    mutationFn: ({ body }) =>
+      api<MutationResponse<import("@/lib/types/teacher").TeacherTask>>(
+        `/api/v2/teacher/students/${studentId}/tasks/from-template`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (e) => {
+      const code = errorCode(e);
+      if (code === "paywall_active") toast.error("Deneme bitti — paketi yükseltin");
+      else showError(e, "Şablon uygulanamadı");
+    },
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Görev şablondan eklendi");
+    },
+  });
+}

@@ -964,11 +964,19 @@ const NAV_ITEMS: Array<{
   },
   {
     href: "/teacher/library/templates",
-    title: "Görev şablonları",
+    title: "Kitap şablonları",
     description:
-      "Sık kullandığın görev kalıpları. Haftalık planda tek tıkla aynı görevi yeniden uygula.",
+      "Bir kitabın ünite/bölüm yapısını kaydet, başka kitaplara tek tıkla uygula.",
     icon: LayoutTemplate,
     tone: "emerald",
+  },
+  {
+    href: "/teacher/library/task-templates",
+    title: "Görev şablonları",
+    description:
+      "Sık kullandığın görev kalıpları (kitap+bölüm+test sayısı). Plana eklerken tek tıkla aynı görevi uygula.",
+    icon: LayoutTemplate,
+    tone: "indigo",
   },
 ];
 

@@ -1688,3 +1688,53 @@ class TrialStatusResponse(BaseModel):
     subscription_status: str | None = None  # active | past_due | canceled | None
     past_due: bool = False          # abonelik yenilenmedi
     upgrade_target: str | None = None
+
+
+# =============================================================================
+# Görev şablonları (TaskTemplate) — sık kullanılan görev kalıpları
+# =============================================================================
+
+
+class TaskTemplateItemModel(BaseModel):
+    book_id: int
+    section_id: int
+    book_name: str
+    section_label: str
+    planned_count: int
+
+
+class TaskTemplateModel(BaseModel):
+    id: int
+    name: str
+    type: TaskTypeLiteral
+    items: list[TaskTemplateItemModel]
+    item_count: int
+    total_planned: int
+    created_at: datetime
+
+
+class TaskTemplateListResponse(BaseModel):
+    items: list[TaskTemplateModel]
+
+
+class TaskTemplateItemBody(BaseModel):
+    book_id: int
+    section_id: int
+    planned_count: int
+
+
+class TaskTemplateCreateBody(BaseModel):
+    name: str
+    type: TaskTypeLiteral = "test"
+    items: list[TaskTemplateItemBody]
+
+
+class TaskTemplateFromTaskBody(BaseModel):
+    name: str
+
+
+class ApplyTaskTemplateBody(BaseModel):
+    template_id: int
+    date: str                          # "YYYY-MM-DD"
+    scheduled_hour: int | None = None
+    is_draft: bool | None = None

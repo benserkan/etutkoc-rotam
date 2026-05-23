@@ -2270,6 +2270,38 @@ Kapsam: önce koç paneli.
   - **NOT:** koç + kurum badges poll'u student_snapshot/sorgu döngüsü yapıyor (60s) —
     çok öğrencide maliyet; gerekirse paylaşılan cache ile optimize edilir.
 
+## Görev şablonları (TaskTemplate) — 2026-05-23
+
+**Bağlam (kullanıcı):** Kütüphanedeki "Görev şablonları" kartı yanlış etiketliydi —
+`/teacher/library/templates`'e (BookTemplate = kitap bölüm yapısı) gidiyordu ama
+"sık kullandığın görev kalıpları, planda tek tıkla uygula" diyordu. Yani **gerçek
+görev şablonu özelliği yoktu**; kullanıcı kitap şablonu oluşturup "neden görev
+eklerken görünmüyor?" dedi. Karar: gerçek özelliği inşa et + kartı düzelt.
+Kaydetme: mevcut görevden + ayrı form (ikisi).
+
+- **Backend ✅** (**migration `f3g6j8k9j77d`** — task_templates + task_template_items,
+  additive; tasktype enum `create_type=False` Postgres-güvenli):
+  - `TaskTemplate` (teacher_id, name, type) + `TaskTemplateItem` (book+section+
+    planned_count). Öğretmen-düzeyi; uygulama anında normal görev doğrulamaları
+    (kitap sahipliği + bölüm + öğrenci ataması + rezerv + paywall).
+  - Uçlar (`teacher.py`): GET/POST `/task-templates` · POST `/task-templates/
+    from-task/{id}` (mevcut görevi şablona çevir) · DELETE `/task-templates/{id}` ·
+    POST `/students/{id}/tasks/from-template` (tek tıkla uygula → `_create_task_with_items`
+    reuse). Sahiplik 404.
+  - `scripts/test_api_v2_teacher_task_templates.py` **11/11**.
+- **Frontend ✅**: types + api (`taskTemplates` key + `getTaskTemplates`) + 4 hook
+  (create/from-task/delete/apply). Yeni sayfa `/teacher/library/task-templates`
+  (liste + "Yeni görev şablonu" formu: kitap→bölüm→sayı çok-kalemli + sil) +
+  `task-templates-client`. Kart düzeltmesi: eski kart "Kitap şablonları" oldu
+  (BookTemplate), yeni "Görev şablonları" kartı → task-templates. **Day-board
+  entegrasyonu**: "Şablondan" butonu → picker (tek tıkla uygula) + her görev
+  kartında "Şablon olarak kaydet" (BookmarkPlus → from-task). Canlı (:3000):
+  oluştur 200 · uygula 200 (görev oluştu) · sayfa render 200. Regresyon: teacher_read
+  12 · paywall 5 · tenant 29. tsc/eslint/build temiz.
+- **NOT (kavram ayrımı):** Kitap şablonu = kitabın bölüm/ünite yapısı (başka kitaba
+  uygulanır, kütüphane). Görev şablonu = görev kalıbı (kitap+bölüm+test sayısı,
+  plana uygulanır). İkisi AYRI.
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

@@ -185,8 +185,14 @@ from app.routes.api_v2.schemas.teacher import (
     StudentParentsResponse,
     StudentPatchBody,
     StudentProgramSummary,
+    ApplyTaskTemplateBody,
     TaskCreateBody,
     TaskItemBody,
+    TaskTemplateCreateBody,
+    TaskTemplateFromTaskBody,
+    TaskTemplateItemModel,
+    TaskTemplateListResponse,
+    TaskTemplateModel,
     SetWeekAnchorBody,
     TaskItemPatchBody,
     TaskPatchBody,
@@ -2921,6 +2927,230 @@ def teacher_create_task_v2(
     assert_active_coaching(db, user)
     try:
         task = _create_task_with_items(db, student=student, payload=body)
+    except ReservationError as e:
+        db.rollback()
+        raise _reservation_to_http(e)
+    except HTTPException:
+        db.rollback()
+        raise
+    db.commit()
+    db.refresh(task)
+    return MutationResponse[TeacherTask](
+        data=_build_teacher_task(db, task),
+        invalidate=_invalidate_for_task(task, user.id),
+    )
+
+
+# ---------------------- Görev şablonları (TaskTemplate) ----------------------
+
+
+def _task_template_invalidate(teacher_id: int) -> list[str]:
+    return [f"teacher:{teacher_id}:task-templates"]
+
+
+def _build_task_template_model(tpl) -> TaskTemplateModel:
+    items: list[TaskTemplateItemModel] = []
+    total = 0
+    for it in tpl.items:
+        total += it.planned_count
+        items.append(TaskTemplateItemModel(
+            book_id=it.book_id,
+            section_id=it.book_section_id,
+            book_name=(it.book.name if it.book else "—"),
+            section_label=(it.section.label if it.section else "—"),
+            planned_count=it.planned_count,
+        ))
+    return TaskTemplateModel(
+        id=tpl.id, name=tpl.name, type=tpl.type.value, items=items,
+        item_count=len(items), total_planned=total, created_at=tpl.created_at,
+    )
+
+
+def _get_owned_template(db: Session, template_id: int, teacher_id: int):
+    from app.models import TaskTemplate, TaskTemplateItem
+    tpl = (
+        db.query(TaskTemplate)
+        .options(
+            joinedload(TaskTemplate.items).joinedload(TaskTemplateItem.book),
+            joinedload(TaskTemplate.items).joinedload(TaskTemplateItem.section),
+        )
+        .filter(TaskTemplate.id == template_id, TaskTemplate.teacher_id == teacher_id)
+        .first()
+    )
+    if not tpl:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "template_not_found",
+                    "message": "Görev şablonu bulunamadı."},
+        )
+    return tpl
+
+
+def _validate_template_item(db: Session, teacher_id: int, book_id: int, section_id: int, count: int):
+    if count < 1:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_count",
+                    "message": "Test sayısı en az 1 olmalı."},
+        )
+    book = db.query(Book).filter(Book.id == book_id, Book.teacher_id == teacher_id).first()
+    if not book:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "book_not_found",
+                    "message": "Kitap bulunamadı."},
+        )
+    _ensure_section_belongs_to_book(db, book_id, section_id)
+
+
+@router.get("/task-templates", response_model=TaskTemplateListResponse)
+def teacher_task_templates_list_v2(
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğretmenin görev şablonları (sık kullanılan görev kalıpları)."""
+    from app.models import TaskTemplate, TaskTemplateItem
+    tpls = (
+        db.query(TaskTemplate)
+        .options(
+            joinedload(TaskTemplate.items).joinedload(TaskTemplateItem.book),
+            joinedload(TaskTemplate.items).joinedload(TaskTemplateItem.section),
+        )
+        .filter(TaskTemplate.teacher_id == user.id)
+        .order_by(TaskTemplate.created_at.desc())
+        .all()
+    )
+    return TaskTemplateListResponse(items=[_build_task_template_model(t) for t in tpls])
+
+
+@router.post("/task-templates", response_model=MutationResponse[TaskTemplateModel])
+def teacher_task_template_create_v2(
+    body: TaskTemplateCreateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Yeni görev şablonu oluştur (formdan: kitap+bölüm+sayı kalemleri)."""
+    from app.models import TaskTemplate, TaskTemplateItem
+    name = (body.name or "").strip()
+    if not name:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "name_required", "message": "Ad boş olamaz."},
+        )
+    if not body.items:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "no_items", "message": "En az bir kalem ekleyin."},
+        )
+    try:
+        ttype = TaskType(body.type)
+    except ValueError:
+        ttype = TaskType.TEST
+    for it in body.items:
+        _validate_template_item(db, user.id, it.book_id, it.section_id, it.planned_count)
+    tpl = TaskTemplate(teacher_id=user.id, name=name[:160], type=ttype)
+    db.add(tpl)
+    db.flush()
+    for it in body.items:
+        db.add(TaskTemplateItem(
+            template_id=tpl.id, book_id=it.book_id,
+            book_section_id=it.section_id, planned_count=it.planned_count,
+        ))
+    db.commit()
+    tpl = _get_owned_template(db, tpl.id, user.id)
+    return MutationResponse[TaskTemplateModel](
+        data=_build_task_template_model(tpl), invalidate=_task_template_invalidate(user.id),
+    )
+
+
+@router.post("/task-templates/from-task/{task_id}", response_model=MutationResponse[TaskTemplateModel])
+def teacher_task_template_from_task_v2(
+    task_id: int,
+    body: TaskTemplateFromTaskBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Mevcut bir görevi şablon olarak kaydet (kalemleri kopyalanır)."""
+    from app.models import TaskTemplate, TaskTemplateItem
+    task = _get_owned_task(db, task_id, user.id)
+    if not task.book_items:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "no_items", "message": "Görevde kalem yok."},
+        )
+    name = (body.name or "").strip() or task.title
+    tpl = TaskTemplate(teacher_id=user.id, name=name[:160], type=task.type)
+    db.add(tpl)
+    db.flush()
+    for it in task.book_items:
+        db.add(TaskTemplateItem(
+            template_id=tpl.id, book_id=it.book_id,
+            book_section_id=it.book_section_id, planned_count=it.planned_count,
+        ))
+    db.commit()
+    tpl = _get_owned_template(db, tpl.id, user.id)
+    return MutationResponse[TaskTemplateModel](
+        data=_build_task_template_model(tpl), invalidate=_task_template_invalidate(user.id),
+    )
+
+
+@router.delete("/task-templates/{template_id}", response_model=MutationResponse[dict])
+def teacher_task_template_delete_v2(
+    template_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    tpl = _get_owned_template(db, template_id, user.id)
+    db.delete(tpl)
+    db.commit()
+    return MutationResponse[dict](
+        data={"deleted": template_id}, invalidate=_task_template_invalidate(user.id),
+    )
+
+
+@router.post(
+    "/students/{student_id}/tasks/from-template",
+    response_model=MutationResponse[TeacherTask],
+)
+def teacher_apply_task_template_v2(
+    student_id: int,
+    body: ApplyTaskTemplateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Görev şablonunu öğrenciye belirtilen tarihte tek tıkla uygula → görev oluşturur."""
+    student = _get_owned_student(db, student_id, user.id)
+    assert_active_coaching(db, user)
+    tpl = _get_owned_template(db, body.template_id, user.id)
+    if not tpl.items:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "no_items",
+                    "message": "Şablonda kalem yok (kitap silinmiş olabilir)."},
+        )
+    # Başlık türet: tek kalem → 'kitap — bölüm: N test', çok kalem → şablon adı
+    if len(tpl.items) == 1:
+        it0 = tpl.items[0]
+        bk = it0.book.name if it0.book else "—"
+        sc = it0.section.label if it0.section else "—"
+        unit = "deneme" if (it0.book and it0.book.type.value in ("brans_denemesi", "genel_deneme")) else "test"
+        title = f"{bk} — {sc}: {it0.planned_count} {unit}"
+    else:
+        title = tpl.name
+    payload = TaskCreateBody(
+        date=body.date,
+        type=tpl.type.value,
+        title=title,
+        scheduled_hour=body.scheduled_hour,
+        is_draft=body.is_draft,
+        notes=None,
+        items=[
+            TaskItemBody(book_id=it.book_id, section_id=it.book_section_id, planned_count=it.planned_count)
+            for it in tpl.items
+        ],
+    )
+    try:
+        task = _create_task_with_items(db, student=student, payload=payload)
     except ReservationError as e:
         db.rollback()
         raise _reservation_to_http(e)

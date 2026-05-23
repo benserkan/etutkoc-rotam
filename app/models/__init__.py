@@ -239,6 +239,7 @@ from app.models.support_request import (
     SupportRequestMessage,
 )
 from app.models.system_secret import SystemSecret
+from app.models.task_template import TaskTemplate, TaskTemplateItem
 from app.models.warning_state import WarningState
 from app.models.owner_contact import OwnerContact
 from app.models.owner_tag import (
@@ -390,6 +391,8 @@ __all__ = [
     "SUPPORT_ATTACH_MAX_BYTES",
     "SUPPORT_ATTACH_MAX_PER_REQUEST",
     "WarningState",
+    "TaskTemplate",
+    "TaskTemplateItem",
     "SUPPORT_AUDIENCE_SUPER_ADMIN",
     "SUPPORT_AUDIENCE_INSTITUTION_ADMIN",
     "SUPPORT_AUDIENCE_LABELS_TR",

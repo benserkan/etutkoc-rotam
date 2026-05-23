@@ -1556,3 +1556,45 @@ export interface BillingMonthResponse {
   rows: BillingStudentRow[];
   totals: BillingTotals;
 }
+
+// Görev şablonları (TaskTemplate)
+export interface TaskTemplateItemModel {
+  book_id: number;
+  section_id: number;
+  book_name: string;
+  section_label: string;
+  planned_count: number;
+}
+
+export interface TaskTemplateModel {
+  id: number;
+  name: string;
+  type: string;
+  items: TaskTemplateItemModel[];
+  item_count: number;
+  total_planned: number;
+  created_at: string;
+}
+
+export interface TaskTemplateListResponse {
+  items: TaskTemplateModel[];
+}
+
+export interface TaskTemplateItemBody {
+  book_id: number;
+  section_id: number;
+  planned_count: number;
+}
+
+export interface TaskTemplateCreateBody {
+  name: string;
+  type: string;
+  items: TaskTemplateItemBody[];
+}
+
+export interface ApplyTaskTemplateBody {
+  template_id: number;
+  date: string;
+  scheduled_hour?: number | null;
+  is_draft?: boolean | null;
+}
