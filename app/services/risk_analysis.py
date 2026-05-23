@@ -148,6 +148,11 @@ def compute_risk_score(
     indicators: list[RiskIndicator] = []
     score = 0
 
+    # Onboarding kuralı: yeni oluşturulmuş öğrenci hemen "giriş yok / programsız"
+    # ile işaretlenmemeli (false-positive). Hesap yaşı eşiğin altındaysa o sinyal
+    # üretilmez. (Kullanıcı 2026-05-23 — yeni öğrenci yanlış-pozitif uyarısı.)
+    account_age_days = _days_since(student.created_at, now)
+
     # Pasif öğrenci için skor hesaplama yok (panelden zaten filtrelenir).
     # NOT: is_paused öğrenci için risk skoru ÜRETMEYE devam ederiz — koç
     # panelde silik gözükmüş halini görmek isteyebilir. Yalnız is_active=False
@@ -165,9 +170,13 @@ def compute_risk_score(
     if week.planned > 0:
         rate_pct = int(round(100 * week.completed / week.planned))
 
-    # 1) Son giriş 5+ gün önce
+    # 1) Son giriş 5+ gün önce. Hiç giriş yapmamışsa, "kaç gündür giriş yok" =
+    # hesap yaşı kadar sayılır → yeni öğrenci (hesap < 5 gün) işaretlenmez.
     last_login_days = _days_since(student.last_login_at, now)
-    if last_login_days is None or last_login_days >= 5:
+    effective_no_login = (
+        last_login_days if last_login_days is not None else account_age_days
+    )
+    if effective_no_login is not None and effective_no_login >= 5:
         indicators.append(RiskIndicator(
             code="no_login_5d",
             title="5+ gündür giriş yok",
@@ -224,8 +233,9 @@ def compute_risk_score(
         ))
         score += WEIGHTS["drop_30pct"]
 
-    # 5) Bu hafta planlı görev yok
-    if week.planned == 0:
+    # 5) Bu hafta planlı görev yok — yeni öğrenciye (hesap < 3 gün) "Programsız"
+    # demek erken; koça programı kurması için onboarding süresi tanı.
+    if week.planned == 0 and (account_age_days is None or account_age_days >= 3):
         indicators.append(RiskIndicator(
             code="no_program",
             title="Programsız",

@@ -552,6 +552,15 @@ def generate_warnings(
     """Araba-ekranı tarzı akıllı uyarılar. Sadece uyulması gereken durumlarda dön."""
     out: list[Warning] = []
 
+    # Onboarding: yeni oluşturulmuş öğrenci (hesap < 3 gün) inaktivite uyarısı
+    # ALMAZ — henüz programı/girişi olmayabilir (false-positive önleme).
+    _created = student.created_at
+    if _created is not None and _created.tzinfo is None:
+        _created = _created.replace(tzinfo=timezone.utc)
+    account_age_days = (
+        max(0, (datetime.now(timezone.utc) - _created).days) if _created else None
+    )
+
     # 1) Bugün hiç tik yapmadı mı (plan vardı ama tamamlama yok)
     today_stats = daily_stats_for(db, student.id, today)
     if today_stats.planned > 0 and today_stats.completed == 0:
@@ -576,9 +585,17 @@ def generate_warnings(
             detail=f"Dün {yesterday_stats.planned} test planlı idi, tamamlanmadı.",
         ))
 
-    # 3) Son 3 günde hiç tik yok mu (plan olsun/olmasın)
+    # 3) Son 3 günde hiç tik yok mu — SADECE programı olan (planlı görevi bulunan)
+    # ve hesabı ≥3 günlük öğrenci için. Yeni/programsız öğrenciye "hareket yok"
+    # demek yanlış-pozitif (programsızlık ayrı sinyal).
     series3 = daily_completed_series(db, student.id, today, 3)
-    if sum(series3.values()) == 0:
+    dby_stats = daily_stats_for(db, student.id, today - timedelta(days=2))
+    planned_3 = today_stats.planned + yesterday_stats.planned + dby_stats.planned
+    if (
+        sum(series3.values()) == 0
+        and planned_3 > 0
+        and (account_age_days is None or account_age_days >= 3)
+    ):
         out.append(Warning(
             level="red",
             code="inactive_3d",

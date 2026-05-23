@@ -2006,6 +2006,19 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
     "Kurum/Bağımsız koç" rozeti + "Koç 360" linki. Doğrulandı: demo C (past_due
     skor 90) + A (limit-aşımı skor 70) artık Aksiyon Merkezi'nde görünüyor.
   - Verify: analytics 9/9 + offers 19/19 + admin 13 + tenant 29; tsc/eslint/build temiz.
+- **Uyarı/risk yanlış-pozitif FIRE düzeltmesi** ✅ (2026-05-23, kullanıcı bildirdi —
+  yeni öğrenci hemen "giriş yok/hareket yok/programsız" alıyordu):
+  - Kök neden: `risk_analysis` (no_login_5d `last_login is None`→hemen; no_program
+    `planned==0`→hemen) + `analytics.generate_warnings` (inactive_3d program/yaş
+    bakmadan) hesap yaşını dikkate almıyordu.
+  - **Onboarding grace**: yeni öğrenci (hesap < ~3-5 gün) inaktivite sinyali ÜRETMEZ.
+    no_login: hiç giriş yapmamışta "kaç gün" = hesap yaşı (yaş<5 → işaretlenmez);
+    no_program: hesap ≥3 gün; inactive_3d: program (son 3g planlı>0) + hesap ≥3g.
+  - **Bütüncül test** `scripts/simulate_alert_correctness.py` **9/9**: yeni→sessiz,
+    eski programsız→no_login+no_program, dün-giriş→no_program, zamanlama 2g/4g
+    eşiği, eski programlı 3-gün-boş→inactive_3d, aktif→temiz. Gerçek sinyaller
+    hâlâ doğru üretiliyor; yanlış-pozitif yok.
+  - Regresyon: institution_p2 19 + action_center 8 + scorecard 7 + compliance 10.
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge) — kalan tek faz.
 
 Migration head: `a8b1e3f4e22y`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
