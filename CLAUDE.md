@@ -2116,6 +2116,17 @@ kapsam = önce backend+test, sonra frontend.
   tonları purge-safe explicit (koyu temada okunur). invalidate: `support:mine` /
   `support:inbox`. Verify: tsc ✅ · eslint ✅ · build ✅ (4 route). **NOT: tarayıcı
   testi yapılmadı (ortam yok) — yalnız derleme doğrulandı; canlı smoke kullanıcıya.**
+- **Yönlendirme (kurum yöneticisi → süper admin) ✅** (2026-05-23, **migration YOK**):
+  kurum yöneticisi çözemeyeceği (teknik/şifre vb.) talebi süper yöneticiye
+  yönlendirebilir. `POST /support/requests/{id}/escalate` (yalnız ilgili kurum
+  yöneticisi + audience=institution_admin + kapanmamış): muhatap institution_admin
+  → super_admin, status→Açık, üstlenen sıfırlanır, thread'e "[Yönlendirme]" notu
+  eklenir → süper admin gelen kutusunda belirir, kurum yöneticisi kuyruğundan çıkar.
+  `can_escalate` (schema viewer-bazlı) → frontend "Süper yöneticiye yönlendir"
+  butonu (not dialogu) institution-inbox detayında. **Hand-off** (yönlendiren
+  sonradan izleyemez — basit/net). Test: support smoke **42/42** (ESC.0–9: yönlendir
+  + thread notu + süper admin kutusu + kurum kuyruğundan çıkış + yönlendiren artık
+  çözümleyemez + süper admin çözümler + rol/tenant guard). Regresyon tenant 29 temiz.
 
 Migration head: `b9c2f4g5f33z`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
@@ -2124,7 +2135,8 @@ Migration head: `b9c2f4g5f33z`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `352e6fc`/`93bd059` (öğrenci detay Durum Özeti + kontrast/başarı kartları) ·
 `0641ef9` (AI ücretli kapı FIRE + yükseltmede reaktivasyon) · `4369630` (paywall
 mesaj güncellemeleri) · `b5749f5` (abonelik iptal akışı testi) ·
-`38035b8` (rol-bazlı talep sistemi backend + 32/32 test).
+`38035b8` (rol-bazlı talep sistemi backend + 32/32 test) ·
+`863aeed` (talep sistemi frontend 3 panel) · talep yönlendirme (kurum→süper admin).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

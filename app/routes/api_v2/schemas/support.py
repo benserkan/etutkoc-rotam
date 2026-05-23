@@ -11,11 +11,14 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from app.models import (
+    SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
     SUPPORT_AUDIENCE_LABELS_TR,
     SUPPORT_STATUS_LABELS_TR,
+    SUPPORT_TERMINAL_STATUSES,
     SupportRequest,
     SupportRequestMessage,
     User,
+    UserRole,
 )
 from app.models.support_request import SUPPORT_CATEGORY_LABELS_TR
 
@@ -54,6 +57,7 @@ class SupportRequestListItem(BaseModel):
     handled_by_name: str | None
     resolved_at: datetime | None
     is_mine: bool  # viewer talebin sahibi mi (talep eden mi)
+    can_escalate: bool  # viewer (kurum yöneticisi) süper yöneticiye yönlendirebilir mi
 
 
 class SupportRequestDetail(SupportRequestListItem):
@@ -81,6 +85,10 @@ class SupportReplyBody(BaseModel):
     body: str
 
 
+class SupportEscalateBody(BaseModel):
+    note: str | None = None
+
+
 # ----------------------------- Serileştiriciler -----------------------------
 
 
@@ -104,6 +112,18 @@ def message_item(msg: SupportRequestMessage, viewer: User) -> SupportMessageItem
         is_me=(msg.sender_id == viewer.id),
         body=msg.body,
         created_at=msg.created_at,
+    )
+
+
+def _can_escalate(req: SupportRequest, viewer: User) -> bool:
+    """Kurum yöneticisi, kendi kurumunun (institution_admin muhataplı) kapanmamış
+    talebini süper yöneticiye yönlendirebilir."""
+    return (
+        viewer.role == UserRole.INSTITUTION_ADMIN
+        and req.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN
+        and req.institution_id is not None
+        and req.institution_id == viewer.institution_id
+        and req.status not in SUPPORT_TERMINAL_STATUSES
     )
 
 
@@ -136,6 +156,7 @@ def _list_item(req: SupportRequest, viewer: User) -> SupportRequestListItem:
         handled_by_name=(_name(req.handled_by) if req.handled_by_id else None),
         resolved_at=req.resolved_at,
         is_mine=(req.requester_id == viewer.id),
+        can_escalate=_can_escalate(req, viewer),
     )
 
 

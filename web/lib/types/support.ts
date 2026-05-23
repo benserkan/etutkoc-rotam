@@ -43,6 +43,7 @@ export interface SupportRequestListItem {
   handled_by_name: string | null;
   resolved_at: string | null;
   is_mine: boolean;
+  can_escalate: boolean;
 }
 
 export interface SupportRequestDetail extends SupportRequestListItem {

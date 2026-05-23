@@ -254,6 +254,36 @@ def main() -> int:
               r.json()["data"]["status"] == "answered" and r2.json()["data"]["status"] == "resolved",
               f"{r.text[:80]} | {r2.text[:80]}")
 
+        # ── ESC: Kurum yöneticisi → Süper Admin yönlendirme ──
+        print("\nYönlendirme (kurum yöneticisi → süper admin):")
+        d = admin_clis[2].get(f"/api/v2/support/requests/{teacher_reqs[2]}").json()
+        check("ESC.0 kurum yöneticisi can_escalate=True", d.get("can_escalate") is True, f"{d.get('can_escalate')}")
+        r = admin_clis[2].post(f"/api/v2/support/requests/{teacher_reqs[2]}/escalate",
+                               json={"note": "Teknik/şifre konusu, sizde çözülür"})
+        ok = r.status_code == 200 and r.json()["data"]["audience"] == "super_admin" and r.json()["data"]["status"] == "open"
+        check("ESC.1 yönlendir → 200 + audience=super_admin + status=Açık", ok, f"{r.text[:140]}")
+        d = r.json()["data"] if r.status_code == 200 else {"messages": []}
+        check("ESC.2 thread'e yönlendirme notu eklendi",
+              any("Yönlendirme" in m["body"] for m in d["messages"]), "not yok")
+        inbox = sa.get("/api/v2/support/inbox").json()
+        check("ESC.3 süper admin gelen kutusunda yönlendirilen var",
+              teacher_reqs[2] in _ids_in(inbox["items"]), "yok")
+        adm2_inbox = admin_clis[2].get("/api/v2/support/inbox").json()
+        check("ESC.4 yönlendirilen, kurum yöneticisi kutusundan çıktı",
+              teacher_reqs[2] not in _ids_in(adm2_inbox["items"]), "hâlâ var")
+        r = admin_clis[2].post(f"/api/v2/support/requests/{teacher_reqs[2]}/resolve")
+        check("ESC.5 yönlendiren kurum yöneticisi artık çözümleyemez → 404", r.status_code == 404, f"{r.status_code}")
+        sa.post(f"/api/v2/support/requests/{teacher_reqs[2]}/review")
+        r = sa.post(f"/api/v2/support/requests/{teacher_reqs[2]}/resolve")
+        check("ESC.6 süper admin yönlendcileni çözümler → Çözümlendi",
+              r.status_code == 200 and r.json()["data"]["status"] == "resolved", f"{r.text[:100]}")
+        r = sa.post(f"/api/v2/support/requests/{coach_reqs[2]}/escalate", json={})
+        check("ESC.7 süper admin yönlendiremez → 403", r.status_code == 403, f"{r.status_code}")
+        r = teacher_clis[3].post(f"/api/v2/support/requests/{teacher_reqs[3]}/escalate", json={})
+        check("ESC.8 öğretmen yönlendiremez → 403", r.status_code == 403, f"{r.status_code}")
+        r = admin_clis[0].post(f"/api/v2/support/requests/{teacher_reqs[3]}/escalate", json={})
+        check("ESC.9 başka kurum yöneticisi yönlendiremez → 404", r.status_code == 404, f"{r.status_code}")
+
         # ── YETKİ ──
         print("\nYetki kontrolleri:")
         r = coach_clis[2].get("/api/v2/support/inbox")

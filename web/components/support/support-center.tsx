@@ -4,6 +4,7 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
+  ArrowUpRight,
   CheckCircle2,
   Inbox,
   Loader2,
@@ -29,6 +30,7 @@ import {
 } from "@/lib/api/support";
 import {
   useCreateSupportRequest,
+  useEscalateSupport,
   useReplySupport,
   useResolveSupport,
   useReviewSupport,
@@ -271,7 +273,10 @@ function RequestDetail({
   const withdraw = useWithdrawSupport(requestId);
   const review = useReviewSupport(requestId);
   const resolve = useResolveSupport(requestId);
+  const escalate = useEscalateSupport(requestId);
   const [replyBody, setReplyBody] = React.useState("");
+  const [escalateOpen, setEscalateOpen] = React.useState(false);
+  const [escalateNote, setEscalateNote] = React.useState("");
 
   const data = q.data;
   const terminal = data ? data.status === "resolved" || data.status === "withdrawn" : false;
@@ -374,6 +379,17 @@ function RequestDetail({
                         İncelemeye al
                       </Button>
                     ) : null}
+                    {data.can_escalate ? (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setEscalateOpen(true)}
+                        disabled={escalate.isPending}
+                      >
+                        <ArrowUpRight className="size-4" aria-hidden />
+                        Süper yöneticiye yönlendir
+                      </Button>
+                    ) : null}
                     <Button
                       variant="outline"
                       size="sm"
@@ -411,6 +427,51 @@ function RequestDetail({
           </p>
         ) : null}
       </div>
+
+      <Dialog open={escalateOpen} onOpenChange={setEscalateOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Süper yöneticiye yönlendir</DialogTitle>
+            <DialogDescription>
+              Çözemediğiniz (teknik / şifre vb.) talebi süper yöneticiye iletin.
+              Talep gelen kutunuzdan çıkar ve süper yönetici tarafından ele alınır.
+            </DialogDescription>
+          </DialogHeader>
+          <textarea
+            className={cn(FIELD, "min-h-[90px] resize-y")}
+            placeholder="Yönlendirme notu (opsiyonel) — süper yöneticiye kısa açıklama"
+            value={escalateNote}
+            onChange={(e) => setEscalateNote(e.target.value)}
+            maxLength={5000}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEscalateOpen(false)}>
+              Vazgeç
+            </Button>
+            <Button
+              onClick={() =>
+                escalate.mutate(
+                  { note: escalateNote.trim() || undefined },
+                  {
+                    onSuccess: () => {
+                      setEscalateOpen(false);
+                      onBack();
+                    },
+                  },
+                )
+              }
+              disabled={escalate.isPending}
+            >
+              {escalate.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <ArrowUpRight className="size-4" aria-hidden />
+              )}
+              Yönlendir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -19,6 +19,7 @@ from app.models import User, UserRole
 from app.routes.api_v2.dependencies import get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.support import (
+    SupportEscalateBody,
     SupportListResponse,
     SupportRequestCreateBody,
     SupportRequestDetail,
@@ -159,6 +160,31 @@ def review_request_v2(
         raise _not_found()
     try:
         svc.mark_under_review(db, req=req, recipient=user)
+    except svc.SupportError as e:
+        db.rollback()
+        raise _svc_error(e)
+    db.commit()
+    db.refresh(req)
+    return MutationResponse[SupportRequestDetail](
+        data=build_detail(req, user), invalidate=["support:inbox", "support:mine"],
+    )
+
+
+@router.post("/requests/{request_id}/escalate", response_model=MutationResponse[SupportRequestDetail])
+def escalate_request_v2(
+    request_id: int,
+    body: SupportEscalateBody,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Kurum yöneticisi, çözemeyeceği talebi süper yöneticiye yönlendirir."""
+    if user.role != UserRole.INSTITUTION_ADMIN:
+        raise _forbidden("Yönlendirme yalnız kurum yöneticisi içindir.")
+    req = svc.get_for_recipient(db, user, request_id)
+    if req is None:
+        raise _not_found()
+    try:
+        svc.escalate_to_super_admin(db, req=req, admin=user, note=body.note)
     except svc.SupportError as e:
         db.rollback()
         raise _svc_error(e)

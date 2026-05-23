@@ -92,6 +92,23 @@ export function useReviewSupport(requestId: number) {
   });
 }
 
+export function useEscalateSupport(requestId: number) {
+  const qc = useQueryClient();
+  return useMutation<Detail, ApiError, { note?: string }>({
+    mutationFn: ({ note }) =>
+      api<Detail>(`/api/v2/support/requests/${requestId}/escalate`, {
+        method: "POST",
+        body: JSON.stringify({ note: note ?? null }),
+      }),
+    onError: (e) => showError(e, "Yönlendirilemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.setQueryData(["support", "detail", String(requestId)], res.data);
+      toast.success("Talep süper yöneticiye yönlendirildi");
+    },
+  });
+}
+
 export function useResolveSupport(requestId: number) {
   const qc = useQueryClient();
   return useMutation<Detail, ApiError, void>({

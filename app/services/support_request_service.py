@@ -227,6 +227,41 @@ def mark_under_review(db: Session, *, req: SupportRequest, recipient: User) -> N
     db.flush()
 
 
+def escalate_to_super_admin(
+    db: Session, *, req: SupportRequest, admin: User, note: str | None = None,
+) -> SupportRequestMessage:
+    """Kurum yöneticisi, çözemeyeceği talebi (teknik/şifre vb.) süper yöneticiye
+    yönlendirir. Muhatap institution_admin → super_admin olur; talep kurum
+    yöneticisinin aktif kuyruğundan çıkar, süper admin gelen kutusunda 'Açık'
+    olarak belirir. Thread korunur + yönlendirme notu eklenir.
+
+    Yalnız ilgili kurumun yöneticisi + audience=institution_admin + kapanmamış
+    talep yönlendirilebilir (endpoint get_for_recipient ile aktif muhataplığı
+    doğrular).
+    """
+    if req.audience != SUPPORT_AUDIENCE_INSTITUTION_ADMIN:
+        raise SupportError("not_escalatable", "Bu talep süper yöneticiye yönlendirilemez.")
+    if req.status in SUPPORT_TERMINAL_STATUSES:
+        raise SupportError("already_closed", "Kapanmış talep yönlendirilemez.")
+
+    note = (note or "").strip()
+    sys_body = "[Yönlendirme] Kurum yöneticisi bu talebi süper yöneticiye iletti."
+    if note:
+        if len(note) > MAX_BODY:
+            raise SupportError("body_too_long", f"Not en fazla {MAX_BODY} karakter.")
+        sys_body += f" Not: {note}"
+
+    req.audience = SUPPORT_AUDIENCE_SUPER_ADMIN
+    req.status = SUPPORT_STATUS_OPEN
+    req.handled_by_id = None
+    req.handled_at = None
+    msg = SupportRequestMessage(request_id=req.id, sender_id=admin.id, body=sys_body)
+    db.add(msg)
+    _touch(req)
+    db.flush()
+    return msg
+
+
 def resolve_request(db: Session, *, req: SupportRequest, recipient: User) -> None:
     if req.status in SUPPORT_TERMINAL_STATUSES:
         raise SupportError("already_closed", "Talep zaten kapanmış.")
