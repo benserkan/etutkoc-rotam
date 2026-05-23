@@ -1315,3 +1315,47 @@ export function useGenerateCoachingInsight(studentId: number) {
     },
   });
 }
+
+// =============================================================================
+// Uyarı akışı — gördüm/ertele (WarningState)
+// =============================================================================
+
+export function useAckWarning() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{ ok: boolean }>,
+    ApiError,
+    { student_id: number; code: string; snooze_days?: number }
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<{ ok: boolean }>>(
+        "/api/v2/teacher/dashboard/warnings/ack",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (e) => showError(e, "Uyarı ertelenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Uyarı ertelendi");
+    },
+  });
+}
+
+export function useUnackWarning() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{ ok: boolean }>,
+    ApiError,
+    { student_id: number; code: string }
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<{ ok: boolean }>>(
+        "/api/v2/teacher/dashboard/warnings/unack",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (e) => showError(e, "Geri alınamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Uyarı akışa döndü");
+    },
+  });
+}

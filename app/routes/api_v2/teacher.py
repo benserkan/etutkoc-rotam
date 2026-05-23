@@ -211,6 +211,8 @@ from app.routes.api_v2.schemas.teacher import (
     DashboardWarningsFeedResponse,
     ParentNoteBody,
     ParentNoteResult,
+    WarningAckBody,
+    WarningUnackBody,
     StudentResetPasswordResult,
     TeacherBurnoutFleetResponse,
     TeacherBurnoutFleetRow,
@@ -6196,6 +6198,13 @@ def teacher_dashboard_warnings_feed_v2(
     Eşdeğer Jinja: teacher_dashboard.py top_warnings — öğrenci için
     student_snapshot.warnings, sonra severity sıralı liste.
     """
+    from app.services.warning_state_service import reconcile_states
+
+    now = datetime.now(timezone.utc)
+
+    def _aw(dt):
+        return dt if (dt is None or dt.tzinfo) else dt.replace(tzinfo=timezone.utc)
+
     today = date.today()
     students = (
         db.query(User)
@@ -6204,23 +6213,76 @@ def teacher_dashboard_warnings_feed_v2(
         .all()
     )
     level_rank = {"red": 0, "amber": 1, "green": 2}
-    feed: list[DashboardWarningRow] = []
-    total = 0
+    raw: list[tuple[User, object]] = []
+    present_keys: set[tuple[int, str]] = set()
     for s in students:
         sn = student_snapshot(db, s, today=today)
         for w in sn.warnings:
-            total += 1
-            feed.append(DashboardWarningRow(
-                student_id=s.id,
-                student_name=s.full_name,
-                level=w.level,
-                title=w.title,
-                detail=w.detail,
-                is_paused=bool(s.is_paused),
-            ))
-    feed.sort(key=lambda r: (level_rank.get(r.level, 9), r.student_name.lower()))
-    feed = feed[:30]
-    return DashboardWarningsFeedResponse(rows=feed, total=total)
+            raw.append((s, w))
+            present_keys.add((s.id, w.code))
+
+    # Tazelik + erteleme durumlarını canlı uyarılarla uzlaştır (first_seen yaz,
+    # koşulu düzelenleri sil). GET ama durum izleme yan etkisi — commit edilir.
+    states = reconcile_states(db, actor_id=user.id, present_keys=present_keys, now=now)
+    db.commit()
+
+    active: list[DashboardWarningRow] = []
+    snoozed: list[DashboardWarningRow] = []
+    for s, w in raw:
+        st = states[(s.id, w.code)]
+        age_days = max(0, (now - _aw(st.first_seen_at)).days)
+        snz = _aw(st.snooze_until)
+        is_snoozed = bool(snz and snz > now)
+        row = DashboardWarningRow(
+            student_id=s.id, student_name=s.full_name, level=w.level, code=w.code,
+            title=w.title, detail=w.detail, is_paused=bool(s.is_paused),
+            age_days=age_days, snoozed=is_snoozed, snooze_until=st.snooze_until,
+        )
+        (snoozed if is_snoozed else active).append(row)
+
+    active.sort(key=lambda r: (level_rank.get(r.level, 9), r.student_name.lower()))
+    snoozed.sort(key=lambda r: (level_rank.get(r.level, 9), r.student_name.lower()))
+    return DashboardWarningsFeedResponse(
+        rows=active[:30], snoozed_rows=snoozed[:30],
+        total=len(active), snoozed_count=len(snoozed),
+    )
+
+
+@router.post("/dashboard/warnings/ack", response_model=MutationResponse[dict])
+def teacher_warning_ack_v2(
+    body: WarningAckBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Uyarıyı 'gördüm/ertele' — N gün aktif akıştan gizler (koşul sürerse geri döner)."""
+    from app.services.warning_state_service import set_snooze
+
+    _get_owned_student(db, body.student_id, user.id)  # sahiplik 404
+    set_snooze(db, actor_id=user.id, student_id=body.student_id,
+               code=body.code, days=body.snooze_days)
+    db.commit()
+    return MutationResponse[dict](
+        data={"ok": True},
+        invalidate=[f"teacher:{user.id}:dashboard:warnings-feed"],
+    )
+
+
+@router.post("/dashboard/warnings/unack", response_model=MutationResponse[dict])
+def teacher_warning_unack_v2(
+    body: WarningUnackBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Erteleme/gördüm geri al → uyarı aktif akışa döner."""
+    from app.services.warning_state_service import clear_snooze
+
+    _get_owned_student(db, body.student_id, user.id)
+    clear_snooze(db, actor_id=user.id, student_id=body.student_id, code=body.code)
+    db.commit()
+    return MutationResponse[dict](
+        data={"ok": True},
+        invalidate=[f"teacher:{user.id}:dashboard:warnings-feed"],
+    )
 
 
 # =============================================================================

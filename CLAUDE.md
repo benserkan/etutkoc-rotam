@@ -2172,6 +2172,38 @@ mesaj güncellemeleri) · `b5749f5` (abonelik iptal akışı testi) ·
 talep yönlendirme DÜZELTME (escalated_by izleme + cevap geri düşer, canlı 17/17) ·
 talep dosya eki + rol-renk + tıklanabilir profil (54/54 + canlı 22/22).
 
+## Uyarı Akışı tazelik + Gördüm/Ertele (alarm körlüğü) — 2026-05-23
+
+**Bağlam (kullanıcı 2026-05-23):** Pano "Uyarı Akışı"ndaki kırmızı/sarı uyarılar
+canlı veriden hesaplanıyor (koşul düzelince düşüyor) ama "müdahale edildi mi /
+ne kadar taze" bilgisi yoktu → işlenen ama koşulu süren uyarı kırmızı kalıp
+**alarm körlüğü** yaratıyordu. Karar (3 onay): **Gördüm/Ertele + tazelik etiketi** ·
+**süreli + koşul-düzelince sıfırla** · **önce öğretmen panosu**.
+
+- **Backend ✅** (**migration `e2f5i7j8i66c`** — warning_states, additive):
+  - `warning_states` (actor_id + student_id + code unique; first_seen_at +
+    snooze_until + acknowledged_at). Uyarı kimliği = `(student_id, code)`.
+  - `warning_state_service`: `reconcile_states` (feed her yüklemede — yeni uyarıya
+    first_seen yaz, **canlıda olmayan = koşul düzeldi → SİL** [tekrar ederse taze]),
+    `set_snooze` (gördüm/ertele N gün), `clear_snooze` (geri al). DEFAULT 3 / MAX 30 gün.
+  - `GET /teacher/dashboard/warnings-feed` artık reconcile yapar + commit eder
+    (GET ama durum-izleme yan etkisi); response `rows` (aktif) + `snoozed_rows`
+    (ertelenenler) + `total` + `snoozed_count`; her satır +code/age_days/snoozed/
+    snooze_until. `POST .../warnings/ack` + `.../warnings/unack` (sahiplik 404).
+  - **snooze_until > now → aktif akıştan gizli**; süre dolunca koşul sürerse otomatik
+    geri döner. Tablo generic (actor_id) → kurum yöneticisi + süper admin sonra reuse.
+  - `scripts/test_api_v2_teacher_warning_ack.py` **9/9** (feed+code+age · ack→
+    ertelenenler · unack→aktif · sahiplik 404 · reconcile purge). CANLI
+    `live_warning_ack.py` :3000 **6/6** (gerçek HTTP + pano render).
+- **Frontend ✅** (yalnız öğretmen panosu): `dashboard-client.tsx` WarningRow yeniden
+  yapı — yaş etiketi (Clock "N gündür") + hover'da **Gördüm** (3 gün) / **7g** butonları;
+  yeni **Ertelenenler (N)** açılır bölümü (Geri al). types +code/age_days/snoozed/
+  snooze_until + snoozed_rows/snoozed_count; `useAckWarning`/`useUnackWarning`.
+  Verify: tsc ✅ · eslint ✅ · build ✅ · tenant 29 temiz.
+- **NOT**: warnings-feed GET artık yazma yapıyor (reconcile commit) → SQLite'ta
+  eşzamanlı pano polling ile nadiren kısa kilit (geçici). Kurum yöneticisi + süper
+  admin panoları kapsam dışı (sonraki adım, aynı tablo reuse).
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

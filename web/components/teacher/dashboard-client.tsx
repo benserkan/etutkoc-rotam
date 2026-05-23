@@ -9,11 +9,16 @@ import {
   AlertTriangle,
   ArrowRight,
   Bell,
+  Check,
   CheckCircle2,
+  ChevronDown,
+  Clock,
   ExternalLink,
   HeartPulse,
   Hourglass,
   Info,
+  Loader2,
+  RotateCcw,
   TrendingUp,
   Users,
   type LucideIcon,
@@ -24,6 +29,7 @@ import {
   getTeacherWarningsFeed,
   teacherKeys,
 } from "@/lib/api/teacher";
+import { useAckWarning, useUnackWarning } from "@/lib/hooks/use-teacher-mutations";
 import type {
   DashboardWarningRow,
   DashboardWarningsFeedResponse,
@@ -318,39 +324,51 @@ function WarningsFeedSection() {
             </p>
           ) : (
             <ul className="divide-y divide-border max-h-[500px] overflow-y-auto -mx-2">
-              {q.data.rows.map((w, idx) => (
-                <WarningRow key={`${w.student_id}-${idx}`} row={w} />
+              {q.data.rows.map((w) => (
+                <WarningRow key={`${w.student_id}-${w.code}`} row={w} />
               ))}
             </ul>
           )}
+
+          {q.data && q.data.snoozed_count > 0 ? (
+            <SnoozedSection rows={q.data.snoozed_rows} count={q.data.snoozed_count} />
+          ) : null}
         </CardContent>
       </Card>
     </section>
   );
 }
 
+function ageLabel(days: number): string {
+  if (days <= 0) return "bugün";
+  if (days === 1) return "1 gündür";
+  return `${days} gündür`;
+}
+
 function WarningRow({ row }: { row: DashboardWarningRow }) {
   const meta = LEVEL_META[row.level];
   const Icon = meta.icon;
+  const ack = useAckWarning();
+  const busy = ack.isPending;
   return (
-    <li>
-      <Link
-        href={`/teacher/students/${row.student_id}`}
-        className={cn(
-          "flex items-start gap-2.5 px-3 py-2 hover:bg-muted/40 transition rounded-md",
-          row.is_paused && "opacity-60",
-        )}
-      >
-        <Icon
-          className={cn("size-4 mt-0.5 flex-shrink-0", meta.tone)}
-          aria-hidden
-        />
-        <div className="flex-1 min-w-0">
+    <li
+      className={cn(
+        "group flex items-start gap-2.5 px-3 py-2 rounded-md transition hover:bg-muted/40",
+        row.is_paused && "opacity-60",
+      )}
+    >
+      <Icon className={cn("size-4 mt-0.5 flex-shrink-0", meta.tone)} aria-hidden />
+      <div className="flex-1 min-w-0">
+        <Link href={`/teacher/students/${row.student_id}`} className="block">
           <div className="flex items-baseline justify-between gap-2 flex-wrap">
             <span className={cn("text-sm font-semibold truncate", meta.tone)}>
               {row.title}
             </span>
             <span className="text-[11px] text-muted-foreground whitespace-nowrap inline-flex items-center gap-1">
+              <span className="inline-flex items-center gap-0.5" title="Bu uyarı kaç gündür sürüyor">
+                <Clock className="size-3" aria-hidden />
+                {ageLabel(row.age_days)}
+              </span>
               {row.is_paused ? (
                 <span
                   className="text-[10px] uppercase tracking-wider px-1 py-0.5 rounded bg-muted text-muted-foreground"
@@ -365,9 +383,86 @@ function WarningRow({ row }: { row: DashboardWarningRow }) {
           <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
             {row.detail}
           </p>
-        </div>
-      </Link>
+        </Link>
+      </div>
+      {/* Gördüm / Ertele — işlenen uyarı akıştan çıkar, süre dolunca koşul sürerse döner */}
+      <div className="flex shrink-0 items-center gap-1 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+        <button
+          type="button"
+          onClick={() => ack.mutate({ student_id: row.student_id, code: row.code, snooze_days: 3 })}
+          disabled={busy}
+          title="Gördüm — 3 gün akıştan gizle (koşul sürerse geri döner)"
+          className="inline-flex items-center gap-1 rounded border border-border bg-card px-1.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          {busy ? <Loader2 className="size-3 animate-spin" aria-hidden /> : <Check className="size-3" aria-hidden />}
+          Gördüm
+        </button>
+        <button
+          type="button"
+          onClick={() => ack.mutate({ student_id: row.student_id, code: row.code, snooze_days: 7 })}
+          disabled={busy}
+          title="7 gün ertele"
+          className="rounded border border-border bg-card px-1.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          7g
+        </button>
+      </div>
     </li>
+  );
+}
+
+function SnoozedSection({
+  rows,
+  count,
+}: {
+  rows: DashboardWarningRow[];
+  count: number;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const unack = useUnackWarning();
+  return (
+    <div className="mt-3 border-t border-border pt-2">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ChevronDown className={cn("size-3.5 transition", open && "rotate-180")} aria-hidden />
+        Ertelenenler ({count})
+      </button>
+      {open ? (
+        <ul className="mt-1 divide-y divide-border/60 -mx-2">
+          {rows.map((w) => (
+            <li
+              key={`sn-${w.student_id}-${w.code}`}
+              className="flex items-center gap-2 px-3 py-1.5 opacity-70"
+            >
+              <div className="flex-1 min-w-0">
+                <Link
+                  href={`/teacher/students/${w.student_id}`}
+                  className="text-xs font-medium truncate hover:underline"
+                >
+                  {w.title}
+                </Link>
+                <span className="ml-1.5 text-[11px] text-muted-foreground">
+                  · {w.student_name.split(" ")[0]}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => unack.mutate({ student_id: w.student_id, code: w.code })}
+                disabled={unack.isPending}
+                title="Geri al — uyarıyı akışa döndür"
+                className="inline-flex shrink-0 items-center gap-1 rounded border border-border bg-card px-1.5 py-1 text-[11px] font-medium text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                <RotateCcw className="size-3" aria-hidden />
+                Geri al
+              </button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </div>
   );
 }
 

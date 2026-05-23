@@ -1314,14 +1314,31 @@ class DashboardWarningRow(BaseModel):
     student_id: int
     student_name: str
     level: WarningLevelLiteral
+    code: str                       # uyarı kimliği (gördüm/ertele için)
     title: str
     detail: str
     is_paused: bool
+    age_days: int                   # kaç gündür sürüyor (tazelik)
+    snoozed: bool                   # ertelenmiş mi (aktif akışta gizli)
+    snooze_until: datetime | None
 
 
 class DashboardWarningsFeedResponse(BaseModel):
-    rows: list[DashboardWarningRow]
-    total: int
+    rows: list[DashboardWarningRow]          # aktif (ertelenmemiş) uyarılar
+    snoozed_rows: list[DashboardWarningRow]  # ertelenenler (geri alınabilir)
+    total: int                               # aktif sayım
+    snoozed_count: int
+
+
+class WarningAckBody(BaseModel):
+    student_id: int
+    code: str
+    snooze_days: int = 3
+
+
+class WarningUnackBody(BaseModel):
+    student_id: int
+    code: str
 
 
 class StudentResetPasswordResult(BaseModel):

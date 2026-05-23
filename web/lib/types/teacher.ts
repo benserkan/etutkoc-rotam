@@ -1222,14 +1222,20 @@ export interface DashboardWarningRow {
   student_id: number;
   student_name: string;
   level: WarningLevel;
+  code: string;
   title: string;
   detail: string;
   is_paused: boolean;
+  age_days: number;
+  snoozed: boolean;
+  snooze_until: string | null;
 }
 
 export interface DashboardWarningsFeedResponse {
   rows: DashboardWarningRow[];
+  snoozed_rows: DashboardWarningRow[];
   total: number;
+  snoozed_count: number;
 }
 
 export interface StudentResetPasswordResult {
