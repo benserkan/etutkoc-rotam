@@ -217,6 +217,23 @@ from app.models.contact_request import (
     ContactRequest,
 )
 from app.models.exam_result import ExamResult, compute_net, section_penalty
+from app.models.support_request import (
+    SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
+    SUPPORT_AUDIENCE_LABELS_TR,
+    SUPPORT_AUDIENCE_SUPER_ADMIN,
+    SUPPORT_CATEGORY_LABELS_TR,
+    SUPPORT_OPEN_STATUSES,
+    SUPPORT_RECIPIENT_PENDING_STATUSES,
+    SUPPORT_STATUS_ANSWERED,
+    SUPPORT_STATUS_LABELS_TR,
+    SUPPORT_STATUS_OPEN,
+    SUPPORT_STATUS_RESOLVED,
+    SUPPORT_STATUS_UNDER_REVIEW,
+    SUPPORT_STATUS_WITHDRAWN,
+    SUPPORT_TERMINAL_STATUSES,
+    SupportRequest,
+    SupportRequestMessage,
+)
 from app.models.system_secret import SystemSecret
 from app.models.owner_contact import OwnerContact
 from app.models.owner_tag import (
@@ -361,6 +378,21 @@ __all__ = [
     "CoachingSessionStatus",
     "AppSetting",
     "ContactRequest",
+    "SupportRequest",
+    "SupportRequestMessage",
+    "SUPPORT_AUDIENCE_SUPER_ADMIN",
+    "SUPPORT_AUDIENCE_INSTITUTION_ADMIN",
+    "SUPPORT_AUDIENCE_LABELS_TR",
+    "SUPPORT_CATEGORY_LABELS_TR",
+    "SUPPORT_STATUS_OPEN",
+    "SUPPORT_STATUS_UNDER_REVIEW",
+    "SUPPORT_STATUS_ANSWERED",
+    "SUPPORT_STATUS_RESOLVED",
+    "SUPPORT_STATUS_WITHDRAWN",
+    "SUPPORT_STATUS_LABELS_TR",
+    "SUPPORT_OPEN_STATUSES",
+    "SUPPORT_TERMINAL_STATUSES",
+    "SUPPORT_RECIPIENT_PENDING_STATUSES",
     "CONTACT_STATUS_NEW",
     "CONTACT_STATUS_CONTACTED",
     "CONTACT_STATUS_CLOSED",

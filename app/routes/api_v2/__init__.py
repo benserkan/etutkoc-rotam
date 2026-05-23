@@ -35,6 +35,7 @@ from app.routes.api_v2 import parent as v2_parent
 from app.routes.api_v2 import pricing_public as v2_pricing_public
 from app.routes.api_v2 import settings as v2_settings
 from app.routes.api_v2 import student as v2_student
+from app.routes.api_v2 import support as v2_support
 from app.routes.api_v2 import teacher as v2_teacher
 from app.routes.api_v2 import weekly_plan as v2_weekly_plan
 
@@ -58,6 +59,7 @@ router.include_router(v2_academic.router)
 router.include_router(v2_grade.router)
 router.include_router(v2_csv.router)
 router.include_router(v2_weekly_plan.router)
+router.include_router(v2_support.router)
 
 
 @router.get("/ping", include_in_schema=False)
