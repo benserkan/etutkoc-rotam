@@ -222,15 +222,16 @@ def resolve_request_v2(
 
 
 def _resolve_access(db: Session, user: User, request_id: int):
-    """Talebe erişimi çöz: (req, by_recipient). Erişim yoksa 404."""
-    req = svc.get_for_requester(db, user, request_id)
-    if req is not None:
-        return req, False
-    if _is_recipient_role(user):
-        req = svc.get_for_recipient(db, user, request_id)
-        if req is not None:
-            return req, True
-    raise _not_found()
+    """Talebe görüntüleme erişimini çöz: (req, by_recipient).
+
+    Erişenler: talep eden · aktif muhatap · yönlendiren kurum yöneticisi.
+    by_recipient = kullanıcı AKTİF muhatap mı (yanıt cevabı 'Cevaplandı' yapar).
+    Erişim yoksa 404.
+    """
+    req = svc.get_viewable(db, user, request_id)
+    if req is None:
+        raise _not_found()
+    return req, svc.is_active_recipient(req, user)
 
 
 @router.get("/requests/{request_id}", response_model=SupportRequestDetail)

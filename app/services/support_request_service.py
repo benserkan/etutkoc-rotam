@@ -17,6 +17,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from sqlalchemy import or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import (
@@ -143,11 +144,17 @@ def list_inbox_super_admin(
 def list_inbox_institution_admin(
     db: Session, admin: User, *, status_filter: str | None = None,
 ) -> list[SupportRequest]:
+    """Kurum yöneticisinin gelen kutusu: AKTİF kuyruğu (audience=institution_admin
+    + kendi kurumu) + KENDİ YÖNLENDİRDİKLERİ (escalated_by_id == admin.id). İkincisi
+    süper yöneticiye iletilmiş olsa da burada kalır → yönetici cevabı izleyebilir."""
     if admin.institution_id is None:
         return []
     q = _base_query(db).filter(
-        SupportRequest.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
-        SupportRequest.institution_id == admin.institution_id,
+        or_(
+            (SupportRequest.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN)
+            & (SupportRequest.institution_id == admin.institution_id),
+            SupportRequest.escalated_by_id == admin.id,
+        )
     )
     if status_filter:
         q = q.filter(SupportRequest.status == status_filter)
@@ -162,22 +169,42 @@ def get_for_requester(db: Session, requester: User, req_id: int) -> SupportReque
     )
 
 
+def is_active_recipient(req: SupportRequest, user: User) -> bool:
+    """Kullanıcı talebin AKTİF muhatabı mı (eyleme yetkili: incele/cevapla/çözümle/
+    yönlendir). Süper admin → audience=super_admin; kurum yöneticisi →
+    audience=institution_admin + kendi kurumu."""
+    if user.role == UserRole.SUPER_ADMIN:
+        return req.audience == SUPPORT_AUDIENCE_SUPER_ADMIN
+    if user.role == UserRole.INSTITUTION_ADMIN:
+        return (
+            req.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN
+            and req.institution_id is not None
+            and req.institution_id == user.institution_id
+        )
+    return False
+
+
 def get_for_recipient(db: Session, recipient: User, req_id: int) -> SupportRequest | None:
-    """Muhatap erişimi: süper admin → audience=super_admin; kurum yöneticisi →
-    audience=institution_admin + KENDİ kurumu. Aksi → None (tenant izolasyonu)."""
+    """AKTİF muhatap erişimi (eylemler için). Aksi → None (tenant izolasyonu)."""
     req = _base_query(db).filter(SupportRequest.id == req_id).first()
     if req is None:
         return None
-    if recipient.role == UserRole.SUPER_ADMIN:
-        return req if req.audience == SUPPORT_AUDIENCE_SUPER_ADMIN else None
-    if recipient.role == UserRole.INSTITUTION_ADMIN:
-        if (
-            req.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN
-            and req.institution_id is not None
-            and req.institution_id == recipient.institution_id
-        ):
-            return req
+    return req if is_active_recipient(req, recipient) else None
+
+
+def get_viewable(db: Session, user: User, req_id: int) -> SupportRequest | None:
+    """GÖRÜNTÜLEME erişimi (thread okuma): talep eden VEYA aktif muhatap VEYA
+    yönlendiren kurum yöneticisi. Yönlendiren, talep süper yöneticiye geçse bile
+    görmeye + cevabı izlemeye devam eder."""
+    req = _base_query(db).filter(SupportRequest.id == req_id).first()
+    if req is None:
         return None
+    if req.requester_id == user.id:
+        return req
+    if is_active_recipient(req, user):
+        return req
+    if req.escalated_by_id is not None and req.escalated_by_id == user.id:
+        return req
     return None
 
 
@@ -255,6 +282,8 @@ def escalate_to_super_admin(
     req.status = SUPPORT_STATUS_OPEN
     req.handled_by_id = None
     req.handled_at = None
+    req.escalated_by_id = admin.id
+    req.escalated_at = datetime.now(timezone.utc)
     msg = SupportRequestMessage(request_id=req.id, sender_id=admin.id, body=sys_body)
     db.add(msg)
     _touch(req)

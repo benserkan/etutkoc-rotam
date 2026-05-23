@@ -2116,19 +2116,32 @@ kapsam = önce backend+test, sonra frontend.
   tonları purge-safe explicit (koyu temada okunur). invalidate: `support:mine` /
   `support:inbox`. Verify: tsc ✅ · eslint ✅ · build ✅ (4 route). **NOT: tarayıcı
   testi yapılmadı (ortam yok) — yalnız derleme doğrulandı; canlı smoke kullanıcıya.**
-- **Yönlendirme (kurum yöneticisi → süper admin) ✅** (2026-05-23, **migration YOK**):
+- **Yönlendirme (kurum yöneticisi → süper admin) ✅ + DÜZELTME** (2026-05-23,
+  **migration `c0d3g5h6g44a`** — escalated_by_id/escalated_at, additive):
   kurum yöneticisi çözemeyeceği (teknik/şifre vb.) talebi süper yöneticiye
-  yönlendirebilir. `POST /support/requests/{id}/escalate` (yalnız ilgili kurum
-  yöneticisi + audience=institution_admin + kapanmamış): muhatap institution_admin
-  → super_admin, status→Açık, üstlenen sıfırlanır, thread'e "[Yönlendirme]" notu
-  eklenir → süper admin gelen kutusunda belirir, kurum yöneticisi kuyruğundan çıkar.
-  `can_escalate` (schema viewer-bazlı) → frontend "Süper yöneticiye yönlendir"
-  butonu (not dialogu) institution-inbox detayında. **Hand-off** (yönlendiren
-  sonradan izleyemez — basit/net). Test: support smoke **42/42** (ESC.0–9: yönlendir
-  + thread notu + süper admin kutusu + kurum kuyruğundan çıkış + yönlendiren artık
-  çözümleyemez + süper admin çözümler + rol/tenant guard). Regresyon tenant 29 temiz.
+  yönlendirir. `POST /support/requests/{id}/escalate` (yalnız ilgili kurum yöneticisi
+  + audience=institution_admin + kapanmamış): muhatap institution_admin → super_admin,
+  status→Açık, üstlenen sıfırlanır, **escalated_by_id set**, thread'e "[Yönlendirme]"
+  notu eklenir.
+  - **KULLANICI BUG BİLDİRİMİ (2026-05-23)**: İlk "hand-off" tasarımı yanlıştı —
+    yönlendirince talep kurum yöneticisinin kutusundan **tamamen kayboluyordu** ve
+    süper adminin cevabı kurum yöneticisine **geri düşmüyordu**. DÜZELTİLDİ:
+    `escalated_by_id` ile yönlendiren talebi GÖRMEYE + cevabı izlemeye devam eder
+    (3 taraflı thread: talep eden + yönlendiren + süper admin).
+  - `get_viewable` (talep eden | aktif muhatap | yönlendiren) GET detay + reply
+    erişimi; `list_inbox_institution_admin` `or_(aktif kuyruk, escalated_by==admin)`
+    → yönlendirilen talep kutuda KALIR; `is_active_recipient` eylem yetkisi (yönlendiren
+    artık review/resolve YAPAMAZ — aktif muhatap süper admin). Schema +can_manage/
+    escalated/escalated_by_name/is_escalator. Frontend: aksiyonlar `can_manage` bazlı,
+    yönlendiren için "yönlendirildi — cevap burada görünür" notu + "Yönlendirildi" rozeti,
+    yönlendirme sonrası seçim KORUNUR (kutu boşalmaz).
+  - **CANLI TEST** `scripts/live_support_flow.py` (gerçek HTTP + cookie jar, tarayıcı
+    yolu :3000 → rewrite → :8081): 3 akış (koç→süper admin cevap döner / öğretmen→
+    kurum yöneticisi / öğretmen→yönlendir→süper admin) + 4 sayfa render → **17/17**
+    kullanıcının canlı stack'inde. API smoke `test_api_v2_support_requests.py` **46/46**
+    (ESC.4 kutuda kalır · ESC.8 yönlendiren cevabı görür · ESC.9 talep eden görür).
 
-Migration head: `b9c2f4g5f33z`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
+Migration head: `c0d3g5h6g44a`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
 `8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup) ·
 `62c1d7f`/`3a6738e`/`4cb7363`/`4eb9c80` (trial yaşam döngüsü Faz 1-4) ·
@@ -2136,7 +2149,8 @@ Migration head: `b9c2f4g5f33z`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `0641ef9` (AI ücretli kapı FIRE + yükseltmede reaktivasyon) · `4369630` (paywall
 mesaj güncellemeleri) · `b5749f5` (abonelik iptal akışı testi) ·
 `38035b8` (rol-bazlı talep sistemi backend + 32/32 test) ·
-`863aeed` (talep sistemi frontend 3 panel) · talep yönlendirme (kurum→süper admin).
+`863aeed` (talep sistemi frontend 3 panel) · `268a967` (talep yönlendirme) ·
+talep yönlendirme DÜZELTME (escalated_by izleme + cevap geri düşer, canlı 17/17).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 

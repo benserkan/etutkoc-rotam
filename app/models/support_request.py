@@ -116,8 +116,16 @@ class SupportRequest(Base):
     handled_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     resolved_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
+    # Yönlendirme: kurum yöneticisi talebi süper yöneticiye iletince dolar.
+    # Talep ondan KOPMAZ — escalated_by ile görmeye + cevabı izlemeye devam eder.
+    escalated_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    escalated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
     requester: Mapped["User"] = relationship("User", foreign_keys=[requester_id])
     handled_by: Mapped["User | None"] = relationship("User", foreign_keys=[handled_by_id])
+    escalated_by: Mapped["User | None"] = relationship("User", foreign_keys=[escalated_by_id])
     institution: Mapped["Institution | None"] = relationship(
         "Institution", foreign_keys=[institution_id]
     )

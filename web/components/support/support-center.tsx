@@ -237,7 +237,14 @@ function RequestRow({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="line-clamp-1 text-sm font-semibold">{item.subject}</p>
-        <StatusBadge status={item.status} label={item.status_label} />
+        <div className="flex shrink-0 items-center gap-1">
+          {item.escalated ? (
+            <span className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-1.5 py-0.5 text-[10px] font-semibold text-violet-900">
+              Yönlendirildi
+            </span>
+          ) : null}
+          <StatusBadge status={item.status} label={item.status_label} />
+        </div>
       </div>
       <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
         {item.last_message_preview ?? "—"}
@@ -281,6 +288,8 @@ function RequestDetail({
   const data = q.data;
   const terminal = data ? data.status === "resolved" || data.status === "withdrawn" : false;
   const isMine = data?.is_mine ?? false;
+  const canManage = data?.can_manage ?? false;
+  const isEscalator = data?.is_escalator ?? false;
 
   function submitReply() {
     const body = replyBody.trim();
@@ -308,12 +317,20 @@ function RequestDetail({
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-base font-semibold">{data.subject}</h2>
                 <StatusBadge status={data.status} label={data.status_label} />
+                {data.escalated ? (
+                  <span className="inline-flex items-center rounded-full border border-violet-300 bg-violet-50 px-2 py-0.5 text-[11px] font-semibold text-violet-900">
+                    Süper yöneticiye yönlendirildi
+                  </span>
+                ) : null}
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 {data.category_label} · {data.requester_name}
                 {data.institution_name ? ` · ${data.institution_name}` : ""} ·{" "}
                 {fmt(data.created_at)}
                 {data.handled_by_name ? ` · İlgilenen: ${data.handled_by_name}` : ""}
+                {data.escalated && data.escalated_by_name
+                  ? ` · Yönlendiren: ${data.escalated_by_name}`
+                  : ""}
               </p>
             </>
           )}
@@ -365,9 +382,15 @@ function RequestDetail({
               onChange={(e) => setReplyBody(e.target.value)}
               maxLength={5000}
             />
+            {isEscalator && !canManage ? (
+              <p className="rounded-md border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs text-violet-900">
+                Bu talebi süper yöneticiye yönlendirdiniz; süper yönetici yanıtladığında
+                cevap burada görünür.
+              </p>
+            ) : null}
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap gap-2">
-                {!isMine ? (
+                {canManage ? (
                   <>
                     {(data.status === "open" || data.status === "answered") ? (
                       <Button
@@ -400,7 +423,7 @@ function RequestDetail({
                       Çözümle
                     </Button>
                   </>
-                ) : (
+                ) : isMine ? (
                   <Button
                     variant="outline"
                     size="sm"
@@ -409,7 +432,7 @@ function RequestDetail({
                   >
                     Geri çek
                   </Button>
-                )}
+                ) : null}
               </div>
               <Button size="sm" onClick={submitReply} disabled={reply.isPending || !replyBody.trim()}>
                 {reply.isPending ? (
@@ -452,12 +475,7 @@ function RequestDetail({
               onClick={() =>
                 escalate.mutate(
                   { note: escalateNote.trim() || undefined },
-                  {
-                    onSuccess: () => {
-                      setEscalateOpen(false);
-                      onBack();
-                    },
-                  },
+                  { onSuccess: () => setEscalateOpen(false) },
                 )
               }
               disabled={escalate.isPending}

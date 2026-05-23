@@ -13,6 +13,7 @@ from pydantic import BaseModel
 from app.models import (
     SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
     SUPPORT_AUDIENCE_LABELS_TR,
+    SUPPORT_AUDIENCE_SUPER_ADMIN,
     SUPPORT_STATUS_LABELS_TR,
     SUPPORT_TERMINAL_STATUSES,
     SupportRequest,
@@ -57,7 +58,11 @@ class SupportRequestListItem(BaseModel):
     handled_by_name: str | None
     resolved_at: datetime | None
     is_mine: bool  # viewer talebin sahibi mi (talep eden mi)
+    can_manage: bool  # viewer aktif muhatap mı (incele/cevapla/çözümle)
     can_escalate: bool  # viewer (kurum yöneticisi) süper yöneticiye yönlendirebilir mi
+    escalated: bool  # talep süper yöneticiye yönlendirildi mi
+    escalated_by_name: str | None
+    is_escalator: bool  # viewer bu talebi yönlendiren kurum yöneticisi mi
 
 
 class SupportRequestDetail(SupportRequestListItem):
@@ -115,14 +120,24 @@ def message_item(msg: SupportRequestMessage, viewer: User) -> SupportMessageItem
     )
 
 
+def _is_active_recipient(req: SupportRequest, viewer: User) -> bool:
+    if viewer.role == UserRole.SUPER_ADMIN:
+        return req.audience == SUPPORT_AUDIENCE_SUPER_ADMIN
+    if viewer.role == UserRole.INSTITUTION_ADMIN:
+        return (
+            req.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN
+            and req.institution_id is not None
+            and req.institution_id == viewer.institution_id
+        )
+    return False
+
+
 def _can_escalate(req: SupportRequest, viewer: User) -> bool:
     """Kurum yöneticisi, kendi kurumunun (institution_admin muhataplı) kapanmamış
     talebini süper yöneticiye yönlendirebilir."""
     return (
         viewer.role == UserRole.INSTITUTION_ADMIN
-        and req.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN
-        and req.institution_id is not None
-        and req.institution_id == viewer.institution_id
+        and _is_active_recipient(req, viewer)
         and req.status not in SUPPORT_TERMINAL_STATUSES
     )
 
@@ -156,7 +171,11 @@ def _list_item(req: SupportRequest, viewer: User) -> SupportRequestListItem:
         handled_by_name=(_name(req.handled_by) if req.handled_by_id else None),
         resolved_at=req.resolved_at,
         is_mine=(req.requester_id == viewer.id),
+        can_manage=_is_active_recipient(req, viewer),
         can_escalate=_can_escalate(req, viewer),
+        escalated=(req.escalated_by_id is not None),
+        escalated_by_name=(_name(req.escalated_by) if req.escalated_by_id else None),
+        is_escalator=(req.escalated_by_id is not None and req.escalated_by_id == viewer.id),
     )
 
 
