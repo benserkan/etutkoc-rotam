@@ -195,6 +195,47 @@ def cancel_offer(
     return {"ok": True, "offer_id": offer.id}
 
 
+def update_offer(
+    db: Session, *, offer_id: int,
+    title: str | None = None,
+    public_message: str | None = None,
+    admin_note: str | None = None,
+    value: float | None = None,
+    duration_months: int | None = None,
+    new_plan: str | None = None,
+    expires_in_days: int | None = None,
+    autocommit: bool = True,
+) -> dict:
+    """Henüz GÖNDERİLMEMİŞ (DRAFT) teklifi düzenle — admin son rötuş.
+
+    Yalnız DRAFT düzenlenebilir (SENT/ACCEPTED vb. değişmez). None geçilen alanlar
+    dokunulmaz; boş string → temizler. expires_in_days verilirse expires_at yeniden
+    hesaplanır (0/negatif → süresiz)."""
+    offer = db.get(Offer, offer_id)
+    if offer is None:
+        return {"ok": False, "error": "not_found"}
+    if offer.status != OfferStatus.DRAFT:
+        return {"ok": False, "error": "not_draft", "current_status": offer.status.value}
+    if title is not None and title.strip():
+        offer.title = title.strip()[:255]
+    if public_message is not None:
+        offer.public_message = public_message.strip() or None
+    if admin_note is not None:
+        offer.admin_note = admin_note.strip() or None
+    if value is not None:
+        offer.value = value
+    if duration_months is not None:
+        offer.duration_months = duration_months
+    if new_plan is not None:
+        offer.new_plan = new_plan.strip() or None
+    if expires_in_days is not None:
+        offer.expires_at = (_now() + timedelta(days=int(expires_in_days))) if expires_in_days > 0 else None
+    if autocommit:
+        db.commit()
+        db.refresh(offer)
+    return {"ok": True, "offer_id": offer.id}
+
+
 def get_offer_by_token(db: Session, *, token: str) -> Offer | None:
     return db.query(Offer).filter(Offer.token == token).first()
 

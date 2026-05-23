@@ -40,6 +40,7 @@ import {
   useSaveOwnerContact,
   useSendInvoiceReminder,
   useSendOffer,
+  useUpdateOffer,
 } from "@/lib/hooks/use-admin-mutations";
 import {
   adminKeys,
@@ -807,6 +808,33 @@ export function OffersPanel({
   const createMut = useCreateOffer(ownerType, ownerId);
   const sendMut = useSendOffer();
   const cancelMut = useCancelOffer();
+  const updateMut = useUpdateOffer();
+  // DRAFT teklif düzenleme (göndermeden son rötuş)
+  const [editId, setEditId] = React.useState<number | null>(null);
+  const [eTitle, setETitle] = React.useState("");
+  const [eMsg, setEMsg] = React.useState("");
+  const [eNote, setENote] = React.useState("");
+
+  function startEdit(o: OfferItem) {
+    setEditId(o.id);
+    setETitle(o.title);
+    setEMsg(o.public_message ?? "");
+    setENote(o.admin_note ?? "");
+  }
+  function saveEdit(o: OfferItem) {
+    updateMut.mutate(
+      {
+        offerId: o.id,
+        body: {
+          kind: o.kind, title: eTitle.trim() || o.title,
+          value: o.value, duration_months: o.duration_months,
+          new_plan: o.new_plan ?? "", public_message: eMsg, admin_note: eNote,
+        },
+      },
+      { onSuccess: () => setEditId(null) },
+    );
+  }
+
   const [kind, setKind] = React.useState(meta.offer_kinds[0]?.value ?? "discount_percent");
   const [title, setTitle] = React.useState("");
   const [value, setValue] = React.useState("");
@@ -956,11 +984,36 @@ export function OffersPanel({
                           <strong>Ret nedeni:</strong> {o.decline_reason}
                         </div>
                       ) : null}
+                      {o.status === "draft" && editId === o.id ? (
+                        <div className="mt-2 space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/40 p-2">
+                          <label className="block">
+                            <span className="text-[11px] text-muted-foreground">Başlık</span>
+                            <input type="text" value={eTitle} onChange={(e) => setETitle(e.target.value)} maxLength={255} className={cn(fieldClass, "mt-0.5")} />
+                          </label>
+                          <label className="block">
+                            <span className="text-[11px] text-muted-foreground">Owner&apos;a mesaj</span>
+                            <textarea value={eMsg} onChange={(e) => setEMsg(e.target.value)} rows={2} className={cn(fieldClass, "mt-0.5")} />
+                          </label>
+                          <label className="block">
+                            <span className="text-[11px] text-muted-foreground">Admin notu (görünmez)</span>
+                            <textarea value={eNote} onChange={(e) => setENote(e.target.value)} rows={1} className={cn(fieldClass, "mt-0.5")} />
+                          </label>
+                          <div className="flex gap-2">
+                            <Button size="sm" disabled={updateMut.isPending} onClick={() => saveEdit(o)} className="bg-indigo-600 text-white hover:bg-indigo-700">
+                              {updateMut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Save className="size-3.5" aria-hidden />} Kaydet
+                            </Button>
+                            <Button size="sm" variant="ghost" onClick={() => setEditId(null)}>Vazgeç</Button>
+                          </div>
+                        </div>
+                      ) : null}
                       <div className="mt-2 flex flex-wrap items-center gap-2">
                         {o.status === "draft" ? (
                           <>
                             <Button size="sm" disabled={sendMut.isPending} onClick={() => sendMut.mutate(o.id)} className="bg-emerald-600 text-white hover:bg-emerald-700">
                               <Send className="size-3.5" aria-hidden /> Gönder
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => (editId === o.id ? setEditId(null) : startEdit(o))}>
+                              Düzenle
                             </Button>
                             <Button size="sm" variant="outline" disabled={cancelMut.isPending} onClick={() => cancelMut.mutate(o.id)}>
                               İptal

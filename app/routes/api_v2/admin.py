@@ -5780,6 +5780,56 @@ def admin_revenue_offer_cancel_v2(
     )
 
 
+@router.post(
+    "/revenue/offers/{offer_id}",
+    response_model=MutationResponse[RevenueOfferMutationResult],
+)
+def admin_revenue_offer_update_v2(
+    offer_id: int,
+    body: OfferBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Gönderilmemiş (DRAFT) teklifi düzenle — admin son rötuş. SENT vb. → 400."""
+    from app.models import Offer
+    from app.services.offers import update_offer
+
+    offer = db.get(Offer, offer_id)
+    if offer is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "offer_not_found", "message": "Teklif bulunamadı"},
+        )
+    result = update_offer(
+        db, offer_id=offer_id,
+        title=body.title,
+        public_message=body.public_message,
+        admin_note=body.admin_note,
+        value=body.value,
+        duration_months=body.duration_months,
+        new_plan=body.new_plan,
+        expires_in_days=(int(body.expires_in_days) if body.expires_in_days else None),
+    )
+    if not result.get("ok"):
+        code = result.get("error", "update_failed")
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "offer_not_draft" if code == "not_draft" else code,
+                    "message": "Yalnız gönderilmemiş (taslak) teklif düzenlenebilir."
+                               if code == "not_draft" else "Teklif düzenlenemedi."},
+        )
+    log_action(
+        db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+        target_type="offer", target_id=offer_id, request=request,
+        details={"action": "update"},
+    )
+    return MutationResponse[RevenueOfferMutationResult](
+        data=RevenueOfferMutationResult(message="Teklif güncellendi", offer_id=offer_id),
+        invalidate=_offer_owner_invalidate(offer),
+    )
+
+
 # ---------------------------- Fatura tahsilat ----------------------------
 
 

@@ -1339,6 +1339,26 @@ export function useCreateOffer(ownerType: OwnerType, ownerId: number) {
   });
 }
 
+export function useUpdateOffer() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<RevenueOfferMutationResult>, Error, { offerId: number; body: OfferBody }>({
+    mutationFn: ({ offerId, body }) =>
+      api<MutationResponse<RevenueOfferMutationResult>>(
+        `/api/v2/admin/revenue/offers/${offerId}`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data.message);
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Teklif güncellenemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
 export function useSendOffer() {
   const qc = useQueryClient();
   return useMutation<MutationResponse<RevenueOfferMutationResult>, Error, number>({
