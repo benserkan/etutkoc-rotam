@@ -60,6 +60,11 @@ def offer_public_view(token: str, db: Session = Depends(get_db)):
         offer.status = OfferStatus.EXPIRED
         db.commit()
 
+    # Açıldı izleme: kullanıcı linki ilk açtığında zaman damgası (admin görür).
+    if offer.status == OfferStatus.SENT and offer.viewed_at is None:
+        offer.viewed_at = _now()
+        db.commit()
+
     desc = describe_offer(offer)
     return OfferPublicResponse(
         valid=offer.status == OfferStatus.SENT,

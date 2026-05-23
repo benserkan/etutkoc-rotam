@@ -1642,6 +1642,7 @@ export interface OfferItem {
   summary: string;
   token: string;
   sent_at: string | null;
+  viewed_at: string | null;
   responded_at: string | null;
   expires_at: string | null;
   decline_reason: string | null;

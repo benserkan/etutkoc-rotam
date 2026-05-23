@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import {
   Bell,
   BellRing,
@@ -40,7 +41,13 @@ import {
   useSendInvoiceReminder,
   useSendOffer,
 } from "@/lib/hooks/use-admin-mutations";
+import {
+  adminKeys,
+  getAdminActionTemplateRender,
+  getAdminActionTemplates,
+} from "@/lib/api/admin";
 import type {
+  ActionTemplatesResponse,
   CrmActionItem,
   CrmMeta,
   CrmNoteItem,
@@ -367,9 +374,33 @@ export function CrmActionsPanel({
   const [notes, setNotes] = React.useState("");
   const [result, setResult] = React.useState("pending");
   const [followUp, setFollowUp] = React.useState("");
+  const [tplLoading, setTplLoading] = React.useState(false);
   const addMut = useAddCrmAction(ownerType, ownerId);
   const completeMut = useCompleteCrmAction();
   const delMut = useDeleteCrmAction();
+
+  // Aksiyon şablonları (hazır script'ler) — owner placeholder'larıyla doldurulur.
+  const tplQ = useQuery<ActionTemplatesResponse>({
+    queryKey: adminKeys.revenueActionTemplates(),
+    queryFn: getAdminActionTemplates,
+    staleTime: 60_000,
+  });
+  const templates = tplQ.data?.templates ?? [];
+
+  async function applyTemplate(id: string) {
+    if (!id) return;
+    setTplLoading(true);
+    try {
+      const r = await getAdminActionTemplateRender(Number(id), ownerType, ownerId);
+      if (r.kind) setKind(r.kind);
+      // Özet: subject varsa o, yoksa gövdenin ilk satırı.
+      const firstLine = (r.body || "").split("\n").find((l) => l.trim()) ?? "";
+      setSummary((r.subject || firstLine).slice(0, 500));
+      setNotes(r.body || "");
+    } finally {
+      setTplLoading(false);
+    }
+  }
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -392,6 +423,25 @@ export function CrmActionsPanel({
       <div className="md:col-span-1">
         <Card className="sticky top-4 p-4">
           <h2 className="mb-2 text-sm font-semibold">Yeni Aksiyon</h2>
+          {templates.length > 0 ? (
+            <label className="mb-2 block rounded-md border border-indigo-200 bg-indigo-50/50 p-2">
+              <span className="text-xs font-medium text-indigo-800">Şablondan doldur</span>
+              <select
+                defaultValue=""
+                disabled={tplLoading}
+                onChange={(e) => { applyTemplate(e.target.value); e.target.value = ""; }}
+                className={cn(fieldClass, "mt-1")}
+              >
+                <option value="">{tplLoading ? "Dolduruluyor…" : "Şablon seç…"}</option>
+                {templates.map((t) => (
+                  <option key={t.id} value={t.id}>{t.name} ({t.kind_label})</option>
+                ))}
+              </select>
+              <span className="mt-1 block text-[10px] text-muted-foreground">
+                Owner bilgileri ({"{{owner_name}}"}, {"{{plan}}"}, {"{{trial_ends_at}}"}…) otomatik dolar.
+              </span>
+            </label>
+          ) : null}
           <form onSubmit={submit} className="space-y-2">
             <label className="block">
               <span className="text-xs text-muted-foreground">Tür</span>
@@ -893,6 +943,12 @@ export function OffersPanel({
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-3 text-[11px] text-muted-foreground">
                         <span>Oluşturuldu: {fmtDateTime(o.created_at)}</span>
                         {o.sent_at ? <span>· Gönderildi: {fmtDateTime(o.sent_at)}</span> : null}
+                        {o.viewed_at ? (
+                          <span className="font-medium text-emerald-700">· Açıldı: {fmtDateTime(o.viewed_at)}</span>
+                        ) : o.status === "sent" ? (
+                          <span className="text-amber-700">· Henüz açılmadı</span>
+                        ) : null}
+                        {o.responded_at ? <span>· Yanıt: {fmtDateTime(o.responded_at)}</span> : null}
                         {o.expires_at ? <span>· Son: {fmtDate(o.expires_at)}</span> : null}
                       </div>
                       {o.decline_reason ? (

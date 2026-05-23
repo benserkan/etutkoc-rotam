@@ -175,6 +175,10 @@ class Offer(Base):
     sent_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True,
     )
+    # Kullanıcı public teklif linkini ilk açtığında doldurulur (açıldı izleme)
+    viewed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True,
+    )
     responded_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True,
     )

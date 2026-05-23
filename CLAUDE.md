@@ -1964,9 +1964,36 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
     emerald-900) — koyu temada beyaz-metin-açık-zemin görünmezliği giderildi.
   - **"7 gün içinde denemesi bitenler"** dar listeden belirgin kart-ızgarasına
     (gün-kaldı rozeti + owner-aware link) yükseltildi.
+- **Teklif izleme + CRM şablon entegrasyonu** ✅ (2026-05-23, **migration `a8b1e3f4e22y`**):
+  - **Teklif "açıldı" izleme**: `offers.viewed_at` (additive). Public `GET /offers/{token}`
+    ilk açılışta doldurur → 360 Teklifler panelinde **"Açıldı: tarih" / "Henüz açılmadı"**
+    + yanıt tarihi gösterilir (`OfferItem.viewed_at`). Admin artık "iletildi ama
+    açtı mı?" sorusunu görebiliyor.
+  - **Şablon → Aksiyon**: 360 "Yeni Aksiyon" formuna **"Şablondan doldur"** seçici
+    (render endpoint owner placeholder'larını doldurur → kind/özet/detay otomatik aksar).
+  - **Aksiyon Şablonları sayfası**: canlı **önizleme** (örnek koç verisiyle) +
+    **tek-süslü `{...}` uyarısı** (yalnız `{{...}}` render edilir — kullanıcının
+    `{trial_ends_at}` hatası önlenir).
+  - **FIRE düzeltmesi**: past_due / limit-aşımı koçu öğrenci eklemeyi de artık
+    paywall engelliyor (`_check_student_creation_quota`'ya `assert_active_coaching`).
+    Önce sadece program/görev gate'liydi; öğrenci ekleme plan-kotasından geçiyordu.
+  - **Kapsamlı simülasyon** `scripts/simulate_offer_action_flow.py`: teklif yaşam
+    döngüsü (DRAFT kuyruk→gönder→açıldı→kabul) + 4 senaryo öğrenci-sayısı karar
+    mekanizması + aksiyon merkezi sinyal yakalama. **Bulgular**: (a) öğrenciler
+    asla otomatik pasifleşmez/silinmez — plan düşer, fazla öğrencide aktif koçluk
+    kilitlenir, "hangi öğrenci"yi koç seçer; (b) **Aksiyon Merkezi KURUM-merkezli**
+    (bağımsız koç orada görünmez; solo koç trial_reminder cron + Ticari Pano
+    "denemesi bitenler"de yakalanır); (c) aksiyon = manuel görev/log, sistem
+    otomatik aramaz/mesaj atmaz.
+  - **Teklif kuyruk→onay→gönder sistemi VAR**: trial_reminder cron DRAFT teklif
+    yaratır (kuyruk) → admin 360 Teklifler'de görür → "Gönder" → e-posta + public
+    link → kullanıcı açar (viewed_at) → kabul/ret. (Eksik: admin DRAFT'ı
+    göndermeden DÜZENLEYEMİYOR — iptal+yeniden oluştur gerekir.)
+  - Verify: paywall 5/5 + offers 19/19 + renewal 12/12 + admin 13 + 360 18 +
+    dashboard 11 + tenant 29; tsc/eslint/build temiz.
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge) — kalan tek faz.
 
-Migration head: `z7a9d2e3d11x`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
+Migration head: `a8b1e3f4e22y`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
 `8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup) ·
 `62c1d7f`/`3a6738e`/`4cb7363`/`4eb9c80` (trial yaşam döngüsü Faz 1-4).

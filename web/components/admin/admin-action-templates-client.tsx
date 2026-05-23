@@ -27,6 +27,27 @@ interface Props {
 
 const PLACEHOLDERS = ["{{owner_name}}", "{{plan}}", "{{trial_ends_at}}", "{{contact_email}}", "{{today}}"];
 
+// Backend ile aynı: yalnız ÇİFT süslü {{ key }} render edilir.
+const SAMPLE_CTX: Record<string, string> = {
+  owner_name: "Ahmet Koç",
+  plan: "solo_pro",
+  trial_ends_at: "30.05.2026",
+  contact_email: "ahmet@ornek.com",
+  today: "23.05.2026",
+};
+
+function renderPreview(text: string): string {
+  return (text || "").replace(/\{\{\s*([a-zA-Z_]+)\s*\}\}/g, (m, key) =>
+    Object.prototype.hasOwnProperty.call(SAMPLE_CTX, key) ? SAMPLE_CTX[key] : m,
+  );
+}
+
+/** Tek süslü {key} (çift değil) → render EDİLMEZ; uyar. */
+function hasSingleBrace(text: string): boolean {
+  const stripped = (text || "").replace(/\{\{\s*[a-zA-Z_]+\s*\}\}/g, "");
+  return /\{\s*[a-zA-Z_]+\s*\}/.test(stripped);
+}
+
 export function AdminActionTemplatesClient({ initial }: Props) {
   const q = useQuery<ActionTemplatesResponse>({
     queryKey: adminKeys.revenueActionTemplates(),
@@ -124,6 +145,23 @@ function NewTemplateForm({ kinds }: { kinds: EnumOption[] }) {
                     placeholder={"Merhaba {{owner_name}},\n\nPlanınız: {{plan}}…"}
                     className={cn(fieldClass, "mt-1 font-mono text-xs")} />
         </label>
+        {hasSingleBrace(subject) || hasSingleBrace(body) ? (
+          <p className="rounded border border-amber-300 bg-amber-50 px-2 py-1 text-[11px] text-amber-800">
+            ⚠ Tek süslü {"{...}"} render edilmez. Çift süslü <strong>{"{{...}}"}</strong> kullan
+            (ör. {"{{trial_ends_at}}"}).
+          </p>
+        ) : null}
+        {body.trim() ? (
+          <div className="rounded border border-border bg-muted/40 p-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+              Önizleme (örnek koç verisiyle)
+            </span>
+            {subject.trim() ? (
+              <div className="mt-1 text-xs font-medium">Konu: {renderPreview(subject)}</div>
+            ) : null}
+            <pre className="mt-1 whitespace-pre-wrap break-words font-sans text-xs text-foreground/90">{renderPreview(body)}</pre>
+          </div>
+        ) : null}
         <label className="block">
           <span className="text-xs text-muted-foreground">Açıklama (admin için)</span>
           <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2}

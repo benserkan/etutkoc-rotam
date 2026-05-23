@@ -3741,6 +3741,9 @@ def _check_student_creation_quota(
     """Plan kotası kontrolü — kurumlu öğretmen için institution quota, solo
     öğretmen için plan-bazlı solo quota. Aşımda HTTPException 422 fırlatılır.
     """
+    # Ödeme duvarı: deneme bitip limit aşılmış / abonelik past_due ise yeni
+    # öğrenci eklemek de aktif koçluk sayılır → 403 (program/görev ile tutarlı).
+    assert_active_coaching(db, teacher)
     # Kurumsal
     if teacher.institution_id is not None and teacher.institution is not None:
         from app.services.quotas import (

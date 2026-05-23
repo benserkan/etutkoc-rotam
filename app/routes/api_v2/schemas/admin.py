@@ -1843,6 +1843,7 @@ class OfferItem(BaseModel):
     summary: str
     token: str
     sent_at: datetime | None = None
+    viewed_at: datetime | None = None       # kullanıcı teklifi açtı mı / ne zaman
     responded_at: datetime | None = None
     expires_at: datetime | None = None
     decline_reason: str | None = None

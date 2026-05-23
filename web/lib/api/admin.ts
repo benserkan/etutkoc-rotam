@@ -17,6 +17,7 @@ import type {
   AdminUserListResponse,
   ActionCenterResponse,
   ActionTemplatesResponse,
+  ActionTemplateRenderResponse,
   AnnouncementsListResponse,
   AuditListResponse,
   CampaignDetailResponse,
@@ -480,6 +481,14 @@ export function getAdminRevenueInstitution360(id: number) {
 
 export function getAdminRevenueUser360(id: number) {
   return api<UserRevenue360Response>(`/api/v2/admin/revenue/users/${id}`);
+}
+
+export function getAdminActionTemplateRender(
+  templateId: number, ownerType: string, ownerId: number,
+) {
+  return api<ActionTemplateRenderResponse>(
+    `/api/v2/admin/revenue/action-templates/${templateId}/render?owner_type=${ownerType}&owner_id=${ownerId}`,
+  );
 }
 
 export function getAdminActionTemplates() {

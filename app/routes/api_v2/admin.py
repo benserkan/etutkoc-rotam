@@ -4929,6 +4929,7 @@ def _offer_item(o) -> OfferItem:
         summary=summary["summary"],
         token=o.token,
         sent_at=o.sent_at,
+        viewed_at=o.viewed_at,
         responded_at=o.responded_at,
         expires_at=o.expires_at,
         decline_reason=o.decline_reason,
