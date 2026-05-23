@@ -74,7 +74,8 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
               <strong>Deneme süreniz bitti.</strong> {data.student_count} öğrenciniz var;
               ücretsiz sürüm {data.student_limit} öğrenci destekler. Koçluğa devam etmek
               için paketi yükseltin <em>ya da</em> {data.student_limit} öğrenci tutup
-              gerisini arşivleyin.
+              gerisini pasif duruma geçirin. Paketi yükselttiğinizde pasif
+              öğrencileriniz otomatik olarak yeniden aktif olur.
             </span>
           </div>
           <div className="flex shrink-0 gap-2">

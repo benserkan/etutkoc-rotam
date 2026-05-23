@@ -249,8 +249,8 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
               {data.status === "trialing"
                 ? "Denemen bitmeden geç; tüm öğrencilerin ve yapay zekâ kesintisiz devam etsin."
                 : data.status === "past_due"
-                  ? "Aboneliğin yenilenmedi. Ödeyip yenileyerek aktif koçluğa devam et."
-                  : "Sınırsız öğrenci ve yapay zekâ özellikleriyle koçluğa devam et."}
+                  ? "Aboneliğin yenilenmedi. Ödeyip yenileyerek aktif koçluğa devam et; pasif öğrencilerin otomatik yeniden aktif olur."
+                  : "Sınırsız öğrenci ve yapay zekâ özellikleriyle koçluğa devam et. Paketi yükselttiğinde pasif öğrencilerin otomatik yeniden aktif olur."}
             </p>
           </div>
           {/* Aylık / Akademik yıl toggle */}
