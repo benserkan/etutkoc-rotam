@@ -148,7 +148,7 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
       <div
         className={cn(
           "grid grid-cols-12 items-center gap-3 px-4 py-3 hover:bg-muted transition-colors",
-          dim && "opacity-60",
+          dim ? "opacity-60" : levelRowClass(s.worst_warning_level),
         )}
       >
         <Link
@@ -405,6 +405,14 @@ function TempPasswordPanel({
       </div>
     </div>
   );
+}
+
+// Satır zemini — en kötü uyarı seviyesine göre (kırmızı=acil, turuncu=dikkat
+// öne çıksın; yeşil temiz kalır → liste gürültüsüz). Koyu temada saydam ton.
+function levelRowClass(level: WarningLevel): string {
+  if (level === "red") return "bg-rose-500/10 border-l-4 border-l-rose-500";
+  if (level === "amber") return "bg-amber-500/10 border-l-4 border-l-amber-500";
+  return "";
 }
 
 function WarningDot({ level }: { level: WarningLevel }) {

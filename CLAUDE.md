@@ -2204,6 +2204,20 @@ ne kadar taze" bilgisi yoktu → işlenen ama koşulu süren uyarı kırmızı k
   eşzamanlı pano polling ile nadiren kısa kilit (geçici). Kurum yöneticisi + süper
   admin panoları kapsam dışı (sonraki adım, aynı tablo reuse).
 
+## Durum-bazlı satır renklendirme (kurum panosu + öğrenci listesi) — 2026-05-23
+
+**Bağlam (kullanıcı):** Kurum yöneticisi sınıflara/koçlara odaklanır; risk bir
+bakışta görünmeli. Tablo/liste satırları **orana/uyarı seviyesine göre zemin
+tonu** alsın (D4 eşikleri: <%40 kırmızı acil · %40–69 turuncu dikkat · ≥%70 yeşil).
+- **Kurum panosu** (`institution/dashboard-client.tsx`) "Öğretmenler — Bu Haftaki
+  Performans": `rateRowClass(weekly_rate_pct)` ile satır zemini (saydam ton +
+  sol şerit, koyu temada okunur) + başlıkta renk göstergesi (legend). Pasif
+  öğretmen tonlanmaz (muted).
+- **Öğrenci listesi** (`teacher/students-list-client.tsx`): `levelRowClass(
+  worst_warning_level)` — **kırmızı + turuncu** satırlar belirgin tonlanır,
+  **yeşil temiz** bırakılır (uzun listede gürültü/alarm körlüğü olmasın; sorunlar
+  öne çıkar). Frontend-only (mevcut alanlar). tsc/eslint/build temiz.
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

@@ -247,6 +247,15 @@ function rateColorClass(pct: number | null): string {
   return "text-rose-700";
 }
 
+// Satır zemini — orana göre (koyu temada da okunur: saydam ton + sol şerit).
+// Kurum yöneticisi koçun/sınıfın durumunu bir bakışta ayırt eder.
+function rateRowClass(pct: number | null): string {
+  if (pct == null) return "";
+  if (pct >= 70) return "bg-emerald-500/10 border-l-4 border-l-emerald-500";
+  if (pct >= 40) return "bg-amber-500/10 border-l-4 border-l-amber-500";
+  return "bg-rose-500/10 border-l-4 border-l-rose-500";
+}
+
 function TeachersTable({
   summaries,
 }: {
@@ -254,8 +263,21 @@ function TeachersTable({
 }) {
   return (
     <Card>
-      <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h2 className="font-medium">Öğretmenler — Bu Haftaki Performans</h2>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 py-3 border-b border-border">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+          <h2 className="font-medium">Öğretmenler — Bu Haftaki Performans</h2>
+          <span className="inline-flex items-center gap-2 text-[11px] text-muted-foreground">
+            <span className="inline-flex items-center gap-1">
+              <span className="size-2.5 rounded-sm bg-rose-500" aria-hidden /> &lt;%40 acil
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="size-2.5 rounded-sm bg-amber-500" aria-hidden /> %40–69 dikkat
+            </span>
+            <span className="inline-flex items-center gap-1">
+              <span className="size-2.5 rounded-sm bg-emerald-500" aria-hidden /> ≥%70 yolunda
+            </span>
+          </span>
+        </div>
         <Link
           href="/institution/teachers"
           className="text-xs text-accent hover:underline"
@@ -293,7 +315,9 @@ function TeachersTable({
                 <tr
                   key={s.id}
                   className={cn(
-                    !s.is_active && "bg-muted/30 text-muted-foreground",
+                    s.is_active
+                      ? rateRowClass(s.weekly_rate_pct)
+                      : "bg-muted/30 text-muted-foreground opacity-70",
                   )}
                 >
                   <td className="px-4 py-2">
