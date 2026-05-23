@@ -2031,12 +2031,48 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
   - NOT: teacher_students smoke'unda görülen 13/14, institution smoke'larının
     sızdırdığı 3 orphan BookSection (id-reuse) kontaminasyonuydu — temizlendi,
     kod değişikliğiyle ilgisizdi.
+- **Öğrenci detay "Durum Özeti" — kontrast + başarı kartları** ✅ (2026-05-23,
+  migration YOK): kart metinleri koyu temada okunmuyordu (`bg-*-50` açık zemin +
+  `text-foreground` beyaza çözülüyordu — gelir panosu bucket hatasının aynısı) →
+  ton-bazlı explicit renkler (`text-{rose|amber|emerald}-900/800`). Panel artık
+  yalnız riski değil, `program_summary`'den türetilen **linkli pozitif sinyaller**
+  de gösterir (bugünü tamamladı→/day · haftalık tempo iyi→/week · tutarlı→/dna ·
+  hedef tutturuyor→/week). İki grup: "Dikkat gerektirenler" + "İyi giden".
+- **AI ücretli kapı tutarlılığı (FIRE) + yükseltmede pasif öğrenci reaktivasyonu**
+  ✅ (2026-05-23, migration YOK):
+  - **FIRE**: Kitap-AI ünite önerisi (`library` ai-suggest) ücretli kapıyı
+    ATLIYORDU (yalnız feature-flag + krediye bakıyordu) → süresi bitmiş ücretsiz
+    koç kullanabiliyordu. Diğer 3 AI ucu (foto/ses/içgörü) doğru engelliyordu.
+    Ücretli kapı tek kaynağa alındı (`dependencies.assert_ai_premium`); 4 AI ucu
+    AYNI kapıyı kullanır. `test_simulate_paywall_archive_ai.py` 15/15.
+  - **Reaktivasyon**: paket yükseltme/aktivasyonda (ücretsiz/past_due → ücretli)
+    ödeme duvarında pasifleştirilen öğrenciler OTOMATİK geri açılır
+    (`plans.reactivate_solo_students`). Self-serve `/teacher/plan/upgrade` +
+    admin `activate-plan` (past_due aynı-plan yenileme dahil — `change_plan`
+    erken-return'e rağmen). **Aktif-ücretli koçun kasıtlı arşivi KORUNUR**
+    (was_paid_active gate). `simulate_upgrade_reactivation.py` 15/15 (4 koç:
+    self-serve / admin / past_due / kontrol).
+  - **Mesajlar**: paywall banner + toast + `/teacher/plan` → "arşivle" yerine
+    "pasif duruma geçir" + "paketi yükseltince pasif öğrenciler otomatik aktif olur".
+- **Abonelik iptal akışı — doğrulandı (kod değişikliği YOK)** ✅ (2026-05-23):
+  `simulate_subscription_cancel_flow.py` 23/23. İptal → `status=canceled`, plan
+  ücretli kalır → **dönem sonuna kadar erişim sürer** (AI açık, paywall yok,
+  program serbest) → cron (`process_renewals`) dönem sonunda **solo_free**'ye
+  düşürür (AI kapanır; 3'ten fazla öğrenci varsa paywall; öğrenciler OTOMATİK
+  pasifleşmez — koç arşivler). Resume → erişim sürer. Aktifken AI = ücretli
+  tahsisat dahilinde açık (solo_pro 500 / solo_elite 2000 kredi/dönem).
+  **DİKKAT**: `process_renewals` GLOBAL çalışır → testte DAİMA gerçek `now` +
+  hedef koç period_end'i geçmişe alınarak izole edilir (gelecek `now` YASAK —
+  demo/gerçek koçları past_due yapar/düşürür).
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge) — kalan tek faz.
 
 Migration head: `a8b1e3f4e22y`. Commit'ler: `97b8075` (M1) · `8ca4871` (M3) ·
 `df60ec0` (M2 backend) · `b0926a8` (M2 UI) · `854b0ec` (M1-M3 docs) ·
 `8530ecb` (M5 tek-kaynak kopya + kurumsal iletişim) · `9c013b9` (M6 pakete duyarlı signup) ·
-`62c1d7f`/`3a6738e`/`4cb7363`/`4eb9c80` (trial yaşam döngüsü Faz 1-4).
+`62c1d7f`/`3a6738e`/`4cb7363`/`4eb9c80` (trial yaşam döngüsü Faz 1-4) ·
+`352e6fc`/`93bd059` (öğrenci detay Durum Özeti + kontrast/başarı kartları) ·
+`0641ef9` (AI ücretli kapı FIRE + yükseltmede reaktivasyon) · `4369630` (paywall
+mesaj güncellemeleri) · `b5749f5` (abonelik iptal akışı testi).
 
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
