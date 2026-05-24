@@ -121,6 +121,8 @@ from app.routes.api_v2.schemas.institution import (
     InstitutionRosterResponse,
     InstitutionTeacherListResponse,
     InvitationCreateBody,
+    NotifyCoachBody,
+    NotifyCoachResult,
     InvitationItem,
     InvitationListResponse,
     PlanQuotaItem,
@@ -187,6 +189,7 @@ from app.services.risk_analysis import (
     get_active_mutes_for_students,
 )
 from app.services.security import hash_password
+from app.services import support_request_service as support_svc
 from app.services.subscription import (
     enable_guarantee,
     evaluate_guarantee,
@@ -1439,6 +1442,81 @@ def institution_burnout_v2(
         institution=_institution_brief(inst),
         items=rows,
         total=len(rows),
+    )
+
+
+@router.post("/notify-coach", response_model=MutationResponse[NotifyCoachResult])
+def institution_notify_coach_v2(
+    body: NotifyCoachBody,
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Tükenmişlik/risk panosundan ilgili koça müdahale talebi açar (aşağı yönlü
+    SupportRequest, audience=teacher). Gizlilik: kurum yöneticisi öğrenci detayına
+    inemez; müdahale kolu KOÇtur — bu uç koça bildirim/talep iletir.
+
+    Koç, kurum yöneticisinin kendi kurumuna bağlı olmalı (tenant izolasyonu).
+    """
+    inst = _get_institution_or_403(db, user.institution_id)
+    teacher = (
+        db.query(User)
+        .filter(
+            User.id == body.teacher_id,
+            User.institution_id == inst.id,
+            User.role == UserRole.TEACHER,
+        )
+        .first()
+    )
+    if teacher is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "coach_not_found",
+                    "message": "Koç bulunamadı."},
+        )
+
+    student_name = (body.student_name or "").strip()
+    ctx_label = {
+        "burnout": "tükenmişlik panosunda",
+        "at_risk": "risk panosunda",
+    }.get(body.context or "", "panoda")
+    subject = (
+        f"Riskli öğrenci: {student_name}" if student_name
+        else "Risk altındaki öğrenci için müdahale"
+    )
+    note = (body.note or "").strip()
+    lines = [
+        f"Kurum yöneticisi, {ctx_label} risk işareti taşıyan bir öğrenciniz için"
+        f" sizinle birebir görüşmenizi/inceleme yapmanızı rica ediyor.",
+    ]
+    if student_name:
+        lines.append(f"Öğrenci: {student_name}")
+    if note:
+        lines.append(f"Not: {note}")
+    lines.append(
+        "Lütfen öğrenciyi kendi panelinizden inceleyin; gerekiyorsa programı"
+        " ve çalışma temposunu gözden geçirin."
+    )
+    message_body = "\n".join(lines)
+
+    try:
+        req = support_svc.notify_coach(
+            db, admin=user, teacher=teacher, subject=subject, body=message_body,
+            category="student_risk",
+        )
+    except support_svc.SupportError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "validation", "code": e.code, "message": e.message},
+        )
+    db.commit()
+    return MutationResponse[NotifyCoachResult](
+        data=NotifyCoachResult(
+            request_id=req.id,
+            teacher_id=teacher.id,
+            teacher_name=teacher.full_name or teacher.email,
+        ),
+        invalidate=["support:inbox", "support:mine"],
     )
 
 

@@ -2223,10 +2223,12 @@ def teacher_badges_v2(
         )
         .count()
     )
+    from app.services.support_request_service import pending_count_teacher
     return TeacherBadgesResponse(
         pending_request_count=pending_count_for_teacher(db, user.id),
         at_risk_count=at_risk,
         support_answered_count=support_answered,
+        support_inbox_pending=pending_count_teacher(db, user),
         checked_at=now,
     )
 

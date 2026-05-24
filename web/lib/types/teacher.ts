@@ -237,6 +237,7 @@ export interface TeacherBadgesResponse {
   pending_request_count: number;
   at_risk_count: number;
   support_answered_count: number;
+  support_inbox_pending: number;
   checked_at: string;
 }
 

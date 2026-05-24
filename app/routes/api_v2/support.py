@@ -58,7 +58,9 @@ def _forbidden(msg: str) -> HTTPException:
 
 
 def _is_recipient_role(user: User) -> bool:
-    return user.role in (UserRole.SUPER_ADMIN, UserRole.INSTITUTION_ADMIN)
+    # TEACHER: yalnız aşağı yönlü (audience=teacher) taleplerin muhatabı olabilir;
+    # get_for_recipient → is_active_recipient ile doğrulanır.
+    return user.role in (UserRole.SUPER_ADMIN, UserRole.INSTITUTION_ADMIN, UserRole.TEACHER)
 
 
 # ----------------------------- Talep eden tarafı -----------------------------
@@ -140,6 +142,9 @@ def inbox_v2(
     elif user.role == UserRole.INSTITUTION_ADMIN:
         rows = svc.list_inbox_institution_admin(db, user, status_filter=status_param)
         pending = svc.pending_count_institution_admin(db, user)
+    elif user.role == UserRole.TEACHER:
+        rows = svc.list_inbox_teacher(db, user, status_filter=status_param)
+        pending = svc.pending_count_teacher(db, user)
     else:
         raise _forbidden("Bu rolün gelen kutusu yok.")
     return SupportListResponse(

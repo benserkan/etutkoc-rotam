@@ -816,3 +816,22 @@ class InstitutionBadgesResponse(BaseModel):
     support_inbox_pending: int
     support_answered: int = 0
     checked_at: datetime
+
+
+# =============================================================================
+# Koça ilet — riskli öğrenci için kurum yöneticisi → koç talebi (aşağı yönlü)
+# =============================================================================
+
+
+class NotifyCoachBody(BaseModel):
+    """Tükenmişlik/risk panosundan koça müdahale talebi açar."""
+    teacher_id: int
+    student_name: str | None = None
+    note: str | None = None
+    context: str | None = None  # "burnout" | "at_risk" | None (kaynak panel)
+
+
+class NotifyCoachResult(BaseModel):
+    request_id: int
+    teacher_id: int
+    teacher_name: str | None = None

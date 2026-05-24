@@ -3,14 +3,19 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Activity, Lock, PartyPopper } from "lucide-react";
+import { Activity, Lock, PartyPopper, Send, UserCog } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   getInstitutionBurnout,
   institutionKeys,
 } from "@/lib/api/institution";
+import {
+  NotifyCoachDialog,
+  type NotifyCoachTarget,
+} from "@/components/institution/notify-coach-dialog";
 import type { BurnoutResponse, BurnoutRowItem } from "@/lib/types/institution";
 import {
   BurnoutLevelBadge,
@@ -22,10 +27,11 @@ interface Props {
 }
 
 /**
- * Tükenmişlik Panosu — Jinja `burnout.html` ile birebir.
+ * Tükenmişlik Panosu — risk altındaki öğrenciler + koç müdahale kolu.
  *
- * Tablo: Öğrenci / Risk (0-100) / Seviye / Sinyal sayısı
- * Risk skoru sıralı, risk=0 olanlar yok (backend filtreler).
+ * Gözlem + EYLEM: gizlilik gereği yönetici öğrenci detayına inemez; müdahale
+ * kolu KOÇtur. "Koça ilet" ile ilgili koça müdahale talebi açılır (koçun
+ * "Destek → Gelen kutusu"nda görünür).
  */
 export function BurnoutClient({ initial }: Props) {
   const q = useQuery<BurnoutResponse>({
@@ -37,6 +43,8 @@ export function BurnoutClient({ initial }: Props) {
   });
   const data = q.data ?? initial;
   const { items } = data;
+
+  const [target, setTarget] = React.useState<NotifyCoachTarget | null>(null);
 
   return (
     <div className="space-y-6">
@@ -52,7 +60,7 @@ export function BurnoutClient({ initial }: Props) {
           Kurum Tükenmişlik Panosu
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Kurumun risk altındaki öğrencileri ve aktif sinyal sayıları.
+          Kurumun risk altındaki öğrencileri, aktif sinyalleri ve sorumlu koçları.
         </p>
       </header>
 
@@ -64,23 +72,29 @@ export function BurnoutClient({ initial }: Props) {
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-muted-foreground text-xs">
                 <tr>
-                  <th className="text-left px-4 py-2.5 font-medium">
-                    Öğrenci
-                  </th>
-                  <th className="text-right px-4 py-2.5 font-medium w-28">
-                    Risk
-                  </th>
-                  <th className="text-center px-4 py-2.5 font-medium w-32">
-                    Seviye
-                  </th>
-                  <th className="text-right px-4 py-2.5 font-medium w-28">
-                    Sinyal
-                  </th>
+                  <th className="text-left px-4 py-2.5 font-medium">Öğrenci</th>
+                  <th className="text-left px-4 py-2.5 font-medium">Sorumlu koç</th>
+                  <th className="text-right px-4 py-2.5 font-medium w-28">Risk</th>
+                  <th className="text-center px-4 py-2.5 font-medium w-32">Seviye</th>
+                  <th className="text-right px-4 py-2.5 font-medium w-24">Sinyal</th>
+                  <th className="text-right px-4 py-2.5 font-medium w-32">Müdahale</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {items.map((r) => (
-                  <BurnoutRow key={r.student_id} row={r} />
+                  <BurnoutRow
+                    key={r.student_id}
+                    row={r}
+                    onNotify={() =>
+                      r.teacher_id
+                        ? setTarget({
+                            student_name: r.full_name,
+                            teacher_id: r.teacher_id,
+                            teacher_name: r.teacher_name,
+                          })
+                        : undefined
+                    }
+                  />
                 ))}
               </tbody>
             </table>
@@ -91,19 +105,37 @@ export function BurnoutClient({ initial }: Props) {
       <div className="text-xs text-muted-foreground leading-relaxed flex items-start gap-2">
         <Lock className="size-3.5 shrink-0 mt-0.5" aria-hidden />
         <span>
-          <strong>Gizlilik notu:</strong> bu panoda öğretmen-öğrenci eşleşmesi
-          gösterilmez ve detay sayfasına link yoktur. Detay için öğretmen kendi
-          panelinden inceler.
+          <strong>Gizlilik notu:</strong> bu panoda öğrenci detay sayfası yoktur —
+          öğrenciyi koç kendi panelinden inceler. Müdahale için{" "}
+          <strong>“Koça ilet”</strong> ile ilgili koça talep açabilirsiniz.
         </span>
       </div>
+
+      <NotifyCoachDialog target={target} onClose={() => setTarget(null)} context="burnout" />
     </div>
   );
 }
 
-function BurnoutRow({ row }: { row: BurnoutRowItem }) {
+function BurnoutRow({
+  row,
+  onNotify,
+}: {
+  row: BurnoutRowItem;
+  onNotify: () => void;
+}) {
   return (
     <tr className="hover:bg-muted/30">
-      <td className="px-4 py-2.5">{row.full_name}</td>
+      <td className="px-4 py-2.5 font-medium">{row.full_name}</td>
+      <td className="px-4 py-2.5 text-muted-foreground">
+        {row.teacher_name ? (
+          <span className="inline-flex items-center gap-1.5">
+            <UserCog className="size-3.5 shrink-0" aria-hidden />
+            {row.teacher_name}
+          </span>
+        ) : (
+          <span className="italic">Koçu atanmamış</span>
+        )}
+      </td>
       <td className="px-4 py-2.5 text-right">
         <span
           className={cn(
@@ -120,6 +152,16 @@ function BurnoutRow({ row }: { row: BurnoutRowItem }) {
       </td>
       <td className="px-4 py-2.5 text-right text-muted-foreground tabular-nums">
         {row.signal_count} aktif
+      </td>
+      <td className="px-4 py-2.5 text-right">
+        {row.teacher_id ? (
+          <Button size="sm" variant="outline" onClick={onNotify}>
+            <Send className="size-3.5" aria-hidden />
+            Koça ilet
+          </Button>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
       </td>
     </tr>
   );

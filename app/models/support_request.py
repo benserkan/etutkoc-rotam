@@ -32,10 +32,14 @@ if TYPE_CHECKING:
 # ----------------------------- Muhatap (audience) -----------------------------
 SUPPORT_AUDIENCE_SUPER_ADMIN = "super_admin"
 SUPPORT_AUDIENCE_INSTITUTION_ADMIN = "institution_admin"
+# Aşağı yönlü: kurum yöneticisi → belirli bir koça (target_user_id). Riskli
+# öğrenci için "Koça ilet" akışında kullanılır.
+SUPPORT_AUDIENCE_TEACHER = "teacher"
 
 SUPPORT_AUDIENCE_LABELS_TR: dict[str, str] = {
     SUPPORT_AUDIENCE_SUPER_ADMIN: "Süper Yönetici",
     SUPPORT_AUDIENCE_INSTITUTION_ADMIN: "Kurum Yöneticisi",
+    SUPPORT_AUDIENCE_TEACHER: "Koç",
 }
 
 # ----------------------------- Durum (status) -----------------------------
@@ -70,6 +74,7 @@ SUPPORT_CATEGORY_LABELS_TR: dict[str, str] = {
     "account": "Hesap / erişim",
     "billing": "Üyelik / ödeme",
     "feature": "Öneri / istek",
+    "student_risk": "Riskli öğrenci",
     "other": "Diğer",
 }
 
@@ -114,6 +119,10 @@ class SupportRequest(Base):
     institution_id: Mapped[int | None] = mapped_column(
         ForeignKey("institutions.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    # Aşağı yönlü (audience=teacher) talepte muhatap koç. Yukarı yönlüde NULL.
+    target_user_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     category: Mapped[str] = mapped_column(String(20), nullable=False, default="other")
     subject: Mapped[str] = mapped_column(String(200), nullable=False)
@@ -137,6 +146,7 @@ class SupportRequest(Base):
 
     requester: Mapped["User"] = relationship("User", foreign_keys=[requester_id])
     handled_by: Mapped["User | None"] = relationship("User", foreign_keys=[handled_by_id])
+    target_user: Mapped["User | None"] = relationship("User", foreign_keys=[target_user_id])
     escalated_by: Mapped["User | None"] = relationship("User", foreign_keys=[escalated_by_id])
     institution: Mapped["Institution | None"] = relationship(
         "Institution", foreign_keys=[institution_id]

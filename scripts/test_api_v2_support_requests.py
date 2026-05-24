@@ -304,16 +304,20 @@ def main() -> int:
 
         # ── YETKİ ──
         print("\nYetki kontrolleri:")
+        # Koça-ilet (aşağı yönlü) sonrası koçların da gelen kutusu var; bağımsız
+        # koç hiç hedef alınamadığı için kutusu BOŞ döner (200, items=[]).
         r = coach_clis[2].get("/api/v2/support/inbox")
-        check("YET.1 bağımsız koçun gelen kutusu YOK → 403",
-              r.status_code == 403, f"{r.status_code}")
+        check("YET.1 bağımsız koçun gelen kutusu BOŞ → 200 items=[]",
+              r.status_code == 200 and r.json()["items"] == [], f"{r.status_code} {r.text[:80]}")
         r = coach_clis[2].get(f"/api/v2/support/requests/{coach_reqs[0]}")
         check("YET.2 koç BAŞKA koçun talebini açamaz → 404", r.status_code == 404, f"{r.status_code}")
+        # Öğretmen KENDİ talebinin (audience=institution_admin) muhatabı değildir →
+        # get_for_recipient None → 404 (eylem reddedilir; sonuç korunur).
         r = teacher_clis[1].post(f"/api/v2/support/requests/{teacher_reqs[1]}/review")
-        check("YET.3 öğretmen KENDİ talebini incele/çözümle yapamaz → 403 (muhatap değil)",
-              r.status_code == 403, f"{r.status_code}")
+        check("YET.3 öğretmen KENDİ talebini incele yapamaz → 404 (muhatap değil)",
+              r.status_code == 404, f"{r.status_code}")
         r = teacher_clis[1].post(f"/api/v2/support/requests/{teacher_reqs[1]}/resolve")
-        check("YET.4 öğretmen kendi talebini çözümleyemez → 403", r.status_code == 403, f"{r.status_code}")
+        check("YET.4 öğretmen kendi talebini çözümleyemez → 404", r.status_code == 404, f"{r.status_code}")
 
         # ── SAYIMLAR ──
         print("\nSayımlar:")

@@ -10,6 +10,8 @@ import type {
   AdminDigestSendResult,
   InvitationCreateBody,
   InvitationItem,
+  NotifyCoachBody,
+  NotifyCoachResult,
   SubscriptionRequestResult,
   SubscriptionStatusInfo,
   SubscriptionUpgradeRequestBody,
@@ -358,6 +360,35 @@ export function useEnableGuarantee() {
     },
     onError: (e) => {
       toast.error(errorTitle(e, "Aktivasyon başarısız"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+/**
+ * Koça ilet — riskli öğrenci için ilgili koça müdahale talebi açar (aşağı yönlü
+ * SupportRequest). Tükenmişlik/risk panosundan tetiklenir. Koç bunu kendi
+ * "Destek → Gelen kutusu"nda görür.
+ */
+export function useNotifyCoach() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<NotifyCoachResult>, Error, NotifyCoachBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<NotifyCoachResult>>("/api/v2/institution/notify-coach", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Koça iletildi", {
+        description: res.data.teacher_name
+          ? `${res.data.teacher_name} bilgilendirildi — talep koçun gelen kutusunda.`
+          : "Talep koçun gelen kutusunda görünecek.",
+      });
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "İletilemedi"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
       });
     },

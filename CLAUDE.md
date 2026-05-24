@@ -2658,6 +2658,53 @@ Kaydetme: mevcut görevden + ayrı form (ikisi).
   uygulanır, kütüphane). Görev şablonu = görev kalıbı (kitap+bölüm+test sayısı,
   plana uygulanır). İkisi AYRI.
 
+## "Koça ilet" — risk/tükenmişlik panosundan koça müdahale + tutarsızlık analizi (2026-05-24)
+
+**Bağlam (kullanıcı):** Kurum Tükenmişlik/Risk panoları yalnız LİSTELİYOR; yönetici
+"bu öğrenci için ne yapabilir?" diye sordu. Gizlilik gereği yönetici öğrenci
+detayına inemez → tek müdahale kolu KOÇtur. Seçenek A onaylandı: panoya koç adı +
+"Koça ilet" butonu (ilgili koça müdahale talebi).
+
+**İki tanı sorusu (gerçek veriden yanıtlandı):**
+- **Yiğit tutarsızlığı**: Tükenmişlik panosu `compute_burnout` (yük/düşüş metriği),
+  Müdahale Merkezi `risk_analysis` kullanır — FARKLI metrikler. Yiğit burnout
+  "Uyarı 50" ama risk_analysis "ok (15)", programı var (%66) → Müdahale Merkezi'nde
+  yok. Bug değil, farklı ölçüm.
+- **Programsız/düşük-uyum uyarısı**: `simulate_action_center.py` 10/10 kanıtladı
+  (boş 2→uyarı/3→kritik, uyum %10→kritik/%30→uyarı). ETUTKOC'ta tek aktif öğrenci
+  (programı var) olduğu için Müdahale Merkezi 0; boş/düşük öğrenci eklenince çıkar.
+
+**Uygulama (aşağı yönlü SupportRequest):**
+- **Migration `h5i8l0m1l99f`** (down_revision g4h7k9l0k88e): `support_requests.target_user_id`
+  (nullable FK→users, SET NULL). **Additive**, downgrade'li, uygulandı. **Migration
+  head = h5i8l0m1l99f.**
+- Model: yeni `SUPPORT_AUDIENCE_TEACHER="teacher"` (audience String, enum migration
+  yok) + `target_user_id` + `target_user` relationship + `student_risk` kategori.
+- Servis `support_request_service`: `notify_coach(admin, teacher, ...)` (audience=
+  teacher, target_user_id=koç; tenant: koç yöneticinin kurumuna bağlı olmalı) +
+  `list_inbox_teacher` + `list_inbox` dispatcher + `pending_count_teacher` +
+  `is_active_recipient`'a TEACHER dalı (koç kendi hedefli talebinin aktif muhatabı).
+- **Yön asimetrisi**: support sistemi artık çift yönlü — yukarı (koç/öğretmen→
+  yönetici→süper admin) + aşağı (yönetici→koç). Koç hem talep eden hem muhatap olabilir.
+- Endpoint `POST /api/v2/institution/notify-coach` (`_require_institution_admin`;
+  koç kurum-dışıysa 404). `/support/inbox` + review/resolve TEACHER'ı kapsar
+  (`_is_recipient_role`'a TEACHER eklendi; yetki `get_for_recipient` ile).
+- Frontend: paylaşılan `notify-coach-dialog.tsx` (NotifyCoachTarget + not + KVKK
+  notu; setState-in-effect yerine "prop değişince render'da sıfırla" deseni) ·
+  burnout-client + at-risk-client'a "Sorumlu koç" sütunu + "Koça ilet" butonu +
+  güncellenmiş gizlilik notu · `useNotifyCoach` hook · yeni `/teacher/support-inbox`
+  sayfası (SupportCenter view="inbox" reuse) · teacher-shell "Gelen Talepler" nav +
+  `support_inbox_pending` rozeti (işleyince azalır — cevaplayınca düşer).
+- **Test**: `test_api_v2_notify_coach.py` **13/13** + `test_api_v2_support_requests.py`
+  **54/54** (YET.1/3/4 yeni davranışa güncellendi: koç inbox 200-boş; öğretmen kendi
+  talebini yönetemez → 404) + CANLI `live_notify_coach_flow.py` :3000 **13/13**
+  (notify→inbox→rozet→cevap→rozet düşer→çözüm + 3 sayfa render). Regresyon: teacher
+  badges 11 · institution_p2 19 · action_center 8 · compliance 10 · tenant 29 GREEN.
+  tsc/eslint temiz (build YOK — :3000 dev çalışıyor).
+- **NOT (bağımsız koç)**: institution_id NULL koç hedef alınamaz → gelen kutusu
+  her zaman boş (200, items=[]). notify_coach yalnız kurum yöneticisi → kendi
+  kurumunun koçu.
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

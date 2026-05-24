@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Info, PartyPopper, Printer } from "lucide-react";
+import { Info, PartyPopper, Printer, Send } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,6 +12,10 @@ import {
   getInstitutionAtRisk,
   institutionKeys,
 } from "@/lib/api/institution";
+import {
+  NotifyCoachDialog,
+  type NotifyCoachTarget,
+} from "@/components/institution/notify-coach-dialog";
 import type {
   AtRiskCountsInfo,
   AtRiskResponse,
@@ -44,6 +48,8 @@ export function AtRiskClient({ initial }: Props) {
   });
   const data = q.data ?? initial;
   const { institution, counts, total_students, healthy_count, at_risk } = data;
+
+  const [target, setTarget] = React.useState<NotifyCoachTarget | null>(null);
 
   return (
     <div className="space-y-6">
@@ -96,17 +102,34 @@ export function AtRiskClient({ initial }: Props) {
                   <th className="text-left px-4 py-2 font-medium">
                     Niye risk altında
                   </th>
+                  <th className="text-right px-4 py-2 font-medium w-32">
+                    Müdahale
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {at_risk.map((r) => (
-                  <AtRiskRow key={r.student_id} row={r} />
+                  <AtRiskRow
+                    key={r.student_id}
+                    row={r}
+                    onNotify={() =>
+                      r.teacher_id
+                        ? setTarget({
+                            student_name: r.full_name,
+                            teacher_id: r.teacher_id,
+                            teacher_name: r.teacher_name,
+                          })
+                        : undefined
+                    }
+                  />
                 ))}
               </tbody>
             </table>
           </div>
         </Card>
       )}
+
+      <NotifyCoachDialog target={target} onClose={() => setTarget(null)} context="at_risk" />
     </div>
   );
 }
@@ -118,8 +141,8 @@ function PrivacyNote() {
       <div>
         <strong>Gizlilik:</strong> Bu panel öğrenci programını veya öğretmen
         notlarını GÖSTERMEZ — sadece &ldquo;kim risk altında ve niye&rdquo;
-        bilgisini sunar. Müdahale gerekiyorsa öğretmenle{" "}
-        <strong>doğrudan iletişime geçin</strong>.
+        bilgisini sunar. Müdahale için ilgili koça{" "}
+        <strong>“Koça ilet”</strong> ile talep açabilirsiniz.
       </div>
     </div>
   );
@@ -186,7 +209,13 @@ function CountCard({
   );
 }
 
-function AtRiskRow({ row }: { row: AtRiskRowItem }) {
+function AtRiskRow({
+  row,
+  onNotify,
+}: {
+  row: AtRiskRowItem;
+  onNotify: () => void;
+}) {
   return (
     <tr className={riskRowBgClass(row.level, row.is_paused)}>
       <td className="px-4 py-3 align-top">
@@ -253,6 +282,16 @@ function AtRiskRow({ row }: { row: AtRiskRowItem }) {
             </span>
           ))}
         </div>
+      </td>
+      <td className="px-4 py-3 text-right align-top">
+        {row.teacher_id ? (
+          <Button size="sm" variant="outline" onClick={onNotify}>
+            <Send className="size-3.5" aria-hidden />
+            Koça ilet
+          </Button>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        )}
       </td>
     </tr>
   );

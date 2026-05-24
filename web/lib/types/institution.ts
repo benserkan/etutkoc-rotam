@@ -301,6 +301,20 @@ export interface BurnoutResponse {
   total: number;
 }
 
+// Koça ilet — riskli öğrenci için kurum yöneticisi → koç talebi (aşağı yönlü)
+export interface NotifyCoachBody {
+  teacher_id: number;
+  student_name?: string | null;
+  note?: string | null;
+  context?: string | null; // "burnout" | "at_risk"
+}
+
+export interface NotifyCoachResult {
+  request_id: number;
+  teacher_id: number;
+  teacher_name: string | null;
+}
+
 // =============================================================================
 // D4 Paket 2 — Kohortlar
 // =============================================================================

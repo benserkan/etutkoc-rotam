@@ -14,6 +14,7 @@ from app.models import (
     SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
     SUPPORT_AUDIENCE_LABELS_TR,
     SUPPORT_AUDIENCE_SUPER_ADMIN,
+    SUPPORT_AUDIENCE_TEACHER,
     SUPPORT_STATUS_LABELS_TR,
     SUPPORT_TERMINAL_STATUSES,
     SupportRequest,
@@ -62,6 +63,8 @@ class SupportRequestListItem(BaseModel):
     requester_id: int
     requester_name: str
     requester_role: str
+    target_user_id: int | None  # aşağı yönlü (audience=teacher) muhatap koç
+    target_user_name: str | None
     institution_id: int | None
     institution_name: str | None
     created_at: datetime
@@ -179,6 +182,12 @@ def _is_active_recipient(req: SupportRequest, viewer: User) -> bool:
             and req.institution_id is not None
             and req.institution_id == viewer.institution_id
         )
+    if viewer.role == UserRole.TEACHER:
+        return (
+            req.audience == SUPPORT_AUDIENCE_TEACHER
+            and req.target_user_id is not None
+            and req.target_user_id == viewer.id
+        )
     return False
 
 
@@ -212,6 +221,8 @@ def _list_item(req: SupportRequest, viewer: User) -> SupportRequestListItem:
         requester_id=req.requester_id,
         requester_name=_name(req.requester),
         requester_role=req.requester_role,
+        target_user_id=req.target_user_id,
+        target_user_name=(_name(req.target_user) if req.target_user_id else None),
         institution_id=req.institution_id,
         institution_name=(req.institution.name if req.institution else None),
         created_at=req.created_at,

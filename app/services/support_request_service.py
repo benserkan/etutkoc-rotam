@@ -26,6 +26,7 @@ from app.models import (
     SUPPORT_ATTACH_MAX_PER_REQUEST,
     SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
     SUPPORT_AUDIENCE_SUPER_ADMIN,
+    SUPPORT_AUDIENCE_TEACHER,
     SUPPORT_RECIPIENT_PENDING_STATUSES,
     SUPPORT_STATUS_ANSWERED,
     SUPPORT_STATUS_OPEN,
@@ -113,12 +114,62 @@ def create_request(
     return req
 
 
+def notify_coach(
+    db: Session, *, admin: User, teacher: User, subject: str, body: str,
+    category: str = "student_risk",
+) -> SupportRequest:
+    """Aşağı yönlü talep: kurum yöneticisi → kendi kurumundaki koç (audience=
+    teacher, target_user_id=teacher). Riskli öğrenci için "Koça ilet" akışı.
+
+    Tenant izolasyonu: koç, yöneticinin kurumuna bağlı olmalı (endpoint doğrular;
+    burada savunmacı kontrol)."""
+    if admin.role != UserRole.INSTITUTION_ADMIN or admin.institution_id is None:
+        raise SupportError("role_not_allowed", "Yalnız kurum yöneticisi koça talep iletebilir.")
+    if (
+        teacher.role != UserRole.TEACHER
+        or teacher.institution_id != admin.institution_id
+    ):
+        raise SupportError("coach_not_found", "Koç bu kuruma bağlı değil.")
+
+    subject = (subject or "").strip()
+    body = (body or "").strip()
+    if not subject:
+        raise SupportError("subject_required", "Konu boş olamaz.")
+    if len(subject) > MAX_SUBJECT:
+        raise SupportError("subject_too_long", f"Konu en fazla {MAX_SUBJECT} karakter.")
+    if not body:
+        raise SupportError("body_required", "Mesaj boş olamaz.")
+    if len(body) > MAX_BODY:
+        raise SupportError("body_too_long", f"Mesaj en fazla {MAX_BODY} karakter.")
+    if category not in SUPPORT_CATEGORY_LABELS_TR:
+        category = "student_risk"
+
+    now = datetime.now(timezone.utc)
+    req = SupportRequest(
+        requester_id=admin.id,
+        requester_role=admin.role.value,
+        audience=SUPPORT_AUDIENCE_TEACHER,
+        institution_id=admin.institution_id,
+        target_user_id=teacher.id,
+        category=category,
+        subject=subject,
+        status=SUPPORT_STATUS_OPEN,
+        last_activity_at=now,
+    )
+    db.add(req)
+    db.flush()
+    db.add(SupportRequestMessage(request_id=req.id, sender_id=admin.id, body=body))
+    db.flush()
+    return req
+
+
 # ----------------------------- Sorgular -----------------------------
 
 
 _LOAD = (
     joinedload(SupportRequest.requester),
     joinedload(SupportRequest.handled_by),
+    joinedload(SupportRequest.target_user),
     joinedload(SupportRequest.escalated_by),
     joinedload(SupportRequest.messages).joinedload(SupportRequestMessage.sender),
     joinedload(SupportRequest.attachments).joinedload(SupportAttachment.uploaded_by),
@@ -167,6 +218,31 @@ def list_inbox_institution_admin(
     return q.order_by(SupportRequest.last_activity_at.desc()).all()
 
 
+def list_inbox_teacher(
+    db: Session, teacher: User, *, status_filter: str | None = None,
+) -> list[SupportRequest]:
+    """Koçun gelen kutusu: kurum yöneticisinin kendisine ilettiği talepler
+    (audience=teacher + target_user_id == koç)."""
+    q = _base_query(db).filter(
+        SupportRequest.audience == SUPPORT_AUDIENCE_TEACHER,
+        SupportRequest.target_user_id == teacher.id,
+    )
+    if status_filter:
+        q = q.filter(SupportRequest.status == status_filter)
+    return q.order_by(SupportRequest.last_activity_at.desc()).all()
+
+
+def list_inbox(db: Session, user: User, *, status_filter: str | None = None) -> list[SupportRequest]:
+    """Rol-temelli gelen kutusu dağıtıcı (endpoint tek uç kullanır)."""
+    if user.role == UserRole.SUPER_ADMIN:
+        return list_inbox_super_admin(db, status_filter=status_filter)
+    if user.role == UserRole.INSTITUTION_ADMIN:
+        return list_inbox_institution_admin(db, user, status_filter=status_filter)
+    if user.role == UserRole.TEACHER:
+        return list_inbox_teacher(db, user, status_filter=status_filter)
+    return []
+
+
 def get_for_requester(db: Session, requester: User, req_id: int) -> SupportRequest | None:
     return (
         _base_query(db)
@@ -186,6 +262,12 @@ def is_active_recipient(req: SupportRequest, user: User) -> bool:
             req.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN
             and req.institution_id is not None
             and req.institution_id == user.institution_id
+        )
+    if user.role == UserRole.TEACHER:
+        return (
+            req.audience == SUPPORT_AUDIENCE_TEACHER
+            and req.target_user_id is not None
+            and req.target_user_id == user.id
         )
     return False
 
@@ -399,6 +481,19 @@ def pending_count_institution_admin(db: Session, admin: User) -> int:
         .filter(
             SupportRequest.audience == SUPPORT_AUDIENCE_INSTITUTION_ADMIN,
             SupportRequest.institution_id == admin.institution_id,
+            SupportRequest.status.in_(SUPPORT_RECIPIENT_PENDING_STATUSES),
+        )
+        .count()
+    )
+
+
+def pending_count_teacher(db: Session, teacher: User) -> int:
+    """Koça iletilmiş, koçun henüz cevaplamadığı talep sayısı (gelen kutusu rozeti)."""
+    return (
+        db.query(SupportRequest)
+        .filter(
+            SupportRequest.audience == SUPPORT_AUDIENCE_TEACHER,
+            SupportRequest.target_user_id == teacher.id,
             SupportRequest.status.in_(SUPPORT_RECIPIENT_PENDING_STATUSES),
         )
         .count()
