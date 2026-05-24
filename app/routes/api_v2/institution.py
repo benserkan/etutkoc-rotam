@@ -53,7 +53,7 @@ from __future__ import annotations
 import secrets
 from datetime import date, datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
@@ -1442,6 +1442,35 @@ def institution_burnout_v2(
         institution=_institution_brief(inst),
         items=rows,
         total=len(rows),
+    )
+
+
+@router.get("/logo/{institution_id}")
+def institution_logo_v2(
+    institution_id: int,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Kurum logosunu servis eder (co-branding `<img src>`).
+
+    Erişim: süper admin (her kurum) VEYA kuruma bağlı kullanıcı (kendi kurumu —
+    yönetici/öğretmen/öğrenci/veli). Logo kişisel veri değil; özel cache.
+    """
+    if user.role != UserRole.SUPER_ADMIN and user.institution_id != institution_id:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "logo_not_found", "message": "Logo bulunamadı."},
+        )
+    inst = db.get(Institution, institution_id)
+    if inst is None or not inst.logo_content_type or not inst.logo_data:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "logo_not_found", "message": "Logo bulunamadı."},
+        )
+    return Response(
+        content=inst.logo_data,
+        media_type=inst.logo_content_type,
+        headers={"Cache-Control": "private, max-age=300"},
     )
 
 
