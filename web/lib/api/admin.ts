@@ -49,6 +49,7 @@ import type {
   SystemHealthResponse,
   SecurityOverviewResponse,
   IntegrityResponse,
+  ErrorExplanation,
   SystemHealthDataResponse,
   NotificationHealthResponse,
   ActivityPanelResponse,
@@ -553,6 +554,13 @@ export function getAdminSecurityIntegrity() {
 
 export function getAdminSecuritySystem() {
   return api<SystemHealthDataResponse>("/api/v2/admin/security-monitor/system");
+}
+
+export function explainAdminSystemError(errorId: number) {
+  return api<ErrorExplanation>(
+    `/api/v2/admin/security-monitor/system/${errorId}/explain`,
+    { method: "POST" },
+  );
 }
 
 export function getAdminSecurityNotifications() {

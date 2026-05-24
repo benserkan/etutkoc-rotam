@@ -215,7 +215,7 @@ class InstitutionEditBody(BaseModel):
     """POST /api/v2/admin/institutions/{id} body."""
     name: str
     contact_email: str | None = None
-    plan: str = "free"
+    plan: str | None = None    # None/boş → mevcut planı KORU (yalnız açıkça gönderilince değişir)
     is_active: bool = True
 
 
@@ -239,6 +239,15 @@ class InstitutionUserBrief(BaseModel):
     last_login_at: datetime | None = None
 
 
+class PendingUpgradeInfo(BaseModel):
+    """Kurumun bekleyen plan yükseltme talebi (contact_requests'ten)."""
+    contact_request_id: int
+    requested_plan_code: str | None = None   # PlanCard ön-seçimi için (varsa)
+    requested_plan_label: str                # "Etüt Standart" | "Belirtilmedi"
+    requested_at: str
+    note: str | None = None
+
+
 class InstitutionDetailResponse(BaseModel):
     """GET /api/v2/admin/institutions/{id} yanıtı."""
     institution: InstitutionDetailBrief
@@ -246,6 +255,7 @@ class InstitutionDetailResponse(BaseModel):
     institution_admins: list[InstitutionUserBrief]
     teachers: list[InstitutionUserBrief]
     student_count: int
+    pending_upgrade: PendingUpgradeInfo | None = None   # bekleyen yükseltme talebi
 
 
 class InstitutionMutationResult(BaseModel):
@@ -2483,6 +2493,18 @@ class IntegrityResponse(BaseModel):
     cron_drift: IntegrityCronDrift
 
 
+class ErrorExplanationModel(BaseModel):
+    """Ham hatanın sade dile çevrilmiş hâli (error_translator)."""
+    category: str
+    category_label: str
+    summary: str
+    why: str
+    how_to_fix: str
+    severity: str               # info | warning | critical
+    is_code_bug: bool           # geliştirici düzeltmesi mi gerekiyor
+    source: str                 # rule | ai | none
+
+
 class SystemErrorGroup(BaseModel):
     id: int
     signature: str
@@ -2499,6 +2521,9 @@ class SystemErrorGroup(BaseModel):
     resolved_at: datetime | None = None
     last_ip: str | None = None
     last_actor_user_id: int | None = None
+    explanation: ErrorExplanationModel | None = None   # sade dil çevirisi
+    stale: bool = False         # son görülme eski → muhtemelen çözülmüş/güncel değil
+    last_seen_label: str = ""   # "3 gün önce" gibi okunur etiket
 
 
 class SystemEndpointError(BaseModel):
@@ -3186,8 +3211,10 @@ class SetAiSettingBody(BaseModel):
 # =============================================================================
 
 
-class SoloBandIn(BaseModel):
-    max_students: int
+class SoloTierIn(BaseModel):
+    code: str
+    label: str
+    max_students: int | None = None   # None = sınırsız
     monthly: int
 
 
@@ -3196,7 +3223,8 @@ class InstitutionTierIn(BaseModel):
     label: str
     min_coaches: int
     max_coaches: int | None = None
-    per_coach_monthly: int
+    monthly_total: int | None = None   # None = özel teklif (enterprise)
+    price_hidden: bool = False
     white_label: bool = False
     short: str = ""
 
@@ -3205,8 +3233,7 @@ class PricingConfigBody(BaseModel):
     annual_paid_months: int
     solo_trial_days: int
     solo_free_students: int
-    solo_bands: list[SoloBandIn]
-    solo_over_cap_per_student: int
+    solo_tiers: list[SoloTierIn]
     institution_trial_days: int
     institution_free_teachers: int
     institution_free_students: int
@@ -3238,7 +3265,10 @@ class ContactRequestItem(BaseModel):
     handled_by_id: int | None = None
     handled_at: str | None = None
     admin_note: str | None = None
-    linked_user_id: int | None = None   # abonelik talebinde koç user_id (mesajdan)
+    linked_user_id: int | None = None          # abonelik talebinde koç user_id (mesajdan)
+    linked_institution_id: int | None = None   # kurum abonelik talebinde kurum_id (mesajdan)
+    requested_plan_label: str | None = None            # talep edilen paket (mesajdan)
+    institution_current_plan_label: str | None = None  # kurumun CANLI mevcut planı
 
 
 class ContactRequestListResponse(BaseModel):

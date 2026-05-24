@@ -183,12 +183,21 @@ export interface InstitutionUserBrief {
   last_login_at: string | null;
 }
 
+export interface PendingUpgradeInfo {
+  contact_request_id: number;
+  requested_plan_code: string | null;
+  requested_plan_label: string;
+  requested_at: string;
+  note: string | null;
+}
+
 export interface InstitutionDetailResponse {
   institution: InstitutionDetailBrief;
   health: HealthAssessmentItem;
   institution_admins: InstitutionUserBrief[];
   teachers: InstitutionUserBrief[];
   student_count: number;
+  pending_upgrade?: PendingUpgradeInfo | null;
 }
 
 export interface InstitutionMutationResult {
@@ -2270,6 +2279,17 @@ export interface IntegrityResponse {
   cron_drift: IntegrityCronDrift;
 }
 
+export interface ErrorExplanation {
+  category: string;
+  category_label: string;
+  summary: string;
+  why: string;
+  how_to_fix: string;
+  severity: string;        // info | warning | critical
+  is_code_bug: boolean;
+  source: string;          // rule | ai | none
+}
+
 export interface SystemErrorGroup {
   id: number;
   signature: string;
@@ -2286,6 +2306,9 @@ export interface SystemErrorGroup {
   resolved_at: string | null;
   last_ip: string | null;
   last_actor_user_id: number | null;
+  explanation: ErrorExplanation | null;
+  stale: boolean;
+  last_seen_label: string;
 }
 
 export interface SystemEndpointError {
@@ -2940,8 +2963,10 @@ export interface SetAiSettingBody {
 }
 
 // Üyelik/fiyat yapılandırması (tek kaynak override)
-export interface SoloBandCfg {
-  max_students: number;
+export interface SoloTierCfg {
+  code: string;
+  label: string;
+  max_students: number | null;   // null = sınırsız
   monthly: number;
 }
 export interface InstitutionTierCfg {
@@ -2949,7 +2974,8 @@ export interface InstitutionTierCfg {
   label: string;
   min_coaches: number;
   max_coaches: number | null;
-  per_coach_monthly: number;
+  monthly_total: number | null;  // null = özel teklif
+  price_hidden: boolean;
   white_label: boolean;
   short: string;
 }
@@ -2957,8 +2983,7 @@ export interface PricingConfig {
   annual_paid_months: number;
   solo_trial_days: number;
   solo_free_students: number;
-  solo_bands: SoloBandCfg[];
-  solo_over_cap_per_student: number;
+  solo_tiers: SoloTierCfg[];
   institution_trial_days: number;
   institution_free_teachers: number;
   institution_free_students: number;
@@ -2988,6 +3013,9 @@ export interface ContactRequestItem {
   handled_at: string | null;
   admin_note: string | null;
   linked_user_id?: number | null;
+  linked_institution_id?: number | null;
+  requested_plan_label?: string | null;
+  institution_current_plan_label?: string | null;
 }
 
 export interface ContactRequestListResponse {

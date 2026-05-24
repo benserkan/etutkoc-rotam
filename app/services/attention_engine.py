@@ -378,35 +378,42 @@ def _detect_open_critical_errors(db: Session) -> list[AttentionItem]:
         .limit(3)
         .all()
     )
+    from app.services.error_translator import explain_error
+
+    now = datetime.now(timezone.utc)
     items: list[AttentionItem] = []
     for r in rows:
-        # Çok yüksek count → critical, az → warn
-        sev = "critical" if (r.count or 0) >= 10 else "warn"
+        exp = explain_error(r.exception_type or "", r.exception_message or "", r.endpoint)
+        # Bayatlık: son görülme 3+ gün önce → muhtemelen çözülmüş (sayaç eski olabilir).
+        last = _aware(r.last_seen_at)
+        stale_days = (now - last).days if last else None
+        is_stale = stale_days is not None and stale_days >= 3
+        stale_note = ""
+        if is_stale:
+            stale_note = (
+                f"\n\nNot: Bu hata en son {stale_days} gün önce görüldü; o tarihten beri "
+                "tekrarlamamış — muhtemelen çözülmüş ya da artık kullanılmayan bir sayfadan. "
+                "Doğruysa 'Çöz' işaretleyip listeden kaldırabilirsin."
+            )
+        # Şiddet: çeviri kritik diyorsa ya da çok tekrarladıysa kritik; bayatsa düşür.
+        sev = "critical" if (exp.severity == "critical" or (r.count or 0) >= 10) else "warn"
+        if is_stale:
+            sev = "warn"
         items.append(AttentionItem(
             severity=sev,
             icon="🔧",
-            title=f"{r.exception_type or 'HTTPError'}: {r.endpoint}",
-            description=(
-                f"{r.count} kez tetiklendi. "
-                f"{(r.exception_message or '')[:100]}"
-            ),
+            title=f"Bir sayfa hata veriyor: {r.endpoint}",
+            description=f"{r.count} kez — {exp.summary}",
             action_url="/admin/security-monitor/system",
             action_label="Hata grubunu aç",
             category="error",
-            ts=_aware(r.last_seen_at),
-            score=70 if sev == "critical" else 50,
+            ts=last,
+            score=(40 if is_stale else 70 if sev == "critical" else 50),
             explainer=(
-                "Bir kullanıcı sistemin bir sayfasını kullanırken kod düzeyinde hata oluştu "
-                "(programcıların 'exception' dediği şey). Sistem hatayı yakaladı, kullanıcıya "
-                "muhtemelen 'bir hata oluştu' mesajı gösterdi ama detayını programcı için "
-                "buraya kaydetti. Aynı hata kod konumundan tekrar gelse sayaç artar, yeni "
-                "satır açılmaz.\n\n"
-                "Neden önemli: 10+ kez tekrarlamış bir hata = düzenli olarak kullanıcı "
-                "etkilenmiş demektir. Şikayet gelmeden önce fark etmek değerlidir.\n\n"
-                "Ne yapmalısın: 'Hata grubunu aç' diyerek stack trace (hatanın kod yolu) "
-                "ve ilk/son tetiklenme zamanını gör. Geliştiriciye iletilebilir veya "
-                "geçici çare bulunabilir. Çözüldüğünde 'Çöz' işaretle — aynı hata tekrar "
-                "tetiklenirse otomatik tekrar açılır."
+                f"Ne oldu: {exp.summary}\n\n"
+                f"Neden: {exp.why}\n\n"
+                f"Ne yapmalısın: {exp.how_to_fix}"
+                + stale_note
             ),
         ))
     return items
@@ -539,35 +546,42 @@ def _detect_cron_drift(db: Session) -> list[AttentionItem]:
     """Cron drift critical durumdaki job'lar."""
     try:
         from app.services.data_integrity import cron_drift_check
+        from app.services.error_translator import cron_label, cron_purpose
         cd = cron_drift_check(db)
         if cd["summary"]["critical"] == 0:
             return []
-        crit_jobs = [j for j in cd["jobs"] if j["level"] == "critical"][:3]
-        names = ", ".join(j["job_key"] for j in crit_jobs)
-        more = f" +{cd['summary']['critical'] - 3}" if cd["summary"]["critical"] > 3 else ""
+        crit_all = [j for j in cd["jobs"] if j["level"] == "critical"]
+        crit_jobs = crit_all[:3]
+        names = ", ".join(cron_label(j["job_key"]) for j in crit_jobs)
+        more = f" +{cd['summary']['critical'] - 3} görev daha" if cd["summary"]["critical"] > 3 else ""
+        # Etkilenen görevlerin ne işe yaradığını tek tek say (admin "ne olmadı"yı bilsin).
+        affected = "\n".join(
+            f"• {cron_label(j['job_key'])} — {cron_purpose(j['job_key'])}" for j in crit_jobs
+        )
         return [AttentionItem(
             severity="critical",
             icon="🩺",
-            title=f"{cd['summary']['critical']} cron 48 saattir çalışmıyor",
-            description=f"{names}{more}",
+            title=f"{cd['summary']['critical']} otomatik görev 48+ saattir çalışmıyor",
+            description=f"Çalışmayanlar: {names}{more}",
             action_url="/admin/security-monitor/integrity",
             action_label="Bütünlük panosu",
             category="integrity",
             ts=_now(),
             score=75,
             explainer=(
-                "'Cron' sistemde belirli aralıklarla otomatik çalışan iş demektir. Rotam'da "
-                "çok sayıda cron var: her gece veli özetlerini yollayan, ay başı kredileri "
-                "yenileyen, eski log'ları temizleyen, alarm motorunu 5 dakikada bir "
-                "çalıştıran, abuse tespitini her saat yapan vb.\n\n"
-                "Neden önemli: Bir cron 48 saattir çalışmıyorsa o işin yapması gereken "
-                "şeyler **olmadı**. Veliye günlük özet gitmedi, alarm tetiklenmedi, "
-                "eski hata kayıtları silinmedi. En olası sebep: dispatcher loop'u "
-                "(arka plan işleyicisi) çökmüş veya restart sırasında başlamamış.\n\n"
-                "Ne yapmalısın: 'Bütünlük panosu' diyerek hangi cron'ların hangi son hata "
-                "ile durduğunu gör. Sunucuyu yeniden başlatmak çoğu zaman yeterlidir "
-                "(`pkill uvicorn && python -m uvicorn ...`). Hata mesajı kod-bug "
-                "gösteriyorsa geliştiriciye iletilebilir."
+                "Sistemde belirli aralıklarla kendiliğinden çalışan otomatik görevler "
+                "(cron) var; bunlardan bazıları 48 saatten uzun süredir hiç çalışmamış.\n\n"
+                f"Şu an çalışmayan görevler ve ne yaptıkları:\n{affected}\n\n"
+                "Neden önemli: Bu görevler durduğunda yapmaları gereken işler SESSİZCE "
+                "yapılmaz — örneğin veliye günlük bilgi gitmez, deneme süresi bitenler "
+                "düşmez, hatırlatmalar gönderilmez. Kullanıcı fark etmez.\n\n"
+                "Olası neden: Görevleri tetikleyen zamanlayıcı süreci (arka plan işleyici) "
+                "durmuş ya da sunucu yeniden başladığında başlamamış; ya da görev her "
+                "çalışmada hata veriyor.\n\n"
+                "Ne yapmalısın: 'Bütünlük panosu'na girip hangi görevin neden durduğunu "
+                "(varsa son hata mesajını) gör. Çoğu zaman sunucuyu/zamanlayıcıyı yeniden "
+                "başlatmak yeterlidir. Hata mesajı bir kod sorununa işaret ediyorsa "
+                "geliştiriciye iletilmeli."
             ),
         )]
     except Exception:

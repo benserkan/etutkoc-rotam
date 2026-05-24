@@ -10,9 +10,11 @@ import {
   Ban,
   Bug,
   CheckCircle2,
+  ChevronDown,
   Eye,
   Flame,
   KeyRound,
+  Lightbulb,
   Shield,
   ShieldAlert,
   UserCog,
@@ -22,7 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { adminKeys, getAdminSecurityOverview } from "@/lib/api/admin";
-import type { SecurityOverviewResponse } from "@/lib/types/admin";
+import type { AttentionItemModel, SecurityOverviewResponse } from "@/lib/types/admin";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
 import {
   SeverityBadge,
@@ -39,6 +41,58 @@ interface Props {
 
 function roleLabel(role: string): string {
   return (ROLE_LABELS_TR as Record<string, string>)[role] ?? role;
+}
+
+function AttentionCard({ it }: { it: AttentionItemModel }) {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <Card className={cn("border-l-4 p-4", severityCardClass(it.severity))}>
+      <div className="flex items-start gap-3">
+        {React.createElement(severityIcon(it.severity), {
+          className: cn("mt-0.5 size-5 shrink-0", severityIconColor(it.severity)),
+          "aria-hidden": true,
+        })}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <SeverityBadge sev={it.severity} />
+            {it.ts ? (
+              <span className="text-[11px] text-muted-foreground">{fmtDateTime(it.ts)}</span>
+            ) : null}
+          </div>
+          <h3 className="mt-1 text-sm font-semibold">{it.title}</h3>
+          <p className="mt-0.5 text-xs text-muted-foreground">{it.description}</p>
+
+          {it.explainer ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setOpen((v) => !v)}
+                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+              >
+                <Lightbulb className="size-3.5" aria-hidden />
+                {open ? "Açıklamayı gizle" : "Bu ne demek? Ne yapmalı?"}
+                <ChevronDown className={cn("size-3 transition", open && "rotate-180")} aria-hidden />
+              </button>
+              {open ? (
+                <div className="mt-2 whitespace-pre-line rounded-lg border border-border bg-background/60 p-3 text-xs leading-relaxed text-foreground/90">
+                  {it.explainer}
+                </div>
+              ) : null}
+            </>
+          ) : null}
+
+          {it.action_url ? (
+            <Link
+              href={it.action_url}
+              className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
+            >
+              {it.action_label || "Detay"} →
+            </Link>
+          ) : null}
+        </div>
+      </div>
+    </Card>
+  );
 }
 
 function KpiCard({
@@ -115,37 +169,9 @@ export function SecurityOverviewClient({ initial }: Props) {
           </Card>
         ) : (
           <div className="grid gap-3 md:grid-cols-2">
-            {att.items.map((it, i) => {
-              const Icon = severityIcon(it.severity);
-              return (
-                <Card
-                  key={`${it.category}-${i}`}
-                  className={cn("border-l-4 p-4", severityCardClass(it.severity))}
-                >
-                  <div className="flex items-start gap-3">
-                    <Icon className={cn("mt-0.5 size-5 shrink-0", severityIconColor(it.severity))} aria-hidden />
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <SeverityBadge sev={it.severity} />
-                        {it.ts ? (
-                          <span className="text-[11px] text-muted-foreground">{fmtDateTime(it.ts)}</span>
-                        ) : null}
-                      </div>
-                      <h3 className="mt-1 text-sm font-semibold">{it.title}</h3>
-                      <p className="mt-0.5 text-xs text-muted-foreground">{it.description}</p>
-                      {it.action_url ? (
-                        <Link
-                          href={it.action_url}
-                          className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-indigo-600 hover:text-indigo-800"
-                        >
-                          {it.action_label || "Detay"} →
-                        </Link>
-                      ) : null}
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+            {att.items.map((it, i) => (
+              <AttentionCard key={`${it.category}-${i}`} it={it} />
+            ))}
           </div>
         )}
       </section>

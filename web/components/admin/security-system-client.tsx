@@ -7,9 +7,14 @@ import {
   CheckCircle2,
   ChevronDown,
   Gauge,
+  Loader2,
+  Lightbulb,
   ServerCrash,
+  Sparkles,
   Timer,
+  Wrench,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
@@ -22,10 +27,40 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { adminKeys, getAdminSecuritySystem } from "@/lib/api/admin";
+import { adminKeys, getAdminSecuritySystem, explainAdminSystemError } from "@/lib/api/admin";
 import { useResolveSystemError } from "@/lib/hooks/use-admin-mutations";
-import type { SystemErrorGroup, SystemHealthDataResponse } from "@/lib/types/admin";
+import type { ErrorExplanation, SystemErrorGroup, SystemHealthDataResponse } from "@/lib/types/admin";
 import { fmtDateTime, humanizeAgo } from "@/components/admin/security-ui";
+
+const SEV_TONE: Record<string, string> = {
+  critical: "border-rose-200 bg-rose-50 text-rose-900",
+  warning: "border-amber-200 bg-amber-50 text-amber-900",
+  info: "border-sky-200 bg-sky-50 text-sky-900",
+};
+
+function ExplanationBlock({ exp }: { exp: ErrorExplanation }) {
+  return (
+    <div className={cn("mt-2 rounded-lg border p-3 text-xs", SEV_TONE[exp.severity] ?? SEV_TONE.warning)}>
+      <p className="flex items-center gap-1.5 font-semibold">
+        <Lightbulb className="size-3.5 shrink-0" aria-hidden />
+        {exp.category_label}
+        {exp.is_code_bug ? (
+          <span className="rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-medium">
+            <Wrench className="mr-0.5 inline size-2.5" aria-hidden /> kod düzeltmesi gerekir
+          </span>
+        ) : null}
+        {exp.source === "ai" ? (
+          <span className="rounded bg-white/70 px-1.5 py-0.5 text-[10px] font-medium">
+            <Sparkles className="mr-0.5 inline size-2.5" aria-hidden /> yapay zekâ
+          </span>
+        ) : null}
+      </p>
+      <p className="mt-1.5"><strong>Ne oldu:</strong> {exp.summary}</p>
+      {exp.why ? <p className="mt-1"><strong>Neden:</strong> {exp.why}</p> : null}
+      {exp.how_to_fix ? <p className="mt-1"><strong>Ne yapmalı:</strong> {exp.how_to_fix}</p> : null}
+    </div>
+  );
+}
 
 interface Props {
   initial: SystemHealthDataResponse;
@@ -93,48 +128,93 @@ function ResolveButton({ group }: { group: SystemErrorGroup }) {
 
 function ErrorGroupRow({ group }: { group: SystemErrorGroup }) {
   const [expanded, setExpanded] = React.useState(false);
+  // Sade açıklama: backend kural çevirisi; yoksa (source="none") AI ile getirilir.
+  const [explanation, setExplanation] = React.useState<ErrorExplanation | null>(group.explanation);
+  const [aiLoading, setAiLoading] = React.useState(false);
+
+  async function askAi() {
+    setAiLoading(true);
+    try {
+      const exp = await explainAdminSystemError(group.id);
+      setExplanation(exp);
+    } catch {
+      toast.error("Yapay zekâ açıklaması alınamadı", {
+        description: "AI ayarlarını kontrol et ya da ham detaya bak.",
+      });
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
+  const needsAi = !explanation || explanation.source === "none";
+
   return (
-    <Card className="overflow-hidden">
+    <Card className={cn("overflow-hidden", group.stale && "opacity-75")}>
       <div className="flex items-start gap-3 p-3">
         <span className={cn("mt-0.5 inline-flex items-center rounded border px-1.5 py-0.5 font-mono text-[11px]", statusTone(group.status_code))}>
           {group.status_code}
         </span>
         <div className="min-w-0 flex-1">
+          {/* Sade başlık: hangi sayfa + kaç kez + tazelik */}
           <div className="flex flex-wrap items-center gap-2">
-            <span className="font-mono text-xs font-semibold">{group.exception_type}</span>
-            <span className="rounded bg-muted px-1.5 py-0.5 text-[11px] text-muted-foreground">
+            <span className="text-xs font-semibold">Bir sayfa hata veriyor</span>
+            <span className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground">
               {group.method} {group.endpoint}
             </span>
             <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">
               {group.count}×
             </span>
+            {group.stale ? (
+              <span className="rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-600">
+                muhtemelen çözülmüş · son {group.last_seen_label}
+              </span>
+            ) : null}
           </div>
-          {group.exception_message ? (
-            <p className="mt-1 truncate text-xs text-muted-foreground" title={group.exception_message}>
-              {group.exception_message}
-            </p>
+
+          {/* Sade dil açıklaması (kural ya da AI) */}
+          {explanation ? <ExplanationBlock exp={explanation} /> : null}
+
+          {/* Katalogda yoksa: AI ile açıkla */}
+          {needsAi ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-2 h-7 text-xs"
+              onClick={askAi}
+              disabled={aiLoading}
+            >
+              {aiLoading ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Sparkles className="size-3.5" aria-hidden />}
+              Yapay zekâ ile açıkla
+            </Button>
           ) : null}
-          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
+
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
             <span>İlk: {fmtDateTime(group.first_seen_at)}</span>
             <span>Son: {fmtDateTime(group.last_seen_at)} ({humanizeAgo(group.age_seconds)})</span>
             {group.last_ip ? <span className="font-mono">{group.last_ip}</span> : null}
           </div>
-          {group.stack_trace ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setExpanded((v) => !v)}
-                className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-indigo-600 hover:text-indigo-800"
-              >
-                <ChevronDown className={cn("size-3 transition", expanded && "rotate-180")} aria-hidden />
-                {expanded ? "Yığını gizle" : "Yığın izini göster"}
-              </button>
-              {expanded ? (
-                <pre className="mt-1 max-h-64 overflow-auto rounded-md bg-slate-900 p-2 font-mono text-[10px] leading-relaxed text-slate-100">
+
+          {/* Ham teknik detay — geliştirici için, katlanır */}
+          <button
+            type="button"
+            onClick={() => setExpanded((v) => !v)}
+            className="mt-1 inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground hover:text-foreground"
+          >
+            <ChevronDown className={cn("size-3 transition", expanded && "rotate-180")} aria-hidden />
+            {expanded ? "Geliştirici detayını gizle" : "Geliştirici detayı (teknik)"}
+          </button>
+          {expanded ? (
+            <div className="mt-1 space-y-1">
+              <p className="font-mono text-[11px] font-semibold">{group.exception_type}</p>
+              {group.exception_message ? (
+                <p className="font-mono text-[10px] text-muted-foreground">{group.exception_message}</p>
+              ) : null}
+              {group.stack_trace ? (
+                <pre className="max-h-64 overflow-auto rounded-md bg-slate-900 p-2 font-mono text-[10px] leading-relaxed text-slate-100">
                   {group.stack_trace}
                 </pre>
               ) : null}
-            </>
+            </div>
           ) : null}
         </div>
         <div className="shrink-0">

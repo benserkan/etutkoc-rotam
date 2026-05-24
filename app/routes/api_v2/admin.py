@@ -93,6 +93,7 @@ from app.routes.api_v2.schemas.admin import (
     InstitutionDetailResponse,
     InstitutionEditBody,
     InstitutionFilterLevelLiteral,
+    PendingUpgradeInfo,
     InstitutionListItem,
     InstitutionListResponse,
     InstitutionMutationResult,
@@ -263,6 +264,7 @@ from app.routes.api_v2.schemas.admin import (
     RevenueTrialEntry,
     AttentionItemModel,
     AttentionSummaryModel,
+    ErrorExplanationModel,
     ErrorSummaryModel,
     IntegrityCronDrift,
     IntegrityCronJob,
@@ -866,6 +868,52 @@ def admin_create_institution_v2(
 # =============================================================================
 
 
+def _pending_institution_upgrade(db: Session, institution_id: int) -> PendingUpgradeInfo | None:
+    """Bu kuruma ait bekleyen (status=new) plan yükseltme talebi → PlanCard ön-seçimi.
+
+    Mesajdan kurum_id (tam-sayı eşleşme) + hedef_kod + hedef(etiket) + not parse edilir.
+    Eski format hedef_kod yoksa etiket→kod (pricing kataloğu) ile eşlenir.
+    """
+    import re
+
+    from app.models.contact_request import ContactRequest
+
+    rows = (
+        db.query(ContactRequest)
+        .filter(ContactRequest.source == "subscription_request", ContactRequest.status == "new")
+        .order_by(ContactRequest.created_at.desc())
+        .all()
+    )
+    for cr in rows:
+        if not cr.message:
+            continue
+        mi = re.search(r"kurum_id=(\d+)", cr.message)
+        if not mi or int(mi.group(1)) != institution_id:
+            continue
+        code: str | None = None
+        mk = re.search(r"hedef_kod=([a-z_]+)", cr.message)
+        if mk:
+            code = mk.group(1)
+        lm = re.search(r"hedef=([^·]+)·", cr.message)
+        label = lm.group(1).strip() if lm else "Belirtilmedi"
+        if not code and label and label != "Belirtilmedi":
+            from app.services import pricing
+            for t in pricing.get_pricing_catalog()["institution"]["tiers"]:
+                if t["label"] == label:
+                    code = t["code"]
+                    break
+        nm = re.search(r"not: ([^·]+)·", cr.message)
+        note = nm.group(1).strip() if nm else None
+        return PendingUpgradeInfo(
+            contact_request_id=cr.id,
+            requested_plan_code=code,
+            requested_plan_label=label,
+            requested_at=cr.created_at.isoformat() if cr.created_at else "",
+            note=note,
+        )
+    return None
+
+
 @router.get(
     "/institutions/{institution_id}",
     response_model=InstitutionDetailResponse,
@@ -923,6 +971,7 @@ def admin_institution_detail_v2(
         institution_admins=[_user_to_inst_brief(u) for u in institution_admins],
         teachers=[_user_to_inst_brief(u) for u in teachers],
         student_count=student_count,
+        pending_upgrade=_pending_institution_upgrade(db, inst.id),
     )
 
 
@@ -968,7 +1017,11 @@ def admin_edit_institution_v2(
     }
     inst.name = name_clean
     inst.contact_email = (body.contact_email or "").strip().lower() or None
-    inst.plan = (body.plan or "free").strip() or "free"
+    # plan OPSİYONEL: yalnız açıkça gönderildiğinde değiştir. Boş/None gelirse
+    # mevcut planı KORU (genel bilgi formu planı sıfırlamasın — "free"e düşürme bug'ı).
+    new_plan = (body.plan or "").strip()
+    if new_plan:
+        inst.plan = new_plan
     inst.is_active = bool(body.is_active)
     after = {
         "name": inst.name,
@@ -6919,15 +6972,67 @@ def admin_security_system_v2(
     """Sistem sağlığı kamerası: açık hata grupları + endpoint hata oranı +
     yavaş istekler. Jinja: admin.py error_capture panel."""
     from app.services.error_capture import get_system_health_data
+    from app.services.error_translator import explain_error
+    from app.routes.api_v2.schemas.admin import ErrorExplanationModel
 
     data = get_system_health_data(db)
+    now = datetime.now(timezone.utc)
+
+    def _enrich(g: dict) -> SystemErrorGroup:
+        exp = explain_error(
+            g.get("exception_type", ""), g.get("exception_message") or "", g.get("endpoint"),
+        )
+        # Bayatlık: son görülme 3+ gün önce ise muhtemelen çözülmüş/güncel değil.
+        last_seen = g.get("last_seen_at")
+        stale = False
+        label = ""
+        if last_seen is not None:
+            ls = last_seen if last_seen.tzinfo else last_seen.replace(tzinfo=timezone.utc)
+            days = (now - ls).days
+            stale = days >= 3
+            label = "bugün" if days <= 0 else (f"{days} gün önce" if days < 30 else f"{days // 30} ay önce")
+        return SystemErrorGroup(
+            **g,
+            explanation=ErrorExplanationModel(**exp.as_dict()),
+            stale=stale,
+            last_seen_label=label,
+        )
+
     return SystemHealthDataResponse(
         generated_at=data["generated_at"],
         summary=ErrorSummaryModel(**data["summary"]),
-        error_groups=[SystemErrorGroup(**g) for g in data["error_groups"]],
+        error_groups=[_enrich(g) for g in data["error_groups"]],
         endpoint_top=[SystemEndpointError(**e) for e in data["endpoint_top"]],
         slow_requests=[SystemSlowRequest(**s) for s in data["slow_requests"]],
     )
+
+
+@router.post(
+    "/security-monitor/system/{error_id}/explain",
+    response_model=ErrorExplanationModel,
+)
+def admin_security_system_explain_v2(
+    error_id: int,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Yapay zekâ ile sade açıklama (katalogda olmayan hatalar için, talep üzerine).
+    Sonuç imzaya göre bellekte önbeklenir — tekrar çağrıda kredi yanmaz."""
+    from app.services.error_capture import ErrorEvent
+    from app.services.error_translator import ai_explain_error
+    from app.routes.api_v2.schemas.admin import ErrorExplanationModel
+
+    row = db.get(ErrorEvent, error_id)
+    if row is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "error_not_found", "message": "Hata kaydı bulunamadı."},
+        )
+    exp = ai_explain_error(
+        row.exception_type, row.exception_message or "", row.endpoint,
+        signature=row.signature,
+    )
+    return ErrorExplanationModel(**exp.as_dict())
 
 
 @router.post(
@@ -7703,8 +7808,8 @@ def admin_ai_settings_delete_v2(
 _PRICING_INVALIDATE = ["admin:settings:pricing", "pricing"]
 
 _PRICING_EDITABLE_KEYS = (
-    "annual_paid_months", "solo_trial_days", "solo_free_students", "solo_bands",
-    "solo_over_cap_per_student", "institution_trial_days", "institution_free_teachers",
+    "annual_paid_months", "solo_trial_days", "solo_free_students", "solo_tiers",
+    "institution_trial_days", "institution_free_teachers",
     "institution_free_students", "institution_students_per_coach", "institution_tiers",
 )
 
@@ -7737,19 +7842,19 @@ def admin_pricing_set_v2(
     from app.services import app_settings, pricing
 
     payload = body.model_dump()
-    # Basit doğrulama: negatif fiyat/sayı yok; en az 1 bant + 1 tier.
-    if not payload["solo_bands"] or not payload["institution_tiers"]:
+    # Basit doğrulama: negatif fiyat/sayı yok; en az 1 solo tier + 1 kurum tier.
+    if not payload["solo_tiers"] or not payload["institution_tiers"]:
         raise HTTPException(
             status_code=400,
             detail={"error": "validation", "code": "invalid_pricing",
-                    "message": "En az bir öğrenci bandı ve bir kurum tier'ı gerekir."},
+                    "message": "En az bir solo paketi ve bir kurum tier'ı gerekir."},
         )
-    for b in payload["solo_bands"]:
-        if b["max_students"] <= 0 or b["monthly"] < 0:
+    for t in payload["solo_tiers"]:
+        if (t["max_students"] is not None and t["max_students"] <= 0) or t["monthly"] < 0:
             raise HTTPException(status_code=400, detail={"error": "validation", "code": "invalid_pricing",
-                    "message": "Bant değerleri geçersiz."})
+                    "message": "Solo paket değerleri geçersiz."})
     for t in payload["institution_tiers"]:
-        if t["per_coach_monthly"] < 0 or t["min_coaches"] <= 0:
+        if (t["monthly_total"] is not None and t["monthly_total"] < 0) or t["min_coaches"] <= 0:
             raise HTTPException(status_code=400, detail={"error": "validation", "code": "invalid_pricing",
                     "message": "Tier değerleri geçersiz."})
 
@@ -7774,18 +7879,42 @@ def admin_pricing_set_v2(
 _CONTACT_INVALIDATE = ["admin:contact-requests"]
 
 
-def _contact_item(cr) -> ContactRequestItem:
+def _contact_item(cr, db: Session | None = None) -> ContactRequestItem:
     import re
 
     from app.models.contact_request import (
         CONTACT_SOURCE_LABELS_TR,
         CONTACT_STATUS_LABELS_TR,
     )
+    from app.services.plans import get_plan_info
+
+    def _plan_label(code: str) -> str:
+        info = get_plan_info(code)
+        if info:
+            return info.label
+        return {"free": "Kurum Tanıma"}.get(code, code)
+
     linked_user_id = None
+    linked_institution_id = None
+    requested_plan_label = None
+    institution_current_plan_label = None
+    source_label = CONTACT_SOURCE_LABELS_TR.get(cr.source, cr.source)
     if cr.source == "subscription_request" and cr.message:
-        m = re.search(r"koç_id=(\d+)", cr.message)
-        if m:
-            linked_user_id = int(m.group(1))
+        mu = re.search(r"koç_id=(\d+)", cr.message)
+        if mu:
+            linked_user_id = int(mu.group(1))
+        mi = re.search(r"kurum_id=(\d+)", cr.message)
+        if mi:
+            linked_institution_id = int(mi.group(1))
+            source_label = "Abonelik talebi (kurum)"
+        hm = re.search(r"hedef=([^·]+)·", cr.message)
+        if hm:
+            requested_plan_label = hm.group(1).strip()
+        # Kurumun CANLI mevcut planı (talep anındaki değil — view-time doğru):
+        if linked_institution_id and db is not None:
+            inst = db.get(Institution, linked_institution_id)
+            if inst:
+                institution_current_plan_label = _plan_label(inst.plan or "free")
     return ContactRequestItem(
         id=cr.id,
         created_at=cr.created_at.isoformat() if cr.created_at else "",
@@ -7796,13 +7925,16 @@ def _contact_item(cr) -> ContactRequestItem:
         coach_count=cr.coach_count,
         message=cr.message,
         source=cr.source,
-        source_label=CONTACT_SOURCE_LABELS_TR.get(cr.source, cr.source),
+        source_label=source_label,
         status=cr.status,
         status_label=CONTACT_STATUS_LABELS_TR.get(cr.status, cr.status),
         handled_by_id=cr.handled_by_id,
         handled_at=cr.handled_at.isoformat() if cr.handled_at else None,
         admin_note=cr.admin_note,
         linked_user_id=linked_user_id,
+        linked_institution_id=linked_institution_id,
+        requested_plan_label=requested_plan_label,
+        institution_current_plan_label=institution_current_plan_label,
     )
 
 
@@ -7837,7 +7969,7 @@ def admin_contact_requests_list_v2(
     counts["total"] = counts["new"] + counts["contacted"] + counts["closed"]
 
     return ContactRequestListResponse(
-        items=[_contact_item(r) for r in rows],
+        items=[_contact_item(r, db) for r in rows],
         counts=counts,
         status_labels=dict(CONTACT_STATUS_LABELS_TR),
     )
