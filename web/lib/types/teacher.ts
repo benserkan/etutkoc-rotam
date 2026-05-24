@@ -1421,10 +1421,12 @@ export interface TeacherPlanOption {
   label: string;
   short_description: string;
   price_monthly_try: number;
+  max_students: number | null;   // null = sınırsız
   tier_rank: number;
   ai_included: boolean;
   is_current: boolean;
   is_upgrade: boolean;
+  is_recommended: boolean;
 }
 
 export interface TeacherPlanResponse {
@@ -1438,7 +1440,8 @@ export interface TeacherPlanResponse {
   note: string | null;
   status: string;              // trialing | active | past_due | free | managed
   student_count: number;
-  solo_monthly_price: number;  // öğrenci bandına göre Solo aylık (₺)
+  solo_monthly_price: number;  // öğrenci sayısına uygun Solo tier aylık (₺)
+  recommended_plan: string;    // öğrenci sayısına en uygun solo tier kodu
   annual_paid_months: number;
   sales_email: string;
   subscription_status: string | null;   // active | canceled | past_due | null

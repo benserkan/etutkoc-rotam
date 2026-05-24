@@ -1631,10 +1631,12 @@ class TeacherPlanOption(BaseModel):
     label: str
     short_description: str
     price_monthly_try: int
+    max_students: int | None = None   # öğrenci tavanı; null = sınırsız
     tier_rank: int
     ai_included: bool           # bu planda AI premium özellikleri açık mı
     is_current: bool
     is_upgrade: bool            # mevcut plandan yükseltme mi (UI buton)
+    is_recommended: bool = False  # öğrenci sayısına en uygun tier
 
 
 class TeacherPlanResponse(BaseModel):
@@ -1649,7 +1651,8 @@ class TeacherPlanResponse(BaseModel):
     # Uygulama-içi abonelik ekranı (Faz 1) — /pricing ile tutarlı tek kaynak.
     status: str = "free"        # trialing | active | past_due | free | managed
     student_count: int = 0      # bağımsız koçun aktif öğrenci sayısı
-    solo_monthly_price: int = 0 # öğrenci bandına göre Solo aylık ücret (₺)
+    solo_monthly_price: int = 0 # öğrenci sayısına uygun Solo tier aylık ücreti (₺)
+    recommended_plan: str = ""  # öğrenci sayısına en uygun solo tier kodu
     annual_paid_months: int = 10  # akademik yıl = N ay öde (2 ay bedava)
     sales_email: str = ""       # manuel aktivasyon iletişimi (pricing.contact)
     subscription_status: str | None = None       # active | canceled | past_due | None

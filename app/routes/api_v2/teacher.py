@@ -1614,12 +1614,12 @@ def teacher_coaching_insight_generate_v2(
 
 # Self-serve yükseltilebilir solo planlar (ücretli). NOT: ödeme entegrasyonu
 # (Stripe vb.) ayrı bir iştir; şimdilik yükseltme doğrudan plan değişimidir.
-_SOLO_UPGRADE_TARGETS = ("solo_pro", "solo_elite")
+_SOLO_UPGRADE_TARGETS = ("solo_pro", "solo_elite", "solo_unlimited")
 
 
 def _build_plan_response(db: Session, user: User):
     from app.services.plans import (
-        SOLO_ELITE, SOLO_FREE, SOLO_PRO,
+        SOLO_ELITE, SOLO_FREE, SOLO_PRO, SOLO_STUDENT_LIMITS, SOLO_UNLIMITED,
         ai_premium_allowed, count_solo_students, effective_plan_for_user,
         get_plan_info, is_paid_plan, is_trial_active, trial_days_left,
     )
@@ -1631,10 +1631,11 @@ def _build_plan_response(db: Session, user: User):
     options: list[TeacherPlanOption] = []
     note: str | None = None
 
-    # Abonelik durumu + öğrenci-bandı fiyatı (uygulama-içi ekran — tek kaynak)
+    # Abonelik durumu + öğrenci-sayısına uygun tier fiyatı (uygulama-içi ekran — tek kaynak)
     catalog = pricing.get_pricing_catalog()
     student_count = count_solo_students(db, teacher_id=user.id) if is_solo else 0
     solo_monthly_price = pricing.compute_solo_monthly(student_count) if is_solo else 0
+    recommended_plan = pricing.solo_tier_for_students(student_count)["code"] if is_solo else ""
     if not is_solo:
         status = "managed"
     elif is_trial_active(user):
@@ -1649,19 +1650,22 @@ def _build_plan_response(db: Session, user: User):
     if is_solo:
         cur_info = get_plan_info(effective)
         cur_rank = cur_info.tier_rank if cur_info else 0
-        for code in (SOLO_FREE, SOLO_PRO, SOLO_ELITE):
+        for code in (SOLO_FREE, SOLO_PRO, SOLO_ELITE, SOLO_UNLIMITED):
             pi = get_plan_info(code)
             if pi is None:
                 continue
+            limit = SOLO_STUDENT_LIMITS.get(code, 0)
             options.append(TeacherPlanOption(
                 code=code,
                 label=pi.label,
                 short_description=pi.short_description,
                 price_monthly_try=pi.price_monthly_try,
+                max_students=(None if limit < 0 else limit),
                 tier_rank=pi.tier_rank,
                 ai_included=is_paid_plan(code),
                 is_current=(code == effective),
                 is_upgrade=(code in _SOLO_UPGRADE_TARGETS and pi.tier_rank > cur_rank),
+                is_recommended=(code == recommended_plan),
             ))
     else:
         note = "Paketiniz kurumunuz tarafından yönetilir. Yapay zekâ özellikleri " \
@@ -1679,6 +1683,7 @@ def _build_plan_response(db: Session, user: User):
         status=status,
         student_count=student_count,
         solo_monthly_price=solo_monthly_price,
+        recommended_plan=recommended_plan,
         annual_paid_months=int(catalog["annual_paid_months"]),
         sales_email=str(catalog.get("contact", {}).get("sales_email", "")),
         subscription_status=user.subscription_status if is_solo else None,
@@ -1732,7 +1737,7 @@ def teacher_subscription_request_v2(
                     "message": "Paketin kurumun tarafından yönetilir."},
         )
     plan = (body.plan or "solo_pro").strip()
-    if plan not in ("solo_pro", "solo_elite"):
+    if plan not in _SOLO_UPGRADE_TARGETS:
         plan = "solo_pro"
     cycle = (body.cycle or "monthly").strip()
     if cycle not in ("monthly", "academic_year"):
@@ -1874,7 +1879,7 @@ def teacher_plan_upgrade_v2(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"error": "validation", "code": "invalid_plan",
-                    "message": "Yalnız Solo Pro veya Solo Elite seçilebilir."},
+                    "message": "Yalnız Solo paketleri seçilebilir."},
         )
 
     # Ödeme duvarından / ücretsizden geliyorsa (aktif-ücretli DEĞİLSE) pasif
@@ -2574,16 +2579,6 @@ def _create_task_with_items(
     Rezervi her kalem için reserve_item ile açar; kapasite hatası ReservationError
     çağrıya ulaşır (çağıran wrap eder).
     """
-    if not payload.items:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={
-                "error": "validation",
-                "code": "no_items",
-                "message": "Görevde en az bir kalem olmalı.",
-            },
-        )
-
     d = _parse_iso_date(payload.date)
     sched = _validate_scheduled_hour(payload.scheduled_hour)
     try:
@@ -2591,7 +2586,22 @@ def _create_task_with_items(
     except ValueError:
         ttype = TaskType.TEST
 
-    # Kalemler geçerli mi (kitap-bölüm uyumu + atama + sayım)?
+    # "test" görevi = soru ataması → en az bir kalem (kitap + bölüm + sayı) şart.
+    # Etkinlik tipleri (video/özet/tekrar/diğer) KALEMSİZ olabilir: başlık/not ile
+    # tanımlı "yap/yapma" görevi; öğrenci görev-bazında tamamlar, soru %'sine girmez.
+    # (Kullanıcı 2026-05-24: etkinlik tiplerine kalemsiz görev izni.)
+    if not payload.items and ttype == TaskType.TEST:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation",
+                "code": "no_items",
+                "message": "Test görevinde en az bir kalem olmalı (kitap + bölüm + soru sayısı). "
+                           "Soru atamasız bir görev için tipi Video/Özet/Tekrar/Diğer seç.",
+            },
+        )
+
+    # Kalemler geçerli mi (kitap-bölüm uyumu + atama + sayım)? — kalemsizse atlanır.
     # Reserve işlemleri sırasıyla — kapasite hatası ilk olası kalemde fırlar.
     for it in payload.items:
         _ensure_count_positive(it.planned_count)

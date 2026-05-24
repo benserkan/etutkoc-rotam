@@ -30,11 +30,15 @@ function tl(n: number): string {
 }
 
 const SOLO_FEATURES = [
-  "Sınırsız öğrenci — koçluğun büyüdükçe öde",
   "Yapay zekâ: sesli dikte + fotoğraftan not + koçluk içgörüsü",
   "Veliye otomatik ilerleme bildirimi + deneme/net takibi",
+  "Tükenen veya uzaklaşan öğrenciyi geç olmadan gör",
   "Aylık kredi dahil",
 ];
+
+function studentCapLabel(max: number | null): string {
+  return max == null ? "Sınırsız öğrenci" : `${max} öğrenciye kadar`;
+}
 
 export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse }) {
   const q = useQuery<TeacherPlanResponse>({
@@ -232,7 +236,22 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
   const [yearly, setYearly] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const months = data.annual_paid_months || 10;
-  const monthly = data.solo_monthly_price || 0;
+
+  // Yükseltilebilir Solo paketleri (3 kapaklı tier). Öğrenci sayısına uygun
+  // olan (recommended) önceden seçili gelir.
+  const tiers = data.options.filter((o) => o.code !== "solo_free");
+  const recommended = data.recommended_plan || tiers.find((t) => t.is_recommended)?.code || tiers[0]?.code || "solo_pro";
+  const [selected, setSelected] = React.useState(recommended);
+  // recommended değişirse (öğrenci sayısı tier sınırı aştığında) seçimi senkronla
+  // — effect yerine "prop değişince state ayarla" render deseni.
+  const [prevRec, setPrevRec] = React.useState(recommended);
+  if (recommended !== prevRec) {
+    setPrevRec(recommended);
+    setSelected(recommended);
+  }
+
+  const selTier = tiers.find((t) => t.code === selected) ?? tiers[0];
+  const monthly = selTier?.price_monthly_try ?? 0;
   const shownMonthly = yearly ? Math.round((monthly * months) / 12) : monthly;
   const cycleLabel = yearly ? "akademik yıl peşin · 2 ay bedava" : "aylık · istediğin zaman iptal";
 
@@ -243,29 +262,29 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-display text-lg font-bold">
-              {data.status === "past_due" ? "Aboneliğini yenile" : "Solo'ya geç"}
+              {data.status === "past_due" ? "Aboneliğini yenile" : "Paketini seç"}
             </p>
             <p className="text-sm text-muted-foreground">
               {data.status === "trialing"
                 ? "Denemen bitmeden geç; tüm öğrencilerin ve yapay zekâ kesintisiz devam etsin."
                 : data.status === "past_due"
                   ? "Aboneliğin yenilenmedi. Ödeyip yenileyerek aktif koçluğa devam et; pasif öğrencilerin otomatik yeniden aktif olur."
-                  : "Sınırsız öğrenci ve yapay zekâ özellikleriyle koçluğa devam et. Paketi yükselttiğinde pasif öğrencilerin otomatik yeniden aktif olur."}
+                  : "Öğrenci sayına uygun paketi seç. Yükselttiğinde yapay zekâ açılır ve pasif öğrencilerin otomatik yeniden aktif olur."}
             </p>
           </div>
           {/* Aylık / Akademik yıl toggle */}
-          <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50/60 p-1 text-xs font-bold">
+          <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 p-1 text-xs font-bold">
             <button
               type="button"
               onClick={() => setYearly(false)}
-              className={cn("rounded-full px-3 py-1.5 transition", !yearly ? "bg-white text-cyan-800 shadow-sm" : "text-muted-foreground")}
+              className={cn("rounded-full px-3 py-1.5 transition", !yearly ? "bg-white text-cyan-800 shadow-sm" : "text-slate-500")}
             >
               Aylık
             </button>
             <button
               type="button"
               onClick={() => setYearly(true)}
-              className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition", yearly ? "bg-white text-cyan-800 shadow-sm" : "text-muted-foreground")}
+              className={cn("inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition", yearly ? "bg-white text-cyan-800 shadow-sm" : "text-slate-500")}
             >
               Akademik Yıl
               <span className="rounded bg-amber-100 px-1 py-0.5 text-[9px] uppercase text-amber-700">2 ay bedava</span>
@@ -273,12 +292,41 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
           </div>
         </div>
 
-        <div>
-          <span className="font-display text-3xl font-extrabold">{tl(shownMonthly)}</span>
-          <span className="text-sm text-muted-foreground">/ay</span>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {data.student_count} öğrenci için · {cycleLabel}
-          </p>
+        {/* 3 tier seçici */}
+        <div className="grid gap-2 sm:grid-cols-3">
+          {tiers.map((t) => {
+            const isSel = t.code === selected;
+            const tierMonthly = yearly ? Math.round((t.price_monthly_try * months) / 12) : t.price_monthly_try;
+            return (
+              <button
+                key={t.code}
+                type="button"
+                onClick={() => setSelected(t.code)}
+                className={cn(
+                  "relative rounded-xl border p-3 text-left transition",
+                  isSel
+                    ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600"
+                    : "border-slate-200 bg-white hover:border-cyan-300",
+                )}
+              >
+                {t.is_recommended ? (
+                  <span className="absolute -top-2 right-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-cyan-950">
+                    Sana uygun
+                  </span>
+                ) : null}
+                <p className="text-sm font-bold text-slate-900">{t.label}</p>
+                <p className="text-xs text-slate-600">{studentCapLabel(t.max_students)}</p>
+                <p className="mt-1.5 font-display text-lg font-extrabold text-slate-900">
+                  {tl(tierMonthly)}<span className="text-xs font-medium text-slate-500">/ay</span>
+                </p>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+          Şu an <strong className="text-slate-900">{data.student_count}</strong> aktif öğrencin var. Seçtiğin paket:{" "}
+          <strong className="text-slate-900">{selTier?.label}</strong> ({studentCapLabel(selTier?.max_students ?? null)}) · {cycleLabel}
         </div>
 
         <ul className="space-y-2 text-sm">
@@ -291,14 +339,15 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         </ul>
 
         <Button className="w-full bg-cyan-700 text-white hover:bg-cyan-800" onClick={() => setOpen(true)}>
-          {data.status === "past_due" ? "Yenile (öde)" : "Solo'ya geç (öde)"}
+          {data.status === "past_due" ? "Yenile (öde)" : `${selTier?.label} paketine geç (öde)`}
         </Button>
       </CardContent>
 
       <UpgradeDialog
         open={open}
         onClose={() => setOpen(false)}
-        plan="solo_pro"
+        plan={selected}
+        planLabel={selTier?.label ?? "Solo"}
         cycle={yearly ? "academic_year" : "monthly"}
         priceLabel={`${tl(shownMonthly)}/ay (${yearly ? "akademik yıl" : "aylık"})`}
         salesEmail={data.sales_email}
@@ -311,6 +360,7 @@ function UpgradeDialog({
   open,
   onClose,
   plan,
+  planLabel,
   cycle,
   priceLabel,
   salesEmail,
@@ -318,6 +368,7 @@ function UpgradeDialog({
   open: boolean;
   onClose: () => void;
   plan: string;
+  planLabel: string;
   cycle: string;
   priceLabel: string;
   salesEmail: string;
@@ -332,7 +383,7 @@ function UpgradeDialog({
     },
   });
   const mailto = salesEmail
-    ? `mailto:${salesEmail}?subject=${encodeURIComponent("Solo abonelik aktivasyonu")}`
+    ? `mailto:${salesEmail}?subject=${encodeURIComponent(`${planLabel} abonelik aktivasyonu`)}`
     : "";
   const errMsg = mut.error instanceof ApiError ? mut.error.detail.message : "Bir hata oluştu, tekrar deneyin.";
 
@@ -341,7 +392,7 @@ function UpgradeDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Gem className="size-4 text-cyan-700" aria-hidden /> Solo&apos;ya geç
+            <Gem className="size-4 text-cyan-700" aria-hidden /> {planLabel} paketine geç
           </DialogTitle>
         </DialogHeader>
         {done ? (
@@ -357,7 +408,7 @@ function UpgradeDialog({
           <div className="space-y-3 text-sm">
             <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3">
               <span className="text-muted-foreground">Seçilen:</span>{" "}
-              <span className="font-semibold text-cyan-900">Solo · {priceLabel}</span>
+              <span className="font-semibold text-cyan-900">{planLabel} · {priceLabel}</span>
             </div>
             <p className="flex items-start gap-2 text-muted-foreground">
               <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
