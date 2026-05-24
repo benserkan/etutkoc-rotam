@@ -66,19 +66,23 @@ def landing_cards(
     request: Request,
     response: Response,
     limit: int = Query(5, ge=1, le=12),
+    audience: str | None = Query(None, max_length=40),
     db: Session = Depends(get_db),
 ):
     """Anasayfa feature kartları + A/B variant_slug.
 
     Anon session cookie (ensure_session_id) yönetilir — variant ataması ve
     telemetri agregasyonu bu session'a bağlanır (Jinja index() ile aynı).
+
+    audience: "teacher" (koç vitrini, varsayılan akış) | "institution_admin"
+      (kurum bandı). Boş → tüm hedef kitleler.
     """
     from app.services import feature_catalog as fc
     from app.services import telemetry as tel
 
     sid = tel.ensure_session_id(request, response)
     cards, variant_slug = fc.get_for_landing_with_variant(
-        db, limit=limit, viewer=None, session_id=sid,
+        db, limit=limit, viewer=None, session_id=sid, audience=audience,
     )
     return LandingResponse(
         cards=[_serialize_card(c) for c in cards],

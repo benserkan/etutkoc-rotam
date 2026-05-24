@@ -145,6 +145,7 @@ def _build_landing_cards(
     viewer,
     session_id: str | None,
     strategy_key: str | None,
+    audience: str | None = None,
 ) -> tuple[list[FeatureCard], str | None]:
     """İç yardımcı — (kart listesi, variant_slug) döner.
 
@@ -152,6 +153,9 @@ def _build_landing_cards(
       1. strategy_key parametresi varsa onu kullan
       2. Aktif RUNNING deney + session_id varsa → variant ataması
       3. Aksi halde varsayılan: hybrid_full (fuzzy + bandit + MMR)
+
+    audience: verilirse yalnız target_roles'ında bu rol bulunan kartlar
+      (örn. "teacher" = koç vitrini, "institution_admin" = kurum bandı).
     """
     rows = (
         db.query(FeatureCard)
@@ -163,6 +167,8 @@ def _build_landing_cards(
         )
         .all()
     )
+    if audience:
+        rows = [r for r in rows if audience in (r.target_roles or [])]
     if not rows:
         return [], None
 
@@ -218,15 +224,17 @@ def get_for_landing_with_variant(
     viewer=None,
     session_id: str | None = None,
     strategy_key: str | None = None,
+    audience: str | None = None,
 ) -> tuple[list[FeatureCard], str | None]:
     """Anasayfa kartları + variant_slug (A/B test çerçevesiyle).
 
     Landing route bunu kullanır; variant_slug telemetri event'lerine
-    aktarılır (Katman 9 istatistik agregasyonu için).
+    aktarılır (Katman 9 istatistik agregasyonu için). audience verilirse
+    yalnız o role hedeflenen kartlar döner (koç vitrini / kurum bandı).
     """
     return _build_landing_cards(
         db, limit=limit, viewer=viewer,
-        session_id=session_id, strategy_key=strategy_key,
+        session_id=session_id, strategy_key=strategy_key, audience=audience,
     )
 
 
