@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Bot, GitCommitHorizontal, FileCode2, Loader2 } from "lucide-react";
+import { Bot, GitCommitHorizontal, FileCode2, Loader2, RefreshCw } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,7 @@ import { adminKeys, getAdminFeatureCatalogDiscovery } from "@/lib/api/admin";
 import {
   useBulkDiscovery,
   useRejectDiscoveryCard,
+  useScanDiscovery,
 } from "@/lib/hooks/use-admin-mutations";
 import type { DiscoveryQueueResponse } from "@/lib/types/admin";
 import { SolidBadge } from "@/components/admin/feature-catalog-ui";
@@ -49,6 +50,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
 
   const bulkMut = useBulkDiscovery();
   const rejectMut = useRejectDiscoveryCard();
+  const scanMut = useScanDiscovery();
 
   function toggle(id: number) {
     setSelected((prev) => {
@@ -89,22 +91,37 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
 
   return (
     <div className="space-y-5">
-      <header>
-        <Link
-          href="/admin/feature-catalog"
-          className="text-sm text-muted-foreground hover:text-foreground"
+      <header className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Link
+            href="/admin/feature-catalog"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ← Vitrin Kartları
+          </Link>
+          <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
+            <Bot className="size-6 text-indigo-700" aria-hidden />
+            Onay Kuyruğu
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Otomatik keşif aracının ürettiği taslak kart adayları. Bunlar yayına
+            çıkmaz — yalnız onayla DRAFT&apos;tan çıkar. Reddedilenler gizlenir
+            (silinmez), tekrar üretilmezler. Tarama haftalık otomatik çalışır;
+            anında kontrol için &ldquo;Şimdi tara&rdquo;.
+          </p>
+        </div>
+        <Button
+          onClick={() => scanMut.mutate()}
+          disabled={scanMut.isPending}
+          className="shrink-0"
         >
-          ← Vitrin Kartları
-        </Link>
-        <h1 className="mt-1 inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
-          <Bot className="size-6 text-indigo-700" aria-hidden />
-          Onay Kuyruğu
-        </h1>
-        <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-          Otomatik keşif aracının ürettiği taslak kart adayları. Bunlar yayına
-          çıkmaz — yalnız onayla DRAFT&apos;tan çıkar. Reddedilenler gizlenir
-          (silinmez), tekrar üretilmezler.
-        </p>
+          {scanMut.isPending ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <RefreshCw className="size-4" aria-hidden />
+          )}
+          {scanMut.isPending ? "Taranıyor…" : "Şimdi tara"}
+        </Button>
       </header>
 
       {/* Sayım rozetleri */}

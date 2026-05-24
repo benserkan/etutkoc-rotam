@@ -865,6 +865,31 @@ def security_integrity_scan(db: Session, *, now: datetime) -> dict:
     return summary
 
 
+def offers_expire(db: Session, *, now: datetime) -> dict:
+    """Günlük: süresi dolmuş SENT teklifleri EXPIRED'a çek (toplu süpürme).
+
+    Teklif görüntülenince zaten lazy expire oluyordu (offers.describe_offer); ama
+    hiç açılmamış süresi-geçmiş teklifler SENT kalıp admin gelir/funnel sayımını
+    şişiriyordu. Bu cron o boşluğu kapatır."""
+    from app.services.offers import expire_old_offers
+    return expire_old_offers(db, autocommit=True)
+
+
+def feature_discovery_scan(db: Session, *, now: datetime) -> dict:
+    """Haftalık Vitrin Kartları otomatik keşfi — son migration + commit'leri tarar,
+    yeni özellikler için DRAFT keşif kartı açar (idempotent). Süper admin keşif
+    kuyruğunda inceleyip yayınlar. Manuel 'Şimdi tara' butonuyla aynı servisi
+    paylaşır (feature_discovery.run_scan)."""
+    from app.services import feature_discovery as fd
+    counts = fd.run_scan(db, actor_id=None, days=120)
+    logger.info("feature_discovery_scan: %s", counts)
+    return {
+        "created": counts.get("created", 0),
+        "skipped": counts.get("skipped", 0),
+        "candidates": counts.get("candidates", 0),
+    }
+
+
 JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "daily_summary": daily_summary,
     "weekly_backstop": weekly_backstop,
@@ -888,4 +913,8 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "error_event_retention": error_event_retention,
     "slow_request_retention": slow_request_retention,
     "security_integrity_scan": security_integrity_scan,
+    # Vitrin Kartları otomatik keşfi (haftalık)
+    "feature_discovery_scan": feature_discovery_scan,
+    # Kopuk-cron düzeltmeleri (2026-05-24): schedule'ı eksik olanlar
+    "offers_expire": offers_expire,
 }

@@ -31,7 +31,7 @@ import logging
 import re
 import subprocess
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterable
 
@@ -281,6 +281,26 @@ def discover_all(
     # benzersizliği yine de farklı (mig-/c-) olduğundan ikisi de gelir.
     out.sort(key=lambda c: c.introduced_at, reverse=True)
     return out
+
+
+def run_scan(
+    db: Session,
+    *,
+    actor_id: int | None = None,
+    days: int = 120,
+    sources: Iterable[str] = ("migration", "commit"),
+) -> dict[str, int | list[str]]:
+    """Tek adımda tara + uygula (endpoint + cron paylaşır).
+
+    Son `days` gün içindeki migration + commit'leri tarar, yeni adayları DRAFT
+    keşif kartı olarak yazar (apply_candidates idempotent → mevcutları atlar).
+    Returns: {"created": N, "skipped": M, "errors": [...], "candidates": K}.
+    """
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    candidates = discover_all(since=since, sources=sources)
+    counts = apply_candidates(db, candidates, actor_id=actor_id)
+    counts["candidates"] = len(candidates)
+    return counts
 
 
 def apply_candidates(
