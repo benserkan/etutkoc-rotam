@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Eye, Loader2, NotebookPen, Plus, StickyNote, X } from "lucide-react";
+import { ChevronDown, Eye, Loader2, NotebookPen, Plus, StickyNote, X } from "lucide-react";
 
 import {
   useAddWeekNote,
@@ -26,6 +26,9 @@ export function WeekNotesCard({ studentId, weekStart, notes }: Props) {
   const addMut = useAddWeekNote(studentId);
   const inputRef = React.useRef<HTMLInputElement>(null);
   const [draft, setDraft] = React.useState("");
+  // Hafta notları VARSAYILAN KAPALI (kullanıcı 2026-05-24) — yer kaplamasın;
+  // başlıktaki sayı sinyali görünür, tıklayınca açılır.
+  const [open, setOpen] = React.useState(false);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -47,7 +50,12 @@ export function WeekNotesCard({ studentId, weekStart, notes }: Props) {
 
   return (
     <section className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
-      <header className="px-5 py-4 border-b border-border/60 flex items-center justify-between gap-3">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full px-5 py-4 flex items-center justify-between gap-3 text-left hover:bg-muted/40 transition"
+      >
         <div className="flex items-center gap-3 min-w-0">
           <span className="inline-flex items-center justify-center w-9 h-9 rounded-lg bg-muted text-foreground">
             <StickyNote className="size-4" aria-hidden />
@@ -66,28 +74,36 @@ export function WeekNotesCard({ studentId, weekStart, notes }: Props) {
             </p>
           </div>
         </div>
-        <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-          <Eye className="size-3.5" aria-hidden />
-          öğrenci de görür
-        </span>
-      </header>
+        <div className="flex items-center gap-2">
+          <span className="hidden sm:inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+            <Eye className="size-3.5" aria-hidden />
+            öğrenci de görür
+          </span>
+          <ChevronDown
+            className={cn("size-4 text-muted-foreground transition-transform", open && "rotate-180")}
+            aria-hidden
+          />
+        </div>
+      </button>
 
-      {notes.length > 0 ? (
-        <ul className="divide-y divide-border/60">
-          {notes.map((n) => (
-            <NoteRow key={n.id} studentId={studentId} note={n} />
-          ))}
-        </ul>
-      ) : (
-        <p className="px-5 py-4 text-xs text-muted-foreground italic">
-          Hızlı bir not bırak — Salı dersine deneme getir, hedef kart sayısı, vb.
-        </p>
-      )}
+      {!open ? null : (
+        <>
+          {notes.length > 0 ? (
+            <ul className="divide-y divide-border/60 border-t border-border/60">
+              {notes.map((n) => (
+                <NoteRow key={n.id} studentId={studentId} note={n} />
+              ))}
+            </ul>
+          ) : (
+            <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border/60">
+              Hızlı bir not bırak — Salı dersine deneme getir, hedef kart sayısı, vb.
+            </p>
+          )}
 
-      <form
-        onSubmit={onSubmit}
-        className="flex gap-2 px-5 py-3 border-t border-border/60 bg-muted/30"
-      >
+          <form
+            onSubmit={onSubmit}
+            className="flex gap-2 px-5 py-3 border-t border-border/60 bg-muted/30"
+          >
         <div className="flex-1 flex items-center gap-2 px-2.5 rounded-md border border-input bg-background focus-within:ring-2 focus-within:ring-ring focus-within:border-ring transition">
           <NotebookPen
             className="size-4 text-muted-foreground flex-shrink-0"
@@ -116,7 +132,9 @@ export function WeekNotesCard({ studentId, weekStart, notes }: Props) {
           )}
           Ekle
         </button>
-      </form>
+          </form>
+        </>
+      )}
     </section>
   );
 }

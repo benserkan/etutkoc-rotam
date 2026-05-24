@@ -7,6 +7,7 @@ import {
   Brain,
   CalendarClock,
   CheckCircle2,
+  ChevronDown,
   Loader2,
   Plus,
   Sparkles,
@@ -59,6 +60,9 @@ export function InlineSuggestions({
   trackLabel,
 }: Props) {
   const acceptAll = useAcceptAllSuggestions(studentId);
+  // Öneriler VARSAYILAN KAPALI (kullanıcı 2026-05-24) — gün kartı sadeleşsin.
+  // Başlık + sayı sinyali görünür kalır; liste tıklayınca açılır.
+  const [expanded, setExpanded] = React.useState(false);
 
   const matPct = Math.round(maturityValue * 100);
   const matTone =
@@ -85,19 +89,27 @@ export function InlineSuggestions({
     });
   }
 
+  const hasSuggestions = suggestions.length > 0;
   return (
-    <div className="border-t border-border bg-muted/30">
-      <div className="px-5 py-3 flex items-center justify-between gap-3 flex-wrap border-b border-border/60">
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="inline-flex items-center justify-center size-6 rounded-md bg-foreground text-background">
-              <Sparkles className="size-3.5" aria-hidden />
-            </span>
-            <span className="text-sm font-semibold text-foreground tracking-tight">
-              Öneriler
-            </span>
-          </div>
-          {suggestions.length > 0 ? (
+    <div className="border-t border-border border-l-[3px] border-l-indigo-400/70 bg-indigo-500/[0.04]">
+      <div className="px-5 py-3 flex items-center justify-between gap-3 flex-wrap">
+        {/* Başlık = aç/kapa toggle (liste varsayılan kapalı) */}
+        <button
+          type="button"
+          onClick={() => hasSuggestions && setExpanded((v) => !v)}
+          className={cn(
+            "flex items-center gap-2 flex-wrap text-left rounded-md -mx-1 px-1 py-0.5",
+            hasSuggestions ? "hover:bg-indigo-500/5 cursor-pointer" : "cursor-default",
+          )}
+          aria-expanded={expanded}
+        >
+          <span className="inline-flex items-center justify-center size-6 rounded-md bg-indigo-600 text-white">
+            <Sparkles className="size-3.5" aria-hidden />
+          </span>
+          <span className="text-sm font-semibold text-foreground tracking-tight">
+            Öneriler
+          </span>
+          {hasSuggestions ? (
             <Pill tone="success">{suggestions.length} hazır</Pill>
           ) : null}
           <Pill tone={matTone}>
@@ -115,8 +127,17 @@ export function InlineSuggestions({
               {trackLabel}
             </Pill>
           ) : null}
-        </div>
-        {suggestions.length > 0 ? (
+          {hasSuggestions ? (
+            <ChevronDown
+              className={cn(
+                "size-4 text-muted-foreground transition-transform",
+                expanded && "rotate-180",
+              )}
+              aria-hidden
+            />
+          ) : null}
+        </button>
+        {hasSuggestions ? (
           <button
             type="button"
             onClick={onAcceptAll}
@@ -133,6 +154,7 @@ export function InlineSuggestions({
         ) : null}
       </div>
 
+      {/* Alan-eksik uyarısı her zaman görünür (nadir + önemli) */}
       {trackRequired && trackMissing ? (
         <div className="px-5 py-2.5 border-b border-border/60 flex items-start gap-2.5 text-xs">
           <AlertTriangle
@@ -150,16 +172,17 @@ export function InlineSuggestions({
         </div>
       ) : null}
 
-      {weeksObserved === 0 && daysObserved === 0 ? (
-        <p className="px-5 py-4 text-xs text-muted-foreground italic">
+      {/* Liste yalnız açıkken. Boş durum mesajları da açıkken (gürültü olmasın). */}
+      {!expanded ? null : weeksObserved === 0 && daysObserved === 0 ? (
+        <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border/60">
           Henüz geçmiş plan verisi yok — sistem siz plan yaptıkça öğrenecek.
         </p>
       ) : suggestions.length === 0 ? (
-        <p className="px-5 py-4 text-xs text-muted-foreground italic">
+        <p className="px-5 py-4 text-xs text-muted-foreground italic border-t border-border/60">
           Bu güne ek öneri yok. Mevcut plan tipik düzende veya tüm bölümler ekli.
         </p>
       ) : (
-        <div className="px-5 py-3 space-y-2">
+        <div className="px-5 py-3 space-y-2 border-t border-border/60">
           {suggestions.map((s) => (
             <SuggestionCard
               key={`${s.book_id}-${s.section_id}`}
@@ -204,27 +227,25 @@ function SuggestionCard({
       )}
       style={{ opacity }}
     >
-      <div className="px-3 py-2 flex items-center gap-3">
+      <div className="px-3 py-1.5 flex items-center gap-2.5">
         <ConfidenceMark conf={conf} label={s.confidence_label} />
-        <div className="flex-1 min-w-0">
-          <div className="text-sm leading-snug">
-            <span className="font-semibold text-foreground">{s.book_name}</span>
-            <span className="text-muted-foreground"> · {s.section_label}</span>
-            {s.topic_name ? (
-              <span className="text-muted-foreground/70"> ({s.topic_name})</span>
-            ) : null}
-            <span className="ml-1.5 text-xs text-muted-foreground/80">
-              · {s.subject_name}
+        {/* Tek satır: ad · bölüm · ders · güven% + (varsa) ilk gerekçe rozeti */}
+        <div className="flex-1 min-w-0 flex items-center gap-1.5 flex-wrap text-sm leading-snug">
+          <span className="font-semibold text-foreground truncate">{s.book_name}</span>
+          <span className="text-muted-foreground truncate">· {s.section_label}</span>
+          <span className="text-xs text-muted-foreground/80">· {s.subject_name}</span>
+          <span className="text-[10px] text-muted-foreground/70">· güven %{Math.round(conf * 100)}</span>
+          {s.reasons.slice(0, 1).map((reason, i) => (
+            <ReasonBadge key={i} reason={reason} />
+          ))}
+          {s.reasons.length > 1 ? (
+            <span
+              className="text-[10px] text-muted-foreground/60"
+              title={s.reasons.join(" · ")}
+            >
+              +{s.reasons.length - 1}
             </span>
-          </div>
-          <div className="flex flex-wrap items-center gap-1.5 mt-1">
-            {s.reasons.map((reason, i) => (
-              <ReasonBadge key={i} reason={reason} />
-            ))}
-            <span className="text-[10px] text-muted-foreground/70 ml-0.5">
-              güven %{Math.round(conf * 100)}
-            </span>
-          </div>
+          ) : null}
         </div>
         <div className="flex items-center gap-1.5 flex-shrink-0">
           <input

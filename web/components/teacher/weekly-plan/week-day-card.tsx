@@ -179,6 +179,26 @@ export function WeekDayCard({
               {day.planned > 0 ? (
                 <span className="tabular-nums">· {day.planned} test</span>
               ) : null}
+              {day.planned > 0 ? (
+                <span
+                  className={cn(
+                    "inline-flex items-center gap-1.5 tabular-nums font-medium",
+                    day.pct >= 0.7 ? "text-emerald-600" : day.pct >= 0.4 ? "text-amber-600" : "text-rose-600",
+                  )}
+                  title={`${day.completed}/${day.planned} test tamamlandı`}
+                >
+                  <span className="hidden sm:inline-block h-1.5 w-10 rounded-full bg-muted overflow-hidden align-middle">
+                    <span
+                      className={cn(
+                        "block h-full rounded-full",
+                        day.pct >= 0.7 ? "bg-emerald-500" : day.pct >= 0.4 ? "bg-amber-500" : "bg-rose-500",
+                      )}
+                      style={{ width: `${Math.min(100, Math.round(day.pct * 100))}%` }}
+                    />
+                  </span>
+                  %{Math.round(day.pct * 100)}
+                </span>
+              ) : null}
               {draftCount > 0 ? (
                 <span className="inline-flex items-center gap-1 text-[10px] font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800">
                   <Pencil className="size-3" aria-hidden />
@@ -201,16 +221,26 @@ export function WeekDayCard({
       ) : null}
 
       {subjectSummary.length > 0 ? (
-        <div className="px-5 py-2.5 border-t border-border bg-muted/30 flex flex-wrap gap-1.5">
-          {subjectSummary.map((ent) => (
+        <div className="px-5 py-2.5 border-t border-border border-l-[3px] border-l-slate-300 dark:border-l-slate-600 bg-muted/40 flex flex-wrap items-center gap-1.5">
+          {subjectSummary.filter((e) => e.task_count > 0).map((ent) => (
             <SubjectChip key={ent.subject_id} ent={ent} />
           ))}
+          {(() => {
+            const empty = subjectSummary.filter((e) => e.task_count === 0).length;
+            const withTasks = subjectSummary.length - empty;
+            if (empty === 0) return null;
+            return (
+              <span className="text-[11px] text-muted-foreground/70 italic">
+                {withTasks === 0 ? "Bu güne ders seçilmedi" : `+${empty} ders planlanmadı`}
+              </span>
+            );
+          })()}
         </div>
       ) : null}
 
       <TaskList studentId={studentId} day={day} />
 
-      <div className="px-5 py-3 border-t border-border bg-muted/20">
+      <div className="px-5 py-3 border-t border-border border-l-[3px] border-l-sky-400/70 bg-sky-500/[0.04]">
         <div
           className={cn(
             "rounded-lg border border-dashed transition",
