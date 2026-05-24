@@ -14,12 +14,16 @@ detay sayfası YOK (at-risk/burnout gizlilik deseni).
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models import Task, TaskBookItem, User, UserRole
+
+# Yeni öğrenci (hesap < bu gün) henüz programsızsa "boş program" sayılmaz —
+# koça program kurması için onboarding penceresi (yanlış-pozitif önler).
+EMPTY_PROGRAM_GRACE_DAYS = 3
 
 
 # Tamamlama oranı renk eşikleri (D4 deseni)
@@ -103,7 +107,7 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
 
     # Aktif öğrenciler + koç eşlemesi
     students = (
-        db.query(User.id, User.full_name, User.email, User.teacher_id)
+        db.query(User.id, User.full_name, User.email, User.teacher_id, User.created_at)
         .filter(
             User.role == UserRole.STUDENT,
             User.institution_id == institution_id,
@@ -113,7 +117,8 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
     )
     student_ids = [int(s.id) for s in students]
     student_meta = {
-        int(s.id): {"name": s.full_name or s.email, "teacher_id": s.teacher_id}
+        int(s.id): {"name": s.full_name or s.email, "teacher_id": s.teacher_id,
+                    "created_at": s.created_at}
         for s in students
     }
 
@@ -192,12 +197,20 @@ def compute_compliance(db: Session, *, institution_id: int, weeks: int = 8) -> d
     attention_students = student_rows[:25]
 
     # ---- Boş program: bu hafta hiç planlı görevi olmayan aktif öğrenci ----
+    # Onboarding grace: yeni eklenen öğrenci (hesap < grace) henüz programsızsa
+    # "boş" sayılmaz — koça program kurması için süre tanı (yanlış-pozitif önler).
+    now = datetime.now(timezone.utc)
     empty_by_teacher: dict[int | None, dict] = {}
     empty_total = 0
     for sid in student_ids:
         t = this_totals.get(sid)
         if t and t["planned"] > 0:
             continue
+        created = student_meta[sid].get("created_at")
+        if created is not None:
+            c = created if created.tzinfo else created.replace(tzinfo=timezone.utc)
+            if (now - c).days < EMPTY_PROGRAM_GRACE_DAYS:
+                continue  # yeni öğrenci — onboarding penceresi
         empty_total += 1
         tid = student_meta[sid]["teacher_id"]
         e = empty_by_teacher.setdefault(tid, {"count": 0, "students": []})

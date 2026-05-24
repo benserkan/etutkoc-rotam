@@ -96,7 +96,7 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
         for a in critical[:15]:
             sev = "critical" if a.level == "critical" else "warn"
             tname = teacher_name.get(a.student.teacher_id, "—") if a.student.teacher_id else "—"
-            ind = ", ".join(i.label for i in a.indicators[:3]) if a.indicators else ""
+            ind = ", ".join(i.title for i in a.indicators[:3]) if a.indicators else ""
             items.append({
                 "severity": sev,
                 "category": "at_risk",

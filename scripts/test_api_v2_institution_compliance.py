@@ -83,13 +83,15 @@ def _seed() -> dict:
                        password_changed_at=now, must_change_password=False, email_verified_at=now)
         db.add_all([admin, teacher])
         db.flush()
-        # 3 öğrenci: s1 (uyumlu), s2 (düşük), s3 (boş program)
+        # 3 öğrenci: s1 (uyumlu), s2 (düşük), s3 (boş program).
+        # created_at eski (10g) → boş-program onboarding grace'inden etkilenmesin.
+        old = datetime.now(timezone.utc) - timedelta(days=10)
         s1 = User(email=f"{PFX}_s1@t.invalid", password_hash=pwd, full_name="Öğrenci Bir",
-                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True)
+                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True, created_at=old)
         s2 = User(email=f"{PFX}_s2@t.invalid", password_hash=pwd, full_name="Öğrenci İki",
-                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True)
+                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True, created_at=old)
         s3 = User(email=f"{PFX}_s3@t.invalid", password_hash=pwd, full_name="Öğrenci Üç",
-                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True)
+                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True, created_at=old)
         db.add_all([s1, s2, s3])
         db.flush()
         # Kitap (TaskBookItem.book_id zorunlu)

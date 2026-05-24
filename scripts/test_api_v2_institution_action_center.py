@@ -66,13 +66,15 @@ def _seed() -> dict:
                        role=UserRole.TEACHER, institution_id=inst.id, is_active=True,
                        password_changed_at=now, must_change_password=False, email_verified_at=now)
         db.add_all([admin, teacher]); db.flush()
-        # s1: düşük uyum (rate 20), s2 + s3: boş program
+        # s1: düşük uyum (rate 20), s2 + s3: boş program.
+        # created_at eski (10g) → boş-program onboarding grace'inden etkilenmesin.
+        old = now - timedelta(days=10)
         s1 = User(email=f"{PFX}_s1@t.invalid", password_hash=pwd, full_name="Öğrenci Bir",
-                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True)
+                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True, created_at=old)
         s2 = User(email=f"{PFX}_s2@t.invalid", password_hash=pwd, full_name="Öğrenci İki",
-                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True)
+                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True, created_at=old)
         s3 = User(email=f"{PFX}_s3@t.invalid", password_hash=pwd, full_name="Öğrenci Üç",
-                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True)
+                  role=UserRole.STUDENT, institution_id=inst.id, teacher_id=teacher.id, is_active=True, created_at=old)
         db.add_all([s1, s2, s3]); db.flush()
         subj = Subject(name=f"{PFX} Mat", teacher_id=teacher.id); db.add(subj); db.flush()
         book = Book(teacher_id=teacher.id, subject_id=subj.id, name=f"{PFX} Kitap", type="test")
