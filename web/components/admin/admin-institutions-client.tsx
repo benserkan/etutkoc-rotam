@@ -26,13 +26,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { adminKeys, getAdminInstitutions } from "@/lib/api/admin";
+import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import { useCreateInstitution } from "@/lib/hooks/use-admin-mutations";
+import { buildInstitutionPlanOptions, institutionPlanLabel } from "@/lib/institution-plans";
 import type {
   InstitutionFilterLevel,
   InstitutionListItem,
   InstitutionListResponse,
   InstitutionSort,
 } from "@/lib/types/admin";
+import type { PricingCatalog } from "@/lib/types/pricing";
 
 interface Props {
   initial: InstitutionListResponse;
@@ -54,8 +57,6 @@ const FILTER_OPTIONS: {
   { value: "unhealthy", label: "Sorunlu Olanlar" },
   { value: "critical", label: "Sadece Acil" },
 ];
-
-const PLAN_OPTIONS = ["free", "starter", "professional"];
 
 /**
  * Kurumlar listesi — Jinja `institutions_list.html` feature parity.
@@ -325,7 +326,7 @@ function InstitutionRow({ item }: { item: InstitutionListItem }) {
       </td>
       <td className="px-4 py-3 align-top">
         <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
-          {inst.plan ?? "free"}
+          {institutionPlanLabel(inst.plan)}
         </span>
       </td>
       <td className="px-4 py-3 text-right tabular-nums align-top">
@@ -442,16 +443,23 @@ function CreateInstitutionDialog({
 }) {
   const router = useRouter();
   const mut = useCreateInstitution();
+  const catalogQ = useQuery<PricingCatalog>({
+    queryKey: pricingKeys.catalog(),
+    queryFn: getPricingCatalog,
+    staleTime: 60_000,
+  });
+  const planOptions = buildInstitutionPlanOptions(catalogQ.data);
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
   const [contactEmail, setContactEmail] = React.useState("");
-  const [plan, setPlan] = React.useState("free");
+  const [plan, setPlan] = React.useState("institution_free");
+  const selectedPlan = planOptions.find((p) => p.value === plan) ?? planOptions[0];
 
   function reset() {
     setName("");
     setSlug("");
     setContactEmail("");
-    setPlan("free");
+    setPlan("institution_free");
   }
 
   function onSubmit(e: React.FormEvent) {
@@ -535,12 +543,18 @@ function CreateInstitutionDialog({
               onChange={(e) => setPlan(e.target.value)}
               className="mt-1 w-full px-3 py-2 border border-input rounded-md text-sm bg-card"
             >
-              {PLAN_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
+              {planOptions.map((p) => (
+                <option key={p.value} value={p.value}>
+                  {p.label} — {p.coaches}
                 </option>
               ))}
             </select>
+            {selectedPlan ? (
+              <p className="mt-1.5 text-xs text-muted-foreground">
+                <span className="font-medium text-foreground">{selectedPlan.coaches}.</span>{" "}
+                {selectedPlan.desc}
+              </p>
+            ) : null}
           </div>
           <DialogFooter className="gap-2 pt-2">
             <Button

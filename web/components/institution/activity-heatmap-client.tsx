@@ -206,11 +206,18 @@ function HeatmapRow({
               pasif
             </span>
           )}
+          {row.is_new && (
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-sky-100 text-sky-700 border border-sky-200">
+              yeni
+            </span>
+          )}
         </div>
         <div className="text-[11px] text-muted-foreground mt-0.5">
           {row.last_active_day
             ? `son aktivite ${row.days_since_active}g önce`
-            : "hiç aktivite yok"}
+            : row.is_new
+              ? "yeni hesap — henüz giriş yok"
+              : "hiç aktivite yok"}
         </div>
       </td>
       <td className="px-4 py-3">

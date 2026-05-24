@@ -7,8 +7,10 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   ArrowLeft,
+  ArrowUpRight,
   Download,
   FileText,
+  Gem,
   Loader2,
   Save,
   ShieldAlert,
@@ -32,18 +34,19 @@ import {
   adminKeys,
   getAdminInstitution,
 } from "@/lib/api/admin";
+import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import {
   useDeleteInstitution,
   useEditInstitution,
 } from "@/lib/hooks/use-admin-mutations";
-import type { InstitutionDetailResponse } from "@/lib/types/admin";
+import { buildInstitutionPlanOptions, institutionPlanLabel } from "@/lib/institution-plans";
+import type { InstitutionDetailResponse, PendingUpgradeInfo } from "@/lib/types/admin";
+import type { PricingCatalog } from "@/lib/types/pricing";
 
 interface Props {
   initial: InstitutionDetailResponse;
   institutionId: number;
 }
-
-const PLAN_OPTIONS = ["free", "starter", "professional"];
 
 /**
  * Kurum detayı — Jinja `institution_detail.html` feature parity.
@@ -90,7 +93,7 @@ export function AdminInstitutionDetailClient({
               </span>
             )}
             <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
-              {inst.plan}
+              {institutionPlanLabel(inst.plan)}
             </span>
           </h1>
           <div className="text-sm text-muted-foreground mt-1 font-mono">
@@ -106,6 +109,15 @@ export function AdminInstitutionDetailClient({
       </header>
 
       <HealthCard health={data.health} />
+
+      <PlanCard
+        institutionId={inst.id}
+        currentPlan={inst.plan}
+        name={inst.name}
+        contactEmail={inst.contact_email}
+        isActive={inst.is_active}
+        pending={data.pending_upgrade ?? null}
+      />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <EditInstitutionForm
@@ -288,6 +300,211 @@ function HealthStat({
 }
 
 // ============================================================================
+// Üyelik Planı — kurum yöneticisi yükseltme talebinin VARIŞ noktası (#plan).
+// İletişim Talepleri → "Kurum sayfasına git (planı değiştir)" buraya çıpalanır.
+// ============================================================================
+
+function PlanCard({
+  institutionId,
+  currentPlan,
+  name,
+  contactEmail,
+  isActive,
+  pending,
+}: {
+  institutionId: number;
+  currentPlan: string;
+  name: string;
+  contactEmail: string | null;
+  isActive: boolean;
+  pending: PendingUpgradeInfo | null;
+}) {
+  const router = useRouter();
+  const mut = useEditInstitution(institutionId);
+  const catalogQ = useQuery<PricingCatalog>({
+    queryKey: pricingKeys.catalog(),
+    queryFn: getPricingCatalog,
+    staleTime: 60_000,
+  });
+
+  const planOptions = buildInstitutionPlanOptions(catalogQ.data);
+  const hasCurrent = planOptions.some((p) => p.value === currentPlan);
+  const allOptions = hasCurrent
+    ? planOptions
+    : [...planOptions, { value: currentPlan, label: institutionPlanLabel(currentPlan), coaches: "", desc: "" }];
+
+  // Kurumun TALEP ETTİĞİ paket varsa onu ön-seç (admin tekrar seçmesin) —
+  // yoksa mevcut plan. Talep edilen kod kataloğda mevcutsa ve mevcut plandan
+  // farklıysa ön-seçim anlamlı.
+  const requestedCode =
+    pending?.requested_plan_code &&
+    allOptions.some((o) => o.value === pending.requested_plan_code)
+      ? pending.requested_plan_code
+      : null;
+  const initialSel = requestedCode && requestedCode !== currentPlan ? requestedCode : currentPlan;
+
+  const [plan, setPlan] = React.useState(initialSel);
+  // Sunucudan gelen güncel plan / talep değişince seçimi senkronla.
+  const [prevKey, setPrevKey] = React.useState(`${currentPlan}|${requestedCode ?? ""}`);
+  const curKey = `${currentPlan}|${requestedCode ?? ""}`;
+  if (curKey !== prevKey) {
+    setPrevKey(curKey);
+    setPlan(initialSel);
+  }
+
+  const dirty = plan !== currentPlan;
+  const selected = allOptions.find((p) => p.value === plan);
+
+  // Talep var + belirli (ve mevcuttan farklı) bir paket istenmişse: ODAKLI ONAY
+  // modu — admin diğer paketleri görüp tekrar SEÇMEZ; sadece talebi onaylar.
+  // Aksi halde (talep yok / paket belirtilmemiş / istenen=mevcut): seçici modu.
+  const requestedOption = requestedCode ? allOptions.find((o) => o.value === requestedCode) : undefined;
+  const focusedConfirm = !!requestedCode && requestedCode !== currentPlan;
+  const [showPicker, setShowPicker] = React.useState(false);
+  const currentOption = allOptions.find((o) => o.value === currentPlan);
+
+  function apply(target?: string) {
+    mut.mutate(
+      { name, contact_email: contactEmail, plan: target ?? plan, is_active: isActive },
+      { onSuccess: () => router.refresh() },
+    );
+  }
+
+  return (
+    <Card id="plan" className="scroll-mt-20 border-cyan-200">
+      <div className="h-1 w-full bg-gradient-to-r from-cyan-600 to-cyan-800" aria-hidden />
+      <CardContent className="p-5">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700">
+            <Gem className="size-5" aria-hidden />
+          </span>
+          <div className="min-w-0">
+            <h2 className="font-medium">Üyelik Planı</h2>
+            <p className="text-xs text-muted-foreground">
+              Kurumun planını buradan değiştir. Mevcut plan:{" "}
+              <strong className="text-foreground">{institutionPlanLabel(currentPlan)}</strong>.
+            </p>
+          </div>
+        </div>
+
+        {focusedConfirm && !showPicker ? (
+          /* ODAKLI ONAY — kurum paketi seçti, admin yalnızca onaylar */
+          <div className="mt-3 space-y-3">
+            <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+              <p className="flex items-center gap-2 font-semibold">
+                <ArrowUpRight className="size-4 shrink-0" aria-hidden />
+                Bu kurum <strong>{requestedOption?.label}</strong> paketine geçmek için talepte bulundu.
+              </p>
+              {pending?.note ? <p className="mt-1 text-amber-800">Kurumun notu: {pending.note}</p> : null}
+            </div>
+
+            {/* Mevcut → Talep edilen karşılaştırması */}
+            <div className="flex items-center gap-3 text-sm">
+              <div className="flex-1 rounded-lg border border-slate-200 bg-white p-3">
+                <p className="text-[11px] uppercase tracking-wide text-slate-500">Mevcut</p>
+                <p className="font-bold text-slate-900">{institutionPlanLabel(currentPlan)}</p>
+                {currentOption?.coaches ? <p className="text-xs text-slate-600">{currentOption.coaches}</p> : null}
+              </div>
+              <ArrowUpRight className="size-5 shrink-0 text-cyan-600" aria-hidden />
+              <div className="flex-1 rounded-lg border border-cyan-600 bg-cyan-50 p-3 ring-1 ring-cyan-600">
+                <p className="text-[11px] uppercase tracking-wide text-cyan-700">Talep edilen</p>
+                <p className="font-bold text-slate-900">{requestedOption?.label}</p>
+                {requestedOption?.coaches ? <p className="text-xs text-slate-700">{requestedOption.coaches}</p> : null}
+                {requestedOption?.desc ? <p className="text-[11px] text-slate-600">{requestedOption.desc}</p> : null}
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => setShowPicker(true)}
+                className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+              >
+                Başka bir plana geçir
+              </button>
+              <Button
+                onClick={() => apply(requestedCode!)}
+                disabled={mut.isPending}
+                className="bg-cyan-700 hover:bg-cyan-800 text-white"
+              >
+                {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                {requestedOption?.label} paketine yükselt
+              </Button>
+            </div>
+          </div>
+        ) : (
+          /* SEÇİCİ — talep yok / paket belirtilmemiş / admin elle yönetiyor */
+          <>
+            {pending && !requestedCode ? (
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+                Bu kurum yükseltme talebinde bulundu ama belirli bir paket belirtmedi —
+                uygun kademeyi seç.
+                {pending.note ? <><br /><span className="text-amber-800">Not: {pending.note}</span></> : null}
+              </div>
+            ) : null}
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              {allOptions.map((p) => {
+                const isSel = p.value === plan;
+                const isCur = p.value === currentPlan;
+                return (
+                  <button
+                    key={p.value}
+                    type="button"
+                    onClick={() => setPlan(p.value)}
+                    className={cn(
+                      "relative rounded-xl border p-3 text-left transition",
+                      isSel
+                        ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600"
+                        : "border-slate-200 bg-white hover:border-cyan-300",
+                    )}
+                  >
+                    {isCur ? (
+                      <span className="absolute -top-2 right-2 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-white">
+                        Mevcut
+                      </span>
+                    ) : null}
+                    <p className="text-sm font-bold text-slate-900">{p.label}</p>
+                    {p.coaches ? <p className="text-xs text-slate-600">{p.coaches}</p> : null}
+                    {p.desc ? <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-2">{p.desc}</p> : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+              {focusedConfirm ? (
+                <button
+                  type="button"
+                  onClick={() => { setShowPicker(false); setPlan(requestedCode!); }}
+                  className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                >
+                  ← Talep edilen pakete dön
+                </button>
+              ) : (
+                <p className="text-xs text-muted-foreground">
+                  {dirty
+                    ? <>Seçilen: <strong className="text-foreground">{selected?.label}</strong> — uygula&apos;ya bas.</>
+                    : "Plan değiştirmek için bir kademe seç."}
+                </p>
+              )}
+              <Button
+                onClick={() => apply()}
+                disabled={!dirty || mut.isPending}
+                className="bg-cyan-700 hover:bg-cyan-800 text-white"
+              >
+                {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                Planı uygula
+              </Button>
+            </div>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================================
 // Edit form
 // ============================================================================
 
@@ -309,16 +526,16 @@ function EditInstitutionForm({
   const [contactEmail, setContactEmail] = React.useState(
     initialValues.contact_email ?? "",
   );
-  const [plan, setPlan] = React.useState(initialValues.plan);
   const [isActive, setIsActive] = React.useState(initialValues.is_active);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // plan GÖNDERİLMEZ → backend mevcut planı korur. Plan değişimi ayrı
+    // "Üyelik Planı" kartından yapılır (akış: talep → kurum sayfası #plan).
     mut.mutate(
       {
         name: name.trim(),
         contact_email: contactEmail.trim() || null,
-        plan,
         is_active: isActive,
       },
       {
@@ -361,26 +578,6 @@ function EditInstitutionForm({
               onChange={(e) => setContactEmail(e.target.value)}
               className="mt-1"
             />
-          </div>
-          <div>
-            <Label
-              htmlFor="edit-plan"
-              className="text-xs uppercase tracking-wide"
-            >
-              Plan
-            </Label>
-            <select
-              id="edit-plan"
-              value={plan}
-              onChange={(e) => setPlan(e.target.value)}
-              className="mt-1 w-full px-3 py-2 border border-input rounded-md text-sm bg-card"
-            >
-              {PLAN_OPTIONS.map((p) => (
-                <option key={p} value={p}>
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
-                </option>
-              ))}
-            </select>
           </div>
           <label className="flex items-center gap-2 text-sm cursor-pointer">
             <input

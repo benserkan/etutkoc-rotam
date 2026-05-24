@@ -255,6 +255,7 @@ class TeacherHeatmapRow(BaseModel):
     total_tasks: int
     total_notes: int
     is_inactive: bool
+    is_new: bool = False     # yeni hesap (onboarding) — "pasif" değil
 
 
 class ActivityHeatmapResponse(BaseModel):
@@ -427,11 +428,35 @@ class GuaranteeEvaluationInfo(BaseModel):
     note: str
 
 
+class InstitutionPlanOption(BaseModel):
+    """Yükseltme talebi için seçilebilir kurum kademesi (pricing kataloğundan)."""
+    code: str
+    label: str
+    coaches: str            # koç aralığı (örn. "2–10 koç")
+    price_label: str        # "10.000 ₺/ay" | "Özel teklif"
+
+
 class SubscriptionResponse(BaseModel):
     institution: InstitutionBrief
     plan: str
+    plan_label: str = ""                          # planın okunur adı
     status: SubscriptionStatusInfo
     guarantee_evaluation: GuaranteeEvaluationInfo
+    # Plan yükseltme talebi (satın alma DEĞİL — süper admine sinyal)
+    available_plans: list[InstitutionPlanOption] = []
+    pending_upgrade_request: bool = False
+    requested_plan_label: str | None = None       # bekleyen talepte hedef paket
+
+
+class SubscriptionUpgradeRequestBody(BaseModel):
+    plan: str | None = None      # hedef kademe kodu (etut_standart/dershane_pro/enterprise) — opsiyonel
+    note: str | None = None      # kurumun ek notu (opsiyonel)
+
+
+class SubscriptionRequestResult(BaseModel):
+    ok: bool = True
+    message: str
+    already_pending: bool = False
 
 
 # =============================================================================

@@ -5,11 +5,14 @@ import { toast } from "sonner";
 
 import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
+import { requestInstitutionUpgrade } from "@/lib/api/institution";
 import type {
   AdminDigestSendResult,
   InvitationCreateBody,
   InvitationItem,
+  SubscriptionRequestResult,
   SubscriptionStatusInfo,
+  SubscriptionUpgradeRequestBody,
   TeacherCreateBody,
   TeacherCreateResult,
   TeacherSummaryItem,
@@ -355,6 +358,26 @@ export function useEnableGuarantee() {
     },
     onError: (e) => {
       toast.error(errorTitle(e, "Aktivasyon başarısız"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+/** Plan yükseltme TALEBİ gönder (satın alma değil — süper admine sinyal). */
+export function useRequestInstitutionUpgrade() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<SubscriptionRequestResult>, Error, SubscriptionUpgradeRequestBody>({
+    mutationFn: (body) => requestInstitutionUpgrade(body),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(
+        res.data.already_pending ? "Zaten bekleyen talebin var" : "Talebin alındı",
+        { description: res.data.message },
+      );
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Talep gönderilemedi"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
       });
     },

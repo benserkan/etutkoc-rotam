@@ -130,8 +130,11 @@ from app.routes.api_v2.schemas.institution import (
     RosterFilterOptions,
     RosterRowItem,
     RosterTeacherOption,
+    InstitutionPlanOption,
+    SubscriptionRequestResult,
     SubscriptionResponse,
     SubscriptionStatusInfo,
+    SubscriptionUpgradeRequestBody,
     TeacherCardResponse,
     TeacherCardStudentRow,
     TeacherCreateBody,
@@ -560,6 +563,22 @@ def institution_create_teacher_v2(
                 "error": "conflict",
                 "code": "email_exists",
                 "message": "Bu e-posta zaten kayıtlı.",
+            },
+        )
+
+    # Kota duvarı: plan öğretmen limitini aş(ma). (Davet yolu zaten gate'liydi;
+    # doğrudan ekleme açıkta kalmıştı — bu düzeltme limiti tutarlı uygular.)
+    inst = _get_institution_or_403(db, user.institution_id)
+    try:
+        check_quota_for_create(db, institution=inst, quota_key="teachers")
+    except QuotaExceeded as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "quota_exceeded",
+                "code": "quota_exceeded",
+                "message": e.message,
+                "details": {"limit": e.limit, "current": e.current, "quota_key": "teachers"},
             },
         )
 
@@ -1239,6 +1258,7 @@ def institution_activity_heatmap_v2(
             total_tasks=h.total_tasks,
             total_notes=h.total_notes,
             is_inactive=h.is_inactive,
+            is_new=h.is_new,
         ))
 
     return ActivityHeatmapResponse(
@@ -1517,6 +1537,62 @@ def _subscription_keys(institution_id: int) -> list[str]:
     return _invalidate_keys(institution_id, "subscription", "quota")
 
 
+def _institution_plan_label(plan_code: str) -> str:
+    """Plan kodu → okunur ad (kurum). get_plan_info varsa onu kullan."""
+    from app.services.plans import get_plan_info
+    info = get_plan_info(plan_code)
+    if info:
+        return info.label
+    return {"free": "Kurum Tanıma"}.get(plan_code, plan_code)
+
+
+def _institution_upgrade_options() -> list[InstitutionPlanOption]:
+    """Yükseltme talebi için kurum kademeleri — /pricing kataloğu (tek kaynak)."""
+    from app.services import pricing
+    cat = pricing.get_pricing_catalog()
+    out: list[InstitutionPlanOption] = []
+    for t in cat["institution"]["tiers"]:
+        mc = t.get("max_coaches")
+        coaches = f"{t['min_coaches']}+ koç" if mc is None else f"{t['min_coaches']}–{mc} koç"
+        if t.get("price_hidden") or t.get("monthly_total") is None:
+            price = "Özel teklif"
+        else:
+            price = f"{int(t['monthly_total']):,}".replace(",", ".") + " ₺/ay"
+        out.append(InstitutionPlanOption(code=t["code"], label=t["label"], coaches=coaches, price_label=price))
+    return out
+
+
+def _pending_institution_sub_request(db: Session, institution_id: int):
+    """Bu kuruma ait bekleyen (status=new) abonelik talebini döner (yoksa None).
+
+    Mesajdaki `kurum_id={id}` işaretinden eşler — substring çakışmasına karşı
+    Python tarafında tam sayı karşılaştırması.
+    """
+    import re
+    from app.models.contact_request import ContactRequest
+    rows = (
+        db.query(ContactRequest)
+        .filter(ContactRequest.source == "subscription_request", ContactRequest.status == "new")
+        .order_by(ContactRequest.created_at.desc())
+        .all()
+    )
+    for cr in rows:
+        if cr.message:
+            m = re.search(r"kurum_id=(\d+)", cr.message)
+            if m and int(m.group(1)) == institution_id:
+                return cr
+    return None
+
+
+def _requested_plan_label_from_message(message: str | None) -> str | None:
+    """Bekleyen talebin mesajından hedef paket etiketini çıkar (varsa)."""
+    import re
+    if not message:
+        return None
+    m = re.search(r"hedef=([^·]+)·", message)
+    return m.group(1).strip() if m else None
+
+
 @router.get("/subscription", response_model=SubscriptionResponse)
 def institution_subscription_v2(
     user: User = Depends(_require_institution_admin),
@@ -1529,9 +1605,11 @@ def institution_subscription_v2(
     inst = _get_institution_or_403(db, user.institution_id)
     status_info = get_subscription_status(inst)
     guarantee_eval = evaluate_guarantee(db, institution=inst)
+    pending = _pending_institution_sub_request(db, inst.id)
     return SubscriptionResponse(
         institution=_institution_brief(inst),
         plan=inst.plan or "free",
+        plan_label=_institution_plan_label(inst.plan or "free"),
         status=_status_to_info(status_info),
         guarantee_evaluation=GuaranteeEvaluationInfo(
             eligible=guarantee_eval.eligible,
@@ -1544,6 +1622,84 @@ def institution_subscription_v2(
             can_extend=guarantee_eval.can_extend,
             note=guarantee_eval.note,
         ),
+        available_plans=_institution_upgrade_options(),
+        pending_upgrade_request=pending is not None,
+        requested_plan_label=_requested_plan_label_from_message(pending.message) if pending else None,
+    )
+
+
+@router.post(
+    "/subscription-request",
+    response_model=MutationResponse[SubscriptionRequestResult],
+)
+def institution_subscription_request_v2(
+    body: SubscriptionUpgradeRequestBody,
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Kurum yöneticisi plan yükseltme TALEBİ — satın alma DEĞİL.
+
+    Talep `contact_requests`'e (source=subscription_request, mesajda kurum_id=N)
+    düşer → süper admin İletişim Talepleri'nde "Abonelik talebi (kurum)" olarak
+    görür → kurum detayından planı değiştirir. Koç akışıyla simetrik. Idempotent:
+    bekleyen talep varsa tekrar oluşturmaz. Migration YOK.
+    """
+    from app.models.contact_request import ContactRequest
+
+    inst = _get_institution_or_403(db, user.institution_id)
+
+    # Bekleyen talep varsa tekrar oluşturma (idempotent)
+    pending = _pending_institution_sub_request(db, inst.id)
+    if pending is not None:
+        return MutationResponse[SubscriptionRequestResult](
+            data=SubscriptionRequestResult(
+                ok=True, already_pending=True,
+                message="Zaten bekleyen bir yükseltme talebin var. Ekibimiz en kısa sürede iletişime geçecek.",
+            ),
+            invalidate=_subscription_keys(inst.id),
+        )
+
+    # Hedef paket (opsiyonel) — geçerli kademe ise kod + etiketini sakla.
+    # hedef_kod, süper admin kurum sayfasındaki PlanCard'da ön-seçim için kullanılır
+    # (admin tekrar seçmesin — kurum hangi paketi istediyse o gelir).
+    options = {o.code: o for o in _institution_upgrade_options()}
+    target = (body.plan or "").strip()
+    valid_target = target if target in options else ""
+    target_label = options[target].label if target in options else "Belirtilmedi"
+
+    teacher_count = (
+        db.query(User)
+        .filter(
+            User.institution_id == inst.id,
+            User.role == UserRole.TEACHER,
+            User.is_active.is_(True),
+        )
+        .count()
+    )
+    note = (body.note or "").strip()
+    note_part = f" · not: {note[:300]}" if note else ""
+    cr = ContactRequest(
+        name=user.full_name or user.email,
+        email=user.email,
+        institution_name=inst.name,
+        coach_count=teacher_count,
+        source="subscription_request",
+        message=(
+            f"Kurum paket yükseltme talebi · hedef={target_label} · "
+            f"mevcut={_institution_plan_label(inst.plan or 'free')} · "
+            f"{teacher_count} aktif öğretmen{note_part} · "
+            f"hedef_kod={valid_target} · kurum_id={inst.id}"
+        ),
+    )
+    db.add(cr)
+    db.commit()
+
+    return MutationResponse[SubscriptionRequestResult](
+        data=SubscriptionRequestResult(
+            ok=True,
+            message="Talebin alındı. Ekibimiz en kısa sürede seninle iletişime geçecek.",
+        ),
+        invalidate=_subscription_keys(inst.id) + ["admin:contact-requests"],
     )
 
 
@@ -1685,18 +1841,26 @@ def institution_quota_v2(
         )
         for q in summary
     ]
+    # Karşılaştırma tablosu: kanonik kurum kademeleri (legacy "free" + trial HARİÇ;
+    # mükerrer "Kurum Tanıma" satırı olmasın). Tek free adı: institution_free.
+    compare_codes = ["institution_free", "etut_standart", "dershane_pro", "enterprise"]
     plans = [
         PlanQuotaItem(
-            plan=plan_code,
-            teachers=PLAN_QUOTAS[plan_code].get("teachers", 0),
-            students=PLAN_QUOTAS[plan_code].get("students", 0),
-            institution_admins=PLAN_QUOTAS[plan_code].get("institution_admins", 0),
+            plan=code,
+            teachers=PLAN_QUOTAS[code].get("teachers", 0),
+            students=PLAN_QUOTAS[code].get("students", 0),
+            institution_admins=PLAN_QUOTAS[code].get("institution_admins", 0),
         )
-        for plan_code in PLAN_QUOTAS
+        for code in compare_codes
+        if code in PLAN_QUOTAS
     ]
+    # Mevcut planı kanonik koda normalize et → header etiketi + tablo vurgusu tutarlı.
+    cur = inst.plan or "institution_free"
+    if cur == "free":
+        cur = "institution_free"
     return QuotaResponse(
         institution=_institution_brief(inst),
-        plan=inst.plan or "free",
+        plan=cur,
         summary=summary_items,
         plans=plans,
         warn_pct=WARN_PCT,

@@ -12,11 +12,13 @@ Performans:
 - Tek SQL ile group by (teacher, day) — 3 kaynak için 3 sorgu
 - Python tarafında dict birleştirme; matrix oluşturma O(N×D)
 
-Skor hesabı:
-- Login: 1 puan (en az bir login varsa o gün)
-- Task: günlük oluşturulan task sayısı kapsanan, max 10 ile sınırlı
-- Note: günlük oluşturulan not sayısı kapsanan, max 5 ile sınırlı
-- Toplam puan max 16; activity_score = min(1.0, total / 16)
+Skor hesabı (0..1, erken doygunluk — gerçek günlük aktivite koyu yeşile ulaşsın):
+- Giriş (login): VAR ise taban 0.25 + giriş yoğunluğu (≤5 girişte 0.15'e doğar)
+  → giriş yapılan gün tek başına ~level 2 (görünür yeşil). Eski "binary +1 / 16"
+  hatası: 23 giriş + 2 task neredeyse beyaz kalıyordu (0.19) — düzeltildi.
+- Task: günde 5 task'ta doygun → 0.40 ağırlık
+- Note: günde 3 not'ta doygun → 0.20 ağırlık
+- activity_score = min(1.0, login_pay + task_pay + note_pay)
 
 Bu skor öznel — UI sadece ısı göstergesi olarak kullanır (yeşilin tonu).
 """
@@ -43,10 +45,16 @@ from app.models import (
 logger = logging.getLogger(__name__)
 
 
-# Skor sabitleri
-TASK_CAP = 10           # günlük task sayısı bu üstü kapsıyor
-NOTE_CAP = 5            # günlük not sayısı bu üstü kapsıyor
+# Skor sabitleri — erken doygunluk: gerçek bir aktif gün koyu yeşile ulaşmalı.
+LOGIN_BASE = 0.25       # giriş yapılan gün tabanı (tek başına ~level 2 = görünür)
+LOGIN_INTENSITY = 0.15  # giriş yoğunluğu ek payı (LOGIN_SAT girişte tam)
+LOGIN_SAT = 5           # bu kadar girişte yoğunluk payı doygun
+TASK_SAT = 5            # günde bu kadar task'ta task payı doygun
+NOTE_SAT = 3            # günde bu kadar not'ta not payı doygun
+TASK_WEIGHT = 0.40      # task payı toplam ağırlığı
+NOTE_WEIGHT = 0.20      # note payı toplam ağırlığı
 INACTIVE_DAYS = 7       # bu kadar gün hiç aktivite yok = pasif
+ONBOARDING_GRACE_DAYS = 3  # yeni öğretmen (hesap < bu) hiç aktivitesiz → "pasif" değil "yeni"
 
 
 @dataclass
@@ -70,6 +78,7 @@ class TeacherHeatmap:
     total_tasks: int = 0
     total_notes: int = 0
     is_inactive: bool = False           # son INACTIVE_DAYS hiç aktivite yok
+    is_new: bool = False                # yeni hesap (onboarding) + henüz aktivite yok
 
     @property
     def days_since_active(self) -> int | None:
@@ -180,14 +189,15 @@ def _notes_created_per_teacher_per_day(
 
 
 def _compute_score(login: int, tasks: int, notes: int) -> float:
-    """0..1 normalize skor."""
-    score = 0
+    """0..1 normalize skor — erken doygunluk (gerçek aktif gün koyu yeşil olur)."""
+    score = 0.0
     if login > 0:
-        score += 1
-    score += min(tasks, TASK_CAP)
-    score += min(notes, NOTE_CAP)
-    max_score = 1 + TASK_CAP + NOTE_CAP   # 16
-    return round(min(1.0, score / max_score), 3)
+        score += LOGIN_BASE + LOGIN_INTENSITY * (min(login, LOGIN_SAT) / LOGIN_SAT)
+    if tasks > 0:
+        score += TASK_WEIGHT * (min(tasks, TASK_SAT) / TASK_SAT)
+    if notes > 0:
+        score += NOTE_WEIGHT * (min(notes, NOTE_SAT) / NOTE_SAT)
+    return round(min(1.0, score), 3)
 
 
 # ---------------------------- Public API ----------------------------
@@ -264,7 +274,18 @@ def teacher_activity_heatmap(
                 total_tasks += ta
                 total_notes += no
 
-        is_inactive = (
+        # Onboarding grace: yeni oluşturulmuş öğretmen (hesap < grace) henüz hiç
+        # aktivite üretmediyse "pasif" DEĞİL "yeni" sayılır — yanlış-pozitif önler.
+        # (Kullanıcı 2026-05-23 — yeni öğretmen pasif işaretleniyordu.)
+        account_age_days = (
+            (today - t.created_at.date()).days if t.created_at else None
+        )
+        is_new = (
+            last_active is None
+            and account_age_days is not None
+            and account_age_days < ONBOARDING_GRACE_DAYS
+        )
+        is_inactive = (not is_new) and (
             last_active is None
             or (today - last_active).days > INACTIVE_DAYS
         )
@@ -276,6 +297,7 @@ def teacher_activity_heatmap(
             total_tasks=total_tasks,
             total_notes=total_notes,
             is_inactive=is_inactive,
+            is_new=is_new,
         ))
     return out
 
@@ -322,7 +344,11 @@ def inactive_teachers(
     for t in teachers:
         la = last_active_map.get(t.id)
         if la is None:
-            out.append(t)
+            # Onboarding grace: hiç giriş yapmamış YENİ öğretmen (hesap < grace)
+            # "pasif" sayılmaz — yanlış-pozitif önler (heatmap ile tutarlı).
+            age = (today - t.created_at.date()).days if t.created_at else None
+            if age is None or age >= ONBOARDING_GRACE_DAYS:
+                out.append(t)
             continue
         if la.tzinfo is None:
             la = la.replace(tzinfo=timezone.utc)

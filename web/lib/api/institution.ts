@@ -9,6 +9,7 @@
  * detay sayfalarına YÖNLENMEZ — kurum yöneticisinin yetki sınırı içinde kalır.
  */
 import { api } from "@/lib/api";
+import type { MutationResponse } from "@/lib/api";
 import type {
   ActivityHeatmapResponse,
   AdminDigestDetailResponse,
@@ -30,7 +31,9 @@ import type {
   InvitationListResponse,
   QuotaResponse,
   RosterListParams,
+  SubscriptionRequestResult,
   SubscriptionResponse,
+  SubscriptionUpgradeRequestBody,
   TeacherCardResponse,
   UsageResponse,
 } from "@/lib/types/institution";
@@ -179,6 +182,13 @@ export function getInstitutionAdminDigestDetail(id: number) {
 
 export function getInstitutionSubscription() {
   return api<SubscriptionResponse>("/api/v2/institution/subscription");
+}
+
+export function requestInstitutionUpgrade(body: SubscriptionUpgradeRequestBody) {
+  return api<MutationResponse<SubscriptionRequestResult>>(
+    "/api/v2/institution/subscription-request",
+    { method: "POST", body: JSON.stringify(body) },
+  );
 }
 
 export function getInstitutionQuota() {

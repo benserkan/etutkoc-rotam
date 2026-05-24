@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { institutionPlanLabel } from "@/lib/institution-plans";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   getInstitutionUsage,
@@ -77,8 +78,8 @@ export function UsageClient({ initial }: Props) {
           belirli sayıda &ldquo;kredi&rdquo; tüketir. {institution.name} ·{" "}
           <span className="font-mono">{account.period_year_month}</span> ayı ·
           plan:{" "}
-          <strong className="text-foreground capitalize">
-            {account.plan_code}
+          <strong className="text-foreground">
+            {institutionPlanLabel(account.plan_code)}
           </strong>
         </p>
       </header>
@@ -387,7 +388,7 @@ function PlanInfoBlock({
     <Card>
       <CardContent className="p-5 space-y-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <Stat label="Plan" value={plan} mono uppercase />
+          <Stat label="Plan" value={institutionPlanLabel(plan)} />
           <Stat
             label="Aylık Limit"
             value={`${allocated} kredi`}

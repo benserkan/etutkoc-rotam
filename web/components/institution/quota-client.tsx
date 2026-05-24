@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { institutionPlanLabel } from "@/lib/institution-plans";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   getInstitutionQuota,
@@ -66,7 +67,7 @@ export function QuotaClient({ initial }: Props) {
           {institution.name} kurumunda planınıza göre en fazla kaç öğretmen,
           öğrenci ve yönetici olabilir. Aktif olarak şu an kaç tane var, ne
           kadar yer kalmış aşağıda görürsünüz. Plan:{" "}
-          <strong className="text-foreground capitalize">{plan}</strong>
+          <strong className="text-foreground">{institutionPlanLabel(plan)}</strong>
         </p>
       </header>
 
@@ -218,8 +219,8 @@ function PlanComparison({
                     isCurrent ? "bg-emerald-50/50 font-medium" : undefined,
                   )}
                 >
-                  <td className="px-4 py-2 capitalize">
-                    {p.plan}
+                  <td className="px-4 py-2">
+                    {institutionPlanLabel(p.plan)}
                     {isCurrent && (
                       <span className="ml-2 text-[11px] inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 border border-emerald-200">
                         <CheckCircle2 className="size-2.5" aria-hidden />

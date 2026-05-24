@@ -8,6 +8,8 @@ import {
   ArrowUpRight,
   CalendarDays,
   CheckCircle2,
+  Clock,
+  Gem,
   HelpCircle,
   Loader2,
   Pause,
@@ -34,11 +36,13 @@ import {
 import {
   useEnableGuarantee,
   usePauseForSummer,
+  useRequestInstitutionUpgrade,
   useResumeFromPause,
   useSwitchAcademicYear,
 } from "@/lib/hooks/use-institution-mutations";
 import type {
   GuaranteeEvaluationInfo,
+  InstitutionPlanOption,
   SubscriptionResponse,
   SubscriptionStatusInfo,
 } from "@/lib/types/institution";
@@ -62,7 +66,7 @@ export function SubscriptionClient({ initial }: Props) {
     staleTime: 30_000,
   });
   const data = q.data ?? initial;
-  const { status, guarantee_evaluation, plan, institution } = data;
+  const { status, guarantee_evaluation, plan, plan_label, institution } = data;
 
   return (
     <div className="space-y-6">
@@ -82,15 +86,16 @@ export function SubscriptionClient({ initial }: Props) {
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           {institution.name} kurumunun mevcut planı{" "}
-          <strong className="text-foreground capitalize">{plan}</strong> — burada
-          akademik yıl planına geçiş, yaz pause modu ve 60 gün performans
-          garantisi yönetilir.
+          <strong className="text-foreground">{plan_label || plan}</strong> — burada
+          planını yükseltmek için talep gönderebilir; akademik yıl planına geçiş,
+          yaz pause modu ve 60 gün performans garantisini yönetebilirsin.
         </p>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="lg:col-span-2 space-y-5">
-          <CurrentStatusCard status={status} plan={plan} />
+          <UpgradeRequestCard data={data} />
+          <CurrentStatusCard status={status} plan={plan_label || plan} />
           {status.can_switch_to_academic_year && <AcademicYearPromoCard />}
           {(status.kind === "academic_year" || status.kind === "paused") && (
             <SummerPauseCard status={status} />
@@ -106,6 +111,154 @@ export function SubscriptionClient({ initial }: Props) {
           <HelpCard />
         </aside>
       </div>
+    </div>
+  );
+}
+
+// ============================================================================
+// Plan yükseltme talebi (satın alma DEĞİL — süper admine sinyal)
+// ============================================================================
+
+function UpgradeRequestCard({ data }: { data: SubscriptionResponse }) {
+  const mut = useRequestInstitutionUpgrade();
+  const [open, setOpen] = React.useState(false);
+  const [selected, setSelected] = React.useState<string>(
+    data.available_plans[0]?.code ?? "",
+  );
+  const [note, setNote] = React.useState("");
+
+  const pending = data.pending_upgrade_request;
+
+  function submit() {
+    mut.mutate(
+      { plan: selected || null, note: note.trim() || null },
+      { onSuccess: () => setOpen(false) },
+    );
+  }
+
+  return (
+    <Card className="overflow-hidden border-cyan-200">
+      <div className="h-1 w-full bg-gradient-to-r from-cyan-600 to-cyan-800" aria-hidden />
+      <CardContent className="space-y-4 p-5">
+        <div className="flex items-start gap-3">
+          <span className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700">
+            <Gem className="size-5" aria-hidden />
+          </span>
+          <div>
+            <h2 className="font-display text-lg font-bold">Planını yükselt</h2>
+            <p className="text-sm text-muted-foreground">
+              Daha fazla öğretmen ve öğrenci kapasitesi için paketini yükselt.
+              Bu bir <strong className="text-foreground">satın alma değil</strong> —
+              talebini iletirsin, ekibimiz seninle iletişime geçip kuruluma yardımcı olur.
+            </p>
+          </div>
+        </div>
+
+        {pending ? (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+            <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+            <span>
+              <strong>Talebin alındı.</strong>{" "}
+              {data.requested_plan_label && data.requested_plan_label !== "Belirtilmedi"
+                ? `Hedef paket: ${data.requested_plan_label}. `
+                : ""}
+              Ekibimiz en kısa sürede seninle iletişime geçecek.
+            </span>
+          </div>
+        ) : (
+          <>
+            {/* Kademe seçici */}
+            <div className="grid gap-2 sm:grid-cols-3">
+              {data.available_plans.map((p) => {
+                const isSel = p.code === selected;
+                return (
+                  <button
+                    key={p.code}
+                    type="button"
+                    onClick={() => setSelected(p.code)}
+                    className={cn(
+                      "rounded-xl border p-3 text-left transition",
+                      isSel
+                        ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600"
+                        : "border-slate-200 bg-white hover:border-cyan-300",
+                    )}
+                  >
+                    <p className="text-sm font-bold text-slate-900">{p.label}</p>
+                    <p className="text-xs text-slate-600">{p.coaches}</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-900">{p.price_label}</p>
+                  </button>
+                );
+              })}
+            </div>
+            <Button
+              className="w-full bg-cyan-700 text-white hover:bg-cyan-800"
+              onClick={() => setOpen(true)}
+            >
+              Yükseltme talebi gönder
+            </Button>
+          </>
+        )}
+      </CardContent>
+
+      <Dialog open={open} onOpenChange={(v) => { if (!mut.isPending) setOpen(v); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Gem className="size-4 text-cyan-700" aria-hidden /> Plan yükseltme talebi
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm">
+            <PlanOptionSummary options={data.available_plans} selected={selected} />
+            <div>
+              <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Not (opsiyonel)
+              </label>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={3}
+                placeholder="Örn. 8 öğretmenimiz var, eylülde 4 yeni koç ekleyeceğiz."
+                className="w-full rounded-md border border-input bg-card px-3 py-2 text-sm"
+              />
+            </div>
+            <p className="flex items-start gap-2 text-muted-foreground">
+              <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Talep süper admin ekibine iletilir; ödeme/aktivasyon manuel yapılır.
+            </p>
+          </div>
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="ghost" onClick={() => setOpen(false)} disabled={mut.isPending}>
+              Vazgeç
+            </Button>
+            <Button
+              className="bg-cyan-700 text-white hover:bg-cyan-800"
+              onClick={submit}
+              disabled={mut.isPending}
+            >
+              {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+              Talebi gönder
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Card>
+  );
+}
+
+function PlanOptionSummary({
+  options,
+  selected,
+}: {
+  options: InstitutionPlanOption[];
+  selected: string;
+}) {
+  const sel = options.find((o) => o.code === selected);
+  if (!sel) return null;
+  return (
+    <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3">
+      <span className="text-muted-foreground">Seçilen kademe:</span>{" "}
+      <span className="font-semibold text-cyan-900">{sel.label}</span>{" "}
+      <span className="text-cyan-800">· {sel.coaches} · {sel.price_label}</span>
     </div>
   );
 }
@@ -129,10 +282,10 @@ function CurrentStatusCard({
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground">
               Mevcut Plan
             </p>
-            <h2 className="text-lg font-semibold mt-0.5">{status.kind_label}</h2>
+            <h2 className="text-lg font-semibold mt-0.5">{plan}</h2>
             <p className="text-xs text-muted-foreground mt-1">
-              Plan kodu:{" "}
-              <span className="font-mono uppercase text-foreground">{plan}</span>
+              Abonelik türü:{" "}
+              <span className="font-medium text-foreground">{status.kind_label}</span>
             </p>
           </div>
           <KindBadge kind={status.kind} />

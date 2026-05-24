@@ -252,6 +252,18 @@ function ManageDialog({ item }: { item: ContactRequestItem }) {
             <div className="rounded-lg border border-border bg-muted/30 p-3 text-xs">
               <div className="font-medium">{item.name} · {item.email}</div>
               {item.institution_name ? <div className="text-muted-foreground">{item.institution_name}{item.coach_count != null ? ` · ${item.coach_count} koç` : ""}</div> : null}
+              {/* Kurum abonelik talebi: mevcut → talep edilen planı NET göster */}
+              {item.linked_institution_id && (item.institution_current_plan_label || item.requested_plan_label) ? (
+                <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                  <span className="rounded border border-slate-300 bg-slate-100 px-1.5 py-0.5 font-medium text-slate-700">
+                    Mevcut: {item.institution_current_plan_label ?? "—"}
+                  </span>
+                  <ArrowUpRight className="size-3.5 text-cyan-600" aria-hidden />
+                  <span className="rounded border border-cyan-300 bg-cyan-50 px-1.5 py-0.5 font-medium text-cyan-800">
+                    Talep edilen: {item.requested_plan_label ?? "Belirtilmedi"}
+                  </span>
+                </div>
+              ) : null}
               {item.message ? <p className="mt-1 text-muted-foreground">{item.message}</p> : null}
               {item.linked_user_id ? (
                 <Link
@@ -260,6 +272,20 @@ function ManageDialog({ item }: { item: ContactRequestItem }) {
                 >
                   <ArrowUpRight className="size-3.5" aria-hidden /> Koç sayfasına git (aboneliği aktive et)
                 </Link>
+              ) : null}
+              {item.linked_institution_id ? (
+                <div className="mt-2 space-y-1">
+                  <Link
+                    href={`/admin/institutions/${item.linked_institution_id}#plan`}
+                    className="inline-flex items-center gap-1 font-medium text-indigo-600 hover:underline"
+                  >
+                    <ArrowUpRight className="size-3.5" aria-hidden /> Kurum sayfasına git (planı değiştir)
+                  </Link>
+                  <p className="text-[11px] text-muted-foreground">
+                    Planı değiştirdikten sonra bu talebi aşağıdan{" "}
+                    <strong>&quot;Kapatıldı&quot;</strong> olarak işaretle.
+                  </p>
+                </div>
               ) : null}
             </div>
             <div>

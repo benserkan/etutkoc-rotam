@@ -206,6 +206,7 @@ export interface TeacherHeatmapRow {
   total_tasks: number;
   total_notes: number;
   is_inactive: boolean;
+  is_new: boolean;
 }
 
 export interface ActivityHeatmapResponse {
@@ -466,11 +467,33 @@ export interface GuaranteeEvaluationInfo {
   note: string;
 }
 
+export interface InstitutionPlanOption {
+  code: string;
+  label: string;
+  coaches: string;       // koç aralığı
+  price_label: string;   // "10.000 ₺/ay" | "Özel teklif"
+}
+
 export interface SubscriptionResponse {
   institution: InstitutionBrief;
   plan: string;
+  plan_label: string;
   status: SubscriptionStatusInfo;
   guarantee_evaluation: GuaranteeEvaluationInfo;
+  available_plans: InstitutionPlanOption[];
+  pending_upgrade_request: boolean;
+  requested_plan_label: string | null;
+}
+
+export interface SubscriptionUpgradeRequestBody {
+  plan?: string | null;
+  note?: string | null;
+}
+
+export interface SubscriptionRequestResult {
+  ok: boolean;
+  message: string;
+  already_pending: boolean;
 }
 
 // =============================================================================

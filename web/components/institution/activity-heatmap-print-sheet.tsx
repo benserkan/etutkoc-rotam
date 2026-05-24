@@ -110,10 +110,15 @@ export function ActivityHeatmapPrintSheet({ data, weeks }: Props) {
                           PASİF
                         </span>
                       ) : null}
+                      {t.is_new ? (
+                        <span className="text-sky-700 font-medium">YENİ</span>
+                      ) : null}
                       {t.is_inactive && t.last_active_day ? " · " : null}
                       {t.last_active_day
                         ? `son aktivite ${t.days_since_active}g önce`
-                        : "hiç aktivite yok"}
+                        : t.is_new
+                          ? "yeni hesap — henüz giriş yok"
+                          : "hiç aktivite yok"}
                     </div>
                   </td>
                   <td>
