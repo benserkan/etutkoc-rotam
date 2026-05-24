@@ -27,6 +27,8 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
+import { InstitutionBrand } from "@/components/institution-brand";
+import type { InstitutionRef } from "@/lib/types/me";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { getTeacherBadges, teacherKeys } from "@/lib/api/teacher";
 import { TrialBanner } from "@/components/teacher/trial-banner";
@@ -64,6 +66,7 @@ const TEACHER_NAV: NavLink[] = [
 
 interface Props {
   user: UserPublic;
+  institution?: InstitutionRef | null;
   children: React.ReactNode;
 }
 
@@ -77,7 +80,7 @@ interface Props {
  *
  * Bu component sadece NAVIGATION sunar; her sayfa kendi içeriğini render eder.
  */
-export function TeacherShell({ user, children }: Props) {
+export function TeacherShell({ user, institution, children }: Props) {
   const pathname = usePathname();
   const logout = useLogout();
   const [navOpen, setNavOpen] = React.useState(false);
@@ -97,6 +100,11 @@ export function TeacherShell({ user, children }: Props) {
         <div className="px-4 h-14 flex items-center border-b border-border">
           <BrandLogo href="/teacher/dashboard" size={28} />
         </div>
+        {institution ? (
+          <div className="px-4 py-2 border-b border-border">
+            <InstitutionBrand institution={institution} />
+          </div>
+        ) : null}
         <nav
           className="flex-1 overflow-y-auto p-2 space-y-0.5"
           aria-label="Öğretmen paneli"
@@ -121,6 +129,12 @@ export function TeacherShell({ user, children }: Props) {
       <header className="lg:hidden sticky top-0 z-30 border-b border-border bg-background/85 backdrop-blur-sm">
         <div className="flex h-14 items-center gap-3 px-4">
           <BrandLogo href="/teacher/dashboard" size={28} className="shrink-0" />
+          {institution ? (
+            <InstitutionBrand
+              institution={institution}
+              className="hidden sm:inline-flex max-w-[180px]"
+            />
+          ) : null}
           <div className="flex-1" />
           <span className="hidden sm:inline text-sm text-muted-foreground truncate max-w-[160px]">
             {user.full_name}

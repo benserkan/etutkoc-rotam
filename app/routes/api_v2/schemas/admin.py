@@ -228,6 +228,8 @@ class InstitutionDetailBrief(BaseModel):
     plan: str
     is_active: bool
     created_at: datetime | None = None
+    has_logo: bool = False
+    logo_url: str | None = None  # co-branding logosu (varsa)
 
 
 class InstitutionUserBrief(BaseModel):
@@ -1138,6 +1140,14 @@ class DiscoveryBulkBody(BaseModel):
 class DiscoveryMutationResult(BaseModel):
     message: str
     affected: int | None = None
+
+
+class DiscoveryScanResult(BaseModel):
+    """POST /feature-catalog/discovery-queue/scan — 'Şimdi tara' sonucu."""
+    message: str
+    created: int
+    skipped: int
+    candidates: int
 
 
 # ---------------------------- A/B deneyler ----------------------------

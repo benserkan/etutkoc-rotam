@@ -171,7 +171,11 @@ def get_me(
     if user.institution_id:
         inst = db.get(Institution, user.institution_id)
         if inst is not None:
-            institution_ref = InstitutionRef(id=inst.id, name=inst.name, slug=inst.slug)
+            institution_ref = InstitutionRef(
+                id=inst.id, name=inst.name, slug=inst.slug,
+                has_logo=inst.has_logo,
+                logo_url=(f"/api/v2/institution/logo/{inst.id}" if inst.has_logo else None),
+            )
 
     return MyAccountResponse(
         user=UserPublic.from_user(user),

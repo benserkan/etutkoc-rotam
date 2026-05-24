@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -11,10 +12,12 @@ import {
   Download,
   FileText,
   Gem,
+  ImageIcon,
   Loader2,
   Save,
   ShieldAlert,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -37,7 +40,9 @@ import {
 import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import {
   useDeleteInstitution,
+  useDeleteInstitutionLogo,
   useEditInstitution,
+  useUploadInstitutionLogo,
 } from "@/lib/hooks/use-admin-mutations";
 import { buildInstitutionPlanOptions, institutionPlanLabel } from "@/lib/institution-plans";
 import type { InstitutionDetailResponse, PendingUpgradeInfo } from "@/lib/types/admin";
@@ -117,6 +122,13 @@ export function AdminInstitutionDetailClient({
         contactEmail={inst.contact_email}
         isActive={inst.is_active}
         pending={data.pending_upgrade ?? null}
+      />
+
+      <LogoCard
+        institutionId={inst.id}
+        name={inst.name}
+        hasLogo={!!inst.has_logo}
+        logoUrl={inst.logo_url ?? null}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -296,6 +308,103 @@ function HealthStat({
         <div className="text-[10px] text-muted-foreground">{sub}</div>
       )}
     </div>
+  );
+}
+
+// ============================================================================
+// Kurum logosu (co-branding) — süper admin yükler; kurum yöneticisi + bağlı
+// öğretmen panellerinde gösterilir. PNG/JPEG/WebP, ≤2 MB.
+// ============================================================================
+
+function LogoCard({
+  institutionId,
+  name,
+  hasLogo,
+  logoUrl,
+}: {
+  institutionId: number;
+  name: string;
+  hasLogo: boolean;
+  logoUrl: string | null;
+}) {
+  const upload = useUploadInstitutionLogo(institutionId);
+  const remove = useDeleteInstitutionLogo(institutionId);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  // logo değişince <img> önbelleğini kır
+  const [bust, setBust] = React.useState(0);
+  const busy = upload.isPending || remove.isPending;
+
+  function onPick(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    upload.mutate(file, { onSuccess: () => setBust((n) => n + 1) });
+  }
+
+  const src = logoUrl ? `${logoUrl}?v=${bust}` : null;
+
+  return (
+    <Card className="border-amber-200">
+      <CardContent className="p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <ImageIcon className="size-4 text-amber-600" aria-hidden />
+          <h2 className="font-semibold">Kurum logosu</h2>
+        </div>
+        <p className="text-sm text-muted-foreground mb-4">
+          Kurum yöneticisi ve bağlı öğretmenlerin panel başlığında platform
+          markasının yanında gösterilir. PNG, JPEG veya WebP · en fazla 2 MB.
+        </p>
+
+        <div className="flex items-center gap-4">
+          <div className="flex size-16 shrink-0 items-center justify-center rounded-xl border border-border bg-card overflow-hidden">
+            {hasLogo && src ? (
+              <Image
+                src={src}
+                alt={name}
+                width={56}
+                height={56}
+                unoptimized
+                className="size-14 object-contain"
+              />
+            ) : (
+              <ImageIcon className="size-7 text-muted-foreground/40" aria-hidden />
+            )}
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <input
+              ref={inputRef}
+              type="file"
+              accept="image/png,image/jpeg,image/webp"
+              className="hidden"
+              onChange={onPick}
+            />
+            <Button
+              variant="outline"
+              onClick={() => inputRef.current?.click()}
+              disabled={busy}
+            >
+              {upload.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Upload className="size-4" aria-hidden />
+              )}
+              {hasLogo ? "Logoyu değiştir" : "Logo yükle"}
+            </Button>
+            {hasLogo ? (
+              <Button
+                variant="ghost"
+                className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+                onClick={() => remove.mutate()}
+                disabled={busy}
+              >
+                <Trash2 className="size-4" aria-hidden />
+                Kaldır
+              </Button>
+            ) : null}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 

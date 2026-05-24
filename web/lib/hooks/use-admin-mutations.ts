@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
+import { uploadInstitutionLogo } from "@/lib/api/admin";
 import type {
   AccountArchiveBody,
   AccountArchiveResult,
@@ -22,6 +23,7 @@ import type {
   AnnouncementMutationResult,
   DiscoveryBulkBody,
   DiscoveryMutationResult,
+  DiscoveryScanResult,
   ExperimentCreateBody,
   ExperimentMutationResult,
   ExperimentStatusBody,
@@ -310,6 +312,44 @@ export function useDeleteInstitution(institutionId: number) {
     onError: (e) => {
       toast.error(errorTitle(e, "Silme başarısız"), {
         description: errorMessage(e, "Kurum silinemedi."),
+      });
+    },
+  });
+}
+
+/** Kurum logosu yükle (co-branding, multipart). */
+export function useUploadInstitutionLogo(institutionId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<InstitutionMutationResult>, Error, File>({
+    mutationFn: (file) => uploadInstitutionLogo(institutionId, file),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data.message);
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Logo yüklenemedi"), {
+        description: errorMessage(e, "Logo yüklenemedi."),
+      });
+    },
+  });
+}
+
+/** Kurum logosunu kaldır (varsayılan platform markasına döner). */
+export function useDeleteInstitutionLogo(institutionId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<InstitutionMutationResult>, Error, void>({
+    mutationFn: () =>
+      api<MutationResponse<InstitutionMutationResult>>(
+        `/api/v2/admin/institutions/${institutionId}/logo/delete`,
+        { method: "POST" },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data.message);
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Kaldırma başarısız"), {
+        description: errorMessage(e, "Logo kaldırılamadı."),
       });
     },
   });
@@ -1045,6 +1085,30 @@ export function useBulkDiscovery() {
     },
     onError: (e) => {
       toast.error(errorTitle(e, "Toplu işlem başarısız"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+/** "Şimdi tara" — migration + commit'leri tarayıp yeni keşif kartı açar. */
+export function useScanDiscovery() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<DiscoveryScanResult>, Error, void>({
+    mutationFn: () =>
+      api<MutationResponse<DiscoveryScanResult>>(
+        "/api/v2/admin/feature-catalog/discovery-queue/scan",
+        { method: "POST" },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(
+        res.data.created > 0 ? `${res.data.created} yeni kart açıldı` : "Tarama tamam",
+        { description: res.data.message },
+      );
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Tarama başarısız"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
       });
     },

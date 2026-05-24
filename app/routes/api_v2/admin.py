@@ -28,7 +28,7 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session, joinedload
 
@@ -131,6 +131,7 @@ from app.routes.api_v2.schemas.admin import (
     UsageMutationResult,
     UsageTotals,
     DiscoveryBulkBody,
+    DiscoveryScanResult,
     DiscoveryCardItem,
     DiscoveryMutationResult,
     DiscoveryQueueResponse,
@@ -696,6 +697,8 @@ def _institution_to_detail_brief(inst: Institution) -> InstitutionDetailBrief:
         plan=inst.plan or "free",
         is_active=inst.is_active,
         created_at=inst.created_at,
+        has_logo=inst.has_logo,
+        logo_url=(f"/api/v2/institution/logo/{inst.id}" if inst.has_logo else None),
     )
 
 
@@ -1045,6 +1048,104 @@ def admin_edit_institution_v2(
         data=InstitutionMutationResult(
             institution=_institution_to_detail_brief(inst),
             message="Kurum güncellendi.",
+        ),
+        invalidate=_admin_invalidate(),
+    )
+
+
+# Kurum logosu — yalnız raster (png/jpeg/webp); 2 MB sınır (co-branding için yeterli)
+_LOGO_ALLOWED_TYPES = {"image/png": "png", "image/jpeg": "jpg", "image/webp": "webp"}
+_LOGO_MAX_BYTES = 2 * 1024 * 1024
+
+
+@router.post(
+    "/institutions/{institution_id}/logo",
+    response_model=MutationResponse[InstitutionMutationResult],
+)
+async def admin_upload_institution_logo_v2(
+    institution_id: int,
+    request: Request,
+    file: UploadFile = File(...),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Kurum logosu yükle (co-branding). Yalnız süper admin. PNG/JPEG/WebP, ≤2 MB."""
+    inst = db.get(Institution, institution_id)
+    if not inst:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "institution_not_found",
+                    "message": "Kurum bulunamadı."},
+        )
+    ctype = (file.content_type or "").split(";")[0].strip().lower()
+    if ctype not in _LOGO_ALLOWED_TYPES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "invalid_file_type",
+                    "message": "Yalnız PNG, JPEG veya WebP logo yükleyebilirsiniz."},
+        )
+    data = await file.read()
+    if not data:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "empty_file", "message": "Dosya boş."},
+        )
+    if len(data) > _LOGO_MAX_BYTES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "file_too_large",
+                    "message": "Logo en fazla 2 MB olabilir."},
+        )
+    inst.logo_data = data
+    inst.logo_content_type = ctype
+    inst.logo_updated_at = datetime.now(timezone.utc)
+    log_action(
+        db, action=AuditAction.INSTITUTION_UPDATE, actor_id=user.id,
+        target_type="institution", target_id=inst.id, request=request,
+        details={"logo": "uploaded", "content_type": ctype, "size_bytes": len(data)},
+        autocommit=False,
+    )
+    db.commit()
+    return MutationResponse[InstitutionMutationResult](
+        data=InstitutionMutationResult(
+            institution=_institution_to_detail_brief(inst),
+            message="Logo yüklendi.",
+        ),
+        invalidate=_admin_invalidate(),
+    )
+
+
+@router.post(
+    "/institutions/{institution_id}/logo/delete",
+    response_model=MutationResponse[InstitutionMutationResult],
+)
+def admin_delete_institution_logo_v2(
+    institution_id: int,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Kurum logosunu kaldır (varsayılan platform markasına döner)."""
+    inst = db.get(Institution, institution_id)
+    if not inst:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "institution_not_found",
+                    "message": "Kurum bulunamadı."},
+        )
+    inst.logo_data = None
+    inst.logo_content_type = None
+    inst.logo_updated_at = datetime.now(timezone.utc)
+    log_action(
+        db, action=AuditAction.INSTITUTION_UPDATE, actor_id=user.id,
+        target_type="institution", target_id=inst.id, request=request,
+        details={"logo": "removed"}, autocommit=False,
+    )
+    db.commit()
+    return MutationResponse[InstitutionMutationResult](
+        data=InstitutionMutationResult(
+            institution=_institution_to_detail_brief(inst),
+            message="Logo kaldırıldı.",
         ),
         invalidate=_admin_invalidate(),
     )
@@ -4084,6 +4185,51 @@ def admin_feature_catalog_discovery_queue_v2(
         counts={"total": total_pending, "migration": mig_pending, "commit": com_pending},
         source=source or "",
         show_rejected=bool(show_rejected),
+    )
+
+
+@router.post(
+    "/feature-catalog/discovery-queue/scan",
+    response_model=MutationResponse[DiscoveryScanResult],
+)
+def admin_feature_catalog_discovery_scan_v2(
+    request: Request,
+    days: int = Query(120, ge=1, le=3650),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """'Şimdi tara' — son `days` gün migration + commit'lerini tarayıp yeni
+    özellikler için DRAFT keşif kartı açar (idempotent). Cron ile aynı servisi
+    paylaşır (feature_discovery.run_scan)."""
+    from app.services import feature_discovery as fd
+
+    counts = fd.run_scan(db, actor_id=user.id, days=days)
+    created = int(counts.get("created", 0))
+    skipped = int(counts.get("skipped", 0))
+    candidates = int(counts.get("candidates", 0))
+    log_action(
+        db,
+        action=AuditAction.FEATURE_CARD_AUTO_DISCOVERED,
+        actor_id=user.id,
+        target_type="discovery_scan",
+        target_id=None,
+        request=request,
+        details={"manual_scan": True, "created": created, "skipped": skipped,
+                 "candidates": candidates, "days": days},
+        autocommit=True,
+    )
+    msg = (
+        f"{created} yeni kart açıldı"
+        + (f", {skipped} zaten vardı" if skipped else "")
+        + f" ({candidates} aday tarandı)."
+        if created or candidates
+        else "Yeni özellik bulunamadı (her şey güncel)."
+    )
+    return MutationResponse[DiscoveryScanResult](
+        data=DiscoveryScanResult(
+            message=msg, created=created, skipped=skipped, candidates=candidates,
+        ),
+        invalidate=_fc_invalidate(),
     )
 
 

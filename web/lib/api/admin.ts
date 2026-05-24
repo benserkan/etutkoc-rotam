@@ -5,7 +5,7 @@
  * "admin:*" prefix'i ile uyumlu. Sonraki paketlerde mutation hook'ları
  * eklenince applyInvalidate ile yeniden bayatlanır.
  */
-import { api } from "@/lib/api";
+import { api, ApiError, type MutationResponse } from "@/lib/api";
 import type {
   AccountHistoryResponse,
   AccountOwnerType,
@@ -42,6 +42,7 @@ import type {
   FeatureFlagsListResponse,
   InstitutionBackupSummary,
   InstitutionDetailResponse,
+  InstitutionMutationResult,
   InstitutionFilterLevel,
   InstitutionListResponse,
   InstitutionSort,
@@ -624,4 +625,29 @@ export function getAdminSecurityAbuse(onlyOpen = true, kind: string | null = nul
   return api<AbuseResponse>(
     `/api/v2/admin/security-monitor/abuse?${qs.toString()}`,
   );
+}
+
+/** Kurum logosu yükle — multipart/form-data (api() JSON sarmalayıcısı kullanılamaz). */
+export async function uploadInstitutionLogo(
+  institutionId: number,
+  file: File,
+): Promise<MutationResponse<InstitutionMutationResult>> {
+  const fd = new FormData();
+  fd.append("file", file);
+  // eslint-disable-next-line lgs/no-bare-fetch -- multipart yükleme; api() JSON sarmalayıcısı FormData ile uyumsuz
+  const r = await fetch(
+    `/api/v2/admin/institutions/${encodeURIComponent(String(institutionId))}/logo`,
+    { method: "POST", credentials: "include", body: fd },
+  );
+  if (!r.ok) {
+    let detail = { error: "error", message: "Logo yüklenemedi" };
+    try {
+      const b = await r.json();
+      if (b?.detail && typeof b.detail === "object") detail = b.detail;
+    } catch {
+      /* yoksay */
+    }
+    throw new ApiError(r.status, detail);
+  }
+  return r.json() as Promise<MutationResponse<InstitutionMutationResult>>;
 }

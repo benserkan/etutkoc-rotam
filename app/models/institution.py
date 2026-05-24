@@ -19,7 +19,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, String, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, Integer, LargeBinary, String, UniqueConstraint, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -78,6 +78,18 @@ class Institution(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    # Kurum logosu (co-branding) — DB'de saklanır (support-attachment deseni).
+    # deferred: liste/detay sorgularında yüklenmez; yalnız serve ucu okur.
+    logo_data: Mapped[bytes | None] = mapped_column(LargeBinary, nullable=True, deferred=True)
+    logo_content_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    logo_updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+    @property
+    def has_logo(self) -> bool:
+        return bool(self.logo_content_type)
 
     users: Mapped[list["User"]] = relationship(
         "User",

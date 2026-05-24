@@ -34,6 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
+import { InstitutionBrand } from "@/components/institution-brand";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { getInstitutionBadges, institutionKeys } from "@/lib/api/institution";
 import type { InstitutionBadgesResponse } from "@/lib/types/institution";
@@ -227,13 +228,10 @@ export function InstitutionShell({ user, institution, children }: Props) {
         <div className="flex h-14 items-center gap-3 px-4">
           <BrandLogo href="/institution" size={28} className="shrink-0" />
           {institution ? (
-            <span
-              className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 truncate max-w-[200px]"
-              title={institution.name}
-            >
-              <Building2 className="size-3" aria-hidden />
-              {institution.name}
-            </span>
+            <InstitutionBrand
+              institution={institution}
+              className="hidden sm:inline-flex max-w-[200px]"
+            />
           ) : null}
           <div className="flex-1" />
           <Button
@@ -268,13 +266,7 @@ export function InstitutionShell({ user, institution, children }: Props) {
 function InstitutionChip({ institution }: { institution: InstitutionRef }) {
   return (
     <div className="px-4 py-2 border-b border-border">
-      <div
-        className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 max-w-full"
-        title={institution.name}
-      >
-        <Building2 className="size-3 shrink-0" aria-hidden />
-        <span className="truncate">{institution.name}</span>
-      </div>
+      <InstitutionBrand institution={institution} />
     </div>
   );
 }

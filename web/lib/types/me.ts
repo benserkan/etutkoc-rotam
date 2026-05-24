@@ -41,6 +41,8 @@ export interface InstitutionRef {
   id: number;
   name: string;
   slug: string | null;
+  has_logo?: boolean;
+  logo_url?: string | null;
 }
 
 export interface ParentLinkRef {

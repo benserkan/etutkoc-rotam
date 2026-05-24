@@ -173,6 +173,8 @@ export interface InstitutionDetailBrief {
   plan: string;
   is_active: boolean;
   created_at: string | null;
+  has_logo?: boolean;
+  logo_url?: string | null;
 }
 
 export interface InstitutionUserBrief {
@@ -994,6 +996,13 @@ export interface DiscoveryBulkBody {
 export interface DiscoveryMutationResult {
   message: string;
   affected: number | null;
+}
+
+export interface DiscoveryScanResult {
+  message: string;
+  created: number;
+  skipped: number;
+  candidates: number;
 }
 
 export interface ExperimentVariantBrief {

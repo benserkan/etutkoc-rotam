@@ -43,5 +43,9 @@ export default async function TeacherLayout({
     redirect("/me/account");
   }
 
-  return <TeacherShell user={data.user}>{children}</TeacherShell>;
+  return (
+    <TeacherShell user={data.user} institution={data.institution}>
+      {children}
+    </TeacherShell>
+  );
 }

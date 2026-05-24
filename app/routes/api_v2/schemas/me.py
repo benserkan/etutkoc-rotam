@@ -61,6 +61,8 @@ class InstitutionRef(BaseModel):
     id: int
     name: str
     slug: str | None = None
+    has_logo: bool = False
+    logo_url: str | None = None  # co-branding (logo varsa serve ucu)
 
 
 class ParentLinkRef(BaseModel):
