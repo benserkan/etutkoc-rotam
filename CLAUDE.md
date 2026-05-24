@@ -2188,6 +2188,25 @@ zaten video/özet/tekrar/**diğer** tiplerinde `items: []` gönderiyordu → bu 
   kalemsiz→422 no_items, öğrenci tamamla→COMPLETED). Regresyon: teacher_read 12 +
   weekly_plan 14 + paywall 5 + task_templates 11 + teacher_students 14 GREEN.
 
+## Müdahale Merkezi doğrulama + crash bug fix (2026-05-24)
+
+**Bağlam (kullanıcı):** /institution/action-center 0/0/0 gösteriyordu — "değerler
+doğru mu? kritik/uyarı simüle et, değişiyor mu test et." `simulate_action_center.py`
+(10 senaryo, compute_action_center'ı doğrudan çağırır; görev hacmi için kitapsız
+deneme kalemi) yazıldı: boş kurum→0 · sağlıklı→0 · boş program 2→uyarı / 3→kritik ·
+uyum %10→kritik / %30→uyarı · yeni öğrenci at_risk üretmez (grace) · eski+giriş
+yok+düşük tamamlama+boş günler (skor ~75)→at_risk high · temizlik→tekrar 0.
+- **GERÇEK BUG bulundu+düzeltildi**: `institution_action_center.py:99` `i.label`
+  kullanıyordu ama RiskIndicator'da label YOK (alanlar code/title/detail/weight) →
+  **kurumda high/critical at-risk öğrenci olunca Müdahale Merkezi 500 veriyordu.**
+  `i.label`→`i.title`. Mevcut smoke (8/8) yakalamamıştı çünkü test verisinde high
+  öğrenci yoktu; simülasyon yakaladı. **Sonuç**: kart değerleri DOĞRU + dinamik;
+  kullanıcının 0/0/0'ı bu hafta gerçekten sağlıklı veri.
+- **Bulgu (opsiyonel)**: compliance empty_program'da onboarding grace YOK — hafta
+  ortasında eklenen yeni öğrenci hemen "boş program" sayılır (hafif yanlış-pozitif).
+- Doğrulama: simulate_action_center 10/10 + action_center 8/8 + compliance 10/10 +
+  scorecard 7/7 + tenant 29/29.
+
 ## Tam deneme (kitapsız, soru sayılı) görev — LGS/TYT — 2026-05-24 (migration `g4h7k9l0k88e`)
 
 **Bağlam (kullanıcı):** Öğrenci gün içinde tam LGS/TYT denemesi çözüyor; bu tek
