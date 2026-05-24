@@ -2066,6 +2066,312 @@ aylık + akademik yıl (/pricing ile tutarlı). Ödeme şimdilik MANUEL (Stripe 
   demo/gerçek koçları past_due yapar/düşürür).
 - **Faz 4 ⏳ Stripe/iyzico** otomatik yenileme (kart + auto-charge) — kalan tek faz.
 
+## Paket/Limit Revizyonu — kapaklı tier'lar + duvar (2026-05-23)
+
+**Bağlam (kullanıcı 2026-05-23):** Süper admin paneldeki paket limitleri ile
+/pricing ve gerçek sistem davranışı çakışıyordu. Tespit + kullanıcı kararları:
+- **Solo**: free=3 (sert duvar, korundu). Eski "bant-fiyatlı sınırsız" → **3
+  KAPAKLI paket**: Solo Başlangıç ≤10 @ 2.500₺/ay · Solo (öne çıkan) ≤25 @
+  5.000₺/ay · Solo Sınırsız 25+ @ 7.500₺/ay. (kullanıcı "2.500/5.000/7.500 uygun")
+- **Kurum**: koç kademe 10/50/50+ korundu; koç-başı fiyat (10×4000=40k kafa
+  karıştırıcı) → **toplam-kademe**: ≤10 koç → 10.000₺/ay · ≤50 → 30.000₺/ay ·
+  50+ → özel teklif (price_hidden). (kullanıcı onayı)
+- **2 GERÇEK BUG bulundu+düzeltildi**: (a) kurum öğretmen-oluşturmada **duvar
+  yoktu** (free 2'yi aşıp 3,4,5 ekleniyordu) → `institution_create_teacher_v2`'ye
+  `check_quota_for_create(quota_key="teachers")` eklendi (422 quota_exceeded);
+  (b) `quotas.PLAN_QUOTAS` + `credits.PLAN_ALLOCATIONS` anahtarları gerçek plan
+  kodlarıyla eşleşmiyordu → ücretli kurumlar **free kotaya/krediye düşüyordu**
+  (etut_standart/dershane_pro/enterprise eklendi).
+
+**Backend (tek kaynak `pricing.py`):** `_DEFAULTS` solo_bands+over_cap → `solo_tiers`
+[{code,label,max_students(null=∞),monthly}]; institution per_coach_monthly →
+`monthly_total`(null=özel)+`price_hidden`. `solo_tier_for_students(n)` ·
+`compute_solo_monthly(n)` (kapaklı) · `compute_institution_monthly(n)→int|None`.
+`_marketing_cards` 5 kart (free + 3 solo + dark institution). `plans.py`
+SOLO_UNLIMITED + SOLO_STUDENT_LIMITS {free:3, pro:10, elite:25, unlimited:-1};
+PlanInfo solo 2500/5000/7500 + institution 10000/30000/-1 (eski 199/2999 + çift
+"En Popüler" badge düzeltildi). `quotas`/`credits` gerçek-kod anahtarları.
+schemas/admin `SoloTierIn`/`InstitutionTierIn`(monthly_total+price_hidden)/
+`PricingConfigBody`. teacher `/plan` 4 seçenek + `recommended_plan` (öğrenci
+sayısına uygun tier) + `is_recommended`/`max_students`.
+
+**Frontend:** `lib/types/pricing.ts` SoloTier/InstitutionTier güncel · `/pricing`
+**Bireysel/Kurumsal sekmeli** (PricingClient) + audience-filtreli `PricingCards`
+(variant: landing özet-üçlü / solo 4-kart / institution); kapaklı fiyat "X ₺/ay"
+(eski "'den" kaldırıldı) · teacher-plan-client **3-tier seçici** (recommended
+ön-seçili, prop→state render deseni) · admin-pricing-client solo_tiers +
+monthly_total editörü · admin user-detail activate-plan 4 solo seçenek ·
+signup soloCard lookup düzeltildi (key "solo" → audience-bazlı).
+
+**Canlı doğrulama (kullanıcı "çok önemli"):**
+- `scripts/live_limit_enforcement.py` — **9/9**: solo free(3)/pro(10)/elite(25)
+  limitte +1 → 422 plan_quota_exceeded · unlimited(30)→200 · kurum free(2)
+  doğrudan öğretmen +1 → 422 quota_exceeded (DUVAR) · etut(10)→422 · limit-altı
+  hepsi 201/200.
+- `scripts/live_pricing_flow.py` — **19/19**: katalog 5-kart/3-tier yapısı +
+  süper admin editör round-trip (değiştir→/pricing yansıdı→negatif 400→reset) +
+  koç /plan tier önerisi (5→pro, 18→elite, 40→unlimited).
+- Login limiter (10/dk per IP, sunucu içi-bellek) test sürecinden reset edilemez
+  → live login() 429'da `retry_after_seconds` kadar bekleyip 1 kez yeniden dener.
+- Verify: tsc ✅ · eslint ✅ · build ✅ · smoke pricing 8 + entitlement 13 +
+  renewal 12 + trial_status 6 + contact 11 + paywall 5 + admin + tenant 29 GREEN.
+- **Commit YOK** (kullanıcı henüz istemedi). Migration GEREKMEDİ (sadece config/
+  kod). NOT: canlı tarayıcıda görsel smoke (sekme geçişi, kart görünümü) kullanıcı
+  tarafında doğrulanmalı.
+
+**Düzeltme — admin kurum planı dropdown'u + signup deneme metni** (2026-05-23,
+kullanıcı bildirdi, migration YOK):
+- **Admin "Yeni Kurum" + kurum detay düzenleme** plan dropdown'u eski "Free/
+  Starter/Professional" sabit listesi gösteriyordu (gerçek kodlarla tutarsız,
+  süper admin hangi pakete kaydettiğini bilemiyordu). Yeni paylaşılan
+  `lib/institution-plans.ts` (`buildInstitutionPlanOptions` + `institutionPlanLabel`)
+  → `/api/v2/pricing` kataloğundan türetir: **Kurum Tanıma (Ücretsiz) · Etüt
+  Standart 2–10 koç · Dershane Pro 11–50 koç · Özel Okul/Enterprise 51+** +
+  her seçenekte koç aralığı + açıklama + fiyat (özel teklif). Liste/detay
+  tablolarında ham kod yerine okunur etiket (`institutionPlanLabel`). Mevcut
+  kurum kataloğun dışı (legacy) plan kullanıyorsa dropdown'da korunur.
+- **Signup `/signup/teacher?plan=X`** "Denemende hemen açık" listesinde "Sınırsız
+  öğrenci" yazıyordu — seçilen pakete (Solo Başlangıç ≤10) aykırı. Düzeltildi:
+  öğrenci sayısı listeden çıkarıldı (deneme tüm özellikleri açar, öğrenci sayısı
+  PAKET bilgisi) → ayrı **"Seçtiğin paket: {ad} · {kapasite}"** rozeti (tier'in
+  `max_students`'ından; sınırsız tier → "Sınırsız öğrenci"). Ayrıca yanlış AI
+  notu düzeltildi: deneme AI'yı KAPSAR (50 kredi) — eski "denemede kapalı" metni
+  gerçekle çelişiyordu → "yapay zekâ hazırlığı 50 kredi denemede açık" + "14 gün
+  sonra yükseltmezsen free'ye düşer, AI kapanır" dürüst çerçeve.
+- **NOT (kavram):** deneme (solo_trial) backend'de öğrenci sınırsız (-1) + AI açık
+  (50 kredi); 14 gün sonra solo_free (3 öğrenci, AI kapalı). Signup artık paketi
+  doğru yansıtır; deneme davranışı değişmedi (paket-bazlı deneme limiti istenirse
+  ayrı iş). Verify: tsc/eslint/build ✅ · canlı HTML doğrulama (solo_pro→"10
+  öğrenciye kadar", solo_unlimited→"Sınırsız", kurum tier'ları katalogdan) ✅.
+
+## Öğretmen aktivite onboarding grace — "pasif" yanlış-pozitifi (2026-05-23)
+
+**Bağlam (kullanıcı bildirdi):** `/institution/activity-heatmap`'te **yeni
+oluşturulmuş** öğretmenler "pasif / hiç aktivite yok" işaretleniyordu (henüz
+giriş yapmamış olanlar). Öğrenci tarafında çözülen onboarding-grace sorununun
+öğretmen aktivite eşdeğeri. `teacher_activity.is_inactive = last_active is None
+or ...` hesap yaşına bakmıyordu → bugün açılan koç anında "pasif" oluyordu.
+- **Düzeltme** (`teacher_activity.py`, migration YOK): `ONBOARDING_GRACE_DAYS=3`
+  + `TeacherHeatmap.is_new`. Yeni hesap (created_at < grace) + henüz aktivite
+  yoksa **is_new=True / is_inactive=False** ("pasif" değil "yeni"). Eski hesap
+  (≥grace) aktivitesiz → gerçekten pasif. `inactive_teachers` dashboard callout'u
+  da aynı grace ile düzeltildi (yeni koç callout'a düşmez).
+- Backend: `TeacherHeatmapRow.is_new` (schema) + endpoint mapping. Frontend:
+  `activity-heatmap-client` + print-sheet → mavi **"yeni"** rozeti + "yeni hesap
+  — henüz giriş yok" metni; `is_inactive` rose "pasif" yalnız gerçek pasifte.
+- **Doğrulama:** birim testi (yeni→is_new, eski→is_inactive, callout ayrımı) +
+  **canlı uçtan uca** (geçici kurum admin + yeni koç → endpoint is_new=True,
+  inactive_count=0). institution 18/18 + p2 19/19 + alert_correctness 9/9 ·
+  tsc/eslint/build temiz. **NOT:** id-reuse kirliliği (silinen test koçlarının
+  LOGIN_SUCCESS audit'leri reused ID'ye miras kalır) → grace testleri test ID'leri
+  için AuditLog temizler; ürün hatası DEĞİL.
+
+## Kalemsiz (etkinlik) görev — video/özet/tekrar/diğer (2026-05-24)
+
+**Bağlam (kullanıcı):** `/teacher/students/{id}/week` Pazar'a "Diğer" tipinde
+başlık+açıklama ("Mebi Deneme 7") girip görev eklemeye çalışınca **"Görevde en az
+bir kalem olmalı"** hatası. Sebep: backend `_create_task_with_items` HER görevde
+≥1 kitap-kalemi (kitap+bölüm+soru) zorunlu kılıyordu. AMA frontend `add-task-form`
+zaten video/özet/tekrar/**diğer** tiplerinde `items: []` gönderiyordu → bu tipler
+**tamamen kırıktı** (hiç eklenemiyordu).
+- **Kullanıcı kararı**: etkinlik tiplerine (video/özet/tekrar/diğer) kalemsiz
+  görev izni; **"test" yine ≥1 kalem** ister (soru ataması).
+- **Düzeltme (backend, migration YOK)**: `_create_task_with_items` — kalem
+  zorunluluğu yalnız `ttype == TaskType.TEST` için. Etkinlik tipleri kalemsiz
+  oluşturulur (reserve döngüsü boş items'ta no-op). Hata mesajı netleşti ("Test
+  görevinde en az bir kalem… soru atamasız için Video/Özet/Tekrar/Diğer seç").
+- **Model**: kalemsiz görev = "yap/yapma" görevi; öğrenci görev-bazında tamamlar
+  (`complete_task` book_items boşsa sadece `status=COMPLETED`); planned=0 olduğu
+  için "tamamlanan soru %" metriğine girmez (deneme/etkinlik için doğru olan bu).
+  Frontend değişikliği GEREKMEDİ (form zaten items:[] gönderiyordu).
+- **Doğrulama** `live_itemless_task.py` **5/5** (Diğer/Video kalemsiz→200, Test
+  kalemsiz→422 no_items, öğrenci tamamla→COMPLETED). Regresyon: teacher_read 12 +
+  weekly_plan 14 + paywall 5 + task_templates 11 + teacher_students 14 GREEN.
+
+## Güvenlik Kamarası — Hata Tercümanı (sade dil + neden + ne yapmalı) — 2026-05-24
+
+**Bağlam (kullanıcı):** Güvenlik Kamarası ham geliştirici hatalarını süper admine
+olduğu gibi gösteriyordu — "2 cron 48 saattir çalışmıyor", "InvalidRequestError ...
+Query.filter() being called on a Query which already has LIMIT or OFFSET applied"
+gibi. Süper admin bunlardan bir şey anlamıyordu; her hata için **ne demek / neden
+oldu / nasıl önlenir** bilgisini hatanın içinde görebilmeli. Onaylanan: **hibrit**
+(kural kataloğu + AI yedeği) + **4 kapsam** (sistem hataları + cron/sistem sağlığı +
+Dikkat Odası/alarmlar + gerçek bug). Migration YOK.
+- **Gerçek bug bulgusu**: `/admin/revenue/users/{id}` "filter-after-limit" hatası
+  **zaten düzeltilmiş** (`offers.py` filtreyi limit'ten önce uyguluyor); yakalanan
+  21 kayıt **bayat** (eski Jinja route `admin.py:3542` + düzeltme öncesi koddan).
+  Yani sorun, panonun bayat/ham hatayı korkutucu göstermesiydi → tercüman + bayat
+  işareti çözer. (Stack trace `error_capture` tablosundan okunup tespit edildi.)
+- **Yeni servis `error_translator.py`**: `explain_error(type, msg, endpoint)` kural
+  kataloğu → `{kategori, sade özet, neden, ne yapmalı, şiddet, is_code_bug, source}`.
+  Kapsam: DB (filter-after-limit kod-bug / kilit / bağlantı / IntegrityError),
+  dış AI/e-posta, timeout, validation, yetki. Eşleşme yok → `source="none"`
+  (frontend AI butonu). `CRON_LABELS_TR` (21 işin dostça adı + ne yaptığı) +
+  `explain_cron/explain_dispatcher/explain_database_size`. **AI yedeği**
+  `ai_explain_error` → `gemini.generate(personal_data=False, json_mode=True)`,
+  imzaya göre BELLEKTE önbellekli (tekrar çağrıda kredi yanmaz).
+- **Backend**: `/security-monitor/system` her hata grubunu `explanation` +
+  `stale` (son görülme 3+ gün → muhtemelen çözülmüş) + `last_seen_label` ile
+  zenginleştirir. Yeni `POST /security-monitor/system/{id}/explain` (AI, talep
+  üzerine). `attention_engine` hata detektörü ham `exception_type` yerine sade
+  başlık + `explain_error` tabanlı explainer + bayat notu; cron detektörü ham
+  `job_key` yerine dostça ad + etkilenen görevlerin ne yaptığı.
+- **Frontend**: `security-system-client` hata satırı sade açıklama (kategori +
+  ne oldu/neden/ne yapmalı, şiddet renkli) + "kod düzeltmesi gerekir"/AI rozeti +
+  **bayat** rozeti + "Yapay zekâ ile açıkla" butonu (source=none); ham
+  exception/stack "Geliştirici detayı"na indi. `security-overview` Dikkat Odası
+  kartlarına **"Bu ne demek? Ne yapmalı?"** açılır explainer (artık gösteriliyordu—
+  YOKTU, eklendi).
+- **Doğrulama** `test_error_translator.py` **14/14** (kural çıktıları + AI
+  monkeypatch + önbellek + canlı endpoint enrich + /explain 404). Canlı: gerçek
+  InvalidRequestError artık "Veritabanı · kod düzeltmesi gerekir · muhtemelen
+  çözülmüş · son 6 gün önce" + sade ne oldu/neden/ne yapmalı. Regresyon: security
+  overview 14 + activity 15 + sessions 17 + alarms_abuse 21 + admin + tenant 29 ·
+  tsc/eslint/build temiz.
+
+## Kurum yöneticisi plan YÜKSELTME TALEBİ (panel-içi) — 2026-05-24
+
+**Bağlam (kullanıcı):** Bağımsız koçun `/teacher/plan`'da panel-içi "yükseltme
+talebi" akışı vardı; **kurum yöneticisinde YOKTU** — kurum ancak public /pricing
+iletişim formundan ya da süper admin elle değiştirerek yükselebiliyordu. Kullanıcı:
+"kurum bir talepte bulunmak istesin (satın alma değil), süper admin bu talebi
+görsün". Koç akışıyla **simetrik** kuruldu. Migration YOK.
+- **Backend** (`institution.py`): `POST /institution/subscription-request`
+  (satın alma değil — `contact_requests`'e source=subscription_request +
+  mesajda `kurum_id=N` + `hedef={paket}` ile düşer; idempotent: bekleyen talep
+  varsa tekrar yaratmaz). `GET /subscription` genişledi: `plan_label` +
+  `available_plans` (pricing kataloğu kurum kademeleri, tek kaynak) +
+  `pending_upgrade_request` + `requested_plan_label`. Helper'lar:
+  `_institution_upgrade_options` / `_pending_institution_sub_request` (kurum_id
+  Python'da tam-sayı eşleşme, substring çakışması yok) / `_institution_plan_label`.
+- **Admin tarafı**: `_contact_item` artık `kurum_id`'yi de parse eder →
+  `linked_institution_id` + etiket **"Abonelik talebi (kurum)"**. İletişim
+  Talepleri dialog'una "Kurum sayfasına git (planı değiştir)" linki
+  (`/admin/institutions/{id}` edit formundan plan değişir). Süper admin
+  "İletişim Talepleri" badge'i (contact_new) bu talebi de sayar.
+- **Frontend**: `/institution/subscription`'a en üstte **"Planını yükselt" kartı**
+  (Gem ikon, "satın alma değil" vurgusu) — 3 kademe seçici (ad/koç/fiyat,
+  purge-safe koyu metin) + not'lu talep dialog'u; bekleyen talep varsa amber
+  "Talebin alındı" durumu (hedef paket). Tip + fetcher + `useRequestInstitutionUpgrade`.
+- **Akış**: kurum yöneticisi panelden talep → süper admin İletişim Talepleri'nde
+  "Abonelik talebi (kurum)" görür → kuruma gidip planı değiştirir (örn. ETUTKOC
+  için yaptığımız gibi). Ödeme/aktivasyon manuel (koç akışıyla aynı).
+- **Doğrulama**: `scripts/live_institution_upgrade_request.py` **11/11** (talep yok→
+  gönder→bekliyor+hedef→idempotent→süper admin linki/etiket). Regresyon:
+  institution 18 + p3 18 + contact 11 + subscription_request(solo) 11 + admin 13 +
+  tenant 29 GREEN · tsc/eslint/build temiz.
+
+## Kurum plan değişimi — kopuk akışın uçtan uca bağlanması (2026-05-24)
+
+**Bağlam (kullanıcı — GÜÇLÜ süreç eleştirisi, [[feedback-holistic-change-propagation]]):**
+Kurum yükseltme talebi dialog'una "Kurum sayfasına git (planı değiştir)" linki
+koymuştum AMA gidilen kurum detay sayfasında plan değişimi belirgin değildi
+(plan, "Kurum Bilgileri" formunun içinde gömülü bir alandı; çıpa yoktu). Kullanıcı:
+"kopuk gidiyorsun, isteneni yapıp oradaki kodu değiştiriyorsun ama tıklama-yolunu
+takip etmiyorsun." → memory kuralına **süreç/tıklama-yolu** boyutu eklendi.
+- **Uçtan uca düzeltme (akış bir bütün):**
+  - **Belirgin "Üyelik Planı" kartı** (`admin-institution-detail-client.tsx`,
+    `id="plan"` çıpa + `scroll-mt-20`) — sağlık kartından hemen sonra, kademe
+    seçici (free + 3 tier, "Mevcut" rozeti) + "Planı uygula". Plan, genel "Kurum
+    Bilgileri" formundan ÇIKARILDI (tek net yer).
+  - İletişim Talepleri dialog linki `/admin/institutions/{id}**#plan**`'a gider +
+    "Planı değiştirdikten sonra talebi 'Kapatıldı' işaretle" ipucu (döngü kapanır).
+  - **2 GERÇEK BUG (planSIZ edit planı sıfırlıyordu):** (a) edit endpoint
+    `inst.plan = (body.plan or "free")` → plan gönderilmezse free'ye düşürüyordu;
+    (b) `InstitutionEditBody.plan` Pydantic default **"free"** → alan omit edilse
+    bile "free" geliyordu. İkisi de düzeltildi: schema `plan: str | None = None`
+    + endpoint "yalnız açıkça gönderilince değiştir, yoksa KORU". Artık genel
+    bilgi formu (ad/email/aktif) planı bozmaz.
+- **Doğrulama** `live_institution_upgrade_request.py` **15/15** (talep→admin görür→
+  link→planı Etüt Standart yapar→uygulandı→**planSIZ edit planı KORUR**). Regresyon:
+  admin_institutions 23 + admin 13 + institution 18 + contact 11 + tenant 29 ·
+  tsc/eslint/build temiz. Migration YOK.
+- **Devam — talep edilen paket ÖN-SEÇİLİ gelir (kullanıcı 2026-05-24):** "kurum
+  zaten paketi seçip gönderiyor, admin neden tekrar seçsin?" Akış tam bağlandı:
+  istek mesajına `hedef_kod={code}` eklendi → `GET /admin/institutions/{id}`
+  artık `pending_upgrade` (contact_request_id + requested_plan_code/label +
+  note + tarih) döndürür (`_pending_institution_upgrade`; eski format hedef_kod
+  yoksa etiket→kod pricing kataloğundan eşlenir). PlanCard talep edilen kademeyi
+  **ön-seçer** + amber banner ("Bu kurum Etüt Standart için talep etti — seçili
+  geldi, 'Planı uygula'ya bas") + kurumun notunu gösterir. Admin tek tık onaylar.
+  `live_institution_upgrade_request.py` **19/19** (6a-6e: detayda pending_upgrade
+  + kod/etiket/not + ön-seçili planı uygula). Regresyon admin_institutions 23 +
+  admin 13 + contact 11 + institution 18 + tenant 29 · tsc/eslint/build temiz.
+- **Devam — diğer paketleri gösterme + mevcut planı da göster (kullanıcı 2026-05-24):**
+  (1) "kurum zaten seçti, neden diğer paketleri gösterip kafa karıştırıyorsun?" →
+  PlanCard **context-aware**: talep belirli+farklı paket içeriyorsa ODAKLI ONAY
+  modu (yalnız *Mevcut → Talep edilen* karşılaştırması + tek "yükselt" butonu;
+  4'lü seçici GİZLİ; nadir override için küçük "başka plana geçir" bağlantısı).
+  Talep yok / paket belirtilmemiş / admin elle yönetiyor → seçici modu. (2)
+  "kurumun mevcut planını da görelim" → İletişim Talepleri dialog'unda kurum
+  abonelik talebi için **Mevcut (CANLI, DB'den) → Talep edilen** rozet satırı
+  (`_contact_item` artık `db` alır + `institution_current_plan_label` [linked
+  institution'ın canlı planı] + `requested_plan_label` [mesajdan hedef=] döner).
+  `live_institution_upgrade_request.py` **21/21** (5e-5f: canlı mevcut plan +
+  talep edilen). Regresyon contact 11 + admin 13 + solo subscription 11 ·
+  tsc/eslint/build temiz.
+- **Devam — ücretsiz kurum planı adı her yerde "Kurum Tanıma" (kullanıcı 2026-05-24):**
+  "farklı free paket isimleri görmek istemiyorum." Tutarsızlık vardı: `/institution/quota`
+  ham kod `capitalize` → "Free"; `/institution/usage` `plan_code` mono+uppercase →
+  "FREE"; `subscription` "Plan kodu: free"; quota karşılaştırma tablosu PLAN_QUOTAS'ın
+  TÜM anahtarlarını dökerek **mükerrer "Kurum Tanıma"** (legacy `free` + `institution_free`)
+  gösteriyordu. Düzeltme — tek kaynak `institutionPlanLabel`: quota header + karşılaştırma
+  tablosu + usage header + usage Stat + subscription CurrentStatusCard (artık "Paket adı"
+  gösterir, "Plan kodu" değil). Quota endpoint **kanonik 4 kademe** döndürür
+  (institution_free/etut_standart/dershane_pro/enterprise; legacy free + trial HARİÇ) +
+  mevcut planı kanonik koda normalize eder (free→institution_free) → header etiketi +
+  tablo vurgusu tutarlı. Canlı: quota.plan=institution_free→"Kurum Tanıma", 4 kanonik
+  (duplicate yok), subscription.plan_label="Kurum Tanıma", usage→"Kurum Tanıma".
+  Regresyon institution 18 + p3 18 + admin 13 + contact 11 + tenant 29 + upgrade 21 ·
+  tsc/eslint/build temiz.
+
+## UI düzeltmeleri — /teacher/plan kontrast + heatmap renk eşiği (2026-05-23)
+
+**Kullanıcı bildirdi, migration YOK:**
+1. **`/teacher/plan` "Paketini seç" kartı koyu temada okunmuyordu** — tier
+   butonları (`bg-white`/`bg-cyan-50`) + özet kutusu (`bg-slate-50`) tema
+   token'ları (`text-muted-foreground`/`text-foreground`) kullanıyordu → koyu
+   temada açık metin açık zeminde kayboluyordu (tekrarlayan dark-theme kontrast
+   bug'ı). Düzeltme: açık-zeminli alt öğelere **explicit koyu renk** (text-slate-900/
+   600/500) — purge-safe. Aylık/Yıl toggle inactive metni de `text-slate-500`.
+2. **Aktivite heatmap renk eşiği yanlış kalibre** — `_compute_score` girişi
+   **binary +1**, task/note ise 10+5 ile doyuyordu (max_score=16). "23 giriş +
+   2 task" = 3/16 = 0.19 → level 1 (neredeyse beyaz). Çok aktif bir gün soluk
+   görünüyordu. Düzeltme (`teacher_activity.py`): **erken doygunluk** —
+   giriş VAR ise taban 0.25 + yoğunluk (≤5 girişte 0.15'e doğar); task 5'te /
+   note 3'te doygun (0.40 / 0.20 ağırlık). Yeni: 1 giriş→level 2 (görünür),
+   23 giriş+2 task→level 3 (koyu yeşil), tam aktivite→level 4, sıfır→beyaz.
+   Level eşlemesi (scoreToLevel ceil(s*4)) değişmedi. Verify: tsc/eslint/build +
+   institution 18/18 + p2 (heatmap) 19/19 GREEN.
+
+## KRİTİK — Şifre değişiminden sonra oturum ölüyordu (/me/account dead-end) — 2026-05-23
+
+**Bağlam (kullanıcı, sık yaşanan ciddi sorun):** Süper admin yeni kurum + kurum
+yöneticisi oluşturuyor → yönetici ilk giriş (geçici şifre, must_change=True) →
+zorunlu şifre değiştirme → değişimden sonra panele giremeyip **/me/account**
+çıkmazına düşüyordu. "Yeni üye kayıt sonrası ilk login → sürekli /me/account".
+- **Kök neden**: `POST /api/v2/me/password-change` şifreyi değiştirip `pwd_stamp`'i
+  döndürüyordu (yeni password_hash) AMA **yeni cookie BASMIYORDU**. Tarayıcının
+  elindeki access+refresh token eski pwd_stamp'li → bir sonraki istekte
+  **401 token_revoked**. `(institution)/layout.tsx` /me 401/403'te /login'e,
+  rol uyuşmazlığında /me/account'a yönlendiriyordu → kullanıcı çıkmaza düşüyordu.
+- **Çözüm (en sağlıklı, `me.py` change_password)**: değişimden hemen sonra
+  `_establish_bff_session(db, user, request, response)` (login/signup ile AYNI
+  helper) → **taze access/refresh cookie (yeni pwd_stamp) + yeni ActiveSession**.
+  Bu cihaz kesintisiz devam eder; diğer cihazlar pwd_stamp ile düşer (güvenlik:
+  şifre değişince başka oturumlar kapanır — istenen davranış). Endpoint signature'a
+  `request: Request, response: Response` eklendi.
+- **Ek sağlamlaştırma**: `PasswordChangeResult.role` eklendi → frontend form
+  değişim sonrası **doğrudan yanıttaki role** ile panele yönlenir (ikinci /auth/me
+  çağrısı + yarış riski yok; eksikse /auth/me fallback). Tip + form güncellendi.
+- **Doğrulama**: canlı (login→change→/me) **3 rol için GREEN** (institution_admin/
+  teacher/super_admin; oturum sağ, doğru rol). :8081 + :3000 ikisinde de
+  password-change 2 Set-Cookie basıyor. Regresyon: me 13/13 · auth 14/14 ·
+  auth_p1..p5 · api_v1 47/47 · tsc/eslint/build temiz. Migration YOK.
+- **KURAL**: Bir kullanıcının pwd_stamp'ini döndüren her uç (şifre değiştir/
+  sıfırla) ya oturumu yeniden kurmalı (cookie re-issue) ya da kullanıcıyı login'e
+  yollamalı — sessizce ölü token bırakmak yasak.
+
 ## Rol-bazlı Talep Sistemi (SupportRequest) — 2026-05-23, DEVAM EDİYOR
 
 **Bağlam (kullanıcı 2026-05-23):** Koç↔öğrenci `TaskRequest` var ama (a) kurum
