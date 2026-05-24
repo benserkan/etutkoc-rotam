@@ -2705,6 +2705,92 @@ detayına inemez → tek müdahale kolu KOÇtur. Seçenek A onaylandı: panoya k
   her zaman boş (200, items=[]). notify_coach yalnız kurum yöneticisi → kendi
   kurumunun koçu.
 
+## Kurum logosu / co-branding (2026-05-24, migration `i6j9m1n2m00g`)
+
+**Bağlam (kullanıcı):** Kurumların kendi logoları olsa; kurum yöneticisi + bağlı
+öğretmen panellerinde "hangi kuruma aitim" logoyla görünse. Bağımsız koçun
+kurumsal kimliği yok → onlar değişmez. Kullanıcı kararları (AskUserQuestion):
+**süper admin yükler · yönetici + öğretmen panellerinde göster · bağımsız koç =
+sadece platform markası**. Tam müşteriye-dönük white-label zaten Enterprise satış
+vaadi (pricing) — solo koça verilmedi (konumlandırma korunur).
+- **Migration `i6j9m1n2m00g`** (down_revision h5i8l0m1l99f): `institutions.logo_data`
+  (LargeBinary **deferred**) + `logo_content_type` + `logo_updated_at`. **Additive**,
+  downgrade'li, uygulandı. **Migration head = i6j9m1n2m00g.** Logo DB'de saklanır
+  (support-attachment deseni — S3/volume yok, SQLite/Postgres taşınabilir, KVKK
+  açısından kişisel veri değil).
+- Model `Institution.has_logo` property (logo_content_type dolu mu — data yüklemez).
+- **Backend**: serve `GET /api/v2/institution/logo/{id}` (`get_current_user_v2`;
+  süper admin VEYA kurumun üyesi — img src cookie ile; aksi 404, anonim 401) ·
+  süper admin `POST /admin/institutions/{id}/logo` (multipart, PNG/JPEG/WebP ≤2MB,
+  400 invalid_file_type/file_too_large) + `/logo/delete` (INSTITUTION_UPDATE audit) ·
+  `/me` InstitutionRef + admin kurum detayı `InstitutionDetailBrief`'e `has_logo` +
+  `logo_url` eklendi.
+- **Frontend**: paylaşılan `components/institution-brand.tsx` (logo varsa next/Image
+  + ad; yoksa Building2 chip — emerald). `institution-shell` (sidebar chip + mobil)
+  bunu kullanır; `teacher-shell`'e `institution` prop eklendi + teacher layout
+  `data.institution` geçirir → bağlı öğretmen header'ında co-brand; bağımsız koç
+  (institution null) → yalnız platform markası (değişmedi). Admin kurum detayına
+  **logo kartı** (`LogoCard`: önizleme + yükle/değiştir/kaldır + cache-bust) ·
+  `useUploadInstitutionLogo` (multipart bare-fetch, gerekçeli eslint-disable) +
+  `useDeleteInstitutionLogo`.
+- **Test**: `test_api_v2_institution_logo.py` **12/12** (403/401 + tür/boyut +
+  yükle/serve/sil + cross-tenant 404 + /me + admin detay) + CANLI
+  `live_institution_logo.py` :3000 **9/9** (yükle→/me logo_url→serve→3 sayfa
+  render→sil). Regresyon: notify_coach 13 · me 13 · admin 13 · admin_institutions 23 ·
+  institution 18 · institution_p3 18 · tenant 29 · api_v1 47 GREEN. tsc/eslint temiz
+  (build YOK — :3000 dev). **NOT**: çoklu backend dosyası düzenlerken :8081
+  WatchFiles ara reload'unda login geçici 500 verebilir; reload oturunca düzelir.
+
+## Vitrin Kartları otomatik keşif — buton + cron + kopuk servis denetimi (2026-05-24, migration `j7k0n2o3n11h`)
+
+**Bağlam (kullanıcı):** "Yeni özellik eklendikçe Vitrin'de kart açılır diyoruz ama
+sonra eklenenleri görmüyorum — verimi analiz et + testler yap." Sonra: "başka
+kopuk servisler var mı? derinlemesine test."
+
+**Tanı (kanıtlı):** `feature_discovery` algılama motoru (migration docstring + git
+commit tarar) KUSURSUZ çalışıyor — `discover_features.py --dry-run --since 2026-05-15`
+**99 aday** buldu (logo/koça-ilet/deneme/hata-tercüman/pricing/KS/support…). AMA
+tarama **hiç otomatik tetiklenmiyordu**: `discover_all`+`apply_candidates` yalnız
+`scripts/discover_features.py` (elle CLI) + testten çağrılıyordu. Admin UI'da "tara"
+butonu YOK, cron YOK. Keşif kartları 2026-05-08→05-14'te donmuştu; 66 kart
+incelenmemiş bekliyordu. Verim ≈ %0.
+
+**Çözüm (buton + cron):**
+- `feature_discovery.run_scan(db, *, actor_id, days=120)` — tara+uygula tek adım
+  (endpoint + cron paylaşır; idempotent — mevcut slug'ları atlar).
+- `cron_jobs.feature_discovery_scan` + JOB_REGISTRY; **migration `j7k0n2o3n11h`**
+  (down_revision i6j9m1n2m00g): `feature_discovery_scan` CronSchedule seed (haftalık
+  Pzt 05:00 UTC, idempotent INSERT). **Migration head = j7k0n2o3n11h.**
+- `POST /admin/feature-catalog/discovery-queue/scan` (`_require_super_admin`,
+  `days` query, audit FEATURE_CARD_AUTO_DISCOVERED) → `DiscoveryScanResult`
+  (created/skipped/candidates).
+- Frontend: discovery-queue sayfası header'ına **"Şimdi tara"** butonu
+  (`useScanDiscovery` + RefreshCw + invalidate `_fc_invalidate`).
+- **Test**: `test_api_v2_admin_discovery_scan.py` **7/7** (rol + tara + idempotent +
+  cron fonksiyonu doğrudan + schedule/registry eşleşmesi) + CANLI
+  `live_discovery_scan.py` :3000 **6/6** (tara→created=50/candidates=95→kuyruk
+  arttı→idempotent→sayfa render; testler delta'yı temizler). Regresyon:
+  feature_catalog 25 + feature_discovery unit 31. tsc/eslint temiz.
+
+**KOPUK SERVİS DERİNLEMESİNE DENETİMİ** (yeni `scripts/audit_orphan_triggers.py` +
+reachability analizi):
+- **Modül düzeyi**: 105/105 servis bir entrypoint'ten (route/cron/dep) erişilebilir
+  — tamamen ölü servis dosyası YOK. Scheduler GERÇEKTEN çalışıyor (main.py lifespan
+  + dispatcher `cron_tick`). Kapalı (disabled) schedule YOK.
+- **3 KOPUK TETİKLEYİCİ bulundu** (kod var/çalışır ama canlı app'ten tetiklenmiyor):
+  1. **feature_discovery scan** — ✅ bu oturumda DÜZELTİLDİ (buton + cron).
+  2. **`health_snapshot_daily`** — JOB_REGISTRY'de ama **CronSchedule YOK** → hiç
+     çalışmaz. `record_daily_snapshots` yalnız bu cron'dan çağrılıyor →
+     `HealthScoreSnapshot` **2026-05-16'da donmuş (10 satır)** → sağlık trend/churn
+     geçmiş karşılaştırması ölü. **Düzeltme bekliyor** (1-satır cron seed, trial_expire
+     deseni).
+  3. **`expire_old_offers`** — cron olarak tasarlanmış ama JOB_REGISTRY'de YOK +
+     schedule YOK; yalnız script çağırıyor. Teklif görüntülenince lazy expire var
+     (offers.py:351) → kısmen telafi; ama hiç açılmamış süresi-geçmiş teklifler SENT
+     kalır (admin gelir/funnel sayımını şişirir). **Düzeltme bekliyor** (JOB_REGISTRY +
+     cron seed).
+- NOT: #2 ve #3 düzeltmeleri kullanıcı onayı bekliyor (migration içerir).
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**
