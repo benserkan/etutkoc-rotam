@@ -164,7 +164,7 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
     return StudentTaskItem(
         id=item.id,
         book_id=item.book_id,
-        book_name=item.book.name if item.book else "—",
+        book_name=item.book.name if item.book else (item.label or "Deneme"),
         section_id=item.book_section_id,
         section_label=section_label,
         topic_name=topic_name,

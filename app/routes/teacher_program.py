@@ -98,6 +98,8 @@ def compute_day_subject_summary(
     by_sid: dict[int, dict] = {}
     for t in day_tasks:
         for it in t.book_items:
+            if it.book is None:
+                continue  # kitapsız deneme kalemi — derse bağlı değil, ders özetine girmez
             sid = it.book.subject_id
             is_deneme = it.book.type.value in ("brans_denemesi", "genel_deneme")
             entry = by_sid.setdefault(

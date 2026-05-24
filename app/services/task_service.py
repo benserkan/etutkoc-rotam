@@ -127,6 +127,8 @@ def complete_item(
 def release_task_items(db: Session, student_id: int, items: list[TaskBookItem]) -> None:
     """Bir görevin tüm kalemlerinin rezervini iade et (görev silme/düzenleme)."""
     for it in items:
+        if it.book_id is None:
+            continue  # kitapsız deneme kalemi — rezerv yok, iade gerekmez
         # Sadece henüz tamamlanmamış kısmı rezervden iade et
         remaining_reserved = max(0, it.planned_count - it.completed_count)
         if remaining_reserved > 0:
@@ -150,6 +152,10 @@ def complete_task(db: Session, task) -> None:
     for it in task.book_items:
         to_complete = it.planned_count - it.completed_count
         if to_complete <= 0:
+            continue
+        if it.book_id is None:
+            # Kitapsız deneme kalemi: rezerv/kapasite yok, doğrudan tamamla.
+            it.completed_count = it.planned_count
             continue
         progress, section = _get_progress(
             db, student_id, it.book_id, it.book_section_id
@@ -182,6 +188,9 @@ def uncomplete_task(db: Session, task) -> None:
     for it in task.book_items:
         if it.completed_count <= 0:
             continue
+        if it.book_id is None:
+            it.completed_count = 0  # kitapsız deneme kalemi — rezerv yok
+            continue
         progress, section = _get_progress(
             db, student_id, it.book_id, it.book_section_id
         )
@@ -207,6 +216,10 @@ def set_item_completion(db: Session, item: TaskBookItem, new_completed: int) -> 
         new_completed = item.planned_count
     delta = new_completed - item.completed_count
     if delta == 0:
+        return
+    if item.book_id is None:
+        # Kitapsız deneme kalemi: rezerv/kapasite yok, doğrudan ayarla.
+        item.completed_count = new_completed
         return
     progress, section = _get_progress(
         db, item.task.student_id, item.book_id, item.book_section_id

@@ -247,13 +247,14 @@ TaskStatusLiteral = Literal["pending", "partial", "completed", "cancelled"]
 
 
 class TeacherTaskItem(BaseModel):
-    """Öğretmen perspektifi — kalem detayı + rezerv/tamam exposure'ı."""
+    """Öğretmen perspektifi — kalem detayı + rezerv/tamam exposure'ı.
+    Kitapsız deneme kaleminde book_id/section_id None; book_name = deneme adı."""
     id: int
-    book_id: int
+    book_id: int | None = None
     book_name: str
     subject_id: int | None
     subject_name: str | None
-    section_id: int
+    section_id: int | None = None
     section_label: str | None
     topic_name: str | None
     planned_count: int
@@ -541,9 +542,14 @@ class ReviewStruggleResponse(BaseModel):
 
 
 class TaskItemBody(BaseModel):
-    """POST /tasks ve POST /tasks/{id}/items için kalem."""
-    book_id: int
-    section_id: int
+    """POST /tasks ve POST /tasks/{id}/items için kalem.
+
+    Kitapsız "deneme" kalemi: book_id/section_id None + label (deneme adı) verilir;
+    rezerv/kapasite atlanır, sadece planned_count hacme sayar.
+    """
+    book_id: int | None = None
+    section_id: int | None = None
+    label: str | None = None         # kitapsız deneme kaleminde deneme adı
     planned_count: int               # ≥1 — service ek olarak kontrol eder
 
 

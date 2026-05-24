@@ -547,8 +547,9 @@ export interface ReviewStruggleResponse {
 // =============================================================================
 
 export interface TaskItemBody {
-  book_id: number;
-  section_id: number;
+  book_id: number | null;
+  section_id: number | null;
+  label?: string | null;        // kitapsız deneme kaleminde deneme adı
   planned_count: number;
 }
 

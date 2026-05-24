@@ -89,20 +89,23 @@ class TaskBookItem(Base):
     task_id: Mapped[int] = mapped_column(
         ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False, index=True
     )
-    book_id: Mapped[int] = mapped_column(
-        ForeignKey("books.id", ondelete="RESTRICT"), nullable=False, index=True
+    # Kitapsız "deneme" kalemi (tam LGS/TYT denemesi) için book/section NULL olabilir;
+    # bu durumda label deneme adını taşır, rezerv/kapasite atlanır.
+    book_id: Mapped[int | None] = mapped_column(
+        ForeignKey("books.id", ondelete="RESTRICT"), nullable=True, index=True
     )
-    book_section_id: Mapped[int] = mapped_column(
-        ForeignKey("book_sections.id", ondelete="RESTRICT"), nullable=False, index=True
+    book_section_id: Mapped[int | None] = mapped_column(
+        ForeignKey("book_sections.id", ondelete="RESTRICT"), nullable=True, index=True
     )
+    label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     planned_count: Mapped[int] = mapped_column(Integer, nullable=False)
     completed_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     correct_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     wrong_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
     task: Mapped["Task"] = relationship("Task", back_populates="book_items")
-    book: Mapped["Book"] = relationship("Book")
-    section: Mapped["BookSection"] = relationship("BookSection")
+    book: Mapped["Book | None"] = relationship("Book")
+    section: Mapped["BookSection | None"] = relationship("BookSection")
 
     def __repr__(self) -> str:
         return f"<TaskBookItem {self.planned_count} from section {self.book_section_id}>"

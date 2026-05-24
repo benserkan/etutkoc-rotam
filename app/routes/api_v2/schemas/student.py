@@ -52,9 +52,10 @@ DOW_KEYS = ("monday", "tuesday", "wednesday", "thursday", "friday", "saturday", 
 
 
 class StudentTaskItem(BaseModel):
-    """Görev içindeki tek kalem (kitap bölümü × planlanan sayı)."""
+    """Görev içindeki tek kalem (kitap bölümü × planlanan sayı).
+    Kitapsız deneme kaleminde book_id None; book_name = deneme adı."""
     id: int
-    book_id: int
+    book_id: int | None = None
     book_name: str
     section_id: int | None = None
     section_label: str | None = None

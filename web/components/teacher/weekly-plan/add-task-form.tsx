@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   BookOpen,
   Brain,
+  ClipboardCheck,
   FileText,
   Flame,
   Info,
@@ -34,7 +35,9 @@ import type {
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
 
-type TaskType = "test" | "video" | "ozet" | "tekrar" | "other";
+// "deneme" yalnız UI sekmesi; backend'e type="other" + kitapsız kalem gönderir
+// (tasktype enum'una değer eklemeden — ikinci migration gerekmez).
+type TaskType = "test" | "deneme" | "video" | "ozet" | "tekrar" | "other";
 
 const TYPE_TILES: Array<{
   key: TaskType;
@@ -42,6 +45,7 @@ const TYPE_TILES: Array<{
   Icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
 }> = [
   { key: "test", label: "Test", Icon: FileText },
+  { key: "deneme", label: "Deneme", Icon: ClipboardCheck },
   { key: "video", label: "Video", Icon: Video },
   { key: "ozet", label: "Özet", Icon: BookOpen },
   { key: "tekrar", label: "Tekrar", Icon: Repeat },
@@ -79,7 +83,7 @@ export function AddTaskForm({
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
           Görev tipi
         </p>
-        <div className="grid grid-cols-5 gap-1.5">
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
           {TYPE_TILES.map(({ key, label, Icon }) => {
             const active = type === key;
             return (
@@ -108,6 +112,13 @@ export function AddTaskForm({
           dayDate={dayDate}
           subjects={subjects}
           onFocusSubject={onFocusSubject}
+          onAfterAdd={onAfterAdd}
+        />
+      ) : null}
+      {type === "deneme" ? (
+        <DenemeForm
+          studentId={studentId}
+          dayDate={dayDate}
           onAfterAdd={onAfterAdd}
         />
       ) : null}
@@ -320,6 +331,103 @@ function TestForm({
         </div>
       </div>
       {statsQ.data ? <SectionStatsMini stats={statsQ.data} /> : null}
+    </form>
+  );
+}
+
+// =============================================================================
+// DENEME TİPİ (kitapsız, soru sayılı) — tam LGS/TYT denemesi
+// =============================================================================
+
+function DenemeForm({
+  studentId,
+  dayDate,
+  onAfterAdd,
+}: {
+  studentId: number;
+  dayDate: string;
+  onAfterAdd: () => void;
+}) {
+  const create = useCreateTask(studentId);
+  const [hour, setHour] = React.useState("");
+  const [title, setTitle] = React.useState("");
+  const [count, setCount] = React.useState("");
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const name = title.trim();
+    const n = Number(count);
+    if (!name || !Number.isFinite(n) || n < 1) return;
+    const scheduledHour = hour === "" ? null : Number(hour);
+    create.mutate(
+      {
+        body: {
+          date: dayDate,
+          type: "other", // backend: kitapsız kalem; tasktype enum'una deneme eklenmedi
+          title: name,
+          scheduled_hour: scheduledHour,
+          // Kitapsız "deneme" kalemi: ders/kitap yok, sadece etiket + soru sayısı.
+          items: [{ book_id: null, section_id: null, label: name, planned_count: n }],
+        },
+      },
+      {
+        onSuccess: () => {
+          setTitle("");
+          setCount("");
+          onAfterAdd();
+        },
+      },
+    );
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+        <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
+        <div className="md:col-span-6">
+          <Label>Deneme adı</Label>
+          <Input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            maxLength={200}
+            placeholder="Örn. Mebi LGS Tam Deneme 7"
+          />
+        </div>
+        <div className="md:col-span-3">
+          <Label>Soru sayısı</Label>
+          <Input
+            type="number"
+            min={1}
+            value={count}
+            onChange={(e) => setCount(e.target.value)}
+            placeholder="örn. 90"
+            className="text-right tabular-nums"
+          />
+        </div>
+        <div className="md:col-span-2 flex justify-end">
+          <SubmitButton
+            pending={create.isPending}
+            disabled={!title.trim() || !count || Number(count) < 1}
+          />
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <span className="text-[11px] text-muted-foreground">Hızlı seç:</span>
+        <button type="button" onClick={() => setCount("90")}
+          className="rounded-md border border-border bg-card px-2 py-0.5 text-[11px] font-medium hover:bg-muted">
+          LGS · 90 soru
+        </button>
+        <button type="button" onClick={() => setCount("120")}
+          className="rounded-md border border-border bg-card px-2 py-0.5 text-[11px] font-medium hover:bg-muted">
+          TYT · 120 soru
+        </button>
+      </div>
+      <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
+        <Info className="size-3" aria-hidden />
+        Tam deneme ders/kitap seçmeden eklenir; çözülen soru sayısına sayar.
+        Sonuç/net girişi için öğrenci profilindeki &quot;Denemeler&quot; sekmesini kullan.
+      </p>
     </form>
   );
 }

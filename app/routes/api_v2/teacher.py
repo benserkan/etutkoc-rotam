@@ -2365,7 +2365,7 @@ def _build_teacher_task_item(
     return TeacherTaskItem(
         id=item.id,
         book_id=item.book_id,
-        book_name=item.book.name if item.book else "—",
+        book_name=item.book.name if item.book else (item.label or "Deneme"),
         subject_id=subj.id if subj else None,
         subject_name=subj.name if subj else None,
         section_id=item.book_section_id,
@@ -2601,10 +2601,12 @@ def _create_task_with_items(
             },
         )
 
-    # Kalemler geçerli mi (kitap-bölüm uyumu + atama + sayım)? — kalemsizse atlanır.
-    # Reserve işlemleri sırasıyla — kapasite hatası ilk olası kalemde fırlar.
+    # Kalemler geçerli mi (kitap-bölüm uyumu + atama + sayım)? Kitapsız "deneme"
+    # kalemi (book_id None) kitap doğrulaması + rezerv ATLAR; yalnız sayı kontrolü.
     for it in payload.items:
         _ensure_count_positive(it.planned_count)
+        if it.book_id is None:
+            continue  # kitapsız deneme kalemi — kapasite/atama yok
         _ensure_section_belongs_to_book(db, it.book_id, it.section_id)
         _ensure_student_book_assigned(db, student.id, it.book_id)
 
@@ -2633,6 +2635,17 @@ def _create_task_with_items(
     db.flush()
 
     for it in payload.items:
+        if it.book_id is None:
+            # Kitapsız deneme kalemi: rezerv yok, label deneme adını taşır.
+            db.add(TaskBookItem(
+                task_id=task.id,
+                book_id=None,
+                book_section_id=None,
+                label=(getattr(it, "label", None) or (payload.title or "").strip() or "Deneme"),
+                planned_count=it.planned_count,
+                completed_count=0,
+            ))
+            continue
         # reserve_item kapasite aşımında ReservationError fırlatır
         reserve_item(
             db,

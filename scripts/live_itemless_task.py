@@ -90,7 +90,26 @@ def main() -> int:
         code = (r.json().get("detail", {}) or {}).get("code") if r.status_code == 422 else None
         chk("Test + kalemsiz → 422 no_items (kalem hâlâ şart)", r.status_code == 422 and code == "no_items", f"{r.status_code} {code}")
 
-        # 4) Öğrenci kalemsiz görevi tamamlar (görev-bazında)
+        # 4) Kitapsız DENEME görevi (soru sayılı) — type other + bookless item
+        r = tc.post(f"/api/v2/teacher/students/{sid}/tasks", json={
+            "date": today, "type": "other", "title": "LGS Tam Deneme 7", "is_draft": False,
+            "items": [{"book_id": None, "section_id": None, "label": "LGS Tam Deneme 7", "planned_count": 90}]})
+        deneme_id = None
+        ok4 = r.status_code == 200
+        chk("Deneme (kitapsız, 90 soru) → 200", ok4, f"{r.status_code} {r.text[:140]}")
+        if ok4:
+            d = r.json()["data"]
+            deneme_id = d["id"]
+            items = d.get("items", [])
+            chk("deneme kalemi planned=90 + label görünüyor",
+                len(items) == 1 and items[0]["planned_count"] == 90 and items[0]["book_name"] == "LGS Tam Deneme 7",
+                str(items))
+
+        # 4b) HAFTA endpoint'i kitapsız kalemde ÇÖKMEMELİ (compute_day_subject_summary)
+        rw = tc.get(f"/api/v2/teacher/students/{sid}/week")
+        chk("hafta görünümü deneme/kalemsizle 200 (eski 500 fix)", rw.status_code == 200, f"{rw.status_code} {rw.text[:140]}")
+
+        # 5) Öğrenci kalemsiz görevi tamamlar (görev-bazında)
         if task_id:
             sc = login(f"{PFX}_s@t.invalid")
             r = sc.post(f"/api/v2/student/tasks/{task_id}/complete")
@@ -98,6 +117,17 @@ def main() -> int:
             if r.status_code == 200:
                 st = (r.json().get("data") or {}).get("status")
                 chk("görev status COMPLETED", str(st).lower() == "completed", str(st))
+
+        # 6) Öğrenci denemeyi tamamlar → 90 soru hacme sayar (completed=90)
+        if deneme_id:
+            sc2 = login(f"{PFX}_s@t.invalid")
+            r = sc2.post(f"/api/v2/student/tasks/{deneme_id}/complete")
+            ok6 = r.status_code == 200
+            chk("Öğrenci denemeyi tamamladı → 200", ok6, f"{r.status_code} {r.text[:120]}")
+            if ok6:
+                items = (r.json().get("data") or {}).get("items", [])
+                comp = items[0]["completed"] if items else None
+                chk("deneme completed=90 (çözülen soruya sayar)", comp == 90, str(comp))
     finally:
         with SessionLocal() as db:
             ids = [r[0] for r in db.query(User.id).filter(User.email.like(f"{PFX}_%")).all()]
