@@ -2188,6 +2188,37 @@ zaten video/özet/tekrar/**diğer** tiplerinde `items: []` gönderiyordu → bu 
   kalemsiz→422 no_items, öğrenci tamamla→COMPLETED). Regresyon: teacher_read 12 +
   weekly_plan 14 + paywall 5 + task_templates 11 + teacher_students 14 GREEN.
 
+## Tam deneme (kitapsız, soru sayılı) görev — LGS/TYT — 2026-05-24 (migration `g4h7k9l0k88e`)
+
+**Bağlam (kullanıcı):** Öğrenci gün içinde tam LGS/TYT denemesi çözüyor; bu tek
+derse ait olmadığından "önce ders seç" akışına girmiyordu → programa eklenemiyordu.
+Kullanıcı kararı: **kitapsız "Deneme" görev tipi** (ad + soru sayısı); programda
+görünsün + çözülen soru hacmine saysın. Sonuç/net yine "Denemeler" sekmesinde.
+- **Kısıt**: Book.subject_id + TaskBookItem.book_id/section_id NOT NULL → gerçek
+  kitapsız kalem için **migration `g4h7k9l0k88e`** (down_revision f3g6j8k9j77d):
+  task_book_items.book_id/book_section_id **nullable** + `label` kolonu. Additive/
+  kısıt-gevşetme, mevcut satırlar dolu (etkilenmez), downgrade'li. Uygulandı.
+- **Backend**: kitapsız kalem (book_id None + label + planned_count) rezerv/kapasite/
+  atama ATLAR; `_create_task_with_items` + task_service complete/uncomplete/release/
+  set_item_completion book_id None'da progress'i atlar (completed_count doğrudan).
+  Serializer'lar (teacher+student) null-safe: book_name = label ("Deneme"). Şemalar
+  book_id/section_id nullable. Hacim/tamamlanma toplamları DEĞİŞMEDİ (zaten
+  planned_count topluyor) → deneme soruları otomatik sayar.
+- **Düzeltme (hafta görünümü 500)**: `compute_day_subject_summary` (teacher_program.py)
+  her kalemde `it.book.subject_id` yapıyordu → kitapsız denemede AttributeError →
+  /teacher/students/{id}/week 500. Guard eklendi (it.book None → ders özetine girmez;
+  deneme derse bağlı değil). Diğer task-item book/section erişimleri tarandı: sort
+  key'leri (2450/2770) + request_service:440 zaten guard'lı; kalanlar StudentBook
+  (sb.book, hep dolu) veya ölü Jinja. live_itemless_task'a hafta-fetch eklendi (10/10).
+- **Frontend**: hafta add-task-form'a **"Deneme"** kutucuğu (ad + soru sayısı,
+  LGS 90 / TYT 120 hızlı seç). Backend'e type="other" + kitapsız kalem gönderir
+  (tasktype enum'una "deneme" EKLENMEDİ → ikinci migration yok). Gün-board form
+  kapsam dışı (kullanıcı akışı hafta görünümü).
+- **Doğrulama** `live_itemless_task.py` **9/9** (deneme 90 soru→200, kalem planned=90
+  + label, öğrenci tamamla→completed=90). Regresyon: teacher_read 12 + weekly_plan 14 +
+  students 14 + paywall 5 + task_templates 11 + exams 16 + student_read 11 +
+  student_mutations 12 + tenant 29 GREEN. tsc/eslint temiz (pnpm build YOK — dev açık).
+
 ## Güvenlik Kamarası — Hata Tercümanı (sade dil + neden + ne yapmalı) — 2026-05-24
 
 **Bağlam (kullanıcı):** Güvenlik Kamarası ham geliştirici hatalarını süper admine
