@@ -22,6 +22,7 @@ import {
   ChevronRight,
   FileEdit,
   GripVertical,
+  Layers,
   Loader2,
   Pencil,
   Plus,
@@ -221,7 +222,11 @@ export function WeekDayCard({
       ) : null}
 
       {subjectSummary.length > 0 ? (
-        <div className="px-5 py-2.5 border-t border-border border-l-[3px] border-l-slate-300 dark:border-l-slate-600 bg-muted/40 flex flex-wrap items-center gap-1.5">
+        <div className="px-5 py-2 border-t border-border border-l-[3px] border-l-slate-300 dark:border-l-slate-600 bg-muted/50 flex flex-wrap items-center gap-1.5">
+          <span className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold text-muted-foreground/80 mr-1">
+            <Layers className="size-3" aria-hidden /> Ders dağılımı
+          </span>
+          <span className="text-muted-foreground/40">·</span>
           {subjectSummary.filter((e) => e.task_count > 0).map((ent) => (
             <SubjectChip key={ent.subject_id} ent={ent} />
           ))}
@@ -515,6 +520,12 @@ function SortableTaskRow({
   const primarySubjectId = task.items[0]?.subject_id ?? null;
   const primarySubjectName = task.items[0]?.subject_name ?? null;
   const hue = primarySubjectId !== null ? (primarySubjectId * 67) % 360 : 220;
+  // Kitapsız (deneme) kalem = book_id None → tam deneme; ders-test satırından ayır.
+  const isDeneme = task.items.some((it) => it.book_id === null);
+  // Dersi olmayan etkinlik satırları (video/özet/tekrar/diğer) için tip-renkli şerit.
+  const ACTIVITY_ACCENT: Record<string, string> = {
+    video: "#38bdf8", ozet: "#34d399", tekrar: "#a78bfa", other: "#94a3b8",
+  };
 
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -522,7 +533,9 @@ function SortableTaskRow({
     borderLeftColor:
       primarySubjectId !== null
         ? `hsl(${hue}, 45%, 65%)`
-        : "transparent",
+        : isDeneme
+          ? "#6366f1" // indigo — deneme
+          : ACTIVITY_ACCENT[task.type] ?? "transparent",
     opacity: isDragging ? 0.5 : 1,
   };
 
@@ -533,7 +546,10 @@ function SortableTaskRow({
     <div
       ref={setNodeRef}
       id={`task-${task.id}`}
-      className="px-4 py-2.5 flex items-start gap-3 hover:bg-muted/30 border-l-2 task-row transition-colors"
+      className={cn(
+        "px-4 py-2.5 flex items-start gap-3 border-l-[3px] task-row transition-colors",
+        isDeneme ? "bg-indigo-500/[0.05] hover:bg-indigo-500/[0.09]" : "hover:bg-muted/30",
+      )}
       style={style}
     >
       <button
@@ -576,12 +592,17 @@ function SortableTaskRow({
           ) : null}
           <span
             className={cn(
-              "text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded border",
-              typeTone,
+              "text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border",
+              isDeneme ? "bg-indigo-100 text-indigo-700 border-indigo-300" : typeTone,
             )}
           >
-            {TASK_TYPE_LABELS[task.type] ?? task.type}
+            {isDeneme ? "Deneme" : (TASK_TYPE_LABELS[task.type] ?? task.type)}
           </span>
+          {isDeneme && task.planned_count > 0 ? (
+            <span className="text-[11px] text-indigo-700 font-medium tabular-nums">
+              {task.planned_count} soru
+            </span>
+          ) : null}
           {task.is_draft ? (
             <span
               className="inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-medium px-1.5 py-0.5 rounded border border-amber-200 bg-amber-50 text-amber-800"

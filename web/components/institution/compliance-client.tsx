@@ -55,6 +55,13 @@ function rateBar(c: string): string {
 function pct(v: number | null): string {
   return v == null ? "—" : `%${v}`;
 }
+/** Büyük KPI değeri — null ise kocaman "—" yerine net "veri yok" gösterir. */
+function BigPct({ v, className }: { v: number | null; className?: string }) {
+  if (v == null) {
+    return <div className="mt-1 text-base font-medium text-muted-foreground">veri yok</div>;
+  }
+  return <div className={cn("mt-1 text-3xl font-bold tabular-nums", className)}>%{v}</div>;
+}
 function weekShort(iso: string): string {
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso.slice(5);
@@ -111,15 +118,19 @@ export function ComplianceClient({ initial }: Props) {
               </span>
             ) : null}
           </div>
-          <div className={cn("mt-1 text-3xl font-bold tabular-nums", rateText(s.rate_color))}>{pct(s.rate)}</div>
+          <BigPct v={s.rate} className={rateText(s.rate_color)} />
           <div className="text-[11px] text-muted-foreground">geçen hafta {pct(s.last_week_rate)}</div>
         </Card>
         <Card className="p-4">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-muted-foreground">
             <Target className="size-3.5" aria-hidden /> Doğruluk
           </div>
-          <div className="mt-1 text-3xl font-bold tabular-nums">{pct(s.accuracy)}</div>
-          <div className="text-[11px] text-muted-foreground">yapılan soruların doğruluğu</div>
+          <BigPct v={s.accuracy} />
+          <div className="text-[11px] text-muted-foreground">
+            {s.accuracy == null
+              ? "henüz doğru/yanlış girilmemiş"
+              : "yapılan soruların doğruluğu"}
+          </div>
         </Card>
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase text-muted-foreground">Soru (yapılan/planlanan)</div>
