@@ -10,11 +10,17 @@ import { api } from "@/lib/api";
 import type { LandingResponse } from "@/lib/types/landing";
 
 export const landingKeys = {
-  cards: (limit: number) => ["landing", "cards", String(limit)] as const,
+  cards: (limit: number, audience?: string | null) =>
+    ["landing", "cards", String(limit), audience ?? "all"] as const,
 };
 
-export function getLandingCards(limit = 5): Promise<LandingResponse> {
-  return api<LandingResponse>(`/api/v2/landing?limit=${limit}`);
+export function getLandingCards(
+  limit = 5,
+  audience?: string | null,
+): Promise<LandingResponse> {
+  const q = new URLSearchParams({ limit: String(limit) });
+  if (audience) q.set("audience", audience);
+  return api<LandingResponse>(`/api/v2/landing?${q.toString()}`);
 }
 
 export function sendLandingTelemetry(

@@ -2791,6 +2791,64 @@ reachability analizi):
      cron seed).
 - NOT: #2 ve #3 düzeltmeleri kullanıcı onayı bekliyor (migration içerir).
 
+## Vitrin stratejisi — hizmet→değer haritası + anasayfa kartları (2026-05-25)
+
+**Bağlam (kullanıcı):** Asıl hedef = kurum (özel okul/etüt/dershane/elit kurs) +
+bağımsız koçların ÜYE olması; bu da sorunlarına çözüm vaadiyle olur. İstenen:
+hizmetleri rol kategorisinde grupla → kime ne fayda → ticari değerlileri anasayfa
+vitrinine yansıt. Sonra: "vitrin kartları zaten bunun için var, sistemden fazla mı
+bekledik?" → **Hayır.** feature_catalog birebir "içerik hazırla → anasayfada yayınla"
+CMS'i; sadece kartları üretip yayına almak + segment filtresi eklemek kaldı.
+
+**Vitrin kartı çalışma mantığı:** admin `/admin/feature-catalog`'tan kart oluşturur/
+düzenler → `status=published` + `mockup_type` dolu (5 geçerli: daily_schedule/
+fsrs_rating/burnout_gauge/books_progress/whatsapp_chat) → landing `/api/v2/landing`
+yayın kartlarını çeker (pin'liler tepede, gerisine A/B + fuzzy skor + MMR çeşitlilik)
+→ anasayfada gösterir; telemetri (impression/view/demo_click) skoru besler.
+
+**Strateji (onaylandı, koç-öncelikli):** 11 fayda-odaklı yayın kartı —
+- **Koç (6, ana akış · audience=teacher):** erken-uyarı (hero) · AI seans hazırlığı
+  (premium) · sesli/foto not (premium) · sürdürülebilir plan · veli bilgilendirme ·
+  tahsilat. target_roles=['teacher'].
+- **Kurum (5, #kurumlar bandı · audience=institution_admin):** program uyumu ·
+  müdahale merkezi · akademik çıktı · öğretmen karnesi · veli güveni.
+  target_roles=['institution_admin'].
+
+**Uygulama:**
+- Backend: `_build_landing_cards`/`get_for_landing_with_variant` + `/api/v2/landing`'e
+  **`audience` filtresi** (target_roles'a göre; "teacher"=koç vitrini,
+  "institution_admin"=kurum bandı). Geçersiz audience → boş (hata değil).
+- `scripts/seed_landing_cards.py` — 11 kartı **idempotent** yayınlar (slug `kesfet-*`;
+  slug varsa ATLAR → admin'deki sonraki düzenlemeler korunur). Eski 5 genel kart
+  (daily-plan/aralikli-tekrar/dna-risk/soru-bankasi/veli-kanali) yeni kartlar öne
+  çıksın diye **HIDDEN** (silinmez; `--delete` ile geri PUBLISHED + yeni kartları siler).
+- Frontend: anasayfa ana feed `audience=teacher`; `#kurumlar` bandının alt mini-kartları
+  artık **feature_catalog-güdümlü** (`audience=institution_admin`, statik değil) —
+  ısı haritası görseli + CTA korundu.
+- **Kart metinleri admin'den düzenlenebilir** (kullanıcı sonra düzeltecek):
+  `/admin/feature-catalog` → kart → düzenle formu.
+- **Premium (AI) kartları:** category_label "Yapay Zekâ" + "Ücretli pakette" benefit
+  (şema değişikliği yok; AI gerçekten ücretli pakette).
+- Test: `test_api_v2_landing_audience.py` **8/8** + landing_public regresyon 8/8 +
+  canlı :3000 (koç 6 / kurum 5 / anasayfa 200). tsc/eslint temiz (build YOK — :3000 dev).
+- **Commit YOK** (kullanıcı henüz istemedi). Migration GEREKMEDİ (sadece veri/kod).
+
+**"Nasıl Çalışır?" — uçtan uca koçluk döngüsü (2026-05-25):** Anasayfa
+`#nasil-calisir` bölümü genel 5-adımdan **rol-renkli 7-adım koçluk akışına**
+yeniden kurgulandı (`HowItWorks` + `ROLE_TONE` purge-safe ton map): ①Koç kütüphaneyi
+kurar (kitap ünite/test sayıları) →②Koç günlük/haftalık program hazırlar (**rezerv**
+açıklanır: atanan soru kitaptan düşülür, kalan kapasite görünür) →③Öğrenci günlük
+uygular (tamamladım işareti + doğru/yanlış) →④Sistem ölçer →⑤Veli bilgilenir →⑥Koç
+erken müdahale (döngü başa sarar) →⑦Kurum tek panelden görür. Her adımda aktör
+rozeti + "→ çıktı" satırı + aktör lejantı + döngü kapanış bandı.
+- **Konumlandırma:** bölüm güven şeridinin (`Reassurance` — 14 gün ücretsiz…) HEMEN
+  ALTINA taşındı (Hero→Reassurance→**HowItWorks**→Features→…).
+- **Kullanıcı geri bildirimi:** eski açıklamalar jargonluydu ("anlık kaynak durumu" —
+  ziyaretçi "kaynak"ı bilmiyor); süreci anlatan sade cümlelere çevrildi + kütüphane
+  kurulumu + **rezerv** özelliği + öğrencinin günlük "tamamladım" işaretlemesi tanıtıldı.
+- `cn` import edildi, kullanılmayan `Users` ikonu kaldırıldı. tsc/eslint temiz · canlı
+  :3000 render doğrulandı.
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

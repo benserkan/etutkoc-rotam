@@ -30,10 +30,10 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
-  Users,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import {
   getLandingCards,
@@ -59,8 +59,8 @@ const DEMO_MAIL =
 
 export function LandingClient() {
   const q = useQuery<LandingResponse>({
-    queryKey: landingKeys.cards(5),
-    queryFn: () => getLandingCards(5),
+    queryKey: landingKeys.cards(5, "teacher"),
+    queryFn: () => getLandingCards(5, "teacher"),
     staleTime: 60_000,
   });
   const cards = q.data?.cards ?? [];
@@ -71,10 +71,10 @@ export function LandingClient() {
       <Header />
       <Hero />
       <Reassurance />
+      <HowItWorks />
       <Features cards={cards} variant={variant} loading={q.isLoading} />
       <Comparison />
       <Institutions />
-      <HowItWorks />
       <Pricing />
       <Faq />
       <FinalCta />
@@ -657,6 +657,14 @@ function FeatureCard({
 /* ───────────────────────── Institutions (B2B) ───────────────────────── */
 
 function Institutions() {
+  // Kurum bandı kartları feature_catalog'tan (audience=institution_admin) —
+  // admin'den düzenlenebilir; statik değil.
+  const instQ = useQuery<LandingResponse>({
+    queryKey: landingKeys.cards(6, "institution_admin"),
+    queryFn: () => getLandingCards(6, "institution_admin"),
+    staleTime: 60_000,
+  });
+  const instCards = instQ.data?.cards ?? [];
   const teachers = ["A. Yılmaz", "B. Demir", "C. Kaya", "D. Çelik", "E. Şahin", "F. Arslan"];
   const heat = [
     [0.95, 0.9, 0.85, 0.95, 1, 0.9, 0.85, 0.95, 0.9, 1, 0.95, 0.85],
@@ -739,16 +747,30 @@ function Institutions() {
             </div>
           </div>
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
-            {mini.map((m) => {
-              const Icon = m.icon;
+            {(instCards.length > 0
+              ? instCards.map((c) => ({
+                  key: c.slug,
+                  Icon: MOCKUP_ICON[c.mockup_type ?? ""] ?? Target,
+                  title: c.title,
+                  desc: c.tagline,
+                  label: c.category_label,
+                }))
+              : mini.map((m) => ({
+                  key: m.title, Icon: m.icon, title: m.title, desc: m.desc, label: "",
+                }))
+            ).map((m) => {
+              const Icon = m.Icon;
               return (
-                <div key={m.title} className="rounded-xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur transition hover:bg-white/[0.08]">
+                <div key={m.key} className="rounded-xl border border-white/10 bg-white/[0.04] p-4 backdrop-blur transition hover:bg-white/[0.08]">
                   <div className="mb-2 flex items-center gap-2">
                     <span className="flex size-8 items-center justify-center rounded-lg bg-amber-400/15 text-amber-300 ring-1 ring-amber-400/25">
                       <Icon className="size-4" aria-hidden />
                     </span>
                     <h3 className="font-display text-sm font-bold">{m.title}</h3>
                   </div>
+                  {m.label ? (
+                    <span className="mb-1.5 inline-block rounded border border-amber-400/25 bg-amber-400/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-amber-200">{m.label}</span>
+                  ) : null}
                   <p className="text-xs leading-relaxed text-cyan-100/65">{m.desc}</p>
                 </div>
               );
@@ -762,48 +784,119 @@ function Institutions() {
 
 /* ───────────────────────── How it works ───────────────────────── */
 
+// Uçtan uca koçluk döngüsü — rol-renkli adımlar (purge-safe explicit sınıflar)
+const ROLE_TONE: Record<
+  string,
+  { label: string; node: string; chip: string; result: string }
+> = {
+  koc: { label: "Koç", node: "bg-cyan-700 shadow-cyan-700/25", chip: "bg-cyan-50 text-cyan-700 border-cyan-200", result: "text-cyan-700" },
+  ogrenci: { label: "Öğrenci", node: "bg-emerald-600 shadow-emerald-600/25", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", result: "text-emerald-700" },
+  sistem: { label: "Sistem", node: "bg-violet-600 shadow-violet-600/25", chip: "bg-violet-50 text-violet-700 border-violet-200", result: "text-violet-700" },
+  veli: { label: "Veli", node: "bg-amber-500 shadow-amber-500/25", chip: "bg-amber-50 text-amber-700 border-amber-200", result: "text-amber-700" },
+  kurum: { label: "Kurum", node: "bg-slate-800 shadow-slate-800/25", chip: "bg-slate-100 text-slate-800 border-slate-300", result: "text-slate-800" },
+};
+
 function HowItWorks() {
-  const steps = [
-    { num: "01", tag: "Kurulum", icon: Users, title: "Kur ve Ata", desc: "Öğrencini kaydet, kitap envanterini seç, hedefleri belirle. Sistem akademik yıl ve hedef sınava göre otomatik yapılandırılır." },
-    { num: "02", tag: "AI Önerisi", icon: BrainCircuit, title: "Yapay Zeka ile Planla", desc: "Öğrenme motorunun görev önerilerini onayla, günlük rotayı oluştur. FSRS unutulmaya yüz tutan konuları tam zamanında getirir." },
-    { num: "03", tag: "Pomodoro", icon: Target, title: "Öğrenci Odaklansın", desc: "Pomodoro + rozet + streak ile motivasyonu kaybetmeden ilerlesin. Oyunlaştırma ile bağlılık artar." },
-    { num: "04", tag: "Risk Paneli", icon: LineChart, title: "Veriyi Analiz Et", desc: "Tamamlanan/planlanan görevleri ve doğruluk oranlarını anlık izle. Çalışma DNA'sı + burnout sinyalleriyle düşüş başlamadan müdahale et." },
-    { num: "05", tag: "WhatsApp", icon: MessageSquareText, title: "Veli ile Paylaş", desc: "WhatsApp üzerinden otomatik haftalık raporlarla süreci taçlandır. Veli kendi sessiz saatlerini yönetir." },
+  const steps: {
+    num: string; role: keyof typeof ROLE_TONE; icon: LucideIcon;
+    title: string; desc: string; result: string; loop?: boolean;
+  }[] = [
+    { num: "01", role: "koc", icon: BookOpen, title: "Koç kütüphaneyi kurar",
+      desc: "Koç kullandığı kitapları sisteme tanıtır: her kitabın üniteleri ve içindeki test/soru sayıları girilir. Program böylece gerçek bir soru havuzuna dayanır.",
+      result: "Çözülecek soru havuzu hazır" },
+    { num: "02", role: "koc", icon: CalendarDays, title: "Koç günlük/haftalık programı hazırlar",
+      desc: "Her öğrenciye gün gün görev verir (örn. 'Matematik – Üslü Sayılar, 40 soru'). Sistem atanan soruları kitaptan otomatik rezerve eder: aynı sorular iki kez verilmez, her ünitenin kalan kapasitesi anlık görünür.",
+      result: "Çakışmasız, takip edilebilir plan" },
+    { num: "03", role: "ogrenci", icon: CheckCircle2, title: "Öğrenci günlük uygular",
+      desc: "Öğrenci her gün kendi programını açar; bitirdiği görevi 'tamamladım' olarak işaretler ve çözdüğü soruların doğru/yanlış sayısını girer.",
+      result: "Günlük uyum + gerçek çözüm verisi" },
+    { num: "04", role: "sistem", icon: LineChart, title: "Sistem ölçer",
+      desc: "Tamamlama oranı, doğruluk yüzdesi, deneme neti ve çalışma düzeni otomatik hesaplanır; geride kalan veya tempo düşüren öğrenci işaretlenir.",
+      result: "Net trendi + erken risk uyarısı" },
+    { num: "05", role: "veli", icon: MessageSquareText, title: "Veli bilgilenir",
+      desc: "Veliye otomatik bildirim gider; çocuğunun haftalık gidişatını ve net grafiğini kendi panelinden görür — koç tek tek rapor yazmaz.",
+      result: "Veli güveni" },
+    { num: "06", role: "koc", icon: Sparkles, title: "Koç erkenden müdahale eder",
+      desc: "Kopan öğrenci panoda kırmızı yanar; yapay zekâ 'bugün şu öğrenciyle şunu konuş' diye hazırlık verir; görüşmeyle program güncellenir — döngü başa sarar.",
+      result: "Zamanında müdahale", loop: true },
+    { num: "07", role: "kurum", icon: LayoutGrid, title: "Kurum tek panelden görür",
+      desc: "Program uyumu, akademik çıktı ve müdahale merkeziyle tüm koçların sonucunu izler; hangi öğrenci geride, hangi koç sonuç alıyor görür, kaliteyi standartlaştırır.",
+      result: "Ölçülebilir kurum başarısı" },
   ];
   return (
     <section id="nasil-calisir" className="relative bg-background py-20">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <Reveal className="mx-auto mb-14 max-w-2xl text-center">
+        <Reveal className="mx-auto mb-10 max-w-2xl text-center">
           <p className="mb-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.25em] text-amber-600">
-            <Route className="size-3.5" aria-hidden /> Süreç
+            <Route className="size-3.5" aria-hidden /> Uçtan uca koçluk
           </p>
-          <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">Beş adımda başarı rotası</h2>
-          <p className="mt-3 text-muted-foreground">Veriye dayalı koçluk; kurulumdan veli iletişimine tek akışta.</p>
+          <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Plandan ölçülebilir başarıya, adım adım
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Koçun program hazırlamasıyla başlar, öğrencinin uyumuyla ilerler, kurumun
+            çıktıyı görmesiyle döngü tamamlanır.
+          </p>
         </Reveal>
+
+        {/* Aktör lejantı */}
+        <Reveal className="mb-10 flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+          {(["koc", "ogrenci", "sistem", "veli", "kurum"] as const).map((r) => (
+            <span key={r} className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+              <span className={cn("size-2.5 rounded-full", ROLE_TONE[r].node.split(" ")[0])} />
+              {ROLE_TONE[r].label}
+            </span>
+          ))}
+        </Reveal>
+
         <div className="relative space-y-4">
           {/* dikey rota çizgisi */}
-          <div className="pointer-events-none absolute bottom-6 left-[39px] top-6 hidden w-px bg-gradient-to-b from-cyan-200 via-cyan-300 to-amber-300 sm:block" />
+          <div className="pointer-events-none absolute bottom-8 left-[39px] top-8 hidden w-px bg-gradient-to-b from-cyan-300 via-violet-300 to-slate-300 sm:block" />
           {steps.map((s, i) => {
             const Icon = s.icon;
+            const tone = ROLE_TONE[s.role];
             return (
               <Reveal key={s.num} delayMs={i * 60}>
                 <div className="lp-card relative flex items-start gap-4 rounded-2xl border border-slate-200 bg-card p-5 transition hover:-translate-y-0.5 sm:p-6">
-                  <div className="relative z-10 flex size-14 shrink-0 items-center justify-center rounded-2xl bg-cyan-700 text-white shadow-md shadow-cyan-700/25">
+                  <div className={cn("relative z-10 flex size-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-md", tone.node)}>
                     <Icon className="size-6" aria-hidden />
                     <span className="absolute -right-2 -top-2 flex size-6 items-center justify-center rounded-full bg-amber-400 text-[10px] font-bold text-cyan-950 ring-2 ring-background">
                       {s.num}
                     </span>
                   </div>
-                  <div className="min-w-0">
-                    <span className="text-[10px] font-bold uppercase tracking-[0.18em] text-amber-600">{s.tag}</span>
-                    <h3 className="mt-0.5 font-display text-lg font-bold sm:text-xl">{s.title}</h3>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className={cn("inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider", tone.chip)}>
+                        {tone.label}
+                      </span>
+                      {s.loop ? (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-cyan-600">
+                          <RotateCcw className="size-3" aria-hidden /> döngü başa sarar
+                        </span>
+                      ) : null}
+                    </div>
+                    <h3 className="mt-1 font-display text-lg font-bold sm:text-xl">{s.title}</h3>
                     <p className="mt-1 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+                    <p className={cn("mt-2 inline-flex items-center gap-1 text-xs font-semibold", tone.result)}>
+                      <ArrowRight className="size-3.5" aria-hidden /> {s.result}
+                    </p>
                   </div>
                 </div>
               </Reveal>
             );
           })}
         </div>
+
+        {/* Döngü kapanışı */}
+        <Reveal delayMs={120} className="mt-6">
+          <div className="flex items-start gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-5 text-sm text-cyan-900">
+            <RotateCcw className="mt-0.5 size-5 shrink-0 text-cyan-700" aria-hidden />
+            <p className="leading-relaxed">
+              <b>1–5. adımlar her hafta tekrarlanır;</b> öğrenci sürdürülebilir bir tempoda ilerler.
+              6. adımda <b>kurum, tüm koçların çıktısını birleşik görür</b> — başarı ölçülebilir, kalite standart olur.
+            </p>
+          </div>
+        </Reveal>
       </div>
     </section>
   );
