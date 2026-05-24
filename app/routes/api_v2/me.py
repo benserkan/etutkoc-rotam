@@ -304,6 +304,8 @@ def cancel_my_delete_request(
 )
 def change_password(
     body: PasswordChangeBody,
+    request: Request,
+    response: Response,
     user: User = Depends(get_current_user_v2_allow_pwchange),
     db: Session = Depends(get_db),
 ):
@@ -407,10 +409,22 @@ def change_password(
     db.commit()
     db.refresh(user)
 
+    # KRİTİK: Şifre değişimi pwd_stamp'i döndürür → tarayıcının elindeki eski
+    # access/refresh token'ları ANINDA geçersizleşir (token_revoke). Yeni cookie
+    # basılmazsa kullanıcı bir sonraki istekte 401 alır ve panele giremez
+    # (yeni üyenin ilk-giriş + şifre-değiştir akışında /me/account'a düşme bug'ı).
+    # Çözüm: değişimden hemen sonra TAZE oturum kur (yeni pwd_stamp'li cookie +
+    # yeni ActiveSession). Diğer cihazlardaki oturumlar pwd_stamp ile düşer
+    # (güvenlik: şifre değişince başka oturumlar kapanır), bu cihaz devam eder.
+    from app.routes.api_v2.auth import _establish_bff_session
+
+    _establish_bff_session(db, user, request, response)
+
     return MutationResponse[PasswordChangeResult](
         data=PasswordChangeResult(
             must_change_password=False,
             password_changed_at=user.password_changed_at,
+            role=user.role.value if hasattr(user.role, "value") else str(user.role),
         ),
         invalidate=["me:account"],
     )

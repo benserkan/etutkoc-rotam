@@ -140,6 +140,7 @@ class PasswordChangeBody(BaseModel):
 class PasswordChangeResult(BaseModel):
     must_change_password: bool        # always False after success
     password_changed_at: datetime
+    role: str = "student"             # değişim sonrası doğru panele yönlendirmek için
 
 
 # ---------------------------- 2FA / TOTP (Dalga 7 P4) ----------------------------

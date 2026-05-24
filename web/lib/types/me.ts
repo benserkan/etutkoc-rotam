@@ -117,4 +117,5 @@ export interface PasswordChangeBody {
 export interface PasswordChangeResult {
   must_change_password: boolean;
   password_changed_at: string;
+  role: UserRole;
 }

@@ -53,7 +53,7 @@ export function PasswordChangeForm({ isForced }: Props) {
   async function onSubmit(values: Values) {
     setSubmitting(true);
     try {
-      await api<MutationResponse<PasswordChangeResult>>("/api/v2/me/password-change", {
+      const res = await api<MutationResponse<PasswordChangeResult>>("/api/v2/me/password-change", {
         method: "POST",
         body: JSON.stringify({
           current_password: isForced ? null : (values.current_password ?? ""),
@@ -64,13 +64,17 @@ export function PasswordChangeForm({ isForced }: Props) {
 
       toast.success("Şifreniz güncellendi.");
       qc.clear();
-      // Artık must_change=False → role'e göre panele yönlendir
-      let role: UserRole = "student";
-      try {
-        const me = await api<UserPublic>("/api/v2/auth/me");
-        role = me.role;
-      } catch {
-        // role alınamazsa student fallback
+      // Şifre değişimi yeni oturum cookie'si bastı (backend _establish_bff_session).
+      // Rol artık yanıtta geliyor → ikinci /auth/me çağrısına gerek yok (yarış
+      // riski yok). Yine de eksikse /auth/me ile güvenli geri-dönüş.
+      let role: UserRole = res.data?.role ?? "student";
+      if (!res.data?.role) {
+        try {
+          const me = await api<UserPublic>("/api/v2/auth/me");
+          role = me.role;
+        } catch {
+          // role alınamazsa student fallback
+        }
       }
       router.refresh();
       router.push(defaultLandingFor(role));
