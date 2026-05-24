@@ -1,8 +1,10 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
-import { Sparkles } from "lucide-react";
+import { Sparkles, User, Building2 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { PricingCards } from "@/components/pricing/pricing-cards";
@@ -13,9 +15,11 @@ function tl(n: number): string {
   return `${n.toLocaleString("tr-TR")} ₺`;
 }
 
+type Tab = "solo" | "institution";
+
 export function PricingClient({ catalog, initialType = "" }: { catalog: PricingCatalog; initialType?: string }) {
   const solo = catalog.solo;
-  const isKurum = initialType === "kurum";
+  const [tab, setTab] = React.useState<Tab>(initialType === "kurum" ? "institution" : "solo");
 
   return (
     <main className="force-light min-h-screen bg-background">
@@ -38,52 +42,125 @@ export function PricingClient({ catalog, initialType = "" }: { catalog: PricingC
           </p>
         </div>
 
-        <div className="mt-10">
-          <PricingCards initial={catalog} />
-        </div>
-
-        {/* Bağımsız koç — öğrenci sayına göre fiyat tablosu */}
-        <div className="mt-16">
-          <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="font-display text-lg font-bold">Bağımsız koç — öğrenci sayına göre</h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Ücretsiz {solo.free.students} öğrenciye kadar. Ücretli planda öğrenci sayın arttıkça
-              öğrenci başı maliyet düşer. {solo.trial_days} gün boyunca tüm özellikler ücretsiz.
-            </p>
-            <table className="mt-4 w-full text-sm">
-              <thead>
-                <tr className="border-b border-slate-100 text-left text-xs text-muted-foreground">
-                  <th className="pb-2 font-medium">Öğrenci</th>
-                  <th className="pb-2 text-right font-medium">Aylık</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr className="border-b border-slate-50">
-                  <td className="py-2">1–{solo.free.students} (Ücretsiz)</td>
-                  <td className="py-2 text-right font-semibold">0 ₺</td>
-                </tr>
-                {solo.bands.map((b, i) => {
-                  const prev = i === 0 ? solo.free.students : solo.bands[i - 1].max_students;
-                  return (
-                    <tr key={b.max_students} className="border-b border-slate-50">
-                      <td className="py-2">{prev + 1}–{b.max_students} öğrenci</td>
-                      <td className="py-2 text-right font-semibold">{tl(b.monthly)}/ay</td>
-                    </tr>
-                  );
-                })}
-                <tr>
-                  <td className="py-2">{solo.bands[solo.bands.length - 1].max_students}+ öğrenci</td>
-                  <td className="py-2 text-right font-semibold">öğrenci başı +{tl(solo.over_cap_per_student)}/ay</td>
-                </tr>
-              </tbody>
-            </table>
+        {/* Bireysel / Kurumsal sekmeleri */}
+        <div className="mt-8 flex justify-center">
+          <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => setTab("solo")}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition",
+                tab === "solo" ? "bg-cyan-700 text-white shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <User className="size-4" aria-hidden /> Bireysel Koç
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab("institution")}
+              className={cn(
+                "inline-flex items-center gap-2 rounded-full px-6 py-2.5 text-sm font-bold transition",
+                tab === "institution" ? "bg-slate-800 text-white shadow-sm" : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Building2 className="size-4" aria-hidden /> Kurum
+            </button>
           </div>
         </div>
 
-        {/* Kurumsal — fiyat yok, iletişim formu */}
-        <div className="mt-12">
-          <InstitutionContact catalog={catalog} autoFocus={isKurum} />
-        </div>
+        {tab === "solo" ? (
+          <>
+            <div className="mt-10">
+              <PricingCards initial={catalog} variant="solo" />
+            </div>
+
+            {/* Bağımsız koç — paket sınırları özeti */}
+            <div className="mt-14">
+              <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="font-display text-lg font-bold">Bağımsız koç paketleri — bir bakışta</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Ücretsiz {solo.free.students} öğrenciye kadar, süresiz. Öğrenci sayın büyüdükçe
+                  paketini yükselt. {solo.trial_days} gün boyunca tüm özellikler ücretsiz denenir.
+                </p>
+                <table className="mt-4 w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-left text-xs text-muted-foreground">
+                      <th className="pb-2 font-medium">Paket</th>
+                      <th className="pb-2 font-medium">Öğrenci</th>
+                      <th className="pb-2 text-right font-medium">Aylık</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-slate-50">
+                      <td className="py-2 font-medium">Ücretsiz</td>
+                      <td className="py-2">{solo.free.students} öğrenciye kadar</td>
+                      <td className="py-2 text-right font-semibold">0 ₺</td>
+                    </tr>
+                    {solo.tiers.map((t) => (
+                      <tr key={t.code} className="border-b border-slate-50">
+                        <td className="py-2 font-medium">{t.label}</td>
+                        <td className="py-2">
+                          {t.max_students == null ? "Sınırsız öğrenci" : `${t.max_students} öğrenciye kadar`}
+                        </td>
+                        <td className="py-2 text-right font-semibold">{tl(t.monthly)}/ay</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="mt-10">
+              <PricingCards initial={catalog} variant="institution" />
+            </div>
+
+            {/* Kurum kademeleri */}
+            <div className="mt-14">
+              <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h2 className="font-display text-lg font-bold">Kurum kademeleri — koç sayısına göre</h2>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Fiyat koç sayısına göre kademelidir (toplam aylık). Ücretsiz {catalog.institution.free.teachers} öğretmen
+                  ve {catalog.institution.free.students} öğrenci ile dene. {catalog.institution.trial_days} gün pilot.
+                </p>
+                <table className="mt-4 w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100 text-left text-xs text-muted-foreground">
+                      <th className="pb-2 font-medium">Kademe</th>
+                      <th className="pb-2 font-medium">Koç</th>
+                      <th className="pb-2 text-right font-medium">Aylık (toplam)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {catalog.institution.tiers.map((t) => (
+                      <tr key={t.code} className="border-b border-slate-50">
+                        <td className="py-2 font-medium">{t.label}</td>
+                        <td className="py-2">
+                          {t.max_coaches == null
+                            ? `${t.min_coaches}+ koç`
+                            : `${t.min_coaches}–${t.max_coaches} koç`}
+                        </td>
+                        <td className="py-2 text-right font-semibold">
+                          {t.price_hidden || t.monthly_total == null ? "Özel teklif" : `${tl(t.monthly_total)}/ay`}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="mt-3 text-xs text-muted-foreground">
+                  Her koç ortalama {catalog.institution.students_per_coach} öğrenciye kadar takip eder.
+                  50+ koç ve özel okullar için white-label dahil özel sözleşme sunulur.
+                </p>
+              </div>
+            </div>
+
+            {/* Kurumsal — fiyat yok, iletişim formu */}
+            <div className="mt-12">
+              <InstitutionContact catalog={catalog} autoFocus />
+            </div>
+          </>
+        )}
 
         {/* AI note */}
         <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-cyan-200 bg-cyan-50/60 p-5 text-sm text-slate-700">

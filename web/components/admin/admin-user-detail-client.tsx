@@ -196,16 +196,18 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
 // ============================================================================
 
 const SOLO_PLAN_OPTIONS: { value: string; label: string }[] = [
-  { value: "solo_pro", label: "Solo Pro" },
-  { value: "solo_elite", label: "Solo Elite" },
+  { value: "solo_pro", label: "Solo Başlangıç (≤10)" },
+  { value: "solo_elite", label: "Solo (≤25)" },
+  { value: "solo_unlimited", label: "Solo Sınırsız" },
   { value: "solo_free", label: "Solo Ücretsiz" },
 ];
 
 const SOLO_PLAN_LABELS: Record<string, string> = {
   solo_trial: "14 Günlük Deneme",
   solo_free: "Solo Ücretsiz",
-  solo_pro: "Solo Pro",
-  solo_elite: "Solo Elite",
+  solo_pro: "Solo Başlangıç",
+  solo_elite: "Solo",
+  solo_unlimited: "Solo Sınırsız",
 };
 
 function fmtShortDate(iso: string | null | undefined): string {
@@ -218,7 +220,7 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
   const mut = useActivateUserPlan(target.id);
   const [plan, setPlan] = React.useState("solo_pro");
   const [cycle, setCycle] = React.useState("monthly");
-  const paid = plan === "solo_pro" || plan === "solo_elite";
+  const paid = plan === "solo_pro" || plan === "solo_elite" || plan === "solo_unlimited";
   const sub = target.subscription_status;
   const isActive = sub === "active";
 

@@ -63,6 +63,13 @@ PLAN_ALLOCATIONS: dict[str, int] = {
     "solo_trial": 50,
     "solo_pro": 500,
     "solo_elite": 2000,
+    "solo_unlimited": 4000,
+    # Kurum planları (period başına kredi) — gerçek plan kodları (stale free
+    # fallback'i önler; ücretli kurum 50 krediye düşmesin).
+    "institution_free": 50,
+    "institution_trial": 2000,
+    "etut_standart": 5000,
+    "dershane_pro": 20000,
 }
 
 # Çağrı tipi başına kredi maliyeti (TUNABLE).

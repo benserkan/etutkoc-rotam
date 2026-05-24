@@ -13,11 +13,32 @@ function fmt(n: number): string {
   return n.toLocaleString("tr-TR");
 }
 
+type CardsVariant = "landing" | "solo" | "institution";
+
+function selectCards(catalog: PricingCatalog, variant: CardsVariant): PricingCard[] {
+  const cards = catalog.cards;
+  if (variant === "solo") return cards.filter((c) => c.audience === "solo");
+  if (variant === "institution") return cards.filter((c) => c.audience === "institution");
+  // landing: özet üçlü — Ücretsiz + öne çıkan Solo + Kurum
+  const free = cards.find((c) => c.key === "free");
+  const featured = cards.find((c) => c.audience === "solo" && c.highlight)
+    ?? cards.find((c) => c.audience === "solo");
+  const inst = cards.find((c) => c.audience === "institution");
+  return [free, featured, inst].filter(Boolean) as PricingCard[];
+}
+
 /**
  * Paylaşılan üyelik kartları — TEK KAYNAK (/api/v2/pricing).
- * Hem anasayfa paket bölümü hem /pricing sayfası bunu kullanır (tutarlılık).
+ * Hem anasayfa (variant="landing", özet üçlü) hem /pricing sekmeleri
+ * (variant="solo" → 4 kart / "institution") bunu kullanır (tutarlılık).
  */
-export function PricingCards({ initial }: { initial?: PricingCatalog }) {
+export function PricingCards({
+  initial,
+  variant = "landing",
+}: {
+  initial?: PricingCatalog;
+  variant?: CardsVariant;
+}) {
   const q = useQuery<PricingCatalog>({
     queryKey: pricingKeys.catalog(),
     queryFn: getPricingCatalog,
@@ -38,6 +59,11 @@ export function PricingCards({ initial }: { initial?: PricingCatalog }) {
   }
 
   const months = catalog.annual_paid_months;
+  const cards = selectCards(catalog, variant);
+  const gridCols =
+    cards.length >= 4 ? "md:grid-cols-2 lg:grid-cols-4"
+      : cards.length === 1 ? "max-w-md mx-auto"
+        : "md:grid-cols-3";
 
   return (
     <div className="space-y-7">
@@ -65,8 +91,8 @@ export function PricingCards({ initial }: { initial?: PricingCatalog }) {
         </p>
       </div>
 
-      <div className="grid items-stretch gap-6 md:grid-cols-3">
-        {catalog.cards.map((card) => (
+      <div className={cn("grid items-stretch gap-6", gridCols)}>
+        {cards.map((card) => (
           <PlanCard key={card.key} card={card} yearly={yearly} months={months} />
         ))}
       </div>
@@ -82,12 +108,13 @@ function PlanCard({ card, yearly, months }: { card: PricingCard; yearly: boolean
   const monthly = yearly ? Math.round((card.monthly * months) / 12) : card.monthly;
 
   // Kurum kartı fiyat göstermez — "Kurumunuza özel teklif".
+  // Solo paketleri kapaklı (sabit) fiyatlı → "X ₺/ay" (eski "'den" değil).
   let priceLabel = "Ücretsiz";
   let priceUnit = "";
   if (card.price_hidden) {
     priceLabel = card.price_caption || "Size özel teklif";
   } else if (!isFree) {
-    priceLabel = `${fmt(monthly)} ₺’den`;
+    priceLabel = `${fmt(monthly)} ₺`;
     priceUnit = "/ay";
   }
   const priceNote = yearly && !isFree && !card.price_hidden

@@ -40,27 +40,19 @@ logger = logging.getLogger(__name__)
 
 # Plan başına anlık entity limitleri.
 # -1 = sınırsız, 0 = kapalı (oluşturulamaz)
+# Kurum plan kotaları — pricing.py institution_tiers ile UYUMLU (tek model):
+#   teachers = tier max_coaches · students = max_coaches × students_per_coach(30)
+#   institution_free: 2 öğretmen / 20 öğrenci (pricing free) · enterprise: sınırsız.
+# NOT: anahtarlar GERÇEK plan kodlarıdır (eski free/starter/professional STALE idi
+# → ücretli kurumlar yanlışlıkla free'ye düşüyordu; düzeltildi).
 PLAN_QUOTAS: dict[str, dict[str, int]] = {
-    "free": {
-        "teachers": 2,
-        "students": 20,
-        "institution_admins": 1,
-    },
-    "starter": {
-        "teachers": 10,
-        "students": 200,
-        "institution_admins": 3,
-    },
-    "professional": {
-        "teachers": 50,
-        "students": 2000,
-        "institution_admins": 10,
-    },
-    "enterprise": {
-        "teachers": -1,
-        "students": -1,
-        "institution_admins": -1,
-    },
+    "institution_free": {"teachers": 2, "students": 20, "institution_admins": 1},
+    "institution_trial": {"teachers": 10, "students": 300, "institution_admins": 3},
+    "etut_standart": {"teachers": 10, "students": 300, "institution_admins": 3},
+    "dershane_pro": {"teachers": 50, "students": 1500, "institution_admins": 5},
+    "enterprise": {"teachers": -1, "students": -1, "institution_admins": -1},
+    # Geriye uyum (eski anahtar) — institution_free ile aynı.
+    "free": {"teachers": 2, "students": 20, "institution_admins": 1},
 }
 
 QUOTA_KEYS: tuple[str, ...] = ("teachers", "students", "institution_admins")
@@ -124,10 +116,10 @@ class QuotaInfo:
 
 
 def _normalize_plan(plan: str | None) -> str:
-    """Bilinmeyen plan → 'free' fallback (defansif)."""
+    """Bilinmeyen plan → 'institution_free' fallback (defansif)."""
     if plan and plan in PLAN_QUOTAS:
         return plan
-    return "free"
+    return "institution_free"
 
 
 def get_default_limit(plan: str, quota_key: str) -> int:

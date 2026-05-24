@@ -42,33 +42,33 @@ def main():
     r = c.get("/api/v2/pricing")
     j = r.json() if r.status_code == 200 else {}
     check("1. anonim GET /pricing → 200", r.status_code == 200, f"status={r.status_code}")
-    check("1b. solo bant + kurum tier yapısı",
-          len(j.get("solo", {}).get("bands", [])) == 3 and len(j.get("institution", {}).get("tiers", [])) == 3
+    check("1b. solo tier + kurum tier yapısı",
+          len(j.get("solo", {}).get("tiers", [])) == 3 and len(j.get("institution", {}).get("tiers", [])) == 3
           and j.get("solo", {}).get("free", {}).get("students") == 3,
           f"{j}")
     cards = j.get("cards", [])
     card_keys = {c.get("key") for c in cards}
-    solo_card = next((c for c in cards if c.get("key") == "solo"), {})
-    check("1d. pazarlama kartları (free/solo/institution) + fayda metni",
-          card_keys == {"free", "solo", "institution"}
+    solo_card = next((c for c in cards if c.get("key") == "solo_elite"), {})
+    check("1d. pazarlama kartları (free + 3 solo + institution) + En popüler",
+          card_keys == {"free", "solo_pro", "solo_elite", "solo_unlimited", "institution"}
           and solo_card.get("highlight") is True
           and len(solo_card.get("features", [])) >= 4
-          and solo_card.get("plan") == "solo_pro",
+          and solo_card.get("plan") == "solo_elite",
           f"keys={card_keys} solo={solo_card.get('plan')}")
     check("1c. AI free=kapalı, ücretli=açık",
           j.get("solo", {}).get("free", {}).get("ai_included") is False
           and j.get("solo", {}).get("ai_included") is True, f"{j.get('solo')}")
 
-    # 2. solo bantlar
-    cases = [(0, 0), (3, 2000), (5, 2000), (6, 4000), (15, 4000), (16, 6000), (30, 6000), (40, 6000 + 10 * 200)]
+    # 2. solo kapaklı tier'lar: ≤10→2500, ≤25→5000, 25+→7500
+    cases = [(0, 0), (3, 2500), (10, 2500), (11, 5000), (25, 5000), (26, 7500), (100, 7500)]
     ok = all(pricing.compute_solo_monthly(n) == exp for n, exp in cases)
-    check("2. compute_solo_monthly bantları", ok,
+    check("2. compute_solo_monthly kapaklı tier'lar", ok,
           str([(n, pricing.compute_solo_monthly(n), exp) for n, exp in cases]))
 
-    # 3. kurum koç-başı
-    inst = [(5, 5 * 4000), (10, 10 * 4000), (30, 30 * 3000), (60, 60 * 2500)]
+    # 3. kurum toplam kademe: ≤10→10k, ≤50→30k, 50+→None (özel teklif)
+    inst = [(5, 10000), (10, 10000), (30, 30000), (50, 30000), (60, None)]
     ok = all(pricing.compute_institution_monthly(n) == exp for n, exp in inst)
-    check("3. compute_institution_monthly", ok,
+    check("3. compute_institution_monthly toplam kademe", ok,
           str([(n, pricing.compute_institution_monthly(n), exp) for n, exp in inst]))
 
     # 4. tier eşleşmesi

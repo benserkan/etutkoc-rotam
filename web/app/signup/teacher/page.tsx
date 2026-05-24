@@ -24,26 +24,33 @@ interface TurnstileConfig {
   site_key: string | null;
 }
 
-// Denemede HEMEN açık olanlar (yapay zekâ HARİÇ — o Solo'ya geçince).
-const TRIAL_OPEN: { title: string; sub: string }[] = [
-  { title: "Sınırsız öğrenci", sub: "Deneme boyunca öğrenci kapasiten yok" },
-  { title: "Haftalık plan + günlük görev yönetimi", sub: "Programı kur, takip et" },
-  { title: "Veliye otomatik ilerleme bildirimi", sub: "Veli sürekli 'ne yapıyor?' diye sormaz" },
-  { title: "Deneme ve net gelişim takibi", sub: "Sınav sonuçları + akademik grafik" },
-  { title: "Risk paneli + aralıklı tekrar", sub: "Kopan öğrenciyi erken yakala" },
-];
-
 function PlanValuePanel({
   card,
+  planLabel,
+  capText,
   trialDays,
   freeStudents,
 }: {
   card: PricingCard | null;
+  planLabel: string;
+  capText: string;          // seçilen paketin öğrenci kapasitesi (örn. "10 öğrenciye kadar")
   trialDays: number;
   freeStudents: number;
 }) {
-  const planName = card?.name ?? "Solo";
+  const planName = card?.name ?? planLabel;
   const tagline = card?.tagline ?? "Büyüyen, yapay zekâ kullanan koç için";
+
+  // Denemede HEMEN açık olanlar — yapay zekâ DAHİL (50 kredi tavanıyla).
+  // Öğrenci sayısı buraya YAZILMAZ: deneme tüm özellikleri açar; öğrenci
+  // kapasitesi paket bilgisidir (aşağıdaki "Seçtiğin paket" rozeti).
+  const trialOpen: { title: string; sub: string }[] = [
+    { title: "Yapay zekâ hazırlığı — 50 kredi", sub: "Sesli dikte, fotoğraftan not, koçluk içgörüsü denemede açık" },
+    { title: "Haftalık plan + günlük görev yönetimi", sub: "Programı kur, takip et" },
+    { title: "Veliye otomatik ilerleme bildirimi", sub: "Veli sürekli 'ne yapıyor?' diye sormaz" },
+    { title: "Deneme ve net gelişim takibi", sub: "Sınav sonuçları + akademik grafik" },
+    { title: "Risk paneli + aralıklı tekrar", sub: "Kopan öğrenciyi erken yakala" },
+  ];
+
   return (
     <div>
       <h2 className="font-display text-2xl font-extrabold tracking-tight sm:text-3xl">
@@ -51,11 +58,17 @@ function PlanValuePanel({
       </h2>
       <p className="mt-2 text-sm text-muted-foreground">{tagline}</p>
 
+      {/* Seçtiğin paket — öğrenci kapasitesi paket bilgisi olarak net gösterilir */}
+      <div className="mt-4 inline-flex items-center gap-2 rounded-xl border border-cyan-200 bg-cyan-50/70 px-3 py-2 text-sm">
+        <span className="font-semibold text-cyan-800">Seçtiğin paket:</span>
+        <span className="font-medium text-foreground">{planName} · {capText}</span>
+      </div>
+
       <p className="mt-6 text-xs font-semibold uppercase tracking-wide text-cyan-700">
         Denemende hemen açık
       </p>
       <ul className="mt-3 space-y-3.5">
-        {TRIAL_OPEN.map((b) => (
+        {trialOpen.map((b) => (
           <li key={b.title} className="flex items-start gap-3">
             <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-700">
               <Check className="size-3.5" aria-hidden />
@@ -68,24 +81,19 @@ function PlanValuePanel({
         ))}
       </ul>
 
-      {/* Yapay zekâ — Solo'ya geçince (dürüst çerçeve) */}
+      {/* 14 gün sonra — dürüst çerçeve: ücretsiz plana düşüş + AI kapanması */}
       <div className="mt-6 rounded-2xl border border-amber-200 bg-amber-50/70 p-4 text-sm text-amber-900">
         <p className="flex items-center gap-1.5 font-semibold text-amber-800">
-          <Sparkles className="size-4 text-amber-500" aria-hidden /> Yapay zekâ — Solo aboneliğinde
+          <Sparkles className="size-4 text-amber-500" aria-hidden /> {trialDays} gün sonra ne olur?
         </p>
         <p className="mt-1.5 flex items-start gap-2">
           <Lock className="mt-0.5 size-3.5 shrink-0 opacity-70" aria-hidden />
           <span>
-            Sesli dikte, fotoğraftan not doldurma ve koçluk içgörüsü <strong>Solo</strong>
-            {" "}planını başlatınca devreye girer. Denemede ve ücretsiz planda kapalıdır.
+            Yükseltmezsen hesabın <strong>Solo Ücretsiz</strong>&apos;e ({freeStudents} öğrenci)
+            kibarca düşer ve yapay zekâ kapanır; verilerin korunur. <strong>{planName}</strong>
+            {" "}paketine geçince öğrenci kapasiten ve yapay zekâ kesintisiz devam eder.
           </span>
         </p>
-      </div>
-
-      <div className="mt-4 rounded-2xl border border-cyan-200 bg-cyan-50/60 p-4 text-sm text-cyan-900">
-        <span className="font-semibold text-cyan-800">{trialDays} gün sonra:</span>{" "}
-        Hesabın Solo Ücretsiz&apos;e ({freeStudents} öğrenci) kibarca düşer; verilerin
-        korunur. İstediğin an Solo&apos;ya yükseltebilirsin.
       </div>
     </div>
   );
@@ -113,11 +121,27 @@ export default async function SignupTeacherPage({
   const cards = catalog?.cards ?? [];
   const requested = cards.find((c) => c.plan === planParam) ?? null;
   const isInstitutionPlan = requested?.audience === "institution";
-  // Deneme her zaman Pro deneyimi (sınırsız öğrenci) verir → panel hep Solo
-  // kartını gösterir (free seçilse bile). `requested` yalnız kurum tespitinde.
-  const soloCard = cards.find((c) => c.key === "solo") ?? null;
+  // Gelinen solo paketi gösterilir; yoksa öne çıkan Solo kartı (free/kurum seçilse bile).
+  const soloCard =
+    (requested && requested.audience === "solo" ? requested : null) ??
+    cards.find((c) => c.audience === "solo" && c.highlight) ??
+    cards.find((c) => c.audience === "solo") ??
+    null;
   const trialDays = catalog?.solo.trial_days ?? 14;
   const freeStudents = catalog?.solo.free.students ?? 3;
+
+  // Seçilen Solo paketinin öğrenci tavanı — "denemede hemen açık" satırı bununla
+  // tutarlı olmalı (örn. Solo Başlangıç → 10 öğrenci; "sınırsız" değil).
+  const soloTiers = catalog?.solo.tiers ?? [];
+  const selectedTier =
+    soloTiers.find((t) => t.code === (soloCard?.plan ?? planParam)) ??
+    soloTiers.find((t) => t.code === planParam) ??
+    null;
+  const planLabel = soloCard?.name ?? selectedTier?.label ?? "Solo";
+  const capText =
+    selectedTier && selectedTier.max_students != null
+      ? `${selectedTier.max_students} öğrenciye kadar`
+      : "Sınırsız öğrenci";
 
   return (
     <main className="force-light min-h-screen bg-background px-4 py-12">
@@ -147,7 +171,13 @@ export default async function SignupTeacherPage({
             <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800">
               <Sparkles className="size-3.5 text-amber-500" aria-hidden /> {trialDays} gün ücretsiz · kart gerekmez
             </div>
-            <PlanValuePanel card={soloCard} trialDays={trialDays} freeStudents={freeStudents} />
+            <PlanValuePanel
+              card={soloCard}
+              planLabel={planLabel}
+              capText={capText}
+              trialDays={trialDays}
+              freeStudents={freeStudents}
+            />
           </div>
 
           {/* Form */}

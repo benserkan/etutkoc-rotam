@@ -47,8 +47,9 @@ logger = logging.getLogger(__name__)
 # Bireysel bağımsız öğretmen yolu (B2C self-serve)
 SOLO_TRIAL = "solo_trial"
 SOLO_FREE = "solo_free"
-SOLO_PRO = "solo_pro"
-SOLO_ELITE = "solo_elite"
+SOLO_PRO = "solo_pro"          # ≤10 öğrenci (Solo Başlangıç)
+SOLO_ELITE = "solo_elite"     # ≤25 öğrenci (Solo)
+SOLO_UNLIMITED = "solo_unlimited"  # 25+ sınırsız (Solo Sınırsız)
 
 # Kurumsal yol (B2B sözleşmeli)
 INSTITUTION_TRIAL = "institution_trial"
@@ -58,7 +59,7 @@ DERSHANE_PRO = "dershane_pro"
 ENTERPRISE = "enterprise"
 
 
-SOLO_PLANS = (SOLO_TRIAL, SOLO_FREE, SOLO_PRO, SOLO_ELITE)
+SOLO_PLANS = (SOLO_TRIAL, SOLO_FREE, SOLO_PRO, SOLO_ELITE, SOLO_UNLIMITED)
 INSTITUTION_PLANS = (
     INSTITUTION_TRIAL, INSTITUTION_FREE, ETUT_STANDART,
     DERSHANE_PRO, ENTERPRISE,
@@ -142,21 +143,20 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
     ),
     SOLO_PRO: PlanInfo(
         code=SOLO_PRO,
-        label="Solo Pro",
-        short_description="15 öğrenciye kadar, AI + WhatsApp dahil",
+        label="Solo Başlangıç",
+        short_description="10 öğrenciye kadar, AI dahil",
         long_description=(
-            "Aktif çalışan koçluk için en popüler plan. 15 aktif öğrenci, "
-            "yapay zeka şablon önerisi (300 kredi/ay), WhatsApp veli bildirimi "
-            "(500 mesaj/ay dahil), haftalık otomatik raporlar."
+            "Küçük ama düzenli büyüyen koçluk için. 10 aktif öğrenciye kadar, "
+            "yapay zeka özellikleri + veli bildirimi + haftalık raporlar dahil."
         ),
-        price_monthly_try=299,
-        price_yearly_try=2691,   # 9 × 299 (1 ay bonus)
+        price_monthly_try=2500,
+        price_yearly_try=25000,  # 10 ay (2 ay bedava)
         audience="solo",
         tier_rank=2,
         features_included=[
-            "15 aktif öğrenci",
-            "Yapay zeka önerisi (300 kredi/ay)",
-            "WhatsApp veli bildirimi (500 mesaj/ay)",
+            "10 öğrenciye kadar",
+            "Yapay zeka özellikleri",
+            "Veli bildirimi + deneme/net grafiği",
             "Haftalık otomatik raporlar",
             "Tüm temel özellikler",
         ],
@@ -164,33 +164,53 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
             "Sınırsız öğrenci",
             "Veli portalı",
         ],
-        cta_label="Solo Pro'ya Geç",
-        badge="⭐ En Popüler",
+        cta_label="Solo Başlangıç'a Geç",
     ),
     SOLO_ELITE: PlanInfo(
         code=SOLO_ELITE,
-        label="Solo Elite",
-        short_description="Sınırsız öğrenci, tüm özellikler",
+        label="Solo",
+        short_description="25 öğrenciye kadar, AI dahil",
         long_description=(
-            "Yoğun talep alan, çok öğrencili koçlar için. Sınırsız öğrenci, "
-            "yapay zeka 1500 kredi/ay, WhatsApp 1500 mesaj/ay, veli portalı dahil, "
-            "60 gün performans garantisi opsiyonu."
+            "Yoğun, yapay zekâ kullanan koç için en popüler plan. 25 aktif "
+            "öğrenciye kadar, tüm yapay zeka özellikleri + veli bildirimi + "
+            "haftalık/günlük raporlar + öncelikli destek."
         ),
-        price_monthly_try=599,
-        price_yearly_try=5391,   # 9 × 599
+        price_monthly_try=5000,
+        price_yearly_try=50000,  # 10 ay
         audience="solo",
         tier_rank=3,
         features_included=[
-            "Sınırsız öğrenci",
-            "Yapay zeka önerisi (1500 kredi/ay)",
-            "WhatsApp veli bildirimi (1500 mesaj/ay)",
-            "Veli portalı dahil",
+            "25 öğrenciye kadar",
+            "Tüm yapay zeka özellikleri",
+            "Veli bildirimi + deneme/net grafiği",
             "Haftalık + günlük raporlar",
             "Öncelikli destek",
-            "60 gün performans garantisi",
+        ],
+        features_excluded=["Sınırsız öğrenci"],
+        cta_label="Solo'ya Yükselt",
+        badge="⭐ En Popüler",
+    ),
+    SOLO_UNLIMITED: PlanInfo(
+        code=SOLO_UNLIMITED,
+        label="Solo Sınırsız",
+        short_description="Sınırsız öğrenci, tüm özellikler",
+        long_description=(
+            "Mini-kurum ölçeğindeki güç koçu için. Sınırsız öğrenci, tüm yapay "
+            "zeka özellikleri, veli bildirimi, haftalık/günlük raporlar, öncelikli destek."
+        ),
+        price_monthly_try=7500,
+        price_yearly_try=75000,  # 10 ay
+        audience="solo",
+        tier_rank=4,
+        features_included=[
+            "Sınırsız öğrenci",
+            "Tüm yapay zeka özellikleri",
+            "Veli bildirimi + deneme/net grafiği",
+            "Haftalık + günlük raporlar",
+            "Öncelikli destek",
         ],
         features_excluded=[],
-        cta_label="Elite'e Yükselt",
+        cta_label="Sınırsız'a Yükselt",
     ),
 
     # ---------- KURUMSAL ----------
@@ -246,18 +266,18 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
     ETUT_STANDART: PlanInfo(
         code=ETUT_STANDART,
         label="Etüt Standart",
-        short_description="2-10 koç, 200 öğrenciye kadar",
+        short_description="2-10 koç, 300 öğrenciye kadar",
         long_description=(
             "Etüt merkezleri ve butik dershaneler için en uygun plan. "
-            "Koç başına aylık 199 ₺, öğrenci başına aylık 15 ₺. "
+            "Toplam aylık 10.000 ₺ (≤10 koç). "
             "Yapay zeka, WhatsApp veli bildirimi, haftalık raporlar dahil."
         ),
-        price_monthly_try=199,   # koç başı; öğrenci başı +15 ₺
-        price_yearly_try=1791,   # 9 × 199
+        price_monthly_try=10000,   # toplam kademe (≤10 koç)
+        price_yearly_try=100000,   # 10 ay (2 ay bedava)
         audience="institution",
         tier_rank=2,
         features_included=[
-            "2-10 koç, 200 öğrenciye kadar",
+            "2-10 koç, 300 öğrenciye kadar",
             "Yapay zeka önerisi",
             "WhatsApp veli bildirimi",
             "Haftalık + aylık raporlar",
@@ -274,18 +294,18 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
     DERSHANE_PRO: PlanInfo(
         code=DERSHANE_PRO,
         label="Dershane Pro",
-        short_description="10-50 koç, 2000 öğrenciye kadar",
+        short_description="11-50 koç, 1500 öğrenciye kadar",
         long_description=(
-            "Büyük dershane ve eğitim kurumları için. Yıllık plan + akademik yıl "
-            "uyumu (Eylül-Haziran 10 ay peşin) + yaz pause seçeneği + "
-            "öncelikli destek. Toplu fiyat üzerinden indirim."
+            "Büyük dershane ve eğitim kurumları için. Toplam aylık 30.000 ₺ "
+            "(≤50 koç). Akademik yıl uyumu (Eylül-Haziran 10 ay peşin) + yaz "
+            "pause seçeneği + öncelikli destek. Hacim avantajı + 60 gün garanti."
         ),
-        price_monthly_try=2999,   # tahmini başlangıç
-        price_yearly_try=26991,
+        price_monthly_try=30000,   # toplam kademe (≤50 koç)
+        price_yearly_try=300000,   # 10 ay (2 ay bedava)
         audience="institution",
         tier_rank=3,
         features_included=[
-            "10-50 koç, 2000 öğrenciye kadar",
+            "11-50 koç, 1500 öğrenciye kadar",
             "Akademik yıl planı (10 ay peşin)",
             "Yaz pause seçeneği",
             "Tüm Etüt Standart özellikleri",
@@ -381,10 +401,11 @@ def ai_premium_allowed(db: Session, user: User) -> bool:
 # Bağımsız öğretmen plan'larında aktif öğrenci limiti.
 # -1 = sınırsız, 0 = kapalı.
 SOLO_STUDENT_LIMITS: dict[str, int] = {
-    SOLO_TRIAL: -1,        # trial sırasında pro deneyim — sınırsız
+    SOLO_TRIAL: -1,        # trial sırasında pro deneyim — sınırsız (kredi tavanlı)
     SOLO_FREE: 3,          # ücretsiz tier — 3 öğrenci (sert sınır)
-    SOLO_PRO: -1,          # ücretli — öğrenci bandına göre fiyatlanır (sert sınır YOK)
-    SOLO_ELITE: -1,        # sınırsız
+    SOLO_PRO: 10,          # Solo Başlangıç — ≤10 öğrenci (sert sınır)
+    SOLO_ELITE: 25,        # Solo — ≤25 öğrenci (sert sınır)
+    SOLO_UNLIMITED: -1,    # Solo Sınırsız — sınırsız
 }
 
 

@@ -80,7 +80,7 @@ def _seed() -> dict:
     with SessionLocal() as db:
         alpha = Institution(
             name=ALPHA_NAME, slug=f"{PFX}-alpha",
-            contact_email="alpha@test.invalid", plan="free", is_active=True,
+            contact_email="alpha@test.invalid", plan="etut_standart", is_active=True,
         )
         beta = Institution(
             name=BETA_NAME, slug=f"{PFX}-beta",

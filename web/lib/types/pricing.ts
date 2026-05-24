@@ -1,7 +1,9 @@
 // /api/v2/pricing — public üyelik/fiyat kataloğu (tek kaynak: app/services/pricing.py)
 
-export interface SoloBand {
-  max_students: number;
+export interface SoloTier {
+  code: string;                 // solo_pro | solo_elite | solo_unlimited
+  label: string;
+  max_students: number | null;  // null = sınırsız
   monthly: number;
 }
 
@@ -10,7 +12,8 @@ export interface InstitutionTier {
   label: string;
   min_coaches: number;
   max_coaches: number | null;
-  per_coach_monthly: number;
+  monthly_total: number | null; // null = özel teklif (price_hidden)
+  price_hidden: boolean;
   white_label: boolean;
   short: string;
 }
@@ -22,7 +25,7 @@ export interface PricingCard {
   name: string;
   tagline: string;
   monthly: number;        // 0 = ücretsiz; "from" referans aylık
-  price_label: string;    // "Ücretsiz" | "2.000 ₺’den"
+  price_label: string;    // "Ücretsiz" | "2.500 ₺"
   price_unit?: string;    // "/ay"
   price_note?: string;
   tone?: string;          // plain | featured | dark (görsel ton)
@@ -52,8 +55,7 @@ export interface PricingCatalog {
   solo: {
     trial_days: number;
     free: { students: number; ai_included: boolean };
-    bands: SoloBand[];
-    over_cap_per_student: number;
+    tiers: SoloTier[];
     ai_included: boolean;
   };
   institution: {
