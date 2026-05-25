@@ -14,7 +14,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # pnpm'i corepack üzerinden aktive et — Node 22 dahili
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 
 # Bağımlılık manifestoları (kod değişimi onları etkilemediği sürece bu katman cache'lenir)
 COPY package.json pnpm-lock.yaml ./
@@ -28,7 +28,7 @@ RUN pnpm install --frozen-lockfile
 FROM node:22-alpine AS builder
 
 RUN apk add --no-cache libc6-compat
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 
 WORKDIR /app
 
