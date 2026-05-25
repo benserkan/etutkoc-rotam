@@ -110,7 +110,7 @@ class User(Base):
     # üreticileri bu kullanıcıyı atlar. Manuel veya otonom (inaktivite cron'u)
     # tetiklenir. pause_reason ile ayrılır: "manual" / "auto_inactivity".
     is_paused: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False, server_default=text("0"),
+        Boolean, default=False, nullable=False, server_default=text("false"),
     )
     paused_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True,
@@ -153,7 +153,7 @@ class User(Base):
     # değiştirilince False olur. İleride üyelik/davetiye akışında token-flow
     # bunu da temsil edecek (token kullanılıp şifre belirlenince True→False).
     must_change_password: Mapped[bool] = mapped_column(
-        Boolean, default=False, nullable=False, server_default=text("0")
+        Boolean, default=False, nullable=False, server_default=text("false")
     )
     # E-posta doğrulama (Dalga 7 P3) — soft: NULL = doğrulanmamış (panelde banner),
     # dolu = doğrulandı. Mevcut kullanıcılar migration'da geriye dönük doğrulanır.

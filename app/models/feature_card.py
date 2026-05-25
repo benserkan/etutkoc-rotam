@@ -206,13 +206,13 @@ class FeatureCard(Base):
         Integer, nullable=False, server_default=text("3"),
     )
     manual_pin: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("0"),
+        Boolean, nullable=False, server_default=text("false"),
     )
     pin_until: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True,
     )
     manual_hide: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, server_default=text("0"),
+        Boolean, nullable=False, server_default=text("false"),
     )
 
     # --- CTA ---

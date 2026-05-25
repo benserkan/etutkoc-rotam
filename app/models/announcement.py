@@ -89,7 +89,7 @@ class SystemAnnouncement(Base):
     )
 
     dismissible: Mapped[bool] = mapped_column(
-        Boolean, nullable=False, default=True, server_default=text("1"),
+        Boolean, nullable=False, default=True, server_default=text("true"),
     )
 
     created_by: Mapped[int | None] = mapped_column(

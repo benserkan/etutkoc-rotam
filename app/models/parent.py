@@ -165,7 +165,7 @@ class ParentNotificationPref(Base):
     teacher_note_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     # Faz 8: sınav yaklaşıyor tetikleyicisi (D-30, D-7, D-1) — varsayılan açık.
     exam_approaching_enabled: Mapped[bool] = mapped_column(
-        Boolean, default=True, nullable=False, server_default=sa_text("1")
+        Boolean, default=True, nullable=False, server_default=sa_text("true")
     )
 
     # WhatsApp — telefon doğrulanmadan gönderim yapılmaz
