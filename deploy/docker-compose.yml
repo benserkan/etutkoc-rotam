@@ -75,6 +75,16 @@ services:
       WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN}
       WHATSAPP_APP_SECRET: ${WHATSAPP_APP_SECRET}
       WHATSAPP_WEBHOOK_VERIFY_TOKEN: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN}  # GET /webhooks/whatsapp verify aşaması
+      # ---- Yapay Zekâ (Gemini) — boş bırakılırsa süper admin panelden girilebilir ----
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}              # virgülle çoklu: ilk=ücretli, kalan=ücretsiz
+      GEMINI_PAID_API_KEY: ${GEMINI_PAID_API_KEY:-}    # açıkça ücretli (öncelikli)
+      GEMINI_FREE_API_KEYS: ${GEMINI_FREE_API_KEYS:-}  # virgülle ayrılmış ücretsiz key'ler
+      GEMINI_PAID_MODEL: ${GEMINI_PAID_MODEL:-gemini-2.5-pro}
+      GEMINI_FREE_MODEL: ${GEMINI_FREE_MODEL:-gemini-2.5-flash}
+      # ---- Cloudflare Turnstile (CAPTCHA) — ikisi de boşsa otomatik kapalı ----
+      TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
+      TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
+      TURNSTILE_ENABLED: ${TURNSTILE_ENABLED:-1}
       # ---- Worker'la çakışma önlemi ----
       LGS_RUN_BACKGROUND: "false"    # web'de cron/dispatcher KAPALI
       # ---- Gunicorn ----

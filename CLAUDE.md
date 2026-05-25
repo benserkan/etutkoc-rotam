@@ -2867,6 +2867,25 @@ kalıyordu.
   düzenle→tutarlı · kitapsız deneme→label korunur). Regresyon: weekly_plan 14 +
   teacher_read 12 + task_templates 11 + paywall 5 + itemless 10 GREEN.
 
+## Deploy hazırlığı — repo-içi eksikler kapatıldı (2026-05-25)
+
+Deploy hazırlık denetiminde bulunan 4 repo-içi eksik giderildi (sunucuya
+dokunulmadı; canlı deploy + secret'lar kullanıcının sorumluluğunda):
+- **`deploy/docker-compose.yml`** (web env): **GEMINI** (`GEMINI_API_KEY`/paid/free
+  + model) + **Turnstile** (`TURNSTILE_SITE_KEY`/SECRET/ENABLED) env eklendi —
+  yoksa AI prod'da ölü kalır / CAPTCHA açılamazdı. Boş bırakılabilir (AI panelden
+  de girilebilir; Turnstile boşsa otomatik kapalı).
+- **`deploy/.env.example`**: Gemini + Turnstile bölümleri eklendi + WhatsApp'a
+  "token yoksa false yap" notu.
+- **`start.sh`**: `python -m scripts.seed_landing_cards` eklendi (anasayfa vitrin
+  kartları prod'da otomatik yayınlanır; idempotent — admin düzenlemeleri korunur).
+- **`deploy/redeploy.sh`** (yeni): düzelt→tekrar gönder döngüsü için tek komut —
+  git pull + migration öncesi DB yedeği (pg_dump) + `up -d --build` + web log takibi.
+- Doğrulama: compose YAML geçerli (5 servis, GEMINI/Turnstile web env'de) +
+  seed_landing_cards idempotent (11 atlandı). **Kullanıcının sağlayacağı**: sunucu
+  + Static IP + alan adı/DNS + güçlü secret'lar (`openssl rand -hex 32`) + SMTP.
+  **Karar**: temiz prod DB (dev verisi taşınmaz), WhatsApp ilk açılışta `false`.
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

@@ -10,6 +10,9 @@ alembic upgrade head
 # Müfredat seed (idempotent — yoksa ekler, varsa atlar)
 python -m scripts.seed || true
 
+# Anasayfa vitrin kartları seed (idempotent — var olanı ezmez, admin düzenlemeleri korunur)
+python -m scripts.seed_landing_cards || true
+
 # Gunicorn ile başlat (uvicorn worker'ları)
 PORT="${PORT:-8000}"
 WORKERS="${WORKERS:-2}"
