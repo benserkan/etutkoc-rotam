@@ -19,8 +19,11 @@ RUN corepack enable && corepack prepare pnpm@11.1.2 --activate
 # Bağımlılık manifestoları (kod değişimi onları etkilemediği sürece bu katman cache'lenir)
 COPY package.json pnpm-lock.yaml ./
 
-# Build için dev bağımlılıklarını da kur
-RUN pnpm install --frozen-lockfile
+# Build için dev bağımlılıklarını da kur.
+# --ignore-scripts: yeni pnpm, build script'i olan paketleri (sharp/msw/unrs-resolver)
+# onaysız reddedip ERR_PNPM_IGNORED_BUILDS ile çöküyor. Bu paketler prebuilt binary
+# kullanır (build script gerekmez) → scriptleri atlamak güvenli + deterministik.
+RUN pnpm install --frozen-lockfile --ignore-scripts
 
 # -----------------------------------------------------------------------------
 # Stage 2: builder — Next.js build (.next/standalone üretir)
