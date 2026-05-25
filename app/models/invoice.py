@@ -96,7 +96,8 @@ class Invoice(Base):
     __table_args__ = (
         Index("ix_invoices_institution_status", "institution_id", "status"),
         Index("ix_invoices_user_status", "user_id", "status"),
-        Index("ix_invoices_due_at", "due_at"),
+        # ix_invoices_due_at: due_at kolonunda index=True ile zaten üretiliyor —
+        # açık tanım çift indeks (create_all'da "already exists") yapıyordu, kaldırıldı.
         Index("ix_invoices_status_due", "status", "due_at"),
         CheckConstraint(
             "(owner_type = 'institution' AND institution_id IS NOT NULL AND user_id IS NULL) "
