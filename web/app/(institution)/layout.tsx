@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { apiServer } from "@/lib/api-server";
 import { ApiError } from "@/lib/api";
 import type { MyAccountResponse } from "@/lib/types/me";
+import { roleHome } from "@/lib/role-home";
 import { InstitutionShell } from "@/components/institution/institution-shell";
 
 /**
@@ -33,9 +34,7 @@ export default async function InstitutionLayout({
 
   const role = data.user.role;
   if (role !== "institution_admin") {
-    if (role === "teacher") redirect("/teacher/dashboard");
-    if (role === "student") redirect("/student/day");
-    redirect("/me/account");
+    redirect(roleHome(role));
   }
 
   return (

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { apiServer } from "@/lib/api-server";
 import { ApiError } from "@/lib/api";
 import type { MyAccountResponse } from "@/lib/types/me";
+import { roleHome } from "@/lib/role-home";
 import { TeacherShell } from "@/components/teacher/teacher-shell";
 
 /**
@@ -37,10 +38,7 @@ export default async function TeacherLayout({
 
   const role = data.user.role;
   if (role !== "teacher") {
-    if (role === "student") {
-      redirect("/student/day");
-    }
-    redirect("/me/account");
+    redirect(roleHome(role));
   }
 
   return (

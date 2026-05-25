@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { apiServer } from "@/lib/api-server";
 import { ApiError } from "@/lib/api";
 import type { MyAccountResponse } from "@/lib/types/me";
+import { roleHome } from "@/lib/role-home";
 import { AdminShell } from "@/components/admin/admin-shell";
 
 /**
@@ -32,11 +33,7 @@ export default async function AdminLayout({
 
   const role = data.user.role;
   if (role !== "super_admin") {
-    if (role === "institution_admin") redirect("/institution");
-    if (role === "teacher") redirect("/teacher/dashboard");
-    if (role === "student") redirect("/student/day");
-    if (role === "parent") redirect("/parent");
-    redirect("/me/account");
+    redirect(roleHome(role));
   }
 
   return <AdminShell user={data.user}>{children}</AdminShell>;

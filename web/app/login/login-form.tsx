@@ -12,7 +12,8 @@ import { Loader2 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { api, ApiError } from "@/lib/api";
-import type { LoginResponse, UserRole } from "@/lib/types/me";
+import type { LoginResponse } from "@/lib/types/me";
+import { roleHome, safeReturnUrl } from "@/lib/role-home";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,15 +27,6 @@ declare global {
   interface Window {
     turnstile?: TurnstileApi;
   }
-}
-
-/** Role bazlı default landing — _home_for (app/routes/auth.py) ile parite. */
-function defaultLandingFor(role: UserRole): string {
-  if (role === "super_admin") return "/admin";
-  if (role === "institution_admin") return "/institution";
-  if (role === "teacher") return "/teacher/dashboard";
-  if (role === "parent") return "/parent";
-  return "/student";
 }
 
 const LoginSchema = z.object({
@@ -81,7 +73,9 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
     }
     qc.clear();
     const role = res.user?.role ?? "student";
-    const target = returnUrlParam ?? defaultLandingFor(role);
+    // returnUrl yalnız kullanıcının kendi panel alanına aitse onurlandırılır;
+    // aksi halde rolün kendi paneline (rol-uyuşmazlığı + open-redirect koruması)
+    const target = safeReturnUrl(returnUrlParam, role) ?? roleHome(role);
     if (res.user) toast.success(`Hoş geldin, ${res.user.full_name}`);
     router.refresh();
     router.push(target);
