@@ -4,8 +4,10 @@
 
 set -euo pipefail
 
-# Migration uygula
-alembic upgrade head
+# DB başlat — boş DB'de modellerden create_all+stamp, mevcut DB'de upgrade head.
+# (Initial migration tabloları alfabetik yaratıyor → boş Postgres'te FK ordering
+# çöküyor; init_db doğru sırada kurar. Detay: scripts/init_db.py)
+python -m scripts.init_db
 
 # Müfredat seed (idempotent — yoksa ekler, varsa atlar)
 python -m scripts.seed || true
