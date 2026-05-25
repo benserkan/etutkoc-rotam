@@ -2957,6 +2957,31 @@ dokunma, kalsın" gereği yapılmıyor.
   `/opt/etutkoc/deploy/.env` güvenli kopyası alınmalı (DB parolası + JWT/SESSION
   secret'ları). Turnstile CAPTCHA kapalı (`.env`'de TURNSTILE_* + ENABLED=true ile açılır).
 
+## KRİTİK fix — login returnUrl rol-uyuşmazlığı / /me/account dead-end (2026-05-26)
+
+**Bağlam (kullanıcı bildirdi, localde de tekrar yaşanıyordu):** Süper admin
+giriş yapınca `/me/account`'a düşüyordu (panele giremiyor). Tarayıcı linki ipucu:
+`/login?returnUrl=%2Fteacher%2Fsettings` — kullanıcı giriş öncesi bir teacher
+route'una gitmek istemiş (proxy `returnUrl` ekler), login bunu **rolden bağımsız**
+uyguluyordu → süper admin `/teacher/settings`'e → teacher layout rol koruması onu
+`/me/account` dead-end'ine atıyordu.
+- **2 kök neden:** (a) `login-form.tsx` `returnUrlParam ?? defaultLandingFor(role)`
+  — returnUrl her zaman tercih ediliyordu (rol kontrolü yok + **open-redirect**
+  riski: `//evil.com`); (b) 5 panel layout rol-uyuşmazlığında `/me/account`
+  catch-all'una düşürüyordu (admin layout hariç — o zaten her rolü kendi paneline
+  yolluyordu).
+- **Çözüm — tek kaynak `web/lib/role-home.ts`:** `roleHome(role)` (login landing +
+  layout fallback; ASLA /me/account) + `safeReturnUrl(returnUrl, role)` (returnUrl
+  yalnız kullanıcının kendi panel alanı veya paylaşılan `/me` altındaysa onurlandır;
+  aksi halde null → open-redirect + rol-uyuşmazlığı koruması). login + 5 layout +
+  kök sayfa bunu kullanır. Verify: tsc ✅ · eslint ✅ · canlıda `next` rebuild.
+- **/me/account "güvenlik açığı" DEĞİL:** her kullanıcının kendi hesap sayfası;
+  "Hesabımı sil" anlık silme değil — 30 gün gecikmeli + iptal edilebilir KVKK
+  silme talebi, yalnız kendi hesabı (başkası süper admini silemez).
+- **KURAL:** Bir rol koruması (layout/guard) kullanıcıyı yönlendirirken `roleHome`
+  kullanır — boş sayfa veya `/me/account` dead-end bırakmak yasak. Yeni returnUrl
+  tüketen her yer `safeReturnUrl`'den geçer.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
