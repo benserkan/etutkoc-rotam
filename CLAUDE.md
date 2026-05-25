@@ -2849,6 +2849,24 @@ rozeti + "→ çıktı" satırı + aktör lejantı + döngü kapanış bandı.
 - `cn` import edildi, kullanılmayan `Users` ikonu kaldırıldı. tsc/eslint temiz · canlı
   :3000 render doğrulandı.
 
+## Hata düzeltme — yeni görev başlığı "Görev" placeholder'ı (2026-05-25)
+
+**Kullanıcı bulgusu:** Hafta/gün görünümünde görev ekleyince satır **"Görev"**
+yazıyordu; ama görevi düzenle→güncelle yapınca **"Kitap — Bölüm: N test"** oluyordu
+(tutarsız). Kök neden: tek-kalem düzenleme (`teacher_patch_task_single_item_v2`)
+başlığı kalemlerden besteliyordu ama **oluşturma (`_create_task_with_items`)
+frontend'in gönderdiği sabit `title:"Görev"`'i kullanıyordu** (add-task-form
+placeholder). Satır her zaman `task.title` gösterdiği için yeni görevde "Görev"
+kalıyordu.
+- **Düzeltme (backend, migration YOK):** paylaşılan `_compose_single_item_title(book,
+  section, planned)` helper'ı çıkarıldı; `_create_task_with_items` tek kitap-kalemli
+  görevde başlığı otomatik üretir (oluşturma = düzenleme tutarlı). Kitapsız deneme/
+  etkinlik kalemleri kendi label/başlığını korur. Single-item patch de aynı helper'ı
+  kullanır (DRY). Frontend değişmedi (backend tek kaynak).
+- **Doğrulama:** `test_task_title_autocompose.py` **3/3** (oluştur→otomatik başlık ·
+  düzenle→tutarlı · kitapsız deneme→label korunur). Regresyon: weekly_plan 14 +
+  teacher_read 12 + task_templates 11 + paywall 5 + itemless 10 GREEN.
+
 ## Dalga 7 — KAPANIŞ (2026-05-20)
 
 **5 rolün tamamı + auth/güvenlik Next.js'e taşındı. Strangler Fig tamamlandı.**

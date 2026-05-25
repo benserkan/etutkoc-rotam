@@ -2570,6 +2570,17 @@ def _next_order_for_day(db: Session, student_id: int, d: date) -> int:
     return (row[0] + 1) if row else 0
 
 
+def _compose_single_item_title(book: Book, section: BookSection, planned_count: int) -> str:
+    """Tek kitap-kalemli görev başlığı — 'Kitap — Bölüm: N test/deneme'.
+
+    Hem oluşturma (_create_task_with_items) hem tek-kalem düzenleme paylaşır →
+    yeni görev de düzenlenmiş görevle aynı okunur başlığı taşır (placeholder yok)."""
+    unit_word = "deneme" if book.type and book.type.value in (
+        "brans_denemesi", "genel_deneme",
+    ) else "test"
+    return f"{book.name} — {section.label}: {planned_count} {unit_word}"
+
+
 def _create_task_with_items(
     db: Session,
     *,
@@ -2664,6 +2675,18 @@ def _create_task_with_items(
             completed_count=0,
         ))
     db.flush()
+
+    # Tek kitap-kalemli görevde başlığı otomatik üret — tek-kalem düzenleme ile
+    # tutarlı. Frontend 'Görev' placeholder'ı yerine 'Kitap — Bölüm: N test'.
+    # (Kitapsız deneme/etkinlik kalemleri kendi label/başlığını korur.)
+    book_items = [it for it in payload.items if it.book_id is not None]
+    if len(payload.items) == 1 and len(book_items) == 1:
+        bi = book_items[0]
+        book = db.query(Book).filter(Book.id == bi.book_id).first()
+        section = db.query(BookSection).filter(BookSection.id == bi.section_id).first()
+        if book and section:
+            task.title = _compose_single_item_title(book, section, bi.planned_count)
+            db.flush()
     return task
 
 
@@ -3513,16 +3536,12 @@ def teacher_patch_task_single_item_v2(
     task.notes = (body.notes or "").strip() or None
     task.link_url = (body.link_url or "").strip() or None
 
-    # Başlığı otomatik üret (Jinja parite — book.type'a göre "test" / "deneme")
+    # Başlığı otomatik üret (oluşturma ile paylaşılan helper — book.type'a göre
+    # "test" / "deneme")
     new_book = db.query(Book).filter(Book.id == body.book_id).first()
     new_section = db.query(BookSection).filter(BookSection.id == body.section_id).first()
     if new_book and new_section:
-        unit_word = "deneme" if new_book.type and new_book.type.value in (
-            "brans_denemesi", "genel_deneme",
-        ) else "test"
-        task.title = (
-            f"{new_book.name} — {new_section.label}: {body.planned_count} {unit_word}"
-        )
+        task.title = _compose_single_item_title(new_book, new_section, body.planned_count)
 
     db.commit()
     db.refresh(task)
