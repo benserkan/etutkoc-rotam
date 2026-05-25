@@ -70,7 +70,14 @@ def main() -> int:
 
     if APPLY:
         print("APPLY — hedef şema sıfırlanıp kuruluyor...")
-        md.drop_all(bind=dest)
+        if is_pg:
+            # drop_all döngüsel FK (academic_years↔users, isimsiz constraint) yüzünden
+            # sıralayamıyor → şemayı toptan sil (cycle'dan bağımsız), yeniden kur.
+            with dest.begin() as wc:
+                wc.execute(text("DROP SCHEMA public CASCADE"))
+                wc.execute(text("CREATE SCHEMA public"))
+        else:
+            md.drop_all(bind=dest)
         md.create_all(bind=dest)
 
     kept: dict[str, set] = {}
