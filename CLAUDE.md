@@ -2916,6 +2916,47 @@ Caddy'de Next.js'e yönlenen path'ler: `/me` `/student` `/teacher` `/institution
 **Jinja dead-code** (teacher/institution/parent/admin route + template) — "Jinja'ya
 dokunma, kalsın" gereği yapılmıyor.
 
+## Canlı Yayın (Production) — 2026-05-26
+
+**Sistem CANLI:** https://rotam.etutkoc.com
+- **Sunucu:** Hetzner Cloud CPX22 (178.105.221.223), Docker Compose 5 servis
+  (db/web/worker/next/proxy). Caddy otomatik HTTPS (Let's Encrypt).
+- **DNS:** Cloudflare — `rotam` A kaydı → 178.105.221.223 (DNS-only/gri bulut,
+  Caddy LE için). Kök alan `etutkoc.com` GoDaddy'de kayıtlı, DNS Cloudflare'de.
+- **Kod yolu:** sunucuda `/opt/etutkoc`; güncelleme `deploy/redeploy.sh`
+  (git pull + DB yedek + `docker compose up -d --build`). SSH anahtarı
+  kullanıcının yerel Windows makinesinde.
+- **DB:** prod Postgres. Gerçek veri `scripts/migrate_subset.py` ile taşındı
+  (KEEP_USERS={1,2,4,6,7}, KEEP_INST={1}; FK-closure ile test/demo junk dışlandı;
+  operasyonel log tabloları SKIP). `scripts/init_db.py` (users yoksa create_all+
+  stamp / varsa upgrade head) initial-migration alfabetik FK-sırası çökmesini çözer.
+  alembic head = `l9m2p4q5p33j`.
+- **Yedekleme (2 katman):** (1) sunucuda günlük `pg_dump -Fc` cron (03:00 UTC,
+  14 gün rotasyon, `deploy/backup.sh` → `deploy/backups/*.dump`, .gitignore'da);
+  (2) Hetzner otomatik snapshot AÇIK (disk-dışı felaket kurtarma). Geri yükleme:
+  `cat backups/X.dump | docker compose exec -T db pg_restore -U lgs -d lgs --clean --if-exists`.
+- **E-posta CANLI:** Zoho SMTP (`smtp.zoho.com:587` STARTTLS, gönderim
+  `rotam@etutkoc.com`). `.env`: EMAIL_ENABLED=true + SMTP_HOST/PORT/USER/PASSWORD/
+  FROM (compose'da TLS=true/SSL=false sabit). Uçtan uca doğrulandı (raw smtplib +
+  app `send_email` APP_SEND_OK). SPF/DKIM zaten Zoho için Cloudflare'de tanımlı
+  (yeni DNS gerekmedi). Hacim artarsa ZeptoMail'e geçilir (aynı domain).
+  **NOT:** kurulumda kullanılan app şifresi sohbete sızmıştı → Zoho'dan iptal
+  edilip yeni app şifresiyle değiştirildi (`deploy/rotate_smtp.sh` ile, 2026-05-26;
+  gönderim yeni şifreyle doğrulandı).
+- **Gemini AI CANLI:** süper admin panelden ücretli (gemini-2.5-pro) + ücretsiz
+  (gemini-2.5-flash) anahtar girildi; gerçek `generate()` çağrısıyla ikisi de
+  doğrulandı (2026-05-26). AI özellikleri (foto/ses not, koçluk içgörüsü, kitap
+  şablonu) artık çalışır. Anahtarlar `system_secrets`'te (Fernet şifreli).
+- **Bekleyen (kullanıcı aksiyonu):**
+  - **Gemini AI anahtarları** — süper admin panel → Sistem → AI Ayarları'ndan
+    girilecek (Fernet anahtarı farklı olduğu için `system_secrets` taşınmadı;
+    girilene kadar AI özellikleri 502 ai_unavailable verir, diğer akışlar etkilenmez).
+  - **Ödeme** (iyzico/PayTR) — ticari üyelik/şirket gerektirir; sonraya bırakıldı.
+  - **Mobil** (iOS/Android) — en son.
+- **Güvenlik notları:** GitHub repo PUBLIC (ticari kod açıkta — private yapılmalı);
+  `/opt/etutkoc/deploy/.env` güvenli kopyası alınmalı (DB parolası + JWT/SESSION
+  secret'ları). Turnstile CAPTCHA kapalı (`.env`'de TURNSTILE_* + ENABLED=true ile açılır).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
