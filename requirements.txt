@@ -18,3 +18,4 @@ psycopg2-binary==2.9.10  # Postgres sürücüsü (prod'da kullanılır)
 
 pyotp>=2.9.0  # 2FA TOTP (Dalga 7 P4)
 cryptography>=42.0.0  # süper admin API anahtarı şifreleme (Fernet) — system_secrets
+PyJWT>=2.9.0  # JWT access/refresh + BFF cookie + api_v1 mobil (jwt_auth.py)
