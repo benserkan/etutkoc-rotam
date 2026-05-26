@@ -767,6 +767,58 @@ def solo_trial_status(
 # ---------------------------- Plan değişiklik ----------------------------
 
 
+def _refresh_current_period_allocation(
+    db: Session, *,
+    owner_type: PlanOwnerType,
+    owner_id: int,
+    new_plan: str,
+) -> None:
+    """Plan değişikliğinden sonra MEVCUT periyodun CreditAccount'unu yeni plana çek.
+
+    BUG (2026-05-26 kullanıcı bildirdi): ETUTKOC plan=free → etut_standart
+    yapıldı; PLAN_ALLOCATIONS["etut_standart"] = 10000. AMA mevcut Mayıs
+    period'un CreditAccount.allocated_credits=50 olarak donmuş kaldı (eski
+    plan_code='free'). Kullanıcı "kalan -6" gördü (eskisinin aşımı), yeni
+    plan değerinden faydalanamadı.
+
+    Çözüm: change_plan sonrası mevcut period varsa plan_code + allocated_credits
+    güncellenir. Yoksa (henüz get_or_create_account çağrılmamış) atlanır —
+    bir sonraki çağrı yeni plana göre yaratır.
+
+    Davranış:
+      - Upgrade: allocated yükselir, used korunur, remaining artar. ✓
+      - Downgrade: allocated düşer; eğer used > new_alloc, remaining negatife
+        düşer (kullanıcı zaten daha az kotaya geçti — kabul).
+    """
+    from app.services.credits import current_period, PLAN_ALLOCATIONS
+    from app.models import CreditAccount, UsageOwnerType
+
+    new_alloc = PLAN_ALLOCATIONS.get(new_plan)
+    if new_alloc is None:
+        return  # bilinmeyen plan kodu — defensif atla
+
+    usage_owner_type = (
+        UsageOwnerType.INSTITUTION
+        if owner_type == PlanOwnerType.INSTITUTION
+        else UsageOwnerType.USER
+    )
+    period = current_period()
+    acc = (
+        db.query(CreditAccount)
+        .filter(
+            CreditAccount.owner_type == usage_owner_type,
+            CreditAccount.owner_id == owner_id,
+            CreditAccount.period_year_month == period,
+        )
+        .first()
+    )
+    if acc is None:
+        return  # mevcut period kaydı yok; sıradaki get_or_create yeni plan'la oluşturur
+    acc.plan_code = new_plan
+    acc.allocated_credits = new_alloc
+    db.flush()
+
+
 def change_plan(
     db: Session, *,
     owner_type: PlanOwnerType,
@@ -777,7 +829,7 @@ def change_plan(
     note: str | None = None,
     autocommit: bool = True,
 ) -> User | Institution | None:
-    """Plan değişikliği + audit log."""
+    """Plan değişikliği + audit log + mevcut periyodun kredisini yeni plana çek."""
     if new_plan not in ALL_PLANS:
         raise ValueError(f"Bilinmeyen plan: {new_plan}")
 
@@ -797,6 +849,14 @@ def change_plan(
     # (yoksa is_trial_active True kalır → /teacher/plan + banner "deneme" sanır).
     if owner_type == PlanOwnerType.USER and is_paid_plan(new_plan):
         owner.trial_ends_at = None
+
+    # MEVCUT periyodun CreditAccount'unu yeni plan kotasına senkronla.
+    # Aksi halde plan yükseltilse bile bu ayın allocated_credits eski plan'da
+    # kalır (bug 2026-05-26 ETUTKOC vakası).
+    _refresh_current_period_allocation(
+        db, owner_type=owner_type, owner_id=owner_id, new_plan=new_plan,
+    )
+
     _log_change(
         db, owner_type=owner_type, owner_id=owner_id,
         from_plan=from_plan, to_plan=new_plan, reason=reason,
