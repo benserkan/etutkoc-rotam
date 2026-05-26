@@ -521,6 +521,8 @@ class UsageEventItem(BaseModel):
     kind_label: str
     credits: int
     actor_user_id: int | None = None
+    actor_name: str | None = None      # User.full_name (yoksa "Otomatik (sistem)")
+    balance_after: int | None = None   # bu olaydan sonra kalan kredi
 
 
 class UsageAccountInfo(BaseModel):
@@ -534,6 +536,10 @@ class UsageAccountInfo(BaseModel):
     usage_pct: int  # 0..100+
     hard_block_enabled: bool
     blocked_until: datetime | None = None
+    # Şeffaflık: ilk/son kullanım + bu periyotta kaç event var
+    first_event_at: datetime | None = None
+    last_event_at: datetime | None = None
+    total_event_count: int = 0
 
 
 class UsageResponse(BaseModel):

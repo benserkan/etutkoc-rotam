@@ -562,6 +562,9 @@ export interface UsageAccountInfo {
   usage_pct: number;
   hard_block_enabled: boolean;
   blocked_until: string | null;
+  first_event_at: string | null;
+  last_event_at: string | null;
+  total_event_count: number;
 }
 
 export interface UsageBreakdownEntry {
@@ -582,6 +585,8 @@ export interface UsageEventItem {
   kind_label: string;
   credits: number;
   actor_user_id: number | null;
+  actor_name: string | null;
+  balance_after: number | null;
 }
 
 export interface UsageResponse {

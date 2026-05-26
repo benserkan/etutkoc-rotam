@@ -2037,9 +2037,53 @@ def institution_usage_v2(
     events = recent_events(db, owner=owner, limit=50)
 
     # %100+ aşımı için 999 cap; UI `>100` rozetiyle gösterir.
-    # CreditAccount.usage_pct property (modelde mevcut).
     raw_pct = int(account.usage_pct) if account.total_allocated > 0 else 0
     usage_pct = min(999, max(0, raw_pct))
+
+    # Şeffaflık: bu periyotta tüm event'lerin ilk/son zamanı + toplam adet
+    from app.models import UsageEvent
+    period_events_q = (
+        db.query(UsageEvent)
+          .filter(
+              UsageEvent.owner_type == owner.owner_type,
+              UsageEvent.owner_id == owner.owner_id,
+              UsageEvent.period_year_month == period,
+          )
+    )
+    total_event_count = period_events_q.count()
+    first_at = period_events_q.order_by(UsageEvent.occurred_at.asc()).first()
+    last_at = period_events_q.order_by(UsageEvent.occurred_at.desc()).first()
+
+    # Actor isimlerini tek seferde çek (N+1 önleme)
+    actor_ids = sorted({e.actor_user_id for e in events if e.actor_user_id is not None})
+    actor_name_map: dict[int, str] = {}
+    if actor_ids:
+        for u in db.query(User).filter(User.id.in_(actor_ids)).all():
+            actor_name_map[u.id] = u.full_name or u.email
+
+    # balance_after: olayları ESKİDEN YENİYE sırala, cumulative cıkar
+    # account.total_allocated (alocated + bonus) - cumulative_used = balance_after
+    # `recent_events` zaten DESC döner — bunu kullanırken cumulative_used'u
+    # newest'ten geriye doğru azaltarak hesaplıyoruz.
+    used_so_far = account.used_credits
+    event_items: list[UsageEventItem] = []
+    for e in events:  # newest first
+        balance_after = account.total_allocated - used_so_far
+        actor_name = (
+            actor_name_map.get(e.actor_user_id) if e.actor_user_id is not None
+            else "Otomatik (sistem)"
+        )
+        event_items.append(UsageEventItem(
+            id=e.id,
+            occurred_at=e.occurred_at,
+            kind=e.kind.value,
+            kind_label=_kind_label(e.kind.value),
+            credits=e.credits,
+            actor_user_id=e.actor_user_id,
+            actor_name=actor_name,
+            balance_after=balance_after,
+        ))
+        used_so_far -= e.credits  # bir önceki olay bu kadar az kullandırmıştı
 
     return UsageResponse(
         institution=_institution_brief(inst),
@@ -2054,6 +2098,9 @@ def institution_usage_v2(
             usage_pct=usage_pct,
             hard_block_enabled=bool(account.hard_block_enabled),
             blocked_until=account.blocked_until,
+            first_event_at=first_at.occurred_at if first_at else None,
+            last_event_at=last_at.occurred_at if last_at else None,
+            total_event_count=total_event_count,
         ),
         breakdown=[
             UsageBreakdownEntry(
@@ -2068,17 +2115,7 @@ def institution_usage_v2(
         series=[
             UsageDailyPoint(day=d, credits=c) for d, c in series_raw
         ],
-        events=[
-            UsageEventItem(
-                id=e.id,
-                occurred_at=e.occurred_at,
-                kind=e.kind.value,
-                kind_label=_kind_label(e.kind.value),
-                credits=e.credits,
-                actor_user_id=e.actor_user_id,
-            )
-            for e in events
-        ],
+        events=event_items,
         warn_threshold_pct=WARN_THRESHOLD_PCT,
     )
 

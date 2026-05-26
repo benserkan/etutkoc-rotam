@@ -107,6 +107,10 @@ export function UsageClient({ initial }: Props) {
         bonus={account.bonus_credits}
         remaining={account.remaining_credits}
         pct={account.usage_pct}
+        firstAt={account.first_event_at}
+        lastAt={account.last_event_at}
+        totalEvents={account.total_event_count}
+        hardBlock={account.hard_block_enabled}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
@@ -216,12 +220,20 @@ function MainBalanceCard({
   bonus,
   remaining,
   pct,
+  firstAt,
+  lastAt,
+  totalEvents,
+  hardBlock,
 }: {
   used: number;
   allocated: number;
   bonus: number;
   remaining: number;
   pct: number;
+  firstAt: string | null;
+  lastAt: string | null;
+  totalEvents: number;
+  hardBlock: boolean;
 }) {
   const remainingTone =
     pct >= 100
@@ -279,6 +291,35 @@ function MainBalanceCard({
           <span className="font-medium text-foreground">%{pct}</span>
           <span>%100</span>
         </div>
+
+        {/* Şeffaflık satırı — ilk/son kullanım + toplam olay */}
+        <div className="border-t border-border pt-3 grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+          <div>
+            <div className="text-muted-foreground">İlk kullanım</div>
+            <div className="tabular-nums font-medium">{firstAt ? formatEventTime(firstAt) : "—"}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Son kullanım</div>
+            <div className="tabular-nums font-medium">{lastAt ? formatEventTime(lastAt) : "—"}</div>
+          </div>
+          <div>
+            <div className="text-muted-foreground">Bu ay toplam olay</div>
+            <div className="tabular-nums font-medium">{totalEvents} işlem</div>
+          </div>
+        </div>
+
+        {/* "-6 nasıl olur" açıklaması — yalnız kalan eksiyse */}
+        {remaining < 0 && (
+          <div className="rounded-md border border-rose-200 bg-rose-50/60 px-3 py-2 text-xs text-rose-900">
+            <b>Kalan {remaining} kredi nasıl mümkün?</b> Aylık kota {allocated}{bonus > 0 ? ` (+${bonus} bonus)` : ""} ama kullanım {used}.
+            {hardBlock ? (
+              <> Sert kilit (hard-block) AÇIK olmasına rağmen aşımın olması süper admin&apos;in açıkça izin verdiği işlemlerden veya bonus krediden kaynaklanabilir.</>
+            ) : (
+              <> Sert kilit KAPALI — kurumun işlerini durdurmamak için yumuşak aşım kabul edildi. Ay sonunda kota sıfırlanır. Limiti artırmak için süper admin bonus kredi ekleyebilir veya plan yükseltebilir.</>
+            )}
+            {" "}<span className="opacity-80">Aşağıdaki &quot;Son 50 İşlem&quot; tablosundan hangi işlemlerin ne kadar tükettiğini olay olay görebilirsin.</span>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -481,29 +522,43 @@ function EventsTable({ events }: { events: UsageEventItem[] }) {
                 <th className="text-right px-4 py-2 font-medium">
                   Tüketilen Kredi
                 </th>
+                <th className="text-right px-4 py-2 font-medium">
+                  Sonra Kalan
+                </th>
                 <th className="text-left px-4 py-2 font-medium">Kim Yaptı</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {events.map((e) => (
-                <tr key={e.id}>
-                  <td className="px-4 py-1.5 text-muted-foreground tabular-nums">
-                    {formatEventTime(e.occurred_at)}
-                  </td>
-                  <td className="px-4 py-1.5 font-medium inline-flex items-center gap-1.5">
-                    <Mail className="size-3 text-muted-foreground" aria-hidden />
-                    {e.kind_label}
-                  </td>
-                  <td className="px-4 py-1.5 text-right font-mono tabular-nums">
-                    {e.credits}
-                  </td>
-                  <td className="px-4 py-1.5 text-muted-foreground">
-                    {e.actor_user_id != null
-                      ? `Kullanıcı #${e.actor_user_id}`
-                      : "Otomatik (sistem)"}
-                  </td>
-                </tr>
-              ))}
+              {events.map((e) => {
+                const after = e.balance_after;
+                const afterTone = after == null
+                  ? "text-muted-foreground"
+                  : after < 0
+                    ? "text-rose-700"
+                    : after === 0
+                      ? "text-amber-700"
+                      : "text-foreground";
+                return (
+                  <tr key={e.id}>
+                    <td className="px-4 py-1.5 text-muted-foreground tabular-nums">
+                      {formatEventTime(e.occurred_at)}
+                    </td>
+                    <td className="px-4 py-1.5 font-medium inline-flex items-center gap-1.5">
+                      <Mail className="size-3 text-muted-foreground" aria-hidden />
+                      {e.kind_label}
+                    </td>
+                    <td className="px-4 py-1.5 text-right font-mono tabular-nums">
+                      -{e.credits}
+                    </td>
+                    <td className={cn("px-4 py-1.5 text-right font-mono tabular-nums", afterTone)}>
+                      {after ?? "—"}
+                    </td>
+                    <td className="px-4 py-1.5 text-muted-foreground">
+                      {e.actor_name ?? (e.actor_user_id != null ? `#${e.actor_user_id}` : "Otomatik (sistem)")}
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
