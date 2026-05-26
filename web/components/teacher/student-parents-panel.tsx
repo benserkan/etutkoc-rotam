@@ -7,6 +7,7 @@ import { Loader2, Mail, Plus, Send, Trash2 } from "lucide-react";
 import { getTeacherStudentParents, teacherKeys } from "@/lib/api/teacher";
 import {
   useInviteParent,
+  useRevokeParentInvitation,
   useSendParentNote,
   useUnlinkParent,
 } from "@/lib/hooks/use-teacher-mutations";
@@ -83,7 +84,7 @@ export function StudentParentsPanel({ studentId }: Props) {
             <h3 className="text-base font-medium">Bekleyen davetler</h3>
             <ul className="divide-y divide-border text-sm">
               {data.pending_invitations.map((p) => (
-                <PendingInviteRow key={p.invitation_id} inv={p} />
+                <PendingInviteRow key={p.invitation_id} inv={p} studentId={studentId} />
               ))}
             </ul>
           </CardContent>
@@ -165,15 +166,49 @@ function ParentLinkRow({
   );
 }
 
-function PendingInviteRow({ inv }: { inv: PendingParentInvitation }) {
+function PendingInviteRow({
+  inv,
+  studentId,
+}: {
+  inv: PendingParentInvitation;
+  studentId: number;
+}) {
+  const mut = useRevokeParentInvitation(studentId);
+  function onRevoke() {
+    if (
+      !window.confirm(
+        `${inv.invited_email} adresine gönderilen daveti geri çekmek istiyor musunuz? ` +
+          `Davet linki artık çalışmayacak; istersen aynı e-postaya tekrar davet gönderebilirsin.`,
+      )
+    ) {
+      return;
+    }
+    mut.mutate({ invitationId: inv.invitation_id });
+  }
   return (
     <li className="py-2 grid grid-cols-12 gap-2 items-center">
-      <span className="col-span-7 truncate">{inv.invited_email}</span>
+      <span className="col-span-6 truncate">{inv.invited_email}</span>
       <span className="col-span-2 text-xs text-muted-foreground">
         {PARENT_RELATION_LABELS_TR[inv.relation]}
       </span>
       <span className="col-span-3 text-xs text-muted-foreground tabular-nums text-right">
         son: {inv.expires_at.slice(0, 10)}
+      </span>
+      <span className="col-span-1 flex justify-end">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRevoke}
+          disabled={mut.isPending}
+          aria-label="Daveti geri çek"
+          title="Daveti geri çek"
+        >
+          {mut.isPending ? (
+            <Loader2 className="size-4 animate-spin" aria-hidden />
+          ) : (
+            <Trash2 className="size-4" aria-hidden />
+          )}
+        </Button>
       </span>
     </li>
   );

@@ -5109,6 +5109,52 @@ def teacher_unlink_parent_v2(
     )
 
 
+# ---------------------- DELETE /teacher/students/{id}/parent-invitations/{inv_id} ----------------------
+
+
+@router.delete(
+    "/students/{student_id}/parent-invitations/{invitation_id}",
+    response_model=MutationResponse[dict],
+)
+def teacher_revoke_parent_invitation_v2(
+    student_id: int,
+    invitation_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bekleyen veli davetini geri çek (henüz kullanılmamış davet → satır silinir).
+    Tüketilmiş (consumed_at dolu) davet 404 ile reddedilir — bağ zaten kurulmuş,
+    veli bağlantısını kaldırmak için DELETE /parents/{link_id} kullanılır.
+    """
+    student = _get_owned_student(db, student_id, user.id)
+    inv = (
+        db.query(ParentInvitation)
+        .filter(
+            ParentInvitation.id == invitation_id,
+            ParentInvitation.student_id == student.id,
+            ParentInvitation.consumed_at.is_(None),
+        )
+        .first()
+    )
+    if not inv:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": "not_found",
+                "code": "invitation_not_found",
+                "message": "Bekleyen davet bulunamadı (zaten kullanılmış veya silinmiş olabilir).",
+            },
+        )
+    db.delete(inv)
+    db.commit()
+    return MutationResponse[dict](
+        data={"revoked": True, "invitation_id": invitation_id, "student_id": student.id},
+        invalidate=_invalidate_for_students(user.id, student.id) + [
+            f"teacher:{user.id}:students:{student.id}:parents",
+        ],
+    )
+
+
 # =============================================================================
 # Paket 3.5c — Sınıf Yükselt (Promote)
 # =============================================================================

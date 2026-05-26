@@ -747,6 +747,32 @@ export function useUnlinkParent(studentId: number) {
   });
 }
 
+export function useRevokeParentInvitation(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{ revoked: boolean; invitation_id: number; student_id: number }>,
+    ApiError,
+    { invitationId: number }
+  >({
+    mutationFn: ({ invitationId }) =>
+      api<
+        MutationResponse<{
+          revoked: boolean;
+          invitation_id: number;
+          student_id: number;
+        }>
+      >(
+        `/api/v2/teacher/students/${studentId}/parent-invitations/${invitationId}`,
+        { method: "DELETE" },
+      ),
+    onError: (err) => showError(err, "Davet geri çekilemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Veli daveti geri çekildi");
+    },
+  });
+}
+
 // =============================================================================
 // Paket 3.5c — Promote / Goals / Review / DNA / Focus mutations
 // =============================================================================
