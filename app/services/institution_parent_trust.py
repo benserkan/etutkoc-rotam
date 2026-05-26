@@ -172,14 +172,17 @@ def list_notifications(
     StudentU = aliased(User)
     Teacher = aliased(User)
 
+    # Tüm join'ler OUTER — student_id NULL (veya silinmiş) satırlar da görünür.
+    # Filtreleme: parent VEYA student kurumun kapsamında olmalı (compute_parent_trust
+    # ile aynı geniş kapsam — aksi halde "başarısız 2" sayılır ama detay 0 olur).
     q = (
         db.query(NotificationLog, ParentU, StudentU)
         .outerjoin(ParentU, NotificationLog.parent_id == ParentU.id)
-        .join(StudentU, NotificationLog.student_id == StudentU.id)
-        .join(Teacher, StudentU.teacher_id == Teacher.id)
+        .outerjoin(StudentU, NotificationLog.student_id == StudentU.id)
+        .outerjoin(Teacher, StudentU.teacher_id == Teacher.id)
         .filter(
             Teacher.institution_id == institution_id,
-            NotificationLog.created_at >= since,
+            NotificationLog.queued_at >= since,
         )
     )
     if status_filter:
@@ -189,7 +192,7 @@ def list_notifications(
             pass
 
     total_count = q.count()
-    rows = q.order_by(NotificationLog.created_at.desc()).limit(limit).all()
+    rows = q.order_by(NotificationLog.queued_at.desc()).limit(limit).all()
 
     items: list[dict] = []
     for log, parent_user, student_user in rows:
@@ -206,7 +209,7 @@ def list_notifications(
             "student_name": student_user.full_name if student_user else None,
             "parent_email": parent_user.email if parent_user else None,
             "parent_name": parent_user.full_name if parent_user else None,
-            "created_at": log.created_at,
+            "created_at": log.queued_at,
             "sent_at": log.sent_at,
         })
     return items, total_count
