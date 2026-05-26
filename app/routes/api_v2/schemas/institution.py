@@ -728,6 +728,31 @@ class ParentTrustResponse(BaseModel):
     channels: list[ParentTrustChannel]
 
 
+class ParentTrustNotificationItem(BaseModel):
+    """Tek bir bildirim satırı (NotificationLog) — detay panelinde gösterilir."""
+    id: int
+    status: str            # sent / failed / suppressed / queued
+    status_label: str
+    kind: str
+    kind_label: str
+    channel: str
+    channel_label: str
+    subject: str | None = None
+    error: str | None = None
+    student_name: str | None = None
+    parent_email: str | None = None
+    parent_name: str | None = None
+    created_at: datetime
+    sent_at: datetime | None = None
+
+
+class ParentTrustNotificationListResponse(BaseModel):
+    """GET /api/v2/institution/parent-trust/notifications — detay listesi."""
+    items: list[ParentTrustNotificationItem]
+    days: int
+    total_count: int
+
+
 # =============================================================================
 # KP4b — Kurum Akademik Çıktı Panosu (deneme net agregasyonu)
 # =============================================================================

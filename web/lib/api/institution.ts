@@ -20,6 +20,7 @@ import type {
   ActionCenterResponse,
   TeacherScorecardResponse,
   ParentTrustResponse,
+  ParentTrustNotificationListResponse,
   InstitutionAcademicResponse,
   CohortTab,
   CohortsResponse,
@@ -72,6 +73,8 @@ export const institutionKeys = {
     ["institution", "me", "teacher-scorecard", String(weeks)] as const,
   parentTrust: (days: number) =>
     ["institution", "me", "parent-trust", String(days)] as const,
+  parentTrustNotifications: (days: number, status: string | null) =>
+    ["institution", "me", "parent-trust", "notifications", String(days), status ?? "all"] as const,
   academic: (weeks: number) =>
     ["institution", "me", "academic", String(weeks)] as const,
   invitations: () => ["institution", "me", "invitations"] as const,
@@ -157,6 +160,18 @@ export function getInstitutionTeacherScorecard(weeks = 4) {
 export function getInstitutionParentTrust(days = 30) {
   return api<ParentTrustResponse>(
     `/api/v2/institution/parent-trust?days=${days}`,
+  );
+}
+
+export function getInstitutionParentTrustNotifications(
+  days = 30,
+  status: string | null = null,
+  limit = 200,
+) {
+  const q = new URLSearchParams({ days: String(days), limit: String(limit) });
+  if (status) q.set("status", status);
+  return api<ParentTrustNotificationListResponse>(
+    `/api/v2/institution/parent-trust/notifications?${q.toString()}`,
   );
 }
 

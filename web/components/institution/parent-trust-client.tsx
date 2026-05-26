@@ -2,12 +2,19 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { HeartHandshake, Mail, MailWarning, UserCheck, Users } from "lucide-react";
+import { HeartHandshake, List, Mail, MailWarning, UserCheck, Users } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { institutionKeys, getInstitutionParentTrust } from "@/lib/api/institution";
-import type { ParentTrustResponse } from "@/lib/types/institution";
+import {
+  institutionKeys,
+  getInstitutionParentTrust,
+  getInstitutionParentTrustNotifications,
+} from "@/lib/api/institution";
+import type {
+  ParentTrustNotificationListResponse,
+  ParentTrustResponse,
+} from "@/lib/types/institution";
 
 interface Props {
   initial: ParentTrustResponse;
@@ -114,6 +121,125 @@ export function ParentTrustClient({ initial }: Props) {
           teşvik edin — veli iletişimi kayıt yenilemeyi ve memnuniyeti güçlendirir.
         </Card>
       ) : null}
+
+      <NotificationDetailSection days={s.days} />
     </div>
+  );
+}
+
+
+const STATUS_TONE: Record<string, { text: string; bg: string; border: string }> = {
+  sent:       { text: "text-emerald-800", bg: "bg-emerald-50",  border: "border-emerald-200" },
+  failed:     { text: "text-rose-800",    bg: "bg-rose-50",     border: "border-rose-200" },
+  suppressed: { text: "text-slate-700",   bg: "bg-slate-50",    border: "border-slate-200" },
+  queued:     { text: "text-amber-800",   bg: "bg-amber-50",    border: "border-amber-200" },
+};
+
+function fmtDateTime(iso: string | null): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  return `${String(d.getDate()).padStart(2,"0")}.${String(d.getMonth()+1).padStart(2,"0")} ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+}
+
+function NotificationDetailSection({ days }: { days: number }) {
+  const [status, setStatus] = React.useState<string | null>(null);
+  const q = useQuery<ParentTrustNotificationListResponse>({
+    queryKey: institutionKeys.parentTrustNotifications(days, status),
+    queryFn: () => getInstitutionParentTrustNotifications(days, status),
+    staleTime: 30_000,
+  });
+  const items = q.data?.items ?? [];
+  const total = q.data?.total_count ?? 0;
+
+  const FILTERS: Array<{ key: string | null; label: string; tone?: string }> = [
+    { key: null, label: "Tümü" },
+    { key: "sent", label: "Ulaştı", tone: "text-emerald-700" },
+    { key: "failed", label: "Başarısız", tone: "text-rose-700" },
+    { key: "suppressed", label: "Engellendi", tone: "text-slate-700" },
+  ];
+
+  return (
+    <Card className="overflow-hidden">
+      <div className="border-b border-border px-4 py-2.5">
+        <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold">
+          <List className="size-4 text-muted-foreground" aria-hidden />
+          Son {days} gün bildirim detayı
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Hangi veliye/öğrenciye giden bildirim ulaştı/başarısız oldu — tek tek.
+          Başarısız satırlardaki hata satırı sebebi gösterir.
+        </p>
+      </div>
+      <div className="flex flex-wrap items-center gap-2 border-b border-border px-4 py-2 text-xs">
+        {FILTERS.map((f) => (
+          <button
+            key={f.key ?? "all"}
+            type="button"
+            onClick={() => setStatus(f.key)}
+            className={cn(
+              "rounded-full border px-3 py-1 transition",
+              status === f.key
+                ? "border-foreground bg-foreground/5 font-medium"
+                : "border-border text-muted-foreground hover:bg-muted/40",
+              f.tone,
+            )}
+          >
+            {f.label}
+          </button>
+        ))}
+        <span className="ml-auto text-muted-foreground tabular-nums">
+          {q.isLoading ? "yükleniyor…" : `${items.length}${total !== items.length ? ` / ${total}` : ""} kayıt`}
+        </span>
+      </div>
+      {items.length === 0 && !q.isLoading ? (
+        <p className="p-6 text-center text-sm text-muted-foreground">
+          Bu dönemde bu filtreyle eşleşen bildirim yok.
+        </p>
+      ) : (
+        <div className="divide-y divide-border">
+          {items.map((n) => {
+            const tone = STATUS_TONE[n.status] ?? STATUS_TONE.suppressed;
+            return (
+              <div key={n.id} className="px-4 py-3">
+                <div className="flex items-start gap-3">
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-md border px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide",
+                      tone.text, tone.bg, tone.border,
+                    )}
+                  >
+                    {n.status_label}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                      <span className="text-sm font-medium">{n.kind_label}</span>
+                      <span className="text-xs text-muted-foreground">·</span>
+                      <span className="text-xs text-muted-foreground">{n.channel_label}</span>
+                      <span className="ml-auto text-[11px] text-muted-foreground tabular-nums">
+                        {fmtDateTime(n.sent_at ?? n.created_at)}
+                      </span>
+                    </div>
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      {n.student_name ? <span>öğrenci: <b className="text-foreground">{n.student_name}</b></span> : null}
+                      {n.parent_email ? <span className="ml-2">→ {n.parent_email}</span> : null}
+                    </div>
+                    {n.subject ? (
+                      <div className="mt-0.5 truncate text-xs italic text-muted-foreground">
+                        {n.subject}
+                      </div>
+                    ) : null}
+                    {n.error ? (
+                      <div className="mt-1 rounded border border-rose-200 bg-rose-50/60 px-2 py-1 text-xs text-rose-800">
+                        <span className="font-semibold">Hata:</span> {n.error}
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </Card>
   );
 }

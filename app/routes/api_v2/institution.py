@@ -93,6 +93,8 @@ from app.routes.api_v2.schemas.institution import (
     ParentTrustResponse,
     ParentTrustSummary,
     ParentTrustChannel,
+    ParentTrustNotificationItem,
+    ParentTrustNotificationListResponse,
     AcademicSummary,
     AcademicSectionRow,
     AcademicTrendPoint,
@@ -2285,6 +2287,40 @@ def institution_parent_trust_v2(
         institution=_institution_brief(inst),
         summary=ParentTrustSummary(**d["summary"]),
         channels=[ParentTrustChannel(**c) for c in d["channels"]],
+    )
+
+
+@router.get(
+    "/parent-trust/notifications",
+    response_model=ParentTrustNotificationListResponse,
+)
+def institution_parent_trust_notifications_v2(
+    days: int = Query(30, ge=7, le=90),
+    status: str | None = Query(None, description="sent/failed/suppressed/queued; boşsa hepsi"),
+    limit: int = Query(200, ge=1, le=500),
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Veli güveni — son N gün NotificationLog detay listesi.
+
+    Hangi velilere/öğrencilere hangi mailler gitmiş/başarısız olmuş tek tek
+    görmek için. Kart sayılarındaki "2 ulaştı · 2 başarısız" gibi rakamların
+    arkasındaki gerçek kayıtları gösterir.
+    """
+    from app.services.institution_parent_trust import list_notifications
+
+    inst = _get_institution_or_403(db, user.institution_id)
+    items, total = list_notifications(
+        db,
+        institution_id=inst.id,
+        days=days,
+        status_filter=status,
+        limit=limit,
+    )
+    return ParentTrustNotificationListResponse(
+        items=[ParentTrustNotificationItem(**it) for it in items],
+        days=days,
+        total_count=total,
     )
 
 

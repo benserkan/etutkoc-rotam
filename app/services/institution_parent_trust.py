@@ -20,7 +20,11 @@ from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
+from sqlalchemy.orm import aliased
+
 from app.models import (
+    NOTIFICATION_KIND_LABELS,
+    NotificationKind,
     NotificationLog,
     NotificationStatus,
     ParentInvitation,
@@ -30,6 +34,7 @@ from app.models import (
 )
 
 CHANNEL_LABELS = {"email": "E-posta", "whatsapp": "WhatsApp", "sms": "SMS"}
+STATUS_LABELS = {"sent": "Ulaştı", "failed": "Başarısız", "suppressed": "Engellendi", "queued": "Kuyrukta"}
 
 
 def _success_pct(sent: int, failed: int) -> int | None:
@@ -146,3 +151,62 @@ def compute_parent_trust(db: Session, *, institution_id: int, days: int = 30) ->
         },
         "channels": channels,
     }
+
+
+def list_notifications(
+    db: Session,
+    *,
+    institution_id: int,
+    days: int = 30,
+    status_filter: str | None = None,
+    limit: int = 200,
+) -> tuple[list[dict], int]:
+    """Kurum bağlamında son N gün NotificationLog detayı.
+
+    Filtre: status_filter (sent/failed/suppressed/queued) veya None=hepsi.
+    Geri dönüş: (items, total_count) — total_count filtre uygulanmış toplam
+    (limit'ten önceki).
+    """
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+    ParentU = aliased(User)
+    StudentU = aliased(User)
+    Teacher = aliased(User)
+
+    q = (
+        db.query(NotificationLog, ParentU, StudentU)
+        .outerjoin(ParentU, NotificationLog.parent_id == ParentU.id)
+        .join(StudentU, NotificationLog.student_id == StudentU.id)
+        .join(Teacher, StudentU.teacher_id == Teacher.id)
+        .filter(
+            Teacher.institution_id == institution_id,
+            NotificationLog.created_at >= since,
+        )
+    )
+    if status_filter:
+        try:
+            q = q.filter(NotificationLog.status == NotificationStatus(status_filter))
+        except ValueError:
+            pass
+
+    total_count = q.count()
+    rows = q.order_by(NotificationLog.created_at.desc()).limit(limit).all()
+
+    items: list[dict] = []
+    for log, parent_user, student_user in rows:
+        items.append({
+            "id": log.id,
+            "status": log.status.value,
+            "status_label": STATUS_LABELS.get(log.status.value, log.status.value),
+            "kind": log.kind.value,
+            "kind_label": NOTIFICATION_KIND_LABELS.get(log.kind, log.kind.value),
+            "channel": log.channel.value,
+            "channel_label": CHANNEL_LABELS.get(log.channel.value, log.channel.value),
+            "subject": log.subject,
+            "error": log.error,
+            "student_name": student_user.full_name if student_user else None,
+            "parent_email": parent_user.email if parent_user else None,
+            "parent_name": parent_user.full_name if parent_user else None,
+            "created_at": log.created_at,
+            "sent_at": log.sent_at,
+        })
+    return items, total_count

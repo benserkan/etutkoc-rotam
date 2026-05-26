@@ -735,6 +735,29 @@ export interface ParentTrustResponse {
   channels: ParentTrustChannel[];
 }
 
+export interface ParentTrustNotificationItem {
+  id: number;
+  status: string;            // sent/failed/suppressed/queued
+  status_label: string;
+  kind: string;
+  kind_label: string;
+  channel: string;
+  channel_label: string;
+  subject: string | null;
+  error: string | null;
+  student_name: string | null;
+  parent_email: string | null;
+  parent_name: string | null;
+  created_at: string;
+  sent_at: string | null;
+}
+
+export interface ParentTrustNotificationListResponse {
+  items: ParentTrustNotificationItem[];
+  days: number;
+  total_count: number;
+}
+
 // =============================================================================
 // KP4b — Kurum Akademik Çıktı Panosu
 // =============================================================================
