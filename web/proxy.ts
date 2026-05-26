@@ -26,7 +26,13 @@ const PUBLIC_PATHS_EXACT = new Set<string>([
 const PUBLIC_PATHS_PREFIX = [
   "/login",
   "/signup",
+  // Şifre sıfırlama akışı: token ile gelir, oturum yok — public olmalı.
+  // /password/change AYRI (auth gerekir, must_change flow), bu listede YOK.
+  "/password/forgot",
+  "/password/reset",
+  "/verify-email",          // /verify-email/<token> — token ile gelir, anonim
   "/parent/invite",
+  "/parent/unsubscribe",    // /parent/unsubscribe/<token> — bildirim mailindeki çıkış
   "/offers",
   "/pricing",
   "/kvkk",
