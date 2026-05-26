@@ -2045,8 +2045,8 @@ def institution_usage_v2(
     period_events_q = (
         db.query(UsageEvent)
           .filter(
-              UsageEvent.owner_type == owner.owner_type,
-              UsageEvent.owner_id == owner.owner_id,
+              UsageEvent.owner_type == owner.type,
+              UsageEvent.owner_id == owner.id,
               UsageEvent.period_year_month == period,
           )
     )
