@@ -34,7 +34,7 @@ from sqlalchemy import (
     func,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship, validates
 
 from app.database import Base
 
@@ -103,6 +103,15 @@ class Invoice(Base):
             "(owner_type = 'institution' AND institution_id IS NOT NULL AND user_id IS NULL) "
             "OR (owner_type = 'user' AND user_id IS NOT NULL AND institution_id IS NULL)",
             name="ck_invoices_owner_xor",
+        ),
+        # Plan ailesi owner_type ile uyumlu olmalı — solo_* plan kodları
+        # YALNIZ bağımsız koç (user) için; diğer kodlar YALNIZ kurum için.
+        # Bu, seed/migration sırasında oluşan tutarsız (institution+solo_pro vb.)
+        # satırları DB-level reddeder. ORM tarafında @validates ile defense-in-depth.
+        CheckConstraint(
+            r"(owner_type = 'institution' AND plan NOT LIKE 'solo\_%' ESCAPE '\') "
+            r"OR (owner_type = 'user' AND plan LIKE 'solo\_%' ESCAPE '\')",
+            name="ck_invoices_plan_owner_match",
         ),
     )
 
@@ -196,6 +205,37 @@ class Invoice(Base):
         if self.owner_type == "institution":
             return f"/admin/revenue/institutions/{self.institution_id}"
         return f"/admin/revenue/users/{self.user_id}"
+
+    @validates("plan", "owner_type")
+    def _validate_plan_owner_match(self, key, value):
+        """Plan ↔ owner_type tutarlılığı (ORM seviyesinde defense-in-depth).
+
+        `ck_invoices_plan_owner_match` CHECK constraint DB seviyesinde airtight,
+        ama ORM `@validates` ile daha NET hata mesajı + erken yakalama.
+
+        Sözleşme: `solo_*` plan kodları YALNIZ bağımsız koç (user) için;
+        diğer kodlar (institution_free / etut_standart / dershane_pro /
+        enterprise) YALNIZ kurum için.
+        """
+        if key == "plan":
+            new_plan, new_owner = value, self.owner_type
+        else:
+            new_plan, new_owner = self.plan, value
+        # Henüz tek alan set edilmiş — diğer set edildiğinde tekrar tetiklenir
+        if new_plan is None or new_owner is None:
+            return value
+        is_solo_plan = isinstance(new_plan, str) and new_plan.startswith("solo_")
+        if new_owner == "institution" and is_solo_plan:
+            raise ValueError(
+                f"Invoice plan '{new_plan}' bağımsız koç (solo) paketi — "
+                f"owner_type='institution' ile kullanılamaz."
+            )
+        if new_owner == "user" and not is_solo_plan:
+            raise ValueError(
+                f"Invoice plan '{new_plan}' kurum paketi — "
+                f"owner_type='user' (bağımsız koç) ile kullanılamaz."
+            )
+        return value
 
     def __repr__(self) -> str:
         return (
