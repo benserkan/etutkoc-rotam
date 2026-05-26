@@ -74,10 +74,23 @@ class DatabaseStatus:
 
 
 @dataclass
+class BackupStatus:
+    """Postgres yedek (pg_dump) sağlık durumu — cron + rotasyon takibi."""
+    backup_dir: str
+    latest_at: datetime | None         # son yedek dosyasının mtime'ı
+    latest_age_hours: float | None     # son yedekten kaç saat geçti
+    latest_size_mb: float | None       # son yedek dosyasının boyutu
+    total_count: int                   # toplam yedek dosyası sayısı
+    total_size_mb: float               # toplam disk kullanımı (yedek dizini)
+    health: str                        # 'ok' (<30h) | 'warn' (30-48h) | 'crit' (>48h veya yedek yok)
+
+
+@dataclass
 class SystemHealthSnapshot:
     crons: list[CronStatus] = field(default_factory=list)
     dispatcher: DispatcherStatus | None = None
     database: DatabaseStatus | None = None
+    backup: BackupStatus | None = None
     overall_health: str = "ok"  # 'ok' | 'warn' | 'crit'
 
 
@@ -221,12 +234,69 @@ def collect_database_status(db: Session) -> DatabaseStatus:
     )
 
 
+def collect_backup_status(*, now: datetime | None = None) -> BackupStatus:
+    """`/opt/etutkoc/backups/lgs-*.dump` (varsayılan) içinden son yedeği bulur.
+
+    Yol BACKUP_DIR env değişkeniyle özelleştirilebilir. Eşikler:
+      - ≤30h: ok (cron 03:00 UTC, +27h tolerans)
+      - 30-48h: warn (1 gün cron atlamış olabilir)
+      - >48h veya hiç yedek yok: crit
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+    backup_dir = os.environ.get("BACKUP_DIR", "/opt/etutkoc/backups")
+    p = Path(backup_dir)
+    if not p.exists():
+        return BackupStatus(
+            backup_dir=backup_dir,
+            latest_at=None, latest_age_hours=None, latest_size_mb=None,
+            total_count=0, total_size_mb=0.0, health="crit",
+        )
+    try:
+        files = list(p.glob("lgs-*.dump"))
+    except OSError:
+        return BackupStatus(
+            backup_dir=backup_dir,
+            latest_at=None, latest_age_hours=None, latest_size_mb=None,
+            total_count=0, total_size_mb=0.0, health="crit",
+        )
+    if not files:
+        return BackupStatus(
+            backup_dir=backup_dir,
+            latest_at=None, latest_age_hours=None, latest_size_mb=None,
+            total_count=0, total_size_mb=0.0, health="crit",
+        )
+    files.sort(key=lambda x: x.stat().st_mtime, reverse=True)
+    latest = files[0]
+    latest_mtime = datetime.fromtimestamp(latest.stat().st_mtime, tz=timezone.utc)
+    age_h = (now - latest_mtime).total_seconds() / 3600.0
+    total_size = sum(f.stat().st_size for f in files)
+
+    if age_h <= 30:
+        health = "ok"
+    elif age_h <= 48:
+        health = "warn"
+    else:
+        health = "crit"
+
+    return BackupStatus(
+        backup_dir=backup_dir,
+        latest_at=latest_mtime,
+        latest_age_hours=round(age_h, 1),
+        latest_size_mb=round(latest.stat().st_size / 1024.0 / 1024.0, 2),
+        total_count=len(files),
+        total_size_mb=round(total_size / 1024.0 / 1024.0, 2),
+        health=health,
+    )
+
+
 def collect_snapshot(db: Session, *, now: datetime | None = None) -> SystemHealthSnapshot:
     if now is None:
         now = datetime.now(timezone.utc)
     crons = collect_cron_status(db, now=now)
     dispatcher = collect_dispatcher_status(db, now=now)
     database = collect_database_status(db)
+    backup = collect_backup_status(now=now)
 
     # Overall — en kötü bileşen
     levels = ["ok", "warn", "crit"]
@@ -238,10 +308,13 @@ def collect_snapshot(db: Session, *, now: datetime | None = None) -> SystemHealt
         worst = dispatcher.health
     if database.health in levels and levels.index(database.health) > levels.index(worst):
         worst = database.health
+    if backup.health in levels and levels.index(backup.health) > levels.index(worst):
+        worst = backup.health
 
     return SystemHealthSnapshot(
         crons=crons,
         dispatcher=dispatcher,
         database=database,
+        backup=backup,
         overall_health=worst,
     )

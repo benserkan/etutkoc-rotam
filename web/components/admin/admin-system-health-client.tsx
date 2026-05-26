@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
+  Archive,
   CheckCircle2,
   Clock,
   Database,
@@ -16,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { adminKeys, getAdminSystemHealth } from "@/lib/api/admin";
 import type {
+  BackupStatusInfo,
   CronStatusItem,
   DatabaseStatusInfo,
   DispatcherStatusInfo,
@@ -71,6 +73,8 @@ export function AdminSystemHealthClient({ initial }: Props) {
       {data.dispatcher && <DispatcherCard dispatcher={data.dispatcher} />}
 
       {data.database && <DatabaseCard database={data.database} />}
+
+      {data.backup && <BackupCard backup={data.backup} />}
     </div>
   );
 }
@@ -421,6 +425,75 @@ function DatabaseCard({ database }: { database: DatabaseStatusInfo }) {
             </table>
           </div>
         </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BackupCard({ backup }: { backup: BackupStatusInfo }) {
+  const healthMap = {
+    crit: "text-rose-700",
+    warn: "text-amber-700",
+    ok: "text-emerald-700",
+  };
+  const healthLabel = {
+    crit: backup.total_count === 0 ? "Yedek bulunamadı" : "48 saatten eski",
+    warn: "30-48 saat arası gecikmeli",
+    ok: "Güncel",
+  };
+  const age = backup.latest_age_hours;
+  const ageLabel = age == null ? "—" : age < 24 ? `${age} saat` : `${(age / 24).toFixed(1)} gün`;
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <h2 className="text-sm font-medium mb-3 inline-flex items-center gap-1.5">
+          <Archive className="size-4 text-muted-foreground" aria-hidden />
+          Veritabanı Yedeği
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Son yedek</div>
+            <div className={cn("text-2xl font-bold tabular-nums", healthMap[backup.health])}>
+              {ageLabel}
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-1">
+              önce — {healthLabel[backup.health]}
+            </div>
+            {backup.latest_at ? (
+              <div className="text-[11px] text-muted-foreground font-mono mt-1">
+                {formatDateTime(backup.latest_at)}
+              </div>
+            ) : null}
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Son yedek boyutu</div>
+            <div className="text-2xl font-bold tabular-nums">
+              {backup.latest_size_mb ?? "—"}
+              <span className="text-sm text-muted-foreground ml-1">MB</span>
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-1">
+              pg_dump -Fc (sıkıştırılmış)
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Toplam (14 gün rotasyon)</div>
+            <div className="text-2xl font-bold tabular-nums">
+              {backup.total_count}
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-1">
+              dosya — {backup.total_size_mb} MB disk
+            </div>
+          </div>
+        </div>
+        <div className="text-[11px] text-muted-foreground mt-3 font-mono break-all">
+          dizin: {backup.backup_dir}
+        </div>
+        {backup.health === "crit" && backup.total_count === 0 ? (
+          <div className="text-xs text-rose-700 mt-3 bg-rose-50 border border-rose-200 rounded p-2">
+            ⚠ Yedek dizini boş veya erişilemez. Cron&apos;un çalıştığını + dosya izinlerini kontrol et.
+            Komut: <code className="font-mono">bash /opt/etutkoc/deploy/backup.sh</code>
+          </div>
+        ) : null}
       </CardContent>
     </Card>
   );

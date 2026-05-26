@@ -503,10 +503,21 @@ export interface DatabaseStatusInfo {
   health: "ok" | "warn" | "crit";
 }
 
+export interface BackupStatusInfo {
+  backup_dir: string;
+  latest_at: string | null;
+  latest_age_hours: number | null;
+  latest_size_mb: number | null;
+  total_count: number;
+  total_size_mb: number;
+  health: "ok" | "warn" | "crit";
+}
+
 export interface SystemHealthResponse {
   crons: CronStatusItem[];
   dispatcher: DispatcherStatusInfo | null;
   database: DatabaseStatusInfo | null;
+  backup: BackupStatusInfo | null;
   overall_health: "ok" | "warn" | "crit";
 }
 

@@ -2996,6 +2996,62 @@ token ile / anonim erişilmesi gereken sayfalar; proxy onları "korumalı" sanı
   PUBLIC_PATHS_PREFIX'e mutlaka eklenir; aksi halde proxy /login'e atar +
   ölü-bağlantı görünür.
 
+## Mail akışı denetimi + dağıtık fix'ler (2026-05-26)
+
+Kullanıcı şablon+SMTP testlerinin (Bölüm 1) yeterli olmadığını fark etti: şablon
+render edilir + SMTP teslim eder ama **endpoint `send_email`'i çağırmazsa** mail
+asla gitmez. Veli daveti bug'ı tam buradan kaçtı.
+- **Sistematik kod denetimi** yapıldı (her şablon → helper → endpoint çağrı zinciri).
+  Bulgular + düzeltmeler:
+  - **API v2 veli davet**: `notify_parent_invitation` çağrısı eksikti → eklendi.
+  - **publish-week** (haftalık program yayını): `event_triggers.on_program_published`
+    hiç tetiklenmiyordu → eklendi (publish-day spam riski için manuel; mevcut
+    `/program/notify-parents` butonu duruyor).
+  - **Koç + Kurum abonelik talebi**: ContactRequest yazılıyordu ama admin'e mail
+    gitmiyordu → `contact_request_admin` template'i ile satış adresine gönderim eklendi.
+  - **Yeni signup → süper admin/satış bildirimi** (yeni özellik): `notify_new_signup_admin`
+    helper'ı + `new_signup_admin.html` template'i. Bağımsız koç self-signup'ında
+    satış adresine düşer.
+  - **Placeholder mail temizliği**: `etutkocrotam.app` (yanlış, bounce eden) → `etutkoc.com`;
+    `kvkk@etutkoc.com` → `destek@etutkoc.com` (kvkk@ alias'ı yok, destek'e yönlendir).
+- **Yanlış pozitifler** (denetim incelmesi): student request açma + teacher response
+  request_service'in içinde `_notify_new_safe`/`_notify_resolved_safe` zaten çağrılıyor.
+  Endpoint'te bireysel çağrı eklemeye gerek yok.
+- **KURAL**: Bir email-trigger endpoint eklendikten sonra **send_email çağrısı
+  endpoint kodunda VEYA çağrılan service fonksiyonunda OLMALI** (her ikisi yoksa
+  bug). Şablon+SMTP testi yeterli DEĞİL; endpoint integration için ayrı denetim.
+
+## Proxy/Caddy operasyonel kurallar (2026-05-26)
+
+- **`/parent/invitation/<token>`** Next.js'te yaşıyordu ama `proxy.ts`
+  PUBLIC_PATHS_PREFIX'te `/parent/invite` (eski/404) vardı → login'e atıp form
+  görünmüyordu. **Doğrusu `/parent/invitation`** (path eklenirken Next.js
+  route'unun gerçek adına bak; varsayma).
+- **Caddyfile bind-mount cache (kritik gizli bug)**: `deploy/Caddyfile`
+  değiştirilip `docker compose exec proxy caddy reload --config /etc/caddy/Caddyfile`
+  çalıştırılınca **Caddy aynı stale-FD'yi okumaya devam edebiliyor** — bind-mount
+  güncellense bile reload eski içerikten beslenir (kernel/Docker mount cache).
+  Belirti: yeni `reverse_proxy` satırları reload sonrası aktive olmaz, host'taki
+  dosya doğru ama container içinde grep ile aranınca bulunmaz.
+  - **KURAL**: Caddyfile değişikliklerinden sonra `caddy reload` YETMEZ →
+    **`docker compose restart proxy`** kullan. Restart container'ı yeniden
+    başlatır + bind-mount dosya tazece okunur. <60sn rollback (R-020).
+- **Next.js public/ kök asset'leri (logo, mark vb.)** Caddyfile'a açıkça
+  `reverse_proxy /etutkoc-logo.png next:3000` gibi yazılmalı — top-level statik
+  asset'ler default'a düşerse FastAPI'den 404 alır. `/static/*` zaten FastAPI'de.
+
+## Sistem sağlık paneli — yedek (pg_dump) takibi (2026-05-26)
+
+- `/admin/system-health` sayfasına **BackupCard** eklendi: son yedek yaşı (saat/gün),
+  boyutu, toplam dosya + disk kullanımı, sağlık eşiği (≤30h ok / 30-48h warn /
+  >48h crit / dosya yok crit).
+- Backend: `system_health.collect_backup_status()` + `BackupStatus` dataclass +
+  `BackupStatusInfo` schema. Endpoint `/api/v2/admin/system-health`'e `backup` alanı.
+- `BACKUP_DIR` env (varsayılan `/opt/etutkoc/backups`) — `backup.sh` aynı dizine yazar.
+- **docker-compose**: web service'e read-only volume mount eklendi:
+  `../backups:/opt/etutkoc/backups:ro`. Volume değişikliği `docker compose up -d --build web`
+  yeniden oluşturma gerektirir.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

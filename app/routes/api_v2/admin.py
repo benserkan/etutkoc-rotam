@@ -76,6 +76,7 @@ from app.routes.api_v2.schemas.admin import (
     AuditListItem,
     AuditListResponse,
     AuditLogItem,
+    BackupStatusInfo,
     CronStatusItem,
     DatabaseStatusInfo,
     DispatcherStatusInfo,
@@ -2611,10 +2612,24 @@ def admin_system_health_v2(
         if snapshot.database
         else None
     )
+    backup = (
+        BackupStatusInfo(
+            backup_dir=snapshot.backup.backup_dir,
+            latest_at=snapshot.backup.latest_at,
+            latest_age_hours=snapshot.backup.latest_age_hours,
+            latest_size_mb=snapshot.backup.latest_size_mb,
+            total_count=snapshot.backup.total_count,
+            total_size_mb=snapshot.backup.total_size_mb,
+            health=snapshot.backup.health,
+        )
+        if snapshot.backup
+        else None
+    )
     return SystemHealthResponse(
         crons=crons,
         dispatcher=dispatcher,
         database=database,
+        backup=backup,
         overall_health=snapshot.overall_health,
     )
 

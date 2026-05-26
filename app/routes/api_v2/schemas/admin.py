@@ -596,11 +596,23 @@ class DatabaseStatusInfo(BaseModel):
     health: str
 
 
+class BackupStatusInfo(BaseModel):
+    """Postgres yedek (pg_dump) sağlık göstergesi."""
+    backup_dir: str
+    latest_at: datetime | None = None
+    latest_age_hours: float | None = None
+    latest_size_mb: float | None = None
+    total_count: int = 0
+    total_size_mb: float = 0.0
+    health: str  # 'ok' | 'warn' | 'crit'
+
+
 class SystemHealthResponse(BaseModel):
     """GET /api/v2/admin/system-health yanıtı."""
     crons: list[CronStatusItem]
     dispatcher: DispatcherStatusInfo | None = None
     database: DatabaseStatusInfo | None = None
+    backup: BackupStatusInfo | None = None
     overall_health: str  # 'ok' | 'warn' | 'crit'
 
 

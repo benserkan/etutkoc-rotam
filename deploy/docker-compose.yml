@@ -95,6 +95,10 @@ services:
         condition: service_healthy
     networks: [internal]
     restart: unless-stopped
+    volumes:
+      # Yedek dizinini read-only mount et — /admin/system-health backup kartı
+      # son yedek tarihi/boyutu/sayısını okuyabilsin (backup.sh aynı yere yazar)
+      - ../backups:/opt/etutkoc/backups:ro
     # Web sağlıklı olduğunda worker + next bağlanabilir
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]
