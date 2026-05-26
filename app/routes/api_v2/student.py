@@ -1240,8 +1240,12 @@ def _build_request_item(req: TaskRequest) -> StudentRequestItem:
         type=req.type.value,
         status=req.status.value,
         task_id=req.task_id,
-        task_title=req.task.title if req.task else None,
-        task_date=req.task.date.isoformat() if req.task else None,
+        # REMOVE onaylanınca task silindi + FK SET NULL: snapshot'tan göster
+        task_title=(req.task.title if req.task else req.task_title_snapshot),
+        task_date=(
+            req.task.date.isoformat() if req.task
+            else (req.task_date_snapshot.isoformat() if req.task_date_snapshot else None)
+        ),
         message=req.message,
         proposed_book_id=req.proposed_book_id,
         proposed_book_name=req.proposed_book.name if req.proposed_book else None,

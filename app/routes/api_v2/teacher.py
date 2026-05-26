@@ -3704,8 +3704,12 @@ def _build_request_list_item(req: TaskRequest) -> TeacherRequestListItem:
         type=req.type.value,
         status=req.status.value,
         task_id=req.task_id,
-        task_title=req.task.title if req.task else None,
-        task_date=req.task.date.isoformat() if req.task else None,
+        # Task silindiyse (REMOVE onaylanmış) snapshot'tan göster — audit izi
+        task_title=(req.task.title if req.task else req.task_title_snapshot),
+        task_date=(
+            req.task.date.isoformat() if req.task
+            else (req.task_date_snapshot.isoformat() if req.task_date_snapshot else None)
+        ),
         message=req.message,
         proposed_count=req.proposed_count,
         proposed_date=req.proposed_date.isoformat() if req.proposed_date else None,
@@ -3732,8 +3736,12 @@ def _build_request_detail(db: Session, req: TaskRequest) -> TeacherRequestDetail
         type=req.type.value,
         status=req.status.value,
         task_id=req.task_id,
-        task_title=req.task.title if req.task else None,
-        task_date=req.task.date.isoformat() if req.task else None,
+        # Task silindiyse (REMOVE onaylanmış) snapshot'tan göster — audit izi
+        task_title=(req.task.title if req.task else req.task_title_snapshot),
+        task_date=(
+            req.task.date.isoformat() if req.task
+            else (req.task_date_snapshot.isoformat() if req.task_date_snapshot else None)
+        ),
         message=req.message,
         teacher_response=req.teacher_response,
         proposed_book_id=req.proposed_book_id,

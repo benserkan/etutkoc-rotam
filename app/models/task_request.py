@@ -96,6 +96,12 @@ class TaskRequest(Base):
 
     teacher_response: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # REMOVE talebi onaylanınca task silinir + FK SET NULL → task_id=NULL kalır.
+    # Audit izi için task'ın silmeden ÖNCEKİ başlığı + tarihi burada snapshot'lanır.
+    # `_apply_remove` (request_service) silmeden önce yazar.
+    task_title_snapshot: Mapped[str | None] = mapped_column(String(200), nullable=True)
+    task_date_snapshot: Mapped[date | None] = mapped_column(Date, nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

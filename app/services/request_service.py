@@ -543,7 +543,12 @@ def _apply_replace(db: Session, req: TaskRequest) -> Task:
 
 
 def _apply_remove(db: Session, req: TaskRequest) -> None:
-    """REMOVE: Görevi sil, rezerv iade et."""
+    """REMOVE: Görevi sil, rezerv iade et.
+
+    Silmeden ÖNCE task başlığı + tarihi req.task_title_snapshot/task_date_snapshot'a
+    yazılır → task_id SET NULL olsa bile detail sayfasında "Çıkarılan görev: <ad>
+    (<tarih>)" gösterilebilir (audit izi).
+    """
     task = (
         db.query(Task)
         .options(joinedload(Task.book_items))
@@ -552,6 +557,9 @@ def _apply_remove(db: Session, req: TaskRequest) -> None:
     )
     if not task:
         raise RequestError("İlgili görev artık mevcut değil.")
+    # Audit snapshot — task silinince bu alanlar kalır
+    req.task_title_snapshot = task.title
+    req.task_date_snapshot = task.date
     release_task_items(db, task.student_id, list(task.book_items))
     db.delete(task)
 
