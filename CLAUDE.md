@@ -2982,6 +2982,20 @@ uyguluyordu → süper admin `/teacher/settings`'e → teacher layout rol koruma
   kullanır — boş sayfa veya `/me/account` dead-end bırakmak yasak. Yeni returnUrl
   tüketen her yer `safeReturnUrl`'den geçer.
 
+## Proxy public path eksiği — şifre/doğrulama akışları kırıktı (2026-05-26)
+
+**Bağlam (kullanıcı bildirdi):** Login sayfasındaki "Şifremi unuttum" butonuna
+basınca form değişmiyordu; tarayıcı `/login?returnUrl=%2Fpassword%2Fforgot`'a
+dönüyordu. Sebep: `web/proxy.ts` `PUBLIC_PATHS_PREFIX` listesinde **`/password/forgot`,
+`/password/reset`, `/verify-email`, `/parent/unsubscribe` yoktu** — bu sayfalar
+token ile / anonim erişilmesi gereken sayfalar; proxy onları "korumalı" sanıp
+`/login`'e yönlendiriyordu (zaten login'desin → form değişmiyor).
+- **Düzeltme** (`web/proxy.ts`): dört path public prefix listesine eklendi.
+  `/password/change` listede YOK — auth gerekir (must_change flow).
+- **KURAL:** Yeni public sayfa (token ile / anonim erişilir) eklenince `proxy.ts`
+  PUBLIC_PATHS_PREFIX'e mutlaka eklenir; aksi halde proxy /login'e atar +
+  ölü-bağlantı görünür.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
