@@ -56,10 +56,27 @@ def _week_bounds(today: date, weeks_back: int = 0) -> tuple[date, date]:
 
 
 def _student_totals_for_week(
-    db: Session, *, student_ids: list[int], ws: date, we: date
+    db: Session, *, student_ids: list[int], ws: date, we: date,
+    today: date | None = None,
 ) -> dict[int, dict]:
-    """Öğrenci başına haftalık planlı/yapılan/doğru/yanlış (yayınlanmış görevler)."""
+    """Öğrenci başına haftalık planlı/yapılan/doğru/yanlış (yayınlanmış görevler).
+
+    Hafta-ortası mantığı (2026-05-26): `we` BUGÜNDEN İLERİYSE bugüne cap'lenir.
+    Aksi halde "henüz vakti gelmemiş günlerin planları" bölene katılır → hafta-
+    ortası rate yapay olarak düşük görünür ("düşük uyum" false alarm). Geçmiş
+    haftalar için (we <= today) hesap değişmez.
+
+    Örnek: bugün Salı, hafta Pzt-Pzr aralığı. Yiğit Pzt+Sal planının %100'ünü
+    yapmış ama Çar-Pzr planları henüz vakti gelmemiş. ESKİ hesap %34 (yapay
+    düşük); YENİ hesap %100 (bugüne kadar tam).
+    """
     if not student_ids:
+        return {}
+    if today is None:
+        today = date.today()
+    effective_we = min(we, today)
+    if effective_we < ws:
+        # Hafta henüz başlamamış (gelecek hafta sorgusu) — boş dön
         return {}
     rows = (
         db.query(
@@ -74,7 +91,7 @@ def _student_totals_for_week(
             Task.student_id.in_(student_ids),
             Task.is_draft.is_(False),
             Task.date >= ws,
-            Task.date <= we,
+            Task.date <= effective_we,
         )
         .group_by(Task.student_id)
         .all()
