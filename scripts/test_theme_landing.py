@@ -82,7 +82,7 @@ def main() -> int:
     check("5 adım: Üye Ol, Plan Oluştur",
           "Üye Ol" in body and "Plan Oluştur" in body and "Başarıyı Artır" in body)
     check("Hero dashboard mockup",
-          "lp-mock" in body and "etutkoc.app/teacher" in body)
+          "lp-mock" in body and "rotam.etutkoc.com/teacher" in body)
     check("Hero floating notification kartları",
           "lp-float-card" in body)
     check("Trust strip logo marquee",

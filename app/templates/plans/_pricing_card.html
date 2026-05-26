@@ -85,12 +85,12 @@
         Plan Detaylarım →
       </a>
     {% elif info.code == 'enterprise' or info.code == 'dershane_pro' %}
-      <a href="mailto:satis@etutkocrotam.app?subject={{ info.label }}%20Görüşme%20Talebi"
+      <a href="mailto:satis@etutkoc.com?subject={{ info.label }}%20Görüşme%20Talebi"
          class="block text-center px-4 py-2.5 rounded-lg bg-slate-900 text-white font-medium hover:bg-slate-800">
         {{ info.cta_label }}
       </a>
     {% elif info.code == 'institution_trial' %}
-      <a href="mailto:satis@etutkocrotam.app?subject=Pilot%20Başvurusu"
+      <a href="mailto:satis@etutkoc.com?subject=Pilot%20Başvurusu"
          class="block text-center px-4 py-2.5 rounded-lg bg-brand-teal text-white font-medium hover:bg-brand-tealDark">
         {{ info.cta_label }}
       </a>
@@ -108,7 +108,7 @@
       {% endif %}
     {% else %}
       {% if user %}
-      <a href="mailto:satis@etutkocrotam.app?subject={{ info.label }}%20Yükseltme%20Talebi"
+      <a href="mailto:satis@etutkoc.com?subject={{ info.label }}%20Yükseltme%20Talebi"
          class="block text-center px-4 py-2.5 rounded-lg bg-brand-teal text-white font-medium hover:bg-brand-tealDark">
         {{ info.cta_label }}
       </a>

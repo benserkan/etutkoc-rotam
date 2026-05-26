@@ -56,6 +56,7 @@ from __future__ import annotations
 
 import calendar
 import json
+import logging
 import secrets
 import string as _string_mod
 from datetime import date, datetime, timedelta, timezone
@@ -85,6 +86,11 @@ from app.models import (
     ExamResult,
     ExamSection,
     GraduateMode,
+    NotificationChannel,
+    NotificationKind,
+    NotificationLog,
+    NotificationStatus,
+    PARENT_RELATION_LABELS,
     ParentInvitation,
     ParentRelation,
     ParentStudentLink,
@@ -260,6 +266,7 @@ from app.services.task_service import (
 )
 
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/teacher", tags=["v2-teacher"])
 
 
@@ -5054,6 +5061,32 @@ def teacher_invite_parent_v2(
     )
     db.commit()
     db.refresh(inv)
+
+    # Davet mailini gönder — Jinja akışıyla eşdeğer (teacher_parents.py:132-158).
+    # Bu yoksa davet satırı DB'de durur ama veliye link asla ulaşmaz (gerçek bug).
+    from app.services.email_service import notify_parent_invitation
+    sent_ok = False
+    try:
+        sent_ok = notify_parent_invitation(
+            inv,
+            teacher=user,
+            student=student,
+            relation_label=PARENT_RELATION_LABELS[relation_enum],
+        )
+    except Exception:
+        logger.exception("Veli davet maili gönderim hatası")
+    db.add(NotificationLog(
+        parent_id=user.id,  # henüz parent yok — KVKK izi için davet eden öğretmen
+        student_id=student.id,
+        kind=NotificationKind.INVITATION,
+        channel=NotificationChannel.EMAIL,
+        status=NotificationStatus.SENT if sent_ok else NotificationStatus.QUEUED,
+        subject=f"Veli daveti: {student.full_name}",
+        payload_json=None,
+        external_id=None,
+        sent_at=datetime.now(timezone.utc) if sent_ok else None,
+    ))
+    db.commit()
 
     return MutationResponse[ParentInviteResult](
         data=ParentInviteResult(

@@ -55,7 +55,7 @@ const NAV = [
 ];
 
 const DEMO_MAIL =
-  "mailto:satis@etutkocrotam.app?subject=Kurumsal%20Demo%20Talebi";
+  "mailto:satis@etutkoc.com?subject=Kurumsal%20Demo%20Talebi";
 
 export function LandingClient() {
   const q = useQuery<LandingResponse>({
@@ -218,8 +218,8 @@ function Faq() {
         </Reveal>
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Başka sorunuz mu var?{" "}
-          <a href="mailto:destek@etutkocrotam.app" className="font-medium text-cyan-700 underline-offset-4 hover:underline">
-            destek@etutkocrotam.app
+          <a href="mailto:destek@etutkoc.com" className="font-medium text-cyan-700 underline-offset-4 hover:underline">
+            destek@etutkoc.com
           </a>
         </p>
       </div>
@@ -363,7 +363,7 @@ function HeroMock() {
           <span className="size-2.5 rounded-full bg-rose-400" />
           <span className="size-2.5 rounded-full bg-amber-400" />
           <span className="size-2.5 rounded-full bg-cyan-400" />
-          <span className="ml-2 font-mono text-xs text-muted-foreground">etutkoc.app/teacher</span>
+          <span className="ml-2 font-mono text-xs text-muted-foreground">rotam.etutkoc.com/teacher</span>
         </div>
         <div className="p-5">
           <div className="mb-4 flex items-center justify-between">
@@ -971,7 +971,7 @@ function Footer() {
             <p className="mt-4 font-mono text-xs text-cyan-200/40">500+ otomatik test ile doğrulandı</p>
           </div>
           <FooterCol title="Platform" links={[["#ozellikler", "Özellikler"], ["#paketler", "Paketler"], ["#nasil-calisir", "Nasıl Çalışır?"], ["#kurumlar", "Kurumlar"]]} />
-          <FooterCol title="Destek" links={[["mailto:destek@etutkocrotam.app", "Yardım Merkezi"], ["mailto:destek@etutkocrotam.app", "Kullanım Kılavuzu"], ["mailto:destek@etutkocrotam.app", "İletişim"]]} />
+          <FooterCol title="Destek" links={[["mailto:destek@etutkoc.com", "Yardım Merkezi"], ["mailto:destek@etutkoc.com", "Kullanım Kılavuzu"], ["mailto:destek@etutkoc.com", "İletişim"]]} />
           <FooterCol title="Yasal" links={[["/kvkk", "Kullanım Şartları"], ["/privacy", "Gizlilik Politikası"], ["/kvkk", "KVKK Aydınlatma"]]} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-cyan-200/50">

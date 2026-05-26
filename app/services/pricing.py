@@ -51,8 +51,8 @@ _DEFAULTS: dict[str, Any] = {
     ],
     # --- İletişim (kurumsal talep + destek) ---
     "contact": {
-        "sales_email": "satis@etutkocrotam.app",
-        "support_email": "destek@etutkocrotam.app",
+        "sales_email": "satis@etutkoc.com",
+        "support_email": "destek@etutkoc.com",
         "whatsapp": "",   # boş → gizli. Örn: "+905xxxxxxxxx"
         "phone": "",      # boş → gizli. Örn: "+902xxxxxxxxx"
     },
