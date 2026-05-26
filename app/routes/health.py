@@ -11,7 +11,10 @@ from app.database import engine
 router = APIRouter()
 
 
-@router.get("/healthz")
+# UptimeRobot ve benzeri monitör araçları varsayılan olarak HEAD kullanır
+# (daha hafif). Sadece GET tanımlanırsa 405 dönüp monitor "Down" gösterir.
+# Hem GET hem HEAD kabul ederek dışsal monitorlerin doğru çalışmasını sağlıyoruz.
+@router.api_route("/healthz", methods=["GET", "HEAD"])
 def healthz() -> dict:
     """Uygulama + DB bağlantısı sağlıklı mı?"""
     db_ok = False
