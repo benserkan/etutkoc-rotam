@@ -420,12 +420,18 @@ class GuaranteeEvaluationInfo(BaseModel):
     eligible: bool
     period_started_at: datetime | None = None
     days_into_period: int | None = None
+    period_total_days: int = 60                # toplam değerlendirme penceresi
     average_completion_rate: float | None = None
     threshold: float
     triggered: bool
     already_extended: bool
     can_extend: bool
     note: str
+    # Detay: koç + ekrandaki diğer panellerle (compliance) tutarlı sayılar
+    student_count: int = 0                     # aktif öğrenci sayısı
+    total_planned_questions: int = 0           # toplam planlanan soru (TaskBookItem)
+    total_completed_questions: int = 0         # toplam tamamlanan soru
+    is_provisional: bool = False               # 60 gün dolmadan hesaplandı mı
 
 
 class InstitutionPlanOption(BaseModel):

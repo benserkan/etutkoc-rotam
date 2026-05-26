@@ -31,6 +31,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models import (
@@ -372,16 +373,27 @@ def is_paused(institution: Institution, now: datetime | None = None) -> bool:
 
 @dataclass
 class GuaranteeEvaluation:
-    """60g performans garantisi sonucu."""
+    """60g performans garantisi sonucu — şeffaf breakdown ile.
+
+    `average_completion_rate` ekrandaki Program Uyum Panosu ile AYNI metrik:
+    TaskBookItem.completed_count / TaskBookItem.planned_count.
+    Süre dolmadan da hesaplanır (`is_provisional=True`) — kullanıcı ilerleyişi
+    görür.
+    """
     eligible: bool                  # plana göre garanti geçerli mi
     period_started_at: datetime | None
     days_into_period: int | None    # bugün periyot başından kaç gün sonra
-    average_completion_rate: float | None    # 0..1 — kurum geneli haftalık ort
+    period_total_days: int          # toplam değerlendirme penceresi (60)
+    average_completion_rate: float | None    # 0..1
     threshold: float
     triggered: bool                 # eşiğin altında mı (uzatma şart)
     already_extended: bool
     can_extend: bool                # uzatmak şu an mümkün mü
     note: str
+    student_count: int              # aktif öğrenci sayısı (hesaba katılan)
+    total_planned_questions: int    # toplam planlanan soru
+    total_completed_questions: int  # toplam tamamlanan soru
+    is_provisional: bool            # 60 gün dolmadan hesaplandı mı
 
 
 def enable_guarantee(
@@ -418,86 +430,117 @@ def evaluate_guarantee(
     db: Session, *, institution: Institution,
     now: datetime | None = None,
 ) -> GuaranteeEvaluation:
-    """Kurumun 60g garantisi tetiklenecek durumda mı? Salt-okunur değerlendirme.
+    """Kurumun 60g garantisi sonucu — şeffaf breakdown ile.
 
-    Periyot başlangıcı: institution.created_at (veya garanti ilk aktive edilme).
-    Eşik: kurum genelinde son 60 gündeki haftalık tamamlama ortalaması
-    GUARANTEE_COMPLETION_THRESHOLD altındaysa.
+    Metrik: TaskBookItem.completed_count / TaskBookItem.planned_count —
+    Program Uyum Panosu ile AYNI ölçü (yani sayılar kullanıcının diğer
+    sayfada gördüğüyle bire bir uyumlu).
+
+    Mantık:
+      - Periyot başlangıcı: institution.created_at.
+      - Süre dolmamış olsa da rate hesaplanır (is_provisional=True): kullanıcı
+        ilerleyişi proaktif görür.
+      - Otomatik uzatma hakkı (can_extend=True) yalnız 60 gün dolmuşsa.
+      - Hesap penceresi: max(period_start, now-60g) → now. Hafta-ortası
+        yapay düşüklük önlemi için "ileri günler" zaten dışta (geçmiş+bugün).
     """
+    from app.models import TaskBookItem
+
     if now is None:
         now = datetime.now(timezone.utc)
 
+    threshold = GUARANTEE_COMPLETION_THRESHOLD
+    period_total = GUARANTEE_PERIOD_DAYS
+
+    # Hiç garanti aktif değilse
     if not institution.performance_guarantee:
         return GuaranteeEvaluation(
             eligible=False, period_started_at=None, days_into_period=None,
-            average_completion_rate=None, threshold=GUARANTEE_COMPLETION_THRESHOLD,
+            period_total_days=period_total,
+            average_completion_rate=None, threshold=threshold,
             triggered=False, already_extended=False, can_extend=False,
-            note="Garanti seçili değil (performance_guarantee=False)",
+            note="Garanti seçili değil",
+            student_count=0, total_planned_questions=0,
+            total_completed_questions=0, is_provisional=False,
         )
 
     period_start = _ensure_utc(institution.created_at) or now
     days_in = (now.date() - period_start.date()).days
     already = institution.guarantee_extended_at is not None
+    is_provisional = days_in < period_total
 
-    # 60 günden az ise henüz değerlendirme zamanı değil
-    if days_in < GUARANTEE_PERIOD_DAYS:
-        return GuaranteeEvaluation(
-            eligible=True, period_started_at=period_start, days_into_period=days_in,
-            average_completion_rate=None, threshold=GUARANTEE_COMPLETION_THRESHOLD,
-            triggered=False, already_extended=already, can_extend=False,
-            note=f"Henüz {days_in}/60 gün — değerlendirme zamanı gelmedi",
-        )
+    # Aktif öğrenciler
+    students = db.query(User).filter(
+        User.institution_id == institution.id,
+        User.role == UserRole.STUDENT,
+        User.is_active.is_(True),
+    ).all()
+    student_ids = [u.id for u in students]
+    student_count = len(student_ids)
 
-    # 60 gün geçmiş — kurum geneli tamamlama oranını hesapla
-    cutoff = now - timedelta(days=GUARANTEE_PERIOD_DAYS)
-    student_ids = [
-        u.id for u in db.query(User).filter(
-            User.institution_id == institution.id,
-            User.role == UserRole.STUDENT,
-            User.is_active.is_(True),
-        ).all()
-    ]
     if not student_ids:
         return GuaranteeEvaluation(
             eligible=True, period_started_at=period_start, days_into_period=days_in,
-            average_completion_rate=None, threshold=GUARANTEE_COMPLETION_THRESHOLD,
+            period_total_days=period_total,
+            average_completion_rate=None, threshold=threshold,
             triggered=False, already_extended=already, can_extend=False,
-            note="Kurum altında öğrenci yok — değerlendirme yapılamaz",
+            note="Aktif öğrenci yok — değerlendirme yapılamaz",
+            student_count=0, total_planned_questions=0,
+            total_completed_questions=0, is_provisional=is_provisional,
         )
 
-    # Görev sayım: planlanan / tamamlanan
-    planned = (
-        db.query(Task)
+    # Pencere: garanti periyodu içindeki tüm yayınlanmış görevler (planned)
+    # vs tamamlananları (completed). Compliance panosuyla AYNI metrik.
+    cutoff = max(period_start, now - timedelta(days=period_total))
+    totals = (
+        db.query(
+            func.coalesce(func.sum(TaskBookItem.planned_count), 0).label("p"),
+            func.coalesce(func.sum(TaskBookItem.completed_count), 0).label("c"),
+        )
+        .join(Task, TaskBookItem.task_id == Task.id)
         .filter(
             Task.student_id.in_(student_ids),
+            Task.is_draft.is_(False),
             Task.date >= cutoff.date(),
             Task.date <= now.date(),
         )
-        .count()
+        .first()
     )
-    completed = (
-        db.query(Task)
-        .filter(
-            Task.student_id.in_(student_ids),
-            Task.date >= cutoff.date(),
-            Task.date <= now.date(),
-            Task.status == TaskStatus.COMPLETED,
-        )
-        .count()
-    )
+    planned = int(totals.p) if totals else 0
+    completed = int(totals.c) if totals else 0
     rate = (completed / planned) if planned > 0 else None
 
-    triggered = rate is not None and rate < GUARANTEE_COMPLETION_THRESHOLD
-    can_extend = triggered and not already
+    # Tetiklenme + uzatma hakkı
+    triggered = rate is not None and rate < threshold
+    # Uzatma SADECE süre dolduğunda mümkün (provisional iken bilgi-amaçlı)
+    can_extend = triggered and not already and not is_provisional
+
+    # Açıklama metni
+    if is_provisional:
+        rate_label = "—" if rate is None else f"%{rate*100:.0f}"
+        note = (
+            f"İlerleyiş: {days_in}/{period_total} gün · şu an {rate_label} "
+            f"(eşik %{threshold*100:.0f}). Değerlendirme {period_total - days_in} gün sonra."
+        )
+    elif rate is None:
+        note = "Periyotta planlanmış görev yok — değerlendirme yapılamaz"
+    else:
+        note = (
+            f"Tamamlama oranı %{rate*100:.0f} "
+            f"(eşik %{threshold*100:.0f}) — "
+            f"{'eşik altında, uzatma hakkı oluştu' if triggered else 'eşik üstünde'}"
+        )
 
     return GuaranteeEvaluation(
         eligible=True, period_started_at=period_start, days_into_period=days_in,
-        average_completion_rate=rate, threshold=GUARANTEE_COMPLETION_THRESHOLD,
+        period_total_days=period_total,
+        average_completion_rate=rate, threshold=threshold,
         triggered=triggered, already_extended=already, can_extend=can_extend,
-        note=(
-            f"Tamamlama oranı %{(rate or 0)*100:.0f} "
-            f"(eşik %{GUARANTEE_COMPLETION_THRESHOLD*100:.0f})"
-        ) if rate is not None else "Yeterli veri yok",
+        note=note,
+        student_count=student_count,
+        total_planned_questions=planned,
+        total_completed_questions=completed,
+        is_provisional=is_provisional,
     )
 
 

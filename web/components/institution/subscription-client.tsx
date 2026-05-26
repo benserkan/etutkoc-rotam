@@ -720,88 +720,146 @@ function GuaranteeDetails({
   evaluation: GuaranteeEvaluationInfo;
   thresholdPct: number;
 }) {
+  const totalDays = evaluation.period_total_days || 60;
   const ratePct =
     evaluation.average_completion_rate != null
       ? Math.round(evaluation.average_completion_rate * 100)
       : null;
   const daysPct =
     evaluation.days_into_period != null
-      ? Math.min(100, Math.round((evaluation.days_into_period / 60) * 100))
+      ? Math.min(100, Math.round((evaluation.days_into_period / totalDays) * 100))
       : 0;
+  const remaining =
+    evaluation.days_into_period != null
+      ? Math.max(0, totalDays - evaluation.days_into_period)
+      : 0;
+  const above = ratePct != null && ratePct >= thresholdPct;
+  const delta = ratePct == null ? null : ratePct - thresholdPct;
+  const fmt = (n: number) => new Intl.NumberFormat("tr-TR").format(n);
+  const planned = evaluation.total_planned_questions;
+  const completed = evaluation.total_completed_questions;
+
   return (
     <div className="space-y-3">
+      {/* Değerlendirme dönemi — başlangıç + ilerleyiş bar + kalan */}
       <div className="rounded-md border border-border bg-muted/40 p-3 space-y-2">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div className="text-xs text-muted-foreground">Değerlendirme dönemi</div>
-          <div className="text-xs">
+        <div className="flex flex-wrap items-baseline justify-between gap-2 text-xs">
+          <span className="text-muted-foreground">Değerlendirme dönemi</span>
+          <span>
             {evaluation.period_started_at && (
               <span className="font-medium">
                 {formatDateOnly(evaluation.period_started_at)}
               </span>
             )}
             {evaluation.days_into_period != null && (
-              <span className="text-muted-foreground ml-1">
-                · {evaluation.days_into_period}/60 gün
-              </span>
+              <>
+                <span className="text-muted-foreground"> · </span>
+                <span className="font-medium">
+                  {evaluation.days_into_period}/{totalDays} gün
+                </span>
+                {remaining > 0 && (
+                  <span className="text-muted-foreground"> · {remaining} gün kaldı</span>
+                )}
+              </>
             )}
-          </div>
+          </span>
         </div>
         <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
-          <div
-            className="h-full bg-indigo-500"
-            style={{ width: `${daysPct}%` }}
-          />
+          <div className="h-full bg-indigo-500" style={{ width: `${daysPct}%` }} />
         </div>
       </div>
 
-      <dl className="grid grid-cols-2 gap-3 text-sm">
+      {/* Eşik vs Mevcut — büyük + delta */}
+      <div className="grid grid-cols-2 gap-3 rounded-md border border-border bg-background p-3">
         <div>
-          <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Eşik
-          </dt>
-          <dd className="font-semibold text-foreground tabular-nums">
-            %{thresholdPct}
-          </dd>
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            Eşik (tetik altı)
+          </div>
+          <div className="mt-0.5 text-2xl font-bold tabular-nums">%{thresholdPct}</div>
+          <div className="text-[11px] text-muted-foreground">
+            Bu rakamın altındaysa 1 ay uzatma hakkı
+          </div>
         </div>
         <div>
-          <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">
-            Mevcut tamamlama
-          </dt>
-          <dd
+          <div className="text-[11px] uppercase tracking-wider text-muted-foreground">
+            Şu anki tamamlama
+          </div>
+          <div
             className={cn(
-              "font-semibold tabular-nums",
+              "mt-0.5 text-2xl font-bold tabular-nums",
               ratePct == null
                 ? "text-muted-foreground"
-                : ratePct >= thresholdPct
+                : above
                   ? "text-emerald-700"
                   : "text-rose-700",
             )}
           >
             {ratePct == null ? "—" : `%${ratePct}`}
-          </dd>
+          </div>
+          {delta != null && (
+            <div className={cn(
+              "text-[11px]",
+              above ? "text-emerald-700" : "text-rose-700",
+            )}>
+              eşikten {above ? "+" : ""}{delta} puan {above ? "yukarıda" : "aşağıda"}
+            </div>
+          )}
         </div>
-      </dl>
+      </div>
 
+      {/* Açık breakdown — hesabı doğrulayabilesin diye */}
+      <div className="rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs space-y-1">
+        <div className="font-medium text-foreground">Hesap nasıl yapıldı?</div>
+        <div className="text-muted-foreground">
+          Periyot içinde yayınlanmış tüm görevlerin <b>soru bazında</b> oranı
+          (Program Uyum Panosu ile aynı metrik):
+        </div>
+        <div className="grid grid-cols-3 gap-2 pt-1">
+          <span><b className="tabular-nums">{evaluation.student_count}</b> aktif öğrenci</span>
+          <span><b className="tabular-nums">{fmt(planned)}</b> soru planlandı</span>
+          <span><b className="tabular-nums">{fmt(completed)}</b> tamamlandı</span>
+        </div>
+        {planned > 0 && (
+          <div className="text-muted-foreground pt-0.5">
+            = <b className="tabular-nums">{fmt(completed)} / {fmt(planned)}</b>
+            {" "}× 100 = <b>%{ratePct ?? 0}</b>
+          </div>
+        )}
+      </div>
+
+      {/* Durum banner — provisional / triggered / safe / extended */}
       {evaluation.already_extended ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2">
           <CheckCircle2 className="size-4 shrink-0 mt-0.5" aria-hidden />
           <span>
-            Garanti uzatması <b>uygulandı</b>. Tek seferlik bir hak; tekrar
-            tetiklenmez.
+            Garanti uzatması <b>uygulandı</b>. Tek seferlik bir hak; tekrar tetiklenmez.
+          </span>
+        </div>
+      ) : evaluation.is_provisional ? (
+        <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 flex items-start gap-2">
+          <CheckCircle2 className="size-4 shrink-0 mt-0.5" aria-hidden />
+          <span>
+            <b>İlerleyiş izleme.</b> Resmi değerlendirme 60. günde yapılır
+            ({remaining} gün kaldı). Yukarıdaki oran şu ANKİ ilerleyişin.
+            {ratePct != null && above && " Eşiğin üstündesin — şimdilik uzatma hakkı oluşmadı."}
+            {ratePct != null && !above && " Şu an eşik altında; 60. gün böyle kalırsa otomatik uzatma uygulanır."}
           </span>
         </div>
       ) : evaluation.triggered ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
           <span>
-            Tamamlama oranı eşiğin altında — sistem otomatik uzatma
+            <b>Tamamlama eşiğin altında.</b> Sistem otomatik 1 ay uzatma
             uygulayacak (cron Pazartesi 06:00 UTC).
           </span>
         </div>
       ) : (
-        <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 flex items-start gap-2">
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 flex items-start gap-2">
           <CheckCircle2 className="size-4 shrink-0 mt-0.5" aria-hidden />
-          <span>{evaluation.note}</span>
+          <span>
+            <b>Hedef yakalandı.</b> Tamamlama %{ratePct} (eşik %{thresholdPct})
+            — uzatma hakkı oluşmadı.
+          </span>
         </div>
       )}
     </div>

@@ -473,12 +473,17 @@ export interface GuaranteeEvaluationInfo {
   eligible: boolean;
   period_started_at: string | null;
   days_into_period: number | null;
+  period_total_days: number;
   average_completion_rate: number | null;
   threshold: number;
   triggered: boolean;
   already_extended: boolean;
   can_extend: boolean;
   note: string;
+  student_count: number;
+  total_planned_questions: number;
+  total_completed_questions: number;
+  is_provisional: boolean;
 }
 
 export interface InstitutionPlanOption {
