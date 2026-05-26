@@ -23,6 +23,7 @@ Servisler dokunulmaz; sadece JSON adapter rolündedir.
 """
 from __future__ import annotations
 
+import logging
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -67,6 +68,7 @@ from app.routes.api_v2.schemas.teacher import (
 from app.routes.api_v2.schemas.library import DeletedRef
 
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/teacher", tags=["v2-teacher-weekly-plan"])
 
 
@@ -340,6 +342,17 @@ def publish_week(
         t.is_draft = False
         t.published_at = now
     db.commit()
+
+    # Hafta yayınlanınca velilere "yeni haftalık program" maili tetikle
+    # (event_triggers.on_program_published -> produce_new_program; idempotent).
+    # publish-day bilinçli olarak buradan çağırmaz (granüler, spam riski).
+    if published_count > 0:
+        try:
+            from app.services.event_triggers import on_program_published
+            on_program_published(db, student=student, week_start=start, week_end=end)
+        except Exception:
+            logger.exception("Program yayın bildirim hatası student=%s", student.id)
+
     return MutationResponse[PublishResult](
         data=PublishResult(
             published_count=published_count,

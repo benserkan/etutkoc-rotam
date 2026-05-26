@@ -1792,6 +1792,25 @@ def teacher_subscription_request_v2(
     db.add(cr)
     db.commit()
 
+    # Süper admin/satış inbox'una bildir — talep iletişim talepleri sayfasında
+    # zaten görünür, ama mail proaktif uyarı olur (ödeme aktivasyonu manuel).
+    try:
+        from app.services.email_service import send_email
+        catalog = pricing.get_pricing_catalog()
+        to = (catalog.get("contact") or {}).get("sales_email") or ""
+        if "<" in to and ">" in to:
+            to = to.split("<", 1)[1].rstrip(">").strip()
+        if to:
+            send_email(to=to, template="contact_request_admin", ctx={
+                "name": cr.name, "email": cr.email, "phone": "",
+                "institution_name": cr.institution_name or "",
+                "coach_count": str(cr.coach_count or ""),
+                "source_label": "Abonelik talebi (koç)",
+                "message": cr.message or "",
+            })
+    except Exception:
+        logger.exception("Koç abonelik talebi admin maili gönderim hatası")
+
     return MutationResponse[SubscriptionRequestResult](
         data=SubscriptionRequestResult(
             ok=True,

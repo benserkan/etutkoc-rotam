@@ -471,7 +471,7 @@ def main() -> int:
     check("Madde 11 başlığı",
           "Madde 11" in body)
     check("KVKK email iletişim",
-          "kvkk@etutkoc.com" in body)
+          "destek@etutkoc.com" in body)
 
     # ============ STEP 17: HTTP /privacy public ============
     print("\n=== STEP 17: /privacy public ===")

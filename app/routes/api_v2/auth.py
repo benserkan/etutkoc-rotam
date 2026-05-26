@@ -739,6 +739,13 @@ def v2_signup_teacher(
     except Exception:
         logger.exception("email verify issue fail user=%s", new_user.id)
 
+    # Yeni koç self-signup'ı süper admin/satış inbox'una bildir (onboarding takibi).
+    try:
+        from app.services.email_service import notify_new_signup_admin
+        notify_new_signup_admin(new_user)
+    except Exception:
+        logger.exception("new signup admin notify fail user=%s", new_user.id)
+
     _establish_bff_session(db, new_user, request, response)
     return SignupOut(user=UserPublic.from_user(new_user), email_verification_sent=sent)
 

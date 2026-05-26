@@ -1,0 +1,41 @@
+Subject: {{ app_name }} — Yeni koç kayıt oldu: {{ user_full_name }}
+<div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 540px; margin: 0 auto; color: #1e293b;">
+  <h2 style="font-size: 18px; margin: 0 0 12px;">Yeni bağımsız koç kayıt oldu</h2>
+  <p style="font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
+    {{ app_name }}'a yeni bir koç self-signup ile kayıt oldu. Onboarding takibi için detaylar aşağıda.
+  </p>
+  <table cellpadding="0" cellspacing="0" style="border-collapse: collapse; width: 100%; margin: 0 0 16px; font-size: 14px;">
+    <tr>
+      <td style="padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600; width: 130px;">Ad Soyad</td>
+      <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">{{ user_full_name }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">E-posta</td>
+      <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">{{ user_email }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">Rol</td>
+      <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">{{ user_role }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">Paket</td>
+      <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">{{ user_plan }}</td>
+    </tr>
+    <tr>
+      <td style="padding: 8px 10px; background: #f8fafc; border: 1px solid #e2e8f0; font-weight: 600;">Kayıt</td>
+      <td style="padding: 8px 10px; border: 1px solid #e2e8f0;">{{ signed_up_at_label }}</td>
+    </tr>
+  </table>
+  <p style="margin: 0 0 18px;">
+    <a href="{{ app_base_url }}{{ admin_url }}"
+       style="display: inline-block; background: #117A86; color: #ffffff;
+              text-decoration: none; padding: 11px 20px; border-radius: 8px;
+              font-size: 14px; font-weight: 600;">
+      Koç detayını aç
+    </a>
+  </p>
+  <p style="font-size: 12px; line-height: 1.6; color: #64748b; margin: 0;">
+    Bu otomatik bir bildirimdir — yeni self-signup işlemleri için süper admin
+    bilgilendirilir. Yanıtlamaya gerek yok.
+  </p>
+</div>

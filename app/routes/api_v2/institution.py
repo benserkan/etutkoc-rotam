@@ -50,6 +50,7 @@ kullanıcısı erişirse 404.
 """
 from __future__ import annotations
 
+import logging
 import secrets
 from datetime import date, datetime, timezone
 
@@ -206,6 +207,7 @@ from app.services.teacher_activity import (
 )
 
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/institution", tags=["v2-institution"])
 
 
@@ -1800,6 +1802,25 @@ def institution_subscription_request_v2(
     )
     db.add(cr)
     db.commit()
+
+    # Süper admin/satış inbox'una bildir — kurum talebi proaktif uyarı.
+    try:
+        from app.services import pricing as _pricing
+        from app.services.email_service import send_email
+        catalog = _pricing.get_pricing_catalog()
+        to = (catalog.get("contact") or {}).get("sales_email") or ""
+        if "<" in to and ">" in to:
+            to = to.split("<", 1)[1].rstrip(">").strip()
+        if to:
+            send_email(to=to, template="contact_request_admin", ctx={
+                "name": cr.name, "email": cr.email, "phone": "",
+                "institution_name": cr.institution_name or "",
+                "coach_count": str(cr.coach_count or ""),
+                "source_label": "Abonelik talebi (kurum)",
+                "message": cr.message or "",
+            })
+    except Exception:
+        logger.exception("Kurum abonelik talebi admin maili gönderim hatası")
 
     return MutationResponse[SubscriptionRequestResult](
         data=SubscriptionRequestResult(

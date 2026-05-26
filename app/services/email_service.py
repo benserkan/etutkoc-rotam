@@ -163,6 +163,38 @@ def notify_parent_invitation(invitation, *, teacher, student, relation_label: st
     )
 
 
+def notify_new_signup_admin(user) -> int:
+    """Yeni koç self-signup olduğunda satış/admin adresine bilgilendirme maili.
+
+    Alıcı: pricing katalogundaki `contact.sales_email` (yoksa SMTP_FROM fallback'i).
+    Returns: gönderilen mail sayısı (1 ya da 0).
+    """
+    from datetime import datetime, timezone
+    from app.services import pricing
+    catalog = pricing.get_pricing_catalog()
+    sales = (catalog.get("contact") or {}).get("sales_email")
+    to = sales or settings.smtp_from or ""
+    # Display-name içeriyorsa ("ETUTKOC Rotam <x@y>") sadece adresi çıkar
+    if "<" in to and ">" in to:
+        to = to.split("<", 1)[1].rstrip(">").strip()
+    if not to:
+        logger.info("notify_new_signup_admin: alıcı tanımlı değil — atlandı")
+        return 0
+    ok = send_email(
+        to=to,
+        template="new_signup_admin",
+        ctx={
+            "user_full_name": user.full_name or user.email,
+            "user_email": user.email,
+            "user_role": "Bağımsız Koç",
+            "user_plan": user.plan or "solo_trial",
+            "signed_up_at_label": datetime.now(timezone.utc).strftime("%d.%m.%Y %H:%M UTC"),
+            "admin_url": f"/admin/users/{user.id}",
+        },
+    )
+    return 1 if ok else 0
+
+
 def notify_student_request_resolved(req, action: str) -> None:
     """Talep işlendiğinde öğrenciye mail.
     action: 'approved' / 'rejected' / 'answered'
