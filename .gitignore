@@ -26,3 +26,10 @@ build/
 
 # Araştırma scratch — MEB PDF/transkript dosyaları (kod artefaktı değil)
 _meb_research/
+
+# Lokal geliştirme demo seed script'leri — prod'a SIZMAMALI.
+# Bu scriptler test/demo veri üretir (örn. solo_pro plan'lı sahte invoice'lar).
+# Migrate_subset.py FK-closure ile yanlışlıkla prod'a taşıyabilir + dunning
+# cron yanlış fatura için mail atabilir (bu durum 2026-05-26'da yaşandı).
+# Lokalde scripts/ altında DURUR ama git'e konulmaz.
+scripts/seed_demo_*.py
