@@ -87,6 +87,13 @@
         reverse_proxy /_next/* next:3000
         reverse_proxy /favicon.ico next:3000
 
+        # Next.js public/ kök statik asset'leri (logo, mark vb.)
+        # Aksi halde /etutkoc-logo.svg gibi istekler aşağıdaki default'a
+        # düşüp FastAPI'den 404 alıyordu.
+        reverse_proxy /etutkoc-logo.png next:3000
+        reverse_proxy /etutkoc-logo.svg next:3000
+        reverse_proxy /etutkoc-mark.svg next:3000
+
         # =====================================================================
         # 3. STRANGLER FIG — dalga-bazlı Next.js açılışları
         # Her dalga teslim edildiğinde ilgili reverse_proxy aktive edilir.

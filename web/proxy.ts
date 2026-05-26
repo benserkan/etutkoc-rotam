@@ -31,7 +31,7 @@ const PUBLIC_PATHS_PREFIX = [
   "/password/forgot",
   "/password/reset",
   "/verify-email",          // /verify-email/<token> — token ile gelir, anonim
-  "/parent/invite",
+  "/parent/invitation",     // /parent/invitation/<token> — veli davet linki, anonim
   "/parent/unsubscribe",    // /parent/unsubscribe/<token> — bildirim mailindeki çıkış
   "/offers",
   "/pricing",
