@@ -51,25 +51,26 @@ logger = logging.getLogger(__name__)
 # Plan başına aylık kredi tahsisatı (TUNABLE — settings'e taşınabilir).
 # Tasarım: free trial gibi düşük başlangıç, pro tier'da bol kredi.
 PLAN_ALLOCATIONS: dict[str, int] = {
-    "free": 50,
-    "starter": 500,
-    "professional": 5000,
-    "enterprise": 50000,  # ileride büyük müşteri için
-    # Bağımsız koç (solo) planları — period (ay) başına kredi.
-    # solo_trial=50 (kullanıcı 2026-05-22): 14 gün denemede AI tavanı; tükenince
-    # ücretliye yönlendirilir, deneme bitince AI gate kapanır. solo_pro/elite
-    # "yükselince daha fazla" için (öneri — ücretlendirmede ayarlanabilir).
-    "solo_free": 50,
-    "solo_trial": 50,
-    "solo_pro": 500,
-    "solo_elite": 2000,
-    "solo_unlimited": 4000,
-    # Kurum planları (period başına kredi) — gerçek plan kodları (stale free
-    # fallback'i önler; ücretli kurum 50 krediye düşmesin).
-    "institution_free": 50,
-    "institution_trial": 2000,
-    "etut_standart": 5000,
-    "dershane_pro": 20000,
+    # ----- LEGACY (eski plan kodları, kullanılmıyor ama defensive) -----
+    "free": 100,
+    "starter": 1500,
+    "professional": 10000,
+    "enterprise": 150000,
+    # ----- SOLO (bağımsız koç) — period (ay) başına kredi -----
+    # Tahmin: öğrenci başına ~150 kredi/ay (AI yoğun kullanılırsa). 2026-05-26
+    # revizyonu: ETUTKOC gerçek tüketim verisinden (8 günde 56 = ay 210 / 1
+    # öğrenci) ekstrapolasyon. AI fiyatları: email=1, WA=5, AI insight=6,
+    # AI foto=5, AI dikte=3, AI book_template=5.
+    "solo_free": 200,        # 3 öğr, AI yok → ~90 email + buffer
+    "solo_trial": 50,        # 14 gün deneme — TASARIM AI-tavanı (değişmedi)
+    "solo_pro": 1500,        # ≤10 öğr × 150 = 1500
+    "solo_elite": 4000,      # ≤25 öğr × 160 = 4000
+    "solo_unlimited": 8000,  # 40+ öğr
+    # ----- KURUM planları -----
+    "institution_free": 200,    # ≤2 koç, AI sınırlı
+    "institution_trial": 3000,  # kurum deneyimi
+    "etut_standart": 10000,     # ≤10 koç × 5 öğr × 200 ≈ 10K
+    "dershane_pro": 40000,      # ≤50 koç × 5 öğr × 160 ≈ 40K
 }
 
 # Çağrı tipi başına kredi maliyeti (TUNABLE).
