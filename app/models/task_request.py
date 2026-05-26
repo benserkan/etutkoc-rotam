@@ -70,8 +70,11 @@ class TaskRequest(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     # Mevcut göreve referans (CHANGE / REMOVE / QUESTION-on-task için); ADD için NULL
+    # ondelete=SET NULL: REMOVE talebi onaylanınca task silinir AMA request kalır
+    # (status=approved, audit izi korunur). CASCADE iken endpoint db.refresh(req)
+    # InvalidRequestError → HTTP 500 fırlatıyordu (26.05.2026 incidenti).
     task_id: Mapped[int | None] = mapped_column(
-        ForeignKey("tasks.id", ondelete="CASCADE"), nullable=True, index=True
+        ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True, index=True
     )
 
     type: Mapped[RequestType] = mapped_column(Enum(RequestType), nullable=False)
