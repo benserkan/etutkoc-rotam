@@ -94,6 +94,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "",
     links: [
       { href: "/admin", label: "Panel", icon: LayoutDashboard },
+      { href: "/admin/activity-stream", label: "Aktivite Akışı", icon: Activity },
     ],
   },
   {

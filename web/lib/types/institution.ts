@@ -769,6 +769,33 @@ export interface ParentTrustNotificationListResponse {
 }
 
 // =============================================================================
+// Üyelik & Aktivite Akışı (admin + institution paylaşır)
+// =============================================================================
+
+export interface ActivityStreamItem {
+  id: string;
+  occurred_at: string;
+  type: string;
+  category: "signup" | "invitation" | "commercial" | "change";
+  is_commercial: boolean;
+  title: string;
+  subtitle: string | null;
+  actor_name: string | null;
+  actor_email: string | null;
+  actor_role: string | null;
+  target_label: string | null;
+  detail_url: string | null;
+  institution_id: number | null;
+  institution_name: string | null;
+}
+
+export interface ActivityStreamResponse {
+  items: ActivityStreamItem[];
+  counts: Record<string, number>;
+  days: number;
+}
+
+// =============================================================================
 // KP4b — Kurum Akademik Çıktı Panosu
 // =============================================================================
 

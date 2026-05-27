@@ -766,6 +766,40 @@ class ParentTrustNotificationListResponse(BaseModel):
 
 
 # =============================================================================
+# Üyelik & Aktivite Akışı
+# =============================================================================
+
+
+class ActivityStreamItem(BaseModel):
+    """Birleşik aktivite akışı satırı.
+
+    Veri kaynakları: users + invitations + parent_invitations +
+    contact_requests + plan_change_history. Kategori 4 grup:
+      - signup / invitation / commercial / change
+    """
+    id: str                              # 'user:42', 'invitation:8', vb.
+    occurred_at: datetime
+    type: str                            # ham tip kodu
+    category: str                        # signup / invitation / commercial / change
+    is_commercial: bool                  # paket alımı, abonelik talebi → highlight
+    title: str
+    subtitle: str | None = None
+    actor_name: str | None = None
+    actor_email: str | None = None
+    actor_role: str | None = None
+    target_label: str | None = None
+    detail_url: str | None = None
+    institution_id: int | None = None
+    institution_name: str | None = None
+
+
+class ActivityStreamResponse(BaseModel):
+    items: list[ActivityStreamItem]
+    counts: dict[str, int]               # total / signup / invitation / commercial / change / purchases
+    days: int
+
+
+# =============================================================================
 # KP4b — Kurum Akademik Çıktı Panosu (deneme net agregasyonu)
 # =============================================================================
 

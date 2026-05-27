@@ -21,6 +21,7 @@ import type {
   TeacherScorecardResponse,
   ParentTrustResponse,
   ParentTrustNotificationListResponse,
+  ActivityStreamResponse,
   InstitutionAcademicResponse,
   CohortTab,
   CohortsResponse,
@@ -75,6 +76,8 @@ export const institutionKeys = {
     ["institution", "me", "parent-trust", String(days)] as const,
   parentTrustNotifications: (days: number, status: string | null) =>
     ["institution", "me", "parent-trust", "notifications", String(days), status ?? "all"] as const,
+  activityStream: (days: number, type: string | null) =>
+    ["institution", "me", "activity-stream", String(days), type ?? "all"] as const,
   academic: (weeks: number) =>
     ["institution", "me", "academic", String(weeks)] as const,
   invitations: () => ["institution", "me", "invitations"] as const,
@@ -160,6 +163,16 @@ export function getInstitutionTeacherScorecard(weeks = 4) {
 export function getInstitutionParentTrust(days = 30) {
   return api<ParentTrustResponse>(
     `/api/v2/institution/parent-trust?days=${days}`,
+  );
+}
+
+export function getInstitutionActivityStream(
+  days = 30, type: string | null = null, limit = 200,
+) {
+  const q = new URLSearchParams({ days: String(days), limit: String(limit) });
+  if (type) q.set("type", type);
+  return api<ActivityStreamResponse>(
+    `/api/v2/institution/activity-stream?${q.toString()}`,
   );
 }
 

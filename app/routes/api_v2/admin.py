@@ -568,6 +568,32 @@ def _to_health_item(h) -> HealthAssessmentItem:
 # =============================================================================
 
 
+@router.get("/activity-stream")
+def admin_activity_stream_v2(
+    days: int = Query(30, ge=1, le=90),
+    type: str | None = Query(None, description="all/signup/invitation/commercial/change"),
+    limit: int = Query(200, ge=1, le=500),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Süper admin — sistem geneli üyelik & aktivite akışı.
+
+    Tüm kurumlar + bağımsız koçlar dahil. Paket satın alma (plan upgrade) +
+    abonelik/iletişim talepleri 'commercial' kategoriyle highlight'lanır.
+    """
+    from app.routes.api_v2.schemas.institution import (
+        ActivityStreamItem, ActivityStreamResponse,
+    )
+    from app.services.activity_stream import fetch_activity
+    items, counts = fetch_activity(
+        db, institution_id=None, days=days, type_filter=type, limit=limit,
+    )
+    return ActivityStreamResponse(
+        items=[ActivityStreamItem(**i) for i in items],
+        counts=counts, days=days,
+    )
+
+
 @router.get("/dashboard", response_model=AdminDashboardResponse)
 def admin_dashboard_v2(
     user: User = Depends(_require_super_admin),

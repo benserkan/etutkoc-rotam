@@ -131,6 +131,8 @@ export const adminKeys = {
       String(page),
     ] as const,
   systemHealth: () => ["admin", "system-health"] as const,
+  activityStream: (days: number, type: string | null) =>
+    ["admin", "activity-stream", String(days), type ?? "all"] as const,
   announcements: () => ["admin", "announcements"] as const,
   kvkk: () => ["admin", "kvkk"] as const,
   usage: () => ["admin", "usage"] as const,
@@ -357,6 +359,16 @@ export function getAdminAudit(
 
 export function getAdminSystemHealth() {
   return api<SystemHealthResponse>("/api/v2/admin/system-health");
+}
+
+export function getAdminActivityStream(
+  days = 30, type: string | null = null, limit = 200,
+) {
+  const q = new URLSearchParams({ days: String(days), limit: String(limit) });
+  if (type) q.set("type", type);
+  return api<import("@/lib/types/institution").ActivityStreamResponse>(
+    `/api/v2/admin/activity-stream?${q.toString()}`,
+  );
 }
 
 export function getAdminAnnouncements() {

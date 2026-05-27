@@ -78,6 +78,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "",
     links: [
       { href: "/institution", label: "Panel", icon: LayoutDashboard },
+      { href: "/institution/activity-stream", label: "Aktivite Akışı", icon: Activity },
     ],
   },
   {
