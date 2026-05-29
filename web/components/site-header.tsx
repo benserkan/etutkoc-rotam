@@ -215,22 +215,29 @@ function MobileDrawer({
     };
   }, [onClose]);
 
-  // iOS Safari'de absolute container içinde h-full bazen yükseklik almıyor →
-  // flex parent + ml-auto panel deseni daha sağlam. Backdrop ayrı button (a11y).
+  // iOS Safari fix: h-full / h-screen viewport adres çubuğu için yanlış
+  // hesaplanıyor. `100dvh` (dynamic viewport height) iOS 16+'da garantili
+  // tam yükseklik verir. Inline style fallback (Tailwind purge garanti).
+  const FULL_HEIGHT_STYLE = { height: "100dvh", maxHeight: "100dvh" } as const;
   return (
     <div
       role="dialog"
       aria-modal
       aria-label="Mobil menü"
       className="lg:hidden fixed inset-0 z-50 flex"
+      style={FULL_HEIGHT_STYLE}
     >
       <button
         type="button"
         onClick={onClose}
         aria-label="Menüyü kapat"
         className="absolute inset-0 z-0 bg-black/50 backdrop-blur-sm"
+        style={FULL_HEIGHT_STYLE}
       />
-      <div className="relative z-10 ml-auto flex h-full w-[300px] max-w-[88vw] flex-col bg-card text-card-foreground shadow-2xl border-l border-border">
+      <aside
+        className="relative z-10 ml-auto flex w-[300px] max-w-[88vw] flex-col bg-card text-card-foreground shadow-2xl border-l border-border"
+        style={FULL_HEIGHT_STYLE}
+      >
         <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 h-14">
           <div className="min-w-0 leading-tight">
             <p className="truncate text-sm font-medium">{user.full_name}</p>
@@ -240,7 +247,11 @@ function MobileDrawer({
             <X className="size-5" aria-hidden />
           </Button>
         </div>
-        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3" aria-label="Öğrenci paneli">
+        <nav
+          className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3"
+          aria-label="Öğrenci paneli"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
           {STUDENT_NAV.map((n) => {
             const active =
               pathname === n.href || pathname.startsWith(`${n.href}/`);
@@ -268,7 +279,7 @@ function MobileDrawer({
             <LogOut className="size-4" aria-hidden /> Çıkış yap
           </Button>
         </div>
-      </div>
+      </aside>
     </div>
   );
 }
