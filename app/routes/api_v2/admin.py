@@ -354,6 +354,8 @@ from app.routes.api_v2.schemas.admin import (
     ContactRequestListResponse,
     ContactRequestUpdateBody,
     ContactRequestMutationResult,
+    OnboardInstitutionBody,
+    OnboardInstitutionResult,
 )
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.services.account_history import (
@@ -6862,7 +6864,7 @@ def admin_revenue_dashboard_v2(
 
     if segment not in ("all", "institution", "user"):
         segment = "all"
-    data = get_revenue_panel_data(db)
+    data = get_revenue_panel_data(db, segment=segment)
 
     try:
         mrr_combined = mrr_owner_aware(db, segment=segment)
@@ -6934,13 +6936,18 @@ def admin_revenue_dashboard_v2(
 def admin_revenue_drill_v2(
     key: str = Query(...),
     plan: str | None = Query(None),
+    segment: str = Query("all", pattern="^(all|institution|user)$"),
     user: User = Depends(_require_super_admin),
     db: Session = Depends(get_db),
 ):
-    """KPI drill-down — bir sayının arkasındaki kurum listesi. Jinja: admin.py:3429-3453."""
+    """KPI drill-down — bir sayının arkasındaki kurum/koç listesi.
+
+    segment: 'all' (kurum + bağımsız koç) | 'institution' | 'user'.
+    plan_change:* anahtarlarında segment owner-tip filtresine dönüşür.
+    """
     from app.services.revenue_panel import drill_for_key
 
-    result = drill_for_key(db, key=key, plan=plan)
+    result = drill_for_key(db, key=key, plan=plan, segment=segment)
     return RevenueDrillResponse(
         title=result.get("title", ""),
         icon=result.get("icon", ""),
@@ -6949,8 +6956,14 @@ def admin_revenue_drill_v2(
         count=result.get("count", 0),
         rows=[
             RevenueDrillRow(
-                institution_id=r["institution_id"],
-                institution_name=r["institution_name"],
+                owner_type=r.get("owner_type", "institution"),
+                owner_id=r.get("owner_id", 0),
+                display_name=r.get("display_name") or r.get("institution_name", ""),
+                institution_id=r.get("institution_id", 0),
+                institution_name=r.get("institution_name", ""),
+                user_id=r.get("user_id"),
+                user_name=r.get("user_name"),
+                user_email=r.get("user_email"),
                 plan=r["plan"],
                 plan_label=r["plan_label"],
                 monthly_price_try=r.get("monthly_price_try"),
@@ -6958,12 +6971,17 @@ def admin_revenue_drill_v2(
                 trial_ends_at=r.get("trial_ends_at"),
                 post_trial_plan=r.get("post_trial_plan"),
                 reason=r.get("reason"),
-                detail_url=r.get("detail_url", f"/admin/institutions/{r['institution_id']}"),
+                detail_url=r.get("detail_url", ""),
                 health_score=r.get("health_score"),
                 active_teacher_pct=r.get("active_teacher_pct"),
                 active_student_pct=r.get("active_student_pct"),
                 event_at=r.get("event_at"),
                 event_days_ago=r.get("event_days_ago"),
+                from_plan=r.get("from_plan"),
+                from_plan_label=r.get("from_plan_label"),
+                to_plan=r.get("to_plan"),
+                to_plan_label=r.get("to_plan_label"),
+                event_note=r.get("event_note"),
             )
             for r in result.get("rows", [])
         ],
@@ -8211,6 +8229,208 @@ def admin_contact_request_update_v2(
     return MutationResponse[ContactRequestMutationResult](
         data=ContactRequestMutationResult(id=cr.id, status=cr.status),
         invalidate=_CONTACT_INVALIDATE,
+    )
+
+
+@router.post(
+    "/contact-requests/{request_id}/onboard",
+    response_model=MutationResponse[OnboardInstitutionResult],
+)
+def admin_onboard_institution_v2(
+    request_id: int,
+    body: OnboardInstitutionBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Talepten aktivasyona — tek transaction'da kurum + yönetici + ödeme linki.
+
+    Akış:
+      1) Kurum yarat (slug auto-gen, contact_email)
+      2) Kurum yöneticisi yarat (INSTITUTION_ADMIN, geçici şifre, must_change=True)
+      3) Ödeme linki yarat (target=institution + amount + cycle)
+      4) E-posta gönder (yöneticiye: giriş bilgileri + ödeme linki)
+      5) contact_request status='closed' + handled_by_id + admin_note'e izleme
+      6) Audit logları
+    """
+    from datetime import datetime, timezone
+    from decimal import Decimal
+    from app.models.contact_request import (
+        CONTACT_STATUS_CLOSED, ContactRequest,
+    )
+    from app.services.auth_security import generate_strong_password
+    from app.services import payment_link_service
+    from app.services.email_service import send_email
+    from app.services.security import hash_password as _hash
+    from app.config import settings
+
+    # 0) Talep'i yükle
+    cr = db.get(ContactRequest, request_id)
+    if cr is None:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "contact_request_not_found",
+                    "message": "İletişim talebi bulunamadı."},
+        )
+
+    # E-posta çakışma kontrolü
+    if db.query(User).filter(User.email == body.admin_email.strip().lower()).first():
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "conflict", "code": "email_taken",
+                    "message": "Bu e-posta zaten kayıtlı; başka e-posta veya mevcut kullanıcıyı kullanın."},
+        )
+
+    # 1) Kurum yarat
+    slug = (body.slug or _slugify(body.institution_name)).strip()
+    if not slug:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "validation", "code": "slug_invalid",
+                    "message": "Geçerli bir slug üretilemedi (kurum adını kontrol edin)."},
+        )
+    # Slug çakışmasını saymakla uğraşmadan: varsa sona "-N" ekle
+    base_slug, i = slug, 1
+    while db.query(Institution).filter(Institution.slug == slug).first():
+        i += 1
+        slug = f"{base_slug}-{i}"
+        if i > 50:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "validation", "code": "slug_collision",
+                        "message": "Slug üretilemedi (çok fazla çakışma)."},
+            )
+
+    inst = Institution(
+        name=body.institution_name.strip(),
+        slug=slug,
+        contact_email=(body.contact_email or body.admin_email).strip().lower() or None,
+        plan=body.plan,
+        is_active=True,
+    )
+    db.add(inst)
+    db.flush()
+
+    # 2) Yönetici yarat — geçici şifre
+    pwd = generate_strong_password(UserRole.INSTITUTION_ADMIN)
+    admin_user = User(
+        email=body.admin_email.strip().lower(),
+        password_hash=_hash(pwd),
+        full_name=body.admin_full_name.strip(),
+        role=UserRole.INSTITUTION_ADMIN,
+        institution_id=inst.id,
+        is_active=True,
+        password_changed_at=datetime.now(timezone.utc),
+        must_change_password=True,
+        email_verified_at=datetime.now(timezone.utc),  # admin oluşturduğu için onaylı say
+    )
+    db.add(admin_user)
+    db.flush()
+
+    # 3) Ödeme linki yarat
+    try:
+        link = payment_link_service.create_link(
+            db, admin=user,
+            target_owner_type="institution",
+            target_owner_id=inst.id,
+            plan_code=body.plan,
+            cycle=body.payment_cycle,
+            amount=Decimal(str(body.payment_amount)),
+            description=body.payment_description,
+            expires_in_days=body.payment_expires_in_days,
+        )
+    except payment_link_service.PaymentLinkError as exc:
+        # Geri al — kurum/yönetici de geri çekilsin (transaction rollback)
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "validation", "code": exc.code, "message": exc.message},
+        ) from exc
+
+    public_url = f"{settings.app_base_url.rstrip('/')}/payment/link/{link.token}"
+
+    # 4) E-posta gönder (opsiyonel — varsayılan True)
+    email_sent = False
+    if body.send_email:
+        # Plan etiketini katalogdan al
+        from app.services.plans import PLAN_CATALOG
+        pi = PLAN_CATALOG.get(body.plan)
+        plan_label = pi.label if pi else body.plan
+        cycle_label_tr = "Aylık" if body.payment_cycle == "monthly" else "Yıllık (10 ay peşin)"
+        amount_formatted = f"{int(body.payment_amount):,} ₺".replace(",", ".")
+        expires_at_label = (
+            link.expires_at.strftime("%d.%m.%Y")
+            if link.expires_at else "—"
+        )
+        try:
+            email_sent = send_email(
+                to=admin_user.email,
+                template="institution_onboarding",
+                ctx={
+                    "full_name": admin_user.full_name,
+                    "email": admin_user.email,
+                    "temp_password": pwd,
+                    "login_url": f"{settings.app_base_url.rstrip('/')}/login",
+                    "institution_name": inst.name,
+                    "plan_label": plan_label,
+                    "amount_formatted": amount_formatted,
+                    "cycle_label": cycle_label_tr,
+                    "description": body.payment_description,
+                    "payment_url": public_url,
+                    "expires_at_label": expires_at_label,
+                },
+            )
+        except Exception:
+            logger.exception("institution_onboarding email fail user=%s", admin_user.id)
+            email_sent = False
+
+    # 5) contact_request'i 'closed' işaretle + izleme notu
+    cr.status = CONTACT_STATUS_CLOSED
+    cr.handled_by_id = user.id
+    cr.handled_at = datetime.now(timezone.utc)
+    existing_note = (cr.admin_note or "").strip()
+    tracking_note = (
+        f"Onboarding tamam — kurum #{inst.id} ({inst.name}), "
+        f"yönetici #{admin_user.id} ({admin_user.email}), "
+        f"ödeme linki #{link.id} ({body.payment_amount:.0f} ₺)"
+    )
+    cr.admin_note = (existing_note + "\n" + tracking_note).strip() if existing_note else tracking_note
+
+    # 6) Audit logları
+    log_action(
+        db, action=AuditAction.INSTITUTION_CREATE, actor_id=user.id,
+        target_type="institution", target_id=inst.id, request=request,
+        details={"from_contact_request": cr.id, "plan": body.plan},
+    )
+    log_action(
+        db, action=AuditAction.USER_CREATE, actor_id=user.id,
+        target_type="user", target_id=admin_user.id, request=request,
+        details={"role": "institution_admin", "institution_id": inst.id,
+                 "from_contact_request": cr.id, "temp_password_issued": True},
+    )
+    db.commit()
+
+    return MutationResponse[OnboardInstitutionResult](
+        data=OnboardInstitutionResult(
+            institution_id=inst.id,
+            institution_name=inst.name,
+            institution_admin_id=admin_user.id,
+            institution_admin_email=admin_user.email,
+            temp_password=pwd,
+            payment_link_id=link.id,
+            payment_link_token=link.token,
+            payment_link_url=public_url,
+            email_sent=email_sent,
+            message=(
+                f"Kurum {inst.name} oluşturuldu, yönetici {admin_user.email} "
+                f"tanımlandı, ödeme linki hazır."
+                + (" E-posta gönderildi." if email_sent else " E-postayı elden iletin.")
+            ),
+        ),
+        invalidate=[
+            "admin:dashboard", "admin:institutions", "admin:users",
+            "admin:payment-links", *_CONTACT_INVALIDATE,
+        ],
     )
 
 

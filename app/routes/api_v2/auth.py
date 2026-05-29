@@ -98,6 +98,10 @@ class SignupTeacherIn(BaseModel):
     password_confirm: str
     accept_terms: bool = False
     turnstile_token: str = ""
+    # /pricing'den "14 gün ücretsiz dene" ile gelen koç bir tier seçmiş olur
+    # (solo_pro/solo_elite/solo_unlimited). Trial bitince bu plan'a geçmek için
+    # ödeme talep edilir; başka tier verilirse veya boşsa varsayılan solo_free.
+    intended_plan: str | None = None
 
 
 class SignupInviteIn(BaseModel):
@@ -716,7 +720,11 @@ def v2_signup_teacher(
     db.add(new_user)
     db.flush()
     try:
-        start_solo_trial(db, user=new_user, autocommit=False)
+        start_solo_trial(
+            db, user=new_user,
+            intended_plan=(payload.intended_plan or None),
+            autocommit=False,
+        )
     except Exception:
         logger.exception("solo trial start fail user=%s", new_user.id)
     log_action(

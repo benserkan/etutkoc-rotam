@@ -76,5 +76,19 @@ class Settings(BaseSettings):
     auth_cookie_samesite_access: str = "lax"
     auth_cookie_samesite_refresh: str = "strict"
 
+    # ========================================================================
+    # Ödeme — Iyzico (Ödeme Paket Ö1). Boş key + sandbox URL = test modu.
+    # Üretime geçiş: IYZICO_BASE_URL=https://api.iyzipay.com + gerçek key/secret.
+    # ========================================================================
+    iyzico_api_key: str = ""
+    iyzico_secret_key: str = ""
+    iyzico_base_url: str = "https://sandbox-api.iyzipay.com"
+    # Iyzico checkout sonrası bu URL'ye form-POST eder (token ile).
+    # Backend olmalı (frontend değil — POST handler gerek). Bizim handler 303 ile
+    # Next.js'in /payment/result sayfasına yönlendirir.
+    # Dev: http://127.0.0.1:8081/api/v2/payment/iyzico/callback
+    # Prod: https://rotam.etutkoc.com/api/v2/payment/iyzico/callback
+    payment_callback_url: str = "http://127.0.0.1:8081/api/v2/payment/iyzico/callback"
+
 
 settings = Settings()

@@ -1449,6 +1449,14 @@ export interface TeacherPlanResponse {
   subscription_status: string | null;   // active | canceled | past_due | null
   subscription_period_end: string | null;
   subscription_cycle: string | null;
+  // Signup'ta seçilen "14 gün dene" paketinin kodu (solo_pro/elite/unlimited).
+  // Trial bitince koç bu pakete geçmek için ödeme yapar; aksi halde solo_free.
+  post_trial_plan: string | null;
+  post_trial_plan_label: string | null;
+  post_trial_plan_credits: number | null;
+  // AI kredi durumu — /teacher/plan ilerleme çubuğu
+  ai_credits_used: number;
+  ai_credits_allocated: number;
 }
 
 export interface PlanUpgradeBody {

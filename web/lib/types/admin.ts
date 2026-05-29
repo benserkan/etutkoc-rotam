@@ -2066,8 +2066,17 @@ export interface RevenueDashboardResponse {
 }
 
 export interface RevenueDrillRow {
+  // Owner-pattern (kurum VEYA bağımsız koç)
+  owner_type: "institution" | "user";
+  owner_id: number;
+  display_name: string;
+  // Geri uyumluluk
   institution_id: number;
   institution_name: string;
+  // Koç için
+  user_id: number | null;
+  user_name: string | null;
+  user_email: string | null;
   plan: string;
   plan_label: string;
   monthly_price_try: number | null;
@@ -2081,6 +2090,12 @@ export interface RevenueDrillRow {
   active_student_pct: number | null;
   event_at: string | null;
   event_days_ago: number | null;
+  // Plan değişimi detayları
+  from_plan: string | null;
+  from_plan_label: string | null;
+  to_plan: string | null;
+  to_plan_label: string | null;
+  event_note: string | null;
 }
 
 export interface RevenueDrillResponse {
@@ -3047,6 +3062,34 @@ export interface ContactRequestListResponse {
 export interface ContactRequestMutationResult {
   id: number;
   status: string;
+}
+
+// "Talepten Aktivasyona" — tek dialog'lu onboarding
+export interface OnboardInstitutionBody {
+  institution_name: string;
+  slug?: string | null;
+  contact_email?: string | null;
+  plan: string;
+  admin_full_name: string;
+  admin_email: string;
+  payment_amount: number;
+  payment_cycle: "monthly" | "annual";
+  payment_description?: string | null;
+  payment_expires_in_days?: number;
+  send_email?: boolean;
+}
+
+export interface OnboardInstitutionResult {
+  institution_id: number;
+  institution_name: string;
+  institution_admin_id: number;
+  institution_admin_email: string;
+  temp_password: string;
+  payment_link_id: number;
+  payment_link_token: string;
+  payment_link_url: string;
+  email_sent: boolean;
+  message: string;
 }
 
 export interface AdminBadgesResponse {

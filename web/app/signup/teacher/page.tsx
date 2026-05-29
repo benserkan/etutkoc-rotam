@@ -194,6 +194,7 @@ export default async function SignupTeacherPage({
                 <SignupTeacherForm
                   turnstileEnabled={turnstile.enabled}
                   turnstileSiteKey={turnstile.site_key}
+                  intendedPlan={planParam}
                 />
               </CardContent>
             </Card>

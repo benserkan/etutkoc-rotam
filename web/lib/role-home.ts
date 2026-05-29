@@ -45,6 +45,9 @@ export function safeReturnUrl(
   const path = returnUrl.split(/[?#]/)[0];
   const area = ROLE_AREA[role];
   const inOwnArea = path === area || path.startsWith(area + "/");
-  const inShared = path === "/me" || path.startsWith("/me/");
+  const inShared =
+    path === "/me" ||
+    path.startsWith("/me/") ||
+    path.startsWith("/payment/"); // her rol ödeme sonucu / linkini görebilir
   return inOwnArea || inShared ? returnUrl : null;
 }

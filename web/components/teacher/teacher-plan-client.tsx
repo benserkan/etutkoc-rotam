@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Check, CheckCircle2, Clock, Gem, Loader2, Lock, Mail, Sparkles } from "lucide-react";
+import { Check, CheckCircle2, Clock, CreditCard, Gem, Loader2, Lock, Mail, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { ApiError } from "@/lib/api";
@@ -23,18 +23,61 @@ import {
   submitSubscriptionRequest,
   teacherKeys,
 } from "@/lib/api/teacher";
+import {
+  getPaymentProviderStatus,
+  paymentKeys,
+} from "@/lib/api/payment";
+import { useInitPaymentCheckout } from "@/lib/hooks/use-payment-mutations";
 import type { TeacherPlanResponse } from "@/lib/types/teacher";
 
 function tl(n: number): string {
   return `${n.toLocaleString("tr-TR")} ₺`;
 }
 
-const SOLO_FEATURES = [
-  "Yapay zekâ: sesli dikte + fotoğraftan not + koçluk içgörüsü",
-  "Veliye otomatik ilerleme bildirimi + deneme/net takibi",
-  "Tükenen veya uzaklaşan öğrenciyi geç olmadan gör",
-  "Aylık kredi dahil",
-];
+// Tier-bazlı özellik listesi + kredi (Google Workspace tarzı detaylı kart için).
+// Her tier "alt tier'ın TÜM özelliklerine ek olarak..." mantığıyla yazıldı.
+interface TierDetails {
+  features: string[];
+  credits: number;       // aylık AI kredi
+  badge?: string;        // "En popüler" gibi
+}
+const TIER_DETAILS: Record<string, TierDetails> = {
+  solo_pro: {
+    credits: 1500,
+    features: [
+      "10 öğrenciye kadar bireysel koçluk",
+      "Aylık 1.500 yapay zekâ kredisi",
+      "Sesli dikte + fotoğraftan seans notu",
+      "AI koçluk içgörüsü (sonraki seans hazırlığı)",
+      "Veliye otomatik ilerleme bildirimi",
+      "Deneme / net takibi + akademik grafik",
+      "Tükenen öğrenciyi geç olmadan gör (risk paneli)",
+    ],
+  },
+  solo_elite: {
+    credits: 4000,
+    badge: "En popüler",
+    features: [
+      "Solo Başlangıç'taki tüm özellikler",
+      "25 öğrenciye kadar koçluk",
+      "Aylık 4.000 yapay zekâ kredisi (~2,5×)",
+      "Aylık veya akademik yıl (2 ay bedava)",
+      "Aralıklı tekrar + öğrenci DNA analizi",
+      "Çoklu sınav tipinde net takibi (LGS/TYT/AYT)",
+    ],
+  },
+  solo_unlimited: {
+    credits: 8000,
+    features: [
+      "Solo'daki tüm özellikler",
+      "Sınırsız öğrenci",
+      "Aylık 8.000 yapay zekâ kredisi (~5×)",
+      "Yüksek hacimde AI içgörü + foto/dikte",
+      "Aile/öğrenci başına özel veli kanalı",
+      "Öncelikli destek",
+    ],
+  },
+};
 
 function studentCapLabel(max: number | null): string {
   return max == null ? "Sınırsız öğrenci" : `${max} öğrenciye kadar`;
@@ -65,12 +108,45 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
         <CardContent className="flex flex-wrap items-center justify-between gap-3 p-4">
           <div>
             <p className="text-xs uppercase tracking-wide text-muted-foreground">Mevcut paket</p>
-            <p className="text-lg font-semibold">{data.plan_label}</p>
+            <p className="text-lg font-semibold">
+              {data.trial_active && data.post_trial_plan_label
+                ? `${data.post_trial_plan_label} — ${data.trial_days_left ?? 14} gün ücretsiz deneme`
+                : data.plan_label}
+            </p>
             <StatusLine status={data.status} daysLeft={data.trial_days_left} subStatus={data.subscription_status} />
           </div>
           <AiPill aiPremium={data.ai_premium} status={data.status} daysLeft={data.trial_days_left} />
         </CardContent>
       </Card>
+
+      {/* Trial niyetli plan bilgi notu */}
+      {data.trial_active && data.post_trial_plan && data.post_trial_plan !== "solo_free" && data.post_trial_plan_label ? (
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50/70 px-4 py-3 text-sm text-cyan-900">
+          <p className="font-semibold">Deneme süren bittiğinde</p>
+          <p className="mt-0.5">
+            <strong>{data.post_trial_plan_label}</strong> paketine geçmek için <strong>ödeme</strong> talep edilir.
+            {data.post_trial_plan_credits && data.post_trial_plan_credits > 0 ? (
+              <>
+                {" "}Yapay zekâ kredin{" "}
+                <strong>{(data.post_trial_plan_credits).toLocaleString("tr-TR")} / ay</strong>{" "}
+                olur ve ay başında otomatik yenilenir.
+              </>
+            ) : null}
+            {" "}Ödemezsen <strong>Solo Ücretsiz</strong>&apos;e (3 öğrenci, yapay zekâ kapalı) düşersin.
+          </p>
+        </div>
+      ) : null}
+
+      {/* AI Kredi durumu — trial veya free için ilerleme çubuğu */}
+      {data.is_solo && data.ai_credits_allocated > 0 ? (
+        <AiCreditMeter
+          used={data.ai_credits_used}
+          allocated={data.ai_credits_allocated}
+          trialActive={data.trial_active}
+          postTrialPlanLabel={data.post_trial_plan_label}
+          postTrialPlanCredits={data.post_trial_plan_credits}
+        />
+      ) : null}
 
       {data.status === "managed" || !data.is_solo ? (
         <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
@@ -94,6 +170,75 @@ function fmtDate(iso: string | null): string {
   if (!iso) return "";
   const d = new Date(iso);
   return `${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}.${d.getFullYear()}`;
+}
+
+function AiCreditMeter({
+  used, allocated, trialActive, postTrialPlanLabel, postTrialPlanCredits,
+}: {
+  used: number;
+  allocated: number;
+  trialActive: boolean;
+  postTrialPlanLabel: string | null;
+  postTrialPlanCredits: number | null;
+}) {
+  const remaining = Math.max(0, allocated - used);
+  const pct = allocated > 0 ? Math.min(100, Math.round((used / allocated) * 100)) : 0;
+  const exhausted = remaining === 0;
+  const lowThreshold = trialActive ? 10 : Math.max(5, Math.round(allocated * 0.1));
+  const low = remaining > 0 && remaining <= lowThreshold;
+
+  const barColor = exhausted ? "bg-rose-500" : low ? "bg-amber-500" : "bg-emerald-500";
+  const ringColor = exhausted ? "border-rose-200 bg-rose-50" : low ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50";
+  const textColor = exhausted ? "text-rose-900" : low ? "text-amber-900" : "text-emerald-900";
+
+  // Deneme kredisi vs. paket kredisi karşılaştırması
+  const hasIntendedPlan = trialActive && postTrialPlanLabel && postTrialPlanCredits && postTrialPlanCredits > 0;
+  const multiplier = hasIntendedPlan ? Math.round((postTrialPlanCredits ?? 0) / allocated) : 0;
+
+  return (
+    <div className={cn("rounded-lg border px-4 py-3 text-sm", ringColor, textColor)}>
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <p className="font-semibold">
+          {trialActive ? "Yapay zekâ kredisi (deneme)" : "Yapay zekâ kredisi"}
+        </p>
+        <p className="tabular-nums">
+          <span className="font-semibold">{used.toLocaleString("tr-TR")}</span>
+          <span className="opacity-70"> / {allocated.toLocaleString("tr-TR")} kullanıldı</span>
+          <span className="ml-2 font-semibold">({remaining.toLocaleString("tr-TR")} kaldı)</span>
+        </p>
+      </div>
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/70">
+        <div className={cn("h-full transition-all", barColor)} style={{ width: `${pct}%` }} />
+      </div>
+
+      {/* Deneme açıklaması — kullanıcı 50'nin "denemeye özel" tavan olduğunu görsün */}
+      {hasIntendedPlan ? (
+        <div className="mt-2 rounded-md border border-current/20 bg-white/50 px-3 py-2 text-xs">
+          <p>
+            <strong>{allocated} kredi yalnız deneme süresine özeldir.</strong>{" "}
+            <strong className="text-cyan-800">{postTrialPlanLabel}</strong> paketine geçtiğinde
+            aylık <strong className="text-cyan-800">{(postTrialPlanCredits ?? 0).toLocaleString("tr-TR")} kredi</strong>{" "}
+            ({multiplier > 1 ? `~${multiplier}× daha fazla` : "yenilenen kredi"}) tanımlanır ve ay başında otomatik yenilenir.
+          </p>
+        </div>
+      ) : null}
+
+      {exhausted ? (
+        <p className="mt-2 text-xs">
+          <strong>Krediniz bitti.</strong>
+          {trialActive && postTrialPlanLabel
+            ? ` Deneme süreniz devam etse de yapay zekâ için ${postTrialPlanLabel} paketine geçmeniz gerekir.`
+            : " Ay başında otomatik yenilenir veya paketinizi yükseltebilirsiniz."}
+        </p>
+      ) : low ? (
+        <p className="mt-2 text-xs">
+          Krediniz azaldı. {trialActive && postTrialPlanLabel
+            ? `${postTrialPlanLabel} paketine geçerek artırın.`
+            : "Ay başında yenilenir."}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 function StatusLine({ status, daysLeft, subStatus }: { status: string; daysLeft: number | null; subStatus?: string | null }) {
@@ -237,10 +382,20 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
   const [open, setOpen] = React.useState(false);
   const months = data.annual_paid_months || 10;
 
-  // Yükseltilebilir Solo paketleri (3 kapaklı tier). Öğrenci sayısına uygun
-  // olan (recommended) önceden seçili gelir.
+  // Yükseltilebilir Solo paketleri (3 kapaklı tier).
+  // Öncelik: signup'ta seçilen paket (post_trial_plan) > recommended (öğrenci
+  // sayısı) > tier önerisi > solo_pro. Kullanıcının kasıtlı seçimi kaybolmaz.
   const tiers = data.options.filter((o) => o.code !== "solo_free");
-  const recommended = data.recommended_plan || tiers.find((t) => t.is_recommended)?.code || tiers[0]?.code || "solo_pro";
+  const intendedFromSignup =
+    data.post_trial_plan && data.post_trial_plan !== "solo_free"
+      ? data.post_trial_plan
+      : "";
+  const recommended =
+    intendedFromSignup ||
+    data.recommended_plan ||
+    tiers.find((t) => t.is_recommended)?.code ||
+    tiers[0]?.code ||
+    "solo_pro";
   const [selected, setSelected] = React.useState(recommended);
   // recommended değişirse (öğrenci sayısı tier sınırı aştığında) seçimi senkronla
   // — effect yerine "prop değişince state ayarla" render deseni.
@@ -292,55 +447,119 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
           </div>
         </div>
 
-        {/* 3 tier seçici */}
-        <div className="grid gap-2 sm:grid-cols-3">
+        {/* Aktif öğrenci durumu */}
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+          Şu an <strong className="text-slate-900">{data.student_count}</strong> aktif öğrencin var.
+          {data.post_trial_plan && data.post_trial_plan !== "solo_free" ? (
+            <> Kayıtta seçtiğin paket: <strong className="text-cyan-800">{data.post_trial_plan_label}</strong>.</>
+          ) : null}
+          {" "}{cycleLabel}.
+        </div>
+
+        {/* 3 BÜYÜK detaylı paket kartı yan yana */}
+        <div className="grid gap-4 lg:grid-cols-3">
           {tiers.map((t) => {
             const isSel = t.code === selected;
+            const details = TIER_DETAILS[t.code];
             const tierMonthly = yearly ? Math.round((t.price_monthly_try * months) / 12) : t.price_monthly_try;
+            const tierYearlyTotal = t.price_monthly_try * months;
+            const isIntended = data.post_trial_plan === t.code;
+            const isRecommended = t.is_recommended;
             return (
-              <button
+              <div
                 key={t.code}
-                type="button"
-                onClick={() => setSelected(t.code)}
                 className={cn(
-                  "relative rounded-xl border p-3 text-left transition",
+                  "relative flex flex-col rounded-2xl border-2 bg-white p-5 transition",
                   isSel
-                    ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600"
-                    : "border-slate-200 bg-white hover:border-cyan-300",
+                    ? "border-cyan-600 shadow-lg ring-2 ring-cyan-100"
+                    : "border-slate-200 hover:border-cyan-300",
                 )}
               >
-                {t.is_recommended ? (
-                  <span className="absolute -top-2 right-2 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-bold text-cyan-950">
+                {/* Üst rozetler */}
+                {details?.badge ? (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-0.5 text-[11px] font-bold text-cyan-950 shadow-sm">
+                    {details.badge}
+                  </span>
+                ) : null}
+                {isIntended ? (
+                  <span className="absolute right-3 top-3 rounded-full bg-cyan-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                    Denemede açık
+                  </span>
+                ) : isRecommended && !isIntended ? (
+                  <span className="absolute right-3 top-3 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">
                     Sana uygun
                   </span>
                 ) : null}
-                <p className="text-sm font-bold text-slate-900">{t.label}</p>
-                <p className="text-xs text-slate-600">{studentCapLabel(t.max_students)}</p>
-                <p className="mt-1.5 font-display text-lg font-extrabold text-slate-900">
-                  {tl(tierMonthly)}<span className="text-xs font-medium text-slate-500">/ay</span>
-                </p>
-              </button>
+
+                {/* Başlık */}
+                <div className="mb-3">
+                  <h3 className="font-display text-xl font-extrabold text-slate-900">{t.label}</h3>
+                  <p className="text-xs text-slate-600">{studentCapLabel(t.max_students)}</p>
+                </div>
+
+                {/* Fiyat */}
+                <div className="mb-4">
+                  <div className="flex items-baseline gap-1">
+                    <span className="font-display text-3xl font-extrabold text-slate-900">{tl(tierMonthly)}</span>
+                    <span className="text-sm text-slate-500">/ay</span>
+                  </div>
+                  {yearly ? (
+                    <p className="text-[11px] text-slate-500">
+                      yıllık <strong>{tl(tierYearlyTotal)}</strong> tek seferlik (2 ay bedava)
+                    </p>
+                  ) : (
+                    <p className="text-[11px] text-slate-500">aylık · istediğin zaman iptal</p>
+                  )}
+                </div>
+
+                {/* AI kredi ön plana çıkar */}
+                {details ? (
+                  <div className="mb-4 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800">Aylık yapay zekâ kredisi</p>
+                    <p className="font-display text-2xl font-extrabold text-cyan-900">{details.credits.toLocaleString("tr-TR")} <span className="text-xs font-medium text-cyan-700">kredi</span></p>
+                  </div>
+                ) : null}
+
+                {/* Özellik listesi */}
+                {details ? (
+                  <ul className="mb-5 space-y-2 text-sm">
+                    {details.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+                        <span className="text-slate-700">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+
+                {/* CTA — plan adı kart başlığında zaten büyük; buton sadeleşti */}
+                <div className="mt-auto">
+                  <Button
+                    className={cn(
+                      "w-full whitespace-normal text-sm",
+                      isSel
+                        ? "bg-cyan-700 text-white hover:bg-cyan-800"
+                        : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+                    )}
+                    onClick={() => {
+                      setSelected(t.code);
+                      if (isSel) setOpen(true);
+                    }}
+                  >
+                    {isSel ? "Bu pakete geç (öde)" : "Bu paketi seç"}
+                  </Button>
+                </div>
+              </div>
             );
           })}
         </div>
 
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
-          Şu an <strong className="text-slate-900">{data.student_count}</strong> aktif öğrencin var. Seçtiğin paket:{" "}
-          <strong className="text-slate-900">{selTier?.label}</strong> ({studentCapLabel(selTier?.max_students ?? null)}) · {cycleLabel}
+        {/* Alt bilgi: seçili olanın özet açıklaması */}
+        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-[11px] text-slate-600">
+          Seçili paket <strong className="text-slate-900">{selTier?.label}</strong> · {tl(shownMonthly)}/ay.
+          Aylık AI kredisi (sesli dikte 3, fotoğraftan not 5, koçluk içgörüsü 6 kredi başına) ay başında otomatik yenilenir.
+          {data.status === "past_due" ? " Aboneliğin yenilenmedi — ödeme ile aktif koçluğa devam eder." : null}
         </div>
-
-        <ul className="space-y-2 text-sm">
-          {SOLO_FEATURES.map((f) => (
-            <li key={f} className="flex items-start gap-2.5">
-              <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
-              <span className="text-foreground/85">{f}</span>
-            </li>
-          ))}
-        </ul>
-
-        <Button className="w-full bg-cyan-700 text-white hover:bg-cyan-800" onClick={() => setOpen(true)}>
-          {data.status === "past_due" ? "Yenile (öde)" : `${selTier?.label} paketine geç (öde)`}
-        </Button>
       </CardContent>
 
       <UpgradeDialog
@@ -382,6 +601,17 @@ function UpgradeDialog({
       setDone(true);
     },
   });
+  // Iyzico checkout — provider available ise "Kartla Öde" butonu çıkar
+  const providerQ = useQuery({
+    queryKey: paymentKeys.providerStatus(),
+    queryFn: getPaymentProviderStatus,
+    staleTime: 60_000,
+    enabled: open,  // dialog açılınca check
+  });
+  const cardCheckout = useInitPaymentCheckout();
+  const cardAvailable = providerQ.data?.available === true;
+  const inSandbox = providerQ.data?.sandbox === true;
+
   const mailto = salesEmail
     ? `mailto:${salesEmail}?subject=${encodeURIComponent(`${planLabel} abonelik aktivasyonu`)}`
     : "";
@@ -410,12 +640,24 @@ function UpgradeDialog({
               <span className="text-muted-foreground">Seçilen:</span>{" "}
               <span className="font-semibold text-cyan-900">{planLabel} · {priceLabel}</span>
             </div>
-            <p className="flex items-start gap-2 text-muted-foreground">
-              <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
-              &quot;Öde ve devam et&quot; talebini gönder; ödeme/aktivasyon manuel
-              yapılıyor — onaylanınca hesabın Solo&apos;ya geçer. (Yakında ödeme
-              doğrudan buradan olacak.)
-            </p>
+            {cardAvailable ? (
+              <p className="flex items-start gap-2 text-muted-foreground">
+                <CreditCard className="mt-0.5 size-4 shrink-0" aria-hidden />
+                Kartınla anında ödeme yapabilirsin (3D Secure). Veya havale/EFT
+                ile talep gönderebilirsin — destek seninle iletişime geçer.
+                {inSandbox ? (
+                  <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                    TEST modu
+                  </span>
+                ) : null}
+              </p>
+            ) : (
+              <p className="flex items-start gap-2 text-muted-foreground">
+                <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+                &quot;Öde ve devam et&quot; talebini gönder; destek seninle
+                iletişime geçer, ödemeyi havale ile alıp aktive eder.
+              </p>
+            )}
             {mut.isError ? (
               <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{errMsg}</p>
             ) : null}
@@ -432,13 +674,40 @@ function UpgradeDialog({
                 </Button>
               ) : null}
               <Button
-                className="bg-cyan-700 text-white hover:bg-cyan-800"
-                disabled={mut.isPending}
+                variant="outline"
+                disabled={mut.isPending || cardCheckout.isPending}
                 onClick={() => mut.mutate()}
               >
                 {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-                Öde ve devam et
+                Havale ile talep gönder
               </Button>
+              {cardAvailable ? (
+                <Button
+                  className="bg-cyan-700 text-white hover:bg-cyan-800"
+                  disabled={cardCheckout.isPending || mut.isPending}
+                  onClick={() => {
+                    // Manuel akış (subscription_request) `academic_year` kullanır;
+                    // Iyzico backend `monthly | annual` bekler. Çevirim:
+                    const iyzicoCycle: "monthly" | "annual" =
+                      cycle === "academic_year" ? "annual" : "monthly";
+                    cardCheckout.mutate(
+                      { plan_code: plan, cycle: iyzicoCycle },
+                      {
+                        onSuccess: (res) => {
+                          window.location.href = res.payment_page_url;
+                        },
+                      },
+                    );
+                  }}
+                >
+                  {cardCheckout.isPending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <CreditCard className="size-4" aria-hidden />
+                  )}
+                  Kartla Öde
+                </Button>
+              ) : null}
             </>
           )}
         </DialogFooter>

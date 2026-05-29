@@ -1667,6 +1667,16 @@ class TeacherPlanResponse(BaseModel):
     subscription_status: str | None = None       # active | canceled | past_due | None
     subscription_period_end: str | None = None  # aktif abonede yenileme tarihi (ISO)
     subscription_cycle: str | None = None        # monthly | academic_year
+    # Signup'ta seçilen "14 gün dene" paketinin kodu — trial bitince bu plan'a
+    # geçmek için ödeme talep edilir (yoksa solo_free'ye düşer).
+    post_trial_plan: str | None = None
+    post_trial_plan_label: str | None = None
+    # Deneme bitince geçilecek plan'ın aylık AI kredi miktarı — kullanıcıya
+    # "Şu an 50 kredi (deneme), Solo Başlangıç'a geçince 1.500/ay" mesajı için.
+    post_trial_plan_credits: int | None = None
+    # AI kredi durumu — /teacher/plan üst kartında ilerleme çubuğu için
+    ai_credits_used: int = 0
+    ai_credits_allocated: int = 0
 
 
 class PlanUpgradeBody(BaseModel):

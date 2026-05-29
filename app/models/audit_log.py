@@ -68,6 +68,11 @@ class AuditAction(str, enum.Enum):
     USER_RESUME_ALERTS = "user_resume_alerts"      # manuel resume
     USER_AUTO_PAUSE = "user_auto_pause"            # cron tetikli auto-pause
     USER_AUTO_RESUME = "user_auto_resume"          # login/task ile auto-resume
+    # Ödeme (Paket Ö1)
+    PAYMENT_INITIATED = "payment_initiated"        # kullanıcı checkout başlattı
+    PAYMENT_SUCCEEDED = "payment_succeeded"        # callback succeeded → plan aktive
+    PAYMENT_FAILED = "payment_failed"              # 3DS red / kart red / iyzico hata
+    PAYMENT_REFUNDED = "payment_refunded"          # admin elle iade işaretledi
 
 
 AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
@@ -99,6 +104,10 @@ AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
     AuditAction.FEATURE_CARD_AUTO_DISCOVERED: "Vitrin kartı otomatik keşfedildi (taslak)",
     AuditAction.FEATURE_CARD_DISCOVERY_REJECTED: "Otomatik keşif adayı reddedildi (gizlendi)",
     AuditAction.SYSTEM_SETTING_UPDATE: "Sistem ayarı güncellendi (API anahtarı)",
+    AuditAction.PAYMENT_INITIATED: "Ödeme başlatıldı",
+    AuditAction.PAYMENT_SUCCEEDED: "Ödeme başarılı (plan aktive)",
+    AuditAction.PAYMENT_FAILED: "Ödeme başarısız",
+    AuditAction.PAYMENT_REFUNDED: "Ödeme iade edildi",
     AuditAction.USER_PAUSE_ALERTS: "Kullanıcı uyarıları susturuldu (manuel)",
     AuditAction.USER_RESUME_ALERTS: "Kullanıcı uyarıları açıldı (manuel)",
     AuditAction.USER_AUTO_PAUSE: "Kullanıcı otomatik pasifleştirildi (sessizlik)",

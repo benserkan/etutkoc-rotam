@@ -123,12 +123,13 @@ def main() -> int:
     print(f"  seeded inst={seed['inst_id']} inv={seed['inv_token'][:16]}…\n")
 
     try:
-        # 1. signup/teacher happy
+        # 1. signup/teacher happy + intended_plan='solo_pro' (yeni: post_trial_plan kaydı)
         get_login_limiter().reset()
         c = TestClient(app)
         r = c.post("/api/v2/auth/signup/teacher", json={
             "full_name": "Yeni Öğretmen", "email": TEACHER_EMAIL,
-            "password": PASSWORD, "password_confirm": PASSWORD, "accept_terms": True})
+            "password": PASSWORD, "password_confirm": PASSWORD, "accept_terms": True,
+            "intended_plan": "solo_pro"})
         j = r.json() if r.text else {}
         cookies = {ck.name for ck in c.cookies.jar}
         u = _user(TEACHER_EMAIL)
@@ -136,8 +137,11 @@ def main() -> int:
             r.status_code == 200 and ACCESS in cookies
             and j.get("user", {}).get("email") == TEACHER_EMAIL
             and u is not None and u.role == UserRole.TEACHER and u.institution_id is None
+            and u.plan == "solo_trial"
+            and u.post_trial_plan == "solo_pro"  # ← intended_plan yansıdı
         )
-        check("1. signup/teacher happy + cookie + user", ok, f"status={r.status_code} {r.text[:120]}")
+        check("1. signup/teacher happy + cookie + user + intended_plan", ok,
+              f"status={r.status_code} plan={u.plan if u else None} post_trial={u.post_trial_plan if u else None}")
         teacher_id = u.id if u else None
 
         # 5. (önce) email_verified_at NULL

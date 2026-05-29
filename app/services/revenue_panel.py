@@ -154,31 +154,47 @@ def trial_ending_soon(db: Session, *, days_horizon: int = 7) -> list[TrialEntry]
     return out
 
 
-def trial_expired_unconverted(db: Session, *, days: int = 30) -> int:
+def trial_expired_unconverted(
+    db: Session, *, days: int = 30, owner_type_filter: str = "all",
+) -> int:
     """Son N gün içinde trial bittiyse ve sonrasında üst tier'a geçmediyse."""
+    from app.models import PlanOwnerType
     cutoff = _now() - timedelta(days=days)
-    return int(
-        (db.query(func.count(PlanChangeHistory.id))
-         .filter(
-             PlanChangeHistory.reason == PlanChangeReason.TRIAL_EXPIRED,
-             PlanChangeHistory.occurred_at >= cutoff,
-         )
-         .scalar()) or 0
+    q = (
+        db.query(func.count(PlanChangeHistory.id))
+        .filter(
+            PlanChangeHistory.reason == PlanChangeReason.TRIAL_EXPIRED,
+            PlanChangeHistory.occurred_at >= cutoff,
+        )
     )
+    if owner_type_filter == "institution":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION)
+    elif owner_type_filter == "user":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.USER)
+    return int(q.scalar() or 0)
 
 
 # ---------------------------- Plan değişim trendi ----------------------------
 
 
-def plan_change_summary(db: Session, *, days: int = 30) -> dict:
-    """Son N gün PlanChangeHistory: reason başına sayım."""
+def plan_change_summary(
+    db: Session, *, days: int = 30, owner_type_filter: str = "all",
+) -> dict:
+    """Son N gün PlanChangeHistory: reason başına sayım.
+
+    owner_type_filter: 'all' (kurum + koç) | 'institution' | 'user'.
+    """
+    from app.models import PlanOwnerType
     cutoff = _now() - timedelta(days=days)
-    rows = (
+    q = (
         db.query(PlanChangeHistory.reason, func.count(PlanChangeHistory.id))
         .filter(PlanChangeHistory.occurred_at >= cutoff)
-        .group_by(PlanChangeHistory.reason)
-        .all()
     )
+    if owner_type_filter == "institution":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION)
+    elif owner_type_filter == "user":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.USER)
+    rows = q.group_by(PlanChangeHistory.reason).all()
     by_reason: dict[str, int] = {}
     for reason, c in rows:
         key = reason.value if hasattr(reason, "value") else str(reason)
@@ -201,14 +217,24 @@ def plan_change_summary(db: Session, *, days: int = 30) -> dict:
     }
 
 
-def daily_plan_changes(db: Session, *, days: int = 30) -> list[dict]:
-    """Günlük PlanChangeHistory bucket (gün × reason)."""
+def daily_plan_changes(
+    db: Session, *, days: int = 30, owner_type_filter: str = "all",
+) -> list[dict]:
+    """Günlük PlanChangeHistory bucket (gün × reason).
+
+    owner_type_filter: 'all' | 'institution' | 'user'.
+    """
+    from app.models import PlanOwnerType
     cutoff = _now() - timedelta(days=days)
-    rows = (
+    q = (
         db.query(PlanChangeHistory.occurred_at, PlanChangeHistory.reason)
         .filter(PlanChangeHistory.occurred_at >= cutoff)
-        .all()
     )
+    if owner_type_filter == "institution":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION)
+    elif owner_type_filter == "user":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.USER)
+    rows = q.all()
     now = _now()
     buckets: dict[str, dict[str, int]] = {}
     reasons = [r.value for r in PlanChangeReason]
@@ -252,11 +278,21 @@ def churn_proxy(db: Session) -> dict:
 
 def _row(inst: Institution, *, reason: str | None = None,
          extra: dict | None = None) -> dict:
-    """Tek kurum satırı — drill-down panellerinde gösterilen küçük kart."""
+    """Tek kurum satırı — drill-down panellerinde gösterilen küçük kart.
+
+    Owner-pattern: owner_type="institution", owner_id=inst.id, display_name=inst.name.
+    institution_id/name geri uyumluluk için saklı.
+    """
     label, price = _plan_label_and_price(inst.plan)
     base = {
+        "owner_type": "institution",
+        "owner_id": inst.id,
+        "display_name": inst.name,
         "institution_id": inst.id,
         "institution_name": inst.name,
+        "user_id": None,
+        "user_name": None,
+        "user_email": None,
         "plan": inst.plan,
         "plan_label": label,
         "monthly_price_try": price,
@@ -266,6 +302,37 @@ def _row(inst: Institution, *, reason: str | None = None,
         "created_at": _aware(inst.created_at),
         "reason": reason,
         "detail_url": f"/admin/institutions/{inst.id}",
+    }
+    if extra:
+        base.update(extra)
+    return base
+
+
+def _row_user(coach: "User", *, reason: str | None = None,
+              extra: dict | None = None) -> dict:
+    """Tek bağımsız koç satırı (owner-pattern karşılığı)."""
+    plan = coach.plan or "solo_free"
+    label, price = _plan_label_and_price(plan)
+    display = coach.full_name or coach.email or f"Koç #{coach.id}"
+    base = {
+        "owner_type": "user",
+        "owner_id": coach.id,
+        "display_name": display,
+        # Geri uyumluluk: institution_id 0 (frontend null check'i için)
+        "institution_id": 0,
+        "institution_name": display,
+        "user_id": coach.id,
+        "user_name": coach.full_name,
+        "user_email": coach.email,
+        "plan": plan,
+        "plan_label": label,
+        "monthly_price_try": price,
+        "is_active": coach.is_active,
+        "trial_ends_at": _aware(getattr(coach, "trial_ends_at", None)),
+        "post_trial_plan": None,
+        "created_at": _aware(coach.created_at),
+        "reason": reason,
+        "detail_url": f"/admin/revenue/users/{coach.id}",
     }
     if extra:
         base.update(extra)
@@ -308,179 +375,299 @@ def drill_health(db: Session, *, level: str) -> list[dict]:
     return out
 
 
-def drill_plan_members(db: Session, *, plan: str) -> list[dict]:
-    """Belirli bir paketteki tüm aktif kurumlar."""
-    rows = (
-        db.query(Institution)
-        .filter(Institution.is_active.is_(True), Institution.plan == plan)
-        .order_by(Institution.name)
-        .all()
-    )
-    return [_row(r) for r in rows]
-
-
-def drill_paying(db: Session) -> list[dict]:
-    """Ödeyen (price > 0) tüm aktif kurumlar."""
-    catalog = _plan_catalog()
-    paying_plans = [
-        p for p, info in catalog.items()
-        if (getattr(info, "price_monthly_try", 0) or 0) > 0
-    ]
-    if not paying_plans:
-        return []
-    rows = (
-        db.query(Institution)
-        .filter(Institution.is_active.is_(True), Institution.plan.in_(paying_plans))
-        .order_by(Institution.name)
-        .all()
-    )
-    return [_row(r) for r in rows]
-
-
-def drill_free(db: Session) -> list[dict]:
-    """Ücretsiz (price = 0) tüm aktif kurumlar."""
-    catalog = _plan_catalog()
-    free_plans = [
-        p for p, info in catalog.items()
-        if (getattr(info, "price_monthly_try", 0) or 0) == 0
-    ]
-    rows = (
-        db.query(Institution)
-        .filter(Institution.is_active.is_(True))
-        .order_by(Institution.name)
-        .all()
-    )
-    # free_plans boşsa fallback: trial veya bilinmeyen plan da ücretsiz say
+def drill_plan_members(
+    db: Session, *, plan: str, owner_type_filter: str = "all",
+) -> list[dict]:
+    """Belirli bir paketteki tüm aktif kurum/koç (owner-pattern + segment)."""
     out: list[dict] = []
-    for r in rows:
-        _, price = _plan_label_and_price(r.plan)
-        if price == 0:
-            out.append(_row(r))
+    if owner_type_filter in ("all", "institution"):
+        insts = (
+            db.query(Institution)
+            .filter(Institution.is_active.is_(True), Institution.plan == plan)
+            .order_by(Institution.name)
+            .all()
+        )
+        out.extend(_row(r) for r in insts)
+    if owner_type_filter in ("all", "user"):
+        coaches = (
+            db.query(User)
+            .filter(
+                User.role == UserRole.TEACHER,
+                User.institution_id.is_(None),
+                User.is_active.is_(True),
+                User.plan == plan,
+            )
+            .order_by(User.full_name)
+            .all()
+        )
+        out.extend(_row_user(c) for c in coaches)
     return out
 
 
-def drill_plan_changes(
-    db: Session, *, reason_key: str, days: int = 30,
+def drill_paying(
+    db: Session, *, owner_type_filter: str = "all",
 ) -> list[dict]:
-    """Son N gün içinde belirli bir sebeple plan değiştiren kurumlar.
+    """Ödeyen (price > 0) tüm aktif kurum + bağımsız koç (owner-pattern + segment)."""
+    out: list[dict] = []
+    if owner_type_filter in ("all", "institution"):
+        insts = (
+            db.query(Institution)
+            .filter(Institution.is_active.is_(True))
+            .order_by(Institution.name)
+            .all()
+        )
+        for r in insts:
+            _, price = _plan_label_and_price(r.plan)
+            if price > 0:
+                out.append(_row(r))
+    if owner_type_filter in ("all", "user"):
+        coaches = (
+            db.query(User)
+            .filter(
+                User.role == UserRole.TEACHER,
+                User.institution_id.is_(None),
+                User.is_active.is_(True),
+            )
+            .order_by(User.full_name)
+            .all()
+        )
+        for c in coaches:
+            _, price = _plan_label_and_price(c.plan or "free")
+            if price > 0:
+                out.append(_row_user(c))
+    return out
 
-    reason_key: PlanChangeReason değerlerinden biri (signup, upgrade, downgrade,
-    pause, trial_expired, resume, vb.)
+
+def drill_free(
+    db: Session, *, owner_type_filter: str = "all",
+) -> list[dict]:
+    """Ücretsiz (price = 0) tüm aktif kurum + bağımsız koç (owner-pattern + segment)."""
+    out: list[dict] = []
+    if owner_type_filter in ("all", "institution"):
+        insts = (
+            db.query(Institution)
+            .filter(Institution.is_active.is_(True))
+            .order_by(Institution.name)
+            .all()
+        )
+        for r in insts:
+            _, price = _plan_label_and_price(r.plan)
+            if price == 0:
+                out.append(_row(r))
+    if owner_type_filter in ("all", "user"):
+        coaches = (
+            db.query(User)
+            .filter(
+                User.role == UserRole.TEACHER,
+                User.institution_id.is_(None),
+                User.is_active.is_(True),
+            )
+            .order_by(User.full_name)
+            .all()
+        )
+        for c in coaches:
+            _, price = _plan_label_and_price(c.plan or "free")
+            if price == 0:
+                out.append(_row_user(c))
+    return out
+
+
+_REASON_LABEL_MAP_TR: dict[str, str] = {
+    "signup": "Yeni kayıt",
+    "upgrade": "Pakete yükseltme",
+    "downgrade": "Paket alçaltma",
+    "pause": "Hesabı duraklatma",
+    "resume": "Hesabı devam ettirme",
+    "trial_expired": "Deneme süresi bitti",
+    "admin_override": "Süper admin manuel değişiklik",
+    "guarantee_extend": "60 gün garanti uzatma",
+    "academic_year_renewal": "Akademik yıl yenileme",
+}
+
+
+def drill_plan_changes(
+    db: Session, *, reason_key: str,
+    owner_type_filter: str = "all", days: int = 30,
+) -> list[dict]:
+    """Son N gün içinde belirli bir sebeple plan değiştirenler.
+
+    owner_type_filter:
+      - "all": kurum + bağımsız koç (varsayılan)
+      - "institution": yalnız kurum
+      - "user": yalnız bağımsız koç
+
+    reason_key: PlanChangeReason değerlerinden biri.
     """
-    from app.models import PlanOwnerType  # local import — institution scope
+    from app.models import PlanOwnerType  # local import
     try:
         reason_enum = PlanChangeReason(reason_key)
     except Exception:
         return []
     cutoff = _now() - timedelta(days=days)
-    rows = (
+
+    q = (
         db.query(PlanChangeHistory)
         .filter(
             PlanChangeHistory.reason == reason_enum,
             PlanChangeHistory.occurred_at >= cutoff,
-            PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION,
         )
         .order_by(desc(PlanChangeHistory.occurred_at))
-        .all()
     )
-    inst_ids = {r.owner_id for r in rows}
-    if not inst_ids:
+    if owner_type_filter == "institution":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION)
+    elif owner_type_filter == "user":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.USER)
+
+    rows = q.all()
+    if not rows:
         return []
-    insts = {
-        i.id: i for i in
-        db.query(Institution).filter(Institution.id.in_(inst_ids)).all()
+
+    # Owner objelerini batch yükle
+    inst_ids = {
+        r.owner_id for r in rows
+        if r.owner_type == PlanOwnerType.INSTITUTION
     }
+    user_ids = {
+        r.owner_id for r in rows
+        if r.owner_type == PlanOwnerType.USER
+    }
+    insts = (
+        {i.id: i for i in db.query(Institution).filter(Institution.id.in_(inst_ids)).all()}
+        if inst_ids else {}
+    )
+    users = (
+        {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()}
+        if user_ids else {}
+    )
+
+    reason_text = _REASON_LABEL_MAP_TR.get(reason_key, reason_key)
     out: list[dict] = []
     for r in rows:
-        inst = insts.get(r.owner_id)
-        if inst is None:
-            continue
         when = _aware(r.occurred_at)
         days_ago = (_now() - when).days if when else None
-        reason_label_map = {
-            "signup": "Yeni kayıt",
-            "upgrade": "Pakete yükseltme",
-            "downgrade": "Paket alçaltma",
-            "pause": "Hesabı duraklatma",
-            "resume": "Hesabı devam ettirme",
-            "trial_expired": "Deneme süresi bitti",
-            "admin_override": "Süper admin manuel değişiklik",
-            "guarantee_extend": "60 gün garanti uzatma",
-            "academic_year_renewal": "Akademik yıl yenileme",
+        from_label = _plan_label_and_price(r.from_plan)[0] if r.from_plan else "—"
+        to_label = _plan_label_and_price(r.to_plan)[0] if r.to_plan else "—"
+        from_to = f"{from_label} → {to_label}"
+
+        extra = {
+            "event_at": when,
+            "event_days_ago": days_ago,
+            "from_plan": r.from_plan,
+            "from_plan_label": from_label if r.from_plan else None,
+            "to_plan": r.to_plan,
+            "to_plan_label": to_label if r.to_plan else None,
+            "event_note": r.note,
         }
-        reason_text = reason_label_map.get(reason_key, reason_key)
-        from_to = (
-            f"{r.from_plan or '—'} → {r.to_plan}"
-            if r.from_plan or r.to_plan else ""
-        )
-        out.append(_row(
-            inst,
-            reason=f"{reason_text} · {from_to}",
-            extra={
-                "event_at": when,
-                "event_days_ago": days_ago,
-                "from_plan": r.from_plan,
-                "to_plan": r.to_plan,
-                "event_note": r.note,
-            },
-        ))
+
+        if r.owner_type == PlanOwnerType.INSTITUTION:
+            inst = insts.get(r.owner_id)
+            if inst is None:
+                continue
+            out.append(_row(
+                inst,
+                reason=f"{reason_text} · {from_to}",
+                extra=extra,
+            ))
+        else:  # USER (bağımsız koç)
+            coach = users.get(r.owner_id)
+            if coach is None:
+                continue
+            out.append(_row_user(
+                coach,
+                reason=f"{reason_text} · {from_to}",
+                extra=extra,
+            ))
     return out
 
 
 def drill_trial_expired_unconverted(
-    db: Session, *, days: int = 30,
+    db: Session, *, days: int = 30, owner_type_filter: str = "all",
 ) -> list[dict]:
-    """Son N gün içinde denemesi bitip ödeyene dönüşmeyen kurumlar.
+    """Son N gün içinde denemesi bitip ödeyene dönüşmeyen kurum/koç.
 
-    plan_change_history'de TRIAL_EXPIRED olayı sonrasında upgrade gelmediyse
-    bu kurum "kaybedilen fırsat".
+    plan_change_history'de TRIAL_EXPIRED sonrasında UPGRADE gelmediyse =
+    "kaybedilen fırsat". Owner-pattern + segment.
     """
     from app.models import PlanOwnerType
     cutoff = _now() - timedelta(days=days)
-    rows = (
+    q = (
         db.query(PlanChangeHistory)
         .filter(
             PlanChangeHistory.reason == PlanChangeReason.TRIAL_EXPIRED,
             PlanChangeHistory.occurred_at >= cutoff,
-            PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION,
         )
         .order_by(desc(PlanChangeHistory.occurred_at))
-        .all()
     )
-    inst_ids = list({r.owner_id for r in rows})
-    if not inst_ids:
+    if owner_type_filter == "institution":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION)
+    elif owner_type_filter == "user":
+        q = q.filter(PlanChangeHistory.owner_type == PlanOwnerType.USER)
+    rows = q.all()
+    if not rows:
         return []
-    # Bu kurumlar trial sonrası upgrade etmiş mi?
-    upgraded_ids = {
-        r.owner_id for r in
-        db.query(PlanChangeHistory)
-        .filter(
-            PlanChangeHistory.owner_id.in_(inst_ids),
-            PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION,
-            PlanChangeHistory.reason == PlanChangeReason.UPGRADE,
-            PlanChangeHistory.occurred_at >= cutoff,
-        )
-        .all()
-    }
-    insts = {
-        i.id: i for i in
-        db.query(Institution).filter(Institution.id.in_(inst_ids)).all()
-    }
+
+    # Trial sonrası UPGRADE eden owner'ları çıkar (her tip için ayrı sorgu)
+    inst_ids = {r.owner_id for r in rows if r.owner_type == PlanOwnerType.INSTITUTION}
+    user_ids = {r.owner_id for r in rows if r.owner_type == PlanOwnerType.USER}
+
+    upgraded_inst = set()
+    if inst_ids:
+        upgraded_inst = {
+            r.owner_id for r in
+            db.query(PlanChangeHistory)
+            .filter(
+                PlanChangeHistory.owner_id.in_(inst_ids),
+                PlanChangeHistory.owner_type == PlanOwnerType.INSTITUTION,
+                PlanChangeHistory.reason == PlanChangeReason.UPGRADE,
+                PlanChangeHistory.occurred_at >= cutoff,
+            )
+            .all()
+        }
+    upgraded_user = set()
+    if user_ids:
+        upgraded_user = {
+            r.owner_id for r in
+            db.query(PlanChangeHistory)
+            .filter(
+                PlanChangeHistory.owner_id.in_(user_ids),
+                PlanChangeHistory.owner_type == PlanOwnerType.USER,
+                PlanChangeHistory.reason == PlanChangeReason.UPGRADE,
+                PlanChangeHistory.occurred_at >= cutoff,
+            )
+            .all()
+        }
+
+    insts = (
+        {i.id: i for i in db.query(Institution).filter(Institution.id.in_(inst_ids)).all()}
+        if inst_ids else {}
+    )
+    users = (
+        {u.id: u for u in db.query(User).filter(User.id.in_(user_ids)).all()}
+        if user_ids else {}
+    )
+
     out: list[dict] = []
     for r in rows:
-        if r.owner_id in upgraded_ids:
-            continue
-        inst = insts.get(r.owner_id)
-        if inst is None:
-            continue
         when = _aware(r.occurred_at)
         days_ago = (_now() - when).days if when else None
-        out.append(_row(
-            inst,
-            reason=f"Deneme bitti, ödemeye geçmedi · {days_ago} gün önce",
-            extra={"event_at": when, "event_days_ago": days_ago},
-        ))
-    # Yakın geçmişten geriye sırala
+        extra = {"event_at": when, "event_days_ago": days_ago}
+        reason_text = f"Deneme bitti, ödemeye geçmedi · {days_ago} gün önce"
+
+        if r.owner_type == PlanOwnerType.INSTITUTION:
+            if r.owner_id in upgraded_inst:
+                continue
+            inst = insts.get(r.owner_id)
+            if inst is None:
+                continue
+            out.append(_row(inst, reason=reason_text, extra=extra))
+        else:  # USER
+            if r.owner_id in upgraded_user:
+                continue
+            coach = users.get(r.owner_id)
+            if coach is None:
+                continue
+            out.append(_row_user(coach, reason=reason_text, extra=extra))
+
     out.sort(key=lambda r: (r.get("event_days_ago") or 999))
     return out
 
@@ -490,52 +677,52 @@ DRILL_REGISTRY: dict[str, dict] = {
     # Sağlık seviyeleri (Churn proxy alt kırılım)
     "health:critical": {"title": "Kritik — Acil müdahale",
                         "icon": "🚨",
-                        "handler": lambda db: drill_health(db, level="critical")},
+                        "handler": lambda db, segment="all": drill_health(db, level="critical")},
     "health:risk": {"title": "Risk altında",
                     "icon": "⚠️",
-                    "handler": lambda db: drill_health(db, level="risk")},
+                    "handler": lambda db, segment="all": drill_health(db, level="risk")},
     "health:watch": {"title": "İzleme listesinde",
                      "icon": "👀",
-                     "handler": lambda db: drill_health(db, level="watch")},
+                     "handler": lambda db, segment="all": drill_health(db, level="watch")},
     "health:healthy": {"title": "Sağlıklı kurumlar",
                        "icon": "✅",
-                       "handler": lambda db: drill_health(db, level="healthy")},
+                       "handler": lambda db, segment="all": drill_health(db, level="healthy")},
     # Trial
     "trial:expired_30d": {
         "title": "Denemesi bitti, ödemeye geçmedi (son 30 gün)",
         "icon": "💔",
-        "handler": lambda db: drill_trial_expired_unconverted(db, days=30),
+        "handler": lambda db, segment="all": drill_trial_expired_unconverted(db, days=30, owner_type_filter=segment),
     },
-    # Plan hareketleri (son 30 gün)
+    # Plan hareketleri (son 30 gün) — segment-aware (kurum + bağımsız koç)
     "plan_change:signup": {"title": "Yeni kayıt (son 30 gün)",
                             "icon": "✨",
-                            "handler": lambda db: drill_plan_changes(db, reason_key="signup")},
+                            "handler": lambda db, segment="all": drill_plan_changes(db, reason_key="signup", owner_type_filter=segment)},
     "plan_change:upgrade": {"title": "Pakete yükseltme (son 30 gün)",
                             "icon": "↑",
-                            "handler": lambda db: drill_plan_changes(db, reason_key="upgrade")},
+                            "handler": lambda db, segment="all": drill_plan_changes(db, reason_key="upgrade", owner_type_filter=segment)},
     "plan_change:downgrade": {"title": "Paket alçaltma (son 30 gün)",
                               "icon": "↓",
-                              "handler": lambda db: drill_plan_changes(db, reason_key="downgrade")},
+                              "handler": lambda db, segment="all": drill_plan_changes(db, reason_key="downgrade", owner_type_filter=segment)},
     "plan_change:pause": {"title": "Hesabı duraklatma (son 30 gün)",
                           "icon": "⏸",
-                          "handler": lambda db: drill_plan_changes(db, reason_key="pause")},
+                          "handler": lambda db, segment="all": drill_plan_changes(db, reason_key="pause", owner_type_filter=segment)},
     "plan_change:resume": {"title": "Hesabı devam ettirme (son 30 gün)",
                            "icon": "▶",
-                           "handler": lambda db: drill_plan_changes(db, reason_key="resume")},
+                           "handler": lambda db, segment="all": drill_plan_changes(db, reason_key="resume", owner_type_filter=segment)},
     "plan_change:trial_expired": {"title": "Deneme bitti olayları (son 30 gün)",
                                   "icon": "⏰",
-                                  "handler": lambda db: drill_plan_changes(db, reason_key="trial_expired")},
+                                  "handler": lambda db, segment="all": drill_plan_changes(db, reason_key="trial_expired", owner_type_filter=segment)},
     "plan_change:guarantee_extend": {"title": "60 gün garanti uzatma (son 30 gün)",
                                      "icon": "🛡",
-                                     "handler": lambda db: drill_plan_changes(db, reason_key="guarantee_extend")},
+                                     "handler": lambda db, segment="all": drill_plan_changes(db, reason_key="guarantee_extend", owner_type_filter=segment)},
     "plan_change:academic_year_renewal": {"title": "Akademik yıl yenileme (son 30 gün)",
                                           "icon": "📅",
-                                          "handler": lambda db: drill_plan_changes(db, reason_key="academic_year_renewal")},
+                                          "handler": lambda db, segment="all": drill_plan_changes(db, reason_key="academic_year_renewal", owner_type_filter=segment)},
     # Ödeme tipi
     "paying": {"title": "Ödeyen kurumlar", "icon": "💰",
-                "handler": lambda db: drill_paying(db)},
+                "handler": lambda db, segment="all": drill_paying(db, owner_type_filter=segment)},
     "free": {"title": "Ücretsiz kurumlar", "icon": "🆓",
-             "handler": lambda db: drill_free(db)},
+             "handler": lambda db, segment="all": drill_free(db, owner_type_filter=segment)},
 }
 
 
@@ -582,8 +769,14 @@ def drill_invoice_bucket(db: Session, *, bucket: str) -> list[dict]:
     return []
 
 
-def drill_for_key(db: Session, *, key: str, plan: str | None = None) -> dict:
+def drill_for_key(
+    db: Session, *, key: str, plan: str | None = None,
+    segment: str = "all",
+) -> dict:
     """Route handler için dispatch.
+
+    segment: 'all' | 'institution' | 'user' — plan_change drill'leri için kullanılır
+    (kurum + bağımsız koç ayrımı). Diğer handler'lar segment'i görmezden gelir.
 
     Dönen dict: {title, icon, key, plan, rows, count}.
     """
@@ -593,9 +786,9 @@ def drill_for_key(db: Session, *, key: str, plan: str | None = None) -> dict:
         if not plan_code:
             return {"title": "Plan", "icon": "📦", "key": key, "rows": [], "count": 0}
         label, _ = _plan_label_and_price(plan_code)
-        rows = drill_plan_members(db, plan=plan_code)
+        rows = drill_plan_members(db, plan=plan_code, owner_type_filter=segment)
         return {
-            "title": f"{label} planındaki kurumlar",
+            "title": f"{label} paketindeki kurum/koçlar",
             "icon": "📦",
             "key": key,
             "plan": plan_code,
@@ -621,7 +814,7 @@ def drill_for_key(db: Session, *, key: str, plan: str | None = None) -> dict:
         return {"title": "Bilinmeyen kategori", "icon": "❓",
                 "key": key, "rows": [], "count": 0,
                 "error": "unknown_key"}
-    rows = entry["handler"](db)
+    rows = entry["handler"](db, segment)
     return {
         "title": entry["title"],
         "icon": entry["icon"],
@@ -928,15 +1121,22 @@ def mark_overdue(db: Session, *, autocommit: bool = True) -> int:
 # ---------------------------- Aggregator ----------------------------
 
 
-def get_revenue_panel_data(db: Session) -> dict:
+def get_revenue_panel_data(db: Session, *, segment: str = "all") -> dict:
+    """Ticari Pano aggregate verisi.
+
+    segment: 'all' | 'institution' | 'user' — plan değişimi sayım/bucket'ları +
+    trial_expired sayımı bu segment'e göre filtreler. Diğer alanlar (mrr/
+    plan_distribution/trial_ending) endpoint katmanında ayrıca segment-aware
+    (revenue_owner).
+    """
     return {
         "generated_at": _now(),
         "mrr": mrr(db),
         "plan_distribution": plan_distribution(db),
         "trial_ending_soon": trial_ending_soon(db, days_horizon=7),
-        "trial_expired_30d": trial_expired_unconverted(db, days=30),
-        "change_summary_30d": plan_change_summary(db, days=30),
-        "daily_changes_30d": daily_plan_changes(db, days=30),
+        "trial_expired_30d": trial_expired_unconverted(db, days=30, owner_type_filter=segment),
+        "change_summary_30d": plan_change_summary(db, days=30, owner_type_filter=segment),
+        "daily_changes_30d": daily_plan_changes(db, days=30, owner_type_filter=segment),
         "churn_proxy": churn_proxy(db),
         "payment_calendar": payment_calendar_summary(db, days_horizon=14),
     }

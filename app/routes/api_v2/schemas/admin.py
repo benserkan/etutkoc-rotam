@@ -2277,8 +2277,20 @@ class RevenueDashboardResponse(BaseModel):
 
 
 class RevenueDrillRow(BaseModel):
-    institution_id: int
-    institution_name: str
+    # Owner-pattern (yeni): kurum VEYA bağımsız koç ayrımı için
+    owner_type: str = "institution"  # 'institution' | 'user'
+    owner_id: int = 0
+    display_name: str = ""
+
+    # Geri uyumluluk: kurum drill'lerinde institution_id/name dolu kalır
+    institution_id: int = 0
+    institution_name: str = ""
+
+    # Bağımsız koç drill'lerinde dolar
+    user_id: int | None = None
+    user_name: str | None = None
+    user_email: str | None = None
+
     plan: str
     plan_label: str
     monthly_price_try: int | None = None
@@ -2292,6 +2304,12 @@ class RevenueDrillRow(BaseModel):
     active_student_pct: int | None = None
     event_at: datetime | None = None
     event_days_ago: int | None = None
+    # Plan değişimi detayları (plan_change:* drill'lerinde dolar)
+    from_plan: str | None = None
+    from_plan_label: str | None = None
+    to_plan: str | None = None
+    to_plan_label: str | None = None
+    event_note: str | None = None
 
 
 class RevenueDrillResponse(BaseModel):
@@ -3307,6 +3325,44 @@ class ContactRequestUpdateBody(BaseModel):
 class ContactRequestMutationResult(BaseModel):
     id: int
     status: str
+
+
+# "Talepten Aktivasyona" — tek dialog'lu onboarding
+class OnboardInstitutionBody(BaseModel):
+    """contact_requests/{id}/onboard — tek transaction'da kurum + yönetici +
+    ödeme linki oluşturur, yöneticiye onboarding e-postası gönderir,
+    contact_request'i 'closed' işaretler."""
+    # Kurum bilgileri
+    institution_name: str = Field(..., min_length=2, max_length=200)
+    slug: str | None = Field(None, max_length=64)  # boş → name'den auto-gen
+    contact_email: str | None = Field(None, max_length=255)  # boş → admin_email
+    plan: str = Field(..., min_length=1, max_length=50)  # etut_standart vs.
+
+    # Kurum yöneticisi
+    admin_full_name: str = Field(..., min_length=3, max_length=200)
+    admin_email: str = Field(..., min_length=5, max_length=255)
+
+    # Ödeme linki (tutar özel pazarlık)
+    payment_amount: float = Field(..., gt=0)
+    payment_cycle: str = Field(..., pattern="^(monthly|annual)$")
+    payment_description: str | None = Field(None, max_length=500)
+    payment_expires_in_days: int = Field(14, ge=1, le=365)
+
+    # E-posta gönderim seçeneği
+    send_email: bool = True  # False → süper admin elden iletecek
+
+
+class OnboardInstitutionResult(BaseModel):
+    institution_id: int
+    institution_name: str
+    institution_admin_id: int
+    institution_admin_email: str
+    temp_password: str        # tek seferlik göster + clipboard
+    payment_link_id: int
+    payment_link_token: str
+    payment_link_url: str     # tam URL
+    email_sent: bool
+    message: str
 
 
 # =============================================================================

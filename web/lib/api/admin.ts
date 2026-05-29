@@ -535,10 +535,15 @@ export function getAdminRevenueDashboard(segment = "all") {
   );
 }
 
-export function getAdminRevenueDrill(key: string, plan?: string | null) {
+export function getAdminRevenueDrill(
+  key: string,
+  plan?: string | null,
+  segment: "all" | "institution" | "user" = "all",
+) {
   const qs = new URLSearchParams();
   qs.set("key", key);
   if (plan) qs.set("plan", plan);
+  qs.set("segment", segment);
   return api<RevenueDrillResponse>(
     `/api/v2/admin/security-monitor/revenue/drill?${qs.toString()}`,
   );

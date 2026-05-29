@@ -21,6 +21,7 @@ import {
   LayoutDashboard,
   LifeBuoy,
   Lightbulb,
+  Link2,
   ListChecks,
   LogOut,
   Megaphone,
@@ -160,6 +161,7 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
       { href: "/admin/pricing", label: "Ücretlendirme", icon: CircleDollarSign },
+      { href: "/admin/payment-links", label: "Ödeme Linkleri", icon: Link2 },
       { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox, badgeKey: "contact_new" },
       { href: "/admin/support", label: "Talepler", icon: LifeBuoy, badgeKey: "support_pending" },
     ],

@@ -78,7 +78,10 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
   async function openDrill(key: string, plan?: string) {
     setDrillLoading(true);
     try {
-      const res = await getAdminRevenueDrill(key, plan);
+      // Her drill üst toggle'ın seçili segment'ini takip eder.
+      // health:* ve invoice_bucket:* kurum-merkezli kalır (backend zaten görmezden gelir).
+      const seg = segment as "all" | "institution" | "user";
+      const res = await getAdminRevenueDrill(key, plan, seg);
       setDrill(res);
       setTimeout(() => drillRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } finally {
@@ -224,59 +227,131 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
         </Card>
       ) : null}
 
-      {/* Üst KPI (kurum-merkezli, drill'li) */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <KpiButton label="Aylık Gelir" value={tl(d.mrr.total_try)} sub={`${d.mrr.paying_institutions} ödeyen kurum`}
-                   tone="emerald" onClick={() => openDrill("paying")} />
-        <KpiButton label="Toplam Kurum" value={`${d.mrr.total_institutions}`} sub={`${d.mrr.free_institutions} ücretsiz`}
-                   tone="blue" onClick={() => openDrill("free")} />
-        <KpiButton label="Denemesi Yakın" value={`${d.trial_ending_soon.length}`} sub={`son 30g ${d.trial_expired_30d} bitti`}
-                   tone="amber" onClick={() => openDrill("trial:expired_30d")} />
-        <KpiButton label="Terk Riski" value={`${cp.unhealthy_total}`}
-                   sub={cp.critical > 0 ? `${cp.critical} kritik · ${cp.risk} risk` : cp.unhealthy_total > 0 ? `${cp.risk} risk · ${cp.watch} izle` : "temiz"}
-                   tone={cp.critical > 0 ? "rose" : cp.unhealthy_total > 0 ? "amber" : "emerald"}
-                   onClick={() => openDrill(cp.critical > 0 ? "health:critical" : "health:risk")} />
-      </div>
+      {/* Alt KPI grid — segment-aware (mrr_combined kullanır) */}
+      {d.mrr_combined ? (
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <KpiButton
+            label="Aylık Gelir"
+            value={tl(d.mrr_combined.total_try)}
+            sub={segment === "all"
+              ? `${d.mrr_combined.paying_count} ödeyen (${d.mrr_combined.institution_paying_count} kurum + ${d.mrr_combined.user_paying_count} koç)`
+              : segment === "institution"
+                ? `${d.mrr_combined.institution_paying_count} ödeyen kurum`
+                : `${d.mrr_combined.user_paying_count} ödeyen koç`}
+            tone="emerald"
+            onClick={() => openDrill("paying")}
+          />
+          <KpiButton
+            label={segment === "all" ? "Toplam Sahip" : segment === "institution" ? "Toplam Kurum" : "Toplam Koç"}
+            value={`${d.mrr_combined.total_owners}`}
+            sub={segment === "all"
+              ? `${d.mrr_combined.institution_count} kurum + ${d.mrr_combined.user_count} koç`
+              : segment === "institution"
+                ? `${d.mrr_combined.institution_count - d.mrr_combined.institution_paying_count} ücretsiz`
+                : `${d.mrr_combined.user_count - d.mrr_combined.user_paying_count} ücretsiz`}
+            tone="blue"
+            onClick={() => openDrill("free")}
+          />
+          <KpiButton
+            label="Denemesi Yakın"
+            value={`${d.trial_combined.length}`}
+            sub={`son 30g ${d.trial_expired_30d} denemesi bitti`}
+            tone="amber"
+            onClick={() => openDrill("trial:expired_30d")}
+          />
+          <KpiButton
+            label="Terk Riski"
+            value={`${cp.unhealthy_total}`}
+            sub={cp.critical > 0
+              ? `${cp.critical} kritik · ${cp.risk} risk`
+              : cp.unhealthy_total > 0
+                ? `${cp.risk} risk · ${cp.watch} izle`
+                : "temiz"}
+            tone={cp.critical > 0 ? "rose" : cp.unhealthy_total > 0 ? "amber" : "emerald"}
+            onClick={() => openDrill(cp.critical > 0 ? "health:critical" : "health:risk")}
+          />
+        </div>
+      ) : null}
+      {segment !== "all" ? (
+        <p className="-mt-2 text-[11px] text-muted-foreground">
+          <strong>Not:</strong> Terk Riski yalnız kurumlar için hesaplanır (sağlık endeksi tenant-bazlı).
+          Koç riski için <Link href="/admin/revenue/action-center" className="text-indigo-600 underline">Aksiyon Merkezi</Link>&apos;ne bakın.
+        </p>
+      ) : null}
 
       {/* Plan hareketleri (30g) */}
       <section>
-        <h2 className="mb-2 text-sm font-semibold text-muted-foreground">Son 30 günde plan hareketleri</h2>
+        <div className="mb-2 flex items-baseline gap-2">
+          <h2 className="text-sm font-semibold text-muted-foreground">Son 30 günde plan hareketleri</h2>
+          <span className="text-[11px] text-muted-foreground">
+            ({segment === "all" ? "Kurum + Bağımsız Koç" : segment === "institution" ? "Yalnız kurumlar" : "Yalnız bağımsız koçlar"})
+          </span>
+        </div>
+        <div className="mb-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
+          <strong className="text-slate-900">Ne demek?</strong>{" "}
+          <span><strong>Yeni kayıt</strong>: ilk kez sisteme dahil oldu.</span>{" · "}
+          <span><strong>Yükselen</strong>: ücretsizden ücretliye veya daha üst pakete geçti.</span>{" · "}
+          <span><strong>Düşüren</strong>: pakedi küçülttü.</span>{" · "}
+          <span><strong>Net Büyüme</strong>: yükselen − düşüren (pozitif = büyüme).</span>{" · "}
+          <span><strong>Duraklatma</strong>: yaz penceresinde pakedi geçici dondurma.</span>
+        </div>
         <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-          <ChangeKpi label="Yeni kayıt" value={cs.signups} onClick={cs.signups > 0 ? () => openDrill("plan_change:signup") : undefined} />
-          <ChangeKpi label="Yükselen" value={`↑ ${cs.upgrades}`} tone="emerald" onClick={cs.upgrades > 0 ? () => openDrill("plan_change:upgrade") : undefined} />
-          <ChangeKpi label="Düşüren" value={`↓ ${cs.downgrades}`} tone="rose" onClick={cs.downgrades > 0 ? () => openDrill("plan_change:downgrade") : undefined} />
-          <ChangeKpi label="Net Büyüme" value={`${cs.net_growth >= 0 ? "+" : ""}${cs.net_growth}`} tone={cs.net_growth >= 0 ? "emerald" : "rose"} />
-          <ChangeKpi label="Duraklatma" value={cs.pauses} onClick={cs.pauses > 0 ? () => openDrill("plan_change:pause") : undefined} />
+          <ChangeKpi label="Yeni kayıt" value={cs.signups} tooltip="İlk kayıt — kurumun/koçun sisteme yeni eklendiği an" onClick={cs.signups > 0 ? () => openDrill("plan_change:signup") : undefined} />
+          <ChangeKpi label="Yükselen" value={`↑ ${cs.upgrades}`} tone="emerald" tooltip="Pakete yükseltme — daha üst plana geçen" onClick={cs.upgrades > 0 ? () => openDrill("plan_change:upgrade") : undefined} />
+          <ChangeKpi label="Düşüren" value={`↓ ${cs.downgrades}`} tone="rose" tooltip="Paket alçaltma — daha alt plana inen" onClick={cs.downgrades > 0 ? () => openDrill("plan_change:downgrade") : undefined} />
+          <ChangeKpi label="Net Büyüme" value={`${cs.net_growth >= 0 ? "+" : ""}${cs.net_growth}`} tone={cs.net_growth >= 0 ? "emerald" : "rose"} tooltip="Yükselen − Düşüren. Pozitif = paket büyümesi." />
+          <ChangeKpi label="Duraklatma" value={cs.pauses} tooltip="Yaz penceresinde pakedi geçici durduranlar" onClick={cs.pauses > 0 ? () => openDrill("plan_change:pause") : undefined} />
         </div>
       </section>
 
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-        {/* Plan dağılımı */}
-        <Card className="overflow-hidden">
-          <div className="border-b border-border px-4 py-3">
-            <h2 className="text-sm font-semibold">Plan Dağılımı</h2>
-            <p className="text-xs text-muted-foreground">Her pakette kaç kurum + aylık katkı. Satıra tıkla → kurum listesi.</p>
-          </div>
-          {d.plan_distribution.length === 0 ? (
-            <div className="px-4 py-6 text-sm text-muted-foreground">Veri yok.</div>
-          ) : (
+      {/* Plan Dağılımı — segment-aware (plan_dist_combined kullanır) */}
+      <Card className="overflow-hidden">
+        <div className="border-b border-border px-4 py-3">
+          <h2 className="text-sm font-semibold">Plan Dağılımı</h2>
+          <p className="text-xs text-muted-foreground">
+            Her pakette kaç {segment === "all" ? "kurum/koç" : segment === "institution" ? "kurum" : "koç"} + aylık katkı.
+            Satıra tıkla → liste açılır.
+          </p>
+        </div>
+        {(d.plan_dist_combined ?? []).length === 0 ? (
+          <div className="px-4 py-6 text-sm text-muted-foreground">Veri yok.</div>
+        ) : (
+          <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-muted/40 text-[11px] uppercase text-muted-foreground">
                 <tr>
                   <th className="px-3 py-2 text-left">Paket</th>
-                  <th className="px-3 py-2 text-right">Kurum</th>
+                  {segment === "all" ? (
+                    <>
+                      <th className="px-3 py-2 text-right">Toplam</th>
+                      <th className="px-3 py-2 text-right">Kurum</th>
+                      <th className="px-3 py-2 text-right">Koç</th>
+                    </>
+                  ) : (
+                    <th className="px-3 py-2 text-right">{segment === "institution" ? "Kurum" : "Koç"}</th>
+                  )}
                   <th className="px-3 py-2 text-right">Aylık fiyat</th>
                   <th className="px-3 py-2 text-right">Aylık katkı</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {d.plan_distribution.map((p) => (
+                {(d.plan_dist_combined ?? []).map((p) => (
                   <tr key={p.plan} className="cursor-pointer hover:bg-muted/40" onClick={() => openDrill(`plan:${p.plan}`, p.plan)}>
                     <td className="px-3 py-2">
                       <div>{p.label}</div>
                       <code className="text-[11px] text-muted-foreground">{p.plan}</code>
                     </td>
-                    <td className="px-3 py-2 text-right font-semibold text-indigo-700">{p.count} →</td>
+                    {segment === "all" ? (
+                      <>
+                        <td className="px-3 py-2 text-right font-semibold text-indigo-700">{p.count} →</td>
+                        <td className="px-3 py-2 text-right text-blue-700">{p.institution_count}</td>
+                        <td className="px-3 py-2 text-right text-violet-700">{p.user_count}</td>
+                      </>
+                    ) : (
+                      <td className="px-3 py-2 text-right font-semibold text-indigo-700">
+                        {segment === "institution" ? p.institution_count : p.user_count} →
+                      </td>
+                    )}
                     <td className="px-3 py-2 text-right text-muted-foreground">{p.monthly_price_try > 0 ? `${p.monthly_price_try} ₺` : "—"}</td>
                     <td className={cn("px-3 py-2 text-right", p.estimated_mrr > 0 ? "font-semibold text-emerald-700" : "text-muted-foreground")}>
                       {p.estimated_mrr > 0 ? tl(p.estimated_mrr) : "—"}
@@ -285,48 +360,9 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                 ))}
               </tbody>
             </table>
-          )}
-        </Card>
-
-        {/* Denemesi bitenler */}
-        <Card className="overflow-hidden">
-          <div className="border-b border-border px-4 py-3">
-            <h2 className="text-sm font-semibold">Denemesi Bitmek Üzere — 7 Gün</h2>
-            <p className="text-xs text-muted-foreground">Ödeyen müşteriye dönüşüm fırsatı.</p>
           </div>
-          {d.trial_ending_soon.length === 0 ? (
-            <div className="px-4 py-10 text-center text-sm text-muted-foreground">7 gün içinde denemesi biten kurum yok.</div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead className="bg-muted/40 text-[11px] uppercase text-muted-foreground">
-                <tr>
-                  <th className="px-3 py-2 text-left">Kurum</th>
-                  <th className="px-3 py-2 text-left">Paket</th>
-                  <th className="px-3 py-2 text-right">Kalan</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {d.trial_ending_soon.map((t, idx) => (
-                  <tr key={`${t.institution_id}-${idx}`} className="hover:bg-muted/40">
-                    <td className="px-3 py-2">
-                      <Link href={`/admin/revenue/institutions/${t.institution_id}`} className="font-medium hover:text-indigo-700">
-                        {t.institution_name}
-                      </Link>
-                    </td>
-                    <td className="px-3 py-2"><code className="text-xs">{t.plan}</code></td>
-                    <td className="px-3 py-2 text-right">
-                      <span className={cn(
-                        "rounded px-2 py-0.5 text-xs",
-                        t.days_left <= 1 ? "bg-rose-100 text-rose-800" : t.days_left <= 3 ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800",
-                      )}>{t.days_left} gün</span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </Card>
-      </div>
+        )}
+      </Card>
 
       {/* Drill paneli */}
       <div ref={drillRef}>
@@ -340,56 +376,100 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
               <div className="inline-flex items-center gap-2 text-sm">
                 <ListChecks className="size-4" aria-hidden />
                 <span className="font-semibold">{drill.title}</span>
-                <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">{drill.count} kurum</span>
+                <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800">{drill.count} kayıt</span>
               </div>
               <button type="button" onClick={() => setDrill(null)} className="text-muted-foreground hover:text-foreground" aria-label="Kapat">
                 <X className="size-4" aria-hidden />
               </button>
             </div>
             {drill.rows.length === 0 ? (
-              <div className="px-4 py-6 text-center text-sm text-muted-foreground">Bu kategoride kurum yok — temiz.</div>
+              <div className="px-4 py-6 text-center text-sm text-muted-foreground">Bu kategoride kayıt yok — temiz.</div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-xs">
                   <thead className="bg-muted/40 text-muted-foreground">
                     <tr>
-                      <th className="px-3 py-2 text-left">Kurum</th>
-                      <th className="px-3 py-2 text-left">Paket</th>
+                      <th className="px-3 py-2 text-left">Kim</th>
+                      <th className="px-3 py-2 text-left">Plan Hareketi</th>
                       <th className="px-3 py-2 text-right">Aylık</th>
-                      <th className="px-3 py-2 text-left">Sebep / Detay</th>
+                      <th className="px-3 py-2 text-left">Ne zaman</th>
                       <th className="px-3 py-2 text-right" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
-                    {drill.rows.map((r, idx) => (
-                      <tr key={`${r.institution_id}-${idx}`} className="hover:bg-muted/40">
-                        <td className="px-3 py-2">
-                          <div className="font-medium">{r.institution_name}</div>
-                          <div className="font-mono text-[10px] text-muted-foreground">#{r.institution_id}</div>
-                        </td>
-                        <td className="px-3 py-2">
-                          <div>{r.plan_label}</div>
-                          <code className="text-[10px] text-muted-foreground">{r.plan}</code>
-                        </td>
-                        <td className="px-3 py-2 text-right">
-                          {r.monthly_price_try && r.monthly_price_try > 0 ? (
-                            <span className="font-semibold text-emerald-700">{tl(r.monthly_price_try)}</span>
-                          ) : <span className="text-muted-foreground">—</span>}
-                        </td>
-                        <td className="max-w-md break-words px-3 py-2 text-muted-foreground">
-                          {r.reason ?? "—"}
-                          {r.health_score != null ? (
-                            <div className="text-[10px]">Sağlık: {r.health_score}/100</div>
-                          ) : null}
-                        </td>
-                        <td className="whitespace-nowrap px-3 py-2 text-right">
-                          <Link href={r.detail_url || `/admin/revenue/institutions/${r.institution_id}`}
-                                className="inline-flex items-center gap-0.5 font-medium text-indigo-600 hover:text-indigo-800">
-                            360 <ArrowUpRight className="size-3" aria-hidden />
-                          </Link>
-                        </td>
-                      </tr>
-                    ))}
+                    {drill.rows.map((r, idx) => {
+                      const isUser = r.owner_type === "user";
+                      const hasMovement = r.from_plan_label || r.to_plan_label;
+                      return (
+                        <tr key={`${r.owner_type}-${r.owner_id}-${idx}`} className="hover:bg-muted/40">
+                          <td className="px-3 py-2">
+                            <div className="flex items-center gap-2">
+                              <span
+                                className={cn(
+                                  "inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                                  isUser
+                                    ? "bg-violet-100 text-violet-800"
+                                    : "bg-blue-100 text-blue-800",
+                                )}
+                                title={isUser ? "Bağımsız koç" : "Kurum"}
+                              >
+                                {isUser ? "Koç" : "Kurum"}
+                              </span>
+                              <div className="font-medium">{r.display_name}</div>
+                            </div>
+                            <div className="ml-7 font-mono text-[10px] text-muted-foreground">
+                              {isUser ? `user #${r.user_id}` : `#${r.institution_id}`}
+                              {r.user_email ? ` · ${r.user_email}` : ""}
+                            </div>
+                          </td>
+                          <td className="px-3 py-2">
+                            {hasMovement ? (
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1">
+                                  <span className="text-muted-foreground">{r.from_plan_label ?? "—"}</span>
+                                  <span className="text-indigo-600">→</span>
+                                  <span className="font-medium text-foreground">{r.to_plan_label ?? "—"}</span>
+                                </div>
+                                <code className="block text-[10px] text-muted-foreground">{r.from_plan ?? "—"} → {r.to_plan ?? "—"}</code>
+                              </div>
+                            ) : (
+                              <div>
+                                <div>{r.plan_label}</div>
+                                <code className="text-[10px] text-muted-foreground">{r.plan}</code>
+                              </div>
+                            )}
+                          </td>
+                          <td className="px-3 py-2 text-right">
+                            {r.monthly_price_try && r.monthly_price_try > 0 ? (
+                              <span className="font-semibold text-emerald-700">{tl(r.monthly_price_try)}</span>
+                            ) : <span className="text-muted-foreground">—</span>}
+                          </td>
+                          <td className="max-w-xs break-words px-3 py-2 text-muted-foreground">
+                            {r.event_at ? (
+                              <div>
+                                {new Date(r.event_at).toLocaleString("tr-TR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
+                                {r.event_days_ago != null ? (
+                                  <span className="ml-1 text-[10px]">({r.event_days_ago === 0 ? "bugün" : `${r.event_days_ago} gün önce`})</span>
+                                ) : null}
+                              </div>
+                            ) : r.reason ? (
+                              <span>{r.reason}</span>
+                            ) : (
+                              <span>—</span>
+                            )}
+                            {r.health_score != null ? (
+                              <div className="text-[10px]">Sağlık: {r.health_score}/100</div>
+                            ) : null}
+                          </td>
+                          <td className="whitespace-nowrap px-3 py-2 text-right">
+                            <Link href={r.detail_url || (isUser ? `/admin/revenue/users/${r.user_id}` : `/admin/revenue/institutions/${r.institution_id}`)}
+                                  className="inline-flex items-center gap-0.5 font-medium text-indigo-600 hover:text-indigo-800">
+                              360 <ArrowUpRight className="size-3" aria-hidden />
+                            </Link>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -437,11 +517,18 @@ function KpiButton({ label, value, sub, tone, onClick }: { label: string; value:
   );
 }
 
-function ChangeKpi({ label, value, tone, onClick }: { label: string; value: number | string; tone?: string; onClick?: () => void }) {
+function ChangeKpi({ label, value, tone, onClick, tooltip }: { label: string; value: number | string; tone?: string; onClick?: () => void; tooltip?: string }) {
   const text = tone === "emerald" ? "text-emerald-700" : tone === "rose" ? "text-rose-700" : "text-foreground";
   const inner = (
     <>
-      <div className="text-xs text-muted-foreground">{label}</div>
+      <div className="flex items-center gap-1 text-xs text-muted-foreground">
+        <span>{label}</span>
+        {tooltip ? (
+          <span title={tooltip} className="cursor-help text-slate-400" aria-label={tooltip}>
+            ⓘ
+          </span>
+        ) : null}
+      </div>
       <div className={cn("mt-0.5 text-xl font-semibold", text)}>{value}</div>
       {onClick ? <div className="mt-1 text-[10px] text-indigo-600 underline underline-offset-2">→ Listeyi gör</div> : null}
     </>

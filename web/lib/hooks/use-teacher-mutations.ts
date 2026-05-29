@@ -86,6 +86,33 @@ function errorCode(e: unknown): string | undefined {
   return undefined;
 }
 
+/**
+ * ai_credit_exhausted (402) — backend `details.upgrade_url` + `upgrade_to_plan_label`
+ * döner. Toast'ta "Solo Başlangıç paketini al →" linki gösterip /teacher/plan'a
+ * yönlendirir. Sonner toast.action API'sini kullanır.
+ */
+function showCreditExhaustedToast(e: unknown): void {
+  let message = "Bu ay için yapay zekâ kredin bitti.";
+  let upgradeLabel = "Solo Başlangıç";
+  let upgradeUrl = "/teacher/plan";
+  if (e instanceof ApiError) {
+    if (e.detail?.message) message = e.detail.message;
+    const details = (e.detail as { details?: { upgrade_url?: string; upgrade_to_plan_label?: string } })?.details;
+    if (details?.upgrade_url) upgradeUrl = details.upgrade_url;
+    if (details?.upgrade_to_plan_label) upgradeLabel = details.upgrade_to_plan_label;
+  }
+  toast.error(message, {
+    description: `${upgradeLabel} paketine geçerek kesintisiz devam et.`,
+    action: {
+      label: "Paketi al",
+      onClick: () => {
+        if (typeof window !== "undefined") window.location.href = upgradeUrl;
+      },
+    },
+    duration: 8000,
+  });
+}
+
 /** detail.code'a göre kullanıcı dostu kısa başlık (toast title). */
 function errorTitle(e: unknown, fallback: string): string {
   const code = errorCode(e);
@@ -1263,7 +1290,7 @@ export function useParseSessionPhoto(studentId: number) {
       const code = errorCode(err);
       if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
       else if (code === "plan_upgrade_required") toast.error("Bu özellik ücretli pakette", { description: "Paketinizi yükseltin." });
-      else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
+      else if (code === "ai_credit_exhausted") showCreditExhaustedToast(err);
       else if (code === "photo_unreadable") toast.error("Fotoğraf okunamadı", { description: "Daha net bir fotoğraf deneyin." });
       else if (code === "invalid_media_type") toast.error("Desteklenmeyen görsel türü (JPEG/PNG/WebP)");
       else if (code === "image_too_large") toast.error("Görsel çok büyük");
@@ -1286,7 +1313,7 @@ export function useTranscribeAudio(studentId: number) {
       const code = errorCode(err);
       if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
       else if (code === "plan_upgrade_required") toast.error("Bu özellik ücretli pakette", { description: "Paketinizi yükseltin." });
-      else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
+      else if (code === "ai_credit_exhausted") showCreditExhaustedToast(err);
       else if (code === "voice_unreadable") toast.error("Ses anlaşılamadı", { description: "Daha sessiz bir ortamda, net konuşarak tekrar deneyin." });
       else if (code === "invalid_media_type") toast.error("Desteklenmeyen ses türü");
       else if (code === "audio_too_large") toast.error("Ses kaydı çok uzun");
@@ -1333,7 +1360,7 @@ export function useGenerateCoachingInsight(studentId: number) {
       const code = errorCode(err);
       if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
       else if (code === "plan_upgrade_required") toast.error("Bu özellik ücretli pakette", { description: "Paketinizi yükseltin." });
-      else if (code === "ai_credit_exhausted") toast.error("Kredi sınırına ulaşıldı");
+      else if (code === "ai_credit_exhausted") showCreditExhaustedToast(err);
       else if (code === "not_enough_data") toast.error("İçgörü için en az bir seans kaydı gerekir");
       else if (code === "insight_unreadable") toast.error("İçgörü üretilemedi", { description: "Lütfen tekrar deneyin." });
       else if (code === "ai_unavailable") toast.error("AI servisi şu an kullanılamıyor");

@@ -75,6 +75,8 @@ import type {
   PricingAdminResponse,
   PricingConfig,
   ContactRequestMutationResult,
+  OnboardInstitutionBody,
+  OnboardInstitutionResult,
 } from "@/lib/types/admin";
 
 /**
@@ -706,6 +708,34 @@ export function useUpdateContactRequest(requestId: number) {
     onError: (e) => {
       toast.error(errorTitle(e, "Güncelleme başarısız"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+/**
+ * Talepten Aktivasyona — tek transaction'da kurum + yönetici + ödeme linki +
+ * e-posta. Backend `contact-requests/{id}/onboard`.
+ */
+export function useOnboardInstitution(requestId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<OnboardInstitutionResult>,
+    Error,
+    OnboardInstitutionBody
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<OnboardInstitutionResult>>(
+        `/api/v2/admin/contact-requests/${requestId}/onboard`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      // Toast değil — sonuç dialog'da gösterilir (temp_password + link)
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Aktivasyon başarısız"), {
+        description: errorMessage(e, "Beklenmeyen bir hata."),
       });
     },
   });

@@ -1,0 +1,64 @@
+Subject: {{ app_name }} — {{ institution_name }} kurumsal hesabınız hazır
+<div style="font-family: -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 560px; margin: 0 auto; color: #1e293b;">
+  <h2 style="font-size: 20px; margin: 0 0 12px;">Hoş geldiniz, {{ full_name }}</h2>
+  <p style="font-size: 14px; line-height: 1.6; margin: 0 0 16px;">
+    <strong>{{ institution_name }}</strong> kurumsal hesabınız oluşturuldu. Aşağıda
+    giriş bilgileriniz ve seçtiğiniz pakete ait ödeme bağlantınız yer alıyor.
+  </p>
+
+  <!-- Giriş bilgileri -->
+  <div style="background: #f1f5f9; border: 1px solid #cbd5e1; border-radius: 8px; padding: 16px; margin: 0 0 20px;">
+    <p style="margin: 0 0 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; color: #475569; letter-spacing: 0.5px;">
+      Giriş bilgileri
+    </p>
+    <p style="margin: 8px 0; font-size: 14px;">
+      <strong>Adres:</strong>
+      <a href="{{ login_url }}" style="color: #0e7490; text-decoration: none;">{{ login_url }}</a>
+    </p>
+    <p style="margin: 8px 0; font-size: 14px;">
+      <strong>E-posta:</strong> {{ email }}
+    </p>
+    <p style="margin: 8px 0; font-size: 14px;">
+      <strong>Geçici şifre:</strong>
+      <code style="background: #fef3c7; padding: 4px 8px; border-radius: 4px; font-family: 'SF Mono', Consolas, monospace; font-size: 13px; font-weight: 700; color: #92400e; letter-spacing: 0.5px;">{{ temp_password }}</code>
+    </p>
+    <p style="margin: 12px 0 0; font-size: 12px; color: #64748b; line-height: 1.5;">
+      İlk girişte sistem sizi yeni bir şifre belirlemeye yönlendirecek (zorunlu).
+      Geçici şifreniz yalnız bir kez kullanılabilir.
+    </p>
+  </div>
+
+  {% if payment_url %}
+  <!-- Ödeme linki -->
+  <div style="background: #ecfeff; border: 2px solid #0e7490; border-radius: 8px; padding: 16px; margin: 0 0 20px;">
+    <p style="margin: 0 0 8px; font-size: 14px; font-weight: 700; color: #155e75;">
+      📦 Seçilen paket: {{ plan_label }} — {{ amount_formatted }} ({{ cycle_label }})
+    </p>
+    {% if description %}
+    <p style="margin: 0 0 12px; font-size: 13px; color: #155e75;">{{ description }}</p>
+    {% endif %}
+    <p style="margin: 12px 0;">
+      <a href="{{ payment_url }}"
+         style="display: inline-block; background: #0e7490; color: #ffffff;
+                text-decoration: none; padding: 12px 24px; border-radius: 8px;
+                font-size: 14px; font-weight: 600;">
+        Şimdi Öde — 3D Secure
+      </a>
+    </p>
+    <p style="margin: 8px 0 0; font-size: 12px; color: #475569; line-height: 1.5;">
+      Ödeme bağlantısı <strong>{{ expires_at_label }}</strong> tarihine kadar geçerli.
+      Ödedikten sonra paket otomatik aktive olur; öğrenci ve koç eklemeye
+      başlayabilirsiniz. Kart bilgileriniz {{ app_name }}'a iletilmez —
+      PCI-DSS sertifikalı altyapı üzerinden işlenir.
+    </p>
+  </div>
+  {% endif %}
+
+  <p style="font-size: 13px; line-height: 1.6; margin: 16px 0 0; color: #475569;">
+    Sorularınız için bu e-postayı doğrudan yanıtlayabilirsiniz. İyi çalışmalar!
+  </p>
+  <p style="font-size: 12px; line-height: 1.6; margin: 16px 0 0; color: #94a3b8;">
+    Bu e-posta {{ app_name }} kurumsal hesabınızın oluşturulması üzerine otomatik
+    gönderildi.
+  </p>
+</div>

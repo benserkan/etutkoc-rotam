@@ -508,13 +508,21 @@ def check_solo_student_quota(
 # ---------------------------- Trial yönetimi ----------------------------
 
 
+_VALID_SOLO_PAID_TIERS = {"solo_pro", "solo_elite", "solo_unlimited"}
+
+
 def start_solo_trial(
     db: Session, *, user: User, days: int = SOLO_TRIAL_DAYS,
-    actor_user_id: int | None = None, autocommit: bool = True,
+    actor_user_id: int | None = None,
+    intended_plan: str | None = None,
+    autocommit: bool = True,
 ) -> User:
     """Bağımsız öğretmen için 14 günlük reverse trial başlat.
 
-    plan='solo_trial' set edilir, trial_ends_at=now+14d, post_trial_plan='solo_free'.
+    plan='solo_trial' set edilir, trial_ends_at=now+14d.
+    post_trial_plan: intended_plan geçerli bir ücretli tier ise oraya;
+    aksi halde 'solo_free'. Trial bitince /teacher/plan'da bu paketi seçili
+    görüp ödeme akışına geçer (yoksa solo_free'ye düşer).
     """
     if user.institution_id is not None:
         raise ValueError(
@@ -524,14 +532,21 @@ def start_solo_trial(
     from_plan = user.plan
     user.plan = SOLO_TRIAL
     user.trial_ends_at = now + timedelta(days=days)
-    user.post_trial_plan = SOLO_FREE
+    # Niyetli tier varsa ona, yoksa free
+    user.post_trial_plan = (
+        intended_plan if intended_plan in _VALID_SOLO_PAID_TIERS else SOLO_FREE
+    )
 
+    note = (
+        f"{days} günlük reverse trial başlatıldı (Solo Pro özellikleri)"
+        + (f" · sonra: {intended_plan}" if user.post_trial_plan != SOLO_FREE else "")
+    )
     _log_change(
         db, owner_type=PlanOwnerType.USER, owner_id=user.id,
         from_plan=from_plan, to_plan=SOLO_TRIAL,
         reason=PlanChangeReason.SIGNUP,
         actor_user_id=actor_user_id or user.id,
-        note=f"{days} günlük reverse trial başlatıldı (Solo Pro özellikleri)",
+        note=note,
     )
     if autocommit:
         db.commit()

@@ -49,9 +49,15 @@ interface SignupOk {
 interface Props {
   turnstileEnabled: boolean;
   turnstileSiteKey: string | null;
+  /**
+   * /pricing'den "14 gün ücretsiz dene" ile gelen pakete kodu
+   * (solo_pro/solo_elite/solo_unlimited). Backend bu plan'ı `post_trial_plan`
+   * olarak kaydeder — trial bitince koç bu pakete geçmek için ödeme yapar.
+   */
+  intendedPlan?: string;
 }
 
-export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey }: Props) {
+export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intendedPlan }: Props) {
   const router = useRouter();
   const qc = useQueryClient();
   const [isSubmitting, setSubmitting] = React.useState(false);
@@ -85,7 +91,11 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey }: Props)
       }
       const res = await api<SignupOk>("/api/v2/auth/signup/teacher", {
         method: "POST",
-        body: JSON.stringify({ ...values, turnstile_token: turnstileToken }),
+        body: JSON.stringify({
+          ...values,
+          turnstile_token: turnstileToken,
+          intended_plan: intendedPlan || undefined,
+        }),
       });
       qc.clear();
       toast.success(`Hoş geldin, ${res.user.full_name}`, {
@@ -118,7 +128,7 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey }: Props)
     } finally {
       setSubmitting(false);
     }
-  }, [showCaptcha, form, qc, router]);
+  }, [showCaptcha, form, qc, router, intendedPlan]);
 
   return (
     <>

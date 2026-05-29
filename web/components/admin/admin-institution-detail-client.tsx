@@ -9,6 +9,7 @@ import {
   AlertTriangle,
   ArrowLeft,
   ArrowUpRight,
+  Check,
   Download,
   FileText,
   Gem,
@@ -413,6 +414,70 @@ function LogoCard({
 // İletişim Talepleri → "Kurum sayfasına git (planı değiştir)" buraya çıpalanır.
 // ============================================================================
 
+// Kurum tier detayları (Google Workspace tarzı detaylı kart için).
+interface InstTierDetails {
+  monthly: number | null;       // ₺/ay — null = "Görüşme" (Enterprise)
+  credits: number;              // aylık AI kredi (PLAN_ALLOCATIONS backend)
+  coaches: string;              // koç sınırı kısa metni
+  features: string[];
+  badge?: string;
+}
+
+const INSTITUTION_TIER_DETAILS: Record<string, InstTierDetails> = {
+  institution_free: {
+    monthly: 0,
+    credits: 200,
+    coaches: "2 koç, 20 öğrenci",
+    features: [
+      "Kurumu tanımak için ücretsiz başlangıç",
+      "200 aylık AI kredisi (sembolik — yoğun kullanım için yetersiz)",
+      "Kuruluş paneli + müdahale merkezi",
+      "Veli güveni paneli",
+      "Akademik çıktı raporu",
+    ],
+  },
+  etut_standart: {
+    monthly: 10_000,
+    credits: 10_000,
+    coaches: "≤10 koç",
+    badge: "En popüler",
+    features: [
+      "10 koça kadar bireysel koçluk",
+      "Aylık 10.000 AI kredisi",
+      "Program uyum panosu",
+      "Müdahale merkezi + öğretmen karnesi",
+      "Akademik çıktı + veli güveni",
+      "Tüm bireysel koç özellikleri",
+    ],
+  },
+  dershane_pro: {
+    monthly: 30_000,
+    credits: 40_000,
+    coaches: "≤50 koç",
+    features: [
+      "Etüt Standart'ın tüm özellikleri",
+      "50 koça kadar",
+      "Aylık 40.000 AI kredisi (~4×)",
+      "Çoklu şube/sınıf yönetimi",
+      "Toplu kampanya gönderim",
+      "Yıllık akademik yıl peşin (2 ay bedava)",
+    ],
+  },
+  enterprise: {
+    monthly: null,
+    credits: 150_000,
+    coaches: "50+ koç",
+    features: [
+      "Dershane Pro'nun tüm özellikleri",
+      "Sınırsız koç + özel SLA",
+      "Aylık 150.000 AI kredisi (~15×)",
+      "White-label (kurum kendi markası)",
+      "Özel entegrasyon + API erişimi",
+      "Öncelikli destek + Account Manager",
+    ],
+  },
+};
+
 function PlanCard({
   institutionId,
   currentPlan,
@@ -552,59 +617,143 @@ function PlanCard({
               </div>
             ) : null}
 
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            {/* 4 BÜYÜK detaylı paket kartı yan yana (Google Workspace tarzı) */}
+            <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
               {allOptions.map((p) => {
                 const isSel = p.value === plan;
                 const isCur = p.value === currentPlan;
+                const details = INSTITUTION_TIER_DETAILS[p.value];
                 return (
-                  <button
+                  <div
                     key={p.value}
-                    type="button"
-                    onClick={() => setPlan(p.value)}
                     className={cn(
-                      "relative rounded-xl border p-3 text-left transition",
+                      "relative flex flex-col rounded-2xl border-2 bg-white p-4 transition",
                       isSel
-                        ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600"
-                        : "border-slate-200 bg-white hover:border-cyan-300",
+                        ? "border-cyan-600 shadow-lg ring-2 ring-cyan-100"
+                        : "border-slate-200 hover:border-cyan-300",
                     )}
                   >
-                    {isCur ? (
-                      <span className="absolute -top-2 right-2 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-white">
-                        Mevcut
+                    {/* Üst rozetler */}
+                    {details?.badge ? (
+                      <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-0.5 text-[11px] font-bold text-cyan-950 shadow-sm">
+                        {details.badge}
                       </span>
                     ) : null}
-                    <p className="text-sm font-bold text-slate-900">{p.label}</p>
-                    {p.coaches ? <p className="text-xs text-slate-600">{p.coaches}</p> : null}
-                    {p.desc ? <p className="mt-0.5 text-[11px] text-slate-500 line-clamp-2">{p.desc}</p> : null}
-                  </button>
+                    {isCur ? (
+                      <span className="absolute right-2 top-2 rounded-full bg-slate-700 px-2 py-0.5 text-[10px] font-bold text-white">
+                        Mevcut paket
+                      </span>
+                    ) : null}
+
+                    {/* Başlık */}
+                    <div className="mb-3">
+                      <h3 className="font-display text-lg font-extrabold text-slate-900">{p.label}</h3>
+                      <p className="text-xs text-slate-600">{details?.coaches ?? p.coaches ?? "—"}</p>
+                    </div>
+
+                    {/* Fiyat */}
+                    <div className="mb-3">
+                      {details && details.monthly != null ? (
+                        details.monthly === 0 ? (
+                          <div className="flex items-baseline gap-1">
+                            <span className="font-display text-2xl font-extrabold text-slate-900">Ücretsiz</span>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="flex items-baseline gap-1">
+                              <span className="font-display text-2xl font-extrabold text-slate-900">
+                                {details.monthly.toLocaleString("tr-TR")}
+                              </span>
+                              <span className="text-sm text-slate-500">₺/ay</span>
+                            </div>
+                            <p className="text-[11px] text-slate-500">
+                              yıllık {(details.monthly * 10).toLocaleString("tr-TR")} ₺ (2 ay bedava)
+                            </p>
+                          </>
+                        )
+                      ) : (
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-display text-xl font-extrabold text-slate-900">Özel teklif</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* AI kredi ön plana çıkar */}
+                    {details ? (
+                      <div className="mb-3 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800">
+                          Aylık yapay zekâ kredisi
+                        </p>
+                        <p className="font-display text-xl font-extrabold text-cyan-900">
+                          {details.credits.toLocaleString("tr-TR")}{" "}
+                          <span className="text-xs font-medium text-cyan-700">kredi</span>
+                        </p>
+                      </div>
+                    ) : null}
+
+                    {/* Özellik listesi */}
+                    {details ? (
+                      <ul className="mb-4 space-y-1.5 text-xs">
+                        {details.features.map((f) => (
+                          <li key={f} className="flex items-start gap-1.5">
+                            <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-hidden />
+                            <span className="text-slate-700">{f}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : p.desc ? (
+                      <p className="mb-4 text-xs text-slate-600">{p.desc}</p>
+                    ) : null}
+
+                    {/* CTA */}
+                    <div className="mt-auto">
+                      <Button
+                        size="sm"
+                        className={cn(
+                          "w-full whitespace-normal text-xs",
+                          isCur
+                            ? "border border-slate-300 bg-slate-100 text-slate-600 hover:bg-slate-100"
+                            : isSel
+                              ? "bg-cyan-700 text-white hover:bg-cyan-800"
+                              : "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50",
+                        )}
+                        disabled={isCur}
+                        onClick={() => {
+                          if (isCur) return;
+                          if (isSel) {
+                            apply();
+                          } else {
+                            setPlan(p.value);
+                          }
+                        }}
+                      >
+                        {isCur ? "Aktif paket" : isSel ? "Bu pakete geç" : "Bu paketi seç"}
+                      </Button>
+                    </div>
+                  </div>
                 );
               })}
             </div>
 
-            <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+            <div className="mt-4 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
               {focusedConfirm ? (
                 <button
                   type="button"
                   onClick={() => { setShowPicker(false); setPlan(requestedCode!); }}
-                  className="text-xs text-muted-foreground underline-offset-2 hover:text-foreground hover:underline"
+                  className="underline-offset-2 hover:text-foreground hover:underline"
                 >
                   ← Talep edilen pakete dön
                 </button>
               ) : (
-                <p className="text-xs text-muted-foreground">
+                <p>
                   {dirty
-                    ? <>Seçilen: <strong className="text-foreground">{selected?.label}</strong> — uygula&apos;ya bas.</>
-                    : "Plan değiştirmek için bir kademe seç."}
+                    ? <>Seçilen: <strong className="text-foreground">{selected?.label}</strong>. Kartın altındaki <strong>&quot;Bu pakete geç&quot;</strong> ile onayla.</>
+                    : "Plan değiştirmek için kart seç → tekrar tıklayıp uygula."}
                 </p>
               )}
-              <Button
-                onClick={() => apply()}
-                disabled={!dirty || mut.isPending}
-                className="bg-cyan-700 hover:bg-cyan-800 text-white"
-              >
-                {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-                Planı uygula
-              </Button>
+              {mut.isPending ? (
+                <span className="inline-flex items-center gap-1"><Loader2 className="size-3 animate-spin" aria-hidden /> Uygulanıyor…</span>
+              ) : null}
             </div>
           </>
         )}

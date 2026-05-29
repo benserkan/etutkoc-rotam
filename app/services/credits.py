@@ -51,26 +51,29 @@ logger = logging.getLogger(__name__)
 # Plan başına aylık kredi tahsisatı (TUNABLE — settings'e taşınabilir).
 # Tasarım: free trial gibi düşük başlangıç, pro tier'da bol kredi.
 PLAN_ALLOCATIONS: dict[str, int] = {
-    # ----- LEGACY (eski plan kodları, kullanılmıyor ama defensive) -----
+    # ----- DEFANSİF FALLBACK -----
+    # "free" PLAN_CATALOG'da DEĞİL ama eski DB satırları (özellikle non-teacher
+    # User: öğrenci/veli/admin default plan="free") taşır. Bu satır olmadan
+    # credits.py:204 (allocation = PLAN_ALLOCATIONS.get(..., PLAN_ALLOCATIONS["free"]))
+    # KeyError. AI özelliği bu kullanıcılarda KAPALI, sadece email/whatsapp gibi
+    # düşük maliyetli aksiyonlar için yeterli.
     "free": 100,
-    "starter": 1500,
-    "professional": 10000,
-    "enterprise": 150000,
     # ----- SOLO (bağımsız koç) — period (ay) başına kredi -----
     # Tahmin: öğrenci başına ~150 kredi/ay (AI yoğun kullanılırsa). 2026-05-26
     # revizyonu: ETUTKOC gerçek tüketim verisinden (8 günde 56 = ay 210 / 1
     # öğrenci) ekstrapolasyon. AI fiyatları: email=1, WA=5, AI insight=6,
     # AI foto=5, AI dikte=3, AI book_template=5.
     "solo_free": 200,        # 3 öğr, AI yok → ~90 email + buffer
-    "solo_trial": 50,        # 14 gün deneme — TASARIM AI-tavanı (değişmedi)
+    "solo_trial": 50,        # 14 gün deneme — TASARIM AI-tavanı (sembolik)
     "solo_pro": 1500,        # ≤10 öğr × 150 = 1500
     "solo_elite": 4000,      # ≤25 öğr × 160 = 4000
-    "solo_unlimited": 8000,  # 40+ öğr
+    "solo_unlimited": 8000,  # sınırsız öğrenci
     # ----- KURUM planları -----
     "institution_free": 200,    # ≤2 koç, AI sınırlı
-    "institution_trial": 3000,  # kurum deneyimi
+    "institution_trial": 3000,  # kurum deneme
     "etut_standart": 10000,     # ≤10 koç × 5 öğr × 200 ≈ 10K
     "dershane_pro": 40000,      # ≤50 koç × 5 öğr × 160 ≈ 40K
+    "enterprise": 150000,       # 50+ koç, özel teklif
 }
 
 # Çağrı tipi başına kredi maliyeti (TUNABLE).
@@ -272,13 +275,13 @@ def check_credit_available(
 
     # 3) Yeterli kredi var mı
     if acc.remaining_credits < cost:
-        # Bağımsız öğretmen için otomatik cooldown set et
+        # Bağımsız öğretmen: krediler tükendiğinde 'exhausted' reason döner.
+        # ÇÖZÜM YENİDEN-DENE DEĞİL → çözüm paket yükseltme veya ay başını bekleme.
+        # (Cooldown saati 'X saat sonra tekrar deneyin' mesajı YANLIŞ — krediler
+        # ay başında yenilenir. UI 'paketi yükselt' yönlendirir.)
         if owner.type == UsageOwnerType.USER:
-            acc.blocked_until = now + timedelta(hours=INDEPENDENT_COOLDOWN_HOURS)
-            db.flush()
             return CreditCheckResult(
-                ok=False, account=acc, reason="cooldown",
-                blocked_until=acc.blocked_until,
+                ok=False, account=acc, reason="exhausted",
                 remaining=acc.remaining_credits,
             )
         # Kurum: krediyi tüketmiş ama hard-block manuel — fonksiyonel davranış
@@ -332,13 +335,11 @@ def record_usage(
 
     acc.used_credits = (acc.used_credits or 0) + credits
 
-    # %100'e ulaşan bağımsız öğretmen için cooldown
-    if (
-        owner.type == UsageOwnerType.USER
-        and acc.used_credits >= acc.total_allocated
-        and acc.blocked_until is None
-    ):
-        acc.blocked_until = now + timedelta(hours=INDEPENDENT_COOLDOWN_HOURS)
+    # NOT: Bağımsız öğretmen için 'cooldown' mantığı KALDIRILDI (2026-05-29).
+    # Krediler ay başında otomatik yenilenir; '5 saat sonra tekrar deneyin'
+    # mesajı yanıltıcıydı. Bunun yerine check_credit_available 'exhausted'
+    # reason döner ve endpoint koçu /teacher/plan'a yönlendirir
+    # (`ai_credit_exhausted` 402 + details.upgrade_url).
 
     # %80 eşiği bu kullanımla geçildi mi → uyarı tetikle
     if threshold_just_crossed(acc):
@@ -476,15 +477,22 @@ def consume_credits(
     """
     check = check_credit_available(db, owner=owner, kind=kind)
     if not check.ok:
-        # Cooldown veya hard-block — exception fırlat
+        # Cooldown / hard-block / exhausted — exception fırlat
+        reason_messages = {
+            "hard_block": "Yapay zekâ kullanımı manuel olarak kapatıldı (süper admin)",
+            "cooldown": (
+                f"Kullanım sınırına ulaşıldı, "
+                f"{INDEPENDENT_COOLDOWN_HOURS} saat sonra tekrar deneyin"
+            ),
+            "exhausted": (
+                "Bu ay için yapay zekâ kredin bitti. Paketini yükselterek "
+                "kesintisiz devam edebilirsin."
+            ),
+        }
         raise CreditBlocked(
             reason=check.reason or "no_account",  # type: ignore[arg-type]
             until=check.blocked_until,
-            message=(
-                "Kullanım sınırına ulaşıldı (hard-block aktif)" if check.reason == "hard_block"
-                else f"Kullanım sınırına ulaşıldı, {INDEPENDENT_COOLDOWN_HOURS} saat sonra tekrar deneyin"
-                if check.reason == "cooldown" else "Kredi hesabı bulunamadı"
-            ),
+            message=reason_messages.get(check.reason or "", "Kredi hesabı bulunamadı"),
         )
 
     ctx = _UsageContext()

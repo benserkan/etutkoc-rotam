@@ -286,6 +286,31 @@ def _require_teacher(user: User = Depends(get_current_user_v2)) -> User:
     return user
 
 
+def _ai_credit_exhausted_error(user: User, exc_message: str) -> HTTPException:
+    """402 ai_credit_exhausted — koçu /teacher/plan'a yönlendiren zenginleştirilmiş hata.
+
+    Frontend toast'una `details.upgrade_url` + `details.upgrade_to_plan_label` ekler
+    → "Solo Başlangıç paketini al → /teacher/plan" gibi link yönlendirir.
+    """
+    from app.services.plans import PLAN_CATALOG
+    post_plan = user.post_trial_plan or "solo_pro"
+    pti = PLAN_CATALOG.get(post_plan)
+    upgrade_label = pti.label if pti else "Solo Başlangıç"
+    return HTTPException(
+        status_code=status.HTTP_402_PAYMENT_REQUIRED,
+        detail={
+            "error": "credit",
+            "code": "ai_credit_exhausted",
+            "message": exc_message,
+            "details": {
+                "upgrade_url": "/teacher/plan",
+                "upgrade_to_plan": post_plan,
+                "upgrade_to_plan_label": upgrade_label,
+            },
+        },
+    )
+
+
 def _get_owned_student(db: Session, student_id: int, teacher_id: int) -> User:
     """Öğretmenin kendi öğrencisini yükle, değilse 404.
 
@@ -1366,10 +1391,7 @@ def teacher_parse_session_photo_v2(
             ctx.set_metadata({"student_id": student_id, "source": "photo"})
     except CreditBlocked as e:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail={"error": "credit", "code": "ai_credit_exhausted", "message": f"Kredi sınırı: {e.message}"},
-        )
+        raise _ai_credit_exhausted_error(user, e.message)
     except AIInvalidResponse as e:
         db.rollback()
         raise HTTPException(
@@ -1444,10 +1466,7 @@ def teacher_transcribe_v2(
             ctx.set_metadata({"student_id": student_id, "source": "dictation"})
     except CreditBlocked as e:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail={"error": "credit", "code": "ai_credit_exhausted", "message": f"Kredi sınırı: {e.message}"},
-        )
+        raise _ai_credit_exhausted_error(user, e.message)
     except AIInvalidResponse as e:
         db.rollback()
         raise HTTPException(
@@ -1578,10 +1597,7 @@ def teacher_coaching_insight_generate_v2(
             ctx.set_metadata({"student_id": student_id, "sessions": len(rows)})
     except CreditBlocked as e:
         db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_402_PAYMENT_REQUIRED,
-            detail={"error": "credit", "code": "ai_credit_exhausted", "message": f"Kredi sınırı: {e.message}"},
-        )
+        raise _ai_credit_exhausted_error(user, e.message)
     except AIInvalidResponse as e:
         db.rollback()
         raise HTTPException(
@@ -1678,6 +1694,29 @@ def _build_plan_response(db: Session, user: User):
         note = "Paketiniz kurumunuz tarafından yönetilir. Yapay zekâ özellikleri " \
                "kurumunuzun planına bağlıdır."
 
+    # Trial bitince geçecek plan — signup'ta seçilen tier veya solo_free
+    from app.services.plans import PLAN_CATALOG
+    from app.services.credits import PLAN_ALLOCATIONS
+    post_trial = user.post_trial_plan if is_solo else None
+    post_trial_label = None
+    post_trial_credits = None
+    if post_trial:
+        pti = PLAN_CATALOG.get(post_trial)
+        post_trial_label = pti.label if pti else post_trial
+        post_trial_credits = PLAN_ALLOCATIONS.get(post_trial)
+
+    # AI kredi durumu — /teacher/plan ilerleme çubuğu için
+    ai_used = 0
+    ai_alloc = 0
+    if is_solo:
+        try:
+            from app.services.credits import CreditOwner, get_or_create_account
+            acc = get_or_create_account(db, owner=CreditOwner.for_user(user))
+            ai_used = int(acc.used_credits or 0)
+            ai_alloc = int(acc.total_allocated or 0)
+        except Exception:
+            pass
+
     return TeacherPlanResponse(
         plan_code=effective,
         plan_label=info.label if info else effective,
@@ -1699,6 +1738,11 @@ def _build_plan_response(db: Session, user: User):
             if is_solo and user.subscription_period_end else None
         ),
         subscription_cycle=user.subscription_cycle if is_solo else None,
+        post_trial_plan=post_trial,
+        post_trial_plan_label=post_trial_label,
+        post_trial_plan_credits=post_trial_credits,
+        ai_credits_used=ai_used,
+        ai_credits_allocated=ai_alloc,
     )
 
 
