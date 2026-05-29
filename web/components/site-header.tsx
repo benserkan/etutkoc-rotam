@@ -215,29 +215,32 @@ function MobileDrawer({
     };
   }, [onClose]);
 
+  // iOS Safari'de absolute container içinde h-full bazen yükseklik almıyor →
+  // flex parent + ml-auto panel deseni daha sağlam. Backdrop ayrı button (a11y).
   return (
     <div
       role="dialog"
       aria-modal
       aria-label="Mobil menü"
-      className="lg:hidden fixed inset-0 z-40"
+      className="lg:hidden fixed inset-0 z-50 flex"
     >
-      <div
-        className="absolute inset-0 bg-black/40"
+      <button
+        type="button"
         onClick={onClose}
-        aria-hidden
+        aria-label="Menüyü kapat"
+        className="absolute inset-0 z-0 bg-black/50 backdrop-blur-sm"
       />
-      <div className="absolute right-0 top-0 h-full w-72 max-w-[85vw] bg-card shadow-xl border-l border-border flex flex-col">
-        <div className="flex items-center justify-between px-4 h-14 border-b border-border">
-          <div className="leading-tight">
-            <p className="text-sm font-medium truncate">{user.full_name}</p>
+      <div className="relative z-10 ml-auto flex h-full w-[300px] max-w-[88vw] flex-col bg-card text-card-foreground shadow-2xl border-l border-border">
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 h-14">
+          <div className="min-w-0 leading-tight">
+            <p className="truncate text-sm font-medium">{user.full_name}</p>
             <p className="text-xs text-muted-foreground">{ROLE_LABELS_TR[user.role]}</p>
           </div>
           <Button variant="ghost" size="icon" onClick={onClose} aria-label="Kapat">
             <X className="size-5" aria-hidden />
           </Button>
         </div>
-        <nav className="flex-1 overflow-y-auto p-2 space-y-0.5" aria-label="Öğrenci paneli">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto p-3" aria-label="Öğrenci paneli">
           {STUDENT_NAV.map((n) => {
             const active =
               pathname === n.href || pathname.startsWith(`${n.href}/`);
@@ -248,19 +251,19 @@ function MobileDrawer({
                 href={n.href}
                 onClick={onClose}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors",
+                  "flex items-center gap-3 rounded-md px-3 py-3 text-sm transition-colors",
                   active
-                    ? "bg-muted font-medium text-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "bg-muted font-semibold text-foreground"
+                    : "text-foreground/80 hover:bg-muted hover:text-foreground",
                 )}
               >
-                <Icon className="size-4" aria-hidden />
-                {n.label}
+                <Icon className="size-4 shrink-0" aria-hidden />
+                <span className="truncate">{n.label}</span>
               </Link>
             );
           })}
         </nav>
-        <div className="p-3 border-t border-border">
+        <div className="shrink-0 border-t border-border p-3">
           <Button variant="outline" className="w-full" onClick={onLogout}>
             <LogOut className="size-4" aria-hidden /> Çıkış yap
           </Button>
