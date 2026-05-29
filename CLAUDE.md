@@ -3052,6 +3052,433 @@ asla gitmez. Veli daveti bug'ı tam buradan kaçtı.
   `../backups:/opt/etutkoc/backups:ro`. Volume değişikliği `docker compose up -d --build web`
   yeniden oluşturma gerektirir.
 
+## Üyelik & Aktivite Akışı — süper admin + kurum yöneticisi panelleri (2026-05-27, commit `dcee8a2`)
+
+**Bağlam (kullanıcı):** Ticari değerli site için yeni üye/davet/satın alma akışı
+mikro-bölünmüştü (audit log + contact_requests + users + invitations +
+parent_invitations + plan_change_history hepsi ayrı yerlerde). Yöneticinin
+"bugün kim katıldı / kim paket aldı / kim davet etti" sorusuna tek panelden yanıt
+vermesi gerekiyordu. Migration YOK — mevcut tablolardan UNION query.
+
+- **Backend** (`app/services/activity_stream.py`): `fetch_activity(institution_id,
+  days, type_filter, limit)`. 5 kaynak chronological tek akışa birleşir:
+  users (signup) + invitations (kurum→koç) + parent_invitations (koç→veli) +
+  contact_requests (iletişim/abonelik talebi) + plan_change_history (UPGRADE öne
+  çıkar). 4 kategori: **signup / invitation / commercial / change**. Sayımlar:
+  total + signup + invitation + commercial + change + **purchases** (UPGRADE ayrı
+  sayım — paket alımları). `institution_id=None` = süper admin (tüm sistem),
+  INT = kurum yöneticisi (scoped: kendi öğretmenleri + öğrencileri + davetleri +
+  plan değişimleri).
+- **Endpoint'ler**: `GET /api/v2/admin/activity-stream` + `GET /api/v2/institution/
+  activity-stream` (ikisi de aynı response şemasını döndürür, scope farkı backend'de).
+  Schema `schemas/institution.py`'a 6 yeni model.
+- **Frontend**: paylaşılan `components/activity-stream.tsx` (`ActivityStreamPage`)
+  — 5 KPI kart + tarih (1g/7g/30g) + tip filter pills + chronological feed.
+  `plan_upgrade` = yeşil highlight (PAKET SATIN ALMA), `is_commercial` = vurgulu kart.
+  2 sayfa: `/admin/activity-stream` + `/institution/activity-stream` (server initial
+  fetch + client TanStack Query). admin-shell + institution-shell sidebar'ına Panel
+  altına **"Aktivite Akışı"** linki.
+- **Durum**: commit + push (origin/main). Smoke testi YAZILMADI. Canlı tarayıcı
+  doğrulaması kullanıcıya bırakıldı.
+
+## Iyzico ödeme sistemi (sandbox-first) — Paket Ö1-Ö3 (2026-05-28/29)
+
+**Bağlam (kullanıcı):** Şirketsiz şahıs olarak Türkiye'de ödeme almanın yolları
+tartışıldı (sanal POS / aggregator / TR Karekod). Karar: **Iyzico sandbox-first**
+— SDK + akış kodlanır, gerçek üye işyeri başvurusu paralel; onay gelince tek
+`.env` ile prod'a geçer.
+
+- **Paket Ö1 — Iyzico backend altyapısı** (2026-05-28, **migration `p3q6u9v0u88o`**):
+  - `requirements.txt` +`iyzipay>=1.0.46` (resmi SDK)
+  - `config.py` +IYZICO_API_KEY/SECRET_KEY/BASE_URL + PAYMENT_CALLBACK_URL
+  - **Migration `p3q6u9v0u88o`** (down_revision o2p5t7u8t77n): `payment_transactions`
+    tablosu (user_id + provider + provider_reference + amount + currency + plan_code +
+    cycle + status + status_reason + raw_request/response + completed_at). Additive.
+  - Model `PaymentTransaction` + 6 status sabit + 3 provider sabit + status labels TR
+  - `AuditAction` +4 (PAYMENT_INITIATED/SUCCEEDED/FAILED/REFUNDED) + TR etiket
+  - `services/iyzico_service.py`: `is_provider_available` + `_iyzico_options`
+    (HTTPSConnection scheme-strip) + `_iyzico_call_create`/`_call_retrieve`
+    (mock-able helper'lar — smoke için monkeypatch) + `init_checkout`
+    (Pydantic body → pricing.py'dan fiyat → conversation_id UUID → request body
+    → SDK → paymentPageUrl + iyzico_token; pending tx satırı **ÖNCE** yaratılır,
+    SDK fail olsa bile iz kalır) + `verify_callback` (token-bazlı arama —
+    `provider_reference = iyzico_token` set edildi ki callback'te conversationId
+    bağımlılığı olmasın; başarıda owner-aware `change_plan` reuse, kurum varsa
+    institution, yoksa user; subscription_status/cycle/period_end doldurulur;
+    cycle normalize **`annual` → `academic_year`** çünkü sistem geri kalanı bu
+    standartı kullanır; PaymentLink varsa consumed işaretle) + `list_user_payments`
+    + `PaymentError` (kod-mesaj-details)
+  - `schemas/payment.py`: 6 Pydantic model
+  - `routes/api_v2/payment.py`: **5 endpoint** — `GET /provider-status` (public,
+    available + sandbox), `POST /init` (auth: koç/yön./süper admin),
+    `POST /iyzico/callback` (auth YOK, Iyzico form-POST → 303 redirect),
+    `GET /transactions/{id}` (sahibi), `GET /history`
+  - `_require_teacher_or_admin` = TEACHER + INSTITUTION_ADMIN + **SUPER_ADMIN**
+    (süper admin test için ödeme yapabilir + tx görüntüler; /history servis
+    katmanında user_id ile filtrelenir)
+  - `payment.py` import: payment router api_v2/__init__'e kayıt
+  - Iyzico SDK email regex sıkı: `.local`/`.test`/`.example` reddediliyor →
+    `noreply@etutkoc.com` fallback'i eklendi
+
+- **Paket Ö2a — PaymentLink (kurumsal ödeme akışı)** (**migration `q4r7v0w1v99p`**):
+  - Kurum self-serve ödeme yapamaz (Enterprise "Görüşme" fiyat); süper admin link
+    oluşturur → kurum yöneticisine WhatsApp/email → linkten Iyzico checkout
+  - **Migration `q4r7v0w1v99p`** (down_revision p3q6u9v0u88o): `payment_links`
+    tablosu (token unique 64char hex + target_owner_type/id + plan_code + cycle +
+    amount + description + status [active/consumed/expired/cancelled] +
+    expires_at + consumed_at + consumed_by_user_id + consumed_transaction_id +
+    created_by_admin_id) + `payment_transactions.payment_link_id` (FK SET NULL).
+    Additive, downgrade'li.
+  - Model `PaymentLink` + 4 status + 2 owner-type sabit + `is_usable` /
+    `status_resolved` property (expires_at geçmişse otomatik 'expired')
+  - Servis `payment_link_service.py`: `create_link` (token secrets.token_hex
+    çakışma kontrolü 5 deneme + audit) + `get_by_token` + `list_links` (filter
+    status/owner) + `cancel_link` (yalnız active) + `mark_consumed` (idempotent) +
+    `expire_overdue_links` (cron için) + `can_user_pay_link` (süper admin daima
+    OK, institution linki → o kurumun ADMIN'i, user linki → sahibi) +
+    `PaymentLinkError`
+  - `iyzico_service.init_checkout` genişletildi: `payment_link` opsiyonel
+    parametresi (linkten gelirse fiyat/plan/cycle linkten alır, tx'e link_id bağlanır)
+  - **5 yeni endpoint** (toplam 10 `/api/v2/payment/*`):
+    - `POST /admin/links` (süper admin) — link oluştur
+    - `GET /admin/links` (süper admin) — liste + status/owner filtre
+    - `POST /admin/links/{id}/cancel` (süper admin)
+    - `GET /link/{token}` (auth: yetkili) — link bilgisi (plan/tutar/kurum adı +
+      can_pay flag + is_usable + requires_login)
+    - `POST /link/{token}/checkout` (auth: yetkili) — iyzico init → paymentPageUrl
+
+- **Paket Ö2b — Frontend (4 sayfa)**:
+  - `lib/types/payment.ts` 12 tip · `lib/api/payment.ts` 5 fetcher + paymentKeys ·
+    `lib/hooks/use-payment-mutations.ts` 4 hook (Create/CancelLink + InitCheckout +
+    LinkCheckout) + 15 hata kodu TR etiketi
+  - `/admin/payment-links` süper admin paneli (5 KPI + status filter chip-bar +
+    tablo [Hedef · Paket · Tutar · Durum · Süre · İşlem]) + "Yeni Ödeme Linki"
+    dialog (form-resetli `key`-remount; hedef tip radio Kurum/Bağımsız Koç + ID +
+    plan select + cycle + tutar + açıklama + süre 1-365) + URL kopyala (DOM
+    clipboard) + iptal confirm dialog · admin-shell "Sistem → Ödeme Linkleri"
+    (Link2 ikon)
+  - `/payment/result?tx=N` sonuç sayfası (SSR `apiServer.getTransaction(txId)`
+    → succeeded/failed/pending 3 durum + büyük emoji + işlem özeti tablo +
+    "Panele git"/"Tekrar dene" CTA; error param ise "Bir sorun oldu"). force-light.
+    **Kontrast düzeltme**: koyu temada `bg-slate-50` üstüne `text-foreground` beyaza
+    çözülüyordu → explicit slate-900/600 + Row toneCls (emerald/rose/amber tonlu)
+  - `/payment/link/[token]` public sayfa (SSR + LinkInfo render; 4 durum:
+    consumed → "Bu link daha önce ödendi" / not usable → "Artık ödenemez" /
+    not can_pay → "Yetkili değilsiniz" / usable → büyük "Şimdi Öde" cyan buton →
+    `useLinkCheckout` → window.location = paymentPageUrl). force-light + ShieldCheck +
+    "Kart bilgileri ETÜTKOÇ'a iletilmez · PCI-DSS Iyzico 3DS" güvence notu
+  - `/teacher/plan` "Üyeliği aktive et" dialog'a **"Kartla Öde"** butonu (provider
+    available ise yan yana mevcut "Havale ile talep gönder" ile; sandbox modunda
+    amber **TEST modu** rozeti)
+  - `lib/role-home.ts` `safeReturnUrl` paylaşılan path'lere `/payment/*` eklendi
+    (her rol ödeme sonucu/linki görür, returnUrl güvenli)
+  - **Cycle çevirim bug (2026-05-29)**: `teacher-plan-client` "Kartla Öde" "Akademik
+    Yıl" seçildiğinde `cycle="academic_year"` gönderiyordu, backend `monthly|annual`
+    bekliyordu → 422. Düzeltme: dialog içinde `iyzicoCycle = cycle ===
+    "academic_year" ? "annual" : "monthly"` çevirim. Manuel akış (subscription_
+    request) `academic_year` kullanır, Iyzico `annual` — iki ayrı sözleşme. **KURAL**:
+    bu çevirim yalnız kart akışında, manuel akışta DEĞİL.
+
+- **Paket Ö3 — Smoke + Iyzico test kartlarıyla canlı doğrulama**:
+  - `iyzico_service`'e mock-able helper'lar (`_iyzico_call_create`/`_retrieve`)
+    ayrıldı → smoke'da monkeypatch ile gerçek Iyzico'ya istek yapmadan tüm
+    state machine doğrulanır
+  - `scripts/test_api_v2_payment_iyzico.py` — **27 senaryo** (auth + init mock +
+    callback success/failure/idempotent + tx GET sahip/yabancı + history + admin
+    link CRUD + public link can_pay yetki/yabancı + checkout başlat + callback →
+    kurum aktive + link consumed + tek-kullanım koruması + cancel + cancel iki kez +
+    SDK exception → 503 + **yıllık akış cycle=annual → subscription_cycle=
+    academic_year normalize doğrulama**)
+  - **Local canlı testler (kullanıcı tarayıcıdan):**
+    - Demo Koç A `solo_pro` aylık 2.500 ₺ ödedi (Akbank `5528790000000008` + 3DS `a`)
+      → callback OK → plan aktif (tx #7, daha sonra db'de gözden geçirme için).
+      İlk denemede 503 `getaddrinfo failed` = geçici DNS — tekrar denemeyle düzeldi
+    - Cycle bug fix sonrası `solo_unlimited` yıllık 75.000 ₺ akışı 422→200 OK
+    - Kurum link akışı: admin → link → kurum yöneticisi login → linkten ödeme →
+      kurum planı aktive + link consumed (yine başarılı)
+  - **DB'de değişiklik (önemli)**: legacy `subscription_cycle="annual"` olan 1
+    koç (`solo-b-yillik@g.com`) → `"academic_year"` migrate edildi (frontend
+    "(aylık)" yazıyordu çünkü sistem `academic_year` standartını arıyordu)
+
+**Sandbox kullanımı (kullanıcı önemli notu):**
+- Iyzico Bireysel Üye İşyeri başvurusu **henüz yapılmadı** (Paket Ö4 — başvuru
+  rehberi sonraya bırakıldı). Sandbox key ile test devam eder.
+- Şu an gerçek müşteri YOK → canlıya alındığında para hareketi olmaz; sandbox
+  test transaction'ları prod DB'sinde birikir (zararsız).
+- Prod `.env` ayarları (kullanıcı dolduracak): `IYZICO_API_KEY` + `IYZICO_SECRET_KEY`
+  + `IYZICO_BASE_URL=https://sandbox-api.iyzipay.com` + `APP_BASE_URL=https://
+  rotam.etutkoc.com` + `PAYMENT_CALLBACK_URL=https://rotam.etutkoc.com/api/v2/
+  payment/iyzico/callback`
+
+## Ticari Pano — Owner-pattern + jargon + kapsamlı doğrulama (2026-05-28)
+
+**Bağlam:** Kullanıcı `/admin/security-monitor/revenue`'da bir bug fark etti
+("Yükselen 7" sayım var ama "Listeyi gör" 0 kayıt). Sebep: drill kurum-only
+ama sayım kurum+koç. Kullanıcı "her şey hatasız" istedi → KAPSAMLI denetim.
+
+**Bulgular (9 tutarsızlık) ve düzeltmeler:**
+
+1. **Alt 4 KPI** `d.mrr` (kurum-only) → `d.mrr_combined` (segment-aware) — bağımsız
+   seçince koç sayımları
+2. **Plan Dağılımı tablosu** `d.plan_distribution` → `d.plan_dist_combined` —
+   bağımsızda solo planları görünür; Hepsi'de 3 sütun (Toplam/Kurum/Koç)
+3. **"Denemesi Bitmek Üzere" alt tablo** kaldırıldı (üst kart segment-aware
+   zaten gösteriyor — tekrar)
+4. **`drill_paying`** owner_type_filter parametresi (all/institution/user) +
+   `_row_user(coach)` helper
+5. **`drill_free`** owner_type_filter aynı şekilde
+6. **`drill_trial_expired_unconverted`** owner_type_filter + 2 ayrı upgraded_set
+   (institution + user)
+7. **`drill_plan_members`** owner_type_filter — solo planlardaki koçlar görünür
+8. **`health:*` drill** kurum-only KALIR (tenant_health sadece kurum metriği) +
+   UI'da segment≠all iken "Terk Riski yalnız kurumlar — koç için Aksiyon Merkezi"
+   açıklama notu
+9. **`plan_change_summary` + `daily_plan_changes` + `trial_expired_unconverted`**
+   sayım fonksiyonlarına owner_type_filter (önceden sayım segment-bağımsızdı;
+   bu yüzden "sayım var drill 0" bug'ı çıkıyordu)
+
+**Backend (`revenue_panel.py`):**
+- `_row_user(coach, ...)` helper — bağımsız koç row üreticisi (owner_type='user',
+  display_name, user_id/name/email)
+- `_row` (kurum) + `_row_user` (koç) ikisi de **owner-pattern alanları**
+  (`owner_type` / `owner_id` / `display_name`) doldurur (geri uyumluluk için
+  `institution_id`/`name` korunur kurumda; koç row'unda 0/display)
+- `DRILL_REGISTRY` tüm handler lambda imzaları `(db, segment="all")` →
+  segment'i drill fonksiyonuna `owner_type_filter` olarak geçirir
+- `drill_for_key` `segment="all"` parametresi
+- `get_revenue_panel_data` segment-aware (sayım fonksiyonlarına geçirir)
+
+**Şema (`schemas/admin.py`):**
+- `RevenueDrillRow` polymorphic: `owner_type` + `owner_id` + `display_name` +
+  opsiyonel `user_id/user_name/user_email` + plan değişimi alanları
+  (`from_plan_label`/`to_plan_label`/`event_at`/`event_days_ago`/`event_note`)
+
+**Endpoint (`routes/api_v2/admin.py`):**
+- `/security-monitor/revenue/drill` `segment` query parametresi
+  (pattern: `all|institution|user`)
+- Owner-aware row mapping (institution_id/name → 0/"—" koç row'unda)
+- `/security-monitor/revenue` dashboard endpoint'i `data = get_revenue_panel_data(
+  db, segment=segment)` ile sayımları da segment-aware doldurur (önceki bug)
+
+**Frontend (`admin-revenue-dashboard-client.tsx`):**
+- `openDrill` her drill için seçili segment'i geçirir (eski "yalnız plan_change:*"
+  yerine genel)
+- Alt 4 KPI segment-aware başlık + alt etiket + sayım (mrr_combined kullanır)
+- Plan Dağılımı tablosu segment-aware (Hepsi → 3 sütun; tek segment → 1 sütun)
+- Üstte segment etiketi "Yalnız kurumlar / Yalnız bağımsız koçlar"
+- **Mini sözlük** kutusu (Yeni kayıt/Yükselen/Düşüren/Net Büyüme/Duraklatma
+  açıklamaları — CLAUDE.md jargon yasağı kuralı)
+- `ChangeKpi` +`tooltip` prop (her KPI'da ⓘ hover açıklaması)
+- Drill tablosu yeniden tasarlandı:
+  - **Kim** sütunu: "Kurum" / "Koç" rozeti (mavi/violet) + isim + ID/email
+  - **Plan Hareketi**: `from_plan_label → to_plan_label` (örn. "Solo Ücretsiz → Solo Başlangıç")
+  - **Aylık** + **Ne zaman** (tarih + "N gün önce")
+  - **360** linki owner-aware (`/admin/revenue/users/{id}` veya `/admin/revenue/institutions/{id}`)
+- "{count} kurum" → "{count} kayıt" (kurum+koç karışık)
+
+**Smoke (`test_api_v2_admin_revenue_dashboard.py`): 16 → 32 senaryo:**
+- Tutarlılık testleri kritik: **26: `change_summary.upgrades == drill.count`
+  her segment için** (kullanıcının yaşadığı bug'ın regresyon koruması)
+- **27: `trial_expired_30d` sayım ≥ drill row sayısı** (drill upgrade etmiş
+  olanları çıkarır)
+- **28: tüm drill rows'ta owner-pattern alanları dolu** (frontend güvenli render)
+- 17-25: kapsamlı drill × segment matrisi (paying/free/trial:expired/plan:solo_pro/
+  etut_standart × all/institution/user)
+
+**KURAL (kullanıcının vurgusu):** "Bu sayfanın üstünden kaç defa geçtik. Lütfen
+bu sayfayı **hangi kod varsa testini yaparak** doğrulamanı istiyorum." → bundan
+sonra büyük sayfa refactor'larında sayım↔drill tutarlılık testleri **zorunlu**.
+
+## Signup intended_plan → post_trial_plan (2026-05-29)
+
+**Bağlam (kullanıcı bildirdi):** `/pricing` "Solo Başlangıç 14 gün ücretsiz dene"
+butonuna basıp `/signup/teacher?plan=solo_pro`'ya gidip kayıt olunca `/teacher/plan`
+"MEVCUT PAKET: **14 Günlük Pro Deneme**" diyordu — kullanıcının seçtiği paket
+DB'ye HİÇ yazılmıyordu, deneme bitince herkes solo_free'ye düşüyordu.
+
+**Bug (3 katman):**
+1. Backend `SignupTeacherIn` Pydantic modelinde `plan` alanı YOK → URL parametresi
+   tamamen yutuluyor
+2. `start_solo_trial` sabit `post_trial_plan = SOLO_FREE` (sabit kodlu)
+3. Frontend signup formu body'ye `plan` parametresini eklemiyor
+
+**Düzeltme (5 katman):**
+1. `SignupTeacherIn` +`intended_plan: str | None` opsiyonel alanı
+2. `plans.start_solo_trial` +`intended_plan` parametresi → geçerli `_VALID_SOLO_PAID_
+   TIERS` ({solo_pro/elite/unlimited}) içinde ise `post_trial_plan = intended_plan`,
+   değilse `solo_free`. PlanChangeHistory note'a "+ sonra: solo_pro" eklenir
+3. Signup endpoint `start_solo_trial(intended_plan=payload.intended_plan)`
+4. Frontend `signup-teacher-form` `intendedPlan` prop alır + body'ye
+   `intended_plan: intendedPlan || undefined` ekler; `page.tsx`'te
+   `<SignupTeacherForm intendedPlan={planParam} />`
+5. `TeacherPlanResponse` +`post_trial_plan` +`post_trial_plan_label` (PLAN_CATALOG'dan
+   etiket) +`post_trial_plan_credits` (PLAN_ALLOCATIONS'tan kredi)
+
+**Frontend `/teacher/plan` ek iyileştirmeler:**
+- Üst kart başlığı: `data.trial_active && data.post_trial_plan_label` ise
+  "Solo Başlangıç — 14 gün ücretsiz deneme" (önceden "14 Günlük Pro Deneme")
+- **Cyan bilgi notu** "Deneme bittiğinde Solo Başlangıç paketine geçmek için
+  ödeme talep edilir. **Yapay zekâ kredin 1.500 / ay** olur" (post_trial_plan_credits
+  ile vurgulu)
+- "Paketini seç" kartı (SoloUpgradeCard) **post_trial_plan'i öncelikli seçer**
+  (`intendedFromSignup || recommended_plan || ...`) — kullanıcının kasıtlı seçimi
+  öne çıkar (öğrenci sayısı bazlı recommended yerine)
+
+**Smoke (`test_api_v2_auth_p3.py`):** "signup happy" senaryosu zenginleştirildi —
+`intended_plan='solo_pro'` body alanı + DB'de `u.post_trial_plan == 'solo_pro'`
+doğrulaması (geçersiz tier → solo_free fallback; intended_plan boş → solo_free).
+
+## Trial kredi tükenince ödemeye yönlendirme — Paket A (2026-05-29)
+
+**Bağlam:** Trial koç AI özelliği çağırınca 50 kredi tüketince mesaj "5 saat sonra
+tekrar deneyin" diyordu — yanıltıcı (krediler aylık yenilenir, çözüm ödeme).
+Ayrıca frontend toast'ında "/teacher/plan'a git" yönlendirmesi yok, kredi göstergesi
+yoktu.
+
+**Backend (`credits.py`):**
+- `check_credit_available` bağımsız koç için **'exhausted'** reason (eski
+  'cooldown' yerine; bağımsız koç için "X saat sonra tekrar" anlamsız)
+- `record_usage` balance=0 olduğunda `blocked_until` SET ETMEZ (eski kalıp
+  yanlış mesaj kaynağıydı)
+- `consume_credits` CreditBlocked mesajı `reason_messages` dict:
+  - `exhausted`: "Bu ay için yapay zekâ kredin bitti. Paketini yükselterek
+    kesintisiz devam edebilirsin."
+- `PLAN_ALLOCATIONS` legacy `starter`/`professional` kaldırıldı (PLAN_CATALOG'da
+  YOK, hiç kullanılmıyor). `free` defensive fallback olarak KALDI (DB'de 140
+  non-teacher User satırı var)
+
+**Backend (`teacher.py`):**
+- `_ai_credit_exhausted_error(user, message)` modül-seviyesi helper — 402 detail'a
+  `details.upgrade_url` + `upgrade_to_plan` + `upgrade_to_plan_label`
+  (`PLAN_CATALOG[post_trial_plan].label`) ekler
+- 3 AI endpoint (parse-photo / parse-voice / coaching-insight) `except CreditBlocked`
+  helper'a yönlendir
+
+**Frontend:**
+- `use-teacher-mutations.ts` `showCreditExhaustedToast(err)` — backend'in
+  `details.upgrade_to_plan_label` + `upgrade_url`'i okur, Sonner `action` API'siyle
+  "**Paketi al**" butonu (tıklayınca `window.location.href = upgradeUrl`).
+  3 yerde basic toast'tan helper'a çevrildi.
+- `TeacherPlanResponse` +`ai_credits_used` +`ai_credits_allocated`
+- `/teacher/plan` `AiCreditMeter` componenti: emerald/amber/rose 3 renk ilerleme
+  çubuğu + "**N kredi yalnız deneme süresine özeldir. Solo Başlangıç paketine
+  geçtiğinde aylık 1.500 kredi (~30× daha fazla) tanımlanır**" karşılaştırma
+  bilgisi (post_trial_plan_credits bazlı multiplier)
+
+## Paket B — /teacher/plan Google Workspace tarzı detaylı kartlar (2026-05-29)
+
+**Bağlam (kullanıcı, Google Workspace ekran görüntüsü paylaştı):** 3 paket
+küçük tıklanabilir kutu yerine **büyük kartlar yan yana** + her kartta tier'a
+özel özellik listesi + AI kredi vurgusu + CTA.
+
+**Frontend (`teacher-plan-client.tsx`):**
+- `TIER_DETAILS` const — solo_pro / solo_elite / solo_unlimited için 7/6/6 madde
+  özellik listesi + aylık AI kredi + badge ("En popüler" → solo_elite)
+- `SoloUpgradeCard` 3 büyük kart `lg:grid-cols-3`:
+  - Plan adı + öğrenci kapasitesi + büyük fiyat (aylık/yıllık toggle)
+  - **Cyan vurgulu** "Aylık yapay zekâ kredisi" kutusu (en görünür alan)
+  - Tier-bazlı özellik listesi (alt tier'ın tüm özellikleri + bu tier'a özel)
+  - CTA: aktif/seçili **"Bu pakete geç (öde)"** (cyan), diğer **"Bu paketi seç"**
+    (beyaz) — buton metni sade (plan adı kart başlığında zaten büyük; "Solo
+    Başlangıç paketine geç (öde)" kırpılıyordu, kullanıcı bildirdi)
+- Üst rozetler:
+  - **"Denemede açık"** (cyan, sağ üst) — kullanıcının post_trial_plan ile eşleşen
+  - **"Sana uygun"** (amber, sağ üst) — öğrenci sayısına uygun ama denemeyle aynı değil
+  - **"En popüler"** (amber, üst-orta) — solo_elite için kalıcı
+- Alt mini-bilgi: seçili paketin kredi maliyet tablosu (sesli dikte 3, foto 5,
+  içgörü 6 kredi başına)
+
+**Aynı patern kurum tarafına da uygulandı** (`admin-institution-detail-client.tsx`):
+- `INSTITUTION_TIER_DETAILS` const (institution_free / etut_standart / dershane_pro /
+  enterprise için kredi + 5-6 özellik)
+- PlanCard'ın "seçici" modunda 4 büyük kart `xl:grid-cols-4` (önceden 4 küçük
+  kutu) — fiyat + kredi vurgusu + özellik + CTA
+- "Aktif paket" (disabled) / "Bu pakete geç" (seçili, cyan) / "Bu paketi seç"
+
+## Talepten Aktivasyona — tek dialog kurum onboarding (2026-05-29)
+
+**Bağlam (kullanıcı):** Kurum bilgilendirme formundan sonra **8 manuel adım**
+süper admin için (3 ayrı sayfa). "Bu süreç havada mı yoksa otomatik mi?" Karar:
+**tek dialog'da** kurum + yönetici + ödeme linki + e-posta + contact_request close.
+
+- Backend endpoint `POST /admin/contact-requests/{id}/onboard`:
+  1. Kurum yarat (slug auto-gen + çakışmada `-N`)
+  2. Kurum yöneticisi yarat (`INSTITUTION_ADMIN`, 14 karakter güçlü geçici şifre +
+     `must_change=True` + `email_verified_at=now`)
+  3. Ödeme linki yarat (`payment_link_service.create_link`, target=institution)
+  4. **E-posta gönder** (`institution_onboarding.html`, yöneticiye giriş bilgileri +
+     ödeme bağlantısı — opsiyonel `send_email` flag)
+  5. ContactRequest `status=closed` + admin_note'a izleme satırı ("Onboarding tamam —
+     kurum #N (ad), yönetici #M (email), ödeme linki #K (X ₺)")
+  6. Audit: `INSTITUTION_CREATE` + `USER_CREATE` `from_contact_request=N`
+- Şema: `OnboardInstitutionBody` (institution_name + slug + plan + admin_full_name +
+  admin_email + payment_amount + payment_cycle + payment_description +
+  payment_expires_in_days + send_email) → `OnboardInstitutionResult` (geçici şifre +
+  link URL + email_sent + message)
+- E-posta template `institution_onboarding.html` — hoş geldiniz + cyan "Şimdi Öde —
+  3DS" CTA + giriş bilgileri kutusu (geçici şifre amber vurgulu)
+- Frontend `OnboardDialog` (admin-contact-requests-client):
+  - ContactRow'a 2. buton: "🚀 Kurum Aç + Aktive Et" (yalnız
+    `status != closed && !linked_institution_id && !linked_user_id` iken)
+  - Dialog 3 bölüm: Kurum (ad + plan) + Yönetici (ad + email) + Ödeme linki
+    (tutar + cycle + açıklama + süre) + "Otomatik e-posta gönder" checkbox
+  - Form **contact_request'tan ön-doldurulur** (ad/email/kurum adı)
+  - **Plan/cycle değişince tutar otomatik güncellenir** (`PLAN_DEFAULT_AMOUNTS`:
+    etut_standart 10K / dershane_pro 30K; yıllık = aylık × 10). Süper admin
+    yine manuel override yapabilir (özel pazarlık) — kullanıcı bug bildirimi
+    sonrası eklendi (önceden dershane_pro seçilse bile etut_standart fiyatı
+    kalıyordu)
+  - Başarı paneli: geçici şifre + URL **kopyalanabilir** + "E-posta gönderildi"
+    (yeşil) veya "Elden ilet" (amber) durumu + "Kurum sayfasına git" CTA
+- `useOnboardInstitution` hook (use-admin-mutations'a eklendi)
+
+**KURAL (kullanıcı vurgusu):** Bir alan/durum değişince etkilenen tüm yüzeyler
+aynı commit'te güncellenir — bu durumda PaymentLink tablosundaki yanlış tutar
+(önceki bug'lı testte 10K kayıt) ürün hatası DEĞİL, akışın yeniden test edilebilir
+durumda olduğu için temizleme kullanıcıya bırakıldı.
+
+## Veli paneli + haftalık mail + mobil giriş (2026-05-29)
+
+**Bağlam (kullanıcı 3 iş):**
+1. Veli haftalık mail sadece gün + toplam test sayısı gösteriyor → günlük detay +
+   son deneme netleri eklenmeli
+2. Veli panel ana sayfada deneme bilgisi yok
+3. Anasayfa mobil görünümünde "Giriş" butonu görünmüyor
+
+- **Veli paneli son deneme kartı**:
+  - Backend `ParentChildSummary` +5 alan (`latest_exam_title`/`date`/`net`/
+    `section`/`count`)
+  - `/parent/dashboard` endpoint: her çocuk için tek sorguda toplam sayım
+    + en son ExamResult (`exam_date desc + created_at desc`)
+  - Frontend `parent-dashboard-client` ChildCard'a petrol mavisi tonlu "Son Deneme"
+    bölümü: deneme adı + sınav türü rozeti (LGS/TYT/AYT/YDT) + büyük net +
+    tarih + sağ üst "toplam N deneme" rozeti; hiç deneme yoksa bölüm görünmez
+- **Veli haftalık rapor maili zenginleştirildi**:
+  - `notification_producers.py` 2 yeni helper:
+    - `_build_daily_breakdown(student_id, week_start, week_end)` — 7 gün için
+      her görev: kitap + bölüm + `planned_count/completed_count` + günlük toplam
+      (Pzt/Sal/.../Paz; boş günler dahil)
+    - `_get_latest_exam(student_id, since_days=7)` — son 7g girilen ExamResult
+      (title, date, net, correct/wrong/blank, section)
+  - `produce_weekly_report` payload'a `daily_breakdown` + `latest_exam` eklendi
+  - Template `parent_weekly_report.html` zenginleştirildi:
+    - **"Günlük Program" tablosu** — 7 gün × kitap × bölüm × `15/20 soru`
+      (tamamlanan emerald, eksik slate); günlük toplam sağ alt
+    - **"Son Deneme" cyan kutu** — başlık + sınav türü + tarih + büyük net +
+      doğru/yanlış/boş kırılımı
+  - **Bug fix**: Jinja2'de `items` rezerve adı `dict.items()` ile çakışıyordu →
+    producer'da `rows` adı kullanıldı (template + helper güncellendi)
+- **Mobil ana sayfa "Giriş" butonu** (`landing-client.tsx`):
+  - Header: eski `hidden ... sm:inline` class'ı kaldırıldı → mobilde de görünür
+    ("Giriş" cyan-border, "Ücretsiz Dene" cyan-dolu yan yana)
+  - StickyMobileCta: "Giriş" küçük border buton + "Ücretsiz Dene" ana buton
+
+**KURAL (yeni — Jinja2 template adlandırma):** Jinja2'de `dict.items()` /
+`dict.keys()` / `dict.values()` built-in metotları **iterate edilemez** — yani
+template'de `{% for x in obj.items %}` ile çakışırsa "object is not iterable"
+hatası verir. Producer/ctx'lerde rezerve dict-metodlarıyla aynı isim
+kullanılmamalı (örn. `items` yerine `rows` veya `entries`).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

@@ -232,17 +232,25 @@ function Faq() {
 function StickyMobileCta() {
   return (
     <div className="fixed inset-x-0 bottom-0 z-50 border-t border-cyan-900/15 bg-background/95 px-4 py-3 backdrop-blur md:hidden">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex items-center justify-between gap-2">
         <div className="leading-tight">
           <p className="text-sm font-bold text-cyan-900">14 gün ücretsiz</p>
           <p className="text-[11px] text-muted-foreground">Kredi kartı gerekmez</p>
         </div>
-        <Link
-          href="/signup/teacher"
-          className="inline-flex items-center gap-1.5 rounded-full bg-cyan-700 px-5 py-2.5 text-sm font-bold text-white shadow-sm"
-        >
-          Ücretsiz Dene <ArrowRight className="size-4" aria-hidden />
-        </Link>
+        <div className="flex items-center gap-1.5">
+          <Link
+            href="/login"
+            className="inline-flex items-center rounded-full border border-cyan-700/40 px-3 py-2 text-xs font-bold text-cyan-800 hover:bg-cyan-50"
+          >
+            Giriş
+          </Link>
+          <Link
+            href="/signup/teacher"
+            className="inline-flex items-center gap-1 rounded-full bg-cyan-700 px-4 py-2 text-xs font-bold text-white shadow-sm"
+          >
+            Ücretsiz Dene <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
+        </div>
       </div>
     </div>
   );
@@ -262,16 +270,16 @@ function Header() {
             </a>
           ))}
         </nav>
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 sm:gap-2.5">
           <Link
             href="/login"
-            className="hidden text-sm font-medium text-muted-foreground transition hover:text-cyan-800 sm:inline"
+            className="inline-flex items-center rounded-full border border-cyan-700/30 px-3 py-1.5 text-xs font-semibold text-cyan-800 transition hover:border-cyan-700 hover:bg-cyan-50 sm:px-4 sm:py-2 sm:text-sm"
           >
             Giriş
           </Link>
           <Link
             href="/signup/teacher"
-            className="inline-flex items-center gap-1.5 rounded-full bg-cyan-700 px-4 py-2 text-sm font-semibold text-white shadow-sm shadow-cyan-700/20 transition hover:-translate-y-0.5 hover:bg-cyan-800"
+            className="inline-flex items-center gap-1.5 rounded-full bg-cyan-700 px-3 py-1.5 text-xs font-semibold text-white shadow-sm shadow-cyan-700/20 transition hover:-translate-y-0.5 hover:bg-cyan-800 sm:px-4 sm:py-2 sm:text-sm"
           >
             Ücretsiz Dene
           </Link>

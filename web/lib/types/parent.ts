@@ -40,6 +40,12 @@ export interface ParentChildSummary {
   rate_7d: number | null;
   consistency_7d: number | null;
   warning_level: WarningLevel;
+  // Son deneme özet
+  latest_exam_title: string | null;
+  latest_exam_date: string | null;
+  latest_exam_net: number | null;
+  latest_exam_section: string | null;
+  latest_exam_count: number;
 }
 
 export interface ParentDashboardResponse {

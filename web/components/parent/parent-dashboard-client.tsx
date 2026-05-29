@@ -198,6 +198,45 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
             />
           </div>
 
+          {/* Son deneme — varsa */}
+          {child.latest_exam_count > 0 ? (
+            <div className="rounded-lg border border-[#117A86]/20 bg-[#117A86]/5 px-3 py-2.5">
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-[11px] font-medium uppercase tracking-wider text-[#117A86]">
+                  Son Deneme
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  toplam {child.latest_exam_count} deneme
+                </span>
+              </div>
+              {child.latest_exam_title ? (
+                <div className="truncate text-sm font-medium" title={child.latest_exam_title}>
+                  {child.latest_exam_title}
+                </div>
+              ) : null}
+              <div className="mt-1 flex items-center gap-3 text-xs">
+                {child.latest_exam_net != null ? (
+                  <span className="inline-flex items-baseline gap-1">
+                    <span className="text-muted-foreground">Net:</span>
+                    <span className="text-base font-bold tabular-nums text-[#117A86]">
+                      {child.latest_exam_net.toLocaleString("tr-TR", { maximumFractionDigits: 2 })}
+                    </span>
+                  </span>
+                ) : null}
+                {child.latest_exam_section ? (
+                  <span className="rounded bg-white px-1.5 py-0.5 text-[10px] font-semibold text-[#117A86]">
+                    {child.latest_exam_section}
+                  </span>
+                ) : null}
+                {child.latest_exam_date ? (
+                  <span className="text-muted-foreground">
+                    {formatExamDate(child.latest_exam_date)}
+                  </span>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           <div className="pt-2 border-t border-border text-xs text-[#117A86] group-hover:text-[#0E5F69] inline-flex items-center gap-0.5">
             Detayları gör
             <ChevronRight
@@ -209,6 +248,16 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
       </Card>
     </Link>
   );
+}
+
+function formatExamDate(iso: string): string {
+  try {
+    return new Date(iso).toLocaleDateString("tr-TR", {
+      day: "2-digit", month: "short", year: "numeric",
+    });
+  } catch {
+    return iso;
+  }
 }
 
 function Stat({

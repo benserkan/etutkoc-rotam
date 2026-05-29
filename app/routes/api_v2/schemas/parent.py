@@ -53,6 +53,12 @@ class ParentChildSummary(BaseModel):
     rate_7d: int | None = None
     consistency_7d: int | None = None
     warning_level: WarningLevelLiteral
+    # Son deneme özet (varsa) — veli paneli kart yansıması
+    latest_exam_title: str | None = None
+    latest_exam_date: str | None = None  # ISO date
+    latest_exam_net: float | None = None  # ham net
+    latest_exam_section: str | None = None  # LGS, TYT, AYT, YDT (enum value)
+    latest_exam_count: int = 0  # toplam deneme sayısı (rozet için)
 
 
 class ParentDashboardResponse(BaseModel):

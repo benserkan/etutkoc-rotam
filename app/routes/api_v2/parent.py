@@ -129,11 +129,53 @@ def parent_dashboard_v2(
     user: User = Depends(_require_parent),
     db: Session = Depends(get_db),
 ):
-    """Veliye bağlı tüm çocuklar — dashboard kartları için.
+    """Veliye bağlı tüm çocuklar + her çocuğun son deneme özeti."""
+    from sqlalchemy import desc, func
+    from app.models.exam_result import ExamResult
 
-    Eşdeğer Jinja: parent.py:242-256 (parent_dashboard).
-    """
     children = list_parent_students(db, user)
+    if not children:
+        return ParentDashboardResponse(children=children)
+
+    # Her çocuk için son deneme + toplam sayım — tek sorguda batch yükle
+    student_ids = [c["student_id"] for c in children]
+
+    # Toplam sayım
+    counts = dict(
+        db.query(ExamResult.student_id, func.count(ExamResult.id))
+        .filter(ExamResult.student_id.in_(student_ids))
+        .group_by(ExamResult.student_id)
+        .all()
+    )
+
+    # En son deneme (her öğrenci için ayrı sorgu — basit ve hızlı; küçük sayıda çocuk)
+    latest_by_student: dict[int, ExamResult] = {}
+    for sid in student_ids:
+        latest = (
+            db.query(ExamResult)
+            .filter(ExamResult.student_id == sid)
+            .order_by(desc(ExamResult.exam_date), desc(ExamResult.created_at))
+            .first()
+        )
+        if latest is not None:
+            latest_by_student[sid] = latest
+
+    # Children dict'lerine yeni alanları enjekte et
+    for c in children:
+        sid = c["student_id"]
+        c["latest_exam_count"] = int(counts.get(sid, 0))
+        latest = latest_by_student.get(sid)
+        if latest is not None:
+            c["latest_exam_title"] = latest.title
+            c["latest_exam_date"] = (
+                latest.exam_date.isoformat() if latest.exam_date else None
+            )
+            c["latest_exam_net"] = float(latest.net) if latest.net is not None else None
+            c["latest_exam_section"] = (
+                latest.section.value if hasattr(latest.section, "value") else str(latest.section)
+                if latest.section else None
+            )
+
     return ParentDashboardResponse(children=children)
 
 

@@ -26,7 +26,7 @@ Tetikleyici noktalar:
 from __future__ import annotations
 
 import logging
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -160,6 +160,113 @@ def produce_empty_day(
 # ---------------------------- WEEKLY_REPORT (email + WA) ----------------------------
 
 
+def _build_daily_breakdown(
+    db: Session, *, student_id: int, week_start: date, week_end: date,
+) -> list[dict]:
+    """Günlük görev listesi — her görev: kitap + bölüm + planlanan/tamamlanan soru.
+
+    [{day_iso, day_label, items: [{title, type, book, section, planned, completed}], total_planned, total_completed}]
+    """
+    from app.models import Task, TaskBookItem
+    from sqlalchemy.orm import joinedload
+
+    tasks = (
+        db.query(Task)
+        .options(joinedload(Task.book_items).joinedload(TaskBookItem.book),
+                 joinedload(Task.book_items).joinedload(TaskBookItem.section))
+        .filter(
+            Task.student_id == student_id,
+            Task.date >= week_start,
+            Task.date <= week_end,
+        )
+        .order_by(Task.date, Task.id)
+        .all()
+    )
+
+    by_day: dict[date, list[dict]] = {}
+    for t in tasks:
+        items_list: list[dict] = []
+        total_p = 0
+        total_c = 0
+        for it in t.book_items:
+            planned = int(it.planned_count or 0)
+            done = int(it.completed_count or 0)
+            total_p += planned
+            total_c += done
+            book_name = it.label if not it.book else (it.book.name if hasattr(it.book, "name") else "")
+            section_name = it.section.name if it.section and hasattr(it.section, "name") else ""
+            items_list.append({
+                "book": book_name or "—",
+                "section": section_name or "",
+                "planned": planned,
+                "completed": done,
+            })
+        task_type = (
+            t.type.value if hasattr(t.type, "value") else str(t.type)
+        ) if t.type else "test"
+        task_record = {
+            "title": t.title or "",
+            "type": task_type,
+            # 'items' Jinja2'de dict.items() metoduyla çakışır → 'rows' kullan
+            "rows": items_list,
+            "total_planned": total_p,
+            "total_completed": total_c,
+        }
+        by_day.setdefault(t.date, []).append(task_record)
+
+    # Tüm hafta günleri (boş günler de listelensin — veli boş gün de görsün)
+    day_names_tr = {0: "Pzt", 1: "Sal", 2: "Çar", 3: "Per", 4: "Cum", 5: "Cmt", 6: "Paz"}
+    out: list[dict] = []
+    cur = week_start
+    while cur <= week_end:
+        day_tasks = by_day.get(cur, [])
+        day_total_p = sum(t["total_planned"] for t in day_tasks)
+        day_total_c = sum(t["total_completed"] for t in day_tasks)
+        out.append({
+            "day_iso": cur.isoformat(),
+            "day_label": cur.strftime("%d %b").replace("Jan","Oca").replace("Feb","Şub")
+                .replace("Mar","Mar").replace("Apr","Nis").replace("May","May")
+                .replace("Jun","Haz").replace("Jul","Tem").replace("Aug","Ağu")
+                .replace("Sep","Eyl").replace("Oct","Eki").replace("Nov","Kas").replace("Dec","Ara"),
+            "day_name": day_names_tr.get(cur.weekday(), ""),
+            "tasks": day_tasks,
+            "total_planned": day_total_p,
+            "total_completed": day_total_c,
+            "has_tasks": len(day_tasks) > 0,
+        })
+        cur += timedelta(days=1)
+    return out
+
+
+def _get_latest_exam(db: Session, *, student_id: int, since_days: int = 7) -> dict | None:
+    """Son deneme — yalnız son N gün içinde girilmiş olan ExamResult varsa."""
+    from app.models.exam_result import ExamResult
+    from sqlalchemy import desc as _desc
+
+    cutoff = date.today() - timedelta(days=since_days)
+    latest = (
+        db.query(ExamResult)
+        .filter(
+            ExamResult.student_id == student_id,
+            ExamResult.exam_date >= cutoff,
+        )
+        .order_by(_desc(ExamResult.exam_date), _desc(ExamResult.created_at))
+        .first()
+    )
+    if latest is None:
+        return None
+    section_str = latest.section.value if hasattr(latest.section, "value") else (str(latest.section) if latest.section else None)
+    return {
+        "title": latest.title,
+        "date_iso": latest.exam_date.isoformat() if latest.exam_date else None,
+        "net": float(latest.net) if latest.net is not None else None,
+        "correct": int(latest.total_correct or 0),
+        "wrong": int(latest.total_wrong or 0),
+        "blank": int(latest.total_blank or 0),
+        "section": section_str,
+    }
+
+
 def produce_weekly_report(
     db: Session,
     *,
@@ -180,6 +287,11 @@ def produce_weekly_report(
         "completed": completed,
         "planned": planned,
         "rate_pct": rate_pct,
+        # Günlük detay + son deneme — template'in zenginleştirilmesi için
+        "daily_breakdown": _build_daily_breakdown(
+            db, student_id=student.id, week_start=week_start, week_end=week_end,
+        ),
+        "latest_exam": _get_latest_exam(db, student_id=student.id, since_days=7),
         "unsubscribe_token": _unsub_token(db, parent.id),
     }
 
