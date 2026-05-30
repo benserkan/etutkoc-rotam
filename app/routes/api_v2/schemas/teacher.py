@@ -267,6 +267,9 @@ class TeacherTaskItem(BaseModel):
     section_reserved_count: int
     section_completed_count: int
     section_remaining: int
+    # Sonuç (opsiyonel) — koç hem görüntüler hem düzenler.
+    correct_count: int | None = None
+    wrong_count: int | None = None
 
 
 class TeacherTask(BaseModel):
@@ -278,6 +281,7 @@ class TeacherTask(BaseModel):
     status: TaskStatusLiteral
     title: str
     scheduled_hour: str | None      # "HH:00" veya None
+    period: str | None = None       # "morning"|"noon"|"evening"|None (M6)
     order: int
     is_draft: bool
     notes: str | None
@@ -499,6 +503,17 @@ class BookOptionsResponse(BaseModel):
     subject_id: int | None
 
 
+class SubjectBrief(BaseModel):
+    """Görev formu Video/Özet/Tekrar/Diğer dropdown'ı için — kitap atanma
+    şartı olmadan öğrencinin müfredat havuzundaki tüm dersler."""
+    id: int
+    name: str
+
+
+class SubjectListResponse(BaseModel):
+    items: list[SubjectBrief]
+
+
 class SectionOption(BaseModel):
     id: int
     label: str
@@ -566,6 +581,7 @@ class TaskCreateBody(BaseModel):
     type: TaskTypeLiteral = "test"
     title: str
     scheduled_hour: int | None = None  # 0..23
+    period: str | None = None          # "morning"|"noon"|"evening"|None (M6)
     is_draft: bool | None = None
     notes: str | None = None
     items: list[TaskItemBody]        # ≥1
@@ -580,6 +596,7 @@ class TaskPatchBody(BaseModel):
     title: str | None = None
     type: TaskTypeLiteral | None = None
     scheduled_hour: int | None = None
+    period: str | None = None          # "morning"|"noon"|"evening"|""(=null)|None
     order: int | None = None
     is_draft: bool | None = None
     notes: str | None = None
@@ -588,6 +605,20 @@ class TaskPatchBody(BaseModel):
 class TaskItemPatchBody(BaseModel):
     """PATCH /api/v2/teacher/tasks/{task_id}/items/{item_id}"""
     planned_count: int
+
+
+class TaskItemResultBody(BaseModel):
+    """POST /api/v2/teacher/tasks/{task_id}/items/{item_id}/result
+
+    Koç bir kalemin "çözdüm + doğru/yanlış" sonucunu düzenler. Öğrenci girmedi/
+    yanlış girdiyse koç düzeltir. Boş D/Y geçirmek (None) → o alan değişmez;
+    `0` geçmek → temizlemek anlamı (öğrenci eski D/Y'sini sıfırlamak için).
+
+    Validation: correct + wrong ≤ completed. completed > planned_count → klamp.
+    """
+    completed: int
+    correct: int | None = None
+    wrong: int | None = None
 
 
 class TaskSingleItemEditBody(BaseModel):
@@ -748,6 +779,7 @@ class StudentCreateBody(BaseModel):
 class StudentPatchBody(BaseModel):
     """PATCH /api/v2/teacher/students/{id} — profil alanları, None geçilirse değişmez."""
     full_name: str | None = None
+    email: str | None = None      # boş string → değişmez; format/çakışma backend'de
     grade_level: int | None = None
     is_graduate: bool | None = None
     track: TrackLiteral | None = None

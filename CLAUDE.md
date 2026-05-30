@@ -2901,6 +2901,437 @@ Caddy'de Next.js'e yönlenen path'ler: `/me` `/student` `/teacher` `/institution
 **Yeni bağımlılıklar:** `pyotp` (backend, requirements.txt) · `qrcode.react`
 (frontend, package.json).
 
+## WhatsApp İletişim Sistemi — Faz 1 (Click-to-WhatsApp) — DEVAM EDİYOR (2026-05-30)
+
+**Strateji (kullanıcı 2026-05-30):** Yol A — önce **Click-to-WhatsApp** (manuel,
+wa.me deep link, koçun kendi telefonu) Faz 1; sonra **Cloud API otomatik bildirim**
+(merkezi etütkoç hattı) Faz 2. Otomatik bildirimler **bilgi bombardımanı YAPMAZ**;
+her kullanıcı türü için kapsamlı + ölçülü.
+
+**Onaylanan kararlar:** (1) Toplu hibrit (≤20 sıralı / 20+ broadcast) · (2) 2 telefon
+birincil seç · (3) SMS doğrulama (Netgsm önerildi) · (4) Test modu (her şablon)
+· (5) Karakter sayaç YOK · (6) Spam uyarısı (haftalık + günlük 100 üstü) · (7) AI
+ton önerisi Faz 1.5 (Gemini) · (8) Şablon editörü süper admin paneli (35 şablon DB'de)
+· (9) **Otomatik bildirim aktif/pasif yetkisi**: bağımsız koç + kurum yöneticisi
+yapabilir, kuruma bağlı öğretmen YAPAMAZ (kurum politikası yöneticide).
+
+- **P0 ✅ Notification preference altyapısı + Veli aktivasyon KVKK ekranı**
+  (**migration `r5s8w0x1w99q`** — additive, downgrade'li, uygulandı):
+  - **Migration**: `parent_notification_prefs` tablosuna 7 yeni `*_wa_enabled`
+    kolonu (varsayılan False — opt-in/KVKK) + `child_whatsapp_consent` bool
+    (18 yaş altı çocuk için doğrudan WA gönderim için veli onayı). Mevcut
+    `*_enabled` kolonları **e-posta tarafı için** korunur (default True,
+    eski davranış değişmez).
+  - Backend: `ParentNotificationPref` model genişletildi (7 WA + child consent) ·
+    `schemas/parent.py` `ParentPreferencesInfo` + `ParentPreferencesBody` +
+    `ParentInvitationAcceptBody` (yeni opsiyonel: notification_preferences dict +
+    quiet_start/end + child_whatsapp_consent) · `parent.py` `_build_preferences`
+    + `update_preferences_v2` + `parent_invitation_accept_v2` (yeni veli kurulurken
+    aktivasyon matrisindeki tercihler pref'e yansır; mevcut velide yalnız
+    child_consent KVKK güncelleme olarak işlenir) · audit `kvkk_consent_v2`
+    (yeni hesap veya child_consent=True).
+  - **Producer kanal-aware** (`notification_producer.py`): `_KIND_TO_PREF_FIELD`
+    (EMAIL → `*_enabled`, default=True/opt-out) + yeni `_KIND_TO_PREF_FIELD_WA`
+    (WHATSAPP → `*_wa_enabled`, default=False/opt-in). Adım 2 kanala göre alanı
+    seçer; SMS (yalnız OTP) bypass. Geriye uyum: eski EMAIL çağrıları aynen çalışır.
+  - **KVKK metni** `/legal/kvkk-veli` 3 yeni alt-madde: **4.1 İletişim Kanalları**
+    (her tür ayrı, Meta gizlilik) · **4.2 18 Yaş Altı Çocuk için WhatsApp**
+    (veli onayı zorunlu) · **4.3 İletişim İptali** (her tür ayrı kapatma + "DUR" +
+    tek-tıkla unsub).
+  - **Frontend aktivasyon ekranı** (`parent-invitation-client.tsx`) 3 bölüme
+    bölündü: ① Hesap bilgileri (ad/şifre) ② **İletişim tercihleri** (7×2 matris
+    + sessiz saat + "Çocuğum WhatsApp alabilir" onayı + amber bilgi notu "WA için
+    Bildirim Tercihleri'nden telefon doğrulayın") ③ KVKK onayı.
+  - **Frontend ayarlar sayfası** (`parent-settings-client.tsx`) PreferencesForm
+    matris düzenine geçti: 7 satır × E-posta/WhatsApp 2 sütun + toplu işlem
+    butonları (E-posta/WA hepsini aç/kapat) + çocuk WA onayı kartı. WhatsAppCard
+    (telefon doğrulama akışı) ve ChildrenMuteCard değişmedi.
+  - `scripts/test_api_v2_parent_wa_channel.py` — **14/14 yeşil** (settings GET +
+    POST yeni body + eski body geriye uyum + 4 aktivasyon senaryosu [yeni body /
+    child_consent True / child_consent False / eski istemci] + 5 producer
+    kanal-aware senaryosu). Regresyon: parent 20 + parent_invitation 17 GREEN.
+    Verify: tsc ✅ · eslint ✅.
+
+- **P1 ✅ Telefon altyapısı (User.phone) + Netgsm SMS doğrulama + `/me/phone/*`**
+  (**migration `s6t9x1y2x00r`** — additive, downgrade'li, uygulandı):
+  - **Politika kararı (kullanıcı 2026-05-30):** sisteme kim üye olursa olsun
+    signup/davet sırasında cep telefonu zorunlu istenir + SMS ile doğrulanır.
+    Kullanıcının cep telefonu = WhatsApp numarası (ayrı tutulmaz).
+  - **Migration**: `User.phone/_verified_at/_secondary/_secondary_verified_at`
+    (yalnız PARENT secondary kullanır — anne+baba ayrımı) + generic
+    `phone_verifications` tablosu (user_id FK + slot primary|secondary +
+    channel sms|whatsapp, varsayılan sms). **Veri taşıma**:
+    `parent_notification_prefs.whatsapp_phone` (verified_at dolu olanlar)
+    → `User.phone` + `User.phone_verified_at`. Eski pref kolonları boş
+    bırakıldı (deprecated, geriye uyum için silinmedi).
+  - **SMS provider** (`sms_provider.py`): Netgsm REST API "SMS GET" endpoint'i.
+    `settings.sms_enabled=False` → log-only (dev); kullanıcı paneline kod
+    `phone_dev_test_code` olarak yansır. `.env`: `SMS_ENABLED`,
+    `NETGSM_USER/PASSWORD/HEADER/BASE_URL`.
+  - **Phone servisi** (`phone_service.py`): `normalize_e164_tr()` — Türkiye
+    cep formatı (5XX), 0/+90/90/0532/+905321234567 hepsini E.164'e
+    ("905321234567"); 60sn cooldown + 10dk TTL + 5 max attempts.
+    `start_phone_verification` / `verify_phone` / `delete_phone` /
+    `pending_verification_for`.
+  - **6 yeni endpoint** (`/me/phone/*`): start/verify/delete birincil +
+    secondary (`secondary_slot_parent_only` 403 diğer rollere). `/api/v2/me`
+    yanıtına `phone: MyPhoneInfo` eklendi (her iki slot durumu + dev kod +
+    `secondary_slot_available` UI flag'i). Signup endpoint'lerinde
+    (ParentInvitationAccept + SignupTeacher + SignupInvite) `phone` opsiyonel
+    alan — verilirse normalize edilip User.phone'a yazılır, `verified_at=None`
+    (panelde banner'la doğrulanır).
+  - **Producer kanal=WHATSAPP** kontrolü P0'daki `pref.whatsapp_*` yerine artık
+    `User.phone + User.phone_verified_at` bakar — tek doğruluk kaynağı.
+    Dispatcher `_send_whatsapp` da `user.phone`'a geçti.
+  - **Frontend**: `MyPhoneInfo` tipi + 6 mutation hook (Start/Verify/Delete ×
+    primary+secondary, 9 error code TR etiketi). `/me/account` sayfasına
+    `PhoneCard` (3 durum: kapalı / kod bekleniyor / doğrulandı, dev modda
+    test kodu UI'da görünür). Veli için ek "İkinci Telefon" kartı (otomatik
+    `secondary_slot_available=true` durumunda görünür).
+  - `scripts/test_api_v2_phone_verification.py` — **14/14 yeşil** (normalize 7
+    senaryo + start/verify/cooldown/wrong_code/delete + secondary 403 +
+    parent secondary OK + unauth 401 + **signup invalid_phone 400** +
+    **signup valid phone → User.phone normalize, verified_at NULL**). P0
+    regresyon `parent_wa_channel` 14/14 + `me` 13/13 + `parent` 20/20 +
+    `parent_invitation` 17/17 + `auth_p3` 13/13 GREEN. Verify: tsc ✅ ·
+    eslint ✅.
+  - **Üst banner** (`phone-verify-banner.tsx`): `user.phone_verified=false`
+    iken her panelin üstünde kapatılamaz uyarı. "Şimdi Doğrula" tıklanınca
+    inline Dialog açılır (panelden ayrılma yok, güvenlik algısı sorunu
+    çözüldü) → içinde PhoneCard reuse → telefon ekle/kod gönder/doğrula tek
+    dialog'ta. Doğrulama anında banner anlık kaybolur (live /me query),
+    dialog kapanışında router.refresh(). 5 shell'e (teacher / parent /
+    institution / admin / student layout) yerleştirildi. `/me/account`'a
+    rol-bazlı "← Panele Dön" linki eklendi (eski tip standalone gezinti
+    sorunu giderildi).
+  - **Signup form'larına cep telefonu zorunlu alan** eklendi: bağımsız koç
+    signup (`signup-teacher-form.tsx`), davet öğretmen signup
+    (`signup-invite-form.tsx`), veli aktivasyon (`parent-invitation-client.tsx`).
+    Her formda placeholder + açıklama (SMS ile doğrulanır) + invalid_phone
+    backend hata kodu set-error. UserPublic.phone_verified flag'i SSR'a yansır
+    → kayıt sonrası kullanıcı paneline geçince banner zaten beklemekte.
+
+- **P2 ✅ Şablon registry + 35 seed + süper admin CRUD paneli**
+  (**migration `t7u0y2z3y11s`** — additive, downgrade'li, uygulandı):
+  - **Migration**: `whatsapp_templates` tablosu (key unique + category +
+    target_role + name_tr + content_template + variables_json + requires_date +
+    allow_bulk + allow_freeform_note + sort_order + is_active +
+    created_at/updated_at + updated_by_id FK SET NULL). 2 index: kategori+sort
+    ve target_role.
+  - **35 şablon seed** (`scripts/seed_whatsapp_templates.py`, **idempotent** —
+    key varsa atlar; `--reset` zorunlu silme+yeniden yazma): 10 veli (koç→veli)
+    + 5 ogrenci (koç→öğrenci) + 5 kurum_ogretmen + 5 kurum_veli + 3 kurum_ogrenci
+    + 5 admin_yonetici + 2 admin_sistem. Değişken sözdizimi `{{key}}` (Jinja
+    deseni); 25+ ortak değişken tanımı (V_VELI, V_OGRENCI, V_KOC, V_TARIH vb.).
+    Bayraklar: requires_date (toplantı/etkinlik), allow_bulk (bayram/duyuru),
+    allow_freeform_note (tebrik/serbest mesaj).
+  - **Backend**: `schemas/whatsapp_template.py` (8 model) ·
+    `services/whatsapp_template_service.py` (render_preview + extract_keys +
+    parse/serialize JSON) · `admin.py` 7 endpoint:
+    - `GET /whatsapp-templates` (filter: category/target_role/include_inactive +
+      categories+target_roles meta dict)
+    - `GET /whatsapp-templates/{id}` (detay)
+    - `POST /whatsapp-templates/preview` (preview — DİKKAT: `{id}` route'undan
+      ÖNCE tanımlı; FastAPI route çözümleyicide string "preview"i int olarak
+      yakalamasın diye)
+    - `POST /whatsapp-templates` (create — key unique check 409 key_taken)
+    - `POST /whatsapp-templates/{id}` (update — key haricinde her şey)
+    - `POST /whatsapp-templates/{id}/toggle-active` (aktif/pasif)
+    - `POST /whatsapp-templates/{id}/delete` (yalnız pasif — aktif şablon
+      400 template_active, defensive)
+  - `scripts/test_api_v2_admin_whatsapp_templates.py` — **15/15 yeşil** (liste +
+    3 filter + invalid_category + create + key_taken + update + toggle + delete
+    aktif/pasif + preview rendered + unknown_keys warnings + TEACHER 403).
+    Regresyon: admin 13/13 + phone 14/14 GREEN.
+  - **Frontend**: `lib/types/whatsapp-template.ts` (10 tip) · `lib/api/admin.ts`
+    +3 fetcher + 2 queryKey (`whatsappTemplates(category,role,active)` +
+    `whatsappTemplate(id)`) · `use-admin-mutations.ts` +4 mutation hook
+    (Create/Update/Toggle/Delete) + 5 error code TR etiketi.
+    `/admin/whatsapp-templates` sayfa + client component:
+    - Header: KPI (toplam/aktif/pasif) + kategori filter chip-bar + "Pasifleri göster"
+      toggle + "Yeni Şablon" CTA
+    - Kategori bazlı gruplu liste (statik ton map): satır = ad + key + bayrak
+      rozetleri (Toplu/Tarihli/Serbest not) + içerik preview (line-clamp-2) +
+      hedef rol + değişken sayısı + Düzenle/Toggle/Sil aksiyonları
+    - Form Dialog (create + edit ortak): key (yalnız create) + ad + kategori
+      select + hedef rol select + sıralama + açıklama + içerik textarea +
+      **dinamik değişken editörü** (3-kolon: key/etiket/örnek + ekle/sil) +
+      4 bayrak checkbox + canlı **Önizleme** bloğu (POST /preview, örnek
+      değerlerle render edilmiş yeşil kutu + warnings amber liste)
+  - Admin sidebar "Sistem" grubuna **"WhatsApp Şablonları"** nav linki
+    (MessageSquare ikon, AI Ayarları + Ücretlendirme'den sonra).
+  - Verify: tsc ✅ · eslint ✅ (preview mutation için `lgs/missing-invalidate`
+    gerekçeli disable — preview saf okuma).
+
+- **P3 ✅ Click-to-WA URL üretici + yetki + dispatch log**
+  (**migration `u8v1z3a4z22t`** — additive, downgrade'li, uygulandı):
+  - **Migration**: `whatsapp_dispatch_logs` tablosu (sender CASCADE +
+    target SET NULL + template_key + template_id SET NULL +
+    params_json + character_count + created_at). 2 index:
+    sender+created, target+created. P3'te yalnız yazılır, P6 spam guard
+    okur.
+  - **Servis** `whatsapp_link_service.py`:
+    - `mask_phone_e164()` — "+90 532 *** ** 67" deseni
+    - `build_wa_url()` — `https://wa.me/{e164}?text={percent_encoded}`
+      (UTF-8 RFC 3986 quote; Türkçe `ş` → `%C5%9F` doğru encode)
+    - `can_send_wa_to(db, sender, target)` — yetki matrisi:
+      - SUPER_ADMIN → herkese
+      - INSTITUTION_ADMIN → aynı kurum içi
+      - TEACHER → kendi öğrencisi + öğrencisinin velisi (ParentStudentLink join)
+      - Kendine her zaman serbest (test gönderimi)
+    - `build_wa_dispatch(...)` ana fonksiyon: şablon doğrula + hedef yetki +
+      telefon kontrolü + render + freeform_note (allow_freeform_note guard) +
+      URL üret + dispatch log yaz. Uzunluk uyarısı (2000+ karakter).
+  - **Endpoint** `POST /api/v2/messaging/wa-link`:
+    - Auth: TEACHER + INSTITUTION_ADMIN + SUPER_ADMIN (PARENT/STUDENT 403
+      role_not_allowed)
+    - Body: template_id + target_user_id + variables + freeform_note (opsiyonel)
+    - 404 hataları (template_not_found, target_not_found) → yetki sızıntı
+      önleme (yetki yoksa "yok" der, "yasak" demez)
+    - 400 hataları: target_phone_not_verified + freeform_not_allowed
+    - Yanıt: wa_url + rendered_text + target_name + target_phone_masked +
+      character_count + long_text + warnings + log_id
+  - Yeni router `messaging.py` (api_v2/__init__'e kayıt).
+  - `scripts/test_api_v2_messaging_wa_link.py` — **13/13 yeşil** (anon 401 +
+    PARENT 403 + template 404 + target 404 + phone_not_verified 400 + yabancı
+    koç 404 sızıntı önleme + happy [coach→öğr/veli + admin→herkes] + freeform
+    note guard + maskeleme deseni + Türkçe percent-encoded URL).
+  - Regresyon: admin_wa_templates 15/15 + phone 14/14 + parent_wa_channel 14/14.
+
+- **P4 ✅ Tekli gönderim dialog (WaSendDialog) + kapsamlı 5-kullanıcı test**
+  (migration YOK — P3 altyapısını UI'a bağlıyor):
+  - **Backend ek 2 endpoint**:
+    - `GET /api/v2/messaging/templates` — kullanıcının rolüne uygun aktif
+      şablonlar (TEACHER → teacher+any; INSTITUTION_ADMIN → institution_admin+any;
+      SUPER_ADMIN → hepsi). admin CRUD endpoint'inden farklı: kompakt brief
+      model (target_role UI'da gösterilmez, zaten filtreli).
+    - `GET /api/v2/messaging/target/{user_id}` — hedef özeti + yetki check
+      (sızıntı önleme: 404 target_not_found). Phone_masked + phone_verified flag.
+  - **Frontend**:
+    - `lib/types/messaging.ts` — 7 tip · `lib/api/messaging.ts` 3 fetcher +
+      messagingKeys
+    - **`WaSendDialog` paylaşılan bileşen** — 7 bölüm:
+      1. Hedef header (isim + maskeli telefon + Shield ikon emerald/amber)
+      2. "🧪 Önce kendime test gönder" toggle (sender verilirse)
+      3. Kategori chip-bar (filter)
+      4. Şablon select (rol filtreli liste)
+      5. Değişken alanları (otomatik example pre-fill — useEffect değil
+         event handler içinde, React önerisi)
+      6. Freeform note alanı (yalnız allow_freeform_note=True şablonlarda)
+      7. Önizleme paneli (gerçek render, "Önizle" butonu) + karakter sayım +
+         uzun mesaj uyarısı
+    - "WhatsApp'ı Aç" → POST /wa-link + `window.open(wa_url, "_blank")` +
+      toast bilgilendirme ("son gönder tuşunu siz basacaksınız")
+  - **Entegrasyonlar**:
+    - `/teacher/students/[id]` QuickActions'a **"WA Gönder"** emerald-tonlu
+      buton (öğrenci hedefli, defaultCategory="ogrenci")
+    - Veliler panelindeki her satıra **MessageSquare ikon** (parent_id hedefli,
+      defaultCategory="veli")
+  - `scripts/test_api_v2_messaging_p4_comprehensive.py` — **21/21 yeşil
+    (KULLANICI İSTEĞİ: kapsamlı 5-kullanıcı testi)**:
+    - **K1 Bağımsız koç (5 test)**: şablon filtresi + kendi öğrencisine WA +
+      velisine WA + başka kurum öğrencisine 404 sızıntı önleme
+    - **K2 Kuruma bağlı öğretmen (3 test)**: kendi öğrencisi → 200 / aynı
+      kurum başka öğretmenin öğrencisi → 404 (koç yetkisi yalnız teacher_id) /
+      başka kurum → 404
+    - **K4 Kurum yöneticisi (4 test)**: şablon filtresi + aynı kurum öğretmen/
+      öğrenci → 200 / başka kurum → 404
+    - **K5 Süper admin (3 test)**: tüm şablon tipleri görünür + her hedefe WA
+    - **V1 Veli yetki yok (3 test)**: 403 role_not_allowed × 3 endpoint
+    - **Dispatch log içgörü (3 test)**: kayıt sayısı + template_key + char_count
+  - Regresyon: messaging_wa_link 13/13 + admin_wa_templates 15/15 + phone 14/14
+    GREEN. Verify: tsc ✅ · eslint ✅.
+
+- **P5 ✅ Toplu gönderim sihirbazı (hibrit ≤20 sıralı / 20+ broadcast)**
+  (migration YOK — P3 altyapısı + P4 dialog deseni reuse):
+  - **Backend `whatsapp_bulk_service.py`**:
+    - `GROUPS_BY_ROLE` matrisi: TEACHER → my_parents/my_students;
+      INSTITUTION_ADMIN → inst_parents/inst_teachers/inst_students;
+      SUPER_ADMIN → hepsi
+    - `list_bulk_targets(sender, group_key)` → eligible (telefon doğrulu) +
+      no_phone (doğrulanmamış) ayrı. Yetkisiz grup → boş + available_groups
+      (UI hangi grupları gösterebileceğini bilir)
+    - `build_bulk_dispatch(sender, template_id, target_user_ids, ...)` →
+      yetki + telefon kontrolü → eligible için URL üret + dispatch log yaz,
+      yetkisiz/telefonsuz hedefler `skipped[]`'a düşer (sızıntı önleme: yetki
+      yoksa "no_permission", görünür değil)
+    - MAX_BULK_TARGETS = 200 (güvenlik). allow_bulk=False şablon →
+      400 bulk_not_allowed
+  - **2 yeni endpoint**:
+    - `GET /messaging/bulk-targets?group=...` → hedef adayları + UI için
+      available_groups menu
+    - `POST /messaging/bulk-link` → toplu URL üret (mode=sequential|broadcast)
+  - **Frontend** `BulkSendWizard` (4 adım, "use client" sayfa):
+    1. **Şablon seçici** — allow_bulk=True şablonlar kategori başlığı ile gruplu
+       (tıkla → otomatik example pre-fill + step 2)
+    2. **Değişkenleri doldur** — tüm hedeflere aynı değer (Adım 2'ye geç)
+    3. **Hedef grubu seç** — chip-bar (rolüne göre available_groups) +
+       hedef listesi (eligible + no_phone ayrı, "Tümünü seç" / "Temizle"
+       toplu işlem)
+    4. **Gönderim modu** — `<20` hedef "Sıralı (önerilen)" otomatik seçili,
+       `≥20` "Broadcast (önerilen)". `> ~100` sıralı disabled.
+       - **Sıralı görünüm**: 1/N current target gösterimi, "WhatsApp'ı Aç"
+         → window.open + tamamlanan rozeti, "İleri/Geri" nav
+       - **Broadcast görünüm**: 2 panoya-kopyala kutusu (mesaj + telefon
+         listesi) + "WA Business broadcast list" talimat banner
+  - Sayfa: `/teacher/bulk-wa` + `/institution/bulk-wa` (ortak `<BulkSendWizard />`).
+    Teacher-shell ve institution-shell sidebar'larına **"Toplu WhatsApp"**
+    nav linki (MessageSquare ikon).
+  - `scripts/test_api_v2_messaging_bulk.py` — **15/15 yeşil**:
+    - 5-kullanıcı: anon 401, koç my_students/my_parents (2 eligible+1 no_phone),
+      koç yetkisiz inst_teachers (boş+available_groups dolu), kurum yön. inst_teachers/
+      inst_parents (kendi kurumu), süper admin tüm grup keys görünür
+    - Mutation: allow_bulk=False 400, MAX 200 sınırı, boş hedef 422, 3 hedef
+      [2 OK + 1 telefonsuz] → 2 dispatched + 1 skipped phone_not_verified,
+      yabancı hedef karışık → no_permission skipped, log her başarılı için yazıldı,
+      mode=broadcast rendered_text üretildi, invalid_mode 400
+  - Regresyon: messaging_p4_comprehensive 21/21 + wa_link 13/13 +
+    admin_whatsapp_templates 15/15 + phone 14/14 GREEN. **Toplam WA test
+    78/78 GREEN.**
+  - Manuel test setup'larına `sys.path.insert` patch eklendi
+    (PYTHONPATH=. olmadan çalışsın).
+  - Verify: tsc ✅ · eslint ✅.
+
+- **P6 ✅ Audit + Spam Guard** (migration YOK — P3 dispatch_log altyapısını
+  okuyor):
+  - **Backend `whatsapp_spam_guard.py`**:
+    - `compute_dispatch_stats(sender)` → today_count + week_count (Pazartesi
+      00:00 UTC haftası) + warning_level
+    - Eşikler: `<50/gün` → "ok" (sessiz) / `50-99` → "yogun" (amber uyarı) /
+      `≥100` → "cok_yogun" (rose). **Engelleme YOK** — Faz 1 manuel akış,
+      koçun sorumluluğu; sistem yalnız bilgilendirir
+  - **2 yeni endpoint**:
+    - `GET /messaging/dispatch-stats` (koç görür: bugün+hafta sayım + uyarı)
+    - `GET /admin/whatsapp-dispatch-log?days=N&sender_id=...&limit=50` (süper
+      admin: log liste + summary{today/week/period/top_senders[5]})
+  - **Frontend `SpamGuardBanner`**:
+    - "ok" + hafta_count==0 → tamamen sessiz
+    - "ok" + hafta varsa → küçük gri özet ("Bu hafta N mesaj")
+    - "yogun" → amber AlertTriangle banner
+    - "cok_yogun" → rose Flame banner
+    - 60s polling + refetch on focus
+    - `/teacher/bulk-wa` ve `/institution/bulk-wa` sayfalarının üstüne yerleştirildi
+  - **Frontend `/admin/whatsapp-dispatch-log` sayfası**:
+    - 4 KPI kartı (Bugün/Hafta/Period/En aktif sender)
+    - Filtre: süre chip-bar (1/7/30/90g) + sender_id input
+    - Top 5 sender tablosu (tıkla → filter)
+    - Log tablosu (zaman / sender / target / şablon / karakter)
+    - Silinmiş şablon → "(silinmiş şablon)" / Silinmiş target → "(silindi)"
+  - Admin sidebar "Sistem" grubuna **"WhatsApp Audit"** nav (Activity ikon)
+  - `scripts/test_api_v2_messaging_p6_spam_audit.py` — **12/12 yeşil**:
+    - 5-kullanıcı: anon 401, veli 403, koç (0/30/60/110 log) → uyarı seviyesi
+      doğru hesaplandı + 14 gün önceki log bu hafta sayım'a girmedi
+    - Admin endpoint: veli 403, koç 403, süper admin 200 + items + summary +
+      top_senders + sender_id filter + days clamp
+  - **`days=0 or 7 == 7` bug** giderildi (clamp doğrudan max/min ile).
+  - Regresyon: bulk 15/15 + p4 21/21 + wa_link 13/13 + admin_templates 15/15 +
+    phone 14/14 GREEN. **Toplam WA test 90/90 GREEN.**
+  - Verify: tsc ✅ · eslint ✅.
+  - **UI kontrast düzeltmesi** (kullanıcı bildirdi): aktif top-sender butonunda
+    `bg-emerald-100` zemin + default `text-foreground` → koyu temada beyaz
+    metin + açık zemin = okunmaz. CLAUDE.md "kontrast iyileştirme" kuralı:
+    açık-zemin durumda **explicit koyu emerald** (text-emerald-900/800/700)
+    purge-safe. Log tablosunda aktif satır vurgulaması zemin yerine
+    `border-l-4 border-l-emerald-500` (zemin müdahalesi yok, her iki temada
+    belirgin). Tablo metinleri `text-emerald-800/900` yerine `text-foreground`
+    (semantic tema değişimine duyarlı).
+
+- **P7 ✅ Faz 1 KAPANIŞ — smoke runner + tam setup + manuel rehber**:
+  - `scripts/run_faz1_smokes.py` — tüm P0-P6 smoke'larını sırayla çalıştırır,
+    her paket başına PASS/FAIL özet + toplam. Çıktı:
+    **🎉 Faz 1 — 104/104 passed · 0 failed** (P0 14 + P1 14 + P2 15 + P3 13 +
+    P4 21 + P5 15 + P6 12).
+  - `scripts/faz1_full_setup.py` — tek komutla 5 rol ekosistemi (süper admin +
+    bağımsız koç A + kurum yön. + kuruma bağlı öğretmen B + 2 öğrenci +
+    3 veli [1 telefonsuz "skipped" senaryo için]) + kurum X. Tüm telefonlar
+    önceden doğrulu, dispatch_log temiz. `--inject-busy` 70 log (amber banner)
+    veya `--inject-heavy` 120 log (rose banner) opsiyonu.
+  - `scripts/faz1_full_cleanup.py` — tüm `faz1_*` kullanıcı + kurum + bağımlı
+    kayıtları siler.
+  - `scripts/faz1_manuel_test_rehberi.md` — adım-adım her panel için tarayıcı
+    senaryosu (P0 aktivasyon · P1 telefon · P2 admin şablon · P3-P4 tekli
+    dialog · P5 toplu sihirbaz · P6 spam banner + admin audit · F3 koyu tema
+    kontrast).
+  - P0 smoke testine `sys.path.insert` patchi eklendi (PYTHONPATH=. olmadan
+    çalışabilsin).
+
+## Faz 1 — KAPANIŞ ÖZETİ (2026-05-31)
+
+**Click-to-WhatsApp Faz 1 tamamlandı.** Tüm akış: koç/yönetici/süper admin
+şablon havuzundan seçer → değişkenler doldurulur → URL üretilir → koç wa.me
+linkini yeni sekmede açar → WhatsApp Web/uygulamasında metin hazır → koç son
+gönder tuşunu basar. Sistem audit altında: her tetik dispatch_log'a yazılır;
+koç günde 50+/100+ mesaj atınca banner uyarı; süper admin tüm aktiviteyi
+panelden izler.
+
+**Migration sayım (Faz 1):**
+- `r5s8w0x1w99q` — parent_notification_prefs WA kanal toggle'ları (P0)
+- `s6t9x1y2x00r` — User.phone + phone_verifications generic tablo (P1)
+- `t7u0y2z3y11s` — whatsapp_templates tablosu (P2)
+- `u8v1z3a4z22t` — whatsapp_dispatch_logs tablosu (P3)
+- Toplam: **4 additive migration**, downgrade'li, prod-uyumlu.
+
+**Yeni endpoint sayım (Faz 1):**
+- Veli: 0 yeni (mevcut /settings genişletildi)
+- /me/phone/*: 6 (start/verify/delete × primary+secondary)
+- Admin /whatsapp-templates: 7 (CRUD + preview)
+- /messaging/*: 5 (templates/target/wa-link/bulk-targets/bulk-link/dispatch-stats)
+- Admin /whatsapp-dispatch-log: 1
+- Toplam: **~19 yeni endpoint**.
+
+**Veri akışı:**
+- Şablon kaynağı: süper admin DB tabanlı (CRUD), 35 idempotent seed.
+- URL üretici: `wa.me/{phone}?text={percent_encoded}` (RFC 3986 UTF-8).
+- Yetki: koç → kendi öğrencisi+velisi; kurum yön. → kurum içi; süper admin → herkes.
+- Sızıntı önleme: yetkisiz hedef → 404 target_not_found (varlık ifşası yok).
+- Spam guard: 50/gün amber, 100/gün rose, hafta sayım. **Engelleme YOK** —
+  Faz 1 manuel akış koç sorumluluğu.
+- Audit: dispatch_log her tetikte yazılır; admin panelden tüm aktivite görünür.
+
+**Faz 1'in sınırı (Faz 2 yapacaklar):**
+- Otomatik bildirimler hâlâ **e-posta + producer** kanalında; WhatsApp Cloud API'ye
+  bağlanmadı (Meta Business hesabı + onaylı şablonlar + kredi sistemi gerek).
+- **Mobil app push notification** — yapıldığında otomatik bildirimler buraya
+  kayar (Click-to-WA manuel olarak değerli kalır; koç-veli bireysel akış için).
+- SMS sağlayıcı **dev stub**; prod'da `SMS_ENABLED=true` + Netgsm `.env` ile
+  gerçek SMS gider.
+
+## Faz 2 — Yol Haritası (yapılacaklar listesi)
+
+**Önerilen sıra (kullanıcı onayına bağlı):**
+
+1. **Mobil App — iOS+Android** (Önerilen ilk)
+   - React Native veya Capacitor (Next.js → mobil)
+   - Push notification altyapısı (FCM + APNs)
+   - Veli/öğrenci/koç paneli mobil-optimized
+   - **Otomatik bildirim ana kanalı** olur: e-posta + push (WhatsApp opsiyonel)
+
+2. **WhatsApp Cloud API entegrasyonu (otomatik bildirimler)** — opsiyonel
+   - Meta Business hesabı + WABA + Phone Number ID
+   - Onaylı şablonlar (Meta inceleme süreci)
+   - Webhook (gelen mesajlar — Faz 3 inbox için)
+   - Kredi sistemi (mesaj başı maliyet, kullanıcı paketine bağlı)
+   - **Faz 1 click-to-WA değişmez** — koç-veli bireysel akış için tutulur
+
+3. **Çift yönlü WA inbox** — koç paneline gelen veli mesajlarını yansıtır
+   (Cloud API webhook'u + UI inbox)
+
+4. **AI ton önerisi (Faz 1.5)** — bayram/duyuru şablonlarında Gemini ile
+   3 ton (Sıcak/Resmi/Esprili). Mevcut AI altyapısına bağlanır.
+
+5. **Netgsm SMS prod** — `.env`'e kimlikler + SMS_ENABLED=true.
+
+**Sırada:** kullanıcı kararıyla; manuel test ✅ ise mobil app veya Cloud API.
+
+**🎯 Mimari karar (kullanıcı 2026-05-30):** **Mobil app (iOS/Android) yapıldığında
+otomatik bildirimler push notification ile gönderilecek** → bu durumda **Faz 2
+(WhatsApp Cloud API otomatik bildirim) büyük ölçüde gereksiz** olabilir.
+Faz 1 (manuel Click-to-WhatsApp, koçun kendi telefonu) yine de **değerli kalır**
+— koç-veli/öğrenci bireysel mesajları + toplu duyurular için push yetmez.
+**Sıralama:** Faz 1 (yapılıyor) → mobil app + push (otomatik bildirim ana kanalı)
+→ Faz 2 (Cloud API) **yeniden değerlendirme** (belki sadece push'a ulaşmayan
+acil sinyaller için tutulur). E-posta otomatik bildirim altyapısı zaten var, kalır.
+
 ## Sırada
 
 **Açık iş kalmadı — tüm dalgalar (D0-D7) tamamlandı.** Olası sonraki adımlar

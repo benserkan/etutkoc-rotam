@@ -26,6 +26,7 @@ import {
   LogOut,
   Megaphone,
   Menu,
+  MessageSquare,
   Scale,
   Send,
   Settings,
@@ -47,6 +48,7 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
+import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { adminKeys, getAdminBadges } from "@/lib/api/admin";
 import type { AdminBadgesResponse } from "@/lib/types/admin";
@@ -161,6 +163,8 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
       { href: "/admin/pricing", label: "Ücretlendirme", icon: CircleDollarSign },
+      { href: "/admin/whatsapp-templates", label: "WhatsApp Şablonları", icon: MessageSquare },
+      { href: "/admin/whatsapp-dispatch-log", label: "WhatsApp Audit", icon: Activity },
       { href: "/admin/payment-links", label: "Ödeme Linkleri", icon: Link2 },
       { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox, badgeKey: "contact_new" },
       { href: "/admin/support", label: "Talepler", icon: LifeBuoy, badgeKey: "support_pending" },
@@ -238,6 +242,7 @@ export function AdminShell({ user, children }: Props) {
       </header>
 
       <main className="flex-1 min-w-0">
+        <PhoneVerifyBanner phoneVerified={user.phone_verified ?? true} />
         <div className="mx-auto max-w-7xl px-4 py-6 sm:py-8">{children}</div>
       </main>
 

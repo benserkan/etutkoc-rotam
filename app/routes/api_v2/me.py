@@ -41,22 +41,35 @@ from app.routes.api_v2.schemas.me import (
     KvkkStatus,
     ActiveSessionItem,
     MyAccountResponse,
+    MyPhoneInfo,
     ParentLinkRef,
     PasswordChangeBody,
     PasswordChangeResult,
+    PhoneMutationResult,
     SessionRevokeResult,
     SessionsResponse,
+    StartPhoneVerificationBody,
     TwoFactorCodeBody,
     TwoFactorMutationResult,
     TwoFactorSetupResult,
     TwoFactorStatus,
     UserPublic,
+    VerifyPhoneBody,
 )
 from app.services.kvkk import (
     cancel_request as kvkk_cancel_request,
     request_deletion as kvkk_request_deletion,
     request_export as kvkk_request_export,
 )
+from app.services.phone_service import (
+    PhoneError,
+    PhoneSlot,
+    delete_phone,
+    pending_verification_for,
+    start_phone_verification,
+    verify_phone,
+)
+from app.services.sms_provider import is_sms_enabled
 
 
 router = APIRouter(tags=["v2-me"])
@@ -191,6 +204,204 @@ def get_me(
         recent_requests=[
             _to_request_summary(r, viewer_id=user.id) for r in requests
         ],
+        phone=_build_phone_info(db, user),
+    )
+
+
+# ============================================================================
+# P1 — Telefon doğrulama (/me/phone/*) — tüm roller
+# ============================================================================
+
+
+def _is_dev_sms_stub() -> bool:
+    """SMS_ENABLED=False ise dev modda kodu UI'a göster."""
+    return not is_sms_enabled()
+
+
+def _build_phone_info(db: Session, user: User) -> MyPhoneInfo:
+    """User.phone + phone_secondary durumunu UI için topla.
+
+    secondary_slot_available yalnız PARENT için True (UI ikinci kart gösterir).
+    """
+    dev = _is_dev_sms_stub()
+    # Birincil slot
+    pv = pending_verification_for(db, user=user, slot=PhoneSlot.PRIMARY)
+    info = MyPhoneInfo(
+        phone=user.phone,
+        phone_verified_at=user.phone_verified_at,
+        phone_pending_verify=pv is not None,
+        phone_pending_phone=pv.phone if pv else None,
+        phone_pending_expires_at=pv.expires_at if pv else None,
+        phone_dev_test_code=(pv.code if pv and dev else None),
+        secondary_slot_available=(user.role == UserRole.PARENT),
+    )
+    # İkincil slot (yalnız PARENT için zaten verili anlamlı; bilgi yine doldurulur)
+    if user.role == UserRole.PARENT:
+        pv2 = pending_verification_for(db, user=user, slot=PhoneSlot.SECONDARY)
+        info.phone_secondary = user.phone_secondary
+        info.phone_secondary_verified_at = user.phone_secondary_verified_at
+        info.phone_secondary_pending_verify = pv2 is not None
+        info.phone_secondary_pending_phone = pv2.phone if pv2 else None
+        info.phone_secondary_pending_expires_at = pv2.expires_at if pv2 else None
+        info.phone_secondary_dev_test_code = (pv2.code if pv2 and dev else None)
+    return info
+
+
+def _phone_error_http(err: PhoneError) -> HTTPException:
+    return HTTPException(
+        status_code=400,
+        detail={"error": "invalid", "code": err.code, "message": err.message},
+    )
+
+
+def _require_parent_for_secondary(user: User) -> None:
+    if user.role != UserRole.PARENT:
+        raise HTTPException(
+            status_code=403,
+            detail={
+                "error": "forbidden",
+                "code": "secondary_slot_parent_only",
+                "message": "İkinci telefon yalnız veli hesaplarına özeldir.",
+            },
+        )
+
+
+# ---- Birincil telefon ----
+
+
+@router.post("/me/phone/start", response_model=MutationResponse[PhoneMutationResult])
+def me_phone_start(
+    body: StartPhoneVerificationBody,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Birincil telefon için OTP başlat — SMS gönderir."""
+    try:
+        start_phone_verification(db, user=user, phone=body.phone, slot=PhoneSlot.PRIMARY)
+    except PhoneError as e:
+        db.rollback()
+        raise _phone_error_http(e)
+    db.commit()
+    return MutationResponse[PhoneMutationResult](
+        data=PhoneMutationResult(
+            message="Doğrulama kodu gönderildi.",
+            info=_build_phone_info(db, user),
+        ),
+        invalidate=["me"],
+    )
+
+
+@router.post("/me/phone/verify", response_model=MutationResponse[PhoneMutationResult])
+def me_phone_verify(
+    body: VerifyPhoneBody,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Birincil telefon doğrulama kodunu kontrol et."""
+    try:
+        verify_phone(db, user=user, code=body.code, slot=PhoneSlot.PRIMARY)
+    except PhoneError as e:
+        db.commit()  # attempts artırımını koru
+        raise _phone_error_http(e)
+    db.commit()
+    return MutationResponse[PhoneMutationResult](
+        data=PhoneMutationResult(
+            message="Telefon doğrulandı.",
+            info=_build_phone_info(db, user),
+        ),
+        invalidate=["me"],
+    )
+
+
+@router.post("/me/phone/delete", response_model=MutationResponse[PhoneMutationResult])
+def me_phone_delete(
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Birincil telefonu kaldır."""
+    delete_phone(db, user=user, slot=PhoneSlot.PRIMARY)
+    db.commit()
+    return MutationResponse[PhoneMutationResult](
+        data=PhoneMutationResult(
+            message="Telefon kaldırıldı.",
+            info=_build_phone_info(db, user),
+        ),
+        invalidate=["me"],
+    )
+
+
+# ---- İkincil telefon (yalnız PARENT) ----
+
+
+@router.post(
+    "/me/phone-secondary/start",
+    response_model=MutationResponse[PhoneMutationResult],
+)
+def me_phone_secondary_start(
+    body: StartPhoneVerificationBody,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    _require_parent_for_secondary(user)
+    try:
+        start_phone_verification(
+            db, user=user, phone=body.phone, slot=PhoneSlot.SECONDARY,
+        )
+    except PhoneError as e:
+        db.rollback()
+        raise _phone_error_http(e)
+    db.commit()
+    return MutationResponse[PhoneMutationResult](
+        data=PhoneMutationResult(
+            message="Doğrulama kodu gönderildi.",
+            info=_build_phone_info(db, user),
+        ),
+        invalidate=["me"],
+    )
+
+
+@router.post(
+    "/me/phone-secondary/verify",
+    response_model=MutationResponse[PhoneMutationResult],
+)
+def me_phone_secondary_verify(
+    body: VerifyPhoneBody,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    _require_parent_for_secondary(user)
+    try:
+        verify_phone(db, user=user, code=body.code, slot=PhoneSlot.SECONDARY)
+    except PhoneError as e:
+        db.commit()
+        raise _phone_error_http(e)
+    db.commit()
+    return MutationResponse[PhoneMutationResult](
+        data=PhoneMutationResult(
+            message="İkinci telefon doğrulandı.",
+            info=_build_phone_info(db, user),
+        ),
+        invalidate=["me"],
+    )
+
+
+@router.post(
+    "/me/phone-secondary/delete",
+    response_model=MutationResponse[PhoneMutationResult],
+)
+def me_phone_secondary_delete(
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    _require_parent_for_secondary(user)
+    delete_phone(db, user=user, slot=PhoneSlot.SECONDARY)
+    db.commit()
+    return MutationResponse[PhoneMutationResult](
+        data=PhoneMutationResult(
+            message="İkinci telefon kaldırıldı.",
+            info=_build_phone_info(db, user),
+        ),
+        invalidate=["me"],
     )
 
 

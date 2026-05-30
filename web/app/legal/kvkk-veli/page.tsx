@@ -90,6 +90,36 @@ export default function ParentKvkkPage() {
                 kişilerle paylaşılmaz.
               </Section>
 
+              <Section title="4.1 İletişim Kanalları">
+                Bilgilendirme mesajları, davet kabulü sırasında veya{" "}
+                <strong className="text-foreground">Bildirim Tercihleri</strong>
+                {" "}sayfasından seçtiğiniz iki kanaldan (e-posta ve/veya
+                WhatsApp) iletilir. Her bildirim türünü her iki kanal için ayrı
+                ayrı açıp kapatabilirsiniz. WhatsApp mesajları, kişisel
+                numaranıza yalnızca onaylanmış şablonlarla gönderilir; içerik
+                Meta&apos;nın gizlilik koşullarına tabidir.
+              </Section>
+
+              <Section title="4.2 18 Yaş Altı Çocuk için WhatsApp">
+                Çocuğunuzun (öğrenci kullanıcısının) WhatsApp üzerinden mesaj
+                alması için <strong className="text-foreground">veli
+                onayınız</strong> zorunludur. Davet kabul ekranında veya
+                Bildirim Tercihleri sayfasında <em>&ldquo;Çocuğum WhatsApp
+                mesajı alabilir&rdquo;</em> seçeneğini işaretlemezseniz, çocuğa
+                doğrudan WhatsApp mesajı gönderilmez. Bilgilendirme yalnızca
+                veli e-postası / WhatsApp&apos;ı veya panel üzerinden devam eder.
+              </Section>
+
+              <Section title="4.3 İletişim İptali">
+                Her bildirim tipini ayrı ayrı{" "}
+                <strong className="text-foreground">istediğiniz zaman</strong>{" "}
+                Bildirim Tercihleri sayfasından kapatabilir, e-postaların
+                altındaki &ldquo;tek tıkla kapat&rdquo; bağlantısı ile tüm
+                bildirimleri durdurabilir veya WhatsApp gelen kutunuzdan
+                &ldquo;DUR&rdquo; yazarak yalnızca WhatsApp bildirimlerini
+                sonlandırabilirsiniz.
+              </Section>
+
               <Section title="5. Saklama Süresi">
                 Veli hesabı aktif olduğu sürece veriler işlenir. Hesap
                 silindikten sonra kimliği belirsiz hale getirilemeyen kayıtlar
@@ -138,7 +168,7 @@ export default function ParentKvkkPage() {
                 Geri dön
               </Link>
               <span className="text-xs text-muted-foreground">
-                Son güncelleme: 2026-05-19
+                Son güncelleme: 2026-05-30
               </span>
             </div>
           </CardContent>

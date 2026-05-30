@@ -270,6 +270,15 @@ export interface TeacherTaskItem {
   section_reserved_count: number;
   section_completed_count: number;
   section_remaining: number;
+  // Opsiyonel sonuç — öğrenci girdiyse veya koç düzelttiyse.
+  correct_count: number | null;
+  wrong_count: number | null;
+}
+
+export interface TaskItemResultBody {
+  completed: number;
+  correct?: number | null;
+  wrong?: number | null;
 }
 
 export interface TaskSingleItemEditBody {
@@ -283,6 +292,8 @@ export interface TaskSingleItemEditBody {
   link_url?: string | null;
 }
 
+export type TaskPeriod = "morning" | "noon" | "evening";
+
 export interface TeacherTask {
   id: number;
   student_id: number;
@@ -291,6 +302,7 @@ export interface TeacherTask {
   status: TaskStatus;
   title: string;
   scheduled_hour: string | null;
+  period: TaskPeriod | null;       // M6 — opsiyonel periyot
   order: number;
   is_draft: boolean;
   notes: string | null;
@@ -504,6 +516,17 @@ export interface BookOptionsResponse {
   subject_id: number | null;
 }
 
+// Görev formu Video/Özet/Tekrar/Diğer için — kitap atanma şartı olmadan
+// öğrencinin müfredat havuzundaki tüm dersler.
+export interface SubjectBrief {
+  id: number;
+  name: string;
+}
+
+export interface SubjectListResponse {
+  items: SubjectBrief[];
+}
+
 export interface SectionOption {
   id: number;
   label: string;
@@ -559,6 +582,7 @@ export interface TaskCreateBody {
   type?: TaskType;
   title: string;
   scheduled_hour?: number | null;
+  period?: TaskPeriod | null;       // M6 — opsiyonel periyot
   // null/undefined: backend smart varsayılan (gelecek tarihler taslak).
   // true/false: açık değer.
   is_draft?: boolean | null;
@@ -570,6 +594,7 @@ export interface TaskPatchBody {
   title?: string | null;
   type?: TaskType | null;
   scheduled_hour?: number | null;
+  period?: TaskPeriod | "" | null;  // M6 — "" → temizle (NULL'a düşür)
   order?: number | null;
   is_draft?: boolean | null;
   notes?: string | null;
@@ -680,6 +705,7 @@ export interface StudentCreateBody {
 
 export interface StudentPatchBody {
   full_name?: string | null;
+  email?: string | null;
   grade_level?: number | null;
   is_graduate?: boolean | null;
   track?: Track | null;

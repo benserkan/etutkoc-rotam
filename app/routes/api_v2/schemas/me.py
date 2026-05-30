@@ -37,6 +37,11 @@ class UserPublic(BaseModel):
     is_active: bool
     must_change_password: bool
     email_verified: bool = True
+    # P1 (2026-05-30): cep telefonu SMS ile doğrulandı mı?
+    # Banner: phone_verified=False iken tüm panellerin üstünde kapatılamaz
+    # "Telefonunuzu doğrulayın" uyarısı gösterilir. Default True = geriye uyum
+    # (eski client'lar bu alanı yok sayar).
+    phone_verified: bool = True
     last_login_at: datetime | None = None
     created_at: datetime | None = None
 
@@ -51,6 +56,7 @@ class UserPublic(BaseModel):
             is_active=user.is_active,
             must_change_password=user.must_change_password,
             email_verified=getattr(user, "email_verified_at", None) is not None,
+            phone_verified=getattr(user, "phone_verified_at", None) is not None,
             last_login_at=user.last_login_at,
             created_at=user.created_at,
         )
@@ -107,6 +113,8 @@ class MyAccountResponse(BaseModel):
     parent_links: list[ParentLinkRef] = []
     kvkk_status: KvkkStatus
     recent_requests: list[DataRequestSummary] = []
+    # P1 — telefon durumu (her iki slot için, secondary yalnız PARENT'ta anlamlı)
+    phone: "MyPhoneInfo | None" = None
 
 
 class DataDeleteRequestBody(BaseModel):
@@ -192,3 +200,45 @@ class SessionsResponse(BaseModel):
 
 class SessionRevokeResult(BaseModel):
     message: str
+
+
+# ---------------------------- Telefon doğrulama (P1, 2026-05-30) ----------------------------
+
+
+PhoneSlotLiteral = Literal["primary", "secondary"]
+
+
+class MyPhoneInfo(BaseModel):
+    """GET /api/v2/me yanıtında telefon durumu (her iki slot)."""
+    # Birincil telefon — tüm rollerde anlamlı
+    phone: str | None = None  # E.164 ("905...")
+    phone_verified_at: datetime | None = None
+    phone_pending_verify: bool = False  # son OTP aktif mi
+    phone_pending_phone: str | None = None  # bekleyen telefon (kullanıcı yeni numara girdiyse)
+    phone_pending_expires_at: datetime | None = None
+    phone_dev_test_code: str | None = None  # DEV stub: sms_enabled=False ise kodu UI'a göster
+    # İkincil telefon — yalnız PARENT için doldurulur (diğer roller None)
+    phone_secondary: str | None = None
+    phone_secondary_verified_at: datetime | None = None
+    phone_secondary_pending_verify: bool = False
+    phone_secondary_pending_phone: str | None = None
+    phone_secondary_pending_expires_at: datetime | None = None
+    phone_secondary_dev_test_code: str | None = None
+    # UI: secondary slot bu kullanıcı için mevcut mu (yalnız PARENT)
+    secondary_slot_available: bool = False
+
+
+class StartPhoneVerificationBody(BaseModel):
+    """POST /api/v2/me/phone/start veya /me/phone-secondary/start body."""
+    phone: str  # serbest format; backend normalize eder
+
+
+class VerifyPhoneBody(BaseModel):
+    """POST /api/v2/me/phone/verify veya /me/phone-secondary/verify body."""
+    code: str  # 6 haneli
+
+
+class PhoneMutationResult(BaseModel):
+    """Phone mutation sonucu — güncel durum + opsiyonel mesaj."""
+    message: str
+    info: MyPhoneInfo

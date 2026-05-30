@@ -12,12 +12,18 @@ import {
   Info,
   ListChecks,
   Loader2,
+  Moon,
   Plus,
   Repeat,
+  Sun,
+  Sunrise,
   Video,
 } from "lucide-react";
 
+import type { TaskPeriod } from "@/lib/types/teacher";
+
 import {
+  getStudentAllSubjects,
   getStudentBookSections,
   getStudentBooksBySubject,
   getStudentReviewChips,
@@ -26,14 +32,104 @@ import {
   teacherKeys,
 } from "@/lib/api/teacher";
 import { useCreateTask } from "@/lib/hooks/use-teacher-mutations";
+import { useTeacherStudent } from "@/lib/hooks/use-teacher-queries";
 import type {
   BookOptionsResponse,
   ReviewStruggleResponse,
   SectionOptionsResponse,
   SectionStatsResponse,
   SidebarResponse,
+  SubjectListResponse,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+
+// ---------------------------------------------------------------------------
+// Deneme presetleri — öğrencinin sınav hedefi ve sınıf seviyesine göre
+// gösterilen deneme türleri. Tıklanınca title + planlanan soru sayısı doldurur.
+// ---------------------------------------------------------------------------
+
+interface DenemePreset {
+  title: string;
+  count: number;
+}
+
+interface DenemePresetGroup {
+  group: string;
+  items: DenemePreset[];
+}
+
+// LGS hazırlık öğrencisi (8. sınıf)
+const DENEME_LGS: DenemePresetGroup[] = [
+  {
+    group: "LGS",
+    items: [
+      { title: "LGS Tam Deneme", count: 90 },
+      { title: "LGS Sözel Bölüm", count: 50 },
+      { title: "LGS Sayısal Bölüm", count: 40 },
+    ],
+  },
+];
+
+// YKS hazırlık öğrencisi (11-12 + mezun)
+const DENEME_YKS: DenemePresetGroup[] = [
+  {
+    group: "TYT",
+    items: [
+      { title: "TYT Genel Deneme", count: 120 },
+      { title: "TYT Türkçe Branş", count: 40 },
+      { title: "TYT Sosyal Branş", count: 20 },
+      { title: "TYT Matematik Branş", count: 40 },
+      { title: "TYT Fen Bilimleri Branş", count: 20 },
+    ],
+  },
+  {
+    group: "AYT",
+    items: [
+      { title: "AYT Genel Deneme", count: 80 },
+      { title: "AYT Matematik Branş", count: 40 },
+      { title: "AYT Fizik Branş", count: 14 },
+      { title: "AYT Kimya Branş", count: 13 },
+      { title: "AYT Biyoloji Branş", count: 13 },
+      { title: "AYT Türk Dili-Edebiyatı Branş", count: 24 },
+      { title: "AYT Tarih Branş", count: 21 },
+      { title: "AYT Coğrafya Branş", count: 17 },
+    ],
+  },
+  {
+    group: "YDT",
+    items: [{ title: "YDT (Yabancı Dil) Deneme", count: 80 }],
+  },
+];
+
+// 9-10 ara sınıf (sınav hedefi henüz yok)
+const DENEME_LISE_ARA: DenemePresetGroup[] = [
+  {
+    group: "Sınıf Denemesi",
+    items: [
+      { title: "Sınıf Genel Deneme", count: 40 },
+      { title: "Sınıf Sözel Bölüm", count: 20 },
+      { title: "Sınıf Sayısal Bölüm", count: 20 },
+    ],
+  },
+];
+
+function pickPresetGroups(
+  examTarget: string | null | undefined,
+  gradeLevel: number | null | undefined,
+): DenemePresetGroup[] {
+  // Öncelikle exam_target — kesin sınav hedefi varsa onu kullan
+  if (examTarget === "LGS" || examTarget === "lgs") return DENEME_LGS;
+  if (examTarget === "YKS" || examTarget === "yks") return DENEME_YKS;
+  // Mezun (graduate) genelde YKS hedefli
+  // 8. sınıf default LGS
+  if (gradeLevel === 8) return DENEME_LGS;
+  // 11-12 default YKS
+  if (gradeLevel === 11 || gradeLevel === 12) return DENEME_YKS;
+  // 9-10 ara
+  if (gradeLevel === 9 || gradeLevel === 10) return DENEME_LISE_ARA;
+  // Bilinmiyor → tüm grupları göster (LGS + YKS) — kullanıcı seçer
+  return [...DENEME_LGS, ...DENEME_YKS];
+}
 
 // "deneme" yalnız UI sekmesi; backend'e type="other" + kitapsız kalem gönderir
 // (tasktype enum'una değer eklemeden — ikinci migration gerekmez).
@@ -66,13 +162,28 @@ export function AddTaskForm({
   onAfterAdd,
 }: Props) {
   const [type, setType] = React.useState<TaskType>("test");
+  // M6 — opsiyonel periyot. Null = atanmamış (default).
+  const [period, setPeriod] = React.useState<TaskPeriod | null>(null);
 
+  // TEST için: sidebar — yalnız kitap atanmış dersler (cascade ders→kitap→ünite)
   const allSidebarQ = useQuery<SidebarResponse>({
     queryKey: teacherKeys.studentSidebar(studentId, null),
     queryFn: () => getStudentSidebar(studentId, null),
     staleTime: 60_000,
   });
-  const subjects = (allSidebarQ.data?.subjects ?? []).map((s) => ({
+  const bookedSubjects = (allSidebarQ.data?.subjects ?? []).map((s) => ({
+    id: s.id,
+    name: s.name,
+  }));
+
+  // VIDEO / ÖZET / TEKRAR / DİĞER için: müfredat-tam ders havuzu (kitap zorunlu YOK).
+  // Koç bir derste kitap atamamış olsa bile video/özet/tekrar/diğer atayabilmeli.
+  const allSubjectsQ = useQuery<SubjectListResponse>({
+    queryKey: teacherKeys.studentAllSubjects(studentId),
+    queryFn: () => getStudentAllSubjects(studentId),
+    staleTime: 5 * 60_000,
+  });
+  const allSubjects = (allSubjectsQ.data?.items ?? []).map((s) => ({
     id: s.id,
     name: s.name,
   }));
@@ -106,11 +217,15 @@ export function AddTaskForm({
         </div>
       </div>
 
+      {/* M6 — opsiyonel periyot chip-bar (sabah/öğle/akşam). Boş = atanmamış. */}
+      <PeriodChips value={period} onChange={setPeriod} />
+
       {type === "test" ? (
         <TestForm
           studentId={studentId}
           dayDate={dayDate}
-          subjects={subjects}
+          subjects={bookedSubjects}
+          period={period}
           onFocusSubject={onFocusSubject}
           onAfterAdd={onAfterAdd}
         />
@@ -119,6 +234,7 @@ export function AddTaskForm({
         <DenemeForm
           studentId={studentId}
           dayDate={dayDate}
+          period={period}
           onAfterAdd={onAfterAdd}
         />
       ) : null}
@@ -126,6 +242,9 @@ export function AddTaskForm({
         <VideoForm
           studentId={studentId}
           dayDate={dayDate}
+          subjects={allSubjects}
+          period={period}
+          onFocusSubject={onFocusSubject}
           onAfterAdd={onAfterAdd}
         />
       ) : null}
@@ -133,7 +252,8 @@ export function AddTaskForm({
         <OzetForm
           studentId={studentId}
           dayDate={dayDate}
-          subjects={subjects}
+          subjects={allSubjects}
+          period={period}
           onFocusSubject={onFocusSubject}
           onAfterAdd={onAfterAdd}
         />
@@ -142,7 +262,8 @@ export function AddTaskForm({
         <TekrarForm
           studentId={studentId}
           dayDate={dayDate}
-          subjects={subjects}
+          subjects={allSubjects}
+          period={period}
           onFocusSubject={onFocusSubject}
           onAfterAdd={onAfterAdd}
         />
@@ -151,9 +272,63 @@ export function AddTaskForm({
         <OtherForm
           studentId={studentId}
           dayDate={dayDate}
+          subjects={allSubjects}
+          period={period}
+          onFocusSubject={onFocusSubject}
           onAfterAdd={onAfterAdd}
         />
       ) : null}
+    </div>
+  );
+}
+
+/**
+ * Periyot chip-bar (M6) — Yok/Sabah/Öğle/Akşam.
+ * Tek tıkla seçim; mobil-dostu (büyük dokunma alanı). Opsiyonel:
+ * "Yok" → null gönderilir; backend görev period=NULL kaydeder.
+ */
+function PeriodChips({
+  value,
+  onChange,
+}: {
+  value: TaskPeriod | null;
+  onChange: (v: TaskPeriod | null) => void;
+}) {
+  const opts: Array<{ key: TaskPeriod | null; label: string; Icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }> | null }> = [
+    { key: null, label: "—", Icon: null },
+    { key: "morning", label: "Sabah", Icon: Sunrise },
+    { key: "noon", label: "Öğle", Icon: Sun },
+    { key: "evening", label: "Akşam", Icon: Moon },
+  ];
+  return (
+    <div className="mb-3">
+      <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-1.5">
+        Periyot{" "}
+        <span className="text-[10px] normal-case text-muted-foreground/70">
+          (opsiyonel — günün hangi diliminde)
+        </span>
+      </p>
+      <div className="flex flex-wrap gap-1.5">
+        {opts.map(({ key, label, Icon }) => {
+          const active = value === key;
+          return (
+            <button
+              key={key ?? "none"}
+              type="button"
+              onClick={() => onChange(key)}
+              className={cn(
+                "px-3 py-1.5 rounded-md text-xs font-medium border transition-all inline-flex items-center gap-1.5",
+                active
+                  ? "border-foreground bg-foreground text-background"
+                  : "border-border bg-card text-foreground hover:border-foreground/30 hover:bg-muted/50",
+              )}
+            >
+              {Icon ? <Icon className="size-3.5" aria-hidden /> : null}
+              {label}
+            </button>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -166,12 +341,14 @@ function TestForm({
   studentId,
   dayDate,
   subjects,
+  period,
   onFocusSubject,
   onAfterAdd,
 }: {
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
+  period: TaskPeriod | null;
   onFocusSubject: (id: number | null) => void;
   onAfterAdd: () => void;
 }) {
@@ -238,6 +415,7 @@ function TestForm({
           type: "test",
           title: "Görev",
           scheduled_hour: scheduledHour,
+          period: period,
           items: [
             { book_id: bookId, section_id: sectionId, planned_count: count },
           ],
@@ -342,16 +520,35 @@ function TestForm({
 function DenemeForm({
   studentId,
   dayDate,
+  period,
   onAfterAdd,
 }: {
   studentId: number;
   dayDate: string;
+  period: TaskPeriod | null;
   onAfterAdd: () => void;
 }) {
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
   const [title, setTitle] = React.useState("");
   const [count, setCount] = React.useState("");
+
+  // Öğrencinin sınav hedefi + sınıf seviyesini cache'ten al (student detail
+  // sayfası zaten bu query'yi yüklemiş; useTeacherStudent 30s stale).
+  const studentQ = useTeacherStudent(studentId);
+  const profile = studentQ.data?.student;
+  const examTarget = profile?.exam_target ?? null;
+  const gradeLevel = profile?.grade_level ?? null;
+
+  const presetGroups = React.useMemo(
+    () => pickPresetGroups(examTarget, gradeLevel),
+    [examTarget, gradeLevel],
+  );
+
+  function applyPreset(preset: DenemePreset) {
+    setTitle(preset.title);
+    setCount(String(preset.count));
+  }
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -366,6 +563,7 @@ function DenemeForm({
           type: "other", // backend: kitapsız kalem; tasktype enum'una deneme eklenmedi
           title: name,
           scheduled_hour: scheduledHour,
+          period: period,
           // Kitapsız "deneme" kalemi: ders/kitap yok, sadece etiket + soru sayısı.
           items: [{ book_id: null, section_id: null, label: name, planned_count: n }],
         },
@@ -412,23 +610,70 @@ function DenemeForm({
           />
         </div>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-[11px] text-muted-foreground">Hızlı seç:</span>
-        <button type="button" onClick={() => setCount("90")}
-          className="rounded-md border border-border bg-card px-2 py-0.5 text-[11px] font-medium hover:bg-muted">
-          LGS · 90 soru
-        </button>
-        <button type="button" onClick={() => setCount("120")}
-          className="rounded-md border border-border bg-card px-2 py-0.5 text-[11px] font-medium hover:bg-muted">
-          TYT · 120 soru
-        </button>
-      </div>
+
+      <DenemePresetDropdown
+        groups={presetGroups}
+        onPick={applyPreset}
+      />
+
       <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
         <Info className="size-3" aria-hidden />
         Tam deneme ders/kitap seçmeden eklenir; çözülen soru sayısına sayar.
         Sonuç/net girişi için öğrenci profilindeki &quot;Denemeler&quot; sekmesini kullan.
       </p>
     </form>
+  );
+}
+
+/**
+ * Tek native `<select>` dropdown — mobil-uyumlu (iOS/Android native picker).
+ * 13 chip yan yana yerine tek tıkla seçim + optgroup ile sınav kategorisi.
+ * Seçim yan etkisi: title + count doldurur; sonra reset (kullanıcı tekrar
+ * "hazır seç" yapabilir).
+ */
+function DenemePresetDropdown({
+  groups,
+  onPick,
+}: {
+  groups: DenemePresetGroup[];
+  onPick: (preset: DenemePreset) => void;
+}) {
+  const [value, setValue] = React.useState("");
+
+  function onSelect(v: string) {
+    setValue(v);
+    if (!v) return;
+    // value formatı: "{group_idx}:{item_idx}"
+    const [gi, ii] = v.split(":").map(Number);
+    const preset = groups[gi]?.items[ii];
+    if (preset) onPick(preset);
+    // Dropdown'u sıfırla — kullanıcı tekrar seçebilsin
+    setTimeout(() => setValue(""), 0);
+  }
+
+  return (
+    <div className="flex items-center gap-2 flex-wrap">
+      <span className="text-[11px] text-muted-foreground inline-flex items-center gap-1">
+        <Info className="size-3" aria-hidden />
+        Hızlı seç:
+      </span>
+      <select
+        value={value}
+        onChange={(e) => onSelect(e.target.value)}
+        className="px-2.5 py-1 border border-input bg-background rounded-md text-xs focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition min-w-[240px]"
+      >
+        <option value="">— hazır deneme türü seç —</option>
+        {groups.map((g, gi) => (
+          <optgroup key={g.group} label={g.group}>
+            {g.items.map((it, ii) => (
+              <option key={it.title} value={`${gi}:${ii}`}>
+                {it.title} · {it.count} soru
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -439,29 +684,49 @@ function DenemeForm({
 function VideoForm({
   studentId,
   dayDate,
+  subjects,
+  period,
+  onFocusSubject,
   onAfterAdd,
 }: {
   studentId: number;
   dayDate: string;
+  subjects: { id: number; name: string }[];
+  period: TaskPeriod | null;
+  onFocusSubject: (id: number | null) => void;
   onAfterAdd: () => void;
 }) {
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
+  const [subjectId, setSubjectId] = React.useState<number | "">("");
   const [linkUrl, setLinkUrl] = React.useState("");
   const [notes, setNotes] = React.useState("");
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!linkUrl.trim()) return;
+    if (subjectId === "" || !linkUrl.trim()) return;
     const scheduledHour = hour === "" ? null : Number(hour);
+    const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    // Başlık formatı her zaman "{ders} · {içerik}" — render tarafı ders adını
+    // parse edip rozet olarak gösterir (Test ile görsel simetri).
+    const trimmedNotes = notes.trim();
+    const title = trimmedNotes
+      ? `${subjectName} · ${trimmedNotes}`
+      : `${subjectName} · video`;
+    // Video URL'i notes alanına eklenir (mevcut backend kontrat — kitapsız tip
+    // için ayrı URL alanı yok; URL açıklamayla birlikte saklanır).
+    const fullNotes = trimmedNotes
+      ? `${trimmedNotes}\n${linkUrl.trim()}`
+      : linkUrl.trim();
     create.mutate(
       {
         body: {
           date: dayDate,
           type: "video",
-          title: notes.trim() || "Video",
+          title,
           scheduled_hour: scheduledHour,
-          notes: notes.trim() || null,
+          period: period,
+          notes: fullNotes,
           items: [],
         },
       },
@@ -479,7 +744,25 @@ function VideoForm({
     <form onSubmit={onSubmit} className="space-y-2">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
         <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-        <div className="md:col-span-7">
+        <div className="md:col-span-2">
+          <Label>Ders</Label>
+          <Select
+            value={subjectId === "" ? "" : String(subjectId)}
+            onChange={(v) => {
+              const num = v === "" ? "" : Number(v);
+              setSubjectId(num as number | "");
+              onFocusSubject(num === "" ? null : num);
+            }}
+          >
+            <option value="">— ders seç —</option>
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="md:col-span-5">
           <Label>Video bağlantısı</Label>
           <Input
             type="url"
@@ -502,13 +785,14 @@ function VideoForm({
         <div className="md:col-span-1 flex justify-end">
           <SubmitButton
             pending={create.isPending}
-            disabled={!linkUrl.trim()}
+            disabled={subjectId === "" || !linkUrl.trim()}
           />
         </div>
       </div>
       <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
         <Info className="size-3" aria-hidden />
-        Öğrenci linke tıklayarak videoyu açar; kısa açıklama konuyu netleştirir.
+        Ders seçimi zorunlu — programa &quot;{`{ders}`} videosu&quot; olarak
+        düşer. Öğrenci linke tıklayarak videoyu açar.
       </p>
     </form>
   );
@@ -522,12 +806,14 @@ function OzetForm({
   studentId,
   dayDate,
   subjects,
+  period,
   onFocusSubject,
   onAfterAdd,
 }: {
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
+  period: TaskPeriod | null;
   onFocusSubject: (id: number | null) => void;
   onAfterAdd: () => void;
 }) {
@@ -541,14 +827,17 @@ function OzetForm({
     if (subjectId === "" || !notes.trim()) return;
     const scheduledHour = hour === "" ? null : Number(hour);
     const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    // Başlık: "{ders} · {konu}" — render parse'ı ders rozetine çevirir
+    // (görsel olarak Test/Video/Tekrar/Diğer ile aynı düzen).
     create.mutate(
       {
         body: {
           date: dayDate,
           type: "ozet",
-          title: `${subjectName} özet`,
+          title: `${subjectName} · ${notes.trim()}`,
           scheduled_hour: scheduledHour,
-          notes: notes.trim(),
+          period: period,
+          notes: null,
           items: [],
         },
       },
@@ -612,12 +901,14 @@ function TekrarForm({
   studentId,
   dayDate,
   subjects,
+  period,
   onFocusSubject,
   onAfterAdd,
 }: {
   studentId: number;
   dayDate: string;
   subjects: { id: number; name: string }[];
+  period: TaskPeriod | null;
   onFocusSubject: (id: number | null) => void;
   onAfterAdd: () => void;
 }) {
@@ -643,14 +934,16 @@ function TekrarForm({
     if (subjectId === "" || !notes.trim()) return;
     const scheduledHour = hour === "" ? null : Number(hour);
     const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    // Başlık: "{ders} · {konu}" — render parse'ı ders rozetine çevirir.
     create.mutate(
       {
         body: {
           date: dayDate,
           type: "tekrar",
-          title: `${subjectName} tekrar`,
+          title: `${subjectName} · ${notes.trim()}`,
           scheduled_hour: scheduledHour,
-          notes: notes.trim(),
+          period: period,
+          notes: null,
           items: [],
         },
       },
@@ -794,28 +1087,39 @@ function ReviewChips({
 function OtherForm({
   studentId,
   dayDate,
+  subjects,
+  period,
+  onFocusSubject,
   onAfterAdd,
 }: {
   studentId: number;
   dayDate: string;
+  subjects: { id: number; name: string }[];
+  period: TaskPeriod | null;
+  onFocusSubject: (id: number | null) => void;
   onAfterAdd: () => void;
 }) {
   const create = useCreateTask(studentId);
   const [hour, setHour] = React.useState("");
+  const [subjectId, setSubjectId] = React.useState<number | "">("");
   const [title, setTitle] = React.useState("");
   const [notes, setNotes] = React.useState("");
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (subjectId === "" || !title.trim()) return;
     const scheduledHour = hour === "" ? null : Number(hour);
+    const subjectName = subjects.find((s) => s.id === subjectId)?.name ?? "";
+    // Başlık formatı: "{ders} · {başlık}"
+    const fullTitle = `${subjectName} · ${title.trim()}`;
     create.mutate(
       {
         body: {
           date: dayDate,
           type: "other",
-          title: title.trim(),
+          title: fullTitle,
           scheduled_hour: scheduledHour,
+          period: period,
           notes: notes.trim() || null,
           items: [],
         },
@@ -834,17 +1138,35 @@ function OtherForm({
     <form onSubmit={onSubmit} className="space-y-2">
       <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
         <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-        <div className="md:col-span-4">
+        <div className="md:col-span-2">
+          <Label>Ders</Label>
+          <Select
+            value={subjectId === "" ? "" : String(subjectId)}
+            onChange={(v) => {
+              const num = v === "" ? "" : Number(v);
+              setSubjectId(num as number | "");
+              onFocusSubject(num === "" ? null : num);
+            }}
+          >
+            <option value="">— ders seç —</option>
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name}
+              </option>
+            ))}
+          </Select>
+        </div>
+        <div className="md:col-span-3">
           <Label>Başlık</Label>
           <Input
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             maxLength={200}
-            placeholder="Görev başlığı"
+            placeholder="Örn. Konu özeti hazırla"
           />
         </div>
-        <div className="md:col-span-6">
+        <div className="md:col-span-5">
           <Label>Açıklama (opsiyonel)</Label>
           <Input
             type="text"
@@ -855,9 +1177,17 @@ function OtherForm({
           />
         </div>
         <div className="md:col-span-1 flex justify-end">
-          <SubmitButton pending={create.isPending} disabled={!title.trim()} />
+          <SubmitButton
+            pending={create.isPending}
+            disabled={subjectId === "" || !title.trim()}
+          />
         </div>
       </div>
+      <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
+        <Info className="size-3" aria-hidden />
+        Ders seçimi zorunlu — programa &quot;{`{ders}`} · {`{başlık}`}&quot;
+        olarak düşer.
+      </p>
     </form>
   );
 }

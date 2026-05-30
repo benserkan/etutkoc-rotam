@@ -8,6 +8,7 @@ import {
   Loader2,
   Megaphone,
   Microscope,
+  Printer,
   Rocket,
 } from "lucide-react";
 
@@ -165,6 +166,16 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           >
             <Microscope className="size-4" aria-hidden />
             Tanı
+          </Link>
+          <Link
+            href={`/teacher/students/${studentId}/program/print?week=${data.start_date}`}
+            target="_blank"
+            rel="noopener"
+            className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted inline-flex items-center gap-1.5"
+            title="Bu haftanın programını yazdırılabilir formatta aç"
+          >
+            <Printer className="size-4" aria-hidden />
+            Yazdır
           </Link>
           {draftTotal > 0 ? (
             <Button

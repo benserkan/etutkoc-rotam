@@ -266,6 +266,26 @@ from app.models.parent import (
     ParentStudentLink,
     TeacherNoteToParent,
 )
+from app.models.phone_verification import PhoneVerification
+from app.models.whatsapp_template import (
+    ALL_CATEGORIES as WA_TEMPLATE_CATEGORIES,
+    ALL_TARGET_ROLES as WA_TEMPLATE_TARGET_ROLES,
+    CATEGORY_ADMIN_SISTEM,
+    CATEGORY_ADMIN_YONETICI,
+    CATEGORY_KURUM_OGRENCI,
+    CATEGORY_KURUM_OGRETMEN,
+    CATEGORY_KURUM_VELI,
+    CATEGORY_LABELS_TR as WA_TEMPLATE_CATEGORY_LABELS_TR,
+    CATEGORY_OGRENCI,
+    CATEGORY_VELI,
+    TARGET_ANY,
+    TARGET_INSTITUTION_ADMIN,
+    TARGET_ROLE_LABELS_TR as WA_TEMPLATE_TARGET_ROLE_LABELS_TR,
+    TARGET_SUPER_ADMIN,
+    TARGET_TEACHER,
+    WhatsAppTemplate,
+)
+from app.models.whatsapp_dispatch_log import WhatsAppDispatchLog
 from app.models.payment_link import (
     LINK_OWNER_INSTITUTION,
     LINK_OWNER_USER,
@@ -525,6 +545,13 @@ __all__ = [
     "ParentPhoneVerification",
     "ParentRelation",
     "ParentSessionLog",
+    "PhoneVerification",
+    "WhatsAppDispatchLog",
+    "WhatsAppTemplate",
+    "WA_TEMPLATE_CATEGORIES",
+    "WA_TEMPLATE_TARGET_ROLES",
+    "WA_TEMPLATE_CATEGORY_LABELS_TR",
+    "WA_TEMPLATE_TARGET_ROLE_LABELS_TR",
     "ParentStudentLink",
     "REQUEST_STATUS_LABELS",
     "REQUEST_TYPE_LABELS",

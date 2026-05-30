@@ -11,6 +11,7 @@ import {
   MoreHorizontal,
   Plus,
   Replace,
+  SlidersHorizontal,
   Trash2,
   MessageCircle,
 } from "lucide-react";
@@ -23,10 +24,15 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  CompleteSheet,
+  type CompleteSheetResult,
+} from "@/components/shared/complete-sheet";
 import type { StudentTask, StudentTaskItem } from "@/lib/types/student";
 import {
   useCompleteTask,
   useDebouncedSetItem,
+  useSetItemCompleted,
   useUncompleteTask,
 } from "@/lib/hooks/use-student-mutations";
 import type { CommMode } from "./comm-modal";
@@ -210,8 +216,14 @@ function ItemRow({
   blocked: boolean;
 }) {
   const debounced = useDebouncedSetItem(dateIso);
+  const setItem = useSetItemCompleted(dateIso);
+  const [sheetOpen, setSheetOpen] = React.useState(false);
   const max = item.planned;
   const min = 0;
+
+  // Kitapsız deneme kaleminde de D/Y mantıklı (TYT branş denemesi → 40 soru/35 D/5 Y)
+  const isDeneme = item.book_id == null;
+  const hasResult = item.correct != null || item.wrong != null;
 
   function inc() {
     if (blocked || item.completed >= max) return;
@@ -222,48 +234,167 @@ function ItemRow({
     debounced.apply({ task, itemId: item.id, completed: item.completed - 1 });
   }
 
+  function handleSheetSubmit(r: CompleteSheetResult) {
+    setItem.mutate(
+      {
+        task,
+        itemId: item.id,
+        completed: r.completed,
+        correct: r.correct,
+        wrong: r.wrong,
+      },
+      {
+        onSuccess: () => setSheetOpen(false),
+      },
+    );
+  }
+
   return (
-    <div className="flex items-center gap-3 text-sm">
-      <div className="flex-1 min-w-0">
-        <p className="truncate">
-          <span className="font-medium">{item.book_name}</span>
-          {item.section_label ? (
-            <span className="text-muted-foreground"> · {item.section_label}</span>
+    <>
+      <div className="flex items-center gap-3 text-sm">
+        <div className="flex-1 min-w-0">
+          <p className="truncate">
+            <span className="font-medium">{item.book_name}</span>
+            {item.section_label ? (
+              <span className="text-muted-foreground"> · {item.section_label}</span>
+            ) : null}
+          </p>
+          {item.topic_name ? (
+            <p className="text-xs text-muted-foreground truncate">{item.topic_name}</p>
           ) : null}
-        </p>
-        {item.topic_name ? (
-          <p className="text-xs text-muted-foreground truncate">{item.topic_name}</p>
-        ) : null}
+          {/* D/Y rozeti veya "+ doğru/yanlış" linki — yalnız completed > 0 ise göster */}
+          {item.completed > 0 ? (
+            <ResultBadge
+              correct={item.correct}
+              wrong={item.wrong}
+              completed={item.completed}
+              onEdit={() => setSheetOpen(true)}
+              blocked={blocked}
+            />
+          ) : null}
+        </div>
+
+        <div className="flex items-center gap-1.5">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-7"
+            disabled={blocked || item.completed <= min}
+            onClick={dec}
+            aria-label="Bir azalt"
+          >
+            <Minus className="size-3.5" aria-hidden="true" />
+          </Button>
+          <span className="tabular-nums text-sm font-medium min-w-[3.5rem] text-center">
+            {item.completed} / {item.planned}
+          </span>
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            className="size-7"
+            disabled={blocked || item.completed >= max}
+            onClick={inc}
+            aria-label="Bir arttır"
+          >
+            <Plus className="size-3.5" aria-hidden="true" />
+          </Button>
+          {/* Sheet trigger — "Sayıyla tamamla" / "Sonucu düzenle" */}
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="size-7"
+            disabled={blocked}
+            onClick={() => setSheetOpen(true)}
+            aria-label={hasResult ? "Sonucu düzelt" : "Çözdüğüm sayı ve sonuç"}
+            title={hasResult ? "Sonucu düzelt" : "Sayıyla tamamla"}
+          >
+            <SlidersHorizontal
+              className={cn(
+                "size-3.5",
+                hasResult ? "text-emerald-600" : "text-muted-foreground",
+              )}
+              aria-hidden="true"
+            />
+          </Button>
+        </div>
       </div>
 
-      <div className="flex items-center gap-1.5">
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-7"
-          disabled={blocked || item.completed <= min}
-          onClick={dec}
-          aria-label="Bir azalt"
-        >
-          <Minus className="size-3.5" aria-hidden="true" />
-        </Button>
-        <span className="tabular-nums text-sm font-medium min-w-[3.5rem] text-center">
-          {item.completed} / {item.planned}
-        </span>
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="size-7"
-          disabled={blocked || item.completed >= max}
-          onClick={inc}
-          aria-label="Bir arttır"
-        >
-          <Plus className="size-3.5" aria-hidden="true" />
-        </Button>
-      </div>
-    </div>
+      <CompleteSheet
+        open={sheetOpen}
+        onClose={() => setSheetOpen(false)}
+        onSubmit={handleSheetSubmit}
+        taskTitle={task.title}
+        itemLabel={
+          item.book_name +
+          (item.section_label ? ` · ${item.section_label}` : "")
+        }
+        planned={item.planned}
+        initialCompleted={item.completed > 0 ? item.completed : item.planned}
+        initialCorrect={item.correct}
+        initialWrong={item.wrong}
+        isDeneme={isDeneme}
+        saving={setItem.isPending}
+      />
+    </>
+  );
+}
+
+/**
+ * D/Y rozeti — completed > 0 ise gösterilir.
+ * - D/Y girilmişse: yeşil rozet "8 ✓ / 2 ✗" + "düzelt" linki
+ * - Girilmemişse: küçük "+ doğru/yanlış" linki (sonradan düzeltme)
+ */
+function ResultBadge({
+  correct,
+  wrong,
+  completed,
+  onEdit,
+  blocked,
+}: {
+  correct: number | null;
+  wrong: number | null;
+  completed: number;
+  onEdit: () => void;
+  blocked: boolean;
+}) {
+  const hasResult = correct != null || wrong != null;
+  if (!hasResult) {
+    return (
+      <button
+        type="button"
+        onClick={onEdit}
+        disabled={blocked}
+        className="inline-flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground hover:text-foreground transition disabled:opacity-40"
+      >
+        <Plus className="size-2.5" aria-hidden />
+        doğru/yanlış ekle
+      </button>
+    );
+  }
+  const c = correct ?? 0;
+  const w = wrong ?? 0;
+  const blank = Math.max(0, completed - c - w);
+  return (
+    <button
+      type="button"
+      onClick={onEdit}
+      disabled={blocked}
+      className="inline-flex items-center gap-1.5 mt-0.5 text-[11px] tabular-nums hover:underline disabled:opacity-40"
+      title="Sonucu düzelt"
+    >
+      <span className="text-emerald-700 font-medium">{c} doğru</span>
+      <span className="text-muted-foreground/60">·</span>
+      <span className="text-rose-700 font-medium">{w} yanlış</span>
+      {blank > 0 ? (
+        <>
+          <span className="text-muted-foreground/60">·</span>
+          <span className="text-muted-foreground">{blank} boş</span>
+        </>
+      ) : null}
+    </button>
   );
 }
 
@@ -338,6 +469,16 @@ function ActionsMenu({
 
   const canChangeOrReplaceOrRemove = !isCompleted && !task.has_pending_request;
 
+  // Tip-aware menü görünürlüğü:
+  // - "Sayıyı değiştir" → görevde **en az bir sayı kalemi** olmalı (Test, Deneme).
+  //   Video/Özet/Tekrar/Diğer items=[] → bu seçenek gizli.
+  // - "Kaynağı değiştir" → görevde **en az bir kitaplı kalem** olmalı (Test).
+  //   Deneme (kitapsız etiket) + Video/Özet/Tekrar/Diğer → bu seçenek gizli.
+  const hasItems = task.items.length > 0;
+  const hasBookItem = task.items.some((it) => it.book_id != null);
+  const showChange = hasItems;
+  const showReplace = hasBookItem;
+
   return (
     <div className="relative" ref={ref}>
       <Button
@@ -355,33 +496,37 @@ function ActionsMenu({
           role="menu"
           className="absolute right-0 z-20 mt-1 w-48 rounded-md border border-border bg-popover p-1 shadow-md"
         >
-          <MenuItem
-            label="Sayıyı değiştir"
-            icon={<CircleDashed className="size-3.5" />}
-            disabled={!canChangeOrReplaceOrRemove || blocked}
-            onClick={() => {
-              setOpen(false);
-              onOpenComm("change", task);
-            }}
-            disabledReason={
-              task.has_pending_request
-                ? "Bu görev için zaten bekleyen talep var"
-                : isCompleted
-                  ? "Tamamlanmış görevde değişiklik yok"
-                  : blocked
-                    ? "Gelecek tarihli görev"
-                    : undefined
-            }
-          />
-          <MenuItem
-            label="Kaynağı değiştir"
-            icon={<Replace className="size-3.5" />}
-            disabled={!canChangeOrReplaceOrRemove || blocked}
-            onClick={() => {
-              setOpen(false);
-              onOpenComm("replace", task);
-            }}
-          />
+          {showChange ? (
+            <MenuItem
+              label="Sayıyı değiştir"
+              icon={<CircleDashed className="size-3.5" />}
+              disabled={!canChangeOrReplaceOrRemove || blocked}
+              onClick={() => {
+                setOpen(false);
+                onOpenComm("change", task);
+              }}
+              disabledReason={
+                task.has_pending_request
+                  ? "Bu görev için zaten bekleyen talep var"
+                  : isCompleted
+                    ? "Tamamlanmış görevde değişiklik yok"
+                    : blocked
+                      ? "Gelecek tarihli görev"
+                      : undefined
+              }
+            />
+          ) : null}
+          {showReplace ? (
+            <MenuItem
+              label="Kaynağı değiştir"
+              icon={<Replace className="size-3.5" />}
+              disabled={!canChangeOrReplaceOrRemove || blocked}
+              onClick={() => {
+                setOpen(false);
+                onOpenComm("replace", task);
+              }}
+            />
+          ) : null}
           <MenuItem
             label="Çıkar"
             icon={<Trash2 className="size-3.5" />}
@@ -392,7 +537,9 @@ function ActionsMenu({
               onOpenComm("remove", task);
             }}
           />
-          <div className="my-1 h-px bg-border" aria-hidden="true" />
+          {(showChange || showReplace) ? (
+            <div className="my-1 h-px bg-border" aria-hidden="true" />
+          ) : null}
           <MenuItem
             label="Koçuna sor"
             icon={<MessageCircle className="size-3.5" />}

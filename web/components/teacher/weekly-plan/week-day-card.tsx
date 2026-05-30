@@ -64,6 +64,7 @@ import { cn } from "@/lib/utils";
 
 import { AddTaskForm } from "./add-task-form";
 import { InlineSuggestions } from "./inline-suggestions";
+import { TaskItemResultBadge } from "./task-item-result-badge";
 
 const TR_MONTHS = [
   "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
@@ -518,8 +519,33 @@ function SortableTaskRow({
   } = useSortable({ id: task.id, disabled: hourBound });
 
   const primarySubjectId = task.items[0]?.subject_id ?? null;
-  const primarySubjectName = task.items[0]?.subject_name ?? null;
-  const hue = primarySubjectId !== null ? (primarySubjectId * 67) % 360 : 220;
+  // Kitapsız etkinlik görevlerinde (Video/Özet/Tekrar/Diğer · items=[]) ders
+  // backend'den gelmez; add-task-form başlığı `{Ders} · {içerik}` formatında
+  // üretir → burada parse edip rozet olarak gösteririz (Test ile görsel
+  // simetri). Title "·" içermiyorsa fallback: ders yok.
+  let primarySubjectName: string | null = task.items[0]?.subject_name ?? null;
+  let displayTitle = task.title;
+  if (!primarySubjectName && task.items.length === 0) {
+    const sepIdx = task.title.indexOf(" · ");
+    if (sepIdx > 0 && sepIdx < task.title.length - 3) {
+      primarySubjectName = task.title.substring(0, sepIdx);
+      displayTitle = task.title.substring(sepIdx + 3);
+    }
+  }
+  // Renk hue: subject_id varsa hash, yoksa parse edilen ders adı string hash;
+  // ikisi de yoksa nötr ton (220).
+  const subjectNameHash = primarySubjectName
+    ? Math.abs(
+        Array.from(primarySubjectName).reduce(
+          (h, c) => ((h * 31 + c.charCodeAt(0)) | 0),
+          0,
+        ),
+      ) % 360
+    : 220;
+  const hue =
+    primarySubjectId !== null
+      ? (primarySubjectId * 67) % 360
+      : subjectNameHash;
   // Kitapsız (deneme) kalem = book_id None → tam deneme; ders-test satırından ayır.
   const isDeneme = task.items.some((it) => it.book_id === null);
   // Dersi olmayan etkinlik satırları (video/özet/tekrar/diğer) için tip-renkli şerit.
@@ -613,12 +639,21 @@ function SortableTaskRow({
             </span>
           ) : null}
           <span className="text-sm font-medium text-foreground">
-            {task.title}
+            {displayTitle}
           </span>
           {task.completed_count > 0 ? (
             <span className="text-xs text-emerald-700 tabular-nums">
               · {task.completed_count}/{task.planned_count}
             </span>
+          ) : null}
+          {/* Tek kalemli görevde D/Y rozeti — task badge'lerinin yanına inline */}
+          {task.items.length === 1 ? (
+            <TaskItemResultBadge
+              studentId={studentId}
+              dateIso={dayDate}
+              task={task}
+              item={task.items[0]}
+            />
           ) : null}
           {task.status === "completed" ? (
             <span className="inline-flex items-center gap-0.5 text-xs text-emerald-700">
@@ -632,20 +667,28 @@ function SortableTaskRow({
         {task.items.length > 1 ? (
           <div className="mt-1 text-xs text-muted-foreground space-y-0.5">
             {task.items.map((it) => (
-              <div key={it.id}>
+              <div key={it.id} className="flex items-baseline flex-wrap">
                 <span className="text-muted-foreground/60">▸</span>{" "}
-                {it.book_name} — {it.section_label}
-                {it.topic_name ? (
-                  <span className="text-muted-foreground/70">
-                    {" "}({it.topic_name})
-                  </span>
-                ) : null}
-                : <span className="font-medium tabular-nums">{it.planned_count}</span>
-                {it.completed_count > 0 ? (
-                  <span className="text-emerald-700 tabular-nums">
-                    {" "}({it.completed_count} çöz.)
-                  </span>
-                ) : null}
+                <span>
+                  {it.book_name} — {it.section_label}
+                  {it.topic_name ? (
+                    <span className="text-muted-foreground/70">
+                      {" "}({it.topic_name})
+                    </span>
+                  ) : null}
+                  : <span className="font-medium tabular-nums">{it.planned_count}</span>
+                  {it.completed_count > 0 ? (
+                    <span className="text-emerald-700 tabular-nums">
+                      {" "}({it.completed_count} çöz.)
+                    </span>
+                  ) : null}
+                </span>
+                <TaskItemResultBadge
+                  studentId={studentId}
+                  dateIso={dayDate}
+                  task={task}
+                  item={it}
+                />
               </div>
             ))}
           </div>

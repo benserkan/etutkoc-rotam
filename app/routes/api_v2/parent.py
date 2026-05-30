@@ -276,9 +276,9 @@ def _format_time(t: dt_time | None, default: str) -> str:
 
 
 def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferencesInfo:
-    """ParentNotificationPref ORM → Pydantic."""
+    """ParentNotificationPref ORM → Pydantic. P0: e-posta + WA kanalları ayrı."""
     if pref is None:
-        # Yeni veli — varsayılan açık tüm bildirimler
+        # Yeni veli — varsayılan e-posta açık, WhatsApp kapalı (opt-in)
         return ParentPreferencesInfo(
             daily_summary_enabled=True,
             weekly_report_enabled=True,
@@ -287,6 +287,14 @@ def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferences
             new_program_alert_enabled=True,
             teacher_note_enabled=True,
             exam_approaching_enabled=True,
+            daily_summary_wa_enabled=False,
+            weekly_report_wa_enabled=False,
+            empty_day_alert_wa_enabled=False,
+            drop_alert_wa_enabled=False,
+            new_program_alert_wa_enabled=False,
+            teacher_note_wa_enabled=False,
+            exam_approaching_wa_enabled=False,
+            child_whatsapp_consent=False,
             quiet_hours_start="22:00",
             quiet_hours_end="07:00",
             unsubscribed_at=None,
@@ -299,6 +307,14 @@ def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferences
         new_program_alert_enabled=pref.new_program_alert_enabled,
         teacher_note_enabled=pref.teacher_note_enabled,
         exam_approaching_enabled=pref.exam_approaching_enabled,
+        daily_summary_wa_enabled=bool(getattr(pref, "daily_summary_wa_enabled", False)),
+        weekly_report_wa_enabled=bool(getattr(pref, "weekly_report_wa_enabled", False)),
+        empty_day_alert_wa_enabled=bool(getattr(pref, "empty_day_alert_wa_enabled", False)),
+        drop_alert_wa_enabled=bool(getattr(pref, "drop_alert_wa_enabled", False)),
+        new_program_alert_wa_enabled=bool(getattr(pref, "new_program_alert_wa_enabled", False)),
+        teacher_note_wa_enabled=bool(getattr(pref, "teacher_note_wa_enabled", False)),
+        exam_approaching_wa_enabled=bool(getattr(pref, "exam_approaching_wa_enabled", False)),
+        child_whatsapp_consent=bool(getattr(pref, "child_whatsapp_consent", False)),
         quiet_hours_start=_format_time(pref.quiet_hours_start, "22:00"),
         quiet_hours_end=_format_time(pref.quiet_hours_end, "07:00"),
         unsubscribed_at=pref.unsubscribed_at,
@@ -445,6 +461,16 @@ def update_preferences_v2(
     pref.drop_alert_enabled = body.drop_alert
     pref.teacher_note_enabled = body.teacher_note
     pref.exam_approaching_enabled = body.exam_approaching
+
+    # P0 — WhatsApp kanal toggle'ları
+    pref.daily_summary_wa_enabled = body.daily_summary_wa
+    pref.weekly_report_wa_enabled = body.weekly_report_wa
+    pref.empty_day_alert_wa_enabled = body.empty_day_wa
+    pref.new_program_alert_wa_enabled = body.new_program_wa
+    pref.drop_alert_wa_enabled = body.drop_alert_wa
+    pref.teacher_note_wa_enabled = body.teacher_note_wa
+    pref.exam_approaching_wa_enabled = body.exam_approaching_wa
+    pref.child_whatsapp_consent = body.child_whatsapp_consent
 
     qs = _parse_time_str(body.quiet_start)
     qe = _parse_time_str(body.quiet_end)
@@ -939,6 +965,34 @@ def parent_invitation_accept_v2(
     is_new_account = parent_user is None
 
     now = datetime.now(timezone.utc)
+
+    # P0 — aktivasyondan gelen iletişim tercih matrisini ParentNotificationPref'e
+    # uygula. Mevcut veli için sadece child_whatsapp_consent (KVKK güncelleme)
+    # işlenir; ana tercihleri zaten ayarlar sayfasından yönetir.
+    _np = body.notification_preferences or {}
+
+    def _bool_pref(key: str, default: bool) -> bool:
+        v = _np.get(key)
+        if v is None:
+            return default
+        return bool(v)
+
+    # P1 — telefon (opsiyonel; gönderilirse normalize edilip User.phone'a yazılır,
+    # verified_at=None — doğrulama panelde banner'la başlatılır)
+    phone_normalized: str | None = None
+    if body.phone:
+        from app.services.phone_service import normalize_e164_tr
+        phone_normalized = normalize_e164_tr(body.phone)
+        if not phone_normalized:
+            raise HTTPException(
+                status_code=400,
+                detail={
+                    "error": "invalid",
+                    "code": "invalid_phone",
+                    "message": "Geçersiz telefon numarası. Türkiye cep telefonu formatı gerekir.",
+                },
+            )
+
     if is_new_account:
         parent_user = User(
             email=inv.invited_email.strip().lower(),
@@ -948,6 +1002,8 @@ def parent_invitation_accept_v2(
             is_active=True,
             password_changed_at=now,
             must_change_password=False,
+            phone=phone_normalized,
+            # phone_verified_at=None — kullanıcı panelden OTP ile doğrulayacak
         )
         db.add(parent_user)
         db.flush()
@@ -955,8 +1011,45 @@ def parent_invitation_accept_v2(
         pref = ParentNotificationPref(
             parent_id=parent_user.id,
             unsubscribe_token=secrets.token_urlsafe(48),
+            # E-posta — default açık, aktivasyon ekranı kapatabilir
+            daily_summary_enabled=_bool_pref("daily_summary_email", True),
+            weekly_report_enabled=_bool_pref("weekly_report_email", True),
+            empty_day_alert_enabled=_bool_pref("empty_day_email", True),
+            drop_alert_enabled=_bool_pref("drop_alert_email", True),
+            new_program_alert_enabled=_bool_pref("new_program_email", True),
+            teacher_note_enabled=_bool_pref("teacher_note_email", True),
+            exam_approaching_enabled=_bool_pref("exam_approaching_email", True),
+            # WhatsApp — default kapalı, aktivasyon ekranı açabilir (opt-in)
+            daily_summary_wa_enabled=_bool_pref("daily_summary_wa", False),
+            weekly_report_wa_enabled=_bool_pref("weekly_report_wa", False),
+            empty_day_alert_wa_enabled=_bool_pref("empty_day_wa", False),
+            drop_alert_wa_enabled=_bool_pref("drop_alert_wa", False),
+            new_program_alert_wa_enabled=_bool_pref("new_program_wa", False),
+            teacher_note_wa_enabled=_bool_pref("teacher_note_wa", False),
+            exam_approaching_wa_enabled=_bool_pref("exam_approaching_wa", False),
+            child_whatsapp_consent=body.child_whatsapp_consent,
         )
+
+        # Sessiz saat — opsiyonel; verilirse uygula
+        qs = _parse_time_str(body.quiet_start) if body.quiet_start else None
+        qe = _parse_time_str(body.quiet_end) if body.quiet_end else None
+        if qs is not None:
+            pref.quiet_hours_start = dt_time(qs[0], qs[1])
+        if qe is not None:
+            pref.quiet_hours_end = dt_time(qe[0], qe[1])
+
         db.add(pref)
+    else:
+        # Mevcut veli — yalnız child_whatsapp_consent'i bu davetin parent_id'sine
+        # işle. Diğer tercihler ayarlar sayfasından yönetilir; aktivasyon
+        # ekranındaki seçimler mevcut velinin kararlarını ezmez.
+        existing_pref = (
+            db.query(ParentNotificationPref)
+            .filter(ParentNotificationPref.parent_id == parent_user.id)
+            .first()
+        )
+        if existing_pref and body.child_whatsapp_consent:
+            existing_pref.child_whatsapp_consent = True
 
     # 5. ParentStudentLink — UNIQUE kontrolü
     existing_link = (
@@ -987,6 +1080,13 @@ def parent_invitation_accept_v2(
         action="invitation_accepted" if is_new_account else "invitation_added_link",
         ip=ip, user_agent=ua,
     ))
+    # P0 — KVKK + iletişim tercihi v2 audit (yeni veli veya çocuk WA onayı verildi)
+    if is_new_account or body.child_whatsapp_consent:
+        db.add(ParentSessionLog(
+            parent_id=parent_user.id,
+            action="kvkk_consent_v2",
+            ip=ip, user_agent=ua,
+        ))
     db.add(ParentSessionLog(
         parent_id=parent_user.id,
         action="login", ip=ip, user_agent=ua,

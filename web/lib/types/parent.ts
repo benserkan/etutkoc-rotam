@@ -213,6 +213,7 @@ export interface ParentNotificationsResponse {
 // =============================================================================
 
 export interface ParentPreferencesInfo {
+  // E-posta tarafı (default açık, opt-out)
   daily_summary_enabled: boolean;
   weekly_report_enabled: boolean;
   empty_day_alert_enabled: boolean;
@@ -220,6 +221,16 @@ export interface ParentPreferencesInfo {
   new_program_alert_enabled: boolean;
   teacher_note_enabled: boolean;
   exam_approaching_enabled: boolean;
+  // WhatsApp tarafı (default kapalı, opt-in — KVKK)
+  daily_summary_wa_enabled: boolean;
+  weekly_report_wa_enabled: boolean;
+  empty_day_alert_wa_enabled: boolean;
+  drop_alert_wa_enabled: boolean;
+  new_program_alert_wa_enabled: boolean;
+  teacher_note_wa_enabled: boolean;
+  exam_approaching_wa_enabled: boolean;
+  // 18 yaş altı öğrenciye doğrudan WA için veli onayı
+  child_whatsapp_consent: boolean;
   quiet_hours_start: string;
   quiet_hours_end: string;
   unsubscribed_at: string | null;
@@ -255,6 +266,7 @@ export interface ParentSettingsResponse {
 // =============================================================================
 
 export interface ParentPreferencesBody {
+  // E-posta
   daily_summary: boolean;
   weekly_report: boolean;
   empty_day: boolean;
@@ -262,6 +274,15 @@ export interface ParentPreferencesBody {
   drop_alert: boolean;
   teacher_note: boolean;
   exam_approaching: boolean;
+  // WhatsApp
+  daily_summary_wa: boolean;
+  weekly_report_wa: boolean;
+  empty_day_wa: boolean;
+  new_program_wa: boolean;
+  drop_alert_wa: boolean;
+  teacher_note_wa: boolean;
+  exam_approaching_wa: boolean;
+  child_whatsapp_consent: boolean;
   quiet_start: string;
   quiet_end: string;
 }
@@ -298,6 +319,14 @@ export interface ParentInvitationAcceptBody {
   password: string;
   password_confirm: string;
   kvkk_accept: boolean;
+  // P1 — cep telefonu (SMS ile doğrulanır; backend opsiyonel kabul, yeni
+  // istemcide zorunlu gönderilir)
+  phone?: string;
+  // P0 — opsiyonel iletişim tercih matrisi (aktivasyon ekranındaki seçimler)
+  notification_preferences?: Record<string, boolean>;
+  quiet_start?: string;
+  quiet_end?: string;
+  child_whatsapp_consent?: boolean;
 }
 
 export interface ParentInvitationAcceptResult {

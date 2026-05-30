@@ -1942,3 +1942,120 @@ export function useResetPricing() {
     },
   });
 }
+
+// =============================================================================
+// P2 — WhatsApp şablon registry mutation hook'ları
+// =============================================================================
+
+const WA_TPL_ERROR_LABELS: Record<string, string> = {
+  invalid_category: "Geçersiz kategori seçimi.",
+  invalid_target_role: "Geçersiz hedef rol seçimi.",
+  key_taken: "Bu key zaten kullanılıyor — başka bir key seçin.",
+  template_not_found: "Şablon bulunamadı.",
+  template_active: "Aktif şablon silinemez. Önce pasife alın.",
+};
+
+function waTplErrorTitle(e: unknown, fallback: string): string {
+  if (e instanceof ApiError) {
+    const code = e.detail?.code as string | undefined;
+    if (code && WA_TPL_ERROR_LABELS[code]) return WA_TPL_ERROR_LABELS[code];
+    return e.detail?.message ?? fallback;
+  }
+  return fallback;
+}
+
+export function useCreateWaTemplate() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<import("@/lib/types/whatsapp-template").WaTemplateItem>,
+    ApiError,
+    import("@/lib/types/whatsapp-template").WaTemplateCreateBody
+  >({
+    mutationFn: (body) =>
+      api<
+        MutationResponse<
+          import("@/lib/types/whatsapp-template").WaTemplateItem
+        >
+      >("/api/v2/admin/whatsapp-templates", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Şablon oluşturuldu");
+    },
+    onError: (e) => toast.error(waTplErrorTitle(e, "Şablon oluşturulamadı")),
+  });
+}
+
+export function useUpdateWaTemplate(id: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<import("@/lib/types/whatsapp-template").WaTemplateItem>,
+    ApiError,
+    import("@/lib/types/whatsapp-template").WaTemplateUpdateBody
+  >({
+    mutationFn: (body) =>
+      api<
+        MutationResponse<
+          import("@/lib/types/whatsapp-template").WaTemplateItem
+        >
+      >(`/api/v2/admin/whatsapp-templates/${id}`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Şablon güncellendi");
+    },
+    onError: (e) => toast.error(waTplErrorTitle(e, "Şablon güncellenemedi")),
+  });
+}
+
+export function useToggleWaTemplate() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<
+      import("@/lib/types/whatsapp-template").WaTemplateToggleResult
+    >,
+    ApiError,
+    { id: number }
+  >({
+    mutationFn: ({ id }) =>
+      api<
+        MutationResponse<
+          import("@/lib/types/whatsapp-template").WaTemplateToggleResult
+        >
+      >(`/api/v2/admin/whatsapp-templates/${id}/toggle-active`, {
+        method: "POST",
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "Durum değişti");
+    },
+    onError: (e) => toast.error(waTplErrorTitle(e, "Durum değiştirilemedi")),
+  });
+}
+
+export function useDeleteWaTemplate() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<
+      import("@/lib/types/whatsapp-template").WaTemplateDeleteResult
+    >,
+    ApiError,
+    { id: number }
+  >({
+    mutationFn: ({ id }) =>
+      api<
+        MutationResponse<
+          import("@/lib/types/whatsapp-template").WaTemplateDeleteResult
+        >
+      >(`/api/v2/admin/whatsapp-templates/${id}/delete`, { method: "POST" }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "Silindi");
+    },
+    onError: (e) => toast.error(waTplErrorTitle(e, "Silinemedi")),
+  });
+}

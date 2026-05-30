@@ -31,7 +31,12 @@ export interface StudentTaskItem {
   completed: number;
   is_full: boolean;
   max_completable: number;
+  // Opsiyonel sonuç — "Tamam + sayıyla" sheet'inden gelir; null girilmedi.
+  correct: number | null;
+  wrong: number | null;
 }
+
+export type TaskPeriod = "morning" | "noon" | "evening";
 
 export interface StudentTask {
   id: number;
@@ -40,6 +45,7 @@ export interface StudentTask {
   status: TaskStatus;
   date: string;                    // "YYYY-MM-DD"
   scheduled_hour: string | null;   // "HH:MM" veya null
+  period: TaskPeriod | null;       // M6 — opsiyonel periyot
   items: StudentTaskItem[];
   planned_count: number;
   completed_count: number;

@@ -8454,3 +8454,484 @@ def admin_pricing_reset_v2(
         ),
         invalidate=_PRICING_INVALIDATE,
     )
+
+
+# ============================================================================
+# P2 — WhatsApp şablon registry (Click-to-WA Faz 1)
+# ============================================================================
+
+from app.models import (
+    WA_TEMPLATE_CATEGORIES,
+    WA_TEMPLATE_CATEGORY_LABELS_TR,
+    WA_TEMPLATE_TARGET_ROLE_LABELS_TR,
+    WA_TEMPLATE_TARGET_ROLES,
+    WhatsAppTemplate,
+)
+from app.routes.api_v2.schemas.whatsapp_template import (
+    WhatsAppTemplateCreateBody,
+    WhatsAppTemplateDeleteResult,
+    WhatsAppTemplateItem,
+    WhatsAppTemplateListResponse,
+    WhatsAppTemplatePreviewBody,
+    WhatsAppTemplatePreviewResult,
+    WhatsAppTemplateToggleResult,
+    WhatsAppTemplateUpdateBody,
+    WhatsAppTemplateVar,
+)
+from app.services.whatsapp_template_service import (
+    parse_variables_json,
+    render_preview,
+    serialize_variables,
+)
+
+
+_WA_TEMPLATES_INVALIDATE = ["admin:whatsapp-templates"]
+
+
+def _wa_tmpl_to_item(tmpl: WhatsAppTemplate) -> WhatsAppTemplateItem:
+    """ORM → Pydantic item."""
+    vars_list = parse_variables_json(tmpl.variables_json)
+    safe_vars: list[WhatsAppTemplateVar] = []
+    for v in vars_list:
+        if not isinstance(v, dict):
+            continue
+        try:
+            safe_vars.append(WhatsAppTemplateVar(
+                key=str(v.get("key", ""))[:40],
+                label_tr=str(v.get("label_tr", "") or v.get("key", ""))[:120],
+                example=str(v.get("example", "") or "")[:200],
+            ))
+        except Exception:
+            continue
+
+    return WhatsAppTemplateItem(
+        id=tmpl.id,
+        key=tmpl.key,
+        category=tmpl.category,
+        category_label_tr=WA_TEMPLATE_CATEGORY_LABELS_TR.get(tmpl.category, tmpl.category),
+        target_role=tmpl.target_role,
+        target_role_label_tr=WA_TEMPLATE_TARGET_ROLE_LABELS_TR.get(
+            tmpl.target_role, tmpl.target_role,
+        ),
+        name_tr=tmpl.name_tr,
+        description=tmpl.description or "",
+        content_template=tmpl.content_template,
+        variables=safe_vars,
+        requires_date=bool(tmpl.requires_date),
+        allow_bulk=bool(tmpl.allow_bulk),
+        allow_freeform_note=bool(tmpl.allow_freeform_note),
+        sort_order=int(tmpl.sort_order),
+        is_active=bool(tmpl.is_active),
+        updated_at=tmpl.updated_at,
+        updated_by_name=tmpl.updated_by.full_name if tmpl.updated_by else None,
+    )
+
+
+@router.get(
+    "/whatsapp-templates",
+    response_model=WhatsAppTemplateListResponse,
+)
+def admin_whatsapp_templates_list(
+    category: str | None = None,
+    target_role: str | None = None,
+    include_inactive: bool = True,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Tüm WhatsApp şablonları — filtreli liste."""
+    q = db.query(WhatsAppTemplate)
+    if category:
+        if category not in WA_TEMPLATE_CATEGORIES:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "invalid", "code": "invalid_category",
+                        "message": "Geçersiz kategori."},
+            )
+        q = q.filter(WhatsAppTemplate.category == category)
+    if target_role:
+        if target_role not in WA_TEMPLATE_TARGET_ROLES:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "invalid", "code": "invalid_target_role",
+                        "message": "Geçersiz hedef rol."},
+            )
+        q = q.filter(WhatsAppTemplate.target_role == target_role)
+    if not include_inactive:
+        q = q.filter(WhatsAppTemplate.is_active == True)  # noqa: E712
+
+    rows = (
+        q.options(joinedload(WhatsAppTemplate.updated_by))
+        .order_by(WhatsAppTemplate.category, WhatsAppTemplate.sort_order, WhatsAppTemplate.id)
+        .all()
+    )
+
+    return WhatsAppTemplateListResponse(
+        items=[_wa_tmpl_to_item(t) for t in rows],
+        total=len(rows),
+        categories=dict(WA_TEMPLATE_CATEGORY_LABELS_TR),
+        target_roles=dict(WA_TEMPLATE_TARGET_ROLE_LABELS_TR),
+    )
+
+
+@router.get(
+    "/whatsapp-templates/{template_id}",
+    response_model=WhatsAppTemplateItem,
+)
+def admin_whatsapp_template_detail(
+    template_id: int,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    tmpl = (
+        db.query(WhatsAppTemplate)
+        .options(joinedload(WhatsAppTemplate.updated_by))
+        .filter(WhatsAppTemplate.id == template_id)
+        .first()
+    )
+    if not tmpl:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "template_not_found",
+                    "message": "Şablon bulunamadı."},
+        )
+    return _wa_tmpl_to_item(tmpl)
+
+
+def _validate_category_role(category: str, target_role: str) -> None:
+    if category not in WA_TEMPLATE_CATEGORIES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "invalid_category",
+                    "message": "Geçersiz kategori."},
+        )
+    if target_role not in WA_TEMPLATE_TARGET_ROLES:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "invalid_target_role",
+                    "message": "Geçersiz hedef rol."},
+        )
+
+
+@router.post(
+    "/whatsapp-templates",
+    response_model=MutationResponse[WhatsAppTemplateItem],
+)
+def admin_whatsapp_template_create(
+    body: WhatsAppTemplateCreateBody,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Yeni şablon oluştur. `key` unique."""
+    _validate_category_role(body.category, body.target_role)
+
+    existing = (
+        db.query(WhatsAppTemplate)
+        .filter(WhatsAppTemplate.key == body.key)
+        .first()
+    )
+    if existing:
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "conflict", "code": "key_taken",
+                    "message": "Bu key zaten kullanılıyor."},
+        )
+
+    variables = [v.model_dump() for v in body.variables]
+    tmpl = WhatsAppTemplate(
+        key=body.key,
+        category=body.category,
+        target_role=body.target_role,
+        name_tr=body.name_tr,
+        description=body.description or "",
+        content_template=body.content_template,
+        variables_json=serialize_variables(variables),
+        requires_date=body.requires_date,
+        allow_bulk=body.allow_bulk,
+        allow_freeform_note=body.allow_freeform_note,
+        sort_order=body.sort_order,
+        is_active=body.is_active,
+        updated_by_id=user.id,
+    )
+    db.add(tmpl)
+    db.commit()
+    db.refresh(tmpl)
+
+    return MutationResponse[WhatsAppTemplateItem](
+        data=_wa_tmpl_to_item(tmpl),
+        invalidate=_WA_TEMPLATES_INVALIDATE,
+    )
+
+
+@router.post(
+    "/whatsapp-templates/preview",
+    response_model=WhatsAppTemplatePreviewResult,
+)
+def admin_whatsapp_template_preview(
+    body: WhatsAppTemplatePreviewBody,
+    user: User = Depends(_require_super_admin),
+):
+    """Şablonu örnek değerlerle render et — DB'ye yazma yok.
+
+    NOT: Bu endpoint `{template_id}` path'inden ÖNCE tanımlı — FastAPI route
+    çözümleyici "preview" string'ini int template_id olarak yakalamasın diye.
+    """
+    result = render_preview(
+        template=body.content_template,
+        values=body.variables,
+        variable_defs=[v.model_dump() for v in body.variable_defs],
+    )
+    return WhatsAppTemplatePreviewResult(
+        rendered=result.rendered,
+        warnings=result.warnings,
+        used_keys=result.used_keys,
+        missing_keys=result.missing_keys,
+        unknown_keys=result.unknown_keys,
+    )
+
+
+@router.post(
+    "/whatsapp-templates/{template_id}",
+    response_model=MutationResponse[WhatsAppTemplateItem],
+)
+def admin_whatsapp_template_update(
+    template_id: int,
+    body: WhatsAppTemplateUpdateBody,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Şablonu güncelle (key haricinde her şey)."""
+    _validate_category_role(body.category, body.target_role)
+
+    tmpl = (
+        db.query(WhatsAppTemplate)
+        .filter(WhatsAppTemplate.id == template_id)
+        .first()
+    )
+    if not tmpl:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "template_not_found",
+                    "message": "Şablon bulunamadı."},
+        )
+
+    tmpl.category = body.category
+    tmpl.target_role = body.target_role
+    tmpl.name_tr = body.name_tr
+    tmpl.description = body.description or ""
+    tmpl.content_template = body.content_template
+    tmpl.variables_json = serialize_variables(
+        [v.model_dump() for v in body.variables]
+    )
+    tmpl.requires_date = body.requires_date
+    tmpl.allow_bulk = body.allow_bulk
+    tmpl.allow_freeform_note = body.allow_freeform_note
+    tmpl.sort_order = body.sort_order
+    tmpl.is_active = body.is_active
+    tmpl.updated_by_id = user.id
+
+    db.commit()
+    db.refresh(tmpl)
+
+    return MutationResponse[WhatsAppTemplateItem](
+        data=_wa_tmpl_to_item(tmpl),
+        invalidate=_WA_TEMPLATES_INVALIDATE,
+    )
+
+
+@router.post(
+    "/whatsapp-templates/{template_id}/toggle-active",
+    response_model=MutationResponse[WhatsAppTemplateToggleResult],
+)
+def admin_whatsapp_template_toggle(
+    template_id: int,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Şablonu aktif/pasif yap."""
+    tmpl = (
+        db.query(WhatsAppTemplate)
+        .filter(WhatsAppTemplate.id == template_id)
+        .first()
+    )
+    if not tmpl:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "template_not_found",
+                    "message": "Şablon bulunamadı."},
+        )
+    tmpl.is_active = not tmpl.is_active
+    tmpl.updated_by_id = user.id
+    db.commit()
+    return MutationResponse[WhatsAppTemplateToggleResult](
+        data=WhatsAppTemplateToggleResult(
+            message=("Şablon aktif edildi." if tmpl.is_active else "Şablon pasife alındı."),
+            is_active=tmpl.is_active,
+        ),
+        invalidate=_WA_TEMPLATES_INVALIDATE,
+    )
+
+
+@router.post(
+    "/whatsapp-templates/{template_id}/delete",
+    response_model=MutationResponse[WhatsAppTemplateDeleteResult],
+)
+def admin_whatsapp_template_delete(
+    template_id: int,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Şablonu kalıcı sil. Yalnız pasif (is_active=False) şablonlar silinebilir
+    — aktif şablon önce pasife alınmalı (yanlışlıkla silmeyi engeller)."""
+    tmpl = (
+        db.query(WhatsAppTemplate)
+        .filter(WhatsAppTemplate.id == template_id)
+        .first()
+    )
+    if not tmpl:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "template_not_found",
+                    "message": "Şablon bulunamadı."},
+        )
+    if tmpl.is_active:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "template_active",
+                    "message": "Aktif şablon silinemez. Önce pasife alın."},
+        )
+    db.delete(tmpl)
+    db.commit()
+    return MutationResponse[WhatsAppTemplateDeleteResult](
+        data=WhatsAppTemplateDeleteResult(message="Şablon silindi."),
+        invalidate=_WA_TEMPLATES_INVALIDATE,
+    )
+
+
+# ============================================================================
+# P6 — Süper admin WhatsApp dispatch log paneli
+# ============================================================================
+
+from datetime import datetime as _wa_dt, timedelta as _wa_td, timezone as _wa_tz
+
+from app.models import WhatsAppDispatchLog as _WAD
+from app.routes.api_v2.schemas.messaging import (
+    DispatchLogItem,
+    DispatchLogResponse,
+    DispatchLogSummary,
+    TopSenderItem,
+)
+
+
+@router.get("/whatsapp-dispatch-log", response_model=DispatchLogResponse)
+def admin_whatsapp_dispatch_log(
+    days: int = 7,
+    sender_id: int | None = None,
+    limit: int = 50,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Dispatch log liste — Click-to-WA audit görünürlüğü.
+
+    Filtreler: days (1-90), sender_id, limit (1-200).
+    Summary: bugün/hafta sayım + top 5 sender.
+    """
+    # `0 or 7 == 7` tuzağına düşmemek için `or` kullanmıyoruz; clamp doğrudan.
+    days = max(1, min(int(days), 90))
+    limit = max(1, min(int(limit), 200))
+
+    now = _wa_dt.now(_wa_tz.utc)
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    week_start = today_start - _wa_td(days=today_start.weekday())
+    period_start = today_start - _wa_td(days=days - 1)
+
+    base_q = db.query(_WAD).filter(_WAD.created_at >= period_start)
+    if sender_id and sender_id > 0:
+        base_q = base_q.filter(_WAD.sender_user_id == sender_id)
+
+    rows = (
+        base_q.options(
+            joinedload(_WAD.sender),
+            joinedload(_WAD.target),
+            joinedload(_WAD.template),
+        )
+        .order_by(_WAD.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+    total = base_q.count()
+
+    # Top senders (filtre içinde)
+    sender_counts = (
+        base_q.with_entities(
+            _WAD.sender_user_id,
+            sa_func.count(_WAD.id).label("c"),
+        )
+        .group_by(_WAD.sender_user_id)
+        .order_by(sa_func.count(_WAD.id).desc())
+        .limit(5)
+        .all()
+    )
+    sender_lookup_ids = [sid for sid, _ in sender_counts]
+    sender_lookup = (
+        {
+            u.id: u
+            for u in db.query(User).filter(User.id.in_(sender_lookup_ids)).all()
+        }
+        if sender_lookup_ids
+        else {}
+    )
+
+    top_senders: list[TopSenderItem] = []
+    for sid, cnt in sender_counts:
+        u = sender_lookup.get(sid)
+        top_senders.append(TopSenderItem(
+            sender_user_id=sid,
+            sender_name=u.full_name if u else "(silindi)",
+            sender_role=u.role.value if u else "—",
+            count=int(cnt),
+        ))
+
+    total_today = (
+        db.query(sa_func.count(_WAD.id))
+        .filter(_WAD.created_at >= today_start)
+        .scalar()
+        or 0
+    )
+    total_week = (
+        db.query(sa_func.count(_WAD.id))
+        .filter(_WAD.created_at >= week_start)
+        .scalar()
+        or 0
+    )
+
+    items: list[DispatchLogItem] = []
+    for r in rows:
+        items.append(DispatchLogItem(
+            id=r.id,
+            sender_user_id=r.sender_user_id,
+            sender_name=r.sender.full_name if r.sender else "(silindi)",
+            sender_role=r.sender.role.value if r.sender else "—",
+            target_user_id=r.target_user_id,
+            target_name=(r.target.full_name if r.target else "(silindi)"),
+            target_role=(r.target.role.value if r.target else None),
+            template_key=r.template_key,
+            template_name_tr=(r.template.name_tr if r.template else None),
+            character_count=int(r.character_count),
+            created_at=r.created_at.isoformat() if r.created_at else "",
+        ))
+
+    return DispatchLogResponse(
+        items=items,
+        total=total,
+        summary=DispatchLogSummary(
+            total_today=int(total_today),
+            total_week=int(total_week),
+            total_period=total,
+            top_senders=top_senders,
+        ),
+        days=days,
+        sender_filter_id=sender_id,
+    )
+
+

@@ -30,6 +30,7 @@ from app.routes.api_v2 import institution as v2_institution
 from app.routes.api_v2 import landing_public as v2_landing_public
 from app.routes.api_v2 import library as v2_library
 from app.routes.api_v2 import me as v2_me
+from app.routes.api_v2 import messaging as v2_messaging
 from app.routes.api_v2 import offers_public as v2_offers_public
 from app.routes.api_v2 import parent as v2_parent
 from app.routes.api_v2 import payment as v2_payment
@@ -62,6 +63,7 @@ router.include_router(v2_grade.router)
 router.include_router(v2_csv.router)
 router.include_router(v2_weekly_plan.router)
 router.include_router(v2_support.router)
+router.include_router(v2_messaging.router)
 
 
 @router.get("/ping", include_in_schema=False)

@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Clock, Moon, Sun, Sunrise } from "lucide-react";
 
 import { getStudentDay, studentKeys } from "@/lib/api/student";
-import type { StudentDayResponse, StudentTask } from "@/lib/types/student";
+import type { StudentDayResponse, StudentTask, TaskPeriod } from "@/lib/types/student";
 import { LoadingState } from "@/components/loading-state";
 import { ErrorState } from "@/components/error-state";
 
@@ -90,9 +91,7 @@ export function DayClient({ initial }: Props) {
               )}
             </div>
           ) : (
-            day.tasks.map((t) => (
-              <TaskCard key={t.id} task={t} dateIso={dateIso} onOpenComm={openComm} />
-            ))
+            <PeriodGroupedTasks tasks={day.tasks} dateIso={dateIso} openComm={openComm} />
           )}
         </div>
 
@@ -122,6 +121,70 @@ export function DayClient({ initial }: Props) {
           />
         )
       ) : null}
+    </div>
+  );
+}
+
+// =============================================================================
+// PeriodGroupedTasks — M6: koç period atadıysa görevleri 3 (veya 4) bölüme ayır.
+// Hiçbir görevde period yoksa tek liste (geriye uyum, sade görünüm).
+// =============================================================================
+
+interface PeriodGroupedTasksProps {
+  tasks: StudentTask[];
+  dateIso: string;
+  openComm: (mode: Exclude<CommMode, "add">, task: StudentTask) => void;
+}
+
+const PERIOD_META: Array<{
+  key: TaskPeriod | null;
+  label: string;
+  Icon: React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
+  toneText: string;
+  toneBorder: string;
+}> = [
+  { key: "morning", label: "Sabah", Icon: Sunrise, toneText: "text-amber-700", toneBorder: "border-amber-200" },
+  { key: "noon", label: "Öğle", Icon: Sun, toneText: "text-orange-700", toneBorder: "border-orange-200" },
+  { key: "evening", label: "Akşam", Icon: Moon, toneText: "text-indigo-700", toneBorder: "border-indigo-200" },
+  { key: null, label: "Saatsiz", Icon: Clock, toneText: "text-muted-foreground", toneBorder: "border-border" },
+];
+
+function PeriodGroupedTasks({ tasks, dateIso, openComm }: PeriodGroupedTasksProps) {
+  // Koç hiç period atamadıysa tek liste — sade UX (geriye uyum).
+  const anyPeriod = tasks.some((t) => t.period != null);
+  if (!anyPeriod) {
+    return (
+      <>
+        {tasks.map((t) => (
+          <TaskCard key={t.id} task={t} dateIso={dateIso} onOpenComm={openComm} />
+        ))}
+      </>
+    );
+  }
+  return (
+    <div className="space-y-4">
+      {PERIOD_META.map(({ key, label, Icon, toneText, toneBorder }) => {
+        const group = tasks.filter((t) => t.period === key);
+        if (group.length === 0) return null;
+        return (
+          <section key={key ?? "none"}>
+            <header className={`flex items-center gap-2 mb-2 pb-1 border-b ${toneBorder}`}>
+              <Icon className={`size-4 ${toneText}`} aria-hidden />
+              <h3 className={`text-xs uppercase tracking-wider font-semibold ${toneText}`}>
+                {label}
+              </h3>
+              <span className="text-[11px] text-muted-foreground tabular-nums">
+                · {group.length} görev
+              </span>
+            </header>
+            <div className="space-y-2">
+              {group.map((t) => (
+                <TaskCard key={t.id} task={t} dateIso={dateIso} onOpenComm={openComm} />
+              ))}
+            </div>
+          </section>
+        );
+      })}
     </div>
   );
 }

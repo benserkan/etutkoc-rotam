@@ -75,28 +75,41 @@ interface MutationContext {
 
 interface TaskMutationParams {
   task: StudentTask;
+  // Opsiyonel D/Y — yalnız tek kalemli görevde uygulanır (backend kuralı).
+  correct?: number | null;
+  wrong?: number | null;
 }
 
 export function useCompleteTask(dateIso: string) {
   const qc = useQueryClient();
   return useMutation<MutationResponse<StudentTask>, ApiError, TaskMutationParams, MutationContext>({
     mutationKey: ["student", "mutate-task", dateIso, "complete"],
-    mutationFn: ({ task }) =>
+    mutationFn: ({ task, correct, wrong }) =>
       api<MutationResponse<StudentTask>>(
         `/api/v2/student/tasks/${task.id}/complete`,
-        { method: "POST" },
+        {
+          method: "POST",
+          body: JSON.stringify({
+            correct: correct ?? null,
+            wrong: wrong ?? null,
+          }),
+        },
       ),
-    onMutate: async ({ task }) => {
+    onMutate: async ({ task, correct, wrong }) => {
       await qc.cancelQueries({ queryKey: studentKeys.day(dateIso) });
+      const isSingleItem = task.items.length === 1;
       const previous = patchTaskInDayCache(qc, dateIso, task.id, (t) => ({
         ...t,
         status: "completed",
         completed_count: t.planned_count,
         pct: 1,
-        items: t.items.map((it) => ({
+        items: t.items.map((it, idx) => ({
           ...it,
           completed: it.planned,
           is_full: it.planned > 0,
+          // Sadece tek kalemli görevde D/Y uygulanır (backend simetrisi).
+          correct: isSingleItem && idx === 0 && correct !== undefined ? correct : it.correct,
+          wrong: isSingleItem && idx === 0 && wrong !== undefined ? wrong : it.wrong,
         })),
       }));
       return { previous };
@@ -131,7 +144,14 @@ export function useUncompleteTask(dateIso: string) {
         status: "pending",
         completed_count: 0,
         pct: 0,
-        items: t.items.map((it) => ({ ...it, completed: 0, is_full: false })),
+        items: t.items.map((it) => ({
+          ...it,
+          completed: 0,
+          is_full: false,
+          // Uncomplete D/Y'yi sıfırlar (backend simetrisi).
+          correct: null,
+          wrong: null,
+        })),
       }));
       return { previous };
     },
@@ -156,29 +176,52 @@ interface SetItemParams {
   task: StudentTask;
   itemId: number;
   completed: number;
+  // Opsiyonel D/Y — sheet'ten geçirilir; null/undefined → güncellenmez.
+  correct?: number | null;
+  wrong?: number | null;
 }
 
 export function useSetItemCompleted(dateIso: string) {
   const qc = useQueryClient();
   return useMutation<MutationResponse<StudentTask>, ApiError, SetItemParams, MutationContext>({
     mutationKey: ["student", "mutate-task", dateIso, "set-item"],
-    mutationFn: ({ task, itemId, completed }) =>
+    mutationFn: ({ task, itemId, completed, correct, wrong }) =>
       api<MutationResponse<StudentTask>>(
         `/api/v2/student/tasks/${task.id}/items/${itemId}/set-completed`,
-        { method: "POST", body: JSON.stringify({ completed }) },
+        {
+          method: "POST",
+          body: JSON.stringify({
+            completed,
+            correct: correct ?? null,
+            wrong: wrong ?? null,
+          }),
+        },
       ),
-    onMutate: async ({ task, itemId, completed }) => {
+    onMutate: async ({ task, itemId, completed, correct, wrong }) => {
       await qc.cancelQueries({ queryKey: studentKeys.day(dateIso) });
       const previous = patchTaskInDayCache(qc, dateIso, task.id, (t) => {
-        const items = t.items.map((it) =>
-          it.id === itemId
-            ? {
-                ...it,
-                completed: Math.max(0, Math.min(completed, it.planned)),
-                is_full: completed >= it.planned && it.planned > 0,
-              }
-            : it,
-        );
+        const items = t.items.map((it) => {
+          if (it.id !== itemId) return it;
+          const effectiveCompleted = Math.max(0, Math.min(completed, it.planned));
+          return {
+            ...it,
+            completed: effectiveCompleted,
+            is_full: completed >= it.planned && it.planned > 0,
+            // completed=0 → backend D/Y null'a düşürür; optimistic match
+            correct:
+              effectiveCompleted === 0
+                ? null
+                : correct !== undefined
+                  ? correct
+                  : it.correct,
+            wrong:
+              effectiveCompleted === 0
+                ? null
+                : wrong !== undefined
+                  ? wrong
+                  : it.wrong,
+          };
+        });
         const planned = items.reduce((s, it) => s + it.planned, 0);
         const done = items.reduce((s, it) => s + it.completed, 0);
         const status: StudentTask["status"] =

@@ -48,6 +48,7 @@ import type {
   SetWeekAnchorBody,
   SetWeekAnchorResult,
   TaskItemPatchBody,
+  TaskItemResultBody,
   TaskPatchBody,
   TaskSingleItemEditBody,
   TeacherGoalActionResult,
@@ -455,6 +456,81 @@ export function usePatchTaskItem(studentId: number, dateIso: string) {
           ctx.previous,
         );
       showError(err, "Kalem güncellenemedi");
+    },
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+    },
+  });
+}
+
+/**
+ * Koç tarafı: bir görev kaleminin "çözüldü + D/Y" sonucunu düzenler.
+ * Öğrenci girmediyse veya yanlış girdiyse koç düzeltir.
+ * Backend: POST /api/v2/teacher/tasks/{taskId}/items/{itemId}/result
+ */
+export function useSetTaskItemResult(studentId: number, dateIso: string) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<TeacherTask>,
+    ApiError,
+    { taskId: number; itemId: number; body: TaskItemResultBody },
+    DayCacheCtx
+  >({
+    mutationFn: ({ taskId, itemId, body }) =>
+      api<MutationResponse<TeacherTask>>(
+        `/api/v2/teacher/tasks/${taskId}/items/${itemId}/result`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onMutate: async ({ taskId, itemId, body }) => {
+      await qc.cancelQueries({
+        queryKey: teacherKeys.studentDay(studentId, dateIso),
+      });
+      const previous = setDayCache(qc, studentId, dateIso, (prev) => ({
+        ...prev,
+        tasks: prev.tasks.map((t) => {
+          if (t.id !== taskId) return t;
+          const items = t.items.map((it) => {
+            if (it.id !== itemId) return it;
+            const effectiveCompleted = Math.max(
+              0,
+              Math.min(body.completed, it.planned_count),
+            );
+            return {
+              ...it,
+              completed_count: effectiveCompleted,
+              // completed=0 → backend D/Y null'a düşürür (optimistic match)
+              correct_count:
+                effectiveCompleted === 0
+                  ? null
+                  : body.correct !== undefined
+                    ? body.correct
+                    : it.correct_count,
+              wrong_count:
+                effectiveCompleted === 0
+                  ? null
+                  : body.wrong !== undefined
+                    ? body.wrong
+                    : it.wrong_count,
+            };
+          });
+          const completed = items.reduce((s, it) => s + it.completed_count, 0);
+          return {
+            ...t,
+            items,
+            completed_count: completed,
+            pct: t.planned_count > 0 ? completed / t.planned_count : 0,
+          };
+        }),
+      }));
+      return { previous, dateIso };
+    },
+    onError: (err, _vars, ctx) => {
+      if (ctx?.previous)
+        qc.setQueryData(
+          teacherKeys.studentDay(studentId, ctx.dateIso),
+          ctx.previous,
+        );
+      showError(err, "Sonuç kaydedilemedi");
     },
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);

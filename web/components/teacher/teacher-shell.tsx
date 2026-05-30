@@ -16,6 +16,7 @@ import {
   Loader2,
   LogOut,
   Menu,
+  MessageSquare,
   Settings,
   Sparkles,
   Users,
@@ -32,6 +33,7 @@ import type { InstitutionRef } from "@/lib/types/me";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { getTeacherBadges, teacherKeys } from "@/lib/api/teacher";
 import { TrialBanner } from "@/components/teacher/trial-banner";
+import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
 import type { TeacherBadgesResponse } from "@/lib/types/teacher";
 import type { UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
@@ -51,6 +53,7 @@ interface NavLink {
 const TEACHER_NAV: NavLink[] = [
   { href: "/teacher/dashboard", label: "Pano", icon: LayoutDashboard },
   { href: "/teacher/students", label: "Öğrenciler", icon: Users, badgeKey: "at_risk_count" },
+  { href: "/teacher/bulk-wa", label: "Toplu WhatsApp", icon: MessageSquare },
   { href: "/teacher/requests", label: "Talepler", icon: Inbox, badgeKey: "pending_request_count" },
   { href: "/teacher/support", label: "Destek", icon: LifeBuoy, badgeKey: "support_answered_count" },
   { href: "/teacher/support-inbox", label: "Gelen Talepler", icon: Inbox, badgeKey: "support_inbox_pending" },
@@ -151,6 +154,7 @@ export function TeacherShell({ user, institution, children }: Props) {
       </header>
 
       <main className="flex-1 min-w-0">
+        <PhoneVerifyBanner phoneVerified={user.phone_verified ?? true} />
         <TrialBanner enabled={user.role === "teacher"} />
         <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</div>
       </main>

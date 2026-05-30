@@ -157,6 +157,8 @@ class ParentNotificationPref(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
+    # E-POSTA tarafı toggle'ları (geriye uyumlu — eski davranış değişmez).
+    # Veli aktivasyonda varsayılan açık (opt-out). Her bildirim tipi için ayrı.
     daily_summary_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     weekly_report_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     empty_day_alert_enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -166,6 +168,38 @@ class ParentNotificationPref(Base):
     # Faz 8: sınav yaklaşıyor tetikleyicisi (D-30, D-7, D-1) — varsayılan açık.
     exam_approaching_enabled: Mapped[bool] = mapped_column(
         Boolean, default=True, nullable=False, server_default=sa_text("true")
+    )
+
+    # WhatsApp tarafı toggle'ları (P0 — 2026-05-30). Veli aktivasyonda
+    # varsayılan KAPALI (opt-in, KVKK gereği). Producer step 2 kanala göre
+    # email vs wa pref alanını seçer.
+    daily_summary_wa_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
+    )
+    weekly_report_wa_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
+    )
+    empty_day_alert_wa_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
+    )
+    drop_alert_wa_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
+    )
+    new_program_alert_wa_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
+    )
+    teacher_note_wa_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
+    )
+    exam_approaching_wa_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
+    )
+
+    # 18 yaş altı öğrenciye doğrudan WA gönderim için veli onayı (KVKK 3.5).
+    # Aktivasyon ekranında işaretlenmezse öğrenciye doğrudan WA gitmez;
+    # yalnızca veliye veya panele yansır.
+    child_whatsapp_consent: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
     )
 
     # WhatsApp — telefon doğrulanmadan gönderim yapılmaz

@@ -160,6 +160,22 @@ class User(Base):
     email_verified_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+
+    # Telefon (P1, 2026-05-30, migration s6t9x1y2x00r) — tüm roller için.
+    # Kullanıcının cep telefonu aynı zamanda WhatsApp numarası sayılır
+    # (otomatik WA bildirimleri buraya gider). SMS ile OTP doğrulama yapılır.
+    # phone: E.164 ("905321234567"). phone_verified_at: SMS doğrulama tarihi.
+    phone: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    phone_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # İkinci telefon — yalnız veli için anlamlı (anne + baba ayrımı). Diğer
+    # rollerde her zaman None kalır; /me/phone-secondary/* endpoint'leri yalnız
+    # PARENT rolüne açıktır.
+    phone_secondary: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    phone_secondary_verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     # İki faktörlü doğrulama / TOTP (Dalga 7 P4) — yalnız Süper Admin + Kurum
     # Yöneticisi etkinleştirebilir. totp_secret: base32 (setup'ta üretilir,
     # pending); totp_enabled_at dolunca 2FA aktif (login'de kod istenir).

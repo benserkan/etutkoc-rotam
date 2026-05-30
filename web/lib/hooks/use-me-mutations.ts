@@ -10,6 +10,9 @@ import type {
   DataDeleteResponse,
   PasswordChangeBody,
   PasswordChangeResult,
+  PhoneMutationResult,
+  StartPhoneVerificationBody,
+  VerifyPhoneBody,
 } from "@/lib/types/me";
 
 interface SimpleOk {
@@ -103,6 +106,123 @@ export function useCancelDataDelete() {
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       toast.success("Silme talebi iptal edildi");
+    },
+  });
+}
+
+// ============================================================================
+// P1 — Telefon doğrulama (SMS OTP)
+// ============================================================================
+
+const PHONE_ERROR_LABELS: Record<string, string> = {
+  invalid_phone: "Geçersiz telefon numarası.",
+  cooldown_active: "Çok hızlı yeni kod istediniz. Birkaç saniye bekleyin.",
+  sms_send_failed: "SMS gönderilemedi. Birkaç dakika sonra tekrar deneyin.",
+  invalid_code_format: "Kod 6 haneli olmalı.",
+  no_pending_verification: "Bekleyen doğrulama yok. Önce kod gönderin.",
+  expired: "Kod süresi doldu. Yeni kod isteyin.",
+  too_many_attempts: "Çok fazla hatalı deneme. Yeni kod isteyin.",
+  otp_mismatch: "Kod hatalı.",
+  secondary_slot_parent_only:
+    "İkinci telefon yalnız veli hesaplarına özeldir.",
+};
+
+function phoneErrorMessage(err: ApiError): string {
+  const code = errorCode(err);
+  return (code && PHONE_ERROR_LABELS[code]) || errorMessage(err, "İşlem başarısız oldu");
+}
+
+export function usePhoneStart() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PhoneMutationResult>, ApiError, StartPhoneVerificationBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<PhoneMutationResult>>("/api/v2/me/phone/start", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (err) => toast.error(phoneErrorMessage(err)),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "Doğrulama kodu gönderildi.");
+    },
+  });
+}
+
+export function usePhoneVerify() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PhoneMutationResult>, ApiError, VerifyPhoneBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<PhoneMutationResult>>("/api/v2/me/phone/verify", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (err) => toast.error(phoneErrorMessage(err)),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "Telefon doğrulandı.");
+    },
+  });
+}
+
+export function usePhoneDelete() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PhoneMutationResult>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<PhoneMutationResult>>("/api/v2/me/phone/delete", {
+        method: "POST",
+      }),
+    onError: (err) => toast.error(phoneErrorMessage(err)),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "Telefon kaldırıldı.");
+    },
+  });
+}
+
+export function usePhoneSecondaryStart() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PhoneMutationResult>, ApiError, StartPhoneVerificationBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<PhoneMutationResult>>(
+        "/api/v2/me/phone-secondary/start",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (err) => toast.error(phoneErrorMessage(err)),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "Doğrulama kodu gönderildi.");
+    },
+  });
+}
+
+export function usePhoneSecondaryVerify() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PhoneMutationResult>, ApiError, VerifyPhoneBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<PhoneMutationResult>>(
+        "/api/v2/me/phone-secondary/verify",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (err) => toast.error(phoneErrorMessage(err)),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "İkinci telefon doğrulandı.");
+    },
+  });
+}
+
+export function usePhoneSecondaryDelete() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PhoneMutationResult>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<PhoneMutationResult>>(
+        "/api/v2/me/phone-secondary/delete",
+        { method: "POST" },
+      ),
+    onError: (err) => toast.error(phoneErrorMessage(err)),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "İkinci telefon kaldırıldı.");
     },
   });
 }

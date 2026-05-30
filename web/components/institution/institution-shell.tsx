@@ -23,6 +23,7 @@ import {
   LogOut,
   Mail,
   Menu,
+  MessageSquare,
   ScrollText,
   Target,
   Users,
@@ -35,6 +36,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { InstitutionBrand } from "@/components/institution-brand";
+import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { getInstitutionBadges, institutionKeys } from "@/lib/api/institution";
 import type { InstitutionBadgesResponse } from "@/lib/types/institution";
@@ -87,6 +89,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/institution/teachers", label: "Öğretmenler", icon: Users },
       { href: "/institution/invitations", label: "Davet", icon: Mail },
       { href: "/institution/roster", label: "Roster", icon: ScrollText },
+      { href: "/institution/bulk-wa", label: "Toplu WhatsApp", icon: MessageSquare },
     ],
   },
   {
@@ -247,6 +250,7 @@ export function InstitutionShell({ user, institution, children }: Props) {
       </header>
 
       <main className="flex-1 min-w-0">
+        <PhoneVerifyBanner phoneVerified={user.phone_verified ?? true} />
         <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</div>
       </main>
 

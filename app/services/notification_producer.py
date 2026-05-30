@@ -34,13 +34,15 @@ from app.models import (
     NotificationStatus,
     ParentNotificationPref,
     ParentStudentLink,
+    User,
 )
 
 
 logger = logging.getLogger(__name__)
 
 
-# Hangi bildirim türü hangi pref alanını kontrol eder
+# Hangi bildirim türü hangi pref alanını kontrol eder.
+# E-POSTA kanalı için: mevcut `*_enabled` alanları (default=True, opt-out).
 _KIND_TO_PREF_FIELD: dict[NotificationKind, str] = {
     NotificationKind.DAILY_SUMMARY: "daily_summary_enabled",
     NotificationKind.EMPTY_DAY: "empty_day_alert_enabled",
@@ -50,6 +52,18 @@ _KIND_TO_PREF_FIELD: dict[NotificationKind, str] = {
     NotificationKind.TEACHER_NOTE: "teacher_note_enabled",
     NotificationKind.EXAM_APPROACHING: "exam_approaching_enabled",
     # INVITATION ve OTP her zaman gönderilir — pref kontrolü yok
+}
+
+# WHATSAPP kanalı için: yeni `*_wa_enabled` alanları (default=False, opt-in / KVKK).
+# Producer step 2'de kanala göre seçilir.
+_KIND_TO_PREF_FIELD_WA: dict[NotificationKind, str] = {
+    NotificationKind.DAILY_SUMMARY: "daily_summary_wa_enabled",
+    NotificationKind.EMPTY_DAY: "empty_day_alert_wa_enabled",
+    NotificationKind.WEEKLY_REPORT: "weekly_report_wa_enabled",
+    NotificationKind.NEW_PROGRAM: "new_program_alert_wa_enabled",
+    NotificationKind.DROP_ALERT: "drop_alert_wa_enabled",
+    NotificationKind.TEACHER_NOTE: "teacher_note_wa_enabled",
+    NotificationKind.EXAM_APPROACHING: "exam_approaching_wa_enabled",
 }
 
 # WhatsApp olmasa da gönderilen tip (INVITATION/OTP gibi sistem mesajları)
@@ -162,10 +176,20 @@ def enqueue_notification(
         db.flush()
         return log
 
-    # 2) Tür bazlı pref kapalı → SUPPRESSED
+    # 2) Tür + kanal bazlı pref kapalı → SUPPRESSED
+    # E-posta için *_enabled (default=True), WhatsApp için *_wa_enabled (default=False).
+    # SMS kanalı yalnız OTP'de kullanıldığı için pref kontrolünden geçmez (bypass).
     if pref and kind not in _BYPASS_PREF_KINDS:
-        field = _KIND_TO_PREF_FIELD.get(kind)
-        if field is not None and not getattr(pref, field, True):
+        if channel == NotificationChannel.EMAIL:
+            field = _KIND_TO_PREF_FIELD.get(kind)
+            default_enabled = True
+        elif channel == NotificationChannel.WHATSAPP:
+            field = _KIND_TO_PREF_FIELD_WA.get(kind)
+            default_enabled = False
+        else:
+            field = None
+            default_enabled = True
+        if field is not None and not getattr(pref, field, default_enabled):
             log = NotificationLog(
                 parent_id=parent_id, student_id=student_id, kind=kind, channel=channel,
                 status=NotificationStatus.SUPPRESSED,
@@ -176,14 +200,19 @@ def enqueue_notification(
             db.flush()
             return log
 
-    # 3) WhatsApp kanalı için pref + telefon doğrulama kontrolü
+    # 3) WhatsApp kanalı için telefon doğrulama kontrolü.
+    # P1 (2026-05-30): tek doğruluk kaynağı User.phone + User.phone_verified_at.
+    # Eski pref.whatsapp_phone artık kullanılmıyor (veri P1 migration'da User'a
+    # taşındı). Geriye uyum için pref.whatsapp_phone hâlâ dolu olabilir ama
+    # bakmıyoruz; User üzerinden doğrulamayı kontrol ederiz.
     if channel == NotificationChannel.WHATSAPP and kind not in _BYPASS_PREF_KINDS:
-        if not pref or not pref.whatsapp_enabled or not pref.whatsapp_phone:
+        parent_user = db.query(User).filter(User.id == parent_id).first()
+        if not parent_user or not parent_user.phone or not parent_user.phone_verified_at:
             log = NotificationLog(
                 parent_id=parent_id, student_id=student_id, kind=kind, channel=channel,
                 status=NotificationStatus.SUPPRESSED,
                 subject=subject, payload_json=_safe_json(payload),
-                error="whatsapp_not_enabled",
+                error="phone_not_verified",
             )
             db.add(log)
             db.flush()

@@ -142,9 +142,22 @@ def release_task_items(db: Session, student_id: int, items: list[TaskBookItem]) 
         # completed kısmı çözüldüye sayılır, geri alınmaz
 
 
-def complete_task(db: Session, task) -> None:
+def complete_task(
+    db: Session,
+    task,
+    *,
+    correct: int | None = None,
+    wrong: int | None = None,
+) -> None:
     """Görevdeki tüm kalemleri planlanan miktar kadar çözüldüye çevir.
     Her kalem için: reserved'den (planned - already_completed) kadarını completed'e transfer et.
+
+    Opsiyonel `correct` / `wrong`: yalnız **tek kalemli** görevlerde anlamlı (tek
+    tıkla tamamla sheet'i). Çoklu kalemli görevlerde kalem-bazlı set_item_completion
+    ile girilir; bu params yok sayılır.
+
+    Validation çağrı yerinde (endpoint Pydantic body) yapılır; servis defansif
+    olarak yalnız non-negatif değerleri yazar.
     """
     from app.models import TaskStatus  # lokal import — döngü önlemek için
 
@@ -175,6 +188,13 @@ def complete_task(db: Session, task) -> None:
         progress.reserved_count -= to_complete
         progress.completed_count += to_complete
         it.completed_count = it.planned_count
+    # Tek kalemli görevde D/Y uygulanır (mobil "Tamam + sayıyla" sheet'i).
+    if len(task.book_items) == 1 and (correct is not None or wrong is not None):
+        single = task.book_items[0]
+        if correct is not None and correct >= 0:
+            single.correct_count = correct
+        if wrong is not None and wrong >= 0:
+            single.wrong_count = wrong
     task.status = TaskStatus.COMPLETED
     from datetime import datetime, timezone
     task.completed_at = datetime.now(timezone.utc)
@@ -200,13 +220,29 @@ def uncomplete_task(db: Session, task) -> None:
         # Kitap kapasitesini aşma ihtimali: teorik olarak aşmaz çünkü completed+reserved
         # toplamı yine aynı kalıyor.
         it.completed_count = 0
+        # Tamamlama geri alınınca D/Y de sıfırlanır — eski sonucun stale kalmasını önle.
+        it.correct_count = None
+        it.wrong_count = None
     task.status = TaskStatus.PENDING
     task.completed_at = None
 
 
-def set_item_completion(db: Session, item: TaskBookItem, new_completed: int) -> None:
+def set_item_completion(
+    db: Session,
+    item: TaskBookItem,
+    new_completed: int,
+    *,
+    correct: int | None = None,
+    wrong: int | None = None,
+) -> None:
     """Tek bir kalemin tamamlanan sayısını manuel ayarla (kısmi tamamlama).
     new_completed: 0..planned_count arası. SectionProgress'i uygun şekilde günceller.
+
+    Opsiyonel `correct` / `wrong`: bu kalem için doğru/yanlış sonucu.
+    Endpoint validation: correct + wrong ≤ new_completed. Servis defansif:
+      - new_completed == 0 → D/Y de None'a düşer (tutarlılık)
+      - sentinel `None` geçilirse alan güncellenmez (mevcut değer korunur)
+      - `0` geçilirse alan 0 olarak yazılır (kullanıcı eski D/Y'yi temizleyebilir)
     """
     from app.models import TaskStatus
 
@@ -216,10 +252,14 @@ def set_item_completion(db: Session, item: TaskBookItem, new_completed: int) -> 
         new_completed = item.planned_count
     delta = new_completed - item.completed_count
     if delta == 0:
+        # Sayım değişmediyse bile D/Y güncellemesi yapılabilir (örn. öğrenci
+        # tamamlama yaptıktan sonra D/Y'yi sonradan girer).
+        _apply_result_fields(item, new_completed, correct, wrong)
         return
     if item.book_id is None:
         # Kitapsız deneme kalemi: rezerv/kapasite yok, doğrudan ayarla.
         item.completed_count = new_completed
+        _apply_result_fields(item, new_completed, correct, wrong)
         return
     progress, section = _get_progress(
         db, item.task.student_id, item.book_id, item.book_section_id
@@ -244,5 +284,32 @@ def set_item_completion(db: Session, item: TaskBookItem, new_completed: int) -> 
         progress.completed_count = max(0, progress.completed_count + delta)  # delta negatif
         progress.reserved_count -= delta  # delta negatif; yani arttırır
     item.completed_count = new_completed
+    _apply_result_fields(item, new_completed, correct, wrong)
     # Görev durumu güncelleme çağrı yerinde yapılabilir
+
+
+def _apply_result_fields(
+    item: TaskBookItem,
+    new_completed: int,
+    correct: int | None,
+    wrong: int | None,
+) -> None:
+    """D/Y alanlarını item üzerine güvenle uygula.
+
+    - new_completed == 0 → D/Y daima None (tamamlama yoksa sonuç da yok)
+    - sentinel None → alan değişmez (kullanıcı güncellemedi)
+    - sayı geçildi → alan üzerine yazılır (0 da yazılır — "sıfırla" anlamı)
+
+    Bu helper, D/Y validation'ını **yapmaz** (correct+wrong ≤ completed kuralı
+    endpoint Pydantic body'sinde uygulanır; servis pratik klamp yapar).
+    """
+    if new_completed == 0:
+        item.correct_count = None
+        item.wrong_count = None
+        return
+    if correct is not None:
+        item.correct_count = max(0, correct)
+    if wrong is not None:
+        item.wrong_count = max(0, wrong)
+
 

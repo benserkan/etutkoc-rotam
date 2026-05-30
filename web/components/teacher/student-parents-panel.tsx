@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Mail, Plus, Send, Trash2 } from "lucide-react";
+import { Loader2, Mail, MessageSquare, Plus, Send, Trash2 } from "lucide-react";
+
+import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
 
 import { getTeacherStudentParents, teacherKeys } from "@/lib/api/teacher";
 import {
@@ -127,6 +129,7 @@ function ParentLinkRow({
   studentId: number;
 }) {
   const mut = useUnlinkParent(studentId);
+  const [waOpen, setWaOpen] = React.useState(false);
   function onRemove() {
     if (
       !window.confirm(
@@ -152,6 +155,16 @@ function ParentLinkRow({
       <Button
         variant="ghost"
         size="sm"
+        onClick={() => setWaOpen(true)}
+        aria-label="WhatsApp gönder"
+        title="Veliye WhatsApp mesajı gönder"
+        className="text-emerald-700"
+      >
+        <MessageSquare className="size-4" aria-hidden />
+      </Button>
+      <Button
+        variant="ghost"
+        size="sm"
         onClick={onRemove}
         disabled={mut.isPending}
         aria-label="Bağlantıyı kaldır"
@@ -162,6 +175,14 @@ function ParentLinkRow({
           <Trash2 className="size-4" aria-hidden />
         )}
       </Button>
+      <WaSendDialog
+        open={waOpen}
+        onOpenChange={setWaOpen}
+        targetUserId={link.parent_id}
+        targetNameFallback={link.parent_full_name}
+        title={`${link.parent_full_name} (Veli) — WhatsApp Mesajı`}
+        defaultCategory="veli"
+      />
     </li>
   );
 }

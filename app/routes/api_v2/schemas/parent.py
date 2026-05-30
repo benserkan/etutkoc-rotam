@@ -225,7 +225,12 @@ class ParentNotificationsResponse(BaseModel):
 
 
 class ParentPreferencesInfo(BaseModel):
-    """ParentNotificationPref durumu — 7 toggle + sessiz saatler + unsubscribe."""
+    """ParentNotificationPref durumu — 7 toggle × 2 kanal + sessiz saatler + unsubscribe.
+
+    `*_enabled` = e-posta tarafı (default açık, opt-out).
+    `*_wa_enabled` = WhatsApp tarafı (default kapalı, opt-in — KVKK).
+    `child_whatsapp_consent` = 18 yaş altı öğrenciye doğrudan WA için veli onayı.
+    """
     daily_summary_enabled: bool
     weekly_report_enabled: bool
     empty_day_alert_enabled: bool
@@ -233,6 +238,15 @@ class ParentPreferencesInfo(BaseModel):
     new_program_alert_enabled: bool
     teacher_note_enabled: bool
     exam_approaching_enabled: bool
+    # P0 — WhatsApp kanal toggle'ları
+    daily_summary_wa_enabled: bool = False
+    weekly_report_wa_enabled: bool = False
+    empty_day_alert_wa_enabled: bool = False
+    drop_alert_wa_enabled: bool = False
+    new_program_alert_wa_enabled: bool = False
+    teacher_note_wa_enabled: bool = False
+    exam_approaching_wa_enabled: bool = False
+    child_whatsapp_consent: bool = False
     quiet_hours_start: str  # HH:MM
     quiet_hours_end: str
     unsubscribed_at: datetime | None = None
@@ -273,7 +287,12 @@ class ParentSettingsResponse(BaseModel):
 
 
 class ParentPreferencesBody(BaseModel):
-    """POST /api/v2/parent/settings/preferences — 7 toggle + sessiz saatler."""
+    """POST /api/v2/parent/settings/preferences — 7 e-posta toggle + 7 WhatsApp toggle
+    + sessiz saatler + 18 yaş altı WA onayı.
+
+    WhatsApp toggle'ları (`*_wa`) ve `child_whatsapp_consent` opsiyoneldir; eski
+    istemciler göndermezse mevcut değerler korunur (False ise False kalır).
+    """
     daily_summary: bool
     weekly_report: bool
     empty_day: bool
@@ -281,6 +300,15 @@ class ParentPreferencesBody(BaseModel):
     drop_alert: bool
     teacher_note: bool
     exam_approaching: bool
+    # P0 — WhatsApp kanal toggle'ları (opsiyonel, default False)
+    daily_summary_wa: bool = False
+    weekly_report_wa: bool = False
+    empty_day_wa: bool = False
+    new_program_wa: bool = False
+    drop_alert_wa: bool = False
+    teacher_note_wa: bool = False
+    exam_approaching_wa: bool = False
+    child_whatsapp_consent: bool = False
     quiet_start: str = Field(default="22:00", description="HH:MM")
     quiet_end: str = Field(default="07:00", description="HH:MM")
 
@@ -325,11 +353,30 @@ class ParentInvitationInfo(BaseModel):
 
 
 class ParentInvitationAcceptBody(BaseModel):
-    """POST /api/v2/parent/invitation/{token}/accept body."""
+    """POST /api/v2/parent/invitation/{token}/accept body.
+
+    P0 (2026-05-30): aktivasyon ekranındaki iletişim tercih matrisinden gelen
+    7 e-posta + 7 WhatsApp toggle'ı + sessiz saat + 18 yaş altı WA onayı
+    OPSİYONEL olarak alınır. Eski istemci bunları göndermezse varsayılan değerler
+    kullanılır (e-posta açık, WhatsApp kapalı).
+
+    P1 (2026-05-30): `phone` alanı yeni istemcilerde zorunlu — kullanıcı
+    aktivasyonda cep telefonunu girer, hesap oluştuktan sonra panelde
+    "Telefonunuzu doğrulayın" banner'ı SMS OTP başlatır. Eski istemcilerde
+    opsiyonel (geriye uyum) — telefon verilmeyebilir, sonra /me/account'tan eklenir.
+    """
     full_name: str = Field(min_length=1, max_length=120)
     password: str = Field(min_length=1, max_length=255)
     password_confirm: str
     kvkk_accept: bool
+    # P1 — cep telefonu (opsiyonel: eski istemci uyumluluğu)
+    phone: str | None = None
+    # İletişim tercihleri (opsiyonel — yeni istemcilerden gelir)
+    # E-posta: varsayılan True; WhatsApp: varsayılan False; sessiz saat HH:MM
+    notification_preferences: dict[str, bool] | None = None
+    quiet_start: str | None = Field(default=None, description="HH:MM")
+    quiet_end: str | None = Field(default=None, description="HH:MM")
+    child_whatsapp_consent: bool = False
 
 
 class ParentInvitationAcceptResult(BaseModel):

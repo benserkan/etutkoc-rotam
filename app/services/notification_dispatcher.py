@@ -145,16 +145,17 @@ def _send_email(parent: User, log: NotificationLog) -> tuple[bool, str | None, s
 
 
 def _send_whatsapp(
-    pref: ParentNotificationPref, log: NotificationLog
+    user: User | None, log: NotificationLog
 ) -> tuple[bool, str | None, str | None]:
-    """WhatsApp Cloud API çağrısı (Sprint 4'te stub, Sprint 6'da gerçek)."""
-    if not pref or not pref.whatsapp_phone:
-        return False, None, "no_whatsapp_phone"
+    """WhatsApp Cloud API çağrısı. P1 (2026-05-30): kullanıcı telefonu
+    User.phone'dan okunur (eski pref.whatsapp_phone yerine)."""
+    if not user or not user.phone or not user.phone_verified_at:
+        return False, None, "no_verified_phone"
     payload = _decode_payload(log)
     template = payload.get("__wa_template", f"veli_{log.kind.value}")
     components = payload.get("__wa_components", [])
     result = whatsapp.send_template(
-        to_phone=pref.whatsapp_phone,
+        to_phone=user.phone,
         template_name=template,
         components=components,
     )
@@ -213,7 +214,7 @@ def _dispatch_one(
             log.error = "feature_flag_disabled"
             log.next_attempt_at = None
             return
-        ok, ext_id, err = _send_whatsapp(pref, log)
+        ok, ext_id, err = _send_whatsapp(parent, log)
     else:
         ok, ext_id, err = False, None, f"unknown_channel:{log.channel}"
 

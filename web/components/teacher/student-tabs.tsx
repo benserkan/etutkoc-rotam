@@ -12,6 +12,8 @@ import {
   CheckCircle2,
   Dna,
   Loader2,
+  MessageSquare,
+  Pencil,
   RefreshCw,
   Target,
   Timer,
@@ -19,7 +21,14 @@ import {
 
 import { teacherKeys } from "@/lib/api/teacher";
 import { useTeacherStudent } from "@/lib/hooks/use-teacher-queries";
-import { useSetWeekAnchor } from "@/lib/hooks/use-teacher-mutations";
+import { useSetWeekAnchor, usePatchStudent } from "@/lib/hooks/use-teacher-mutations";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { TeacherStudentDetailResponse } from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -28,6 +37,7 @@ import { StudentAnalyticsPanel } from "@/components/teacher/student-analytics-pa
 import { StudentExamsPanel } from "@/components/teacher/student-exams-panel";
 import { StudentSessionsPanel } from "@/components/teacher/student-sessions-panel";
 import { StudentParentsPanel } from "@/components/teacher/student-parents-panel";
+import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
 
 type TabKey = "summary" | "analytics" | "exams" | "sessions" | "books" | "parents";
 
@@ -116,6 +126,8 @@ export function StudentTabs({ studentId, initial }: Props) {
 
           <QuickActions
             studentId={studentId}
+            studentName={s.full_name}
+            studentEmail={s.email}
             isGraduate={s.is_graduate}
             onRefresh={refreshAll}
             isRefreshing={q.isFetching}
@@ -407,17 +419,56 @@ function Pill({
 
 function QuickActions({
   studentId,
+  studentName,
+  studentEmail,
   isGraduate,
   onRefresh,
   isRefreshing,
 }: {
   studentId: number;
+  studentName: string;
+  studentEmail: string;
   isGraduate: boolean;
   onRefresh: () => void;
   isRefreshing: boolean;
 }) {
+  const [waOpen, setWaOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
   return (
     <div className="flex flex-wrap items-center gap-1.5">
+      <button
+        type="button"
+        onClick={() => setEditOpen(true)}
+        title="Öğrenci ad ve e-posta bilgisini düzenle"
+        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-muted transition"
+      >
+        <Pencil className="size-3.5" aria-hidden />
+        Profili Düzenle
+      </button>
+      <EditStudentProfileDialog
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
+        studentId={studentId}
+        initialFullName={studentName}
+        initialEmail={studentEmail}
+      />
+      <button
+        type="button"
+        onClick={() => setWaOpen(true)}
+        title="Öğrenciye WhatsApp gönder"
+        className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-800 px-2.5 py-1.5 text-xs hover:bg-emerald-100 transition"
+      >
+        <MessageSquare className="size-3.5" aria-hidden />
+        WA Gönder
+      </button>
+      <WaSendDialog
+        open={waOpen}
+        onOpenChange={setWaOpen}
+        targetUserId={studentId}
+        targetNameFallback={studentName}
+        title={`${studentName} (Öğrenci) — WhatsApp Mesajı`}
+        defaultCategory="ogrenci"
+      />
       <button
         type="button"
         onClick={onRefresh}
@@ -931,4 +982,128 @@ function weekdayFromIso(iso: string): number {
   // JS getDay: 0=Sun..6=Sat → istediğimiz 0=Mon..6=Sun
   const jsDow = new Date(Date.UTC(y, m - 1, d)).getUTCDay();
   return jsDow === 0 ? 6 : jsDow - 1;
+}
+
+// =============================================================================
+// EditStudentProfileDialog — koç ad + e-posta düzenleme
+// (M2: koç öğrenci e-postasını güncelleyebilir; şifre dokunulmaz)
+// =============================================================================
+
+function EditStudentProfileDialog({
+  open,
+  onClose,
+  studentId,
+  initialFullName,
+  initialEmail,
+}: {
+  open: boolean;
+  onClose: () => void;
+  studentId: number;
+  initialFullName: string;
+  initialEmail: string;
+}) {
+  if (!open) return null;
+  return (
+    <EditStudentProfileDialogInner
+      onClose={onClose}
+      studentId={studentId}
+      initialFullName={initialFullName}
+      initialEmail={initialEmail}
+    />
+  );
+}
+
+function EditStudentProfileDialogInner({
+  onClose,
+  studentId,
+  initialFullName,
+  initialEmail,
+}: {
+  onClose: () => void;
+  studentId: number;
+  initialFullName: string;
+  initialEmail: string;
+}) {
+  const [fullName, setFullName] = React.useState(initialFullName);
+  const [email, setEmail] = React.useState(initialEmail);
+  const mut = usePatchStudent(studentId);
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const body: { full_name?: string; email?: string } = {};
+    const trimmedName = fullName.trim();
+    const trimmedEmail = email.trim();
+    if (trimmedName !== initialFullName.trim()) body.full_name = trimmedName;
+    if (trimmedEmail.toLowerCase() !== initialEmail.toLowerCase())
+      body.email = trimmedEmail;
+    if (Object.keys(body).length === 0) {
+      onClose();
+      return;
+    }
+    mut.mutate(
+      { body },
+      {
+        onSuccess: () => onClose(),
+      },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Profili Düzenle</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1.5">
+              Ad Soyad
+            </label>
+            <input
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1.5">
+              E-posta
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+              required
+            />
+            <p className="text-[11px] text-muted-foreground mt-1.5">
+              E-posta değişirse öğrencinin yeni adresi sistem tarafından
+              doğrulanmamış sayılır. Şifre değişmez, oturum kesilmez.
+            </p>
+          </div>
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-sm rounded-md border border-border hover:bg-muted transition"
+            >
+              Vazgeç
+            </button>
+            <button
+              type="submit"
+              disabled={mut.isPending}
+              className="px-4 py-2 text-sm rounded-md bg-foreground text-background font-medium hover:bg-foreground/90 disabled:opacity-40 transition inline-flex items-center gap-2"
+            >
+              {mut.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : null}
+              Kaydet
+            </button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }

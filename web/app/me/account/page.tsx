@@ -1,10 +1,12 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CalendarClock, Building2, Users, ShieldCheck, FileText } from "lucide-react";
+import { ArrowLeft, CalendarClock, Building2, Users, ShieldCheck, FileText } from "lucide-react";
 
 import { apiServer } from "@/lib/api-server";
 import { ApiError } from "@/lib/api";
 import type { MyAccountResponse } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
+import { roleHome } from "@/lib/role-home";
 import { formatDate, formatDateShort, formatRelative } from "@/lib/locale";
 import { SectionPanel } from "@/components/section-panel";
 import { JargonTooltip } from "@/components/jargon-tooltip";
@@ -15,6 +17,7 @@ import { PasswordChangeCard } from "@/components/password-change-card";
 import { TwoFactorCard } from "@/components/me/two-factor-card";
 import { SessionsCard } from "@/components/me/sessions-card";
 import { EmailVerifyBanner } from "@/components/me/email-verify-banner";
+import { PhoneCard } from "@/components/me/phone-card";
 
 export const metadata = {
   title: "Hesabım",
@@ -37,8 +40,33 @@ export default async function MeAccountPage() {
 
   const { user, institution, parent_links, kvkk_status, recent_requests } = data;
 
+  // Rol bazlı panel ana sayfa linki (login landing tek kaynak)
+  const panelHome = roleHome(user.role);
+  const panelHomeLabel = (() => {
+    switch (user.role) {
+      case "teacher": return "Koç paneli";
+      case "parent": return "Veli paneli";
+      case "institution_admin": return "Kurum paneli";
+      case "super_admin": return "Yönetim paneli";
+      case "student": return "Bugün";
+      default: return "Ana sayfa";
+    }
+  })();
+
   return (
     <main className="max-w-4xl mx-auto px-4 py-10 space-y-6">
+      {/* Panele geri dönüş — /me/account standalone, kullanıcı tarayıcı geri
+          tuşuna mahkum kalmasın diye explicit link. */}
+      <div>
+        <Link
+          href={panelHome}
+          className="inline-flex items-center gap-1 text-xs font-semibold text-[#117A86] hover:text-[#0E5F69] transition-colors"
+        >
+          <ArrowLeft className="size-3.5" aria-hidden />
+          {panelHomeLabel}
+        </Link>
+      </div>
+
       {/* Sayfa başlığı + ana eylemler */}
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="space-y-1">
@@ -154,6 +182,10 @@ export default async function MeAccountPage() {
           </ul>
         </SectionPanel>
       ) : null}
+
+      {/* P1 — cep telefonu (tüm roller); ikinci telefon yalnız PARENT'ta görünür */}
+      <PhoneCard slot="primary" initial={data} />
+      <PhoneCard slot="secondary" initial={data} />
 
       {/* Hesap şifresi */}
       <PasswordChangeCard

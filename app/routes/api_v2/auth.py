@@ -98,6 +98,10 @@ class SignupTeacherIn(BaseModel):
     password_confirm: str
     accept_terms: bool = False
     turnstile_token: str = ""
+    # P1 (2026-05-30): cep telefonu — yeni istemcide zorunlu; eski istemci
+    # opsiyonel (geriye uyum). Verilirse User.phone'a normalize edilip yazılır,
+    # verified_at=None — kullanıcı panelden OTP ile doğrulayacak.
+    phone: str | None = None
     # /pricing'den "14 gün ücretsiz dene" ile gelen koç bir tier seçmiş olur
     # (solo_pro/solo_elite/solo_unlimited). Trial bitince bu plan'a geçmek için
     # ödeme talep edilir; başka tier verilirse veya boşsa varsayılan solo_free.
@@ -110,6 +114,8 @@ class SignupInviteIn(BaseModel):
     password: str
     password_confirm: str
     accept_terms: bool = False
+    # P1 — cep telefonu (opsiyonel: eski istemci uyumluluğu)
+    phone: str | None = None
 
 
 class InvitationInfoOut(BaseModel):
@@ -707,6 +713,19 @@ def v2_signup_teacher(
                     "message": "Bu e-posta zaten kayıtlı. Giriş yapmayı deneyin."},
         )
 
+    # P1 — cep telefonu (opsiyonel; verilirse normalize edilip kaydedilir,
+    # verified_at=None — panelden OTP ile doğrulanır)
+    phone_normalized: str | None = None
+    if payload.phone:
+        from app.services.phone_service import normalize_e164_tr
+        phone_normalized = normalize_e164_tr(payload.phone)
+        if not phone_normalized:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "invalid", "code": "invalid_phone",
+                        "message": "Geçersiz telefon numarası. Türkiye cep telefonu formatı gerekir."},
+            )
+
     new_user = User(
         email=email_clean,
         password_hash=hash_password(payload.password),
@@ -716,6 +735,7 @@ def v2_signup_teacher(
         is_active=True,
         password_changed_at=datetime.now(timezone.utc),
         must_change_password=False,
+        phone=phone_normalized,
     )
     db.add(new_user)
     db.flush()
@@ -849,6 +869,18 @@ def v2_signup_invite(
                                 "message": f"Kuota: {e.message}"},
                     )
 
+    # P1 — cep telefonu (opsiyonel)
+    phone_normalized: str | None = None
+    if payload.phone:
+        from app.services.phone_service import normalize_e164_tr
+        phone_normalized = normalize_e164_tr(payload.phone)
+        if not phone_normalized:
+            raise HTTPException(
+                status_code=400,
+                detail={"error": "invalid", "code": "invalid_phone",
+                        "message": "Geçersiz telefon numarası. Türkiye cep telefonu formatı gerekir."},
+            )
+
     new_user = User(
         email=email_clean,
         password_hash=hash_password(payload.password),
@@ -858,6 +890,7 @@ def v2_signup_invite(
         is_active=True,
         password_changed_at=datetime.now(timezone.utc),
         must_change_password=False,
+        phone=phone_normalized,
     )
     db.add(new_user)
     db.flush()

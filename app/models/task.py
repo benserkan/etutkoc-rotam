@@ -56,6 +56,11 @@ class Task(Base):
     # Opsiyonel saat (0-23). NULL = saatsiz (eski davranış); set ise gün içi
     # sıralamada öncelik kazanır (hour NULLS LAST, order, id).
     scheduled_hour: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Opsiyonel periyot (M6): "morning" | "noon" | "evening" | NULL.
+    # NULL = period atanmamış. scheduled_hour'dan BAĞIMSIZ — koç açıkça seçer.
+    # Hiç görev period dolu değilse öğrenci görünümü tek liste (geriye uyum).
+    # En az 1 dolu ise 4 başlıklı bölüm: Sabah/Öğle/Akşam/Saatsiz.
+    period: Mapped[str | None] = mapped_column(String(16), nullable=True)
     # Tip-spesifik bağlantı (video URL vb.). notes ise konu/açıklama için.
     link_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
     # Taslak/yayın mantığı: True iken görev sadece öğretmende görünür; False iken

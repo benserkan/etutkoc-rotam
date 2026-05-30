@@ -33,6 +33,9 @@ export interface UserPublic {
   is_active: boolean;
   must_change_password: boolean;
   email_verified?: boolean;
+  // P1 — cep telefonu SMS ile doğrulandı mı? Banner: false iken her panelin
+  // üstünde kapatılamaz "Telefonunuzu doğrulayın" uyarısı kalır.
+  phone_verified?: boolean;
   last_login_at: string | null;
   created_at: string | null;
 }
@@ -80,6 +83,37 @@ export interface MyAccountResponse {
   parent_links: ParentLinkRef[];
   kvkk_status: KvkkStatus;
   recent_requests: DataRequestSummary[];
+  phone: MyPhoneInfo | null;
+}
+
+// P1 — telefon durumu (her iki slot)
+export interface MyPhoneInfo {
+  phone: string | null;
+  phone_verified_at: string | null;
+  phone_pending_verify: boolean;
+  phone_pending_phone: string | null;
+  phone_pending_expires_at: string | null;
+  phone_dev_test_code: string | null;
+  phone_secondary: string | null;
+  phone_secondary_verified_at: string | null;
+  phone_secondary_pending_verify: boolean;
+  phone_secondary_pending_phone: string | null;
+  phone_secondary_pending_expires_at: string | null;
+  phone_secondary_dev_test_code: string | null;
+  secondary_slot_available: boolean;
+}
+
+export interface StartPhoneVerificationBody {
+  phone: string;
+}
+
+export interface VerifyPhoneBody {
+  code: string;
+}
+
+export interface PhoneMutationResult {
+  message: string;
+  info: MyPhoneInfo;
 }
 
 export interface LoginResponse {

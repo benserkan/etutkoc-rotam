@@ -31,6 +31,8 @@ const Schema = z
   .object({
     full_name: z.string().min(3, "Ad Soyad en az 3 karakter"),
     email: z.string().min(1, "E-posta gerekli").email("Geçerli bir e-posta girin"),
+    // P1 — cep telefonu zorunlu, SMS ile doğrulanır
+    phone: z.string().min(10, "Cep telefonunuzu girin (örn: 0532 123 45 67)"),
     password: z.string().min(10, "Öğretmen şifresi en az 10 karakter olmalı"),
     password_confirm: z.string().min(1, "Şifre tekrarı gerekli"),
     accept_terms: z.boolean().refine((v) => v, "Kullanım şartlarını kabul etmelisiniz"),
@@ -67,7 +69,7 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
 
   const form = useForm<Values>({
     resolver: zodResolver(Schema),
-    defaultValues: { full_name: "", email: "", password: "", password_confirm: "", accept_terms: false },
+    defaultValues: { full_name: "", email: "", phone: "", password: "", password_confirm: "", accept_terms: false },
   });
 
   const renderWidget = React.useCallback(() => {
@@ -113,6 +115,10 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
           form.setError("email", { message: "Bu e-posta zaten kayıtlı. Giriş yapmayı deneyin." });
         } else if (code === "captcha_failed") {
           form.setError("email", { message: "Güvenlik doğrulaması başarısız, tekrar deneyin." });
+        } else if (code === "invalid_phone") {
+          form.setError("phone", {
+            message: "Geçersiz telefon. Türkiye cep formatı: 0532… veya +90 532…",
+          });
         } else if (code === "signup_invalid") {
           toast.error("Kayıt bilgileri geçersiz", { description: e.detail?.message });
         } else if (e.status === 429) {
@@ -155,6 +161,19 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
           {form.formState.errors.email ? (
             <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
           ) : null}
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="phone">Cep telefonu</Label>
+          <Input id="phone" type="tel" autoComplete="tel" placeholder="0532 123 45 67" disabled={isSubmitting}
+                 {...form.register("phone")} aria-invalid={!!form.formState.errors.phone} />
+          {form.formState.errors.phone ? (
+            <p className="text-sm text-destructive">{form.formState.errors.phone.message}</p>
+          ) : (
+            <p className="text-xs text-muted-foreground">
+              Kayıttan sonra SMS ile gönderilecek 6 haneli kodla doğrulayacaksınız.
+              Bildirimler ve şifre sıfırlama için kullanılır.
+            </p>
+          )}
         </div>
         <div className="space-y-2">
           <Label htmlFor="password">Şifre</Label>

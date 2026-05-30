@@ -7,6 +7,12 @@
  */
 import { api, ApiError, type MutationResponse } from "@/lib/api";
 import type {
+  WaTemplateItem,
+  WaTemplateListResponse,
+  WaTemplatePreviewBody,
+  WaTemplatePreviewResult,
+} from "@/lib/types/whatsapp-template";
+import type {
   AccountHistoryResponse,
   AccountOwnerType,
   AdminBadgesResponse,
@@ -237,6 +243,21 @@ export const adminKeys = {
   pricing: () => ["admin", "settings", "pricing"] as const,
   contactRequests: (status: string | null) =>
     ["admin", "contact-requests", status ?? ""] as const,
+  // P2 — WhatsApp şablon registry
+  whatsappTemplates: (
+    category: string | null,
+    targetRole: string | null,
+    includeInactive: boolean,
+  ) =>
+    [
+      "admin",
+      "whatsapp-templates",
+      category ?? "",
+      targetRole ?? "",
+      includeInactive ? "1" : "0",
+    ] as const,
+  whatsappTemplate: (id: number) =>
+    ["admin", "whatsapp-templates", String(id)] as const,
 };
 
 // =============================================================================
@@ -667,4 +688,33 @@ export async function uploadInstitutionLogo(
     throw new ApiError(r.status, detail);
   }
   return r.json() as Promise<MutationResponse<InstitutionMutationResult>>;
+}
+
+// =============================================================================
+// P2 — WhatsApp şablon registry fetcher'ları
+// =============================================================================
+
+export function getAdminWhatsAppTemplates(
+  category: string | null = null,
+  targetRole: string | null = null,
+  includeInactive = true,
+) {
+  const qs = new URLSearchParams();
+  if (category) qs.set("category", category);
+  if (targetRole) qs.set("target_role", targetRole);
+  qs.set("include_inactive", includeInactive ? "true" : "false");
+  return api<WaTemplateListResponse>(
+    `/api/v2/admin/whatsapp-templates?${qs.toString()}`,
+  );
+}
+
+export function getAdminWhatsAppTemplate(id: number) {
+  return api<WaTemplateItem>(`/api/v2/admin/whatsapp-templates/${id}`);
+}
+
+export function previewAdminWhatsAppTemplate(body: WaTemplatePreviewBody) {
+  return api<WaTemplatePreviewResult>(
+    "/api/v2/admin/whatsapp-templates/preview",
+    { method: "POST", body: JSON.stringify(body) },
+  );
 }

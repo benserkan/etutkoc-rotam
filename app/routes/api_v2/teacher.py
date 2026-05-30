@@ -201,6 +201,7 @@ from app.routes.api_v2.schemas.teacher import (
     TaskTemplateModel,
     SetWeekAnchorBody,
     TaskItemPatchBody,
+    TaskItemResultBody,
     TaskPatchBody,
     TaskSingleItemEditBody,
     TeacherBadgesResponse,
@@ -263,6 +264,7 @@ from app.services.task_service import (
     release_item,
     release_task_items,
     reserve_item,
+    set_item_completion as svc_set_item_completion,
 )
 
 
@@ -2449,6 +2451,8 @@ def _build_teacher_task_item(
         section_reserved_count=reserved,
         section_completed_count=completed,
         section_remaining=remaining,
+        correct_count=item.correct_count,
+        wrong_count=item.wrong_count,
     )
 
 
@@ -2478,6 +2482,7 @@ def _build_teacher_task(db: Session, task: Task) -> TeacherTask:
         scheduled_hour=(
             f"{task.scheduled_hour:02d}:00" if task.scheduled_hour is not None else None
         ),
+        period=task.period,
         order=task.order,
         is_draft=bool(task.is_draft),
         notes=task.notes,
@@ -2604,6 +2609,28 @@ def _ensure_count_positive(count: int) -> None:
         )
 
 
+_VALID_PERIODS = {"morning", "noon", "evening"}
+
+
+def _validate_period(p: str | None) -> str | None:
+    """M6 — periyot string normalize. None/boş → None; geçersiz → 422."""
+    if p is None:
+        return None
+    norm = p.strip().lower()
+    if norm == "":
+        return None
+    if norm not in _VALID_PERIODS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation",
+                "code": "invalid_period",
+                "message": "Periyot 'morning' | 'noon' | 'evening' olabilir.",
+            },
+        )
+    return norm
+
+
 def _validate_scheduled_hour(h: int | None) -> int | None:
     if h is None:
         return None
@@ -2664,6 +2691,7 @@ def _create_task_with_items(
     """
     d = _parse_iso_date(payload.date)
     sched = _validate_scheduled_hour(payload.scheduled_hour)
+    period = _validate_period(getattr(payload, "period", None))
     try:
         ttype = TaskType(payload.type)
     except ValueError:
@@ -2710,6 +2738,7 @@ def _create_task_with_items(
         status=TaskStatus.PENDING,
         order=order,
         scheduled_hour=sched,
+        period=period,
         is_draft=is_draft_value,
         published_at=published_at,
         notes=(payload.notes or None),
@@ -3322,6 +3351,9 @@ def teacher_patch_task_v2(
             pass
     if body.scheduled_hour is not None:
         task.scheduled_hour = _validate_scheduled_hour(body.scheduled_hour)
+    if body.period is not None:
+        # Boş string ("") → period temizle (NULL).
+        task.period = _validate_period(body.period if body.period else None)
     if body.order is not None:
         task.order = int(body.order)
     if body.is_draft is not None:
@@ -3404,6 +3436,115 @@ def teacher_add_task_item_v2(
         planned_count=body.planned_count,
         completed_count=0,
     ))
+    db.commit()
+    db.refresh(task)
+    return MutationResponse[TeacherTask](
+        data=_build_teacher_task(db, task),
+        invalidate=_invalidate_for_task(task, user.id),
+    )
+
+
+# ---------------------- POST /tasks/{task_id}/items/{item_id}/result ----------------------
+
+
+def _teacher_validate_result_distribution(
+    *,
+    completed: int,
+    correct: int | None,
+    wrong: int | None,
+    is_book_item: bool,
+) -> None:
+    """D/Y validation — birim duyarlı (öğrenci simetrisi).
+
+    Kitaplı görev: completed = test sayısı; D/Y = soru sayısı (bağımsız) →
+    sadece c ≥ 0, w ≥ 0.
+    Kitapsız deneme: completed = soru; c + w ≤ completed.
+    """
+    c = correct if correct is not None else 0
+    w = wrong if wrong is not None else 0
+    if c < 0 or w < 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation_error",
+                "code": "invalid_result_distribution",
+                "message": "Doğru ve yanlış sayıları negatif olamaz.",
+            },
+        )
+    if not is_book_item and c + w > completed:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation_error",
+                "code": "invalid_result_distribution",
+                "message": (
+                    f"Doğru ({c}) + Yanlış ({w}) = {c + w}, çözülen "
+                    f"({completed}) sorudan fazla olamaz."
+                ),
+            },
+        )
+
+
+@router.post(
+    "/tasks/{task_id}/items/{item_id}/result",
+    response_model=MutationResponse[TeacherTask],
+)
+def teacher_set_task_item_result_v2(
+    task_id: int,
+    item_id: int,
+    body: TaskItemResultBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Koç bir görev kaleminin çözüldü + D/Y sonucunu düzenler.
+
+    Öğrenci girmediyse veya yanlış girdiyse koç düzeltir. completed > planned →
+    klamp (svc tarafında). correct + wrong ≤ completed (validation).
+
+    Tutarlılık: svc_set_item_completion mevcut rezerv/section progress
+    mantığını AYNEN uygular; D/Y opsiyonel parametre olarak iletilir.
+    """
+    task = _get_owned_task(db, task_id, user.id)
+    item = next((i for i in task.book_items if i.id == item_id), None)
+    if not item:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": "not_found",
+                "code": "item_not_found",
+                "message": "Görev kalemi bulunamadı.",
+            },
+        )
+
+    effective_completed = max(0, min(body.completed, item.planned_count))
+    _teacher_validate_result_distribution(
+        completed=effective_completed,
+        correct=body.correct,
+        wrong=body.wrong,
+        is_book_item=item.book_id is not None,
+    )
+
+    try:
+        svc_set_item_completion(
+            db, item, body.completed, correct=body.correct, wrong=body.wrong
+        )
+    except ReservationError as e:
+        db.rollback()
+        raise _reservation_to_http(e)
+
+    # Görev status'ünü kalem toplamlarına göre yeniden değerlendir
+    total_planned = sum(i.planned_count for i in task.book_items)
+    total_done = sum(i.completed_count for i in task.book_items)
+    if total_done == 0:
+        task.status = TaskStatus.PENDING
+        task.completed_at = None
+    elif total_done >= total_planned:
+        task.status = TaskStatus.COMPLETED
+        task.completed_at = datetime.now(timezone.utc)
+    else:
+        task.status = TaskStatus.PARTIAL
+        task.completed_at = None
+
     db.commit()
     db.refresh(task)
     return MutationResponse[TeacherTask](
@@ -4414,7 +4555,48 @@ def teacher_patch_student_v2(
             )
         new_year_id = body.academic_year_id
 
+    # Email değişimi — opsiyonel. Boş string atılırsa "değişmedi" sayılır
+    # (Pydantic str | None None ise zaten None). Format + uniqueness kontrolü.
+    new_email = student.email
+    if body.email is not None:
+        candidate = body.email.strip().lower()
+        if not candidate:
+            # Boş string = "değişme" — sessizce yok say
+            pass
+        elif candidate != student.email.lower():
+            # Basit format kontrolü (Pydantic EmailStr eklemiyoruz çünkü
+            # diğer alanlarla simetri için str — burada elle doğrula).
+            if "@" not in candidate or "." not in candidate.split("@")[-1]:
+                raise _validation_error(
+                    "invalid_email", "Geçersiz e-posta adresi."
+                )
+            # Çakışma: başka kullanıcı bu email'i kullanıyor mu?
+            existing = (
+                db.query(User.id)
+                .filter(
+                    User.email == candidate,
+                    User.id != student.id,
+                )
+                .first()
+            )
+            if existing:
+                raise HTTPException(
+                    status_code=status.HTTP_409_CONFLICT,
+                    detail={
+                        "error": "conflict",
+                        "code": "email_taken",
+                        "message": "Bu e-posta başka bir hesap tarafından kullanılıyor.",
+                    },
+                )
+            new_email = candidate
+
+    # Email değişimi etkisi: doğrulama sıfırla (koç değiştiriyor → öğrenci
+    # yeni adresi doğrulasın). pwd_stamp'a dokunulmaz — oturum kesilmez.
+    email_changed = new_email != student.email
     student.full_name = new_full_name
+    student.email = new_email
+    if email_changed:
+        student.email_verified_at = None
     student.grade_level = new_grade
     student.is_graduate = new_is_graduate
     student.track = new_track

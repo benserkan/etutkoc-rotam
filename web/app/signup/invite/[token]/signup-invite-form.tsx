@@ -27,6 +27,8 @@ const Schema = z
   .object({
     full_name: z.string().min(3, "Ad Soyad en az 3 karakter"),
     email: z.string().min(1, "E-posta gerekli").email("Geçerli bir e-posta girin"),
+    // P1 — cep telefonu zorunlu, SMS ile doğrulanır
+    phone: z.string().min(10, "Cep telefonunuzu girin (örn: 0532 123 45 67)"),
     password: z.string().min(8, "Şifre en az 8 karakter olmalı"),
     password_confirm: z.string().min(1, "Şifre tekrarı gerekli"),
     accept_terms: z.boolean().refine((v) => v, "Kullanım şartlarını kabul etmelisiniz"),
@@ -59,6 +61,7 @@ export function SignupInviteForm({ token, defaultEmail, defaultFullName, role }:
     defaultValues: {
       full_name: defaultFullName,
       email: defaultEmail,
+      phone: "",
       password: "",
       password_confirm: "",
       accept_terms: false,
@@ -85,6 +88,10 @@ export function SignupInviteForm({ token, defaultEmail, defaultFullName, role }:
           toast.error("Davetiye geçersiz", { description: e.detail?.message });
         } else if (e.status === 409 && code === "email_taken") {
           form.setError("email", { message: "Bu e-posta zaten kayıtlı." });
+        } else if (code === "invalid_phone") {
+          form.setError("phone", {
+            message: "Geçersiz telefon. Türkiye cep formatı: 0532… veya +90 532…",
+          });
         } else if (code === "quota_exceeded") {
           toast.error("Kuota dolu", { description: e.detail?.message });
         } else if (code === "signup_invalid") {
@@ -119,6 +126,18 @@ export function SignupInviteForm({ token, defaultEmail, defaultFullName, role }:
         {form.formState.errors.email ? (
           <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
         ) : null}
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="phone">Cep telefonu</Label>
+        <Input id="phone" type="tel" autoComplete="tel" placeholder="0532 123 45 67" disabled={isSubmitting}
+               {...form.register("phone")} aria-invalid={!!form.formState.errors.phone} />
+        {form.formState.errors.phone ? (
+          <p className="text-sm text-destructive">{form.formState.errors.phone.message}</p>
+        ) : (
+          <p className="text-xs text-muted-foreground">
+            Kayıttan sonra SMS ile gönderilecek 6 haneli kodla doğrulayacaksınız.
+          </p>
+        )}
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Şifre</Label>

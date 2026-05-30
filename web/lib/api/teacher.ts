@@ -21,6 +21,7 @@ import type {
   SectionOptionsResponse,
   SectionStatsResponse,
   SidebarResponse,
+  SubjectListResponse,
   StudentBookListResponse,
   StudentExamListResponse,
   StudentSessionListResponse,
@@ -98,6 +99,8 @@ export const teacherKeys = {
       "sidebar",
       subjectId === null ? "" : String(subjectId),
     ] as const,
+  studentAllSubjects: (id: number) =>
+    ["teacher", "me", "students", String(id), "all-subjects"] as const,
   studentBooksBySubject: (id: number, subjectId: number | null) =>
     [
       "teacher",
@@ -411,6 +414,14 @@ export function getStudentSidebar(
   });
   return api<SidebarResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/sidebar-items${qs}`,
+  );
+}
+
+export function getStudentAllSubjects(
+  studentId: number,
+): Promise<SubjectListResponse> {
+  return api<SubjectListResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/all-subjects`,
   );
 }
 

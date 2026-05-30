@@ -64,6 +64,10 @@ class StudentTaskItem(BaseModel):
     completed: int                 # completed_count
     is_full: bool                  # planned == completed
     max_completable: int           # set-completed için tavan (basit: planned_count + section_remaining)
+    # Opsiyonel sonuç — öğrenci "Tamam + sayıyla" sheet'inde girer; girmezse None.
+    # Koç da düzenleyebilir. Analiz: haftalık doğruluk oranı.
+    correct: int | None = None
+    wrong: int | None = None
 
 
 class StudentTask(BaseModel):
@@ -74,6 +78,7 @@ class StudentTask(BaseModel):
     status: TaskStatusLiteral
     date: str                      # "YYYY-MM-DD"
     scheduled_hour: str | None     # "HH:MM" veya None
+    period: str | None = None      # "morning"|"noon"|"evening"|None (M6)
     items: list[StudentTaskItem]
     planned_count: int             # sum(items.planned)
     completed_count: int           # sum(items.completed)
@@ -362,8 +367,27 @@ class SetCompletedBody(BaseModel):
     Service `set_item_completion` üst sınırı `planned_count`'a klampler;
     negatif değerleri 0'a klampler. Bu yüzden ek tip kısıtlaması koymadan
     `int` alıyoruz (negatif test edilebilir → service 0'a düşürür).
+
+    Opsiyonel D/Y: "Tamam + sayıyla" sheet'inden gelir. None → alan güncellenmez
+    (mevcut değer korunur). Sayı → üzerine yazılır. Endpoint validation:
+    correct + wrong ≤ completed (aksi 422 invalid_result_distribution).
     """
     completed: int
+    correct: int | None = None
+    wrong: int | None = None
+
+
+class CompleteTaskBody(BaseModel):
+    """POST /api/v2/student/tasks/{task_id}/complete body — TÜM görevi tamamla.
+
+    Tek-kalemli görevler için "Tamam + sayıyla" sheet'i: D/Y burada geçirilir.
+    Çoklu kalemli görevlerde D/Y kalem-bazlı set-completed ile girilir; burada
+    geçilen değerler yok sayılır (tek kalemli kuralı service tarafında uygulanır).
+
+    Boş body de geçerli (geri uyumluluk: D/Y atla, sadece tamamla).
+    """
+    correct: int | None = None
+    wrong: int | None = None
 
 
 # ============================================================================

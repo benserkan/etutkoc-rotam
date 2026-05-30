@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Clock,
   Loader2,
+  Mail,
   MessageCircle,
   Moon,
   Settings as SettingsIcon,
@@ -15,6 +16,7 @@ import {
   VolumeX,
 } from "lucide-react";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -46,44 +48,52 @@ interface Props {
 }
 
 const PREF_ROWS: Array<{
-  key: keyof ParentPreferencesBody;
+  emailKey: keyof ParentPreferencesBody;
+  waKey: keyof ParentPreferencesBody;
   title: string;
   desc: string;
 }> = [
   {
-    key: "daily_summary",
+    emailKey: "daily_summary",
+    waKey: "daily_summary_wa",
     title: "Günlük özet",
     desc: "Çocuğun bugünkü tamamlama özeti",
   },
   {
-    key: "empty_day",
+    emailKey: "empty_day",
+    waKey: "empty_day_wa",
     title: "Boş gün uyarısı",
-    desc: "Hiç görev tamamlamadığında bilgi verir (3 günü aşan üst üste suskunluk için sus)",
+    desc: "Hiç görev tamamlamadığında bilgi verir",
   },
   {
-    key: "weekly_report",
+    emailKey: "weekly_report",
+    waKey: "weekly_report_wa",
     title: "Haftalık rapor",
     desc: "Her 7 günlük döngünün sonunda gönderilir",
   },
   {
-    key: "new_program",
+    emailKey: "new_program",
+    waKey: "new_program_wa",
     title: "Yeni program duyurusu",
     desc: "Öğretmen yeni haftalık programı yayınladığında",
   },
   {
-    key: "drop_alert",
+    emailKey: "drop_alert",
+    waKey: "drop_alert_wa",
     title: "Düşüş alarmı",
     desc: "Geçen haftaya göre %30+ düşüş olduğunda",
   },
   {
-    key: "teacher_note",
+    emailKey: "teacher_note",
+    waKey: "teacher_note_wa",
     title: "Öğretmen notu",
     desc: "Öğretmen size özel not gönderdiğinde",
   },
   {
-    key: "exam_approaching",
+    emailKey: "exam_approaching",
+    waKey: "exam_approaching_wa",
     title: "Sınav yaklaşıyor",
-    desc: "Sınav tarihine 30, 7 ve 1 gün kala bilgilendirme (LGS / YKS)",
+    desc: "Sınav tarihine 30, 7 ve 1 gün kala (LGS / YKS)",
   },
 ];
 
@@ -95,6 +105,14 @@ type ParentPreferencesBody = {
   drop_alert: boolean;
   teacher_note: boolean;
   exam_approaching: boolean;
+  daily_summary_wa: boolean;
+  weekly_report_wa: boolean;
+  empty_day_wa: boolean;
+  new_program_wa: boolean;
+  drop_alert_wa: boolean;
+  teacher_note_wa: boolean;
+  exam_approaching_wa: boolean;
+  child_whatsapp_consent: boolean;
   quiet_start: string;
   quiet_end: string;
 };
@@ -189,6 +207,14 @@ function PreferencesForm({
     drop_alert: preferences.drop_alert_enabled,
     teacher_note: preferences.teacher_note_enabled,
     exam_approaching: preferences.exam_approaching_enabled,
+    daily_summary_wa: preferences.daily_summary_wa_enabled,
+    weekly_report_wa: preferences.weekly_report_wa_enabled,
+    empty_day_wa: preferences.empty_day_alert_wa_enabled,
+    new_program_wa: preferences.new_program_alert_wa_enabled,
+    drop_alert_wa: preferences.drop_alert_wa_enabled,
+    teacher_note_wa: preferences.teacher_note_wa_enabled,
+    exam_approaching_wa: preferences.exam_approaching_wa_enabled,
+    child_whatsapp_consent: preferences.child_whatsapp_consent,
     quiet_start: preferences.quiet_hours_start,
     quiet_end: preferences.quiet_hours_end,
   }));
@@ -196,6 +222,18 @@ function PreferencesForm({
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     mut.mutate(state);
+  }
+
+  function setAll(channel: "email" | "wa", value: boolean) {
+    setState((s) => {
+      const next: ParentPreferencesBody = { ...s };
+      for (const row of PREF_ROWS) {
+        const key = channel === "email" ? row.emailKey : row.waKey;
+        // PREF_ROWS yalnız bool alanlar: TS keyof union narrowing için cast
+        (next as Record<string, unknown>)[key] = value;
+      }
+      return next;
+    });
   }
 
   return (
@@ -207,32 +245,133 @@ function PreferencesForm({
             Bildirim Türleri
           </h2>
           <p className="text-xs text-muted-foreground mt-0.5">
-            İstemediğiniz bildirim türlerini kapatabilirsiniz
+            Her bildirim türünü e-posta ve WhatsApp için ayrı ayrı yönetebilirsiniz
           </p>
+        </div>
+
+        {/* Matris başlığı */}
+        <div className="grid grid-cols-[1fr_auto_auto] items-center gap-1 bg-muted/40 px-5 py-2 border-b border-border text-[10px] uppercase tracking-wider font-semibold text-muted-foreground">
+          <div>Bildirim türü</div>
+          <div className="px-3 inline-flex items-center gap-1">
+            <Mail className="size-3" aria-hidden />
+            E-posta
+          </div>
+          <div className="px-3 inline-flex items-center gap-1">
+            <MessageCircle className="size-3" aria-hidden />
+            WhatsApp
+          </div>
         </div>
 
         <div className="divide-y divide-border">
           {PREF_ROWS.map((row) => (
-            <label
-              key={row.key}
-              className="flex items-start gap-3 px-5 py-3 cursor-pointer hover:bg-muted/40 transition-colors"
+            <div
+              key={row.emailKey}
+              className="grid grid-cols-[1fr_auto_auto] items-center gap-1 px-5 py-2.5 hover:bg-muted/40 transition-colors"
             >
-              <input
-                type="checkbox"
-                checked={state[row.key] as boolean}
-                onChange={(e) =>
-                  setState((s) => ({ ...s, [row.key]: e.target.checked }))
-                }
-                className="mt-1 accent-[#117A86] size-4"
-              />
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0">
                 <div className="text-sm font-medium">{row.title}</div>
                 <div className="text-xs text-muted-foreground mt-0.5">
                   {row.desc}
                 </div>
               </div>
-            </label>
+              <label
+                className={cn(
+                  "inline-flex items-center justify-center px-3 py-1.5 cursor-pointer rounded",
+                  state[row.emailKey] ? "text-[#117A86]" : "text-muted-foreground",
+                )}
+                aria-label={`${row.title} — E-posta`}
+              >
+                <input
+                  type="checkbox"
+                  checked={state[row.emailKey] as boolean}
+                  onChange={(e) =>
+                    setState((s) => ({ ...s, [row.emailKey]: e.target.checked }))
+                  }
+                  className="size-4 accent-[#117A86] cursor-pointer"
+                />
+              </label>
+              <label
+                className={cn(
+                  "inline-flex items-center justify-center px-3 py-1.5 cursor-pointer rounded",
+                  state[row.waKey] ? "text-[#117A86]" : "text-muted-foreground",
+                )}
+                aria-label={`${row.title} — WhatsApp`}
+              >
+                <input
+                  type="checkbox"
+                  checked={state[row.waKey] as boolean}
+                  onChange={(e) =>
+                    setState((s) => ({ ...s, [row.waKey]: e.target.checked }))
+                  }
+                  className="size-4 accent-[#117A86] cursor-pointer"
+                />
+              </label>
+            </div>
           ))}
+        </div>
+
+        {/* Toplu işlemler */}
+        <div className="px-5 py-2 border-t border-border bg-muted/20 flex items-center justify-between gap-2 flex-wrap text-[11px]">
+          <div className="text-muted-foreground">Toplu işlem:</div>
+          <div className="flex items-center gap-1 flex-wrap">
+            <button
+              type="button"
+              onClick={() => setAll("email", true)}
+              className="rounded px-2 py-1 hover:bg-muted text-foreground"
+            >
+              Tüm e-postalar açık
+            </button>
+            <button
+              type="button"
+              onClick={() => setAll("email", false)}
+              className="rounded px-2 py-1 hover:bg-muted text-muted-foreground"
+            >
+              Tüm e-postalar kapalı
+            </button>
+            <span className="text-muted-foreground/40 mx-1">·</span>
+            <button
+              type="button"
+              onClick={() => setAll("wa", true)}
+              className="rounded px-2 py-1 hover:bg-muted text-foreground"
+            >
+              Tüm WhatsApp açık
+            </button>
+            <button
+              type="button"
+              onClick={() => setAll("wa", false)}
+              className="rounded px-2 py-1 hover:bg-muted text-muted-foreground"
+            >
+              Tüm WhatsApp kapalı
+            </button>
+          </div>
+        </div>
+
+        {/* Çocuk WA onayı */}
+        <div className="px-5 py-3 border-t border-border">
+          <label className="flex items-start gap-2 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={state.child_whatsapp_consent}
+              onChange={(e) =>
+                setState((s) => ({
+                  ...s,
+                  child_whatsapp_consent: e.target.checked,
+                }))
+              }
+              className="mt-0.5 accent-[#117A86] size-4"
+            />
+            <div className="flex-1 text-xs">
+              <div className="font-semibold text-foreground mb-0.5 inline-flex items-center gap-1.5">
+                <ShieldCheck className="size-3.5 text-[#117A86]" aria-hidden />
+                Çocuğum WhatsApp mesajı alabilir
+              </div>
+              <p className="text-muted-foreground leading-relaxed">
+                18 yaş altı çocuğunuzun WhatsApp üzerinden doğrudan bildirim
+                almasına izin veriyorsanız işaretleyin. Onay vermezseniz
+                çocuğunuzla iletişim panel ve e-posta üzerinden devam eder.
+              </p>
+            </div>
+          </label>
         </div>
 
         <div className="px-5 py-4 border-t border-border bg-muted/30">

@@ -124,18 +124,29 @@ def create_change_request(
 ) -> TaskRequest:
     if task.student_id != student.id:
         raise RequestError("Bu görev size ait değil.")
+    # Bu görevde sayı kalemi yoksa (Video/Özet/Tekrar/Diğer — items=[]),
+    # "sayıyı değiştir" mantıksal değildir. Frontend'de menüde gizli, burada
+    # API-seviyesinde de simetrik koruma.
+    if not task.book_items:
+        raise RequestError(
+            "Bu tip görevde sayı değişikliği yapılamaz. Görev için soru sormak "
+            "veya kaldırmak istiyorsan diğer seçenekleri kullan."
+        )
     if proposed_count is not None and proposed_count < 1:
         raise RequestError("Önerilen sayı 1'den küçük olamaz.")
     # Pre-doğrulama: kapasite (kalan + gelecek rezervler) yeterli mi?
     if proposed_count is not None and len(task.book_items) == 1:
         item = task.book_items[0]
-        max_count = max_new_count_for_change(db, task, item)
-        if proposed_count > max_count:
-            raise RequestError(
-                f"Bu üniteden en fazla {max_count} test çözebilirsin "
-                f"(şu an {item.planned_count} planlı + kalan + gelecekteki diğer rezervlerin tamamı). "
-                f"Talep edilen {proposed_count} bu sınırı aşıyor."
-            )
+        # Kitapsız kalem (Deneme: book_id=null, label, planned_count=N) için
+        # kapasite kontrolü atlanır — sayı serbest düzenlenebilir.
+        if item.book_id is not None:
+            max_count = max_new_count_for_change(db, task, item)
+            if proposed_count > max_count:
+                raise RequestError(
+                    f"Bu üniteden en fazla {max_count} test çözebilirsin "
+                    f"(şu an {item.planned_count} planlı + kalan + gelecekteki diğer rezervlerin tamamı). "
+                    f"Talep edilen {proposed_count} bu sınırı aşıyor."
+                )
     req = TaskRequest(
         student_id=student.id,
         teacher_id=_ensure_teacher_id(student),
@@ -163,6 +174,14 @@ def create_replace_request(
 ) -> TaskRequest:
     if task.student_id != student.id:
         raise RequestError("Bu görev size ait değil.")
+    # Kaynağı değiştirmek için görevin **kitaplı** bir kalemi olmalı.
+    # Deneme (kitapsız label kalemi) ve Video/Özet/Tekrar/Diğer (items=[]) için
+    # "kaynak değiştir" mantıksal değildir — simetrik backend koruması.
+    if not any(it.book_id is not None for it in task.book_items):
+        raise RequestError(
+            "Bu tip görevde kaynak değişikliği yapılamaz. Görev için soru sormak "
+            "veya kaldırmak istiyorsan diğer seçenekleri kullan."
+        )
     if new_count < 1:
         raise RequestError("Yeni sayı 1'den küçük olamaz.")
     # Tamamlanmış kalem varsa engelle (öğretmen aşamasında da kontrol var, kullanıcıyı erken uyar)

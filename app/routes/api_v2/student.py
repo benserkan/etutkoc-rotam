@@ -91,6 +91,7 @@ from app.routes.api_v2.schemas.student import (
     ReviewCardItem,
     ReviewRateBody,
     ReviewResponse,
+    CompleteTaskBody,
     SetCompletedBody,
     StudentBooksResponse,
     StudentDayResponse,
@@ -172,7 +173,54 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
         completed=item.completed_count,
         is_full=(item.completed_count >= item.planned_count and item.planned_count > 0),
         max_completable=item.planned_count,
+        correct=item.correct_count,
+        wrong=item.wrong_count,
     )
+
+
+def _validate_result_distribution(
+    *,
+    completed: int,
+    correct: int | None,
+    wrong: int | None,
+    is_book_item: bool,
+) -> None:
+    """D/Y validation — birim duyarlı.
+
+    Kitaplı görev (`is_book_item=True`):
+      - completed = **test sayısı** (rezerv-bağlı, ≤ planned)
+      - correct/wrong = **soru sayısı** (her test çoklu soru içerir; örn. 3 test = 30 soru)
+      - Kural: sadece c ≥ 0, w ≥ 0. Toplam üst sınır YOK (bağımsız metric).
+
+    Kitapsız deneme (`is_book_item=False`):
+      - completed = **soru sayısı** (planned = soru)
+      - correct/wrong = **soru sayısı** (aynı birim)
+      - Kural: c ≥ 0, w ≥ 0 ve c + w ≤ completed (boş = completed − c − w)
+    """
+    c = correct if correct is not None else 0
+    w = wrong if wrong is not None else 0
+    if c < 0 or w < 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation_error",
+                "code": "invalid_result_distribution",
+                "message": "Doğru ve yanlış sayıları negatif olamaz.",
+            },
+        )
+    # Toplam ≤ completed kuralı yalnız kitapsız denemede geçerli (aynı birim).
+    if not is_book_item and c + w > completed:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation_error",
+                "code": "invalid_result_distribution",
+                "message": (
+                    f"Doğru ({c}) + Yanlış ({w}) = {c + w}, çözdüğün "
+                    f"({completed}) sorudan fazla olamaz."
+                ),
+            },
+        )
 
 
 def _has_pending_request_for_task(db: Session, task_id: int, student_id: int) -> bool:
@@ -193,13 +241,21 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
     planned = sum(it.planned for it in items)
     completed = sum(it.completed for it in items)
     pct = (completed / planned) if planned > 0 else 0.0
+    # scheduled_hour DB'de int (saat); StudentTask için "HH:MM" string'e dönüştür.
+    sched_hour_str: str | None = None
+    if task.scheduled_hour is not None:
+        try:
+            sched_hour_str = f"{int(task.scheduled_hour):02d}:00"
+        except (TypeError, ValueError):
+            sched_hour_str = None
     return StudentTask(
         id=task.id,
         title=task.title or "",
         type=task.type.value if task.type else "test",
         status=task.status.value if task.status else "pending",
         date=task.date.isoformat(),
-        scheduled_hour=task.scheduled_hour.strftime("%H:%M") if task.scheduled_hour else None,
+        scheduled_hour=sched_hour_str,
+        period=task.period,
         items=items,
         planned_count=planned,
         completed_count=completed,
@@ -1032,10 +1088,14 @@ def _invalidate_keys_for_task(task: Task, user: User) -> list[str]:
 )
 def complete_task_v2(
     task_id: int,
+    body: CompleteTaskBody | None = None,
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
     """Görevi tamamla — idempotent (zaten COMPLETED ise event tetiklenmez, 200 döner).
+
+    Opsiyonel D/Y (body.correct / body.wrong): yalnız **tek kalemli** görevde
+    uygulanır. Çoklu kalemli görevde yok sayılır.
 
     Eşdeğer Jinja: app/routes/student.py:683 (complete_task).
     """
@@ -1044,8 +1104,20 @@ def complete_task_v2(
 
     was_completed = task.status == TaskStatus.COMPLETED
 
+    # D/Y validation — tek kalemli görevde uygulanır (servis de tek-kalem kontrolü yapar)
+    correct = body.correct if body else None
+    wrong = body.wrong if body else None
+    if len(task.book_items) == 1:
+        single = task.book_items[0]
+        _validate_result_distribution(
+            completed=single.planned_count,  # complete → planlanan tam
+            correct=correct,
+            wrong=wrong,
+            is_book_item=single.book_id is not None,
+        )
+
     try:
-        svc_complete_task(db, task)
+        svc_complete_task(db, task, correct=correct, wrong=wrong)
     except ReservationError as e:
         db.rollback()
         raise _reservation_error_response(e)
@@ -1128,8 +1200,20 @@ def set_item_completed_v2(
             },
         )
 
+    # D/Y validation — body.completed üst sınır; servis klampleyince tutarsızlık
+    # önlemek için klamplenmiş completed üzerinden kontrol.
+    effective_completed = max(0, min(body.completed, item.planned_count))
+    _validate_result_distribution(
+        completed=effective_completed,
+        correct=body.correct,
+        wrong=body.wrong,
+        is_book_item=item.book_id is not None,
+    )
+
     try:
-        svc_set_item_completion(db, item, body.completed)
+        svc_set_item_completion(
+            db, item, body.completed, correct=body.correct, wrong=body.wrong
+        )
     except ReservationError as e:
         db.rollback()
         raise _reservation_error_response(e)

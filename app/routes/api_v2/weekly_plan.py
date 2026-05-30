@@ -59,6 +59,8 @@ from app.routes.api_v2.schemas.teacher import (
     SidebarSection,
     SidebarSubject,
     SidebarSubjectSummary,
+    SubjectBrief,
+    SubjectListResponse,
     TasksReorderBody,
     TasksReorderResult,
     TeacherWeekNote,
@@ -565,6 +567,58 @@ def sidebar_items(
         except ValueError:
             focused = None
     return _build_sidebar(db, student.id, focused)
+
+
+@router.get(
+    "/students/{student_id}/all-subjects",
+    response_model=SubjectListResponse,
+)
+def all_subjects(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+) -> SubjectListResponse:
+    """Öğrencinin müfredat havuzundaki TÜM dersler (kitap atanma şartı YOK).
+
+    Video/Özet/Tekrar/Diğer görev tipleri için kullanılır — bu tiplerde kitap
+    cascade'i (sidebar gibi) yok; öğrenci için müfredata uygun her dersi
+    seçebilmeli (örn. öğretmen henüz Tarih kitabı atamamış ama Tarih videosu
+    eklemek istiyor).
+
+    Filtre: koçun kendi Subject havuzu + builtin + öğrencinin curriculum_model'i
+    + sınıf seviyesi aralığı. Aynı ad farklı modellerden tekille — ilk geçen kalır.
+    """
+    from sqlalchemy import or_ as sa_or
+    from app.models.curriculum import Subject
+
+    student = _get_owned_student(db, student_id, user.id)
+
+    student_cm = student.effective_curriculum_model
+    rows = (
+        db.query(Subject)
+        .filter(
+            sa_or(Subject.is_builtin.is_(True), Subject.teacher_id == user.id)
+        )
+        .order_by(Subject.order, Subject.name)
+        .all()
+    )
+
+    seen_names: set[str] = set()
+    items: list[SubjectBrief] = []
+    for s in rows:
+        # Sınıf seviyesi filtre
+        if not s.covers_grade(student.grade_level, is_graduate=student.is_graduate):
+            continue
+        # Müfredat modeli filtre (öğrencinin modeline uymuyor + ders model-bound ise atla)
+        if student_cm and s.curriculum_model and s.curriculum_model != student_cm:
+            continue
+        # Tekille (ad bazlı — farklı modellerden aynı ders adı varsa ilki kalır)
+        if s.name in seen_names:
+            continue
+        seen_names.add(s.name)
+        items.append(SubjectBrief(id=s.id, name=s.name))
+
+    return SubjectListResponse(items=items)
 
 
 # =============================================================================
