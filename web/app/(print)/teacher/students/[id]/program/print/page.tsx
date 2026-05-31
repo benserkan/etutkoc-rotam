@@ -45,10 +45,10 @@ export default async function ProgramPrintPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ week?: string }>;
+  searchParams: Promise<{ week?: string; program_id?: string }>;
 }) {
   const { id } = await params;
-  const { week } = await searchParams;
+  const { week, program_id } = await searchParams;
 
   let studentName = "";
   let weekData: TeacherStudentWeekResponse | null = null;
@@ -65,7 +65,10 @@ export default async function ProgramPrintPage({
   }
 
   try {
-    const qs = week ? `?start=${encodeURIComponent(week)}` : "";
+    const qsParts: string[] = [];
+    if (program_id) qsParts.push(`program_id=${encodeURIComponent(program_id)}`);
+    if (week && !program_id) qsParts.push(`start=${encodeURIComponent(week)}`);
+    const qs = qsParts.length ? `?${qsParts.join("&")}` : "";
     weekData = await apiServer<TeacherStudentWeekResponse>(
       `/api/v2/teacher/students/${encodeURIComponent(id)}/week${qs}`,
     );

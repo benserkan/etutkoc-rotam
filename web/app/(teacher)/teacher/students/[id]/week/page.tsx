@@ -37,7 +37,11 @@ export default async function TeacherStudentWeekPage({
   const numericId = Number(id);
   if (!Number.isInteger(numericId) || numericId <= 0) notFound();
   const start = firstStr(sp.start);
-  const qs = start ? `?start=${encodeURIComponent(start)}` : "";
+  const programId = firstStr(sp.program_id);
+  const qsParts: string[] = [];
+  if (start) qsParts.push(`start=${encodeURIComponent(start)}`);
+  if (programId) qsParts.push(`program_id=${encodeURIComponent(programId)}`);
+  const qs = qsParts.length ? `?${qsParts.join("&")}` : "";
 
   let data: TeacherStudentWeekResponse;
   try {

@@ -125,6 +125,24 @@ def _parse_iso(value: str, code: str = "invalid_date") -> date:
         raise _validation_error(code, "Tarih formatı YYYY-MM-DD olmalı.")
 
 
+def _resolve_window(
+    db: Session, student_id: int, program_id: int | None, week_start_iso: str,
+) -> tuple[date, date]:
+    """WP2 — publish/notify için tarih aralığı çöz.
+
+    program_id verildiyse o programın aralığı (1-14 gün esnek);
+    yoksa eski 7 gün davranışı (week_start + 6).
+    """
+    if program_id is not None:
+        from app.models import WeeklyProgram
+        prog = db.get(WeeklyProgram, program_id)
+        if prog is None or prog.student_id != student_id:
+            raise _validation_error("program_not_found", "Program bulunamadı.")
+        return prog.start_date, prog.end_date
+    start = _parse_iso(week_start_iso, "invalid_week_start")
+    return start, start + timedelta(days=6)
+
+
 def _invalidate_week(teacher_id: int, student_id: int) -> list[str]:
     return [
         f"teacher:{teacher_id}:students:{student_id}:week",
@@ -326,8 +344,9 @@ def publish_week(
 ) -> MutationResponse[PublishResult]:
     student = _get_owned_student(db, student_id, user.id)
     assert_active_coaching(db, user)
-    start = _parse_iso(body.week_start, "invalid_week_start")
-    end = start + timedelta(days=6)
+    # WP2 — program_id varsa program aralığını kullan (1-14 gün esnek); aksi
+    # halde eski 7 günlük davranış (geriye uyum)
+    start, end = _resolve_window(db, student.id, body.program_id, body.week_start)
     now = datetime.now(timezone.utc)
     drafts = (
         db.query(Task)
@@ -351,7 +370,10 @@ def publish_week(
     if published_count > 0:
         try:
             from app.services.event_triggers import on_program_published
-            on_program_published(db, student=student, week_start=start, week_end=end)
+            # WP2 — start/end zaten program-aware (_resolve_window yukarıda)
+            on_program_published(
+                db, student=student, week_start=start, week_end=end,
+            )
         except Exception:
             logger.exception("Program yayın bildirim hatası student=%s", student.id)
 
@@ -426,8 +448,12 @@ def notify_parents(
     from app.services.event_triggers import on_program_published
 
     student = _get_owned_student(db, student_id, user.id)
-    ws = _parse_iso(body.week_start, "invalid_week_start")
-    summary = on_program_published(db, student=student, week_start=ws)
+    # WP2 — program_id varsa o programın tam aralığını kullan (1-14 gün esnek);
+    # yoksa eski 7 gün davranışı (geriye uyum)
+    start, end = _resolve_window(db, student.id, body.program_id, body.week_start)
+    summary = on_program_published(
+        db, student=student, week_start=start, week_end=end,
+    )
     db.commit()
 
     no_tasks = bool(summary.get("no_tasks"))

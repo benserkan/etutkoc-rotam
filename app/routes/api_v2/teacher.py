@@ -202,6 +202,13 @@ from app.routes.api_v2.schemas.teacher import (
     SetWeekAnchorBody,
     TaskItemPatchBody,
     TaskItemResultBody,
+    WeeklyProgramCreateBody,
+    WeeklyProgramDeleteBody,
+    WeeklyProgramItem,
+    WeeklyProgramListResponse,
+    WeeklyProgramOverlapItem,
+    WeeklyProgramUpdateBody,
+    WeeklyProgramWrapLegacyBody,
     TaskPatchBody,
     TaskSingleItemEditBody,
     TeacherBadgesResponse,
@@ -2838,19 +2845,23 @@ def teacher_student_day_v2(
 def teacher_student_week_v2(
     student_id: int,
     start_param: str | None = Query(None, alias="start"),
+    program_id: int | None = Query(None, alias="program_id"),
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Öğretmen perspektifinde 7 günlük plan + WeekNote + Jinja-parity zenginleştirmeler.
+    """Öğretmen perspektifinde program-aware görünüm.
 
-    Paket 3.5a — Jinja şablonundaki tüm parite alanları:
-      - week_anchor + anchor_is_manual (read-only)
-      - week_draft_total + day_draft_count
-      - day_subject_summary (her gün ders rozetleri)
-      - inline suggestions (her gün için)
-      - maturity_* + active_phase + track_* (öneri paneli rozet'leri)
+    WP2 (2026-05-31) — Program-aware mantık:
+      - `program_id` verilirse o programa odaklanır (geçmiş programları görme)
+      - `program_id` yoksa: bugünü içeren aktif program → onun tarih aralığı
+      - Aktif program yoksa: fallback (mevcut anchor-blok mantığı, bugünü
+        içeren bloğa snap) — eski öğrenciler bozulmadan çalışsın
+
+    Pencere uzunluğu artık dinamik: program 1-14 gün arası ne olursa onu
+    gösterir. Eski parite alanları (week_anchor, anchor_is_manual,
+    week_draft_total) korunur — frontend hâlâ aynı response şemasını kullanır.
     """
-    from app.models import StudentBook
+    from app.models import StudentBook, WeeklyProgram
     from app.routes.teacher_program import (
         _resolve_week_anchor,
         _student_week_start,
@@ -2863,12 +2874,45 @@ def teacher_student_week_v2(
         maturity_label,
         suggest_for_date,
     )
+    from app.services.weekly_program_service import get_active_program
 
     student = _get_owned_student(db, student_id, user.id)
     today = date.today()
-    start = _parse_iso_date(start_param, fallback=today)
-    days = [start + timedelta(days=i) for i in range(7)]
-    end = days[-1]
+
+    # Pencere belirleme — öncelik sırası:
+    # 1) program_id verildi → o program (sahip kontrolü)
+    # 2) start_param verildi → eski mantık (kullanıcı manuel gezdi)
+    # 3) Hiçbiri yok → aktif program ara → varsa onu kullan
+    # 4) Aktif yoksa → fallback (bugünü içeren anchor-blok)
+    active_program: WeeklyProgram | None = None
+    if program_id is not None:
+        active_program = db.get(WeeklyProgram, program_id)
+        if active_program is None or active_program.student_id != student.id:
+            raise HTTPException(
+                status_code=404,
+                detail={"error": "not_found", "code": "program_not_found",
+                        "message": "Program bulunamadı."},
+            )
+        start = active_program.start_date
+        end = active_program.end_date
+    elif start_param:
+        # Açık gezinme — kullanıcı buton bastı; eski 7-günlük davranış
+        start = _parse_iso_date(start_param, fallback=today)
+        end = start + timedelta(days=6)
+    else:
+        # Default: bugünü içeren aktif program
+        active_program = get_active_program(
+            db, student_id=student.id, today=today,
+        )
+        if active_program is not None:
+            start = active_program.start_date
+            end = active_program.end_date
+        else:
+            # Fallback: eski anchor-blok mantığı (bugünü içeren bloğa snap)
+            start = _student_week_start(db, student, today)
+            end = start + timedelta(days=6)
+
+    days = [start + timedelta(days=i) for i in range((end - start).days + 1)]
 
     # Tek query'de tüm hafta tasklarını çek (taslaklar dahil — öğretmen görür)
     tasks = (
@@ -3029,6 +3073,40 @@ def teacher_student_week_v2(
     track_missing = track_required and student.track is None
     track_label = TRACK_LABELS.get(student.track) if student.track else None
 
+    # WP2 — Program-aware ek alanlar (program seçici dropdown + banner)
+    from app.services.weekly_program_service import (
+        get_unlinked_task_summary,
+        list_programs,
+    )
+    all_progs = list_programs(db, student_id=student.id)
+    bugune_aktif = get_active_program(db, student_id=student.id, today=today)
+    unlinked = get_unlinked_task_summary(db, student_id=student.id)
+
+    # current_program = gösterilen pencereyi temsil eden program (eğer böyle bir
+    # program varsa). Pencere tam olarak bir programın aralığıyla eşleşiyorsa
+    # o program "current" sayılır.
+    current_prog = active_program  # üstte set edildi (program_id veya default)
+    if current_prog is None:
+        # Pencere bir programın tarih aralığına denk geliyor mu (eski mantık fallback'inde)
+        for p in all_progs:
+            if p.start_date == start and p.end_date == end:
+                current_prog = p
+                break
+
+    def _wp_to_brief(p):
+        return WeeklyProgramItem(
+            id=p.id,
+            student_id=p.student_id,
+            start_date=p.start_date.isoformat(),
+            end_date=p.end_date.isoformat(),
+            day_count=p.day_count,
+            name=p.name,
+            notes=p.notes,
+            is_active=p.contains(today),
+            created_at=p.created_at,
+            label=p.label,
+        )
+
     return TeacherStudentWeekResponse(
         student_id=student.id,
         start_date=start.isoformat(),
@@ -3053,6 +3131,20 @@ def teacher_student_week_v2(
         track_required=track_required,
         track_missing=track_missing,
         track_label=track_label,
+        # WP2 — Program-aware
+        active_program_id=bugune_aktif.id if bugune_aktif else None,
+        current_program_id=current_prog.id if current_prog else None,
+        current_program_label=current_prog.label if current_prog else None,
+        current_program_name=current_prog.name if current_prog else None,
+        current_program_day_count=current_prog.day_count if current_prog else None,
+        programs=[_wp_to_brief(p) for p in all_progs],
+        unlinked_task_count=int(unlinked["count"]) if unlinked else 0,
+        unlinked_earliest=(
+            unlinked["earliest"].isoformat() if unlinked else None
+        ),
+        unlinked_latest=(
+            unlinked["latest"].isoformat() if unlinked else None
+        ),
     )
 
 
@@ -6972,3 +7064,316 @@ def teacher_reset_student_password_v2(
             f"teacher:{user.id}:students",
         ],
     )
+
+
+# =============================================================================
+# WP1 — Weekly Programs CRUD endpoint'leri (2026-05-31)
+# =============================================================================
+
+
+def _wp_to_item(p, *, today: date) -> WeeklyProgramItem:
+    return WeeklyProgramItem(
+        id=p.id,
+        student_id=p.student_id,
+        start_date=p.start_date.isoformat(),
+        end_date=p.end_date.isoformat(),
+        day_count=p.day_count,
+        name=p.name,
+        notes=p.notes,
+        is_active=p.contains(today),
+        created_at=p.created_at,
+        label=p.label,
+    )
+
+
+def _wp_overlap_to_item(o) -> WeeklyProgramOverlapItem:
+    return WeeklyProgramOverlapItem(
+        program_id=o.program_id,
+        label=o.label,
+        start_date=o.start_date.isoformat(),
+        end_date=o.end_date.isoformat(),
+        overlap_days=o.overlap_days,
+        task_count_in_overlap=o.task_count_in_overlap,
+    )
+
+
+def _wp_program_error_to_http(e) -> HTTPException:
+    """ProgramError → HTTPException dönüşümü."""
+    code = getattr(e, "code", "validation")
+    msg = str(e)
+    status_code = status.HTTP_422_UNPROCESSABLE_ENTITY
+    if code == "not_found":
+        status_code = status.HTTP_404_NOT_FOUND
+    elif code == "overlap":
+        status_code = status.HTTP_409_CONFLICT
+    return HTTPException(
+        status_code=status_code,
+        detail={"error": "validation", "code": code, "message": msg},
+    )
+
+
+@router.get(
+    "/students/{student_id}/programs",
+    response_model=WeeklyProgramListResponse,
+)
+def teacher_list_programs_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bir öğrencinin tüm programları + aktif program + unlinked tasks özeti."""
+    from app.services.weekly_program_service import (
+        get_active_program,
+        get_unlinked_task_summary,
+        list_programs,
+    )
+
+    student = _get_owned_student(db, student_id, user.id)
+    today = date.today()
+
+    programs = list_programs(db, student_id=student.id)
+    active = get_active_program(db, student_id=student.id, today=today)
+    unlinked = get_unlinked_task_summary(db, student_id=student.id)
+
+    return WeeklyProgramListResponse(
+        student_id=student.id,
+        items=[_wp_to_item(p, today=today) for p in programs],
+        active_program_id=active.id if active else None,
+        unlinked_task_count=int(unlinked["count"]) if unlinked else 0,
+        unlinked_earliest=(
+            unlinked["earliest"].isoformat() if unlinked else None
+        ),
+        unlinked_latest=(
+            unlinked["latest"].isoformat() if unlinked else None
+        ),
+    )
+
+
+@router.post(
+    "/students/{student_id}/programs",
+    response_model=MutationResponse[WeeklyProgramItem],
+)
+def teacher_create_program_v2(
+    student_id: int,
+    body: WeeklyProgramCreateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Yeni program yarat. Çakışma varsa 409 + detail.overlaps listesi.
+
+    Kullanıcı uyarıyı görüp `allow_overlap=True` ile yeniden çağırırsa zorla yaratılır.
+    """
+    from app.services.weekly_program_service import (
+        ProgramError,
+        create_program,
+        find_overlapping,
+    )
+
+    try:
+        start = date.fromisoformat(body.start_date)
+        end = date.fromisoformat(body.end_date)
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "validation", "code": "invalid_date",
+                    "message": "Tarih formatı YYYY-MM-DD olmalı."},
+        )
+
+    try:
+        prog = create_program(
+            db,
+            coach=user,
+            student_id=student_id,
+            start=start,
+            end=end,
+            name=body.name,
+            notes=body.notes,
+            allow_overlap=body.allow_overlap,
+        )
+    except ProgramError as e:
+        if e.code == "overlap":
+            overlaps = find_overlapping(
+                db, student_id=student_id, start=start, end=end,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "error": "conflict",
+                    "code": "overlap",
+                    "message": str(e),
+                    "overlaps": [
+                        _wp_overlap_to_item(o).model_dump() for o in overlaps
+                    ],
+                },
+            )
+        raise _wp_program_error_to_http(e)
+
+    db.commit()
+    db.refresh(prog)
+    today = date.today()
+    return MutationResponse[WeeklyProgramItem](
+        data=_wp_to_item(prog, today=today),
+        invalidate=[
+            f"teacher:{user.id}:students:{student_id}:programs",
+            f"teacher:{user.id}:students:{student_id}:week",
+        ],
+    )
+
+
+@router.post(
+    "/students/{student_id}/programs/wrap-legacy",
+    response_model=MutationResponse[WeeklyProgramItem],
+)
+def teacher_wrap_legacy_v2(
+    student_id: int,
+    body: WeeklyProgramWrapLegacyBody | None = None,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Programa bağlı olmayan tüm görevleri tek "Eski Dönem" programına bağla.
+
+    Bu route TANIM SIRASI ÖNEMLİDİR: `/programs/{program_id}` (UPDATE) ile aynı
+    pattern'i paylaştığı için bu route DAHA ÖNCE tanımlı olmalı — FastAPI ilk
+    eşleşeni alır. Aksi halde "wrap-legacy" path param olarak yorumlanır ve
+    422 int_parsing hatası alınır.
+    """
+    from app.services.weekly_program_service import ProgramError, wrap_legacy_tasks
+
+    name = (body.name if body else None) or "Eski Dönem"
+    try:
+        prog = wrap_legacy_tasks(
+            db, coach=user, student_id=student_id, name=name,
+        )
+    except ProgramError as e:
+        raise _wp_program_error_to_http(e)
+    db.commit()
+    db.refresh(prog)
+    today = date.today()
+    return MutationResponse[WeeklyProgramItem](
+        data=_wp_to_item(prog, today=today),
+        invalidate=[
+            f"teacher:{user.id}:students:{student_id}:programs",
+            f"teacher:{user.id}:students:{student_id}:week",
+        ],
+    )
+
+
+@router.post(
+    "/students/{student_id}/programs/{program_id}",
+    response_model=MutationResponse[WeeklyProgramItem],
+)
+def teacher_update_program_v2(
+    student_id: int,
+    program_id: int,
+    body: WeeklyProgramUpdateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Program tarih/etiket güncelle."""
+    from app.services.weekly_program_service import (
+        ProgramError,
+        find_overlapping,
+        update_program,
+    )
+
+    _get_owned_student(db, student_id, user.id)
+
+    start = None
+    end = None
+    if body.start_date:
+        try:
+            start = date.fromisoformat(body.start_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail={"error": "validation", "code": "invalid_date",
+                        "message": "Başlangıç tarihi YYYY-MM-DD olmalı."},
+            )
+    if body.end_date:
+        try:
+            end = date.fromisoformat(body.end_date)
+        except ValueError:
+            raise HTTPException(
+                status_code=422,
+                detail={"error": "validation", "code": "invalid_date",
+                        "message": "Bitiş tarihi YYYY-MM-DD olmalı."},
+            )
+
+    try:
+        prog = update_program(
+            db,
+            coach=user,
+            program_id=program_id,
+            start=start,
+            end=end,
+            name=body.name,
+            notes=body.notes,
+            allow_overlap=body.allow_overlap,
+        )
+    except ProgramError as e:
+        if e.code == "overlap":
+            from app.models import WeeklyProgram
+            current = db.get(WeeklyProgram, program_id)
+            new_start = start or (current.start_date if current else date.today())
+            new_end = end or (current.end_date if current else date.today())
+            overlaps = find_overlapping(
+                db, student_id=student_id, start=new_start, end=new_end,
+                exclude_id=program_id,
+            )
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "error": "conflict", "code": "overlap", "message": str(e),
+                    "overlaps": [
+                        _wp_overlap_to_item(o).model_dump() for o in overlaps
+                    ],
+                },
+            )
+        raise _wp_program_error_to_http(e)
+
+    db.commit()
+    db.refresh(prog)
+    today = date.today()
+    return MutationResponse[WeeklyProgramItem](
+        data=_wp_to_item(prog, today=today),
+        invalidate=[
+            f"teacher:{user.id}:students:{student_id}:programs",
+            f"teacher:{user.id}:students:{student_id}:week",
+        ],
+    )
+
+
+@router.post(
+    "/students/{student_id}/programs/{program_id}/delete",
+    response_model=MutationResponse[dict],
+)
+def teacher_delete_program_v2(
+    student_id: int,
+    program_id: int,
+    body: WeeklyProgramDeleteBody | None = None,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Program'ı sil. body.delete_tasks=True ise içindeki görevleri de sil."""
+    from app.services.weekly_program_service import ProgramError, delete_program
+
+    _get_owned_student(db, student_id, user.id)
+    delete_tasks = bool(body.delete_tasks) if body else False
+    try:
+        result = delete_program(
+            db, coach=user, program_id=program_id,
+            delete_tasks=delete_tasks,
+        )
+    except ProgramError as e:
+        raise _wp_program_error_to_http(e)
+    db.commit()
+    return MutationResponse[dict](
+        data=result,
+        invalidate=[
+            f"teacher:{user.id}:students:{student_id}:programs",
+            f"teacher:{user.id}:students:{student_id}:week",
+            f"teacher:{user.id}:students:{student_id}",
+        ],
+    )
+
+

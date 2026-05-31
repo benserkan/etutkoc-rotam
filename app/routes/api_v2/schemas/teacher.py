@@ -392,6 +392,16 @@ class TeacherStudentWeekResponse(BaseModel):
     track_required: bool = False
     track_missing: bool = False
     track_label: str | None = None
+    # WP2 — Program-aware response (Frontend bunlara göre üst başlık + dropdown)
+    active_program_id: int | None = None        # bugünü içeren aktif program
+    current_program_id: int | None = None       # gösterilen pencere bir program mı (görünür blok)
+    current_program_label: str | None = None    # "Yeni Hafta · 30 May–5 Haz"
+    current_program_name: str | None = None     # koç verdiyse özel ad
+    current_program_day_count: int | None = None
+    programs: list["WeeklyProgramItem"] = []    # dropdown için tüm programlar (en yeni→en eski)
+    unlinked_task_count: int = 0                # mavi banner için
+    unlinked_earliest: str | None = None
+    unlinked_latest: str | None = None
 
 
 # =============================================================================
@@ -414,7 +424,8 @@ class PublishDayBody(BaseModel):
 
 
 class PublishWeekBody(BaseModel):
-    week_start: str                   # ISO
+    week_start: str                   # ISO (eski parametre — geriye uyum)
+    program_id: int | None = None     # WP2 — varsa program tarih aralığı kullanılır
 
 
 class PublishResult(BaseModel):
@@ -432,7 +443,8 @@ class TasksReorderResult(BaseModel):
 
 
 class NotifyParentsBody(BaseModel):
-    week_start: str                   # ISO
+    week_start: str                   # ISO (eski parametre — geriye uyum)
+    program_id: int | None = None     # WP2 — varsa program tarih aralığı kullanılır
 
 
 class NotifyParentsResult(BaseModel):
@@ -1792,3 +1804,73 @@ class ApplyTaskTemplateBody(BaseModel):
     date: str                          # "YYYY-MM-DD"
     scheduled_hour: int | None = None
     is_draft: bool | None = None
+
+
+# =============================================================================
+# WP1 — Weekly Programs (yeni program oluştur akışı, 2026-05-31)
+# =============================================================================
+
+
+class WeeklyProgramOverlapItem(BaseModel):
+    """Çakışma uyarısı — UI dialog'unda gösterilir."""
+    program_id: int
+    label: str
+    start_date: str                # "YYYY-MM-DD"
+    end_date: str
+    overlap_days: int
+    task_count_in_overlap: int     # silme kararı için info
+
+
+class WeeklyProgramItem(BaseModel):
+    """Tek program — listede + aktif gösterimde."""
+    id: int
+    student_id: int
+    start_date: str
+    end_date: str
+    day_count: int                 # (end - start) + 1
+    name: str | None
+    notes: str | None
+    is_active: bool                # bugünü içeriyor mu
+    created_at: datetime
+    label: str                     # UI'da gösterilecek varsayılan ad
+
+
+class WeeklyProgramListResponse(BaseModel):
+    """GET /api/v2/teacher/students/{id}/programs"""
+    student_id: int
+    items: list[WeeklyProgramItem]
+    active_program_id: int | None  # bugünü içeren
+    # Mevcut öğrenci için hatırlatıcı: programa bağlı olmayan görev sayısı
+    unlinked_task_count: int
+    unlinked_earliest: str | None
+    unlinked_latest: str | None
+
+
+class WeeklyProgramCreateBody(BaseModel):
+    """POST /api/v2/teacher/students/{id}/programs"""
+    start_date: str                # "YYYY-MM-DD"
+    end_date: str
+    name: str | None = None
+    notes: str | None = None
+    # Kullanıcı çakışma uyarısını gördü ve onayladı (advanced)
+    allow_overlap: bool = False
+
+
+class WeeklyProgramUpdateBody(BaseModel):
+    """POST /api/v2/teacher/students/{id}/programs/{program_id}"""
+    start_date: str | None = None
+    end_date: str | None = None
+    name: str | None = None
+    notes: str | None = None
+    allow_overlap: bool = False
+
+
+class WeeklyProgramDeleteBody(BaseModel):
+    """POST /api/v2/teacher/students/{id}/programs/{program_id}/delete"""
+    delete_tasks: bool = False     # default: program siler, görevler korunur
+
+
+class WeeklyProgramWrapLegacyBody(BaseModel):
+    """POST /api/v2/teacher/students/{id}/programs/wrap-legacy
+    Tek tık "Eski Dönem programı yarat" akışı."""
+    name: str | None = None        # default "Eski Dönem"

@@ -384,6 +384,53 @@ export interface TeacherStudentWeekDay {
   suggestions?: TeacherSuggestionInline[];
 }
 
+export interface WeeklyProgramItem {
+  id: number;
+  student_id: number;
+  start_date: string;            // "YYYY-MM-DD"
+  end_date: string;
+  day_count: number;
+  name: string | null;
+  notes: string | null;
+  is_active: boolean;
+  created_at: string;
+  label: string;
+}
+
+export interface WeeklyProgramOverlapItem {
+  program_id: number;
+  label: string;
+  start_date: string;
+  end_date: string;
+  overlap_days: number;
+  task_count_in_overlap: number;
+}
+
+export interface WeeklyProgramListResponse {
+  student_id: number;
+  items: WeeklyProgramItem[];
+  active_program_id: number | null;
+  unlinked_task_count: number;
+  unlinked_earliest: string | null;
+  unlinked_latest: string | null;
+}
+
+export interface WeeklyProgramCreateBody {
+  start_date: string;
+  end_date: string;
+  name?: string | null;
+  notes?: string | null;
+  allow_overlap?: boolean;
+}
+
+export interface WeeklyProgramUpdateBody {
+  start_date?: string | null;
+  end_date?: string | null;
+  name?: string | null;
+  notes?: string | null;
+  allow_overlap?: boolean;
+}
+
 export interface TeacherStudentWeekResponse {
   student_id: number;
   start_date: string;
@@ -408,6 +455,16 @@ export interface TeacherStudentWeekResponse {
   track_required?: boolean;
   track_missing?: boolean;
   track_label?: string | null;
+  // WP2 — Program-aware ek alanlar
+  active_program_id?: number | null;
+  current_program_id?: number | null;
+  current_program_label?: string | null;
+  current_program_name?: string | null;
+  current_program_day_count?: number | null;
+  programs?: WeeklyProgramItem[];
+  unlinked_task_count?: number;
+  unlinked_earliest?: string | null;
+  unlinked_latest?: string | null;
 }
 
 // =============================================================================
@@ -430,6 +487,7 @@ export interface PublishDayBody {
 
 export interface PublishWeekBody {
   week_start: string;
+  program_id?: number | null;
 }
 
 export interface PublishResult {
@@ -448,6 +506,7 @@ export interface TasksReorderResult {
 
 export interface NotifyParentsBody {
   week_start: string;
+  program_id?: number | null;
 }
 
 export interface NotifyParentsResult {

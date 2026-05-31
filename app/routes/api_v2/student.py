@@ -485,7 +485,7 @@ def student_week_v2(
     """
     today = date.today()
     try:
-        start = date.fromisoformat(start_param) if start_param else today
+        start = date.fromisoformat(start_param) if start_param else None
     except ValueError:
         raise HTTPException(
             status_code=422,
@@ -495,6 +495,15 @@ def student_week_v2(
                 "message": "Tarih formatı geçersiz. YYYY-MM-DD bekleniyor.",
             },
         )
+
+    # WP4 — Öğrenci sayfası açılınca aktif program varsa onun başlangıcına snap.
+    # Yoksa bugün — eski davranış (geri uyum).
+    if start is None:
+        from app.services.weekly_program_service import get_active_program
+        active_prog = get_active_program(
+            db, student_id=user.id, today=today,
+        )
+        start = active_prog.start_date if active_prog else today
 
     days = [start + timedelta(days=i) for i in range(7)]
     end = days[-1]

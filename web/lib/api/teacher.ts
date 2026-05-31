@@ -84,6 +84,8 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "day", date] as const,
   studentWeek: (id: number, start: string) =>
     ["teacher", "me", "students", String(id), "week", start] as const,
+  studentPrograms: (id: number) =>
+    ["teacher", "me", "students", String(id), "programs"] as const,
   studentBooks: (id: number) =>
     ["teacher", "me", "students", String(id), "books"] as const,
   studentParents: (id: number) =>
@@ -359,10 +361,22 @@ export function getTeacherStudentDay(
 export function getTeacherStudentWeek(
   id: number,
   start?: string,
+  programId?: number | null,
 ): Promise<TeacherStudentWeekResponse> {
-  const qs = buildQuery({ start });
+  const qs = buildQuery({
+    start,
+    program_id: programId != null ? String(programId) : undefined,
+  });
   return api<TeacherStudentWeekResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(id))}/week${qs}`,
+  );
+}
+
+export function getTeacherStudentPrograms(
+  id: number,
+): Promise<import("@/lib/types/teacher").WeeklyProgramListResponse> {
+  return api(
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/programs`,
   );
 }
 

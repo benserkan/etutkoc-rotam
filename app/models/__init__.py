@@ -207,6 +207,7 @@ from app.models.coaching_session import (
     CoachingSessionStatus,
     SessionCaptureSource,
 )
+from app.models.weekly_program import WeeklyProgram
 from app.models.app_setting import AppSetting
 from app.models.contact_request import (
     CONTACT_SOURCE_LABELS_TR,
@@ -461,6 +462,7 @@ __all__ = [
     "CONTACT_SOURCE_LABELS_TR",
     "SystemSecret",
     "SessionCaptureSource",
+    "WeeklyProgram",
     "COACH_PAYMENT_METHOD_LABELS",
     "CoachPayment",
     "CoachPaymentMethod",

@@ -1572,3 +1572,159 @@ export function useApplyTaskTemplate(studentId: number) {
     },
   });
 }
+
+// =============================================================================
+// WP3 — Weekly Programs (yeni program oluştur akışı)
+// =============================================================================
+
+import type {
+  WeeklyProgramCreateBody,
+  WeeklyProgramItem,
+  WeeklyProgramUpdateBody,
+} from "@/lib/types/teacher";
+
+interface WPProgramErrorDetail {
+  code?: string;
+  message?: string;
+  overlaps?: Array<{
+    program_id: number;
+    label: string;
+    start_date: string;
+    end_date: string;
+    overlap_days: number;
+    task_count_in_overlap: number;
+  }>;
+}
+
+export function useCreateProgram(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<WeeklyProgramItem>,
+    ApiError,
+    WeeklyProgramCreateBody
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<WeeklyProgramItem>>(
+        `/api/v2/teacher/students/${studentId}/programs`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "programs"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "week"],
+      });
+      toast.success("Yeni program oluşturuldu");
+    },
+    onError: (e) => {
+      const detail = (e.detail as WPProgramErrorDetail) ?? {};
+      const code = detail.code;
+      const messages: Record<string, string> = {
+        too_long: "Program en fazla 14 gün olabilir.",
+        too_short: "Program en az 1 gün olmalı.",
+        invalid_range: "Bitiş tarihi başlangıçtan önce olamaz.",
+        invalid_date: "Geçersiz tarih formatı.",
+        not_found: "Öğrenci bulunamadı.",
+        // overlap kullanıcıya dialog gösterilecek, bu mesaj atlanır
+      };
+      if (code === "overlap") return; // dialog handle ediyor
+      toast.error(messages[code ?? ""] ?? "Program oluşturulamadı");
+    },
+  });
+}
+
+export function useUpdateProgram(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<WeeklyProgramItem>,
+    ApiError,
+    { programId: number; body: WeeklyProgramUpdateBody }
+  >({
+    mutationFn: ({ programId, body }) =>
+      api<MutationResponse<WeeklyProgramItem>>(
+        `/api/v2/teacher/students/${studentId}/programs/${programId}`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "programs"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "week"],
+      });
+      toast.success("Program güncellendi");
+    },
+    onError: (e) => {
+      const detail = (e.detail as WPProgramErrorDetail) ?? {};
+      if (detail.code === "overlap") return;
+      toast.error(detail.message ?? "Program güncellenemedi");
+    },
+  });
+}
+
+export function useDeleteProgram(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{ deleted: number; tasks_deleted: number }>,
+    ApiError,
+    { programId: number; deleteTasks: boolean }
+  >({
+    mutationFn: ({ programId, deleteTasks }) =>
+      api<MutationResponse<{ deleted: number; tasks_deleted: number }>>(
+        `/api/v2/teacher/students/${studentId}/programs/${programId}/delete`,
+        { method: "POST", body: JSON.stringify({ delete_tasks: deleteTasks }) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "programs"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "week"],
+      });
+      const td = res.data?.tasks_deleted ?? 0;
+      toast.success(
+        td > 0
+          ? `Program silindi (${td} görev de temizlendi)`
+          : "Program silindi",
+      );
+    },
+    onError: (e) => showError(e, "Program silinemedi"),
+  });
+}
+
+export function useWrapLegacyTasks(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<WeeklyProgramItem>,
+    ApiError,
+    { name?: string | null }
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<WeeklyProgramItem>>(
+        `/api/v2/teacher/students/${studentId}/programs/wrap-legacy`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "programs"],
+      });
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "week"],
+      });
+      toast.success("Eski görevler programa bağlandı");
+    },
+    onError: (e) => {
+      const detail = (e.detail as WPProgramErrorDetail) ?? {};
+      if (detail.code === "no_unlinked_tasks") {
+        toast.error("Programa bağlı olmayan görev yok.");
+        return;
+      }
+      showError(e, "İşlem başarısız");
+    },
+  });
+}

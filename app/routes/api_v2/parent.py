@@ -231,13 +231,20 @@ def parent_student_week_v2(
 
     Eşdeğer Jinja: parent.py:285-309 (parent_student_week).
     """
+    today = date.today()
     if start:
         try:
             start_date = date.fromisoformat(start)
         except ValueError:
-            start_date = date.today()
+            start_date = today
     else:
-        start_date = date.today()
+        # WP4 — Veli sayfası açılınca aktif program varsa onun başlangıcına snap.
+        # Yoksa bugün — eski davranış (geri uyum).
+        from app.services.weekly_program_service import get_active_program
+        active_prog = get_active_program(
+            db, student_id=student_id, today=today,
+        )
+        start_date = active_prog.start_date if active_prog else today
     try:
         data = student_week(db, user, student_id, start_date)
     except ParentAccessDenied:
