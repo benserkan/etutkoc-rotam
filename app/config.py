@@ -21,10 +21,21 @@ class Settings(BaseSettings):
     # Email içindeki linkler için public URL (deploy sonrası değişir)
     app_base_url: str = "http://127.0.0.1:8081"
 
-    # SMS — Netgsm REST (P1, 2026-05-30). Yalnız telefon doğrulama OTP'si
-    # için kullanılır; otomatik SMS bildirimi YOK. sms_enabled=false iken
-    # log-only (dev): kullanıcı paneline kod dev_test_code olarak yansır.
+    # SMS — pluggable sağlayıcı (P1 2026-05-30, VatanSMS 2026-05-31).
+    # Yalnız telefon doğrulama OTP'si için kullanılır; otomatik SMS bildirimi YOK.
+    # sms_enabled=false iken log-only (dev): kullanıcı paneline kod dev_test_code
+    # olarak yansır.
     sms_enabled: bool = False
+    # Sağlayıcı seçimi: "vatansms" (default — bireysel hesap kabul) veya "netgsm"
+    sms_provider: str = "vatansms"
+
+    # VatanSMS REST (default — TC kimlik + e-devlet belgesi ile bireysel hesap)
+    vatansms_api_id: str = ""
+    vatansms_api_key: str = ""
+    vatansms_sender: str = ""  # onaylı başlık (sender ID)
+    vatansms_base_url: str = "https://api.vatansms.net"
+
+    # Netgsm REST (legacy — şirket gerekir)
     netgsm_user: str = ""
     netgsm_password: str = ""
     netgsm_header: str = ""  # onaylı başlık (sender ID)

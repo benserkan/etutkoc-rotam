@@ -85,13 +85,21 @@ services:
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       TURNSTILE_ENABLED: ${TURNSTILE_ENABLED:-1}
-      # ---- SMS (Netgsm — telefon doğrulama OTP) ----
+      # ---- SMS (telefon doğrulama OTP) ----
       # SMS_ENABLED=false iken kod konsol log'una düşer + UI'da dev_test_code
-      # olarak gösterilir. true ise Netgsm'e gerçek SMS gönderir.
+      # olarak gösterilir. true ise gerçek SMS gönderir.
+      # SMS_PROVIDER: "vatansms" (default — bireysel hesap kabul) veya "netgsm"
       SMS_ENABLED: ${SMS_ENABLED:-false}
+      SMS_PROVIDER: ${SMS_PROVIDER:-vatansms}
+      # VatanSMS (default) — TC kimlik + e-devlet belgesi ile bireysel hesap
+      VATANSMS_API_ID: ${VATANSMS_API_ID:-}
+      VATANSMS_API_KEY: ${VATANSMS_API_KEY:-}
+      VATANSMS_SENDER: ${VATANSMS_SENDER:-}          # onaylı başlık (sender ID)
+      VATANSMS_BASE_URL: ${VATANSMS_BASE_URL:-https://api.vatansms.net}
+      # Netgsm (legacy — şirket gerekir; SMS_PROVIDER=netgsm yapılınca aktif olur)
       NETGSM_USER: ${NETGSM_USER:-}
       NETGSM_PASSWORD: ${NETGSM_PASSWORD:-}
-      NETGSM_HEADER: ${NETGSM_HEADER:-}             # onaylı başlık (sender ID)
+      NETGSM_HEADER: ${NETGSM_HEADER:-}
       NETGSM_BASE_URL: ${NETGSM_BASE_URL:-https://api.netgsm.com.tr}
       # ---- Worker'la çakışma önlemi ----
       LGS_RUN_BACKGROUND: "false"    # web'de cron/dispatcher KAPALI
