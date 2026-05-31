@@ -339,6 +339,9 @@ export interface AdminUserListItem {
   subscription_status?: string | null;
   subscription_period_end?: string | null;
   trial_active?: boolean;
+  // M5 ext — demo etiketi (listede amber rozet için)
+  is_demo?: boolean;
+  demo_label?: string | null;
 }
 
 export interface AdminUserListResponse {
@@ -3096,4 +3099,54 @@ export interface AdminBadgesResponse {
   support_pending: number;
   contact_new: number;
   checked_at: string;
+}
+
+// =============================================================================
+// M5 — Demo Ekosistem
+// =============================================================================
+
+export type DemoKind = "institution" | "solo_coach" | "institution_teacher";
+
+export interface DemoCredentialItem {
+  role_label: string;     // "Kurum Yöneticisi" | "Koç" | "Öğrenci" | "Veli"
+  full_name: string;
+  email: string;
+  password: string;       // standart "Demo123!@"
+  user_id: number;
+  panel_path: string;     // /institution | /teacher | /student | /parent
+}
+
+export interface DemoSeedResult {
+  kind: DemoKind;
+  institution_id: number | null;
+  institution_name: string | null;
+  seed_id: string;
+  label: string | null;
+  credentials: DemoCredentialItem[];
+  student_count: number;
+  summary: string;
+}
+
+export interface DemoSessionListItem {
+  seed_id: string;
+  kind: DemoKind;
+  label: string | null;
+  institution_id: number | null;
+  institution_name: string | null;
+  user_count: number;
+  student_count: number;
+  created_at: string;
+}
+
+export interface DemoSessionListResponse {
+  items: DemoSessionListItem[];
+}
+
+export interface DemoSessionDeleteResult {
+  seed_id: string;
+  users_deleted: number;
+  institutions_deleted: number;
+  tasks_deleted: number;
+  exams_deleted: number;
+  sessions_deleted: number;
 }

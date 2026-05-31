@@ -9,6 +9,7 @@ import {
   BellRing,
   Building2,
   CalendarDays,
+  FlaskConical,
   KeyRound,
   CircleDollarSign,
   ClipboardList,
@@ -168,6 +169,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/payment-links", label: "Ödeme Linkleri", icon: Link2 },
       { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox, badgeKey: "contact_new" },
       { href: "/admin/support", label: "Talepler", icon: LifeBuoy, badgeKey: "support_pending" },
+      { href: "/admin/demo-sessions", label: "Demo Hesaplar", icon: FlaskConical },
     ],
   },
 ];

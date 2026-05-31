@@ -12,6 +12,7 @@ import type {
   ParentDashboardResponse,
   ParentInvitationInfo,
   ParentNotificationsResponse,
+  ParentSessionsResponse,
   ParentSettingsResponse,
   ParentStudentOverviewResponse,
   ParentUnsubscribeResult,
@@ -35,6 +36,15 @@ export const parentKeys = {
       String(id),
       "week",
       start ?? "",
+    ] as const,
+  studentSessions: (id: number, months: number) =>
+    [
+      "parent",
+      "me",
+      "students",
+      String(id),
+      "sessions",
+      months,
     ] as const,
   notifications: () => ["parent", "me", "notifications"] as const,
   settings: () => ["parent", "me", "settings"] as const,
@@ -64,6 +74,15 @@ export function getParentStudentWeek(
   const qs = start ? `?start=${encodeURIComponent(start)}` : "";
   return api<ParentWeekResponse>(
     `/api/v2/parent/students/${studentId}/week${qs}`,
+  );
+}
+
+export function getParentStudentSessions(
+  studentId: number,
+  months: number = 12,
+) {
+  return api<ParentSessionsResponse>(
+    `/api/v2/parent/students/${studentId}/sessions?months=${months}`,
   );
 }
 

@@ -398,3 +398,78 @@ UnsubscribeStatusLiteral = Literal["unsubscribed", "already", "invalid"]
 
 class ParentUnsubscribeResult(BaseModel):
     status: UnsubscribeStatusLiteral
+
+
+# =============================================================================
+# M4 — Veli seans hareketleri (KS1/KS2 görünümü)
+#
+# KVKK gizliliği: veli aşağıdakileri GÖRMEZ:
+#   - coach_note (Kova 2 anlatı — koça özel)
+#   - agenda / next_change (Kova 3 koç kararı — koça özel)
+#   - mood / tags / auto_snapshot (gelişimsel sinyaller)
+#   - capture_source (foto/ses → AI not — operasyonel)
+#
+# Veli yalnız: tarih + durum + süre + kanal + ödeme verisi görür (operasyonel
+# tahsilat şeffaflığı). "Bu seans yapıldı/ertelendi, X ücretten Y ödendi."
+# =============================================================================
+
+
+SessionStatusLiteral = Literal["done", "postponed", "cancelled", "no_show"]
+SessionChannelLiteral = Literal["in_person", "online", "phone"]
+PaymentMethodLiteral = Literal["cash", "transfer", "other"]
+
+
+class ParentSessionItem(BaseModel):
+    """Tek seans — veli görünümü (gizli alanlar HARİÇ)."""
+    id: int
+    session_date: DateType
+    status: SessionStatusLiteral
+    status_label: str
+    duration_min: int | None
+    channel: SessionChannelLiteral | None
+    channel_label: str | None
+
+
+class ParentPaymentItem(BaseModel):
+    """Tek ödeme kaydı."""
+    id: int
+    paid_at: DateType
+    amount: int
+    method: PaymentMethodLiteral
+    method_label: str
+    period_month: str | None       # "YYYY-MM" — hangi ayı kapatıyor
+    note: str | None
+
+
+class ParentBillingMonth(BaseModel):
+    """Bir ayın tahsilat özeti — hesaplanır (modelde değil)."""
+    period_month: str              # "YYYY-MM"
+    period_label: str              # "Mart 2026"
+    sessions_done: int             # o ay status=DONE seans sayısı
+    session_fee: int               # cari ücret (CoachStudentRate)
+    accrued: int                   # sessions_done × session_fee (tahakkuk)
+    paid: int                      # o ay period_month'una düşen ödemelerin toplamı
+    balance: int                   # accrued − paid (+ kalan; − fazla ödenmiş)
+
+
+class ParentBillingSummary(BaseModel):
+    """Toplam + ay bazlı kırılım."""
+    session_fee: int                          # cari ücret (0 = belirlenmemiş)
+    total_accrued: int                        # months toplamı
+    total_paid: int                           # months toplamı
+    open_balance: int                         # total_accrued − total_paid
+    months: list[ParentBillingMonth]          # eski → yeni
+    payments: list[ParentPaymentItem]         # son N (en yeni → en eski)
+
+
+class ParentSessionsResponse(BaseModel):
+    """GET /api/v2/parent/students/{id}/sessions response.
+
+    `sessions`: son 12 ay seans listesi (en yeni → en eski).
+    `billing`: aynı dönem için aylık tahakkuk + ödeme kırılımı.
+    Veli bu sayfadan aylık borç durumunu net görür (KVKK: koça-özel notlar yok).
+    """
+    student_id: int
+    student_name: str
+    sessions: list[ParentSessionItem]
+    billing: ParentBillingSummary

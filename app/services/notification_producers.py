@@ -267,6 +267,47 @@ def _get_latest_exam(db: Session, *, student_id: int, since_days: int = 7) -> di
     }
 
 
+def _get_recent_exams(
+    db: Session, *, student_id: int, since_days: int = 90, limit: int = 20,
+) -> list[dict]:
+    """Son N gün denemeleri — güncel tarih → geriye doğru sıralı.
+
+    M3 için `parent_new_program` mail'ine eklenir: veli yeni programı görürken
+    son 3 ayın deneme performansını da görür (bilgi amaçlı, klinik teşhis değil).
+    `limit` mail boyutunu kontrol eder (default 20).
+    """
+    from app.models.exam_result import ExamResult
+    from sqlalchemy import desc as _desc
+
+    cutoff = date.today() - timedelta(days=since_days)
+    rows = (
+        db.query(ExamResult)
+        .filter(
+            ExamResult.student_id == student_id,
+            ExamResult.exam_date >= cutoff,
+        )
+        .order_by(_desc(ExamResult.exam_date), _desc(ExamResult.created_at))
+        .limit(limit)
+        .all()
+    )
+    out: list[dict] = []
+    for r in rows:
+        section_str = (
+            r.section.value if hasattr(r.section, "value")
+            else (str(r.section) if r.section else None)
+        )
+        out.append({
+            "title": r.title,
+            "date_iso": r.exam_date.isoformat() if r.exam_date else None,
+            "net": float(r.net) if r.net is not None else None,
+            "correct": int(r.total_correct or 0),
+            "wrong": int(r.total_wrong or 0),
+            "blank": int(r.total_blank or 0),
+            "section": section_str,
+        })
+    return out
+
+
 def produce_weekly_report(
     db: Session,
     *,
@@ -414,9 +455,25 @@ def produce_new_program(
 ) -> list[NotificationLog]:
     """Öğretmen yeni haftalık program yayınladı.
 
-    daily_breakdown: [{"date": "2026-05-06", "label": "Salı", "task_count": 5}, ...]
-    Sadece önümüzdeki 7 güne bakar (geçmiş özet vermez — locked design).
+    `daily_breakdown` parametresi `event_triggers.on_program_published`'dan
+    gelir (basit "gün → task_count" özeti). Producer bunu yok sayar ve
+    `_build_daily_breakdown` ile **gün × görev kalemleri detaylı** veri
+    çeker (ders + konu + planlanan soru sayısı). Eski callsite imzası
+    bozulmasın diye parametre kaldırılmadı, sadece kullanılmıyor.
+
+    M3 (yeniden tasarım): mail her gün için → kitap + bölüm + planlanan soru
+    sayısı listesini gösterir. Altında son 90g denemeler tablosu (veya
+    "deneme yok" notu) bulunur.
     """
+    # _build_daily_breakdown weekly_report ile aynı kalıbı kullanır; bu mail
+    # için "completed" alanı her zaman 0 (yeni program), şablonda gizlenir.
+    detailed_breakdown = _build_daily_breakdown(
+        db, student_id=student.id, week_start=week_start, week_end=week_end,
+    )
+    # daily_breakdown parametresi (event_triggers'tan eski format) artık atıl —
+    # log için sayım amaçlı kullanılabilir ama mail içeriği detailed_breakdown'dan.
+    _ = daily_breakdown
+
     base_payload: dict[str, Any] = {
         "__template": "parent_new_program",
         "student_id": student.id,
@@ -424,7 +481,11 @@ def produce_new_program(
         "week_start": week_start.isoformat(),
         "week_end": week_end.isoformat(),
         "total_tasks": total_tasks,
-        "daily_breakdown": daily_breakdown or [],
+        # Detaylı gün-gün liste — şablon yeniden tasarımı bu formatla çalışır
+        "daily_breakdown": detailed_breakdown,
+        "recent_exams": _get_recent_exams(
+            db, student_id=student.id, since_days=90, limit=20,
+        ),
         "unsubscribe_token": _unsub_token(db, parent.id),
     }
 

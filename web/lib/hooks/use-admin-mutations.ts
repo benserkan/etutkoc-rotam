@@ -2059,3 +2059,69 @@ export function useDeleteWaTemplate() {
     onError: (e) => toast.error(waTplErrorTitle(e, "Silinemedi")),
   });
 }
+
+// =============================================================================
+// M5 — Demo Ekosistem Oluştur
+// =============================================================================
+
+import type { DemoKind, DemoSeedResult, DemoSessionDeleteResult } from "@/lib/types/admin";
+
+export function useCreateDemoEcosystem() {
+  const qc = useQueryClient();
+  return useMutation<
+    DemoSeedResult,
+    ApiError,
+    { kind: DemoKind; label?: string | null }
+  >({
+    mutationFn: ({ kind, label }) =>
+      api<DemoSeedResult>("/api/v2/admin/demo-seed", {
+        method: "POST",
+        body: JSON.stringify({ kind, label: label ?? null }),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      qc.invalidateQueries({ queryKey: ["admin", "institutions"] });
+      qc.invalidateQueries({ queryKey: ["admin", "demo-sessions"] });
+    },
+    onError: (e) => {
+      const code = e.detail?.code as string | undefined;
+      const messages: Record<string, string> = {
+        invalid_kind: "Geçersiz demo türü.",
+        demo_seed_failed: "Demo oluşturulamadı (sunucu hatası).",
+        role_required: "Bu işlem yalnız süper admin içindir.",
+      };
+      toast.error((code && messages[code]) || "Demo oluşturulamadı");
+    },
+  });
+}
+
+export function useDeleteDemoSession() {
+  const qc = useQueryClient();
+  return useMutation<DemoSessionDeleteResult, ApiError, { seedId: string }>({
+    mutationFn: ({ seedId }) =>
+      api<DemoSessionDeleteResult>(
+        `/api/v2/admin/demo-sessions/${encodeURIComponent(seedId)}/delete`,
+        { method: "POST" },
+      ),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      qc.invalidateQueries({ queryKey: ["admin", "institutions"] });
+      qc.invalidateQueries({ queryKey: ["admin", "demo-sessions"] });
+      const total =
+        res.users_deleted +
+        res.institutions_deleted +
+        res.tasks_deleted +
+        res.exams_deleted +
+        res.sessions_deleted;
+      toast.success(`Demo silindi (${total} kayıt temizlendi)`);
+    },
+    onError: (e) => {
+      const code = e.detail?.code as string | undefined;
+      const messages: Record<string, string> = {
+        demo_delete_failed: "Demo silinemedi (sunucu hatası).",
+        role_required: "Bu işlem yalnız süper admin içindir.",
+      };
+      toast.error((code && messages[code]) || "Silinemedi");
+    },
+  });
+}

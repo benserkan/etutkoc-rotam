@@ -52,6 +52,8 @@ from app.routes.api_v2.dependencies import (
 )
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.parent import (
+    ParentBillingMonth,
+    ParentBillingSummary,
     ParentChildLink,
     ParentDashboardResponse,
     ParentInvitationAcceptBody,
@@ -60,8 +62,11 @@ from app.routes.api_v2.schemas.parent import (
     ParentMuteBody,
     ParentNotificationItem,
     ParentNotificationsResponse,
+    ParentPaymentItem,
     ParentPreferencesBody,
     ParentPreferencesInfo,
+    ParentSessionItem,
+    ParentSessionsResponse,
     ParentSettingsResponse,
     ParentStudentOverviewResponse,
     ParentUnsubscribeResult,
@@ -78,6 +83,7 @@ from app.services.parent_invitation import (
 )
 from app.services.parent_view import (
     ParentAccessDenied,
+    assert_parent_can_view,
     list_parent_students,
     list_recent_notifications,
     student_overview,
@@ -244,6 +250,189 @@ def parent_student_week_v2(
             },
         )
     return data
+
+
+# =============================================================================
+# M4 — Veli seans hareketleri
+# =============================================================================
+
+
+@router.get(
+    "/students/{student_id}/sessions",
+    response_model=ParentSessionsResponse,
+)
+def parent_student_sessions_v2(
+    student_id: int,
+    months: int = Query(12, ge=1, le=36, description="Kapsam ay (1-36)"),
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veli için seans hareketleri + tahsilat özeti.
+
+    KVKK: koça-özel alanlar (coach_note, agenda, next_change, mood, tags,
+    auto_snapshot, capture_source) response'a DAHİL DEĞİL. Veli yalnız
+    tarih + status + duration + channel + ödeme görür.
+
+    Aylık hesap servis tarafında compute edilir (modelde değil): her ay için
+    status=DONE seans sayısı × cari ücret = tahakkuk; ödemeler period_month'a
+    göre dağıtılır; bakiye = tahakkuk − ödeme.
+    """
+    try:
+        student = assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "not_found",
+                "code": "student_not_found",
+                "message": "Öğrenci bulunamadı.",
+            },
+        )
+
+    # Lokal import — döngü riski yok ama parent.py giriş yolu temiz.
+    from datetime import date as _date
+    from app.models.coach_billing import (
+        COACH_PAYMENT_METHOD_LABELS,
+        CoachPayment,
+        CoachStudentRate,
+    )
+    from app.models.coaching_session import (
+        COACHING_CHANNEL_LABELS,
+        COACHING_STATUS_LABELS,
+        CoachingSession,
+        CoachingSessionStatus,
+    )
+
+    today = _date.today()
+    # Pencere başı: months ay önceki ayın 1'i
+    start_year = today.year
+    start_month = today.month - (months - 1)
+    while start_month <= 0:
+        start_month += 12
+        start_year -= 1
+    window_start = _date(start_year, start_month, 1)
+
+    # Seanslar — en yeni → en eski
+    sessions = (
+        db.query(CoachingSession)
+        .filter(
+            CoachingSession.student_id == student.id,
+            CoachingSession.session_date >= window_start,
+        )
+        .order_by(CoachingSession.session_date.desc(), CoachingSession.id.desc())
+        .all()
+    )
+
+    session_items: list[ParentSessionItem] = []
+    for s in sessions:
+        session_items.append(ParentSessionItem(
+            id=s.id,
+            session_date=s.session_date,
+            status=s.status.value,
+            status_label=COACHING_STATUS_LABELS.get(s.status, s.status.value),
+            duration_min=s.duration_min,
+            channel=s.channel.value if s.channel else None,
+            channel_label=COACHING_CHANNEL_LABELS.get(s.channel) if s.channel else None,
+        ))
+
+    # Cari ücret (öğrenci başına, koça-spesifik değil)
+    rate_row = (
+        db.query(CoachStudentRate)
+        .filter(CoachStudentRate.student_id == student.id)
+        .first()
+    )
+    fee = int(rate_row.session_fee) if rate_row else 0
+
+    # Ödemeler — pencere içinde
+    payments = (
+        db.query(CoachPayment)
+        .filter(
+            CoachPayment.student_id == student.id,
+            CoachPayment.paid_at >= window_start,
+        )
+        .order_by(CoachPayment.paid_at.desc(), CoachPayment.id.desc())
+        .all()
+    )
+
+    # Aylık tahakkuk hesabı
+    TR_MONTHS = [
+        "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
+        "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık",
+    ]
+    month_data: dict[str, dict[str, int]] = {}
+    # months pencere init (boş aylar bile görünsün)
+    cur_y, cur_m = start_year, start_month
+    while (cur_y, cur_m) <= (today.year, today.month):
+        key = f"{cur_y:04d}-{cur_m:02d}"
+        month_data[key] = {"sessions_done": 0, "paid": 0}
+        cur_m += 1
+        if cur_m > 12:
+            cur_m = 1
+            cur_y += 1
+
+    # DONE seansları aya dağıt
+    for s in sessions:
+        if s.status != CoachingSessionStatus.DONE:
+            continue
+        key = f"{s.session_date.year:04d}-{s.session_date.month:02d}"
+        if key in month_data:
+            month_data[key]["sessions_done"] += 1
+
+    # Ödemeleri period_month'a göre dağıt; period_month yoksa paid_at'a düşür
+    for p in payments:
+        if p.period_month and p.period_month in month_data:
+            key = p.period_month
+        else:
+            key = f"{p.paid_at.year:04d}-{p.paid_at.month:02d}"
+        if key in month_data:
+            month_data[key]["paid"] += int(p.amount)
+
+    months_out: list[ParentBillingMonth] = []
+    total_accrued = 0
+    total_paid = 0
+    for key in sorted(month_data.keys()):
+        y, m = key.split("-")
+        label = f"{TR_MONTHS[int(m) - 1]} {y}"
+        sd = month_data[key]["sessions_done"]
+        pa = month_data[key]["paid"]
+        accrued = sd * fee
+        total_accrued += accrued
+        total_paid += pa
+        months_out.append(ParentBillingMonth(
+            period_month=key,
+            period_label=label,
+            sessions_done=sd,
+            session_fee=fee,
+            accrued=accrued,
+            paid=pa,
+            balance=accrued - pa,
+        ))
+
+    payment_items: list[ParentPaymentItem] = []
+    for p in payments[:50]:  # en yeni 50 ödeme
+        payment_items.append(ParentPaymentItem(
+            id=p.id,
+            paid_at=p.paid_at,
+            amount=int(p.amount),
+            method=p.method.value,
+            method_label=COACH_PAYMENT_METHOD_LABELS.get(p.method, p.method.value),
+            period_month=p.period_month,
+            note=p.note,
+        ))
+
+    return ParentSessionsResponse(
+        student_id=student.id,
+        student_name=student.full_name,
+        sessions=session_items,
+        billing=ParentBillingSummary(
+            session_fee=fee,
+            total_accrued=total_accrued,
+            total_paid=total_paid,
+            open_balance=total_accrued - total_paid,
+            months=months_out,
+            payments=payment_items,
+        ),
+    )
 
 
 # =============================================================================

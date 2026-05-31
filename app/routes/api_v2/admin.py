@@ -72,6 +72,12 @@ from app.routes.api_v2.schemas.admin import (
     AnnouncementMutationResult,
     AnnouncementSeverityOption,
     AnnouncementsListResponse,
+    DemoCredentialItem,
+    DemoSeedBody,
+    DemoSeedResult,
+    DemoSessionDeleteResult,
+    DemoSessionListItem,
+    DemoSessionListResponse,
     AuditActorBrief,
     AuditListItem,
     AuditListResponse,
@@ -1611,6 +1617,9 @@ def _user_to_admin_item(u: User) -> AdminUserListItem:
         trial_active=(
             u.institution_id is None and is_trial_active(u)
         ),
+        # M5 ext — demo etiketi (listede rozet için)
+        is_demo=bool(getattr(u, "is_demo", False)),
+        demo_label=getattr(u, "demo_label", None),
     )
 
 
@@ -8933,5 +8942,211 @@ def admin_whatsapp_dispatch_log(
         days=days,
         sender_filter_id=sender_id,
     )
+
+
+# =============================================================================
+# M5 — Demo Ekosistem Oluştur
+#
+# Süper admin tanıtım hesabı: 3 kind'tan birini seç → kurum + admin + koç +
+# öğrenci + veli + örnek veri yaratılır + dialog'da kopya-butonlu credentials
+# döner. Görüşme bitince mevcut "Kurum Sil" / "Kullanıcı Sil" akışıyla cascade
+# temizlenir.
+#
+# Tasarım kararı (kullanıcı 2026-05-31): is_demo flag YOK; gerçek hesaplar.
+# İstatistik filtreleri yok; bakım yükü minimum. Süper admin sorumluluğunda
+# temizlik (5 satırlık küçük etki).
+# =============================================================================
+
+
+@router.post(
+    "/demo-seed",
+    response_model=DemoSeedResult,
+)
+def admin_demo_seed_v2(
+    body: DemoSeedBody,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Süper admin için demo ekosistem yaratır.
+
+    kind:
+      - institution: kurum + 1 admin + 1 koç + 1 öğr + 1 veli + örnek veri
+      - solo_coach: bağımsız koç + 2 öğr + 2 veli + örnek veri (AI özellikleri açık)
+      - institution_teacher: kurum + 1 öğretmen + 1 öğr + 1 veli (admin yok)
+
+    Response: 3-5 kullanıcının email/şifre listesi + kurum bilgisi. Tek seferlik
+    kopyalama dialog'unda kullanılır.
+    """
+    from app.services.demo_seed import create_demo_ecosystem, VALID_KINDS
+
+    if body.kind not in VALID_KINDS:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation",
+                "code": "invalid_kind",
+                "message": f"Geçersiz kind: {body.kind}",
+            },
+        )
+
+    try:
+        result = create_demo_ecosystem(db, kind=body.kind, label=body.label)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        # Hata mesajı dış kullanıcıya sızmaz, log'a düşer
+        import logging
+        logging.getLogger(__name__).exception("demo_seed failed: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "internal",
+                "code": "demo_seed_failed",
+                "message": "Demo oluşturulamadı. Detay log'da.",
+            },
+        )
+
+    # Audit
+    _audit_demo_seed(db, actor=user, result=result)
+
+    # Schema dönüşümü (dataclass → Pydantic)
+    return DemoSeedResult(
+        kind=result.kind,
+        institution_id=result.institution_id,
+        institution_name=result.institution_name,
+        seed_id=result.seed_id,
+        label=result.label,
+        credentials=[
+            DemoCredentialItem(
+                role_label=c.role_label,
+                full_name=c.full_name,
+                email=c.email,
+                password=c.password,
+                user_id=c.user_id,
+                panel_path=c.panel_path,
+            )
+            for c in result.credentials
+        ],
+        student_count=result.student_count,
+        summary=result.summary,
+    )
+
+
+@router.get(
+    "/demo-sessions",
+    response_model=DemoSessionListResponse,
+)
+def admin_list_demo_sessions_v2(
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Tüm demo seanslarını listele (en yeni → en eski).
+
+    Her seans bir kart olarak gösterilir: kurum + kullanıcı sayım + etiket +
+    oluşturulma tarihi + "Sil" butonu.
+    """
+    from app.services.demo_seed import list_demo_sessions
+
+    items = list_demo_sessions(db)
+    return DemoSessionListResponse(
+        items=[
+            DemoSessionListItem(
+                seed_id=it.seed_id,
+                kind=it.kind,
+                label=it.label,
+                institution_id=it.institution_id,
+                institution_name=it.institution_name,
+                user_count=it.user_count,
+                student_count=it.student_count,
+                created_at=it.created_at,
+            )
+            for it in items
+        ],
+    )
+
+
+@router.post(
+    "/demo-sessions/{seed_id}/delete",
+    response_model=DemoSessionDeleteResult,
+)
+def admin_delete_demo_session_v2(
+    seed_id: str,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Bir demo seansının tüm kayıtlarını cascade sil.
+
+    Sadece is_demo=True kayıtlara dokunur. Gerçek hesaplara hiç erişmez.
+    """
+    from app.services.demo_seed import delete_demo_session
+
+    try:
+        counts = delete_demo_session(db, seed_id=seed_id)
+        db.commit()
+    except Exception as e:
+        db.rollback()
+        import logging
+        logging.getLogger(__name__).exception("demo_session delete failed: %s", e)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "internal",
+                "code": "demo_delete_failed",
+                "message": "Demo silinemedi. Detay log'da.",
+            },
+        )
+
+    # Audit
+    try:
+        log_action(
+            db,
+            action=AuditAction.INSTITUTION_DELETE,
+            actor_id=user.id,
+            target_type="demo_session",
+            target_id=None,
+            details={"seed_id": seed_id, "counts": counts},
+            autocommit=True,
+        )
+    except Exception:
+        db.rollback()
+
+    return DemoSessionDeleteResult(
+        seed_id=seed_id,
+        users_deleted=counts.get("users", 0),
+        institutions_deleted=counts.get("institutions", 0),
+        tasks_deleted=counts.get("tasks", 0),
+        exams_deleted=counts.get("exams", 0),
+        sessions_deleted=counts.get("sessions", 0),
+    )
+
+
+def _audit_demo_seed(db: Session, *, actor: User, result) -> None:
+    """Demo seed eylemi için audit log."""
+    try:
+        target_type = "institution" if result.institution_id else "user"
+        target_id = (
+            result.institution_id
+            or (result.credentials[0].user_id if result.credentials else None)
+        )
+        log_action(
+            db,
+            action=(
+                AuditAction.INSTITUTION_CREATE
+                if result.institution_id
+                else AuditAction.USER_CREATE
+            ),
+            actor_id=actor.id,
+            target_type=target_type,
+            target_id=target_id,
+            details={
+                "kind": result.kind,
+                "user_count": len(result.credentials),
+                "demo_seed": True,
+            },
+            autocommit=True,
+        )
+    except Exception:
+        # Audit fail demo'yu bozmaz
+        db.rollback()
 
 

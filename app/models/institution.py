@@ -19,7 +19,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Boolean, DateTime, Integer, LargeBinary, String, UniqueConstraint, func
+from sqlalchemy import Boolean, DateTime, Integer, LargeBinary, String, UniqueConstraint, false as sa_false, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -43,6 +43,16 @@ class Institution(Base):
     # Plan placeholder — billing entegrasyonu Sprint 14+ olabilir.
     plan: Mapped[str] = mapped_column(String(32), nullable=False, default="free")
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
+
+    # M5 ext (2026-05-31) — Demo etiketi (User ile aynı semantik).
+    # demo_seed_id aynı seansın User'larıyla eşleşir → toplu silme.
+    is_demo: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_false(),
+    )
+    demo_seed_id: Mapped[str | None] = mapped_column(
+        String(32), nullable=True, index=True,
+    )
+    demo_label: Mapped[str | None] = mapped_column(String(120), nullable=True)
 
     # Stage 9 (Faz 2) — Pilot/trial: kurum başvurusunda 30 gün
     # 'pilot' süreci aktif. Süre dolduğunda plana göre devam eder veya

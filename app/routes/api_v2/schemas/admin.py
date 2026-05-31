@@ -413,6 +413,9 @@ class AdminUserListItem(BaseModel):
     subscription_status: str | None = None       # active | past_due | canceled | None
     subscription_period_end: datetime | None = None  # yenileme tarihi
     trial_active: bool = False   # solo deneme aktif mi (kart durumu için)
+    # M5 ext — demo etiketi (listede amber rozet için)
+    is_demo: bool = False
+    demo_label: str | None = None
 
 
 class AdminUserListResponse(BaseModel):
@@ -3380,3 +3383,65 @@ class AdminBadgesResponse(BaseModel):
     support_pending: int
     contact_new: int = 0
     checked_at: datetime
+
+
+# =============================================================================
+# M5 — Demo Ekosistem Oluştur (süper admin tanıtım hesabı)
+# =============================================================================
+
+
+DemoKindLiteral = Literal["institution", "solo_coach", "institution_teacher"]
+
+
+class DemoSeedBody(BaseModel):
+    """POST /api/v2/admin/demo-seed body."""
+    kind: DemoKindLiteral
+    label: str | None = None       # opsiyonel etiket ("ABC Etüt için demo")
+
+
+class DemoCredentialItem(BaseModel):
+    """Tek demo kullanıcı kimlik bilgisi."""
+    role_label: str
+    full_name: str
+    email: str
+    password: str       # standart Demo123!@ — kopya-yapıştır kolay
+    user_id: int
+    panel_path: str     # /institution, /teacher, /student, /parent
+
+
+class DemoSeedResult(BaseModel):
+    """Demo ekosistem oluşturma sonucu."""
+    kind: DemoKindLiteral
+    institution_id: int | None
+    institution_name: str | None
+    seed_id: str                          # M5 ext — UUID hex
+    label: str | None = None              # M5 ext — süper admin etiketi
+    credentials: list[DemoCredentialItem]
+    student_count: int
+    summary: str
+
+
+class DemoSessionListItem(BaseModel):
+    """Demo seansları sayfası — bir kart için özet."""
+    seed_id: str
+    kind: DemoKindLiteral
+    label: str | None
+    institution_id: int | None
+    institution_name: str | None
+    user_count: int
+    student_count: int
+    created_at: datetime
+
+
+class DemoSessionListResponse(BaseModel):
+    items: list[DemoSessionListItem]
+
+
+class DemoSessionDeleteResult(BaseModel):
+    """Toplu silme sonucu."""
+    seed_id: str
+    users_deleted: int
+    institutions_deleted: int
+    tasks_deleted: int
+    exams_deleted: int
+    sessions_deleted: int

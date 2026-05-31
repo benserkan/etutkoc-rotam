@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   CalendarDays,
   ChevronRight,
+  Receipt,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -145,8 +146,8 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
       {/* Öğretmen notları */}
       <TeacherNotesCard notes={data.teacher_notes} />
 
-      {/* Hafta linki */}
-      <div className="flex justify-center pt-2">
+      {/* Aksiyon linkleri */}
+      <div className="flex justify-center pt-2 gap-2 flex-wrap">
         <Button
           asChild
           className="bg-[#117A86] hover:bg-[#0E5F69] text-white"
@@ -154,6 +155,16 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
           <Link href={`/parent/students/${data.student.id}/week`}>
             <CalendarDays className="size-4" aria-hidden />
             Haftalık Programı Gör
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        </Button>
+        <Button
+          asChild
+          variant="outline"
+        >
+          <Link href={`/parent/students/${data.student.id}/sessions`}>
+            <Receipt className="size-4" aria-hidden />
+            Seans Hareketleri
             <ChevronRight className="size-4" aria-hidden />
           </Link>
         </Button>

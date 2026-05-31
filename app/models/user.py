@@ -104,6 +104,18 @@ class User(Base):
 
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
+    # M5 ext (2026-05-31) — Demo etiketi: süper admin tanıtım hesapları için.
+    # is_demo = True işaretli kayıtlar `/admin/demo-sessions` sayfasında listelenir;
+    # `demo_seed_id` aynı seansın tüm kayıtlarını gruplar (toplu silme için).
+    # İstatistik filtrelerinde KULLANILMAZ — yalnız görsel ayrım + temizlik.
+    is_demo: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=text("false"),
+    )
+    demo_seed_id: Mapped[str | None] = mapped_column(
+        String(32), nullable=True, index=True,
+    )
+    demo_label: Mapped[str | None] = mapped_column(String(120), nullable=True)
+
     # Uyarı susturma durumu (migration o3k0n2l3m11g) — is_active'ten AYRI.
     # is_active=True kalmaya devam eder (auth login açık), ama is_paused=True
     # iken at-risk panel + burnout + admin digest + veli bildirimi gibi alert

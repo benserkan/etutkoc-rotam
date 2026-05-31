@@ -346,3 +346,57 @@ export type ParentUnsubscribeStatus = "unsubscribed" | "already" | "invalid";
 export interface ParentUnsubscribeResult {
   status: ParentUnsubscribeStatus;
 }
+
+// =============================================================================
+// M4 — Seans hareketleri (veli görünümü)
+// =============================================================================
+
+export type ParentSessionStatus = "done" | "postponed" | "cancelled" | "no_show";
+export type ParentSessionChannel = "in_person" | "online" | "phone";
+export type ParentPaymentMethod = "cash" | "transfer" | "other";
+
+export interface ParentSessionItem {
+  id: number;
+  session_date: string;            // "YYYY-MM-DD"
+  status: ParentSessionStatus;
+  status_label: string;
+  duration_min: number | null;
+  channel: ParentSessionChannel | null;
+  channel_label: string | null;
+}
+
+export interface ParentPaymentItem {
+  id: number;
+  paid_at: string;
+  amount: number;
+  method: ParentPaymentMethod;
+  method_label: string;
+  period_month: string | null;
+  note: string | null;
+}
+
+export interface ParentBillingMonth {
+  period_month: string;            // "YYYY-MM"
+  period_label: string;            // "Mart 2026"
+  sessions_done: number;
+  session_fee: number;
+  accrued: number;
+  paid: number;
+  balance: number;
+}
+
+export interface ParentBillingSummary {
+  session_fee: number;
+  total_accrued: number;
+  total_paid: number;
+  open_balance: number;
+  months: ParentBillingMonth[];
+  payments: ParentPaymentItem[];
+}
+
+export interface ParentSessionsResponse {
+  student_id: number;
+  student_name: string;
+  sessions: ParentSessionItem[];
+  billing: ParentBillingSummary;
+}

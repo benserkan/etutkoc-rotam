@@ -21,17 +21,96 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} için yeni haftalık program
       Önümüzdeki 7 gün için <b>{{ student_name }}</b> adına toplam <b>{{ total_tasks }} görev</b> planlandı.
     </p>
 
+    {# Günlük Program — tarih + gün + görev detayı (ders·konu·planlanan soru sayısı) #}
     {% if daily_breakdown %}
-    <div style="background: #f1f5f9; border-radius: 8px; padding: 12px 16px; margin: 14px 0;">
-      <div style="font-size: 12px; color: #64748b; margin-bottom: 6px;">Günlük dağılım</div>
-      <ul style="list-style: none; padding: 0; margin: 0; font-size: 13px; line-height: 1.8;">
-        {% for d in daily_breakdown %}
-        <li style="display: flex; justify-content: space-between; border-bottom: 1px dashed #e2e8f0; padding: 4px 0;">
-          <span style="color: #334155;">{{ d.label }}</span>
-          <span style="color: #117A86; font-weight: 600;">{{ d.task_count }} görev</span>
-        </li>
+    <h3 style="font-size: 14px; color: #0f172a; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+      Günlük Program
+    </h3>
+    <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px;">
+      {% for day in daily_breakdown %}
+      <tr>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; width: 96px;">
+          <div style="font-weight: 700; color: #117A86;">{{ day.day_name }}</div>
+          <div style="font-size: 11px; color: #64748b;">{{ day.day_label }}</div>
+        </td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #f1f5f9;">
+          {% if day.has_tasks %}
+            {% for task in day.tasks %}
+              {% if task.rows %}
+                {% for it in task.rows %}
+                <div style="margin-bottom: 4px;">
+                  <span style="font-weight: 600; color: #1e293b;">{{ it.book }}</span>{% if it.section %} <span style="color: #64748b;">· {{ it.section }}</span>{% endif %}
+                  <span style="float: right; font-variant-numeric: tabular-nums; color: #475569;">
+                    <b>{{ it.planned }}</b> soru
+                  </span>
+                </div>
+                {% endfor %}
+              {% else %}
+                <div style="color: #475569; font-style: italic; margin-bottom: 4px;">
+                  {{ task.title or task.type }}
+                  {% if task.total_planned and task.total_planned > 0 %}
+                    <span style="float: right; font-variant-numeric: tabular-nums; color: #475569; font-style: normal;">
+                      <b>{{ task.total_planned }}</b> soru
+                    </span>
+                  {% endif %}
+                </div>
+              {% endif %}
+            {% endfor %}
+            <div style="margin-top: 4px; font-size: 11px; color: #64748b; text-align: right;">
+              gün toplamı: <b>{{ day.total_planned }}</b> soru
+            </div>
+          {% else %}
+            <span style="color: #cbd5e1; font-style: italic;">— görev yok —</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    {# M3 — Son 90 günde girilen denemeler (bilgi amaçlı, en yeni → en eski) #}
+    <h3 style="font-size: 14px; color: #0f172a; margin: 22px 0 6px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+      Son 3 ayın denemeleri
+    </h3>
+    {% if recent_exams and recent_exams|length > 0 %}
+    <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px;">
+      <thead>
+        <tr style="background: #f8fafc;">
+          <th style="text-align: left; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 11px;">Tarih</th>
+          <th style="text-align: left; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 11px;">Deneme</th>
+          <th style="text-align: right; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 11px;">Net</th>
+          <th style="text-align: right; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 11px;">D / Y / B</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ex in recent_exams %}
+        <tr>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; color: #475569; white-space: nowrap;">
+            {{ ex.date_iso or "—" }}
+          </td>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">
+            {{ ex.title }}
+            {% if ex.section %}<span style="color: #94a3b8;"> · {{ ex.section }}</span>{% endif %}
+          </td>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; text-align: right; color: #117A86; font-weight: 700; font-variant-numeric: tabular-nums;">
+            {{ "%.2f"|format(ex.net) if ex.net is not none else "—" }}
+          </td>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; text-align: right; color: #475569; font-variant-numeric: tabular-nums;">
+            <span style="color: #059669;">{{ ex.correct }}</span> /
+            <span style="color: #dc2626;">{{ ex.wrong }}</span> /
+            <span style="color: #94a3b8;">{{ ex.blank }}</span>
+          </td>
+        </tr>
         {% endfor %}
-      </ul>
+      </tbody>
+    </table>
+    <p style="margin: 4px 0 12px; font-size: 11px; color: #94a3b8; font-style: italic;">
+      Son 90 günde sisteme girilmiş tüm denemeler, güncel → eski sırada.
+    </p>
+    {% else %}
+    <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin: 6px 0 14px; font-size: 12.5px; color: #78350f;">
+      Son 90 günde sisteme yüklenmiş deneme yok. Öğrenci yeni deneme girdiğinde
+      sonuçlar bu mailde otomatik görünür.
     </div>
     {% endif %}
 

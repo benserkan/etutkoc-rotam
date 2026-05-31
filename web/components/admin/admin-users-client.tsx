@@ -8,6 +8,7 @@ import {
   ArrowRight,
   CheckCircle2,
   Clipboard,
+  FlaskConical,
   Filter,
   Loader2,
   Lock,
@@ -82,6 +83,7 @@ export function AdminUsersClient({
   });
   const data = q.data ?? initial;
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [demoOpen, setDemoOpen] = React.useState(false);
   const [tempPwResult, setTempPwResult] =
     React.useState<AdminUserCreateResult | null>(null);
 
@@ -116,14 +118,26 @@ export function AdminUsersClient({
             Kullanıcılar
           </h1>
         </div>
-        <Button
-          onClick={() => setCreateOpen(true)}
-          className="bg-indigo-600 hover:bg-indigo-700 text-white"
-        >
-          <Plus className="size-4" aria-hidden />
-          Yeni Kullanıcı
-        </Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Button
+            variant="outline"
+            onClick={() => setDemoOpen(true)}
+            className="border-amber-300 text-amber-900 hover:bg-amber-50"
+            title="Tanıtım için hazır kurum/koç/öğrenci/veli ekosistemi oluştur"
+          >
+            <FlaskConical className="size-4" aria-hidden />
+            Demo Aç
+          </Button>
+          <Button
+            onClick={() => setCreateOpen(true)}
+            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+          >
+            <Plus className="size-4" aria-hidden />
+            Yeni Kullanıcı
+          </Button>
+        </div>
       </header>
+      <DemoEcosystemDialog open={demoOpen} onClose={() => setDemoOpen(false)} />
 
       {/* Filter form */}
       <Card>
@@ -282,6 +296,15 @@ function UserRow({ user }: { user: AdminUserListItem }) {
         >
           {user.full_name}
         </Link>
+        {user.is_demo ? (
+          <span
+            className="ml-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border border-amber-300 bg-amber-50 text-amber-900"
+            title={user.demo_label ? `Demo: ${user.demo_label}` : "Demo hesap"}
+          >
+            <FlaskConical className="size-2.5" aria-hidden />
+            Demo{user.demo_label ? ` · ${user.demo_label}` : ""}
+          </span>
+        ) : null}
       </td>
       <td className="px-4 py-2 font-mono text-xs">{user.email}</td>
       <td className="px-4 py-2">
@@ -567,4 +590,271 @@ function formatDateTime(iso: string): string {
   const hh = String(d.getHours()).padStart(2, "0");
   const mn = String(d.getMinutes()).padStart(2, "0");
   return `${dd}.${mm} ${hh}:${mn}`;
+}
+
+// =============================================================================
+// M5 — Demo Ekosistem Dialog
+// =============================================================================
+
+import type { DemoKind, DemoSeedResult } from "@/lib/types/admin";
+import { useCreateDemoEcosystem } from "@/lib/hooks/use-admin-mutations";
+
+const DEMO_KINDS: Array<{
+  key: DemoKind;
+  label: string;
+  description: string;
+  members: string;
+}> = [
+  {
+    key: "institution",
+    label: "Kurum (tam ekosistem)",
+    description: "Etüt/dershane satışı için ideal — kurum yöneticisi + koç + öğrenci + veli.",
+    members: "1 yönetici + 1 koç + 1 öğr + 1 veli",
+  },
+  {
+    key: "solo_coach",
+    label: "Bağımsız Koç",
+    description: "Solo paket tanıtımı — koç + 2 öğrenci + 2 veli. AI özellikleri açık.",
+    members: "1 koç + 2 öğr + 2 veli",
+  },
+  {
+    key: "institution_teacher",
+    label: "Kuruma Bağlı Öğretmen",
+    description: "Tek öğretmen-öğrenci akışı (kurum yöneticisi gerekmez).",
+    members: "1 öğretmen + 1 öğr + 1 veli",
+  },
+];
+
+function DemoEcosystemDialog({
+  open,
+  onClose,
+}: {
+  open: boolean;
+  onClose: () => void;
+}) {
+  // Outer kapı — kapalıyken inner render edilmez → her açılışta state
+  // yeniden init olur (set-state-in-effect deseninden kaçınma).
+  if (!open) return null;
+  return <DemoEcosystemDialogInner onClose={onClose} />;
+}
+
+function DemoEcosystemDialogInner({ onClose }: { onClose: () => void }) {
+  const [selectedKind, setSelectedKind] = React.useState<DemoKind>("institution");
+  const [label, setLabel] = React.useState("");
+  const [result, setResult] = React.useState<DemoSeedResult | null>(null);
+  const create = useCreateDemoEcosystem();
+
+  function handleCreate() {
+    create.mutate(
+      { kind: selectedKind, label: label.trim() || null },
+      {
+        onSuccess: (data) => setResult(data),
+      },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-2xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <FlaskConical className="size-5 text-amber-700" aria-hidden />
+            Demo Ekosistem Oluştur
+          </DialogTitle>
+        </DialogHeader>
+
+        {!result ? (
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Tanıtım/satış için hazır kullanıcı ekosistemi yaratır. Email
+              <code className="mx-1 px-1 py-0.5 bg-muted rounded text-[11px]">demo-XXXXXXXX-rol@etutkoc.com</code>
+              formatında, şifre standart <code className="mx-1 px-1 py-0.5 bg-muted rounded text-[11px]">Demo123!@</code>.
+              Görüşme bitince <b>Kullanıcılar/Kurumlar</b> sayfalarından silinir.
+            </p>
+
+            <div className="space-y-2">
+              {DEMO_KINDS.map((k) => {
+                const active = selectedKind === k.key;
+                return (
+                  <button
+                    key={k.key}
+                    type="button"
+                    onClick={() => setSelectedKind(k.key)}
+                    className={cn(
+                      "w-full text-left px-4 py-3 rounded-lg border-2 transition",
+                      active
+                        ? "border-amber-500 bg-amber-50"
+                        : "border-border bg-card hover:bg-muted/50",
+                    )}
+                  >
+                    <div className="flex items-baseline justify-between gap-2">
+                      <h3 className="font-semibold text-foreground">{k.label}</h3>
+                      <span className="text-[11px] text-muted-foreground">{k.members}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{k.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Etiket (opsiyonel) — Demo Hesaplar sayfasında görünür */}
+            <div>
+              <Label htmlFor="demo-label" className="text-xs">
+                Etiket (opsiyonel)
+              </Label>
+              <Input
+                id="demo-label"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="örn. ABC Etüt için demo"
+                maxLength={120}
+                className="mt-1"
+              />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                Demo Hesaplar sayfasında bu etiket görünür — birden fazla
+                seansı ayırt etmek için kullan.
+              </p>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={onClose}>
+                Vazgeç
+              </Button>
+              <Button
+                onClick={handleCreate}
+                disabled={create.isPending}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {create.isPending ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <FlaskConical className="size-4" aria-hidden />
+                )}
+                Oluştur
+              </Button>
+            </DialogFooter>
+          </div>
+        ) : (
+          <DemoResultPanel result={result} onClose={onClose} />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DemoResultPanel({
+  result,
+  onClose,
+}: {
+  result: DemoSeedResult;
+  onClose: () => void;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border-2 border-emerald-200 bg-emerald-50 p-3">
+        <p className="text-sm font-semibold text-emerald-900">
+          <CheckCircle2 className="inline size-4 mr-1" aria-hidden />
+          Demo ekosistem hazır!
+        </p>
+        <p className="text-xs text-emerald-800 mt-1">{result.summary}</p>
+        {result.institution_name ? (
+          <p className="text-[11px] text-emerald-700 mt-1">
+            Kurum: <b>{result.institution_name}</b>
+          </p>
+        ) : null}
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
+          Kimlik Bilgileri (kopyala-yapıştır)
+        </p>
+        {result.credentials.map((c) => (
+          <DemoCredentialCard key={c.user_id} cred={c} />
+        ))}
+      </div>
+
+      <p className="text-[11px] text-muted-foreground italic">
+        Şifreler aynıdır: <code className="px-1 py-0.5 bg-muted rounded">Demo123!@</code>
+        — kopyala-yapıştır kolay. Görüşme bitince hesapları sil.
+      </p>
+
+      <DialogFooter>
+        <Button onClick={onClose}>Kapat</Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+function DemoCredentialCard({
+  cred,
+}: {
+  cred: DemoSeedResult["credentials"][number];
+}) {
+  const [copied, setCopied] = React.useState<"email" | "password" | null>(null);
+
+  async function copy(value: string, kind: "email" | "password") {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopied(kind);
+      setTimeout(() => setCopied(null), 1500);
+    } catch {
+      // Fallback boş
+    }
+  }
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-3">
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <span className="text-xs font-semibold uppercase tracking-wider text-amber-700">
+          {cred.role_label}
+        </span>
+        <span className="text-[11px] text-muted-foreground">
+          {cred.full_name}
+        </span>
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase text-muted-foreground w-14">
+            Email
+          </span>
+          <code className="flex-1 text-xs font-mono bg-muted px-2 py-1 rounded">
+            {cred.email}
+          </code>
+          <button
+            type="button"
+            onClick={() => copy(cred.email, "email")}
+            className="px-2 py-1 text-[11px] rounded border border-border hover:bg-muted transition inline-flex items-center gap-1"
+            title="Email'i panoya kopyala"
+          >
+            {copied === "email" ? (
+              <CheckCircle2 className="size-3 text-emerald-600" aria-hidden />
+            ) : (
+              <Clipboard className="size-3" aria-hidden />
+            )}
+            {copied === "email" ? "Kopyalandı" : "Kopyala"}
+          </button>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] uppercase text-muted-foreground w-14">
+            Şifre
+          </span>
+          <code className="flex-1 text-xs font-mono bg-muted px-2 py-1 rounded">
+            {cred.password}
+          </code>
+          <button
+            type="button"
+            onClick={() => copy(cred.password, "password")}
+            className="px-2 py-1 text-[11px] rounded border border-border hover:bg-muted transition inline-flex items-center gap-1"
+          >
+            {copied === "password" ? (
+              <CheckCircle2 className="size-3 text-emerald-600" aria-hidden />
+            ) : (
+              <Clipboard className="size-3" aria-hidden />
+            )}
+            {copied === "password" ? "Kopyalandı" : "Kopyala"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }

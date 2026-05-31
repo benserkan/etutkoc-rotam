@@ -78,6 +78,8 @@ export const adminKeys = {
   root: () => ["admin"] as const,
   badges: () => ["admin", "badges"] as const,
   dashboard: () => ["admin", "dashboard"] as const,
+  // M5 ext — demo seansları listesi
+  demoSessions: () => ["admin", "demo-sessions"] as const,
   institutions: (
     sort: InstitutionSort,
     filterLevel: InstitutionFilterLevel | null,
@@ -717,4 +719,14 @@ export function previewAdminWhatsAppTemplate(body: WaTemplatePreviewBody) {
     "/api/v2/admin/whatsapp-templates/preview",
     { method: "POST", body: JSON.stringify(body) },
   );
+}
+
+// =============================================================================
+// M5 ext — Demo seansları listesi
+// =============================================================================
+
+import type { DemoSessionListResponse } from "@/lib/types/admin";
+
+export function getAdminDemoSessions(): Promise<DemoSessionListResponse> {
+  return api<DemoSessionListResponse>("/api/v2/admin/demo-sessions");
 }
