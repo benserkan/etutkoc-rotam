@@ -85,6 +85,14 @@ services:
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
       TURNSTILE_ENABLED: ${TURNSTILE_ENABLED:-1}
+      # ---- SMS (Netgsm — telefon doğrulama OTP) ----
+      # SMS_ENABLED=false iken kod konsol log'una düşer + UI'da dev_test_code
+      # olarak gösterilir. true ise Netgsm'e gerçek SMS gönderir.
+      SMS_ENABLED: ${SMS_ENABLED:-false}
+      NETGSM_USER: ${NETGSM_USER:-}
+      NETGSM_PASSWORD: ${NETGSM_PASSWORD:-}
+      NETGSM_HEADER: ${NETGSM_HEADER:-}             # onaylı başlık (sender ID)
+      NETGSM_BASE_URL: ${NETGSM_BASE_URL:-https://api.netgsm.com.tr}
       # ---- Worker'la çakışma önlemi ----
       LGS_RUN_BACKGROUND: "false"    # web'de cron/dispatcher KAPALI
       # ---- Gunicorn ----
