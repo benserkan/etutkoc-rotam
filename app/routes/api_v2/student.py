@@ -943,21 +943,31 @@ def student_badges_v2(
     Eşdeğer Jinja: app/routes/partials.py:48 (student_pending_count, HTMX).
     """
     from app.services.request_service import pending_count_for_student
-    from app.models.task import Task, TaskBookItem
+    from app.models.task import Task, TaskBookItem, TaskStatus
     count = pending_count_for_student(db, user.id)
-    # 'Bugün' rozeti: bugünün YAYINLANMIŞ + tamamlanmamış görev sayısı (tikleyince düşer)
-    today_open = (
-        db.query(TaskBookItem.task_id)
-        .join(Task, Task.id == TaskBookItem.task_id)
+    # 'Bugün' rozeti: bugünün YAYINLANMIŞ + tamamlanmamış görev sayısı (tikleyince düşer).
+    # Kalemsiz etkinlik görevi (Diğer/Video/..., soru sayısı 0) de sayılır →
+    # eski TaskBookItem-join sorgusu bunları tamamen dışarıda bırakıyordu.
+    today_tasks = (
+        db.query(Task)
+        .options(joinedload(Task.book_items))
         .filter(
             Task.student_id == user.id,
             Task.date == date.today(),
             Task.is_draft.is_(False),
-            TaskBookItem.completed_count < TaskBookItem.planned_count,
         )
-        .distinct()
-        .count()
+        .all()
     )
+
+    def _task_open(t: Task) -> bool:
+        numeric_items = [it for it in t.book_items if it.planned_count > 0]
+        if numeric_items:
+            # Soru-sayılı görev: bir kalem bile eksikse açık (eski davranış)
+            return any(it.completed_count < it.planned_count for it in numeric_items)
+        # Kalemsiz/etkinlik görevi: durum COMPLETED değilse açık
+        return t.status != TaskStatus.COMPLETED
+
+    today_open = sum(1 for t in today_tasks if _task_open(t))
     return PendingBadgesResponse(
         pending_count=count,
         today_open_count=today_open,

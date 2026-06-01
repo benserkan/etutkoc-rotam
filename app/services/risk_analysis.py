@@ -30,7 +30,7 @@ from sqlalchemy.orm import Session
 
 from app.models import User, UserRole
 from app.services.analytics import (
-    daily_completed_series,
+    daily_activity_flag_series,
     week_stats_for,
 )
 
@@ -124,13 +124,16 @@ def _days_since(dt: datetime | None, now: datetime) -> int | None:
 
 
 def _consecutive_empty_days(db: Session, student_id: int, today: date) -> int:
-    """Bugünden geriye giderek üst üste kaç gün hiç tamamlama yok."""
-    series = daily_completed_series(db, student_id, today, 14)
-    # series: dict[date, int] (sıralı değil garanti — dict comprehension)
+    """Bugünden geriye üst üste kaç gün hiç görev tiklenmedi (etkinlik dahil).
+
+    "Boş gün" = o gün hiçbir görev tamamlanmadı. İtemless etkinlik görevi
+    (Diğer/Video/...) tamamlaması da gün'ü dolu yapar → soru sayısı 0 olsa bile.
+    """
+    flags = daily_activity_flag_series(db, student_id, today, 14)
     count = 0
     d = today
     for _ in range(14):
-        if series.get(d, 0) > 0:
+        if flags.get(d, False):
             break
         count += 1
         d -= timedelta(days=1)
@@ -249,9 +252,13 @@ def compute_risk_score(
         ))
         score += WEIGHTS["drop_30pct"]
 
-    # 5) Bu hafta planlı görev yok — yeni öğrenciye (hesap < 3 gün) "Programsız"
+    # 5) Bu hafta hiç görev yok — yeni öğrenciye (hesap < 3 gün) "Programsız"
     # demek erken; koça programı kurması için onboarding süresi tanı.
-    if week.planned == 0 and (account_age_days is None or account_age_days >= ONBOARDING_GRACE_DAYS):
+    # NOT: "programı var mı" = görev SAYISI (tasks_total). Yalnız etkinlik görevi
+    # (Diğer/Video, soru sayısı 0) atanmış hafta da PROGRAMLIDIR → week.planned
+    # (soru) yerine week.tasks_total kullanılır (aksi halde etkinlik-only hafta
+    # yanlışlıkla "Programsız" damgalanır).
+    if week.tasks_total == 0 and (account_age_days is None or account_age_days >= ONBOARDING_GRACE_DAYS):
         indicators.append(RiskIndicator(
             code="no_program",
             title="Programsız",

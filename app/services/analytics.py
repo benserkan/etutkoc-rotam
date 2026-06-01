@@ -447,14 +447,50 @@ def compute_projection(
 # ---------------------------- Performans skorları ----------------------------
 
 
+def daily_activity_flag_series(
+    db: Session, student_id: int, end_date: date, days_back: int
+) -> dict[date, bool]:
+    """Her gün (Task.date) için öğrenci o gün herhangi bir görevi tikledi mi.
+
+    Aktif/tik = görevin durumu COMPLETED VEYA bir kaleminde completed_count > 0.
+    İtemless etkinlik görevi (Diğer/Video/Özet/Tekrar — soru sayısı 0) tamamlandığında
+    da o gün AKTİF sayılır. "İstikrar / hareket" gibi engagement metrikleri için
+    soru-sayısı yerine bu görev-temelli sinyal kullanılmalı.
+    """
+    start = end_date - timedelta(days=days_back - 1)
+    tasks = (
+        db.query(Task)
+        .options(joinedload(Task.book_items))
+        .filter(
+            Task.student_id == student_id,
+            Task.date >= start,
+            Task.date <= end_date,
+        )
+        .all()
+    )
+    result = {d: False for d in _daterange(start, end_date)}
+    for t in tasks:
+        if t.date not in result:
+            continue
+        done = (t.status == TaskStatus.COMPLETED) or any(
+            it.completed_count > 0 for it in t.book_items
+        )
+        if done:
+            result[t.date] = True
+    return result
+
+
 def consistency_score(
     db: Session, student_id: int, end_date: date, days: int = 7
 ) -> float:
-    """Son N günün kaçında en az 1 test tamamlanmış (tik var) / N."""
-    series = daily_completed_series(db, student_id, end_date, days)
-    if not series:
+    """Son N günün kaçında öğrenci en az 1 görevi tikledi (etkinlik dahil) / N.
+
+    Engagement metriği — itemless etkinlik görevi tamamlaması da aktif gün sayılır.
+    """
+    flags = daily_activity_flag_series(db, student_id, end_date, days)
+    if not flags:
         return 0.0
-    active_days = sum(1 for v in series.values() if v > 0)
+    active_days = sum(1 for v in flags.values() if v)
     return active_days / days
 
 
@@ -561,9 +597,17 @@ def generate_warnings(
         max(0, (datetime.now(timezone.utc) - _created).days) if _created else None
     )
 
-    # 1) Bugün hiç tik yapmadı mı (plan vardı ama tamamlama yok)
+    # 1) Bugün hiç tik yapmadı mı (plan vardı ama tamamlama yok).
+    # "Tik" = görev tamamlama. İtemless etkinlik görevi (Diğer/Video/Özet/Tekrar,
+    # soru sayısı 0) tamamlandığında da öğrenci AKTİFTİR → tasks_completed > 0
+    # ise bu uyarı tetiklenmez (aksi halde etkinlik tikleyen öğrenci yanlışlıkla
+    # "hiç tik yapmadı" görünür — bkz. "Diğer görevler tamamlamaya sayılır").
     today_stats = daily_stats_for(db, student.id, today)
-    if today_stats.planned > 0 and today_stats.completed == 0:
+    if (
+        today_stats.planned > 0
+        and today_stats.completed == 0
+        and today_stats.tasks_completed == 0
+    ):
         # Saat geç mi? Akşam geçmiş ama hiç tik yok — kırmızı; gün hâlâ devam ediyorsa sarı
         hour = datetime.now().hour
         level = "red" if hour >= 20 else "amber"
@@ -574,10 +618,14 @@ def generate_warnings(
             detail=f"Bugüne planlanmış {today_stats.planned} test var, henüz hiçbiri tiklenmedi.",
         ))
 
-    # 2) Dün de tik yoksa — ciddileştir
+    # 2) Dün de tik yoksa — ciddileştir (etkinlik görevi de tik sayılır)
     yesterday = today - timedelta(days=1)
     yesterday_stats = daily_stats_for(db, student.id, yesterday)
-    if yesterday_stats.planned > 0 and yesterday_stats.completed == 0:
+    if (
+        yesterday_stats.planned > 0
+        and yesterday_stats.completed == 0
+        and yesterday_stats.tasks_completed == 0
+    ):
         out.append(Warning(
             level="red",
             code="yesterday_no_tick",
@@ -591,8 +639,16 @@ def generate_warnings(
     series3 = daily_completed_series(db, student.id, today, 3)
     dby_stats = daily_stats_for(db, student.id, today - timedelta(days=2))
     planned_3 = today_stats.planned + yesterday_stats.planned + dby_stats.planned
+    # Etkinlik (itemless) görev tamamlaması da "hareket" sayılır — son 3 günde
+    # tamamlanan görev varsa "hareket yok" demek yanlış (soru sayısı 0 olsa bile).
+    tasks_done_3 = (
+        today_stats.tasks_completed
+        + yesterday_stats.tasks_completed
+        + dby_stats.tasks_completed
+    )
     if (
         sum(series3.values()) == 0
+        and tasks_done_3 == 0
         and planned_3 > 0
         and (account_age_days is None or account_age_days >= 3)
     ):
