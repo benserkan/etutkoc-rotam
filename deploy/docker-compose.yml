@@ -161,6 +161,11 @@ services:
         condition: service_healthy  # migration tamamlanmış sayılır
     networks: [internal]
     restart: unless-stopped
+    # Healthcheck KAPALI — worker HTTP sunucusu DEĞİL (dispatcher döngüsü); web
+    # image'ından miras "curl localhost:8000/healthz" hep başarısızdı → YANLIŞ
+    # "unhealthy". Çökerse restart:unless-stopped yeniden başlatır.
+    healthcheck:
+      disable: true
     # scale: 1 (compose default) — manuel scale ETMEYİN
     deploy:
       replicas: 1
@@ -188,6 +193,15 @@ services:
         condition: service_healthy
     networks: [internal]
     restart: unless-stopped
+    # Healthcheck override — Dockerfile'daki "localhost" IPv6 (::1) çözümleniyor,
+    # Next IPv4'te (0.0.0.0:3000) dinliyor → bağlanamayıp YANLIŞ "unhealthy"
+    # veriyordu. 127.0.0.1 ile IPv4'e sabitle.
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:3000/ || exit 1"]
+      interval: 30s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
 
   # ===========================================================================
   # Caddy reverse proxy + otomatik HTTPS (Let's Encrypt)
