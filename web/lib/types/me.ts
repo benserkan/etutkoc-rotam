@@ -101,6 +101,9 @@ export interface MyPhoneInfo {
   phone_secondary_pending_expires_at: string | null;
   phone_secondary_dev_test_code: string | null;
   secondary_slot_available: boolean;
+  /** Soft mod: SMS doğrulama operasyonel mi. False iken banner gizlenir +
+   *  PhoneCard doğrulama formu yerine "yakında" bilgisi gösterir. */
+  verification_available: boolean;
 }
 
 export interface StartPhoneVerificationBody {

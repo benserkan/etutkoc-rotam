@@ -77,9 +77,16 @@ export function PhoneCard({ slot, initial }: Props) {
 
   // Slot bazlı alan seçimi
   const phone = pickPhoneFields(data.phone, slot);
+  // Soft mod: SMS doğrulama operasyonel değilse, doğrulanmamış telefonu zorla
+  // doğrulatma — start/verify formu kod gelmediği için dead-end olur. Bunun
+  // yerine "yakında" bilgisi göster (numara varsa kayıtlı olarak gösterilir).
+  const verificationAvailable = data.phone.verification_available !== false;
 
   if (phone.verified) {
     return <PhoneVerifiedPanel slot={slot} phone={phone} />;
+  }
+  if (!verificationAvailable) {
+    return <PhoneSoftPanel slot={slot} phone={phone} />;
   }
   if (phone.pending) {
     return <PhonePendingPanel slot={slot} phone={phone} />;
@@ -397,6 +404,49 @@ function PhoneStartPanel({ slot }: { slot: "primary" | "secondary" }) {
             )}
           </Button>
         </form>
+      </div>
+    </PhoneCardShell>
+  );
+}
+
+// ============================================================================
+// Soft mod — SMS doğrulama henüz operasyonel değil (sağlayıcı yok / SMS_ENABLED=false)
+// ============================================================================
+
+function PhoneSoftPanel({
+  slot,
+  phone,
+}: {
+  slot: "primary" | "secondary";
+  phone: PickedPhone;
+}) {
+  return (
+    <PhoneCardShell
+      slot={slot}
+      badge={
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+          <Clock className="size-3" aria-hidden />
+          Yakında
+        </span>
+      }
+    >
+      <div className="space-y-2 text-sm">
+        {phone.number ? (
+          <p>
+            Kayıtlı numara:{" "}
+            <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
+              +{phone.number}
+            </code>
+          </p>
+        ) : (
+          <p className="text-muted-foreground">Henüz telefon numarası eklenmedi.</p>
+        )}
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          SMS ile doğrulama şu an etkin değil.
+          {phone.number ? " Numaranız kayıtlı; " : " "}
+          doğrulama açıldığında buradan tek adımda tamamlayabilirsiniz. Şimdilik
+          bir işlem yapmanıza gerek yok.
+        </p>
       </div>
     </PhoneCardShell>
   );

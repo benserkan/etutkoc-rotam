@@ -51,7 +51,12 @@ export function PhoneVerifyBanner({ phoneVerified }: Props) {
 
   const liveVerified =
     meQuery.data?.phone?.phone_verified_at != null;
-  const showBanner = !phoneVerified && !liveVerified;
+  // Soft mod: SMS doğrulama operasyonel değilse (sağlayıcı yok / SMS_ENABLED=false)
+  // kullanıcıyı zorla doğrulamaya itme — banner gösterme. SMS açılınca otomatik döner.
+  // (=== true: /me henüz gelmemişken de banner çakmaz, flash önlenir.)
+  const verificationAvailable =
+    meQuery.data?.phone?.verification_available === true;
+  const showBanner = !phoneVerified && !liveVerified && verificationAvailable;
 
   // Dialog kapandığında: doğrulandıysa SSR'ı tazele (banner kaybolur)
   function handleOpenChange(next: boolean) {

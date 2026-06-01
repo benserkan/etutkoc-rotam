@@ -3413,6 +3413,22 @@ dokunma, kalsın" gereği yapılmıyor.
   yüzeyinin ifşası önlendi. Canlı doğrulandı (üçü de 404, /healthz + /api/v2 +
   / 200). Commit `9cb602b`, sunucuda `git pull` + `web`/`worker` rebuild ile
   deploy edildi.
+- **Soft telefon doğrulama modu (2026-06-01):** Türkiye'de SMS başlığı (sender ID)
+  şirket + operatör onayı gerektirdiğinden SMS henüz canlı değil. Eskiden
+  `SMS_ENABLED=false` iken: (a) "Cep telefonunuzu doğrulayın" banner'ı her panelde
+  **kapatılamaz** çıkıp kullanıcıyı doğrulayamayacağı bir akışa zorluyordu; (b)
+  `_is_dev_sms_stub() = not is_sms_enabled()` olduğu için **OTP kodu prod'da
+  `/me` yanıtında sızıyordu**. Düzeltme: `MyPhoneInfo.verification_available =
+  is_sms_enabled()` eklendi → frontend banner yalnız `verification_available===true`
+  iken görünür; `PhoneCard` SMS kapalıyken doğrulama formu yerine "Yakında" bilgi
+  paneli gösterir (numara kayıtlıysa görünür, dead-end yok). `_is_dev_sms_stub`
+  artık `settings.debug AND not is_sms_enabled()` → prod'da (DEBUG=false) OTP kodu
+  asla yanıta konmaz; yerelde (DEBUG=true) dev kodu görünmeye devam eder (smoke
+  korunur). **Signup'ta telefon hâlâ toplanır** (SMS gönderilmediği için kayıt
+  kilitlenmez); SMS açılınca herkesin numarası hazır. SMS canlıya alınınca
+  (VatanSMS bireysel hesap → `SMS_ENABLED=true`) banner + doğrulama akışı
+  **otomatik** geri gelir (kod değişikliği gerekmez). Smoke phone 15/15 (sc.15 =
+  soft-mod sinyali) + me 13/13.
 
 ## KRİTİK fix — login returnUrl rol-uyuşmazlığı / /me/account dead-end (2026-05-26)
 

@@ -13,6 +13,9 @@ Senaryolar:
   10. PARENT olmayan kullanıcı /me/phone-secondary/start → 403 secondary_slot_parent_only
   11. PARENT için /me/phone-secondary/start + verify → User.phone_secondary set
   12. Auth gerektiren endpoint'lere unauth çağrı → 401
+  13. signup/teacher geçersiz telefon → 400 invalid_phone
+  14. signup/teacher geçerli telefon → User.phone normalize, verified_at NULL
+  15. soft mod: /me phone.verification_available = is_sms_enabled()
 """
 from __future__ import annotations
 
@@ -382,6 +385,20 @@ def main() -> int:
                 ))
                 db.execute(sa_delete(User).where(User.id == new_user_id))
                 db.commit()
+
+        # ===== 15. Soft mod sinyali: /me phone.verification_available = is_sms_enabled() =====
+        from app.services.sms_provider import is_sms_enabled as _sms_on
+        r13 = c.get("/api/v2/me")
+        ph13 = r13.json().get("phone", {}) if r13.status_code == 200 else {}
+        ok = (
+            r13.status_code == 200
+            and ph13.get("verification_available") == _sms_on()
+        )
+        check(
+            "15. /me phone.verification_available = is_sms_enabled() (soft mod sinyali)",
+            ok,
+            f"status={r13.status_code} va={ph13.get('verification_available')} sms={_sms_on()}",
+        )
 
     finally:
         _cleanup(seed)

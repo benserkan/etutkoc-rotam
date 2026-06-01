@@ -226,6 +226,10 @@ class MyPhoneInfo(BaseModel):
     phone_secondary_dev_test_code: str | None = None
     # UI: secondary slot bu kullanıcı için mevcut mu (yalnız PARENT)
     secondary_slot_available: bool = False
+    # Soft mod: SMS doğrulama operasyonel mi (sağlayıcı + SMS_ENABLED). False iken
+    # banner gizlenir, PhoneCard doğrulama formu yerine "yakında" bilgisi gösterir;
+    # kullanıcı zorla doğrulamaya itilmez. SMS açılınca (VatanSMS) True → akış normale döner.
+    verification_available: bool = True
 
 
 class StartPhoneVerificationBody(BaseModel):

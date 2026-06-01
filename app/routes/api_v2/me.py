@@ -214,8 +214,13 @@ def get_me(
 
 
 def _is_dev_sms_stub() -> bool:
-    """SMS_ENABLED=False ise dev modda kodu UI'a göster."""
-    return not is_sms_enabled()
+    """Yalnız GERÇEK dev'de (DEBUG=true) + SMS kapalıyken OTP kodunu UI'a göster.
+
+    Prod'da (DEBUG=false) kod asla yanıta konmaz — eskiden `not is_sms_enabled()`
+    olduğu için SMS kapalı prod'da OTP UI'da sızıyordu (soft mod düzeltmesi).
+    """
+    from app.config import settings
+    return bool(settings.debug) and not is_sms_enabled()
 
 
 def _build_phone_info(db: Session, user: User) -> MyPhoneInfo:
@@ -234,6 +239,10 @@ def _build_phone_info(db: Session, user: User) -> MyPhoneInfo:
         phone_pending_expires_at=pv.expires_at if pv else None,
         phone_dev_test_code=(pv.code if pv and dev else None),
         secondary_slot_available=(user.role == UserRole.PARENT),
+        # Soft mod: SMS doğrulama operasyonel mi? False iken frontend banner'ı
+        # gizler + doğrulama formu yerine bilgilendirme gösterir (kullanıcı zorla
+        # doğrulamaya itilmez). SMS sağlayıcısı (VatanSMS) açılınca otomatik True.
+        verification_available=is_sms_enabled(),
     )
     # İkincil slot (yalnız PARENT için zaten verili anlamlı; bilgi yine doldurulur)
     if user.role == UserRole.PARENT:
