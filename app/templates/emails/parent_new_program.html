@@ -35,30 +35,33 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} için yeni haftalık program
         </td>
         <td style="padding: 8px 10px; border-bottom: 1px solid #f1f5f9;">
           {% if day.has_tasks %}
-            {% for task in day.tasks %}
-              {% if task.rows %}
-                {% for it in task.rows %}
-                <div style="margin-bottom: 4px;">
-                  <span style="font-weight: 600; color: #1e293b;">{{ it.book }}</span>{% if it.section %} <span style="color: #64748b;">· {{ it.section }}</span>{% endif %}
+            {# Ders bazlı gruplu — her ders başlık, altında konu (bölüm) + test sayısı #}
+            {% for grp in day.subject_groups %}
+              <div style="margin-bottom: 6px;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">{{ grp.subject }}</div>
+                {% for it in grp.items %}
+                <div style="margin: 0 0 2px 12px;">
+                  <span style="color: #334155;">{{ it.section or it.book }}</span>{% if it.section and it.book %} <span style="color: #94a3b8;">· {{ it.book }}</span>{% endif %}
                   <span style="float: right; font-variant-numeric: tabular-nums; color: #475569;">
-                    <b>{{ it.planned }}</b> soru
+                    <b>{{ it.planned }}</b> test
                   </span>
                 </div>
                 {% endfor %}
-              {% else %}
-                <div style="color: #475569; font-style: italic; margin-bottom: 4px;">
-                  {{ task.title or task.type }}
-                  {% if task.total_planned and task.total_planned > 0 %}
-                    <span style="float: right; font-variant-numeric: tabular-nums; color: #475569; font-style: normal;">
-                      <b>{{ task.total_planned }}</b> soru
-                    </span>
-                  {% endif %}
-                </div>
-              {% endif %}
+              </div>
             {% endfor %}
+            {% if day.activities %}
+              <div style="margin-bottom: 4px;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">Diğer çalışmalar</div>
+                {% for a in day.activities %}
+                <div style="margin: 0 0 2px 12px; color: #475569; font-style: italic;">{{ a.title or a.type }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% if day.total_planned and day.total_planned > 0 %}
             <div style="margin-top: 4px; font-size: 11px; color: #64748b; text-align: right;">
-              gün toplamı: <b>{{ day.total_planned }}</b> soru
+              gün toplamı: <b>{{ day.total_planned }}</b> test
             </div>
+            {% endif %}
           {% else %}
             <span style="color: #cbd5e1; font-style: italic;">— görev yok —</span>
           {% endif %}

@@ -163,17 +163,25 @@ def produce_empty_day(
 def _build_daily_breakdown(
     db: Session, *, student_id: int, week_start: date, week_end: date,
 ) -> list[dict]:
-    """Günlük görev listesi — her görev: kitap + bölüm + planlanan/tamamlanan soru.
+    """Günlük program — DERS bazlı gruplu + kalemsiz etkinlikler ayrı.
 
-    [{day_iso, day_label, items: [{title, type, book, section, planned, completed}], total_planned, total_completed}]
+    Birim: **test** (planned_count = atanan test sayısı; "soru" DEĞİL).
+
+    Her gün:
+      - subject_groups: [{subject, items:[{book, section, planned, completed}],
+                          total_planned, total_completed}]  (Subject.order'a göre)
+      - activities: [{title, type}]  (kalemsiz Video/Özet/Tekrar/Diğer görevler)
+      - tasks: [...]  (eski düz yapı — weekly_report şablonu geriye uyum için kullanır)
     """
-    from app.models import Task, TaskBookItem
+    from app.models import Book, Task, TaskBookItem
     from sqlalchemy.orm import joinedload
 
     tasks = (
         db.query(Task)
-        .options(joinedload(Task.book_items).joinedload(TaskBookItem.book),
-                 joinedload(Task.book_items).joinedload(TaskBookItem.section))
+        .options(
+            joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject),
+            joinedload(Task.book_items).joinedload(TaskBookItem.section),
+        )
         .filter(
             Task.student_id == student_id,
             Task.date >= week_start,
@@ -183,45 +191,79 @@ def _build_daily_breakdown(
         .all()
     )
 
-    by_day: dict[date, list[dict]] = {}
+    by_day_tasks: dict[date, list[dict]] = {}            # geriye uyum (düz)
+    by_day_groups: dict[date, dict[int, dict]] = {}      # date -> {subject_key: group}
+    by_day_order: dict[date, dict[int, tuple]] = {}      # subject sıralaması
+    by_day_activities: dict[date, list[dict]] = {}       # kalemsiz görevler
+
     for t in tasks:
+        task_type = (
+            t.type.value if hasattr(t.type, "value") else str(t.type)
+        ) if t.type else "test"
+
+        if not t.book_items:
+            # Kalemsiz etkinlik (Diğer/Video/Özet/Tekrar) — derssiz, sayısız
+            by_day_activities.setdefault(t.date, []).append({
+                "title": t.title or "",
+                "type": task_type,
+            })
+            by_day_tasks.setdefault(t.date, []).append({
+                "title": t.title or "", "type": task_type,
+                "rows": [], "total_planned": 0, "total_completed": 0,
+            })
+            continue
+
         items_list: list[dict] = []
-        total_p = 0
-        total_c = 0
+        total_p = total_c = 0
         for it in t.book_items:
             planned = int(it.planned_count or 0)
             done = int(it.completed_count or 0)
             total_p += planned
             total_c += done
-            book_name = it.label if not it.book else (it.book.name if hasattr(it.book, "name") else "")
-            section_name = it.section.name if it.section and hasattr(it.section, "name") else ""
-            items_list.append({
+            book = it.book
+            book_name = it.label if not book else (book.name if book else "")
+            section_name = it.section.name if (it.section and hasattr(it.section, "name")) else ""
+            subj = book.subject if (book and getattr(book, "subject", None)) else None
+            subj_name = subj.name if subj else "Diğer"
+            subj_key = subj.id if subj else -1
+            subj_order = (subj.order, subj.id) if subj else (10**9, 10**9)
+
+            row = {
                 "book": book_name or "—",
                 "section": section_name or "",
                 "planned": planned,
                 "completed": done,
-            })
-        task_type = (
-            t.type.value if hasattr(t.type, "value") else str(t.type)
-        ) if t.type else "test"
-        task_record = {
-            "title": t.title or "",
-            "type": task_type,
-            # 'items' Jinja2'de dict.items() metoduyla çakışır → 'rows' kullan
-            "rows": items_list,
-            "total_planned": total_p,
-            "total_completed": total_c,
-        }
-        by_day.setdefault(t.date, []).append(task_record)
+            }
+            items_list.append(row)
 
-    # Tüm hafta günleri (boş günler de listelensin — veli boş gün de görsün)
+            grp = by_day_groups.setdefault(t.date, {}).setdefault(subj_key, {
+                "subject": subj_name, "items": [],
+                "total_planned": 0, "total_completed": 0,
+            })
+            grp["items"].append(dict(row))
+            grp["total_planned"] += planned
+            grp["total_completed"] += done
+            by_day_order.setdefault(t.date, {})[subj_key] = subj_order
+
+        by_day_tasks.setdefault(t.date, []).append({
+            "title": t.title or "", "type": task_type,
+            "rows": items_list, "total_planned": total_p, "total_completed": total_c,
+        })
+
     day_names_tr = {0: "Pzt", 1: "Sal", 2: "Çar", 3: "Per", 4: "Cum", 5: "Cmt", 6: "Paz"}
     out: list[dict] = []
     cur = week_start
     while cur <= week_end:
-        day_tasks = by_day.get(cur, [])
-        day_total_p = sum(t["total_planned"] for t in day_tasks)
-        day_total_c = sum(t["total_completed"] for t in day_tasks)
+        flat = by_day_tasks.get(cur, [])
+        groups_map = by_day_groups.get(cur, {})
+        order_map = by_day_order.get(cur, {})
+        subject_groups = [
+            groups_map[k]
+            for k in sorted(groups_map, key=lambda kk: order_map.get(kk, (10**9, kk)))
+        ]
+        activities = by_day_activities.get(cur, [])
+        day_total_p = sum(t["total_planned"] for t in flat)
+        day_total_c = sum(t["total_completed"] for t in flat)
         out.append({
             "day_iso": cur.isoformat(),
             "day_label": cur.strftime("%d %b").replace("Jan","Oca").replace("Feb","Şub")
@@ -229,10 +271,12 @@ def _build_daily_breakdown(
                 .replace("Jun","Haz").replace("Jul","Tem").replace("Aug","Ağu")
                 .replace("Sep","Eyl").replace("Oct","Eki").replace("Nov","Kas").replace("Dec","Ara"),
             "day_name": day_names_tr.get(cur.weekday(), ""),
-            "tasks": day_tasks,
+            "tasks": flat,                       # geriye uyum (weekly_report)
+            "subject_groups": subject_groups,    # DERS bazlı (yeni — new_program + önizleme)
+            "activities": activities,            # kalemsiz etkinlikler
             "total_planned": day_total_p,
             "total_completed": day_total_c,
-            "has_tasks": len(day_tasks) > 0,
+            "has_tasks": len(flat) > 0,
         })
         cur += timedelta(days=1)
     return out

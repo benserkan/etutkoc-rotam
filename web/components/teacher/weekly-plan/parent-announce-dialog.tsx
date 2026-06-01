@@ -147,7 +147,7 @@ export function ParentAnnounceDialog({
               )}
             </div>
 
-            {/* Gün gün program (veli mailindeki içerikle aynı) */}
+            {/* Gün gün program — DERS bazlı gruplu (veli mailiyle aynı) */}
             <div>
               <h3 className="mb-1.5 font-semibold text-foreground">Veliye gidecek program</h3>
               {daysWithTasks.length === 0 ? (
@@ -163,36 +163,79 @@ export function ParentAnnounceDialog({
                           {d.day_name} · {d.day_label}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {d.total_planned} soru
+                          {d.total_planned} test
                         </span>
                       </div>
-                      <ul className="mt-1 space-y-1">
-                        {d.tasks.map((t, ti) => (
-                          <li key={ti} className="text-xs leading-relaxed">
-                            {t.is_activity ? (
-                              <span className="italic text-slate-600">
-                                <span className="mr-1 rounded bg-slate-100 px-1 text-[10px] font-medium not-italic text-slate-600">
-                                  {TYPE_LABEL[t.type] ?? t.type}
-                                </span>
-                                {t.title || "Etkinlik"}
-                              </span>
-                            ) : (
-                              t.rows.map((r, ri) => (
-                                <span key={ri} className="block text-slate-700">
-                                  <span className="font-medium">{r.book}</span>
-                                  {r.section ? ` · ${r.section}` : ""}
-                                  <span className="text-muted-foreground"> — {r.planned} soru</span>
-                                </span>
-                              ))
-                            )}
-                          </li>
+                      <div className="mt-1.5 space-y-2">
+                        {d.subject_groups.map((g, gi) => (
+                          <div key={gi}>
+                            <div className="text-xs font-semibold text-foreground">{g.subject}</div>
+                            <ul className="mt-0.5 space-y-0.5">
+                              {g.items.map((it, ii) => (
+                                <li
+                                  key={ii}
+                                  className="flex items-baseline justify-between gap-2 pl-3 text-xs text-slate-700"
+                                >
+                                  <span>
+                                    {it.section || it.book}
+                                    {it.section && it.book ? (
+                                      <span className="text-muted-foreground"> · {it.book}</span>
+                                    ) : null}
+                                  </span>
+                                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                                    {it.planned} test
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         ))}
-                      </ul>
+                        {d.activities.length > 0 ? (
+                          <div>
+                            <div className="text-xs font-semibold text-foreground">Diğer çalışmalar</div>
+                            <ul className="mt-0.5 space-y-0.5">
+                              {d.activities.map((a, ai) => (
+                                <li key={ai} className="pl-3 text-xs italic text-slate-600">
+                                  <span className="mr-1 rounded bg-slate-100 px-1 text-[10px] font-medium not-italic text-slate-600">
+                                    {TYPE_LABEL[a.type] ?? a.type}
+                                  </span>
+                                  {a.title || "Etkinlik"}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
+                      </div>
                     </div>
                   ))}
                 </div>
               )}
             </div>
+
+            {/* Son 90 gün denemeleri (veli mailindeki tabloyla aynı; varsayılan paylaşımlı) */}
+            {data.recent_exams.length > 0 ? (
+              <div>
+                <h3 className="mb-1.5 font-semibold text-foreground">Son 90 günün denemeleri</h3>
+                <ul className="space-y-1">
+                  {data.recent_exams.map((e, i) => (
+                    <li key={i} className="flex items-baseline justify-between gap-2 text-xs">
+                      <span className="text-slate-700">
+                        {e.date_iso ? (
+                          <span className="text-muted-foreground">{e.date_iso} · </span>
+                        ) : null}
+                        {e.title}
+                        {e.section ? (
+                          <span className="text-muted-foreground"> · {e.section}</span>
+                        ) : null}
+                      </span>
+                      <span className="shrink-0 font-semibold tabular-nums text-cyan-700">
+                        {e.net != null ? `net ${e.net.toFixed(2)}` : "—"}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : null}
           </div>
         )}
 

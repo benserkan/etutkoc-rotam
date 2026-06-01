@@ -1198,6 +1198,39 @@ export function useCreateExam(studentId: number) {
   });
 }
 
+export function useUpdateExam() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<ExamResultRow>,
+    ApiError,
+    { examId: number; body: ExamCreateBody }
+  >({
+    mutationFn: ({ examId, body }) =>
+      api<MutationResponse<ExamResultRow>>(
+        `/api/v2/teacher/exams/${examId}`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (err) => {
+      const code = errorCode(err);
+      if (code === "empty_exam") {
+        toast.error("Eksik değer", {
+          description: "En az bir doğru/yanlış/boş değeri girin.",
+        });
+      } else if (code === "invalid_date") {
+        toast.error("Geçersiz tarih", { description: "YYYY-MM-DD bekleniyor." });
+      } else if (code === "title_required") {
+        toast.error("Deneme adı zorunlu");
+      } else {
+        showError(err, "Deneme güncellenemedi");
+      }
+    },
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Deneme güncellendi");
+    },
+  });
+}
+
 export function useDeleteExam() {
   const qc = useQueryClient();
   return useMutation<

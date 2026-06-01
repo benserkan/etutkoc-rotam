@@ -46,11 +46,13 @@ from app.routes.api_v2.schemas.teacher import (
     BookOptionsResponse,
     NotifyParentsBody,
     NotifyParentsResult,
+    ParentProgramPreviewActivity,
     ParentProgramPreviewDay,
+    ParentProgramPreviewExam,
+    ParentProgramPreviewGroup,
     ParentProgramPreviewItem,
     ParentProgramPreviewRecipient,
     ParentProgramPreviewResponse,
-    ParentProgramPreviewTask,
     PublishDayBody,
     PublishResult,
     PublishWeekBody,
@@ -508,6 +510,7 @@ def parent_program_preview(
     from app.services.event_triggers import _active_parents_for, _has_recent
     from app.services.notification_producers import (
         _build_daily_breakdown,
+        _get_recent_exams,
         _wa_eligible,
     )
 
@@ -521,30 +524,36 @@ def parent_program_preview(
     )
     days_out: list[ParentProgramPreviewDay] = []
     for day in breakdown:
-        tasks_out: list[ParentProgramPreviewTask] = []
-        for t in day.get("tasks", []):
-            rows = [
-                ParentProgramPreviewItem(
-                    book=r.get("book", "—"),
-                    section=r.get("section", ""),
-                    planned=int(r.get("planned", 0)),
-                    completed=int(r.get("completed", 0)),
-                )
-                for r in t.get("rows", [])
-            ]
-            tasks_out.append(ParentProgramPreviewTask(
-                title=(t.get("title") or "").strip(),
-                type=t.get("type", "test"),
-                is_activity=len(rows) == 0,
-                rows=rows,
-                total_planned=int(t.get("total_planned", 0)),
-            ))
+        groups_out = [
+            ParentProgramPreviewGroup(
+                subject=g.get("subject", "Diğer"),
+                items=[
+                    ParentProgramPreviewItem(
+                        book=it.get("book", "—"),
+                        section=it.get("section", ""),
+                        planned=int(it.get("planned", 0)),
+                        completed=int(it.get("completed", 0)),
+                    )
+                    for it in g.get("items", [])
+                ],
+                total_planned=int(g.get("total_planned", 0)),
+            )
+            for g in day.get("subject_groups", [])
+        ]
+        activities_out = [
+            ParentProgramPreviewActivity(
+                title=(a.get("title") or "").strip(),
+                type=a.get("type", "other"),
+            )
+            for a in day.get("activities", [])
+        ]
         days_out.append(ParentProgramPreviewDay(
             day_iso=day.get("day_iso", ""),
             day_name=day.get("day_name", ""),
             day_label=day.get("day_label", ""),
             has_tasks=bool(day.get("has_tasks")),
-            tasks=tasks_out,
+            subject_groups=groups_out,
+            activities=activities_out,
             total_planned=int(day.get("total_planned", 0)),
         ))
 
@@ -559,6 +568,21 @@ def parent_program_preview(
         )
         .count()
     )
+
+    # Son 90 gün denemeleri — veli mailindeki tabloyla aynı (varsayılan paylaşımlı;
+    # öğrenci opt-out toggle ayrı/migration'lı işte gelecek).
+    recent_exams = [
+        ParentProgramPreviewExam(
+            title=e.get("title", ""),
+            date_iso=e.get("date_iso"),
+            net=e.get("net"),
+            correct=int(e.get("correct", 0)),
+            wrong=int(e.get("wrong", 0)),
+            blank=int(e.get("blank", 0)),
+            section=e.get("section"),
+        )
+        for e in _get_recent_exams(db, student_id=student.id, since_days=90, limit=20)
+    ]
 
     parents = _active_parents_for(db, student.id)
     recipients = [
@@ -581,6 +605,7 @@ def parent_program_preview(
         week_end=end.isoformat(),
         total_tasks=total_tasks,
         daily_breakdown=days_out,
+        recent_exams=recent_exams,
         recipients=recipients,
         has_recipients=len(recipients) > 0,
     )

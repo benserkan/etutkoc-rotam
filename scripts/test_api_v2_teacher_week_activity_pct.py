@@ -163,18 +163,18 @@ def main() -> int:
         p = r2.json() if r2.status_code == 200 else {}
         bd = p.get("daily_breakdown", [])
         pday = next((d for d in bd if d.get("day_iso") == today_iso), None)
-        ptasks = pday.get("tasks", []) if pday else []
-        all_activity = len(ptasks) == 3 and all(t.get("is_activity") is True for t in ptasks)
+        activities = pday.get("activities", []) if pday else []
+        groups = pday.get("subject_groups", []) if pday else []
         recip_names = [rr.get("name") for rr in p.get("recipients", [])]
         check(
-            "2. önizleme: 3 Diğer görev is_activity=True + total_tasks=3 + veli alıcı",
+            "2. önizleme: 3 Diğer görev activities'te (ders grubu yok) + total_tasks=3 + veli alıcı",
             r2.status_code == 200
-            and all_activity
+            and len(activities) == 3 and len(groups) == 0
             and p.get("total_tasks") == 3
             and p.get("has_recipients") is True
             and f"{PFX} Parent" in recip_names,
-            f"status={r2.status_code} total={p.get('total_tasks')} "
-            f"activity_ok={all_activity} recipients={recip_names}",
+            f"status={r2.status_code} activities={len(activities)} groups={len(groups)} "
+            f"total={p.get('total_tasks')} recipients={recip_names}",
         )
 
     finally:

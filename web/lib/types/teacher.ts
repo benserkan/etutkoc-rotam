@@ -467,27 +467,39 @@ export interface TeacherStudentWeekResponse {
   unlinked_latest?: string | null;
 }
 
-// "Veliye duyur" gönderim öncesi önizleme — veliye gidecek tam içerik
+// "Veliye duyur" gönderim öncesi önizleme — veliye gidecek tam içerik (ders gruplu)
 export interface ParentProgramPreviewItem {
   book: string;
   section: string;
   planned: number;
   completed: number;
 }
-export interface ParentProgramPreviewTask {
+export interface ParentProgramPreviewGroup {
+  subject: string;
+  items: ParentProgramPreviewItem[];
+  total_planned: number;
+}
+export interface ParentProgramPreviewActivity {
   title: string;
   type: TaskType;
-  is_activity: boolean;
-  rows: ParentProgramPreviewItem[];
-  total_planned: number;
 }
 export interface ParentProgramPreviewDay {
   day_iso: string;
   day_name: string;
   day_label: string;
   has_tasks: boolean;
-  tasks: ParentProgramPreviewTask[];
+  subject_groups: ParentProgramPreviewGroup[];
+  activities: ParentProgramPreviewActivity[];
   total_planned: number;
+}
+export interface ParentProgramPreviewExam {
+  title: string;
+  date_iso: string | null;
+  net: number | null;
+  correct: number;
+  wrong: number;
+  blank: number;
+  section: string | null;
 }
 export interface ParentProgramPreviewRecipient {
   name: string;
@@ -502,6 +514,7 @@ export interface ParentProgramPreviewResponse {
   week_end: string;
   total_tasks: number;
   daily_breakdown: ParentProgramPreviewDay[];
+  recent_exams: ParentProgramPreviewExam[];
   recipients: ParentProgramPreviewRecipient[];
   has_recipients: boolean;
 }

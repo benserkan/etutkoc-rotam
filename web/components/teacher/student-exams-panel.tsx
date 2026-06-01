@@ -15,6 +15,7 @@ import {
   ChevronDown,
   Loader2,
   Minus,
+  Pencil,
   Plus,
   TrendingDown,
   TrendingUp,
@@ -23,8 +24,13 @@ import {
 } from "lucide-react";
 
 import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
-import { useCreateExam, useDeleteExam } from "@/lib/hooks/use-teacher-mutations";
+import {
+  useCreateExam,
+  useDeleteExam,
+  useUpdateExam,
+} from "@/lib/hooks/use-teacher-mutations";
 import type {
+  ExamCreateBody,
   ExamResultRow,
   ExamSectionValue,
   ExamSubjectInput,
@@ -117,7 +123,12 @@ export function StudentExamsPanel({ studentId }: Props) {
           {data.rows.length >= 2 ? <NetTrendChart rows={data.rows} /> : null}
           <ul className="space-y-2">
             {data.rows.map((row) => (
-              <ExamRow key={row.id} row={row} />
+              <ExamRow
+                key={row.id}
+                row={row}
+                studentId={studentId}
+                sectionOptions={data.section_options ?? []}
+              />
             ))}
           </ul>
         </>
@@ -212,49 +223,118 @@ function StatCard({
 }
 
 function NetTrendChart({ rows }: { rows: ExamResultRow[] }) {
-  // rows DESC (en yeni ilk) → kronolojik için ters çevir
+  // Sınav türleri farklı ölçektedir (TYT net/120 · AYT net/80 · LGS) → tek
+  // çizgide KARIŞTIRMA. Türe göre ayır; her tür kendi içinde kıyaslanır.
+  const sectionsInfo = React.useMemo(() => {
+    const map = new Map<ExamSectionValue, { label: string; count: number }>();
+    for (const r of rows) {
+      const e = map.get(r.section);
+      if (e) e.count += 1;
+      else map.set(r.section, { label: r.section_label, count: 1 });
+    }
+    return [...map.entries()]
+      .map(([value, v]) => ({ value, label: v.label, count: v.count }))
+      .sort((a, b) => b.count - a.count);
+  }, [rows]);
+
+  // En çok denemesi olan tür varsayılan seçili
+  const [sel, setSel] = React.useState<ExamSectionValue | null>(null);
+  const active =
+    sel && sectionsInfo.some((s) => s.value === sel)
+      ? sel
+      : sectionsInfo[0]?.value ?? null;
+
   const points = React.useMemo(
     () =>
-      [...rows].reverse().map((r) => ({
-        date: formatTRDate(r.exam_date).slice(0, 5),
-        net: r.net,
-        title: r.title,
-      })),
-    [rows],
+      [...rows]
+        .filter((r) => r.section === active)
+        .reverse()
+        .map((r) => ({
+          date: formatTRDate(r.exam_date).slice(0, 5),
+          net: r.net,
+          title: r.title,
+        })),
+    [rows, active],
   );
+
+  // Hiçbir türde ≥2 deneme yoksa grafik anlamsız — gösterme
+  const maxCount = sectionsInfo[0]?.count ?? 0;
+  if (maxCount < 2) return null;
+
+  const activeLabel = sectionsInfo.find((s) => s.value === active)?.label ?? "";
+
   return (
     <Card>
       <CardContent className="p-4">
-        <p className="text-sm font-medium mb-3">Net Gelişimi</p>
-        <div className="h-48 w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={points} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-              <Tooltip
-                formatter={(v) => [Number(v).toFixed(2), "Net"]}
-                labelFormatter={(_l, p) => p?.[0]?.payload?.title ?? ""}
-                contentStyle={{ fontSize: 12, borderRadius: 8 }}
-              />
-              <Line
-                type="monotone"
-                dataKey="net"
-                stroke="#4f46e5"
-                strokeWidth={2}
-                dot={{ r: 3 }}
-                activeDot={{ r: 5 }}
-              />
-            </LineChart>
-          </ResponsiveContainer>
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <p className="text-sm font-medium">
+            Net Gelişimi
+            <span className="ml-1 text-xs font-normal text-muted-foreground">
+              · {activeLabel}
+            </span>
+          </p>
+          {sectionsInfo.length > 1 ? (
+            <select
+              value={active ?? ""}
+              onChange={(e) => setSel(e.target.value as ExamSectionValue)}
+              aria-label="Sınav türü seç"
+              className={cn(
+                "h-8 rounded-md border border-input bg-background px-2 text-xs",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              )}
+            >
+              {sectionsInfo.map((s) => (
+                <option key={s.value} value={s.value}>
+                  {s.label} ({s.count})
+                </option>
+              ))}
+            </select>
+          ) : null}
         </div>
+        {points.length < 2 ? (
+          <p className="py-8 text-center text-xs text-muted-foreground">
+            {activeLabel} türünde grafik için en az 2 deneme gerekir.
+          </p>
+        ) : (
+          <div className="h-48 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={points} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+                <Tooltip
+                  formatter={(v) => [Number(v).toFixed(2), "Net"]}
+                  labelFormatter={(_l, p) => p?.[0]?.payload?.title ?? ""}
+                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="net"
+                  stroke="#4f46e5"
+                  strokeWidth={2}
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function ExamRow({ row }: { row: ExamResultRow }) {
+function ExamRow({
+  row,
+  studentId,
+  sectionOptions,
+}: {
+  row: ExamResultRow;
+  studentId: number;
+  sectionOptions: StudentExamListResponse["section_options"];
+}) {
   const [open, setOpen] = React.useState(false);
+  const [editOpen, setEditOpen] = React.useState(false);
   const del = useDeleteExam();
   const hasSubjects = row.subjects.length > 0;
 
@@ -326,6 +406,14 @@ function ExamRow({ row }: { row: ExamResultRow }) {
               <Button
                 variant="ghost"
                 size="sm"
+                onClick={() => setEditOpen(true)}
+                aria-label="Denemeyi düzenle"
+              >
+                <Pencil className="size-4" aria-hidden />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={onDelete}
                 disabled={del.isPending}
                 aria-label="Denemeyi sil"
@@ -338,6 +426,20 @@ function ExamRow({ row }: { row: ExamResultRow }) {
               </Button>
             </div>
           </div>
+
+          <Dialog open={editOpen} onOpenChange={setEditOpen}>
+            <DialogContent className="max-w-lg">
+              <DialogHeader>
+                <DialogTitle>Denemeyi düzenle</DialogTitle>
+              </DialogHeader>
+              <ExamForm
+                studentId={studentId}
+                sectionOptions={sectionOptions}
+                editRow={row}
+                onDone={() => setEditOpen(false)}
+              />
+            </DialogContent>
+          </Dialog>
 
           {open && hasSubjects ? (
             <div className="mt-3 border-t border-border pt-2">
@@ -384,28 +486,43 @@ type FormMode = "total" | "subjects";
 function ExamForm({
   studentId,
   sectionOptions,
+  editRow = null,
   onDone,
 }: {
   studentId: number;
   sectionOptions: StudentExamListResponse["section_options"];
+  editRow?: ExamResultRow | null;
   onDone: () => void;
 }) {
   const create = useCreateExam(studentId);
+  const update = useUpdateExam();
+  const busy = create.isPending || update.isPending;
   const today = new Date().toISOString().slice(0, 10);
+  const editSubjects = !!editRow && editRow.subjects.length > 0;
 
-  const [title, setTitle] = React.useState("");
-  const [examDate, setExamDate] = React.useState(today);
+  const [title, setTitle] = React.useState(editRow?.title ?? "");
+  const [examDate, setExamDate] = React.useState(editRow?.exam_date ?? today);
   const [section, setSection] = React.useState<ExamSectionValue>(
-    sectionOptions[0]?.value ?? "lgs",
+    editRow?.section ?? sectionOptions[0]?.value ?? "lgs",
   );
-  const [mode, setMode] = React.useState<FormMode>("total");
-  const [correct, setCorrect] = React.useState("");
-  const [wrong, setWrong] = React.useState("");
-  const [blank, setBlank] = React.useState("");
-  const [subjects, setSubjects] = React.useState<ExamSubjectInput[]>([
-    { name: "", correct: 0, wrong: 0, blank: 0 },
-  ]);
-  const [note, setNote] = React.useState("");
+  const [mode, setMode] = React.useState<FormMode>(editSubjects ? "subjects" : "total");
+  const [correct, setCorrect] = React.useState(
+    editRow && !editSubjects ? String(editRow.total_correct) : "",
+  );
+  const [wrong, setWrong] = React.useState(
+    editRow && !editSubjects ? String(editRow.total_wrong) : "",
+  );
+  const [blank, setBlank] = React.useState(
+    editRow && !editSubjects ? String(editRow.total_blank) : "",
+  );
+  const [subjects, setSubjects] = React.useState<ExamSubjectInput[]>(
+    editSubjects && editRow
+      ? editRow.subjects.map((s) => ({
+          name: s.name, correct: s.correct, wrong: s.wrong, blank: s.blank,
+        }))
+      : [{ name: "", correct: 0, wrong: 0, blank: 0 }],
+  );
+  const [note, setNote] = React.useState(editRow?.note ?? "");
   const [error, setError] = React.useState<string | null>(null);
 
   // Canlı net önizlemesi
@@ -438,6 +555,7 @@ function ExamForm({
       setError("Deneme adı zorunlu.");
       return;
     }
+    let body: ExamCreateBody;
     if (mode === "total") {
       const c = Number(correct) || 0;
       const w = Number(wrong) || 0;
@@ -446,20 +564,15 @@ function ExamForm({
         setError("En az bir doğru/yanlış/boş değeri girin.");
         return;
       }
-      create.mutate(
-        {
-          body: {
-            title: t,
-            exam_date: examDate,
-            section,
-            total_correct: c,
-            total_wrong: w,
-            total_blank: b,
-            note: note.trim() || null,
-          },
-        },
-        { onSuccess: () => onDone() },
-      );
+      body = {
+        title: t,
+        exam_date: examDate,
+        section,
+        total_correct: c,
+        total_wrong: w,
+        total_blank: b,
+        note: note.trim() || null,
+      };
     } else {
       const cleaned = subjects
         .map((s) => ({
@@ -481,18 +594,18 @@ function ExamForm({
         setError("Ders satırlarında en az bir değer girin.");
         return;
       }
-      create.mutate(
-        {
-          body: {
-            title: t,
-            exam_date: examDate,
-            section,
-            subjects: cleaned,
-            note: note.trim() || null,
-          },
-        },
-        { onSuccess: () => onDone() },
-      );
+      body = {
+        title: t,
+        exam_date: examDate,
+        section,
+        subjects: cleaned,
+        note: note.trim() || null,
+      };
+    }
+    if (editRow) {
+      update.mutate({ examId: editRow.id, body }, { onSuccess: () => onDone() });
+    } else {
+      create.mutate({ body }, { onSuccess: () => onDone() });
     }
   }
 
@@ -690,14 +803,12 @@ function ExamForm({
       ) : null}
 
       <div className="flex items-center justify-end gap-2 pt-1">
-        <Button type="button" variant="ghost" onClick={onDone} disabled={create.isPending}>
+        <Button type="button" variant="ghost" onClick={onDone} disabled={busy}>
           İptal
         </Button>
-        <Button type="submit" disabled={create.isPending}>
-          {create.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : null}
-          Kaydet
+        <Button type="submit" disabled={busy}>
+          {busy ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+          {editRow ? "Güncelle" : "Kaydet"}
         </Button>
       </div>
     </form>

@@ -170,6 +170,23 @@ def main():
         r = tc.get(f"/api/v2/teacher/students/{seed['s2_id']}/exams")
         check("8. başka öğr. öğrencisi GET → 404", r.status_code == 404, f"status={r.status_code}")
 
+        # 8b. UPDATE happy — hatalı giriş düzelt: yeni net = 25 - 3/3 = 24.0
+        r = tc.post(f"/api/v2/teacher/exams/{exam1_id}", json={
+            "title": "3D LGS Deneme 1 (düzeltildi)", "exam_date": "2026-05-02",
+            "section": "lgs", "total_correct": 25, "total_wrong": 3, "total_blank": 2})
+        j = r.json()
+        ok = (r.status_code == 200 and abs(j["data"]["net"] - 24.0) < 0.01
+              and j["data"]["title"] == "3D LGS Deneme 1 (düzeltildi)"
+              and j["data"]["exam_date"] == "2026-05-02"
+              and j["data"]["total_questions"] == 30)
+        check("8b. UPDATE happy → net yeniden hesap (24.0) + alanlar güncel", ok,
+              f"status={r.status_code} {r.text[:160]}")
+
+        # 8c. başka öğretmen UPDATE → 404 (sahiplik)
+        r = t2c.post(f"/api/v2/teacher/exams/{exam1_id}", json={
+            "title": "X", "exam_date": "2026-05-01", "section": "lgs", "total_correct": 5})
+        check("8c. başka öğr. UPDATE → 404", r.status_code == 404, f"status={r.status_code}")
+
         # 9. DELETE happy
         r = tc.delete(f"/api/v2/teacher/exams/{exam1_id}")
         check("9. DELETE happy → 200", r.status_code == 200 and r.json()["data"]["deleted"],

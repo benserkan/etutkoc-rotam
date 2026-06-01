@@ -458,18 +458,23 @@ class NotifyParentsResult(BaseModel):
 
 
 class ParentProgramPreviewItem(BaseModel):
-    book: str                         # kitap adı veya kalemsiz görev etiketi
-    section: str
-    planned: int
+    book: str                         # kitap adı
+    section: str                      # konu/bölüm
+    planned: int                      # atanan TEST sayısı
     completed: int
 
 
-class ParentProgramPreviewTask(BaseModel):
-    title: str
-    type: str                         # test/video/ozet/tekrar/other
-    is_activity: bool                 # True = kalemsiz (Diğer/etkinlik) — sayı yok
-    rows: list[ParentProgramPreviewItem]
+class ParentProgramPreviewGroup(BaseModel):
+    """Ders bazlı grup — başlık + konu kalemleri (mailde ders gruplaması)."""
+    subject: str
+    items: list[ParentProgramPreviewItem]
     total_planned: int
+
+
+class ParentProgramPreviewActivity(BaseModel):
+    """Kalemsiz etkinlik (Diğer/Video/Özet/Tekrar) — sayı yok."""
+    title: str
+    type: str
 
 
 class ParentProgramPreviewDay(BaseModel):
@@ -477,8 +482,20 @@ class ParentProgramPreviewDay(BaseModel):
     day_name: str                     # Pzt/Sal/...
     day_label: str                    # "31 May"
     has_tasks: bool
-    tasks: list[ParentProgramPreviewTask]
-    total_planned: int                # gün toplam soru
+    subject_groups: list[ParentProgramPreviewGroup]
+    activities: list[ParentProgramPreviewActivity]
+    total_planned: int                # gün toplam TEST
+
+
+class ParentProgramPreviewExam(BaseModel):
+    """Son 90 gün denemesi (bilgi amaçlı, veli mailindeki tabloyla aynı)."""
+    title: str
+    date_iso: str | None = None
+    net: float | None = None
+    correct: int = 0
+    wrong: int = 0
+    blank: int = 0
+    section: str | None = None
 
 
 class ParentProgramPreviewRecipient(BaseModel):
@@ -495,6 +512,7 @@ class ParentProgramPreviewResponse(BaseModel):
     week_end: str
     total_tasks: int                  # yayınlanmış (taslak hariç) görev sayısı
     daily_breakdown: list[ParentProgramPreviewDay]
+    recent_exams: list[ParentProgramPreviewExam]
     recipients: list[ParentProgramPreviewRecipient]
     has_recipients: bool
 

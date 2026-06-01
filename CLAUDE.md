@@ -3979,6 +3979,34 @@ girmiyordu (2026-05-24 "etkinlik soru %'sine girmez" kararının revizyonu).
   weekly_plan 14 + itemless 10 + teacher_read 12. tsc/eslint temiz. **NOT:** smoke'ta
   id-reuse orphan TaskBookItem temizliği gerekti (ürün hatası değil).
 
+## Veli önizleme ders-grubu + "test" birimi + deneme düzenleme + net grafiği tür-ayrımı (2026-06-01)
+
+Kullanıcı önizlemeyi inceledi, 4 düzeltme + 1 ek özellik:
+- **Birim "soru" → "test"**: `_build_daily_breakdown` + `parent_new_program.html` +
+  önizleme modalı artık "test" der (sistemin birimi = atanan test sayısı; hafta
+  görünümü zaten "test" diyordu).
+- **Ders bazlı gruplama**: `_build_daily_breakdown` her güne `subject_groups`
+  (Subject.order'lı: ders başlığı → konu/bölüm + test) + `activities` (kalemsiz
+  Diğer/Video/Özet/Tekrar) ekler (`tasks` düz yapı weekly_report için korundu).
+  Mail + önizleme bunu render eder.
+- **Veliye-duyur önizlemesine denemeler eklendi** (`recent_exams`, son 90g).
+  **Deneme paylaşım kararı (kullanıcı 2026-06-01):** denemeler veliyle paylaşılır,
+  **varsayılan AÇIK** (veli paneli + veli mailleri + önizleme); öğrenci isterse
+  kapatabilmeli (opt-out toggle) — **bu toggle migration'lı AYRI iş, henüz YOK**
+  ([[feedback-holistic-change-propagation]] · `student-exams-panel` notu hâlâ
+  "veliyle paylaşılmaz" diyor → toggle yapılınca düzeltilecek; şu an çelişkili).
+- **Deneme DÜZENLEME** (yeni — kullanıcı "hatalı girişlerde düzenle olmalı"):
+  `_validate_and_compute_exam` helper'ı create+update ortak; yeni `POST
+  /api/v2/teacher/exams/{id}` (sahiplik 404, created_by_id değişmez, net yeniden
+  hesap). Frontend `student-exams-panel` her deneme kartına Pencil "Düzenle" +
+  `ExamForm editRow` (prefill) + `useUpdateExam`. Smoke exams 18/18 (8b/8c update).
+- **Net Gelişimi grafiği tür-ayrımı** (kullanıcı: TYT+AYT aynı grafikte yanlış):
+  farklı sınav türleri farklı ölçek (TYT/120·AYT/80·LGS) → tek çizgide karıştırma
+  YOK. `NetTrendChart` türe göre filtreler + tür seçici (native select, en çok
+  denemesi olan tür varsayılan); hiçbir türde ≥2 deneme yoksa grafik gizli.
+- Smoke: exams 18/18 + week_activity_pct 2/2 (önizleme grouped yapıya güncellendi) +
+  weekly_plan 14 + itemless 10. tsc/eslint temiz.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

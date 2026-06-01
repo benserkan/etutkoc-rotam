@@ -843,6 +843,78 @@ def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamRes
     )
 
 
+def _validate_and_compute_exam(body: "ExamCreateBody") -> dict:
+    """ExamCreateBody doğrula + net/toplam hesapla — create + update ortak kullanır.
+
+    Hata → HTTPException (422). Dönüş: title / exam_date / section / total_* / net /
+    subject_payload (ders kırılımı varsa toplamlar ondan türetilir).
+    """
+    title = (body.title or "").strip()
+    if not title:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "title_required",
+                    "message": "Deneme adı zorunlu."},
+        )
+    try:
+        exam_date = date.fromisoformat((body.exam_date or "").strip())
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_date",
+                    "message": "Geçersiz tarih. YYYY-MM-DD bekleniyor."},
+        )
+    try:
+        section = ExamSection(body.section)
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_section",
+                    "message": "Geçersiz sınav türü."},
+        )
+
+    subject_payload: list[dict] = []
+    if body.subjects:
+        tc = tw = tb = 0
+        for subj in body.subjects:
+            name = (subj.name or "").strip()
+            if not name:
+                continue
+            c = max(int(subj.correct), 0)
+            w = max(int(subj.wrong), 0)
+            b = max(int(subj.blank), 0)
+            tc += c
+            tw += w
+            tb += b
+            subject_payload.append({
+                "name": name, "correct": c, "wrong": w, "blank": b,
+                "net": compute_net(c, w, section),
+            })
+        total_correct, total_wrong, total_blank = tc, tw, tb
+    else:
+        total_correct = max(int(body.total_correct), 0)
+        total_wrong = max(int(body.total_wrong), 0)
+        total_blank = max(int(body.total_blank), 0)
+
+    if total_correct + total_wrong + total_blank <= 0:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "empty_exam",
+                    "message": "En az bir doğru/yanlış/boş değeri girilmeli."},
+        )
+
+    return {
+        "title": title[:200],
+        "exam_date": exam_date,
+        "section": section,
+        "total_correct": total_correct,
+        "total_wrong": total_wrong,
+        "total_blank": total_blank,
+        "net": compute_net(total_correct, total_wrong, section),
+        "subject_payload": subject_payload,
+    }
+
+
 @router.get(
     "/students/{student_id}/exams",
     response_model=StudentExamListResponse,
@@ -913,74 +985,21 @@ def teacher_create_exam_v2(
     (LGS: D-Y/3, YKS: D-Y/4). Ders kırılımı verilirse toplamlar ondan türetilir.
     """
     student = _get_owned_student(db, student_id, user.id)
-
-    title = (body.title or "").strip()
-    if not title:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"error": "validation", "code": "title_required",
-                    "message": "Deneme adı zorunlu."},
-        )
-    try:
-        exam_date = date.fromisoformat((body.exam_date or "").strip())
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"error": "validation", "code": "invalid_date",
-                    "message": "Geçersiz tarih. YYYY-MM-DD bekleniyor."},
-        )
-    try:
-        section = ExamSection(body.section)
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"error": "validation", "code": "invalid_section",
-                    "message": "Geçersiz sınav türü."},
-        )
-
-    # Ders kırılımı varsa toplamlar ondan türetilir; yoksa doğrudan toplam.
-    subject_payload: list[dict] = []
-    if body.subjects:
-        tc = tw = tb = 0
-        for subj in body.subjects:
-            name = (subj.name or "").strip()
-            if not name:
-                continue
-            c = max(int(subj.correct), 0)
-            w = max(int(subj.wrong), 0)
-            b = max(int(subj.blank), 0)
-            tc += c
-            tw += w
-            tb += b
-            subject_payload.append({
-                "name": name, "correct": c, "wrong": w, "blank": b,
-                "net": compute_net(c, w, section),
-            })
-        total_correct, total_wrong, total_blank = tc, tw, tb
-    else:
-        total_correct = max(int(body.total_correct), 0)
-        total_wrong = max(int(body.total_wrong), 0)
-        total_blank = max(int(body.total_blank), 0)
-
-    if total_correct + total_wrong + total_blank <= 0:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"error": "validation", "code": "empty_exam",
-                    "message": "En az bir doğru/yanlış/boş değeri girilmeli."},
-        )
-
-    net = compute_net(total_correct, total_wrong, section)
+    f = _validate_and_compute_exam(body)
     exam = ExamResult(
         student_id=student.id,
         created_by_id=user.id,
-        title=title[:200],
-        exam_date=exam_date,
-        section=section,
-        total_correct=total_correct,
-        total_wrong=total_wrong,
-        total_blank=total_blank,
-        net=net,
-        subject_nets=json.dumps(subject_payload, ensure_ascii=False) if subject_payload else None,
+        title=f["title"],
+        exam_date=f["exam_date"],
+        section=f["section"],
+        total_correct=f["total_correct"],
+        total_wrong=f["total_wrong"],
+        total_blank=f["total_blank"],
+        net=f["net"],
+        subject_nets=(
+            json.dumps(f["subject_payload"], ensure_ascii=False)
+            if f["subject_payload"] else None
+        ),
         note=(body.note or "").strip()[:500] or None,
     )
     db.add(exam)
@@ -991,6 +1010,49 @@ def teacher_create_exam_v2(
         invalidate=[
             f"teacher:{user.id}:students:{student.id}:exams",
             f"teacher:{user.id}:students:{student.id}",
+        ],
+    )
+
+
+@router.post(
+    "/exams/{exam_id}",
+    response_model=MutationResponse[ExamResultRow],
+)
+def teacher_update_exam_v2(
+    exam_id: int,
+    body: ExamCreateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Deneme kaydını DÜZENLE (hatalı giriş düzeltme). Sahiplik 404.
+
+    Net/toplamlar create ile aynı kuralla yeniden hesaplanır. created_by_id
+    DEĞİŞMEZ (kaydı kim girdiyse o kalır)."""
+    exam = _get_owned_exam(db, exam_id, user.id)
+    f = _validate_and_compute_exam(body)
+    exam.title = f["title"]
+    exam.exam_date = f["exam_date"]
+    exam.section = f["section"]
+    exam.total_correct = f["total_correct"]
+    exam.total_wrong = f["total_wrong"]
+    exam.total_blank = f["total_blank"]
+    exam.net = f["net"]
+    exam.subject_nets = (
+        json.dumps(f["subject_payload"], ensure_ascii=False)
+        if f["subject_payload"] else None
+    )
+    exam.note = (body.note or "").strip()[:500] or None
+    db.commit()
+    db.refresh(exam)
+    creator_name = None
+    if exam.created_by_id:
+        creator = db.get(User, exam.created_by_id)
+        creator_name = creator.full_name if creator else None
+    return MutationResponse[ExamResultRow](
+        data=_build_exam_row(exam, created_by_name=creator_name),
+        invalidate=[
+            f"teacher:{user.id}:students:{exam.student_id}:exams",
+            f"teacher:{user.id}:students:{exam.student_id}",
         ],
     )
 
