@@ -65,6 +65,13 @@ export function proxy(req: NextRequest) {
     return NextResponse.next();
   }
 
+  // Kill-switch service worker — eski (terk edilen PWA) SW'lerin kendini iptal
+  // etmesi için /sw.js auth'suz serve edilir; aksi halde /login'e 307 olur ve
+  // tarayıcı SW güncelleme kontrolü script yerine HTML alır.
+  if (pathname === "/sw.js" || pathname === "/service-worker.js") {
+    return NextResponse.next();
+  }
+
   // Public path'ler proxy'yi atlar (login, davet linkleri, KVKK)
   if (PUBLIC_PATHS_EXACT.has(pathname)) {
     return NextResponse.next();
@@ -79,7 +86,12 @@ export function proxy(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     url.searchParams.set("returnUrl", pathname + req.nextUrl.search);
-    return NextResponse.redirect(url);
+    const res = NextResponse.redirect(url);
+    // Redirect (307) yanıtı tarayıcıda DİSK cache'lenmesin — aksi halde Chrome
+    // çıkış sonrası "korumalı sayfa → /login" yönlendirmesini (veya tersini)
+    // cache'den servis edip eski authenticated görünümü gösterebiliyor.
+    res.headers.set("Cache-Control", "no-store, max-age=0, must-revalidate");
+    return res;
   }
 
   return NextResponse.next();

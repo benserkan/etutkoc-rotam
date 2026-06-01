@@ -105,6 +105,12 @@
         reverse_proxy /web-app-manifest-192x192.png next:3000
         reverse_proxy /web-app-manifest-512x512.png next:3000
 
+        # Kill-switch Service Worker (public/sw.js) — terk edilen PWA döneminden
+        # kalma eski SW'ler güncelleme kontrolünde bunu çekip kendini iptal eder.
+        # Next.js serve eder; aksi halde FastAPI'den 404 alır → eski SW takılı kalır.
+        reverse_proxy /sw.js next:3000
+        reverse_proxy /service-worker.js next:3000
+
         # =====================================================================
         # 3. STRANGLER FIG — dalga-bazlı Next.js açılışları
         # Her dalga teslim edildiğinde ilgili reverse_proxy aktive edilir.
