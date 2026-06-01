@@ -269,10 +269,9 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
             </Button>
           ) : null}
           <Button
-            variant="outline"
             onClick={() => setAnnounceOpen(true)}
             title="Yayınlanmış programı bağlı velilere e-posta/WhatsApp ile duyur — önce önizleme"
-            className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+            className="bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white"
           >
             <Megaphone className="size-4" aria-hidden />
             Veliye duyur

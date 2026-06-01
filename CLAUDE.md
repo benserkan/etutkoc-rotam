@@ -4007,6 +4007,32 @@ Kullanıcı önizlemeyi inceledi, 4 düzeltme + 1 ek özellik:
 - Smoke: exams 18/18 + week_activity_pct 2/2 (önizleme grouped yapıya güncellendi) +
   weekly_plan 14 + itemless 10. tsc/eslint temiz.
 
+## Mail worker-rebuild dersi + e-posta logosu PNG + buton hover + deneme özet/grafik per-tür (2026-06-01)
+
+Kullanıcı gönderilen maili inceledi, 4 sorun:
+- **KRİTİK deploy dersi:** Gönderilen mail eski "soru"/grupsuz formattaydı çünkü
+  e-postaları render eden **worker container'ı yeniden oluşturulmamıştı** —
+  `docker compose up -d --build web next` yapmıştım ama **worker** (dispatcher,
+  e-posta/cron render eder) eski image'ı çalıştırıyordu. **KURAL: backend kodu/
+  şablon/cron/producer değişince deploy'a `worker` DAHİL** (`up -d --build web
+  worker next`). redeploy.sh (argümansız `up -d --build`) zaten hepsini kapsar;
+  hedefli deploy'da worker'ı atlamak yasak. Worker recreate → mail ders-gruplu + "test".
+- **E-posta logosu PNG (SVG değil):** Mailde logo kırık görünüyordu — `etutkoc-mark.svg`
+  SVG; **e-posta istemcileri (Gmail/Outlook) SVG'yi engeller**. Çözüm: `apple-touch-icon.png`
+  (şeffaf amblem) → `web/public/etutkoc-mark.png` kopyalandı; 12 e-posta şablonunda
+  SVG img → PNG img; Caddy `/etutkoc-mark.png` rotası. **KURAL: e-posta logosu daima
+  PNG (SVG e-postada görünmez).**
+- **"Veliye duyur" buton hover kontrastı:** `variant="outline"` + `bg-emerald-50` →
+  outline'ın `hover:text-accent-foreground`'u koyu temada metni açık renge çevirip
+  açık-yeşil zeminde okunmaz yapıyordu. Solid `bg-emerald-600 text-white
+  hover:bg-emerald-700 hover:text-white` (variant kaldırıldı).
+- **Deneme özet şeridi + grafik per-tür:** Özet (Ortalama/En İyi/Son Net) + grafik
+  farklı sınav türlerini (TYT net/120 · AYT net/80) **birleştiriyordu** — kıyaslanamaz.
+  Tür seçimi `StudentExamsPanel` seviyesine taşındı (native select, en çok denemesi
+  olan tür varsayılan); SummaryStrip + NetTrendChart artık seçili **tek türe** göre
+  hesaplar. Deneme listesi (her satır kendi tür rozetiyle) tüm türleri gösterir.
+- tsc/eslint temiz. Deploy: web + worker + next rebuild + Caddy `restart proxy`.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

@@ -87,6 +87,32 @@ export function StudentExamsPanel({ studentId }: Props) {
   const [addOpen, setAddOpen] = React.useState(false);
   const data = q.data;
 
+  // Sınav türleri farklı ölçekte (TYT/120·AYT/80·LGS) → özet + grafik tek TÜRE
+  // göre hesaplanır; karıştırma yok. En çok denemesi olan tür varsayılan seçili.
+  const rows = React.useMemo(() => data?.rows ?? [], [data]);
+  const sectionsInfo = React.useMemo(() => {
+    const map = new Map<ExamSectionValue, { label: string; count: number }>();
+    for (const r of rows) {
+      const e = map.get(r.section);
+      if (e) e.count += 1;
+      else map.set(r.section, { label: r.section_label, count: 1 });
+    }
+    return [...map.entries()]
+      .map(([value, v]) => ({ value, label: v.label, count: v.count }))
+      .sort((a, b) => b.count - a.count);
+  }, [rows]);
+  const [selSection, setSelSection] = React.useState<ExamSectionValue | null>(null);
+  const activeSection =
+    selSection && sectionsInfo.some((s) => s.value === selSection)
+      ? selSection
+      : sectionsInfo[0]?.value ?? null;
+  const sectionRows = React.useMemo(
+    () => rows.filter((r) => r.section === activeSection),
+    [rows, activeSection],
+  );
+  const activeLabel =
+    sectionsInfo.find((s) => s.value === activeSection)?.label ?? "";
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
@@ -119,8 +145,31 @@ export function StudentExamsPanel({ studentId }: Props) {
         </Card>
       ) : (
         <>
-          <SummaryStrip data={data} />
-          {data.rows.length >= 2 ? <NetTrendChart rows={data.rows} /> : null}
+          {sectionsInfo.length > 1 ? (
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <p className="text-xs text-muted-foreground">
+                Net istatistikleri ve grafik <b>{activeLabel}</b> türüne göre —
+                farklı sınav türleri ayrı ölçektedir, karıştırılmaz.
+              </p>
+              <select
+                value={activeSection ?? ""}
+                onChange={(e) => setSelSection(e.target.value as ExamSectionValue)}
+                aria-label="Sınav türü"
+                className={cn(
+                  "h-8 rounded-md border border-input bg-background px-2 text-xs",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                )}
+              >
+                {sectionsInfo.map((s) => (
+                  <option key={s.value} value={s.value}>
+                    {s.label} ({s.count})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : null}
+          <SummaryStrip rows={sectionRows} />
+          {sectionRows.length >= 2 ? <NetTrendChart rows={sectionRows} /> : null}
           <ul className="space-y-2">
             {data.rows.map((row) => (
               <ExamRow
@@ -155,17 +204,24 @@ export function StudentExamsPanel({ studentId }: Props) {
   );
 }
 
-function SummaryStrip({ data }: { data: StudentExamListResponse }) {
-  const s = data.summary;
+function SummaryStrip({ rows }: { rows: ExamResultRow[] }) {
+  // rows: TEK sınav türü, DESC (en yeni ilk) — özet o türe göre hesaplanır.
+  const count = rows.length;
+  const nets = rows.map((r) => r.net);
+  const avg = count ? nets.reduce((a, b) => a + b, 0) / count : 0;
+  const best = count ? Math.max(...nets) : 0;
+  const last = count ? rows[0].net : null;
+  const first = count ? rows[count - 1].net : null;
+  const delta = count >= 2 && last != null && first != null ? last - first : null;
   return (
     <section className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <StatCard label="Deneme Sayısı" value={String(s.count)} />
-      <StatCard label="Ortalama Net" value={s.avg_net.toFixed(2)} />
-      <StatCard label="En İyi Net" value={s.best_net.toFixed(2)} emphasize="good" />
+      <StatCard label="Deneme Sayısı" value={String(count)} />
+      <StatCard label="Ortalama Net" value={avg.toFixed(2)} />
+      <StatCard label="En İyi Net" value={best.toFixed(2)} emphasize="good" />
       <StatCard
         label="Son Net"
-        value={s.last_net != null ? s.last_net.toFixed(2) : "—"}
-        delta={s.trend_delta}
+        value={last != null ? last.toFixed(2) : "—"}
+        delta={delta}
       />
     </section>
   );
@@ -223,102 +279,42 @@ function StatCard({
 }
 
 function NetTrendChart({ rows }: { rows: ExamResultRow[] }) {
-  // Sınav türleri farklı ölçektedir (TYT net/120 · AYT net/80 · LGS) → tek
-  // çizgide KARIŞTIRMA. Türe göre ayır; her tür kendi içinde kıyaslanır.
-  const sectionsInfo = React.useMemo(() => {
-    const map = new Map<ExamSectionValue, { label: string; count: number }>();
-    for (const r of rows) {
-      const e = map.get(r.section);
-      if (e) e.count += 1;
-      else map.set(r.section, { label: r.section_label, count: 1 });
-    }
-    return [...map.entries()]
-      .map(([value, v]) => ({ value, label: v.label, count: v.count }))
-      .sort((a, b) => b.count - a.count);
-  }, [rows]);
-
-  // En çok denemesi olan tür varsayılan seçili
-  const [sel, setSel] = React.useState<ExamSectionValue | null>(null);
-  const active =
-    sel && sectionsInfo.some((s) => s.value === sel)
-      ? sel
-      : sectionsInfo[0]?.value ?? null;
-
+  // rows: TEK sınav türü (panel seviyesinde filtrelendi), DESC → kronolojik için ters
   const points = React.useMemo(
     () =>
-      [...rows]
-        .filter((r) => r.section === active)
-        .reverse()
-        .map((r) => ({
-          date: formatTRDate(r.exam_date).slice(0, 5),
-          net: r.net,
-          title: r.title,
-        })),
-    [rows, active],
+      [...rows].reverse().map((r) => ({
+        date: formatTRDate(r.exam_date).slice(0, 5),
+        net: r.net,
+        title: r.title,
+      })),
+    [rows],
   );
-
-  // Hiçbir türde ≥2 deneme yoksa grafik anlamsız — gösterme
-  const maxCount = sectionsInfo[0]?.count ?? 0;
-  if (maxCount < 2) return null;
-
-  const activeLabel = sectionsInfo.find((s) => s.value === active)?.label ?? "";
-
   return (
     <Card>
       <CardContent className="p-4">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <p className="text-sm font-medium">
-            Net Gelişimi
-            <span className="ml-1 text-xs font-normal text-muted-foreground">
-              · {activeLabel}
-            </span>
-          </p>
-          {sectionsInfo.length > 1 ? (
-            <select
-              value={active ?? ""}
-              onChange={(e) => setSel(e.target.value as ExamSectionValue)}
-              aria-label="Sınav türü seç"
-              className={cn(
-                "h-8 rounded-md border border-input bg-background px-2 text-xs",
-                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-              )}
-            >
-              {sectionsInfo.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label} ({s.count})
-                </option>
-              ))}
-            </select>
-          ) : null}
+        <p className="text-sm font-medium mb-3">Net Gelişimi</p>
+        <div className="h-48 w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={points} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+              <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+              <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
+              <Tooltip
+                formatter={(v) => [Number(v).toFixed(2), "Net"]}
+                labelFormatter={(_l, p) => p?.[0]?.payload?.title ?? ""}
+                contentStyle={{ fontSize: 12, borderRadius: 8 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="net"
+                stroke="#4f46e5"
+                strokeWidth={2}
+                dot={{ r: 3 }}
+                activeDot={{ r: 5 }}
+              />
+            </LineChart>
+          </ResponsiveContainer>
         </div>
-        {points.length < 2 ? (
-          <p className="py-8 text-center text-xs text-muted-foreground">
-            {activeLabel} türünde grafik için en az 2 deneme gerekir.
-          </p>
-        ) : (
-          <div className="h-48 w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={points} margin={{ top: 5, right: 8, bottom: 0, left: -20 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-                <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                <Tooltip
-                  formatter={(v) => [Number(v).toFixed(2), "Net"]}
-                  labelFormatter={(_l, p) => p?.[0]?.payload?.title ?? ""}
-                  contentStyle={{ fontSize: 12, borderRadius: 8 }}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="net"
-                  stroke="#4f46e5"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
       </CardContent>
     </Card>
   );

@@ -93,6 +93,7 @@
         reverse_proxy /etutkoc-logo.png next:3000
         reverse_proxy /etutkoc-logo.svg next:3000
         reverse_proxy /etutkoc-mark.svg next:3000
+        reverse_proxy /etutkoc-mark.png next:3000
 
         # RealFaviconGenerator favicon seti (public/ kök) — Next.js serve eder.
         # /favicon.ico zaten yukarıda (line 88) next:3000'e gidiyor.
