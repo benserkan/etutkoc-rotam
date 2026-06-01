@@ -155,6 +155,7 @@ function Metric({
     <div className="flex items-baseline gap-1.5">
       <span className="opacity-70">{label}</span>
       <span className={cn("font-semibold tabular-nums", color)}>{value}</span>
+      <span className="opacity-50 text-[10px]">test</span>
     </div>
   );
 }

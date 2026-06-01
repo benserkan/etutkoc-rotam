@@ -263,13 +263,14 @@ function ProjectionCard({
         </div>
 
         <div className="grid grid-cols-3 gap-3 text-sm">
-          <StatBlock label="Toplam Hedef" value={projection.total_tests} />
+          <StatBlock label="Toplam Hedef" value={projection.total_tests} unit="test" />
           <StatBlock
             label="Tamamlandı"
             value={projection.completed_tests}
             tone="text-emerald-700"
+            unit="test"
           />
-          <StatBlock label="Kalan" value={projection.remaining_tests} />
+          <StatBlock label="Kalan" value={projection.remaining_tests} unit="test" />
           {projection.days_left_to_exam != null && (
             <>
               <StatBlock
@@ -281,11 +282,13 @@ function ProjectionCard({
               <StatBlock
                 label="Günlük Hız"
                 value={projection.rate_per_day ?? "—"}
+                unit={projection.rate_per_day != null ? "test/gün" : undefined}
               />
               <StatBlock
                 label="Beklenen Erim"
                 value={projection.expected_completed_by_exam}
                 tone={tone.text}
+                unit="test"
               />
             </>
           )}
@@ -307,10 +310,12 @@ function StatBlock({
   label,
   value,
   tone,
+  unit,
 }: {
   label: string;
   value: number | string;
   tone?: string;
+  unit?: string;
 }) {
   return (
     <div>
@@ -324,6 +329,11 @@ function StatBlock({
         )}
       >
         {value}
+        {unit && (
+          <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+            {unit}
+          </span>
+        )}
       </div>
     </div>
   );

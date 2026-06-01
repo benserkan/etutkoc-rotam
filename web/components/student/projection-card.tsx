@@ -61,6 +61,7 @@ export function ProjectionCard({ projection: p }: Props) {
           <p className="text-xs text-muted-foreground">Bu gidişle çözülecek</p>
           <p className="font-display text-2xl font-bold tabular-nums">
             {p.projected_completable.toLocaleString("tr-TR")}
+            <span className="ml-1 text-sm font-medium text-muted-foreground">test</span>
           </p>
           <p className="text-[11px] text-muted-foreground">
             Günde ortalama {p.rate_per_day.toFixed(1)} test
@@ -84,6 +85,7 @@ export function ProjectionCard({ projection: p }: Props) {
             >
               {gapAbs.toLocaleString("tr-TR")}
             </span>
+            <span className="text-sm font-medium text-muted-foreground">test</span>
           </div>
           <p className="text-[11px] text-muted-foreground">
             Yetişmek için günde {p.required_rate.toFixed(1)} test gerekli
