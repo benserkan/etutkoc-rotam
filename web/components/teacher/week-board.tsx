@@ -44,7 +44,6 @@ import {
   teacherKeys,
 } from "@/lib/api/teacher";
 import {
-  useNotifyParents,
   usePublishWeek,
 } from "@/lib/hooks/use-weekly-plan-mutations";
 import type {
@@ -55,6 +54,7 @@ import type {
 import { Button } from "@/components/ui/button";
 
 import { BookGridModal } from "./weekly-plan/book-grid-modal";
+import { ParentAnnounceDialog } from "./weekly-plan/parent-announce-dialog";
 import { WeekDayCard } from "./weekly-plan/week-day-card";
 import { WeekNotesCard } from "./weekly-plan/week-notes-card";
 import { ResourceSidebar } from "./weekly-plan/resource-sidebar";
@@ -129,12 +129,13 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
   const [gridBookId, setGridBookId] = React.useState<number | null>(null);
 
   const publishWeek = usePublishWeek(studentId);
-  const notifyParents = useNotifyParents(studentId);
 
   const draftTotal = data.week_draft_total ?? 0;
 
   // WP3 — Program-aware: aktif program + dialog state
   const [newProgramOpen, setNewProgramOpen] = React.useState(false);
+  // Veliye duyur — gönderim öncesi önizleme modalı
+  const [announceOpen, setAnnounceOpen] = React.useState(false);
   const [programsDropdownOpen, setProgramsDropdownOpen] = React.useState(false);
   const currentProgramId = data.current_program_id ?? null;
   const currentProgramName = data.current_program_name;
@@ -269,34 +270,11 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           ) : null}
           <Button
             variant="outline"
-            onClick={() => {
-              if (
-                !window.confirm(
-                  `Bu hafta ${data.start_date} – ${data.end_date} programını bağlı velilere bildirim olarak göndermek istediğinizden emin misiniz?${
-                    draftTotal > 0
-                      ? `\n\nNOT: ${draftTotal} taslak görev YAYINLANMAMIŞ; bildirimde sayılmaz.`
-                      : ""
-                  }`,
-                )
-              ) {
-                return;
-              }
-              notifyParents.mutate({
-                body: {
-                  week_start: data.start_date,
-                  program_id: currentProgramId ?? undefined,
-                },
-              });
-            }}
-            disabled={notifyParents.isPending}
-            title="Yayınlanmış programı bağlı velilere e-posta/WhatsApp ile duyur"
+            onClick={() => setAnnounceOpen(true)}
+            title="Yayınlanmış programı bağlı velilere e-posta/WhatsApp ile duyur — önce önizleme"
             className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
           >
-            {notifyParents.isPending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : (
-              <Megaphone className="size-4" aria-hidden />
-            )}
+            <Megaphone className="size-4" aria-hidden />
             Veliye duyur
           </Button>
         </div>
@@ -394,6 +372,16 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
         open={newProgramOpen}
         onClose={() => setNewProgramOpen(false)}
         studentId={studentId}
+      />
+
+      {/* Veliye duyur — gönderim öncesi önizleme */}
+      <ParentAnnounceDialog
+        studentId={studentId}
+        weekStart={data.start_date}
+        programId={currentProgramId ?? null}
+        draftTotal={draftTotal}
+        open={announceOpen}
+        onOpenChange={setAnnounceOpen}
       />
     </div>
   );

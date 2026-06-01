@@ -256,19 +256,41 @@ function DayBlock({
           </thead>
           <tbody>
             {tasks.flatMap((t) =>
-              t.items.map((it, idx) => (
-                <TaskItemRow
-                  key={`${t.id}-${it.id}`}
-                  task={t}
-                  item={it}
-                  isFirst={idx === 0}
-                />
-              )),
+              t.items.length > 0
+                ? t.items.map((it, idx) => (
+                    <TaskItemRow
+                      key={`${t.id}-${it.id}`}
+                      task={t}
+                      item={it}
+                      isFirst={idx === 0}
+                    />
+                  ))
+                : [<ActivityTaskRow key={`${t.id}-activity`} task={t} />],
             )}
           </tbody>
         </table>
       )}
     </section>
+  );
+}
+
+// Kalemsiz (Video/Özet/Tekrar/Diğer) görevler — soru kalemi yok; başlık + durum.
+// Eskiden t.items boş olduğu için print'te HİÇ satır üretilmiyordu (görünmez bug).
+function ActivityTaskRow({ task }: { task: TeacherTask }) {
+  const typeLabel = TASK_TYPE_LABEL[task.type] ?? task.type;
+  const done = task.status === "completed";
+  return (
+    <tr className="border-b border-stone-100">
+      <td className="px-1 py-1 text-stone-600">{typeLabel}</td>
+      <td className="px-1 py-1 text-stone-900">
+        {task.title || "—"}
+        {done ? <span className="text-emerald-700"> · yapıldı ✓</span> : null}
+      </td>
+      <td className="px-1 py-1 text-right text-stone-400">—</td>
+      <td className="px-1 py-1 text-right text-stone-400">—</td>
+      <td className="px-1 py-1 text-right text-stone-400">—</td>
+      <td className="px-1 py-1 text-right text-stone-400">—</td>
+    </tr>
   );
 }
 

@@ -3952,6 +3952,33 @@ template'de `{% for x in obj.items %}` ile çakışırsa "object is not iterable
 hatası verir. Producer/ctx'lerde rezerve dict-metodlarıyla aynı isim
 kullanılmamalı (örn. `items` yerine `rows` veya `entries`).
 
+## "Diğer"/etkinlik görevleri tamamlamaya sayılır + Veliye-duyur önizleme (2026-06-01)
+
+**Bağlam (kullanıcı, student 12 Pazar):** 7 görev (3 TEST=8 soru + 4 OTHER), 2 OTHER
+"tamam" ama manşet **%0**. Kök neden: gün/hafta `pct` **tamamen soru-bazlıydı**
+(`completed_count/planned_count`); kalemsiz "Diğer" görevler `planned=0` → %'ye hiç
+girmiyordu (2026-05-24 "etkinlik soru %'sine girmez" kararının revizyonu).
+- **Karar (kullanıcı onayı): iki ayrı metrik.** (1) **Soru hacmi** ("8 test") yalnız
+  sayısal görevlerden — analitik/risk/veli soru tablosu bunu kullanmaya DEVAM eder
+  (Diğer'e sayı uydurma yok). (2) **Görev tamamlama** (manşet %) = her görev 1 birim;
+  COMPLETED→1.0, sayısal görev→çözülen/planlanan, kalemsiz etkinlik tamamsa→1 değilse→0.
+  Manşet artık "%0" yerine "%29" (2/7) gösterir.
+- Backend: `teacher.py` `_task_completion_fraction` + gün/hafta `pct` görev-bazlı
+  (planned/completed soru olarak KORUNDU — print özeti + "8 test" değişmez).
+- **Print bug:** `program/print` `DayBlock` `t.items.map` ile satır üretiyordu →
+  kalemsiz görevlerin items'i boş → **print'te görünmüyordu**. `ActivityTaskRow`
+  eklendi (başlık + tip + "yapıldı ✓").
+- **Veli içeriği zaten doğru:** `parent_new_program.html` rows boşsa task.title'ı
+  render ediyor → Diğer görevler veli mailinde ZATEN var (değişiklik gerekmedi).
+- **Veliye-duyur ÖNİZLEME (yeni):** `GET /teacher/students/{id}/program/parent-preview`
+  (salt-okuma, bildirim YOK) — veli mailinin `_build_daily_breakdown`'unu + yayınlanmış
+  görev sayısı + alıcı veli (24s dedup) döndürür. Frontend `ParentAnnounceDialog`
+  ("Veliye duyur" artık `window.confirm` yerine önizleme modalı açar: gün gün program
+  [Diğer dahil, is_activity rozetli] + alıcılar + taslak uyarısı → "Velilere gönder").
+- Smoke `test_api_v2_teacher_week_activity_pct.py` 2/2 (görev-pct + önizleme). Regresyon:
+  weekly_plan 14 + itemless 10 + teacher_read 12. tsc/eslint temiz. **NOT:** smoke'ta
+  id-reuse orphan TaskBookItem temizliği gerekti (ürün hatası değil).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

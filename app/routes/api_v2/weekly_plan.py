@@ -46,6 +46,11 @@ from app.routes.api_v2.schemas.teacher import (
     BookOptionsResponse,
     NotifyParentsBody,
     NotifyParentsResult,
+    ParentProgramPreviewDay,
+    ParentProgramPreviewItem,
+    ParentProgramPreviewRecipient,
+    ParentProgramPreviewResponse,
+    ParentProgramPreviewTask,
     PublishDayBody,
     PublishResult,
     PublishWeekBody,
@@ -477,6 +482,107 @@ def notify_parents(
             fired=fired, skipped_recent=skipped, no_tasks=no_tasks, message=message,
         ),
         invalidate=_invalidate_week(user.id, student.id),
+    )
+
+
+@router.get(
+    "/students/{student_id}/program/parent-preview",
+    response_model=ParentProgramPreviewResponse,
+)
+def parent_program_preview(
+    student_id: int,
+    program_id: int | None = Query(None),
+    week_start: str | None = Query(None),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+) -> ParentProgramPreviewResponse:
+    """Veliye duyurmadan ÖNCE — veliye gidecek tam içeriği döndür (gönderim YOK).
+
+    İçerik = veli mailinin kullandığı `_build_daily_breakdown` (Diğer/etkinlik
+    görevleri başlıkla dahil) + yayınlanmış (taslak hariç) görev sayısı + alıcı
+    veliler (24s dedup durumu). Hiçbir bildirim enqueue EDİLMEZ — salt okuma.
+    """
+    from datetime import timedelta as _td
+
+    from app.models import NotificationKind
+    from app.services.event_triggers import _active_parents_for, _has_recent
+    from app.services.notification_producers import (
+        _build_daily_breakdown,
+        _wa_eligible,
+    )
+
+    student = _get_owned_student(db, student_id, user.id)
+    start, end = _resolve_window(
+        db, student.id, program_id, week_start or date.today().isoformat(),
+    )
+
+    breakdown = _build_daily_breakdown(
+        db, student_id=student.id, week_start=start, week_end=end,
+    )
+    days_out: list[ParentProgramPreviewDay] = []
+    for day in breakdown:
+        tasks_out: list[ParentProgramPreviewTask] = []
+        for t in day.get("tasks", []):
+            rows = [
+                ParentProgramPreviewItem(
+                    book=r.get("book", "—"),
+                    section=r.get("section", ""),
+                    planned=int(r.get("planned", 0)),
+                    completed=int(r.get("completed", 0)),
+                )
+                for r in t.get("rows", [])
+            ]
+            tasks_out.append(ParentProgramPreviewTask(
+                title=(t.get("title") or "").strip(),
+                type=t.get("type", "test"),
+                is_activity=len(rows) == 0,
+                rows=rows,
+                total_planned=int(t.get("total_planned", 0)),
+            ))
+        days_out.append(ParentProgramPreviewDay(
+            day_iso=day.get("day_iso", ""),
+            day_name=day.get("day_name", ""),
+            day_label=day.get("day_label", ""),
+            has_tasks=bool(day.get("has_tasks")),
+            tasks=tasks_out,
+            total_planned=int(day.get("total_planned", 0)),
+        ))
+
+    # Yayınlanmış görev sayısı — mail başlığındaki "X görev" ile parite (taslak hariç)
+    total_tasks = (
+        db.query(Task)
+        .filter(
+            Task.student_id == student.id,
+            Task.date >= start,
+            Task.date <= end,
+            Task.is_draft.is_(False),
+        )
+        .count()
+    )
+
+    parents = _active_parents_for(db, student.id)
+    recipients = [
+        ParentProgramPreviewRecipient(
+            name=p.full_name,
+            email=True,
+            whatsapp=_wa_eligible(db, p.id),
+            recently_notified=_has_recent(
+                db, parent_id=p.id, student_id=student.id,
+                kind=NotificationKind.NEW_PROGRAM, within=_td(hours=24),
+            ),
+        )
+        for p in parents
+    ]
+
+    return ParentProgramPreviewResponse(
+        student_id=student.id,
+        student_name=student.full_name,
+        week_start=start.isoformat(),
+        week_end=end.isoformat(),
+        total_tasks=total_tasks,
+        daily_breakdown=days_out,
+        recipients=recipients,
+        has_recipients=len(recipients) > 0,
     )
 
 

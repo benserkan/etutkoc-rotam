@@ -467,6 +467,45 @@ export interface TeacherStudentWeekResponse {
   unlinked_latest?: string | null;
 }
 
+// "Veliye duyur" gönderim öncesi önizleme — veliye gidecek tam içerik
+export interface ParentProgramPreviewItem {
+  book: string;
+  section: string;
+  planned: number;
+  completed: number;
+}
+export interface ParentProgramPreviewTask {
+  title: string;
+  type: TaskType;
+  is_activity: boolean;
+  rows: ParentProgramPreviewItem[];
+  total_planned: number;
+}
+export interface ParentProgramPreviewDay {
+  day_iso: string;
+  day_name: string;
+  day_label: string;
+  has_tasks: boolean;
+  tasks: ParentProgramPreviewTask[];
+  total_planned: number;
+}
+export interface ParentProgramPreviewRecipient {
+  name: string;
+  email: boolean;
+  whatsapp: boolean;
+  recently_notified: boolean;
+}
+export interface ParentProgramPreviewResponse {
+  student_id: number;
+  student_name: string;
+  week_start: string;
+  week_end: string;
+  total_tasks: number;
+  daily_breakdown: ParentProgramPreviewDay[];
+  recipients: ParentProgramPreviewRecipient[];
+  has_recipients: boolean;
+}
+
 // =============================================================================
 // Paket 3.5a — Mutation body'leri + ek response tipleri
 // =============================================================================

@@ -454,6 +454,51 @@ class NotifyParentsResult(BaseModel):
     message: str                      # insancıl özet
 
 
+# ---- Veliye duyur ÖNİZLEME (gönderim öncesi "ne gidecek") ----
+
+
+class ParentProgramPreviewItem(BaseModel):
+    book: str                         # kitap adı veya kalemsiz görev etiketi
+    section: str
+    planned: int
+    completed: int
+
+
+class ParentProgramPreviewTask(BaseModel):
+    title: str
+    type: str                         # test/video/ozet/tekrar/other
+    is_activity: bool                 # True = kalemsiz (Diğer/etkinlik) — sayı yok
+    rows: list[ParentProgramPreviewItem]
+    total_planned: int
+
+
+class ParentProgramPreviewDay(BaseModel):
+    day_iso: str
+    day_name: str                     # Pzt/Sal/...
+    day_label: str                    # "31 May"
+    has_tasks: bool
+    tasks: list[ParentProgramPreviewTask]
+    total_planned: int                # gün toplam soru
+
+
+class ParentProgramPreviewRecipient(BaseModel):
+    name: str
+    email: bool = True
+    whatsapp: bool = False
+    recently_notified: bool = False   # son 24s içinde aynı program duyurulmuş mu
+
+
+class ParentProgramPreviewResponse(BaseModel):
+    student_id: int
+    student_name: str
+    week_start: str
+    week_end: str
+    total_tasks: int                  # yayınlanmış (taslak hariç) görev sayısı
+    daily_breakdown: list[ParentProgramPreviewDay]
+    recipients: list[ParentProgramPreviewRecipient]
+    has_recipients: bool
+
+
 # ---- Sidebar (3 seviyeli) ----
 
 

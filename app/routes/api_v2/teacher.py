@@ -2876,6 +2876,22 @@ def teacher_student_week_v2(
     )
     from app.services.weekly_program_service import get_active_program
 
+    def _task_completion_fraction(t: Task) -> float:
+        """Görev tamamlama oranı (0..1) — manşet %'si için.
+
+        COMPLETED görev → 1.0 (tip fark etmez). Sayısal (test/deneme) görev →
+        çözülen/planlanan soru. Kalemsiz etkinlik (Video/Özet/Tekrar/Diğer)
+        tamamlanmamışsa 0. Böylece 'Diğer' görevleri 'tamam' işaretlenince
+        tamamlama yüzdesine SAYILIR (eskiden soru-bazlı olduğu için %0 görünüyordu).
+        """
+        if t.status == TaskStatus.COMPLETED:
+            return 1.0
+        p = sum(int(it.planned_count or 0) for it in t.book_items)
+        if p <= 0:
+            return 0.0
+        c = sum(int(it.completed_count or 0) for it in t.book_items)
+        return min(1.0, c / p)
+
     student = _get_owned_student(db, student_id, user.id)
     today = date.today()
 
@@ -2983,12 +2999,20 @@ def teacher_student_week_v2(
     total_planned = 0
     total_completed = 0
     week_draft_total = 0
+    # Manşet % artık GÖREV-TAMAMLAMA bazlı (her görev = 1 birim; 'Diğer' etkinlik
+    # görevleri de sayılır). planned/completed soru hacmi olarak KALIR ("8 test"
+    # + analitik/veli soru tablosu bunları kullanmaya devam eder).
+    week_frac_sum = 0.0
+    week_task_count = 0
     for d in days:
         day_tasks = tasks_by_day[d]
         tt = [_build_teacher_task(db, t) for t in day_tasks]
         planned = sum(t.planned_count for t in tt)
         completed = sum(t.completed_count for t in tt)
-        pct = (completed / planned) if planned > 0 else 0.0
+        frac_sum = sum(_task_completion_fraction(t) for t in day_tasks)
+        pct = (frac_sum / len(day_tasks)) if day_tasks else 0.0
+        week_frac_sum += frac_sum
+        week_task_count += len(day_tasks)
         draft_count = sum(1 for t in day_tasks if t.is_draft)
         week_draft_total += draft_count
 
@@ -3048,7 +3072,7 @@ def teacher_student_week_v2(
         total_planned += planned
         total_completed += completed
 
-    total_pct = (total_completed / total_planned) if total_planned > 0 else 0.0
+    total_pct = (week_frac_sum / week_task_count) if week_task_count > 0 else 0.0
 
     # Hafta anchor (read-only)
     week_anchor = _resolve_week_anchor(db, student)

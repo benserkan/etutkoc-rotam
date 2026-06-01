@@ -49,6 +49,7 @@ import type {
   TeacherReviewResponse,
   TeacherStudentAnalyticsResponse,
   TeacherStudentDayResponse,
+  ParentProgramPreviewResponse,
   TeacherStudentDetailResponse,
   TeacherStudentListResponse,
   TeacherStudentWeekResponse,
@@ -369,6 +370,19 @@ export function getTeacherStudentWeek(
   });
   return api<TeacherStudentWeekResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(id))}/week${qs}`,
+  );
+}
+
+export function getParentProgramPreview(
+  id: number,
+  opts: { start?: string; programId?: number | null } = {},
+): Promise<ParentProgramPreviewResponse> {
+  const qs = buildQuery({
+    week_start: opts.start,
+    program_id: opts.programId != null ? String(opts.programId) : undefined,
+  });
+  return api<ParentProgramPreviewResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/program/parent-preview${qs}`,
   );
 }
 
