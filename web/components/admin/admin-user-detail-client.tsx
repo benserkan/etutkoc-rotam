@@ -11,6 +11,7 @@ import {
   KeyRound,
   Loader2,
   Lock,
+  MessageSquare,
   Save,
   ShieldCheck,
   Trash2,
@@ -44,6 +45,7 @@ import type {
   AdminUserListItem,
 } from "@/lib/types/admin";
 import { TempPasswordDialog } from "@/components/admin/admin-users-client";
+import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
 
 interface Props {
   initial: AdminUserDetailResponse;
@@ -83,6 +85,7 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
   });
   const data = q.data ?? initial;
   const t = data.target;
+  const [waOpen, setWaOpen] = React.useState(false);
 
   return (
     <div className="space-y-5">
@@ -130,15 +133,37 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
             {t.email}
           </div>
         </div>
-        {["teacher", "institution_admin", "super_admin"].includes(t.role) && (
-          <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
-            <Link href={`/admin/users/${t.id}/account-history`}>
-              <FileText className="size-4" aria-hidden />
-              Hesap Hareketleri
-            </Link>
-          </Button>
-        )}
+        <div className="flex items-center gap-2 flex-wrap">
+          {!data.is_self && (
+            <Button
+              onClick={() => setWaOpen(true)}
+              className="bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white"
+            >
+              <MessageSquare className="size-4" aria-hidden />
+              WA Gönder
+            </Button>
+          )}
+          {["teacher", "institution_admin", "super_admin"].includes(t.role) && (
+            <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+              <Link href={`/admin/users/${t.id}/account-history`}>
+                <FileText className="size-4" aria-hidden />
+                Hesap Hareketleri
+              </Link>
+            </Button>
+          )}
+        </div>
       </header>
+
+      {!data.is_self && (
+        <WaSendDialog
+          open={waOpen}
+          onOpenChange={setWaOpen}
+          targetUserId={t.id}
+          targetNameFallback={t.full_name}
+          title={`${t.full_name} — WhatsApp`}
+          defaultCategory="admin_yonetici"
+        />
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <EditUserForm

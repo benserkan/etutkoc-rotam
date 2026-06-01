@@ -4056,6 +4056,25 @@ Kullanıcı gönderilen maili inceledi, 4 sorun:
   prod'da elle çalıştırıldı. **KURAL: seed'le dolan her tablo start.sh'te olmalı
   (yoksa prod'da boş kalır).**
 
+## Bireysel (tekli) WhatsApp gönderimi — kurum yöneticisi + süper admin (2026-06-01)
+
+**Bağlam (kullanıcı):** `/teacher/bulk-wa`'da sidebar'da yalnız "Toplu WhatsApp"
+görünüyor, bireysel mesaj linki yok sandı. **Denetim:** WhatsApp mesajlaşma
+erişimi — Öğretmen: toplu (sidebar) + bireysel (BAĞLAM-içi: öğrenci detayı
+"WA Gönder" + Veliler sekmesi WhatsApp ikonu, `WaSendDialog`). Kurum yöneticisi:
+toplu var, bireysel YOK. Süper admin: yalnız Şablonlar + Audit. Veli/Öğrenci:
+yok (alıcı, backend 403 — doğru). Tasarım: toplu = sidebar (hedefsiz sihirbaz);
+bireysel = kişinin kendi sayfasından (hedef gerekir) — öğretmende eksik değil.
+- **Kullanıcı kararı: kurum yöneticisi + süper admin'e bireysel ekle.** Backend
+  zaten izinli (`/messaging/wa-link` + templates + target; P4 K4/K5 testleri).
+  Frontend-only: `teacher-card-client` (kurum öğretmen detayı → "WA Gönder",
+  hedef=öğretmen, kategori=kurum_ogretmen) + `admin-user-detail-client` (kullanıcı
+  detayı → "WA Gönder", `!is_self`, kategori=admin_yonetici). Paylaşılan
+  `WaSendDialog` reuse. tsc/eslint temiz, next rebuild.
+- **NOT:** SMS soft-mod'da olduğu için (telefon doğrulama kapalı) gerçek gönderim
+  hedefin doğrulanmış telefonu olunca çalışır; UI hazır, davranış tutarlı (toplu
+  ve öğretmen bireyseli de aynı kısıta tabi).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

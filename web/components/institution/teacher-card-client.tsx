@@ -3,10 +3,12 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Lock } from "lucide-react";
+import { Lock, MessageSquare } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
 import {
   getInstitutionTeacherCard,
   institutionKeys,
@@ -39,6 +41,7 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
   const data = q.data ?? initial;
   const { teacher, students, total_planned, total_completed, overall_rate_pct } =
     data;
+  const [waOpen, setWaOpen] = React.useState(false);
 
   return (
     <div className="space-y-6">
@@ -49,13 +52,33 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
         >
           ← Öğretmenler
         </Link>
-        <h1 className="text-2xl font-semibold tracking-tight font-display mt-1">
-          {teacher.full_name}
-        </h1>
-        <div className="text-sm text-muted-foreground font-mono mt-1">
-          {teacher.email}
+        <div className="mt-1 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight font-display">
+              {teacher.full_name}
+            </h1>
+            <div className="text-sm text-muted-foreground font-mono mt-1">
+              {teacher.email}
+            </div>
+          </div>
+          <Button
+            onClick={() => setWaOpen(true)}
+            className="shrink-0 bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white"
+          >
+            <MessageSquare className="size-4" aria-hidden />
+            WA Gönder
+          </Button>
         </div>
       </header>
+
+      <WaSendDialog
+        open={waOpen}
+        onOpenChange={setWaOpen}
+        targetUserId={teacherId}
+        targetNameFallback={teacher.full_name}
+        title={`${teacher.full_name} (Öğretmen) — WhatsApp`}
+        defaultCategory="kurum_ogretmen"
+      />
 
       <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2">
         <Lock className="size-4 shrink-0 mt-0.5" aria-hidden />
