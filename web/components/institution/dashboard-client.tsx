@@ -181,7 +181,7 @@ function KpiGrid({
       <KpiCard
         label="Öğretmen"
         value={aggregate.teacher_count}
-        sub={`${aggregate.active_teacher_count} son 7 günde aktif`}
+        sub={`${aggregate.active_teacher_count} son 7 günde aktif (giriş yapan)`}
       />
       <KpiCard
         label="Öğrenci"
@@ -189,9 +189,9 @@ function KpiGrid({
         sub="aktif kayıt"
       />
       <KpiCard
-        label="Bu Hafta Plan"
+        label="Planlanan test"
         value={aggregate.weekly_planned}
-        sub={`${aggregate.weekly_completed} tamamlandı`}
+        sub={`${aggregate.weekly_completed} test çözüldü · son 7 gün`}
       />
       <KpiCard
         label="Tamamlama Oranı"

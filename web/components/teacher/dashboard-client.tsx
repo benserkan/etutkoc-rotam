@@ -122,9 +122,9 @@ export function DashboardClient({ initial }: Props) {
         />
         <KpiCard
           icon={TrendingUp}
-          label="Bu hafta"
+          label="Bu hafta tamamlama"
           value={`%${weekPct}`}
-          sub={`${data.week_completed} / ${data.week_planned} tamam`}
+          sub={`${data.week_completed}/${data.week_planned} test · son 7 gün`}
           tone="text-emerald-500"
         />
       </section>
@@ -164,8 +164,8 @@ export function DashboardClient({ initial }: Props) {
               tone="text-rose-500"
             />
             <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-              Bugün planlanan: {data.today_planned} · tamamlanan{" "}
-              {data.today_completed} (%{todayPct})
+              Bugün planlanan: {data.today_planned} test · tamamlanan{" "}
+              {data.today_completed} test (%{todayPct})
             </div>
           </CardContent>
         </Card>

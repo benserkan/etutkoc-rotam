@@ -136,12 +136,12 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
                     {child.today_planned}
                   </span>
                   <span className="text-muted-foreground text-xs ml-1">
-                    görev
+                    test
                   </span>
                 </>
               ) : (
                 <span className="text-muted-foreground italic">
-                  bugün görev yok
+                  bugün test yok
                 </span>
               )}
             </span>
@@ -156,7 +156,7 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
               <span className="font-semibold tabular-nums">
                 {child.week_planned > 0 ? (
                   <>
-                    {child.week_completed}/{child.week_planned} görev
+                    {child.week_completed}/{child.week_planned} test
                     {child.week_completion_rate != null && (
                       <span className="text-muted-foreground ml-1">
                         · %{child.week_completion_rate}
@@ -186,6 +186,7 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
               tone={
                 child.rate_7d != null ? tone.text : "text-muted-foreground"
               }
+              sub="test tamamlama"
             />
             <Stat
               label="İstikrar"
@@ -195,6 +196,7 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
                   : "—"
               }
               tone="text-foreground"
+              sub="7 günde aktif gün"
             />
           </div>
 
@@ -264,10 +266,12 @@ function Stat({
   label,
   value,
   tone,
+  sub,
 }: {
   label: string;
   value: string;
   tone: string;
+  sub?: string;
 }) {
   return (
     <div className="text-center">
@@ -277,6 +281,11 @@ function Stat({
       <div className={cn("text-lg font-semibold mt-0.5 tabular-nums", tone)}>
         {value}
       </div>
+      {sub ? (
+        <div className="text-[10px] text-muted-foreground mt-0.5 leading-tight">
+          {sub}
+        </div>
+      ) : null}
     </div>
   );
 }

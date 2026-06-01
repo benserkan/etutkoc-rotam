@@ -69,14 +69,17 @@ export function ActionCenterClient({ initial }: Props) {
         <Card className={cn("p-4", s.critical > 0 && "border-rose-300 bg-rose-50/40")}>
           <div className="text-[11px] font-semibold uppercase text-rose-700">Kritik</div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.critical}</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">acil müdahale sinyali</div>
         </Card>
         <Card className={cn("p-4", s.warn > 0 && "border-amber-300 bg-amber-50/40")}>
           <div className="text-[11px] font-semibold uppercase text-amber-700">Uyarı</div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.warn}</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">dikkat sinyali</div>
         </Card>
         <Card className="p-4">
           <div className="text-[11px] font-semibold uppercase text-muted-foreground">Toplam</div>
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.total}</div>
+          <div className="text-[11px] text-muted-foreground mt-0.5">aksiyon kartı (şu an)</div>
         </Card>
       </section>
 

@@ -113,7 +113,8 @@ export function DnaView({ data }: Props) {
             %{completionPct}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {data.total_completed} / {data.total_planned} test
+            {data.total_completed} / {data.total_planned} test · son{" "}
+            {data.window_days} gün
           </p>
         </Card>
 
