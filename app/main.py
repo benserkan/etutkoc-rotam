@@ -100,7 +100,17 @@ async def lifespan(app: FastAPI):
                 pass
 
 
-app = FastAPI(title=settings.app_name, lifespan=lifespan)
+# OpenAPI dokümantasyonu (Swagger /docs · ReDoc /redoc · /openapi.json) yalnız
+# dev'de açık. Prod (DEBUG=false) → tüm API saldırı yüzeyini ifşa etmesin diye
+# kapatılır. openapi_url=None olunca /docs + /redoc de otomatik devre dışı kalır.
+_docs_enabled = settings.debug
+app = FastAPI(
+    title=settings.app_name,
+    lifespan=lifespan,
+    docs_url="/docs" if _docs_enabled else None,
+    redoc_url="/redoc" if _docs_enabled else None,
+    openapi_url="/openapi.json" if _docs_enabled else None,
+)
 
 # Session güvenliği (Sprint 2 multi-tenant security):
 # - max_age: 24 saat default. Admin oturumları rol-bazlı daha kısa
