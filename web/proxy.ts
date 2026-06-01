@@ -61,7 +61,7 @@ export function proxy(req: NextRequest) {
   // Statik public dosyalar (logo, görseller, fontlar) — auth'suz serve edilir.
   // Aksi halde anonim ziyaretçide /etutkoc-logo.svg gibi varlıklar /login'e
   // 307 redirect olur ve kırık görsel olarak görünür.
-  if (/\.(?:svg|png|jpe?g|gif|webp|avif|ico|txt|xml|json|woff2?|ttf|otf|map)$/i.test(pathname)) {
+  if (/\.(?:svg|png|jpe?g|gif|webp|avif|ico|txt|xml|json|webmanifest|woff2?|ttf|otf|map)$/i.test(pathname)) {
     return NextResponse.next();
   }
 

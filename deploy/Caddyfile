@@ -94,6 +94,16 @@
         reverse_proxy /etutkoc-logo.svg next:3000
         reverse_proxy /etutkoc-mark.svg next:3000
 
+        # RealFaviconGenerator favicon seti (public/ kök) — Next.js serve eder.
+        # /favicon.ico zaten yukarıda (line 88) next:3000'e gidiyor.
+        # Aksi halde bu kök istekler default'a düşüp FastAPI'den 404 alır.
+        reverse_proxy /favicon.svg next:3000
+        reverse_proxy /favicon-96x96.png next:3000
+        reverse_proxy /apple-touch-icon.png next:3000
+        reverse_proxy /site.webmanifest next:3000
+        reverse_proxy /web-app-manifest-192x192.png next:3000
+        reverse_proxy /web-app-manifest-512x512.png next:3000
+
         # =====================================================================
         # 3. STRANGLER FIG — dalga-bazlı Next.js açılışları
         # Her dalga teslim edildiğinde ilgili reverse_proxy aktive edilir.
