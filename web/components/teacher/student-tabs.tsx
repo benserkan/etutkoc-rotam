@@ -98,8 +98,10 @@ export function StudentTabs({ studentId, initial }: Props) {
   }
 
   const s = data.student;
-  const today = Math.round((data.program_summary.today_pct ?? 0) * 100);
-  const week = Math.round((data.program_summary.week_pct ?? 0) * 100);
+  // Bugün/Hafta KPI'ları görev-bazlı (etkinlik/"Diğer" dahil); Hız/Tutarlılık/
+  // Hedef Tutturma soru-hacmi (volume) olarak kalır.
+  const today = Math.round((data.program_summary.today_task_pct ?? 0) * 100);
+  const week = Math.round((data.program_summary.week_task_pct ?? 0) * 100);
   const consistency = Math.round((data.program_summary.consistency_7d ?? 0) * 100);
   const hitRate = Math.round((data.program_summary.hit_rate_7d ?? 0) * 100);
   const rate7d = data.program_summary.rate_7d ?? 0;
@@ -174,11 +176,11 @@ export function StudentTabs({ studentId, initial }: Props) {
         >
           <MetricsStrip
             today={today}
-            todayCompleted={data.program_summary.today_completed}
-            todayPlanned={data.program_summary.today_planned}
+            todayCompleted={data.program_summary.today_tasks_done ?? 0}
+            todayPlanned={data.program_summary.today_tasks_total ?? 0}
             week={week}
-            weekCompleted={data.program_summary.week_completed}
-            weekPlanned={data.program_summary.week_planned}
+            weekCompleted={data.program_summary.week_tasks_done ?? 0}
+            weekPlanned={data.program_summary.week_tasks_total ?? 0}
             rate7d={rate7d}
             consistency={consistency}
             hitRate={hitRate}
@@ -597,8 +599,13 @@ function StatusSummary({
 }) {
   const ps = data.program_summary;
   const base = `/teacher/students/${studentId}`;
-  const todayPct = ps.today_planned > 0 ? Math.round((ps.today_pct ?? 0) * 100) : null;
-  const weekPct = ps.week_planned > 0 ? Math.round((ps.week_pct ?? 0) * 100) : null;
+  // GÖREV-BAZLI (etkinlik/"Diğer" dahil) — "X/Y görev" tamamlanan/toplam görev.
+  const todayTotal = ps.today_tasks_total ?? 0;
+  const todayDone = ps.today_tasks_done ?? 0;
+  const weekTotal = ps.week_tasks_total ?? 0;
+  const weekDone = ps.week_tasks_done ?? 0;
+  const todayPct = todayTotal > 0 ? Math.round((ps.today_task_pct ?? 0) * 100) : null;
+  const weekPct = weekTotal > 0 ? Math.round((ps.week_task_pct ?? 0) * 100) : null;
   const consistency = Math.round((ps.consistency_7d ?? 0) * 100);
   const hitRate = Math.round((ps.hit_rate_7d ?? 0) * 100);
   const items = data.warning_items ?? [];
@@ -606,18 +613,18 @@ function StatusSummary({
 
   // İyi giden (başarı) sinyalleri — program_summary'den türetilir, linkli.
   const positives: SummaryRow[] = [];
-  if (ps.today_planned > 0 && ps.today_completed >= ps.today_planned) {
+  if (todayTotal > 0 && todayDone >= todayTotal) {
     positives.push({ tone: "green", title: "Bugünkü programı tamamladı",
-      detail: `${ps.today_completed}/${ps.today_planned} görev bitti`,
+      detail: `${todayDone}/${todayTotal} görev bitti`,
       link: `${base}/day`, linkLabel: "Günü gör", good: true });
-  } else if (ps.today_planned > 0 && (todayPct ?? 0) >= 50) {
+  } else if (todayTotal > 0 && (todayPct ?? 0) >= 50) {
     positives.push({ tone: "green", title: "Bugün iyi gidiyor",
-      detail: `${ps.today_completed}/${ps.today_planned} görev (%${todayPct})`,
+      detail: `${todayDone}/${todayTotal} görev (%${todayPct})`,
       link: `${base}/day`, linkLabel: "Günü gör", good: true });
   }
-  if (ps.week_planned > 0 && (weekPct ?? 0) >= 70) {
+  if (weekTotal > 0 && (weekPct ?? 0) >= 70) {
     positives.push({ tone: "green", title: `Haftalık tempo iyi (%${weekPct})`,
-      detail: `${ps.week_completed}/${ps.week_planned} görev tamamlandı`,
+      detail: `${weekDone}/${weekTotal} görev tamamlandı`,
       link: `${base}/week`, linkLabel: "Haftalık planı gör", good: true });
   }
   if (consistency >= 80) {
@@ -649,9 +656,9 @@ function StatusSummary({
         <div className={cn("rounded-lg border p-3", verdict.cls)}>
           <p className="font-semibold">{verdict.title}</p>
           <p className="mt-0.5 text-sm opacity-90">
-            Bugün <strong>{ps.today_completed}/{ps.today_planned}</strong> görev
+            Bugün <strong>{todayDone}/{todayTotal}</strong> görev
             {todayPct != null ? ` (%${todayPct})` : ""} ·{" "}
-            Bu hafta <strong>{ps.week_completed}/{ps.week_planned}</strong>
+            Bu hafta <strong>{weekDone}/{weekTotal}</strong> görev
             {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
             Tutarlılık %{consistency}
           </p>

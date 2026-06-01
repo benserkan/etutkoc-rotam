@@ -186,6 +186,13 @@ export interface StudentProgramSummary {
   consistency_7d: number;
   hit_rate_7d: number;
   rate_7d?: number;
+  // Görev-bazlı (etkinlik/"Diğer" dahil) — Durum Özeti + KPI "X/Y görev"
+  today_tasks_total?: number;
+  today_tasks_done?: number;
+  today_task_pct?: number;
+  week_tasks_total?: number;
+  week_tasks_done?: number;
+  week_task_pct?: number;
 }
 
 export interface StudentActivePhase {

@@ -158,6 +158,13 @@ class StudentProgramSummary(BaseModel):
     consistency_7d: float               # 0..1
     hit_rate_7d: float                  # 0..1
     rate_7d: float = 0.0                # test/gün (7 günlük ortalama hız)
+    # Görev-bazlı (etkinlik/"Diğer" dahil) — Durum Özeti "X/Y görev" + manşet %
+    today_tasks_total: int = 0
+    today_tasks_done: int = 0
+    today_task_pct: float = 0.0         # 0..1 (görev tamamlama, etkinlik dahil)
+    week_tasks_total: int = 0
+    week_tasks_done: int = 0
+    week_task_pct: float = 0.0
 
 
 class StudentActivePhase(BaseModel):

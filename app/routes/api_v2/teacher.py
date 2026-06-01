@@ -644,6 +644,32 @@ def teacher_students_v2(
 # =============================================================================
 
 
+def _task_frac(t: Task) -> float:
+    """Görev tamamlama oranı (0..1) — manşet/Durum Özeti için.
+
+    COMPLETED görev → 1.0 (tip fark etmez; Diğer/Video/Özet/Tekrar dahil).
+    Sayısal görev → çözülen/planlanan soru (max 1). Kalemsiz etkinlik
+    tamamlanmamışsa 0. "Diğer" görevi tamamlanınca tamamlamaya SAYILIR.
+    """
+    if t.status == TaskStatus.COMPLETED:
+        return 1.0
+    p = sum(int(it.planned_count or 0) for it in t.book_items)
+    if p <= 0:
+        return 0.0
+    c = sum(int(it.completed_count or 0) for it in t.book_items)
+    return min(1.0, c / p)
+
+
+def _task_based_summary(tasks: list[Task]) -> tuple[int, int, float]:
+    """(tamamlanan_görev, toplam_görev, oran 0..1) — görev-bazlı (etkinlik dahil)."""
+    total = len(tasks)
+    if total == 0:
+        return 0, 0, 0.0
+    fracs = [_task_frac(t) for t in tasks]
+    done = sum(1 for f in fracs if f >= 1.0)
+    return done, total, sum(fracs) / total
+
+
 @router.get(
     "/students/{student_id}",
     response_model=TeacherStudentDetailResponse,
@@ -664,6 +690,26 @@ def teacher_student_detail_v2(
     today = date.today()
     sn = student_snapshot(db, student, today=today)
 
+    # GÖREV-BAZLI Durum Özeti (etkinlik/"Diğer" görevleri de sayılır).
+    # Eski today_pct/week_pct soru-bazlıydı → tamamlanan "Diğer" görev manşete
+    # girmiyordu ("Bugün 0/6 görev %0" yanlışı). Yayınlanmış (taslak olmayan)
+    # görevler üzerinden, hafta-görünümü manşetiyle aynı _task_frac mantığı.
+    _week_start = today - timedelta(days=6)
+    _today_tasks = (
+        db.query(Task).options(joinedload(Task.book_items))
+        .filter(Task.student_id == student.id, Task.date == today, Task.is_draft.is_(False))
+        .all()
+    )
+    _week_tasks = (
+        db.query(Task).options(joinedload(Task.book_items))
+        .filter(Task.student_id == student.id, Task.date >= _week_start,
+                Task.date <= today, Task.is_draft.is_(False))
+        .all()
+    )
+    today_done, today_tasks_total, today_task_pct = _task_based_summary(_today_tasks)
+    week_done, week_tasks_total, week_task_pct = _task_based_summary(_week_tasks)
+
+    # Soru-bazlı (hacim) — geriye uyum için korunur; "8 test" gibi sayılar bunu kullanır.
     today_pct = (sn.today.completed / sn.today.planned) if sn.today.planned > 0 else 0.0
     week_pct = (sn.week.completed / sn.week.planned) if sn.week.planned > 0 else 0.0
     warnings_text = [f"{w.title}: {w.detail}" for w in sn.warnings]
@@ -715,6 +761,13 @@ def teacher_student_detail_v2(
             consistency_7d=float(sn.consistency_7d),
             hit_rate_7d=float(sn.hit_rate_7d),
             rate_7d=float(sn.rate_7d),
+            # Görev-bazlı (etkinlik dahil) — Durum Özeti "X/Y görev" için
+            today_tasks_total=today_tasks_total,
+            today_tasks_done=today_done,
+            today_task_pct=today_task_pct,
+            week_tasks_total=week_tasks_total,
+            week_tasks_done=week_done,
+            week_task_pct=week_task_pct,
         ),
         worst_warning_level=sn.worst_warning_level,
         warnings=warnings_text,

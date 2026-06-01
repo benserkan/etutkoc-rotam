@@ -18,7 +18,9 @@ import { Label } from "@/components/ui/label";
 import { api } from "@/lib/api";
 import {
   usePhoneDelete,
+  usePhoneSave,
   usePhoneSecondaryDelete,
+  usePhoneSecondarySave,
   usePhoneSecondaryStart,
   usePhoneSecondaryVerify,
   usePhoneStart,
@@ -420,33 +422,131 @@ function PhoneSoftPanel({
   slot: "primary" | "secondary";
   phone: PickedPhone;
 }) {
+  const savePrimary = usePhoneSave();
+  const saveSecondary = usePhoneSecondarySave();
+  const saveMut = slot === "secondary" ? saveSecondary : savePrimary;
+  const delPrimary = usePhoneDelete();
+  const delSecondary = usePhoneSecondaryDelete();
+  const delMut = slot === "secondary" ? delSecondary : delPrimary;
+
+  const [editing, setEditing] = React.useState(!phone.number);
+  const [num, setNum] = React.useState("");
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    saveMut.mutate({ phone: num }, { onSuccess: () => setEditing(false) });
+  }
+
   return (
     <PhoneCardShell
       slot={slot}
       badge={
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-          <Clock className="size-3" aria-hidden />
-          Yakında
-        </span>
+        phone.number ? (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-emerald-100 text-emerald-700 border border-emerald-200">
+            <CheckCircle2 className="size-3" aria-hidden />
+            Kayıtlı
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+            <Phone className="size-3" aria-hidden />
+            Numara ekleyin
+          </span>
+        )
       }
     >
-      <div className="space-y-2 text-sm">
-        {phone.number ? (
-          <p>
-            Kayıtlı numara:{" "}
-            <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
-              +{phone.number}
-            </code>
-          </p>
+      <div className="space-y-3">
+        {phone.number && !editing ? (
+          <>
+            <p className="text-sm">
+              Kayıtlı numara:{" "}
+              <code className="bg-muted px-1.5 py-0.5 rounded font-mono">
+                +{phone.number}
+              </code>
+            </p>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              SMS doğrulama henüz aktif değil; numaranız <strong>kayıtlı</strong>.
+              Bu numaraya WhatsApp mesajı gönderilebilir. Doğrulama açıldığında
+              tek adımda onaylarsınız.
+            </p>
+            <div className="flex gap-2 flex-wrap">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  setNum(phone.number ?? "");
+                  setEditing(true);
+                }}
+              >
+                Numarayı değiştir
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => delMut.mutate()}
+                disabled={delMut.isPending}
+                className="text-rose-700 border-rose-200 hover:bg-rose-50"
+              >
+                {delMut.isPending ? (
+                  <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                ) : null}
+                Kaldır
+              </Button>
+            </div>
+          </>
         ) : (
-          <p className="text-muted-foreground">Henüz telefon numarası eklenmedi.</p>
+          <>
+            <p className="text-sm text-muted-foreground">
+              {slot === "secondary"
+                ? "İkinci numaranızı girin. SMS doğrulama henüz aktif olmadığından numara doğrulamadan kaydedilir; bu numaraya WhatsApp gönderilebilir."
+                : "Cep telefonunuzu girin. SMS doğrulama henüz aktif olmadığından numara doğrulamadan kaydedilir; bu numaraya WhatsApp gönderilebilir."}
+            </p>
+            <form onSubmit={onSubmit} className="space-y-3">
+              <div>
+                <Label htmlFor={`soft-phone-${slot}`}>Telefon numarası</Label>
+                <Input
+                  id={`soft-phone-${slot}`}
+                  type="tel"
+                  placeholder="+90 532 ..."
+                  required
+                  value={num}
+                  onChange={(e) => setNum(e.target.value)}
+                  className="w-full max-w-sm mt-1"
+                  autoComplete="tel"
+                />
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Türkiye için <code>0532...</code> veya <code>+90 532...</code>{" "}
+                  formatı kabul edilir.
+                </p>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button
+                  type="submit"
+                  className="bg-[#117A86] hover:bg-[#0E5F69] text-white"
+                  disabled={saveMut.isPending}
+                >
+                  {saveMut.isPending ? (
+                    <>
+                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                      Kaydediliyor…
+                    </>
+                  ) : (
+                    "Numarayı Kaydet"
+                  )}
+                </Button>
+                {phone.number ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setEditing(false)}
+                  >
+                    Vazgeç
+                  </Button>
+                ) : null}
+              </div>
+            </form>
+          </>
         )}
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          SMS ile doğrulama şu an etkin değil.
-          {phone.number ? " Numaranız kayıtlı; " : " "}
-          doğrulama açıldığında buradan tek adımda tamamlayabilirsiniz. Şimdilik
-          bir işlem yapmanıza gerek yok.
-        </p>
       </div>
     </PhoneCardShell>
   );

@@ -148,6 +148,38 @@ export function usePhoneStart() {
   });
 }
 
+export function usePhoneSave() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PhoneMutationResult>, ApiError, StartPhoneVerificationBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<PhoneMutationResult>>("/api/v2/me/phone/save", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (err) => toast.error(phoneErrorMessage(err)),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "Telefon numarası kaydedildi.");
+    },
+  });
+}
+
+export function usePhoneSecondarySave() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PhoneMutationResult>, ApiError, StartPhoneVerificationBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<PhoneMutationResult>>("/api/v2/me/phone-secondary/save", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (err) => toast.error(phoneErrorMessage(err)),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data?.message ?? "İkinci telefon numarası kaydedildi.");
+    },
+  });
+}
+
 export function usePhoneVerify() {
   const qc = useQueryClient();
   return useMutation<MutationResponse<PhoneMutationResult>, ApiError, VerifyPhoneBody>({

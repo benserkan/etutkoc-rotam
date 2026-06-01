@@ -256,6 +256,41 @@ def verify_phone(
     return user
 
 
+def save_phone_unverified(
+    db: Session,
+    *,
+    user: User,
+    phone: str,
+    slot: PhoneSlot = PhoneSlot.PRIMARY,
+) -> str:
+    """Soft mod: numarayı DOĞRULAMADAN kaydet (verified_at=None).
+
+    SMS doğrulama henüz operasyonel değilken (is_sms_enabled False) kullanıcı
+    numarasını kaydedebilsin diye — böylece Click-to-WhatsApp gönderimi çalışır.
+    SMS açıldığında numara verify_phone ile doğrulanır. Numara normalize edilir,
+    bekleyen OTP satırları iptal edilir.
+    """
+    normalized = normalize_e164_tr(phone)
+    if not normalized:
+        raise PhoneError(
+            "invalid_phone",
+            "Geçersiz telefon numarası. Türkiye cep telefonu formatı gerekir.",
+        )
+    phone_field, verified_field = _phone_field_name(slot)
+    setattr(user, phone_field, normalized)
+    setattr(user, verified_field, None)  # doğrulanmadı — SMS açılınca doğrulanır
+    db.query(PhoneVerification).filter(
+        PhoneVerification.user_id == user.id,
+        PhoneVerification.slot == _slot_str(slot),
+        PhoneVerification.consumed_at.is_(None),
+    ).update(
+        {PhoneVerification.consumed_at: datetime.now(timezone.utc)},
+        synchronize_session=False,
+    )
+    db.flush()
+    return normalized
+
+
 def delete_phone(
     db: Session,
     *,

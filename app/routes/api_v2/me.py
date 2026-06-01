@@ -66,6 +66,7 @@ from app.services.phone_service import (
     PhoneSlot,
     delete_phone,
     pending_verification_for,
+    save_phone_unverified,
     start_phone_verification,
     verify_phone,
 )
@@ -339,6 +340,38 @@ def me_phone_delete(
     )
 
 
+@router.post("/me/phone/save", response_model=MutationResponse[PhoneMutationResult])
+def me_phone_save(
+    body: StartPhoneVerificationBody,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Soft mod: numarayı doğrulamadan kaydet (SMS doğrulama henüz canlı değil).
+
+    SMS doğrulama açıkken (is_sms_enabled) kullanılamaz — o zaman start/verify
+    akışı ile kod doğrulanır.
+    """
+    if is_sms_enabled():
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "bad_request", "code": "verification_required",
+                    "message": "SMS doğrulama aktif — lütfen kod ile doğrulayın."},
+        )
+    try:
+        save_phone_unverified(db, user=user, phone=body.phone, slot=PhoneSlot.PRIMARY)
+    except PhoneError as e:
+        db.rollback()
+        raise _phone_error_http(e)
+    db.commit()
+    return MutationResponse[PhoneMutationResult](
+        data=PhoneMutationResult(
+            message="Telefon numarası kaydedildi.",
+            info=_build_phone_info(db, user),
+        ),
+        invalidate=["me"],
+    )
+
+
 # ---- İkincil telefon (yalnız PARENT) ----
 
 
@@ -408,6 +441,38 @@ def me_phone_secondary_delete(
     return MutationResponse[PhoneMutationResult](
         data=PhoneMutationResult(
             message="İkinci telefon kaldırıldı.",
+            info=_build_phone_info(db, user),
+        ),
+        invalidate=["me"],
+    )
+
+
+@router.post(
+    "/me/phone-secondary/save",
+    response_model=MutationResponse[PhoneMutationResult],
+)
+def me_phone_secondary_save(
+    body: StartPhoneVerificationBody,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Soft mod: ikinci numarayı doğrulamadan kaydet (yalnız PARENT)."""
+    _require_parent_for_secondary(user)
+    if is_sms_enabled():
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "bad_request", "code": "verification_required",
+                    "message": "SMS doğrulama aktif — lütfen kod ile doğrulayın."},
+        )
+    try:
+        save_phone_unverified(db, user=user, phone=body.phone, slot=PhoneSlot.SECONDARY)
+    except PhoneError as e:
+        db.rollback()
+        raise _phone_error_http(e)
+    db.commit()
+    return MutationResponse[PhoneMutationResult](
+        data=PhoneMutationResult(
+            message="İkinci telefon numarası kaydedildi.",
             info=_build_phone_info(db, user),
         ),
         invalidate=["me"],
