@@ -378,7 +378,13 @@ function SubjectsCard({ subjects }: { subjects: ParentSubjectItem[] }) {
 // Öğretmen notları
 // ============================================================================
 
+const NOTES_VISIBLE = 4;
+
 function TeacherNotesCard({ notes }: { notes: ParentTeacherNoteItem[] }) {
+  const [showAll, setShowAll] = React.useState(false);
+  const visible = showAll ? notes : notes.slice(0, NOTES_VISIBLE);
+  const hiddenCount = notes.length - NOTES_VISIBLE;
+
   return (
     <Card>
       <CardContent className="p-5">
@@ -389,24 +395,69 @@ function TeacherNotesCard({ notes }: { notes: ParentTeacherNoteItem[] }) {
           </p>
         ) : (
           <div className="space-y-3">
-            {notes.map((n) => (
-              <div
-                key={n.id}
-                className="border-l-4 border-[#117A86] bg-[#117A86]/5 pl-4 py-2.5 rounded-r"
-              >
-                <p className="text-sm whitespace-pre-line">{n.body}</p>
-                <div className="text-[11px] text-muted-foreground mt-1.5">
-                  {n.teacher_name ?? "—"}
-                  {n.created_at && (
-                    <span> · {n.created_at.slice(0, 10).replaceAll("-", ".")}</span>
-                  )}
-                </div>
-              </div>
+            {visible.map((n) => (
+              <NoteItem key={n.id} note={n} />
             ))}
+            {!showAll && hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAll(true)}
+                className="text-xs font-medium text-[#117A86] hover:underline"
+              >
+                Daha eski notları gör ({hiddenCount})
+              </button>
+            )}
+            {showAll && notes.length > NOTES_VISIBLE && (
+              <button
+                type="button"
+                onClick={() => setShowAll(false)}
+                className="text-xs font-medium text-muted-foreground hover:text-foreground"
+              >
+                Daha az göster
+              </button>
+            )}
           </div>
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function NoteItem({ note }: { note: ParentTeacherNoteItem }) {
+  const [expanded, setExpanded] = React.useState(false);
+  const body = note.body ?? "";
+  // Uzun not → mobilde sayfayı şişirmesin: 3 satıra kırp + "Devamını oku".
+  const isLong = body.length > 220 || body.split("\n").length > 4;
+
+  return (
+    <div className="border-l-4 border-[#117A86] bg-[#117A86]/5 pl-4 pr-3 py-2.5 rounded-r">
+      <div className="text-[11px] font-medium text-foreground/70 mb-1">
+        {note.teacher_name ?? "—"}
+        {note.created_at && (
+          <span className="text-muted-foreground font-normal">
+            {" · "}
+            {note.created_at.slice(0, 10).replaceAll("-", ".")}
+          </span>
+        )}
+      </div>
+      <p
+        className={cn(
+          "text-sm whitespace-pre-line leading-relaxed",
+          !expanded && isLong && "line-clamp-3",
+        )}
+      >
+        {body}
+      </p>
+      {isLong && (
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          className="text-xs font-medium text-[#117A86] hover:underline mt-1"
+        >
+          {expanded ? "Daha az" : "Devamını oku"}
+        </button>
+      )}
+    </div>
   );
 }
 
