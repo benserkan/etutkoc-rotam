@@ -221,8 +221,11 @@ function TaskRow({ task }: { task: ParentWeekTask }) {
       style={
         hue != null
           ? {
-              background: `hsl(${hue}, 70%, 98%)`,
-              borderLeftColor: `hsl(${hue}, 60%, 60%)`,
+              // Düşük-opaklık tint — kart zemininin üzerine biner; metin tema
+              // token'ı (text-foreground) hem açık hem koyu temada okunur.
+              // (Opak hsl 98% sabit-açık zemindi → koyu temada beyaz metin kaybı.)
+              background: `hsla(${hue}, 65%, 50%, 0.08)`,
+              borderLeftColor: `hsl(${hue}, 60%, 55%)`,
             }
           : { borderLeftColor: "transparent" }
       }

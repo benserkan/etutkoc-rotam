@@ -111,7 +111,12 @@ def list_parent_students(db: Session, parent: User) -> list[dict[str, Any]]:
                 round(100 * week.completed / week.planned)
                 if week.planned > 0 else None
             ),
-            "rate_7d": round(snap.rate_7d * 100) if snap.rate_7d is not None else None,
+            # "Son 7 Gün Oran" = planlanan→tamamlanan oranı (hit_rate_7d, 0..1).
+            # DİKKAT: rate_7d test/gün HIZIDIR (yüzde değil) — burada kullanılmaz.
+            "rate_7d": (
+                min(100, round(snap.hit_rate_7d * 100))
+                if snap.hit_rate_7d is not None else None
+            ),
             "consistency_7d": round(snap.consistency_7d * 100) if snap.consistency_7d is not None else None,
             "warning_level": snap.worst_warning_level,
         })
@@ -212,7 +217,12 @@ def student_overview(db: Session, parent: User, student_id: int) -> dict[str, An
             "completed": snap.week.completed,
             "rate": round(100 * snap.week.completed / snap.week.planned) if snap.week.planned > 0 else None,
         },
-        "rate_7d_pct": round(snap.rate_7d * 100) if snap.rate_7d is not None else None,
+        # "Son 7 Gün Oran" = planlanan→tamamlanan oranı (hit_rate_7d, 0..1).
+        # rate_7d test/gün HIZIDIR (yüzde değil); oran için hit_rate kullanılır.
+        "rate_7d_pct": (
+            min(100, round(snap.hit_rate_7d * 100))
+            if snap.hit_rate_7d is not None else None
+        ),
         "rate_30d_pct": round(snap.rate_30d * 100) if snap.rate_30d is not None else None,
         "consistency_7d_pct": round(snap.consistency_7d * 100) if snap.consistency_7d is not None else None,
         "warning_level": snap.worst_warning_level,
