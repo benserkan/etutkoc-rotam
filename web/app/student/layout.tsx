@@ -6,6 +6,7 @@ import type { MyAccountResponse } from "@/lib/types/me";
 import { roleHome } from "@/lib/role-home";
 import { SiteHeader } from "@/components/site-header";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 
 /**
  * /student/* için korumalı layout.
@@ -45,6 +46,7 @@ export default async function StudentLayout({
   return (
     <div className="min-h-screen bg-background">
       <SiteHeader user={data.user} />
+      <ImpersonationBanner />
       <PhoneVerifyBanner phoneVerified={data.user.phone_verified ?? true} />
       <main className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</main>
     </div>

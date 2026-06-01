@@ -34,6 +34,7 @@ import { useLogout } from "@/lib/hooks/use-logout";
 import { getTeacherBadges, teacherKeys } from "@/lib/api/teacher";
 import { TrialBanner } from "@/components/teacher/trial-banner";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import type { TeacherBadgesResponse } from "@/lib/types/teacher";
 import type { UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
@@ -154,6 +155,7 @@ export function TeacherShell({ user, institution, children }: Props) {
       </header>
 
       <main className="flex-1 min-w-0">
+        <ImpersonationBanner />
         <PhoneVerifyBanner phoneVerified={user.phone_verified ?? true} />
         <TrialBanner enabled={user.role === "teacher"} />
         <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</div>

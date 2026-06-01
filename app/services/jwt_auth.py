@@ -45,6 +45,9 @@ class TokenPayload:
     expires_at: datetime
     password_stamp: str | None
     session_id: str | None = None  # BFF ActiveSession takibi (api_v1'de None)
+    # Impersonation: bu token bir süper admin tarafından "sahte oturum" için
+    # üretildiyse, impersonator (süper admin) id'si. None = normal oturum.
+    impersonator_id: int | None = None
 
 
 # ============================================================================
@@ -55,6 +58,7 @@ class TokenPayload:
 def _make_token(
     *, user: User, kind: TokenType, lifetime: timedelta,
     now: datetime | None = None, sid: str | None = None,
+    imp_by: int | None = None,
 ) -> str:
     if now is None:
         now = datetime.now(timezone.utc)
@@ -73,28 +77,34 @@ def _make_token(
     # sid taşımaz → payload birebir aynı kalır (geriye uyum).
     if sid:
         payload["sid"] = sid
+    # imp_by yalnız "sahte oturum" (impersonation) token'larında — süper admin'in
+    # id'si. Yoksa eklenmez (normal oturum payload'u birebir aynı kalır).
+    if imp_by is not None:
+        payload["imp_by"] = int(imp_by)
     return jwt.encode(
         payload, settings.jwt_secret, algorithm=settings.jwt_algorithm
     )
 
 
 def issue_access_token(
-    user: User, *, now: datetime | None = None, sid: str | None = None
+    user: User, *, now: datetime | None = None, sid: str | None = None,
+    imp_by: int | None = None,
 ) -> str:
     return _make_token(
         user=user, kind="access",
         lifetime=timedelta(minutes=settings.jwt_access_minutes),
-        now=now, sid=sid,
+        now=now, sid=sid, imp_by=imp_by,
     )
 
 
 def issue_refresh_token(
-    user: User, *, now: datetime | None = None, sid: str | None = None
+    user: User, *, now: datetime | None = None, sid: str | None = None,
+    imp_by: int | None = None,
 ) -> str:
     return _make_token(
         user=user, kind="refresh",
         lifetime=timedelta(days=settings.jwt_refresh_days),
-        now=now, sid=sid,
+        now=now, sid=sid, imp_by=imp_by,
     )
 
 
@@ -107,13 +117,14 @@ class TokenPair:
 
 
 def issue_token_pair(
-    user: User, *, now: datetime | None = None, sid: str | None = None
+    user: User, *, now: datetime | None = None, sid: str | None = None,
+    imp_by: int | None = None,
 ) -> TokenPair:
     if now is None:
         now = datetime.now(timezone.utc)
     return TokenPair(
-        access_token=issue_access_token(user, now=now, sid=sid),
-        refresh_token=issue_refresh_token(user, now=now, sid=sid),
+        access_token=issue_access_token(user, now=now, sid=sid, imp_by=imp_by),
+        refresh_token=issue_refresh_token(user, now=now, sid=sid, imp_by=imp_by),
         access_expires_in=settings.jwt_access_minutes * 60,
         refresh_expires_in=settings.jwt_refresh_days * 86400,
     )
@@ -144,6 +155,8 @@ def decode_token(token: str) -> TokenPayload:
         exp = datetime.fromtimestamp(data["exp"], tz=timezone.utc)
         pwd_stamp = data.get("pwd_stamp")
         session_id = data.get("sid")
+        imp_by_raw = data.get("imp_by")
+        impersonator_id = int(imp_by_raw) if imp_by_raw is not None else None
     except (KeyError, TypeError, ValueError) as e:
         raise TokenError(f"Token payload bozuk: {e}") from e
 
@@ -154,6 +167,7 @@ def decode_token(token: str) -> TokenPayload:
         user_id=user_id, role=role, type=kind,  # type: ignore[arg-type]
         issued_at=iat, expires_at=exp,
         password_stamp=pwd_stamp, session_id=session_id,
+        impersonator_id=impersonator_id,
     )
 
 

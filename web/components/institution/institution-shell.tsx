@@ -37,6 +37,7 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { InstitutionBrand } from "@/components/institution-brand";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { getInstitutionBadges, institutionKeys } from "@/lib/api/institution";
 import type { InstitutionBadgesResponse } from "@/lib/types/institution";
@@ -250,6 +251,7 @@ export function InstitutionShell({ user, institution, children }: Props) {
       </header>
 
       <main className="flex-1 min-w-0">
+        <ImpersonationBanner />
         <PhoneVerifyBanner phoneVerified={user.phone_verified ?? true} />
         <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</div>
       </main>

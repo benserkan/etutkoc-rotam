@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
+import { ImpersonationBanner } from "@/components/impersonation-banner";
 import type { UserPublic } from "@/lib/types/me";
 
 /**
@@ -100,6 +101,7 @@ export function ParentShell({ user, children }: Props) {
       </header>
 
       <main className="flex-1">
+        <ImpersonationBanner />
         <PhoneVerifyBanner phoneVerified={user.phone_verified ?? true} />
         <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
           {children}

@@ -2210,6 +2210,7 @@ def admin_impersonate_user_v2(
     user_id: int,
     body: AdminImpersonateBody,
     request: Request,
+    response: Response,
     user: User = Depends(_require_super_admin),
     db: Session = Depends(get_db),
 ):
@@ -2332,6 +2333,25 @@ def admin_impersonate_user_v2(
         # SessionMiddleware bağlı değilse (test client'ta) — sessizce devam
         pass
 
+    # BFF (Next.js) impersonation — ESAS mekanizma: hedef için JWT cookie bas
+    # (imp_by=admin.id). Paneller artık Next.js olduğundan Jinja session ölü;
+    # Next.js panelleri __Host-access JWT'sini okur, bu yüzden hedefin token'ı
+    # basılır. imp_by claim'i "Admin'e dön" + banner + audit için taşınır.
+    from app.routes.api_v2.auth import _set_access_cookie, _set_refresh_cookie
+    from app.services import security_monitor as _secmon
+    from app.services.jwt_auth import issue_token_pair as _issue_pair
+    imp_sid = _secmon.generate_session_token()
+    try:
+        _secmon.record_session_start(
+            db, user=target, session_token=imp_sid, ip=ip,
+            user_agent=request.headers.get("user-agent"),
+        )
+    except Exception:
+        logger.exception("impersonate session record fail target=%s", target.id)
+    _pair = _issue_pair(target, sid=imp_sid, imp_by=user.id)
+    _set_access_cookie(response, _pair.access_token, _pair.access_expires_in)
+    _set_refresh_cookie(response, _pair.refresh_token, _pair.refresh_expires_in)
+
     if target.role == UserRole.TEACHER:
         dest = "/teacher"
     elif target.role == UserRole.STUDENT:
@@ -2357,18 +2377,45 @@ def admin_impersonate_user_v2(
 @router.post("/impersonate/end", response_model=AdminImpersonateEndResult)
 def admin_impersonate_end_v2(
     request: Request,
+    response: Response,
     db: Session = Depends(get_db),
 ):
-    """Sahte oturumu sonlandır — gerçek admin'e restore.
+    """Sahte oturumu sonlandır — gerçek admin'e restore (BFF cookie + Jinja session).
 
-    Auth zorunlu DEĞİL — session.impersonator_id'ye bakılır.
-
-    Eşdeğer Jinja: admin.py:1224-1278 (end_impersonation).
+    Auth dep YOK: aktif token HEDEFin (impersonation cookie'si) ama `imp_by`
+    claim'i süper admin'i taşır → ondan admin çözülür. Geriye uyum için Jinja
+    session'a da bakılır. Admin'in normal cookie'si geri basılır (imp_by YOK).
     """
-    try:
-        impersonator_id = request.session.get("impersonator_id")
-    except (AttributeError, AssertionError):
-        impersonator_id = None
+    from app.config import settings as _settings
+    from app.routes.api_v2.auth import _set_access_cookie, _set_refresh_cookie
+    from app.services import security_monitor as _secmon
+    from app.services.impersonation import (
+        end_session as _end_imp,
+        find_active_for_actor_target,
+    )
+    from app.services.jwt_auth import decode_token, issue_token_pair as _issue_pair
+
+    impersonator_id: int | None = None
+    target_id: int | None = None
+    imp_access_sid: str | None = None
+
+    # 1) imp_by'ı BFF access cookie'sinden oku (Next.js dünyası)
+    access = request.cookies.get(_settings.auth_cookie_access_name)
+    if access:
+        try:
+            _p = decode_token(access.strip())
+            impersonator_id = _p.impersonator_id
+            target_id = _p.user_id
+            imp_access_sid = _p.session_id
+        except Exception:
+            pass
+    # 2) Yoksa Jinja session (geriye uyum)
+    if not impersonator_id:
+        try:
+            impersonator_id = request.session.get("impersonator_id")
+            target_id = target_id or request.session.get("user_id")
+        except (AttributeError, AssertionError):
+            pass
 
     if not impersonator_id:
         raise HTTPException(
@@ -2391,17 +2438,31 @@ def admin_impersonate_end_v2(
                 "message": "Admin oturumu geçersiz, tekrar giriş yapın.",
             },
         )
-    target_id = request.session.get("user_id")
-    imp_id = request.session.get("impersonation_id")
-    if imp_id:
+
+    # Impersonation kaydını kapat (imp_id JWT'de yok → actor+target ile bul)
+    if target_id:
         try:
-            from app.services.impersonation import end_session as _end_imp
-            _end_imp(
-                db, session_id=imp_id, end_reason="manual",
-                ended_by_user_id=admin.id,
+            existing = find_active_for_actor_target(
+                db, actor_id=admin.id, target_id=target_id
+            )
+            if existing is not None:
+                _end_imp(
+                    db, session_id=existing.id, end_reason="manual",
+                    ended_by_user_id=admin.id,
+                )
+        except Exception:
+            logger.exception(
+                "impersonation end fail actor=%s target=%s", admin.id, target_id
+            )
+    # Impersonation ActiveSession'ı kapat (canlı oturum panelinden düşsün)
+    if imp_access_sid:
+        try:
+            _secmon.terminate_session(
+                db, session_token=imp_access_sid, reason="impersonation_end"
             )
         except Exception:
-            logger.exception("impersonation end fail imp=%s", imp_id)
+            logger.exception("imp session terminate fail")
+
     log_action(
         db,
         action=AuditAction.IMPERSONATE_END,
@@ -2409,11 +2470,10 @@ def admin_impersonate_end_v2(
         target_type="user",
         target_id=target_id,
         request=request,
-        details={
-            "target_user_id": target_id,
-            "impersonation_id": imp_id,
-        },
+        details={"target_user_id": target_id},
     )
+
+    # Jinja session restore (geriye uyum)
     try:
         request.session.clear()
         request.session["user_id"] = admin.id
@@ -2425,6 +2485,23 @@ def admin_impersonate_end_v2(
         request.session["login_at"] = datetime.now(timezone.utc).isoformat()
     except (AttributeError, AssertionError):
         pass
+
+    # BFF: admin'in NORMAL cookie'sini geri bas (imp_by YOK → impersonation biter)
+    ip = (request.client.host if request.client else None)
+    fwd = request.headers.get("x-forwarded-for")
+    if fwd:
+        ip = fwd.split(",")[0].strip()[:64]
+    admin_sid = _secmon.generate_session_token()
+    try:
+        _secmon.record_session_start(
+            db, user=admin, session_token=admin_sid, ip=ip,
+            user_agent=request.headers.get("user-agent"),
+        )
+    except Exception:
+        logger.exception("admin restore session record fail")
+    _pair = _issue_pair(admin, sid=admin_sid)
+    _set_access_cookie(response, _pair.access_token, _pair.access_expires_in)
+    _set_refresh_cookie(response, _pair.refresh_token, _pair.refresh_expires_in)
 
     return AdminImpersonateEndResult(
         admin_id=admin.id,

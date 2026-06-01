@@ -75,6 +75,13 @@ class TurnstileConfigOut(BaseModel):
     site_key: str | None = None
 
 
+class ImpersonationStatusOut(BaseModel):
+    """GET /api/v2/auth/impersonation-status — panel banner'ı için."""
+    active: bool = False
+    impersonator_name: str | None = None
+    target_name: str | None = None
+
+
 class ForgotPasswordIn(BaseModel):
     email: str
     turnstile_token: str = ""
@@ -567,12 +574,16 @@ def v2_refresh(
     Cevap body'sinde güncel user — frontend "still logged in" doğrulayabilir.
     """
     now = datetime.now(timezone.utc)
-    # Refresh token'daki sid'i koru → ActiveSession sürekliliği + heartbeat
+    # Refresh token'daki sid'i koru → ActiveSession sürekliliği + heartbeat.
+    # imp_by varsa (sahte oturum) onu da taşı → impersonation refresh'te kopmaz.
     sid: str | None = None
+    imp_by: int | None = None
     refresh_token = request.cookies.get(settings.auth_cookie_refresh_name)
     if refresh_token:
         try:
-            sid = decode_token(refresh_token.strip()).session_id
+            _rp = decode_token(refresh_token.strip())
+            sid = _rp.session_id
+            imp_by = _rp.impersonator_id
         except Exception:
             sid = None
     if sid:
@@ -580,7 +591,7 @@ def v2_refresh(
             secmon.heartbeat(db, session_token=sid)
         except Exception:
             logger.exception("v2 refresh heartbeat fail")
-    new_access = issue_access_token(user, now=now, sid=sid)
+    new_access = issue_access_token(user, now=now, sid=sid, imp_by=imp_by)
     max_age = settings.jwt_access_minutes * 60
     _set_access_cookie(response, new_access, max_age)
     return UserPublic.from_user(user)
@@ -1065,6 +1076,29 @@ def v2_turnstile_config():
     return TurnstileConfigOut(
         enabled=turnstile.is_enabled(),
         site_key=turnstile.get_site_key(),
+    )
+
+
+@router.get("/impersonation-status", response_model=ImpersonationStatusOut)
+def v2_impersonation_status(request: Request, db: Session = Depends(get_db)):
+    """Aktif istek bir 'sahte oturum' mu? Access cookie'sindeki imp_by claim'inden
+    çözülür (token hedefin, imp_by süper admin'i taşır). Banner bunu çağırır;
+    active=True ise 'Admin'e dön' gösterilir. Auth dep YOK (her panelde çağrılır)."""
+    access = request.cookies.get(settings.auth_cookie_access_name)
+    if not access:
+        return ImpersonationStatusOut(active=False)
+    try:
+        p = decode_token(access.strip())
+    except Exception:
+        return ImpersonationStatusOut(active=False)
+    if not p.impersonator_id:
+        return ImpersonationStatusOut(active=False)
+    admin = db.query(User).filter(User.id == p.impersonator_id).first()
+    target = db.query(User).filter(User.id == p.user_id).first()
+    return ImpersonationStatusOut(
+        active=True,
+        impersonator_name=admin.full_name if admin else None,
+        target_name=target.full_name if target else None,
     )
 
 

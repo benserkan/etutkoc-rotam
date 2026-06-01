@@ -429,6 +429,16 @@ def main() -> int:
             f"status={r.status_code} body={r.text[:200]}",
         )
 
+        # ===== 18b. BFF: impersonate sc'nin cookie'sini HEDEFE çevirdi (yeni davranış).
+        # end → admin cookie geri basılır; sc tekrar süper admin olur (sonraki testler
+        # için şart) + end akışı doğrulanır. =====
+        r = sc.post("/api/v2/admin/impersonate/end")
+        check(
+            "18b. impersonate end → 200 + /admin (admin cookie restore)",
+            r.status_code == 200 and r.json().get("redirect_url") == "/admin",
+            f"status={r.status_code} body={r.text[:200]}",
+        )
+
         # ===== 19. impersonate self → 403 =====
         r = sc.post(
             f"/api/v2/admin/users/{seed['super_id']}/impersonate",

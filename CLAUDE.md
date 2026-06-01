@@ -4075,6 +4075,39 @@ bireysel = kişinin kendi sayfasından (hedef gerekir) — öğretmende eksik de
   hedefin doğrulanmış telefonu olunca çalışır; UI hazır, davranış tutarlı (toplu
   ve öğretmen bireyseli de aynı kısıta tabi).
 
+## BFF-JWT impersonation (sahte oturum) — Next.js panellerinde çalışır hale getirildi (2026-06-01)
+
+**Bağlam (kullanıcı):** `/admin/users/{id}` "Sahte Oturum" çalışmıyordu — gerekçe
+textarea'sı beyaz-üstüne-beyaz + "başlat"a basınca /admin'de kalıyordu. Kök neden:
+impersonation ucu yalnız **Jinja `request.session`'a** yazıyordu; paneller artık
+Next.js + **BFF JWT cookie** ile auth → Jinja session ölü, cookie hâlâ süper admin
+→ hedef panele gidince rol-koruması /admin'e geri atıyordu.
+- **Textarea kontrastı:** `text-slate-900 placeholder:text-slate-400` (commit `8fca02e`, deploy).
+- **BFF-JWT impersonation (onaylı):** JWT'ye opsiyonel **`imp_by`** claim'i
+  (`jwt_auth`: `_make_token`/issue_*/`issue_token_pair` + `TokenPayload.impersonator_id`
+  + decode; imp_by None iken token birebir aynı → api_v1 47/47 korundu).
+  - `POST /users/{id}/impersonate`: Jinja session'a EK olarak **hedef için
+    access+refresh cookie** basar (`imp_by=admin.id`, yeni ActiveSession sid) →
+    Next.js paneli hedefi görür. redirect = hedef roleHome.
+  - `POST /impersonate/end` (auth dep YOK): aktif access cookie'sinin `imp_by`'ından
+    admin'i çözer → Impersonation kaydını kapat + imp ActiveSession terminate +
+    **admin'in normal cookie'sini** geri bas (imp_by YOK) → /admin.
+  - `POST /auth/refresh`: imp_by'ı taşır (impersonation refresh'te kopmaz).
+  - `GET /auth/impersonation-status` (auth dep YOK): access cookie imp_by'ından
+    {active, impersonator_name, target_name} → banner besler.
+  - Frontend: `components/impersonation-banner.tsx` (mor üst bant + "Admin'e dön" →
+    end → redirect) — teacher/institution/parent/student shell'lerine eklendi
+    (admin'e impersonate edilemez). admin-user-detail ImpersonateCard zaten redirect
+    yapıyordu (artık cookie hedefe geçtiği için panel hedefi gösterir).
+  - **Güvenlik:** kendini/diğer süper admini/pasifi impersonate yasağı korunur;
+    audit (IMPERSONATE_START/END) korunur; admin'in tarayıcısına hedef JWT'si
+    basılır (impersonation'ın doğası) — imp_by + audit ile izlenir, "Admin'e dön"le
+    geri alınır.
+  - Smoke `test_api_v2_impersonation_bff.py` **8/8** (impersonate→cookie swap→
+    /auth/me hedef→status active→refresh korur→end→admin restore→status pasif) +
+    admin_users **26/26** (18b end-restore eklendi — cookie-swap yeni davranışı) +
+    api_v1 47 + auth 14 + auth_p1 10 + me 13. Migration YOK. Deploy: web+worker+next.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
