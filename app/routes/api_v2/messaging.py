@@ -48,9 +48,11 @@ from app.services.whatsapp_bulk_service import (
 from app.services.whatsapp_link_service import (
     WaDispatchError,
     build_wa_dispatch,
+    can_message_phone,
     can_send_wa_to,
     mask_phone_e164,
 )
+from app.services.sms_provider import is_sms_enabled
 from app.services.whatsapp_template_service import parse_variables_json
 
 
@@ -156,14 +158,17 @@ def messaging_target_info(
                     "message": "Hedef kullanıcı bulunamadı."},
         )
     verified = target.phone is not None and target.phone_verified_at is not None
+    can_msg = can_message_phone(target)
     return WaTargetBrief(
         user_id=target.id,
         full_name=target.full_name,
         role=target.role.value,
         phone_masked=(
-            mask_phone_e164(target.phone) if verified else "Telefon doğrulanmamış"
+            mask_phone_e164(target.phone) if target.phone else "Telefon numarası yok"
         ),
         phone_verified=verified,
+        can_message=can_msg,
+        sms_verification_live=is_sms_enabled(),
     )
 
 
@@ -237,6 +242,7 @@ def messaging_bulk_targets(
             BulkTargetCandidateModel(
                 user_id=c.user_id, full_name=c.full_name, role=c.role,
                 phone_masked=c.phone_masked, phone_verified=c.phone_verified,
+                can_message=c.can_message,
             )
             for c in result.eligible
         ],
@@ -244,6 +250,7 @@ def messaging_bulk_targets(
             BulkTargetCandidateModel(
                 user_id=c.user_id, full_name=c.full_name, role=c.role,
                 phone_masked=c.phone_masked, phone_verified=c.phone_verified,
+                can_message=c.can_message,
             )
             for c in result.no_phone
         ],

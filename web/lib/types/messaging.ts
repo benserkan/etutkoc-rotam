@@ -32,6 +32,8 @@ export interface WaTargetBrief {
   role: string;
   phone_masked: string;
   phone_verified: boolean;
+  can_message?: boolean;
+  sms_verification_live?: boolean;
 }
 
 export interface WaLinkRequestBody {
@@ -60,6 +62,7 @@ export interface BulkTargetCandidate {
   role: string;
   phone_masked: string;
   phone_verified: boolean;
+  can_message?: boolean;
 }
 
 export interface BulkGroupOption {

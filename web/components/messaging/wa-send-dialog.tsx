@@ -179,6 +179,8 @@ function DialogBody({
           template_not_found: "Şablon bulunamadı (silinmiş veya pasif).",
           target_phone_not_verified:
             "Hedefin telefonu doğrulanmamış. WhatsApp gönderimi yapılamaz.",
+          target_phone_missing:
+            "Hedefin kayıtlı telefon numarası yok. WhatsApp gönderimi yapılamaz.",
           freeform_not_allowed:
             "Bu şablon ek not yazımına izin vermiyor — ek not alanını boşaltın.",
           role_not_allowed: "Bu özellik hesabınızda yok.",
@@ -217,17 +219,32 @@ function DialogBody({
   }
 
   const target = targetQ.data!;
+  // Soft mod: numara varsa gönderilebilir (SMS doğrulama henüz canlı değilse
+  // kimse doğrulayamaz). can_message yoksa eski phone_verified'e düş.
+  const canMessage = target.can_message ?? target.phone_verified;
+  const verificationPending =
+    canMessage && !target.phone_verified && target.sms_verification_live === false;
 
-  if (!target.phone_verified) {
+  if (!canMessage) {
     return (
       <>
         <TargetHeader target={target} />
         <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-3 text-sm text-amber-900 inline-flex items-start gap-2">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
           <div>
-            <strong>Telefon doğrulanmamış.</strong> WhatsApp mesajı
-            gönderebilmek için hedef kullanıcının cep telefonunu kendi
-            hesabından SMS ile doğrulaması gerekir.
+            {target.sms_verification_live ? (
+              <>
+                <strong>Telefon doğrulanmamış.</strong> WhatsApp mesajı
+                gönderebilmek için hedef kullanıcının cep telefonunu kendi
+                hesabından SMS ile doğrulaması gerekir.
+              </>
+            ) : (
+              <>
+                <strong>Telefon numarası yok.</strong> WhatsApp mesajı
+                gönderebilmek için hedef kullanıcının kayıtlı bir cep telefonu
+                numarası olmalı.
+              </>
+            )}
           </div>
         </div>
         <DialogFooter>
@@ -243,6 +260,17 @@ function DialogBody({
     <div className="space-y-4">
       {/* Hedef header */}
       <TargetHeader target={target} />
+
+      {/* Soft mod: numara var ama SMS doğrulama henüz açık değil */}
+      {verificationPending ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 inline-flex items-start gap-2">
+          <AlertTriangle className="size-3.5 shrink-0 mt-0.5" aria-hidden />
+          <span>
+            Numara henüz SMS ile doğrulanmadı (SMS doğrulama yakında açılacak).
+            Mesajı yine de hazırlayıp WhatsApp&apos;tan gönderebilirsiniz.
+          </span>
+        </div>
+      ) : null}
 
       {/* Test modu toggle (yalnız sender verildiyse) */}
       {senderUserId ? (

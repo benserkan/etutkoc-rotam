@@ -66,6 +66,26 @@ class WaDispatchError(Exception):
 
 
 # ----------------------------------------------------------------------
+# Telefon uygunluğu (soft mod)
+# ----------------------------------------------------------------------
+
+
+def can_message_phone(target: User) -> bool:
+    """Hedefe WhatsApp/Click-to-WA gönderilebilir mi?
+
+    Numara ŞART. Doğrulama YALNIZCA SMS doğrulama canlıyken (is_sms_enabled)
+    zorunlu — soft modda (SMS henüz açılmamış) kimse doğrulayamadığı için numara
+    mevcutsa yeterli. SMS açıldığında doğrulama tekrar şart olur.
+    """
+    from app.services.sms_provider import is_sms_enabled
+    if not target.phone:
+        return False
+    if target.phone_verified_at is not None:
+        return True
+    return not is_sms_enabled()
+
+
+# ----------------------------------------------------------------------
 # Yetki
 # ----------------------------------------------------------------------
 
@@ -187,11 +207,12 @@ def build_wa_dispatch(
             status=404,
         )
 
-    # 3) Telefon kontrolü
-    if not target.phone or not target.phone_verified_at:
+    # 3) Telefon kontrolü (soft mod: numara yeterli; SMS canlıysa doğrulama şart)
+    if not can_message_phone(target):
         raise WaDispatchError(
             "target_phone_not_verified",
-            "Hedef kullanıcının telefonu doğrulanmamış. WhatsApp gönderimi yapılamaz.",
+            "Hedef kullanıcının telefonu doğrulanmamış veya kayıtlı numarası yok. "
+            "WhatsApp gönderimi yapılamaz.",
             status=400,
         )
 

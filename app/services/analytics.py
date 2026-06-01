@@ -716,6 +716,26 @@ def generate_warnings(
             ))
 
     # 6) Bir dersten 7+ gün uzak
+    # "Henüz başlanmadı" sadece VADESİ GELMİŞ ders için anlamlı. Rezerv, görev
+    # GELECEK tarihli olsa bile açılır → yalnız gelecek görevi olan ders bugünden
+    # "başlanmadı" damgalanmamalı (öğrenci o güne henüz gelmedi). Bu yüzden bugüne
+    # kadar (date <= today) görevi olan ders kümesini çıkar; subject_untouched
+    # yalnız bu kümede tetiklenir.
+    from app.models import Task as _T, TaskBookItem as _TI, Book as _B
+    due_subject_ids = {
+        r[0] for r in (
+            db.query(_B.subject_id)
+            .join(_TI, _TI.book_id == _B.id)
+            .join(_T, _T.id == _TI.task_id)
+            .filter(
+                _T.student_id == student.id,
+                _T.date <= today,
+                _B.subject_id.isnot(None),
+            )
+            .distinct()
+            .all()
+        )
+    }
     breakdown = subject_breakdown(db, student.id)
     for s in breakdown:
         if s["remaining"] > 0 and s["reserved"] > 0:
@@ -731,8 +751,13 @@ def generate_warnings(
                     title=f"{s['name']} dersinde durgunluk",
                     detail=f"Son {days_gap} gündür bu derste tamamlama yok (%{s['percent_done']} bitmiş).",
                 ))
-        elif s["total"] > 0 and s["last_completed_at"] is None and s["reserved"] > 0:
-            # Hiç çözülmemiş ama rezerv var
+        elif (
+            s["total"] > 0
+            and s["last_completed_at"] is None
+            and s["reserved"] > 0
+            and s["subject_id"] in due_subject_ids
+        ):
+            # Hiç çözülmemiş ama VADESİ GELMİŞ (date<=today) rezerv var
             out.append(Warning(
                 level="amber",
                 code=f"subject_untouched_{s['subject_id']}",

@@ -28,6 +28,7 @@ from app.services.whatsapp_link_service import (
     LONG_TEXT_THRESHOLD,
     WaDispatchError,
     build_wa_url,
+    can_message_phone,
     can_send_wa_to,
     mask_phone_e164,
 )
@@ -79,6 +80,7 @@ class BulkTargetCandidate:
     role: str
     phone_masked: str
     phone_verified: bool
+    can_message: bool = False
 
 
 @dataclass
@@ -122,14 +124,16 @@ class BulkDispatchResult:
 
 def _candidate_from_user(u: User) -> BulkTargetCandidate:
     verified = u.phone is not None and u.phone_verified_at is not None
+    can_msg = can_message_phone(u)
     return BulkTargetCandidate(
         user_id=u.id,
         full_name=u.full_name,
         role=u.role.value,
         phone_masked=(
-            mask_phone_e164(u.phone) if verified else "—"
+            mask_phone_e164(u.phone) if u.phone else "—"
         ),
         phone_verified=verified,
+        can_message=can_msg,
     )
 
 
@@ -276,7 +280,7 @@ def list_bulk_targets(
     no_phone: list[BulkTargetCandidate] = []
     for u in users:
         c = _candidate_from_user(u)
-        if c.phone_verified:
+        if c.can_message:
             eligible.append(c)
         else:
             no_phone.append(c)
@@ -398,7 +402,7 @@ def build_bulk_dispatch(
                 reason="no_permission",
             ))
             continue
-        if not target.phone or not target.phone_verified_at:
+        if not can_message_phone(target):
             skipped.append(BulkSkippedItem(
                 target_user_id=tid,
                 target_name=target.full_name,

@@ -62,8 +62,12 @@ class WaTargetBrief(BaseModel):
     user_id: int
     full_name: str
     role: str
-    phone_masked: str  # "+90 532 *** ** 67" veya "Telefon doğrulanmamış"
+    phone_masked: str  # "+90 532 *** ** 67" veya "Telefon numarası yok"
     phone_verified: bool
+    # Click-to-WA gönderilebilir mi? Soft modda (SMS kapalı) numara varsa True.
+    can_message: bool = False
+    # SMS doğrulama canlı mı (False ise numara doğrulanmadan da gönderilebilir).
+    sms_verification_live: bool = False
 
 
 # ============================================================================
@@ -77,6 +81,7 @@ class BulkTargetCandidateModel(BaseModel):
     role: str
     phone_masked: str
     phone_verified: bool
+    can_message: bool = False
 
 
 class BulkGroupOption(BaseModel):
