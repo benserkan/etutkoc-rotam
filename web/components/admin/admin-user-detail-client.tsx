@@ -765,7 +765,7 @@ function ImpersonateCard({
             value={reason}
             onChange={(e) => setReason(e.target.value)}
             placeholder="örn. 'Ödevler görünmüyor şikayetini yerinde inceleme'"
-            className="block w-full px-2 py-1.5 text-xs border border-violet-300 rounded bg-white focus:border-violet-500 focus:ring-1 focus:ring-violet-300"
+            className="block w-full px-2 py-1.5 text-xs border border-violet-300 rounded bg-white text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-300"
           />
           <Button
             type="submit"
