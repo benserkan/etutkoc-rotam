@@ -91,19 +91,45 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <KpiCard label="Öğrenci" value={students.length} />
-        <KpiCard label="Planlanan (7 gün)" value={total_planned} />
-        <KpiCard label="Tamamlanan" value={total_completed} />
+        <KpiCard label="Öğrenci" value={students.length} sub="bu koça bağlı" />
+        <KpiCard
+          label="Planlanan"
+          value={total_planned}
+          unit="test"
+          sub="son 7 günde atanan"
+        />
+        <KpiCard
+          label="Tamamlanan"
+          value={total_completed}
+          unit="test"
+          sub="son 7 günde çözülen"
+        />
         <KpiCard
           label="Tamamlama Oranı"
           value={overall_rate_pct == null ? "—" : `%${overall_rate_pct}`}
           valueClassName={rateColorClass(overall_rate_pct)}
+          sub="çözülen ÷ planlanan"
         />
+      </div>
+
+      {/* Kart sayılarının ne anlama geldiğini her zaman görünür biçimde açıkla
+          (admin/kurum panelinde açıklamasız sayı yasak — jargon kuralı). */}
+      <div className="rounded-md border border-border bg-muted/30 px-3 py-2.5 text-xs text-muted-foreground leading-relaxed">
+        Yukarıdaki ve aşağıdaki sayılar <strong>son 7 günde</strong> planlanan ve
+        çözülen <strong>test (soru) adedini</strong> gösterir.{" "}
+        <strong>Plan</strong> = koçun bu öğrenciye 7 günde atadığı test sayısı ·{" "}
+        <strong>Tamamlanan</strong> = öğrencinin çözüp işaretlediği test ·{" "}
+        <strong>Oran</strong> = çözülen ÷ planlanan. (Aylık/kümülatif değil — kayan
+        son 7 gün.)
       </div>
 
       <Card>
         <div className="px-4 py-3 border-b border-border">
           <h2 className="font-medium">Öğrenciler</h2>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            Son 7 gün — planlanan ve çözülen <strong>test adedi</strong> (öğrenci
+            başına)
+          </p>
         </div>
         {students.length === 0 ? (
           <div className="px-4 py-12 text-center text-sm text-muted-foreground italic">
@@ -116,11 +142,15 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
                 <tr>
                   <th className="text-left px-4 py-2 font-medium">Öğrenci</th>
                   <th className="text-left px-4 py-2 font-medium">Sınıf</th>
-                  <th className="text-right px-4 py-2 font-medium">Plan</th>
                   <th className="text-right px-4 py-2 font-medium">
-                    Tamamlanan
+                    Planlanan test
                   </th>
-                  <th className="text-right px-4 py-2 font-medium">Oran</th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    Çözülen test
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    Tamamlama&nbsp;%
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -176,10 +206,14 @@ function KpiCard({
   label,
   value,
   valueClassName,
+  unit,
+  sub,
 }: {
   label: string;
   value: number | string;
   valueClassName?: string;
+  unit?: string;
+  sub?: string;
 }) {
   return (
     <Card>
@@ -194,7 +228,15 @@ function KpiCard({
           )}
         >
           {value}
+          {unit ? (
+            <span className="ml-1 text-sm font-medium text-muted-foreground">
+              {unit}
+            </span>
+          ) : null}
         </div>
+        {sub ? (
+          <div className="text-[11px] text-muted-foreground mt-0.5">{sub}</div>
+        ) : null}
       </CardContent>
     </Card>
   );
