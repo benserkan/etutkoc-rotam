@@ -716,11 +716,11 @@ def generate_warnings(
             ))
 
     # 6) Bir dersten 7+ gün uzak
-    # "Henüz başlanmadı" sadece VADESİ GELMİŞ ders için anlamlı. Rezerv, görev
-    # GELECEK tarihli olsa bile açılır → yalnız gelecek görevi olan ders bugünden
-    # "başlanmadı" damgalanmamalı (öğrenci o güne henüz gelmedi). Bu yüzden bugüne
-    # kadar (date <= today) görevi olan ders kümesini çıkar; subject_untouched
-    # yalnız bu kümede tetiklenir.
+    # "Henüz başlanmadı" sadece VADESİ GEÇMİŞ ders için anlamlı. Rezerv, görev
+    # gelecek/bugün tarihli olsa bile açılır → yalnız gelecek (veya yalnız bugün)
+    # görevi olan ders "başlanmadı" damgalanmamalı: gelecek henüz gelmedi, BUGÜN
+    # hâlâ sürüyor (zaten 'today_no_tick' kapsar). Bu yüzden yalnız GEÇMİŞ
+    # (date < today) görevi olan ders kümesinde tetiklenir.
     from app.models import Task as _T, TaskBookItem as _TI, Book as _B
     due_subject_ids = {
         r[0] for r in (
@@ -729,7 +729,7 @@ def generate_warnings(
             .join(_T, _T.id == _TI.task_id)
             .filter(
                 _T.student_id == student.id,
-                _T.date <= today,
+                _T.date < today,
                 _B.subject_id.isnot(None),
             )
             .distinct()
