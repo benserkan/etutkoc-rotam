@@ -735,6 +735,9 @@ def teacher_student_detail_v2(
     # Paket 3.5b — anchor durumu + aktif dönem rozeti
     week_anchor = _resolve_week_anchor(db, student)
     anchor_is_manual = student.program_anchor_date is not None
+    # Aktif (explicit) program varsa anchor fallback'i kullanılmıyor → UI kartı gizler.
+    from app.services.weekly_program_service import get_active_program
+    has_active_program = get_active_program(db, student_id=student.id, today=today) is not None
 
     active_phase: StudentActivePhase | None = None
     if student.academic_year is not None:
@@ -776,6 +779,7 @@ def teacher_student_detail_v2(
         active_phase=active_phase,
         week_anchor=week_anchor.isoformat() if week_anchor else None,
         anchor_is_manual=anchor_is_manual,
+        has_active_program=has_active_program,
     )
 
 

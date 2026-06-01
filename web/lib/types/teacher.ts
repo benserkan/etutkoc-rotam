@@ -224,6 +224,7 @@ export interface TeacherStudentDetailResponse {
   active_phase?: StudentActivePhase | null;
   week_anchor?: string | null;
   anchor_is_manual?: boolean;
+  has_active_program?: boolean;
 }
 
 export interface SetWeekAnchorBody {

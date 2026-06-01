@@ -204,6 +204,8 @@ class TeacherStudentDetailResponse(BaseModel):
     # Paket 3.5b — anchor edit kartı için
     week_anchor: str | None = None      # "YYYY-MM-DD" | None
     anchor_is_manual: bool = False
+    # Aktif (explicit) program varsa anchor fallback atıl → UI kartı gizler.
+    has_active_program: bool = False
 
 
 class SetWeekAnchorBody(BaseModel):

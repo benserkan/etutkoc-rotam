@@ -189,11 +189,16 @@ export function StudentTabs({ studentId, initial }: Props) {
 
           <StatusSummary studentId={studentId} data={data} />
 
-          <AnchorEditCard
-            studentId={studentId}
-            weekAnchor={data.week_anchor ?? null}
-            isManual={data.anchor_is_manual ?? false}
-          />
+          {/* Hafta Anchor'ı yalnız aktif (explicit) program YOKKEN anlamlı —
+              fallback hizalama mekanizması. Aktif program varsa kart gizlenir
+              ("yeni program oluştur" akışı anchor'ı geçersiz kılar). */}
+          {!data.has_active_program ? (
+            <AnchorEditCard
+              studentId={studentId}
+              weekAnchor={data.week_anchor ?? null}
+              isManual={data.anchor_is_manual ?? false}
+            />
+          ) : null}
 
           <section className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <Card>
