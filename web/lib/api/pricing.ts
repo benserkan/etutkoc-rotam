@@ -17,6 +17,7 @@ export interface ContactRequestInput {
   coach_count?: number | null;
   message?: string;
   source?: string;
+  turnstile_token?: string;
 }
 
 export interface ContactRequestResult {

@@ -17,7 +17,17 @@ function tl(n: number): string {
 
 type Tab = "solo" | "institution";
 
-export function PricingClient({ catalog, initialType = "" }: { catalog: PricingCatalog; initialType?: string }) {
+export function PricingClient({
+  catalog,
+  initialType = "",
+  turnstileEnabled = false,
+  turnstileSiteKey = null,
+}: {
+  catalog: PricingCatalog;
+  initialType?: string;
+  turnstileEnabled?: boolean;
+  turnstileSiteKey?: string | null;
+}) {
   const solo = catalog.solo;
   const [tab, setTab] = React.useState<Tab>(initialType === "kurum" ? "institution" : "solo");
 
@@ -157,7 +167,12 @@ export function PricingClient({ catalog, initialType = "" }: { catalog: PricingC
 
             {/* Kurumsal — fiyat yok, iletişim formu */}
             <div className="mt-12">
-              <InstitutionContact catalog={catalog} autoFocus />
+              <InstitutionContact
+                catalog={catalog}
+                autoFocus
+                turnstileEnabled={turnstileEnabled}
+                turnstileSiteKey={turnstileSiteKey}
+              />
             </div>
           </>
         )}

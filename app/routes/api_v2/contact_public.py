@@ -20,6 +20,7 @@ from app.models.contact_request import (
     CONTACT_SOURCE_LABELS_TR,
     ContactRequest,
 )
+from app.services import turnstile
 from app.services.rate_limit import enforce_login_rate_limit
 
 
@@ -34,6 +35,9 @@ class ContactRequestIn(BaseModel):
     coach_count: int | None = Field(default=None, ge=0, le=100000)
     message: str | None = Field(default=None, max_length=2000)
     source: str = Field(default="pricing_institution", max_length=40)
+    # Cloudflare Turnstile token — yalnız CAPTCHA aktifse doğrulanır (bot/spam
+    # koruması: public form → contact_requests + satışa e-posta).
+    turnstile_token: str = Field(default="", max_length=4096)
 
 
 class ContactRequestOut(BaseModel):
@@ -56,6 +60,18 @@ def submit_contact(
     _rl: None = Depends(enforce_login_rate_limit),
 ):
     """İletişim talebini kaydet + satışa e-posta + süper admin panele düşür."""
+    # Turnstile CAPTCHA — yalnız aktifse (bot/spam talep + e-posta bombardımanı koruması)
+    if turnstile.is_enabled():
+        ip_raw = _client_ip(request)
+        if not turnstile.verify_token(
+            payload.turnstile_token,
+            ip=(ip_raw if ip_raw and ip_raw != "unknown" else None),
+        ):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail={"error": "unauthenticated", "code": "captcha_failed",
+                        "message": "Bot doğrulaması başarısız. Sayfayı yenile ve tekrar dene."},
+            )
     # Basit email biçim doğrulaması (email-validator/EmailStr projede kullanılmıyor)
     email_clean = str(payload.email).strip().lower()
     if "@" not in email_clean or len(email_clean.split("@")) != 2 or "." not in email_clean.split("@")[1]:

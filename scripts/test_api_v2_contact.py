@@ -12,6 +12,8 @@ Senaryolar:
    9. olmayan id → 404
   10. teacher GET list → 403 role_required
   11. anonim GET list → 401
+  12. Turnstile aktif + token yok → 401 captcha_failed (monkeypatch)
+  13. Turnstile aktif + geçerli token → 200
 """
 from __future__ import annotations
 
@@ -178,6 +180,30 @@ def main() -> int:
         # 11. anonim list → 401
         r = anon.get("/api/v2/admin/contact-requests")
         check("11. anonim GET list → 401", r.status_code == 401, f"status={r.status_code}")
+
+        # 12-13. Turnstile aktifken zorunluluk (monkeypatch — gerçek CF çağrısı yok)
+        import app.services.turnstile as ts
+        _orig_enabled, _orig_verify = ts.is_enabled, ts.verify_token
+        try:
+            ts.is_enabled = lambda: True
+            ts.verify_token = lambda token, ip=None: token == "good-token"
+            # 12. token boş → 401 captcha_failed (kayıt OLUŞMAZ — turnstile ilk adım)
+            r = anon.post("/api/v2/contact", json={
+                "name": "Bot Deneme", "email": f"{PFX}_bot@example.com",
+                "source": "pricing_institution",
+            })
+            check("12. captcha aktif + token yok → 401 captcha_failed",
+                  r.status_code == 401 and r.json().get("detail", {}).get("code") == "captcha_failed",
+                  f"status={r.status_code} body={r.text[:200]}")
+            # 13. geçerli token → 200
+            r = anon.post("/api/v2/contact", json={
+                "name": "Gercek Yetkili", "email": CONTACT_EMAIL,
+                "source": "pricing_institution", "turnstile_token": "good-token",
+            })
+            check("13. captcha aktif + geçerli token → 200", r.status_code == 200,
+                  f"status={r.status_code} body={r.text[:200]}")
+        finally:
+            ts.is_enabled, ts.verify_token = _orig_enabled, _orig_verify
 
     finally:
         _cleanup(seed)

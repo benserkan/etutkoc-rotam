@@ -3386,7 +3386,33 @@ dokunma, kalsın" gereği yapılmıyor.
   - **Mobil** (iOS/Android) — en son.
 - **Güvenlik notları:** GitHub repo PUBLIC (ticari kod açıkta — private yapılmalı);
   `/opt/etutkoc/deploy/.env` güvenli kopyası alınmalı (DB parolası + JWT/SESSION
-  secret'ları). Turnstile CAPTCHA kapalı (`.env`'de TURNSTILE_* + ENABLED=true ile açılır).
+  secret'ları).
+- **Turnstile CAPTCHA prod'da AÇIK (2026-06-01):** sunucu `/opt/etutkoc/deploy/.env`'e
+  gerçek `TURNSTILE_SITE_KEY` + `TURNSTILE_SECRET_KEY` girildi (`TURNSTILE_ENABLED=1`),
+  `docker compose up -d web` ile recreate. Önceden anahtarlar BOŞ olduğu için
+  `turnstile.is_enabled()` False → login/signup/forgot CAPTCHA'sı tamamen bypass
+  ediliyordu (sınırsız hesap açılabiliyordu). Artık `/login` · `/signup/teacher` ·
+  `/forgot-password` token zorunlu (token'sız → 401 captcha_failed, hesap oluşmaz).
+  `/signup/invite/{token}` bilinçli kapsam dışı (geçerli tek-kullanım davet token'ı
+  zaten kapı). **Kod zaten doğruydu** (frontend widget + backend verify); sorun salt
+  config'di. **Rollback:** `.env`'de `TURNSTILE_ENABLED=0` + `docker compose up -d web`
+  (<60sn). **NOT:** secret sohbete yazıldı → Cloudflare'den döndürülmesi (rotate)
+  önerildi. Widget'ın Cloudflare'deki izinli domain listesinde `rotam.etutkoc.com`
+  olmalı; tarayıcı testi kullanıcıda.
+  - **Ek (2026-06-01) — /pricing kurumsal teklif formu da Turnstile'a bağlandı:**
+    `POST /api/v2/contact` (`contact_public.py`) artık `turnstile.is_enabled()` ise
+    token doğrular (token yok → 401 captcha_failed; public form → contact_requests +
+    satışa e-posta spam koruması). Frontend: `pricing/page.tsx` config'i çeker →
+    `pricing-client` → `institution-contact` widget'ı basar (dark tema; sekme
+    remount'unda da render). `test_api_v2_contact.py` 13/13 (12-13 monkeypatch
+    enforcement). Kod commit + `web`/`next` rebuild ile deploy. Kapsam dışı kalanlar:
+    `/signup/invite` (token kapı), `/api/v2/landing/telemetry` (anonim ölçüm).
+- **OpenAPI docs prod'da KAPALI (2026-06-01):** `app/main.py` FastAPI artık
+  `docs_url/redoc_url/openapi_url`'i yalnız `DEBUG=true` (dev) iken açar; prod
+  (`DEBUG=false`) → `/docs` · `/redoc` · `/openapi.json` 404. Tüm API saldırı
+  yüzeyinin ifşası önlendi. Canlı doğrulandı (üçü de 404, /healthz + /api/v2 +
+  / 200). Commit `9cb602b`, sunucuda `git pull` + `web`/`worker` rebuild ile
+  deploy edildi.
 
 ## KRİTİK fix — login returnUrl rol-uyuşmazlığı / /me/account dead-end (2026-05-26)
 

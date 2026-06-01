@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Script from "next/script";
 import { useMutation } from "@tanstack/react-query";
 import {
   Building2,
@@ -17,6 +18,17 @@ import {
 import { ApiError } from "@/lib/api";
 import { submitContactRequest } from "@/lib/api/pricing";
 import type { PricingCatalog } from "@/lib/types/pricing";
+
+interface TurnstileApi {
+  render: (el: HTMLElement, opts: Record<string, unknown>) => string;
+  reset: (id?: string) => void;
+  getResponse: (id?: string) => string | undefined;
+}
+declare global {
+  interface Window {
+    turnstile?: TurnstileApi;
+  }
+}
 
 const BENEFITS: { icon: React.ElementType; title: string; body: string }[] = [
   {
@@ -44,13 +56,21 @@ const BENEFITS: { icon: React.ElementType; title: string; body: string }[] = [
 export function InstitutionContact({
   catalog,
   autoFocus = false,
+  turnstileEnabled = false,
+  turnstileSiteKey = null,
 }: {
   catalog: PricingCatalog;
   autoFocus?: boolean;
+  turnstileEnabled?: boolean;
+  turnstileSiteKey?: string | null;
 }) {
   const contact = catalog.contact;
   const sectionRef = React.useRef<HTMLDivElement>(null);
+  const widgetRef = React.useRef<HTMLDivElement | null>(null);
+  const hasRenderedRef = React.useRef(false);
+  const showCaptcha = turnstileEnabled && !!turnstileSiteKey;
   const [done, setDone] = React.useState(false);
+  const [captchaError, setCaptchaError] = React.useState<string | null>(null);
   const [form, setForm] = React.useState({
     name: "",
     email: "",
@@ -66,6 +86,19 @@ export function InstitutionContact({
     }
   }, [autoFocus]);
 
+  const renderWidget = React.useCallback(() => {
+    if (!showCaptcha || !widgetRef.current || !window.turnstile) return;
+    if (hasRenderedRef.current) return;
+    window.turnstile.render(widgetRef.current, { sitekey: turnstileSiteKey, theme: "dark" });
+    hasRenderedRef.current = true;
+  }, [showCaptcha, turnstileSiteKey]);
+
+  // Script onLoad ilk yüklemede tetikler; sekme değişimiyle bileşen remount
+  // olursa (turnstile zaten yüklü) onLoad tekrar gelmez → mount'ta da dene.
+  React.useEffect(() => {
+    if (showCaptcha && window.turnstile) renderWidget();
+  }, [showCaptcha, renderWidget]);
+
   // eslint-disable-next-line lgs/missing-invalidate -- public form; istemcide tazelenecek query yok (kayıt süper admin panelinde görünür)
   const mut = useMutation({
     mutationFn: () =>
@@ -77,8 +110,13 @@ export function InstitutionContact({
         coach_count: form.coach_count ? Number(form.coach_count) : undefined,
         message: form.message.trim() || undefined,
         source: "pricing_institution",
+        turnstile_token: showCaptcha ? (window.turnstile?.getResponse() ?? "") : "",
       }),
     onSuccess: () => setDone(true),
+    onError: () => {
+      // CAPTCHA token tek-kullanımlık → her hatadan sonra sıfırla
+      if (showCaptcha && window.turnstile) window.turnstile.reset();
+    },
   });
 
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
@@ -143,12 +181,25 @@ export function InstitutionContact({
               <p className="mt-1 text-xs text-white/60">
                 Birkaç bilgi yeterli — gerisini biz arayalım.
               </p>
+              {showCaptcha ? (
+                <Script
+                  src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+                  strategy="afterInteractive"
+                  onLoad={renderWidget}
+                />
+              ) : null}
               <form
                 method="post"
                 className="mt-5 space-y-3"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  if (!mut.isPending) mut.mutate();
+                  if (mut.isPending) return;
+                  if (showCaptcha && !window.turnstile?.getResponse()) {
+                    setCaptchaError("Lütfen güvenlik doğrulamasını tamamlayın.");
+                    return;
+                  }
+                  setCaptchaError(null);
+                  mut.mutate();
                 }}
               >
                 <Field label="Ad Soyad" required>
@@ -173,6 +224,12 @@ export function InstitutionContact({
                 <Field label="Mesajınız">
                   <textarea className={`${inputCls} min-h-20 resize-y`} value={form.message} onChange={set("message")} placeholder="İhtiyacınızı kısaca yazın (opsiyonel)" />
                 </Field>
+
+                {showCaptcha ? <div ref={widgetRef} className="min-h-[65px]" /> : null}
+
+                {captchaError ? (
+                  <p className="rounded-lg bg-rose-500/15 px-3 py-2 text-xs text-rose-200">{captchaError}</p>
+                ) : null}
 
                 {mut.isError ? (
                   <p className="rounded-lg bg-rose-500/15 px-3 py-2 text-xs text-rose-200">{errMsg}</p>
