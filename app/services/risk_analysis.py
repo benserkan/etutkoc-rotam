@@ -50,6 +50,12 @@ WEIGHTS = {
     "no_program": 10,         # bu hafta planlı görev yok
 }
 
+# Onboarding grace: yeni eklenen öğrenci (hesap < bu kadar gün) performans
+# göstergelerine (düşük tamamlama / üst üste boş / programsız) takılmaz —
+# henüz adil bir geçmişi yok (kullanıcı 2026-06-01: dün eklenen öğrenci "14 gün
+# üst üste boş" alıyordu). no_login (5g) kendi eşiğiyle zaten korunuyor.
+ONBOARDING_GRACE_DAYS = 3
+
 # Skor seviye eşikleri (alt sınır dahil)
 LEVEL_THRESHOLDS = [
     (80, "critical"),  # 🔴
@@ -188,8 +194,12 @@ def compute_risk_score(
         ))
         score += WEIGHTS["no_login_5d"]
 
-    # 2) Haftalık tamamlama < %40 (sadece plan varsa)
-    if week.planned > 0 and rate_pct is not None and rate_pct < 40:
+    # 2) Haftalık tamamlama < %40 (sadece plan varsa). Yeni öğrenci (hesap <
+    # grace) henüz tamamlamaya fırsat bulmamış olabilir → onboarding grace.
+    if (
+        week.planned > 0 and rate_pct is not None and rate_pct < 40
+        and (account_age_days is None or account_age_days >= ONBOARDING_GRACE_DAYS)
+    ):
         indicators.append(RiskIndicator(
             code="low_completion",
             title="Düşük haftalık tamamlama",
@@ -203,6 +213,12 @@ def compute_risk_score(
     # 'no_program' göstergesi tarafından kapsanıyor.)
     if week.planned > 0:
         empty_days = _consecutive_empty_days(db, student.id, today)
+        # Hesap yaşından fazla "boş gün" olamaz — dün eklenen öğrenci için 14 gün
+        # öncesini saymak yanlış-pozitif. account_age ile sınırla; bu aynı zamanda
+        # ONBOARDING_GRACE_DAYS (3) eşiğiyle yeni öğrenciyi otomatik korur
+        # (1-2 günlük hesap → empty_days < 3 → işaretlenmez).
+        if account_age_days is not None:
+            empty_days = min(empty_days, account_age_days)
         if empty_days >= 3:
             indicators.append(RiskIndicator(
                 code="consecutive_empty",
@@ -235,7 +251,7 @@ def compute_risk_score(
 
     # 5) Bu hafta planlı görev yok — yeni öğrenciye (hesap < 3 gün) "Programsız"
     # demek erken; koça programı kurması için onboarding süresi tanı.
-    if week.planned == 0 and (account_age_days is None or account_age_days >= 3):
+    if week.planned == 0 and (account_age_days is None or account_age_days >= ONBOARDING_GRACE_DAYS):
         indicators.append(RiskIndicator(
             code="no_program",
             title="Programsız",

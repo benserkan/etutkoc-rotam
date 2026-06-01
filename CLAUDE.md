@@ -4033,6 +4033,29 @@ Kullanıcı gönderilen maili inceledi, 4 sorun:
   hesaplar. Deneme listesi (her satır kendi tür rozetiyle) tüm türleri gösterir.
 - tsc/eslint temiz. Deploy: web + worker + next rebuild + Caddy `restart proxy`.
 
+## Risk göstergesi onboarding-grace (low_completion + consecutive_empty) + WhatsApp seed prod boşluğu (2026-06-01)
+
+- **Risk yanlış-pozitif (kullanıcı: /institution/at-risk):** Dün eklenen öğrenci
+  "14 gün üst üste boş" + "düşük haftalık tamamlama" alıyordu. `risk_analysis`'te
+  bu iki gösterge onboarding-grace'siz: `low_completion` yalnız `planned>0 & rate<40`
+  bakıyordu; `consecutive_empty` bugünden 14 gün geriye sayıp hesap-öncesi günleri
+  de "boş" sayıyordu. Düzeltme (`ONBOARDING_GRACE_DAYS=3`): low_completion'a hesap
+  yaşı gate; consecutive_empty `empty_days = min(empty, account_age)` (1 günlük hesap
+  "14 boş" olamaz; ≥3 eşiğiyle yeni öğrenci otomatik korunur). no_program zaten
+  3-gün grace'liydi → sabite bağlandı. (2026-05-23 no_login/no_program grace'inin
+  performans göstergelerine genişletilmesi.) Smoke `test_risk_onboarding_grace.py`
+  6/6 (yeni→sessiz, 6g→sinyal var + boş gün hesap yaşıyla sınırlı). Regresyon:
+  institution_p2 19 + action_center 8 + alert_correctness 9/9 (ilk koşu 7/9 idi =
+  id-reuse kontaminasyonu, tekrar koşunca 9/9 — fix age≥3'te no-op).
+- **WhatsApp şablonları prod'da boştu (kullanıcı sordu):** localde 35 şablon var,
+  canlıda `/admin/whatsapp-templates` boş. Sebep: `seed_whatsapp_templates.py`
+  (35 idempotent şablon) **prod'da hiç çalışmamış** — `start.sh` yalnız
+  init_db + seed + seed_landing_cards çalıştırıyordu; whatsapp seed YOKtu. Migration
+  tabloyu kurmuş ama doldurmamış (count=0). Düzeltme: `start.sh`'e
+  `python -m scripts.seed_whatsapp_templates || true` eklendi (web start'ında seed) +
+  prod'da elle çalıştırıldı. **KURAL: seed'le dolan her tablo start.sh'te olmalı
+  (yoksa prod'da boş kalır).**
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
