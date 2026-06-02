@@ -129,7 +129,7 @@ export function DashboardClient({ initial }: Props) {
         />
         <KpiCard
           icon={TrendingUp}
-          label="Bu hafta görev tamamlama"
+          label="Son 7 gün görev tamamlama"
           value={`%${weekPct}`}
           sub={
             (data.gorev_week_total ?? 0) > 0

@@ -147,11 +147,12 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
             </span>
           </div>
 
-          {/* Bu hafta progress */}
+          {/* Son 7 gün progress (rolling — "bu hafta" DEĞİL; geçen haftanın
+              tamamlanmış günlerini de kapsar) */}
           <div>
             <div className="flex items-center justify-between text-xs mb-1.5">
               <span className="uppercase tracking-wider text-muted-foreground font-medium">
-                Bu hafta
+                Son 7 gün
               </span>
               <span className="font-semibold tabular-nums">
                 {child.week_gorev_total > 0 ? (
@@ -189,12 +190,12 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
           {/* 7g rate + istikrar */}
           <div className="grid grid-cols-2 gap-3 pt-1">
             <Stat
-              label="Son 7 Gün Oran"
+              label="Tutturma"
               value={child.rate_7d != null ? `%${child.rate_7d}` : "—"}
               tone={
                 child.rate_7d != null ? tone.text : "text-muted-foreground"
               }
-              sub="tamamlama oranı"
+              sub="planlanana göre"
             />
             <Stat
               label="İstikrar"

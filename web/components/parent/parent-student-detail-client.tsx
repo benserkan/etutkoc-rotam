@@ -106,7 +106,7 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
           }
         />
         <MetricCard
-          label="Bu Hafta"
+          label="Son 7 Gün"
           value={data.week.gorev_rate != null ? `%${data.week.gorev_rate}` : "—"}
           hint={
             data.week.gorev_total > 0
@@ -115,7 +115,7 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
                     ? ` · ${data.week.test_completed}/${data.week.test_planned} test`
                     : ""
                 }`
-              : "bu hafta görev yok"
+              : "son 7 günde görev yok"
           }
         />
         <MetricCard

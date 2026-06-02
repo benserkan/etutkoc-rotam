@@ -668,7 +668,7 @@ function StatusSummary({
           <p className="mt-0.5 text-sm opacity-90">
             Bugün <strong>{todayDone}/{todayTotal}</strong> görev
             {todayPct != null ? ` (%${todayPct})` : ""} ·{" "}
-            Bu hafta <strong>{weekDone}/{weekTotal}</strong> görev
+            Son 7 gün <strong>{weekDone}/{weekTotal}</strong> görev
             {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
             Tutarlılık %{consistency}
           </p>
@@ -769,7 +769,7 @@ function GorevBreakdownCard({
                 : "bg-background text-muted-foreground hover:bg-muted",
             )}
           >
-            Bu hafta
+            Son 7 gün
           </button>
         </div>
       </CardHeader>
@@ -875,7 +875,7 @@ function GorevBreakdownCard({
           <p className="text-sm text-muted-foreground italic">
             {scope === "today"
               ? "Bugün için planlanmış görev yok."
-              : "Bu hafta planlanmış görev yok."}
+              : "Son 7 günde planlanmış görev yok."}
           </p>
         )}
       </CardContent>
