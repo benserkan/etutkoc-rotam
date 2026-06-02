@@ -601,6 +601,21 @@ def teacher_students_v2(
         s.id: student_snapshot(db, s, today=today) for s in page_students
     }
 
+    # Bugünün görev sayısı (görev-bazlı, tek batch sorgu) — "Bugün X/Y test"
+    # yerine "X/Y görev". Yayınlanmış görevler.
+    from app.services import gorev_stats
+    _page_ids = [s.id for s in page_students]
+    _today_by_student: dict[int, list] = {}
+    if _page_ids:
+        _all_today = (
+            db.query(Task)
+            .options(joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject))
+            .filter(Task.student_id.in_(_page_ids), Task.date == today, Task.is_draft.is_(False))
+            .all()
+        )
+        for _t in _all_today:
+            _today_by_student.setdefault(_t.student_id, []).append(_t)
+
     _wrank = {"red": 0, "amber": 1, "green": 2}
     items: list[TeacherStudentListItem] = []
     for s in page_students:
@@ -614,6 +629,7 @@ def teacher_students_v2(
         if sn and sn.warnings:
             ww = min(sn.warnings, key=lambda x: _wrank.get(x.level, 9))
             ww_title, ww_detail = ww.title, ww.detail
+        _g = gorev_stats.summarize(_today_by_student.get(s.id, []))
         items.append(TeacherStudentListItem(
             id=s.id,
             full_name=s.full_name,
@@ -626,6 +642,8 @@ def teacher_students_v2(
             worst_warning_detail=ww_detail,
             today_planned=(sn.today.planned if sn else 0),
             today_completed=(sn.today.completed if sn else 0),
+            today_gorev_total=_g.gorev_total,
+            today_gorev_done=_g.gorev_done,
             week_pct=week_pct,
             has_pending_request=_has_pending_request_for_student(db, s.id),
         ))
@@ -3164,6 +3182,7 @@ def teacher_student_week_v2(
     # Manşet % artık GÖREV-TAMAMLAMA bazlı (her görev = 1 birim; 'Diğer' etkinlik
     # görevleri de sayılır). planned/completed soru hacmi olarak KALIR ("8 test"
     # + analitik/veli soru tablosu bunları kullanmaya devam eder).
+    from app.services import gorev_stats
     week_frac_sum = 0.0
     week_task_count = 0
     for d in days:
@@ -3171,6 +3190,9 @@ def teacher_student_week_v2(
         tt = [_build_teacher_task(db, t) for t in day_tasks]
         planned = sum(t.planned_count for t in tt)
         completed = sum(t.completed_count for t in tt)
+        # Görev/test/deneme ayrımı — "122 test" (deneme 120 sorusu test sayılıyordu)
+        # yerine test (soru bankası) + deneme AYRI.
+        _g = gorev_stats.summarize(day_tasks)
         frac_sum = sum(_task_completion_fraction(t) for t in day_tasks)
         pct = (frac_sum / len(day_tasks)) if day_tasks else 0.0
         week_frac_sum += frac_sum
@@ -3226,6 +3248,12 @@ def teacher_student_week_v2(
             planned=planned,
             completed=completed,
             pct=pct,
+            test_planned=_g.test_planned,
+            test_completed=_g.test_completed,
+            deneme_planned=_g.deneme_planned,
+            deneme_completed=_g.deneme_completed,
+            deneme_count=_g.cat_total["deneme"] + _g.cat_total["tam_deneme"],
+            etkinlik_count=_g.cat_total["etkinlik"],
             tasks=tt,
             draft_count=draft_count,
             subject_summary=day_subject_summary,

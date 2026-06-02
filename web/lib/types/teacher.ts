@@ -138,6 +138,8 @@ export interface TeacherStudentListItem {
   worst_warning_detail: string | null;
   today_planned: number;
   today_completed: number;
+  today_gorev_total?: number;
+  today_gorev_done?: number;
   week_pct: number;
   has_pending_request: boolean;
 }
@@ -422,6 +424,13 @@ export interface TeacherStudentWeekDay {
   planned: number;
   completed: number;
   pct: number;
+  // Görev/test/deneme ayrımı
+  test_planned?: number;
+  test_completed?: number;
+  deneme_planned?: number;
+  deneme_completed?: number;
+  deneme_count?: number;
+  etkinlik_count?: number;
   tasks: TeacherTask[];
   // Paket 3.5a parity (server defaults exist for backward compat)
   draft_count?: number;

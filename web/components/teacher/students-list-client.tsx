@@ -115,8 +115,8 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
       <StudentsFilterBar initial={filters} />
 
       <p className="text-xs text-muted-foreground -mt-1">
-        <strong>Bugün</strong> = bugün çözülen/planlanan test ·{" "}
-        <strong>Hafta</strong> = son 7 günün test tamamlama yüzdesi. Renkli satır
+        <strong>Bugün</strong> = bugün tamamlanan/toplam görev (etkinlik dahil) ·{" "}
+        <strong>Hafta</strong> = son 7 günün görev tamamlama yüzdesi. Renkli satır
         = en kötü uyarı seviyesi.
       </p>
 
@@ -196,7 +196,7 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
           {s.grade_level !== null ? `${s.grade_level}. sınıf` : "Mezun"}
         </span>
         <span className="hidden sm:block sm:col-span-2 text-sm tabular-nums">
-          Bugün: {s.today_completed}/{s.today_planned} test
+          Bugün: {s.today_gorev_done ?? 0}/{s.today_gorev_total ?? 0} görev
         </span>
         <span className="hidden sm:block sm:col-span-1 text-sm tabular-nums">
           Hafta: %{weekPct}

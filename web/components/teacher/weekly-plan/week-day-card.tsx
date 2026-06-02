@@ -178,16 +178,21 @@ export function WeekDayCard({
               <span className="text-foreground font-medium tabular-nums">
                 {day.tasks_count} görev
               </span>
-              {day.planned > 0 ? (
-                <span className="tabular-nums">· {day.planned} test</span>
+              {(day.test_planned ?? 0) > 0 ? (
+                <span className="tabular-nums">
+                  · {day.test_completed}/{day.test_planned} test
+                </span>
               ) : null}
-              {day.planned > 0 ? (
+              {(day.deneme_count ?? 0) > 0 ? (
+                <span className="tabular-nums">· {day.deneme_count} deneme</span>
+              ) : null}
+              {day.tasks_count > 0 ? (
                 <span
                   className={cn(
                     "inline-flex items-center gap-1.5 tabular-nums font-medium",
                     day.pct >= 0.7 ? "text-emerald-600" : day.pct >= 0.4 ? "text-amber-600" : "text-rose-600",
                   )}
-                  title={`${day.completed}/${day.planned} test tamamlandı`}
+                  title={`Görev tamamlama %${Math.round(day.pct * 100)}`}
                 >
                   <span className="hidden sm:inline-block h-1.5 w-10 rounded-full bg-muted overflow-hidden align-middle">
                     <span

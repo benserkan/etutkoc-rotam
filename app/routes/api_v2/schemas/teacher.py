@@ -99,8 +99,10 @@ class TeacherStudentListItem(BaseModel):
     worst_warning_level: WarningLevelLiteral
     worst_warning_title: str | None = None   # satırın NEDEN kırmızı/sarı olduğu
     worst_warning_detail: str | None = None
-    today_planned: int
+    today_planned: int                  # soru (test) hacmi — geriye uyum
     today_completed: int
+    today_gorev_total: int = 0          # bugünkü GÖREV sayısı (etkinlik dahil)
+    today_gorev_done: int = 0
     week_pct: float                     # 0..1
 
     has_pending_request: bool
@@ -411,10 +413,17 @@ class TeacherStudentWeekDay(BaseModel):
     is_today: bool
     is_future: bool
     is_past: bool
-    tasks_count: int
-    planned: int
+    tasks_count: int           # GÖREV sayısı (etkinlik dahil)
+    planned: int               # soru hacmi (test+deneme karışık — geriye uyum)
     completed: int
-    pct: float
+    pct: float                 # görev tamamlama % (0..1)
+    # Görev/test/deneme ayrımı — "122 test" (deneme soruları test sayılıyordu) yerine:
+    test_planned: int = 0      # soru bankası test hacmi (deneme HARİÇ)
+    test_completed: int = 0
+    deneme_planned: int = 0    # branş+tam deneme (AYRI; soru/deneme adedi)
+    deneme_completed: int = 0
+    deneme_count: int = 0      # deneme görev adedi
+    etkinlik_count: int = 0    # video/özet/tekrar görev adedi
     tasks: list[TeacherTask]
     # Paket 3.5a — Jinja parity zenginleştirmesi (geriye uyumlu, varsayılan None/empty)
     draft_count: int = 0
