@@ -97,20 +97,24 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
         <MetricCard
           label="Bugün"
           value={
-            data.today.planned > 0
-              ? `${data.today.completed}/${data.today.planned}`
+            data.today.gorev_total > 0
+              ? `${data.today.gorev_done}/${data.today.gorev_total}`
               : "—"
           }
           hint={
-            data.today.planned > 0 ? "görev tamamlandı" : "bugün görev yok"
+            data.today.gorev_total > 0 ? "görev tamamlandı" : "bugün görev yok"
           }
         />
         <MetricCard
           label="Bu Hafta"
-          value={data.week.rate != null ? `%${data.week.rate}` : "—"}
+          value={data.week.gorev_rate != null ? `%${data.week.gorev_rate}` : "—"}
           hint={
-            data.week.planned > 0
-              ? `${data.week.completed} / ${data.week.planned} görev`
+            data.week.gorev_total > 0
+              ? `${data.week.gorev_done} / ${data.week.gorev_total} görev${
+                  data.week.test_planned > 0
+                    ? ` · ${data.week.test_completed}/${data.week.test_planned} test`
+                    : ""
+                }`
               : "bu hafta görev yok"
           }
         />

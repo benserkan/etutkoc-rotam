@@ -98,7 +98,14 @@ class DaySummary(BaseModel):
     total_items: int
     planned_count: int
     completed_count: int
-    pct: float                     # 0..1
+    pct: float                     # 0..1 — GÖREV tamamlama (deneme soruları test'e karışmaz)
+    # GÖREV-bazlı kırılım (her madde 1 görev; deneme/test/etkinlik AYRI)
+    gorev_total: int = 0
+    gorev_done: int = 0
+    test_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
+    test_completed: int = 0
+    deneme_count: int = 0
+    etkinlik_count: int = 0
 
 
 class ResourceBook(BaseModel):
@@ -194,7 +201,14 @@ class StudentWeekDay(BaseModel):
     tasks_count: int
     planned: int
     completed: int
-    pct: float                     # 0..1
+    pct: float                     # 0..1 — GÖREV tamamlama (deneme soruları test'e karışmaz)
+    # GÖREV-bazlı kırılım (her madde 1 görev; deneme/test/etkinlik AYRI)
+    gorev_total: int = 0
+    gorev_done: int = 0
+    test_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
+    test_completed: int = 0
+    deneme_count: int = 0
+    etkinlik_count: int = 0
     tasks: list[StudentTask]
 
 
@@ -207,7 +221,11 @@ class StudentWeekResponse(BaseModel):
     days: list[StudentWeekDay]     # 7 gün
     total_planned: int
     total_completed: int
-    total_pct: float
+    total_pct: float               # 0..1 — GÖREV tamamlama
+    total_gorev: int = 0
+    total_gorev_done: int = 0
+    total_test_planned: int = 0
+    total_test_completed: int = 0
 
 
 # ============================================================================

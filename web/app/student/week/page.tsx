@@ -40,8 +40,12 @@ export default async function StudentWeekPage({ searchParams }: PageProps) {
         </Button>
         <div className="flex-1" />
         <p className="text-sm text-muted-foreground tabular-nums">
-          {week.start_date} – {week.end_date} · {week.total_completed}/{week.total_planned} test ·{" "}
-          <span className="font-medium text-foreground">%{totalPct}</span>
+          {week.start_date} – {week.end_date} · {week.total_gorev_done}/
+          {week.total_gorev} görev
+          {week.total_test_planned > 0 ? (
+            <> · {week.total_test_completed}/{week.total_test_planned} test</>
+          ) : null}{" "}
+          · <span className="font-medium text-foreground">%{totalPct}</span>
         </p>
         <PrintMenu startDate={week.start_date} />
       </header>
@@ -70,11 +74,16 @@ export default async function StudentWeekPage({ searchParams }: PageProps) {
                 ) : null}
               </div>
               <p className="font-medium tabular-nums mt-1">{d.date}</p>
-              <p className="text-xs text-muted-foreground mt-2">
-                {d.tasks_count} görev
+              <p className="text-xs text-muted-foreground mt-2 tabular-nums">
+                {d.gorev_done}/{d.gorev_total} görev
               </p>
-              <p className="text-xs text-muted-foreground tabular-nums">
-                {d.completed} / {d.planned}
+              <p className="text-[11px] text-muted-foreground tabular-nums">
+                {d.test_planned > 0 ? `${d.test_completed}/${d.test_planned} test` : null}
+                {d.test_planned > 0 && d.deneme_count > 0 ? " · " : null}
+                {d.deneme_count > 0 ? `${d.deneme_count} deneme` : null}
+                {(d.test_planned > 0 || d.deneme_count > 0) && d.etkinlik_count > 0 ? " · " : null}
+                {d.etkinlik_count > 0 ? `${d.etkinlik_count} etkinlik` : null}
+                {d.test_planned === 0 && d.deneme_count === 0 && d.etkinlik_count === 0 ? "—" : null}
               </p>
               <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
                 <div

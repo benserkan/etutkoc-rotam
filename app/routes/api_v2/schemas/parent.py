@@ -94,12 +94,19 @@ class ParentStudentInfo(BaseModel):
 class ParentTodayInfo(BaseModel):
     planned: int
     completed: int
+    gorev_total: int = 0
+    gorev_done: int = 0
 
 
 class ParentWeekInfo(BaseModel):
     planned: int
     completed: int
     rate: int | None = None
+    gorev_total: int = 0
+    gorev_done: int = 0
+    gorev_rate: int | None = None
+    test_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
+    test_completed: int = 0
 
 
 class ParentSubjectItem(BaseModel):
@@ -180,6 +187,13 @@ class ParentWeekDay(BaseModel):
     task_count: int
     planned_total: int
     completed_total: int
+    # GÖREV-bazlı (her madde 1 görev; deneme/test/etkinlik AYRI)
+    gorev_total: int = 0
+    gorev_done: int = 0
+    test_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
+    test_completed: int = 0
+    deneme_count: int = 0
+    etkinlik_count: int = 0
 
 
 class ParentStudentRef(BaseModel):

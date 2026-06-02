@@ -64,7 +64,14 @@ export interface DaySummary {
   total_items: number;
   planned_count: number;
   completed_count: number;
-  pct: number;                     // 0..1
+  pct: number;                     // 0..1 — GÖREV tamamlama (deneme soruları test'e karışmaz)
+  // GÖREV-bazlı kırılım (her madde 1 görev; deneme/test/etkinlik AYRI)
+  gorev_total: number;
+  gorev_done: number;
+  test_planned: number;            // yalnız soru bankası (deneme HARİÇ)
+  test_completed: number;
+  deneme_count: number;
+  etkinlik_count: number;
 }
 
 export interface ResourceBook {
@@ -167,7 +174,13 @@ export interface StudentWeekDay {
   tasks_count: number;
   planned: number;
   completed: number;
-  pct: number;
+  pct: number;                     // GÖREV tamamlama (deneme soruları test'e karışmaz)
+  gorev_total: number;
+  gorev_done: number;
+  test_planned: number;            // yalnız soru bankası (deneme HARİÇ)
+  test_completed: number;
+  deneme_count: number;
+  etkinlik_count: number;
   tasks: StudentTask[];
 }
 
@@ -179,7 +192,11 @@ export interface StudentWeekResponse {
   days: StudentWeekDay[];
   total_planned: number;
   total_completed: number;
-  total_pct: number;
+  total_pct: number;               // GÖREV tamamlama
+  total_gorev: number;
+  total_gorev_done: number;
+  total_test_planned: number;
+  total_test_completed: number;
 }
 
 // =============================================================================

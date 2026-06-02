@@ -157,6 +157,19 @@ def student_overview(db: Session, parent: User, student_id: int) -> dict[str, An
     snap = student_snapshot(db, student, today=today)
     subjects = subject_breakdown(db, student.id)
 
+    # GÖREV-bazlı bugün/hafta (her madde 1 görev; deneme soruları test'e karışmaz)
+    from app.services import gorev_stats
+    _wk_start = today - timedelta(days=6)
+    _opts = joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject)
+    _wk_tasks = (
+        db.query(Task).options(_opts)
+        .filter(Task.student_id == student.id, Task.date >= _wk_start,
+                Task.date <= today, Task.is_draft.is_(False))
+        .all()
+    )
+    _gw = gorev_stats.summarize(_wk_tasks)
+    _gt = gorev_stats.summarize([t for t in _wk_tasks if t.date == today])
+
     # 30 günlük trend serileri (mobil grafik için saf liste)
     completed_series = daily_completed_series(db, student.id, today, 30)
     planned_series = daily_planned_series(db, student.id, today, 30)
@@ -234,11 +247,21 @@ def student_overview(db: Session, parent: User, student_id: int) -> dict[str, An
         "today": {
             "planned": snap.today.planned,
             "completed": snap.today.completed,
+            "gorev_total": _gt.gorev_total,
+            "gorev_done": _gt.gorev_done,
         },
         "week": {
             "planned": snap.week.planned,
             "completed": snap.week.completed,
             "rate": round(100 * snap.week.completed / snap.week.planned) if snap.week.planned > 0 else None,
+            "gorev_total": _gw.gorev_total,
+            "gorev_done": _gw.gorev_done,
+            "gorev_rate": (
+                round(100 * _gw.gorev_done / _gw.gorev_total)
+                if _gw.gorev_total > 0 else None
+            ),
+            "test_planned": _gw.test_planned,
+            "test_completed": _gw.test_completed,
         },
         # "Son 7 Gün Oran" = planlanan→tamamlanan oranı (hit_rate_7d, 0..1).
         # rate_7d test/gün HIZIDIR (yüzde değil); oran için hit_rate kullanılır.
@@ -309,6 +332,12 @@ def student_week(db: Session, parent: User, student_id: int, start: date) -> dic
     for d in days:
         by_day[d].sort(key=task_sort_key)
 
+    # GÖREV-bazlı kırılım — Task nesnelerinden (deneme soruları test'e karışmaz)
+    from app.services import gorev_stats
+    obj_by_day: dict[date, list[Task]] = {d: [] for d in days}
+    for t in tasks:
+        obj_by_day[t.date].append(t)
+
     days_payload = []
     for d in days:
         day_tasks = by_day[d]
@@ -318,6 +347,7 @@ def student_week(db: Session, parent: User, student_id: int, start: date) -> dic
         completed = sum(
             sum(it["completed_count"] for it in t["book_items"]) for t in day_tasks
         )
+        _g = gorev_stats.summarize(obj_by_day[d])
         days_payload.append({
             "date": d.isoformat(),
             "weekday": d.weekday(),
@@ -325,6 +355,13 @@ def student_week(db: Session, parent: User, student_id: int, start: date) -> dic
             "task_count": len(day_tasks),
             "planned_total": planned,
             "completed_total": completed,
+            # GÖREV-bazlı (her madde 1 görev; deneme/test/etkinlik AYRI)
+            "gorev_total": _g.gorev_total,
+            "gorev_done": _g.gorev_done,
+            "test_planned": _g.test_planned,
+            "test_completed": _g.test_completed,
+            "deneme_count": _g.cat_total["deneme"] + _g.cat_total["tam_deneme"],
+            "etkinlik_count": _g.cat_total["etkinlik"],
         })
 
     return {

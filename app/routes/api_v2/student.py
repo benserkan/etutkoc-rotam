@@ -380,16 +380,25 @@ def _build_projection_panel(snapshot) -> ProjectionPanel | None:
 
 
 def _build_day_summary(tasks: list[Task]) -> DaySummary:
+    from app.services import gorev_stats
     total_items = sum(len(t.book_items) for t in tasks)
     planned = sum(it.planned_count for t in tasks for it in t.book_items)
     completed = sum(it.completed_count for t in tasks for it in t.book_items)
-    pct = (completed / planned) if planned > 0 else 0.0
+    # GÖREV tamamlama (her madde 1 görev; deneme soruları test'e karışmaz)
+    g = gorev_stats.summarize(tasks)
+    pct = (g.gorev_done / g.gorev_total) if g.gorev_total > 0 else 0.0
     return DaySummary(
         total_tasks=len(tasks),
         total_items=total_items,
         planned_count=planned,
         completed_count=completed,
         pct=pct,
+        gorev_total=g.gorev_total,
+        gorev_done=g.gorev_done,
+        test_planned=g.test_planned,
+        test_completed=g.test_completed,
+        deneme_count=g.cat_total["deneme"] + g.cat_total["tam_deneme"],
+        etkinlik_count=g.cat_total["etkinlik"],
     )
 
 
@@ -526,14 +535,19 @@ def student_week_v2(
     for t in tasks_all:
         tasks_by_day[t.date].append(t)
 
+    from app.services import gorev_stats
     week_days: list[StudentWeekDay] = []
     total_planned = 0
     total_completed = 0
+    total_gorev = total_gorev_done = 0
+    total_test_planned = total_test_completed = 0
     for d in days:
         day_tasks = tasks_by_day[d]
         planned = sum(it.planned_count for t in day_tasks for it in t.book_items)
         completed = sum(it.completed_count for t in day_tasks for it in t.book_items)
-        pct = (completed / planned) if planned > 0 else 0.0
+        # GÖREV tamamlama (her madde 1 görev; deneme soruları test'e karışmaz)
+        _g = gorev_stats.summarize(day_tasks)
+        pct = (_g.gorev_done / _g.gorev_total) if _g.gorev_total > 0 else 0.0
         dow_idx = d.weekday()  # Mon=0..Sun=6
         week_days.append(StudentWeekDay(
             date=d.isoformat(),
@@ -545,12 +559,22 @@ def student_week_v2(
             planned=planned,
             completed=completed,
             pct=pct,
+            gorev_total=_g.gorev_total,
+            gorev_done=_g.gorev_done,
+            test_planned=_g.test_planned,
+            test_completed=_g.test_completed,
+            deneme_count=_g.cat_total["deneme"] + _g.cat_total["tam_deneme"],
+            etkinlik_count=_g.cat_total["etkinlik"],
             tasks=[_build_task(db, t, today) for t in day_tasks],
         ))
         total_planned += planned
         total_completed += completed
+        total_gorev += _g.gorev_total
+        total_gorev_done += _g.gorev_done
+        total_test_planned += _g.test_planned
+        total_test_completed += _g.test_completed
 
-    total_pct = (total_completed / total_planned) if total_planned > 0 else 0.0
+    total_pct = (total_gorev_done / total_gorev) if total_gorev > 0 else 0.0
 
     return StudentWeekResponse(
         start_date=start.isoformat(),
@@ -561,6 +585,10 @@ def student_week_v2(
         total_planned=total_planned,
         total_completed=total_completed,
         total_pct=total_pct,
+        total_gorev=total_gorev,
+        total_gorev_done=total_gorev_done,
+        total_test_planned=total_test_planned,
+        total_test_completed=total_test_completed,
     )
 
 

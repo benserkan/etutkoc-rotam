@@ -85,9 +85,17 @@ export function DayHeader({ day, onRequestAdd }: Props) {
           ) : null}
         </h1>
         <p className="text-sm text-muted-foreground">
-          {day.summary.total_tasks} görev · {day.summary.completed_count}/
-          {day.summary.planned_count} test ·{" "}
-          <span className="font-medium text-foreground">%{pct} tamam</span>
+          {day.summary.gorev_done}/{day.summary.gorev_total} görev
+          {day.summary.test_planned > 0 ? (
+            <> · {day.summary.test_completed}/{day.summary.test_planned} test</>
+          ) : null}
+          {day.summary.deneme_count > 0 ? (
+            <> · {day.summary.deneme_count} deneme</>
+          ) : null}
+          {day.summary.etkinlik_count > 0 ? (
+            <> · {day.summary.etkinlik_count} etkinlik</>
+          ) : null}{" "}
+          · <span className="font-medium text-foreground">%{pct} tamam</span>
         </p>
         <div className="h-1.5 w-full max-w-md rounded-full bg-muted overflow-hidden">
           <div

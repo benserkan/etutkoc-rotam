@@ -128,11 +128,12 @@ export function ParentWeekClient({ initial, studentId, startParam }: Props) {
 
 function DayAccordion({ day }: { day: ParentWeekDay }) {
   const [open, setOpen] = React.useState(day.task_count > 0);
-  const ratio = day.planned_total > 0
-    ? day.completed_total / day.planned_total
+  // GÖREV tamamlama (deneme soruları test'e karışmaz)
+  const ratio = day.gorev_total > 0
+    ? day.gorev_done / day.gorev_total
     : 0;
   const dayTone =
-    day.planned_total === 0
+    day.gorev_total === 0
       ? "text-muted-foreground"
       : ratio >= 0.8
         ? "text-emerald-700"
@@ -161,14 +162,22 @@ function DayAccordion({ day }: { day: ParentWeekDay }) {
         <div className="flex items-center gap-2 text-xs">
           {day.task_count > 0 ? (
             <>
-              <span className="text-muted-foreground">
-                {day.task_count} görev
+              <span className={cn("font-semibold tabular-nums", dayTone)}>
+                {day.gorev_done}/{day.gorev_total} görev
               </span>
-              {day.planned_total > 0 && (
+              {day.test_planned > 0 && (
                 <>
                   <span className="text-muted-foreground/60">·</span>
-                  <span className={cn("font-semibold tabular-nums", dayTone)}>
-                    {day.completed_total}/{day.planned_total} test
+                  <span className="text-muted-foreground tabular-nums">
+                    {day.test_completed}/{day.test_planned} test
+                  </span>
+                </>
+              )}
+              {day.deneme_count > 0 && (
+                <>
+                  <span className="text-muted-foreground/60">·</span>
+                  <span className="text-muted-foreground tabular-nums">
+                    {day.deneme_count} deneme
                   </span>
                 </>
               )}

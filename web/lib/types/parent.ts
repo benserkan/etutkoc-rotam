@@ -79,12 +79,19 @@ export interface ParentStudentInfo {
 export interface ParentTodayInfo {
   planned: number;
   completed: number;
+  gorev_total: number;
+  gorev_done: number;
 }
 
 export interface ParentWeekInfo {
   planned: number;
   completed: number;
   rate: number | null;
+  gorev_total: number;
+  gorev_done: number;
+  gorev_rate: number | null;
+  test_planned: number;            // yalnız soru bankası (deneme HARİÇ)
+  test_completed: number;
 }
 
 export interface ParentSubjectItem {
@@ -162,6 +169,13 @@ export interface ParentWeekDay {
   task_count: number;
   planned_total: number;
   completed_total: number;
+  // GÖREV-bazlı (her madde 1 görev; deneme/test/etkinlik AYRI)
+  gorev_total: number;
+  gorev_done: number;
+  test_planned: number;            // yalnız soru bankası (deneme HARİÇ)
+  test_completed: number;
+  deneme_count: number;
+  etkinlik_count: number;
 }
 
 export interface ParentStudentRef {
