@@ -25,6 +25,7 @@ import { setRecommendedForStudent } from "@/lib/utils/book-sets";
 import {
   useAssignBook,
   useBulkAssignBooks,
+  useSetSectionCompleted,
   useUnassignBook,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
@@ -362,7 +363,13 @@ function BookCard({
             </summary>
             <ul className="mt-2 divide-y divide-border border-t border-border">
               {book.sections.map((s) => (
-                <SectionRow key={s.section_id} section={s} isDeneme={isDeneme} />
+                <SectionRow
+                  key={s.section_id}
+                  section={s}
+                  isDeneme={isDeneme}
+                  studentId={studentId}
+                  studentBookId={book.student_book_id}
+                />
               ))}
             </ul>
           </details>
@@ -448,42 +455,110 @@ function Chip({
 function SectionRow({
   section: s,
   isDeneme,
+  studentId,
+  studentBookId,
 }: {
   section: StudentBookSectionProgressRow;
   isDeneme: boolean;
+  studentId: number;
+  studentBookId: number;
 }) {
   const remaining = Math.max(0, s.test_count - s.completed_count - s.reserved_count);
   const dim = s.test_count === 0;
+  const maxAllowed = Math.max(0, s.test_count - s.reserved_count);
+  const unit = isDeneme ? "deneme" : "test";
+
+  const [editing, setEditing] = React.useState(false);
+  const [val, setVal] = React.useState(s.completed_count);
+  const mut = useSetSectionCompleted(studentId);
+
+  function save() {
+    const clamped = Math.max(0, Math.min(val, maxAllowed));
+    mut.mutate(
+      { studentBookId, sectionId: s.section_id, completedCount: clamped },
+      { onSuccess: () => setEditing(false) },
+    );
+  }
+
   return (
     <li
       className={cn(
-        "py-1.5 flex items-start justify-between gap-3 text-xs",
+        "py-1.5 text-xs",
         dim && "opacity-60",
       )}
     >
-      <div className="min-w-0 flex-1">
-        <p className="truncate">{s.label}</p>
-        {!isDeneme && s.topic_name ? (
-          <p className="text-muted-foreground truncate">{s.topic_name}</p>
-        ) : null}
-      </div>
-      <div className="shrink-0 tabular-nums text-right space-x-1">
-        <span>
-          {remaining}
-          <span className="text-muted-foreground">/{s.test_count}</span>
-          <span className="text-muted-foreground"> kalan</span>
-        </span>
-        {s.reserved_count > 0 ? (
-          <span className="text-amber-600 dark:text-amber-400">
-            ({s.reserved_count} rezerv)
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate">{s.label}</p>
+          {!isDeneme && s.topic_name ? (
+            <p className="text-muted-foreground truncate">{s.topic_name}</p>
+          ) : null}
+        </div>
+        <div className="shrink-0 tabular-nums text-right space-x-1">
+          <span>
+            {remaining}
+            <span className="text-muted-foreground">/{s.test_count}</span>
+            <span className="text-muted-foreground"> kalan</span>
           </span>
-        ) : null}
-        {s.completed_count > 0 ? (
-          <span className="text-emerald-600 dark:text-emerald-400">
-            ({s.completed_count} çöz.)
-          </span>
-        ) : null}
+          {s.reserved_count > 0 ? (
+            <span className="text-amber-600 dark:text-amber-400">
+              ({s.reserved_count} rezerv)
+            </span>
+          ) : null}
+          {s.completed_count > 0 ? (
+            <span className="text-emerald-600 dark:text-emerald-400">
+              ({s.completed_count} çöz.)
+            </span>
+          ) : null}
+        </div>
       </div>
+
+      {/* "Öğrenci bunu zaten çözmüştü" — geçmiş yıl baseline işaretleme */}
+      {!dim ? (
+        editing ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1.5">
+            <span className="text-[11px] text-muted-foreground">Çözülmüş {unit}:</span>
+            <input
+              type="number"
+              min={0}
+              max={maxAllowed}
+              value={val}
+              onChange={(e) => setVal(Number(e.target.value) || 0)}
+              className="h-7 w-16 rounded border border-input bg-background px-1.5 text-xs tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+            <button
+              type="button"
+              onClick={() => setVal(maxAllowed)}
+              className="rounded border border-border px-1.5 py-0.5 text-[11px] hover:bg-background"
+            >
+              Tümü ({maxAllowed})
+            </button>
+            <button
+              type="button"
+              onClick={save}
+              disabled={mut.isPending}
+              className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              Kaydet
+            </button>
+            <button
+              type="button"
+              onClick={() => { setVal(s.completed_count); setEditing(false); }}
+              className="rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-background"
+            >
+              İptal
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={() => { setVal(s.completed_count); setEditing(true); }}
+            className="mt-1 text-[11px] text-cyan-700 hover:underline dark:text-cyan-400"
+          >
+            {s.completed_count > 0 ? "Çözülen sayısını düzenle" : "Öğrenci bunu zaten çözmüştü"}
+          </button>
+        )
+      ) : null}
     </li>
   );
 }

@@ -805,6 +805,27 @@ export function useUnassignBook(studentId: number) {
   });
 }
 
+/** Bir bölümü "öğrenci zaten çözmüş" işaretle (geçmiş yıl baseline). */
+export function useSetSectionCompleted(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<StudentBookListItem>,
+    ApiError,
+    { studentBookId: number; sectionId: number; completedCount: number }
+  >({
+    mutationFn: ({ studentBookId, sectionId, completedCount }) =>
+      api<MutationResponse<StudentBookListItem>>(
+        `/api/v2/teacher/students/${studentId}/books/${studentBookId}/sections/${sectionId}/completed`,
+        { method: "POST", body: JSON.stringify({ completed_count: completedCount }) },
+      ),
+    onError: (err) => showError(err, "Bölüm işaretlenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Bölüm güncellendi");
+    },
+  });
+}
+
 export function useInviteParent(studentId: number) {
   const qc = useQueryClient();
   return useMutation<

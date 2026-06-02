@@ -20,7 +20,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 # =============================================================================
@@ -1001,6 +1001,16 @@ class StudentBookListResponse(BaseModel):
 class StudentBookAssignBody(BaseModel):
     """POST /api/v2/teacher/students/{id}/books — kitap ata."""
     book_id: int
+
+
+class SectionCompletedBaselineBody(BaseModel):
+    """Bir bölümü 'öğrenci zaten çözmüş' işaretle (geçmiş yıl baseline).
+
+    completed_count doğrudan set edilir; bölümün kalanı (test - rezerv - tamam)
+    düşer → programda bir daha atanmaz. 0 = işareti kaldır (tüm bölüm yeniden
+    atanabilir).
+    """
+    completed_count: int = Field(ge=0)
 
 
 class StudentBookBulkAssignBody(BaseModel):

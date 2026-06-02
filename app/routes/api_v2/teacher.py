@@ -179,6 +179,7 @@ from app.routes.api_v2.schemas.teacher import (
     RiskRow,
     StruggleCardRow,
     StruggleSectionOption,
+    SectionCompletedBaselineBody,
     StudentBookAssignBody,
     StudentBookBulkAssignBody,
     StudentBookBulkAssignResult,
@@ -5156,6 +5157,79 @@ def teacher_student_books_v2(
     # Ders adına, ardından kitap adına göre — frontend gruplama bunu varsayar
     items.sort(key=lambda x: (x.subject_name.lower(), x.book_name.lower()))
     return StudentBookListResponse(items=items, total=len(items))
+
+
+@router.post(
+    "/students/{student_id}/books/{student_book_id}/sections/{section_id}/completed",
+    response_model=MutationResponse[StudentBookListItem],
+)
+def teacher_set_section_completed_v2(
+    student_id: int,
+    student_book_id: int,
+    section_id: int,
+    body: SectionCompletedBaselineBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bir bölümü 'öğrenci zaten çözmüş' olarak işaretle (geçmiş yıl baseline).
+
+    completed_count'u DOĞRUDAN set eder (görev gerektirmez); o bölümün kalanı
+    (test − rezerv − tamam) düşer → programda bir daha atanmaz. completed_count=0
+    işareti kaldırır. Üst sınır = test_count − reserved_count (aktif rezerv korunur).
+    """
+    student = _get_owned_student(db, student_id, user.id)
+    sb = (
+        db.query(StudentBook)
+        .filter(StudentBook.id == student_book_id, StudentBook.student_id == student.id)
+        .first()
+    )
+    if not sb:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "student_book_not_found",
+                    "message": "Bu öğrenciye ait kitap bulunamadı."},
+        )
+    section = (
+        db.query(BookSection)
+        .filter(BookSection.id == section_id, BookSection.book_id == sb.book_id)
+        .first()
+    )
+    if not section:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "section_not_found",
+                    "message": "Bölüm bu kitaba ait değil."},
+        )
+    sp = (
+        db.query(SectionProgress)
+        .filter(SectionProgress.student_book_id == sb.id,
+                SectionProgress.book_section_id == section_id)
+        .first()
+    )
+    if not sp:
+        sp = SectionProgress(
+            student_book_id=sb.id, book_section_id=section_id,
+            reserved_count=0, completed_count=0,
+        )
+        db.add(sp)
+        db.flush()
+    max_allowed = max(0, int(section.test_count or 0) - int(sp.reserved_count or 0))
+    if body.completed_count > max_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "exceeds_available",
+                    "message": (f"En fazla {max_allowed} test işaretlenebilir "
+                                f"(bölüm {section.test_count} test, {sp.reserved_count} rezerv).")},
+        )
+    sp.completed_count = body.completed_count
+    db.commit()
+    db.refresh(sb)
+    return MutationResponse[StudentBookListItem](
+        data=_student_book_summary(db, sb),
+        invalidate=_invalidate_for_students(user.id, student.id) + [
+            f"teacher:{user.id}:students:{student.id}:books",
+        ],
+    )
 
 
 # ---------------------- GET /students/{id}/books/{book_id}/grid (cinema-seat) ----------------------
