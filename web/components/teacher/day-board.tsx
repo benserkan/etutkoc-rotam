@@ -27,6 +27,7 @@ import type {
   TeacherTaskItem,
 } from "@/lib/types/teacher";
 
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -258,6 +259,33 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
   );
 }
 
+// Görev durumu (deneme/etkinlik dahil): done = COMPLETED veya hacim tamamlandı;
+// partial = ilerleme var ama bitmedi; todo = hiç yapılmadı; cancelled = iptal.
+type GorevState = "done" | "partial" | "todo" | "cancelled";
+function gorevState(task: TeacherTask): GorevState {
+  if (task.status === "cancelled") return "cancelled";
+  const done =
+    task.status === "completed" ||
+    (task.planned_count > 0 && task.completed_count >= task.planned_count);
+  if (done) return "done";
+  return task.completed_count > 0 ? "partial" : "todo";
+}
+
+// Tamamlanmamış (todo) + kısmi (partial) DİKKAT ÇEKİCİ (renkli sol şerit + tonlu
+// zemin); tamamlanan SAKİN (de-emphasize). Purge-safe explicit renkler.
+const STATE_CARD: Record<GorevState, string> = {
+  todo: "border-l-4 border-l-rose-500 bg-rose-50/60 dark:bg-rose-950/25",
+  partial: "border-l-4 border-l-amber-500 bg-amber-50/60 dark:bg-amber-950/25",
+  done: "border-l-4 border-l-emerald-500/40 opacity-75",
+  cancelled: "border-l-4 border-l-slate-300 opacity-55",
+};
+const STATE_BADGE: Record<GorevState, { text: string; cls: string }> = {
+  todo: { text: "Yapılmadı", cls: "bg-rose-100 text-rose-800 dark:bg-rose-950/50 dark:text-rose-200" },
+  partial: { text: "Kısmen", cls: "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200" },
+  done: { text: "Tamamlandı", cls: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200" },
+  cancelled: { text: "İptal", cls: "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300" },
+};
+
 function TaskCardEditable({
   task,
   studentId,
@@ -268,6 +296,8 @@ function TaskCardEditable({
   dateIso: string;
 }) {
   const pct = Math.round((task.pct ?? 0) * 100);
+  const gstate = gorevState(task);
+  const badge = STATE_BADGE[gstate];
   const [editTitleOpen, setEditTitleOpen] = React.useState(false);
 
   const deleteMut = useDeleteTask(studentId, dateIso);
@@ -292,12 +322,30 @@ function TaskCardEditable({
   }
 
   return (
-    <Card>
+    <Card className={cn(STATE_CARD[gstate])}>
       <CardContent className="p-4 space-y-2">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="font-medium truncate">{task.title || "—"}</p>
-            <p className="text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <span
+                className={cn(
+                  "shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide",
+                  badge.cls,
+                )}
+              >
+                {badge.text}
+              </span>
+              <p
+                className={cn(
+                  "font-medium truncate",
+                  gstate === "done" || gstate === "cancelled" ? "text-muted-foreground" : "",
+                  gstate === "cancelled" ? "line-through" : "",
+                )}
+              >
+                {task.title || "—"}
+              </p>
+            </div>
+            <p className="text-xs text-muted-foreground mt-0.5">
               {task.scheduled_hour ?? "Saat belirsiz"} · {task.type} ·{" "}
               {task.completed_count}/{task.planned_count} (%{pct})
               {task.is_draft ? " · taslak" : ""}
