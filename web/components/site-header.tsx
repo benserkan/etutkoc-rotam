@@ -18,6 +18,7 @@ import {
   RotateCcw,
   Target,
   Timer,
+  UserCog,
   X,
 } from "lucide-react";
 
@@ -157,6 +158,18 @@ export function SiteHeader({ user, enableBadges = true }: Props) {
         <Button
           variant="ghost"
           size="sm"
+          asChild
+          className="hidden sm:inline-flex"
+        >
+          <Link href="/me/account" aria-label="Hesabım ve şifre">
+            <UserCog aria-hidden />
+            <span className="hidden sm:inline">Hesabım</span>
+          </Link>
+        </Button>
+
+        <Button
+          variant="ghost"
+          size="sm"
           onClick={() => logout.mutate()}
           disabled={logout.isPending}
           aria-label="Çıkış yap"
@@ -274,7 +287,12 @@ function MobileDrawer({
             );
           })}
         </nav>
-        <div className="shrink-0 border-t border-border p-3">
+        <div className="shrink-0 border-t border-border p-3 space-y-2">
+          <Button variant="ghost" className="w-full justify-start" asChild>
+            <Link href="/me/account" onClick={onClose}>
+              <UserCog className="size-4" aria-hidden /> Hesabım &amp; Şifre
+            </Link>
+          </Button>
           <Button variant="outline" className="w-full" onClick={onLogout}>
             <LogOut className="size-4" aria-hidden /> Çıkış yap
           </Button>

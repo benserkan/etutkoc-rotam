@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, HeartHandshake, LayoutDashboard, LogOut, Settings, X, Menu } from "lucide-react";
+import { Bell, HeartHandshake, LayoutDashboard, LogOut, Settings, UserCog, X, Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ const NAV_LINKS: NavLink[] = [
   { href: "/parent", label: "Panel", icon: LayoutDashboard, exact: true },
   { href: "/parent/notifications", label: "Bildirimler", icon: Bell },
   { href: "/parent/settings", label: "Ayarlar", icon: Settings },
+  { href: "/me/account", label: "Hesabım", icon: UserCog },
 ];
 
 export function ParentShell({ user, children }: Props) {
