@@ -670,6 +670,34 @@ def _task_based_summary(tasks: list[Task]) -> tuple[int, int, float]:
     return done, total, sum(fracs) / total
 
 
+def _build_gorev_breakdown(g):
+    """gorev_stats.GorevSummary → API GorevBreakdown (360/gün/hafta ortak)."""
+    from app.routes.api_v2.schemas.teacher import (
+        GorevBreakdown, GorevSubjectItem, GorevDenemeItem,
+    )
+    return GorevBreakdown(
+        gorev_total=g.gorev_total, gorev_done=g.gorev_done, gorev_pct=g.gorev_pct,
+        test_planned=g.test_planned, test_completed=g.test_completed,
+        deneme_planned=g.deneme_planned, deneme_completed=g.deneme_completed,
+        deneme_count=g.cat_total["deneme"] + g.cat_total["tam_deneme"],
+        deneme_done=g.cat_done["deneme"] + g.cat_done["tam_deneme"],
+        etkinlik_count=g.cat_total["etkinlik"], etkinlik_done=g.cat_done["etkinlik"],
+        subjects=[
+            GorevSubjectItem(
+                subject_name=x.subject_name, gorev_total=x.gorev_total,
+                gorev_done=x.gorev_done, pct=x.pct,
+                test_planned=x.test_planned, test_completed=x.test_completed,
+            ) for x in g.subjects
+        ],
+        denemeler=[
+            GorevDenemeItem(
+                title=d.title, subject=d.subject_name, category=d.category,
+                planned=d.planned, completed=d.completed, done=d.done,
+            ) for d in g.denemeler
+        ],
+    )
+
+
 @router.get(
     "/students/{student_id}",
     response_model=TeacherStudentDetailResponse,
@@ -759,33 +787,6 @@ def teacher_student_detail_v2(
                 end_date=ph.end_date.isoformat(),
             )
 
-    from app.routes.api_v2.schemas.teacher import (
-        GorevBreakdown, GorevSubjectItem, GorevDenemeItem,
-    )
-
-    def _gorev_bd(g) -> GorevBreakdown:
-        return GorevBreakdown(
-            gorev_total=g.gorev_total, gorev_done=g.gorev_done, gorev_pct=g.gorev_pct,
-            test_planned=g.test_planned, test_completed=g.test_completed,
-            deneme_planned=g.deneme_planned, deneme_completed=g.deneme_completed,
-            deneme_count=g.cat_total["deneme"] + g.cat_total["tam_deneme"],
-            deneme_done=g.cat_done["deneme"] + g.cat_done["tam_deneme"],
-            etkinlik_count=g.cat_total["etkinlik"], etkinlik_done=g.cat_done["etkinlik"],
-            subjects=[
-                GorevSubjectItem(
-                    subject_name=x.subject_name, gorev_total=x.gorev_total,
-                    gorev_done=x.gorev_done, pct=x.pct,
-                    test_planned=x.test_planned, test_completed=x.test_completed,
-                ) for x in g.subjects
-            ],
-            denemeler=[
-                GorevDenemeItem(
-                    title=d.title, subject=d.subject_name, category=d.category,
-                    planned=d.planned, completed=d.completed, done=d.done,
-                ) for d in g.denemeler
-            ],
-        )
-
     return TeacherStudentDetailResponse(
         student=_build_brief_profile(student),
         program_summary=StudentProgramSummary(
@@ -814,8 +815,8 @@ def teacher_student_detail_v2(
         week_anchor=week_anchor.isoformat() if week_anchor else None,
         anchor_is_manual=anchor_is_manual,
         has_active_program=has_active_program,
-        gorev_today=_gorev_bd(_today_g),
-        gorev_week=_gorev_bd(_week_g),
+        gorev_today=_build_gorev_breakdown(_today_g),
+        gorev_week=_build_gorev_breakdown(_week_g),
     )
 
 
@@ -2974,6 +2975,11 @@ def teacher_student_day_v2(
     planned = sum(t.planned_count for t in tasks_out)
     completed = sum(t.completed_count for t in tasks_out)
     pct = (completed / planned) if planned > 0 else 0.0
+    # Görev/test/deneme özeti — yayınlanmış (öğrencinin gördüğü) görevler üzerinden.
+    from app.services import gorev_stats
+    gorev = _build_gorev_breakdown(
+        gorev_stats.summarize([t for t in tasks if not t.is_draft])
+    )
 
     return TeacherStudentDayResponse(
         student_id=student.id,
@@ -2987,6 +2993,7 @@ def teacher_student_day_v2(
         today_planned=planned,
         today_completed=completed,
         today_pct=pct,
+        gorev=gorev,
     )
 
 

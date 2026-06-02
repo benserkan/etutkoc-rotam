@@ -365,6 +365,8 @@ class TeacherStudentDayResponse(BaseModel):
     today_planned: int
     today_completed: int
     today_pct: float
+    # Görev/test/deneme ayrımlı özet (gorev_stats) — manşet GÖREV-bazlı
+    gorev: GorevBreakdown | None = None
 
 
 class TeacherDaySubjectSummary(BaseModel):

@@ -103,7 +103,23 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
             Günlük plan · {data.date}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {data.today_completed}/{data.today_planned} tamam · %{pct}
+            {data.gorev ? (
+              <>
+                <strong className="text-foreground tabular-nums">
+                  {data.gorev.gorev_done}/{data.gorev.gorev_total}
+                </strong>{" "}
+                görev · %{data.gorev.gorev_pct}
+                {" · "}
+                {data.gorev.test_completed}/{data.gorev.test_planned} test
+                {data.gorev.deneme_count > 0
+                  ? ` · ${data.gorev.deneme_done}/${data.gorev.deneme_count} deneme`
+                  : ""}
+              </>
+            ) : (
+              <>
+                {data.today_completed}/{data.today_planned} tamam · %{pct}
+              </>
+            )}
             {data.is_today
               ? " · Bugün"
               : data.is_future

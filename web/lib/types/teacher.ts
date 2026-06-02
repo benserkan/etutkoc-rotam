@@ -376,6 +376,7 @@ export interface TeacherStudentDayResponse {
   today_planned: number;
   today_completed: number;
   today_pct: number;
+  gorev?: GorevBreakdown | null;
 }
 
 export interface TeacherDaySubjectSummary {
