@@ -4807,6 +4807,7 @@ def teacher_create_student_v2(
         is_graduate=is_graduate,
         track=track_enum,
         graduate_mode=grad_mode_enum,
+        must_change_password=True,  # ilk girişte geçici parolayı değiştirmek ZORUNLU
     )
     db.add(student)
     try:
