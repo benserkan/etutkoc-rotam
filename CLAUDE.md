@@ -4161,6 +4161,23 @@ kitabı) · tam_deneme (kitapsız "Deneme") · etkinlik (video/özet/tekrar/diğ
   saymak YASAK. Engagement/consistency/uyarı metrikleri tests_only=False kalır
   (deneme aktivitesi engagement'a sayılır).
 
+### "Bu hafta" → "Son 7 gün" + KONTROL MEKANİZMASI (2026-06-02)
+
+- **Bug (kullanıcı Image 32):** Yeni başlayan haftada (Pzt/Sal) veli kartı "BU
+  HAFTA %89" gösteriyordu. Kök neden: **özet kartlar** (`week_stats_for` +
+  360/pano görev_week) **rolling son-7-gün** penceresi kullanıyor → geçen
+  haftanın bitmiş günleri sızıyor. Etiket yanıltıcıydı.
+- **Düzeltme (frontend-only):** ÖZET KARTLARDA "Bu hafta" → **"Son 7 gün"** (veli
+  pano + koç pano + veli detay + koç 360 StatusSummary/GorevBreakdownCard). Veli
+  pano "Son 7 Gün Oran" → "Tutturma". **HAFTA SAYFALARI (`/week`) DOKUNULMADI** —
+  onlar `get_active_program` haftasını kullanıyor ("bu hafta" orada doğru).
+- **KONTROL MEKANİZMASI** (kullanıcı: "yok mu bir kontrol mekanizması"):
+  `scripts/test_card_consistency.py` (23) — golden senaryo, 5 yüzey AYNI+DOĞRU
+  sayı + deneme≠test invariant + projeksiyon izolasyon. `scripts/run_gorev_checks.py`
+  — **tek komut** 5 kontrol (68/68). **KURAL: görev/test/deneme veya kart-sayısı
+  mantığı değişince `python scripts/run_gorev_checks.py` koş — kırmızıysa kartlar
+  bozulmuştur.**
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
