@@ -4108,6 +4108,59 @@ Next.js + **BFF JWT cookie** ile auth → Jinja session ölü, cookie hâlâ sü
     admin_users **26/26** (18b end-restore eklendi — cookie-swap yeni davranışı) +
     api_v1 47 + auth 14 + auth_p1 10 + me 13. Migration YOK. Deploy: web+worker+next.
 
+## GÖREV / TEST / DENEME standardizasyonu — sistem geneli (2026-06-02)
+
+**Bağlam (kullanıcı, Image 31):** Hafta görünümü "3 görev · 122 test" diyordu =
+2 integral test + **120 (TYT Genel Deneme'nin 120 sorusu test sayılmış)**.
+"deneme ayrı test ayrı diğer ayrı görev ayrı olmalı, her yerde eksik olmasın."
+
+**Standart (kullanıcı, kilitli):** GÖREV = Task; programa eklenen her madde 1
+görev (bir görevde çok kalem OLMAZ). TEST = görev içi soru hacmi (ikincil).
+DENEME ≠ TEST. 4 kategori: test (soru bankası) · deneme (branş/genel deneme
+kitabı) · tam_deneme (kitapsız "Deneme") · etkinlik (video/özet/tekrar/diğer).
+
+- **Çekirdek:** `app/services/gorev_stats.py` — `classify_gorev`/`gorev_done`/
+  `summarize` (görev/test/deneme/etkinlik AYRI) + public `is_test_book`/
+  `item_is_test`. `scripts/test_gorev_stats.py` 27/27. TEK MERKEZ — tüm panel/
+  mail/yazdırma buradan beslenir.
+- **Panel yüzeyleri (program-bazlı, hepsi görev manşet + test/deneme ayrı):**
+  Koç 360/gün/hafta/liste/pano · Öğrenci gün/hafta · Veli pano/detay/hafta.
+  Manşet = "X/Y görev (%Z)"; test = yalnız soru bankası; deneme + etkinlik ayrı.
+- **Mail (Faz B):** `_build_daily_breakdown` görev-bazlı (test ders-grupları +
+  **Denemeler AYRI başlık** + Etkinlikler ayrı). `parent_weekly_report` +
+  `parent_new_program` şablonları görev manşet. "Veliye duyur" önizlemesi mail
+  ile birebir. **Jinja FIX:** grup dict anahtarı `items`→`rows` (`.items()`
+  metoduna çözülüp "object is not iterable" veriyordu — CLAUDE.md kuralı).
+- **Faz C:** Veli **günlük özet maili KALDIRILDI** (haftalık rapor yeter).
+  Boş-gün uyarısı GÖREV-bazlı (`_is_empty_day`: hiç görev bitmemiş + hiç
+  test/deneme ilerlemesi yok → kısmi çalışan AKTİF) + eşik **3 üst üste** +
+  3g cooldown. `test_daily_empty_threshold.py` 6/6.
+- **Yüzey 9 — envanter/projeksiyon/DNA/Hız test-only:** `analytics`
+  `inventory_totals`/`daily_completed_series`/`daily_planned_series`/`recent_rate`
+  +`tests_only` param (varsayılan False → engagement/consistency/UYARILAR
+  DEĞİŞMEZ). **`compute_projection` İZOLE** — envanter+seri+rate hepsi
+  tests_only=True → projeksiyon yalnız TEST envanteri (deneme girmez).
+  `student_snapshot.rate_7d/30d` ("test/gün hız") + DNA "Tamamlama" (study_dna
+  additive `display_*`, total_*/burnout'a DOKUNMADAN) + Kaynak Durumu grand-total
+  + öğretmen Analitik 30g trend + veli 30g trend + seans prefill hızı → test-only.
+  **`test_projection_tests_only.py` 10/10** (soru bankası 100 + genel deneme 40 →
+  projeksiyon total=100/completed=30/kalan=70, rate deneme'siz).
+- **Regresyon (hepsi GREEN):** gorev_stats 27 · projection_iso 10 · daily_empty 6 ·
+  student_read 11 · student_mut 12 · teacher_read 12 · teacher_students 14 ·
+  alert_correctness 9 · risk_grace 6 · compliance 10 · parent 20 · tenant 29 +
+  şablon render doğrulaması. tsc/eslint temiz. 8 deploy (web/worker/next), canlı.
+- **Test-data fix:** `simulate_alert_correctness.py` `Book type="test"` (geçersiz
+  enum string) → `BookType.SORU_BANKASI`; `joinedload(book)` artık enum
+  deserialize ettiğinden patlıyordu (production değil test bug'ı).
+- **KALAN (opsiyonel, düşük öncelik):** `subject_breakdown` (ders dağılımı) hâlâ
+  deneme kitaplarını ders aktivitesine katar (kurulu davranış; kullanıcı
+  flag'lemedi). Program **print** gün/toplam "Planlanan X" soru-bazlı (görev
+  satırları doğru listelenir). İstenirse ayrı pakette test-only yapılır.
+- **KURAL:** Yeni bir "test" sayımı/gösterimi eklenince `gorev_stats` (görev/test
+  ayrımı) veya `analytics tests_only=True` kullanılır — deneme sorularını "test"
+  saymak YASAK. Engagement/consistency/uyarı metrikleri tests_only=False kalır
+  (deneme aktivitesi engagement'a sayılır).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
