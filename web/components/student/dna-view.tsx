@@ -59,7 +59,11 @@ const RISK_META: Record<BurnoutRiskLevel, { label: string; bg: string }> = {
 export function DnaView({ data }: Props) {
   const chrono = CHRONOTYPE_META[data.chronotype];
   const risk = RISK_META[data.burnout_risk_level];
-  const completionPct = Math.round(data.completion_rate * 100);
+  // GÖREV tamamlama (deneme soruları test'e karışmaz) — eski hacim-oranına fallback
+  const completionPct =
+    data.gorev_total > 0
+      ? Math.round((data.gorev_done / data.gorev_total) * 100)
+      : Math.round(data.completion_rate * 100);
 
   return (
     <div className="space-y-6">
@@ -113,9 +117,23 @@ export function DnaView({ data }: Props) {
             %{completionPct}
           </p>
           <p className="text-xs text-muted-foreground mt-0.5">
-            {data.total_completed} / {data.total_planned} test · son{" "}
-            {data.window_days} gün
+            {data.gorev_total > 0 ? (
+              <>{data.gorev_done} / {data.gorev_total} görev</>
+            ) : (
+              <>{data.total_completed} / {data.total_planned}</>
+            )}{" "}
+            · son {data.window_days} gün
           </p>
+          {data.gorev_total > 0 &&
+          (data.test_planned > 0 || data.deneme_count > 0) ? (
+            <p className="text-[11px] text-muted-foreground/80 mt-0.5">
+              {data.test_planned > 0
+                ? `${data.test_completed}/${data.test_planned} test`
+                : ""}
+              {data.test_planned > 0 && data.deneme_count > 0 ? " · " : ""}
+              {data.deneme_count > 0 ? `${data.deneme_count} deneme` : ""}
+            </p>
+          ) : null}
         </Card>
 
         <Card>

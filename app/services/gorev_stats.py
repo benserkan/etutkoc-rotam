@@ -24,6 +24,27 @@ from app.models.task import Task, TaskStatus
 
 # Deneme sayılan kitap türleri (branş + genel deneme).
 _DENEME_BOOK_TYPES = {BookType.BRANS_DENEMESI, BookType.GENEL_DENEME}
+DENEME_BOOK_TYPES = _DENEME_BOOK_TYPES  # public alias (analytics envanter filtresi)
+
+
+def is_test_book(book) -> bool:
+    """Kitap 'test' sayılır mı (soru bankası vb.) — deneme kitabı DEĞİL.
+
+    Envanter/projeksiyon 'test' sayımında deneme kitaplarını dışlamak için.
+    """
+    return book is not None and book.type not in _DENEME_BOOK_TYPES
+
+
+def item_is_test(item) -> bool:
+    """Görev kalemi 'test' mi — kitapsız tam-deneme + deneme kitabı kalemi HARİÇ.
+
+    Günlük seri 'test/gün' + 'test hacmi' sayımında deneme'yi dışlar.
+    """
+    return (
+        getattr(item, "book_id", None) is not None
+        and getattr(item, "book", None) is not None
+        and item.book.type not in _DENEME_BOOK_TYPES
+    )
 
 GOREV_CATEGORIES = ("test", "deneme", "tam_deneme", "etkinlik")
 

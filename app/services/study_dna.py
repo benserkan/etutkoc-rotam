@@ -105,8 +105,17 @@ class StudyDnaProfile:
     window_days: int
     computed_at: datetime
 
-    total_completed: int  # window içinde COMPLETED + PARTIAL
+    total_completed: int  # window içinde COMPLETED + PARTIAL (hacim — profil/burnout için)
     total_planned: int
+
+    # GÖREV-bazlı gösterim (her madde 1 görev; deneme/test AYRI). Yalnız "Tamamlama"
+    # gösterimi için — profil/burnout mantığını (total_*) ETKİLEMEZ.
+    display_gorev_total: int = 0
+    display_gorev_done: int = 0
+    display_test_planned: int = 0   # yalnız soru bankası (deneme HARİÇ)
+    display_test_completed: int = 0
+    display_deneme_count: int = 0
+    display_etkinlik_count: int = 0
 
     # 7 × 24 matrisi (TR saat); satır = weekday (0=Pzt), sütun = saat 0..23
     heatmap: list[list[int]] = field(default_factory=lambda: [[0]*24 for _ in range(7)])
@@ -294,6 +303,7 @@ def compute_profile(
     medium_conf_count = 0    # batch + scheduled_hour ile kurtarıldı
     completed_with_hour_intent = 0  # toplam tamamlanmış (saat hesabına aday)
 
+    from app.services import gorev_stats
     for task in tasks:
         # Toplam planlanan = book_items varsa planned_count, yoksa 1 (basit görev)
         planned_total = sum(it.planned_count for it in task.book_items) or 1
@@ -302,6 +312,19 @@ def compute_profile(
         )
         profile.total_planned += planned_total
         profile.total_completed += completed_total
+
+        # GÖREV-bazlı gösterim (deneme test'e karışmaz) — yalnız display alanları
+        _cat = gorev_stats.classify_gorev(task)
+        profile.display_gorev_total += 1
+        if gorev_stats.gorev_done(task):
+            profile.display_gorev_done += 1
+        if _cat == "test":
+            profile.display_test_planned += sum(it.planned_count for it in task.book_items)
+            profile.display_test_completed += sum(it.completed_count for it in task.book_items)
+        elif _cat in ("deneme", "tam_deneme"):
+            profile.display_deneme_count += 1
+        elif _cat == "etkinlik":
+            profile.display_etkinlik_count += 1
 
         # Subject bazlı
         if task.book_items:

@@ -34,6 +34,7 @@ from app.models import (
     TaskStatus,
     User,
 )
+from app.services import gorev_stats
 
 
 # ---------------------------- Veri türleri ----------------------------
@@ -117,18 +118,23 @@ def _as_local_date(dt: datetime | None) -> date | None:
 
 
 def daily_completed_series(
-    db: Session, student_id: int, end_date: date, days_back: int
+    db: Session, student_id: int, end_date: date, days_back: int,
+    tests_only: bool = False,
 ) -> dict[date, int]:
     """Son N gün için her günün tamamlanan test sayısı.
 
     Görevin **plan tarihine (Task.date)** göre bucket'lanır — bu hit_rate hesabı için
     plan-gerçekleşme tutarlılığını sağlar. Yani bir görevi geç tıklamak hala görevin
     asıl tarihine puan yazar.
+
+    tests_only=True → yalnız soru bankası kalemleri (deneme kitabı + kitapsız tam
+    deneme HARİÇ). "test/gün hız" ve projeksiyon için (deneme soruları test'e
+    karışmaz). Varsayılan False → eski davranış (hacim/engagement, geriye uyum).
     """
     start = end_date - timedelta(days=days_back - 1)
     tasks = (
         db.query(Task)
-        .options(joinedload(Task.book_items))
+        .options(joinedload(Task.book_items).joinedload(TaskBookItem.book))
         .filter(Task.student_id == student_id)
         .filter(Task.date >= start)
         .filter(Task.date <= end_date)
@@ -138,7 +144,11 @@ def daily_completed_series(
     for t in tasks:
         if t.date not in result:
             continue
-        total = sum(it.completed_count for it in t.book_items)
+        items = (
+            [it for it in t.book_items if gorev_stats.item_is_test(it)]
+            if tests_only else t.book_items
+        )
+        total = sum(it.completed_count for it in items)
         if total > 0:
             result[t.date] += total
     return result
@@ -172,13 +182,17 @@ def daily_action_series(
 
 
 def daily_planned_series(
-    db: Session, student_id: int, end_date: date, days_back: int
+    db: Session, student_id: int, end_date: date, days_back: int,
+    tests_only: bool = False,
 ) -> dict[date, int]:
-    """Her gün için o güne atanmış planlanan toplam test (Task.date bazında)."""
+    """Her gün için o güne atanmış planlanan toplam test (Task.date bazında).
+
+    tests_only=True → yalnız soru bankası kalemleri (deneme HARİÇ; projeksiyon için).
+    """
     start = end_date - timedelta(days=days_back - 1)
     tasks = (
         db.query(Task)
-        .options(joinedload(Task.book_items))
+        .options(joinedload(Task.book_items).joinedload(TaskBookItem.book))
         .filter(
             Task.student_id == student_id,
             Task.date >= start,
@@ -190,7 +204,11 @@ def daily_planned_series(
     for t in tasks:
         if t.date not in result:
             continue
-        result[t.date] += sum(it.planned_count for it in t.book_items)
+        items = (
+            [it for it in t.book_items if gorev_stats.item_is_test(it)]
+            if tests_only else t.book_items
+        )
+        result[t.date] += sum(it.planned_count for it in items)
     return result
 
 
@@ -239,17 +257,28 @@ def week_stats_for(db: Session, student_id: int, end_date: date) -> DailyStats:
 
 
 def recent_rate(
-    db: Session, student_id: int, end_date: date, window_days: int
+    db: Session, student_id: int, end_date: date, window_days: int,
+    tests_only: bool = False,
 ) -> float:
-    """Son N günde günde ortalama tamamlanan test."""
-    series = daily_completed_series(db, student_id, end_date, window_days)
+    """Son N günde günde ortalama tamamlanan test.
+
+    tests_only=True → yalnız soru bankası (deneme HARİÇ) — "test/gün hız" gösterimi.
+    """
+    series = daily_completed_series(db, student_id, end_date, window_days, tests_only=tests_only)
     if not series:
         return 0.0
     return sum(series.values()) / window_days
 
 
-def inventory_totals(db: Session, student_id: int) -> tuple[int, int, int]:
-    """Öğrencinin tüm kitaplarının toplam / çözüldü / rezerv sayıları."""
+def inventory_totals(
+    db: Session, student_id: int, tests_only: bool = False
+) -> tuple[int, int, int]:
+    """Öğrencinin kitaplarının toplam / çözüldü / rezerv test sayıları.
+
+    tests_only=True → deneme kitapları (branş/genel deneme) HARİÇ — yalnız soru
+    bankası 'test envanteri' (DNA Tamamlama + projeksiyon için; deneme test sayılmaz).
+    Varsayılan False → tüm kitaplar (geriye uyum).
+    """
     total = 0
     completed = 0
     reserved = 0
@@ -263,6 +292,8 @@ def inventory_totals(db: Session, student_id: int) -> tuple[int, int, int]:
         .all()
     )
     for sb in sbs:
+        if tests_only and not gorev_stats.is_test_book(sb.book):
+            continue
         total += sb.total_tests
         completed += sb.completed_tests
         reserved += sb.reserved_tests
@@ -311,24 +342,28 @@ def compute_projection(
         days_left = None
         effective_days = 0
 
+    # PROJEKSİYON = yalnız TEST envanteri (deneme test'e karışmaz). Hız/plan/envanter
+    # hepsi tests_only — deneme soruları projeksiyona girmez (izole edilmiş hesap).
     # Tarihçe — günlük tamamlama (sadece geçmiş)
-    series = daily_completed_series(db, student.id, today, window_days)
+    series = daily_completed_series(db, student.id, today, window_days, tests_only=True)
     overall_rate = (sum(series.values()) / window_days) if window_days > 0 else 0.0
 
     # Planlama serisi — geçmiş + gelecek (öğretmenin tüm planını yansıtır)
     # daily_planned_series end_date'e doğru bakıyor; gelecek için ayrı çekip birleştiriyoruz.
-    past_planned = daily_planned_series(db, student.id, today, window_days)
+    past_planned = daily_planned_series(db, student.id, today, window_days, tests_only=True)
     # Geleceğe planları al — gelecek görevleri sınav tarihine kadar kapsar
     from app.models import Task as _Task, TaskBookItem as _TBI
     future_q = (
         db.query(_Task)
-        .options(joinedload(_Task.book_items))
+        .options(joinedload(_Task.book_items).joinedload(_TBI.book))
         .filter(_Task.student_id == student.id, _Task.date >= today)
         .all()
     )
     future_planned: dict[date, int] = {}
     for t in future_q:
-        future_planned[t.date] = future_planned.get(t.date, 0) + sum(it.planned_count for it in t.book_items)
+        future_planned[t.date] = future_planned.get(t.date, 0) + sum(
+            it.planned_count for it in t.book_items if gorev_stats.item_is_test(it)
+        )
 
     # DOW bazlı: tamamlanan = sadece geçmiş, planlanan = geçmiş + gelecek (yalnızca plan girilmiş günler)
     dow_completed_buckets: dict[int, list[int]] = {i: [] for i in range(7)}
@@ -364,7 +399,7 @@ def compute_projection(
             dow_hit_rates[dow] = 0.0
             dow_hit_measured[dow] = False
 
-    total, completed, reserved = inventory_totals(db, student.id)
+    total, completed, reserved = inventory_totals(db, student.id, tests_only=True)
     remaining_unassigned = total - completed - reserved
     remaining_overall = total - completed  # tüm hedef iş
 
@@ -787,8 +822,10 @@ def student_snapshot(
         today = date.today()
     today_stats = daily_stats_for(db, student.id, today)
     week_stats = week_stats_for(db, student.id, today)
-    rate7 = recent_rate(db, student.id, today, 7)
-    rate30 = recent_rate(db, student.id, today, 30)
+    # "test/gün hız" gösterimi → yalnız soru bankası (deneme test'e karışmaz).
+    # Bu alanlar yalnız gösterim; uyarılar `proj`'tan beslenir (snapshot'tan önce).
+    rate7 = recent_rate(db, student.id, today, 7, tests_only=True)
+    rate30 = recent_rate(db, student.id, today, 30, tests_only=True)
     cons7 = consistency_score(db, student.id, today, 7)
     hit7 = hit_rate(db, student.id, today, 7)
     # Gerçekçi projeksiyon — 28 günlük DOW penceresi + 5 günlük sınav tamponu

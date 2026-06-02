@@ -574,9 +574,16 @@ class DnaResponse(BaseModel):
     """GET /api/v2/student/dna — çalışma DNA profili + burnout."""
     window_days: int
     has_enough_data: bool
-    total_completed: int
+    total_completed: int           # hacim (profil/burnout)
     total_planned: int
     completion_rate: float
+    # GÖREV-bazlı gösterim (deneme/test AYRI; "Tamamlama" gösterimi için)
+    gorev_total: int = 0
+    gorev_done: int = 0
+    test_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
+    test_completed: int = 0
+    deneme_count: int = 0
+    etkinlik_count: int = 0
     chronotype: DnaChronotypeLiteral
     peak_hour: int | None
     peak_day_idx: int | None

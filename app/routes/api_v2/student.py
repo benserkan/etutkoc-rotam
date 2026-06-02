@@ -268,6 +268,7 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
 
 def _build_resource_sidebar(db: Session, student_id: int) -> ResourceSidebar:
     """Sticky XL sidebar verisi — ders × kitap × rezerv/tamam/kalan."""
+    from app.services import gorev_stats
     assignments = (
         db.query(StudentBook)
         .options(
@@ -306,14 +307,18 @@ def _build_resource_sidebar(db: Session, student_id: int) -> ResourceSidebar:
             )
         grp = subjects_map[sid]
         grp.books.append(rb)
-        grp.total_tests += rb.total_tests
-        grp.reserved_tests += rb.reserved_tests
-        grp.completed_tests += rb.completed_tests
-        grp.remaining_tests += rb.remaining_tests
-        total_t += rb.total_tests
-        total_r += rb.reserved_tests
-        total_c += rb.completed_tests
-        total_rem += rb.remaining_tests
+        # "Toplam test" toplamları YALNIZ soru bankası (deneme kitapları test'e
+        # karışmaz). Deneme kitabı kartı listede kalır (tip etiketli) ama
+        # test-envanteri toplamına girmez.
+        if gorev_stats.is_test_book(book):
+            grp.total_tests += rb.total_tests
+            grp.reserved_tests += rb.reserved_tests
+            grp.completed_tests += rb.completed_tests
+            grp.remaining_tests += rb.remaining_tests
+            total_t += rb.total_tests
+            total_r += rb.reserved_tests
+            total_c += rb.completed_tests
+            total_rem += rb.remaining_tests
 
     # subject_order: subject.order varsa o, yoksa isim
     subject_list = sorted(
@@ -1976,6 +1981,12 @@ def student_dna_v2(
         total_completed=profile.total_completed,
         total_planned=profile.total_planned,
         completion_rate=float(profile.completion_rate),
+        gorev_total=profile.display_gorev_total,
+        gorev_done=profile.display_gorev_done,
+        test_planned=profile.display_test_planned,
+        test_completed=profile.display_test_completed,
+        deneme_count=profile.display_deneme_count,
+        etkinlik_count=profile.display_etkinlik_count,
         chronotype=profile.chronotype,
         peak_hour=profile.peak_hour,
         peak_day_idx=profile.peak_day_idx,

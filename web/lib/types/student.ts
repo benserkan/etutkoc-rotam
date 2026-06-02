@@ -396,6 +396,13 @@ export interface DnaResponse {
   total_completed: number;
   total_planned: number;
   completion_rate: number;
+  // GÖREV-bazlı gösterim (deneme/test AYRI)
+  gorev_total: number;
+  gorev_done: number;
+  test_planned: number;            // yalnız soru bankası (deneme HARİÇ)
+  test_completed: number;
+  deneme_count: number;
+  etkinlik_count: number;
   chronotype: DnaChronotype;
   peak_hour: number | null;
   peak_day_idx: number | null;

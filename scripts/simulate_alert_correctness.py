@@ -28,7 +28,7 @@ from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
 from app.models import (
-    Book, BookSection, Subject, Task, TaskBookItem, TaskType, User, UserRole,
+    Book, BookSection, BookType, Subject, Task, TaskBookItem, TaskType, User, UserRole,
 )
 from app.services import analytics, risk_analysis
 from app.services.security import hash_password
@@ -104,7 +104,7 @@ def main():
                      password_changed_at=now, must_change_password=False)
         db.add(coach); db.flush(); coach_id = coach.id
         subj = Subject(name=f"{PFX} Mat", teacher_id=coach.id); db.add(subj); db.flush(); subj_id = subj.id
-        book = Book(teacher_id=coach.id, subject_id=subj.id, name=f"{PFX} Kitap", type="test"); db.add(book); db.flush(); book_id = book.id
+        book = Book(teacher_id=coach.id, subject_id=subj.id, name=f"{PFX} Kitap", type=BookType.SORU_BANKASI); db.add(book); db.flush(); book_id = book.id
         sec = BookSection(book_id=book.id, label="Ü1"); db.add(sec); db.flush(); section_id = sec.id
         db.commit()
     uids.append(coach_id)
