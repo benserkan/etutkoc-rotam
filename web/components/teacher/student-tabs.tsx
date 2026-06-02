@@ -862,7 +862,8 @@ function GorevBreakdownCard({
                     ) : null}
                   </span>
                   <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
-                    {d.completed}/{d.planned} soru
+                    {d.completed}/{d.planned}{" "}
+                    {d.category === "tam_deneme" ? "soru" : "deneme"}
                   </span>
                 </li>
               ))}
