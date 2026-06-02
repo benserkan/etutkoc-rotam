@@ -167,6 +167,47 @@ class StudentProgramSummary(BaseModel):
     week_task_pct: float = 0.0
 
 
+class GorevSubjectItem(BaseModel):
+    """Ders bazında TEST görevleri (denemeler ayrı listede)."""
+    subject_name: str
+    gorev_total: int
+    gorev_done: int
+    pct: int                 # görev tamamlama %
+    test_planned: int        # o derste planlanan test (soru) hacmi
+    test_completed: int
+
+
+class GorevDenemeItem(BaseModel):
+    """Tek deneme/tam-deneme görevi (ayrı başlık)."""
+    title: str
+    subject: str | None = None
+    category: str            # "deneme" | "tam_deneme"
+    planned: int             # soru sayısı
+    completed: int
+    done: bool
+
+
+class GorevBreakdown(BaseModel):
+    """Görev/test/deneme ayrımlı özet — gorev_stats çekirdeğinden.
+
+    Manşet = görev (etkinlik dahil). Test hacmi DENEME'den AYRI. Çıktılarda
+    "X görev (%Z) · A test · B deneme" deseni; "224/365 test" karışıklığı yok.
+    """
+    gorev_total: int
+    gorev_done: int
+    gorev_pct: int           # 0..100
+    test_planned: int        # soru bankası test hacmi (deneme HARİÇ)
+    test_completed: int
+    deneme_planned: int      # branş + tam deneme soru hacmi (AYRI)
+    deneme_completed: int
+    deneme_count: int        # deneme görev adedi (branş + tam)
+    deneme_done: int
+    etkinlik_count: int      # video/özet/tekrar görev adedi
+    etkinlik_done: int
+    subjects: list[GorevSubjectItem] = []
+    denemeler: list[GorevDenemeItem] = []
+
+
 class StudentActivePhase(BaseModel):
     """Öğrencinin academic_year'ında bugüne denk gelen aktif dönem.
 
@@ -206,6 +247,9 @@ class TeacherStudentDetailResponse(BaseModel):
     anchor_is_manual: bool = False
     # Aktif (explicit) program varsa anchor fallback atıl → UI kartı gizler.
     has_active_program: bool = False
+    # Görev/test/deneme ayrımlı özet (gorev_stats) — bugün + bu hafta
+    gorev_today: GorevBreakdown | None = None
+    gorev_week: GorevBreakdown | None = None
 
 
 class SetWeekAnchorBody(BaseModel):

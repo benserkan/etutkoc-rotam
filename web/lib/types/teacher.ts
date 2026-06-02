@@ -195,6 +195,40 @@ export interface StudentProgramSummary {
   week_task_pct?: number;
 }
 
+export interface GorevSubjectItem {
+  subject_name: string;
+  gorev_total: number;
+  gorev_done: number;
+  pct: number;            // görev tamamlama %
+  test_planned: number;   // o derste test (soru) hacmi
+  test_completed: number;
+}
+
+export interface GorevDenemeItem {
+  title: string;
+  subject?: string | null;
+  category: "deneme" | "tam_deneme" | string;
+  planned: number;        // soru sayısı
+  completed: number;
+  done: boolean;
+}
+
+export interface GorevBreakdown {
+  gorev_total: number;
+  gorev_done: number;
+  gorev_pct: number;      // 0..100
+  test_planned: number;   // soru bankası test hacmi (deneme HARİÇ)
+  test_completed: number;
+  deneme_planned: number; // branş + tam deneme (AYRI)
+  deneme_completed: number;
+  deneme_count: number;
+  deneme_done: number;
+  etkinlik_count: number;
+  etkinlik_done: number;
+  subjects: GorevSubjectItem[];
+  denemeler: GorevDenemeItem[];
+}
+
 export interface StudentActivePhase {
   kind: "regular" | "winter_break" | "summer_camp" | "exam_prep" | string;
   kind_label: string;
@@ -225,6 +259,8 @@ export interface TeacherStudentDetailResponse {
   week_anchor?: string | null;
   anchor_is_manual?: boolean;
   has_active_program?: boolean;
+  gorev_today?: GorevBreakdown | null;
+  gorev_week?: GorevBreakdown | null;
 }
 
 export interface SetWeekAnchorBody {

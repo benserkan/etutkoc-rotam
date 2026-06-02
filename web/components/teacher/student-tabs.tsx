@@ -29,7 +29,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { TeacherStudentDetailResponse } from "@/lib/types/teacher";
+import type { GorevBreakdown, TeacherStudentDetailResponse } from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { StudentBooksPanel } from "@/components/teacher/student-books-panel";
@@ -188,6 +188,11 @@ export function StudentTabs({ studentId, initial }: Props) {
           />
 
           <StatusSummary studentId={studentId} data={data} />
+
+          <GorevBreakdownCard
+            today={data.gorev_today ?? null}
+            week={data.gorev_week ?? null}
+          />
 
           {/* Hafta Anchor'ı yalnız aktif (explicit) program YOKKEN anlamlı —
               fallback hizalama mekanizması. Aktif program varsa kart gizlenir
@@ -718,6 +723,162 @@ function SummaryCard({ row }: { row: SummaryRow }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+// =============================================================================
+// Görev / Test / Deneme dağılımı — gorev_stats çekirdeğinden
+// Görev birincil (manşet); test (soru bankası) ile deneme AYRI; etkinlik ayrı.
+// =============================================================================
+
+function GorevBreakdownCard({
+  today,
+  week,
+}: {
+  today: GorevBreakdown | null;
+  week: GorevBreakdown | null;
+}) {
+  const [scope, setScope] = React.useState<"today" | "week">("today");
+  const g = scope === "today" ? today : week;
+  if (!g) return null;
+
+  return (
+    <Card>
+      <CardHeader className="flex-row items-center justify-between gap-2 space-y-0">
+        <CardTitle className="text-base">Görev / Test / Deneme</CardTitle>
+        <div className="inline-flex rounded-md border border-border overflow-hidden text-xs">
+          <button
+            type="button"
+            onClick={() => setScope("today")}
+            className={cn(
+              "px-2.5 py-1",
+              scope === "today"
+                ? "bg-[#117A86] text-white"
+                : "bg-background text-muted-foreground hover:bg-muted",
+            )}
+          >
+            Bugün
+          </button>
+          <button
+            type="button"
+            onClick={() => setScope("week")}
+            className={cn(
+              "px-2.5 py-1 border-l border-border",
+              scope === "week"
+                ? "bg-[#117A86] text-white"
+                : "bg-background text-muted-foreground hover:bg-muted",
+            )}
+          >
+            Bu hafta
+          </button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {/* Manşet — GÖREV (etkinlik dahil) */}
+        <div className="rounded-lg border border-border bg-muted/30 p-3">
+          <p className="text-sm">
+            <strong className="tabular-nums">
+              {g.gorev_done}/{g.gorev_total}
+            </strong>{" "}
+            görev tamamlandı{" "}
+            <span className="text-muted-foreground">(%{g.gorev_pct})</span>
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            <strong className="text-foreground tabular-nums">
+              {g.test_completed}/{g.test_planned}
+            </strong>{" "}
+            test çözüldü
+            {g.deneme_count > 0 && (
+              <>
+                {" · "}
+                <strong className="text-foreground tabular-nums">
+                  {g.deneme_done}/{g.deneme_count}
+                </strong>{" "}
+                deneme
+              </>
+            )}
+            {g.etkinlik_count > 0 && (
+              <>
+                {" · "}
+                <strong className="text-foreground tabular-nums">
+                  {g.etkinlik_done}/{g.etkinlik_count}
+                </strong>{" "}
+                etkinlik
+              </>
+            )}
+          </p>
+        </div>
+
+        {/* Ders bazında TEST görevleri */}
+        {g.subjects.length > 0 && (
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Ders bazında (test görevleri)
+            </p>
+            <ul className="space-y-1">
+              {g.subjects.map((s) => (
+                <li
+                  key={s.subject_name}
+                  className="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span className="truncate">{s.subject_name}</span>
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    <strong
+                      className={cn(
+                        s.pct >= 70
+                          ? "text-emerald-700"
+                          : s.pct >= 40
+                            ? "text-amber-700"
+                            : "text-rose-700",
+                      )}
+                    >
+                      {s.gorev_done}/{s.gorev_total} görev
+                    </strong>{" "}
+                    · {s.test_completed}/{s.test_planned} test
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {/* Denemeler — AYRI başlık (testlerle karışmaz) */}
+        {g.denemeler.length > 0 && (
+          <div>
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+              Denemeler
+            </p>
+            <ul className="space-y-1">
+              {g.denemeler.map((d, i) => (
+                <li
+                  key={`${d.title}-${i}`}
+                  className="flex items-center justify-between gap-2 text-sm"
+                >
+                  <span className="truncate">
+                    {d.done ? "✓ " : ""}
+                    {d.title}
+                    {d.subject ? (
+                      <span className="text-muted-foreground"> · {d.subject}</span>
+                    ) : null}
+                  </span>
+                  <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                    {d.completed}/{d.planned} soru
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {g.gorev_total === 0 && (
+          <p className="text-sm text-muted-foreground italic">
+            {scope === "today"
+              ? "Bugün için planlanmış görev yok."
+              : "Bu hafta planlanmış görev yok."}
+          </p>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 
