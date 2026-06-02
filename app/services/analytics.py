@@ -632,17 +632,23 @@ def generate_warnings(
         max(0, (datetime.now(timezone.utc) - _created).days) if _created else None
     )
 
-    # 1) Bugün hiç tik yapmadı mı (plan vardı ama tamamlama yok).
-    # "Tik" = görev tamamlama. İtemless etkinlik görevi (Diğer/Video/Özet/Tekrar,
-    # soru sayısı 0) tamamlandığında da öğrenci AKTİFTİR → tasks_completed > 0
-    # ise bu uyarı tetiklenmez (aksi halde etkinlik tikleyen öğrenci yanlışlıkla
-    # "hiç tik yapmadı" görünür — bkz. "Diğer görevler tamamlamaya sayılır").
+    # 1) Bugün hiç tik yapmadı mı — GÖREV-bazlı (her tür görev; etkinlik DAHİL).
+    # "Tik" = görev tamamlama. Etkinlik görevi (Diğer/Video/Özet/Tekrar, soru
+    # sayısı 0) de engagement'a sayılır → bugün ≥1 yayınlanmış görev var ama
+    # hiçbiri tamamlanmadıysa uyarı (test hacmi 0 olsa da). Eskiden yalnız test
+    # hacmi (planned>0) bakıyordu → etkinlik-only günde yanlışlıkla yeşil
+    # görünüyordu (bkz. "Diğer görevler tamamlamaya sayılır").
     today_stats = daily_stats_for(db, student.id, today)
-    if (
-        today_stats.planned > 0
-        and today_stats.completed == 0
-        and today_stats.tasks_completed == 0
-    ):
+    _today_tasks = (
+        db.query(Task)
+        .options(joinedload(Task.book_items))
+        .filter(Task.student_id == student.id, Task.date == today,
+                Task.is_draft.is_(False))
+        .all()
+    )
+    _today_gorev = len(_today_tasks)
+    _today_gorev_done = sum(1 for t in _today_tasks if gorev_stats.gorev_done(t))
+    if _today_gorev > 0 and _today_gorev_done == 0:
         # Saat geç mi? Akşam geçmiş ama hiç tik yok — kırmızı; gün hâlâ devam ediyorsa sarı
         hour = datetime.now().hour
         level = "red" if hour >= 20 else "amber"
@@ -650,7 +656,7 @@ def generate_warnings(
             level=level,
             code="today_no_tick",
             title="Bugün hiç tik yapmadı",
-            detail=f"Bugüne planlanmış {today_stats.planned} test var, henüz hiçbiri tiklenmedi.",
+            detail=f"Bugüne planlanmış {_today_gorev} görev var, henüz hiçbiri yapılmadı.",
         ))
 
     # 2) Dün de tik yoksa — ciddileştir (etkinlik görevi de tik sayılır)
