@@ -170,9 +170,9 @@ def student_overview(db: Session, parent: User, student_id: int) -> dict[str, An
     _gw = gorev_stats.summarize(_wk_tasks)
     _gt = gorev_stats.summarize([t for t in _wk_tasks if t.date == today])
 
-    # 30 günlük trend serileri (mobil grafik için saf liste)
-    completed_series = daily_completed_series(db, student.id, today, 30)
-    planned_series = daily_planned_series(db, student.id, today, 30)
+    # 30 günlük TEST trend serileri — yalnız soru bankası (deneme test'e karışmaz)
+    completed_series = daily_completed_series(db, student.id, today, 30, tests_only=True)
+    planned_series = daily_planned_series(db, student.id, today, 30, tests_only=True)
     trend_days = sorted(completed_series.keys())
     trend = [
         {

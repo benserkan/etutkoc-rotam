@@ -1250,7 +1250,8 @@ def _compute_session_prefill(db: Session, student: User) -> dict:
     today = date.today()
     week = an.week_stats_for(db, student.id, today)
     pct = int(round(100 * week.completed / week.planned)) if week.planned > 0 else None
-    rate = round(an.recent_rate(db, student.id, today, 7), 1)
+    # "test/gün hız" → yalnız soru bankası (deneme test'e karışmaz; tutarlılık)
+    rate = round(an.recent_rate(db, student.id, today, 7, tests_only=True), 1)
 
     behind = []
     for s in an.subject_breakdown(db, student.id):
@@ -6975,8 +6976,9 @@ def teacher_student_analytics_v2(
 
     student = _get_owned_student(db, student_id, user.id)
     today = date.today()
-    completed = daily_completed_series(db, student.id, today, 30)
-    planned = daily_planned_series(db, student.id, today, 30)
+    # 30 gün TEST trendi — yalnız soru bankası (deneme günleri grafiği şişirmesin)
+    completed = daily_completed_series(db, student.id, today, 30, tests_only=True)
+    planned = daily_planned_series(db, student.id, today, 30, tests_only=True)
     days = sorted(completed.keys())
     trend = [
         AnalyticsTrendPoint(
