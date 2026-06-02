@@ -30,6 +30,7 @@ CHECKS = [
     ("Projeksiyon izolasyon (deneme envanteri girmez)", "test_projection_tests_only.py"),
     ("Boş-gün eşiği 3 + günlük özet kaldırıldı", "test_daily_empty_threshold.py"),
     ("Hafta görev-% + Veliye duyur önizleme", "test_api_v2_teacher_week_activity_pct.py"),
+    ("Mail render güvenliği (yeni+eski payload)", "test_mail_render_safety.py"),
 ]
 
 
