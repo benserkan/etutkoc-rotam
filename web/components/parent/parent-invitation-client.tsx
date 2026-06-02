@@ -398,12 +398,7 @@ const PREF_ROWS: Array<{
   title: string;
   desc: string;
 }> = [
-  {
-    emailKey: "daily_summary_email",
-    waKey: "daily_summary_wa",
-    title: "Günlük özet",
-    desc: "Çocuğun bugünkü tamamlama özeti",
-  },
+  // "Günlük özet" Faz C'de kaldırıldı (haftalık rapor kapsıyor) — toggle çıkarıldı.
   {
     emailKey: "weekly_report_email",
     waKey: "weekly_report_wa",
@@ -414,7 +409,7 @@ const PREF_ROWS: Array<{
     emailKey: "empty_day_email",
     waKey: "empty_day_wa",
     title: "Boş gün uyarısı",
-    desc: "Hiç görev tamamlanmadığında",
+    desc: "3+ gün üst üste hiç görev tamamlanmazsa",
   },
   {
     emailKey: "drop_alert_email",

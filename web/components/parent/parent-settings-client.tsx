@@ -53,17 +53,14 @@ const PREF_ROWS: Array<{
   title: string;
   desc: string;
 }> = [
-  {
-    emailKey: "daily_summary",
-    waKey: "daily_summary_wa",
-    title: "Günlük özet",
-    desc: "Çocuğun bugünkü tamamlama özeti",
-  },
+  // NOT: "Günlük özet" (daily_summary) Faz C'de kaldırıldı — günlük özet maili
+  // artık gönderilmiyor (haftalık rapor kapsıyor). Toggle UI'dan çıkarıldı;
+  // backend pref alanı (daily_summary_enabled) zararsız şekilde duruyor.
   {
     emailKey: "empty_day",
     waKey: "empty_day_wa",
     title: "Boş gün uyarısı",
-    desc: "Hiç görev tamamlamadığında bilgi verir",
+    desc: "3+ gün üst üste hiç görev tamamlanmazsa bilgi verir",
   },
   {
     emailKey: "weekly_report",
