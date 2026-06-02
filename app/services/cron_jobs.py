@@ -79,16 +79,49 @@ def _has_recent_notification(
     )
 
 
-def _consecutive_empty_days(db: Session, student_id: int, today_date: date, lookback: int = 5) -> int:
-    """Bugün dahil son N günde planlı ama tamamlanmamış (boş) gün sayısı (üst üste).
+def _gorev_day(db: Session, student_id: int, d: date):
+    """O günün GÖREV özeti (gorev_stats; deneme/test/etkinlik AYRI)."""
+    from sqlalchemy.orm import joinedload
+    from app.models import Book, Task, TaskBookItem
+    from app.services import gorev_stats
+    tasks = (
+        db.query(Task)
+        .options(joinedload(Task.book_items)
+                 .joinedload(TaskBookItem.book).joinedload(Book.subject))
+        .filter(Task.student_id == student_id, Task.date == d,
+                Task.is_draft.is_(False))
+        .all()
+    )
+    return gorev_stats.summarize(tasks)
 
-    "Üst üste boş gün uyarısı 3'ten sonra atma" mantığı için.
+
+def _is_empty_day(g) -> bool:
+    """O gün TAMAMEN hareketsiz mi (gerçek "boş gün").
+
+    Boş = ≥1 görev planlı AMA hiç görev tamamlanmamış VE hiç ilerleme yok
+    (test/deneme soru ilerlemesi de yok). Kısmi çalışan (örn. 5/10 test) öğrenci
+    AKTİF sayılır — boş-gün uyarısı tetiklemez (yanlış alarm önleme).
+    """
+    return (
+        g.gorev_total > 0
+        and g.gorev_done == 0
+        and g.test_completed == 0
+        and g.deneme_completed == 0
+    )
+
+
+def _consecutive_empty_days(db: Session, student_id: int, today_date: date, lookback: int = 7) -> int:
+    """Bugün dahil son N günde ÜST ÜSTE tamamen hareketsiz ("boş") gün sayısı.
+
+    GÖREV-bazlı: bir gün boş = ≥1 görev planlı + hiç görev tamamlanmamış + hiç
+    soru/deneme ilerlemesi yok (bkz. _is_empty_day). Deneme soruları test'e
+    karışmaz; kısmi çalışan öğrenci boş sayılmaz.
     """
     count = 0
     for i in range(lookback):
         d = today_date - timedelta(days=i)
-        stats = daily_stats_for(db, student_id, d)
-        if stats.planned > 0 and stats.completed == 0:
+        g = _gorev_day(db, student_id, d)
+        if _is_empty_day(g):
             count += 1
         else:
             break
@@ -132,69 +165,55 @@ def _all_parent_student_pairs(db: Session) -> list[tuple[User, User, ParentStude
 
 
 def daily_summary(db: Session, *, now: datetime) -> dict:
-    """Her aktif veli/öğrenci çifti için günlük özet bildirimi üret.
+    """Boş-gün uyarısı (3+ üst üste) — GÜNLÜK ÖZET MAİLİ KALDIRILDI.
 
-    İçerik:
-      - planned > 0 ve completed > 0 → DAILY_SUMMARY (tamamlama yüzdesi)
-      - planned > 0 ve completed = 0 → EMPTY_DAY (3 günden fazla üst üste ise atla)
-      - planned = 0 → atla (gürültü)
+    Kullanıcı kararı (2026-06): veliyi günlük özetle boğma — haftalık rapor
+    zaten kapsıyor. Bu cron artık YALNIZ "uzun süredir hiç görev yok" uyarısı
+    gönderir.
+
+    İçerik (GÖREV-bazlı):
+      - görev planlı YOK → atla (gürültü)
+      - bugün ≥1 görev tamamlandı → atla (aktif gün; günlük özet maili YOK)
+      - 3+ gün ÜST ÜSTE planlı ama hiç görev tamamlanmadı → EMPTY_DAY
+        (3 günlük cooldown — eşik aşıldıktan sonra her gün tekrar atmaz)
     """
     today = _today_utc(now)
     pairs = _all_parent_student_pairs(db)
-    counts = {"daily": 0, "empty": 0, "skipped_recent": 0, "skipped_streak": 0, "skipped_zero": 0}
+    counts = {"empty": 0, "skipped_recent": 0, "skipped_streak": 0,
+              "skipped_zero": 0, "skipped_active": 0}
 
     for parent, student, link in pairs:
-        stats = daily_stats_for(db, student.id, today)
+        g = _gorev_day(db, student.id, today)
 
-        if stats.planned == 0:
+        if g.gorev_total == 0:
             counts["skipped_zero"] += 1
             continue
+        if not _is_empty_day(g):
+            # Aktif gün (görev bitti VEYA kısmi ilerleme var) — günlük özet maili
+            # göndermiyoruz (haftalık rapor yeter)
+            counts["skipped_active"] += 1
+            continue
 
-        if stats.completed > 0:
-            # Aynı gün ikinci özet atma
-            if _has_recent_notification(
-                db, parent_id=parent.id, student_id=student.id,
-                kind=NotificationKind.DAILY_SUMMARY, within=timedelta(hours=18),
-            ):
-                counts["skipped_recent"] += 1
-                continue
-
-            subjects = subject_breakdown(db, student.id)
-            sb = [
-                {
-                    "subject": s["name"],
-                    "completed": s["completed"],
-                    "planned": s["completed"] + s["remaining"] + s["reserved"],
-                    "unit": "test",
-                }
-                for s in subjects[:6]
-            ]
-            produce_daily_summary(
-                db, parent=parent, student=student,
-                completed=stats.completed, planned=stats.planned,
-                subject_breakdown=sb,
-            )
-            counts["daily"] += 1
-        else:
-            # Boş gün uyarısı — ama 3 günden fazla üst üste ise sus
-            streak = _consecutive_empty_days(db, student.id, today)
-            if streak > 3:
-                counts["skipped_streak"] += 1
-                continue
-            if _has_recent_notification(
-                db, parent_id=parent.id, student_id=student.id,
-                kind=NotificationKind.EMPTY_DAY, within=timedelta(hours=18),
-            ):
-                counts["skipped_recent"] += 1
-                continue
-            produce_empty_day(
-                db, parent=parent, student=student,
-                planned=stats.planned, consecutive_empty_days=streak,
-            )
-            counts["empty"] += 1
+        # Boş gün (tamamen hareketsiz) — yalnız 3+ üst üste boş ise uyar (erken nag yok)
+        streak = _consecutive_empty_days(db, student.id, today)
+        if streak < 3:
+            counts["skipped_streak"] += 1
+            continue
+        # Eşik aşıldıktan sonra 3 gün boyunca tekrar atma (cooldown)
+        if _has_recent_notification(
+            db, parent_id=parent.id, student_id=student.id,
+            kind=NotificationKind.EMPTY_DAY, within=timedelta(days=3),
+        ):
+            counts["skipped_recent"] += 1
+            continue
+        produce_empty_day(
+            db, parent=parent, student=student,
+            planned=g.gorev_total, consecutive_empty_days=streak,
+        )
+        counts["empty"] += 1
 
     db.flush()
-    logger.info("daily_summary cron: %s", counts)
+    logger.info("daily_empty cron: %s", counts)
     return counts
 
 
