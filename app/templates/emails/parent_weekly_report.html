@@ -102,7 +102,7 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} haftalık raporu
             </div>
             {% endif %}
             <div style="margin-top: 4px; font-size: 11px; color: #64748b; text-align: right;">
-              {{ day.gorev_done }}/{{ day.gorev_total }} görev{% if day.test_planned > 0 %} · {{ day.test_completed }}/{{ day.test_planned }} test{% endif %}
+              {{ day.gorev_done or 0 }}/{{ day.gorev_total or 0 }} görev{% if (day.test_planned or 0) > 0 %} · {{ day.test_completed }}/{{ day.test_planned }} test{% endif %}
             </div>
           {% else %}
             <span style="color: #cbd5e1; font-style: italic;">— görev yok —</span>

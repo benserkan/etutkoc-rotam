@@ -71,7 +71,7 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} için yeni haftalık program
               </div>
             {% endif %}
             <div style="margin-top: 4px; font-size: 11px; color: #64748b; text-align: right;">
-              <b>{{ day.gorev_total }}</b> görev{% if day.test_planned > 0 %} · {{ day.test_planned }} test{% endif %}{% if day.deneme_count > 0 %} · {{ day.deneme_count }} deneme{% endif %}
+              <b>{{ day.gorev_total or 0 }}</b> görev{% if (day.test_planned or 0) > 0 %} · {{ day.test_planned }} test{% endif %}{% if (day.deneme_count or 0) > 0 %} · {{ day.deneme_count }} deneme{% endif %}
             </div>
           {% else %}
             <span style="color: #cbd5e1; font-style: italic;">— görev yok —</span>
