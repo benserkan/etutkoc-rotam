@@ -54,11 +54,18 @@ export function DashboardClient({ initial }: Props) {
   const data = q.data ?? initial;
   const isStale = q.isFetching && !q.isLoading;
 
-  const weekPct = Math.round((data.week_completion_rate ?? 0) * 100);
+  // GÖREV tamamlama (deneme soruları test'e karışmaz) — eski test-bazlıya fallback
+  const weekPct = Math.round(
+    ((data.gorev_week_total ?? 0) > 0
+      ? (data.gorev_week_rate ?? 0)
+      : (data.week_completion_rate ?? 0)) * 100,
+  );
   const todayPct =
-    data.today_planned > 0
-      ? Math.round((data.today_completed / data.today_planned) * 100)
-      : 0;
+    (data.gorev_today_total ?? 0) > 0
+      ? Math.round((data.gorev_today_done / data.gorev_today_total) * 100)
+      : data.today_planned > 0
+        ? Math.round((data.today_completed / data.today_planned) * 100)
+        : 0;
 
   return (
     <div className="space-y-6">
@@ -122,9 +129,13 @@ export function DashboardClient({ initial }: Props) {
         />
         <KpiCard
           icon={TrendingUp}
-          label="Bu hafta tamamlama"
+          label="Bu hafta görev tamamlama"
           value={`%${weekPct}`}
-          sub={`${data.week_completed}/${data.week_planned} test · son 7 gün`}
+          sub={
+            (data.gorev_week_total ?? 0) > 0
+              ? `${data.gorev_week_done}/${data.gorev_week_total} görev · ${data.test_week_completed}/${data.test_week_planned} test · son 7 gün`
+              : `${data.week_completed}/${data.week_planned} test · son 7 gün`
+          }
           tone="text-emerald-500"
         />
       </section>
@@ -164,8 +175,9 @@ export function DashboardClient({ initial }: Props) {
               tone="text-rose-500"
             />
             <div className="mt-3 pt-3 border-t border-border text-xs text-muted-foreground">
-              Bugün planlanan: {data.today_planned} test · tamamlanan{" "}
-              {data.today_completed} test (%{todayPct})
+              {(data.gorev_today_total ?? 0) > 0
+                ? `Bugün ${data.gorev_today_done}/${data.gorev_today_total} görev tamamlandı (%${todayPct})`
+                : `Bugün planlanan: ${data.today_planned} test · tamamlanan ${data.today_completed} test (%${todayPct})`}
             </div>
           </CardContent>
         </Card>

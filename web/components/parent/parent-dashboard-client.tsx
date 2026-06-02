@@ -126,22 +126,22 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
               Bugün
             </span>
             <span className="text-sm">
-              {child.today_planned > 0 ? (
+              {child.today_gorev_total > 0 ? (
                 <>
                   <span className="font-semibold tabular-nums">
-                    {child.today_completed}
+                    {child.today_gorev_done}
                   </span>
                   <span className="text-muted-foreground/60 mx-0.5">/</span>
                   <span className="text-muted-foreground tabular-nums">
-                    {child.today_planned}
+                    {child.today_gorev_total}
                   </span>
                   <span className="text-muted-foreground text-xs ml-1">
-                    test
+                    görev
                   </span>
                 </>
               ) : (
                 <span className="text-muted-foreground italic">
-                  bugün test yok
+                  bugün görev yok
                 </span>
               )}
             </span>
@@ -154,12 +154,12 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
                 Bu hafta
               </span>
               <span className="font-semibold tabular-nums">
-                {child.week_planned > 0 ? (
+                {child.week_gorev_total > 0 ? (
                   <>
-                    {child.week_completed}/{child.week_planned} test
-                    {child.week_completion_rate != null && (
+                    {child.week_gorev_done}/{child.week_gorev_total} görev
+                    {child.week_gorev_rate != null && (
                       <span className="text-muted-foreground ml-1">
-                        · %{child.week_completion_rate}
+                        · %{child.week_gorev_rate}
                       </span>
                     )}
                   </>
@@ -168,13 +168,21 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
                 )}
               </span>
             </div>
-            {child.week_planned > 0 && (
-              <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
-                <div
-                  className={cn("h-full", tone.bar)}
-                  style={{ width: `${child.week_completion_rate ?? 0}%` }}
-                />
-              </div>
+            {child.week_gorev_total > 0 && (
+              <>
+                <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                  <div
+                    className={cn("h-full", tone.bar)}
+                    style={{ width: `${child.week_gorev_rate ?? 0}%` }}
+                  />
+                </div>
+                {child.week_test_planned > 0 && (
+                  <div className="text-[11px] text-muted-foreground mt-1">
+                    Test: {child.week_test_completed}/{child.week_test_planned}{" "}
+                    (deneme ayrı sayılır)
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -186,7 +194,7 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
               tone={
                 child.rate_7d != null ? tone.text : "text-muted-foreground"
               }
-              sub="test tamamlama"
+              sub="tamamlama oranı"
             />
             <Stat
               label="İstikrar"

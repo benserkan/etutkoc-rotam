@@ -37,6 +37,14 @@ export interface ParentChildSummary {
   week_planned: number;
   week_completed: number;
   week_completion_rate: number | null;
+  // GÖREV-bazlı (her madde 1 görev; deneme/test/etkinlik AYRI)
+  today_gorev_total: number;
+  today_gorev_done: number;
+  week_gorev_total: number;
+  week_gorev_done: number;
+  week_gorev_rate: number | null;
+  week_test_planned: number;
+  week_test_completed: number;
   rate_7d: number | null;
   consistency_7d: number | null;
   warning_level: WarningLevel;

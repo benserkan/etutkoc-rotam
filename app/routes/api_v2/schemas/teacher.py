@@ -73,6 +73,15 @@ class TeacherDashboardResponse(BaseModel):
     week_completed: int
     week_completion_rate: float         # 0..1
 
+    # GÖREV-bazlı (görev/test/deneme AYRI; deneme soruları test'e karışmaz)
+    gorev_today_total: int = 0
+    gorev_today_done: int = 0
+    gorev_week_total: int = 0
+    gorev_week_done: int = 0
+    gorev_week_rate: float = 0.0        # 0..1 görev tamamlama
+    test_week_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
+    test_week_completed: int = 0
+
     fleet_red: int                      # worst_warning_level sayım
     fleet_amber: int
     fleet_green: int

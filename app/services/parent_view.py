@@ -83,6 +83,9 @@ def list_parent_students(db: Session, parent: User) -> list[dict[str, Any]]:
         .filter(ParentStudentLink.parent_id == parent.id)
         .all()
     )
+    from app.services import gorev_stats
+    _wk_start = today - timedelta(days=6)
+    _opts = joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject)
     out = []
     for link in links:
         s = link.student
@@ -91,6 +94,15 @@ def list_parent_students(db: Session, parent: User) -> list[dict[str, Any]]:
         snap = student_snapshot(db, s, today=today)
         # 7 günlük tamamlama (bu hafta için)
         week = snap.week
+        # GÖREV-bazlı (görev/test/deneme AYRI; deneme soruları test'e karışmaz)
+        _wk_tasks = (
+            db.query(Task).options(_opts)
+            .filter(Task.student_id == s.id, Task.date >= _wk_start,
+                    Task.date <= today, Task.is_draft.is_(False))
+            .all()
+        )
+        _gw = gorev_stats.summarize(_wk_tasks)
+        _gt = gorev_stats.summarize([t for t in _wk_tasks if t.date == today])
         out.append({
             "student_id": s.id,
             "full_name": s.full_name,
@@ -111,6 +123,17 @@ def list_parent_students(db: Session, parent: User) -> list[dict[str, Any]]:
                 round(100 * week.completed / week.planned)
                 if week.planned > 0 else None
             ),
+            # GÖREV-bazlı (her madde 1 görev; deneme/test/etkinlik AYRI)
+            "today_gorev_total": _gt.gorev_total,
+            "today_gorev_done": _gt.gorev_done,
+            "week_gorev_total": _gw.gorev_total,
+            "week_gorev_done": _gw.gorev_done,
+            "week_gorev_rate": (
+                round(100 * _gw.gorev_done / _gw.gorev_total)
+                if _gw.gorev_total > 0 else None
+            ),
+            "week_test_planned": _gw.test_planned,       # yalnız soru bankası
+            "week_test_completed": _gw.test_completed,
             # "Son 7 Gün Oran" = planlanan→tamamlanan oranı (hit_rate_7d, 0..1).
             # DİKKAT: rate_7d test/gün HIZIDIR (yüzde değil) — burada kullanılmaz.
             "rate_7d": (

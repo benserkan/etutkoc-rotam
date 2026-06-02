@@ -452,12 +452,47 @@ def teacher_dashboard_v2(
     fleet_amber = sum(1 for s in snapshots if s.worst_warning_level == "amber")
     fleet_green = sum(1 for s in snapshots if s.worst_warning_level == "green")
 
-    # Hafta + bugün toplamı
+    # Hafta + bugün toplamı (soru-bazlı — geriye uyum)
     week_planned = sum(sn.week.planned for sn in snapshots)
     week_completed = sum(sn.week.completed for sn in snapshots)
     today_planned = sum(sn.today.planned for sn in snapshots)
     today_completed = sum(sn.today.completed for sn in snapshots)
     week_rate = (week_completed / week_planned) if week_planned > 0 else 0.0
+
+    # GÖREV-bazlı filo toplamı (görev/test/deneme AYRI) — "X test" şişmesini
+    # önler: deneme'nin soruları test hacmine girmez. Tek batch sorgu (snapshot
+    # döngüsünden verimli).
+    from app.services import gorev_stats
+    _wk_start = today - timedelta(days=6)
+    _all_ids = [s.id for s in students]
+    gorev_week_total = gorev_week_done = 0
+    gorev_today_total = gorev_today_done = 0
+    test_week_planned = test_week_completed = 0
+    if _all_ids:
+        _wk_tasks = (
+            db.query(Task)
+            .options(joinedload(Task.book_items)
+                     .joinedload(TaskBookItem.book).joinedload(Book.subject))
+            .filter(Task.student_id.in_(_all_ids), Task.date >= _wk_start,
+                    Task.date <= today, Task.is_draft.is_(False))
+            .all()
+        )
+        _wk_by: dict[int, list] = {}
+        _today_by: dict[int, list] = {}
+        for _t in _wk_tasks:
+            _wk_by.setdefault(_t.student_id, []).append(_t)
+            if _t.date == today:
+                _today_by.setdefault(_t.student_id, []).append(_t)
+        for _sid in _all_ids:
+            _gw = gorev_stats.summarize(_wk_by.get(_sid, []))
+            gorev_week_total += _gw.gorev_total
+            gorev_week_done += _gw.gorev_done
+            test_week_planned += _gw.test_planned
+            test_week_completed += _gw.test_completed
+            _gt = gorev_stats.summarize(_today_by.get(_sid, []))
+            gorev_today_total += _gt.gorev_total
+            gorev_today_done += _gt.gorev_done
+    gorev_week_rate = (gorev_week_done / gorev_week_total) if gorev_week_total > 0 else 0.0
 
     # Risk paneli — sadece aktif + mute'suz medium+
     muted_ids = get_active_mutes(db, user.id)
@@ -515,6 +550,13 @@ def teacher_dashboard_v2(
         week_planned=week_planned,
         week_completed=week_completed,
         week_completion_rate=week_rate,
+        gorev_today_total=gorev_today_total,
+        gorev_today_done=gorev_today_done,
+        gorev_week_total=gorev_week_total,
+        gorev_week_done=gorev_week_done,
+        gorev_week_rate=gorev_week_rate,
+        test_week_planned=test_week_planned,
+        test_week_completed=test_week_completed,
         fleet_red=fleet_red,
         fleet_amber=fleet_amber,
         fleet_green=fleet_green,

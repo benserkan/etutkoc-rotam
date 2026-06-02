@@ -114,6 +114,15 @@ export interface TeacherDashboardResponse {
   week_completed: number;
   week_completion_rate: number;
 
+  // GÖREV-bazlı (görev/test/deneme AYRI)
+  gorev_today_total: number;
+  gorev_today_done: number;
+  gorev_week_total: number;
+  gorev_week_done: number;
+  gorev_week_rate: number;
+  test_week_planned: number;
+  test_week_completed: number;
+
   fleet_red: number;
   fleet_amber: number;
   fleet_green: number;

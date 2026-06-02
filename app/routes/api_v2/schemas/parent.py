@@ -50,6 +50,14 @@ class ParentChildSummary(BaseModel):
     week_planned: int
     week_completed: int
     week_completion_rate: int | None = None
+    # GÖREV-bazlı (her madde 1 görev; deneme/test/etkinlik AYRI)
+    today_gorev_total: int = 0
+    today_gorev_done: int = 0
+    week_gorev_total: int = 0
+    week_gorev_done: int = 0
+    week_gorev_rate: int | None = None
+    week_test_planned: int = 0          # yalnız soru bankası (deneme HARİÇ)
+    week_test_completed: int = 0
     rate_7d: int | None = None
     consistency_7d: int | None = None
     warning_level: WarningLevelLiteral
