@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, Sparkles, Trash2 } from "lucide-react";
 
 import { getLibraryBook, libraryKeys } from "@/lib/api/library";
 import {
@@ -123,6 +123,31 @@ export function BookDetailClient({
           Kitabı sil
         </Button>
       </header>
+
+      {/* Atanmamış öğrenci uyarısı — kitap hiçbir öğrenciye atanmadıysa program
+          yaparken GÖRÜNMEZ. Tüm sekmelerde belirgin durur (AI sekmesinde de
+          "önce ata" hatırlatması). Atama yapılınca kaybolur. */}
+      {book.assigned_students.length === 0 ? (
+        <div className="flex items-start gap-3 rounded-lg border-l-4 border-l-amber-500 border border-amber-300 bg-amber-50 dark:bg-amber-950/30 px-4 py-3">
+          <AlertTriangle className="size-5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" aria-hidden />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+              Bu kitap henüz hiçbir öğrenciye atanmadı
+            </p>
+            <p className="text-xs text-amber-800 dark:text-amber-300/90 mt-0.5">
+              Atamadan kitap, program yaparken öğrencinin listesinde
+              <strong> görünmez</strong>. Öğrenci seçip <strong>Kaydet</strong> butonuna basın.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setActive("students")}
+            className="shrink-0 bg-amber-600 text-white hover:bg-amber-700"
+          >
+            Öğrenci ata
+          </Button>
+        </div>
+      ) : null}
 
       <div
         role="tablist"
@@ -642,17 +667,28 @@ function AssignmentsTab({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           Kutuyu işaretle/kaldır. Rezerv/tamam test olan öğrenciler kilitli
           (silinemez).
         </p>
-        <Button onClick={save} disabled={!hasChange || mut.isPending}>
-          {mut.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
+        <div className="flex items-center gap-2 shrink-0">
+          {hasChange ? (
+            <span className="text-xs font-medium text-amber-700 dark:text-amber-300 whitespace-nowrap">
+              Kaydedilmedi — başka sekmeye geçmeden kaydedin
+            </span>
           ) : null}
-          Kaydet
-        </Button>
+          <Button
+            onClick={save}
+            disabled={!hasChange || mut.isPending}
+            className={cn(hasChange ? "bg-amber-600 text-white hover:bg-amber-700" : "")}
+          >
+            {mut.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : null}
+            Kaydet
+          </Button>
+        </div>
       </div>
       <Card>
         <CardContent className="p-0">

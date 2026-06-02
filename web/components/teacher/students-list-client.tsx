@@ -204,9 +204,9 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
         <span className="col-span-12 sm:col-span-3 flex items-center justify-end gap-2 text-xs">
           <Link
             href={`/teacher/students/${s.id}/day`}
-            className="rounded-md border border-border px-2 py-1 hover:bg-background"
+            className="rounded-md border border-border px-2 py-1 hover:bg-background whitespace-nowrap"
           >
-            Plan
+            Haftalık Program
           </Link>
           <Link
             href={`/teacher/requests?student_id=${s.id}`}
