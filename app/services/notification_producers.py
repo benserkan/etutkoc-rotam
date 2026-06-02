@@ -175,6 +175,7 @@ def _build_daily_breakdown(
     """
     from app.models import Book, Task, TaskBookItem
     from sqlalchemy.orm import joinedload
+    from app.services import gorev_stats
 
     tasks = (
         db.query(Task)
@@ -192,16 +193,20 @@ def _build_daily_breakdown(
     )
 
     by_day_tasks: dict[date, list[dict]] = {}            # geriye uyum (düz)
-    by_day_groups: dict[date, dict[int, dict]] = {}      # date -> {subject_key: group}
+    by_day_groups: dict[date, dict[int, dict]] = {}      # date -> {subject_key: group} (YALNIZ test)
     by_day_order: dict[date, dict[int, tuple]] = {}      # subject sıralaması
+    by_day_denemeler: dict[date, list[dict]] = {}        # deneme görevleri (AYRI)
     by_day_activities: dict[date, list[dict]] = {}       # kalemsiz görevler
+    by_day_tasklist: dict[date, list[Task]] = {}         # görev sayımı için ORM
 
     for t in tasks:
         task_type = (
             t.type.value if hasattr(t.type, "value") else str(t.type)
         ) if t.type else "test"
+        by_day_tasklist.setdefault(t.date, []).append(t)
+        cat = gorev_stats.classify_gorev(t)  # test | deneme | tam_deneme | etkinlik
 
-        if not t.book_items:
+        if cat == "etkinlik":
             # Kalemsiz etkinlik (Diğer/Video/Özet/Tekrar) — derssiz, sayısız
             by_day_activities.setdefault(t.date, []).append({
                 "title": t.title or "",
@@ -213,6 +218,32 @@ def _build_daily_breakdown(
             })
             continue
 
+        if cat in ("deneme", "tam_deneme"):
+            # Deneme görevi — BÜTÜN (test'e karışmaz). Birim: deneme adedi
+            # (branş/genel deneme kitabı) veya soru (tam deneme, kitapsız).
+            planned = sum(int(i.planned_count or 0) for i in t.book_items)
+            done = sum(int(i.completed_count or 0) for i in t.book_items)
+            first = t.book_items[0] if t.book_items else None
+            name = (
+                t.title
+                or (first.label if first and not first.book else None)
+                or (first.book.name if first and first.book else "Deneme")
+            )
+            by_day_denemeler.setdefault(t.date, []).append({
+                "title": name,
+                "planned": planned,
+                "completed": done,
+                "is_tam": cat == "tam_deneme",   # True → birim "soru"; False → "deneme"
+                "is_done": gorev_stats.gorev_done(t),
+            })
+            by_day_tasks.setdefault(t.date, []).append({
+                "title": name, "type": task_type,
+                "rows": [], "total_planned": planned, "total_completed": done,
+                "is_deneme": True,
+            })
+            continue
+
+        # cat == "test" — soru bankası; ders bazlı grupla
         items_list: list[dict] = []
         total_p = total_c = 0
         for it in t.book_items:
@@ -236,11 +267,13 @@ def _build_daily_breakdown(
             }
             items_list.append(row)
 
+            # NOT: anahtar "rows" — Jinja'da `grp.items` dict.items() metoduna
+            # çözülür ("object is not iterable"); "rows" güvenli (CLAUDE.md kuralı).
             grp = by_day_groups.setdefault(t.date, {}).setdefault(subj_key, {
-                "subject": subj_name, "items": [],
+                "subject": subj_name, "rows": [],
                 "total_planned": 0, "total_completed": 0,
             })
-            grp["items"].append(dict(row))
+            grp["rows"].append(dict(row))
             grp["total_planned"] += planned
             grp["total_completed"] += done
             by_day_order.setdefault(t.date, {})[subj_key] = subj_order
@@ -261,9 +294,10 @@ def _build_daily_breakdown(
             groups_map[k]
             for k in sorted(groups_map, key=lambda kk: order_map.get(kk, (10**9, kk)))
         ]
+        denemeler = by_day_denemeler.get(cur, [])
         activities = by_day_activities.get(cur, [])
-        day_total_p = sum(t["total_planned"] for t in flat)
-        day_total_c = sum(t["total_completed"] for t in flat)
+        # GÖREV-bazlı gün özeti (her madde 1 görev; deneme test'e karışmaz)
+        _g = gorev_stats.summarize(by_day_tasklist.get(cur, []))
         out.append({
             "day_iso": cur.isoformat(),
             "day_label": cur.strftime("%d %b").replace("Jan","Oca").replace("Feb","Şub")
@@ -271,12 +305,21 @@ def _build_daily_breakdown(
                 .replace("Jun","Haz").replace("Jul","Tem").replace("Aug","Ağu")
                 .replace("Sep","Eyl").replace("Oct","Eki").replace("Nov","Kas").replace("Dec","Ara"),
             "day_name": day_names_tr.get(cur.weekday(), ""),
-            "tasks": flat,                       # geriye uyum (weekly_report)
-            "subject_groups": subject_groups,    # DERS bazlı (yeni — new_program + önizleme)
+            "tasks": flat,                       # geriye uyum
+            "subject_groups": subject_groups,    # DERS bazlı (YALNIZ test görevleri)
+            "denemeler": denemeler,              # deneme görevleri AYRI (test'e karışmaz)
             "activities": activities,            # kalemsiz etkinlikler
-            "total_planned": day_total_p,
-            "total_completed": day_total_c,
-            "has_tasks": len(flat) > 0,
+            # GÖREV-bazlı sayımlar
+            "gorev_total": _g.gorev_total,
+            "gorev_done": _g.gorev_done,
+            "test_planned": _g.test_planned,     # yalnız soru bankası
+            "test_completed": _g.test_completed,
+            "deneme_count": _g.cat_total["deneme"] + _g.cat_total["tam_deneme"],
+            "etkinlik_count": _g.cat_total["etkinlik"],
+            # geriye uyum (eski şablonlar)
+            "total_planned": _g.test_planned,
+            "total_completed": _g.test_completed,
+            "has_tasks": _g.gorev_total > 0,
         })
         cur += timedelta(days=1)
     return out
@@ -363,19 +406,37 @@ def produce_weekly_report(
     planned: int,
     rate_pct: int | None,
 ) -> list[NotificationLog]:
+    daily_breakdown = _build_daily_breakdown(
+        db, student_id=student.id, week_start=week_start, week_end=week_end,
+    )
+    # GÖREV-bazlı hafta manşeti (her madde 1 görev; deneme test'e karışmaz)
+    wk_gorev_total = sum(d["gorev_total"] for d in daily_breakdown)
+    wk_gorev_done = sum(d["gorev_done"] for d in daily_breakdown)
+    wk_test_planned = sum(d["test_planned"] for d in daily_breakdown)
+    wk_test_completed = sum(d["test_completed"] for d in daily_breakdown)
+    wk_deneme = sum(d["deneme_count"] for d in daily_breakdown)
+    wk_etkinlik = sum(d["etkinlik_count"] for d in daily_breakdown)
     base_payload: dict[str, Any] = {
         "__template": "parent_weekly_report",
         "student_id": student.id,
         "student_name": student.full_name,
         "week_start": week_start.isoformat(),
         "week_end": week_end.isoformat(),
-        "completed": completed,
+        "completed": completed,           # geriye uyum (test-bazlı)
         "planned": planned,
         "rate_pct": rate_pct,
-        # Günlük detay + son deneme — template'in zenginleştirilmesi için
-        "daily_breakdown": _build_daily_breakdown(
-            db, student_id=student.id, week_start=week_start, week_end=week_end,
+        # GÖREV-bazlı hafta özeti (manşet)
+        "gorev_total": wk_gorev_total,
+        "gorev_done": wk_gorev_done,
+        "gorev_rate": (
+            round(100 * wk_gorev_done / wk_gorev_total) if wk_gorev_total else 0
         ),
+        "test_planned": wk_test_planned,  # yalnız soru bankası (deneme HARİÇ)
+        "test_completed": wk_test_completed,
+        "deneme_count": wk_deneme,
+        "etkinlik_count": wk_etkinlik,
+        # Günlük detay + son deneme — template'in zenginleştirilmesi için
+        "daily_breakdown": daily_breakdown,
         "latest_exam": _get_latest_exam(db, student_id=student.id, since_days=7),
         "unsubscribe_token": _unsub_token(db, parent.id),
     }
@@ -517,6 +578,9 @@ def produce_new_program(
     # daily_breakdown parametresi (event_triggers'tan eski format) artık atıl —
     # log için sayım amaçlı kullanılabilir ama mail içeriği detailed_breakdown'dan.
     _ = daily_breakdown
+    # GÖREV sayısı breakdown'dan (her madde 1 görev; deneme test'e karışmaz).
+    # Çağıranın total_tasks'i yerine kanonik değer kullanılır.
+    total_tasks = sum(d["gorev_total"] for d in detailed_breakdown)
 
     base_payload: dict[str, Any] = {
         "__template": "parent_new_program",

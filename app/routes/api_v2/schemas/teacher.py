@@ -550,14 +550,27 @@ class ParentProgramPreviewActivity(BaseModel):
     type: str
 
 
+class ParentProgramPreviewDeneme(BaseModel):
+    """Deneme görevi (AYRI — test'e karışmaz)."""
+    title: str
+    planned: int
+    completed: int
+    is_tam: bool = False              # True → birim "soru"; False → "deneme"
+
+
 class ParentProgramPreviewDay(BaseModel):
     day_iso: str
     day_name: str                     # Pzt/Sal/...
     day_label: str                    # "31 May"
     has_tasks: bool
     subject_groups: list[ParentProgramPreviewGroup]
+    denemeler: list[ParentProgramPreviewDeneme] = []
     activities: list[ParentProgramPreviewActivity]
-    total_planned: int                # gün toplam TEST
+    total_planned: int                # gün toplam TEST (yalnız soru bankası)
+    # GÖREV-bazlı (her madde 1 görev; deneme/test AYRI)
+    gorev_total: int = 0
+    test_planned: int = 0
+    deneme_count: int = 0
 
 
 class ParentProgramPreviewExam(BaseModel):

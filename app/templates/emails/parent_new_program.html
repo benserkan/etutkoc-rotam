@@ -39,7 +39,7 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} için yeni haftalık program
             {% for grp in day.subject_groups %}
               <div style="margin-bottom: 6px;">
                 <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">{{ grp.subject }}</div>
-                {% for it in grp.items %}
+                {% for it in grp.rows %}
                 <div style="margin: 0 0 2px 12px;">
                   <span style="color: #334155;">{{ it.section or it.book }}</span>{% if it.section and it.book %} <span style="color: #94a3b8;">· {{ it.book }}</span>{% endif %}
                   <span style="float: right; font-variant-numeric: tabular-nums; color: #475569;">
@@ -49,19 +49,30 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} için yeni haftalık program
                 {% endfor %}
               </div>
             {% endfor %}
+            {% if day.denemeler %}
+              <div style="margin-bottom: 6px;">
+                <div style="font-weight: 700; color: #7c3aed; margin-bottom: 2px;">Denemeler</div>
+                {% for d in day.denemeler %}
+                <div style="margin: 0 0 2px 12px;">
+                  <span style="color: #334155;">{{ d.title }}</span>
+                  <span style="float: right; font-variant-numeric: tabular-nums; color: #475569;">
+                    {% if d.is_tam %}<b>{{ d.planned }}</b> soru{% else %}<b>{{ d.planned }}</b> deneme{% endif %}
+                  </span>
+                </div>
+                {% endfor %}
+              </div>
+            {% endif %}
             {% if day.activities %}
               <div style="margin-bottom: 4px;">
-                <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">Diğer çalışmalar</div>
+                <div style="font-weight: 700; color: #0891b2; margin-bottom: 2px;">Diğer çalışmalar</div>
                 {% for a in day.activities %}
                 <div style="margin: 0 0 2px 12px; color: #475569; font-style: italic;">{{ a.title or a.type }}</div>
                 {% endfor %}
               </div>
             {% endif %}
-            {% if day.total_planned and day.total_planned > 0 %}
             <div style="margin-top: 4px; font-size: 11px; color: #64748b; text-align: right;">
-              gün toplamı: <b>{{ day.total_planned }}</b> test
+              <b>{{ day.gorev_total }}</b> görev{% if day.test_planned > 0 %} · {{ day.test_planned }} test{% endif %}{% if day.deneme_count > 0 %} · {{ day.deneme_count }} deneme{% endif %}
             </div>
-            {% endif %}
           {% else %}
             <span style="color: #cbd5e1; font-style: italic;">— görev yok —</span>
           {% endif %}

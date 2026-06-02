@@ -546,14 +546,24 @@ export interface ParentProgramPreviewActivity {
   title: string;
   type: TaskType;
 }
+export interface ParentProgramPreviewDeneme {
+  title: string;
+  planned: number;
+  completed: number;
+  is_tam: boolean;                 // true → birim "soru"; false → "deneme"
+}
 export interface ParentProgramPreviewDay {
   day_iso: string;
   day_name: string;
   day_label: string;
   has_tasks: boolean;
   subject_groups: ParentProgramPreviewGroup[];
+  denemeler: ParentProgramPreviewDeneme[];
   activities: ParentProgramPreviewActivity[];
-  total_planned: number;
+  total_planned: number;           // yalnız soru bankası (deneme HARİÇ)
+  gorev_total: number;
+  test_planned: number;
+  deneme_count: number;
 }
 export interface ParentProgramPreviewExam {
   title: string;

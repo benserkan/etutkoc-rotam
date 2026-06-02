@@ -48,6 +48,7 @@ from app.routes.api_v2.schemas.teacher import (
     NotifyParentsResult,
     ParentProgramPreviewActivity,
     ParentProgramPreviewDay,
+    ParentProgramPreviewDeneme,
     ParentProgramPreviewExam,
     ParentProgramPreviewGroup,
     ParentProgramPreviewItem,
@@ -534,11 +535,20 @@ def parent_program_preview(
                         planned=int(it.get("planned", 0)),
                         completed=int(it.get("completed", 0)),
                     )
-                    for it in g.get("items", [])
+                    for it in g.get("rows", [])
                 ],
                 total_planned=int(g.get("total_planned", 0)),
             )
             for g in day.get("subject_groups", [])
+        ]
+        denemeler_out = [
+            ParentProgramPreviewDeneme(
+                title=(d.get("title") or "Deneme").strip(),
+                planned=int(d.get("planned", 0)),
+                completed=int(d.get("completed", 0)),
+                is_tam=bool(d.get("is_tam")),
+            )
+            for d in day.get("denemeler", [])
         ]
         activities_out = [
             ParentProgramPreviewActivity(
@@ -553,8 +563,12 @@ def parent_program_preview(
             day_label=day.get("day_label", ""),
             has_tasks=bool(day.get("has_tasks")),
             subject_groups=groups_out,
+            denemeler=denemeler_out,
             activities=activities_out,
             total_planned=int(day.get("total_planned", 0)),
+            gorev_total=int(day.get("gorev_total", 0)),
+            test_planned=int(day.get("test_planned", 0)),
+            deneme_count=int(day.get("deneme_count", 0)),
         ))
 
     # Yayınlanmış görev sayısı — mail başlığındaki "X görev" ile parite (taslak hariç)

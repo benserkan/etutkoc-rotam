@@ -163,7 +163,9 @@ export function ParentAnnounceDialog({
                           {d.day_name} · {d.day_label}
                         </span>
                         <span className="text-xs text-muted-foreground">
-                          {d.total_planned} test
+                          {d.gorev_total} görev
+                          {d.test_planned > 0 ? ` · ${d.test_planned} test` : ""}
+                          {d.deneme_count > 0 ? ` · ${d.deneme_count} deneme` : ""}
                         </span>
                       </div>
                       <div className="mt-1.5 space-y-2">
@@ -190,6 +192,24 @@ export function ParentAnnounceDialog({
                             </ul>
                           </div>
                         ))}
+                        {d.denemeler.length > 0 ? (
+                          <div>
+                            <div className="text-xs font-semibold text-violet-700">Denemeler</div>
+                            <ul className="mt-0.5 space-y-0.5">
+                              {d.denemeler.map((dn, di) => (
+                                <li
+                                  key={di}
+                                  className="flex items-baseline justify-between gap-2 pl-3 text-xs text-slate-700"
+                                >
+                                  <span>{dn.title}</span>
+                                  <span className="shrink-0 tabular-nums text-muted-foreground">
+                                    {dn.planned} {dn.is_tam ? "soru" : "deneme"}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
                         {d.activities.length > 0 ? (
                           <div>
                             <div className="text-xs font-semibold text-foreground">Diğer çalışmalar</div>
