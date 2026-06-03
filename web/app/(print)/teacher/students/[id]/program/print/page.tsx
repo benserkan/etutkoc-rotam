@@ -258,6 +258,10 @@ function TaskRow({ task }: { task: TeacherTask }) {
     st === "done" ? "text-emerald-700" : st === "partial" ? "text-amber-700" : "text-stone-400";
   const isActivity = task.planned_count <= 0 && task.items.every((it) => (it.planned_count ?? 0) <= 0);
   const typeLabel = TASK_TYPE_LABEL[task.type] ?? task.type;
+  // Görev bazlı doğru/yanlış toplamı (kalemlerden) — varsa yanında göster.
+  const correct = task.items.reduce((a, it) => a + (it.correct_count ?? 0), 0);
+  const wrong = task.items.reduce((a, it) => a + (it.wrong_count ?? 0), 0);
+  const hasDY = correct > 0 || wrong > 0;
 
   return (
     <li className="flex items-start gap-1 text-[9.5px] leading-tight">
@@ -278,6 +282,12 @@ function TaskRow({ task }: { task: TeacherTask }) {
             {" "}{task.completed_count}/{task.planned_count} {taskUnit(task)}
           </span>
         )}
+        {hasDY ? (
+          <span className="tabular-nums">
+            {" "}· <span className="font-semibold text-emerald-700">D{correct}</span>{" "}
+            <span className="font-semibold text-rose-700">Y{wrong}</span>
+          </span>
+        ) : null}
       </span>
     </li>
   );
