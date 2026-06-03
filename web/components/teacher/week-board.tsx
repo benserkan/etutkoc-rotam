@@ -58,6 +58,7 @@ import { ParentAnnounceDialog } from "./weekly-plan/parent-announce-dialog";
 import { WeekDayCard } from "./weekly-plan/week-day-card";
 import { WeekNotesCard } from "./weekly-plan/week-notes-card";
 import { ResourceSidebar } from "./weekly-plan/resource-sidebar";
+import { WeekGrid } from "./weekly-plan/week-grid";
 
 /**
  * Öğretmen — haftalık plan ekranı (Paket 3.5a).
@@ -293,6 +294,21 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           </span>
         </div>
       ) : null}
+
+      <WeekGrid
+        days={data.days}
+        openDate={openDate}
+        onOpenDay={(date) => {
+          setOpenDate(date);
+          if (typeof window !== "undefined") {
+            window.requestAnimationFrame(() => {
+              document
+                .getElementById(`day-${date}`)
+                ?.scrollIntoView({ behavior: "smooth", block: "start" });
+            });
+          }
+        }}
+      />
 
       <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
         <div className="space-y-4 min-w-0">

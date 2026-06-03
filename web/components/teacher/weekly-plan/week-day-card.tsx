@@ -133,12 +133,14 @@ export function WeekDayCard({
 
   return (
     <details
+      id={`day-${day.date}`}
       open={isOpen}
       onToggle={(e) => {
         const next = (e.target as HTMLDetailsElement).open;
         if (next !== isOpen) onSetOpen(next);
       }}
       className={cn(
+        "scroll-mt-4",
         "day-card rounded-xl border bg-card group transition-shadow",
         day.is_today
           ? "border-foreground/30 shadow-sm ring-1 ring-foreground/5"
@@ -420,6 +422,89 @@ function SubjectChip({
 }
 
 // ============================================================================
+// Ders gruplama (Katman 1) — görevler ders bazlı gruplanır; aynı dersin
+// görevleri yan yana durur (araya başka ders girmez). Etkinlik (kalemsiz)
+// görevlerinde ders backend'den gelmez → başlık "{Ders} · {içerik}" parse edilir.
+// ============================================================================
+
+interface TaskSubject {
+  key: string;
+  id: number | null;
+  name: string;
+}
+
+function taskSubject(task: TeacherTask): TaskSubject {
+  const withSubj = task.items.find((it) => it.subject_id != null);
+  if (withSubj?.subject_id != null) {
+    return {
+      key: `s${withSubj.subject_id}`,
+      id: withSubj.subject_id,
+      name: withSubj.subject_name ?? "Ders",
+    };
+  }
+  if (task.items.length === 0) {
+    const sep = task.title.indexOf(" · ");
+    if (sep > 0 && sep < task.title.length - 3) {
+      const nm = task.title.substring(0, sep);
+      return { key: `n:${nm.toLocaleLowerCase("tr")}`, id: null, name: nm };
+    }
+  }
+  return { key: "other", id: null, name: "Diğer çalışmalar" };
+}
+
+function subjectHue(id: number | null, name: string): number {
+  if (id !== null) return (id * 67) % 360;
+  return (
+    Math.abs(
+      Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0),
+    ) % 360
+  );
+}
+
+// Görevleri ders grubuna göre sırala: gruplar ilk-görülme sırasında, "Diğer"
+// en sonda; grup içinde görevlerin mevcut sırası korunur.
+function subjectGroupedOrder(tasks: TeacherTask[]): number[] {
+  const order: string[] = [];
+  const groups = new Map<string, number[]>();
+  for (const t of tasks) {
+    const k = taskSubject(t).key;
+    if (!groups.has(k)) {
+      groups.set(k, []);
+      order.push(k);
+    }
+    groups.get(k)!.push(t.id);
+  }
+  order.sort((a, b) => (a === "other" ? 1 : 0) - (b === "other" ? 1 : 0));
+  return order.flatMap((k) => groups.get(k) ?? []);
+}
+
+function SubjectGroupHeader({
+  subj,
+  count,
+}: {
+  subj: TaskSubject;
+  count: number;
+}) {
+  const hue = subjectHue(subj.id, subj.name);
+  return (
+    <div
+      className="flex items-center gap-2 px-4 pt-3 pb-1.5 bg-muted/20 border-l-[3px]"
+      style={{ borderLeftColor: `hsl(${hue}, 45%, 65%)` }}
+    >
+      <span
+        className="size-2 rounded-full flex-shrink-0"
+        style={{ backgroundColor: `hsl(${hue}, 55%, 52%)` }}
+        aria-hidden
+      />
+      <span className="text-xs font-semibold text-foreground">{subj.name}</span>
+      <span className="text-[11px] text-muted-foreground tabular-nums">
+        · {count} görev
+      </span>
+    </div>
+  );
+}
+
+// ============================================================================
 // Task list with drag-drop
 // ============================================================================
 
@@ -431,20 +516,36 @@ function TaskList({
   day: TeacherStudentWeekDay;
 }) {
   const reorderMut = useReorderTasks(studentId);
-  const [orderedIds, setOrderedIds] = React.useState<number[]>(
-    day.tasks.map((t) => t.id),
+  const [orderedIds, setOrderedIds] = React.useState<number[]>(() =>
+    subjectGroupedOrder(day.tasks),
   );
 
-  const taskIdsKey = day.tasks.map((t) => t.id).join(",");
+  // Görev seti değişince (ekle/sil) ders-gruplu sıraya yeniden kur. Görev
+  // kimliklerini sıralayıp birleştiriyoruz → yalnız set değişince tetiklenir,
+  // grup-içi sürükleme sırası kaybolmaz.
+  const taskIdsKey = day.tasks
+    .map((t) => t.id)
+    .sort((a, b) => a - b)
+    .join(",");
   const [lastKey, setLastKey] = React.useState(taskIdsKey);
   if (lastKey !== taskIdsKey) {
     setLastKey(taskIdsKey);
-    setOrderedIds(day.tasks.map((t) => t.id));
+    setOrderedIds(subjectGroupedOrder(day.tasks));
   }
 
   const tasksById = React.useMemo(() => {
     const m = new Map<number, TeacherTask>();
     for (const t of day.tasks) m.set(t.id, t);
+    return m;
+  }, [day.tasks]);
+
+  // Grup başına görev sayısı (başlıkta gösterilir).
+  const groupCounts = React.useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of day.tasks) {
+      const k = taskSubject(t).key;
+      m.set(k, (m.get(k) ?? 0) + 1);
+    }
     return m;
   }, [day.tasks]);
 
@@ -484,16 +585,28 @@ function TaskList({
     >
       <SortableContext items={orderedIds} strategy={verticalListSortingStrategy}>
         <div className="divide-y divide-border/60 border-t border-border">
-          {orderedIds.map((id) => {
+          {orderedIds.map((id, idx) => {
             const task = tasksById.get(id);
             if (!task) return null;
+            const subj = taskSubject(task);
+            const prevTask =
+              idx > 0 ? tasksById.get(orderedIds[idx - 1]) : undefined;
+            const prevKey = prevTask ? taskSubject(prevTask).key : null;
+            const showHeader = subj.key !== prevKey;
             return (
-              <SortableTaskRow
-                key={id}
-                studentId={studentId}
-                dayDate={day.date}
-                task={task}
-              />
+              <React.Fragment key={id}>
+                {showHeader ? (
+                  <SubjectGroupHeader
+                    subj={subj}
+                    count={groupCounts.get(subj.key) ?? 1}
+                  />
+                ) : null}
+                <SortableTaskRow
+                  studentId={studentId}
+                  dayDate={day.date}
+                  task={task}
+                />
+              </React.Fragment>
             );
           })}
         </div>
