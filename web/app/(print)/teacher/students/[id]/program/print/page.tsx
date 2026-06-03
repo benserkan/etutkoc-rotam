@@ -4,19 +4,15 @@ import type {
   TeacherStudentDetailResponse,
   TeacherStudentWeekResponse,
   TeacherTask,
-  TeacherTaskItem,
 } from "@/lib/types/teacher";
 
 /**
- * /teacher/students/[id]/program/print?week=YYYY-MM-DD
+ * /teacher/students/[id]/program/print?week=YYYY-MM-DD | ?program_id=N
  *
- * Yazdırılabilir haftalık program çıktısı. Mevcut + geçmiş haftalar için:
- *   - Her gün × görev satırları
- *   - Kalem detayı: kitap · bölüm · planlanan / çözülen / D / Y
- *   - Toplam özet (planlanan / çözülen / oran)
- *
- * D/Y null olan kalemler "—" gösterir. Geçmiş haftalarda D/Y dolu varsa
- * koç performans karşılaştırması yapabilir.
+ * Haftalık program — A4 YATAY tek sayfa. Gün × DERS bazlı gruplu kompakt ızgara.
+ * Her görev: durum işareti (✓ yapıldı / ◐ kısmen / ☐ yapılmadı) + kitap·bölüm +
+ * çözülen/planlanan. Etkinlik (Video/Özet/Tekrar/Diğer) görevleri de durum
+ * işaretiyle gösterilir (test dışı konuların yapılıp yapılmadığı net görünür).
  */
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Haftalık Program Çıktısı" };
@@ -31,14 +27,64 @@ function fmtDate(iso: string): string {
   if (!y || !m || !d) return iso;
   return `${d} ${TR_MONTHS[m - 1]} ${y}`;
 }
+function fmtShort(iso: string): string {
+  const [, m, d] = iso.split("-").map(Number);
+  if (!m || !d) return iso;
+  return `${d} ${TR_MONTHS[m - 1].slice(0, 3)}`;
+}
 
 const TASK_TYPE_LABEL: Record<string, string> = {
-  test: "Test",
-  video: "Video",
-  ozet: "Özet",
-  tekrar: "Tekrar",
-  other: "Diğer",
+  test: "Test", video: "Video", ozet: "Özet", tekrar: "Tekrar", other: "Diğer",
 };
+
+// Ders text rengi — subject_id stable hash (print-color-adjust ile basılır).
+const SUBJECT_TEXT = [
+  "text-indigo-700", "text-emerald-700", "text-amber-700", "text-rose-700",
+  "text-violet-700", "text-cyan-700", "text-fuchsia-700", "text-sky-700",
+];
+function subjectColor(subjectId: number | null): string {
+  if (subjectId == null) return "text-stone-500";
+  return SUBJECT_TEXT[Math.abs(subjectId) % SUBJECT_TEXT.length];
+}
+
+type GState = "done" | "partial" | "todo";
+function gorevState(t: TeacherTask): GState {
+  const done =
+    t.status === "completed" ||
+    (t.planned_count > 0 && t.completed_count >= t.planned_count);
+  if (done) return "done";
+  return t.completed_count > 0 ? "partial" : "todo";
+}
+
+interface SubjGroup {
+  key: number | null;
+  name: string;
+  order: number;
+  tasks: TeacherTask[];
+}
+function groupDayBySubject(tasks: TeacherTask[]): SubjGroup[] {
+  const map = new Map<number | null, SubjGroup>();
+  for (const t of tasks) {
+    const ws = t.items.find((it) => it.subject_id != null);
+    const key = ws?.subject_id ?? null;
+    const name = ws?.subject_name ?? "Diğer";
+    const g = map.get(key);
+    if (g) g.tasks.push(t);
+    else map.set(key, { key, name, order: key == null ? 1 : 0, tasks: [t] });
+  }
+  return Array.from(map.values()).sort(
+    (a, b) => a.order - b.order || a.name.localeCompare(b.name, "tr"),
+  );
+}
+
+// Görev etiketi (kompakt): tek kalemli test/deneme → "Kitap · Bölüm"; aksi → başlık
+function taskLabel(t: TeacherTask): string {
+  const first = t.items.find((it) => it.book_id != null) ?? t.items[0];
+  if (first?.book_id) {
+    return first.book_name + (first.section_label ? ` · ${first.section_label}` : "");
+  }
+  return t.title || "—";
+}
 
 export default async function ProgramPrintPage({
   params,
@@ -87,92 +133,62 @@ export default async function ProgramPrintPage({
   }
 
   const totalCorrect = weekData.days.reduce(
-    (acc, d) =>
-      acc +
-      d.tasks.reduce(
-        (a, t) =>
-          a +
-          t.items.reduce((b, it) => b + (it.correct_count ?? 0), 0),
-        0,
-      ),
-    0,
-  );
+    (acc, d) => acc + d.tasks.reduce(
+      (a, t) => a + t.items.reduce((b, it) => b + (it.correct_count ?? 0), 0), 0), 0);
   const totalWrong = weekData.days.reduce(
-    (acc, d) =>
-      acc +
-      d.tasks.reduce(
-        (a, t) =>
-          a +
-          t.items.reduce((b, it) => b + (it.wrong_count ?? 0), 0),
-        0,
-      ),
-    0,
-  );
+    (acc, d) => acc + d.tasks.reduce(
+      (a, t) => a + t.items.reduce((b, it) => b + (it.wrong_count ?? 0), 0), 0), 0);
 
   return (
-    <main className="mx-auto max-w-[820px] bg-white px-8 py-6 text-stone-900">
+    <main className="mx-auto w-full max-w-[1100px] bg-white px-6 py-4 text-stone-900 print:max-w-none print:px-0 print:py-0">
       <style>{`
         @media print {
-          @page { size: A4 portrait; margin: 12mm; }
+          @page { size: A4 landscape; margin: 7mm; }
           .no-print { display: none !important; }
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       `}</style>
 
-      {/* Header */}
-      <header className="mb-5 border-b-2 border-stone-800 pb-3">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Haftalık Program</h1>
-            <p className="mt-1 text-base font-semibold text-stone-800">
-              {studentName || "—"}
-            </p>
-            <p className="mt-0.5 text-sm text-stone-600">
-              {fmtDate(weekData.start_date)} — {fmtDate(weekData.end_date)}
-            </p>
-          </div>
-          <div className="text-right text-[11px] text-stone-500">
-            <p>etütkoç · rotam</p>
-            <p className="mt-0.5">{new Date().toLocaleDateString("tr-TR")}</p>
-          </div>
+      {/* Header — kompakt tek satır */}
+      <header className="mb-2 flex items-end justify-between gap-4 border-b-2 border-stone-800 pb-1.5">
+        <div className="flex items-baseline gap-3">
+          <h1 className="text-base font-bold tracking-tight">Haftalık Program</h1>
+          <span className="text-sm font-semibold text-stone-800">{studentName || "—"}</span>
+          <span className="text-[11px] text-stone-500">
+            {fmtDate(weekData.start_date)} — {fmtDate(weekData.end_date)}
+          </span>
+        </div>
+        <div className="flex items-center gap-3 text-[10px] text-stone-500">
+          <span>Plan. <b className="text-stone-800">{weekData.total_planned}</b></span>
+          <span>Çöz. <b className="text-stone-800">{weekData.total_completed}</b></span>
+          <span>D <b className="text-emerald-700">{totalCorrect}</b></span>
+          <span>Y <b className="text-rose-700">{totalWrong}</b></span>
+          <span className="text-stone-400">· etütkoç·rotam</span>
         </div>
       </header>
 
-      {/* Özet */}
-      <section className="mb-4 grid grid-cols-4 gap-3 text-center text-sm">
-        <SummaryCell label="Planlanan" value={weekData.total_planned} />
-        <SummaryCell label="Çözülen" value={weekData.total_completed} />
-        <SummaryCell label="Doğru" value={totalCorrect} />
-        <SummaryCell label="Yanlış" value={totalWrong} />
-      </section>
+      {/* Lejant — durum işaretleri */}
+      <div className="mb-2 flex items-center gap-3 text-[9px] text-stone-500">
+        <span><b className="text-emerald-700">✓</b> yapıldı</span>
+        <span><b className="text-amber-700">◐</b> kısmen</span>
+        <span><b className="text-stone-400">☐</b> yapılmadı</span>
+        <span className="text-stone-400">· test/deneme: çözülen/planlanan · diğer: etkinlik</span>
+      </div>
 
-      {/* Günler */}
-      <div className="space-y-4">
+      {/* 7 günlük ızgara — yatay */}
+      <div className="grid grid-cols-7 gap-1.5">
         {weekData.days.map((day) => (
-          <DayBlock
-            key={day.date}
-            date={day.date}
-            dowLabel={day.dow_label}
-            isToday={day.is_today}
-            tasks={day.tasks}
-            planned={day.planned}
-            completed={day.completed}
-          />
+          <DayColumn key={day.date} day={day} />
         ))}
       </div>
 
       {/* Notes */}
       {weekData.notes.length > 0 ? (
-        <section className="mt-6 border-t border-stone-300 pt-4">
-          <h2 className="mb-2 text-sm font-semibold text-stone-800">
-            Hafta notları
-          </h2>
-          <div className="space-y-2">
+        <section className="mt-3 border-t border-stone-300 pt-2">
+          <h2 className="mb-1 text-[11px] font-semibold text-stone-700">Hafta notları</h2>
+          <div className="flex flex-wrap gap-2">
             {weekData.notes.map((n) => (
-              <div
-                key={n.id}
-                className="rounded border border-stone-200 bg-stone-50 px-3 py-2 text-[12px] text-stone-800"
-              >
+              <div key={n.id} className="rounded border border-stone-200 bg-stone-50 px-2 py-1 text-[10px] text-stone-800">
                 {n.body}
               </div>
             ))}
@@ -180,158 +196,78 @@ export default async function ProgramPrintPage({
         </section>
       ) : null}
 
-      <footer className="mt-6 flex items-center justify-between border-t border-stone-200 pt-3 text-[10px] text-stone-500">
-        <span>etütkoç · rotam</span>
-        <span>Kişiseldir; öğrenci için hazırlanmıştır.</span>
-      </footer>
-
-      <div className="no-print mt-6 text-center">
-        <p className="text-xs text-stone-400">
-          Yazdırmak için tarayıcıdan Ctrl/Cmd + P.
-        </p>
+      <div className="no-print mt-4 text-center">
+        <p className="text-xs text-stone-400">Yazdırmak için Ctrl/Cmd + P (yatay seçili gelir).</p>
       </div>
     </main>
   );
 }
 
-function SummaryCell({ label, value }: { label: string; value: number }) {
+function DayColumn({ day }: { day: TeacherStudentWeekResponse["days"][number] }) {
+  const groups = groupDayBySubject(day.tasks);
   return (
-    <div className="rounded border border-stone-300 bg-stone-50 px-2 py-2">
-      <div className="text-[10px] uppercase tracking-wider text-stone-500">
-        {label}
-      </div>
-      <div className="text-xl font-bold tabular-nums text-stone-900">
-        {value}
-      </div>
-    </div>
-  );
-}
-
-function DayBlock({
-  date,
-  dowLabel,
-  isToday,
-  tasks,
-  planned,
-  completed,
-}: {
-  date: string;
-  dowLabel: string;
-  isToday: boolean;
-  tasks: TeacherTask[];
-  planned: number;
-  completed: number;
-}) {
-  return (
-    <section className="break-inside-avoid">
-      <header className="mb-1.5 flex items-baseline justify-between border-b border-stone-300 pb-1">
-        <h3 className="text-sm font-bold text-stone-800">
-          {dowLabel}{" "}
-          <span className="font-normal text-stone-500">· {fmtDate(date)}</span>
-          {isToday ? (
-            <span className="ml-2 rounded-sm bg-stone-800 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-white">
-              bugün
-            </span>
-          ) : null}
-        </h3>
-        <span className="text-[11px] tabular-nums text-stone-600">
-          {completed}/{planned}
+    <section className="break-inside-avoid rounded border border-stone-300">
+      <header
+        className={
+          "flex items-baseline justify-between px-1.5 py-1 " +
+          (day.is_today ? "bg-stone-800 text-white" : "bg-stone-100")
+        }
+      >
+        <span className="text-[10.5px] font-bold leading-tight">
+          {day.dow_label}
+        </span>
+        <span className={"text-[8.5px] " + (day.is_today ? "text-stone-300" : "text-stone-500")}>
+          {fmtShort(day.date)}
         </span>
       </header>
-      {tasks.length === 0 ? (
-        <p className="px-2 py-1.5 text-[11px] italic text-stone-400">
-          — görev yok —
-        </p>
-      ) : (
-        <table className="w-full text-[11.5px]">
-          <thead>
-            <tr className="border-b border-stone-200 text-[10px] uppercase tracking-wider text-stone-500">
-              <th className="px-1 py-1 text-left">Tip</th>
-              <th className="px-1 py-1 text-left">Kitap / Bölüm</th>
-              <th className="px-1 py-1 text-right">Plan.</th>
-              <th className="px-1 py-1 text-right">Çöz.</th>
-              <th className="px-1 py-1 text-right">D</th>
-              <th className="px-1 py-1 text-right">Y</th>
-            </tr>
-          </thead>
-          <tbody>
-            {tasks.flatMap((t) =>
-              t.items.length > 0
-                ? t.items.map((it, idx) => (
-                    <TaskItemRow
-                      key={`${t.id}-${it.id}`}
-                      task={t}
-                      item={it}
-                      isFirst={idx === 0}
-                    />
-                  ))
-                : [<ActivityTaskRow key={`${t.id}-activity`} task={t} />],
-            )}
-          </tbody>
-        </table>
-      )}
+      <div className="px-1 py-1 space-y-1.5">
+        {day.tasks.length === 0 ? (
+          <p className="text-[9px] italic text-stone-400">—</p>
+        ) : (
+          groups.map((g) => (
+            <div key={g.key ?? "other"}>
+              <div className={"text-[9px] font-bold uppercase tracking-wide leading-tight " + subjectColor(g.key)}>
+                {g.name}
+              </div>
+              <ul className="mt-0.5 space-y-0.5">
+                {g.tasks.map((t) => (
+                  <TaskRow key={t.id} task={t} />
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
+      </div>
     </section>
   );
 }
 
-// Kalemsiz (Video/Özet/Tekrar/Diğer) görevler — soru kalemi yok; başlık + durum.
-// Eskiden t.items boş olduğu için print'te HİÇ satır üretilmiyordu (görünmez bug).
-function ActivityTaskRow({ task }: { task: TeacherTask }) {
+function TaskRow({ task }: { task: TeacherTask }) {
+  const st = gorevState(task);
+  const mark = st === "done" ? "✓" : st === "partial" ? "◐" : "☐";
+  const markCls =
+    st === "done" ? "text-emerald-700" : st === "partial" ? "text-amber-700" : "text-stone-400";
+  const isActivity = task.planned_count <= 0 && task.items.every((it) => (it.planned_count ?? 0) <= 0);
   const typeLabel = TASK_TYPE_LABEL[task.type] ?? task.type;
-  const done = task.status === "completed";
-  return (
-    <tr className="border-b border-stone-100">
-      <td className="px-1 py-1 text-stone-600">{typeLabel}</td>
-      <td className="px-1 py-1 text-stone-900">
-        {task.title || "—"}
-        {done ? <span className="text-emerald-700"> · yapıldı ✓</span> : null}
-      </td>
-      <td className="px-1 py-1 text-right text-stone-400">—</td>
-      <td className="px-1 py-1 text-right text-stone-400">—</td>
-      <td className="px-1 py-1 text-right text-stone-400">—</td>
-      <td className="px-1 py-1 text-right text-stone-400">—</td>
-    </tr>
-  );
-}
 
-function TaskItemRow({
-  task,
-  item,
-  isFirst,
-}: {
-  task: TeacherTask;
-  item: TeacherTaskItem;
-  isFirst: boolean;
-}) {
-  const typeLabel = TASK_TYPE_LABEL[task.type] ?? task.type;
-  // Title-only kalemlerde (Video/Özet/Tekrar/Diğer items=[]) book_name "Deneme"
-  // veya boş; başlık tablo'da göster.
-  const label = item.book_id
-    ? `${item.book_name}${item.section_label ? ` · ${item.section_label}` : ""}`
-    : task.title || "—";
   return (
-    <tr className="border-b border-stone-100">
-      <td className="px-1 py-1 text-stone-600">
-        {isFirst ? typeLabel : ""}
-      </td>
-      <td className="px-1 py-1 text-stone-900">
-        {label}
-        {item.topic_name ? (
-          <span className="text-stone-500"> ({item.topic_name})</span>
-        ) : null}
-      </td>
-      <td className="px-1 py-1 text-right tabular-nums text-stone-700">
-        {item.planned_count}
-      </td>
-      <td className="px-1 py-1 text-right tabular-nums text-stone-900">
-        {item.completed_count}
-      </td>
-      <td className="px-1 py-1 text-right tabular-nums text-emerald-700">
-        {item.correct_count ?? "—"}
-      </td>
-      <td className="px-1 py-1 text-right tabular-nums text-rose-700">
-        {item.wrong_count ?? "—"}
-      </td>
-    </tr>
+    <li className="flex items-start gap-1 text-[9.5px] leading-tight">
+      <span className={"shrink-0 font-bold " + markCls} aria-hidden>{mark}</span>
+      <span className="min-w-0 flex-1">
+        <span className={st === "done" ? "text-stone-500" : "text-stone-900"}>
+          {taskLabel(task)}
+        </span>
+        {isActivity ? (
+          <span className="text-stone-400">
+            {" "}({typeLabel})
+            {(task.solved_count ?? 0) > 0 ? ` · ${task.solved_count} soru` : ""}
+          </span>
+        ) : (
+          <span className="text-stone-500 tabular-nums">
+            {" "}{task.completed_count}/{task.planned_count}
+          </span>
+        )}
+      </span>
+    </li>
   );
 }
