@@ -2665,6 +2665,7 @@ def _build_teacher_task_item(
         id=item.id,
         book_id=item.book_id,
         book_name=item.book.name if item.book else (item.label or "Deneme"),
+        book_type=(item.book.type.value if (item.book and item.book.type) else None),
         subject_id=subj.id if subj else None,
         subject_name=subj.name if subj else None,
         section_id=item.book_section_id,

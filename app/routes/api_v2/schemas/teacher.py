@@ -319,6 +319,7 @@ class TeacherTaskItem(BaseModel):
     id: int
     book_id: int | None = None
     book_name: str
+    book_type: str | None = None     # BookType.value — birim (test/deneme/soru) için
     subject_id: int | None
     subject_name: str | None
     section_id: int | None = None

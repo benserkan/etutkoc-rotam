@@ -314,6 +314,7 @@ export interface TeacherTaskItem {
   id: number;
   book_id: number;
   book_name: string;
+  book_type?: string | null;       // BookType.value — birim (test/deneme/soru)
   subject_id: number | null;
   subject_name: string | null;
   section_id: number;

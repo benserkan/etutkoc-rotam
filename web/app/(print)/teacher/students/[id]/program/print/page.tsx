@@ -86,6 +86,15 @@ function taskLabel(t: TeacherTask): string {
   return t.title || "—";
 }
 
+const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
+// Sayı birimi: deneme kitabı → "deneme"; kitapsız → "soru"; aksi → "test".
+function taskUnit(t: TeacherTask): string {
+  const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
+  if (it && !it.book_id) return "soru";              // kitapsız tam deneme
+  if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
+  return "test";
+}
+
 export default async function ProgramPrintPage({
   params,
   searchParams,
@@ -260,11 +269,13 @@ function TaskRow({ task }: { task: TeacherTask }) {
         {isActivity ? (
           <span className="text-stone-400">
             {" "}({typeLabel})
-            {(task.solved_count ?? 0) > 0 ? ` · ${task.solved_count} soru` : ""}
+            {(task.solved_count ?? 0) > 0 ? (
+              <span className="font-semibold text-stone-700"> · {task.solved_count} soru</span>
+            ) : ""}
           </span>
         ) : (
-          <span className="text-stone-500 tabular-nums">
-            {" "}{task.completed_count}/{task.planned_count}
+          <span className="font-semibold tabular-nums text-stone-800">
+            {" "}{task.completed_count}/{task.planned_count} {taskUnit(task)}
           </span>
         )}
       </span>
