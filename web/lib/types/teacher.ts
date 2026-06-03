@@ -389,6 +389,7 @@ export interface TeacherStudentDayResponse {
   today_completed: number;
   today_pct: number;
   gorev?: GorevBreakdown | null;
+  day_note?: string;               // öğrencinin günlük düşünce notu (salt-okuma)
 }
 
 export interface TeacherDaySubjectSummary {

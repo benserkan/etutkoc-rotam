@@ -4,7 +4,8 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Clock, Moon, Sun, Sunrise } from "lucide-react";
 
-import { getStudentDay, studentKeys } from "@/lib/api/student";
+import { getStudentDay, saveStudentDayNote, studentKeys } from "@/lib/api/student";
+import { NotebookPen } from "lucide-react";
 import type { StudentDayResponse, StudentTask, TaskPeriod } from "@/lib/types/student";
 import { LoadingState } from "@/components/loading-state";
 import { ErrorState } from "@/components/error-state";
@@ -93,6 +94,9 @@ export function DayClient({ initial }: Props) {
           ) : (
             <PeriodGroupedTasks tasks={day.tasks} dateIso={dateIso} openComm={openComm} />
           )}
+
+          {/* Günün notu — serbest düşünce, otomatik kaydedilir (buton yok) */}
+          <DayNoteCard key={dateIso} dateIso={dateIso} initialBody={day.day_note ?? ""} />
         </div>
 
         {/* Sağ kolon: kaynak sidebar — lg ve üstü sticky */}
@@ -185,6 +189,77 @@ function PeriodGroupedTasks({ tasks, dateIso, openComm }: PeriodGroupedTasksProp
           </section>
         );
       })}
+    </div>
+  );
+}
+
+// =============================================================================
+// DayNoteCard — günün serbest düşünce notu. Buton YOK: yazdıkça (debounce)
+// otomatik kaydedilir; tekrar açınca kaldığı yerden devam eder; koç görür.
+// key={dateIso} ile gün değişince taze mount edilir.
+// =============================================================================
+
+function DayNoteCard({
+  dateIso,
+  initialBody,
+}: {
+  dateIso: string;
+  initialBody: string;
+}) {
+  const [body, setBody] = React.useState(initialBody);
+  const [status, setStatus] = React.useState<"idle" | "saving" | "saved" | "error">("idle");
+  const dirtyRef = React.useRef(false);
+
+  React.useEffect(() => {
+    if (!dirtyRef.current) return;
+    setStatus("saving");
+    const id = setTimeout(() => {
+      saveStudentDayNote(dateIso, body)
+        .then(() => setStatus("saved"))
+        .catch(() => setStatus("error"));
+    }, 700);
+    return () => clearTimeout(id);
+  }, [body, dateIso]);
+
+  const statusText =
+    status === "saving" ? "Kaydediliyor…"
+    : status === "saved" ? "✓ Kaydedildi"
+    : status === "error" ? "Kaydedilemedi — internet?"
+    : "Yazdıkça otomatik kaydedilir";
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-4">
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <h3 className="inline-flex items-center gap-1.5 text-sm font-medium">
+          <NotebookPen className="size-4 text-cyan-600 dark:text-cyan-400" aria-hidden />
+          Günün notu
+        </h3>
+        <span
+          className={
+            "text-[11px] " +
+            (status === "saved"
+              ? "text-emerald-600 dark:text-emerald-400"
+              : status === "error"
+                ? "text-rose-600 dark:text-rose-400"
+                : "text-muted-foreground")
+          }
+        >
+          {statusText}
+        </span>
+      </div>
+      <textarea
+        value={body}
+        onChange={(e) => {
+          dirtyRef.current = true;
+          setBody(e.target.value);
+        }}
+        rows={4}
+        placeholder="Bugünkü çalışmanla ilgili düşüncen, zorlandığın yer, koçuna iletmek istediğin not… (otomatik kaydedilir)"
+        className="w-full resize-y rounded-md border border-input bg-background px-3 py-2 text-sm leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      />
+      <p className="mt-1.5 text-[11px] text-muted-foreground">
+        Bu notu koçun görebilir. İstediğin zaman geri gelip eklemeye devam edebilirsin.
+      </p>
     </div>
   );
 }

@@ -185,6 +185,19 @@ class StudentDayResponse(BaseModel):
     sidebar: ResourceSidebar
     projection: ProjectionPanel | None
     can_request: CanRequestMatrix
+    day_note: str = ""             # öğrencinin o güne dair serbest düşünce notu (autosave)
+
+
+class DayNoteSaveBody(BaseModel):
+    """PUT /api/v2/student/day-note — otomatik kayıt (debounced)."""
+    date: str                      # "YYYY-MM-DD"
+    body: str
+
+
+class DayNoteResponse(BaseModel):
+    date: str
+    body: str
+    updated_at: str | None = None
 
 
 # ============================================================================

@@ -379,6 +379,8 @@ class TeacherStudentDayResponse(BaseModel):
     today_pct: float
     # Görev/test/deneme ayrımlı özet (gorev_stats) — manşet GÖREV-bazlı
     gorev: GorevBreakdown | None = None
+    # Öğrencinin o güne dair serbest düşünce notu (salt-okuma; öğrenci yazar)
+    day_note: str = ""
 
 
 class TeacherDaySubjectSummary(BaseModel):

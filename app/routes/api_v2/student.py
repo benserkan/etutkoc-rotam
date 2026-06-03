@@ -92,6 +92,8 @@ from app.routes.api_v2.schemas.student import (
     ReviewRateBody,
     ReviewResponse,
     CompleteTaskBody,
+    DayNoteResponse,
+    DayNoteSaveBody,
     SetCompletedBody,
     StudentBooksResponse,
     StudentDayResponse,
@@ -472,6 +474,13 @@ def student_day_v2(
     tasks = _load_day_tasks(db, user.id, d)
     snapshot = student_snapshot(db, user, today=today)
 
+    from app.models import StudentDayNote
+    _note = (
+        db.query(StudentDayNote)
+        .filter(StudentDayNote.student_id == user.id, StudentDayNote.date == d)
+        .first()
+    )
+
     return StudentDayResponse(
         date=d.isoformat(),
         is_today=(d == today),
@@ -484,6 +493,47 @@ def student_day_v2(
         sidebar=_build_resource_sidebar(db, user.id),
         projection=_build_projection_panel(snapshot),
         can_request=_build_can_request_matrix(d, today),
+        day_note=(_note.body if _note else ""),
+    )
+
+
+@router.put("/day-note", response_model=DayNoteResponse)
+def save_day_note_v2(
+    body: DayNoteSaveBody,
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin gün-bazlı serbest düşünce notunu kaydet (autosave, upsert).
+
+    Her yazışta debounce ile çağrılır; (öğrenci, tarih) başına tek kayıt. Boş
+    body de geçerli (notu temizleme). Koç bu notu salt-okuma görür.
+    """
+    from app.models import StudentDayNote
+    try:
+        d = date.fromisoformat(body.date)
+    except ValueError:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "validation", "code": "invalid_date",
+                    "message": "Tarih formatı geçersiz."},
+        )
+    text = (body.body or "")[:8000]  # makul üst sınır
+    note = (
+        db.query(StudentDayNote)
+        .filter(StudentDayNote.student_id == user.id, StudentDayNote.date == d)
+        .first()
+    )
+    if note is None:
+        note = StudentDayNote(student_id=user.id, date=d, body=text)
+        db.add(note)
+    else:
+        note.body = text
+    db.commit()
+    db.refresh(note)
+    return DayNoteResponse(
+        date=d.isoformat(),
+        body=note.body,
+        updated_at=note.updated_at.isoformat() if note.updated_at else None,
     )
 
 

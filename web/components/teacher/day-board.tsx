@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookmarkPlus, LayoutTemplate, Loader2, MoreHorizontal, Plus, Trash2 } from "lucide-react";
+import { BookmarkPlus, LayoutTemplate, Loader2, MoreHorizontal, NotebookPen, Plus, Trash2 } from "lucide-react";
 
 import {
   getTaskTemplates,
@@ -173,6 +173,21 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
           ))}
         </ul>
       )}
+
+      {/* Öğrencinin günlük düşünce notu — salt-okuma (öğrenci yazar, otomatik kaydedilir) */}
+      {data.day_note && data.day_note.trim() ? (
+        <Card className="border-l-4 border-l-cyan-500">
+          <CardContent className="p-4">
+            <p className="mb-1 inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-cyan-700 dark:text-cyan-400">
+              <NotebookPen className="size-3.5" aria-hidden />
+              Öğrencinin günün notu
+            </p>
+            <p className="whitespace-pre-wrap text-sm text-foreground/90">
+              {data.day_note}
+            </p>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Dialog
         open={createOpen}

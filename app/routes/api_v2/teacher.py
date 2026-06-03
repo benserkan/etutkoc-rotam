@@ -3043,6 +3043,13 @@ def teacher_student_day_v2(
     gorev = _build_gorev_breakdown(
         gorev_stats.summarize([t for t in tasks if not t.is_draft])
     )
+    # Öğrencinin o güne dair serbest düşünce notu (salt-okuma)
+    from app.models import StudentDayNote
+    _note = (
+        db.query(StudentDayNote)
+        .filter(StudentDayNote.student_id == student.id, StudentDayNote.date == d)
+        .first()
+    )
 
     return TeacherStudentDayResponse(
         student_id=student.id,
@@ -3057,6 +3064,7 @@ def teacher_student_day_v2(
         today_completed=completed,
         today_pct=pct,
         gorev=gorev,
+        day_note=(_note.body if _note else ""),
     )
 
 

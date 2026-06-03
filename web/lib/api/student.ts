@@ -58,6 +58,17 @@ export function getStudentDay(date?: string): Promise<StudentDayResponse> {
   return api<StudentDayResponse>(`/api/v2/student/day${q}`);
 }
 
+/** Gün notu otomatik kayıt (debounced). Buton yok — yazdıkça çağrılır. */
+export function saveStudentDayNote(
+  date: string,
+  body: string,
+): Promise<{ date: string; body: string; updated_at: string | null }> {
+  return api(`/api/v2/student/day-note`, {
+    method: "PUT",
+    body: JSON.stringify({ date, body }),
+  });
+}
+
 export function getStudentWeek(start?: string): Promise<StudentWeekResponse> {
   const q = start ? `?start=${encodeURIComponent(start)}` : "";
   return api<StudentWeekResponse>(`/api/v2/student/week${q}`);

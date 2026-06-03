@@ -325,6 +325,7 @@ from app.models.focus import (
     StudentBadge,
 )
 from app.models.progress import SectionProgress, StudentBook
+from app.models.student_day_note import StudentDayNote
 from app.models.quota import InstitutionQuotaOverride
 from app.models.review import (
     STATE_LABELS_TR as REVIEW_STATE_LABELS_TR,
@@ -567,6 +568,7 @@ __all__ = [
     "GoalStatus",
     "StudentGoal",
     "StudentBook",
+    "StudentDayNote",
     "Subject",
     "SuggestionFeedback",
     "SuspiciousIp",

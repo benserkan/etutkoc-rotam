@@ -164,6 +164,7 @@ export interface StudentDayResponse {
   sidebar: ResourceSidebar;
   projection: ProjectionPanel | null;
   can_request: CanRequestMatrix;
+  day_note: string;                // öğrencinin o güne dair serbest düşünce notu (autosave)
 }
 
 export interface StudentWeekDay {
