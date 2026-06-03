@@ -4178,6 +4178,42 @@ kitabı) · tam_deneme (kitapsız "Deneme") · etkinlik (video/özet/tekrar/diğ
   mantığı değişince `python scripts/run_gorev_checks.py` koş — kırmızıysa kartlar
   bozulmuştur.**
 
+## Hızlı düzeltmeler + 2 yeni özellik (2026-06-03)
+
+- **KRİTİK — öğrenci ilk girişte şifre yenileme PAS GEÇİYORDU:** `teacher_create_
+  student_v2` `must_change_password=True` set ETMİYORDU (admin + kurum-öğretmeni
+  set ediyordu — yalnız öğrenci eksikti) → login yanıtı must_change=False → /password/
+  change'e yönlenmiyordu. Düzeltildi + etkilenen (hiç giriş yapmamış) öğrenciler
+  backfill ile must_change=True yapıldı. Diğer roller temizdi.
+- **"Bugün hiç tik yapmadı" uyarısı görev-bazlı oldu:** eskiden test hacmine
+  (`today_stats.planned>0`) bağlıydı → etkinlik-only gün (soru=0) yeşil kalıyordu.
+  Artık `gorev_total>0 & gorev_done==0` (etkinlik dahil, draft hariç). Test
+  `test_today_no_tick_gorev.py` 4/4.
+- **"Plan"→"Haftalık Program"** etiketi (hedef /day korundu).
+- **Atanmamış kitap uyarısı:** book detail'da öğrenci atanmamışsa amber banner +
+  "Öğrenci ata" (tüm sekmelerde) + Öğrenciler sekmesinde kaydedilmemiş seçim
+  uyarısı. ("AI bölüm sonrası tik kalkıyor" → REPRO: server atamayı KORUYOR;
+  sorun kaydetmeden sekme değiştirme.)
+- **Bölüm "öğrenci zaten çözmüştü" (geçmiş yıl ayıklama):** öğrenci kitap panelinde
+  her bölüme inline "çözülmüş test" girişi → completed_count set, kalan düşer,
+  programda atanmaz. POST `/students/{id}/books/{sb_id}/sections/{sec_id}/completed`.
+  `test_section_completed_baseline.py` 7/7.
+- **Tüm panellerde "Hesabım & Şifre" linki** (→ /me/account): teacher/institution
+  (sidebar+mobil) · parent (nav) · student (header+mobil). /me/account hiçbir
+  panelden linklenmemişti → şifre değiştirilemiyordu.
+- **YENİ ÖZELLİK 1 — kalemsiz göreve çözülen soru** (migration `y2z5e8f9e33y`:
+  `tasks.solved_count`): "olmayan kitaptan test" gibi etkinlik/diğer göreve öğrenci
+  çözdüğü soruyu girer → **test hacmine** sayılır (kategori etkinlik KALIR, manşet
+  görev %'sini etkilemez). complete_task_v2 solved_count; gorev_stats etkinlik
+  solved→test_completed. Öğrenci task-card inline "+ Çözdüğüm soru", koç day-board
+  "öğrenci N soru çözdü". `test_itemless_solved_count.py` 10/10.
+- **YENİ ÖZELLİK 2 — günlük düşünce notu** (migration `z3a6f9g0f44z`:
+  `student_day_notes`, student_id+date unique): /student/day'de buton-suz, 700ms
+  debounce autosave textarea ("Günün notu"); tekrar açınca devam; koç day-board'da
+  cyan salt-okuma kartında görür. PUT `/student/day-note`. `test_day_note.py` 7/7.
+- **Migration head = `z3a6f9g0f44z`.** Tümü additive + downgrade'li; prod'da
+  start.sh `upgrade head` ile uygulanır.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
