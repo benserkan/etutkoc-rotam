@@ -161,17 +161,50 @@ export function DayBoard({ studentId, initial, initialDate }: Props) {
           </CardContent>
         </Card>
       ) : (
-        <ul className="space-y-2.5">
-          {data.tasks.map((t) => (
-            <li key={t.id}>
-              <TaskCardEditable
-                task={t}
-                studentId={studentId}
-                dateIso={dateIso}
-              />
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-4">
+          {groupTasksBySubject(data.tasks).map((g) => {
+            const tone = subjectTone(g.key);
+            const total = g.tasks.length;
+            const doneCount = g.tasks.filter((t) => gorevState(t) === "done").length;
+            const allDone = doneCount === total;
+            return (
+              <section key={g.key ?? "other"}>
+                {/* Ders başlığı — renkli, dikkat çekici; bir bakışta hangi ders + tamamlanma */}
+                <div
+                  className={cn(
+                    "flex items-center justify-between gap-2 rounded-md border-l-4 px-3 py-2",
+                    tone.bar,
+                    tone.head,
+                  )}
+                >
+                  <span className={cn("inline-flex items-center gap-2 text-sm font-bold", tone.text)}>
+                    <span className={cn("size-2.5 rounded-full", tone.dot)} aria-hidden />
+                    {g.name}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-xs font-medium tabular-nums",
+                      allDone ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground",
+                    )}
+                  >
+                    {doneCount}/{total} tamam{allDone ? " ✓" : ""}
+                  </span>
+                </div>
+                <ul className="mt-2 space-y-2">
+                  {g.tasks.map((t) => (
+                    <li key={t.id}>
+                      <TaskCardEditable
+                        task={t}
+                        studentId={studentId}
+                        dateIso={dateIso}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            );
+          })}
+        </div>
       )}
 
       {/* Öğrencinin günlük düşünce notu — salt-okuma (öğrenci yazar, otomatik kaydedilir) */}
@@ -301,6 +334,48 @@ const STATE_BADGE: Record<GorevState, { text: string; cls: string }> = {
   cancelled: { text: "İptal", cls: "bg-slate-200 text-slate-600 dark:bg-slate-800 dark:text-slate-300" },
 };
 
+// Ders bazlı renk — subject_id stable hash → ton (her ders aynı rengi alır).
+const SUBJECT_TONES = [
+  { bar: "border-l-indigo-500",  head: "bg-indigo-50 dark:bg-indigo-950/30",   text: "text-indigo-700 dark:text-indigo-300",   dot: "bg-indigo-500" },
+  { bar: "border-l-emerald-500", head: "bg-emerald-50 dark:bg-emerald-950/30", text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
+  { bar: "border-l-amber-500",   head: "bg-amber-50 dark:bg-amber-950/30",     text: "text-amber-700 dark:text-amber-300",     dot: "bg-amber-500" },
+  { bar: "border-l-rose-500",    head: "bg-rose-50 dark:bg-rose-950/30",       text: "text-rose-700 dark:text-rose-300",       dot: "bg-rose-500" },
+  { bar: "border-l-violet-500",  head: "bg-violet-50 dark:bg-violet-950/30",   text: "text-violet-700 dark:text-violet-300",   dot: "bg-violet-500" },
+  { bar: "border-l-cyan-500",    head: "bg-cyan-50 dark:bg-cyan-950/30",       text: "text-cyan-700 dark:text-cyan-300",       dot: "bg-cyan-500" },
+  { bar: "border-l-fuchsia-500", head: "bg-fuchsia-50 dark:bg-fuchsia-950/30", text: "text-fuchsia-700 dark:text-fuchsia-300", dot: "bg-fuchsia-500" },
+  { bar: "border-l-sky-500",     head: "bg-sky-50 dark:bg-sky-950/30",         text: "text-sky-700 dark:text-sky-300",         dot: "bg-sky-500" },
+];
+const OTHER_TONE = { bar: "border-l-slate-400", head: "bg-muted/40", text: "text-muted-foreground", dot: "bg-slate-400" };
+
+function subjectTone(subjectId: number | null) {
+  if (subjectId == null) return OTHER_TONE;
+  return SUBJECT_TONES[Math.abs(subjectId) % SUBJECT_TONES.length];
+}
+
+interface DaySubjectGroup {
+  key: number | null;
+  name: string;
+  order: number;
+  tasks: TeacherTask[];
+}
+
+/** Görevleri ders bazlı grupla — birincil kalemin subject'ine göre; kalemsiz
+ *  (etkinlik) görevler "Diğer çalışmalar" grubuna. Dersler isme göre, Diğer en sonda. */
+function groupTasksBySubject(tasks: TeacherTask[]): DaySubjectGroup[] {
+  const map = new Map<number | null, DaySubjectGroup>();
+  for (const t of tasks) {
+    const withSubj = t.items.find((it) => it.subject_id != null);
+    const key = withSubj?.subject_id ?? null;
+    const name = withSubj?.subject_name ?? "Diğer çalışmalar";
+    const g = map.get(key);
+    if (g) g.tasks.push(t);
+    else map.set(key, { key, name, order: key == null ? 1 : 0, tasks: [t] });
+  }
+  return Array.from(map.values()).sort(
+    (a, b) => a.order - b.order || a.name.localeCompare(b.name, "tr"),
+  );
+}
+
 function TaskCardEditable({
   task,
   studentId,
@@ -360,12 +435,14 @@ function TaskCardEditable({
                 {task.title || "—"}
               </p>
             </div>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              {task.scheduled_hour ?? "Saat belirsiz"} · {task.type} ·{" "}
-              {task.completed_count}/{task.planned_count} (%{pct})
+            <p className="text-xs text-muted-foreground mt-0.5 tabular-nums">
+              {task.planned_count > 0
+                ? `${task.completed_count}/${task.planned_count} test (%${pct})`
+                : "etkinlik"}
+              {task.scheduled_hour ? ` · ${task.scheduled_hour}` : ""}
               {(task.solved_count ?? 0) > 0 ? (
                 <span className="text-emerald-600 dark:text-emerald-400">
-                  {" "}· öğrenci {task.solved_count} soru çözdü
+                  {" "}· {task.solved_count} soru çözdü
                 </span>
               ) : null}
               {task.is_draft ? " · taslak" : ""}
