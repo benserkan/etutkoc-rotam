@@ -260,6 +260,7 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
         planned_count=planned,
         completed_count=completed,
         pct=pct,
+        solved_count=task.solved_count,
         is_future_blocked=(task.date > today),
         is_past=(task.date < today),
         has_pending_request=_has_pending_request_for_task(db, task.id, task.student_id),
@@ -1174,6 +1175,12 @@ def complete_task_v2(
         db.rollback()
         raise _reservation_error_response(e)
 
+    # Kalemsiz (etkinlik/diğer) görevde çözülen soru — "çözülen test" hacmine
+    # sayılır (kalemli görevde kalem sayıları geçerli, burada yok sayılır).
+    if not task.book_items and body is not None and body.solved_count is not None:
+        sc = int(body.solved_count)
+        task.solved_count = sc if sc > 0 else None
+
     if not was_completed:
         # Yalnız yeni COMPLETED'a geçişte event + badge — idempotent davranış için kritik
         _fire_task_completed_event_safe(db, user)
@@ -1209,6 +1216,9 @@ def uncomplete_task_v2(
         # Pratikte uncomplete kapasiteyi aşmaz ama defansif yakalama
         db.rollback()
         raise _reservation_error_response(e)
+    # Kalemsiz görevde geri alınca çözülen soru kaydını da temizle (simetri)
+    if not task.book_items:
+        task.solved_count = None
     db.commit()
     db.refresh(task)
 

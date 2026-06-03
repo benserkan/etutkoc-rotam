@@ -78,13 +78,15 @@ interface TaskMutationParams {
   // Opsiyonel D/Y — yalnız tek kalemli görevde uygulanır (backend kuralı).
   correct?: number | null;
   wrong?: number | null;
+  // Opsiyonel çözülen soru — yalnız KALEMSİZ (etkinlik) görevde (backend kuralı).
+  solvedCount?: number | null;
 }
 
 export function useCompleteTask(dateIso: string) {
   const qc = useQueryClient();
   return useMutation<MutationResponse<StudentTask>, ApiError, TaskMutationParams, MutationContext>({
     mutationKey: ["student", "mutate-task", dateIso, "complete"],
-    mutationFn: ({ task, correct, wrong }) =>
+    mutationFn: ({ task, correct, wrong, solvedCount }) =>
       api<MutationResponse<StudentTask>>(
         `/api/v2/student/tasks/${task.id}/complete`,
         {
@@ -92,10 +94,11 @@ export function useCompleteTask(dateIso: string) {
           body: JSON.stringify({
             correct: correct ?? null,
             wrong: wrong ?? null,
+            solved_count: solvedCount ?? null,
           }),
         },
       ),
-    onMutate: async ({ task, correct, wrong }) => {
+    onMutate: async ({ task, correct, wrong, solvedCount }) => {
       await qc.cancelQueries({ queryKey: studentKeys.day(dateIso) });
       const isSingleItem = task.items.length === 1;
       const previous = patchTaskInDayCache(qc, dateIso, task.id, (t) => ({
@@ -103,6 +106,10 @@ export function useCompleteTask(dateIso: string) {
         status: "completed",
         completed_count: t.planned_count,
         pct: 1,
+        solved_count:
+          t.items.length === 0 && solvedCount !== undefined
+            ? solvedCount
+            : t.solved_count,
         items: t.items.map((it, idx) => ({
           ...it,
           completed: it.planned,

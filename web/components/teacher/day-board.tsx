@@ -348,6 +348,11 @@ function TaskCardEditable({
             <p className="text-xs text-muted-foreground mt-0.5">
               {task.scheduled_hour ?? "Saat belirsiz"} · {task.type} ·{" "}
               {task.completed_count}/{task.planned_count} (%{pct})
+              {(task.solved_count ?? 0) > 0 ? (
+                <span className="text-emerald-600 dark:text-emerald-400">
+                  {" "}· öğrenci {task.solved_count} soru çözdü
+                </span>
+              ) : null}
               {task.is_draft ? " · taslak" : ""}
               {task.has_pending_request ? " · talep var" : ""}
             </p>

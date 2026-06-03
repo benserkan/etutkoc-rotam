@@ -83,6 +83,7 @@ class StudentTask(BaseModel):
     planned_count: int             # sum(items.planned)
     completed_count: int           # sum(items.completed)
     pct: float                     # 0..1
+    solved_count: int | None = None  # kalemsiz (etkinlik) görevde öğrencinin girdiği çözülen soru
     is_future_blocked: bool        # tıklanamaz
     is_past: bool
     has_pending_request: bool      # bu görev için bekleyen TaskRequest var mı
@@ -403,9 +404,13 @@ class CompleteTaskBody(BaseModel):
     geçilen değerler yok sayılır (tek kalemli kuralı service tarafında uygulanır).
 
     Boş body de geçerli (geri uyumluluk: D/Y atla, sadece tamamla).
+
+    solved_count: yalnız KALEMSİZ (etkinlik/diğer) görevde — öğrencinin çözdüğü
+    soru sayısı (ör. "olmayan kitaptan test"). Kalemli görevlerde yok sayılır.
     """
     correct: int | None = None
     wrong: int | None = None
+    solved_count: int | None = None
 
 
 # ============================================================================

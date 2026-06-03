@@ -50,6 +50,7 @@ export interface StudentTask {
   planned_count: number;
   completed_count: number;
   pct: number;                     // 0..1
+  solved_count?: number | null;    // kalemsiz (etkinlik) görevde çözülen soru
   is_future_blocked: boolean;
   is_past: boolean;
   has_pending_request: boolean;

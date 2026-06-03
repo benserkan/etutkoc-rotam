@@ -2715,6 +2715,7 @@ def _build_teacher_task(db: Session, task: Task) -> TeacherTask:
         planned_count=planned,
         completed_count=completed,
         pct=pct,
+        solved_count=task.solved_count,
         has_pending_request=has_pending,
     )
 

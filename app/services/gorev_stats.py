@@ -208,6 +208,12 @@ def summarize(tasks: list[Task]) -> GorevSummary:
             ))
         else:  # etkinlik
             s.etkinlikler.append(t.title or "Etkinlik")
+            # Itemless görevde öğrencinin girdiği çözülen soru → "çözülen test"
+            # hacmine sayılır (kullanıcı kararı). Kategori etkinlik KALIR; plan
+            # yok (test_planned'a girmez); manşet görev %'sini etkilemez.
+            _sc = int(getattr(t, "solved_count", 0) or 0)
+            if _sc > 0:
+                s.test_completed += _sc
 
     s.subjects = sorted(subj_map.values(), key=lambda x: (x.order, x.subject_id or 0))
     return s

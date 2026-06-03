@@ -365,6 +365,7 @@ export interface TeacherTask {
   planned_count: number;
   completed_count: number;
   pct: number;
+  solved_count?: number | null;    // kalemsiz (etkinlik) görevde öğrencinin çözdüğü soru
   has_pending_request: boolean;
 }
 

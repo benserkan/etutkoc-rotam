@@ -52,6 +52,11 @@ class Task(Base):
         Enum(TaskStatus), nullable=False, default=TaskStatus.PENDING
     )
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Itemless (etkinlik/diğer) görevde öğrencinin çözdüğü soru sayısı. Kitap
+    # kalemi olmayan görevlerde (Video/Özet/Tekrar/Diğer) öğrenci "olmayan
+    # kitaptan test" gibi durumda çözdüğü soruyu girer → "çözülen test" hacmine
+    # sayılır (görev kategorisi etkinlik kalır). Kalemli görevlerde kullanılmaz.
+    solved_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     # Opsiyonel saat (0-23). NULL = saatsiz (eski davranış); set ise gün içi
     # sıralamada öncelik kazanır (hour NULLS LAST, order, id).

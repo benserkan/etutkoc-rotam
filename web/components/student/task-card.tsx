@@ -122,15 +122,19 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
       </header>
 
       <div className="border-t border-border/70 px-4 py-3 space-y-2">
-        {task.items.map((item) => (
-          <ItemRow
-            key={item.id}
-            task={task}
-            item={item}
-            dateIso={dateIso}
-            blocked={blocked}
-          />
-        ))}
+        {task.items.length > 0 ? (
+          task.items.map((item) => (
+            <ItemRow
+              key={item.id}
+              task={task}
+              item={item}
+              dateIso={dateIso}
+              blocked={blocked}
+            />
+          ))
+        ) : (
+          <ItemlessSolvedRow task={task} dateIso={dateIso} blocked={blocked} />
+        )}
       </div>
 
       {/* Progress bar — alt şerit */}
@@ -197,6 +201,91 @@ function ToggleButton({
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
+  );
+}
+
+// =============================================================================
+// ItemlessSolvedRow — kalemsiz (etkinlik/diğer) görevde "çözdüğüm soru" girişi
+// "olmayan kitaptan test" gibi durumda öğrenci çözdüğü soruyu kaydeder.
+// =============================================================================
+
+function ItemlessSolvedRow({
+  task,
+  dateIso,
+  blocked,
+}: {
+  task: StudentTask;
+  dateIso: string;
+  blocked: boolean;
+}) {
+  const complete = useCompleteTask(dateIso);
+  const current = task.solved_count ?? 0;
+  const [editing, setEditing] = React.useState(false);
+  const [val, setVal] = React.useState<number>(current);
+
+  function save() {
+    complete.mutate(
+      { task, solvedCount: val > 0 ? val : null },
+      { onSuccess: () => setEditing(false) },
+    );
+  }
+
+  if (editing) {
+    return (
+      <div className="flex flex-wrap items-center gap-2 text-sm">
+        <span className="text-muted-foreground">Çözdüğüm soru:</span>
+        <input
+          type="number"
+          min={0}
+          value={val}
+          autoFocus
+          onChange={(e) => setVal(Math.max(0, Number(e.target.value) || 0))}
+          onKeyDown={(e) => { if (e.key === "Enter") save(); }}
+          className="h-8 w-20 rounded-md border border-input bg-background px-2 text-sm tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        />
+        <Button size="sm" className="h-8" onClick={save} disabled={complete.isPending}>
+          Kaydet
+        </Button>
+        <button
+          type="button"
+          onClick={() => { setVal(current); setEditing(false); }}
+          className="text-xs text-muted-foreground hover:text-foreground"
+        >
+          Vazgeç
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      {current > 0 ? (
+        <>
+          <span className="text-muted-foreground">Çözülen soru:</span>
+          <span className="font-medium tabular-nums text-emerald-700 dark:text-emerald-400">
+            {current}
+          </span>
+          {!blocked ? (
+            <button
+              type="button"
+              onClick={() => { setVal(current); setEditing(true); }}
+              className="text-xs text-cyan-700 hover:underline dark:text-cyan-400"
+            >
+              düzenle
+            </button>
+          ) : null}
+        </>
+      ) : (
+        <button
+          type="button"
+          onClick={() => { setVal(0); setEditing(true); }}
+          disabled={blocked}
+          className="text-xs text-cyan-700 hover:underline disabled:opacity-50 disabled:no-underline dark:text-cyan-400"
+        >
+          + Çözdüğüm soru sayısını gir
+        </button>
+      )}
+    </div>
   );
 }
 

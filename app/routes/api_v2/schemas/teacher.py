@@ -353,6 +353,7 @@ class TeacherTask(BaseModel):
     planned_count: int              # sum(items.planned_count)
     completed_count: int            # sum(items.completed_count)
     pct: float                      # 0..1
+    solved_count: int | None = None  # kalemsiz (etkinlik) görevde öğrencinin girdiği çözülen soru
     has_pending_request: bool
 
 
