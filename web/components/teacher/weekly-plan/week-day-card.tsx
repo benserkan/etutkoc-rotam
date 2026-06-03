@@ -442,7 +442,8 @@ function taskSubject(task: TeacherTask): TaskSubject {
       name: withSubj.subject_name ?? "Ders",
     };
   }
-  if (task.items.length === 0) {
+  // Etkinlik (kalemsiz) VEYA blok görevi → başlık "{Ders} · {içerik}" parse et.
+  if (task.items.length === 0 || task.work_block_id != null) {
     const sep = task.title.indexOf(" · ");
     if (sep > 0 && sep < task.title.length - 3) {
       const nm = task.title.substring(0, sep);
@@ -643,7 +644,7 @@ function SortableTaskRow({
   // simetri). Title "·" içermiyorsa fallback: ders yok.
   let primarySubjectName: string | null = task.items[0]?.subject_name ?? null;
   let displayTitle = task.title;
-  if (!primarySubjectName && task.items.length === 0) {
+  if (!primarySubjectName && (task.items.length === 0 || task.work_block_id != null)) {
     const sepIdx = task.title.indexOf(" · ");
     if (sepIdx > 0 && sepIdx < task.title.length - 3) {
       primarySubjectName = task.title.substring(0, sepIdx);
@@ -664,8 +665,10 @@ function SortableTaskRow({
     primarySubjectId !== null
       ? (primarySubjectId * 67) % 360
       : subjectNameHash;
-  // Kitapsız (deneme) kalem = book_id None → tam deneme; ders-test satırından ayır.
-  const isDeneme = task.items.some((it) => it.book_id === null);
+  // Serbest iş bloğu görevi (work_block_id set) — "deneme"den ayır.
+  const isBlock = task.work_block_id != null;
+  // Kitapsız (deneme) kalem = book_id None → tam deneme; blok hariç.
+  const isDeneme = !isBlock && task.items.some((it) => it.book_id === null);
   // Dersi olmayan etkinlik satırları (video/özet/tekrar/diğer) için tip-renkli şerit.
   const ACTIVITY_ACCENT: Record<string, string> = {
     video: "#38bdf8", ozet: "#34d399", tekrar: "#a78bfa", other: "#94a3b8",
@@ -677,9 +680,11 @@ function SortableTaskRow({
     borderLeftColor:
       primarySubjectId !== null
         ? `hsl(${hue}, 45%, 65%)`
-        : isDeneme
-          ? "#6366f1" // indigo — deneme
-          : ACTIVITY_ACCENT[task.type] ?? "transparent",
+        : isBlock
+          ? "#8b5cf6" // violet — serbest blok
+          : isDeneme
+            ? "#6366f1" // indigo — deneme
+            : ACTIVITY_ACCENT[task.type] ?? "transparent",
     opacity: isDragging ? 0.5 : 1,
   };
 
@@ -692,7 +697,11 @@ function SortableTaskRow({
       id={`task-${task.id}`}
       className={cn(
         "px-4 py-2.5 flex items-start gap-3 border-l-[3px] task-row transition-colors",
-        isDeneme ? "bg-indigo-500/[0.05] hover:bg-indigo-500/[0.09]" : "hover:bg-muted/30",
+        isBlock
+          ? "bg-violet-500/[0.05] hover:bg-violet-500/[0.09]"
+          : isDeneme
+            ? "bg-indigo-500/[0.05] hover:bg-indigo-500/[0.09]"
+            : "hover:bg-muted/30",
       )}
       style={style}
     >
@@ -737,12 +746,20 @@ function SortableTaskRow({
           <span
             className={cn(
               "text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border",
-              isDeneme ? "bg-indigo-100 text-indigo-700 border-indigo-300" : typeTone,
+              isBlock
+                ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-950/40 dark:text-violet-200 dark:border-violet-800"
+                : isDeneme
+                  ? "bg-indigo-100 text-indigo-700 border-indigo-300"
+                  : typeTone,
             )}
           >
-            {isDeneme ? "Deneme" : (TASK_TYPE_LABELS[task.type] ?? task.type)}
+            {isBlock ? "Blok" : isDeneme ? "Deneme" : (TASK_TYPE_LABELS[task.type] ?? task.type)}
           </span>
-          {isDeneme && task.planned_count > 0 ? (
+          {isBlock && task.planned_count > 0 ? (
+            <span className="text-[11px] text-violet-700 dark:text-violet-300 font-medium tabular-nums">
+              {task.planned_count} {task.work_block_unit ?? "test"}
+            </span>
+          ) : isDeneme && task.planned_count > 0 ? (
             <span className="text-[11px] text-indigo-700 font-medium tabular-nums">
               {task.planned_count} soru
             </span>

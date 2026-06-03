@@ -24,6 +24,7 @@ import type {
   SubjectListResponse,
   StudentBookListResponse,
   StudentExamListResponse,
+  WorkBlockListResponse,
   StudentSessionListResponse,
   SessionPrefillResponse,
   BillingMonthResponse,
@@ -191,6 +192,8 @@ export const teacherKeys = {
   // Paket 3.5d.2 — Dashboard warnings feed
   warningsFeed: () => ["teacher", "me", "dashboard", "warnings-feed"] as const,
   taskTemplates: () => ["teacher", "me", "task-templates"] as const,
+  studentWorkBlocks: (id: number) =>
+    ["teacher", "me", "students", String(id), "work-blocks"] as const,
   studentExams: (id: number) =>
     ["teacher", "me", "students", String(id), "exams"] as const,
   studentSessions: (id: number) =>
@@ -258,6 +261,16 @@ export function getTeacherStudentExams(
 ): Promise<StudentExamListResponse> {
   return api<StudentExamListResponse>(
     `/api/v2/teacher/students/${studentId}/exams`,
+  );
+}
+
+export function getTeacherWorkBlocks(
+  studentId: number,
+  includeArchived = false,
+): Promise<WorkBlockListResponse> {
+  const qs = includeArchived ? "?include_archived=true" : "";
+  return api<WorkBlockListResponse>(
+    `/api/v2/teacher/students/${studentId}/work-blocks${qs}`,
   );
 }
 

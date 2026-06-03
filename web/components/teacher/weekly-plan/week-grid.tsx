@@ -34,6 +34,7 @@ const MARK: Record<GState, { ch: string; cls: string }> = {
 const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
 
 function taskUnit(t: TeacherTask): string {
+  if (t.work_block_unit) return t.work_block_unit; // serbest blok birimi öncelikli
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
   if (it && it.book_id == null) return "soru"; // kitapsız tam deneme
   if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
@@ -72,27 +73,52 @@ const SUBJECT_TONES = [
 ];
 const OTHER_TONE = { text: "text-muted-foreground", dot: "bg-slate-400" };
 
-function subjectTone(subjectId: number | null) {
-  if (subjectId == null) return OTHER_TONE;
-  return SUBJECT_TONES[Math.abs(subjectId) % SUBJECT_TONES.length];
+function nameHash(name: string): number {
+  return Math.abs(
+    Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0),
+  );
+}
+
+// Grup anahtarına göre ton: "s{id}" → subject hash · "n:.." → ad hash · other → nötr.
+function toneForKey(key: string, name: string) {
+  if (key === "other") return OTHER_TONE;
+  if (key.startsWith("s")) {
+    const id = Number(key.slice(1));
+    if (Number.isFinite(id)) return SUBJECT_TONES[Math.abs(id) % SUBJECT_TONES.length];
+  }
+  return SUBJECT_TONES[nameHash(name) % SUBJECT_TONES.length];
 }
 
 interface SubjGroup {
-  key: number | null;
+  key: string;
   name: string;
   order: number;
   tasks: TeacherTask[];
 }
 
+// Görevin ders grubu — item subject'i; yoksa (etkinlik/blok) başlık "{Ders} · .." parse.
+function taskSubjKey(t: TeacherTask): { key: string; name: string } {
+  const ws = t.items.find((it) => it.subject_id != null);
+  if (ws?.subject_id != null) {
+    return { key: `s${ws.subject_id}`, name: ws.subject_name ?? "Ders" };
+  }
+  if (t.items.length === 0 || t.work_block_id != null) {
+    const sep = t.title.indexOf(" · ");
+    if (sep > 0 && sep < t.title.length - 3) {
+      const nm = t.title.substring(0, sep);
+      return { key: `n:${nm.toLocaleLowerCase("tr")}`, name: nm };
+    }
+  }
+  return { key: "other", name: "Diğer" };
+}
+
 function groupDay(tasks: TeacherTask[]): SubjGroup[] {
-  const map = new Map<number | null, SubjGroup>();
+  const map = new Map<string, SubjGroup>();
   for (const t of tasks) {
-    const ws = t.items.find((it) => it.subject_id != null);
-    const key = ws?.subject_id ?? null;
-    const name = ws?.subject_name ?? "Diğer";
+    const { key, name } = taskSubjKey(t);
     const g = map.get(key);
     if (g) g.tasks.push(t);
-    else map.set(key, { key, name, order: key == null ? 1 : 0, tasks: [t] });
+    else map.set(key, { key, name, order: key === "other" ? 1 : 0, tasks: [t] });
   }
   return Array.from(map.values()).sort(
     (a, b) => a.order - b.order || a.name.localeCompare(b.name, "tr"),
@@ -196,9 +222,9 @@ export function WeekGrid({
                       </p>
                     ) : (
                       groups.map((g) => {
-                        const tone = subjectTone(g.key);
+                        const tone = toneForKey(g.key, g.name);
                         return (
-                          <div key={g.key ?? "other"}>
+                          <div key={g.key}>
                             <div className="flex items-center gap-1 leading-tight">
                               <span
                                 className={cn("size-1.5 rounded-full flex-shrink-0", tone.dot)}

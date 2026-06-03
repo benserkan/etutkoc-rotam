@@ -210,6 +210,10 @@ from app.routes.api_v2.schemas.teacher import (
     WeeklyProgramOverlapItem,
     WeeklyProgramUpdateBody,
     WeeklyProgramWrapLegacyBody,
+    WorkBlockCreateBody,
+    WorkBlockItem,
+    WorkBlockListResponse,
+    WorkBlockUpdateBody,
     TaskPatchBody,
     TaskSingleItemEditBody,
     TeacherBadgesResponse,
@@ -2718,6 +2722,9 @@ def _build_teacher_task(db: Session, task: Task) -> TeacherTask:
         pct=pct,
         solved_count=task.solved_count,
         has_pending_request=has_pending,
+        work_block_id=task.work_block_id,
+        work_block_title=(task.work_block.title if task.work_block else None),
+        work_block_unit=(task.work_block.unit if task.work_block else None),
     )
 
 
@@ -2773,6 +2780,8 @@ def _invalidate_for_task(task: Task, teacher_id: int) -> list[str]:
         f"teacher:{teacher_id}:students:{sid}:week",
         f"teacher:{teacher_id}:students:{sid}:summary",
         f"teacher:{teacher_id}:students:{sid}:sidebar",
+        # Serbest iş blokları: bağlı görev ekle/sil/düzenle → dağıtılan/kalan değişir
+        f"teacher:{teacher_id}:students:{sid}:work-blocks",
         # Kaynak Durumu sidebar'ı: kitap/section rezerv sayıları değiştiyse
         # yenilensin (görev ekle/sil/düzenle hepsinde geçerli)
         f"teacher:{teacher_id}:dashboard",
@@ -2948,6 +2957,25 @@ def _create_task_with_items(
         _ensure_section_belongs_to_book(db, it.book_id, it.section_id)
         _ensure_student_book_assigned(db, student.id, it.book_id)
 
+    # Opsiyonel serbest iş bloğu bağı (Katman 3) — blok bu öğrenciye ait olmalı.
+    work_block_id = getattr(payload, "work_block_id", None)
+    if work_block_id is not None:
+        from app.models import CoachWorkBlock
+        block = (
+            db.query(CoachWorkBlock)
+            .filter(
+                CoachWorkBlock.id == work_block_id,
+                CoachWorkBlock.student_id == student.id,
+            )
+            .first()
+        )
+        if block is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail={"error": "not_found", "code": "work_block_not_found",
+                        "message": "İş bloğu bulunamadı."},
+            )
+
     order = _next_order_for_day(db, student.id, d)
     # Smart draft default (Jinja parite): is_draft=None → gelecek tarihler taslak,
     # bugün/geçmiş canlı. Açık True/False değer override eder.
@@ -2969,6 +2997,7 @@ def _create_task_with_items(
         is_draft=is_draft_value,
         published_at=published_at,
         notes=(payload.notes or None),
+        work_block_id=work_block_id,
     )
     db.add(task)
     db.flush()
@@ -7716,6 +7745,236 @@ def teacher_delete_program_v2(
             f"teacher:{user.id}:students:{student_id}:programs",
             f"teacher:{user.id}:students:{student_id}:week",
             f"teacher:{user.id}:students:{student_id}",
+        ],
+    )
+
+
+# ============================================================================
+# Serbest iş blokları (Katman 3) — CoachWorkBlock CRUD + dağıtılan/kalan
+# ============================================================================
+
+_WORK_BLOCK_UNITS = ("test", "soru", "deneme")
+
+
+def _work_block_aggregates(
+    db: Session, student_id: int, block_ids: list[int],
+) -> dict[int, tuple[int, int, int]]:
+    """block_id -> (dağıtılan, çözülen, görev_sayısı). İptal görevler hariç."""
+    if not block_ids:
+        return {}
+    rows = (
+        db.query(
+            Task.work_block_id,
+            func.coalesce(func.sum(TaskBookItem.planned_count), 0),
+            func.coalesce(func.sum(TaskBookItem.completed_count), 0),
+            func.count(func.distinct(Task.id)),
+        )
+        .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+        .filter(
+            Task.student_id == student_id,
+            Task.work_block_id.in_(block_ids),
+            Task.status != TaskStatus.CANCELLED,
+        )
+        .group_by(Task.work_block_id)
+        .all()
+    )
+    return {r[0]: (int(r[1]), int(r[2]), int(r[3])) for r in rows}
+
+
+def _build_work_block_item(block, agg: tuple[int, int, int]) -> WorkBlockItem:
+    distributed, completed, task_count = agg
+    return WorkBlockItem(
+        id=block.id,
+        title=block.title,
+        subject_id=block.subject_id,
+        subject_name=(block.subject.name if block.subject else None),
+        total_count=block.total_count,
+        unit=block.unit,
+        note=block.note,
+        status=block.status,
+        distributed=distributed,
+        completed=completed,
+        remaining=max(0, block.total_count - distributed),
+        task_count=task_count,
+        created_at=block.created_at,
+        archived_at=block.archived_at,
+    )
+
+
+def _get_owned_work_block(db: Session, block_id: int, user: User):
+    """Bloğu getir + bloğun öğrencisi bu koça ait olmalı (tenant izolasyonu)."""
+    from app.models import CoachWorkBlock
+    block = db.query(CoachWorkBlock).filter(CoachWorkBlock.id == block_id).first()
+    if block is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "work_block_not_found",
+                    "message": "İş bloğu bulunamadı."},
+        )
+    # _get_owned_student koça ait değilse 404 fırlatır → sızıntı önleme.
+    _get_owned_student(db, block.student_id, user.id)
+    return block
+
+
+@router.get(
+    "/students/{student_id}/work-blocks",
+    response_model=WorkBlockListResponse,
+)
+def teacher_list_work_blocks_v2(
+    student_id: int,
+    include_archived: bool = Query(False),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin serbest iş blokları — dağıtılan/kalan hesaplı.
+
+    Varsayılan yalnız aktif/biten bloklar; include_archived=True ise arşivliler de.
+    """
+    from app.models import CoachWorkBlock
+
+    student = _get_owned_student(db, student_id, user.id)
+    q = db.query(CoachWorkBlock).filter(CoachWorkBlock.student_id == student.id)
+    if not include_archived:
+        q = q.filter(CoachWorkBlock.status != "archived")
+    blocks = q.order_by(CoachWorkBlock.created_at.desc()).all()
+    agg = _work_block_aggregates(db, student.id, [b.id for b in blocks])
+    items = [_build_work_block_item(b, agg.get(b.id, (0, 0, 0))) for b in blocks]
+    return WorkBlockListResponse(items=items)
+
+
+@router.post(
+    "/students/{student_id}/work-blocks",
+    response_model=MutationResponse[WorkBlockItem],
+)
+def teacher_create_work_block_v2(
+    student_id: int,
+    body: WorkBlockCreateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Yeni serbest iş bloğu oluştur (sistem-dışı kaynak için sayaç)."""
+    from app.models import CoachWorkBlock
+
+    student = _get_owned_student(db, student_id, user.id)
+    title = (body.title or "").strip()
+    if not title:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "title_required",
+                    "message": "Blok adı zorunlu."},
+        )
+    if body.total_count < 1:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "invalid_total",
+                    "message": "Toplam en az 1 olmalı."},
+        )
+    unit = body.unit if body.unit in _WORK_BLOCK_UNITS else "test"
+    block = CoachWorkBlock(
+        coach_id=user.id,
+        student_id=student.id,
+        title=title[:255],
+        subject_id=body.subject_id,
+        total_count=body.total_count,
+        unit=unit,
+        note=(body.note or None),
+        status="active",
+    )
+    db.add(block)
+    db.commit()
+    db.refresh(block)
+    return MutationResponse[WorkBlockItem](
+        data=_build_work_block_item(block, (0, 0, 0)),
+        invalidate=[f"teacher:{user.id}:students:{student.id}:work-blocks"],
+    )
+
+
+@router.post(
+    "/work-blocks/{block_id}",
+    response_model=MutationResponse[WorkBlockItem],
+)
+def teacher_update_work_block_v2(
+    block_id: int,
+    body: WorkBlockUpdateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bloğu düzenle — None geçilen alan değişmez. status='archived' arşivler."""
+    block = _get_owned_work_block(db, block_id, user)
+    if body.title is not None:
+        t = body.title.strip()
+        if t:
+            block.title = t[:255]
+    if body.total_count is not None:
+        if body.total_count < 1:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={"error": "validation", "code": "invalid_total",
+                        "message": "Toplam en az 1 olmalı."},
+            )
+        block.total_count = body.total_count
+    if body.unit is not None and body.unit in _WORK_BLOCK_UNITS:
+        block.unit = body.unit
+    if body.subject_id is not None:
+        block.subject_id = body.subject_id or None
+    if body.note is not None:
+        block.note = body.note.strip() or None
+    if body.status is not None and body.status in ("active", "done", "archived"):
+        block.status = body.status
+        block.archived_at = (
+            datetime.now(timezone.utc) if body.status == "archived" else None
+        )
+    db.commit()
+    db.refresh(block)
+    agg = _work_block_aggregates(db, block.student_id, [block.id]).get(
+        block.id, (0, 0, 0)
+    )
+    return MutationResponse[WorkBlockItem](
+        data=_build_work_block_item(block, agg),
+        invalidate=[f"teacher:{user.id}:students:{block.student_id}:work-blocks"],
+    )
+
+
+@router.post(
+    "/work-blocks/{block_id}/archive",
+    response_model=MutationResponse[dict],
+)
+def teacher_archive_work_block_v2(
+    block_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bloğu arşivle (yumuşak) — görev bağları korunur, listeden gizlenir."""
+    block = _get_owned_work_block(db, block_id, user)
+    block.status = "archived"
+    block.archived_at = datetime.now(timezone.utc)
+    sid = block.student_id
+    db.commit()
+    return MutationResponse[dict](
+        data={"ok": True},
+        invalidate=[f"teacher:{user.id}:students:{sid}:work-blocks"],
+    )
+
+
+@router.delete(
+    "/work-blocks/{block_id}",
+    response_model=MutationResponse[dict],
+)
+def teacher_delete_work_block_v2(
+    block_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bloğu sil — bağlı görevler KALIR (work_block_id SET NULL)."""
+    block = _get_owned_work_block(db, block_id, user)
+    sid = block.student_id
+    db.delete(block)
+    db.commit()
+    return MutationResponse[dict](
+        data={"ok": True},
+        invalidate=[
+            f"teacher:{user.id}:students:{sid}:work-blocks",
+            f"teacher:{user.id}:students:{sid}:week",
         ],
     )
 

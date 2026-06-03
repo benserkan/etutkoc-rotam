@@ -368,6 +368,50 @@ export interface TeacherTask {
   pct: number;
   solved_count?: number | null;    // kalemsiz (etkinlik) görevde öğrencinin çözdüğü soru
   has_pending_request: boolean;
+  // Serbest iş bloğu bağı (Katman 3)
+  work_block_id?: number | null;
+  work_block_title?: string | null;
+  work_block_unit?: string | null;
+}
+
+// --------------------------- Serbest iş bloğu (Katman 3) ---------------------
+
+export interface WorkBlock {
+  id: number;
+  title: string;
+  subject_id: number | null;
+  subject_name: string | null;
+  total_count: number;
+  unit: string;                     // test | soru | deneme
+  note: string | null;
+  status: string;                   // active | done | archived
+  distributed: number;              // bloğa bağlı görevlerin planlananı
+  completed: number;                // bağlı görevlerde çözülen
+  remaining: number;                // max(0, total - distributed)
+  task_count: number;
+  created_at: string;
+  archived_at: string | null;
+}
+
+export interface WorkBlockListResponse {
+  items: WorkBlock[];
+}
+
+export interface WorkBlockCreateBody {
+  title: string;
+  total_count: number;
+  unit?: string;
+  subject_id?: number | null;
+  note?: string | null;
+}
+
+export interface WorkBlockUpdateBody {
+  title?: string;
+  total_count?: number;
+  unit?: string;
+  subject_id?: number | null;
+  note?: string | null;
+  status?: string;
 }
 
 export interface TeacherWeekNote {
@@ -775,6 +819,7 @@ export interface TaskCreateBody {
   is_draft?: boolean | null;
   notes?: string | null;
   items: TaskItemBody[];
+  work_block_id?: number | null;    // opsiyonel serbest iş bloğu bağı (Katman 3)
 }
 
 export interface TaskPatchBody {

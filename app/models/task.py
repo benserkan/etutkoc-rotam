@@ -11,6 +11,7 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.models.book import Book, BookSection
+    from app.models.coach_work_block import CoachWorkBlock
     from app.models.user import User
 
 
@@ -68,6 +69,11 @@ class Task(Base):
     period: Mapped[str | None] = mapped_column(String(16), nullable=True)
     # Tip-spesifik bağlantı (video URL vb.). notes ise konu/açıklama için.
     link_url: Mapped[str | None] = mapped_column(String(500), nullable=True)
+    # Serbest iş bloğu bağı (Katman 3) — görev bir bloğa aitse blok "dağıtılan"a
+    # sayar (görev planlananı). NULL = bağsız. Blok silinince SET NULL.
+    work_block_id: Mapped[int | None] = mapped_column(
+        ForeignKey("coach_work_blocks.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     # Taslak/yayın mantığı: True iken görev sadece öğretmende görünür; False iken
     # öğrenci paneline iner ve veli duyurusuna aday olur. Smart default:
     # bugün/geçmiş tarihliler False, gelecek tarihliler True.
@@ -86,6 +92,9 @@ class Task(Base):
     )
     book_items: Mapped[list["TaskBookItem"]] = relationship(
         "TaskBookItem", back_populates="task", cascade="all, delete-orphan"
+    )
+    work_block: Mapped["CoachWorkBlock | None"] = relationship(
+        "CoachWorkBlock", back_populates="tasks", foreign_keys=[work_block_id]
     )
 
     def __repr__(self) -> str:

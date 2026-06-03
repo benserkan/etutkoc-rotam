@@ -356,6 +356,10 @@ class TeacherTask(BaseModel):
     pct: float                      # 0..1
     solved_count: int | None = None  # kalemsiz (etkinlik) görevde öğrencinin girdiği çözülen soru
     has_pending_request: bool
+    # Serbest iş bloğu bağı (Katman 3) — görev bir bloğa aitse blok adı + birim.
+    work_block_id: int | None = None
+    work_block_title: str | None = None
+    work_block_unit: str | None = None
 
 
 class TeacherWeekNote(BaseModel):
@@ -721,6 +725,51 @@ class ReviewStruggleResponse(BaseModel):
     subject_id: int
 
 
+# ----------------------- Serbest iş bloğu (Katman 3) -----------------------
+
+
+class WorkBlockItem(BaseModel):
+    """GET /students/{id}/work-blocks satırı — hesaplanan dağıtılan/kalan dahil."""
+    id: int
+    title: str
+    subject_id: int | None = None
+    subject_name: str | None = None
+    total_count: int
+    unit: str                         # test | soru | deneme
+    note: str | None = None
+    status: str                       # active | done | archived
+    distributed: int                  # bloğa bağlı görevlerin planlanan toplamı
+    completed: int                    # bloğa bağlı görevlerde çözülen toplam
+    remaining: int                    # max(0, total - distributed)
+    task_count: int                   # bloğa bağlı görev sayısı
+    created_at: datetime
+    archived_at: datetime | None = None
+
+
+class WorkBlockListResponse(BaseModel):
+    """GET /api/v2/teacher/students/{id}/work-blocks"""
+    items: list[WorkBlockItem]
+
+
+class WorkBlockCreateBody(BaseModel):
+    """POST /api/v2/teacher/students/{id}/work-blocks"""
+    title: str
+    total_count: int                  # ≥1
+    unit: str = "test"                # test | soru | deneme
+    subject_id: int | None = None
+    note: str | None = None
+
+
+class WorkBlockUpdateBody(BaseModel):
+    """POST /api/v2/teacher/work-blocks/{id} — None geçilen alan değişmez."""
+    title: str | None = None
+    total_count: int | None = None
+    unit: str | None = None
+    subject_id: int | None = None
+    note: str | None = None
+    status: str | None = None         # active | done | archived
+
+
 # ----------------------- Mutation bodyleri -----------------------
 
 
@@ -750,6 +799,9 @@ class TaskCreateBody(BaseModel):
     is_draft: bool | None = None
     notes: str | None = None
     items: list[TaskItemBody]        # ≥1
+    # Opsiyonel serbest iş bloğu bağı (Katman 3) — verilirse görev bu bloğa
+    # sayılır (blok "dağıtılan" = bağlı görevlerin planlananı).
+    work_block_id: int | None = None
 
 
 class TaskPatchBody(BaseModel):

@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
   BookOpen,
+  Boxes,
   Brain,
   ClipboardCheck,
   FileText,
@@ -29,9 +30,13 @@ import {
   getStudentReviewChips,
   getStudentSectionStats,
   getStudentSidebar,
+  getTeacherWorkBlocks,
   teacherKeys,
 } from "@/lib/api/teacher";
-import { useCreateTask } from "@/lib/hooks/use-teacher-mutations";
+import {
+  useCreateTask,
+  useCreateWorkBlock,
+} from "@/lib/hooks/use-teacher-mutations";
 import { useTeacherStudent } from "@/lib/hooks/use-teacher-queries";
 import type {
   BookOptionsResponse,
@@ -40,6 +45,8 @@ import type {
   SectionStatsResponse,
   SidebarResponse,
   SubjectListResponse,
+  WorkBlock,
+  WorkBlockListResponse,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
 
@@ -133,7 +140,14 @@ function pickPresetGroups(
 
 // "deneme" yalnız UI sekmesi; backend'e type="other" + kitapsız kalem gönderir
 // (tasktype enum'una değer eklemeden — ikinci migration gerekmez).
-type TaskType = "test" | "deneme" | "video" | "ozet" | "tekrar" | "other";
+type TaskType =
+  | "test"
+  | "deneme"
+  | "blok"
+  | "video"
+  | "ozet"
+  | "tekrar"
+  | "other";
 
 const TYPE_TILES: Array<{
   key: TaskType;
@@ -142,6 +156,7 @@ const TYPE_TILES: Array<{
 }> = [
   { key: "test", label: "Test", Icon: FileText },
   { key: "deneme", label: "Deneme", Icon: ClipboardCheck },
+  { key: "blok", label: "Blok", Icon: Boxes },
   { key: "video", label: "Video", Icon: Video },
   { key: "ozet", label: "Özet", Icon: BookOpen },
   { key: "tekrar", label: "Tekrar", Icon: Repeat },
@@ -194,7 +209,7 @@ export function AddTaskForm({
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
           Görev tipi
         </p>
-        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+        <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
           {TYPE_TILES.map(({ key, label, Icon }) => {
             const active = type === key;
             return (
@@ -235,6 +250,16 @@ export function AddTaskForm({
           studentId={studentId}
           dayDate={dayDate}
           period={period}
+          onAfterAdd={onAfterAdd}
+        />
+      ) : null}
+      {type === "blok" ? (
+        <BlockForm
+          studentId={studentId}
+          dayDate={dayDate}
+          subjects={allSubjects}
+          period={period}
+          onFocusSubject={onFocusSubject}
           onAfterAdd={onAfterAdd}
         />
       ) : null}
@@ -673,6 +698,269 @@ function DenemePresetDropdown({
           </optgroup>
         ))}
       </select>
+    </div>
+  );
+}
+
+// =============================================================================
+// BLOK TİPİ (serbest iş bloğu — Katman 3)
+// Sistemde olmayan kaynak (özel ders / başka öğretmen ödevi). Koç bir blok
+// seçer (veya oluşturur) + bu güne kaç dağıtacağını girer → bağlı görev oluşur,
+// blok "dağıtılan/kalan"ı günceller. Backend'e type="other" + kitapsız kalem +
+// work_block_id gönderir.
+// =============================================================================
+
+function BlockForm({
+  studentId,
+  dayDate,
+  subjects,
+  period,
+  onFocusSubject,
+  onAfterAdd,
+}: {
+  studentId: number;
+  dayDate: string;
+  subjects: { id: number; name: string }[];
+  period: TaskPeriod | null;
+  onFocusSubject: (id: number | null) => void;
+  onAfterAdd: () => void;
+}) {
+  const create = useCreateTask(studentId);
+  const createBlock = useCreateWorkBlock(studentId);
+  const blocksQ = useQuery<WorkBlockListResponse>({
+    queryKey: teacherKeys.studentWorkBlocks(studentId),
+    queryFn: () => getTeacherWorkBlocks(studentId),
+    staleTime: 30_000,
+  });
+  const blocks = blocksQ.data?.items ?? [];
+
+  const [selected, setSelected] = React.useState<string>(""); // "" | id | "new"
+  const [hour, setHour] = React.useState("");
+  const [count, setCount] = React.useState("");
+  const [label, setLabel] = React.useState("");
+
+  // Yeni blok alanları
+  const [nbTitle, setNbTitle] = React.useState("");
+  const [nbTotal, setNbTotal] = React.useState("");
+  const [nbUnit, setNbUnit] = React.useState("test");
+  const [nbSubject, setNbSubject] = React.useState<number | "">("");
+
+  const selectedBlock: WorkBlock | undefined =
+    selected !== "" && selected !== "new"
+      ? blocks.find((b) => b.id === Number(selected))
+      : undefined;
+
+  function onCreateBlock(e: React.FormEvent) {
+    e.preventDefault();
+    const t = nbTitle.trim();
+    const n = Number(nbTotal);
+    if (!t || !Number.isFinite(n) || n < 1) return;
+    createBlock.mutate(
+      {
+        body: {
+          title: t,
+          total_count: n,
+          unit: nbUnit,
+          subject_id: nbSubject === "" ? null : Number(nbSubject),
+        },
+      },
+      {
+        onSuccess: (res) => {
+          // Oluşan bloğu seç + alanları sıfırla
+          setSelected(String(res.data.id));
+          setNbTitle("");
+          setNbTotal("");
+          setNbSubject("");
+        },
+      },
+    );
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedBlock) return;
+    const n = Number(count);
+    if (!Number.isFinite(n) || n < 1) return;
+    const itemLabel = label.trim() || selectedBlock.title;
+    // Ders varsa "{Ders} · {etiket}" → editör/ızgara ders grubuna sokar.
+    const title = selectedBlock.subject_name
+      ? `${selectedBlock.subject_name} · ${itemLabel}`
+      : itemLabel;
+    const scheduledHour = hour === "" ? null : Number(hour);
+    create.mutate(
+      {
+        body: {
+          date: dayDate,
+          type: "other",
+          title,
+          scheduled_hour: scheduledHour,
+          period,
+          work_block_id: selectedBlock.id,
+          items: [
+            {
+              book_id: null,
+              section_id: null,
+              label: itemLabel,
+              planned_count: n,
+            },
+          ],
+        },
+      },
+      {
+        onSuccess: () => {
+          setCount("");
+          setLabel("");
+          onFocusSubject(selectedBlock.subject_id ?? null);
+          onAfterAdd();
+        },
+      },
+    );
+  }
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <Label>İş bloğu</Label>
+        <select
+          value={selected}
+          onChange={(e) => setSelected(e.target.value)}
+          className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring transition"
+        >
+          <option value="">— blok seç —</option>
+          {blocks.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.title} — kalan {b.remaining}/{b.total_count} {b.unit}
+            </option>
+          ))}
+          <option value="new">+ Yeni blok oluştur</option>
+        </select>
+      </div>
+
+      {selected === "new" ? (
+        <form
+          onSubmit={onCreateBlock}
+          className="rounded-lg border border-border bg-muted/30 p-3 space-y-2"
+        >
+          <p className="text-[11px] text-muted-foreground">
+            Yeni serbest blok — örn. özel ders öğretmeninin hazırladığı 10 test.
+          </p>
+          <Input
+            type="text"
+            value={nbTitle}
+            onChange={(e) => setNbTitle(e.target.value)}
+            maxLength={200}
+            placeholder="Blok adı — örn. Özel Ders Mat ödevi"
+          />
+          <div className="flex flex-wrap gap-2 items-end">
+            <div>
+              <Label>Toplam</Label>
+              <Input
+                type="number"
+                min={1}
+                value={nbTotal}
+                onChange={(e) => setNbTotal(e.target.value)}
+                placeholder="10"
+                className="w-24 text-right tabular-nums"
+              />
+            </div>
+            <div>
+              <Label>Birim</Label>
+              <select
+                value={nbUnit}
+                onChange={(e) => setNbUnit(e.target.value)}
+                className="px-2 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="test">test</option>
+                <option value="soru">soru</option>
+                <option value="deneme">deneme</option>
+              </select>
+            </div>
+            <div className="min-w-[140px]">
+              <Label>Ders (opsiyonel)</Label>
+              <Select
+                value={nbSubject === "" ? "" : String(nbSubject)}
+                onChange={(v) => setNbSubject(v === "" ? "" : Number(v))}
+              >
+                <option value="">— ders —</option>
+                {subjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <button
+              type="submit"
+              disabled={createBlock.isPending || !nbTitle.trim() || !nbTotal}
+              className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background hover:bg-foreground/90 disabled:opacity-40 transition"
+            >
+              {createBlock.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" aria-hidden />
+              ) : (
+                <Plus className="size-3.5" aria-hidden />
+              )}
+              Oluştur ve seç
+            </button>
+          </div>
+        </form>
+      ) : null}
+
+      {selectedBlock ? (
+        <form onSubmit={onSubmit} className="space-y-2">
+          <div className="rounded-md border border-indigo-200 dark:border-indigo-900 bg-indigo-50/60 dark:bg-indigo-950/25 px-3 py-2 text-[12px] text-indigo-800 dark:text-indigo-200 flex items-center justify-between gap-2">
+            <span className="truncate">
+              <b>{selectedBlock.title}</b>
+              {selectedBlock.subject_name ? ` · ${selectedBlock.subject_name}` : ""}
+            </span>
+            <span className="whitespace-nowrap tabular-nums font-medium">
+              kalan {selectedBlock.remaining}/{selectedBlock.total_count} {selectedBlock.unit}
+            </span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+            <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
+            <div className="md:col-span-6">
+              <Label>Bu görevin konusu / etiketi (opsiyonel)</Label>
+              <Input
+                type="text"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                maxLength={200}
+                placeholder={`örn. Bölüm 1 · boş bırakılırsa "${selectedBlock.title}"`}
+              />
+            </div>
+            <div className="md:col-span-3">
+              <Label>Bu güne kaç {selectedBlock.unit}</Label>
+              <Input
+                type="number"
+                min={1}
+                value={count}
+                onChange={(e) => setCount(e.target.value)}
+                placeholder="örn. 3"
+                className="text-right tabular-nums"
+              />
+            </div>
+            <div className="md:col-span-2 flex justify-end">
+              <SubmitButton
+                pending={create.isPending}
+                disabled={!count || Number(count) < 1}
+              />
+            </div>
+          </div>
+          {count && Number(count) > selectedBlock.remaining ? (
+            <p className="inline-flex items-center gap-1.5 text-[11px] text-amber-700 dark:text-amber-300">
+              <AlertTriangle className="size-3" aria-hidden />
+              Kalan {selectedBlock.remaining} {selectedBlock.unit}; daha fazla
+              dağıtıyorsun (engellenmez — bloğun toplamı aşılır).
+            </p>
+          ) : (
+            <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground italic">
+              <Info className="size-3" aria-hidden />
+              Bu görev bloğun “dağıtılan”ına sayar; programda{" "}
+              {selectedBlock.unit} olarak görünür.
+            </p>
+          )}
+        </form>
+      ) : null}
     </div>
   );
 }

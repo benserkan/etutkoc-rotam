@@ -51,6 +51,9 @@ import type {
   TaskItemResultBody,
   TaskPatchBody,
   TaskSingleItemEditBody,
+  WorkBlock,
+  WorkBlockCreateBody,
+  WorkBlockUpdateBody,
   TeacherGoalActionResult,
   TeacherGoalCreateBody,
   TeacherGoalUpdateBody,
@@ -212,6 +215,78 @@ export function useCreateTask(studentId: number) {
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       toast.success("Görev eklendi");
+    },
+  });
+}
+
+// --------------------------- Serbest iş bloğu (Katman 3) ---------------------
+
+export function useCreateWorkBlock(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<WorkBlock>, ApiError, { body: WorkBlockCreateBody }>({
+    mutationFn: ({ body }) =>
+      api<MutationResponse<WorkBlock>>(
+        `/api/v2/teacher/students/${studentId}/work-blocks`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (err) => showError(err, "İş bloğu oluşturulamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("İş bloğu oluşturuldu");
+    },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- API tutarlılığı (blok id'si üzerinden; invalidate backend'den gelir)
+export function useUpdateWorkBlock(_studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<WorkBlock>,
+    ApiError,
+    { blockId: number; body: WorkBlockUpdateBody }
+  >({
+    mutationFn: ({ blockId, body }) =>
+      api<MutationResponse<WorkBlock>>(`/api/v2/teacher/work-blocks/${blockId}`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (err) => showError(err, "İş bloğu güncellenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("İş bloğu güncellendi");
+    },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- API tutarlılığı (blok id'si üzerinden; invalidate backend'den gelir)
+export function useArchiveWorkBlock(_studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<{ ok: boolean }>, ApiError, { blockId: number }>({
+    mutationFn: ({ blockId }) =>
+      api<MutationResponse<{ ok: boolean }>>(
+        `/api/v2/teacher/work-blocks/${blockId}/archive`,
+        { method: "POST" },
+      ),
+    onError: (err) => showError(err, "İş bloğu arşivlenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("İş bloğu arşivlendi");
+    },
+  });
+}
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- API tutarlılığı (blok id'si üzerinden; invalidate backend'den gelir)
+export function useDeleteWorkBlock(_studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<{ ok: boolean }>, ApiError, { blockId: number }>({
+    mutationFn: ({ blockId }) =>
+      api<MutationResponse<{ ok: boolean }>>(`/api/v2/teacher/work-blocks/${blockId}`, {
+        method: "DELETE",
+      }),
+    onError: (err) => showError(err, "İş bloğu silinemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("İş bloğu silindi");
     },
   });
 }
