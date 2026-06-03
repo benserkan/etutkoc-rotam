@@ -4214,6 +4214,45 @@ kitabı) · tam_deneme (kitapsız "Deneme") · etkinlik (video/özet/tekrar/diğ
 - **Migration head = `z3a6f9g0f44z`.** Tümü additive + downgrade'li; prod'da
   start.sh `upgrade head` ile uygulanır.
 
+## Haftalık plan editörü — Katman 1/2/3 (2026-06-03, CANLI)
+
+**Bağlam (kullanıcı, Image 36/37):** program oluştururken 3 acı: (1) birbirine
+bağlı testleri (mat öğretmeni 10 test / özel ders sistem-dışı sorular) günlere
+yayarken "kaç verdim, kaç kaldı" elle sayılıyor; (2) tek-açık akordeon → bir günü
+planlarken diğer günleri görememe; (3) gün içi görevler ders bazlı gruplanmıyor
+(araya başka ders giriyor). Kullanıcı önce ciddi analiz istedi → onayladı:
+**Katman 1+2 önce**, blok takibi için **hafif "serbest blok"** (Katman 3).
+
+- **Katman 1 — gün içi ders gruplama** (`week-day-card`): `TaskList` görevleri
+  ders grubuna göre sıralar (`subjectGroupedOrder`) + renkli `SubjectGroupHeader`;
+  aynı dersin görevleri yan yana, araya ders girmez. Sürükle-bırak korunur
+  (orderedIds yalnız görev seti değişince ders-gruplu yeniden kurulur). Render
+  index-bazlı saf karşılaştırma (eslint immutability).
+- **Katman 2 — Hafta Izgarası** (`week-grid.tsx`): 7 günü yan yana, hep görünür
+  tek bakış (akordeonun üstünde). Ders gruplu + durum (✓/◐/☐) + sayı/birim;
+  güne tıkla → o günün düzenleyicisi açılır + kaydırılır (`#day-{date}` +
+  scroll-mt). `grid-cols-2 sm:4 lg:7`, katlanabilir.
+- **Katman 3 — serbest iş bloğu** (**migration `a4b7g0h1g55a`**, additive):
+  `coach_work_blocks` (coach/student/title/subject/total/unit/note/status) +
+  `tasks.work_block_id` (nullable FK SET NULL). Backend `CoachWorkBlock` modeli +
+  5 endpoint (list/create/update/archive/delete · owner-pattern 404) + görev
+  oluşturmada opsiyonel `work_block_id` + serializer'a work_block_id/title/unit +
+  dağıtılan/kalan agregasyonu (`_work_block_aggregates`). **Rezerv YOK** — sayaç.
+  Smoke `test_api_v2_teacher_work_blocks.py` **19/19**.
+  - Frontend: `WorkBlockPanel` (Kaynak Durumu üstünde — ilerleme + oluştur/
+    düzenle/arşivle/sil) + add-task-form **"Blok" tipi** (blok seç/oluştur + bu
+    güne kaç → bağlı görev) + week-day-card/week-grid blok görevini ders grubuna
+    sokar (başlık `{Ders}·{etiket}` parse) + **violet "Blok" rozeti** + blok
+    birimi (deneme'den ayrı).
+- **Migration head = `a4b7g0h1g55a`.** Doğrulandı (prod: kolon+tablo var,
+  endpoint 401, site 200). Commit `5f73dbf`, web/worker/next rebuild + DB yedek.
+- **AÇIK KARAR (kullanıcıya soruldu — ikincil yüzeyler):** blok görevi kitapsız
+  kalem taşıdığından `gorev_stats.classify_gorev` onu **"tam_deneme"** sayıyor →
+  panel/mail "Denemeler"de görünüyor; ayrıca `/day` (day-board) + yazdırma blok
+  görevini "Diğer"e gruplayıp birim "soru" gösteriyor. Editör/ızgara/sidebar
+  (planlama yüzeyleri) tutarlı; bu ikincil yüzeyler kullanıcı kararına bağlı
+  (blok = etkinlik mi / test mi / tam_deneme mi). [[feedback-holistic-change-propagation]]
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
