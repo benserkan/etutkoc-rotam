@@ -61,6 +61,11 @@ import type {
   TeacherTask,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+import {
+  findSubjectByExactName,
+  findSubjectInTitle,
+  type SubjectRef,
+} from "@/lib/subject-match";
 
 import { AddTaskForm } from "./add-task-form";
 import { InlineSuggestions } from "./inline-suggestions";
@@ -433,38 +438,6 @@ interface TaskSubject {
   key: string;
   id: number | null;
   name: string;
-}
-
-export interface SubjectRef {
-  id: number;
-  name: string;
-}
-
-// Ders adı tam eşleşme (video/özet/blok başlığı "{Ders} · ..." öneki için).
-function findSubjectByExactName(
-  name: string,
-  subjects?: SubjectRef[],
-): SubjectRef | null {
-  if (!subjects?.length) return null;
-  const low = name.trim().toLocaleLowerCase("tr");
-  return subjects.find((s) => s.name.toLocaleLowerCase("tr") === low) ?? null;
-}
-
-// Başlık içinde ders adı ara (branş/genel deneme: "AYT Matematik Branş" → Matematik).
-// En uzun ders adı önce denenir (yanlış-pozitif azaltma); en az 3 harf.
-function findSubjectInTitle(
-  title: string,
-  subjects?: SubjectRef[],
-): SubjectRef | null {
-  if (!subjects?.length) return null;
-  const low = title.toLocaleLowerCase("tr");
-  const sorted = [...subjects].sort((a, b) => b.name.length - a.name.length);
-  return (
-    sorted.find((s) => {
-      const nm = s.name.toLocaleLowerCase("tr");
-      return nm.length >= 3 && low.includes(nm);
-    }) ?? null
-  );
 }
 
 function taskSubject(task: TeacherTask, subjects?: SubjectRef[]): TaskSubject {

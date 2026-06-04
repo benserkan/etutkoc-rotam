@@ -5,6 +5,11 @@ import type {
   TeacherStudentWeekResponse,
   TeacherTask,
 } from "@/lib/types/teacher";
+import {
+  findSubjectByExactName,
+  findSubjectInTitle,
+  type SubjectRef,
+} from "@/lib/subject-match";
 
 /**
  * /teacher/students/[id]/program/print?week=YYYY-MM-DD | ?program_id=N
@@ -70,22 +75,6 @@ interface SubjGroup {
   name: string;
   order: number;
   tasks: TeacherTask[];
-}
-type SubjectRef = { id: number; name: string };
-
-function findSubjectByExactName(name: string, subjects: SubjectRef[]): SubjectRef | null {
-  const low = name.trim().toLocaleLowerCase("tr");
-  return subjects.find((s) => s.name.toLocaleLowerCase("tr") === low) ?? null;
-}
-function findSubjectInTitle(title: string, subjects: SubjectRef[]): SubjectRef | null {
-  const low = title.toLocaleLowerCase("tr");
-  const sorted = [...subjects].sort((a, b) => b.name.length - a.name.length);
-  return (
-    sorted.find((s) => {
-      const nm = s.name.toLocaleLowerCase("tr");
-      return nm.length >= 3 && low.includes(nm);
-    }) ?? null
-  );
 }
 // Görevin ders grubu — item subject'i; " · " öneki; branş/genel deneme adında ders.
 function taskSubjKey(t: TeacherTask, subjects: SubjectRef[]): { key: string; name: string } {

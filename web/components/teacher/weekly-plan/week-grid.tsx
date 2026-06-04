@@ -5,6 +5,11 @@ import { ChevronDown, LayoutGrid } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import type { TeacherStudentWeekDay, TeacherTask } from "@/lib/types/teacher";
+import {
+  findSubjectByExactName,
+  findSubjectInTitle,
+  type SubjectRef,
+} from "@/lib/subject-match";
 
 /**
  * Hafta Izgarası (Katman 2) — 7 günü YAN YANA, hep görünür tek bakış.
@@ -94,25 +99,6 @@ interface SubjGroup {
   name: string;
   order: number;
   tasks: TeacherTask[];
-}
-
-type SubjectRef = { id: number; name: string };
-
-function findSubjectByExactName(name: string, subjects?: SubjectRef[]): SubjectRef | null {
-  if (!subjects?.length) return null;
-  const low = name.trim().toLocaleLowerCase("tr");
-  return subjects.find((s) => s.name.toLocaleLowerCase("tr") === low) ?? null;
-}
-function findSubjectInTitle(title: string, subjects?: SubjectRef[]): SubjectRef | null {
-  if (!subjects?.length) return null;
-  const low = title.toLocaleLowerCase("tr");
-  const sorted = [...subjects].sort((a, b) => b.name.length - a.name.length);
-  return (
-    sorted.find((s) => {
-      const nm = s.name.toLocaleLowerCase("tr");
-      return nm.length >= 3 && low.includes(nm);
-    }) ?? null
-  );
 }
 
 // Görevin ders grubu — item subject'i; " · " öneki (video/blok); branş/genel deneme
