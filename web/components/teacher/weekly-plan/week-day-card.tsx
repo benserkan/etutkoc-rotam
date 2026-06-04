@@ -20,6 +20,7 @@ import { CSS } from "@dnd-kit/utilities";
 import {
   Check,
   ChevronRight,
+  Clock,
   FileEdit,
   GripVertical,
   Layers,
@@ -564,11 +565,12 @@ function SubjectGroupHeader({
 
 function PeriodHeader({ pkey, count }: { pkey: string; count: number }) {
   return (
-    <div className="flex items-center gap-2 px-4 pt-3 pb-2 bg-foreground/[0.04] border-y border-border/60">
-      <span className="text-[11px] uppercase tracking-wider font-bold text-foreground">
+    <div className="flex items-center gap-2 px-4 py-2 bg-foreground/[0.07] border-y border-border">
+      <Clock className="size-3.5 text-foreground/70 flex-shrink-0" aria-hidden />
+      <span className="text-[12px] uppercase tracking-wider font-bold text-foreground">
         {PERIOD_LABELS[pkey] ?? PERIOD_LABELS.none}
       </span>
-      <span className="text-[10px] text-muted-foreground tabular-nums">
+      <span className="ml-auto text-[10px] text-muted-foreground tabular-nums bg-background/70 rounded-full px-2 py-0.5">
         {count} görev
       </span>
     </div>
@@ -589,6 +591,7 @@ function TaskList({
   subjects: SubjectRef[];
 }) {
   const reorderMut = useReorderTasks(studentId);
+  const patchTask = usePatchTask(studentId, day.date);
   // Gün periyot kullanıyor mu? En az bir görevde period dolu ise Sabah/Öğle/
   // Akşam bölümleri gösterilir (öğrenci günü mantığıyla aynı).
   const usePeriods = day.tasks.some((t) => t.period != null);
@@ -597,17 +600,19 @@ function TaskList({
     dayTaskOrder(day.tasks, subjects, usePeriods),
   );
 
-  // Görev seti VEYA periyot-modu değişince (periyot →) ders-gruplu sıraya yeniden
-  // kur. Yalnız set/mod değişince tetiklenir → grup-içi sürükleme sırası korunur.
-  const taskIdsKey =
+  // Görev seti / periyot-modu / herhangi bir görevin PERİYODU değişince türetilmiş
+  // (periyot → ders MIKNATIS) sıraya yeniden kur. Anahtar period'ları içerir →
+  // sürükleyip periyot değiştirince düzen anında yeniden hesaplanır; sayfa
+  // yenilenince de korunur (DB'deki period + sıradan türetilir).
+  const orderKey =
     (usePeriods ? "p:" : "s:") +
     day.tasks
-      .map((t) => t.id)
-      .sort((a, b) => a - b)
+      .map((t) => `${t.id}:${t.period ?? ""}`)
+      .sort()
       .join(",");
-  const [lastKey, setLastKey] = React.useState(taskIdsKey);
-  if (lastKey !== taskIdsKey) {
-    setLastKey(taskIdsKey);
+  const [lastKey, setLastKey] = React.useState(orderKey);
+  if (lastKey !== orderKey) {
+    setLastKey(orderKey);
     setOrderedIds(dayTaskOrder(day.tasks, subjects, usePeriods));
   }
 
@@ -645,6 +650,31 @@ function TaskList({
   function onDragEnd(e: DragEndEvent) {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
+    const activeTask = tasksById.get(Number(active.id));
+    const overTask = tasksById.get(Number(over.id));
+    if (!activeTask || !overTask) return;
+
+    // (1) Farklı periyot bölümüne bırakıldı → görevin periyodunu hedef bölüme TAŞI
+    // (mıknatıs: o periyodun ders grubuna girer; sayfa yenilense de kalıcı).
+    if (
+      usePeriods &&
+      periodKey(activeTask.period) !== periodKey(overTask.period)
+    ) {
+      patchTask.mutate({
+        taskId: activeTask.id,
+        body: { period: overTask.period ?? "" },
+      });
+      return;
+    }
+
+    // (2) Farklı ders grubuna bırakma → mıknatıs gereği YOK SAY (dersler iç içe
+    // geçmez). Yalnız AYNI ders grubu içinde yeniden sıralama kaydedilir.
+    if (
+      taskSubject(activeTask, subjects).key !==
+      taskSubject(overTask, subjects).key
+    ) {
+      return;
+    }
     setOrderedIds((prev) => {
       const oldIdx = prev.indexOf(Number(active.id));
       const newIdx = prev.indexOf(Number(over.id));

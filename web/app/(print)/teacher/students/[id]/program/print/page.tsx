@@ -10,6 +10,7 @@ import {
   findSubjectInTitle,
   type SubjectRef,
 } from "@/lib/subject-match";
+import { PrintButton } from "./print-button";
 
 /**
  * /teacher/students/[id]/program/print?week=YYYY-MM-DD | ?program_id=N
@@ -221,6 +222,14 @@ export default async function ProgramPrintPage({
           body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
       `}</style>
+
+      {/* Yazdırma araç çubuğu — çıktıda gizli */}
+      <div className="no-print mb-3 flex items-center justify-between gap-3">
+        <PrintButton />
+        <span className="text-xs text-stone-400">
+          Yatay A4 · yazdırırken yatay seçili gelir
+        </span>
+      </div>
 
       {/* Header — kompakt tek satır */}
       <header className="mb-2 flex items-end justify-between gap-4 border-b-2 border-stone-800 pb-1.5">
