@@ -44,11 +44,13 @@ def inline_part(data_base64: str, mime_type: str) -> dict[str, Any]:
 _RETRY_503 = (1.5, 3.0)
 
 
-def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_mode: bool) -> str:
+def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_mode: bool,
+          max_output_tokens: int = 8192) -> str:
     url = f"{GEMINI_BASE}/{model}:generateContent"
     # 2.5 modelleri "düşünme" tokenı tüketir; düşük bütçe çıktıyı yarıda keser
-    # (yarım JSON → parse hatası). Yapılandırılmış çıktılarımız küçük; bol bütçe ver.
-    gen_cfg: dict[str, Any] = {"temperature": 0.4, "maxOutputTokens": 8192}
+    # (yarım JSON → parse hatası). Büyük yapılandırılmış çıktılarda (örn. vitrin
+    # temalı gruplama, çok aday) max_output_tokens yükseltilir.
+    gen_cfg: dict[str, Any] = {"temperature": 0.4, "maxOutputTokens": max_output_tokens}
     if json_mode:
         gen_cfg["responseMimeType"] = "application/json"
     body = {"contents": [{"role": "user", "parts": parts}], "generationConfig": gen_cfg}
@@ -91,8 +93,17 @@ def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_m
     return text
 
 
-def generate(parts: list[dict], *, personal_data: bool, timeout: float = 45.0, json_mode: bool = True) -> str:
-    """Gemini'den metin yanıt al. personal_data → ücretli key (fallback yok)."""
+def generate(
+    parts: list[dict], *, personal_data: bool, timeout: float = 45.0, json_mode: bool = True,
+    max_output_tokens: int = 8192, prefer_paid: bool = False,
+) -> str:
+    """Gemini'den metin yanıt al.
+
+    personal_data=True → ücretli key (no-training, fallback yok).
+    prefer_paid=True → kişisel veri olmasa da ÖNCE ücretli model (gemini-2.5-pro;
+      daha kaliteli + büyük çıktı bütçesi), kota/hatada ücretsize düşer. Büyük/
+      önemli yapılandırılmış işler (vitrin temalı gruplama) için.
+    """
     from app.services.system_secrets import (
         get_gemini_free_keys, get_gemini_model, get_gemini_paid_key,
     )
@@ -102,14 +113,26 @@ def generate(parts: list[dict], *, personal_data: bool, timeout: float = 45.0, j
         if not key:
             raise AIServiceUnavailable(
                 "Gemini ücretli anahtarı tanımlı değil (süper admin → AI Ayarları)")
-        return _call(get_gemini_model(paid=True), key, parts, timeout=timeout, json_mode=json_mode)
+        return _call(get_gemini_model(paid=True), key, parts, timeout=timeout,
+                     json_mode=json_mode, max_output_tokens=max_output_tokens)
 
-    # Kişisel veri yok → ücretsiz key(ler) sırayla, sonra ücretli
+    # prefer_paid → önce ücretli (pro) model; kotada ücretsize düş.
+    if prefer_paid:
+        paid = get_gemini_paid_key()
+        if paid:
+            try:
+                return _call(get_gemini_model(paid=True), paid, parts, timeout=timeout,
+                             json_mode=json_mode, max_output_tokens=max_output_tokens)
+            except _QuotaExceeded:
+                logger.info("Gemini ücretli kota doldu, ücretsize düşülüyor (prefer_paid)")
+
+    # Ücretsiz key(ler) sırayla, sonra ücretli
     free_keys = get_gemini_free_keys()
     free_model = get_gemini_model(paid=False)
     for k in free_keys:
         try:
-            return _call(free_model, k, parts, timeout=timeout, json_mode=json_mode)
+            return _call(free_model, k, parts, timeout=timeout, json_mode=json_mode,
+                         max_output_tokens=max_output_tokens)
         except _QuotaExceeded:
             logger.info("Gemini ücretsiz anahtar kotası doldu, sıradaki/ücretli deneniyor")
             continue
@@ -119,7 +142,8 @@ def generate(parts: list[dict], *, personal_data: bool, timeout: float = 45.0, j
             raise AIServiceUnavailable("Gemini ücretsiz kota doldu ve ücretli anahtar yok")
         raise AIServiceUnavailable("Gemini anahtarı tanımlı değil (süper admin → AI Ayarları)")
     try:
-        return _call(get_gemini_model(paid=True), paid, parts, timeout=timeout, json_mode=json_mode)
+        return _call(get_gemini_model(paid=True), paid, parts, timeout=timeout,
+                     json_mode=json_mode, max_output_tokens=max_output_tokens)
     except _QuotaExceeded:
         raise AIServiceUnavailable("Gemini tüm anahtarların kotası doldu")
 

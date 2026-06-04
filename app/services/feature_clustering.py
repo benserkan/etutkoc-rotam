@@ -81,8 +81,24 @@ institution_admin, veli→parent).
 """
 
 
-def cluster_and_draft(db: Session, *, actor_id: int | None, limit: int = 150) -> dict:
+def _remaining_count(db: Session) -> int:
+    return (
+        db.query(FeatureCard.id)
+        .filter(
+            (FeatureCard.slug.like("kesif-mig-%") | FeatureCard.slug.like("kesif-c-%")),
+            FeatureCard.status == FeatureStatus.DRAFT.value,
+            FeatureCard.manual_hide.is_(False),
+        )
+        .count()
+    )
+
+
+def cluster_and_draft(db: Session, *, actor_id: int | None, limit: int = 70) -> dict:
     """Keşif adaylarını AI ile temaya gruplayıp DRAFT temalı kart üretir.
+
+    Tek çağrıda en fazla `limit` aday işlenir (çıktı kesilmesini önlemek için).
+    Daha fazlası varsa kullanıcı tekrar çalıştırır (kalanlar bir sonraki turda).
+    Ücretli Gemini modeli (prefer_paid) + büyük çıktı bütçesi kullanılır.
 
     Returns: {themes_created, candidates_grouped, theme_titles, message}
     """
@@ -100,7 +116,12 @@ def cluster_and_draft(db: Session, *, actor_id: int | None, limit: int = 150) ->
     )
     prompt = _PROMPT + "\n\nADAYLAR:\n" + listing
 
-    raw = gemini.generate([gemini.text_part(prompt)], personal_data=False, json_mode=True)
+    # Ücretli model (gemini-2.5-pro) + büyük çıktı bütçesi → çok adayda JSON
+    # kesilmez (kullanıcı kararı 2026-06-04: bu önemli iş ücretli key'den).
+    raw = gemini.generate(
+        [gemini.text_part(prompt)], personal_data=False, json_mode=True,
+        prefer_paid=True, max_output_tokens=24576, timeout=90.0,
+    )
     data = gemini.extract_json(raw)
     themes = data.get("themes") if isinstance(data, dict) else None
     if not isinstance(themes, list) or not themes:
@@ -156,10 +177,16 @@ def cluster_and_draft(db: Session, *, actor_id: int | None, limit: int = 150) ->
             pass
 
     db.commit()
+    remaining = _remaining_count(db)
+    msg = (
+        f"{created} temalı kart üretildi · {len(grouped)} aday gruplandı. "
+        "Taslakları gözden geçirip yayınlayın."
+    )
+    if remaining > 0:
+        msg += f" {remaining} aday daha var — tekrar 'AI ile grupla' çalıştırabilirsiniz."
     return {
         "themes_created": created,
         "candidates_grouped": len(grouped),
         "theme_titles": titles,
-        "message": f"{created} temalı kart üretildi · {len(grouped)} aday gruplandı. "
-                   "Taslakları gözden geçirip yayınlayın.",
+        "message": msg,
     }
