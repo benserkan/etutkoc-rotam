@@ -67,6 +67,8 @@ import { cn } from "@/lib/utils";
 import {
   findSubjectByExactName,
   findSubjectInTitle,
+  subjectGroupKey,
+  subjectHue,
   type SubjectRef,
 } from "@/lib/subject-match";
 
@@ -443,32 +445,29 @@ interface TaskSubject {
   name: string;
 }
 
+// Grup anahtarı ADA göre (subjectGroupKey) — aynı isimli ders (farklı müfredat
+// id'si olsa bile) TEK grupta birleşir: "Fizik" testi + "Fizik" branş denemesi.
 function taskSubject(task: TeacherTask, subjects?: SubjectRef[]): TaskSubject {
   const withSubj = task.items.find((it) => it.subject_id != null);
   if (withSubj?.subject_id != null) {
-    return {
-      key: `s${withSubj.subject_id}`,
-      id: withSubj.subject_id,
-      name: withSubj.subject_name ?? "Ders",
-    };
+    const nm = withSubj.subject_name ?? "Ders";
+    return { key: subjectGroupKey(nm), id: withSubj.subject_id, name: nm };
   }
   // Etkinlik (kalemsiz) VEYA blok görevi → başlık "{Ders} · {içerik}" parse et.
   if (task.items.length === 0 || task.work_block_id != null) {
     const sep = task.title.indexOf(" · ");
     if (sep > 0 && sep < task.title.length - 3) {
       const nm = task.title.substring(0, sep);
-      // Bilinen bir derse denk geliyorsa o dersin grubuna KATIL (test ile birleşir).
+      // Bilinen bir derse çözülürse o dersin ADIYLA birleşir; değilse ham ad.
       const resolved = findSubjectByExactName(nm, subjects);
-      if (resolved) {
-        return { key: `s${resolved.id}`, id: resolved.id, name: resolved.name };
-      }
-      return { key: `n:${nm.toLocaleLowerCase("tr")}`, id: null, name: nm };
+      const name = resolved ? resolved.name : nm;
+      return { key: subjectGroupKey(name), id: resolved?.id ?? null, name };
     }
   }
   // Branş/genel deneme vb. (kitapsız kalem, " · " öneki yok) → başlıkta ders adı ara.
   const inTitle = findSubjectInTitle(task.title, subjects);
   if (inTitle) {
-    return { key: `s${inTitle.id}`, id: inTitle.id, name: inTitle.name };
+    return { key: subjectGroupKey(inTitle.name), id: inTitle.id, name: inTitle.name };
   }
   return { key: "other", id: null, name: "Diğer çalışmalar" };
 }
@@ -490,15 +489,6 @@ function periodRank(p: string | null | undefined): number {
 }
 function periodKey(p: string | null | undefined): string {
   return p && p in PERIOD_RANK ? p : "none";
-}
-
-function subjectHue(id: number | null, name: string): number {
-  if (id !== null) return (id * 67) % 360;
-  return (
-    Math.abs(
-      Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0),
-    ) % 360
-  );
 }
 
 // Görevleri (periyot →) ders grubuna göre sırala. Periyot kullanılıyorsa önce
@@ -546,7 +536,7 @@ function SubjectGroupHeader({
   subj: TaskSubject;
   count: number;
 }) {
-  const hue = subjectHue(subj.id, subj.name);
+  const hue = subjectHue(subj.name);
   return (
     <div
       className="flex items-center gap-2 px-4 pt-3 pb-1.5 bg-muted/20 border-l-[3px]"
@@ -794,7 +784,6 @@ function SortableTaskRow({
     isDragging,
   } = useSortable({ id: task.id, disabled: hourBound });
 
-  let primarySubjectId = task.items[0]?.subject_id ?? null;
   // Kitapsız etkinlik görevlerinde (Video/Özet/Tekrar/Diğer · items=[]) ders
   // backend'den gelmez; add-task-form başlığı `{Ders} · {içerik}` formatında
   // üretir → burada parse edip rozet olarak gösteririz (Test ile görsel
@@ -815,23 +804,11 @@ function SortableTaskRow({
     const resolved = taskSubject(task, subjects);
     if (resolved.key !== "other") {
       primarySubjectName = resolved.name;
-      if (primarySubjectId === null) primarySubjectId = resolved.id;
     }
   }
-  // Renk hue: subject_id varsa hash, yoksa parse edilen ders adı string hash;
-  // ikisi de yoksa nötr ton (220).
-  const subjectNameHash = primarySubjectName
-    ? Math.abs(
-        Array.from(primarySubjectName).reduce(
-          (h, c) => ((h * 31 + c.charCodeAt(0)) | 0),
-          0,
-        ),
-      ) % 360
-    : 220;
-  const hue =
-    primarySubjectId !== null
-      ? (primarySubjectId * 67) % 360
-      : subjectNameHash;
+  // Renk hue: ders ADINA göre (grup başlığıyla AYNI renk; aynı ad daima aynı
+  // ton). Ders yoksa nötr (220).
+  const hue = primarySubjectName ? subjectHue(primarySubjectName) : 220;
   // Serbest iş bloğu görevi (work_block_id set) — "deneme"den ayır.
   const isBlock = task.work_block_id != null;
   // Kitapsız (deneme) kalem = book_id None → tam deneme; blok hariç.
@@ -845,7 +822,7 @@ function SortableTaskRow({
     transform: CSS.Transform.toString(transform),
     transition,
     borderLeftColor:
-      primarySubjectId !== null
+      primarySubjectName
         ? `hsl(${hue}, 45%, 65%)`
         : isBlock
           ? "#8b5cf6" // violet — serbest blok

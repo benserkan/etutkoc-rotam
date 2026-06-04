@@ -15,12 +15,48 @@ export type SubjectRef = { id: number; name: string };
 // o ders için başlıkta aranır. Yeni alias gerekince buraya grup ekle.
 // (Kısa/çok genel terimlerden kaçın — yanlış-pozitif riski; min 3 harf zaten var.)
 const SUBJECT_ALIAS_GROUPS: string[][] = [
-  ["türk dili ve edebiyatı", "türk edebiyatı", "edebiyat"],
+  // TYT/AYT'de ders adı "Türk Dili ve Edebiyatı"; başlıkta "Türkçe"/"Edebiyat"
+  // geçebilir → hepsi aynı derse eşlensin.
+  ["türk dili ve edebiyatı", "türk edebiyatı", "türkçe", "edebiyat"],
   // "Din" tek başına kısa ama Türkçe ı/i ayrımı koruyor ("aydın" = ı, eşleşmez)
   // + en-uzun-terim kazanır (başlıkta başka ders varsa o seçilir). Branş başlığı
   // "AYT Din Branş" gibi salt "din" içerebildiği için bilinçli eklendi.
   ["din kültürü ve ahlak bilgisi", "din kültürü", "dkab", "din"],
 ];
+
+// --------------------------------------------------------------------------
+// Ders grubu anahtarı + rengi — ADA göre (id'ye göre DEĞİL). Aynı ders adı
+// farklı müfredat modelinde ayrı Subject kaydı olabilir (farklı id); bir
+// öğrencinin programında "Fizik" testi ile "Fizik" branş denemesi TEK grupta
+// birleşsin diye anahtar/renk daima normalize ADdan türetilir.
+// --------------------------------------------------------------------------
+
+export function normSubjectName(name: string): string {
+  return name.trim().toLocaleLowerCase("tr");
+}
+
+export function subjectGroupKey(name: string): string {
+  return `s:${normSubjectName(name)}`;
+}
+
+function nameHashNum(name: string): number {
+  return Math.abs(
+    Array.from(normSubjectName(name)).reduce(
+      (h, c) => (h * 31 + c.charCodeAt(0)) | 0,
+      0,
+    ),
+  );
+}
+
+/** Ders adına göre stabil hue (0-359) — aynı ad daima aynı renk. */
+export function subjectHue(name: string): number {
+  return nameHashNum(name) % 360;
+}
+
+/** Ders adına göre stabil ton indeksi (0..n-1) — Tailwind ton paleti için. */
+export function subjectToneIndex(name: string, n: number): number {
+  return nameHashNum(name) % n;
+}
 
 function aliasTermsFor(nameLow: string): string[] {
   for (const group of SUBJECT_ALIAS_GROUPS) {

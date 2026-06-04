@@ -8,6 +8,8 @@ import type {
 import {
   findSubjectByExactName,
   findSubjectInTitle,
+  subjectGroupKey,
+  subjectToneIndex,
   type SubjectRef,
 } from "@/lib/subject-match";
 import { PrintButton } from "./print-button";
@@ -43,23 +45,14 @@ const TASK_TYPE_LABEL: Record<string, string> = {
   test: "Test", video: "Video", ozet: "Özet", tekrar: "Tekrar", other: "Diğer",
 };
 
-// Ders text rengi — subject_id / ad hash stable (print-color-adjust ile basılır).
+// Ders text rengi — ADA göre stabil (editör/ızgara ile aynı; print-color-adjust).
 const SUBJECT_TEXT = [
   "text-indigo-700", "text-emerald-700", "text-amber-700", "text-rose-700",
   "text-violet-700", "text-cyan-700", "text-fuchsia-700", "text-sky-700",
 ];
-function nameHash(name: string): number {
-  return Math.abs(
-    Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0),
-  );
-}
 function subjectColor(key: string, name: string): string {
   if (key === "other") return "text-stone-500";
-  if (key.startsWith("s")) {
-    const id = Number(key.slice(1));
-    if (Number.isFinite(id)) return SUBJECT_TEXT[Math.abs(id) % SUBJECT_TEXT.length];
-  }
-  return SUBJECT_TEXT[nameHash(name) % SUBJECT_TEXT.length];
+  return SUBJECT_TEXT[subjectToneIndex(name, SUBJECT_TEXT.length)];
 }
 
 type GState = "done" | "partial" | "todo";
@@ -77,23 +70,24 @@ interface SubjGroup {
   order: number;
   tasks: TeacherTask[];
 }
-// Görevin ders grubu — item subject'i; " · " öneki; branş/genel deneme adında ders.
+// Görevin ders grubu — ADA göre anahtar (aynı isimli ders tek grupta birleşir).
 function taskSubjKey(t: TeacherTask, subjects: SubjectRef[]): { key: string; name: string } {
   const ws = t.items.find((it) => it.subject_id != null);
   if (ws?.subject_id != null) {
-    return { key: `s${ws.subject_id}`, name: ws.subject_name ?? "Ders" };
+    const nm = ws.subject_name ?? "Ders";
+    return { key: subjectGroupKey(nm), name: nm };
   }
   if (t.items.length === 0 || t.work_block_id != null) {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {
       const nm = t.title.substring(0, sep);
       const resolved = findSubjectByExactName(nm, subjects);
-      if (resolved) return { key: `s${resolved.id}`, name: resolved.name };
-      return { key: `n:${nm.toLocaleLowerCase("tr")}`, name: nm };
+      const name = resolved ? resolved.name : nm;
+      return { key: subjectGroupKey(name), name };
     }
   }
   const inTitle = findSubjectInTitle(t.title, subjects);
-  if (inTitle) return { key: `s${inTitle.id}`, name: inTitle.name };
+  if (inTitle) return { key: subjectGroupKey(inTitle.name), name: inTitle.name };
   return { key: "other", name: "Diğer" };
 }
 function groupDayBySubject(tasks: TeacherTask[], subjects: SubjectRef[]): SubjGroup[] {

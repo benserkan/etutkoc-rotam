@@ -8,6 +8,8 @@ import type { TeacherStudentWeekDay, TeacherTask } from "@/lib/types/teacher";
 import {
   findSubjectByExactName,
   findSubjectInTitle,
+  subjectGroupKey,
+  subjectToneIndex,
   type SubjectRef,
 } from "@/lib/subject-match";
 
@@ -78,20 +80,10 @@ const SUBJECT_TONES = [
 ];
 const OTHER_TONE = { text: "text-muted-foreground", dot: "bg-slate-400" };
 
-function nameHash(name: string): number {
-  return Math.abs(
-    Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0),
-  );
-}
-
-// Grup anahtarına göre ton: "s{id}" → subject hash · "n:.." → ad hash · other → nötr.
+// Ders ADINA göre ton — aynı ad daima aynı renk (editör/yazdırma ile tutarlı).
 function toneForKey(key: string, name: string) {
   if (key === "other") return OTHER_TONE;
-  if (key.startsWith("s")) {
-    const id = Number(key.slice(1));
-    if (Number.isFinite(id)) return SUBJECT_TONES[Math.abs(id) % SUBJECT_TONES.length];
-  }
-  return SUBJECT_TONES[nameHash(name) % SUBJECT_TONES.length];
+  return SUBJECT_TONES[subjectToneIndex(name, SUBJECT_TONES.length)];
 }
 
 interface SubjGroup {
@@ -101,24 +93,25 @@ interface SubjGroup {
   tasks: TeacherTask[];
 }
 
-// Görevin ders grubu — item subject'i; " · " öneki (video/blok); branş/genel deneme
-// başlığında ders adı (subjects ile). Bilinen ders → `s{id}` (test ile birleşir).
+// Görevin ders grubu — ADA göre anahtar (subjectGroupKey): aynı isimli ders
+// (test + branş deneme + video " · " öneki) TEK grupta birleşir.
 function taskSubjKey(t: TeacherTask, subjects?: SubjectRef[]): { key: string; name: string } {
   const ws = t.items.find((it) => it.subject_id != null);
   if (ws?.subject_id != null) {
-    return { key: `s${ws.subject_id}`, name: ws.subject_name ?? "Ders" };
+    const nm = ws.subject_name ?? "Ders";
+    return { key: subjectGroupKey(nm), name: nm };
   }
   if (t.items.length === 0 || t.work_block_id != null) {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {
       const nm = t.title.substring(0, sep);
       const resolved = findSubjectByExactName(nm, subjects);
-      if (resolved) return { key: `s${resolved.id}`, name: resolved.name };
-      return { key: `n:${nm.toLocaleLowerCase("tr")}`, name: nm };
+      const name = resolved ? resolved.name : nm;
+      return { key: subjectGroupKey(name), name };
     }
   }
   const inTitle = findSubjectInTitle(t.title, subjects);
-  if (inTitle) return { key: `s${inTitle.id}`, name: inTitle.name };
+  if (inTitle) return { key: subjectGroupKey(inTitle.name), name: inTitle.name };
   return { key: "other", name: "Diğer" };
 }
 
