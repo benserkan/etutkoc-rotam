@@ -83,8 +83,14 @@ export async function generateMetadata({
       description: desc,
       siteName: "ETÜTKOÇ Rotam",
       type: "website",
+      // Statik 1200×630 banner (Content-Length + uzun cache + .png) → WhatsApp
+      // tarayıcısı BÜYÜK hero önizleme gösterir. Dinamik next/og route'u
+      // (Content-Length yok + must-revalidate) küçük thumbnail'e düşüyordu.
+      images: [
+        { url: "/og-membership.png", width: 1200, height: 630, type: "image/png", alt: "ETÜTKOÇ Rotam" },
+      ],
     },
-    twitter: { card: "summary_large_image", title, description: desc },
+    twitter: { card: "summary_large_image", title, description: desc, images: ["/og-membership.png"] },
   };
 }
 

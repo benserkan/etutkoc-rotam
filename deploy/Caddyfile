@@ -94,6 +94,8 @@
         reverse_proxy /etutkoc-logo.svg next:3000
         reverse_proxy /etutkoc-mark.svg next:3000
         reverse_proxy /etutkoc-mark.png next:3000
+        # WhatsApp üyelik teklifi OG banner'ı (statik 1200×630)
+        reverse_proxy /og-membership.png next:3000
 
         # RealFaviconGenerator favicon seti (public/ kök) — Next.js serve eder.
         # /favicon.ico zaten yukarıda (line 88) next:3000'e gidiyor.
