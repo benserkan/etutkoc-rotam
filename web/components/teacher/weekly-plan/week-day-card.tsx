@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   closestCenter,
   DndContext,
@@ -56,9 +56,11 @@ import type {
   BookOptionsResponse,
   SectionOptionsResponse,
   SidebarResponse,
+  TaskPeriod,
   TaskType,
   TeacherActivePhase,
   TeacherStudentWeekDay,
+  TeacherStudentWeekResponse,
   TeacherTask,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
@@ -592,6 +594,7 @@ function TaskList({
 }) {
   const reorderMut = useReorderTasks(studentId);
   const patchTask = usePatchTask(studentId, day.date);
+  const qc = useQueryClient();
   // Gün periyot kullanıyor mu? En az bir görevde period dolu ise Sabah/Öğle/
   // Akşam bölümleri gösterilir (öğrenci günü mantığıyla aynı).
   const usePeriods = day.tasks.some((t) => t.period != null);
@@ -660,10 +663,31 @@ function TaskList({
       usePeriods &&
       periodKey(activeTask.period) !== periodKey(overTask.period)
     ) {
-      patchTask.mutate({
-        taskId: activeTask.id,
-        body: { period: overTask.period ?? "" },
-      });
+      const targetPeriod = overTask.period ?? null; // null = Zaman belirtilmemiş
+      const prevPeriod = activeTask.period ?? null;
+      // OPTİMİSTİK: week cache'inde period'u hemen güncelle → editör + Hafta
+      // Izgarası ANINDA yeni periyoda taşır (refetch beklenmez). Hata → geri al.
+      const setPeriodInCache = (p: TaskPeriod | null) =>
+        qc.setQueriesData<TeacherStudentWeekResponse>(
+          { queryKey: ["teacher", "me", "students", String(studentId), "week"] },
+          (prev) =>
+            prev
+              ? {
+                  ...prev,
+                  days: prev.days.map((d) => ({
+                    ...d,
+                    tasks: d.tasks.map((t) =>
+                      t.id === activeTask.id ? { ...t, period: p } : t,
+                    ),
+                  })),
+                }
+              : prev,
+        );
+      setPeriodInCache(targetPeriod);
+      patchTask.mutate(
+        { taskId: activeTask.id, body: { period: overTask.period ?? "" } },
+        { onError: () => setPeriodInCache(prevPeriod) },
+      );
       return;
     }
 
