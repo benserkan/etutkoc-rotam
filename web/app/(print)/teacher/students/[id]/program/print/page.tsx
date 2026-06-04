@@ -71,8 +71,24 @@ interface SubjGroup {
   order: number;
   tasks: TeacherTask[];
 }
-// Görevin ders grubu — item subject'i; yoksa (etkinlik/blok) başlık "{Ders}·.." parse.
-function taskSubjKey(t: TeacherTask): { key: string; name: string } {
+type SubjectRef = { id: number; name: string };
+
+function findSubjectByExactName(name: string, subjects: SubjectRef[]): SubjectRef | null {
+  const low = name.trim().toLocaleLowerCase("tr");
+  return subjects.find((s) => s.name.toLocaleLowerCase("tr") === low) ?? null;
+}
+function findSubjectInTitle(title: string, subjects: SubjectRef[]): SubjectRef | null {
+  const low = title.toLocaleLowerCase("tr");
+  const sorted = [...subjects].sort((a, b) => b.name.length - a.name.length);
+  return (
+    sorted.find((s) => {
+      const nm = s.name.toLocaleLowerCase("tr");
+      return nm.length >= 3 && low.includes(nm);
+    }) ?? null
+  );
+}
+// Görevin ders grubu — item subject'i; " · " öneki; branş/genel deneme adında ders.
+function taskSubjKey(t: TeacherTask, subjects: SubjectRef[]): { key: string; name: string } {
   const ws = t.items.find((it) => it.subject_id != null);
   if (ws?.subject_id != null) {
     return { key: `s${ws.subject_id}`, name: ws.subject_name ?? "Ders" };
@@ -81,15 +97,19 @@ function taskSubjKey(t: TeacherTask): { key: string; name: string } {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {
       const nm = t.title.substring(0, sep);
+      const resolved = findSubjectByExactName(nm, subjects);
+      if (resolved) return { key: `s${resolved.id}`, name: resolved.name };
       return { key: `n:${nm.toLocaleLowerCase("tr")}`, name: nm };
     }
   }
+  const inTitle = findSubjectInTitle(t.title, subjects);
+  if (inTitle) return { key: `s${inTitle.id}`, name: inTitle.name };
   return { key: "other", name: "Diğer" };
 }
-function groupDayBySubject(tasks: TeacherTask[]): SubjGroup[] {
+function groupDayBySubject(tasks: TeacherTask[], subjects: SubjectRef[]): SubjGroup[] {
   const map = new Map<string, SubjGroup>();
   for (const t of tasks) {
-    const { key, name } = taskSubjKey(t);
+    const { key, name } = taskSubjKey(t, subjects);
     const g = map.get(key);
     if (g) g.tasks.push(t);
     else map.set(key, { key, name, order: key === "other" ? 1 : 0, tasks: [t] });
@@ -97,6 +117,27 @@ function groupDayBySubject(tasks: TeacherTask[]): SubjGroup[] {
   return Array.from(map.values()).sort(
     (a, b) => a.order - b.order || a.name.localeCompare(b.name, "tr"),
   );
+}
+
+// Periyot (Sabah/Öğle/Akşam) — gün periyotluysa alt bölümler.
+const PERIOD_ORDER = ["morning", "noon", "evening", "none"] as const;
+const PERIOD_LABELS: Record<string, string> = {
+  morning: "Sabah", noon: "Öğle", evening: "Akşam", none: "Belirsiz",
+};
+function periodKey(p: string | null | undefined): string {
+  return p === "morning" || p === "noon" || p === "evening" ? p : "none";
+}
+interface DaySection {
+  pkey: string | null;
+  groups: SubjGroup[];
+}
+function daySections(tasks: TeacherTask[], subjects: SubjectRef[]): DaySection[] {
+  const usePeriods = tasks.some((t) => t.period != null);
+  if (!usePeriods) return [{ pkey: null, groups: groupDayBySubject(tasks, subjects) }];
+  return PERIOD_ORDER.map((pk) => ({
+    pkey: pk,
+    groups: groupDayBySubject(tasks.filter((t) => periodKey(t.period) === pk), subjects),
+  })).filter((s) => s.groups.length > 0);
 }
 
 // Görev etiketi (kompakt): tek kalemli test/deneme → "Kitap · Bölüm"; aksi → başlık
@@ -164,6 +205,17 @@ export default async function ProgramPrintPage({
     );
   }
 
+  // Dersler — branş/genel deneme görev adından ders eşleştirmek için (opsiyonel).
+  let subjects: SubjectRef[] = [];
+  try {
+    const subjResp = await apiServer<{ items: SubjectRef[] }>(
+      `/api/v2/teacher/students/${encodeURIComponent(id)}/all-subjects`,
+    );
+    subjects = (subjResp.items ?? []).map((s) => ({ id: s.id, name: s.name }));
+  } catch {
+    subjects = [];
+  }
+
   const totalCorrect = weekData.days.reduce(
     (acc, d) => acc + d.tasks.reduce(
       (a, t) => a + t.items.reduce((b, it) => b + (it.correct_count ?? 0), 0), 0), 0);
@@ -210,7 +262,7 @@ export default async function ProgramPrintPage({
       {/* 7 günlük ızgara — yatay */}
       <div className="grid grid-cols-7 gap-1.5">
         {weekData.days.map((day) => (
-          <DayColumn key={day.date} day={day} />
+          <DayColumn key={day.date} day={day} subjects={subjects} />
         ))}
       </div>
 
@@ -235,8 +287,14 @@ export default async function ProgramPrintPage({
   );
 }
 
-function DayColumn({ day }: { day: TeacherStudentWeekResponse["days"][number] }) {
-  const groups = groupDayBySubject(day.tasks);
+function DayColumn({
+  day,
+  subjects,
+}: {
+  day: TeacherStudentWeekResponse["days"][number];
+  subjects: SubjectRef[];
+}) {
+  const sections = daySections(day.tasks, subjects);
   return (
     <section className="break-inside-avoid rounded border border-stone-300">
       <header
@@ -256,16 +314,25 @@ function DayColumn({ day }: { day: TeacherStudentWeekResponse["days"][number] })
         {day.tasks.length === 0 ? (
           <p className="text-[9px] italic text-stone-400">—</p>
         ) : (
-          groups.map((g) => (
-            <div key={g.key}>
-              <div className={"text-[9px] font-bold uppercase tracking-wide leading-tight " + subjectColor(g.key, g.name)}>
-                {g.name}
-              </div>
-              <ul className="mt-0.5 space-y-0.5">
-                {g.tasks.map((t) => (
-                  <TaskRow key={t.id} task={t} />
-                ))}
-              </ul>
+          sections.map((sec) => (
+            <div key={sec.pkey ?? "_"} className="space-y-1">
+              {sec.pkey ? (
+                <div className="text-[8px] font-bold uppercase tracking-wider text-stone-600 border-b border-stone-300 leading-tight">
+                  {PERIOD_LABELS[sec.pkey] ?? PERIOD_LABELS.none}
+                </div>
+              ) : null}
+              {sec.groups.map((g) => (
+                <div key={g.key}>
+                  <div className={"text-[9px] font-bold uppercase tracking-wide leading-tight " + subjectColor(g.key, g.name)}>
+                    {g.name}
+                  </div>
+                  <ul className="mt-0.5 space-y-0.5">
+                    {g.tasks.map((t) => (
+                      <TaskRow key={t.id} task={t} />
+                    ))}
+                  </ul>
+                </div>
+              ))}
             </div>
           ))
         )}

@@ -38,6 +38,7 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 import {
+  getStudentAllSubjects,
   getStudentSidebar,
   getStudentWeekNotes,
   getTeacherStudentWeek,
@@ -48,6 +49,7 @@ import {
 } from "@/lib/hooks/use-weekly-plan-mutations";
 import type {
   SidebarResponse,
+  SubjectListResponse,
   TeacherStudentWeekResponse,
   TeacherWeekNote,
 } from "@/lib/types/teacher";
@@ -120,6 +122,16 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
     queryFn: () => getStudentSidebar(studentId, focusedSubjectId),
     staleTime: 30_000,
   });
+  // Tüm dersler (kitapsız dahil) — deneme/branş görev adından ders eşleştirmek için.
+  const allSubjectsQ = useQuery<SubjectListResponse>({
+    queryKey: teacherKeys.studentAllSubjects(studentId),
+    queryFn: () => getStudentAllSubjects(studentId),
+    staleTime: 5 * 60_000,
+  });
+  const subjectsForGrouping = React.useMemo(
+    () => (allSubjectsQ.data?.items ?? []).map((s) => ({ id: s.id, name: s.name })),
+    [allSubjectsQ.data],
+  );
 
   // Açık <details> ID'lerini swap'lerde koru
   const [openSubjects, setOpenSubjects] = React.useState<Set<number>>(
@@ -298,6 +310,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
 
       <WeekGrid
         days={data.days}
+        subjects={subjectsForGrouping}
         openDate={openDate}
         onOpenDay={(date) => {
           setOpenDate(date);
@@ -325,6 +338,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
               studentId={studentId}
               weekStartDate={data.start_date}
               day={d}
+              subjects={subjectsForGrouping}
               focusedSubjectId={focusedSubjectId}
               onFocusSubject={setFocusedSubjectId}
               isOpen={openDate === d.date}

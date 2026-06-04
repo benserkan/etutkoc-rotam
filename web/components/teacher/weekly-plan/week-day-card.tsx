@@ -91,6 +91,7 @@ interface Props {
   studentId: number;
   weekStartDate: string;
   day: TeacherStudentWeekDay;
+  subjects: SubjectRef[];
   focusedSubjectId: number | null;
   onFocusSubject: (id: number | null) => void;
   // Single-open accordion: parent kontrol eder; aynı anda yalnızca tek gün açık.
@@ -109,6 +110,7 @@ interface Props {
 export function WeekDayCard({
   studentId,
   day,
+  subjects,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parent kontratı için tutuluyor
   focusedSubjectId,
   onFocusSubject,
@@ -251,7 +253,7 @@ export function WeekDayCard({
         </div>
       ) : null}
 
-      <TaskList studentId={studentId} day={day} />
+      <TaskList studentId={studentId} day={day} subjects={subjects} />
 
       <div className="px-5 py-3 border-t border-border border-l-[3px] border-l-sky-400/70 bg-sky-500/[0.04]">
         <div
@@ -433,7 +435,39 @@ interface TaskSubject {
   name: string;
 }
 
-function taskSubject(task: TeacherTask): TaskSubject {
+export interface SubjectRef {
+  id: number;
+  name: string;
+}
+
+// Ders adı tam eşleşme (video/özet/blok başlığı "{Ders} · ..." öneki için).
+function findSubjectByExactName(
+  name: string,
+  subjects?: SubjectRef[],
+): SubjectRef | null {
+  if (!subjects?.length) return null;
+  const low = name.trim().toLocaleLowerCase("tr");
+  return subjects.find((s) => s.name.toLocaleLowerCase("tr") === low) ?? null;
+}
+
+// Başlık içinde ders adı ara (branş/genel deneme: "AYT Matematik Branş" → Matematik).
+// En uzun ders adı önce denenir (yanlış-pozitif azaltma); en az 3 harf.
+function findSubjectInTitle(
+  title: string,
+  subjects?: SubjectRef[],
+): SubjectRef | null {
+  if (!subjects?.length) return null;
+  const low = title.toLocaleLowerCase("tr");
+  const sorted = [...subjects].sort((a, b) => b.name.length - a.name.length);
+  return (
+    sorted.find((s) => {
+      const nm = s.name.toLocaleLowerCase("tr");
+      return nm.length >= 3 && low.includes(nm);
+    }) ?? null
+  );
+}
+
+function taskSubject(task: TeacherTask, subjects?: SubjectRef[]): TaskSubject {
   const withSubj = task.items.find((it) => it.subject_id != null);
   if (withSubj?.subject_id != null) {
     return {
@@ -447,10 +481,39 @@ function taskSubject(task: TeacherTask): TaskSubject {
     const sep = task.title.indexOf(" · ");
     if (sep > 0 && sep < task.title.length - 3) {
       const nm = task.title.substring(0, sep);
+      // Bilinen bir derse denk geliyorsa o dersin grubuna KATIL (test ile birleşir).
+      const resolved = findSubjectByExactName(nm, subjects);
+      if (resolved) {
+        return { key: `s${resolved.id}`, id: resolved.id, name: resolved.name };
+      }
       return { key: `n:${nm.toLocaleLowerCase("tr")}`, id: null, name: nm };
     }
   }
+  // Branş/genel deneme vb. (kitapsız kalem, " · " öneki yok) → başlıkta ders adı ara.
+  const inTitle = findSubjectInTitle(task.title, subjects);
+  if (inTitle) {
+    return { key: `s${inTitle.id}`, id: inTitle.id, name: inTitle.name };
+  }
   return { key: "other", id: null, name: "Diğer çalışmalar" };
+}
+
+// --------- Periyot (Sabah/Öğle/Akşam) — öğrenci günü periyotluysa editörde de ----
+const PERIOD_RANK: Record<string, number> = {
+  morning: 0,
+  noon: 1,
+  evening: 2,
+};
+const PERIOD_LABELS: Record<string, string> = {
+  morning: "Sabah",
+  noon: "Öğle",
+  evening: "Akşam",
+  none: "Zaman belirtilmemiş",
+};
+function periodRank(p: string | null | undefined): number {
+  return p && p in PERIOD_RANK ? PERIOD_RANK[p] : 3;
+}
+function periodKey(p: string | null | undefined): string {
+  return p && p in PERIOD_RANK ? p : "none";
 }
 
 function subjectHue(id: number | null, name: string): number {
@@ -462,21 +525,42 @@ function subjectHue(id: number | null, name: string): number {
   );
 }
 
-// Görevleri ders grubuna göre sırala: gruplar ilk-görülme sırasında, "Diğer"
-// en sonda; grup içinde görevlerin mevcut sırası korunur.
-function subjectGroupedOrder(tasks: TeacherTask[]): number[] {
-  const order: string[] = [];
-  const groups = new Map<string, number[]>();
+// Görevleri (periyot →) ders grubuna göre sırala. Periyot kullanılıyorsa önce
+// Sabah/Öğle/Akşam/belirsiz; her periyot içinde dersler ilk-görülme sırasında,
+// "Diğer" en sonda. Periyot kullanılmıyorsa yalnız ders gruplaması (Katman 1).
+function dayTaskOrder(
+  tasks: TeacherTask[],
+  subjects: SubjectRef[] | undefined,
+  usePeriods: boolean,
+): number[] {
+  // bucket: periodRank -> { subjOrder, subj: Map<subjKey, ids[]> }
+  const buckets = new Map<
+    number,
+    { subjOrder: string[]; subj: Map<string, number[]> }
+  >();
   for (const t of tasks) {
-    const k = taskSubject(t).key;
-    if (!groups.has(k)) {
-      groups.set(k, []);
-      order.push(k);
+    const pr = usePeriods ? periodRank(t.period) : 0;
+    const sk = taskSubject(t, subjects).key;
+    let b = buckets.get(pr);
+    if (!b) {
+      b = { subjOrder: [], subj: new Map() };
+      buckets.set(pr, b);
     }
-    groups.get(k)!.push(t.id);
+    if (!b.subj.has(sk)) {
+      b.subj.set(sk, []);
+      b.subjOrder.push(sk);
+    }
+    b.subj.get(sk)!.push(t.id);
   }
-  order.sort((a, b) => (a === "other" ? 1 : 0) - (b === "other" ? 1 : 0));
-  return order.flatMap((k) => groups.get(k) ?? []);
+  const result: number[] = [];
+  for (const pr of Array.from(buckets.keys()).sort((a, b) => a - b)) {
+    const b = buckets.get(pr)!;
+    const order = [...b.subjOrder].sort(
+      (a, b2) => (a === "other" ? 1 : 0) - (b2 === "other" ? 1 : 0),
+    );
+    for (const sk of order) result.push(...(b.subj.get(sk) ?? []));
+  }
+  return result;
 }
 
 function SubjectGroupHeader({
@@ -505,6 +589,19 @@ function SubjectGroupHeader({
   );
 }
 
+function PeriodHeader({ pkey, count }: { pkey: string; count: number }) {
+  return (
+    <div className="flex items-center gap-2 px-4 pt-3 pb-2 bg-foreground/[0.04] border-y border-border/60">
+      <span className="text-[11px] uppercase tracking-wider font-bold text-foreground">
+        {PERIOD_LABELS[pkey] ?? PERIOD_LABELS.none}
+      </span>
+      <span className="text-[10px] text-muted-foreground tabular-nums">
+        {count} görev
+      </span>
+    </div>
+  );
+}
+
 // ============================================================================
 // Task list with drag-drop
 // ============================================================================
@@ -512,26 +609,33 @@ function SubjectGroupHeader({
 function TaskList({
   studentId,
   day,
+  subjects,
 }: {
   studentId: number;
   day: TeacherStudentWeekDay;
+  subjects: SubjectRef[];
 }) {
   const reorderMut = useReorderTasks(studentId);
+  // Gün periyot kullanıyor mu? En az bir görevde period dolu ise Sabah/Öğle/
+  // Akşam bölümleri gösterilir (öğrenci günü mantığıyla aynı).
+  const usePeriods = day.tasks.some((t) => t.period != null);
+
   const [orderedIds, setOrderedIds] = React.useState<number[]>(() =>
-    subjectGroupedOrder(day.tasks),
+    dayTaskOrder(day.tasks, subjects, usePeriods),
   );
 
-  // Görev seti değişince (ekle/sil) ders-gruplu sıraya yeniden kur. Görev
-  // kimliklerini sıralayıp birleştiriyoruz → yalnız set değişince tetiklenir,
-  // grup-içi sürükleme sırası kaybolmaz.
-  const taskIdsKey = day.tasks
-    .map((t) => t.id)
-    .sort((a, b) => a - b)
-    .join(",");
+  // Görev seti VEYA periyot-modu değişince (periyot →) ders-gruplu sıraya yeniden
+  // kur. Yalnız set/mod değişince tetiklenir → grup-içi sürükleme sırası korunur.
+  const taskIdsKey =
+    (usePeriods ? "p:" : "s:") +
+    day.tasks
+      .map((t) => t.id)
+      .sort((a, b) => a - b)
+      .join(",");
   const [lastKey, setLastKey] = React.useState(taskIdsKey);
   if (lastKey !== taskIdsKey) {
     setLastKey(taskIdsKey);
-    setOrderedIds(subjectGroupedOrder(day.tasks));
+    setOrderedIds(dayTaskOrder(day.tasks, subjects, usePeriods));
   }
 
   const tasksById = React.useMemo(() => {
@@ -540,12 +644,23 @@ function TaskList({
     return m;
   }, [day.tasks]);
 
-  // Grup başına görev sayısı (başlıkta gösterilir).
+  // Ders grup başına sayı — periyot kullanılıyorsa periyot+ders bazlı anahtar.
   const groupCounts = React.useMemo(() => {
     const m = new Map<string, number>();
     for (const t of day.tasks) {
-      const k = taskSubject(t).key;
+      const pk = usePeriods ? periodKey(t.period) : "_";
+      const k = `${pk}|${taskSubject(t, subjects).key}`;
       m.set(k, (m.get(k) ?? 0) + 1);
+    }
+    return m;
+  }, [day.tasks, subjects, usePeriods]);
+
+  // Periyot başına toplam görev (periyot başlığında gösterilir).
+  const periodCounts = React.useMemo(() => {
+    const m = new Map<string, number>();
+    for (const t of day.tasks) {
+      const pk = periodKey(t.period);
+      m.set(pk, (m.get(pk) ?? 0) + 1);
     }
     return m;
   }, [day.tasks]);
@@ -589,17 +704,29 @@ function TaskList({
           {orderedIds.map((id, idx) => {
             const task = tasksById.get(id);
             if (!task) return null;
-            const subj = taskSubject(task);
+            const subj = taskSubject(task, subjects);
+            const pk = usePeriods ? periodKey(task.period) : "_";
             const prevTask =
               idx > 0 ? tasksById.get(orderedIds[idx - 1]) : undefined;
-            const prevKey = prevTask ? taskSubject(prevTask).key : null;
-            const showHeader = subj.key !== prevKey;
+            const prevPk = prevTask
+              ? usePeriods
+                ? periodKey(prevTask.period)
+                : "_"
+              : null;
+            const prevSubjKey = prevTask
+              ? taskSubject(prevTask, subjects).key
+              : null;
+            const showPeriod = usePeriods && pk !== prevPk;
+            const showSubject = showPeriod || subj.key !== prevSubjKey;
             return (
               <React.Fragment key={id}>
-                {showHeader ? (
+                {showPeriod ? (
+                  <PeriodHeader pkey={pk} count={periodCounts.get(pk) ?? 1} />
+                ) : null}
+                {showSubject ? (
                   <SubjectGroupHeader
                     subj={subj}
-                    count={groupCounts.get(subj.key) ?? 1}
+                    count={groupCounts.get(`${pk}|${subj.key}`) ?? 1}
                   />
                 ) : null}
                 <SortableTaskRow

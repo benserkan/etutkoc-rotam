@@ -96,8 +96,28 @@ interface SubjGroup {
   tasks: TeacherTask[];
 }
 
-// Görevin ders grubu — item subject'i; yoksa (etkinlik/blok) başlık "{Ders} · .." parse.
-function taskSubjKey(t: TeacherTask): { key: string; name: string } {
+type SubjectRef = { id: number; name: string };
+
+function findSubjectByExactName(name: string, subjects?: SubjectRef[]): SubjectRef | null {
+  if (!subjects?.length) return null;
+  const low = name.trim().toLocaleLowerCase("tr");
+  return subjects.find((s) => s.name.toLocaleLowerCase("tr") === low) ?? null;
+}
+function findSubjectInTitle(title: string, subjects?: SubjectRef[]): SubjectRef | null {
+  if (!subjects?.length) return null;
+  const low = title.toLocaleLowerCase("tr");
+  const sorted = [...subjects].sort((a, b) => b.name.length - a.name.length);
+  return (
+    sorted.find((s) => {
+      const nm = s.name.toLocaleLowerCase("tr");
+      return nm.length >= 3 && low.includes(nm);
+    }) ?? null
+  );
+}
+
+// Görevin ders grubu — item subject'i; " · " öneki (video/blok); branş/genel deneme
+// başlığında ders adı (subjects ile). Bilinen ders → `s{id}` (test ile birleşir).
+function taskSubjKey(t: TeacherTask, subjects?: SubjectRef[]): { key: string; name: string } {
   const ws = t.items.find((it) => it.subject_id != null);
   if (ws?.subject_id != null) {
     return { key: `s${ws.subject_id}`, name: ws.subject_name ?? "Ders" };
@@ -106,16 +126,20 @@ function taskSubjKey(t: TeacherTask): { key: string; name: string } {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {
       const nm = t.title.substring(0, sep);
+      const resolved = findSubjectByExactName(nm, subjects);
+      if (resolved) return { key: `s${resolved.id}`, name: resolved.name };
       return { key: `n:${nm.toLocaleLowerCase("tr")}`, name: nm };
     }
   }
+  const inTitle = findSubjectInTitle(t.title, subjects);
+  if (inTitle) return { key: `s${inTitle.id}`, name: inTitle.name };
   return { key: "other", name: "Diğer" };
 }
 
-function groupDay(tasks: TeacherTask[]): SubjGroup[] {
+function groupDay(tasks: TeacherTask[], subjects?: SubjectRef[]): SubjGroup[] {
   const map = new Map<string, SubjGroup>();
   for (const t of tasks) {
-    const { key, name } = taskSubjKey(t);
+    const { key, name } = taskSubjKey(t, subjects);
     const g = map.get(key);
     if (g) g.tasks.push(t);
     else map.set(key, { key, name, order: key === "other" ? 1 : 0, tasks: [t] });
@@ -123,6 +147,31 @@ function groupDay(tasks: TeacherTask[]): SubjGroup[] {
   return Array.from(map.values()).sort(
     (a, b) => a.order - b.order || a.name.localeCompare(b.name, "tr"),
   );
+}
+
+// Periyot (Sabah/Öğle/Akşam) — gün periyotluysa alt bölümler.
+const PERIOD_ORDER = ["morning", "noon", "evening", "none"] as const;
+const PERIOD_LABELS: Record<string, string> = {
+  morning: "Sabah", noon: "Öğle", evening: "Akşam", none: "Belirsiz",
+};
+function periodKey(p: string | null | undefined): string {
+  return p === "morning" || p === "noon" || p === "evening" ? p : "none";
+}
+
+interface DaySection {
+  pkey: string | null; // null = periyot kullanılmıyor
+  groups: SubjGroup[];
+}
+function daySections(tasks: TeacherTask[], subjects?: SubjectRef[]): DaySection[] {
+  const usePeriods = tasks.some((t) => t.period != null);
+  if (!usePeriods) return [{ pkey: null, groups: groupDay(tasks, subjects) }];
+  return PERIOD_ORDER.map((pk) => ({
+    pkey: pk,
+    groups: groupDay(
+      tasks.filter((t) => periodKey(t.period) === pk),
+      subjects,
+    ),
+  })).filter((s) => s.groups.length > 0);
 }
 
 const TR_MONTHS_SHORT = [
@@ -135,12 +184,56 @@ function shortDate(iso: string): string {
   return `${d} ${TR_MONTHS_SHORT[m - 1]}`;
 }
 
+function SubjGroupBlock({ g }: { g: SubjGroup }) {
+  const tone = toneForKey(g.key, g.name);
+  return (
+    <div>
+      <div className="flex items-center gap-1 leading-tight">
+        <span className={cn("size-1.5 rounded-full flex-shrink-0", tone.dot)} aria-hidden />
+        <span className={cn("text-[10px] font-bold uppercase tracking-wide truncate", tone.text)}>
+          {g.name}
+        </span>
+      </div>
+      <ul className="mt-0.5 space-y-px">
+        {g.tasks.map((t) => {
+          const mk = MARK[gorevState(t)];
+          return (
+            <li key={t.id} className="flex items-start gap-1 text-[10px] leading-snug">
+              <span className={cn("shrink-0 font-bold", mk.cls)} aria-hidden>
+                {mk.ch}
+              </span>
+              <span className="min-w-0 flex-1 text-foreground/90">
+                <span className="truncate inline-block max-w-full align-bottom">
+                  {taskLabel(t)}
+                </span>
+                {isActivity(t) ? (
+                  (t.solved_count ?? 0) > 0 ? (
+                    <span className="text-muted-foreground tabular-nums">
+                      {" "}· {t.solved_count} soru
+                    </span>
+                  ) : null
+                ) : (
+                  <span className="font-semibold tabular-nums text-muted-foreground">
+                    {" "}{t.completed_count}/{t.planned_count} {taskUnit(t)}
+                  </span>
+                )}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </div>
+  );
+}
+
 export function WeekGrid({
   days,
+  subjects,
   openDate,
   onOpenDay,
 }: {
   days: TeacherStudentWeekDay[];
+  subjects: SubjectRef[];
   openDate: string | null;
   onOpenDay: (date: string) => void;
 }) {
@@ -176,7 +269,7 @@ export function WeekGrid({
         <>
           <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-1.5 px-3 pb-3">
             {days.map((day) => {
-              const groups = groupDay(day.tasks);
+              const sections = daySections(day.tasks, subjects);
               const isOpen = openDate === day.date;
               const doneCount = day.tasks.filter(
                 (t) => gorevState(t) === "done",
@@ -221,58 +314,18 @@ export function WeekGrid({
                         boş
                       </p>
                     ) : (
-                      groups.map((g) => {
-                        const tone = toneForKey(g.key, g.name);
-                        return (
-                          <div key={g.key}>
-                            <div className="flex items-center gap-1 leading-tight">
-                              <span
-                                className={cn("size-1.5 rounded-full flex-shrink-0", tone.dot)}
-                                aria-hidden
-                              />
-                              <span
-                                className={cn(
-                                  "text-[10px] font-bold uppercase tracking-wide truncate",
-                                  tone.text,
-                                )}
-                              >
-                                {g.name}
-                              </span>
+                      sections.map((sec) => (
+                        <div key={sec.pkey ?? "_"} className="space-y-1">
+                          {sec.pkey ? (
+                            <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-0.5">
+                              {PERIOD_LABELS[sec.pkey] ?? PERIOD_LABELS.none}
                             </div>
-                            <ul className="mt-0.5 space-y-px">
-                              {g.tasks.map((t) => {
-                                const mk = MARK[gorevState(t)];
-                                return (
-                                  <li
-                                    key={t.id}
-                                    className="flex items-start gap-1 text-[10px] leading-snug"
-                                  >
-                                    <span className={cn("shrink-0 font-bold", mk.cls)} aria-hidden>
-                                      {mk.ch}
-                                    </span>
-                                    <span className="min-w-0 flex-1 text-foreground/90">
-                                      <span className="truncate inline-block max-w-full align-bottom">
-                                        {taskLabel(t)}
-                                      </span>
-                                      {isActivity(t) ? (
-                                        (t.solved_count ?? 0) > 0 ? (
-                                          <span className="text-muted-foreground tabular-nums">
-                                            {" "}· {t.solved_count} soru
-                                          </span>
-                                        ) : null
-                                      ) : (
-                                        <span className="font-semibold tabular-nums text-muted-foreground">
-                                          {" "}{t.completed_count}/{t.planned_count} {taskUnit(t)}
-                                        </span>
-                                      )}
-                                    </span>
-                                  </li>
-                                );
-                              })}
-                            </ul>
-                          </div>
-                        );
-                      })
+                          ) : null}
+                          {sec.groups.map((g) => (
+                            <SubjGroupBlock key={g.key} g={g} />
+                          ))}
+                        </div>
+                      ))
                     )}
                   </div>
 
