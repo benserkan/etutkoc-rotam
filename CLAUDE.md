@@ -4305,10 +4305,20 @@ additive; head = `b5c8f1g2f99w`):
   ETÜTKOÇ logo, **OG meta** → WhatsApp link önizlemesinde logo) + plan/fiyat/
   özellik kartı + client actions (talep + havale IBAN/kopyala/ödedim). proxy
   public allowlist + Caddy `/membership/*` → next (restart proxy).
-- **KALAN paketler:** P2 süper admin oluşturucu UI (hedef seç + plan/fiyat/mesaj +
-  link kopyala/WhatsApp gönder + havale ayar UI) · P3 tekli+toplu WhatsApp teslim
-  (mevcut Click-to-WhatsApp sihirbazına bağla) · sonra Iyzico kart + B (Cloud API).
-  **NOT:** P2 olmadan teklif yalnız API'den oluşturulur (panel UI'ı henüz yok).
+**Paket 2 — süper admin oluşturucu UI + havale ayarı** ✅ (2026-06-04, migration YOK):
+- Backend: `/admin/membership-offers` GET list (son 100 + durum/completion +
+  public_url) + plan-options (PLAN_CATALOG satılabilir planlar). create + havale
+  P1'den.
+- Frontend `/admin/membership-offers` (admin-shell "Ticari Pano → Üyelik Teklifleri
+  (WhatsApp)"): havale/EFT ayar kartı + teklif oluşturucu (hedef koç ara/seç veya
+  genel + yeni/yenileme + plan + döngü + özel fiyat + başlık/mesaj + süre → link
+  kartı: kopyala + **WhatsApp'ta Aç** [wa.me mesaj+link hazır] + önizle) + son
+  teklifler listesi (koç telefonu varsa doğrudan WhatsApp). Uçtan uca kullanılır:
+  admin link üretir → WhatsApp'tan gönderir → koç markalı sayfada talep/havale →
+  İletişim Talepleri → aktive. tsc/eslint temiz, canlı.
+- **KALAN:** P3 mevcut tekli+toplu Click-to-WhatsApp sihirbazına entegrasyon
+  (şimdilik "WhatsApp'ta Aç" wa.me ile manuel gönderim çalışıyor) · sonra Iyzico
+  kart (işletme gelince) + B (Cloud API mavi-tik).
 
 ## Notlar
 
