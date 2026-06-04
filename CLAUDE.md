@@ -4275,6 +4275,41 @@ planlarken diğer günleri görememe; (3) gün içi görevler ders bazlı grupla
     server'da fetch eder. (Sınırlı: tam-ad substring eşleşmesi; "Türk Dili ve
     Edebiyatı" gibi uzun adlar branş başlığında geçmezse "Diğer" kalır.)
 
+## WhatsApp Üyelik Teklifi (sigortam.net tarzı) — Paket 1 (2026-06-04, CANLI)
+
+**Bağlam (kullanıcı):** sigortam.net'in WhatsApp'tan gönderdiği markalı teklif +
+link → web akışı → satın alma deneyimini istedi. Görseller analiz edildi: akış =
+WhatsApp İşletme mesajı (görsel+metin+buton) → **uygulama-içi tarayıcıda web
+sayfası** → satın alma (saf sohbet-içi DEĞİL). **A/B çatalı** sunuldu:
+- **A (şimdi, Meta onayı YOK):** Click-to-WhatsApp ile markalı link → web akışı.
+- **B (sonra):** WhatsApp Cloud API + Meta Business doğrulama (mavi-tik gönderen).
+**Kullanıcı kararı:** A'yı yap, sonra B. **Meta doğrulama + Iyzico canlı kart DA
+kayıtlı işletme ister** (salt TC yetmez); kullanıcının işletmesi yok → A'da
+tamamlama = **"talep → manuel aktive" + havale/EFT (kişisel IBAN, manuel onay)**.
+WhatsApp Pay Türkiye'de YOK.
+
+**Paket 1 — markalı sayfa + backend link üretimi** (**migration `b5c8f1g2f99w`**,
+additive; head = `b5c8f1g2f99w`):
+- `membership_offers` tablosu + `MembershipOffer` modeli (token, hedef koç,
+  offer_type new|renewal, plan_code, cycle, amount[özel fiyat|null], title,
+  message, status, completion[requested|havale_claimed], viewed/accepted/expires).
+- `membership_offer_service`: create_offer (token) · public_view · record_request
+  (ContactRequest source="membership_offer" + koç_id/hedef_kod → admin İletişim
+  Talepleri'nde görüp activate-plan) · record_havale_claim · havale bilgisi
+  (app_settings `membership_havale`).
+- Public router `/membership/{token}` (login'siz): GET + /request + /havale-claim.
+  Admin router `/admin/membership-offers` (_require_super_admin): create + havale
+  GET/POST. `app/routes/api_v2/admin_membership.py` (admin'den `_require_super_admin`
+  import eder). Smoke `test_api_v2_membership_offer.py` **15/15**.
+- Frontend: `/membership/[token]` mobil-öncelikli markalı sayfa (force-light,
+  ETÜTKOÇ logo, **OG meta** → WhatsApp link önizlemesinde logo) + plan/fiyat/
+  özellik kartı + client actions (talep + havale IBAN/kopyala/ödedim). proxy
+  public allowlist + Caddy `/membership/*` → next (restart proxy).
+- **KALAN paketler:** P2 süper admin oluşturucu UI (hedef seç + plan/fiyat/mesaj +
+  link kopyala/WhatsApp gönder + havale ayar UI) · P3 tekli+toplu WhatsApp teslim
+  (mevcut Click-to-WhatsApp sihirbazına bağla) · sonra Iyzico kart + B (Cloud API).
+  **NOT:** P2 olmadan teklif yalnız API'den oluşturulur (panel UI'ı henüz yok).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
