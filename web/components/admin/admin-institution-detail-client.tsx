@@ -691,19 +691,27 @@ function PlanCard({
                       </div>
                     ) : null}
 
-                    {/* Özellik listesi */}
-                    {details ? (
-                      <ul className="mb-4 space-y-1.5 text-xs">
-                        {details.features.map((f) => (
-                          <li key={f} className="flex items-start gap-1.5">
-                            <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-hidden />
-                            <span className="text-slate-700">{f}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : p.desc ? (
-                      <p className="mb-4 text-xs text-slate-600">{p.desc}</p>
-                    ) : null}
+                    {/* Özellik listesi — TEK KAYNAK (API plan_features), yoksa yerel/desc */}
+                    {(() => {
+                      const feats = catalogQ.data?.plan_features?.[p.value]?.length
+                        ? catalogQ.data.plan_features[p.value]
+                        : details?.features ?? [];
+                      if (feats.length) {
+                        return (
+                          <ul className="mb-4 space-y-1.5 text-xs">
+                            {feats.map((f) => (
+                              <li key={f} className="flex items-start gap-1.5">
+                                <Check className="mt-0.5 size-3.5 shrink-0 text-emerald-600" aria-hidden />
+                                <span className="text-slate-700">{f}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      }
+                      return p.desc ? (
+                        <p className="mb-4 text-xs text-slate-600">{p.desc}</p>
+                      ) : null;
+                    })()}
 
                     {/* CTA */}
                     <div className="mt-auto">

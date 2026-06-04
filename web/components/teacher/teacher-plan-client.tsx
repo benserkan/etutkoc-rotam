@@ -28,6 +28,7 @@ import {
   paymentKeys,
 } from "@/lib/api/payment";
 import { useInitPaymentCheckout } from "@/lib/hooks/use-payment-mutations";
+import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import type { TeacherPlanResponse } from "@/lib/types/teacher";
 
 function tl(n: number): string {
@@ -381,6 +382,14 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
   const [yearly, setYearly] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const months = data.annual_paid_months || 10;
+  // Paket özellik bullet'ları TEK KAYNAK: /api/v2/pricing plan_features
+  // (hardcoded TIER_DETAILS.features yerine; pazarlama dili + vitrinle tutarlı).
+  const pricingQ = useQuery({
+    queryKey: pricingKeys.catalog(),
+    queryFn: getPricingCatalog,
+    staleTime: 5 * 60_000,
+  });
+  const planFeatures = pricingQ.data?.plan_features ?? {};
 
   // Yükseltilebilir Solo paketleri (3 kapaklı tier).
   // Öncelik: signup'ta seçilen paket (post_trial_plan) > recommended (öğrenci
@@ -520,17 +529,22 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
                   </div>
                 ) : null}
 
-                {/* Özellik listesi */}
-                {details ? (
-                  <ul className="mb-5 space-y-2 text-sm">
-                    {details.features.map((f) => (
-                      <li key={f} className="flex items-start gap-2">
-                        <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
-                        <span className="text-slate-700">{f}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
+                {/* Özellik listesi — TEK KAYNAK (API plan_features), yoksa yerel fallback */}
+                {(() => {
+                  const feats = planFeatures[t.code]?.length
+                    ? planFeatures[t.code]
+                    : details?.features ?? [];
+                  return feats.length ? (
+                    <ul className="mb-5 space-y-2 text-sm">
+                      {feats.map((f) => (
+                        <li key={f} className="flex items-start gap-2">
+                          <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+                          <span className="text-slate-700">{f}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : null;
+                })()}
 
                 {/* CTA — plan adı kart başlığında zaten büyük; buton sadeleşti */}
                 <div className="mt-auto">

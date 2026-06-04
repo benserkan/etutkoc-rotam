@@ -49,6 +49,7 @@ export interface PricingContact {
 
 export interface PricingCatalog {
   cards: PricingCard[];
+  plan_features: Record<string, string[]>;  // plan kodu → pazarlama bullet'ları (TEK KAYNAK)
   currency: string;
   annual_paid_months: number;
   contact: PricingContact;

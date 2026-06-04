@@ -17,7 +17,7 @@ from sqlalchemy.orm import Session
 
 from app.models import ContactRequest, MembershipOffer, User
 from app.models.contact_request import CONTACT_STATUS_NEW
-from app.services import app_settings, plans
+from app.services import app_settings, plans, pricing
 
 # Havale/EFT bilgisi app_settings'te tutulur (süper admin doldurur).
 _HAVALE_KEY = "membership_havale"
@@ -159,7 +159,8 @@ def public_view(db: Session, offer: MembershipOffer, *, mark_viewed: bool = True
         "plan_code": offer.plan_code,
         "plan_label": (pi.label if pi else offer.plan_code),
         "plan_short": (pi.short_description if pi else None),
-        "plan_features": (list(pi.features_included) if pi else []),
+        # Tek kaynak: pazarlama-odaklı bullet'lar (pricing.features_for_plan).
+        "plan_features": pricing.features_for_plan(offer.plan_code),
         "cycle": offer.cycle,
         "cycle_label": _CYCLE_LABELS.get(offer.cycle, offer.cycle),
         "amount": amount,

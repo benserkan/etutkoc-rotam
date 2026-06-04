@@ -136,20 +136,88 @@ def _fmt(n: int) -> str:
     return f"{int(n):,}".replace(",", ".")
 
 
+# ----------------------------------------------------------------------------
+# TEK KAYNAK — paket özellik bullet'ları (pazarlama-odaklı, "can alıcı"
+# özellikler). /pricing + anasayfa + /teacher/plan + admin kurum + üyelik teklifi
+# HEPSİ buradan beslenir (features_for_plan). plans.py features_included artık
+# bunu yansıtır. Fiyat/limit İSKELETİNE dokunmaz — yalnız SUNUM (hangi özellik,
+# hangi dille). Yeni "can alıcı" özellik çıkınca tek yer güncellenir.
+# ----------------------------------------------------------------------------
+
+# Ücretli solo planlarda ortak yapay zekâ / koçluk gücü (fayda-odaklı dil).
+_AI_FEATURES = [
+    "Her görüşme öncesi yapay zekâ 'bugün şunu konuş' özetini hazırlar",
+    "Görüşmeyi sesle anlat ya da formu fotoğrafla — notlar kendiliğinden yazılır",
+    "Tükenen veya uzaklaşan öğrenciyi geç olmadan gör",
+    "Veliye otomatik ilerleme bildirimi + deneme/net gelişim grafiği",
+]
+# Ücretsiz (free) — temel takip.
+_FREE_FEATURES = [
+    "Haftalık plan + günlük görev yönetimi",
+    "Veliye e-posta ile ilerleme bildirimi",
+    "Aralıklı tekrar ile kalıcı öğrenme",
+]
+# Kurum — kurum gözü + erken müdahale + veli güveni.
+_INSTITUTION_FEATURES = [
+    "Koçların tüm araçları + kurum gözü",
+    "Hangi koç aktif, hangi öğrenci ihmal ediliyor — tek bakışta",
+    "Risk altındaki öğrenci ve sınıfı erken gör (kıyaslamalı)",
+    "Veliyle güçlü iletişim → kayıt yenileme ve memnuniyet",
+    "60 gün performans garantisi",
+]
+
+
+def _cap_note(t: dict[str, Any]) -> str:
+    return "sınırsız öğrenci" if t["max_students"] is None else f"{t['max_students']} öğrenciye kadar"
+
+
+def features_for_plan(plan_code: str | None) -> list[str]:
+    """Bir plan kodu için pazarlama-odaklı özellik bullet'ları (TEK KAYNAK).
+
+    Ücretli solo: '{N} öğrenciye kadar tam takip' + yapay zekâ özellikleri
+    (+ üst tier'larda öncelikli destek). Free: temel takip. Kurum: kurum gözü.
+    Tanınmayan/trial kod → en yakın eşlenik.
+    """
+    if not plan_code:
+        return []
+    cfg = _cfg()
+    solo_tiers = cfg["solo_tiers"]
+    by_code = {t["code"]: (i, t) for i, t in enumerate(solo_tiers)}
+    inst_codes = {t["code"] for t in cfg["institution_tiers"]}
+
+    if plan_code in ("solo_trial",):
+        plan_code = solo_tiers[0]["code"]  # deneme = pro deneyimi
+    if plan_code in by_code:
+        idx, t = by_code[plan_code]
+        out = [f"{_cap_note(t).capitalize()} tam takip", *_AI_FEATURES]
+        if idx >= 1:  # elite + sınırsız → öncelikli destek
+            out.append("Öncelikli destek")
+        return out
+    if plan_code in ("solo_free", "free"):
+        fs = int(cfg["solo_free_students"])
+        return [f"{fs} öğrenciye kadar tam takip", *_FREE_FEATURES]
+    if plan_code in inst_codes or plan_code in (
+        "institution_free", "institution_trial", "etut_standart", "dershane_pro", "enterprise"
+    ):
+        if plan_code in ("institution_free",):
+            return [
+                f"{int(cfg['institution_free_teachers'])} öğretmen / "
+                f"{int(cfg['institution_free_students'])} öğrenciye kadar tanıma",
+                "Koçların tüm araçları + kurum gözü",
+                "Temel kurum panosu",
+            ]
+        return list(_INSTITUTION_FEATURES)
+    return []
+
+
 def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
     free_students = int(cfg["solo_free_students"])
     tiers = cfg["solo_tiers"]
     t1, t2, t3 = tiers[0], tiers[1], tiers[2]
 
     def cap_note(t: dict[str, Any]) -> str:
-        return "sınırsız öğrenci" if t["max_students"] is None else f"{t['max_students']} öğrenciye kadar"
+        return _cap_note(t)
 
-    ai_features = [
-        "Her görüşme öncesi yapay zekâ 'bugün şunu konuş' özetini hazırlar",
-        "Görüşmeyi sesle anlat ya da formu fotoğrafla — notlar kendiliğinden yazılır",
-        "Tükenen veya uzaklaşan öğrenciyi geç olmadan gör",
-        "Veliye otomatik ilerleme bildirimi + deneme/net gelişim grafiği",
-    ]
     cards: list[dict[str, Any]] = [
         {
             "key": "free", "audience": "solo", "plan": "solo_free",
@@ -159,12 +227,7 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
             "price_note": f"{free_students} öğrenciye kadar, süresiz",
             "highlight": False, "badge": None, "corner": None,
             "cta": "Ücretsiz başla", "cta_href": "/signup/teacher",
-            "features": [
-                f"{free_students} öğrenciye kadar tam takip",
-                "Haftalık plan + günlük görev yönetimi",
-                "Veliye e-posta ile ilerleme bildirimi",
-                "Aralıklı tekrar ile kalıcı öğrenme",
-            ],
+            "features": features_for_plan("solo_free"),
             "excluded": ["Yapay zekâ özellikleri", "Sınırsız öğrenci"],
         },
         {
@@ -176,7 +239,7 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
             "price_note": f"{cap_note(t1)} · 14 gün ücretsiz dene",
             "highlight": False, "badge": None, "corner": None,
             "cta": "14 gün ücretsiz dene", "cta_href": "/signup/teacher?plan=" + t1["code"],
-            "features": [f"{cap_note(t1).capitalize()}", *ai_features],
+            "features": features_for_plan(t1["code"]),
             "excluded": [],
         },
         {
@@ -188,7 +251,7 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
             "price_note": f"{cap_note(t2)} · 14 gün ücretsiz dene",
             "highlight": True, "badge": "En popüler", "corner": None,
             "cta": "14 gün ücretsiz dene", "cta_href": "/signup/teacher?plan=" + t2["code"],
-            "features": [f"{cap_note(t2).capitalize()}", *ai_features, "Öncelikli destek"],
+            "features": features_for_plan(t2["code"]),
             "excluded": [],
         },
         {
@@ -200,7 +263,7 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
             "price_note": f"{cap_note(t3)} · 14 gün ücretsiz dene",
             "highlight": False, "badge": None, "corner": None,
             "cta": "14 gün ücretsiz dene", "cta_href": "/signup/teacher?plan=" + t3["code"],
-            "features": [f"{cap_note(t3).capitalize()}", *ai_features, "Öncelikli destek"],
+            "features": features_for_plan(t3["code"]),
             "excluded": [],
         },
         {
@@ -211,13 +274,7 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
             "price_unit": "", "price_note": "30 gün ücretsiz pilot · birkaç saatte kurulum",
             "highlight": False, "badge": None, "corner": "60 Gün Garanti",
             "cta": "Kurumsal teklif al", "cta_href": "/pricing?type=kurum#kurumsal",
-            "features": [
-                "Koçların tüm araçları + kurum gözü",
-                "Hangi koç aktif, hangi öğrenci ihmal ediliyor — tek bakışta",
-                "Risk altındaki öğrenci ve sınıfı erken gör (kıyaslamalı)",
-                "Veliyle güçlü iletişim → kayıt yenileme ve memnuniyet",
-                "60 gün performans garantisi",
-            ],
+            "features": features_for_plan("etut_standart"),
             "excluded": [],
         },
     ]
@@ -228,8 +285,18 @@ def get_pricing_catalog() -> dict[str, Any]:
     """`/pricing` + anasayfa + süper admin için tam yapı. Tek kaynak (override uygulanmış)."""
     cfg = _cfg()
     contact = cfg.get("contact") or _DEFAULTS["contact"]
+    # Plan kodu → pazarlama bullet'ları (TEK KAYNAK). /teacher/plan + admin kurum +
+    # üyelik teklifi aynı kopyayı buradan tüketir (hardcoded liste yok).
+    _codes = (
+        ["solo_free"]
+        + [t["code"] for t in cfg["solo_tiers"]]
+        + ["institution_free"]
+        + [t["code"] for t in cfg["institution_tiers"]]
+    )
+    plan_features = {c: features_for_plan(c) for c in _codes}
     return {
         "cards": _marketing_cards(cfg),
+        "plan_features": plan_features,
         "currency": cfg["currency"],
         "annual_paid_months": int(cfg["annual_paid_months"]),
         "contact": {
