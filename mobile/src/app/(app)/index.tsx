@@ -1,3 +1,4 @@
+import { Redirect } from "expo-router";
 import { Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -14,6 +15,10 @@ const ROLE_LABELS: Record<string, string> = {
 
 export default function AppHome() {
   const { user, signOut } = useAuth();
+
+  // Öğrenci → kendi sekmeli app'ine. Diğer roller (koç/veli/kurum) sırayla
+  // ekleniyor; o ana dek bilgilendirme ekranı.
+  if (user?.role === "student") return <Redirect href="/(app)/student/today" />;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
