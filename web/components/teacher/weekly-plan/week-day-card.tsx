@@ -760,6 +760,7 @@ function TaskList({
                   studentId={studentId}
                   dayDate={day.date}
                   task={task}
+                  subjects={subjects}
                 />
               </React.Fragment>
             );
@@ -774,10 +775,12 @@ function SortableTaskRow({
   studentId,
   dayDate,
   task,
+  subjects,
 }: {
   studentId: number;
   dayDate: string;
   task: TeacherTask;
+  subjects: SubjectRef[];
 }) {
   const deleteMut = useDeleteTask(studentId, dayDate);
   const [editOpen, setEditOpen] = React.useState(false);
@@ -791,7 +794,7 @@ function SortableTaskRow({
     isDragging,
   } = useSortable({ id: task.id, disabled: hourBound });
 
-  const primarySubjectId = task.items[0]?.subject_id ?? null;
+  let primarySubjectId = task.items[0]?.subject_id ?? null;
   // Kitapsız etkinlik görevlerinde (Video/Özet/Tekrar/Diğer · items=[]) ders
   // backend'den gelmez; add-task-form başlığı `{Ders} · {içerik}` formatında
   // üretir → burada parse edip rozet olarak gösteririz (Test ile görsel
@@ -803,6 +806,16 @@ function SortableTaskRow({
     if (sepIdx > 0 && sepIdx < task.title.length - 3) {
       primarySubjectName = task.title.substring(0, sepIdx);
       displayTitle = task.title.substring(sepIdx + 3);
+    }
+  }
+  // Branş deneme (kitapsız, " · " öneki yok) — görev adından dersi çöz (alias
+  // dahil): "AYT Fizik Branş" → Fizik. Bulunursa ders rozeti DENEME'nin başında
+  // gösterilir (genel denemede ders bulunmaz → yalnız DENEME). Test ile simetri.
+  if (!primarySubjectName) {
+    const resolved = taskSubject(task, subjects);
+    if (resolved.key !== "other") {
+      primarySubjectName = resolved.name;
+      if (primarySubjectId === null) primarySubjectId = resolved.id;
     }
   }
   // Renk hue: subject_id varsa hash, yoksa parse edilen ders adı string hash;
