@@ -37,6 +37,7 @@ import type {
   MembershipOfferListResponse,
   MembershipPlanOption,
 } from "@/lib/types/membership";
+import { buildMembershipWaText } from "@/lib/membership-message";
 import { cn } from "@/lib/utils";
 
 const CYCLE_LABEL: Record<string, string> = {
@@ -391,6 +392,7 @@ function Composer({ planOptions }: { planOptions: MembershipPlanOption[] }) {
           targetName={target?.full_name ?? null}
           planLabel={selectedPlan?.label ?? created.plan_code}
           offerType={offerType}
+          amount={created.amount ?? (defaultPrice > 0 ? defaultPrice : null)}
           onClose={() => setCreated(null)}
         />
       ) : null}
@@ -403,16 +405,24 @@ function CreatedCard({
   targetName,
   planLabel,
   offerType,
+  amount,
   onClose,
 }: {
   created: MembershipOfferCreated;
   targetName: string | null;
   planLabel: string;
   offerType: string;
+  amount: number | null;
   onClose: () => void;
 }) {
-  const typeLabel = offerType === "renewal" ? "üyelik yenileme" : "üyelik";
-  const text = `Merhaba${targetName ? " " + targetName : ""},\n\nETÜTKOÇ ${typeLabel} teklifin hazır (${planLabel}).\nÜyeliğini tamamlamak için:\n${created.public_url}`;
+  const text = buildMembershipWaText({
+    offerType,
+    targetName,
+    planLabel,
+    amount,
+    cycle: created.cycle,
+    url: created.public_url,
+  });
   return (
     <div className="mt-4 rounded-lg border border-cyan-300 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
       <div className="flex items-center gap-2">
@@ -604,6 +614,14 @@ function BulkComposer({ planOptions }: { planOptions: MembershipPlanOption[] }) 
   const solo = planOptions.filter((p) => p.audience === "solo");
   const inst = planOptions.filter((p) => p.audience === "institution");
   const selectedPlan = planOptions.find((p) => p.code === planCode);
+  const bulkEffAmount =
+    amount.trim() && Number(amount) > 0
+      ? Number(amount)
+      : selectedPlan
+        ? cycle === "annual"
+          ? selectedPlan.annual
+          : selectedPlan.monthly
+        : 0;
 
   return (
     <section className="rounded-lg border border-border bg-card p-5">
@@ -748,7 +766,8 @@ function BulkComposer({ planOptions }: { planOptions: MembershipPlanOption[] }) 
       </form>
 
       {results ? <BulkResults results={results} offerType={offerType}
-        planLabel={selectedPlan?.label ?? planCode} /> : null}
+        planLabel={selectedPlan?.label ?? planCode}
+        amount={bulkEffAmount > 0 ? bulkEffAmount : null} cycle={cycle} /> : null}
     </section>
   );
 }
@@ -757,14 +776,17 @@ function BulkResults({
   results,
   offerType,
   planLabel,
+  amount,
+  cycle,
 }: {
   results: BulkMembershipOfferResult;
   offerType: string;
   planLabel: string;
+  amount: number | null;
+  cycle: string;
 }) {
-  const typeLabel = offerType === "renewal" ? "üyelik yenileme" : "üyelik";
   function textFor(name: string | null, url: string): string {
-    return `Merhaba${name ? " " + name : ""},\n\nETÜTKOÇ ${typeLabel} teklifin hazır (${planLabel}).\nÜyeliğini tamamlamak için:\n${url}`;
+    return buildMembershipWaText({ offerType, targetName: name, planLabel, amount, cycle, url });
   }
   const broadcast = results.items
     .map((it) => `${it.full_name ?? "Koç"}: ${it.public_url}`)
@@ -829,7 +851,14 @@ function OffersList({
       <div className="mt-3 space-y-2">
         {items.map((o) => {
           const typeLabel = o.offer_type === "renewal" ? "Yenileme" : "Yeni";
-          const text = `Merhaba${o.target_name ? " " + o.target_name : ""},\n\nETÜTKOÇ üyelik teklifin hazır (${o.plan_label}).\nÜyeliğini tamamlamak için:\n${o.public_url}`;
+          const text = buildMembershipWaText({
+            offerType: o.offer_type,
+            targetName: o.target_name,
+            planLabel: o.plan_label,
+            amount: o.amount,
+            cycle: o.cycle,
+            url: o.public_url,
+          });
           return (
             <div
               key={o.id}

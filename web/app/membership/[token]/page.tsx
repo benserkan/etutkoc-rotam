@@ -56,11 +56,24 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { token } = await params;
   const offer = await fetchOffer(token);
-  const title = offer?.title || "ETÜTKOÇ — Üyelik Teklifin Hazır";
-  const desc =
-    offer?.plan_label
-      ? `${offer.offer_type_label ?? "Üyelik"} · ${offer.plan_label}. Üyeliğini tamamlamak için dokun.`
-      : "Sana özel üyelik teklifi. Tamamlamak için dokun.";
+  const isRenewal = offer?.offer_type === "renewal";
+  const planBit = offer?.plan_label
+    ? offer.amount
+      ? `${offer.plan_label} · ${new Intl.NumberFormat("tr-TR").format(offer.amount)} ₺/${offer.cycle_label}`
+      : offer.plan_label
+    : null;
+
+  // Başlık + açıklama amaç-net (sigortam.net kalitesi): kart, dokunmadan ÖNCE
+  // neden geldiğini ve değerini anlatır.
+  const title =
+    offer?.title ||
+    (isRenewal
+      ? "ETÜTKOÇ Rotam — Üyeliğini Yenile"
+      : "ETÜTKOÇ Rotam — Sana Özel Üyelik");
+  const desc = isRenewal
+    ? `${planBit ? planBit + ". " : ""}Öğrenci takibin, deneme analizin ve veli bildirimlerin kesintisiz devam etsin — yenilemek için dokun.`
+    : `Program, deneme takibi, veli bilgilendirme ve yapay zekâ hazırlık tek panelde.${planBit ? " " + planBit + "." : ""} Detaylar için dokun.`;
+
   return {
     title,
     description: desc,
@@ -70,9 +83,8 @@ export async function generateMetadata({
       description: desc,
       siteName: "ETÜTKOÇ Rotam",
       type: "website",
-      images: [{ url: "/etutkoc-logo.png", width: 512, height: 512, alt: "ETÜTKOÇ" }],
     },
-    twitter: { card: "summary", title, description: desc, images: ["/etutkoc-logo.png"] },
+    twitter: { card: "summary_large_image", title, description: desc },
   };
 }
 
@@ -131,8 +143,8 @@ export default async function MembershipPage({
               <p className="mt-1.5 text-[15px] leading-relaxed text-cyan-50">
                 {offer.title ||
                   (offer.offer_type === "renewal"
-                    ? "Üyeliğini avantajlı şekilde yenilemen için teklifini hazırladık."
-                    : "Sana özel üyelik teklifini hazırladık.")}
+                    ? "Üyeliğin sona eriyor. Öğrenci takibin, deneme analizin ve veli bildirimlerin kesintisiz devam etsin diye avantajlı yenileme teklifini hazırladık."
+                    : "ETÜTKOÇ Rotam ile öğrenci koçluğunu tek panelden yönet — program, deneme takibi, veli bilgilendirme ve yapay zekâ hazırlık. Sana özel üyelik teklifini hazırladık.")}
               </p>
             </section>
 
@@ -188,6 +200,16 @@ export default async function MembershipPage({
                   : null
               }
             />
+
+            {/* Tüm paketler — kullanıcı diğer seçenekleri de görebilsin */}
+            <a
+              href="https://rotam.etutkoc.com/pricing"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-center text-sm font-medium text-cyan-700 shadow-sm hover:bg-cyan-50"
+            >
+              Tüm paketleri ve özellikleri incele →
+            </a>
 
             {/* Güvence */}
             <p className="flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-400">
