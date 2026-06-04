@@ -37,14 +37,23 @@ const TASK_TYPE_LABEL: Record<string, string> = {
   test: "Test", video: "Video", ozet: "Özet", tekrar: "Tekrar", other: "Diğer",
 };
 
-// Ders text rengi — subject_id stable hash (print-color-adjust ile basılır).
+// Ders text rengi — subject_id / ad hash stable (print-color-adjust ile basılır).
 const SUBJECT_TEXT = [
   "text-indigo-700", "text-emerald-700", "text-amber-700", "text-rose-700",
   "text-violet-700", "text-cyan-700", "text-fuchsia-700", "text-sky-700",
 ];
-function subjectColor(subjectId: number | null): string {
-  if (subjectId == null) return "text-stone-500";
-  return SUBJECT_TEXT[Math.abs(subjectId) % SUBJECT_TEXT.length];
+function nameHash(name: string): number {
+  return Math.abs(
+    Array.from(name).reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 0),
+  );
+}
+function subjectColor(key: string, name: string): string {
+  if (key === "other") return "text-stone-500";
+  if (key.startsWith("s")) {
+    const id = Number(key.slice(1));
+    if (Number.isFinite(id)) return SUBJECT_TEXT[Math.abs(id) % SUBJECT_TEXT.length];
+  }
+  return SUBJECT_TEXT[nameHash(name) % SUBJECT_TEXT.length];
 }
 
 type GState = "done" | "partial" | "todo";
@@ -57,20 +66,33 @@ function gorevState(t: TeacherTask): GState {
 }
 
 interface SubjGroup {
-  key: number | null;
+  key: string;
   name: string;
   order: number;
   tasks: TeacherTask[];
 }
+// Görevin ders grubu — item subject'i; yoksa (etkinlik/blok) başlık "{Ders}·.." parse.
+function taskSubjKey(t: TeacherTask): { key: string; name: string } {
+  const ws = t.items.find((it) => it.subject_id != null);
+  if (ws?.subject_id != null) {
+    return { key: `s${ws.subject_id}`, name: ws.subject_name ?? "Ders" };
+  }
+  if (t.items.length === 0 || t.work_block_id != null) {
+    const sep = t.title.indexOf(" · ");
+    if (sep > 0 && sep < t.title.length - 3) {
+      const nm = t.title.substring(0, sep);
+      return { key: `n:${nm.toLocaleLowerCase("tr")}`, name: nm };
+    }
+  }
+  return { key: "other", name: "Diğer" };
+}
 function groupDayBySubject(tasks: TeacherTask[]): SubjGroup[] {
-  const map = new Map<number | null, SubjGroup>();
+  const map = new Map<string, SubjGroup>();
   for (const t of tasks) {
-    const ws = t.items.find((it) => it.subject_id != null);
-    const key = ws?.subject_id ?? null;
-    const name = ws?.subject_name ?? "Diğer";
+    const { key, name } = taskSubjKey(t);
     const g = map.get(key);
     if (g) g.tasks.push(t);
-    else map.set(key, { key, name, order: key == null ? 1 : 0, tasks: [t] });
+    else map.set(key, { key, name, order: key === "other" ? 1 : 0, tasks: [t] });
   }
   return Array.from(map.values()).sort(
     (a, b) => a.order - b.order || a.name.localeCompare(b.name, "tr"),
@@ -89,6 +111,7 @@ function taskLabel(t: TeacherTask): string {
 const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
 // Sayı birimi: deneme kitabı → "deneme"; kitapsız → "soru"; aksi → "test".
 function taskUnit(t: TeacherTask): string {
+  if (t.work_block_unit) return t.work_block_unit;   // serbest blok birimi öncelikli
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
   if (it && !it.book_id) return "soru";              // kitapsız tam deneme
   if (it?.book_type && DENEME_TYPES.has(it.book_type)) return "deneme";
@@ -234,8 +257,8 @@ function DayColumn({ day }: { day: TeacherStudentWeekResponse["days"][number] })
           <p className="text-[9px] italic text-stone-400">—</p>
         ) : (
           groups.map((g) => (
-            <div key={g.key ?? "other"}>
-              <div className={"text-[9px] font-bold uppercase tracking-wide leading-tight " + subjectColor(g.key)}>
+            <div key={g.key}>
+              <div className={"text-[9px] font-bold uppercase tracking-wide leading-tight " + subjectColor(g.key, g.name)}>
                 {g.name}
               </div>
               <ul className="mt-0.5 space-y-0.5">
