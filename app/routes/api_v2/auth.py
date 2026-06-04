@@ -46,7 +46,14 @@ from app.services.auth_security import (
     register_failed_login,
     register_successful_login,
 )
-from app.services.jwt_auth import decode_token, issue_access_token, issue_token_pair
+from app.services.jwt_auth import (
+    TokenError,
+    TokenPair,
+    decode_token,
+    issue_access_token,
+    issue_token_pair,
+    verify_against_user,
+)
 from app.services.rate_limit import enforce_login_rate_limit
 from app.services.security import verify_password
 from app.services import turnstile
@@ -67,6 +74,9 @@ class LoginIn(BaseModel):
     password: str
     # Cloudflare Turnstile token — yalnız CAPTCHA aktifse doğrulanır.
     turnstile_token: str = ""
+    # mobile=True (RN app): cookie KURULMAZ, token'lar response body'sinde döner
+    # (RN cookie kullanamaz → expo-secure-store'a yazar). Web (False): cookie.
+    mobile: bool = False
 
 
 class TurnstileConfigOut(BaseModel):
@@ -154,11 +164,36 @@ class LoginOut(BaseModel):
     must_change_password: bool = False
     two_factor_required: bool = False
     challenge: str | None = None
+    # mobile=True login/2fa/refresh → token'lar burada döner (web'de None; cookie kullanır)
+    access_token: str | None = None
+    refresh_token: str | None = None
+    access_expires_in: int | None = None
+    refresh_expires_in: int | None = None
 
 
 class TwoFactorVerifyIn(BaseModel):
     challenge: str
     code: str
+    mobile: bool = False
+
+
+class MobileRefreshIn(BaseModel):
+    """Mobil (RN) refresh — refresh token gövdede gelir (cookie değil)."""
+    refresh_token: str
+
+
+def _login_out(user: User, pair: TokenPair | None = None) -> "LoginOut":
+    """LoginOut üret; mobil ise pair token'larını gövdeye ekle."""
+    out = LoginOut(
+        user=UserPublic.from_user(user),
+        must_change_password=user.must_change_password,
+    )
+    if pair is not None:
+        out.access_token = pair.access_token
+        out.refresh_token = pair.refresh_token
+        out.access_expires_in = pair.access_expires_in
+        out.refresh_expires_in = pair.refresh_expires_in
+    return out
 
 
 # ============================================================================
@@ -417,20 +452,23 @@ def v2_login(
     if user.two_factor_enabled:
         return LoginOut(two_factor_required=True, challenge=_issue_2fa_challenge(user.id))
 
-    _complete_login(db, user, request, response, email_norm=email_norm)
-    return LoginOut(
-        user=UserPublic.from_user(user),
-        must_change_password=user.must_change_password,
-    )
+    pair = _complete_login(db, user, request, response, email_norm=email_norm,
+                           set_cookies=not payload.mobile)
+    return _login_out(user, pair if payload.mobile else None)
 
 
 def _complete_login(
-    db: Session, user: User, request: Request, response: Response, *, email_norm: str
-) -> None:
+    db: Session, user: User, request: Request, response: Response, *, email_norm: str,
+    set_cookies: bool = True,
+) -> TokenPair:
     """Başarılı kimlik doğrulama (şifre + varsa 2FA) sonrası oturumu tamamla.
 
     register_successful_login + audit + auto-resume + ActiveSession (sid) +
     cookie + süper admin alarmı. Login (2FA'sız) ve /auth/2fa/verify ortak kullanır.
+
+    set_cookies=False (mobil/RN): cookie KURULMAZ; çağıran dönen TokenPair'i
+    gövdeye koyar. Web (True): HttpOnly cookie kurulur (eski davranış). Her
+    durumda üretilen TokenPair döner.
     """
     ip = _request_ip(request)
     register_successful_login(user, ip=ip)
@@ -482,8 +520,10 @@ def _complete_login(
 
     now = datetime.now(timezone.utc)
     pair = issue_token_pair(user, now=now, sid=session_token)
-    _set_access_cookie(response, pair.access_token, pair.access_expires_in)
-    _set_refresh_cookie(response, pair.refresh_token, pair.refresh_expires_in)
+    if set_cookies:
+        _set_access_cookie(response, pair.access_token, pair.access_expires_in)
+        _set_refresh_cookie(response, pair.refresh_token, pair.refresh_expires_in)
+    return pair
 
 
 @router.post("/2fa/verify", response_model=LoginOut)
@@ -551,11 +591,51 @@ def v2_2fa_verify(
                     "message": "Doğrulama kodu hatalı."},
         )
 
-    _complete_login(db, user, request, response, email_norm=user.email)
-    return LoginOut(
-        user=UserPublic.from_user(user),
-        must_change_password=user.must_change_password,
+    pair = _complete_login(db, user, request, response, email_norm=user.email,
+                           set_cookies=not payload.mobile)
+    return _login_out(user, pair if payload.mobile else None)
+
+
+@router.post("/token/refresh", response_model=LoginOut)
+def v2_mobile_refresh(
+    payload: MobileRefreshIn,
+    db: Session = Depends(get_db),
+):
+    """Mobil (RN) refresh — refresh token gövdede; yeni access döner.
+
+    Web /auth/refresh cookie okur (RN cookie kullanamaz). Rotation YOK (web/v1
+    ile aynı): refresh süresi dolana dek aynı refresh ile yeni access alınır;
+    şifre değişince pwd_stamp mismatch → refresh de revoke. sid korunur
+    (ActiveSession sürekliliği + heartbeat).
+    """
+    try:
+        rp = decode_token(payload.refresh_token.strip())
+    except TokenError as e:
+        raise _auth_error(str(e), "invalid_token")
+    if rp.type != "refresh":
+        raise _auth_error("Bu endpoint refresh token bekler", "wrong_token_type")
+    user = (
+        db.query(User)
+        .options(joinedload(User.institution))
+        .filter(User.id == rp.user_id)
+        .first()
     )
+    if user is None:
+        raise _auth_error("Kullanıcı bulunamadı", "user_not_found")
+    try:
+        verify_against_user(rp, user)
+    except TokenError as e:
+        raise _auth_error(str(e), "token_revoked")
+    if rp.session_id:
+        try:
+            secmon.heartbeat(db, session_token=rp.session_id)
+        except Exception:
+            logger.exception("v2 mobile refresh heartbeat fail")
+    now = datetime.now(timezone.utc)
+    out = _login_out(user)
+    out.access_token = issue_access_token(user, now=now, sid=rp.session_id)
+    out.access_expires_in = settings.jwt_access_minutes * 60
+    return out
 
 
 @router.post("/refresh", response_model=UserPublic)
