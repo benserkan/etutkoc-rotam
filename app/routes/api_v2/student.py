@@ -160,6 +160,9 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
     section = item.section
     topic_name = section.topic.name if (section and section.topic) else None
     section_label = section.label if section else None
+    # Ders + tip — Hafta Izgarası ders gruplaması için (kitapsız denemede None).
+    book = item.book
+    subject = book.subject if book else None
 
     # max_completable: kalemin planlı sayısını şimdilik tavan say.
     # Daha fazlasını yapmak için CHANGE talebi → öğretmen onayı (mevcut akış).
@@ -167,7 +170,10 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
     return StudentTaskItem(
         id=item.id,
         book_id=item.book_id,
-        book_name=item.book.name if item.book else (item.label or "Deneme"),
+        book_name=book.name if book else (item.label or "Deneme"),
+        book_type=book.type.value if (book and book.type) else None,
+        subject_id=subject.id if subject else None,
+        subject_name=subject.name if subject else None,
         section_id=item.book_section_id,
         section_label=section_label,
         topic_name=topic_name,
@@ -250,6 +256,7 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
             sched_hour_str = f"{int(task.scheduled_hour):02d}:00"
         except (TypeError, ValueError):
             sched_hour_str = None
+    wb = task.work_block
     return StudentTask(
         id=task.id,
         title=task.title or "",
@@ -266,6 +273,9 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
         is_future_blocked=(task.date > today),
         is_past=(task.date < today),
         has_pending_request=_has_pending_request_for_task(db, task.id, task.student_id),
+        work_block_id=task.work_block_id,
+        work_block_title=wb.title if wb else None,
+        work_block_unit=wb.unit if wb else None,
     )
 
 
@@ -578,6 +588,7 @@ def student_week_v2(
         .options(
             joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject),
             joinedload(Task.book_items).joinedload(TaskBookItem.section).joinedload(BookSection.topic),
+            joinedload(Task.work_block),
         )
         .filter(
             Task.student_id == user.id,
@@ -695,6 +706,7 @@ def student_week_print_v2(
         .options(
             joinedload(Task.book_items).joinedload(TaskBookItem.book).joinedload(Book.subject),
             joinedload(Task.book_items).joinedload(TaskBookItem.section).joinedload(BookSection.topic),
+            joinedload(Task.work_block),
         )
         .filter(
             Task.student_id == user.id,

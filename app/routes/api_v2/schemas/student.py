@@ -57,6 +57,9 @@ class StudentTaskItem(BaseModel):
     id: int
     book_id: int | None = None
     book_name: str
+    book_type: str | None = None   # BookType.value — birim (test/deneme/soru) + ders gruplama
+    subject_id: int | None = None  # ders gruplama (Hafta Izgarası) — kitabın dersi
+    subject_name: str | None = None
     section_id: int | None = None
     section_label: str | None = None
     topic_name: str | None = None
@@ -87,6 +90,10 @@ class StudentTask(BaseModel):
     is_future_blocked: bool        # tıklanamaz
     is_past: bool
     has_pending_request: bool      # bu görev için bekleyen TaskRequest var mı
+    # Serbest iş bloğu bağı (Katman 3) — Hafta Izgarası ders gruplama + birim için
+    work_block_id: int | None = None
+    work_block_title: str | None = None
+    work_block_unit: str | None = None
 
 
 # ============================================================================

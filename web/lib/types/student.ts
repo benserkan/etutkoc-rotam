@@ -22,8 +22,11 @@ export type BookType =
 
 export interface StudentTaskItem {
   id: number;
-  book_id: number;
+  book_id: number | null;
   book_name: string;
+  book_type?: string | null;       // BookType.value — birim + ders gruplama
+  subject_id?: number | null;      // Hafta Izgarası ders gruplaması
+  subject_name?: string | null;
   section_id: number | null;
   section_label: string | null;
   topic_name: string | null;
@@ -54,6 +57,10 @@ export interface StudentTask {
   is_future_blocked: boolean;
   is_past: boolean;
   has_pending_request: boolean;
+  // Serbest iş bloğu bağı (Katman 3) — Hafta Izgarası ders gruplama + birim
+  work_block_id?: number | null;
+  work_block_title?: string | null;
+  work_block_unit?: string | null;
 }
 
 // =============================================================================

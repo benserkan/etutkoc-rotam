@@ -3,9 +3,9 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 
 import { apiServer } from "@/lib/api-server";
 import type { StudentWeekResponse } from "@/lib/types/student";
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { PrintMenu } from "@/components/student/print-menu";
+import { StudentWeekGrid } from "@/components/student/student-week-grid";
 
 export const metadata = { title: "Hafta" };
 export const dynamic = "force-dynamic";
@@ -50,58 +50,7 @@ export default async function StudentWeekPage({ searchParams }: PageProps) {
         <PrintMenu startDate={week.start_date} />
       </header>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-3">
-        {week.days.map((d) => {
-          const pct = Math.round(d.pct * 100);
-          return (
-            <Link
-              key={d.date}
-              href={`/student/day?date=${d.date}`}
-              className={cn(
-                "group rounded-lg border bg-card p-3 transition-colors hover:bg-muted/40",
-                d.is_today ? "border-primary" : "border-border",
-                d.is_past ? "opacity-90" : "",
-              )}
-            >
-              <div className="flex items-baseline justify-between">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                  {d.dow_label}
-                </p>
-                {d.is_today ? (
-                  <span className="inline-flex items-center rounded-full bg-primary/15 text-primary px-2 py-0.5 text-[10px] font-medium">
-                    Bugün
-                  </span>
-                ) : null}
-              </div>
-              <p className="font-medium tabular-nums mt-1">{d.date}</p>
-              <p className="text-xs text-muted-foreground mt-2 tabular-nums">
-                {d.gorev_done}/{d.gorev_total} görev
-              </p>
-              <p className="text-[11px] text-muted-foreground tabular-nums">
-                {d.test_planned > 0 ? `${d.test_completed}/${d.test_planned} test` : null}
-                {d.test_planned > 0 && d.deneme_count > 0 ? " · " : null}
-                {d.deneme_count > 0 ? `${d.deneme_count} deneme` : null}
-                {(d.test_planned > 0 || d.deneme_count > 0) && d.etkinlik_count > 0 ? " · " : null}
-                {d.etkinlik_count > 0 ? `${d.etkinlik_count} etkinlik` : null}
-                {d.test_planned === 0 && d.deneme_count === 0 && d.etkinlik_count === 0 ? "—" : null}
-              </p>
-              <div className="mt-2 h-1.5 rounded-full bg-muted overflow-hidden">
-                <div
-                  className={cn(
-                    "h-full transition-all",
-                    pct >= 100 ? "bg-emerald-500" : pct > 0 ? "bg-amber-400" : "bg-muted-foreground/20",
-                  )}
-                  style={{ width: `${Math.min(100, pct)}%` }}
-                  aria-hidden
-                />
-              </div>
-              <p className="text-[11px] text-muted-foreground tabular-nums mt-1">
-                %{pct}
-              </p>
-            </Link>
-          );
-        })}
-      </div>
+      <StudentWeekGrid days={week.days} />
     </div>
   );
 }
