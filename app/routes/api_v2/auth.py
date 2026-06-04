@@ -334,8 +334,11 @@ def v2_login(
             },
         )
 
-    # 0b) Turnstile CAPTCHA — yalnız aktifse (bot/script saldırı koruması)
-    if turnstile.is_enabled():
+    # 0b) Turnstile CAPTCHA — yalnız aktifse VE web isteğiyse. Mobil (RN) app web
+    # widget'ı basamaz → Turnstile atlanır; IP blok + lockout + sliding-window
+    # rate limit korumaya devam eder (native app için kabul edilebilir; ileride
+    # Play Integrity / App Attest eklenebilir).
+    if turnstile.is_enabled() and not payload.mobile:
         if not turnstile.verify_token(payload.turnstile_token, ip=ip):
             log_action(
                 db,
