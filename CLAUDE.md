@@ -4256,6 +4256,25 @@ planlarken diğer günleri görememe; (3) gün içi görevler ders bazlı grupla
   gruplanır (editör/ızgara ile tutarlı) + birim work_block_unit. Tüm yüzeyler
   tutarlı. [[feedback-holistic-change-propagation]]
 
+- **Periyot bölümleri + görev-adından ders eşleştirme** (2026-06-04, commit
+  `9dfc091`, frontend-only):
+  - **(A) Sabah/Öğle/Akşam:** günü periyotlu öğrencilerde (en az 1 görevde
+    `period` dolu) editör (week-day-card) + Hafta Izgarası (week-grid) +
+    yazdırma (print) periyot başlıkları gösterir; her periyot içinde dersler
+    kendi arasında gruplanır. Görev eklenirken `PeriodChips` seçimi → anında o
+    bölüme + ders grubuna. Periyotsuz günde yalnız ders gruplaması. Editörde
+    `dayTaskOrder(tasks, subjects, usePeriods)` (periyot rank → ders ilk-görülme)
+    + PeriodHeader/SubjectGroupHeader; drag grup-içi korunur (set/mod değişince
+    yeniden kurulur).
+  - **(B) Görev adından ders:** branş/genel deneme kitapsız → "Diğer"e düşüyordu;
+    artık görev ADI taranır (`findSubjectInTitle`), bilinen ders adı geçiyorsa o
+    derse girer (örn. "AYT Matematik Branş Denemesi" → Matematik, test görevleriyle
+    AYNI `s{id}` grubunda BİRLEŞİR). " · " önekli (video/özet/tekrar/diğer/blok)
+    görevler de tam-ad eşleşmesiyle (`findSubjectByExactName`) bilinen derse
+    çözülür. week-board `getStudentAllSubjects`'i editör+ızgaraya geçirir; print
+    server'da fetch eder. (Sınırlı: tam-ad substring eşleşmesi; "Türk Dili ve
+    Edebiyatı" gibi uzun adlar branş başlığında geçmezse "Diğer" kalır.)
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
