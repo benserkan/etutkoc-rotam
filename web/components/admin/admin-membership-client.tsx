@@ -17,16 +17,20 @@ import {
 
 import { getAdminUsers } from "@/lib/api/admin";
 import {
+  getMembershipAudience,
   getMembershipHavale,
   getMembershipOffers,
   membershipKeys,
 } from "@/lib/api/membership";
 import {
   useCreateMembershipOffer,
+  useCreateMembershipOffersBulk,
   useSetMembershipHavale,
 } from "@/lib/hooks/use-membership-mutations";
 import type { AdminUserListItem } from "@/lib/types/admin";
 import type {
+  BulkMembershipOfferResult,
+  MembershipAudienceMember,
   MembershipHavaleInfo,
   MembershipOfferCreated,
   MembershipOfferListItem,
@@ -94,6 +98,7 @@ export function AdminMembershipClient({
 
   const planOptions = offersQ.data?.plan_options ?? [];
   const offers = offersQ.data?.items ?? [];
+  const [mode, setMode] = React.useState<"single" | "bulk">("single");
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 px-4 py-6">
@@ -105,7 +110,31 @@ export function AdminMembershipClient({
       </header>
 
       <HavaleCard havale={havaleQ.data ?? initialHavale} />
-      <Composer planOptions={planOptions} />
+
+      <div className="inline-flex rounded-lg border border-border bg-card p-1">
+        {(["single", "bulk"] as const).map((m) => (
+          <button
+            key={m}
+            type="button"
+            onClick={() => setMode(m)}
+            className={cn(
+              "rounded-md px-4 py-1.5 text-sm font-medium transition",
+              mode === m
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {m === "single" ? "Tekli teklif" : "Toplu / gruplu teklif"}
+          </button>
+        ))}
+      </div>
+
+      {mode === "single" ? (
+        <Composer planOptions={planOptions} />
+      ) : (
+        <BulkComposer planOptions={planOptions} />
+      )}
+
       <OffersList items={offers} planOptions={planOptions} />
     </div>
   );
@@ -504,6 +533,276 @@ function TargetPicker({
           {"Hedef seçmezsen \"genel link\" üretilir (herkese aynı, kişiselleştirme yok)."}
         </p>
       )}
+    </div>
+  );
+}
+
+// --------------------------------------------------------------- Toplu mod
+function BulkComposer({ planOptions }: { planOptions: MembershipPlanOption[] }) {
+  const audienceQ = useQuery({
+    queryKey: membershipKeys.audience(),
+    queryFn: getMembershipAudience,
+    staleTime: 30_000,
+  });
+  const bulk = useCreateMembershipOffersBulk();
+
+  const [groupKey, setGroupKey] = React.useState<string>("");
+  const [selected, setSelected] = React.useState<Set<number>>(new Set());
+  const [offerType, setOfferType] = React.useState("new");
+  const [planCode, setPlanCode] = React.useState(planOptions[0]?.code ?? "");
+  const [cycle, setCycle] = React.useState("monthly");
+  const [amount, setAmount] = React.useState("");
+  const [title, setTitle] = React.useState("");
+  const [message, setMessage] = React.useState("");
+  const [expires, setExpires] = React.useState("30");
+  const [results, setResults] = React.useState<BulkMembershipOfferResult | null>(null);
+
+  const groups = audienceQ.data?.groups ?? [];
+  const activeGroup = groups.find((g) => g.key === groupKey);
+  const members: MembershipAudienceMember[] = activeGroup?.members ?? [];
+
+  function pickGroup(key: string) {
+    setGroupKey(key);
+    const g = groups.find((x) => x.key === key);
+    setSelected(new Set((g?.members ?? []).map((m) => m.id)));
+    setResults(null);
+  }
+
+  function toggle(id: number) {
+    setSelected((prev) => {
+      const n = new Set(prev);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (selected.size === 0) {
+      toast.error("Hedef koç seç");
+      return;
+    }
+    const amt = amount.trim() ? Number(amount) : null;
+    bulk.mutate(
+      {
+        body: {
+          target_user_ids: Array.from(selected),
+          offer_type: offerType,
+          plan_code: planCode,
+          cycle,
+          amount: amt && amt > 0 ? amt : null,
+          title: title.trim() || null,
+          message: message.trim() || null,
+          expires_in_days: expires.trim() ? Number(expires) : null,
+        },
+      },
+      { onSuccess: (res) => setResults(res) },
+    );
+  }
+
+  const solo = planOptions.filter((p) => p.audience === "solo");
+  const inst = planOptions.filter((p) => p.audience === "institution");
+  const selectedPlan = planOptions.find((p) => p.code === planCode);
+
+  return (
+    <section className="rounded-lg border border-border bg-card p-5">
+      <h2 className="text-sm font-semibold text-foreground">Toplu / Gruplu Üyelik Teklifi</h2>
+      <p className="mt-1 text-xs text-muted-foreground">
+        Bir koç grubu seç → her birine kişisel link üretilir → WhatsApp&apos;tan tek
+        tek gönder (toplu broadcast için linkleri kopyala).
+      </p>
+
+      {/* Grup seçimi */}
+      <div className="mt-3 flex flex-wrap gap-2">
+        {audienceQ.isLoading ? (
+          <span className="text-xs text-muted-foreground">Gruplar yükleniyor…</span>
+        ) : (
+          groups.map((g) => (
+            <button
+              key={g.key}
+              type="button"
+              onClick={() => pickGroup(g.key)}
+              className={cn(
+                "rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                groupKey === g.key
+                  ? "border-cyan-600 bg-cyan-50 text-cyan-800 dark:bg-cyan-950/40 dark:text-cyan-200"
+                  : "border-border text-foreground hover:bg-muted/50",
+              )}
+            >
+              {g.label} ({g.count})
+            </button>
+          ))
+        )}
+      </div>
+
+      {/* Üye listesi */}
+      {groupKey ? (
+        members.length === 0 ? (
+          <p className="mt-3 text-xs text-muted-foreground">Bu grupta koç yok.</p>
+        ) : (
+          <div className="mt-3 rounded-md border border-border">
+            <div className="flex items-center justify-between border-b border-border/60 bg-muted/30 px-3 py-1.5 text-xs">
+              <span className="text-muted-foreground">
+                {selected.size}/{members.length} seçili
+              </span>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelected(new Set(members.map((m) => m.id)))}
+                  className="text-cyan-700 hover:underline dark:text-cyan-300"
+                >
+                  Tümünü seç
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelected(new Set())}
+                  className="text-muted-foreground hover:underline"
+                >
+                  Temizle
+                </button>
+              </div>
+            </div>
+            <div className="max-h-44 overflow-y-auto">
+              {members.map((m) => (
+                <label
+                  key={m.id}
+                  className="flex cursor-pointer items-center gap-2 border-b border-border/40 px-3 py-1.5 text-sm last:border-0 hover:bg-muted/40"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selected.has(m.id)}
+                    onChange={() => toggle(m.id)}
+                    className="size-4"
+                  />
+                  <span className="text-foreground">{m.full_name}</span>
+                  <span className="text-xs text-muted-foreground">{m.email}</span>
+                  {!m.phone ? (
+                    <span className="ml-auto text-[10px] text-amber-600">telefon yok</span>
+                  ) : null}
+                </label>
+              ))}
+            </div>
+          </div>
+        )
+      ) : (
+        <p className="mt-3 text-xs text-muted-foreground">Önce bir grup seç.</p>
+      )}
+
+      {/* Teklif parametreleri */}
+      <form onSubmit={onSubmit} className="mt-4 space-y-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <label className="text-xs font-medium text-muted-foreground">
+            Tip
+            <select value={offerType} onChange={(e) => setOfferType(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground">
+              <option value="new">Yeni</option>
+              <option value="renewal">Yenileme</option>
+            </select>
+          </label>
+          <label className="text-xs font-medium text-muted-foreground">
+            Plan
+            <select value={planCode} onChange={(e) => setPlanCode(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground">
+              <optgroup label="Bireysel">
+                {solo.map((p) => <option key={p.code} value={p.code}>{p.label}</option>)}
+              </optgroup>
+              <optgroup label="Kurum">
+                {inst.map((p) => <option key={p.code} value={p.code}>{p.label}</option>)}
+              </optgroup>
+            </select>
+          </label>
+          <label className="text-xs font-medium text-muted-foreground">
+            Döngü
+            <select value={cycle} onChange={(e) => setCycle(e.target.value)}
+              className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground">
+              <option value="monthly">Aylık</option>
+              <option value="annual">Akademik yıl</option>
+            </select>
+          </label>
+          <label className="text-xs font-medium text-muted-foreground">
+            Özel fiyat (₺)
+            <input type="number" min={0} value={amount} onChange={(e) => setAmount(e.target.value)}
+              placeholder={selectedPlan && selectedPlan.monthly > 0 ? "plan fiyatı" : "—"}
+              className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm tabular-nums text-foreground" />
+          </label>
+        </div>
+        <input value={title} onChange={(e) => setTitle(e.target.value)} maxLength={200}
+          placeholder="Başlık (opsiyonel)"
+          className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground" />
+        <textarea value={message} onChange={(e) => setMessage(e.target.value)} rows={2} maxLength={600}
+          placeholder="Mesaj (opsiyonel)"
+          className="w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground" />
+        <div className="flex items-center gap-3">
+          <label className="text-xs font-medium text-muted-foreground">
+            Süre (gün)
+            <input type="number" min={1} value={expires} onChange={(e) => setExpires(e.target.value)}
+              className="ml-2 w-20 rounded-md border border-input bg-background px-2 py-1 text-sm tabular-nums text-foreground" />
+          </label>
+          <button type="submit" disabled={bulk.isPending || selected.size === 0}
+            className="ml-auto inline-flex items-center gap-1.5 rounded-md bg-cyan-700 px-4 py-2 text-sm font-semibold text-white hover:bg-cyan-800 disabled:opacity-50">
+            {bulk.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Sparkles className="size-4" aria-hidden />}
+            {selected.size} koça teklif üret
+          </button>
+        </div>
+      </form>
+
+      {results ? <BulkResults results={results} offerType={offerType}
+        planLabel={selectedPlan?.label ?? planCode} /> : null}
+    </section>
+  );
+}
+
+function BulkResults({
+  results,
+  offerType,
+  planLabel,
+}: {
+  results: BulkMembershipOfferResult;
+  offerType: string;
+  planLabel: string;
+}) {
+  const typeLabel = offerType === "renewal" ? "üyelik yenileme" : "üyelik";
+  function textFor(name: string | null, url: string): string {
+    return `Merhaba${name ? " " + name : ""},\n\nETÜTKOÇ ${typeLabel} teklifin hazır (${planLabel}).\nÜyeliğini tamamlamak için:\n${url}`;
+  }
+  const broadcast = results.items
+    .map((it) => `${it.full_name ?? "Koç"}: ${it.public_url}`)
+    .join("\n");
+  return (
+    <div className="mt-4 rounded-lg border border-cyan-300 bg-cyan-50 p-4 dark:border-cyan-900 dark:bg-cyan-950/30">
+      <div className="flex items-center gap-2">
+        <Check className="size-4 text-cyan-700 dark:text-cyan-300" aria-hidden />
+        <span className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+          {results.created} teklif oluşturuldu
+          {results.skipped > 0 ? ` · ${results.skipped} atlandı` : ""}
+        </span>
+        <span className="ml-auto">
+          <CopyButton value={broadcast} label="Tüm linkleri kopyala" />
+        </span>
+      </div>
+      <div className="mt-2 max-h-60 space-y-1.5 overflow-y-auto">
+        {results.items.map((it) => (
+          <div key={it.token} className="flex items-center gap-2 rounded-md bg-white px-2.5 py-1.5 text-sm dark:bg-slate-900">
+            <span className="min-w-0 flex-1 truncate text-slate-800 dark:text-slate-200">
+              {it.full_name ?? "Koç"}
+              {!it.phone ? <span className="ml-1 text-[10px] text-amber-600">telefon yok</span> : null}
+            </span>
+            <CopyButton value={it.public_url} label="Link" />
+            <a
+              href={waUrl(it.phone, textFor(it.full_name, it.public_url))}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+            >
+              <MessageCircle className="size-3" aria-hidden /> WhatsApp
+            </a>
+          </div>
+        ))}
+      </div>
+      <p className="mt-2 text-[11px] text-cyan-800/80 dark:text-cyan-200/70">
+        {"Sıralı gönderim: her satırdaki WhatsApp ile koça aç → gönder. Broadcast için \"Tüm linkleri kopyala\"."}
+      </p>
     </div>
   );
 }

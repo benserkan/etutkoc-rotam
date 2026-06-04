@@ -70,3 +70,44 @@ export interface MembershipHavaleBody {
   name: string;
   note: string;
 }
+
+// ---- Paket 3: toplu ----
+export interface MembershipAudienceMember {
+  id: number;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  plan: string | null;
+}
+export interface MembershipAudienceGroup {
+  key: string;
+  label: string;
+  count: number;
+  members: MembershipAudienceMember[];
+}
+export interface MembershipAudienceResponse {
+  groups: MembershipAudienceGroup[];
+}
+
+export interface BulkMembershipOfferBody {
+  target_user_ids: number[];
+  offer_type: string;
+  plan_code: string;
+  cycle: string;
+  amount?: number | null;
+  title?: string | null;
+  message?: string | null;
+  expires_in_days?: number | null;
+}
+export interface BulkOfferResultItem {
+  target_user_id: number;
+  full_name: string | null;
+  phone: string | null;
+  token: string;
+  public_url: string;
+}
+export interface BulkMembershipOfferResult {
+  created: number;
+  skipped: number;
+  items: BulkOfferResultItem[];
+}

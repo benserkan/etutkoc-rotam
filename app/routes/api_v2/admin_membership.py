@@ -12,10 +12,12 @@ from sqlalchemy.orm import Session
 
 from app.config import settings
 from app.deps import get_db
-from app.models import MembershipOffer, User
+from app.models import MembershipOffer, User, UserRole
 from app.routes.api_v2.admin import _require_super_admin
 from app.services import membership_offer_service as mos
 from app.services import plans
+
+_BULK_MAX = 200
 
 router = APIRouter(prefix="/admin/membership-offers", tags=["v2-admin-membership"])
 
@@ -219,3 +221,139 @@ def set_membership_havale(
         db, iban=body.iban, name=body.name, note=body.note, actor_user_id=user.id
     )
     return HavaleInfoResponse(**info)
+
+
+# ============================================================================
+# Paket 3 — Toplu / gruplu üyelik teklifi
+# ============================================================================
+
+# Bağımsız koç hedef grupları (üyelik teklifi kitlesi). plan koduna göre.
+_MEMBERSHIP_GROUPS = [
+    ("free", "Ücretsiz koçlar", ["solo_free"]),
+    ("trial", "Denemedeki koçlar", ["solo_trial"]),
+    ("paid", "Ücretli koçlar (yenileme)", ["solo_pro", "solo_elite", "solo_unlimited"]),
+]
+
+
+class AudienceMember(BaseModel):
+    id: int
+    full_name: str
+    email: str
+    phone: str | None = None
+    plan: str | None = None
+
+
+class AudienceGroup(BaseModel):
+    key: str
+    label: str
+    count: int
+    members: list[AudienceMember]
+
+
+class AudienceResponse(BaseModel):
+    groups: list[AudienceGroup]
+
+
+def _solo_base(db: Session):
+    return (
+        db.query(User)
+        .filter(
+            User.role == UserRole.TEACHER,
+            User.institution_id.is_(None),
+            User.is_active.is_(True),
+        )
+    )
+
+
+@router.get("/audience", response_model=AudienceResponse)
+def membership_audience(
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Toplu teklif için bağımsız koç hedef grupları (üye listeleriyle)."""
+    groups: list[AudienceGroup] = []
+    for key, label, codes in _MEMBERSHIP_GROUPS:
+        rows = (
+            _solo_base(db)
+            .filter(User.plan.in_(codes))
+            .order_by(User.full_name.asc())
+            .limit(_BULK_MAX)
+            .all()
+        )
+        groups.append(AudienceGroup(
+            key=key, label=label, count=len(rows),
+            members=[
+                AudienceMember(id=u.id, full_name=u.full_name, email=u.email,
+                               phone=u.phone, plan=u.plan)
+                for u in rows
+            ],
+        ))
+    return AudienceResponse(groups=groups)
+
+
+class BulkMembershipOfferBody(BaseModel):
+    target_user_ids: list[int]
+    offer_type: str = "new"
+    plan_code: str
+    cycle: str = "monthly"
+    amount: int | None = None
+    title: str | None = None
+    message: str | None = None
+    expires_in_days: int | None = 30
+
+
+class BulkOfferResultItem(BaseModel):
+    target_user_id: int
+    full_name: str | None = None
+    phone: str | None = None
+    token: str
+    public_url: str
+
+
+class BulkMembershipOfferResult(BaseModel):
+    created: int
+    skipped: int
+    items: list[BulkOfferResultItem]
+
+
+@router.post("/bulk", response_model=BulkMembershipOfferResult)
+def create_membership_offers_bulk(
+    body: BulkMembershipOfferBody,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Seçili koçların her birine birer üyelik teklifi (kişisel token+link) üretir."""
+    ids = list(dict.fromkeys(body.target_user_ids))[:_BULK_MAX]  # tekilleştir + cap
+    if not ids:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "no_targets", "message": "Hedef seçilmedi."},
+        )
+    if plans.get_plan_info(body.plan_code) is None:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "membership", "code": "invalid_plan", "message": "Geçersiz plan."},
+        )
+    items: list[BulkOfferResultItem] = []
+    skipped = 0
+    for uid in ids:
+        u = db.get(User, uid)
+        if u is None:
+            skipped += 1
+            continue
+        try:
+            offer = mos.create_offer(
+                db, admin=user, target_user_id=uid, offer_type=body.offer_type,
+                plan_code=body.plan_code, cycle=body.cycle, amount=body.amount,
+                title=body.title, message=body.message,
+                expires_in_days=body.expires_in_days,
+            )
+        except mos.MembershipOfferError:
+            skipped += 1
+            continue
+        items.append(BulkOfferResultItem(
+            target_user_id=uid, full_name=u.full_name,
+            phone=(u.phone if u.phone else None),
+            token=offer.token, public_url=_public_url(offer.token),
+        ))
+    return BulkMembershipOfferResult(created=len(items), skipped=skipped, items=items)

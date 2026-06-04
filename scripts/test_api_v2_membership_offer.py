@@ -189,6 +189,36 @@ def main() -> int:
         r = anon.post("/api/v2/membership/yokboyle/request", json={})
         check("11. olmayan token /request → 404", r.status_code == 404, f"{r.status_code}")
 
+        # 12. audience — solo_free koç "free" grubunda görünür
+        r = admin.get("/api/v2/admin/membership-offers/audience")
+        groups = (r.json() or {}).get("groups", []) if r.status_code == 200 else []
+        free = next((g for g in groups if g["key"] == "free"), None)
+        check("12. audience → free grubunda test koçu var",
+              free is not None and any(m["id"] == cid for m in free["members"]),
+              f"{r.status_code} groups={[g['key'] for g in groups]}")
+
+        # 13. bulk create (koça birer teklif)
+        r = admin.post("/api/v2/admin/membership-offers/bulk", json={
+            "target_user_ids": [cid], "offer_type": "renewal", "plan_code": "solo_pro",
+            "cycle": "monthly"})
+        ok = r.status_code == 200
+        bd = r.json() if ok else {}
+        check("13. bulk → created=1 + token + public_url",
+              ok and bd.get("created") == 1 and bd["items"][0].get("token")
+              and "/membership/" in bd["items"][0].get("public_url", ""),
+              f"{r.status_code} {r.text[:160]}")
+
+        # 14. bulk boş hedef → 422
+        r = admin.post("/api/v2/admin/membership-offers/bulk", json={
+            "target_user_ids": [], "plan_code": "solo_pro", "offer_type": "new", "cycle": "monthly"})
+        check("14. bulk boş hedef → 422 no_targets",
+              r.status_code == 422 and _code(r) == "no_targets", f"{r.status_code}")
+
+        # 15. teacher bulk yapamaz → 403
+        r = coach.post("/api/v2/admin/membership-offers/bulk", json={
+            "target_user_ids": [cid], "plan_code": "solo_pro", "offer_type": "new", "cycle": "monthly"})
+        check("15. teacher bulk → 403", r.status_code == 403, f"{r.status_code}")
+
     finally:
         with SessionLocal() as db:
             ids = [r[0] for r in db.query(User.id).filter(User.email.like(f"{PFX}_%")).all()]

@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { membershipKeys } from "@/lib/api/membership";
 import type {
+  BulkMembershipOfferBody,
+  BulkMembershipOfferResult,
   CreateMembershipOfferBody,
   MembershipHavaleBody,
   MembershipHavaleInfo,
@@ -28,6 +30,22 @@ export function useCreateMembershipOffer() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: membershipKeys.offers() });
       toast.success("Teklif oluşturuldu — linki kopyalayıp WhatsApp'tan gönderebilirsin");
+    },
+  });
+}
+
+export function useCreateMembershipOffersBulk() {
+  const qc = useQueryClient();
+  return useMutation<BulkMembershipOfferResult, ApiError, { body: BulkMembershipOfferBody }>({
+    mutationFn: ({ body }) =>
+      api<BulkMembershipOfferResult>("/api/v2/admin/membership-offers/bulk", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (e) => toast.error(errMsg(e, "Toplu teklif oluşturulamadı")),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: membershipKeys.offers() });
+      toast.success(`${res.created} teklif oluşturuldu`);
     },
   });
 }
