@@ -4325,18 +4325,33 @@ additive; head = `b5c8f1g2f99w`):
   WhatsApp [telefon varsa doğrudan] + "Tüm linkleri kopyala" broadcast).
 - **KALAN:** Iyzico kart (işletme gelince) + B (Cloud API mavi-tik).
 
-## SIRADA (P3 sonrası, kullanıcı 2026-06-04): Vitrin + akıllı paket içeriği
+## Vitrin + akıllı paket içeriği (2026-06-04, A1+A2 CANLI · B sırada)
 
-**Stratejik iş** (kullanıcı vurguladı): (1) Paket içerikleri (`plans.py` sabit
-`features_included`) + anasayfa vitrin kartları (feature_catalog) projenin gerçek
-"can alıcı" özelliklerini (AI program/seans/foto-ses not, kopan öğrenci erken
-uyarı, veli güveni, deneme takibi vb.) yansıtmıyor — generic birkaç kelime;
-vitrin keşfi ilk dönemde donmuş, yeni özellikler "Vitrin Yönetimi"nde görünmüyor.
-(2) İstenen: vitrin keşif sağlığını düzelt (yeni özellikler kuyruğa düşsün +
-yayınlanabilsin) + **pazarlama-ağırlıklı akıllı içerik katmanı** — özellikleri
-ticari değerine göre tartıp **paket yapısını (neye ödüyorsun / hangi pakette ne
-sınırlı) BOZMADAN** pakete anlamlı yerleştir + kart/bullet metinlerini çarpıcı
-pazarlama diline çevir. Ayrı analiz + plan ile ele alınacak. [[project-revenue-panel-v2-roadmap]]
+**Teşhis (canlı veri):** keşif ÇALIŞIYOR — 109 aday (`kesif-mig-*`) migration'lardan
+bulunmuş AMA hepsi DRAFT'ta sıkışmış (mockup/benefit/rol yok + teknik başlık →
+yayınlanamıyor); landing yalnız 11 elle-seed (`kesfet-*`) kart gösteriyor. Paket
+bullet'ları `plans.py` `features_included`'da sabit/generic, feature_catalog'dan
+kopuk. **Onaylı yön (kullanıcı):** A→B sırası · Gemini · generic mockup · tek-kaynak;
+**+ benzer alandaki özellikleri tek temalı kartta birleştir** (109 → ~10 tema).
+
+- **A1 ✅ generic mockup:** `mockup_registry`'ye `"generic"` (bespoke görsel
+  gerektirmez) + Next.js `GenericShowcase` (`mockups.tsx` MAP) + Jinja parite.
+  mockup zorunluluğu artık yayın darboğazı değil.
+- **A2 ✅ AI temalı gruplama:** `feature_clustering.cluster_and_draft` — Gemini
+  (ücretsiz key, personal_data=False) keşif adaylarını PAZARLAMA temasına gruplar
+  (WhatsApp/AI/veli/akademik…), her temaya çarpıcı kart (başlık+tagline+birleşik
+  benefit+ticari ağırlık→strategic_priority+rol) + generic mockup ile DRAFT üretir;
+  kaynak adayları `manual_hide=True` ile kuyruktan gizler. Endpoint
+  `POST /admin/feature-catalog/discovery-queue/ai-cluster` (AI hata→502/422).
+  Admin keşif-kuyruğu sayfasında "AI ile grupla & temalı kart üret" butonu.
+  Smoke `test_api_v2_feature_clustering.py` **5/5** (Gemini monkeypatch).
+  **Kullanım:** admin "AI ile grupla" → ~10 temalı DRAFT → Vitrin Kartları'nda
+  gözden geçir → yayınla → anasayfa. (Prod Gemini gerçek; kullanıcı çalıştırıp
+  inceleyecek.)
+- **B ⏳ akıllı paket içeriği (tek-kaynak):** paket bullet'larını `plans.py` sabit
+  listeden değil, özelliklerin pazarlama-değer kaydından (tema/ticari ağırlık)
+  türet — fiyat/limit iskeleti BOZULMADAN, dili çarpıcı + vitrinle tutarlı.
+  [[project-revenue-panel-v2-roadmap]]
 
 ## Notlar
 
