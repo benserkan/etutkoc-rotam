@@ -4316,9 +4316,27 @@ additive; head = `b5c8f1g2f99w`):
   teklifler listesi (koç telefonu varsa doğrudan WhatsApp). Uçtan uca kullanılır:
   admin link üretir → WhatsApp'tan gönderir → koç markalı sayfada talep/havale →
   İletişim Talepleri → aktive. tsc/eslint temiz, canlı.
-- **KALAN:** P3 mevcut tekli+toplu Click-to-WhatsApp sihirbazına entegrasyon
-  (şimdilik "WhatsApp'ta Aç" wa.me ile manuel gönderim çalışıyor) · sonra Iyzico
-  kart (işletme gelince) + B (Cloud API mavi-tik).
+**Paket 3 — toplu / gruplu gönderim** ✅ (2026-06-04, migration YOK):
+- Backend: `/admin/membership-offers` GET `/audience` (bağımsız koç hedef grupları:
+  ücretsiz / denemede / ücretli-yenileme + üye listeleri) + POST `/bulk` (seçili
+  koçların her birine kişisel token+link; ≤200, tekilleştirir, atlar). Smoke 19/19.
+- Frontend: membership client "Tekli / Toplu" mod + BulkComposer (grup chip +
+  üye checklist + teklif parametreleri) + BulkResults (her koç link kopyala +
+  WhatsApp [telefon varsa doğrudan] + "Tüm linkleri kopyala" broadcast).
+- **KALAN:** Iyzico kart (işletme gelince) + B (Cloud API mavi-tik).
+
+## SIRADA (P3 sonrası, kullanıcı 2026-06-04): Vitrin + akıllı paket içeriği
+
+**Stratejik iş** (kullanıcı vurguladı): (1) Paket içerikleri (`plans.py` sabit
+`features_included`) + anasayfa vitrin kartları (feature_catalog) projenin gerçek
+"can alıcı" özelliklerini (AI program/seans/foto-ses not, kopan öğrenci erken
+uyarı, veli güveni, deneme takibi vb.) yansıtmıyor — generic birkaç kelime;
+vitrin keşfi ilk dönemde donmuş, yeni özellikler "Vitrin Yönetimi"nde görünmüyor.
+(2) İstenen: vitrin keşif sağlığını düzelt (yeni özellikler kuyruğa düşsün +
+yayınlanabilsin) + **pazarlama-ağırlıklı akıllı içerik katmanı** — özellikleri
+ticari değerine göre tartıp **paket yapısını (neye ödüyorsun / hangi pakette ne
+sınırlı) BOZMADAN** pakete anlamlı yerleştir + kart/bullet metinlerini çarpıcı
+pazarlama diline çevir. Ayrı analiz + plan ile ele alınacak. [[project-revenue-panel-v2-roadmap]]
 
 ## Notlar
 
