@@ -7,7 +7,11 @@ node_modules/
 .expo/
 dist/
 web-build/
+webshot/
 expo-env.d.ts
+
+# UX döngüsü ekran görüntüleri (geçici, scripts/shot.mjs)
+*-shot.png
 
 # Native
 .kotlin/
