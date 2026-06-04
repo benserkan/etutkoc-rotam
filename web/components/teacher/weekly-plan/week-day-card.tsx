@@ -593,12 +593,16 @@ function TaskList({
     dayTaskOrder(day.tasks, subjects, usePeriods),
   );
 
-  // Görev seti / periyot-modu / herhangi bir görevin PERİYODU değişince türetilmiş
-  // (periyot → ders MIKNATIS) sıraya yeniden kur. Anahtar period'ları içerir →
-  // sürükleyip periyot değiştirince düzen anında yeniden hesaplanır; sayfa
-  // yenilenince de korunur (DB'deki period + sıradan türetilir).
+  // Görev seti / periyot-modu / görev PERİYODU / DERS LİSTESİ değişince türetilmiş
+  // (periyot → ders MIKNATIS) sıraya yeniden kur. KRİTİK: subjects async yüklenir;
+  // anahtara subjects imzası dahil → ders listesi gelince (branş deneme isimden
+  // çözülünce) sıra yeniden hesaplanır (yoksa deneme "Diğer" konumunda kalıp
+  // başlık Fizik'e çözülür = ayrık görünür). period değişince de anında düzenlenir.
   const orderKey =
     (usePeriods ? "p:" : "s:") +
+    "subj:" +
+    subjects.map((s) => s.id).join(",") +
+    "|" +
     day.tasks
       .map((t) => `${t.id}:${t.period ?? ""}`)
       .sort()
