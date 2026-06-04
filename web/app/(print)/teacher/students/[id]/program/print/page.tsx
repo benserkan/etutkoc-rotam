@@ -5,6 +5,7 @@ import type {
   TeacherStudentWeekResponse,
   TeacherTask,
 } from "@/lib/types/teacher";
+import type { MyAccountResponse } from "@/lib/types/me";
 import {
   findSubjectByExactName,
   findSubjectInTitle,
@@ -200,6 +201,17 @@ export default async function ProgramPrintPage({
     subjects = [];
   }
 
+  // Koç markası — kuruma bağlı koç ise KURUM logosu, bağımsız koç ise platform
+  // logosu (etütkoç amblemi). /me institution.has_logo + logo_url taşır.
+  let me: MyAccountResponse | null = null;
+  try {
+    me = await apiServer<MyAccountResponse>("/api/v2/me");
+  } catch {
+    me = null;
+  }
+  const inst = me?.institution ?? null;
+  const instLogoUrl = inst?.has_logo ? inst.logo_url ?? null : null;
+
   const totalCorrect = weekData.days.reduce(
     (acc, d) => acc + d.tasks.reduce(
       (a, t) => a + t.items.reduce((b, it) => b + (it.correct_count ?? 0), 0), 0), 0);
@@ -225,14 +237,34 @@ export default async function ProgramPrintPage({
         </span>
       </div>
 
-      {/* Header — kompakt tek satır */}
+      {/* Header — kompakt; solda logo (kurum veya platform) */}
       <header className="mb-2 flex items-end justify-between gap-4 border-b-2 border-stone-800 pb-1.5">
-        <div className="flex items-baseline gap-3">
-          <h1 className="text-base font-bold tracking-tight">Haftalık Program</h1>
-          <span className="text-sm font-semibold text-stone-800">{studentName || "—"}</span>
-          <span className="text-[11px] text-stone-500">
-            {fmtDate(weekData.start_date)} — {fmtDate(weekData.end_date)}
-          </span>
+        <div className="flex items-center gap-3">
+          {instLogoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- auth'lu BFF kurum logosu ucu + yazdırma
+            <img
+              src={instLogoUrl}
+              alt={inst?.name ?? "Kurum"}
+              className="h-10 w-auto max-w-[150px] object-contain"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element -- platform amblemi (yazdırma)
+            <img
+              src="/etutkoc-mark.png"
+              alt="ETÜTKOÇ Rotam"
+              className="h-9 w-9 object-contain"
+            />
+          )}
+          <div>
+            <div className="flex items-baseline gap-3">
+              <h1 className="text-base font-bold tracking-tight">Haftalık Program</h1>
+              <span className="text-sm font-semibold text-stone-800">{studentName || "—"}</span>
+            </div>
+            <div className="text-[11px] text-stone-500">
+              {fmtDate(weekData.start_date)} — {fmtDate(weekData.end_date)}
+              {inst ? <span className="text-stone-600"> · {inst.name}</span> : null}
+            </div>
+          </div>
         </div>
         <div className="flex items-center gap-3 text-[10px] text-stone-500">
           <span>Plan. <b className="text-stone-800">{weekData.total_planned}</b></span>
