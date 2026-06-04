@@ -4346,8 +4346,12 @@ kopuk. **Onaylı yön (kullanıcı):** A→B sırası · Gemini · generic mocku
   Admin keşif-kuyruğu sayfasında "AI ile grupla & temalı kart üret" butonu.
   Smoke `test_api_v2_feature_clustering.py` **5/5** (Gemini monkeypatch).
   **Kullanım:** admin "AI ile grupla" → ~10 temalı DRAFT → Vitrin Kartları'nda
-  gözden geçir → yayınla → anasayfa. (Prod Gemini gerçek; kullanıcı çalıştırıp
-  inceleyecek.)
+  gözden geçir → yayınla → anasayfa.
+  **FIX (2026-06-04, kullanıcı prod hatası "JSON nesnesi değil"):** 109 aday →
+  büyük yanıt + 2.5 düşünme tokenı maxOutputTokens=8192'i aşıp JSON'u kesiyordu.
+  `gemini.generate`'e `max_output_tokens` + `prefer_paid` eklendi; clustering
+  **ücretli pro model + 24576 token + 90s timeout + tek çağrıda ≤70 aday** (kalan
+  varsa "tekrar çalıştır"). Kullanıcı kararı: bu önemli iş ücretli key'den.
 - **B ✅ akıllı paket içeriği TEK KAYNAK:** paket bullet'ları 4 ayrı yerdeydi
   (`pricing.py _marketing_cards` GÜÇLÜ · `plans.py features_included` bland ·
   `teacher-plan TIER_DETAILS` frontend-hardcoded [görseldeki bland kart] ·
