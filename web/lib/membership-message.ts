@@ -8,7 +8,11 @@
  *
  * Click-to-WhatsApp (wa.me) gönderiminde mesaj metni içine link konur; WhatsApp
  * linkin OG önizleme kartını mesajın ÜSTÜNDE gösterir. Bu yüzden metin amaç-net +
- * değer-odaklı, link en sonda 👇 ile verilir (ham URL gürültüsü en aza iner).
+ * değer-odaklı, link en sonda verilir (ham URL gürültüsü en aza iner).
+ *
+ * EMOJİ YOK: 👇/👋/📦 gibi emojiler bazı cihaz/WhatsApp font'larında "tofu"
+ * (kırık kutu ⬚) çıkıyor → amatör görünüm. Yalnız ASCII-güvenli "•" (tipografik
+ * madde imi, emoji değil) ve "₺" kullanılır.
  */
 
 function fmtTry(n: number): string {
@@ -37,7 +41,7 @@ export function buildMembershipWaText({
   cycle,
   url,
 }: MembershipWaTextArgs): string {
-  const greet = `Merhaba${targetName ? " " + targetName : ""}, 👋`;
+  const greet = `Merhaba${targetName ? " " + targetName : ""},`;
   const priceLine =
     amount && amount > 0
       ? `${planLabel} · ${fmtTry(amount)} ₺ / ${CYCLE_SHORT[cycle ?? "monthly"] ?? "ay"}`
@@ -49,9 +53,9 @@ export function buildMembershipWaText({
       "",
       "ETÜTKOÇ Rotam üyeliğin sona eriyor. Öğrencilerinin programı, deneme takibi ve veli bildirimleri kesintisiz devam etsin diye sana özel yenileme teklifini hazırladık.",
       "",
-      `📦 ${priceLine}`,
+      `Teklifin: ${priceLine}`,
       "",
-      "Kaldığın yerden tek tıkla devam et 👇",
+      "Kaldığın yerden tek tıkla devam et:",
       url,
     ].join("\n");
   }
@@ -68,7 +72,7 @@ export function buildMembershipWaText({
     "",
     `Sana özel üyelik teklifi: ${priceLine}`,
     "",
-    "Detayları gör, üyeliğini başlat 👇",
+    "Detayları gör, üyeliğini başlat:",
     url,
   ].join("\n");
 }
