@@ -16,6 +16,10 @@ export type SubjectRef = { id: number; name: string };
 // (Kısa/çok genel terimlerden kaçın — yanlış-pozitif riski; min 3 harf zaten var.)
 const SUBJECT_ALIAS_GROUPS: string[][] = [
   ["türk dili ve edebiyatı", "türk edebiyatı", "edebiyat"],
+  // "Din" tek başına kısa ama Türkçe ı/i ayrımı koruyor ("aydın" = ı, eşleşmez)
+  // + en-uzun-terim kazanır (başlıkta başka ders varsa o seçilir). Branş başlığı
+  // "AYT Din Branş" gibi salt "din" içerebildiği için bilinçli eklendi.
+  ["din kültürü ve ahlak bilgisi", "din kültürü", "dkab", "din"],
 ];
 
 function aliasTermsFor(nameLow: string): string[] {
