@@ -1,0 +1,243 @@
+"""WhatsApp üyelik teklifi servisi (Paket 1).
+
+Süper admin teklif oluşturur → token + public link. Kullanıcı markalı sayfada
+"Üye ol/Yenile" talebi bırakır VEYA havale/EFT ile ödediğini bildirir → her iki
+durumda da bir ContactRequest (source="membership_offer") üretilir → süper admin
+"İletişim Talepleri"nde görüp manuel aktive eder (mevcut activate-plan akışı).
+
+İleride: Iyzico kart ödemesi + WhatsApp Cloud API (B fazı) bu servise eklenir;
+public sayfa + akış değişmez.
+"""
+from __future__ import annotations
+
+import secrets
+from datetime import datetime, timedelta, timezone
+
+from sqlalchemy.orm import Session
+
+from app.models import ContactRequest, MembershipOffer, User
+from app.models.contact_request import CONTACT_STATUS_NEW
+from app.services import app_settings, plans
+
+# Havale/EFT bilgisi app_settings'te tutulur (süper admin doldurur).
+_HAVALE_KEY = "membership_havale"
+
+_TYPE_LABELS = {"new": "Yeni Üyelik", "renewal": "Üyelik Yenileme"}
+_CYCLE_LABELS = {"monthly": "aylık", "annual": "akademik yıl (10 ay peşin)"}
+
+
+class MembershipOfferError(Exception):
+    def __init__(self, code: str, message: str) -> None:
+        self.code = code
+        self.message = message
+        super().__init__(message)
+
+
+def _gen_token(db: Session) -> str:
+    for _ in range(6):
+        t = secrets.token_hex(16)  # 32 hex char
+        if not db.query(MembershipOffer.id).filter(MembershipOffer.token == t).first():
+            return t
+    raise MembershipOfferError("token_error", "Token üretilemedi.")
+
+
+def get_havale_info() -> dict:
+    """Süper adminin tanımladığı havale/EFT bilgisi. Boşsa enabled=False."""
+    raw = app_settings.get_json(_HAVALE_KEY, None) or {}
+    iban = str(raw.get("iban") or "").strip()
+    return {
+        "enabled": bool(iban),
+        "iban": iban,
+        "name": str(raw.get("name") or "").strip(),
+        "note": str(raw.get("note") or "").strip(),
+    }
+
+
+def set_havale_info(db: Session, *, iban: str, name: str, note: str, actor_user_id: int | None) -> dict:
+    app_settings.set_json(
+        db,
+        _HAVALE_KEY,
+        {"iban": iban.strip(), "name": name.strip(), "note": note.strip()},
+        actor_user_id=actor_user_id,
+    )
+    return get_havale_info()
+
+
+def create_offer(
+    db: Session,
+    *,
+    admin: User,
+    target_user_id: int | None,
+    offer_type: str,
+    plan_code: str,
+    cycle: str,
+    amount: int | None,
+    title: str | None,
+    message: str | None,
+    expires_in_days: int | None = 30,
+) -> MembershipOffer:
+    if offer_type not in ("new", "renewal"):
+        offer_type = "new"
+    if cycle not in ("monthly", "annual"):
+        cycle = "monthly"
+    if plans.get_plan_info(plan_code) is None:
+        raise MembershipOfferError("invalid_plan", "Geçersiz plan.")
+    if target_user_id is not None:
+        if db.get(User, target_user_id) is None:
+            raise MembershipOfferError("target_not_found", "Hedef kullanıcı bulunamadı.")
+    token = _gen_token(db)
+    expires_at = (
+        datetime.now(timezone.utc) + timedelta(days=expires_in_days)
+        if expires_in_days
+        else None
+    )
+    offer = MembershipOffer(
+        token=token,
+        created_by_admin_id=admin.id,
+        target_user_id=target_user_id,
+        offer_type=offer_type,
+        plan_code=plan_code,
+        cycle=cycle,
+        amount=amount,
+        title=(title or "").strip() or None,
+        message=(message or "").strip() or None,
+        status="active",
+        expires_at=expires_at,
+    )
+    db.add(offer)
+    db.commit()
+    db.refresh(offer)
+    return offer
+
+
+def get_by_token(db: Session, token: str) -> MembershipOffer | None:
+    return (
+        db.query(MembershipOffer)
+        .filter(MembershipOffer.token == token)
+        .first()
+    )
+
+
+def _resolve_amount(offer: MembershipOffer) -> int | None:
+    if offer.amount is not None:
+        return offer.amount
+    pi = plans.get_plan_info(offer.plan_code)
+    if pi is None:
+        return None
+    val = pi.price_yearly_try if offer.cycle == "annual" else pi.price_monthly_try
+    return val if val and val > 0 else None
+
+
+def _effective_status(offer: MembershipOffer) -> str:
+    if offer.status == "active" and offer.expires_at is not None:
+        now = datetime.now(timezone.utc)
+        exp = offer.expires_at
+        if exp.tzinfo is None:
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp < now:
+            return "expired"
+    return offer.status
+
+
+def public_view(db: Session, offer: MembershipOffer, *, mark_viewed: bool = True) -> dict:
+    status = _effective_status(offer)
+    if mark_viewed and offer.viewed_at is None and status == "active":
+        offer.viewed_at = datetime.now(timezone.utc)
+        db.commit()
+    pi = plans.get_plan_info(offer.plan_code)
+    amount = _resolve_amount(offer)
+    target = offer.target_user
+    return {
+        "valid": status in ("active", "accepted"),
+        "status": status,
+        "completion": offer.completion,
+        "offer_type": offer.offer_type,
+        "offer_type_label": _TYPE_LABELS.get(offer.offer_type, "Üyelik"),
+        "title": offer.title,
+        "message": offer.message,
+        "target_name": (target.full_name if target else None),
+        "plan_code": offer.plan_code,
+        "plan_label": (pi.label if pi else offer.plan_code),
+        "plan_short": (pi.short_description if pi else None),
+        "plan_features": (list(pi.features_included) if pi else []),
+        "cycle": offer.cycle,
+        "cycle_label": _CYCLE_LABELS.get(offer.cycle, offer.cycle),
+        "amount": amount,
+        "havale": get_havale_info(),
+    }
+
+
+def _contact_identity(offer: MembershipOffer, name: str | None, email: str | None, phone: str | None):
+    target = offer.target_user
+    return (
+        (name or "").strip() or (target.full_name if target else None) or "WhatsApp Üyelik Teklifi",
+        (email or "").strip() or (target.email if target else None) or "whatsapp-offer@etutkoc.local",
+        (phone or "").strip() or (target.phone if (target and target.phone) else None),
+    )
+
+
+def _offer_summary(offer: MembershipOffer) -> str:
+    pi = plans.get_plan_info(offer.plan_code)
+    amount = _resolve_amount(offer)
+    amount_str = f"{amount} TL" if amount else "size özel / belirtilmedi"
+    parts = [
+        f"WhatsApp üyelik teklifi — {_TYPE_LABELS.get(offer.offer_type, 'Üyelik')}.",
+        f"Plan: {pi.label if pi else offer.plan_code} ({_CYCLE_LABELS.get(offer.cycle, offer.cycle)}).",
+        f"Tutar: {amount_str}.",
+    ]
+    if offer.target_user_id:
+        parts.append(f"koç_id={offer.target_user_id}")
+    parts.append(f"hedef_kod={offer.plan_code}")
+    parts.append(f"teklif_token={offer.token}")
+    return " ".join(parts)
+
+
+def _create_contact(
+    db: Session, offer: MembershipOffer, *, name, email, phone, extra: str
+) -> ContactRequest:
+    nm, em, ph = _contact_identity(offer, name, email, phone)
+    cr = ContactRequest(
+        name=nm[:160],
+        email=em[:255],
+        phone=(ph[:40] if ph else None),
+        source="membership_offer",
+        message=f"{_offer_summary(offer)} {extra}".strip(),
+        status=CONTACT_STATUS_NEW,
+    )
+    db.add(cr)
+    db.flush()
+    return cr
+
+
+def record_request(
+    db: Session, offer: MembershipOffer, *, name=None, email=None, phone=None
+) -> MembershipOffer:
+    """Kullanıcı "Üye ol/Yenile" talebi bıraktı → ContactRequest + manuel aktive bekler."""
+    if _effective_status(offer) not in ("active", "accepted"):
+        raise MembershipOfferError("not_active", "Bu teklif artık geçerli değil.")
+    cr = _create_contact(db, offer, name=name, email=email, phone=phone,
+                         extra="[ÜYELİK TALEBİ — manuel aktivasyon bekliyor]")
+    offer.status = "accepted"
+    offer.completion = "requested"
+    offer.accepted_at = datetime.now(timezone.utc)
+    offer.contact_request_id = cr.id
+    db.commit()
+    db.refresh(offer)
+    return offer
+
+
+def record_havale_claim(
+    db: Session, offer: MembershipOffer, *, name=None, email=None, phone=None
+) -> MembershipOffer:
+    """Kullanıcı havale/EFT ile ödediğini bildirdi → ContactRequest (dekont kontrolü)."""
+    if _effective_status(offer) not in ("active", "accepted"):
+        raise MembershipOfferError("not_active", "Bu teklif artık geçerli değil.")
+    cr = _create_contact(db, offer, name=name, email=email, phone=phone,
+                         extra="[HAVALE/EFT İLE ÖDEDİĞİNİ BİLDİRDİ — dekont/havale kontrol et, sonra aktive et]")
+    offer.status = "accepted"
+    offer.completion = "havale_claimed"
+    offer.accepted_at = datetime.now(timezone.utc)
+    offer.contact_request_id = cr.id
+    db.commit()
+    db.refresh(offer)
+    return offer

@@ -203,6 +203,11 @@ from app.models.coach_work_block import (
     WORK_BLOCK_UNITS,
     CoachWorkBlock,
 )
+from app.models.membership_offer import (
+    MEMBERSHIP_OFFER_STATUSES,
+    MEMBERSHIP_OFFER_TYPES,
+    MembershipOffer,
+)
 from app.models.coaching_session import (
     COACHING_CHANNEL_LABELS,
     COACHING_STATUS_LABELS,
@@ -476,6 +481,9 @@ __all__ = [
     "CoachWorkBlock",
     "WORK_BLOCK_UNITS",
     "WORK_BLOCK_STATUSES",
+    "MembershipOffer",
+    "MEMBERSHIP_OFFER_TYPES",
+    "MEMBERSHIP_OFFER_STATUSES",
     "EXAM_SECTION_LABELS",
     "EXAM_TARGET_LABELS",
     "ExamResult",

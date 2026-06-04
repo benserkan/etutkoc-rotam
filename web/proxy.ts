@@ -34,6 +34,7 @@ const PUBLIC_PATHS_PREFIX = [
   "/parent/invitation",     // /parent/invitation/<token> — veli davet linki, anonim
   "/parent/unsubscribe",    // /parent/unsubscribe/<token> — bildirim mailindeki çıkış
   "/offers",
+  "/membership",            // /membership/<token> — WhatsApp üyelik teklifi, anonim
   "/pricing",
   "/kvkk",
   "/privacy",

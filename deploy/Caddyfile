@@ -193,6 +193,12 @@
         # Jinja offers_public.py dead-code halinde yayında bekliyor.
         reverse_proxy /offers/* next:3000
 
+        # ---------- WhatsApp Üyelik Teklifi (public) — AÇIK (2026-06-04) ----------
+        # /membership/[token] (login'siz markalı üyelik teklifi → talep / havale
+        # bildirimi). POST'lar /api/v2/membership/{token}(/request|/havale-claim)
+        # → FastAPI. Süper admin oluşturma /api/v2/admin/membership-offers.
+        reverse_proxy /membership/* next:3000
+
         # ---------- Üyelik/Fiyat (public) — AÇIK (2026-05-22) ----------
         # /pricing public üyelik sayfası (Next.js). Veri /api/v2/pricing'den
         # (tek kaynak app/services/pricing.py). Jinja plans/pricing.html dead-code.

@@ -21,6 +21,7 @@ from fastapi import APIRouter
 
 from app.routes.api_v2 import academic as v2_academic
 from app.routes.api_v2 import admin as v2_admin
+from app.routes.api_v2 import admin_membership as v2_admin_membership
 from app.routes.api_v2 import auth as v2_auth
 from app.routes.api_v2 import contact_public as v2_contact_public
 from app.routes.api_v2 import csv_ops as v2_csv
@@ -30,6 +31,7 @@ from app.routes.api_v2 import institution as v2_institution
 from app.routes.api_v2 import landing_public as v2_landing_public
 from app.routes.api_v2 import library as v2_library
 from app.routes.api_v2 import me as v2_me
+from app.routes.api_v2 import membership_public as v2_membership_public
 from app.routes.api_v2 import messaging as v2_messaging
 from app.routes.api_v2 import offers_public as v2_offers_public
 from app.routes.api_v2 import parent as v2_parent
@@ -52,6 +54,8 @@ router.include_router(v2_institution.router)
 router.include_router(v2_parent.router)
 router.include_router(v2_payment.router)
 router.include_router(v2_offers_public.router)
+router.include_router(v2_membership_public.router)
+router.include_router(v2_admin_membership.router)
 router.include_router(v2_landing_public.router)
 router.include_router(v2_pricing_public.router)
 router.include_router(v2_contact_public.router)
