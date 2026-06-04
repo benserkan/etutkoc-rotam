@@ -2,20 +2,31 @@
 
 import * as React from "react";
 import {
+  Activity,
   Award,
+  BarChart3,
   BookOpen,
   Bot,
+  Building2,
   Calculator,
   CheckCircle2,
+  CreditCard,
   FlaskConical,
   Globe,
+  GraduationCap,
   Landmark,
+  LifeBuoy,
+  Lock,
   MessageCircle,
   Moon,
+  Phone,
+  Receipt,
   Flame,
+  ShieldCheck,
   Sparkles,
   Star,
   TrendingUp,
+  Users,
   Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -314,6 +325,201 @@ function ExamTrend() {
   );
 }
 
+/** Güvenlik / KVKK — kalkan + şifreli/uyumlu satırları + rol-bazlı erişim. */
+function Security() {
+  const rows = [
+    { icon: Lock, label: "Tüm veriler şifreli saklanır" },
+    { icon: ShieldCheck, label: "KVKK uyumlu altyapı" },
+    { icon: CheckCircle2, label: "Rol-bazlı erişim kontrolü" },
+  ];
+  return (
+    <Panel>
+      <div className="flex items-center gap-2">
+        <span className="inline-flex size-9 items-center justify-center rounded-xl bg-emerald-600 text-white">
+          <ShieldCheck className="size-5" aria-hidden />
+        </span>
+        <div>
+          <p className="text-sm font-bold text-slate-800">Verileriniz güvende</p>
+          <p className="text-[11px] text-emerald-600">256-bit şifreleme · KVKK</p>
+        </div>
+      </div>
+      <div className="mt-3 space-y-1.5">
+        {rows.map((r) => {
+          const Icon = r.icon;
+          return (
+            <div key={r.label} className="flex items-center gap-2 rounded-lg bg-emerald-50 px-2.5 py-1.5 text-[12px] text-emerald-900">
+              <Icon className="size-3.5 shrink-0 text-emerald-600" aria-hidden /> {r.label}
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+/** Ödeme / üyelik / tahsilat — plan kartı + ödeme satırı + yenileme. */
+function Billing() {
+  return (
+    <Panel>
+      <div className="flex items-center justify-between rounded-xl bg-gradient-to-r from-cyan-600 to-cyan-500 p-3 text-white">
+        <div>
+          <p className="text-[10px] font-medium uppercase tracking-wider text-cyan-100">Aktif paket</p>
+          <p className="text-sm font-bold">Solo · Aylık</p>
+        </div>
+        <CreditCard className="size-6 text-cyan-100" aria-hidden />
+      </div>
+      <div className="mt-2.5 flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-2 text-[12px]">
+        <span className="inline-flex items-center gap-1.5 text-emerald-800">
+          <Receipt className="size-3.5" aria-hidden /> 2.500 ₺
+        </span>
+        <span className="inline-flex items-center gap-1 font-semibold text-emerald-700">
+          <CheckCircle2 className="size-3.5" aria-hidden /> Ödendi
+        </span>
+      </div>
+      <p className="mt-2 text-[11px] text-slate-500">Sonraki yenileme: 12 Tem</p>
+    </Panel>
+  );
+}
+
+/** Veri analizi / panel — KPI kartları + mini çizgi grafik. */
+function Analytics() {
+  const bars = [30, 45, 38, 60, 52, 70, 64];
+  return (
+    <Panel>
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-800">
+          <BarChart3 className="size-4 text-violet-600" aria-hidden /> Panel
+        </span>
+        <span className="text-[11px] font-semibold text-emerald-600">↑ %12</span>
+      </div>
+      <div className="mt-2 grid grid-cols-2 gap-1.5">
+        <div className="rounded-lg bg-violet-50 px-2 py-1.5">
+          <p className="text-[10px] text-violet-500">Aktif öğrenci</p>
+          <p className="text-base font-bold text-violet-800">128</p>
+        </div>
+        <div className="rounded-lg bg-cyan-50 px-2 py-1.5">
+          <p className="text-[10px] text-cyan-600">Tamamlama</p>
+          <p className="text-base font-bold text-cyan-800">%74</p>
+        </div>
+      </div>
+      <div className="mt-2 flex h-12 items-end gap-1">
+        {bars.map((h, i) => (
+          <div key={i} className="flex-1 rounded-t bg-violet-300" style={{ height: `${h}%` }} />
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+/** CRM — kişi satırları + aşama rozetleri + not. */
+function Crm() {
+  const rows = [
+    { name: "Atlas Dershanesi", stage: "Görüşüldü", tone: "bg-amber-100 text-amber-700" },
+    { name: "Bağımsız Koç · Elif", stage: "Kazanıldı", tone: "bg-emerald-100 text-emerald-700" },
+    { name: "Final Etüt", stage: "Yeni", tone: "bg-cyan-100 text-cyan-700" },
+  ];
+  return (
+    <Panel>
+      <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-800">
+        <Users className="size-4 text-cyan-700" aria-hidden /> Müşteri İlişkileri
+      </span>
+      <div className="mt-2.5 space-y-1.5">
+        {rows.map((r) => (
+          <div key={r.name} className="flex items-center justify-between rounded-lg border border-border bg-card px-2.5 py-1.5">
+            <span className="inline-flex items-center gap-1.5 text-[12px] text-slate-700">
+              <Phone className="size-3 text-slate-400" aria-hidden /> {r.name}
+            </span>
+            <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", r.tone)}>{r.stage}</span>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+/** Kurumsal kimlik / co-branding — logolu panel başlığı önizlemesi. */
+function Branding() {
+  return (
+    <Panel>
+      <div className="flex items-center gap-2 rounded-xl border border-dashed border-cyan-300 bg-cyan-50/60 p-3">
+        <span className="inline-flex size-10 items-center justify-center rounded-lg bg-white shadow-sm">
+          <Building2 className="size-5 text-cyan-700" aria-hidden />
+        </span>
+        <div>
+          <p className="text-sm font-bold text-slate-800">Kurumunuzun Adı</p>
+          <p className="text-[11px] text-slate-500">Paneliniz kendi logonuzla</p>
+        </div>
+      </div>
+      <div className="mt-2.5 flex items-center gap-2">
+        <span className="text-[11px] text-slate-500">Marka rengi:</span>
+        <span className="size-4 rounded-full bg-cyan-600" />
+        <span className="size-4 rounded-full bg-amber-500" />
+        <span className="size-4 rounded-full bg-emerald-600" />
+      </div>
+    </Panel>
+  );
+}
+
+/** Destek / sistem sağlığı — talep durumu + yeşil sistem göstergeleri. */
+function Support() {
+  const sys = ["Web", "Veritabanı", "Bildirim"];
+  return (
+    <Panel>
+      <div className="flex items-center justify-between rounded-lg bg-emerald-50 px-2.5 py-2">
+        <span className="inline-flex items-center gap-1.5 text-[12px] text-emerald-900">
+          <LifeBuoy className="size-3.5 text-emerald-600" aria-hidden /> Destek talebi #482
+        </span>
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700">
+          <CheckCircle2 className="size-3.5" aria-hidden /> Çözüldü
+        </span>
+      </div>
+      <div className="mt-2.5 space-y-1.5">
+        {sys.map((s) => (
+          <div key={s} className="flex items-center justify-between text-[12px] text-slate-700">
+            <span className="inline-flex items-center gap-1.5">
+              <Activity className="size-3.5 text-slate-400" aria-hidden /> {s}
+            </span>
+            <span className="inline-flex items-center gap-1 text-emerald-600">
+              <span className="size-2 rounded-full bg-emerald-500" /> Çalışıyor
+            </span>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+/** Akademik yapı / müfredat — sınıf seviyesi + müfredat modeli rozetleri. */
+function Curriculum() {
+  return (
+    <Panel>
+      <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-800">
+        <GraduationCap className="size-4 text-cyan-700" aria-hidden /> Her seviyeye uyumlu
+      </span>
+      <div className="mt-2.5">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">LGS</p>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {["5", "6", "7", "8"].map((g) => (
+            <span key={g} className="rounded-md bg-cyan-50 px-2 py-0.5 text-[11px] font-medium text-cyan-700">{g}. sınıf</span>
+          ))}
+        </div>
+      </div>
+      <div className="mt-2">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">YKS</p>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {["9", "10", "11", "12", "Mezun"].map((g) => (
+            <span key={g} className="rounded-md bg-violet-50 px-2 py-0.5 text-[11px] font-medium text-violet-700">{g}</span>
+          ))}
+        </div>
+      </div>
+      <div className="mt-2 flex gap-1.5">
+        <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] text-amber-700">Maarif Modeli</span>
+        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] text-slate-600">Klasik</span>
+      </div>
+    </Panel>
+  );
+}
+
 const MAP: Record<string, React.ComponentType> = {
   daily_schedule: DailySchedule,
   fsrs_rating: FsrsRating,
@@ -323,6 +529,13 @@ const MAP: Record<string, React.ComponentType> = {
   gamification: Gamification,
   ai_assistant: AiAssistant,
   exam_trend: ExamTrend,
+  security: Security,
+  billing: Billing,
+  analytics: Analytics,
+  crm: Crm,
+  branding: Branding,
+  support: Support,
+  curriculum: Curriculum,
   generic: GenericShowcase,
 };
 

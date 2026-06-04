@@ -11,6 +11,7 @@ import {
   BookOpen,
   Bot,
   BrainCircuit,
+  Building2,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -21,8 +22,10 @@ import {
   Flame,
   Gauge,
   Gift,
+  GraduationCap,
   HelpCircle,
   LayoutGrid,
+  LifeBuoy,
   LineChart,
   Lock,
   MessageSquareText,
@@ -33,6 +36,7 @@ import {
   Sparkles,
   Target,
   TrendingUp,
+  Users,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -451,6 +455,13 @@ const MOCKUP_ICON: Record<string, LucideIcon> = {
   gamification: Award,
   ai_assistant: Bot,
   exam_trend: TrendingUp,
+  security: ShieldCheck,
+  billing: CreditCard,
+  analytics: BarChart3,
+  crm: Users,
+  branding: Building2,
+  support: LifeBuoy,
+  curriculum: GraduationCap,
 };
 
 /** Benefit metninden baştaki emoji/sembolleri temizler (DB verisi emoji ile geliyor). */

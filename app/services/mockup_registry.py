@@ -94,6 +94,55 @@ MOCKUP_TEMPLATES: dict[str, MockupTemplate] = {
         template_path="landing/mockups/generic.html",
         feature_card_slug="",
     ),
+    "security": MockupTemplate(
+        key="security",
+        label="Güvenlik / KVKK",
+        description="Kalkan + kilit + KVKK/şifreli rozetleri (kurumsal güvenlik / veri gizliliği temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "billing": MockupTemplate(
+        key="billing",
+        label="Ödeme / Üyelik / Tahsilat",
+        description="Plan kartı + ödeme özeti + 'ödendi' rozeti (ödeme/üyelik/tahsilat/finans temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "analytics": MockupTemplate(
+        key="analytics",
+        label="Veri Analizi / Panel",
+        description="KPI kartları + çizgi grafik (veri analizi / optimizasyon / içgörü temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "crm": MockupTemplate(
+        key="crm",
+        label="CRM / Müşteri İlişkileri",
+        description="Kişi listesi + not + aşama rozetleri (CRM / satış / müşteri ilişkileri temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "branding": MockupTemplate(
+        key="branding",
+        label="Kurumsal Kimlik / Logo",
+        description="Logolu panel başlığı önizlemesi (markalaşma / kurumsal kimlik / co-branding temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "support": MockupTemplate(
+        key="support",
+        label="Destek / Sistem Sağlığı",
+        description="Destek talebi + sistem durum göstergeleri (destek / yardım / sistem sağlığı temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "curriculum": MockupTemplate(
+        key="curriculum",
+        label="Akademik Yapı / Müfredat",
+        description="Sınıf seviyesi + müfredat modeli rozetleri (LGS/YKS akademik yapı / müfredat temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
     # Genel/şablonsuz kart — bespoke görsel gerektirmeden landing'e çıkar. AI hiçbir
     # özel mockup'a karar veremezse fallback. Next.js GenericShowcase render eder.
     "generic": MockupTemplate(

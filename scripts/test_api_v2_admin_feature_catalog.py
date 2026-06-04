@@ -231,7 +231,7 @@ def main() -> int:
         ok = (
             r.status_code == 200
             and j.get("card") is None
-            and len(j["meta"]["mockups"]) == 9
+            and len(j["meta"]["mockups"]) == 16
             and len(j["meta"]["roles"]) >= 4
         )
         check("4. new form meta", ok, f"status={r.status_code}")

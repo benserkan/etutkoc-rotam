@@ -82,6 +82,13 @@ GÖRSEL (mockup) ANAHTARLARI — temanın içeriğine EN UYGUN olanı seç:
 - "books_progress": kitap / soru bankası / kaynak ilerleme temaları
 - "fsrs_rating": aralıklı tekrar / kalıcı öğrenme / hatırlama temaları
 - "burnout_gauge": risk / tükenmişlik / erken uyarı temaları
+- "security": güvenlik / KVKK / veri gizliliği / şifreleme / kurumsal güvenlik temaları
+- "billing": ödeme / üyelik / abonelik / tahsilat / fatura / finans temaları
+- "analytics": veri analizi / istatistik / optimizasyon / panel / içgörü dashboard temaları
+- "crm": CRM / müşteri ilişkileri / satış / not & aksiyon / kurum-koç ilişki temaları
+- "branding": kurumsal kimlik / logo / co-branding / markalaşma temaları
+- "support": destek / yardım / talep / sistem sağlığı / kesintisiz hizmet temaları
+- "curriculum": müfredat / sınıf seviyesi (LGS/YKS) / akademik yapı / kohort temaları
 - "generic": yukarıdakilerden hiçbiri uymuyorsa
 
 KURALLAR:
