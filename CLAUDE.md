@@ -4246,12 +4246,15 @@ planlarken diğer günleri görememe; (3) gün içi görevler ders bazlı grupla
     birimi (deneme'den ayrı).
 - **Migration head = `a4b7g0h1g55a`.** Doğrulandı (prod: kolon+tablo var,
   endpoint 401, site 200). Commit `5f73dbf`, web/worker/next rebuild + DB yedek.
-- **AÇIK KARAR (kullanıcıya soruldu — ikincil yüzeyler):** blok görevi kitapsız
-  kalem taşıdığından `gorev_stats.classify_gorev` onu **"tam_deneme"** sayıyor →
-  panel/mail "Denemeler"de görünüyor; ayrıca `/day` (day-board) + yazdırma blok
-  görevini "Diğer"e gruplayıp birim "soru" gösteriyor. Editör/ızgara/sidebar
-  (planlama yüzeyleri) tutarlı; bu ikincil yüzeyler kullanıcı kararına bağlı
-  (blok = etkinlik mi / test mi / tam_deneme mi). [[feedback-holistic-change-propagation]]
+- **Blok = ETKİNLİK kararı** (kullanıcı 2026-06-03, commit `bae9360`): blok görevi
+  istatistiklerde etkinlik sayılır — görev birimi (manşet % + "X/Y görev") ama
+  TEST/DENEME hacmine GİRMEZ (blok kendi dağıtılan/kalan sayacıyla izlenir).
+  `gorev_stats.classify_gorev`: `work_block_id` set → "etkinlik" (kitapsız kalem
+  taşısa da tam_deneme SAYILMAZ); kitapsız gerçek deneme (work_block YOK) →
+  tam_deneme korunur → panel/mail "Etkinlikler"e gider, "Denemeler"e karışmaz.
+  `/day` + yazdırma: blok + kalemsiz etkinlik görevleri başlık parse ile DERSİNE
+  gruplanır (editör/ızgara ile tutarlı) + birim work_block_unit. Tüm yüzeyler
+  tutarlı. [[feedback-holistic-change-propagation]]
 
 ## Notlar
 
