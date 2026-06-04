@@ -4348,10 +4348,19 @@ kopuk. **Onaylı yön (kullanıcı):** A→B sırası · Gemini · generic mocku
   **Kullanım:** admin "AI ile grupla" → ~10 temalı DRAFT → Vitrin Kartları'nda
   gözden geçir → yayınla → anasayfa. (Prod Gemini gerçek; kullanıcı çalıştırıp
   inceleyecek.)
-- **B ⏳ akıllı paket içeriği (tek-kaynak):** paket bullet'larını `plans.py` sabit
-  listeden değil, özelliklerin pazarlama-değer kaydından (tema/ticari ağırlık)
-  türet — fiyat/limit iskeleti BOZULMADAN, dili çarpıcı + vitrinle tutarlı.
-  [[project-revenue-panel-v2-roadmap]]
+- **B ✅ akıllı paket içeriği TEK KAYNAK:** paket bullet'ları 4 ayrı yerdeydi
+  (`pricing.py _marketing_cards` GÜÇLÜ · `plans.py features_included` bland ·
+  `teacher-plan TIER_DETAILS` frontend-hardcoded [görseldeki bland kart] ·
+  admin `INSTITUTION_TIER_DETAILS` hardcoded) → tek `pricing.features_for_plan(
+  plan_code)` (pazarlama-odaklı: yapay zekâ hazırlığı, kopan öğrenci erken uyarı,
+  veli bildirim…). `_marketing_cards` bunu kullanır (DRY); catalog'a `plan_features
+  {kod: bullet'lar}` eklendi. **Fiyat/limit iskeleti BOZULMADI** — yalnız sunum.
+  Yüzeyler: /pricing+anasayfa (zaten) · membership üyelik sayfası (features_for_plan) ·
+  /teacher/plan + admin kurum (API plan_features[code], yerel fallback). plans.py
+  features_included artık yalnız dead Jinja. Smoke pricing 8 + membership 19. CANLI.
+- **Vitrin + akıllı paket içeriği (A1+A2+B) TAMAMLANDI.** Kalan opsiyonel: AI
+  prompt ton ayarı (kullanıcı A2 çıktısını görünce) + commercial_weight'i landing
+  skoruna besleme. [[project-revenue-panel-v2-roadmap]]
 
 ## Notlar
 
