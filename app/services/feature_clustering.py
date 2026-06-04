@@ -20,6 +20,7 @@ from app.models import FeatureCard
 from app.models.feature_card import FeatureStatus
 from app.services import feature_catalog as fc
 from app.services import gemini
+from app.services import mockup_registry
 from app.services.ai_book_template import AIInvalidResponse
 
 _VALID_DOMAINS = {"lgs", "yks", "kurumsal", "veli", "genel", "mobil"}
@@ -68,13 +69,26 @@ YALNIZCA şu JSON'u döndür (başka metin yok):
   "target_roles": ["teacher" veya "institution_admin" veya "parent" veya "student"],
   "commercial_weight": 1-5 arası tam sayı (satışa/pazarlamaya katkı; en güçlü=5),
   "benefits": ["3-5 somut fayda maddesi, koça/veliye değer anlatan"],
+  "mockup": "temayı en iyi canlandıran görsel anahtarı (aşağıdaki listeden)",
   "source_slugs": ["bu temaya giren aday slug'ları"]
 }]}
+
+GÖRSEL (mockup) ANAHTARLARI — temanın içeriğine EN UYGUN olanı seç:
+- "ai_assistant": yapay zeka / öneri / içgörü / otomatik not temaları
+- "whatsapp_chat": veli iletişimi / WhatsApp / bildirim / mesaj temaları
+- "exam_trend": deneme / net / akademik sonuç / sınav takibi temaları
+- "gamification": motivasyon / odaklanma / rozet / oyunlaştırma / seri temaları
+- "daily_schedule": program / planlama / günlük görev temaları
+- "books_progress": kitap / soru bankası / kaynak ilerleme temaları
+- "fsrs_rating": aralıklı tekrar / kalıcı öğrenme / hatırlama temaları
+- "burnout_gauge": risk / tükenmişlik / erken uyarı temaları
+- "generic": yukarıdakilerden hiçbiri uymuyorsa
 
 KURALLAR:
 - Her aday en fazla BİR temaya girsin.
 - benefits somut + fayda-odaklı olsun (örn. "Kopan öğrenciyi sen fark etmeden \
 sistem yakalar", "Veliye otomatik haftalık karne gider").
+- mockup'ı temanın ANLAMINA göre seç (uydurma; en yakın olanı).
 - UYDURMA özellik ekleme; yalnız aşağıdaki adaylardan türet.
 - domain ve target_roles'u içeriğe göre uygun seç (koç özelliği→teacher, kurum→\
 institution_admin, veli→parent).
@@ -144,6 +158,9 @@ def cluster_and_draft(db: Session, *, actor_id: int | None, limit: int = 70) -> 
         domain = t.get("domain") if t.get("domain") in _VALID_DOMAINS else "genel"
         cw = t.get("commercial_weight")
         prio = int(cw) if isinstance(cw, (int, float)) and 1 <= cw <= 5 else 3
+        # AI'ın seçtiği görsel; geçersizse generic'e düş.
+        mk = t.get("mockup")
+        mockup_type = mk if mk in mockup_registry.MOCKUP_TEMPLATES else "generic"
         slug = f"tema-{_slugify(title)}-{secrets.token_hex(2)}"
         try:
             fc.create(
@@ -157,7 +174,7 @@ def cluster_and_draft(db: Session, *, actor_id: int | None, limit: int = 70) -> 
                 domain=domain,
                 target_roles=roles,
                 benefits=benefits,
-                mockup_type="generic",
+                mockup_type=mockup_type,
                 status=FeatureStatus.DRAFT.value,
                 strategic_priority=prio,
             )

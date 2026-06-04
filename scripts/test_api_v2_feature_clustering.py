@@ -4,7 +4,8 @@ Gemini monkeypatch ile (gerçek çağrı yok):
   1. keşif adayları (kesif-mig-*) DRAFT oluştur
   2. teacher → 403
   3. süper admin ai-cluster → 200 + themes_created + candidates_grouped
-  4. üretilen temalı kart(lar): slug tema-*, DRAFT, mockup_type=generic, benefits dolu
+  4. üretilen temalı kart(lar): slug tema-*, DRAFT, benefits dolu
+     4b. AI'ın seçtiği geçerli mockup aynen; geçersiz mockup → generic fallback
   5. gruplanan kaynak adaylar manual_hide=True (kuyruktan çıktı)
   6. tekrar çağır → gruplanacak aday yok (0 tema)
 """
@@ -109,6 +110,7 @@ def main() -> int:
                 "domain": "genel", "target_roles": ["teacher"],
                 "commercial_weight": 5,
                 "benefits": ["Toplu duyuru", "Hazır şablonlar", "Tek tık gönderim"],
+                "mockup": "whatsapp_chat",  # geçerli → aynen kullanılır
                 "source_slugs": [cand[0], cand[1]],
             },
             {
@@ -118,6 +120,7 @@ def main() -> int:
                 "domain": "genel", "target_roles": ["teacher"],
                 "commercial_weight": 4,
                 "benefits": ["Seans özeti", "Gündem önerisi"],
+                "mockup": "uydurma_gecersiz",  # geçersiz → generic'e düşmeli
                 "source_slugs": [cand[2]],
             },
         ]
@@ -141,11 +144,18 @@ def main() -> int:
             themed = db.query(FeatureCard).filter(
                 FeatureCard.slug.like("tema-%"),
                 FeatureCard.created_by == ctx["admin"]).all()
-            check("4. temalı kart üretildi (DRAFT + generic mockup + benefits)",
+            by_title = {c.title: c for c in themed}
+            check("4. temalı kart üretildi (DRAFT + benefits dolu)",
                   len(themed) == 2 and all(
-                      c.status == "draft" and c.mockup_type == "generic"
-                      and len(c.benefits or []) > 0 for c in themed),
+                      c.status == "draft" and len(c.benefits or []) > 0 for c in themed),
                   f"{[(c.slug, c.status, c.mockup_type, len(c.benefits or [])) for c in themed]}")
+            # 4b: AI'ın seçtiği geçerli mockup aynen; geçersiz → generic fallback
+            wa = by_title.get("WhatsApp ile Hızlı İletişim")
+            ai = by_title.get("Yapay Zeka Koçluk Asistanı")
+            check("4b. geçerli mockup aynen (whatsapp_chat) · geçersiz → generic",
+                  wa is not None and wa.mockup_type == "whatsapp_chat"
+                  and ai is not None and ai.mockup_type == "generic",
+                  f"wa={getattr(wa, 'mockup_type', None)} ai={getattr(ai, 'mockup_type', None)}")
 
             hidden = db.query(FeatureCard).filter(
                 FeatureCard.slug.in_(cand), FeatureCard.manual_hide.is_(True)).count()

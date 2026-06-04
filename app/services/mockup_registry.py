@@ -71,13 +71,35 @@ MOCKUP_TEMPLATES: dict[str, MockupTemplate] = {
         template_path="landing/mockups/whatsapp_chat.html",
         feature_card_slug="veli-kanali",
     ),
-    # Genel/şablonsuz kart — bespoke görsel gerektirmeden landing'e çıkar. Temalı/
-    # AI-gruplu kartlar varsayılan bunu kullanır (her özelliğe özel mockup yapma
-    # darboğazını kaldırır). Next.js GenericShowcase render eder.
+    # Temalı/AI kartlar için inandırıcı mini-UI'lar (özelliği canlandırır). AI
+    # gruplama her temaya en uygun olanı seçer; admin formdan değiştirebilir.
+    "gamification": MockupTemplate(
+        key="gamification",
+        label="Motivasyon / Oyunlaştırma",
+        description="Seri + seviye barı + rozetler + puan (motivasyon/odaklanma temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "ai_assistant": MockupTemplate(
+        key="ai_assistant",
+        label="Yapay Zeka Asistanı",
+        description="AI öneri kartı / 'bugün şunu konuş' baloncuğu (yapay zekâ temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "exam_trend": MockupTemplate(
+        key="exam_trend",
+        label="Deneme / Net Gelişimi",
+        description="Net trend grafiği + son deneme skoru (deneme/akademik takip temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    # Genel/şablonsuz kart — bespoke görsel gerektirmeden landing'e çıkar. AI hiçbir
+    # özel mockup'a karar veremezse fallback. Next.js GenericShowcase render eder.
     "generic": MockupTemplate(
         key="generic",
         label="Genel Vitrin Kartı (şablonsuz)",
-        description="Marka temalı genel görsel — bespoke mockup gerektirmez; temalı/AI kartlar için",
+        description="Marka temalı genel görsel — uygun özel mockup yoksa fallback",
         template_path="landing/mockups/generic.html",
         feature_card_slug="",
     ),

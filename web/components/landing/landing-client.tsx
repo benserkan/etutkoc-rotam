@@ -6,8 +6,10 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
+  Award,
   BarChart3,
   BookOpen,
+  Bot,
   BrainCircuit,
   CalendarDays,
   Check,
@@ -30,6 +32,7 @@ import {
   ShieldCheck,
   Sparkles,
   Target,
+  TrendingUp,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -445,6 +448,9 @@ const MOCKUP_ICON: Record<string, LucideIcon> = {
   burnout_gauge: Gauge,
   books_progress: BookOpen,
   whatsapp_chat: MessageSquareText,
+  gamification: Award,
+  ai_assistant: Bot,
+  exam_trend: TrendingUp,
 };
 
 /** Benefit metninden baştaki emoji/sembolleri temizler (DB verisi emoji ile geliyor). */

@@ -2,7 +2,9 @@
 
 import * as React from "react";
 import {
+  Award,
   BookOpen,
+  Bot,
   Calculator,
   CheckCircle2,
   FlaskConical,
@@ -12,7 +14,9 @@ import {
   Moon,
   Flame,
   Sparkles,
+  Star,
   TrendingUp,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -225,12 +229,100 @@ function GenericShowcase() {
   );
 }
 
+/** Motivasyon / oyunlaştırma — seri + seviye + rozetler + puan. */
+function Gamification() {
+  const badges = [
+    { icon: Flame, label: "7 günlük seri", tone: "text-amber-600 bg-amber-50" },
+    { icon: Star, label: "Hız ustası", tone: "text-violet-600 bg-violet-50" },
+    { icon: Zap, label: "Odak", tone: "text-cyan-700 bg-cyan-50" },
+  ];
+  return (
+    <Panel>
+      <div className="flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-800">
+          <Award className="size-4 text-amber-500" aria-hidden /> Seviye 4
+        </span>
+        <span className="text-[11px] font-semibold text-amber-600">+120 puan bugün</span>
+      </div>
+      <div className="mt-2 h-2.5 w-full overflow-hidden rounded-full bg-muted">
+        <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-amber-400 to-cyan-500" />
+      </div>
+      <div className="mt-3 flex flex-wrap gap-1.5">
+        {badges.map((b) => {
+          const Icon = b.icon;
+          return (
+            <span key={b.label} className={cn("inline-flex items-center gap-1 rounded-full px-2 py-1 text-[11px] font-medium", b.tone)}>
+              <Icon className="size-3" aria-hidden /> {b.label}
+            </span>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
+/** Yapay zeka asistanı — "bugün şunu konuş" öneri baloncuğu. */
+function AiAssistant() {
+  return (
+    <Panel>
+      <div className="flex items-center gap-2">
+        <span className="inline-flex size-7 items-center justify-center rounded-lg bg-violet-600 text-white">
+          <Bot className="size-4" aria-hidden />
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Yapay Zeka Önerisi
+        </span>
+      </div>
+      <div className="mt-3 rounded-2xl rounded-tl-sm bg-violet-50 p-3 text-[12px] leading-relaxed text-violet-900">
+        <b>Bugün Elif ile şunu konuş:</b> matematikte son 3 denemede net düştü;
+        önce eksik konuyu birlikte belirleyin.
+      </div>
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        <span className="rounded-full bg-cyan-50 px-2 py-1 text-[11px] text-cyan-700">Gündem hazır</span>
+        <span className="rounded-full bg-emerald-50 px-2 py-1 text-[11px] text-emerald-700">Sesle not</span>
+      </div>
+    </Panel>
+  );
+}
+
+/** Deneme / net gelişimi — mini bar grafiği + son deneme skoru. */
+function ExamTrend() {
+  const bars = [40, 52, 48, 63, 71, 78];
+  return (
+    <Panel>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Net Gelişimi
+        </span>
+        <span className="inline-flex items-center gap-1 text-xs font-semibold text-emerald-600">
+          <TrendingUp className="size-3.5" aria-hidden /> +6 net
+        </span>
+      </div>
+      <div className="mt-3 flex h-20 items-end gap-1.5">
+        {bars.map((h, i) => (
+          <div
+            key={i}
+            className={cn("flex-1 rounded-t", i === bars.length - 1 ? "bg-cyan-600" : "bg-cyan-200")}
+            style={{ height: `${h}%` }}
+          />
+        ))}
+      </div>
+      <p className="mt-2 text-[12px] text-slate-700">
+        Son deneme: <b className="text-cyan-800">78 net</b>
+      </p>
+    </Panel>
+  );
+}
+
 const MAP: Record<string, React.ComponentType> = {
   daily_schedule: DailySchedule,
   fsrs_rating: FsrsRating,
   burnout_gauge: BurnoutGauge,
   books_progress: BooksProgress,
   whatsapp_chat: WhatsappChat,
+  gamification: Gamification,
+  ai_assistant: AiAssistant,
+  exam_trend: ExamTrend,
   generic: GenericShowcase,
 };
 
