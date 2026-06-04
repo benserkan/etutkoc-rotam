@@ -1165,6 +1165,14 @@ class DiscoveryScanResult(BaseModel):
     candidates: int
 
 
+class AiClusterResult(BaseModel):
+    """POST /feature-catalog/discovery-queue/ai-cluster — AI temalı gruplama sonucu."""
+    message: str
+    themes_created: int
+    candidates_grouped: int
+    theme_titles: list[str] = []
+
+
 # ---------------------------- A/B deneyler ----------------------------
 
 

@@ -71,6 +71,16 @@ MOCKUP_TEMPLATES: dict[str, MockupTemplate] = {
         template_path="landing/mockups/whatsapp_chat.html",
         feature_card_slug="veli-kanali",
     ),
+    # Genel/şablonsuz kart — bespoke görsel gerektirmeden landing'e çıkar. Temalı/
+    # AI-gruplu kartlar varsayılan bunu kullanır (her özelliğe özel mockup yapma
+    # darboğazını kaldırır). Next.js GenericShowcase render eder.
+    "generic": MockupTemplate(
+        key="generic",
+        label="Genel Vitrin Kartı (şablonsuz)",
+        description="Marka temalı genel görsel — bespoke mockup gerektirmez; temalı/AI kartlar için",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
 }
 
 

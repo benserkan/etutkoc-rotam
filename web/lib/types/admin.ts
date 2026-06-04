@@ -1019,6 +1019,13 @@ export interface DiscoveryScanResult {
   candidates: number;
 }
 
+export interface AiClusterResult {
+  message: string;
+  themes_created: number;
+  candidates_grouped: number;
+  theme_titles: string[];
+}
+
 export interface ExperimentVariantBrief {
   slug: string;
   label: string;

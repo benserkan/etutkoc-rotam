@@ -23,6 +23,7 @@ import type {
   AnnouncementMutationResult,
   DiscoveryBulkBody,
   DiscoveryMutationResult,
+  AiClusterResult,
   DiscoveryScanResult,
   ExperimentCreateBody,
   ExperimentMutationResult,
@@ -1140,6 +1141,32 @@ export function useScanDiscovery() {
     onError: (e) => {
       toast.error(errorTitle(e, "Tarama başarısız"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+/** "AI ile grupla" — keşif adaylarını pazarlama temasına gruplayıp temalı kart üretir. */
+export function useAiClusterDiscovery() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<AiClusterResult>, Error, void>({
+    mutationFn: () =>
+      api<MutationResponse<AiClusterResult>>(
+        "/api/v2/admin/feature-catalog/discovery-queue/ai-cluster",
+        { method: "POST" },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(
+        res.data.themes_created > 0
+          ? `${res.data.themes_created} temalı kart üretildi`
+          : "Gruplanacak aday yok",
+        { description: res.data.message },
+      );
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "AI gruplama başarısız"), {
+        description: errorMessage(e, "Yapay zeka servisi yanıt vermedi."),
       });
     },
   });

@@ -11,6 +11,7 @@ import {
   MessageCircle,
   Moon,
   Flame,
+  Sparkles,
   TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -182,12 +183,55 @@ function WhatsappChat() {
   );
 }
 
+/**
+ * Genel/şablonsuz kart görseli — bespoke mockup gerektirmeyen (temalı/AI-gruplu)
+ * kartlar için marka temalı panel. Kart gövdesi zaten fayda listesini gösterir;
+ * bu sağ-yan görsel "ürün ekranı" hissi verir.
+ */
+function GenericShowcase() {
+  const rows = [
+    { icon: Sparkles, w: "w-[88%]", tone: "text-cyan-700 bg-cyan-50" },
+    { icon: TrendingUp, w: "w-[70%]", tone: "text-emerald-600 bg-emerald-50" },
+    { icon: CheckCircle2, w: "w-[78%]", tone: "text-violet-600 bg-violet-50" },
+    { icon: MessageCircle, w: "w-[62%]", tone: "text-amber-600 bg-amber-50" },
+  ];
+  return (
+    <Panel>
+      <div className="flex items-center gap-2">
+        <span className="inline-flex size-7 items-center justify-center rounded-lg bg-cyan-600 text-white">
+          <Sparkles className="size-4" aria-hidden />
+        </span>
+        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          Öne çıkan özellikler
+        </span>
+      </div>
+      <div className="mt-3 space-y-2.5">
+        {rows.map((r, i) => {
+          const Icon = r.icon;
+          return (
+            <div key={i} className="flex items-center gap-2">
+              <span className={cn("inline-flex size-6 items-center justify-center rounded-md", r.tone)}>
+                <Icon className="size-3.5" aria-hidden />
+              </span>
+              <span className="flex-1">
+                <span className={cn("block h-2 rounded-full bg-foreground/10", r.w)} />
+              </span>
+              <CheckCircle2 className="size-4 text-emerald-500" aria-hidden />
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
+
 const MAP: Record<string, React.ComponentType> = {
   daily_schedule: DailySchedule,
   fsrs_rating: FsrsRating,
   burnout_gauge: BurnoutGauge,
   books_progress: BooksProgress,
   whatsapp_chat: WhatsappChat,
+  generic: GenericShowcase,
 };
 
 export function MockupByType({ type }: { type: string | null }) {

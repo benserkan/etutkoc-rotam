@@ -138,6 +138,7 @@ from app.routes.api_v2.schemas.admin import (
     UsageMutationResult,
     UsageTotals,
     DiscoveryBulkBody,
+    AiClusterResult,
     DiscoveryScanResult,
     DiscoveryCardItem,
     DiscoveryMutationResult,
@@ -4357,6 +4358,56 @@ def admin_feature_catalog_discovery_scan_v2(
     return MutationResponse[DiscoveryScanResult](
         data=DiscoveryScanResult(
             message=msg, created=created, skipped=skipped, candidates=candidates,
+        ),
+        invalidate=_fc_invalidate(),
+    )
+
+
+@router.post(
+    "/feature-catalog/discovery-queue/ai-cluster",
+    response_model=MutationResponse[AiClusterResult],
+)
+def admin_feature_catalog_ai_cluster_v2(
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """'AI ile grupla' — keşif kuyruğundaki ham adayları Gemini ile pazarlama
+    temasına gruplayıp DRAFT temalı kart üretir (generic mockup, fayda listesi
+    dolu). Kaynak adaylar kuyruktan gizlenir. AI hatasında 502/422."""
+    from app.services import feature_clustering as fcl
+    from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
+
+    try:
+        res = fcl.cluster_and_draft(db, actor_id=user.id)
+    except AIInvalidResponse as e:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "ai", "code": "ai_invalid", "message": f"AI yanıtı işlenemedi: {e}"},
+        )
+    except AIServiceUnavailable as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"error": "ai", "code": "ai_unavailable",
+                    "message": f"Yapay zeka servisi şu an kullanılamıyor: {e}"},
+        )
+    log_action(
+        db,
+        action=AuditAction.FEATURE_CARD_AUTO_DISCOVERED,
+        actor_id=user.id,
+        target_type="discovery_cluster",
+        target_id=None,
+        request=request,
+        details={"ai_cluster": True, "themes_created": res["themes_created"],
+                 "candidates_grouped": res["candidates_grouped"]},
+        autocommit=True,
+    )
+    return MutationResponse[AiClusterResult](
+        data=AiClusterResult(
+            message=res["message"],
+            themes_created=res["themes_created"],
+            candidates_grouped=res["candidates_grouped"],
+            theme_titles=res["theme_titles"],
         ),
         invalidate=_fc_invalidate(),
     )

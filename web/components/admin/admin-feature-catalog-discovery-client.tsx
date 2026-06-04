@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Bot, GitCommitHorizontal, FileCode2, Loader2, RefreshCw } from "lucide-react";
+import { Bot, GitCommitHorizontal, FileCode2, Loader2, RefreshCw, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { adminKeys, getAdminFeatureCatalogDiscovery } from "@/lib/api/admin";
 import {
+  useAiClusterDiscovery,
   useBulkDiscovery,
   useRejectDiscoveryCard,
   useScanDiscovery,
@@ -51,6 +52,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
   const bulkMut = useBulkDiscovery();
   const rejectMut = useRejectDiscoveryCard();
   const scanMut = useScanDiscovery();
+  const clusterMut = useAiClusterDiscovery();
 
   function toggle(id: number) {
     setSelected((prev) => {
@@ -110,19 +112,40 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
             anında kontrol için &ldquo;Şimdi tara&rdquo;.
           </p>
         </div>
-        <Button
-          onClick={() => scanMut.mutate()}
-          disabled={scanMut.isPending}
-          className="shrink-0"
-        >
-          {scanMut.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <RefreshCw className="size-4" aria-hidden />
-          )}
-          {scanMut.isPending ? "Taranıyor…" : "Şimdi tara"}
-        </Button>
+        <div className="flex shrink-0 flex-col gap-2 sm:flex-row">
+          <Button
+            variant="outline"
+            onClick={() => scanMut.mutate()}
+            disabled={scanMut.isPending}
+          >
+            {scanMut.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <RefreshCw className="size-4" aria-hidden />
+            )}
+            {scanMut.isPending ? "Taranıyor…" : "Şimdi tara"}
+          </Button>
+          <Button
+            onClick={() => clusterMut.mutate()}
+            disabled={clusterMut.isPending}
+          >
+            {clusterMut.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Sparkles className="size-4" aria-hidden />
+            )}
+            {clusterMut.isPending ? "Gruplanıyor…" : "AI ile grupla & temalı kart üret"}
+          </Button>
+        </div>
       </header>
+
+      <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-3 text-sm text-indigo-900 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-100">
+        <b>AI ile grupla:</b> Kuyruktaki ham adayları benzer alanlara göre (WhatsApp,
+        yapay zeka, veli, akademik takip…) gruplayıp her temaya çarpıcı pazarlama
+        kartı üretir → adaylar tek tek değil, zengin temalı kartlar olarak yayına
+        hazırlanır. Üretilen taslakları aşağıda/Vitrin Kartları&apos;nda gözden
+        geçirip yayınlayın.
+      </div>
 
       {/* Sayım rozetleri */}
       <div className="grid grid-cols-3 gap-3">
