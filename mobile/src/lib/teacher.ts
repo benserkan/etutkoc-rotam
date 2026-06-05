@@ -1,4 +1,5 @@
 import { apiRequest } from "./api";
+import type { ExamRow, ExamSummary } from "./student";
 
 export type WarningLevel = "red" | "amber" | "green";
 
@@ -79,3 +80,85 @@ export function getTeacherStudents(q?: string): Promise<TeacherStudentListRespon
 export function getTeacherStudent(id: number): Promise<TeacherStudentDetail> {
   return apiRequest<TeacherStudentDetail>(`/api/v2/teacher/students/${id}`);
 }
+
+// --- Denemeler (koç sonuç girer) ---
+export interface ExamSectionOption {
+  value: string;
+  label: string;
+}
+export interface TeacherExamsResponse {
+  summary: ExamSummary;
+  rows: ExamRow[];
+  section_options: ExamSectionOption[];
+}
+export interface TeacherExamCreateBody {
+  title: string;
+  exam_date: string;
+  section: string;
+  total_correct: number;
+  total_wrong: number;
+  total_blank: number;
+  note?: string | null;
+}
+export function getTeacherStudentExams(id: number): Promise<TeacherExamsResponse> {
+  return apiRequest<TeacherExamsResponse>(`/api/v2/teacher/students/${id}/exams`);
+}
+export function createTeacherExam(id: number, body: TeacherExamCreateBody): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/students/${id}/exams`, { method: "POST", body });
+}
+export function deleteTeacherExam(examId: number): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/exams/${examId}`, { method: "DELETE" });
+}
+
+// --- Seanslar (koç kaydeder) ---
+export interface CoachingSessionRow {
+  id: number;
+  session_date: string;
+  status: string;
+  status_label: string;
+  duration_min: number | null;
+  channel: string | null;
+  channel_label: string | null;
+  agenda: string;
+  next_change: string | null;
+  coach_note: string | null;
+  mood: number | null;
+  tags: string[];
+  capture_source: string;
+  created_at: string;
+}
+export interface CoachingSessionSummary {
+  total: number;
+  done_count: number;
+  postponed_count: number;
+  cancelled_count: number;
+  no_show_count: number;
+  last_session_date: string | null;
+}
+export interface StudentSessionListResponse {
+  summary: CoachingSessionSummary;
+  rows: CoachingSessionRow[];
+}
+export interface SessionCreateBody {
+  session_date: string;
+  status?: string;
+  duration_min?: number | null;
+  channel?: string | null;
+  agenda: string;
+  next_change?: string | null;
+  coach_note?: string | null;
+  mood?: number | null;
+  tags?: string[];
+  capture_source?: string | null;
+}
+export function getTeacherStudentSessions(id: number): Promise<StudentSessionListResponse> {
+  return apiRequest<StudentSessionListResponse>(`/api/v2/teacher/students/${id}/sessions`);
+}
+export function createTeacherSession(id: number, body: SessionCreateBody): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/students/${id}/sessions`, { method: "POST", body });
+}
+
+export const teacherDetailKeys = {
+  exams: (id: number) => ["teacher", "student", id, "exams"] as const,
+  sessions: (id: number) => ["teacher", "student", id, "sessions"] as const,
+};

@@ -98,11 +98,12 @@ export function StudentDetailView({ data }: { data: TeacherStudentDetail }) {
         )}
       </View>
 
-      {/* Sıradaki adımlar bilgisi */}
+      {/* Diğer işlemler */}
       <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-4">
-        <Text className="text-sm font-semibold text-slate-800">Yakında bu ekranda</Text>
+        <Text className="text-sm font-semibold text-slate-800">Diğer işlemler</Text>
         <Text className="mt-1 text-xs leading-relaxed text-slate-500">
-          Analitik, denemeler, seanslar, kitaplar ve günlük/haftalık program düzenleme sırayla ekleniyor.
+          Deneme sonucu ve seans kaydı için yukarıdaki sekmeleri kullan. Kütüphane, kitap atama ve
+          günlük/haftalık program düzenleme web panelinde.
         </Text>
       </View>
     </ScrollView>
