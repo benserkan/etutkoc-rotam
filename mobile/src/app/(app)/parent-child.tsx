@@ -48,7 +48,7 @@ export default function ParentChildRoute() {
       ) : (
         <ParentChildDetailView
           data={q.data}
-          onOpenWeek={() => router.push({ pathname: "/parent/child-week", params: { id: String(childId) } })}
+          onOpenWeek={() => router.push({ pathname: "/parent-child-week", params: { id: String(childId) } })}
         />
       )}
     </SafeAreaView>

@@ -19,6 +19,7 @@ export default function AppHome() {
   // Rol-bazlı yönlendirme. Koç/kurum sırayla ekleniyor; o ana dek bilgilendirme.
   if (user?.role === "student") return <Redirect href="/(app)/student/today" />;
   if (user?.role === "parent") return <Redirect href="/(app)/parent/dashboard" />;
+  if (user?.role === "teacher") return <Redirect href="/(app)/teacher/students" />;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
