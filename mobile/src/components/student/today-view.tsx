@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { DayNoteCard } from "@/components/student/day-note-card";
 import type { StudentDayResponse, StudentTask } from "@/lib/student";
 
 const TR_DAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
@@ -124,6 +125,9 @@ export function TodayView({
           </Text>
         ) : null}
       </View>
+
+      {/* Günün notu (autosave) */}
+      <DayNoteCard date={day.date} initial={day.day_note ?? ""} />
 
       {/* Görevler */}
       {day.tasks.length === 0 ? (

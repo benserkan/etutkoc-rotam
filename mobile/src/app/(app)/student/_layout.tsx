@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
-/** Öğrenci alt-sekme kabuğu: Bugün · Hafta · Denemeler · Profil. */
+/** Öğrenci alt-sekme kabuğu: Bugün · Hafta · Denemeler · Gelişim · Profil. */
 export default function StudentTabsLayout() {
   return (
     <Tabs
@@ -32,6 +32,13 @@ export default function StudentTabsLayout() {
         options={{
           title: "Denemeler",
           tabBarIcon: ({ color, size }) => <Ionicons name="bar-chart-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="gelisim"
+        options={{
+          title: "Gelişim",
+          tabBarIcon: ({ color, size }) => <Ionicons name="trending-up-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen

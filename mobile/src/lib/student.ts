@@ -290,3 +290,158 @@ export function setItemCompleted(
     body,
   });
 }
+
+// ====== Günün notu (autosave) ======
+export function saveDayNote(date: string, body: string): Promise<unknown> {
+  return apiRequest(`/api/v2/student/day-note`, { method: "PUT", body: { date, body } });
+}
+
+// ====== Kitaplarım (ilerleme) ======
+export type BookType = "soru_bankasi" | "konu_anlatim" | "deneme" | "diger" | string;
+export interface ResourceBookItem {
+  student_book_id: number;
+  book_id: number;
+  book_name: string;
+  book_type: BookType;
+  total_tests: number;
+  reserved_tests: number;
+  completed_tests: number;
+  remaining_tests: number;
+}
+export interface ResourceSubjectGroup {
+  subject_id: number;
+  subject_name: string;
+  total_tests: number;
+  reserved_tests: number;
+  completed_tests: number;
+  remaining_tests: number;
+  books: ResourceBookItem[];
+}
+export interface StudentBooksProgress {
+  total_tests: number;
+  reserved_tests: number;
+  completed_tests: number;
+  remaining_tests: number;
+  subjects: ResourceSubjectGroup[];
+}
+export function getStudentBooksProgress(): Promise<StudentBooksProgress> {
+  return apiRequest<StudentBooksProgress>("/api/v2/student/books");
+}
+
+// ====== Çalışma DNA ======
+export type DnaChronotype = "morning" | "afternoon" | "evening" | "night" | "unknown";
+export interface DnaResponse {
+  window_days: number;
+  has_enough_data: boolean;
+  gorev_total: number;
+  gorev_done: number;
+  test_planned: number;
+  test_completed: number;
+  completion_rate: number;
+  chronotype: DnaChronotype;
+  peak_hour: number | null;
+  peak_day_idx: number | null;
+  peak_day_name: string | null;
+  heatmap: number[][]; // 7×24
+  morning_count: number;
+  afternoon_count: number;
+  evening_count: number;
+  night_count: number;
+  weekend_count: number;
+  weekday_count: number;
+}
+export function getStudentDna(): Promise<DnaResponse> {
+  return apiRequest<DnaResponse>("/api/v2/student/dna");
+}
+
+// ====== Odak (Pomodoro) ======
+export interface FocusSession {
+  id: number;
+  kind: string;
+  planned_minutes: number;
+  actual_minutes: number;
+  interrupted: boolean;
+  label: string | null;
+  is_active: boolean;
+  elapsed_seconds: number;
+}
+export interface FocusTodaySummary {
+  work_sessions: number;
+  work_minutes: number;
+  break_minutes: number;
+  total_minutes: number;
+  interrupted_count: number;
+}
+export interface FocusResponse {
+  active_session: FocusSession | null;
+  today: FocusTodaySummary;
+  recent_sessions: FocusSession[];
+  streak_days: number;
+  points: number;
+}
+export function getStudentFocus(): Promise<FocusResponse> {
+  return apiRequest<FocusResponse>("/api/v2/student/focus");
+}
+
+// ====== Tekrar (aralıklı tekrar / FSRS) ======
+export interface ReviewBreakdown {
+  new: number;
+  learning: number;
+  review: number;
+  relearning: number;
+  due_now: number;
+  total: number;
+}
+export interface ReviewCardItem {
+  id: number;
+  topic_id: number;
+  topic_name: string;
+  subject_name: string | null;
+  state: string;
+  review_count: number;
+}
+export interface ReviewResponse {
+  due_cards: ReviewCardItem[];
+  breakdown: ReviewBreakdown;
+}
+export function getStudentReview(): Promise<ReviewResponse> {
+  return apiRequest<ReviewResponse>("/api/v2/student/review");
+}
+
+// ====== Hedefler ======
+export interface GoalItem {
+  id: number;
+  kind: string;
+  status: string;
+  title: string;
+  description: string | null;
+  target_value: number | null;
+  current_value: number | null;
+  unit: string | null;
+  target_date: string | null;
+  is_auto_generated: boolean;
+  progress_pct: number | null;
+}
+export interface GoalSummary {
+  total: number;
+  active: number;
+  achieved: number;
+  abandoned: number;
+  overall_pct: number | null;
+  next_target_date: string | null;
+}
+export interface GoalListResponse {
+  items: GoalItem[];
+  summary: GoalSummary;
+}
+export function getStudentGoals(): Promise<GoalListResponse> {
+  return apiRequest<GoalListResponse>("/api/v2/student/goals");
+}
+
+export const studentDevKeys = {
+  books: ["student", "books"] as const,
+  dna: ["student", "dna"] as const,
+  focus: ["student", "focus"] as const,
+  review: ["student", "review"] as const,
+  goals: ["student", "goals"] as const,
+};
