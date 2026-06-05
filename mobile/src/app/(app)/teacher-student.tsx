@@ -6,14 +6,16 @@ import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-nati
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ExamsTab } from "@/components/teacher/exams-tab";
+import { ProgramTab } from "@/components/teacher/program-tab";
 import { SessionsTab } from "@/components/teacher/sessions-tab";
 import { StudentDetailView } from "@/components/teacher/student-detail-view";
 import { getTeacherStudent, teacherKeys } from "@/lib/teacher";
 import { cn } from "@/lib/utils";
 
-type Tab = "genel" | "denemeler" | "seanslar";
+type Tab = "genel" | "program" | "denemeler" | "seanslar";
 const TABS: { key: Tab; label: string }[] = [
   { key: "genel", label: "Genel" },
+  { key: "program", label: "Program" },
   { key: "denemeler", label: "Denemeler" },
   { key: "seanslar", label: "Seanslar" },
 ];
@@ -73,6 +75,8 @@ export default function TeacherStudentRoute() {
         </View>
       ) : tab === "genel" ? (
         <StudentDetailView data={q.data} />
+      ) : tab === "program" ? (
+        <ProgramTab studentId={studentId} />
       ) : tab === "denemeler" ? (
         <ScrollView className="flex-1 bg-slate-50">
           <ExamsTab studentId={studentId} />

@@ -1,3 +1,5 @@
+import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -6,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 
 export default function TeacherProfileScreen() {
   const { user, signOut } = useAuth();
+  const isSolo = user?.institution_id == null;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
@@ -25,12 +28,28 @@ export default function TeacherProfileScreen() {
           </View>
         </View>
 
+        {isSolo ? (
+          <Pressable
+            onPress={() => router.push("/teacher-plan")}
+            className="flex-row items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
+          >
+            <View className="flex-row items-center gap-3">
+              <Ionicons name="diamond-outline" size={20} color="#0e7490" />
+              <View>
+                <Text className="text-[15px] font-medium text-slate-900">Paketim</Text>
+                <Text className="mt-0.5 text-xs text-slate-500">Plan, yapay zekâ kredisi, yükseltme</Text>
+              </View>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+          </Pressable>
+        ) : null}
+
         <Pressable
           onPress={() => void Linking.openURL("https://rotam.etutkoc.com/teacher/dashboard")}
           className="rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
         >
           <Text className="text-[15px] font-medium text-slate-900">Web paneli aç</Text>
-          <Text className="mt-0.5 text-xs text-slate-500">Kütüphane, program, AI ve daha fazlası (web)</Text>
+          <Text className="mt-0.5 text-xs text-slate-500">Kütüphane, kaynak, akademik yıl ve daha fazlası (web)</Text>
         </Pressable>
 
         <Pressable

@@ -60,11 +60,13 @@ function StudentRow({ s, onPress }: { s: TeacherStudentListItem; onPress: () => 
 export function StudentsListView({
   items,
   onOpenStudent,
+  onInvite,
   refreshing = false,
   onRefresh,
 }: {
   items: TeacherStudentListItem[];
   onOpenStudent: (id: number) => void;
+  onInvite?: () => void;
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
@@ -82,7 +84,18 @@ export function StudentsListView({
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
       <View className="px-4 pt-3 pb-1 gap-3">
-        <Text className="text-xl font-bold text-slate-900">Öğrencilerim</Text>
+        <View className="flex-row items-center justify-between">
+          <Text className="text-xl font-bold text-slate-900">Öğrencilerim</Text>
+          {onInvite ? (
+            <Pressable
+              onPress={onInvite}
+              className="flex-row items-center gap-1 rounded-full bg-brand-700 px-3 py-1.5 active:bg-brand-800"
+            >
+              <Ionicons name="person-add-outline" size={16} color="#fff" />
+              <Text className="text-sm font-semibold text-white">Davet</Text>
+            </Pressable>
+          ) : null}
+        </View>
         <View className="flex-row items-center gap-2 rounded-xl border border-slate-300 bg-white px-3 py-2.5">
           <Ionicons name="search" size={18} color="#94a3b8" />
           <TextInput
