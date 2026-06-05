@@ -36,7 +36,7 @@ export default function StudentGelisimPreview() {
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
       <View className="flex-1">
-        <DevHubView dna={DNA} focus={FOCUS} review={REVIEW} goals={GOALS} onOpenBooks={() => {}} />
+        <DevHubView dna={DNA} focus={FOCUS} review={REVIEW} goals={GOALS} onOpenBooks={() => {}} onOpenFocus={() => {}} onOpenReview={() => {}} onOpenGoals={() => {}} />
       </View>
     </SafeAreaView>
   );

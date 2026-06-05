@@ -49,6 +49,9 @@ export default function StudentGelisimScreen() {
           review={review.data!}
           goals={goals.data!}
           onOpenBooks={() => router.push("/student-books")}
+          onOpenFocus={() => router.push("/student-focus")}
+          onOpenReview={() => router.push("/student-review")}
+          onOpenGoals={() => router.push("/student-goals")}
           refreshing={refreshing}
           onRefresh={refetchAll}
         />

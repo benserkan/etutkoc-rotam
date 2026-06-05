@@ -445,3 +445,35 @@ export const studentDevKeys = {
   review: ["student", "review"] as const,
   goals: ["student", "goals"] as const,
 };
+
+// ====== Odak / Tekrar / Hedef — mutation'lar (mobilde yönetilebilir) ======
+export function startFocus(body: { planned_minutes: number; kind?: string; label?: string | null }): Promise<unknown> {
+  return apiRequest(`/api/v2/student/focus/start`, { method: "POST", body });
+}
+export function stopFocus(sessionId: number, body: { actual_minutes?: number | null; interrupted?: boolean }): Promise<unknown> {
+  return apiRequest(`/api/v2/student/focus/${sessionId}/stop`, { method: "POST", body });
+}
+export function cancelFocus(sessionId: number): Promise<unknown> {
+  return apiRequest(`/api/v2/student/focus/${sessionId}/cancel`, { method: "POST", body: {} });
+}
+export function rateReviewCard(cardId: number, rating: number): Promise<unknown> {
+  return apiRequest(`/api/v2/student/review/${cardId}/rate`, { method: "POST", body: { rating } });
+}
+export interface GoalCreateBody {
+  title: string;
+  kind?: "weekly" | "daily" | "custom" | "topic";
+  description?: string | null;
+  target_value?: number | null;
+  current_value?: number | null;
+  unit?: string | null;
+  target_date?: string | null;
+}
+export function createGoal(body: GoalCreateBody): Promise<unknown> {
+  return apiRequest(`/api/v2/student/goals`, { method: "POST", body });
+}
+export function updateGoalProgress(goalId: number, current_value: number): Promise<unknown> {
+  return apiRequest(`/api/v2/student/goals/${goalId}/progress`, { method: "POST", body: { current_value } });
+}
+export function toggleGoal(goalId: number, achieved: boolean): Promise<unknown> {
+  return apiRequest(`/api/v2/student/goals/${goalId}/toggle`, { method: "POST", body: { achieved } });
+}

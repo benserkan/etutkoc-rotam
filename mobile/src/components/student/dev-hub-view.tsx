@@ -49,12 +49,30 @@ function PeriodBar({ label, value, max }: { label: string; value: number; max: n
   );
 }
 
+function ActionButton({ label, icon, onPress, tone = "brand" }: { label: string; icon: keyof typeof Ionicons.glyphMap; onPress: () => void; tone?: "brand" | "amber" }) {
+  return (
+    <Pressable
+      onPress={onPress}
+      className={cn(
+        "mt-3 flex-row items-center justify-center gap-2 rounded-xl py-3 active:opacity-90",
+        tone === "amber" ? "bg-amber-500" : "bg-brand-700",
+      )}
+    >
+      <Ionicons name={icon} size={18} color="#fff" />
+      <Text className="text-[15px] font-semibold text-white">{label}</Text>
+    </Pressable>
+  );
+}
+
 export function DevHubView({
   dna,
   focus,
   review,
   goals,
   onOpenBooks,
+  onOpenFocus,
+  onOpenReview,
+  onOpenGoals,
   refreshing = false,
   onRefresh,
 }: {
@@ -63,6 +81,9 @@ export function DevHubView({
   review: ReviewResponse;
   goals: GoalListResponse;
   onOpenBooks: () => void;
+  onOpenFocus: () => void;
+  onOpenReview: () => void;
+  onOpenGoals: () => void;
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
@@ -142,6 +163,7 @@ export function DevHubView({
         ) : (
           <Text className="mt-2 text-sm text-slate-400">Aktif hedef yok.</Text>
         )}
+        <ActionButton label="Hedefleri yönet" icon="flag-outline" onPress={onOpenGoals} />
       </Section>
 
       {/* Odak */}
@@ -152,7 +174,7 @@ export function DevHubView({
           <View><Text className="text-xl font-extrabold text-slate-900">{focus.today.work_sessions}</Text><Text className="text-[11px] text-slate-400">oturum</Text></View>
           <View><Text className="text-xl font-extrabold text-amber-600">{focus.points}</Text><Text className="text-[11px] text-slate-400">puan</Text></View>
         </View>
-        <Text className="mt-2 text-xs text-slate-400">Odak sayacını web panelinden başlatabilirsin; burada özetini görürsün.</Text>
+        <ActionButton label="Odağa başla" icon="play" onPress={onOpenFocus} />
       </Section>
 
       {/* Tekrar */}
@@ -175,6 +197,11 @@ export function DevHubView({
             ))}
           </View>
         ) : null}
+        {review.breakdown.due_now > 0 ? (
+          <ActionButton label={`Tekrara başla (${review.breakdown.due_now})`} icon="repeat" onPress={onOpenReview} tone="amber" />
+        ) : (
+          <Text className="mt-3 text-center text-xs text-slate-400">Şu an tekrar zamanı gelen kart yok.</Text>
+        )}
       </Section>
     </ScrollView>
   );
