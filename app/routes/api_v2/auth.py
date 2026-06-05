@@ -721,6 +721,19 @@ def v2_logout(
         except Exception:
             logger.exception("v2 logout terminate_session fail")
 
+    # KRİTİK GÜVENLİK: Jinja SessionMiddleware oturumunu da temizle. BFF
+    # dependency'si (dependencies._resolve_user_v2) 3. kanal olarak `session`
+    # cookie'sini kabul ediyor (geçiş dönemi fallback'i). Impersonation bitince
+    # (/admin/impersonate/end) admin'in user_id'si bu session'a yazılıyor; yalnız
+    # BFF cookie'sini silmek YETMEZ — kalan session cookie ile dependency
+    # authenticate etmeye devam eder ve çıkıştan sonra /admin açık kalır
+    # (login de oturum görüp roleHome'a sıçratır). Session'ı boşaltınca
+    # SessionMiddleware `session` cookie'sini de Max-Age=0 ile siler.
+    try:
+        request.session.clear()
+    except Exception:
+        pass
+
     _clear_auth_cookies(response)
     return {"ok": True}
 
