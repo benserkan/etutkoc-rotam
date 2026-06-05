@@ -138,6 +138,16 @@ export default function LoginScreen() {
               {error ? <Text className="text-sm text-rose-600">{error}</Text> : null}
 
               <PrimaryButton label="Giriş yap" busy={busy} onPress={onSubmit} />
+
+              <View className="mt-1 flex-row items-center justify-center gap-1">
+                <Text className="text-sm text-slate-400">Koç musun, hesabın yok mu?</Text>
+                <Pressable
+                  onPress={() => void Linking.openURL("https://rotam.etutkoc.com/signup/teacher")}
+                  hitSlop={8}
+                >
+                  <Text className="text-sm font-semibold text-brand-700">14 gün ücretsiz dene</Text>
+                </Pressable>
+              </View>
             </View>
           )}
         </ScrollView>

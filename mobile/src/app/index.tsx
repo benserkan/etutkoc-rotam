@@ -13,5 +13,7 @@ export default function Index() {
       </View>
     );
   }
-  return <Redirect href={status === "authed" ? "/(app)" : "/login"} />;
+  // Giriş yapmamış kullanıcı → karşılama (tanıtım carousel). welcome ekranı
+  // "tanıtımı gördüm" bayrağına bakıp dönen kullanıcıyı doğrudan login'e yollar.
+  return <Redirect href={status === "authed" ? "/(app)" : "/welcome"} />;
 }
