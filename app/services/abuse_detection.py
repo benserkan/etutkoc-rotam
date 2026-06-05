@@ -52,6 +52,7 @@ KIND_MASS_INVITATION = "mass_invitation"
 KIND_MASS_NOTIFICATION = "mass_notification"
 KIND_MULTI_ACCOUNT = "multi_account_same_device"
 KIND_UNSUBSCRIBE_SPIKE = "unsubscribe_spike"
+KIND_SIGNUP_VELOCITY = "signup_velocity"
 
 
 def _now() -> datetime:
@@ -302,6 +303,51 @@ def detect_unsubscribe_spike(
     return hits
 
 
+def detect_signup_velocity(
+    db: Session, *, window_hours: int = 24, threshold: int | None = None
+) -> list[DetectionHit]:
+    """Aynı IP window_hours içinde threshold+ koç self-signup'ı yapmış mı?
+
+    USER_CREATE audit'leri (details self_signup=true) IP'ye göre gruplanır.
+    Çoklu-hesap çiftliği (#5) işareti — signup_guard hard-block'tan ayrı, süper
+    admin görünürlüğü için. IP'siz audit'ler hariç.
+    """
+    from app.services.signup_guard import SIGNUP_IP_FLAG_THRESHOLD
+    threshold = threshold or SIGNUP_IP_FLAG_THRESHOLD
+    now = _now()
+    cutoff = now - timedelta(hours=window_hours)
+    rows = (
+        db.query(
+            AuditLog.ip_address.label("ip"),
+            func.count(AuditLog.id).label("c"),
+        )
+        .filter(
+            AuditLog.action == AuditAction.USER_CREATE,
+            AuditLog.ip_address.isnot(None),
+            AuditLog.created_at >= cutoff,
+            AuditLog.details_json.like('%"self_signup": true%'),
+        )
+        .group_by(AuditLog.ip_address)
+        .having(func.count(AuditLog.id) >= threshold)
+        .all()
+    )
+    hits: list[DetectionHit] = []
+    for r in rows:
+        hits.append(
+            DetectionHit(
+                kind=KIND_SIGNUP_VELOCITY,
+                actor_user_id=None,
+                tenant_id=None,
+                count=int(r.c),
+                window_start=cutoff,
+                window_end=now,
+                details={"ip": r.ip, "threshold": threshold, "window_hours": window_hours},
+                severity="warn" if int(r.c) >= threshold + 2 else "info",
+            )
+        )
+    return hits
+
+
 # ---------------------------- Run-all + listing ----------------------------
 
 
@@ -315,6 +361,7 @@ def run_all(db: Session) -> dict:
         detect_mass_notification,
         detect_multi_account_same_device,
         detect_unsubscribe_spike,
+        detect_signup_velocity,
     ):
         try:
             hits = fn(db)

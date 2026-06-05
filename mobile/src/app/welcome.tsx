@@ -4,7 +4,6 @@ import { Redirect, router } from "expo-router";
 import {
   ActivityIndicator,
   Dimensions,
-  Linking,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Pressable,
@@ -20,7 +19,6 @@ import { storageGet, storageSet } from "@/lib/storage";
 import { cn } from "@/lib/utils";
 
 const SEEN_KEY = "etk_onboarding_seen";
-const SIGNUP_URL = "https://rotam.etutkoc.com/signup/teacher";
 
 type Slide = {
   icon: keyof typeof Ionicons.glyphMap;
@@ -96,8 +94,7 @@ export default function WelcomeScreen() {
   }
   async function goSignup() {
     await markSeen();
-    // Şimdilik web signup (Turnstile + aktivasyon orada); native signup sıradaki adım.
-    Linking.openURL(SIGNUP_URL).catch(() => router.replace("/login"));
+    router.replace("/signup");
   }
   function next() {
     if (index < SLIDES.length - 1) {

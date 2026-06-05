@@ -123,6 +123,9 @@ class SignupTeacherIn(BaseModel):
     # (solo_pro/solo_elite/solo_unlimited). Trial bitince bu plan'a geçmek için
     # ödeme talep edilir; başka tier verilirse veya boşsa varsayılan solo_free.
     intended_plan: str | None = None
+    # mobile=True (RN app): Turnstile atlanır (mobilde captcha yok — IP hız kapısı
+    # korur) + cookie KURULMAZ, token'lar response body'sinde döner (Bearer).
+    mobile: bool = False
 
 
 class SignupInviteIn(BaseModel):
@@ -146,9 +149,14 @@ class InvitationInfoOut(BaseModel):
 
 
 class SignupOut(BaseModel):
-    """Kayıt başarılı — BFF cookie kuruldu, user özeti döner."""
+    """Kayıt başarılı — web'de BFF cookie kuruldu; mobilde token'lar gövdede."""
     user: UserPublic
     email_verification_sent: bool
+    # mobile=True ise dolu (RN cookie kullanamaz → secure-store'a yazar)
+    access_token: str | None = None
+    refresh_token: str | None = None
+    access_expires_in: int | None = None
+    refresh_expires_in: int | None = None
 
 
 class LoginOut(BaseModel):
@@ -739,12 +747,14 @@ def v2_logout(
 
 
 def _establish_bff_session(
-    db: Session, user: User, request: Request, response: Response
-) -> None:
-    """Başarılı kimlik doğrulama sonrası BFF oturumu kur (login + signup ortak).
+    db: Session, user: User, request: Request, response: Response,
+    *, mobile: bool = False,
+):
+    """Başarılı kimlik doğrulama sonrası oturum kur (login + signup ortak).
 
-    ActiveSession kaydı (sid) + access/refresh cookie. G2a/G3 canlı oturum
-    panelini besler.
+    ActiveSession kaydı (sid) + token pair. Web → access/refresh cookie. Mobil
+    (mobile=True) → cookie KURMA; pair'i döndür (caller body'ye koyar, RN Bearer).
+    G2a/G3 canlı oturum panelini besler. Döndürdüğü pair'i web ihmal edebilir.
     """
     ip = _request_ip(request)
     session_token = secmon.generate_session_token()
@@ -757,8 +767,10 @@ def _establish_bff_session(
         logger.exception("active_session signup record fail user=%s", user.id)
     now = datetime.now(timezone.utc)
     pair = issue_token_pair(user, now=now, sid=session_token)
-    _set_access_cookie(response, pair.access_token, pair.access_expires_in)
-    _set_refresh_cookie(response, pair.refresh_token, pair.refresh_expires_in)
+    if not mobile:
+        _set_access_cookie(response, pair.access_token, pair.access_expires_in)
+        _set_refresh_cookie(response, pair.refresh_token, pair.refresh_expires_in)
+    return pair
 
 
 def _validate_signup_common(payload, role) -> str | None:
@@ -798,13 +810,25 @@ def v2_signup_teacher(
     from app.services.email_verification import issue_and_send
 
     ip = _request_ip(request)
-    if turnstile.is_enabled():
+    # Mobilde Turnstile yok (RN widget'ı zor) — IP hız kapısı (aşağıda) korur.
+    if turnstile.is_enabled() and not payload.mobile:
         if not turnstile.verify_token(payload.turnstile_token, ip=ip):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail={"error": "unauthenticated", "code": "captcha_failed",
                         "message": "Bot doğrulaması başarısız. Sayfayı yenile ve tekrar dene."},
             )
+
+    # #5 — Signup-anı IP hız kapısı: aynı ağdan kısa sürede çok hesap → engelle
+    # (özellikle mobilde captcha olmadığı için çoklu-hesap çiftliğine karşı koruma).
+    from app.services.signup_guard import signup_ip_blocked
+    if signup_ip_blocked(db, ip=ip):
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={"error": "rate_limited", "code": "signup_ip_rate_limited",
+                    "message": "Bu ağdan kısa sürede çok fazla hesap oluşturuldu. "
+                               "Lütfen daha sonra tekrar deneyin veya destekle iletişime geçin."},
+        )
 
     err = _validate_signup_common(payload, UserRole.TEACHER)
     if err:
@@ -881,8 +905,14 @@ def v2_signup_teacher(
     except Exception:
         logger.exception("new signup admin notify fail user=%s", new_user.id)
 
-    _establish_bff_session(db, new_user, request, response)
-    return SignupOut(user=UserPublic.from_user(new_user), email_verification_sent=sent)
+    pair = _establish_bff_session(db, new_user, request, response, mobile=payload.mobile)
+    out = SignupOut(user=UserPublic.from_user(new_user), email_verification_sent=sent)
+    if payload.mobile:
+        out.access_token = pair.access_token
+        out.refresh_token = pair.refresh_token
+        out.access_expires_in = pair.access_expires_in
+        out.refresh_expires_in = pair.refresh_expires_in
+    return out
 
 
 def _load_invitation(db: Session, token: str):

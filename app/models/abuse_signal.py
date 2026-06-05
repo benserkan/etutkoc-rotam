@@ -80,6 +80,7 @@ ABUSE_KIND_LABELS_TR: dict[str, str] = {
     "mass_notification": "Toplu bildirim üretimi",
     "multi_account_same_device": "Tek cihazdan çoklu hesap",
     "unsubscribe_spike": "Toplu sessizleştirme/çıkış",
+    "signup_velocity": "Aynı ağdan çoklu koç kaydı",
 }
 
 ABUSE_KIND_DESCRIPTIONS_TR: dict[str, str] = {
@@ -97,6 +98,11 @@ ABUSE_KIND_DESCRIPTIONS_TR: dict[str, str] = {
     ),
     "unsubscribe_spike": (
         "Bir kurumdan toplu sessizleştirme — alıcı şikayet yoğunluğu işareti."
+    ),
+    "signup_velocity": (
+        "Aynı IP'den 24 saatte birden çok koç hesabı açıldı — ücretsiz öğrenci "
+        "limitini çoklu hesapla aşma (çiftlik) girişimi olabilir. Hesapları "
+        "inceleyin; mass farming durumunda pasifleştirin."
     ),
 }
 

@@ -4666,6 +4666,32 @@ doğrulama kapısı).
 - Regresyon: abuse 21/21 · impersonation_bff 8/8 · admin_users 26/26 · logout 12/12 ·
   subscription 11/11. Migration head = `d7e0h3i4h11y`.
 
+## Mobil #1 native koç signup + #5 signup-anı IP hız kapısı (2026-06-06)
+
+Kullanıcının #1 (mobil tanıtım+signup) ve #5 (çoklu-hesap önlem) seçimleri.
+Tanıtım carousel önceki commit (`adcbd48`); bu paket native signup + IP kapısı.
+- **#1 backend — mobil koç signup**: signup_teacher Turnstile'ı `not payload.mobile`
+  ile atlar (mobilde captcha widget'ı zor); `_establish_bff_session(mobile=True)`
+  cookie KURMAZ, token pair döndürür; `SignupTeacherIn.mobile` + `SignupOut`'a
+  access/refresh token alanları → mobil Bearer auth. (login deseniyle birebir.)
+- **#5 backend — IP hız kapısı + sinyal** (migration YOK, AuditLog reuse):
+  `signup_guard.py` — aynı IP'den 24s içinde `SIGNUP_IP_BLOCK_THRESHOLD=3`
+  self-signup VARSA yenisi **429 signup_ip_rate_limited** (mass farming hard-block;
+  mobilde captcha olmadığı için kritik). `abuse_detection.detect_signup_velocity`
+  (yeni kind `signup_velocity`, run_all'a + saatlik cron'a dahil) o IP'leri süper
+  admin güvenlik kamerasında **işaretler** (USER_CREATE self_signup audit'leri IP'ye
+  göre gruplar). `ABUSE_KIND_LABELS_TR`/`DESCRIPTIONS` güncellendi. Kesin önlem
+  (bir telefon = bir hesap) SMS telefon kapısı — SMS canlıya alınınca.
+- **#1 mobil — native signup ekranı**: `lib/auth.tsx` +`signUp(input)` (mobil=true →
+  token → setTokens → authed); `app/signup.tsx` (ad/email/telefon/şifre×2 + hata
+  kodları); welcome "Ücretsiz dene" + login "14 gün ücretsiz dene" artık web yerine
+  app-içi `/signup`'a gider.
+- **Test** `test_api_v2_signup_mobile_guard.py` **7/7**: mobil signup token body'de +
+  /me geçer · 3 signup geçer 4. → 429 · signup_velocity dedektörü IP'yi işaretler.
+  Regresyon: auth 14 · auth_p1 10 · auth_p3 13 · me 13 · api_v1 47 · multi_account 4 ·
+  abuse 21. Migration YOK. mobil tsc temiz.
+- **KALAN (#5)**: SMS telefon doğrulama kapısı (SMS canlıya alınınca devreye girer).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

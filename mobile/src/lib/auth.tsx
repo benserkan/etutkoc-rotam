@@ -25,6 +25,21 @@ interface MeResponse {
   user: AppUser;
 }
 
+interface SignupResponse {
+  user: AppUser;
+  email_verification_sent: boolean;
+  access_token: string | null;
+  refresh_token: string | null;
+}
+
+export interface SignupInput {
+  full_name: string;
+  email: string;
+  password: string;
+  password_confirm: string;
+  phone?: string;
+}
+
 export type SignInResult =
   | { kind: "ok"; mustChangePassword: boolean; user: AppUser }
   | { kind: "2fa"; challenge: string };
@@ -35,6 +50,7 @@ interface AuthContextValue {
   status: AuthStatus;
   user: AppUser | null;
   signIn: (email: string, password: string) => Promise<SignInResult>;
+  signUp: (input: SignupInput) => Promise<AppUser>;
   verifyTwoFactor: (challenge: string, code: string) => Promise<SignInResult>;
   signOut: () => Promise<void>;
   reload: () => Promise<void>;
@@ -108,6 +124,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return result;
   }, []);
 
+  const signUp = React.useCallback(async (input: SignupInput): Promise<AppUser> => {
+    const res = await apiRequest<SignupResponse>("/api/v2/auth/signup/teacher", {
+      method: "POST",
+      auth: false,
+      body: { ...input, accept_terms: true, mobile: true },
+    });
+    if (res.access_token) {
+      await setTokens(res.access_token, res.refresh_token);
+    }
+    setUser(res.user);
+    setStatus("authed");
+    return res.user;
+  }, []);
+
   const verifyTwoFactor = React.useCallback(
     async (challenge: string, code: string): Promise<SignInResult> => {
       const res = await apiRequest<LoginResponse>("/api/v2/auth/2fa/verify", {
@@ -138,8 +168,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = React.useMemo<AuthContextValue>(
-    () => ({ status, user, signIn, verifyTwoFactor, signOut, reload: bootstrap }),
-    [status, user, signIn, verifyTwoFactor, signOut, bootstrap],
+    () => ({ status, user, signIn, signUp, verifyTwoFactor, signOut, reload: bootstrap }),
+    [status, user, signIn, signUp, verifyTwoFactor, signOut, bootstrap],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

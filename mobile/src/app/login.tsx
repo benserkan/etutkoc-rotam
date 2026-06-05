@@ -141,10 +141,7 @@ export default function LoginScreen() {
 
               <View className="mt-1 flex-row items-center justify-center gap-1">
                 <Text className="text-sm text-slate-400">Koç musun, hesabın yok mu?</Text>
-                <Pressable
-                  onPress={() => void Linking.openURL("https://rotam.etutkoc.com/signup/teacher")}
-                  hitSlop={8}
-                >
+                <Pressable onPress={() => router.push("/signup")} hitSlop={8}>
                   <Text className="text-sm font-semibold text-brand-700">14 gün ücretsiz dene</Text>
                 </Pressable>
               </View>
