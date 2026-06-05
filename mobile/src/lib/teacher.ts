@@ -162,3 +162,49 @@ export const teacherDetailKeys = {
   exams: (id: number) => ["teacher", "student", id, "exams"] as const,
   sessions: (id: number) => ["teacher", "student", id, "sessions"] as const,
 };
+
+// --- Tahsilat ---
+export type BillingStatus = "no_rate" | "paid" | "partial" | "pending";
+export interface BillingStudentRow {
+  student_id: number;
+  student_name: string;
+  session_fee: number | null;
+  done_sessions: number;
+  accrued: number | null;
+  paid: number;
+  balance: number | null;
+  status: BillingStatus;
+}
+export interface BillingTotals {
+  accrued: number;
+  paid: number;
+  balance: number;
+}
+export interface BillingMonthResponse {
+  month: string;
+  rows: BillingStudentRow[];
+  totals: BillingTotals;
+}
+export interface PaymentCreateBody {
+  amount: number;
+  paid_at: string;
+  method?: "cash" | "transfer" | "other";
+  period_month?: string | null;
+  note?: string | null;
+}
+export const teacherBillingKeys = {
+  month: (m: string) => ["teacher", "billing", m] as const,
+};
+export function getTeacherBilling(month?: string): Promise<BillingMonthResponse> {
+  const qs = month ? `?month=${encodeURIComponent(month)}` : "";
+  return apiRequest<BillingMonthResponse>(`/api/v2/teacher/billing${qs}`);
+}
+export function setStudentRate(studentId: number, sessionFee: number): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/students/${studentId}/rate`, {
+    method: "POST",
+    body: { session_fee: sessionFee },
+  });
+}
+export function createStudentPayment(studentId: number, body: PaymentCreateBody): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/students/${studentId}/payments`, { method: "POST", body });
+}
