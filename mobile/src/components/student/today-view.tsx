@@ -70,13 +70,13 @@ function CheckCircle({ state }: { state: GState }) {
 export function TodayView({
   day,
   busyTaskId,
-  onToggle,
+  onOpenTask,
   refreshing = false,
   onRefresh,
 }: {
   day: StudentDayResponse;
   busyTaskId: number | null;
-  onToggle: (task: StudentTask) => void;
+  onOpenTask: (task: StudentTask) => void;
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
@@ -127,7 +127,7 @@ export function TodayView({
       ) : (
         <View className="gap-2.5">
           <Text className="px-1 text-xs text-slate-500">
-            Bitirdiğin görevi soldaki yuvarlağa dokunarak işaretle.
+            Görevine dokun: ne kadar yaptığını ve doğru/yanlış sayını gir.
           </Text>
           {day.tasks.map((t) => {
             const st = gorevState(t);
@@ -138,7 +138,7 @@ export function TodayView({
               <Pressable
                 key={t.id}
                 disabled={busy || blocked}
-                onPress={() => onToggle(t)}
+                onPress={() => onOpenTask(t)}
                 className={`flex-row items-center gap-3 rounded-2xl border bg-white p-4 ${
                   st === "done" ? "border-emerald-200" : "border-slate-200"
                 } ${blocked ? "opacity-50" : "active:bg-slate-50"}`}

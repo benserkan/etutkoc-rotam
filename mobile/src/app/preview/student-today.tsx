@@ -86,7 +86,7 @@ export default function StudentTodayPreview() {
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
       <View className="flex-1">
-        <TodayView day={MOCK_DAY} busyTaskId={null} onToggle={() => {}} />
+        <TodayView day={MOCK_DAY} busyTaskId={null} onOpenTask={() => {}} />
       </View>
     </SafeAreaView>
   );

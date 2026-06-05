@@ -77,9 +77,25 @@ export function getStudentDay(date?: string): Promise<StudentDayResponse> {
 
 // MutationResponse — backend invalidate prefix listesi döner; mobilde basitçe
 // ilgili query'leri elle invalidate ediyoruz (web applyInvalidate karşılığı sade).
-export function completeTask(taskId: number): Promise<unknown> {
-  return apiRequest(`/api/v2/student/tasks/${taskId}/complete`, { method: "POST", body: {} });
+export function completeTask(
+  taskId: number,
+  body?: { solved_count?: number; correct?: number | null; wrong?: number | null },
+): Promise<unknown> {
+  return apiRequest(`/api/v2/student/tasks/${taskId}/complete`, { method: "POST", body: body ?? {} });
 }
 export function uncompleteTask(taskId: number): Promise<unknown> {
   return apiRequest(`/api/v2/student/tasks/${taskId}/uncomplete`, { method: "POST", body: {} });
+}
+
+// Tek kalemin kısmi tamamlanması + doğru/yanlış (kitap kalemi: completed=test,
+// D/Y=soru; kitapsız deneme: completed=soru, D+Y≤completed).
+export function setItemCompleted(
+  taskId: number,
+  itemId: number,
+  body: { completed: number; correct?: number | null; wrong?: number | null },
+): Promise<unknown> {
+  return apiRequest(`/api/v2/student/tasks/${taskId}/items/${itemId}/set-completed`, {
+    method: "POST",
+    body,
+  });
 }
