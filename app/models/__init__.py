@@ -279,6 +279,7 @@ from app.models.parent import (
     TeacherNoteToParent,
 )
 from app.models.phone_verification import PhoneVerification
+from app.models.signup_phone_verification import SignupPhoneVerification
 from app.models.whatsapp_template import (
     ALL_CATEGORIES as WA_TEMPLATE_CATEGORIES,
     ALL_TARGET_ROLES as WA_TEMPLATE_TARGET_ROLES,
@@ -567,6 +568,7 @@ __all__ = [
     "ParentRelation",
     "ParentSessionLog",
     "PhoneVerification",
+    "SignupPhoneVerification",
     "WhatsAppDispatchLog",
     "WhatsAppTemplate",
     "WA_TEMPLATE_CATEGORIES",

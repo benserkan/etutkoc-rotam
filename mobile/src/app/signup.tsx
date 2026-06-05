@@ -16,6 +16,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Brand } from "@/components/brand";
 import { ApiError } from "@/lib/api";
 import { useAuth } from "@/lib/auth";
+import {
+  fetchSignupPhoneRequired,
+  startSignupPhone,
+  verifySignupPhone,
+} from "@/lib/signup-phone";
 import { cn } from "@/lib/utils";
 
 export default function SignupScreen() {
@@ -29,12 +34,64 @@ export default function SignupScreen() {
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // #5 SMS telefon kapısı — yalnız sunucuda açıksa zorunlu (şu an dormant=false)
+  const [phoneRequired, setPhoneRequired] = React.useState<boolean | null>(null);
+  const [otpSent, setOtpSent] = React.useState(false);
+  const [otpCode, setOtpCode] = React.useState("");
+  const [devCode, setDevCode] = React.useState<string | null>(null);
+  const [phoneToken, setPhoneToken] = React.useState("");
+  const [phoneVerified, setPhoneVerified] = React.useState(false);
+  const [phoneBusy, setPhoneBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    let alive = true;
+    void fetchSignupPhoneRequired().then((req) => {
+      if (alive) setPhoneRequired(req);
+    });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
+  async function onSendCode() {
+    setError(null);
+    if (phone.trim().length < 10) return setError("Geçerli bir cep telefonu gir.");
+    setPhoneBusy(true);
+    try {
+      const r = await startSignupPhone(phone.trim());
+      setOtpSent(true);
+      setDevCode(r.dev_code ?? null);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Kod gönderilemedi. Tekrar dene.");
+    } finally {
+      setPhoneBusy(false);
+    }
+  }
+
+  async function onVerifyCode() {
+    setError(null);
+    if (otpCode.trim().length !== 6) return setError("6 haneli kodu gir.");
+    setPhoneBusy(true);
+    try {
+      const r = await verifySignupPhone(phone.trim(), otpCode.trim());
+      setPhoneToken(r.phone_token);
+      setPhoneVerified(true);
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Doğrulama başarısız.");
+    } finally {
+      setPhoneBusy(false);
+    }
+  }
+
   async function onSubmit() {
     setError(null);
     if (fullName.trim().length < 3) return setError("Ad soyad en az 3 karakter olmalı.");
     if (!email.includes("@")) return setError("Geçerli bir e-posta gir.");
     if (password.length < 8) return setError("Şifre en az 8 karakter olmalı.");
     if (password !== confirm) return setError("Şifreler eşleşmiyor.");
+    if (phoneRequired && !phoneVerified) {
+      return setError("Devam etmek için cep telefonunu SMS ile doğrula.");
+    }
     setBusy(true);
     try {
       await signUp({
@@ -42,7 +99,8 @@ export default function SignupScreen() {
         email: email.trim(),
         password,
         password_confirm: confirm,
-        phone: phone.trim() || undefined,
+        phone: phoneRequired ? undefined : phone.trim() || undefined,
+        phone_token: phoneRequired ? phoneToken : undefined,
       });
       router.replace("/(app)");
     } catch (e) {
@@ -70,7 +128,49 @@ export default function SignupScreen() {
 
           <Field label="Ad soyad" value={fullName} onChangeText={setFullName} placeholder="Adın Soyadın" autoCapitalize="words" />
           <Field label="E-posta" value={email} onChangeText={setEmail} placeholder="ornek@eposta.com" keyboardType="email-address" autoCapitalize="none" />
-          <Field label="Cep telefonu (opsiyonel)" value={phone} onChangeText={setPhone} placeholder="05XX XXX XX XX" keyboardType="phone-pad" />
+
+          {phoneRequired ? (
+            <View className="gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+              <Text className="text-xs font-semibold text-slate-700">Cep telefonu doğrulama</Text>
+              {phoneVerified ? (
+                <View className="flex-row items-center gap-2">
+                  <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                  <Text className="text-sm font-medium text-emerald-700">{phone.trim()} doğrulandı</Text>
+                </View>
+              ) : (
+                <>
+                  <View className="flex-row items-end gap-2">
+                    <View className="flex-1">
+                      <Field label="Cep telefonu" value={phone} onChangeText={setPhone} placeholder="05XX XXX XX XX" keyboardType="phone-pad" editable={!otpSent} />
+                    </View>
+                    {!otpSent ? (
+                      <Pressable onPress={onSendCode} disabled={phoneBusy} className={cn("mb-1 items-center justify-center rounded-xl bg-slate-800 px-4 py-3", phoneBusy && "opacity-50")}>
+                        {phoneBusy ? <ActivityIndicator color="#fff" /> : <Text className="text-sm font-semibold text-white">Kod gönder</Text>}
+                      </Pressable>
+                    ) : null}
+                  </View>
+                  {otpSent ? (
+                    <>
+                      <View className="flex-row items-end gap-2">
+                        <View className="flex-1">
+                          <Field label="SMS kodu" value={otpCode} onChangeText={(v) => setOtpCode(v.replace(/\D/g, "").slice(0, 6))} placeholder="6 haneli kod" keyboardType="number-pad" />
+                        </View>
+                        <Pressable onPress={onVerifyCode} disabled={phoneBusy} className={cn("mb-1 items-center justify-center rounded-xl bg-brand-700 px-4 py-3", phoneBusy && "opacity-50")}>
+                          {phoneBusy ? <ActivityIndicator color="#fff" /> : <Text className="text-sm font-semibold text-white">Doğrula</Text>}
+                        </Pressable>
+                      </View>
+                      <Pressable onPress={onSendCode} hitSlop={6} disabled={phoneBusy}>
+                        <Text className="text-xs font-medium text-brand-700">Kodu tekrar gönder</Text>
+                      </Pressable>
+                      {devCode ? <Text className="text-xs text-slate-400">Test kodu: {devCode}</Text> : null}
+                    </>
+                  ) : null}
+                </>
+              )}
+            </View>
+          ) : (
+            <Field label="Cep telefonu (opsiyonel)" value={phone} onChangeText={setPhone} placeholder="05XX XXX XX XX" keyboardType="phone-pad" />
+          )}
 
           <View>
             <Text className="mb-1 text-xs font-medium text-slate-600">Şifre</Text>

@@ -38,6 +38,9 @@ export interface SignupInput {
   password: string;
   password_confirm: string;
   phone?: string;
+  // SMS telefon kapısı açıkken: signup/phone/verify'dan alınan imzalı token.
+  // Kapı kapalıyken (şu an) yok sayılır.
+  phone_token?: string;
 }
 
 export type SignInResult =

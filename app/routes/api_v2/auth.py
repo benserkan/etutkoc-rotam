@@ -126,6 +126,32 @@ class SignupTeacherIn(BaseModel):
     # mobile=True (RN app): Turnstile atlanır (mobilde captcha yok — IP hız kapısı
     # korur) + cookie KURULMAZ, token'lar response body'sinde döner (Bearer).
     mobile: bool = False
+    # #5 telefon kapısı (SMS açıkken zorunlu): signup/phone/verify'dan alınan imzalı
+    # token. SMS kapalıyken (paket alınmadan) yok sayılır.
+    phone_token: str = ""
+
+
+class SignupPhoneStartIn(BaseModel):
+    phone: str
+
+
+class SignupPhoneStartOut(BaseModel):
+    sent: bool
+    # Dev stub (DEBUG + SMS kapalı) — gerçek SMS gitmediğinde paneline kod
+    dev_code: str | None = None
+
+
+class SignupPhoneVerifyIn(BaseModel):
+    phone: str
+    code: str
+
+
+class SignupPhoneVerifyOut(BaseModel):
+    phone_token: str
+
+
+class SignupPhoneRequiredOut(BaseModel):
+    required: bool
 
 
 class SignupInviteIn(BaseModel):
@@ -794,6 +820,55 @@ def _validate_signup_common(payload, role) -> str | None:
     return None
 
 
+@router.get("/signup/phone/required", response_model=SignupPhoneRequiredOut)
+def v2_signup_phone_required():
+    """Signup'ta telefon doğrulama zorunlu mu? (SMS açıkken True). Public."""
+    from app.services.signup_phone_service import signup_phone_required
+    return SignupPhoneRequiredOut(required=signup_phone_required())
+
+
+@router.post("/signup/phone/start", response_model=SignupPhoneStartOut)
+def v2_signup_phone_start(
+    payload: SignupPhoneStartIn,
+    request: Request,
+    db: Session = Depends(get_db),
+    _rl: None = Depends(enforce_login_rate_limit),
+):
+    """Signup için telefon OTP'si gönder (hesap-öncesi). Public. SMS açıkken anlamlı."""
+    from app.services.signup_phone_service import start_signup_phone
+    from app.services.phone_service import PhoneError
+    ip = _request_ip(request)
+    try:
+        _phone, dev_code = start_signup_phone(db, phone=payload.phone, ip=ip)
+    except PhoneError as e:
+        code_status = {
+            "cooldown_active": status.HTTP_429_TOO_MANY_REQUESTS,
+            "ip_rate_limited": status.HTTP_429_TOO_MANY_REQUESTS,
+            "phone_in_use": status.HTTP_409_CONFLICT,
+            "sms_send_failed": status.HTTP_502_BAD_GATEWAY,
+        }.get(e.code, status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(status_code=code_status,
+                            detail={"error": "invalid", "code": e.code, "message": e.message})
+    return SignupPhoneStartOut(sent=True, dev_code=dev_code)
+
+
+@router.post("/signup/phone/verify", response_model=SignupPhoneVerifyOut)
+def v2_signup_phone_verify(
+    payload: SignupPhoneVerifyIn,
+    db: Session = Depends(get_db),
+):
+    """Signup telefon OTP'sini doğrula → imzalı phone_token. Public."""
+    from app.services.signup_phone_service import verify_signup_phone
+    from app.services.phone_service import PhoneError
+    try:
+        token = verify_signup_phone(db, phone=payload.phone, code=payload.code)
+    except PhoneError as e:
+        st = status.HTTP_429_TOO_MANY_REQUESTS if e.code == "too_many_attempts" else status.HTTP_400_BAD_REQUEST
+        raise HTTPException(status_code=st,
+                            detail={"error": "invalid", "code": e.code, "message": e.message})
+    return SignupPhoneVerifyOut(phone_token=token)
+
+
 @router.post("/signup/teacher", response_model=SignupOut)
 def v2_signup_teacher(
     payload: SignupTeacherIn,
@@ -844,10 +919,31 @@ def v2_signup_teacher(
                     "message": "Bu e-posta zaten kayıtlı. Giriş yapmayı deneyin."},
         )
 
-    # P1 — cep telefonu (opsiyonel; verilirse normalize edilip kaydedilir,
-    # verified_at=None — panelden OTP ile doğrulanır)
+    # #5 telefon kapısı (DORMANT — yalnız SMS açıkken/paket alınınca devreye girer):
+    # signup_phone_required() True ise telefon SMS-DOĞRULANMIŞ olmalı (phone_token).
+    # Kapalıyken (şu an) telefon opsiyonel + doğrulamasız (P1 eski davranış).
+    from app.services.signup_phone_service import (
+        decode_phone_token, phone_in_use, signup_phone_required,
+    )
     phone_normalized: str | None = None
-    if payload.phone:
+    phone_verified_at_value = None
+    if signup_phone_required():
+        verified_phone = decode_phone_token(payload.phone_token) if payload.phone_token else None
+        if not verified_phone:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={"error": "invalid", "code": "phone_verification_required",
+                        "message": "Devam etmek için cep telefonunu SMS ile doğrulaman gerekiyor."},
+            )
+        if phone_in_use(db, verified_phone):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={"error": "conflict", "code": "phone_in_use",
+                        "message": "Bu telefon numarası zaten bir hesapla ilişkili."},
+            )
+        phone_normalized = verified_phone
+        phone_verified_at_value = datetime.now(timezone.utc)
+    elif payload.phone:
         from app.services.phone_service import normalize_e164_tr
         phone_normalized = normalize_e164_tr(payload.phone)
         if not phone_normalized:
@@ -867,6 +963,7 @@ def v2_signup_teacher(
         password_changed_at=datetime.now(timezone.utc),
         must_change_password=False,
         phone=phone_normalized,
+        phone_verified_at=phone_verified_at_value,
     )
     db.add(new_user)
     db.flush()

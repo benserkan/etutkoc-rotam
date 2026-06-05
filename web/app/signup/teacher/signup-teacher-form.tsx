@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { api, ApiError } from "@/lib/api";
@@ -72,6 +72,70 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
     defaultValues: { full_name: "", email: "", phone: "", password: "", password_confirm: "", accept_terms: false },
   });
 
+  // #5 SMS telefon kapısı — yalnız sunucuda açıksa zorunlu (şu an dormant=false).
+  // Açıkken: kayıt öncesi telefon SMS OTP ile doğrulanır, phone_token gönderilir.
+  const [phoneRequired, setPhoneRequired] = React.useState<boolean | null>(null);
+  const [otpSent, setOtpSent] = React.useState(false);
+  const [otpCode, setOtpCode] = React.useState("");
+  const [devCode, setDevCode] = React.useState<string | null>(null);
+  const [phoneToken, setPhoneToken] = React.useState("");
+  const [phoneVerified, setPhoneVerified] = React.useState(false);
+  const [phoneBusy, setPhoneBusy] = React.useState(false);
+
+  React.useEffect(() => {
+    let alive = true;
+    api<{ required: boolean }>("/api/v2/auth/signup/phone/required")
+      .then((r) => { if (alive) setPhoneRequired(!!r.required); })
+      .catch(() => { if (alive) setPhoneRequired(false); });
+    return () => { alive = false; };
+  }, []);
+
+  const onSendCode = React.useCallback(async () => {
+    const phone = form.getValues("phone")?.trim() ?? "";
+    if (phone.length < 10) {
+      form.setError("phone", { message: "Önce cep telefonunuzu girin." });
+      return;
+    }
+    setPhoneBusy(true);
+    try {
+      const r = await api<{ sent: boolean; dev_code: string | null }>(
+        "/api/v2/auth/signup/phone/start",
+        { method: "POST", body: JSON.stringify({ phone }) },
+      );
+      setOtpSent(true);
+      setDevCode(r.dev_code ?? null);
+      form.clearErrors("phone");
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.detail?.message : "Kod gönderilemedi.";
+      form.setError("phone", { message: msg ?? "Kod gönderilemedi." });
+    } finally {
+      setPhoneBusy(false);
+    }
+  }, [form]);
+
+  const onVerifyCode = React.useCallback(async () => {
+    const phone = form.getValues("phone")?.trim() ?? "";
+    if (otpCode.trim().length !== 6) {
+      form.setError("phone", { message: "6 haneli SMS kodunu girin." });
+      return;
+    }
+    setPhoneBusy(true);
+    try {
+      const r = await api<{ phone_token: string }>(
+        "/api/v2/auth/signup/phone/verify",
+        { method: "POST", body: JSON.stringify({ phone, code: otpCode.trim() }) },
+      );
+      setPhoneToken(r.phone_token);
+      setPhoneVerified(true);
+      form.clearErrors("phone");
+    } catch (e) {
+      const msg = e instanceof ApiError ? e.detail?.message : "Doğrulama başarısız.";
+      form.setError("phone", { message: msg ?? "Doğrulama başarısız." });
+    } finally {
+      setPhoneBusy(false);
+    }
+  }, [form, otpCode]);
+
   const renderWidget = React.useCallback(() => {
     if (!showCaptcha || !widgetRef.current || !window.turnstile) return;
     if (hasRenderedRef.current) return;
@@ -80,6 +144,10 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
   }, [showCaptcha, turnstileSiteKey]);
 
   const onSubmit = React.useCallback(async (values: Values) => {
+    if (phoneRequired && !phoneVerified) {
+      form.setError("phone", { message: "Devam etmek için cep telefonunuzu SMS ile doğrulayın." });
+      return;
+    }
     setSubmitting(true);
     try {
       let turnstileToken = "";
@@ -97,6 +165,7 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
           ...values,
           turnstile_token: turnstileToken,
           intended_plan: intendedPlan || undefined,
+          phone_token: phoneRequired ? phoneToken : undefined,
         }),
       });
       qc.clear();
@@ -119,6 +188,14 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
           form.setError("phone", {
             message: "Geçersiz telefon. Türkiye cep formatı: 0532… veya +90 532…",
           });
+        } else if (code === "phone_verification_required") {
+          form.setError("phone", {
+            message: "Devam etmek için cep telefonunuzu SMS ile doğrulayın.",
+          });
+        } else if (code === "phone_in_use") {
+          form.setError("phone", {
+            message: "Bu telefon numarası zaten bir hesapla ilişkili. Giriş yapmayı deneyin.",
+          });
         } else if (code === "signup_invalid") {
           toast.error("Kayıt bilgileri geçersiz", { description: e.detail?.message });
         } else if (e.status === 429) {
@@ -134,7 +211,7 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
     } finally {
       setSubmitting(false);
     }
-  }, [showCaptcha, form, qc, router, intendedPlan]);
+  }, [showCaptcha, form, qc, router, intendedPlan, phoneRequired, phoneVerified, phoneToken]);
 
   return (
     <>
@@ -164,14 +241,55 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
         </div>
         <div className="space-y-2">
           <Label htmlFor="phone">Cep telefonu</Label>
-          <Input id="phone" type="tel" autoComplete="tel" placeholder="0532 123 45 67" disabled={isSubmitting}
-                 {...form.register("phone")} aria-invalid={!!form.formState.errors.phone} />
+          <div className="flex gap-2">
+            <Input id="phone" type="tel" autoComplete="tel" placeholder="0532 123 45 67"
+                   disabled={isSubmitting || phoneVerified}
+                   className="flex-1"
+                   {...form.register("phone")} aria-invalid={!!form.formState.errors.phone} />
+            {phoneRequired && !phoneVerified && !otpSent ? (
+              <Button type="button" variant="secondary" disabled={phoneBusy} onClick={onSendCode}>
+                {phoneBusy ? <Loader2 className="animate-spin" /> : "Kod gönder"}
+              </Button>
+            ) : null}
+            {phoneRequired && phoneVerified ? (
+              <span className="flex items-center gap-1 px-2 text-sm font-medium text-emerald-600">
+                <ShieldCheck className="size-4" /> Doğrulandı
+              </span>
+            ) : null}
+          </div>
+
+          {phoneRequired && otpSent && !phoneVerified ? (
+            <div className="flex gap-2">
+              <Input
+                inputMode="numeric"
+                maxLength={6}
+                placeholder="6 haneli SMS kodu"
+                value={otpCode}
+                disabled={isSubmitting || phoneBusy}
+                onChange={(e) => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="flex-1"
+              />
+              <Button type="button" disabled={phoneBusy} onClick={onVerifyCode}>
+                {phoneBusy ? <Loader2 className="animate-spin" /> : "Doğrula"}
+              </Button>
+            </div>
+          ) : null}
+
+          {phoneRequired && otpSent && !phoneVerified ? (
+            <button type="button" onClick={onSendCode} disabled={phoneBusy}
+                    className="text-xs font-medium text-primary hover:underline">
+              Kodu tekrar gönder
+            </button>
+          ) : null}
+          {devCode ? <p className="text-xs text-muted-foreground">Test kodu: {devCode}</p> : null}
+
           {form.formState.errors.phone ? (
             <p className="text-sm text-destructive">{form.formState.errors.phone.message}</p>
           ) : (
             <p className="text-xs text-muted-foreground">
-              Kayıttan sonra SMS ile gönderilecek 6 haneli kodla doğrulayacaksınız.
-              Bildirimler ve şifre sıfırlama için kullanılır.
+              {phoneRequired
+                ? "Devam etmeden önce telefonunuza SMS ile gönderilen 6 haneli kodla doğrulayın."
+                : "Bildirimler ve şifre sıfırlama için kullanılır."}
             </p>
           )}
         </div>
