@@ -16,10 +16,11 @@ const ROLE_LABELS: Record<string, string> = {
 export default function AppHome() {
   const { user, signOut } = useAuth();
 
-  // Rol-bazlı yönlendirme. Koç/kurum sırayla ekleniyor; o ana dek bilgilendirme.
+  // Rol-bazlı yönlendirme. Süper admin web'de; o ana dek bilgilendirme.
   if (user?.role === "student") return <Redirect href="/(app)/student/today" />;
   if (user?.role === "parent") return <Redirect href="/(app)/parent/dashboard" />;
   if (user?.role === "teacher") return <Redirect href="/(app)/teacher/students" />;
+  if (user?.role === "institution_admin") return <Redirect href="/(app)/institution/dashboard" />;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
