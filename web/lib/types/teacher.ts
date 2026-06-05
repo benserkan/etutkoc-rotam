@@ -1428,12 +1428,85 @@ export interface AnalyticsSubjectRow {
   last_completed_at: string | null;
 }
 
+export interface AnalyticsSummary {
+  rate_7d: number;
+  rate_30d: number;
+  consistency_7d_pct: number;
+  consistency_30d_pct: number;
+  hit_rate_7d_pct: number;
+  active_days_30: number;
+  longest_streak_30: number;
+  worst_warning_level: "green" | "amber" | "red";
+}
+
+export interface AnalyticsWeekPoint {
+  week_start: string;
+  label: string;
+  planned: number;
+  completed: number;
+  pct: number;
+}
+
+export interface AnalyticsDayFlag {
+  date: string;
+  weekday: number;
+  active: boolean;
+  has_plan: boolean;
+}
+
+export interface AnalyticsDow {
+  weekday: number;
+  label: string;
+  avg_completed: number;
+  hit_pct: number;
+  measured: boolean;
+}
+
+export interface AnalyticsProjection {
+  exam_label: string | null;
+  exam_date: string | null;
+  days_left: number | null;
+  total_tests: number;
+  completed: number;
+  remaining: number;
+  projected_completable: number;
+  gap: number;
+  rate_per_day: number;
+  required_rate: number;
+  confidence_level: "high" | "medium" | "low";
+  status: "green" | "amber" | "red";
+}
+
+export interface AnalyticsExamPoint {
+  title: string;
+  exam_date: string | null;
+  section_label: string;
+  net: number;
+}
+
+export interface AnalyticsWarningItem {
+  level: "green" | "amber" | "red";
+  code: string;
+  title: string;
+  detail: string;
+}
+
 export interface TeacherStudentAnalyticsResponse {
   student_id: number;
   student_name: string;
   window_days: number;
   trend: AnalyticsTrendPoint[];
   subjects: AnalyticsSubjectRow[];
+  // Zenginleştirme — koçun "program süreci" panosu
+  summary: AnalyticsSummary;
+  weekly_trend: AnalyticsWeekPoint[];
+  activity_calendar: AnalyticsDayFlag[];
+  dow_performance: AnalyticsDow[];
+  projection: AnalyticsProjection;
+  exam_trend: AnalyticsExamPoint[];
+  exam_trend_section: string | null;
+  exam_trend_delta: number | null;
+  warnings: AnalyticsWarningItem[];
 }
 
 export interface ParentNoteBody {

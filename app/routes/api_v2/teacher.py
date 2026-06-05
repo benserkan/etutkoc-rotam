@@ -230,8 +230,15 @@ from app.routes.api_v2.schemas.teacher import (
     TeacherRequestDetail,
     TeacherRequestListItem,
     TeacherRequestListResponse,
+    AnalyticsDayFlag,
+    AnalyticsDow,
+    AnalyticsExamPoint,
+    AnalyticsProjection,
     AnalyticsSubjectRow,
+    AnalyticsSummary,
     AnalyticsTrendPoint,
+    AnalyticsWarningItem,
+    AnalyticsWeekPoint,
     DashboardWarningRow,
     DashboardWarningsFeedResponse,
     ParentNoteBody,
@@ -7083,41 +7090,166 @@ def teacher_student_analytics_v2(
     app/services/analytics.py:489 (subject_breakdown).
     """
     from app.services.analytics import (
+        consistency_score,
+        daily_activity_flag_series,
         daily_completed_series,
         daily_planned_series,
+        student_snapshot,
         subject_breakdown,
     )
+    from app.models.curriculum import EXAM_SECTION_LABELS, ExamSection
+    from app.models.exam_result import ExamResult
 
     student = _get_owned_student(db, student_id, user.id)
     today = date.today()
-    # 30 gün TEST trendi — yalnız soru bankası (deneme günleri grafiği şişirmesin)
+
+    # --- 30 gün TEST trendi (mevcut) — yalnız soru bankası ---
     completed = daily_completed_series(db, student.id, today, 30, tests_only=True)
     planned = daily_planned_series(db, student.id, today, 30, tests_only=True)
     days = sorted(completed.keys())
     trend = [
-        AnalyticsTrendPoint(
-            date=d.isoformat(),
-            label=_format_trend_label(d),
-            completed=completed[d],
-            planned=planned[d],
-        )
+        AnalyticsTrendPoint(date=d.isoformat(), label=_format_trend_label(d),
+                            completed=completed[d], planned=planned[d])
         for d in days
     ]
 
+    # --- Ders bazlı ilerleme (mevcut) ---
     raw_subjects = subject_breakdown(db, student.id)
     subjects = [
         AnalyticsSubjectRow(
-            subject_id=row["subject_id"],
-            name=row["name"],
-            total=row["total"],
-            completed=row["completed"],
-            reserved=row["reserved"],
-            remaining=row["remaining"],
-            percent_done=row["percent_done"],
-            percent_reserved=row["percent_reserved"],
+            subject_id=row["subject_id"], name=row["name"], total=row["total"],
+            completed=row["completed"], reserved=row["reserved"], remaining=row["remaining"],
+            percent_done=row["percent_done"], percent_reserved=row["percent_reserved"],
             last_completed_at=row["last_completed_at"],
         )
         for row in raw_subjects
+    ]
+
+    # --- Snapshot: tempo + projeksiyon + uyarılar ---
+    snap = student_snapshot(db, student, today=today)
+    proj = snap.projection
+
+    # Aktif gün + en uzun seri (son 30 gün)
+    flags30 = daily_activity_flag_series(db, student.id, today, 30)
+    active_days_30 = sum(1 for v in flags30.values() if v)
+    longest = cur = 0
+    for d in sorted(flags30.keys()):
+        if flags30[d]:
+            cur += 1
+            longest = max(longest, cur)
+        else:
+            cur = 0
+
+    summary = AnalyticsSummary(
+        rate_7d=round(snap.rate_7d, 2),
+        rate_30d=round(snap.rate_30d, 2),
+        consistency_7d_pct=round(snap.consistency_7d * 100),
+        consistency_30d_pct=round(consistency_score(db, student.id, today, 30) * 100),
+        hit_rate_7d_pct=min(100, round(snap.hit_rate_7d * 100)),
+        active_days_30=active_days_30,
+        longest_streak_30=longest,
+        worst_warning_level=snap.worst_warning_level,
+    )
+
+    # --- Haftalık tamamlama trendi (son ~10 hafta) ---
+    wk_c = daily_completed_series(db, student.id, today, 70, tests_only=True)
+    wk_p = daily_planned_series(db, student.id, today, 70, tests_only=True)
+    wk_buckets: dict[date, dict[str, int]] = {}
+    for d in wk_p:
+        mon = d - timedelta(days=d.weekday())
+        b = wk_buckets.setdefault(mon, {"planned": 0, "completed": 0})
+        b["planned"] += wk_p[d]
+        b["completed"] += wk_c.get(d, 0)
+    weekly_trend = []
+    for mon in sorted(wk_buckets.keys()):
+        b = wk_buckets[mon]
+        pct = round(100 * b["completed"] / b["planned"]) if b["planned"] > 0 else 0
+        weekly_trend.append(AnalyticsWeekPoint(
+            week_start=mon.isoformat(), label=_format_trend_label(mon),
+            planned=b["planned"], completed=b["completed"], pct=pct))
+
+    # --- Aktivite takvimi (son 35 gün) ---
+    flags35 = daily_activity_flag_series(db, student.id, today, 35)
+    plan35 = daily_planned_series(db, student.id, today, 35, tests_only=False)
+    activity_calendar = [
+        AnalyticsDayFlag(date=d.isoformat(), weekday=d.weekday(),
+                         active=flags35[d], has_plan=plan35.get(d, 0) > 0)
+        for d in sorted(flags35.keys())
+    ]
+
+    # --- Haftanın günleri performansı (DOW) ---
+    _DOW = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+    dow_performance = [
+        AnalyticsDow(weekday=i, label=_DOW[i],
+                     avg_completed=round(proj.dow_rates.get(i, 0.0), 1),
+                     hit_pct=min(100, round(proj.dow_hit_rates.get(i, 0.0) * 100)),
+                     measured=bool(proj.dow_hit_measured.get(i, False)))
+        for i in range(7)
+    ]
+
+    # --- Sınava projeksiyon ---
+    remaining_work = max(0, proj.total_tests - proj.completed)
+    if remaining_work <= 0:
+        pstatus = "green"
+    elif proj.gap < 0:
+        pstatus = "red" if abs(proj.gap) > remaining_work * 0.2 else "amber"
+    elif proj.gap < remaining_work * 0.1:
+        pstatus = "amber"
+    else:
+        pstatus = "green"
+    projection = AnalyticsProjection(
+        exam_label=student.effective_exam_label,
+        exam_date=proj.exam_date.isoformat() if proj.exam_date else None,
+        days_left=proj.days_left,
+        total_tests=proj.total_tests,
+        completed=proj.completed,
+        remaining=remaining_work,
+        projected_completable=proj.projected_completable,
+        gap=proj.gap,
+        rate_per_day=round(proj.rate_per_day, 2),
+        required_rate=round(proj.required_rate, 2),
+        confidence_level=proj.confidence_level,
+        status=pstatus,
+    )
+
+    # --- Deneme net trendi (son 60 gün) ---
+    def _sec_label(s):
+        if s is None:
+            return "Deneme"
+        if isinstance(s, ExamSection):
+            return EXAM_SECTION_LABELS.get(s, s.value.upper())
+        return str(s).upper()
+
+    def _sec_val(s):
+        return s.value if hasattr(s, "value") else (str(s) if s else None)
+
+    exam_rows = (
+        db.query(ExamResult)
+        .filter(ExamResult.student_id == student.id,
+                ExamResult.exam_date >= today - timedelta(days=60))
+        .order_by(ExamResult.exam_date.desc(), ExamResult.created_at.desc())
+        .limit(8).all()
+    )
+    exam_trend = [
+        AnalyticsExamPoint(title=r.title,
+                           exam_date=r.exam_date.isoformat() if r.exam_date else None,
+                           section_label=_sec_label(r.section),
+                           net=float(r.net) if r.net is not None else 0.0)
+        for r in exam_rows
+    ]
+    exam_trend_delta = None
+    exam_trend_section = None
+    if exam_rows:
+        latest = exam_rows[0]
+        lsec = _sec_val(latest.section)
+        prev = next((r for r in exam_rows[1:] if _sec_val(r.section) == lsec), None)
+        if prev is not None and latest.net is not None and prev.net is not None:
+            exam_trend_delta = round(float(latest.net) - float(prev.net), 2)
+            exam_trend_section = _sec_label(latest.section)
+
+    warnings = [
+        AnalyticsWarningItem(level=w.level, code=w.code, title=w.title, detail=w.detail)
+        for w in snap.warnings
     ]
 
     return TeacherStudentAnalyticsResponse(
@@ -7126,6 +7258,15 @@ def teacher_student_analytics_v2(
         window_days=30,
         trend=trend,
         subjects=subjects,
+        summary=summary,
+        weekly_trend=weekly_trend,
+        activity_calendar=activity_calendar,
+        dow_performance=dow_performance,
+        projection=projection,
+        exam_trend=exam_trend,
+        exam_trend_section=exam_trend_section,
+        exam_trend_delta=exam_trend_delta,
+        warnings=warnings,
     )
 
 

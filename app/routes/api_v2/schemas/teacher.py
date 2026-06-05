@@ -1529,12 +1529,86 @@ class AnalyticsSubjectRow(BaseModel):
     last_completed_at: datetime | None
 
 
+class AnalyticsSummary(BaseModel):
+    """Tempo + istikrar manşeti."""
+    rate_7d: float              # son 7 gün test/gün hızı (yalnız soru bankası)
+    rate_30d: float             # son 30 gün test/gün
+    consistency_7d_pct: int     # son 7 günün kaçında aktif (0..100)
+    consistency_30d_pct: int
+    hit_rate_7d_pct: int        # planlanan→tamamlanan (0..100)
+    active_days_30: int         # son 30 günde aktif gün sayısı
+    longest_streak_30: int      # son 30 günde en uzun kesintisiz aktif seri
+    worst_warning_level: str    # green/amber/red
+
+
+class AnalyticsWeekPoint(BaseModel):
+    week_start: str             # ISO Pazartesi
+    label: str                  # "12 May"
+    planned: int
+    completed: int
+    pct: int                    # 0..100 (tamamlama)
+
+
+class AnalyticsDayFlag(BaseModel):
+    date: str                   # ISO
+    weekday: int                # 0=Pazartesi
+    active: bool                # o gün tik var mı
+    has_plan: bool              # o gün planlı görev var mıydı
+
+
+class AnalyticsDow(BaseModel):
+    weekday: int                # 0=Pazartesi
+    label: str                  # "Pzt"
+    avg_completed: float        # o güne ait ortalama tamamlanan test
+    hit_pct: int                # o günün tutturma oranı (0..100)
+    measured: bool              # geçmişte planlı gün olup ölçülebildi mi
+
+
+class AnalyticsProjection(BaseModel):
+    exam_label: str | None
+    exam_date: str | None       # ISO
+    days_left: int | None
+    total_tests: int
+    completed: int
+    remaining: int              # total − completed (kalan iş)
+    projected_completable: int  # mevcut tempoyla erişilebilir
+    gap: int                    # projeksiyon − kalan iş
+    rate_per_day: float
+    required_rate: float        # günlük gereken hız
+    confidence_level: str       # high/medium/low
+    status: str                 # green/amber/red
+
+
+class AnalyticsExamPoint(BaseModel):
+    title: str
+    exam_date: str | None
+    section_label: str
+    net: float
+
+
+class AnalyticsWarningItem(BaseModel):
+    level: str                  # green/amber/red
+    code: str
+    title: str
+    detail: str
+
+
 class TeacherStudentAnalyticsResponse(BaseModel):
     student_id: int
     student_name: str
     window_days: int
     trend: list[AnalyticsTrendPoint]
     subjects: list[AnalyticsSubjectRow]
+    # --- Zenginleştirme (koçun "program süreci" panosu) ---
+    summary: AnalyticsSummary
+    weekly_trend: list[AnalyticsWeekPoint]
+    activity_calendar: list[AnalyticsDayFlag]
+    dow_performance: list[AnalyticsDow]
+    projection: AnalyticsProjection
+    exam_trend: list[AnalyticsExamPoint]
+    exam_trend_section: str | None = None
+    exam_trend_delta: float | None = None
+    warnings: list[AnalyticsWarningItem]
 
 
 # --- Veliye Not Gönder ---
