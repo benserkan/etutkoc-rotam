@@ -718,17 +718,86 @@ def list_demo_sessions(db: Session) -> list[DemoSessionListItem]:
     return out
 
 
+def _demo_closure(db: Session, *, seed_id: str) -> tuple[list[int], list[int]]:
+    """Demo seansının ÜRETTİĞİ tüm user_id + institution_id transitif kapanışı.
+
+    Kullanıcı kararı (2026-06-05): "demo kullanıcılarını ve bu kullanıcıların
+    ürettiklerini sistemden temizleyebilmeliyiz." Yani yalnız demo-işaretli
+    seed kayıtları DEĞİL, demo kullanıcıların ürettiği gerçek (demo-işaretsiz)
+    kayıtlar da silinir:
+      1. Demo seed kullanıcıları (is_demo + seed_id)
+      2. Demo kurumların ÜYELERİ (institution_id) — kurum yöneticisinin davet
+         ettiği öğretmenler/öğrenciler (demo işaretli olmasalar bile)
+      3. Demo koçların ÖĞRENCİLERİ (teacher_id) — transitif: davet edilen
+         öğretmenin oluşturduğu öğrenciler de dahil
+      4. Bu öğrencilerin VELİLERİ — GÜVENLİK: yalnız TÜM çocukları silinecek
+         sette olan veli silinir; başka (silinmeyecek) gerçek bir çocuğu olan
+         veli KORUNUR (yetim bırakmamak için).
+
+    Demo scale küçük (onlarca kayıt) — basit iteratif kapanış yeterli.
+    """
+    seed_user_ids = {
+        uid for (uid,) in db.query(User.id)
+        .filter(User.demo_seed_id == seed_id, User.is_demo.is_(True)).all()
+    }
+    inst_ids = {
+        iid for (iid,) in db.query(Institution.id)
+        .filter(Institution.demo_seed_id == seed_id, Institution.is_demo.is_(True)).all()
+    }
+    user_ids: set[int] = set(seed_user_ids)
+
+    # 2. Demo kurum üyeleri (davet edilen öğretmen/öğrenci/admin)
+    if inst_ids:
+        for (uid,) in db.query(User.id).filter(
+            User.institution_id.in_(inst_ids)
+        ).all():
+            user_ids.add(uid)
+
+    # 3+4. Transitif kapanış: koç→öğrenci (teacher_id), öğrenci→veli
+    changed = True
+    while changed and user_ids:
+        changed = False
+        ids = list(user_ids)
+        # teacher_id mevcut sette olan öğrenciler
+        for (uid,) in db.query(User.id).filter(User.teacher_id.in_(ids)).all():
+            if uid not in user_ids:
+                user_ids.add(uid)
+                changed = True
+        # sette olan öğrencilerin velileri (yalnız tüm çocukları sette olan)
+        ids = list(user_ids)
+        parent_ids = [
+            pid for (pid,) in db.query(ParentStudentLink.parent_id)
+            .filter(ParentStudentLink.student_id.in_(ids)).distinct().all()
+        ]
+        for pid in parent_ids:
+            if pid in user_ids:
+                continue
+            other = (
+                db.query(ParentStudentLink.id)
+                .filter(
+                    ParentStudentLink.parent_id == pid,
+                    ParentStudentLink.student_id.notin_(list(user_ids)),
+                )
+                .first()
+            )
+            if other is None:  # velinin tüm çocukları silinecek sette
+                user_ids.add(pid)
+                changed = True
+
+    return list(user_ids), list(inst_ids)
+
+
 def delete_demo_session(db: Session, *, seed_id: str) -> dict:
-    """Bir demo seansının tüm kayıtlarını cascade sil.
+    """Bir demo seansının + demo kullanıcıların ÜRETTİĞİ her şeyin cascade silimi.
 
-    Sıra (FK dependency):
-      1. Öğrencilerin örnek verisi (ExamResult, CoachingSession, CoachStudentRate,
-         TaskBookItem, Task, SectionProgress, StudentBook, ParentStudentLink)
-      2. Müfredat (BookSection, Topic, Book, Subject — koçlar üzerinden)
-      3. User'lar
-      4. Institution
+    `_demo_closure` ile demo seed kullanıcıları + demo kurum üyeleri (davet edilen
+    öğretmen/öğrenci) + koçların öğrencileri + velileri transitif olarak bulunur;
+    sonra bu kullanıcıların TÜM ürettiği veri (kitap/müfredat/görev/deneme/seans/
+    davet/...) + kendileri silinir.
 
-    Sadece is_demo=True kayıtlara dokunur. Gerçek hesaplara erişmez.
+    PROD (Postgres): User satırı silinince 59 CASCADE FK'si tüm alt kaydı otomatik
+    temizler, SET NULL FK'leri null'lar (audit/log korunur). Aşağıdaki explicit
+    silmeler hem dev (SQLite FK kapalı) temizliği hem de güvenli sıralama içindir.
 
     Returns: silinen sayım dict'i {users, institutions, tasks, exams, sessions}.
     """
@@ -748,21 +817,11 @@ def delete_demo_session(db: Session, *, seed_id: str) -> dict:
     from app.models.coach_billing import CoachPayment, CoachStudentRate
     from app.models.coaching_session import CoachingInsight, CoachingSession
     from app.models.exam_result import ExamResult
+    from app.models.invitation import Invitation
+    from app.models.parent import ParentInvitation
 
-    # Önce seansa ait tüm User ID'leri bul
-    user_rows = (
-        db.query(User)
-        .filter(User.demo_seed_id == seed_id, User.is_demo.is_(True))
-        .all()
-    )
-    user_ids = [u.id for u in user_rows]
-
-    inst_rows = (
-        db.query(Institution)
-        .filter(Institution.demo_seed_id == seed_id, Institution.is_demo.is_(True))
-        .all()
-    )
-    inst_ids = [i.id for i in inst_rows]
+    # Transitif kapanış — demo kullanıcılar + ürettikleri (davet edilenler dahil)
+    user_ids, inst_ids = _demo_closure(db, seed_id=seed_id)
 
     if not user_ids and not inst_ids:
         return {"users": 0, "institutions": 0, "tasks": 0, "exams": 0, "sessions": 0}
@@ -813,6 +872,12 @@ def delete_demo_session(db: Session, *, seed_id: str) -> dict:
             (_PSL.parent_id.in_(user_ids)) | (_PSL.student_id.in_(user_ids))
         ))
 
+        # Veli davetleri (koçun gönderdiği veya öğrenciye ait — kabul edilmemiş dahil)
+        db.execute(sa_delete(ParentInvitation).where(
+            (ParentInvitation.invited_by_id.in_(user_ids))
+            | (ParentInvitation.student_id.in_(user_ids))
+        ))
+
         # StudentBook + SectionProgress
         sb_ids = [
             sid for (sid,) in db.query(_SB.id)
@@ -839,7 +904,20 @@ def delete_demo_session(db: Session, *, seed_id: str) -> dict:
             db.execute(sa_delete(_Topic).where(_Topic.subject_id.in_(subject_ids)))
             db.execute(sa_delete(_Subject).where(_Subject.id.in_(subject_ids)))
 
-        # Son: User'lar
+    # Kurum/öğretmen davetleri (demo kurumun veya demo kullanıcıların oluşturduğu —
+    # kabul edilmemiş açık davetler dahil). user_ids/inst_ids boş olabilir.
+    inv_cond = []
+    if inst_ids:
+        inv_cond.append(Invitation.institution_id.in_(inst_ids))
+    if user_ids:
+        inv_cond.append(Invitation.created_by_user_id.in_(user_ids))
+    if inv_cond:
+        from sqlalchemy import or_ as _or
+        db.execute(sa_delete(Invitation).where(_or(*inv_cond)))
+
+    if user_ids:
+        # Son: User'lar (PROD'da Postgres geri kalan tüm CASCADE alt kayıtları
+        # otomatik temizler; SET NULL FK'leri null'lar — audit/log korunur)
         counts["users"] = len(user_ids)
         db.execute(sa_delete(User).where(User.id.in_(user_ids)))
 
