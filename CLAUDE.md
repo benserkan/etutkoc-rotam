@@ -4438,6 +4438,30 @@ Hepsi mobil-only (endpoint'ler zaten canlı → deploy YOK). 82 rota temiz derle
 - **Sıradaki:** EAS build + projectId (push uçtan uca test + store derlemesi) ·
   native AI yakalama · Faz 7 `app/preview/*` temizliği.
 
+## Mobil App — Odak/Tekrar/DNA/Hedef YÖNETİLEBİLİR (koçluğun sırrı) (2026-06-05)
+
+**Bağlam (kullanıcı, kritik):** "Koçluğun sırrı burada — basit program takibinden
+farkı bu. Odak/Tekrar/DNA/Hedef hem koç hem öğrenci için mobilde **yönetilebilir**
+olmalı. Öğrencilerin çoğunda bilgisayar yok → telefonda yoksa kullanılmaz." Salt-
+okuma reddedildi. Mobil-only (uçlar canlı). 95 rota temiz.
+
+- **Öğrenci — etkileşimli** (commit `feb9b69`): Gelişim hub salt-okumadan aksiyona:
+  - **Odak**: canlı Pomodoro (`/student-focus`) — süre seç → geri sayım ring →
+    Bitir/Vazgeç (`/focus/start|stop|cancel`).
+  - **Tekrar**: aralıklı tekrar oturumu (`/student-review`) — due kartlar tek tek,
+    Hatırlamadım/Zor/İyi/Kolay (FSRS rating 1-4, `/review/{id}/rate`).
+  - **Hedefler**: oluştur + ilerleme gir + Başardım (`/student-goals`,
+    `/goals` + `/progress` + `/toggle`).
+  - Gelişim kartlarına aksiyon butonları (Odağa başla / Tekrara başla(N) / yönet).
+- **Koç — izle + yönet** (commit `46c0590`): öğrenci detayı "Genel" → **"Gelişim
+  izleme"** (`/teacher-student-dev`) alt-sekmeli (DNA/Odak/Tekrar/Hedef):
+  - DNA (kronotip + dönem + ders kırılımı + trend) · Odak (seri/puan + son
+    oturumlar) · Tekrar (**zorlandığı konular** + kaç kez unuttu = koçluk
+    içgörüsü; ders seed) · Hedef (**hedef ağacı** nested + öğrenciye hedef ekle).
+  - lib/teacher: dna/focus/review/goals fetcher + createTeacherGoal + seedTeacherReview.
+- Backend teacher uçları (`/students/{id}/dna|focus|review|goals` + goal create +
+  review/seed) ZATEN vardı — mobil bağlandı. PARITY.md güncel.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
