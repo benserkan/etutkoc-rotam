@@ -1,5 +1,6 @@
 import * as React from "react";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
+import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { StudentDayResponse, StudentTask } from "@/lib/student";
 
@@ -83,6 +84,7 @@ export function TodayView({
   const pct = Math.round((s.pct ?? 0) * 100);
 
   return (
+    <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
     <ScrollView
       className="flex-1 bg-slate-50"
       contentContainerClassName="px-4 py-4 gap-4"
@@ -172,5 +174,6 @@ export function TodayView({
         </View>
       )}
     </ScrollView>
+    </SafeAreaView>
   );
 }
