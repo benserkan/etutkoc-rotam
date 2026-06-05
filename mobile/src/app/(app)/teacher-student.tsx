@@ -74,7 +74,10 @@ export default function TeacherStudentRoute() {
           </Pressable>
         </View>
       ) : tab === "genel" ? (
-        <StudentDetailView data={q.data} />
+        <StudentDetailView
+          data={q.data}
+          onOpenDev={() => router.push({ pathname: "/teacher-student-dev", params: { id: String(studentId) } })}
+        />
       ) : tab === "program" ? (
         <ProgramTab studentId={studentId} />
       ) : tab === "denemeler" ? (

@@ -378,3 +378,95 @@ export function getTeacherPlan(): Promise<TeacherPlanResponse> {
 export function upgradeTeacherPlan(plan: string): Promise<unknown> {
   return apiRequest(`/api/v2/teacher/plan/upgrade`, { method: "POST", body: { plan } });
 }
+
+// ====== Koç — öğrenci Gelişim izleme (DNA/Odak/Tekrar/Hedef) ======
+export interface TeacherDnaSubject { subject_name: string; completion_rate: number; }
+export interface TeacherDnaTrend { direction: string; delta_pct: number | null; this_week_completed: number; last_week_completed: number; }
+export interface TeacherDnaResponse {
+  student_name: string;
+  window_days: number;
+  has_enough_data: boolean;
+  completion_rate: number;
+  chronotype: string;
+  peak_hour: number | null;
+  peak_day_name: string | null;
+  morning_count: number;
+  afternoon_count: number;
+  evening_count: number;
+  night_count: number;
+  weekday_count: number;
+  weekend_count: number;
+  by_subject: TeacherDnaSubject[];
+  trend: TeacherDnaTrend | null;
+}
+export interface TeacherFocusSession { id: number; planned_minutes: number; actual_minutes: number; interrupted: boolean; label: string | null; }
+export interface TeacherFocusResponse {
+  student_name: string;
+  today_work_sessions: number;
+  today_work_minutes: number;
+  streak_days: number;
+  longest_streak: number;
+  points_total: number;
+  recent_sessions: TeacherFocusSession[];
+}
+export interface TeacherReviewBreakdown { new: number; learning: number; review: number; relearning: number; due_now: number; total: number; }
+export interface TeacherStruggleCard { topic_id: number; topic_name: string; subject_name: string; state_label: string; lapse_count: number; }
+export interface TeacherReviewSubjectOption { id: number; name: string; }
+export interface TeacherReviewResponse {
+  student_name: string;
+  breakdown: TeacherReviewBreakdown;
+  struggle_cards: TeacherStruggleCard[];
+  subjects: TeacherReviewSubjectOption[];
+}
+export interface TeacherGoalNode {
+  id: number;
+  kind: string;
+  kind_label: string;
+  status: string;
+  title: string;
+  target_value: number | null;
+  current_value: number | null;
+  unit: string | null;
+  progress_pct: number | null;
+  aggregated_pct: number | null;
+  children: TeacherGoalNode[];
+}
+export interface TeacherGoalSummary { total: number; active: number; achieved: number; overall_pct: number | null; }
+export interface TeacherGoalsResponse {
+  student_name: string;
+  overall_pct: number;
+  roots: TeacherGoalNode[];
+  summary: TeacherGoalSummary;
+}
+export interface TeacherGoalCreateBody {
+  title: string;
+  kind?: string;
+  parent_id?: number | null;
+  target_value?: number | null;
+  unit?: string | null;
+  target_date?: string | null;
+}
+export const teacherDevKeys = {
+  dna: (id: number) => ["teacher", "student", id, "dna"] as const,
+  focus: (id: number) => ["teacher", "student", id, "focus"] as const,
+  review: (id: number) => ["teacher", "student", id, "review"] as const,
+  goals: (id: number) => ["teacher", "student", id, "goals"] as const,
+};
+export function getTeacherStudentDna(id: number): Promise<TeacherDnaResponse> {
+  return apiRequest<TeacherDnaResponse>(`/api/v2/teacher/students/${id}/dna`);
+}
+export function getTeacherStudentFocus(id: number): Promise<TeacherFocusResponse> {
+  return apiRequest<TeacherFocusResponse>(`/api/v2/teacher/students/${id}/focus`);
+}
+export function getTeacherStudentReview(id: number): Promise<TeacherReviewResponse> {
+  return apiRequest<TeacherReviewResponse>(`/api/v2/teacher/students/${id}/review`);
+}
+export function getTeacherStudentGoals(id: number): Promise<TeacherGoalsResponse> {
+  return apiRequest<TeacherGoalsResponse>(`/api/v2/teacher/students/${id}/goals`);
+}
+export function createTeacherGoal(id: number, body: TeacherGoalCreateBody): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/students/${id}/goals`, { method: "POST", body });
+}
+export function seedTeacherReview(id: number, subjectId: number): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/students/${id}/review/seed`, { method: "POST", body: { subject_id: subjectId } });
+}

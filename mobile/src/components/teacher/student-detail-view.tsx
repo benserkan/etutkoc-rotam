@@ -1,4 +1,5 @@
-import { ScrollView, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { GorevBreakdown, TeacherStudentDetail, WarningLevel } from "@/lib/teacher";
 import { cn } from "@/lib/utils";
@@ -48,7 +49,7 @@ function GorevCard({ title, g }: { title: string; g: GorevBreakdown }) {
   );
 }
 
-export function StudentDetailView({ data }: { data: TeacherStudentDetail }) {
+export function StudentDetailView({ data, onOpenDev }: { data: TeacherStudentDetail; onOpenDev?: () => void }) {
   const w = WARN[data.worst_warning_level];
   const s = data.student;
   const grade = s.display_grade_label ?? (s.grade_level != null ? `${s.grade_level}. sınıf` : "");
@@ -97,6 +98,23 @@ export function StudentDetailView({ data }: { data: TeacherStudentDetail }) {
           reds.map((i) => <WarnRow key={i.code} level={i.level} title={i.title} detail={i.detail} />)
         )}
       </View>
+
+      {/* Gelişim izleme — koçluğun derin analizi */}
+      {onOpenDev ? (
+        <Pressable
+          onPress={onOpenDev}
+          className="flex-row items-center justify-between rounded-2xl border border-brand-200 bg-brand-50 px-5 py-4 active:bg-brand-100"
+        >
+          <View className="flex-1 flex-row items-center gap-3">
+            <Ionicons name="pulse-outline" size={22} color="#0e7490" />
+            <View className="flex-1">
+              <Text className="text-[15px] font-semibold text-brand-800">Gelişim izleme</Text>
+              <Text className="mt-0.5 text-xs text-brand-700">Çalışma DNA · Odak · Tekrar · Hedefler</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#0e7490" />
+        </Pressable>
+      ) : null}
 
       {/* Diğer işlemler */}
       <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-4">
