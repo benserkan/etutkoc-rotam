@@ -48,6 +48,7 @@ const MOCK_DAY: StudentDayResponse = {
     etkinlik_count: 1,
   },
   day_note: "",
+  can_request: { change: true, replace: true, remove: true, question: true, add: true },
   tasks: [
     {
       id: 1, title: "", type: "test", status: "completed", date: "2026-06-05", period: null,

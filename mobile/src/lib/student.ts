@@ -53,6 +53,14 @@ export interface DaySummary {
   etkinlik_count: number;
 }
 
+export interface CanRequestMatrix {
+  change: boolean;
+  replace: boolean;
+  remove: boolean;
+  question: boolean;
+  add: boolean;
+}
+
 export interface StudentDayResponse {
   date: string;
   is_today: boolean;
@@ -63,6 +71,33 @@ export interface StudentDayResponse {
   tasks: StudentTask[];
   summary: DaySummary;
   day_note: string;
+  can_request: CanRequestMatrix;
+}
+
+export type RequestType = "change" | "replace" | "remove" | "question" | "add";
+export type RequestStatus = "pending" | "approved" | "rejected" | "withdrawn" | "resolved";
+
+export interface StudentRequestItem {
+  id: number;
+  type: RequestType;
+  status: RequestStatus;
+  task_id: number | null;
+  task_title: string | null;
+  task_date: string | null;
+  message: string | null;
+  proposed_book_name: string | null;
+  proposed_section_label: string | null;
+  proposed_count: number | null;
+  proposed_date: string | null;
+  teacher_response: string | null;
+  created_at: string;
+  responded_at: string | null;
+}
+
+export interface StudentRequestListResponse {
+  items: StudentRequestItem[];
+  total: number;
+  pending_count: number;
 }
 
 export interface StudentWeekDay {
@@ -134,10 +169,38 @@ export const studentKeys = {
   day: (date?: string) => ["student", "day", date ?? "today"] as const,
   week: (start?: string) => ["student", "week", start ?? "current"] as const,
   exams: () => ["student", "exams"] as const,
+  requests: (filter?: string) => ["student", "requests", filter ?? "all"] as const,
 };
 
 export function getStudentExams(): Promise<StudentExamsResponse> {
   return apiRequest<StudentExamsResponse>("/api/v2/student/exams");
+}
+
+// --- Öğrenci → koç talepleri ---
+export function getStudentRequests(filter?: "pending" | "answered"): Promise<StudentRequestListResponse> {
+  const qs = filter ? `?status=${filter}` : "";
+  return apiRequest<StudentRequestListResponse>(`/api/v2/student/requests${qs}`);
+}
+export function withdrawRequest(requestId: number): Promise<unknown> {
+  return apiRequest(`/api/v2/student/requests/${requestId}/withdraw`, { method: "POST", body: {} });
+}
+export function requestQuestion(taskId: number, message: string): Promise<unknown> {
+  return apiRequest(`/api/v2/student/tasks/${taskId}/requests/question`, {
+    method: "POST",
+    body: { message },
+  });
+}
+export function requestChange(taskId: number, proposed_count: number, message?: string): Promise<unknown> {
+  return apiRequest(`/api/v2/student/tasks/${taskId}/requests/change`, {
+    method: "POST",
+    body: { proposed_count, message: message || null },
+  });
+}
+export function requestRemove(taskId: number, message?: string): Promise<unknown> {
+  return apiRequest(`/api/v2/student/tasks/${taskId}/requests/remove`, {
+    method: "POST",
+    body: { message: message || null },
+  });
 }
 
 export function getStudentDay(date?: string): Promise<StudentDayResponse> {

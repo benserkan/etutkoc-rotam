@@ -3,11 +3,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { TodayView } from "@/components/student/today-view";
-import { TaskSheet, type ItemUpdate } from "@/components/student/task-sheet";
+import { TaskSheet, type ItemUpdate, type RequestKind, type RequestPayload } from "@/components/student/task-sheet";
 import { ApiError } from "@/lib/api";
 import {
   completeTask,
   getStudentDay,
+  requestChange,
+  requestQuestion,
+  requestRemove,
   setItemCompleted,
   studentKeys,
   uncompleteTask,
@@ -124,6 +127,17 @@ export function DayScreen({ date, safeTop = true }: { date?: string; safeTop?: b
             )
           }
           onUncomplete={() => runAction(() => uncompleteTask(openTask.id))}
+          canRequest={dayQ.data.can_request}
+          hasPendingRequest={openTask.has_pending_request}
+          requestBusy={busy}
+          onSubmitRequest={(kind: RequestKind, payload: RequestPayload) =>
+            runAction(async () => {
+              if (kind === "question") await requestQuestion(openTask.id, payload.message ?? "");
+              else if (kind === "change")
+                await requestChange(openTask.id, payload.proposed_count ?? 0, payload.message);
+              else await requestRemove(openTask.id, payload.message);
+            })
+          }
         />
       ) : null}
     </>

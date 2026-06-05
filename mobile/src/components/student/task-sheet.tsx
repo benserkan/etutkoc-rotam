@@ -10,7 +10,13 @@ import {
   View,
 } from "react-native";
 
-import type { StudentTask } from "@/lib/student";
+import type { CanRequestMatrix, StudentTask } from "@/lib/student";
+
+export type RequestKind = "question" | "change" | "remove";
+export interface RequestPayload {
+  message?: string;
+  proposed_count?: number;
+}
 
 export interface ItemUpdate {
   itemId: number;
@@ -123,6 +129,10 @@ export function TaskSheetContent({
   onSaveItems,
   onCompleteActivity,
   onUncomplete,
+  canRequest,
+  hasPendingRequest,
+  requestBusy,
+  onSubmitRequest,
 }: {
   task: StudentTask;
   busy: boolean;
@@ -130,6 +140,10 @@ export function TaskSheetContent({
   onSaveItems: (updates: ItemUpdate[]) => void;
   onCompleteActivity: (solvedCount: number | null) => void;
   onUncomplete: () => void;
+  canRequest?: CanRequestMatrix;
+  hasPendingRequest?: boolean;
+  requestBusy?: boolean;
+  onSubmitRequest?: (kind: RequestKind, payload: RequestPayload) => void;
 }) {
   const [rows, setRows] = React.useState<Row[]>(() => buildRows(task));
   const [solved, setSolved] = React.useState("");
@@ -245,6 +259,126 @@ export function TaskSheetContent({
           </Pressable>
         </View>
       )}
+
+      {onSubmitRequest ? (
+        <RequestSection
+          canRequest={canRequest}
+          hasPending={!!hasPendingRequest}
+          busy={!!requestBusy}
+          onSubmit={onSubmitRequest}
+        />
+      ) : null}
+    </View>
+  );
+}
+
+function RequestSection({
+  canRequest,
+  hasPending,
+  busy,
+  onSubmit,
+}: {
+  canRequest?: CanRequestMatrix;
+  hasPending: boolean;
+  busy: boolean;
+  onSubmit: (kind: RequestKind, payload: RequestPayload) => void;
+}) {
+  const [open, setOpen] = React.useState<RequestKind | null>(null);
+  const [msg, setMsg] = React.useState("");
+  const [count, setCount] = React.useState("");
+
+  if (hasPending) {
+    return (
+      <View className="mt-1 border-t border-slate-200 pt-4">
+        <Text className="text-sm text-amber-700">
+          Bu görev için bekleyen bir talebin var. &quot;Taleplerim&quot;den takip edebilirsin.
+        </Text>
+      </View>
+    );
+  }
+
+  const opts: { kind: RequestKind; label: string; show: boolean }[] = [
+    { kind: "question", label: "Soru sor", show: !!canRequest?.question },
+    { kind: "change", label: "Sayı değiştir", show: !!canRequest?.change },
+    { kind: "remove", label: "Görevi kaldır", show: !!canRequest?.remove },
+  ];
+  if (!opts.some((o) => o.show)) return null;
+
+  function toggle(kind: RequestKind) {
+    setOpen((cur) => (cur === kind ? null : kind));
+    setMsg("");
+    setCount("");
+  }
+
+  function submit() {
+    if (open === "question") {
+      if (!msg.trim()) return;
+      onSubmit("question", { message: msg.trim() });
+    } else if (open === "change") {
+      const n = Number(count);
+      if (!count.trim() || !(n > 0)) return;
+      onSubmit("change", { proposed_count: n, message: msg.trim() || undefined });
+    } else if (open === "remove") {
+      onSubmit("remove", { message: msg.trim() || undefined });
+    }
+  }
+
+  const sendDisabled =
+    busy ||
+    (open === "question" && !msg.trim()) ||
+    (open === "change" && !(Number(count) > 0));
+
+  return (
+    <View className="mt-1 gap-3 border-t border-slate-200 pt-4">
+      <Text className="text-sm font-semibold text-slate-800">Koça ilet</Text>
+      <View className="flex-row flex-wrap gap-2">
+        {opts
+          .filter((o) => o.show)
+          .map((o) => (
+            <Pressable
+              key={o.kind}
+              onPress={() => toggle(o.kind)}
+              className={`rounded-full border px-3 py-1.5 ${
+                open === o.kind ? "border-brand-600 bg-brand-50" : "border-slate-300"
+              }`}
+            >
+              <Text className={`text-sm font-medium ${open === o.kind ? "text-brand-700" : "text-slate-600"}`}>
+                {o.label}
+              </Text>
+            </Pressable>
+          ))}
+      </View>
+
+      {open ? (
+        <View className="gap-2">
+          {open === "change" ? (
+            <View className="flex-row gap-3">
+              <NumField label="Önerdiğin yeni sayı" value={count} onChangeText={(v) => setCount(v.replace(/[^0-9]/g, "").slice(0, 4))} />
+              <View className="flex-1" />
+            </View>
+          ) : null}
+          <View className="gap-1">
+            <Text className="text-xs font-medium text-slate-600">
+              {open === "question" ? "Sorun" : "Not (isteğe bağlı)"}
+            </Text>
+            <TextInput
+              value={msg}
+              onChangeText={setMsg}
+              placeholder={open === "question" ? "Koçuna sormak istediğin…" : "Kısa açıklama…"}
+              placeholderTextColor="#94a3b8"
+              multiline
+              className="min-h-[60px] rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900"
+            />
+          </View>
+          <Pressable
+            onPress={submit}
+            disabled={sendDisabled}
+            className={`items-center rounded-xl py-3 ${sendDisabled ? "bg-slate-300" : "bg-brand-700 active:bg-brand-800"}`}
+          >
+            <Text className="text-base font-semibold text-white">{busy ? "Gönderiliyor…" : "Koça gönder"}</Text>
+          </Pressable>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -257,6 +391,10 @@ export function TaskSheet(props: {
   onCompleteActivity: (solvedCount: number | null) => void;
   onUncomplete: () => void;
   onClose: () => void;
+  canRequest?: CanRequestMatrix;
+  hasPendingRequest?: boolean;
+  requestBusy?: boolean;
+  onSubmitRequest?: (kind: RequestKind, payload: RequestPayload) => void;
 }) {
   const { onClose, ...content } = props;
   return (

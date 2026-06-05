@@ -52,6 +52,10 @@ export default function TaskSheetPreview() {
           onSaveItems={() => {}}
           onCompleteActivity={() => {}}
           onUncomplete={() => {}}
+          canRequest={{ change: true, replace: true, remove: true, question: true, add: true }}
+          hasPendingRequest={false}
+          requestBusy={false}
+          onSubmitRequest={() => {}}
         />
       </View>
     </SafeAreaView>
