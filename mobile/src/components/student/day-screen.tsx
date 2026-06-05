@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { TodayView } from "@/components/student/today-view";
@@ -102,6 +103,10 @@ export function DayScreen({ date, safeTop = true }: { date?: string; safeTop?: b
         refreshing={dayQ.isRefetching}
         onRefresh={() => dayQ.refetch()}
         safeTop={safeTop}
+        canAddRequest={dayQ.data.can_request?.add}
+        onRequestAdd={() =>
+          router.push({ pathname: "/request-source", params: { mode: "add", date: dayQ.data!.date } })
+        }
       />
       {openTask ? (
         <TaskSheet
@@ -130,6 +135,11 @@ export function DayScreen({ date, safeTop = true }: { date?: string; safeTop?: b
           canRequest={dayQ.data.can_request}
           hasPendingRequest={openTask.has_pending_request}
           requestBusy={busy}
+          onRequestReplace={() => {
+            const id = openTask.id;
+            setOpenTask(null);
+            router.push({ pathname: "/request-source", params: { mode: "replace", task: String(id) } });
+          }}
           onSubmitRequest={(kind: RequestKind, payload: RequestPayload) =>
             runAction(async () => {
               if (kind === "question") await requestQuestion(openTask.id, payload.message ?? "");

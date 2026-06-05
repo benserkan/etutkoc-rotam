@@ -176,6 +176,59 @@ export function getStudentExams(): Promise<StudentExamsResponse> {
   return apiRequest<StudentExamsResponse>("/api/v2/student/exams");
 }
 
+// --- Kitap + bölüm seçici (kaynak değiştir / yeni görev iste) ---
+export interface PickBook {
+  book_id: number;
+  book_name: string;
+  book_type: string;
+  remaining_tests: number;
+}
+export interface PickSubjectGroup {
+  subject_id: number;
+  subject_name: string;
+  books: PickBook[];
+}
+export interface StudentBooksResponse {
+  subjects: PickSubjectGroup[];
+}
+export interface BookSectionOption {
+  id: number;
+  label: string;
+  topic_name: string | null;
+  remaining: number;
+  total: number;
+}
+export interface BookSectionsResponse {
+  book_id: number;
+  is_deneme: boolean;
+  items: BookSectionOption[];
+}
+
+export function getStudentBooks(): Promise<StudentBooksResponse> {
+  return apiRequest<StudentBooksResponse>("/api/v2/student/books");
+}
+export function getBookSections(bookId: number): Promise<BookSectionsResponse> {
+  return apiRequest<BookSectionsResponse>(`/api/v2/student/book-sections?book_id=${bookId}`);
+}
+export function requestReplace(
+  taskId: number,
+  body: { new_book_id: number; new_section_id: number; new_count: number; message?: string },
+): Promise<unknown> {
+  return apiRequest(`/api/v2/student/tasks/${taskId}/requests/replace`, {
+    method: "POST",
+    body: { ...body, message: body.message || null },
+  });
+}
+export function requestAdd(
+  dayIso: string,
+  body: { book_id: number; section_id: number; proposed_count: number; message?: string },
+): Promise<unknown> {
+  return apiRequest(`/api/v2/student/days/${dayIso}/requests/add`, {
+    method: "POST",
+    body: { ...body, message: body.message || null },
+  });
+}
+
 // --- Öğrenci → koç talepleri ---
 export function getStudentRequests(filter?: "pending" | "answered"): Promise<StudentRequestListResponse> {
   const qs = filter ? `?status=${filter}` : "";

@@ -76,6 +76,8 @@ export function TodayView({
   refreshing = false,
   onRefresh,
   safeTop = true,
+  canAddRequest,
+  onRequestAdd,
 }: {
   day: StudentDayResponse;
   busyTaskId: number | null;
@@ -84,6 +86,8 @@ export function TodayView({
   refreshing?: boolean;
   onRefresh?: () => void;
   safeTop?: boolean; // false: üstte kendi başlık çubuğu olan ekran (çift inset olmasın)
+  canAddRequest?: boolean;
+  onRequestAdd?: () => void;
 }) {
   const s = day.summary;
   const pct = Math.round((s.pct ?? 0) * 100);
@@ -194,6 +198,16 @@ export function TodayView({
           })}
         </View>
       )}
+
+      {canAddRequest && onRequestAdd ? (
+        <Pressable
+          onPress={onRequestAdd}
+          className="mt-1 flex-row items-center justify-center gap-2 rounded-2xl border border-dashed border-brand-300 py-3.5 active:bg-brand-50"
+        >
+          <Ionicons name="add-circle-outline" size={18} color="#0e7490" />
+          <Text className="text-sm font-semibold text-brand-700">Koçtan yeni görev iste</Text>
+        </Pressable>
+      ) : null}
     </ScrollView>
     </SafeAreaView>
   );

@@ -133,6 +133,7 @@ export function TaskSheetContent({
   hasPendingRequest,
   requestBusy,
   onSubmitRequest,
+  onRequestReplace,
 }: {
   task: StudentTask;
   busy: boolean;
@@ -144,6 +145,7 @@ export function TaskSheetContent({
   hasPendingRequest?: boolean;
   requestBusy?: boolean;
   onSubmitRequest?: (kind: RequestKind, payload: RequestPayload) => void;
+  onRequestReplace?: () => void;
 }) {
   const [rows, setRows] = React.useState<Row[]>(() => buildRows(task));
   const [solved, setSolved] = React.useState("");
@@ -266,6 +268,7 @@ export function TaskSheetContent({
           hasPending={!!hasPendingRequest}
           busy={!!requestBusy}
           onSubmit={onSubmitRequest}
+          onReplace={onRequestReplace}
         />
       ) : null}
     </View>
@@ -277,11 +280,13 @@ function RequestSection({
   hasPending,
   busy,
   onSubmit,
+  onReplace,
 }: {
   canRequest?: CanRequestMatrix;
   hasPending: boolean;
   busy: boolean;
   onSubmit: (kind: RequestKind, payload: RequestPayload) => void;
+  onReplace?: () => void;
 }) {
   const [open, setOpen] = React.useState<RequestKind | null>(null);
   const [msg, setMsg] = React.useState("");
@@ -302,7 +307,8 @@ function RequestSection({
     { kind: "change", label: "Sayı değiştir", show: !!canRequest?.change },
     { kind: "remove", label: "Görevi kaldır", show: !!canRequest?.remove },
   ];
-  if (!opts.some((o) => o.show)) return null;
+  const showReplace = !!canRequest?.replace && !!onReplace;
+  if (!opts.some((o) => o.show) && !showReplace) return null;
 
   function toggle(kind: RequestKind) {
     setOpen((cur) => (cur === kind ? null : kind));
@@ -347,6 +353,11 @@ function RequestSection({
               </Text>
             </Pressable>
           ))}
+        {showReplace ? (
+          <Pressable onPress={onReplace} className="rounded-full border border-slate-300 px-3 py-1.5">
+            <Text className="text-sm font-medium text-slate-600">Kaynak değiştir</Text>
+          </Pressable>
+        ) : null}
       </View>
 
       {open ? (
@@ -395,6 +406,7 @@ export function TaskSheet(props: {
   hasPendingRequest?: boolean;
   requestBusy?: boolean;
   onSubmitRequest?: (kind: RequestKind, payload: RequestPayload) => void;
+  onRequestReplace?: () => void;
 }) {
   const { onClose, ...content } = props;
   return (
