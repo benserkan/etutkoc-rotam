@@ -321,6 +321,29 @@ def reply_request_v2(
         raise _svc_error(e)
     db.commit()
     db.refresh(req)
+    _push_support_reply(db, req, sender_id=user.id, sender_name=user.full_name)
     return MutationResponse[SupportRequestDetail](
         data=build_detail(req, user), invalidate=["support:mine", "support:inbox"],
     )
+
+
+def _push_support_reply(db: Session, req, *, sender_id: int, sender_name: str) -> None:
+    """Yanıt sonrası ilgili taraflara (gönderen hariç) push gönder. Best-effort."""
+    try:
+        from app.services.push_notifications import send_push_to_user
+
+        # Gönderen hariç katılımcılar: talep eden + hedef koç + yönlendiren.
+        targets = {req.requester_id, req.target_user_id, getattr(req, "escalated_by_id", None)}
+        targets.discard(sender_id)
+        targets.discard(None)
+        for uid in targets:
+            send_push_to_user(
+                db,
+                user_id=uid,
+                title="Destek yanıtı",
+                body=f"{sender_name}: {req.subject}"[:160],
+                data={"type": "support", "request_id": req.id},
+            )
+        db.commit()
+    except Exception:  # noqa: BLE001 — push akışı bozmamalı
+        db.rollback()

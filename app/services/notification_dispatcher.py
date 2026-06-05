@@ -53,6 +53,43 @@ _BYPASS_CAP_KINDS: set[NotificationKind] = {
     NotificationKind.OTP,
 }
 
+# Push bildirim başlıkları (mobil) — kind → kısa başlık. Body = e-posta konusu.
+_PUSH_TITLES: dict[NotificationKind, str] = {
+    NotificationKind.WEEKLY_REPORT: "Haftalık rapor",
+    NotificationKind.NEW_PROGRAM: "Yeni program",
+    NotificationKind.DROP_ALERT: "Dikkat",
+    NotificationKind.TEACHER_NOTE: "Koç notu",
+    NotificationKind.EMPTY_DAY: "Boş gün",
+    NotificationKind.DAILY_SUMMARY: "Günlük özet",
+    NotificationKind.EXAM_APPROACHING: "Deneme yaklaşıyor",
+}
+# Push'a uygun olmayan (token zaten yok / farklı kanal) türler.
+_PUSH_SKIP_KINDS: set[NotificationKind] = {NotificationKind.OTP, NotificationKind.INVITATION}
+
+
+def _maybe_push_parent(db: Session, log: NotificationLog) -> None:
+    """E-posta gönderildikten sonra veliye push gönder (best-effort)."""
+    if log.kind in _PUSH_SKIP_KINDS:
+        return
+    try:
+        from app.services.push_notifications import send_push_to_user
+
+        title = _PUSH_TITLES.get(log.kind, "ETÜTKOÇ")
+        body = (log.subject or "Yeni bir bildiriminiz var.")[:160]
+        send_push_to_user(
+            db,
+            user_id=log.parent_id,
+            title=title,
+            body=body,
+            data={
+                "type": "parent_notification",
+                "kind": log.kind.value if log.kind else None,
+                "student_id": log.student_id,
+            },
+        )
+    except Exception as e:  # noqa: BLE001 — push akışı bozmamalı
+        logger.warning("parent push failed (non-fatal): %s", e)
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -249,6 +286,9 @@ def _dispatch_one(
                         )
         except Exception as ce:
             logger.warning("notification credit record failed (non-fatal): %s", ce)
+        # Push (yalnız EMAIL kanalında → WA ile çift push olmasın). Best-effort.
+        if log.channel == NotificationChannel.EMAIL:
+            _maybe_push_parent(db, log)
         return
 
     # Başarısız — retry kararı

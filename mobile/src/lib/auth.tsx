@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { apiRequest, clearTokens, getAccessToken, setTokens } from "./api";
+import { registerForPush, unregisterForPush } from "./push";
 
 export interface AppUser {
   id: number;
@@ -88,6 +89,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     void bootstrap();
   }, [bootstrap]);
 
+  // Authed olunca push token'ını kaydet (best-effort — cihazda/build'de çalışır).
+  React.useEffect(() => {
+    if (status === "authed") void registerForPush();
+  }, [status]);
+
   const signIn = React.useCallback(async (email: string, password: string): Promise<SignInResult> => {
     const res = await apiRequest<LoginResponse>("/api/v2/auth/login", {
       method: "POST",
@@ -120,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const signOut = React.useCallback(async () => {
+    await unregisterForPush(); // token hâlâ geçerliyken sil
     try {
       await apiRequest("/api/v2/auth/logout", { method: "POST", auth: true });
     } catch {

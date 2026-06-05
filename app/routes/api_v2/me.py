@@ -16,6 +16,8 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
+from pydantic import BaseModel, Field
+
 from app.models import (
     DATA_REQUEST_KIND_LABELS_TR,
     DATA_REQUEST_STATUS_LABELS_TR,
@@ -23,6 +25,7 @@ from app.models import (
     DataRequestKind,
     DataRequestStatus,
     DataSubjectRequest,
+    DevicePushToken,  # noqa: F401 — push token endpoint
     Institution,
     ParentStudentLink,
     User,
@@ -915,3 +918,37 @@ def revoke_my_session(
         data=SessionRevokeResult(message="Oturum kapatıldı."),
         invalidate=["me:sessions"],
     )
+
+
+# --- Mobil push bildirim token'ı (Expo) ---
+class PushTokenBody(BaseModel):
+    token: str = Field(min_length=1, max_length=255)
+    platform: str | None = Field(default=None, max_length=16)
+
+
+@router.post("/me/push-token", response_model=SimpleOk)
+def register_push_token_v2(
+    body: PushTokenBody,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Mobil uygulamanın Expo push token'ını kaydet/güncelle (upsert)."""
+    from app.services.push_notifications import register_token
+
+    register_token(db, user_id=user.id, token=body.token, platform=body.platform)
+    db.commit()
+    return SimpleOk(ok=True)
+
+
+@router.delete("/me/push-token", response_model=SimpleOk)
+def unregister_push_token_v2(
+    token: str,
+    user: User = Depends(get_current_user_v2),
+    db: Session = Depends(get_db),
+):
+    """Çıkışta token'ı sil (yalnız kendi token'ı)."""
+    from app.services.push_notifications import unregister_token
+
+    unregister_token(db, token=token, user_id=user.id)
+    db.commit()
+    return SimpleOk(ok=True)
