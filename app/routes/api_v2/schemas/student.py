@@ -16,6 +16,15 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+# Deneme (ExamResult) modelleri koç şemasıyla ORTAK — öğrenci salt-okuma görür.
+from app.routes.api_v2.schemas.teacher import ExamListSummary, ExamResultRow
+
+
+class StudentExamsResponse(BaseModel):
+    """GET /api/v2/student/exams — öğrencinin kendi deneme sonuçları (salt-okuma)."""
+    summary: ExamListSummary
+    rows: list[ExamResultRow]
+
 
 # Task.type enum — app/models/task.py:TaskType ile birebir 5 değer
 TaskTypeLiteral = Literal["test", "video", "ozet", "tekrar", "other"]

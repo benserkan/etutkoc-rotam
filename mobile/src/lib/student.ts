@@ -93,10 +93,52 @@ export interface StudentWeekResponse {
   total_pct: number;
 }
 
+// Denemeler (salt-okuma; koç girer)
+export interface ExamSubjectRow {
+  name: string;
+  correct: number;
+  wrong: number;
+  blank: number;
+  net: number;
+}
+export interface ExamRow {
+  id: number;
+  title: string;
+  exam_date: string;
+  section: string;
+  section_label: string;
+  total_correct: number;
+  total_wrong: number;
+  total_blank: number;
+  total_questions: number;
+  net: number;
+  subjects: ExamSubjectRow[];
+  note: string | null;
+  created_at: string;
+  created_by_name: string | null;
+}
+export interface ExamSummary {
+  count: number;
+  avg_net: number;
+  best_net: number;
+  last_net: number | null;
+  first_net: number | null;
+  trend_delta: number | null;
+}
+export interface StudentExamsResponse {
+  summary: ExamSummary;
+  rows: ExamRow[];
+}
+
 export const studentKeys = {
   day: (date?: string) => ["student", "day", date ?? "today"] as const,
   week: (start?: string) => ["student", "week", start ?? "current"] as const,
+  exams: () => ["student", "exams"] as const,
 };
+
+export function getStudentExams(): Promise<StudentExamsResponse> {
+  return apiRequest<StudentExamsResponse>("/api/v2/student/exams");
+}
 
 export function getStudentDay(date?: string): Promise<StudentDayResponse> {
   const qs = date ? `?date=${encodeURIComponent(date)}` : "";

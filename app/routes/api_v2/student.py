@@ -31,6 +31,7 @@ from app.deps import get_db
 from app.models import (
     Book,
     BookSection,
+    ExamResult,
     GoalKind,
     GoalStatus,
     PomodoroSession,
@@ -97,6 +98,7 @@ from app.routes.api_v2.schemas.student import (
     SetCompletedBody,
     StudentBooksResponse,
     StudentDayResponse,
+    StudentExamsResponse,
     StudentRequestItem,
     StudentRequestListResponse,
     StudentTask,
@@ -855,6 +857,41 @@ def student_week_print_v2(
         days=print_days,
         week_notes=week_notes,
     )
+
+
+@router.get("/exams", response_model=StudentExamsResponse)
+def student_exams_v2(
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin KENDİ deneme sonuçları (salt-okuma) — özet + liste.
+
+    Denemeyi koç girer; öğrenci yalnız görür (net gelişimi + son denemeler).
+    Serializer koç ucuyla ortak (_build_exam_row); created_by öğrenciye gösterilmez.
+    """
+    from app.routes.api_v2.teacher import _build_exam_row  # ortak serializer (lazy)
+    from app.routes.api_v2.schemas.teacher import ExamListSummary
+
+    exams = (
+        db.query(ExamResult)
+        .filter(ExamResult.student_id == user.id)
+        .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc())
+        .all()
+    )
+    rows = [_build_exam_row(e, created_by_name=None) for e in exams]
+    nets = [e.net for e in exams]
+    count = len(nets)
+    last_net = nets[0] if nets else None  # DESC → ilk = en yeni
+    first_net = nets[-1] if nets else None
+    summary = ExamListSummary(
+        count=count,
+        avg_net=round(sum(nets) / count, 2) if count else 0.0,
+        best_net=round(max(nets), 2) if nets else 0.0,
+        last_net=last_net,
+        first_net=first_net,
+        trend_delta=round(last_net - first_net, 2) if (count >= 2 and last_net is not None and first_net is not None) else None,
+    )
+    return StudentExamsResponse(summary=summary, rows=rows)
 
 
 @router.get("/books", response_model=StudentBooksResponse)
