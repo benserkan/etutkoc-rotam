@@ -350,11 +350,11 @@ function DayBar({ day }: { day: WeeklyReportDaily }) {
   return (
     <View className="flex-row items-center gap-3">
       <Text className="w-9 text-xs font-medium text-slate-500">{DAYS[day.weekday] ?? ""}</Text>
-      <View className="h-2.5 flex-1 overflow-hidden rounded-full bg-slate-100">
+      <View className="flex-1 overflow-hidden rounded-full bg-slate-100" style={{ height: 8 }}>
         {!empty ? (
           <View
-            className={cn("h-full rounded-full", day.pct >= 100 ? "bg-emerald-500" : day.pct > 0 ? "bg-amber-400" : "bg-slate-200")}
-            style={{ width: `${Math.min(100, day.pct)}%` }}
+            className={cn("rounded-full", day.pct >= 100 ? "bg-emerald-500" : day.pct > 0 ? "bg-amber-400" : "bg-slate-200")}
+            style={{ height: 8, width: `${Math.min(100, day.pct)}%` }}
           />
         ) : null}
       </View>
