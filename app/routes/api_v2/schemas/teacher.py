@@ -2010,6 +2010,10 @@ class TeacherPlanResponse(BaseModel):
     # AI kredi durumu — /teacher/plan üst kartında ilerleme çubuğu için
     ai_credits_used: int = 0
     ai_credits_allocated: int = 0
+    # Bekleyen ödeme/abonelik talebi var mı (ContactRequest source=subscription_request,
+    # status=new). True ise UI "Ödeme talebi gönder" butonunu pasifleştirir +
+    # "Talebin alındı" gösterir (tekrar gönderim engellenir).
+    has_pending_subscription_request: bool = False
 
 
 class PlanUpgradeBody(BaseModel):

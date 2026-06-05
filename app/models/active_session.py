@@ -52,6 +52,10 @@ class ActiveSession(Base):
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True
     )
     termination_reason: Mapped[str | None] = mapped_column(String(40), nullable=True)
+    # Impersonation (sahte oturum) işareti: dolu ise bu oturumu açan süper admin id.
+    # multi_account abuse dedektörü impersonation oturumlarını sayımdan dışlar
+    # (admin'in tek tarayıcısından birden çok hedefe girmesi "çoklu hesap" değildir).
+    imp_by: Mapped[int | None] = mapped_column(Integer, nullable=True)
 
 
 # Termination reason sözlüğü — UI'da Türkçe etiket

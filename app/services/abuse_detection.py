@@ -41,6 +41,7 @@ from app.models import (
     THRESHOLD_MULTI_ACCOUNT_DISTINCT_USERS,
     THRESHOLD_UNSUBSCRIBE_SPIKE_PER_DAY,
     User,
+    UserRole,
 )
 
 
@@ -227,6 +228,10 @@ def detect_multi_account_same_device(
             ActiveSession.login_at >= cutoff,
             ActiveSession.ip.isnot(None),
             ActiveSession.user_agent.isnot(None),
+            # Yanlış-pozitif fix: impersonation (sahte oturum) ile süper admin'in
+            # KENDİ girişleri "çoklu hesap abuse" değildir — sayımdan dışla.
+            ActiveSession.imp_by.is_(None),
+            ActiveSession.role != UserRole.SUPER_ADMIN.value,
         )
         .group_by(ActiveSession.ip, ActiveSession.user_agent)
         .having(func.count(func.distinct(ActiveSession.user_id)) >= threshold)

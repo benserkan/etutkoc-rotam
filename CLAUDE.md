@@ -4633,6 +4633,39 @@ analitik sekmesi **program yürütme** panosu yapıldı (mevcut servisleri reuse
   5d1 10/10 + teacher_read 12/12 + teacher_exams 18/18 · web tsc+eslint temiz.
 - **KALAN (orijinal 7'den #6):** öğrenci kendi web analiz sayfası — sıradaki.
 
+## 4 sorun — mobil itemless + abonelik pending + abuse yanlış-pozitif + abuse testi (2026-06-06)
+
+Kullanıcının 5 sorusundan 4'ü bu turda çözüldü (#1 mobil giriş + #5 önlem ayrı
+paketlerde — kullanıcı onayı: tanıtım carousel + signup · IP hız kapısı + telefon
+doğrulama kapısı).
+- **#3 — Mobil itemless/etkinlik görevi "yapılmadı" görünüyordu** (bug): mobil
+  `teacher/week-view.tsx` `done = pct >= 1` kullanıyordu; itemless görevde
+  (video/deneme/diğer, planned=0) pct=0 → hep yapılmadı. Web `status === "completed"`
+  kullanır. Düzeltme: `taskDone(t) = status === "completed" || (planned>0 && pct>=1)`
+  (görev satırı + gün başlığı sayımı). tsc temiz.
+- **#4 — Abonelik "ödeme talebi" butonu her açılışta aktif** (bug): `GET /teacher/plan`
+  yanıtında bekleyen-talep bayrağı yoktu (POST idempotent ama GET bilmiyordu).
+  `TeacherPlanResponse.has_pending_subscription_request` eklendi (subscription-request
+  ile aynı ContactRequest sorgusu). Mobil plan-view + web teacher-plan-client bekleyen
+  talepte butonu pasifleştirir + "Talebin alındı" gösterir. subscription smoke 11/11.
+- **#2 — "Sürekli açık abuse ihlali sinyali"** (yanlış-pozitif): `multi_account_same_device`
+  (aynı IP+UA'dan 3+ farklı user/24s) sinyali süper admin'in kendi test davranışından
+  tetikleniyordu — impersonation hedef için admin tarayıcısından ActiveSession açar →
+  3+ distinct user → eşik(3) anında aşılır, saatlik cron+dedup ile sürekli açık kalır.
+  **Fix (migration `d7e0h3i4h11y` — active_sessions.imp_by, additive):** impersonation
+  oturumu `imp_by`=admin id ile işaretlenir; dedektör `imp_by IS NULL` + `role !=
+  super_admin` ile bunları sayımdan dışlar. **Eşik 3'te bırakıldı** (5 yapmak #5'i
+  yakalanamaz yapardı). `record_session_start(imp_by=)` + admin.py impersonate çağrısı
+  güncellendi.
+- **#5 — Çoklu-hesap çiftliği TEST EDİLDİ** (`test_abuse_multi_account_scenario.py` 4/4):
+  bağımsız koç N hesap açıp her birinde 3 öğrenci → solo_free limitini aşar. Kamera:
+  (A) aynı cihaz/IP'den 3 hesap → YAKALAR; (B) farklı IP (VPN/4G) → bypass; (C)
+  impersonation+süper admin → SAYILMAZ (yanlış-pozitif fix doğrulandı). Yakalama
+  advisory (login-anı, engellemez). **Asıl önlem (#5 paketi, sıradaki):** signup-anı
+  IP hız kapısı + SMS telefon doğrulama kapısı (bir doğrulanmış telefon = bir trial).
+- Regresyon: abuse 21/21 · impersonation_bff 8/8 · admin_users 26/26 · logout 12/12 ·
+  subscription 11/11. Migration head = `d7e0h3i4h11y`.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

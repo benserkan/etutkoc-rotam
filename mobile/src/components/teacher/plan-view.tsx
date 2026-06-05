@@ -170,34 +170,46 @@ export function PlanView({
           </View>
           <Text className="mt-1 text-xs text-brand-700">{targetOpt.label}</Text>
 
-          {/* Döngü seçici */}
-          <View className="mt-3 flex-row gap-2">
-            <Pressable
-              onPress={() => setCycle("monthly")}
-              className={cn("flex-1 items-center rounded-xl border py-2", cycle === "monthly" ? "border-brand-600 bg-white" : "border-brand-200 bg-brand-50")}
-            >
-              <Text className={cn("text-sm font-semibold", cycle === "monthly" ? "text-brand-700" : "text-brand-600")}>Aylık</Text>
-              <Text className="text-[11px] text-slate-500">{tl(targetOpt.price_monthly_try)}/ay</Text>
-            </Pressable>
-            <Pressable
-              onPress={() => setCycle("academic_year")}
-              className={cn("flex-1 items-center rounded-xl border py-2", cycle === "academic_year" ? "border-brand-600 bg-white" : "border-brand-200 bg-brand-50")}
-            >
-              <Text className={cn("text-sm font-semibold", cycle === "academic_year" ? "text-brand-700" : "text-brand-600")}>Akademik yıl</Text>
-              <Text className="text-[11px] text-slate-500">{tl(targetOpt.price_monthly_try * data.annual_paid_months)} ({data.annual_paid_months} ay)</Text>
-            </Pressable>
-          </View>
+          {data.has_pending_subscription_request ? (
+            /* Bekleyen talep var → buton pasif, "alındı" durumu */
+            <View className="mt-3 flex-row items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3">
+              <Ionicons name="checkmark-circle" size={20} color="#059669" />
+              <Text className="flex-1 text-sm font-semibold text-emerald-800">
+                Talebin alındı — en kısa sürede aktive edilecek.
+              </Text>
+            </View>
+          ) : (
+            <>
+              {/* Döngü seçici */}
+              <View className="mt-3 flex-row gap-2">
+                <Pressable
+                  onPress={() => setCycle("monthly")}
+                  className={cn("flex-1 items-center rounded-xl border py-2", cycle === "monthly" ? "border-brand-600 bg-white" : "border-brand-200 bg-brand-50")}
+                >
+                  <Text className={cn("text-sm font-semibold", cycle === "monthly" ? "text-brand-700" : "text-brand-600")}>Aylık</Text>
+                  <Text className="text-[11px] text-slate-500">{tl(targetOpt.price_monthly_try)}/ay</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setCycle("academic_year")}
+                  className={cn("flex-1 items-center rounded-xl border py-2", cycle === "academic_year" ? "border-brand-600 bg-white" : "border-brand-200 bg-brand-50")}
+                >
+                  <Text className={cn("text-sm font-semibold", cycle === "academic_year" ? "text-brand-700" : "text-brand-600")}>Akademik yıl</Text>
+                  <Text className="text-[11px] text-slate-500">{tl(targetOpt.price_monthly_try * data.annual_paid_months)} ({data.annual_paid_months} ay)</Text>
+                </Pressable>
+              </View>
 
-          <Pressable
-            onPress={requestSub}
-            disabled={busy}
-            className={cn("mt-3 items-center rounded-xl bg-brand-700 py-3", busy ? "opacity-50" : "active:bg-brand-800")}
-          >
-            <Text className="text-sm font-semibold text-white">Ödeme talebi gönder</Text>
-          </Pressable>
-          <Text className="mt-2 text-center text-[11px] text-brand-700">
-            Talebin satış ekibine iletilir; ödeme sonrası aktive edilir.
-          </Text>
+              <Pressable
+                onPress={requestSub}
+                disabled={busy}
+                className={cn("mt-3 items-center rounded-xl bg-brand-700 py-3", busy ? "opacity-50" : "active:bg-brand-800")}
+              >
+                <Text className="text-sm font-semibold text-white">Ödeme talebi gönder</Text>
+              </Pressable>
+              <Text className="mt-2 text-center text-[11px] text-brand-700">
+                Talebin satış ekibine iletilir; ödeme sonrası aktive edilir.
+              </Text>
+            </>
+          )}
         </View>
       ) : null}
 

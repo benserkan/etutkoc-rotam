@@ -27,8 +27,15 @@ function taskUnit(t: TeacherTaskRow): string {
   return "test";
 }
 
+// Tamamlandı = durum COMPLETED (etkinlik/itemless/deneme dahil) VEYA soru-hacimli
+// görevde çözülen ≥ planlanan. Yalnız pct'ye bakmak itemless görevi (planned=0 →
+// pct=0) hatalı "yapılmadı" gösteriyordu (web `status === "completed"` kullanır).
+function taskDone(t: TeacherTaskRow): boolean {
+  return t.status === "completed" || (t.planned_count > 0 && t.pct >= 1);
+}
+
 function TaskRow({ t, onDelete }: { t: TeacherTaskRow; onDelete?: (id: number) => void }) {
-  const done = t.pct >= 1;
+  const done = taskDone(t);
   const unit = taskUnit(t);
   return (
     <Pressable
@@ -66,7 +73,7 @@ function DayCard({ day, onAdd, onDelete }: { day: TeacherWeekDay; onAdd: (date: 
         </View>
         {day.tasks_count > 0 ? (
           <Text className="text-xs font-semibold text-slate-500">
-            {day.tasks.filter((t) => t.pct >= 1).length}/{day.tasks_count} · %{pct}
+            {day.tasks.filter(taskDone).length}/{day.tasks_count} · %{pct}
           </Text>
         ) : null}
       </View>

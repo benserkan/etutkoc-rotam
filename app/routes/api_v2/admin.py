@@ -2346,6 +2346,7 @@ def admin_impersonate_user_v2(
         _secmon.record_session_start(
             db, user=target, session_token=imp_sid, ip=ip,
             user_agent=request.headers.get("user-agent"),
+            imp_by=user.id,  # impersonation işareti — abuse dedektörü dışlar
         )
     except Exception:
         logger.exception("impersonate session record fail target=%s", target.id)

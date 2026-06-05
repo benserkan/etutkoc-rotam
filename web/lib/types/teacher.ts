@@ -1788,6 +1788,8 @@ export interface TeacherPlanResponse {
   // AI kredi durumu — /teacher/plan ilerleme çubuğu
   ai_credits_used: number;
   ai_credits_allocated: number;
+  // Bekleyen ödeme/abonelik talebi (true → buton pasif + "Talebin alındı")
+  has_pending_subscription_request: boolean;
 }
 
 export interface PlanUpgradeBody {

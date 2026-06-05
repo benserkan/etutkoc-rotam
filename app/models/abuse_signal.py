@@ -116,7 +116,8 @@ SEVERITY_BADGE_COLOR: dict[str, str] = {
 # Eşikler — abuse_detection.py kullanır
 THRESHOLD_MASS_INVITATION_PER_HOUR = 50
 THRESHOLD_MASS_NOTIFICATION_PER_HOUR = 200
-THRESHOLD_MULTI_ACCOUNT_DISTINCT_USERS = 3
+THRESHOLD_MULTI_ACCOUNT_DISTINCT_USERS = 3  # 3 hesap/cihaz çiftliği yakalanır;
+# yanlış-pozitif (impersonation + süper admin) dedektörde imp_by/role ile dışlanır
 THRESHOLD_UNSUBSCRIBE_SPIKE_PER_DAY = 10
 
 # Dedup penceresi: aynı sinyal 24 saat içinde tekrarsa upsert

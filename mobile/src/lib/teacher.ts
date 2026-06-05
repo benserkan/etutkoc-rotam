@@ -371,6 +371,7 @@ export interface TeacherPlanResponse {
   post_trial_plan_credits: number | null;
   ai_credits_used: number;
   ai_credits_allocated: number;
+  has_pending_subscription_request: boolean;
 }
 export const teacherMiscKeys = {
   week: (id: number, start?: string) => ["teacher", "student", id, "week", start ?? "current"] as const,

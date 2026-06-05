@@ -82,6 +82,7 @@ def record_session_start(
     ip: str | None,
     user_agent: str | None,
     autocommit: bool = True,
+    imp_by: int | None = None,
 ) -> ActiveSession:
     """Login başarılı olduğunda ActiveSession kaydı oluştur.
 
@@ -112,6 +113,7 @@ def record_session_start(
         user_agent=(user_agent or "")[:255] or None,
         login_at=now,
         last_seen_at=now,
+        imp_by=imp_by,
     )
     db.add(row)
     if autocommit:

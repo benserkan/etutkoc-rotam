@@ -584,6 +584,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         cycle={yearly ? "academic_year" : "monthly"}
         priceLabel={`${tl(shownMonthly)}/ay (${yearly ? "akademik yıl" : "aylık"})`}
         salesEmail={data.sales_email}
+        hasPending={data.has_pending_subscription_request}
       />
     </Card>
   );
@@ -597,6 +598,7 @@ function UpgradeDialog({
   cycle,
   priceLabel,
   salesEmail,
+  hasPending = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -605,9 +607,13 @@ function UpgradeDialog({
   cycle: string;
   priceLabel: string;
   salesEmail: string;
+  hasPending?: boolean;
 }) {
   const qc = useQueryClient();
   const [done, setDone] = React.useState(false);
+  // Bekleyen talep (backend kalıcı) VEYA bu oturumda gönderilmiş → "alındı" durumu.
+  // Bu, dialog yeniden açılınca butonun tekrar aktif olmasını engeller.
+  const showDone = done || hasPending;
   const mut = useMutation({
     mutationFn: () => submitSubscriptionRequest({ plan, cycle }),
     onSuccess: (res) => {
@@ -639,7 +645,7 @@ function UpgradeDialog({
             <Gem className="size-4 text-cyan-700" aria-hidden /> {planLabel} paketine geç
           </DialogTitle>
         </DialogHeader>
-        {done ? (
+        {showDone ? (
           <div className="space-y-3 py-2 text-center">
             <CheckCircle2 className="mx-auto size-10 text-emerald-500" aria-hidden />
             <p className="text-sm font-medium">Talebin alındı</p>
@@ -678,7 +684,7 @@ function UpgradeDialog({
           </div>
         )}
         <DialogFooter className="gap-2 pt-2">
-          {done ? (
+          {showDone ? (
             <Button onClick={() => { onClose(); setDone(false); }}>Tamam</Button>
           ) : (
             <>

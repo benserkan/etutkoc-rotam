@@ -15,7 +15,7 @@ const MOCK: TeacherPlanResponse = {
   recommended_plan: "solo_pro", annual_paid_months: 10, sales_email: "satis@etutkoc.com",
   subscription_status: null, subscription_period_end: null, subscription_cycle: null,
   post_trial_plan: "solo_pro", post_trial_plan_label: "Solo Başlangıç", post_trial_plan_credits: 1500,
-  ai_credits_used: 18, ai_credits_allocated: 50,
+  ai_credits_used: 18, ai_credits_allocated: 50, has_pending_subscription_request: false,
 };
 
 export default function TeacherPlanPreview() {

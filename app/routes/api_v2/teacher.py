@@ -1955,6 +1955,21 @@ def _build_plan_response(db: Session, user: User):
         except Exception:
             pass
 
+    # Bekleyen abonelik/ödeme talebi (subscription-request idempotency'siyle aynı sorgu)
+    has_pending_sub = False
+    if is_solo:
+        from app.models.contact_request import ContactRequest
+        has_pending_sub = (
+            db.query(ContactRequest.id)
+            .filter(
+                ContactRequest.email == user.email,
+                ContactRequest.source == "subscription_request",
+                ContactRequest.status == "new",
+            )
+            .first()
+            is not None
+        )
+
     return TeacherPlanResponse(
         plan_code=effective,
         plan_label=info.label if info else effective,
@@ -1981,6 +1996,7 @@ def _build_plan_response(db: Session, user: User):
         post_trial_plan_credits=post_trial_credits,
         ai_credits_used=ai_used,
         ai_credits_allocated=ai_alloc,
+        has_pending_subscription_request=has_pending_sub,
     )
 
 
