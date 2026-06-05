@@ -16,9 +16,9 @@ const ROLE_LABELS: Record<string, string> = {
 export default function AppHome() {
   const { user, signOut } = useAuth();
 
-  // Öğrenci → kendi sekmeli app'ine. Diğer roller (koç/veli/kurum) sırayla
-  // ekleniyor; o ana dek bilgilendirme ekranı.
+  // Rol-bazlı yönlendirme. Koç/kurum sırayla ekleniyor; o ana dek bilgilendirme.
   if (user?.role === "student") return <Redirect href="/(app)/student/today" />;
+  if (user?.role === "parent") return <Redirect href="/(app)/parent/dashboard" />;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
