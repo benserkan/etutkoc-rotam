@@ -1,15 +1,22 @@
 import * as React from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { router, useLocalSearchParams } from "expo-router";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ExamsTab } from "@/components/teacher/exams-tab";
 import { ProgramTab } from "@/components/teacher/program-tab";
 import { SessionsTab } from "@/components/teacher/sessions-tab";
 import { StudentDetailView } from "@/components/teacher/student-detail-view";
-import { getTeacherStudent, teacherKeys } from "@/lib/teacher";
+import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
+import { ApiError } from "@/lib/api";
+import {
+  deactivateTeacherStudent,
+  getTeacherStudent,
+  reactivateTeacherStudent,
+  teacherKeys,
+} from "@/lib/teacher";
 import { cn } from "@/lib/utils";
 
 type Tab = "genel" | "program" | "denemeler" | "seanslar";
@@ -24,12 +31,46 @@ export default function TeacherStudentRoute() {
   const { id } = useLocalSearchParams<{ id?: string }>();
   const studentId = id ? Number(id) : 0;
   const [tab, setTab] = React.useState<Tab>("genel");
+  const [waOpen, setWaOpen] = React.useState(false);
+  const [toggling, setToggling] = React.useState(false);
+  const qc = useQueryClient();
 
   const q = useQuery({
     queryKey: teacherKeys.student(studentId),
     queryFn: () => getTeacherStudent(studentId),
     enabled: studentId > 0,
   });
+
+  function toggleActive() {
+    const active = q.data?.student.is_active ?? true;
+    Alert.alert(
+      active ? "Öğrenciyi pasife al" : "Öğrenciyi aktif et",
+      active
+        ? "Öğrenci pasife alınır (kotadan düşer). Veriler silinmez; istediğinde tekrar aktif edebilirsin."
+        : "Öğrenci tekrar aktif öğrenci olur.",
+      [
+        { text: "Vazgeç", style: "cancel" },
+        {
+          text: active ? "Pasife al" : "Aktif et",
+          style: active ? "destructive" : "default",
+          onPress: async () => {
+            setToggling(true);
+            try {
+              if (active) await deactivateTeacherStudent(studentId);
+              else await reactivateTeacherStudent(studentId);
+              await qc.invalidateQueries({ queryKey: teacherKeys.student(studentId) });
+              await qc.invalidateQueries({ queryKey: ["teacher", "students"] });
+            } catch (e) {
+              const err = e as ApiError;
+              Alert.alert("İşlem başarısız", err?.message ?? "Bir hata oluştu.");
+            } finally {
+              setToggling(false);
+            }
+          },
+        },
+      ],
+    );
+  }
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
@@ -77,6 +118,9 @@ export default function TeacherStudentRoute() {
         <StudentDetailView
           data={q.data}
           onOpenDev={() => router.push({ pathname: "/teacher-student-dev", params: { id: String(studentId) } })}
+          onSendWa={() => setWaOpen(true)}
+          onToggleActive={toggleActive}
+          togglingActive={toggling}
         />
       ) : tab === "program" ? (
         <ProgramTab studentId={studentId} />
@@ -89,6 +133,14 @@ export default function TeacherStudentRoute() {
           <SessionsTab studentId={studentId} />
         </ScrollView>
       )}
+
+      <WaSendDialog
+        visible={waOpen}
+        onClose={() => setWaOpen(false)}
+        targetUserId={studentId}
+        targetLabel={q.data?.student.full_name}
+        defaultCategory="ogrenci"
+      />
     </SafeAreaView>
   );
 }

@@ -1,12 +1,12 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { ActivityIndicator, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PlanView } from "@/components/teacher/plan-view";
 import { ApiError } from "@/lib/api";
-import { getTeacherPlan, teacherMiscKeys, upgradeTeacherPlan } from "@/lib/teacher";
+import { getTeacherPlan, requestTeacherSubscription, teacherMiscKeys, upgradeTeacherPlan } from "@/lib/teacher";
 
 export default function TeacherPlanRoute() {
   const qc = useQueryClient();
@@ -17,9 +17,19 @@ export default function TeacherPlanRoute() {
     onSuccess: () => qc.invalidateQueries({ queryKey: teacherMiscKeys.plan }),
     onError: (e) => {
       const msg = e instanceof ApiError ? e.message : "İşlem başarısız";
-      // Alert basit hata gösterimi
-      // eslint-disable-next-line no-console
-      console.warn(msg);
+      Alert.alert("İşlem başarısız", msg);
+    },
+  });
+
+  const subMut = useMutation({
+    mutationFn: (v: { plan: string; cycle: string }) => requestTeacherSubscription(v.plan, v.cycle),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: teacherMiscKeys.plan });
+      Alert.alert(res.already_pending ? "Talebin zaten alınmış" : "Talebin alındı", res.message);
+    },
+    onError: (e) => {
+      const msg = e instanceof ApiError ? e.message : "İşlem başarısız";
+      Alert.alert("İşlem başarısız", msg);
     },
   });
 
@@ -51,8 +61,9 @@ export default function TeacherPlanRoute() {
       ) : (
         <PlanView
           data={q.data}
-          busy={upMut.isPending}
+          busy={upMut.isPending || subMut.isPending}
           onUpgrade={(code) => upMut.mutate(code)}
+          onRequestSubscription={(plan, cycle) => subMut.mutate({ plan, cycle })}
           refreshing={q.isRefetching}
           onRefresh={() => q.refetch()}
         />

@@ -13,8 +13,8 @@ const STATUS: Record<string, { bg: string; text: string; label: string }> = {
   managed: { bg: "bg-violet-50", text: "text-violet-700", label: "Kurum yönetir" },
 };
 
-function tl(n: number): string {
-  return `${n.toLocaleString("tr-TR")} ₺`;
+function tl(n: number | null | undefined): string {
+  return `${(n ?? 0).toLocaleString("tr-TR")} ₺`;
 }
 
 function OptionCard({
@@ -40,7 +40,7 @@ function OptionCard({
           <View className="rounded-full bg-amber-100 px-2 py-0.5"><Text className="text-[11px] font-semibold text-amber-700">Sana uygun</Text></View>
         ) : null}
       </View>
-      <Text className="mt-1 text-2xl font-extrabold text-slate-900">{tl(opt.monthly)}<Text className="text-sm font-medium text-slate-400">/ay</Text></Text>
+      <Text className="mt-1 text-2xl font-extrabold text-slate-900">{tl(opt.price_monthly_try)}<Text className="text-sm font-medium text-slate-400">/ay</Text></Text>
       <Text className="mt-0.5 text-xs text-slate-400">
         {opt.max_students == null ? "Sınırsız öğrenci" : `${opt.max_students} öğrenciye kadar`}
       </Text>
@@ -61,17 +61,46 @@ export function PlanView({
   data,
   busy,
   onUpgrade,
+  onRequestSubscription,
   refreshing = false,
   onRefresh,
 }: {
   data: TeacherPlanResponse;
   busy: boolean;
   onUpgrade: (code: string) => void;
+  onRequestSubscription?: (plan: string, cycle: string) => void;
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
   const st = STATUS[data.status] ?? STATUS.free;
   const aiPct = data.ai_credits_allocated > 0 ? Math.round((data.ai_credits_used / data.ai_credits_allocated) * 100) : 0;
+  const [cycle, setCycle] = React.useState<"monthly" | "academic_year">("monthly");
+
+  // "Öde ve devam et" hedefi: önerilen → deneme sonrası → mevcut plan
+  const targetCode = data.recommended_plan || data.post_trial_plan || data.plan_code;
+  const targetOpt =
+    data.options.find((o) => o.code === targetCode) ??
+    data.options.find((o) => o.code === data.recommended_plan) ??
+    data.options[0] ??
+    null;
+  const renewLabel =
+    data.status === "trialing" ? "Üyeliğini başlat" :
+    data.status === "past_due" ? "Aboneliğini yenile" :
+    data.status === "active" ? "Aboneliği yenile" :
+    "Üyeliğe geç";
+
+  function requestSub() {
+    if (!targetOpt || !onRequestSubscription) return;
+    const cycleLabel = cycle === "academic_year" ? "akademik yıl" : "aylık";
+    Alert.alert(
+      renewLabel,
+      `${targetOpt.label} · ${cycleLabel} için ödeme talebi gönderilsin mi? Talebin satış ekibine iletilir, ödeme sonrası aktive edilir.`,
+      [
+        { text: "Vazgeç", style: "cancel" },
+        { text: "Talep gönder", onPress: () => onRequestSubscription(targetOpt.code, cycle) },
+      ],
+    );
+  }
 
   function pick(code: string, label: string) {
     Alert.alert(
@@ -132,10 +161,50 @@ export function PlanView({
         ) : null}
       </View>
 
+      {/* Öde ve devam et / yenile */}
+      {onRequestSubscription && data.is_solo && targetOpt && data.status !== "managed" ? (
+        <View className="rounded-2xl border border-brand-200 bg-brand-50 p-4">
+          <View className="flex-row items-center gap-2">
+            <Ionicons name="card-outline" size={18} color="#0e7490" />
+            <Text className="text-[15px] font-bold text-brand-800">{renewLabel}</Text>
+          </View>
+          <Text className="mt-1 text-xs text-brand-700">{targetOpt.label}</Text>
+
+          {/* Döngü seçici */}
+          <View className="mt-3 flex-row gap-2">
+            <Pressable
+              onPress={() => setCycle("monthly")}
+              className={cn("flex-1 items-center rounded-xl border py-2", cycle === "monthly" ? "border-brand-600 bg-white" : "border-brand-200 bg-brand-50")}
+            >
+              <Text className={cn("text-sm font-semibold", cycle === "monthly" ? "text-brand-700" : "text-brand-600")}>Aylık</Text>
+              <Text className="text-[11px] text-slate-500">{tl(targetOpt.price_monthly_try)}/ay</Text>
+            </Pressable>
+            <Pressable
+              onPress={() => setCycle("academic_year")}
+              className={cn("flex-1 items-center rounded-xl border py-2", cycle === "academic_year" ? "border-brand-600 bg-white" : "border-brand-200 bg-brand-50")}
+            >
+              <Text className={cn("text-sm font-semibold", cycle === "academic_year" ? "text-brand-700" : "text-brand-600")}>Akademik yıl</Text>
+              <Text className="text-[11px] text-slate-500">{tl(targetOpt.price_monthly_try * data.annual_paid_months)} ({data.annual_paid_months} ay)</Text>
+            </Pressable>
+          </View>
+
+          <Pressable
+            onPress={requestSub}
+            disabled={busy}
+            className={cn("mt-3 items-center rounded-xl bg-brand-700 py-3", busy ? "opacity-50" : "active:bg-brand-800")}
+          >
+            <Text className="text-sm font-semibold text-white">Ödeme talebi gönder</Text>
+          </Pressable>
+          <Text className="mt-2 text-center text-[11px] text-brand-700">
+            Talebin satış ekibine iletilir; ödeme sonrası aktive edilir.
+          </Text>
+        </View>
+      ) : null}
+
       {/* Yükseltme seçenekleri */}
       {data.is_solo && data.options.length > 0 ? (
         <View className="gap-3">
-          <Text className="px-1 text-sm font-semibold text-slate-700">Paketler</Text>
+          <Text className="px-1 text-sm font-semibold text-slate-700">Paketleri karşılaştır</Text>
           {data.options.map((o) => (
             <OptionCard
               key={o.code}

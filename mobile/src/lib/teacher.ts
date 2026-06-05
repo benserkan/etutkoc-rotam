@@ -339,8 +339,13 @@ export function createTeacherStudent(body: StudentCreateBody): Promise<{ data: S
 export interface TeacherPlanOption {
   code: string;
   label: string;
+  short_description?: string;
+  price_monthly_try: number;
   max_students: number | null;
-  monthly: number;
+  tier_rank?: number;
+  ai_included?: boolean;
+  is_current?: boolean;
+  is_upgrade?: boolean;
   is_recommended?: boolean;
 }
 export interface TeacherPlanResponse {
@@ -377,6 +382,73 @@ export function getTeacherPlan(): Promise<TeacherPlanResponse> {
 }
 export function upgradeTeacherPlan(plan: string): Promise<unknown> {
   return apiRequest(`/api/v2/teacher/plan/upgrade`, { method: "POST", body: { plan } });
+}
+export interface SubscriptionRequestResult {
+  ok: boolean;
+  already_pending: boolean;
+  message: string;
+}
+export function requestTeacherSubscription(plan?: string, cycle?: string): Promise<SubscriptionRequestResult> {
+  return apiRequest<SubscriptionRequestResult>(`/api/v2/teacher/subscription-request`, {
+    method: "POST",
+    body: { plan: plan ?? null, cycle: cycle ?? null },
+  });
+}
+
+// ====== Öğrenci aktif / pasif ======
+export function deactivateTeacherStudent(id: number): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/students/${id}/deactivate`, { method: "POST", body: {} });
+}
+export function reactivateTeacherStudent(id: number): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/students/${id}/reactivate`, { method: "POST", body: {} });
+}
+
+// ====== Koç — öğrenci talepleri (TaskRequest yönetimi) ======
+export type TeacherRequestType = "change" | "replace" | "remove" | "question" | "add";
+export type TeacherRequestStatus = "pending" | "approved" | "rejected" | "withdrawn" | "resolved";
+export interface TeacherRequestListItem {
+  id: number;
+  student_id: number;
+  student_name: string;
+  type: TeacherRequestType;
+  status: TeacherRequestStatus;
+  task_id: number | null;
+  task_title: string | null;
+  task_date: string | null;
+  message: string | null;
+  proposed_count: number | null;
+  proposed_date: string | null;
+  teacher_response: string | null;
+  created_at: string;
+  responded_at: string | null;
+}
+export interface TeacherRequestListResponse {
+  items: TeacherRequestListItem[];
+  total: number;
+  page: number;
+  page_size: number;
+  has_next: boolean;
+  pending_count: number;
+}
+export const teacherRequestKeys = {
+  list: (status: string) => ["teacher", "requests", status] as const,
+};
+export function getTeacherRequests(status = "pending"): Promise<TeacherRequestListResponse> {
+  return apiRequest<TeacherRequestListResponse>(
+    `/api/v2/teacher/requests?status=${encodeURIComponent(status)}&page_size=100`,
+  );
+}
+export function approveTeacherRequest(id: number, response?: string): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/requests/${id}/approve`, {
+    method: "POST",
+    body: { response: response ?? null },
+  });
+}
+export function rejectTeacherRequest(id: number, reason: string): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/requests/${id}/reject`, { method: "POST", body: { reason } });
+}
+export function respondTeacherRequest(id: number, response: string): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/requests/${id}/respond`, { method: "POST", body: { response } });
 }
 
 // ====== Koç — öğrenci Gelişim izleme (DNA/Odak/Tekrar/Hedef) ======

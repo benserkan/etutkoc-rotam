@@ -1,8 +1,18 @@
 import { Ionicons } from "@expo/vector-icons";
+import { useQuery } from "@tanstack/react-query";
 import { Tabs } from "expo-router";
 
-/** Koç alt-sekme kabuğu: Öğrenciler · Tahsilat · Destek · Profil. */
+import { getTeacherRequests, teacherRequestKeys } from "@/lib/teacher";
+
+/** Koç alt-sekme kabuğu: Öğrenciler · Talepler · Tahsilat · Destek · Profil. */
 export default function TeacherTabsLayout() {
+  const pendingQ = useQuery({
+    queryKey: teacherRequestKeys.list("pending"),
+    queryFn: () => getTeacherRequests("pending"),
+    staleTime: 30_000,
+  });
+  const pending = pendingQ.data?.pending_count ?? 0;
+
   return (
     <Tabs
       screenOptions={{
@@ -18,6 +28,14 @@ export default function TeacherTabsLayout() {
         options={{
           title: "Öğrenciler",
           tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="requests"
+        options={{
+          title: "Talepler",
+          tabBarBadge: pending > 0 ? pending : undefined,
+          tabBarIcon: ({ color, size }) => <Ionicons name="git-pull-request-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen

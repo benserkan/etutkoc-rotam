@@ -7,9 +7,9 @@ const MOCK: TeacherPlanResponse = {
   plan_code: "solo_trial", plan_label: "Solo Başlangıç — 14 gün deneme", is_solo: true,
   ai_premium: true, trial_active: true, trial_days_left: 9,
   options: [
-    { code: "solo_pro", label: "Solo Başlangıç", max_students: 10, monthly: 2500, is_recommended: true },
-    { code: "solo_elite", label: "Solo", max_students: 25, monthly: 5000 },
-    { code: "solo_unlimited", label: "Solo Sınırsız", max_students: null, monthly: 7500 },
+    { code: "solo_pro", label: "Solo Başlangıç", max_students: 10, price_monthly_try: 2500, is_recommended: true },
+    { code: "solo_elite", label: "Solo", max_students: 25, price_monthly_try: 5000 },
+    { code: "solo_unlimited", label: "Solo Sınırsız", max_students: null, price_monthly_try: 7500 },
   ],
   note: null, status: "trialing", student_count: 6, solo_monthly_price: 2500,
   recommended_plan: "solo_pro", annual_paid_months: 10, sales_email: "satis@etutkoc.com",

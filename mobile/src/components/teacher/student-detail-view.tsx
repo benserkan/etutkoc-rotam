@@ -49,7 +49,19 @@ function GorevCard({ title, g }: { title: string; g: GorevBreakdown }) {
   );
 }
 
-export function StudentDetailView({ data, onOpenDev }: { data: TeacherStudentDetail; onOpenDev?: () => void }) {
+export function StudentDetailView({
+  data,
+  onOpenDev,
+  onSendWa,
+  onToggleActive,
+  togglingActive = false,
+}: {
+  data: TeacherStudentDetail;
+  onOpenDev?: () => void;
+  onSendWa?: () => void;
+  onToggleActive?: () => void;
+  togglingActive?: boolean;
+}) {
   const w = WARN[data.worst_warning_level];
   const s = data.student;
   const grade = s.display_grade_label ?? (s.grade_level != null ? `${s.grade_level}. sınıf` : "");
@@ -115,6 +127,53 @@ export function StudentDetailView({ data, onOpenDev }: { data: TeacherStudentDet
           <Ionicons name="chevron-forward" size={18} color="#0e7490" />
         </Pressable>
       ) : null}
+
+      {/* Hızlı işlemler */}
+      <View className="gap-2">
+        {onSendWa ? (
+          <Pressable
+            onPress={onSendWa}
+            className="flex-row items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-5 py-4 active:bg-emerald-100"
+          >
+            <Ionicons name="logo-whatsapp" size={22} color="#16a34a" />
+            <View className="flex-1">
+              <Text className="text-[15px] font-semibold text-emerald-800">WhatsApp gönder</Text>
+              <Text className="mt-0.5 text-xs text-emerald-700">Öğrenciye hazır şablonla mesaj</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color="#16a34a" />
+          </Pressable>
+        ) : null}
+
+        {onToggleActive ? (
+          <Pressable
+            onPress={onToggleActive}
+            disabled={togglingActive}
+            className={cn(
+              "flex-row items-center gap-3 rounded-2xl border px-5 py-4",
+              s.is_active
+                ? "border-slate-200 bg-white active:bg-slate-50"
+                : "border-emerald-200 bg-emerald-50 active:bg-emerald-100",
+              togglingActive && "opacity-50",
+            )}
+          >
+            <Ionicons
+              name={s.is_active ? "pause-circle-outline" : "play-circle-outline"}
+              size={22}
+              color={s.is_active ? "#64748b" : "#16a34a"}
+            />
+            <View className="flex-1">
+              <Text className={cn("text-[15px] font-semibold", s.is_active ? "text-slate-800" : "text-emerald-800")}>
+                {s.is_active ? "Öğrenciyi pasife al" : "Öğrenciyi aktif et"}
+              </Text>
+              <Text className={cn("mt-0.5 text-xs", s.is_active ? "text-slate-500" : "text-emerald-700")}>
+                {s.is_active
+                  ? "Kotadan düşer; veri silinmez, sonra tekrar aktif edebilirsin"
+                  : "Tekrar aktif öğrenci olur"}
+              </Text>
+            </View>
+          </Pressable>
+        ) : null}
+      </View>
 
       {/* Diğer işlemler */}
       <View className="rounded-2xl border border-dashed border-slate-300 bg-white p-4">

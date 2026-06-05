@@ -4506,8 +4506,107 @@ veli hem mobil.
   mobil tsc temiz. Migration YOK (mevcut tablolardan agregasyon).
 - **NOT (deploy):** backend (parent_weekly_report + endpoint) hem web hem mobil
   tarafından tüketilir → canlıda görmek için **web+worker+next rebuild** gerekir
-  (mobil app kodu ayrıca EAS build ister). Henüz commit/deploy YOK (kullanıcı
-  istemedi). [[feedback-card-numbers-need-units]] [[feedback-holistic-change-propagation]]
+  (mobil app kodu ayrıca EAS build ister). [[feedback-card-numbers-need-units]]
+  [[feedback-holistic-change-propagation]] — commit `e54ee8c` (web+backend, deploy
+  edildi) + `27a1e1e` (mobil gün-gün bar fix).
+
+## Mobil — koç/öğrenci eksikleri paketi (2026-06-05, mobil-only, migration YOK)
+
+**Bağlam (kullanıcı):** 7 maddelik istek; kullanıcı "önce mobil koç/öğrenci
+eksikleri" dedi. Hepsi MEVCUT backend uçlarını kullanır (yeni endpoint/migration
+YOK) — yalnız mobil UI parite. Web'de hepsi zaten vardı; mobilde eksikti.
+- **M-1 — Koç öğrenciyi pasife alma/aktif etme**: `student-detail-view` "Hızlı
+  işlemler"e Pasife al/Aktif et butonu (Alert onay) → `/teacher/students/{id}/
+  deactivate|reactivate`. `teacher-student.tsx` mutation + invalidate.
+- **M-5 — Mobilden WhatsApp gönderme** (kullanıcının sorusu = EVET): yeni
+  `lib/messaging.ts` (web `/messaging/*` aynen) + paylaşılan
+  `components/messaging/wa-send-dialog.tsx` (Modal: şablon seç + değişken doldur +
+  önizleme → `buildWaLink` → **`Linking.openURL(wa.me)`** → WhatsApp metin hazır
+  açılır). Öğrenci detayına "WhatsApp gönder" butonu (defaultCategory="ogrenci").
+  Backend yetki matrisi (koç→kendi öğrencisi+velisi) hazırdı; telefon doğrulanmamış
+  hedefte 400 → Alert. (Kurum yöneticisi/veli hedefleri sonra eklenebilir.)
+- **M-4 — Koç abonelik/yenileme talebi**: `plan-view`'e "Öde ve devam et / yenile"
+  kartı (aylık/akademik-yıl döngü seçici) → `/teacher/subscription-request`
+  {plan, cycle} → contact_request (manuel aktivasyon). Mevcut direkt "Bu pakete
+  geç" (upgrade) korundu; bu AYRI ödeme/yenileme akışı.
+- **M-2 — Koç öğrenci taleplerini (TaskRequest) yönetme**: yeni `teacher/requests.tsx`
+  **5. tab "Talepler"** (bekleyen sayı rozetli) + `teacher-requests-view` (kart liste:
+  Onayla/Reddet/Yanıtla). `/teacher/requests` + approve/reject({reason})/respond
+  ({response}). Red/yanıt için alttan metin modalı. **Destek (SupportRequest)
+  tab'ından AYRI** — bu program talepleri.
+- **M-3 — Öğrenci talepleri ayrı sekme**: `student/requests.tsx` **6. tab
+  "Talepler"** (eski profil-içi link + standalone `(app)/requests.tsx` kaldırıldı;
+  `RequestsView` reuse). Öğrenci "Koça ilet" ile oluşturduğu istekleri burada
+  görüp geri çeker.
+- **Doğrulama**: mobil `tsc --noEmit` temiz + `expo lint` ile feature dosyaları
+  temiz (kalan 2 hata parent/dashboard + preview, ÖNCEDEN vardı — benim değil).
+  `expo lint`'in kurduğu eslint config + package.json/lock değişikliği geri alındı
+  (istenmedi). **Mobil-only → sunucu deploy GEREKMEZ** (uçlar canlı); Expo reload
+  ile görünür. EAS build sırada.
+
+## KRİTİK güvenlik fix — logout Jinja session cookie'sini temizlemiyordu (2026-06-05, deploy edildi)
+
+**Bağlam (kullanıcı):** Admin çıkış yapınca `/admin`'e dönüyor ve panel çıkış
+yapmamış gibi çalışmaya devam ediyordu.
+- **Kök neden:** BFF dependency (`dependencies._resolve_user_v2`) 3 kanallı:
+  cookie → bearer → **Jinja `session` cookie fallback** (`session.get("user_id")`,
+  geçiş dönemi). `/admin/impersonate/end` (admin.py:2479) impersonation bitince
+  admin'in `user_id`'sini `request.session`'a yazıyor. `v2_logout` yalnız BFF
+  cookie'lerini siliyordu → kalan `session` cookie ile dependency LOGOUT SONRASI
+  hâlâ authenticate ediyordu → `/admin` açık kalıyor, `/login` de oturum görüp
+  roleHome'a (admin) sıçratıyordu.
+- **Fix (`auth.py` v2_logout):** `request.session.clear()` eklendi → SessionMiddleware
+  `session` cookie'sini Max-Age=0 ile siler. Çıkış sonrası HİÇBİR kanaldan auth yok.
+- **Kapsam:** yalnız **impersonation kullanan süper adminleri** etkiliyordu
+  (`session["user_id"]`'yi YALNIZ impersonation endpoint'leri yazıyor — admin.py
+  2327/2480). **Mobil ETKİLENMEZ** (Bearer token secure-store'da; cookie/session
+  yok; `signOut` → `clearTokens()` yerel temizler). Normal web kullanıcıları
+  (öğretmen/öğrenci/veli/kurum) BFF cookie-only → session cookie almıyorlar →
+  zaten etkilenmiyorlardı. Fix yine de TÜM kullanıcıları korur (logout artık tüm
+  auth durumunu temizler).
+- **Reprodüksiyon + test:** `test_api_v2_logout_session.py` (impersonate→end→logout→
+  /me MUST 401). Fix'siz **kırmızı** (logout sonrası /me=200 admin + /admin/dashboard
+  =200 — kullanıcının raporu birebir); fix'le **12/12 yeşil**. Regresyon:
+  impersonation_bff 8/8 · auth_p1 10/10 · me 13/13. Commit `b09f3a6`, web+worker
+  rebuild, canlıda `request.session.clear()` doğrulandı.
+- **AÇIK HARDENING (opsiyonel, kullanıcı kararı):** migration tamamlandığı için
+  BFF dependency'sindeki `_resolve_from_session` fallback'i artık geçiş-dönemi
+  liability'si — yalnız impersonation session yazıyor. İstenirse (a) impersonation
+  start/end'in `session` yazımları kaldırılır (kaynağı kurutur) veya (b) fallback
+  dependency'den çıkarılır (BFF tamamen cookie/bearer olur). Bu fix tek başına
+  raporlanan açığı kapatır; hardening belt-and-suspenders.
+
+## Demo silme — transitif kapanış (demo kullanıcılar + ÜRETTİKLERİ) (2026-06-06, deploy edildi)
+
+**Bağlam (kullanıcı):** Demo koç/kurum açıp test ederken **gerçek (demo-işaretsiz)**
+kayıtlar üretiliyor (demo koçun manuel oluşturduğu öğrenci, kurum yöneticisinin
+davet ettiği öğretmen+öğrenci, kitap, görev, deneme). Eski `delete_demo_session`
+yalnız `is_demo=True` seed kayıtlarını siliyordu → bu üretilenler **yetim kalıyordu**
+(`User.teacher_id` SET NULL → koçsuz öğrenci; davet edilen öğretmen+öğrencisi
+sistemde kalıyor). Kullanıcı: "demo kullanıcılarını ve bu kullanıcıların
+ürettiklerini sistemden temizleyebilmeliyiz."
+- **FK denetimi:** users.id'ye giden 117 FK'nin TAMAMI explicit ondelete (59
+  CASCADE + 58 SET NULL) — bloklayıcı yok. **Prod (Postgres):** User satırı
+  silmek tüm CASCADE ağacını otomatik temizler, SET NULL'ları null'lar
+  (audit/log korunur). **Dev (SQLite):** FK pragma kapalı → explicit silmeler
+  gerekli (mevcut fonksiyonun nedeni buydu).
+- **Çözüm (`demo_seed._demo_closure`):** transitif kapanış — (1) demo seed
+  kullanıcıları + (2) demo kurum ÜYELERİ (institution_id; davet edilen öğretmen/
+  öğrenci) + (3) koçların öğrencileri (teacher_id, iteratif) + (4) bu öğrencilerin
+  velileri (**GÜVENLİK: yalnız tüm çocukları silinecek sette olan veli; başka
+  gerçek çocuğu olan veli KORUNUR**). `delete_demo_session` bu genişletilmiş
+  user_ids/inst_ids ile mevcut explicit silmeleri çalıştırır + Invitation
+  (kurum→öğretmen) + ParentInvitation (koç→veli) eklendi + bulk user/institution
+  silme (prod cascade gerisini halleder).
+- **Test `test_demo_seed_cleanup.py` 13/13:** (S1) solo demo koç + manuel gerçek
+  Zeynep+veli+kitap+görev+deneme → hepsi süpürüldü, yetim yok. (S2) demo kurum +
+  davet edilmiş non-demo öğretmen + onun öğrencisi+velisi+davet+kitap+veri →
+  hepsi süpürüldü, kuruma/koça bağlı yetim yok. Regresyon: demo_seed 12/12 +
+  demo_sessions 12/12 + admin 13/13.
+- **NOT:** `User.teacher_id` SET NULL tasarımı GERÇEK kullanım için DOĞRU kalır
+  (bir koç hesabı silinince öğrenciler kaybolmasın → bağımsız olurlar). Bu
+  değişiklik yalnız DEMO seansı silmede tam-süpürme yapar. "Demo Oturumları"
+  (`/admin/demo-sessions`) sayfasındaki Sil bu kapanışı kullanır.
 
 ## Notlar
 
