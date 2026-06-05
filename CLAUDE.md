@@ -4366,6 +4366,43 @@ kopuk. **Onaylı yön (kullanıcı):** A→B sırası · Gemini · generic mocku
   prompt ton ayarı (kullanıcı A2 çıktısını görünce) + commercial_weight'i landing
   skoruna besleme. [[project-revenue-panel-v2-roadmap]]
 
+## Mobil App — Koç + Kurum ekranları + Push bildirimi (2026-06-05)
+
+**Bağlam (kullanıcı, otomatik plan direktifi):** "koç ekranı ve ona bağlı bütün
+işlemleri sormadan tamamla → kurum yöneticisi ekranlarına geç → web vs app
+özelliklerini karşılaştır → e-posta gönderimlerinin uygulamada **bildirim** olması
+konusunu (push) en son çöz. Kararları benim için al." Mobil = Expo SDK 54
+(öğrenci/veli zaten vardı). Mobil-only değişiklik deploy gerektirmez (endpoint'ler
+canlı); backend ekleri web+worker rebuild ile deploy.
+
+- **Koç app** (commit `5567a06`/`de0902f`/`a59e127`): öğrenci listesi (uyarı renkli)
+  + **öğrenci detayı sekmeli** (Genel durum / **Denemeler** gör+sonuç gir+sil net
+  canlı hesap / **Seanslar** gör+kaydet durum/kanal/gündem/ruh hali) + **Tahsilat**
+  (aylık pano, ücret belirle + ödeme gir, ay seçici) + **Destek** (talep/yanıt
+  thread + Gelen Talepler) + Profil. Program editörü/kütüphane/AI/abonelik/WhatsApp
+  **web'de** (Profil→Web paneli linki). Paylaşılan `FormSheet` (klavyeden kaçınan
+  alttan modal) + `components/support/*` (kurum+veli reuse).
+- **Kurum Yöneticisi app** (commit `dd070d6`): rol yönlendirme institution_admin
+  → /institution/dashboard. **Panel** (kurum KPI + riskli/pasif + koç performans
+  satırları orana göre renk ≥70 yeşil/≥40 amber/<40 rose) + **Müdahale Merkezi**
+  (severity kartları + öneri) + **Talepler** (gelen+kendi) + Profil. Analiz
+  derinliği/CRUD/abonelik **web'de**.
+- **Push bildirim** (commit `c1bfb62`, **migration `c6d9g2h3g00x` — device_push_tokens,
+  additive; CANLI deploy edildi, head=c6d9g2h3g00x**): `DevicePushToken` +
+  `push_notifications` servisi (Expo Push API, best-effort: hata fırlatmaz,
+  `DeviceNotRegistered`→token siler). `POST/DELETE /api/v2/me/push-token` (upsert/sil).
+  **notification_dispatcher EMAIL kanalında veliye push** (kind→başlık: Haftalık
+  rapor/Yeni program/Dikkat/Koç notu/Boş gün); **support reply** ilgili taraflara
+  push. Mobil: `expo-notifications` + app.json plugin + `lib/push` (izin+token+kayıt,
+  web/simülatör/projectId yoksa **sessiz no-op**); auth authed→kayıt, çıkış→sil.
+  `test_api_v2_push_notifications.py` **9/9**; regresyon auth_mobile 9 + me 13 +
+  support 54 + api_v1 47 GREEN. **Tam çalışması için EAS projectId + EAS build**
+  gerek (Expo Go'da projectId yoksa kayıt no-op; özellik bozulmaz).
+- **Web↔app parite tablosu**: `mobile/PARITY.md` (rol bazlı özellik karşılaştırması
+  + bildirim push kapsamı + sıradaki opsiyonel adımlar).
+- **Sıradaki (opsiyonel):** EAS build + projectId (push uçtan uca + store) · koç
+  program salt-okuma · native AI yakalama · Faz 7 `app/preview/*` temizliği.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
