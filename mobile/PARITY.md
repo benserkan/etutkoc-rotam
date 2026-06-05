@@ -20,9 +20,10 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | Haftalık program | ✅ | ✅ | |
 | Görev talebi (soru/değiştir/kaldır/kaynak değiştir) | ✅ | ✅ | |
 | Denemeler (gör) | ✅ | ✅ | net trend grafiği |
-| Günün düşünce notu | ✅ | ⬜ | web (autosave) |
-| Kitaplarım / bölüm baz çözülmüş | ✅ | ⬜ | web |
-| DNA / odak / hedefler / projeksiyon detay | ✅ | ⬜ | web |
+| **Günün düşünce notu (autosave)** | ✅ | ✅ | Bugün ekranında, 700ms debounce |
+| **Kitaplarım + ilerleme** | ✅ | ✅ | ders bazlı + kitap progress barı |
+| **Çalışma DNA / Odak / Tekrar / Hedefler** | ✅ | ✅ | "Gelişim" sekmesi |
+| Bölüm baz "çözülmüş" girişi / projeksiyon detay | ✅ | ⬜ | web |
 
 ## Veli
 
@@ -44,10 +45,15 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | **Seanslar — kaydet/gör** | ✅ | ✅ | durum/kanal/gündem/ruh hali |
 | **Tahsilat — ücret + ödeme** | ✅ | ✅ | aylık pano |
 | **Destek — talep/yanıt + gelen kutusu** | ✅ | ✅ | |
-| Günlük/haftalık program **düzenleme** | ✅ | ⬜ | web (sürükle-bırak, rezerv, blok) |
-| Kütüphane / kitap atama / şablon | ✅ | ⬜ | web |
+| **Haftalık programı gör** | ✅ | ✅ | "Program" sekmesi (gün kartları + %) |
+| **Görev ekle (kaynaktan program yap)** | ✅ | ✅ | Test (kitap→bölüm→soru) + Etkinlik |
+| **Öğrenci davet (oluştur + geçici şifre)** | ✅ | ✅ | listede "Davet" |
+| **Paket yönetimi (bağımsız koç)** | ✅ | ✅ | durum + AI kredisi + tier yükselt |
+| Program **gelişmiş düzenleme** (sürükle-bırak, rezerv, blok, periyot) | ✅ | ⬜ | web |
+| Kütüphane / kitap CRUD / şablon | ✅ | ⬜ | web (kaynak girişi) |
 | AI foto/ses not + koçluk içgörüsü | ✅ | ⬜ | web (native kamera/mik sonra) |
-| Paket / abonelik / yükseltme | ✅ | ⬜ | web |
+| Kaynak kullanım oranları / akademik yıl / sınıf yükseltme | ✅ | ⬜ | web (seyrek/yönetsel) |
+| Öğrenci odak/tekrar/hedef **düzenleme** | ✅ | ⬜ | web (mobilde öğrenci görür) |
 | WhatsApp tekli/toplu gönderim | ✅ | ⬜ | web |
 
 ## Kurum Yöneticisi
@@ -68,14 +74,17 @@ Tamamen **web** (mobil kapsam dışı — kullanıcı kararı).
 
 ---
 
-## Bildirimler (e-posta → uygulama push)
+## Bildirimler (e-posta → uygulama push) + deep-link
 
 Backend: `device_push_tokens` + Expo Push API + dispatcher hook.
+Mobil: bildirime **tıkla → doğru ekran** (`NotificationObserver`, soğuk+sıcak açılış).
 
-| E-posta türü | Push var mı | Not |
+| E-posta türü | Push | Tıkla → ekran |
 |---|:--:|---|
-| Veli: haftalık rapor / yeni program / dikkat / koç notu / boş gün | ✅ | dispatcher EMAIL kanalında push |
-| Destek yanıtı (koç/kurum/süper admin arası) | ✅ | ilgili taraflara |
+| Veli: haftalık rapor | ✅ | → Haftalık rapor (geçen hafta performansı) |
+| Veli: yeni program | ✅ | → Haftalık program |
+| Veli: dikkat / koç notu / deneme yaklaşıyor / boş gün | ✅ | → Çocuk detayı |
+| Destek yanıtı (koç/kurum/süper admin) | ✅ | → Destek thread |
 | Trial/yenileme hatırlatma, signup admin, iletişim talebi | ⬜ | işlemsel; sonra eklenebilir |
 
 Mobil: izinli cihazda otomatik token kaydı (authed olunca). **Tam çalışması için**

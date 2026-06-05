@@ -4400,8 +4400,43 @@ canlı); backend ekleri web+worker rebuild ile deploy.
   gerek (Expo Go'da projectId yoksa kayıt no-op; özellik bozulmaz).
 - **Web↔app parite tablosu**: `mobile/PARITY.md` (rol bazlı özellik karşılaştırması
   + bildirim push kapsamı + sıradaki opsiyonel adımlar).
-- **Sıradaki (opsiyonel):** EAS build + projectId (push uçtan uca + store) · koç
-  program salt-okuma · native AI yakalama · Faz 7 `app/preview/*` temizliği.
+
+## Mobil App — rol derinleştirme + veli deep-link (2026-06-05, EAS build öncesi)
+
+**Bağlam (kullanıcı, EAS build'den önce eklemeler — onaysız ilerle):** 3 alan.
+Hepsi mobil-only (endpoint'ler zaten canlı → deploy YOK). 82 rota temiz derlenir.
+
+- **Veli (öncelik — "projenin en güçlü yönü") — bildirim deep-link + rapor** (commit `faeaeaf`):
+  - `NotificationObserver` (root `_layout`): push'a tıkla → doğru ekran (soğuk
+    açılış pending→authed'de yönlendir; sıcak tık anında). Eşleme: weekly_report→
+    **Haftalık rapor** (geçen hafta performansı), new_program→Haftalık program,
+    teacher_note/drop_alert/exam_approaching/empty_day→Çocuk detayı, support→thread.
+  - Yeni **Haftalık rapor** ekranı (`parent-child-report`): performans halkası
+    (%tamamlama ton renkli) + görev/test toplamı + gün gün barlar (geçen
+    tamamlanmış hafta, `getParentChildWeek(lastMonday)`). Çocuk detayına "Haftalık
+    rapor" + "Haftalık program" butonları.
+- **Öğrenci — günün notu + Gelişim + Kitaplar** (commit `bf7ecfd`):
+  - Bugün ekranına **günün notu** kartı (`DayNoteCard`, 700ms debounce autosave,
+    web ile aynı; koç web day-board'da görür).
+  - Yeni **"Gelişim" sekmesi**: Çalışma DNA (kronotip + dönem barları + zirve) +
+    Hedefler (özet + aktif ilerleme) + Odak (seri/dk/puan) + Tekrar (aralıklı —
+    due + breakdown). **Kitaplarım** ekranı (ders bazlı açılır + kitap progress).
+  - lib/student: saveDayNote + booksProgress/dna/focus/review/goals fetcher'ları.
+- **Koç — Program + davet + paket** (commit `cf4ed1f`):
+  - Öğrenci detayına **"Program" sekmesi**: haftalık görünüm (gün kartları + görev
+    durumu + %) + her güne **"Görev ekle"** (`AddTaskSheet`: Test kitap→bölüm→soru
+    [atanmış kitaplardan, kalan göster] veya Etkinlik video/özet/tekrar/diğer) →
+    POST /students/{id}/tasks; görev sil (basılı tut).
+  - **Öğrenci davet**: listede "Davet" → ad/email/sınıf → oluştur → geçici şifre
+    kartı + kopyala (expo-clipboard).
+  - **Paket** (bağımsız koç, Profil→"Paketim"): durum + AI kredisi (kullanım barı)
+    + tier seçenekleri (sana-uygun rozeti) + yükselt (onaylı, /plan/upgrade).
+  - lib/teacher: week/task-create/student-books/create-student/plan fetcher'ları.
+  - **Web'de kalan koç işleri** (PARITY.md): gelişmiş program editörü (sürükle-
+    bırak/rezerv/blok/periyot), kütüphane/kitap CRUD, AI foto/ses, kaynak kullanım
+    oranları, akademik yıl, sınıf yükseltme, odak/tekrar/hedef düzenleme.
+- **Sıradaki:** EAS build + projectId (push uçtan uca test + store derlemesi) ·
+  native AI yakalama · Faz 7 `app/preview/*` temizliği.
 
 ## Notlar
 
