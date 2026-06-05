@@ -29,9 +29,11 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
 export function ParentChildDetailView({
   data,
   onOpenWeek,
+  onOpenReport,
 }: {
   data: ParentStudentOverview;
   onOpenWeek?: () => void;
+  onOpenReport?: () => void;
 }) {
   const w = WARN[data.warning_level];
   const grade =
@@ -61,18 +63,26 @@ export function ParentChildDetailView({
         </View>
       </View>
 
-      {onOpenWeek ? (
-        <Pressable
-          onPress={onOpenWeek}
-          className="flex-row items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
-        >
-          <View className="flex-row items-center gap-3">
-            <Ionicons name="calendar-outline" size={22} color="#0e7490" />
-            <Text className="text-[15px] font-medium text-slate-900">Haftalık programı gör</Text>
-          </View>
-          <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
-        </Pressable>
-      ) : null}
+      <View className="flex-row gap-3">
+        {onOpenWeek ? (
+          <Pressable
+            onPress={onOpenWeek}
+            className="flex-1 flex-row items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-4 active:bg-slate-50"
+          >
+            <Ionicons name="calendar-outline" size={20} color="#0e7490" />
+            <Text className="text-[14px] font-medium text-slate-900">Haftalık program</Text>
+          </Pressable>
+        ) : null}
+        {onOpenReport ? (
+          <Pressable
+            onPress={onOpenReport}
+            className="flex-1 flex-row items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-4 active:bg-slate-50"
+          >
+            <Ionicons name="stats-chart-outline" size={20} color="#0e7490" />
+            <Text className="text-[14px] font-medium text-slate-900">Haftalık rapor</Text>
+          </Pressable>
+        ) : null}
+      </View>
 
       {/* Projeksiyon */}
       {proj && proj.total_tests > 0 ? (
