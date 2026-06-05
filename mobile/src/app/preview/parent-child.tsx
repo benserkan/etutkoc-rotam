@@ -36,7 +36,7 @@ export default function ParentChildPreview() {
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
       <View className="flex-1">
-        <ParentChildDetailView data={MOCK} />
+        <ParentChildDetailView data={MOCK} onOpenWeek={() => {}} />
       </View>
     </SafeAreaView>
   );

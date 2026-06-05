@@ -36,6 +36,62 @@ export interface ParentDashboardResponse {
   children: ParentChildSummary[];
 }
 
+// --- Bildirimler ---
+export interface ParentNotificationItem {
+  id: number;
+  kind: string;
+  channel: string;
+  status: string;
+  subject: string | null;
+  student_name: string | null;
+  sent_at: string | null;
+  queued_at: string | null;
+}
+export interface ParentNotificationsResponse {
+  items: ParentNotificationItem[];
+  total: number;
+}
+
+// --- Çocuk haftası (read-only) ---
+export interface ParentWeekBookItem {
+  book_name: string | null;
+  subject_name: string | null;
+  subject_id: number | null;
+  section_label: string | null;
+  topic_name: string | null;
+  planned_count: number;
+  completed_count: number;
+}
+export interface ParentWeekTask {
+  id: number;
+  title: string;
+  type: string | null;
+  status: string | null;
+  book_items: ParentWeekBookItem[];
+}
+export interface ParentWeekDay {
+  date: string;
+  weekday: number; // 0=Pazartesi
+  tasks: ParentWeekTask[];
+  task_count: number;
+  planned_total: number;
+  completed_total: number;
+  gorev_total: number;
+  gorev_done: number;
+  test_planned: number;
+  test_completed: number;
+  deneme_count: number;
+  etkinlik_count: number;
+}
+export interface ParentWeekResponse {
+  student: { id: number; full_name: string };
+  start: string;
+  end: string;
+  prev_start: string;
+  next_start: string;
+  days: ParentWeekDay[];
+}
+
 export const parentKeys = {
   dashboard: () => ["parent", "dashboard"] as const,
   child: (id: number) => ["parent", "child", id] as const,
@@ -45,4 +101,11 @@ export const parentKeys = {
 
 export function getParentDashboard(): Promise<ParentDashboardResponse> {
   return apiRequest<ParentDashboardResponse>("/api/v2/parent/dashboard");
+}
+export function getParentNotifications(): Promise<ParentNotificationsResponse> {
+  return apiRequest<ParentNotificationsResponse>("/api/v2/parent/notifications");
+}
+export function getParentChildWeek(id: number, start?: string): Promise<ParentWeekResponse> {
+  const qs = start ? `?start=${encodeURIComponent(start)}` : "";
+  return apiRequest<ParentWeekResponse>(`/api/v2/parent/students/${id}/week${qs}`);
 }

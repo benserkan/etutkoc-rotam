@@ -1,4 +1,5 @@
-import { ScrollView, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { WarningLevel } from "@/lib/parent";
 import type { ParentStudentOverview } from "@/lib/parent-detail";
@@ -25,7 +26,13 @@ function Stat({ label, value, sub }: { label: string; value: string; sub?: strin
   );
 }
 
-export function ParentChildDetailView({ data }: { data: ParentStudentOverview }) {
+export function ParentChildDetailView({
+  data,
+  onOpenWeek,
+}: {
+  data: ParentStudentOverview;
+  onOpenWeek?: () => void;
+}) {
   const w = WARN[data.warning_level];
   const grade =
     data.student.display_grade_label ??
@@ -53,6 +60,19 @@ export function ParentChildDetailView({ data }: { data: ParentStudentOverview })
           <Stat label="Tutarlılık" value={data.consistency_7d_pct != null ? `%${data.consistency_7d_pct}` : "—"} />
         </View>
       </View>
+
+      {onOpenWeek ? (
+        <Pressable
+          onPress={onOpenWeek}
+          className="flex-row items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
+        >
+          <View className="flex-row items-center gap-3">
+            <Ionicons name="calendar-outline" size={22} color="#0e7490" />
+            <Text className="text-[15px] font-medium text-slate-900">Haftalık programı gör</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+        </Pressable>
+      ) : null}
 
       {/* Projeksiyon */}
       {proj && proj.total_tests > 0 ? (
