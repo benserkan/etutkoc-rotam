@@ -4462,6 +4462,53 @@ okuma reddedildi. Mobil-only (uçlar canlı). 95 rota temiz.
 - Backend teacher uçları (`/students/{id}/dna|focus|review|goals` + goal create +
   review/seed) ZATEN vardı — mobil bağlandı. PARITY.md güncel.
 
+## Veli Haftalık Rapor — doyurucu analiz (web + mobil) (2026-06-05, migration YOK)
+
+**Bağlam (kullanıcı, Image #56):** Veli haftalık rapor ekranı "kemik" idi —
+sadece bir tamamlama halkası + gün gün `138/138 · 151/151` (etiketsiz görev/test
+sayıları, anlamsız). Kullanıcı: "bir veli olsan çocuğunun en çok merak ettiğin
+bilgi ne olurdu?" → bu hafta düzeldi mi (geçen haftaya kıyas) · netler yükseliş
+mi düşüş mü · en çok hangi dersi çözüyor / aksatıyor · gün gün ne yaptı. Hem web
+veli hem mobil.
+- **Kritik bulgu (KURAL 1):** `schemas/parent.py`'de zaten zengin bir
+  **`WeeklyReportResponse`** şeması vardı (öksüz — endpoint/servis/frontend hiç
+  bağlanmamış; geçmiş oturumda tanımlanıp yarım bırakılmış). Tam istenen alanlar:
+  daily + subjects (most_completed/most_neglected) + comparison (delta/direction)
+  + exams + exam_trend + teacher_notes + verdict. Bu şemayı tamamladım.
+- **Tek kaynak backend:** `app/services/parent_weekly_report.py` →
+  `build_weekly_report(db, parent, student_id, week_start)`. `gorev_stats.summarize`
+  (görev/test/deneme ayrımı) reuse: bu hafta + geçen hafta özeti + per-gün +
+  per-ders (TEST kategorisi) agregasyonu; en çok çözülen = max test_completed,
+  en çok aksatılan = planlanan>0 & en düşük %; net trendi = son denemenin
+  türünde önceki denemeyle delta (son 60g, ≤8 deneme); koç notu son 14g; verdict
+  level(≥70 good/≥40 warn/<40 bad) × direction → sade-dil tek cümle.
+  - **Varsayılan hafta = son TAMAMLANMIŞ hafta** (geçen Pzt; kıyas dürüst:
+    tam↔tam). `week_start` daima Pazartesi'ye snap. prev/next ile gezilir.
+  - **KVKK:** `assert_parent_can_view` (bağ yoksa 404). **Deneme netleri veliye
+    PAYLAŞILIR** (2026-06-01 kararı, dashboard zaten gösteriyordu); web dashboard
+    "net paylaşılmaz" bayat gizlilik notu gerçeğe uyduruldu (konu bazında
+    doğru/yanlış + öğrenci-koç notları paylaşılmaz).
+- Endpoint `GET /api/v2/parent/students/{id}/weekly-report?week_start=YYYY-MM-DD`.
+  `scripts/test_api_v2_parent_weekly_report.py` — **14/14**.
+- **Web:** `lib/types/parent.ts` + `lib/api/parent.ts` (weeklyReport key + fetcher)
+  · yeni `/parent/students/[id]/report` route + `parent-weekly-report-client.tsx`
+  (hafta gezgini + verdict bandı + **geçen haftaya kıyas manşeti** [Tamamlama%/
+  çözülen test/çalışılan gün ↑↓ delta] + ders kırılımı [en çok çözülen/aksatılan
+  chip + barlar] + deneme performansı [büyük net + trend + son denemeler] + gün
+  gün net-etiketli + koç notları). Öğrenci detayına **"Haftalık Rapor"** birincil
+  butonu. Kontrast-güvenli (tonal zeminlerde explicit koyu renk).
+- **Mobil:** `lib/parent.ts` (WeeklyReport tipleri + `getParentWeeklyReport`) ·
+  `parent-child-report.tsx` route hafta gezginli (varsayılan backend = son
+  tamamlanmış hafta) · `child-report-view.tsx` web ile birebir bölümlere
+  yeniden yazıldı (Ionicons) · preview mock güncellendi.
+- **Doğrulama:** weekly-report 14/14 · parent 20/20 · gorev_stats 27/27 ·
+  card_consistency 23/23 · **run_gorev_checks 82/82** · web tsc+eslint temiz ·
+  mobil tsc temiz. Migration YOK (mevcut tablolardan agregasyon).
+- **NOT (deploy):** backend (parent_weekly_report + endpoint) hem web hem mobil
+  tarafından tüketilir → canlıda görmek için **web+worker+next rebuild** gerekir
+  (mobil app kodu ayrıca EAS build ister). Henüz commit/deploy YOK (kullanıcı
+  istemedi). [[feedback-card-numbers-need-units]] [[feedback-holistic-change-propagation]]
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

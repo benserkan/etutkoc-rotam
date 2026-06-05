@@ -92,10 +92,81 @@ export interface ParentWeekResponse {
   days: ParentWeekDay[];
 }
 
+// --- Haftalık rapor (doyurucu analiz) ---
+export interface WeeklyReportDaily {
+  date: string;
+  weekday: number; // 0=Pazartesi
+  gorev_done: number;
+  gorev_total: number;
+  pct: number;
+  test_completed: number;
+  test_planned: number;
+}
+export interface WeeklyReportSubject {
+  subject_name: string;
+  planned: number;
+  completed: number;
+  pct: number;
+}
+export interface WeeklyReportExam {
+  title: string;
+  exam_date: string | null;
+  section_label: string;
+  net: number;
+  total_correct: number;
+  total_wrong: number;
+  total_blank: number;
+}
+export type WeeklyComparisonDirection = "up" | "down" | "flat" | "none";
+export interface WeeklyReportComparison {
+  this_completion_pct: number;
+  last_completion_pct: number | null;
+  completion_delta: number | null;
+  this_test_completed: number;
+  last_test_completed: number | null;
+  test_delta: number | null;
+  this_gorev_done: number;
+  last_gorev_done: number | null;
+  direction: WeeklyComparisonDirection;
+}
+export interface WeeklyReportNote {
+  body: string;
+  teacher_name: string | null;
+  created_at: string | null;
+}
+export type WeeklyVerdictLevel = "good" | "warn" | "bad";
+export interface WeeklyReportResponse {
+  student: { id: number; full_name: string };
+  start: string;
+  end: string;
+  prev_start: string;
+  next_start: string;
+  gorev_done: number;
+  gorev_total: number;
+  completion_pct: number;
+  test_completed: number;
+  test_planned: number;
+  active_days: number;
+  daily: WeeklyReportDaily[];
+  subjects: WeeklyReportSubject[];
+  most_completed_subject: string | null;
+  most_neglected_subject: string | null;
+  most_neglected_pct: number | null;
+  comparison: WeeklyReportComparison;
+  exams: WeeklyReportExam[];
+  exam_trend_delta: number | null;
+  exam_trend_section: string | null;
+  teacher_notes: WeeklyReportNote[];
+  verdict_level: WeeklyVerdictLevel;
+  verdict_text: string;
+}
+
 export const parentKeys = {
   dashboard: () => ["parent", "dashboard"] as const,
   child: (id: number) => ["parent", "child", id] as const,
   childWeek: (id: number, start?: string) => ["parent", "child", id, "week", start ?? "current"] as const,
+  weeklyReport: (id: number, start?: string | null) =>
+    ["parent", "child", id, "weekly-report", start ?? "default"] as const,
   notifications: () => ["parent", "notifications"] as const,
 };
 
@@ -108,4 +179,8 @@ export function getParentNotifications(): Promise<ParentNotificationsResponse> {
 export function getParentChildWeek(id: number, start?: string): Promise<ParentWeekResponse> {
   const qs = start ? `?start=${encodeURIComponent(start)}` : "";
   return apiRequest<ParentWeekResponse>(`/api/v2/parent/students/${id}/week${qs}`);
+}
+export function getParentWeeklyReport(id: number, weekStart?: string | null): Promise<WeeklyReportResponse> {
+  const qs = weekStart ? `?week_start=${encodeURIComponent(weekStart)}` : "";
+  return apiRequest<WeeklyReportResponse>(`/api/v2/parent/students/${id}/weekly-report${qs}`);
 }

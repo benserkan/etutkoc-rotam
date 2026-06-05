@@ -318,10 +318,9 @@ function PrivacyNote() {
       <Info className="size-4 shrink-0 mt-0.5 text-[#117A86]" aria-hidden />
       <p className="leading-relaxed">
         <strong className="text-foreground">Bilgi:</strong> Bu panelde size
-        sadece görev tamamlama oranı, ders bazında dağılım, istikrar ve genel
-        ilerleme metrikleri gösterilir. Deneme net sayıları ve konu bazında
-        doğru-yanlış oranları öğrenci-öğretmen arasındaki çalışma alanına
-        aittir; gizlilik gereği paylaşılmaz.
+        görev tamamlama oranı, ders bazında dağılım, istikrar, genel ilerleme ve
+        deneme net sonuçları gösterilir. Konu bazında doğru-yanlış kırılımı ve
+        öğrenci-koç arasındaki çalışma notları gizlilik gereği paylaşılmaz.
       </p>
     </div>
   );

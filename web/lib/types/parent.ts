@@ -193,6 +193,85 @@ export interface ParentWeekResponse {
 }
 
 // =============================================================================
+// Haftalık rapor (doyurucu analiz) — web + mobil paylaşır
+// =============================================================================
+
+export interface WeeklyReportDaily {
+  date: string;
+  weekday: number; // 0=Pazartesi
+  gorev_done: number;
+  gorev_total: number;
+  pct: number;
+  test_completed: number;
+  test_planned: number;
+}
+
+export interface WeeklyReportSubject {
+  subject_name: string;
+  planned: number; // bu hafta planlanan test
+  completed: number;
+  pct: number;
+}
+
+export interface WeeklyReportExam {
+  title: string;
+  exam_date: string | null;
+  section_label: string;
+  net: number;
+  total_correct: number;
+  total_wrong: number;
+  total_blank: number;
+}
+
+export type WeeklyComparisonDirection = "up" | "down" | "flat" | "none";
+
+export interface WeeklyReportComparison {
+  this_completion_pct: number;
+  last_completion_pct: number | null;
+  completion_delta: number | null;
+  this_test_completed: number;
+  last_test_completed: number | null;
+  test_delta: number | null;
+  this_gorev_done: number;
+  last_gorev_done: number | null;
+  direction: WeeklyComparisonDirection;
+}
+
+export interface WeeklyReportNote {
+  body: string;
+  teacher_name: string | null;
+  created_at: string | null;
+}
+
+export type WeeklyVerdictLevel = "good" | "warn" | "bad";
+
+export interface WeeklyReportResponse {
+  student: ParentStudentRef;
+  start: string;
+  end: string;
+  prev_start: string;
+  next_start: string;
+  gorev_done: number;
+  gorev_total: number;
+  completion_pct: number;
+  test_completed: number;
+  test_planned: number;
+  active_days: number;
+  daily: WeeklyReportDaily[];
+  subjects: WeeklyReportSubject[];
+  most_completed_subject: string | null;
+  most_neglected_subject: string | null;
+  most_neglected_pct: number | null;
+  comparison: WeeklyReportComparison;
+  exams: WeeklyReportExam[];
+  exam_trend_delta: number | null;
+  exam_trend_section: string | null;
+  teacher_notes: WeeklyReportNote[];
+  verdict_level: WeeklyVerdictLevel;
+  verdict_text: string;
+}
+
+// =============================================================================
 // Notifications
 // =============================================================================
 

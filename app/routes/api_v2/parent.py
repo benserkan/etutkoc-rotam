@@ -74,6 +74,7 @@ from app.routes.api_v2.schemas.parent import (
     ParentWhatsAppInfo,
     ParentWhatsAppStartBody,
     ParentWhatsAppVerifyBody,
+    WeeklyReportResponse,
 )
 from app.services.parent_invitation import (
     can_register_parent_email,
@@ -247,6 +248,49 @@ def parent_student_week_v2(
         start_date = active_prog.start_date if active_prog else today
     try:
         data = student_week(db, user, student_id, start_date)
+    except ParentAccessDenied:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "not_found",
+                "code": "student_not_found",
+                "message": "Öğrenci bulunamadı.",
+            },
+        )
+    return data
+
+
+@router.get(
+    "/students/{student_id}/weekly-report",
+    response_model=WeeklyReportResponse,
+)
+def parent_student_weekly_report_v2(
+    student_id: int,
+    week_start: str | None = Query(
+        None, description="YYYY-MM-DD (Pazartesi'ye snap'lenir); yoksa son tamamlanmış hafta"
+    ),
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veliye doyurucu haftalık analiz raporu.
+
+    İçerik: bu hafta özeti + GEÇEN HAFTAYA KIYAS + ders kırılımı (en çok çözülen /
+    en çok aksatılan) + deneme net trendi + gün gün tamamlama + koç notları +
+    sade-dil genel değerlendirme. Web + mobil paylaşır.
+
+    `week_start` verilmezse en son TAMAMLANMIŞ hafta (geçen Pazartesi) gösterilir.
+    Verilen tarih daima haftanın Pazartesi'sine snap'lenir.
+    """
+    from app.services.parent_weekly_report import build_weekly_report
+
+    ws: date | None = None
+    if week_start:
+        try:
+            ws = date.fromisoformat(week_start)
+        except ValueError:
+            ws = None
+    try:
+        data = build_weekly_report(db, user, student_id, ws)
     except ParentAccessDenied:
         raise HTTPException(
             status_code=404,

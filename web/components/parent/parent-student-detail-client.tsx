@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   CalendarDays,
   ChevronRight,
+  FileBarChart,
   Receipt,
   Target,
   TrendingUp,
@@ -74,9 +75,16 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
         </p>
       </header>
 
-      {/* Hızlı erişim — program + seanslar (en üstte, kolay bulunur) */}
+      {/* Hızlı erişim — haftalık rapor + program + seanslar (en üstte) */}
       <div className="flex flex-wrap gap-2">
         <Button asChild className="bg-[#117A86] hover:bg-[#0E5F69] text-white">
+          <Link href={`/parent/students/${data.student.id}/report`}>
+            <FileBarChart className="size-4" aria-hidden />
+            Haftalık Rapor
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
           <Link href={`/parent/students/${data.student.id}/week`}>
             <CalendarDays className="size-4" aria-hidden />
             Haftalık Programı Gör

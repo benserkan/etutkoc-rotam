@@ -212,6 +212,93 @@ class ParentWeekResponse(BaseModel):
 
 
 # =============================================================================
+# Haftalık ilerleme raporu (veli için doyurucu analiz) — web + mobil paylaşır
+# =============================================================================
+
+
+class WeeklyReportDaily(BaseModel):
+    date: str          # ISO
+    weekday: int       # 0=Pazartesi
+    gorev_done: int
+    gorev_total: int
+    pct: int           # 0..100 (görev tamamlama)
+    test_completed: int
+    test_planned: int
+
+
+class WeeklyReportSubject(BaseModel):
+    subject_name: str
+    planned: int       # bu hafta planlanan test (soru bankası kalemleri)
+    completed: int
+    pct: int           # 0..100
+
+
+class WeeklyReportExam(BaseModel):
+    title: str
+    exam_date: str | None = None
+    section_label: str
+    net: float
+    total_correct: int
+    total_wrong: int
+    total_blank: int
+
+
+class WeeklyReportComparison(BaseModel):
+    this_completion_pct: int
+    last_completion_pct: int | None = None
+    completion_delta: int | None = None     # bu hafta − geçen hafta (puan)
+    this_test_completed: int
+    last_test_completed: int | None = None
+    test_delta: int | None = None
+    this_gorev_done: int
+    last_gorev_done: int | None = None
+    direction: str  # "up" | "down" | "flat" | "none"
+
+
+class WeeklyReportNote(BaseModel):
+    body: str
+    teacher_name: str | None = None
+    created_at: str | None = None
+
+
+class WeeklyReportResponse(BaseModel):
+    """GET /api/v2/parent/students/{id}/weekly-report?week_start=YYYY-MM-DD.
+
+    Veliye doyurucu haftalık analiz: tamamlama + geçen haftaya kıyas + ders
+    kırılımı (en çok çözülen / en çok aksatılan) + deneme net trendi + koç notları.
+    """
+    student: ParentStudentRef
+    start: str          # ISO (haftanın Pzt'si)
+    end: str            # ISO (Paz)
+    prev_start: str
+    next_start: str
+    # bu hafta özeti
+    gorev_done: int
+    gorev_total: int
+    completion_pct: int
+    test_completed: int
+    test_planned: int
+    active_days: int    # görev tamamlanan gün sayısı (0..7)
+    daily: list[WeeklyReportDaily]
+    # ders kırılımı (completed desc)
+    subjects: list[WeeklyReportSubject]
+    most_completed_subject: str | None = None
+    most_neglected_subject: str | None = None   # planlandı ama en az tamamlandı
+    most_neglected_pct: int | None = None
+    # geçen haftaya kıyas
+    comparison: WeeklyReportComparison
+    # denemeler (en yeni ilk) + net trendi
+    exams: list[WeeklyReportExam]
+    exam_trend_delta: float | None = None       # son net − önceki net (aynı tür)
+    exam_trend_section: str | None = None
+    # koç notları (son ~14 gün)
+    teacher_notes: list[WeeklyReportNote]
+    # genel değerlendirme
+    verdict_level: str  # "good" | "warn" | "bad"
+    verdict_text: str
+
+
+# =============================================================================
 # Notifications — list_recent_notifications() çıktısı
 # =============================================================================
 

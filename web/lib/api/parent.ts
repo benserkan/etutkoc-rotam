@@ -17,6 +17,7 @@ import type {
   ParentStudentOverviewResponse,
   ParentUnsubscribeResult,
   ParentWeekResponse,
+  WeeklyReportResponse,
 } from "@/lib/types/parent";
 
 // =============================================================================
@@ -36,6 +37,15 @@ export const parentKeys = {
       String(id),
       "week",
       start ?? "",
+    ] as const,
+  weeklyReport: (id: number, weekStart: string | null) =>
+    [
+      "parent",
+      "me",
+      "students",
+      String(id),
+      "weekly-report",
+      weekStart ?? "",
     ] as const,
   studentSessions: (id: number, months: number) =>
     [
@@ -74,6 +84,18 @@ export function getParentStudentWeek(
   const qs = start ? `?start=${encodeURIComponent(start)}` : "";
   return api<ParentWeekResponse>(
     `/api/v2/parent/students/${studentId}/week${qs}`,
+  );
+}
+
+export function getParentWeeklyReport(
+  studentId: number,
+  weekStart: string | null = null,
+) {
+  const qs = weekStart
+    ? `?week_start=${encodeURIComponent(weekStart)}`
+    : "";
+  return api<WeeklyReportResponse>(
+    `/api/v2/parent/students/${studentId}/weekly-report${qs}`,
   );
 }
 
