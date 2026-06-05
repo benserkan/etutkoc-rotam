@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -70,12 +71,14 @@ function CheckCircle({ state }: { state: GState }) {
 export function TodayView({
   day,
   busyTaskId,
+  onQuickToggle,
   onOpenTask,
   refreshing = false,
   onRefresh,
 }: {
   day: StudentDayResponse;
   busyTaskId: number | null;
+  onQuickToggle: (task: StudentTask) => void;
   onOpenTask: (task: StudentTask) => void;
   refreshing?: boolean;
   onRefresh?: () => void;
@@ -127,7 +130,7 @@ export function TodayView({
       ) : (
         <View className="gap-2.5">
           <Text className="px-1 text-xs text-slate-500">
-            Görevine dokun: ne kadar yaptığını ve doğru/yanlış sayını gir.
+            Yaptıysan yuvarlağa dokun. Kaç yaptığını / doğru-yanlışı girmek için karta dokun.
           </Text>
           {day.tasks.map((t) => {
             const st = gorevState(t);
@@ -135,40 +138,56 @@ export function TodayView({
             const busy = busyTaskId === t.id;
             const blocked = t.is_future_blocked;
             return (
-              <Pressable
+              <View
                 key={t.id}
-                disabled={busy || blocked}
-                onPress={() => onOpenTask(t)}
                 className={`flex-row items-center gap-3 rounded-2xl border bg-white p-4 ${
                   st === "done" ? "border-emerald-200" : "border-slate-200"
-                } ${blocked ? "opacity-50" : "active:bg-slate-50"}`}
+                } ${blocked ? "opacity-50" : ""}`}
               >
-                {busy ? (
-                  <View className="size-8 items-center justify-center">
-                    <ActivityIndicator color="#0e7490" />
+                {/* Sol: hızlı "yaptım" (sayı sormaz) */}
+                <Pressable
+                  onPress={() => onQuickToggle(t)}
+                  disabled={busy || blocked}
+                  hitSlop={10}
+                  accessibilityLabel={st === "done" ? "Geri al" : "Yaptım olarak işaretle"}
+                >
+                  {busy ? (
+                    <View className="size-8 items-center justify-center">
+                      <ActivityIndicator color="#0e7490" />
+                    </View>
+                  ) : (
+                    <CheckCircle state={st} />
+                  )}
+                </Pressable>
+                {/* Sağ: detay (kısmi + doğru/yanlış) */}
+                <Pressable
+                  className="flex-1 flex-row items-center gap-2 active:opacity-60"
+                  onPress={() => onOpenTask(t)}
+                  disabled={blocked}
+                >
+                  <View className="flex-1">
+                    {subj ? (
+                      <Text className="text-[11px] font-bold uppercase tracking-wide text-brand-700">{subj}</Text>
+                    ) : null}
+                    <Text
+                      className={`text-[15px] font-medium ${st === "done" ? "text-slate-400 line-through" : "text-slate-900"}`}
+                      numberOfLines={2}
+                    >
+                      {taskLabel(t)}
+                    </Text>
+                    <Text className="mt-0.5 text-xs text-slate-500">
+                      {isActivity(t)
+                        ? (t.solved_count ?? 0) > 0
+                          ? `Etkinlik · ${t.solved_count} soru`
+                          : "Etkinlik"
+                        : `${t.completed_count}/${t.planned_count} ${taskUnit(t)}`}
+                    </Text>
                   </View>
-                ) : (
-                  <CheckCircle state={st} />
-                )}
-                <View className="flex-1">
-                  {subj ? (
-                    <Text className="text-[11px] font-bold uppercase tracking-wide text-brand-700">{subj}</Text>
+                  {!blocked ? (
+                    <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
                   ) : null}
-                  <Text
-                    className={`text-[15px] font-medium ${st === "done" ? "text-slate-400 line-through" : "text-slate-900"}`}
-                    numberOfLines={2}
-                  >
-                    {taskLabel(t)}
-                  </Text>
-                  <Text className="mt-0.5 text-xs text-slate-500">
-                    {isActivity(t)
-                      ? (t.solved_count ?? 0) > 0
-                        ? `Etkinlik · ${t.solved_count} soru`
-                        : "Etkinlik"
-                      : `${t.completed_count}/${t.planned_count} ${taskUnit(t)}`}
-                  </Text>
-                </View>
-              </Pressable>
+                </Pressable>
+              </View>
             );
           })}
         </View>

@@ -21,6 +21,22 @@ export default function TodayScreen() {
   const [openTask, setOpenTask] = React.useState<StudentTask | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [sheetError, setSheetError] = React.useState<string | null>(null);
+  const [quickBusyId, setQuickBusyId] = React.useState<number | null>(null);
+
+  async function quickToggle(task: StudentTask) {
+    setQuickBusyId(task.id);
+    try {
+      const done =
+        task.status === "completed" ||
+        (task.planned_count > 0 && task.completed_count >= task.planned_count);
+      await (done ? uncompleteTask(task.id) : completeTask(task.id));
+      await qc.invalidateQueries({ queryKey: studentKeys.day() });
+    } catch {
+      // sessiz geç — kullanıcı tekrar deneyebilir (sonra toast eklenecek)
+    } finally {
+      setQuickBusyId(null);
+    }
+  }
 
   async function runAction(fn: () => Promise<unknown>) {
     setBusy(true);
@@ -70,7 +86,8 @@ export default function TodayScreen() {
     <>
       <TodayView
         day={dayQ.data}
-        busyTaskId={busy && openTask ? openTask.id : null}
+        busyTaskId={quickBusyId}
+        onQuickToggle={quickToggle}
         onOpenTask={setOpenTask}
         refreshing={dayQ.isRefetching}
         onRefresh={() => dayQ.refetch()}
