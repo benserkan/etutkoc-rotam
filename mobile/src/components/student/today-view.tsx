@@ -75,6 +75,7 @@ export function TodayView({
   onOpenTask,
   refreshing = false,
   onRefresh,
+  safeTop = true,
 }: {
   day: StudentDayResponse;
   busyTaskId: number | null;
@@ -82,12 +83,13 @@ export function TodayView({
   onOpenTask: (task: StudentTask) => void;
   refreshing?: boolean;
   onRefresh?: () => void;
+  safeTop?: boolean; // false: üstte kendi başlık çubuğu olan ekran (çift inset olmasın)
 }) {
   const s = day.summary;
   const pct = Math.round((s.pct ?? 0) * 100);
 
   return (
-    <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
+    <SafeAreaView edges={safeTop ? ["top"] : []} className="flex-1 bg-slate-50">
     <ScrollView
       className="flex-1 bg-slate-50"
       contentContainerClassName="px-4 py-4 gap-4"

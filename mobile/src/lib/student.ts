@@ -65,6 +65,34 @@ export interface StudentDayResponse {
   day_note: string;
 }
 
+export interface StudentWeekDay {
+  date: string;
+  dow_label: string;
+  is_today: boolean;
+  is_future: boolean;
+  is_past: boolean;
+  gorev_total: number;
+  gorev_done: number;
+  test_planned: number;
+  test_completed: number;
+  deneme_count: number;
+  etkinlik_count: number;
+  tasks: StudentTask[];
+}
+
+export interface StudentWeekResponse {
+  start_date: string;
+  end_date: string;
+  prev_start: string;
+  next_start: string;
+  days: StudentWeekDay[];
+  total_gorev: number;
+  total_gorev_done: number;
+  total_test_planned: number;
+  total_test_completed: number;
+  total_pct: number;
+}
+
 export const studentKeys = {
   day: (date?: string) => ["student", "day", date ?? "today"] as const,
   week: (start?: string) => ["student", "week", start ?? "current"] as const,
@@ -73,6 +101,11 @@ export const studentKeys = {
 export function getStudentDay(date?: string): Promise<StudentDayResponse> {
   const qs = date ? `?date=${encodeURIComponent(date)}` : "";
   return apiRequest<StudentDayResponse>(`/api/v2/student/day${qs}`);
+}
+
+export function getStudentWeek(start?: string): Promise<StudentWeekResponse> {
+  const qs = start ? `?start=${encodeURIComponent(start)}` : "";
+  return apiRequest<StudentWeekResponse>(`/api/v2/student/week${qs}`);
 }
 
 // MutationResponse — backend invalidate prefix listesi döner; mobilde basitçe
