@@ -1,5 +1,14 @@
 import * as React from "react";
-import { Modal, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 
 import type { StudentTask } from "@/lib/student";
 
@@ -252,16 +261,21 @@ export function TaskSheet(props: {
   const { onClose, ...content } = props;
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onClose}>
-      <View className="flex-1 justify-end">
+      <View className="flex-1">
         <Pressable className="absolute inset-0 bg-black/40" onPress={onClose} />
-        <View className="max-h-[88%] rounded-t-3xl bg-white px-5 pb-8 pt-3">
-          <View className="mb-2 items-center">
-            <View className="h-1.5 w-10 rounded-full bg-slate-300" />
+        <KeyboardAvoidingView
+          className="flex-1 justify-end"
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
+          <View className="max-h-[88%] rounded-t-3xl bg-white px-5 pb-8 pt-3">
+            <View className="mb-2 items-center">
+              <View className="h-1.5 w-10 rounded-full bg-slate-300" />
+            </View>
+            <ScrollView keyboardShouldPersistTaps="handled" keyboardDismissMode="interactive">
+              <TaskSheetContent {...content} />
+            </ScrollView>
           </View>
-          <ScrollView keyboardShouldPersistTaps="handled">
-            <TaskSheetContent {...content} />
-          </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
