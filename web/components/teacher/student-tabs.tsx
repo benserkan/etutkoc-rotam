@@ -56,6 +56,7 @@ function isValidTab(v: string): v is TabKey {
   return (
     v === "summary" ||
     v === "analytics" ||
+    v === "topics" ||
     v === "exams" ||
     v === "sessions" ||
     v === "books" ||

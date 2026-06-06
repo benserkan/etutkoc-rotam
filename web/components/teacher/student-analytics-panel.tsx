@@ -236,13 +236,15 @@ function WeeklyTrendCard({ weeks }: { weeks: AnalyticsWeekPoint[] }) {
           </div>
         ) : (
           <>
-            <div className="flex items-end gap-1.5 h-[140px]">
+            <div className="flex items-stretch gap-1.5 h-[160px]">
               {shown.map((w) => (
-                <div key={w.week_start} className="flex-1 flex flex-col items-center justify-end gap-1 group">
+                <div key={w.week_start} className="flex-1 flex flex-col items-center gap-1 group">
                   <span className="text-[9px] text-muted-foreground tabular-nums opacity-0 group-hover:opacity-100 transition-opacity">
                     %{w.pct}
                   </span>
-                  <div className="w-full rounded-t bg-muted overflow-hidden flex items-end" style={{ height: "100%" }}>
+                  {/* flex-1 → kalan dikey alanı doldurur; bar onun pct%'i (eski height:100% sütun
+                      içerik yüksekliğinde kaldığı için görünmüyordu) */}
+                  <div className="w-full flex-1 rounded-t bg-muted overflow-hidden flex items-end">
                     <div
                       className={cn("w-full rounded-t transition-all", barColor(w.pct))}
                       style={{ height: `${Math.max(2, Math.min(100, w.pct))}%` }}
