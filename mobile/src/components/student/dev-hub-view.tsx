@@ -70,6 +70,7 @@ export function DevHubView({
   review,
   goals,
   onOpenBooks,
+  onOpenTopics,
   onOpenFocus,
   onOpenReview,
   onOpenGoals,
@@ -81,6 +82,7 @@ export function DevHubView({
   review: ReviewResponse;
   goals: GoalListResponse;
   onOpenBooks: () => void;
+  onOpenTopics?: () => void;
   onOpenFocus: () => void;
   onOpenReview: () => void;
   onOpenGoals: () => void;
@@ -108,6 +110,23 @@ export function DevHubView({
         </View>
         <Ionicons name="chevron-forward" size={18} color="#bae6fd" />
       </Pressable>
+
+      {/* Konu Performansım — ders/konu bazlı çözülen test + doğru/yanlış */}
+      {onOpenTopics ? (
+        <Pressable
+          onPress={onOpenTopics}
+          className="flex-row items-center justify-between rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4 active:bg-indigo-100"
+        >
+          <View className="flex-row items-center gap-3">
+            <Ionicons name="locate-outline" size={22} color="#4f46e5" />
+            <View>
+              <Text className="text-[15px] font-semibold text-indigo-800">Konu Performansım</Text>
+              <Text className="mt-0.5 text-xs text-indigo-700">Hangi konuda ne kadar doğru</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#4f46e5" />
+        </Pressable>
+      ) : null}
 
       {/* Çalışma DNA */}
       <Section icon="pulse-outline" title="Çalışma DNA'm">

@@ -52,12 +52,14 @@ function GorevCard({ title, g }: { title: string; g: GorevBreakdown }) {
 export function StudentDetailView({
   data,
   onOpenDev,
+  onOpenTopics,
   onSendWa,
   onToggleActive,
   togglingActive = false,
 }: {
   data: TeacherStudentDetail;
   onOpenDev?: () => void;
+  onOpenTopics?: () => void;
   onSendWa?: () => void;
   onToggleActive?: () => void;
   togglingActive?: boolean;
@@ -125,6 +127,23 @@ export function StudentDetailView({
             </View>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#0e7490" />
+        </Pressable>
+      ) : null}
+
+      {/* Konu Performansı — ders/konu bazlı çözülen test + doğru/yanlış */}
+      {onOpenTopics ? (
+        <Pressable
+          onPress={onOpenTopics}
+          className="flex-row items-center justify-between rounded-2xl border border-indigo-200 bg-indigo-50 px-5 py-4 active:bg-indigo-100"
+        >
+          <View className="flex-1 flex-row items-center gap-3">
+            <Ionicons name="locate-outline" size={22} color="#4f46e5" />
+            <View className="flex-1">
+              <Text className="text-[15px] font-semibold text-indigo-800">Konu Performansı</Text>
+              <Text className="mt-0.5 text-xs text-indigo-700">Derslerin konularında çözülen test + doğru/yanlış</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#4f46e5" />
         </Pressable>
       ) : null}
 

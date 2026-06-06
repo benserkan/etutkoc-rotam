@@ -118,6 +118,7 @@ export default function TeacherStudentRoute() {
         <StudentDetailView
           data={q.data}
           onOpenDev={() => router.push({ pathname: "/teacher-student-dev", params: { id: String(studentId) } })}
+          onOpenTopics={() => router.push({ pathname: "/topic-performance", params: { source: "teacher", id: String(studentId) } })}
           onSendWa={() => setWaOpen(true)}
           onToggleActive={toggleActive}
           togglingActive={toggling}

@@ -50,6 +50,7 @@ export default function ParentChildRoute() {
           data={q.data}
           onOpenWeek={() => router.push({ pathname: "/parent-child-week", params: { id: String(childId) } })}
           onOpenReport={() => router.push({ pathname: "/parent-child-report", params: { id: String(childId) } })}
+          onOpenTopics={() => router.push({ pathname: "/topic-performance", params: { source: "parent", id: String(childId) } })}
         />
       )}
     </SafeAreaView>

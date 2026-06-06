@@ -49,6 +49,7 @@ export default function StudentGelisimScreen() {
           review={review.data!}
           goals={goals.data!}
           onOpenBooks={() => router.push("/student-books")}
+          onOpenTopics={() => router.push({ pathname: "/topic-performance", params: { source: "student" } })}
           onOpenFocus={() => router.push("/student-focus")}
           onOpenReview={() => router.push("/student-review")}
           onOpenGoals={() => router.push("/student-goals")}

@@ -30,10 +30,12 @@ export function ParentChildDetailView({
   data,
   onOpenWeek,
   onOpenReport,
+  onOpenTopics,
 }: {
   data: ParentStudentOverview;
   onOpenWeek?: () => void;
   onOpenReport?: () => void;
+  onOpenTopics?: () => void;
 }) {
   const w = WARN[data.warning_level];
   const grade =
@@ -83,6 +85,22 @@ export function ParentChildDetailView({
           </Pressable>
         ) : null}
       </View>
+
+      {onOpenTopics ? (
+        <Pressable
+          onPress={onOpenTopics}
+          className="flex-row items-center justify-between rounded-2xl border border-indigo-200 bg-indigo-50 px-4 py-4 active:bg-indigo-100"
+        >
+          <View className="flex-row items-center gap-2.5">
+            <Ionicons name="locate-outline" size={20} color="#4f46e5" />
+            <View>
+              <Text className="text-[14px] font-semibold text-indigo-800">Konu Performansı</Text>
+              <Text className="text-[11px] text-indigo-700">Ders/konu bazlı çözülen test + doğru/yanlış</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#4f46e5" />
+        </Pressable>
+      ) : null}
 
       {/* Projeksiyon */}
       {proj && proj.total_tests > 0 ? (
