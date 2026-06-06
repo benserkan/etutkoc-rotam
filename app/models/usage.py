@@ -53,6 +53,7 @@ class UsageKind(str, enum.Enum):
     AI_SESSION_VOICE = "ai_session_voice"   # (eski) sesli yapılandırma — yerini AI_TRANSCRIBE aldı
     AI_TRANSCRIBE = "ai_transcribe"         # Gemini — alan dikte (saf ses→metin, KS3b)
     AI_COACHING_INSIGHT = "ai_coaching_insight"  # Gemini — seans geçmişi → koçluk içgörüsü (KS4)
+    AI_PARENT_INSIGHT = "ai_parent_insight"  # Gemini — konu perf + deneme → veli içgörüsü (P2b)
     EMAIL_SEND = "email_send"               # SMTP/SendGrid e-posta
     WHATSAPP_SEND = "whatsapp_send"         # Meta Cloud API mesaj
     OTHER = "other"
@@ -65,6 +66,7 @@ USAGE_KIND_LABELS_TR: dict[UsageKind, str] = {
     UsageKind.AI_SESSION_VOICE: "AI Seans Yakalama (Ses)",
     UsageKind.AI_TRANSCRIBE: "AI Sesli Dikte",
     UsageKind.AI_COACHING_INSIGHT: "AI Koçluk İçgörüsü",
+    UsageKind.AI_PARENT_INSIGHT: "AI Veli İçgörüsü",
     UsageKind.EMAIL_SEND: "E-posta",
     UsageKind.WHATSAPP_SEND: "WhatsApp Mesajı",
     UsageKind.OTHER: "Diğer",

@@ -173,3 +173,42 @@ class CoachingInsight(Base):
 
     def __repr__(self) -> str:
         return f"<CoachingInsight s={self.student_id} stale={self.is_stale}>"
+
+
+class ParentInsight(Base):
+    """AI veli içgörüsü cache (P2b) — öğrenci başına TEK güncel kayıt.
+
+    Veli "çocuğum için analiz oluştur" der → Gemini ücretli key ile konu
+    performansı + deneme sonuçlarından VELİYE yönelik anlaşılır bir analiz üretir
+    (koça-özel seans notları KULLANILMAZ — gizlilik). Kredi öğrencinin KOÇUNUN
+    havuzundan düşer. Bayatlık HESAPLANIR: kayıt edildiğindeki deneme sayısı +
+    çözülen test toplamı bugünkünden farklıysa "güncel değil" işaretlenir (AI
+    çağrısı yok). Sonraki görüntülemeler DB'den okunur (ücretsiz).
+    """
+    __tablename__ = "parent_insights"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    student_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True, index=True
+    )
+    generated_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+
+    summary: Mapped[str] = mapped_column(Text, nullable=False, server_default="")
+    strengths: Mapped[str | None] = mapped_column(Text, nullable=True)       # JSON list
+    focus_areas: Mapped[str | None] = mapped_column(Text, nullable=True)     # JSON list
+    parent_tips: Mapped[str | None] = mapped_column(Text, nullable=True)     # JSON list
+    based_on_exams: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+    based_on_solved: Mapped[int] = mapped_column(Integer, nullable=False, server_default="0")
+
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), onupdate=func.now(),
+        nullable=False,
+    )
+
+    def __repr__(self) -> str:
+        return f"<ParentInsight s={self.student_id}>"

@@ -241,6 +241,248 @@ def parent_student_topic_performance_v2(
     return build_topic_performance_response(compute_topic_performance(db, student.id))
 
 
+@router.get("/students/{student_id}/exams")
+def parent_student_exams_v2(
+    student_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veliye: çocuğun TÜM deneme geçmişi (özet + liste).
+
+    Denemeler veliyle PAYLAŞILIR (2026-06-01 kararı). Koça-özel deneme notu (note)
+    gizlenir. Gizlilik: assert_parent_can_view → 404.
+    """
+    try:
+        student = assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "student_not_found",
+                    "message": "Öğrenci bulunamadı."},
+        )
+    from app.models.exam_result import ExamResult
+    from app.routes.api_v2.teacher import _build_exam_row, _exam_section_options
+    from app.routes.api_v2.schemas.teacher import (
+        ExamListSummary, StudentExamListResponse,
+    )
+    exams = (
+        db.query(ExamResult)
+        .filter(ExamResult.student_id == student.id)
+        .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc())
+        .all()
+    )
+    rows = []
+    for e in exams:
+        r = _build_exam_row(e, created_by_name=None)
+        r.note = None  # koça-özel not veliye gösterilmez
+        rows.append(r)
+    nets = [e.net for e in exams]
+    count = len(nets)
+    last_net = nets[0] if nets else None
+    first_net = nets[-1] if nets else None
+    summary = ExamListSummary(
+        count=count,
+        avg_net=round(sum(nets) / count, 2) if count else 0.0,
+        best_net=round(max(nets), 2) if nets else 0.0,
+        last_net=last_net,
+        first_net=first_net,
+        trend_delta=round(last_net - first_net, 2) if (count >= 2) else None,
+    )
+    return StudentExamListResponse(
+        summary=summary, rows=rows, section_options=_exam_section_options(),
+    )
+
+
+# ---------------------------------------------------------------------------
+# P2b — AI veli içgörüsü (konu performansı + deneme → veliye analiz)
+# Kredi öğrencinin KOÇUNUN havuzundan düşer; cache ile tekrar okuma ücretsiz.
+# ---------------------------------------------------------------------------
+
+import json as _json  # noqa: E402
+
+
+def _parent_insight_gate(db: Session, student: User):
+    """Veli içgörüsü için (coach, ai_available, reason) döndür.
+
+    Üretim öğrencinin koçunun ücretli paketi + AI onayı + kredisini kullanır.
+    """
+    from app.services.plans import ai_premium_allowed
+    coach = db.get(User, student.teacher_id) if student.teacher_id else None
+    if coach is None:
+        return None, False, "Bu öğrencinin bağlı bir koçu yok; analiz oluşturulamıyor."
+    if not ai_premium_allowed(db, coach):
+        return coach, False, "Yapay zekâ analizi koçun paketinde aktif değil."
+    if coach.ai_capture_consent_at is None:
+        return coach, False, "Koç henüz yapay zekâ onayını vermemiş; analiz oluşturulamıyor."
+    return coach, True, None
+
+
+def _current_solved_and_exams(db: Session, student: User) -> tuple[int, int]:
+    """(çözülen test toplamı, deneme sayısı) — bayatlık hesabı için."""
+    from app.services.topic_performance import compute_topic_performance
+    from app.models.exam_result import ExamResult
+    subjects = compute_topic_performance(db, student.id)
+    solved = sum(s.tests_solved for s in subjects)
+    exam_count = db.query(ExamResult).filter(ExamResult.student_id == student.id).count()
+    return solved, exam_count
+
+
+def _parent_insight_to_data(row):
+    from app.routes.api_v2.schemas.parent import ParentInsightData
+    def _lst(s):
+        if not s:
+            return []
+        try:
+            v = _json.loads(s)
+            return [str(x) for x in v] if isinstance(v, list) else []
+        except (ValueError, TypeError):
+            return []
+    return ParentInsightData(
+        summary=row.summary or "",
+        strengths=_lst(row.strengths),
+        focus_areas=_lst(row.focus_areas),
+        parent_tips=_lst(row.parent_tips),
+        based_on_exams=row.based_on_exams,
+        based_on_solved=row.based_on_solved,
+        generated_at=row.generated_at,
+    )
+
+
+@router.get("/students/{student_id}/insight")
+def parent_student_insight_get_v2(
+    student_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veli AI içgörüsü — cache'den OKU (ücretsiz). Yoksa insight=null.
+
+    is_stale: kayıt sonrası yeni deneme/çözülen test eklendiyse True (yenile önerilir).
+    ai_available: koç paketi + onayı uygun mu (üret butonu için).
+    """
+    from app.models.coaching_session import ParentInsight
+    from app.routes.api_v2.schemas.parent import ParentInsightResponse
+    try:
+        student = assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "student_not_found", "message": "Öğrenci bulunamadı."})
+
+    _coach, ai_available, reason = _parent_insight_gate(db, student)
+    row = db.query(ParentInsight).filter(ParentInsight.student_id == student.id).first()
+    if row is None:
+        return ParentInsightResponse(insight=None, is_stale=False, ai_available=ai_available, unavailable_reason=reason)
+    solved, exam_count = _current_solved_and_exams(db, student)
+    is_stale = (solved != row.based_on_solved) or (exam_count != row.based_on_exams)
+    return ParentInsightResponse(
+        insight=_parent_insight_to_data(row), is_stale=is_stale,
+        ai_available=ai_available, unavailable_reason=reason,
+    )
+
+
+@router.post("/students/{student_id}/insight")
+def parent_student_insight_generate_v2(
+    student_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veli AI içgörüsü ÜRET/YENİLE — koçun kredisinden düşer.
+
+    Konu performansı + deneme sonuçlarından veliye yönelik analiz. Yeterli veri
+    yoksa 422. Koç paketi/onayı uygun değilse 403/402.
+    """
+    from app.models.coaching_session import ParentInsight
+    from app.models.exam_result import ExamResult
+    from app.models import UsageKind
+    from app.routes.api_v2.schemas.parent import ParentInsightResponse
+    from app.services.topic_performance import compute_topic_performance
+    from app.services.ai_parent_insight import generate_parent_insight
+    from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
+    from app.services.credits import CreditBlocked, CreditOwner, consume_credits
+
+    try:
+        student = assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "student_not_found", "message": "Öğrenci bulunamadı."})
+
+    coach, ai_available, reason = _parent_insight_gate(db, student)
+    if not ai_available:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_not_available",
+            "message": reason or "Yapay zekâ analizi şu an kullanılamıyor."})
+
+    subjects = compute_topic_performance(db, student.id)
+    exams = (
+        db.query(ExamResult).filter(ExamResult.student_id == student.id)
+        .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc()).limit(8).all()
+    )
+    if not subjects and not exams:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "not_enough_data",
+            "message": "Analiz için yeterli veri yok. Çocuk test çözüp doğru/yanlış girdikçe veya deneme sonucu eklendikçe oluşturulabilir."})
+
+    # Prompt verisi (zorlandığı/iyi konular)
+    subj_payload: list[dict] = []
+    for s in subjects:
+        weak = [{"name": t.topic_name, "accuracy_pct": t.accuracy_pct}
+                for t in s.topics if t.accuracy_pct is not None and t.accuracy_pct < 50][:3]
+        strong = [{"name": t.topic_name, "accuracy_pct": t.accuracy_pct}
+                  for t in s.topics if t.accuracy_pct is not None and t.accuracy_pct >= 70][:2]
+        subj_payload.append({
+            "subject_name": s.subject_name, "accuracy_pct": s.accuracy_pct,
+            "tests_solved": s.tests_solved, "weak_topics": weak, "strong_topics": strong,
+        })
+    from app.models import EXAM_SECTION_LABELS
+    exam_payload = [
+        {"exam_date": e.exam_date.isoformat(),
+         "section_label": EXAM_SECTION_LABELS.get(e.section, str(e.section)), "net": e.net}
+        for e in exams
+    ]
+    solved = sum(s.tests_solved for s in subjects)
+
+    owner = CreditOwner.for_user(coach)
+    insight: dict | None = None
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_PARENT_INSIGHT,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            insight = generate_parent_insight(student.full_name, subj_payload, exam_payload)
+            ctx.set_metadata({"student_id": student_id, "by": "parent"})
+    except CreditBlocked:
+        db.rollback()
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Koçun yapay zekâ kredisi bu ay için doldu. Daha sonra tekrar deneyin."})
+    except AIInvalidResponse:
+        db.rollback()
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "insight_unreadable",
+            "message": "Analiz oluşturulamadı, lütfen tekrar deneyin."})
+    except AIServiceUnavailable:
+        db.rollback()
+        raise HTTPException(status_code=502, detail={
+            "error": "upstream_unavailable", "code": "ai_unavailable",
+            "message": "Yapay zekâ servisi şu an kullanılamıyor, birkaç dakika sonra deneyin."})
+
+    row = db.query(ParentInsight).filter(ParentInsight.student_id == student.id).first()
+    if row is None:
+        row = ParentInsight(student_id=student.id)
+        db.add(row)
+    row.generated_by_id = user.id
+    row.summary = insight["summary"]
+    row.strengths = _json.dumps(insight["strengths"], ensure_ascii=False)
+    row.focus_areas = _json.dumps(insight["focus_areas"], ensure_ascii=False)
+    row.parent_tips = _json.dumps(insight["parent_tips"], ensure_ascii=False)
+    row.based_on_exams = len(exams)
+    row.based_on_solved = solved
+    db.commit()
+    db.refresh(row)
+    return ParentInsightResponse(
+        insight=_parent_insight_to_data(row), is_stale=False, ai_available=True, unavailable_reason=None,
+    )
+
+
 @router.get(
     "/students/{student_id}/week",
     response_model=ParentWeekResponse,

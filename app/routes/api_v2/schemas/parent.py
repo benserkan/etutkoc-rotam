@@ -1,10 +1,11 @@
 """API v2 — Veli (PARENT) şemaları (Dalga 5 Paket 1).
 
-GİZLİLİK NOTU:
-Veli sadece görev tamamlama metrikleri, ders bazlı ilerleme, istikrar,
-projeksiyon ve "veliye iletilebilir" işaretli öğretmen notlarını görür.
-ASLA paylaşılmayanlar: deneme net sayıları, konu bazında doğru/yanlış,
-öğrenci-öğretmen mesajları, AI iç işleyiş.
+GİZLİLİK NOTU (güncel — 2026-06-01 + P1/P2):
+Veli görev tamamlama metrikleri, ders bazlı ilerleme, istikrar, projeksiyon,
+"veliye iletilebilir" öğretmen notları, DENEME sonuçları (net) ve KONU bazında
+test/doğru-yanlış performansını görür (kullanıcı kararı — şeffaflık).
+ASLA paylaşılmayanlar: koça-özel deneme/seans notları, öğrenci-öğretmen özel
+mesajları, koçluk AI iç işleyişi (koçluk içgörüsü).
 
 Bu şemalar Jinja `app/services/parent_view.py`'deki dict çıktılarıyla
 BİREBİR aynı — sadece JSON serialization için Pydantic'e sarılmış.
@@ -582,3 +583,25 @@ class ParentSessionsResponse(BaseModel):
     student_name: str
     sessions: list[ParentSessionItem]
     billing: ParentBillingSummary
+
+
+# =============================================================================
+# P2b — AI veli içgörüsü (konu performansı + deneme → veliye analiz)
+# =============================================================================
+
+
+class ParentInsightData(BaseModel):
+    summary: str
+    strengths: list[str] = []
+    focus_areas: list[str] = []
+    parent_tips: list[str] = []
+    based_on_exams: int = 0
+    based_on_solved: int = 0
+    generated_at: datetime
+
+
+class ParentInsightResponse(BaseModel):
+    insight: ParentInsightData | None = None
+    is_stale: bool = False
+    ai_available: bool = False          # koç ücretli paket + onay → üretilebilir
+    unavailable_reason: str | None = None  # üretilemiyorsa veliye gösterilecek mesaj

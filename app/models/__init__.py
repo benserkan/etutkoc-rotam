@@ -216,6 +216,7 @@ from app.models.coaching_session import (
     CoachingInsight,
     CoachingSession,
     CoachingSessionStatus,
+    ParentInsight,
     SessionCaptureSource,
 )
 from app.models.weekly_program import WeeklyProgram
@@ -441,6 +442,7 @@ __all__ = [
     "COACHING_STATUS_LABELS",
     "CoachingChannel",
     "CoachingInsight",
+    "ParentInsight",
     "CoachingSession",
     "CoachingSessionStatus",
     "AppSetting",
