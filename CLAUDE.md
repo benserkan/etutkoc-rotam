@@ -37,18 +37,35 @@ canlı deploy (web + Android/iOS build) + push** istendi. Migration head =
   yeterli veri yok 422. `ParentInsight` modeli (öğrenci başına tek). Web+mobil veli
   "Denemeler & Analiz" ekranı (içgörü oluştur/yenile + deneme geçmişi).
 
-**SIRADA (P3-P4 + deploy):**
-- **P3** — Veli↔koç çift yönlü talep (mobil; backend YENİ — support audience'da PARENT
-  yok, kurulacak) + "koça deneme yorum talebi" (bu sisteme bağlanır) + öğrenci görev-
-  değiştir/çıkar talebi (mobil — TaskRequest zaten var, mobil UI eksik).
-- **P4** — Kurum: (a) Müdahale "her şey yolunda" yanlış (3-gün programsız öğrenci
-  yansımalı — action_center) · (b) risk panelinde "koça ilet" GEÇMİŞİ (X tarihinde
-  iletildi; web+mobil) · (c) aktivite heatmap okunabilirlik (hangi gün belirsiz) ·
-  (d) haftalık özet grafiklerle zenginleştir (web+mobil) · (e) kurum abonelik/yükseltme
-  mobilden.
-- **SON** — kapsamlı test (run_gorev_checks + tüm smoke) + **canlı deploy** (web+worker+
-  next rebuild — P2 backend canlıya; migration `f9g2j5k6j33a` prod'da `upgrade head`) +
-  **mobil EAS build** (Android+iOS; expo-audio + tüm düzeltmeler) + push.
+- **P3 — Veli↔koç çift yönlü talep + öğrenci görev-talebi** ✅ (backend+web+mobil):
+  P3a `parent_request_to_coach` (veli→çocuğun koçu, audience=teacher; mevcut koç
+  inbox + thread reuse; exam_comment/progress_question kategori). POST /parent/
+  students/{id}/coach-request. Veli /support gate'ine PARENT. `test_api_v2_parent_
+  coach_request.py` 9/9. Web: /parent/support (SupportCenter mine + çocuk-seçimli
+  create + exam ekranından "koça sor"). Mobil: parent/support tab + create dialog.
+  P3b — öğrenci görev-değiştir/çıkar talebi MOBİLDE ZATEN VARDI (task-sheet "Koça
+  ilet": Soru/Sayı değiştir/Görevi kaldır).
+- **P4 — Kurum** ✅ (backend+web+mobil):
+  - P4a Müdahale "programı var ama 3 gün yapmıyor" artık görünür (action_center
+    4. sinyal inactive_program — consecutive_empty medium). simulate 11/11.
+  - P4b risk/tükenmişlik "Koça ilet" GEÇMİŞİ (GET /institution/coach-interventions,
+    subject'ten ad parse, ad-bazlı eşleşme; web+mobil InterventionBadge).
+    notify_coach 15/15.
+  - P4c aktivite heatmap okunabilirlik (hafta-ayrımı + tarih ekseni; mobilde
+    kareye dokun→tarih).
+  - P4d haftalık özet grafikleri (web Recharts + mobil CSS bar).
+  - P4e kurum abonelik mobilden (yükseltme talebi zaten vardı + akademik yıl/
+    duraklat/devam/garanti aksiyonları eklendi).
+
+**Test (hepsi GREEN):** topic_performance 14 + parent_insight 11 + parent_coach_
+request 9 + notify_coach 15 + action_center 8 + simulate 11 + institution/p2/p3 +
+parent + support 54 + tenant + gorev_stats 27 + card_consistency 23 + projection 10.
+(itemless_solved_count 0/0 = önceden-var-olan ilgisiz test bug'ı, CLAUDE.md notu.)
+
+**Deploy (2026-06-06):** tüm commit'ler origin'e push (HEAD a424271). Canlı:
+git pull + DB yedek + web/worker/next rebuild (migration f9g2j5k6j33a start.sh
+`upgrade head` ile uygulanır). **Mobil EAS build** (Android+iOS; expo-audio + tüm
+P1-P4 + koç fixleri) BEKLİYOR — ayrı adım.
 
 ---
 
