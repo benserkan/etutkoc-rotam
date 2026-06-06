@@ -64,13 +64,17 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 
 | Özellik | Web | Mobil | Not |
 |---|:--:|:--:|---|
-| Panel (KPI + koç performansı) | ✅ | ✅ | orana göre renk |
+| Panel (KPI + koç performansı) | ✅ | ✅ | orana göre renk; koç satırı → detay |
+| Koç detayı (öğrenci listesi + 7g planlanan/çözülen) | ✅ | ✅ | gizlilik banner |
 | Müdahale Merkezi | ✅ | ✅ | severity kartları |
-| Talepler (gelen + kendi) | ✅ | ✅ | |
-| Program uyumu / akademik / karne / veli güveni | ✅ | ⬜ | web (analiz derinliği) |
-| Risk / tükenmişlik / kohort / ısı haritası | ✅ | ⬜ | web |
-| Öğretmen CRUD / davet / koça-ilet | ✅ | ⬜ | web |
-| Abonelik / kuota / kullanım | ✅ | ⬜ | web |
+| Talepler (gelen + kendi) | ✅ | ✅ | öğretmen + süper admin |
+| Öğretmen daveti (oluştur/link paylaş/iptal) | ✅ | ✅ | Analiz hub → Kişiler |
+| Program uyumu / akademik / karne / hedef / veli güveni | ✅ | ✅ | Analiz hub |
+| Risk / tükenmişlik / kohort / ısı haritası | ✅ | ✅ | Analiz hub; risk+tükenmişlik "Koça ilet" |
+| Haftalık özet (arşiv + detay + şimdi gönder) | ✅ | ✅ | Analiz hub |
+| Abonelik / kuota / kullanım | ✅ | ✅ | Analiz hub → Üyelik |
+| Aktivite akışı (kim katıldı/yükseltti) | ✅ | ✅ | Analiz hub → Genel |
+| Öğretmen CRUD (pasife al/sil/rol) | ✅ | ⬜ | web (yönetim derinliği) |
 
 ## Süper Admin
 

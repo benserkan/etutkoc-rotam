@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -22,7 +23,12 @@ export default function InstitutionDashboardScreen() {
           </Pressable>
         </View>
       ) : (
-        <InstitutionDashboardView data={q.data} refreshing={q.isRefetching} onRefresh={() => q.refetch()} />
+        <InstitutionDashboardView
+          data={q.data}
+          refreshing={q.isRefetching}
+          onRefresh={() => q.refetch()}
+          onOpenTeacher={(id) => router.push({ pathname: "/institution-teacher", params: { id: String(id) } })}
+        />
       )}
     </SafeAreaView>
   );

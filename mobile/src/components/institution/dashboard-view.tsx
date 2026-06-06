@@ -1,4 +1,5 @@
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { Ionicons } from "@expo/vector-icons";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 
 import type { InstitutionDashboardResponse, TeacherSummaryItem } from "@/lib/institution";
 import { cn } from "@/lib/utils";
@@ -20,33 +21,37 @@ function Kpi({ label, value, sub, tone = "text-slate-900" }: { label: string; va
   );
 }
 
-function TeacherRow({ t }: { t: TeacherSummaryItem }) {
+function TeacherRow({ t, onPress }: { t: TeacherSummaryItem; onPress?: () => void }) {
   const tone = rateTone(t.weekly_rate_pct);
   const muted = !t.is_active || t.is_paused;
   return (
-    <View
+    <Pressable
+      onPress={onPress}
       className={cn(
-        "rounded-xl border border-l-4 border-slate-200 bg-white p-3",
+        "flex-row items-center gap-2 rounded-xl border border-l-4 border-slate-200 bg-white p-3 active:bg-slate-50",
         muted ? "border-l-slate-200 opacity-60" : tone.row,
       )}
     >
-      <View className="flex-row items-center justify-between gap-2">
-        <Text className="flex-1 text-[15px] font-semibold text-slate-900" numberOfLines={1}>
-          {t.full_name}
-        </Text>
-        {muted ? (
-          <Text className="text-[11px] font-semibold text-slate-400">{t.is_paused ? "Duraklatıldı" : "Pasif"}</Text>
-        ) : (
-          <Text className={cn("text-base font-extrabold", tone.text)}>
-            {t.weekly_rate_pct != null ? `%${t.weekly_rate_pct}` : "—"}
+      <View className="flex-1">
+        <View className="flex-row items-center justify-between gap-2">
+          <Text className="flex-1 text-[15px] font-semibold text-slate-900" numberOfLines={1}>
+            {t.full_name}
           </Text>
-        )}
+          {muted ? (
+            <Text className="text-[11px] font-semibold text-slate-400">{t.is_paused ? "Duraklatıldı" : "Pasif"}</Text>
+          ) : (
+            <Text className={cn("text-base font-extrabold", tone.text)}>
+              {t.weekly_rate_pct != null ? `%${t.weekly_rate_pct}` : "—"}
+            </Text>
+          )}
+        </View>
+        <Text className="mt-0.5 text-xs text-slate-400">
+          {t.student_count} öğrenci · {t.weekly_completed}/{t.weekly_planned} görev
+          {t.last_login_days != null ? ` · ${t.last_login_days === 0 ? "bugün" : `${t.last_login_days}g önce`} giriş` : ""}
+        </Text>
       </View>
-      <Text className="mt-0.5 text-xs text-slate-400">
-        {t.student_count} öğrenci · {t.weekly_completed}/{t.weekly_planned} görev
-        {t.last_login_days != null ? ` · ${t.last_login_days === 0 ? "bugün" : `${t.last_login_days}g önce`} giriş` : ""}
-      </Text>
-    </View>
+      <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+    </Pressable>
   );
 }
 
@@ -54,10 +59,12 @@ export function InstitutionDashboardView({
   data,
   refreshing = false,
   onRefresh,
+  onOpenTeacher,
 }: {
   data: InstitutionDashboardResponse;
   refreshing?: boolean;
   onRefresh?: () => void;
+  onOpenTeacher?: (id: number) => void;
 }) {
   const a = data.aggregate;
   return (
@@ -107,7 +114,7 @@ export function InstitutionDashboardView({
         ) : (
           <View className="gap-2">
             {data.teacher_summaries.map((t) => (
-              <TeacherRow key={t.id} t={t} />
+              <TeacherRow key={t.id} t={t} onPress={onOpenTeacher ? () => onOpenTeacher(t.id) : undefined} />
             ))}
           </View>
         )}

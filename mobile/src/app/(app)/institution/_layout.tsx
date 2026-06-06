@@ -1,7 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 
-/** Kurum yöneticisi alt-sekme kabuğu: Panel · Müdahale · Destek · Profil. */
+/** Kurum yöneticisi alt-sekme kabuğu: Panel · Müdahale · Analiz · Talepler · Profil. */
 export default function InstitutionTabsLayout() {
   return (
     <Tabs
@@ -25,6 +25,13 @@ export default function InstitutionTabsLayout() {
         options={{
           title: "Müdahale",
           tabBarIcon: ({ color, size }) => <Ionicons name="alert-circle-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="analiz"
+        options={{
+          title: "Analiz",
+          tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
