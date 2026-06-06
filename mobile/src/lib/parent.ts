@@ -223,3 +223,11 @@ export function getParentInsight(id: number): Promise<ParentInsightResponse> {
 export function generateParentInsight(id: number): Promise<ParentInsightResponse> {
   return apiRequest<ParentInsightResponse>(`/api/v2/parent/students/${id}/insight`, { method: "POST" });
 }
+
+// ---- P3: Veli → koç talebi ----
+export function createParentCoachRequest(
+  studentId: number,
+  body: { category: string; subject: string; body: string },
+): Promise<{ data: { id: number } }> {
+  return apiRequest(`/api/v2/parent/students/${studentId}/coach-request`, { method: "POST", body });
+}

@@ -96,6 +96,7 @@ export function SupportListView({
   createBusy,
   onCreate,
   onOpen,
+  canCreate = true,
 }: {
   view: "mine" | "inbox";
   onChangeView: (v: "mine" | "inbox") => void;
@@ -104,6 +105,8 @@ export function SupportListView({
   createBusy: boolean;
   onCreate: (body: { category: string; subject: string; body: string }) => void;
   onOpen: (id: number) => void;
+  /** Yerleşik "Yeni talep" formu (generic). Veli gibi özel-bağlamlı create için false. */
+  canCreate?: boolean;
 }) {
   const [sheet, setSheet] = React.useState(false);
 
@@ -128,7 +131,7 @@ export function SupportListView({
         </View>
       ) : null}
 
-      {view === "mine" ? (
+      {view === "mine" && canCreate ? (
         <Pressable
           onPress={() => setSheet(true)}
           className="flex-row items-center justify-center gap-2 rounded-2xl border border-brand-200 bg-brand-50 py-3.5 active:bg-brand-100"
