@@ -1,0 +1,8 @@
+# EAS Build arşivinden çıkar (yedek — arşiv kökü mobile/ ise de geçerli).
+# node_modules EAS bulutta install edilir; .expo/dist/screenshot'lar gereksiz.
+node_modules
+.expo
+dist
+*-shot.png
+exams-shot.png
+login-shot.png

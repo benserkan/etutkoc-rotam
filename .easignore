@@ -1,0 +1,31 @@
+# EAS Build arşivi — bu monorepo'dan YALNIZ mobil (mobile/) derlenir.
+# Backend (app/web/.venv) + tüm node_modules + cache'ler arşive girmesin.
+# Bu dosya YALNIZ EAS Build'i etkiler — sunucu deploy'u (git pull) etkilenmez.
+
+# Tüm bağımlılıklar — EAS bulutta kendi install eder (yerel gerekmez)
+**/node_modules
+
+# Backend + web (mobil RN build için gereksiz)
+/app
+/web
+/scripts
+/alembic
+/deploy
+/memory
+/tests
+/.venv
+/.github
+/.claude
+/.pytest_cache
+**/__pycache__
+
+# Build cache / çıktıları
+**/.next
+**/.expo
+**/dist
+
+# Büyük/gereksiz dosyalar
+*.dump
+*.sqlite
+*.db
+ETUTKOC_Rotam_Sistem_Ozellikleri.pdf
