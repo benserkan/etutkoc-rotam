@@ -557,8 +557,16 @@ def hit_rate(
 # ---------------------------- Ders bazında ----------------------------
 
 
-def subject_breakdown(db: Session, student_id: int) -> list[dict]:
-    """Her ders için toplam/çözüldü/rezerv ve tamamlanma yüzdesi."""
+def subject_breakdown(
+    db: Session, student_id: int, tests_only: bool = False
+) -> list[dict]:
+    """Her ders için toplam/çözüldü/rezerv ve tamamlanma yüzdesi.
+
+    tests_only=True → DENEME kitapları (branş/genel deneme) HARİÇ; yalnız 'test'
+    (soru bankası/fasikül/konu anlatımlı) kitapları sayılır. Ders-bazlı 'test
+    çalışması' uyarıları (henüz başlanmadı / durgunluk) deneme atamasını test
+    saymasın diye — DENEME≠TEST standardı (bkz. gorev_stats).
+    """
     sbs = (
         db.query(StudentBook)
         .options(
@@ -571,6 +579,8 @@ def subject_breakdown(db: Session, student_id: int) -> list[dict]:
     )
     bucket: dict[int, dict] = {}
     for sb in sbs:
+        if tests_only and sb.book.type in gorev_stats.DENEME_BOOK_TYPES:
+            continue
         s = sb.book.subject
         b = bucket.setdefault(
             s.id,
@@ -590,16 +600,17 @@ def subject_breakdown(db: Session, student_id: int) -> list[dict]:
         b["reserved"] += sb.reserved_tests
         b["books"] += 1
     # Ders bazında "son tamamlama tarihi" — en son o derste tiklenmiş görev
-    last_per_subject_q = (
+    last_q = (
         db.query(Subject.id, func.max(Task.completed_at))
         .join(TaskBookItem, TaskBookItem.task_id == Task.id)
         .join(Book, Book.id == TaskBookItem.book_id)
         .join(Subject, Subject.id == Book.subject_id)
         .filter(Task.student_id == student_id)
         .filter(Task.completed_at.isnot(None))
-        .group_by(Subject.id)
-        .all()
     )
+    if tests_only:
+        last_q = last_q.filter(Book.type.notin_(gorev_stats.DENEME_BOOK_TYPES))
+    last_per_subject_q = last_q.group_by(Subject.id).all()
     for sid, last in last_per_subject_q:
         if sid in bucket:
             bucket[sid]["last_completed_at"] = last
@@ -762,6 +773,10 @@ def generate_warnings(
     # görevi olan ders "başlanmadı" damgalanmamalı: gelecek henüz gelmedi, BUGÜN
     # hâlâ sürüyor (zaten 'today_no_tick' kapsar). Bu yüzden yalnız GEÇMİŞ
     # (date < today) görevi olan ders kümesinde tetiklenir.
+    # DENEME≠TEST + taslak koruması: "henüz başlanmadı / durgunluk" yalnız TEST
+    # (soru bankası vb.) kitaplarına dayanır — bir DENEME atanması (branş/genel
+    # deneme) "test başlanmadı" saydırmaz. Ayrıca yalnız YAYINLANMIŞ (taslak değil)
+    # GEÇMİŞ test görevi "vadesi gelmiş" kabul edilir.
     from app.models import Task as _T, TaskBookItem as _TI, Book as _B
     due_subject_ids = {
         r[0] for r in (
@@ -771,17 +786,16 @@ def generate_warnings(
             .filter(
                 _T.student_id == student.id,
                 _T.date < today,
+                _T.is_draft.is_(False),
                 _B.subject_id.isnot(None),
+                _B.type.notin_(gorev_stats.DENEME_BOOK_TYPES),
             )
             .distinct()
             .all()
         )
     }
-    breakdown = subject_breakdown(db, student.id)
+    breakdown = subject_breakdown(db, student.id, tests_only=True)
     for s in breakdown:
-        if s["remaining"] > 0 and s["reserved"] > 0:
-            # Rezerv var ama tiklenmiyor
-            pass  # (checked below)
         if s["total"] > 0 and s["last_completed_at"]:
             last = _as_local_date(s["last_completed_at"])
             days_gap = (today - last).days if last else 999
@@ -794,11 +808,12 @@ def generate_warnings(
                 ))
         elif (
             s["total"] > 0
+            and s["completed"] == 0
             and s["last_completed_at"] is None
             and s["reserved"] > 0
             and s["subject_id"] in due_subject_ids
         ):
-            # Hiç çözülmemiş ama VADESİ GELMİŞ (date<=today) rezerv var
+            # Hiç çözülmemiş ama VADESİ GELMİŞ (yayınlanmış, geçmiş) TEST rezervi var
             out.append(Warning(
                 level="amber",
                 code=f"subject_untouched_{s['subject_id']}",
