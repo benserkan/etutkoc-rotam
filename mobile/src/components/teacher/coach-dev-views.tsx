@@ -61,14 +61,27 @@ export function CoachDnaView({ d }: { d: TeacherDnaResponse }) {
         ) : null}
       </View>
       {d.by_subject.length > 0 ? (
-        <View className="rounded-2xl border border-slate-200 bg-white p-4 gap-2">
-          <Text className="text-sm font-semibold text-slate-800"> Derslere göre</Text>
-          {d.by_subject.slice(0, 8).map((s) => (
-            <View key={s.subject_name} className="flex-row items-center justify-between">
-              <Text className="text-[13px] text-slate-700">{s.subject_name}</Text>
-              <Text className="text-xs font-semibold text-slate-500">%{Math.round(s.completion_rate * 100)}</Text>
-            </View>
-          ))}
+        <View className="rounded-2xl border border-slate-200 bg-white p-4 gap-2.5">
+          <View>
+            <Text className="text-sm font-semibold text-slate-800">Derslere göre tamamlama</Text>
+            <Text className="text-[11px] text-slate-400">Her derste verilen görevlerin ne kadarını bitirdi (yüzde). Düşük olan derse ağırlık ver.</Text>
+          </View>
+          {d.by_subject.slice(0, 10).map((s) => {
+            const pct = Math.round(s.completion_rate * 100);
+            const label = s.subject_name === "(diğer)" ? "Deneme / etkinlik (derssiz)" : s.subject_name;
+            const tone = pct >= 70 ? "text-emerald-600" : pct >= 40 ? "text-amber-600" : "text-rose-600";
+            return (
+              <View key={s.subject_name} className="gap-1">
+                <View className="flex-row items-center justify-between">
+                  <Text className="flex-1 text-[13px] text-slate-700" numberOfLines={1}>{label}</Text>
+                  <Text className={cn("text-xs font-semibold", tone)}>%{pct}</Text>
+                </View>
+                <View className="h-1.5 overflow-hidden rounded-full bg-slate-100">
+                  <View className={cn("h-full rounded-full", pct >= 70 ? "bg-emerald-500" : pct >= 40 ? "bg-amber-500" : "bg-rose-500")} style={{ width: `${Math.min(100, pct)}%` }} />
+                </View>
+              </View>
+            );
+          })}
         </View>
       ) : null}
     </View>

@@ -50,6 +50,12 @@
         {
           "color": "#0e7490"
         }
+      ],
+      [
+        "expo-audio",
+        {
+          "microphonePermission": "ETÜTKOÇ Rotam, koçluk seansı notlarını sesle yazabilmen (dikte) için mikrofona erişir. Ses kaydı saklanmaz; yalnız metne çevrilir."
+        }
       ]
     ],
     "experiments": {

@@ -1,12 +1,15 @@
 import * as React from "react";
 import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ActivityIndicator, Pressable, Text, TextInput, View } from "react-native";
+import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from "react-native";
 
+import { DictateButton } from "@/components/teacher/dictate-button";
 import { FormSheet } from "@/components/ui/form-sheet";
 import {
   createTeacherSession,
+  getTeacherAiConsent,
   getTeacherStudentSessions,
+  setTeacherAiConsent,
   teacherDetailKeys,
   type SessionCreateBody,
   type StudentSessionListResponse,
@@ -74,11 +77,20 @@ function Chips({
   );
 }
 
+function appendText(prev: string, added: string): string {
+  const p = prev.trim();
+  return p ? `${p} ${added}` : added;
+}
+
 function SessionForm({
+  studentId,
+  ensureConsent,
   busy,
   error,
   onSubmit,
 }: {
+  studentId: number;
+  ensureConsent: () => Promise<boolean>;
   busy: boolean;
   error: string | null;
   onSubmit: (body: SessionCreateBody) => void;
@@ -130,20 +142,26 @@ function SessionForm({
         />
       </View>
 
-      <View className="gap-1">
-        <Text className="text-xs font-medium text-slate-600">Gündem / konuşulanlar *</Text>
+      <View className="gap-1.5">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-xs font-medium text-slate-600">Gündem / konuşulanlar *</Text>
+          <DictateButton studentId={studentId} ensureConsent={ensureConsent} onText={(t) => setAgenda((p) => appendText(p, t))} />
+        </View>
         <TextInput
           value={agenda}
           onChangeText={setAgenda}
-          placeholder="Bu seansta neyi ele aldınız?"
+          placeholder="Bu seansta neyi ele aldınız? (yazabilir veya 'Dikte' ile sesli anlatabilirsin)"
           placeholderTextColor="#94a3b8"
           multiline
           className="min-h-[72px] rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900"
         />
       </View>
 
-      <View className="gap-1">
-        <Text className="text-xs font-medium text-slate-600">Koç notu (isteğe bağlı)</Text>
+      <View className="gap-1.5">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-xs font-medium text-slate-600">Koç notu (isteğe bağlı)</Text>
+          <DictateButton studentId={studentId} ensureConsent={ensureConsent} onText={(t) => setCoachNote((p) => appendText(p, t))} />
+        </View>
         <TextInput
           value={coachNote}
           onChangeText={setCoachNote}
@@ -154,8 +172,11 @@ function SessionForm({
         />
       </View>
 
-      <View className="gap-1">
-        <Text className="text-xs font-medium text-slate-600">Bir sonraki değişiklik (isteğe bağlı)</Text>
+      <View className="gap-1.5">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-xs font-medium text-slate-600">Bir sonraki değişiklik (isteğe bağlı)</Text>
+          <DictateButton studentId={studentId} ensureConsent={ensureConsent} onText={(t) => setNextChange((p) => appendText(p, t))} />
+        </View>
         <TextInput
           value={nextChange}
           onChangeText={setNextChange}
@@ -213,11 +234,15 @@ function SessionForm({
 }
 
 export function SessionsTabView({
+  studentId,
+  ensureConsent,
   data,
   addBusy,
   addError,
   onAdd,
 }: {
+  studentId: number;
+  ensureConsent: () => Promise<boolean>;
   data: StudentSessionListResponse;
   addBusy: boolean;
   addError: string | null;
@@ -292,6 +317,8 @@ export function SessionsTabView({
 
       <FormSheet visible={sheetOpen} title="Seans kaydet" onClose={() => setSheetOpen(false)}>
         <SessionForm
+          studentId={studentId}
+          ensureConsent={ensureConsent}
           busy={addBusy}
           error={addError}
           onSubmit={(body) => {
@@ -313,6 +340,43 @@ export function SessionsTab({ studentId }: { studentId: number }) {
     queryFn: () => getTeacherStudentSessions(studentId),
     enabled: studentId > 0,
   });
+
+  // Sesli dikte için rıza + ücretli paket kapısı (ilk dikte denemesinde çözülür).
+  const ensureConsent = React.useCallback(async (): Promise<boolean> => {
+    try {
+      const c = await qc.fetchQuery({ queryKey: ["teacher", "ai-consent"], queryFn: getTeacherAiConsent, staleTime: 60_000 });
+      if (!c.ai_premium) {
+        Alert.alert("Ücretli pakette", "Sesli dikte ücretli pakette açıktır. Profil → Paketim'den yükseltebilirsin.");
+        return false;
+      }
+      if (c.consented) return true;
+      return await new Promise<boolean>((resolve) => {
+        Alert.alert(
+          "Yapay zekâ onayı",
+          "Sesli dikte için sesin yapay zekâ ile metne çevrilir (yurt dışı işleyici dahil). Ses kaydı SAKLANMAZ; sonuç yalnız ilgili form alanına yazılır. Onaylıyor musun?",
+          [
+            { text: "Vazgeç", style: "cancel", onPress: () => resolve(false) },
+            {
+              text: "Onayla",
+              onPress: async () => {
+                try {
+                  await setTeacherAiConsent();
+                  await qc.invalidateQueries({ queryKey: ["teacher", "ai-consent"] });
+                  resolve(true);
+                } catch {
+                  Alert.alert("Hata", "Onay kaydedilemedi, tekrar dene.");
+                  resolve(false);
+                }
+              },
+            },
+          ],
+        );
+      });
+    } catch {
+      Alert.alert("Bağlanılamadı", "Lütfen tekrar dene.");
+      return false;
+    }
+  }, [qc]);
 
   const addMut = useMutation({
     mutationFn: (body: SessionCreateBody) => createTeacherSession(studentId, body),
@@ -343,6 +407,8 @@ export function SessionsTab({ studentId }: { studentId: number }) {
 
   return (
     <SessionsTabView
+      studentId={studentId}
+      ensureConsent={ensureConsent}
       data={q.data}
       addBusy={addMut.isPending}
       addError={addError}

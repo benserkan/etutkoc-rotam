@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ActivityIndicator,
@@ -90,7 +91,13 @@ export default function TeacherRequestsTab() {
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
       <View className="px-4 py-3">
         <Text className="text-xl font-bold text-slate-900">Talepler</Text>
-        <Text className="mt-0.5 text-xs text-slate-500">Öğrencilerinin program istekleri ve soruları.</Text>
+        <Text className="mt-0.5 text-xs text-slate-500">Öğrencilerinden GELEN program istekleri ve soruları. Buradan onayla, reddet veya yanıtla.</Text>
+        <View className="mt-2 flex-row items-start gap-1.5 rounded-lg bg-brand-50 px-3 py-2">
+          <Ionicons name="information-circle-outline" size={15} color="#0e7490" style={{ marginTop: 1 }} />
+          <Text className="flex-1 text-[11px] text-brand-800">
+            Sen bir talep oluşturmak istersen (kurum yöneticisi / süper yöneticiye) alttaki “Destek” sekmesini kullan.
+          </Text>
+        </View>
       </View>
 
       {/* Filtre */}

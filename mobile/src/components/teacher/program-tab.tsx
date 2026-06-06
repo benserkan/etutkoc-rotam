@@ -9,6 +9,7 @@ import {
   acceptTeacherSuggestion,
   createTeacherTask,
   deleteTeacherTask,
+  getTeacherStudentAllSubjects,
   getTeacherStudentBooks,
   getTeacherStudentWeek,
   rejectTeacherSuggestion,
@@ -33,6 +34,14 @@ export function ProgramTab({ studentId }: { studentId: number }) {
     queryKey: teacherMiscKeys.studentBooks(studentId),
     queryFn: () => getTeacherStudentBooks(studentId),
     enabled: addDate != null,
+  });
+
+  // Etkinlik görevleri için ders havuzu (müfredat-tam; kitap zorunlu değil).
+  const subjectsQ = useQuery({
+    queryKey: ["teacher", "student", studentId, "all-subjects"],
+    queryFn: () => getTeacherStudentAllSubjects(studentId),
+    enabled: addDate != null,
+    staleTime: 5 * 60_000,
   });
 
   function invalidateWeek() {
@@ -110,6 +119,7 @@ export function ProgramTab({ studentId }: { studentId: number }) {
         date={addDate}
         books={booksQ.data?.items ?? []}
         booksLoading={booksQ.isLoading}
+        subjects={subjectsQ.data?.items ?? []}
         busy={addMut.isPending}
         onClose={() => setAddDate(null)}
         onSubmit={(body) => addMut.mutate(body)}

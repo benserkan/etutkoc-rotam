@@ -91,6 +91,12 @@ export interface TeacherExamsResponse {
   rows: ExamRow[];
   section_options: ExamSectionOption[];
 }
+export interface ExamSubjectInput {
+  name: string;
+  correct: number;
+  wrong: number;
+  blank: number;
+}
 export interface TeacherExamCreateBody {
   title: string;
   exam_date: string;
@@ -98,6 +104,7 @@ export interface TeacherExamCreateBody {
   total_correct: number;
   total_wrong: number;
   total_blank: number;
+  subjects?: ExamSubjectInput[];
   note?: string | null;
 }
 export function getTeacherStudentExams(id: number): Promise<TeacherExamsResponse> {
@@ -347,6 +354,32 @@ export interface StudentBookListResponse {
 }
 export function getTeacherStudentBooks(id: number): Promise<StudentBookListResponse> {
   return apiRequest<StudentBookListResponse>(`/api/v2/teacher/students/${id}/books`);
+}
+
+// Müfredat-tam ders havuzu (etkinlik görevleri için — kitap zorunlu değil).
+export interface SubjectBrief {
+  id: number;
+  name: string;
+}
+export interface AllSubjectsResponse {
+  items: SubjectBrief[];
+}
+export function getTeacherStudentAllSubjects(id: number): Promise<AllSubjectsResponse> {
+  return apiRequest<AllSubjectsResponse>(`/api/v2/teacher/students/${id}/all-subjects`);
+}
+
+// Sesli dikte → düz metin (alan doldurma). Ses saklanmaz; rıza + kredi gerekir.
+export interface TranscribeResponse {
+  text: string;
+}
+export function transcribeSession(
+  id: number,
+  body: { audio_base64: string; media_type: string },
+): Promise<TranscribeResponse> {
+  return apiRequest<TranscribeResponse>(`/api/v2/teacher/students/${id}/sessions/transcribe`, {
+    method: "POST",
+    body,
+  });
 }
 
 // ====== Öğrenci davet (oluştur) ======

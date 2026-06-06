@@ -10,6 +10,7 @@ import {
   getTeacherStudentExams,
   teacherDetailKeys,
   type ExamSectionOption,
+  type ExamSubjectInput,
   type TeacherExamCreateBody,
   type TeacherExamsResponse,
 } from "@/lib/teacher";
@@ -58,6 +59,12 @@ function NumField({ label, value, onChangeText }: { label: string; value: string
 }
 
 // --- Ekleme formu ---
+type ExamMode = "total" | "subjects";
+
+function netOf(c: number, w: number, isLgs: boolean): number {
+  return Math.max(0, c - w / (isLgs ? 3 : 4));
+}
+
 function ExamForm({
   sections,
   busy,
@@ -72,16 +79,59 @@ function ExamForm({
   const [title, setTitle] = React.useState("");
   const [date, setDate] = React.useState(todayISO());
   const [section, setSection] = React.useState(sections[0]?.value ?? "lgs");
+  const [mode, setMode] = React.useState<ExamMode>("total");
   const [correct, setCorrect] = React.useState("");
   const [wrong, setWrong] = React.useState("");
   const [blank, setBlank] = React.useState("");
+  // #6 — ders bazlı satırlar (her ders için D/Y/B)
+  const [subjects, setSubjects] = React.useState<ExamSubjectInput[]>([{ name: "", correct: 0, wrong: 0, blank: 0 }]);
+
+  const isLgs = section === "lgs";
 
   const c = Number(correct) || 0;
   const w = Number(wrong) || 0;
   const b = Number(blank) || 0;
-  const isLgs = section === "lgs";
-  const net = Math.max(0, c - w / (isLgs ? 3 : 4));
-  const canSave = title.trim().length > 0 && c + w + b > 0 && !busy;
+
+  const sumC = subjects.reduce((a, s) => a + (Number(s.correct) || 0), 0);
+  const sumW = subjects.reduce((a, s) => a + (Number(s.wrong) || 0), 0);
+  const sumB = subjects.reduce((a, s) => a + (Number(s.blank) || 0), 0);
+
+  const net = mode === "subjects" ? netOf(sumC, sumW, isLgs) : netOf(c, w, isLgs);
+
+  const cleanedSubjects = subjects
+    .map((s) => ({ ...s, name: s.name.trim() }))
+    .filter((s) => s.name.length > 0 && (s.correct + s.wrong + s.blank) > 0);
+
+  const canSave =
+    title.trim().length > 0 &&
+    !busy &&
+    (mode === "total" ? c + w + b > 0 : cleanedSubjects.length > 0);
+
+  function updateSubject(i: number, patch: Partial<ExamSubjectInput>) {
+    setSubjects((prev) => prev.map((s, idx) => (idx === i ? { ...s, ...patch } : s)));
+  }
+  function addSubjectRow() {
+    setSubjects((prev) => [...prev, { name: "", correct: 0, wrong: 0, blank: 0 }]);
+  }
+  function removeSubjectRow(i: number) {
+    setSubjects((prev) => (prev.length <= 1 ? prev : prev.filter((_, idx) => idx !== i)));
+  }
+
+  function submit() {
+    if (mode === "subjects") {
+      onSubmit({
+        title: title.trim(),
+        exam_date: date,
+        section,
+        total_correct: 0,
+        total_wrong: 0,
+        total_blank: 0,
+        subjects: cleanedSubjects,
+      });
+    } else {
+      onSubmit({ title: title.trim(), exam_date: date, section, total_correct: c, total_wrong: w, total_blank: b });
+    }
+  }
 
   return (
     <View className="gap-4 pb-2">
@@ -130,11 +180,85 @@ function ExamForm({
         </View>
       </View>
 
-      <View className="flex-row gap-3">
-        <NumField label="Doğru" value={correct} onChangeText={setCorrect} />
-        <NumField label="Yanlış" value={wrong} onChangeText={setWrong} />
-        <NumField label="Boş" value={blank} onChangeText={setBlank} />
+      {/* #6 — giriş modu: Toplam veya Ders bazlı */}
+      <View className="flex-row rounded-xl border border-slate-200 bg-slate-50 p-1">
+        {([
+          { v: "total", label: "Toplam" },
+          { v: "subjects", label: "Ders bazlı" },
+        ] as { v: ExamMode; label: string }[]).map((m) => {
+          const active = m.v === mode;
+          return (
+            <Pressable
+              key={m.v}
+              onPress={() => setMode(m.v)}
+              className={cn("flex-1 items-center rounded-lg py-2", active ? "bg-white" : "")}
+            >
+              <Text className={cn("text-sm font-semibold", active ? "text-brand-700" : "text-slate-500")}>{m.label}</Text>
+            </Pressable>
+          );
+        })}
       </View>
+
+      {mode === "total" ? (
+        <View className="flex-row gap-3">
+          <NumField label="Doğru" value={correct} onChangeText={setCorrect} />
+          <NumField label="Yanlış" value={wrong} onChangeText={setWrong} />
+          <NumField label="Boş" value={blank} onChangeText={setBlank} />
+        </View>
+      ) : (
+        <View className="gap-2">
+          <View className="flex-row gap-1.5 px-0.5">
+            <Text className="flex-1 text-[10px] font-medium uppercase tracking-wide text-slate-400">Ders</Text>
+            <Text className="w-11 text-center text-[10px] font-medium uppercase tracking-wide text-slate-400">D</Text>
+            <Text className="w-11 text-center text-[10px] font-medium uppercase tracking-wide text-slate-400">Y</Text>
+            <Text className="w-11 text-center text-[10px] font-medium uppercase tracking-wide text-slate-400">B</Text>
+            <View className="w-6" />
+          </View>
+          {subjects.map((s, i) => (
+            <View key={i} className="flex-row items-center gap-1.5">
+              <TextInput
+                value={s.name}
+                onChangeText={(v) => updateSubject(i, { name: v })}
+                placeholder="Matematik"
+                placeholderTextColor="#cbd5e1"
+                className="flex-1 rounded-lg border border-slate-300 bg-white px-2.5 py-2 text-sm text-slate-900"
+              />
+              <TextInput
+                value={s.correct ? String(s.correct) : ""}
+                onChangeText={(v) => updateSubject(i, { correct: Number(v.replace(/[^0-9]/g, "")) || 0 })}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor="#cbd5e1"
+                className="w-11 rounded-lg border border-slate-300 bg-white px-1 py-2 text-center text-sm font-semibold text-slate-900"
+              />
+              <TextInput
+                value={s.wrong ? String(s.wrong) : ""}
+                onChangeText={(v) => updateSubject(i, { wrong: Number(v.replace(/[^0-9]/g, "")) || 0 })}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor="#cbd5e1"
+                className="w-11 rounded-lg border border-slate-300 bg-white px-1 py-2 text-center text-sm font-semibold text-slate-900"
+              />
+              <TextInput
+                value={s.blank ? String(s.blank) : ""}
+                onChangeText={(v) => updateSubject(i, { blank: Number(v.replace(/[^0-9]/g, "")) || 0 })}
+                keyboardType="number-pad"
+                placeholder="0"
+                placeholderTextColor="#cbd5e1"
+                className="w-11 rounded-lg border border-slate-300 bg-white px-1 py-2 text-center text-sm font-semibold text-slate-900"
+              />
+              <Pressable onPress={() => removeSubjectRow(i)} disabled={subjects.length <= 1} hitSlop={6} className="w-6 items-center">
+                <Ionicons name="close-circle" size={18} color={subjects.length <= 1 ? "#e2e8f0" : "#fb7185"} />
+              </Pressable>
+            </View>
+          ))}
+          <Pressable onPress={addSubjectRow} className="flex-row items-center justify-center gap-1.5 rounded-lg border border-dashed border-slate-300 py-2.5 active:bg-slate-50">
+            <Ionicons name="add" size={16} color="#0e7490" />
+            <Text className="text-sm font-medium text-brand-700">Ders ekle</Text>
+          </Pressable>
+          <Text className="text-[11px] text-slate-400">Toplam: D {sumC} · Y {sumW} · B {sumB}</Text>
+        </View>
+      )}
 
       <View className="flex-row items-center justify-between rounded-xl bg-brand-50 px-4 py-3">
         <Text className="text-sm font-medium text-brand-700">Hesaplanan net</Text>
@@ -144,16 +268,7 @@ function ExamForm({
       {error ? <Text className="text-sm text-rose-600">{error}</Text> : null}
 
       <Pressable
-        onPress={() =>
-          onSubmit({
-            title: title.trim(),
-            exam_date: date,
-            section,
-            total_correct: c,
-            total_wrong: w,
-            total_blank: b,
-          })
-        }
+        onPress={submit}
         disabled={!canSave}
         className={cn("items-center rounded-xl py-3.5", canSave ? "bg-brand-700 active:bg-brand-800" : "bg-brand-700/40")}
       >

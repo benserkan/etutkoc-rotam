@@ -39,7 +39,7 @@ export default function TeacherSessionsPreview() {
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
       <ScrollView className="flex-1">
         <View className="flex-1">
-          <SessionsTabView data={MOCK} addBusy={false} addError={null} onAdd={() => {}} />
+          <SessionsTabView studentId={0} ensureConsent={async () => false} data={MOCK} addBusy={false} addError={null} onAdd={() => {}} />
         </View>
       </ScrollView>
     </SafeAreaView>
