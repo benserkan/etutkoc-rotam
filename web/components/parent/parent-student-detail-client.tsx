@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   CalendarDays,
   ChevronRight,
+  Crosshair,
   FileBarChart,
   Receipt,
   Target,
@@ -88,6 +89,13 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
           <Link href={`/parent/students/${data.student.id}/week`}>
             <CalendarDays className="size-4" aria-hidden />
             Haftalık Programı Gör
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={`/parent/students/${data.student.id}/topics`}>
+            <Crosshair className="size-4" aria-hidden />
+            Konu Performansı
             <ChevronRight className="size-4" aria-hidden />
           </Link>
         </Button>

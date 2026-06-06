@@ -38,12 +38,14 @@ import { StudentExamsPanel } from "@/components/teacher/student-exams-panel";
 import { StudentSessionsPanel } from "@/components/teacher/student-sessions-panel";
 import { StudentParentsPanel } from "@/components/teacher/student-parents-panel";
 import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
+import { TopicPerformancePanel } from "@/components/shared/topic-performance-panel";
 
-type TabKey = "summary" | "analytics" | "exams" | "sessions" | "books" | "parents";
+type TabKey = "summary" | "analytics" | "topics" | "exams" | "sessions" | "books" | "parents";
 
 const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "summary", label: "Genel" },
   { key: "analytics", label: "Analitik" },
+  { key: "topics", label: "Konu Performansı" },
   { key: "exams", label: "Denemeler" },
   { key: "sessions", label: "Seanslar" },
   { key: "books", label: "Kitaplar" },
@@ -248,6 +250,12 @@ export function StudentTabs({ studentId, initial }: Props) {
           aria-labelledby="tab-analytics"
         >
           <StudentAnalyticsPanel studentId={studentId} />
+        </div>
+      ) : null}
+
+      {active === "topics" ? (
+        <div role="tabpanel" id="tab-panel-topics" aria-labelledby="tab-topics">
+          <TopicPerformancePanel source="teacher" studentId={studentId} />
         </div>
       ) : null}
 
