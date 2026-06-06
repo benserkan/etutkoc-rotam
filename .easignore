@@ -29,3 +29,6 @@
 *.sqlite
 *.db
 ETUTKOC_Rotam_Sistem_Ozellikleri.pdf
+
+# Firebase service-account GİZLİ anahtarı — yalnız EAS credentials'a yüklenir, APK'ya girmesin
+mobile/*firebase-adminsdk*.json

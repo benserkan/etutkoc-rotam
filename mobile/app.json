@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.etutkoc.rotam",
+      "googleServicesFile": "./google-services.json",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png"

@@ -45,3 +45,8 @@ example
 # generated native folders
 /ios
 /android
+
+# Firebase / FCM — GİZLİ, asla commit etme
+google-services.json
+google-services*.json
+*firebase-adminsdk*.json
