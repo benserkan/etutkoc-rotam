@@ -1773,6 +1773,95 @@ class StudentExamListResponse(BaseModel):
 
 
 # =============================================================================
+# Ders → Konu performansı (çözülen test + D/Y + doğruluk) — koç/öğrenci/veli ortak
+# =============================================================================
+
+
+class TopicPerfRow(BaseModel):
+    topic_id: int | None = None
+    topic_name: str
+    tests_solved: int
+    correct: int
+    wrong: int
+    answered: int
+    accuracy_pct: int | None = None
+    last_solved_at: datetime | None = None
+
+
+class SubjectPerfRow(BaseModel):
+    subject_id: int
+    subject_name: str
+    tests_solved: int
+    correct: int
+    wrong: int
+    answered: int
+    accuracy_pct: int | None = None
+    topics: list[TopicPerfRow] = []
+
+
+class TopicPerformanceOverall(BaseModel):
+    tests_solved: int
+    correct: int
+    wrong: int
+    answered: int
+    accuracy_pct: int | None = None
+    subject_count: int
+    topic_count: int
+
+
+class TopicPerformanceResponse(BaseModel):
+    overall: TopicPerformanceOverall
+    subjects: list[SubjectPerfRow]
+
+
+def build_topic_performance_response(subjects: list) -> "TopicPerformanceResponse":
+    """topic_performance.SubjectPerf listesini API yanıtına çevirir (3 yüzey ortak)."""
+    rows: list[SubjectPerfRow] = []
+    t_tests = t_correct = t_wrong = 0
+    topic_count = 0
+    for s in subjects:
+        t_tests += s.tests_solved
+        t_correct += s.correct
+        t_wrong += s.wrong
+        topic_count += len(s.topics)
+        rows.append(
+            SubjectPerfRow(
+                subject_id=s.subject_id,
+                subject_name=s.subject_name,
+                tests_solved=s.tests_solved,
+                correct=s.correct,
+                wrong=s.wrong,
+                answered=s.answered,
+                accuracy_pct=s.accuracy_pct,
+                topics=[
+                    TopicPerfRow(
+                        topic_id=t.topic_id,
+                        topic_name=t.topic_name,
+                        tests_solved=t.tests_solved,
+                        correct=t.correct,
+                        wrong=t.wrong,
+                        answered=t.answered,
+                        accuracy_pct=t.accuracy_pct,
+                        last_solved_at=t.last_solved_at,
+                    )
+                    for t in s.topics
+                ],
+            )
+        )
+    answered = t_correct + t_wrong
+    overall = TopicPerformanceOverall(
+        tests_solved=t_tests,
+        correct=t_correct,
+        wrong=t_wrong,
+        answered=answered,
+        accuracy_pct=(int(round(100 * t_correct / answered)) if answered > 0 else None),
+        subject_count=len(rows),
+        topic_count=topic_count,
+    )
+    return TopicPerformanceResponse(overall=overall, subjects=rows)
+
+
+# =============================================================================
 # KS1 — Koçluk seansı / değerlendirme kaydı
 # =============================================================================
 

@@ -549,6 +549,17 @@ def save_day_note_v2(
     )
 
 
+@router.get("/topic-performance")
+def student_topic_performance_v2(
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin kendi ders → konu test performansı (çözülen test + D/Y + doğruluk)."""
+    from app.routes.api_v2.schemas.teacher import build_topic_performance_response
+    from app.services.topic_performance import compute_topic_performance
+    return build_topic_performance_response(compute_topic_performance(db, user.id))
+
+
 @router.get("/week", response_model=StudentWeekResponse)
 def student_week_v2(
     start_param: str | None = Query(None, alias="start"),

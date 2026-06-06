@@ -125,6 +125,8 @@ from app.routes.api_v2.schemas.teacher import (
     ExamSectionOption,
     ExamSubjectRow,
     StudentExamListResponse,
+    TopicPerformanceResponse,
+    build_topic_performance_response,
     CoachingSessionCreateBody,
     CoachingSessionRow,
     CoachingSessionSummary,
@@ -1079,6 +1081,26 @@ def _validate_and_compute_exam(body: "ExamCreateBody") -> dict:
         "net": compute_net(total_correct, total_wrong, section),
         "subject_payload": subject_payload,
     }
+
+
+@router.get(
+    "/students/{student_id}/topic-performance",
+    response_model=TopicPerformanceResponse,
+)
+def teacher_student_topic_performance_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin ders → konu test performansı (çözülen test + D/Y + doğruluk).
+
+    Sahiplik 404. DENEME kitapları hariç (deneme ayrı yüzeyde).
+    """
+    student = _get_owned_student(db, student_id, user.id)
+    from app.services.topic_performance import compute_topic_performance
+    return build_topic_performance_response(
+        compute_topic_performance(db, student.id)
+    )
 
 
 @router.get(

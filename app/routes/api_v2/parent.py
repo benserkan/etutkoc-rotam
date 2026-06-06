@@ -218,6 +218,29 @@ def parent_student_detail_v2(
     return data
 
 
+@router.get("/students/{student_id}/topic-performance")
+def parent_student_topic_performance_v2(
+    student_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veliye: çocuğun ders → konu test performansı (çözülen test + D/Y + doğruluk).
+
+    Gizlilik: assert_parent_can_view → 404 (bağ yoksa sızdırmaz).
+    """
+    try:
+        student = assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "student_not_found",
+                    "message": "Öğrenci bulunamadı."},
+        )
+    from app.routes.api_v2.schemas.teacher import build_topic_performance_response
+    from app.services.topic_performance import compute_topic_performance
+    return build_topic_performance_response(compute_topic_performance(db, student.id))
+
+
 @router.get(
     "/students/{student_id}/week",
     response_model=ParentWeekResponse,
