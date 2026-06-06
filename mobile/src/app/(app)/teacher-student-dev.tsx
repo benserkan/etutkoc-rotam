@@ -63,7 +63,19 @@ export default function TeacherStudentDevRoute() {
   });
   const seedMut = useMutation({
     mutationFn: (subjectId: number) => seedTeacherReview(sid, subjectId),
-    onSuccess: () => qc.invalidateQueries({ queryKey: teacherDevKeys.review(sid) }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: teacherDevKeys.review(sid) });
+      const r = res.data;
+      if (r.added > 0) {
+        Alert.alert("Eklendi", `${r.subject_name}: ${r.added} tekrar kartı eklendi.${r.skipped_existing > 0 ? ` (${r.skipped_existing} zaten ekliydi)` : ""}`);
+      } else {
+        Alert.alert(
+          "Eklenecek konu bulunamadı",
+          `${r.subject_name} için yeni tekrar kartı oluşmadı. Bu dersin konuları öğrencinin atanmış kitaplarında yoksa veya tümü zaten ekliyse kart eklenmez.`,
+        );
+      }
+    },
+    onError: (e) => Alert.alert("Eklenemedi", e instanceof ApiError ? e.message : "İşlem başarısız."),
   });
 
   // AI Koçluk İçgörüsü (GET ücretsiz · POST kredi · rıza + ücretli kapı)

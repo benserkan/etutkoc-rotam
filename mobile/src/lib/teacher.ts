@@ -609,6 +609,12 @@ export function getTeacherStudentGoals(id: number): Promise<TeacherGoalsResponse
 export function createTeacherGoal(id: number, body: TeacherGoalCreateBody): Promise<unknown> {
   return apiRequest(`/api/v2/teacher/students/${id}/goals`, { method: "POST", body });
 }
-export function seedTeacherReview(id: number, subjectId: number): Promise<unknown> {
+export interface ReviewSeedResult {
+  subject_id: number;
+  subject_name: string;
+  added: number;
+  skipped_existing: number;
+}
+export function seedTeacherReview(id: number, subjectId: number): Promise<{ data: ReviewSeedResult }> {
   return apiRequest(`/api/v2/teacher/students/${id}/review/seed`, { method: "POST", body: { subject_id: subjectId } });
 }
