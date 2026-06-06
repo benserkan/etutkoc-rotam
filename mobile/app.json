@@ -9,7 +9,14 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "com.etutkoc.rotam",
-      "supportsTablet": true
+      "buildNumber": "1",
+      "supportsTablet": true,
+      "config": {
+        "usesNonExemptEncryption": false
+      },
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.etutkoc.rotam",
