@@ -10,6 +10,7 @@ import {
   Crosshair,
   FileBarChart,
   Receipt,
+  Sparkles,
   Target,
   TrendingUp,
 } from "lucide-react";
@@ -96,6 +97,13 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
           <Link href={`/parent/students/${data.student.id}/topics`}>
             <Crosshair className="size-4" aria-hidden />
             Konu Performansı
+            <ChevronRight className="size-4" aria-hidden />
+          </Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href={`/parent/students/${data.student.id}/exams`}>
+            <Sparkles className="size-4" aria-hidden />
+            Denemeler & Analiz
             <ChevronRight className="size-4" aria-hidden />
           </Link>
         </Button>

@@ -131,3 +131,39 @@ export function getParentUnsubscribe(token: string) {
     `/api/v2/parent/unsubscribe/${encodeURIComponent(token)}`,
   );
 }
+
+// ---- P2: Veli deneme geçmişi + AI içgörü ----
+import type { StudentExamListResponse } from "@/lib/types/teacher";
+
+export interface ParentInsightData {
+  summary: string;
+  strengths: string[];
+  focus_areas: string[];
+  parent_tips: string[];
+  based_on_exams: number;
+  based_on_solved: number;
+  generated_at: string;
+}
+export interface ParentInsightResponse {
+  insight: ParentInsightData | null;
+  is_stale: boolean;
+  ai_available: boolean;
+  unavailable_reason: string | null;
+}
+
+export const parentP2Keys = {
+  exams: (id: number) => ["parent", "me", "students", String(id), "exams"] as const,
+  insight: (id: number) => ["parent", "me", "students", String(id), "insight"] as const,
+};
+
+export function getParentExams(studentId: number) {
+  return api<StudentExamListResponse>(`/api/v2/parent/students/${studentId}/exams`);
+}
+export function getParentInsight(studentId: number) {
+  return api<ParentInsightResponse>(`/api/v2/parent/students/${studentId}/insight`);
+}
+export function generateParentInsight(studentId: number) {
+  return api<ParentInsightResponse>(`/api/v2/parent/students/${studentId}/insight`, {
+    method: "POST",
+  });
+}
