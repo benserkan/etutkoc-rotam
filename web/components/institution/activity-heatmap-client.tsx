@@ -17,6 +17,7 @@ import type {
   TeacherHeatmapRow,
 } from "@/lib/types/institution";
 import {
+  HeatmapAxis,
   HeatmapGrid,
   HeatmapLegend,
 } from "@/components/institution/heatmap-grid";
@@ -105,8 +106,9 @@ export function ActivityHeatmapClient({ initial, weeks }: Props) {
                   <th className="text-left px-4 py-2 font-medium w-48">
                     Öğretmen
                   </th>
-                  <th className="text-left px-4 py-2 font-medium">
-                    Son {weeks} hafta
+                  <th className="text-left px-4 py-2 font-medium align-bottom">
+                    <div className="mb-1 text-[11px] text-muted-foreground">Son {weeks} hafta — hafta başı tarihleri:</div>
+                    {teachers[0]?.cells?.length ? <HeatmapAxis cells={teachers[0].cells} /> : null}
                   </th>
                   <th className="text-right px-4 py-2 font-medium whitespace-nowrap">
                     Toplam
