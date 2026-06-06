@@ -6,13 +6,26 @@ import { NotifyCoachSheet, type NotifyCoachTarget } from "@/components/instituti
 import { Banner, Empty, InstitutionScreen } from "@/components/institution/ui";
 import { ApiError } from "@/lib/api";
 import {
+  buildInterventionMap,
   getInstitutionBurnout,
+  getInstitutionCoachInterventions,
   institutionKeys,
   notifyCoach,
   type BurnoutResponse,
   type BurnoutRowItem,
+  type CoachInterventionItem,
 } from "@/lib/institution";
 import { cn } from "@/lib/utils";
+
+function InterventionBadge({ it }: { it: CoachInterventionItem }) {
+  const d = new Date(it.created_at);
+  const dt = `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return (
+    <View className="mt-1.5 flex-row items-center gap-1 self-start rounded-md bg-emerald-50 px-1.5 py-0.5">
+      <Text className="text-[10px] font-semibold text-emerald-700">✓ {dt} koça iletildi · {it.status_label}</Text>
+    </View>
+  );
+}
 
 function levelTone(level: string): { text: string; row: string } {
   switch (level) {
@@ -27,7 +40,7 @@ function levelTone(level: string): { text: string; row: string } {
   }
 }
 
-function Row({ r, onNotify }: { r: BurnoutRowItem; onNotify: () => void }) {
+function Row({ r, intervention, onNotify }: { r: BurnoutRowItem; intervention?: CoachInterventionItem | null; onNotify: () => void }) {
   const tone = levelTone(r.risk_level);
   return (
     <View className={cn("rounded-xl border border-l-4 border-slate-200 bg-white p-3", tone.row)}>
@@ -35,6 +48,7 @@ function Row({ r, onNotify }: { r: BurnoutRowItem; onNotify: () => void }) {
         <Text className="flex-1 text-[15px] font-semibold text-slate-900" numberOfLines={1}>{r.full_name}</Text>
         <Text className={cn("text-base font-extrabold", tone.text)}>{r.risk_score}</Text>
       </View>
+      {intervention ? <InterventionBadge it={intervention} /> : null}
       <Text className="mt-0.5 text-xs text-slate-500" numberOfLines={1}>
         {r.teacher_name ?? "Koç yok"} · {r.display_grade_label ?? (r.grade_level != null ? `${r.grade_level}. sınıf` : "Mezun")} · {r.signal_count} sinyal
       </Text>
@@ -57,6 +71,8 @@ function Row({ r, onNotify }: { r: BurnoutRowItem; onNotify: () => void }) {
 export default function InstitutionBurnoutScreen() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: institutionKeys.burnout, queryFn: getInstitutionBurnout });
+  const intQ = useQuery({ queryKey: ["institution", "interventions"], queryFn: getInstitutionCoachInterventions, staleTime: 30_000 });
+  const intMap = React.useMemo(() => buildInterventionMap(intQ.data?.items ?? []), [intQ.data]);
   const [target, setTarget] = React.useState<NotifyCoachTarget | null>(null);
 
   const mut = useMutation({
@@ -65,6 +81,7 @@ export default function InstitutionBurnoutScreen() {
     onSuccess: () => {
       setTarget(null);
       qc.invalidateQueries({ queryKey: ["support"] });
+      qc.invalidateQueries({ queryKey: ["institution", "interventions"] });
       Alert.alert("Gönderildi", "Müdahale talebi koçun gelen kutusuna iletildi.");
     },
     onError: (e) => Alert.alert("Gönderilemedi", e instanceof ApiError ? e.message : "İşlem başarısız"),
@@ -85,6 +102,7 @@ export default function InstitutionBurnoutScreen() {
                 <Row
                   key={r.student_id}
                   r={r}
+                  intervention={intMap.get(r.full_name.trim().toLocaleLowerCase("tr")) ?? null}
                   onNotify={() => setTarget({ teacher_id: r.teacher_id!, teacher_name: r.teacher_name, student_name: r.full_name, context: "burnout" })}
                 />
               ))}

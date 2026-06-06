@@ -642,6 +642,31 @@ export function getInstitutionHeatmap(weeks = 4): Promise<ActivityHeatmapRespons
 export function getInstitutionBurnout(): Promise<BurnoutResponse> {
   return apiRequest<BurnoutResponse>(`/api/v2/institution/burnout`);
 }
+
+// P4b — geçmiş "Koça ilet" müdahaleleri (ad-bazlı eşleşme)
+export interface CoachInterventionItem {
+  request_id: number;
+  student_name: string | null;
+  coach_name: string | null;
+  created_at: string;
+  status: string;
+  status_label: string;
+}
+export interface CoachInterventionsResponse {
+  items: CoachInterventionItem[];
+}
+export function getInstitutionCoachInterventions(): Promise<CoachInterventionsResponse> {
+  return apiRequest<CoachInterventionsResponse>(`/api/v2/institution/coach-interventions?days=90`);
+}
+export function buildInterventionMap(items: CoachInterventionItem[]): Map<string, CoachInterventionItem> {
+  const m = new Map<string, CoachInterventionItem>();
+  for (const it of items) {
+    if (!it.student_name) continue;
+    const key = it.student_name.trim().toLocaleLowerCase("tr");
+    if (!m.has(key)) m.set(key, it);
+  }
+  return m;
+}
 export function getInstitutionScorecard(weeks = 4): Promise<TeacherScorecardResponse> {
   return apiRequest<TeacherScorecardResponse>(`/api/v2/institution/teacher-scorecard?weeks=${weeks}`);
 }

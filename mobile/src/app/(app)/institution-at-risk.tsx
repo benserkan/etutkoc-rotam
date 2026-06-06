@@ -6,13 +6,26 @@ import { NotifyCoachSheet, type NotifyCoachTarget } from "@/components/instituti
 import { Banner, Empty, InstitutionScreen, Kpi, KpiGrid } from "@/components/institution/ui";
 import { ApiError } from "@/lib/api";
 import {
+  buildInterventionMap,
   getInstitutionAtRisk,
+  getInstitutionCoachInterventions,
   institutionKeys,
   notifyCoach,
   type AtRiskResponse,
   type AtRiskRowItem,
+  type CoachInterventionItem,
 } from "@/lib/institution";
 import { cn } from "@/lib/utils";
+
+function InterventionBadge({ it }: { it: CoachInterventionItem }) {
+  const d = new Date(it.created_at);
+  const dt = `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return (
+    <View className="mt-1.5 flex-row items-center gap-1 self-start rounded-md bg-emerald-50 px-1.5 py-0.5">
+      <Text className="text-[10px] font-semibold text-emerald-700">✓ {dt} koça iletildi · {it.status_label}</Text>
+    </View>
+  );
+}
 
 function levelTone(level: string): { row: string; badge: string; badgeText: string } {
   switch (level) {
@@ -25,7 +38,7 @@ function levelTone(level: string): { row: string; badge: string; badgeText: stri
   }
 }
 
-function Row({ r, onNotify }: { r: AtRiskRowItem; onNotify: () => void }) {
+function Row({ r, intervention, onNotify }: { r: AtRiskRowItem; intervention?: CoachInterventionItem | null; onNotify: () => void }) {
   const tone = levelTone(r.level);
   return (
     <View className={cn("rounded-xl border border-l-4 border-slate-200 p-3", tone.row)}>
@@ -35,6 +48,7 @@ function Row({ r, onNotify }: { r: AtRiskRowItem; onNotify: () => void }) {
           <Text className={cn("text-[11px] font-semibold", tone.badgeText)}>{r.level_label} · {r.score}</Text>
         </View>
       </View>
+      {intervention ? <InterventionBadge it={intervention} /> : null}
       <Text className="mt-0.5 text-xs text-slate-500" numberOfLines={1}>
         {r.teacher_name ?? "Koç yok"} · {r.display_grade_label ?? (r.grade_level != null ? `${r.grade_level}. sınıf` : "Mezun")}
         {r.is_muted ? " · sessiz" : ""}{r.is_paused ? " · duraklatıldı" : ""}
@@ -60,6 +74,8 @@ function Row({ r, onNotify }: { r: AtRiskRowItem; onNotify: () => void }) {
 export default function InstitutionAtRiskScreen() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: institutionKeys.atRisk, queryFn: getInstitutionAtRisk });
+  const intQ = useQuery({ queryKey: ["institution", "interventions"], queryFn: getInstitutionCoachInterventions, staleTime: 30_000 });
+  const intMap = React.useMemo(() => buildInterventionMap(intQ.data?.items ?? []), [intQ.data]);
   const [target, setTarget] = React.useState<NotifyCoachTarget | null>(null);
 
   const mut = useMutation({
@@ -68,6 +84,7 @@ export default function InstitutionAtRiskScreen() {
     onSuccess: () => {
       setTarget(null);
       qc.invalidateQueries({ queryKey: ["support"] });
+      qc.invalidateQueries({ queryKey: ["institution", "interventions"] });
       Alert.alert("Gönderildi", "Müdahale talebi koçun gelen kutusuna iletildi.");
     },
     onError: (e) => Alert.alert("Gönderilemedi", e instanceof ApiError ? e.message : "İşlem başarısız"),
@@ -94,6 +111,7 @@ export default function InstitutionAtRiskScreen() {
                 <Row
                   key={r.student_id}
                   r={r}
+                  intervention={intMap.get(r.full_name.trim().toLocaleLowerCase("tr")) ?? null}
                   onNotify={() => setTarget({ teacher_id: r.teacher_id!, teacher_name: r.teacher_name, student_name: r.full_name, context: "at_risk" })}
                 />
               ))}
