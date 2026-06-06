@@ -13,6 +13,16 @@ import {
   Users,
 } from "lucide-react";
 
+import {
+  Bar,
+  BarChart,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -93,8 +103,10 @@ export function AdminDigestDetailClient({ initial, digestId }: Props) {
       ) : (
         <>
           <TotalsGrid payload={payload} />
+          <CompletionCompareChart payload={payload} />
           <HighlightCard payload={payload} />
           <InactiveTeachersCard payload={payload} />
+          <GradeCohortChart cohorts={payload.grade_cohorts} />
           <GradeCohortTable cohorts={payload.grade_cohorts} />
         </>
       )}
@@ -329,6 +341,77 @@ function InactiveTeachersCard({
         )}
       </ul>
     </div>
+  );
+}
+
+const RATE_HEX: Record<string, string> = {
+  green: "#059669",
+  amber: "#d97706",
+  red: "#e11d48",
+  slate: "#94a3b8",
+};
+
+function CompletionCompareChart({ payload }: { payload: AdminDigestPayload }) {
+  const c = payload.completion;
+  if (c.this_week_rate == null && c.last_week_rate == null) return null;
+  const data = [
+    { name: "Geçen hafta", rate: c.last_week_rate ?? 0 },
+    { name: "Bu hafta", rate: c.this_week_rate ?? 0 },
+  ];
+  return (
+    <Card>
+      <div className="px-4 py-2 border-b border-border bg-muted/40">
+        <h3 className="text-sm font-medium">Program tamamlama — haftalık karşılaştırma</h3>
+      </div>
+      <CardContent className="p-4">
+        <ResponsiveContainer width="100%" height={160}>
+          <BarChart data={data} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+            <XAxis dataKey="name" tick={{ fontSize: 12 }} />
+            <YAxis domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
+            <Tooltip cursor={{ fill: "hsl(var(--muted) / 0.4)" }} />
+            <Bar dataKey="rate" name="Tamamlama %" radius={[4, 4, 0, 0]} barSize={64}>
+              {data.map((d, i) => (
+                <Cell key={i} fill={d.rate >= 70 ? "#059669" : d.rate >= 40 ? "#d97706" : "#e11d48"} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+        {c.delta_pct != null ? (
+          <p className="mt-1 text-center text-xs text-muted-foreground">
+            {c.direction === "up" ? `Geçen haftaya göre +%${c.delta_pct} yükseldi` :
+             c.direction === "down" ? `Geçen haftaya göre -%${c.delta_pct} düştü` : "Geçen haftayla aynı seviyede"}
+          </p>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function GradeCohortChart({ cohorts }: { cohorts: AdminDigestCohortEntry[] }) {
+  const data = cohorts.filter((c) => c.rate != null).map((c) => ({ name: c.label, rate: c.rate ?? 0, color: c.color }));
+  if (data.length === 0) return null;
+  return (
+    <Card>
+      <div className="px-4 py-2 border-b border-border bg-muted/40">
+        <h3 className="text-sm font-medium inline-flex items-center gap-1.5">
+          <Users className="size-4" aria-hidden /> Sınıf bazlı tamamlama (grafik)
+        </h3>
+      </div>
+      <CardContent className="p-4">
+        <ResponsiveContainer width="100%" height={Math.max(160, data.length * 34)}>
+          <BarChart data={data} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 0 }}>
+            <XAxis type="number" domain={[0, 100]} tick={{ fontSize: 11 }} unit="%" />
+            <YAxis type="category" dataKey="name" width={90} tick={{ fontSize: 11 }} />
+            <Tooltip cursor={{ fill: "hsl(var(--muted) / 0.4)" }} />
+            <Bar dataKey="rate" name="Tamamlama %" radius={[0, 4, 4, 0]} barSize={18}>
+              {data.map((d, i) => (
+                <Cell key={i} fill={RATE_HEX[d.color] ?? "#94a3b8"} />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </CardContent>
+    </Card>
   );
 }
 
