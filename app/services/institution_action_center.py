@@ -91,6 +91,7 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
             for t in db.query(User).filter(User.id.in_(teacher_ids)).all()
         }
         assessments = bulk_risk_assessment(db, students=students)
+        surfaced_ids: set[int] = set()
         critical = [a for a in filter_at_risk(assessments, min_level="high")]
         critical.sort(key=lambda a: -a.score)
         for a in critical[:15]:
@@ -105,6 +106,32 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
                 "teacher_name": tname,
                 "count": 1,
                 "suggestion": "Koçtan öğrenciyle birebir görüşmesini isteyin.",
+            })
+            surfaced_ids.add(int(a.student.id))
+
+        # 4) Programı var ama yapmıyor — "N gün üst üste boş" (consecutive_empty).
+        # Tek başına medium kalıp yukarıdaki high/critical eşiğine düşmeyen ama
+        # 3+ gündür program TAMAMLAMAYAN öğrenciler. Kullanıcı talebi: bu da
+        # müdahale merkezinde görünmeli (yalnız "her şey yolunda" yanıltıcıydı).
+        inactive: list = []
+        for a in assessments:
+            if int(a.student.id) in surfaced_ids:
+                continue
+            ce = next((i for i in a.indicators if i.code == "consecutive_empty"), None)
+            if ce is not None:
+                inactive.append((a, ce))
+        # En uzun süre boş olan üstte (göstergenin ağırlığı sabit; gün sayısı title'da)
+        inactive.sort(key=lambda x: -x[0].score)
+        for a, ce in inactive[:15]:
+            tname = teacher_name.get(a.student.teacher_id, "—") if a.student.teacher_id else "—"
+            items.append({
+                "severity": "warn",
+                "category": "inactive_program",
+                "title": f"{a.student.full_name or a.student.email} — {ce.title}",
+                "description": f"Koç: {tname} · {ce.detail}",
+                "teacher_name": tname,
+                "count": 1,
+                "suggestion": "Programı var ama yapmıyor — koçtan öğrenciyle iletişime geçmesini isteyin.",
             })
 
     items.sort(key=lambda x: (_SEVERITY_RANK.get(x["severity"], 9), -x["count"]))

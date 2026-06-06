@@ -13,6 +13,7 @@ const CAT_ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   empty_program: "calendar-outline",
   low_compliance: "trending-down-outline",
   at_risk: "pulse-outline",
+  inactive_program: "alarm-outline",
 };
 
 function Card({ item }: { item: ActionCenterItem }) {

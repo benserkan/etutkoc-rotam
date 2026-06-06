@@ -4,6 +4,7 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  CalendarClock,
   CheckCircle2,
   ClipboardX,
   ShieldAlert,
@@ -34,11 +35,13 @@ const CAT_ICON: Record<string, LucideIcon> = {
   empty_program: ClipboardX,
   low_compliance: Target,
   at_risk: ShieldAlert,
+  inactive_program: CalendarClock,
 };
 const CAT_LABEL: Record<string, string> = {
   empty_program: "Boş program",
   low_compliance: "Düşük uyum",
   at_risk: "Riskli öğrenci",
+  inactive_program: "Programı var, yapmıyor",
 };
 
 export function ActionCenterClient({ initial }: Props) {

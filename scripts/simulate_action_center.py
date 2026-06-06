@@ -184,6 +184,25 @@ def main() -> int:
             clear_students(db, iid, tid)
 
         with SessionLocal() as db:
+            # 6c) PROGRAMI VAR AMA YAPMIYOR (medium) — giriş bugün (no_login YOK) +
+            # erken günler tamamlandı (haftalık uyum ≥%40 → low_completion YOK) +
+            # son 3 gün boş → consecutive_empty (20) = medium. Eskiden high eşiğine
+            # düşmediği için GÖRÜNMÜYORDU; artık inactive_program UYARI fire eder.
+            sid = make_student(db, tid, iid, age_days=30, last_login_days=0, suffix="inactive_med")
+            for off in (6, 5, 4, 3):  # aktif günler (completed>0)
+                add_program(db, sid, planned=10, completed=10, d=today - timedelta(days=off))
+            for off in (2, 1, 0):     # son 3 gün boş
+                add_program(db, sid, planned=10, completed=0, d=today - timedelta(days=off))
+            db.commit()
+            r = summary(db, iid)
+            inact = items_of(r, category="inactive_program")
+            atr = items_of(r, category="at_risk")
+            chk("6c. programı var + 3 gün boş (medium) → inactive_program UYARI (eskiden 0)",
+                len(inact) == 1 and inact[0]["severity"] == "warn" and len(atr) == 0,
+                str([(i["category"], i["severity"], i["title"]) for i in r["items"]]))
+            clear_students(db, iid, tid)
+
+        with SessionLocal() as db:
             # 7) SON: temizlikten sonra tekrar 0 (değerler GERÇEKTEN duruma bağlı)
             r = summary(db, iid)
             chk("7. temizlik sonrası tekrar TOPLAM=0 (değerler duruma bağlı, sabit değil)",
