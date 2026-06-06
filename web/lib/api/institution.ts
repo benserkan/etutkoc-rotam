@@ -63,6 +63,7 @@ export const institutionKeys = {
   goals: () => ["institution", "me", "goals"] as const,
   atRisk: () => ["institution", "me", "at-risk"] as const,
   burnout: () => ["institution", "me", "burnout"] as const,
+  interventions: () => ["institution", "me", "interventions"] as const,
   activityHeatmap: (weeks: number) =>
     ["institution", "me", "activity-heatmap", String(weeks)] as const,
   cohorts: (tab: CohortTab) =>
@@ -132,6 +133,31 @@ export function getInstitutionAtRisk() {
 
 export function getInstitutionBurnout() {
   return api<BurnoutResponse>("/api/v2/institution/burnout");
+}
+
+export interface CoachInterventionItem {
+  request_id: number;
+  student_name: string | null;
+  coach_name: string | null;
+  created_at: string;
+  status: string;
+  status_label: string;
+}
+export interface CoachInterventionsResponse {
+  items: CoachInterventionItem[];
+}
+export function getInstitutionCoachInterventions() {
+  return api<CoachInterventionsResponse>("/api/v2/institution/coach-interventions?days=90");
+}
+/** student_name → en yeni müdahale (ad-bazlı eşleşme; küçük harfe normalize). */
+export function buildInterventionMap(items: CoachInterventionItem[]): Map<string, CoachInterventionItem> {
+  const m = new Map<string, CoachInterventionItem>();
+  for (const it of items) {
+    if (!it.student_name) continue;
+    const key = it.student_name.trim().toLocaleLowerCase("tr");
+    if (!m.has(key)) m.set(key, it); // items zaten DESC → ilki en yeni
+  }
+  return m;
 }
 
 export function getInstitutionActivityHeatmap(weeks: number) {

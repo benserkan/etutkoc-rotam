@@ -210,6 +210,20 @@ def main() -> int:
         check("12. Çözülünce koç pending_count=0", r.json()["pending_count"] == 0,
               f"pending={r.json().get('pending_count')}")
 
+        # 13. P4b — müdahale geçmişi: yönetici "Koça ilet" geçmişini görür
+        r = admin.get("/api/v2/institution/coach-interventions")
+        j = r.json()
+        hit = next((i for i in j["items"] if i["request_id"] == req_id), None)
+        check("13. Müdahale geçmişi → Yiğit Eren + koç adı + status parse",
+              hit is not None and hit["student_name"] == "Yiğit Eren"
+              and hit["coach_name"] and hit["status"] == "resolved",
+              f"{hit}")
+        # 13b. başka kurum yöneticisi bu müdahaleyi görmez
+        r = b_admin.get("/api/v2/institution/coach-interventions")
+        check("13b. Cross-tenant yönetici müdahaleyi görmez",
+              all(i["request_id"] != req_id for i in r.json()["items"]),
+              f"items={[i['request_id'] for i in r.json()['items']]}")
+
     finally:
         _cleanup(seed)
         get_login_limiter().reset()

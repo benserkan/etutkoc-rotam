@@ -3,14 +3,17 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Info, PartyPopper, Printer, Send } from "lucide-react";
+import { CheckCircle2, Info, PartyPopper, Printer, Send } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  buildInterventionMap,
   getInstitutionAtRisk,
+  getInstitutionCoachInterventions,
   institutionKeys,
+  type CoachInterventionItem,
 } from "@/lib/api/institution";
 import {
   NotifyCoachDialog,
@@ -47,6 +50,17 @@ export function AtRiskClient({ initial }: Props) {
     refetchOnWindowFocus: true,
   });
   const data = q.data ?? initial;
+
+  // P4b — geçmiş "Koça ilet" müdahaleleri (ad-bazlı eşleşme)
+  const intQ = useQuery({
+    queryKey: institutionKeys.interventions(),
+    queryFn: getInstitutionCoachInterventions,
+    staleTime: 30_000,
+  });
+  const intMap = React.useMemo(
+    () => buildInterventionMap(intQ.data?.items ?? []),
+    [intQ.data],
+  );
   const { institution, counts, total_students, healthy_count, at_risk } = data;
 
   const [target, setTarget] = React.useState<NotifyCoachTarget | null>(null);
@@ -112,6 +126,7 @@ export function AtRiskClient({ initial }: Props) {
                   <AtRiskRow
                     key={r.student_id}
                     row={r}
+                    intervention={intMap.get(r.full_name.trim().toLocaleLowerCase("tr")) ?? null}
                     onNotify={() =>
                       r.teacher_id
                         ? setTarget({
@@ -209,11 +224,27 @@ function CountCard({
   );
 }
 
+export function InterventionBadge({ it }: { it: CoachInterventionItem }) {
+  const d = new Date(it.created_at);
+  const dt = `${d.getDate()}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+  return (
+    <span
+      className="mt-1 inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700"
+      title={`${dt} tarihinde ${it.coach_name ?? "koça"} iletildi — ${it.status_label}`}
+    >
+      <CheckCircle2 className="size-3" aria-hidden />
+      {dt} koça iletildi · {it.status_label}
+    </span>
+  );
+}
+
 function AtRiskRow({
   row,
+  intervention,
   onNotify,
 }: {
   row: AtRiskRowItem;
+  intervention?: CoachInterventionItem | null;
   onNotify: () => void;
 }) {
   return (
@@ -223,6 +254,7 @@ function AtRiskRow({
           {row.full_name}
           {row.is_paused && <PauseBadge reason={row.pause_reason} />}
         </div>
+        {intervention ? <InterventionBadge it={intervention} /> : null}
         <div className="text-[11px] text-muted-foreground mt-0.5">
           {row.grade_level ? `${row.grade_level}. sınıf` : null}
           {row.weekly_planned > 0 ? (

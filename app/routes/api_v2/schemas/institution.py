@@ -906,3 +906,21 @@ class NotifyCoachResult(BaseModel):
     request_id: int
     teacher_id: int
     teacher_name: str | None = None
+
+
+# =============================================================================
+# P4b — Koça iletilen müdahale geçmişi (risk/tükenmişlik panosu)
+# =============================================================================
+
+
+class CoachInterventionItem(BaseModel):
+    request_id: int
+    student_name: str | None = None     # subject'ten parse ("Riskli öğrenci: X")
+    coach_name: str | None = None
+    created_at: datetime
+    status: str
+    status_label: str
+
+
+class CoachInterventionsResponse(BaseModel):
+    items: list[CoachInterventionItem]

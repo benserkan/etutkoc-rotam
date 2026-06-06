@@ -127,6 +127,8 @@ from app.routes.api_v2.schemas.institution import (
     InstitutionTeacherListResponse,
     InvitationCreateBody,
     NotifyCoachBody,
+    CoachInterventionItem,
+    CoachInterventionsResponse,
     NotifyCoachResult,
     InvitationItem,
     InvitationListResponse,
@@ -1551,8 +1553,50 @@ def institution_notify_coach_v2(
             teacher_id=teacher.id,
             teacher_name=teacher.full_name or teacher.email,
         ),
-        invalidate=["support:inbox", "support:mine"],
+        invalidate=["support:inbox", "support:mine", "institution:me:interventions"],
     )
+
+
+@router.get("/coach-interventions", response_model=CoachInterventionsResponse)
+def institution_coach_interventions_v2(
+    days: int = Query(60, ge=1, le=365),
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Yöneticinin "Koça ilet" ile açtığı müdahale talepleri (geçmiş). Risk/
+    tükenmişlik panosunda öğrenci satırına "X tarihinde koça iletildi" eşlemek
+    için ad-bazlı eşleşme kullanılır (notify-coach öğrenciyi isimle referans eder)."""
+    from datetime import datetime as _dt, timedelta as _td, timezone as _tz
+    from app.models import (
+        SUPPORT_AUDIENCE_TEACHER, SUPPORT_STATUS_LABELS_TR, SupportRequest,
+    )
+    cutoff = _dt.now(_tz.utc) - _td(days=days)
+    rows = (
+        db.query(SupportRequest)
+        .filter(
+            SupportRequest.requester_id == user.id,
+            SupportRequest.audience == SUPPORT_AUDIENCE_TEACHER,
+            SupportRequest.category == "student_risk",
+            SupportRequest.created_at >= cutoff,
+        )
+        .order_by(SupportRequest.created_at.desc())
+        .all()
+    )
+    prefix = "Riskli öğrenci: "
+    items: list[CoachInterventionItem] = []
+    for r in rows:
+        sname = None
+        if r.subject and r.subject.startswith(prefix):
+            sname = r.subject[len(prefix):].strip() or None
+        items.append(CoachInterventionItem(
+            request_id=r.id,
+            student_name=sname,
+            coach_name=(r.target_user.full_name or r.target_user.email) if r.target_user else None,
+            created_at=r.created_at,
+            status=r.status,
+            status_label=SUPPORT_STATUS_LABELS_TR.get(r.status, r.status),
+        ))
+    return CoachInterventionsResponse(items=items)
 
 
 # =============================================================================

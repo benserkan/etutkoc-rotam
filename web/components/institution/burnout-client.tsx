@@ -9,13 +9,17 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
+  buildInterventionMap,
   getInstitutionBurnout,
+  getInstitutionCoachInterventions,
   institutionKeys,
+  type CoachInterventionItem,
 } from "@/lib/api/institution";
 import {
   NotifyCoachDialog,
   type NotifyCoachTarget,
 } from "@/components/institution/notify-coach-dialog";
+import { InterventionBadge } from "@/components/institution/at-risk-client";
 import type { BurnoutResponse, BurnoutRowItem } from "@/lib/types/institution";
 import {
   BurnoutLevelBadge,
@@ -43,6 +47,13 @@ export function BurnoutClient({ initial }: Props) {
   });
   const data = q.data ?? initial;
   const { items } = data;
+
+  const intQ = useQuery({
+    queryKey: institutionKeys.interventions(),
+    queryFn: getInstitutionCoachInterventions,
+    staleTime: 30_000,
+  });
+  const intMap = React.useMemo(() => buildInterventionMap(intQ.data?.items ?? []), [intQ.data]);
 
   const [target, setTarget] = React.useState<NotifyCoachTarget | null>(null);
 
@@ -85,6 +96,7 @@ export function BurnoutClient({ initial }: Props) {
                   <BurnoutRow
                     key={r.student_id}
                     row={r}
+                    intervention={intMap.get(r.full_name.trim().toLocaleLowerCase("tr")) ?? null}
                     onNotify={() =>
                       r.teacher_id
                         ? setTarget({
@@ -118,14 +130,19 @@ export function BurnoutClient({ initial }: Props) {
 
 function BurnoutRow({
   row,
+  intervention,
   onNotify,
 }: {
   row: BurnoutRowItem;
+  intervention?: CoachInterventionItem | null;
   onNotify: () => void;
 }) {
   return (
     <tr className="hover:bg-muted/30">
-      <td className="px-4 py-2.5 font-medium">{row.full_name}</td>
+      <td className="px-4 py-2.5 font-medium">
+        {row.full_name}
+        {intervention ? <div><InterventionBadge it={intervention} /></div> : null}
+      </td>
       <td className="px-4 py-2.5 text-muted-foreground">
         {row.teacher_name ? (
           <span className="inline-flex items-center gap-1.5">
