@@ -184,3 +184,42 @@ export function getParentWeeklyReport(id: number, weekStart?: string | null): Pr
   const qs = weekStart ? `?week_start=${encodeURIComponent(weekStart)}` : "";
   return apiRequest<WeeklyReportResponse>(`/api/v2/parent/students/${id}/weekly-report${qs}`);
 }
+
+// ---- P2: Veli deneme geçmişi + AI içgörü ----
+import type { ExamRow, ExamSummary } from "./student";
+
+export interface ParentExamsResponse {
+  summary: ExamSummary;
+  rows: ExamRow[];
+  section_options: { value: string; label: string }[];
+}
+export interface ParentInsightData {
+  summary: string;
+  strengths: string[];
+  focus_areas: string[];
+  parent_tips: string[];
+  based_on_exams: number;
+  based_on_solved: number;
+  generated_at: string;
+}
+export interface ParentInsightResponse {
+  insight: ParentInsightData | null;
+  is_stale: boolean;
+  ai_available: boolean;
+  unavailable_reason: string | null;
+}
+
+export const parentP2Keys = {
+  exams: (id: number) => ["parent", "student", id, "exams"] as const,
+  insight: (id: number) => ["parent", "student", id, "insight"] as const,
+};
+
+export function getParentExams(id: number): Promise<ParentExamsResponse> {
+  return apiRequest<ParentExamsResponse>(`/api/v2/parent/students/${id}/exams`);
+}
+export function getParentInsight(id: number): Promise<ParentInsightResponse> {
+  return apiRequest<ParentInsightResponse>(`/api/v2/parent/students/${id}/insight`);
+}
+export function generateParentInsight(id: number): Promise<ParentInsightResponse> {
+  return apiRequest<ParentInsightResponse>(`/api/v2/parent/students/${id}/insight`, { method: "POST" });
+}

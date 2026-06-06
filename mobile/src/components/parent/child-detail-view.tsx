@@ -31,11 +31,13 @@ export function ParentChildDetailView({
   onOpenWeek,
   onOpenReport,
   onOpenTopics,
+  onOpenExams,
 }: {
   data: ParentStudentOverview;
   onOpenWeek?: () => void;
   onOpenReport?: () => void;
   onOpenTopics?: () => void;
+  onOpenExams?: () => void;
 }) {
   const w = WARN[data.warning_level];
   const grade =
@@ -99,6 +101,22 @@ export function ParentChildDetailView({
             </View>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#4f46e5" />
+        </Pressable>
+      ) : null}
+
+      {onOpenExams ? (
+        <Pressable
+          onPress={onOpenExams}
+          className="flex-row items-center justify-between rounded-2xl border border-violet-200 bg-violet-50 px-4 py-4 active:bg-violet-100"
+        >
+          <View className="flex-row items-center gap-2.5">
+            <Ionicons name="sparkles-outline" size={20} color="#7c3aed" />
+            <View>
+              <Text className="text-[14px] font-semibold text-violet-800">Denemeler & Analiz</Text>
+              <Text className="text-[11px] text-violet-700">Deneme geçmişi + yapay zekâ durum analizi</Text>
+            </View>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#7c3aed" />
         </Pressable>
       ) : null}
 
