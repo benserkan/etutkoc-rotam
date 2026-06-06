@@ -2,7 +2,6 @@ import * as React from "react";
 import {
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -410,12 +409,12 @@ export function TaskSheet(props: {
 }) {
   const { onClose, ...content } = props;
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible transparent statusBarTranslucent animationType="slide" onRequestClose={onClose}>
       <View className="flex-1">
         <Pressable className="absolute inset-0 bg-black/40" onPress={onClose} />
         <KeyboardAvoidingView
           className="flex-1 justify-end"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          behavior="padding"
         >
           <View className="max-h-[88%] rounded-t-3xl bg-white px-5 pb-8 pt-3">
             <View className="mb-2 items-center">

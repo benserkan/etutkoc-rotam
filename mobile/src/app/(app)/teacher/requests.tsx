@@ -5,7 +5,6 @@ import {
   Alert,
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   Text,
   TextInput,
@@ -136,8 +135,8 @@ export default function TeacherRequestsTab() {
       )}
 
       {/* Red gerekçesi / yanıt modalı */}
-      <Modal visible={action != null} transparent animationType="fade" onRequestClose={closeAction}>
-        <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} className="flex-1 justify-end bg-black/40">
+      <Modal visible={action != null} transparent statusBarTranslucent animationType="fade" onRequestClose={closeAction}>
+        <KeyboardAvoidingView behavior="padding" className="flex-1 justify-end bg-black/40">
           <View className="rounded-t-3xl bg-white p-5 pb-8">
             <Text className="text-base font-bold text-slate-900">
               {action?.type === "reject" ? "Talebi reddet" : "Soruyu yanıtla"}

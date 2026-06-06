@@ -2,7 +2,6 @@ import * as React from "react";
 import {
   KeyboardAvoidingView,
   Modal,
-  Platform,
   Pressable,
   ScrollView,
   Text,
@@ -22,12 +21,14 @@ export function FormSheet({
   children: React.ReactNode;
 }) {
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent statusBarTranslucent animationType="slide" onRequestClose={onClose}>
       <View className="flex-1">
         <Pressable className="absolute inset-0 bg-black/40" onPress={onClose} />
         <KeyboardAvoidingView
           className="flex-1 justify-end"
-          behavior={Platform.OS === "ios" ? "padding" : undefined}
+          // Android'de de "padding" şart — alttan açılan sheet klavyenin üstüne
+          // çıksın (önceden undefined idi → klavye formu örtüyordu).
+          behavior="padding"
         >
           <View className="max-h-[90%] rounded-t-3xl bg-white px-5 pb-8 pt-3">
             <View className="mb-2 items-center">
