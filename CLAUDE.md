@@ -6,6 +6,52 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## DEVAM EDEN — Konu Performansı + Veli AI + mobil eksikler (2026-06-06, P1-P4)
+
+**Bağlam:** Kullanıcı cihaz-üstü derin test (4 rol) sırasında 11 maddelik kapsamlı
+istek verdi (çoğu web+mobil+backend). Paketlere bölündü; **sonunda kapsamlı test +
+canlı deploy (web + Android/iOS build) + push** istendi. Migration head =
+**`f9g2j5k6j33a`** (parent_insights). Commit'ler origin'e push'landı (`5f7cdfb`),
+**canlı deploy + mobil build BEKLİYOR** (tüm paketler bitince).
+
+- **Mobil koç 7 düzeltme** ✅ (commit'li, **mobil build bekliyor** — expo-audio
+  native modül): biten kaynak gizle / etkinlikte ders seç (başlık `{Ders}·{detay}`) /
+  deneme ders-bazlı D-Y / **seans mikrofon dikte** (expo-audio + /sessions/transcribe,
+  format audio/mp4) / DNA "Derslere göre" netlik + "(diğer)"→"Deneme/etkinlik (derssiz)" /
+  Talepler→Destek notu / öneri biten-kaynaktan üretmiyor (teyit, suggestions.py:505).
+  + klavye fix (FormSheet behavior="padding") + içgörü 500 graceful (gemini.py deploy'lı) +
+  tekrar seed geri bildirimi.
+
+- **P1 — Ders→Konu performansı** ✅ (backend+web+mobil, **14/14**): çözülen test +
+  D/Y soru + doğruluk % (ders→konu, BookSection.label=konu; DENEME hariç; aynı isim
+  birleşir). `topic_performance.py` + 3 endpoint (teacher/student/parent, gizlilik 404) +
+  `build_topic_performance_response` (3 yüzey ortak). Web: koç "Konu Performansı" sekmesi +
+  /student/topics + /parent/students/[id]/topics (paylaşılan TopicPerformancePanel
+  source-tabanlı). Mobil: tek generic route `topic-performance.tsx` (source+id) + 3 nav.
+
+- **P2 — Veli deneme geçmişi + AI içgörü** ✅ (backend+web+mobil, **11/11**, migration
+  `f9g2j5k6j33a`): P2a GET /parent/students/{id}/exams (tüm denemeler, koça-özel not
+  gizli). P2b `ai_parent_insight.py` (Gemini ücretli, konu perf+deneme→veliye sade analiz;
+  koç-özel seans notu YOK) → kredi **öğrencinin KOÇUNUN** havuzundan (AI_PARENT_INSIGHT=6) +
+  koç ücretli paket + onay kapısı; GET ücretsiz cache (hesaplanan bayatlık) / POST kredi /
+  yeterli veri yok 422. `ParentInsight` modeli (öğrenci başına tek). Web+mobil veli
+  "Denemeler & Analiz" ekranı (içgörü oluştur/yenile + deneme geçmişi).
+
+**SIRADA (P3-P4 + deploy):**
+- **P3** — Veli↔koç çift yönlü talep (mobil; backend YENİ — support audience'da PARENT
+  yok, kurulacak) + "koça deneme yorum talebi" (bu sisteme bağlanır) + öğrenci görev-
+  değiştir/çıkar talebi (mobil — TaskRequest zaten var, mobil UI eksik).
+- **P4** — Kurum: (a) Müdahale "her şey yolunda" yanlış (3-gün programsız öğrenci
+  yansımalı — action_center) · (b) risk panelinde "koça ilet" GEÇMİŞİ (X tarihinde
+  iletildi; web+mobil) · (c) aktivite heatmap okunabilirlik (hangi gün belirsiz) ·
+  (d) haftalık özet grafiklerle zenginleştir (web+mobil) · (e) kurum abonelik/yükseltme
+  mobilden.
+- **SON** — kapsamlı test (run_gorev_checks + tüm smoke) + **canlı deploy** (web+worker+
+  next rebuild — P2 backend canlıya; migration `f9g2j5k6j33a` prod'da `upgrade head`) +
+  **mobil EAS build** (Android+iOS; expo-audio + tüm düzeltmeler) + push.
+
+---
+
 ## Proje
 
 **ETÜTKOÇ** — LGS/YKS koçluk takip platformu. FastAPI + Jinja + HTMX'ten
