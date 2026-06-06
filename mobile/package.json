@@ -46,7 +46,16 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "expo lint"
+    "lint": "expo lint",
+    "build:android:preview": "eas build --platform android --profile preview",
+    "build:ios:preview": "eas build --platform ios --profile preview",
+    "build:android:prod": "eas build --platform android --profile production",
+    "build:ios:prod": "eas build --platform ios --profile production"
+  },
+  "expo": {
+    "install": {
+      "exclude": ["typescript", "@types/react"]
+    }
   },
   "private": true
 }
