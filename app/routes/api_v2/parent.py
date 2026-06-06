@@ -52,6 +52,7 @@ from app.routes.api_v2.dependencies import (
 )
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.parent import (
+    ParentCoachRequestBody,
     ParentBillingMonth,
     ParentBillingSummary,
     ParentChildLink,
@@ -291,6 +292,39 @@ def parent_student_exams_v2(
     return StudentExamListResponse(
         summary=summary, rows=rows, section_options=_exam_section_options(),
     )
+
+
+@router.post("/students/{student_id}/coach-request")
+def parent_coach_request_v2(
+    student_id: int,
+    body: ParentCoachRequestBody,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Veli → çocuğunun koçuna talep (çift yönlü thread). Deneme yorumu / gidişat
+    sorusu vb. Koç gelen kutusunda görür, cevaplar; veli /support'tan izler.
+
+    Gizlilik: assert_parent_can_view → 404. Çocuğun koçu yoksa 404.
+    """
+    import app.services.support_request_service as support_svc
+    try:
+        student = assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "student_not_found", "message": "Öğrenci bulunamadı."})
+    try:
+        req = support_svc.parent_request_to_coach(
+            db, parent=user, student=student, subject=body.subject,
+            body=body.body, category=body.category,
+        )
+    except support_svc.SupportError as e:
+        db.rollback()
+        code = e.code if hasattr(e, "code") else "error"
+        msg = e.message if hasattr(e, "message") else str(e)
+        status_code = 404 if code == "coach_not_found" else 422
+        raise HTTPException(status_code=status_code, detail={"error": "validation", "code": code, "message": msg})
+    db.commit()
+    return MutationResponse[dict](data={"id": req.id}, invalidate=["support:mine"])
 
 
 # ---------------------------------------------------------------------------

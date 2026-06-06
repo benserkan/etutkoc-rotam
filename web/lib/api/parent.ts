@@ -167,3 +167,16 @@ export function generateParentInsight(studentId: number) {
     method: "POST",
   });
 }
+
+// ---- P3: Veli → koç talebi (çift yönlü; SupportRequest) ----
+export interface ParentCoachRequestBody {
+  category: string; // exam_comment | progress_question | other
+  subject: string;
+  body: string;
+}
+export function createParentCoachRequest(studentId: number, body: ParentCoachRequestBody) {
+  return api<{ data: { id: number }; invalidate: string[] }>(
+    `/api/v2/parent/students/${studentId}/coach-request`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}

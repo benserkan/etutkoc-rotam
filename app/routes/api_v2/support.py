@@ -73,7 +73,8 @@ def list_my_requests_v2(
     db: Session = Depends(get_db),
 ):
     """Kendi taleplerim (talep eden görünümü)."""
-    if not svc.can_request(user):
+    # Veli de kendi taleplerini görür (oluşturma parent.py'de student bağlamıyla).
+    if not svc.can_request(user) and user.role != UserRole.PARENT:
         raise _forbidden("Bu rol talep oluşturamaz.")
     rows = svc.list_for_requester(db, user, status_filter=status_param)
     return SupportListResponse(

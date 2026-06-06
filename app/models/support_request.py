@@ -75,6 +75,9 @@ SUPPORT_CATEGORY_LABELS_TR: dict[str, str] = {
     "billing": "Üyelik / ödeme",
     "feature": "Öneri / istek",
     "student_risk": "Riskli öğrenci",
+    # Veli → koç kategorileri (P3)
+    "exam_comment": "Deneme yorumu",
+    "progress_question": "Gidişat sorusu",
     "other": "Diğer",
 }
 

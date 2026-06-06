@@ -7,7 +7,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Sparkles, RefreshCw, TrendingUp, TrendingDown, Heart, Target, AlertCircle } from "lucide-react";
+import { ArrowLeft, Sparkles, RefreshCw, TrendingUp, TrendingDown, Heart, Target, AlertCircle, MessageSquarePlus } from "lucide-react";
 
 import { ApiError } from "@/lib/api";
 import {
@@ -33,11 +33,11 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
   const insightQ = useQuery({ queryKey: parentP2Keys.insight(studentId), queryFn: () => getParentInsight(studentId) });
 
   const [genErr, setGenErr] = React.useState<string | null>(null);
+  // setQueryData ile cache doğrudan güncellenir (yanıt yeni içgörüyü içerir) — invalidate gerekmez
+  // eslint-disable-next-line lgs/missing-invalidate
   const genMut = useMutation({
     mutationFn: () => generateParentInsight(studentId),
     onMutate: () => setGenErr(null),
-    // setQueryData ile cache doğrudan güncellenir (yanıt yeni içgörüyü içerir) — invalidate gerekmez
-    // eslint-disable-next-line lgs/missing-invalidate
     onSuccess: (data) => qc.setQueryData(parentP2Keys.insight(studentId), data),
     onError: (e) => {
       const code = e instanceof ApiError ? (e.detail?.code ?? null) : null;
@@ -123,7 +123,15 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
 
       {/* Deneme geçmişi */}
       <div>
-        <h2 className="mb-2 text-base font-semibold text-foreground">Deneme Geçmişi</h2>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <h2 className="text-base font-semibold text-foreground">Deneme Geçmişi</h2>
+          <Link
+            href={`/parent/support?child=${studentId}&category=exam_comment`}
+            className="inline-flex items-center gap-1.5 rounded-lg border border-[#117A86]/40 px-3 py-1.5 text-xs font-semibold text-[#117A86] hover:bg-[#117A86]/5"
+          >
+            <MessageSquarePlus className="size-3.5" aria-hidden /> Koça deneme hakkında sor
+          </Link>
+        </div>
         {examsQ.isLoading ? (
           <p className="text-sm text-muted-foreground">Yükleniyor…</p>
         ) : !exams || exams.rows.length === 0 ? (

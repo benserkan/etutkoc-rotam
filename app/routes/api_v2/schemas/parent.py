@@ -605,3 +605,14 @@ class ParentInsightResponse(BaseModel):
     is_stale: bool = False
     ai_available: bool = False          # koç ücretli paket + onay → üretilebilir
     unavailable_reason: str | None = None  # üretilemiyorsa veliye gösterilecek mesaj
+
+
+# =============================================================================
+# P3 — Veli → koç talebi (çift yönlü; SupportRequest altyapısı)
+# =============================================================================
+
+
+class ParentCoachRequestBody(BaseModel):
+    category: str = "progress_question"   # exam_comment | progress_question | other
+    subject: str = Field(..., max_length=200)
+    body: str = Field(..., max_length=4000)

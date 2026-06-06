@@ -163,6 +163,51 @@ def notify_coach(
     return req
 
 
+def parent_request_to_coach(
+    db: Session, *, parent: User, student: User, subject: str, body: str,
+    category: str = "progress_question",
+) -> SupportRequest:
+    """Veli → çocuğunun koçuna talep (audience=teacher, target_user_id=koç).
+
+    Çift yönlü thread: koç gelen kutusunda görür (list_inbox_teacher), cevaplar;
+    veli kendi taleplerinde (list_for_requester) görür + izler. Çocuğun bir koçu
+    olmalı (student.teacher_id). Veli-çocuk bağı endpoint'te doğrulanır."""
+    coach = db.get(User, student.teacher_id) if student.teacher_id else None
+    if coach is None or coach.role != UserRole.TEACHER:
+        raise SupportError("coach_not_found", "Çocuğun bağlı bir koçu yok.")
+
+    subject = (subject or "").strip()
+    body = (body or "").strip()
+    if not subject:
+        raise SupportError("subject_required", "Konu boş olamaz.")
+    if len(subject) > MAX_SUBJECT:
+        raise SupportError("subject_too_long", f"Konu en fazla {MAX_SUBJECT} karakter.")
+    if not body:
+        raise SupportError("body_required", "Mesaj boş olamaz.")
+    if len(body) > MAX_BODY:
+        raise SupportError("body_too_long", f"Mesaj en fazla {MAX_BODY} karakter.")
+    if category not in SUPPORT_CATEGORY_LABELS_TR:
+        category = "progress_question"
+
+    now = datetime.now(timezone.utc)
+    req = SupportRequest(
+        requester_id=parent.id,
+        requester_role=parent.role.value,
+        audience=SUPPORT_AUDIENCE_TEACHER,
+        institution_id=coach.institution_id,
+        target_user_id=coach.id,
+        category=category,
+        subject=subject,
+        status=SUPPORT_STATUS_OPEN,
+        last_activity_at=now,
+    )
+    db.add(req)
+    db.flush()
+    db.add(SupportRequestMessage(request_id=req.id, sender_id=parent.id, body=body))
+    db.flush()
+    return req
+
+
 # ----------------------------- Sorgular -----------------------------
 
 
