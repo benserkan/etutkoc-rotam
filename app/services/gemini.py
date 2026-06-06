@@ -113,8 +113,15 @@ def generate(
         if not key:
             raise AIServiceUnavailable(
                 "Gemini ücretli anahtarı tanımlı değil (süper admin → AI Ayarları)")
-        return _call(get_gemini_model(paid=True), key, parts, timeout=timeout,
-                     json_mode=json_mode, max_output_tokens=max_output_tokens)
+        # KVKK gereği kişisel veride ücretsiz key'e DÜŞMEYİZ (no-training zorunlu).
+        # Kota dolunca _QuotaExceeded sızmasın → düzgün AIServiceUnavailable (502).
+        try:
+            return _call(get_gemini_model(paid=True), key, parts, timeout=timeout,
+                         json_mode=json_mode, max_output_tokens=max_output_tokens)
+        except _QuotaExceeded:
+            raise AIServiceUnavailable(
+                "Yapay zekâ şu an yoğun (ücretli anahtar kotası doldu). "
+                "Lütfen birkaç dakika sonra tekrar deneyin.")
 
     # prefer_paid → önce ücretli (pro) model; kotada ücretsize düş.
     if prefer_paid:
