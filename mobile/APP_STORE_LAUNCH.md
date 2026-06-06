@@ -166,15 +166,26 @@ Toplanan veriler — **kimliğe bağlı**, **yalnız uygulama işlevi için**,
 gerçek ekran**; zemin beyaz→açık-petrol degrade; köşede küçük "etütkoç · rotam".
 Tutarlı şablon, temiz durum çubuğu (saat 9:41, dolu pil).
 
-**Görsel planı (sıra + başlık + ekran)**
-1. **"Hedefe giden net rota"** — koç panosu (kim geride/hedefte, renkli durum)
-2. **"Günlük program, tek dokunuşla"** — öğrenci bugün ekranı (görev işaretleme)
-3. **"Deneme netleri, gelişim grafiği"** — deneme/analitik (net trend çizgisi)
-4. **"Geride kalmadan önce uyar"** — risk paneli / erken uyarı
-5. **"Veli her şeyi görür"** — veli haftalık rapor (kıyas + netler)
-6. **"Yapay zekâ koçluk hazırlığı"** — koçluk içgörüsü
-7. **"Kurumlar tek panelden yönetir"** — kurum panosu / müdahale merkezi
-8. **"KVKK'ya uygun, güvenli"** — güven kapanışı (kilit + kısa madde)
+**KESİNLEŞEN sıra (KOÇ-ÖNCELİKLİ — kullanıcı kararı): 4 koç · 1 öğrenci · 1 veli · 1 kurum · 1 güven**
+Mantık: App Store'da asıl ikna hedefi ödeyen KOÇ. İlk 3 görsel (aramada görünür)
+koç değerini satar; öğrenci/veli/kurum ekosistemi gösterir; son görsel güven.
+
+| # | Rol | Başlık | Mobil ekran (üretimde yakalanacak) |
+|---|---|---|---|
+| 1 | **Koç** | "Tüm öğrencilerin tek panelde — kim geride, bir bakışta" | `/teacher/dashboard` veya `/teacher/students` (risk-renkli liste) |
+| 2 | **Koç** | "Geride kalmadan önce uyar" | Pano uyarı akışı / öğrenci detay "Durum Özeti" (kırmızı uyarı) |
+| 3 | **Koç** | "Yapay zekâ ile seansa hazır gel" | Koçluk içgörüsü (⚠ mobilde AI içgörü görünümü eklenmeli VEYA gelişim-izleme "zorlandığı konular"; üretimde netleştir) |
+| 4 | **Öğrenci** | "Öğrencinin programı cebinde" | `/student/today` (görev işaretleme + günün notu) |
+| 5 | **Veli** | "Veli her şeyi görür, güven artar" | `/parent-child-report` (geçen haftaya kıyas + net trendi) |
+| 6 | **Koç** | "Deneme netleri otomatik ölçülür" | Öğrenci detay → Denemeler (net trend grafiği) |
+| 7 | **Kurum** | "Kurumunu tek panelden yönet" | `/institution/action-center` (müdahale merkezi) |
+| 8 | **Güven** | "KVKK'ya uygun, güvende" | Kompoze grafik (kilit + 3 madde: KVKK · şifreli · koça özel notlar) — app ekranı gerekmez |
+
+**Üretim notu**: 1-2-3-6 için **koç hesabı**, 4 için **öğrenci**, 5 için **veli**,
+7 için **kurum yöneticisi** hesabıyla giriş yapıp ekran alınır (test hesaplarıyla).
+#8 tamamen kompoze (Pillow). #3'teki AI ekranı için: ya mobile küçük bir "AI
+içgörü" görünümü eklenir (önerilir — güçlü farklılaştırıcı) ya da yerine
+gelişim-izleme içgörüsü konur.
 
 **Üretim**: iOS build çıkınca (veya mevcut Android yakalamalarından — UI birebir
 aynı) ekranlar alınır; Pillow ile marka çerçevesi + başlık kompoze edilir
