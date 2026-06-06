@@ -4692,6 +4692,80 @@ Tanıtım carousel önceki commit (`adcbd48`); bu paket native signup + IP kapı
   abuse 21. Migration YOK. mobil tsc temiz.
 - **KALAN (#5)**: SMS telefon doğrulama kapısı (SMS canlıya alınınca devreye girer).
 
+## #5 Signup telefon doğrulama kapısı — DORMANT (2026-06-06, migration `e8f1i4j5i22z`)
+
+Çoklu-hesap çiftliğini kökünden kesmek için signup-anı SMS OTP kapısı. **Yalnız
+`is_sms_enabled()` (SMS OTP paketi alınıp `SMS_ENABLED=true`) iken zorunlu**; o ana
+kadar `signup_phone_required()`=False → signup eskisi gibi (telefon opsiyonel,
+doğrulamasız). Deploy edildi ama SMS açılana dek HİÇBİR kaydı etkilemez.
+- **Migration `e8f1i4j5i22z`** (down_revision d7e0h3i4h11y): `signup_phone_verifications`
+  (hesap-OLUŞMADAN önce telefon-anahtarlı OTP; mevcut `phone_verifications` user_id'ye
+  bağlı). Additive, downgrade'li, uygulandı. **alembic head = e8f1i4j5i22z.**
+- `signup_phone_service`: required/start/verify/decode_token/phone_in_use (60s cooldown
+  + IP saatlik cap + bir-telefon-bir-hesap tekillik). 3 public endpoint
+  `/auth/signup/phone/{required,start,verify}` → imzalı `phone_token` (JWT 20dk).
+- `signup_teacher` kapısı: açıkken `phone_token` zorunlu → telefon DOĞRULANMIŞ
+  (`phone_verified_at` set) + tekillik 409. Web + mobil signup formuna koşullu OTP
+  adımı (bütüncül yayılım — kapı global). `test_api_v2_signup_phone_gate` 12/12
+  (dormant #2 dahil). Commit `0e6e2bc`, canlı (`/required`→false doğrulandı).
+
+## Mobil Kurum Yöneticisi paneli — web paritesi (2026-06-06, mobil-only)
+
+Kurum yöneticisi mobil panelini web paritesine taşıdı (tümü CANLI uçlar — yeni
+endpoint/migration YOK). Yeni **"Analiz" sekmesi** (hub) tüm ekranları gruplar.
+- **Koç detayı**: Panel'de koç satırı → `institution-teacher` (öğrenci listesi +
+  son 7g planlanan/çözülen + gizlilik banner).
+- **Öğretmen daveti**: `institution-invitations` (oluştur + link kopyala/paylaş + iptal).
+- **Analiz** (Analiz hub): Program Uyumu · Akademik Çıktı · Risk Paneli · Kohort ·
+  Aktivite Haritası · Tükenmişlik · Öğretmen Karnesi · Hedef Analizi · Haftalık Özet
+  (arşiv+detay+şimdi gönder) · Veli Güveni. Risk + Tükenmişlik'te **"Koça ilet"**
+  (notify-coach müdahale talebi).
+- **Üyelik**: Kredi Kullanımı · Limitler · Hesap Ayarları (plan yükseltme talebi).
+- **Aktivite Akışı**: kim katıldı/davet etti/yükseltti (gün + tür filtresi).
+- Talepler (öğretmen inbox + süper admin) zaten mevcut support ekranındaydı.
+- Paylaşılan primitive'ler `components/institution/ui.tsx` (InstitutionScreen scaffold +
+  Kpi/tone/Section/Bar/Badge/Banner/MiniBars). `lib/institution.ts` tüm tip+fetcher+
+  davet/notify/upgrade mutation'ları. tsc temiz. **Mobil-only — sunucu deploy gerekmez**
+  (EAS build ister). Commit `9ae1ae4`. PARITY.md güncel.
+
+## Push bildirim genişletmesi — tüm rol e-postaları + öğrenci işaretleme→koç (2026-06-06)
+
+**Bağlam (kullanıcı, "son derece titizlikle"):** veli/öğrenci/koç/bağımsız koç/kurum
+yöneticisi için üretilen e-postalar (yeni program, haftalık özet vb.) mobil push olarak
+da iletilmeli + deep-link; ayrıca öğrenci programda işaretleyince koça **mobil-only**
+push (e-posta YOK).
+- **Kritik mimari bulgu**: `NotificationLog`/dispatcher **veli-merkezli** (`parent_id`);
+  push yalnız veliye gidiyordu. Koç/kurum yöneticisi e-postaları **doğrudan
+  `email_service.send_email`** ile gidiyor (push yoktu). İki mekanizma da ele alındı.
+- **Foundation** (`push_notifications.py`): `safe_push` (e-postayı push'a yansıtan
+  best-effort, asla raise etmez, token/user yoksa no-op) + `notify_coach_student_progress`
+  (öğrenci-ilerleme→koç, öğrenci başına **3 saat throttle**, e-posta YOK). Mobil
+  `notification-router`: yeni deep-link tipleri **coach / coach_student / institution /
+  student** → ilgili ekran.
+- **E-posta→push yansıtmaları** (mevcut e-posta korunarak, additive):
+  - Koç/bağımsız koç: deneme/yenileme/süresi-doldu (`trial_notifications` ×4), kredi %80
+    (`credits`), teklif (`offers`), yeni öğrenci talebi (`request_service._notify_new_safe`)
+    → Paket/Talepler.
+  - Kurum yöneticisi: haftalık özet (`admin_digest`), kredi uyarısı, teklif → Özet
+    detayı/Kredi/Abonelik.
+  - Öğrenci: talep yanıtlandı (`_notify_resolved_safe`) → Talepler.
+  - Veli: zaten dispatcher EMAIL kanalında push'lanıyordu (değişmedi).
+- **Öğrenci işaretleme→koç push**: `complete_task_v2` + `set_item_completed_v2`
+  (total_done>0) uçlarında **FastAPI BackgroundTasks** ile (öğrencinin isteğini BLOKLAMAZ
+  — Expo 10s timeout riski; taze SessionLocal; throttle'lı). Un-mark'ta push yok.
+- **KAPSAM DIŞI**: süper admin/satış (mobil süper admin yok) + pre-login (şifre
+  sıfırlama/e-posta doğrulama). `notify_new_signup_admin`/contact requests = config
+  e-postası (user_id yok).
+- `test_push_notifications_expansion` **9/9**. Regresyon: student mutations 12 + read 11 +
+  teacher requests 14 + trial 4 + renewal 12 + usage 21 + parent 20 + push 9 GREEN.
+  Migration YOK. Commit `af9511f`, **web+worker rebuild + canlıda push smoke 9/9 doğrulandı.**
+  **KURAL**: yeni bir e-posta üretildiğinde (aktif rol) `safe_push` ile mobil push da
+  eklenir + mobil router'a deep-link tipi tanımlanır. Push daima best-effort + throttle'lı.
+- **Stale test notu**: `test_api_v2_admin_revenue_offers` (Invoice plan `kurumsal_pro`
+  artık geçersiz) + `test_stage6_credits` (eski cooldown davranışı, Paket A'da değişti) +
+  `test_stage4_admin_digest` (at_risk=0, onboarding-grace) **önceden bozuktu** — push
+  değişiklikleriyle ilgisiz (additive).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
