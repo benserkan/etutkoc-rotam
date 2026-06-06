@@ -6,9 +6,13 @@ import { FormSheet } from "@/components/ui/form-sheet";
 import { Badge, Banner, InstitutionScreen, Section } from "@/components/institution/ui";
 import { ApiError } from "@/lib/api";
 import {
+  enableInstitutionGuarantee,
   getInstitutionSubscription,
   institutionKeys,
+  pauseInstitutionForSummer,
   requestInstitutionUpgrade,
+  resumeInstitutionFromPause,
+  switchInstitutionAcademicYear,
   type InstitutionPlanOption,
   type SubscriptionResponse,
 } from "@/lib/institution";
@@ -36,6 +40,22 @@ export default function InstitutionSubscriptionScreen() {
     onError: (e) => Alert.alert("Gönderilemedi", e instanceof ApiError ? e.message : "İşlem başarısız"),
   });
 
+  // P4e — abonelik aksiyonları (akademik yıl / yaz duraklat-devam / garanti)
+  const action = useMutation({
+    mutationFn: (fn: () => Promise<unknown>) => fn(),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: institutionKeys.subscription });
+      Alert.alert("Tamam", "İşlem uygulandı.");
+    },
+    onError: (e) => Alert.alert("Yapılamadı", e instanceof ApiError ? e.message : "İşlem başarısız"),
+  });
+  function confirmAction(title: string, msg: string, fn: () => Promise<unknown>) {
+    Alert.alert(title, msg, [
+      { text: "Vazgeç", style: "cancel" },
+      { text: "Onayla", onPress: () => action.mutate(fn) },
+    ]);
+  }
+
   return (
     <InstitutionScreen<SubscriptionResponse> title="Hesap Ayarları" query={q}>
       {(d) => {
@@ -55,6 +75,40 @@ export default function InstitutionSubscriptionScreen() {
                 <Row label="Performans garantisi" value={s.performance_guarantee ? "Aktif" : "—"} />
               </View>
             </View>
+
+            {/* Abonelik işlemleri (yenileme/duraklatma) — backend can_* flag'lerine göre */}
+            {(s.can_switch_to_academic_year || s.can_pause || s.can_resume || !s.performance_guarantee) ? (
+              <Section title="Abonelik işlemleri">
+                {s.can_switch_to_academic_year ? (
+                  <Pressable disabled={action.isPending} onPress={() => confirmAction("Akademik yıla geç", "Aboneliğin akademik yıl planına geçirilsin mi?", switchInstitutionAcademicYear)}
+                    className="rounded-xl border border-brand-200 bg-brand-50 px-3 py-3 active:bg-brand-100">
+                    <Text className="text-sm font-semibold text-brand-700">Akademik yıla geç</Text>
+                    <Text className="text-[11px] text-brand-700/80">Tüm öğretim yılını kapsayan plan</Text>
+                  </Pressable>
+                ) : null}
+                {s.can_pause ? (
+                  <Pressable disabled={action.isPending} onPress={() => confirmAction("Yaz duraklatması", "Aboneliğin yaz penceresinde duraklatılsın mı?", pauseInstitutionForSummer)}
+                    className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-3 active:bg-amber-100">
+                    <Text className="text-sm font-semibold text-amber-800">Yaz için duraklat</Text>
+                    <Text className="text-[11px] text-amber-700">Yaz döneminde faturalama durur</Text>
+                  </Pressable>
+                ) : null}
+                {s.can_resume ? (
+                  <Pressable disabled={action.isPending} onPress={() => confirmAction("Devam ettir", "Aboneliğin tekrar aktive edilsin mi?", resumeInstitutionFromPause)}
+                    className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 active:bg-emerald-100">
+                    <Text className="text-sm font-semibold text-emerald-800">Aboneliği devam ettir</Text>
+                    <Text className="text-[11px] text-emerald-700">Duraklatmadan geri dön</Text>
+                  </Pressable>
+                ) : null}
+                {!s.performance_guarantee ? (
+                  <Pressable disabled={action.isPending} onPress={() => confirmAction("Performans garantisi", "60 gün performans garantisi etkinleştirilsin mi?", enableInstitutionGuarantee)}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-3 active:bg-slate-50">
+                    <Text className="text-sm font-semibold text-slate-800">Performans garantisini aç</Text>
+                    <Text className="text-[11px] text-slate-500">60 gün içinde hedefe ulaşılmazsa süre uzatılır</Text>
+                  </Pressable>
+                ) : null}
+              </Section>
+            ) : null}
 
             {d.pending_upgrade_request ? (
               <Banner kind="warn">

@@ -705,6 +705,19 @@ export interface SubscriptionRequestResult {
 export function requestInstitutionUpgrade(body: { plan?: string; note?: string }): Promise<{ data: SubscriptionRequestResult }> {
   return apiRequest(`/api/v2/institution/subscription-request`, { method: "POST", body });
 }
+// Abonelik aksiyonları (P4e) — akademik yıl / yaz duraklat-devam / garanti
+export function switchInstitutionAcademicYear(): Promise<unknown> {
+  return apiRequest(`/api/v2/institution/subscription/switch-academic-year`, { method: "POST" });
+}
+export function pauseInstitutionForSummer(): Promise<unknown> {
+  return apiRequest(`/api/v2/institution/subscription/pause`, { method: "POST" });
+}
+export function resumeInstitutionFromPause(): Promise<unknown> {
+  return apiRequest(`/api/v2/institution/subscription/resume`, { method: "POST" });
+}
+export function enableInstitutionGuarantee(): Promise<unknown> {
+  return apiRequest(`/api/v2/institution/subscription/guarantee/enable`, { method: "POST" });
+}
 export function notifyCoach(body: {
   teacher_id: number;
   student_name?: string;
