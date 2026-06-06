@@ -4,6 +4,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 import { FormSheet } from "@/components/ui/form-sheet";
 import type {
+  CoachingInsightCache,
   TeacherDnaResponse,
   TeacherFocusResponse,
   TeacherGoalCreateBody,
@@ -238,6 +239,85 @@ export function CoachGoalsView({ d, busy, onCreate }: { d: TeacherGoalsResponse;
           </Pressable>
         </View>
       </FormSheet>
+    </View>
+  );
+}
+
+// ---------- AI Koçluk İçgörüsü (KS4) ----------
+function InsightList({ icon, color, title, items }: { icon: keyof typeof Ionicons.glyphMap; color: string; title: string; items: string[] }) {
+  if (!items || items.length === 0) return null;
+  return (
+    <View className="gap-2">
+      <View className="flex-row items-center gap-1.5">
+        <Ionicons name={icon} size={16} color={color} />
+        <Text className="text-sm font-semibold text-slate-700">{title}</Text>
+      </View>
+      <View className="gap-1.5">
+        {items.map((s, i) => (
+          <View key={i} className="flex-row gap-2">
+            <Text className="text-slate-400">•</Text>
+            <Text className="flex-1 text-sm leading-5 text-slate-700">{s}</Text>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+export function CoachInsightView({ cache, busy, onGenerate }: { cache: CoachingInsightCache; busy: boolean; onGenerate: () => void }) {
+  const ins = cache.insight;
+
+  if (!ins) {
+    return (
+      <View className="gap-4">
+        <View className="items-center gap-2 rounded-2xl border border-dashed border-violet-200 bg-violet-50/40 px-6 py-8">
+          <Ionicons name="sparkles" size={30} color="#7c3aed" />
+          <Text className="text-center text-base font-semibold text-slate-800">AI Koçluk İçgörüsü</Text>
+          <Text className="text-center text-sm leading-5 text-slate-500">
+            Seans kayıtları ve akademik durumdan yola çıkarak bir sonraki seans için özet, önerilen gündem ve
+            psikolojik ipuçları hazırlar.
+          </Text>
+        </View>
+        <Pressable onPress={onGenerate} disabled={busy} className={cn("flex-row items-center justify-center gap-2 rounded-xl py-3.5", busy ? "bg-violet-300" : "bg-violet-600 active:bg-violet-700")}>
+          <Ionicons name="sparkles" size={18} color="#fff" />
+          <Text className="text-base font-semibold text-white">{busy ? "Oluşturuluyor…" : "İçgörü oluştur (kredi)"}</Text>
+        </Pressable>
+        <Text className="text-center text-[11px] text-slate-400">Yapay zekâ özelliği — kullanımı kredinden düşer. Yalnız sen görürsün.</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View className="gap-4">
+      {cache.is_stale ? (
+        <View className="flex-row items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3">
+          <Ionicons name="time-outline" size={16} color="#b45309" />
+          <Text className="flex-1 text-xs text-amber-800">
+            Bu içgörü {ins.based_on_sessions} seansa dayanıyor; sonrasında yeni kayıt eklendi. Güncel öneri için yenile.
+          </Text>
+        </View>
+      ) : null}
+
+      <View className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4">
+        <View className="mb-1.5 flex-row items-center gap-1.5">
+          <Ionicons name="sparkles" size={16} color="#7c3aed" />
+          <Text className="text-sm font-semibold text-violet-700">Özet</Text>
+        </View>
+        <Text className="text-sm leading-6 text-slate-800">{ins.summary}</Text>
+      </View>
+
+      <InsightList icon="list-outline" color="#0e7490" title="Bu seans konuş" items={ins.agenda_suggestions} />
+      <InsightList icon="heart-outline" color="#059669" title="Psikolojik ipuçları" items={ins.psychological_tips} />
+      <InsightList icon="alert-circle-outline" color="#be123c" title="Dikkat" items={ins.watch_outs} />
+
+      <View className="flex-row items-center justify-between border-t border-slate-100 pt-3">
+        <Text className="text-[11px] text-slate-400">{ins.based_on_sessions} seansa dayanıyor</Text>
+        <Pressable onPress={onGenerate} disabled={busy} className={cn("flex-row items-center gap-1.5 rounded-lg border px-3 py-2", busy ? "border-slate-200" : "border-violet-300 active:bg-violet-50")}>
+          <Ionicons name="refresh" size={15} color="#7c3aed" />
+          <Text className="text-sm font-semibold text-violet-700">{busy ? "Yenileniyor…" : "Yenile (kredi)"}</Text>
+        </Pressable>
+      </View>
+      <Text className="text-center text-[11px] text-slate-400">Öneri amaçlıdır; klinik teşhis değildir. Yalnız sen görürsün.</Text>
     </View>
   );
 }

@@ -524,7 +524,41 @@ export const teacherDevKeys = {
   focus: (id: number) => ["teacher", "student", id, "focus"] as const,
   review: (id: number) => ["teacher", "student", id, "review"] as const,
   goals: (id: number) => ["teacher", "student", id, "goals"] as const,
+  insight: (id: number) => ["teacher", "student", id, "insight"] as const,
+  aiConsent: ["teacher", "ai-consent"] as const,
 };
+
+// ===== AI Koçluk İçgörüsü (KS4) =====
+export interface CoachingInsight {
+  summary: string;
+  agenda_suggestions: string[];
+  psychological_tips: string[];
+  watch_outs: string[];
+  based_on_sessions: number;
+  generated_at?: string | null;
+}
+export interface CoachingInsightCache {
+  insight: CoachingInsight | null;
+  is_stale: boolean;
+}
+export interface AiConsent {
+  consented: boolean;
+  consent_at?: string | null;
+  ai_premium: boolean;
+  plan_code?: string | null;
+}
+export function getTeacherCoachingInsight(id: number): Promise<CoachingInsightCache> {
+  return apiRequest<CoachingInsightCache>(`/api/v2/teacher/students/${id}/coaching-insight`);
+}
+export function generateTeacherCoachingInsight(id: number): Promise<CoachingInsightCache> {
+  return apiRequest<CoachingInsightCache>(`/api/v2/teacher/students/${id}/coaching-insight`, { method: "POST" });
+}
+export function getTeacherAiConsent(): Promise<AiConsent> {
+  return apiRequest<AiConsent>(`/api/v2/teacher/ai-consent`);
+}
+export function setTeacherAiConsent(): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/ai-consent`, { method: "POST" });
+}
 export function getTeacherStudentDna(id: number): Promise<TeacherDnaResponse> {
   return apiRequest<TeacherDnaResponse>(`/api/v2/teacher/students/${id}/dna`);
 }
