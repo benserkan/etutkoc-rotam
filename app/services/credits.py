@@ -379,10 +379,12 @@ def _send_warning_email(
             )
             .all()
         )
-        emails = [a.email for a in admins if a.email]
-        for email in emails:
+        from app.services.push_notifications import safe_push
+        for a in admins:
+            if not a.email:
+                continue
             send_email(
-                to=email, template="credit_warning",
+                to=a.email, template="credit_warning",
                 ctx={
                     "owner_name": inst.name,
                     "owner_kind": "kurum",
@@ -394,6 +396,9 @@ def _send_warning_email(
                     "is_institution": True,
                 },
             )
+            safe_push(db, user_id=a.id, title="Yapay zekâ kredisi azaldı",
+                      body=f"Kurumunun kredisinin %{account.usage_pct or 80}'i kullanıldı.",
+                      data={"type": "institution", "screen": "usage"})
     else:
         u = db.get(User, owner.id)
         if not u or not u.email:
@@ -411,6 +416,10 @@ def _send_warning_email(
                 "is_institution": False,
             },
         )
+        from app.services.push_notifications import safe_push
+        safe_push(db, user_id=u.id, title="Yapay zekâ kredisi azaldı",
+                  body=f"Kredinin %{account.usage_pct or 80}'i kullanıldı.",
+                  data={"type": "coach", "screen": "plan"})
 
 
 # ---------------------------- %80 uyarı ----------------------------

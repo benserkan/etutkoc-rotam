@@ -28,6 +28,7 @@ from app.models import (
     PlanChangeHistory,
     PlanChangeReason,
     User,
+    UserRole,
 )
 from app.models.plan_history import PlanOwnerType
 
@@ -165,6 +166,27 @@ def send_offer(
             )
     except Exception:
         logger.exception("offer email send fail offer=%s", offer_id)
+
+    # Mobil push (e-posta ile birlikte) — owner-aware
+    try:
+        from app.services.push_notifications import safe_push
+        body = f"Size özel teklif: {offer.title}"
+        if offer.owner_type == "user" and offer.user_id is not None:
+            safe_push(db, user_id=offer.user_id, title="Yeni teklif",
+                      body=body, data={"type": "coach", "screen": "plan"})
+        elif offer.institution_id is not None:
+            admins = (
+                db.query(User)
+                .filter(User.institution_id == offer.institution_id,
+                        User.role == UserRole.INSTITUTION_ADMIN,
+                        User.is_active.is_(True))
+                .all()
+            )
+            for a in admins:
+                safe_push(db, user_id=a.id, title="Yeni teklif",
+                          body=body, data={"type": "institution", "screen": "subscription"})
+    except Exception:
+        logger.exception("offer push fail offer=%s", offer_id)
 
     if autocommit:
         db.commit()

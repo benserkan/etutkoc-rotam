@@ -21,6 +21,7 @@ from app.models.offer import Offer, OfferKind, OfferStatus
 from app.services import offers as offers_service
 from app.services.email_service import send_email
 from app.services.plans import SOLO_PRO, SOLO_TRIAL, trial_days_left
+from app.services.push_notifications import safe_push
 
 logger = logging.getLogger(__name__)
 
@@ -109,6 +110,9 @@ def send_trial_reminders(db: Session, *, now: datetime | None = None) -> int:
             )
         except Exception:
             logger.exception("trial reminder email fail user=%s", c.id)
+        safe_push(db, user_id=c.id, title="Deneme süresi bitiyor",
+                  body=f"Denemenize {days} gün kaldı. Kesintisiz devam için paketini yükselt.",
+                  data={"type": "coach", "screen": "plan"})
         processed += 1
 
     db.commit()
@@ -151,6 +155,9 @@ def process_renewals(db: Session, *, now: datetime | None = None) -> dict:
             )
         except Exception:
             logger.exception("renewal reminder fail user=%s", u.id)
+        safe_push(db, user_id=u.id, title="Yenileme yaklaşıyor",
+                  body="Aboneliğinin yenilenmesine az kaldı. Kesintisiz devam için ödemeni tamamla.",
+                  data={"type": "coach", "screen": "plan"})
         reminded += 1
 
     # Dönem sonu geçti
@@ -189,6 +196,9 @@ def process_renewals(db: Session, *, now: datetime | None = None) -> dict:
                 )
             except Exception:
                 logger.exception("renewal overdue fail user=%s", u.id)
+            safe_push(db, user_id=u.id, title="Ödeme gerekli",
+                      body="Aboneliğinin süresi doldu. Erişimin kısıtlandı — yenilemek için dokun.",
+                      data={"type": "coach", "screen": "plan"})
             past_due += 1
 
     db.commit()
@@ -217,4 +227,7 @@ def notify_trial_expired(db: Session, *, user_ids: list[int]) -> int:
             sent += 1
         except Exception:
             logger.exception("trial expired email fail user=%s", uid)
+        safe_push(db, user_id=uid, title="Deneme süresi doldu",
+                  body="Ücretsiz denemen bitti. Tüm özelliklerle devam için paket seç.",
+                  data={"type": "coach", "screen": "plan"})
     return sent

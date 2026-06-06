@@ -10,6 +10,7 @@ Tüm gönderim **best-effort**: hata fırlatmaz, yalnız loglar. Token geçersiz
 from __future__ import annotations
 
 import logging
+import time
 from datetime import datetime, timezone
 
 import httpx
@@ -120,3 +121,65 @@ def send_push_to_user(
             logger.warning("invalid push token cleanup failed: %s", e)
 
     return len(messages)
+
+
+def safe_push(
+    db: Session,
+    *,
+    user_id: int | None,
+    title: str,
+    body: str,
+    data: dict | None = None,
+) -> None:
+    """E-posta bildirimini mobil push olarak da yansıt (best-effort).
+
+    Tüm rollerde (koç/kurum yöneticisi/öğrenci/veli) e-posta üretilen yerlerde
+    çağrılır. ASLA raise etmez — push hiçbir e-posta/iş akışını bozmamalı.
+    `user_id` None ise (sistem/satış e-postası) no-op.
+    """
+    if not user_id:
+        return
+    try:
+        send_push_to_user(db, user_id=user_id, title=title, body=(body or "")[:200], data=data)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("safe_push failed (non-fatal): %s", e)
+
+
+# Öğrenci ilerleme → koç push'u için bellek-içi throttle (görev başına spam önleme).
+# {student_id: son_push_epoch}. Tek web process'inde tutulur; çok-worker'da nadiren
+# birkaç mükerrer push olabilir (best-effort, kabul edilebilir). Migration gerektirmez.
+_coach_progress_last: dict[int, float] = {}
+COACH_PROGRESS_THROTTLE_SECONDS = 3 * 60 * 60  # öğrenci başına 3 saatte 1 push
+
+
+def notify_coach_student_progress(
+    db: Session,
+    *,
+    student_id: int,
+    student_name: str,
+    coach_id: int | None,
+    detail: str | None = None,
+) -> None:
+    """Öğrenci programda işaretleme yapınca koça MOBİL-ONLY push (e-posta YOK).
+
+    Koçun "öğrencim çalışıyor" sinyali. Throttle: öğrenci başına 3 saatte 1 push
+    (öğrenci gün içinde çok kalem işaretlese de koç bombardımana uğramaz).
+    Best-effort — asla raise etmez.
+    """
+    if not coach_id:
+        return
+    try:
+        now = time.time()
+        last = _coach_progress_last.get(student_id)
+        if last is not None and (now - last) < COACH_PROGRESS_THROTTLE_SECONDS:
+            return
+        _coach_progress_last[student_id] = now
+        send_push_to_user(
+            db,
+            user_id=coach_id,
+            title="Öğrenci ilerlemesi",
+            body=detail or f"{student_name} programında ilerleme kaydetti.",
+            data={"type": "coach_student", "student_id": student_id},
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("coach progress push failed (non-fatal): %s", e)

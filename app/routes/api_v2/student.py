@@ -24,7 +24,7 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.deps import get_db
@@ -1173,6 +1173,28 @@ def _reservation_error_response(e: ReservationError) -> HTTPException:
     )
 
 
+def _push_coach_progress_bg(student_id: int, student_name: str, coach_id: int | None) -> None:
+    """Arka planda (response sonrası) koça öğrenci-ilerleme push'u — taze session.
+
+    Öğrencinin işaretleme isteğini ASLA bloklamamalı (Expo ağ çağrısı 10s timeout
+    olabilir). Bu yüzden BackgroundTasks ile response gönderildikten sonra çalışır.
+    notify_coach_student_progress içinde 3 saatlik throttle var → koç bombardımana
+    uğramaz. E-posta YOK — yalnız mobil push.
+    """
+    if not coach_id:
+        return
+    try:
+        from app.database import SessionLocal
+        from app.services.push_notifications import notify_coach_student_progress
+        with SessionLocal() as s:
+            notify_coach_student_progress(
+                s, student_id=student_id, student_name=student_name, coach_id=coach_id,
+            )
+            s.commit()
+    except Exception:
+        logger.exception("coach progress bg push failed student=%s", student_id)
+
+
 def _fire_task_completed_event_safe(db: Session, student: User) -> None:
     """Görev COMPLETED'a yeni geçtiğinde event'i fırlat — hata endpoint'i bozmasın.
 
@@ -1241,6 +1263,7 @@ def _invalidate_keys_for_task(task: Task, user: User) -> list[str]:
 def complete_task_v2(
     task_id: int,
     body: CompleteTaskBody | None = None,
+    background: BackgroundTasks = None,  # type: ignore[assignment]
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
@@ -1287,6 +1310,10 @@ def complete_task_v2(
 
     db.commit()
     db.refresh(task)
+
+    # Öğrenci işaretleme yaptı → koça mobil push (response sonrası, throttle'lı)
+    if background is not None and user.teacher_id:
+        background.add_task(_push_coach_progress_bg, user.id, user.full_name or "Öğrenci", user.teacher_id)
 
     return MutationResponse[StudentTask](
         data=_build_task(db, task, date.today()),
@@ -1335,6 +1362,7 @@ def set_item_completed_v2(
     task_id: int,
     item_id: int,
     body: SetCompletedBody,
+    background: BackgroundTasks = None,  # type: ignore[assignment]
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
@@ -1403,6 +1431,11 @@ def set_item_completed_v2(
 
     db.commit()
     db.refresh(task)
+
+    # Öğrenci ilerleme işaretledi (total_done>0) → koça mobil push (throttle'lı).
+    # Un-mark (total_done==0) durumunda push gönderme.
+    if background is not None and total_done > 0 and user.teacher_id:
+        background.add_task(_push_coach_progress_bg, user.id, user.full_name or "Öğrenci", user.teacher_id)
 
     return MutationResponse[StudentTask](
         data=_build_task(db, task, date.today()),

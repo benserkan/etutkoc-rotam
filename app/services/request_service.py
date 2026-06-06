@@ -97,21 +97,35 @@ def _ensure_teacher_id(student: User) -> int:
     return student.teacher_id
 
 
-def _notify_new_safe(req: TaskRequest) -> None:
-    """E-posta bildirimini try/except ile güvene al; commit'e blok olmasın."""
+def _notify_new_safe(db: Session, req: TaskRequest) -> None:
+    """E-posta + mobil push bildirimini try/except ile güvene al; commit'e blok olmasın."""
     try:
         notify_teacher_new_request(req)
     except Exception:
         import logging
         logging.getLogger(__name__).exception("notify_teacher_new_request failed")
+    # Koça mobil push (e-posta ile aynı içerik)
+    from app.services.push_notifications import safe_push
+    tid = getattr(req, "teacher_id", None) or (req.teacher.id if req.teacher else None)
+    sname = req.student.full_name if req.student else "Öğrenci"
+    safe_push(db, user_id=tid, title="Yeni öğrenci talebi",
+              body=f"{sname} bir talep gönderdi.",
+              data={"type": "coach", "screen": "requests"})
 
 
-def _notify_resolved_safe(req: TaskRequest, action: str) -> None:
+def _notify_resolved_safe(db: Session, req: TaskRequest, action: str) -> None:
     try:
         notify_student_request_resolved(req, action)
     except Exception:
         import logging
         logging.getLogger(__name__).exception("notify_student_request_resolved failed")
+    # Öğrenciye mobil push (talep yanıtlandı)
+    from app.services.push_notifications import safe_push
+    sid = getattr(req, "student_id", None) or (req.student.id if req.student else None)
+    label = {"approved": "onaylandı", "rejected": "reddedildi", "answered": "yanıtlandı"}.get(action, "güncellendi")
+    safe_push(db, user_id=sid, title="Talebin yanıtlandı",
+              body=f"Koçun talebini {label}.",
+              data={"type": "student", "screen": "requests"})
 
 
 def create_change_request(
@@ -158,7 +172,7 @@ def create_change_request(
     )
     db.add(req)
     db.flush()
-    _notify_new_safe(req)
+    _notify_new_safe(db, req)
     return req
 
 
@@ -202,7 +216,7 @@ def create_replace_request(
     )
     db.add(req)
     db.flush()
-    _notify_new_safe(req)
+    _notify_new_safe(db, req)
     return req
 
 
@@ -225,7 +239,7 @@ def create_remove_request(
     )
     db.add(req)
     db.flush()
-    _notify_new_safe(req)
+    _notify_new_safe(db, req)
     return req
 
 
@@ -255,7 +269,7 @@ def create_add_request(
     )
     db.add(req)
     db.flush()
-    _notify_new_safe(req)
+    _notify_new_safe(db, req)
     return req
 
 
@@ -281,7 +295,7 @@ def create_question(
     )
     db.add(req)
     db.flush()
-    _notify_new_safe(req)
+    _notify_new_safe(db, req)
     return req
 
 
@@ -307,7 +321,7 @@ def reject_request(
     req.status = RequestStatus.REJECTED
     req.teacher_response = (response or "").strip() or None
     req.responded_at = datetime.now(timezone.utc)
-    _notify_resolved_safe(req, "rejected")
+    _notify_resolved_safe(db, req, "rejected")
 
 
 def respond_question(
@@ -324,7 +338,7 @@ def respond_question(
     req.teacher_response = response.strip()
     req.status = RequestStatus.RESOLVED
     req.responded_at = datetime.now(timezone.utc)
-    _notify_resolved_safe(req, "answered")
+    _notify_resolved_safe(db, req, "answered")
 
 
 def approve_request(
@@ -356,7 +370,7 @@ def approve_request(
     req.status = RequestStatus.APPROVED
     req.teacher_response = (response or "").strip() or req.teacher_response
     req.responded_at = datetime.now(timezone.utc)
-    _notify_resolved_safe(req, "approved")
+    _notify_resolved_safe(db, req, "approved")
     return affected_task
 
 

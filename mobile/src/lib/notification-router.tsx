@@ -43,6 +43,48 @@ export function hrefForNotificationData(data: NotifData): string | null {
     }
   }
 
+  // Koç: öğrenci ilerlemesi → öğrenci detayı
+  if (type === "coach_student" && data.student_id != null) {
+    return `/teacher-student?id=${data.student_id}`;
+  }
+
+  // Koç: deneme/yenileme/kredi/teklif → Paket; yeni öğrenci talebi → Talepler
+  if (type === "coach") {
+    const screen = data.screen as string | undefined;
+    switch (screen) {
+      case "requests":
+        return "/(app)/teacher/requests";
+      case "plan":
+        return "/teacher-plan";
+      default:
+        return "/(app)/teacher/students";
+    }
+  }
+
+  // Kurum yöneticisi: haftalık özet/kredi/abonelik → ilgili ekran
+  if (type === "institution") {
+    const screen = data.screen as string | undefined;
+    switch (screen) {
+      case "digest":
+        return data.digest_id != null ? `/institution-digest-detail?id=${data.digest_id}` : "/institution-digest";
+      case "usage":
+        return "/institution-usage";
+      case "subscription":
+        return "/institution-subscription";
+      case "activity":
+        return "/institution-activity";
+      default:
+        return "/(app)/institution/dashboard";
+    }
+  }
+
+  // Öğrenci: talep yanıtlandı → Talepler
+  if (type === "student") {
+    const screen = data.screen as string | undefined;
+    if (screen === "requests") return "/(app)/student/requests";
+    return "/(app)/student/today";
+  }
+
   return null;
 }
 

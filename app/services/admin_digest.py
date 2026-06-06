@@ -307,5 +307,17 @@ def send_admin_weekly_digest(
         digest.error_message = None
 
     digest.sent_at = datetime.now(timezone.utc)
+    db.flush()  # digest.id (push deep-link için)
+
+    # Mobil push — kurum yöneticilerine "haftalık özet" (e-posta ile birlikte)
+    try:
+        from app.services.push_notifications import safe_push
+        for a in admins:
+            safe_push(db, user_id=a.id, title="Haftalık özet hazır",
+                      body=f"{institution.name} bu haftanın yönetici özeti hazır.",
+                      data={"type": "institution", "screen": "digest", "digest_id": digest.id})
+    except Exception as e:
+        logger.warning("admin_digest push failed (non-fatal): %s", e)
+
     db.commit()
     return digest
