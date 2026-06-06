@@ -5,12 +5,16 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { AddTaskSheet } from "@/components/teacher/add-task-sheet";
 import { TeacherWeekView } from "@/components/teacher/week-view";
 import {
+  acceptAllTeacherSuggestions,
+  acceptTeacherSuggestion,
   createTeacherTask,
   deleteTeacherTask,
   getTeacherStudentBooks,
   getTeacherStudentWeek,
+  rejectTeacherSuggestion,
   teacherMiscKeys,
   type TaskCreateBody,
+  type TeacherSuggestionInline,
 } from "@/lib/teacher";
 
 export function ProgramTab({ studentId }: { studentId: number }) {
@@ -44,6 +48,24 @@ export function ProgramTab({ studentId }: { studentId: number }) {
     onSuccess: invalidateWeek,
   });
 
+  // Öneri kabul/ret (kural-tabanlı motor) — kabul gerçek görev oluşturur
+  const acceptMut = useMutation({
+    mutationFn: (v: { date: string; s: TeacherSuggestionInline }) =>
+      acceptTeacherSuggestion(studentId, { date: v.date, book_id: v.s.book_id, section_id: v.s.section_id, planned_count: v.s.planned_count }),
+    onSuccess: invalidateWeek,
+  });
+  const rejectMut = useMutation({
+    mutationFn: (v: { date: string; s: TeacherSuggestionInline }) =>
+      rejectTeacherSuggestion(studentId, { date: v.date, book_id: v.s.book_id, section_id: v.s.section_id }),
+    onSuccess: invalidateWeek,
+  });
+  const acceptAllMut = useMutation({
+    mutationFn: (v: { date: string; items: TeacherSuggestionInline[] }) =>
+      acceptAllTeacherSuggestions(studentId, { date: v.date, items: v.items.map((s) => ({ book_id: s.book_id, section_id: s.section_id, planned_count: s.planned_count })) }),
+    onSuccess: invalidateWeek,
+  });
+  const suggBusy = acceptMut.isPending || rejectMut.isPending || acceptAllMut.isPending;
+
   function shiftToPrev() { setStart(weekQ.data?.prev_start); }
   function shiftToNext() { setStart(weekQ.data?.next_start); }
 
@@ -74,6 +96,12 @@ export function ProgramTab({ studentId }: { studentId: number }) {
         onThisWeek={() => setStart(undefined)}
         onAddTask={(date) => setAddDate(date)}
         onDeleteTask={(id) => delMut.mutate(id)}
+        sugg={{
+          onAccept: (date, s) => acceptMut.mutate({ date, s }),
+          onReject: (date, s) => rejectMut.mutate({ date, s }),
+          onAcceptAll: (date, items) => acceptAllMut.mutate({ date, items }),
+          busy: suggBusy,
+        }}
         refreshing={weekQ.isRefetching}
         onRefresh={() => weekQ.refetch()}
       />

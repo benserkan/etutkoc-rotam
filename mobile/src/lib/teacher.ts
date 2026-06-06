@@ -234,6 +234,24 @@ export interface TeacherTaskRow {
   pct: number;
   solved_count: number | null;
 }
+// Kural-tabanlı öneri (AI DEĞİL): koçun geçmiş planları + öğrencinin atanmış
+// kitap/bölümleri + geride kalma + tekrar zorluğundan türetilir. Uydurma yok.
+export interface TeacherSuggestionInline {
+  book_id: number;
+  book_name: string;
+  book_type: string;
+  section_id: number;
+  section_label: string;
+  subject_id: number;
+  subject_name: string;
+  topic_name: string | null;
+  planned_count: number;
+  remaining: number;
+  confidence: number;
+  confidence_label: string;
+  score: number;
+  reasons: string[];
+}
 export interface TeacherWeekDay {
   date: string;
   dow_label: string;
@@ -250,6 +268,12 @@ export interface TeacherWeekDay {
   etkinlik_count: number;
   tasks: TeacherTaskRow[];
   draft_count: number;
+  // Öneri motoru alanları (opsiyonel — backend week response'unda gelir)
+  suggestions?: TeacherSuggestionInline[];
+  maturity_value?: number;
+  maturity_label?: string;
+  weeks_observed?: number;
+  days_observed?: number;
 }
 export interface TeacherWeekResponse {
   student_id: number;
@@ -278,6 +302,17 @@ export interface TaskCreateBody {
 export function getTeacherStudentWeek(id: number, start?: string): Promise<TeacherWeekResponse> {
   const qs = start ? `?start=${encodeURIComponent(start)}` : "";
   return apiRequest<TeacherWeekResponse>(`/api/v2/teacher/students/${id}/week${qs}`);
+}
+// Öneri kabul/ret (kural-tabanlı motor — kabul gerçek görev oluşturur, ret sistemin
+// öğrenmesini sağlar). Endpoint'ler haftalık planı bayatlar → ProgramTab refetch eder.
+export function acceptTeacherSuggestion(id: number, body: { date: string; book_id: number; section_id: number; planned_count: number }): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/insights/students/${id}/suggestions/accept`, { method: "POST", body });
+}
+export function rejectTeacherSuggestion(id: number, body: { date: string; book_id: number; section_id: number }): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/insights/students/${id}/suggestions/reject`, { method: "POST", body });
+}
+export function acceptAllTeacherSuggestions(id: number, body: { date: string; items: { book_id: number; section_id: number; planned_count: number }[] }): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/insights/students/${id}/suggestions/accept-all`, { method: "POST", body });
 }
 export function createTeacherTask(id: number, body: TaskCreateBody): Promise<unknown> {
   return apiRequest(`/api/v2/teacher/students/${id}/tasks`, { method: "POST", body });
