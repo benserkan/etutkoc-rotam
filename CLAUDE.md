@@ -4152,10 +4152,11 @@ kitabı) · tam_deneme (kitapsız "Deneme") · etkinlik (video/özet/tekrar/diğ
 - **Test-data fix:** `simulate_alert_correctness.py` `Book type="test"` (geçersiz
   enum string) → `BookType.SORU_BANKASI`; `joinedload(book)` artık enum
   deserialize ettiğinden patlıyordu (production değil test bug'ı).
-- **KALAN (opsiyonel, düşük öncelik):** `subject_breakdown` (ders dağılımı) hâlâ
-  deneme kitaplarını ders aktivitesine katar (kurulu davranış; kullanıcı
-  flag'lemedi). Program **print** gün/toplam "Planlanan X" soru-bazlı (görev
-  satırları doğru listelenir). İstenirse ayrı pakette test-only yapılır.
+- **KALAN (opsiyonel, düşük öncelik):** `subject_breakdown` (ders dağılımı) **görüntüleme**
+  yüzeylerinde hâlâ deneme kitaplarını derse katar (kurulu davranış; kullanıcı
+  flag'lemedi). UYARI yolu artık test-only (aşağıda 2026-06-06 fix). Program
+  **print** gün/toplam "Planlanan X" soru-bazlı (görev satırları doğru listelenir).
+  İstenirse ders-dağılımı görüntülemesi de ayrı pakette test-only yapılır.
 - **KURAL:** Yeni bir "test" sayımı/gösterimi eklenince `gorev_stats` (görev/test
   ayrımı) veya `analytics tests_only=True` kullanılır — deneme sorularını "test"
   saymak YASAK. Engagement/consistency/uyarı metrikleri tests_only=False kalır
@@ -4765,6 +4766,45 @@ push (e-posta YOK).
   artık geçersiz) + `test_stage6_credits` (eski cooldown davranışı, Paket A'da değişti) +
   `test_stage4_admin_digest` (at_risk=0, onboarding-grace) **önceden bozuktu** — push
   değişiklikleriyle ilgisiz (additive).
+
+## "{Ders} henüz başlanmadı" uyarısı — deneme atamasını test sayıyordu (2026-06-06, deploy edildi)
+
+**Bağlam (kullanıcı, Berra/student 11):** Öğrenci detayı "Durum Özeti" kartında
+"**Türk Dili ve Edebiyatı henüz başlanmadı · Rezerv açılmış ama hiçbir test
+tamamlanmamış**" uyarısı sürekli görünüyordu; kullanıcı doğruluğunu test etmemi
+istedi. SALT-OKUMA prod teşhisi (`scripts/diagnose_subject_untouched.py`,
+lgs-web'e docker cp) ile kök neden bulundu.
+- **Kök neden:** O derse tek atama bir **BRANŞ DENEMESİ** kitabıydı (TYT Türkçe
+  Denemeleri, type=`brans_denemesi`); 2026-06-02 yayınlanmış (taslak değil) tek
+  görev, yapılmamış (reserved=1, completed=0). `analytics.subject_breakdown`
+  deneme kitaplarını derse kattığı için `subject_untouched_*` uyarısı (analytics.py
+  #6) yanıyordu → **DENEME≠TEST standardı ihlali** (CLAUDE.md'deki "KALAN" notunun
+  uyarı yüzeyindeki tezahürü). NOT: Berra'nınki taslak değildi/baseline değildi —
+  saf deneme-test karışımıydı.
+- **Düzeltme (`analytics.py`, migration YOK):**
+  - `subject_breakdown(db, id, tests_only=False)` geriye-uyumlu param: True →
+    deneme kitapları (branş/genel) HARİÇ (StudentBook agregasyonu + last_completed_at
+    sorgusu). Tüm mevcut çağıranlar (ders dağılımı görüntüleme, veli, öğrenci)
+    DEĞİŞMEDİ.
+  - `generate_warnings` #6 bloğu (`subject_stale` + `subject_untouched`) artık
+    `tests_only=True` ile beslenir.
+  - **Defect A:** `due_subject_ids` sorgusuna `is_draft=False` + deneme HARİÇ
+    filtresi (taslak/yayınlanmamış geçmiş görev "vadesi gelmiş" sayılmaz).
+  - **Defect B:** `subject_untouched` koşuluna `completed==0` eklendi (baseline
+    "öğrenci zaten çözmüş" / sayaç drifti ile `completed_count>0` ama
+    `Task.completed_at=None` durumunda yanlış "başlanmadı" damgası önlenir).
+- **Doğrulama:** `scripts/test_subject_untouched_deneme.py` **5/5** (Berra repro
+  deneme-only → uyarı YOK · gerçek test rezervli → uyarı VAR · taslak → YOK ·
+  baseline completed>0 → YOK · tamamlanmış → YOK). **Canlı teyit:** prod'da
+  `generate_warnings(student 11)` artık **hiç uyarı üretmiyor** (subject_untouched
+  YOK) → kart "Dikkat gerekiyor"dan "Yolunda"ya döner. Regresyon: alert_correctness
+  9/9 · card_consistency 23/23 · teacher_read 12 · teacher_students 14 ·
+  analytics_rich 10 · risk_onboarding_grace 6 GREEN. Deploy: web+worker rebuild
+  (analytics cron/mail'de de kullanılır). Commit `9f57d6a`.
+- **NOT (pre-existing):** `run_gorev_checks.py` içindeki `test_itemless_solved_count.py`
+  0/0 patlıyor (`complete_task_v2` argüman sırası bozuk, `'Session' has no attribute
+  'id'`) — bu düzeltmeyle İLGİSİZ, stash testiyle teyit edildi. Ayrı küçük test-fix
+  bekliyor.
 
 ## Notlar
 
