@@ -38,6 +38,15 @@ def card(bg, bottom=CB, rad=40, fill=CREAM):
     return bg
 
 
+def lift(bg, box, rad=26, fill=WHITE, blur=46, dy=32, alpha=140):
+    """Bir öğeyi ön plana taşı — güçlü gölge + üstte kart (Claude float deseni)."""
+    sh = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    ImageDraw.Draw(sh).rounded_rectangle([box[0] + 8, box[1] + dy, box[2] + 8, box[3] + dy], radius=rad, fill=(0, 14, 22, alpha))
+    bg = Image.alpha_composite(bg.convert("RGBA"), sh.filter(ImageFilter.GaussianBlur(blur))).convert("RGB")
+    ImageDraw.Draw(bg).rounded_rectangle(box, radius=rad, fill=fill)
+    return bg
+
+
 def spark(d, cx, cy, r, col, wd):
     for ang in range(0, 360, 60):
         a = math.radians(ang); rr = r if ang % 120 == 0 else int(r * 0.62)
@@ -88,7 +97,8 @@ ay = by + 124
 for i, ln in enumerate(["Elif son 2 haftada matematik netinde düştü", "(78 → 71). Üçgenler ve olasılık eksik kalıyor.", "Motivasyonu deneme trendiyle desteklenmeli."]):
     d.text((IX0 + 6, ay + i * 46), ln, font=F(31, 500), fill=INK)
 hy = ay + 3 * 46 + 22
-d.rounded_rectangle([IX0, hy, IX1, hy + 286], radius=24, fill=WHITE); d.rounded_rectangle([IX0, hy, IX0 + 14, hy + 286], radius=7, fill=GOLD)
+bg = lift(bg, [X0 + 18, hy, X1 - 18, hy + 286], rad=24, fill=WHITE); d = ImageDraw.Draw(bg)
+d.rounded_rectangle([X0 + 18, hy, X0 + 32, hy + 286], radius=7, fill=GOLD)
 d.text((IX0 + 40, hy + 22), "Seans gündemi hazır", font=F(40, 700), fill=INK)
 for i, b in enumerate(["Üçgenler — 20 soru tekrar", "Olasılık — eksik konu önceliği", "Motivasyon: net trendini göster"]):
     yy = hy + 96 + i * 56; d.ellipse([IX0 + 40, yy + 12, IX0 + 54, yy + 26], fill=CYAN); d.text((IX0 + 74, yy), b, font=F(29, 600), fill=(70, 84, 90))
@@ -102,24 +112,38 @@ for nm, note, col in [("Yusuf", "Türkçe — paragraf hızı düştü", AMBER),
     d.text((IX0 + 32, ly + 22), nm, font=F(32, 700), fill=INK); d.text((IX0 + 32, ly + 64), note, font=F(28, 500), fill=SUB); ly += 134
 bg.save(B + "/play/_c2.png", "PNG")
 
-# 3) PROGRAM
-bg = base(SLATE, ["Programı", "dakikada kur"], WHITE, GOLD); bg = card(bg, 1860); d = ImageDraw.Draw(bg)
+# 3) PROGRAM — AI önerisi ön planda
+bg = base(SLATE, ["Programı", "dakikada kur"], WHITE, GOLD); bg = card(bg, 1770); d = ImageDraw.Draw(bg)
 days = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]; dw = (X1 - X0 - 68) / 7; dx = IX0
 for i, dn in enumerate(days):
     act = i == 4
     d.rounded_rectangle([dx, CT + 26, dx + dw - 10, CT + 90], radius=16, fill=(CYAN if act else (236, 233, 224)))
     d.text((dx + dw / 2 - 22, CT + 44), dn, font=F(24, 700), fill=(WHITE if act else SUB)); dx += dw
-d.text((IX0 + 6, CT + 116), "Cuma · 5 görev", font=F(34, 700), fill=INK)
-d.rounded_rectangle([X1 - 196, CT + 116, IX1, CT + 156], radius=20, fill=(224, 238, 241)); spark(d, X1 - 176, CT + 136, 11, CYAN, 3); d.text((X1 - 158, CT + 122), "AI önerdi", font=F(26, 700), fill=CYAN)
-tasks = [("Matematik", "Üçgenler · 20 test", CYAN), ("Türkçe", "Paragraf · 15 test", GOLD), ("Fen Bilimleri", "Basınç · 10 test", GREEN), ("İnkılap", "5. Ünite · 10 test", VIOLET), ("TYT Deneme", "120 soru", (210, 120, 90))]
-ry = CT + 186
-for t, s, tn in tasks:
-    d.rounded_rectangle([IX0, ry, IX1, ry + 124], radius=20, fill=WHITE); d.rounded_rectangle([IX0, ry, IX0 + 12, ry + 124], radius=6, fill=tn)
-    d.text((IX0 + 32, ry + 20), t, font=F(34, 700), fill=INK); d.text((IX0 + 32, ry + 62), s, font=F(28, 500), fill=SUB)
-    d.ellipse([IX1 - 76, ry + 42, IX1 - 44, ry + 74], outline=tn, width=4); ry += 142
-d.rounded_rectangle([IX0, ry, IX1, ry + 130], radius=22, fill=(58, 72, 80))
-d.text((IX0 + 30, ry + 22), "Kaynak durumu", font=F(30, 700), fill=WHITE); d.text((IX0 + 30, ry + 66), "Matematik · 240/400 test kaldı", font=F(28, 500), fill=(200, 214, 220))
-ry += 160
+d.text((IX0 + 6, CT + 116), "Cuma · Haftalık plan", font=F(34, 700), fill=INK)
+# --- ÖN PLANA TAŞINAN AI ÖNERİSİ (lifted, geniş, güçlü gölge) ---
+fb = [X0 + 18, CT + 172, X1 - 18, CT + 172 + 214]
+bg = lift(bg, fb, rad=28, fill=(224, 240, 244)); d = ImageDraw.Draw(bg)
+d.rounded_rectangle([fb[0], fb[1], fb[0] + 12, fb[3]], radius=6, fill=CYAN)
+d.ellipse([fb[0] + 32, fb[1] + 28, fb[0] + 32 + 58, fb[1] + 28 + 58], fill=CYAN); spark(d, fb[0] + 61, fb[1] + 57, 17, WHITE, 4)
+d.text((fb[0] + 108, fb[1] + 30), "Yapay zekâ önerisi", font=F(34, 700), fill=CYAN)
+d.text((fb[0] + 108, fb[1] + 74), "bu haftaya hazırladı", font=F(27, 500), fill=SUB)
+d.text((fb[0] + 32, fb[1] + 118), "Üçgenler eksik kalıyor — programa", font=F(31, 600), fill=INK)
+d.text((fb[0] + 32, fb[1] + 156), "20 test ekledim · ✓ uygulandı", font=F(31, 600), fill=INK)
+# --- görev listesi (AI eklediği işaretli) ---
+tasks = [("Matematik", "Üçgenler · 20 test", CYAN, True), ("Türkçe", "Paragraf · 15 test", GOLD, False),
+         ("Fen Bilimleri", "Basınç · 10 test", GREEN, False), ("TYT Deneme", "120 soru", (210, 120, 90), False)]
+ry = fb[3] + 28
+for t, s, tn, ai in tasks:
+    d.rounded_rectangle([IX0, ry, IX1, ry + 118], radius=20, fill=WHITE); d.rounded_rectangle([IX0, ry, IX0 + 12, ry + 118], radius=6, fill=tn)
+    d.text((IX0 + 32, ry + 18), t, font=F(33, 700), fill=INK); d.text((IX0 + 32, ry + 60), s, font=F(27, 500), fill=SUB)
+    if ai:
+        d.rounded_rectangle([X1 - 156, ry + 38, IX1 - 6, ry + 78], radius=20, fill=(224, 238, 241)); spark(d, X1 - 138, ry + 58, 9, CYAN, 3); d.text((X1 - 120, ry + 44), "AI ekledi", font=F(24, 700), fill=CYAN)
+    else:
+        d.ellipse([IX1 - 72, ry + 42, IX1 - 40, ry + 74], outline=tn, width=4)
+    ry += 134
+d.rounded_rectangle([IX0, ry, IX1, ry + 124], radius=22, fill=(58, 72, 80))
+d.text((IX0 + 30, ry + 20), "Kaynak durumu", font=F(30, 700), fill=WHITE); d.text((IX0 + 30, ry + 62), "Matematik · 240/400 test kaldı", font=F(27, 500), fill=(200, 214, 220))
+ry += 154
 d.text((IX0 + 6, ry), "Bu hafta planlanan", font=F(28, 700), fill=SUB)
 statstrip(d, ry + 44, [("Test", "540", CYAN), ("Deneme", "4", GOLD), ("Etkinlik", "6", GREEN)])
 bg.save(B + "/play/_c3.png", "PNG")
@@ -168,7 +192,7 @@ for name, p in subs:
     d.rounded_rectangle([IX0 + 300, sy + 6, IX1 - 6, sy + 30], radius=12, fill=(228, 224, 214))
     d.rounded_rectangle([IX0 + 300, sy + 6, IX0 + 300 + int((IX1 - 6 - (IX0 + 300)) * p), sy + 30], radius=12, fill=CYAN); sy += 70
 ey = sy + 14
-d.rounded_rectangle([IX0, ey, IX1, ey + 196], radius=24, fill=WHITE)
+bg = lift(bg, [X0 + 18, ey, X1 - 18, ey + 196], rad=24, fill=WHITE); d = ImageDraw.Draw(bg)
 d.text((IX0 + 30, ey + 22), "Son deneme", font=F(28, 600), fill=SUB)
 d.rounded_rectangle([X1 - 160, ey + 20, IX1 - 6, ey + 58], radius=18, fill=(224, 238, 241)); d.text((X1 - 146, ey + 26), "LGS", font=F(26, 700), fill=CYAN)
 d.text((IX0 + 30, ey + 60), "86", font=F(60, 800, True), fill=CYAN); d.text((IX0 + 150, ey + 94), "net", font=F(30, 600), fill=SUB)
@@ -195,15 +219,20 @@ risks = [("Mert Kaya", "Ayşe Demir · 12. sınıf", "5 gündür giriş yok", "K
          ("Elvin Türkmen", "Serkan Aydın · 11. sınıf", "Düşük tamamlama · %81 düşüş", "Dikkat · 45", AMBER),
          ("Selin Kaya", "Mehmet Yıldız · 11. sınıf", "Haftalık tamamlama %38", "Dikkat · 52", AMBER)]
 ry = CT + 232
-for name, coach, note, badge, col in risks:
-    d.rounded_rectangle([IX0, ry, IX1, ry + 250], radius=24, fill=WHITE); d.rounded_rectangle([IX0, ry, IX0 + 14, ry + 250], radius=7, fill=col)
-    d.text((IX0 + 38, ry + 24), name, font=F(36, 700), fill=INK)
+for idx, (name, coach, note, badge, col) in enumerate(risks):
+    if idx == 0:  # en kritik satır ön plana
+        bg = lift(bg, [X0 + 18, ry, X1 - 18, ry + 250], rad=24, fill=WHITE); d = ImageDraw.Draw(bg)
+        lx0, lx1 = X0 + 18, X1 - 18
+    else:
+        d.rounded_rectangle([IX0, ry, IX1, ry + 250], radius=24, fill=WHITE); lx0, lx1 = IX0, IX1
+    d.rounded_rectangle([lx0, ry, lx0 + 14, ry + 250], radius=7, fill=col)
+    d.text((lx0 + 38, ry + 24), name, font=F(36, 700), fill=INK)
     bw2 = d.textlength(badge, font=F(26, 700))
-    d.rounded_rectangle([IX1 - bw2 - 64, ry + 26, IX1 - 24, ry + 66], radius=20, fill=(250, 232, 210) if col == AMBER else (250, 222, 222))
-    d.text((IX1 - bw2 - 44, ry + 32), badge, font=F(26, 700), fill=(150, 96, 20) if col == AMBER else (170, 50, 50))
-    d.text((IX0 + 38, ry + 76), coach, font=F(28, 500), fill=SUB)
-    d.text((IX0 + 38, ry + 116), note, font=F(28, 600), fill=col)
-    d.rounded_rectangle([IX0 + 38, ry + 162, IX1 - 38, ry + 218], radius=16, fill=CYAN)
+    d.rounded_rectangle([lx1 - bw2 - 64, ry + 26, lx1 - 24, ry + 66], radius=20, fill=(250, 232, 210) if col == AMBER else (250, 222, 222))
+    d.text((lx1 - bw2 - 44, ry + 32), badge, font=F(26, 700), fill=(150, 96, 20) if col == AMBER else (170, 50, 50))
+    d.text((lx0 + 38, ry + 76), coach, font=F(28, 500), fill=SUB)
+    d.text((lx0 + 38, ry + 116), note, font=F(28, 600), fill=col)
+    d.rounded_rectangle([lx0 + 38, ry + 162, lx1 - 38, ry + 218], radius=16, fill=CYAN)
     t = "Sorumlu koça ilet"; tw = d.textlength(t, font=F(30, 700)); d.text(((W - tw) / 2, ry + 174), t, font=F(30, 700), fill=WHITE)
     ry += 274
 d.rounded_rectangle([IX0, ry, IX1, ry + 130], radius=22, fill=(58, 72, 80))
