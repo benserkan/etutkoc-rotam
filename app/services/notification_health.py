@@ -92,16 +92,34 @@ def window_summary(db: Session, *, hours: int, label: str) -> WindowSummary:
 
 
 def oldest_queued_minutes(db: Session) -> int | None:
-    """En eski queued bekleyenin yaşı (dakika). Yoksa None."""
+    """En eski GÖNDERİLEBİLİR (vadesi gelmiş) queued bekleyenin yaşı (dakika).
+
+    Dispatcher'ın gerçek alma kriteriyle (dispatch_pending) BİREBİR hizalı:
+    scheduled_at (sessiz saat ertelemesi) ve next_attempt_at (retry-backoff)
+    henüz GELMEMİŞ satırlar "takılı" SAYILMAZ — onlar bilinçli/zamanlı
+    beklemededir. Aksi halde her gece sessiz saatte (22:00-07:00) ertelenen
+    bildirimler yanlış 'kuyruk takıldı' (oldest_queued_long) alarmı üretirdi.
+    Yalnız gerçekten gönderilmesi gerekip de gönderilmemiş satırlar sayılır.
+    Yoksa None.
+    """
+    now = _now()
     oldest = (
         db.query(func.min(NotificationLog.queued_at))
         .filter(NotificationLog.status == NotificationStatus.QUEUED)
+        .filter(
+            (NotificationLog.scheduled_at.is_(None))
+            | (NotificationLog.scheduled_at <= now)
+        )
+        .filter(
+            (NotificationLog.next_attempt_at.is_(None))
+            | (NotificationLog.next_attempt_at <= now)
+        )
         .scalar()
     )
     if oldest is None:
         return None
     oldest = _aware(oldest)
-    age_sec = (_now() - oldest).total_seconds()
+    age_sec = (now - oldest).total_seconds()
     return max(0, int(age_sec / 60))
 
 
