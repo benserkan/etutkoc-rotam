@@ -95,80 +95,65 @@ def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_m
 
 def generate(
     parts: list[dict], *, personal_data: bool, timeout: float = 45.0, json_mode: bool = True,
-    max_output_tokens: int = 8192, prefer_paid: bool = False,
+    max_output_tokens: int = 8192, prefer_paid: bool = True,
 ) -> str:
-    """Gemini'den metin yanıt al.
+    """Gemini'den metin yanıt al — TÜM AI işlerinde önce **pro** (en zeki model).
 
-    personal_data=True → ücretli key (no-training, fallback yok).
-    prefer_paid=True → kişisel veri olmasa da ÖNCE ücretli model (gemini-2.5-pro;
-      daha kaliteli + büyük çıktı bütçesi), kota/hatada ücretsize düşer. Büyük/
-      önemli yapılandırılmış işler (vitrin temalı gruplama) için.
+    Politika (kullanıcı kararı): pro birinci tercih, sistem ASLA tıkanmaz/sonuçsuz
+    kalmaz. Pro erişilemez/kotasızsa (örn. proje paid tier değilse 429-FreeTier)
+    **AYNI ücretli anahtarla flash'a** düşülür (anahtar/tier değişmez → KVKK nötr).
+    Google'da proje paid tier'a alınınca pro otomatik her yerde devreye girer
+    (kod pro'yu hep önce dener).
+
+    personal_data=True → yalnız ÜCRETLİ (faturalı/no-training) anahtar; pro→flash.
+      KVKK: ücretsiz KEY'e DÜŞÜLMEZ.
+    personal_data=False → önce ücretli anahtar (pro→flash); o da olmazsa ek
+      dayanıklılık için ücretsiz key(ler) + flash.
+
+    prefer_paid: geriye uyum için tutuldu (pro artık her zaman önce denenir).
     """
     from app.services.system_secrets import (
         get_gemini_free_keys, get_gemini_model, get_gemini_paid_key,
     )
+    paid = get_gemini_paid_key()
+    pro = get_gemini_model(paid=True)
+    flash = get_gemini_model(paid=False)
+    paid_models = [pro] + ([flash] if flash and flash != pro else [])
 
-    if personal_data:
-        key = get_gemini_paid_key()
-        if not key:
-            raise AIServiceUnavailable(
-                "Gemini ücretli anahtarı tanımlı değil (süper admin → AI Ayarları)")
-        # KVKK: kişisel veride ücretsiz KEY'e düşmeyiz (no-training tier zorunlu).
-        # ANCAK aynı ücretli anahtarla model'i düşürmek serbesttir (anahtar/tier
-        # değişmez). gemini-2.5-pro Google'da faturalandırma ister; faturasız
-        # hesapta pro → 429. Bu durumda AYNI anahtarla flash modeline düşeriz ki
-        # içgörü/analiz çalışsın. Billing açılınca pro otomatik tekrar öne geçer.
-        models: list[str] = [get_gemini_model(paid=True)]
-        fm = get_gemini_model(paid=False)
-        if fm and fm not in models:
-            models.append(fm)
-        for i, m in enumerate(models):
-            last = i == len(models) - 1
+    # 1) ÜCRETLİ (faturalı) anahtar: önce pro (en zeki), erişilemez/kotasızsa
+    #    AYNI anahtarla flash. AIInvalidResponse (içerik/filtre) → yükselir (gerçek
+    #    sonuç hatası; model/anahtar değiştirmek çözmez).
+    if paid:
+        for m in paid_models:
             try:
-                return _call(m, key, parts, timeout=timeout, json_mode=json_mode,
+                return _call(m, paid, parts, timeout=timeout, json_mode=json_mode,
                              max_output_tokens=max_output_tokens)
             except _QuotaExceeded:
-                if last:
-                    raise AIServiceUnavailable(
-                        "Yapay zekâ şu an kullanılamıyor: ücretli Gemini anahtarında "
-                        "model kotası yok. gemini-2.5-pro için Google hesabında "
-                        "faturalandırma (billing) açılmalı.")
-                logger.info("Gemini ücretli model %s kotasız/erişimsiz → aynı anahtarla sıradaki modele düşülüyor", m)
+                logger.info("Gemini ücretli anahtar + %s kotasız (paid tier mi?) → sıradaki model", m)
             except AIServiceUnavailable:
-                if last:
-                    raise
-                logger.info("Gemini ücretli model %s erişilemez → aynı anahtarla sıradaki modele düşülüyor", m)
+                logger.info("Gemini ücretli anahtar + %s erişilemez → sıradaki model", m)
 
-    # prefer_paid → önce ücretli (pro) model; kotada ücretsize düş.
-    if prefer_paid:
-        paid = get_gemini_paid_key()
-        if paid:
-            try:
-                return _call(get_gemini_model(paid=True), paid, parts, timeout=timeout,
-                             json_mode=json_mode, max_output_tokens=max_output_tokens)
-            except _QuotaExceeded:
-                logger.info("Gemini ücretli kota doldu, ücretsize düşülüyor (prefer_paid)")
+    # KVKK: kişisel veride ücretsiz KEY'e DÜŞMEYİZ (no-training zorunlu).
+    if personal_data:
+        if not paid:
+            raise AIServiceUnavailable(
+                "Gemini ücretli anahtarı tanımlı değil (süper admin → AI Ayarları)")
+        raise AIServiceUnavailable(
+            "Yapay zekâ şu an kullanılamıyor: ücretli Gemini anahtarı pro+flash "
+            "üretemedi. gemini-2.5-pro için Google projesi paid tier (billing aktif) olmalı.")
 
-    # Ücretsiz key(ler) sırayla, sonra ücretli
+    # 2) Kişisel-veri DEĞİL → ek dayanıklılık: ücretsiz key(ler) + flash.
     free_keys = get_gemini_free_keys()
-    free_model = get_gemini_model(paid=False)
+    if not paid and not free_keys:
+        raise AIServiceUnavailable("Gemini anahtarı tanımlı değil (süper admin → AI Ayarları)")
     for k in free_keys:
         try:
-            return _call(free_model, k, parts, timeout=timeout, json_mode=json_mode,
+            return _call(flash, k, parts, timeout=timeout, json_mode=json_mode,
                          max_output_tokens=max_output_tokens)
         except _QuotaExceeded:
-            logger.info("Gemini ücretsiz anahtar kotası doldu, sıradaki/ücretli deneniyor")
+            logger.info("Gemini ücretsiz anahtar + flash kotasız → sıradaki anahtar")
             continue
-    paid = get_gemini_paid_key()
-    if not paid:
-        if free_keys:
-            raise AIServiceUnavailable("Gemini ücretsiz kota doldu ve ücretli anahtar yok")
-        raise AIServiceUnavailable("Gemini anahtarı tanımlı değil (süper admin → AI Ayarları)")
-    try:
-        return _call(get_gemini_model(paid=True), paid, parts, timeout=timeout,
-                     json_mode=json_mode, max_output_tokens=max_output_tokens)
-    except _QuotaExceeded:
-        raise AIServiceUnavailable("Gemini tüm anahtarların kotası doldu")
+    raise AIServiceUnavailable("Gemini tüm anahtarların kotası doldu (süper admin → AI Ayarları).")
 
 
 def extract_json(text: str) -> dict[str, Any]:
