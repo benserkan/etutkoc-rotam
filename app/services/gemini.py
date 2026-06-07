@@ -40,8 +40,10 @@ def inline_part(data_base64: str, mime_type: str) -> dict[str, Any]:
     return {"inline_data": {"mime_type": mime_type, "data": data_base64}}
 
 
-# 503 (model aşırı yük) geçici — kısa backoff ile yeniden dene.
-_RETRY_503 = (1.5, 3.0)
+# 503 (model aşırı yük / "high demand") geçici — backoff ile yeniden dene.
+# Free-tier'da 503 daha sık (öncelik yok) → biraz daha ısrarcı retry (sistem
+# tıkanmasın). Paid tier'da bu spike'lar büyük ölçüde kaybolur.
+_RETRY_503 = (1.0, 2.5, 5.0)
 
 
 def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_mode: bool,
