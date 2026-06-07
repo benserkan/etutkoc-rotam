@@ -34,13 +34,21 @@ Play Console → **Uygulama oluştur**:
 
 **2.1 Uygulama erişimi (App access)** — KRİTİK
 - "Tüm işlevler kısıtlı, giriş gerekir" seç.
-- İncelemeci için **çalışan demo giriş bilgileri** ekle (her rol için ayrı satır).
-  ⚠ Gerçek kullanıcı değil — geçici test hesabı aç (şifre kuralı). Örn:
-  - Koç: `demo-koc@etutkoc.com` / şifre / "Koç paneli, öğrenci listesi"
-  - Öğrenci: `demo-ogrenci@…` / şifre
-  - Veli: `demo-veli@…` / şifre
-  - Kurum: `demo-kurum@…` / şifre
+- İncelemeci için aşağıdaki **canlı demo giriş bilgilerini** ekle (her rol bir satır).
+  Bunlar `is_demo=True` işaretli geçici hesaplardır; gerçek kullanıcıya dokunmaz,
+  süper admin → "Demo Oturumları"ndan tek tıkla silinir (seed: `9d11ccce…`).
 - İncelemeci giriş yapamazsa uygulama **reddedilir**.
+
+| Rol | E-posta | Şifre |
+|---|---|---|
+| Kurum Yöneticisi | `demo-9d11ccce-yonetici@etutkoc.com` | `Demo123!@` |
+| Koç | `demo-9d11ccce-koc@etutkoc.com` | `Demo123!@` |
+| Öğrenci | `demo-9d11ccce-ogrenci@etutkoc.com` | `Demo123!@` |
+| Veli | `demo-9d11ccce-veli@etutkoc.com` | `Demo123!@` |
+
+> Hepsi tek ekosistem (kurum + koç + öğrenci + veli bağlı + örnek program/deneme/
+> seans verisi). Mobil giriş 4 rolde de 200 + token ile doğrulandı.
+> Yeniden üretmek/çoğaltmak: `docker compose exec web python scripts/seed_demo_for_review.py institution`
 
 **2.2 Reklamlar (Ads)**: **Hayır**, reklam içermez.
 
