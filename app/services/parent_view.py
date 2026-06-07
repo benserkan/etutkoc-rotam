@@ -91,6 +91,33 @@ def list_parent_students(db: Session, parent: User) -> list[dict[str, Any]]:
         s = link.student
         if not s or s.role != UserRole.STUDENT:
             continue
+        # Koçluğu sonlandırılmış (pasif) çocuk → minimal kart: "Koçluk sona erdi"
+        # rozeti için is_active=False, güncel metrikler sıfır/None (bayat takip
+        # gösterme). Geçmiş raporlar/denemeler ayrı sayfadan erişilebilir. Ağır
+        # snapshot/görev sorgusu yapılmaz.
+        if not s.is_active:
+            out.append({
+                "student_id": s.id,
+                "full_name": s.full_name,
+                "grade_level": s.grade_level,
+                "is_graduate": s.is_graduate,
+                "display_grade_label": s.display_grade_label,
+                "academic_year": s.academic_year.name if s.academic_year else None,
+                "exam_date": s.effective_exam_date.isoformat() if s.effective_exam_date else None,
+                "exam_label": s.effective_exam_label,
+                "exam_target": s.effective_exam_target.lower() if s.effective_exam_target else "none",
+                "relation": link.relation.value if link.relation else None,
+                "is_primary": link.is_primary,
+                "is_active": False,
+                "today_planned": 0, "today_completed": 0,
+                "week_planned": 0, "week_completed": 0, "week_completion_rate": None,
+                "today_gorev_total": 0, "today_gorev_done": 0,
+                "week_gorev_total": 0, "week_gorev_done": 0, "week_gorev_rate": None,
+                "week_test_planned": 0, "week_test_completed": 0,
+                "rate_7d": None, "consistency_7d": None,
+                "warning_level": "green",
+            })
+            continue
         snap = student_snapshot(db, s, today=today)
         # 7 günlük tamamlama (bu hafta için)
         week = snap.week
@@ -115,6 +142,7 @@ def list_parent_students(db: Session, parent: User) -> list[dict[str, Any]]:
             "exam_target": s.effective_exam_target.lower() if s.effective_exam_target else "none",
             "relation": link.relation.value if link.relation else None,
             "is_primary": link.is_primary,
+            "is_active": True,
             "today_planned": snap.today.planned,
             "today_completed": snap.today.completed,
             "week_planned": week.planned,

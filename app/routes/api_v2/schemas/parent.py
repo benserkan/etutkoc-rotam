@@ -46,6 +46,7 @@ class ParentChildSummary(BaseModel):
     exam_target: str = "none"  # "lgs" / "yks" / "none"
     relation: ParentRelationLiteral | None = None
     is_primary: bool = False
+    is_active: bool = True   # False → koçluk sona erdi (rozet + güncel takip yok)
     today_planned: int
     today_completed: int
     week_planned: int

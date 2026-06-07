@@ -106,6 +106,11 @@ function ChildCard({ child }: { child: ParentChildSummary }) {
             </div>
           </div>
           <div className="text-right text-xs flex flex-col items-end gap-1">
+            {!child.is_active && (
+              <span className="inline-flex items-center bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-semibold" title="Bildirim gönderilmez; geçmiş raporlara erişebilirsiniz.">
+                Koçluk sona erdi
+              </span>
+            )}
             {child.is_primary && (
               <span className="inline-block bg-[#117A86]/10 text-[#117A86] px-1.5 py-0.5 rounded text-[10px] uppercase tracking-wider font-semibold">
                 Birincil

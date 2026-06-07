@@ -32,6 +32,7 @@ export interface ParentChildSummary {
   exam_target: string;
   relation: ParentRelation | null;
   is_primary: boolean;
+  is_active: boolean;   // false → koçluk sona erdi (rozet)
   today_planned: number;
   today_completed: number;
   week_planned: number;

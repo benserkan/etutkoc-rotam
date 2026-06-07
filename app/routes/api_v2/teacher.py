@@ -458,8 +458,10 @@ def teacher_dashboard_v2(
     )
     active_students = [s for s in students if s.is_active]
 
-    # StudentSnapshot toplu üretim
-    snapshots = [student_snapshot(db, s, today=today) for s in students]
+    # StudentSnapshot toplu üretim — YALNIZ AKTİF öğrenci. Koçluğu sonlandırılan
+    # (pasif) öğrenci filo özetine + tamamlama oranına GİRMEZ (koçun ortalamasını
+    # düşürmez). student_count = toplam, active_student_count = aktif ayrı döner.
+    snapshots = [student_snapshot(db, s, today=today) for s in active_students]
 
     # Filo özeti — warning level dağılımı
     fleet_red = sum(1 for s in snapshots if s.worst_warning_level == "red")
@@ -478,7 +480,7 @@ def teacher_dashboard_v2(
     # döngüsünden verimli).
     from app.services import gorev_stats
     _wk_start = today - timedelta(days=6)
-    _all_ids = [s.id for s in students]
+    _all_ids = [s.id for s in active_students]  # görev/test toplamı yalnız aktif
     gorev_week_total = gorev_week_done = 0
     gorev_today_total = gorev_today_done = 0
     test_week_planned = test_week_completed = 0
@@ -7490,9 +7492,13 @@ def teacher_dashboard_warnings_feed_v2(
         return dt if (dt is None or dt.tzinfo) else dt.replace(tzinfo=timezone.utc)
 
     today = date.today()
+    # YALNIZ AKTİF öğrenci — koçluğu sonlandırılan (pasif) öğrenci uyarı akışına
+    # girmez (bayat "program yok / 3 gün boş" uyarıları koçun ekranında kalmaz;
+    # velisine zaten bildirim gitmiyor).
     students = (
         db.query(User)
-        .filter(User.teacher_id == user.id, User.role == UserRole.STUDENT)
+        .filter(User.teacher_id == user.id, User.role == UserRole.STUDENT,
+                User.is_active.is_(True))
         .order_by(User.full_name)
         .all()
     )

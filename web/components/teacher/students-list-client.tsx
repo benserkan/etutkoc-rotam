@@ -225,6 +225,7 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
   const [resetOpen, setResetOpen] = React.useState(false);
   const [resetResult, setResetResult] = React.useState<StudentResetPasswordResult | null>(null);
+  const [endOpen, setEndOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
 
   React.useEffect(() => {
@@ -250,8 +251,12 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
 
   function onToggleActive() {
     setMenuOpen(false);
-    if (student.is_active) deactivate.mutate();
-    else reactivate.mutate();
+    if (student.is_active) setEndOpen(true);  // onaylı "Koçluğu sonlandır" akışı
+    else reactivate.mutate();                 // yeniden başlatma benign → direkt
+  }
+
+  function confirmEnd() {
+    deactivate.mutate(undefined, { onSuccess: () => setEndOpen(false) });
   }
 
   function onResetPassword() {
@@ -297,12 +302,12 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
               {student.is_active ? (
                 <>
                   <PauseCircle className="size-4 text-amber-500" aria-hidden />
-                  Pasife al
+                  Koçluğu sonlandır
                 </>
               ) : (
                 <>
                   <PlayCircle className="size-4 text-emerald-500" aria-hidden />
-                  Aktif et
+                  Koçluğu yeniden başlat
                 </>
               )}
             </button>
@@ -366,6 +371,30 @@ function StudentRowActions({ student }: { student: TeacherStudentListItem }) {
               </Button>
             </DialogFooter>
           )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={endOpen} onOpenChange={(o) => { if (deactivate.isPending) return; setEndOpen(o); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Koçluğu sonlandır</DialogTitle>
+            <DialogDescription>
+              {student.full_name} ile koçluk sürecini sonlandırmak üzeresiniz.
+            </DialogDescription>
+          </DialogHeader>
+          <ul className="space-y-2 text-sm text-muted-foreground">
+            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Veliye bildirim (haftalık rapor, uyarılar) <b className="text-foreground">gönderilmez</b>.</span></li>
+            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Öğrenci <b className="text-foreground">giriş yapamaz</b> (erişimi kapanır).</span></li>
+            <li className="flex gap-2"><span className="text-cyan-600">•</span><span>Koç ve kurum <b className="text-foreground">istatistiklerinden çıkar</b> — ortalamanı düşürmez.</span></li>
+            <li className="flex gap-2"><span className="text-emerald-600">•</span><span>Tüm verisi <b className="text-foreground">korunur</b>; istediğin an &ldquo;Koçluğu yeniden başlat&rdquo; ile geri açılır.</span></li>
+          </ul>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEndOpen(false)} disabled={deactivate.isPending}>Vazgeç</Button>
+            <Button onClick={confirmEnd} disabled={deactivate.isPending}>
+              {deactivate.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <PauseCircle className="size-4" aria-hidden />}
+              Koçluğu sonlandır
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
