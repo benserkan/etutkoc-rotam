@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { BrandLogo } from "@/components/brand-logo";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { InstitutionContact } from "@/components/pricing/institution-contact";
+import { FloatingWhatsApp } from "@/components/contact/floating-whatsapp";
 import type { PricingCatalog } from "@/lib/types/pricing";
 
 function tl(n: number): string {
@@ -193,6 +194,7 @@ export function PricingClient({
           kayıt olduktan sonra hesabın hızlıca aktive edilir.
         </p>
       </div>
+      <FloatingWhatsApp phone={catalog.contact.whatsapp} />
     </main>
   );
 }

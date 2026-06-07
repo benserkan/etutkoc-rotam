@@ -3024,6 +3024,12 @@ export interface InstitutionTierCfg {
   white_label: boolean;
   short: string;
 }
+export interface ContactChannelsCfg {
+  sales_email: string;
+  support_email: string;
+  whatsapp: string;
+  phone: string;
+}
 export interface PricingConfig {
   annual_paid_months: number;
   solo_trial_days: number;
@@ -3034,6 +3040,7 @@ export interface PricingConfig {
   institution_free_students: number;
   institution_students_per_coach: number;
   institution_tiers: InstitutionTierCfg[];
+  contact?: ContactChannelsCfg;
 }
 export interface PricingAdminResponse {
   config: PricingConfig;

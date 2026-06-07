@@ -18,6 +18,7 @@ from sqlalchemy.orm import Session
 from app.deps import get_db
 from app.models.contact_request import (
     CONTACT_SOURCE_LABELS_TR,
+    CONTACT_SUPPORT_SOURCES,
     ContactRequest,
 )
 from app.services import turnstile
@@ -94,14 +95,19 @@ def submit_contact(
     db.commit()
     db.refresh(cr)
 
-    # Satışa bildir (best-effort; e-posta kapalıysa log-only)
+    # İlgili kutuya bildir (destek konusu → destek; diğerleri → satış).
+    # Best-effort; e-posta kapalıysa log-only.
     try:
         from app.services import email_service, pricing
 
-        sales = (pricing.get_pricing_catalog().get("contact") or {}).get("sales_email")
-        if sales:
+        contact_cfg = pricing.get_pricing_catalog().get("contact") or {}
+        if cr.source in CONTACT_SUPPORT_SOURCES:
+            inbox = contact_cfg.get("support_email") or contact_cfg.get("sales_email")
+        else:
+            inbox = contact_cfg.get("sales_email") or contact_cfg.get("support_email")
+        if inbox:
             email_service.send_email(
-                to=sales,
+                to=inbox,
                 template="contact_request_admin",
                 ctx={
                     "name": cr.name,

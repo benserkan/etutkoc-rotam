@@ -31,8 +31,16 @@ CONTACT_SOURCE_LABELS_TR: dict[str, str] = {
     "pricing_institution": "Fiyatlandırma — Kurumsal",
     "pricing_general": "Fiyatlandırma — Genel",
     "subscription_request": "Abonelik talebi (koç)",
+    # /iletisim sayfası — konu seçimine göre kaynak (admin panelde okunur etiket)
+    "iletisim_genel": "İletişim — Genel",
+    "iletisim_destek": "İletişim — Destek",
+    "iletisim_kurumsal": "İletişim — Kurumsal",
+    "iletisim_isbirligi": "İletişim — İş birliği",
     "other": "Diğer",
 }
+
+# Hangi kaynaklar destek kutusuna (sales yerine) yönlenir
+CONTACT_SUPPORT_SOURCES: set[str] = {"iletisim_destek"}
 
 
 class ContactRequest(Base):

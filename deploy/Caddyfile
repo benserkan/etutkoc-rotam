@@ -206,6 +206,10 @@
         # (tek kaynak app/services/pricing.py). Jinja plans/pricing.html dead-code.
         reverse_proxy /pricing next:3000
 
+        # /iletisim public iletişim sayfası (Next.js) — çok kanallı + form.
+        # Veri/kanal bilgisi /api/v2/pricing'den; gönderim /api/v2/contact (Turnstile).
+        reverse_proxy /iletisim next:3000
+
         # ---------- Dalga 7: /logout — KAPALI (Next.js çıkışı BFF ile) ----------
         #     reverse_proxy /logout next:3000
 

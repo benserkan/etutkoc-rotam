@@ -3280,6 +3280,13 @@ class InstitutionTierIn(BaseModel):
     short: str = ""
 
 
+class ContactChannelsIn(BaseModel):
+    sales_email: str = Field(default="", max_length=255)
+    support_email: str = Field(default="", max_length=255)
+    whatsapp: str = Field(default="", max_length=40)   # boş → gizli
+    phone: str = Field(default="", max_length=40)      # boş → gizli
+
+
 class PricingConfigBody(BaseModel):
     annual_paid_months: int
     solo_trial_days: int
@@ -3290,6 +3297,7 @@ class PricingConfigBody(BaseModel):
     institution_free_students: int
     institution_students_per_coach: int
     institution_tiers: list[InstitutionTierIn]
+    contact: ContactChannelsIn | None = None
 
 
 class PricingAdminResponse(BaseModel):

@@ -52,17 +52,18 @@ import { Reveal } from "@/components/landing/reveal";
 import { MockupByType } from "@/components/landing/mockups";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { BrandLogo } from "@/components/brand-logo";
+import { FloatingWhatsAppAuto } from "@/components/contact/floating-whatsapp-auto";
 
 const NAV = [
   { href: "#ozellikler", label: "Özellikler" },
   { href: "#kurumlar", label: "Kurumlar" },
   { href: "#nasil-calisir", label: "Nasıl Çalışır?" },
   { href: "#paketler", label: "Paketler" },
-  { href: "#iletisim", label: "İletişim" },
+  { href: "/iletisim", label: "İletişim" },
 ];
 
-const DEMO_MAIL =
-  "mailto:satis@etutkoc.com?subject=Kurumsal%20Demo%20Talebi";
+// Kurumsal demo/teklif → /pricing kurumsal formu (zengin: koç sayısı + fayda).
+const DEMO_MAIL = "/pricing?type=kurum#kurumsal";
 
 export function LandingClient() {
   const q = useQuery<LandingResponse>({
@@ -88,6 +89,7 @@ export function LandingClient() {
       <Footer />
       <div className="h-20 md:hidden" aria-hidden />
       <StickyMobileCta />
+      <FloatingWhatsAppAuto />
     </div>
   );
 }
@@ -225,9 +227,9 @@ function Faq() {
         </Reveal>
         <p className="mt-8 text-center text-sm text-muted-foreground">
           Başka sorunuz mu var?{" "}
-          <a href="mailto:destek@etutkoc.com" className="font-medium text-cyan-700 underline-offset-4 hover:underline">
-            destek@etutkoc.com
-          </a>
+          <Link href="/iletisim" className="font-medium text-cyan-700 underline-offset-4 hover:underline">
+            Bize ulaşın
+          </Link>
         </p>
       </div>
     </section>
@@ -996,7 +998,7 @@ function Footer() {
             <p className="mt-4 font-mono text-xs text-cyan-200/40">500+ otomatik test ile doğrulandı</p>
           </div>
           <FooterCol title="Platform" links={[["#ozellikler", "Özellikler"], ["#paketler", "Paketler"], ["#nasil-calisir", "Nasıl Çalışır?"], ["#kurumlar", "Kurumlar"]]} />
-          <FooterCol title="Destek" links={[["mailto:destek@etutkoc.com", "Yardım Merkezi"], ["mailto:destek@etutkoc.com", "Kullanım Kılavuzu"], ["mailto:destek@etutkoc.com", "İletişim"]]} />
+          <FooterCol title="İletişim" links={[["/iletisim", "Bize ulaşın"], ["/pricing?type=kurum#kurumsal", "Kurumsal teklif"], ["/iletisim?konu=iletisim_destek", "Teknik destek"]]} />
           <FooterCol title="Yasal" links={[["/kvkk", "Kullanım Şartları"], ["/privacy", "Gizlilik Politikası"], ["/kvkk", "KVKK Aydınlatma"]]} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-cyan-200/50">

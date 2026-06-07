@@ -43,6 +43,10 @@ export function AdminPricingClient({ initial }: { initial: PricingAdminResponse 
       return { ...c, institution_tiers: tiers };
     });
   }
+  const contact = cfg.contact ?? { sales_email: "", support_email: "", whatsapp: "", phone: "" };
+  function setContact(field: keyof typeof contact, v: string) {
+    setCfg((c) => ({ ...c, contact: { ...(c.contact ?? contact), [field]: v } }));
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
@@ -117,6 +121,37 @@ export function AdminPricingClient({ initial }: { initial: PricingAdminResponse 
                 <span className="text-xs text-muted-foreground">{t.price_hidden ? "₺/ay (özel teklif)" : "₺/ay (toplam)"}</span>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* İletişim Kanalları */}
+      <Card>
+        <CardContent className="space-y-4 p-4">
+          <div>
+            <h2 className="font-medium">İletişim Kanalları</h2>
+            <p className="text-xs text-muted-foreground">
+              /iletisim sayfası, footer ve yüzen WhatsApp butonu bu bilgileri kullanır.
+              <strong> WhatsApp/telefon boşsa o kanal gizlenir.</strong> Numarayı ülke koduyla yaz (örn. +905321112233).
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1">
+              <Label className="text-xs">Satış e-postası</Label>
+              <Input value={contact.sales_email} onChange={(e) => setContact("sales_email", e.target.value)} placeholder="satis@etutkoc.com" className="h-9" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Destek e-postası</Label>
+              <Input value={contact.support_email} onChange={(e) => setContact("support_email", e.target.value)} placeholder="destek@etutkoc.com" className="h-9" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">WhatsApp (boş → gizli)</Label>
+              <Input value={contact.whatsapp} onChange={(e) => setContact("whatsapp", e.target.value)} placeholder="+905321112233" className="h-9" />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs">Telefon (boş → gizli)</Label>
+              <Input value={contact.phone} onChange={(e) => setContact("phone", e.target.value)} placeholder="+902121112233" className="h-9" />
+            </div>
           </div>
         </CardContent>
       </Card>

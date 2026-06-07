@@ -8154,6 +8154,7 @@ _PRICING_EDITABLE_KEYS = (
     "annual_paid_months", "solo_trial_days", "solo_free_students", "solo_tiers",
     "institution_trial_days", "institution_free_teachers",
     "institution_free_students", "institution_students_per_coach", "institution_tiers",
+    "contact",  # iletişim kanalları (sales/support e-posta + WhatsApp + telefon)
 )
 
 
@@ -8201,6 +8202,9 @@ def admin_pricing_set_v2(
             raise HTTPException(status_code=400, detail={"error": "validation", "code": "invalid_pricing",
                     "message": "Tier değerleri geçersiz."})
 
+    # İletişim kanalları None ise varsayılanı koru (override'da boş bırakma)
+    if not payload.get("contact"):
+        payload["contact"] = pricing.defaults()["contact"]
     app_settings.set_json(db, pricing.PRICING_KEY, payload, actor_user_id=user.id)
     log_action(
         db, action=AuditAction.SYSTEM_SETTING_UPDATE, actor_id=user.id,
