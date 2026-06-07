@@ -4869,6 +4869,49 @@ lgs-web'e docker cp) ile kök neden bulundu.
   'id'`) — bu düzeltmeyle İLGİSİZ, stash testiyle teyit edildi. Ayrı küçük test-fix
   bekliyor.
 
+## Bildirim/e-posta denetimi + "Kuyrukta uzun süre bekleyen bildirim" yanlış-alarmı (2026-06-07, deploy edildi)
+
+**Bağlam (kullanıcı):** Süper admine her sabah "Kuyrukta uzun süre bekleyen
+bildirim · değer 396 · eşik 60 · CRITICAL" + "Açık abuse sinyali" alarm e-postaları
+geliyordu; "bazen mailler gitmiyor mu" endişesi. Tüm bildirim mimarisi eksiksiz
+okundu + 4 SALT-OKUMA prod teşhisi yazıldı (`diagnose_parent_notifications`,
+`diagnose_notification_queue`, `diagnose_new_program_render`, `diagnose_abuse_signals`).
+- **Kuyruk alarmı = YANLIŞ ALARM (sessiz saat).** "396" mail sayısı DEĞİL, en eski
+  bekleyenin **dakika yaşı**. Gece 23:55 (weekly_backstop) + 21:00 (empty_day) cron'ları
+  mail üretir → sessiz saat (22:00-07:00) → `scheduled_at=07:00`'a ertelenir →
+  07:00'de gönderilir. `notification_health.oldest_queued_minutes` YALNIZ `queued_at`
+  yaşına bakıp `scheduled_at`'i (ve `next_attempt_at` retry-backoff'unu) yok sayıyordu
+  → 00:55–07:00 arası `oldest_queued_long` (alarm_engine) CRITICAL. **Kanıt:** 06:31'de
+  alarm, 07:00'de kuyruk boşaldı (son SENT tam 07:00), hiçbir mail kaybolmadı.
+- **Düzeltme (`notification_health.py`, migration YOK):** `oldest_queued_minutes`
+  artık `dispatch_pending` ile BİREBİR hizalı — `scheduled_at<=now` AND
+  `next_attempt_at(null|<=now)` filtreli; yalnız **gerçekten gönderilebilir-ama-
+  gönderilmemiş** satırların yaşını ölçer. Alarm yalnız GERÇEK dispatcher durmasında
+  çalar; panel "oldest queued" göstergesi de doğrulaştı.
+  `scripts/test_oldest_queued_due_aware.py` **4/4**. Regresyon: security_overview 14 +
+  alarms_abuse 21. Commit `47c992e`, web+worker rebuild.
+- **Mail pipeline SAĞLIKLI (canlı kanıt):** EMAIL_ENABLED=true (Zoho 587/TLS,
+  rotam@etutkoc.com) · `parent_notifications_email` flag açık · 4 cron zamanlı+çalışıyor
+  · dispatcher canlı (60sn, batch 50) · son 7 gün **22 SENT / 1 FAILED** (o 1 = 06-01
+  `parent_new_program` render bug'ı, 06-02 `items→rows` ile düzeldi; aynı payload şimdi
+  OK) · son 24h 0 FAILED. Efe'nin velisine 06-06 21:00 empty_day GİTTİ; 06-01 weekly
+  23:55→07:00 (sessiz saat) teslim — mekanizma canlı kanıt.
+- **"Açık abuse sinyali" alarmı = test/dev yanlış-pozitifi.** `abuse_open` eşik=0 →
+  tek çözülmemiş sinyal her değerlendirmede çalar. 2 açık sinyal (ikisi de kullanıcının
+  IP'si 176.88.39.7, info): `multi_account_same_device` (05-17, mobil app `okhttp` çoklu
+  giriş) + `signup_velocity` (06-05, test koç kayıtları). **Çözüldü** (prod'da
+  `abuse_detection.resolve_signal`, resolver=Süper Admin id=6) → kalan açık sinyal 0,
+  alarm susar. Detektör yeni sinyal üretirse yine yakalar (06-06 imp_by fix yeni
+  impersonation kaynaklı multi_account üretmiyor).
+- **Veli bildirim tetik matrisi (referans):** weekly_report (döngü-bitti olayı +
+  23:55 backstop) · new_program (**publish-week + "Veliye duyur"; publish-day DEĞİL**) ·
+  teacher_note (buton) · empty_day (21:00, 3+ üst üste boş) · drop_alert (Pzt 06:00) ·
+  exam_approaching (08:15, D-30/7/1, **sınav tarihi şart**) · invitation/OTP (anlık).
+- **AÇIK (kullanıcı kararına bağlı):** (a) NEW_PROGRAM boşluğu — koç gün-gün yayınlarsa
+  (publish-day) veli "yeni program" maili hiç almıyor (Efe: 49 görev, 0 bildirim);
+  publish-day'e dedup'lı bildirim veya koça hatırlatma eklenebilir. (b) Efe (12/YKS)
+  sınav tarihi boş → exam_approaching hiç çıkmaz (veri eksiği).
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
