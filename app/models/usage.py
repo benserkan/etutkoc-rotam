@@ -92,7 +92,14 @@ class UsageEvent(Base):
         Enum(UsageOwnerType), nullable=False,
     )
     owner_id: Mapped[int] = mapped_column(Integer, nullable=False)
-    kind: Mapped[UsageKind] = mapped_column(Enum(UsageKind), nullable=False)
+    # native Postgres ENUM DEĞİL → plain VARCHAR. Yeni UsageKind değerleri
+    # (AI_*) migration/ALTER TYPE gerektirmeden çalışır; "invalid input value
+    # for enum usagekind" 500'leri önlenir. SQLAlchemy üye ADINI saklar
+    # (create_constraint=False → CHECK yok), mevcut prod verisiyle tutarlı.
+    kind: Mapped[UsageKind] = mapped_column(
+        Enum(UsageKind, native_enum=False, create_constraint=False, length=40),
+        nullable=False,
+    )
     credits: Mapped[int] = mapped_column(Integer, nullable=False)
 
     # 'YYYY-MM' formatı — CreditAccount.period_year_month ile join + hızlı agrega
