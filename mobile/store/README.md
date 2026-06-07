@@ -1,39 +1,43 @@
 # ETÜTKOÇ Rotam — Mağaza Görselleri (Store Assets)
 
-Premium, marka-tutarlı mağaza görsel seti. İki tasarım dili:
+Premium, marka-tutarlı mağaza seti — **Claude (Anthropic) editöryel dili** uyarlandı.
 
-- **Hero kapaklar (koyu)** — Khan Academy tarzı: koyu petrol yıldız zemin +
-  marka kilidi (amblem + "etütkoç · rotam") + büyük beyaz **Playfair** serif slogan +
-  **logo sarısı** (#f1b422) alt-slogan + altın kıvılcım + cyan el-çizimi + eğik cihaz.
-- **Özellik görselleri (açık)** — Udemy tarzı editöryel: düz açık-gri zemin +
-  sola yaslı **Playfair** serif başlık (siyah + **marka cyan'ı** #0e7490 vurgu) +
-  cyan alt-başlık + alttan taşan çerçeveli cihaz. Logo/şekil yok, sade.
+## Tasarım dili
+- **2 fotoğraf kapağı** — sinematik genç/öğrenci fotoğrafı (teal film tonu) + büyük
+  **Playfair** serif slogan (beyaz) + alt film scrim + marka kilidi (gold spark +
+  "etütkoç · rotam"). Claude'un "The AI for problem solvers / Keep thinking" ikilisi gibi.
+- **6 özellik slaytı** — düz marka-renkli zemin (petrol / terracotta / koyu) + sola
+  yaslı serif başlık + altın el-çizimi kıvrım + **kürasyonlu (idealize) UI kartı**
+  ("dolu dolu": özet şerit + çok satır + ikincil bloklar). Ham ekran değil, hikâye
+  anlatan temiz mockup.
 
 ## Renk & tipografi
-- Marka cyan (petrol): `#0e7490` · logo sarısı (altın): `#f1b422` · mürekkep: `#1c1d1f`
-- Hero zemin: koyu petrol-lacivert degrade `(13,49,60)→(6,23,30)` + yıldız alanı
-- Başlık: **Playfair Display** (variable, wght 780–800) — Türkçe ş/ğ/ç/İ/ı tam
-- Alt-başlık / wordmark: **Plus Jakarta Sans** (variable, wght 600–700)
+- Marka cyan (petrol) `#0e7490` · logo sarısı `#f1b422` · mürekkep `#1c1d1f`
+- Başlık **Playfair Display** (variable) — Türkçe tam · alt metin **Plus Jakarta Sans**
+- Slayt zeminleri: petrol `(18,98,118)` · terracotta `(199,104,72)` · koyu `(28,40,47)`
 
-## Dosyalar
-- `play/` — tüm set (1080×1920, 16 görsel):
-  - `01-hero-rota` · `02-hero-kimse-geride` (koyu kapaklar)
-  - `03..16` — özellikler: öğrenci listesi, erken uyarı, program, konu perf.,
-    AI içgörü, denemeler, öğrenci bugün/hafta/gelişim, veli detay/rapor,
-    kurum koç/risk/tükenmişlik
-- `play8/` — **Play Store için seçilmiş 8** (koç-öncelikli, yüklenme sırası 1–8):
-  1 hero-rota · 2 hero-kimse-geride · 3 program · 4 konu-perf · 5 AI içgörü ·
-  6 denemeler · 7 veli-rapor · 8 kurum-risk
-- `feature-graphic.png` — 1024×500 Play feature graphic (koyu hero dili)
-- `src/` — telefondan çekilen ham ekran görüntüleri (1080×2340)
-- `fonts/` — Playfair + Plus Jakarta Sans (OFL) + şeffaf amblem `mark-transp.png`
+## Dosyalar (`play/` — 1080×1920, 8 görsel)
+1. `01-hero-rota` — kapak: **Hedefe giden net rota** (foto)
+2. `02-hero-kimse-geride` — kapak: **Kimse geride kalmasın** (foto)
+3. `03-erken-uyari` — Geride kalmadan önce uyar (öğrenci listesi · terracotta)
+4. `04-ai-seans` — Yapay zekâ seansa hazırlar (koçluk içgörüsü · petrol)
+5. `05-program` — Programı dakikada kur (haftalık plan · koyu)
+6. `06-deneme-netleri` — Deneme netleri otomatik trend (grafik + kırılım · terracotta)
+7. `07-veli` — Veli her şeyi görür (haftalık rapor · petrol)
+8. `08-kurum-risk` — Riski gör, müdahale et (kurum risk paneli · koyu)
 
-## Mağaza spesifikasyonları
-- **Play telefon görseli**: 1080×1920 (9:16, ≤2:1 oran şartına uygun) ✓
-- **Play feature graphic**: 1024×500 ✓
-- **App Store**: aynı set kullanılabilir (max 10 görsel; ilk 8'e 2 hero + 6 özellik)
+`play8/` — Play yükleme sırası `1.png … 8.png` (yukarıdaki sırayla, koç-öncelikli).
+`feature-graphic.png` — 1024×500 · `store-icon-512.png` — 512×512.
+
+## Kapak fotoğrafları
+AI ile üretildi (Gemini), Gemini watermark'ı kırpıldı, teal film tonuyla tutarlı.
+Kompozit: `_gen_covers.py` mantığı (film scrim + serif slogan + marka).
+Yeni foto gelince aynı akışla yenilenir.
 
 ## Yeniden üretim
-Görseller PIL (Pillow) + cairosvg ile kod-üretimli. Slogan/renk/düzen değişince
-`fonts/` içindeki variable font'larla composer yeniden çalıştırılır (amblem SVG'den
-şeffaf rasterize edilir: `web/public/etutkoc-mark.svg`).
+- Özellik slaytları: `python mobile/store/_gen_concept.py` (kürasyonlu kartlar).
+- Fontlar `fonts/` (Playfair + Plus Jakarta Sans, OFL) + şeffaf amblem `mark-transp.png`.
+
+## Mağaza spesifikasyonları
+- Play telefon görseli 1080×1920 (≤2:1) ✓ · feature graphic 1024×500 ✓
+- App Store: aynı set (ilk 8 = 2 kapak + 6 özellik; 10'a tamamlanabilir).
