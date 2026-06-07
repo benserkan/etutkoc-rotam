@@ -113,15 +113,31 @@ def generate(
         if not key:
             raise AIServiceUnavailable(
                 "Gemini ücretli anahtarı tanımlı değil (süper admin → AI Ayarları)")
-        # KVKK gereği kişisel veride ücretsiz key'e DÜŞMEYİZ (no-training zorunlu).
-        # Kota dolunca _QuotaExceeded sızmasın → düzgün AIServiceUnavailable (502).
-        try:
-            return _call(get_gemini_model(paid=True), key, parts, timeout=timeout,
-                         json_mode=json_mode, max_output_tokens=max_output_tokens)
-        except _QuotaExceeded:
-            raise AIServiceUnavailable(
-                "Yapay zekâ şu an yoğun (ücretli anahtar kotası doldu). "
-                "Lütfen birkaç dakika sonra tekrar deneyin.")
+        # KVKK: kişisel veride ücretsiz KEY'e düşmeyiz (no-training tier zorunlu).
+        # ANCAK aynı ücretli anahtarla model'i düşürmek serbesttir (anahtar/tier
+        # değişmez). gemini-2.5-pro Google'da faturalandırma ister; faturasız
+        # hesapta pro → 429. Bu durumda AYNI anahtarla flash modeline düşeriz ki
+        # içgörü/analiz çalışsın. Billing açılınca pro otomatik tekrar öne geçer.
+        models: list[str] = [get_gemini_model(paid=True)]
+        fm = get_gemini_model(paid=False)
+        if fm and fm not in models:
+            models.append(fm)
+        for i, m in enumerate(models):
+            last = i == len(models) - 1
+            try:
+                return _call(m, key, parts, timeout=timeout, json_mode=json_mode,
+                             max_output_tokens=max_output_tokens)
+            except _QuotaExceeded:
+                if last:
+                    raise AIServiceUnavailable(
+                        "Yapay zekâ şu an kullanılamıyor: ücretli Gemini anahtarında "
+                        "model kotası yok. gemini-2.5-pro için Google hesabında "
+                        "faturalandırma (billing) açılmalı.")
+                logger.info("Gemini ücretli model %s kotasız/erişimsiz → aynı anahtarla sıradaki modele düşülüyor", m)
+            except AIServiceUnavailable:
+                if last:
+                    raise
+                logger.info("Gemini ücretli model %s erişilemez → aynı anahtarla sıradaki modele düşülüyor", m)
 
     # prefer_paid → önce ücretli (pro) model; kotada ücretsize düş.
     if prefer_paid:
