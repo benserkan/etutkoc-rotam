@@ -14,6 +14,7 @@ import {
   type ParentInsightResponse,
 } from "@/lib/parent";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const SECTION_TONE: Record<string, { bg: string; text: string }> = {
   lgs: { bg: "bg-cyan-50", text: "text-cyan-700" },
@@ -79,6 +80,7 @@ export default function ParentChildExamsRoute() {
       </View>
 
       <ScrollView className="flex-1" contentContainerClassName="px-4 py-3 gap-4">
+        <DemoHint contextKey="ai-insight" role="parent" />
         {/* AI içgörü */}
         <View className="rounded-2xl border border-violet-200 bg-violet-50/50 p-4">
           <View className="mb-2 flex-row items-center gap-1.5">

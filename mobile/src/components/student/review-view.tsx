@@ -3,6 +3,7 @@ import { Text, View, Pressable } from "react-native";
 
 import type { ReviewCardItem } from "@/lib/student";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const RATINGS = [
   { v: 1, label: "Hatırlamadım", tone: "bg-rose-600 active:bg-rose-700" },
@@ -38,6 +39,7 @@ export function ReviewView({
         <Text className="text-center text-sm text-slate-500">
           {total > 0 ? `${total} kartı tekrar ettin. Harika!` : "Şu an tekrar edilecek kart yok."}
         </Text>
+        <DemoHint contextKey="review" role="student" />
         <Pressable onPress={onClose} className="mt-2 rounded-xl bg-brand-700 px-6 py-3 active:bg-brand-800">
           <Text className="text-base font-semibold text-white">Bitir</Text>
         </Pressable>

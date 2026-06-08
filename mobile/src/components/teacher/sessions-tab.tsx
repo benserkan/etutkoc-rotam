@@ -16,6 +16,7 @@ import {
 } from "@/lib/teacher";
 import { ApiError } from "@/lib/api";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const TR_MONTHS_SHORT = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
 function shortDate(iso: string): string {
@@ -253,6 +254,7 @@ export function SessionsTabView({
 
   return (
     <View className="gap-4 px-4 py-4">
+      <DemoHint contextKey="sessions" role="teacher" />
       <View className="rounded-2xl bg-brand-700 p-5">
         <Text className="text-xs font-semibold uppercase tracking-wider text-brand-100">
           Seanslar · {s.total} kayıt

@@ -3,6 +3,7 @@ import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native"
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { StudentWeekDay, StudentWeekResponse } from "@/lib/student";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const TR_MONTHS_SHORT = [
   "Oca", "Şub", "Mar", "Nis", "May", "Haz",
@@ -115,6 +116,7 @@ export function WeekView({
           onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined
         }
       >
+        <DemoHint contextKey="week" role="student" />
         {/* Hafta gezinme */}
         <View className="flex-row items-center justify-between">
           <Pressable

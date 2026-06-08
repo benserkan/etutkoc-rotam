@@ -56,7 +56,8 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | **Öğrenciye hedef ekle + tekrar kartı seed** | ✅ | ✅ | Gelişim izleme içinde |
 | Program **gelişmiş düzenleme** (sürükle-bırak, rezerv, blok, periyot) | ✅ | ⬜ | web |
 | Kütüphane / kitap CRUD / şablon | ✅ | ⬜ | web (kaynak girişi) |
-| AI foto/ses not + koçluk içgörüsü | ✅ | ⬜ | web (native kamera/mik sonra) |
+| AI koçluk içgörüsü (Gemini) | ✅ | ✅ | "Gelişim izleme → İçgörü"; web+mobil AYNI backend ucu (`/coaching-insight`) |
+| AI foto/ses not (yakalama) | ✅ | ⬜ | web (native kamera/mik sonra) |
 | Kaynak kullanım oranları / akademik yıl / sınıf yükseltme | ✅ | ⬜ | web (seyrek/yönetsel) |
 | WhatsApp tekli/toplu gönderim | ✅ | ⬜ | web |
 
@@ -98,6 +99,19 @@ Mobil: bildirime **tıkla → doğru ekran** (`NotificationObserver`, soğuk+sı
 Mobil: izinli cihazda otomatik token kaydı (authed olunca). **Tam çalışması için**
 EAS projectId + EAS build gerekir; Expo Go'da projectId yoksa sessiz no-op
 (özellik bozulmaz). Token DB'de saklanır, `DeviceNotRegistered`'da silinir.
+
+---
+
+## Demo videoları (panel-içi "▶ Nasıl kullanılır?")
+
+Web ile aynı registry (`src/lib/demos.ts`, 35 demo) + `components/demos/demo-hint.tsx`
+(expo-web-browser ile uygulama-içi açar; uygulamadan çıkmaz). Bağlamsal yerleşim
+(genel "Demolar" listesi YOK — web kararıyla aynı):
+- **Öğrenci**: Bugün (day) · Odak · Hedefler · Tekrar · Hafta
+- **Koç**: Program · Seanslar · Tahsilat
+- **Veli**: Haftalık Rapor · Yapay Zekâ Durum Analizi
+- Demo içeriği canlı web `/demos`'tan gelir (sahne + sesli anlatım); yeni demo =
+  web+mobil registry birlikte güncellenir.
 
 ---
 

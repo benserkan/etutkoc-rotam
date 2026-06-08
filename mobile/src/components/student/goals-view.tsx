@@ -5,6 +5,7 @@ import { Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "re
 import { FormSheet } from "@/components/ui/form-sheet";
 import type { GoalCreateBody, GoalItem, GoalListResponse } from "@/lib/student";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const KIND: Record<string, string> = { weekly: "Haftalık", daily: "Günlük", custom: "Özel", topic: "Konu", exam_target: "Sınav", subject: "Ders" };
 const CREATE_KINDS = [
@@ -150,6 +151,7 @@ export function GoalsView({
       contentContainerClassName="px-4 py-4 gap-3"
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined}
     >
+      <DemoHint contextKey="goals" role="student" />
       <View className="flex-row gap-3 rounded-2xl border border-slate-200 bg-white p-4">
         <View className="flex-1 items-center"><Text className="text-xl font-extrabold text-slate-900">{data.summary.active}</Text><Text className="text-[11px] text-slate-400">aktif</Text></View>
         <View className="flex-1 items-center"><Text className="text-xl font-extrabold text-emerald-600">{data.summary.achieved}</Text><Text className="text-[11px] text-slate-400">başarıldı</Text></View>

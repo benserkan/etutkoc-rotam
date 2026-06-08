@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AddTaskSheet } from "@/components/teacher/add-task-sheet";
 import { TeacherWeekView } from "@/components/teacher/week-view";
+import { DemoHint } from "@/components/demos/demo-hint";
 import {
   acceptAllTeacherSuggestions,
   acceptTeacherSuggestion,
@@ -98,6 +99,9 @@ export function ProgramTab({ studentId }: { studentId: number }) {
 
   return (
     <View className="flex-1">
+      <View className="px-4 pt-3">
+        <DemoHint contextKey="program" role="teacher" />
+      </View>
       <TeacherWeekView
         week={weekQ.data}
         onPrev={shiftToPrev}

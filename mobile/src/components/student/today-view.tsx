@@ -4,6 +4,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } 
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { DayNoteCard } from "@/components/student/day-note-card";
+import { DemoHint } from "@/components/demos/demo-hint";
 import type { StudentDayResponse, StudentTask } from "@/lib/student";
 
 const TR_DAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
@@ -102,6 +103,7 @@ export function TodayView({
         onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined
       }
     >
+      <DemoHint contextKey="day" role="student" />
       {/* Özet kart (gradient native'de çalışmaz → solid marka rengi) */}
       <View className="rounded-2xl bg-brand-700 p-5">
         <Text className="text-xs font-semibold uppercase tracking-wider text-brand-100">

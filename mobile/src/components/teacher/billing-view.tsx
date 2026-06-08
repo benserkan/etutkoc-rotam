@@ -5,6 +5,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import { FormSheet } from "@/components/ui/form-sheet";
 import type { BillingMonthResponse, BillingStudentRow, PaymentCreateBody } from "@/lib/teacher";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const TR_MONTHS = [
   "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran",
@@ -161,6 +162,7 @@ export function BillingView({
 
   return (
     <View className="flex-1 gap-4 px-4 py-4">
+      <DemoHint contextKey="billing" role="teacher" />
       {/* Ay seçici */}
       <View className="flex-row items-center justify-between rounded-2xl border border-slate-200 bg-white px-2 py-2">
         <Pressable onPress={onPrev} hitSlop={8} className="size-10 items-center justify-center rounded-full active:bg-slate-100">

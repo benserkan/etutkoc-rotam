@@ -4,6 +4,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 import type { FocusResponse } from "@/lib/student";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const DURATIONS = [25, 45, 50];
 
@@ -38,6 +39,7 @@ export function FocusView({
 
   return (
     <View className="flex-1 bg-slate-50 px-5 py-6">
+      <DemoHint contextKey="focus" role="student" className="mb-4" />
       {/* Üst istatistik */}
       <View className="flex-row justify-around rounded-2xl border border-slate-200 bg-white p-4">
         <View className="items-center"><Text className="text-xl font-extrabold text-slate-900">{data.streak_days}</Text><Text className="text-[11px] text-slate-400">gün seri</Text></View>

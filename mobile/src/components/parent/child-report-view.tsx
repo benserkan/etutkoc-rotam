@@ -10,6 +10,7 @@ import type {
   WeeklyVerdictLevel,
 } from "@/lib/parent";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const DAYS = ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"];
 const TR_MONTHS_SHORT = ["Oca", "Şub", "Mar", "Nis", "May", "Haz", "Tem", "Ağu", "Eyl", "Eki", "Kas", "Ara"];
@@ -66,6 +67,7 @@ export function ParentChildReportView({
       <View>
         <Text className="text-xs font-semibold uppercase tracking-wide text-slate-400">Haftalık ilerleme raporu</Text>
         <Text className="mt-0.5 text-lg font-bold text-slate-900">{report.student.full_name}</Text>
+        <DemoHint contextKey="weekly-report" role="parent" className="mt-2" />
       </View>
 
       {/* Değerlendirme */}
