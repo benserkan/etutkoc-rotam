@@ -17,6 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const MONTHS_TR = ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"];
 
@@ -70,6 +71,7 @@ export function BillingClient({
           <p className="mt-1 text-sm text-muted-foreground">
             Yapılan seans × ücret − ödenen = kalan alacak. Ertelenen/iptal seans sayılmaz.
           </p>
+          <DemoHint contextKey="billing" role="teacher" className="mt-1.5" />
         </div>
         <div className="inline-flex items-center gap-1 rounded-lg border border-border bg-card p-1">
           <Button variant="ghost" size="icon" onClick={() => setMonth(addMonth(month, -1))} aria-label="Önceki ay">

@@ -23,6 +23,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { ErrorState } from "@/components/error-state";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { getStudentGoals, studentKeys } from "@/lib/api/student";
 import {
   useGoalCreate,
@@ -88,6 +89,7 @@ export function GoalsClient({ initial }: Props) {
             Kendi hedeflerini koy, ilerleme oranını güncelle. Otomatik üretilmiş
             ders/sınav hedefleri burada gizli — koçunla birlikte yönetilir.
           </p>
+          <DemoHint contextKey="goals" role="student" />
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <PlusCircle /> Yeni hedef

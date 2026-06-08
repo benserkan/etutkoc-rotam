@@ -19,6 +19,7 @@ import type {
 } from "@/lib/types/academic";
 
 import { Button } from "@/components/ui/button";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -143,6 +144,7 @@ export function GradeAdvanceClient({ initialPreview, years }: Props) {
           profili (sınıf, alan, akademik yıl) güncellenir. Tarihçeyi silmek için
           sağdaki &quot;Programı sıfırla&quot; butonunu kullanın (geri alınamaz).
         </p>
+        <DemoHint contextKey="grade-advance" role="teacher" className="mt-1.5" />
       </header>
 
       <Card>

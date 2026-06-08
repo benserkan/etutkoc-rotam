@@ -19,6 +19,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/error-state";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { getStudentRequests, studentKeys } from "@/lib/api/student";
 import { useWithdrawRequest } from "@/lib/hooks/use-student-mutations";
 import type {
@@ -73,6 +74,7 @@ export function RequestsClient({ initial, initialFilter }: Props) {
           Koçuna gönderdiğin değişiklik, çıkar, ekle ve soru talepleri. Bekleyen
           talepler geri çekilebilir.
         </p>
+        <DemoHint contextKey="requests" role="student" />
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <FilterButton active={filter === "all"} onClick={() => applyFilter("all")}>
             Tümü ({data.total})

@@ -1,0 +1,352 @@
+{
+ "book-add-coach": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'da kütüphanenizi nasıl kuracağınızı göstereceğim. Kitap eklemek, bölümlere ayırmak, öğrenciye atamak, kitap setleri, şablonlar, ve yapay zekâ ünite önerisi. Sekiz kısa sahne, yaklaşık iki dakika. Hadi başlayalım.",
+  "Önce şunu konuşalım: neden kitap ekliyoruz? Kütüphane, tüm programınızın temelidir. Bir öğrenciye günlük program hazırlarken; hangi kitaptan, hangi üniteden, kaç test vereceğinizi buradan seçersiniz. Sistem, her bölümdeki test sayısını bilir. Böylece bir öğrenciye kaç test verdiğinizi, kaçının kaldığını tek bakışta görürsünüz. Kütüphanede dört bölüm var. Kitaplar, kitap setleri, kitap şablonları, ve görev şablonları. Yeni bir kitap eklemek için, sağ üstteki Yeni kitap düğmesine basın.",
+  "Yeni kitap ekranı sade. Önce kitabın adını yazın. Sonra hedef sınıf seviyesini seçin. Dört hazır seçenek var. L, G, S; beşten sekize. Lise; dokuzdan on ikiye. Mezun; Y, K, S hazırlık. Ya da tüm seviyeler. Bu seçim önemli; çünkü alttaki ders listesini, yalnızca o seviyeye uygun derslerle gösterir. Doğru dersi hızlıca bulursunuz. Sonra dersi, ve kitabın tipini seçin. Tip; soru bankası, fasikül, konu anlatımlı, branş denemesi, ya da genel deneme olabilir. Oluştur düğmesine bastığınızda, kitabın kendi sayfasına geçersiniz.",
+  "Şimdi kitabı bölümlere ayıralım. Bölümler, kitabın üniteleridir; her birinin bir adı, ve bir test sayısı vardır. Üç yol var. Birincisi, Bölüm ekle ile tek tek; bölüm adını ve test sayısını yazarsınız. İkincisi, Katalog konularından ekle ile; dersin hazır konu listesinden toplu seçersiniz. Üçüncüsünü birazdan göreceğiz; yapay zekâ. Her bölümün yanında üç sayı görürsünüz. Toplam test, rezerv, ve tamamlanan. Rezerv, bir öğrenciye programda ayrılmış testtir. Böylece aynı testi iki kez vermezsiniz.",
+  "En pratik yol, yapay zekâ ünite önerisi. Kitap henüz boşken, yapay zekâ bu kitabın muhtemel ünitelerini, uygun test sayılarıyla önerir. İsterseniz bir sınıf ipucu yazarsınız; boş bırakırsanız, kitabın hedef sınıfından türetilir. Birkaç saniye içinde üniteler kitaba eklenir; ve aynı zamanda bir taslak şablon olarak kaydedilir. Bu şablonu başka kitaplarda tekrar kullanabilirsiniz. Gelen üniteleri ve test sayılarını, tek tek düzenleyebilirsiniz. Bu özellik ücretli pakette açıktır; ve her çağrı, kredinizden düşer.",
+  "Kitabı bölümledikten sonra, sıra öğrenciye atamada. Öğrenciler sekmesine geçin. Şuna dikkat: bir kitap hiçbir öğrenciye atanmazsa, program yaparken o öğrencinin listesinde görünmez. Atamak istediğiniz öğrencilerin kutusunu işaretleyin, ve Kaydet düğmesine basın. Daha önce o kitaptan test verilmiş, yani rezervi olan bir öğrenci kilitlidir; yanlışlıkla çıkarılmaz. Kaydetmeden başka sekmeye geçmeyin; sistem sizi uyarır.",
+  "İki güçlü kısayol daha var. Birincisi, kitap setleri. Birden çok kitabı bir pakette toplarsınız; örneğin, L, G, S sekizinci sınıf paketi. Sonra bir öğrenciye, tek atamayla setteki tüm kitapları birden verirsiniz. İkincisi, kitap şablonları. Bir kitabın bölüm yapısını kaydeder, başka bir kitaba tek tıkla uygularsınız. Aynı üniteleri defalarca yazmaktan kurtulursunuz.",
+  "Son olarak, görev şablonları. Bunlar, sık kullandığınız görev kalıplarıdır; örneğin, günlük yirmi matematik. Kitabı, bölümü, ve test sayısını bir kez tanımlarsınız. Haftalık programa eklerken, Şablondan diyerek, aynı görevi tek tıkla uygularsınız. Şuna dikkat edin: kitap şablonu, kitabın bölüm yapısını kopyalar; görev şablonu ise, plana hazır bir görev koyar. İkisi farklıdır. Demo burada bitiyor. Kütüphaneniz hazır olduğunda, artık güçlü ve kişisel programlar kurabilirsiniz. Şimdi ilk kitabınızı ekleyin."
+ ],
+ "program-create-coach": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'da bir öğrenciye haftalık çalışma programını nasıl oluşturacağınızı göstereceğim. Sekiz kısa sahne, yaklaşık iki dakika. Hadi başlayalım.",
+  "Önce mantığı konuşalım. Program, öğrenciye 'bu hafta, bu gün, şunu çöz' demenin yoludur. Siz görevleri günlere yerleştirirsiniz; öğrenci kendi panelinde bu görevleri görür, yaptıkça işaretler, ve kaç doğru kaç yanlış yaptığını girer. Bu işaretlemeler size geri döner; tamamlama yüzdesini ve kaynak durumunu canlı görürsünüz. Başlamak için, sağ üstteki Yeni Program düğmesine basın. Başlangıç ve bitiş tarihini seçin; bir program, bir günden on dört güne kadar olabilir. İsterseniz bir etiket verin, örneğin Bayram Haftası. Sayfanın solunda gün kartları; sağında ise kaynak durumu ve serbest bloklar paneli durur.",
+  "Şimdi bir güne görev ekleyelim. Gün kartını açın, Yeni görev ekle deyin. Yedi görev tipi var. Test, deneme, blok, video, özet, tekrar, ve diğer. En sık kullanılan, test. Önce dersi seçin; sonra o derse atadığınız kitabı; sonra üniteyi. Kaç test vereceğinizi yazın. Hemen altında o bölümün durumu görünür. Bölümde kaç test var, kaçı çözülmüş, ve kaçı kaldı. Böylece kapasiteyi aşmazsınız. Ekle deyince görev güne düşer.",
+  "İşi hızlandırmak için, Öneriler panelini kullanın. Sistem; geçmiş planlardan ve tekrar kartlarından öğrenerek, o güne uygun üniteleri önerir. Her birinin yanında bir güven yüzdesi vardır. Tek tek Ekle diyebilir; ya da Tümünü ekle ile hepsini bir anda alabilirsiniz. Test dışındaki tipler de işinize yarar. Deneme, ders seçmeden eklenen tam denemedir; örneğin doksan soruluk bir L, G, S denemesi. Video, bir ders videosu bağlantısıdır. Özet ve tekrar, konuyu pekiştiren etkinliklerdir. Diğer ise serbest bir görevdir.",
+  "Şimdi en pratik özelliğe gelelim: bloklar. Diyelim bir özel ders öğretmeni, öğrenciye on testlik bir ödev verdi. Bunu, sistemdeki kitaplara bağlamadan, tek bir blok olarak tanımlarsınız. Serbest Bloklar panelinden Yeni deyip, blok adını ve toplam sayısını girersiniz. Sonra bu on testi haftaya yayarsınız; Salı'ya üç, Perşembe'ye dört. Blok, dağıtılanı ve kalanı sizin için sayar. Üzerinde; dağıtılan yedi bölü on, kalan üç gibi bir ilerleme çubuğu görürsünüz. Artık, kaç verdim kaç kaldı diye elle saymazsınız.",
+  "Sağdaki Kaynak Durumu paneli, programınızın muhasebesidir. Her ders ve kitap için üç sayı görürsünüz. Çözülen, yeşil. Rezerv, sarı. Ve kalan. Rezerv şu demek: bir göreve test atadığınızda, o testler ayrılır, yani rezerve geçer; kalan düşer. Böylece aynı testi yanlışlıkla iki kez vermezsiniz. Üstteki Hafta Izgarası ise tüm haftayı tek bakışta gösterir; bir güne tıkladığınızda, o günün düzenleyicisi açılır.",
+  "Görevleri eklerken bunlar taslak halindedir; öğrenci henüz göremez. Hazır olunca yayınlarsınız. Bir günü tek tek yayınlayabilir; ya da Tüm haftayı yayınla ile hepsini birden indirebilirsiniz. Yayınlanan görevler, öğrencinin gününe düşer. Öğrenci her görevi yaptıkça işaretler, ve kaç doğru kaç yanlış yaptığını girer. Bu sonuçlar size döner; örneğin on yedi doğru, üç yanlış. Tamamlama yüzdesi ve kaynak durumu, anında güncellenir.",
+  "Son ve çok önemli adım: veliye duyurmak. Veliye duyur düğmesine bastığınızda, önce bir önizleme açılır. Gün gün programı, denemeleri, ve hangi velilere gideceğini görürsünüz. Onaylarsanız, bağlı velilere e-posta, ve uygunsa WhatsApp ile gider. Dikkat: eğer duyurmazsanız, öğrenci programı kendi panelinde görür; ama veliye herhangi bir bildirim gitmez. Veliyi sürece katmak istiyorsanız, bu düğmeyi unutmayın. Ayrıca, Hafta Notları ile öğrencinin de göreceği kısa notlar bırakabilir; Yazdır ile programı kâğıda dökebilirsiniz. Demo burada bitiyor. Artık güçlü ve kişisel haftalık programlar kurabilirsiniz."
+ ],
+ "review-cards-coach": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki tekrar kartları sistemini, bir koç olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce neye yaradığını konuşalım. Öğrenci bir konuyu öğrenir; ama tekrar etmezse, zamanla unutur. Tekrar kartları, aralıklı tekrar yöntemiyle çalışır. Sistem, öğrenci konuyu tam unutmadan, doğru aralıklarla, o konuyu yeniden önüne getirir. Böylece bilgi, kısa süreli hafızadan kalıcı hafızaya geçer. Sizin işiniz tek şey: hangi konuların takip edileceğini belirlemek.",
+  "Başlamak çok kolay. Öğrencinin sayfasında, Tekrar Kartları sekmesine girin. Soldaki formdan bir ders seçin, ve Konuları Kart Olarak Ekle deyin. O dersin kataloğundaki tüm konular, bu öğrenciye birer kart olarak açılır. Zaten ekli olan konular atlanır; aynı konuyu iki kez eklemezsiniz. Örneğin Matematik dersini eklediğinizde, yirmi dört yeni kart açılır.",
+  "Kartları ekledikten sonra, üstte kart yükünü tek bakışta görürsünüz. Bugün vadesi gelen, yeni, öğreniyor, ve pekiştirme. Bugün vade sayısı yüksekse, öğrenciyi yönlendirin; tekrarları öğrencinin kendisi, kendi panelinden yapar. Siz buradan takip edersiniz.",
+  "Peki kartlar nasıl ilerler? Öğrenci her kartı görür, hatırlamayı dener, ve kendini dört seçenekle değerlendirir. Tekrar, zor, iyi, ve kolay. İşte önemli kısım: cevaba göre sistem, o kartın bir sonraki tarihini hesaplar. Kolay derse, kart günler sonra döner. İyi derse, aralık uzar. Zor derse kısalır. Tekrar, yani unuttum derse, kart yakında yeniden önüne gelir. Yani öğrenci zorlandıkça, o konu sıklaşır.",
+  "En değerli ekran burası: Müdahale Önerileri. Sistem, öğrencinin zorlandığı konuları, sıfırdan yüze bir zorlanma skoruyla sıralar. Mesela Karekök konusu, seksen beş. İki kez unutulmuş, zorluğu yüksek, ve pekiştirmedeyken bile unutulmuş. Çarpanlar, kırk iki. Her skorun altında nedeni yazar. Yani hangi öğrencinin, hangi konuda takıldığını, tahmin etmeden, sayıyla görürsünüz.",
+  "Gördüğünüz zorlanmaya, hemen müdahale edebilirsiniz. Zorlanılan konunun yanındaki Hızlı görev oluştur ile, o konudan ek çalışma atarsınız. Ayrıca bu konular, yapay zekâ öneri motoruna da beslenir; haftalık program hazırlarken, zorlanılan konu, tekrar görevi olarak öne çıkar. Sistem unutulanı kovalar, siz yön verirsiniz.",
+  "Tüm öğrencilerinizi birlikte görmek için, Tekrar Yükü Panosu var. Her öğrencinin, bugün vadesi gelen kart sayısı, tek listede sıralanır; kimin geride kaldığını bir bakışta anlarsınız. Demo burada bitiyor. Öğrenciye konuyu bir kez öğretmek yetmez; unutmadan tekrarlatmak, kalıcı başarının anahtarıdır."
+ ],
+ "review-cards-student": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki tekrar kartlarını, senin nasıl kullanacağını anlatacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce sana ne kazandırdığını konuşalım. Bir konuyu çözdün, anladın; ama tekrar etmezsen, birkaç hafta sonra çoğunu unutursun. Tekrar kartları bunu önler. Sistem; zorlandığın konuyu daha sık, iyi bildiğin konuyu daha seyrek önüne getirir. Yani en az tekrarla, en çok kalıcılığı elde edersin.",
+  "Tekrar kuyruğu sayfanı açtığında, üstte kart durumunu görürsün. Şu an, yani bugün tekrar etmen gerekenler. Yeni. Öğreniliyor. Ve pekiştirme. Önemli olan, Şu an sayısıdır; bunlar sırayla önüne gelir. Hepsini bitirdiğinde, o günün tekrarı tamamlanmış olur.",
+  "Sıra kartlarda. Karşına bir konu adı gelir; mesela Kareköklü İfadeler. Hemen cevaba atlama. Önce Hatırlamayı dene düğmesine bas. Sistem sana sorar: bu konunun temel kavramlarını, ve tipik soru örüntüsünü, bir iki dakika içinde aklında canlandırabiliyor musun? Bir an dur, ve kendini yokla.",
+  "Şimdi kendini dürüstçe değerlendir. Dört seçeneğin var. Tekrar; hiç hatırlamadıysan. Zor; hatırladın ama çok zorlandıysan. İyi; rahat hatırladıysan. Kolay; hiç düşünmeden bildiysen. Burada kendini kandırma; çünkü bu cevap, senin yararına çalışır.",
+  "Verdiğin cevap, o kartın bir sonraki tarihini belirler. Kolay dersen, kart çok daha geç döner; çünkü o konuyu zaten biliyorsun, boşuna tekrar etmezsin. İyi dersen, birkaç gün sonra gelir. Tekrar, yani hatırlamadım dersen, kart yakında yeniden karşına çıkar. Böylece vaktini, gerçekten zorlandığın konulara ayırırsın.",
+  "Dürüst olmanın iki faydası var. Birincisi, Tekrar dediğin konu daha sık önüne gelir; eksiğini hızlıca kapatırsın. İkincisi, zorlandığın konular koçuna da görünür; koçun sana o konudan ek çalışma planlayabilir. Yani dürüst değerlendirme, hem sistemi hem koçunu senin için çalıştırır.",
+  "Kuyruğun bittiğinde, Bu an için kart yok yazısını görürsün; bu, bugünkü tekrarları tamamladın demektir. Tek sırrı şu: her gün, birkaç dakikanı buraya ayır. Düzenli ve dürüst tekrar, sınavda en çok işine yarayan alışkanlıktır. Şimdi tekrar kuyruğunu aç, ve başla."
+ ],
+ "dna-coach": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki Çalışma DNA panelini, bir koç olarak nasıl okuyacağınızı ve kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce neden önemli, ona bakalım. Bir öğrenciyi yalnızca görev sayısıyla takip ederseniz, yorulmuş ya da tükenmek üzere olan öğrenciyi geç fark edersiniz. Çalışma DNA, öğrencinin nasıl çalıştığını gösterir. Size üç şey kazandırır. Birincisi, erken uyarı; düşüş yaşanmadan haftalar önce sinyal verir. İkincisi, akıllı planlama; öğrencinin verimli saatlerini bilirsiniz. Üçüncüsü, veliye somut konuşma; hisle değil, sayıyla.",
+  "Başlamak için, Tükenmişlik Panosuna girin. Burada tüm öğrencileriniz, risk skoruna göre sıralanır; en kritik en üstte. Her satırda öğrencinin adı, aktif sinyalleri, ve sıfırdan yüze risk skoru vardır. Renkler dört seviyede: yeşil sağlıklı, mavi dikkat, sarı uyarı, kırmızı kritik. Bir öğrenciye tıkladığınızda, o öğrencinin Çalışma DNA paneli açılır.",
+  "Panelin en üstünde, Tükenmişlik Riski kartı var. Örneğin Elif, seksen üzerinden yüz; kritik seviyede. Altında aktif sinyaller listelenir. Sistem beş farklı sinyali izler: gece geç saatte çalışma, hafta sonu mola olmaması, yoğunluk patlaması, tamamlama düşüşü, ve çalışma serisinde kopma. Elif'in sinyali şöyle diyor: son on dört günde, on altı tamamlamadan, yüzde seksen dördü gece yarısı ile sabaha karşı arasında. Yani sayıyla, neyin yolunda gitmediğini görürsünüz.",
+  "Aşağı kaydırınca, Saat ile Gün çalışma haritasını görürsünüz. Yedi gün, yirmi dört saat. Koyu mavi hücreler, o saatte yoğun çalışıldığını gösterir. Bu harita, program kararınızda çok değerli. Elif gece yoğun çalışıyor; karar şu: yeni görevlerin saatlerini, daha verimli ve sağlıklı pencerelere, mesela akşam saatlerine yerleştirin; gece yükünü yumuşatın.",
+  "Haritanın yanında, tempo profili var. Çalışma tipi, yani chronotype; Elif bir gece kuşu. En yoğun saati, gece on bir; en yoğun günü, Cuma. Altta ders bazlı tamamlama çubukları: Matematikte yüzde seksen yedi, Sosyalde yüzde elli beş. Yani hangi derste güçlü, hangisinde ihmal var, açıkça görürsünüz. Bir de haftalık eğilim: verim artıyor mu, azalıyor mu?",
+  "Şimdi en zor iş: veliye somut konuşmak. Veliye duyur düğmesine bastığınızda, sistem DNA verisinden, sayı destekli bir mesaj hazırlar. Örneğin: çalışma saatleri gece geç saatlerde yoğunlaşıyor, risk skoru seksen, bu hafta yükü hafiflettim, on dakika konuşabilir miyiz? Mesajı dilediğiniz gibi düzenler, sonra gönderirsiniz. Öğrenci bu mesajı görmez; yalnız veliye gider.",
+  "Size küçük bir öneri: her Pazartesi sabahı, beş dakika ayırın. Tükenmişlik Panosunu açın, kırmızı öğrencilere bakın, saatlerini haritalarına göre düzenleyin, riski yüksek olanların velilerine kısa bir mesaj atın. Demo burada bitiyor. İyi koç, görev sayısına değil, ritme bakar. Düşmeden önce yakalar, yumuşatır, yönlendirir."
+ ],
+ "dna-student": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki Çalışma DNA'nı, senin nasıl okuyacağını anlatacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Çalışma DNA'n nedir? Son yirmi sekiz günde nasıl çalıştığını, sistemin senin için çıkardığı bir özet. Sana kendi örüntünü gösterir. Ne zaman verimlisin, hangi derste güçlüsün, nerede yoruluyorsun? Bunları bilmek, daha akıllı bir plan kurmanı sağlar. Kendini tanıyan öğrenci, vaktini daha iyi kullanır.",
+  "Sayfanın üstünde üç özet kart var. Birincisi, çalışma tipin. Sabahçı, öğleci, akşamcı, ya da gececi. İkincisi, tamamlama oranın; örneğin yüzde yetmiş altı, yani yirmi beş görevden on dokuzu. Üçüncüsü, yorgunluk durumun; sıfırdan yüze bir risk skoru ve seviyesi. Sağlıklıdan kritiğe.",
+  "Sonra, hangi saatlerde aktif olduğunu görürsün. Sabah, öğle, akşam, ve gece; her birinin yüzdesi. Altında, saat ile gün haritası var. En koyu hücreler, en çok çalıştığın saatlerdir. Bu örnekte, en koyu hücreler gece on bir; demek ki gece çalışıyorsun. Verimli saatini bilmek, ağır dersleri ne zaman çalışacağını söyler.",
+  "Yorgunluk sinyalleri bölümü, seni cezalandırmak için değil; korumak için var. Sistem, beş aşırı çalışma örüntüsünü izler. Mesela gece geç saatlerde aşırı çalışma; gece çalışmanın yüzde seksen dördü, gece yarısından sonra. Bunu görünce, biraz erkene çekmeyi deneyebilirsin. Diğerleri: hafta sonu hiç mola vermemek, ani yoğunluk artışı, tamamlamada düşüş, ve çalışma serinin kopması.",
+  "Ders bazlı tamamlama, hangi derste iyi, hangisinde geride olduğunu gösterir; mesela Matematik yüzde seksen yedi, Sosyal yüzde elli beş. Yeşil iyi, sarı orta, kırmızı zayıf. Bir de haftalık eğilim: bu hafta, geçen haftaya göre daha çok mu, daha az mı çalıştın? Yukarı ok, yükselişte demek.",
+  "Önemli bir nokta: DNA'n canlıdır; sen çalıştıkça, her gün güncellenir. Bugün gececiysen, sabaha kaymaya başladığında, profilin de değişir. Bir ipucu: görevlerini bittiği anda işaretle; gün sonunda topluca değil. Çünkü saat profilin, ne zaman tiklediğine bakar. Anında tiklediğinde, en doğru sonucu alırsın.",
+  "Demo burada bitiyor. Tek alışkanlık yeter: haftada bir, Çalışma DNA'na bak. Verimli saatine ağır dersleri koy; bir yorgunluk sinyali görürsen, bir gün dinlen. DNA'n seni yargılamaz; sana en uygun planı kurmayı öğretir. Şimdi kendi DNA'na göz at."
+ ],
+ "focus-coach": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki Odaklı Çalışma panelini, bir koç olarak nasıl izleyeceğinizi göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce neden önemli. Görev sayısı, öğrencinin ne yaptığını söyler; ama ne kadar yoğunlaştığını söylemez. Odaklı Çalışma, yani Pomodoro seansları, öğrencinin gerçek çalışma temposunu ve sürekliliğini görünür yapar. Şunu unutmayın: bu paneli yalnız izlersiniz; seansları öğrencinin kendisi başlatır.",
+  "Öğrencinin sayfasında, Odak ve Rozetler paneline girin. Üstte beş özet sayı var. Şu anki seri, yani üst üste kaç gün odaklandı. En uzun seri. Son otuz günde toplam odak dakikası. Kazandığı rozet sayısı. Ve toplam puan. Bu beş sayı, öğrencinin odak alışkanlığını bir bakışta özetler.",
+  "Altında Bugün kartı var. Bugün kaç odak seansı yaptı, kaç dakika odaklandı, kaç dakika mola verdi. Bir de yarıda bırakılan seans sayısı. Bu son sayı önemli; çünkü yarıda bırakma, dikkat dağınıklığının işaretidir.",
+  "Son seanslar tablosu, her seansı tek tek gösterir. Türü, etiketi, ve süresi. Örneğin Matematik, yirmi beş bölü yirmi beş dakika; tamamlanmış. Fizik, on bölü elli dakika; yani yarıda bırakılmış. Bu tablo, öğrencinin neye ne kadar odaklandığını net gösterir.",
+  "Panelde kazanılan rozetler de görünür. Yedi gün seri, yüz seans, günde beş odak gibi. Rozetler ve seri, öğrenci için güçlü bir motivasyon kaynağıdır. Siz de seansta bunları takdir ederek, alışkanlığı pekiştirebilirsiniz.",
+  "Peki bu veriyle ne yaparsınız? Üç pratik kural. Seri uzuyorsa, seansta takdir edin; alışkanlığı pekiştirin. Yarıda bırakma artıyorsa, nedenini konuşun; telefon mu, çok uzun seans mı, yorgunluk mu? Otuz günlük odak düşükse, kısa, yirmi beş dakikalık seanslarla başlamasını önerin.",
+  "Demo burada bitiyor. Odakta, süre değil, süreklilik kazanır. Öğrencinin serisini ve temposunu izleyin; yükseleni övün, düşeni konuşun. Küçük ama düzenli odak, zamanla büyük fark yaratır."
+ ],
+ "focus-student": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki Odaklı Çalışma özelliğini, yani Pomodoro'yu nasıl kullanacağını anlatacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce Pomodoro nedir? Belli bir süre, sadece tek bir işe odaklanırsın; sonra kısa bir mola verirsin. Bu küçük döngü, beynini yormadan, kısa kısa zirveler yapmanı sağlar. Üstelik ne kadar çalıştığını da somut olarak görürsün.",
+  "Başlamak çok kolay. Odak sayfasında önce süreyi seç: on beş, yirmi beş, elli, ya da doksan dakika. Sonra türü seç: Odak, Kısa Mola, ya da Uzun Mola. İstersen ne çalıştığını yaz; mesela Matematik paragraf. Sonra Seansı başlat de.",
+  "Seans başlayınca, büyük bir geri sayım sayacı görürsün. Sekmeyi değiştirsen, hatta arka plana atsan bile, sayaç süreyi kaybetmez. Süre dolduğunda, ekranda Süre doldu uyarısı çıkar. Amacın, sayaç boyunca dikkatini dağıtmadan, tek işe yoğunlaşmak.",
+  "Seansı iki şekilde kapatırsın. Süreyi tamamladıysan, Bitir de. Ama arada dağıldıysan, Yarıda terk et. Burada dürüst ol; çünkü yarıda bıraktığın seans, yarıda olarak kaydedilir, ve sen kendi gerçek temponu görürsün. Kendini kandırmak, sana zarar verir.",
+  "Mola da bir seanstır. Odaktan sonra; Kısa Mola, beş dakika; ya da Uzun Mola, on beş dakika başlat. Çalış ve dinlen ritmi, dikkatini taze tutar. Bir de küçük bir kolaylık: bitirmeyi unuttuğun bir seansı, sistem üç saat sonra otomatik kapatır.",
+  "Her gün odaklandıkça, günün özeti birikir. Bugün kaç dakika odaklandın, üst üste kaç gündür çalışıyorsun, ve kaç puan topladın. Seri, yani üst üste günler, en motive edici kısımdır; bozmadan sürdürmeye çalış. Belli eşikleri geçince, rozetler de açılır.",
+  "Demo burada bitiyor. Tek bir öneri: Telefonu uzağa koy, yirmi beş dakikalık bir odak başlat, ve sadece tek işe yoğunlaş. Dağılmadan geçen yirmi beş dakika, çoğu zaman dağınık iki saatten daha değerlidir. Şimdi ilk odağını başlat."
+ ],
+ "goals-coach": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki Hedef Panelini, bir koç olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce mantık. Program, öğrencinin bu hafta ne yapacağını söyler; hedefler ise, nereye gittiğini gösterir. Panelde iki katman var. Birincisi, müfredat ilerlemesi; bu, kitap envanterinizden otomatik hesaplanır, ders ve konu bazında tamamlama yüzdesini verir. İkincisi, kişisel hedefler; bunlar sizin elle koyduğunuz haftalık, günlük, ya da özel hedeflerdir.",
+  "Üstte müfredat ilerlemesini görürsünüz. Dört özet: aktif ders, aktif konu, bitmiş konu, ve genel ilerleme yüzdesi. Altında her ders, bir açılır satırdır; içinde konular ve tamamlama yüzdeleri vardır. Mesela Matematik yüzde yetmiş iki; Türev on sekiz bölü yirmi, İntegral on iki bölü otuz. Yani hangi konuda neredesiniz, tek bakışta görürsünüz. Bu kısım otomatiktir; siz program verdikçe dolar.",
+  "Şimdi kişisel hedef ekleyelim. Sağdaki formdan hedef türünü seçin; haftalık, günlük, ya da özel. İsterseniz bir üst hedef seçin, ki ağaç kursun. Başlığı yazın; mesela, bu hafta elli test çöz. Hedef değerini ve birimini girin; elli, test. Hedefi Oluştur deyin.",
+  "Büyük hedefleri, alt hedeflere bölmek çok güçlüdür. Bu hafta elli test çöz hedefinin altına, iki alt hedef ekleyin; Türev yirmi test, İntegral otuz test. İşte önemli kısım: üst hedefin yüzdesi, alt hedeflerin ortalamasından otomatik hesaplanır. Türev yüzde elli, İntegral yüzde elli ise, üst hedef de yüzde elli görünür. Öğrenci ilerledikçe, ağaç yukarı doğru dolar.",
+  "Öğrenci ilerledikçe, siz de yönetirsiniz. Bir alt hedef bittiğinde, Tamamlandı işaretlersiniz; üst hedefte, bir bölü iki alt tamam gibi bir sayım görünür. Her aktif hedefte dört aksiyonunuz var. Güncelle, mevcut değeri elle değiştirir. Tamamlandı. Bırak, vazgeçilen hedef için. Ve Sil; dikkat, alt hedefler de silinir.",
+  "Hedefler üç durumda olur. Aktif, tamamlandı, ve bırakıldı; her biri farklı renkte. Hızlı bir başlangıç için bir kısayol daha var: Sınav hedefinden otomatik ağaç türet. Bu, öğrencinin sınav hedefinden, örneğin Y, K, S'den, ders iskeletini tek tıkla oluşturur; siz de üstüne kişisel hedefleri eklersiniz.",
+  "Demo burada bitiyor. Yön belli olunca, yol kısalır. Müfredat ilerlemesini izleyin, büyük hedefi alt hedeflere bölün, tamamlananları işaretleyin. Öğrenci, nereye gittiğini gördüğünde, daha istekli çalışır."
+ ],
+ "goals-student": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'daki Hedeflerim sayfasını, senin nasıl kullanacağını anlatacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Hedeflerim sayfası ne işe yarar? Kendine somut, küçük hedefler koyarsın; ilerlemeni yüzdeyle görürsün. Hedefe doğru yürüdüğünü görmek, motivasyonunu canlı tutar. Şunu unutma: ders ve sınav hedeflerin, koçunla birlikte yönetilir; bu sayfa, senin kendi haftalık ve günlük hedeflerin için.",
+  "Sayfanın üstünde özet kartları var. Toplam hedef, aktif, tamamlanan, ve genel ilerleme yüzdesi. Yeni bir hedef için, sağ üstteki, Yeni hedef düğmesine bas.",
+  "Yeni hedef ekranı sade. Önce başlığı yaz; mesela, bu hafta yirmi beş test çöz. Tipi seç; haftalık, günlük, konu, ya da özel. Sonra hedef değerini, başlangıç değerini, ve birimi gir; yirmi beş, sıfır, test. Hedef oluştur de.",
+  "Çalıştıkça, ilerlemeni güncellersin. Hedefin altındaki kutuya, ulaştığın sayıyı yaz; mesela beş. Güncelle de. İlerleme çubuğu dolar, ve yüzde yirmi gibi bir oran görürsün. Böylece hedefe ne kadar yaklaştığını net görürsün.",
+  "Hedefe ulaştığında, Tamamlandı işaretle. Hedef, Tamamlanan hedefler bölümüne taşınır; üstü çizilir, yeşile döner. Yanlışlıkla işaretlersen, Aktife al ile geri getirirsin. Endişelenme.",
+  "Şunu da bil: ders ve sınav hedeflerin, otomatik takip edilir, ve koçunla yönetilir; bu yüzden bu sayfada gizlidir. Sen burada, kendi haftalık, günlük, ve özel hedeflerine odaklan. Bunlar tamamen senin kontrolünde.",
+  "Demo burada bitiyor. Hedefini koy, ilerle, başar. Net bir hedef, dağınık çalışmadan çok daha güçlüdür. Şimdi, bu hafta için kendine bir hedef belirle."
+ ],
+ "whatsapp-coach": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'da WhatsApp ile veli iletişimini, bir koç olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce neden. Sistem, veli bildirimlerini zaten otomatik e-posta olarak gönderir. Ama veliler en çok WhatsApp'ı açar; oradaki mesaj anında okunur. İşte bu yüzden panele hazır WhatsApp şablonları ekledik. Sistem size profesyonel bir metin verir, değişkenleri kendisi doldurur. Böylece her veliye tek tek mesaj yazmaktan, ve göndermeyi unutmaktan kurtulursunuz.",
+  "Mesajı nereden gönderirsiniz? İki yer var. Birincisi, öğrenci detay sayfasındaki, WA Gönder düğmesi; bu, öğrenciye gider. İkincisi, Veliler sekmesinde, her velinin yanındaki WhatsApp simgesi; bu da veliye gider. Şablonları süper yönetici hazırlar; siz yalnızca seçip kullanırsınız. Toplu gönderim için, sol menüde, Toplu WhatsApp bölümü var.",
+  "Bir veliye mesaj gönderelim. Önce şablonu seçin; mesela, yeni program yayınlandı. Şablonu seçtiğiniz an, değişkenler otomatik dolar; veli adı, öğrenci adı, ve panel bağlantısı. Altta önizlemeyi görürsünüz; mesajın tam hali, gitmeden önce karşınızda.",
+  "Şimdi göndermeye hazırsınız. İsterseniz, önce kendime test gönder seçeneğiyle, mesajı kendi telefonunuza açıp kontrol edebilirsiniz. WhatsApp'ı Aç düğmesine bastığınızda, mesaj, sizin kendi telefonunuzda, WhatsApp'ta hazır olarak açılır. Son gönder tuşu sizdedir; isterseniz düzenler, sonra gönderirsiniz. Merkezi bir numara, ya da onay süreci gerekmez; bugün çalışır.",
+  "Çok sayıda veliye aynı mesajı göndermek için, Toplu WhatsApp sihirbazını kullanın. Dört adım: şablonu seç, değişkenleri doldur, hedef grubu seç, ve gönderim modunu seç. Hedef grubu olarak, tüm öğrencilerim, ya da tüm velilerim diyebilirsiniz. Yirmi kişiye kadar, sıralı sihirbaz önerilir; her kişiye tek tek açıp gönderirsiniz. Daha fazlası için, kopyala yapıştır yöntemi, yani yayın listesi önerilir.",
+  "Sistem sizi korur. Birincisi, istenmeyen mesaj koruması: bir günde elli mesajı geçince sarı, yüzü geçince kırmızı bir uyarı çıkar; telefonunuz engellenmesin diye. İkincisi, yetki: yalnızca kendi öğrencilerinize, ve onların velilerine gönderebilirsiniz. Üçüncüsü, denetim: her gönderim kayda geçer; süper yönetici tüm aktiviteyi panelden görebilir.",
+  "Demo burada bitiyor. İletişim, koçluğun yarısıdır. Düzenli ve profesyonel veli iletişimi, güven kurar. Bir öğrenci seçin, ve ilk WhatsApp mesajınızı gönderin."
+ ],
+ "whatsapp-institution": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'da WhatsApp ile kurumsal iletişimi, bir kurum yöneticisi olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce neden. Bir kurum yöneticisi olarak, kurumunuza bağlı öğretmenlerle, velilerle, ve öğrencilerle, hızlı ve tutarlı iletişim kurmanız gerekir. Toplantı duyurusu, performans karnesi, ya da kurumsal bilgilendirme; bunları tek tek aramak yerine, hazır bir şablonla, saniyeler içinde gönderebilirsiniz. Mesajlar markalı, ve aynı dilde olur.",
+  "Kimlere gönderebilirsiniz? Üç grup var: kurumun öğretmenleri, kurumun velileri, ve kurumun öğrencileri. Şablonlar da bu gruplara göre hazırdır; mesela, yeni öğrenci atandı, iç toplantı duyurusu, performans karnesi, veli toplantısı, ya da bayram mesajı. Şablonları süper yönetici yönetir; siz seçer, doldurur, ve gönderirsiniz.",
+  "Önce tek bir kişiye gönderelim. Bir öğretmenin detay sayfasında, WA Gönder düğmesi var. Mesela, yeni öğrenci atandı şablonunu seçin. Önizlemede mesajın tam halini görürsünüz: Merhaba Zeynep Koç, panelinize yeni bir öğrenci atandı. WhatsApp'ı Aç deyince, mesaj kendi telefonunuzda hazır açılır.",
+  "Şimdi toplu gönderim. İlk iki adım. Önce, toplu göndermeye uygun bir şablon seçin; mesela, iç toplantı duyurusu. Bu şablon, hem toplu, hem de tarihli olabilir. İkinci adımda, değişkenleri doldurun; toplantı tarihi, ve konusu. Bu değerler, tüm hedeflere aynı gider.",
+  "Üçüncü, ve dördüncü adım. Hedef grubu olarak, kurumun tüm öğretmenleri deyin. Sistem, kaç kişiye gidileceğini gösterir; mesela, kırk yedi kişiden kırk beşi gönderilebilir, ikisinin telefonu yok. Yirmiden fazla kişi olduğu için, kopyala yapıştır, yani yayın listesi modu önerilir. Sonra, Gönderim Linklerini Üret deyin.",
+  "Yayın listesi modunda, sistem size iki şey verir: hazır mesaj metni, ve telefon listesi. İkisini de kopyalayın; WhatsApp Business uygulamanızda, yeni bir yayın listesi açıp, kişileri ekleyin, mesajı yapıştırın, ve gönderin. Her gönderim kayıt altındadır; istenmeyen mesaj koruması da, yoğun günlerde sizi uyarır.",
+  "Demo burada bitiyor. Tek bir mesajla, tüm öğretmenlerinize, ya da velilerinize ulaşabilirsiniz. Kurumsal iletişiminiz hızlanır, ve tutarlı kalır. Toplu WhatsApp menüsünden başlayın."
+ ],
+ "daily-manage-student": [
+  "Merhaba. Bu kısa demoda, Etütkoç Rotam'da, koçunun hazırladığı haftalık programı, gün gün nasıl yöneteceğini göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce şunu bil: programı koçun hazırlar; sen uygularsın. Her gün, sana düşen görevleri yaparsın, ve yaptıkça işaretlersin. Bu kadar basit. Senin işin, dürüstçe işaretlemek; tamamlama yüzdesini, hızını, ve raporları, sistem hesaplar.",
+  "Bugün ekranıyla başlayalım. Üstte gün gezinme var: önceki gün, sonraki gün, ve bugün. Hemen altında günün özeti: kaç görevden kaçını bitirdin, ve yüzde kaç tamamladın. Koçun, görevleri sabah, öğle, ve akşam diye bölmüş olabilir; o zaman her bölüm ayrı başlık altında görünür.",
+  "Şimdi bir görevi tamamlayalım. Her görevin solunda bir daire var. Boşsa, henüz yapılmadı; dokununca, tamamlandı olur, ve yeşile döner. Görev bir kitaba bağlıysa, içinde bölümü görürsün; mesela, Matematik, Türev. Artı, ve eksi tuşlarıyla, kaç test çözdüğünü ayarlarsın. Hepsini birden değil, yarısını da işaretleyebilirsin.",
+  "En önemli kısım: doğru, ve yanlış sayısı. Kalemin yanındaki ayar simgesine dokun; küçük bir pencere açılır. Önce çözdüğün test sayısını gir. Sonra, istersen, kaçı doğru, kaçı yanlış, onu da yaz. Kaydet de. Bu sayılar, koçunun seni doğru yönlendirmesini sağlar; bu yüzden gerçek sayıları gir.",
+  "Her görev kitaba bağlı değildir. Video izle, özet çıkar, ya da konu tekrarı gibi görevlerde, sadece daireyi işaretlersin; soru sayısı sorulmaz. Kitapsız bir görevde soru çözdüysen, çözdüğüm soru sayısını gir, diyerek onu da ekleyebilirsin. Dürüst ol: yapmadığın bir görevi işaretleme. Sistem, senin gerçek temponu görmeli.",
+  "Bir de günün notu var. Gün ekranının altındaki kutuya, o gün ne hissettiğini, nerede zorlandığını yazabilirsin. Buton yok; yazdıkça otomatik kaydedilir. Bu notu koçun görebilir; yani aranızda küçük bir günlük gibi çalışır.",
+  "Hafta ekranından, tüm haftayı bir bakışta görürsün; hangi gün ne kadar yaptın. Demo burada bitiyor. Unutma: her gün gir, görevini işaretle, sayılarını dürüstçe yaz. Düzenli küçük adımlar, en büyük farkı yaratır."
+ ],
+ "task-request-student": [
+  "Merhaba. Bu kısa demoda, koçundan nasıl talep edebileceğini, yani programınla ilgili nasıl öneri ileteceğini göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Programı koçun hazırlar. Ama bir görevi çok kolay ya da çok zor bulduysan, kaynağı değiştirmek, ya da bir şey sormak istersen, koçuna talep iletebilirsin. Beş tür var: sayıyı değiştir, kaynağı değiştir, görevi çıkar, yeni görev iste, ve koçuna sor.",
+  "Talebi nereden açarsın? Görevin sağ üstündeki üç noktaya dokun. Karşına dört seçenek çıkar: sayıyı değiştir, kaynağı değiştir, çıkar, ve koçuna sor. Yeni bir görev istemek içinse, gün başlığındaki, yeni görev iste düğmesini kullanırsın.",
+  "İlk örnek: sayıyı değiştir. Diyelim bu görevde beş test var, ama sen sekiz çözmek istiyorsun. Yeni sayı kutusuna sekiz yaz, istersen bir de not ekle, ve talep gönder de. Görevde artık, bekliyor etiketi görünür; koçun onaylayınca güncellenir.",
+  "İkinci örnek: yeni görev iste. Bir güne, koçundan ek görev isteyebilirsin. Kitabı, üniteyi, ve sayıyı sen önerirsin; istersen not da yazarsın. Koçun onaylayınca, bu görev planına eklenir.",
+  "Üçüncüsü: koçuna sor. Bu her zaman serbesttir. Görevle ilgili aklına takılanı yazarsın; mesela, bir konuda nasıl çalışmam gerektiğini sorabilirsin. Koçun cevabı sana geri döner.",
+  "Tüm taleplerini, Taleplerim sayfasından izlersin. Her talebin bir durumu vardır: bekliyor, onaylandı, reddedildi, ya da cevaplandı. Koçun yanıtı, talebin altında görünür. Henüz cevaplanmamış bir talebi, geri çek diyerek iptal edebilirsin.",
+  "Demo burada bitiyor. Program senin için hazırlanıyor; ama fikrin varsa söyle. Talep et, koçun değerlendirsin. Birlikte çalışmak, en iyi sonucu verir."
+ ],
+ "task-request-coach": [
+  "Merhaba. Bu kısa demoda, öğrencilerinizden gelen talepleri, bir koç olarak nasıl yöneteceğinizi göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Öğrencileriniz; soru sayısı, kaynak, görev çıkarma, yeni görev, ya da soru için talep açabilir. Bunların hepsi tek bir kuyrukta toplanır. Her yeni talepte, e-posta ve mobil bildirim alırsınız. Onayladığınızda değişiklik, otomatik uygulanır; sayı güncellenir, rezerv ayarlanır.",
+  "Talepler sayfasında, bekleyenleri görürsünüz. Üstte bekleyen talep sayısı, ve durum süzgeçleri var: bekleyen, onaylanan, tümü. Listede öğrenci adı, talep türü, ve durumu görünür. İncelemek için bir talebe dokunun.",
+  "Talep detayında üç şey görürsünüz: öğrencinin mesajı, mevcut görev, ve önerilen değişiklik. Mesela; mevcut görev beş test, öğrenci sekiz öneriyor, ve sebebini yazmış.",
+  "Karar verme zamanı. Onayla'ya basın. İsterseniz kısa bir not bırakın. Onayladığınızda, sayı beşten sekize çıkar, üç test için rezerv otomatik ayarlanır, ve görev başlığı yenilenir. Öğrenciye bildirim gider.",
+  "Bir talebi reddetmek isterseniz, bir gerekçe yazmanız gerekir. Mesela; bu hafta kapasiteyi aştığımız için sekiz atanamaz, yedi önerebilirim. Öğrenci bu gerekçeyi görür, ve dilerse yeni bir talep açar.",
+  "Talep bir soruysa, cevapla'ya basıp yanıtınızı yazarsınız. Mesela; önce konu özetine bak, sonra üç örnek çöz. Cevabınız öğrenciye ulaşır.",
+  "Demo burada bitiyor. Talepleri tek kuyruktan yönetin: onaylayın, reddedin, ya da cevaplayın. Öğrenciyi sürece kattığınızda, program birlikte yürür."
+ ],
+ "academic-years-coach": [
+  "Merhaba. Bu kısa demoda, Akademik Yıllar bölümünü, bir koç olarak ne için ve nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Akademik Yıllar, eylül ağustos eksenli yılları tanımlamanızı sağlar; mesela, iki bin yirmi beş, iki bin yirmi altı. Yılı dönemlere ayırır, hedef sınavı atarsınız. Dönem tipi, plan motorunun günlük tavsiye temposunu da ölçekler.",
+  "Yeni yıl eklemek kolay. Hızlı yıl ekle kartında, geçmiş, şu an, ve gelecek yıllar listelenir. Yılın yanındaki, artı düğmesine basarsınız; yıl adı, başlangıç yılından otomatik üretilir. Sonra detayına girersiniz.",
+  "Yıl ayarlarında, önce hedef sınavı seçersiniz: L, G, S; Y, K, S; ya da yıl sonu. Bu seçim, öğrencinin sınav etiketini belirler. Bir de, etkin yıl kutusunu işaretlersiniz.",
+  "Sonra dönemleri tanımlarsınız. Her dönemin bir adı, bir tipi, ve tarihleri olur. Olağan dönem, yarıyıl tatili, yaz kampı, ve sınav hazırlık. Tatil ve sınav haftalarında tempo artar; sistem günlük tavsiyeyi buna göre yoğunlaştırır.",
+  "Şimdi öğrencileri yıla atayın. Listeden seçer, kaydedersiniz; kaç öğrenci atandığı özetlenir. Not: bir yılı silmek için, önce ona atanmış öğrencileri kaldırmanız gerekir.",
+  "Bütün bunların programa etkisi nedir? Yılın hedef sınavı ve öğrencinin sınıfı, müfredat modelini belirler. Aktif dönemin tipi de, günlük çalışma temposunu ayarlar. Yani takvim, planın iskeletidir.",
+  "Demo burada bitiyor. Akademik yılı kurun, dönemlere bölün, hedef sınavı atayın, öğrencileri yerleştirin. Takviminiz netse, planınız da net olur."
+ ],
+ "promote-grade-coach": [
+  "Merhaba. Bu kısa demoda, Sınıf Yükseltme işlemini, bir koç olarak adım adım nasıl yapacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Yeni akademik yıla geçerken, öğrencilerinizi bir üst sınıfa taşırsınız; sekizden dokuza, ya da on ikiden mezuna. Sınıf, alan, ve müfredat güncellenir. En önemlisi: görevler, rezervler, ve ilerleme korunur. Geçmiş veri silinmez.",
+  "İki yol var. Birincisi toplu: Sınıf Yükseltme sayfasından, tüm öğrencileri işaretleyip hepsini birden yükseltirsiniz. İkincisi bireysel: öğrenci detayındaki, sınıf yükselt düğmesiyle, tek öğrenciyi, canlı müfredat tahminiyle yükseltirsiniz.",
+  "Önce toplu yolu görelim. Sayfa açılınca, her öğrencinin mevcut ve önerilen sınıfı listelenir. Hedef akademik yılı seçer, yükseltmek istediklerinizi işaretlersiniz. Sonra, öğrencileri yükselt düğmesine basarsınız.",
+  "Bireysel yolda daha fazla denetim var. Solda mevcut durum, sağda yeni durum: sınıf, alan, ve gerekiyorsa çalışma şekli. Siz seçtikçe, yeni müfredat modeli, anında ekranda gösterilir. Gerekirse, dokuza giriş yılını da elle ayarlayabilirsiniz.",
+  "Hazır olunca, yükselt ve kaydet'e basarsınız. Sınıf, alan, ve akademik yıl güncellenir. Görev, rezerv, kitap, ve ilerleme; hepsi aynen kalır.",
+  "Bazen sıfırdan başlamak istersiniz. Bunun için, programı sıfırla seçeneği var; görevleri siler, rezervi sıfırlar, ama kitap atamasını korur. Bu işlem geri alınamaz; bu yüzden, öğrencinin tam adını yazarak onaylamanız istenir.",
+  "Demo burada bitiyor. Yıl bitince, öğrencilerinizi tek hamlede üst sınıfa taşıyın. Emeğiniz korunur; siz sadece sayfayı çevirirsiniz."
+ ],
+ "billing-coach": [
+  "Merhaba. Bu kısa demoda, Tahsilat bölümünü, bir koç olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Tahsilat, öğrencilerinizden aldığınız aylık ders ücretini tek yerden takip etmenizi sağlar. Hesap basit: o ay yapılan seans sayısı, çarpı ücret, eksi alınan ödeme, eşittir kalan alacak. Kayıtlar yalnız size özeldir; ödeme genelde elden alınır, burada yalnız kayıt ve hatırlatma tutulur. Ertelenen ya da iptal olan seanslar sayılmaz.",
+  "Tahsilat sayfasının üstünde ay seçici var; önceki ve sonraki aya geçebilirsiniz. Üç özet kart görürsünüz: bu ay tahakkuk, tahsil edilen, ve kalan alacak.",
+  "Altta öğrenci tablosu var. Her satırda öğrenci, seans sayısı, ücret, tahakkuk, ödenen, kalan, ve durum görünür. Durum; ödendi, kısmi, bekliyor, ya da ücret yok olabilir. Kalanı yüksek olanlar üstte sıralanır.",
+  "Önce her öğrenci için ücreti belirlersiniz. Ücret belirle deyip, seans başına ücreti girersiniz; mesela bin beş yüz. Tahakkuk, bu ücretten hesaplanır.",
+  "Ödeme aldığınızda, ödeme gir dersiniz. Tutarı, tarihi, ve yöntemi seçersiniz: nakit, havale, ya da diğer. İsterseniz bir not da eklersiniz. O ay kalan tutar, altta gösterilir.",
+  "Ayı tek hamlede kapatmak için, ayı kapat düğmesi var. Bu, tutar alanını kalan alacakla otomatik doldurur; siz onaylarsınız, ay kapanır.",
+  "Demo burada bitiyor. Ücreti belirleyin, ödemeleri kaydedin, ayı kapatın. Kim ne ödedi, kim borçlu; hepsi tek bakışta önünüzde."
+ ],
+ "sessions-coach": [
+  "Merhaba. Bu kısa demoda, Seanslar bölümünü, ve onu güçlendiren yapay zekâ desteklerini, bir koç olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Seanslar, her öğrenci görüşmenizi kaydettiğiniz yerdir: gündem, görüşme notu, ruh hali, ve etiketler. Geçmiş seanslar, koçluğunuzun hafızası olur. Yapay zekâ size üç yerde zaman kazandırır: sesle yazma, fotoğraftan doldurma, ve birikmiş seanslardan koçluk içgörüsü üretme.",
+  "Yeni bir seans eklerken, durumu, kanalı, ve süreyi seçersiniz. Gündem alanı zorunludur. Ruh halini, ve etiketleri de ekleyebilirsiniz. Önemli bir kolaylık: form, o haftanın akademik verisini otomatik getirir; tamamlama yüzdesi, çalışma hızı, son deneme neti, ve geride kalan dersler. Seansa hazırlıklı girersiniz.",
+  "Not yazmak için konuşmanız yeterli. Sesle yaz düğmesine basın, mikrofona konuşun, sonra durdurun. Yapay zekâ söylediklerinizi metne çevirir, ve görüşme notu alanına ekler. Bu işlem üç kredidir; ses kaydınız saklanmaz, yalnız işlenir.",
+  "Elinizde el yazısı bir kâğıt form varsa, onu da kullanabilirsiniz. Fotoğraftan doldur deyip kâğıdın fotoğrafını çekin; yapay zekâ okur, ve gündem, not, ruh hali, etiketleri taslak olarak doldurur. İlk kullanımda bir onay ekranı çıkar: fotoğraf ve ses saklanmaz, sonucu yalnız siz görürsünüz, ve çıkan taslağı kaydetmeden önce kontrol edersiniz. Bu işlem beş kredidir.",
+  "Şimdi en değerli kısım: koçluk içgörüsü. İçgörü düğmesine bastığınızda, yapay zekâ son seanslarınızı ve öğrencinin akademik durumunu okur, ve dört blok üretir. Bir; durumun kısa özeti. İki; bir sonraki seansta konuşulacak somut maddeler. Üç; psikolojik ve motivasyonel yaklaşım ipuçları. Dört; dikkat edilecek riskler. Yani, bugün şunu konuş, sorusunun net cevabı.",
+  "Krediyi ve gizliliği bilmeniz önemli. İçgörüyü açmak ücretsizdir; önceden üretilmiş analiz önbellekten okunur. Yenile derseniz, yeniden üretilir ve altı kredi düşer. Yeni bir seans eklerseniz, bu içgörü eskidi uyarısı çıkar. Yapay zekâ özellikleri ücretli paketle açılır. Ve unutmayın: içgörü bir öneridir, klinik teşhis değildir; yalnızca siz görürsünüz.",
+  "Demo burada bitiyor. Görüşmeyi kaydedin, sesle ya da fotoğrafla zaman kazanın, ve içgörüyle bir sonraki seansa hazır girin. Koçluğunuza hem hafıza, hem de zekâ katın."
+ ],
+ "week-grid-coach": [
+  "Merhaba. Bu kısa demoda, program oluştururken kullanacağınız Hafta Izgarasını, bir koç olarak tanıtacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Hafta Izgarası, programı hazırlarken yedi günü yan yana göstermenizi sağlar. Bir günü planlarken, diğer günleri de görür; görevleri dengeli dağıtırsınız. Akordeonda kaybolmazsınız: ızgara hep üstte durur, gün düzenleyici aşağıda açılır.",
+  "Izgarada her gün bir kart olarak görünür. Kartta görevlerin durumu vardır: işaret, yapıldı; yarım daire, kısmen; boş kutu, yapılmadı. Böylece hangi gün dolu, hangi gün boş, tek bakışta anlaşılır.",
+  "Bir güne tıkladığınızda, o günün düzenleyicisi aşağıda açılır, ve sayfa oraya kayar. Görev ekler, düzenler, ya da taşırsınız. Aynı anda yalnız bir gün açık kalır; odağınız dağılmaz.",
+  "Gün içinde görevler, derse göre gruplanır. Aynı dersin görevleri yan yana durur; araya başka ders girmez. Bu, hem sizin için hem öğrenci için, düzenli ve okunur bir gün demektir.",
+  "İsterseniz günü periyotlara bölersiniz: sabah, öğle, ve akşam. Görevler bu başlıklar altında görünür; her periyot kendi içinde derse göre gruplanır.",
+  "Her görevde durum, ve sayı görünür; mesela üç bölü beş test, ya da iki deneme, ya da blok birimi. Gün kartının altında özet vardır; mesela iki görev tamamlandı. Test, deneme, ve blok ayrı birimlerle gösterilir.",
+  "Demo burada bitiyor. Haftanın tamamını görün, dengeli planlayın, güne tıklayıp düzenleyin. Izgara, koçun kuş bakışıdır."
+ ],
+ "week-grid-student": [
+  "Merhaba. Bu kısa demoda, Hafta ekranındaki Izgarayı, senin nasıl kullanacağını anlatacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Hafta Izgarası, tüm haftanı tek bakışta görmeni sağlar. Hangi gün ne kadar yaptın, hangi gün boş kaldı; hepsi önünde. Büyük resmi görmek, dengeli çalışmana yardım eder.",
+  "Izgarada yedi gün yan yana durur. Her günde bir tamamlama çubuğu, ve özet vardır; mesela üç bölü dört görev, iki bölü üç test. Dolu günler yeşil, yarım günler sarı, boş günler soluk görünür.",
+  "Bir güne tıkladığında, o günün görevleri açılır. Oradan görevlerini işaretler, ve doğru yanlış sayılarını girersin.",
+  "Izgarada görevler, derse göre gruplanır. Birim olarak görev, test, ya da deneme görürsün; neyin ne kadar olduğu nettir.",
+  "Durum göstergeleri basittir. İşaret, yapıldı; yarım daire, kısmen; boş kutu, yapılmadı. Bir bakışta neyi bitirdiğini, neyin yarım kaldığını yakalarsın.",
+  "Üstte hafta özeti, ve hafta gezinme var. Önceki haftaya, ya da sonraki haftaya geçebilir, bu haftaya dönebilirsin.",
+  "Demo burada bitiyor. Haftanı kuş bakışı gör, eksik günü yakala, güne tıklayıp tamamla. Büyük resmi görmek, motivasyonunu artırır."
+ ],
+ "weekly-report-parent": [
+  "Merhaba. Bu kısa demoda, veli panelindeki Haftalık Raporu, ve onda neler göreceğinizi anlatacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Haftalık Rapor, çocuğunuzun bir haftasını sade bir özetle gösterir. Bu hafta düzeldi mi, netleri yükseldi mi, en çok hangi dersi çalıştı, hangi günler boş kaldı; hepsi tek ekranda. Eğitimci olmanıza gerek yok; her bölüm anlaşılır.",
+  "Üstte hafta gezgini var; haftalar arasında ileri geri gidebilirsiniz. Hemen altında, o haftanın değerlendirmesi yer alır. Renk üç şey söyler: yeşil yolunda, sarı dikkat, kırmızı acil. Yanında kısa bir cümleyle durum özetlenir.",
+  "Sonra, geçen haftaya göre kıyas gelir. Üç ölçü: tamamlama yüzdesi, çözülen test, ve çalışılan gün sayısı. Her birinin yanında bir ok vardır; yukarı ok arttı, aşağı ok azaldı demektir. Yani çocuğunuzun bu hafta, geçen haftaya göre nasıl gittiğini bir bakışta görürsünüz.",
+  "Ardından ders kırılımı var. En çok çözülen ders, ve en çok aksatılan ders ayrı ayrı gösterilir. Her ders için, ne kadar çözdüğü, ve yüzdesi bir çubukla görünür. Güçlü ve zayıf dersi hemen ayırt edersiniz.",
+  "Deneme performansı bölümünde, son denemenin neti büyük puntoyla yazılır. Aynı türdeki bir önceki denemeye göre, net arttı mı azaldı mı işaretlenir. Doğru, yanlış, ve boş sayıları da görünür; altında deneme geçmişi listelenir.",
+  "En altta, gün gün tablo var: hangi gün ne kadar çalışıldığı, çubuklarla gösterilir. Ve koçtan notlar; koçunuz bir şey paylaştıysa, burada okursunuz.",
+  "Demo burada bitiyor. Her hafta tek ekranda: çocuğunuz nasıl gidiyor, neyi iyi yaptı, nerede desteğe ihtiyacı var. Bilgi, doğru desteğin başlangıcıdır."
+ ],
+ "topic-performance": [
+  "Merhaba. Bu kısa demoda, Konu Performansının ne olduğunu, ve nasıl okunacağını göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Konu Performansı, her dersin konularında çözülen test sayısını, ve doğru yanlış oranını gösterir. Yani önemli olan çok çözmek değil, doğru çözmektir. Düşük doğruluklu konular, tekrar ve pekiştirme gerektirir; çalışmayı oraya yönlendirirsiniz.",
+  "En üstte genel özet var. Çözülen test, doğru sayısı, yanlış sayısı, ve genel doğruluk yüzdesi. Tek bakışta, öğrencinin genel durumu ortaya çıkar.",
+  "Altında her ders bir karttır. Kartta dersin adı, çözülen test, konu sayısı, ve doğruluk yüzdesi görünür. Mesela Matematik, yüzde yetmiş üç. Detayı görmek için kartı açarsınız.",
+  "Ders açıldığında, konular listelenir. Her konunun doğruluk yüzdesi, çözülen test sayısı, ve son çalışma tarihi vardır. Mesela; Çarpanlar yüzde seksen, ama Üslü Sayılar yüzde kırk beş.",
+  "Renkler yol gösterir. Doğruluk, doğrunun, doğru artı yanlışa bölümüdür. Yetmiş üstü yeşil, ortası sarı, kırk altısı kırmızı. Kırmızı bir konu, mesela Üslü Sayılar, tekrar ister; bir sonraki programda öne alırsınız.",
+  "Bu veri üç yerde görünür. Koçta en ayrıntılı haliyle; öğrenci kendi performansını görür; veli de çocuğununkini izler. Koç çalışmayı yönlendirir, öğrenci eksiğini görür, veli takip eder.",
+  "Demo burada bitiyor. Konu konu doğruluk, çalışmanın pusulasıdır. Zayıf konuyu görün, oraya yüklenin, neti yükseltin."
+ ],
+ "support-system-coach": [
+  "Merhaba. Bu kısa demoda, Destek ve iletişim sistemini, bir koç olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Bir sorununuz mu var? Teknik bir hata, hesap, ya da üyelikle ilgili bir konuyu, doğrudan sistem yönetimine iletebilirsiniz. Muhatabınız, rolünüzden belirlenir: bağımsız koçsanız süper yöneticiye, bir kuruma bağlıysanız kurum yöneticinize gider. Siz yazarsınız, talep doğru yere ulaşır.",
+  "Yeni talep açmak basit. Önce bir kategori seçersiniz: teknik sorun, hesap, ya da üyelik gibi. Sonra bir konu başlığı, ve mesajınızı yazarsınız. İsterseniz bir dosya da eklersiniz; ekran görüntüsü, ya da fatura gibi.",
+  "Talep bir yazışmaya dönüşür. Mesajlar, gönderenin rolüne göre renklenir: koç mavi, kurum yöneticisi sarı, süper yönetici mor. Cevap geldiğinde, alttaki kutudan siz de yanıt yazarsınız.",
+  "Her talebin bir yaşam döngüsü vardır. Açık, değerlendiriliyor, cevaplandı, ve çözümlendi. Henüz yanıtlanmamış bir talebi, dilerseniz geri çekebilirsiniz.",
+  "Bir de gelen kutunuz olabilir. Kurum yöneticiniz, riskli bir öğrenci için size müdahale talebi açabilir; bu, Gelen Talepler kutunuzda görünür. Sol menüdeki rozet, ele alınmamış talep sayısını gösterir; siz cevaplayınca azalır, sadece okuyunca değil.",
+  "Kısaca örnek bir akış. Bir; teknik talebi açarsınız, ekran görüntüsünü eklersiniz. İki; süper yönetici inceler, ve yanıtlar; size bildirim gelir. Üç; yanıtı okursunuz, gerekirse tekrar yazarsınız, ve talep çözümlenir.",
+  "Demo burada bitiyor. Yalnız değilsiniz. Takıldığınız her konuda talep açın, takip edin, çözüme ulaşın. Destek, bir tık uzağınızda."
+ ],
+ "notif-prefs-parent": [
+  "Merhaba. Bu kısa demoda, veli panelindeki Bildirim Tercihlerini nasıl ayarlayacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Bildirim Tercihleri, çocuğunuzla ilgili haberleri sizin yönetmenizi sağlar. Hangi bildirimi, hangi kanaldan, yani e-posta mı yoksa WhatsApp mı, almak istediğinizi siz seçersiniz. Ne çok, ne az; tam size göre.",
+  "Önce bildirim türleri var. Yedi tür; mesela haftalık rapor, boş gün uyarısı, ve sınav yaklaşıyor. Her türün karşısında iki kutu vardır: e-posta, ve WhatsApp. İstediğinizi açar, istemediğinizi kapatırsınız. Hepsini birden açıp kapatan düğmeler de vardır.",
+  "Sessiz saatler ayarı, gece rahatınız içindir. Bir başlangıç, ve bitiş saati belirlersiniz; mesela gece on, sabah yedi. Bu saatlerde gelen bildirimler, sessiz saat bitince iletilir. Davet, ve doğrulama kodu gibi sistem mesajları bu kuraldan etkilenmez.",
+  "On sekiz yaş altı çocuklar için özel bir onay var. Çocuğumun WhatsApp mesajı almasına izin veriyorum kutusunu işaretlerseniz, çocuğunuz doğrudan WhatsApp bildirimi alabilir. İşaretlemezseniz, iletişim panel ve e-posta üzerinden sürer. Bu, kişisel verilerin korunması içindir.",
+  "Birden fazla çocuğunuz varsa, çocuk başına sustur özelliği işinize yarar. Belirli bir çocuğun tüm bildirimlerini geçici olarak susturabilir, sonra tekrar açabilirsiniz.",
+  "WhatsApp bildirimi için, numaranızı bir kez doğrularsınız. Numaranızı girer, gelen kodu yazarsınız. Üç durum vardır: kapalı, kod bekleniyor, ve aktif. İstediğiniz an kapatabilir, ya da e-postaların altındaki tek tıkla kapat bağlantısıyla her şeyi durdurabilirsiniz.",
+  "Demo burada bitiyor. Hangi bildirimi, hangi kanaldan, ne zaman alacağınız tamamen sizin kontrolünüzde. Doğru bilgi, doğru zamanda."
+ ],
+ "parent-ai-insight-parent": [
+  "Merhaba. Bu kısa demoda, veli panelindeki Yapay Zekâ Durum Analizini nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Bu özellik, çocuğunuzun konu performansından, ve deneme sonuçlarından, sade bir durum analizi üretir. Eğitimci diline gerek yok; sonuç anlaşılır bir Türkçeyle yazılır. Sonucu yalnız siz görürsünüz; koça özel notlar kullanılmaz.",
+  "Analizi, Denemeler ve Analiz ekranında bulursunuz. Burada çocuğunuzun deneme geçmişi de vardır: deneme sayısı, ortalama net, ve en iyi net. Yapay zekâ analizi, bu ekranın üstünde yer alır.",
+  "Analiz oluşturmak için tek bir düğmeye basarsınız: çocuğum için analiz oluştur. Sistem, çocuğunuzun çalışma verilerini yapay zekâ ile işler. Kısa bir bekleyişin ardından, analiz karşınıza gelir.",
+  "Analiz, bir özetle başlar. Üç beş cümleyle, çocuğunuzun genel gidişatı anlatılır. Mesela; genel olarak iyi ilerliyor, son denemede net artışı var, matematikte güçlü, fende desteğe ihtiyacı var.",
+  "Sonra iki liste gelir. Güçlü yanlar; mesela net artışı, ve matematikteki sağlam temel. Gelişim alanları; mesela üslü sayılar, ve fen dersindeki bir ünite. Yani neyi iyi yapıyor, neye odaklanmalı, ayrı ayrı görürsünüz.",
+  "En değerlisi, son bölümdür: evde nasıl destek olabilirsiniz. Mesela; çabasını takdir edin, molalara özen gösterin, sessiz bir çalışma ortamı sağlayın. Unutmayın: bu bir öneridir, kesin bir değerlendirme değildir. Yeni veri eklendikçe, yenile düğmesiyle güncellersiniz; analiz, koçunuzun yapay zekâ kredisinden üretilir.",
+  "Demo burada bitiyor. Karmaşık veriler yerine, sade bir özet: çocuğunuz nerede güçlü, nerede desteğe ihtiyacı var, ve siz nasıl yardım edebilirsiniz. Çocuğunuzu daha iyi anlayın."
+ ],
+ "inst-activity-stream": [
+  "Merhaba. Bu kısa demoda, kurum yöneticisi panelindeki Aktivite Akışını, ve onda neler göreceğinizi anlatacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Aktivite Akışı, kurumunuzda olup biten her şeyi tek bir kronolojik listede toplar. Yeni öğretmen kaydı, öğrenci ekleme, veli ve öğretmen davetleri, abonelik talepleri, ve paket satın almalar. Bugün kim katıldı, kim davet etti, kim paket aldı sorusunun cevabı, tek bakışta önünüzde.",
+  "En üstte beş özet kart var. Paket satın alma, ticari toplam, yeni kayıt, davetler, ve toplam olay sayısı. Böylece akışa girmeden önce, genel tabloyu görürsünüz.",
+  "İki filtreyle akışı daraltırsınız. Tarih: son yirmi dört saat, yedi gün, otuz gün, ya da doksan gün. Tip: tümü, ticari, yeni kayıt, davetler, ya da plan değişimi. Mesela, yalnız bu haftanın paket satışlarını görmek istiyorsanız, ticari tipini seçersiniz.",
+  "Akışta her olay bir kart olarak görünür; en yenisi en üstte. Önemli bir ayrıntı: paket satın almalar yeşil renkle vurgulanır. Böylece kurumunuzun ticari hareketleri, diğer olayların arasında kaybolmaz.",
+  "Bu akış yalnız sizin kurumunuzu gösterir. Yani kendi öğretmenleriniz, öğrencileriniz, davetleriniz, ve plan hareketleriniz. Başka kurumların verisi asla görünmez.",
+  "Peki ne zaman bakarsınız? Sabah ilk iş, gece kim katıldı diye; hafta içinde, kaç paket satışı oldu diye; ya da büyümeyi izlemek için, yeni kayıt ve davet eğilimine.",
+  "Demo burada bitiyor. Kurumunuzun nabzı tek akışta. Katılımı, davetleri, ve ticari hareketleri günü gününe izleyin."
+ ],
+ "inst-teacher-detail": [
+  "Merhaba. Bu kısa demoda, kurum yöneticisi olarak bir öğretmenin sayfasında neler göreceğinizi anlatacağım. Sekiz kısa sahne. Hadi başlayalım.",
+  "Bir öğretmenin sayfasında, ona bağlı öğrencileri, ve haftalık tamamlama tablosunu görürsünüz. Yani hangi koç ne kadar sonuç alıyor, bir bakışta anlaşılır.",
+  "Üstte dört özet var; hepsi son yedi günü kapsar. Öğrenci sayısı, planlanan test, tamamlanan test, ve tamamlama oranı. Oran renklidir: yetmiş ve üstü yeşil, kırk ile altmış dokuz arası sarı, kırkın altı kırmızı.",
+  "Altında öğrenci tablosu var. Her satırda öğrenci adı, sınıfı, planlanan, çözülen, ve oranı görünür. Düşük oranlı öğrenciler kırmızıyla öne çıkar; hangi öğrencinin geride kaldığını hemen görürsünüz.",
+  "Burada önemli bir gizlilik kuralı var. Öğretmenin programını, veli notlarını, ya da öğrenci görev detaylarını göremezsiniz. Yalnızca liste, ve haftalık tamamlama yüzdesi görünür. Öğrenci satırlarında detay sayfası linki yoktur; ayrıntı için koçla doğrudan konuşursunuz.",
+  "Sayfanın üstünden, öğretmene WhatsApp mesajı gönderebilirsiniz. Hazır bir şablon seçer, doldurur, ve gönderirsiniz; mesaj sizin kendi telefonunuzdan gider.",
+  "Durum rozetleri de yardımcı olur. Aktif, pasif, ya da uyarıları duraklatılmış. Pasif öğretmen, ve öğrenci satırları soluk gösterilir.",
+  "Demo burada bitiyor. Her koçun sonucunu, gizliliği koruyarak görün; gerektiğinde tek tıkla WhatsApp'tan ulaşın."
+ ],
+ "inst-invitations": [
+  "Merhaba. Bu kısa demoda, öğretmen davet sistemini, bir kurum yöneticisi olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Öğretmen ekibinizi sisteme eklemek için davetiye oluşturursunuz. Davet ettiğiniz koç, hesabını açar, ve kurumunuza bağlanır. Önemli nokta: sistem otomatik e-posta göndermez; oluşturduğunuz linki, siz paylaşırsınız.",
+  "Yeni Davetiye penceresinde iki alan var; ikisi de opsiyonel. Ad soyad, ve e-posta. E-postayı boş bırakırsanız, açık davetiye olur; linki olan herkes kayıt olabilir. E-posta yazarsanız, davetiye o adrese kilitlenir.",
+  "Davetiyeyi oluşturduğunuzda, bir link üretilir. Kopyala düğmesine basıp, bu linki WhatsApp ya da e-posta ile paylaşırsınız. Link yedi gün geçerlidir, ve tek seferliktir.",
+  "Her davetiyenin bir durumu vardır. Bekliyor, kullanıldı, süresi geçti, ya da iptal. Yanlış birine link gönderdiyseniz, bekleyen davetiyeyi, İptal et ile geçersiz kılarsınız.",
+  "Bir sınır var: planınızın öğretmen kotası. Limit doluysa, yeni davetiye oluşturamazsınız. Önce artık aktif olmayan koçları pasife alır, ya da planınızı yükseltirsiniz.",
+  "Son olarak güvenlik. Linki olan herkes hesap oluşturabilir. Bu yüzden paylaşmadan önce, alıcının doğru kişi olduğundan emin olun; şüphede iptal edin.",
+  "Demo burada bitiyor. Ekibinizi davetle kurun: davetiye oluşturun, linki paylaşın, durumu izleyin, gerekirse iptal edin."
+ ],
+ "inst-roster": [
+  "Merhaba. Bu kısa demoda, Roster sayfasını, yani tüm öğrenci listesini, bir kurum yöneticisi olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Roster, kurumunuzdaki tüm öğrencileri tek listede toplar. Her öğrencinin hangi koça bağlı olduğunu, ve haftalık tamamlama yüzdesini görürsünüz. Hangi öğrenci geride, hangi sınıf zayıf; tek tabloda taranır.",
+  "Tabloda her satır bir öğrencidir. Sütunlar: öğrenci adı, sınıfı, öğretmeni, planlanan, tamamlanan, ve oran.",
+  "Oran renklidir, ve yol gösterir. Yetmiş ve üstü yeşil, kırk ile altmış dokuz arası sarı, kırkın altı kırmızı. Yani hangi öğrencilere odaklanmanız gerektiğini, renk bir bakışta söyler.",
+  "İki filtreyle listeyi daraltırsınız. Öğretmen, ve sınıf. Mesela, sadece sekizinci sınıfı, ya da belirli bir koçun öğrencilerini görmek istiyorsanız, seçer ve filtrelersiniz. Filtre bağlantıya yansır; geri, ve ileri tuşları çalışır.",
+  "Bir gizlilik kuralı var. Öğrenci-öğretmen eşlemesi, ve oran görünür; ama öğrenci detay sayfasına link yoktur. Ayrıntı, koçun panelindedir. Pasif öğrenciler soluk gösterilir, ve sayıma girmez.",
+  "Bu sayfayı ne için kullanırsınız? Kurum geneli zayıf öğrenci taraması için, kırmızı satırlara bakarsınız. Sınıfları karşılaştırmak için. Ya da koça, şu öğrencilere bakalım diye geri bildirim vermek için.",
+  "Demo burada bitiyor. Tüm öğrenciler tek listede; renkli oran sayesinde, geride kalanı saniyede bulun, ve doğru koça yönlendirin."
+ ],
+ "inst-requests": [
+  "Merhaba. Bu kısa demoda, Talepler sistemini, bir kurum yöneticisi olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "İki kutu var. Birincisi, Gelen Talepler: kurumunuzdaki öğretmenlerden gelen talepler; bunları siz yanıtlarsınız. İkincisi, Taleplerim: sizin süper yöneticiye ilettiğiniz talepler, ve onların yanıtları.",
+  "Bir öğretmen talebini yönetelim. Detayda öğretmenin mesajını okursunuz. İncelemeye alabilir, yanıt yazabilir, ya da çözümleyebilirsiniz. Mesaj balonları rol rengindedir: öğretmen mavi, siz sarı, süper yönetici mor.",
+  "Her talebin bir yaşam döngüsü vardır. Açık, değerlendiriliyor, cevaplandı, ve çözümlendi. Siz incelemeye aldıkça, ve yanıt verdikçe, durum buna göre değişir.",
+  "Çözemediğiniz bir talebi, mesela teknik bir sorunu, süper yöneticiye yönlendirirsiniz. Talep, onun kuyruğuna düşer. Ama önemli olan şu: yönlendirseniz bile talep sizin kutunuzda kalır. Süper yönetici cevap verince, cevabı burada görürsünüz. Üç taraflı bir yazışma yürür.",
+  "Kendi talebinizi de açabilirsiniz. Taleplerim'den, süper yöneticiye yeni bir talep iletirsiniz. Kategori seçer, konu, ve mesaj yazar, isterseniz bir dosya da eklersiniz.",
+  "Sol menüdeki rozet işinizi kolaylaştırır. Gelen Talepler rozeti, ele alınmamış talep sayısını gösterir. Siz cevaplayınca ya da çözünce azalır; sadece okuyunca değil.",
+  "Demo burada bitiyor. Öğretmen taleplerini yanıtlayın, çözemediğinizi süper yöneticiye yönlendirin, ve kendi talebinizi de tek yerden açın."
+ ],
+ "inst-analysis-1": [
+  "Merhaba. Bu kısa demoda, kurum yöneticisi panelinin Analiz bölümündeki yedi panoyu tanıtacağım: ne gösterirler, ve nasıl okunurlar. Sekiz kısa sahne. Hadi başlayalım.",
+  "Birinci pano: Müdahale Merkezi. Bu, bugün kime dokunmalıyım sorusunu cevaplar. Boş program, düşük uyum, ve riskli öğrenci sinyalleri, önceliklendirilmiş kartlarda toplanır. Her kartta bir öneri vardır; mesela, koça programı girmesini hatırlatın.",
+  "İkinci pano: Program Uyumu. Koçların programına öğrenci uyumunu ölçer. Dört özet: tamamlama yüzdesi, doğruluk, soru sayısı, ve boş program. Altında haftalık trend, öğretmen kırılımı, ve dikkat edilmesi gereken öğrenciler var. Renkler: yeşil iyi, sarı orta, kırmızı zayıf.",
+  "Üçüncü pano: Akademik Çıktı. Deneme performansını ölçer. Ham net yerine, net başarı oranı kullanılır; böylece farklı sınavlar karşılaştırılabilir. Sınav türü kırılımı, öğretmen kırılımı, ve en çok gelişen ile gerileyen öğrenciler görünür.",
+  "Dördüncü pano: Risk Paneli. Öğrenciler risk skoruna göre sıralanır: kritik, risk, ve dikkat. Her öğrencinin niye risk altında olduğu açıklanır. Ve önemli bir buton var: Koça ilet. Bununla, koçun gelen kutusuna bir müdahale talebi açarsınız.",
+  "Beşinci pano: Kohort Karşılaştırma. Öğrencileri gruplara göre karşılaştırır: sınıf, alan, müfredat, ya da hedef sınav. Mesela, sekizinci sınıf yüzde altmış sekiz, dokuzuncu sınıf yüzde elli beş. Zayıf kalan kohorta, ekstra kaynak ayırırsınız.",
+  "Altıncı, ve yedinci panolar: Aktivite Haritası, ve Tükenmişlik. Aktivite Haritası, öğretmenlerin ne kadar aktif olduğunu, gün gün gösterir; yeni hesaplar, yeni rozetiyle ayrılır. Tükenmişlik ise öğrencinin yorgunluk sinyallerini yakalar: gece çalışma, mola eksikliği, ani düşüş. Burada da Koça ilet butonu vardır.",
+  "Demo burada bitiyor. Yedi pano: önce müdahale edin, sonra uyum, akademik, risk, ve kohortla derinleşin, aktivite ve tükenmişlikle koçunuzu ve öğrencinizi koruyun. Hepsi gizlilik korumalıdır; tek müdahale kolu, Koça ilet."
+ ],
+ "inst-analysis-2": [
+  "Merhaba. Bu kısa demoda, Analiz bölümünün üç panosunu anlatacağım: Öğretmen Karnesi, Hedef Analizi, ve Haftalık Yönetici Özeti. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce Öğretmen Karnesi. Bu pano, kim sonuç alıyor sorusunu cevaplar. Her öğretmenin, son haftalardaki birleşik etkililik skorunu, sıfırdan yüze kadar gösterir. Tükenmişlik panosu kimin yorulduğunu söyler; karne ise kimin sonuç aldığını.",
+  "Skor nasıl hesaplanır? Yüzde kırkı tamamlama, yüzde yirmi beşi doğruluk, yüzde yirmisi disiplin, ve yüzde on beşi düşük risk. Disiplin, öğrenci başına haftalık planlanan sorudur. Skora göre rozet verilir: yetmiş beş üstü örnek, elli üstü iyi, otuz üstü gelişmeli, altında dikkat. En etkili koçu örnek gösterir, düşüğü yönlendirirsiniz.",
+  "İkinci pano: Hedef Analizi. Kurum genelinde öğrenci hedeflerinin özetini verir. Kaç öğrencinin hedefi var, toplam kaç hedef, ve ortalama ilerleme yüzdesi. Öğrenci-bazlı detay görünmez; bu bir gizlilik kuralıdır. Hedefsiz öğrenci varsa, bir uyarı çıkar.",
+  "Üçüncü pano: Haftalık Yönetici Özeti. Her Pazartesi öğlen, kurumun haftalık özeti, otomatik bir e-posta olarak yöneticilere gider. İçinde öğrenci ve öğretmen sayısı, tamamlama oranı, geçen haftaya kıyas, risk özeti, en iyi ve en kötü sınıf, ve pasif öğretmenler vardır.",
+  "Beklemeden, Şimdi Gönder diyebilirsiniz. Geçmiş özetler arşivde tutulur; her birini açıp tam içeriği, yani başarılar, pasif öğretmenler, ve sınıf kohortlarını inceleyebilirsiniz. Gönderim durumu da görünür: gönderildi, sadece kayıt, ya da gönderilemedi.",
+  "Bu üç pano birlikte çalışır. Karne, kim sonuç alıyor sorusunu; Hedef Analizi, hedef kültürü var mı sorusunu; Haftalık Özet ise, haftayı tek bir e-postada toplama ihtiyacını karşılar.",
+  "Demo burada bitiyor. Etkili koçu görün, hedef kültürünü ölçün, ve haftayı tek özette takip edin. Yönetim, düzenli ölçümle güçlenir."
+ ],
+ "inst-parent-trust": [
+  "Merhaba. Bu kısa demoda, Veli Güveni panosunu, bir kurum yöneticisi olarak nasıl kullanacağınızı göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Veli Güveni, kurumunuzun veli nezdindeki değerini ölçer. İki şeyi izler: veli kapsaması, ve iletişim sağlığı. Kayıt yenileme, ve tavsiye, doğrudan bu güvenden beslenir.",
+  "Üstte dört özet var. Veli kapsaması: kaç öğrencinin velisi sistemde. Aktif veli: son günlerde giriş yapan veli sayısı. Bekleyen davet: kabul edilmemiş davetiyeler. Ve bildirim başarısı: velilere giden bildirimlerin başarı oranı.",
+  "Altında kanal teslim tablosu var. E-posta, ve WhatsApp için ayrı ayrı: kaç bildirim ulaştı, kaçı başarısız oldu, ve başarı yüzdesi. Böylece hangi kanalın sağlıklı çalıştığını görürsünüz.",
+  "Veli kapsaması yüzde altmışın altındaysa, bir uyarı çıkar. Düşük kapsama, memnuniyeti, ve kayıt yenilemeyi zayıflatır. Bu durumda, öğretmenleri veli davetinden sorumlu tutarsınız.",
+  "Bildirim detayı bölümünde, tek tek görürsünüz. Hangi veliye, ve hangi öğrenciye giden bildirim ulaştı, ya da başarısız oldu. Başarısız bir satırda, hata sebebi de gösterilir; mesela, e-posta kutusu dolu.",
+  "Peki ne için kullanırsınız? Kapsama düşükse, veli davet kampanyası başlatırsınız. Bildirim başarısı düşükse, hatalı adresleri ve numaraları temizlersiniz. Aktif veli azsa, katılımı artıracak adımlar atarsınız.",
+  "Demo burada bitiyor. Velinin güveni, kurumun en değerli sermayesidir. Kapsamayı, ve iletişim sağlığını ölçün, ve zayıf noktayı kapatın."
+ ],
+ "inst-membership": [
+  "Merhaba. Bu kısa demoda, Üyelik bölümünü, yani Abonelik, Kredi Kullanımı, ve Limitleri, bir kurum yöneticisi olarak nasıl yöneteceğinizi göstereceğim. Sekiz kısa sahne. Hadi başlayalım.",
+  "Önce Abonelik. Burada mevcut planınızı, abonelik türünü, dönem sonunu, ve garanti durumunu görürsünüz. Mesela, Etüt Standart, akademik yıl, dönem sonu otuz bir aralık.",
+  "Plan kapasitenizi büyütmek isterseniz, Planını yükselt kartını kullanırsınız. Dikkat: bu bir satın alma değildir. Bir kademe seçer, ve yükseltme talebi gönderirsiniz; ekibimiz sizinle iletişime geçip kuruluma yardımcı olur.",
+  "Aboneliğin üç önemli özelliği var. Akademik yıl: on ay peşin ödemeyle on iki ay erişim. Yaz pause: temmuz ve ağustos için, sadece yüzde yirmi saklama ücreti; ders verisi korunur. Ve altmış gün garanti: tamamlama eşiğin altındaysa, otomatik bir ay uzatma.",
+  "İkinci sayfa: Kredi Kullanımı. Kredi; yapay zekâ önerileri, veliye giden e-posta, ve WhatsApp mesajlarında harcanır. Bu ay ne kadar kullandığınızı, ve ne kadar kaldığını görürsünüz. Yüzde sekseni geçince sarı, yüzde yüzü geçince kırmızı bir uyarı çıkar.",
+  "Daha da derine inersiniz. Hangi işlemin ne kadar tükettiğini, yani tip kırılımını; son otuz günün grafiğini; ve son elli işlemi, olay olay görürsünüz. Kim, ne zaman, ne kadar kredi harcadı, hepsi şeffaftır.",
+  "Üçüncü sayfa: Limitler. Planınıza göre, en fazla kaç öğretmen, öğrenci, ve yönetici olabileceğinizi gösterir. Yalnız aktif kullanıcılar sayılır; birini pasife alırsanız, yer açılır. Limit dolarsa yeni ekleyemezsiniz; ya pasif kullanıcıları çıkarır, ya da planı yükseltirsiniz.",
+  "Demo burada bitiyor. Aboneliğinizi yönetin, kredi kullanımını izleyin, ve limitlerinizi bilin. Üyelik, kurumunuzun işletme katmanıdır."
+ ]
+}

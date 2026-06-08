@@ -21,6 +21,7 @@ import type {
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 interface Props {
   initialList: AcademicYearListResponse;
@@ -57,6 +58,7 @@ export function AcademicYearsListClient({ initialList, initialChoices }: Props) 
           Eylül-Ağustos eksenli akademik yıllar + dönem (faz) tanımları.
           Şu an: {choices.current_start_year}-{choices.current_start_year + 1}.
         </p>
+        <DemoHint contextKey="academic-years" role="teacher" className="mt-1.5" />
       </header>
 
       <Card>

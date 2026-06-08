@@ -6,6 +6,7 @@ import { HeartHandshake, List, Mail, MailWarning, UserCheck, Users } from "lucid
 
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { DemoHint } from "@/components/demos/demo-hint";
 import {
   institutionKeys,
   getInstitutionParentTrust,
@@ -51,6 +52,7 @@ export function ParentTrustClient({ initial }: Props) {
           Kurumun veli nezdindeki değeri: kaç öğrencinin velisi sistemde, veliler
           aktif mi ve onlara giden bildirimler ulaşıyor mu (son {s.days} gün).
         </p>
+        <DemoHint contextKey="parent-trust" role="institution_admin" className="mt-2" />
       </header>
 
       {/* Özet KPI */}

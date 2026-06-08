@@ -44,6 +44,7 @@ import type {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 interface Props {
   studentId: number;
@@ -109,6 +110,7 @@ function Body({ studentId, d }: { studentId: number; d: TeacherGoalsResponse }) 
           <b>kişisel hedefler</b> elle koyduğun haftalık/günlük/özel hedeflerdir.
           Sınav netleri için ayrı bir sayfa kullan.
         </p>
+        <DemoHint contextKey="goals" role="teacher" className="mt-1.5" />
       </header>
 
       <Card className="border-l-4 border-l-sky-500">

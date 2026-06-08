@@ -29,6 +29,7 @@ import type {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 interface Props {
   studentId: number;
@@ -78,6 +79,7 @@ function Body({ studentId, d }: { studentId: number; d: TeacherReviewResponse })
             {d.exam_label ? ` · ${d.exam_label}` : ""} için aralıklı tekrar (FSRS)
             sistemi.
           </p>
+          <DemoHint contextKey="review" role="teacher" className="mt-1.5" />
         </div>
         <Button asChild variant="ghost" size="sm">
           <Link href="/teacher/review">

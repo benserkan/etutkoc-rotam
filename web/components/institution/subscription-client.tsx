@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
+import { DemoHint } from "@/components/demos/demo-hint";
 import {
   AlertTriangle,
   ArrowUpRight,
@@ -90,6 +91,7 @@ export function SubscriptionClient({ initial }: Props) {
           planını yükseltmek için talep gönderebilir; akademik yıl planına geçiş,
           yaz pause modu ve 60 gün performans garantisini yönetebilirsin.
         </p>
+        <DemoHint contextKey="membership" role="institution_admin" className="mt-2" />
       </header>
 
       <div className="grid gap-6 lg:grid-cols-3">

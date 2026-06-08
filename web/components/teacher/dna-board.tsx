@@ -43,6 +43,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 interface Props {
   studentId: number;
@@ -114,6 +115,7 @@ function Body({ studentId, d }: { studentId: number; d: TeacherDnaResponse }) {
           <p className="text-sm text-muted-foreground mt-1">
             {d.window_days} günlük çalışma örüntüsü ve tükenmişlik analizi.
           </p>
+          <DemoHint contextKey="dna" role="teacher" className="mt-1.5" />
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <Button

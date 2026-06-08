@@ -39,6 +39,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { cn } from "@/lib/utils";
 
 // =============================================================================
@@ -432,6 +433,7 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
               </span>
             ) : null}
           </p>
+          <DemoHint contextKey="library" role="teacher" />
         </div>
         <Button asChild>
           <Link href="/teacher/library/new">

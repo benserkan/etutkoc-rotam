@@ -20,6 +20,7 @@ import {
   Square,
   Trash2,
 } from "lucide-react";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 import {
   getTeacherStudentSessions,
@@ -189,6 +190,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           <p className="mt-0.5 text-xs text-muted-foreground">
             Görüşme notları + kararlar. Tahsilat yapılan seansları sayar.
           </p>
+          <DemoHint contextKey="sessions" role="teacher" className="mt-1.5" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Link

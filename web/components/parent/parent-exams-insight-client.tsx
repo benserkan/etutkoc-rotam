@@ -17,6 +17,7 @@ import {
   parentP2Keys,
 } from "@/lib/api/parent";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const SECTION_TONE: Record<string, string> = {
   lgs: "bg-cyan-50 text-cyan-700",
@@ -66,6 +67,7 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
         <p className="mt-1 text-sm text-muted-foreground">
           {studentName ? `${studentName} için ` : ""}deneme geçmişi ve yapay zekâ destekli durum analizi.
         </p>
+        <DemoHint contextKey="ai-insight" role="parent" className="mt-2" />
       </div>
 
       {/* AI İçgörü */}

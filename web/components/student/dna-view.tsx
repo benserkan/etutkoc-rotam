@@ -11,6 +11,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { JargonTooltip } from "@/components/jargon-tooltip";
+import { DemoHint } from "@/components/demos/demo-hint";
 import type {
   BurnoutRiskLevel,
   BurnoutSignal,
@@ -75,6 +76,7 @@ export function DnaView({ data }: Props) {
           Son {data.window_days} günde nasıl çalışıyorsun? Saat dilimlerine, ders
           dağılımına ve haftalık trende göre kendi örüntün çıkarıldı.
         </p>
+        <DemoHint contextKey="dna" role="student" />
       </header>
 
       {!data.has_enough_data ? (

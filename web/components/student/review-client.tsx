@@ -7,6 +7,7 @@ import { CheckCircle2, Loader2, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/error-state";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { getStudentReview, studentKeys } from "@/lib/api/student";
 import { useReviewRate } from "@/lib/hooks/use-student-mutations";
 import type { ReviewResponse } from "@/lib/types/student";
@@ -93,6 +94,7 @@ export function ReviewClient({ initial }: Props) {
           Konularını aralıklı tekrar et — sistem zorlandığın konuları daha sık
           önüne getirir.
         </p>
+        <DemoHint contextKey="review" role="student" />
         <div className="flex flex-wrap items-center gap-2 text-xs">
           <BreakdownPill label="Şu an" value={data.breakdown.due_now} tone="dikkat" />
           <BreakdownPill label="Yeni" value={data.breakdown.new} />

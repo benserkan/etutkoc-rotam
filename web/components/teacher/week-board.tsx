@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { cn } from "@/lib/utils";
 
 import {
@@ -210,6 +211,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
               </p>
             </>
           )}
+          <DemoHint contextKey="program" role="teacher" className="mt-1.5" />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {/* WP3 — Yeni Program Oluştur (en belirgin buton) */}

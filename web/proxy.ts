@@ -22,6 +22,7 @@ const PUBLIC_PATHS_EXACT = new Set<string>([
   "/",            // splash / preview — anonim giriş kapısı
   "/pricing",     // public üyelik/fiyat sayfası
   "/iletisim",    // public iletişim sayfası (çok kanallı + form)
+  "/demos",       // demo videoları oynatma sayfası — anonim izleme (satış-öncesi)
 ]);
 
 const PUBLIC_PATHS_PREFIX = [

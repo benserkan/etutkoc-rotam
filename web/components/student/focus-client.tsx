@@ -18,6 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ErrorState } from "@/components/error-state";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { getStudentFocus, studentKeys } from "@/lib/api/student";
 import {
   useFocusCancel,
@@ -68,6 +69,7 @@ export function FocusClient({ initial }: Props) {
           Çalışma seanslarını başlat, mola ver, akışın aksamasın. Bitirmeyi
           unuttuğun seansları sistem 3 saatte otomatik kapatır.
         </p>
+        <DemoHint contextKey="focus" role="student" />
       </header>
 
       {data.active_session ? (

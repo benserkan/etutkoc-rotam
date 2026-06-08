@@ -20,6 +20,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { getParentWeeklyReport, parentKeys } from "@/lib/api/parent";
 import type {
   WeeklyReportResponse,
@@ -92,6 +93,7 @@ export function ParentWeeklyReportClient({
         <p className="text-sm text-muted-foreground mt-1">
           {data.student.full_name}
         </p>
+        <DemoHint contextKey="weekly-report" role="parent" className="mt-2" />
       </header>
 
       {/* Hafta gezgini */}

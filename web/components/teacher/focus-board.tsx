@@ -26,6 +26,7 @@ import type {
 } from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 interface Props {
   studentId: number;
@@ -72,6 +73,7 @@ export function FocusBoard({ studentId }: Props) {
         <p className="text-sm text-muted-foreground mt-1">
           Pomodoro istatistikleri, kazanılmış rozetler ve son seans tarihçesi.
         </p>
+        <DemoHint contextKey="focus" role="teacher" className="mt-1.5" />
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">

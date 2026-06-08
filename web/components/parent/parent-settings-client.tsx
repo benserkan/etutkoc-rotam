@@ -18,6 +18,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -142,6 +143,7 @@ export function ParentSettingsClient({ initial }: Props) {
           Hangi bildirimleri, hangi kanaldan ve ne zaman alacağınızı buradan
           yönetin.
         </p>
+        <DemoHint contextKey="settings" role="parent" className="mt-2" />
       </header>
 
       {data.preferences.unsubscribed_at && (

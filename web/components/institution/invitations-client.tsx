@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DemoHint } from "@/components/demos/demo-hint";
 import {
   Dialog,
   DialogContent,
@@ -77,6 +78,7 @@ export function InvitationsClient({ initial }: Props) {
             {institution.name} — kurumuna öğretmen davet et. Link{" "}
             <strong>7 gün</strong> geçerli ve tek seferlik.
           </p>
+          <DemoHint contextKey="invitations" role="institution_admin" className="mt-2" />
         </div>
         <Button onClick={() => setCreateOpen(true)}>
           <Plus className="size-4" aria-hidden />

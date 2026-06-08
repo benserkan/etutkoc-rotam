@@ -8,6 +8,7 @@ import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Label } from "@/components/ui/label";
 import {
   getInstitutionRoster,
@@ -84,6 +85,7 @@ export function RosterClient({ initial, params }: Props) {
         <p className="text-sm text-muted-foreground mt-1">
           Tüm öğrenciler ve haftalık tamamlama yüzdeleri
         </p>
+        <DemoHint contextKey="roster" role="institution_admin" className="mt-2" />
       </header>
 
       <Card>

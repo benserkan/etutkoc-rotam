@@ -44,6 +44,10 @@ const nextConfig: NextConfig = {
       { source: "/legal/:path*", destination: `${apiTarget}/legal/:path*` },
       // Landing "Demo İzle" linki — /demos Jinja'da kalır (dev'de de çalışsın)
       { source: "/demos", destination: `${apiTarget}/demos` },
+      // /demos sayfası sesleri + statik varlıkları /static/...'ten yükler.
+      // Dev'de de FastAPI'den servis edilsin; aksi halde demo sesi (TTS mp3)
+      // :3000'de 404 olur (prod'da Caddy /static/* → FastAPI zaten yapıyor).
+      { source: "/static/:path*", destination: `${apiTarget}/static/:path*` },
 
       // Henüz v2'ye taşınmamış print sayfaları (Jinja'da kalan)
       // /student/week/print → Next.js'in kendisi (Paket 7 sonrası)

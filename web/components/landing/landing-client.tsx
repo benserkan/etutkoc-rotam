@@ -50,6 +50,7 @@ import {
 import type { LandingCard, LandingResponse } from "@/lib/types/landing";
 import { Reveal } from "@/components/landing/reveal";
 import { MockupByType } from "@/components/landing/mockups";
+import { demosForRole, demoPlayUrl, type DemoRole } from "@/lib/demos";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { BrandLogo } from "@/components/brand-logo";
 import { FloatingWhatsAppAuto } from "@/components/contact/floating-whatsapp-auto";
@@ -58,6 +59,7 @@ const NAV = [
   { href: "#ozellikler", label: "Özellikler" },
   { href: "#kurumlar", label: "Kurumlar" },
   { href: "#nasil-calisir", label: "Nasıl Çalışır?" },
+  { href: "#izle", label: "İzle" },
   { href: "#paketler", label: "Paketler" },
   { href: "/iletisim", label: "İletişim" },
 ];
@@ -80,6 +82,7 @@ export function LandingClient() {
       <Hero />
       <Reassurance />
       <HowItWorks />
+      <DemoGallery />
       <Features cards={cards} variant={variant} loading={q.isLoading} />
       <Comparison />
       <Institutions />
@@ -923,6 +926,125 @@ function HowItWorks() {
               6. adımda <b>kurum, tüm koçların çıktısını birleşik görür</b> — başarı ölçülebilir, kalite standart olur.
             </p>
           </div>
+        </Reveal>
+      </div>
+    </section>
+  );
+}
+
+/* ───────────────────────── Demo galerisi (İzle) ───────────────────────── */
+
+const GALLERY_ROLES: { key: keyof typeof ROLE_TONE; role: DemoRole }[] = [
+  { key: "koc", role: "teacher" },
+  { key: "ogrenci", role: "student" },
+  { key: "veli", role: "parent" },
+  { key: "kurum", role: "institution_admin" },
+];
+
+/**
+ * Anasayfa "Nasıl çalışır — İzle" galerisi (satış-öncesi vitrin).
+ * Rol-sekmeli; her rolün demoları registry'den (lib/demos) gelir → /demos?play=.
+ * Yeni demo eklenince otomatik listelenir. Telemetri: demo_click.
+ */
+function DemoGallery() {
+  const [active, setActive] = React.useState<keyof typeof ROLE_TONE>("koc");
+  const role = GALLERY_ROLES.find((g) => g.key === active)?.role ?? "teacher";
+  const demos = demosForRole(role);
+  const activeBg = ROLE_TONE[active].node.split(" ")[0];
+
+  return (
+    <section id="izle" className="relative bg-slate-50/70 py-20">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+        <Reveal className="mx-auto mb-8 max-w-2xl text-center">
+          <p className="mb-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.25em] text-cyan-700">
+            <PlayCircle className="size-3.5" aria-hidden /> İzleyin
+          </p>
+          <h2 className="font-display text-3xl font-extrabold tracking-tight sm:text-4xl">
+            Üye olmadan, gerçek ekranlardan izleyin
+          </h2>
+          <p className="mt-3 text-muted-foreground">
+            Her rol için kısa demolar — sistemin aşama aşama nasıl çalıştığını görün,
+            kararınızı kolaylaştırın. Üyelikten sonra bu demolar panelinizde de
+            başucu rehberi olarak durur.
+          </p>
+        </Reveal>
+
+        {/* Rol sekmeleri */}
+        <Reveal className="mb-8 flex flex-wrap items-center justify-center gap-2">
+          {GALLERY_ROLES.map((g) => {
+            const tone = ROLE_TONE[g.key];
+            const isActive = g.key === active;
+            const count = demosForRole(g.role).length;
+            return (
+              <button
+                key={g.key}
+                type="button"
+                onClick={() => setActive(g.key)}
+                aria-pressed={isActive}
+                className={cn(
+                  "inline-flex items-center gap-2 rounded-full border px-4 py-1.5 text-sm font-semibold transition",
+                  isActive
+                    ? cn("border-transparent text-white shadow", tone.node.split(" ")[0])
+                    : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50",
+                )}
+              >
+                {tone.label}
+                <span
+                  className={cn(
+                    "rounded-full px-1.5 text-[10px] font-bold leading-5",
+                    isActive ? "bg-white/25" : "bg-slate-100 text-slate-500",
+                  )}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
+        </Reveal>
+
+        {/* Demo kartları */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {demos.map((d, i) => (
+            <Reveal key={d.slug} delayMs={(i % 3) * 60}>
+              <a
+                href={demoPlayUrl(d.slug)}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => sendLandingTelemetry(d.slug, "demo_click", null)}
+                className="lp-card group flex h-full items-center gap-3 rounded-2xl border border-slate-200 bg-card p-4 transition hover:-translate-y-0.5"
+              >
+                <span
+                  className={cn(
+                    "flex size-11 shrink-0 items-center justify-center rounded-xl text-white shadow-sm",
+                    activeBg,
+                  )}
+                >
+                  <PlayCircle className="size-5" aria-hidden />
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-semibold text-slate-800">
+                    {d.title}
+                  </span>
+                  <span className="text-xs text-slate-500">{d.durationLabel}</span>
+                </span>
+                <ChevronRight
+                  className="size-4 shrink-0 text-slate-400 transition group-hover:translate-x-0.5"
+                  aria-hidden
+                />
+              </a>
+            </Reveal>
+          ))}
+        </div>
+
+        <Reveal delayMs={120} className="mt-8 text-center">
+          <a
+            href="/demos"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-cyan-700 px-5 py-2.5 text-sm font-semibold text-white shadow transition hover:bg-cyan-800"
+          >
+            <PlayCircle className="size-4" aria-hidden /> Tüm demoları aç
+          </a>
         </Reveal>
       </div>
     </section>
