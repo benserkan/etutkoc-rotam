@@ -21,6 +21,7 @@ export function InstitutionActivityStreamClient({
         getInstitutionActivityStream(days, type, limit)
       }
       initial={initial}
+      demoRole="institution_admin"
     />
   );
 }

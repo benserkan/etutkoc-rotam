@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Card } from "@/components/ui/card";
 import { institutionKeys, getInstitutionActionCenter } from "@/lib/api/institution";
 import type { ActionCenterItem, ActionCenterResponse } from "@/lib/types/institution";
@@ -65,6 +66,7 @@ export function ActionCenterClient({ initial }: Props) {
           Bugün acil ilgi gerektiren durumlar tek listede, öncelik sırasıyla. Boş
           program, düşük uyum ve riskli öğrenci sinyalleri burada birleşir.
         </p>
+        <DemoHint contextKey="analysis" role="institution_admin" className="mt-2" />
       </header>
 
       {/* Özet */}

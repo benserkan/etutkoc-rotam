@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Info, PartyPopper, Printer, Send } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -83,6 +84,7 @@ export function AtRiskClient({ initial }: Props) {
             {total_students} öğrenci risk altında, {healthy_count} tanesi
             sağlıklı.
           </p>
+          <DemoHint contextKey="analysis" role="institution_admin" className="mt-2" />
         </div>
         <Button asChild variant="outline" size="sm">
           <Link href="/institution/at-risk/print" target="_blank">

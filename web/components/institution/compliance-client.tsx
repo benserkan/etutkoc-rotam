@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Card } from "@/components/ui/card";
 import { institutionKeys, getInstitutionCompliance } from "@/lib/api/institution";
 import type {
@@ -103,6 +104,7 @@ export function ComplianceClient({ initial }: Props) {
           planlanan soru; doğruluk = doğru ÷ (doğru+yanlış). Bu hafta:{" "}
           {weekShort(s.week_start)}–{weekShort(s.week_end)}.
         </p>
+        <DemoHint contextKey="analysis" role="institution_admin" className="mt-2" />
       </header>
 
       {/* Kurum özeti KPI */}

@@ -18,6 +18,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
+import { DemoHint } from "@/components/demos/demo-hint";
+import type { DemoRole } from "@/lib/demos";
 import type {
   ActivityStreamItem,
   ActivityStreamResponse,
@@ -30,6 +32,7 @@ interface Props {
   queryKey: (days: number, type: string | null) => readonly unknown[];
   queryFn: (days: number, type: string | null, limit?: number) => Promise<ActivityStreamResponse>;
   initial?: ActivityStreamResponse;
+  demoRole?: DemoRole;
 }
 
 const TYPES: Array<{ key: string | null; label: string; tone?: string }> = [
@@ -91,7 +94,7 @@ function itemTone(it: ActivityStreamItem): { wrap: string; badge: string } {
 }
 
 export function ActivityStreamPage({
-  title, description, queryKey, queryFn, initial,
+  title, description, queryKey, queryFn, initial, demoRole,
 }: Props) {
   const [days, setDays] = React.useState(30);
   const [type, setType] = React.useState<string | null>(null);
@@ -114,6 +117,7 @@ export function ActivityStreamPage({
           {title}
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">{description}</p>
+        {demoRole ? <DemoHint contextKey="activity-stream" role={demoRole} className="mt-2" /> : null}
       </header>
 
       {/* KPI kartları */}

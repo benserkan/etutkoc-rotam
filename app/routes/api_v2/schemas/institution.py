@@ -788,9 +788,10 @@ class ActivityStreamItem(BaseModel):
     actor_email: str | None = None
     actor_role: str | None = None
     target_label: str | None = None
-    detail_url: str | None = None
+    detail_url: str | None = None       # süper admin: owner-aware 360 linki
     institution_id: int | None = None
     institution_name: str | None = None
+    user_id: int | None = None           # ilgili koç/kullanıcı (360 + tıklanabilirlik)
 
 
 class ActivityStreamResponse(BaseModel):

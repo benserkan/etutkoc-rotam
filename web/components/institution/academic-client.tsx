@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Card } from "@/components/ui/card";
 import { institutionKeys, getInstitutionAcademic } from "@/lib/api/institution";
 import type {
@@ -73,6 +74,7 @@ export function AcademicClient({ initial }: Props) {
           öğrenci deneme giriyor, gidişat nasıl, hangi koçun öğrencileri daha iyi
           sonuç alıyor, kim yükseliyor kim düşüyor.
         </p>
+        <DemoHint contextKey="analysis" role="institution_admin" className="mt-2" />
       </header>
 
       {/* Sade dil notu — net başarı oranı nedir */}

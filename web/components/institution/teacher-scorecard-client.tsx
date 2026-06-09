@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Award, GraduationCap, Trophy } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Card } from "@/components/ui/card";
 import { institutionKeys, getInstitutionTeacherScorecard } from "@/lib/api/institution";
 import type {
@@ -61,6 +62,7 @@ export function TeacherScorecardClient({ initial }: Props) {
           tamamlama + %25 doğruluk + %20 program disiplini + %15 düşük risk. En iyi
           pratiği örnek gösterin, düşük skorlu koçu yönlendirin.
         </p>
+        <DemoHint contextKey="analysis-2" role="institution_admin" className="mt-2" />
       </header>
 
       {/* Özet */}

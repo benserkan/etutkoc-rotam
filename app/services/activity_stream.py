@@ -42,6 +42,27 @@ def _plan_label(code: str | None) -> str:
     return _PLAN_LABELS_TR.get(code, code)
 
 
+def _admin_360_url(institution_id: int | None, user_id: int | None) -> str | None:
+    """Süper admin için owner-aware 360 (Ticari) linki — kurum öncelikli, sonra koç.
+
+    Kurum üyesi/kurumun kendisi → kurum 360; bağımsız koç/öğrencinin koçu → koç 360.
+    """
+    if institution_id:
+        return f"/admin/revenue/institutions/{institution_id}"
+    if user_id:
+        return f"/admin/revenue/users/{user_id}"
+    return None
+
+
+_CYCLE_LABELS = {
+    "monthly": "aylık", "academic_year": "akademik yıl", "annual": "akademik yıl",
+}
+
+
+def _cycle_label(cycle: str | None) -> str:
+    return _CYCLE_LABELS.get(cycle or "", cycle or "")
+
+
 def _item(
     *,
     src: str, sid: int, occurred_at: datetime, type_: str, category: str,
@@ -50,6 +71,7 @@ def _item(
     actor_role: str | None = None,
     target_label: str | None = None, detail_url: str | None = None,
     institution_id: int | None = None, institution_name: str | None = None,
+    user_id: int | None = None,
 ) -> dict[str, Any]:
     return {
         "id": f"{src}:{sid}",
@@ -62,6 +84,7 @@ def _item(
         "target_label": target_label,
         "detail_url": detail_url,
         "institution_id": institution_id, "institution_name": institution_name,
+        "user_id": user_id,
     }
 
 
@@ -130,16 +153,24 @@ def fetch_activity(
             inst_name = inst.name if inst else None
         else:
             continue
+        item_inst_id = u.institution_id or (coach.institution_id if coach else None)
+        if u.role == UserRole.STUDENT:
+            owner_uid = coach.id if coach else None  # öğrencinin koçu → koç 360
+        elif u.role == UserRole.PARENT:
+            owner_uid = None
+        else:
+            owner_uid = u.id  # koç / kurum yöneticisi → kendi
         items.append(_item(
             src="user", sid=u.id, occurred_at=u.created_at,
             type_=t, category="signup", is_commercial=False,
             title=title, subtitle=subtitle,
             actor_name=u.full_name, actor_email=u.email,
             actor_role=u.role.value,
-            detail_url=f"/admin/users/{u.id}" if institution_id is None
+            detail_url=_admin_360_url(item_inst_id, owner_uid) if institution_id is None
                        else (f"/institution/teachers/{u.id}" if u.role == UserRole.TEACHER else None),
-            institution_id=u.institution_id or (coach.institution_id if coach else None),
+            institution_id=item_inst_id,
             institution_name=inst_name,
+            user_id=owner_uid,
         ))
 
     # ---- 2) Kurum davetleri (invitations — institution_admin'in koça yolladığı) ----
@@ -169,7 +200,7 @@ def fetch_activity(
             actor_email=creator.email if creator else None,
             actor_role=creator.role.value if creator else None,
             target_label=target,
-            detail_url=f"/admin/institutions/{inv.institution_id}" if institution_id is None
+            detail_url=_admin_360_url(inv.institution_id, None) if institution_id is None
                        else "/institution/invitations",
             institution_id=inv.institution_id,
             institution_name=inst.name if inst else None,
@@ -198,8 +229,13 @@ def fetch_activity(
             actor_email=teacher.email if teacher else None,
             actor_role="teacher",
             target_label=pi.invited_email,
-            detail_url=f"/teacher/students/{pi.student_id}#parents" if pi.student_id else None,
+            detail_url=_admin_360_url(
+                teacher.institution_id if teacher else None,
+                teacher.id if teacher else None,
+            ) if institution_id is None
+              else (f"/teacher/students/{pi.student_id}#parents" if pi.student_id else None),
             institution_id=teacher.institution_id if teacher else None,
+            user_id=teacher.id if teacher else None,
         ))
 
     # ---- 4) Contact requests (iletişim + abonelik talepleri) ----
@@ -260,23 +296,42 @@ def fetch_activity(
             title = "Plan kaydı"
             t = "plan_other"; cat = "change"; is_commercial = False
 
-        # owner adı
+        # owner adı + abonelik bilgisi (paket/süre)
+        owner_user_id: int | None = None
+        cycle: str | None = None
+        period_end = None
         if pch.owner_type == PlanOwnerType.INSTITUTION:
             inst = db.query(Institution).filter(Institution.id == pch.owner_id).first()
             owner_label = inst.name if inst else f"Kurum #{pch.owner_id}"
             inst_name = owner_label
             inst_id = pch.owner_id
-            url = f"/admin/institutions/{pch.owner_id}" if institution_id is None else "/institution/subscription"
+            period_end = inst.subscription_period_end if inst else None
+            url_inst = "/institution/subscription"
         else:
             u = db.query(User).filter(User.id == pch.owner_id).first()
             owner_label = u.full_name if u else f"Kullanıcı #{pch.owner_id}"
             inst_name = None
             inst_id = u.institution_id if u else None
-            url = f"/admin/users/{pch.owner_id}" if institution_id is None else None
+            owner_user_id = pch.owner_id
+            cycle = u.subscription_cycle if u else None
+            period_end = u.subscription_period_end if u else None
+            url_inst = None
 
+        url = _admin_360_url(inst_id, owner_user_id) if institution_id is None else url_inst
+
+        # Subtitle: hangi paket → hangi paket; satın almada süre/yenileme bilgisi
         subtitle = (
             f"{owner_label} · {_plan_label(pch.from_plan)} → {_plan_label(pch.to_plan)}"
         )
+        if is_upgrade:
+            extra: list[str] = []
+            if cycle:
+                extra.append(_cycle_label(cycle))
+            if period_end:
+                extra.append(f"yenileme {period_end:%d.%m.%Y}")
+            if extra:
+                subtitle += " · " + " · ".join(extra)
+
         items.append(_item(
             src="plan_change", sid=pch.id,
             occurred_at=pch.occurred_at,
@@ -286,6 +341,7 @@ def fetch_activity(
             target_label=owner_label,
             detail_url=url,
             institution_id=inst_id, institution_name=inst_name,
+            user_id=owner_user_id,
         ))
 
     # ---- Filter + sort + limit ----

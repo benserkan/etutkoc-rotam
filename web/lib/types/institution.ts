@@ -787,6 +787,7 @@ export interface ActivityStreamItem {
   detail_url: string | null;
   institution_id: number | null;
   institution_name: string | null;
+  user_id: number | null;
 }
 
 export interface ActivityStreamResponse {

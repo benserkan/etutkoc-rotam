@@ -10,6 +10,7 @@ import {
   REQUEST_TYPE_LABELS_TR,
 } from "@/lib/types/teacher";
 import { Card, CardContent } from "@/components/ui/card";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 /**
  * /teacher/requests — talep listesi (Paket 5: read-only).
@@ -76,6 +77,7 @@ export default async function TeacherRequestsPage({ searchParams }: PageProps) {
           {data.pending_count} bekleyen · sayfada {data.items.length} · toplam{" "}
           {data.total}
         </p>
+        <DemoHint contextKey="requests" role="teacher" />
       </header>
 
       <div className="flex flex-wrap items-center gap-2 text-sm">

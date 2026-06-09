@@ -1,6 +1,7 @@
 import { apiServer } from "@/lib/api-server";
 import type { StudentDayResponse } from "@/lib/types/student";
 import { DayClient } from "@/components/student/day-client";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 /**
  * /student/day — interaktif öğrenci günü (Paket 6).
@@ -30,5 +31,10 @@ export default async function StudentDayPage({
   const date = typeof raw === "string" ? raw : undefined;
   const qs = date ? `?date=${encodeURIComponent(date)}` : "";
   const day = await apiServer<StudentDayResponse>(`/api/v2/student/day${qs}`);
-  return <DayClient initial={day} />;
+  return (
+    <div className="space-y-4">
+      <DemoHint contextKey="day" role="student" />
+      <DayClient initial={day} />
+    </div>
+  );
 }

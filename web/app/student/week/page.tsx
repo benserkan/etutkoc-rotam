@@ -6,6 +6,7 @@ import type { StudentWeekResponse } from "@/lib/types/student";
 import { Button } from "@/components/ui/button";
 import { PrintMenu } from "@/components/student/print-menu";
 import { StudentWeekGrid } from "@/components/student/student-week-grid";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 export const metadata = { title: "Hafta" };
 export const dynamic = "force-dynamic";
@@ -50,6 +51,7 @@ export default async function StudentWeekPage({ searchParams }: PageProps) {
         <PrintMenu startDate={week.start_date} />
       </header>
 
+      <DemoHint contextKey="week" role="student" />
       <StudentWeekGrid days={week.days} />
     </div>
   );

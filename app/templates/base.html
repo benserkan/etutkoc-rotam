@@ -4,8 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{% block title %}ETÜTKOÇ Rotam{% endblock %}</title>
-  <link rel="icon" type="image/png" href="/static/img/etutkoc-logo.png" />
-  <link rel="apple-touch-icon" href="/static/img/etutkoc-logo.png" />
+  {# Favicon — anasayfa (Next) ile AYNI set; Caddy /favicon* → next:3000 #}
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
 
   {# Stage 11+ Theme System — Plus Jakarta Sans (display) + Inter (body) + JetBrains Mono (numeric) #}
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -472,7 +475,7 @@
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
       <div class="flex items-center gap-6">
         <a href="/" class="flex items-center gap-2.5 group">
-          <img src="/static/img/etutkoc-logo.png" alt="ETÜTKOÇ Rotam"
+          <img src="/etutkoc-mark.svg" alt="ETÜTKOÇ Rotam"
                class="h-9 w-9 object-contain group-hover:scale-105 transition-transform" />
           <span class="brand-wordmark text-base leading-none">
             <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-0.5">·</span><span class="b-rotam">rotam</span>

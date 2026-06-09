@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
+  Activity,
   AlertTriangle,
   ArrowRight,
   Building2,
@@ -26,7 +27,8 @@ import {
 
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
-import { getAdminDashboard, adminKeys } from "@/lib/api/admin";
+import { getAdminDashboard, getAdminActivityStream, adminKeys } from "@/lib/api/admin";
+import type { ActivityStreamResponse } from "@/lib/types/institution";
 import type {
   AdminDashboardResponse,
   AuditLogItem,
@@ -93,6 +95,8 @@ export function AdminDashboardClient({ initial }: Props) {
         />
       )}
 
+      <ActivitySummary />
+
       <CommercialShortcuts />
 
       <SystemShortcuts />
@@ -105,6 +109,122 @@ export function AdminDashboardClient({ initial }: Props) {
       />
 
       <RecentAudits audits={data.recent_audits} />
+    </div>
+  );
+}
+
+// ============================================================================
+// Aktivite Özeti — son 7 gün üyelik + davet hareketleri (her satır → 360)
+// ============================================================================
+
+function ActivitySummary() {
+  const q = useQuery<ActivityStreamResponse>({
+    queryKey: adminKeys.activityStream(7, null),
+    queryFn: () => getAdminActivityStream(7, null, 50),
+    staleTime: 30_000,
+  });
+  const counts = q.data?.counts ?? {};
+  const items = (q.data?.items ?? []).slice(0, 6);
+
+  return (
+    <Card>
+      <CardContent className="p-5 space-y-4">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="inline-flex items-center gap-1.5 text-sm font-semibold">
+            <Activity className="size-4 text-indigo-700" aria-hidden />
+            Son 7 Gün — Üyelik &amp; Davet Aktivitesi
+          </h2>
+          <Link
+            href="/admin/activity-stream"
+            className="inline-flex items-center gap-0.5 text-xs font-medium text-indigo-700 hover:underline"
+          >
+            Tüm aktivite <ArrowRight className="size-3.5" aria-hidden />
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <ActivityKpi label="Paket satın alma" value={counts.purchases ?? 0} highlight />
+          <ActivityKpi label="Yeni kayıt" value={counts.signup ?? 0} />
+          <ActivityKpi label="Davetler" value={counts.invitation ?? 0} />
+          <ActivityKpi label="Ticari talep" value={counts.commercial ?? 0} />
+        </div>
+
+        <div className="divide-y divide-border">
+          {items.length === 0 ? (
+            <p className="py-2 text-sm text-muted-foreground">
+              Son 7 günde yeni üyelik veya davet aktivitesi yok.
+            </p>
+          ) : (
+            items.map((it) => {
+              const Wrapper: React.ElementType = it.detail_url ? Link : "div";
+              const wrapperProps = it.detail_url ? { href: it.detail_url } : {};
+              return (
+                <Wrapper
+                  key={it.id}
+                  {...wrapperProps}
+                  className={cn(
+                    "flex items-center gap-3 py-2 text-sm",
+                    it.detail_url &&
+                      "-mx-2 rounded px-2 transition-colors hover:bg-muted/50",
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "size-1.5 shrink-0 rounded-full",
+                      it.is_commercial ? "bg-emerald-500" : "bg-slate-300",
+                    )}
+                    aria-hidden
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate font-medium">{it.title}</span>
+                    {it.subtitle ? (
+                      <span className="block truncate text-xs text-muted-foreground">
+                        {it.subtitle}
+                      </span>
+                    ) : null}
+                  </span>
+                  {it.detail_url ? (
+                    <span className="inline-flex shrink-0 items-center gap-0.5 text-[11px] text-indigo-700">
+                      360 <ArrowRight className="size-3" aria-hidden />
+                    </span>
+                  ) : null}
+                </Wrapper>
+              );
+            })
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function ActivityKpi({
+  label,
+  value,
+  highlight,
+}: {
+  label: string;
+  value: number;
+  highlight?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-lg border p-2.5",
+        highlight ? "border-emerald-200 bg-emerald-50/50" : "border-border bg-muted/30",
+      )}
+    >
+      <div
+        className={cn(
+          "text-lg font-semibold tabular-nums",
+          highlight ? "text-emerald-700" : "text-foreground",
+        )}
+      >
+        {value}
+      </div>
+      <div className="text-[10px] uppercase leading-tight tracking-wider text-muted-foreground">
+        {label}
+      </div>
     </div>
   );
 }

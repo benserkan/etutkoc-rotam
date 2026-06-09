@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Lock, MessageSquare } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
@@ -60,6 +61,7 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
             <div className="text-sm text-muted-foreground font-mono mt-1">
               {teacher.email}
             </div>
+            <DemoHint contextKey="teacher-detail" role="institution_admin" className="mt-2" />
           </div>
           <Button
             onClick={() => setWaOpen(true)}
