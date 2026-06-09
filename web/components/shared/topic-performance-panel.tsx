@@ -9,6 +9,8 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Target, CheckCircle2, XCircle } from "lucide-react";
 
+import { DemoHint } from "@/components/demos/demo-hint";
+
 import {
   getParentTopicPerformance,
   getStudentTopicPerformance,
@@ -105,6 +107,9 @@ export function TopicPerformancePanel({
 
   return (
     <div className="space-y-4">
+      {source === "teacher" ? (
+        <DemoHint contextKey="topic-performance" role="teacher" />
+      ) : null}
       {/* Açıklama */}
       <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
         <p className="text-xs leading-relaxed text-muted-foreground">

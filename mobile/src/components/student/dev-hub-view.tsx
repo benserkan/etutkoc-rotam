@@ -3,6 +3,7 @@ import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native"
 
 import type { DnaResponse, FocusResponse, GoalListResponse, ReviewResponse } from "@/lib/student";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const CHRONO: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap }> = {
   morning: { label: "Sabahçı", icon: "sunny-outline" },
@@ -130,6 +131,7 @@ export function DevHubView({
 
       {/* Çalışma DNA */}
       <Section icon="pulse-outline" title="Çalışma DNA'm">
+        <DemoHint contextKey="dna" role="student" className="mb-2" />
         {!dna.has_enough_data ? (
           <Text className="text-sm text-slate-400">Yeterli veri birikince çalışma alışkanlıkların burada görünür.</Text>
         ) : (

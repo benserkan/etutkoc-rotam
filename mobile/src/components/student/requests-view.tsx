@@ -3,6 +3,7 @@ import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-
 
 import type { StudentRequestItem, StudentRequestListResponse } from "@/lib/student";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const TYPE_LABEL: Record<string, string> = {
   change: "Sayı değişikliği",
@@ -118,6 +119,7 @@ export function RequestsView({
         onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined
       }
     >
+      <DemoHint contextKey="requests" role="student" />
       {data.items.length === 0 ? (
         <View className="mt-10 items-center gap-3 px-6">
           <Ionicons name="chatbubbles-outline" size={44} color="#94a3b8" />
