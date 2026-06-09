@@ -46,7 +46,7 @@ export default function InstitutionActivityScreen() {
   });
 
   return (
-    <InstitutionScreen<ActivityStreamResponse> title="Aktivite Akışı" query={q}>
+    <InstitutionScreen<ActivityStreamResponse> title="Aktivite Akışı" query={q} demoContext="activity-stream">
       {(d) => {
         const items = type ? d.items.filter((i) => i.category === type) : d.items;
         return (

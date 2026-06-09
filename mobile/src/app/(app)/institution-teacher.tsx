@@ -46,7 +46,7 @@ export default function InstitutionTeacherScreen() {
   const q = useQuery({ queryKey: institutionKeys.teacherCard(id), queryFn: () => getInstitutionTeacherCard(id), enabled: Number.isFinite(id) });
 
   return (
-    <InstitutionScreen<TeacherCardResponse> title={q.data?.teacher.full_name ?? "Koç detayı"} query={q}>
+    <InstitutionScreen<TeacherCardResponse> title={q.data?.teacher.full_name ?? "Koç detayı"} query={q} demoContext="teacher-detail">
       {(d) => (
         <>
           <Banner kind="info">

@@ -33,7 +33,7 @@ function Row({ r }: { r: TeacherScorecardRow }) {
 export default function InstitutionScorecardScreen() {
   const q = useQuery({ queryKey: institutionKeys.scorecard, queryFn: () => getInstitutionScorecard(4) });
   return (
-    <InstitutionScreen<TeacherScorecardResponse> title="Öğretmen Karnesi" query={q}>
+    <InstitutionScreen<TeacherScorecardResponse> title="Öğretmen Karnesi" query={q} demoContext="analysis-2">
       {(d) => (
         <>
           <KpiGrid>

@@ -61,7 +61,7 @@ export default function InstitutionComplianceScreen() {
   const q = useQuery({ queryKey: institutionKeys.compliance, queryFn: () => getInstitutionCompliance(8) });
 
   return (
-    <InstitutionScreen<InstitutionComplianceResponse> title="Program Uyumu" query={q}>
+    <InstitutionScreen<InstitutionComplianceResponse> title="Program Uyumu" query={q} demoContext="analysis">
       {(d) => {
         const s = d.summary;
         const deltaTxt = s.delta == null ? "" : `${s.delta >= 0 ? "↑" : "↓"} %${Math.abs(Math.round(s.delta))} geçen haftaya göre`;

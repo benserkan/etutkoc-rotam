@@ -57,7 +57,7 @@ export default function InstitutionSubscriptionScreen() {
   }
 
   return (
-    <InstitutionScreen<SubscriptionResponse> title="Hesap Ayarları" query={q}>
+    <InstitutionScreen<SubscriptionResponse> title="Hesap Ayarları" query={q} demoContext="membership">
       {(d) => {
         const s = d.status;
         return (

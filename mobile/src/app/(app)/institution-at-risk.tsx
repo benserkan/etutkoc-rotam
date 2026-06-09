@@ -91,7 +91,7 @@ export default function InstitutionAtRiskScreen() {
   });
 
   return (
-    <InstitutionScreen<AtRiskResponse> title="Risk Paneli" query={q}>
+    <InstitutionScreen<AtRiskResponse> title="Risk Paneli" query={q} demoContext="analysis">
       {(d) => (
         <>
           <Banner kind="info">

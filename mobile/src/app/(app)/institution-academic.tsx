@@ -45,7 +45,7 @@ export default function InstitutionAcademicScreen() {
   const q = useQuery({ queryKey: institutionKeys.academic, queryFn: () => getInstitutionAcademic(8) });
 
   return (
-    <InstitutionScreen<InstitutionAcademicResponse> title="Akademik Çıktı" query={q}>
+    <InstitutionScreen<InstitutionAcademicResponse> title="Akademik Çıktı" query={q} demoContext="analysis">
       {(d) => {
         const s = d.summary;
         const deltaTxt = s.delta == null ? "" : `${s.delta >= 0 ? "↑" : "↓"} %${Math.abs(Math.round(s.delta))}`;

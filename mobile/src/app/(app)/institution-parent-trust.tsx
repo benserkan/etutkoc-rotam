@@ -15,7 +15,7 @@ function successTone(pct: number | null): string {
 export default function InstitutionParentTrustScreen() {
   const q = useQuery({ queryKey: institutionKeys.parentTrust, queryFn: () => getInstitutionParentTrust(30) });
   return (
-    <InstitutionScreen<ParentTrustResponse> title="Veli Güveni" query={q}>
+    <InstitutionScreen<ParentTrustResponse> title="Veli Güveni" query={q} demoContext="parent-trust">
       {(d) => {
         const s = d.summary;
         return (

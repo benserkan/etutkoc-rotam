@@ -783,6 +783,27 @@
   </script>
   {% endif %}
 
+  {# Anonim ziyaretçi (login'siz) header'ı — /demos, /kvkk, /privacy gibi Jinja
+     sayfalarında marka + ana sayfaya dönüş + giriş. Anasayfa (Next) ile tutarlı;
+     demo videolarını üye olmadan izleyen ziyaretçi de marka şeridini görür. #}
+  {% if not user %}
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2.5 group">
+        <img src="/etutkoc-mark.svg" alt="ETÜTKOÇ Rotam"
+             class="h-9 w-9 object-contain group-hover:scale-105 transition-transform" />
+        <span class="brand-wordmark text-base leading-none">
+          <span class="b-etut">etütkoç</span><span class="text-slate-400 mx-0.5">·</span><span class="b-rotam">rotam</span>
+        </span>
+      </a>
+      <div class="flex items-center gap-2">
+        <a href="/login" class="px-3 py-1.5 rounded-md text-sm text-slate-600 hover:bg-slate-100 hover:text-slate-900">Giriş</a>
+        <a href="/signup/teacher" class="px-3 py-1.5 rounded-md text-sm font-medium bg-cyan-700 text-white hover:bg-cyan-800">Ücretsiz Dene</a>
+      </div>
+    </div>
+  </header>
+  {% endif %}
+
   {# Logged-in user için header altı role ambient şeridi (subtle) #}
   {% if user %}
   <div class="role-ambient h-32 -mb-32 pointer-events-none" aria-hidden="true"></div>

@@ -88,6 +88,7 @@ export default function InstitutionInvitationsScreen() {
     <InstitutionScreen<InvitationListResponse>
       title="Öğretmen Davetleri"
       query={q}
+      demoContext="invitations"
       headerRight={
         <Pressable onPress={openCreate} className="rounded-lg bg-brand-700 px-3 py-1.5 active:bg-brand-800">
           <Text className="text-xs font-semibold text-white">Yeni davet</Text>

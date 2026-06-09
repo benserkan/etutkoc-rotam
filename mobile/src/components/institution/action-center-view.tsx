@@ -3,6 +3,7 @@ import { RefreshControl, ScrollView, Text, View } from "react-native";
 
 import type { ActionCenterItem, ActionCenterResponse } from "@/lib/institution";
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 const SEV: Record<string, { card: string; chip: string; chipText: string; icon: keyof typeof Ionicons.glyphMap; label: string }> = {
   critical: { card: "border-l-rose-500", chip: "bg-rose-50", chipText: "text-rose-700", icon: "alert-circle", label: "Kritik" },
@@ -61,6 +62,7 @@ export function ActionCenterView({
       contentContainerClassName="px-4 py-4 gap-4"
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined}
     >
+      <DemoHint contextKey="analysis" role="institution_admin" />
       <View className="flex-row gap-3">
         <View className="flex-1 rounded-2xl border border-slate-200 bg-white p-3">
           <Text className="text-2xl font-extrabold text-rose-600">{s.critical}</Text>

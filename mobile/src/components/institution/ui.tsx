@@ -5,6 +5,7 @@ import { ActivityIndicator, Pressable, RefreshControl, ScrollView, Text, View } 
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { cn } from "@/lib/utils";
+import { DemoHint } from "@/components/demos/demo-hint";
 
 /** Backend renk ipucu (rate_color/net_pct_color/score_color) → mobil ton. */
 export function toneFromColor(color: string | null | undefined): { text: string; bg: string; bar: string; border: string } {
@@ -46,6 +47,7 @@ export function InstitutionScreen<T>({
   title,
   query,
   headerRight,
+  demoContext,
   children,
 }: {
   title: string;
@@ -57,6 +59,8 @@ export function InstitutionScreen<T>({
     isRefetching: boolean;
   };
   headerRight?: React.ReactNode;
+  /** Verilirse ScrollView başında "▶ Nasıl kullanılır?" rozeti (kurum demosu). */
+  demoContext?: string;
   children: (data: T) => React.ReactNode;
 }) {
   return (
@@ -93,6 +97,7 @@ export function InstitutionScreen<T>({
           contentContainerClassName="px-4 py-4 gap-3"
           refreshControl={<RefreshControl refreshing={query.isRefetching} onRefresh={() => query.refetch()} tintColor="#0e7490" />}
         >
+          {demoContext ? <DemoHint contextKey={demoContext} role="institution_admin" /> : null}
           {children(query.data)}
         </ScrollView>
       )}
