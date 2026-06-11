@@ -1,6 +1,7 @@
 import { Redirect, Stack } from "expo-router";
 import { ActivityIndicator, View } from "react-native";
 
+import { PanelVisitTracker } from "@/components/panel-visit-tracker";
 import { useAuth } from "@/lib/auth";
 
 export default function AppLayout() {
@@ -15,5 +16,10 @@ export default function AppLayout() {
   }
   if (status !== "authed") return <Redirect href="/login" />;
 
-  return <Stack screenOptions={{ headerShown: false }} />;
+  return (
+    <>
+      <PanelVisitTracker />
+      <Stack screenOptions={{ headerShown: false }} />
+    </>
+  );
 }

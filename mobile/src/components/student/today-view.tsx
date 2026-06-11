@@ -6,6 +6,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { DayNoteCard } from "@/components/student/day-note-card";
 import { DemoHint } from "@/components/demos/demo-hint";
 import type { StudentDayResponse, StudentTask } from "@/lib/student";
+import { QuickAccessStrip } from "@/components/quick-access-strip";
 
 const TR_DAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
 const TR_MONTHS = [
@@ -104,6 +105,7 @@ export function TodayView({
       }
     >
       <DemoHint contextKey="day" role="student" />
+      <QuickAccessStrip padded={false} />
       {/* Özet kart (gradient native'de çalışmaz → solid marka rengi) */}
       <View className="rounded-2xl bg-brand-700 p-5">
         <Text className="text-xs font-semibold uppercase tracking-wider text-brand-100">

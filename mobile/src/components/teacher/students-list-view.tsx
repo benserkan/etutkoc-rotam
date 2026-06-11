@@ -5,6 +5,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { TeacherStudentListItem, WarningLevel } from "@/lib/teacher";
 import { cn } from "@/lib/utils";
+import { QuickAccessStrip } from "@/components/quick-access-strip";
 
 const WARN: Record<WarningLevel, { border: string; dot: string }> = {
   red: { border: "border-l-rose-500", dot: "bg-rose-500" },
@@ -120,6 +121,7 @@ export function StudentsListView({
           onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined
         }
       >
+        <QuickAccessStrip padded={false} />
         {filtered.length === 0 ? (
           <View className="mt-10 items-center gap-3 px-6">
             <Ionicons name="people-outline" size={44} color="#94a3b8" />

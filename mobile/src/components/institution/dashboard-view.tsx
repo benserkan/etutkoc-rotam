@@ -3,6 +3,7 @@ import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native"
 
 import type { InstitutionDashboardResponse, TeacherSummaryItem } from "@/lib/institution";
 import { cn } from "@/lib/utils";
+import { QuickAccessStrip } from "@/components/quick-access-strip";
 
 function rateTone(pct: number | null): { row: string; text: string } {
   if (pct == null) return { row: "border-l-slate-200", text: "text-slate-500" };
@@ -73,6 +74,8 @@ export function InstitutionDashboardView({
       contentContainerClassName="px-4 py-4 gap-4"
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined}
     >
+      <QuickAccessStrip padded={false} />
+
       {/* Kurum başlık */}
       <View className="rounded-2xl bg-brand-700 p-5">
         <Text className="text-lg font-bold text-white">{data.institution.name}</Text>

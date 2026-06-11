@@ -14,6 +14,8 @@ class PanelVisitEventIn(BaseModel):
 
 class PanelVisitsBody(BaseModel):
     events: list[PanelVisitEventIn] = Field(..., max_length=50)
+    # Olay kaynağı — web (varsayılan) veya mobil app
+    source: str = Field(default="web", pattern="^(web|mobile)$")
 
 
 class PanelVisitsResult(BaseModel):

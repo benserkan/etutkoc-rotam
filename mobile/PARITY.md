@@ -113,6 +113,27 @@ Web ile aynı registry (`src/lib/demos.ts`, 35 demo) + `components/demos/demo-hi
 - Demo içeriği canlı web `/demos`'tan gelir (sahne + sesli anlatım); yeni demo =
   web+mobil registry birlikte güncellenir.
 
+## Hızlı Erişim Kartları (QA-3, 2026-06-11)
+
+Web ile AYNI backend (`/api/v2/me/quick-cards` + `panel-visits`); skor/yaşam
+döngüsü sunucuda. Mobil katman:
+- `lib/quick-access.ts` — ÇİFT YÖNLÜ eşleme: mobil ekran→katalog web path
+  (ziyaret izleme) + route_key→mobil ekran (kart navigasyonu). Yeni mobil
+  ekran eklenince (web karşılığı varsa) İKİ tabloya da satır eklenir.
+- `components/panel-visit-tracker.tsx` — authed layout'ta; ≥3sn kalış +
+  30sn batch + arka plana inerken flush; `source: "mobile"`.
+- `components/quick-access-strip.tsx` — 4 rol ana ekranında (koç Öğrenciler /
+  kurum Panel / veli Çocuklarım / öğrenci Bugün) yatay kart şeridi; dokun→git,
+  **basılı tut→Sabitle/Kaldır** menüsü; mobilde karşılığı olmayan kart gizlenir.
+
+## EAS Update (OTA) — 2026-06-11
+
+`expo-updates` kuruldu; `app.json` updates.url + `runtimeVersion: appVersion`;
+`eas.json` kanalları: preview / production. **İlk etkinleşme yeni build ister**
+(expo-updates native modül) → sonraki salt-JS değişiklikler
+`eas update --channel production -m "mesaj"` ile store'suz gider.
+Native değişiklikte (yeni modül/izin) yine yeni AAB + store gerekir.
+
 ---
 
 ## Sıradaki (opsiyonel, kullanıcı önceliğine bağlı)

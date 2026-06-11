@@ -4962,8 +4962,23 @@ kontrol · ham olay logu + agregat · 5 rol birden web) onaylandı.
   seed migration'ları prod'da hiç koşmadığından — init_db create_all+stamp —
   desen canlıda ilk kez patladı). Bundan sonra seed INSERT'lerinde bool kolona
   daima `:e=True` bind param. Tarayıcı testi kullanıcıda.
-- **QA-3 (mobil)** ayrı onayla sonra: aynı endpoint'ler; expo-router ekran
-  odağı → route_key eşleme + strip.
+- **QA-3 (mobil) ✅ + EAS Update (2026-06-11):**
+  - **EAS Update (OTA) kuruldu**: `expo-updates ~29.0.18` + app.json
+    `updates.url` (projectId e70c9fe3) + `runtimeVersion: appVersion` +
+    eas.json kanalları (preview/production). **İlk etkinleşme yeni AAB ister**
+    (native modül); sonrasında salt-JS değişiklikler `eas update --channel
+    production` ile store'suz gider.
+  - **Mobil hızlı erişim**: `lib/quick-access.ts` (ÇİFT YÖNLÜ eşleme — mobil
+    ekran→katalog web path [izleme] + route_key→mobil ekran [navigasyon];
+    yeni mobil ekran = iki tabloya satır) · `panel-visit-tracker.tsx` (authed
+    layout; ≥3sn + 30sn batch + AppState background flush; source="mobile") ·
+    `quick-access-strip.tsx` (4 rol ana ekranı: koç Öğrenciler / kurum Panel /
+    veli Çocuklarım / öğrenci Bugün; dokun→git, **basılı tut→Sabitle/Kaldır**;
+    mobilde karşılığı olmayan kart gizlenir).
+  - Backend: `PanelVisitsBody.source` (web|mobile, pattern-validated) —
+    smoke **16/16** (5b: source=mobile kaydı + geçersiz source 422).
+  - Mobil tsc temiz. **Kullanıcı aksiyonu**: `eas build --platform android
+    --profile production` → AAB v5 → Play kapalı test; sonraki JS işleri OTA.
 
 ## Notlar
 

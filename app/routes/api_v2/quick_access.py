@@ -43,7 +43,7 @@ def post_panel_visits(
     user: User = Depends(get_current_user_v2),
 ) -> PanelVisitsResult:
     accepted = panel_behavior.record_visits(
-        db, user, [e.model_dump() for e in body.events], source="web"
+        db, user, [e.model_dump() for e in body.events], source=body.source
     )
     if accepted:
         db.commit()

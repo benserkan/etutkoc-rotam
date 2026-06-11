@@ -4,6 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import type { ParentChildSummary, WarningLevel } from "@/lib/parent";
 import { cn } from "@/lib/utils";
+import { QuickAccessStrip } from "@/components/quick-access-strip";
 
 const WARN: Record<WarningLevel, { border: string; dot: string; label: string; text: string }> = {
   red: { border: "border-l-rose-500", dot: "bg-rose-500", label: "Acil", text: "text-rose-700" },
@@ -105,6 +106,7 @@ export function ParentDashboardView({
         }
       >
         <Text className="px-1 text-xl font-bold text-slate-900">Çocuklarım</Text>
+        <QuickAccessStrip padded={false} />
         {children.length === 0 ? (
           <View className="mt-10 items-center gap-3 px-6">
             <Ionicons name="people-outline" size={44} color="#94a3b8" />

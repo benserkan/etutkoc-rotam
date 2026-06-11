@@ -165,6 +165,24 @@ def main() -> int:
         cards = c.get("/api/v2/me/quick-cards").json()["cards"]
         check("5. tek günlük ziyaret kart ÖNERMEZ (days_seen<3)", cards == [], f"{cards}")
 
+        # mobil kaynak (QA-3): source=mobile kabul, geçersiz source 422
+        r = c.post("/api/v2/me/panel-visits",
+                   json={"events": [{"path": "/teacher/library"}], "source": "mobile"})
+        with SessionLocal() as db:
+            ev = (
+                db.query(PanelVisitEvent)
+                .filter_by(user_id=ctx["coach_a"], route_key="teacher.library")
+                .first()
+            )
+        r2 = c.post("/api/v2/me/panel-visits",
+                    json={"events": [{"path": "/teacher/library"}], "source": "hacker"})
+        check(
+            "5b. source=mobile kaydedildi, geçersiz source 422",
+            r.status_code == 200 and ev is not None and ev.source == "mobile"
+            and r2.status_code == 422,
+            f"r={r.status_code} src={getattr(ev, 'source', None)} r2={r2.status_code}",
+        )
+
         # 3 farklı güne yayılmış ziyaret → önerilen
         simulate_visits(ctx["coach_a"], week_path, [2, 1])  # bugünkü zaten var
         cards = c.get("/api/v2/me/quick-cards").json()["cards"]
@@ -276,7 +294,7 @@ def main() -> int:
                 entity_id=None, dwell_ms=0, source="web", created_at=old,
             ))
             db.add(PanelRouteStat(
-                user_id=ctx["coach_a"], route_key="teacher.library", entity_id=0,
+                user_id=ctx["coach_a"], route_key="teacher.insights", entity_id=0,
                 score=1.0, visit_count=2, days_seen=2, last_visit_at=old,
                 last_visit_date=old.date(),
             ))
@@ -290,7 +308,7 @@ def main() -> int:
             res = pb.purge_old_events(db, now=now)
             stale_gone = (
                 db.query(PanelRouteStat)
-                .filter_by(user_id=ctx["coach_a"], route_key="teacher.library")
+                .filter_by(user_id=ctx["coach_a"], route_key="teacher.insights")
                 .first()
                 is None
             )

@@ -21,6 +21,9 @@
     "android": {
       "package": "com.etutkoc.rotam",
       "googleServicesFile": "./google-services.json",
+      "blockedPermissions": [
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png"
@@ -67,6 +70,13 @@
         "projectId": "e70c9fe3-562c-44a3-ae92-36ad943fed52"
       }
     },
-    "owner": "etutkoc"
+    "owner": "etutkoc",
+    "updates": {
+      "url": "https://u.expo.dev/e70c9fe3-562c-44a3-ae92-36ad943fed52",
+      "fallbackToCacheTimeout": 0
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    }
   }
 }
