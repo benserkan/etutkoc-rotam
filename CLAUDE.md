@@ -4912,6 +4912,54 @@ okundu + 4 SALT-OKUMA prod teşhisi yazıldı (`diagnose_parent_notifications`,
   publish-day'e dedup'lı bildirim veya koça hatırlatma eklenebilir. (b) Efe (12/YKS)
   sınav tarihi boş → exam_approaching hiç çıkmaz (veri eksiği).
 
+## Hızlı Erişim Kartları (QA) — davranıştan öğrenen panel kısayolları (2026-06-11)
+
+**Bağlam (kullanıcı):** 5 rolün panel ana sayfasına, kullanıcının kendi gezinti
+alışkanlığından öğrenen dinamik hızlı erişim kartları ("öğrenen → öneren →
+tıklandıkça kalıcılaşan"). Mevcut statik kartlara DOKUNULMADI. Mantıksal çerçeve
++ 4 kullanıcı kararı (sayfa+kişi düzeyi · otomatik 3-tık kalıcılaşma + elle
+kontrol · ham olay logu + agregat · 5 rol birden web) onaylandı.
+
+- **Migration `g0h3k6l7k44b`** (down_revision f9g2j5k6j33a, additive, downgrade'li,
+  uygulandı — **alembic head = g0h3k6l7k44b**): `panel_visit_events` (ham olay;
+  ham URL SAKLANMAZ, normalize route_key+entity_id; 180g saklama) +
+  `panel_route_stats` (kullanıcı+rota+entity başına TEK satır: EWMA skor +
+  sayaçlar + pinned_at/dismissed_until/card_clicks; entity_id=0 = sayfa-düzeyi,
+  UNIQUE için NULL yerine 0) + `panel_events_purge` günlük cron seed (03:30 UTC).
+- **Servis `panel_behavior.py`**: ~100 girişlik ROTA KATALOĞU (5 rol; regex
+  pattern → route_key; detay sayfaları liste anahtarında birikir [fold]; sihirbaz/
+  form/token'lı sayfalar bilinçli dışarıda) · EWMA skor (yarılanma 14g, okuma
+  anında da indirgenir — cron'suz sönme) · kişi-düzeyi rota ağırlığı 1.5 ·
+  60sn dedup (yalnız ileri yönde; out-of-order batch sayılır, last_visit_at
+  geriye taşınmaz) · yaşam döngüsü: skor≥3.0 + ≥3 farklı gün → ÖNERİLEN; karta
+  3 tık VEYA elle pin → KALICI; dismiss → 90g bastırma + kalıcılık sıfır ·
+  entity etiketi okuma anında çözülür + erişim kontrolü (koç→kendi öğrencisi
+  aktif; veli→ParentStudentLink; kurum yön.→kendi kurumunun koçu; süper admin→
+  kurum/kullanıcı; kitap→sahibi) — erişim düşen kart otomatik düşer ·
+  `purge_old_events` (cron; sabitli/kalıcı satır yaşar). NOT: autoflush kapalı
+  olduğundan record_visits her olaydan sonra flush eder (batch-içi UNIQUE koruması).
+- **Endpoint'ler** (`api_v2/quick_access.py`, prefix /me, tüm roller):
+  POST `/me/panel-visits` (batch ≤50) · GET `/me/quick-cards` (≤12 aday) ·
+  POST `/me/quick-cards/click|pin|dismiss` (invalidate `me:quick-cards`).
+  Kimse başkasının verisini göremez (tüm sorgular user_id'li).
+- **Frontend**: `use-panel-visit-tracker.ts` (5 shell'de: teacher/institution/
+  admin/parent shell + site-header; ≥3sn kalış → ziyaret; 30sn batch; sekme
+  kapanışında sendBeacon; hata sessiz) · paylaşılan `quick-access-strip.tsx`
+  (maks 6 kart; pinned→established→suggested sırası; "önerilen" rozeti + pin/
+  kaldır kontrolleri; boş durumda HİÇ render etmez; `excludeHrefs` ile statik
+  kart tekilleştirme) · 5 panel ana sayfasına eklendi (teacher dashboard /
+  institution dashboard / admin dashboard [statik kısayol href'leri exclude] /
+  parent dashboard / student day [kendi sayfası exclude]).
+- **Test**: `scripts/test_api_v2_quick_access.py` **15/15** (anonim 401 +
+  katalog/rol filtresi + dedup + eşik + öneri + 3-tık kalıcılaşma + pin +
+  erişim düşmesi + dismiss + rol izolasyonu + veli + 404 + purge + cron kaydı).
+  Regresyon: me 13 + auth 14 + tenant 29 GREEN · tsc ✅ · eslint ✅ (build YOK
+  — dev kuralı). **Commit + canlı deploy YAPILMADI** (kullanıcı istemedi);
+  deploy'da web+worker+next rebuild gerekir (migration start.sh `upgrade head`
+  ile uygulanır; cron seed migration'da).
+- **QA-3 (mobil)** ayrı onayla sonra: aynı endpoint'ler; expo-router ekran
+  odağı → route_key eşleme + strip.
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini

@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { usePanelVisitTracker } from "@/lib/hooks/use-panel-visit-tracker";
 import {
   Activity,
   AlertOctagon,
@@ -182,6 +183,7 @@ interface Props {
 
 export function AdminShell({ user, children }: Props) {
   const pathname = usePathname();
+  usePanelVisitTracker();
   const logout = useLogout();
   const [navOpen, setNavOpen] = React.useState(false);
 

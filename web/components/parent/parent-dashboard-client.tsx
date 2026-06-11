@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, HeartHandshake, Info } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { QuickAccessStrip } from "@/components/quick-access-strip";
 import { Card, CardContent } from "@/components/ui/card";
 import { getParentDashboard, parentKeys } from "@/lib/api/parent";
 import type {
@@ -59,6 +60,8 @@ export function ParentDashboardClient({ initial }: Props) {
           aşağıda. Detaylar için kartın üzerine tıklayın.
         </p>
       </header>
+
+      <QuickAccessStrip />
 
       {children.length === 0 ? (
         <EmptyState />

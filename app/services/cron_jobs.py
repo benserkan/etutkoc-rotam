@@ -909,6 +909,16 @@ def feature_discovery_scan(db: Session, *, now: datetime) -> dict:
     }
 
 
+def panel_events_purge(db: Session, *, now: datetime) -> dict:
+    """Günlük — 180 günden eski panel ziyaret olaylarını + dokunulmamış
+    hızlı-erişim agregat satırlarını siler (sabitlenen/kalıcı kartlar yaşar).
+    QA-1 saklama politikası."""
+    from app.services.panel_behavior import purge_old_events
+    counts = purge_old_events(db, now=now)
+    logger.info("panel_events_purge: %s", counts)
+    return counts
+
+
 JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "daily_summary": daily_summary,
     "weekly_backstop": weekly_backstop,
@@ -936,4 +946,6 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "feature_discovery_scan": feature_discovery_scan,
     # Kopuk-cron düzeltmeleri (2026-05-24): schedule'ı eksik olanlar
     "offers_expire": offers_expire,
+    # Hızlı erişim kartları (QA-1) — ham olay saklama politikası
+    "panel_events_purge": panel_events_purge,
 }

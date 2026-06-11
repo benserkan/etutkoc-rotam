@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { QuickAccessStrip } from "@/components/quick-access-strip";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   getInstitutionDashboard,
@@ -53,6 +54,8 @@ export function DashboardClient({ initial }: Props) {
           Kurum genel durumu ve öğretmenlerin haftalık performansı.
         </p>
       </header>
+
+      <QuickAccessStrip />
 
       <PrivacyNote />
 

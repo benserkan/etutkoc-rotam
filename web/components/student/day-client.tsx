@@ -8,6 +8,7 @@ import { getStudentDay, saveStudentDayNote, studentKeys } from "@/lib/api/studen
 import { NotebookPen } from "lucide-react";
 import type { StudentDayResponse, StudentTask, TaskPeriod } from "@/lib/types/student";
 import { LoadingState } from "@/components/loading-state";
+import { QuickAccessStrip } from "@/components/quick-access-strip";
 import { ErrorState } from "@/components/error-state";
 
 import { DayHeader } from "./day-header";
@@ -72,6 +73,8 @@ export function DayClient({ initial }: Props) {
   return (
     <div className="space-y-4">
       <DayHeader day={day} onRequestAdd={() => setComm({ mode: "add" })} />
+
+      <QuickAccessStrip excludeHrefs={["/student/day"]} />
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_320px] gap-6 items-start">
         {/* Sol kolon: görev listesi + projeksiyon */}

@@ -255,6 +255,7 @@ from app.models.support_request import (
 from app.models.system_secret import SystemSecret
 from app.models.task_template import TaskTemplate, TaskTemplateItem
 from app.models.warning_state import WarningState
+from app.models.panel_behavior import PanelRouteStat, PanelVisitEvent
 from app.models.owner_contact import OwnerContact
 from app.models.owner_tag import (
     OWNER_TAG_COLORS,
@@ -454,6 +455,8 @@ __all__ = [
     "SUPPORT_ATTACH_MAX_BYTES",
     "SUPPORT_ATTACH_MAX_PER_REQUEST",
     "WarningState",
+    "PanelRouteStat",
+    "PanelVisitEvent",
     "TaskTemplate",
     "TaskTemplateItem",
     "SUPPORT_AUDIENCE_SUPER_ADMIN",

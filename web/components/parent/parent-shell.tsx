@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { usePanelVisitTracker } from "@/lib/hooks/use-panel-visit-tracker";
 import { Bell, HeartHandshake, LayoutDashboard, LogOut, MessageSquare, Settings, UserCog, X, Menu } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ const NAV_LINKS: NavLink[] = [
 
 export function ParentShell({ user, children }: Props) {
   const pathname = usePathname();
+  usePanelVisitTracker();
   const logout = useLogout();
   const [navOpen, setNavOpen] = React.useState(false);
 

@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { usePanelVisitTracker } from "@/lib/hooks/use-panel-visit-tracker";
 import { BrandLogo } from "@/components/brand-logo";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -71,6 +72,7 @@ const STUDENT_NAV: NavLink[] = [
  */
 export function SiteHeader({ user, enableBadges = true }: Props) {
   const pathname = usePathname();
+  usePanelVisitTracker();
   const logout = useLogout();
   const [navOpen, setNavOpen] = React.useState(false);
   const badges = useQuery<PendingBadgesResponse>({
