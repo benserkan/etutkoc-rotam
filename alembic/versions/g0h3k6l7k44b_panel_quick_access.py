@@ -102,7 +102,7 @@ def upgrade() -> None:
             sa.text(
                 "INSERT INTO cron_schedules "
                 "(job_key, description, hour, minute, day_of_week, enabled) "
-                "VALUES (:k, :d, :h, :m, :w, 1)"
+                "VALUES (:k, :d, :h, :m, :w, :e)"
             ),
             {
                 "k": "panel_events_purge",
@@ -110,6 +110,9 @@ def upgrade() -> None:
                 "h": 3,
                 "m": 30,
                 "w": None,  # her gün
+                # bool param — Postgres'te enabled BOOLEAN (literal 1 integer
+                # sayılıp DatatypeMismatch verir), SQLite'ta 1'e çözülür
+                "e": True,
             },
         )
 
