@@ -4954,9 +4954,14 @@ kontrol · ham olay logu + agregat · 5 rol birden web) onaylandı.
   katalog/rol filtresi + dedup + eşik + öneri + 3-tık kalıcılaşma + pin +
   erişim düşmesi + dismiss + rol izolasyonu + veli + 404 + purge + cron kaydı).
   Regresyon: me 13 + auth 14 + tenant 29 GREEN · tsc ✅ · eslint ✅ (build YOK
-  — dev kuralı). **Commit + canlı deploy YAPILMADI** (kullanıcı istemedi);
-  deploy'da web+worker+next rebuild gerekir (migration start.sh `upgrade head`
-  ile uygulanır; cron seed migration'da).
+  — dev kuralı). **CANLI (2026-06-11):** commit `5861822` + fix `86d4dff` push;
+  sunucuda pull + DB yedek + web/worker/next rebuild; migration prod'da uygulandı
+  (head=g0h3k6l7k44b, cron seed `t`), site 200 + endpoint 401 doğrulandı.
+  **DERS — Postgres cron seed:** `cron_schedules.enabled` BOOLEAN — raw SQL
+  seed'de literal `1` Postgres'te DatatypeMismatch verir (SQLite yutar; eski
+  seed migration'ları prod'da hiç koşmadığından — init_db create_all+stamp —
+  desen canlıda ilk kez patladı). Bundan sonra seed INSERT'lerinde bool kolona
+  daima `:e=True` bind param. Tarayıcı testi kullanıcıda.
 - **QA-3 (mobil)** ayrı onayla sonra: aynı endpoint'ler; expo-router ekran
   odağı → route_key eşleme + strip.
 
