@@ -359,6 +359,17 @@ from app.models.student_goal import (
     StudentGoal,
 )
 from app.models.suggestion_feedback import FeedbackAction, SuggestionFeedback
+from app.models.survey import (
+    CAREER_REQUIRED_CODES,
+    CAREER_SURVEY_CODES,
+    SURVEY_ASSIGNMENT_STATUS_LABELS_TR,
+    SURVEY_CATEGORY_LABELS_TR,
+    SURVEY_DISCLAIMER_TR,
+    CareerInsight,
+    SurveyAssignment,
+    SurveyQuestion,
+    SurveyTemplate,
+)
 from app.models.task import Task, TaskBookItem, TaskStatus, TaskType
 from app.models.week_note import WeekNote
 from app.models.task_request import (

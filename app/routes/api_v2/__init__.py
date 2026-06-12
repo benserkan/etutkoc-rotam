@@ -41,6 +41,7 @@ from app.routes.api_v2 import quick_access as v2_quick_access
 from app.routes.api_v2 import settings as v2_settings
 from app.routes.api_v2 import student as v2_student
 from app.routes.api_v2 import support as v2_support
+from app.routes.api_v2 import surveys as v2_surveys
 from app.routes.api_v2 import teacher as v2_teacher
 from app.routes.api_v2 import weekly_plan as v2_weekly_plan
 
@@ -70,6 +71,7 @@ router.include_router(v2_weekly_plan.router)
 router.include_router(v2_support.router)
 router.include_router(v2_messaging.router)
 router.include_router(v2_quick_access.router)
+router.include_router(v2_surveys.router)
 
 
 @router.get("/ping", include_in_schema=False)

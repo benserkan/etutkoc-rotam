@@ -6,6 +6,125 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Öğrenci Tanıma Anket/Envanter Sistemi (2026-06-11, KARARLAR ALINDI, kod BAŞLAMADI)
+
+**Bağlam:** Koç, öğrencisini tanımak için anket uygular (çoklu zeka, ilgi envanteri,
+yaşam çarkı, SWOT, mesleki beceri...). Koç sistemden anketi öğrenciye gönderir →
+öğrenci doldurur (mobil öncelikli!) → sonuç anında koça düşer. Literatür + koçluk
+platformu taraması yapıldı (2026-06-11).
+
+**Kullanıcı kararları (2026-06-11, AskUserQuestion):**
+1. **Telif stratejisi = özgün + serbest kaynak**: Çerçeveler telifsiz ama madde
+   metinleri telifli → yaygın çerçevelerle (çoklu zeka 8 alan, RIASEC 6 tip,
+   VAK 3 stil, yaşam çarkı 8 dilim, SWOT) **ETÜTKOÇ'a özgü maddeler** yazılır
+   (Claude taslak → kullanıcı onayı) + public domain olanlar (O*NET Interest
+   Profiler CC BY 4.0, IPIP) Türkçeleştirilip atıfla alınır. MBTI/Kolb/VARK/16PF
+   gibi lisanslı markalara GİRİLMEZ. TOAD'daki akademik ölçekler izinsiz KULLANILMAZ.
+2. **Çekirdek set = 10 anket (4 grup)**: Tanıma 4'lüsü (Çoklu Zeka + Öğrenme
+   Stilleri + Yaşam Çarkı + SWOT) · Sınav 2'lisi (Sınav Kaygısı + Çalışma
+   Alışkanlıkları) · Kariyer 2'lisi (Mesleki İlgi RIASEC + Akademik Benlik) ·
+   Motivasyon 2'lisi (Başarısızlık Nedenleri + Hedef/Motivasyon).
+3. **Mimari = B motoru, fazlı C**: Genel anket motoru (soru tipleri: likert5/
+   çoktan seçmeli/1-10 kaydırıcı/açık uç + boyut-bazlı skorlama + rapor şablonu
+   radar/çark/kadran); hazır anketler motorun üstünde **idempotent seed**
+   (whatsapp_templates deseni, süper admin düzenleyebilir). Faz 1: motor +
+   10 hazır anket + koç gönder/sonuç + öğrenci doldurma (web+MOBİL) + görsel
+   rapor. Faz 2: koç özel anket + veli anketi (token'lı). Faz 3: AI anket
+   taslağı + **AI sonuç yorumu (kredili, KS4 deseni: GET ücretsiz cache /
+   POST kredi, yalnız ücretli paket)**.
+4. **Konumlandırma**: "psikolojik test" DEĞİL "koçluk amaçlı tanıma anketi" —
+   rapor ekranlarında sabit ibare (test uygulama yetkisi PDR/psikolog meselesi).
+
+**KARİYER KEŞİF eklemesi (kullanıcı 2026-06-12 — kritik):** Öğrencilerin çoğu
+hangi mesleğe yatkın olduğunu bilmiyor; koçun hedef belirleme çalışmasının en
+önemli girdisi beceri×ilgi denklemi. Karar: (a) **Beceri Seti Öz-Değerlendirme**
+11. anket olarak çekirdek sete eklendi (8 beceri boyutu — ifade/analitik/problem/
+yaratıcılık/sosyal/liderlik/teknik/dijital); (b) **AI Kariyer Sentezi** (sıradaki
+paket): Gemini, RIASEC ilgi + Beceri Seti + Akademik Benlik + Çoklu Zeka sonuçlarını
+sistemdeki GERÇEK akademik veriyle (deneme netleri, konu performansı) birleştirip
+3-5 meslek/bölüm önerisi + YKS alan uyumu + koç için hedef-belirleme seans gündemi
+üretir. KS4 deseni: cache'li, GET ücretsiz / POST kredili, ücretli paket; yeni
+anket sonucu → stale. AI test SORMAZ — anketler ölçer, AI sentezler.
+
+**FAZ 1 BACKEND+WEB ✅ (2026-06-12, migration `h1i4l7m8l55c` — head):**
+- **Migration `h1i4l7m8l55c`** (down_revision g0h3k6l7k44b): survey_templates +
+  survey_questions + survey_assignments. Additive, downgrade'li, uygulandı.
+- Model `app/models/survey.py` (3 model + kategori/skorlama/qtype/durum sabitleri
+  + `SURVEY_DISCLAIMER_TR` sabit ibare). Servis `survey_service.py` (TEK MERKEZ:
+  compute_scores [dimensions likert5 (avg-1)/4·reverse 6-v / wheel slider10 /
+  qualitative bloklar] + build_result [boyut etiket+level+high_is_good+yorum
+  bandı] + save_answers [kısmi kaydet → in_progress; complete → doğrula+skorla]
+  + has_open_assignment). AI Kariyer Sentezi skorları buradan okuyacak.
+- Router `api_v2/surveys.py` (8 uç): koç catalog / students/{id}/surveys GET+POST
+  (mükerrer 409) / assignments/{id} GET + cancel; öğrenci surveys GET /
+  {id} GET (doldurma+sonuç) / {id}/answers POST (kaydet/tamamla). Sahiplik 404
+  (sızıntı yok; koç değişiminde öğrencinin güncel koçu da görür). Tamamlanınca
+  koça push (`coach_student`), atanınca öğrenciye push.
+- **Seed `scripts/seed_surveys.py`** — 11 anket, ~250 ÖZGÜN madde (idempotent,
+  code varsa atlar; `--reset` dikkat: atamaları CASCADE siler). start.sh'e
+  eklendi (prod boş kalmaz kuralı). RIASEC = O*NET esinli özgün uyarlama
+  (source_attribution'da CC BY 4.0 atfı).
+- **Web koç**: öğrenci detayına **"Anketler" sekmesi** (`student-surveys-panel`:
+  atamalar [durum rozeti + iptal + Sonucu Gör dialog] + kategori-gruplu katalog
+  [Gönder → not'lu dialog]). **Web öğrenci**: `/student/surveys` (bekleyen/
+  tamamlanan) + `/student/surveys/[id]` doldurma (mobil-öncelikli: likert5 5
+  büyük buton + slider10 1-10 şerit + open textarea; sabit alt çubuk: ilerleme +
+  Kaydet + Tamamla; eksikte ilk eksiğe scroll + kırmızı işaret) + site-header
+  "Anketler" nav. Paylaşılan `shared/survey-result-view.tsx` (Recharts radar ≥5
+  boyut + ton-güvenli bar/pill + SWOT kadran + açık uç + report_note + disclaimer).
+- lib: `types/survey.ts` + `api/surveys.ts` (surveyKeys; invalidate
+  `teacher:{tid}:students:{sid}:surveys` + `student:surveys` uyumlu) +
+  `hooks/use-survey-mutations.ts` (assign/cancel/save + hata kodu etiketleri).
+- **Test `scripts/test_api_v2_surveys.py` 18/18** (rol kapıları + atama/mükerrer/
+  yabancı-404 + kısmi kaydet + eksikle tamamla + skor doğruluğu [görsel=100 high]
+  + çark 8 dilim + SWOT 4 kadran + iptal + öğrenci izolasyonu). Regresyon:
+  tenant 29 + teacher_read 12 + student_read 11 + student_mutations 12 + me 13.
+  tsc/eslint temiz (build YOK — dev kuralı). **Commit + canlı deploy YOK**
+  (kullanıcı kararı bekliyor).
+
+**MOBİL ÖĞRENCİ + AI KARİYER SENTEZİ ✅ (2026-06-12, migration `i2j5m8n9m66d` — head):**
+- **Mobil öğrenci anket ekranları** (mobil-only, deploy gerekmez): `lib/surveys.ts`
+  (tipler + fetcher'lar) · `(app)/student-surveys` liste (bekleyen/tamamlanan +
+  koç notu) · `(app)/student-survey-fill` doldurma (likert 5 büyük buton + 1-10
+  şerit + open; alt çubuk ilerleme + Kaydet + Tamamla; eksikte ilk eksiğe scroll +
+  Alert; tamamlanınca sonuç) · `components/student/survey-result-view.tsx` (bar +
+  seviye rozet + SWOT kadran + disclaimer) · Gelişim hub'a **"Anketlerim" kartı**
+  (bekleyen sayısı rozetli) · notification-router `student screen:"surveys"` →
+  /student-surveys. Expo typed-routes (.expo/types/router.d.ts) elle eklendi
+  (expo start'ta aynı şekilde yeniden üretilir). Mobil tsc temiz.
+- **AI Kariyer Sentezi** (**migration `i2j5m8n9m66d`**: `career_insights` —
+  additive, uygulandı): `CareerInsight` cache modeli (models/survey.py;
+  öğrenci başına TEK satır) + `CAREER_SURVEY_CODES` (mesleki-ilgi/beceri-seti/
+  akademik-benlik/coklu-zeka) + `CAREER_REQUIRED_CODES` (ilk ikisi zorunlu).
+  `UsageKind.AI_CAREER_SYNTHESIS` = **8 kredi** ("AI Kariyer Sentezi").
+  Servis `ai_career_synthesis.py`: anket boyut skorları (deterministik) + GERÇEK
+  akademik veri (`_compute_session_prefill` + son 5 ExamResult) → Gemini ücretli
+  (personal_data=True, max_output_tokens=16384) → {summary, career_suggestions
+  [title/field=YKS alan/why/example_departments], strengths, agenda (hedef
+  seansı), watch_outs}. Öneri dili zorunlu ("yakın duruyor"), ilgi↔performans
+  çelişkisi watch_outs'a. Endpoint'ler (surveys.py): GET `/teacher/students/{id}/
+  career-synthesis` (cache ÜCRETSİZ + ready/missing_surveys) · POST (üret/yenile,
+  assert_ai_premium + consent_required + 422 not_enough_data + KREDİ). Öğrenci
+  kariyer setinden anket tamamlayınca `_mark_career_stale` (AI çağrısı YOK).
+  Web koç paneli: Anketler sekmesi üstünde **CareerSynthesisCard** (eksik anket
+  rehberi / oluştur CTA / sonuç: öneri kartları + güçlü yönler + seans gündemi +
+  dikkat noktaları + bayat banner + Yenile; consent_required'da confirm → 
+  useSetAiConsent → otomatik yeniden dene — dead-end yok).
+- **Test:** `test_api_v2_career_synthesis.py` **11/11** (readiness + consent +
+  kredi=1 → GET ücretsiz → stale → yenile kredi=2 + free plan 403 + yabancı 404;
+  Gemini monkeypatch) · surveys 18/18 yeniden · tenant 29 · coaching_insight 11 ·
+  admin_usage 21 GREEN · web tsc+eslint temiz · mobil tsc temiz.
+  **Commit + canlı deploy YOK** (kullanıcı kararı bekliyor; backend değişti →
+  deploy'da web+worker rebuild gerekir).
+
+**KALAN (opsiyonel/sonraki):**
+- Koç mobil anket gönder/sonuç + Kariyer Sentezi ekranı (uçlar hazır; koça push
+  şimdilik öğrenci detayına götürür).
+- Süper admin anket şablonu düzenleme UI (şablonlar DB'de; seed ile yönetilir).
+- Faz 2: koç özel anket + veli anketi (token'lı).
+
+---
+
 ## DEVAM EDEN — Konu Performansı + Veli AI + mobil eksikler (2026-06-06, P1-P4)
 
 **Bağlam:** Kullanıcı cihaz-üstü derin test (4 rol) sırasında 11 maddelik kapsamlı

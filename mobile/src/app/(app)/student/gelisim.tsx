@@ -11,12 +11,14 @@ import {
   getStudentReview,
   studentDevKeys,
 } from "@/lib/student";
+import { getStudentSurveys, surveyKeys } from "@/lib/surveys";
 
 export default function StudentGelisimScreen() {
   const dna = useQuery({ queryKey: studentDevKeys.dna, queryFn: getStudentDna });
   const focus = useQuery({ queryKey: studentDevKeys.focus, queryFn: getStudentFocus });
   const review = useQuery({ queryKey: studentDevKeys.review, queryFn: getStudentReview });
   const goals = useQuery({ queryKey: studentDevKeys.goals, queryFn: getStudentGoals });
+  const surveys = useQuery({ queryKey: surveyKeys.studentList, queryFn: getStudentSurveys });
 
   const loading = dna.isLoading || focus.isLoading || review.isLoading || goals.isLoading;
   const ready = dna.data && focus.data && review.data && goals.data;
@@ -53,6 +55,8 @@ export default function StudentGelisimScreen() {
           onOpenFocus={() => router.push("/student-focus")}
           onOpenReview={() => router.push("/student-review")}
           onOpenGoals={() => router.push("/student-goals")}
+          onOpenSurveys={() => router.push("/student-surveys")}
+          pendingSurveys={surveys.data?.pending.length ?? 0}
           refreshing={refreshing}
           onRefresh={refetchAll}
         />

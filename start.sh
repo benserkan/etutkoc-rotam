@@ -19,6 +19,9 @@ python -m scripts.seed_landing_cards || true
 # Prod'da unutulmuştu → /admin/whatsapp-templates boş geliyordu (2026-06-01).
 python -m scripts.seed_whatsapp_templates || true
 
+# Anket kataloğu seed (11 tanıma anketi, idempotent — code varsa atlar, düzenlemeleri korur)
+python -m scripts.seed_surveys || true
+
 # Gunicorn ile başlat (uvicorn worker'ları)
 PORT="${PORT:-8000}"
 WORKERS="${WORKERS:-2}"

@@ -78,10 +78,11 @@ export function hrefForNotificationData(data: NotifData): string | null {
     }
   }
 
-  // Öğrenci: talep yanıtlandı → Talepler
+  // Öğrenci: talep yanıtlandı → Talepler · yeni anket → Anketlerim
   if (type === "student") {
     const screen = data.screen as string | undefined;
     if (screen === "requests") return "/(app)/student/requests";
+    if (screen === "surveys") return "/student-surveys";
     return "/(app)/student/today";
   }
 

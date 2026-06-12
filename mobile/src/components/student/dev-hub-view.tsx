@@ -75,6 +75,8 @@ export function DevHubView({
   onOpenFocus,
   onOpenReview,
   onOpenGoals,
+  onOpenSurveys,
+  pendingSurveys = 0,
   refreshing = false,
   onRefresh,
 }: {
@@ -87,6 +89,8 @@ export function DevHubView({
   onOpenFocus: () => void;
   onOpenReview: () => void;
   onOpenGoals: () => void;
+  onOpenSurveys?: () => void;
+  pendingSurveys?: number;
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
@@ -126,6 +130,34 @@ export function DevHubView({
             </View>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#4f46e5" />
+        </Pressable>
+      ) : null}
+
+      {/* Anketlerim — koçun gönderdiği tanıma anketleri */}
+      {onOpenSurveys ? (
+        <Pressable
+          onPress={onOpenSurveys}
+          className="flex-row items-center justify-between rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 active:bg-cyan-100"
+        >
+          <View className="flex-row items-center gap-3">
+            <Ionicons name="clipboard-outline" size={22} color="#0e7490" />
+            <View>
+              <Text className="text-[15px] font-semibold text-cyan-900">Anketlerim</Text>
+              <Text className="mt-0.5 text-xs text-cyan-800">
+                {pendingSurveys > 0
+                  ? `${pendingSurveys} anket seni bekliyor`
+                  : "Koçunun gönderdiği tanıma anketleri"}
+              </Text>
+            </View>
+          </View>
+          <View className="flex-row items-center gap-2">
+            {pendingSurveys > 0 ? (
+              <View className="min-w-6 items-center rounded-full bg-amber-500 px-1.5 py-0.5">
+                <Text className="text-xs font-bold text-white">{pendingSurveys}</Text>
+              </View>
+            ) : null}
+            <Ionicons name="chevron-forward" size={18} color="#0e7490" />
+          </View>
         </Pressable>
       ) : null}
 

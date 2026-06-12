@@ -26,6 +26,7 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | **Odak (Pomodoro — başlat/çalıştır/bitir)** | ✅ | ✅ | canlı sayaç |
 | **Tekrar (aralıklı — kart değerlendir)** | ✅ | ✅ | FSRS oturumu (1-4) |
 | **Hedefler (oluştur/ilerlet/tamamla)** | ✅ | ✅ | tam yönetim |
+| **Anketler (listele + doldur + sonuç gör)** | ✅ | ✅ | Gelişim hub kartı (bekleyen rozet) + push deep-link |
 | Bölüm baz "çözülmüş" girişi / projeksiyon detay | ✅ | ⬜ | web |
 
 ## Veli
@@ -52,6 +53,7 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | **Görev ekle (kaynaktan program yap)** | ✅ | ✅ | Test (kitap→bölüm→soru) + Etkinlik |
 | **Öğrenci davet (oluştur + geçici şifre)** | ✅ | ✅ | listede "Davet" |
 | **Paket yönetimi (bağımsız koç)** | ✅ | ✅ | durum + AI kredisi + tier yükselt |
+| Anket gönder + sonuç + AI Kariyer Sentezi | ✅ | ⬜ | web (öğrenci detayı "Anketler" sekmesi); koça push "Anket tamamlandı" öğrenci detayına gider |
 | **Öğrenci Gelişim izleme** (DNA/Odak/Tekrar/Hedef) | ✅ | ✅ | "Gelişim izleme" — zorlandığı konular |
 | **Öğrenciye hedef ekle + tekrar kartı seed** | ✅ | ✅ | Gelişim izleme içinde |
 | Program **gelişmiş düzenleme** (sürükle-bırak, rezerv, blok, periyot) | ✅ | ⬜ | web |

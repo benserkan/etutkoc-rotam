@@ -86,6 +86,7 @@ KIND_CREDITS: dict[UsageKind, int] = {
     UsageKind.AI_TRANSCRIBE: 3,     # saf ses→metin dikte (alan başına)
     UsageKind.AI_COACHING_INSIGHT: 6,  # Gemini — geniş bağlam (seans geçmişi + akademik)
     UsageKind.AI_PARENT_INSIGHT: 6,  # Gemini — konu perf + deneme → veli içgörüsü (P2b)
+    UsageKind.AI_CAREER_SYNTHESIS: 8,  # Gemini — en geniş bağlam (4 anket + akademik veri)
     UsageKind.EMAIL_SEND: 1,
     UsageKind.WHATSAPP_SEND: 5,
     UsageKind.OTHER: 1,
