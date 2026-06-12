@@ -114,8 +114,19 @@ anket sonucu → stale. AI test SORMAZ — anketler ölçer, AI sentezler.
   kredi=1 → GET ücretsiz → stale → yenile kredi=2 + free plan 403 + yabancı 404;
   Gemini monkeypatch) · surveys 18/18 yeniden · tenant 29 · coaching_insight 11 ·
   admin_usage 21 GREEN · web tsc+eslint temiz · mobil tsc temiz.
-  **Commit + canlı deploy YOK** (kullanıcı kararı bekliyor; backend değişti →
-  deploy'da web+worker rebuild gerekir).
+- **CANLI DEPLOY ✅ (2026-06-12):** commit `caedd92` push → sunucu git pull +
+  DB yedek (`pre_survey_20260612_0855.dump`) + web/worker/next rebuild.
+  Doğrulandı: alembic head = **`i2j5m8n9m66d`** (prod) · survey_templates=11,
+  survey_questions=234 (start.sh seed) · healthz 200 · /api/v2/student/surveys
+  401 (anonim) · site 200.
+- **MOBİL AAB (2026-06-12):** EAS `appVersionSource=remote` + `autoIncrement` —
+  versionCode EAS'ta yönetilir. **versionCode 5 build'i (bugün 04:00) Play'e
+  HİÇ YÜKLENMEDİ → atlanması SORUNSUZ** (Play yalnız "öncekinden büyük" ister,
+  ardışıklık istemez). Yeni production build **versionCode 6** başlatıldı
+  (build id `1faafdb7-bd12-4e98-a36e-4d2a4eefad5f`) — v5'in tüm içeriği + anket
+  ekranları TEK AAB'de; Play Console'a yalnız bu yüklenir (tek iş). Submit
+  yapılandırılmadı (eas.json submit boş) → AAB'yi kullanıcı Play Console'a
+  elle yükler.
 
 **KALAN (opsiyonel/sonraki):**
 - Koç mobil anket gönder/sonuç + Kariyer Sentezi ekranı (uçlar hazır; koça push
