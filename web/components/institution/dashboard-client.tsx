@@ -183,7 +183,7 @@ function KpiGrid({
   aggregate: InstitutionDashboardResponse["aggregate"];
 }) {
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+    <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
       <KpiCard
         label="Öğretmen"
         value={aggregate.teacher_count}
@@ -197,16 +197,21 @@ function KpiGrid({
       <KpiCard
         label="Planlanan test"
         value={aggregate.weekly_planned}
-        sub={`${aggregate.weekly_completed} test çözüldü · son 7 gün`}
+        sub={`${aggregate.weekly_completed} çözüldü · soru bankası · son 7 gün`}
       />
       <KpiCard
-        label="Tamamlama Oranı"
+        label="Planlanan deneme"
+        value={aggregate.weekly_deneme_planned}
+        sub={`${aggregate.weekly_deneme_completed} çözüldü · branş/genel/tam · son 7 gün`}
+      />
+      <KpiCard
+        label="Test tamamlama"
         value={
           aggregate.weekly_rate_pct == null
             ? "—"
             : `%${aggregate.weekly_rate_pct}`
         }
-        sub="son 7 gün, kurum geneli"
+        sub="son 7 gün · yalnız test"
         valueClassName={rateColorClass(aggregate.weekly_rate_pct)}
       />
     </div>
@@ -308,11 +313,12 @@ function TeachersTable({
               <tr>
                 <th className="text-left px-4 py-2 font-medium">Öğretmen</th>
                 <th className="text-right px-4 py-2 font-medium">Öğrenci</th>
-                <th className="text-right px-4 py-2 font-medium">Plan</th>
+                <th className="text-right px-4 py-2 font-medium">Test plan</th>
                 <th className="text-right px-4 py-2 font-medium">
-                  Tamamlanan
+                  Test çöz.
                 </th>
-                <th className="text-right px-4 py-2 font-medium">Oran</th>
+                <th className="text-right px-4 py-2 font-medium">Deneme (çöz/plan)</th>
+                <th className="text-right px-4 py-2 font-medium">Test oranı</th>
                 <th className="text-right px-4 py-2 font-medium">Son Giriş</th>
               </tr>
             </thead>
@@ -350,6 +356,11 @@ function TeachersTable({
                   </td>
                   <td className="px-4 py-2 text-right tabular-nums">
                     {s.weekly_completed}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                    {s.weekly_deneme_planned > 0
+                      ? `${s.weekly_deneme_completed}/${s.weekly_deneme_planned}`
+                      : "—"}
                   </td>
                   <td
                     className={cn(

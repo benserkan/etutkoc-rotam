@@ -341,6 +341,8 @@ def _teacher_summary_to_item(s: TeacherSummary) -> TeacherSummaryItem:
         weekly_planned=s.planned,
         weekly_completed=s.completed,
         weekly_rate_pct=s.rate_pct,
+        weekly_deneme_planned=s.deneme_planned,
+        weekly_deneme_completed=s.deneme_completed,
         last_login_at=t.last_login_at,
         last_login_days=s.last_login_days,
     )
@@ -435,6 +437,8 @@ def institution_dashboard_v2(
     student_count = sum(s.student_count for s in summaries)
     weekly_planned = sum(s.planned for s in summaries)
     weekly_completed = sum(s.completed for s in summaries)
+    weekly_deneme_planned = sum(s.deneme_planned for s in summaries)
+    weekly_deneme_completed = sum(s.deneme_completed for s in summaries)
     weekly_rate_pct: int | None = None
     if weekly_planned > 0:
         weekly_rate_pct = int(round(100 * weekly_completed / weekly_planned))
@@ -472,6 +476,8 @@ def institution_dashboard_v2(
             weekly_planned=weekly_planned,
             weekly_completed=weekly_completed,
             weekly_rate_pct=weekly_rate_pct,
+            weekly_deneme_planned=weekly_deneme_planned,
+            weekly_deneme_completed=weekly_deneme_completed,
         ),
         risk=InstitutionRiskBadge(
             at_risk_count=at_risk_count,

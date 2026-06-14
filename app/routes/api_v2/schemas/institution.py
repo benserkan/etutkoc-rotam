@@ -57,6 +57,8 @@ class TeacherSummaryItem(BaseModel):
     weekly_planned: int
     weekly_completed: int
     weekly_rate_pct: int | None = None
+    weekly_deneme_planned: int = 0
+    weekly_deneme_completed: int = 0
     last_login_at: datetime | None = None
     last_login_days: int | None = None
 
@@ -68,6 +70,8 @@ class InstitutionAggregateInfo(BaseModel):
     weekly_planned: int
     weekly_completed: int
     weekly_rate_pct: int | None = None
+    weekly_deneme_planned: int = 0
+    weekly_deneme_completed: int = 0
 
 
 class InstitutionRiskBadge(BaseModel):

@@ -34,6 +34,8 @@ export interface TeacherSummaryItem {
   weekly_planned: number;
   weekly_completed: number;
   weekly_rate_pct: number | null;
+  weekly_deneme_planned: number;
+  weekly_deneme_completed: number;
   last_login_at: string | null;
   last_login_days: number | null;
 }
@@ -45,6 +47,8 @@ export interface InstitutionAggregateInfo {
   weekly_planned: number;
   weekly_completed: number;
   weekly_rate_pct: number | null;
+  weekly_deneme_planned: number;
+  weekly_deneme_completed: number;
 }
 
 export interface InstitutionRiskBadge {

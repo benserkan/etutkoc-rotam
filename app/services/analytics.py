@@ -292,6 +292,47 @@ def week_stats_for(
     )
 
 
+@dataclass
+class WeekTestDeneme:
+    """Son 7 gün hacim — TEST (soru bankası) ve DENEME (branş/genel + kitapsız
+    tam-deneme) AYRI. Etkinlik hacme girmez. completed_count (oran ≤ %100)."""
+    test_planned: int = 0
+    test_completed: int = 0
+    deneme_planned: int = 0
+    deneme_completed: int = 0
+
+
+def week_test_deneme_for(db: Session, student_id: int, end_date: date) -> WeekTestDeneme:
+    """Kurum panosu/öğretmen detayı için test + deneme hacimlerini AYRI döndürür.
+
+    Görev-merkezli sınıflandırma (gorev_stats.classify_gorev): test görevi →
+    test hacmi; deneme/tam_deneme görevi → deneme hacmi; etkinlik → ikisine de
+    girmez. Yayınlanmış görevler (is_draft=False).
+    """
+    start = end_date - timedelta(days=6)
+    tasks = (
+        db.query(Task)
+        .options(joinedload(Task.book_items).joinedload(TaskBookItem.book))
+        .filter(
+            Task.student_id == student_id,
+            Task.date >= start,
+            Task.date <= end_date,
+            Task.is_draft.is_(False),
+        )
+        .all()
+    )
+    res = WeekTestDeneme()
+    for t in tasks:
+        cat = gorev_stats.classify_gorev(t)
+        if cat == "test":
+            res.test_planned += sum(it.planned_count for it in t.book_items)
+            res.test_completed += sum(it.completed_count for it in t.book_items)
+        elif cat in ("deneme", "tam_deneme"):
+            res.deneme_planned += sum(it.planned_count for it in t.book_items)
+            res.deneme_completed += sum(it.completed_count for it in t.book_items)
+    return res
+
+
 # ---------------------------- Hız ve projeksiyon ----------------------------
 
 

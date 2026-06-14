@@ -18,17 +18,19 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy.orm import Session
 
 from app.models import User, UserRole
-from app.services.analytics import week_stats_for
+from app.services.analytics import week_stats_for, week_test_deneme_for
 
 
 @dataclass
 class TeacherSummary:
     teacher: User
     student_count: int
-    planned: int          # bu hafta toplam planlanan görev
-    completed: int        # bu hafta toplam tamamlanan
-    rate_pct: int | None  # 0-100 arası tamamlama oranı (hiç plan yoksa None)
+    planned: int          # bu hafta toplam planlanan TEST (soru bankası)
+    completed: int        # bu hafta toplam tamamlanan TEST
+    rate_pct: int | None  # 0-100 arası TEST tamamlama oranı (hiç plan yoksa None)
     last_login_days: int | None  # son giriş kaç gün önce (None = hiç)
+    deneme_planned: int = 0    # bu hafta planlanan DENEME sorusu (branş/genel + tam)
+    deneme_completed: int = 0  # bu hafta çözülen DENEME sorusu
 
 
 def _days_since(dt: datetime | None, now: datetime) -> int | None:
@@ -67,10 +69,14 @@ def teacher_summaries(
         )
         total_planned = 0
         total_completed = 0
+        deneme_p = 0
+        deneme_c = 0
         for s in students:
-            w = week_stats_for(db, s.id, today, tests_only=True)  # deneme'yi "test"e katma
-            total_planned += w.planned
-            total_completed += w.completed
+            td = week_test_deneme_for(db, s.id, today)  # test + deneme AYRI
+            total_planned += td.test_planned
+            total_completed += td.test_completed
+            deneme_p += td.deneme_planned
+            deneme_c += td.deneme_completed
         rate: int | None = None
         if total_planned > 0:
             rate = int(round(100 * total_completed / total_planned))
@@ -81,6 +87,8 @@ def teacher_summaries(
             completed=total_completed,
             rate_pct=rate,
             last_login_days=_days_since(t.last_login_at, now),
+            deneme_planned=deneme_p,
+            deneme_completed=deneme_c,
         ))
     return summaries
 
