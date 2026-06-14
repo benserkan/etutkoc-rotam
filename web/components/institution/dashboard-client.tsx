@@ -202,7 +202,7 @@ function KpiGrid({
       <KpiCard
         label="Planlanan deneme"
         value={aggregate.weekly_deneme_planned}
-        sub={`${aggregate.weekly_deneme_completed} çözüldü · branş/genel/tam · son 7 gün`}
+        sub={`${aggregate.weekly_deneme_completed} tamamlandı · deneme adedi · son 7 gün`}
       />
       <KpiCard
         label="Test tamamlama"
@@ -317,7 +317,7 @@ function TeachersTable({
                 <th className="text-right px-4 py-2 font-medium">
                   Test çöz.
                 </th>
-                <th className="text-right px-4 py-2 font-medium">Deneme (çöz/plan)</th>
+                <th className="text-right px-4 py-2 font-medium">Deneme (tam/plan)</th>
                 <th className="text-right px-4 py-2 font-medium">Test oranı</th>
                 <th className="text-right px-4 py-2 font-medium">Son Giriş</th>
               </tr>

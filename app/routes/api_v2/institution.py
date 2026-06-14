@@ -158,7 +158,7 @@ from app.routes.api_v2.schemas.institution import (
     WeekOverWeekInfo,
 )
 from app.services.admin_digest import send_admin_weekly_digest
-from app.services.analytics import week_stats_for
+from app.services.analytics import week_stats_for, week_test_deneme_for
 from app.services.audit import log_action
 from app.services.auth_security import generate_strong_password
 from app.services.burnout import compute_burnout
@@ -839,22 +839,28 @@ def institution_teacher_card_v2(
     rows: list[TeacherCardStudentRow] = []
     total_planned = 0
     total_completed = 0
+    total_deneme_planned = 0
+    total_deneme_completed = 0
     for s in students:
-        w = week_stats_for(db, s.id, today, tests_only=True)
+        td = week_test_deneme_for(db, s.id, today)  # test + deneme AYRI
         rate: int | None = None
-        if w.planned > 0:
-            rate = int(round(100 * w.completed / w.planned))
-        total_planned += w.planned
-        total_completed += w.completed
+        if td.test_planned > 0:
+            rate = int(round(100 * td.test_completed / td.test_planned))
+        total_planned += td.test_planned
+        total_completed += td.test_completed
+        total_deneme_planned += td.deneme_planned
+        total_deneme_completed += td.deneme_completed
         rows.append(TeacherCardStudentRow(
             id=s.id,
             full_name=s.full_name,
             grade_level=s.grade_level,
             display_grade_label=getattr(s, "display_grade_label", None),
             is_active=bool(s.is_active),
-            weekly_planned=w.planned,
-            weekly_completed=w.completed,
+            weekly_planned=td.test_planned,
+            weekly_completed=td.test_completed,
             weekly_rate_pct=rate,
+            weekly_deneme_planned=td.deneme_planned,
+            weekly_deneme_completed=td.deneme_completed,
         ))
     overall_rate: int | None = None
     if total_planned > 0:
@@ -866,6 +872,8 @@ def institution_teacher_card_v2(
         total_planned=total_planned,
         total_completed=total_completed,
         overall_rate_pct=overall_rate,
+        total_deneme_planned=total_deneme_planned,
+        total_deneme_completed=total_deneme_completed,
     )
 
 

@@ -40,8 +40,10 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
     refetchOnWindowFocus: true,
   });
   const data = q.data ?? initial;
-  const { teacher, students, total_planned, total_completed, overall_rate_pct } =
-    data;
+  const {
+    teacher, students, total_planned, total_completed, overall_rate_pct,
+    total_deneme_planned, total_deneme_completed,
+  } = data;
   const [waOpen, setWaOpen] = React.useState(false);
 
   return (
@@ -95,22 +97,22 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard label="Öğrenci" value={students.length} sub="bu koça bağlı" />
         <KpiCard
-          label="Planlanan"
+          label="Planlanan test"
           value={total_planned}
-          unit="test"
-          sub="son 7 günde atanan"
+          unit="soru"
+          sub={`${total_completed} çözüldü · soru bankası · son 7 gün`}
         />
         <KpiCard
-          label="Tamamlanan"
-          value={total_completed}
-          unit="test"
-          sub="son 7 günde çözülen"
+          label="Planlanan deneme"
+          value={total_deneme_planned}
+          unit="adet"
+          sub={`${total_deneme_completed} tamamlandı · deneme adedi · son 7 gün`}
         />
         <KpiCard
-          label="Tamamlama Oranı"
+          label="Test tamamlama"
           value={overall_rate_pct == null ? "—" : `%${overall_rate_pct}`}
           valueClassName={rateColorClass(overall_rate_pct)}
-          sub="çözülen ÷ planlanan"
+          sub="çözülen ÷ planlanan · yalnız test"
         />
       </div>
 
@@ -151,7 +153,10 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
                     Çözülen test
                   </th>
                   <th className="text-right px-4 py-2 font-medium">
-                    Tamamlama&nbsp;%
+                    Deneme (tam/plan)
+                  </th>
+                  <th className="text-right px-4 py-2 font-medium">
+                    Test&nbsp;%
                   </th>
                 </tr>
               </thead>
@@ -189,6 +194,11 @@ function StudentRow({ student }: { student: TeacherCardStudentRow }) {
       </td>
       <td className="px-4 py-2 text-right tabular-nums">
         {student.weekly_completed}
+      </td>
+      <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+        {student.weekly_deneme_planned > 0
+          ? `${student.weekly_deneme_completed}/${student.weekly_deneme_planned}`
+          : "—"}
       </td>
       <td
         className={cn(

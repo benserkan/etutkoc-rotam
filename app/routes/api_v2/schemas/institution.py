@@ -136,6 +136,8 @@ class TeacherCardStudentRow(BaseModel):
     weekly_planned: int
     weekly_completed: int
     weekly_rate_pct: int | None = None
+    weekly_deneme_planned: int = 0
+    weekly_deneme_completed: int = 0
 
 
 class TeacherCardResponse(BaseModel):
@@ -144,6 +146,8 @@ class TeacherCardResponse(BaseModel):
     total_planned: int
     total_completed: int
     overall_rate_pct: int | None = None
+    total_deneme_planned: int = 0
+    total_deneme_completed: int = 0
 
 
 # =============================================================================

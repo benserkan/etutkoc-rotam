@@ -294,12 +294,15 @@ def week_stats_for(
 
 @dataclass
 class WeekTestDeneme:
-    """Son 7 gün hacim — TEST (soru bankası) ve DENEME (branş/genel + kitapsız
-    tam-deneme) AYRI. Etkinlik hacme girmez. completed_count (oran ≤ %100)."""
-    test_planned: int = 0
-    test_completed: int = 0
-    deneme_planned: int = 0
-    deneme_completed: int = 0
+    """Son 7 gün — TEST (soru bankası) SORU hacmi + DENEME ADEDİ.
+
+    BİRİM FARKI (kullanıcı 2026-06-14): test = SORU sayısı (soru bankasından
+    çözülen soru hacmi). DENEME = ADET (kaç deneme çözüldü) — soru sayısı DEĞİL
+    (1 TYT denemesi = 120 soru ama "1 deneme"). Etkinlik ikisine de girmez."""
+    test_planned: int = 0       # planlanan test SORUSU (soru bankası)
+    test_completed: int = 0     # çözülen test SORUSU
+    deneme_planned: int = 0     # planlanan DENEME ADEDİ (kaç deneme görevi)
+    deneme_completed: int = 0   # tamamlanan DENEME ADEDİ
 
 
 def week_test_deneme_for(db: Session, student_id: int, end_date: date) -> WeekTestDeneme:
@@ -328,8 +331,10 @@ def week_test_deneme_for(db: Session, student_id: int, end_date: date) -> WeekTe
             res.test_planned += sum(it.planned_count for it in t.book_items)
             res.test_completed += sum(it.completed_count for it in t.book_items)
         elif cat in ("deneme", "tam_deneme"):
-            res.deneme_planned += sum(it.planned_count for it in t.book_items)
-            res.deneme_completed += sum(it.completed_count for it in t.book_items)
+            # DENEME = ADET (soru hacmi DEĞİL): kaç deneme planlandı / tamamlandı.
+            res.deneme_planned += 1
+            if gorev_stats.gorev_done(t):
+                res.deneme_completed += 1
     return res
 
 

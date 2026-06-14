@@ -97,6 +97,8 @@ export interface TeacherCardStudentRow {
   weekly_planned: number;
   weekly_completed: number;
   weekly_rate_pct: number | null;
+  weekly_deneme_planned: number;
+  weekly_deneme_completed: number;
 }
 
 export interface TeacherCardResponse {
@@ -105,6 +107,8 @@ export interface TeacherCardResponse {
   total_planned: number;
   total_completed: number;
   overall_rate_pct: number | null;
+  total_deneme_planned: number;
+  total_deneme_completed: number;
 }
 
 export interface RosterRowItem {
