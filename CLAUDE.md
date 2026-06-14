@@ -5110,6 +5110,80 @@ kontrol · ham olay logu + agregat · 5 rol birden web) onaylandı.
   - Mobil tsc temiz. **Kullanıcı aksiyonu**: `eas build --platform android
     --profile production` → AAB v5 → Play kapalı test; sonraki JS işleri OTA.
 
+## Sosyal kanıt + Dönüşüm ölçümü + Plausible analitik + Kurum/koç panel fix'leri (2026-06-14, CANLI)
+
+Uzun oturum; hepsi prod'a deploy edildi (commit'ler `972b928`→`086ba64`).
+
+**Sosyal kanıt (testimonials)** (migration `j3k6n9o0n77e`): `testimonials` tablosu
+(kind: review/institution_ref/success_story · status: pending/published/hidden ·
+source: manual/in_app/import). Servis `testimonial_service.py` (TEK MERKEZ) +
+public `GET /api/v2/testimonials` (yayınlanmış + counts) + `POST /testimonials/submit`
+(uygulama-içi, authed) + `GET /testimonials/prompt` (rol+hesap≥7gün+gönderim-yok →
+"Deneyimini paylaş" kartı uygunluğu) + süper admin `admin_testimonials.py` (CRUD +
+moderasyon, audit `TESTIMONIAL_MODERATE`). Frontend: `/admin/testimonials` panel +
+anasayfa **slider** (otomatik+ok+nokta, line-clamp; 0 yayında→hiç render etme) +
+**`ShareExperiencePrompt`** (öğrenci/veli/koç/kurum ana ekranlarında, lazy-init
+localStorage dismiss). Smoke `test_api_v2_testimonials.py` **19/19**. Kullanıcı
+etutkoc.com yorumlarını panelden elle yükledi.
+
+**Dönüşüm ölçümü** (migration `k4l7o0p1o88f`): `signup_attributions` (anonim landing
+`fc_telemetry_sid` çerezi → üyelik; variant_slug + source landing/direct).
+`conversion_service.py`: signup'ta `record_signup_attribution` (best-effort, koç
+self-signup'a kanca) + `compute_funnel` (ziyaretçi→gördü→**tıkladı**→üye→ücretli +
+A/B varyant dönüşümü, doğrudan event verisinden). Süper admin `/admin/conversion`
+(huni barları + varyant tablosu + jargonsuz mini sözlük). Smoke
+`test_api_v2_conversion.py` **10/10** (baseline+delta + varyant izolasyonu).
+**Landing kartları artık TIKLANABİLİR** → `cta_click` + `/signup/teacher`; koç/AI
+kartlarına **demo butonları** bağlandı (`bind_landing_demos.py` anahtar-kelime
+tabanlı, start.sh'te). `clicked` metriği = cta_click+demo_click.
+**ÖNEMLİ bulgu:** dönüşüm hunisindeki "kart etkileşimi" eskiden yalnız scroll
+(IntersectionObserver view) ölçüyordu; demo butonu/tıklama YOKtu → ölçülemiyordu.
+Şimdi gerçek tıklama (cta_click) + demo (demo_click) var.
+
+**Plausible (self-host) site analitiği — CANLI** (`analytics.etutkoc.com`):
+`plausible` + ClickHouse + Postgres (docker-compose). **First-party tracking**:
+Caddy ana alan adından `/js/*` + `/api/event` → plausible (reklam-engelleyici
+dirençli, KVKK, veri kendi sunucumuzda). Kök layout env-driven script
+(`PLAUSIBLE_DOMAIN`). Süper admin `/admin/analytics` gömülü pano (iframe,
+`PLAUSIBLE_SHARED_URL`). Kurulum `deploy/PLAUSIBLE_SETUP.md`. Doğrulandı:
+analytics 200 + tracking 202 + first-party script 200.
+- **DERS — ClickHouse 24.12 auth:** default user'ı ağ üzerinden şifresiz bağlanmaya
+  KAPATIYOR → Plausible auth-fail crash-loop. `deploy/clickhouse/user-logging.xml`'e
+  `<users><default><password></password><networks><ip>::/0</ip></networks>` ekle
+  (servis yalnız iç ağda).
+- **DERS — Caddy çoklu site bloğu:** ana blok `route{}` içerdiğinden 2 kapanış `}`
+  var; yeni site bloğu (`analytics.etutkoc.com {}`) ana bloğun DIŞINA konmalı,
+  içine konursa "unrecognized directive" → TÜM proxy düşer (ana site dahil).
+- **DERS — VPS OOM (3.7GB):** Plausible+ClickHouse (~675MB) eklenince Next.js build
+  OOM-kill oldu. Çözüm: **2GB swap kalıcı eklendi** (`/swapfile` + fstab) +
+  build sırasında Plausible geçici `stop` (gerçek RAM boşalt) → build → geri `up`.
+- **Secret sızıntısı:** kurulumda `grep PLAUSIBLE` çıktısı SECRET_KEY_BASE/DB
+  parolasını sohbete bastı → secret'lar **döndürüldü** (ALTER USER + yeni .env).
+
+**Kurum/koç paneli fix'leri** (kullanıcı bildirdi, migration YOK):
+- **"Filo durumu" → "Öğrencilerin durumu"** (koç panosu; filo metaforu yanlıştı).
+- **"Kritik 1 ama tıklayınca liste boş" BUG:** kart sayısı `worst_warning_level`
+  (analytics uyarı rengi) ama drilldown `?risk=critical` `risk_analysis` skoru →
+  iki sistem uyuşmuyordu. Kart artık `risk_analysis`'ten türetiliyor (Kritik=critical
+  · Uyarı=medium+high · Yolunda=ok; `?risk=medium` high'ı kapsar) → kart=drilldown=
+  /institution/at-risk tutarlı. (`teacher.py` dashboard fleet + filtre.)
+- **Kurum "planlanan test" deneme'yle şişiyordu** (1180, gerçekte 63 test + 1117
+  deneme): `week_stats_for(tests_only=True)` + `week_test_deneme_for` (görev-merkezli
+  `gorev_stats.classify_gorev`, **`item_is_test` + completed_count** — `summarize.
+  test_completed` solved_count ekleyip oranı %100 üstüne çıkarıyordu, KAÇINILDI).
+  Kurum dashboard + öğretmen detay + compliance SQL (Book inner-join) test-only.
+- **test + deneme YAN YANA:** dashboard KPI "Planlanan test" + "Planlanan deneme"
+  ayrı + öğretmen tablosunda "Deneme (çöz/plan)" sütunu (`TeacherSummary`/aggregate
+  +deneme alanları). Kurum hem soru-bankası hem deneme çözümünü görür.
+- **Efe "programsız" işareti DOĞRU** (grace yalnız <3 gün yeni öğrenciyi korur;
+  eski+programsız öğrenci doğru işaretlenir — dokunulmadı).
+- Smoke: testimonials 19 · conversion 10 · institution 18 · compliance 10 ·
+  teacher_read 12 · gorev kart-tutarlılık 23/23.
+
+**Migration head: `k4l7o0p1o88f`** (signup_attributions). Plausible env'leri
+`deploy/.env` (PLAUSIBLE_*). [[feedback-holistic-change-propagation]]
+[[feedback-card-numbers-need-units]]
+
 ## Notlar
 
 - "feedback_lgs_workflow_decisions" + "feedback_lgs_ux_preferences" memory'lerini
