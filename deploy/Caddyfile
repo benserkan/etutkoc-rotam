@@ -235,19 +235,17 @@
         # =====================================================================
         reverse_proxy web:8000
     }
+}
 
 # =============================================================================
-# Plausible analitik PANOSU — ayrı alt alan adı (Plausible AÇILINCA aktive et)
+# Plausible analitik PANOSU — ANA BLOK DIŞINDA, ayrı top-level site bloğu.
+# KRİTİK: Bu blok {$PUBLIC_DOMAIN} bloğunun } kapanışından SONRA olmalı. İçine
+# konursa Caddy "unrecognized directive: analytics.etutkoc.com" verir ve TÜM
+# proxy düşer (ana site dahil). Ana blok route{} içerdiğinden iki kapanış } var.
 # Tracking (script /js/* + olaylar /api/event) ZATEN ana alan adından first-party
-# gidiyor (yukarıdaki blok); bu blok yalnız PANOYU sunar (süper admin gömülü
-# iframe + "Tam panel" linki). Plausible kapalıyken yorumlu KALMALI — boş/erişilemez
-# site bloğu Caddy'yi başlatmaz.
-# Kurulum (deploy/PLAUSIBLE_SETUP.md):
-#   1. analytics.etutkoc.com DNS A kaydı → sunucu IP (Cloudflare, DNS-only/gri bulut)
-#   2. Aşağıdaki 3 satırın yorumunu kaldır (alan adını kendininkiyle değiştir)
-#   3. docker compose restart proxy   (Caddy yeni site için otomatik HTTPS alır)
+# gider; bu blok yalnız PANOYU sunar (süper admin gömülü iframe + "Tam panel").
+# Plausible/DNS yoksa aşağıdaki 3 satırı yorumla.
 # =============================================================================
 analytics.etutkoc.com {
     reverse_proxy plausible:8000
-}
 }
