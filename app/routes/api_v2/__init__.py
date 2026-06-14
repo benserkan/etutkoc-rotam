@@ -21,9 +21,12 @@ from fastapi import APIRouter
 
 from app.routes.api_v2 import academic as v2_academic
 from app.routes.api_v2 import admin as v2_admin
+from app.routes.api_v2 import admin_conversion as v2_admin_conversion
 from app.routes.api_v2 import admin_membership as v2_admin_membership
+from app.routes.api_v2 import admin_testimonials as v2_admin_testimonials
 from app.routes.api_v2 import auth as v2_auth
 from app.routes.api_v2 import contact_public as v2_contact_public
+from app.routes.api_v2 import testimonials_public as v2_testimonials_public
 from app.routes.api_v2 import csv_ops as v2_csv
 from app.routes.api_v2 import grade_advance as v2_grade
 from app.routes.api_v2 import insights as v2_insights
@@ -72,6 +75,9 @@ router.include_router(v2_support.router)
 router.include_router(v2_messaging.router)
 router.include_router(v2_quick_access.router)
 router.include_router(v2_surveys.router)
+router.include_router(v2_testimonials_public.router)
+router.include_router(v2_admin_testimonials.router)
+router.include_router(v2_admin_conversion.router)
 
 
 @router.get("/ping", include_in_schema=False)

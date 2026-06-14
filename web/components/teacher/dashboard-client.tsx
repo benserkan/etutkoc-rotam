@@ -40,6 +40,7 @@ import type {
 import { REQUEST_TYPE_LABELS_TR, RISK_LABELS_TR } from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { ShareExperiencePrompt } from "@/components/testimonials/share-experience-prompt";
 
 interface Props {
   initial: TeacherDashboardResponse;
@@ -70,6 +71,7 @@ export function DashboardClient({ initial }: Props) {
 
   return (
     <div className="space-y-6">
+      <ShareExperiencePrompt />
       <header className="flex items-end justify-between gap-3 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight font-display">

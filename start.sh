@@ -15,6 +15,10 @@ python -m scripts.seed || true
 # Anasayfa vitrin kartları seed (idempotent — var olanı ezmez, admin düzenlemeleri korunur)
 python -m scripts.seed_landing_cards || true
 
+# Vitrin kartlarına demo videolarını bağla (idempotent — yalnız demo_slug boş olanı,
+# admin'in elle bağladığı demolar korunur). "Demo İzle" butonu + demo_click telemetrisi.
+python -m scripts.bind_landing_demos || true
+
 # WhatsApp şablonları seed (35 şablon, idempotent — key varsa atlar, düzenlemeleri korur).
 # Prod'da unutulmuştu → /admin/whatsapp-templates boş geliyordu (2026-06-01).
 python -m scripts.seed_whatsapp_templates || true

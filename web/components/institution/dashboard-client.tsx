@@ -12,6 +12,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
+import { ShareExperiencePrompt } from "@/components/testimonials/share-experience-prompt";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   getInstitutionDashboard,
@@ -56,6 +57,8 @@ export function DashboardClient({ initial }: Props) {
       </header>
 
       <QuickAccessStrip />
+
+      <ShareExperiencePrompt />
 
       <PrivacyNote />
 

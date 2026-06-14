@@ -16,6 +16,7 @@ import {
   Check,
   CheckCircle2,
   ChevronDown,
+  ChevronLeft,
   ChevronRight,
   Compass,
   CreditCard,
@@ -30,10 +31,12 @@ import {
   Lock,
   MessageSquareText,
   PlayCircle,
+  Quote,
   RotateCcw,
   Route,
   ShieldCheck,
   Sparkles,
+  Star,
   Target,
   TrendingUp,
   Users,
@@ -48,6 +51,8 @@ import {
   sendLandingTelemetry,
 } from "@/lib/api/landing";
 import type { LandingCard, LandingResponse } from "@/lib/types/landing";
+import { getPublicTestimonials, testimonialKeys } from "@/lib/api/testimonials";
+import type { TestimonialPublicItem } from "@/lib/types/testimonial";
 import { Reveal } from "@/components/landing/reveal";
 import { MockupByType } from "@/components/landing/mockups";
 import { demosForRole, demoPlayUrl, type DemoRole } from "@/lib/demos";
@@ -85,6 +90,7 @@ export function LandingClient() {
       <DemoGallery />
       <Features cards={cards} variant={variant} loading={q.isLoading} />
       <Comparison />
+      <Testimonials />
       <Institutions />
       <Pricing />
       <Faq />
@@ -94,6 +100,185 @@ export function LandingClient() {
       <StickyMobileCta />
       <FloatingWhatsAppAuto />
     </div>
+  );
+}
+
+/* ───────────────────────── Testimonials (sosyal kanıt) ───────────────────────── */
+
+const TESTI_KIND_LABEL: Record<string, string> = {
+  review: "Kullanıcı yorumu",
+  institution_ref: "Kurum referansı",
+  success_story: "Başarı hikâyesi",
+};
+
+function TestiStars({ n }: { n: number | null }) {
+  if (!n) return null;
+  return (
+    <span className="inline-flex items-center gap-0.5">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Star key={i} className={cn("size-4", i < n ? "fill-amber-400 text-amber-400" : "text-slate-300")} aria-hidden />
+      ))}
+    </span>
+  );
+}
+
+function TestimonialCard({ t }: { t: TestimonialPublicItem }) {
+  return (
+    <figure className="lp-card flex h-full min-h-[15rem] flex-col rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+      <Quote className="size-7 shrink-0 text-cyan-200" aria-hidden />
+      <blockquote className="mt-3 flex-1 text-[15px] leading-relaxed text-slate-700 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:6] overflow-hidden">
+        “{t.content}”
+      </blockquote>
+      <div className="mt-4 border-t border-slate-100 pt-4">
+        <TestiStars n={t.rating} />
+        <figcaption className="mt-1.5">
+          <span className="block text-sm font-semibold text-slate-900">{t.author_name}</span>
+          <span className="block text-xs text-slate-500">
+            {[t.author_role_label, t.author_title, t.institution_name]
+              .filter(Boolean)
+              .join(" · ") || TESTI_KIND_LABEL[t.kind]}
+          </span>
+        </figcaption>
+      </div>
+    </figure>
+  );
+}
+
+function Testimonials() {
+  const q = useQuery({
+    queryKey: testimonialKeys.public(null),
+    queryFn: () => getPublicTestimonials(null, 24),
+    staleTime: 60_000,
+  });
+  const items: TestimonialPublicItem[] = q.data?.items ?? [];
+
+  const scrollerRef = React.useRef<HTMLDivElement>(null);
+  const [active, setActive] = React.useState(0);
+  const [paused, setPaused] = React.useState(false);
+
+  const stride = React.useCallback((el: HTMLDivElement): number => {
+    const kids = el.children;
+    if (kids.length >= 2) {
+      return (kids[1] as HTMLElement).offsetLeft - (kids[0] as HTMLElement).offsetLeft;
+    }
+    return (kids[0] as HTMLElement)?.offsetWidth ?? el.clientWidth;
+  }, []);
+
+  const goNext = React.useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const atEnd = el.scrollLeft + el.clientWidth >= el.scrollWidth - 8;
+    if (atEnd) el.scrollTo({ left: 0, behavior: "smooth" });
+    else el.scrollBy({ left: stride(el), behavior: "smooth" });
+  }, [stride]);
+
+  const goPrev = React.useCallback(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    if (el.scrollLeft <= 8) el.scrollTo({ left: el.scrollWidth, behavior: "smooth" });
+    else el.scrollBy({ left: -stride(el), behavior: "smooth" });
+  }, [stride]);
+
+  const onScroll = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const s = stride(el) || 1;
+    setActive(Math.round(el.scrollLeft / s));
+  };
+
+  // Otomatik ilerleme (4.5 sn) — üzerine gelince / sekme gizliyken durur.
+  React.useEffect(() => {
+    if (paused || items.length <= 1) return;
+    const id = window.setInterval(goNext, 4500);
+    return () => window.clearInterval(id);
+  }, [paused, items.length, goNext]);
+
+  // Yayınlanmış gerçek yorum yoksa bölümü HİÇ gösterme (sahte/boş sosyal kanıt yok;
+  // veri zamanla birikir — süper admin yayınladıkça burada görünür).
+  if (q.isLoading || items.length === 0) return null;
+
+  const multi = items.length > 1;
+
+  return (
+    <section id="yorumlar" className="bg-white py-16">
+      <div className="mx-auto max-w-6xl px-4">
+        <Reveal className="mx-auto mb-8 max-w-2xl text-center">
+          <p className="mb-2 text-sm font-semibold uppercase tracking-wide text-cyan-700">
+            Kullanıcılarımız ne diyor?
+          </p>
+          <h2 className="text-3xl font-bold text-slate-900 sm:text-4xl">
+            Gerçek deneyimler, gerçek <span className="text-cyan-700">sonuçlar</span>
+          </h2>
+        </Reveal>
+
+        <div
+          className="relative"
+          onMouseEnter={() => setPaused(true)}
+          onMouseLeave={() => setPaused(false)}
+          onFocusCapture={() => setPaused(true)}
+          onBlurCapture={() => setPaused(false)}
+        >
+          {/* Sol/sağ oklar (yalnız masaüstü, birden çok kayıt varsa) */}
+          {multi ? (
+            <>
+              <button
+                type="button"
+                onClick={goPrev}
+                aria-label="Önceki yorum"
+                className="absolute -left-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-600 shadow-md transition hover:bg-slate-50 hover:text-cyan-700 lg:flex"
+              >
+                <ChevronLeft className="size-5" aria-hidden />
+              </button>
+              <button
+                type="button"
+                onClick={goNext}
+                aria-label="Sonraki yorum"
+                className="absolute -right-3 top-1/2 z-10 hidden -translate-y-1/2 items-center justify-center rounded-full border border-slate-200 bg-white p-2 text-slate-600 shadow-md transition hover:bg-slate-50 hover:text-cyan-700 lg:flex"
+              >
+                <ChevronRight className="size-5" aria-hidden />
+              </button>
+            </>
+          ) : null}
+
+          {/* Kaydırılabilir şerit (snap) */}
+          <div
+            ref={scrollerRef}
+            onScroll={onScroll}
+            className="flex snap-x snap-mandatory gap-5 overflow-x-auto scroll-smooth pb-2 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          >
+            {items.map((t) => (
+              <div
+                key={t.id}
+                className="snap-start shrink-0 basis-[88%] sm:basis-[47%] lg:basis-[31.5%]"
+              >
+                <TestimonialCard t={t} />
+              </div>
+            ))}
+          </div>
+
+          {/* Noktalar */}
+          {multi ? (
+            <div className="mt-6 flex items-center justify-center gap-2">
+              {items.map((t, i) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  aria-label={`${i + 1}. yoruma git`}
+                  onClick={() => {
+                    const el = scrollerRef.current;
+                    if (el) el.scrollTo({ left: stride(el) * i, behavior: "smooth" });
+                  }}
+                  className={cn(
+                    "h-2 rounded-full transition-all",
+                    i === active ? "w-6 bg-cyan-600" : "w-2 bg-slate-300 hover:bg-slate-400",
+                  )}
+                />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -568,6 +753,12 @@ function FeatureChecklist({ benefits, accent }: { benefits: string[]; accent: st
   );
 }
 
+/** Karta tıklayınca: cta_click telemetri + ücretsiz kayıt sayfasına götür. */
+function goSignup(slug: string, variant: string | null) {
+  sendLandingTelemetry(slug, "cta_click", variant);
+  window.location.href = "/signup/teacher";
+}
+
 function DemoLink({
   card,
   variant,
@@ -581,7 +772,11 @@ function DemoLink({
   return (
     <a
       href={`/demos?play=${encodeURIComponent(card.demo_slug)}`}
-      onClick={() => sendLandingTelemetry(card.slug, "demo_click", variant)}
+      // Kart tıklamasını (signup) tetiklemesin — demo kendi sayfasını açar.
+      onClick={(e) => {
+        e.stopPropagation();
+        sendLandingTelemetry(card.slug, "demo_click", variant);
+      }}
       className="inline-flex items-center gap-1.5 text-sm font-semibold transition hover:gap-2"
       style={{ color: accent }}
     >
@@ -593,6 +788,15 @@ function DemoLink({
   );
 }
 
+/** Kartın tıklanabilirliğini belli eden "Ücretsiz dene →" ipucu. */
+function CardCtaHint() {
+  return (
+    <span className="ml-auto inline-flex items-center gap-1 text-sm font-semibold text-cyan-700 transition-all group-hover:gap-2">
+      Ücretsiz dene <ArrowRight className="size-4" aria-hidden />
+    </span>
+  );
+}
+
 function HeroFeature({ card, variant }: { card: LandingCard; variant: string | null }) {
   const accent = card.accent_color || "#0e7490";
   const ref = useCardTelemetry(card.slug, variant);
@@ -601,7 +805,17 @@ function HeroFeature({ card, variant }: { card: LandingCard; variant: string | n
     <Reveal>
       <div
         ref={ref}
-        className="lp-card relative overflow-hidden rounded-3xl border border-slate-200 bg-card p-6 transition lg:p-9"
+        onClick={() => goSignup(card.slug, variant)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            goSignup(card.slug, variant);
+          }
+        }}
+        role="link"
+        tabIndex={0}
+        aria-label={`${card.title} — ücretsiz dene`}
+        className="lp-card group relative cursor-pointer overflow-hidden rounded-3xl border border-slate-200 bg-card p-6 transition hover:border-cyan-300 lg:p-9"
       >
         <div className="grid items-center gap-8 lg:grid-cols-2">
           <div className="min-w-0">
@@ -621,8 +835,9 @@ function HeroFeature({ card, variant }: { card: LandingCard; variant: string | n
             <div className="mt-5">
               <FeatureChecklist benefits={card.benefits} accent={accent} />
             </div>
-            <div className="mt-6">
+            <div className="mt-6 flex items-center gap-3">
               <DemoLink card={card} variant={variant} accent={accent} />
+              <CardCtaHint />
             </div>
           </div>
           {card.mockup_type ? (
@@ -655,7 +870,17 @@ function FeatureCard({
     <Reveal delayMs={index * 80}>
       <div
         ref={ref}
-        className="lp-card group flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200 bg-card p-6 transition hover:-translate-y-1 hover:border-cyan-300"
+        onClick={() => goSignup(card.slug, variant)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            goSignup(card.slug, variant);
+          }
+        }}
+        role="link"
+        tabIndex={0}
+        aria-label={`${card.title} — ücretsiz dene`}
+        className="lp-card group flex h-full cursor-pointer flex-col overflow-hidden rounded-2xl border border-slate-200 bg-card p-6 transition hover:-translate-y-1 hover:border-cyan-300"
       >
         <div className="mb-3 flex items-center gap-3">
           <span className="flex size-11 items-center justify-center rounded-xl" style={{ background: `${accent}16`, color: accent }}>
@@ -677,7 +902,10 @@ function FeatureCard({
         ) : null}
         <div className="mt-auto space-y-4">
           <FeatureChecklist benefits={card.benefits} accent={accent} />
-          <DemoLink card={card} variant={variant} accent={accent} />
+          <div className="flex items-center gap-3">
+            <DemoLink card={card} variant={variant} accent={accent} />
+            <CardCtaHint />
+          </div>
         </div>
       </div>
     </Reveal>

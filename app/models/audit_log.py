@@ -73,6 +73,8 @@ class AuditAction(str, enum.Enum):
     PAYMENT_SUCCEEDED = "payment_succeeded"        # callback succeeded → plan aktive
     PAYMENT_FAILED = "payment_failed"              # 3DS red / kart red / iyzico hata
     PAYMENT_REFUNDED = "payment_refunded"          # admin elle iade işaretledi
+    # Sosyal kanıt (testimonials) — süper admin moderasyon/yayın
+    TESTIMONIAL_MODERATE = "testimonial_moderate"
 
 
 AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
@@ -108,6 +110,7 @@ AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
     AuditAction.PAYMENT_SUCCEEDED: "Ödeme başarılı (plan aktive)",
     AuditAction.PAYMENT_FAILED: "Ödeme başarısız",
     AuditAction.PAYMENT_REFUNDED: "Ödeme iade edildi",
+    AuditAction.TESTIMONIAL_MODERATE: "Yorum/referans yayın durumu değişti",
     AuditAction.USER_PAUSE_ALERTS: "Kullanıcı uyarıları susturuldu (manuel)",
     AuditAction.USER_RESUME_ALERTS: "Kullanıcı uyarıları açıldı (manuel)",
     AuditAction.USER_AUTO_PAUSE: "Kullanıcı otomatik pasifleştirildi (sessizlik)",

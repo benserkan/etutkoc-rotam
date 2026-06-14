@@ -2152,3 +2152,81 @@ export function useDeleteDemoSession() {
     },
   });
 }
+
+// =============================================================================
+// Sosyal kanıt (testimonials) — süper admin moderasyon/CRUD
+// =============================================================================
+
+import type {
+  TestimonialAdminItem,
+  TestimonialCreateBody,
+  TestimonialStatus,
+  TestimonialUpdateBody,
+} from "@/lib/types/testimonial";
+
+export function useCreateTestimonial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body: TestimonialCreateBody) =>
+      api<MutationResponse<TestimonialAdminItem>>("/api/v2/admin/testimonials", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Kayıt eklendi");
+    },
+    onError: (e) => toast.error(errorTitle(e, "Eklenemedi")),
+  });
+}
+
+export function useUpdateTestimonial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: number; body: TestimonialUpdateBody }) =>
+      api<MutationResponse<TestimonialAdminItem>>(
+        `/api/v2/admin/testimonials/${id}`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Güncellendi");
+    },
+    onError: (e) => toast.error(errorTitle(e, "Güncellenemedi")),
+  });
+}
+
+export function useSetTestimonialStatus() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, status }: { id: number; status: TestimonialStatus }) =>
+      api<MutationResponse<TestimonialAdminItem>>(
+        `/api/v2/admin/testimonials/${id}/status`,
+        { method: "POST", body: JSON.stringify({ status }) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const s = res.data.status;
+      toast.success(
+        s === "published" ? "Yayınlandı" : s === "hidden" ? "Gizlendi" : "Beklemeye alındı",
+      );
+    },
+    onError: (e) => toast.error(errorTitle(e, "Durum değiştirilemedi")),
+  });
+}
+
+export function useDeleteTestimonial() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number) =>
+      api<MutationResponse<{ ok: boolean }>>(
+        `/api/v2/admin/testimonials/${id}/delete`,
+        { method: "POST", body: JSON.stringify({}) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Silindi");
+    },
+    onError: (e) => toast.error(errorTitle(e, "Silinemedi")),
+  });
+}

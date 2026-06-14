@@ -57,6 +57,13 @@ const THEME_INIT_SCRIPT = `
 `;
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Plausible (self-host) — gizlilik-dostu, çerezsiz site analitiği. Script
+  // ANA alan adından sunulur (Caddy /js/script.js → plausible) = first-party
+  // → reklam engelleyiciler engellemez + KVKK (kişisel veri yok). Runtime env;
+  // PLAUSIBLE_DOMAIN tanımlı değilse hiç basılmaz (kapalı kalır).
+  const plausibleDomain = process.env.PLAUSIBLE_DOMAIN || "";
+  const plausibleSrc = process.env.PLAUSIBLE_SRC || "/js/script.js";
+
   return (
     <html lang="tr" className={`${inter.variable} ${display.variable}`} suppressHydrationWarning>
       <head>
@@ -67,6 +74,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-title" content="ETÜTKOÇ" />
         <link rel="manifest" href="/site.webmanifest" />
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />
+        {plausibleDomain ? (
+          <script defer data-domain={plausibleDomain} src={plausibleSrc} />
+        ) : null}
       </head>
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <ThemeProvider>

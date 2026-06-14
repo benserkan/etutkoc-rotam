@@ -7,6 +7,7 @@ import { ChevronRight, HeartHandshake, Info } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
+import { ShareExperiencePrompt } from "@/components/testimonials/share-experience-prompt";
 import { Card, CardContent } from "@/components/ui/card";
 import { getParentDashboard, parentKeys } from "@/lib/api/parent";
 import type {
@@ -62,6 +63,8 @@ export function ParentDashboardClient({ initial }: Props) {
       </header>
 
       <QuickAccessStrip />
+
+      <ShareExperiencePrompt />
 
       {children.length === 0 ? (
         <EmptyState />

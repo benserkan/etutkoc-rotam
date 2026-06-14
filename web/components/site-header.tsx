@@ -12,12 +12,14 @@ import {
   BookOpenCheck,
   CalendarDays,
   CalendarRange,
+  ChevronDown,
   ClipboardList,
   Crosshair,
   ListChecks,
   Loader2,
   LogOut,
   Menu,
+  MoreHorizontal,
   RotateCcw,
   Target,
   Timer,
@@ -62,6 +64,12 @@ const STUDENT_NAV: NavLink[] = [
   { href: "/student/goals", label: "Hedefler", icon: Target },
 ];
 
+// Masaüstünde menü tek satıra sığsın diye: ilk 6 sık kullanılan link yatay
+// kalır; kalan 4 (Odak/Çalışma DNA/Tekrar/Hedefler) "Daha fazla" taşma
+// menüsüne iner. Mobil drawer tüm STUDENT_NAV'ı düz liste gösterir (değişmez).
+const STUDENT_NAV_PRIMARY = STUDENT_NAV.slice(0, 6);
+const STUDENT_NAV_MORE = STUDENT_NAV.slice(6);
+
 /**
  * Site başlığı — ETÜTKOÇ logosu + yatay öğrenci navigasyonu + bekleyen rozet
  * + ad-soyad + çıkış.
@@ -99,7 +107,7 @@ export function SiteHeader({ user, enableBadges = true }: Props) {
 
         {isStudent ? (
           <nav className="hidden lg:flex items-center gap-1 flex-1 ml-2" aria-label="Öğrenci paneli">
-            {STUDENT_NAV.map((n) => {
+            {STUDENT_NAV_PRIMARY.map((n) => {
               const active =
                 pathname === n.href || pathname.startsWith(`${n.href}/`);
               const Icon = n.icon;
@@ -125,6 +133,7 @@ export function SiteHeader({ user, enableBadges = true }: Props) {
                 </Link>
               );
             })}
+            <StudentMoreMenu items={STUDENT_NAV_MORE} pathname={pathname} />
           </nav>
         ) : (
           <div className="flex-1" />
@@ -207,6 +216,96 @@ export function SiteHeader({ user, enableBadges = true }: Props) {
         <MobileDrawer onClose={() => setNavOpen(false)} pathname={pathname} user={user} onLogout={() => logout.mutate()} />
       ) : null}
     </header>
+  );
+}
+
+/**
+ * Masaüstü "Daha fazla" taşma menüsü — primary'ye sığmayan öğrenci linklerini
+ * tek satırda tutmak için açılır panel. Dışarı tıklama + Esc ile kapanır;
+ * shadcn dropdown bağımlılığı olmadan (MobileDrawer ile aynı self-contained
+ * desen). Aktif link bu grupta ise tetikleyici vurgulanır.
+ */
+function StudentMoreMenu({
+  items,
+  pathname,
+}: {
+  items: NavLink[];
+  pathname: string;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef<HTMLDivElement | null>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    function onPointer(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setOpen(false);
+    }
+    document.addEventListener("mousedown", onPointer);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointer);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const groupActive = items.some(
+    (n) => pathname === n.href || pathname.startsWith(`${n.href}/`),
+  );
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors",
+          groupActive || open
+            ? "bg-muted font-medium text-foreground"
+            : "text-muted-foreground hover:bg-muted hover:text-foreground",
+        )}
+      >
+        <MoreHorizontal className="size-3.5" aria-hidden />
+        Daha fazla
+        <ChevronDown
+          className={cn("size-3.5 transition-transform", open && "rotate-180")}
+          aria-hidden
+        />
+      </button>
+      {open ? (
+        <div
+          role="menu"
+          className="absolute right-0 top-full z-40 mt-1 w-52 rounded-lg border border-border bg-card p-1.5 shadow-lg"
+        >
+          {items.map((n) => {
+            const active =
+              pathname === n.href || pathname.startsWith(`${n.href}/`);
+            const Icon = n.icon;
+            return (
+              <Link
+                key={n.href}
+                href={n.href}
+                role="menuitem"
+                onClick={() => setOpen(false)}
+                className={cn(
+                  "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm transition-colors",
+                  active
+                    ? "bg-muted font-medium text-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+              >
+                <Icon className="size-4 shrink-0" aria-hidden />
+                {n.label}
+              </Link>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
   );
 }
 

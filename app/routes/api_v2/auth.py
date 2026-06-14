@@ -1002,6 +1002,15 @@ def v2_signup_teacher(
     except Exception:
         logger.exception("new signup admin notify fail user=%s", new_user.id)
 
+    # Landing dönüşüm ilişkilendirme (best-effort; akışı bloklamaz).
+    try:
+        from app.services import conversion_service
+        conversion_service.record_signup_attribution(
+            db, user=new_user, request=request, signup_role="teacher"
+        )
+    except Exception:
+        logger.exception("signup attribution fail user=%s", new_user.id)
+
     pair = _establish_bff_session(db, new_user, request, response, mobile=payload.mobile)
     out = SignupOut(user=UserPublic.from_user(new_user), email_verification_sent=sent)
     if payload.mobile:

@@ -7,6 +7,7 @@ import { usePanelVisitTracker } from "@/lib/hooks/use-panel-visit-tracker";
 import {
   Activity,
   AlertOctagon,
+  BarChart3,
   BellRing,
   Building2,
   CalendarDays,
@@ -35,9 +36,11 @@ import {
   Shield,
   ShieldAlert,
   Sparkles,
+  Star,
   Stethoscope,
   Target,
   Telescope,
+  TrendingDown,
   TrendingUp,
   Users,
   Wallet,
@@ -100,6 +103,7 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin", label: "Panel", icon: LayoutDashboard },
       { href: "/admin/activity-stream", label: "Aktivite Akışı", icon: Activity },
+      { href: "/admin/analytics", label: "Site Analitiği", icon: BarChart3 },
     ],
   },
   {
@@ -133,6 +137,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/feature-catalog", label: "Kartlar", icon: Lightbulb },
       { href: "/admin/feature-catalog/dashboard", label: "Vitrin Yönetimi", icon: Telescope },
       { href: "/admin/feature-catalog/experiments", label: "Deneyler", icon: ListChecks },
+      { href: "/admin/conversion", label: "Dönüşüm Hunisi", icon: TrendingDown },
     ],
   },
   {
@@ -170,6 +175,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/whatsapp-dispatch-log", label: "WhatsApp Audit", icon: Activity },
       { href: "/admin/payment-links", label: "Ödeme Linkleri", icon: Link2 },
       { href: "/admin/contact-requests", label: "İletişim Talepleri", icon: Inbox, badgeKey: "contact_new" },
+      { href: "/admin/testimonials", label: "Sosyal Kanıt (Yorumlar)", icon: Star },
       { href: "/admin/support", label: "Talepler", icon: LifeBuoy, badgeKey: "support_pending" },
       { href: "/admin/demo-sessions", label: "Demo Hesaplar", icon: FlaskConical },
     ],

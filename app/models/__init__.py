@@ -370,7 +370,28 @@ from app.models.survey import (
     SurveyQuestion,
     SurveyTemplate,
 )
+from app.models.signup_attribution import (
+    SIGNUP_SOURCE_DIRECT,
+    SIGNUP_SOURCE_LANDING,
+    SignupAttribution,
+)
 from app.models.task import Task, TaskBookItem, TaskStatus, TaskType
+from app.models.testimonial import (
+    TESTIMONIAL_KIND_INSTITUTION,
+    TESTIMONIAL_KIND_LABELS_TR,
+    TESTIMONIAL_KIND_REVIEW,
+    TESTIMONIAL_KIND_STORY,
+    TESTIMONIAL_ROLE_LABELS_TR,
+    TESTIMONIAL_SOURCE_IMPORT,
+    TESTIMONIAL_SOURCE_IN_APP,
+    TESTIMONIAL_SOURCE_LABELS_TR,
+    TESTIMONIAL_SOURCE_MANUAL,
+    TESTIMONIAL_STATUS_HIDDEN,
+    TESTIMONIAL_STATUS_LABELS_TR,
+    TESTIMONIAL_STATUS_PENDING,
+    TESTIMONIAL_STATUS_PUBLISHED,
+    Testimonial,
+)
 from app.models.week_note import WeekNote
 from app.models.task_request import (
     REQUEST_STATUS_LABELS,
@@ -396,6 +417,23 @@ from app.models.user import (
 )
 
 __all__ = [
+    "SignupAttribution",
+    "SIGNUP_SOURCE_LANDING",
+    "SIGNUP_SOURCE_DIRECT",
+    "Testimonial",
+    "TESTIMONIAL_KIND_REVIEW",
+    "TESTIMONIAL_KIND_INSTITUTION",
+    "TESTIMONIAL_KIND_STORY",
+    "TESTIMONIAL_KIND_LABELS_TR",
+    "TESTIMONIAL_STATUS_PENDING",
+    "TESTIMONIAL_STATUS_PUBLISHED",
+    "TESTIMONIAL_STATUS_HIDDEN",
+    "TESTIMONIAL_STATUS_LABELS_TR",
+    "TESTIMONIAL_SOURCE_MANUAL",
+    "TESTIMONIAL_SOURCE_IN_APP",
+    "TESTIMONIAL_SOURCE_IMPORT",
+    "TESTIMONIAL_SOURCE_LABELS_TR",
+    "TESTIMONIAL_ROLE_LABELS_TR",
     "ACADEMIC_PHASE_KIND_BADGES",
     "ACADEMIC_PHASE_KIND_LABELS",
     "AT_RISK_MUTE_DAYS",

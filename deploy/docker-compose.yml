@@ -188,6 +188,15 @@ services:
       NEXT_PUBLIC_PUBLIC_API_URL: ""
       PORT: "3000"
       HOSTNAME: "0.0.0.0"
+      # ---- Plausible (self-host) site analitiği — runtime env (boşsa kapalı) ----
+      # PLAUSIBLE_DOMAIN: izleme script'inin data-domain'i (örn. rotam.etutkoc.com)
+      # PLAUSIBLE_SRC: script yolu (first-party; Caddy /js/script.js → plausible)
+      # PLAUSIBLE_SHARED_URL: süper admin gömülü panosu (Plausible paylaşım embed bağlantısı)
+      # PLAUSIBLE_DASHBOARD_URL: "Tam panel" linki (örn. https://analytics.etutkoc.com)
+      PLAUSIBLE_DOMAIN: ${PLAUSIBLE_DOMAIN:-}
+      PLAUSIBLE_SRC: ${PLAUSIBLE_SRC:-/js/script.js}
+      PLAUSIBLE_SHARED_URL: ${PLAUSIBLE_SHARED_URL:-}
+      PLAUSIBLE_DASHBOARD_URL: ${PLAUSIBLE_DASHBOARD_URL:-}
     depends_on:
       web:
         condition: service_healthy
@@ -202,6 +211,68 @@ services:
       timeout: 5s
       start_period: 20s
       retries: 3
+
+  # ===========================================================================
+  # Plausible (self-host, Community Edition) — gizlilik-dostu site analitiği.
+  # Çerezsiz, kişisel veri yok (KVKK). Veri kendi sunucumuzda kalır.
+  # Sürümler Plausible resmi community-edition compose'undan; gerekirse güncelle.
+  # İlk kurulum + ENV üretimi: deploy/PLAUSIBLE_SETUP.md
+  # ===========================================================================
+  plausible_db:
+    image: postgres:16-alpine
+    container_name: lgs-plausible-db
+    environment:
+      POSTGRES_DB: plausible
+      POSTGRES_USER: plausible
+      POSTGRES_PASSWORD: ${PLAUSIBLE_DB_PASSWORD}
+    volumes:
+      - plausible-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U plausible -d plausible"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+    restart: unless-stopped
+
+  plausible_events_db:
+    image: clickhouse/clickhouse-server:24.12-alpine
+    container_name: lgs-plausible-clickhouse
+    volumes:
+      - plausible-clickhouse-data:/var/lib/clickhouse
+      - ./clickhouse/logging.xml:/etc/clickhouse-server/config.d/logging.xml:ro
+      - ./clickhouse/user-logging.xml:/etc/clickhouse-server/users.d/logging.xml:ro
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:8123/ping || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks: [internal]
+    restart: unless-stopped
+
+  plausible:
+    image: ghcr.io/plausible/community-edition:v2.1.4
+    container_name: lgs-plausible
+    command: sh -c "/entrypoint.sh db createdb && /entrypoint.sh db migrate && /entrypoint.sh run"
+    depends_on:
+      plausible_db:
+        condition: service_healthy
+      plausible_events_db:
+        condition: service_healthy
+    environment:
+      BASE_URL: https://${PLAUSIBLE_HOST}
+      SECRET_KEY_BASE: ${PLAUSIBLE_SECRET_KEY_BASE}
+      TOTP_VAULT_KEY: ${PLAUSIBLE_TOTP_VAULT_KEY}
+      DATABASE_URL: postgres://plausible:${PLAUSIBLE_DB_PASSWORD}@plausible_db:5432/plausible
+      CLICKHOUSE_DATABASE_URL: http://plausible_events_db:8123/plausible_events_db
+      # İlk admin oluşturulduktan sonra true bırak (açık kayıt kapalı)
+      DISABLE_REGISTRATION: ${PLAUSIBLE_DISABLE_REGISTRATION:-true}
+    networks: [internal]
+    restart: unless-stopped
 
   # ===========================================================================
   # Caddy reverse proxy + otomatik HTTPS (Let's Encrypt)
@@ -243,4 +314,8 @@ volumes:
   caddy-data:
     name: lgs-caddy-data
   caddy-config:
+  plausible-db-data:
+    name: lgs-plausible-db-data
+  plausible-clickhouse-data:
+    name: lgs-plausible-clickhouse-data
     name: lgs-caddy-config
