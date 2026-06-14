@@ -254,10 +254,21 @@ def week_stats_for(
             )
             .all()
         )
-        s = gorev_stats.summarize(tasks)
+        # Yalnız TEST kitabı kalemleri (deneme kitabı + kitapsız tam-deneme HARİÇ);
+        # completed_count kullanılır — etkinlik görevlerinin "çözülen soru"su (solved_count)
+        # test hacmine EKLENMEZ → tamamlama oranı ≤ %100 (kurum panosu için temiz;
+        # gorev_stats.summarize.test_completed solved_count'u da ekleyip oranı bozuyordu).
+        planned = sum(
+            it.planned_count for t in tasks for it in t.book_items
+            if gorev_stats.item_is_test(it)
+        )
+        completed = sum(
+            it.completed_count for t in tasks for it in t.book_items
+            if gorev_stats.item_is_test(it)
+        )
         return DailyStats(
-            planned=s.test_planned,
-            completed=s.test_completed,
+            planned=planned,
+            completed=completed,
             tasks_total=len(tasks),
             tasks_completed=sum(1 for t in tasks if t.status == TaskStatus.COMPLETED),
         )
