@@ -314,8 +314,8 @@ volumes:
   caddy-data:
     name: lgs-caddy-data
   caddy-config:
+    name: lgs-caddy-config
   plausible-db-data:
     name: lgs-plausible-db-data
   plausible-clickhouse-data:
     name: lgs-plausible-clickhouse-data
-    name: lgs-caddy-config
