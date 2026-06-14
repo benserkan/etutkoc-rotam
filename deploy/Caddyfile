@@ -247,7 +247,7 @@
 #   2. Aşağıdaki 3 satırın yorumunu kaldır (alan adını kendininkiyle değiştir)
 #   3. docker compose restart proxy   (Caddy yeni site için otomatik HTTPS alır)
 # =============================================================================
-# analytics.etutkoc.com {
-#     reverse_proxy plausible:8000
-# }
+analytics.etutkoc.com {
+    reverse_proxy plausible:8000
+}
 }
