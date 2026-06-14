@@ -150,11 +150,12 @@ export function DashboardClient({ initial }: Props) {
           <CardHeader className="pb-2">
             <CardTitle className="text-base font-semibold inline-flex items-center gap-2">
               <HeartPulse className="size-4 text-indigo-500" aria-hidden />
-              Filo durumu
+              Öğrencilerin durumu
             </CardTitle>
             <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              Filo, tüm aktif öğrencilerin tek-bakışta sağlık durumu. Her öğrenci
-              en kötü uyarısına göre yeşil/amber/kırmızıdır.
+              Tüm aktif öğrencilerin tek bakışta risk durumu. Her öğrenci risk
+              puanına göre Yolunda / Uyarı / Kritik. Bir satıra tıkla, o
+              öğrencileri gör.
             </p>
           </CardHeader>
           <CardContent className="space-y-2 text-sm">

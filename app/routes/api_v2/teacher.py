@@ -463,10 +463,10 @@ def teacher_dashboard_v2(
     # düşürmez). student_count = toplam, active_student_count = aktif ayrı döner.
     snapshots = [student_snapshot(db, s, today=today) for s in active_students]
 
-    # Filo özeti — warning level dağılımı
-    fleet_red = sum(1 for s in snapshots if s.worst_warning_level == "red")
-    fleet_amber = sum(1 for s in snapshots if s.worst_warning_level == "amber")
-    fleet_green = sum(1 for s in snapshots if s.worst_warning_level == "green")
+    # Öğrenci durumu (Yolunda/Uyarı/Kritik) — risk_assessments hesaplandıktan
+    # SONRA aşağıda risk_analysis seviyesinden türetilir (worst_warning_level
+    # DEĞİL — o, drilldown ?risk filtresiyle uyuşmuyor, "Kritik 1 ama liste boş"
+    # bug'ı yaratıyordu).
 
     # Hafta + bugün toplamı (soru-bazlı — geriye uyum)
     week_planned = sum(sn.week.planned for sn in snapshots)
@@ -519,6 +519,18 @@ def teacher_dashboard_v2(
     ]
     at_risk_count = len(visible_at_risk)
     at_risk_critical = sum(1 for a in visible_at_risk if a.level == "critical")
+
+    # Öğrenci durumu kartı (Yolunda/Uyarı/Kritik) — risk_analysis seviyesinden,
+    # drilldown (?risk=ok/medium/critical) + /institution/at-risk ile AYNI sistem.
+    # muted→ok. Kritik=critical · Uyarı=medium+high · Yolunda=ok. Böylece kart
+    # sayısı = tıklanan liste (eski worst_warning_level uyuşmazlığı giderildi).
+    _risk_lv = {
+        a.student.id: ("ok" if a.student.id in muted_ids else a.level)
+        for a in risk_assessments
+    }
+    fleet_red = sum(1 for lv in _risk_lv.values() if lv == "critical")
+    fleet_amber = sum(1 for lv in _risk_lv.values() if lv in ("medium", "high"))
+    fleet_green = sum(1 for lv in _risk_lv.values() if lv == "ok")
 
     top_5: list[RiskRow] = []
     for a in visible_at_risk[:5]:
@@ -643,10 +655,12 @@ def teacher_students_v2(
                 risk_levels_by_id[a.student.id] = "ok"
             else:
                 risk_levels_by_id[a.student.id] = a.level
-        # pasif olanlar zaten 'ok' kabul
+        # pasif olanlar zaten 'ok' kabul. "Uyarı" kartı (fleet_amber) medium+high
+        # sayıyor → ?risk=medium drilldown'u da high'ı kapsamalı (kart=liste).
+        _match = {"medium", "high"} if risk_norm == "medium" else {risk_norm}
         students = [
             s for s in students
-            if risk_levels_by_id.get(s.id, "ok") == risk_norm
+            if risk_levels_by_id.get(s.id, "ok") in _match
         ]
 
     total = len(students)

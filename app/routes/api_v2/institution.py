@@ -370,7 +370,7 @@ def _teacher_to_summary_item(teacher: User, *, today: date | None = None) -> Tea
         )
         student_count = len(students)
         for s in students:
-            w = week_stats_for(db, s.id, today)
+            w = week_stats_for(db, s.id, today, tests_only=True)
             total_planned += w.planned
             total_completed += w.completed
     rate: int | None = None
@@ -834,7 +834,7 @@ def institution_teacher_card_v2(
     total_planned = 0
     total_completed = 0
     for s in students:
-        w = week_stats_for(db, s.id, today)
+        w = week_stats_for(db, s.id, today, tests_only=True)
         rate: int | None = None
         if w.planned > 0:
             rate = int(round(100 * w.completed / w.planned))
@@ -965,7 +965,7 @@ def institution_roster_v2(
 
     items: list[RosterRowItem] = []
     for s in students:
-        w = week_stats_for(db, s.id, today)
+        w = week_stats_for(db, s.id, today, tests_only=True)
         rate: int | None = None
         if w.planned > 0:
             rate = int(round(100 * w.completed / w.planned))

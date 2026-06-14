@@ -230,9 +230,37 @@ def daily_stats_for(db: Session, student_id: int, d: date) -> DailyStats:
     )
 
 
-def week_stats_for(db: Session, student_id: int, end_date: date) -> DailyStats:
-    """Son 7 gün toplamı (end dahil)."""
+def week_stats_for(
+    db: Session, student_id: int, end_date: date, tests_only: bool = False
+) -> DailyStats:
+    """Son 7 gün toplamı (end dahil).
+
+    tests_only=True: planned/completed yalnız TEST (soru bankası) hacmidir —
+    DENEME (branş/genel deneme kitabı + kitapsız tam-deneme) soruları "test"e
+    GİRMEZ (GÖREV/TEST/DENEME standardı, 2026-06-02). Yalnız yayınlanmış görevler
+    (is_draft=False). Kurum panosu + öğretmen detayı bu modu kullanır ("X test"
+    deneme sorularıyla şişmesin).
+    """
     start = end_date - timedelta(days=6)
+    if tests_only:
+        tasks = (
+            db.query(Task)
+            .options(joinedload(Task.book_items).joinedload(TaskBookItem.book))
+            .filter(
+                Task.student_id == student_id,
+                Task.date >= start,
+                Task.date <= end_date,
+                Task.is_draft.is_(False),
+            )
+            .all()
+        )
+        s = gorev_stats.summarize(tasks)
+        return DailyStats(
+            planned=s.test_planned,
+            completed=s.test_completed,
+            tasks_total=len(tasks),
+            tasks_completed=sum(1 for t in tasks if t.status == TaskStatus.COMPLETED),
+        )
     tasks = (
         db.query(Task)
         .options(joinedload(Task.book_items))

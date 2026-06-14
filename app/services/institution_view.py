@@ -68,7 +68,7 @@ def teacher_summaries(
         total_planned = 0
         total_completed = 0
         for s in students:
-            w = week_stats_for(db, s.id, today)
+            w = week_stats_for(db, s.id, today, tests_only=True)  # deneme'yi "test"e katma
             total_planned += w.planned
             total_completed += w.completed
         rate: int | None = None

@@ -19,7 +19,8 @@ from datetime import date, datetime, timedelta, timezone
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models import Task, TaskBookItem, User, UserRole
+from app.models import Book, Task, TaskBookItem, User, UserRole
+from app.services.gorev_stats import DENEME_BOOK_TYPES
 
 # Yeni öğrenci (hesap < bu gün) henüz programsızsa "boş program" sayılmaz —
 # koça program kurması için onboarding penceresi (yanlış-pozitif önler).
@@ -87,11 +88,16 @@ def _student_totals_for_week(
             func.coalesce(func.sum(TaskBookItem.wrong_count), 0).label("no"),
         )
         .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+        # TEST-only (GÖREV/TEST/DENEME standardı): Book INNER JOIN kitapsız
+        # tam-deneme kalemlerini (book_id NULL) otomatik eler; deneme kitabı
+        # tipleri filtreyle dışlanır → "test"e deneme soruları girmez.
+        .join(Book, Book.id == TaskBookItem.book_id)
         .filter(
             Task.student_id.in_(student_ids),
             Task.is_draft.is_(False),
             Task.date >= ws,
             Task.date <= effective_we,
+            Book.type.notin_(list(DENEME_BOOK_TYPES)),
         )
         .group_by(Task.student_id)
         .all()
