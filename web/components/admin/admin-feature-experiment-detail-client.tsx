@@ -145,7 +145,13 @@ export function AdminFeatureExperimentDetailClient({ initial, experimentId }: Pr
               </thead>
               <tbody className="divide-y divide-border">
                 {data.stats.map((v) => (
-                  <StatRow key={v.slug} v={v} />
+                  <StatRow
+                    key={v.slug}
+                    v={v}
+                    poolLabel={
+                      data.experiment.variants.find((b) => b.slug === v.slug)?.pool_label ?? null
+                    }
+                  />
                 ))}
               </tbody>
             </table>
@@ -186,7 +192,7 @@ export function AdminFeatureExperimentDetailClient({ initial, experimentId }: Pr
   );
 }
 
-function StatRow({ v }: { v: ExperimentVariantStat }) {
+function StatRow({ v, poolLabel }: { v: ExperimentVariantStat; poolLabel?: string | null }) {
   const barMax = 0.3;
   const loW = Math.min(100, (v.ctr_low / barMax) * 100);
   const hiW = Math.min(100, (v.ctr_high / barMax) * 100);
@@ -201,6 +207,11 @@ function StatRow({ v }: { v: ExperimentVariantStat }) {
           {v.slug} · {v.weight}%
         </div>
         <div className="mt-0.5 text-[11px] text-muted-foreground">{v.strategy_label}</div>
+        {poolLabel ? (
+          <div className="mt-1 inline-block rounded bg-cyan-100 px-1.5 py-px text-[10px] font-medium text-cyan-900">
+            {poolLabel}
+          </div>
+        ) : null}
         {v.is_control ? (
           <div className="mt-1 inline-block rounded border border-border bg-muted px-1.5 py-px text-[10px] text-muted-foreground">
             Kontrol

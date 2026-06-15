@@ -1032,6 +1032,8 @@ export interface ExperimentVariantBrief {
   strategy: string;
   weight: number;
   is_control: boolean;
+  pool?: string | null;
+  pool_label?: string | null;
 }
 
 export interface ExperimentListItem {
@@ -1056,8 +1058,16 @@ export interface ExperimentStrategyOption {
   description: string;
 }
 
+export interface ExperimentPoolOption {
+  key: string;
+  label: string;
+  description: string;
+  count: number;
+}
+
 export interface ExperimentFormMeta {
   strategies: ExperimentStrategyOption[];
+  pools?: ExperimentPoolOption[];
 }
 
 export interface ExperimentVariantStat {
@@ -1106,6 +1116,8 @@ export interface ExperimentCreateBody {
   test_strategy?: string;
   weight_ctrl?: number;
   weight_test?: number;
+  ctrl_pool?: string;
+  test_pool?: string;
 }
 
 export interface ExperimentStatusBody {

@@ -19,6 +19,7 @@ interface Props {
 export function AdminFeatureExperimentFormClient({ meta }: Props) {
   const router = useRouter();
   const strategies = meta.strategies;
+  const pools = meta.pools ?? [];
   const [name, setName] = React.useState("");
   const [slug, setSlug] = React.useState("");
   const [hypothesis, setHypothesis] = React.useState("");
@@ -30,6 +31,8 @@ export function AdminFeatureExperimentFormClient({ meta }: Props) {
   );
   const [weightCtrl, setWeightCtrl] = React.useState(50);
   const [weightTest, setWeightTest] = React.useState(50);
+  const [ctrlPool, setCtrlPool] = React.useState("");
+  const [testPool, setTestPool] = React.useState("");
 
   const mut = useCreateExperiment();
 
@@ -44,6 +47,8 @@ export function AdminFeatureExperimentFormClient({ meta }: Props) {
         test_strategy: testStrategy,
         weight_ctrl: weightCtrl,
         weight_test: weightTest,
+        ctrl_pool: ctrlPool,
+        test_pool: testPool,
       },
       {
         onSuccess: (res) => {
@@ -113,7 +118,15 @@ export function AdminFeatureExperimentFormClient({ meta }: Props) {
           </label>
 
           <div className="border-t border-border pt-5">
-            <h3 className="mb-3 text-sm font-semibold">Variant&apos;lar</h3>
+            <h3 className="mb-1 text-sm font-semibold">Variant&apos;lar</h3>
+            {pools.length > 0 ? (
+              <p className="mb-3 rounded-md bg-cyan-50 px-3 py-2 text-[11px] text-cyan-900">
+                <strong>Kart havuzu</strong> ile farklı kart setlerini karşılaştırabilirsin
+                (örn. elle hazırlanmış <code className="font-mono">kesfet-*</code> kartlar vs
+                AI temalı <code className="font-mono">tema-*</code> kartlar). Boş bırakırsan
+                yalnız sıralama stratejisi karşılaştırılır (havuz aynı kalır).
+              </p>
+            ) : null}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="rounded-lg border border-border bg-muted/30 p-3">
                 <div className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -131,6 +144,23 @@ export function AdminFeatureExperimentFormClient({ meta }: Props) {
                     ))}
                   </select>
                 </label>
+                {pools.length > 0 ? (
+                  <label className="mb-2 block">
+                    <span className="text-xs text-muted-foreground">Kart havuzu</span>
+                    <select
+                      value={ctrlPool}
+                      onChange={(e) => setCtrlPool(e.target.value)}
+                      className={cn(fieldClass, "mt-1 bg-background")}
+                    >
+                      {pools.map((p) => (
+                        <option key={p.key || "all"} value={p.key}>
+                          {p.label}
+                          {p.key ? ` · ${p.count} kart` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 <label className="block">
                   <span className="text-xs text-muted-foreground">Ağırlık (%)</span>
                   <input
@@ -160,6 +190,23 @@ export function AdminFeatureExperimentFormClient({ meta }: Props) {
                     ))}
                   </select>
                 </label>
+                {pools.length > 0 ? (
+                  <label className="mb-2 block">
+                    <span className="text-xs text-muted-foreground">Kart havuzu</span>
+                    <select
+                      value={testPool}
+                      onChange={(e) => setTestPool(e.target.value)}
+                      className={cn(fieldClass, "mt-1 bg-background")}
+                    >
+                      {pools.map((p) => (
+                        <option key={p.key || "all"} value={p.key}>
+                          {p.label}
+                          {p.key ? ` · ${p.count} kart` : ""}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                ) : null}
                 <label className="block">
                   <span className="text-xs text-muted-foreground">Ağırlık (%)</span>
                   <input

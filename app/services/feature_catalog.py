@@ -138,6 +138,61 @@ def get_published_visible(db: Session) -> list[FeatureCard]:
     return cards
 
 
+# Kart-havuzu A/B seçenekleri (slug öneki → TR etiket). Tek kaynak: form meta +
+# varyant özeti buradan beslenir. Boş key ("") = tüm kartlar (yalnız strateji A/B).
+LANDING_POOLS: list[dict] = [
+    {"key": "", "label": "Tüm kartlar (havuz ayrımı yok)",
+     "description": "Yalnız sıralama A/B'si — kart havuzu değişmez."},
+    {"key": "kesfet", "label": "Elle seçilmiş kartlar (kesfet-*)",
+     "description": "seed_landing_cards ile yayınlanan elle hazırlanmış kartlar."},
+    {"key": "tema", "label": "AI temalı kartlar (tema-*)",
+     "description": "AI kümeleme ile üretilen temalı kartlar."},
+]
+
+_POOL_LABELS: dict[str, str] = {p["key"]: p["label"] for p in LANDING_POOLS}
+
+
+def pool_label(key: str | None) -> str | None:
+    """Havuz öneki için TR etiket; bilinmeyen önek → 'önek-*' formatı."""
+    k = (key or "").strip()
+    if not k:
+        return None
+    return _POOL_LABELS.get(k, f"{k}-*")
+
+
+def pool_published_count(db: Session, pool_key: str) -> int:
+    """Verilen havuzda (slug öneki) kaç yayında+görünür kart var — form rehberi."""
+    k = (pool_key or "").strip()
+    if not k:
+        return 0
+    return (
+        db.query(FeatureCard)
+        .filter(
+            FeatureCard.status == FeatureStatus.PUBLISHED.value,
+            FeatureCard.manual_hide.is_(False),
+            FeatureCard.mockup_type.isnot(None),
+            FeatureCard.mockup_type != "",
+            FeatureCard.slug.ilike(f"{k}-%"),
+        )
+        .count()
+    )
+
+
+def _variant_pool(experiment, variant_slug: str | None) -> str | None:
+    """Atanan varyantın kart-havuzu (slug öneki) — yoksa None.
+
+    Kart-havuzu A/B (kesfet vs tema): varyant dict'inde opsiyonel `pool` alanı
+    (örn. "kesfet", "tema"). Boş/eksikse None döner → havuz filtresi uygulanmaz.
+    """
+    if not variant_slug or experiment is None:
+        return None
+    for v in (experiment.variants or []):
+        if v.get("slug") == variant_slug:
+            pool = (v.get("pool") or "").strip()
+            return pool or None
+    return None
+
+
 def _build_landing_cards(
     db: Session,
     *,
@@ -183,6 +238,20 @@ def _build_landing_cards(
         active = exp.get_active_experiment(db)
         if active is not None:
             variant_slug, chosen_key = exp.assign_variant(active, session_id)
+            # Kart-havuzu A/B (kesfet vs tema): varyantta `pool` (slug öneki)
+            # varsa kart havuzunu o önekteki kartlarla sınırla. Havuz boşalırsa
+            # (örn. o önekte yayında kart yok) anasayfa boş kalmasın → tüm
+            # havuza geri dön (graceful).
+            pool = _variant_pool(active, variant_slug)
+            if pool:
+                scoped = [r for r in rows if (r.slug or "").startswith(f"{pool}-")]
+                if scoped:
+                    rows = scoped
+                else:
+                    logger.warning(
+                        "landing pool '%s' boş — tüm havuza dönüldü (deney=%s)",
+                        pool, getattr(active, "slug", None),
+                    )
 
     strategy = ls.get_strategy(chosen_key)
 

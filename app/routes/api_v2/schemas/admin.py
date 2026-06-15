@@ -1183,6 +1183,8 @@ class ExperimentVariantBrief(BaseModel):
     strategy: str
     weight: int
     is_control: bool = False
+    pool: str | None = None
+    pool_label: str | None = None
 
 
 class ExperimentListItem(BaseModel):
@@ -1207,9 +1209,17 @@ class ExperimentStrategyOption(BaseModel):
     description: str
 
 
+class ExperimentPoolOption(BaseModel):
+    key: str
+    label: str
+    description: str
+    count: int = 0
+
+
 class ExperimentFormMeta(BaseModel):
-    """Yeni deney formu — strateji registry."""
+    """Yeni deney formu — strateji registry + kart-havuzu seçenekleri."""
     strategies: list[ExperimentStrategyOption]
+    pools: list[ExperimentPoolOption] = []
 
 
 class ExperimentVariantStat(BaseModel):
@@ -1259,6 +1269,10 @@ class ExperimentCreateBody(BaseModel):
     test_strategy: str = "fuzzy_only"
     weight_ctrl: int = 50
     weight_test: int = 50
+    # Kart-havuzu A/B (kesfet vs tema): varyant başına slug öneki. Boş = tüm
+    # kartlar (yalnız strateji A/B). "kesfet" = elle seçilmiş, "tema" = AI temalı.
+    ctrl_pool: str = ""
+    test_pool: str = ""
 
 
 class ExperimentStatusBody(BaseModel):

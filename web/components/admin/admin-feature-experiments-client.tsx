@@ -105,6 +105,11 @@ export function AdminFeatureExperimentsClient({ initial }: Props) {
                           <span className="text-muted-foreground"> · </span>
                           {v.label}
                           <span className="text-muted-foreground"> · </span>%{v.weight}
+                          {v.pool_label ? (
+                            <span className="ml-1 rounded bg-cyan-100 px-1 py-0.5 text-[10px] font-medium text-cyan-900">
+                              {v.pool}
+                            </span>
+                          ) : null}
                         </div>
                       ))}
                     </td>

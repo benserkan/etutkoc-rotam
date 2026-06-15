@@ -152,6 +152,7 @@ from app.routes.api_v2.schemas.admin import (
     ExperimentListResponse,
     ExperimentMutationResult,
     ExperimentStatusBody,
+    ExperimentPoolOption,
     ExperimentStrategyOption,
     ExperimentVariantBrief,
     ExperimentVariantStat,
@@ -4552,16 +4553,23 @@ def admin_feature_catalog_dashboard_v2(
 
 
 def _exp_variant_briefs(exp) -> list[ExperimentVariantBrief]:
-    return [
-        ExperimentVariantBrief(
-            slug=str(v.get("slug", "")),
-            label=str(v.get("label", v.get("slug", ""))),
-            strategy=str(v.get("strategy", "")),
-            weight=int(v.get("weight", 0)),
-            is_control=bool(v.get("is_control", False)),
+    from app.services import feature_catalog as fc
+
+    out: list[ExperimentVariantBrief] = []
+    for v in (exp.variants or []):
+        pool = (v.get("pool") or "").strip() or None
+        out.append(
+            ExperimentVariantBrief(
+                slug=str(v.get("slug", "")),
+                label=str(v.get("label", v.get("slug", ""))),
+                strategy=str(v.get("strategy", "")),
+                weight=int(v.get("weight", 0)),
+                is_control=bool(v.get("is_control", False)),
+                pool=pool,
+                pool_label=fc.pool_label(pool),
+            )
         )
-        for v in (exp.variants or [])
-    ]
+    return out
 
 
 @router.get(
@@ -4605,8 +4613,10 @@ def admin_feature_catalog_experiments_list_v2(
 )
 def admin_feature_catalog_experiment_form_v2(
     user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
 ):
-    """Yeni deney formu — strateji registry. Jinja: admin.py:2358-2381."""
+    """Yeni deney formu — strateji registry + kart-havuzu seçenekleri."""
+    from app.services import feature_catalog as fc
     from app.services.landing_strategies import (
         REGISTRY, STRATEGY_DESCRIPTIONS_TR, STRATEGY_LABELS_TR,
     )
@@ -4618,7 +4628,16 @@ def admin_feature_catalog_experiment_form_v2(
                 description=STRATEGY_DESCRIPTIONS_TR.get(k, ""),
             )
             for k in REGISTRY.keys()
-        ]
+        ],
+        pools=[
+            ExperimentPoolOption(
+                key=p["key"],
+                label=p["label"],
+                description=p["description"],
+                count=fc.pool_published_count(db, p["key"]),
+            )
+            for p in fc.LANDING_POOLS
+        ],
     )
 
 
@@ -4675,12 +4694,21 @@ def admin_feature_catalog_experiment_create_v2(
         updated_at=now,
         created_by=user.id,
     )
-    new_exp.variants = [
-        {"slug": "ctrl", "label": "Kontrol", "strategy": body.ctrl_strategy,
-         "weight": body.weight_ctrl, "is_control": True},
-        {"slug": "test", "label": "Test", "strategy": body.test_strategy,
-         "weight": body.weight_test, "is_control": False},
-    ]
+    ctrl_pool = (body.ctrl_pool or "").strip()
+    test_pool = (body.test_pool or "").strip()
+    ctrl_variant: dict = {
+        "slug": "ctrl", "label": "Kontrol", "strategy": body.ctrl_strategy,
+        "weight": body.weight_ctrl, "is_control": True,
+    }
+    test_variant: dict = {
+        "slug": "test", "label": "Test", "strategy": body.test_strategy,
+        "weight": body.weight_test, "is_control": False,
+    }
+    if ctrl_pool:
+        ctrl_variant["pool"] = ctrl_pool
+    if test_pool:
+        test_variant["pool"] = test_pool
+    new_exp.variants = [ctrl_variant, test_variant]
     db.add(new_exp)
     db.commit()
     db.refresh(new_exp)
