@@ -25,6 +25,7 @@ import type {
   FeatureCardFormResponse,
 } from "@/lib/types/admin";
 import { fieldClass } from "@/components/admin/feature-catalog-ui";
+import { LandingCardPreview } from "@/components/landing/card-preview";
 
 interface Props {
   initial: FeatureCardFormResponse;
@@ -386,6 +387,51 @@ export function AdminFeatureCardFormClient({ initial, mode }: Props) {
 
         {/* Sağ — yönetim */}
         <div className="space-y-4">
+          {/* Canlı anasayfa önizlemesi — yayın öncesi "nasıl görünecek" simülasyonu */}
+          <Card className="overflow-hidden border-2 border-cyan-200 bg-cyan-50/40 p-0">
+            <div className="flex items-baseline justify-between px-4 pb-2 pt-4">
+              <h2 className="text-sm font-semibold text-cyan-900">
+                🏠 Anasayfa önizlemesi
+              </h2>
+              <span className="text-[10px] italic text-cyan-700">canlı</span>
+            </div>
+            <p className="px-4 pb-3 text-[11px] text-cyan-800">
+              Kart anasayfada bu şekilde görünür. Yazdıkça güncellenir.
+            </p>
+            <div className="bg-slate-100 p-4">
+              <LandingCardPreview
+                data={{
+                  title,
+                  tagline,
+                  categoryLabel,
+                  accentColor,
+                  mockupType: mockupType || null,
+                  benefits: linesToList(benefits),
+                  demoDurationLabel: demoDuration,
+                  hasDemo: Boolean(demoSlug.trim()),
+                }}
+              />
+            </div>
+            <div className="px-4 pb-4 pt-3">
+              {status === "published" && !manualHide ? (
+                <p className="rounded-md bg-emerald-100 px-3 py-2 text-[11px] font-medium text-emerald-900">
+                  ✓ Yayında — anasayfada görünür (skor/A-B sıralamasına göre).
+                </p>
+              ) : status === "published" && manualHide ? (
+                <p className="rounded-md bg-amber-100 px-3 py-2 text-[11px] font-medium text-amber-900">
+                  Yayında ama “Manuel gizle” açık → anasayfada gösterilmiyor.
+                </p>
+              ) : (
+                <p className="rounded-md bg-slate-200 px-3 py-2 text-[11px] font-medium text-slate-700">
+                  Henüz yayında değil (durum:{" "}
+                  {meta.statuses.find((s) => s.value === status)?.label ?? status}).
+                  Anasayfada göstermek için sağ alttaki{" "}
+                  <strong>Yayın durumu → Yayında</strong> seç.
+                </p>
+              )}
+            </div>
+          </Card>
+
           <Card className="p-5">
             <h2 className="mb-3 text-sm font-medium">🎨 Görsel tema</h2>
             <Field label="Vurgu rengi">

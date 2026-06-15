@@ -6,12 +6,8 @@ import Image from "next/image";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
-  Award,
   BarChart3,
   BookOpen,
-  Bot,
-  BrainCircuit,
-  Building2,
   CalendarDays,
   Check,
   CheckCircle2,
@@ -23,10 +19,8 @@ import {
   Flame,
   Gauge,
   Gift,
-  GraduationCap,
   HelpCircle,
   LayoutGrid,
-  LifeBuoy,
   LineChart,
   Lock,
   MessageSquareText,
@@ -38,8 +32,6 @@ import {
   Sparkles,
   Star,
   Target,
-  TrendingUp,
-  Users,
   XCircle,
   type LucideIcon,
 } from "lucide-react";
@@ -54,7 +46,7 @@ import type { LandingCard, LandingResponse } from "@/lib/types/landing";
 import { getPublicTestimonials, testimonialKeys } from "@/lib/api/testimonials";
 import type { TestimonialPublicItem } from "@/lib/types/testimonial";
 import { Reveal } from "@/components/landing/reveal";
-import { MockupByType } from "@/components/landing/mockups";
+import { MockupByType, MOCKUP_ICON } from "@/components/landing/mockups";
 import { demosForRole, demoPlayUrl, type DemoRole } from "@/lib/demos";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { BrandLogo } from "@/components/brand-logo";
@@ -635,24 +627,6 @@ function HeroMock() {
 }
 
 /* ───────────────────────── Features (temiz showcase) ───────────────────────── */
-
-const MOCKUP_ICON: Record<string, LucideIcon> = {
-  daily_schedule: CalendarDays,
-  fsrs_rating: BrainCircuit,
-  burnout_gauge: Gauge,
-  books_progress: BookOpen,
-  whatsapp_chat: MessageSquareText,
-  gamification: Award,
-  ai_assistant: Bot,
-  exam_trend: TrendingUp,
-  security: ShieldCheck,
-  billing: CreditCard,
-  analytics: BarChart3,
-  crm: Users,
-  branding: Building2,
-  support: LifeBuoy,
-  curriculum: GraduationCap,
-};
 
 /** Benefit metninden baştaki emoji/sembolleri temizler (DB verisi emoji ile geliyor). */
 function cleanBenefit(s: string): string {

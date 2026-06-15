@@ -7,17 +7,21 @@ import {
   BarChart3,
   BookOpen,
   Bot,
+  BrainCircuit,
   Building2,
   Calculator,
+  CalendarDays,
   CheckCircle2,
   CreditCard,
   FlaskConical,
+  Gauge,
   Globe,
   GraduationCap,
   Landmark,
   LifeBuoy,
   Lock,
   MessageCircle,
+  MessageSquareText,
   Moon,
   Phone,
   Receipt,
@@ -30,6 +34,7 @@ import {
   TrendingUp,
   Users,
   Zap,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -641,3 +646,26 @@ export function MockupByType({ type }: { type: string | null }) {
   if (!Cmp) return null;
   return <Cmp />;
 }
+
+/** mockup_type → kart başlığındaki Lucide ikonu. Tek kaynak (landing + admin
+ * önizleme aynı haritayı kullanır). Eşleşmezse Sparkles fallback. */
+export const MOCKUP_ICON: Record<string, LucideIcon> = {
+  daily_schedule: CalendarDays,
+  fsrs_rating: BrainCircuit,
+  burnout_gauge: Gauge,
+  books_progress: BookOpen,
+  whatsapp_chat: MessageSquareText,
+  gamification: Award,
+  ai_assistant: Bot,
+  exam_trend: TrendingUp,
+  security: ShieldCheck,
+  billing: CreditCard,
+  analytics: BarChart3,
+  crm: Users,
+  branding: Building2,
+  support: LifeBuoy,
+  curriculum: GraduationCap,
+  focus_timer: Timer,
+  goals: Target,
+  topic_performance: BarChart3,
+};
