@@ -78,6 +78,17 @@ def record_signup_attribution(
         )
         db.add(row)
         db.commit()
+
+        # DÖNÜŞÜM döngüsü: landing oturumu üye olduysa, o oturumun tıkladığı
+        # kartlara bandit'te güçlü ödül ver → anasayfa üye-getiren kartı öğrenir.
+        # Best-effort, attribution'ı bloklamaz.
+        if sid:
+            try:
+                from app.services import bandit
+                bandit.reward_conversion_for_session(db, session_id=sid, viewer=None)
+            except Exception:
+                logger.warning("conversion bandit reward fail user=%s", user.id)
+
         return row
     except Exception:
         logger.exception("record_signup_attribution fail user=%s", getattr(user, "id", None))

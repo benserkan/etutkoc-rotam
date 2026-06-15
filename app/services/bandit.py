@@ -55,6 +55,10 @@ REWARD_BY_EVENT: dict[str, float] = {
     "cta_click": 0.8,
 }
 
+# DÖNÜŞÜM ödülü — üyeliğe dönüşen oturumun TIKLADIĞI karta verilir (demo_click 1.0'ın
+# 3 katı). Anasayfa böylece "ilgi çekeni" değil "üye yapanı" öne çıkarmayı öğrenir.
+CONVERSION_REWARD: float = 3.0
+
 
 # ============================================================
 # Matrix yardımcıları (saf Python)
@@ -265,6 +269,51 @@ def update_from_event(
     if reward == 0.0:
         return None
     return update(db, card_id=card_id, context=context, reward=reward, commit=commit)
+
+
+def reward_conversion_for_session(
+    db: Session,
+    *,
+    session_id: str,
+    viewer: User | None = None,
+    now: datetime | None = None,
+    commit: bool = True,
+) -> int:
+    """DÖNÜŞÜM döngüsü: üyeliğe dönüşen oturumun TIKLADIĞI (cta_click/demo_click)
+    kartlara güçlü `CONVERSION_REWARD` ver → bandit anasayfayı üye-getiren karta
+    göre öğrenir (yalnız tıklamaya değil). Bağlam landing'i gören anon ziyaretçinin
+    bağlamıyla aynı (viewer=None varsayılan). Dönen: ödüllendirilen kart sayısı.
+    Best-effort — hata akışı bloklamaz."""
+    try:
+        from app.models import FeatureCardEvent
+
+        rows = (
+            db.query(FeatureCardEvent.card_id)
+            .filter(
+                FeatureCardEvent.session_id == session_id,
+                FeatureCardEvent.event_type.in_(("cta_click", "demo_click")),
+            )
+            .distinct()
+            .all()
+        )
+        card_ids = {int(r.card_id) for r in rows}
+        if not card_ids:
+            return 0
+        ctx = extract_context(viewer, now=now)
+        n = 0
+        for cid in card_ids:
+            if update(db, card_id=cid, context=ctx, reward=CONVERSION_REWARD, commit=False) is not None:
+                n += 1
+        if commit and n:
+            db.commit()
+        return n
+    except Exception as e:
+        logger.warning("reward_conversion_for_session error: %s", e)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+        return 0
 
 
 def score(state: FeatureBanditState, context: list[float]) -> tuple[float, float]:
