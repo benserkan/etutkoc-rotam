@@ -143,6 +143,28 @@ MOCKUP_TEMPLATES: dict[str, MockupTemplate] = {
         template_path="landing/mockups/generic.html",
         feature_card_slug="",
     ),
+    # Demo konularından eklenen (2026-06-15): odak / hedef / konu performansı
+    "focus_timer": MockupTemplate(
+        key="focus_timer",
+        label="Odak / Pomodoro",
+        description="Geri sayım halkası + seri + oturum (odaklı çalışma / Pomodoro temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "goals": MockupTemplate(
+        key="goals",
+        label="Hedefler",
+        description="Ana hedef + alt hedef ağacı + ilerleme (hedef belirleme / motivasyon temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
+    "topic_performance": MockupTemplate(
+        key="topic_performance",
+        label="Konu Performansı",
+        description="Ders/konu bazında doğruluk barları (konu analizi / eksik tespit temaları)",
+        template_path="landing/mockups/generic.html",
+        feature_card_slug="",
+    ),
     # Genel/şablonsuz kart — bespoke görsel gerektirmeden landing'e çıkar. AI hiçbir
     # özel mockup'a karar veremezse fallback. Next.js GenericShowcase render eder.
     "generic": MockupTemplate(

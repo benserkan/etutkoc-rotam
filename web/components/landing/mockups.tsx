@@ -25,6 +25,8 @@ import {
   ShieldCheck,
   Sparkles,
   Star,
+  Target,
+  Timer,
   TrendingUp,
   Users,
   Zap,
@@ -520,8 +522,102 @@ function Curriculum() {
   );
 }
 
+/** Odaklı çalışma / Pomodoro — geri sayım halkası + seri + süre. */
+function FocusTimer() {
+  return (
+    <Panel>
+      <div className="mb-3 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-800">
+          <Timer className="size-4 text-cyan-700" aria-hidden /> Odak Oturumu
+        </span>
+        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-600">
+          <Flame className="size-3" aria-hidden /> 5 gün seri
+        </span>
+      </div>
+      <div className="flex items-center justify-center py-2">
+        <div className="relative grid size-24 place-items-center rounded-full"
+             style={{ background: "conic-gradient(#0e7490 264deg, #e2e8f0 0)" }}>
+          <div className="grid size-[78px] place-items-center rounded-full bg-card">
+            <span className="font-display text-xl font-extrabold text-slate-800">18:24</span>
+          </div>
+        </div>
+      </div>
+      <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+        <span>Bugün <b className="text-cyan-800">3 oturum</b></span>
+        <span>Toplam <b className="text-cyan-800">95 dk</b></span>
+      </div>
+    </Panel>
+  );
+}
+
+/** Hedefler — ana hedef + alt hedef ağacı + ilerleme. */
+function Goals() {
+  const subs = [
+    { label: "TYT Matematik 30 net", pct: 80 },
+    { label: "Paragraf hız çalışması", pct: 55 },
+    { label: "Haftalık 4 deneme", pct: 100 },
+  ];
+  return (
+    <Panel>
+      <div className="flex items-center gap-2 rounded-lg bg-cyan-50 px-2.5 py-2">
+        <Target className="size-4 shrink-0 text-cyan-700" aria-hidden />
+        <span className="text-[12px] font-bold text-cyan-900">Hedef: Sayısal 350+ sıralama</span>
+      </div>
+      <div className="mt-2.5 space-y-2">
+        {subs.map((s) => (
+          <div key={s.label}>
+            <div className="mb-0.5 flex items-center justify-between">
+              <span className="text-[11px] font-medium text-slate-700">{s.label}</span>
+              <span className="text-[10px] font-bold text-muted-foreground">%{s.pct}</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className={cn("h-full rounded-full", s.pct === 100 ? "bg-emerald-500" : "bg-cyan-600")}
+                   style={{ width: `${s.pct}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
+/** Konu performansı — ders/konu bazında doğruluk barları. */
+function TopicPerformance() {
+  const rows = [
+    { topic: "Üslü Sayılar", solved: 48, pct: 92, cls: "bg-emerald-500" },
+    { topic: "Çarpanlara Ayırma", solved: 36, pct: 68, cls: "bg-amber-500" },
+    { topic: "Olasılık", solved: 22, pct: 41, cls: "bg-rose-500" },
+  ];
+  return (
+    <Panel>
+      <div className="mb-2 flex items-center justify-between">
+        <span className="inline-flex items-center gap-1.5 text-sm font-bold text-slate-800">
+          <BarChart3 className="size-4 text-violet-600" aria-hidden /> Konu Performansı
+        </span>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Matematik</span>
+      </div>
+      <div className="space-y-2">
+        {rows.map((r) => (
+          <div key={r.topic}>
+            <div className="mb-0.5 flex items-center justify-between text-[11px]">
+              <span className="font-medium text-slate-700">{r.topic}</span>
+              <span className="font-bold text-muted-foreground">%{r.pct} <span className="font-normal">· {r.solved} soru</span></span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+              <div className={cn("h-full rounded-full", r.cls)} style={{ width: `${r.pct}%` }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </Panel>
+  );
+}
+
 const MAP: Record<string, React.ComponentType> = {
   daily_schedule: DailySchedule,
+  focus_timer: FocusTimer,
+  goals: Goals,
+  topic_performance: TopicPerformance,
   fsrs_rating: FsrsRating,
   burnout_gauge: BurnoutGauge,
   books_progress: BooksProgress,
