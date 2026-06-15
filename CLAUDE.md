@@ -136,6 +136,64 @@ anket sonucu → stale. AI test SORMAZ — anketler ölçer, AI sentezler.
 
 ---
 
+## Dinamik vitrin + dönüşüm + sosyal kanıt + analitik (2026-06-15, CANLI)
+
+**Bağlam:** Anasayfa bilgi kartlarının dinamik gösterimi (feature_catalog: fuzzy +
+LinUCB bandit + MMR çeşitlilik + A/B), pazarlama stratejisi, dönüşüm ölçümü, GA-tarzı
+site analitiği. Kullanıcı sırası (en küçük→büyük): #1 menü fix · #2 sosyal kanıt ·
+#3 dönüşüm ölçümü · #4 Plausible · #5 dinamik gösterim (ayrı). Sonra #5 sırası
+(kullanıcı onayı): dönüşüm döngüsü kapat → A/B kur → yayın akışı (önizleme).
+
+- **Menü overflow** ✅: site-header öğrenci nav (10 link) → ilk 6 + `StudentMoreMenu`
+  dropdown (son 4).
+- **Sosyal kanıt** ✅ (**migration `j3k6n9o0n77e`** — testimonials): süper admin
+  giriş (`/admin/testimonials`, kurum referansı/yorum/başarı hikayesi, moderasyon
+  `TESTIMONIAL_MODERATE`) + landing slider + uygulama-içi `share-experience-prompt`
+  (öğrenci/veli/koç/kurum yorum toplama). etutkoc.com yorumları JS-render →
+  kullanıcı elle yükledi.
+- **Dönüşüm ölçümü (#3)** ✅ (**migration `k4l7o0p1o88f`** — signup_attributions):
+  `conversion_service` (record_signup_attribution: anon landing oturumu `fc_telemetry_sid`
+  + A/B varyant → SignupAttribution; compute_funnel: ziyaretçi→etkileşim→tıklama→demo→
+  üye→ücretli + varyant kırılımı). `/admin/conversion` panosu. Landing kartları
+  tıklanabilir (`goSignup` → cta_click + /signup/teacher).
+- **Plausible analitik (#4)** ✅: self-host (plausible+ClickHouse+Postgres),
+  first-party tracking Caddy `/js/* + /api/event` → plausible; `analytics.etutkoc.com`
+  bloğu ANA blok DIŞINDA (route{} 2 kapanış); env-driven script `web/app/layout.tsx`;
+  `/admin/analytics` iframe embed. **OOM-güvenli deploy: 2GB swap + build sırasında
+  plausible stop** (3.7GB VPS'te Next build OOM oluyordu). DERS: secret'ı grep'leme
+  (SECRET_KEY_BASE sohbete sızdı → rotate edildi). DERS: Caddyfile bind-mount stale-FD →
+  `restart proxy` gerek (reload yetmez).
+- **Dönüşüm döngüsü (#5-1)** ✅ (CANLI, HEAD öncesi `11ea714`): `bandit.CONVERSION_REWARD=3.0`
+  + `reward_conversion_for_session` (üye olan oturumun cta_click/demo_click yaptığı
+  kartlara güçlü ödül) → `conversion_service.record_signup_attribution` hook'lar.
+  Anasayfa artık "ilgi çekeni" değil "üye yapanı" öğrenir. `test_bandit_conversion_reward` 5/5.
+- **Görsel şablonlar** ✅: mockup kütüphanesi zaten zengindi (16 mockup, registry=frontend
+  MAP birebir); demo konularından gerçekten eksik 3 eklendi → **19**: focus_timer
+  (Pomodoro halkası) + goals (hedef ağacı) + topic_performance (konu doğruluk barları).
+  `MOCKUP_ICON` tek kaynağa (`mockups.tsx`) taşındı.
+- **#2 Yayın akışı — anasayfa önizlemesi** ✅: admin kart formunda (`admin-feature-card-form-client`)
+  paylaşılan `LandingCardPreview` (landing FeatureCard görünümü birebir, telemetri/
+  navigasyon yok) sağ kolonda CANLI güncellenir; **yayın kapısı görünür** (durum!=Yayında →
+  uyarı, manuel gizle → uyarı, yayında → yeşil onay).
+- **#3 Kart-havuzu A/B (kesfet vs tema)** ✅: deney varyantına opsiyonel `pool` (slug
+  öneki) boyutu — varyant artık yalnız sıralama stratejisini değil KART HAVUZUNU da
+  değiştirir. `feature_catalog._variant_pool` + `LANDING_POOLS` tek kaynak + landing
+  filtresi (boş havuz → graceful fallback). `ExperimentCreateBody +ctrl_pool/test_pool`;
+  form meta +pools (yayında kart sayımlı); varyant brief +pool/pool_label; form havuz
+  seçicisi + liste/detay pool rozeti. Dönüşüm ölçümü (#5-1) artık elle vs AI-temalı
+  kart setlerini gerçekten kıyaslar. `test_landing_pool_ab` 9/9.
+- **Panel düzeltmeleri** ✅ (kullanıcı bildirdi): "Filo durumu"→"Öğrencilerin durumu"
+  (risk-bazlı, `risk_assessments`'ten kırmızı/sarı/yeşil); "Kritik 1 ama drill boş"
+  (filter `?risk=medium` artık medium+high eşler); "1106 planlanan test" şişmesi
+  (deneme test sayılıyordu) → `week_test_deneme_for` test=soru-hacmi (`item_is_test`) /
+  **deneme=ADET** (soru toplamı değil); test+deneme yan yana (kurum panosu + öğretmen
+  detayı + teacher card); compliance test-only (Book.type deneme HARİÇ).
+- **Migration head:** `k4l7o0p1o88f` (signup_attributions) — `j3k6n9o0n77e`
+  (testimonials) ile birlikte additive, prod'da uygulandı. Mockup/pool/önizleme
+  migration GEREKTİRMEDİ (kod/config). Tümü CANLI (web+worker+next rebuild, OOM-güvenli).
+
+---
+
 ## DEVAM EDEN — Konu Performansı + Veli AI + mobil eksikler (2026-06-06, P1-P4)
 
 **Bağlam:** Kullanıcı cihaz-üstü derin test (4 rol) sırasında 11 maddelik kapsamlı
