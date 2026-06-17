@@ -165,6 +165,29 @@ def _invalidate_week(teacher_id: int, student_id: int) -> list[str]:
 # =============================================================================
 
 
+def _reconcile_dead_reservations(db: Session, student_id: int) -> None:
+    """'Ölü rezerv' telafisi (best-effort): aktif programın başlangıcından ÖNCEKİ
+    haftalardan kalan tamamlanmamış görevlerin rezervini serbest bırak → koç
+    "kalan 0" sorunuyla karşılaşmadan üniteyi yeniden atayabilir. İdempotent;
+    add-task cascade (sidebar) açılışında tetiklenir."""
+    try:
+        from app.services import weekly_program_service as wps
+        from app.services.task_service import reconcile_past_reservations
+
+        today = date.today()
+        active = wps.get_active_program(db, student_id=student_id, today=today)
+        cutoff = active.start_date if active is not None else today
+        res = reconcile_past_reservations(db, student_id=student_id, cutoff_date=cutoff)
+        if res.get("released_tests"):
+            db.commit()
+    except Exception:
+        logger.exception("_reconcile_dead_reservations failed s=%s", student_id)
+        try:
+            db.rollback()
+        except Exception:
+            pass
+
+
 def _load_week_notes(db: Session, student_id: int, week_start: date) -> list[WeekNote]:
     return (
         db.query(WeekNote)
@@ -730,6 +753,8 @@ def sidebar_items(
     db: Session = Depends(get_db),
 ) -> SidebarResponse:
     student = _get_owned_student(db, student_id, user.id)
+    # Add-task cascade açılırken ölü rezervi serbest bırak → "kalan" doğru görünür.
+    _reconcile_dead_reservations(db, student.id)
     focused: int | None = None
     s = (subject_id or "").strip()
     if s:

@@ -12,14 +12,18 @@ Tamamlama (Sprint 3) reserved'den completed'e transfer eder.
 
 from __future__ import annotations
 
-from sqlalchemy.orm import Session
+from datetime import date, datetime, timezone
+
+from sqlalchemy.orm import Session, joinedload
 
 from app.models import (
     Book,
     BookSection,
     SectionProgress,
     StudentBook,
+    Task,
     TaskBookItem,
+    TaskStatus,
 )
 
 
@@ -129,6 +133,10 @@ def release_task_items(db: Session, student_id: int, items: list[TaskBookItem]) 
     for it in items:
         if it.book_id is None:
             continue  # kitapsız deneme kalemi — rezerv yok, iade gerekmez
+        # "Ölü rezerv" zaten serbest bırakılmışsa (haftası geçmiş görev reconcile
+        # ile çözülmüş) → tekrar iade ETME (çift-iade rezervi yanlış düşürür).
+        if it.reservation_released_at is not None:
+            continue
         # Sadece henüz tamamlanmamış kısmı rezervden iade et
         remaining_reserved = max(0, it.planned_count - it.completed_count)
         if remaining_reserved > 0:
@@ -140,6 +148,115 @@ def release_task_items(db: Session, student_id: int, items: list[TaskBookItem]) 
                 count=remaining_reserved,
             )
         # completed kısmı çözüldüye sayılır, geri alınmaz
+
+
+def reconcile_past_reservations(
+    db: Session,
+    *,
+    student_id: int,
+    cutoff_date: date,
+) -> dict:
+    """'Ölü rezervi' serbest bırak — haftası/programı geçmiş, tamamlanmamış,
+    yayında görevlerin yapılmamış rezerv kısmını kapasiteye iade et (idempotent).
+
+    Ölü rezerv = `task.date < cutoff_date` AND `status != COMPLETED` AND
+    `is_draft == False` olan görevlerin, henüz serbest bırakılmamış
+    (reservation_released_at IS NULL) section'lı kalemlerinin (planned - completed)
+    kısmı. Görev kaydı (planned/completed/geçmiş) DEĞİŞMEZ — yalnız rezerv kilidi
+    kalkar; kalem `reservation_released_at` ile işaretlenir (tekrar iade edilmez).
+
+    cutoff_date genelde aktif programın start_date'i (geçmiş haftalar < cutoff).
+
+    Returns: {"released_tests": int, "released_items": int}.
+    """
+    items = (
+        db.query(TaskBookItem)
+        .join(Task, Task.id == TaskBookItem.task_id)
+        .filter(
+            Task.student_id == student_id,
+            Task.date < cutoff_date,
+            Task.status != TaskStatus.COMPLETED,
+            Task.is_draft.is_(False),
+            TaskBookItem.book_section_id.isnot(None),
+            TaskBookItem.reservation_released_at.is_(None),
+        )
+        .all()
+    )
+    released_tests = 0
+    released_items = 0
+    now = datetime.now(timezone.utc)
+    for it in items:
+        remaining = max(0, it.planned_count - it.completed_count)
+        if remaining <= 0:
+            # Tam tamamlanmış (yapılmamış kısım yok) — yine de işaretle ki bir daha
+            # bakılmasın; rezerv değişmez.
+            it.reservation_released_at = now
+            continue
+        release_item(
+            db,
+            student_id=student_id,
+            book_id=it.book_id,
+            section_id=it.book_section_id,
+            count=remaining,
+        )
+        it.reservation_released_at = now
+        released_tests += remaining
+        released_items += 1
+    return {"released_tests": released_tests, "released_items": released_items}
+
+
+def list_carryover_candidates(
+    db: Session,
+    *,
+    student_id: int,
+    cutoff_date: date,
+) -> list[dict]:
+    """Geçmiş haftalardan 'yapılmadan kalan' kalemler (devret adayları).
+
+    `task.date < cutoff_date` + `status != COMPLETED` + `is_draft == False`
+    görevlerin, section'lı + (planned - completed) > 0 olan kalemleri. Rezerv
+    serbest bırakılmış olsun olmasın aday olabilir (kapasite reconcile ile zaten
+    iade edilmiştir). Her aday: kitap + bölüm + kalan test + kaynak görev tarihi.
+    """
+    items = (
+        db.query(TaskBookItem)
+        .join(Task, Task.id == TaskBookItem.task_id)
+        .options(
+            joinedload(TaskBookItem.book),
+            joinedload(TaskBookItem.section),
+        )
+        .filter(
+            Task.student_id == student_id,
+            Task.date < cutoff_date,
+            Task.status != TaskStatus.COMPLETED,
+            Task.is_draft.is_(False),
+            TaskBookItem.book_section_id.isnot(None),
+        )
+        .order_by(Task.date.asc(), TaskBookItem.id.asc())
+        .all()
+    )
+    out: list[dict] = []
+    for it in items:
+        remaining = max(0, it.planned_count - it.completed_count)
+        if remaining <= 0:
+            continue
+        book = it.book
+        section = it.section
+        if book is None or section is None:
+            continue
+        out.append({
+            "task_item_id": it.id,
+            "task_date": it.task.date,
+            "book_id": it.book_id,
+            "section_id": it.book_section_id,
+            "book_name": book.name,
+            "section_label": getattr(section, "label", None) or getattr(section, "name", "") or "",
+            "subject_id": getattr(book, "subject_id", None),
+            "planned": it.planned_count,
+            "completed": it.completed_count,
+            "remaining": remaining,
+        })
+    return out
 
 
 def complete_task(

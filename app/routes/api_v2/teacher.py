@@ -195,6 +195,10 @@ from app.routes.api_v2.schemas.teacher import (
     StudentPatchBody,
     StudentProgramSummary,
     ApplyTaskTemplateBody,
+    CarryoverBody,
+    CarryoverCandidate,
+    CarryoverCandidatesResponse,
+    CarryoverResult,
     TaskCreateBody,
     TaskItemBody,
     TaskTemplateCreateBody,
@@ -3535,6 +3539,123 @@ def teacher_create_task_v2(
     return MutationResponse[TeacherTask](
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
+    )
+
+
+# ---------------------- Devret (carryover) — geçen haftadan eksikler ----------------------
+
+
+def _carryover_cutoff(db: Session, student_id: int) -> date:
+    """Devret/reconcile sınırı: aktif programın başlangıcı, yoksa bugün.
+    Bundan ÖNCEKİ haftalar 'geçmiş' sayılır (haftası geçince serbest bırak)."""
+    from app.services import weekly_program_service as wps
+
+    today = date.today()
+    active = wps.get_active_program(db, student_id=student_id, today=today)
+    return active.start_date if active is not None else today
+
+
+@router.get(
+    "/students/{student_id}/carryover-candidates",
+    response_model=CarryoverCandidatesResponse,
+)
+def teacher_carryover_candidates_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Geçen haftalardan yapılmadan kalan kalemler (devret adayları).
+
+    Önce 'ölü rezerv' serbest bırakılır (kapasite geri döner) → koç bu kalemleri
+    yeni haftaya taşıyabilir. Aktif programın başlangıcından ÖNCEKİ, tamamlanmamış,
+    yayında görevlerin section'lı + kalan>0 kalemleri.
+    """
+    from app.services import task_service as tsvc
+
+    student = _get_owned_student(db, student_id, user.id)
+    cutoff = _carryover_cutoff(db, student.id)
+    # Ölü rezervi serbest bırak (idempotent) — kapasite devret için hazır olsun.
+    res = tsvc.reconcile_past_reservations(db, student_id=student.id, cutoff_date=cutoff)
+    if res.get("released_tests"):
+        db.commit()
+    rows = tsvc.list_carryover_candidates(db, student_id=student.id, cutoff_date=cutoff)
+    return CarryoverCandidatesResponse(
+        candidates=[
+            CarryoverCandidate(
+                task_item_id=r["task_item_id"],
+                task_date=r["task_date"].isoformat(),
+                book_id=r["book_id"],
+                section_id=r["section_id"],
+                book_name=r["book_name"],
+                section_label=r["section_label"],
+                subject_id=r["subject_id"],
+                planned=r["planned"],
+                completed=r["completed"],
+                remaining=r["remaining"],
+            )
+            for r in rows
+        ],
+        cutoff_date=cutoff.isoformat(),
+    )
+
+
+@router.post(
+    "/students/{student_id}/carryover",
+    response_model=MutationResponse[CarryoverResult],
+)
+def teacher_carryover_v2(
+    student_id: int,
+    body: CarryoverBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Seçili eksik kalemleri yeni güne taşı (her kalem → yeni görev).
+
+    Önce ölü rezerv serbest bırakılır (kapasite hazır), sonra her kalem için
+    normal görev oluşturma (rezerv açar). Eski (geçmiş) görev kaydı DURUR —
+    yalnızca yeni haftada yeni görevler oluşur.
+    """
+    from app.services import task_service as tsvc
+
+    student = _get_owned_student(db, student_id, user.id)
+    assert_active_coaching(db, user)
+    target = _parse_iso_date(body.target_date)
+    if not body.items:
+        raise HTTPException(
+            status_code=422,
+            detail={"error": "invalid", "code": "no_items", "message": "Taşınacak kalem seçilmedi."},
+        )
+    # Ölü rezervi serbest bırak → taşınan kalemler için kapasite açılsın.
+    cutoff = _carryover_cutoff(db, student.id)
+    tsvc.reconcile_past_reservations(db, student_id=student.id, cutoff_date=cutoff)
+
+    created = 0
+    try:
+        for it in body.items:
+            if it.count < 1:
+                continue
+            payload = TaskCreateBody(
+                date=target.isoformat(),
+                type="test",
+                title="—",  # _create_task_with_items tek-kalemde otomatik başlık üretir
+                period=body.period,
+                items=[TaskItemBody(book_id=it.book_id, section_id=it.section_id, planned_count=it.count)],
+            )
+            _create_task_with_items(db, student=student, payload=payload)
+            created += 1
+    except ReservationError as e:
+        db.rollback()
+        raise _reservation_to_http(e)
+    except HTTPException:
+        db.rollback()
+        raise
+    db.commit()
+    return MutationResponse[CarryoverResult](
+        data=CarryoverResult(created_tasks=created, target_date=target.isoformat()),
+        invalidate=[
+            f"teacher:{user.id}:students:{student.id}:week",
+            f"teacher:{user.id}:students:{student.id}:day",
+        ],
     )
 
 

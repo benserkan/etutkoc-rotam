@@ -206,6 +206,15 @@ def create_program(
     )
     db.add(prog)
     db.flush()
+    # "Ölü rezerv" telafisi: yeni program başlangıcından ÖNCEKİ haftalardan kalan,
+    # tamamlanmamış görevlerin rezervi serbest bırakılır → koç aynı üniteyi yeni
+    # haftada yeniden atayabilir (kapasite kilitli kalmaz). Best-effort.
+    try:
+        from app.services.task_service import reconcile_past_reservations
+
+        reconcile_past_reservations(db, student_id=student.id, cutoff_date=start)
+    except Exception:
+        logger.exception("create_program: reconcile_past_reservations failed s=%s", student.id)
     logger.info(
         "create_program: coach=%s student=%s prog=%s %s→%s",
         coach.id, student.id, prog.id, start, end,

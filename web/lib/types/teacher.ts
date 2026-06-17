@@ -832,6 +832,42 @@ export interface TaskPatchBody {
   notes?: string | null;
 }
 
+// Devret (carryover) — geçen haftadan yapılmadan kalan kalemler
+export interface CarryoverCandidate {
+  task_item_id: number;
+  task_date: string;
+  book_id: number;
+  section_id: number;
+  book_name: string;
+  section_label: string;
+  subject_id: number | null;
+  planned: number;
+  completed: number;
+  remaining: number;
+}
+
+export interface CarryoverCandidatesResponse {
+  candidates: CarryoverCandidate[];
+  cutoff_date: string;
+}
+
+export interface CarryoverItemBody {
+  book_id: number;
+  section_id: number;
+  count: number;
+}
+
+export interface CarryoverBody {
+  target_date: string;
+  period?: TaskPeriod | null;
+  items: CarryoverItemBody[];
+}
+
+export interface CarryoverResult {
+  created_tasks: number;
+  target_date: string;
+}
+
 export interface TaskItemPatchBody {
   planned_count: number;
 }

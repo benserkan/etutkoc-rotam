@@ -9,6 +9,8 @@ import { teacherKeys } from "@/lib/api/teacher";
 import type {
   BulkResult,
   BulkTasksBody,
+  CarryoverBody,
+  CarryoverResult,
   DnaNotifyParentBody,
   DnaNotifyParentResult,
   ExamCreateBody,
@@ -215,6 +217,26 @@ export function useCreateTask(studentId: number) {
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       toast.success("Görev eklendi");
+    },
+  });
+}
+
+// --------------------------- Devret (carryover) ------------------------------
+
+export function useCarryover(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<CarryoverResult>, ApiError, { body: CarryoverBody }>({
+    mutationFn: ({ body }) =>
+      api<MutationResponse<CarryoverResult>>(
+        `/api/v2/teacher/students/${studentId}/carryover`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (err) => showError(err, "Görevler taşınamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({ queryKey: teacherKeys.carryoverCandidates(studentId) });
+      const n = res.data?.created_tasks ?? 0;
+      toast.success(n > 0 ? `${n} görev bu haftaya taşındı` : "Görev taşındı");
     },
   });
 }

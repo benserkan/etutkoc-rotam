@@ -47,6 +47,7 @@ import type {
   TeacherRequestDetail,
   TeacherRequestListResponse,
   TeacherReviewFleetResponse,
+  CarryoverCandidatesResponse,
   TeacherReviewResponse,
   TeacherStudentAnalyticsResponse,
   TeacherStudentDayResponse,
@@ -92,6 +93,8 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "books"] as const,
   studentParents: (id: number) =>
     ["teacher", "me", "students", String(id), "parents"] as const,
+  carryoverCandidates: (id: number) =>
+    ["teacher", "me", "students", String(id), "carryover"] as const,
 
   // Paket 3.5a — haftalık plan yardımcıları
   studentSidebar: (id: number, subjectId: number | null) =>
@@ -383,6 +386,14 @@ export function getTeacherStudentWeek(
   });
   return api<TeacherStudentWeekResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(id))}/week${qs}`,
+  );
+}
+
+export function getCarryoverCandidates(
+  id: number,
+): Promise<CarryoverCandidatesResponse> {
+  return api<CarryoverCandidatesResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/carryover-candidates`,
   );
 }
 

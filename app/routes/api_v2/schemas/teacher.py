@@ -804,6 +804,44 @@ class TaskCreateBody(BaseModel):
     work_block_id: int | None = None
 
 
+class CarryoverCandidate(BaseModel):
+    """Geçmiş haftalardan 'yapılmadan kalan' bir kalem (devret adayı)."""
+    task_item_id: int
+    task_date: str                   # "YYYY-MM-DD" — kaynak görev tarihi
+    book_id: int
+    section_id: int
+    book_name: str
+    section_label: str
+    subject_id: int | None = None
+    planned: int
+    completed: int
+    remaining: int
+
+
+class CarryoverCandidatesResponse(BaseModel):
+    candidates: list[CarryoverCandidate]
+    cutoff_date: str                 # bu tarihten öncekiler aday
+
+
+class CarryoverItemBody(BaseModel):
+    """Devredilecek tek kalem: kitap+bölüm+sayı (kalan ≤)."""
+    book_id: int
+    section_id: int
+    count: int                       # ≥1
+
+
+class CarryoverBody(BaseModel):
+    """POST /students/{id}/carryover — seçili eksik kalemleri yeni güne taşı."""
+    target_date: str                 # "YYYY-MM-DD"
+    period: str | None = None        # "morning"|"noon"|"evening"|None
+    items: list[CarryoverItemBody]   # ≥1
+
+
+class CarryoverResult(BaseModel):
+    created_tasks: int
+    target_date: str
+
+
 class TaskPatchBody(BaseModel):
     """PATCH /api/v2/teacher/tasks/{task_id}
 
