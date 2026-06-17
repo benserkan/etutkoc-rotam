@@ -136,6 +136,48 @@ anket sonucu → stale. AI test SORMAZ — anketler ölçer, AI sentezler.
 
 ---
 
+## Ölü rezerv telafisi (carryover) — geçen haftadan yapılmayan görevler (2026-06-17, migration `l5m8p1q2p44k`)
+
+**Sorun (kullanıcı, student 34 hasta senaryosu):** Öğrenci geçen hafta atanan
+testleri yapmayınca (hasta vb.) o testler `SectionProgress.reserved_count`'ta
+GLOBAL kilitli kalıyordu → koç yeni haftada aynı üniteyi atayamıyordu ("kalan 0";
+`reserve_item` 422). Rezerv "aktif plana taahhüt" ile "geçmişte planlanıp hiç
+yapılmamış ölü taahhüt"ü aynı sayıyordu. Mimari: Task `date`'e bağlı (program_id
+YOK), WeeklyProgram = tarih-aralığı kapısı; reserved_count öğrenci+bölüm global,
+yalnız tamamlama/silme'de düşüyordu.
+
+**Kullanıcı kararları (AskUserQuestion):** kapsam = **A + B**; sınır = **haftası/
+programı geçince** (aktif hafta-içi telafi etkilenmez).
+
+- **A — `task_service.reconcile_past_reservations(db, student_id, cutoff_date)`**:
+  cutoff'tan ÖNCEKİ + `status != COMPLETED` + `is_draft=False` görevlerin
+  yapılmamış (`planned - completed`) rezerv kısmını serbest bırakır (kapasite döner).
+  **İdempotent** — **migration `l5m8p1q2p44k`**: `task_book_items.reservation_released_at`
+  izi (additive, nullable, downgrade'li). İşaretli kalem tekrar iade EDİLMEZ →
+  görev sonradan silinse bile çift-iade yok (`release_task_items`'a guard eklendi).
+  Geçmiş kayıt (planned/completed) DEĞİŞMEZ — yalnız kilit kalkar. Section'lı her
+  kalem rezerv ediyor (blok dahil; yalnız kitapsız deneme hariç). Tetik: `create_program`
+  (cutoff=yeni program start) + add-task cascade (`sidebar-items` GET, lazy,
+  cutoff=aktif program start, best-effort commit). Bugün/gelecek/taslak ASLA dokunulmaz.
+- **B — Devret**: `GET /teacher/students/{id}/carryover-candidates` (reconcile +
+  geçmiş eksik kalemleri listele) + `POST /teacher/students/{id}/carryover`
+  (target_date + seçili kalemler → her biri yeni güne yeni görev, kapasiteyi
+  yeniden rezerv eder; eski görev DURUR). Frontend: hafta görünümü aside'ında
+  `CarryoverPanel` (amber, aday yoksa hiç görünmez; checkbox + tarih + "Bu haftaya
+  taşı"). `useCarryover` + `getCarryoverCandidates` + `teacherKeys.carryoverCandidates`.
+- **Test:** `test_reservation_carryover` **13/13** (reconcile + kısmi[3/5→3 serbest]
+  + bugün/gelecek korunur + idempotent + reserve sonrası atanabilir + candidates +
+  **çift-iade guard**) · `test_api_v2_carryover_http` **9/9** (login→candidates→
+  reconcile kapasite→carry→yeni görev+rezerv→eski durur). Regresyon: weekly_plan
+  14/14 · student_mutations 12/12 · teacher_read 12 · itemless 10 · paywall 5 ·
+  gorev_checks (pre-existing itemless 0/0 hariç) · tenant 29.
+- **KURAL:** rezerv = yalnız hâlâ yapılabilir göreve (aktif hafta/gelecek/taslak)
+  ait kapasite kilidi; haftası geçmiş tamamlanmamış görevin rezervi "ölü"dür →
+  serbest bırakılır (yeniden atanabilir). pwd_stamp deseni gibi: rezerv değiştiren
+  her yeni yol idempotency + çift-iade guard'ına dikkat etmeli.
+
+---
+
 ## Dinamik vitrin + dönüşüm + sosyal kanıt + analitik (2026-06-15, CANLI)
 
 **Bağlam:** Anasayfa bilgi kartlarının dinamik gösterimi (feature_catalog: fuzzy +
