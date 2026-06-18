@@ -201,6 +201,10 @@ from app.routes.api_v2.schemas.teacher import (
     CarryoverItemlessItem,
     CarryoverResult,
     CarryoverSectionItem,
+    CurriculumExtraItem,
+    CurriculumProgressResponse,
+    CurriculumSubjectItem,
+    CurriculumTopicItem,
     TaskCreateBody,
     TaskItemBody,
     TaskTemplateCreateBody,
@@ -1122,6 +1126,55 @@ def teacher_student_topic_performance_v2(
     from app.services.topic_performance import compute_topic_performance
     return build_topic_performance_response(
         compute_topic_performance(db, student.id)
+    )
+
+
+@router.get(
+    "/students/{student_id}/curriculum",
+    response_model=CurriculumProgressResponse,
+)
+def teacher_student_curriculum_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin müfredat ilerlemesi — hibrit omurga (resmi konu sırası + durum +
+    tamamlama oranı + 'nerede'). Eşleşmemiş üniteler 'ekstra' grubunda. Sahiplik 404."""
+    from app.services import curriculum_progress as cp
+
+    student = _get_owned_student(db, student_id, user.id)
+    res = cp.compute_curriculum_progress(db, student, user.id)
+    return CurriculumProgressResponse(
+        curriculum_model=res.curriculum_model,
+        grade_level=res.grade_level,
+        overall_total_topics=res.overall_total_topics,
+        overall_started_topics=res.overall_started_topics,
+        overall_coverage_pct=res.overall_coverage_pct,
+        subjects=[
+            CurriculumSubjectItem(
+                subject_id=s.subject_id, name=s.name, order=s.order,
+                total_topics=s.total_topics, started_topics=s.started_topics,
+                completed_topics=s.completed_topics, no_resource_topics=s.no_resource_topics,
+                coverage_pct=s.coverage_pct, last_topic_name=s.last_topic_name,
+                next_topic_name=s.next_topic_name,
+                topics=[
+                    CurriculumTopicItem(
+                        topic_id=t.topic_id, name=t.name, order=t.order,
+                        has_resource=t.has_resource, test_total=t.test_total,
+                        completed=t.completed, reserved=t.reserved, status=t.status, pct=t.pct,
+                    )
+                    for t in s.topics
+                ],
+            )
+            for s in res.subjects
+        ],
+        extras=[
+            CurriculumExtraItem(
+                section_id=e.section_id, label=e.label, book_name=e.book_name,
+                subject_name=e.subject_name, test_total=e.test_total, completed=e.completed,
+            )
+            for e in res.extras
+        ],
     )
 
 

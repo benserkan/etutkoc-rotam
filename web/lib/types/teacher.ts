@@ -836,6 +836,52 @@ export interface TaskPatchBody {
   notes?: string | null;
 }
 
+// Müfredat ilerleme (Faz 1)
+export interface CurriculumTopicItem {
+  topic_id: number;
+  name: string;
+  order: number;
+  has_resource: boolean;
+  test_total: number;
+  completed: number;
+  reserved: number;
+  status: "kaynak_yok" | "baslanmadi" | "planlandi" | "devam" | "tamamlandi";
+  pct: number;
+}
+
+export interface CurriculumSubjectItem {
+  subject_id: number;
+  name: string;
+  order: number;
+  total_topics: number;
+  started_topics: number;
+  completed_topics: number;
+  no_resource_topics: number;
+  coverage_pct: number;
+  last_topic_name: string | null;
+  next_topic_name: string | null;
+  topics: CurriculumTopicItem[];
+}
+
+export interface CurriculumExtraItem {
+  section_id: number;
+  label: string;
+  book_name: string;
+  subject_name: string | null;
+  test_total: number;
+  completed: number;
+}
+
+export interface CurriculumProgressResponse {
+  curriculum_model: string | null;
+  grade_level: number | null;
+  overall_total_topics: number;
+  overall_started_topics: number;
+  overall_coverage_pct: number;
+  subjects: CurriculumSubjectItem[];
+  extras: CurriculumExtraItem[];
+}
+
 // Devret (carryover) — geçen haftadan yapılmadan kalan GÖREVLER (tüm tipler)
 export interface CarryoverSectionItem {
   book_id: number;

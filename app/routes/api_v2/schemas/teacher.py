@@ -806,6 +806,51 @@ class TaskCreateBody(BaseModel):
     work_block_id: int | None = None
 
 
+class CurriculumTopicItem(BaseModel):
+    topic_id: int
+    name: str
+    order: int
+    has_resource: bool
+    test_total: int
+    completed: int
+    reserved: int
+    status: str                      # kaynak_yok|baslanmadi|planlandi|devam|tamamlandi
+    pct: int
+
+
+class CurriculumSubjectItem(BaseModel):
+    subject_id: int
+    name: str
+    order: int
+    total_topics: int
+    started_topics: int
+    completed_topics: int
+    no_resource_topics: int
+    coverage_pct: int
+    last_topic_name: str | None = None
+    next_topic_name: str | None = None
+    topics: list[CurriculumTopicItem] = []
+
+
+class CurriculumExtraItem(BaseModel):
+    section_id: int
+    label: str
+    book_name: str
+    subject_name: str | None = None
+    test_total: int
+    completed: int
+
+
+class CurriculumProgressResponse(BaseModel):
+    curriculum_model: str | None = None
+    grade_level: int | None = None
+    overall_total_topics: int
+    overall_started_topics: int
+    overall_coverage_pct: int
+    subjects: list[CurriculumSubjectItem]
+    extras: list[CurriculumExtraItem]
+
+
 class CarryoverSectionItem(BaseModel):
     """Devret adayı görevin yapılmamış section kalemi."""
     book_id: int

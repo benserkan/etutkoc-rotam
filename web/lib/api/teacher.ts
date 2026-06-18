@@ -48,6 +48,7 @@ import type {
   TeacherRequestListResponse,
   TeacherReviewFleetResponse,
   CarryoverCandidatesResponse,
+  CurriculumProgressResponse,
   TeacherReviewResponse,
   TeacherStudentAnalyticsResponse,
   TeacherStudentDayResponse,
@@ -95,6 +96,8 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "parents"] as const,
   carryoverCandidates: (id: number, programId?: number | null) =>
     ["teacher", "me", "students", String(id), "carryover", String(programId ?? "active")] as const,
+  studentCurriculum: (id: number) =>
+    ["teacher", "me", "students", String(id), "curriculum"] as const,
 
   // Paket 3.5a — haftalık plan yardımcıları
   studentSidebar: (id: number, subjectId: number | null) =>
@@ -386,6 +389,14 @@ export function getTeacherStudentWeek(
   });
   return api<TeacherStudentWeekResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(id))}/week${qs}`,
+  );
+}
+
+export function getTeacherStudentCurriculum(
+  id: number,
+): Promise<CurriculumProgressResponse> {
+  return api<CurriculumProgressResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/curriculum`,
   );
 }
 
