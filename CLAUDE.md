@@ -226,9 +226,31 @@ faz 2) · aday = görev düzeyi tüm tipler · blok bağımsız taşıma · carr
     batch/SQLite-uyumlu FK). Carry yeni görevi kaynağa bağlar; **yeni görev silinince
     kaynağın `carried_at`'i temizlenir** → kaynak tekrar listeye döner. `useDeleteTask`
     carryover'ı invalidate eder. **Migration head = `n7o0r3s4r66m`.**
-  - Test: `test_reservation_carryover` **19/19** (filtre + geri-al) · `test_api_v2_carryover_http`
-    **17/17** (Hata1 422 + Hata2 sil→geri + dinamik düşme).
-- **KALAN (faz 2):** sürükle-bırak (listeden kalemi güne/bölüme bırak).
+  - Test: `test_reservation_carryover` **20/20** (filtre + geri-al + browse) · `test_api_v2_carryover_http`
+    **17/17** (Hata1 422 + Hata2 sil→geri + dinamik düşme + plan/browse).
+  - **Browse modu test dahil**: geçmiş program (`?program_id`) BİLGİ AMAÇLI →
+    `list_carryover_candidates +include_plain_tests`; endpoint browse'da True (tüm
+    tipler), plan'da False (test hariç).
+- **Blok yaşam döngüsü (2026-06-18, migration `o8p1s4t5s77n`):**
+  - **Sorun**: Serbest Blok görevleri kitapsız kalem; "blok" işareti yalnız
+    `work_block_id`. Blok SİLİNİNCE work_block_id NULL → kitapsız kalem yanlışlıkla
+    **tam_deneme (DENEME "N soru")** sınıflanıyordu.
+  - **`tasks.block_detached`** (migration, additive): blok silinince bağlı görevler
+    işaretlenir → `classify_gorev` + frontend rozet bunu 'etkinlik/**Diğer**' sayar
+    (DENEME değil). Program verisi DEĞİŞMEZ (görev kalır). Rozet **"{Ders} / Diğer"**
+    (başlık `{Ders} · ...` önekinden; week-day-card/day-board/week-grid block_detached'i
+    önek-parse'a dahil eder → uzun ders adları da çözülür). Carry: blok kökenli görev
+    taşınınca yeni görev de block_detached (Diğer). `test_block_detach` **9/9**.
+  - **Auto-arşiv**: blok tamamen tamamlanınca (`completed >= total`) work-blocks
+    liste ucunda **otomatik status=archived** → Serbest Bloklar listesinden düşer
+    (lazy, idempotent, GET-içi yazma). Görevler programda BLOK olarak kalır; kısmi
+    blok kalır; `include_archived=true` ile yine görünür. `test_block_auto_archive`
+    **8/8**. NOT: önceden silinmiş öksüz DENEME görevlerine DOKUNULMADI (kullanıcı kararı).
+- **Faz 2 — sürükle-bırak ✅ (2026-06-18, frontend-only):** carryover kartı
+  `draggable` (native HTML5 DnD), her gün kartı drop hedefi → görevi o güne taşır
+  (carry). Mevcut dnd-kit gün-içi sıralamasına DOKUNMAZ (ayrı event sistemi). Geçmiş
+  gün drop kabul etmez; drop'ta gün amber ring. Mobil 'Ekle' modalıyla (DnD masaüstü).
+- **Migration head = `o8p1s4t5s77n`.**
 
 ---
 
