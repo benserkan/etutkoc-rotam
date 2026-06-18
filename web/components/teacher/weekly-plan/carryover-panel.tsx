@@ -10,6 +10,7 @@ import {
   Info,
   Boxes,
   X,
+  GripVertical,
 } from "lucide-react";
 
 import {
@@ -133,19 +134,36 @@ export function CarryoverPanel({
           >
             {isBrowse
               ? "Bu hafta tamamlanmamış + sonraki haftaya taşınmamış görevler (bilgi amaçlı)."
-              : "Yapılmadan kalan görevler. Birine “Ekle” diyerek hedef güne taşıyın; taşınan görev listeden düşer."}
+              : "Yapılmadan kalan görevler. Bir güne SÜRÜKLEYİP bırakın ya da “Ekle” ile taşıyın; taşınan görev listeden düşer."}
           </p>
 
           <ul className="space-y-1 px-3 pb-3">
             {candidates.map((c) => (
               <li
                 key={c.task_id}
+                draggable={!isBrowse}
+                onDragStart={
+                  isBrowse
+                    ? undefined
+                    : (e) => {
+                        e.dataTransfer.setData("text/x-carryover-task", String(c.task_id));
+                        e.dataTransfer.effectAllowed = "copy";
+                      }
+                }
                 className={cn(
                   "rounded-md border px-2.5 py-2 text-xs",
-                  isBrowse ? "border-slate-200 bg-white" : "border-amber-200 bg-white",
+                  isBrowse
+                    ? "border-slate-200 bg-white"
+                    : "cursor-grab border-amber-200 bg-white active:cursor-grabbing",
                 )}
               >
                 <div className="flex items-start gap-2">
+                  {!isBrowse ? (
+                    <GripVertical
+                      className="mt-0.5 size-3.5 shrink-0 text-amber-400"
+                      aria-hidden
+                    />
+                  ) : null}
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1 font-medium text-slate-900">
                       {c.is_block ? (

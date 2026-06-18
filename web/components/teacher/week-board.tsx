@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 
 import {
+  useCarryover,
   useCreateProgram,
   useWrapLegacyTasks,
 } from "@/lib/hooks/use-teacher-mutations";
@@ -145,6 +146,10 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
   const [gridBookId, setGridBookId] = React.useState<number | null>(null);
 
   const publishWeek = usePublishWeek(studentId);
+  // Devret sürükle-bırak: panelden bir görevi gün kartına bırakınca o güne taşı.
+  const carryDnd = useCarryover(studentId);
+  const [dragOverDate, setDragOverDate] = React.useState<string | null>(null);
+  const CARRY_MIME = "text/x-carryover-task";
 
   const draftTotal = data.week_draft_total ?? 0;
 
@@ -336,8 +341,40 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           />
 
           {data.days.map((d) => (
-            <WeekDayCard
+            <div
               key={d.date}
+              onDragOver={(e) => {
+                if (d.is_past) return; // geçmiş güne taşıma yok (Hata 1)
+                if (e.dataTransfer.types.includes(CARRY_MIME)) {
+                  e.preventDefault();
+                  e.dataTransfer.dropEffect = "copy";
+                  if (dragOverDate !== d.date) setDragOverDate(d.date);
+                }
+              }}
+              onDragLeave={(e) => {
+                // yalnız kartı tamamen terk edince temizle (alt öğelere girince değil)
+                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                  setDragOverDate((cur) => (cur === d.date ? null : cur));
+                }
+              }}
+              onDrop={(e) => {
+                const raw = e.dataTransfer.getData(CARRY_MIME);
+                setDragOverDate(null);
+                if (!raw || d.is_past) return;
+                e.preventDefault();
+                const tid = Number(raw);
+                if (!Number.isFinite(tid)) return;
+                carryDnd.mutate({
+                  body: { target_date: d.date, period: null, task_ids: [tid] },
+                });
+              }}
+              className={cn(
+                "rounded-lg transition",
+                dragOverDate === d.date &&
+                  "ring-2 ring-amber-400 ring-offset-2 ring-offset-background",
+              )}
+            >
+            <WeekDayCard
               studentId={studentId}
               weekStartDate={data.start_date}
               day={d}
@@ -358,6 +395,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
               trackMissing={data.track_missing ?? false}
               trackLabel={data.track_label ?? null}
             />
+            </div>
           ))}
 
           <div className="flex gap-3 text-xs text-muted-foreground mt-2">
