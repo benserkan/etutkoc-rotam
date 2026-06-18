@@ -1157,6 +1157,9 @@ function TaskRichEditForm({
     task.scheduled_hour ? task.scheduled_hour.slice(0, 2) : "",
   );
   const [taskType, setTaskType] = React.useState<TaskType>(task.type);
+  const [period, setPeriod] = React.useState<TaskPeriod | null>(
+    (task.period as TaskPeriod | null) ?? null,
+  );
   const [subjectId, setSubjectId] = React.useState<number | "">(
     item.subject_id ?? "",
   );
@@ -1238,6 +1241,7 @@ function TaskRichEditForm({
           date: taskDate,
           scheduled_hour: hourNum,
           type: taskType,
+          period,
           book_id: bookId,
           section_id: sectionId,
           planned_count: countNum,
@@ -1301,6 +1305,32 @@ function TaskRichEditForm({
             <option value="tekrar">Tekrar</option>
             <option value="other">Diğer</option>
           </select>
+        </div>
+      </div>
+
+      <div>
+        <span className="text-sm font-medium">Zaman dilimi (gün içi bölüm)</span>
+        <div className="mt-1 flex flex-wrap gap-1.5">
+          {([
+            { k: null, l: "Yok" },
+            { k: "morning", l: "Sabah" },
+            { k: "noon", l: "Öğle" },
+            { k: "evening", l: "Akşam" },
+          ] as { k: TaskPeriod | null; l: string }[]).map((p) => (
+            <button
+              key={p.l}
+              type="button"
+              onClick={() => setPeriod(p.k)}
+              className={cn(
+                "rounded-md border px-2.5 py-1 text-xs transition",
+                period === p.k
+                  ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
+                  : "border-input bg-background hover:bg-muted/50",
+              )}
+            >
+              {p.l}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -1462,6 +1492,10 @@ function TaskQuickEditForm({
 }) {
   const patchMut = usePatchTask(studentId, dayDate);
   const [title, setTitle] = React.useState(task.title);
+  const [taskDate, setTaskDate] = React.useState(task.date);
+  const [period, setPeriod] = React.useState<TaskPeriod | null>(
+    (task.period as TaskPeriod | null) ?? null,
+  );
   const [hour, setHour] = React.useState<string>(
     task.scheduled_hour ? task.scheduled_hour.slice(0, 2) : "",
   );
@@ -1483,12 +1517,15 @@ function TaskQuickEditForm({
     }
     const trimmedTitle = title.trim();
     const trimmedNotes = notes.trim();
+    const curPeriod = (task.period as TaskPeriod | null) ?? null;
     patchMut.mutate(
       {
         taskId: task.id,
         body: {
           title:
             trimmedTitle && trimmedTitle !== task.title ? trimmedTitle : undefined,
+          date: taskDate && taskDate !== task.date ? taskDate : undefined,
+          period: period !== curPeriod ? (period ?? "") : undefined,
           scheduled_hour: hourNum,
           is_draft: isDraft !== task.is_draft ? isDraft : undefined,
           notes:
@@ -1518,6 +1555,49 @@ function TaskQuickEditForm({
           maxLength={200}
           className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
         />
+      </div>
+      <div className="space-y-1">
+        <label
+          htmlFor={`edit-date-${task.id}`}
+          className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium"
+        >
+          Gün (başka güne taşı)
+        </label>
+        <input
+          id={`edit-date-${task.id}`}
+          type="date"
+          value={taskDate}
+          onChange={(e) => setTaskDate(e.target.value)}
+          required
+          className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+        />
+      </div>
+      <div className="space-y-1">
+        <span className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+          Zaman dilimi (gün içi bölüm)
+        </span>
+        <div className="flex flex-wrap gap-1.5">
+          {([
+            { k: null, l: "Yok" },
+            { k: "morning", l: "Sabah" },
+            { k: "noon", l: "Öğle" },
+            { k: "evening", l: "Akşam" },
+          ] as { k: TaskPeriod | null; l: string }[]).map((p) => (
+            <button
+              key={p.l}
+              type="button"
+              onClick={() => setPeriod(p.k)}
+              className={cn(
+                "rounded-md border px-2.5 py-1 text-xs transition",
+                period === p.k
+                  ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
+                  : "border-input bg-background hover:bg-muted/50",
+              )}
+            >
+              {p.l}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div className="space-y-1">

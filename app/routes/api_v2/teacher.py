@@ -4012,6 +4012,8 @@ def teacher_patch_task_v2(
     if body.period is not None:
         # Boş string ("") → period temizle (NULL).
         task.period = _validate_period(body.period if body.period else None)
+    if body.date is not None and body.date.strip():
+        task.date = _parse_iso_date(body.date)
     if body.order is not None:
         task.order = int(body.order)
     if body.is_draft is not None:
@@ -4413,6 +4415,7 @@ def teacher_patch_task_single_item_v2(
     task.date = new_date
     task.type = new_type
     task.scheduled_hour = new_sched
+    task.period = body.period if body.period in ("morning", "noon", "evening") else None
     task.notes = (body.notes or "").strip() or None
     task.link_url = (body.link_url or "").strip() or None
 

@@ -865,6 +865,7 @@ class TaskPatchBody(BaseModel):
     type: TaskTypeLiteral | None = None
     scheduled_hour: int | None = None
     period: str | None = None          # "morning"|"noon"|"evening"|""(=null)|None
+    date: str | None = None            # "YYYY-MM-DD" — görevi başka güne taşı
     order: int | None = None
     is_draft: bool | None = None
     notes: str | None = None
@@ -904,6 +905,7 @@ class TaskSingleItemEditBody(BaseModel):
     date: str                          # "YYYY-MM-DD"
     scheduled_hour: int | None = None  # 0..23 veya None = saatsiz
     type: TaskTypeLiteral
+    period: str | None = None          # "morning"|"noon"|"evening"|None (zaman dilimi)
     book_id: int
     section_id: int
     planned_count: int

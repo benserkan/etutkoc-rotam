@@ -21,7 +21,7 @@ except Exception:
     pass
 
 import secrets
-from datetime import date
+from datetime import date, timedelta
 
 from fastapi.testclient import TestClient
 from sqlalchemy import delete as sa_delete
@@ -261,6 +261,40 @@ def main() -> int:
         ok = sc == 200 and j.get("data", {}).get("period") is None
         check("10. period=None → NULL kalır",
               ok, f"status={sc} period={j.get('data', {}).get('period')}")
+
+        # ===== 11. PATCH date → görev başka güne taşınır (gün düzenleme) =====
+        sc, j, _ = _create_task(client, seed, period="morning")
+        tid = j["data"]["id"]
+        new_day = (date.today() + timedelta(days=2)).isoformat()
+        r = client.patch(f"/api/v2/teacher/tasks/{tid}", json={"date": new_day})
+        with SessionLocal() as db:
+            tk = db.get(Task, tid)
+            check("11. PATCH date → görev yeni güne taşındı",
+                  r.status_code == 200 and tk.date.isoformat() == new_day,
+                  f"status={r.status_code} date={tk.date}")
+
+        # ===== 12. PATCH period='' → temizle + date birlikte =====
+        r = client.patch(f"/api/v2/teacher/tasks/{tid}", json={"period": "", "date": date.today().isoformat()})
+        with SessionLocal() as db:
+            tk = db.get(Task, tid)
+            check("12. PATCH period='' + date → period NULL + date bugün",
+                  r.status_code == 200 and tk.period is None and tk.date == date.today(),
+                  f"status={r.status_code} period={tk.period} date={tk.date}")
+
+        # ===== 13. single-item PATCH period+date → ikisi de güncellenir =====
+        sc, j, _ = _create_task(client, seed)
+        tid2 = j["data"]["id"]
+        r = client.patch(
+            f"/api/v2/teacher/tasks/{tid2}/single-item",
+            json={"date": new_day, "type": "test", "period": "evening",
+                  "book_id": seed["book_id"], "section_id": seed["section_id"],
+                  "planned_count": 3},
+        )
+        with SessionLocal() as db:
+            tk = db.get(Task, tid2)
+            check("13. single-item PATCH period=evening + date → ikisi güncel",
+                  r.status_code == 200 and tk.period == "evening" and tk.date.isoformat() == new_day,
+                  f"status={r.status_code} period={tk.period} date={tk.date}")
 
     finally:
         _cleanup(seed)

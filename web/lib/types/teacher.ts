@@ -341,6 +341,7 @@ export interface TaskSingleItemEditBody {
   date: string;
   scheduled_hour: number | null;
   type: TaskType;
+  period?: TaskPeriod | null;        // zaman dilimi (Sabah/Öğle/Akşam/null)
   book_id: number;
   section_id: number;
   planned_count: number;
@@ -829,6 +830,7 @@ export interface TaskPatchBody {
   type?: TaskType | null;
   scheduled_hour?: number | null;
   period?: TaskPeriod | "" | null;  // M6 — "" → temizle (NULL'a düşür)
+  date?: string | null;             // "YYYY-MM-DD" — görevi başka güne taşı
   order?: number | null;
   is_draft?: boolean | null;
   notes?: string | null;
