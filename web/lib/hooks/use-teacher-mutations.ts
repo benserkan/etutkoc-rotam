@@ -485,6 +485,10 @@ export function useDeleteTask(studentId: number, dateIso: string) {
     },
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
+      // Devredilmiş görev silinmiş olabilir → kaynak listeye döner (geri-al).
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "carryover"],
+      });
       toast.success("Görev silindi");
     },
   });

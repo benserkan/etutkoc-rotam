@@ -270,8 +270,15 @@ def list_carryover_candidates(
                     "count": it.planned_count,
                 })
                 total_remaining += rem
-        # Hiç section kalemi tamamlanmamış kalmamışsa ama itemless/etkinlik ise yine aday.
         is_activity = len(t.book_items) == 0
+        is_block = t.work_block_id is not None
+        # DÜZ TEST görevi (kitaptan section, blok DEĞİL, kitapsız kalem yok) →
+        # LİSTEDE GÖSTERME. Rezerv reconcile ile zaten iade edildi; kitapta
+        # 'çözülmedi' olarak görünür → koç normal akıştan yeniden atar. Yalnız
+        # blok / etkinlik (video/özet/tekrar/diğer) / kitapsız deneme listelenir.
+        if section_items and not is_block and not itemless and not is_activity:
+            continue
+        # Gösterilecek içerik yoksa atla.
         if not section_items and not itemless and not is_activity:
             continue
         out.append({

@@ -66,15 +66,20 @@ def main() -> int:
         sb = StudentBook(student_id=student.id, book_id=book.id); db.add(sb); db.flush()
         sp = SectionProgress(student_book_id=sb.id, book_section_id=sec.id, reserved_count=3, completed_count=0)
         db.add(sp); db.flush()
-        # Geçen hafta görevi — 3 test rezerv, yapılmadı (tam kapasite kilitli)
+        # Geçen hafta DÜZ TEST görevi — 3 test rezerv (reconcile serbest bırakır,
+        # LİSTEDE GÖRÜNMEZ — kitapta çözülmedi olarak görünür)
         t_past = Task(student_id=student.id, date=today - timedelta(days=6), type=TaskType.TEST,
-                      title="Geçen hafta", status=TaskStatus.PENDING, order=0, is_draft=False)
+                      title="Geçen hafta test", status=TaskStatus.PENDING, order=0, is_draft=False)
         db.add(t_past); db.flush()
         db.add(TaskBookItem(task_id=t_past.id, book_id=book.id, book_section_id=sec.id,
                             planned_count=3, completed_count=0))
+        # Geçen hafta ETKİNLİK görevi (video) — LİSTEDE GÖRÜNÜR, taşınabilir
+        t_video = Task(student_id=student.id, date=today - timedelta(days=6), type=TaskType.VIDEO,
+                       title="Geçen hafta video", status=TaskStatus.PENDING, order=1, is_draft=False)
+        db.add(t_video); db.flush()
         db.commit()
         ids = {"teacher": teacher.id, "student": student.id, "book": book.id, "sec": sec.id,
-               "sp": sp.id, "t_past": t_past.id, "subj": subj.id}
+               "sp": sp.id, "t_past": t_past.id, "t_video": t_video.id, "subj": subj.id}
 
     get_login_limiter().reset()
     client = TestClient(app)
@@ -91,36 +96,53 @@ def main() -> int:
         check("2. candidates 200", r.status_code == 200, r.text[:120])
         body = r.json()
         check("2b. mode=plan (aktif/yeni hafta)", body.get("mode") == "plan", body.get("mode"))
-        cands = body.get("candidates", [])
-        mine = [c for c in cands if c["task_id"] == ids["t_past"]]
-        check("3. geçen haftanın eksik görevi adaylarda (kalan=3)",
-              len(mine) == 1 and mine[0]["total_remaining"] == 3, f"got {mine}")
+        ctids = {c["task_id"] for c in body.get("candidates", [])}
+        check("3. düz TEST görevi listede YOK (rezerv iade edildi, kitapta görünür)",
+              ids["t_past"] not in ctids, f"got {ctids}")
+        check("3b. ETKİNLİK (video) görevi listede VAR", ids["t_video"] in ctids, f"got {ctids}")
         with SessionLocal() as db:
-            check("4. reconcile sonrası sec reserved=0 (kapasite açıldı)",
+            check("4. reconcile sonrası sec reserved=0 (kapasite açıldı, kitapta çözülmedi)",
                   db.get(SectionProgress, ids["sp"]).reserved_count == 0)
 
-        # POST carry → görevi bu haftaya (bugün) taşı
+        # Hata 1: GEÇMİŞ güne taşıma reddedilir (422)
         r = client.post(
             f"/api/v2/teacher/students/{ids['student']}/carryover",
-            json={"target_date": today.isoformat(), "task_ids": [ids["t_past"]]},
+            json={"target_date": (today - timedelta(days=2)).isoformat(), "task_ids": [ids["t_video"]]},
         )
-        check("5. carry 200", r.status_code == 200, r.text[:160])
-        check("6. created_tasks=1", r.json().get("data", {}).get("created_tasks") == 1, r.text[:120])
+        check("5. Hata1: geçmiş güne taşıma → 422 past_target_date",
+              r.status_code == 422 and "past_target_date" in r.text, f"{r.status_code} {r.text[:120]}")
+
+        # POST carry → video görevini bugüne taşı
+        r = client.post(
+            f"/api/v2/teacher/students/{ids['student']}/carryover",
+            json={"target_date": today.isoformat(), "task_ids": [ids["t_video"]]},
+        )
+        check("6. carry 200 + created=1", r.status_code == 200
+              and r.json().get("data", {}).get("created_tasks") == 1, r.text[:160])
         with SessionLocal() as db:
-            check("7. taşıma sonrası sec reserved=3 (yeni görevde yeniden rezerv)",
-                  db.get(SectionProgress, ids["sp"]).reserved_count == 3)
+            src = db.get(Task, ids["t_video"])
+            check("7. kaynak video carried_at işaretlendi (kayıt durur)", src.carried_at is not None)
             new_tasks = db.query(Task).filter(
                 Task.student_id == ids["student"], Task.date == today).all()
-            check("8. bugün yeni görev oluştu", len(new_tasks) == 1, f"got {len(new_tasks)}")
-            src = db.get(Task, ids["t_past"])
-            check("9. eski görev hâlâ duruyor + carried_at işaretlendi",
-                  src is not None and src.carried_at is not None)
+            check("8. bugün yeni görev oluştu + kaynağa bağlı (carried_from)",
+                  len(new_tasks) == 1 and new_tasks[0].carried_from_task_id == ids["t_video"],
+                  f"got {[(t.id, t.carried_from_task_id) for t in new_tasks]}")
+            ids["new_task"] = new_tasks[0].id
 
-        # GET candidates tekrar → taşınan görev listeden DÜŞTÜ (dinamik)
+        # GET candidates → taşınan video listeden DÜŞTÜ (dinamik)
         r = client.get(f"/api/v2/teacher/students/{ids['student']}/carryover-candidates")
-        cands2 = r.json().get("candidates", [])
-        check("10. taşınan görev artık adaylarda YOK (dinamik düşme)",
-              ids["t_past"] not in {c["task_id"] for c in cands2}, f"got {[c['task_id'] for c in cands2]}")
+        check("9. taşınan video artık adaylarda YOK (dinamik düşme)",
+              ids["t_video"] not in {c["task_id"] for c in r.json().get("candidates", [])})
+
+        # Hata 2: yeni görevi sil → kaynak video LİSTEYE GERİ döner
+        r = client.delete(f"/api/v2/teacher/tasks/{ids['new_task']}")
+        check("10. yeni görev silindi (200)", r.status_code == 200, r.text[:120])
+        with SessionLocal() as db:
+            check("10b. kaynak video carried_at TEMİZLENDİ (geri-al)",
+                  db.get(Task, ids["t_video"]).carried_at is None)
+        r = client.get(f"/api/v2/teacher/students/{ids['student']}/carryover-candidates")
+        check("10c. Hata2: silinince kaynak video LİSTEYE GERİ döndü",
+              ids["t_video"] in {c["task_id"] for c in r.json().get("candidates", [])})
 
         # BROWSE mode: geçmiş program + ikinci (taşınmamış) görev
         with SessionLocal() as db:
@@ -138,8 +160,8 @@ def main() -> int:
         bj = r.json()
         check("11. geçmiş program görüntüleme → mode=browse", bj.get("mode") == "browse", bj.get("mode"))
         bids = {c["task_id"] for c in bj.get("candidates", [])}
-        check("12. browse: o haftanın taşınmamış görevi (video) listede", ids["t2"] in bids, f"got {bids}")
-        check("13. browse: taşınmış (carried) görev listede YOK", ids["t_past"] not in bids, f"got {bids}")
+        check("12. browse: o haftanın etkinlik görevi (video) listede (bilgi amaçlı)", ids["t2"] in bids, f"got {bids}")
+        check("13. browse: düz TEST görevi listede YOK (filtre)", ids["t_past"] not in bids, f"got {bids}")
     finally:
         with SessionLocal() as db:
             # tüm öğrenci görevlerini sil

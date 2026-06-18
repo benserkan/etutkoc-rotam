@@ -25,6 +25,7 @@ from app.models import (
     Book,
     BookSection,
     BookType,
+    CoachWorkBlock,
     SectionProgress,
     StudentBook,
     Subject,
@@ -85,7 +86,8 @@ def main() -> int:
         sb = StudentBook(student_id=student.id, book_id=book.id); db.add(sb); db.flush()
         sp_a = SectionProgress(student_book_id=sb.id, book_section_id=sec_a.id, reserved_count=3, completed_count=0)
         sp_b = SectionProgress(student_book_id=sb.id, book_section_id=sec_b.id, reserved_count=5, completed_count=2)
-        sp_c = SectionProgress(student_book_id=sb.id, book_section_id=sec_c.id, reserved_count=2, completed_count=0)
+        # sec_c: t_today(2) + t_block(1) = 3 rezerv
+        sp_c = SectionProgress(student_book_id=sb.id, book_section_id=sec_c.id, reserved_count=3, completed_count=0)
         db.add_all([sp_a, sp_b, sp_c]); db.flush()
 
         # GEÇMİŞ görev (geçen hafta, PENDING) — sec_a'dan 3 test, hiç yapılmadı (HASTA)
@@ -109,12 +111,26 @@ def main() -> int:
         i_today = TaskBookItem(task_id=t_today.id, book_id=book.id, book_section_id=sec_c.id,
                                planned_count=2, completed_count=0)
         db.add(i_today)
+        # GEÇMİŞ BLOK görevi (work_block) — section'lı ama blok → LİSTEDE OLMALI
+        blk = CoachWorkBlock(coach_id=teacher.id, student_id=student.id,
+                             title="Mat Blok", total_count=10, unit="test", status="active")
+        db.add(blk); db.flush()
+        t_block = Task(student_id=student.id, date=today - timedelta(days=5), type=TaskType.TEST,
+                       title="Mat·Blok", status=TaskStatus.PENDING, order=2, is_draft=False,
+                       work_block_id=blk.id)
+        db.add(t_block); db.flush()
+        db.add(TaskBookItem(task_id=t_block.id, book_id=book.id, book_section_id=sec_c.id,
+                            planned_count=1, completed_count=0))
+        # GEÇMİŞ ETKİNLİK görevi (video, kalemsiz) → LİSTEDE OLMALI
+        t_video = Task(student_id=student.id, date=today - timedelta(days=5), type=TaskType.VIDEO,
+                       title="Konu videosu", status=TaskStatus.PENDING, order=3, is_draft=False)
+        db.add(t_video); db.flush()
         db.commit()
         ids = {"student": student.id, "teacher_obj": teacher.id, "book": book.id,
                "sec_a": sec_a.id, "sec_b": sec_b.id, "sec_c": sec_c.id,
                "sp_a": sp_a.id, "sp_b": sp_b.id, "sp_c": sp_c.id,
                "t_past": t_past.id, "t_partial": t_partial.id, "t_today": t_today.id,
-               "i_past": i_past.id}
+               "i_past": i_past.id, "blk": blk.id, "t_block": t_block.id, "t_video": t_video.id}
 
     try:
         with SessionLocal() as db:
@@ -124,8 +140,8 @@ def main() -> int:
 
             res = ts.reconcile_past_reservations(db, student_id=ids["student"], cutoff_date=cutoff)
             db.commit()
-            check("1. reconcile serbest bıraktı (3 + 3 = 6 test)",
-                  res["released_tests"] == 6, f"got {res}")
+            check("1. reconcile serbest bıraktı (3 + 3 + 1 blok = 7 test)",
+                  res["released_tests"] == 7, f"got {res}")
             check("2. sec_a reserved → 0 (geçen hafta tam serbest)", _reserved(db, ids["sp_a"]) == 0)
             check("3. sec_b reserved → 2 (5'ten 3 serbest, completed 2 korundu)",
                   _reserved(db, ids["sp_b"]) == 2, f"got {_reserved(db, ids['sp_b'])}")
@@ -150,20 +166,18 @@ def main() -> int:
             check("9. reconcile sonrası sec_a yeniden atanabilir (reserve 3 OK)",
                   _reserved(db, ids["sp_a"]) == 3)
 
-            # carryover candidates (GÖREV düzeyi): geçmiş yapılmayanlar listelenir
+            # carryover candidates (GÖREV düzeyi) — YENİ FİLTRE: düz test görevleri
+            # LİSTEDE YOK (rezerv iade edildi, kitapta çözülmedi görünür); yalnız
+            # blok + etkinlik (video/özet/...) + kitapsız deneme listelenir.
             cands = ts.list_carryover_candidates(db, student_id=ids["student"], cutoff_date=cutoff)
-            # section'ları düzleştir → {section_id: remaining}
-            sec_ids: dict = {}
-            for c in cands:
-                for si in c["section_items"]:
-                    sec_ids[si["section_id"]] = si["remaining"]
-            check("10. candidates sec_a (3) + sec_b (3) içerir (görev düzeyi)",
-                  sec_ids.get(ids["sec_a"]) == 3 and sec_ids.get(ids["sec_b"]) == 3, f"got {sec_ids}")
-            check("11. candidates bugünkü sec_c'yi İÇERMEZ", ids["sec_c"] not in sec_ids)
-            # taşınmamış (carried_at NULL) görevler → her ikisi de listede
             task_ids = {c["task_id"] for c in cands}
-            check("11a. t_past + t_partial görevleri adaylarda",
-                  ids["t_past"] in task_ids and ids["t_partial"] in task_ids, f"got {task_ids}")
+            check("10. düz TEST görevleri (t_past + t_partial) listede YOK (rezerv iade edildi)",
+                  ids["t_past"] not in task_ids and ids["t_partial"] not in task_ids, f"got {task_ids}")
+            check("11. BLOK görevi (t_block) listede VAR",
+                  ids["t_block"] in task_ids, f"got {task_ids}")
+            check("11a. ETKİNLİK görevi (t_video) listede VAR",
+                  ids["t_video"] in task_ids, f"got {task_ids}")
+            check("11e. bugünkü görev listede YOK (geçmiş değil)", ids["t_today"] not in task_ids)
 
             # since_date kapsamı: today-3'ten itibaren → today-5 görevleri DIŞARIDA
             # (geçen hafta sınırı), ama kapasiteleri yine serbest (reconcile tüm geçmiş).
@@ -175,12 +189,17 @@ def main() -> int:
             check("11c. ama kapasiteleri yine serbest (reconcile tüm geçmiş): sec_a reserved hâlâ 0/3 atanabilir",
                   db.get(SectionProgress, ids["sp_a"]).reserved_count == 3)  # test 9'da yeniden atanmıştı
 
-            # carried işareti: t_partial'ı taşınmış işaretle → listeden düşer
-            tp = db.get(Task, ids["t_partial"])
-            ts.mark_task_carried(db, tp); db.commit()
+            # carried işareti: t_block'u taşınmış işaretle → listeden düşer
+            tb = db.get(Task, ids["t_block"])
+            ts.mark_task_carried(db, tb); db.commit()
             cands2 = ts.list_carryover_candidates(db, student_id=ids["student"], cutoff_date=cutoff)
-            check("11d. mark_task_carried sonrası t_partial listeden DÜŞTÜ",
-                  ids["t_partial"] not in {c["task_id"] for c in cands2}, "carried görünmemeli")
+            check("11d. mark_task_carried sonrası t_block listeden DÜŞTÜ",
+                  ids["t_block"] not in {c["task_id"] for c in cands2}, "carried görünmemeli")
+            # geri-al: carried_at temizle → tekrar listede
+            tb.carried_at = None; db.commit()
+            cands3 = ts.list_carryover_candidates(db, student_id=ids["student"], cutoff_date=cutoff)
+            check("11f. carried_at temizlenince t_block listeye GERİ döndü (geri-al)",
+                  ids["t_block"] in {c["task_id"] for c in cands3})
 
             # çift-iade koruması: serbest bırakılmış geçmiş görevi sil → reserved bozulmasın
             # (sec_a şu an 3 = yeniden atanan reserve; geçmiş görevi silmek bunu düşürmemeli)
@@ -192,9 +211,13 @@ def main() -> int:
                   _reserved(db, ids["sp_a"]) == 3, f"got {_reserved(db, ids['sp_a'])}")
     finally:
         with SessionLocal() as db:
-            tids = [ids["t_past"], ids["t_partial"], ids["t_today"]]
+            tids = [ids["t_past"], ids["t_partial"], ids["t_today"],
+                    ids.get("t_block"), ids.get("t_video")]
+            tids = [t for t in tids if t]
             db.execute(sa_delete(TaskBookItem).where(TaskBookItem.task_id.in_(tids)))
             db.execute(sa_delete(Task).where(Task.id.in_(tids)))
+            if ids.get("blk"):
+                db.execute(sa_delete(CoachWorkBlock).where(CoachWorkBlock.id == ids["blk"]))
             db.execute(sa_delete(WeeklyProgram).where(WeeklyProgram.student_id == ids["student"]))
             db.execute(sa_delete(SectionProgress).where(
                 SectionProgress.book_section_id.in_([ids["sec_a"], ids["sec_b"], ids["sec_c"]])))

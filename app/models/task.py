@@ -87,6 +87,13 @@ class Task(Base):
     carried_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # Devret kaynağı: bu görev başka bir görevden devredildiyse (devret listesinden
+    # taşıma) kaynak görev id'si. Bu görev silinirse kaynağın carried_at'i temizlenir
+    # → kaynak tekrar "tamamlanmayanlar" listesine döner (geri-al). Kaynak silinince
+    # SET NULL.
+    carried_from_task_id: Mapped[int | None] = mapped_column(
+        ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True, index=True
+    )
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

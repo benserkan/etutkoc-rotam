@@ -3659,6 +3659,15 @@ def teacher_carryover_v2(
             status_code=422,
             detail={"error": "invalid", "code": "no_items", "message": "Taşınacak görev seçilmedi."},
         )
+    # Hata 1: geçmiş güne tamamlanamayan görev eklenemez (aynı hafta bile olsa).
+    if target < date.today():
+        raise HTTPException(
+            status_code=422,
+            detail={
+                "error": "invalid", "code": "past_target_date",
+                "message": "Geçmiş bir güne görev taşınamaz; bugün veya ileri bir gün seçin.",
+            },
+        )
     # Ölü rezervi serbest bırak → taşınan görevler için kapasite açılsın.
     _mode, _ws, _we, recon_cutoff = _carryover_context(db, student.id, None)
     if recon_cutoff is not None:
@@ -3705,7 +3714,9 @@ def teacher_carryover_v2(
                 notes=src.notes,
                 items=items,
             )
-            _create_task_with_items(db, student=student, payload=payload)
+            new_task = _create_task_with_items(db, student=student, payload=payload)
+            # Hata 2 için: yeni görev kaynağa bağlanır → silinirse kaynak listeye döner.
+            new_task.carried_from_task_id = src.id
             tsvc.mark_task_carried(db, src)
             carried_ids.append(src.id)
             created += 1
@@ -4022,14 +4033,25 @@ def teacher_delete_task_v2(
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Görevi sil — `planned - completed` kadar rezervi iade et."""
+    """Görevi sil — `planned - completed` kadar rezervi iade et.
+
+    Hata 2: bu görev devret listesinden taşınmışsa (carried_from_task_id),
+    silinince kaynak görevin carried_at'i temizlenir → kaynak tekrar
+    'tamamlanmayanlar' listesine döner (geri-al)."""
     task = _get_owned_task(db, task_id, user.id)
     invalidate = _invalidate_for_task(task, user.id)
+    src_id = task.carried_from_task_id
     try:
         release_task_items(db, task.student_id, list(task.book_items))
     except ReservationError as e:
         db.rollback()
         raise _reservation_to_http(e)
+    if src_id is not None:
+        src = db.query(Task).filter(
+            Task.id == src_id, Task.student_id == task.student_id,
+        ).first()
+        if src is not None and src.carried_at is not None:
+            src.carried_at = None  # geri-al → listeye döner
     db.delete(task)
     db.commit()
     return MutationResponse[dict](

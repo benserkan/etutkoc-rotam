@@ -215,14 +215,19 @@ function AddToDayDialog({
   onConfirm: (targetDate: string, period: TaskPeriod | null) => void;
 }) {
   const open = candidate !== null;
+  // Hata 1: geçmiş güne tamamlanamayan görev eklenemez → yalnız bugün + ileri günler.
+  const selectableDays = React.useMemo(
+    () => weekDays.filter((d) => !d.is_past),
+    [weekDays],
+  );
   const usesPeriods = React.useMemo(
     () => weekDays.some((d) => d.tasks?.some((t) => t.period)),
     [weekDays],
   );
   const defaultDay = React.useMemo(() => {
-    const today = weekDays.find((d) => d.is_today);
-    return today?.date ?? weekDays[0]?.date ?? "";
-  }, [weekDays]);
+    const today = selectableDays.find((d) => d.is_today);
+    return today?.date ?? selectableDays[0]?.date ?? "";
+  }, [selectableDays]);
 
   const [day, setDay] = React.useState(defaultDay);
   const [period, setPeriod] = React.useState<TaskPeriod | null>(null);
@@ -248,8 +253,14 @@ function AddToDayDialog({
         <div className="space-y-3">
           <div>
             <p className="mb-1.5 text-xs font-medium text-foreground">Gün</p>
+            {selectableDays.length === 0 ? (
+              <p className="rounded-md bg-amber-50 px-2 py-1.5 text-[11px] text-amber-800">
+                Bu haftada eklenebilecek (bugün veya ileri) gün yok. Yeni hafta
+                oluşturup oraya taşıyın.
+              </p>
+            ) : null}
             <div className="grid grid-cols-2 gap-1.5">
-              {weekDays.map((d) => (
+              {selectableDays.map((d) => (
                 <button
                   key={d.date}
                   type="button"
