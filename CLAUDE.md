@@ -213,6 +213,21 @@ faz 2) · aday = görev düzeyi tüm tipler · blok bağımsız taşıma · carr
   plan/browse + dinamik düşme + carried hariç + bağımsız rezerv). Regresyon:
   weekly_plan 14 · student_mutations 12 · teacher_read 12 · itemless 10 · paywall 5 ·
   tenant 29. **Migration head = `m6n9q2r3q55l`.**
+- **Düzeltmeler (2026-06-18, migration `n7o0r3s4r66m`):**
+  - **Liste kapsamı**: düz TEST görevleri (kitaptan section, blok DEĞİL, kitapsız
+    kalem yok) artık **listede GÖRÜNMEZ** — rezerv reconcile ile zaten iade edildi,
+    kitapta "çözülmedi" görünür → koç normal akıştan yeniden atar. Yalnız **blok
+    (work_block_id) + etkinlik (video/özet/tekrar/diğer) + kitapsız deneme** listelenir
+    (`list_carryover_candidates` filtre).
+  - **Hata 1 (geçmiş gün)**: carry hedef tarihi `< bugün` → 422 `past_target_date`
+    (geçmiş güne tamamlanamayan görev eklenemez). Frontend `AddToDayDialog` yalnız
+    **bugün + ileri** günleri gösterir (`!is_past`).
+  - **Hata 2 (silince geri-al)**: **migration `n7o0r3s4r66m`** (`tasks.carried_from_task_id`,
+    batch/SQLite-uyumlu FK). Carry yeni görevi kaynağa bağlar; **yeni görev silinince
+    kaynağın `carried_at`'i temizlenir** → kaynak tekrar listeye döner. `useDeleteTask`
+    carryover'ı invalidate eder. **Migration head = `n7o0r3s4r66m`.**
+  - Test: `test_reservation_carryover` **19/19** (filtre + geri-al) · `test_api_v2_carryover_http`
+    **17/17** (Hata1 422 + Hata2 sil→geri + dinamik düşme).
 - **KALAN (faz 2):** sürükle-bırak (listeden kalemi güne/bölüme bırak).
 
 ---
