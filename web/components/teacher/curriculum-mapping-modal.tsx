@@ -43,27 +43,25 @@ export function CurriculumMappingModal({
 
   // section_id → seçili topic_id ("" = eşleme yok). Veri gelince/değişince türet.
   const [sel, setSel] = React.useState<Record<number, number | "">>({});
-  const [seedKey, setSeedKey] = React.useState<string>("");
   const data = q.data;
-  if (data) {
-    const key = `${ai}:${data.rows.map((r) => r.section_id).join(",")}`;
-    if (key !== seedKey) {
-      setSeedKey(key);
-      const next: Record<number, number | ""> = {};
-      for (const r of data.rows) {
-        next[r.section_id] = r.current_topic_id ?? r.suggested_topic_id ?? "";
-      }
-      setSel(next);
-    }
-  }
-
   const topics = data?.candidate_topics ?? [];
+
+  // Görünen değer = koçun elle değiştirdiği (override) varsa o; yoksa mevcut eşleme,
+  // yoksa ÖNERİ (auto/AI). Böylece öneri açılır menüye OTOMATİK dolar (seed timing
+  // sorunu yok) — koç sadece gözden geçirir + Uygula.
+  type Row = MappingSuggestionsResponse["rows"][number];
+  function valueFor(r: Row): number | "" {
+    if (r.section_id in sel) return sel[r.section_id];
+    return r.current_topic_id ?? r.suggested_topic_id ?? "";
+  }
 
   function onApply() {
     if (!data) return;
     const items = data.rows
-      .map((r) => ({ section_id: r.section_id, topic_id: sel[r.section_id] === "" ? null : Number(sel[r.section_id]) }))
-      // yalnız değişenleri gönder
+      .map((r) => {
+        const v = valueFor(r);
+        return { section_id: r.section_id, topic_id: v === "" ? null : Number(v) };
+      })
       .filter((it) => {
         const r = data.rows.find((x) => x.section_id === it.section_id)!;
         return it.topic_id !== (r.current_topic_id ?? null);
@@ -77,6 +75,14 @@ export function CurriculumMappingModal({
 
   const mapped = data ? data.mapped_count : 0;
   const total = data ? data.total_sections : 0;
+  // Uygulanacak (öneriyle dolu veya elle değişmiş, mevcuttan farklı) sayısı.
+  const pendingCount = data
+    ? data.rows.filter((r) => {
+        const v = valueFor(r);
+        const tid = v === "" ? null : Number(v);
+        return tid !== (r.current_topic_id ?? null);
+      }).length
+    : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -84,15 +90,20 @@ export function CurriculumMappingModal({
         <DialogHeader>
           <DialogTitle>Müfredata eşleştir</DialogTitle>
           <p className="mt-1 text-xs text-muted-foreground">
-            Kitap ünitelerini resmi müfredat konularına bağla. Eşleşmeyen üniteler
-            müfredat ilerleme haritasında görünmez. Otomatik öneriler hazır; emin
-            olmadıklarında <strong>“Yapay zekâ ile öner”</strong> dene.
+            <strong>Amaç:</strong> bu kitabın her ünitesinin <strong>hangi resmi
+            müfredat konusu</strong> olduğunu işaretlemek. Böylece öğrencinin
+            müfredatta nerede olduğunu (tamamlanan/sıradaki konular) görebileceğiz.
+            Aşağıda <strong>öneriler hazır</strong> ve açılır menüye dolduruldu —
+            kontrol et, gerekirse değiştir, <strong>Uygula</strong>’ya bas. Karşılığı
+            olmayan üniteler “eşleşmemiş” kalır (sorun değil; resmi konusu yok).
           </p>
         </DialogHeader>
 
         <div className="flex items-center justify-between gap-2">
           <span className="text-xs text-muted-foreground">
-            {q.isLoading ? "Yükleniyor…" : `${mapped}/${total} ünite eşli`}
+            {q.isLoading
+              ? "Yükleniyor…"
+              : `${mapped}/${total} eşli${pendingCount > 0 ? ` · ${pendingCount} öneri uygulanacak` : ""}`}
           </span>
           <Button
             size="sm"
@@ -137,7 +148,7 @@ export function CurriculumMappingModal({
                       </td>
                       <td className="px-3 py-2 align-top">
                         <select
-                          value={sel[r.section_id] === undefined ? "" : String(sel[r.section_id])}
+                          value={valueFor(r) === "" ? "" : String(valueFor(r))}
                           onChange={(e) =>
                             setSel((p) => ({
                               ...p,
@@ -146,8 +157,8 @@ export function CurriculumMappingModal({
                           }
                           className={cn(
                             "w-full rounded-md border border-input bg-background px-2 py-1 text-sm",
-                            suggested && sel[r.section_id] === r.suggested_topic_id &&
-                              "border-amber-400 bg-amber-50",
+                            suggested && valueFor(r) === r.suggested_topic_id &&
+                              "border-amber-400 bg-amber-50 text-amber-900",
                           )}
                         >
                           <option value="">— eşleşmemiş —</option>
