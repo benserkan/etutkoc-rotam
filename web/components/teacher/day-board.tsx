@@ -376,7 +376,7 @@ function taskSubjKey(t: TeacherTask): { key: string; name: string } {
   if (ws?.subject_id != null) {
     return { key: `s${ws.subject_id}`, name: ws.subject_name ?? "Ders" };
   }
-  if (t.items.length === 0 || t.work_block_id != null) {
+  if (t.items.length === 0 || t.work_block_id != null || t.block_detached) {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {
       const nm = t.title.substring(0, sep);

@@ -101,7 +101,7 @@ function taskSubjKey(t: TeacherTask, subjects?: SubjectRef[]): { key: string; na
     const nm = ws.subject_name ?? "Ders";
     return { key: subjectGroupKey(nm), name: nm };
   }
-  if (t.items.length === 0 || t.work_block_id != null) {
+  if (t.items.length === 0 || t.work_block_id != null || t.block_detached) {
     const sep = t.title.indexOf(" · ");
     if (sep > 0 && sep < t.title.length - 3) {
       const nm = t.title.substring(0, sep);

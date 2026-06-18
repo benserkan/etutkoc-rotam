@@ -453,8 +453,8 @@ function taskSubject(task: TeacherTask, subjects?: SubjectRef[]): TaskSubject {
     const nm = withSubj.subject_name ?? "Ders";
     return { key: subjectGroupKey(nm), id: withSubj.subject_id, name: nm };
   }
-  // Etkinlik (kalemsiz) VEYA blok görevi → başlık "{Ders} · {içerik}" parse et.
-  if (task.items.length === 0 || task.work_block_id != null) {
+  // Etkinlik (kalemsiz) VEYA blok (bloğu silinmiş dahil) → "{Ders} · {içerik}" parse.
+  if (task.items.length === 0 || task.work_block_id != null || task.block_detached) {
     const sep = task.title.indexOf(" · ");
     if (sep > 0 && sep < task.title.length - 3) {
       const nm = task.title.substring(0, sep);
@@ -794,7 +794,7 @@ function SortableTaskRow({
   // simetri). Title "·" içermiyorsa fallback: ders yok.
   let primarySubjectName: string | null = task.items[0]?.subject_name ?? null;
   let displayTitle = task.title;
-  if (!primarySubjectName && (task.items.length === 0 || task.work_block_id != null)) {
+  if (!primarySubjectName && (task.items.length === 0 || task.work_block_id != null || task.block_detached)) {
     const sepIdx = task.title.indexOf(" · ");
     if (sepIdx > 0 && sepIdx < task.title.length - 3) {
       primarySubjectName = task.title.substring(0, sepIdx);
