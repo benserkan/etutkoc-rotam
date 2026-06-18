@@ -851,6 +851,39 @@ class CurriculumProgressResponse(BaseModel):
     extras: list[CurriculumExtraItem]
 
 
+# Faz 2 — sıradaki üniteler (atanabilir)
+class NextUnitSectionItem(BaseModel):
+    book_id: int
+    section_id: int
+    book_name: str
+    section_label: str
+    test_total: int
+    completed: int
+    reserved: int
+    remaining: int
+
+
+class NextUnitItem(BaseModel):
+    subject_id: int
+    subject_name: str
+    topic_id: int
+    topic_name: str
+    order: int
+    status: str
+    completed: int
+    test_total: int
+    sections: list[NextUnitSectionItem] = []
+    # AI önceliklendirme (opsiyonel) — doldurulursa öneri sırası + gerekçe
+    ai_priority: int | None = None
+    ai_reason: str | None = None
+
+
+class NextUnitsResponse(BaseModel):
+    units: list[NextUnitItem]
+    ai_used: bool = False
+    ai_summary: str | None = None
+
+
 class CarryoverSectionItem(BaseModel):
     """Devret adayı görevin yapılmamış section kalemi."""
     book_id: int

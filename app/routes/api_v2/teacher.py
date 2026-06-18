@@ -205,6 +205,9 @@ from app.routes.api_v2.schemas.teacher import (
     CurriculumProgressResponse,
     CurriculumSubjectItem,
     CurriculumTopicItem,
+    NextUnitItem,
+    NextUnitSectionItem,
+    NextUnitsResponse,
     TaskCreateBody,
     TaskItemBody,
     TaskTemplateCreateBody,
@@ -1176,6 +1179,116 @@ def teacher_student_curriculum_v2(
             for e in res.extras
         ],
     )
+
+
+def _next_units_payload(units) -> list[NextUnitItem]:
+    return [
+        NextUnitItem(
+            subject_id=u.subject_id, subject_name=u.subject_name, topic_id=u.topic_id,
+            topic_name=u.topic_name, order=u.order, status=u.status,
+            completed=u.completed, test_total=u.test_total,
+            sections=[
+                NextUnitSectionItem(
+                    book_id=s.book_id, section_id=s.section_id, book_name=s.book_name,
+                    section_label=s.section_label, test_total=s.test_total,
+                    completed=s.completed, reserved=s.reserved, remaining=s.remaining,
+                )
+                for s in u.sections
+            ],
+        )
+        for u in units
+    ]
+
+
+@router.get(
+    "/students/{student_id}/next-units",
+    response_model=NextUnitsResponse,
+)
+def teacher_student_next_units_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Program yaparken SIRADAKİ atanabilir üniteler (resmi sırada, tamamlanmamış,
+    kaynaklı) + atanabilir section'ları (tek-tık görev için). Deterministik, ücretsiz."""
+    from app.services import curriculum_progress as cp
+
+    student = _get_owned_student(db, student_id, user.id)
+    units = cp.next_units_for_assignment(db, student, user.id, per_subject=2)
+    return NextUnitsResponse(units=_next_units_payload(units), ai_used=False)
+
+
+@router.post(
+    "/students/{student_id}/next-units/ai-prioritize",
+    response_model=NextUnitsResponse,
+)
+def teacher_student_next_units_ai_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Sıradaki üniteleri AI ile akıllı önceliklendir (perf + sınav + sıra). KREDİ DÜŞER.
+    Ücretli paket + rıza gerekir."""
+    from app.services import curriculum_progress as cp
+    from app.services.ai_book_template import AIServiceUnavailable
+    from app.services.credits import CreditBlocked, CreditOwner, consume_credits
+    from app.services.topic_performance import compute_topic_performance
+
+    student = _get_owned_student(db, student_id, user.id)
+    _require_ai_premium(db, user)
+    if user.ai_capture_consent_at is None:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "consent_required",
+                    "message": "AI özellikleri için önce açık rıza vermelisiniz."},
+        )
+    units = cp.next_units_for_assignment(db, student, user.id, per_subject=2)
+    if not units:
+        return NextUnitsResponse(units=[], ai_used=False)
+
+    # Zayıf konular (doğruluk düşük) — topic_performance'tan
+    weak: list[str] = []
+    for sp in compute_topic_performance(db, student.id):
+        for tp in sp.topics:
+            if tp.accuracy_pct is not None and tp.accuracy_pct < 55:
+                weak.append(tp.topic_name)
+    days_to_exam = None
+    ed = student.effective_exam_date
+    if ed is not None:
+        days_to_exam = max(0, (ed - date.today()).days)
+
+    owner = CreditOwner.for_user(user)
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_CURRICULUM_PRIORITY,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            result = cp.ai_prioritize_units(
+                units, exam_label=student.effective_exam_label,
+                days_to_exam=days_to_exam, weak_topics=weak,
+            )
+            ctx.set_metadata({"student_id": student_id, "units": len(units)})
+    except CreditBlocked as e:
+        db.rollback()
+        raise _ai_credit_exhausted_error(user, e.message)
+    except cp.AIUnavailable as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail={"error": "upstream_unavailable", "code": "ai_unavailable",
+                    "message": f"AI servisi şu an kullanılamıyor: {e}"},
+        )
+    db.commit()
+
+    pri = result.get("priorities", {})
+    items = _next_units_payload(units)
+    for it in items:
+        hit = pri.get(it.topic_id)
+        if hit:
+            it.ai_priority, it.ai_reason = hit[0], hit[1]
+    # AI önceliğine göre sırala (öncelik verilmemişler sona)
+    items.sort(key=lambda x: (x.ai_priority if x.ai_priority is not None else 999, x.order))
+    return NextUnitsResponse(units=items, ai_used=True, ai_summary=result.get("summary"))
 
 
 @router.get(

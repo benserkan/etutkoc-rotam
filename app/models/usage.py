@@ -55,6 +55,7 @@ class UsageKind(str, enum.Enum):
     AI_COACHING_INSIGHT = "ai_coaching_insight"  # Gemini — seans geçmişi → koçluk içgörüsü (KS4)
     AI_PARENT_INSIGHT = "ai_parent_insight"  # Gemini — konu perf + deneme → veli içgörüsü (P2b)
     AI_CAREER_SYNTHESIS = "ai_career_synthesis"  # Gemini — anket sonuçları + akademik veri → kariyer önerisi
+    AI_CURRICULUM_PRIORITY = "ai_curriculum_priority"  # Gemini — sıradaki üniteler akıllı öncelik (Faz 2)
     EMAIL_SEND = "email_send"               # SMTP/SendGrid e-posta
     WHATSAPP_SEND = "whatsapp_send"         # Meta Cloud API mesaj
     OTHER = "other"
@@ -69,6 +70,7 @@ USAGE_KIND_LABELS_TR: dict[UsageKind, str] = {
     UsageKind.AI_COACHING_INSIGHT: "AI Koçluk İçgörüsü",
     UsageKind.AI_PARENT_INSIGHT: "AI Veli İçgörüsü",
     UsageKind.AI_CAREER_SYNTHESIS: "AI Kariyer Sentezi",
+    UsageKind.AI_CURRICULUM_PRIORITY: "AI Müfredat Önceliği",
     UsageKind.EMAIL_SEND: "E-posta",
     UsageKind.WHATSAPP_SEND: "WhatsApp Mesajı",
     UsageKind.OTHER: "Diğer",

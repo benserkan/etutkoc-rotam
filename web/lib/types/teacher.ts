@@ -882,6 +882,38 @@ export interface CurriculumProgressResponse {
   extras: CurriculumExtraItem[];
 }
 
+// Faz 2 — sıradaki atanabilir üniteler
+export interface NextUnitSectionItem {
+  book_id: number;
+  section_id: number;
+  book_name: string;
+  section_label: string;
+  test_total: number;
+  completed: number;
+  reserved: number;
+  remaining: number;
+}
+
+export interface NextUnitItem {
+  subject_id: number;
+  subject_name: string;
+  topic_id: number;
+  topic_name: string;
+  order: number;
+  status: string;
+  completed: number;
+  test_total: number;
+  sections: NextUnitSectionItem[];
+  ai_priority: number | null;
+  ai_reason: string | null;
+}
+
+export interface NextUnitsResponse {
+  units: NextUnitItem[];
+  ai_used: boolean;
+  ai_summary: string | null;
+}
+
 // Devret (carryover) — geçen haftadan yapılmadan kalan GÖREVLER (tüm tipler)
 export interface CarryoverSectionItem {
   book_id: number;

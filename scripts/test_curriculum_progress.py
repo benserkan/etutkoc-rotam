@@ -110,6 +110,34 @@ def main() -> int:
             check("11. eşleşmemiş ekstra: 'Ekstra Konu' listede",
                   any(e.section_id == ids["sec_extra"] for e in res.extras), f"{[e.label for e in res.extras]}")
             check("12. overall coverage hesaplandı (>0)", res.overall_coverage_pct > 0, res.overall_coverage_pct)
+
+            # --- Faz 2: sıradaki atanabilir üniteler ---
+            units = cp.next_units_for_assignment(db, st, ids["teacher"], per_subject=2)
+            ut = {u.topic_id: u for u in units}
+            check("13. sıradaki: Çarpanlar (tamam) HARİÇ", ids["t1"] not in ut)
+            check("14. sıradaki: Üslü (devam) + Olasılık (başlanmadı) DAHİL",
+                  ids["t2"] in ut and ids["t3"] in ut, f"{list(ut)}")
+            check("15. sıradaki: Kareköklü (kaynak yok) HARİÇ", ids["t4"] not in ut)
+            check("16. atanabilir section: Üslü'de kalan kapasite var (10-2-4=4)",
+                  any(s.remaining == 4 for s in ut[ids["t2"]].sections),
+                  f"{[s.remaining for s in ut[ids['t2']].sections]}")
+
+            # --- AI önceliklendirme (monkeypatch gemini) ---
+            import app.services.gemini as gem
+            orig = gem.generate
+            gem.generate = lambda parts, **kw: (
+                '{"summary":"Önce yarım kalanlar","priorities":['
+                '{"topic_id":%d,"priority":1,"reason":"yarım kaldı"},'
+                '{"topic_id":%d,"priority":2,"reason":"sırada"}]}' % (ids["t2"], ids["t3"])
+            )
+            try:
+                r = cp.ai_prioritize_units(units, exam_label="LGS", days_to_exam=30,
+                                           weak_topics=["Üslü İfadeler"])
+                check("17. AI önceliklendirme: summary + öncelikler",
+                      r["summary"] and r["priorities"].get(ids["t2"], (None,))[0] == 1,
+                      f"{r}")
+            finally:
+                gem.generate = orig
     finally:
         with SessionLocal() as db:
             secs = [s.id for s in db.query(BookSection).filter(BookSection.book_id == ids["book"]).all()]

@@ -16,10 +16,15 @@ DURUM: kaynak_yok | baslanmadi | planlandi | devam | tamamlandi.
 """
 from __future__ import annotations
 
+import json
+import logging
+import re
 from dataclasses import dataclass, field
 
 from sqlalchemy import and_, func, or_
 from sqlalchemy.orm import Session
+
+logger = logging.getLogger(__name__)
 
 from app.models import (
     Book,
@@ -247,3 +252,193 @@ def compute_curriculum_progress(
         subjects=out_subjects,
         extras=extras,
     )
+
+
+# ============================================================================
+# Faz 2 — Sıradaki üniteler (atanabilir) + AI akıllı öncelik
+# ============================================================================
+
+
+@dataclass
+class AssignableSection:
+    book_id: int
+    section_id: int
+    book_name: str
+    section_label: str
+    test_total: int
+    completed: int
+    reserved: int
+    remaining: int        # test_total - reserved - completed (atanabilir kapasite)
+
+
+@dataclass
+class NextUnit:
+    subject_id: int
+    subject_name: str
+    topic_id: int
+    topic_name: str
+    order: int
+    status: str           # baslanmadi | planlandi | devam
+    completed: int
+    test_total: int
+    sections: list[AssignableSection] = field(default_factory=list)
+
+
+def next_units_for_assignment(
+    db: Session, student: User, coach_id: int, *, per_subject: int = 2,
+) -> list[NextUnit]:
+    """Her ders için SIRADAKİ atanabilir üniteler (resmi sırada, tamamlanmamış,
+    kaynaklı). Her ünitenin atanabilir section'ları (kalan kapasiteli) döner →
+    koç tek tıkla görev üretebilir. tamamlanmış/kaynaksız konular atlanır."""
+    rows = (
+        db.query(
+            BookSection.id.label("section_id"),
+            BookSection.topic_id.label("topic_id"),
+            BookSection.label.label("label"),
+            BookSection.test_count.label("test_count"),
+            Book.id.label("book_id"),
+            Book.name.label("book_name"),
+            func.coalesce(SectionProgress.completed_count, 0).label("completed"),
+            func.coalesce(SectionProgress.reserved_count, 0).label("reserved"),
+        )
+        .select_from(StudentBook)
+        .join(Book, Book.id == StudentBook.book_id)
+        .join(BookSection, BookSection.book_id == Book.id)
+        .outerjoin(
+            SectionProgress,
+            and_(
+                SectionProgress.student_book_id == StudentBook.id,
+                SectionProgress.book_section_id == BookSection.id,
+            ),
+        )
+        .filter(StudentBook.student_id == student.id,
+                BookSection.topic_id.isnot(None))
+        .all()
+    )
+    # topic_id → sections + agg
+    by_topic_secs: dict[int, list] = {}
+    by_topic_agg: dict[int, dict] = {}
+    for r in rows:
+        by_topic_secs.setdefault(r.topic_id, []).append(r)
+        agg = by_topic_agg.setdefault(r.topic_id, {"test": 0, "completed": 0})
+        agg["test"] += int(r.test_count or 0)
+        agg["completed"] += int(r.completed or 0)
+
+    subjects = _applicable_subjects(db, student, coach_id)
+    subj_ids = [s.id for s in subjects]
+    topics_by_subject: dict[int, list[Topic]] = {}
+    if subj_ids:
+        for t in (
+            db.query(Topic)
+            .filter(Topic.subject_id.in_(subj_ids),
+                    or_(Topic.is_builtin.is_(True), Topic.teacher_id == coach_id))
+            .order_by(Topic.order, Topic.id).all()
+        ):
+            topics_by_subject.setdefault(t.subject_id, []).append(t)
+
+    out: list[NextUnit] = []
+    for s in subjects:
+        picked = 0
+        for t in topics_by_subject.get(s.id, []):
+            if picked >= per_subject:
+                break
+            agg = by_topic_agg.get(t.id)
+            if agg is None:
+                continue  # kaynak yok → atla
+            comp = agg["completed"]
+            test_total = agg["test"]
+            if test_total > 0 and comp >= test_total:
+                continue  # tamamlanmış → atla
+            # atanabilir section'lar (kalan kapasiteli)
+            secs: list[AssignableSection] = []
+            for r in by_topic_secs.get(t.id, []):
+                rem = max(0, int(r.test_count or 0) - int(r.reserved or 0) - int(r.completed or 0))
+                secs.append(AssignableSection(
+                    book_id=r.book_id, section_id=r.section_id, book_name=r.book_name,
+                    section_label=r.label, test_total=int(r.test_count or 0),
+                    completed=int(r.completed or 0), reserved=int(r.reserved or 0),
+                    remaining=rem,
+                ))
+            status = "devam" if comp > 0 else "baslanmadi"
+            out.append(NextUnit(
+                subject_id=s.id, subject_name=s.name, topic_id=t.id, topic_name=t.name,
+                order=t.order, status=status, completed=comp, test_total=test_total,
+                sections=secs,
+            ))
+            picked += 1
+    return out
+
+
+# ----------------------------- AI akıllı öncelik -----------------------------
+
+class AIUnavailable(Exception):
+    pass
+
+
+def _parse_json(raw: str) -> dict:
+    raw = (raw or "").strip()
+    if raw.startswith("```"):
+        raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
+    try:
+        return json.loads(raw)
+    except Exception:
+        m = re.search(r"\{.*\}", raw, flags=re.DOTALL)
+        if m:
+            return json.loads(m.group(0))
+        raise
+
+
+def ai_prioritize_units(
+    units: list[NextUnit],
+    *,
+    exam_label: str | None,
+    days_to_exam: int | None,
+    weak_topics: list[str],
+) -> dict:
+    """Gemini ile sıradaki üniteleri akıllı önceliklendir (öğrenci verili → ÜCRETLİ key).
+
+    Girdi: deterministik sıradaki üniteler + sınav yakınlığı + zayıf konular (doğruluk).
+    Çıktı: {"summary": str, "priorities": {topic_id: (priority:int, reason:str)}}.
+    Öneri: resmi sıra + öğrencinin zayıf olduğu/yarım kalan + sınav yakınlığı dengesi.
+    """
+    from app.services import gemini
+
+    if not units:
+        return {"summary": None, "priorities": {}}
+    unit_lines = "\n".join(
+        f"{u.topic_id}: {u.subject_name} — {u.topic_name} "
+        f"(durum: {u.status}, {u.completed}/{u.test_total} test)"
+        for u in units
+    )
+    weak = ", ".join(weak_topics[:12]) if weak_topics else "—"
+    exam_ctx = (
+        f"Sınav: {exam_label or 'belirsiz'}"
+        + (f", {days_to_exam} gün kaldı" if days_to_exam is not None else "")
+    )
+    prompt = (
+        "Bir koçun öğrencisine bu hafta atayabileceği SIRADAKİ müfredat üniteleri "
+        "aşağıda. Resmi müfredat sırası + öğrencinin ZAYIF olduğu konular + yarım "
+        "kalanlar + sınav yakınlığını dengeleyerek ÖNCELİK sırası öner (1 = en öncelikli). "
+        "Her ünite için kısa, somut gerekçe (Türkçe, 1 cümle). Klinik dil değil koçluk dili.\n\n"
+        f"{exam_ctx}\n"
+        f"Öğrencinin doğruluğu düşük (zayıf) konular: {weak}\n\n"
+        f"SIRADAKİ ÜNİTELER (topic_id: ders — konu):\n{unit_lines}\n\n"
+        'Yalnız JSON: {"summary":"1-2 cümle genel öncelik mantığı",'
+        '"priorities":[{"topic_id":N,"priority":1,"reason":"..."}]}'
+    )
+    try:
+        raw = gemini.generate(
+            [gemini.text_part(prompt)],
+            personal_data=True, json_mode=True, max_output_tokens=8192,
+        )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("ai_prioritize_units gemini fail: %s", e)
+        raise AIUnavailable(str(e))
+    data = _parse_json(raw)
+    valid = {u.topic_id for u in units}
+    pri: dict[int, tuple[int, str]] = {}
+    for p in (data.get("priorities") or []):
+        tid = p.get("topic_id")
+        if tid in valid:
+            pri[int(tid)] = (int(p.get("priority") or 99), str(p.get("reason") or "").strip())
+    return {"summary": str(data.get("summary") or "").strip() or None, "priorities": pri}

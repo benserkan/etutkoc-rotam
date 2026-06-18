@@ -63,6 +63,7 @@ import { WeekDayCard } from "./weekly-plan/week-day-card";
 import { WeekNotesCard } from "./weekly-plan/week-notes-card";
 import { ResourceSidebar } from "./weekly-plan/resource-sidebar";
 import { CarryoverPanel } from "./weekly-plan/carryover-panel";
+import { NextUnitsPanel } from "./weekly-plan/next-units-panel";
 import { WeekGrid } from "./weekly-plan/week-grid";
 import { WorkBlockPanel } from "./weekly-plan/work-block-panel";
 
@@ -428,6 +429,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
             programId={currentProgramId}
             weekDays={data.days}
           />
+          <NextUnitsPanel studentId={studentId} weekDays={data.days} />
           <WorkBlockPanel studentId={studentId} />
           <ResourceSidebar
             data={sidebarQ.data}

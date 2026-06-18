@@ -49,6 +49,7 @@ import type {
   TeacherReviewFleetResponse,
   CarryoverCandidatesResponse,
   CurriculumProgressResponse,
+  NextUnitsResponse,
   TeacherReviewResponse,
   TeacherStudentAnalyticsResponse,
   TeacherStudentDayResponse,
@@ -98,6 +99,8 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "carryover", String(programId ?? "active")] as const,
   studentCurriculum: (id: number) =>
     ["teacher", "me", "students", String(id), "curriculum"] as const,
+  studentNextUnits: (id: number) =>
+    ["teacher", "me", "students", String(id), "next-units"] as const,
 
   // Paket 3.5a — haftalık plan yardımcıları
   studentSidebar: (id: number, subjectId: number | null) =>
@@ -397,6 +400,12 @@ export function getTeacherStudentCurriculum(
 ): Promise<CurriculumProgressResponse> {
   return api<CurriculumProgressResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(id))}/curriculum`,
+  );
+}
+
+export function getTeacherNextUnits(id: number): Promise<NextUnitsResponse> {
+  return api<NextUnitsResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/next-units`,
   );
 }
 
