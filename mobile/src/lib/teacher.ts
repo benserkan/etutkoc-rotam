@@ -168,7 +168,65 @@ export function createTeacherSession(id: number, body: SessionCreateBody): Promi
 export const teacherDetailKeys = {
   exams: (id: number) => ["teacher", "student", id, "exams"] as const,
   sessions: (id: number) => ["teacher", "student", id, "sessions"] as const,
+  curriculum: (id: number) => ["teacher", "student", id, "curriculum"] as const,
 };
+
+// --- Müfredat ilerleme (web Müfredat sekmesi paritesi) ---
+export type CurriculumTopicStatus =
+  | "kaynak_yok" | "baslanmadi" | "planlandi" | "devam" | "tamamlandi";
+export interface CurriculumTopicItem {
+  topic_id: number;
+  name: string;
+  order: number;
+  has_resource: boolean;
+  test_total: number;
+  completed: number;
+  reserved: number;
+  status: CurriculumTopicStatus;
+  pct: number;
+}
+export interface CurriculumSubjectItem {
+  subject_id: number;
+  name: string;
+  order: number;
+  total_topics: number;
+  started_topics: number;
+  completed_topics: number;
+  no_resource_topics: number;
+  coverage_pct: number;
+  last_topic_name: string | null;
+  next_topic_name: string | null;
+  topics: CurriculumTopicItem[];
+}
+export interface CurriculumExtraItem {
+  section_id: number;
+  label: string;
+  book_name: string;
+  subject_name: string | null;
+  test_total: number;
+  completed: number;
+}
+export interface CurriculumProjectionItem {
+  has_exam: boolean;
+  days_to_exam: number | null;
+  remaining_topics: number;
+  pace_per_week: number;
+  projected_coverage_pct: number;
+  verdict: "yetisir" | "risk" | "yetismez" | "sinav_yok" | "veri_yok";
+}
+export interface CurriculumProgressResponse {
+  curriculum_model: string | null;
+  grade_level: number | null;
+  overall_total_topics: number;
+  overall_started_topics: number;
+  overall_coverage_pct: number;
+  subjects: CurriculumSubjectItem[];
+  extras: CurriculumExtraItem[];
+  projection: CurriculumProjectionItem | null;
+}
+export function getTeacherStudentCurriculum(id: number): Promise<CurriculumProgressResponse> {
+  return apiRequest<CurriculumProgressResponse>(`/api/v2/teacher/students/${id}/curriculum`);
+}
 
 // --- Tahsilat ---
 export type BillingStatus = "no_rate" | "paid" | "partial" | "pending";

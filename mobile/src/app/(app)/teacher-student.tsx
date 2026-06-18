@@ -5,6 +5,7 @@ import { router, useLocalSearchParams } from "expo-router";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { CurriculumTab } from "@/components/teacher/curriculum-tab";
 import { ExamsTab } from "@/components/teacher/exams-tab";
 import { ProgramTab } from "@/components/teacher/program-tab";
 import { SessionsTab } from "@/components/teacher/sessions-tab";
@@ -19,10 +20,11 @@ import {
 } from "@/lib/teacher";
 import { cn } from "@/lib/utils";
 
-type Tab = "genel" | "program" | "denemeler" | "seanslar";
+type Tab = "genel" | "program" | "mufredat" | "denemeler" | "seanslar";
 const TABS: { key: Tab; label: string }[] = [
   { key: "genel", label: "Genel" },
   { key: "program", label: "Program" },
+  { key: "mufredat", label: "Müfredat" },
   { key: "denemeler", label: "Denemeler" },
   { key: "seanslar", label: "Seanslar" },
 ];
@@ -94,7 +96,11 @@ export default function TeacherStudentRoute() {
           const active = t.key === tab;
           return (
             <Pressable key={t.key} onPress={() => setTab(t.key)} className="flex-1 items-center py-2.5">
-              <Text className={cn("text-sm font-semibold", active ? "text-brand-700" : "text-slate-400")}>
+              <Text
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                className={cn("text-[13px] font-semibold", active ? "text-brand-700" : "text-slate-400")}
+              >
                 {t.label}
               </Text>
               <View className={cn("mt-2 h-0.5 w-full rounded-full", active ? "bg-brand-600" : "bg-transparent")} />
@@ -125,6 +131,8 @@ export default function TeacherStudentRoute() {
         />
       ) : tab === "program" ? (
         <ProgramTab studentId={studentId} />
+      ) : tab === "mufredat" ? (
+        <CurriculumTab studentId={studentId} />
       ) : tab === "denemeler" ? (
         <ScrollView className="flex-1 bg-slate-50">
           <ExamsTab studentId={studentId} />
