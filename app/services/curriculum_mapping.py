@@ -49,22 +49,39 @@ def _topics_by_norm(topics: list[Topic]) -> dict[str, Topic]:
     return out
 
 
+# Gemini 2.5 düşünme tokenı çıktıyı kesip JSON'u bozabiliyor → section'ları küçük
+# parçalara böl (çok ünite = büyük yanıt = kesilme riski) + tokenı yükselt.
+_AI_BATCH = 12
+
+
 def _ai_suggest(
     sections: list[BookSection], candidate_topics: list[Topic],
 ) -> dict[int, tuple[int, str]]:
     """Gemini ile section.label → topic_id öner. {section_id: (topic_id, confidence)}.
 
     Best-effort: anahtar yok/başarısız → boş dict. Kişisel veri değil (ücretsiz key).
+    Section'lar parçalara bölünür (kesilme önleme); bir parça hata verse de diğerleri
+    devam eder.
     """
     if not sections or not candidate_topics:
         return {}
+    out: dict[int, tuple[int, str]] = {}
+    for i in range(0, len(sections), _AI_BATCH):
+        out.update(_ai_suggest_batch(sections[i:i + _AI_BATCH], candidate_topics))
+    return out
+
+
+def _ai_suggest_batch(
+    sections: list[BookSection], candidate_topics: list[Topic],
+) -> dict[int, tuple[int, str]]:
     topic_lines = "\n".join(f"{t.id}: {t.name}" for t in candidate_topics)
     sec_lines = "\n".join(f"{s.id}: {s.label}" for s in sections)
     prompt = (
         "Bir kitabın ünite başlıklarını resmi müfredat konularına eşle. Her ünite "
-        "için EN UYGUN resmi konuyu seç; emin değilsen topic_id=null bırak. Kısaltma/"
-        "yayın öneki/yazım farkı olabilir (örn. 'BS Doğrunun Analitiği' = 'Doğrunun "
-        "Analitiği'). Yalnız listedeki topic_id'leri kullan.\n\n"
+        "için EN UYGUN resmi konuyu seç; emin değilsen topic_id=null bırak. Ünite "
+        "başlığında '1. Ünite — ', yayın öneki (BS, AYT vb.), yazım farkı olabilir; "
+        "bunları yok say, ANLAM olarak eşleştir (örn. '8. Ünite — Duyu Organları' = "
+        "'Duyu Organları'). Yalnız listedeki topic_id'leri kullan, kısa tut.\n\n"
         f"RESMİ KONULAR (topic_id: ad):\n{topic_lines}\n\n"
         f"ÜNİTE BAŞLIKLARI (section_id: başlık):\n{sec_lines}\n\n"
         'Yalnız JSON dön: {"mappings":[{"section_id":N,"topic_id":N|null,'
@@ -73,7 +90,7 @@ def _ai_suggest(
     try:
         raw = gemini.generate(
             [gemini.text_part(prompt)],
-            personal_data=False, json_mode=True, max_output_tokens=8192,
+            personal_data=False, json_mode=True, max_output_tokens=16384,
         )
         data = _parse_json(raw)
         valid_ids = {t.id for t in candidate_topics}
@@ -87,7 +104,7 @@ def _ai_suggest(
                 out[int(sid)] = (int(tid), conf if conf in ("high", "medium", "low") else "low")
         return out
     except Exception as e:  # noqa: BLE001
-        logger.warning("curriculum_mapping AI suggest fail: %s", e)
+        logger.warning("curriculum_mapping AI suggest batch fail (%d sec): %s", len(sections), e)
         return {}
 
 
