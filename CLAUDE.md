@@ -274,7 +274,7 @@ semantik, ÜCRETSİZ key — kişisel veri değil) + akıllı sıradaki ünitele
 **AI-örülü yol haritası (onaylı):**
 - **Faz 0 — Eşleştirme yükseltme** ✅ (2026-06-18, CANLI, migration YOK): deterministik
   auto-map + Gemini semantik öneri + koç onay UI.
-- Faz 1 — müfredat ilerleme servisi + öğrenci "Müfredat" sekmesi (omurga+durum+%+frontier).
+- **Faz 1 — müfredat ilerleme servisi + öğrenci "Müfredat" sekmesi** ✅ (2026-06-19, CANLI).
 - Faz 2 — program "sıradaki üniteler" + tek-tık ata + AI akıllı öncelik (perf+sınav+getiri).
 - Faz 3 — seans "geçen hafta işlenenler" + KS4 içgörüye müfredat girdisi.
 - Faz 4 (ops.) — müfredat yetişme projeksiyonu + AI kapsama planı + kurum/veli.
@@ -289,6 +289,23 @@ semantik, ÜCRETSİZ key — kişisel veri değil) + akıllı sıradaki ünitele
   rozeti) → `CurriculumMappingModal` (satır konu seçici + auto/AI/eşli rozet + "Yapay zekâ
   ile öner" + Uygula).
 - `test_curriculum_mapping` **11/11** · library 24/18. Migration GEREKMEZ (topic_id zaten var).
+- **AI batch fix (2026-06-18):** 22 ünitelik tam Gemini çağrısı 2.5 düşünme tokenıyla
+  8192'yi aşıp JSON'u kesiyordu → tüm "öneri yok". `_ai_suggest` section'ları `_AI_BATCH=12`
+  parçaya böler + `max_output_tokens=16384`. Modal: öneri açılır menüye `valueFor` ile
+  OTOMATİK dolar (seed timing bug'ı düzeltildi) + amaç açıklaması.
+
+**Faz 1 detay (CANLI):**
+- `app/services/curriculum_progress.py`: `_applicable_subjects` (all_subjects kuralı —
+  `covers_grade` + `curriculum_model`) + topic bazında agregat (StudentBook→Book→
+  BookSection.topic_id → SectionProgress completed/reserved + test_count) → **durum**
+  (kaynak_yok/baslanmadi/planlandi/devam/tamamlandi) + **coverage_pct** (işlenen/toplam) +
+  **frontier** (son işlenen=en yüksek order-started · sıradaki=ilk kaynaklı-başlanmamış) +
+  **eşleşmemiş ekstra** (topic_id NULL section'lar). Konu-içi derinlik = completed/test_total.
+- `GET /teacher/students/{id}/curriculum` (sahiplik 404).
+- Frontend: öğrenci detayına **"Müfredat" sekmesi** (Analitik'ten sonra) + `CurriculumPanel`
+  (genel kapsama barı + ders akordeon: sıralı konu + durum rozet + "sıradaki" vurgu +
+  test derinliği + eşleşmemiş ekstra grubu). "İşlenme" = en az 1 test çözülen konu/toplam.
+- `test_curriculum_progress` **12/12** (durumlar + coverage + frontier + ekstra). Migration YOK.
 
 ---
 
