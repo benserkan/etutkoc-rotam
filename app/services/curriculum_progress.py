@@ -113,8 +113,9 @@ def _compute_projection(
     """Müfredat yetişme projeksiyonu — kapsama + sınav yakınlığı + son hız.
 
     Hız = son 14 günde işlenen FARKLI konu sayısı / 2 (hafta). Projeksiyon =
-    started + hız × kalan hafta → sınava kadar ulaşılacak kapsama. Verdict:
-    yetisir (>=%100) · risk (>=%85) · yetismez (<%85). Sınav yoksa sinav_yok.
+    started + hız × kalan hafta → sınava kadar ulaşılacak kapsama. Eşikler:
+    %100 müfredat kapsaması gerçekçi değil (kimse bitirmez) → %90 tahmini
+    kapsama "yetişir", %70-89 "riskli", <%70 "yetişmez". Sınav yoksa sinav_yok.
     """
     from datetime import date
 
@@ -134,9 +135,9 @@ def _compute_projection(
     proj_pct = round(100 * projected_started / total)
     if pace <= 0 and remaining > 0:
         verdict = "yetismez"
-    elif proj_pct >= 100:
+    elif proj_pct >= 90:
         verdict = "yetisir"
-    elif proj_pct >= 85:
+    elif proj_pct >= 70:
         verdict = "risk"
     else:
         verdict = "yetismez"
