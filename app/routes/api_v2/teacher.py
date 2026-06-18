@@ -2792,6 +2792,7 @@ def _build_teacher_task(db: Session, task: Task) -> TeacherTask:
         work_block_id=task.work_block_id,
         work_block_title=(task.work_block.title if task.work_block else None),
         work_block_unit=(task.work_block.unit if task.work_block else None),
+        block_detached=bool(getattr(task, "block_detached", False)),
     )
 
 
@@ -3720,6 +3721,9 @@ def teacher_carryover_v2(
             new_task = _create_task_with_items(db, student=student, payload=payload)
             # Hata 2 için: yeni görev kaynağa bağlanır → silinirse kaynak listeye döner.
             new_task.carried_from_task_id = src.id
+            # Blok kökenli görev taşınırsa yeni görev de 'Diğer' (DENEME değil).
+            if src.work_block_id is not None or getattr(src, "block_detached", False):
+                new_task.block_detached = True
             tsvc.mark_task_carried(db, src)
             carried_ids.append(src.id)
             created += 1
@@ -8379,9 +8383,14 @@ def teacher_delete_work_block_v2(
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Bloğu sil — bağlı görevler KALIR (work_block_id SET NULL)."""
+    """Bloğu sil — bağlı görevler KALIR (work_block_id SET NULL), ama 'Diğer'
+    olarak işaretlenir (block_detached=True) → DENEME yazmaz, program değişmez."""
     block = _get_owned_work_block(db, block_id, user)
     sid = block.student_id
+    # Bağlı görevleri 'bloğu silinmiş' işaretle → DENEME değil, Diğer görünür.
+    db.query(Task).filter(
+        Task.work_block_id == block.id, Task.student_id == sid,
+    ).update({Task.block_detached: True}, synchronize_session=False)
     db.delete(block)
     db.commit()
     return MutationResponse[dict](

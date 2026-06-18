@@ -360,6 +360,8 @@ class TeacherTask(BaseModel):
     work_block_id: int | None = None
     work_block_title: str | None = None
     work_block_unit: str | None = None
+    # Bloğu silinmiş görev → DENEME değil 'Diğer' olarak gösterilir.
+    block_detached: bool = False
 
 
 class TeacherWeekNote(BaseModel):

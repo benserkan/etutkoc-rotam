@@ -75,7 +75,10 @@ def classify_gorev(task: Task) -> str:
     # Serbest iş bloğu görevi (Katman 3) → ETKİNLİK. Kitapsız kalem taşısa da
     # "tam_deneme" sayılmaz; test/deneme hacmine girmez (blok kendi dağıtılan/
     # kalan sayacıyla izlenir). Kullanıcı kararı 2026-06-03.
-    if getattr(task, "work_block_id", None) is not None:
+    # block_detached: bloğu silinmiş/blok-kökenli görev (work_block_id NULL'a
+    # düşmüş) — yine ETKİNLİK (Diğer), DENEME değil. Kullanıcı kararı 2026-06-18.
+    if (getattr(task, "work_block_id", None) is not None
+            or getattr(task, "block_detached", False)):
         return "etkinlik"
     # Soru-hacimli görev. Görevde tek kalem olduğu için ilk kalem belirleyici.
     items = task.book_items

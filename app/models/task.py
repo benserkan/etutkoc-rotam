@@ -94,6 +94,13 @@ class Task(Base):
     carried_from_task_id: Mapped[int | None] = mapped_column(
         ForeignKey("tasks.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    # Bloğu silinmiş görev: Serbest Blok kitapsız kalem olarak saklanır; blok
+    # silinince work_block_id NULL'a düşer ve kitapsız kalem yanlışlıkla DENEME
+    # sınıflanırdı. True iken görev DENEME değil 'etkinlik/Diğer' sayılır (program
+    # verisi değişmez). Blok silme + blok görevini carry ile taşıma bunu set eder.
+    block_detached: Mapped[bool] = mapped_column(
+        Boolean, nullable=False, default=False, server_default="0"
+    )
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

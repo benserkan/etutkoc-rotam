@@ -372,6 +372,8 @@ export interface TeacherTask {
   work_block_id?: number | null;
   work_block_title?: string | null;
   work_block_unit?: string | null;
+  // Bloğu silinmiş görev → DENEME değil 'Diğer' gösterilir.
+  block_detached?: boolean;
 }
 
 // --------------------------- Serbest iş bloğu (Katman 3) ---------------------
