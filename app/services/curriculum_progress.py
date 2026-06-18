@@ -76,6 +76,16 @@ class ExtraSection:
 
 
 @dataclass
+class CurriculumProjection:
+    has_exam: bool
+    days_to_exam: int | None
+    remaining_topics: int
+    pace_per_week: float            # son 2 haftada işlenen farklı konu / 2
+    projected_coverage_pct: int     # mevcut hızla sınava kadar ulaşılacak kapsama
+    verdict: str                    # yetisir | risk | yetismez | sinav_yok | veri_yok
+
+
+@dataclass
 class CurriculumProgress:
     curriculum_model: str | None
     grade_level: int | None
@@ -84,6 +94,7 @@ class CurriculumProgress:
     overall_coverage_pct: int
     subjects: list[SubjectProgress]
     extras: list[ExtraSection]       # müfredata eşleşmemiş kitap üniteleri
+    projection: "CurriculumProjection | None" = None
 
 
 def _status(has_resource: bool, completed: int, reserved: int, test_total: int) -> str:
@@ -94,6 +105,42 @@ def _status(has_resource: bool, completed: int, reserved: int, test_total: int) 
     if test_total > 0 and completed >= test_total:
         return "tamamlandi"
     return "devam"
+
+
+def _compute_projection(
+    db: Session, student: User, total: int, started: int,
+) -> "CurriculumProjection":
+    """Müfredat yetişme projeksiyonu — kapsama + sınav yakınlığı + son hız.
+
+    Hız = son 14 günde işlenen FARKLI konu sayısı / 2 (hafta). Projeksiyon =
+    started + hız × kalan hafta → sınava kadar ulaşılacak kapsama. Verdict:
+    yetisir (>=%100) · risk (>=%85) · yetismez (<%85). Sınav yoksa sinav_yok.
+    """
+    from datetime import date
+
+    ed = student.effective_exam_date
+    days = max(0, (ed - date.today()).days) if ed is not None else None
+    if total <= 0:
+        return CurriculumProjection(False, days, 0, 0.0, 0, "veri_yok")
+    remaining = max(0, total - started)
+    # son 14 günde işlenen farklı konu → hız
+    recent = recently_covered_units(db, student, days=14)
+    pace = round(len({c.topic_name for c in recent}) / 2.0, 1)
+    if days is None:
+        return CurriculumProjection(
+            False, None, remaining, pace, round(100 * started / total), "sinav_yok")
+    weeks = days / 7.0
+    projected_started = min(total, started + pace * weeks)
+    proj_pct = round(100 * projected_started / total)
+    if pace <= 0 and remaining > 0:
+        verdict = "yetismez"
+    elif proj_pct >= 100:
+        verdict = "yetisir"
+    elif proj_pct >= 85:
+        verdict = "risk"
+    else:
+        verdict = "yetismez"
+    return CurriculumProjection(True, days, remaining, pace, proj_pct, verdict)
 
 
 def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subject]:
@@ -242,6 +289,8 @@ def compute_curriculum_progress(
         for ex in extras:
             ex.subject_name = subj_name_cache.get(row_subj.get(ex.section_id))
 
+    projection = _compute_projection(db, student, g_total, g_started)
+
     return CurriculumProgress(
         curriculum_model=(student.effective_curriculum_model.value
                           if student.effective_curriculum_model else None),
@@ -251,6 +300,7 @@ def compute_curriculum_progress(
         overall_coverage_pct=round(100 * g_started / g_total) if g_total else 0,
         subjects=out_subjects,
         extras=extras,
+        projection=projection,
     )
 
 

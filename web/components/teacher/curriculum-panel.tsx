@@ -16,6 +16,7 @@ import {
 import { getTeacherStudentCurriculum, teacherKeys } from "@/lib/api/teacher";
 import type {
   CurriculumProgressResponse,
+  CurriculumProjectionItem,
   CurriculumSubjectItem,
   CurriculumTopicItem,
 } from "@/lib/types/teacher";
@@ -87,6 +88,8 @@ export function CurriculumPanel({ studentId }: { studentId: number }) {
         </p>
       </div>
 
+      {data.projection ? <ProjectionCard p={data.projection} /> : null}
+
       {data.subjects.map((s) => (
         <SubjectBlock key={s.subject_id} subject={s} />
       ))}
@@ -112,6 +115,64 @@ export function CurriculumPanel({ studentId }: { studentId: number }) {
           </p>
         </details>
       ) : null}
+    </div>
+  );
+}
+
+const VERDICT: Record<
+  CurriculumProjectionItem["verdict"],
+  { label: string; cls: string; bar: string }
+> = {
+  yetisir: { label: "Yetişir", cls: "border-emerald-300 bg-emerald-50/60 text-emerald-900", bar: "bg-emerald-500" },
+  risk: { label: "Riskli — tempo artmalı", cls: "border-amber-300 bg-amber-50/60 text-amber-900", bar: "bg-amber-500" },
+  yetismez: { label: "Yetişmez — acil hızlanma gerek", cls: "border-rose-300 bg-rose-50/60 text-rose-900", bar: "bg-rose-500" },
+  sinav_yok: { label: "Sınav tarihi girilmemiş", cls: "border-slate-300 bg-slate-50/60 text-slate-700", bar: "bg-slate-400" },
+  veri_yok: { label: "Veri yetersiz", cls: "border-slate-300 bg-slate-50/60 text-slate-700", bar: "bg-slate-400" },
+};
+
+function ProjectionCard({ p }: { p: CurriculumProjectionItem }) {
+  const v = VERDICT[p.verdict];
+  return (
+    <div className={cn("rounded-lg border p-4", v.cls)}>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm font-semibold">Sınava yetişme projeksiyonu</p>
+        <span className="rounded-full border border-current/30 px-2 py-0.5 text-xs font-semibold">
+          {v.label}
+        </span>
+      </div>
+      {p.has_exam ? (
+        <>
+          <div className="mt-2 grid grid-cols-3 gap-2 text-center text-xs">
+            <div>
+              <p className="text-lg font-bold tabular-nums">{p.days_to_exam}</p>
+              <p className="opacity-80">gün kaldı</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold tabular-nums">{p.remaining_topics}</p>
+              <p className="opacity-80">kalan konu</p>
+            </div>
+            <div>
+              <p className="text-lg font-bold tabular-nums">{p.pace_per_week}</p>
+              <p className="opacity-80">konu/hafta (son 2 hafta)</p>
+            </div>
+          </div>
+          <div className="mt-3">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="opacity-80">Bu tempoyla sınava kadar ulaşılacak kapsama</span>
+              <span className="font-semibold tabular-nums">%{p.projected_coverage_pct}</span>
+            </div>
+            <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-black/10">
+              <div className={cn("h-full rounded-full", v.bar)} style={{ width: `${Math.min(100, p.projected_coverage_pct)}%` }} />
+            </div>
+          </div>
+        </>
+      ) : (
+        <p className="mt-2 text-xs opacity-80">
+          {p.verdict === "sinav_yok"
+            ? "Öğrencinin sınav tarihini girince, mevcut çalışma temposuna göre müfredatın yetişip yetişmeyeceği burada hesaplanır."
+            : "Projeksiyon için yeterli müfredat verisi yok."}
+        </p>
+      )}
     </div>
   );
 }

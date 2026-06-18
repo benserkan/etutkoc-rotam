@@ -29,6 +29,12 @@ Premium, marka-tutarlı mağaza seti — **Claude (Anthropic) editöryel dili** 
 `play8/` — Play yükleme sırası `1.png … 8.png` (yukarıdaki sırayla, koç-öncelikli).
 `feature-graphic.png` — 1024×500 · `store-icon-512.png` — 512×512.
 
+### feature-graphic v2 (2026-06-11, onaylı)
+Sinematik tam-kare: 01-hero kızın yüz bandı (çene dahil, bakış metne akar) +
+sol petrol scrim. 4 öğe, fazlası yok: keskin logo kilidi (icon.png'den, 3×
+supersample) · Playfair serif "Hedefe giden net rota" · altın çizgi ·
+harf-aralıklı "ÖĞRENCİ KOÇLUĞU". Telefon ölçeğinde okunaklılık doğrulandı.
+
 ## Kapak fotoğrafları
 AI ile üretildi (Gemini), Gemini watermark'ı kırpıldı, teal film tonuyla tutarlı.
 Kompozit: `_gen_covers.py` mantığı (film scrim + serif slogan + marka).

@@ -152,6 +152,32 @@ def main() -> int:
             cn = {c.topic_name: c.tests_completed for c in covered}
             check("18. işlenen üniteler: Çarpanlar (5 test) listede",
                   cn.get("Çarpanlar") == 5, f"{cn}")
+
+            # --- Faz 4: yetişme projeksiyonu ---
+            # sınav tarihi yok → sinav_yok; kalan konu = 4-2 = 2
+            proj = res.projection
+            check("19. projeksiyon var + sınav yok → verdict sinav_yok",
+                  proj is not None and proj.verdict == "sinav_yok",
+                  f"{proj.verdict if proj else None}")
+            check("20. projeksiyon: kalan = toplam - işlenen (overall)",
+                  proj is not None
+                  and proj.remaining_topics == res.overall_total_topics - res.overall_started_topics,
+                  f"rem={proj.remaining_topics if proj else None} "
+                  f"total={res.overall_total_topics} started={res.overall_started_topics}")
+            # sınav tarihi ver (effective_exam_date türetilmiş property → geçici override)
+            from datetime import timedelta
+            from unittest.mock import patch
+            fake_date = date.today() + timedelta(days=60)
+            with patch.object(type(st), "effective_exam_date",
+                              property(lambda self: fake_date)):
+                res2 = cp.compute_curriculum_progress(db, st, ids["teacher"])
+            p2 = res2.projection
+            check("21. sınav tarihi girilince → has_exam + days_to_exam ~60",
+                  p2 is not None and p2.has_exam and 58 <= (p2.days_to_exam or 0) <= 60,
+                  f"{p2.has_exam if p2 else None} {p2.days_to_exam if p2 else None}")
+            check("22. verdict yetisir|risk|yetismez içinde",
+                  p2 is not None and p2.verdict in ("yetisir", "risk", "yetismez"),
+                  f"{p2.verdict if p2 else None}")
     finally:
         with SessionLocal() as db:
             tks = [t.id for t in db.query(Task).filter(Task.student_id == ids["student"]).all()]

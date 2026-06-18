@@ -204,6 +204,7 @@ from app.routes.api_v2.schemas.teacher import (
     CarryoverSectionItem,
     CurriculumExtraItem,
     CurriculumProgressResponse,
+    CurriculumProjectionItem,
     CurriculumSubjectItem,
     CurriculumTopicItem,
     NextUnitItem,
@@ -1179,6 +1180,17 @@ def teacher_student_curriculum_v2(
             )
             for e in res.extras
         ],
+        projection=(
+            CurriculumProjectionItem(
+                has_exam=res.projection.has_exam,
+                days_to_exam=res.projection.days_to_exam,
+                remaining_topics=res.projection.remaining_topics,
+                pace_per_week=res.projection.pace_per_week,
+                projected_coverage_pct=res.projection.projected_coverage_pct,
+                verdict=res.projection.verdict,
+            )
+            if res.projection else None
+        ),
     )
 
 

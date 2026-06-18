@@ -841,6 +841,15 @@ class CurriculumExtraItem(BaseModel):
     completed: int
 
 
+class CurriculumProjectionItem(BaseModel):
+    has_exam: bool
+    days_to_exam: int | None = None
+    remaining_topics: int
+    pace_per_week: float
+    projected_coverage_pct: int
+    verdict: str                     # yetisir|risk|yetismez|sinav_yok|veri_yok
+
+
 class CurriculumProgressResponse(BaseModel):
     curriculum_model: str | None = None
     grade_level: int | None = None
@@ -849,6 +858,7 @@ class CurriculumProgressResponse(BaseModel):
     overall_coverage_pct: int
     subjects: list[CurriculumSubjectItem]
     extras: list[CurriculumExtraItem]
+    projection: CurriculumProjectionItem | None = None
 
 
 # Faz 2 — sıradaki üniteler (atanabilir)

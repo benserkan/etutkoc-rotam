@@ -872,6 +872,15 @@ export interface CurriculumExtraItem {
   completed: number;
 }
 
+export interface CurriculumProjectionItem {
+  has_exam: boolean;
+  days_to_exam: number | null;
+  remaining_topics: number;
+  pace_per_week: number;
+  projected_coverage_pct: number;
+  verdict: "yetisir" | "risk" | "yetismez" | "sinav_yok" | "veri_yok";
+}
+
 export interface CurriculumProgressResponse {
   curriculum_model: string | null;
   grade_level: number | null;
@@ -880,6 +889,7 @@ export interface CurriculumProgressResponse {
   overall_coverage_pct: number;
   subjects: CurriculumSubjectItem[];
   extras: CurriculumExtraItem[];
+  projection: CurriculumProjectionItem | null;
 }
 
 // Faz 2 — sıradaki atanabilir üniteler
