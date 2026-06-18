@@ -211,15 +211,19 @@ def list_carryover_candidates(
     student_id: int,
     cutoff_date: date,
     since_date: date | None = None,
+    include_plain_tests: bool = False,
 ) -> list[dict]:
     """Devret adayları — GÖREV düzeyinde 'yapılmadan kalan' görevler.
 
     `since_date <= task.date < cutoff_date` + `status != COMPLETED` + yayında +
-    `carried_at IS NULL` (henüz taşınmamış) görevler. Tüm görev tipleri (test/
-    blok/itemless/deneme/etkinlik) görev düzeyinde tek aday. Her aday: görevin
-    YAPILMAMIŞ section kalemleri (planned-completed>0) + itemless kalemleri +
-    toplam kalan. Görev taşınınca `carried_at` ile işaretlenir → listeden düşer.
-    (Kapasite reconcile ile zaten iade edilmiştir — bu yalnız liste/UI.)
+    `carried_at IS NULL` (henüz taşınmamış) görevler. Görev düzeyinde tek aday;
+    her aday: görevin YAPILMAMIŞ section kalemleri (planned-completed>0) + itemless
+    kalemleri + toplam kalan. Görev taşınınca `carried_at` ile işaretlenir → düşer.
+
+    `include_plain_tests=False` (plan modu, varsayılan): düz TEST görevleri (kitaptan
+    section, blok değil, kitapsız kalem yok) LİSTELENMEZ — rezerv reconcile ile
+    iade edildi, kitapta 'çözülmedi' görünür. `True` (browse modu, geçmiş program
+    BİLGİ AMAÇLI): TÜM tipler (test dahil) listelenir.
     """
     q = (
         db.query(Task)
@@ -273,10 +277,11 @@ def list_carryover_candidates(
         is_activity = len(t.book_items) == 0
         is_block = t.work_block_id is not None
         # DÜZ TEST görevi (kitaptan section, blok DEĞİL, kitapsız kalem yok) →
-        # LİSTEDE GÖSTERME. Rezerv reconcile ile zaten iade edildi; kitapta
-        # 'çözülmedi' olarak görünür → koç normal akıştan yeniden atar. Yalnız
-        # blok / etkinlik (video/özet/tekrar/diğer) / kitapsız deneme listelenir.
-        if section_items and not is_block and not itemless and not is_activity:
+        # PLAN modunda LİSTELENMEZ (rezerv iade edildi, kitapta 'çözülmedi' görünür;
+        # koç normal akıştan yeniden atar). BROWSE modunda (geçmiş program, bilgi
+        # amaçlı) TÜM görevler listelenir → include_plain_tests=True ile gösterilir.
+        if (not include_plain_tests
+                and section_items and not is_block and not itemless and not is_activity):
             continue
         # Gösterilecek içerik yoksa atla.
         if not section_items and not itemless and not is_activity:

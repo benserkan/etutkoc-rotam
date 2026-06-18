@@ -178,6 +178,13 @@ def main() -> int:
             check("11a. ETKİNLİK görevi (t_video) listede VAR",
                   ids["t_video"] in task_ids, f"got {task_ids}")
             check("11e. bugünkü görev listede YOK (geçmiş değil)", ids["t_today"] not in task_ids)
+            # browse modu (include_plain_tests=True): düz test görevleri DE listelenir
+            browse = ts.list_carryover_candidates(
+                db, student_id=ids["student"], cutoff_date=cutoff, include_plain_tests=True)
+            btids = {c["task_id"] for c in browse}
+            check("11g. browse modu: düz TEST görevleri (t_past+t_partial) DE listede (bilgi amaçlı)",
+                  ids["t_past"] in btids and ids["t_partial"] in btids
+                  and ids["t_block"] in btids and ids["t_video"] in btids, f"got {btids}")
 
             # since_date kapsamı: today-3'ten itibaren → today-5 görevleri DIŞARIDA
             # (geçen hafta sınırı), ama kapasiteleri yine serbest (reconcile tüm geçmiş).

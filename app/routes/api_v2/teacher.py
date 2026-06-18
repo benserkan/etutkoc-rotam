@@ -3606,8 +3606,11 @@ def teacher_carryover_candidates_v2(
         )
         if res.get("released_tests"):
             db.commit()
+    # browse (geçmiş program, bilgi amaçlı) → test dahil TÜM görevler; plan →
+    # düz test görevleri hariç (rezerv iade edildi, kitapta görünür).
     rows = tsvc.list_carryover_candidates(
         db, student_id=student.id, cutoff_date=win_end, since_date=win_start,
+        include_plain_tests=(mode == "browse"),
     )
     return CarryoverCandidatesResponse(
         candidates=[

@@ -161,7 +161,8 @@ def main() -> int:
         check("11. geçmiş program görüntüleme → mode=browse", bj.get("mode") == "browse", bj.get("mode"))
         bids = {c["task_id"] for c in bj.get("candidates", [])}
         check("12. browse: o haftanın etkinlik görevi (video) listede (bilgi amaçlı)", ids["t2"] in bids, f"got {bids}")
-        check("13. browse: düz TEST görevi listede YOK (filtre)", ids["t_past"] not in bids, f"got {bids}")
+        check("13. browse: düz TEST görevi DE listede (bilgi amaçlı, tüm tipler)",
+              ids["t_past"] in bids, f"got {bids}")
     finally:
         with SessionLocal() as db:
             # tüm öğrenci görevlerini sil
