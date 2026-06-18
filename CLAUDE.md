@@ -254,6 +254,44 @@ faz 2) · aday = görev düzeyi tüm tipler · blok bağımsız taşıma · carr
 
 ---
 
+## Öğrenci bazlı Müfredat İlerleme (2026-06-18, DEVAM EDİYOR — Faz 0 CANLI)
+
+**Bağlam (kullanıcı):** Koç program hazırlarken öğrencinin müfredatta NEREDE olduğunu
++ tamamlama oranını, seansta GEÇEN HAFTA hangi üniteleri işlediğini, program yaparken
+SIRADAKİ üniteleri görmek istiyor. Detaylı ihtiyaç analizi + AI-örülü yol haritası yapıldı.
+
+**Mevcut model (keşif):** Resmi müfredat omurgası VAR — `Subject`+`Topic` (built-in,
+teacher_id=NULL): Topic.order=resmi sıra, grade_level, curriculum_model (LGS/MAARIF/KLASIK).
+Öğrencinin `effective_curriculum_model`+sınıf+track ile sıralı konu seti türetilir.
+İlerleme: `SectionProgress` (reserved/completed per öğrenci-ünite) + `TaskBookItem`.
+**KRİTİK BULGU:** prod'da 463 BookSection'ın yalnız %34'ü (156) resmi konuya (topic_id)
+eşleşmiş → saf resmi-omurga %66 boşluklu. **Eşleştirme yükseltme ön şart.**
+
+**Kullanıcı kararları (AskUserQuestion):** omurga = **Hibrit** (resmi Topic omurga +
+eşleşmemiş ekstra). + **AI kullanımı sorusu** → en büyük kaldıraç EŞLEŞTİRME (Gemini
+semantik, ÜCRETSİZ key — kişisel veri değil) + akıllı sıradaki üniteler (ücretli, KS4 deseni).
+
+**AI-örülü yol haritası (onaylı):**
+- **Faz 0 — Eşleştirme yükseltme** ✅ (2026-06-18, CANLI, migration YOK): deterministik
+  auto-map + Gemini semantik öneri + koç onay UI.
+- Faz 1 — müfredat ilerleme servisi + öğrenci "Müfredat" sekmesi (omurga+durum+%+frontier).
+- Faz 2 — program "sıradaki üniteler" + tek-tık ata + AI akıllı öncelik (perf+sınav+getiri).
+- Faz 3 — seans "geçen hafta işlenenler" + KS4 içgörüye müfredat girdisi.
+- Faz 4 (ops.) — müfredat yetişme projeksiyonu + AI kapsama planı + kurum/veli.
+
+**Faz 0 detay (CANLI):**
+- `app/services/curriculum_mapping.py`: `normalize` (Türkçe sadeleştirme) + auto-map
+  (label→Topic.name exact-normalize) + `_ai_suggest` (Gemini `personal_data=False`=ücretsiz
+  key, eşleşmeyenler; best-effort) + `apply_mappings`. Aday konular = kitabın subject'inin
+  `_accessible_topics`.
+- Uçlar (library): `GET /books/{id}/mapping-suggestions?ai=true` · `POST /books/{id}/apply-mapping`.
+- Frontend: kitap detayı "Bölümler" sekmesinde **"Müfredata eşleştir"** butonu (eşleşmemiş
+  rozeti) → `CurriculumMappingModal` (satır konu seçici + auto/AI/eşli rozet + "Yapay zekâ
+  ile öner" + Uygula).
+- `test_curriculum_mapping` **11/11** · library 24/18. Migration GEREKMEZ (topic_id zaten var).
+
+---
+
 ## Dinamik vitrin + dönüşüm + sosyal kanıt + analitik (2026-06-15, CANLI)
 
 **Bağlam:** Anasayfa bilgi kartlarının dinamik gösterimi (feature_catalog: fuzzy +
