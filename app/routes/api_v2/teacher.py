@@ -8251,6 +8251,26 @@ def teacher_list_work_blocks_v2(
     from app.models import CoachWorkBlock
 
     student = _get_owned_student(db, student_id, user.id)
+    # Lazy auto-arşiv: tamamen tamamlanmış (çözülen >= toplam) aktif bloklar artık
+    # işe yaramaz → Serbest Bloklar listesinden otomatik kalkar (status=archived).
+    # Görevler programda BLOK olarak kalır (tamamlanmış); yalnız blok listeden düşer.
+    active_blocks = (
+        db.query(CoachWorkBlock)
+        .filter(CoachWorkBlock.student_id == student.id, CoachWorkBlock.status == "active")
+        .all()
+    )
+    if active_blocks:
+        agg_all = _work_block_aggregates(db, student.id, [b.id for b in active_blocks])
+        changed = False
+        for b in active_blocks:
+            _dist, completed, _cnt = agg_all.get(b.id, (0, 0, 0))
+            if b.total_count > 0 and completed >= b.total_count:
+                b.status = "archived"
+                b.archived_at = datetime.now(timezone.utc)
+                changed = True
+        if changed:
+            db.commit()
+
     q = db.query(CoachWorkBlock).filter(CoachWorkBlock.student_id == student.id)
     if not include_archived:
         q = q.filter(CoachWorkBlock.status != "archived")
