@@ -394,6 +394,14 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
               trackRequired={data.track_required ?? false}
               trackMissing={data.track_missing ?? false}
               trackLabel={data.track_label ?? null}
+              onCarryoverDrop={
+                d.is_past
+                  ? undefined
+                  : (period, taskId) =>
+                      carryDnd.mutate({
+                        body: { target_date: d.date, period, task_ids: [taskId] },
+                      })
+              }
             />
             </div>
           ))}

@@ -115,6 +115,9 @@ interface Props {
   trackRequired: boolean;
   trackMissing: boolean;
   trackLabel: string | null;
+  // Devret sürükle-bırak: bir zaman dilimi (periyot) başlığına bırakılınca o
+  // periyoda taşı (week-board day-level drop period=null fallback'tir).
+  onCarryoverDrop?: (period: TaskPeriod | null, taskId: number) => void;
 }
 
 export function WeekDayCard({
@@ -134,6 +137,7 @@ export function WeekDayCard({
   trackRequired,
   trackMissing,
   trackLabel,
+  onCarryoverDrop,
 }: Props) {
   const [addOpen, setAddOpen] = React.useState(false);
 
@@ -263,7 +267,12 @@ export function WeekDayCard({
         </div>
       ) : null}
 
-      <TaskList studentId={studentId} day={day} subjects={subjects} />
+      <TaskList
+        studentId={studentId}
+        day={day}
+        subjects={subjects}
+        onCarryoverDrop={onCarryoverDrop}
+      />
 
       <div className="px-5 py-3 border-t border-border border-l-[3px] border-l-sky-400/70 bg-sky-500/[0.04]">
         <div
@@ -555,13 +564,62 @@ function SubjectGroupHeader({
   );
 }
 
-function PeriodHeader({ pkey, count }: { pkey: string; count: number }) {
+function PeriodHeader({
+  pkey,
+  count,
+  onCarryoverDrop,
+}: {
+  pkey: string;
+  count: number;
+  onCarryoverDrop?: (period: TaskPeriod | null, taskId: number) => void;
+}) {
+  const [over, setOver] = React.useState(false);
+  const CARRY_MIME = "text/x-carryover-task";
+  const periodValue: TaskPeriod | null =
+    pkey === "morning" || pkey === "noon" || pkey === "evening"
+      ? (pkey as TaskPeriod)
+      : null;
+  const droppable = !!onCarryoverDrop;
   return (
-    <div className="flex items-center gap-2 px-4 py-2 bg-foreground/[0.07] border-y border-border">
+    <div
+      onDragOver={
+        droppable
+          ? (e) => {
+              if (e.dataTransfer.types.includes(CARRY_MIME)) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.dataTransfer.dropEffect = "copy";
+                if (!over) setOver(true);
+              }
+            }
+          : undefined
+      }
+      onDragLeave={droppable ? () => setOver(false) : undefined}
+      onDrop={
+        droppable
+          ? (e) => {
+              const raw = e.dataTransfer.getData(CARRY_MIME);
+              setOver(false);
+              if (!raw) return;
+              e.preventDefault();
+              e.stopPropagation(); // gün-level drop tetiklenmesin (çift taşıma yok)
+              const tid = Number(raw);
+              if (Number.isFinite(tid)) onCarryoverDrop?.(periodValue, tid);
+            }
+          : undefined
+      }
+      className={cn(
+        "flex items-center gap-2 px-4 py-2 bg-foreground/[0.07] border-y border-border transition",
+        over && "bg-amber-200/60 ring-2 ring-inset ring-amber-400",
+      )}
+    >
       <Clock className="size-3.5 text-foreground/70 flex-shrink-0" aria-hidden />
       <span className="text-[12px] uppercase tracking-wider font-bold text-foreground">
         {PERIOD_LABELS[pkey] ?? PERIOD_LABELS.none}
       </span>
+      {over ? (
+        <span className="text-[10px] font-semibold text-amber-800">→ buraya bırak</span>
+      ) : null}
       <span className="ml-auto text-[10px] text-muted-foreground tabular-nums bg-background/70 rounded-full px-2 py-0.5">
         {count} görev
       </span>
@@ -577,10 +635,12 @@ function TaskList({
   studentId,
   day,
   subjects,
+  onCarryoverDrop,
 }: {
   studentId: number;
   day: TeacherStudentWeekDay;
   subjects: SubjectRef[];
+  onCarryoverDrop?: (period: TaskPeriod | null, taskId: number) => void;
 }) {
   const reorderMut = useReorderTasks(studentId);
   const patchTask = usePatchTask(studentId, day.date);
@@ -742,7 +802,11 @@ function TaskList({
             return (
               <React.Fragment key={id}>
                 {showPeriod ? (
-                  <PeriodHeader pkey={pk} count={periodCounts.get(pk) ?? 1} />
+                  <PeriodHeader
+                    pkey={pk}
+                    count={periodCounts.get(pk) ?? 1}
+                    onCarryoverDrop={onCarryoverDrop}
+                  />
                 ) : null}
                 {showSubject ? (
                   <SubjectGroupHeader
