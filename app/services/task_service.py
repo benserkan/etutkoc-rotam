@@ -212,56 +212,87 @@ def list_carryover_candidates(
     cutoff_date: date,
     since_date: date | None = None,
 ) -> list[dict]:
-    """Geçmiş haftalardan 'yapılmadan kalan' kalemler (devret adayları).
+    """Devret adayları — GÖREV düzeyinde 'yapılmadan kalan' görevler.
 
-    `task.date < cutoff_date` + `status != COMPLETED` + `is_draft == False`
-    görevlerin, section'lı + (planned - completed) > 0 olan kalemleri. Rezerv
-    serbest bırakılmış olsun olmasın aday olabilir (kapasite reconcile ile zaten
-    iade edilmiştir). `since_date` verilirse YALNIZ o tarihten itibaren (>=)
-    görevler — Devret panelini 'geçen hafta' ile sınırlamak için (tüm geçmiş
-    yığını koçu boğmasın; eski kalemlerin kapasitesi yine boştadır). Her aday:
-    kitap + bölüm + kalan test + kaynak görev tarihi.
+    `since_date <= task.date < cutoff_date` + `status != COMPLETED` + yayında +
+    `carried_at IS NULL` (henüz taşınmamış) görevler. Tüm görev tipleri (test/
+    blok/itemless/deneme/etkinlik) görev düzeyinde tek aday. Her aday: görevin
+    YAPILMAMIŞ section kalemleri (planned-completed>0) + itemless kalemleri +
+    toplam kalan. Görev taşınınca `carried_at` ile işaretlenir → listeden düşer.
+    (Kapasite reconcile ile zaten iade edilmiştir — bu yalnız liste/UI.)
     """
     q = (
-        db.query(TaskBookItem)
-        .join(Task, Task.id == TaskBookItem.task_id)
+        db.query(Task)
         .options(
-            joinedload(TaskBookItem.book),
-            joinedload(TaskBookItem.section),
+            joinedload(Task.book_items).joinedload(TaskBookItem.book),
+            joinedload(Task.book_items).joinedload(TaskBookItem.section),
         )
         .filter(
             Task.student_id == student_id,
             Task.date < cutoff_date,
             Task.status != TaskStatus.COMPLETED,
             Task.is_draft.is_(False),
-            TaskBookItem.book_section_id.isnot(None),
+            Task.carried_at.is_(None),
         )
     )
     if since_date is not None:
         q = q.filter(Task.date >= since_date)
-    items = q.order_by(Task.date.asc(), TaskBookItem.id.asc()).all()
+    tasks = q.order_by(Task.date.asc(), Task.order.asc(), Task.id.asc()).all()
+
     out: list[dict] = []
-    for it in items:
-        remaining = max(0, it.planned_count - it.completed_count)
-        if remaining <= 0:
-            continue
-        book = it.book
-        section = it.section
-        if book is None or section is None:
+    for t in tasks:
+        section_items: list[dict] = []
+        itemless: list[dict] = []
+        total_remaining = 0
+        for it in t.book_items:
+            if it.book_section_id is not None:
+                rem = max(0, it.planned_count - it.completed_count)
+                if rem <= 0:
+                    continue
+                book = it.book
+                section = it.section
+                if book is None or section is None:
+                    continue
+                section_items.append({
+                    "book_id": it.book_id,
+                    "section_id": it.book_section_id,
+                    "book_name": book.name,
+                    "section_label": (getattr(section, "label", None)
+                                      or getattr(section, "name", "") or ""),
+                    "remaining": rem,
+                })
+                total_remaining += rem
+            else:
+                # Kitapsız (deneme / blok-counter) kalem — yapılmamışsa taşınır.
+                rem = max(0, it.planned_count - it.completed_count)
+                itemless.append({
+                    "label": it.label or t.title,
+                    "count": it.planned_count,
+                })
+                total_remaining += rem
+        # Hiç section kalemi tamamlanmamış kalmamışsa ama itemless/etkinlik ise yine aday.
+        is_activity = len(t.book_items) == 0
+        if not section_items and not itemless and not is_activity:
             continue
         out.append({
-            "task_item_id": it.id,
-            "task_date": it.task.date,
-            "book_id": it.book_id,
-            "section_id": it.book_section_id,
-            "book_name": book.name,
-            "section_label": getattr(section, "label", None) or getattr(section, "name", "") or "",
-            "subject_id": getattr(book, "subject_id", None),
-            "planned": it.planned_count,
-            "completed": it.completed_count,
-            "remaining": remaining,
+            "task_id": t.id,
+            "task_date": t.date,
+            "title": t.title,
+            "type": t.type.value if hasattr(t.type, "value") else str(t.type),
+            "is_activity": is_activity,
+            "is_block": t.work_block_id is not None,
+            "period": t.period,
+            "section_items": section_items,
+            "itemless_items": itemless,
+            "total_remaining": total_remaining,
         })
     return out
+
+
+def mark_task_carried(db: Session, task: Task) -> None:
+    """Görevi 'taşındı' olarak işaretle (devret listesinden düşsün)."""
+    if task.carried_at is None:
+        task.carried_at = datetime.now(timezone.utc)
 
 
 def complete_task(

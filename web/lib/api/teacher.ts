@@ -93,8 +93,8 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "books"] as const,
   studentParents: (id: number) =>
     ["teacher", "me", "students", String(id), "parents"] as const,
-  carryoverCandidates: (id: number) =>
-    ["teacher", "me", "students", String(id), "carryover"] as const,
+  carryoverCandidates: (id: number, programId?: number | null) =>
+    ["teacher", "me", "students", String(id), "carryover", String(programId ?? "active")] as const,
 
   // Paket 3.5a — haftalık plan yardımcıları
   studentSidebar: (id: number, subjectId: number | null) =>
@@ -391,9 +391,13 @@ export function getTeacherStudentWeek(
 
 export function getCarryoverCandidates(
   id: number,
+  programId?: number | null,
 ): Promise<CarryoverCandidatesResponse> {
+  const qs = buildQuery({
+    program_id: programId != null ? String(programId) : undefined,
+  });
   return api<CarryoverCandidatesResponse>(
-    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/carryover-candidates`,
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/carryover-candidates${qs}`,
   );
 }
 

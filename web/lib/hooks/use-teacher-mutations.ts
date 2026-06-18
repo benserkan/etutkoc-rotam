@@ -234,7 +234,10 @@ export function useCarryover(studentId: number) {
     onError: (err) => showError(err, "Görevler taşınamadı"),
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
-      qc.invalidateQueries({ queryKey: teacherKeys.carryoverCandidates(studentId) });
+      // carryover listesini (tüm program varyantları) tazele → taşınan düşsün
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "carryover"],
+      });
       const n = res.data?.created_tasks ?? 0;
       toast.success(n > 0 ? `${n} görev bu haftaya taşındı` : "Görev taşındı");
     },

@@ -198,7 +198,9 @@ from app.routes.api_v2.schemas.teacher import (
     CarryoverBody,
     CarryoverCandidate,
     CarryoverCandidatesResponse,
+    CarryoverItemlessItem,
     CarryoverResult,
+    CarryoverSectionItem,
     TaskCreateBody,
     TaskItemBody,
     TaskTemplateCreateBody,
@@ -3545,14 +3547,35 @@ def teacher_create_task_v2(
 # ---------------------- Devret (carryover) — geçen haftadan eksikler ----------------------
 
 
-def _carryover_cutoff(db: Session, student_id: int) -> date:
-    """Devret/reconcile sınırı: aktif programın başlangıcı, yoksa bugün.
-    Bundan ÖNCEKİ haftalar 'geçmiş' sayılır (haftası geçince serbest bırak)."""
+def _carryover_context(db: Session, student_id: int, program_id: int | None):
+    """Devret bağlamı → (mode, window_start, window_end, reconcile_cutoff).
+
+    - Geçmiş bir program GÖRÜNTÜLENİYORSA (program_id verilmiş + end_date < bugün):
+      mode='browse' (bilgi amaçlı) → pencere = O HAFTANIN aralığı [start, end+1).
+      Reconcile yapılmaz (yalnız geçmişe bakılıyor).
+    - Aksi halde (aktif/gelecek/program yok): mode='plan' (eylemli) → pencere =
+      bir ÖNCEKİ hafta [prev.start, active.start); reconcile_cutoff = active.start.
+    """
+    from datetime import timedelta as _td
+
+    from app.models import WeeklyProgram
     from app.services import weekly_program_service as wps
 
     today = date.today()
+    if program_id:
+        viewed = (
+            db.query(WeeklyProgram)
+            .filter(WeeklyProgram.id == program_id, WeeklyProgram.student_id == student_id)
+            .first()
+        )
+        if viewed is not None and viewed.end_date < today:
+            return ("browse", viewed.start_date, viewed.end_date + _td(days=1), None)
+
     active = wps.get_active_program(db, student_id=student_id, today=today)
-    return active.start_date if active is not None else today
+    cutoff = active.start_date if active is not None else today
+    prev = wps.get_previous_program(db, student_id=student_id, before_date=cutoff)
+    since = prev.start_date if prev is not None else (cutoff - _td(days=7))
+    return ("plan", since, cutoff, cutoff)
 
 
 @router.get(
@@ -3561,51 +3584,50 @@ def _carryover_cutoff(db: Session, student_id: int) -> date:
 )
 def teacher_carryover_candidates_v2(
     student_id: int,
+    program_id: int | None = Query(None),
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Geçen haftalardan yapılmadan kalan kalemler (devret adayları).
+    """Devret adayları — yapılmadan kalan GÖREVLER (tüm tipler, görev düzeyi).
 
-    Önce 'ölü rezerv' serbest bırakılır (kapasite geri döner) → koç bu kalemleri
-    yeni haftaya taşıyabilir. Aktif programın başlangıcından ÖNCEKİ, tamamlanmamış,
-    yayında görevlerin section'lı + kalan>0 kalemleri.
+    mode='plan' (aktif/yeni hafta): bir önceki haftanın taşınmamış eksikleri +
+    önce ölü rezerv serbest bırakılır (TÜM geçmiş, kapasite hazır).
+    mode='browse' (geçmiş program görüntüleniyor): O HAFTANIN taşınmamış eksikleri,
+    BİLGİ AMAÇLI (eylemsiz). Taşınmış (carried) görevler her iki modda da düşer.
     """
     from app.services import task_service as tsvc
 
-    from datetime import timedelta as _td
-
-    from app.services import weekly_program_service as wps
-
     student = _get_owned_student(db, student_id, user.id)
-    cutoff = _carryover_cutoff(db, student.id)
-    # Ölü rezervi serbest bırak (idempotent, TÜM geçmiş) — kapasite hazır olsun.
-    res = tsvc.reconcile_past_reservations(db, student_id=student.id, cutoff_date=cutoff)
-    if res.get("released_tests"):
-        db.commit()
-    # Devret listesi YALNIZ bir önceki haftayla sınırlı (koçu tüm geçmiş yığını
-    # boğmasın). Önceki program varsa onun başlangıcı, yoksa cutoff'tan 7 gün geri.
-    prev = wps.get_previous_program(db, student_id=student.id, before_date=cutoff)
-    since = prev.start_date if prev is not None else (cutoff - _td(days=7))
+    mode, win_start, win_end, recon_cutoff = _carryover_context(db, student.id, program_id)
+    if mode == "plan" and recon_cutoff is not None:
+        # Ölü rezervi serbest bırak (idempotent, TÜM geçmiş) — kapasite hazır olsun.
+        res = tsvc.reconcile_past_reservations(
+            db, student_id=student.id, cutoff_date=recon_cutoff,
+        )
+        if res.get("released_tests"):
+            db.commit()
     rows = tsvc.list_carryover_candidates(
-        db, student_id=student.id, cutoff_date=cutoff, since_date=since,
+        db, student_id=student.id, cutoff_date=win_end, since_date=win_start,
     )
     return CarryoverCandidatesResponse(
         candidates=[
             CarryoverCandidate(
-                task_item_id=r["task_item_id"],
+                task_id=r["task_id"],
                 task_date=r["task_date"].isoformat(),
-                book_id=r["book_id"],
-                section_id=r["section_id"],
-                book_name=r["book_name"],
-                section_label=r["section_label"],
-                subject_id=r["subject_id"],
-                planned=r["planned"],
-                completed=r["completed"],
-                remaining=r["remaining"],
+                title=r["title"],
+                type=r["type"],
+                is_activity=r["is_activity"],
+                is_block=r["is_block"],
+                period=r["period"],
+                section_items=[CarryoverSectionItem(**si) for si in r["section_items"]],
+                itemless_items=[CarryoverItemlessItem(**il) for il in r["itemless_items"]],
+                total_remaining=r["total_remaining"],
             )
             for r in rows
         ],
-        cutoff_date=cutoff.isoformat(),
+        mode=mode,
+        window_start=win_start.isoformat(),
+        window_end=win_end.isoformat(),
     )
 
 
@@ -3619,39 +3641,73 @@ def teacher_carryover_v2(
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Seçili eksik kalemleri yeni güne taşı (her kalem → yeni görev).
+    """Seçili görevleri yeni güne taşı (her görev → yeni görev, yapılmamış işiyle).
 
-    Önce ölü rezerv serbest bırakılır (kapasite hazır), sonra her kalem için
-    normal görev oluşturma (rezerv açar). Eski (geçmiş) görev kaydı DURUR —
-    yalnızca yeni haftada yeni görevler oluşur.
+    Önce ölü rezerv serbest bırakılır (kapasite hazır). Her kaynak görev için
+    YALNIZ yapılmamış kısmı (section: planned-completed; kitapsız: kalem; etkinlik:
+    kalemsiz) hedef güne yeni görev olarak oluşturulur — blok dahil BAĞIMSIZ görev
+    (eski blok muhasebesi geçmişte kalır). Kaynak görev `carried_at` ile işaretlenir
+    (listeden düşer) ama kaydı DURUR.
     """
     from app.services import task_service as tsvc
 
     student = _get_owned_student(db, student_id, user.id)
     assert_active_coaching(db, user)
     target = _parse_iso_date(body.target_date)
-    if not body.items:
+    if not body.task_ids:
         raise HTTPException(
             status_code=422,
-            detail={"error": "invalid", "code": "no_items", "message": "Taşınacak kalem seçilmedi."},
+            detail={"error": "invalid", "code": "no_items", "message": "Taşınacak görev seçilmedi."},
         )
-    # Ölü rezervi serbest bırak → taşınan kalemler için kapasite açılsın.
-    cutoff = _carryover_cutoff(db, student.id)
-    tsvc.reconcile_past_reservations(db, student_id=student.id, cutoff_date=cutoff)
+    # Ölü rezervi serbest bırak → taşınan görevler için kapasite açılsın.
+    _mode, _ws, _we, recon_cutoff = _carryover_context(db, student.id, None)
+    if recon_cutoff is not None:
+        tsvc.reconcile_past_reservations(db, student_id=student.id, cutoff_date=recon_cutoff)
 
     created = 0
+    carried_ids: list[int] = []
     try:
-        for it in body.items:
-            if it.count < 1:
+        for tid in body.task_ids:
+            src = (
+                db.query(Task)
+                .filter(Task.id == tid, Task.student_id == student.id)
+                .first()
+            )
+            if src is None or src.carried_at is not None or src.status == TaskStatus.COMPLETED:
                 continue
+            # Yapılmamış işi topla
+            items: list[TaskItemBody] = []
+            for it in src.book_items:
+                if it.book_section_id is not None:
+                    rem = max(0, it.planned_count - it.completed_count)
+                    if rem > 0:
+                        items.append(TaskItemBody(
+                            book_id=it.book_id, section_id=it.book_section_id, planned_count=rem,
+                        ))
+                elif it.book_id is None:
+                    # kitapsız (deneme/blok-counter) kalem
+                    rem = max(0, it.planned_count - it.completed_count)
+                    items.append(TaskItemBody(
+                        book_id=None, section_id=None,
+                        label=it.label or src.title, planned_count=(rem or it.planned_count),
+                    ))
+            src_type = src.type.value if hasattr(src.type, "value") else str(src.type)
+            # Section'lı kalem varsa "test"; yoksa kaynak tipini koru (etkinlik).
+            has_section = any(i.section_id is not None for i in items)
+            new_type = "test" if has_section else (src_type if src_type in {
+                "video", "ozet", "tekrar", "other",
+            } else "other")
             payload = TaskCreateBody(
                 date=target.isoformat(),
-                type="test",
-                title="—",  # _create_task_with_items tek-kalemde otomatik başlık üretir
+                type=new_type,
+                title=src.title or "—",
                 period=body.period,
-                items=[TaskItemBody(book_id=it.book_id, section_id=it.section_id, planned_count=it.count)],
+                notes=src.notes,
+                items=items,
             )
             _create_task_with_items(db, student=student, payload=payload)
+            tsvc.mark_task_carried(db, src)
+            carried_ids.append(src.id)
             created += 1
     except ReservationError as e:
         db.rollback()
@@ -3661,7 +3717,10 @@ def teacher_carryover_v2(
         raise
     db.commit()
     return MutationResponse[CarryoverResult](
-        data=CarryoverResult(created_tasks=created, target_date=target.isoformat()),
+        data=CarryoverResult(
+            created_tasks=created, carried_task_ids=carried_ids,
+            target_date=target.isoformat(),
+        ),
         invalidate=[
             f"teacher:{user.id}:students:{student.id}:week",
             f"teacher:{user.id}:students:{student.id}:day",

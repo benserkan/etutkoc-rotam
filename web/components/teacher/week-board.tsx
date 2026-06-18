@@ -377,7 +377,11 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
         </div>
 
         <aside className="xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto rounded-lg border border-border bg-card">
-          <CarryoverPanel studentId={studentId} />
+          <CarryoverPanel
+            studentId={studentId}
+            programId={currentProgramId}
+            weekDays={data.days}
+          />
           <WorkBlockPanel studentId={studentId} />
           <ResourceSidebar
             data={sidebarQ.data}

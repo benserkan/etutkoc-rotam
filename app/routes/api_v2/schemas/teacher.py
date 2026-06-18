@@ -804,41 +804,52 @@ class TaskCreateBody(BaseModel):
     work_block_id: int | None = None
 
 
-class CarryoverCandidate(BaseModel):
-    """Geçmiş haftalardan 'yapılmadan kalan' bir kalem (devret adayı)."""
-    task_item_id: int
-    task_date: str                   # "YYYY-MM-DD" — kaynak görev tarihi
+class CarryoverSectionItem(BaseModel):
+    """Devret adayı görevin yapılmamış section kalemi."""
     book_id: int
     section_id: int
     book_name: str
     section_label: str
-    subject_id: int | None = None
-    planned: int
-    completed: int
     remaining: int
+
+
+class CarryoverItemlessItem(BaseModel):
+    """Devret adayı görevin kitapsız (deneme/blok-counter) kalemi."""
+    label: str
+    count: int
+
+
+class CarryoverCandidate(BaseModel):
+    """Geçmiş haftadan 'yapılmadan kalan' bir GÖREV (devret adayı). Tüm tipler."""
+    task_id: int
+    task_date: str                   # "YYYY-MM-DD" — kaynak görev tarihi
+    title: str
+    type: str
+    is_activity: bool                # kalemsiz etkinlik (video/özet/tekrar/diğer)
+    is_block: bool                   # serbest iş bloğuna bağlı
+    period: str | None = None
+    section_items: list[CarryoverSectionItem] = []
+    itemless_items: list[CarryoverItemlessItem] = []
+    total_remaining: int
 
 
 class CarryoverCandidatesResponse(BaseModel):
     candidates: list[CarryoverCandidate]
-    cutoff_date: str                 # bu tarihten öncekiler aday
-
-
-class CarryoverItemBody(BaseModel):
-    """Devredilecek tek kalem: kitap+bölüm+sayı (kalan ≤)."""
-    book_id: int
-    section_id: int
-    count: int                       # ≥1
+    mode: str                        # "plan" (eylemli) | "browse" (bilgi amaçlı)
+    window_start: str                # aday penceresi başlangıç (YYYY-MM-DD)
+    window_end: str                  # aday penceresi bitiş (hariç, YYYY-MM-DD)
 
 
 class CarryoverBody(BaseModel):
-    """POST /students/{id}/carryover — seçili eksik kalemleri yeni güne taşı."""
+    """POST /students/{id}/carryover — seçili görevleri yeni güne taşı."""
     target_date: str                 # "YYYY-MM-DD"
     period: str | None = None        # "morning"|"noon"|"evening"|None
-    items: list[CarryoverItemBody]   # ≥1
+    task_ids: list[int]              # ≥1 — taşınacak kaynak görev id'leri
 
 
 class CarryoverResult(BaseModel):
     created_tasks: int
+    carried_task_ids: list[int]
     target_date: str
 
 

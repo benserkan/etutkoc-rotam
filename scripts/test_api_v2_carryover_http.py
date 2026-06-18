@@ -23,6 +23,7 @@ from app.main import app
 from app.models import (
     Book, BookSection, BookType, SectionProgress, StudentBook, Subject,
     SuspiciousIp, Task, TaskBookItem, TaskStatus, TaskType, Topic, User, UserRole,
+    WeeklyProgram,
 )
 from app.services.rate_limit import get_login_limiter
 from app.services.security import hash_password
@@ -85,22 +86,23 @@ def main() -> int:
         r = client.post("/api/v2/auth/login", json={"email": f"{PFX}-t@t.invalid", "password": PASSWORD})
         check("1. koç login 200", r.status_code == 200, r.text[:120])
 
-        # GET candidates — reconcile kapasiteyi açar + adayı listeler
+        # GET candidates — reconcile kapasiteyi açar + adayı listeler (GÖREV düzeyi)
         r = client.get(f"/api/v2/teacher/students/{ids['student']}/carryover-candidates")
         check("2. candidates 200", r.status_code == 200, r.text[:120])
-        cands = r.json().get("candidates", [])
-        mine = [c for c in cands if c["section_id"] == ids["sec"]]
-        check("3. geçen haftanın eksik kalemi adaylarda (remaining=3)",
-              len(mine) == 1 and mine[0]["remaining"] == 3, f"got {mine}")
+        body = r.json()
+        check("2b. mode=plan (aktif/yeni hafta)", body.get("mode") == "plan", body.get("mode"))
+        cands = body.get("candidates", [])
+        mine = [c for c in cands if c["task_id"] == ids["t_past"]]
+        check("3. geçen haftanın eksik görevi adaylarda (kalan=3)",
+              len(mine) == 1 and mine[0]["total_remaining"] == 3, f"got {mine}")
         with SessionLocal() as db:
             check("4. reconcile sonrası sec reserved=0 (kapasite açıldı)",
                   db.get(SectionProgress, ids["sp"]).reserved_count == 0)
 
-        # POST carry → bu haftaya (bugün) taşı
+        # POST carry → görevi bu haftaya (bugün) taşı
         r = client.post(
             f"/api/v2/teacher/students/{ids['student']}/carryover",
-            json={"target_date": today.isoformat(),
-                  "items": [{"book_id": ids["book"], "section_id": ids["sec"], "count": 3}]},
+            json={"target_date": today.isoformat(), "task_ids": [ids["t_past"]]},
         )
         check("5. carry 200", r.status_code == 200, r.text[:160])
         check("6. created_tasks=1", r.json().get("data", {}).get("created_tasks") == 1, r.text[:120])
@@ -110,8 +112,34 @@ def main() -> int:
             new_tasks = db.query(Task).filter(
                 Task.student_id == ids["student"], Task.date == today).all()
             check("8. bugün yeni görev oluştu", len(new_tasks) == 1, f"got {len(new_tasks)}")
-            # eski görev hâlâ duruyor (kayıt korundu)
-            check("9. eski (geçmiş) görev hâlâ duruyor", db.get(Task, ids["t_past"]) is not None)
+            src = db.get(Task, ids["t_past"])
+            check("9. eski görev hâlâ duruyor + carried_at işaretlendi",
+                  src is not None and src.carried_at is not None)
+
+        # GET candidates tekrar → taşınan görev listeden DÜŞTÜ (dinamik)
+        r = client.get(f"/api/v2/teacher/students/{ids['student']}/carryover-candidates")
+        cands2 = r.json().get("candidates", [])
+        check("10. taşınan görev artık adaylarda YOK (dinamik düşme)",
+              ids["t_past"] not in {c["task_id"] for c in cands2}, f"got {[c['task_id'] for c in cands2]}")
+
+        # BROWSE mode: geçmiş program + ikinci (taşınmamış) görev
+        with SessionLocal() as db:
+            prog = WeeklyProgram(student_id=ids["student"], coach_id=ids["teacher"],
+                                 start_date=today - timedelta(days=7), end_date=today - timedelta(days=1),
+                                 name="Geçen hafta")
+            db.add(prog); db.flush()
+            t2 = Task(student_id=ids["student"], date=today - timedelta(days=5), type=TaskType.VIDEO,
+                      title="Geçen hafta video", status=TaskStatus.PENDING, order=2, is_draft=False)
+            db.add(t2); db.flush()
+            db.commit()
+            ids["prog"] = prog.id; ids["t2"] = t2.id
+        r = client.get(
+            f"/api/v2/teacher/students/{ids['student']}/carryover-candidates?program_id={ids['prog']}")
+        bj = r.json()
+        check("11. geçmiş program görüntüleme → mode=browse", bj.get("mode") == "browse", bj.get("mode"))
+        bids = {c["task_id"] for c in bj.get("candidates", [])}
+        check("12. browse: o haftanın taşınmamış görevi (video) listede", ids["t2"] in bids, f"got {bids}")
+        check("13. browse: taşınmış (carried) görev listede YOK", ids["t_past"] not in bids, f"got {bids}")
     finally:
         with SessionLocal() as db:
             # tüm öğrenci görevlerini sil
@@ -119,6 +147,7 @@ def main() -> int:
             if tids:
                 db.execute(sa_delete(TaskBookItem).where(TaskBookItem.task_id.in_(tids)))
                 db.execute(sa_delete(Task).where(Task.id.in_(tids)))
+            db.execute(sa_delete(WeeklyProgram).where(WeeklyProgram.student_id == ids["student"]))
             db.execute(sa_delete(SectionProgress).where(SectionProgress.book_section_id == ids["sec"]))
             db.execute(sa_delete(StudentBook).where(StudentBook.student_id == ids["student"]))
             db.execute(sa_delete(BookSection).where(BookSection.id == ids["sec"]))

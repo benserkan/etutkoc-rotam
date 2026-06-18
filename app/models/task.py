@@ -81,6 +81,12 @@ class Task(Base):
     published_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # Devret izi: görev, devret listesinden yeni haftaya taşınınca doldurulur →
+    # listeden dinamik düşer; geçmiş program gezilirken "sonraki haftaya eklenmiş"
+    # sayılır. NULL = henüz taşınmadı. Görev kaydı silinmez (geçmiş korunur).
+    carried_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     completed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

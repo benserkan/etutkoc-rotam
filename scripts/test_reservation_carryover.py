@@ -150,22 +150,37 @@ def main() -> int:
             check("9. reconcile sonrası sec_a yeniden atanabilir (reserve 3 OK)",
                   _reserved(db, ids["sp_a"]) == 3)
 
-            # carryover candidates: geçmiş yapılmayanlar listelenir
+            # carryover candidates (GÖREV düzeyi): geçmiş yapılmayanlar listelenir
             cands = ts.list_carryover_candidates(db, student_id=ids["student"], cutoff_date=cutoff)
-            sec_ids = {c["section_id"]: c["remaining"] for c in cands}
-            check("10. candidates sec_a (3) + sec_b (3) içerir",
+            # section'ları düzleştir → {section_id: remaining}
+            sec_ids: dict = {}
+            for c in cands:
+                for si in c["section_items"]:
+                    sec_ids[si["section_id"]] = si["remaining"]
+            check("10. candidates sec_a (3) + sec_b (3) içerir (görev düzeyi)",
                   sec_ids.get(ids["sec_a"]) == 3 and sec_ids.get(ids["sec_b"]) == 3, f"got {sec_ids}")
             check("11. candidates bugünkü sec_c'yi İÇERMEZ", ids["sec_c"] not in sec_ids)
+            # taşınmamış (carried_at NULL) görevler → her ikisi de listede
+            task_ids = {c["task_id"] for c in cands}
+            check("11a. t_past + t_partial görevleri adaylarda",
+                  ids["t_past"] in task_ids and ids["t_partial"] in task_ids, f"got {task_ids}")
 
             # since_date kapsamı: today-3'ten itibaren → today-5 görevleri DIŞARIDA
             # (geçen hafta sınırı), ama kapasiteleri yine serbest (reconcile tüm geçmiş).
             scoped = ts.list_carryover_candidates(
                 db, student_id=ids["student"], cutoff_date=cutoff,
                 since_date=today - timedelta(days=3))
-            check("11b. since_date=today-3 → today-5 kalemleri listede YOK (geçen hafta sınırı)",
+            check("11b. since_date=today-3 → today-5 görevleri listede YOK (geçen hafta sınırı)",
                   len(scoped) == 0, f"got {len(scoped)}")
             check("11c. ama kapasiteleri yine serbest (reconcile tüm geçmiş): sec_a reserved hâlâ 0/3 atanabilir",
                   db.get(SectionProgress, ids["sp_a"]).reserved_count == 3)  # test 9'da yeniden atanmıştı
+
+            # carried işareti: t_partial'ı taşınmış işaretle → listeden düşer
+            tp = db.get(Task, ids["t_partial"])
+            ts.mark_task_carried(db, tp); db.commit()
+            cands2 = ts.list_carryover_candidates(db, student_id=ids["student"], cutoff_date=cutoff)
+            check("11d. mark_task_carried sonrası t_partial listeden DÜŞTÜ",
+                  ids["t_partial"] not in {c["task_id"] for c in cands2}, "carried görünmemeli")
 
             # çift-iade koruması: serbest bırakılmış geçmiş görevi sil → reserved bozulmasın
             # (sec_a şu an 3 = yeniden atanan reserve; geçmiş görevi silmek bunu düşürmemeli)

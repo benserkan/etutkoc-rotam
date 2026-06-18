@@ -2,106 +2,121 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { History, Loader2, ArrowRight, ChevronDown } from "lucide-react";
+import {
+  History,
+  Loader2,
+  ChevronDown,
+  Plus,
+  Info,
+  Boxes,
+  X,
+} from "lucide-react";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { getCarryoverCandidates, teacherKeys } from "@/lib/api/teacher";
 import { useCarryover } from "@/lib/hooks/use-teacher-mutations";
-import type { CarryoverCandidatesResponse } from "@/lib/types/teacher";
+import type {
+  CarryoverCandidate,
+  CarryoverCandidatesResponse,
+  TaskPeriod,
+  TeacherStudentWeekDay,
+} from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
 
-function todayIso(): string {
-  const d = new Date();
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
-  return `${y}-${m}-${day}`;
-}
+const PERIODS: { key: TaskPeriod; label: string }[] = [
+  { key: "morning", label: "Sabah" },
+  { key: "noon", label: "Öğle" },
+  { key: "evening", label: "Akşam" },
+];
 
 function fmtDate(iso: string): string {
-  // "2026-06-12" → "12.06"
   const [, m, d] = iso.split("-");
   return d && m ? `${d}.${m}` : iso;
 }
 
 /**
- * Devret — YALNIZ bir önceki haftadan yapılmadan kalan görevler.
+ * Devret — bir önceki haftadan YAPILMADAN KALAN görevler (tüm tipler: test/blok/
+ * deneme/etkinlik). Varsayılan KAPALI; tek satır özet → tıkla aç.
  *
- * Öğrenci geçen hafta bir görevi yapmadıysa (hasta vb.), o testler rezervde
- * kilitli kalıyordu → yeni haftada aynı üniteyi atayamıyordun. Sayfayı açınca
- * "ölü rezerv" otomatik serbest bırakılır (kapasite döner, tüm geçmiş). Bu panel
- * yalnız BİR ÖNCEKİ haftanın eksiklerini gösterir (tüm geçmiş yığını değil) ve
- * VARSAYILAN KAPALI başlar — tek satır özet, tıklayınca açılır. Seç + "bu haftaya
- * taşı" → yeni güne yeni görev. Eski görev kaydı (yapılmadı) durur. Aday yoksa
- * panel HİÇ görünmez.
+ * - mode="plan" (aktif/yeni hafta): EYLEMLİ. Her görev kartında "Ekle" → modal
+ *   (hedef gün + varsa periyot seç) → yeni güne taşı. Taşınan görev DİNAMİK
+ *   olarak listeden düşer (carried). Sayfayı açınca ölü rezerv otomatik serbest
+ *   bırakılır (kapasite döner).
+ * - mode="browse" (geçmiş program gezilirken): BİLGİ AMAÇLI (eylemsiz) — o
+ *   haftada yapılmayan + sonraki haftaya taşınmamış görevler.
+ *
+ * Aday yoksa panel HİÇ görünmez.
  */
-export function CarryoverPanel({ studentId }: { studentId: number }) {
+export function CarryoverPanel({
+  studentId,
+  programId,
+  weekDays,
+}: {
+  studentId: number;
+  programId: number | null;
+  weekDays: TeacherStudentWeekDay[];
+}) {
   const q = useQuery<CarryoverCandidatesResponse>({
-    queryKey: teacherKeys.carryoverCandidates(studentId),
-    queryFn: () => getCarryoverCandidates(studentId),
+    queryKey: teacherKeys.carryoverCandidates(studentId, programId),
+    queryFn: () => getCarryoverCandidates(studentId, programId),
     staleTime: 15_000,
   });
   const carry = useCarryover(studentId);
 
   const candidates = React.useMemo(() => q.data?.candidates ?? [], [q.data]);
+  const mode = q.data?.mode ?? "plan";
   const [expanded, setExpanded] = React.useState(false);
-  const [selected, setSelected] = React.useState<Set<number>>(new Set());
-  const [target, setTarget] = React.useState(todayIso());
-
-  // Aday listesi değişince geçersiz seçimleri ayıkla (render sırasında türet).
-  const validIds = React.useMemo(
-    () => new Set(candidates.map((c) => c.task_item_id)),
-    [candidates],
-  );
-  const effectiveSelected = React.useMemo(
-    () => new Set([...selected].filter((id) => validIds.has(id))),
-    [selected, validIds],
-  );
+  const [addFor, setAddFor] = React.useState<CarryoverCandidate | null>(null);
 
   if (q.isLoading || candidates.length === 0) return null;
 
-  function toggle(id: number) {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function selectAll() {
-    setSelected(new Set(candidates.map((c) => c.task_item_id)));
-  }
-
-  function onCarry() {
-    const items = candidates
-      .filter((c) => effectiveSelected.has(c.task_item_id))
-      .map((c) => ({ book_id: c.book_id, section_id: c.section_id, count: c.remaining }));
-    if (items.length === 0) return;
-    carry.mutate(
-      { body: { target_date: target, items } },
-      { onSuccess: () => setSelected(new Set()) },
-    );
-  }
-
-  const totalRemaining = candidates.reduce((s, c) => s + c.remaining, 0);
+  const totalRemaining = candidates.reduce((s, c) => s + c.total_remaining, 0);
+  const isBrowse = mode === "browse";
 
   return (
-    <div className="border-b border-amber-200 bg-amber-50/60">
-      {/* Varsayılan kapalı — tek satır özet; tıklayınca açılır */}
+    <div
+      className={cn(
+        "border-b",
+        isBrowse ? "border-slate-200 bg-slate-50/60" : "border-amber-200 bg-amber-50/60",
+      )}
+    >
+      {/* Varsayılan kapalı — tek satır özet */}
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition hover:bg-amber-100/50"
+        className={cn(
+          "flex w-full items-center gap-2 px-4 py-2.5 text-left transition",
+          isBrowse ? "hover:bg-slate-100/60" : "hover:bg-amber-100/50",
+        )}
         aria-expanded={expanded}
       >
-        <History className="size-4 shrink-0 text-amber-700" aria-hidden />
-        <span className="min-w-0 flex-1 text-sm font-medium text-amber-900">
-          Geçen haftadan {candidates.length} eksik kaldı
-          <span className="ml-1 font-normal text-amber-700">· {totalRemaining} test</span>
+        {isBrowse ? (
+          <Info className="size-4 shrink-0 text-slate-500" aria-hidden />
+        ) : (
+          <History className="size-4 shrink-0 text-amber-700" aria-hidden />
+        )}
+        <span
+          className={cn(
+            "min-w-0 flex-1 text-sm font-medium",
+            isBrowse ? "text-slate-700" : "text-amber-900",
+          )}
+        >
+          {isBrowse ? "Bu haftada yapılmayanlar" : "Geçen haftadan eksikler"} ({candidates.length})
+          {totalRemaining > 0 ? (
+            <span className={cn("ml-1 font-normal", isBrowse ? "text-slate-500" : "text-amber-700")}>
+              · {totalRemaining} test
+            </span>
+          ) : null}
         </span>
         <ChevronDown
           className={cn(
-            "size-4 shrink-0 text-amber-600 transition-transform",
+            "size-4 shrink-0 transition-transform",
+            isBrowse ? "text-slate-400" : "text-amber-600",
             expanded && "rotate-180",
           )}
           aria-hidden
@@ -110,85 +125,212 @@ export function CarryoverPanel({ studentId }: { studentId: number }) {
 
       {!expanded ? null : (
         <>
-      <p className="px-4 pb-2 text-xs text-amber-800">
-        Bu testlerin rezervi serbest bırakıldı (kapasite döndü). Seç → bu haftaya taşı.
-        Daha eski haftaların kalemleri burada listelenmez (kapasiteleri yine boştadır).
-      </p>
+          <p
+            className={cn(
+              "px-4 pb-2 text-xs",
+              isBrowse ? "text-slate-600" : "text-amber-800",
+            )}
+          >
+            {isBrowse
+              ? "Bu hafta tamamlanmamış + sonraki haftaya taşınmamış görevler (bilgi amaçlı)."
+              : "Yapılmadan kalan görevler. Birine “Ekle” diyerek hedef güne taşıyın; taşınan görev listeden düşer."}
+          </p>
 
-      <ul className="space-y-1 px-3 pb-2">
-        {candidates.map((c) => (
-          <li key={c.task_item_id}>
-            <label
-              className={cn(
-                "flex cursor-pointer items-start gap-2 rounded-md border px-2 py-1.5 text-xs transition",
-                effectiveSelected.has(c.task_item_id)
-                  ? "border-amber-400 bg-amber-100/70"
-                  : "border-amber-200 bg-white hover:bg-amber-50",
-              )}
-            >
-              <input
-                type="checkbox"
-                checked={effectiveSelected.has(c.task_item_id)}
-                onChange={() => toggle(c.task_item_id)}
-                className="mt-0.5 rounded border-amber-300"
-              />
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium text-slate-900">
-                  {c.book_name}
-                </span>
-                <span className="block truncate text-slate-600">
-                  {c.section_label} ·{" "}
-                  <span className="font-semibold text-amber-800">{c.remaining} test</span>
-                  {c.completed > 0 ? (
-                    <span className="text-slate-400"> ({c.completed} yapıldı)</span>
+          <ul className="space-y-1 px-3 pb-3">
+            {candidates.map((c) => (
+              <li
+                key={c.task_id}
+                className={cn(
+                  "rounded-md border px-2.5 py-2 text-xs",
+                  isBrowse ? "border-slate-200 bg-white" : "border-amber-200 bg-white",
+                )}
+              >
+                <div className="flex items-start gap-2">
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1 font-medium text-slate-900">
+                      {c.is_block ? (
+                        <Boxes className="size-3 text-violet-500" aria-hidden />
+                      ) : null}
+                      <span className="truncate">{c.title}</span>
+                    </span>
+                    {c.section_items.map((si) => (
+                      <span key={si.section_id} className="block truncate text-slate-600">
+                        {si.book_name} · {si.section_label} ·{" "}
+                        <span className="font-semibold text-amber-800">{si.remaining} test</span>
+                      </span>
+                    ))}
+                    {c.itemless_items.map((il, i) => (
+                      <span key={i} className="block truncate text-slate-600">
+                        {il.label} · {il.count} test
+                      </span>
+                    ))}
+                    <span className="text-slate-400">{fmtDate(c.task_date)}</span>
+                  </span>
+                  {!isBrowse ? (
+                    <button
+                      type="button"
+                      onClick={() => setAddFor(c)}
+                      className="inline-flex shrink-0 items-center gap-1 rounded-md bg-amber-600 px-2 py-1 text-[11px] font-semibold text-white transition hover:bg-amber-700"
+                    >
+                      <Plus className="size-3" aria-hidden />
+                      Ekle
+                    </button>
                   ) : null}
-                  <span className="text-slate-400"> · {fmtDate(c.task_date)}</span>
-                </span>
-              </span>
-            </label>
-          </li>
-        ))}
-      </ul>
-
-      <div className="flex flex-wrap items-center gap-2 px-4 pb-3 pt-1">
-        <button
-          type="button"
-          onClick={selectAll}
-          className="text-[11px] font-medium text-amber-800 hover:underline"
-        >
-          Tümünü seç
-        </button>
-        <span className="text-amber-300">·</span>
-        <label className="flex items-center gap-1 text-[11px] text-amber-900">
-          Tarih:
-          <input
-            type="date"
-            value={target}
-            onChange={(e) => setTarget(e.target.value)}
-            className="rounded border border-amber-300 bg-white px-1.5 py-0.5 text-xs text-slate-900"
-          />
-        </label>
-        <button
-          type="button"
-          onClick={onCarry}
-          disabled={effectiveSelected.size === 0 || carry.isPending}
-          className={cn(
-            "ml-auto inline-flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-semibold transition",
-            effectiveSelected.size === 0 || carry.isPending
-              ? "cursor-not-allowed bg-amber-200 text-amber-500"
-              : "bg-amber-600 text-white hover:bg-amber-700",
-          )}
-        >
-          {carry.isPending ? (
-            <Loader2 className="size-3.5 animate-spin" aria-hidden />
-          ) : (
-            <ArrowRight className="size-3.5" aria-hidden />
-          )}
-          Bu haftaya taşı ({effectiveSelected.size})
-        </button>
-      </div>
+                </div>
+              </li>
+            ))}
+          </ul>
         </>
       )}
+
+      {/* Hedef gün + periyot seçim modalı */}
+      <AddToDayDialog
+        candidate={addFor}
+        weekDays={weekDays}
+        pending={carry.isPending}
+        onClose={() => setAddFor(null)}
+        onConfirm={(targetDate, period) => {
+          if (!addFor) return;
+          carry.mutate(
+            { body: { target_date: targetDate, period, task_ids: [addFor.task_id] } },
+            { onSuccess: () => setAddFor(null) },
+          );
+        }}
+      />
     </div>
+  );
+}
+
+function AddToDayDialog({
+  candidate,
+  weekDays,
+  pending,
+  onClose,
+  onConfirm,
+}: {
+  candidate: CarryoverCandidate | null;
+  weekDays: TeacherStudentWeekDay[];
+  pending: boolean;
+  onClose: () => void;
+  onConfirm: (targetDate: string, period: TaskPeriod | null) => void;
+}) {
+  const open = candidate !== null;
+  const usesPeriods = React.useMemo(
+    () => weekDays.some((d) => d.tasks?.some((t) => t.period)),
+    [weekDays],
+  );
+  const defaultDay = React.useMemo(() => {
+    const today = weekDays.find((d) => d.is_today);
+    return today?.date ?? weekDays[0]?.date ?? "";
+  }, [weekDays]);
+
+  const [day, setDay] = React.useState(defaultDay);
+  const [period, setPeriod] = React.useState<TaskPeriod | null>(null);
+
+  // Modal her açıldığında varsayılanlara dön (prop değişince render'da sıfırla)
+  const [lastKey, setLastKey] = React.useState<number | null>(null);
+  if (candidate && candidate.task_id !== lastKey) {
+    setLastKey(candidate.task_id);
+    setDay(defaultDay);
+    setPeriod((candidate.period as TaskPeriod | null) ?? null);
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle className="text-base">Hangi güne eklensin?</DialogTitle>
+        </DialogHeader>
+        {candidate ? (
+          <p className="-mt-1 truncate text-xs text-muted-foreground">{candidate.title}</p>
+        ) : null}
+
+        <div className="space-y-3">
+          <div>
+            <p className="mb-1.5 text-xs font-medium text-foreground">Gün</p>
+            <div className="grid grid-cols-2 gap-1.5">
+              {weekDays.map((d) => (
+                <button
+                  key={d.date}
+                  type="button"
+                  onClick={() => setDay(d.date)}
+                  className={cn(
+                    "rounded-md border px-2 py-1.5 text-left text-xs transition",
+                    day === d.date
+                      ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
+                      : "border-border bg-card hover:bg-muted/50",
+                  )}
+                >
+                  {d.dow_label} · {fmtDate(d.date)}
+                  {d.is_today ? <span className="ml-1 text-amber-600">bugün</span> : null}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {usesPeriods ? (
+            <div>
+              <p className="mb-1.5 text-xs font-medium text-foreground">Zaman dilimi</p>
+              <div className="flex flex-wrap gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPeriod(null)}
+                  className={cn(
+                    "rounded-md border px-2.5 py-1 text-xs transition",
+                    period === null
+                      ? "border-slate-500 bg-slate-100 font-semibold text-slate-900"
+                      : "border-border bg-card hover:bg-muted/50",
+                  )}
+                >
+                  Yok
+                </button>
+                {PERIODS.map((p) => (
+                  <button
+                    key={p.key}
+                    type="button"
+                    onClick={() => setPeriod(p.key)}
+                    className={cn(
+                      "rounded-md border px-2.5 py-1 text-xs transition",
+                      period === p.key
+                        ? "border-amber-500 bg-amber-100 font-semibold text-amber-900"
+                        : "border-border bg-card hover:bg-muted/50",
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <div className="mt-2 flex items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex items-center gap-1 rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+          >
+            <X className="size-4" aria-hidden />
+            Vazgeç
+          </button>
+          <button
+            type="button"
+            onClick={() => day && onConfirm(day, period)}
+            disabled={!day || pending}
+            className={cn(
+              "inline-flex items-center gap-1 rounded-md px-3 py-1.5 text-sm font-semibold text-white transition",
+              !day || pending ? "cursor-not-allowed bg-amber-300" : "bg-amber-600 hover:bg-amber-700",
+            )}
+          >
+            {pending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Plus className="size-4" aria-hidden />
+            )}
+            Bu güne ekle
+          </button>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }

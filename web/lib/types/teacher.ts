@@ -832,39 +832,49 @@ export interface TaskPatchBody {
   notes?: string | null;
 }
 
-// Devret (carryover) — geçen haftadan yapılmadan kalan kalemler
-export interface CarryoverCandidate {
-  task_item_id: number;
-  task_date: string;
+// Devret (carryover) — geçen haftadan yapılmadan kalan GÖREVLER (tüm tipler)
+export interface CarryoverSectionItem {
   book_id: number;
   section_id: number;
   book_name: string;
   section_label: string;
-  subject_id: number | null;
-  planned: number;
-  completed: number;
   remaining: number;
+}
+
+export interface CarryoverItemlessItem {
+  label: string;
+  count: number;
+}
+
+export interface CarryoverCandidate {
+  task_id: number;
+  task_date: string;
+  title: string;
+  type: string;
+  is_activity: boolean;
+  is_block: boolean;
+  period: TaskPeriod | null;
+  section_items: CarryoverSectionItem[];
+  itemless_items: CarryoverItemlessItem[];
+  total_remaining: number;
 }
 
 export interface CarryoverCandidatesResponse {
   candidates: CarryoverCandidate[];
-  cutoff_date: string;
-}
-
-export interface CarryoverItemBody {
-  book_id: number;
-  section_id: number;
-  count: number;
+  mode: "plan" | "browse";
+  window_start: string;
+  window_end: string;
 }
 
 export interface CarryoverBody {
   target_date: string;
   period?: TaskPeriod | null;
-  items: CarryoverItemBody[];
+  task_ids: number[];
 }
 
 export interface CarryoverResult {
   created_tasks: number;
+  carried_task_ids: number[];
   target_date: string;
 }
 
