@@ -133,6 +133,7 @@ from app.routes.api_v2.schemas.teacher import (
     StudentSessionListResponse,
     SessionPrefillResponse,
     SessionPrefillSubject,
+    SessionCoveredUnit,
     SessionPrefillExam,
     RateUpdateBody,
     PaymentCreateBody,
@@ -1503,6 +1504,13 @@ def _compute_session_prefill(db: Session, student: User) -> dict:
             "net_pct": int(round(100 * last.net / total_q)) if total_q > 0 else None,
         }
 
+    # Faz 3: son 7 günde işlenen müfredat üniteleri (seans "geçen hafta" analizi).
+    from app.services import curriculum_progress as _cp
+    recent_units = [
+        {"subject": c.subject_name, "topic": c.topic_name, "tests": c.tests_completed}
+        for c in _cp.recently_covered_units(db, student, days=7)
+    ]
+
     return {
         "week_planned": week.planned,
         "week_completed": week.completed,
@@ -1511,6 +1519,7 @@ def _compute_session_prefill(db: Session, student: User) -> dict:
         "behind_subjects": behind,
         "latest_exam": latest_exam,
         "exam_count": int(exam_count),
+        "recent_units": recent_units,
     }
 
 
@@ -1650,6 +1659,7 @@ def teacher_session_prefill_v2(
         behind_subjects=[SessionPrefillSubject(**s) for s in d["behind_subjects"]],
         latest_exam=SessionPrefillExam(**d["latest_exam"]) if d["latest_exam"] else None,
         exam_count=d["exam_count"],
+        recent_units=[SessionCoveredUnit(**u) for u in d.get("recent_units", [])],
     )
 
 

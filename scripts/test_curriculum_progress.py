@@ -16,9 +16,11 @@ import secrets
 from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
+from datetime import date
+
 from app.models import (
     Book, BookSection, BookType, CurriculumModel, SectionProgress, StudentBook,
-    Subject, Topic, User, UserRole,
+    Subject, Task, TaskBookItem, TaskStatus, TaskType, Topic, User, UserRole,
 )
 from app.services import curriculum_progress as cp
 from app.services.security import hash_password
@@ -80,6 +82,12 @@ def main() -> int:
             SectionProgress(student_book_id=sb.id, book_section_id=sec_extra.id, completed_count=2, reserved_count=0),
         ])
         # t4 (Kareköklü) → öğrencide hiç section yok → kaynak_yok
+        # Faz 3: bugün Çarpanlar'dan 5 test çözülen görev (işlenen ünite)
+        tk = Task(student_id=student.id, date=date.today(), type=TaskType.TEST,
+                  title="Çarpanlar", status=TaskStatus.COMPLETED, order=0, is_draft=False)
+        db.add(tk); db.flush()
+        db.add(TaskBookItem(task_id=tk.id, book_id=book.id, book_section_id=sec1.id,
+                            planned_count=5, completed_count=5))
         db.commit()
         ids = {"teacher": teacher.id, "student": student.id, "subj": subj.id, "book": book.id,
                "t1": t1.id, "t2": t2.id, "t3": t3.id, "t4": t4.id,
@@ -138,8 +146,18 @@ def main() -> int:
                       f"{r}")
             finally:
                 gem.generate = orig
+
+            # --- Faz 3: son dönemde işlenen üniteler ---
+            covered = cp.recently_covered_units(db, st, days=7)
+            cn = {c.topic_name: c.tests_completed for c in covered}
+            check("18. işlenen üniteler: Çarpanlar (5 test) listede",
+                  cn.get("Çarpanlar") == 5, f"{cn}")
     finally:
         with SessionLocal() as db:
+            tks = [t.id for t in db.query(Task).filter(Task.student_id == ids["student"]).all()]
+            if tks:
+                db.execute(sa_delete(TaskBookItem).where(TaskBookItem.task_id.in_(tks)))
+                db.execute(sa_delete(Task).where(Task.id.in_(tks)))
             secs = [s.id for s in db.query(BookSection).filter(BookSection.book_id == ids["book"]).all()]
             db.execute(sa_delete(SectionProgress).where(SectionProgress.book_section_id.in_(secs)))
             db.execute(sa_delete(StudentBook).where(StudentBook.student_id == ids["student"]))

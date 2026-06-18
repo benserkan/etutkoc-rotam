@@ -2061,6 +2061,12 @@ class SessionPrefillExam(BaseModel):
     net_pct: int | None = None
 
 
+class SessionCoveredUnit(BaseModel):
+    subject: str
+    topic: str
+    tests: int
+
+
 class SessionPrefillResponse(BaseModel):
     """Seans formu 'Bu haftanın verisi' otomatik paneli (Kova 1)."""
     week_planned: int
@@ -2070,6 +2076,7 @@ class SessionPrefillResponse(BaseModel):
     behind_subjects: list[SessionPrefillSubject]
     latest_exam: SessionPrefillExam | None = None
     exam_count: int
+    recent_units: list[SessionCoveredUnit] = []   # Faz 3: son 7 günde işlenen üniteler
 
 
 # =============================================================================

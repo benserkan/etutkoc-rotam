@@ -516,6 +516,11 @@ function AutoSnapshot({ snap }: { snap: SessionPrefillResponse }) {
         {snap.behind_subjects.length > 0 ? (
           <span className="col-span-2">Geride: {snap.behind_subjects.map((s) => `${s.name} %${s.percent_done}`).join(" · ")}</span>
         ) : null}
+        {snap.recent_units && snap.recent_units.length > 0 ? (
+          <span className="col-span-2 text-cyan-700 dark:text-cyan-300">
+            Geçen hafta işlenen: {snap.recent_units.slice(0, 6).map((u) => `${u.topic} (${u.tests})`).join(" · ")}
+          </span>
+        ) : null}
       </div>
     </div>
   );

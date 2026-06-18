@@ -61,6 +61,11 @@ def _build_prompt(student_name: str, sessions: list[dict[str, Any]], academic: d
                      + (f" (%{le.get('net_pct')} başarı)" if le.get("net_pct") is not None else ""))
     else:
         lines.append("Henüz deneme sonucu girilmemiş.")
+    # Faz 3: son 7 günde işlenen müfredat üniteleri (seans "geçen hafta" analizi)
+    ru = academic.get("recent_units") or []
+    if ru:
+        lines.append("Son 7 günde işlenen üniteler: " + ", ".join(
+            f"{u.get('subject')}—{u.get('topic')} ({u.get('tests')} test)" for u in ru[:10]))
 
     lines.append("\n--- SON SEANSLAR (yeniden eskiye) ---")
     if not sessions:

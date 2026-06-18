@@ -1815,6 +1815,12 @@ export interface SessionPrefillExam {
   net_pct: number | null;
 }
 
+export interface SessionCoveredUnit {
+  subject: string;
+  topic: string;
+  tests: number;
+}
+
 export interface SessionPrefillResponse {
   week_planned: number;
   week_completed: number;
@@ -1823,6 +1829,7 @@ export interface SessionPrefillResponse {
   behind_subjects: SessionPrefillSubject[];
   latest_exam: SessionPrefillExam | null;
   exam_count: number;
+  recent_units?: SessionCoveredUnit[];
 }
 
 export interface CoachingSessionCreateBody {

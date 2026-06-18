@@ -442,3 +442,52 @@ def ai_prioritize_units(
         if tid in valid:
             pri[int(tid)] = (int(p.get("priority") or 99), str(p.get("reason") or "").strip())
     return {"summary": str(data.get("summary") or "").strip() or None, "priorities": pri}
+
+
+# ----------------------- Faz 3: son dönemde işlenen üniteler ------------------
+
+@dataclass
+class CoveredUnit:
+    subject_name: str
+    topic_name: str
+    tests_completed: int
+
+
+def recently_covered_units(
+    db: Session, student: User, *, days: int = 7,
+) -> list[CoveredUnit]:
+    """Son `days` günde İŞLENEN müfredat üniteleri (seans 'geçen hafta' analizi).
+
+    Task.date penceresi + tamamlanan (completed_count>0) section kalemleri →
+    topic'e eşli olanlar → ders+konu bazında çözülen test toplamı. En çok çözülen üstte.
+    """
+    from datetime import date, timedelta
+
+    from app.models import Task, TaskBookItem
+
+    start = date.today() - timedelta(days=days)
+    rows = (
+        db.query(
+            Subject.name.label("subject_name"),
+            Topic.name.label("topic_name"),
+            func.sum(TaskBookItem.completed_count).label("tests"),
+        )
+        .select_from(Task)
+        .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+        .join(BookSection, BookSection.id == TaskBookItem.book_section_id)
+        .join(Topic, Topic.id == BookSection.topic_id)
+        .join(Subject, Subject.id == Topic.subject_id)
+        .filter(
+            Task.student_id == student.id,
+            Task.date >= start,
+            TaskBookItem.completed_count > 0,
+        )
+        .group_by(Subject.name, Topic.name)
+        .order_by(func.sum(TaskBookItem.completed_count).desc())
+        .all()
+    )
+    return [
+        CoveredUnit(subject_name=r.subject_name, topic_name=r.topic_name,
+                    tests_completed=int(r.tests or 0))
+        for r in rows
+    ]
