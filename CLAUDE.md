@@ -6,6 +6,62 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## Öğrenci-bazlı Müfredat İlerleme + Yetişme Projeksiyonu (Faz 0-4) — 2026-06-19, CANLI
+
+**Bağlam (kullanıcı):** Koç program hazırlarken öğrencinin müfredatta NEREDE
+olduğunu (hangi konular işlendi, sırada ne, sınava yetişir mi) tek bakışta
+görmeli. Hibrit omurga onaylandı: **resmi konu sırası (Topic.order) + eşleşmemiş
+ekstra**. Yapay zekâ entegre edildi (Gemini önceliklendirme + içgörü). Tüm
+fazlar bitti; demo + 5-öğrenci uçtan uca test + canlı deploy + mobil OTA yapıldı.
+
+- **Faz 0 — kütüphane→müfredat eşleştirme** (`curriculum_mapping.py`): kitap
+  section'larını resmi Topic'lere bağlar (normalize auto-map + Gemini öneri,
+  `_AI_BATCH=12` + max_output_tokens=16384 — 2.5 düşünme tokenı JSON kesmesin).
+  Modal `curriculum-mapping-modal.tsx` (valueFor = override ?? current ??
+  suggested, seed YOK). `test_curriculum_mapping` 11/11.
+- **Faz 1 — ilerleme haritası** (`curriculum_progress.py` `compute_curriculum_
+  progress`): ders bazlı sıralı konu + durum (kaynak_yok/baslanmadi/planlandi/
+  devam/tamamlandi) + coverage% + frontier (son işlenen/sıradaki) + eşleşmemiş
+  ekstra. `applicable_subjects` = covers_grade + effective_curriculum_model +
+  ad-dedup. Web "Müfredat" sekmesi (`curriculum-panel.tsx`).
+- **Faz 2 — sıradaki atanabilir üniteler** (`next_units_for_assignment` + AI
+  `ai_prioritize_units` Gemini personal_data=True): haftalık plan aside'ında
+  `next-units-panel.tsx` (AI önceliklendir + AssignDialog gün/section/sayı →
+  görev). `UsageKind.AI_CURRICULUM_PRIORITY` = 4 kredi (_require_ai_premium +
+  consent). 
+- **Faz 3 — son işlenen üniteler** (`recently_covered_units`): seans prefill'e
+  `recent_units` + KS4 içgörü prompt'una "son 7 günde işlenen üniteler".
+- **Faz 4 — sınava yetişme projeksiyonu** (`_compute_projection`): hız = son 14
+  günde işlenen FARKLI konu / 2 hafta; tahmini kapsama = işlenen + hız×kalan
+  hafta. **Eşikler GERÇEKÇİ** (kullanıcı kararı sonrası ayar): %100 kimse
+  bitirmez → yetisir≥%90 / risk≥%70 / yetismez<%70 (pace=0 → yetismez) /
+  sinav_yok / veri_yok. Web `ProjectionCard` (verdict rozeti + gün/kalan/tempo +
+  tahmini kapsama barı). `test_curriculum_progress` **22/22**.
+- **Demo + 5-öğrenci test** (`scripts/seed_demo_curriculum.py`, idempotent,
+  --reset): her builtin ders için topic-eşli demo kitap (ad müfredat modeliyle
+  BENZERSIZ — Matematik LGS/klasik/maarif çakışmasını çözer) + 5 profil. Uçtan
+  uca doğrulama: Ayşe(g8,68%,aktif)→yetisir · Burak(g8,18%,durgun)→yetismez ·
+  Ceren(g12,51%,sınav yarın)→yetismez · Deniz(g11,sınav yok)→sinav_yok ·
+  Emre(g12,83%,sınav yarın)→risk. Her verdict doğru profille eşleşti.
+  start.sh'e EKLENMEDİ (yalnız demo/test). NOT: projeksiyon OVERALL (tüm
+  uygulanabilir dersler), tek ders değil.
+- **Migration GEREKMEDİ** (topic_id mevcut, usage_events.kind plain VARCHAR).
+  Commit'ler `888873b`(Faz3)·`a6b5d87`(Faz4)·`3013fa2`(demo+eşik). **CANLI**
+  (web+next rebuild, OOM-güvenli; healthz 200 · /curriculum 401 · site 200).
+- **MOBİL koç Müfredat sekmesi + OTA** (commit `5ebd6f4`): `teacher-student`
+  detayına "Müfredat" sekmesi (web paritesi: kapsama + projeksiyon + ders
+  accordion + ekstra; `curriculum-tab.tsx` + lib/teacher tipleri/fetcher).
+  JS-only → **EAS OTA `update --channel production` ile yayınlandı** (runtime
+  1.0.0 = v6 install'lara YENİDEN YÜKLEME OLMADAN düşer — OTA mekanizması uçtan
+  uca doğrulandı, update group `796d6748`). + yeni **AAB v7** (versionCode 6→7
+  autoIncrement) `eas build` ile kuyruğa alındı (build `4d4990c5`, Expo cloud
+  ~15-20dk; kullanıcı EAS dashboard'dan indirir). Mobil tsc temiz.
+  **DERS — OTA vs yeni AAB:** runtimeVersion=appVersion=1.0.0 sabit kaldığı için
+  JS-only özellikler `eas update`'le store'suz dağıtılır; yeni AAB yalnız native
+  değişiklik veya yeni store baseline için. v7 AAB de runtime 1.0.0 → OTA uyumlu.
+
+---
+
 ## YENİ İŞ — Öğrenci Tanıma Anket/Envanter Sistemi (2026-06-11, KARARLAR ALINDI, kod BAŞLAMADI)
 
 **Bağlam:** Koç, öğrencisini tanımak için anket uygular (çoklu zeka, ilgi envanteri,
