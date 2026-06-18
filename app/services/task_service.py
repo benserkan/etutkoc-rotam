@@ -210,15 +210,19 @@ def list_carryover_candidates(
     *,
     student_id: int,
     cutoff_date: date,
+    since_date: date | None = None,
 ) -> list[dict]:
     """Geçmiş haftalardan 'yapılmadan kalan' kalemler (devret adayları).
 
     `task.date < cutoff_date` + `status != COMPLETED` + `is_draft == False`
     görevlerin, section'lı + (planned - completed) > 0 olan kalemleri. Rezerv
     serbest bırakılmış olsun olmasın aday olabilir (kapasite reconcile ile zaten
-    iade edilmiştir). Her aday: kitap + bölüm + kalan test + kaynak görev tarihi.
+    iade edilmiştir). `since_date` verilirse YALNIZ o tarihten itibaren (>=)
+    görevler — Devret panelini 'geçen hafta' ile sınırlamak için (tüm geçmiş
+    yığını koçu boğmasın; eski kalemlerin kapasitesi yine boştadır). Her aday:
+    kitap + bölüm + kalan test + kaynak görev tarihi.
     """
-    items = (
+    q = (
         db.query(TaskBookItem)
         .join(Task, Task.id == TaskBookItem.task_id)
         .options(
@@ -232,9 +236,10 @@ def list_carryover_candidates(
             Task.is_draft.is_(False),
             TaskBookItem.book_section_id.isnot(None),
         )
-        .order_by(Task.date.asc(), TaskBookItem.id.asc())
-        .all()
     )
+    if since_date is not None:
+        q = q.filter(Task.date >= since_date)
+    items = q.order_by(Task.date.asc(), TaskBookItem.id.asc()).all()
     out: list[dict] = []
     for it in items:
         remaining = max(0, it.planned_count - it.completed_count)

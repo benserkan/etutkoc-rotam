@@ -3572,13 +3572,23 @@ def teacher_carryover_candidates_v2(
     """
     from app.services import task_service as tsvc
 
+    from datetime import timedelta as _td
+
+    from app.services import weekly_program_service as wps
+
     student = _get_owned_student(db, student_id, user.id)
     cutoff = _carryover_cutoff(db, student.id)
-    # Ölü rezervi serbest bırak (idempotent) — kapasite devret için hazır olsun.
+    # Ölü rezervi serbest bırak (idempotent, TÜM geçmiş) — kapasite hazır olsun.
     res = tsvc.reconcile_past_reservations(db, student_id=student.id, cutoff_date=cutoff)
     if res.get("released_tests"):
         db.commit()
-    rows = tsvc.list_carryover_candidates(db, student_id=student.id, cutoff_date=cutoff)
+    # Devret listesi YALNIZ bir önceki haftayla sınırlı (koçu tüm geçmiş yığını
+    # boğmasın). Önceki program varsa onun başlangıcı, yoksa cutoff'tan 7 gün geri.
+    prev = wps.get_previous_program(db, student_id=student.id, before_date=cutoff)
+    since = prev.start_date if prev is not None else (cutoff - _td(days=7))
+    rows = tsvc.list_carryover_candidates(
+        db, student_id=student.id, cutoff_date=cutoff, since_date=since,
+    )
     return CarryoverCandidatesResponse(
         candidates=[
             CarryoverCandidate(

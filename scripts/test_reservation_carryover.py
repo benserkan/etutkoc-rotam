@@ -157,6 +157,16 @@ def main() -> int:
                   sec_ids.get(ids["sec_a"]) == 3 and sec_ids.get(ids["sec_b"]) == 3, f"got {sec_ids}")
             check("11. candidates bugünkü sec_c'yi İÇERMEZ", ids["sec_c"] not in sec_ids)
 
+            # since_date kapsamı: today-3'ten itibaren → today-5 görevleri DIŞARIDA
+            # (geçen hafta sınırı), ama kapasiteleri yine serbest (reconcile tüm geçmiş).
+            scoped = ts.list_carryover_candidates(
+                db, student_id=ids["student"], cutoff_date=cutoff,
+                since_date=today - timedelta(days=3))
+            check("11b. since_date=today-3 → today-5 kalemleri listede YOK (geçen hafta sınırı)",
+                  len(scoped) == 0, f"got {len(scoped)}")
+            check("11c. ama kapasiteleri yine serbest (reconcile tüm geçmiş): sec_a reserved hâlâ 0/3 atanabilir",
+                  db.get(SectionProgress, ids["sp_a"]).reserved_count == 3)  # test 9'da yeniden atanmıştı
+
             # çift-iade koruması: serbest bırakılmış geçmiş görevi sil → reserved bozulmasın
             # (sec_a şu an 3 = yeniden atanan reserve; geçmiş görevi silmek bunu düşürmemeli)
             past_items = db.query(TaskBookItem).filter(

@@ -384,6 +384,25 @@ def get_most_recent_program(
     )
 
 
+def get_previous_program(
+    db: Session, *, student_id: int, before_date: date,
+) -> WeeklyProgram | None:
+    """`before_date`'ten ÖNCE biten en son program (bir önceki hafta).
+
+    Devret panelini yalnız 'geçen hafta' ile sınırlamak için kullanılır
+    (tatil/boşluk olsa bile 'son yapılan program').
+    """
+    return (
+        db.query(WeeklyProgram)
+        .filter(
+            WeeklyProgram.student_id == student_id,
+            WeeklyProgram.end_date < before_date,
+        )
+        .order_by(WeeklyProgram.end_date.desc())
+        .first()
+    )
+
+
 # =============================================================================
 # Wrap-legacy: eski görevleri tek programa bağla (mevcut öğrenciler için)
 # =============================================================================

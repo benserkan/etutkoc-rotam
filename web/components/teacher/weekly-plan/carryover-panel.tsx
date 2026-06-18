@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { History, Loader2, ArrowRight } from "lucide-react";
+import { History, Loader2, ArrowRight, ChevronDown } from "lucide-react";
 
 import { getCarryoverCandidates, teacherKeys } from "@/lib/api/teacher";
 import { useCarryover } from "@/lib/hooks/use-teacher-mutations";
@@ -24,14 +24,15 @@ function fmtDate(iso: string): string {
 }
 
 /**
- * Devret — geçen haftalardan yapılmadan kalan görevler.
+ * Devret — YALNIZ bir önceki haftadan yapılmadan kalan görevler.
  *
  * Öğrenci geçen hafta bir görevi yapmadıysa (hasta vb.), o testler rezervde
- * kilitli kalıyordu → yeni haftada aynı üniteyi atayamıyordun. Bu panel:
- * sayfayı açınca "ölü rezerv" otomatik serbest bırakılır (kapasite döner) +
- * eksik kalemler burada listelenir → seç + "bu haftaya taşı" ile tek tıkla
- * yeni güne yeni görev olarak eklenir. Eski görev kaydı (yapılmadı) durur.
- * Aday yoksa panel HİÇ görünmez.
+ * kilitli kalıyordu → yeni haftada aynı üniteyi atayamıyordun. Sayfayı açınca
+ * "ölü rezerv" otomatik serbest bırakılır (kapasite döner, tüm geçmiş). Bu panel
+ * yalnız BİR ÖNCEKİ haftanın eksiklerini gösterir (tüm geçmiş yığını değil) ve
+ * VARSAYILAN KAPALI başlar — tek satır özet, tıklayınca açılır. Seç + "bu haftaya
+ * taşı" → yeni güne yeni görev. Eski görev kaydı (yapılmadı) durur. Aday yoksa
+ * panel HİÇ görünmez.
  */
 export function CarryoverPanel({ studentId }: { studentId: number }) {
   const q = useQuery<CarryoverCandidatesResponse>({
@@ -42,6 +43,7 @@ export function CarryoverPanel({ studentId }: { studentId: number }) {
   const carry = useCarryover(studentId);
 
   const candidates = React.useMemo(() => q.data?.candidates ?? [], [q.data]);
+  const [expanded, setExpanded] = React.useState(false);
   const [selected, setSelected] = React.useState<Set<number>>(new Set());
   const [target, setTarget] = React.useState(todayIso());
 
@@ -85,16 +87,33 @@ export function CarryoverPanel({ studentId }: { studentId: number }) {
 
   return (
     <div className="border-b border-amber-200 bg-amber-50/60">
-      <div className="px-4 py-3">
-        <p className="flex items-center gap-1.5 font-medium text-amber-900">
-          <History className="size-4" aria-hidden />
-          Geçen haftadan eksikler ({candidates.length})
-        </p>
-        <p className="mt-0.5 text-xs text-amber-800">
-          Yapılmadan kalan {totalRemaining} test serbest bırakıldı (kapasite döndü).
-          Seç → bu haftaya taşı.
-        </p>
-      </div>
+      {/* Varsayılan kapalı — tek satır özet; tıklayınca açılır */}
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition hover:bg-amber-100/50"
+        aria-expanded={expanded}
+      >
+        <History className="size-4 shrink-0 text-amber-700" aria-hidden />
+        <span className="min-w-0 flex-1 text-sm font-medium text-amber-900">
+          Geçen haftadan {candidates.length} eksik kaldı
+          <span className="ml-1 font-normal text-amber-700">· {totalRemaining} test</span>
+        </span>
+        <ChevronDown
+          className={cn(
+            "size-4 shrink-0 text-amber-600 transition-transform",
+            expanded && "rotate-180",
+          )}
+          aria-hidden
+        />
+      </button>
+
+      {!expanded ? null : (
+        <>
+      <p className="px-4 pb-2 text-xs text-amber-800">
+        Bu testlerin rezervi serbest bırakıldı (kapasite döndü). Seç → bu haftaya taşı.
+        Daha eski haftaların kalemleri burada listelenmez (kapasiteleri yine boştadır).
+      </p>
 
       <ul className="space-y-1 px-3 pb-2">
         {candidates.map((c) => (
@@ -168,6 +187,8 @@ export function CarryoverPanel({ studentId }: { studentId: number }) {
           Bu haftaya taşı ({effectiveSelected.size})
         </button>
       </div>
+        </>
+      )}
     </div>
   );
 }
