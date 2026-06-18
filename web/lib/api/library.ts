@@ -15,6 +15,7 @@ import type {
   BookSetListResponse,
   BookTemplateListResponse,
   LibraryBookDetailResponse,
+  MappingSuggestionsResponse,
   LibraryBookListResponse,
   SubjectListResponse,
   TopicListResponse,
@@ -42,6 +43,8 @@ export const libraryKeys = {
     ] as const,
   book: (id: number) =>
     ["teacher", "me", "library", "books", String(id)] as const,
+  mappingSuggestions: (id: number, ai: boolean) =>
+    ["teacher", "me", "library", "books", String(id), "mapping", ai ? "ai" : "auto"] as const,
 
   templates: () => ["teacher", "me", "library", "templates"] as const,
 
@@ -96,6 +99,16 @@ export function getLibraryBooks(
 export function getLibraryBook(id: number): Promise<LibraryBookDetailResponse> {
   return api<LibraryBookDetailResponse>(
     `/api/v2/teacher/library/books/${encodeURIComponent(String(id))}`,
+  );
+}
+
+export function getBookMappingSuggestions(
+  id: number,
+  ai: boolean,
+): Promise<MappingSuggestionsResponse> {
+  const qs = ai ? "?ai=true" : "";
+  return api<MappingSuggestionsResponse>(
+    `/api/v2/teacher/library/books/${encodeURIComponent(String(id))}/mapping-suggestions${qs}`,
   );
 }
 

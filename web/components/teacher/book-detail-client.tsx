@@ -4,7 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Sparkles, Trash2 } from "lucide-react";
+import { AlertTriangle, Loader2, Sparkles, Trash2, Wand2 } from "lucide-react";
+
+import { CurriculumMappingModal } from "@/components/teacher/curriculum-mapping-modal";
 
 import { getLibraryBook, libraryKeys } from "@/lib/api/library";
 import {
@@ -203,7 +205,11 @@ function SectionsTab({
 }) {
   const [addOpen, setAddOpen] = React.useState(false);
   const [bulkOpen, setBulkOpen] = React.useState(false);
+  const [mapOpen, setMapOpen] = React.useState(false);
   const clearMut = useClearSections(book.id);
+
+  // Müfredata eşleşmemiş ünite sayısı (rozet için).
+  const unmappedCount = book.sections.filter((s) => s.topic_id == null).length;
 
   function onClearAll() {
     if (
@@ -225,6 +231,22 @@ function SectionsTab({
         {topics.length > 0 ? (
           <Button size="sm" variant="outline" onClick={() => setBulkOpen(true)}>
             Katalog konularından ekle
+          </Button>
+        ) : null}
+        {topics.length > 0 && book.sections.length > 0 ? (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setMapOpen(true)}
+            className="border-indigo-300 text-indigo-700 hover:bg-indigo-50"
+          >
+            <Wand2 className="size-4" aria-hidden />
+            Müfredata eşleştir
+            {unmappedCount > 0 ? (
+              <span className="ml-1 rounded-full bg-amber-500 px-1.5 text-[10px] font-bold text-white">
+                {unmappedCount}
+              </span>
+            ) : null}
           </Button>
         ) : null}
         {book.sections.length > 0 ? (
@@ -292,6 +314,8 @@ function SectionsTab({
           />
         </DialogContent>
       </Dialog>
+
+      <CurriculumMappingModal open={mapOpen} onOpenChange={setMapOpen} bookId={book.id} />
     </div>
   );
 }

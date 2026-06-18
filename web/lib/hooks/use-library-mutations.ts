@@ -23,6 +23,8 @@ import type {
   BulkCatalogResult,
   DeletedRef,
   LibraryBookDetailResponse,
+  ApplyMappingItem,
+  ApplyMappingResult,
   LibrarySectionItem,
   SaveAsTemplateBody,
   SectionCreateBody,
@@ -153,6 +155,30 @@ export function useDeleteBook(bookId: number) {
 // =============================================================================
 // Sections
 // =============================================================================
+
+export function useApplyMapping(bookId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<ApplyMappingResult>,
+    ApiError,
+    { items: ApplyMappingItem[] }
+  >({
+    mutationFn: ({ items }) =>
+      api<MutationResponse<ApplyMappingResult>>(
+        `/api/v2/teacher/library/books/${bookId}/apply-mapping`,
+        { method: "POST", body: JSON.stringify({ items }) },
+      ),
+    onError: (err) => showError(err, "Eşleştirme uygulanamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "library", "books", String(bookId), "mapping"],
+      });
+      const n = res.data?.changed ?? 0;
+      toast.success(n > 0 ? `${n} ünite müfredata eşleştirildi` : "Değişiklik yok");
+    },
+  });
+}
 
 export function useCreateSection(bookId: number) {
   const qc = useQueryClient();

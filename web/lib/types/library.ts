@@ -63,6 +63,42 @@ export interface TopicListResponse {
   items: TopicRef[];
 }
 
+// Müfredat eşleştirme (Faz 0)
+export interface MappingSuggestionRow {
+  section_id: number;
+  label: string;
+  order: number;
+  current_topic_id: number | null;
+  current_topic_name: string | null;
+  suggested_topic_id: number | null;
+  suggested_topic_name: string | null;
+  source: "mapped" | "auto" | "ai" | "none";
+  confidence: "high" | "medium" | "low" | null;
+}
+
+export interface MappingSuggestionsResponse {
+  book_id: number;
+  book_name: string;
+  subject_name: string | null;
+  total_sections: number;
+  mapped_count: number;
+  suggested_count: number;
+  ai_used: boolean;
+  candidate_topics: TopicRef[];
+  rows: MappingSuggestionRow[];
+}
+
+export interface ApplyMappingItem {
+  section_id: number;
+  topic_id: number | null;
+}
+
+export interface ApplyMappingResult {
+  changed: number;
+  mapped_count: number;
+  total_sections: number;
+}
+
 // =============================================================================
 // Books
 // =============================================================================

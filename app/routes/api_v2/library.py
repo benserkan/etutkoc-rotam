@@ -75,6 +75,9 @@ from app.routes.api_v2.schemas.library import (
     AddBooksToSetResult,
     AiSuggestBody,
     AiSuggestResult,
+    ApplyMappingBody,
+    ApplyMappingItem,
+    ApplyMappingResult,
     ApplyTemplateBody,
     ApplyTemplateResult,
     AssignedStudentRef,
@@ -102,6 +105,8 @@ from app.routes.api_v2.schemas.library import (
     SectionCreateBody,
     SectionPatchBody,
     SectionsBulkFromCatalogBody,
+    MappingSuggestionRow,
+    MappingSuggestionsResponse,
     SubjectListResponse,
     SubjectRef,
     TopicListResponse,
@@ -635,6 +640,81 @@ def library_book_delete_v2(
     return MutationResponse[DeletedRef](
         data=DeletedRef(deleted=True, id=book_id),
         invalidate=_invalidate_book(user.id, book_id),
+    )
+
+
+# =============================================================================
+# Müfredat eşleştirme (Faz 0) — kitap ünitesi → resmi konu
+# =============================================================================
+
+
+@router.get(
+    "/books/{book_id}/mapping-suggestions",
+    response_model=MappingSuggestionsResponse,
+)
+def library_book_mapping_suggestions_v2(
+    book_id: int,
+    ai: bool = Query(False),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kitabın ünitelerini resmi müfredat konularına eşleştirme önerileri.
+
+    Deterministik auto-map (label→konu normalize) + opsiyonel `ai=true` (Gemini
+    semantik, ücretsiz key — kişisel veri değil). Zaten eşleşmişlere öneri yok.
+    """
+    from app.services import curriculum_mapping as cm
+
+    book = _get_owned_book(db, book_id, user.id)
+    candidate_topics = _accessible_topics(db, book.subject_id, user.id)
+    rows = cm.suggest_for_book(db, book, candidate_topics, use_ai=ai)
+    mapped_count = sum(1 for r in rows if r["current_topic_id"] is not None)
+    suggested_count = sum(1 for r in rows if r["suggested_topic_id"] is not None)
+    ai_used = ai and any(r["source"] == "ai" for r in rows)
+    return MappingSuggestionsResponse(
+        book_id=book.id,
+        book_name=book.name,
+        subject_name=book.subject.name if book.subject else None,
+        total_sections=len(rows),
+        mapped_count=mapped_count,
+        suggested_count=suggested_count,
+        ai_used=ai_used,
+        candidate_topics=[
+            TopicRef(id=t.id, name=t.name, subject_id=t.subject_id,
+                     is_builtin=bool(t.is_builtin), order=t.order)
+            for t in candidate_topics
+        ],
+        rows=[MappingSuggestionRow(**r) for r in rows],
+    )
+
+
+@router.post(
+    "/books/{book_id}/apply-mapping",
+    response_model=MutationResponse[ApplyMappingResult],
+)
+def library_book_apply_mapping_v2(
+    book_id: int,
+    body: ApplyMappingBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Seçili (section_id → topic_id|null) eşlemelerini uygula. topic_id None →
+    eşlemeyi kaldır. Yalnız bu kitabın section'ları + erişilebilir konular."""
+    from app.services import curriculum_mapping as cm
+
+    book = _get_owned_book(db, book_id, user.id)
+    candidate_ids = {t.id for t in _accessible_topics(db, book.subject_id, user.id)}
+    pairs = [(it.section_id, it.topic_id) for it in (body.items or [])]
+    changed = cm.apply_mappings(db, book, pairs, candidate_ids)
+    db.commit()
+    mapped_count = sum(1 for s in (book.sections or []) if s.topic_id is not None)
+    return MutationResponse[ApplyMappingResult](
+        data=ApplyMappingResult(
+            changed=changed,
+            mapped_count=mapped_count,
+            total_sections=len(book.sections or []),
+        ),
+        invalidate=_invalidate_book(user.id, book.id),
     )
 
 

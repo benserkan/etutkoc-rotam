@@ -65,6 +65,50 @@ class TopicListResponse(BaseModel):
 
 
 # =============================================================================
+# Müfredat eşleştirme (Faz 0) — kitap ünitesi → resmi konu
+# =============================================================================
+
+
+class MappingSuggestionRow(BaseModel):
+    section_id: int
+    label: str
+    order: int
+    current_topic_id: int | None = None
+    current_topic_name: str | None = None
+    suggested_topic_id: int | None = None
+    suggested_topic_name: str | None = None
+    source: str                        # "mapped" | "auto" | "ai" | "none"
+    confidence: str | None = None      # "high" | "medium" | "low"
+
+
+class MappingSuggestionsResponse(BaseModel):
+    book_id: int
+    book_name: str
+    subject_name: str | None = None
+    total_sections: int
+    mapped_count: int                  # current_topic_id dolu olanlar
+    suggested_count: int               # öneri üretilenler (auto+ai)
+    ai_used: bool
+    candidate_topics: list[TopicRef]   # eşleştirme için resmi konu listesi
+    rows: list[MappingSuggestionRow]
+
+
+class ApplyMappingItem(BaseModel):
+    section_id: int
+    topic_id: int | None = None        # None → eşlemeyi kaldır
+
+
+class ApplyMappingBody(BaseModel):
+    items: list[ApplyMappingItem]
+
+
+class ApplyMappingResult(BaseModel):
+    changed: int
+    mapped_count: int
+    total_sections: int
+
+
+# =============================================================================
 # Kitap listeleme + detay
 # =============================================================================
 
