@@ -178,6 +178,45 @@ programı geçince** (aktif hafta-içi telafi etkilenmez).
 
 ---
 
+## Devret v2 — görev düzeyi + carried + güne-tıkla modal + bilgi-amaçlı geçmiş (2026-06-18, migration `m6n9q2r3q55l`)
+
+**Kullanıcı geri bildirimi:** ilk Devret paneli (a) tüm geçmiş haftaları döküyordu
+(19 kalem/56 test, kafa karışıklığı) → önce "yalnız geçen hafta + kapalı" yapıldı;
+(b) eklenince listeden düşmüyordu + blok/itemless yoktu + geçmiş gezinme yoktu.
+**Kullanıcı kararları (AskUserQuestion):** ekleme = güne-tıkla modal (sürükle-bırak
+faz 2) · aday = görev düzeyi tüm tipler · blok bağımsız taşıma · carried kalıcı.
+
+- **Migration `m6n9q2r3q55l`**: `tasks.carried_at` (additive, nullable, downgrade'li).
+  Görev devret listesinden taşınınca işaretlenir → listeden **DİNAMİK düşer**;
+  yeni programla önceki-hafta penceresi kayar → **otomatik sıfırlama** (carried
+  temizlemeye gerek yok).
+- **`task_service.list_carryover_candidates` GÖREV düzeyine geçti**: `since<=date<
+  cutoff` + `status!=COMPLETED` + yayında + `carried_at IS NULL` görevler; her aday
+  yapılmamış section kalemleri + itemless + toplam kalan. Tüm tipler (test/blok/
+  itemless/deneme/etkinlik). `mark_task_carried` helper.
+- **Carry (görev bazlı)**: `POST /carryover` body `task_ids[]` → her kaynak görevin
+  YALNIZ yapılmamış işini (section: planned-completed; kitapsız: kalem) hedef güne
+  **BAĞIMSIZ yeni görev** olarak kopyalar (blok dahil; eski blok muhasebesi geçmişte
+  kalır, çift-sayım yok), kaynağı `carried_at` işaretler — kayıt DURUR. Part A (ölü
+  rezerv serbest, TÜM geçmiş) aynen; reconcile yalnız plan modunda.
+- **mode (plan vs browse)**: `_carryover_context(program_id)` → geçmiş program
+  GÖRÜNTÜLENİYORSA (program_id + end_date<bugün) **browse** (o hafta, BİLGİ AMAÇLI
+  eylemsiz, carried düşmüş); aksi halde **plan** (aktif/yeni hafta → bir önceki hafta,
+  eylemli). GET `?program_id=N`.
+- **Frontend** `CarryoverPanel(studentId, programId, weekDays)`: kapalı başlar +
+  tek-satır özet; plan modunda her kartta **"Ekle" → AddToDayDialog** (hedef gün
+  grid + varsa periyot Sabah/Öğle/Akşam) → tek görev taşı → dinamik düş; browse
+  modunda salt-okuma (slate, "Bu haftada yapılmayanlar (bilgi)"). week-board
+  `currentProgramId` + `data.days` geçirir; carryover key'e programId segment.
+- **Test:** `test_reservation_carryover` **17/17** (görev düzeyi + carried düşme +
+  çift-iade guard + since pencere) · `test_api_v2_carryover_http` **14/14** (mode
+  plan/browse + dinamik düşme + carried hariç + bağımsız rezerv). Regresyon:
+  weekly_plan 14 · student_mutations 12 · teacher_read 12 · itemless 10 · paywall 5 ·
+  tenant 29. **Migration head = `m6n9q2r3q55l`.**
+- **KALAN (faz 2):** sürükle-bırak (listeden kalemi güne/bölüme bırak).
+
+---
+
 ## Dinamik vitrin + dönüşüm + sosyal kanıt + analitik (2026-06-15, CANLI)
 
 **Bağlam:** Anasayfa bilgi kartlarının dinamik gösterimi (feature_catalog: fuzzy +
