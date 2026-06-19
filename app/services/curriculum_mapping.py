@@ -93,10 +93,20 @@ def _ai_suggest_batch(
             personal_data=False, json_mode=True, max_output_tokens=16384,
         )
         data = _parse_json(raw)
+        # Gemini bazen sarmalayıcı obje yerine doğrudan dizi döndürür
+        # ([{...}]) → "mappings" anahtarı yok. İki şekli de kabul et.
+        if isinstance(data, list):
+            mappings = data
+        elif isinstance(data, dict):
+            mappings = data.get("mappings") or []
+        else:
+            mappings = []
         valid_ids = {t.id for t in candidate_topics}
         sec_ids = {s.id for s in sections}
         out: dict[int, tuple[int, str]] = {}
-        for m in (data.get("mappings") or []):
+        for m in mappings:
+            if not isinstance(m, dict):
+                continue
             sid = m.get("section_id")
             tid = m.get("topic_id")
             conf = str(m.get("confidence") or "low")
@@ -108,15 +118,15 @@ def _ai_suggest_batch(
         return {}
 
 
-def _parse_json(raw: str) -> dict:
+def _parse_json(raw: str) -> dict | list:
     raw = (raw or "").strip()
     if raw.startswith("```"):
         raw = re.sub(r"^```(?:json)?|```$", "", raw, flags=re.MULTILINE).strip()
     try:
         return json.loads(raw)
     except Exception:
-        # ilk { ... } bloğunu yakala
-        m = re.search(r"\{.*\}", raw, flags=re.DOTALL)
+        # ilk { ... } veya [ ... ] bloğunu yakala (obje veya dizi)
+        m = re.search(r"\{.*\}|\[.*\]", raw, flags=re.DOTALL)
         if m:
             return json.loads(m.group(0))
         raise
