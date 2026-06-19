@@ -49,6 +49,7 @@ class TopicProgress:
     status: str
     pct: int            # konu içi derinlik: completed/test_total
     unit_name: str | None = None    # ait olduğu tema/ünite (Maarif) — UI gruplama
+    grade_level: int | None = None  # konunun sınıfı — UI sınıf başlığı (tekrar eden tema adı ayrımı)
 
 
 @dataclass
@@ -236,6 +237,11 @@ def compute_curriculum_progress(
         for t in all_topics:
             topics_by_subject.setdefault(t.subject_id, []).append(t)
 
+    # Öğrencinin sınıfına kadar (kümülatif) göster — tüm müfredatı 12'ye kadar
+    # dökmek mantıksız (10. sınıf öğrencisine 11-12 konuları gösterilmez). Mezun
+    # veya sınıfı bilinmeyen → tümü.
+    max_grade = 99 if (student.is_graduate or student.grade_level is None) else student.grade_level
+
     # 3) Ders bazında topic durumları
     out_subjects: list[SubjectProgress] = []
     g_total = g_started = 0
@@ -246,9 +252,14 @@ def compute_curriculum_progress(
         # Tema/ünite (parent) topic'leri yalnız GRUPLAMA içindir; "konu" sayımı +
         # durum yalnız LEAF (alt başlık) üzerinden. Düz müfredatta (LGS/Klasik)
         # tüm topic'ler parent'sız + çocuksuz → hepsi leaf. Maarif'te leaf = alt başlık.
+        # Sınıf filtresi: yalnız grade_level <= öğrencinin sınıfı (kümülatif).
         parent_name_by_id = {t.id: t.name for t in all_topics}
         has_children = {t.parent_id for t in all_topics if t.parent_id is not None}
-        topics = [t for t in all_topics if t.id not in has_children]
+        topics = [
+            t for t in all_topics
+            if t.id not in has_children
+            and (t.grade_level is None or t.grade_level <= max_grade)
+        ]
         if not topics:
             continue
         tps: list[TopicProgress] = []
@@ -267,6 +278,7 @@ def compute_curriculum_progress(
                 topic_id=t.id, name=t.name, order=t.order, has_resource=has_res,
                 test_total=test_total, completed=comp, reserved=resv, status=st, pct=pct,
                 unit_name=parent_name_by_id.get(t.parent_id) if t.parent_id else None,
+                grade_level=t.grade_level,
             ))
             if not has_res:
                 no_res += 1

@@ -1167,7 +1167,7 @@ def teacher_student_curriculum_v2(
                         topic_id=t.topic_id, name=t.name, order=t.order,
                         has_resource=t.has_resource, test_total=t.test_total,
                         completed=t.completed, reserved=t.reserved, status=t.status, pct=t.pct,
-                        unit_name=t.unit_name,
+                        unit_name=t.unit_name, grade_level=t.grade_level,
                     )
                     for t in s.topics
                 ],

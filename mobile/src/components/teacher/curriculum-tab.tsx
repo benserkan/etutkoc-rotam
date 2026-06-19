@@ -193,9 +193,16 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
           {s.topics.map((t, i) => {
             const meta = STATUS[t.status];
             const isNext = t.name === s.next_topic_name;
-            const showUnit = !!t.unit_name && (i === 0 || s.topics[i - 1].unit_name !== t.unit_name);
+            const prev = i > 0 ? s.topics[i - 1] : null;
+            const showGrade = t.grade_level != null && (!prev || prev.grade_level !== t.grade_level);
+            const showUnit = !!t.unit_name && (!prev || prev.unit_name !== t.unit_name || showGrade);
             return (
               <View key={t.topic_id}>
+                {showGrade ? (
+                  <View className="bg-indigo-100 px-3 py-1.5">
+                    <Text className="text-xs font-bold text-indigo-800">{t.grade_level}. Sınıf</Text>
+                  </View>
+                ) : null}
                 {showUnit ? (
                   <View className="bg-slate-100 px-3 py-1.5">
                     <Text className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">

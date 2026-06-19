@@ -220,10 +220,20 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
           {s.topics.map((t, i) => {
             const meta = STATUS[t.status];
             const isNext = t.name === s.next_topic_name;
+            const prev = i > 0 ? s.topics[i - 1] : null;
+            // sınıf başlığı: grade değiştiğinde (tekrar eden tema adlarını ayırır)
+            const showGrade = t.grade_level != null && (!prev || prev.grade_level !== t.grade_level);
             // tema/ünite başlığı: unit_name değiştiğinde bir kez göster (Maarif)
-            const showUnit = t.unit_name && (i === 0 || s.topics[i - 1].unit_name !== t.unit_name);
+            const showUnit = t.unit_name && (!prev || prev.unit_name !== t.unit_name || showGrade);
             return (
               <React.Fragment key={t.topic_id}>
+                {showGrade ? (
+                  <li className="bg-indigo-100/80 px-4 py-1.5 dark:bg-indigo-950/40">
+                    <span className="text-xs font-bold text-indigo-800 dark:text-indigo-200">
+                      {t.grade_level}. Sınıf
+                    </span>
+                  </li>
+                ) : null}
                 {showUnit ? (
                   <li className="bg-slate-100/70 px-4 py-1.5 dark:bg-slate-800/40">
                     <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">

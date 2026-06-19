@@ -185,6 +185,7 @@ export interface CurriculumTopicItem {
   status: CurriculumTopicStatus;
   pct: number;
   unit_name: string | null;
+  grade_level: number | null;
 }
 export interface CurriculumSubjectItem {
   subject_id: number;

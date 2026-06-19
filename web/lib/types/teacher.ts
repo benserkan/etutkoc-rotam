@@ -848,6 +848,7 @@ export interface CurriculumTopicItem {
   status: "kaynak_yok" | "baslanmadi" | "planlandi" | "devam" | "tamamlandi";
   pct: number;
   unit_name: string | null;
+  grade_level: number | null;
 }
 
 export interface CurriculumSubjectItem {
