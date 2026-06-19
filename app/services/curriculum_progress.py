@@ -48,6 +48,7 @@ class TopicProgress:
     reserved: int
     status: str
     pct: int            # konu içi derinlik: completed/test_total
+    unit_name: str | None = None    # ait olduğu tema/ünite (Maarif) — UI gruplama
 
 
 @dataclass
@@ -239,7 +240,15 @@ def compute_curriculum_progress(
     out_subjects: list[SubjectProgress] = []
     g_total = g_started = 0
     for s in subjects:
-        topics = topics_by_subject.get(s.id, [])
+        all_topics = topics_by_subject.get(s.id, [])
+        if not all_topics:
+            continue
+        # Tema/ünite (parent) topic'leri yalnız GRUPLAMA içindir; "konu" sayımı +
+        # durum yalnız LEAF (alt başlık) üzerinden. Düz müfredatta (LGS/Klasik)
+        # tüm topic'ler parent'sız + çocuksuz → hepsi leaf. Maarif'te leaf = alt başlık.
+        parent_name_by_id = {t.id: t.name for t in all_topics}
+        has_children = {t.parent_id for t in all_topics if t.parent_id is not None}
+        topics = [t for t in all_topics if t.id not in has_children]
         if not topics:
             continue
         tps: list[TopicProgress] = []
@@ -257,6 +266,7 @@ def compute_curriculum_progress(
             tps.append(TopicProgress(
                 topic_id=t.id, name=t.name, order=t.order, has_resource=has_res,
                 test_total=test_total, completed=comp, reserved=resv, status=st, pct=pct,
+                unit_name=parent_name_by_id.get(t.parent_id) if t.parent_id else None,
             ))
             if not has_res:
                 no_res += 1

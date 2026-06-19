@@ -352,7 +352,10 @@ def _accessible_subjects(db: Session, teacher_id: int) -> list[Subject]:
 def _accessible_topics(
     db: Session, subject_id: int, teacher_id: int,
 ) -> list[Topic]:
-    return (
+    """Eşleştirme/listeleme adayları = LEAF konular (alt başlıklar). Tema/ünite
+    (parent) topic'leri yalnız gruplamadır; kitap bölümü onlara değil alt başlığa
+    eşlenir → parent'ları aday listeden çıkar."""
+    all_topics = (
         db.query(Topic)
         .filter(
             Topic.subject_id == subject_id,
@@ -361,6 +364,8 @@ def _accessible_topics(
         .order_by(Topic.order, Topic.name)
         .all()
     )
+    parent_ids = {t.parent_id for t in all_topics if t.parent_id is not None}
+    return [t for t in all_topics if t.id not in parent_ids]
 
 
 @router.get("/subjects", response_model=SubjectListResponse)

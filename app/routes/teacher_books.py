@@ -36,7 +36,8 @@ def _accessible_subjects(db: Session, teacher_id: int) -> list[Subject]:
 
 
 def _accessible_topics(db: Session, subject_id: int, teacher_id: int) -> list[Topic]:
-    return (
+    # LEAF konular (alt başlıklar); tema/ünite parent'ları gruplama amaçlı, hariç.
+    all_topics = (
         db.query(Topic)
         .filter(
             Topic.subject_id == subject_id,
@@ -45,6 +46,8 @@ def _accessible_topics(db: Session, subject_id: int, teacher_id: int) -> list[To
         .order_by(Topic.order, Topic.name)
         .all()
     )
+    parent_ids = {t.parent_id for t in all_topics if t.parent_id is not None}
+    return [t for t in all_topics if t.id not in parent_ids]
 
 
 @router.get("")

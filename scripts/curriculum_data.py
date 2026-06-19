@@ -277,50 +277,78 @@ LGS_CURRICULUM: dict[str, dict] = {
 # =============================================================================
 # MAARIF LİSE — 9-12. sınıf (Türkiye Yüzyılı Maarif Modeli, 2024-25'ten beri)
 # =============================================================================
-# Faz 2.2'de doldurulacak (15 ders × 9-10. sınıf). 11-12 MEB tarafından
-# henüz yayınlanmadığı için placeholder kalıyor; Eylül 2026'dan önce eklenir.
+# Kaynak: RESMİ MEB — Türkiye Yüzyılı Maarif Modeli (tymm.meb.gov.tr), onaylı
+# öğretim programı PDF'leri (2024programbiy/fiz/kim/math/turh/tar/cog/fel/din...).
+# 2026-06 web doğrulamasıyla 9-12 dört sınıf da yayımlanmış; her ders kendi
+# resmi terimini kullanır ("Tema" veya "Ünite") — `unit_term` ile korunur.
+#
+# YAPI: her ders `units` listesi → (unit_no, unit_name, grade, [alt_başlıklar]).
+# Seed'de her ünite/tema bir PARENT Topic, alt başlıklar parent_id ile CHILD
+# Topic olur. Test kitapları bu alt başlıklarla düzenlendiği için alt başlık =
+# kitap bölümü eşleştirme adayı. (Eski seed yanlış/eksikti → tamamen yenilendi.)
 
 MAARIF_LISE_CURRICULUM: dict[str, dict] = {
-    # 9-10. sınıf konuları MEB Türkiye Yüzyılı Maarif Modeli (2024-25 onaylı)
-    # öğretim programlarından alınmıştır. Ünite başlıkları kesin; alt-konuların
-    # bir kısmı 3. parti rehberlerden derlendiği için dikkat:
-    #   - 10. sınıf: detaylı (Atlas Rehberlik dökümünden)
-    #   - 9. sınıf: ünite bazlı + Mat/Fiz/Kim/Bio için kısmi alt-konu
-    #   - 11-12: MEB henüz yayınlamadı (Eylül 2026 / 2027 sonrası eklenir)
-    # Eksik alt-konuları öğretmen UI üzerinden ekleyebilir.
-
     "Matematik": {
         "min_grade": 9, "max_grade": 12,
         "exam_section": "TYT",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # 9. sınıf
-            ("Sayılar — Üslü ve Köklü Gösterimler", 9),
-            ("Sayılar — Aralıklar ve İşlemler", 9),
-            ("Sayı Kümeleri ve İşlem Özellikleri", 9),
-            ("İki Kare Farkı ve Tamkare Özdeşlikleri", 9),
-            ("Doğrusal Fonksiyonlar ve Mutlak Değer", 9),
-            ("Doğrusal Denklem ve Eşitsizlikler", 9),
-            ("Algoritma Temelli Problemler", 9),
-            ("Mantık Bağlaçları ve Niceleyiciler", 9),
-            ("Üçgende Açı ve Kenar Özellikleri", 9),
-            ("Geometrik Şekillerde Eşlik ve Benzerlik", 9),
-            ("Geometrik Dönüşümler (Yansıma, Öteleme, Dönme)", 9),
-            ("İstatistiksel Araştırma Süreci", 9),
-            ("Veriden Olasılığa", 9),
-            # 10. sınıf
-            ("Üçgenler ve Trigonometri", 10),
-            ("İki Kategorik Değişkenli Dağılımlar", 10),
-            ("Asal Çarpanlar, OBEB ve OKEK", 10),
-            ("Bölme Algoritması", 10),
-            ("Fonksiyon Tanımı ve Özellikleri", 10),
-            ("Ters Fonksiyonlar", 10),
-            ("Doğrusal, Karesel, Karekök ve Rasyonel Fonksiyonlar", 10),
-            ("Doğrusal/Karesel/Karekök/Rasyonel Denklem ve Eşitsizlikler", 10),
-            ("Sayma Stratejileri ve Algoritmik Dil", 10),
-            ("Koşullu Olasılık", 10),
-            ("Nokta ve Doğrunun Analitiği", 10),
+        "unit_term": "Tema",
+        "units": [
+            (1, "Sayılar", 9, [
+                "Üslü ve Köklü İfadeler", "Gerçek Sayı Aralıkları",
+                "Sayı Kümeleri ve İşlem Özellikleri",
+                "İki Kare Farkı ve Tam Kare Özdeşlikleri"]),
+            (2, "Nicelikler ve Değişimler", 9, [
+                "Doğrusal Fonksiyonlar ve Mutlak Değer Fonksiyonu",
+                "Doğrusal Denklem ve Eşitsizlikler"]),
+            (3, "Algoritma ve Bilişim", 9, [
+                "Algoritma Temelli Problemler", "Mantık Bağlaçları ve Niceleyiciler"]),
+            (4, "Geometrik Şekiller", 9, [
+                "Üçgende Açı Özellikleri", "Üçgende Kenar Özellikleri"]),
+            (5, "Eşlik ve Benzerlik", 9, [
+                "Geometrik Dönüşümler (Yansıma, Öteleme, Dönme)",
+                "Üçgenlerde Eşlik ve Benzerlik (Tales, Öklid, Pisagor)"]),
+            (6, "İstatistiksel Araştırma Süreci", 9, [
+                "Tek Değişkenli Veri Analizi (Histogram, Kutu Grafiği, Standart Sapma)"]),
+            (7, "Veriden Olasılığa", 9, [
+                "Deneysel ve Teorik Olasılık"]),
+            (1, "Sayılar", 10, [
+                "Bölünebilme, Asal Çarpanlar, OBEB ve OKEK"]),
+            (2, "Nicelikler ve Değişimler", 10, [
+                "Karesel Fonksiyonlar", "Karekök ve Rasyonel Fonksiyonlar",
+                "Fonksiyonların Tersi", "İlgili Denklem ve Eşitsizlikler"]),
+            (3, "Sayma, Algoritma ve Bilişim", 10, [
+                "Sayma Stratejileri", "Cebirsel İşlemlerin Algoritmik Yapısı"]),
+            (4, "Geometrik Şekiller", 10, [
+                "Dik Üçgende Trigonometrik Oranlar", "Trigonometrik Özdeşlikler",
+                "Üçgende Yardımcı Elemanlar", "Üçgende Alan",
+                "Sinüs ve Kosinüs Teoremleri"]),
+            (5, "Analitik İnceleme", 10, [
+                "Noktanın Analitiği", "Doğrunun Analitiği", "İki Nokta Arası Uzaklık"]),
+            (6, "İstatistiksel Araştırma Süreci", 10, [
+                "İki Kategorik Değişken (İki Yönlü Tablo, Koşullu Sıklık)"]),
+            (7, "Veriden Olasılığa", 10, [
+                "Koşullu Olasılık", "Bağımlı ve Bağımsız Olaylar", "Bayes Teoremi"]),
+            (1, "Nicelikler ve Değişimler", 11, [
+                "Trigonometrik Fonksiyonlar", "Üstel ve Logaritmik Fonksiyonlar",
+                "Fonksiyonlarla İşlemler ve Bileşke Fonksiyon"]),
+            (2, "Geometrik Şekiller", 11, [
+                "Dörtgenler ve Özel Dörtgenler", "Çokgenler"]),
+            (3, "İstatistiksel Araştırma Süreci", 11, [
+                "İki Nicel Değişken (Serpme Diyagramı, Korelasyon)"]),
+            (1, "Nicelikler ve Değişimler", 12, [
+                "Diziler (Aritmetik ve Geometrik Dizi)",
+                "Polinom Fonksiyonlar", "Polinom ve Rasyonel Denklem-Eşitsizlikler"]),
+            (2, "Değişimin Matematiği", 12, [
+                "Limit ve Süreklilik", "Türev ve Türev Alma Kuralları",
+                "Türevin Uygulamaları"]),
+            (3, "Geometrik Şekiller", 12, [
+                "Çemberde Açı, Kiriş ve Teğet", "Dairenin Alanı"]),
+            (4, "Geometrik Cisimler", 12, [
+                "Prizma, Silindir, Piramit, Koni ve Küre (Alan ve Hacim)"]),
+            (5, "Hazır Veriler Üzerinde Çalışma", 12, [
+                "Betimleyen ve İlişkilendiren İstatistiksel Çalışmalar"]),
         ],
     },
     "Fizik": {
@@ -328,27 +356,53 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": "AYT_SAY",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # 9. sınıf
-            ("Fizik Bilimi ve Kariyer Keşfi", 9),
-            ("Temel ve Türetilmiş Nicelikler, Vektörler", 9),
-            ("Doğadaki Temel Kuvvetler", 9),
-            ("Hareket ve Hareket Türleri", 9),
-            ("Akışkanlar — Basınç ve Sıvılarda Basınç", 9),
-            ("Kaldırma Kuvveti ve Bernoulli İlkesi", 9),
-            ("Enerji, Isı ve Sıcaklık", 9),
-            ("Hâl Değişimi, Isıl Denge ve Isı Aktarımı", 9),
-            # 10. sınıf
-            ("Sabit Hızlı Hareket", 10),
-            ("Sabit İvmeli Hareket", 10),
-            ("Serbest Düşme (Bir Boyut)", 10),
-            ("Serbest Düşme (İki Boyut)", 10),
-            ("İş, Enerji ve Güç", 10),
-            ("Enerji Çeşitleri ve Mekanik Enerji", 10),
-            ("Temel Elektrik Kavramları", 10),
-            ("Elektrik Akımı", 10),
-            ("Dalga Türleri", 10),
-            ("Dalgaların Temel Özellikleri", 10),
+        "unit_term": "Ünite",
+        "units": [
+            (1, "Fizik Bilimi ve Kariyer Keşfi", 9, [
+                "Fizik Bilimi ve Alt Dalları", "Fizikte Kariyer Keşfi"]),
+            (2, "Kuvvet ve Hareket", 9, [
+                "Temel ve Türetilmiş Büyüklükler (SI)", "Skaler ve Vektörel Büyüklükler",
+                "Vektörler", "Doğadaki Temel Kuvvetler", "Hareket Çeşitleri"]),
+            (3, "Akışkanlar", 9, [
+                "Basınç", "Sıvılarda Basınç", "Açık Hava Basıncı",
+                "Kaldırma Kuvveti", "Bernoulli İlkesi"]),
+            (4, "Enerji", 9, [
+                "İç Enerji, Isı ve Sıcaklık", "Öz Isı ve Isı Sığası",
+                "Hâl Değişimleri", "Isıl Denge", "Isı Aktarma Yolları"]),
+            (1, "Kuvvet ve Hareket", 10, [
+                "Sabit Hızlı Hareket", "Sabit İvmeli Hareket",
+                "Serbest Düşme", "İki Boyutta Hareket (Atışlar)"]),
+            (2, "Enerji", 10, [
+                "İş, Enerji ve Güç", "Enerji Biçimleri",
+                "Mekanik Enerji", "Enerji Kaynakları"]),
+            (3, "Elektrik", 10, [
+                "Basit Elektrik Devreleri", "Elektrik Akımı", "Ohm Yasası",
+                "Dirençlerin Bağlanması", "Üreteçlerin Bağlanması"]),
+            (4, "Dalgalar", 10, [
+                "Dalgaların Temel Kavramları", "Dalga Çeşitleri",
+                "Periyodik Hareketler", "Su Dalgalarında Yansıma ve Kırılma",
+                "Rezonans ve Deprem"]),
+            (1, "Kuvvet ve Hareket", 11, [
+                "Newton'un Hareket Yasaları", "Sürtünme Kuvveti",
+                "Limit Hız", "Çembersel Hareket"]),
+            (2, "Elektrik ve Manyetizma", 11, [
+                "Elektriksel Kuvvet ve Elektriksel Alan",
+                "Manyetik Alan ve Manyetik Kuvvet", "İndüksiyon Akımı", "Transformatörler"]),
+            (3, "Madde ve Doğası", 11, ["Yarı İletkenler", "Süper İletkenler"]),
+            (4, "Optik", 11, [
+                "Aydınlanma", "Düzlem ve Küresel Aynalar", "Işığın Kırılması",
+                "Mercekler", "Prizmalar ve Fiber Optik"]),
+            (1, "Kuvvet ve Hareket", 12, [
+                "Tork ve Denge", "İtme ve Momentum", "Momentumun Korunumu",
+                "Açısal Momentum"]),
+            (2, "Enerji", 12, [
+                "Yay Sabiti ve Esneklik Potansiyel Enerjisi",
+                "Sürtünmede Yapılan İş", "Enerjinin Korunumu ve Verim"]),
+            (3, "Dalgalar", 12, [
+                "Kırınım", "Girişim", "Elektromanyetik Dalgalar", "Işık Renkleri"]),
+            (4, "Madde ve Doğası", 12, [
+                "Siyah Cisim Işıması ve Fotoelektrik Etki", "Modern Atom Teorisi",
+                "Standart Model", "Nükleer Enerji"]),
         ],
     },
     "Kimya": {
@@ -356,24 +410,46 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": "AYT_SAY",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # 9. sınıf
-            ("Etkileşim — Atom Teorileri ve Periyodik Tablo", 9),
-            ("Çeşitlilik — Kimyasal Bağlar", 9),
-            ("Lewis Yapıları, Polar/Apolar Adlandırma", 9),
-            ("Katılar ve Sıvılar", 9),
-            ("Sürdürülebilirlik — Nanoparçacıklar ve Yeşil Kimya", 9),
-            # 10. sınıf
-            ("Kimyasal Tepkimelerin Oluşumu", 10),
-            ("Kimyasal Tepkime Türleri", 10),
-            ("Mol Kavramı ve Stokiyometrik Hesaplamalar", 10),
-            ("Gazlar — Özellikleri ve Yasaları", 10),
-            ("İdeal Gaz Yasası", 10),
-            ("Graham Difüzyon ve Efüzyon", 10),
-            ("Çözünme Süreci ve Derişim Birimleri", 10),
-            ("Çözünürlük ve Etkileyen Faktörler", 10),
-            ("Çözeltilerin Sınıflandırılması ve Koligatif Özellikler", 10),
-            ("Yeşil Kimya — Çevresel ve Ekonomik Sürdürülebilirlik", 10),
+        "unit_term": "Tema",
+        "units": [
+            (1, "Etkileşim", 9, [
+                "Günlük Hayatta Kimya ve Kariyer", "Atom Teorileri ve Atomun Yapısı",
+                "Atom Orbitalleri ve Elektron Dizilimi",
+                "Periyodik Tablo ve Periyodik Özellikler"]),
+            (2, "Çeşitlilik", 9, [
+                "Metalik, İyonik ve Kovalent Bağ", "Lewis Yapısı ve Molekül Polarlığı",
+                "Bileşiklerin Adlandırılması", "Moleküller Arası Etkileşimler",
+                "Katılar ve Sıvılar"]),
+            (3, "Sürdürülebilirlik", 9, [
+                "Nanoparçacıklar ve Ekolojik Sürdürülebilirlik", "Yeşil Kimya"]),
+            (1, "Etkileşim", 10, [
+                "Kimyasal Tepkimelerin Oluşumu", "Kimyasal Tepkime Türleri",
+                "Mol Kavramı", "Denklem Denkleştirme ve Stokiyometri",
+                "Gazlar ve Gaz Yasaları", "İdeal Gaz Yasası", "Difüzyon ve Efüzyon"]),
+            (2, "Çeşitlilik", 10, [
+                "Çözünme Süreci ve Çözünürlük", "Derişim Birimleri (Molarite, ppm)",
+                "Çözünürlüğe Etki Eden Faktörler", "Çözeltilerin Sınıflandırılması",
+                "Koligatif Özellikler"]),
+            (3, "Sürdürülebilirlik", 10, [
+                "Yeşil Kimya ve Atmosferdeki Tepkimeler"]),
+            (1, "Etkileşim", 11, [
+                "Tepkimelerde Enerji (Entalpi)", "Bağ Enerjileri ve Oluşum Entalpileri",
+                "Kimyasal Tepkimelerde Hız", "Hıza Etki Eden Faktörler"]),
+            (2, "Çeşitlilik", 11, [
+                "Kimyasal Denge ve Dengeyi Etkileyen Faktörler",
+                "Asit-Baz Dengesi ve pH", "Tampon Çözeltiler ve Titrasyon",
+                "Çözünürlük Dengesi (Kçç)"]),
+            (3, "Sürdürülebilirlik", 11, [
+                "Nanoteknoloji, Yeşil Hidrojen ve Mikroplastikler"]),
+            (1, "Etkileşim", 12, [
+                "İndirgenme-Yükseltgenme (Redoks) Tepkimeleri",
+                "Elektrokimyasal Hücreler", "Elektroliz ve Korozyon"]),
+            (2, "Çeşitlilik", 12, [
+                "Organik Kimyaya Giriş (Hibritleşme, VSEPR)",
+                "Hidrokarbonlar (Alifatik ve Aromatik)",
+                "Fonksiyonel Gruplar ve İzomerlik"]),
+            (3, "Sürdürülebilirlik", 12, [
+                "Nanobilim, Biyobozunur Polimerler ve Yeşil Kimya"]),
         ],
     },
     "Biyoloji": {
@@ -381,18 +457,41 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": "AYT_SAY",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # 9. sınıf
-            ("Yaşam — Biyoloji Bilimi ve Sınıflandırma", 9),
-            ("Üç Âlem Sistemi ve Biyoçeşitlilik", 9),
-            ("Organizasyon — İnorganik ve Organik Moleküller", 9),
-            ("Hücre Yapısı ve Madde Geçişleri", 9),
-            # 10. sınıf
-            ("Canlılık için Enerjinin Önemi", 10),
-            ("ATP", 10),
-            ("Fotosentez Süreci", 10),
-            ("Fotosentez Hızını Etkileyen Faktörler", 10),
-            ("Kemosentez", 10),
+        "unit_term": "Tema",
+        "units": [
+            (1, "Yaşam", 9, [
+                "Biyolojinin Doğası ve Bilim Etiği", "Canlıların Ortak Özellikleri",
+                "Canlıların Sınıflandırılması", "Üç Âlem (Domain) Sistemi",
+                "Biyoçeşitlilik"]),
+            (2, "Organizasyon", 9, [
+                "İnorganik Bileşikler (Su, Mineraller, Asit-Baz)",
+                "Organik Bileşikler (Karbonhidrat, Lipit, Protein, Enzim, Nükleik Asit, ATP)",
+                "Hücre ve Organeller", "Hücre Zarından Madde Geçişleri",
+                "Hücre-Doku-Organ-Sistem Organizasyonu"]),
+            (1, "Enerji", 10, [
+                "Canlılıkta Enerji ve ATP", "Fotosentez", "Kemosentez",
+                "Hücresel Solunum (Oksijenli Solunum)", "Fermantasyon",
+                "Sindirim Sistemleri"]),
+            (2, "Ekoloji", 10, [
+                "Ekosistemin Bileşenleri", "Komünite ve Popülasyon Ekolojisi",
+                "Madde Döngüleri ve Enerji Akışı",
+                "Ekolojik Sürdürülebilirlik ve Çevre Sorunları",
+                "Biyoçeşitliliğin Korunması"]),
+            (1, "Tepki", 11, [
+                "Bitkilerde Tepki (Hormonlar, Tropizma, Nasti)", "Duyu Organları",
+                "Sinir Sistemi", "Refleks ve Hareketin Kontrolü (Kas-İskelet)",
+                "Bağışıklık Sistemi"]),
+            (2, "Homeostazi", 11, [
+                "Homeostazi ve Geri Bildirim Mekanizmaları", "Endokrin Sistem",
+                "Dolaşım Sistemi", "Solunum Sistemi", "Boşaltım Sistemi"]),
+            (1, "Üreme", 12, [
+                "Hücre Bölünmeleri (Mitoz ve Mayoz)", "Eşeysiz Üreme",
+                "Eşeyli Üreme", "İnsanda Üreme ve Gelişme",
+                "Bitkilerde Üreme ve Gelişme"]),
+            (2, "Gen", 12, [
+                "Nükleik Asitler ve DNA Replikasyonu", "Gen İfadesi (Protein Sentezi)",
+                "Kalıtım (Mendel Genetiği)", "Eşeye Bağlı Kalıtım",
+                "Biyoteknoloji ve Genetik Mühendisliği"]),
         ],
     },
     "Türk Dili ve Edebiyatı": {
@@ -400,21 +499,27 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": "AYT_SOZ",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # 9. sınıf
-            ("Giriş — Edebiyat, Gösterge, Düşünce, Dil, İletişim", 9),
-            ("Hikâye (Öykü)", 9),
-            ("Şiir", 9),
-            ("Masal / Fabl", 9),
-            ("Roman", 9),
-            ("Tiyatro", 9),
-            ("Biyografi / Otobiyografi / CV / Dilekçe / Tutanak", 9),
-            ("Mektup / E-Posta", 9),
-            ("Günlük / Blog", 9),
-            # 10. sınıf
-            ("Sözün Ezgisi — Kelimelerin Ritmi", 10),
-            ("Dünden Bugüne", 10),
-            ("Nesillerin Mirası", 10),
+        "unit_term": "Tema",
+        "units": [
+            (1, "Sözün İnceliği", 9, ["Şiir", "Deneme", "Mülakat"]),
+            (2, "Anlam Arayışı", 9, ["Hikâye", "Anı", "Şiir"]),
+            (3, "Anlamın Yapı Taşları", 9, ["Hikâye", "Gezi Yazısı", "Belgesel"]),
+            (4, "Dilin Zenginliği", 9, ["Roman", "Tiyatro", "Eleştiri", "Otobiyografi"]),
+            (1, "Sözün Ezgisi", 10, ["Koşuk", "Koşma", "Türkü", "Ninni", "Masal"]),
+            (2, "Kelimelerin Ritmi", 10, ["Gazel", "Kaside", "Saf Şiir", "Söyleşi"]),
+            (3, "Dünden Bugüne", 10, ["Destan", "Halk Hikâyesi", "Mesnevi", "Fabl"]),
+            (4, "Nesillerin Mirası", 10, [
+                "Dede Korkut Hikâyeleri", "Tanzimat ve Servetifünun Edebiyatı",
+                "Millî Edebiyat"]),
+            (1, "Bir Diyeceğim Var", 11, ["Karagöz Oyunu", "Mektup", "Dilekçe ve E-Posta"]),
+            (2, "Kültür Yolculuğu", 11, [
+                "Hikâye (Türk Dünyası)", "Anı", "Orhun Abideleri ve Dîvânu Lugâti't-Türk"]),
+            (3, "Yaşamın İzinde", 11, ["Roman", "Biyografi", "Tezkire", "Mülakat"]),
+            (4, "Hayatın Aynası", 11, ["Tiyatro", "Küçürek Hikâye", "Belgesel"]),
+            (1, "Benim Yolculuğum", 12, ["Günlük", "Blog", "Şiir", "Hikâye"]),
+            (2, "Toplumun Ahengi", 12, ["Roman", "Makale", "Haber Metni", "Eleştiri"]),
+            (3, "Hayatın Dengesi", 12, ["Gezi Yazısı", "Broşür", "Hikâye", "Anket"]),
+            (4, "Hayalimdeki Yarın", 12, ["Hikâye", "Makale", "Öz Geçmiş", "Röportaj"]),
         ],
     },
     "Tarih": {
@@ -422,15 +527,36 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": "AYT_SOZ",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # 9. sınıf
-            ("Geçmişin İnşa Süreci, Tarihin Doğası, Dijitalleşme", 9),
-            ("Eski Çağ Medeniyetleri, Tarım Devrimi, Yönetim, Hukuk", 9),
-            ("Orta Çağ Göçleri, Devletler, Ticaret Yolları, Bilim/Kültür", 9),
-            # 10. sınıf
-            ("Türkistan'dan Türkiye'ye (1040–1299)", 10),
-            ("Beylikten Devlete Osmanlı (1299–1453)", 10),
-            ("Cihan Devleti Osmanlı (1453–1683)", 10),
+        "unit_term": "Ünite",
+        "units": [
+            (1, "Geçmişin İnşa Sürecinde Tarih", 9, [
+                "Tarihin Doğası ve Tarih Öğrenmenin Faydaları",
+                "Tarihsel Bilginin Üretimi ve Dijitalleşme"]),
+            (2, "Eski Çağ Medeniyetleri", 9, [
+                "Tarım Devrimi, Yerleşme ve Ekonomi", "Yönetim, Ordu ve Hukuk",
+                "İnanç, Bilim ve Sanat", "Türklerde Konargöçer Yaşam"]),
+            (3, "Orta Çağ Medeniyetleri", 9, [
+                "Kitlesel Göçler", "Devletlerin Yönetim ve Ordu Yapıları",
+                "Ticaret Yolları", "Bilim, Kültür ve Sanat"]),
+            (1, "Türkistan'dan Türkiye'ye (1040-1299)", 10, [
+                "Askerî Mücadeleler", "Devlet ve Ordu Teşkilatı",
+                "Sosyal ve Ekonomik Yaşam", "Türk-İslam Bilim ve Sanatı"]),
+            (2, "Beylikten Devlete Osmanlı (1299-1453)", 10, [
+                "Osmanlı'nın Kuruluşu", "Siyasi ve Askerî Mücadeleler",
+                "Devletleşme: Ordu, Hukuk ve Toprak Sistemi",
+                "İskân ve İlim-İrfan Geleneği"]),
+            (3, "Cihan Devleti Osmanlı (1453-1683)", 10, [
+                "Siyasi ve Askerî Mücadeleler", "Yönetim ve Ordu Yapısındaki Değişim",
+                "Avrupa'nın Sömürgeciliği", "İsyanlar", "Bilim, Kültür ve Sanat"]),
+            (1, "Değişen Dünyada Osmanlı (1683-1789)", 11, [
+                "Siyasi ve Askerî Mücadeleler", "Lale Devri",
+                "Sanayi Devrimi'nin Etkileri"]),
+            (2, "Dönüşüm Sürecinde Osmanlı (1789-1908)", 11, [
+                "Fransız İhtilali'nin Etkileri", "Siyasi, Askerî ve İdari Gelişmeler",
+                "Bilim, Sanat, Teknoloji ve Sanayileşme Çabaları"]),
+            (3, "Savaşlar Sarmalında Osmanlı (1908-1918)", 11, [
+                "Siyasi ve Askerî Gelişmeler", "Kitlesel Göç ve Salgınlar",
+                "Osmanlı'nın İnsanlık Tarihine Katkıları"]),
         ],
     },
     "Coğrafya": {
@@ -438,23 +564,65 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": "AYT_SOZ",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # 9. sınıf
-            ("Coğrafya Biliminin Konusu ve Bölümleri", 9),
-            ("Haritalar", 9),
-            ("Doğal Sistemler — Hava ve İklim", 9),
-            ("Beşeri Sistemler — Nüfus", 9),
-            ("Ekonomik Faaliyetler", 9),
-            ("Afetler", 9),
-            ("Bölgeler", 9),
-            # 10. sınıf
-            ("Coğrafya Bilimi", 10),
-            ("Mekânsal Bilgi Teknolojileri", 10),
-            ("Tektonik Süreçler ve Yeryüzü Şekilleri", 10),
-            ("Yerleşmeler", 10),
-            ("Ekonomik Faaliyetler", 10),
-            ("Afetler", 10),
-            ("Türk Kültürü", 10),
+        "unit_term": "Ünite",
+        "units": [
+            (1, "Coğrafyanın Doğası", 9, [
+                "Coğrafyanın Konusu ve Bölümleri", "Coğrafya Biliminin Gelişimi"]),
+            (2, "Mekânsal Bilgi Teknolojileri", 9, [
+                "Haritalar", "Türkiye'nin Coğrafi Konumu",
+                "Mekânsal Bilgi Teknolojilerinin Bileşenleri"]),
+            (3, "Doğal Sistemler ve Süreçler", 9, [
+                "Hava Olayları", "İklim Sistemi ve Bileşenleri", "İklim Türleri",
+                "İklim Değişiklikleri"]),
+            (4, "Beşerî Sistemler ve Süreçler", 9, [
+                "Nüfusun Dağılışı ve Hareketleri", "Demografik Dönüşüm ve Nüfus Piramitleri",
+                "Nüfus Politikaları"]),
+            (5, "Ekonomik Faaliyetler ve Etkileri", 9, [
+                "Ekonomik Faaliyetleri Etkileyen Coğrafi Faktörler"]),
+            (6, "Afetler ve Sürdürülebilir Çevre", 9, [
+                "Tehlike, Risk ve Afet", "Afet Türleri", "Bütüncül Afet Yönetimi"]),
+            (7, "Bölgeler, Ülkeler ve Küresel Bağlantılar", 9, [
+                "Bölge ve Bölge Türleri"]),
+            (1, "Coğrafyanın Doğası", 10, ["Coğrafi Bakış (Konum, Mekân, Dağılış)"]),
+            (2, "Mekânsal Bilgi Teknolojileri", 10, [
+                "CBS ve Uzaktan Algılama", "Mekânsal Verilerin Haritalara Aktarılması"]),
+            (3, "Doğal Sistemler ve Süreçler", 10, [
+                "Tektonik Süreçler", "Aşınma ve Çözünme Süreçleri",
+                "Aşınım-Birikim ve Yeryüzü Şekilleri", "Yeryüzü Şekilleri ve Beşerî Faaliyet"]),
+            (4, "Beşerî Sistemler ve Süreçler", 10, [
+                "Yerleşmelerin Kuruluşu ve Gelişimi", "Yerleşmelerin Fonksiyonları"]),
+            (5, "Ekonomik Faaliyetler ve Etkileri", 10, [
+                "Ekonomik Sektörler ve Gelişmişlik", "Türkiye Ekonomisinin Sektörel Dağılımı"]),
+            (6, "Afetler ve Sürdürülebilir Çevre", 10, [
+                "Afetlerle Mücadele ve Afet Bilinci", "Afetlere Dirençli Yaşam Alanları"]),
+            (7, "Bölgeler, Ülkeler ve Küresel Bağlantılar", 10, [
+                "Türk Kültürünün Mekânsal Özellikleri"]),
+            (1, "Coğrafyanın Doğası", 11, ["Mekânsal Sorunlar ve Coğrafya Bilimi"]),
+            (2, "Mekânsal Bilgi Teknolojileri", 11, ["Web Tabanlı CBS"]),
+            (3, "Doğal Sistemler ve Süreçler", 11, [
+                "Su Kaynakları", "Türkiye'nin Su Kaynakları"]),
+            (4, "Beşerî Sistemler ve Süreçler", 11, [
+                "Yerleşmelerin Mekânsal Organizasyonu", "Yerleşmelerin Etki Alanları"]),
+            (5, "Ekonomik Faaliyetler ve Etkileri", 11, [
+                "Tarımsal Faaliyetler ve Sürdürülebilirlik", "Madenler ve Enerji Kaynakları",
+                "Sanayileşmenin Mekânsal Etkileri"]),
+            (6, "Afetler ve Sürdürülebilir Çevre", 11, [
+                "Gezegen Sınırı ve Küresel İklim Değişikliği",
+                "Suyun Sürdürülebilir Kullanımı"]),
+            (7, "Bölgeler, Ülkeler ve Küresel Bağlantılar", 11, [
+                "Türkiye'nin Kültürel Hinterlandı", "Örnek Ülkeler (Tarım, Sanayi, Enerji)"]),
+            (1, "Coğrafyanın Doğası", 12, ["Geleceğin Dünyasında Coğrafya"]),
+            (2, "Mekânsal Bilgi Teknolojileri", 12, ["CBS ve Tematik Haritalar"]),
+            (3, "Doğal Sistemler ve Süreçler", 12, [
+                "Toprak Oluşumu ve Kullanımı", "Bitki Türlerinin Çeşitliliği ve Dağılışı"]),
+            (4, "Beşerî Sistemler ve Süreçler", 12, [
+                "Kültür-Mekân Etkileşimi", "Kültürel Peyzaj ve Sürdürülebilirlik"]),
+            (5, "Ekonomik Faaliyetler ve Etkileri", 12, [
+                "Ulaşım Sistemleri", "Küresel Ticaret", "Turizm Faaliyetleri"]),
+            (6, "Afetler ve Sürdürülebilir Çevre", 12, [
+                "Çevre Sorunları ve Çözümleri", "Ortak Doğal ve Kültürel Miras"]),
+            (7, "Bölgeler, Ülkeler ve Küresel Bağlantılar", 12, [
+                "Uluslararası Birliktelik ve Anlaşmazlıklar", "Örnek Ülkeler"]),
         ],
     },
     "Felsefe": {
@@ -462,17 +630,40 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": "AYT_SOZ",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # 10. sınıf — 9'da Felsefe yok, 10'da başlar
-            ("Felsefenin Doğası", 10),
-            ("Felsefe, Mantık ve Argümantasyon", 10),
-            ("Varlık Felsefesi", 10),
-            ("Bilgi Felsefesi", 10),
-            ("Ahlak Felsefesi", 10),
-            ("Estetik ve Sanat Felsefesi", 10),
-            ("Siyaset Felsefesi", 10),
-            ("Din Felsefesi", 10),
-            ("Bilim Felsefesi", 10),
+        "unit_term": "Ünite",
+        "units": [
+            (1, "Felsefenin Doğası", 10, [
+                "Felsefenin Anlamı ve Felsefi Düşünce",
+                "Felsefenin Diğer Alanlarla İlişkisi ve İşlevi"]),
+            (2, "Felsefe, Mantık ve Argümantasyon", 10, [
+                "Düşünme ve Dil İlişkisi", "Argümantasyonun Yapısı ve Temel Kavramları"]),
+            (3, "Varlık Felsefesi", 10, [
+                "Varlık Felsefesinin Konusu", "Varlık Felsefesinin Temel Problemleri"]),
+            (4, "Bilgi Felsefesi", 10, [
+                "Bilginin İmkânı ve Kaynağı", "Doğruluk Ölçütleri"]),
+            (5, "Ahlak Felsefesi", 10, [
+                "Evrensel Ahlak Yasasının İmkânı", "Özgürlük-Sorumluluk İlişkisi"]),
+            (6, "Estetik ve Sanat Felsefesi", 10, [
+                "Güzellik ve Ortak Estetik Yargıların İmkânı"]),
+            (7, "Siyaset Felsefesi", 10, [
+                "Devletin Kökeni ve İktidarın Meşruiyeti", "İdeal Düzen ve Ütopyalar"]),
+            (8, "Din Felsefesi", 10, [
+                "Tanrı'nın Varlığına İlişkin Görüşler ve Kanıtlamalar",
+                "Ruhun Ölümsüzlüğü"]),
+            (9, "Bilim Felsefesi", 10, [
+                "Bilimin Ne Olduğu", "Bilimin Yöntemi"]),
+            (1, "Çevre Sorunları ve Felsefe", 11, [
+                "Çevre Problemleri ve Sürdürülebilirlik", "Çevre Etiği"]),
+            (2, "Teknoloji ve Hayat", 11, [
+                "Teknoloji ve İnsan Hayatı", "Ontolojik ve Aksiyolojik Problemler"]),
+            (3, "Akıl ve İnanç", 11, ["Akıl-İnanç İlişkisine Yönelik Görüşler"]),
+            (4, "Edebiyat ve Felsefe", 11, [
+                "Dil, Edebiyat ve Felsefe İlişkisi", "Edebî Unsurlara Felsefi Bakış"]),
+            (5, "Hayatın Anlamı", 11, [
+                "Mutluluk ve Hayat İlişkisi", "Varoluş ve Kendi Olma"]),
+            (6, "Hukuk ve Felsefe", 11, [
+                "Hukukun Gereği ve Kaynağı (Doğal Hukuk, Pozitif Hukuk)",
+                "Ahlak-Hukuk İlişkisi"]),
         ],
     },
     "İngilizce": {
@@ -480,10 +671,38 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": "AYT_DIL",
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": True,
-        "topics": [
-            # MEB resmî 9-12 İngilizce öğretim programı tema-bazlı; alt-konular
-            # zaman içinde tema değişimleriyle güncellenir. Öğretmen UI üzerinden
-            # kullandığı temayı ekleyebilir. Boş bırakıyoruz — kullanıcı eklesin.
+        "unit_term": "Theme",
+        "units": [
+            (1, "School Life", 9, ["Countries, Nationalities and Languages", "National Days"]),
+            (2, "Classroom Life", 9, ["Friendships", "Daily and Study Routines"]),
+            (3, "Personal Life: Appearance & Personality", 9, [
+                "Physical Appearance", "Personality and Character Traits"]),
+            (4, "Family Life", 9, ["Family Members' Jobs and Routines"]),
+            (5, "Life in the House & Neighbourhood", 9, ["Houses, Rooms and Furniture"]),
+            (6, "Life in the City & Country", 9, ["Local and International Food Culture"]),
+            (7, "Life in the World & Nature", 9, ["Endangered Animals and Habitats"]),
+            (1, "School Life & Education", 10, ["Types of Schools", "School Anxiety and Stress"]),
+            (2, "Classroom Life & Learning", 10, ["Learning Styles", "Learning with Technology"]),
+            (3, "Personal Life & Well-being", 10, ["Illnesses", "Fashion Preferences"]),
+            (4, "Family Life & Home", 10, ["Routines (Past and Present)", "Hobbies and Interests"]),
+            (5, "Neighbourhood, City & Social Life", 10, ["Attractions", "Services", "Transportation"]),
+            (6, "Life in the World & Culture", 10, ["Continents and Nationalities", "Food Culture"]),
+            (7, "Life in Nature & Global Problems", 10, ["Natural Resources and Protection"]),
+            (8, "Life in the Universe & the Future", 10, ["Space Exploration", "Futuristic Technology"]),
+            (1, "School Life & Education", 11, ["Comparing Schools and Education Systems"]),
+            (2, "Classroom Life & Learning", 11, ["Traditional vs Modern Education"]),
+            (3, "Personal Life & Well-being", 11, ["Physical Health", "Mental and Emotional Health"]),
+            (4, "Family Life & Home", 11, ["Family Traditions and Values", "Family Problems"]),
+            (5, "Neighbourhood, City & Social Life", 11, ["Types of Cities", "Rural vs Urban Life"]),
+            (6, "Life in the World & Culture", 11, ["Music and Art", "Sports Cultures"]),
+            (7, "Life in Nature & Global Problems", 11, ["Globalisation", "Environmental Issues"]),
+            (8, "Life in the Universe & Future", 11, ["Future Lifestyles and Inventions"]),
+            (1, "School Life & Education", 12, ["Coping with Challenges", "Future Plans"]),
+            (2, "Personal Life & Well-being", 12, ["Social Health", "Economic Stability"]),
+            (3, "Family Life & Home", 12, ["Technology and Family", "Family and Community"]),
+            (4, "City & Social Life", 12, ["Communities and Lifestyles", "Infrastructure and Planning"]),
+            (5, "Life in the Cultural and Natural World", 12, ["Cultural Diversity", "Climate Change"]),
+            (6, "Life in the Universe & Future", 12, ["Space Organisations", "Future Aspirations"]),
         ],
     },
     "Din Kültürü ve Ahlak Bilgisi": {
@@ -491,15 +710,50 @@ MAARIF_LISE_CURRICULUM: dict[str, dict] = {
         "exam_section": None,  # YKS'de yok, sadece okul dersi
         "curriculum_model": "MAARIF_LISE",
         "available_for_graduate": False,
-        "topics": [
-            # 9. sınıf
-            ("Allah-İnsan İlişkisi", 9),
-            ("İnanç Esasları", 9),
-            ("İbadetler", 9),
-            ("Ahlak İlkeleri", 9),
-            ("Hz. Muhammed", 9),
-            # 10. sınıf
-            ("İslamda Varlık ve Birlik", 10),
+        "unit_term": "Ünite",
+        "units": [
+            (1, "Allah-İnsan İlişkisi", 9, [
+                "İnsanın Yaratılışı", "Doğruyu Arayan Varlık Olarak İnsan",
+                "İbadet ve Dua"]),
+            (2, "İslam'da İnanç Esasları", 9, [
+                "İman ve Mahiyeti", "İslam'da İman Esasları", "İmanın Kazandırdıkları"]),
+            (3, "İslam'da İbadetler", 9, [
+                "İbadetin Kapsamı", "Temel İbadetler", "İnsan ve İbadet"]),
+            (4, "İslam'da Ahlak İlkeleri", 9, [
+                "Ahlakın Mahiyeti", "Ahlakın Temel Unsurları", "Ahlaki Tutum ve Davranışlar"]),
+            (5, "Kur'an'a Göre Hz. Muhammed", 9, [
+                "Hz. Muhammed'in Beşerî ve Peygamberlik Yönü", "Hz. Muhammed'in Örnekliği"]),
+            (1, "İslam'da Varlık ve Bilgi", 10, [
+                "Bilgi ve Kaynakları", "Allah-Âlem İlişkisi"]),
+            (2, "Allah'ı Tanımak", 10, [
+                "Allah'ın Varlığının Delilleri", "İsim ve Sıfatlarıyla Allah"]),
+            (3, "İslam'ın Evrensel Mesajları", 10, [
+                "Tevhit İlkesi", "Adalet ve Eşitlik", "İslam ve Barış"]),
+            (4, "Din, Çevre ve Teknoloji", 10, [
+                "İnsan, Çevre ve Ahlak", "Teknoloji ve Ahlak"]),
+            (5, "İslam Düşüncesinde Yorumlar", 10, [
+                "Dinî Yorum Farklılıklarının Sebepleri",
+                "İtikadi-Siyasi ve Fıkhi Yorumlar"]),
+            (1, "Kader, İrade ve Sorumluluk", 11, [
+                "İnsan ve Kader", "Akıl, İrade ve Sorumluluk"]),
+            (2, "Din, Felsefe, Bilim ve Sanat", 11, [
+                "Din, Felsefe ve Bilim", "Din ve Sanat"]),
+            (3, "İslam Medeniyeti ve Gönül Coğrafyamız", 11, [
+                "Medeniyetin Oluşumu", "İslam Medeniyetinin İzleri"]),
+            (4, "İnançla İlgili Meseleler", 11, [
+                "İnançla İlgili Felsefi Yaklaşımlar", "Kötülük Problemi", "Din İstismarı"]),
+            (5, "Yahudilik ve Hristiyanlık", 11, ["Yahudilik", "Hristiyanlık"]),
+            (1, "Kur'an-ı Kerim", 12, [
+                "Kur'an'ın Tarihi", "Ana Konuları ve Temel Özellikleri",
+                "Anlaşılmasında Temel İlkeler"]),
+            (2, "Din ve Aile", 12, [
+                "İslam'da Aile", "Aile İçi İletişim", "Aile ve Ahlaki Değerler"]),
+            (3, "Güncel Dinî Meseleler", 12, [
+                "Gıda, Bağımlılık ve Günlük Hayatla İlgili Meseleler"]),
+            (4, "İslam Düşüncesinde Tasavvufi Yorumlar", 12, [
+                "Tasavvufi Düşünce", "Alevilik-Bektaşilik ve Cem Erkânı"]),
+            (5, "Hint ve Çin Dinleri", 12, [
+                "Hinduizm ve Budizm", "Konfüçyanizm ve Taoizm"]),
         ],
     },
 }

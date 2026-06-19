@@ -847,6 +847,7 @@ export interface CurriculumTopicItem {
   reserved: number;
   status: "kaynak_yok" | "baslanmadi" | "planlandi" | "devam" | "tamamlandi";
   pct: number;
+  unit_name: string | null;
 }
 
 export interface CurriculumSubjectItem {

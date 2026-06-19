@@ -104,21 +104,57 @@ def seed_curriculum(db: Session, *, only_model: str | None = None) -> dict[str, 
                 subject.exam_section = exam_section_enum
                 subject.curriculum_model = cm_enum
 
-            # Topics — (subject_id, name, grade_level) ile ara
-            existing_keys = {(t.name, t.grade_level) for t in subject.topics}
-            for topic_order, (topic_name, topic_grade) in enumerate(spec["topics"]):
-                if (topic_name, topic_grade) in existing_keys:
-                    continue
-                db.add(Topic(
-                    subject_id=subject.id,
-                    name=topic_name,
-                    order=topic_order,
-                    grade_level=topic_grade,
-                    is_builtin=True,
-                    teacher_id=None,
-                    curriculum_model=cm_enum,
-                ))
-                added_topics += 1
+            # Topics — iki format desteklenir:
+            #   1) "topics": [(name, grade), ...]  → düz konu (LGS/Klasik)
+            #   2) "units":  [(no, name, grade, [alt_başlık, ...]), ...]
+            #      → her ünite/tema PARENT Topic, alt başlıklar parent_id ile CHILD
+            #        (Maarif; test kitapları alt başlıkla düzenlenir). Sıralama:
+            #        order = grade*10000 + unit_no*100 (+ alt sırası) → sınıf→ünite→alt.
+            existing_keys = {(t.name, t.grade_level, t.parent_id) for t in subject.topics}
+            units = spec.get("units")
+            if units:
+                term = spec.get("unit_term", "Ünite")
+                for unit_no, unit_name, grade, subtopics in units:
+                    parent_name = f"{unit_no}. {term}: {unit_name}"
+                    parent_order = grade * 10000 + unit_no * 100
+                    parent = next(
+                        (t for t in subject.topics
+                         if t.name == parent_name and t.grade_level == grade
+                         and t.parent_id is None),
+                        None,
+                    )
+                    if parent is None:
+                        parent = Topic(
+                            subject_id=subject.id, name=parent_name, order=parent_order,
+                            grade_level=grade, is_builtin=True, teacher_id=None,
+                            curriculum_model=cm_enum, parent_id=None,
+                        )
+                        db.add(parent); db.flush()
+                        added_topics += 1
+                    for sub_idx, sub_name in enumerate(subtopics):
+                        if (sub_name, grade, parent.id) in existing_keys:
+                            continue
+                        db.add(Topic(
+                            subject_id=subject.id, name=sub_name,
+                            order=parent_order + sub_idx + 1, grade_level=grade,
+                            is_builtin=True, teacher_id=None,
+                            curriculum_model=cm_enum, parent_id=parent.id,
+                        ))
+                        added_topics += 1
+            else:
+                for topic_order, (topic_name, topic_grade) in enumerate(spec.get("topics", [])):
+                    if (topic_name, topic_grade, None) in existing_keys:
+                        continue
+                    db.add(Topic(
+                        subject_id=subject.id,
+                        name=topic_name,
+                        order=topic_order,
+                        grade_level=topic_grade,
+                        is_builtin=True,
+                        teacher_id=None,
+                        curriculum_model=cm_enum,
+                    ))
+                    added_topics += 1
 
         counts[model_name] = added_topics
         print(f"    Toplam yeni topic: {added_topics}")

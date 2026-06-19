@@ -190,26 +190,38 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
 
       {open ? (
         <View className="border-t border-slate-100">
-          {s.topics.map((t) => {
+          {s.topics.map((t, i) => {
             const meta = STATUS[t.status];
             const isNext = t.name === s.next_topic_name;
+            const showUnit = !!t.unit_name && (i === 0 || s.topics[i - 1].unit_name !== t.unit_name);
             return (
-              <View
-                key={t.topic_id}
-                className={cn("flex-row items-center gap-2 px-3 py-2", isNext && "bg-indigo-50/60")}
-              >
-                <Text className="w-5 text-right text-[11px] text-slate-400">{t.order + 1}</Text>
-                <View className={cn("size-2 rounded-full", meta.dot)} />
-                <View className="flex-1">
-                  <Text className={cn("text-sm", t.status === "kaynak_yok" ? "text-slate-400" : "text-slate-700")}>
-                    {t.name}
-                    {isNext ? "  • sıradaki" : ""}
-                  </Text>
-                  {t.has_resource && t.test_total > 0 ? (
-                    <Text className="text-[11px] text-slate-400">{t.completed}/{t.test_total} test</Text>
-                  ) : null}
+              <View key={t.topic_id}>
+                {showUnit ? (
+                  <View className="bg-slate-100 px-3 py-1.5">
+                    <Text className="text-[11px] font-semibold uppercase tracking-wide text-slate-600">
+                      {t.unit_name}
+                    </Text>
+                  </View>
+                ) : null}
+                <View
+                  className={cn(
+                    "flex-row items-center gap-2 py-2 pr-3",
+                    t.unit_name ? "pl-6" : "pl-3",
+                    isNext && "bg-indigo-50/60",
+                  )}
+                >
+                  <View className={cn("size-2 rounded-full", meta.dot)} />
+                  <View className="flex-1">
+                    <Text className={cn("text-sm", t.status === "kaynak_yok" ? "text-slate-400" : "text-slate-700")}>
+                      {t.name}
+                      {isNext ? "  • sıradaki" : ""}
+                    </Text>
+                    {t.has_resource && t.test_total > 0 ? (
+                      <Text className="text-[11px] text-slate-400">{t.completed}/{t.test_total} test</Text>
+                    ) : null}
+                  </View>
+                  <Text className={cn("text-[10px] font-medium", meta.text)}>{meta.label}</Text>
                 </View>
-                <Text className={cn("text-[10px] font-medium", meta.text)}>{meta.label}</Text>
               </View>
             );
           })}

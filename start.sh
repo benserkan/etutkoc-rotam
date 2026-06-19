@@ -12,6 +12,11 @@ python -m scripts.init_db
 # Müfredat seed (idempotent — yoksa ekler, varsa atlar)
 python -m scripts.seed || true
 
+# Maarif müfredatını resmi MEB tema/ünite + alt başlık yapısına taşı (bir kez).
+# Guard'lı: eski düz konular varsa düzeltir + etkilenen kitap eşleştirmelerini
+# NULL'lar (Faz 0 ile yeniden eşlenir); veri zaten yeni yapıdaysa ATLAR (güvenli).
+python -m scripts.reseed_maarif_curriculum || true
+
 # Anasayfa vitrin kartları seed (idempotent — var olanı ezmez, admin düzenlemeleri korunur)
 python -m scripts.seed_landing_cards || true
 

@@ -816,6 +816,7 @@ class CurriculumTopicItem(BaseModel):
     reserved: int
     status: str                      # kaynak_yok|baslanmadi|planlandi|devam|tamamlandi
     pct: int
+    unit_name: str | None = None     # ait olduğu tema/ünite (Maarif) — UI gruplama
 
 
 class CurriculumSubjectItem(BaseModel):

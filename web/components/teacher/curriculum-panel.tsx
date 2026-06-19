@@ -217,45 +217,53 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
 
       {open ? (
         <ul className="divide-y divide-border/60 border-t border-border">
-          {s.topics.map((t) => {
+          {s.topics.map((t, i) => {
             const meta = STATUS[t.status];
             const isNext = t.name === s.next_topic_name;
+            // tema/ünite başlığı: unit_name değiştiğinde bir kez göster (Maarif)
+            const showUnit = t.unit_name && (i === 0 || s.topics[i - 1].unit_name !== t.unit_name);
             return (
-              <li
-                key={t.topic_id}
-                className={cn(
-                  "flex items-center gap-3 px-4 py-2",
-                  isNext && "bg-indigo-50/50",
-                )}
-              >
-                <span className="w-6 shrink-0 text-right text-[11px] tabular-nums text-muted-foreground">
-                  {t.order + 1}
-                </span>
-                <span className="min-w-0 flex-1">
-                  <span className={cn("text-sm", t.status === "kaynak_yok" ? "text-muted-foreground" : "text-foreground")}>
-                    {t.name}
-                  </span>
-                  {isNext ? (
-                    <span className="ml-2 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700">
-                      sıradaki
+              <React.Fragment key={t.topic_id}>
+                {showUnit ? (
+                  <li className="bg-slate-100/70 px-4 py-1.5 dark:bg-slate-800/40">
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300">
+                      {t.unit_name}
                     </span>
-                  ) : null}
-                  {t.has_resource && t.test_total > 0 ? (
-                    <span className="ml-2 text-[11px] text-muted-foreground tabular-nums">
-                      {t.completed}/{t.test_total} test
-                    </span>
-                  ) : null}
-                </span>
-                <span
+                  </li>
+                ) : null}
+                <li
                   className={cn(
-                    "inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium",
-                    meta.cls,
+                    "flex items-center gap-3 py-2 pr-4",
+                    t.unit_name ? "pl-7" : "pl-4",
+                    isNext && "bg-indigo-50/50",
                   )}
                 >
-                  <meta.Icon className="size-3" aria-hidden />
-                  {meta.label}
-                </span>
-              </li>
+                  <span className="min-w-0 flex-1">
+                    <span className={cn("text-sm", t.status === "kaynak_yok" ? "text-muted-foreground" : "text-foreground")}>
+                      {t.name}
+                    </span>
+                    {isNext ? (
+                      <span className="ml-2 rounded bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700">
+                        sıradaki
+                      </span>
+                    ) : null}
+                    {t.has_resource && t.test_total > 0 ? (
+                      <span className="ml-2 text-[11px] text-muted-foreground tabular-nums">
+                        {t.completed}/{t.test_total} test
+                      </span>
+                    ) : null}
+                  </span>
+                  <span
+                    className={cn(
+                      "inline-flex shrink-0 items-center gap-1 rounded border px-1.5 py-0.5 text-[10px] font-medium",
+                      meta.cls,
+                    )}
+                  >
+                    <meta.Icon className="size-3" aria-hidden />
+                    {meta.label}
+                  </span>
+                </li>
+              </React.Fragment>
             );
           })}
         </ul>

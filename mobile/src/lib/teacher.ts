@@ -184,6 +184,7 @@ export interface CurriculumTopicItem {
   reserved: number;
   status: CurriculumTopicStatus;
   pct: number;
+  unit_name: string | null;
 }
 export interface CurriculumSubjectItem {
   subject_id: number;
