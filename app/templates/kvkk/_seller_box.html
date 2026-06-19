@@ -1,0 +1,16 @@
+{# Satıcı / hizmet sağlayıcı bilgileri kutusu — legal_info.COMPANY'den beslenir.
+   Mesafeli satış + iade + kullanım şartları sayfalarında ortak kullanılır. #}
+<section class="bg-white border border-slate-200 rounded-xl p-6 mb-6">
+  <h2 class="text-lg font-semibold text-slate-900 mt-0">Satıcı / Hizmet Sağlayıcı</h2>
+  <dl class="text-sm text-slate-700 leading-relaxed grid sm:grid-cols-2 gap-x-6 gap-y-1 mt-2">
+    <div><dt class="inline font-semibold">Ticaret Ünvanı:</dt> <dd class="inline">{{ company.unvan }}</dd></div>
+    <div><dt class="inline font-semibold">Marka / Platform:</dt> <dd class="inline">{{ company.marka }} ({{ company.website }})</dd></div>
+    <div><dt class="inline font-semibold">Adres:</dt> <dd class="inline">{{ company.adres }}</dd></div>
+    <div><dt class="inline font-semibold">Telefon:</dt> <dd class="inline">{{ company.telefon }}</dd></div>
+    <div><dt class="inline font-semibold">E-posta:</dt> <dd class="inline"><a href="mailto:{{ company.email }}" class="text-brand-teal hover:text-brand-tealDark">{{ company.email }}</a></dd></div>
+    <div><dt class="inline font-semibold">MERSIS No:</dt> <dd class="inline">{{ company.mersis }}</dd></div>
+    <div><dt class="inline font-semibold">Vergi Dairesi / No:</dt> <dd class="inline">{{ company.vergi_dairesi }} / {{ company.vergi_no }}</dd></div>
+    <div><dt class="inline font-semibold">Ticaret Sicil No:</dt> <dd class="inline">{{ company.ticaret_sicil_no }}</dd></div>
+    {% if company.kep %}<div><dt class="inline font-semibold">KEP:</dt> <dd class="inline">{{ company.kep }}</dd></div>{% endif %}
+  </dl>
+</section>

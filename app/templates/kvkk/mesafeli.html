@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Mesafeli Satış Sözleşmesi — ETÜTKOÇ Rotam{% endblock %}
+
+{% block content %}
+<article class="max-w-3xl mx-auto prose prose-slate">
+  <p class="text-xs uppercase tracking-[0.2em] text-brand-teal font-semibold">Yasal</p>
+  <h1 class="text-3xl font-bold text-slate-900 mt-2 mb-2">Mesafeli Satış Sözleşmesi</h1>
+  <p class="text-sm text-slate-500 mb-8">Son güncelleme: 19 Haziran 2026</p>
+
+  {% if not company_complete %}
+  <div class="bg-amber-50 border border-amber-300 text-amber-900 rounded-xl p-4 mb-6 text-sm">
+    <b>Taslak:</b> Şirket tescil bilgileri (adres, MERSIS, vergi no, telefon) henüz
+    girilmediği için bu sözleşmede "DOLDURULACAK" alanları görünür. Yayına almadan
+    önce <code>app/legal_info.py</code> dosyasından gerçek değerleri girin.
+  </div>
+  {% endif %}
+
+  {% include "kvkk/_seller_box.html" %}
+
+  <div class="bg-white border border-slate-200 rounded-xl p-6 space-y-5 text-sm text-slate-700 leading-relaxed">
+
+    <h2 class="text-base font-semibold text-slate-900">1. Taraflar</h2>
+    <p>
+      İşbu Mesafeli Satış Sözleşmesi ("Sözleşme"); yukarıda bilgileri yer alan
+      <b>{{ company.unvan }}</b> ("Satıcı") ile {{ company.marka }} platformu
+      ({{ company.website }}) üzerinden elektronik ortamda üyelik/abonelik satın alan
+      gerçek veya tüzel kişi ("Alıcı") arasında, 6502 sayılı Tüketicinin Korunması
+      Hakkında Kanun ve Mesafeli Sözleşmeler Yönetmeliği hükümlerine uygun olarak
+      kurulmuştur.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">2. Sözleşmenin Konusu</h2>
+    <p>
+      Sözleşmenin konusu, Alıcı'nın {{ company.marka }} platformunda elektronik ortamda
+      sipariş verdiği, nitelikleri ve satış bedeli aşağıda ve
+      <a href="/pricing" class="text-brand-teal hover:text-brand-tealDark">fiyatlandırma sayfasında</a>
+      belirtilen <b>dijital eğitim koçluğu takip hizmetine</b> (abonelik) ilişkin
+      tarafların hak ve yükümlülüklerinin belirlenmesidir.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">3. Hizmetin Nitelikleri ve Bedeli</h2>
+    <ul class="list-disc pl-5 space-y-1">
+      <li><b>Hizmet türü:</b> Bulut tabanlı (SaaS) eğitim koçluğu takip ve yönetim aboneliği — dijital/gayrimaddi hizmet.</li>
+      <li><b>Paketler, kapsam ve güncel bedeller:</b> Tüm vergiler dahil olarak
+        <a href="/pricing" class="text-brand-teal hover:text-brand-tealDark">/pricing</a>
+        sayfasında ve ödeme adımında gösterilir. Alıcı, ödemeyi onaylamadan önce
+        seçtiği paketin adını, dönemini (aylık / akademik yıl) ve toplam tutarını görür.</li>
+      <li><b>Ödeme dönemi:</b> Seçilen plana göre aylık veya akademik yıl peşin.</li>
+    </ul>
+
+    <h2 class="text-base font-semibold text-slate-900">4. Ödeme Şekli</h2>
+    <p>
+      Ödemeler, lisanslı ödeme kuruluşu <b>iyzico (iyzi Ödeme ve Elektronik Para
+      Hizmetleri A.Ş.)</b> altyapısı üzerinden kredi/banka kartı ile 3D Secure
+      güvenliğiyle alınır. Kart bilgileri Satıcı tarafından görülmez veya saklanmaz;
+      doğrudan ödeme kuruluşunda işlenir. Havale/EFT yöntemi sunulduğunda, ödeme
+      Satıcı'ya ulaştıktan sonra üyelik aktive edilir.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">5. İfa / Teslimat</h2>
+    <p>
+      Hizmet dijital olduğundan, ödemenin onaylanmasının hemen ardından Alıcı'nın
+      hesabında <b>anında</b> aktive edilir; ayrıca fiziksel teslimat yapılmaz.
+      Abonelik, seçilen dönem boyunca kesintisiz olarak Alıcı'nın kullanımına sunulur.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">6. Cayma Hakkı</h2>
+    <p>
+      Mesafeli Sözleşmeler Yönetmeliği'nin 15/1-(ğ) maddesi uyarınca, <b>elektronik
+      ortamda anında ifa edilen hizmetlere</b> ilişkin sözleşmelerde, hizmetin
+      Alıcı'nın açık onayı ile derhal ifasına başlanması hâlinde cayma hakkı
+      kullanılamaz. Alıcı, ödeme adımında bu durumu açıkça onaylar.
+    </p>
+    <p>
+      Bununla birlikte Satıcı, Alıcı'nın hizmeti satın almadan önce denemesi için
+      <b>14 günlük ücretsiz deneme</b> sunar ve abonelik istenildiği an iptal
+      edilebilir. İptal ve iade koşullarının tamamı
+      <a href="/iade-iptal" class="text-brand-teal hover:text-brand-tealDark">İade, İptal ve Cayma Koşulları</a>
+      sayfasında düzenlenmiştir.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">7. Alıcının Yükümlülükleri</h2>
+    <ul class="list-disc pl-5 space-y-1">
+      <li>Hesap ve ödeme bilgilerini doğru ve güncel beyan etmek.</li>
+      <li>Hizmeti
+        <a href="/kullanim-sartlari" class="text-brand-teal hover:text-brand-tealDark">Kullanım Şartları</a>'na
+        uygun kullanmak.</li>
+      <li>Hesap güvenliğinden (şifre vb.) sorumlu olmak.</li>
+    </ul>
+
+    <h2 class="text-base font-semibold text-slate-900">8. Kişisel Verilerin Korunması</h2>
+    <p>
+      Kişisel veriler, <a href="/kvkk" class="text-brand-teal hover:text-brand-tealDark">KVKK Aydınlatma Metni</a>
+      ve <a href="/privacy" class="text-brand-teal hover:text-brand-tealDark">Gizlilik Politikası</a>
+      kapsamında işlenir.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">9. Uyuşmazlıkların Çözümü</h2>
+    <p>
+      İşbu Sözleşme'den doğan uyuşmazlıklarda, Ticaret Bakanlığı'nca her yıl ilan
+      edilen parasal sınırlar dâhilinde Alıcı'nın yerleşim yerindeki <b>Tüketici
+      Hakem Heyetleri</b> ve <b>Tüketici Mahkemeleri</b> yetkilidir.
+    </p>
+
+    <h2 class="text-base font-semibold text-slate-900">10. Yürürlük</h2>
+    <p>
+      Alıcı, ödeme adımında işbu Sözleşme'yi ve
+      <a href="/iade-iptal" class="text-brand-teal hover:text-brand-tealDark">İade/İptal Koşulları</a>'nı
+      okuyup kabul ettiğini onaylar. Sözleşme, siparişin Satıcı tarafından onaylanıp
+      ödemenin tamamlanmasıyla yürürlüğe girer.
+    </p>
+
+    <p class="text-xs text-slate-400 pt-2 border-t border-slate-100">
+      Bu metin standart bir taslaktır; yayına almadan önce bir hukuk danışmanına
+      gözden geçirtmeniz önerilir.
+    </p>
+  </div>
+</article>
+{% endblock %}

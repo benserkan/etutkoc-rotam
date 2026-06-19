@@ -10,16 +10,17 @@
   <section class="bg-white border border-slate-200 rounded-xl p-6 mb-6">
     <h2 class="text-lg font-semibold text-slate-900 mt-0">Veri Sorumlusu</h2>
     <p class="text-sm text-slate-700 leading-relaxed">
-      ETÜTKOÇ Rotam, <b>ETÜTKOÇ Eğitim ve Danışmanlık</b> tarafından işletilen, bağımsız
+      {{ company.marka }}, <b>{{ company.unvan }}</b> tarafından işletilen, bağımsız
       öğretmenler ve eğitim kurumları için tasarlanmış bir koçluk takip sistemidir. KVKK
       kapsamında veri sorumlusu sıfatıyla işbu aydınlatma metnini yayınlamaktayız.
     </p>
-    <p class="text-sm text-slate-700 leading-relaxed mt-2">
-      <b>İletişim:</b>
-      <a href="mailto:destek@etutkoc.com" class="text-brand-teal hover:text-brand-tealDark">
-        destek@etutkoc.com
-      </a>
-    </p>
+    <dl class="text-sm text-slate-700 leading-relaxed mt-3 space-y-1">
+      <div><dt class="inline font-semibold">Adres:</dt> <dd class="inline">{{ company.adres }}</dd></div>
+      <div><dt class="inline font-semibold">MERSIS:</dt> <dd class="inline">{{ company.mersis }}</dd></div>
+      <div><dt class="inline font-semibold">Telefon:</dt> <dd class="inline">{{ company.telefon }}</dd></div>
+      <div><dt class="inline font-semibold">İletişim:</dt>
+        <dd class="inline"><a href="mailto:{{ company.email }}" class="text-brand-teal hover:text-brand-tealDark">{{ company.email }}</a></dd></div>
+    </dl>
   </section>
 
   <section class="bg-white border border-slate-200 rounded-xl p-6 mb-6">

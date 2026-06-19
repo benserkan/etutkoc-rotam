@@ -1319,14 +1319,23 @@ function Footer() {
             <p className="max-w-sm text-sm leading-relaxed">
               Koçluk süreçlerinizi dijitalleştiriyor, öğrencinin başarı rotasını birlikte çiziyoruz.
             </p>
-            <p className="mt-4 font-mono text-xs text-cyan-200/40">500+ otomatik test ile doğrulandı</p>
+            <div className="mt-4 max-w-sm space-y-0.5 text-xs leading-relaxed text-cyan-200/50">
+              <p className="font-semibold text-cyan-100/70">ETÜTKOÇ Akademi Kişisel Gelişim Özel Eğitim ve Öğretim Hizmetleri Ltd. Şti.</p>
+              <p>İskenderpaşa Mah. Gazipaşa Cad. Timurcıoğlu Apartmanı No: 12 / İç Kapı No: 6, Ortahisar / Trabzon</p>
+              <p>MERSIS: 0381113961000001 · Vergi No: 3811139610 (Karadeniz V.D.)</p>
+              <p>
+                <a href="tel:+905056738561" className="transition hover:text-amber-300">+90 505 673 85 61</a>
+                {" · "}
+                <a href="mailto:destek@etutkoc.com" className="transition hover:text-amber-300">destek@etutkoc.com</a>
+              </p>
+            </div>
           </div>
           <FooterCol title="Platform" links={[["#ozellikler", "Özellikler"], ["#paketler", "Paketler"], ["#nasil-calisir", "Nasıl Çalışır?"], ["#kurumlar", "Kurumlar"]]} />
           <FooterCol title="İletişim" links={[["/iletisim", "Bize ulaşın"], ["/pricing?type=kurum#kurumsal", "Kurumsal teklif"], ["/iletisim?konu=iletisim_destek", "Teknik destek"]]} />
-          <FooterCol title="Yasal" links={[["/kvkk", "Kullanım Şartları"], ["/privacy", "Gizlilik Politikası"], ["/kvkk", "KVKK Aydınlatma"]]} />
+          <FooterCol title="Yasal" links={[["/kullanim-sartlari", "Kullanım Şartları"], ["/mesafeli-satis", "Mesafeli Satış Sözleşmesi"], ["/iade-iptal", "İade ve İptal"], ["/privacy", "Gizlilik Politikası"], ["/kvkk", "KVKK Aydınlatma"]]} />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-cyan-200/50">
-          <p>© 2026 ETÜTKOÇ Rotam · Tüm hakları saklıdır.</p>
+          <p>© 2026 ETÜTKOÇ Akademi Ltd. Şti. · Tüm hakları saklıdır.</p>
           <p className="font-mono">etütkoç · rotam</p>
         </div>
       </div>

@@ -81,6 +81,12 @@ services:
       GEMINI_FREE_API_KEYS: ${GEMINI_FREE_API_KEYS:-}  # virgülle ayrılmış ücretsiz key'ler
       GEMINI_PAID_MODEL: ${GEMINI_PAID_MODEL:-gemini-2.5-pro}
       GEMINI_FREE_MODEL: ${GEMINI_FREE_MODEL:-gemini-2.5-flash}
+      # ---- Ödeme (Iyzico) — boş key = test modu; canlı için gerçek key + prod URL ----
+      # Üretim: IYZICO_BASE_URL=https://api.iyzipay.com (sandbox: https://sandbox-api.iyzipay.com)
+      IYZICO_API_KEY: ${IYZICO_API_KEY:-}
+      IYZICO_SECRET_KEY: ${IYZICO_SECRET_KEY:-}
+      IYZICO_BASE_URL: ${IYZICO_BASE_URL:-https://sandbox-api.iyzipay.com}
+      PAYMENT_CALLBACK_URL: ${PAYMENT_CALLBACK_URL:-https://${PUBLIC_DOMAIN}/api/v2/payment/iyzico/callback}
       # ---- Cloudflare Turnstile (CAPTCHA) — ikisi de boşsa otomatik kapalı ----
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
