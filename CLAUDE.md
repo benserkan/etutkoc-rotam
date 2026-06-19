@@ -62,6 +62,56 @@ fazlar bitti; demo + 5-öğrenci uçtan uca test + canlı deploy + mobil OTA yap
 
 ---
 
+## Maarif müfredatı resmi MEB tema/ünite + alt başlık yapısına taşındı — 2026-06-19, CANLI
+
+**Bağlam (kullanıcı, Müfredat sayfası ekran görüntüsü):** 10. sınıf Maarif
+müfredatındaki konular YANLIŞ/EKSİKti (örn. Biyoloji 10 "Ekoloji" teması komple
+yok, "Üç Âlem Sistemi ve Biyoçeşitlilik" uydurma; "diğer derslerde de benzer
+sorunlar"). **Kritik düzeltme (yanlış anlama):** bu konuları **Gemini ÜRETMEDİ**
+— `scripts/curriculum_data.py`'ye ELLE yazılmıştı (2026-05-08 Lise/YKS genişlemesi,
+yeni Maarif modeli hatalı/eksik girilmiş). Gemini yalnız Faz 0'da kitap→konu
+EŞLEŞTİRMESİ yapar; konu listesini yazmaz. Müfredat sayfası seed verisini sadık
+gösterir → çöp girer çöp çıkar.
+
+**Detaylı web doğrulaması (6 paralel subagent, YALNIZ resmi tymm.meb.gov.tr):**
+10 Maarif dersi (9-12) resmi onaylı programlardan çıkarıldı. **Terminoloji ders
+bazında değişir** (kullanıcı haklı): Biyoloji/Kimya/Matematik/Edebiyat=**Tema**,
+Fizik/Tarih/Coğrafya/Felsefe/Din=**Ünite**, İngilizce=**Theme**. Az temalı dersler
+(Biyoloji 10 = 2 tema) aslında zengin alt başlıklı (Enerji→ATP/Fotosentez/Solunum/
+Fermantasyon/Sindirim) — test kitapları bu alt başlıklarla düzenlenir.
+
+**Kullanıcı kararları (AskUserQuestion):** granülerlik=**Hibrit** (tema zorunlu +
+alt başlık; sonra "tema ve alt başlıkları KESİNLİKLE görmek istiyorum" → her yerde
+alt başlık) · kapsam=**Yalnız Maarif** · eşleştirme=**Otomatik yeniden eşleştir**.
+
+- **Veri:** `curriculum_data.py` MAARIF_LISE tamamen yeniden yazıldı — **175 tema/
+  ünite + 468 alt başlık**, `units` formatı `(no, ad, sınıf, [alt başlıklar])`,
+  `unit_term` ile resmi terim korunur.
+- **Yapı (migration YOK):** `Topic.parent_id` (mevcut, kullanılmıyordu) → tema/ünite
+  = PARENT topic (ad "1. Tema: Enerji"), alt başlık = CHILD (parent_id). Kitap
+  bölümü LEAF'e eşlenir; tema parent'ı eşleştirme adayı DEĞİL.
+- **seed.py:** `units` formatını işler (parent + child). `reseed_maarif_curriculum.py`:
+  eski Maarif topic'leri sil + etkilenen `book_section.topic_id` NULL (Faz 0 re-map)
+  + yeni yapı. **İDEMPOTENCY GUARD** (stale=parent_id NULL ama çocuksuz düz konu var
+  mı) → start.sh'e eklendi: eski veriyi BİR KEZ düzeltir, temizse ATLAR (koç
+  eşleştirmelerini re-null'lamaz). Prod start.sh: 756 karışık (113 stale) → 643 temiz.
+- **Servis:** `compute_curriculum_progress` LEAF sayar + parent'ı `unit_name` olarak
+  ekler. `_accessible_topics` (library+teacher_books) yalnız LEAF önerir.
+- **UI:** web `curriculum-panel` + mobil `curriculum-tab` tema başlığı (unit_name
+  değişince) + nested alt başlık. Schema `CurriculumTopicItem.unit_name`.
+- **Test:** `test_curriculum_units` **10/10** (leaf sayım + parent hariç + unit_name +
+  eşleştirme adayı leaf) · curriculum_progress 22/22 · mapping 11/11 · library 24/18.
+- **CANLI (commit `9395887`):** web+worker+next rebuild; prod reseed otomatik
+  (start.sh guard) — **643 Maarif topic (175 tema + 468 alt başlık)**, 38 gerçek
+  kitap eşleştirmesi NULL'landı (koçlar Faz 0 ile yeniden eşler). Biyoloji 10 artık
+  Enerji+Ekoloji temaları doğru (prod'da doğrulandı). Mobil JS-only → **EAS OTA
+  `update --channel production`** (runtime 1.0.0, group `254c8e24`).
+- **DERS:** Müfredat konuları kod-seed'dir (AI değil) — yanlışsa `curriculum_data.py`
+  düzeltilir. Yeni model (Maarif) verisi resmi MEB kaynağından doğrulanmalı; eski
+  seed yaklaşıktı. parent_id ile tema gruplama migration'sız mümkün.
+
+---
+
 ## YENİ İŞ — Öğrenci Tanıma Anket/Envanter Sistemi (2026-06-11, KARARLAR ALINDI, kod BAŞLAMADI)
 
 **Bağlam:** Koç, öğrencisini tanımak için anket uygular (çoklu zeka, ilgi envanteri,
