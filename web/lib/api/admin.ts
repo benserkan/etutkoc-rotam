@@ -68,6 +68,9 @@ import type {
   AiSettingsResponse,
   PricingAdminResponse,
   ContactRequestListResponse,
+  CommHealthOverview,
+  CommLogList,
+  CommLogFilters,
 } from "@/lib/types/admin";
 
 // =============================================================================
@@ -214,6 +217,11 @@ export const adminKeys = {
   securityIntegrity: () => ["admin", "security", "integrity"] as const,
   securitySystem: () => ["admin", "security", "system"] as const,
   securityNotifications: () => ["admin", "security", "notifications"] as const,
+  // İletişim Sağlığı (Faz 2c)
+  communicationHealth: (days: number) =>
+    ["admin", "communication", "health", days] as const,
+  communicationLog: (f: CommLogFilters) =>
+    ["admin", "communication", "log", f] as const,
   // G2b — Aktivite Kamerası
   securityActivity: (segment: string) =>
     ["admin", "security", "activity", segment] as const,
@@ -608,6 +616,25 @@ export function getAdminSecurityNotifications() {
   return api<NotificationHealthResponse>(
     "/api/v2/admin/security-monitor/notifications",
   );
+}
+
+export function getAdminCommunicationHealth(days = 7) {
+  return api<CommHealthOverview>(
+    `/api/v2/admin/communication-health?days=${days}`,
+  );
+}
+
+export function getAdminCommunicationLog(f: CommLogFilters = {}) {
+  const p = new URLSearchParams();
+  if (f.channel) p.set("channel", f.channel);
+  if (f.status) p.set("status", f.status);
+  if (f.days) p.set("days", String(f.days));
+  if (f.q) p.set("q", f.q);
+  if (f.category) p.set("category", f.category);
+  if (f.page) p.set("page", String(f.page));
+  if (f.limit) p.set("limit", String(f.limit));
+  const qs = p.toString();
+  return api<CommLogList>(`/api/v2/admin/communication-log${qs ? `?${qs}` : ""}`);
 }
 
 // =============================================================================

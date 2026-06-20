@@ -3176,3 +3176,66 @@ export interface DemoSessionDeleteResult {
   exams_deleted: number;
   sessions_deleted: number;
 }
+
+// =============================================================================
+// İletişim Sağlığı (communication_logs) — Faz 2c
+// =============================================================================
+export interface CommChannelWindow {
+  total: number;
+  sent: number;
+  delivered: number;
+  bounced: number;
+  failed: number;
+  queued: number;
+  suppressed: number;
+  success_pct: number | null;
+}
+export interface CommChannel24h {
+  total: number;
+  failed: number;
+  success_pct: number | null;
+}
+export interface CommChannelSummary {
+  channel: string;
+  label: string;
+  window: CommChannelWindow;
+  last24h: CommChannel24h;
+}
+export interface CommHealthOverview {
+  generated_at: string;
+  window_days: number;
+  channels: CommChannelSummary[];
+  overall: { total: number; success_pct: number | null };
+}
+export interface CommLogItem {
+  id: number;
+  channel: string;
+  channel_label: string;
+  category: string | null;
+  to_address: string | null;
+  to_user_id: number | null;
+  to_user_name: string | null;
+  subject: string | null;
+  status: string;
+  status_label: string;
+  provider: string | null;
+  error: string | null;
+  created_at: string;
+  sent_at: string | null;
+}
+export interface CommLogList {
+  items: CommLogItem[];
+  total: number;
+  page: number;
+  limit: number;
+  pages: number;
+}
+export interface CommLogFilters {
+  channel?: string;
+  status?: string;
+  days?: number;
+  q?: string;
+  category?: string;
+  page?: number;
+  limit?: number;
+}

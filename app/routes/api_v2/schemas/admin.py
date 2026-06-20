@@ -3475,3 +3475,67 @@ class DemoSessionDeleteResult(BaseModel):
     tasks_deleted: int
     exams_deleted: int
     sessions_deleted: int
+
+
+# =============================================================================
+# İletişim Sağlığı (communication_logs) — e-posta/push/whatsapp/sms birleşik
+# =============================================================================
+class CommChannelWindow(BaseModel):
+    total: int
+    sent: int
+    delivered: int
+    bounced: int
+    failed: int
+    queued: int
+    suppressed: int
+    success_pct: float | None = None
+
+
+class CommChannel24h(BaseModel):
+    total: int
+    failed: int
+    success_pct: float | None = None
+
+
+class CommChannelSummary(BaseModel):
+    channel: str
+    label: str
+    window: CommChannelWindow
+    last24h: CommChannel24h
+
+
+class CommOverall(BaseModel):
+    total: int
+    success_pct: float | None = None
+
+
+class CommHealthOverviewResponse(BaseModel):
+    generated_at: datetime
+    window_days: int
+    channels: list[CommChannelSummary]
+    overall: CommOverall
+
+
+class CommLogItem(BaseModel):
+    id: int
+    channel: str
+    channel_label: str
+    category: str | None = None
+    to_address: str | None = None
+    to_user_id: int | None = None
+    to_user_name: str | None = None
+    subject: str | None = None
+    status: str
+    status_label: str
+    provider: str | None = None
+    error: str | None = None
+    created_at: datetime
+    sent_at: datetime | None = None
+
+
+class CommLogListResponse(BaseModel):
+    items: list[CommLogItem]
+    total: int
+    page: int
+    limit: int
+    pages: int

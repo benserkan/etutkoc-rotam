@@ -288,6 +288,8 @@ from app.routes.api_v2.schemas.admin import (
     NotifDailyTrend,
     NotifFailureItem,
     NotifMatrix,
+    CommHealthOverviewResponse,
+    CommLogListResponse,
     NotifSuppressItem,
     NotifWindowSummary,
     NotificationHealthResponse,
@@ -7502,6 +7504,42 @@ def _str_matrix(matrix: dict) -> dict[str, dict[str, int]]:
         str(h): {str(d): int(v) for d, v in row.items()}
         for h, row in matrix.items()
     }
+
+
+@router.get("/communication-health", response_model=CommHealthOverviewResponse)
+def admin_communication_health_v2(
+    days: int = Query(7, ge=1, le=90),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """İletişim Sağlığı — kanal başına (e-posta/push/whatsapp/sms) 24s + N günlük
+    sağlık özeti. Kaynak: communication_logs (comm_log servisi)."""
+    from app.services.communication_health import get_overview
+
+    return CommHealthOverviewResponse(**get_overview(db, days=days))
+
+
+@router.get("/communication-log", response_model=CommLogListResponse)
+def admin_communication_log_v2(
+    channel: str | None = Query(None),
+    status: str | None = Query(None),
+    days: int = Query(7, ge=1, le=90),
+    q: str | None = Query(None),
+    category: str | None = Query(None),
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, ge=1, le=200),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Filtreli + sayfalı gönderim listesi (kime/ne/ne zaman/durum)."""
+    from app.services.communication_health import list_logs
+
+    return CommLogListResponse(
+        **list_logs(
+            db, channel=channel, status=status, days=days, q=q,
+            category=category, page=page, limit=limit,
+        )
+    )
 
 
 @router.get("/security-monitor/activity", response_model=ActivityPanelResponse)
