@@ -76,6 +76,40 @@ münferiden, Serkan Aydın %33 ortak). **Tek kaynak `app/legal_info.py` COMPANY*
 
 ---
 
+## Kampanya & Teklif Orkestrasyonu (Aksiyon Merkezi + Üyelik Teklifi + WhatsApp) — 2026-06-21, DEVAM EDİYOR
+
+**Vizyon (kullanıcı):** Aksiyon Merkezi (ne yapmalıyım) + Üyelik Teklifleri (kişiye
+özel teklif) + **WhatsApp Business Cloud API** (kurumsal başlıklı, sigortam.net tarzı
+görsel-başlıklı, mavi-tik) tek orkestrasyonda. Hedef: sistem kullanıcıları (koç/kurum)
++ **sistem-dışı prospect'ler** (rehber/eklenen kurum) → tanıtım + kişiye özel teklif →
+WhatsApp branded mesaj → `/membership/{token}` → paket seç → Iyzico ödeme (web tarafı VAR).
+
+**Mevcut envanter (keşif):** Cloud API client `whatsapp.py send_template` (görsel başlık
++ buton component destekli) **VAR, stub modda**. webhook (teslim/okundu) VAR. membership
+offer + markalı `/membership` sayfası + Iyzico VAR. Aksiyon Merkezi sinyalleri (trial
+≤2g kritik → "dönüşüm görüşmesi"+"uzatma teklifi %20", 3-7g → "geri sayım e-postası";
+past_due) → ama **öneri+CRM log; otomatik göndermiyor**. Eksik halka: branded gönderim
++ aksiyon-merkezi/teklif birleşimi + sistem-dışı hedef.
+
+- **K1a — Hedef Havuzu ✅ CANLI** (commit `6063b02`, migration `q0r3u6v7u99p`):
+  `sales_prospects` (üye olmayan kurum/koç adayı: ad+telefon+kind+org+opt-in+status
+  hunisi) + `membership_offers.target_prospect_id` (batch FK). `prospect_service`
+  (E.164 normalize + dedup) + `admin_prospects` router (CRUD+status) + `/admin/prospects`
+  UI (durum filtre + tablo + wa.me manuel + create/edit). `test_api_v2_admin_prospects`
+  12/12. admin-shell "Ticari Pano → Hedef Havuzu".
+- **Faz 0 — Meta doğrulama (KULLANICI, paralel):** `deploy/META_WHATSAPP_SETUP.md`
+  rehberi yazıldı. Business verification (Ltd) + WABA + numara + görsel-başlıklı
+  Marketing template onayı. Anahtarlar `.env`'e (WHATSAPP_*), şablon adı sisteme.
+- **KALAN:** **K1b** — üyelik teklifini prospect hedefine bağla (offer → /membership
+  link; toplu/kampanya/segment). **K2** (Meta'ya bağlı) — `send_template` ile branded
+  gönderim (image header + buton URL) + Aksiyon Merkezi'ne "WhatsApp teklif gönder"
+  butonu + dispatch/teslim takibi (communication_logs). **K3** — dönüşüm takibi.
+- **⚠️ Politika:** Cloud API marketing = opt-in/kalite kuralı; soğuk toplu → numara
+  kısıtlanır. prospect.opt_in işareti + düşük hacim başlangıç. Maliyet: konuşma başı
+  (kullanıcı kabul etti). [[project-ai-credits-packaging]]
+
+---
+
 ## Koyu tema kontrast/okunabilirlik — sistemik fix (Faz 1-3) — 2026-06-20, CANLI
 
 **Bağlam (kullanıcı, ekran görüntüleri):** Admin panellerinde koyu temada metin/kart
