@@ -71,6 +71,7 @@ import type {
   CommHealthOverview,
   CommLogList,
   CommLogFilters,
+  ProspectListResponse,
 } from "@/lib/types/admin";
 
 // =============================================================================
@@ -222,6 +223,9 @@ export const adminKeys = {
     ["admin", "communication", "health", days] as const,
   communicationLog: (f: CommLogFilters) =>
     ["admin", "communication", "log", f] as const,
+  // Hedef Havuzu (K1a)
+  prospects: (status: string, kind: string, q: string) =>
+    ["admin", "prospects", status, kind, q] as const,
   // G2b — Aktivite Kamerası
   securityActivity: (segment: string) =>
     ["admin", "security", "activity", segment] as const,
@@ -616,6 +620,15 @@ export function getAdminSecurityNotifications() {
   return api<NotificationHealthResponse>(
     "/api/v2/admin/security-monitor/notifications",
   );
+}
+
+export function getAdminProspects(status = "", kind = "", q = "") {
+  const p = new URLSearchParams();
+  if (status) p.set("status", status);
+  if (kind) p.set("kind", kind);
+  if (q) p.set("q", q);
+  const qs = p.toString();
+  return api<ProspectListResponse>(`/api/v2/admin/prospects${qs ? `?${qs}` : ""}`);
 }
 
 export function getAdminCommunicationHealth(days = 7) {

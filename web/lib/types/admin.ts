@@ -3240,3 +3240,45 @@ export interface CommLogFilters {
   page?: number;
   limit?: number;
 }
+
+// =============================================================================
+// Hedef Havuzu (sales_prospects) — K1a
+// =============================================================================
+export interface ProspectItem {
+  id: number;
+  name: string;
+  phone: string;
+  kind: string;
+  kind_label: string;
+  org_name: string | null;
+  email: string | null;
+  city: string | null;
+  source: string;
+  source_label: string;
+  status: string;
+  status_label: string;
+  opt_in: boolean;
+  note: string | null;
+  last_contacted_at: string | null;
+  created_at: string | null;
+}
+export interface ProspectListResponse {
+  items: ProspectItem[];
+  counts: Record<string, number>;
+  meta: {
+    kinds: Record<string, string>;
+    statuses: Record<string, string>;
+    sources: Record<string, string>;
+  };
+}
+export interface ProspectCreateBody {
+  name: string;
+  phone: string;
+  kind?: string;
+  org_name?: string | null;
+  email?: string | null;
+  city?: string | null;
+  source?: string;
+  opt_in?: boolean;
+  note?: string | null;
+}

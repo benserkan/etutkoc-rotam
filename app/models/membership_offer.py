@@ -36,6 +36,9 @@ class MembershipOffer(Base):
     target_user_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    target_prospect_id: Mapped[int | None] = mapped_column(
+        ForeignKey("sales_prospects.id", ondelete="SET NULL"), nullable=True
+    )
     offer_type: Mapped[str] = mapped_column(String(16), nullable=False, default="new")
     plan_code: Mapped[str] = mapped_column(String(40), nullable=False)
     cycle: Mapped[str] = mapped_column(String(16), nullable=False, default="monthly")

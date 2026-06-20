@@ -149,6 +149,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/revenue/forecast", label: "Tahmin", icon: TrendingUp },
       { href: "/admin/revenue/cohort", label: "Kohort & LTV", icon: Heart },
       { href: "/admin/revenue/campaigns", label: "Kampanyalar", icon: Send },
+      { href: "/admin/prospects", label: "Hedef Havuzu", icon: Target },
       { href: "/admin/membership-offers", label: "Üyelik Teklifleri (WhatsApp)", icon: MessageSquare },
       { href: "/admin/revenue/action-templates", label: "Şablonlar", icon: ClipboardList },
     ],

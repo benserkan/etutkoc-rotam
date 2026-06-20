@@ -78,6 +78,8 @@ import type {
   ContactRequestMutationResult,
   OnboardInstitutionBody,
   OnboardInstitutionResult,
+  ProspectItem,
+  ProspectCreateBody,
 } from "@/lib/types/admin";
 
 /**
@@ -2227,6 +2229,60 @@ export function useDeleteTestimonial() {
       applyInvalidate(qc, res.invalidate);
       toast.success("Silindi");
     },
+    onError: (e) => toast.error(errorTitle(e, "Silinemedi")),
+  });
+}
+
+// =============================================================================
+// Hedef Havuzu (sales_prospects) — K1a
+// =============================================================================
+type ProspectResp = { data: ProspectItem; invalidate?: string[] };
+
+export function useCreateProspect() {
+  const qc = useQueryClient();
+  return useMutation<ProspectResp, Error, ProspectCreateBody>({
+    mutationFn: (body) =>
+      api<ProspectResp>("/api/v2/admin/prospects", { method: "POST", body: JSON.stringify(body) }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Hedef havuza eklendi");
+    },
+    onError: (e) => {
+      const code = (e as { details?: { code?: string } })?.details?.code;
+      const msg = code === "duplicate_phone" ? "Bu telefon zaten havuzda"
+        : code === "invalid_phone" ? "Geçerli cep telefonu girin"
+        : errorMessage(e, "Eklenemedi");
+      toast.error(errorTitle(e, "Eklenemedi"), { description: msg });
+    },
+  });
+}
+
+export function useUpdateProspect(prospectId: number) {
+  const qc = useQueryClient();
+  return useMutation<ProspectResp, Error, Partial<ProspectCreateBody> & { status?: string }>({
+    mutationFn: (body) =>
+      api<ProspectResp>(`/api/v2/admin/prospects/${prospectId}`, { method: "POST", body: JSON.stringify(body) }),
+    onSuccess: (res) => { applyInvalidate(qc, res.invalidate); toast.success("Güncellendi"); },
+    onError: (e) => toast.error(errorTitle(e, "Güncellenemedi")),
+  });
+}
+
+export function useSetProspectStatus(prospectId: number) {
+  const qc = useQueryClient();
+  return useMutation<ProspectResp, Error, string>({
+    mutationFn: (status) =>
+      api<ProspectResp>(`/api/v2/admin/prospects/${prospectId}/status`, { method: "POST", body: JSON.stringify({ status }) }),
+    onSuccess: (res) => { applyInvalidate(qc, res.invalidate); toast.success("Durum güncellendi"); },
+    onError: (e) => toast.error(errorTitle(e, "Durum değişmedi")),
+  });
+}
+
+export function useDeleteProspect(prospectId: number) {
+  const qc = useQueryClient();
+  return useMutation<{ data: { deleted: boolean }; invalidate?: string[] }, Error, void>({
+    mutationFn: () =>
+      api<{ data: { deleted: boolean }; invalidate?: string[] }>(`/api/v2/admin/prospects/${prospectId}/delete`, { method: "POST" }),
+    onSuccess: (res) => { applyInvalidate(qc, res.invalidate); toast.success("Silindi"); },
     onError: (e) => toast.error(errorTitle(e, "Silinemedi")),
   });
 }
