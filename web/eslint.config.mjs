@@ -120,6 +120,50 @@ const lgsPlugin = {
         };
       },
     },
+
+    // 4. no-unsafe-contrast → açık tonal zemin (bg-*-50/100) + tema-token metin
+    //    (text-foreground / text-muted-foreground) aynı className string'inde →
+    //    koyu temada token açık renge çözülür, metin kaybolur. Açık zeminde
+    //    explicit koyu renk (text-emerald-900) veya şeffaf tonal kullan.
+    "no-unsafe-contrast": {
+      meta: {
+        type: "problem",
+        docs: {
+          description:
+            "Açık tonal zemin + tema-token metin koyu temada okunmaz",
+        },
+        schema: [],
+        messages: {
+          unsafe:
+            'Kontrast riski: açık zemin (bg-*-{{shade}}) + tema-token metin ({{token}}). Koyu temada metin kaybolur → açık zeminde explicit koyu renk (örn. text-slate-900/text-emerald-900) ya da şeffaf tonal (bg-{tone}-500/10 + text-{tone}-200) kullan.',
+        },
+      },
+      create(context) {
+        const BG_LIGHT =
+          /\bbg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100)\b/;
+        const TOKEN_TEXT = /\btext-(foreground|muted-foreground)\b/;
+        function check(node, value) {
+          if (typeof value !== "string") return;
+          const bg = value.match(BG_LIGHT);
+          const tk = value.match(TOKEN_TEXT);
+          if (bg && tk) {
+            context.report({
+              node,
+              messageId: "unsafe",
+              data: { shade: bg[1], token: "text-" + tk[1] },
+            });
+          }
+        }
+        return {
+          Literal(node) {
+            if (typeof node.value === "string") check(node, node.value);
+          },
+          TemplateElement(node) {
+            check(node, node.value?.cooked ?? node.value?.raw);
+          },
+        };
+      },
+    },
   },
 };
 
@@ -145,6 +189,7 @@ const eslintConfig = defineConfig([
       "lgs/no-bare-fetch": "error",
       "lgs/missing-invalidate": "warn",
       "lgs/no-bare-jargon": "warn",
+      "lgs/no-unsafe-contrast": "warn",
     },
   },
 

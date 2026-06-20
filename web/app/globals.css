@@ -57,13 +57,13 @@
     --secondary: 60 20% 35%;             /* haki-700 */
     --secondary-foreground: 0 0% 95%;
     --muted: 220 6% 22%;
-    --muted-foreground: 220 5% 65%;
+    --muted-foreground: 220 7% 74%;      /* L65→L74: koyu panellerde soluk metin okunabilirliği (global) */
     --accent: 215 40% 56%;
     --accent-foreground: 0 0% 100%;
     --destructive: 0 60% 50%;
     --destructive-foreground: 0 0% 100%;
-    --border: 220 6% 25%;
-    --input: 220 6% 25%;
+    --border: 220 7% 30%;                /* L25→L30: panel/satır ayraçları belirginleşsin */
+    --input: 220 7% 30%;
     --ring: 215 50% 60%;
 
     --sidebar: 220 10% 14%;

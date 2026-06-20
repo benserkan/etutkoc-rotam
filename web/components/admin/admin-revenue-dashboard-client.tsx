@@ -162,7 +162,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
                     <Link
                       key={`${o.owner_type}-${o.owner_id}-${idx}`}
                       href={o.url}
-                      className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 transition hover:bg-amber-100"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900 transition hover:bg-amber-100 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:hover:bg-amber-500/20"
                     >
                       <span className="flex min-w-0 items-center gap-1.5">
                         {o.owner_type === "institution"
@@ -214,9 +214,9 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
               <button key={b.key} type="button" onClick={() => openDrill(`invoice_bucket:${b.key}`)}
                       className={cn(
                         "rounded-lg border p-2.5 text-left transition",
-                        b.key.startsWith("overdue") ? "border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100"
-                          : ["due_today", "due_tomorrow"].includes(b.key) ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100"
-                          : "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100",
+                        b.key.startsWith("overdue") ? "border-rose-300 bg-rose-50 text-rose-900 hover:bg-rose-100 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-500/20"
+                          : ["due_today", "due_tomorrow"].includes(b.key) ? "border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:hover:bg-amber-500/20"
+                          : "border-emerald-300 bg-emerald-50 text-emerald-900 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:hover:bg-emerald-500/20",
                       )}>
                 <div className="text-[10px] font-semibold uppercase tracking-wide opacity-80">{b.label}</div>
                 <div className="mt-0.5 text-2xl font-bold">{b.count}</div>
@@ -487,10 +487,10 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
 
 function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: string }) {
   const cls: Record<string, string> = {
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
-    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900",
-    amber: "bg-amber-50 border-amber-200 text-amber-900",
-    sky: "bg-sky-50 border-sky-200 text-sky-900",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
+    amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+    sky: "bg-sky-50 border-sky-200 text-sky-900 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
   };
   return (
     <div className={cn("rounded-lg border p-3", cls[tone] ?? cls.indigo)}>
@@ -503,10 +503,10 @@ function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: s
 
 function KpiButton({ label, value, sub, tone, onClick }: { label: string; value: string; sub: string; tone: string; onClick: () => void }) {
   const cls: Record<string, string> = {
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100",
-    blue: "bg-blue-50 border-blue-200 text-blue-900 hover:bg-blue-100",
-    amber: "bg-amber-50 border-amber-200 text-amber-900 hover:bg-amber-100",
-    rose: "bg-rose-50 border-rose-200 text-rose-900 hover:bg-rose-100",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 hover:bg-emerald-100 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:hover:bg-emerald-500/20",
+    blue: "bg-blue-50 border-blue-200 text-blue-900 hover:bg-blue-100 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200 dark:hover:bg-blue-500/20",
+    amber: "bg-amber-50 border-amber-200 text-amber-900 hover:bg-amber-100 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:hover:bg-amber-500/20",
+    rose: "bg-rose-50 border-rose-200 text-rose-900 hover:bg-rose-100 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 dark:hover:bg-rose-500/20",
   };
   return (
     <button type="button" onClick={onClick} className={cn("rounded-lg border p-4 text-left transition", cls[tone] ?? cls.blue)}>
@@ -518,7 +518,7 @@ function KpiButton({ label, value, sub, tone, onClick }: { label: string; value:
 }
 
 function ChangeKpi({ label, value, tone, onClick, tooltip }: { label: string; value: number | string; tone?: string; onClick?: () => void; tooltip?: string }) {
-  const text = tone === "emerald" ? "text-emerald-700" : tone === "rose" ? "text-rose-700" : "text-foreground";
+  const text = tone === "emerald" ? "text-emerald-700 dark:text-emerald-400" : tone === "rose" ? "text-rose-700 dark:text-rose-400" : "text-foreground";
   const inner = (
     <>
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
