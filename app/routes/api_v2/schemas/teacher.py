@@ -2136,6 +2136,7 @@ class BillingStudentRow(BaseModel):
     paid: int
     balance: int | None = None
     status: BillingStatusLiteral
+    is_active: bool = True   # pasif öğrenci de bu ay aktivitesi varsa listede görünür
 
 
 class BillingTotals(BaseModel):

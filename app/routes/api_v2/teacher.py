@@ -2527,13 +2527,17 @@ def teacher_billing_v2(
     """Aylık tahsilat panosu — öğrenci başına yapılan seans × ücret − ödenen."""
     first, last, month_str = _month_bounds(month)
 
+    # Aktif + pasif TÜM öğrenciler alınır; pasif olanlar yalnız bu ay tahsilat
+    # ayak izi (yapılmış seans VEYA ödeme) varsa listede gösterilir — koç pasife
+    # alınan öğrencinin kalan bakiyesini görüp tahsil edebilsin.
     students = (
-        db.query(User.id, User.full_name, User.email)
-        .filter(User.role == UserRole.STUDENT, User.teacher_id == user.id, User.is_active.is_(True))
+        db.query(User.id, User.full_name, User.email, User.is_active)
+        .filter(User.role == UserRole.STUDENT, User.teacher_id == user.id)
         .all()
     )
     ids = [int(s.id) for s in students]
     name = {int(s.id): (s.full_name or s.email) for s in students}
+    active_flag = {int(s.id): bool(s.is_active) for s in students}
     if not ids:
         return BillingMonthResponse(month=month_str, rows=[], totals=BillingTotals(accrued=0, paid=0, balance=0))
 
@@ -2568,10 +2572,15 @@ def teacher_billing_v2(
         fee = rate_map.get(sid)
         done = done_map.get(sid, 0)
         paid = pay_map.get(sid, 0)
+        is_act = active_flag.get(sid, True)
+        # Pasif öğrenci + bu ay hiç aktivite yok → listeyi şişirme, gizle.
+        if not is_act and done == 0 and paid == 0:
+            continue
         if fee is None:
             rows.append(BillingStudentRow(
                 student_id=sid, student_name=name[sid], session_fee=None,
-                done_sessions=done, accrued=None, paid=paid, balance=None, status="no_rate"))
+                done_sessions=done, accrued=None, paid=paid, balance=None,
+                status="no_rate", is_active=is_act))
             continue
         accrued = done * fee
         balance = accrued - paid
@@ -2586,9 +2595,11 @@ def teacher_billing_v2(
             st = "pending"
         rows.append(BillingStudentRow(
             student_id=sid, student_name=name[sid], session_fee=fee,
-            done_sessions=done, accrued=accrued, paid=paid, balance=balance, status=st))
+            done_sessions=done, accrued=accrued, paid=paid, balance=balance,
+            status=st, is_active=is_act))
 
-    rows.sort(key=lambda r: (r.status == "no_rate", -(r.balance or 0)))
+    # Sıralama: önce ücretsizler, sonra bakiye; pasifler en sona.
+    rows.sort(key=lambda r: (not r.is_active, r.status == "no_rate", -(r.balance or 0)))
     return BillingMonthResponse(
         month=month_str, rows=rows,
         totals=BillingTotals(accrued=t_accrued, paid=t_paid, balance=t_balance),

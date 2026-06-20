@@ -190,6 +190,21 @@ def main():
         r = tc.get("/api/v2/teacher/billing?month=2026-13")
         check("13. invalid month → 422", r.status_code == 422 and r.json()["detail"]["code"] == "invalid_month", f"status={r.status_code}")
 
+        # 14. pasif öğrenci, bu ay aktivitesi (2 DONE seans) varsa listede KALIR
+        with SessionLocal() as db:
+            su = db.get(User, sid)
+            su.is_active = False
+            db.commit()
+        r = tc.get(f"/api/v2/teacher/billing?month={MONTH}")
+        row = _row(r.json(), sid)
+        check("14. pasif + aktiviteli öğrenci listede + is_active=false",
+              row is not None and row["is_active"] is False and row["done_sessions"] == 2,
+              f"{row}")
+        # 14b. aktivitesiz BAŞKA bir ayda pasif öğrenci görünmez
+        r = tc.get(f"/api/v2/teacher/billing?month=2026-03")
+        check("14b. pasif + aktivitesiz ay → gizli", _row(r.json(), sid) is None,
+              f"{[x['student_id'] for x in r.json()['rows']]}")
+
     finally:
         _cleanup(seed)
         get_login_limiter().reset()

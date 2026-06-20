@@ -2036,6 +2036,7 @@ export interface BillingStudentRow {
   paid: number;
   balance: number | null;
   status: BillingStatus;
+  is_active?: boolean;
 }
 
 export interface BillingTotals {
