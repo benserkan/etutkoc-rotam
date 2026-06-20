@@ -76,6 +76,30 @@ münferiden, Serkan Aydın %33 ortak). **Tek kaynak `app/legal_info.py` COMPANY*
 
 ---
 
+## Koyu tema kontrast/okunabilirlik — sistemik fix (Faz 1-3) — 2026-06-20, CANLI
+
+**Bağlam (kullanıcı, ekran görüntüleri):** Admin panellerinde koyu temada metin/kart
+okunabilirliği düşüktü (tekrarlayan "kontrast" bug'ı). Kökten + tekrarsız çözüldü.
+- **Faz 1 — regresyon kalkanı:** `eslint.config.mjs`'e yeni `lgs/no-unsafe-contrast`
+  kuralı (aynı className string'inde `bg-*-50/100` + `text-foreground|muted-foreground`
+  → koyu temada görünmez metin). Mevcut ihlal 0 (geçmiş düzeltmeler temizlemiş);
+  kural yeni eklenmeyi engeller. (4. lgs kuralı.)
+- **Faz 2 — sistemik token:** `globals.css` `.dark` → `--muted-foreground` L65→L74
+  + `--border` L25→L30. **Tek değişiklik TÜM koyu-mod soluk metni** (footnote/empty/
+  tablo) global iyileştirir. + Ticari Pano açık KPI kartlarına `dark:` varyantı.
+- **Faz 3 — sweep (codemod):** aynı className'de `bg-{c}-50` + `border-{c}-200`
+  (gerçek kart üçlüsü) olan **100 dosya / 373 className** → `dark:bg-{c}-500/10
+  dark:border-{c}-500/30` (+ koyu metin varsa `dark:text-{c}-200`). Rozet/hover/
+  gradient'e dokunulmadı. force-light sayfalarda dark: inert.
+- **KURAL (yeni standart):** Açık tonal KART = `bg-{c}-50 border-{c}-200 text-{c}-900`
+  **+ daima** `dark:bg-{c}-500/10 dark:border-{c}-500/30 dark:text-{c}-200`. Açık
+  dolgu + tema-token metin (`text-foreground`) ASLA birlikte (lint yakalar). Soluk
+  metin için tema token'ı (`text-muted-foreground`) kullan — global L74 ayarlı.
+  Commit'ler `d5149ff` (Faz1+2) · `948cf8b` (Faz3). tsc/eslint temiz, next rebuild.
+  [[feedback-holistic-change-propagation]]
+
+---
+
 ## Öğrenci-bazlı Müfredat İlerleme + Yetişme Projeksiyonu (Faz 0-4) — 2026-06-19, CANLI
 
 **Bağlam (kullanıcı):** Koç program hazırlarken öğrencinin müfredatta NEREDE
