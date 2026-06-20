@@ -4,7 +4,7 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronLeft, ChevronRight, Loader2, Wallet } from "lucide-react";
 
-import { getTeacherBilling, teacherKeys } from "@/lib/api/teacher";
+import { getTeacherBilling, getTeacherStudentSessions, teacherKeys } from "@/lib/api/teacher";
 import { useSetRate, useCreatePayment } from "@/lib/hooks/use-teacher-mutations";
 import type {
   BillingMonthResponse,
@@ -58,6 +58,7 @@ export function BillingClient({
   });
   const [rateFor, setRateFor] = React.useState<BillingStudentRow | null>(null);
   const [payFor, setPayFor] = React.useState<{ row: BillingStudentRow; preset: number } | null>(null);
+  const [seansFor, setSeansFor] = React.useState<BillingStudentRow | null>(null);
 
   const d = q.data;
 
@@ -123,7 +124,16 @@ export function BillingClient({
                         </span>
                       )}
                     </td>
-                    <td className="px-3 py-2 text-right tabular-nums">{r.done_sessions}</td>
+                    <td className="px-3 py-2 text-right tabular-nums">
+                      <button
+                        type="button"
+                        onClick={() => setSeansFor(r)}
+                        className="rounded px-1.5 py-0.5 hover:bg-muted underline-offset-2 hover:underline"
+                        title="Yapılan seans günlerini gör"
+                      >
+                        {r.done_sessions}
+                      </button>
+                    </td>
                     <td className="px-3 py-2 text-right tabular-nums">
                       <button
                         type="button"
@@ -174,7 +184,75 @@ export function BillingClient({
       {payFor ? (
         <PaymentDialog row={payFor.row} preset={payFor.preset} month={month} onClose={() => setPayFor(null)} />
       ) : null}
+      {seansFor ? (
+        <SessionDetailDialog row={seansFor} month={month} onClose={() => setSeansFor(null)} />
+      ) : null}
     </div>
+  );
+}
+
+const SESSION_TONE: Record<string, string> = {
+  done: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  postponed: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+  cancelled: "border-slate-200 bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-300",
+  no_show: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+};
+
+function fmtDate(iso: string): string {
+  const [y, m, dd] = iso.split("-").map(Number);
+  if (!y) return iso;
+  return `${String(dd).padStart(2, "0")}.${String(m).padStart(2, "0")}.${y}`;
+}
+
+function SessionDetailDialog({ row, month, onClose }: { row: BillingStudentRow; month: string; onClose: () => void }) {
+  const q = useQuery({
+    queryKey: teacherKeys.studentSessions(row.student_id),
+    queryFn: () => getTeacherStudentSessions(row.student_id),
+    staleTime: 15_000,
+  });
+  const all = q.data?.rows ?? [];
+  const monthRows = all
+    .filter((s) => s.session_date.startsWith(month))
+    .sort((a, b) => a.session_date.localeCompare(b.session_date));
+  const doneCount = monthRows.filter((s) => s.status === "done").length;
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[85vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{row.student_name} — {monthLabel(month)} seansları</DialogTitle>
+        </DialogHeader>
+        {q.isLoading ? (
+          <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Yükleniyor…
+          </div>
+        ) : monthRows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Bu ay kayıtlı seans yok.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs text-muted-foreground">
+              <b className="text-emerald-700 dark:text-emerald-300">{doneCount}</b> yapılan seans tahakkuka sayılır
+              {row.session_fee != null ? ` (${doneCount} × ${lira(row.session_fee)} = ${lira(doneCount * row.session_fee)})` : ""}.
+            </p>
+            <ul className="divide-y divide-border rounded-lg border border-border">
+              {monthRows.map((s) => (
+                <li key={s.id} className="flex items-center justify-between gap-2 px-3 py-2 text-sm">
+                  <div className="min-w-0">
+                    <span className="font-medium tabular-nums">{fmtDate(s.session_date)}</span>
+                    {s.channel_label ? <span className="ml-2 text-xs text-muted-foreground">{s.channel_label}</span> : null}
+                    {s.duration_min ? <span className="ml-1 text-xs text-muted-foreground">· {s.duration_min} dk</span> : null}
+                    {s.agenda ? <span className="block truncate text-xs text-muted-foreground">{s.agenda}</span> : null}
+                  </div>
+                  <span className={cn("shrink-0 inline-flex rounded border px-1.5 py-0.5 text-[10px] font-bold", SESSION_TONE[s.status] ?? SESSION_TONE.cancelled)}>
+                    {s.status_label}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 
