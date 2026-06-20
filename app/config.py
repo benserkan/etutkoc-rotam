@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     smtp_from: str = "ETÜTKOÇ <noreply@etutkoc.local>"
     smtp_use_tls: bool = True
     smtp_use_ssl: bool = False  # 465 portu için True
+    # ZeptoMail bounce/teslimat webhook'u — URL'ye ?token=<secret> eklenir.
+    # Boş ise tüm POST'lar kabul (yine de loglanır); doluysa token eşleşmeli.
+    zeptomail_webhook_secret: str = ""
     # Email içindeki linkler için public URL (deploy sonrası değişir)
     app_base_url: str = "http://127.0.0.1:8081"
 

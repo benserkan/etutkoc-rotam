@@ -69,6 +69,8 @@ services:
       SMTP_FROM: ${SMTP_FROM}
       SMTP_USE_TLS: "true"
       SMTP_USE_SSL: "false"
+      # ZeptoMail bounce/teslimat webhook'u doğrular (?token=). Boşsa tüm POST kabul.
+      ZEPTOMAIL_WEBHOOK_SECRET: ${ZEPTOMAIL_WEBHOOK_SECRET:-}
       # ---- WhatsApp ----
       WHATSAPP_ENABLED: ${WHATSAPP_ENABLED:-true}
       WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}

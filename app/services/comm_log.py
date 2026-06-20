@@ -20,6 +20,8 @@ from app.models.communication_log import (
     CHANNEL_PUSH,
     CHANNEL_SMS,
     CHANNEL_WHATSAPP,
+    STATUS_BOUNCED,
+    STATUS_DELIVERED,
     STATUS_SENT,
 )
 
@@ -121,3 +123,63 @@ def log_whatsapp(**kw) -> int | None:
 
 def log_sms(**kw) -> int | None:
     return record(CHANNEL_SMS, provider=kw.pop("provider", "sms"), **kw)
+
+
+# ---- E-posta teslimat/bounce olayı (ZeptoMail webhook → durum güncelle) ----
+
+def apply_email_event(
+    recipient: str | None,
+    status: str,
+    *,
+    reason: str | None = None,
+    message_id: str | None = None,
+    window_days: int = 14,
+) -> int:
+    """Bir e-posta gönderim satırını DELIVERED/BOUNCED olarak güncelle.
+
+    Eşleşme: önce Message-ID (varsa), yoksa alıcı adresi + en yeni 'sent' satır.
+    delivered olayı yalnız mevcut durum 'sent' iken uygulanır (bounced'ı ezmesin).
+    Döner: güncellenen satır sayısı (0 veya 1). Best-effort.
+    """
+    if status not in (STATUS_DELIVERED, STATUS_BOUNCED):
+        return 0
+    from datetime import datetime, timedelta, timezone
+
+    from sqlalchemy import func as _func
+
+    try:
+        with SessionLocal() as db:
+            since = datetime.now(timezone.utc) - timedelta(days=window_days)
+            base = db.query(CommunicationLog).filter(
+                CommunicationLog.channel == CHANNEL_EMAIL,
+                CommunicationLog.created_at >= since,
+            )
+            row = None
+            if message_id:
+                row = (
+                    base.filter(CommunicationLog.provider_message_id == message_id)
+                    .order_by(CommunicationLog.id.desc())
+                    .first()
+                )
+            if row is None and recipient:
+                row = (
+                    base.filter(
+                        _func.lower(CommunicationLog.to_address)
+                        == recipient.strip().lower(),
+                        CommunicationLog.status.in_([STATUS_SENT, STATUS_DELIVERED]),
+                    )
+                    .order_by(CommunicationLog.id.desc())
+                    .first()
+                )
+            if row is None:
+                return 0
+            if status == STATUS_DELIVERED and row.status != STATUS_SENT:
+                return 0  # bounced/delivered'ı geri alma
+            row.status = status
+            if reason:
+                row.error = _clip(reason, _MAX_ERR)
+            db.commit()
+            return 1
+    except Exception as e:  # noqa: BLE001
+        logger.warning("apply_email_event failed (non-fatal): %s", e)
+        return 0

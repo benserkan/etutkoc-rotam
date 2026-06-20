@@ -51,6 +51,7 @@ from app.routes import (
     teacher_suggestions,
     teacher_tasks,
     teacher_years,
+    webhooks_zeptomail,
     whatsapp_webhook,
 )
 from app.templating import templates
@@ -315,6 +316,7 @@ app.include_router(review.router)
 app.include_router(dna.router)
 app.include_router(focus.router)
 app.include_router(whatsapp_webhook.router)
+app.include_router(webhooks_zeptomail.router)
 app.include_router(api_v1_router)
 app.include_router(api_v2_router)
 
