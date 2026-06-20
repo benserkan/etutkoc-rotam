@@ -22,7 +22,11 @@ from typing import Iterator
 from fastapi import APIRouter, Query, Request
 
 from app.config import settings
-from app.models.communication_log import STATUS_BOUNCED, STATUS_DELIVERED
+from app.models.communication_log import (
+    STATUS_BOUNCED,
+    STATUS_COMPLAINED,
+    STATUS_DELIVERED,
+)
 from app.services import comm_log
 
 logger = logging.getLogger(__name__)
@@ -30,6 +34,11 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/webhooks", tags=["webhooks"])
 
 _BOUNCE_EVENTS = {"hardbounce", "softbounce", "bounce", "bounced"}
+# Geribildirim döngüsü = alıcı SPAM işaretledi → şikayet (itibar zedeler)
+_COMPLAINT_EVENTS = {
+    "feedback_loop", "feedbackloop", "feedback-loop", "fbl",
+    "complaint", "complained", "spam", "spam_complaint", "abuse",
+}
 # open/click teslimatı ima eder → delivered (yalnız 'sent' iken yükseltilir)
 _DELIVERED_EVENTS = {
     "email_delivery", "delivery", "delivered",
@@ -123,6 +132,12 @@ async def zeptomail_webhook(request: Request, token: str | None = Query(None)):
             updated += comm_log.apply_email_event(
                 recipient, STATUS_BOUNCED,
                 reason=_search(d, _REASON_KEYS), message_id=msgid,
+            )
+        elif ename in _COMPLAINT_EVENTS:
+            updated += comm_log.apply_email_event(
+                recipient, STATUS_COMPLAINED,
+                reason=_search(d, _REASON_KEYS) or "Alıcı spam işaretledi",
+                message_id=msgid,
             )
         elif ename in _DELIVERED_EVENTS:
             updated += comm_log.apply_email_event(

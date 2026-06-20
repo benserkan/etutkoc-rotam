@@ -21,7 +21,9 @@ from app.models.communication_log import (
     CHANNEL_SMS,
     CHANNEL_WHATSAPP,
     STATUS_BOUNCED,
+    STATUS_COMPLAINED,
     STATUS_DELIVERED,
+    STATUS_PRECEDENCE,
     STATUS_SENT,
 )
 
@@ -135,13 +137,13 @@ def apply_email_event(
     message_id: str | None = None,
     window_days: int = 14,
 ) -> int:
-    """Bir e-posta gönderim satırını DELIVERED/BOUNCED olarak güncelle.
+    """Bir e-posta gönderim satırını DELIVERED/BOUNCED/COMPLAINED olarak güncelle.
 
-    Eşleşme: önce Message-ID (varsa), yoksa alıcı adresi + en yeni 'sent' satır.
-    delivered olayı yalnız mevcut durum 'sent' iken uygulanır (bounced'ı ezmesin).
-    Döner: güncellenen satır sayısı (0 veya 1). Best-effort.
+    Eşleşme: önce Message-ID (varsa), yoksa alıcı adresi + en yeni açık satır.
+    Güncelleme ÖNCELİK sırasına göre: yalnız daha kesin duruma yükseltir (delivered'ı
+    sent'e, bounced/complained'ı delivered'a düşürmez). Döner: güncellenen satır (0/1).
     """
-    if status not in (STATUS_DELIVERED, STATUS_BOUNCED):
+    if status not in (STATUS_DELIVERED, STATUS_BOUNCED, STATUS_COMPLAINED):
         return 0
     from datetime import datetime, timedelta, timezone
 
@@ -173,8 +175,10 @@ def apply_email_event(
                 )
             if row is None:
                 return 0
-            if status == STATUS_DELIVERED and row.status != STATUS_SENT:
-                return 0  # bounced/delivered'ı geri alma
+            cur = STATUS_PRECEDENCE.get(row.status, 0)
+            new = STATUS_PRECEDENCE.get(status, 0)
+            if new <= cur:
+                return 0  # daha kesin değil → dokunma (örn. delivered'ı sent yapma)
             row.status = status
             if reason:
                 row.error = _clip(reason, _MAX_ERR)

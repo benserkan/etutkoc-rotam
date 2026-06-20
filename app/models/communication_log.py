@@ -43,13 +43,14 @@ CHANNEL_LABELS_TR = {
 # --- Durum sabitleri ---
 STATUS_QUEUED = "queued"          # kuyruğa alındı (henüz gönderilmedi)
 STATUS_SENT = "sent"              # sağlayıcıya teslim edildi (kabul)
-STATUS_DELIVERED = "delivered"    # alıcıya ulaştı (webhook teyidi)
-STATUS_BOUNCED = "bounced"        # geri döndü (kalıcı teslim hatası)
+STATUS_DELIVERED = "delivered"    # alıcıya ulaştı (webhook teyidi / açılma)
+STATUS_BOUNCED = "bounced"        # geri döndü (kalıcı/geçici teslim hatası)
+STATUS_COMPLAINED = "complained"  # teslim oldu ama alıcı SPAM işaretledi (feedback loop)
 STATUS_FAILED = "failed"          # gönderim hatası (bizden/sağlayıcıdan)
 STATUS_SUPPRESSED = "suppressed"  # bilinçli gönderilmedi (tercih/mute/abonelik)
 STATUSES = (
     STATUS_QUEUED, STATUS_SENT, STATUS_DELIVERED, STATUS_BOUNCED,
-    STATUS_FAILED, STATUS_SUPPRESSED,
+    STATUS_COMPLAINED, STATUS_FAILED, STATUS_SUPPRESSED,
 )
 
 STATUS_LABELS_TR = {
@@ -57,13 +58,27 @@ STATUS_LABELS_TR = {
     STATUS_SENT: "Gönderildi",
     STATUS_DELIVERED: "Ulaştı",
     STATUS_BOUNCED: "Geri döndü",
+    STATUS_COMPLAINED: "Şikayet (spam)",
     STATUS_FAILED: "Başarısız",
     STATUS_SUPPRESSED: "Gönderilmedi (tercih)",
 }
 
 # Sağlık hesabında "başarılı" sayılan durumlar (success / (success+fail) oranı).
 SUCCESS_STATUSES = (STATUS_SENT, STATUS_DELIVERED)
-FAILURE_STATUSES = (STATUS_BOUNCED, STATUS_FAILED)
+# Şikayet teslim hatası DEĞİL (mail ulaştı) ama itibar zedeler → başarısız grubunda
+# sayılır ki sağlık % düşsün ve dikkat çeksin.
+FAILURE_STATUSES = (STATUS_BOUNCED, STATUS_FAILED, STATUS_COMPLAINED)
+
+# Durum öncelik sırası (webhook güncellemesinde yalnız "daha kesin" duruma yükselt;
+# delivered'ı sent'e, bounced/complained'ı delivered'a DÜŞÜRME).
+STATUS_PRECEDENCE = {
+    STATUS_QUEUED: 0,
+    STATUS_SENT: 1,
+    STATUS_DELIVERED: 2,
+    STATUS_BOUNCED: 3,
+    STATUS_COMPLAINED: 3,
+    STATUS_FAILED: 3,
+}
 
 
 class CommunicationLog(Base):

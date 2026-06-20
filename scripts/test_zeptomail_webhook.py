@@ -156,6 +156,21 @@ def main() -> int:
           and rb and _search(rb[1], _RECIPIENT_KEYS, want_email=True) == "c@d.com")
     check("11. parser 2 biçim alıcı çözer", bool(ok), f"{ra} {rb}")
 
+    # 12. POST feedback_loop → complained (spam şikayeti)
+    a12 = f"{PFX}-12@x.test"
+    r12 = _seed_email(a12)
+    payload = {"event_message": [{"event_name": "feedback_loop",
+               "details": [{"recipient": a12}]}]}
+    r = c.post("/webhooks/zeptomail", json=payload)
+    check("12. feedback_loop → complained",
+          r.json().get("updated") >= 1 and _status(r12)[0] == "complained",
+          f"{r.json()} {_status(r12)}")
+
+    # 13. complained'ı delivered EZMEZ (öncelik)
+    n = comm_log.apply_email_event(a12, "delivered")
+    check("13. complained korunur (delivered ezmez)",
+          n == 0 and _status(r12)[0] == "complained", f"{n} {_status(r12)[0]}")
+
     _cleanup()
     print(f"\n=== Result: {passed} passed, {len(failed)} failed ===")
     for f in failed:

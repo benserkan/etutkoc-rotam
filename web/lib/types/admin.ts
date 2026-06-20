@@ -3185,6 +3185,7 @@ export interface CommChannelWindow {
   sent: number;
   delivered: number;
   bounced: number;
+  complained: number;
   failed: number;
   queued: number;
   suppressed: number;

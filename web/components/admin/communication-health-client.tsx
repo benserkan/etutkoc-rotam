@@ -35,6 +35,8 @@ function statusTone(s: string): string {
       return "bg-emerald-50 text-emerald-800 ring-1 ring-inset ring-emerald-200";
     case "bounced":
       return "bg-rose-100 text-rose-900 ring-1 ring-inset ring-rose-300";
+    case "complained":
+      return "bg-orange-100 text-orange-900 ring-1 ring-inset ring-orange-300";
     case "failed":
       return "bg-rose-50 text-rose-800 ring-1 ring-inset ring-rose-200";
     case "queued":
@@ -64,6 +66,7 @@ const STATUS_OPTIONS = [
   ["sent", "Gönderildi"],
   ["delivered", "Ulaştı"],
   ["bounced", "Geri döndü"],
+  ["complained", "Şikayet (spam)"],
   ["failed", "Başarısız"],
   ["queued", "Kuyrukta"],
   ["suppressed", "Gönderilmedi (tercih)"],
@@ -340,6 +343,7 @@ function ChannelCard({
         {(w.bounced > 0 || w.failed > 0) && (
           <span>Hata: <b className="text-rose-600">{w.bounced + w.failed}</b></span>
         )}
+        {w.complained > 0 && <span>Şikayet: <b className="text-orange-600">{w.complained}</b></span>}
         {w.suppressed > 0 && <span>Gönderilmedi: <b className="text-slate-500">{w.suppressed}</b></span>}
         {w.queued > 0 && <span>Kuyrukta: <b className="text-sky-700">{w.queued}</b></span>}
       </div>

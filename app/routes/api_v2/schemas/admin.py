@@ -3485,6 +3485,7 @@ class CommChannelWindow(BaseModel):
     sent: int
     delivered: int
     bounced: int
+    complained: int = 0
     failed: int
     queued: int
     suppressed: int

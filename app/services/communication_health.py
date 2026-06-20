@@ -58,6 +58,7 @@ def _summary(counts: dict[str, int]) -> dict:
         "sent": counts.get("sent", 0),
         "delivered": counts.get("delivered", 0),
         "bounced": counts.get("bounced", 0),
+        "complained": counts.get("complained", 0),
         "failed": counts.get("failed", 0),
         "queued": counts.get("queued", 0),
         "suppressed": counts.get("suppressed", 0),
@@ -84,7 +85,7 @@ def get_overview(db: Session, *, days: int = 7) -> dict:
             "window": w,
             "last24h": {
                 "total": h["total"],
-                "failed": h["failed"] + h["bounced"],
+                "failed": h["failed"] + h["bounced"] + h["complained"],
                 "success_pct": h["success_pct"],
             },
         })
