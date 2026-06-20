@@ -22,7 +22,9 @@
       "package": "com.etutkoc.rotam",
       "googleServicesFile": "./google-services.json",
       "blockedPermissions": [
-        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK"
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK",
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_DATA_SYNC"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
