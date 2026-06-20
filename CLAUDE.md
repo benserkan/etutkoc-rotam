@@ -41,11 +41,18 @@ münferiden, Serkan Aydın %33 ortak). **Tek kaynak `app/legal_info.py` COMPANY*
   AYRI ayna). Mevcut NotificationLog + whatsapp_dispatch_logs'a DOKUNULMADI.
   `test_comm_log.py` **28/28** (4 kanal gerçek fonksiyon + izolasyon + maskeleme).
   Prod: head=p9q2t5u6t88o, gerçek email→zeptomail→comm_log status=sent doğrulandı.
+- **İletişim Sağlığı Faz 2c — CANLI** (commit `bb8dfb3`, migration YOK): süper admin
+  `/admin/communication-health` — 4 kanal tek ekran. `communication_health.py`
+  (get_overview kanal başına 24s+N günlük durum kırılımı + başarı % · list_logs
+  filtreli/sayfalı). 2 endpoint: `/admin/communication-health` + `/communication-log`
+  (channel/status/days/q/category/page/limit). Frontend: kanal kartları (tıkla→filtrele)
+  + filtreli tablo (zaman/kanal/tür/alıcı/konu/durum + durum dropdown + arama debounce
+  + sayfalama, kontrast-güvenli). admin-shell "Güvenlik Kamarası → İletişim Sağlığı".
+  `test_api_v2_admin_communication_health.py` **10/10**. Prod: endpoint 401 anon ·
+  sayfa 307. (Mevcut `/security-monitor/notifications` matrisi ayrı duruyor.)
 - **KALAN (sıradaki):** **Faz 2b** — ZeptoMail bounce webhook (`/webhooks/zeptomail`)
-  → comm_log DELIVERED/BOUNCED (Message-ID/recipient eşleşmesi). **Faz 2c** — Süper
-  admin "İletişim Sağlığı" ekranı: kanal sekmeleri (E-posta/Mobil Bildirim/WhatsApp/
-  SMS) + sağlık KPI + filtreli drill-down liste (kime/ne/ne zaman/durum + tarih+
-  kanal+durum+arama filtreleri). Mevcut `/security-monitor/notifications` buraya bağlanır.
+  → comm_log DELIVERED/BOUNCED (Message-ID/recipient eşleşmesi). ZeptoMail panosu
+  "Web Kancaları" sekmesinden webhook URL ayarlanacak (kullanıcı aksiyonu).
 
 ---
 
