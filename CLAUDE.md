@@ -60,6 +60,19 @@ münferiden, Serkan Aydın %33 ortak). **Tek kaynak `app/legal_info.py` COMPANY*
   "Web Kancaları" → URL `https://rotam.etutkoc.com/webhooks/zeptomail` (+ secret
   kullanılacaksa `?token=...` + .env'e ZEPTOMAIL_WEBHOOK_SECRET) + bounce/delivery
   olayları seç. **İletişim Sağlığı (2a+2b+2c) TAMAMLANDI.**
+- **Spam şikayeti + açılma** (commit `12f92ac`, migration YOK): yeni
+  `STATUS_COMPLAINED` "Şikayet (spam)" (FAILURE grubu → sağlık % düşer) +
+  `STATUS_PRECEDENCE` (webhook yalnız daha kesin duruma yükseltir). Webhook
+  feedback_loop/fbl/complaint → complained; email_open → delivered (ZeptoMail'de
+  "Email open" + "E-posta İzleme" açılırsa). Kanal kartında "Şikayet" sayımı (turuncu).
+- **Abuse alarmı yanlış-pozitif düzeltmesi** (commit `9e9f55a`, migration YOK):
+  süper admine her gün gelen "Açık abuse sinyali" alarmı dev gürültüsüydü
+  (multi_account_same_device, hepsi 'info'; kaynak: kendi test girişleri + curl
+  smoke). `detect_multi_account_same_device` bot/test UA'ları dışlar (curl/python/
+  httpx/wget/postman/testclient… ILIKE; super_admin+impersonation zaten dışlıydı).
+  `_val_abuse_open` yalnız warn/critical sayar (info email atmaz, panelde görünür).
+  Prod'da 4 mevcut false-positive çözüldü → abuse_open=0. **DERS:** abuse alarmı
+  eşik=0 + info dahil olunca dev trafiği alarm körlüğü yaratıyordu; tespit ≠ email.
 
 ---
 
