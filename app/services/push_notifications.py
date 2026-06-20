@@ -9,6 +9,7 @@ Tüm gönderim **best-effort**: hata fırlatmaz, yalnız loglar. Token geçersiz
 """
 from __future__ import annotations
 
+import json
 import logging
 import time
 from datetime import datetime, timezone
@@ -83,8 +84,16 @@ def send_push_to_user(
     Best-effort: ağ/Expo hatasında 0 döner ve loglar (asla raise etmez).
     Geçersiz token'lar (DeviceNotRegistered) silinir.
     """
+    from app.services import comm_log  # best-effort gözlem log'u
+
+    kind = (data or {}).get("kind") if isinstance(data, dict) else None
     rows = db.query(DevicePushToken).filter(DevicePushToken.user_id == user_id).all()
     if not rows:
+        # Hedef kullanıcının kayıtlı cihazı yok → push ulaşamaz (gözlem için kaydet).
+        comm_log.log_push(
+            status="suppressed", to_user_id=user_id, subject=title,
+            category=kind, error="no_device",
+        )
         return 0
 
     messages = [
@@ -101,10 +110,16 @@ def send_push_to_user(
         receipts = _expo_send(messages)
     except Exception as e:  # noqa: BLE001 — push asla akışı bozmamalı
         logger.warning("expo push send failed (non-fatal): %s", e)
+        comm_log.log_push(
+            status="failed", to_user_id=user_id, subject=title, category=kind,
+            to_address=comm_log.mask_token(rows[0].token), error=str(e),
+            meta_json=json.dumps({"devices": len(rows)}),
+        )
         return 0
 
     # Geçersiz token'ları temizle (receipt sırası mesaj sırasıyla aynı).
     invalid: list[str] = []
+    ok_count = 0
     for r, rec in zip(rows, receipts):
         if not isinstance(rec, dict):
             continue
@@ -112,6 +127,8 @@ def send_push_to_user(
             err = (rec.get("details") or {}).get("error")
             if err == "DeviceNotRegistered":
                 invalid.append(r.token)
+        elif rec.get("status") == "ok":
+            ok_count += 1
     if invalid:
         try:
             db.query(DevicePushToken).filter(DevicePushToken.token.in_(invalid)).delete(
@@ -120,6 +137,15 @@ def send_push_to_user(
         except Exception as e:  # noqa: BLE001
             logger.warning("invalid push token cleanup failed: %s", e)
 
+    comm_log.log_push(
+        status="sent" if ok_count > 0 else "failed",
+        to_user_id=user_id, subject=title, category=kind,
+        to_address=comm_log.mask_token(rows[0].token),
+        error=None if ok_count > 0 else "all_devices_failed",
+        meta_json=json.dumps(
+            {"devices": len(rows), "ok": ok_count, "invalid": len(invalid)}
+        ),
+    )
     return len(messages)
 
 

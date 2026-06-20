@@ -208,6 +208,7 @@ from app.models.membership_offer import (
     MEMBERSHIP_OFFER_TYPES,
     MembershipOffer,
 )
+from app.models.communication_log import CommunicationLog
 from app.models.device_push_token import DevicePushToken
 from app.models.coaching_session import (
     COACHING_CHANNEL_LABELS,
@@ -540,6 +541,7 @@ __all__ = [
     "MembershipOffer",
     "MEMBERSHIP_OFFER_TYPES",
     "MEMBERSHIP_OFFER_STATUSES",
+    "CommunicationLog",
     "DevicePushToken",
     "EXAM_SECTION_LABELS",
     "EXAM_TARGET_LABELS",

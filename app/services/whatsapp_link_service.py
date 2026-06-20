@@ -267,6 +267,15 @@ def build_wa_dispatch(
         db.flush()
         log_id = log.id
 
+        # Birleşik iletişim gözlem log'u (spam-guard log'undan ayrı, best-effort)
+        from app.services import comm_log
+        comm_log.log_whatsapp(
+            db=db, status="sent", to_user_id=target.id,
+            to_address=mask_phone_e164(target.phone),
+            category=tmpl.key, subject=rendered[:120],
+            meta_json=json.dumps({"chars": char_count, "sender_id": sender.id}),
+        )
+
     return WaDispatchResult(
         wa_url=wa_url,
         rendered_text=rendered,

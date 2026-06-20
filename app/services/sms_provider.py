@@ -51,6 +51,8 @@ def send_sms(phone_e164: str, message: str) -> bool:
     phone_e164: E.164 normalize, "+" olmadan ("905321234567")
     message: SMS gövdesi (160 karakter standart, fazlasında sağlayıcı parça'lar)
     """
+    from app.services import comm_log  # best-effort gözlem log'u
+
     if not is_sms_enabled():
         # Dev mode — log + dönüş True (akışın devam etmesini sağla)
         logger.info(
@@ -58,13 +60,23 @@ def send_sms(phone_e164: str, message: str) -> bool:
             phone_e164,
             message[:80],
         )
+        comm_log.log_sms(
+            status="suppressed", to_address=phone_e164, category="otp",
+            subject=message[:120], provider="dev", error="sms_disabled",
+        )
         return True
 
     provider = get_provider_name()
     if provider == "netgsm":
-        return _send_via_netgsm(phone_e164, message)
-    # Default: vatansms
-    return _send_via_vatansms(phone_e164, message)
+        ok = _send_via_netgsm(phone_e164, message)
+    else:  # Default: vatansms
+        ok = _send_via_vatansms(phone_e164, message)
+    comm_log.log_sms(
+        status="sent" if ok else "failed",
+        to_address=phone_e164, category="otp", subject=message[:120],
+        provider=provider, error=None if ok else "send_failed",
+    )
+    return ok
 
 
 # =============================================================================

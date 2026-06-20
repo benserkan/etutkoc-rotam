@@ -13,6 +13,7 @@ from __future__ import annotations
 import logging
 import smtplib
 from email.message import EmailMessage
+from email.utils import make_msgid
 from pathlib import Path
 from typing import Any
 
@@ -80,6 +81,9 @@ def send_email(to: str, template: str, ctx: dict[str, Any]) -> bool:
         logger.exception(f"Email template render failed for {template}: {e}")
         return False
 
+    # İletişim gözlem log'u (best-effort; gönderimi asla bozmaz)
+    from app.services import comm_log
+
     if not settings.email_enabled or not settings.smtp_host:
         # Log-only — geliştirme/test ortamı
         logger.info(
@@ -89,12 +93,22 @@ def send_email(to: str, template: str, ctx: dict[str, Any]) -> bool:
         )
         # Verbose görünüm istenirse debug log'da gövde
         logger.debug("[EMAIL BODY]\n%s", plain)
+        comm_log.log_email(
+            status=comm_log_status_suppressed(),
+            to_address=to,
+            category=template,
+            subject=subject,
+            error="email_disabled",
+            provider=_email_provider(),
+        )
         return False
 
+    msgid = make_msgid(domain="etutkoc.com")
     msg = EmailMessage()
     msg["Subject"] = subject or settings.app_name
     msg["From"] = settings.smtp_from or settings.smtp_user
     msg["To"] = to
+    msg["Message-ID"] = msgid
     msg.set_content(plain)
     msg.add_alternative(html, subtype="html")
 
@@ -112,10 +126,42 @@ def send_email(to: str, template: str, ctx: dict[str, Any]) -> bool:
         finally:
             server.quit()
         logger.info("Email sent: %s → %s", subject, to)
+        comm_log.log_email(
+            status="sent",
+            to_address=to,
+            category=template,
+            subject=subject,
+            provider=_email_provider(),
+            provider_message_id=msgid,
+        )
         return True
     except Exception as e:
         logger.exception("Email send failed: %s → %s — %s", subject, to, e)
+        comm_log.log_email(
+            status="failed",
+            to_address=to,
+            category=template,
+            subject=subject,
+            provider=_email_provider(),
+            provider_message_id=msgid,
+            error=str(e),
+        )
         return False
+
+
+def _email_provider() -> str:
+    """SMTP host'tan kısa sağlayıcı adı türet (gözlem log'u için)."""
+    host = (settings.smtp_host or "").lower()
+    if "zepto" in host:
+        return "zeptomail"
+    if "zoho" in host:
+        return "zoho"
+    return host or "smtp"
+
+
+def comm_log_status_suppressed() -> str:
+    from app.models.communication_log import STATUS_SUPPRESSED
+    return STATUS_SUPPRESSED
 
 
 # ---------------------------- Yüksek seviye yardımcılar ----------------------------
