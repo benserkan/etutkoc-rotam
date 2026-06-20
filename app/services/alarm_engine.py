@@ -82,9 +82,15 @@ def _val_error_groups_open(db: Session) -> int:
 
 
 def _val_abuse_open(db: Session) -> int:
+    # Yalnız warn/critical açık sinyaller alarmlar. "info" (düşük güven —
+    # örn. aynı IP'den birkaç test girişi) email gürültüsü yaratmasın; tespit
+    # yine kaydedilir + Suistimal panelinde görünür, sadece email atmaz.
     return int(
         (db.query(func.count(AbuseSignal.id))
-         .filter(AbuseSignal.resolved_at.is_(None))
+         .filter(
+             AbuseSignal.resolved_at.is_(None),
+             AbuseSignal.severity != "info",
+         )
          .scalar()) or 0
     )
 

@@ -218,6 +218,16 @@ def detect_multi_account_same_device(
     threshold = threshold or THRESHOLD_MULTI_ACCOUNT_DISTINCT_USERS
     now = _now()
     cutoff = now - timedelta(hours=window_hours)
+    # Bot/test araçları (curl/python/httpx/wget/postman…) gerçek hesap-çiftliği
+    # değil — bizim smoke/test scriptlerimiz. Sayımdan dışla; gerçek abuse
+    # tarayıcı/mobil uygulama UA'sı kullanır. (ILIKE = SQLite + Postgres uyumlu)
+    _bot_filters = [
+        ~ActiveSession.user_agent.ilike(f"%{p}%")
+        for p in (
+            "curl", "python", "httpx", "requests", "wget", "postman",
+            "insomnia", "go-http", "scrapy", "libwww", "testclient",
+        )
+    ]
     # ActiveSession bazında ua+ip → distinct user_id say
     rows = (
         db.query(
@@ -233,6 +243,7 @@ def detect_multi_account_same_device(
             # KENDİ girişleri "çoklu hesap abuse" değildir — sayımdan dışla.
             ActiveSession.imp_by.is_(None),
             ActiveSession.role != UserRole.SUPER_ADMIN.value,
+            *_bot_filters,
         )
         .group_by(ActiveSession.ip, ActiveSession.user_agent)
         .having(func.count(func.distinct(ActiveSession.user_id)) >= threshold)
