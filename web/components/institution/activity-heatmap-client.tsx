@@ -85,7 +85,7 @@ export function ActivityHeatmapClient({ initial, weeks }: Props) {
       <div className="flex items-center justify-between flex-wrap gap-3">
         <PeriodSwitch active={weeks} />
         {inactive_count > 0 && (
-          <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded inline-flex items-center gap-1.5">
+          <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 px-3 py-1.5 rounded inline-flex items-center gap-1.5 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
             <AlertCircle className="size-3.5" aria-hidden />
             {inactive_count} öğretmen son {inactive_threshold_days} gündür
             pasif
@@ -138,7 +138,7 @@ function InfoBanner({
   inactive_threshold_days: number;
 }) {
   return (
-    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2">
+    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
       <Info className="size-4 shrink-0 mt-0.5" aria-hidden />
       <div>
         <strong>Aktivite nasıl ölçülür?</strong> Öğretmen o gün sisteme girmiş

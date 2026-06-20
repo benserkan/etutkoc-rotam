@@ -82,7 +82,7 @@ function itemTone(it: ActivityStreamItem): { wrap: string; badge: string } {
     return { wrap: "border-emerald-300 bg-emerald-50/40", badge: "bg-emerald-600 text-white" };
   }
   if (it.is_commercial) {
-    return { wrap: "border-emerald-200 bg-emerald-50/30", badge: "bg-emerald-100 text-emerald-800" };
+    return { wrap: "border-emerald-200 bg-emerald-50/30 dark:bg-emerald-500/10 dark:border-emerald-500/30", badge: "bg-emerald-100 text-emerald-800" };
   }
   if (it.category === "signup") {
     return { wrap: "border-sky-200", badge: "bg-sky-100 text-sky-800" };

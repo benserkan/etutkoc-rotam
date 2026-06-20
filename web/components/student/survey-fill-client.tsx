@@ -137,7 +137,7 @@ export function SurveyFillClient({
           İstediğin an kaydedip sonra devam edebilirsin.
         </p>
         {data.assignment.note ? (
-          <p className="text-xs rounded-md border border-cyan-200 bg-cyan-50 text-cyan-900 px-2.5 py-1.5">
+          <p className="text-xs rounded-md border border-cyan-200 bg-cyan-50 text-cyan-900 px-2.5 py-1.5 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
             Koçundan not: {data.assignment.note}
           </p>
         ) : null}

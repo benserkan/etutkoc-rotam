@@ -26,11 +26,11 @@ const STATUS: Record<
   CurriculumTopicItem["status"],
   { label: string; cls: string; Icon: React.ElementType }
 > = {
-  tamamlandi: { label: "Tamamlandı", cls: "text-emerald-700 bg-emerald-50 border-emerald-200", Icon: CheckCircle2 },
-  devam: { label: "Devam", cls: "text-amber-700 bg-amber-50 border-amber-200", Icon: Clock },
-  planlandi: { label: "Planlandı", cls: "text-sky-700 bg-sky-50 border-sky-200", Icon: CircleDashed },
-  baslanmadi: { label: "Başlanmadı", cls: "text-slate-600 bg-slate-50 border-slate-200", Icon: CircleDashed },
-  kaynak_yok: { label: "Kaynak yok", cls: "text-slate-400 bg-slate-50 border-slate-200", Icon: CircleSlash },
+  tamamlandi: { label: "Tamamlandı", cls: "text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200", Icon: CheckCircle2 },
+  devam: { label: "Devam", cls: "text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200", Icon: Clock },
+  planlandi: { label: "Planlandı", cls: "text-sky-700 bg-sky-50 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200", Icon: CircleDashed },
+  baslanmadi: { label: "Başlanmadı", cls: "text-slate-600 bg-slate-50 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30", Icon: CircleDashed },
+  kaynak_yok: { label: "Kaynak yok", cls: "text-slate-400 bg-slate-50 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30", Icon: CircleSlash },
 };
 
 export function CurriculumPanel({ studentId }: { studentId: number }) {
@@ -60,7 +60,7 @@ export function CurriculumPanel({ studentId }: { studentId: number }) {
   return (
     <div className="space-y-4">
       {/* Genel kapsama */}
-      <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
+      <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4 dark:bg-indigo-500/10 dark:border-indigo-500/30">
         <div className="flex items-center justify-between gap-3">
           <div>
             <p className="text-sm font-semibold text-indigo-900">
@@ -95,7 +95,7 @@ export function CurriculumPanel({ studentId }: { studentId: number }) {
       ))}
 
       {data.extras.length > 0 ? (
-        <details className="rounded-lg border border-amber-200 bg-amber-50/40">
+        <details className="rounded-lg border border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30">
           <summary className="cursor-pointer px-4 py-2.5 text-sm font-medium text-amber-900">
             Müfredata eşleşmemiş üniteler ({data.extras.length}){" "}
             <span className="font-normal text-amber-700">

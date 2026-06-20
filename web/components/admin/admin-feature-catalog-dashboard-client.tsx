@@ -149,7 +149,7 @@ export function AdminFeatureCatalogDashboardClient({ initial }: Props) {
                 <div>
                   <h2 className="inline-flex items-center gap-2 text-sm font-semibold">
                     Aktif A/B Deneyi
-                    <span className="rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-emerald-700">
+                    <span className="rounded border border-emerald-200 bg-emerald-50 px-1.5 py-0.5 text-[10px] uppercase tracking-wider text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
                       Çalışıyor
                     </span>
                   </h2>

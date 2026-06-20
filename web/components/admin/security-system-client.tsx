@@ -33,9 +33,9 @@ import type { ErrorExplanation, SystemErrorGroup, SystemHealthDataResponse } fro
 import { fmtDateTime, humanizeAgo } from "@/components/admin/security-ui";
 
 const SEV_TONE: Record<string, string> = {
-  critical: "border-rose-200 bg-rose-50 text-rose-900",
-  warning: "border-amber-200 bg-amber-50 text-amber-900",
-  info: "border-sky-200 bg-sky-50 text-sky-900",
+  critical: "border-rose-200 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  warning: "border-amber-200 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+  info: "border-sky-200 bg-sky-50 text-sky-900 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
 };
 
 function ExplanationBlock({ exp }: { exp: ErrorExplanation }) {
@@ -67,9 +67,9 @@ interface Props {
 }
 
 function statusTone(code: number): string {
-  if (code >= 500) return "bg-rose-50 text-rose-700 border-rose-200";
-  if (code >= 400) return "bg-amber-50 text-amber-700 border-amber-200";
-  return "bg-slate-50 text-slate-600 border-slate-200";
+  if (code >= 500) return "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200";
+  if (code >= 400) return "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200";
+  return "bg-slate-50 text-slate-600 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30";
 }
 
 function ResolveButton({ group }: { group: SystemErrorGroup }) {
@@ -271,7 +271,7 @@ export function SecuritySystemClient({ initial }: Props) {
           Açık hata grupları
         </h2>
         {d.error_groups.length === 0 ? (
-          <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-4 text-sm text-emerald-800">
+          <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-4 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
             <CheckCircle2 className="size-5 shrink-0 text-emerald-600" aria-hidden />
             Açık hata yok. Sistem temiz görünüyor.
           </Card>

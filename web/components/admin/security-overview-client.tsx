@@ -163,7 +163,7 @@ export function SecurityOverviewClient({ initial }: Props) {
           </span>
         </div>
         {att.is_clean ? (
-          <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-4 text-sm text-emerald-800">
+          <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-4 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
             <CheckCircle2 className="size-5 shrink-0 text-emerald-600" aria-hidden />
             Şu an dikkat gerektiren bir durum yok. Her şey sakin görünüyor.
           </Card>
@@ -344,11 +344,11 @@ export function SecurityOverviewClient({ initial }: Props) {
                       <td className="px-3 py-1.5 text-right tabular-nums">{ip.distinct_email_count}</td>
                       <td className="px-3 py-1.5 text-center">
                         {ip.is_blocked ? (
-                          <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700">
+                          <span className="inline-flex items-center gap-1 rounded-full border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
                             <Ban className="size-3" aria-hidden /> Blokli
                           </span>
                         ) : (
-                          <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                          <span className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
                             İzleniyor
                           </span>
                         )}

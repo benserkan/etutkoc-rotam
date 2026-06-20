@@ -77,7 +77,7 @@ export function PaymentLinkClient({ token, info }: Props) {
             </p>
           </div>
 
-          <div className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-5">
+          <div className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-5 dark:bg-slate-500/10 dark:border-slate-500/30">
             <div className="flex items-center gap-3">
               {isInst ? (
                 <Building2 className="size-5 text-slate-500" aria-hidden />
@@ -113,7 +113,7 @@ export function PaymentLinkClient({ token, info }: Props) {
             </div>
 
             {info.description ? (
-              <div className="rounded-md border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900">
+              <div className="rounded-md border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200">
                 {info.description}
               </div>
             ) : null}
@@ -195,7 +195,7 @@ function PayButton({
 
 function SuccessBox() {
   return (
-    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center">
+    <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 text-center dark:bg-emerald-500/10 dark:border-emerald-500/30">
       <CheckCircle2 className="mx-auto size-8 text-emerald-600" aria-hidden />
       <p className="mt-2 text-sm font-semibold text-emerald-800">
         Bu link daha önce ödendi
@@ -210,7 +210,7 @@ function SuccessBox() {
 
 function UnusableBox({ label }: { label: string }) {
   return (
-    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-center dark:bg-slate-500/10 dark:border-slate-500/30">
       <AlertOctagon className="mx-auto size-8 text-slate-500" aria-hidden />
       <p className="mt-2 text-sm font-semibold text-slate-700">
         Bu link artık ödenemez ({label})
@@ -224,7 +224,7 @@ function UnusableBox({ label }: { label: string }) {
 
 function ForbiddenBox({ isInst }: { isInst: boolean }) {
   return (
-    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-center">
+    <div className="rounded-lg border border-rose-200 bg-rose-50 p-4 text-center dark:bg-rose-500/10 dark:border-rose-500/30">
       <Lock className="mx-auto size-8 text-rose-500" aria-hidden />
       <p className="mt-2 text-sm font-semibold text-rose-700">
         Bu linki ödemeye yetkili değilsiniz

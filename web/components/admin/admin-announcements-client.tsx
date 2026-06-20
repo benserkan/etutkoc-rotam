@@ -352,7 +352,7 @@ function AnnouncementRow({ item }: { item: AnnouncementItem }) {
       </td>
       <td className="px-4 py-3">
         {item.is_active_now ? (
-          <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+          <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
             ● Yayında
           </span>
         ) : (
@@ -378,17 +378,17 @@ function SeverityBadge({
     { cls: string; Icon: typeof Info; iconColor: string }
   > = {
     critical: {
-      cls: "bg-rose-50 text-rose-700 border-rose-200",
+      cls: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
       Icon: AlertCircle,
       iconColor: "text-rose-600",
     },
     warn: {
-      cls: "bg-amber-50 text-amber-700 border-amber-200",
+      cls: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
       Icon: AlertTriangle,
       iconColor: "text-amber-600",
     },
     info: {
-      cls: "bg-sky-50 text-sky-700 border-sky-200",
+      cls: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
       Icon: Info,
       iconColor: "text-sky-600",
     },

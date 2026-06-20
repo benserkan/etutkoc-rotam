@@ -14,10 +14,10 @@ import { useSetAiSetting, useDeleteAiSetting } from "@/lib/hooks/use-admin-mutat
 import type { AiSettingItem, AiSettingsResponse } from "@/lib/types/admin";
 
 const SOURCE_LABELS: Record<string, { label: string; tone: string }> = {
-  db: { label: "Panelden", tone: "border-emerald-200 bg-emerald-50 text-emerald-700" },
-  env: { label: ".env'den", tone: "border-sky-200 bg-sky-50 text-sky-700" },
-  default: { label: "Varsayılan", tone: "border-slate-200 bg-slate-50 text-slate-600" },
-  none: { label: "Ayarlı değil", tone: "border-amber-200 bg-amber-50 text-amber-800" },
+  db: { label: "Panelden", tone: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200" },
+  env: { label: ".env'den", tone: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200" },
+  default: { label: "Varsayılan", tone: "border-slate-200 bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30" },
+  none: { label: "Ayarlı değil", tone: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200" },
 };
 
 export function AdminAiSettingsClient({ initial }: { initial: AiSettingsResponse }) {
@@ -42,7 +42,7 @@ export function AdminAiSettingsClient({ initial }: { initial: AiSettingsResponse
         </p>
       </header>
 
-      <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+      <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
         <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
         <span>
           <strong>KVKK:</strong> Öğrenci verili işler (fotoğraf/ses/içgörü) yalnız{" "}

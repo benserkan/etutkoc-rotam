@@ -805,7 +805,7 @@ function InstitutionHealthCard({
                   <Link
                     href={`/admin/revenue/institutions/${h.institution.id}`}
                     className="font-medium hover:text-indigo-700 flex-1 truncate"
-                    title={`${h.institution.name} — Ticari 360'a git`}
+                    title={`${h.institution.name} — Ticari 360 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200'a git`}
                   >
                     {h.institution.name}
                   </Link>

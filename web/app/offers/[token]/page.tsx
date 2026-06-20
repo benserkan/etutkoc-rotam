@@ -73,7 +73,7 @@ export default async function OfferPage({
           <CardContent className="space-y-4">
             {valid && offer ? (
               <>
-                <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4">
+                <div className="rounded-lg border border-indigo-200 bg-indigo-50/50 p-4 dark:bg-indigo-500/10 dark:border-indigo-500/30">
                   <p className="text-lg font-semibold text-indigo-900">{offer.summary ?? offer.title}</p>
                   {offer.public_message ? (
                     <p className="mt-2 text-sm text-indigo-800">{offer.public_message}</p>

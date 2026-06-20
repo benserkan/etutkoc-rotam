@@ -312,7 +312,7 @@ function Stat({
 
 function EmptyState() {
   return (
-    <Card className="border-amber-200 bg-amber-50/40">
+    <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30">
       <CardContent className="p-8 text-center">
         <p className="text-sm text-amber-800">
           Henüz size bağlı bir öğrenci yok. Lütfen sizi davet eden eğitim

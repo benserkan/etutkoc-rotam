@@ -584,7 +584,7 @@ function UnlinkedTasksBanner({
                 <b>&quot;Eski Dönem&quot;</b> programına bağlayabilirim. Veri kaybı yok.
               </>
             ) : (
-              "Eski görevleri tek tık ile 'Eski Dönem' programına bağlayabilirim."
+              "Eski görevleri tek tık ile  dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200'Eski Dönem' programına bağlayabilirim."
             )}
           </p>
         </div>

@@ -91,9 +91,9 @@ const TASK_TYPE_LABELS: Record<string, string> = {
 
 const TASK_TYPE_TONE: Record<string, string> = {
   test: "bg-foreground/5 text-foreground border-border",
-  video: "bg-sky-50 text-sky-700 border-sky-200",
-  ozet: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  tekrar: "bg-violet-50 text-violet-700 border-violet-200",
+  video: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+  ozet: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  tekrar: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
   other: "bg-muted text-muted-foreground border-border",
 };
 
@@ -445,7 +445,7 @@ function SubjectChip({
 // ============================================================================
 // Ders gruplama (Katman 1) — görevler ders bazlı gruplanır; aynı dersin
 // görevleri yan yana durur (araya başka ders girmez). Etkinlik (kalemsiz)
-// görevlerinde ders backend'den gelmez → başlık "{Ders} · {içerik}" parse edilir.
+// görevlerinde ders backend dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200'den gelmez → başlık "{Ders} · {içerik}" parse edilir.
 // ============================================================================
 
 interface TaskSubject {
@@ -995,7 +995,7 @@ function SortableTaskRow({
               · {task.completed_count}/{task.planned_count}
             </span>
           ) : null}
-          {/* Tek kalemli görevde D/Y rozeti — task badge'lerinin yanına inline */}
+          {/* Tek kalemli görevde D/Y rozeti — task badge dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200'lerinin yanına inline */}
           {task.items.length === 1 ? (
             <TaskItemResultBadge
               studentId={studentId}
@@ -1260,7 +1260,7 @@ function TaskRichEditForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       {item.completed_count > 0 ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           Bu görevde <b>{item.completed_count}</b> test çözülmüş — kaynak (kitap/ünite)
           değişikliği bloke; sayıyı en az <b>{item.completed_count}</b> tutmalısın.
         </div>
@@ -1415,7 +1415,7 @@ function TaskRichEditForm({
       ) : null}
 
       {countBelowCompleted ? (
-        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
           Yeni sayı ({count}) tamamlanmış miktardan ({item.completed_count}) küçük olamaz.
         </div>
       ) : null}

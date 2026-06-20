@@ -149,7 +149,7 @@ function Body({
       </div>
 
       {hasDrift ? (
-        <div className="px-5 py-2 border-b border-amber-200 bg-amber-50 text-[11px] text-amber-900 flex items-start gap-2">
+        <div className="px-5 py-2 border-b border-amber-200 bg-amber-50 text-[11px] text-amber-900 flex items-start gap-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           <AlertTriangle
             className="size-3.5 text-amber-700 flex-shrink-0 mt-0.5"
             aria-hidden
@@ -227,7 +227,7 @@ function SectionGrid({
           ) : null}
           {secDrift ? (
             <span
-              className="ml-1.5 text-[10px] font-normal text-amber-700 bg-amber-50 border border-amber-200 rounded px-1"
+              className="ml-1.5 text-[10px] font-normal text-amber-700 bg-amber-50 border border-amber-200 rounded px-1 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200"
               title={`Kayıtlı: rezerv ${section.reserved} · çözüldü ${section.completed}. Gerçek görevlerden çıkan değer farklı.`}
             >
               sayaç uyumsuz

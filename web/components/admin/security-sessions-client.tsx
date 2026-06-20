@@ -84,7 +84,7 @@ export function SecuritySessionsClient({ initial }: Props) {
       {/* Aktif sahte oturumlar */}
       {d.active_impersonations.length > 0 ? (
         <Card className="overflow-hidden border-2 border-violet-300">
-          <div className="border-b border-violet-200 bg-violet-50/60 px-4 py-2.5 text-sm font-semibold text-violet-900">
+          <div className="border-b border-violet-200 bg-violet-50/60 px-4 py-2.5 text-sm font-semibold text-violet-900 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
             <UserCog className="mr-1 inline size-4" aria-hidden />
             Aktif Sahte Oturumlar ({d.active_impersonations.length})
             <span className="ml-2 text-xs font-normal text-violet-700">— 30 dk sonra otomatik kapanır</span>
@@ -302,10 +302,10 @@ export function SecuritySessionsClient({ initial }: Props) {
 
 function SummaryCard({ label, value, tone }: { label: string; value: number; tone: string }) {
   const cls: Record<string, string> = {
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
-    rose: "bg-rose-50 border-rose-200 text-rose-900",
-    amber: "bg-amber-50 border-amber-200 text-amber-900",
-    slate: "bg-slate-50 border-slate-200 text-slate-900",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+    rose: "bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+    amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+    slate: "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
   };
   return (
     <div className={cn("rounded-lg border p-3", cls[tone] ?? cls.slate)}>

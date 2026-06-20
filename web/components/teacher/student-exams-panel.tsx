@@ -51,12 +51,12 @@ import { cn } from "@/lib/utils";
 
 // Sınav türü → sabit ton (Tailwind purge güvenli)
 const SECTION_TONE: Record<ExamSectionValue, string> = {
-  lgs: "border-sky-200 bg-sky-50 text-sky-700",
-  tyt: "border-indigo-200 bg-indigo-50 text-indigo-700",
-  ayt_say: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  ayt_ea: "border-amber-200 bg-amber-50 text-amber-800",
-  ayt_soz: "border-violet-200 bg-violet-50 text-violet-700",
-  ayt_dil: "border-rose-200 bg-rose-50 text-rose-700",
+  lgs: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+  tyt: "border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
+  ayt_say: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  ayt_ea: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+  ayt_soz: "border-violet-200 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
+  ayt_dil: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
 };
 
 function sectionPenalty(section: ExamSectionValue): number {

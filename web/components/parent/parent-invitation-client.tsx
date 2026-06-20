@@ -180,7 +180,7 @@ export function ParentInvitationClient({ invitation }: Props) {
             </div>
 
             {localError && (
-              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-800">
+              <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2.5 text-sm text-rose-800 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
                 {localError}
               </div>
             )}
@@ -276,7 +276,7 @@ export function ParentInvitationClient({ invitation }: Props) {
 
                 <PrefMatrix prefs={prefs} onToggle={togglePref} />
 
-                <div className="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-[11px] text-amber-900 leading-relaxed">
+                <div className="rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-[11px] text-amber-900 leading-relaxed dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
                   <strong>WhatsApp bildirimleri</strong> almak için davet
                   kabulünden sonra Bildirim Tercihleri sayfasından telefon
                   numaranızı doğrulamanız gerekir. Telefonunuz doğrulanana

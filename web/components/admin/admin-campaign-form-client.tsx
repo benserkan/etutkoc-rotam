@@ -178,7 +178,7 @@ export function AdminCampaignFormClient({ meta }: Props) {
             ) : preview ? (
               <div className={cn(
                 "rounded-lg border p-3",
-                preview.count > 0 ? "border-emerald-200 bg-emerald-50" : "border-amber-200 bg-amber-50",
+                preview.count > 0 ? "border-emerald-200 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30" : "border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30",
               )}>
                 <div className={cn("text-sm font-semibold", preview.count > 0 ? "text-emerald-900" : "text-amber-900")}>
                   {preview.count === 0 ? "Bu segmentte şu anda hedef bulunamadı." : `${preview.count} hedef`}

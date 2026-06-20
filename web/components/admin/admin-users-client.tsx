@@ -54,11 +54,11 @@ const ROLE_OPTIONS: { value: AdminRole; label: string }[] = [
 ];
 
 const ROLE_COLOR: Record<AdminRole, string> = {
-  super_admin: "bg-rose-50 text-rose-700 border-rose-200",
-  institution_admin: "bg-violet-50 text-violet-700 border-violet-200",
-  teacher: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  student: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  parent: "bg-sky-50 text-sky-700 border-sky-200",
+  super_admin: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  institution_admin: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
+  teacher: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
+  student: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  parent: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
 };
 
 /**
@@ -824,7 +824,7 @@ function DemoCredentialCard({
             type="button"
             onClick={() => copy(cred.email, "email")}
             className="px-2 py-1 text-[11px] rounded border border-border hover:bg-muted transition inline-flex items-center gap-1"
-            title="Email'i panoya kopyala"
+            title="Email dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200'i panoya kopyala"
           >
             {copied === "email" ? (
               <CheckCircle2 className="size-3 text-emerald-600" aria-hidden />

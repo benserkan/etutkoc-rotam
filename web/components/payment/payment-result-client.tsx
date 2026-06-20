@@ -119,7 +119,7 @@ export function PaymentResultClient({ result, errorCode }: Props) {
             </>
           )}
 
-          <div className="mx-auto mt-6 max-w-sm rounded-lg border border-slate-200 bg-slate-50 p-4 text-left text-sm">
+          <div className="mx-auto mt-6 max-w-sm rounded-lg border border-slate-200 bg-slate-50 p-4 text-left text-sm dark:bg-slate-500/10 dark:border-slate-500/30">
             <Row label="İşlem No" value={`#${result.transaction_id}`} />
             <Row label="Paket" value={result.plan_code} />
             <Row label="Dönem" value={result.cycle === "annual" ? "Yıllık" : "Aylık"} />

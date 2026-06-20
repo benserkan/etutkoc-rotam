@@ -111,7 +111,7 @@ export function SessionsCard() {
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-medium">{deviceLabel(s.user_agent)}</span>
                       {s.is_current ? (
-                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+                        <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
                           Bu cihaz
                         </span>
                       ) : null}

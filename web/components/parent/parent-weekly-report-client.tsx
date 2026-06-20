@@ -339,7 +339,7 @@ function SubjectSection({
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
               {mostCompleted && (
-                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2.5 dark:bg-emerald-500/10 dark:border-emerald-500/30">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-800">
                     <Trophy className="size-3.5" aria-hidden />
                     En çok çözülen
@@ -350,7 +350,7 @@ function SubjectSection({
                 </div>
               )}
               {mostNeglected && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+                <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 dark:bg-amber-500/10 dark:border-amber-500/30">
                   <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-800">
                     <AlertTriangle className="size-3.5" aria-hidden />
                     En çok aksatılan

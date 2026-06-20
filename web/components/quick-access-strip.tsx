@@ -170,7 +170,7 @@ function QuickCardTile({
           </span>
         )}
         {card.state === "suggested" && (
-          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-1.5 py-0.5 text-[10px] font-medium text-cyan-900">
+          <span className="mt-1.5 inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 px-1.5 py-0.5 text-[10px] font-medium text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
             <Sparkles className="size-2.5" aria-hidden />
             önerilen
           </span>

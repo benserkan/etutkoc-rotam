@@ -48,12 +48,12 @@ interface Props {
 }
 
 const CATEGORY_TONE: Record<string, string> = {
-  veli: "bg-sky-50 text-sky-900 border-sky-200",
-  ogrenci: "bg-emerald-50 text-emerald-900 border-emerald-200",
-  kurum_ogretmen: "bg-violet-50 text-violet-900 border-violet-200",
-  kurum_veli: "bg-amber-50 text-amber-900 border-amber-200",
-  kurum_ogrenci: "bg-rose-50 text-rose-900 border-rose-200",
-  admin_yonetici: "bg-fuchsia-50 text-fuchsia-900 border-fuchsia-200",
+  veli: "bg-sky-50 text-sky-900 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+  ogrenci: "bg-emerald-50 text-emerald-900 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  kurum_ogretmen: "bg-violet-50 text-violet-900 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
+  kurum_veli: "bg-amber-50 text-amber-900 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+  kurum_ogrenci: "bg-rose-50 text-rose-900 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  admin_yonetici: "bg-fuchsia-50 text-fuchsia-900 border-fuchsia-200 dark:bg-fuchsia-500/10 dark:border-fuchsia-500/30 dark:text-fuchsia-200",
   admin_sistem: "bg-slate-100 text-slate-900 border-slate-300",
 };
 
@@ -297,17 +297,17 @@ function TemplateRow({
             </span>
           )}
           {template.allow_bulk && (
-            <span className="text-[10px] uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] uppercase tracking-wider bg-amber-50 text-amber-800 border border-amber-200 px-1.5 py-0.5 rounded dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
               Toplu
             </span>
           )}
           {template.requires_date && (
-            <span className="text-[10px] uppercase tracking-wider bg-sky-50 text-sky-800 border border-sky-200 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] uppercase tracking-wider bg-sky-50 text-sky-800 border border-sky-200 px-1.5 py-0.5 rounded dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
               Tarihli
             </span>
           )}
           {template.allow_freeform_note && (
-            <span className="text-[10px] uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] uppercase tracking-wider bg-emerald-50 text-emerald-800 border border-emerald-200 px-1.5 py-0.5 rounded dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
               Serbest not
             </span>
           )}
@@ -768,7 +768,7 @@ function PreviewBlock({
       </div>
       {previewMut.data ? (
         <>
-          <div className="rounded border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-sm whitespace-pre-wrap text-emerald-900">
+          <div className="rounded border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-sm whitespace-pre-wrap text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
             {previewMut.data.rendered}
           </div>
           {previewMut.data.warnings.length > 0 ? (

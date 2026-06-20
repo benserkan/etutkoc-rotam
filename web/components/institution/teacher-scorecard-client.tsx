@@ -72,7 +72,7 @@ export function TeacherScorecardClient({ initial }: Props) {
           <div className="mt-1 text-3xl font-bold tabular-nums">{s.avg_score}</div>
           <div className="text-[11px] text-muted-foreground">{s.teacher_count} öğretmen</div>
         </Card>
-        <Card className="p-4 sm:col-span-2 border-emerald-200 bg-emerald-50/40">
+        <Card className="p-4 sm:col-span-2 border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30">
           <div className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase text-emerald-700">
             <Trophy className="size-3.5" aria-hidden /> En etkili koç
           </div>

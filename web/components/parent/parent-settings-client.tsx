@@ -158,7 +158,7 @@ export function ParentSettingsClient({ initial }: Props) {
 
       <WhatsAppCard whatsapp={data.whatsapp} />
 
-      <div className="rounded-md border border-rose-200 bg-rose-50/50 p-4 text-xs text-rose-800 leading-relaxed">
+      <div className="rounded-md border border-rose-200 bg-rose-50/50 p-4 text-xs text-rose-800 leading-relaxed dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
         <strong>Tek tıkla tüm bildirimleri kapatmak için:</strong>{" "}
         e-postaların altındaki &ldquo;tek tıkla kapat&rdquo; linkini
         kullanabilirsiniz. Tüm türler kapanır; bu sayfadan tekrar aktive
@@ -703,7 +703,7 @@ function WhatsAppPendingPanel({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
 
   return (
     <div className="space-y-3">
-      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+      <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
         <code className="bg-white/60 px-1.5 py-0.5 rounded font-mono">
           +{whatsapp.pending_phone}
         </code>{" "}

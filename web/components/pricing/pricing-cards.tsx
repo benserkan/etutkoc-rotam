@@ -69,7 +69,7 @@ export function PricingCards({
     <div className="space-y-7">
       {/* Aylık / Yıllık toggle */}
       <div className="flex flex-col items-center gap-2">
-        <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50/60 p-1">
+        <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50/60 p-1 dark:bg-cyan-500/10 dark:border-cyan-500/30">
           <button
             type="button"
             onClick={() => setYearly(false)}

@@ -190,7 +190,7 @@ function HelpDetails({
   years: number;
 }) {
   return (
-    <details className="rounded-md border border-sky-200 bg-sky-50/40">
+    <details className="rounded-md border border-sky-200 bg-sky-50/40 dark:bg-sky-500/10 dark:border-sky-500/30">
       <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-sky-900 hover:bg-sky-100/60 inline-flex items-center gap-1.5 w-full">
         <Info className="size-4" aria-hidden />
         Bu sayfada ne yazıyor? (terim açıklamaları)
@@ -238,9 +238,9 @@ function Kpi({
 }) {
   const map = {
     default: "border-border bg-card",
-    amber: "border-amber-200 bg-amber-50/40",
-    slate: "border-slate-200 bg-slate-50/40",
-    indigo: "border-indigo-200 bg-indigo-50/40",
+    amber: "border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30",
+    slate: "border-slate-200 bg-slate-50/40 dark:bg-slate-500/10 dark:border-slate-500/30",
+    indigo: "border-indigo-200 bg-indigo-50/40 dark:bg-indigo-500/10 dark:border-indigo-500/30",
   };
   const valueColor = {
     default: "text-foreground",

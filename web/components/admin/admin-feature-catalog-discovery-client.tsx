@@ -326,7 +326,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                             type="button"
                             disabled={busy}
                             onClick={() => setConfirm({ action: "reject", ids: [c.id] })}
-                            className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 hover:bg-amber-100"
+                            className="rounded border border-amber-200 bg-amber-50 px-2 py-1 text-xs text-amber-700 hover:bg-amber-100 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200"
                           >
                             Reddet
                           </button>
@@ -335,7 +335,7 @@ export function AdminFeatureCatalogDiscoveryClient({ initial }: Props) {
                           type="button"
                           disabled={busy}
                           onClick={() => setConfirm({ action: "delete", ids: [c.id] })}
-                          className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 hover:bg-rose-100"
+                          className="rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 hover:bg-rose-100 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200"
                         >
                           Sil
                         </button>

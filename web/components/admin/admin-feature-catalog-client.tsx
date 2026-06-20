@@ -329,7 +329,7 @@ function ScoreCell({ c }: { c: FeatureCardListItem }) {
       <div className="flex items-center gap-1 text-[10px]">
         {c.bandit_obs > 0 ? (
           <span
-            className="inline-flex items-center gap-0.5 rounded border border-teal-200 bg-teal-50 px-1 text-teal-700"
+            className="inline-flex items-center gap-0.5 rounded border border-teal-200 bg-teal-50 px-1 text-teal-700 dark:bg-teal-500/10 dark:border-teal-500/30 dark:text-teal-200"
             title={`Akıllı sıralama (LinUCB) ${c.bandit_obs} gözlemden öğrendi.`}
           >
             <Brain className="size-3" aria-hidden />

@@ -20,9 +20,9 @@ import { cn } from "@/lib/utils";
 
 // severity: critical / warn / info
 const SEVERITY_BADGE: Record<string, string> = {
-  critical: "bg-rose-50 text-rose-700 border-rose-200",
-  warn: "bg-amber-50 text-amber-700 border-amber-200",
-  info: "bg-sky-50 text-sky-700 border-sky-200",
+  critical: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  warn: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+  info: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
 };
 const SEVERITY_CARD: Record<string, string> = {
   critical: "border-l-rose-500 bg-rose-50/40",
@@ -47,11 +47,11 @@ export const SEVERITY_LABEL: Record<string, string> = {
 
 // level: ok / warn / critical / error / unknown / never / disabled / pending
 const LEVEL_BADGE: Record<string, string> = {
-  ok: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  warn: "bg-amber-50 text-amber-700 border-amber-200",
-  critical: "bg-rose-50 text-rose-700 border-rose-200",
-  error: "bg-rose-50 text-rose-700 border-rose-200",
-  pending: "bg-amber-50 text-amber-700 border-amber-200",
+  ok: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  warn: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+  critical: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  error: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  pending: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
   never: "bg-slate-100 text-slate-600 border-slate-200",
   disabled: "bg-slate-100 text-slate-500 border-slate-200",
   unknown: "bg-slate-100 text-slate-600 border-slate-200",

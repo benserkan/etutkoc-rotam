@@ -231,7 +231,7 @@ function NotificationDetailSection({ days }: { days: number }) {
                       </div>
                     ) : null}
                     {n.error ? (
-                      <div className="mt-1 rounded border border-rose-200 bg-rose-50/60 px-2 py-1 text-xs text-rose-800">
+                      <div className="mt-1 rounded border border-rose-200 bg-rose-50/60 px-2 py-1 text-xs text-rose-800 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
                         <span className="font-semibold">Hata:</span> {n.error}
                       </div>
                     ) : null}

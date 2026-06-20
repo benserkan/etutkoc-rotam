@@ -61,11 +61,11 @@ const ROLE_OPTIONS: { value: AdminRole; label: string }[] = [
 ];
 
 const ROLE_COLOR: Record<AdminRole, string> = {
-  super_admin: "bg-rose-50 text-rose-700 border-rose-200",
-  institution_admin: "bg-violet-50 text-violet-700 border-violet-200",
-  teacher: "bg-indigo-50 text-indigo-700 border-indigo-200",
-  student: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  parent: "bg-sky-50 text-sky-700 border-sky-200",
+  super_admin: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  institution_admin: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
+  teacher: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
+  student: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  parent: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
 };
 
 /**
@@ -144,7 +144,7 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
             </Button>
           )}
           {["teacher", "institution_admin", "super_admin"].includes(t.role) && (
-            <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100">
+            <Button asChild variant="outline" className="border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200">
               <Link href={`/admin/users/${t.id}/account-history`}>
                 <FileText className="size-4" aria-hidden />
                 Hesap Hareketleri
@@ -199,7 +199,7 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
             </>
           )}
           {data.is_self && (
-            <Card className="border-amber-200 bg-amber-50/40">
+            <Card className="border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30">
               <CardContent className="p-5 text-xs text-amber-900">
                 ℹ Bu sayfa <strong>kendi profilin</strong>. Rol değişimi,
                 impersonate ve hesap silme buradan yapılamaz (kilitlenme riski).
@@ -252,31 +252,31 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
   let stateBadge: React.ReactNode;
   if (isActive) {
     stateBadge = (
-      <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+      <span className="inline-flex items-center gap-1 rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
         Aktif{target.subscription_period_end ? ` · yenileme ${fmtShortDate(target.subscription_period_end)}` : ""}
       </span>
     );
   } else if (sub === "canceled") {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
         İptal edildi{target.subscription_period_end ? ` · ${fmtShortDate(target.subscription_period_end)}'de biter` : ""}
       </span>
     );
   } else if (sub === "past_due") {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700">
+      <span className="inline-flex items-center rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
         Yenileme gerekli (süresi doldu)
       </span>
     );
   } else if (target.trial_active) {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+      <span className="inline-flex items-center rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
         Deneme aktif
       </span>
     );
   } else {
     stateBadge = (
-      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600">
+      <span className="inline-flex items-center rounded border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-medium text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30">
         {SOLO_PLAN_LABELS[target.plan ?? "solo_free"] ?? target.plan}
       </span>
     );
@@ -764,7 +764,7 @@ function ImpersonateCard({
             required
             value={reason}
             onChange={(e) => setReason(e.target.value)}
-            placeholder="örn. 'Ödevler görünmüyor şikayetini yerinde inceleme'"
+            placeholder="örn.  dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200'Ödevler görünmüyor şikayetini yerinde inceleme'"
             className="block w-full px-2 py-1.5 text-xs border border-violet-300 rounded bg-white text-slate-900 placeholder:text-slate-400 focus:border-violet-500 focus:ring-1 focus:ring-violet-300"
           />
           <Button

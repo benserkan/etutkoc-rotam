@@ -62,9 +62,9 @@ const STATUS_TONE: Record<SupportStatus, string> = {
 
 // Gönderen rolüne göre mesaj balonu tonu (kim yazdı bir bakışta — purge-safe)
 const ROLE_TONE: Record<string, { bubble: string; name: string }> = {
-  teacher: { bubble: "border-sky-200 bg-sky-50 text-sky-950", name: "text-sky-800" },
-  institution_admin: { bubble: "border-amber-200 bg-amber-50 text-amber-950", name: "text-amber-800" },
-  super_admin: { bubble: "border-violet-200 bg-violet-50 text-violet-950", name: "text-violet-800" },
+  teacher: { bubble: "border-sky-200 bg-sky-50 text-sky-950 dark:bg-sky-500/10 dark:border-sky-500/30", name: "text-sky-800" },
+  institution_admin: { bubble: "border-amber-200 bg-amber-50 text-amber-950 dark:bg-amber-500/10 dark:border-amber-500/30", name: "text-amber-800" },
+  super_admin: { bubble: "border-violet-200 bg-violet-50 text-violet-950 dark:bg-violet-500/10 dark:border-violet-500/30", name: "text-violet-800" },
 };
 const ROLE_TONE_DEFAULT = { bubble: "border-border bg-muted text-foreground", name: "text-foreground" };
 
@@ -459,7 +459,7 @@ function RequestDetail({
               maxLength={5000}
             />
             {isEscalator && !canManage ? (
-              <p className="rounded-md border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs text-violet-900">
+              <p className="rounded-md border border-violet-200 bg-violet-50 px-2.5 py-1.5 text-xs text-violet-900 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
                 Bu talebi süper yöneticiye yönlendirdiniz; süper yönetici yanıtladığında
                 cevap burada görünür.
               </p>

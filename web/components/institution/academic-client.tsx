@@ -78,7 +78,7 @@ export function AcademicClient({ initial }: Props) {
       </header>
 
       {/* Sade dil notu — net başarı oranı nedir */}
-      <Card className="border-sky-200 bg-sky-50/50 p-3">
+      <Card className="border-sky-200 bg-sky-50/50 p-3 dark:bg-sky-500/10 dark:border-sky-500/30">
         <div className="flex items-start gap-2 text-sm text-sky-900">
           <Info className="mt-0.5 size-4 shrink-0" aria-hidden />
           <p>
@@ -269,7 +269,7 @@ export function AcademicClient({ initial }: Props) {
       {/* Deneme girmeyen (kapsama eksiği) */}
       {d.no_exam_program.length > 0 ? (
         <Card className="overflow-hidden border-amber-300">
-          <div className="border-b border-amber-200 bg-amber-50/50 px-4 py-2.5">
+          <div className="border-b border-amber-200 bg-amber-50/50 px-4 py-2.5 dark:bg-amber-500/10 dark:border-amber-500/30">
             <h2 className="text-sm font-semibold text-amber-900">
               Deneme girilmeyen öğrenciler ({s.no_exam_count})
             </h2>

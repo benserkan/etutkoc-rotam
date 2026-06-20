@@ -157,7 +157,7 @@ function UpgradeRequestCard({ data }: { data: SubscriptionResponse }) {
         </div>
 
         {pending ? (
-          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900">
+          <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
             <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
               <strong>Talebin alındı.</strong>{" "}
@@ -257,7 +257,7 @@ function PlanOptionSummary({
   const sel = options.find((o) => o.code === selected);
   if (!sel) return null;
   return (
-    <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3">
+    <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
       <span className="text-muted-foreground">Seçilen kademe:</span>{" "}
       <span className="font-semibold text-cyan-900">{sel.label}</span>{" "}
       <span className="text-cyan-800">· {sel.coaches} · {sel.price_label}</span>
@@ -359,9 +359,9 @@ function CurrentStatusCard({
 function KindBadge({ kind }: { kind: SubscriptionStatusInfo["kind"] }) {
   const tone =
     kind === "academic_year"
-      ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+      ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200"
       : kind === "paused"
-        ? "bg-sky-50 text-sky-700 border-sky-200"
+        ? "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200"
         : "bg-slate-100 text-slate-700 border-slate-200";
   const label =
     kind === "academic_year"
@@ -416,7 +416,7 @@ function AcademicYearPromoCard() {
   }
 
   return (
-    <Card className="border-emerald-200 bg-emerald-50/40">
+    <Card className="border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30">
       <CardContent className="p-5">
         <div className="flex items-start gap-3">
           <div className="rounded-md bg-emerald-100 p-2">
@@ -511,7 +511,7 @@ function SummerPauseCard({ status }: { status: SubscriptionStatusInfo }) {
 function PauseHelpline({ status }: { status: SubscriptionStatusInfo }) {
   if (status.kind !== "academic_year") {
     return (
-      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2">
+      <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
         <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
         <span>
           Pause moduna geçmek için <b>akademik yıl planında</b> olmanız gerekir.
@@ -521,7 +521,7 @@ function PauseHelpline({ status }: { status: SubscriptionStatusInfo }) {
   }
   if (!status.in_summer_window) {
     return (
-      <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 flex items-start gap-2">
+      <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
         <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
         <span>
           Pause moduna <b>sadece Temmuz-Ağustos</b> penceresinde geçilebilir.
@@ -831,14 +831,14 @@ function GuaranteeDetails({
 
       {/* Durum banner — provisional / triggered / safe / extended */}
       {evaluation.already_extended ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2">
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           <CheckCircle2 className="size-4 shrink-0 mt-0.5" aria-hidden />
           <span>
             Garanti uzatması <b>uygulandı</b>. Tek seferlik bir hak; tekrar tetiklenmez.
           </span>
         </div>
       ) : evaluation.is_provisional ? (
-        <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 flex items-start gap-2">
+        <div className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
           <CheckCircle2 className="size-4 shrink-0 mt-0.5" aria-hidden />
           <span>
             <b>İlerleyiş izleme.</b> Resmi değerlendirme 60. günde yapılır
@@ -848,7 +848,7 @@ function GuaranteeDetails({
           </span>
         </div>
       ) : evaluation.triggered ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2">
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 flex items-start gap-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
           <span>
             <b>Tamamlama eşiğin altında.</b> Sistem otomatik 1 ay uzatma
@@ -856,7 +856,7 @@ function GuaranteeDetails({
           </span>
         </div>
       ) : (
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 flex items-start gap-2">
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900 flex items-start gap-2 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
           <CheckCircle2 className="size-4 shrink-0 mt-0.5" aria-hidden />
           <span>
             <b>Hedef yakalandı.</b> Tamamlama %{ratePct} (eşik %{thresholdPct})

@@ -62,10 +62,10 @@ const STATUS_OPTIONS: { value: SessionStatus; label: string }[] = [
   { value: "no_show", label: "Gelmedi" },
 ];
 const STATUS_TONE: Record<SessionStatus, string> = {
-  done: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  postponed: "border-amber-200 bg-amber-50 text-amber-800",
-  cancelled: "border-slate-200 bg-slate-50 text-slate-600",
-  no_show: "border-rose-200 bg-rose-50 text-rose-700",
+  done: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  postponed: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+  cancelled: "border-slate-200 bg-slate-50 text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30",
+  no_show: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
 };
 const CHANNEL_OPTIONS: { value: SessionChannel; label: string }[] = [
   { value: "in_person", label: "Yüz yüze" },
@@ -217,7 +217,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
       </div>
 
       {aiLocked ? (
-        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+        <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           <Lock className="size-4 shrink-0" aria-hidden />
           Yapay zekâ özellikleri (sesli dikte, fotoğraftan doldurma, koçluk içgörüsü) ücretli
           pakette açıktır.
@@ -323,7 +323,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
                 akademik durumdan bir sonraki seans için özet, gündem ve yaklaşım
                 önerileri üretilir.
               </p>
-              <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800">
+              <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-xs text-violet-800 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
                 Bu işlem yapay zekâ kullanır ve <strong>kredi düşer</strong>. Üretilen
                 içgörü kaydedilir; sonraki görüntülemeler ücretsizdir.
               </div>
@@ -338,7 +338,7 @@ export function StudentSessionsPanel({ studentId }: Props) {
           ) : (
             <div className="max-h-[68vh] space-y-4 overflow-y-auto pr-1 text-sm">
               {insightQ.data?.is_stale ? (
-                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
                   <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
                   <span>
                     Bu içgörü <strong>{cachedInsight.based_on_sessions} seansa</strong> dayanıyor;
@@ -412,7 +412,7 @@ function InsightList({
             key={i}
             className={cn(
               "rounded-md border px-2.5 py-1.5 text-sm",
-              tone === "warn" ? "border-amber-200 bg-amber-50 text-amber-900" : "border-border bg-card",
+              tone === "warn" ? "border-amber-200 bg-amber-50 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200" : "border-border bg-card",
             )}
           >
             {it}
@@ -770,7 +770,7 @@ function SessionForm({
       />
 
       {!isEdit ? (
-        <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3 text-xs">
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3 text-xs dark:bg-cyan-500/10 dark:border-cyan-500/30">
           <p className="mb-1.5 font-semibold text-cyan-900">Bu haftanın verisi (otomatik)</p>
           {prefill.isLoading ? (
             <p className="text-muted-foreground">Hesaplanıyor…</p>

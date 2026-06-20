@@ -154,7 +154,7 @@ function StepIndicator({ current }: { current: WizardStep }) {
               s === current
                 ? "bg-emerald-600 text-white border-emerald-600"
                 : s < current
-                ? "bg-emerald-50 text-emerald-800 border-emerald-200"
+                ? "bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200"
                 : "bg-muted text-muted-foreground border-border",
             )}
           >
@@ -905,7 +905,7 @@ function BroadcastView({ result }: { result: BulkSendResponse }) {
   return (
     <Card>
       <CardContent className="p-4 space-y-4">
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 inline-flex items-start gap-2">
+        <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 inline-flex items-start gap-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           <AlertTriangle className="size-4 shrink-0 mt-0.5" aria-hidden />
           <div>
             <strong>Broadcast list talimatı:</strong> WhatsApp Business
@@ -928,7 +928,7 @@ function BroadcastView({ result }: { result: BulkSendResponse }) {
               Kopyala
             </Button>
           </div>
-          <div className="rounded border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-sm whitespace-pre-wrap text-emerald-900">
+          <div className="rounded border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-sm whitespace-pre-wrap text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
             {result.rendered_text}
           </div>
         </div>

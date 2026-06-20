@@ -82,7 +82,7 @@ export function AdminUser360Client({ initial, userId }: Props) {
         <div className="flex items-center gap-2">
           <Link
             href={`/admin/users/${owner.owner_id}/account-history`}
-            className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100"
+            className="inline-flex items-center gap-1.5 rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200"
           >
             <ScrollText className="size-4" aria-hidden />
             Hesap Hareketleri
@@ -220,14 +220,14 @@ export function AdminUser360Client({ initial, userId }: Props) {
 
 function Kpi({ label, value, sub, tone }: { label: string; value: string; sub: string; tone: string }) {
   const cls: Record<string, string> = {
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
-    rose: "bg-rose-50 border-rose-200 text-rose-900",
-    amber: "bg-amber-50 border-amber-200 text-amber-900",
-    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900",
-    sky: "bg-sky-50 border-sky-200 text-sky-900",
-    lime: "bg-lime-50 border-lime-200 text-lime-900",
-    orange: "bg-orange-50 border-orange-200 text-orange-900",
-    slate: "bg-slate-50 border-slate-200 text-slate-900",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+    rose: "bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+    amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
+    sky: "bg-sky-50 border-sky-200 text-sky-900 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+    lime: "bg-lime-50 border-lime-200 text-lime-900 dark:bg-lime-500/10 dark:border-lime-500/30 dark:text-lime-200",
+    orange: "bg-orange-50 border-orange-200 text-orange-900 dark:bg-orange-500/10 dark:border-orange-500/30 dark:text-orange-200",
+    slate: "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
   };
   return (
     <div className={cn("rounded-lg border p-4", cls[tone] ?? cls.slate)}>

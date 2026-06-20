@@ -150,7 +150,7 @@ export function AdminInstitutionsClient({
               className={cn(
                 "px-2 py-1 rounded border transition",
                 sort === opt.value
-                  ? "bg-indigo-50 text-indigo-700 border-indigo-200 font-medium"
+                  ? "bg-indigo-50 text-indigo-700 border-indigo-200 font-medium dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200"
                   : "bg-card text-muted-foreground border-border hover:border-foreground/40",
               )}
             >
@@ -173,7 +173,7 @@ export function AdminInstitutionsClient({
               className={cn(
                 "px-2 py-1 rounded border transition",
                 filterLevel === opt.value
-                  ? "bg-rose-50 text-rose-700 border-rose-200 font-medium"
+                  ? "bg-rose-50 text-rose-700 border-rose-200 font-medium dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200"
                   : "bg-card text-muted-foreground border-border hover:border-foreground/40",
               )}
             >
@@ -325,7 +325,7 @@ function InstitutionRow({ item }: { item: InstitutionListItem }) {
         </div>
       </td>
       <td className="px-4 py-3 align-top">
-        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
+        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
           {institutionPlanLabel(inst.plan)}
         </span>
       </td>
@@ -359,7 +359,7 @@ function InstitutionRow({ item }: { item: InstitutionListItem }) {
       </td>
       <td className="px-4 py-3 align-top">
         {inst.is_active ? (
-          <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
             Aktif
           </span>
         ) : (
@@ -417,16 +417,16 @@ function ActivityBar({
 
 function ScoreBadge({ score, color }: { score: number; color: string }) {
   const map: Record<string, string> = {
-    rose: "bg-rose-50 text-rose-700 border-rose-200",
-    amber: "bg-amber-50 text-amber-700 border-amber-200",
-    yellow: "bg-yellow-50 text-yellow-700 border-yellow-200",
-    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    rose: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+    amber: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+    yellow: "bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-500/10 dark:border-yellow-500/30 dark:text-yellow-200",
+    emerald: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
   };
   return (
     <span
       className={cn(
         "text-xs px-1.5 py-0.5 rounded font-mono font-semibold border tabular-nums",
-        map[color] ?? "bg-slate-50 text-slate-700 border-slate-200",
+        map[color] ?? "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
       )}
     >
       {score}

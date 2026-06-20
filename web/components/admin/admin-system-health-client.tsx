@@ -232,11 +232,11 @@ function CronRow({ cron }: { cron: CronStatusItem }) {
 function HealthBadge({ band }: { band: HealthBand }) {
   const map: Record<HealthBand, { cls: string; label: string }> = {
     crit: {
-      cls: "bg-rose-50 text-rose-700 border-rose-200",
+      cls: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
       label: "🔴 Kritik gecikme",
     },
     warn: {
-      cls: "bg-amber-50 text-amber-700 border-amber-200",
+      cls: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
       label: "🟡 Gecikmiş",
     },
     never: {
@@ -248,7 +248,7 @@ function HealthBadge({ band }: { band: HealthBand }) {
       label: "⏸ Kapalı",
     },
     ok: {
-      cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      cls: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
       label: "🟢 Sağlıklı",
     },
   };
@@ -329,15 +329,15 @@ function DispatcherCard({
             </div>
             <div className="mt-1">
               {dispatcher.health === "crit" ? (
-                <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">
+                <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
                   🔴 Acil bakın
                 </span>
               ) : dispatcher.health === "warn" ? (
-                <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium">
+                <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 font-medium dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
                   🟡 Yığılma var
                 </span>
               ) : (
-                <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
                   🟢 Akıcı
                 </span>
               )}
@@ -489,7 +489,7 @@ function BackupCard({ backup }: { backup: BackupStatusInfo }) {
           dizin: {backup.backup_dir}
         </div>
         {backup.health === "crit" && backup.total_count === 0 ? (
-          <div className="text-xs text-rose-700 mt-3 bg-rose-50 border border-rose-200 rounded p-2">
+          <div className="text-xs text-rose-700 mt-3 bg-rose-50 border border-rose-200 rounded p-2 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
             ⚠ Yedek dizini boş veya erişilemez. Cron&apos;un çalıştığını + dosya izinlerini kontrol et.
             Komut: <code className="font-mono">bash /opt/etutkoc/deploy/backup.sh</code>
           </div>

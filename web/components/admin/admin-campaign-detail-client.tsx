@@ -214,7 +214,7 @@ export function AdminCampaignDetailClient({ initial, campaignId }: Props) {
         {c.started_at ? <div>Başlatıldı: {fmt(c.started_at)}</div> : null}
         {c.completed_at ? <div>Tamamlandı: {fmt(c.completed_at)}</div> : null}
         {c.admin_note ? (
-          <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700">
+          <div className="mt-2 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
             <strong>İç not:</strong> {c.admin_note}
           </div>
         ) : null}
@@ -293,12 +293,12 @@ function FunnelKpi({
   sub?: string;
 }) {
   const cls: Record<string, string> = {
-    slate: "bg-slate-50 border-slate-200 text-slate-900",
-    blue: "bg-blue-50 border-blue-200 text-blue-900",
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
-    rose: "bg-rose-50 border-rose-200 text-rose-900",
-    amber: "bg-amber-50 border-amber-200 text-amber-900",
-    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900",
+    slate: "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
+    blue: "bg-blue-50 border-blue-200 text-blue-900 dark:bg-blue-500/10 dark:border-blue-500/30 dark:text-blue-200",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+    rose: "bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+    amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+    indigo: "bg-indigo-50 border-indigo-200 text-indigo-900 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
   };
   return (
     <div className={cn("rounded-lg border p-3", cls[tone] ?? cls.slate)}>

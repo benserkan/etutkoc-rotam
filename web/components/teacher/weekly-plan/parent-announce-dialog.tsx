@@ -99,7 +99,7 @@ export function ParentAnnounceDialog({
           </p>
         ) : (
           <div className="space-y-4 text-sm">
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
               <p>
                 <b>{data.student_name}</b> · {data.week_start} — {data.week_end}
               </p>
@@ -109,7 +109,7 @@ export function ParentAnnounceDialog({
             </div>
 
             {draftTotal > 0 ? (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
                 <span>
                   {draftTotal} taslak görev YAYINLANMAMIŞ — bu duyuruya girmez.

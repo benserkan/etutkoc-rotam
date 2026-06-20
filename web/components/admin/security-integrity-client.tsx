@@ -28,9 +28,9 @@ interface Props {
 }
 
 function migrationTone(status: string): string {
-  if (status === "ok") return "border-emerald-200 bg-emerald-50/40";
-  if (status === "pending") return "border-amber-200 bg-amber-50/40";
-  return "border-rose-200 bg-rose-50/40";
+  if (status === "ok") return "border-emerald-200 bg-emerald-50/40 dark:bg-emerald-500/10 dark:border-emerald-500/30";
+  if (status === "pending") return "border-amber-200 bg-amber-50/40 dark:bg-amber-500/10 dark:border-amber-500/30";
+  return "border-rose-200 bg-rose-50/40 dark:bg-rose-500/10 dark:border-rose-500/30";
 }
 
 export function SecurityIntegrityClient({ initial }: Props) {
@@ -150,7 +150,7 @@ export function SecurityIntegrityClient({ initial }: Props) {
           ) : (
             <div className="mt-3 space-y-2">
               {d.orphans.findings.map((f) => (
-                <div key={f.kind} className="rounded-md border border-amber-200 bg-amber-50/50 p-3">
+                <div key={f.kind} className="rounded-md border border-amber-200 bg-amber-50/50 p-3 dark:bg-amber-500/10 dark:border-amber-500/30">
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-sm font-medium text-amber-900">{f.label}</span>
                     <span className="rounded-full bg-amber-200 px-2 py-0.5 text-[11px] font-medium text-amber-900">

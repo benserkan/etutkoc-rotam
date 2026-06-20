@@ -117,7 +117,7 @@ export function AdminAuditClient({
       </header>
 
       {/* Help collapse */}
-      <details className="rounded-md border border-sky-200 bg-sky-50/40">
+      <details className="rounded-md border border-sky-200 bg-sky-50/40 dark:bg-sky-500/10 dark:border-sky-500/30">
         <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-sky-900 hover:bg-sky-100/60 inline-flex items-center gap-1.5 w-full">
           <Info className="size-4" aria-hidden />
           Bu sayfada ne yazıyor? (terim açıklamaları)
@@ -407,13 +407,13 @@ function DetailCell({ item }: { item: AuditListItem }) {
           ↳ Değişim diff&apos;i (önce / sonra)
         </summary>
         <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
-          <div className="bg-rose-50 border border-rose-200 rounded p-2">
+          <div className="bg-rose-50 border border-rose-200 rounded p-2 dark:bg-rose-500/10 dark:border-rose-500/30">
             <div className="text-rose-700 font-semibold mb-1">ÖNCE</div>
             <pre className="text-rose-900 whitespace-pre-wrap break-words font-mono">
               {"before" in parsed ? JSON.stringify(parsed.before, null, 2) : "—"}
             </pre>
           </div>
-          <div className="bg-emerald-50 border border-emerald-200 rounded p-2">
+          <div className="bg-emerald-50 border border-emerald-200 rounded p-2 dark:bg-emerald-500/10 dark:border-emerald-500/30">
             <div className="text-emerald-700 font-semibold mb-1">SONRA</div>
             <pre className="text-emerald-900 whitespace-pre-wrap break-words font-mono">
               {"after" in parsed ? JSON.stringify(parsed.after, null, 2) : "—"}

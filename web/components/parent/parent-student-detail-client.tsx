@@ -510,18 +510,18 @@ function warningTone(level: WarningLevel): {
   if (level === "red") {
     return {
       text: "text-rose-700",
-      pill: "bg-rose-50 text-rose-700 border border-rose-200",
+      pill: "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
     };
   }
   if (level === "amber") {
     return {
       text: "text-amber-700",
-      pill: "bg-amber-50 text-amber-700 border border-amber-200",
+      pill: "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
     };
   }
   return {
     text: "text-emerald-700",
-    pill: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    pill: "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
   };
 }
 

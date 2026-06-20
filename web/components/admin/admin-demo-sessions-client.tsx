@@ -37,9 +37,9 @@ const KIND_LABEL: Record<DemoKind, string> = {
 };
 
 const KIND_TONE: Record<DemoKind, string> = {
-  institution: "border-indigo-200 bg-indigo-50 text-indigo-800",
-  solo_coach: "border-violet-200 bg-violet-50 text-violet-800",
-  institution_teacher: "border-sky-200 bg-sky-50 text-sky-800",
+  institution: "border-indigo-200 bg-indigo-50 text-indigo-800 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200",
+  solo_coach: "border-violet-200 bg-violet-50 text-violet-800 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
+  institution_teacher: "border-sky-200 bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
 };
 
 function fmtRelative(iso: string): string {
@@ -213,7 +213,7 @@ function DemoSessionCard({ item }: { item: DemoSessionListItem }) {
               ) : null}
               <li>Tüm örnek görev/deneme/seans/kitap verileri</li>
             </ul>
-            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2">
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
               Yalnız <code>is_demo=True</code> kayıtlara dokunulur. Gerçek
               hesaplar etkilenmez.
             </p>

@@ -332,7 +332,7 @@ function CompleteSheetInner({
                 />
               </div>
             </div>
-            {/* Boş soru hesabı — yalnız Deneme'de (aynı birim) anlamlı */}
+            {/* Boş soru hesabı — yalnız Deneme dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200'de (aynı birim) anlamlı */}
             {isDeneme &&
             correct != null &&
             wrong != null &&

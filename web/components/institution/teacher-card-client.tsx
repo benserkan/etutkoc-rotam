@@ -84,7 +84,7 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
         defaultCategory="kurum_ogretmen"
       />
 
-      <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2">
+      <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
         <Lock className="size-4 shrink-0 mt-0.5" aria-hidden />
         <div>
           Bu sayfada öğretmenin programını, veli notlarını veya öğrenci görev

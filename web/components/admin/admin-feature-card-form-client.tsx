@@ -194,7 +194,7 @@ export function AdminFeatureCardFormClient({ initial, mode }: Props) {
             </div>
           </Card>
 
-          <Card className="border-2 border-indigo-200 bg-indigo-50/40 p-5">
+          <Card className="border-2 border-indigo-200 bg-indigo-50/40 p-5 dark:bg-indigo-500/10 dark:border-indigo-500/30">
             <div className="mb-3 flex items-baseline justify-between">
               <h2 className="text-sm font-semibold text-indigo-900">
                 🏠 2. Anasayfa Kart Görünümü
@@ -388,7 +388,7 @@ export function AdminFeatureCardFormClient({ initial, mode }: Props) {
         {/* Sağ — yönetim */}
         <div className="space-y-4">
           {/* Canlı anasayfa önizlemesi — yayın öncesi "nasıl görünecek" simülasyonu */}
-          <Card className="overflow-hidden border-2 border-cyan-200 bg-cyan-50/40 p-0">
+          <Card className="overflow-hidden border-2 border-cyan-200 bg-cyan-50/40 p-0 dark:bg-cyan-500/10 dark:border-cyan-500/30">
             <div className="flex items-baseline justify-between px-4 pb-2 pt-4">
               <h2 className="text-sm font-semibold text-cyan-900">
                 🏠 Anasayfa önizlemesi
@@ -583,7 +583,7 @@ export function AdminFeatureCardFormClient({ initial, mode }: Props) {
       </form>
 
       {isEdit ? (
-        <Card className="border-rose-200 bg-rose-50 p-4">
+        <Card className="border-rose-200 bg-rose-50 p-4 dark:bg-rose-500/10 dark:border-rose-500/30">
           <h3 className="mb-2 text-sm font-medium text-rose-900">⚠ Tehlikeli Aksiyonlar</h3>
           <Button
             type="button"

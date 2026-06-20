@@ -62,7 +62,7 @@ export function MembershipActions({
   if (done) {
     const isHavale = done === "havale_claimed";
     return (
-      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center shadow-sm">
+      <section className="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 text-center shadow-sm dark:bg-emerald-500/10 dark:border-emerald-500/30">
         <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-emerald-600 text-white">
           <Check className="size-6" aria-hidden />
         </div>

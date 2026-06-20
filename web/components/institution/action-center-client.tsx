@@ -90,7 +90,7 @@ export function ActionCenterClient({ initial }: Props) {
 
       {/* Kartlar */}
       {d.items.length === 0 ? (
-        <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-6 text-sm text-emerald-800">
+        <Card className="flex items-center gap-3 border-emerald-200 bg-emerald-50/40 p-6 text-sm text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
           <CheckCircle2 className="size-6 shrink-0 text-emerald-600" aria-hidden />
           Şu an acil müdahale gerektiren bir durum yok. Tüm sınıflar yolunda görünüyor.
         </Card>

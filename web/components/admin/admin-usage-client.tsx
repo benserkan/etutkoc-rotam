@@ -285,7 +285,7 @@ function InstRow({ row }: { row: UsageInstitutionRow }) {
         </div>
       </td>
       <td className="px-4 py-2">
-        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
+        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
           {row.account.plan_code}
         </span>
       </td>
@@ -297,7 +297,7 @@ function InstRow({ row }: { row: UsageInstitutionRow }) {
       </td>
       <td className="px-4 py-2">
         {row.account.hard_block_enabled ? (
-          <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium inline-flex items-center gap-0.5">
+          <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium inline-flex items-center gap-0.5 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
             <ShieldOff className="size-3" aria-hidden />
             Erişim Kapalı
           </span>
@@ -500,7 +500,7 @@ function IndepRow({ row }: { row: UsageIndependentRow }) {
         </div>
       </td>
       <td className="px-4 py-2">
-        <span className="text-xs px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200">
+        <span className="text-xs px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
           {row.account.plan_code}
         </span>
       </td>

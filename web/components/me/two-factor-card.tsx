@@ -114,7 +114,7 @@ export function TwoFactorCard() {
         )}
         <h2 className="font-display text-lg font-semibold">İki faktörlü doğrulama</h2>
         {status.enabled ? (
-          <span className="ml-auto rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700">
+          <span className="ml-auto rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
             Aktif
           </span>
         ) : (
@@ -158,7 +158,7 @@ export function TwoFactorCard() {
             <code className="mt-1 block break-all text-xs font-mono">{setup.secret}</code>
           </div>
 
-          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3">
+          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 dark:bg-amber-500/10 dark:border-amber-500/30">
             <p className="text-xs font-medium text-amber-900">
               Yedek kodlarınızı güvenli bir yere kaydedin (bir kez gösterilir):
             </p>

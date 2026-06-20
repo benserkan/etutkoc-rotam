@@ -182,7 +182,7 @@ export function SurveyResultView({ result }: { result: SurveyResultModel }) {
 
       {/* Yorum çerçevesi + atıf + sabit ibare */}
       {result.report_note ? (
-        <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 text-xs text-cyan-900">
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 text-xs text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
           <p className="font-semibold mb-0.5">Koçluk yorumu için çerçeve</p>
           <p className="leading-relaxed">{result.report_note}</p>
         </div>

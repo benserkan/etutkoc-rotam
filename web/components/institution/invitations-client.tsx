@@ -140,7 +140,7 @@ export function InvitationsClient({ initial }: Props) {
 
 function SecurityNote() {
   return (
-    <div className="rounded-md border border-violet-200 bg-violet-50 text-violet-900 px-3 py-2.5 text-xs flex items-start gap-2">
+    <div className="rounded-md border border-violet-200 bg-violet-50 text-violet-900 px-3 py-2.5 text-xs flex items-start gap-2 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
       <ShieldAlert className="size-4 shrink-0 mt-0.5" aria-hidden />
       <div>
         <strong>🔐 Güvenlik:</strong> Davetiye linki paylaşmadan önce alıcının
@@ -361,7 +361,7 @@ function NewInvitationDialog({
               kayıt olur.
             </p>
           </div>
-          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900">
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
             <strong>📨 Davetiye linki:</strong> oluşturulduktan sonra tabloda
             görünür. Linki <strong>kendin alıcıya iletmelisin</strong> —
             sistem henüz e-posta göndermiyor. Link <strong>7 gün</strong>{" "}

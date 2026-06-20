@@ -53,10 +53,10 @@ function fmtTL(n: number): string {
 }
 
 const STATUS_TONE: Record<string, string> = {
-  done: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  postponed: "bg-amber-50 text-amber-700 border-amber-200",
-  cancelled: "bg-rose-50 text-rose-700 border-rose-200",
-  no_show: "bg-slate-50 text-slate-700 border-slate-200",
+  done: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+  postponed: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+  cancelled: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  no_show: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
 };
 
 const STATUS_ICON: Record<string, React.ComponentType<{ className?: string; "aria-hidden"?: boolean }>> = {
@@ -191,9 +191,9 @@ function BalanceCard({ billing }: { billing: ParentSessionsResponse["billing"] }
         ? "sky"
         : "emerald";
   const toneClass: Record<string, string> = {
-    rose: "border-rose-200 bg-rose-50 text-rose-900",
-    sky: "border-sky-200 bg-sky-50 text-sky-900",
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-900",
+    rose: "border-rose-200 bg-rose-50 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+    sky: "border-sky-200 bg-sky-50 text-sky-900 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
   };
   return (
     <div
@@ -359,7 +359,7 @@ function PaymentsList({ payments }: { payments: ParentPaymentItem[] }) {
         const Icon = PAYMENT_METHOD_ICON[p.method] ?? Receipt;
         return (
           <li key={p.id} className="px-3 py-2.5 flex items-start gap-3">
-            <div className="size-8 inline-flex items-center justify-center rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 flex-shrink-0 mt-0.5">
+            <div className="size-8 inline-flex items-center justify-center rounded-md bg-emerald-50 border border-emerald-200 text-emerald-700 flex-shrink-0 mt-0.5 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
               <Icon className="size-4" aria-hidden />
             </div>
             <div className="flex-1 min-w-0">

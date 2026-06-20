@@ -287,7 +287,7 @@ export function AdminRevenueDashboardClient({ initial }: Props) {
             ({segment === "all" ? "Kurum + Bağımsız Koç" : segment === "institution" ? "Yalnız kurumlar" : "Yalnız bağımsız koçlar"})
           </span>
         </div>
-        <div className="mb-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700">
+        <div className="mb-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-[11px] text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200">
           <strong className="text-slate-900">Ne demek?</strong>{" "}
           <span><strong>Yeni kayıt</strong>: ilk kez sisteme dahil oldu.</span>{" · "}
           <span><strong>Yükselen</strong>: ücretsizden ücretliye veya daha üst pakete geçti.</span>{" · "}

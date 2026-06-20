@@ -122,7 +122,7 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
 
       {/* Trial niyetli plan bilgi notu */}
       {data.trial_active && data.post_trial_plan && data.post_trial_plan !== "solo_free" && data.post_trial_plan_label ? (
-        <div className="rounded-lg border border-cyan-200 bg-cyan-50/70 px-4 py-3 text-sm text-cyan-900">
+        <div className="rounded-lg border border-cyan-200 bg-cyan-50/70 px-4 py-3 text-sm text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
           <p className="font-semibold">Deneme süren bittiğinde</p>
           <p className="mt-0.5">
             <strong>{data.post_trial_plan_label}</strong> paketine geçmek için <strong>ödeme</strong> talep edilir.
@@ -150,7 +150,7 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
       ) : null}
 
       {data.status === "managed" || !data.is_solo ? (
-        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30">
           {data.note ?? "Paketin kurumun tarafından yönetilir."}
         </div>
       ) : data.status === "active" ? (
@@ -189,7 +189,7 @@ function AiCreditMeter({
   const low = remaining > 0 && remaining <= lowThreshold;
 
   const barColor = exhausted ? "bg-rose-500" : low ? "bg-amber-500" : "bg-emerald-500";
-  const ringColor = exhausted ? "border-rose-200 bg-rose-50" : low ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50";
+  const ringColor = exhausted ? "border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30" : low ? "border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30" : "border-emerald-200 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30";
   const textColor = exhausted ? "text-rose-900" : low ? "text-amber-900" : "text-emerald-900";
 
   // Deneme kredisi vs. paket kredisi karşılaştırması
@@ -382,7 +382,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
   const [yearly, setYearly] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const months = data.annual_paid_months || 10;
-  // Paket özellik bullet'ları TEK KAYNAK: /api/v2/pricing plan_features
+  // Paket özellik bullet dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200'ları TEK KAYNAK: /api/v2/pricing plan_features
   // (hardcoded TIER_DETAILS.features yerine; pazarlama dili + vitrinle tutarlı).
   const pricingQ = useQuery({
     queryKey: pricingKeys.catalog(),
@@ -437,7 +437,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
             </p>
           </div>
           {/* Aylık / Akademik yıl toggle */}
-          <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 p-1 text-xs font-bold">
+          <div className="inline-flex items-center gap-1 rounded-full border border-cyan-200 bg-cyan-50 p-1 text-xs font-bold dark:bg-cyan-500/10 dark:border-cyan-500/30">
             <button
               type="button"
               onClick={() => setYearly(false)}
@@ -457,7 +457,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         </div>
 
         {/* Aktif öğrenci durumu */}
-        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+        <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200">
           Şu an <strong className="text-slate-900">{data.student_count}</strong> aktif öğrencin var.
           {data.post_trial_plan && data.post_trial_plan !== "solo_free" ? (
             <> Kayıtta seçtiğin paket: <strong className="text-cyan-800">{data.post_trial_plan_label}</strong>.</>
@@ -523,7 +523,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
 
                 {/* AI kredi ön plana çıkar */}
                 {details ? (
-                  <div className="mb-4 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2">
+                  <div className="mb-4 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2 dark:bg-cyan-500/10 dark:border-cyan-500/30">
                     <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800">Aylık yapay zekâ kredisi</p>
                     <p className="font-display text-2xl font-extrabold text-cyan-900">{details.credits.toLocaleString("tr-TR")} <span className="text-xs font-medium text-cyan-700">kredi</span></p>
                   </div>
@@ -569,7 +569,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         </div>
 
         {/* Alt bilgi: seçili olanın özet açıklaması */}
-        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-[11px] text-slate-600">
+        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-[11px] text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30">
           Seçili paket <strong className="text-slate-900">{selTier?.label}</strong> · {tl(shownMonthly)}/ay.
           Aylık AI kredisi (sesli dikte 3, fotoğraftan not 5, koçluk içgörüsü 6 kredi başına) ay başında otomatik yenilenir.
           {data.status === "past_due" ? " Aboneliğin yenilenmedi — ödeme ile aktif koçluğa devam eder." : null}
@@ -656,7 +656,7 @@ function UpgradeDialog({
           </div>
         ) : (
           <div className="space-y-3 text-sm">
-            <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3">
+            <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
               <span className="text-muted-foreground">Seçilen:</span>{" "}
               <span className="font-semibold text-cyan-900">{planLabel} · {priceLabel}</span>
             </div>

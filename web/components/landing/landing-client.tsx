@@ -332,7 +332,7 @@ function Comparison() {
         </Reveal>
         <div className="grid gap-5 md:grid-cols-2">
           <Reveal>
-            <div className="h-full rounded-2xl border border-rose-200 bg-rose-50/40 p-6">
+            <div className="h-full rounded-2xl border border-rose-200 bg-rose-50/40 p-6 dark:bg-rose-500/10 dark:border-rose-500/30">
               <p className="mb-4 inline-flex items-center gap-2 font-display text-lg font-bold text-rose-700">
                 <XCircle className="size-5" aria-hidden /> Eski yöntem
               </p>
@@ -1021,10 +1021,10 @@ const ROLE_TONE: Record<
   string,
   { label: string; node: string; chip: string; result: string }
 > = {
-  koc: { label: "Koç", node: "bg-cyan-700 shadow-cyan-700/25", chip: "bg-cyan-50 text-cyan-700 border-cyan-200", result: "text-cyan-700" },
-  ogrenci: { label: "Öğrenci", node: "bg-emerald-600 shadow-emerald-600/25", chip: "bg-emerald-50 text-emerald-700 border-emerald-200", result: "text-emerald-700" },
-  sistem: { label: "Sistem", node: "bg-violet-600 shadow-violet-600/25", chip: "bg-violet-50 text-violet-700 border-violet-200", result: "text-violet-700" },
-  veli: { label: "Veli", node: "bg-amber-500 shadow-amber-500/25", chip: "bg-amber-50 text-amber-700 border-amber-200", result: "text-amber-700" },
+  koc: { label: "Koç", node: "bg-cyan-700 shadow-cyan-700/25", chip: "bg-cyan-50 text-cyan-700 border-cyan-200 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200", result: "text-cyan-700" },
+  ogrenci: { label: "Öğrenci", node: "bg-emerald-600 shadow-emerald-600/25", chip: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200", result: "text-emerald-700" },
+  sistem: { label: "Sistem", node: "bg-violet-600 shadow-violet-600/25", chip: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200", result: "text-violet-700" },
+  veli: { label: "Veli", node: "bg-amber-500 shadow-amber-500/25", chip: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200", result: "text-amber-700" },
   kurum: { label: "Kurum", node: "bg-slate-800 shadow-slate-800/25", chip: "bg-slate-100 text-slate-800 border-slate-300", result: "text-slate-800" },
 };
 
@@ -1121,7 +1121,7 @@ function HowItWorks() {
 
         {/* Döngü kapanışı */}
         <Reveal delayMs={120} className="mt-6">
-          <div className="flex items-start gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-5 text-sm text-cyan-900">
+          <div className="flex items-start gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-5 text-sm text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
             <RotateCcw className="mt-0.5 size-5 shrink-0 text-cyan-700" aria-hidden />
             <p className="leading-relaxed">
               <b>1–5. adımlar her hafta tekrarlanır;</b> öğrenci sürdürülebilir bir tempoda ilerler.

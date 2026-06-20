@@ -196,11 +196,11 @@ function OverrideRow({ override }: { override: FeatureFlagOverrideItem }) {
       </td>
       <td className="px-4 py-2">
         {override.enabled ? (
-          <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+          <span className="text-xs px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
             ● Açık
           </span>
         ) : (
-          <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium">
+          <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 font-medium dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
             ○ Kapalı
           </span>
         )}

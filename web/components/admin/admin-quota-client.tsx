@@ -132,7 +132,7 @@ function QuotaRow({
         </div>
       </td>
       <td className="px-4 py-2">
-        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200">
+        <span className="text-xs px-2 py-0.5 rounded bg-sky-50 text-sky-700 border border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
           {row.plan}
         </span>
       </td>
@@ -195,7 +195,7 @@ function QuotaCellView({ cell }: { cell: QuotaCell }) {
       )}
       {cell.has_override && (
         <span
-          className="text-[9px] px-1 rounded bg-violet-50 text-violet-700 border border-violet-200"
+          className="text-[9px] px-1 rounded bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200"
           title={cell.note ?? "Bu kuruma özel limit verilmiş"}
         >
           özel

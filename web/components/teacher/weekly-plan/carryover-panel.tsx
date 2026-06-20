@@ -83,7 +83,7 @@ export function CarryoverPanel({
     <div
       className={cn(
         "border-b",
-        isBrowse ? "border-slate-200 bg-slate-50/60" : "border-amber-200 bg-amber-50/60",
+        isBrowse ? "border-slate-200 bg-slate-50/60 dark:bg-slate-500/10 dark:border-slate-500/30" : "border-amber-200 bg-amber-50/60 dark:bg-amber-500/10 dark:border-amber-500/30",
       )}
     >
       {/* Varsayılan kapalı — tek satır özet */}

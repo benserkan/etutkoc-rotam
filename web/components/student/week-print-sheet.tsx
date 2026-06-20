@@ -242,7 +242,7 @@ function PrintButton() {
 }
 
 // =============================================================================
-// Stiller — sayfa içinde inline. Tailwind print: variant'ı yetmiyor (A4 size,
+// Stiller — sayfa içinde inline. Tailwind print: variant dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200'ı yetmiyor (A4 size,
 // sheet boyutu, density mode'ları için gerçek CSS gerek).
 // =============================================================================
 

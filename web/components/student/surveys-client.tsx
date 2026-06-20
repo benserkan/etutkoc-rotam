@@ -97,7 +97,7 @@ function SurveyRow({ row, done }: { row: SurveyAssignmentRow; done?: boolean }) 
                 : `${row.template.question_count} soru · ~${row.template.estimated_minutes} dk`}
           </p>
           {!done && row.note ? (
-            <p className="mt-1 text-xs rounded-md border border-cyan-200 bg-cyan-50 text-cyan-900 px-2 py-1">
+            <p className="mt-1 text-xs rounded-md border border-cyan-200 bg-cyan-50 text-cyan-900 px-2 py-1 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
               Koçundan not: {row.note}
             </p>
           ) : null}

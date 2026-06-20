@@ -470,7 +470,7 @@ function MobileDrawer({
         {institution ? (
           <div className="px-4 py-2 border-b border-border">
             <div
-              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 max-w-full"
+              className="inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 max-w-full dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200"
               title={institution.name}
             >
               <Building2 className="size-3 shrink-0" aria-hidden />

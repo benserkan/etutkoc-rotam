@@ -152,10 +152,10 @@ function CountCard({
   tone: "slate" | "amber" | "sky" | "emerald";
 }) {
   const cls: Record<typeof tone, string> = {
-    slate: "border-slate-200 bg-slate-50 text-slate-700",
-    amber: "border-amber-200 bg-amber-50 text-amber-700",
-    sky: "border-sky-200 bg-sky-50 text-sky-700",
-    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    slate: "border-slate-200 bg-slate-50 text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
+    amber: "border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+    sky: "border-sky-200 bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
+    emerald: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
   };
   return (
     <div className={cn("rounded-xl border p-4", cls[tone])}>
@@ -220,8 +220,8 @@ function ContactRow({ item }: { item: ContactRequestItem }) {
 
 function StatusBadge({ status, label }: { status: string; label: string }) {
   const cls: Record<string, string> = {
-    new: "bg-amber-50 text-amber-700 border-amber-200",
-    contacted: "bg-sky-50 text-sky-700 border-sky-200",
+    new: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+    contacted: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200",
     closed: "bg-slate-100 text-slate-600 border-slate-200",
   };
   return (
@@ -444,7 +444,7 @@ function OnboardDialog({ item }: { item: ContactRequestItem }) {
           ) : (
             <div className="space-y-4">
               {/* Talep özeti */}
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
                 <p className="font-semibold">Talep özeti</p>
                 <p>{item.name} · {item.email}{item.phone ? ` · ${item.phone}` : ""}</p>
                 {item.message ? <p className="mt-1 italic">{item.message}</p> : null}
@@ -546,7 +546,7 @@ function OnboardDialog({ item }: { item: ContactRequestItem }) {
               </div>
 
               {/* E-posta seçeneği */}
-              <label className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs">
+              <label className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 p-2 text-xs dark:bg-slate-500/10 dark:border-slate-500/30">
                 <input
                   type="checkbox"
                   checked={sendEmail}
@@ -605,14 +605,14 @@ function OnboardSuccessPanel({
 
   return (
     <div className="space-y-3">
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+      <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
         <p className="flex items-center gap-2 font-semibold">
           <CheckCircle2 className="size-4" aria-hidden /> {result.message}
         </p>
       </div>
 
       {/* Yönetici bilgileri */}
-      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3">
+      <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-slate-500/10 dark:border-slate-500/30">
         <p className="text-[11px] font-bold uppercase tracking-wide text-slate-500">Kurum yöneticisi giriş bilgileri</p>
         <div className="mt-2 space-y-1.5 text-sm">
           <div>
@@ -638,7 +638,7 @@ function OnboardSuccessPanel({
       </div>
 
       {/* Ödeme linki */}
-      <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3">
+      <div className="rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
         <p className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">Ödeme linki</p>
         <div className="mt-2 flex items-center gap-2">
           <code className="flex-1 truncate rounded bg-white px-2 py-1 font-mono text-xs">{result.payment_link_url}</code>
@@ -658,12 +658,12 @@ function OnboardSuccessPanel({
 
       {/* E-posta durumu */}
       {result.email_sent ? (
-        <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-800">
+        <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-800 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
           <Mail className="inline size-3.5" aria-hidden /> Yöneticiye onboarding e-postası başarıyla gönderildi
           (giriş bilgileri + ödeme bağlantısı dahil).
         </div>
       ) : (
-        <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-xs text-amber-800">
+        <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-xs text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
           ⚠ E-posta gönderilmedi — geçici şifreyi ve linki <strong>elden iletmen</strong> gerek (WhatsApp/SMS).
         </div>
       )}

@@ -179,7 +179,7 @@ export function PricingClient({
         )}
 
         {/* AI note */}
-        <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-cyan-200 bg-cyan-50/60 p-5 text-sm text-slate-700">
+        <div className="mx-auto mt-12 max-w-3xl rounded-xl border border-cyan-200 bg-cyan-50/60 p-5 text-sm text-slate-700 dark:bg-cyan-500/10 dark:border-cyan-500/30">
           <p className="flex items-center gap-2 font-semibold text-cyan-900">
             <Sparkles className="size-4" aria-hidden /> Yapay zekâ ücretli planlarda dahildir
           </p>

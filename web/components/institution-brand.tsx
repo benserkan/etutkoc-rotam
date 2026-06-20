@@ -25,7 +25,7 @@ export function InstitutionBrand({
         "inline-flex items-center gap-1.5 px-2 py-1 rounded-full text-[11px] font-medium border max-w-full",
         hasLogo
           ? "bg-card text-foreground border-border"
-          : "bg-emerald-50 text-emerald-700 border-emerald-200",
+          : "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
         className,
       )}
       title={institution.name}

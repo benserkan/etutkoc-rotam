@@ -274,7 +274,7 @@ export function AdminRevenueForecastClient({ initial }: Props) {
             </div>
           </Card>
         </div>
-        <Card className="mt-4 border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+        <Card className="mt-4 border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
           <span className="font-semibold">Eylem önerisi:</span> Aksiyon
           Merkezi&apos;nde risk altındaki kurumlara bugün ulaşırsan, 90 günde
           toplam{" "}
@@ -306,10 +306,10 @@ function Kpi({
   tone: string;
 }) {
   const cls: Record<string, string> = {
-    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900",
-    rose: "bg-rose-50 border-rose-200 text-rose-900",
-    amber: "bg-amber-50 border-amber-200 text-amber-900",
-    slate: "bg-slate-50 border-slate-200 text-slate-900",
+    emerald: "bg-emerald-50 border-emerald-200 text-emerald-900 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200",
+    rose: "bg-rose-50 border-rose-200 text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+    amber: "bg-amber-50 border-amber-200 text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
+    slate: "bg-slate-50 border-slate-200 text-slate-900 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
   };
   return (
     <div className={cn("rounded-lg border p-4", cls[tone] ?? cls.slate)}>

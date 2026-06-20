@@ -276,7 +276,7 @@ function CareerSynthesisCard({ studentId }: { studentId: number }) {
             </p>
           </div>
         ) : !data.insight ? (
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-200 bg-cyan-50 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-cyan-200 bg-cyan-50 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
             <p className="text-sm text-cyan-900">
               Anketler hazır — öğrencinin beceri × ilgi × akademik profili
               sentezlenebilir.
@@ -350,7 +350,7 @@ function CareerSynthesisResult({
 
       <div className="grid gap-2 sm:grid-cols-2">
         {ins.career_suggestions.map((s, i) => (
-          <div key={i} className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3">
+          <div key={i} className="rounded-lg border border-cyan-200 bg-cyan-50/50 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
             <div className="flex items-center justify-between gap-2">
               <p className="text-sm font-semibold text-cyan-950">{s.title}</p>
               {s.field ? (

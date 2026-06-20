@@ -137,7 +137,7 @@ export function ConversionClient({ initial }: { initial: ConversionResponse }) {
           <FlaskConical className="size-4 text-violet-600" aria-hidden />
           <h2 className="text-sm font-semibold">A/B varyant dönüşümü</h2>
           {data.has_experiment && data.experiment_name ? (
-            <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs text-violet-700">
+            <span className="rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs text-violet-700 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
               Aktif deney: {data.experiment_name}
             </span>
           ) : null}

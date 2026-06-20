@@ -380,7 +380,7 @@ export function CrmActionsPanel({
   const completeMut = useCompleteCrmAction();
   const delMut = useDeleteCrmAction();
 
-  // Aksiyon şablonları (hazır script'ler) — owner placeholder'larıyla doldurulur.
+  // Aksiyon şablonları (hazır script dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200'ler) — owner placeholder'larıyla doldurulur.
   const tplQ = useQuery<ActionTemplatesResponse>({
     queryKey: adminKeys.revenueActionTemplates(),
     queryFn: getAdminActionTemplates,
@@ -697,7 +697,7 @@ function OwnerTagsCard({
   const available = meta.tag_kinds.filter((k) => !existing.has(k.value));
   const [kindRaw, setKind] = React.useState("");
   const [note, setNote] = React.useState("");
-  // Seçili tür available listesinden düşmüşse ilk uygun türe geri düş (effect'siz).
+  // Seçili tür available listesinden düşmüşse ilk uygun türe geri düş (effect dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200'siz).
   const kind = available.some((a) => a.value === kindRaw)
     ? kindRaw
     : (available[0]?.value ?? "");
@@ -964,7 +964,7 @@ export function OffersPanel({
                         </div>
                       ) : null}
                       {o.admin_note ? (
-                        <div className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-700">
+                        <div className="mt-1 rounded border border-amber-200 bg-amber-50 px-2 py-1 text-[11px] text-amber-700 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
                           <strong>Not (iç):</strong> {o.admin_note}
                         </div>
                       ) : null}
@@ -980,12 +980,12 @@ export function OffersPanel({
                         {o.expires_at ? <span>· Son: {fmtDate(o.expires_at)}</span> : null}
                       </div>
                       {o.decline_reason ? (
-                        <div className="mt-1.5 rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700">
+                        <div className="mt-1.5 rounded border border-rose-200 bg-rose-50 px-2 py-1 text-xs text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
                           <strong>Ret nedeni:</strong> {o.decline_reason}
                         </div>
                       ) : null}
                       {o.status === "draft" && editId === o.id ? (
-                        <div className="mt-2 space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/40 p-2">
+                        <div className="mt-2 space-y-2 rounded-lg border border-indigo-200 bg-indigo-50/40 p-2 dark:bg-indigo-500/10 dark:border-indigo-500/30">
                           <label className="block">
                             <span className="text-[11px] text-muted-foreground">Başlık</span>
                             <input type="text" value={eTitle} onChange={(e) => setETitle(e.target.value)} maxLength={255} className={cn(fieldClass, "mt-0.5")} />
@@ -1138,25 +1138,25 @@ function InvoiceRow({ inv }: { inv: InvoiceItem }) {
             <button type="button" disabled={busy}
                     onClick={() => reminderMut.mutate({ invoiceId: inv.invoice_id, body: { kind: "manual" } })}
                     title="Hatırlatma gönder"
-                    className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] text-sky-700 hover:bg-sky-100 disabled:opacity-50">
+                    className="rounded border border-sky-200 bg-sky-50 px-2 py-0.5 text-[11px] text-sky-700 hover:bg-sky-100 disabled:opacity-50 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
               <BellRing className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { const d = prompt("Kaç gün ötelensin?", "7"); if (d) postponeMut.mutate({ invoiceId: inv.invoice_id, body: { days: Number(d) } }); }}
                     title="Vadeyi ötele"
-                    className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 hover:bg-amber-100 disabled:opacity-50">
+                    className="rounded border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-700 hover:bg-amber-100 disabled:opacity-50 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
               <CalendarClock className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { if (confirm("Manuel ödendi işaretlensin mi?")) markPaidMut.mutate({ invoiceId: inv.invoice_id, body: { method: "manual" } }); }}
                     title="Manuel ödendi"
-                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 hover:bg-emerald-100 disabled:opacity-50">
+                    className="rounded border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200">
               <CheckCircle2 className="size-3.5" aria-hidden />
             </button>
             <button type="button" disabled={busy}
                     onClick={() => { const n = prompt("İptal sebebi?"); if (n != null) cancelMut.mutate({ invoiceId: inv.invoice_id, body: { note: n } }); }}
                     title="İptal et"
-                    className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-100 disabled:opacity-50">
+                    className="rounded border border-rose-200 bg-rose-50 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-100 disabled:opacity-50 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
               <Ban className="size-3.5" aria-hidden />
             </button>
           </div>

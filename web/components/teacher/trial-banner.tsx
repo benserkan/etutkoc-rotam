@@ -46,7 +46,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
   if (data.paywall) {
     if (data.past_due) {
       return (
-        <div className="border-b border-rose-200 bg-rose-50">
+        <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
           <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-start gap-2.5 text-sm text-rose-900">
               <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
@@ -66,7 +66,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
       );
     }
     return (
-      <div className="border-b border-rose-200 bg-rose-50">
+      <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-2.5 text-sm text-rose-900">
             <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
@@ -102,7 +102,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
     const d = data.days_left ?? 0;
     const left = d <= 0 ? "bugün" : d === 1 ? "yarın" : `${d} gün sonra`;
     return (
-      <div className="border-b border-amber-200 bg-amber-50">
+      <div className="border-b border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <Clock className="size-4 shrink-0 text-amber-600" aria-hidden />
           <p className="flex-1 text-sm text-amber-900">

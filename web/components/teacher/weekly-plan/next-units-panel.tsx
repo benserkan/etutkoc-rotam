@@ -80,7 +80,7 @@ export function NextUnitsPanel({
   if (q.isLoading || units.length === 0) return null;
 
   return (
-    <div className="border-b border-cyan-200 bg-cyan-50/50">
+    <div className="border-b border-cyan-200 bg-cyan-50/50 dark:bg-cyan-500/10 dark:border-cyan-500/30">
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}

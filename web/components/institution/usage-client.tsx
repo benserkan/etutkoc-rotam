@@ -262,7 +262,7 @@ function MainBalanceCard({
                 / {allocated} kredi
               </span>
               {bonus > 0 && (
-                <span className="ml-2 inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200">
+                <span className="ml-2 inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
                   <Gift className="size-3" aria-hidden />+{bonus} bonus
                 </span>
               )}
@@ -310,7 +310,7 @@ function MainBalanceCard({
 
         {/* "-6 nasıl olur" açıklaması — yalnız kalan eksiyse */}
         {remaining < 0 && (
-          <div className="rounded-md border border-rose-200 bg-rose-50/60 px-3 py-2 text-xs text-rose-900">
+          <div className="rounded-md border border-rose-200 bg-rose-50/60 px-3 py-2 text-xs text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
             <b>Kalan {remaining} kredi nasıl mümkün?</b> Aylık kota {allocated}{bonus > 0 ? ` (+${bonus} bonus)` : ""} ama kullanım {used}.
             {hardBlock ? (
               <> Sert kilit (hard-block) AÇIK olmasına rağmen aşımın olması süper admin&apos;in açıkça izin verdiği işlemlerden veya bonus krediden kaynaklanabilir.</>

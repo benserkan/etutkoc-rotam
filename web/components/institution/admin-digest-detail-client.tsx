@@ -324,7 +324,7 @@ function InactiveTeachersCard({
   if (inactive_teachers.length === 0) return null;
   const remaining = totals.inactive_teacher_count - inactive_teachers.length;
   return (
-    <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3">
+    <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 dark:bg-amber-500/10 dark:border-amber-500/30">
       <h3 className="text-sm font-medium text-amber-900 mb-2 flex items-center gap-1.5">
         <Moon className="size-4" aria-hidden />
         Son 7 gündür pasif öğretmenler

@@ -112,7 +112,7 @@ function QuotaCard({ item }: { item: QuotaInfoItem }) {
           <h3 className="text-sm font-medium text-foreground">{item.label}</h3>
           {item.has_override && (
             <span
-              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 border border-violet-200"
+              className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-50 text-violet-700 border border-violet-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200"
               title={
                 item.override_note ??
                 "ETÜTKOÇ ekibi tarafından kuruma özel limit verilmiş"
@@ -252,7 +252,7 @@ function PlanComparison({
 
 function HelpBlock() {
   return (
-    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-4 py-3 text-xs space-y-2">
+    <div className="rounded-md border border-sky-200 bg-sky-50 text-sky-900 px-4 py-3 text-xs space-y-2 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200">
       <p className="flex items-start gap-2">
         <Info className="size-4 shrink-0 mt-0.5" aria-hidden />
         <span>

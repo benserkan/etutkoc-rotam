@@ -71,7 +71,7 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
       </div>
 
       {/* AI İçgörü */}
-      <div className="rounded-2xl border border-violet-200 bg-violet-50/40 p-5">
+      <div className="rounded-2xl border border-violet-200 bg-violet-50/40 p-5 dark:bg-violet-500/10 dark:border-violet-500/30">
         <div className="mb-2 flex items-center gap-2">
           <Sparkles className="size-5 text-violet-600" aria-hidden />
           <h2 className="text-base font-semibold text-violet-900">Yapay Zekâ Durum Analizi</h2>
@@ -82,7 +82,7 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
         ) : insight ? (
           <div className="space-y-4">
             {isStale ? (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
                 <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
                 Bu analizden sonra yeni veri (deneme/çözülen test) eklendi. Güncel analiz için yenileyin.
               </div>

@@ -657,7 +657,7 @@ function StatusSummary({
   const items = data.warning_items ?? [];
   const lvl = data.worst_warning_level;
 
-  // İyi giden (başarı) sinyalleri — program_summary'den türetilir, linkli.
+  // İyi giden (başarı) sinyalleri — program_summary dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200'den türetilir, linkli.
   const positives: SummaryRow[] = [];
   if (todayTotal > 0 && todayDone >= todayTotal) {
     positives.push({ tone: "green", title: "Bugünkü programı tamamladı",
@@ -733,7 +733,7 @@ function StatusSummary({
         ) : null}
 
         {warnings.length === 0 && positives.length === 0 ? (
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200">
             Henüz yeterli veri yok — program oluşturuldukça durum burada özetlenir.{" "}
             <Link href={`${base}/week`} className="font-medium underline underline-offset-4">
               Haftalık planı aç →
