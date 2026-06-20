@@ -6,6 +6,49 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## Ödeme (iyzico) + Yasal sayfalar + ZeptoMail + İletişim Sağlığı — 2026-06-20
+
+**Şirket kuruldu:** ETÜTKOÇ Akademi Kişisel Gelişim Özel Eğitim ve Öğretim
+Hizmetleri Ltd. Şti. (Trabzon Tic. Sic. 26268 · MERSIS 0381113961000001 · Vergi
+3811139610 Karadeniz V.D. · adres İskenderpaşa Mah. Gazipaşa Cad. Timurcıoğlu Apt.
+No:12/6 Ortahisar/Trabzon · tel +90 505 673 85 61 · imza yetkilisi Avni Bektaş
+münferiden, Serkan Aydın %33 ortak). **Tek kaynak `app/legal_info.py` COMPANY**.
+
+- **Ödeme = iyzico** (analiz sonucu — mevcut entegrasyon hazır Ö1-Ö3, abonelik native,
+  yeni şirkete kolay onay). Kurumsal üye işyeri başvurusu yapılıyor; CANLI key
+  geldiğinde `.env`: IYZICO_API_KEY/SECRET + IYZICO_BASE_URL=https://api.iyzipay.com.
+  **docker-compose web'e iyzico env BAĞLANDI** (eksikti). Faz 4 (otomatik yenileme/
+  iyzico Abonelik) hâlâ kalan tek ödeme parçası.
+- **Yasal sayfalar (iyzico + KVKK zorunlu) — CANLI** (commit `c16e98d`): yeni Jinja
+  public sayfalar `/mesafeli-satis` · `/iade-iptal` · `/kullanim-sartlari` (+ `kvkk/
+  _seller_box.html`); hepsi `legal_info.COMPANY`'den beslenir. `/kvkk` veri sorumlusu
+  resmi ünvana güncellendi. Anasayfa footer: yasal linkler + şirket kimlik bloğu.
+  Caddy DEFAULT FALLBACK FastAPI → yeni yollar otomatik Jinja (Caddyfile değişmedi).
+- **E-posta = ZeptoMail (işlemsel) — CANLI** (Phase 1): Hotmail 451 IP-reputation
+  sorunu = Zoho Mail paylaşımlı SMTP. Çözüm ZeptoMail (temiz IP, aynı domain,
+  DKIM+bounce CNAME Cloudflare'de doğrulandı). Prod `.env`: SMTP_HOST=smtp.zeptomail.com
+  PORT=587 USER=emailapikey PASSWORD=<token 144 char> FROM=rotam@etutkoc.com.
+  Gönderim kodu generic SMTP → sadece config. Gmail gelen kutusu + prod uçtan uca
+  doğrulandı. **rotam@etutkoc.com posta kutusu Zoho'da kalır** (insan-posta ≠ işlemsel).
+  Google Workspace YANLIŞ araç (posta kutusu, işlemsel değil) — kullanılmadı.
+- **İletişim Sağlığı Faz 2a — CANLI** (commit `e4d7ce7`, migration `p9q2t5u6t88o`):
+  birleşik `communication_logs` (e-posta/push/whatsapp/sms TEK gözlem kaydı —
+  ne/kime/ne zaman/durum). channel/status düz VARCHAR (enum migration'sız).
+  `app/services/comm_log.py` merkezi best-effort logger (db verilirse SAVEPOINT,
+  yoksa kendi SessionLocal → SQLite tek-yazar kilidi yok). 4 kanca: **send_email**
+  (27 işlemsel mail dahil + Message-ID bounce eşleşmesi için) · **send_push_to_user**
+  (sent/no_device/failed) · **send_sms** · **build_wa_dispatch** (spam-guard log'undan
+  AYRI ayna). Mevcut NotificationLog + whatsapp_dispatch_logs'a DOKUNULMADI.
+  `test_comm_log.py` **28/28** (4 kanal gerçek fonksiyon + izolasyon + maskeleme).
+  Prod: head=p9q2t5u6t88o, gerçek email→zeptomail→comm_log status=sent doğrulandı.
+- **KALAN (sıradaki):** **Faz 2b** — ZeptoMail bounce webhook (`/webhooks/zeptomail`)
+  → comm_log DELIVERED/BOUNCED (Message-ID/recipient eşleşmesi). **Faz 2c** — Süper
+  admin "İletişim Sağlığı" ekranı: kanal sekmeleri (E-posta/Mobil Bildirim/WhatsApp/
+  SMS) + sağlık KPI + filtreli drill-down liste (kime/ne/ne zaman/durum + tarih+
+  kanal+durum+arama filtreleri). Mevcut `/security-monitor/notifications` buraya bağlanır.
+
+---
+
 ## Öğrenci-bazlı Müfredat İlerleme + Yetişme Projeksiyonu (Faz 0-4) — 2026-06-19, CANLI
 
 **Bağlam (kullanıcı):** Koç program hazırlarken öğrencinin müfredatta NEREDE
