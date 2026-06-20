@@ -50,9 +50,16 @@ münferiden, Serkan Aydın %33 ortak). **Tek kaynak `app/legal_info.py` COMPANY*
   + sayfalama, kontrast-güvenli). admin-shell "Güvenlik Kamarası → İletişim Sağlığı".
   `test_api_v2_admin_communication_health.py` **10/10**. Prod: endpoint 401 anon ·
   sayfa 307. (Mevcut `/security-monitor/notifications` matrisi ayrı duruyor.)
-- **KALAN (sıradaki):** **Faz 2b** — ZeptoMail bounce webhook (`/webhooks/zeptomail`)
-  → comm_log DELIVERED/BOUNCED (Message-ID/recipient eşleşmesi). ZeptoMail panosu
-  "Web Kancaları" sekmesinden webhook URL ayarlanacak (kullanıcı aksiyonu).
+- **İletişim Sağlığı Faz 2b — CANLI** (commit `ddd7bed`, migration YOK): ZeptoMail
+  bounce/teslimat webhook `POST /webhooks/zeptomail` → comm_log DELIVERED/BOUNCED.
+  `comm_log.apply_email_event` (Message-ID veya alıcı+en yeni 'sent' eşleşmesi;
+  delivered yalnız 'sent' iken, bounced'ı ezmez). Savunmacı parser (event_message/
+  details biçim varyasyonları). Güvenlik: `ZEPTOMAIL_WEBHOOK_SECRET` → URL `?token=`.
+  Caddy `/webhooks/*` zaten FastAPI. `test_zeptomail_webhook.py` **11/11**. Prod:
+  GET ping 200, POST updated:0. **KULLANICI AKSİYONU:** ZeptoMail Mail Agent →
+  "Web Kancaları" → URL `https://rotam.etutkoc.com/webhooks/zeptomail` (+ secret
+  kullanılacaksa `?token=...` + .env'e ZEPTOMAIL_WEBHOOK_SECRET) + bounce/delivery
+  olayları seç. **İletişim Sağlığı (2a+2b+2c) TAMAMLANDI.**
 
 ---
 
