@@ -102,6 +102,14 @@ class PaymentLinkListResponse(BaseModel):
     total: int
 
 
+class PaymentLinkHavale(BaseModel):
+    """İyzico kapalıyken gösterilecek havale/EFT bilgisi (membership ile aynı kaynak)."""
+    enabled: bool = False
+    iban: str = ""
+    name: str = ""
+    note: str = ""
+
+
 class PaymentLinkPublicInfo(BaseModel):
     """Public/auth'lı sayfa için — kurumun göreceği link özeti."""
     token: str
@@ -120,4 +128,6 @@ class PaymentLinkPublicInfo(BaseModel):
     is_usable: bool
     can_pay: bool  # giriş yapan kullanıcı bu linki ödeyebilir mi
     requires_login: bool  # link kullanıcı login gerektirir
+    provider_available: bool = False  # iyzico aktif mi (kapalıysa havale fallback)
+    havale: PaymentLinkHavale | None = None  # iyzico kapalıyken havale/EFT
 

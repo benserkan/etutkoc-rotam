@@ -51,6 +51,7 @@ from app.routes.api_v2.schemas.payment import (
     PaymentLinkCreateBody,
     PaymentLinkItem,
     PaymentLinkListResponse,
+    PaymentLinkHavale,
     PaymentLinkPublicInfo,
     PaymentProviderStatus,
     PaymentResultResponse,
@@ -388,6 +389,10 @@ def get_link_info(
 
     can_pay = payment_link_service.can_user_pay_link(user, link)
 
+    # İyzico kapalıyken havale/EFT fallback (membership ile aynı kaynak)
+    from app.services import membership_offer_service
+    havale_raw = membership_offer_service.get_havale_info()
+
     resolved_status = link.status_resolved
     return PaymentLinkPublicInfo(
         token=link.token,
@@ -406,6 +411,8 @@ def get_link_info(
         is_usable=link.is_usable,
         can_pay=can_pay,
         requires_login=True,
+        provider_available=iyzico_service.is_provider_available(),
+        havale=PaymentLinkHavale(**havale_raw),
     )
 
 
