@@ -39,6 +39,9 @@ class MembershipPublicResponse(BaseModel):
     cycle: str | None = None
     cycle_label: str | None = None
     amount: int | None = None
+    list_price: int | None = None
+    savings: int | None = None
+    discount_pct: int | None = None
     havale: HavaleInfo | None = None
 
 
