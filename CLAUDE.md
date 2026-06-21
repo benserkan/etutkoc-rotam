@@ -110,6 +110,16 @@ past_due) → ama **öneri+CRM log; otomatik göndermiyor**. Eksik halka: brande
   satırı "Teklif" (Gift) → OfferDialog → sonuç link + "WhatsApp'tan gönder" + kopyala.
   `test_api_v2_admin_prospects` 15/15. **Grup senaryosu:** Cloud API gruba GÖNDEREMEZ;
   grup = markalı kampanya linki elle paylaş (Yol A), birey = 1:1 branded template (K2).
+- **Meta-öncesi 3 düzeltme ✅ CANLI** (commit `3ec751d`, migration YOK):
+  **A)** Membership landing kazanç — `public_view` list_price/savings/discount_pct →
+  çizik liste fiyatı + "Sana özel %X · N₺ tasarruf" (amount<liste olunca).
+  **B)** Contact request veri uyumu — `_contact_identity` prospect'i tanır (gerçek
+  ad/eposta/telefon, placeholder değil); `_offer_summary` hedef_tip+aday_id+tutar.
+  **C)** Dinamik onboard — `_contact_item` membership_offer parse (target_kind koc/
+  kurum + plan + tutar + aday); İletişim Talepleri koç/kurum ayırır; yeni
+  `POST /contact-requests/{id}/onboard-coach` (koç hesabı + solo plan + ödeme linki +
+  e-posta + prospect=member); frontend target_kind=coach → "Koç Aç + Aktive Et"
+  dialog, kurum → "Kurum Aç + Aktive Et". Inline uçtan uca + regresyon temiz.
 - **KALAN:** kampanya/genel link (gruba paylaşım — Yol A landing). **K2** (Meta'ya
   bağlı) — `send_template` ile branded
   gönderim (image header + buton URL) + Aksiyon Merkezi'ne "WhatsApp teklif gönder"
