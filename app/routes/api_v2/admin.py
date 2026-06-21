@@ -8331,9 +8331,19 @@ def _contact_item(cr, db: Session | None = None) -> ContactRequestItem:
         ma = re.search(r"tutar=(\d+)", cr.message)
         if ma:
             requested_amount = int(ma.group(1))
+        elif (am2 := re.search(r"Tutar:\s*([\d.]+)\s*TL", cr.message)):  # eski format
+            try:
+                requested_amount = int(am2.group(1).replace(".", ""))
+            except ValueError:
+                pass
         mp = re.search(r"aday_id=(\d+)", cr.message)
         if mp:
             linked_prospect_id = int(mp.group(1))
+        # Eski kayıtlar (hedef_tip yok) → plan tipinden türet: solo=koç, kurum planı=kurum
+        if target_kind is None and requested_plan_code:
+            _pi = get_plan_info(requested_plan_code)
+            if _pi is not None:
+                target_kind = "coach" if _pi.audience == "solo" else "institution"
         source_label = ("Üyelik teklifi (koç)" if target_kind == "coach"
                         else "Üyelik teklifi (kurum)" if target_kind == "institution"
                         else source_label)
