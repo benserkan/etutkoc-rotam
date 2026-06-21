@@ -61,6 +61,12 @@ export function AdminActionCenterClient({ initial }: Props) {
   const data = q.data ?? initial;
   const sc = data.severity_counts;
 
+  // Önem düzeyine göre filtre (kart tıklayınca). null = tümü. Çok sayıda kullanıcı
+  // olduğunda uzun listeyi kısaltmak için.
+  const [filter, setFilter] = React.useState<string | null>(null);
+  const items = filter ? data.items.filter((it) => it.severity === filter) : data.items;
+  const activeLabel = SUMMARY_CARDS.find((c) => c.key === filter)?.label ?? null;
+
   return (
     <div className="space-y-5">
       <header>
@@ -76,21 +82,60 @@ export function AdminActionCenterClient({ initial }: Props) {
         </p>
       </header>
 
-      {/* Sayım kartları */}
+      {/* Sayım kartları — tıklanabilir filtre (önem düzeyine göre listeyi daralt) */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-5">
-        {SUMMARY_CARDS.map((c) => (
-          <div key={c.key} className={cn("rounded-lg border p-3", CARD_TONE[c.tone])}>
-            <div className="text-xs uppercase tracking-wide opacity-80">{c.label}</div>
-            <div className="mt-1 text-2xl font-semibold">{sc[c.key] ?? 0}</div>
-            <div className="text-[11px] opacity-70">{c.sub}</div>
-          </div>
-        ))}
-        <div className={cn("rounded-lg border p-3", CARD_TONE.indigo)}>
+        {SUMMARY_CARDS.map((c) => {
+          const active = filter === c.key;
+          const count = sc[c.key] ?? 0;
+          return (
+            <button
+              key={c.key}
+              type="button"
+              aria-pressed={active}
+              onClick={() => setFilter(active ? null : c.key)}
+              className={cn(
+                "rounded-lg border p-3 text-left transition hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                CARD_TONE[c.tone],
+                active && "ring-2 ring-offset-2 ring-offset-background ring-current",
+              )}
+            >
+              <div className="text-xs uppercase tracking-wide opacity-80">{c.label}</div>
+              <div className="mt-1 text-2xl font-semibold">{count}</div>
+              <div className="text-[11px] opacity-70">{active ? "filtre açık · temizle" : c.sub}</div>
+            </button>
+          );
+        })}
+        <button
+          type="button"
+          aria-pressed={filter === null}
+          onClick={() => setFilter(null)}
+          className={cn(
+            "rounded-lg border p-3 text-left transition hover:brightness-95 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+            CARD_TONE.indigo,
+            filter === null && "ring-2 ring-offset-2 ring-offset-background ring-current",
+          )}
+        >
           <div className="text-xs uppercase tracking-wide opacity-80">Toplam</div>
           <div className="mt-1 text-2xl font-semibold">{data.total_count}</div>
-          <div className="text-[11px] opacity-70">kurum listede</div>
-        </div>
+          <div className="text-[11px] opacity-70">{filter === null ? "tümü gösteriliyor" : "tümünü göster"}</div>
+        </button>
       </div>
+
+      {filter ? (
+        <div className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2 text-sm">
+          <span className="text-muted-foreground">
+            <span className="font-semibold text-foreground">{activeLabel}</span> önem
+            düzeyi · {items.length} sinyal gösteriliyor
+          </span>
+          <button
+            type="button"
+            onClick={() => setFilter(null)}
+            className="text-xs font-medium text-indigo-700 hover:underline"
+          >
+            Filtreyi temizle
+          </button>
+        </div>
+      ) : null}
 
       {data.items.length === 0 ? (
         <Card className="p-12 text-center text-sm text-emerald-700">
@@ -98,9 +143,20 @@ export function AdminActionCenterClient({ initial }: Props) {
           Tebrikler — bugün için açık aksiyon yok. Tüm kurumlar sağlıklı, ödemeler
           güncel, deneme alarmı yok.
         </Card>
+      ) : items.length === 0 ? (
+        <Card className="p-10 text-center text-sm text-muted-foreground">
+          Bu önem düzeyinde ({activeLabel}) açık aksiyon yok.
+          <button
+            type="button"
+            onClick={() => setFilter(null)}
+            className="ml-1 font-medium text-indigo-700 hover:underline"
+          >
+            Tümünü göster
+          </button>
+        </Card>
       ) : (
         <div className="space-y-3">
-          {data.items.map((it) => (
+          {items.map((it) => (
             <ActionRow key={`${it.owner_type ?? "institution"}-${it.owner_id ?? it.institution_id}`} it={it} />
           ))}
         </div>
