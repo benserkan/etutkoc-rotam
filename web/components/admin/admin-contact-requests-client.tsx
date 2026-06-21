@@ -210,11 +210,9 @@ function ContactRow({ item }: { item: ContactRequestItem }) {
       </td>
       <td className="px-4 py-3 text-right">
         <div className="inline-flex flex-col items-end gap-1">
-          {item.status !== "closed" && !item.linked_institution_id && !item.linked_user_id ? (
-            item.target_kind === "coach"
-              ? <CoachOnboardDialog item={item} />
-              : <OnboardDialog item={item} />
-          ) : null}
+          {item.target_kind === "coach"
+            ? <CoachOnboardDialog item={item} />
+            : <OnboardDialog item={item} />}
           <ManageDialog item={item} />
         </div>
       </td>
@@ -388,12 +386,19 @@ function CoachOnboardDialog({ item }: { item: ContactRequestItem }) {
 
   function close() { setOpen(false); setResult(null); }
 
+  // Onboard yapılabilir mi? Onboard sonrası talep "closed"+linked olur → trigger
+  // gizlenir AMA dialog/result açıkken unmount edilmez (link kaybolmasın).
+  const canOnboard = item.status !== "closed" && !item.linked_institution_id && !item.linked_user_id;
+  if (!canOnboard && !open && !result) return null;
+
   return (
     <>
-      <button type="button" onClick={() => setOpen(true)}
-              className="inline-flex items-center gap-1 rounded border border-violet-300 bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
-        <Rocket className="size-3.5" aria-hidden /> Koç Aç + Aktive Et
-      </button>
+      {canOnboard ? (
+        <button type="button" onClick={() => setOpen(true)}
+                className="inline-flex items-center gap-1 rounded border border-violet-300 bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
+          <Rocket className="size-3.5" aria-hidden /> Koç Aç + Aktive Et
+        </button>
+      ) : null}
       <Dialog open={open} onOpenChange={(v) => { if (!v) close(); else setOpen(true); }}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -547,15 +552,22 @@ function OnboardDialog({ item }: { item: ContactRequestItem }) {
     setResult(null);
   }
 
+  // Onboard sonrası talep "closed"+linked olur → trigger gizlenir AMA dialog/result
+  // açıkken unmount edilmez (giriş bilgisi + ödeme linki kaybolmasın).
+  const canOnboard = item.status !== "closed" && !item.linked_institution_id && !item.linked_user_id;
+  if (!canOnboard && !open && !result) return null;
+
   return (
     <>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        className="inline-flex items-center gap-1 rounded border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-700 hover:bg-cyan-100"
-      >
-        <Rocket className="size-3.5" aria-hidden /> Kurum Aç + Aktive Et
-      </button>
+      {canOnboard ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center gap-1 rounded border border-cyan-300 bg-cyan-50 px-2 py-0.5 text-xs font-semibold text-cyan-700 hover:bg-cyan-100"
+        >
+          <Rocket className="size-3.5" aria-hidden /> Kurum Aç + Aktive Et
+        </button>
+      ) : null}
       <Dialog open={open} onOpenChange={(v) => { if (!v) close(); else setOpen(true); }}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
