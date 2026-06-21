@@ -80,6 +80,8 @@ import type {
   OnboardInstitutionResult,
   ProspectItem,
   ProspectCreateBody,
+  ProspectOfferBody,
+  ProspectOfferResult,
 } from "@/lib/types/admin";
 
 /**
@@ -2284,5 +2286,18 @@ export function useDeleteProspect(prospectId: number) {
       api<{ data: { deleted: boolean }; invalidate?: string[] }>(`/api/v2/admin/prospects/${prospectId}/delete`, { method: "POST" }),
     onSuccess: (res) => { applyInvalidate(qc, res.invalidate); toast.success("Silindi"); },
     onError: (e) => toast.error(errorTitle(e, "Silinemedi")),
+  });
+}
+
+export function useCreateProspectOffer(prospectId: number) {
+  const qc = useQueryClient();
+  return useMutation<{ data: ProspectOfferResult; invalidate?: string[] }, Error, ProspectOfferBody>({
+    mutationFn: (body) =>
+      api<{ data: ProspectOfferResult; invalidate?: string[] }>(
+        `/api/v2/admin/prospects/${prospectId}/offer`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => { applyInvalidate(qc, res.invalidate); toast.success("Teklif linki üretildi"); },
+    onError: (e) => toast.error(errorTitle(e, "Teklif üretilemedi")),
   });
 }

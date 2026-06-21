@@ -2,13 +2,15 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { MessageCircle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Copy, Gift, MessageCircle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
 
 import { adminKeys, getAdminProspects } from "@/lib/api/admin";
 import {
   useCreateProspect, useUpdateProspect, useSetProspectStatus, useDeleteProspect,
+  useCreateProspectOffer,
 } from "@/lib/hooks/use-admin-mutations";
-import type { ProspectItem, ProspectListResponse } from "@/lib/types/admin";
+import type { ProspectItem, ProspectListResponse, ProspectPlanOption } from "@/lib/types/admin";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -32,6 +34,7 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
   const [q, setQ] = React.useState("");
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editRow, setEditRow] = React.useState<ProspectItem | null>(null);
+  const [offerRow, setOfferRow] = React.useState<ProspectItem | null>(null);
 
   React.useEffect(() => {
     const t = setTimeout(() => setQ(searchInput.trim()), 350);
@@ -126,6 +129,10 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
                 </td>
                 <td className="px-3 py-2">
                   <div className="flex items-center justify-end gap-1">
+                    <button onClick={() => setOfferRow(p)} title="Üyelik teklifi üret"
+                            className="rounded p-1.5 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
+                      <Gift className="size-4" />
+                    </button>
                     <a href={`https://wa.me/${p.phone}`} target="_blank" rel="noopener noreferrer"
                        title="WhatsApp'tan yaz" className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10">
                       <MessageCircle className="size-4" />
@@ -154,7 +161,100 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
 
       {createOpen ? <ProspectDialog kinds={data.meta.kinds} onClose={() => setCreateOpen(false)} /> : null}
       {editRow ? <ProspectDialog kinds={data.meta.kinds} row={editRow} onClose={() => setEditRow(null)} /> : null}
+      {offerRow ? <OfferDialog row={offerRow} plans={data.meta.plans} onClose={() => setOfferRow(null)} /> : null}
     </div>
+  );
+}
+
+function OfferDialog({ row, plans, onClose }: { row: ProspectItem; plans: ProspectPlanOption[]; onClose: () => void }) {
+  const mut = useCreateProspectOffer(row.id);
+  const [f, setF] = React.useState({
+    plan_code: plans[0]?.code ?? "", cycle: "monthly", amount: "",
+    title: "", message: "", expires_in_days: "7",
+  });
+  const [result, setResult] = React.useState<{ public_url: string; wa_url: string } | null>(null);
+  const set = (k: string, v: string) => setF((s) => ({ ...s, [k]: v }));
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    mut.mutate(
+      {
+        plan_code: f.plan_code, cycle: f.cycle,
+        amount: f.amount ? Number(f.amount) : null,
+        title: f.title || null, message: f.message || null,
+        expires_in_days: f.expires_in_days ? Number(f.expires_in_days) : null,
+      },
+      { onSuccess: (res) => setResult(res.data) },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader><DialogTitle>{row.name} — üyelik teklifi</DialogTitle></DialogHeader>
+        {result ? (
+          <div className="space-y-3">
+            <p className="text-sm text-emerald-700 dark:text-emerald-300">Teklif linki hazır. WhatsApp&apos;tan gönderebilirsin.</p>
+            <div className="rounded-lg border border-border bg-muted/30 p-2 text-xs break-all">{result.public_url}</div>
+            <div className="flex flex-wrap gap-2">
+              <a href={result.wa_url} target="_blank" rel="noopener noreferrer"
+                 className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-700">
+                <MessageCircle className="size-4" /> WhatsApp&apos;tan gönder
+              </a>
+              <button onClick={() => { navigator.clipboard?.writeText(result.public_url); toast.success("Link kopyalandı"); }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-2 text-sm hover:bg-muted">
+                <Copy className="size-4" /> Linki kopyala
+              </button>
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Kurumsal başlıklı otomatik (Cloud API) gönderim Meta doğrulaması sonrası (K2) eklenecek.
+            </p>
+            <div className="flex justify-end"><Button onClick={onClose}>Kapat</Button></div>
+          </div>
+        ) : (
+          <form onSubmit={submit} method="post" className="space-y-3">
+            <div>
+              <Label>Plan *</Label>
+              <select value={f.plan_code} onChange={(e) => set("plan_code", e.target.value)} required
+                      className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                {plans.map((p) => <option key={p.code} value={p.code}>{p.label} ({p.monthly}₺/ay)</option>)}
+              </select>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <Label>Döngü</Label>
+                <select value={f.cycle} onChange={(e) => set("cycle", e.target.value)}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm">
+                  <option value="monthly">Aylık</option>
+                  <option value="annual">Akademik Yıl</option>
+                </select>
+              </div>
+              <div>
+                <Label>Özel fiyat (₺)</Label>
+                <Input value={f.amount} onChange={(e) => set("amount", e.target.value)} placeholder="boş = plan fiyatı" />
+              </div>
+            </div>
+            <div>
+              <Label>Başlık (sayfada büyük görünür)</Label>
+              <Input value={f.title} onChange={(e) => set("title", e.target.value)} placeholder="Örn. Sana özel %20 indirim" />
+            </div>
+            <div>
+              <Label>Mesaj</Label>
+              <textarea value={f.message} onChange={(e) => set("message", e.target.value)} rows={2}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm" placeholder="(opsiyonel)" />
+            </div>
+            <div>
+              <Label>Geçerlilik (gün)</Label>
+              <Input value={f.expires_in_days} onChange={(e) => set("expires_in_days", e.target.value)} className="w-24" />
+            </div>
+            <div className="flex justify-end gap-2 pt-1">
+              <Button type="button" variant="outline" onClick={onClose}>Vazgeç</Button>
+              <Button type="submit" disabled={mut.isPending || !f.plan_code}>Teklif + Link üret</Button>
+            </div>
+          </form>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
 

@@ -334,8 +334,14 @@ def create_action(
     result: str = "pending",
     follow_up_at: datetime | None = None,
     autocommit: bool = True,
+    dedup: bool = False,
 ) -> CrmAction | None:
-    """CrmAction yarat. `institution_id` veya `user_id` — birinden biri."""
+    """CrmAction yarat. `institution_id` veya `user_id` — birinden biri.
+
+    `dedup=True` ise: aynı owner + kind + summary için hâlâ AÇIK (pending) bir
+    aksiyon varsa yenisini yaratmaz, mevcudu döndürür (öneri butonuna hızlı/
+    mükerrer basışta tekrar kayıt önlenir). Manuel "Yeni Aksiyon" formu dedup=False.
+    """
     from app.models import CrmActionKind, CrmActionResult
     try:
         kind_enum = CrmActionKind(kind)
@@ -348,6 +354,17 @@ def create_action(
     owner_kw = _resolve_owner_kwargs(
         institution_id=institution_id, user_id=user_id,
     )
+    if dedup:
+        q = db.query(CrmAction).filter(
+            CrmAction.kind == kind_enum,
+            CrmAction.summary == summary[:500],
+            CrmAction.result == CrmActionResult.PENDING,
+        )
+        for k, v in owner_kw.items():
+            q = q.filter(getattr(CrmAction, k) == v)
+        existing = q.order_by(CrmAction.id.desc()).first()
+        if existing is not None:
+            return existing
     action = CrmAction(
         kind=kind_enum,
         summary=summary[:500],

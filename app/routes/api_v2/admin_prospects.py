@@ -5,17 +5,33 @@ Sisteme üye olmayan kurum/koç adaylarını CRUD. Üyelik teklifi bunları hede
 """
 from __future__ import annotations
 
+from urllib.parse import quote
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
+from app.config import settings
 from app.deps import get_db
 from app.models import SalesProspect, User
 from app.models.sales_prospect import (
     PROSPECT_KIND_LABELS_TR, PROSPECT_SOURCE_LABELS_TR, PROSPECT_STATUS_LABELS_TR,
 )
 from app.routes.api_v2.admin import _require_super_admin
+from app.services import membership_offer_service as mos
+from app.services import plans
 from app.services import prospect_service as ps
+
+
+def _sellable_plans() -> list[dict]:
+    out = []
+    for code, pi in plans.PLAN_CATALOG.items():
+        if not plans.is_paid_plan(code):
+            continue
+        out.append({"code": code, "label": pi.label, "audience": pi.audience,
+                    "monthly": pi.price_monthly_try, "annual": pi.price_yearly_try})
+    out.sort(key=lambda p: (p["audience"], p["monthly"] if p["monthly"] > 0 else 10**9))
+    return out
 
 router = APIRouter(prefix="/admin/prospects", tags=["v2-admin-prospects"])
 
@@ -90,6 +106,7 @@ def list_prospects(
             "kinds": PROSPECT_KIND_LABELS_TR,
             "statuses": PROSPECT_STATUS_LABELS_TR,
             "sources": PROSPECT_SOURCE_LABELS_TR,
+            "plans": _sellable_plans(),
         },
     }
 
@@ -149,6 +166,54 @@ def set_status(
         db.rollback()
         _err(e)
     return {"data": _item(p), "invalidate": ["admin:prospects"]}
+
+
+class ProspectOfferBody(BaseModel):
+    plan_code: str
+    cycle: str = "monthly"
+    offer_type: str = "new"
+    amount: int | None = None
+    title: str | None = None
+    message: str | None = None
+    expires_in_days: int | None = 7
+
+
+@router.post("/{prospect_id}/offer")
+def create_prospect_offer(
+    prospect_id: int,
+    body: ProspectOfferBody,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Hedef Havuzu adayına kişiye özel üyelik teklifi üret → markalı /membership
+    linki + hazır wa.me mesajı (şimdilik manuel; Cloud API branded gönderim K2)."""
+    p = ps.get_prospect(db, prospect_id)
+    if p is None:
+        raise HTTPException(status_code=404, detail={"error": "prospect", "code": "not_found"})
+    try:
+        offer = mos.create_offer(
+            db, admin=user, target_user_id=None, target_prospect_id=p.id,
+            offer_type=body.offer_type, plan_code=body.plan_code, cycle=body.cycle,
+            amount=body.amount, title=body.title, message=body.message,
+            expires_in_days=body.expires_in_days,
+        )
+    except mos.MembershipOfferError as e:
+        raise HTTPException(status_code=422, detail={"error": "offer", "code": e.code, "message": e.message})
+    ps.mark_contacted(db, p)
+    db.commit()
+
+    public_url = f"{settings.app_base_url.rstrip('/')}/membership/{offer.token}"
+    ad = (p.name or "").split(" ")[0]
+    wa_text = (
+        f"Merhaba {ad}, ETUTKOC Rotam ogrenci koclugu sistemini tanitmak isteriz. "
+        f"{(body.title or '').strip()}\nDetaylar ve uyelik: {public_url}"
+    ).strip()
+    wa_url = f"https://wa.me/{p.phone}?text={quote(wa_text)}"
+    return {
+        "data": {"offer_id": offer.id, "token": offer.token,
+                 "public_url": public_url, "wa_url": wa_url},
+        "invalidate": ["admin:prospects"],
+    }
 
 
 @router.post("/{prospect_id}/delete")

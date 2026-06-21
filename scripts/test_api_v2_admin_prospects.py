@@ -19,7 +19,7 @@ from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
 from app.main import app
-from app.models import SalesProspect, User, UserRole
+from app.models import MembershipOffer, SalesProspect, User, UserRole
 from app.services.rate_limit import get_login_limiter
 from app.services.security import hash_password
 
@@ -52,6 +52,7 @@ def _seed():
 
 def _cleanup(seed):
     with SessionLocal() as db:
+        db.execute(sa_delete(MembershipOffer).where(MembershipOffer.created_by_admin_id == seed["super"]))
         db.execute(sa_delete(SalesProspect).where(SalesProspect.phone.like("9055%")))
         db.execute(sa_delete(SalesProspect).where(SalesProspect.created_by_admin_id == seed["super"]))
         db.execute(sa_delete(User).where(User.id.in_([seed["super"], seed["teacher"]])))
@@ -104,6 +105,9 @@ def main():
         check("6. list + counts + meta",
               any(p["id"] == created_id for p in j["items"]) and "counts" in j
               and "statuses" in j["meta"], f"items={len(j.get('items',[]))}")
+        check("6b. meta.plans (satılabilir planlar)",
+              isinstance(j["meta"].get("plans"), list) and len(j["meta"]["plans"]) > 0
+              and "code" in j["meta"]["plans"][0], "plans yok")
 
         # 7. filtre kind=institution
         r = sc.get("/api/v2/admin/prospects?kind=institution")
@@ -116,6 +120,19 @@ def main():
         r = sc.post(f"/api/v2/admin/prospects/{created_id}", json={"city": "İstanbul", "opt_in": True})
         check("8. update", r.status_code == 200 and r.json()["data"]["city"] == "İstanbul"
               and r.json()["data"]["opt_in"] is True, str(r.status_code))
+
+        # 8c. prospect'e teklif üret → public_url + wa_url + contacted
+        plan0 = sc.get("/api/v2/admin/prospects").json()["meta"]["plans"][0]["code"]
+        r = sc.post(f"/api/v2/admin/prospects/{created_id}/offer", json={
+            "plan_code": plan0, "cycle": "monthly", "title": "Sana özel %20", "expires_in_days": 7})
+        j = r.json()
+        check("8c. prospect teklifi → link + wa.me",
+              r.status_code == 200 and "/membership/" in j["data"]["public_url"]
+              and j["data"]["wa_url"].startswith("https://wa.me/"), f"{r.status_code} {j.get('data')}")
+        # contacted oldu mu
+        row = next((p for p in sc.get("/api/v2/admin/prospects").json()["items"] if p["id"] == created_id), None)
+        check("8d. teklif sonrası status=contacted", row and row["status"] == "contacted",
+              str(row and row["status"]))
 
         # 9. set status member
         r = sc.post(f"/api/v2/admin/prospects/{created_id}/status", json={"status": "member"})

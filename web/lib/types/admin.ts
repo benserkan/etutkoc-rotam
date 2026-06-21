@@ -3262,6 +3262,13 @@ export interface ProspectItem {
   last_contacted_at: string | null;
   created_at: string | null;
 }
+export interface ProspectPlanOption {
+  code: string;
+  label: string;
+  audience: string;
+  monthly: number;
+  annual: number;
+}
 export interface ProspectListResponse {
   items: ProspectItem[];
   counts: Record<string, number>;
@@ -3269,7 +3276,23 @@ export interface ProspectListResponse {
     kinds: Record<string, string>;
     statuses: Record<string, string>;
     sources: Record<string, string>;
+    plans: ProspectPlanOption[];
   };
+}
+export interface ProspectOfferBody {
+  plan_code: string;
+  cycle?: string;
+  offer_type?: string;
+  amount?: number | null;
+  title?: string | null;
+  message?: string | null;
+  expires_in_days?: number | null;
+}
+export interface ProspectOfferResult {
+  offer_id: number;
+  token: string;
+  public_url: string;
+  wa_url: string;
 }
 export interface ProspectCreateBody {
   name: string;

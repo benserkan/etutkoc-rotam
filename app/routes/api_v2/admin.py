@@ -5188,6 +5188,7 @@ def admin_revenue_quick_action_v2(
         by_user_id=user.id,
         result=body.result,
         follow_up_at=follow_dt,
+        dedup=True,   # öneri butonuna mükerrer basışta tekrar kayıt yaratma
     )
     if action is None:
         raise HTTPException(

@@ -75,6 +75,7 @@ def create_offer(
     title: str | None,
     message: str | None,
     expires_in_days: int | None = 30,
+    target_prospect_id: int | None = None,
 ) -> MembershipOffer:
     if offer_type not in ("new", "renewal"):
         offer_type = "new"
@@ -85,6 +86,10 @@ def create_offer(
     if target_user_id is not None:
         if db.get(User, target_user_id) is None:
             raise MembershipOfferError("target_not_found", "Hedef kullanıcı bulunamadı.")
+    if target_prospect_id is not None:
+        from app.models import SalesProspect
+        if db.get(SalesProspect, target_prospect_id) is None:
+            raise MembershipOfferError("target_not_found", "Hedef aday bulunamadı.")
     token = _gen_token(db)
     expires_at = (
         datetime.now(timezone.utc) + timedelta(days=expires_in_days)
@@ -95,6 +100,7 @@ def create_offer(
         token=token,
         created_by_admin_id=admin.id,
         target_user_id=target_user_id,
+        target_prospect_id=target_prospect_id,
         offer_type=offer_type,
         plan_code=plan_code,
         cycle=cycle,
@@ -147,6 +153,12 @@ def public_view(db: Session, offer: MembershipOffer, *, mark_viewed: bool = True
     pi = plans.get_plan_info(offer.plan_code)
     amount = _resolve_amount(offer)
     target = offer.target_user
+    target_name = target.full_name if target else None
+    if target_name is None and offer.target_prospect_id:
+        from app.models import SalesProspect
+        pr = db.get(SalesProspect, offer.target_prospect_id)
+        if pr:
+            target_name = pr.name
     return {
         "valid": status in ("active", "accepted"),
         "status": status,
@@ -155,7 +167,7 @@ def public_view(db: Session, offer: MembershipOffer, *, mark_viewed: bool = True
         "offer_type_label": _TYPE_LABELS.get(offer.offer_type, "Üyelik"),
         "title": offer.title,
         "message": offer.message,
-        "target_name": (target.full_name if target else None),
+        "target_name": target_name,
         "plan_code": offer.plan_code,
         "plan_label": (pi.label if pi else offer.plan_code),
         "plan_short": (pi.short_description if pi else None),
