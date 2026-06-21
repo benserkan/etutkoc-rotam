@@ -3342,6 +3342,11 @@ class ContactRequestItem(BaseModel):
     linked_institution_id: int | None = None   # kurum abonelik talebinde kurum_id (mesajdan)
     requested_plan_label: str | None = None            # talep edilen paket (mesajdan)
     institution_current_plan_label: str | None = None  # kurumun CANLI mevcut planı
+    # Üyelik teklifi (membership_offer) — koç/kurum ayrımı + dinamik onboard için
+    target_kind: str | None = None                     # coach | institution
+    requested_plan_code: str | None = None
+    requested_amount: int | None = None
+    linked_prospect_id: int | None = None
 
 
 class ContactRequestListResponse(BaseModel):
@@ -3394,6 +3399,29 @@ class OnboardInstitutionResult(BaseModel):
     payment_link_id: int
     payment_link_token: str
     payment_link_url: str     # tam URL
+    email_sent: bool
+    message: str
+
+
+class OnboardCoachBody(BaseModel):
+    """contact-requests/{id}/onboard-coach — bağımsız koç hesabı + solo plan
+    aktivasyonu + ödeme linki + onboarding e-postası (üyelik teklifi koç hedefli)."""
+    full_name: str = Field(..., min_length=3, max_length=200)
+    email: str = Field(..., min_length=5, max_length=255)
+    plan: str = Field(..., min_length=1, max_length=50)  # solo_pro/elite/unlimited
+    payment_amount: int = Field(..., ge=0)
+    payment_cycle: str = Field("monthly")
+    payment_description: str | None = Field(None, max_length=200)
+    payment_expires_in_days: int = Field(14, ge=1, le=365)
+    send_email: bool = True
+
+
+class OnboardCoachResult(BaseModel):
+    coach_id: int
+    coach_email: str
+    temp_password: str
+    payment_link_token: str
+    payment_link_url: str
     email_sent: bool
     message: str
 

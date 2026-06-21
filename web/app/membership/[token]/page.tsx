@@ -37,6 +37,9 @@ interface MembershipView {
   cycle: string | null;
   cycle_label: string | null;
   amount: number | null;
+  list_price: number | null;
+  savings: number | null;
+  discount_pct: number | null;
   havale: HavaleInfo | null;
 }
 
@@ -172,6 +175,11 @@ export default async function MembershipPage({
                 <div className="text-right">
                   {offer.amount ? (
                     <>
+                      {offer.list_price && offer.savings ? (
+                        <div className="text-sm font-medium text-slate-400 line-through">
+                          {fmtTry(offer.list_price)} ₺
+                        </div>
+                      ) : null}
                       <div className="text-2xl font-extrabold text-cyan-700">
                         {fmtTry(offer.amount)} ₺
                       </div>
@@ -182,6 +190,14 @@ export default async function MembershipPage({
                   )}
                 </div>
               </div>
+
+              {offer.savings && offer.amount ? (
+                <div className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-center text-sm font-semibold text-emerald-800">
+                  Sana özel {offer.discount_pct ? `%${offer.discount_pct} ` : ""}indirim ·
+                  {" "}{fmtTry(offer.savings)} ₺ tasarruf
+                  <span className="font-normal"> ({offer.cycle_label})</span>
+                </div>
+              ) : null}
 
               {offer.plan_features.length > 0 ? (
                 <ul className="mt-4 space-y-2">

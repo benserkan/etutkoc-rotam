@@ -32,7 +32,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { adminKeys, getAdminContactRequests } from "@/lib/api/admin";
-import { useOnboardInstitution, useUpdateContactRequest } from "@/lib/hooks/use-admin-mutations";
+import { useOnboardInstitution, useOnboardCoach, useUpdateContactRequest } from "@/lib/hooks/use-admin-mutations";
+import type { OnboardCoachResult } from "@/lib/types/admin";
+import { toast } from "sonner";
 import type { OnboardInstitutionResult } from "@/lib/types/admin";
 import type {
   ContactRequestItem,
@@ -209,7 +211,9 @@ function ContactRow({ item }: { item: ContactRequestItem }) {
       <td className="px-4 py-3 text-right">
         <div className="inline-flex flex-col items-end gap-1">
           {item.status !== "closed" && !item.linked_institution_id && !item.linked_user_id ? (
-            <OnboardDialog item={item} />
+            item.target_kind === "coach"
+              ? <CoachOnboardDialog item={item} />
+              : <OnboardDialog item={item} />
           ) : null}
           <ManageDialog item={item} />
         </div>
@@ -355,6 +359,128 @@ const PLAN_DEFAULT_AMOUNTS: Record<string, number> = {
  * "Talepten Aktivasyona" — tek dialog: kurum + yönetici + ödeme linki + e-posta.
  * Başarı sonrası geçici şifre + URL'yi gösteren sonuç ekranı.
  */
+const SOLO_PLANS: { code: string; label: string; monthly: number }[] = [
+  { code: "solo_pro", label: "Solo Başlangıç (≤10 öğr)", monthly: 2500 },
+  { code: "solo_elite", label: "Solo (≤25 öğr)", monthly: 5000 },
+  { code: "solo_unlimited", label: "Solo Sınırsız", monthly: 7500 },
+];
+
+function CoachOnboardDialog({ item }: { item: ContactRequestItem }) {
+  const mut = useOnboardCoach(item.id);
+  const [open, setOpen] = React.useState(false);
+  const [result, setResult] = React.useState<OnboardCoachResult | null>(null);
+  const [name, setName] = React.useState(item.name ?? "");
+  const [email, setEmail] = React.useState(item.email ?? "");
+  const [plan, setPlan] = React.useState(item.requested_plan_code ?? "solo_pro");
+  const [amount, setAmount] = React.useState(
+    item.requested_amount ?? SOLO_PLANS.find((p) => p.code === (item.requested_plan_code ?? "solo_pro"))?.monthly ?? 2500,
+  );
+  const [cycle, setCycle] = React.useState<"monthly" | "annual">("monthly");
+  const [expiresInDays, setExpiresInDays] = React.useState(14);
+  const [sendEmail, setSendEmail] = React.useState(true);
+
+  function changePlan(p: string) {
+    setPlan(p);
+    const m = SOLO_PLANS.find((x) => x.code === p)?.monthly;
+    if (m != null) setAmount(cycle === "annual" ? m * 10 : m);
+  }
+  const valid = name.trim().length >= 3 && /.+@.+\..+/.test(email) && amount >= 0;
+
+  function close() { setOpen(false); setResult(null); }
+
+  return (
+    <>
+      <button type="button" onClick={() => setOpen(true)}
+              className="inline-flex items-center gap-1 rounded border border-violet-300 bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700 hover:bg-violet-100 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200">
+        <Rocket className="size-3.5" aria-hidden /> Koç Aç + Aktive Et
+      </button>
+      <Dialog open={open} onOpenChange={(v) => { if (!v) close(); else setOpen(true); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="inline-flex items-center gap-2">
+              <Rocket className="size-4 text-violet-600" aria-hidden />
+              {result ? "Koç aktive edildi" : "Bağımsız koç oluştur"}
+            </DialogTitle>
+          </DialogHeader>
+          {result ? (
+            <div className="space-y-3 text-sm">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                <p>Geçici şifre: <b className="font-mono">{result.temp_password}</b></p>
+                <p className="mt-1 break-all">Ödeme linki: {result.payment_link_url}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <button onClick={() => { navigator.clipboard?.writeText(result.payment_link_url); toast.success("Link kopyalandı"); }}
+                        className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-muted">Linki kopyala</button>
+                <button onClick={() => { navigator.clipboard?.writeText(result.temp_password); toast.success("Şifre kopyalandı"); }}
+                        className="rounded-lg border border-border px-3 py-1.5 text-sm hover:bg-muted">Şifre kopyala</button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                {result.email_sent ? "Koça e-posta gönderildi (giriş + ödeme)." : "E-postayı elden iletin."}
+              </p>
+              <div className="flex justify-end"><Button onClick={close}>Kapat</Button></div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                <p className="font-semibold">Talep (koç hedefli üyelik teklifi)</p>
+                <p>{item.name} · {item.email}{item.phone ? ` · ${item.phone}` : ""}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="col-span-2">
+                  <Label className="text-xs">Koç adı</Label>
+                  <Input value={name} onChange={(e) => setName(e.target.value)} />
+                </div>
+                <div className="col-span-2">
+                  <Label className="text-xs">E-posta</Label>
+                  <Input value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+                <div>
+                  <Label className="text-xs">Solo paket</Label>
+                  <select value={plan} onChange={(e) => changePlan(e.target.value)}
+                          className="w-full rounded border border-input bg-card px-3 py-2 text-sm">
+                    {SOLO_PLANS.map((p) => <option key={p.code} value={p.code}>{p.label}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs">Tutar (₺)</Label>
+                  <Input type="number" value={amount} onChange={(e) => setAmount(Number(e.target.value))} />
+                </div>
+                <div>
+                  <Label className="text-xs">Dönem</Label>
+                  <select value={cycle} onChange={(e) => setCycle(e.target.value as "monthly" | "annual")}
+                          className="w-full rounded border border-input bg-card px-3 py-2 text-sm">
+                    <option value="monthly">Aylık</option>
+                    <option value="annual">Akademik Yıl</option>
+                  </select>
+                </div>
+                <div>
+                  <Label className="text-xs">Geçerlilik (gün)</Label>
+                  <Input type="number" value={expiresInDays} onChange={(e) => setExpiresInDays(Number(e.target.value))} />
+                </div>
+              </div>
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={sendEmail} onChange={(e) => setSendEmail(e.target.checked)} />
+                Koça otomatik e-posta gönder (giriş + ödeme linki)
+              </label>
+              <div className="flex justify-end gap-2">
+                <Button variant="outline" onClick={close}>Vazgeç</Button>
+                <Button disabled={!valid || mut.isPending}
+                        onClick={() => mut.mutate({
+                          full_name: name.trim(), email: email.trim().toLowerCase(), plan,
+                          payment_amount: amount, payment_cycle: cycle,
+                          payment_expires_in_days: expiresInDays, send_email: sendEmail,
+                        }, { onSuccess: (res) => setResult(res.data) })}>
+                  Koç Oluştur + Ödeme Linki
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
+
 function OnboardDialog({ item }: { item: ContactRequestItem }) {
   const mut = useOnboardInstitution(item.id);
   const [open, setOpen] = React.useState(false);

@@ -3080,6 +3080,10 @@ export interface ContactRequestItem {
   linked_institution_id?: number | null;
   requested_plan_label?: string | null;
   institution_current_plan_label?: string | null;
+  target_kind?: string | null;          // coach | institution (üyelik teklifi)
+  requested_plan_code?: string | null;
+  requested_amount?: number | null;
+  linked_prospect_id?: number | null;
 }
 
 export interface ContactRequestListResponse {
@@ -3115,6 +3119,26 @@ export interface OnboardInstitutionResult {
   institution_admin_email: string;
   temp_password: string;
   payment_link_id: number;
+  payment_link_token: string;
+  payment_link_url: string;
+  email_sent: boolean;
+  message: string;
+}
+
+export interface OnboardCoachBody {
+  full_name: string;
+  email: string;
+  plan: string;
+  payment_amount: number;
+  payment_cycle: "monthly" | "annual";
+  payment_description?: string | null;
+  payment_expires_in_days?: number;
+  send_email?: boolean;
+}
+export interface OnboardCoachResult {
+  coach_id: number;
+  coach_email: string;
+  temp_password: string;
   payment_link_token: string;
   payment_link_url: string;
   email_sent: boolean;

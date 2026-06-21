@@ -78,6 +78,8 @@ import type {
   ContactRequestMutationResult,
   OnboardInstitutionBody,
   OnboardInstitutionResult,
+  OnboardCoachBody,
+  OnboardCoachResult,
   ProspectItem,
   ProspectCreateBody,
   ProspectOfferBody,
@@ -2299,5 +2301,20 @@ export function useCreateProspectOffer(prospectId: number) {
       ),
     onSuccess: (res) => { applyInvalidate(qc, res.invalidate); toast.success("Teklif linki üretildi"); },
     onError: (e) => toast.error(errorTitle(e, "Teklif üretilemedi")),
+  });
+}
+
+export function useOnboardCoach(requestId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<OnboardCoachResult>, Error, OnboardCoachBody>({
+    mutationFn: (body) =>
+      api<MutationResponse<OnboardCoachResult>>(
+        `/api/v2/admin/contact-requests/${requestId}/onboard-coach`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => { applyInvalidate(qc, res.invalidate); },
+    onError: (e) => toast.error(errorTitle(e, "Koç aktivasyonu başarısız"), {
+      description: errorMessage(e, "Beklenmeyen bir hata."),
+    }),
   });
 }

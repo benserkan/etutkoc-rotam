@@ -366,6 +366,8 @@ from app.routes.api_v2.schemas.admin import (
     ContactRequestMutationResult,
     OnboardInstitutionBody,
     OnboardInstitutionResult,
+    OnboardCoachBody,
+    OnboardCoachResult,
 )
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.services.account_history import (
@@ -8312,7 +8314,29 @@ def _contact_item(cr, db: Session | None = None) -> ContactRequestItem:
     linked_institution_id = None
     requested_plan_label = None
     institution_current_plan_label = None
+    target_kind = None
+    requested_plan_code = None
+    requested_amount = None
+    linked_prospect_id = None
     source_label = CONTACT_SOURCE_LABELS_TR.get(cr.source, cr.source)
+    if cr.source == "membership_offer" and cr.message:
+        # WhatsApp üyelik teklifi → koç/kurum ayrımı + plan + tutar + aday
+        mt = re.search(r"hedef_tip=(koc|kurum)", cr.message)
+        if mt:
+            target_kind = "coach" if mt.group(1) == "koc" else "institution"
+        mk = re.search(r"hedef_kod=([a-z_]+)", cr.message)
+        if mk:
+            requested_plan_code = mk.group(1)
+            requested_plan_label = _plan_label(requested_plan_code)
+        ma = re.search(r"tutar=(\d+)", cr.message)
+        if ma:
+            requested_amount = int(ma.group(1))
+        mp = re.search(r"aday_id=(\d+)", cr.message)
+        if mp:
+            linked_prospect_id = int(mp.group(1))
+        source_label = ("Üyelik teklifi (koç)" if target_kind == "coach"
+                        else "Üyelik teklifi (kurum)" if target_kind == "institution"
+                        else source_label)
     if cr.source == "subscription_request" and cr.message:
         mu = re.search(r"koç_id=(\d+)", cr.message)
         if mu:
@@ -8349,6 +8373,10 @@ def _contact_item(cr, db: Session | None = None) -> ContactRequestItem:
         linked_institution_id=linked_institution_id,
         requested_plan_label=requested_plan_label,
         institution_current_plan_label=institution_current_plan_label,
+        target_kind=target_kind,
+        requested_plan_code=requested_plan_code,
+        requested_amount=requested_amount,
+        linked_prospect_id=linked_prospect_id,
     )
 
 
@@ -8640,6 +8668,122 @@ def admin_onboard_institution_v2(
             "admin:dashboard", "admin:institutions", "admin:users",
             "admin:payment-links", *_CONTACT_INVALIDATE,
         ],
+    )
+
+
+@router.post(
+    "/contact-requests/{request_id}/onboard-coach",
+    response_model=MutationResponse[OnboardCoachResult],
+)
+def admin_onboard_coach_v2(
+    request_id: int,
+    body: OnboardCoachBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Talepten aktivasyona — bağımsız KOÇ: koç hesabı + solo plan + ödeme linki +
+    onboarding e-postası. (Üyelik teklifi koç hedefliyse — kurum onboard'ın koç eşi.)"""
+    from datetime import datetime, timezone
+    from decimal import Decimal
+    from app.models.contact_request import CONTACT_STATUS_CLOSED, ContactRequest
+    from app.services.auth_security import generate_strong_password
+    from app.services import payment_link_service, plans
+    from app.services.email_service import send_email
+    from app.services.security import hash_password as _hash
+    from app.config import settings
+
+    cr = db.get(ContactRequest, request_id)
+    if cr is None:
+        raise HTTPException(status_code=404, detail={"error": "not_found",
+                            "code": "contact_request_not_found", "message": "Talep bulunamadı."})
+    if not plans.is_paid_plan(body.plan):
+        raise HTTPException(status_code=400, detail={"error": "validation",
+                            "code": "invalid_plan", "message": "Geçerli bir solo plan seçin."})
+    if db.query(User).filter(User.email == body.email.strip().lower()).first():
+        raise HTTPException(status_code=409, detail={"error": "conflict", "code": "email_taken",
+                            "message": "Bu e-posta zaten kayıtlı."})
+
+    # 1) Koç hesabı (bağımsız — institution_id NULL) + istenen plan
+    pwd = generate_strong_password(UserRole.TEACHER)
+    coach = User(
+        email=body.email.strip().lower(), password_hash=_hash(pwd),
+        full_name=body.full_name.strip(), role=UserRole.TEACHER, institution_id=None,
+        plan=body.plan, is_active=True,
+        password_changed_at=datetime.now(timezone.utc), must_change_password=True,
+        email_verified_at=datetime.now(timezone.utc),
+    )
+    db.add(coach)
+    db.flush()
+
+    # 2) Ödeme linki (target=user)
+    try:
+        link = payment_link_service.create_link(
+            db, admin=user, target_owner_type="user", target_owner_id=coach.id,
+            plan_code=body.plan, cycle=body.payment_cycle,
+            amount=Decimal(str(body.payment_amount)),
+            description=body.payment_description, expires_in_days=body.payment_expires_in_days,
+        )
+    except payment_link_service.PaymentLinkError as exc:
+        db.rollback()
+        raise HTTPException(status_code=400, detail={"error": "validation",
+                            "code": exc.code, "message": exc.message}) from exc
+    public_url = f"{settings.app_base_url.rstrip('/')}/payment/link/{link.token}"
+
+    # 3) E-posta (kurum onboarding şablonu reuse — institution_name yerine '—')
+    email_sent = False
+    if body.send_email:
+        pi = plans.get_plan_info(body.plan)
+        try:
+            email_sent = send_email(
+                to=coach.email, template="institution_onboarding",
+                ctx={
+                    "full_name": coach.full_name, "email": coach.email, "temp_password": pwd,
+                    "login_url": f"{settings.app_base_url.rstrip('/')}/login",
+                    "institution_name": "Bağımsız Koç",
+                    "plan_label": (pi.label if pi else body.plan),
+                    "amount_formatted": f"{int(body.payment_amount):,} ₺".replace(",", "."),
+                    "cycle_label": "Aylık" if body.payment_cycle == "monthly" else "Yıllık (10 ay peşin)",
+                    "description": body.payment_description,
+                    "payment_url": public_url,
+                    "expires_at_label": link.expires_at.strftime("%d.%m.%Y") if link.expires_at else "—",
+                },
+            )
+        except Exception:
+            logger.exception("coach onboarding email fail user=%s", coach.id)
+            email_sent = False
+
+    # 4) Aday'ı üye işaretle (membership_offer aday_id mesajdan)
+    import re as _re
+    if cr.message:
+        mp = _re.search(r"aday_id=(\d+)", cr.message)
+        if mp:
+            from app.models import SalesProspect
+            pr = db.get(SalesProspect, int(mp.group(1)))
+            if pr:
+                pr.status = "member"
+
+    # 5) Talebi kapat
+    cr.status = CONTACT_STATUS_CLOSED
+    cr.handled_by_id = user.id
+    cr.handled_at = datetime.now(timezone.utc)
+    note = (cr.admin_note or "").strip()
+    cr.admin_note = (note + f"\nOnboarding (koç) — koç #{coach.id} ({coach.email}), ödeme linki #{link.id}.").strip()
+    log_action(db, action=AuditAction.USER_CREATE, actor_id=user.id,
+               target_type="user", target_id=coach.id,
+               details={"from_contact_request": cr.id, "onboard": "coach"})
+    db.commit()
+
+    return MutationResponse[OnboardCoachResult](
+        data=OnboardCoachResult(
+            coach_id=coach.id, coach_email=coach.email, temp_password=pwd,
+            payment_link_token=link.token, payment_link_url=public_url,
+            email_sent=email_sent,
+            message=(f"Koç {coach.email} oluşturuldu, ödeme linki hazır."
+                     + (" E-posta gönderildi." if email_sent else " E-postayı elden iletin.")),
+        ),
+        invalidate=["admin:dashboard", "admin:users", "admin:payment-links",
+                    "admin:prospects", *_CONTACT_INVALIDATE],
     )
 
 

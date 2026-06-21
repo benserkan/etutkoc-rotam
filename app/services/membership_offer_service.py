@@ -152,6 +152,16 @@ def public_view(db: Session, offer: MembershipOffer, *, mark_viewed: bool = True
         db.commit()
     pi = plans.get_plan_info(offer.plan_code)
     amount = _resolve_amount(offer)
+    # Liste fiyatı (indirimsiz plan) — kazanç hesabı için
+    list_price = None
+    if pi is not None:
+        lp = pi.price_yearly_try if offer.cycle == "annual" else pi.price_monthly_try
+        list_price = lp if lp and lp > 0 else None
+    savings = None
+    discount_pct = None
+    if list_price and amount is not None and amount < list_price:
+        savings = list_price - amount
+        discount_pct = round(savings * 100 / list_price)
     target = offer.target_user
     target_name = target.full_name if target else None
     if target_name is None and offer.target_prospect_id:
@@ -176,16 +186,41 @@ def public_view(db: Session, offer: MembershipOffer, *, mark_viewed: bool = True
         "cycle": offer.cycle,
         "cycle_label": _CYCLE_LABELS.get(offer.cycle, offer.cycle),
         "amount": amount,
+        # Kazanç: liste fiyatı (indirimsiz) vs teklif tutarı → çizik fiyat + tasarruf.
+        "list_price": list_price,
+        "savings": savings,
+        "discount_pct": discount_pct,
         "havale": get_havale_info(),
     }
 
 
+def _prospect_of(offer: MembershipOffer):
+    if not offer.target_prospect_id:
+        return None
+    from app.database import SessionLocal
+    from app.models import SalesProspect
+    # offer'a bağlı session yoksa kısa session — caller genelde session'lı çağırır
+    try:
+        from sqlalchemy import inspect as _sa_inspect
+        sess = _sa_inspect(offer).session
+    except Exception:
+        sess = None
+    if sess is not None:
+        return sess.get(SalesProspect, offer.target_prospect_id)
+    with SessionLocal() as s:
+        return s.get(SalesProspect, offer.target_prospect_id)
+
+
 def _contact_identity(offer: MembershipOffer, name: str | None, email: str | None, phone: str | None):
     target = offer.target_user
+    pr = _prospect_of(offer)
     return (
-        (name or "").strip() or (target.full_name if target else None) or "WhatsApp Üyelik Teklifi",
-        (email or "").strip() or (target.email if target else None) or "whatsapp-offer@etutkoc.local",
-        (phone or "").strip() or (target.phone if (target and target.phone) else None),
+        (name or "").strip() or (target.full_name if target else None)
+            or (pr.name if pr else None) or "WhatsApp Üyelik Teklifi",
+        (email or "").strip() or (target.email if target else None)
+            or (pr.email if (pr and pr.email) else None) or "whatsapp-offer@etutkoc.local",
+        (phone or "").strip() or (target.phone if (target and target.phone) else None)
+            or (pr.phone if (pr and pr.phone) else None),
     )
 
 
@@ -200,7 +235,13 @@ def _offer_summary(offer: MembershipOffer) -> str:
     ]
     if offer.target_user_id:
         parts.append(f"koç_id={offer.target_user_id}")
+    if offer.target_prospect_id:
+        parts.append(f"aday_id={offer.target_prospect_id}")
+    # Hedef tipi: solo plan → koç onboard, kurum planı → kurum onboard (dinamik buton)
+    parts.append(f"hedef_tip={'koc' if (pi and pi.audience == 'solo') else 'kurum'}")
     parts.append(f"hedef_kod={offer.plan_code}")
+    if amount:
+        parts.append(f"tutar={amount}")
     parts.append(f"teklif_token={offer.token}")
     return " ".join(parts)
 
