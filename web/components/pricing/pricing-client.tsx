@@ -10,6 +10,7 @@ import { BrandLogo } from "@/components/brand-logo";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { InstitutionContact } from "@/components/pricing/institution-contact";
 import { FloatingWhatsApp } from "@/components/contact/floating-whatsapp";
+import { PaymentMethods } from "@/components/payment-methods";
 import type { PricingCatalog } from "@/lib/types/pricing";
 
 function tl(n: number): string {
@@ -193,6 +194,10 @@ export function PricingClient({
           Tüm planlar KDV hariçtir. Yükseltme manuel aktivasyonla yapılır — planı seçip
           kayıt olduktan sonra hesabın hızlıca aktive edilir.
         </p>
+
+        <div className="mt-10 flex justify-center border-t border-slate-200 pt-8">
+          <PaymentMethods variant="light" className="justify-center" />
+        </div>
       </div>
       <FloatingWhatsApp phone={catalog.contact.whatsapp} />
     </main>

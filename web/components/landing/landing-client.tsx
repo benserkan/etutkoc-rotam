@@ -50,6 +50,7 @@ import { MockupByType, MOCKUP_ICON } from "@/components/landing/mockups";
 import { demosForRole, demoPlayUrl, type DemoRole } from "@/lib/demos";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { BrandLogo } from "@/components/brand-logo";
+import { PaymentMethods } from "@/components/payment-methods";
 import { FloatingWhatsAppAuto } from "@/components/contact/floating-whatsapp-auto";
 
 const NAV = [
@@ -1333,6 +1334,9 @@ function Footer() {
           <FooterCol title="Platform" links={[["#ozellikler", "Özellikler"], ["#paketler", "Paketler"], ["#nasil-calisir", "Nasıl Çalışır?"], ["#kurumlar", "Kurumlar"]]} />
           <FooterCol title="İletişim" links={[["/iletisim", "Bize ulaşın"], ["/pricing?type=kurum#kurumsal", "Kurumsal teklif"], ["/iletisim?konu=iletisim_destek", "Teknik destek"]]} />
           <FooterCol title="Yasal" links={[["/kullanim-sartlari", "Kullanım Şartları"], ["/mesafeli-satis", "Mesafeli Satış Sözleşmesi"], ["/iade-iptal", "İade ve İptal"], ["/privacy", "Gizlilik Politikası"], ["/kvkk", "KVKK Aydınlatma"]]} />
+        </div>
+        <div className="mb-6 border-t border-white/10 pt-6">
+          <PaymentMethods variant="dark" />
         </div>
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/10 pt-6 text-xs text-cyan-200/50">
           <p>© 2026 ETÜTKOÇ Akademi Ltd. Şti. · Tüm hakları saklıdır.</p>
