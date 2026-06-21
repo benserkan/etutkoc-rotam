@@ -145,9 +145,26 @@ past_due) → ama **öneri+CRM log; otomatik göndermiyor**. Eksik halka: brande
   formu, force-light, OG meta) + admin `/admin/campaign-links` (oluştur+liste+kopyala/
   WA paylaş+duraklat/arşivle) + admin-shell "Kampanya Linkleri". `test_api_v2_campaign_link`
   **17/17**. proxy allowlist + Caddy `/kampanya/*`. Prod: head=r1s4u7v8u00r · page 200 · admin 307.
-- **KALAN: K2** (Meta'ya bağlı) — `send_template` ile branded gönderim (image header +
-  buton URL) + Aksiyon Merkezi'ne "WhatsApp teklif gönder" butonu + dispatch/teslim
-  takibi (communication_logs). **K3** — dönüşüm takibi.
+- **K2 — Cloud API branded gönderim ✅ KOD CANLI (Meta onayı bekliyor)** (commit `d9025e8`,
+  migration `s2t5v8w9v11s`): Meta API doğrulandı (hello_world). Onaylı `uyelik_teklifi`
+  şablonu (görsel başlık + ad/plan/tutar + "Teklifi Gör" buton → `/membership/{token}`)
+  ile DOĞRUDAN branded gönderim (mavi tik), manuel wa.me'den AYRI. `whatsapp.send_template`
+  zaten gerçek (httpx→graph.facebook.com); `whatsapp.is_enabled` public + config
+  `whatsapp_offer_template`/`whatsapp_offer_image_url`. `membership_offer_service.send_via_whatsapp`
+  (telefon çöz + component kur + gönder + comm_log + offer.wa_sent_at/wa_message_id izi +
+  prospect contacted). `comm_log.apply_whatsapp_event` (webhook teslim/okundu/hata →
+  İletişim Sağlığı; NotificationLog'tan AYRI). `whatsapp_webhook` her status'te comm_log
+  günceller. Endpoint `POST /admin/membership-offers/{id}/send-whatsapp` (403/409 disabled/
+  422 no_phone/502 send_failed/404). Liste +whatsapp_enabled +wa_sent. docker-compose
+  web+worker'a WHATSAPP_OFFER_* env. Frontend: admin membership listesinde "Cloud API gönder"
+  (cyan, anahtar dolu+telefon var) + "WhatsApp gönderildi" rozeti; wa.me "Manuel" kalır.
+  `test_api_v2_membership_whatsapp` **13/13**. **Stub modda çalışır; aktive için
+  KULLANICI:** (1) Meta'da `uyelik_teklifi` şablonu oluştur+onaylat (Marketing/tr, IMAGE
+  header + body {{1}}ad {{2}}plan {{3}}tutar + URL buton `https://rotam.etutkoc.com/membership/{{1}}`),
+  (2) kalıcı System User token üret, (3) prod `.env`: WHATSAPP_PHONE_NUMBER_ID + ACCESS_TOKEN +
+  APP_SECRET + WEBHOOK_VERIFY_TOKEN + WHATSAPP_ENABLED=true → `up -d web worker`, (4) Meta
+  webhook URL `https://rotam.etutkoc.com/webhooks/whatsapp` + verify token. İşletme
+  doğrulaması "Değerlendirmede" (1-3 gün). **K3** — dönüşüm takibi (kalan).
 - **⚠️ Politika:** Cloud API marketing = opt-in/kalite kuralı; soğuk toplu → numara
   kısıtlanır. prospect.opt_in işareti + düşük hacim başlangıç. Maliyet: konuşma başı
   (kullanıcı kabul etti). [[project-ai-credits-packaging]]
