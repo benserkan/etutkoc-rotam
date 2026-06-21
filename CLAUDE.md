@@ -100,8 +100,18 @@ past_due) → ama **öneri+CRM log; otomatik göndermiyor**. Eksik halka: brande
 - **Faz 0 — Meta doğrulama (KULLANICI, paralel):** `deploy/META_WHATSAPP_SETUP.md`
   rehberi yazıldı. Business verification (Ltd) + WABA + numara + görsel-başlıklı
   Marketing template onayı. Anahtarlar `.env`'e (WHATSAPP_*), şablon adı sisteme.
-- **KALAN:** **K1b** — üyelik teklifini prospect hedefine bağla (offer → /membership
-  link; toplu/kampanya/segment). **K2** (Meta'ya bağlı) — `send_template` ile branded
+- **Dedup fix ✅** (commit `8feb396`): `institution_360.create_action(dedup=True)` —
+  quick-action öneri butonuna mükerrer basışta aynı owner+kind+summary için açık
+  'Bekliyor' aksiyon varsa tekrar yaratmaz (manuel "Yeni Aksiyon" formu dedup=False).
+- **K1b — prospect'e kişiye özel teklif ✅ CANLI** (commit `8feb396`, migration YOK):
+  `membership create_offer` `target_prospect_id` alır (public_view prospect adını çözer).
+  `POST /admin/prospects/{id}/offer` → markalı `/membership` linki + hazır wa.me mesajı
+  + prospect 'contacted'. Hedef Havuzu meta'ya satılabilir planlar. Frontend: prospect
+  satırı "Teklif" (Gift) → OfferDialog → sonuç link + "WhatsApp'tan gönder" + kopyala.
+  `test_api_v2_admin_prospects` 15/15. **Grup senaryosu:** Cloud API gruba GÖNDEREMEZ;
+  grup = markalı kampanya linki elle paylaş (Yol A), birey = 1:1 branded template (K2).
+- **KALAN:** kampanya/genel link (gruba paylaşım — Yol A landing). **K2** (Meta'ya
+  bağlı) — `send_template` ile branded
   gönderim (image header + buton URL) + Aksiyon Merkezi'ne "WhatsApp teklif gönder"
   butonu + dispatch/teslim takibi (communication_logs). **K3** — dönüşüm takibi.
 - **⚠️ Politika:** Cloud API marketing = opt-in/kalite kuralı; soğuk toplu → numara
