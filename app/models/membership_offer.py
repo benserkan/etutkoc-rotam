@@ -53,6 +53,9 @@ class MembershipOffer(Base):
     contact_request_id: Mapped[int | None] = mapped_column(
         ForeignKey("contact_requests.id", ondelete="SET NULL"), nullable=True
     )
+    # K2 — Cloud API branded gönderim izi (manuel wa.me'den AYRI; doğrudan template)
+    wa_sent_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    wa_message_id: Mapped[str | None] = mapped_column(String(255), nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

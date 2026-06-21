@@ -280,6 +280,78 @@ def record_request(
     return offer
 
 
+def send_via_whatsapp(db: Session, offer: MembershipOffer) -> MembershipOffer:
+    """K2 — Cloud API ile branded üyelik teklifi şablonunu prospect/koça GÖNDER.
+
+    Manuel wa.me'den (Faz 1) AYRI: doğrudan onaylı `uyelik_teklifi` şablonu
+    (görsel başlık + ad/plan/tutar + "Teklifi Gör" buton → /membership/{token}).
+    Gönderim comm_log'a (whatsapp kanalı) yazılır; teslim/okundu webhook'tan gelir.
+    """
+    from app.config import settings
+    from app.services import comm_log, whatsapp
+    from app.models.communication_log import STATUS_SENT, STATUS_FAILED
+
+    if _effective_status(offer) not in ("active", "accepted"):
+        raise MembershipOfferError("not_active", "Bu teklif artık geçerli değil.")
+
+    name, _email, phone = _contact_identity(offer, None, None, None)
+    if not phone:
+        raise MembershipOfferError("no_phone",
+                                   "Hedefin telefon numarası yok — WhatsApp gönderilemez.")
+
+    pi = plans.get_plan_info(offer.plan_code)
+    plan_label = pi.label if pi else offer.plan_code
+    amount = _resolve_amount(offer)
+    amount_str = (f"{amount:,} ₺/{_CYCLE_LABELS.get(offer.cycle, offer.cycle)}".replace(",", ".")
+                  if amount else "Size özel")
+
+    components = [
+        {"type": "header", "parameters": [
+            {"type": "image", "image": {"link": settings.whatsapp_offer_image_url}}]},
+        {"type": "body", "parameters": [
+            {"type": "text", "text": name},
+            {"type": "text", "text": plan_label},
+            {"type": "text", "text": amount_str},
+        ]},
+        {"type": "button", "sub_type": "url", "index": "0",
+         "parameters": [{"type": "text", "text": offer.token}]},
+    ]
+
+    res = whatsapp.send_template(
+        to_phone=phone,
+        template_name=settings.whatsapp_offer_template,
+        components=components,
+        language_code="tr",
+    )
+
+    if not res.success:
+        comm_log.log_whatsapp(
+            db=db, status=STATUS_FAILED, to_address=phone, to_user_id=offer.target_user_id,
+            category="membership_offer", subject=f"{plan_label} teklifi",
+            provider="whatsapp_cloud", error=res.error or "send_failed",
+        )
+        db.commit()
+        raise MembershipOfferError("wa_send_failed",
+                                   f"WhatsApp gönderilemedi: {res.error or 'bilinmeyen hata'}")
+
+    now = datetime.now(timezone.utc)
+    offer.wa_sent_at = now
+    offer.wa_message_id = res.external_id
+    comm_log.log_whatsapp(
+        db=db, status=STATUS_SENT, to_address=phone, to_user_id=offer.target_user_id,
+        category="membership_offer", subject=f"{plan_label} teklifi",
+        provider="whatsapp_cloud", provider_message_id=res.external_id, sent_at=now,
+    )
+    # Aday'ı "iletişime geçildi" işaretle (varsa)
+    pr = _prospect_of(offer)
+    if pr is not None and pr.status == "new":
+        pr.status = "contacted"
+        pr.last_contacted_at = now
+    db.commit()
+    db.refresh(offer)
+    return offer
+
+
 def record_havale_claim(
     db: Session, offer: MembershipOffer, *, name=None, email=None, phone=None
 ) -> MembershipOffer:

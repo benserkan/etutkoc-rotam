@@ -35,11 +35,15 @@ export interface MembershipOfferListItem {
   message: string | null;
   created_at: string;
   viewed: boolean;
+  wa_sent: boolean;
+  wa_sent_at: string | null;
 }
 
 export interface MembershipOfferListResponse {
   items: MembershipOfferListItem[];
   plan_options: MembershipPlanOption[];
+  whatsapp_enabled: boolean;
+  offer_template: string;
 }
 
 export interface CreateMembershipOfferBody {

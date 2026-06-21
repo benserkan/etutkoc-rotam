@@ -46,6 +46,11 @@ def _whatsapp_enabled() -> bool:
     )
 
 
+def is_enabled() -> bool:
+    """Public: Cloud API gerçek gönderim için yapılandırıldı mı (anahtarlar dolu)."""
+    return _whatsapp_enabled()
+
+
 def normalize_phone(phone: str) -> str | None:
     """E.164 benzeri düzenleme — '+', rakam dışı her şey atılır.
 

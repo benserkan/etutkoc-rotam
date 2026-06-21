@@ -25,6 +25,7 @@ import {
 import {
   useCreateMembershipOffer,
   useCreateMembershipOffersBulk,
+  useSendMembershipOfferWhatsApp,
   useSetMembershipHavale,
 } from "@/lib/hooks/use-membership-mutations";
 import type { AdminUserListItem } from "@/lib/types/admin";
@@ -136,7 +137,11 @@ export function AdminMembershipClient({
         <BulkComposer planOptions={planOptions} />
       )}
 
-      <OffersList items={offers} planOptions={planOptions} />
+      <OffersList
+        items={offers}
+        planOptions={planOptions}
+        whatsappEnabled={offersQ.data?.whatsapp_enabled ?? false}
+      />
     </div>
   );
 }
@@ -833,9 +838,11 @@ function BulkResults({
 function OffersList({
   items,
   planOptions,
+  whatsappEnabled,
 }: {
   items: MembershipOfferListItem[];
   planOptions: MembershipPlanOption[];
+  whatsappEnabled: boolean;
 }) {
   void planOptions;
   if (items.length === 0) {
@@ -849,56 +856,90 @@ function OffersList({
     <section className="rounded-lg border border-border bg-card p-5">
       <h2 className="text-sm font-semibold text-foreground">Son Teklifler</h2>
       <div className="mt-3 space-y-2">
-        {items.map((o) => {
-          const typeLabel = o.offer_type === "renewal" ? "Yenileme" : "Yeni";
-          const text = buildMembershipWaText({
-            offerType: o.offer_type,
-            targetName: o.target_name,
-            planLabel: o.plan_label,
-            amount: o.amount,
-            cycle: o.cycle,
-            url: o.public_url,
-          });
-          return (
-            <div
-              key={o.id}
-              className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-border/70 px-3 py-2 text-sm"
-            >
-              <span className="font-medium text-foreground">
-                {o.target_name ?? "Genel link"}
-              </span>
-              <span className="text-xs text-muted-foreground">
-                {typeLabel} · {o.plan_label} · {CYCLE_LABEL[o.cycle] ?? o.cycle}
-                {o.amount ? ` · ${fmtTry(o.amount)} ₺` : ""}
-              </span>
-              <span
-                className={cn(
-                  "rounded-full px-2 py-0.5 text-[11px] font-medium",
-                  o.completion
-                    ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
-                    : o.viewed
-                      ? "bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200"
-                      : "bg-muted text-muted-foreground",
-                )}
-              >
-                {o.completion ? o.completion_label : o.viewed ? "Görüntülendi" : "Bekliyor"}
-              </span>
-              <div className="ml-auto flex items-center gap-2">
-                <CopyButton value={o.public_url} label="Link" />
-                <a
-                  href={waUrl(o.target_phone, text)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
-                  title={o.target_phone ? "Doğrudan koça WhatsApp" : "WhatsApp aç (alıcı seç)"}
-                >
-                  <MessageCircle className="size-3" aria-hidden /> WhatsApp
-                </a>
-              </div>
-            </div>
-          );
-        })}
+        {items.map((o) => (
+          <OfferRow key={o.id} o={o} whatsappEnabled={whatsappEnabled} />
+        ))}
       </div>
     </section>
+  );
+}
+
+function OfferRow({
+  o,
+  whatsappEnabled,
+}: {
+  o: MembershipOfferListItem;
+  whatsappEnabled: boolean;
+}) {
+  const sendWa = useSendMembershipOfferWhatsApp();
+  const typeLabel = o.offer_type === "renewal" ? "Yenileme" : "Yeni";
+  const text = buildMembershipWaText({
+    offerType: o.offer_type,
+    targetName: o.target_name,
+    planLabel: o.plan_label,
+    amount: o.amount,
+    cycle: o.cycle,
+    url: o.public_url,
+  });
+  // Cloud API doğrudan gönderim: anahtarlar dolu + hedefin telefonu var
+  const canCloudSend = whatsappEnabled && !!o.target_phone;
+
+  return (
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-md border border-border/70 px-3 py-2 text-sm">
+      <span className="font-medium text-foreground">
+        {o.target_name ?? "Genel link"}
+      </span>
+      <span className="text-xs text-muted-foreground">
+        {typeLabel} · {o.plan_label} · {CYCLE_LABEL[o.cycle] ?? o.cycle}
+        {o.amount ? ` · ${fmtTry(o.amount)} ₺` : ""}
+      </span>
+      <span
+        className={cn(
+          "rounded-full px-2 py-0.5 text-[11px] font-medium",
+          o.completion
+            ? "bg-amber-100 text-amber-800 dark:bg-amber-950/50 dark:text-amber-200"
+            : o.viewed
+              ? "bg-sky-100 text-sky-800 dark:bg-sky-950/50 dark:text-sky-200"
+              : "bg-muted text-muted-foreground",
+        )}
+      >
+        {o.completion ? o.completion_label : o.viewed ? "Görüntülendi" : "Bekliyor"}
+      </span>
+      {o.wa_sent ? (
+        <span className="inline-flex items-center gap-1 rounded-full bg-cyan-100 px-2 py-0.5 text-[11px] font-medium text-cyan-800 dark:bg-cyan-950/50 dark:text-cyan-200">
+          <Check className="size-3" aria-hidden /> WhatsApp gönderildi
+        </span>
+      ) : null}
+      <div className="ml-auto flex items-center gap-2">
+        <CopyButton value={o.public_url} label="Link" />
+        {/* Cloud API: doğrudan branded şablon (mavi tik) */}
+        {canCloudSend ? (
+          <button
+            type="button"
+            disabled={sendWa.isPending}
+            onClick={() => sendWa.mutate({ id: o.id })}
+            className="inline-flex items-center gap-1 rounded-md bg-cyan-600 px-2 py-1 text-xs font-medium text-white hover:bg-cyan-700 disabled:opacity-50"
+            title="Cloud API ile markalı şablon gönder (mavi tik)"
+          >
+            {sendWa.isPending ? (
+              <Loader2 className="size-3 animate-spin" aria-hidden />
+            ) : (
+              <Sparkles className="size-3" aria-hidden />
+            )}
+            {o.wa_sent ? "Tekrar gönder" : "Cloud API gönder"}
+          </button>
+        ) : null}
+        {/* Manuel wa.me (Faz 1) — her zaman var */}
+        <a
+          href={waUrl(o.target_phone, text)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 rounded-md bg-emerald-600 px-2 py-1 text-xs font-medium text-white hover:bg-emerald-700"
+          title={o.target_phone ? "Doğrudan koça WhatsApp (manuel)" : "WhatsApp aç (alıcı seç)"}
+        >
+          <MessageCircle className="size-3" aria-hidden /> Manuel
+        </a>
+      </div>
+    </div>
   );
 }

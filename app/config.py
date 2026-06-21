@@ -53,6 +53,9 @@ class Settings(BaseSettings):
     whatsapp_app_secret: str = ""          # Webhook imza doğrulama için (App Secret)
     whatsapp_webhook_verify_token: str = "" # GET verify aşaması için (sen seç)
     whatsapp_default_language: str = "tr"
+    # K2 — branded üyelik teklifi şablonu (Meta'da onaylı şablon adı + görsel başlık)
+    whatsapp_offer_template: str = "uyelik_teklifi"   # WhatsApp Manager'daki onaylı şablon adı
+    whatsapp_offer_image_url: str = "https://rotam.etutkoc.com/og-membership.png"  # IMAGE header
 
     # AI sağlayıcı anahtarları — ÖNCELİK süper admin DB (system_secrets);
     # bu alanlar yalnız env/.env fallback'i. Boş = yalnız DB'den okunur.

@@ -23,6 +23,7 @@ from app.models.communication_log import (
     STATUS_BOUNCED,
     STATUS_COMPLAINED,
     STATUS_DELIVERED,
+    STATUS_FAILED,
     STATUS_PRECEDENCE,
     STATUS_SENT,
 )
@@ -186,4 +187,63 @@ def apply_email_event(
             return 1
     except Exception as e:  # noqa: BLE001
         logger.warning("apply_email_event failed (non-fatal): %s", e)
+        return 0
+
+
+# ---- WhatsApp teslimat olayı (Cloud API webhook → durum güncelle) ----
+
+# Meta status → comm_log status (read'i delivered sayarız; model'de read yok)
+_WA_EVENT_MAP = {
+    "sent": STATUS_SENT,
+    "delivered": STATUS_DELIVERED,
+    "read": STATUS_DELIVERED,
+    "failed": STATUS_FAILED,
+}
+
+
+def apply_whatsapp_event(
+    provider_message_id: str | None,
+    event: str,
+    *,
+    reason: str | None = None,
+    window_days: int = 14,
+) -> int:
+    """WhatsApp gönderim satırını Meta status callback'iyle güncelle (Cloud API webhook).
+
+    Eşleşme: Meta message id (gönderimde sakladığımız provider_message_id).
+    ÖNCELİK sırasına göre yalnız daha kesin duruma yükseltir (delivered'ı sent'e düşürmez).
+    """
+    if not provider_message_id:
+        return 0
+    new_status = _WA_EVENT_MAP.get((event or "").lower())
+    if new_status is None:
+        return 0
+    from datetime import datetime, timedelta, timezone
+
+    try:
+        with SessionLocal() as db:
+            since = datetime.now(timezone.utc) - timedelta(days=window_days)
+            row = (
+                db.query(CommunicationLog)
+                .filter(
+                    CommunicationLog.channel == CHANNEL_WHATSAPP,
+                    CommunicationLog.provider_message_id == provider_message_id,
+                    CommunicationLog.created_at >= since,
+                )
+                .order_by(CommunicationLog.id.desc())
+                .first()
+            )
+            if row is None:
+                return 0
+            cur = STATUS_PRECEDENCE.get(row.status, 0)
+            new = STATUS_PRECEDENCE.get(new_status, 0)
+            if new <= cur:
+                return 0
+            row.status = new_status
+            if reason:
+                row.error = _clip(reason, _MAX_ERR)
+            db.commit()
+            return 1
+    except Exception as e:  # noqa: BLE001
+        logger.warning("apply_whatsapp_event failed (non-fatal): %s", e)
         return 0

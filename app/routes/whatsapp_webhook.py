@@ -23,6 +23,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.deps import get_db
 from app.models import NotificationLog, NotificationStatus
+from app.services import comm_log
 from app.services.whatsapp import verify_webhook_signature
 
 
@@ -81,6 +82,15 @@ async def whatsapp_callback(request: Request, db: Session = Depends(get_db)):
                     status_str = st.get("status")  # sent | delivered | read | failed
                     if not msg_id or not status_str:
                         continue
+
+                    # K2 — yeni İletişim Sağlığı (communication_logs) teslim güncellemesi.
+                    # NotificationLog'tan AYRI; Cloud API ile gönderilen branded teklifler
+                    # yalnız comm_log'ta olduğundan burada güncellenir.
+                    _wa_err = None
+                    if status_str == "failed":
+                        _e = (st.get("errors") or [{}])[0]
+                        _wa_err = f"{_e.get('code', '?')} {_e.get('title') or _e.get('message') or ''}"[:200]
+                    comm_log.apply_whatsapp_event(msg_id, status_str, reason=_wa_err)
 
                     log = (
                         db.query(NotificationLog)

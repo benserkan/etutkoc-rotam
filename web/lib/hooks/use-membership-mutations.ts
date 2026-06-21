@@ -50,6 +50,19 @@ export function useCreateMembershipOffersBulk() {
   });
 }
 
+export function useSendMembershipOfferWhatsApp() {
+  const qc = useQueryClient();
+  return useMutation<{ ok: boolean; wa_sent_at: string | null; message: string }, ApiError, { id: number }>({
+    mutationFn: ({ id }) =>
+      api(`/api/v2/admin/membership-offers/${id}/send-whatsapp`, { method: "POST" }),
+    onError: (e) => toast.error(errMsg(e, "WhatsApp gönderilemedi")),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: membershipKeys.offers() });
+      toast.success("Branded teklif WhatsApp'tan gönderildi");
+    },
+  });
+}
+
 export function useSetMembershipHavale() {
   const qc = useQueryClient();
   return useMutation<MembershipHavaleInfo, ApiError, { body: MembershipHavaleBody }>({

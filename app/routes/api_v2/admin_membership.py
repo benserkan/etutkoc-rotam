@@ -141,11 +141,15 @@ class MembershipOfferListItem(BaseModel):
     message: str | None = None
     created_at: str
     viewed: bool = False
+    wa_sent: bool = False           # K2 — Cloud API ile branded gönderildi mi
+    wa_sent_at: str | None = None
 
 
 class MembershipOfferListResponse(BaseModel):
     items: list[MembershipOfferListItem]
     plan_options: list[PlanOption]
+    whatsapp_enabled: bool = False  # K2 — Cloud API anahtarları dolu mu (buton göster)
+    offer_template: str = ""        # onaylı şablon adı (bilgi)
 
 
 def _list_item(db: Session, o: MembershipOffer) -> MembershipOfferListItem:
@@ -171,6 +175,8 @@ def _list_item(db: Session, o: MembershipOffer) -> MembershipOfferListItem:
         message=o.message,
         created_at=o.created_at.isoformat() if o.created_at else "",
         viewed=o.viewed_at is not None,
+        wa_sent=o.wa_sent_at is not None,
+        wa_sent_at=o.wa_sent_at.isoformat() if o.wa_sent_at else None,
     )
 
 
@@ -198,9 +204,57 @@ def list_membership_offers(
         .limit(100)
         .all()
     )
+    from app.services import whatsapp as _wa
     return MembershipOfferListResponse(
         items=[_list_item(db, o) for o in offers],
         plan_options=_plan_options(),
+        whatsapp_enabled=_wa.is_enabled(),
+        offer_template=settings.whatsapp_offer_template,
+    )
+
+
+class SendWhatsAppResult(BaseModel):
+    ok: bool
+    wa_sent_at: str | None = None
+    message: str
+
+
+@router.post("/{offer_id}/send-whatsapp", response_model=SendWhatsAppResult)
+def send_membership_offer_whatsapp(
+    offer_id: int,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """K2 — onaylı branded şablonu (uyelik_teklifi) Cloud API ile hedefe gönder."""
+    from app.services import whatsapp as _wa
+    if not _wa.is_enabled():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "whatsapp", "code": "whatsapp_disabled",
+                    "message": "WhatsApp Cloud API yapılandırılmamış (anahtarlar eksik)."},
+        )
+    offer = db.get(MembershipOffer, offer_id)
+    if offer is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"error": "not_found", "code": "offer_not_found", "message": "Teklif bulunamadı."},
+        )
+    try:
+        mos.send_via_whatsapp(db, offer)
+    except mos.MembershipOfferError as e:
+        code_status = {
+            "no_phone": status.HTTP_422_UNPROCESSABLE_ENTITY,
+            "not_active": status.HTTP_409_CONFLICT,
+            "wa_send_failed": status.HTTP_502_BAD_GATEWAY,
+        }.get(e.code, status.HTTP_400_BAD_REQUEST)
+        raise HTTPException(
+            status_code=code_status,
+            detail={"error": "whatsapp", "code": e.code, "message": e.message},
+        )
+    return SendWhatsAppResult(
+        ok=True,
+        wa_sent_at=offer.wa_sent_at.isoformat() if offer.wa_sent_at else None,
+        message="Branded üyelik teklifi WhatsApp'tan gönderildi.",
     )
 
 
