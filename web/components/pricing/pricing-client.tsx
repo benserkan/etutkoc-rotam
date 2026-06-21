@@ -196,7 +196,7 @@ export function PricingClient({
         </p>
 
         <div className="mt-10 flex justify-center border-t border-slate-200 pt-8">
-          <PaymentMethods variant="light" className="justify-center" />
+          <PaymentMethods variant="light" className="items-center text-center" />
         </div>
       </div>
       <FloatingWhatsApp phone={catalog.contact.whatsapp} />
