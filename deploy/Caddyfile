@@ -209,6 +209,12 @@
         # → FastAPI. Süper admin oluşturma /api/v2/admin/membership-offers.
         reverse_proxy /membership/* next:3000
 
+        # ---------- Kampanya / Genel Link (public) — AÇIK (2026-06-21, Yol A) ----------
+        # /kampanya/[token] (login'siz markalı kampanya landing → lead formu).
+        # POST /api/v2/campaign/{token}/lead → FastAPI. Süper admin yönetim
+        # /api/v2/admin/campaign-links. Gruba elle paylaşılır (Cloud API gruba atamaz).
+        reverse_proxy /kampanya/* next:3000
+
         # ---------- Üyelik/Fiyat (public) — AÇIK (2026-05-22) ----------
         # /pricing public üyelik sayfası (Next.js). Veri /api/v2/pricing'den
         # (tek kaynak app/services/pricing.py). Jinja plans/pricing.html dead-code.

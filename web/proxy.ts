@@ -37,6 +37,7 @@ const PUBLIC_PATHS_PREFIX = [
   "/parent/unsubscribe",    // /parent/unsubscribe/<token> — bildirim mailindeki çıkış
   "/offers",
   "/membership",            // /membership/<token> — WhatsApp üyelik teklifi, anonim
+  "/kampanya",              // /kampanya/<token> — public kampanya landing (grup), anonim
   "/pricing",
   "/kvkk",
   "/privacy",
