@@ -120,10 +120,34 @@ past_due) → ama **öneri+CRM log; otomatik göndermiyor**. Eksik halka: brande
   `POST /contact-requests/{id}/onboard-coach` (koç hesabı + solo plan + ödeme linki +
   e-posta + prospect=member); frontend target_kind=coach → "Koç Aç + Aktive Et"
   dialog, kurum → "Kurum Aç + Aktive Et". Inline uçtan uca + regresyon temiz.
-- **KALAN:** kampanya/genel link (gruba paylaşım — Yol A landing). **K2** (Meta'ya
-  bağlı) — `send_template` ile branded
-  gönderim (image header + buton URL) + Aksiyon Merkezi'ne "WhatsApp teklif gönder"
-  butonu + dispatch/teslim takibi (communication_logs). **K3** — dönüşüm takibi.
+- **3 düzeltme (deploy sonrası, 2026-06-21):** (A) eski membership_offer talepleri
+  `hedef_tip` yoksa `_contact_item` plan tipinden koç/kurum türetir (commit `240e547`);
+  (B) **membership savings API'de görünmüyordu** — `public_view` alanları vardı ama
+  `MembershipPublicResponse` şeması taşımıyordu → Pydantic kırpıyordu; 3 alan eklendi
+  (commit `b5a8cd8`); (C) **onboard dialog unmount** — başarı sonrası talep closed→tablo
+  yenilenince dialog (link gösteren) unmount oluyordu → dialog her zaman mount + trigger
+  `canOnboard` gate (commit `784a7cc`). + **KÖK NEDEN:** prod `auditaction` enum'unda
+  PAYMENT_*/TESTIMONIAL_MODERATE değerleri eksikti → tüm ödeme linki oluşturma 500;
+  ALTER TYPE ADD VALUE ile eklendi. [[feedback-postgres-enum-new-member-migration]]
+- **Ödeme-linki havale fallback ✅** (commit `e6bcaa4`): `/payment/link/{token}` iyzico
+  kapalıyken (`provider_available=false`) "Şimdi Öde"ye basınca çiğ hata veriyordu →
+  provider-aware: iyzico açık → "Şimdi Öde" (3DS), kapalı → havale/EFT bilgisi (membership
+  ile aynı kaynak) + "kartlı ödeme yakında". Key girilince otomatik döner.
+- **Yol A — Kampanya/Genel Link ✅ CANLI** (commit `3c3b1db`, migration `r1s4u7v8u00r`):
+  Cloud API gruba mesaj atamadığından admin tekrar kullanılabilir markalı landing
+  oluşturur (1:çok) → WhatsApp grubuna paylaşır → tıklayan plan/fiyat/kazanç görür +
+  ad+telefon bırakır → `SalesProspect` (lead, dedup) + `ContactRequest` (source=
+  campaign_link, hedef_tip/hedef_kod/aday_id encode) → İletişim Talepleri'nde mevcut
+  **Koç/Kurum Aç + Aktive Et** akışına akar. `campaign_links` (token+plan+amount+
+  audience+status+view/lead sayacı) + `campaign_link_service` (membership/pricing tek
+  kaynak reuse) + public router (`GET /campaign/{token}` + `POST /lead`) + admin router
+  (create/list/status). Frontend: public `/kampanya/[token]` (markalı landing + lead
+  formu, force-light, OG meta) + admin `/admin/campaign-links` (oluştur+liste+kopyala/
+  WA paylaş+duraklat/arşivle) + admin-shell "Kampanya Linkleri". `test_api_v2_campaign_link`
+  **17/17**. proxy allowlist + Caddy `/kampanya/*`. Prod: head=r1s4u7v8u00r · page 200 · admin 307.
+- **KALAN: K2** (Meta'ya bağlı) — `send_template` ile branded gönderim (image header +
+  buton URL) + Aksiyon Merkezi'ne "WhatsApp teklif gönder" butonu + dispatch/teslim
+  takibi (communication_logs). **K3** — dönüşüm takibi.
 - **⚠️ Politika:** Cloud API marketing = opt-in/kalite kuralı; soğuk toplu → numara
   kısıtlanır. prospect.opt_in işareti + düşük hacim başlangıç. Maliyet: konuşma başı
   (kullanıcı kabul etti). [[project-ai-credits-packaging]]
