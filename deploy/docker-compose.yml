@@ -80,6 +80,7 @@ services:
       # K2 — branded üyelik teklifi şablonu (Meta'da onaylı şablon adı + görsel başlık)
       WHATSAPP_OFFER_TEMPLATE: ${WHATSAPP_OFFER_TEMPLATE:-uyelik_teklifi}
       WHATSAPP_OFFER_IMAGE_URL: ${WHATSAPP_OFFER_IMAGE_URL:-https://rotam.etutkoc.com/og-membership.png}
+      WHATSAPP_OFFER_BUTTON_DYNAMIC: ${WHATSAPP_OFFER_BUTTON_DYNAMIC:-false}  # şablon butonu dinamik URL ise true
       # ---- Yapay Zekâ (Gemini) — boş bırakılırsa süper admin panelden girilebilir ----
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}              # virgülle çoklu: ilk=ücretli, kalan=ücretsiz
       GEMINI_PAID_API_KEY: ${GEMINI_PAID_API_KEY:-}    # açıkça ücretli (öncelikli)
@@ -166,6 +167,7 @@ services:
       WHATSAPP_WEBHOOK_VERIFY_TOKEN: ${WHATSAPP_WEBHOOK_VERIFY_TOKEN}  # config tutarlılığı için (worker webhook karşılamaz)
       WHATSAPP_OFFER_TEMPLATE: ${WHATSAPP_OFFER_TEMPLATE:-uyelik_teklifi}
       WHATSAPP_OFFER_IMAGE_URL: ${WHATSAPP_OFFER_IMAGE_URL:-https://rotam.etutkoc.com/og-membership.png}
+      WHATSAPP_OFFER_BUTTON_DYNAMIC: ${WHATSAPP_OFFER_BUTTON_DYNAMIC:-false}
       LGS_RUN_BACKGROUND: "true"    # SADECE worker'da açık
     depends_on:
       db:

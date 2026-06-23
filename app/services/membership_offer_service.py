@@ -313,9 +313,14 @@ def send_via_whatsapp(db: Session, offer: MembershipOffer) -> MembershipOffer:
             {"type": "text", "text": plan_label},
             {"type": "text", "text": amount_str},
         ]},
-        {"type": "button", "sub_type": "url", "index": "0",
-         "parameters": [{"type": "text", "text": offer.token}]},
     ]
+    # Buton parametresi YALNIZ şablonun butonu dinamik URL (.../membership/{{1}})
+    # ise gönderilir. Statik butonlu şablonda parametre yollamak → Meta #132018.
+    if settings.whatsapp_offer_button_dynamic:
+        components.append({
+            "type": "button", "sub_type": "url", "index": "0",
+            "parameters": [{"type": "text", "text": offer.token}],
+        })
 
     res = whatsapp.send_template(
         to_phone=phone,

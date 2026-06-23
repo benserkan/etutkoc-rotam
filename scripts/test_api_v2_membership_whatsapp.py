@@ -30,6 +30,7 @@ from app.database import SessionLocal
 from app.main import app
 from app.models import CommunicationLog, MembershipOffer, User, UserRole
 from app.models.communication_log import CHANNEL_WHATSAPP, STATUS_DELIVERED, STATUS_FAILED, STATUS_SENT
+from app.config import settings
 from app.services import whatsapp, comm_log
 from app.services.rate_limit import get_login_limiter
 from app.services.security import hash_password
@@ -117,6 +118,8 @@ def main() -> int:
     # monkeypatch — gerçek Meta çağrısı yapma
     orig_send = whatsapp.send_template
     orig_enabled = whatsapp.is_enabled
+    orig_btn = settings.whatsapp_offer_button_dynamic
+    settings.whatsapp_offer_button_dynamic = True  # buton param yapısını test et
     sent_payloads: list = []
 
     def fake_send(*, to_phone, template_name, components=None, language_code=None):
@@ -216,6 +219,7 @@ def main() -> int:
     finally:
         whatsapp.send_template = orig_send
         whatsapp.is_enabled = orig_enabled
+        settings.whatsapp_offer_button_dynamic = orig_btn
         cleanup()
 
     print(f"\n=== {passed} passed, {len(failed)} failed ===")
