@@ -155,13 +155,23 @@ class MembershipOfferListResponse(BaseModel):
 def _list_item(db: Session, o: MembershipOffer) -> MembershipOfferListItem:
     pi = plans.get_plan_info(o.plan_code)
     target = o.target_user
+    target_name = target.full_name if target else None
+    target_phone = target.phone if (target and target.phone) else None
+    # Aday (prospect) hedefli teklif: ad + telefon prospect'ten çözülür → liste
+    # adayı "Genel link" yerine adıyla gösterir + Cloud API butonu (telefon var) çıkar.
+    if (target_name is None or target_phone is None) and o.target_prospect_id:
+        from app.models import SalesProspect
+        pr = db.get(SalesProspect, o.target_prospect_id)
+        if pr is not None:
+            target_name = target_name or pr.name
+            target_phone = target_phone or pr.phone
     return MembershipOfferListItem(
         id=o.id,
         token=o.token,
         public_url=_public_url(o.token),
         target_user_id=o.target_user_id,
-        target_name=(target.full_name if target else None),
-        target_phone=(target.phone if (target and target.phone) else None),
+        target_name=target_name,
+        target_phone=target_phone,
         offer_type=o.offer_type,
         plan_code=o.plan_code,
         plan_label=(pi.label if pi else o.plan_code),
