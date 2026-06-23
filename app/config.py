@@ -55,7 +55,7 @@ class Settings(BaseSettings):
     whatsapp_default_language: str = "tr"
     # K2 — branded üyelik teklifi şablonu (Meta'da onaylı şablon adı + görsel başlık)
     whatsapp_offer_template: str = "uyelik_teklifi"   # WhatsApp Manager'daki onaylı şablon adı
-    whatsapp_offer_image_url: str = "https://rotam.etutkoc.com/og-membership.png"  # IMAGE header
+    whatsapp_offer_image_url: str = "https://rotam.etutkoc.com/wa-offer-header.png"  # IMAGE header (full-bleed banner)
     # Şablonun butonu DİNAMİK URL ise (https://.../membership/{{1}}) True → token
     # buton parametresi olarak gönderilir. Statik butonlu şablonda False (param yollama).
     whatsapp_offer_button_dynamic: bool = False

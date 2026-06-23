@@ -102,6 +102,8 @@
         reverse_proxy /etutkoc-mark.png next:3000
         # WhatsApp üyelik teklifi OG banner'ı (statik 1200×630)
         reverse_proxy /og-membership.png next:3000
+        # WhatsApp branded teklif şablonu IMAGE header'ı (Meta bu linki çeker)
+        reverse_proxy /wa-offer-header.png next:3000
         # iyzico resmi güvenli-ödeme logo bandı (public/iyzico/*) — footer + /pricing
         reverse_proxy /iyzico/* next:3000
 
