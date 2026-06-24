@@ -90,6 +90,27 @@ def main() -> int:
         check("A5. AYT Matematik >= 10 konu", len(ayt_topics) >= 10, f"{len(ayt_topics)}")
         tyt_id = tyt.id
 
+        # A6/A7: tüm TYT/AYT dersleri seedlendi mi + her biri >= 5 konu
+        exam_subjects = db.query(Subject).filter(
+            Subject.is_builtin.is_(True), Subject.teacher_id.is_(None),
+            Subject.curriculum_model.is_(None), Subject.exam_section.isnot(None),
+        ).all()
+        names = {s.name for s in exam_subjects}
+        expected = {
+            "TYT Türkçe", "TYT Matematik", "TYT Geometri", "TYT Fizik", "TYT Kimya",
+            "TYT Biyoloji", "TYT Tarih", "TYT Coğrafya", "TYT Felsefe",
+            "TYT Din Kültürü ve Ahlak Bilgisi", "AYT Matematik", "AYT Geometri",
+            "AYT Fizik", "AYT Kimya", "AYT Biyoloji", "AYT Edebiyat", "AYT Tarih",
+            "AYT Coğrafya", "AYT Felsefe Grubu", "AYT Din Kültürü ve Ahlak Bilgisi",
+        }
+        check("A6. tüm TYT/AYT dersleri seedlendi", expected.issubset(names),
+              f"eksik: {expected - names}")
+        counts_ok = all(
+            db.query(Topic).filter(Topic.subject_id == s.id).count() >= 5
+            for s in exam_subjects
+        )
+        check("A7. her sınav dersinin >= 5 konusu var", counts_ok)
+
     # --- B) _applicable_subjects YKS dedup (izole koç-sahipli dersler) ---
     ids: dict = {}
     try:

@@ -166,6 +166,13 @@ def _exam_base_name(name: str) -> str:
     return name
 
 
+# Okul dersi adı, sınav dersi base adıyla birebir aynı değilse köprü kur.
+# (örn. okul "Türk Dili ve Edebiyatı" → sınavda "Türkçe" (TYT) / "Edebiyat" (AYT)).
+_SCHOOL_EXAM_SYNONYMS: dict[str, set[str]] = {
+    "Türk Dili ve Edebiyatı": {"Türkçe", "Edebiyat"},
+}
+
+
 def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subject]:
     """Öğrencinin müfredat dersleri (resmi/koç) — grade + curriculum_model filtreli.
 
@@ -199,7 +206,10 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
     seen: set[str] = set()
     for s in candidates:
         # YKS: sınav karşılığı olan okul dersini (TYT/AYT değil, modelli) atla
-        if is_yks and not _is_exam_subject(s) and s.name in exam_bases:
+        if is_yks and not _is_exam_subject(s) and (
+            s.name in exam_bases
+            or bool(_SCHOOL_EXAM_SYNONYMS.get(s.name, set()) & exam_bases)
+        ):
             continue
         if s.name in seen:  # aynı ad farklı modelden tekille (ilk geçen kalır)
             continue
