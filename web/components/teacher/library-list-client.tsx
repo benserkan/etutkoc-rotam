@@ -35,6 +35,12 @@ import {
   CURRICULUM_MODEL_ORDER,
   LIBRARY_BOOK_TYPE_LABELS_TR,
 } from "@/lib/types/library";
+import { isExamSubject } from "@/lib/utils/subjects";
+
+// Sınav (TYT/AYT) kanonik dersleri model-bağımsız (curriculum_model=null +
+// exam_section) → kütüphane müfredat filtresinde "Diğer" yerine kendi kategorisi.
+const EXAM_CURRICULUM_KEY = "exam";
+const EXAM_CURRICULUM_LABEL = "Sınav Müfredatı (TYT / AYT)";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -266,9 +272,15 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
     return m;
   }, [allSubjects]);
 
-  function bookCurriculum(b: LibraryBookListItem): CurriculumModel | "other" {
-    const s = subjectById.get(b.subject_id);
-    return (s?.curriculum_model as CurriculumModel | null) ?? "other";
+  // Bir ders/kitabın müfredat kategorisi: sınav dersi → "exam", okul dersi →
+  // curriculum_model, hiçbiri → "other".
+  function subjectCurriculumKey(s: SubjectRef | undefined): string {
+    if (!s) return "other";
+    if (isExamSubject(s)) return EXAM_CURRICULUM_KEY;
+    return (s.curriculum_model as CurriculumModel | null) ?? "other";
+  }
+  function bookCurriculum(b: LibraryBookListItem): string {
+    return subjectCurriculumKey(subjectById.get(b.subject_id));
   }
 
   // Müfredat sayımları: KİTAP sayısı (subject sayısı değil) — kullanıcı
@@ -277,6 +289,7 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
   const curriculumCounts = React.useMemo(() => {
     const c: Record<string, number> = {};
     for (const cm of CURRICULUM_MODEL_ORDER) c[cm] = 0;
+    c[EXAM_CURRICULUM_KEY] = 0;
     c.other = 0;
     for (const b of apiItems) {
       const k = bookCurriculum(b);
@@ -287,12 +300,13 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
   }, [apiItems, subjectById]);
 
   // Default müfredat: URL'de yoksa, en dolu olan ilk müfredat
-  // (LGS → Maarif → Klasik → Diğer sırasında ilk count>0).
+  // (LGS → Maarif → Klasik → Sınav → Diğer sırasında ilk count>0).
   const effectiveCurriculum: string = React.useMemo(() => {
     if (urlCurriculum) return urlCurriculum;
     for (const cm of CURRICULUM_MODEL_ORDER) {
       if ((curriculumCounts[cm] ?? 0) > 0) return cm;
     }
+    if ((curriculumCounts[EXAM_CURRICULUM_KEY] ?? 0) > 0) return EXAM_CURRICULUM_KEY;
     if ((curriculumCounts.other ?? 0) > 0) return "other";
     return CURRICULUM_MODEL_ORDER[0]; // LGS — tüm sayımlar 0 ise
   }, [urlCurriculum, curriculumCounts]);
@@ -405,10 +419,9 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
 
   // Aktif müfredata göre subject chip-bar filtresi
   const visibleSubjects: SubjectRef[] = React.useMemo(() => {
-    if (effectiveCurriculum === "other") {
-      return allSubjects.filter((s) => !s.curriculum_model);
-    }
-    return allSubjects.filter((s) => s.curriculum_model === effectiveCurriculum);
+    return allSubjects.filter(
+      (s) => subjectCurriculumKey(s) === effectiveCurriculum,
+    );
   }, [allSubjects, effectiveCurriculum]);
 
   return (
@@ -483,11 +496,7 @@ export function LibraryListClient({ initial, initialFilters }: Props) {
             const sid = p.get("subject_id");
             if (sid) {
               const s = allSubjects.find((x) => String(x.id) === sid);
-              if (!s) {
-                p.delete("subject_id");
-              } else if (v !== "other" && s.curriculum_model !== v) {
-                p.delete("subject_id");
-              } else if (v === "other" && s.curriculum_model) {
+              if (!s || subjectCurriculumKey(s) !== v) {
                 p.delete("subject_id");
               }
             }
@@ -655,6 +664,15 @@ function FilterBar({
               />
             );
           })}
+          {(curriculumCounts[EXAM_CURRICULUM_KEY] ?? 0) > 0 ||
+          effectiveCurriculum === EXAM_CURRICULUM_KEY ? (
+            <FilterChip
+              active={effectiveCurriculum === EXAM_CURRICULUM_KEY}
+              onClick={() => onCurriculum(EXAM_CURRICULUM_KEY)}
+              label={EXAM_CURRICULUM_LABEL}
+              count={curriculumCounts[EXAM_CURRICULUM_KEY] ?? 0}
+            />
+          ) : null}
           {(curriculumCounts.other ?? 0) > 0 || effectiveCurriculum === "other" ? (
             <FilterChip
               active={effectiveCurriculum === "other"}
