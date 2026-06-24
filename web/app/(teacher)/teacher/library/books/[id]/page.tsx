@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/api";
 import type {
   BookTemplateListResponse,
   LibraryBookDetailResponse,
+  SubjectListResponse,
   TopicListResponse,
 } from "@/lib/types/library";
 import type { TeacherStudentListResponse } from "@/lib/types/teacher";
@@ -45,13 +46,16 @@ export default async function BookDetailPage({ params }: PageProps) {
   // Aynı dersin topics + tüm şablonlar + öğretmenin öğrencileri (assignment için)
   // Subjects'in tamamı liste ekranı yapar; burada sadece bu kitabın ders topic'lerini
   // çekiyoruz (bulk-from-catalog için).
-  const [topics, templates, students] = await Promise.all([
+  const [topics, templates, students, subjects] = await Promise.all([
     apiServer<TopicListResponse>(
       `/api/v2/teacher/library/subjects/${book.subject_id}/topics`,
     ).catch(() => ({ items: [] }) as TopicListResponse),
     apiServer<BookTemplateListResponse>("/api/v2/teacher/library/templates"),
     apiServer<TeacherStudentListResponse>(
       "/api/v2/teacher/students?page_size=100",
+    ),
+    apiServer<SubjectListResponse>("/api/v2/teacher/library/subjects").catch(
+      () => ({ items: [] }) as SubjectListResponse,
     ),
   ]);
   return (
@@ -60,6 +64,7 @@ export default async function BookDetailPage({ params }: PageProps) {
       topics={topics.items}
       templates={templates.items}
       students={students.items}
+      subjects={subjects.items}
     />
   );
 }

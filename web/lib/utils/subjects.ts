@@ -19,22 +19,35 @@ export interface SubjectGroup {
   subjects: SubjectRef[];
 }
 
+/** Sınav-bazlı kanonik ders mi (TYT/AYT, model-bağımsız)? */
+export function isExamSubject(s: SubjectRef): boolean {
+  return s.curriculum_model == null && s.exam_section != null;
+}
+
 /**
- * Subjects'i curriculum_model'e göre gruplar. Sıralama:
- * LGS → Maarif Lise → Klasik Lise → Diğer (null).
- * Boş gruplar listede yer almaz.
+ * Subjects'i gruplar. Sıralama:
+ * Sınav (TYT/AYT) → LGS → Maarif Lise → Klasik Lise → Diğer (null).
+ * Sınav dersleri YKS koçluğunun omurgası → en üstte. Boş gruplar yer almaz.
  */
 export function groupSubjectsByCurriculum(
   subjects: readonly SubjectRef[],
 ): SubjectGroup[] {
+  const exam: SubjectRef[] = [];
   const buckets = new Map<CurriculumModel | null, SubjectRef[]>();
   for (const s of subjects) {
+    if (isExamSubject(s)) {
+      exam.push(s);
+      continue;
+    }
     const key = (s.curriculum_model as CurriculumModel | null) ?? null;
     const arr = buckets.get(key);
     if (arr) arr.push(s);
     else buckets.set(key, [s]);
   }
   const groups: SubjectGroup[] = [];
+  if (exam.length > 0) {
+    groups.push({ key: null, label: "Sınav Müfredatı (TYT / AYT)", subjects: exam });
+  }
   for (const cm of CURRICULUM_MODEL_ORDER) {
     const arr = buckets.get(cm);
     if (arr && arr.length > 0) {

@@ -382,6 +382,7 @@ def library_subjects_v2(
             curriculum_model=(
                 s.curriculum_model.value if s.curriculum_model else None
             ),
+            exam_section=(s.exam_section.value if s.exam_section else None),
             min_grade_level=s.min_grade_level,
             max_grade_level=s.max_grade_level,
             available_for_graduate=bool(s.available_for_graduate),
@@ -588,6 +589,13 @@ def library_book_patch_v2(
             raise _validation_error(
                 "invalid_subject", "Ders bulunamadı veya erişiminiz yok.",
             )
+        if body.subject_id != book.subject_id:
+            # Ders değişti → mevcut eşleştirmeler eski derse aitti, geçersiz.
+            # topic_id'leri sıfırla (yeni dersin konularına yeniden eşleştirilecek).
+            # Bölümler/ilerleme/rezerv DOKUNULMAZ (yalnız müfredat eşlemesi sıfırlanır).
+            for sec in (book.sections or []):
+                if sec.topic_id is not None:
+                    sec.topic_id = None
         book.subject_id = body.subject_id
     if body.avg_questions_per_test is not None:
         book.avg_questions_per_test = body.avg_questions_per_test

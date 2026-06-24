@@ -43,6 +43,7 @@ class SubjectRef(BaseModel):
     name: str
     is_builtin: bool
     curriculum_model: str | None  # CurriculumModel.value veya None
+    exam_section: str | None = None  # ExamSection.value (TYT/AYT_*) veya None
     min_grade_level: int | None
     max_grade_level: int | None
     available_for_graduate: bool

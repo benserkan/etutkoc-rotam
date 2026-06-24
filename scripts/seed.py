@@ -35,7 +35,7 @@ from app.models import (
     UserRole,
 )
 from app.services.security import hash_password
-from scripts.curriculum_data import ALL_CURRICULA
+from scripts.curriculum_data import ALL_CURRICULA, EXAM_CURRICULUM
 
 
 def _enum_or_none(enum_cls, value: str | None):
@@ -163,6 +163,60 @@ def seed_curriculum(db: Session, *, only_model: str | None = None) -> dict[str, 
     return counts
 
 
+def seed_exam_curriculum(db: Session) -> int:
+    """Sınav-bazlı kanonik taksonomi (TYT/AYT) — model-bağımsız, idempotent.
+
+    Okul müfredatından (LGS/Maarif/Klasik) AYRI dersler: `curriculum_model=None`
+    + `exam_section` set. Test kitapları + YKS koçluğu bu omurgayla eşleşir.
+    Düz `topics` formatı (parent/child yok). Returns: yeni eklenen topic sayısı.
+    """
+    added = 0
+    print("  [EXAM — TYT/AYT kanonik]")
+    base_order = 900  # okul derslerinden sonra sırala
+    for idx, (subject_name, spec) in enumerate(EXAM_CURRICULUM.items()):
+        exam_section_enum = _enum_or_none(ExamSection, spec.get("exam_section"))
+        subject = (
+            db.query(Subject)
+            .filter(
+                Subject.is_builtin.is_(True),
+                Subject.teacher_id.is_(None),
+                Subject.name == subject_name,
+                Subject.curriculum_model.is_(None),
+            )
+            .first()
+        )
+        if not subject:
+            subject = Subject(
+                name=subject_name, order=base_order + idx, is_builtin=True,
+                teacher_id=None, min_grade_level=spec.get("min_grade"),
+                max_grade_level=spec.get("max_grade"),
+                available_for_graduate=spec.get("available_for_graduate", False),
+                exam_section=exam_section_enum, curriculum_model=None,
+            )
+            db.add(subject); db.flush()
+            print(f"    + Ders: {subject_name} ({spec.get('exam_section')})")
+        else:
+            subject.order = base_order + idx
+            subject.min_grade_level = spec.get("min_grade")
+            subject.max_grade_level = spec.get("max_grade")
+            subject.available_for_graduate = spec.get("available_for_graduate", False)
+            subject.exam_section = exam_section_enum
+
+        existing = {(t.name, t.grade_level) for t in subject.topics}
+        for topic_order, (topic_name, topic_grade) in enumerate(spec.get("topics", [])):
+            if (topic_name, topic_grade) in existing:
+                continue
+            db.add(Topic(
+                subject_id=subject.id, name=topic_name, order=topic_order,
+                grade_level=topic_grade, is_builtin=True, teacher_id=None,
+                curriculum_model=None,
+            ))
+            added += 1
+    db.commit()
+    print(f"    Toplam yeni topic: {added}")
+    return added
+
+
 def seed_cron_schedules(db: Session) -> int:
     """Bildirim cron job'larını idempotent olarak ekle.
 
@@ -260,6 +314,9 @@ def main() -> None:
         print("Müfredat seed başlıyor...")
         counts = seed_curriculum(db, only_model=args.only)
         print(f"Özet: {counts}")
+        if not args.only:
+            print("Sınav-bazlı kanonik taksonomi (TYT/AYT) seed...")
+            seed_exam_curriculum(db)
         print("Cron schedules seed...")
         seed_cron_schedules(db)
         if args.teacher:

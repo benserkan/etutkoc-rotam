@@ -1034,6 +1034,85 @@ KLASIK_LISE_CURRICULUM: dict[str, dict] = {
 
 
 # =============================================================================
+# SINAV-BAZLI KANONİK TAKSONOMİ (model-bağımsız) — TYT / AYT
+# =============================================================================
+# Okul müfredatı (LGS/Maarif/Klasik) model+sınıf bazlıdır; YKS sınavı (TYT/AYT)
+# ise model-üstü ve sınıf-üstüdür. Test kitapları + koçluk bu listeyle düzenlenir.
+# Bu dersler `curriculum_model=None` (model-bağımsız) + `exam_section` ile seed
+# edilir → YKS öğrencisi için ilerleme panelinde ve eşleştirmede omurga olur.
+# Okul müfredatı (Maarif tema/ünite) SİLİNMEZ — referans olarak kalır.
+#
+# Kaynak: ÖSYM/MEB TYT-AYT konu çerçevesi (yaygın yayınevi taksonomisi). Konu
+# adları en yaygın yayınevi formuyla yazıldı (auto-map uyumu yüksek olsun diye).
+# Kapsam: Matematik (TYT + AYT). Diğer dersler sonraki aşamalarda eklenecek.
+
+EXAM_CURRICULUM: dict[str, dict] = {
+    "TYT Matematik": {
+        "min_grade": 9, "max_grade": 12,
+        "exam_section": "TYT",
+        "curriculum_model": None,
+        "available_for_graduate": True,
+        "topics": [
+            ("Temel Kavramlar", 9),
+            ("Sayı Basamakları", 9),
+            ("Tek ve Çift Sayılar", 9),
+            ("Ardışık Sayılar", 9),
+            ("Bölme ve Bölünebilme", 9),
+            ("EBOB - EKOK", 9),
+            ("Asal Sayılar", 9),
+            ("Faktöriyel", 9),
+            ("Rasyonel Sayılar", 9),
+            ("Basit Eşitsizlikler", 9),
+            ("Mutlak Değer", 9),
+            ("Üslü Sayılar", 9),
+            ("Köklü Sayılar", 9),
+            ("Çarpanlara Ayırma", 9),
+            ("Oran ve Orantı", 9),
+            ("Birinci Dereceden Denklemler", 9),
+            ("Sayı - Kesir Problemleri", 9),
+            ("Yaş Problemleri", 9),
+            ("Yüzde Problemleri", 9),
+            ("Kar - Zarar Problemleri", 9),
+            ("Karışım Problemleri", 9),
+            ("İşçi Problemleri", 9),
+            ("Hareket Problemleri", 9),
+            ("Grafik Problemleri", 9),
+            ("Sayısal Yetenek Problemleri", 9),
+            ("Kümeler", 9),
+            ("Mantık", 9),
+            ("Fonksiyonlar", 10),
+            ("Polinomlar", 10),
+            ("Permütasyon", 10),
+            ("Kombinasyon", 10),
+            ("Binom", 10),
+            ("Olasılık", 10),
+            ("Veri ve İstatistik", 10),
+        ],
+    },
+    "AYT Matematik": {
+        "min_grade": 11, "max_grade": 12,
+        "exam_section": "AYT_SAY",
+        "curriculum_model": None,
+        "available_for_graduate": True,
+        "topics": [
+            ("Polinomlar", 11),
+            ("İkinci Dereceden Denklemler", 11),
+            ("Parabol", 11),
+            ("Eşitsizlikler", 11),
+            ("Trigonometri", 11),
+            ("Karmaşık Sayılar", 11),
+            ("Logaritma ve Üstel Fonksiyonlar", 12),
+            ("Diziler", 12),
+            ("Limit ve Süreklilik", 12),
+            ("Türev", 12),
+            ("İntegral", 12),
+            ("Fonksiyon Grafikleri ve Uygulamaları", 12),
+        ],
+    },
+}
+
+
+# =============================================================================
 # Tüm müfredat sözlüklerinin birleşik view'i (seed.py kullanır)
 # =============================================================================
 

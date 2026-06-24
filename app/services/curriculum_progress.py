@@ -29,6 +29,7 @@ logger = logging.getLogger(__name__)
 from app.models import (
     Book,
     BookSection,
+    ExamSection,
     SectionProgress,
     StudentBook,
     Subject,
@@ -146,9 +147,33 @@ def _compute_projection(
     return CurriculumProjection(True, days, remaining, pace, proj_pct, verdict)
 
 
+_EXAM_SECTIONS = {
+    ExamSection.TYT, ExamSection.AYT_SAY, ExamSection.AYT_EA,
+    ExamSection.AYT_SOZ, ExamSection.AYT_DIL,
+}
+
+
+def _is_exam_subject(s: Subject) -> bool:
+    """Sınav-bazlı kanonik ders mi (TYT/AYT, model-bağımsız)?"""
+    return s.curriculum_model is None and s.exam_section in _EXAM_SECTIONS
+
+
+def _exam_base_name(name: str) -> str:
+    """'TYT Matematik' / 'AYT Matematik' → 'Matematik' (okul dersiyle eşlemek için)."""
+    for pfx in ("TYT ", "AYT "):
+        if name.startswith(pfx):
+            return name[len(pfx):].strip()
+    return name
+
+
 def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subject]:
     """Öğrencinin müfredat dersleri (resmi/koç) — grade + curriculum_model filtreli.
-    all_subjects (weekly_plan) ile aynı kural."""
+
+    YKS (lise/mezun) öğrenci için **sınav omurgası**: TYT/AYT kanonik dersleri
+    gösterir; karşılığı olan OKUL dersini (örn. Klasik/Maarif 'Matematik') gizler
+    → panel temiz "TYT/AYT müfredatında nerede". Okul müfredatı verisi silinmez,
+    yalnız bu görünümde sınav dersi tercih edilir. Sınav karşılığı olmayan okul
+    dersleri (henüz kanonik yok) aynen gösterilir → kademeli rollout güvenli."""
     student_cm = student.effective_curriculum_model
     rows = (
         db.query(Subject)
@@ -156,15 +181,27 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
         .order_by(Subject.order, Subject.name)
         .all()
     )
+    # Aday geç: grade + model filtresi
+    candidates = [
+        s for s in rows
+        if s.covers_grade(student.grade_level, is_graduate=student.is_graduate)
+        and not (student_cm and s.curriculum_model and s.curriculum_model != student_cm)
+    ]
+    is_yks = bool(student.is_graduate) or (
+        student.grade_level is not None and student.grade_level >= 9
+    )
+    # YKS'de sınav dersi olan base adların okul karşılığını gizle
+    exam_bases = {
+        _exam_base_name(s.name) for s in candidates if _is_exam_subject(s)
+    } if is_yks else set()
+
     out: list[Subject] = []
     seen: set[str] = set()
-    for s in rows:
-        if not s.covers_grade(student.grade_level, is_graduate=student.is_graduate):
+    for s in candidates:
+        # YKS: sınav karşılığı olan okul dersini (TYT/AYT değil, modelli) atla
+        if is_yks and not _is_exam_subject(s) and s.name in exam_bases:
             continue
-        if student_cm and s.curriculum_model and s.curriculum_model != student_cm:
-            continue
-        # Aynı ad farklı modelden tekille (ilk geçen kalır)
-        if s.name in seen:
+        if s.name in seen:  # aynı ad farklı modelden tekille (ilk geçen kalır)
             continue
         seen.add(s.name)
         out.append(s)

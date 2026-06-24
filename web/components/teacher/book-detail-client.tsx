@@ -4,7 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, Loader2, Sparkles, Trash2, Wand2 } from "lucide-react";
+import { AlertTriangle, BookOpen, Loader2, Sparkles, Trash2, Wand2 } from "lucide-react";
 
 import { CurriculumMappingModal } from "@/components/teacher/curriculum-mapping-modal";
 
@@ -18,6 +18,7 @@ import {
   useCreateSection,
   useDeleteBook,
   useDeleteSection,
+  usePatchBook,
   usePatchSection,
   useSaveAsTemplate,
 } from "@/lib/hooks/use-library-mutations";
@@ -25,9 +26,11 @@ import type {
   BookTemplateListItem,
   LibraryBookDetailResponse,
   LibrarySectionItem,
+  SubjectRef,
   TopicRef,
 } from "@/lib/types/library";
 import { LIBRARY_BOOK_TYPE_LABELS_TR } from "@/lib/types/library";
+import { groupSubjectsByCurriculum } from "@/lib/utils/subjects";
 import type { TeacherStudentListItem } from "@/lib/types/teacher";
 
 import { Button } from "@/components/ui/button";
@@ -56,6 +59,7 @@ interface Props {
   topics: TopicRef[];
   templates: BookTemplateListItem[];
   students: TeacherStudentListItem[];
+  subjects: SubjectRef[];
 }
 
 export function BookDetailClient({
@@ -63,6 +67,7 @@ export function BookDetailClient({
   topics,
   templates,
   students,
+  subjects,
 }: Props) {
   const router = useRouter();
   const [active, setActive] = React.useState<Tab>("sections");
@@ -75,6 +80,34 @@ export function BookDetailClient({
     refetchOnWindowFocus: true,
   });
   const book = bookQ.data ?? initialBook;
+
+  // Dersi değiştir (sınav omurgasına geçiş için: örn. Klasik Matematik → TYT Matematik)
+  const [subjOpen, setSubjOpen] = React.useState(false);
+  const [pickSubj, setPickSubj] = React.useState<number | "">("");
+  const patchBookMut = usePatchBook(book.id);
+  const subjGroups = React.useMemo(
+    () => groupSubjectsByCurriculum(subjects),
+    [subjects],
+  );
+  function openSubjDialog() {
+    setPickSubj(book.subject_id);
+    setSubjOpen(true);
+  }
+  function onChangeSubject() {
+    if (pickSubj === "" || Number(pickSubj) === book.subject_id) {
+      setSubjOpen(false);
+      return;
+    }
+    patchBookMut.mutate(
+      { body: { subject_id: Number(pickSubj) } },
+      {
+        onSuccess: () => {
+          setSubjOpen(false);
+          router.refresh(); // yeni dersin konuları (katalog/eşleştirme) tazelensin
+        },
+      },
+    );
+  }
 
   const deleteBookMut = useDeleteBook(book.id);
   function onDeleteBook() {
@@ -111,19 +144,30 @@ export function BookDetailClient({
             {book.publisher ? ` · ${book.publisher}` : ""}
           </p>
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={onDeleteBook}
-          disabled={deleteBookMut.isPending}
-        >
-          {deleteBookMut.isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
-          ) : (
-            <Trash2 className="size-4" aria-hidden />
-          )}
-          Kitabı sil
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={openSubjDialog}
+            disabled={subjects.length === 0}
+          >
+            <BookOpen className="size-4" aria-hidden />
+            Dersi değiştir
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={onDeleteBook}
+            disabled={deleteBookMut.isPending}
+          >
+            {deleteBookMut.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Trash2 className="size-4" aria-hidden />
+            )}
+            Kitabı sil
+          </Button>
+        </div>
       </header>
 
       {/* Atanmamış öğrenci uyarısı — kitap hiçbir öğrenciye atanmadıysa program
@@ -188,6 +232,66 @@ export function BookDetailClient({
       {active === "templates" ? (
         <TemplatesTab book={book} templates={templates} />
       ) : null}
+
+      <Dialog open={subjOpen} onOpenChange={setSubjOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Dersi değiştir</DialogTitle>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Kitabın bağlı olduğu ders. YKS kitabını <strong>Sınav Müfredatı
+              (TYT / AYT)</strong> dersine taşırsan üniteler doğru resmi konularla
+              eşleşir. <strong>Dikkat:</strong> ders değişince mevcut müfredat
+              eşleştirmeleri sıfırlanır (bölümler/ilerleme korunur) — sonra
+              “Müfredata eşleştir” ile yeniden eşle.
+            </p>
+          </DialogHeader>
+          <div className="space-y-1">
+            <Label htmlFor="bk-subject">Ders</Label>
+            <select
+              id="bk-subject"
+              value={pickSubj === "" ? "" : String(pickSubj)}
+              onChange={(e) =>
+                setPickSubj(e.target.value ? Number(e.target.value) : "")
+              }
+              className={cn(
+                "h-9 w-full rounded-md border border-input bg-background px-2 text-sm",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+              )}
+            >
+              {subjGroups.map((g) => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.subjects.map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            <p className="text-[11px] text-muted-foreground">
+              Şu anki ders: <strong>{book.subject_name ?? "—"}</strong>
+            </p>
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="ghost" onClick={() => setSubjOpen(false)}>
+              Vazgeç
+            </Button>
+            <Button
+              onClick={onChangeSubject}
+              disabled={
+                patchBookMut.isPending ||
+                pickSubj === "" ||
+                Number(pickSubj) === book.subject_id
+              }
+            >
+              {patchBookMut.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : null}
+              Dersi değiştir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -42,6 +42,7 @@ export interface SubjectRef {
   name: string;
   is_builtin: boolean;
   curriculum_model: string | null;
+  exam_section: string | null;
   min_grade_level: number | null;
   max_grade_level: number | null;
   available_for_graduate: boolean;

@@ -39,11 +39,59 @@ def normalize(s: str | None) -> str:
     return cleaned
 
 
+# --- Eşleştirme anahtarı katmanı (auto-map kalitesi) -------------------------
+# normalize() saf kalır; aşağıdaki katman SADECE eşleştirme anahtarı üretir.
+#   - Önek temizleme: kitap etiketinden yayınevi/ünite öneki ("1. Ünite —", "BS",
+#     "TYT", "Konu:") atılır → resmi konu adıyla eşleşme şansı artar (RESMİ KONU
+#     ADINA DOKUNULMAZ, yalnız kitap etiketine).
+#   - Bağlaç atma: "ve"/"ile" eşleştirme gürültüsüdür ("Oran ve Orantı" =
+#     "Oran Orantı", "Veri ve İstatistik" = "Veri İstatistik").
+#   - Alias: yaygın yazım/akronim varyantları ("OBEB OKEK" = "EBOB EKOK").
+# Hepsi auto-map (ücretsiz, anlık) içindir; AI çağrısından önce daha çok ünite
+# deterministik eşleşir → kredi yanmaz, koç daha az el ile düzeltir.
+
+# normalize edilmiş (lower + tr-sade + yalnız harf/rakam) dize üstünde çalışır.
+_PREFIX_RE = re.compile(
+    r"^(?:\d+\s+)?(?:unite|bolum|konu|test|fasikul|deneme|bs|tyt|ayt|lgs|yks)\s+",
+)
+_STOPWORDS = {"ve", "ile"}
+_ALIAS: dict[str, str] = {
+    "obeb okek": "ebob ekok",
+    "okek obeb": "ebob ekok",
+    # yaygın matematik eşanlam varyantları (yayınevleri "ifadeler"/"sayılar" karışık kullanır)
+    "uslu ifadeler": "uslu sayilar",
+    "koklu ifadeler": "koklu sayilar",
+}
+
+
+def _canon_from_norm(norm: str) -> str:
+    """Normalize edilmiş dizeden eşleştirme anahtarı: bağlaç at + alias uygula."""
+    if not norm:
+        return ""
+    key = " ".join(t for t in norm.split() if t not in _STOPWORDS)
+    return _ALIAS.get(key, key)
+
+
+def _topic_key(name: str | None) -> str:
+    """Resmi konu adı → eşleştirme anahtarı (önek temizlenmez — resmi ad korunur)."""
+    return _canon_from_norm(normalize(name))
+
+
+def _label_key(label: str | None) -> str:
+    """Kitap ünite etiketi → eşleştirme anahtarı (önek temizlenir + canon)."""
+    norm = normalize(label)
+    prev = None
+    while norm != prev:  # zincirli önek ("12 unite ...", "tyt 1 unite ...")
+        prev = norm
+        norm = _PREFIX_RE.sub("", norm).strip()
+    return _canon_from_norm(norm or normalize(label))
+
+
 def _topics_by_norm(topics: list[Topic]) -> dict[str, Topic]:
-    """Normalize ad → Topic (ilk geleni tutar, order'a göre)."""
+    """Eşleştirme anahtarı → Topic (ilk geleni tutar, order'a göre)."""
     out: dict[str, Topic] = {}
     for t in sorted(topics, key=lambda x: (x.order, x.id)):
-        key = normalize(t.name)
+        key = _topic_key(t.name)
         if key and key not in out:
             out[key] = t
     return out
@@ -159,7 +207,7 @@ def suggest_for_book(
         suggested = None
         source = "mapped" if cur_id is not None else "none"
         if cur_id is None:
-            auto = tmap.get(normalize(sec.label))
+            auto = tmap.get(_label_key(sec.label))
             if auto is not None:
                 suggested = auto
                 source = "auto"
