@@ -66,11 +66,20 @@ kapsam = **TYT + AYT Matematik** · kitap detayına **"Dersi değiştir"** ekle.
 - **KULLANICI AKSİYONU (test):** (1) Efe'nin 4K kitabı → "Dersi değiştir" →
   **TYT Matematik** → "Müfredata eşleştir" (30/34 ön-dolu) → Uygula. (2) Yeni TYT/
   AYT kitapları artık "Sınav Müfredatı (TYT/AYT)" grubundan seçilir.
-- **KALAN (aşamalı, kullanıcı onayına bağlı):** diğer dersler kanonik taksonomisi —
-  TYT Türkçe/Fen(Fiz/Kim/Biyo)/Sosyal + AYT(Fiz/Kim/Biyo/Edebiyat/Tarih/Coğ/Fel/
-  Din/Dil). Her liste ÖSYM'den DOĞRULANMALI ("çöp girer çöp çıkar" dersi). + ops.
-  AYT track filtresi (şu an AYT Matematik tüm YKS'de görünür, kitapsızsa boş —
-  zararsız). + "kasko tek-akış sihirbazı" (Aşama 3, opsiyonel) henüz yapılmadı.
+- **TÜM TYT/AYT DERSLERİ EKLENDİ — CANLI (commit `07d5801`, 2026-06-24):** kapsam
+  Matematik'ten **20 sınav dersine** genişletildi (LGS/Maarif okul müfredatına
+  DOKUNULMADI). TYT (10): Türkçe·Matematik·Geometri·Fizik·Kimya·Biyoloji·Tarih·
+  Coğrafya·Felsefe·Din Kültürü. AYT (10, SAY: Mat·Geometri·Fiz·Kim·Biyo · SÖZ:
+  Edebiyat·Tarih·Coğrafya·Felsefe Grubu·Din). ~261 konu, yaygın yayınevi/ÖSYM
+  taksonomisi. Dedup eşanlam köprüsü `_SCHOOL_EXAM_SYNONYMS` (okul "Türk Dili ve
+  Edebiyatı" ↔ sınav "Türkçe"/"Edebiyat"). `test_curriculum_exam_taxonomy` **13/13**
+  (20 ders + her biri ≥5 konu). Prod doğrulandı (20 ders seedli, healthz 200).
+  Migration YOK. **NOT:** konu listeleri standart ÖSYM/yayınevi taksonomisinden
+  yazıldı (web doğrulaması rate-limit nedeniyle yapılmadı); bir ders sapmışsa
+  Maarif iş akışındaki gibi `curriculum_data.py EXAM_CURRICULUM`'da tek tek düzeltilir.
+- **KALAN (opsiyonel):** AYT track filtresi (şu an AYT dersleri tüm YKS'de görünür,
+  kitapsızsa boş — zararsız). + "kasko tek-akış sihirbazı" (Aşama 3) henüz yapılmadı.
+  + YDT (Yabancı Dil) eklenmedi (konu-bazlı değil; istenirse ayrı).
 - **DERS:** Test kitapları ÖSYM/yayınevi taksonomisiyle düzenlenir; okul müfredatı
   (Maarif tema/Klasik sınıf) omurgası TYT/AYT eşleştirmesi için yetersiz → sınav
   taksonomisi ayrı, model-bağımsız omurga olarak eklendi. Klasik sönümleniyor,
