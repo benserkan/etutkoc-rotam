@@ -8,6 +8,7 @@ import { ChevronDown, GraduationCap, Loader2, School } from "lucide-react";
 import { useCreateBook } from "@/lib/hooks/use-library-mutations";
 import type {
   BookTemplateListItem,
+  LibraryBookDetailResponse,
   LibraryBookType,
   SubjectRef,
 } from "@/lib/types/library";
@@ -66,9 +67,19 @@ const PRESET_OPTIONS: Array<{
 interface Props {
   subjects: SubjectRef[];
   templates: BookTemplateListItem[];
+  /** Sihirbaz modu: oluşturulunca redirect yerine bu çağrılır (adım ilerletir). */
+  onCreated?: (book: LibraryBookDetailResponse) => void;
+  submitLabel?: string;
+  hideCancel?: boolean;
 }
 
-export function BookCreateForm({ subjects, templates }: Props) {
+export function BookCreateForm({
+  subjects,
+  templates,
+  onCreated,
+  submitLabel,
+  hideCancel,
+}: Props) {
   const router = useRouter();
   const createMut = useCreateBook();
 
@@ -172,7 +183,8 @@ export function BookCreateForm({ subjects, templates }: Props) {
       },
       {
         onSuccess: (res) => {
-          router.push(`/teacher/library/books/${res.data.id}`);
+          if (onCreated) onCreated(res.data);
+          else router.push(`/teacher/library/books/${res.data.id}`);
         },
       },
     );
@@ -415,14 +427,16 @@ export function BookCreateForm({ subjects, templates }: Props) {
             </p>
           ) : null}
           <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-            <Button asChild type="button" variant="ghost">
-              <Link href="/teacher/library">İptal</Link>
-            </Button>
+            {hideCancel ? null : (
+              <Button asChild type="button" variant="ghost">
+                <Link href="/teacher/library">İptal</Link>
+              </Button>
+            )}
             <Button type="submit" disabled={createMut.isPending}>
               {createMut.isPending ? (
                 <Loader2 className="size-4 animate-spin" aria-hidden />
               ) : null}
-              Oluştur
+              {submitLabel ?? "Oluştur"}
             </Button>
           </div>
         </form>
