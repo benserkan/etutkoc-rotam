@@ -6,6 +6,78 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## Kitap müfredat eşleştirme iyileştirme + TYT/AYT sınav omurgası — 2026-06-24, CANLI (commit `2a8fffb`)
+
+**Bağlam (kullanıcı, Efe TYT Matematik kitabı):** 4K TYT Matematik kitabı eklendi
+→ AI bölüm önerisi İYİ (gerçek 34 ünite doğru) ama **müfredat eşleştirme ~0**
+(sadece "Olasılık" eşleşti). Kullanıcı "sistem sadece AYT'ye mi duyarlı?" sordu +
+kitap-yükleme sürecini "kasko gibi tek akış"a bağlamak istedi. Önce SAĞLAM MANTIK
+(analiz + simülasyon), sonra aşamalı kod (her aşama ayrı onay) kararı alındı.
+
+**Kök neden (koddan + simülasyonla kanıtlı `scripts/sim_tyt_mapping.py`):**
+- Eşleştirme adayları = `_accessible_topics(book.subject_id)` = kitabın bağlı
+  olduğu **tek dersin** konuları. Efe 12.sınıf → KLASIK kohort → kitap "Klasik Lise
+  Matematik"e bağlı → o derste **yalnız 11-12 (Trigonometri/Türev/İntegral = AYT)**
+  konuları var; TYT 9-10 temelleri (Temel Kavramlar, problemler, Üslü/Köklü...)
+  **sistemde HİÇ yok**. Okul-müfredatı (model+sınıf) ile sınav-taksonomisi (TYT/AYT,
+  model-üstü) yapısal uyumsuz. + ikincil hata: auto-map "1. Ünite —" önekini
+  temizlemiyordu → tam-adlı eşleşmeler bile AI'a düşüyordu.
+- Simülasyon: Klasik Lise Mat 0/34 · TYT-kanonik+önek temizleme **30-32/34**.
+
+**Kullanıcı kararları (AskUserQuestion):** bağlama modeli = **B (sınav omurgası)** ·
+kapsam = **TYT + AYT Matematik** · kitap detayına **"Dersi değiştir"** ekle.
+
+- **Aşama 1 — auto-map kalitesi (ücretsiz, kredisiz):** `curriculum_mapping.py`
+  yeni eşleştirme-anahtarı katmanı: yayınevi/ünite öneki temizleme (`_label_key`:
+  "1. Ünite —", "BS/TYT/AYT/Konu:") + bağlaç atma (ve/ile) + alias (OBEB OKEK=EBOB
+  EKOK, üslü/köklü **ifadeler↔sayılar**). `normalize()` SAF kaldı (katman yalnız
+  anahtar üretir). Resmi konu adına dokunulmaz (önek yalnız kitap etiketinden).
+  `test_curriculum_mapping` **18/18**. NOT: tutucu — auto-map yalnız ÖNERİR,
+  topic_id'yi koç "Uygula" ile set eder (madde 4 tutucu; library.py'ye dokunulmadı).
+- **Aşama 2 — sınav-bazlı kanonik taksonomi:**
+  - `curriculum_data.py` **`EXAM_CURRICULUM`**: "TYT Matematik" (34 konu) + "AYT
+    Matematik" (12 konu), **model-bağımsız** (`curriculum_model=None`) + `exam_section`.
+    Yaygın yayınevi adlarıyla yazıldı (auto-map uyumu yüksek). Okul müfredatı
+    (Maarif/Klasik) SİLİNMEDİ — referans kalır.
+  - `seed.py` **`seed_exam_curriculum`** (idempotent, düz topics, model=None);
+    `main()`'e bağlandı → `start.sh` (`scripts.seed`) prod'da otomatik seed eder.
+    **Migration GEREKMEDİ** (additive Subject/Topic satırları).
+  - `curriculum_progress._applicable_subjects`: **YKS dedup** — lise/mezun
+    öğrencide sınav dersi (TYT/AYT) tercih edilir, **okul karşılığı gizlenir**
+    (Klasik/Maarif "Matematik" → "TYT/AYT Matematik" ile değişir); sınav karşılığı
+    OLMAYAN okul dersi (Fizik vb.) aynen kalır → kademeli rollout güvenli.
+    `_is_exam_subject`/`_exam_base_name` helper'ları. weekly_plan `all_subjects`'e
+    DOKUNULMADI (exam dersleri orada da otomatik görünür; okul dersi de durur — düşük risk).
+  - `SubjectRef.exam_section` (schema + library yanıtı) + frontend
+    `subjects.ts groupSubjectsByCurriculum` → **"Sınav Müfredatı (TYT / AYT)"**
+    ders grubu (book-create seçicide en üstte).
+  - **Kitap detayı "Dersi değiştir"** (book-detail-client + page subjects fetch):
+    PATCH `subject_id`; ders değişince eski müfredat eşleştirmeleri (topic_id)
+    **sıfırlanır** (bölüm/ilerleme/rezerv KORUNUR), koç yeniden eşler. Mevcut
+    kitapları (Efe'nin Klasik'e bağlı 4K) sınav omurgasına taşımanın yolu budur.
+  - `test_curriculum_exam_taxonomy` **11/11** (seed idempotent + yapı + YKS dedup +
+    gerçek TYT kitabı 30/34 auto-eşleşme).
+- **Sonuç:** Efe TYT Matematik eşleşmesi **1/34 → 30/34** (AI'sız auto-map).
+- **CANLI (commit `2a8fffb`):** push + `redeploy.sh` (git pull + DB yedek +
+  `up -d --build`, web/worker/next). Prod doğrulandı: head=2a8fffb · seed çalıştı
+  (TYT Matematik 34 konu · AYT Matematik 12 konu, model-bağımsız) · healthz 200.
+  Regresyon: mapping 18 · progress 22 · units 10 · teacher_library 24/18 ·
+  weekly_plan 14 · tsc/eslint temiz.
+- **KULLANICI AKSİYONU (test):** (1) Efe'nin 4K kitabı → "Dersi değiştir" →
+  **TYT Matematik** → "Müfredata eşleştir" (30/34 ön-dolu) → Uygula. (2) Yeni TYT/
+  AYT kitapları artık "Sınav Müfredatı (TYT/AYT)" grubundan seçilir.
+- **KALAN (aşamalı, kullanıcı onayına bağlı):** diğer dersler kanonik taksonomisi —
+  TYT Türkçe/Fen(Fiz/Kim/Biyo)/Sosyal + AYT(Fiz/Kim/Biyo/Edebiyat/Tarih/Coğ/Fel/
+  Din/Dil). Her liste ÖSYM'den DOĞRULANMALI ("çöp girer çöp çıkar" dersi). + ops.
+  AYT track filtresi (şu an AYT Matematik tüm YKS'de görünür, kitapsızsa boş —
+  zararsız). + "kasko tek-akış sihirbazı" (Aşama 3, opsiyonel) henüz yapılmadı.
+- **DERS:** Test kitapları ÖSYM/yayınevi taksonomisiyle düzenlenir; okul müfredatı
+  (Maarif tema/Klasik sınıf) omurgası TYT/AYT eşleştirmesi için yetersiz → sınav
+  taksonomisi ayrı, model-bağımsız omurga olarak eklendi. Klasik sönümleniyor,
+  sınav taksonomisi kalıcı. [[feedback-holistic-change-propagation]]
+
+---
+
 ## Ödeme (iyzico) + Yasal sayfalar + ZeptoMail + İletişim Sağlığı — 2026-06-20
 
 **Şirket kuruldu:** ETÜTKOÇ Akademi Kişisel Gelişim Özel Eğitim ve Öğretim
