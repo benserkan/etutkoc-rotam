@@ -77,9 +77,22 @@ kapsam = **TYT + AYT Matematik** · kitap detayına **"Dersi değiştir"** ekle.
   Migration YOK. **NOT:** konu listeleri standart ÖSYM/yayınevi taksonomisinden
   yazıldı (web doğrulaması rate-limit nedeniyle yapılmadı); bir ders sapmışsa
   Maarif iş akışındaki gibi `curriculum_data.py EXAM_CURRICULUM`'da tek tek düzeltilir.
+- **Kütüphane liste filtresi fix — CANLI (commit `6e1a649`):** sınav dersleri
+  (curriculum_model=null) liste sayfasında "Diğer"e düşüyordu → `library-list-client`
+  `subjectCurriculumKey`/`bookCurriculum` "exam" kategorisi + müfredat çip-barına
+  **"Sınav Müfredatı (TYT / AYT)"** çipi (Diğer'den önce). Frontend-only.
+- **Aşama 3 — Kitap Ekleme Sihirbazı — CANLI (commit `05a944e`):** "Yeni kitap" artık
+  adım-adım sihirbaz (`book-wizard-client.tsx`): **1 Bilgiler → 2 Üniteler → 3
+  Eşleştirme → 4 Öğrenci → Özet**, üstte ilerleme çubuğu + her adımda sistem ne
+  yaptığını anlatır. Adım 2 **akıllı varsayılan**: sınav dersinde (TYT/AYT) "Resmi
+  konulardan ekle" önerilir (anında + otomatik eşli → adım 3 atlanır), diğerinde AI,
+  ayrıca elle. Adım 3 katalogdan geldiyse "tümü eşli" atlar, AI/elle ise auto-map
+  ön-dolu tablo. Mevcut uçların orkestrasyonu (yeni endpoint/migration YOK). Sekmeli
+  kitap detayı (sonradan düzenleme) AYNEN durur. `BookCreateForm` `onCreated`/
+  `submitLabel`/`hideCancel` ile sihirbazda yeniden kullanıldı. tsc/eslint temiz.
 - **KALAN (opsiyonel):** AYT track filtresi (şu an AYT dersleri tüm YKS'de görünür,
-  kitapsızsa boş — zararsız). + "kasko tek-akış sihirbazı" (Aşama 3) henüz yapılmadı.
-  + YDT (Yabancı Dil) eklenmedi (konu-bazlı değil; istenirse ayrı).
+  kitapsızsa boş — zararsız). + YDT (Yabancı Dil) eklenmedi (konu-bazlı değil; istenirse ayrı).
+  + konu listeleri web-doğrulaması (rate-limit'le yapılamadı; sapan ders olursa düzeltilir).
 - **DERS:** Test kitapları ÖSYM/yayınevi taksonomisiyle düzenlenir; okul müfredatı
   (Maarif tema/Klasik sınıf) omurgası TYT/AYT eşleştirmesi için yetersiz → sınav
   taksonomisi ayrı, model-bağımsız omurga olarak eklendi. Klasik sönümleniyor,
