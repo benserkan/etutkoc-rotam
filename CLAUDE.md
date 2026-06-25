@@ -4443,6 +4443,44 @@ vermesi gerekiyordu. Migration YOK — mevcut tablolardan UNION query.
 - **Durum**: commit + push (origin/main). Smoke testi YAZILMADI. Canlı tarayıcı
   doğrulaması kullanıcıya bırakıldı.
 
+## Ödeme: TEK yöntem iyzico kart — havale/EFT kaldırıldı + CANLI (2026-06-25, commit `bc42453`)
+
+**Bağlam (kullanıcı):** iyzico üyelik/üye-işyeri süreci tamamlandı → sistem tam açıldı.
+İstek: sistemin HER noktasında ödeme yalnız iyzico kart; havale/EFT bilgilendirme/
+linkleri kaldır.
+
+- **Önce haritalandı** (KURAL: ödeme=para-kritik). Platform havale yüzeyleri tespit +
+  3 karar (AskUserQuestion): koç↔öğrenci tahsilatı DOKUNMA · üyelik→iyzico checkout ·
+  admin manuel activate-plan iç araç kalsın.
+- **Kaldırıldı (platform havale/manuel):** `membership_offer_service` (get/set_havale_info,
+  record_havale_claim, `_HAVALE_KEY`, public_view "havale") · `membership_public`
+  `/havale-claim` ucu + HavaleInfo · `campaign_public`+`campaign_link_service` havale ·
+  `payment.py`+schemas `PaymentLinkHavale` + link havale fallback ("ödeme geçici kapalı"
+  olur, havale yok) · `admin_membership` `/havale` GET+POST ayar uçları. Frontend:
+  /teacher/plan "Havale ile talep" → yalnız "Kartla Öde" · /membership/{token} → kart
+  akışına yönlendirme (mevcut koç giriş→/teacher/plan · prospect→/signup/teacher?plan=;
+  opsiyonel "bilgilerimi bırak" lead'i kaldı) · /payment/link havale fallback · /kampanya
+  + admin Üyelik Teklifleri havale kartı · lib tip/api/hook havale.
+- **KORUNDU (platform ödemesi DEĞİL):** `coach_billing` CoachPayment (koç KENDİ
+  öğrencisinden Nakit/Havale/Diğer tahsilatı — iş modeli, dokunulmadı) · admin manuel
+  `activate-plan` (iç override) · admin iyzico `payment-links` · `invoice` PaymentMethod
+  enum (geçmiş kayıt).
+- **Membership→kart nüansı:** iyzico checkout giriş yapmış kullanıcı (alıcı kimlik)
+  gerektirir → public prospect doğrudan giremez; doğru bağlama = giriş/kayıt → /teacher/
+  plan (mevcut Kartla Öde, iyzico init).
+- **CANLI (2026-06-25):** kullanıcı prod `.env`'e CANLI anahtarları girdi
+  (IYZICO_API_KEY/SECRET 32+32 · IYZICO_BASE_URL=https://api.iyzipay.com). Önce web yeni
+  env ile yeniden başlatılıp **provider-status `available:true, sandbox:false`** doğrulandı
+  (havale fallback hâlâ ağdayken = güvenlik ağı), SONRA kart-only kod deploy (git pull +
+  DB yedek + web/worker/next rebuild, HEAD=bc42453). Canlı: provider available · healthz/
+  pricing/anasayfa 200 · havale-claim+admin havale uçları 404.
+- **Doğrulama:** tsc+eslint temiz · app boot 902 route · smoke membership_offer 18 ·
+  whatsapp 13 · payment_iyzico 27 · campaign 17 · contact 13 · subscription 11+12 GREEN.
+- **DERS:** API key/secret/IBAN sohbete YAZILMAZ → sunucu `.env` (kullanıcı SSH);
+  ben yalnız maskeli uzunluk + provider-status ile doğrularım. Kart-only deploy'u
+  provider available OLMADAN yapmak ödemeyi tümden durdurur → önce env+provider doğrula,
+  SONRA kod deploy (güvenlik ağı havale hâlâ ağdayken keyleri test et).
+
 ## Iyzico ödeme sistemi (sandbox-first) — Paket Ö1-Ö3 (2026-05-28/29)
 
 **Bağlam (kullanıcı):** Şirketsiz şahıs olarak Türkiye'de ödeme almanın yolları
