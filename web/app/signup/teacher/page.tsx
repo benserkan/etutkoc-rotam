@@ -115,7 +115,7 @@ export default async function SignupTeacherPage({
       apiServer<PricingCatalog>("/api/v2/pricing"),
     ]);
   } catch {
-    // Config alınamazsa CAPTCHA dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200'sız + varsayılan panelle devam
+    // Config alınamazsa CAPTCHA'sız + varsayılan panelle devam
   }
 
   const cards = catalog?.cards ?? [];
@@ -168,7 +168,7 @@ export default async function SignupTeacherPage({
         <div className="grid items-center gap-10 lg:grid-cols-2">
           {/* Değer paneli — mobilde formun altında */}
           <div className="order-2 lg:order-1">
-            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
+            <div className="mb-4 inline-flex items-center gap-1.5 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-semibold text-cyan-800">
               <Sparkles className="size-3.5 text-amber-500" aria-hidden /> {trialDays} gün ücretsiz · kart gerekmez
             </div>
             <PlanValuePanel
