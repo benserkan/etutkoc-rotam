@@ -1156,7 +1156,7 @@ function DemoGallery() {
   const activeBg = ROLE_TONE[active].node.split(" ")[0];
 
   return (
-    <section id="izle" className="relative bg-slate-50/70 py-20">
+    <section id="izle" className="relative bg-background py-20">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <Reveal className="mx-auto mb-8 max-w-2xl text-center">
           <p className="mb-3 inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.25em] text-cyan-700">
