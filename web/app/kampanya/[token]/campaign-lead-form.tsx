@@ -62,6 +62,17 @@ export function CampaignLeadForm({
         <p className="mt-1.5 text-sm text-emerald-800">
           En kısa sürede seninle iletişime geçilecek. Teşekkürler!
         </p>
+        <a
+          href="/static/lead-magnet-bagimsiz-koc-rehberi.pdf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-4 inline-flex items-center justify-center gap-2 rounded-xl bg-cyan-700 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-cyan-800"
+        >
+          Ücretsiz rehberi indir (PDF)
+        </a>
+        <p className="mt-2 text-xs text-emerald-700">
+          “Bağımsız Koç için 7 Adımda Sürdürülebilir Öğrenci Takip Sistemi”
+        </p>
       </section>
     );
   }

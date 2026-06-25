@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Bağımsız Koç için 7 Adımda Sürdürülebilir Öğrenci Takip Sistemi</title>
+<style>
+  :root{ --ink:#0f172a; --soft:#475569; --line:#e2e8f0; --cyan:#0e7490; --cyanbg:#ecfeff; --amber:#b45309; }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; padding:0; background:#f1f5f9; color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.55; }
+  .page{ max-width:780px; margin:24px auto; background:#fff; padding:48px 56px;
+    box-shadow:0 10px 40px -12px rgba(15,23,42,.25); border-radius:14px; }
+  .brand{ display:flex; align-items:center; gap:10px; font-weight:800; color:var(--cyan);
+    letter-spacing:.5px; font-size:14px; text-transform:uppercase; }
+  .brand .dot{ width:10px; height:10px; border-radius:3px; background:var(--cyan); }
+  h1{ font-size:30px; line-height:1.2; margin:14px 0 6px; letter-spacing:-.4px; }
+  .sub{ color:var(--soft); font-size:15px; margin:0 0 8px; }
+  .lede{ background:var(--cyanbg); border:1px solid #a5f3fc; border-radius:12px;
+    padding:14px 16px; color:#155e75; font-size:14.5px; margin:18px 0 26px; }
+  .step{ border:1px solid var(--line); border-radius:12px; padding:16px 18px; margin:14px 0;
+    page-break-inside:avoid; }
+  .step h3{ margin:0 0 6px; font-size:17px; }
+  .step .no{ display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px;
+    border-radius:8px; background:var(--cyan); color:#fff; font-weight:800; font-size:13px; margin-right:8px; }
+  .step p{ margin:6px 0; font-size:14px; color:#1e293b; }
+  .tip{ font-size:13px; color:var(--soft); margin-top:8px; }
+  .tool{ font-size:12.5px; color:var(--cyan); margin-top:8px; border-left:3px solid var(--cyan);
+    padding-left:10px; background:#f0fdff; padding:8px 10px; border-radius:0 8px 8px 0; }
+  .cta{ margin-top:30px; background:#0f172a; color:#fff; border-radius:14px; padding:24px 26px; }
+  .cta h2{ margin:0 0 6px; font-size:20px; }
+  .cta p{ margin:6px 0; color:#cbd5e1; font-size:14px; }
+  .cta a{ color:#22d3ee; font-weight:700; word-break:break-all; }
+  .foot{ margin-top:22px; padding-top:14px; border-top:1px solid var(--line);
+    color:var(--soft); font-size:12px; display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  @media print{ html,body{ background:#fff; } .page{ box-shadow:none; margin:0; border-radius:0;
+    max-width:none; padding:28px 30px; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <div class="brand"><span class="dot"></span> ETÜTKOÇ · ROTAM</div>
+  <h1>Bağımsız Koç için 7 Adımda<br/>Sürdürülebilir Öğrenci Takip Sistemi</h1>
+  <p class="sub">LGS / YKS koçluğunda kaosu bırakıp ölçülebilir başarıya geçmenin pratik rehberi.</p>
+
+  <div class="lede">
+    Bir öğrenciyi takip etmek kolaydır; 15, 30, 50 öğrenciyi <b>aynı kalitede</b> takip etmek
+    sistemle olur. Aşağıdaki 7 adım, koçun en çok zaman kaybettiği yerleri kapatır — kâğıt, Excel
+    ve dağınık WhatsApp olmadan.
+  </div>
+
+  <div class="step">
+    <h3><span class="no">1</span> Kaynak envanterini çıkar</h3>
+    <p>Her öğrencinin elindeki kitap/föy/denemeyi ünite ve test sayısıyla tek yerde tut. "Hangi
+    kaynaktan kaç test kaldı" bilinmeden program yapılamaz.</p>
+    <p class="tip">İpucu: Kaynağı bir kez ünitelere böl; her hafta sıfırdan saymak yerine "kalan"
+    üzerinden ilerle.</p>
+    <div class="tool">ETÜTKOÇ'ta: kütüphane + sihirbazla kitap ekleme; rezerv mantığıyla "kalan
+    test" otomatik hesaplanır.</div>
+  </div>
+
+  <div class="step">
+    <h3><span class="no">2</span> Haftalık + günlük programı birlikte kur</h3>
+    <p>Haftayı günlere böl, günü derslere grupla. Birbirine bağlı testleri (örn. 10 matematik
+    testi) günlere yayarken "kaç verdim, kaç kaldı" elle sayma.</p>
+    <p class="tip">İpucu: Sabah/öğle/akşam periyotları + ders gruplaması, öğrencinin günü
+    "yönetilebilir" görmesini sağlar.</p>
+    <div class="tool">ETÜTKOÇ'ta: hafta ızgarası + sürükle-bırak + rezerv; atanan test kaynaktan
+    otomatik düşer.</div>
+  </div>
+
+  <div class="step">
+    <h3><span class="no">3</span> Günlük uygulamayı ve "tamamladım"ı görünür kıl</h3>
+    <p>Öğrenci ne yaptığını işaretlemeli; doğru/yanlış girmeli. Tamamlama görünmezse koçluk
+    "tahmine" döner.</p>
+    <p class="tip">İpucu: Günlük küçük bir not alanı ("bugün zorlandığım konu") koçun bir sonraki
+    seansına altın veri olur.</p>
+    <div class="tool">ETÜTKOÇ'ta: öğrenci günlük ekranı + tamamlama + doğru/yanlış + günün notu;
+    koç anında görür.</div>
+  </div>
+
+  <div class="step">
+    <h3><span class="no">4</span> Ölç: deneme ve net analizi</h3>
+    <p>Denemeleri tek tek değil <b>trend</b> olarak izle. Farklı sınav türlerini (LGS/TYT/AYT)
+    aynı grafikte karıştırma — ölçek farklı.</p>
+    <p class="tip">İpucu: Net'in yanında "ders bazında doğruluk %" çalış; düşüşün nereden geldiğini
+    gösterir.</p>
+    <div class="tool">ETÜTKOÇ'ta: tür bazlı net trendi + konu performansı + sınava yetişme
+    projeksiyonu.</div>
+  </div>
+
+  <div class="step">
+    <h3><span class="no">5</span> Veliyi düzenli ve otomatik bilgilendir</h3>
+    <p>Veli güveni = düzenli, anlaşılır bilgilendirme. Her hafta elle rapor yazmak sürdürülemez;
+    otomatikleştir.</p>
+    <p class="tip">İpucu: Veli en çok "bu hafta düzeldi mi, netler ne durumda" merak eder — raporu
+    buna göre kur.</p>
+    <div class="tool">ETÜTKOÇ'ta: veliye otomatik haftalık rapor + program bildirimi + mobil push.</div>
+  </div>
+
+  <div class="step">
+    <h3><span class="no">6</span> Kopan öğrenciyi erken yakala</h3>
+    <p>Bir öğrenci sessizce geri kalır; fark ettiğinde geç olur. Düşüşü <b>sinyal</b> hâline getir:
+    boş günler, düşen tamamlama, net düşüşü.</p>
+    <p class="tip">İpucu: Haftada bir "kim risk altında" listesine bak; müdahaleyi küçükken yap.</p>
+    <div class="tool">ETÜTKOÇ'ta: kopan öğrenci erken uyarısı + "bugün şu öğrenciyle şunu konuş"
+    yapay zekâ seans hazırlığı.</div>
+  </div>
+
+  <div class="step">
+    <h3><span class="no">7</span> Sürdürülebilir tempoyu koru</h3>
+    <p>Koçluk maraton; öğrenciyi de kendini de yakma. Gerçekçi haftalık hedef + tutarlılık,
+    parlama-sönme döngüsünü yener.</p>
+    <p class="tip">İpucu: "Yapılmayanı" bir sonraki haftaya taşıyabilmek (devret), öğrenciyi
+    suçluluktan kurtarır, ritmi korur.</p>
+    <div class="tool">ETÜTKOÇ'ta: devret (carryover) + tutarlılık skoru + ölü rezerv telafisi.</div>
+  </div>
+
+  <div class="cta">
+    <h2>Bu 7 adımı tek panelde, otomatik yapın</h2>
+    <p>ETÜTKOÇ bağımsız koçlar için bu döngünün tamamını kurar: program, ölçüm, veli iletişimi,
+    erken uyarı, yapay zekâ seans hazırlığı ve tahsilat.</p>
+    <p><b>14 gün ücretsiz deneyin (kart gerekmez):</b><br/>
+    https://rotam.etutkoc.com</p>
+    <p>30 saniyelik demolar: https://rotam.etutkoc.com/demos</p>
+  </div>
+
+  <div class="foot">
+    <span>ETÜTKOÇ · rotam.etutkoc.com</span>
+    <span>Bağımsız koçlar ve kurumlar için öğrenci koçluk takip platformu</span>
+  </div>
+</div>
+</body>
+</html>
