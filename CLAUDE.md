@@ -132,8 +132,15 @@ kapsam = **TYT + AYT Matematik** · kitap detayına **"Dersi değiştir"** ekle.
     geleneksel konu adı kullanır → leaf'ler geleneksel olmalı. 5-7 konu listeleri
     MEB öğrenme-alanı standardından yazıldı; kullanıcı spot-check edebilir
     (Maarif iş akışındaki gibi sapan ders `curriculum_data.py`'de düzeltilir).
-- **KALAN (opsiyonel):** Sosyal Bilgiler 5-7 (öğrenme-alanı↔ünite adlandırması
-  belirsiz → ayrı dikkatli pas) + Din/İngilizce zaten somut (gerek yok). YDT
+- **Sosyal Bilgiler 5-7 (commit `048855e`, MEB-doğrulamalı):** sınıf (PARENT) +
+  gerçek ünite (LEAF). MEB-doğrulanmış ünite adları (5: 7 öğrenme alanı; 6: Sosyal
+  Bilgiler Öğreniyorum/Yeryüzünde Yaşam/İpek Yolunda Türkler/Ülkemizin Kaynakları/
+  Ülkemiz ve Dünya/Demokrasinin Serüveni/Elektronik Yüzyıl; 7: İletişim ve İnsan
+  İlişkileri/Ülkemizde Nüfus/Türk Tarihinde Yolculuk/Zaman İçinde Bilim/Ekonomi ve
+  Sosyal Hayat/Yaşayan Demokrasi/Ülkeler Arası Köprüler). reseed otomatik kapsadı
+  (prod: 20 eski tema silindi, 21 leaf, 0 stale). LGS sim %100 (64/64). **#2 artık
+  Matematik+Türkçe+Fen+Sosyal'in tamamında bitti.**
+- **KALAN (opsiyonel):** Din/İngilizce 5-7 zaten somut adlı (gerek yok). YDT
   eklenmedi. Maarif geleneksel-adlı kitap → TYT/AYT omurgası kullanılmalı.
 - **DERS:** Test kitapları ÖSYM/yayınevi taksonomisiyle düzenlenir; okul müfredatı
   (Maarif tema/Klasik sınıf) omurgası TYT/AYT eşleştirmesi için yetersiz → sınav
