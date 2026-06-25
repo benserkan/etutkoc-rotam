@@ -70,10 +70,10 @@ export async function generateMetadata({
       siteName: "ETÜTKOÇ Rotam",
       type: "website",
       images: [
-        { url: "/og-membership.png", width: 1200, height: 630, type: "image/png", alt: "ETÜTKOÇ Rotam" },
+        { url: "/og-membership.png?v=2", width: 1200, height: 630, type: "image/png", alt: "ETÜTKOÇ Rotam" },
       ],
     },
-    twitter: { card: "summary_large_image", title, description: desc, images: ["/og-membership.png"] },
+    twitter: { card: "summary_large_image", title, description: desc, images: ["/og-membership.png?v=2"] },
   };
 }
 
