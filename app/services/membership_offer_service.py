@@ -1,12 +1,10 @@
 """WhatsApp üyelik teklifi servisi (Paket 1).
 
-Süper admin teklif oluşturur → token + public link. Kullanıcı markalı sayfada
-"Üye ol/Yenile" talebi bırakır VEYA havale/EFT ile ödediğini bildirir → her iki
-durumda da bir ContactRequest (source="membership_offer") üretilir → süper admin
-"İletişim Talepleri"nde görüp manuel aktive eder (mevcut activate-plan akışı).
-
-İleride: Iyzico kart ödemesi + WhatsApp Cloud API (B fazı) bu servise eklenir;
-public sayfa + akış değişmez.
+Süper admin teklif oluşturur → token + public link. Ödeme TEK yöntem: iyzico kart.
+Markalı sayfada kullanıcı kartla ödemeye yönlendirilir (mevcut koç → giriş → /teacher/
+plan; prospect → kayıt → /teacher/plan). İsteğe bağlı "bilgilerimi bırak" lead'i
+ContactRequest (source="membership_offer") üretir (ödeme değil, iletişim). Havale/EFT
+KALDIRILDI (2026-06: tek ödeme aracı iyzico kart).
 """
 from __future__ import annotations
 
@@ -17,10 +15,7 @@ from sqlalchemy.orm import Session
 
 from app.models import ContactRequest, MembershipOffer, User
 from app.models.contact_request import CONTACT_STATUS_NEW
-from app.services import app_settings, plans, pricing
-
-# Havale/EFT bilgisi app_settings'te tutulur (süper admin doldurur).
-_HAVALE_KEY = "membership_havale"
+from app.services import plans, pricing
 
 _TYPE_LABELS = {"new": "Yeni Üyelik", "renewal": "Üyelik Yenileme"}
 _CYCLE_LABELS = {"monthly": "aylık", "annual": "akademik yıl (10 ay peşin)"}
@@ -39,28 +34,6 @@ def _gen_token(db: Session) -> str:
         if not db.query(MembershipOffer.id).filter(MembershipOffer.token == t).first():
             return t
     raise MembershipOfferError("token_error", "Token üretilemedi.")
-
-
-def get_havale_info() -> dict:
-    """Süper adminin tanımladığı havale/EFT bilgisi. Boşsa enabled=False."""
-    raw = app_settings.get_json(_HAVALE_KEY, None) or {}
-    iban = str(raw.get("iban") or "").strip()
-    return {
-        "enabled": bool(iban),
-        "iban": iban,
-        "name": str(raw.get("name") or "").strip(),
-        "note": str(raw.get("note") or "").strip(),
-    }
-
-
-def set_havale_info(db: Session, *, iban: str, name: str, note: str, actor_user_id: int | None) -> dict:
-    app_settings.set_json(
-        db,
-        _HAVALE_KEY,
-        {"iban": iban.strip(), "name": name.strip(), "note": note.strip()},
-        actor_user_id=actor_user_id,
-    )
-    return get_havale_info()
 
 
 def create_offer(
@@ -190,7 +163,6 @@ def public_view(db: Session, offer: MembershipOffer, *, mark_viewed: bool = True
         "list_price": list_price,
         "savings": savings,
         "discount_pct": discount_pct,
-        "havale": get_havale_info(),
     }
 
 
@@ -357,18 +329,3 @@ def send_via_whatsapp(db: Session, offer: MembershipOffer) -> MembershipOffer:
     return offer
 
 
-def record_havale_claim(
-    db: Session, offer: MembershipOffer, *, name=None, email=None, phone=None
-) -> MembershipOffer:
-    """Kullanıcı havale/EFT ile ödediğini bildirdi → ContactRequest (dekont kontrolü)."""
-    if _effective_status(offer) not in ("active", "accepted"):
-        raise MembershipOfferError("not_active", "Bu teklif artık geçerli değil.")
-    cr = _create_contact(db, offer, name=name, email=email, phone=phone,
-                         extra="[HAVALE/EFT İLE ÖDEDİĞİNİ BİLDİRDİ — dekont/havale kontrol et, sonra aktive et]")
-    offer.status = "accepted"
-    offer.completion = "havale_claimed"
-    offer.accepted_at = datetime.now(timezone.utc)
-    offer.contact_request_id = cr.id
-    db.commit()
-    db.refresh(offer)
-    return offer

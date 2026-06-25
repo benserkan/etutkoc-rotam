@@ -5,11 +5,11 @@ Senaryolar:
   2. süper admin teklif oluştur (hedef koç, new, solo_pro, monthly) → token+public_url
   3. teacher (admin değil) oluşturamaz → 403
   4. anon GET teklif → valid + active + plan_label + amount + target_name + viewed
-  5. havale ayarla (admin) → enabled
-  6. anon GET → havale.enabled + iban
-  7. anon POST /request → ContactRequest(source=membership_offer) + offer accepted/requested
-  8. anon POST /havale-claim (yeni teklif) → completion=havale_claimed + ContactRequest
-  9. havale kapalıyken /havale-claim → 400 havale_disabled
+  5. havale KALDIRILDI — public GET yanıtında havale alanı yok (tek ödeme: iyzico kart)
+  6. admin /havale ayar ucu kaldırıldı → 404/405
+  7. anon POST /request → ContactRequest(source=membership_offer) + offer accepted/requested (lead)
+  8. anon POST /havale-claim ucu kaldırıldı → 404/405
+  9. (havale akışı tamamen kaldırıldı)
  10. geçersiz plan → 400 invalid_plan · olmayan hedef → 400 target_not_found
  11. olmayan token /request → 404
 """
@@ -129,19 +129,18 @@ def main() -> int:
             o = db.query(MembershipOffer).filter(MembershipOffer.token == token).first()
             check("4b. viewed_at işaretlendi", o is not None and o.viewed_at is not None, "")
 
-        # 5. havale ayarla
-        r = admin.post("/api/v2/admin/membership-offers/havale", json={
-            "iban": "TR12 0000 0000 0000 0000 0000 01", "name": "ETÜTKOÇ", "note": "Açıklamaya teklif no yaz"})
-        check("5. havale ayarla → enabled", r.status_code == 200 and r.json()["enabled"] is True,
-              f"{r.status_code} {r.text[:120]}")
-
-        # 6. anon GET → havale görünür
+        # 5. havale KALDIRILDI → public GET yanıtında havale alanı yok (kart-only)
         r = anon.get(f"/api/v2/membership/{token}")
-        hav = (r.json() or {}).get("havale") or {}
-        check("6. anon GET → havale.enabled + iban", hav.get("enabled") and "TR12" in hav.get("iban", ""),
-              f"{hav}")
+        check("5. public GET → havale alanı yok (tek ödeme: iyzico kart)",
+              r.status_code == 200 and "havale" not in (r.json() or {}),
+              f"{r.status_code}")
 
-        # 7. request
+        # 6. admin havale ayar ucu KALDIRILDI → 404/405
+        r = admin.post("/api/v2/admin/membership-offers/havale", json={"iban": "TR1"})
+        check("6. admin /havale ayar ucu kaldırıldı → 404/405",
+              r.status_code in (404, 405), f"{r.status_code}")
+
+        # 7. request (lead — ödeme değil, iletişim)
         r = anon.post(f"/api/v2/membership/{token}/request", json={})
         check("7. /request → 200 ok + requested",
               r.status_code == 200 and r.json()["ok"] and r.json()["completion"] == "requested",
@@ -156,24 +155,16 @@ def main() -> int:
             check("7c. offer accepted + completion=requested",
                   o.status == "accepted" and o.completion == "requested", f"{o.status}/{o.completion}")
 
-        # 8. havale-claim (yeni teklif)
+        # 8. havale-claim ucu KALDIRILDI → 404/405 (tek ödeme: iyzico kart)
         r = admin.post("/api/v2/admin/membership-offers", json={
             "target_user_id": cid, "offer_type": "renewal", "plan_code": "solo_elite",
             "cycle": "annual"})
         token2 = r.json()["token"]
-        r = anon.post(f"/api/v2/membership/{token2}/havale-claim", json={"name": "Veli X", "phone": "905330001122"})
-        check("8. /havale-claim → 200 + havale_claimed",
-              r.status_code == 200 and r.json()["completion"] == "havale_claimed",
-              f"{r.status_code} {r.text[:140]}")
+        r = anon.post(f"/api/v2/membership/{token2}/havale-claim", json={})
+        check("8. /havale-claim ucu kaldırıldı → 404/405",
+              r.status_code in (404, 405), f"{r.status_code}")
 
-        # 9. havale kapalıyken claim → 400
-        admin.post("/api/v2/admin/membership-offers/havale", json={"iban": "", "name": "", "note": ""})
-        r = admin.post("/api/v2/admin/membership-offers", json={
-            "target_user_id": cid, "plan_code": "solo_pro", "offer_type": "new", "cycle": "monthly"})
-        token3 = r.json()["token"]
-        r = anon.post(f"/api/v2/membership/{token3}/havale-claim", json={})
-        check("9. havale kapalı → 400 havale_disabled",
-              r.status_code == 400 and _code(r) == "havale_disabled", f"{r.status_code}")
+        # 9. (havale akışı tamamen kaldırıldı — kart-only)
 
         # 10. validasyon
         r = admin.post("/api/v2/admin/membership-offers", json={

@@ -7,7 +7,6 @@ import {
   Check,
   Copy,
   ExternalLink,
-  Landmark,
   Loader2,
   MessageCircle,
   Search,
@@ -18,7 +17,6 @@ import {
 import { getAdminUsers } from "@/lib/api/admin";
 import {
   getMembershipAudience,
-  getMembershipHavale,
   getMembershipOffers,
   membershipKeys,
 } from "@/lib/api/membership";
@@ -26,13 +24,11 @@ import {
   useCreateMembershipOffer,
   useCreateMembershipOffersBulk,
   useSendMembershipOfferWhatsApp,
-  useSetMembershipHavale,
 } from "@/lib/hooks/use-membership-mutations";
 import type { AdminUserListItem } from "@/lib/types/admin";
 import type {
   BulkMembershipOfferResult,
   MembershipAudienceMember,
-  MembershipHavaleInfo,
   MembershipOfferCreated,
   MembershipOfferListItem,
   MembershipOfferListResponse,
@@ -80,22 +76,14 @@ function CopyButton({ value, label = "Kopyala" }: { value: string; label?: strin
 
 export function AdminMembershipClient({
   initialOffers,
-  initialHavale,
 }: {
   initialOffers: MembershipOfferListResponse;
-  initialHavale: MembershipHavaleInfo;
 }) {
   const offersQ = useQuery({
     queryKey: membershipKeys.offers(),
     queryFn: getMembershipOffers,
     initialData: initialOffers,
     staleTime: 15_000,
-  });
-  const havaleQ = useQuery({
-    queryKey: membershipKeys.havale(),
-    queryFn: getMembershipHavale,
-    initialData: initialHavale,
-    staleTime: 60_000,
   });
 
   const planOptions = offersQ.data?.plan_options ?? [];
@@ -107,11 +95,9 @@ export function AdminMembershipClient({
       <header>
         <h1 className="text-xl font-bold text-foreground">WhatsApp Üyelik Teklifleri</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          {"Koça özel üyelik/yenileme teklifi oluştur → linki WhatsApp'tan gönder → kullanıcı markalı sayfada talep bırakır veya havale ile öder → İletişim Talepleri'nden aktive et."}
+          {"Koça özel üyelik/yenileme teklifi oluştur → linki WhatsApp'tan gönder → kullanıcı markalı sayfada kartla öder (iyzico) → paketi aktive olur."}
         </p>
       </header>
-
-      <HavaleCard havale={havaleQ.data ?? initialHavale} />
 
       <div className="inline-flex rounded-lg border border-border bg-card p-1">
         {(["single", "bulk"] as const).map((m) => (
@@ -143,86 +129,6 @@ export function AdminMembershipClient({
         whatsappEnabled={offersQ.data?.whatsapp_enabled ?? false}
       />
     </div>
-  );
-}
-
-// ---------------------------------------------------------------- Havale ayarı
-function HavaleCard({ havale }: { havale: MembershipHavaleInfo }) {
-  const setHavale = useSetMembershipHavale();
-  const [iban, setIban] = React.useState(havale.iban);
-  const [name, setName] = React.useState(havale.name);
-  const [note, setNote] = React.useState(havale.note);
-
-  // prop değişince (refetch) senkronla
-  const sig = `${havale.iban}|${havale.name}|${havale.note}`;
-  const [lastSig, setLastSig] = React.useState(sig);
-  if (sig !== lastSig) {
-    setLastSig(sig);
-    setIban(havale.iban);
-    setName(havale.name);
-    setNote(havale.note);
-  }
-
-  return (
-    <section className="rounded-lg border border-border bg-card p-5">
-      <div className="flex items-center gap-2">
-        <Landmark className="size-4 text-muted-foreground" aria-hidden />
-        <h2 className="text-sm font-semibold text-foreground">Havale / EFT Bilgisi</h2>
-        <span
-          className={cn(
-            "ml-auto rounded-full px-2 py-0.5 text-[11px] font-medium",
-            havale.enabled
-              ? "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-200"
-              : "bg-muted text-muted-foreground",
-          )}
-        >
-          {havale.enabled ? "Aktif" : "Kapalı (IBAN boş)"}
-        </span>
-      </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        {"IBAN girilirse teklif sayfasında \"Havale/EFT ile öde\" seçeneği görünür. Boş bırakılırsa yalnız \"Üyelik talebi\" akışı çalışır."}
-      </p>
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <label className="text-xs font-medium text-muted-foreground sm:col-span-2">
-          IBAN
-          <input
-            value={iban}
-            onChange={(e) => setIban(e.target.value)}
-            placeholder="TR.. (boş = havale kapalı)"
-            className="mt-1 w-full rounded-md border border-input bg-background px-2.5 py-1.5 font-mono text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </label>
-        <label className="text-xs font-medium text-muted-foreground">
-          Alıcı adı
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ad Soyad"
-            className="mt-1 w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </label>
-        <label className="text-xs font-medium text-muted-foreground">
-          Açıklama notu
-          <input
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Örn. Açıklamaya adınızı yazın"
-            className="mt-1 w-full rounded-md border border-input bg-background px-2.5 py-1.5 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-          />
-        </label>
-      </div>
-      <div className="mt-3 flex justify-end">
-        <button
-          type="button"
-          onClick={() => setHavale.mutate({ body: { iban, name, note } })}
-          disabled={setHavale.isPending}
-          className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-1.5 text-sm font-medium text-background hover:bg-foreground/90 disabled:opacity-50"
-        >
-          {setHavale.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
-          Kaydet
-        </button>
-      </div>
-    </section>
   );
 }
 

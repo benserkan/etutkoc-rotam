@@ -1,12 +1,5 @@
 // WhatsApp Üyelik Teklifi — süper admin tipleri (Paket 2)
 
-export interface MembershipHavaleInfo {
-  enabled: boolean;
-  iban: string;
-  name: string;
-  note: string;
-}
-
 export interface MembershipPlanOption {
   code: string;
   label: string;
@@ -67,12 +60,6 @@ export interface MembershipOfferCreated {
   amount: number | null;
   target_user_id: number | null;
   status: string;
-}
-
-export interface MembershipHavaleBody {
-  iban: string;
-  name: string;
-  note: string;
 }
 
 // ---- Paket 3: toplu ----

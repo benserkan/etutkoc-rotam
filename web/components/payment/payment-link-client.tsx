@@ -9,7 +9,6 @@ import {
   ChevronRight,
   Clock,
   Home,
-  Landmark,
   Loader2,
   Lock,
   ShieldCheck,
@@ -20,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useLinkCheckout } from "@/lib/hooks/use-payment-mutations";
-import type { PaymentLinkHavale, PaymentLinkPublicInfo } from "@/lib/types/payment";
+import type { PaymentLinkPublicInfo } from "@/lib/types/payment";
 
 interface Props {
   token: string;
@@ -160,7 +159,7 @@ export function PaymentLinkClient({ token, info }: Props) {
                 loading={checkout.isPending}
               />
             ) : (
-              <HavaleFallback havale={info.havale} />
+              <PaymentUnavailableBox />
             )}
           </div>
 
@@ -199,67 +198,17 @@ function PayButton({
 }
 
 /**
- * İyzico aktif değilken (provider_available=false) kartlı ödeme yerine havale/EFT
- * gösterilir — gerçek aday çiğ hata almasın. İyzico key girilince otomatik
- * "Şimdi Öde"ye döner (provider_available=true).
+ * İyzico geçici olarak kapalıyken (provider_available=false) gösterilir. Havale/EFT
+ * KALDIRILDI — tek ödeme aracı iyzico kart. Anahtar girilince otomatik "Şimdi Öde".
  */
-function HavaleFallback({ havale }: { havale: PaymentLinkHavale | null }) {
-  const [copied, setCopied] = React.useState(false);
-
-  function copyIban() {
-    if (!havale?.iban) return;
-    navigator.clipboard?.writeText(havale.iban.replace(/\s/g, "")).then(
-      () => {
-        setCopied(true);
-        setTimeout(() => setCopied(false), 2000);
-      },
-      () => undefined,
-    );
-  }
-
+function PaymentUnavailableBox() {
   return (
-    <div className="space-y-3">
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
-        <p className="font-semibold">Kartlı ödeme yakında aktif olacak</p>
-        <p className="mt-1 text-xs">
-          {havale?.enabled
-            ? "Şimdilik havale / EFT ile ödeyebilirsin. Ödemeni aldıktan sonra ekibimiz üyeliğini aktive eder."
-            : "Ekibimiz seninle iletişime geçip ödeme adımlarını paylaşacak."}
-        </p>
-      </div>
-
-      {havale?.enabled ? (
-        <div className="rounded-lg border border-slate-200 bg-white p-4 dark:bg-slate-900 dark:border-slate-700">
-          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900 dark:text-slate-100">
-            <Landmark className="size-4 text-cyan-600" aria-hidden /> Havale / EFT Bilgileri
-          </div>
-          <dl className="mt-3 space-y-2 text-sm">
-            <div>
-              <dt className="text-xs text-slate-500">IBAN</dt>
-              <dd className="mt-0.5 flex items-center gap-2">
-                <code className="flex-1 break-all rounded bg-slate-100 px-2 py-1 font-mono text-xs text-slate-900 dark:bg-slate-800 dark:text-slate-100">
-                  {havale.iban}
-                </code>
-                <Button size="sm" variant="outline" onClick={copyIban}>
-                  {copied ? "Kopyalandı" : "Kopyala"}
-                </Button>
-              </dd>
-            </div>
-            {havale.name ? (
-              <div>
-                <dt className="text-xs text-slate-500">Alıcı</dt>
-                <dd className="mt-0.5 text-slate-900 dark:text-slate-100">{havale.name}</dd>
-              </div>
-            ) : null}
-            {havale.note ? (
-              <div>
-                <dt className="text-xs text-slate-500">Açıklama</dt>
-                <dd className="mt-0.5 whitespace-pre-line text-slate-700 dark:text-slate-300">{havale.note}</dd>
-              </div>
-            ) : null}
-          </dl>
-        </div>
-      ) : null}
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+      <p className="font-semibold">Kartlı ödeme şu an geçici olarak kullanılamıyor</p>
+      <p className="mt-1 text-xs">
+        Lütfen kısa süre sonra tekrar deneyin. Sorun sürerse size linki gönderen
+        kişiyle iletişime geçin.
+      </p>
     </div>
   );
 }

@@ -135,12 +135,4 @@ export interface PaymentLinkPublicInfo {
   can_pay: boolean;
   requires_login: boolean;
   provider_available: boolean;
-  havale: PaymentLinkHavale | null;
-}
-
-export interface PaymentLinkHavale {
-  enabled: boolean;
-  iban: string;
-  name: string;
-  note: string;
 }

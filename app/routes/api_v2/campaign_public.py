@@ -16,13 +16,6 @@ from app.services import campaign_link_service as cls
 router = APIRouter(prefix="/campaign", tags=["v2-campaign-public"])
 
 
-class CampaignHavale(BaseModel):
-    enabled: bool = False
-    iban: str = ""
-    name: str = ""
-    note: str = ""
-
-
 class CampaignPublicView(BaseModel):
     valid: bool
     status: str
@@ -39,7 +32,6 @@ class CampaignPublicView(BaseModel):
     list_price: int | None = None
     savings: int | None = None
     discount_pct: int | None = None
-    havale: CampaignHavale | None = None
 
 
 class CampaignLeadBody(BaseModel):

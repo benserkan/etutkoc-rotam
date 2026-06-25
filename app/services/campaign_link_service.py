@@ -21,7 +21,6 @@ from app.models.campaign_link import (
 )
 from app.models.contact_request import CONTACT_STATUS_NEW
 from app.services import plans, pricing
-from app.services.membership_offer_service import get_havale_info
 
 _CYCLE_LABELS = {"monthly": "aylık", "annual": "akademik yıl (10 ay peşin)"}
 
@@ -151,7 +150,6 @@ def public_view(db: Session, link: CampaignLink, *, mark_viewed: bool = True) ->
         "list_price": list_price,
         "savings": savings,
         "discount_pct": discount_pct,
-        "havale": get_havale_info(),
     }
 
 

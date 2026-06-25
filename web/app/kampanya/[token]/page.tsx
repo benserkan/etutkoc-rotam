@@ -15,12 +15,6 @@ import { CampaignLeadForm } from "./campaign-lead-form";
  */
 export const dynamic = "force-dynamic";
 
-interface CampaignHavale {
-  enabled: boolean;
-  iban: string;
-  name: string;
-  note: string;
-}
 interface CampaignView {
   valid: boolean;
   status: string;
@@ -37,7 +31,6 @@ interface CampaignView {
   list_price: number | null;
   savings: number | null;
   discount_pct: number | null;
-  havale: CampaignHavale | null;
 }
 
 async function fetchCampaign(token: string): Promise<CampaignView | null> {

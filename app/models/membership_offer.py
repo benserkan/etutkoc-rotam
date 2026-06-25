@@ -21,9 +21,9 @@ MEMBERSHIP_OFFER_STATUSES = ("active", "accepted", "cancelled", "expired")
 class MembershipOffer(Base):
     """Süper adminin WhatsApp ile gönderdiği üyelik teklifi (yeni üyelik/yenileme).
 
-    Token bazlı public link → markalı sayfa → kullanıcı "Üye ol/Yenile" talebi
-    bırakır veya havale/EFT ile ödediğini bildirir → süper admin manuel aktive
-    eder. (İleride Iyzico kart + WhatsApp Cloud API ile genişler.)
+    Token bazlı public link → markalı sayfa → kullanıcı kartla ödemeye yönlendirilir
+    (iyzico, tek ödeme yöntemi). İsteğe bağlı "bilgilerimi bırak" lead'i süper admine
+    düşer. Havale/EFT KALDIRILDI (2026-06).
     """
 
     __tablename__ = "membership_offers"

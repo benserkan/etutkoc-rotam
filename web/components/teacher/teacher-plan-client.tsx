@@ -5,7 +5,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, CheckCircle2, Clock, CreditCard, Gem, Loader2, Lock, Mail, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
-import { ApiError } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -20,7 +19,6 @@ import {
   cancelSubscription,
   getTeacherPlan,
   resumeSubscription,
-  submitSubscriptionRequest,
   teacherKeys,
 } from "@/lib/api/teacher";
 import {
@@ -584,7 +582,6 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         cycle={yearly ? "academic_year" : "monthly"}
         priceLabel={`${tl(shownMonthly)}/ay (${yearly ? "akademik yıl" : "aylık"})`}
         salesEmail={data.sales_email}
-        hasPending={data.has_pending_subscription_request}
       />
     </Card>
   );
@@ -598,7 +595,6 @@ function UpgradeDialog({
   cycle,
   priceLabel,
   salesEmail,
-  hasPending = false,
 }: {
   open: boolean;
   onClose: () => void;
@@ -607,128 +603,84 @@ function UpgradeDialog({
   cycle: string;
   priceLabel: string;
   salesEmail: string;
-  hasPending?: boolean;
 }) {
-  const qc = useQueryClient();
-  const [done, setDone] = React.useState(false);
-  // Bekleyen talep (backend kalıcı) VEYA bu oturumda gönderilmiş → "alındı" durumu.
-  // Bu, dialog yeniden açılınca butonun tekrar aktif olmasını engeller.
-  const showDone = done || hasPending;
-  const mut = useMutation({
-    mutationFn: () => submitSubscriptionRequest({ plan, cycle }),
-    onSuccess: (res) => {
-      applyInvalidate(qc, res.invalidate);
-      setDone(true);
-    },
-  });
-  // Iyzico checkout — provider available ise "Kartla Öde" butonu çıkar
+  // Tek ödeme yöntemi: iyzico kart (havale KALDIRILDI). provider available ise
+  // "Kartla Öde"; geçici kapalıysa iletişim.
   const providerQ = useQuery({
     queryKey: paymentKeys.providerStatus(),
     queryFn: getPaymentProviderStatus,
     staleTime: 60_000,
-    enabled: open,  // dialog açılınca check
+    enabled: open,
   });
   const cardCheckout = useInitPaymentCheckout();
   const cardAvailable = providerQ.data?.available === true;
   const inSandbox = providerQ.data?.sandbox === true;
 
   const mailto = salesEmail
-    ? `mailto:${salesEmail}?subject=${encodeURIComponent(`${planLabel} abonelik aktivasyonu`)}`
+    ? `mailto:${salesEmail}?subject=${encodeURIComponent(`${planLabel} abonelik`)}`
     : "";
-  const errMsg = mut.error instanceof ApiError ? mut.error.detail.message : "Bir hata oluştu, tekrar deneyin.";
 
   return (
-    <Dialog open={open} onOpenChange={(v) => { if (!v) { onClose(); setDone(false); } }}>
+    <Dialog open={open} onOpenChange={(v) => { if (!v) onClose(); }}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Gem className="size-4 text-cyan-700" aria-hidden /> {planLabel} paketine geç
           </DialogTitle>
         </DialogHeader>
-        {showDone ? (
-          <div className="space-y-3 py-2 text-center">
-            <CheckCircle2 className="mx-auto size-10 text-emerald-500" aria-hidden />
-            <p className="text-sm font-medium">Talebin alındı</p>
-            <p className="text-sm text-muted-foreground">
-              Ödeme/aktivasyon için en kısa sürede iletişime geçeceğiz. Onaylanınca
-              hesabın Solo&apos;ya geçer.
+        <div className="space-y-3 text-sm">
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
+            <span className="text-muted-foreground">Seçilen:</span>{" "}
+            <span className="font-semibold text-cyan-900">{planLabel} · {priceLabel}</span>
+          </div>
+          {cardAvailable ? (
+            <p className="flex items-start gap-2 text-muted-foreground">
+              <CreditCard className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Kartınla anında ve güvenle ödersin (3D Secure, iyzico). Ödeme onaylanınca
+              paketin hemen aktive olur.
+              {inSandbox ? (
+                <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">
+                  TEST modu
+                </span>
+              ) : null}
             </p>
-          </div>
-        ) : (
-          <div className="space-y-3 text-sm">
-            <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
-              <span className="text-muted-foreground">Seçilen:</span>{" "}
-              <span className="font-semibold text-cyan-900">{planLabel} · {priceLabel}</span>
-            </div>
-            {cardAvailable ? (
-              <p className="flex items-start gap-2 text-muted-foreground">
-                <CreditCard className="mt-0.5 size-4 shrink-0" aria-hidden />
-                Kartınla anında ödeme yapabilirsin (3D Secure). Veya havale/EFT
-                ile talep gönderebilirsin — destek seninle iletişime geçer.
-                {inSandbox ? (
-                  <span className="ml-1 rounded bg-amber-100 px-1.5 py-0.5 text-xs font-medium text-amber-800">
-                    TEST modu
-                  </span>
-                ) : null}
-              </p>
-            ) : (
-              <p className="flex items-start gap-2 text-muted-foreground">
-                <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
-                &quot;Öde ve devam et&quot; talebini gönder; destek seninle
-                iletişime geçer, ödemeyi havale ile alıp aktive eder.
-              </p>
-            )}
-            {mut.isError ? (
-              <p className="rounded-lg bg-rose-50 px-3 py-2 text-xs text-rose-700">{errMsg}</p>
-            ) : null}
-          </div>
-        )}
-        <DialogFooter className="gap-2 pt-2">
-          {showDone ? (
-            <Button onClick={() => { onClose(); setDone(false); }}>Tamam</Button>
           ) : (
-            <>
-              {mailto ? (
-                <Button asChild variant="ghost">
-                  <a href={mailto}><Mail className="size-4" aria-hidden /> İletişim</a>
-                </Button>
-              ) : null}
-              <Button
-                variant="outline"
-                disabled={mut.isPending || cardCheckout.isPending}
-                onClick={() => mut.mutate()}
-              >
-                {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-                Havale ile talep gönder
-              </Button>
-              {cardAvailable ? (
-                <Button
-                  className="bg-cyan-700 text-white hover:bg-cyan-800"
-                  disabled={cardCheckout.isPending || mut.isPending}
-                  onClick={() => {
-                    // Manuel akış (subscription_request) `academic_year` kullanır;
-                    // Iyzico backend `monthly | annual` bekler. Çevirim:
-                    const iyzicoCycle: "monthly" | "annual" =
-                      cycle === "academic_year" ? "annual" : "monthly";
-                    cardCheckout.mutate(
-                      { plan_code: plan, cycle: iyzicoCycle },
-                      {
-                        onSuccess: (res) => {
-                          window.location.href = res.payment_page_url;
-                        },
-                      },
-                    );
-                  }}
-                >
-                  {cardCheckout.isPending ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden />
-                  ) : (
-                    <CreditCard className="size-4" aria-hidden />
-                  )}
-                  Kartla Öde
-                </Button>
-              ) : null}
-            </>
+            <p className="flex items-start gap-2 text-muted-foreground">
+              <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
+              Kartlı ödeme şu an geçici olarak kullanılamıyor. Kısa süre sonra
+              tekrar dene veya bizimle iletişime geç.
+            </p>
+          )}
+        </div>
+        <DialogFooter className="gap-2 pt-2">
+          {mailto ? (
+            <Button asChild variant="ghost">
+              <a href={mailto}><Mail className="size-4" aria-hidden /> İletişim</a>
+            </Button>
+          ) : null}
+          {cardAvailable ? (
+            <Button
+              className="bg-cyan-700 text-white hover:bg-cyan-800"
+              disabled={cardCheckout.isPending}
+              onClick={() => {
+                // Iyzico backend `monthly | annual` bekler; akademik yıl → annual.
+                const iyzicoCycle: "monthly" | "annual" =
+                  cycle === "academic_year" ? "annual" : "monthly";
+                cardCheckout.mutate(
+                  { plan_code: plan, cycle: iyzicoCycle },
+                  { onSuccess: (res) => { window.location.href = res.payment_page_url; } },
+                );
+              }}
+            >
+              {cardCheckout.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <CreditCard className="size-4" aria-hidden />
+              )}
+              Kartla Öde
+            </Button>
+          ) : (
+            <Button variant="outline" onClick={onClose}>Kapat</Button>
           )}
         </DialogFooter>
       </DialogContent>

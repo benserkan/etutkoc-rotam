@@ -1,6 +1,6 @@
 """API v2 — Süper Admin: WhatsApp Üyelik Teklifi yönetimi (Paket 1).
 
-Teklif oluşturma (token + public link üretir) + havale/EFT bilgisi ayarı.
+Teklif oluşturma (token + public link üretir). Ödeme tek yöntem: iyzico kart.
 Teklif WhatsApp ile gönderilir (tekli/toplu Click-to-WhatsApp — P2/P3).
 Public taraf: membership_public.py.
 """
@@ -61,19 +61,6 @@ class MembershipOfferCreated(BaseModel):
     amount: int | None = None
     target_user_id: int | None = None
     status: str
-
-
-class HavaleInfoBody(BaseModel):
-    iban: str = ""
-    name: str = ""
-    note: str = ""
-
-
-class HavaleInfoResponse(BaseModel):
-    enabled: bool
-    iban: str = ""
-    name: str = ""
-    note: str = ""
 
 
 @router.post("", response_model=MembershipOfferCreated)
@@ -266,25 +253,6 @@ def send_membership_offer_whatsapp(
         wa_sent_at=offer.wa_sent_at.isoformat() if offer.wa_sent_at else None,
         message="Branded üyelik teklifi WhatsApp'tan gönderildi.",
     )
-
-
-@router.get("/havale", response_model=HavaleInfoResponse)
-def get_membership_havale(
-    user: User = Depends(_require_super_admin),
-):
-    return HavaleInfoResponse(**mos.get_havale_info())
-
-
-@router.post("/havale", response_model=HavaleInfoResponse)
-def set_membership_havale(
-    body: HavaleInfoBody,
-    user: User = Depends(_require_super_admin),
-    db: Session = Depends(get_db),
-):
-    info = mos.set_havale_info(
-        db, iban=body.iban, name=body.name, note=body.note, actor_user_id=user.id
-    )
-    return HavaleInfoResponse(**info)
 
 
 # ============================================================================

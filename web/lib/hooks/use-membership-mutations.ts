@@ -9,8 +9,6 @@ import type {
   BulkMembershipOfferBody,
   BulkMembershipOfferResult,
   CreateMembershipOfferBody,
-  MembershipHavaleBody,
-  MembershipHavaleInfo,
   MembershipOfferCreated,
 } from "@/lib/types/membership";
 
@@ -63,19 +61,3 @@ export function useSendMembershipOfferWhatsApp() {
   });
 }
 
-export function useSetMembershipHavale() {
-  const qc = useQueryClient();
-  return useMutation<MembershipHavaleInfo, ApiError, { body: MembershipHavaleBody }>({
-    mutationFn: ({ body }) =>
-      api<MembershipHavaleInfo>("/api/v2/admin/membership-offers/havale", {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
-    onError: (e) => toast.error(errMsg(e, "Havale bilgisi kaydedilemedi")),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: membershipKeys.havale() });
-      qc.invalidateQueries({ queryKey: membershipKeys.offers() });
-      toast.success("Havale/EFT bilgisi kaydedildi");
-    },
-  });
-}

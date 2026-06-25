@@ -10,17 +10,11 @@ import { MembershipActions } from "./membership-actions";
  * /membership/[token] — WhatsApp üyelik teklifi public sayfası (Paket 1).
  *
  * Login GEREKTİRMEZ. Kullanıcı WhatsApp'tan gelen linke tıklar (uygulama-içi
- * tarayıcı) → markalı ETÜTKOÇ sayfası → "Üye ol/Yenile" talebi veya havale/EFT
- * ile ödeme bildirimi. OG meta → WhatsApp link önizlemesinde ETÜTKOÇ logosu.
+ * tarayıcı) → markalı ETÜTKOÇ sayfası → kartla ödemeye yönlendirilir (iyzico).
+ * OG meta → WhatsApp link önizlemesinde ETÜTKOÇ logosu.
  */
 export const dynamic = "force-dynamic";
 
-interface HavaleInfo {
-  enabled: boolean;
-  iban: string;
-  name: string;
-  note: string;
-}
 interface MembershipView {
   valid: boolean;
   status: string;
@@ -40,7 +34,6 @@ interface MembershipView {
   list_price: number | null;
   savings: number | null;
   discount_pct: number | null;
-  havale: HavaleInfo | null;
 }
 
 async function fetchOffer(token: string): Promise<MembershipView | null> {
@@ -214,7 +207,7 @@ export default async function MembershipPage({
             {/* Aksiyonlar (client) */}
             <MembershipActions
               token={token}
-              havale={offer.havale}
+              planCode={offer.plan_code}
               initialCompletion={
                 isAccepted &&
                 (offer.completion === "requested" || offer.completion === "havale_claimed")

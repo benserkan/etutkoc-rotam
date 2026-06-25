@@ -1,8 +1,8 @@
 """API v2 — Public WhatsApp Üyelik Teklifi (Paket 1).
 
 Token bazlı, login GEREKTİRMEZ. Kullanıcı WhatsApp'tan gelen linke tıklar →
-markalı sayfa bu uçları çağırır: teklifi görüntüle + "Üye ol/Yenile" talebi +
-"Havale/EFT ile ödedim" bildirimi. Servis: membership_offer_service.
+markalı sayfa: teklifi görüntüle + kartla ödemeye yönlendir (iyzico) + isteğe
+bağlı "bilgilerimi bırak" lead'i. Havale KALDIRILDI. Servis: membership_offer_service.
 """
 from __future__ import annotations
 
@@ -14,13 +14,6 @@ from app.deps import get_db
 from app.services import membership_offer_service as mos
 
 router = APIRouter(prefix="/membership", tags=["v2-membership-public"])
-
-
-class HavaleInfo(BaseModel):
-    enabled: bool
-    iban: str = ""
-    name: str = ""
-    note: str = ""
 
 
 class MembershipPublicResponse(BaseModel):
@@ -42,7 +35,6 @@ class MembershipPublicResponse(BaseModel):
     list_price: int | None = None
     savings: int | None = None
     discount_pct: int | None = None
-    havale: HavaleInfo | None = None
 
 
 class MembershipActionBody(BaseModel):
@@ -90,31 +82,3 @@ def membership_offer_request(
     )
 
 
-@router.post("/{token}/havale-claim", response_model=MembershipActionResult)
-def membership_offer_havale(
-    token: str, body: MembershipActionBody | None = None, db: Session = Depends(get_db)
-):
-    offer = mos.get_by_token(db, token)
-    if offer is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail={"error": "not_found", "code": "offer_not_found", "message": "Teklif bulunamadı."},
-        )
-    if not mos.get_havale_info()["enabled"]:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "membership", "code": "havale_disabled",
-                    "message": "Havale/EFT seçeneği şu an kapalı."},
-        )
-    b = body or MembershipActionBody()
-    try:
-        mos.record_havale_claim(db, offer, name=b.name, email=b.email, phone=b.phone)
-    except mos.MembershipOfferError as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "membership", "code": e.code, "message": e.message},
-        )
-    return MembershipActionResult(
-        ok=True, status="accepted", completion="havale_claimed",
-        message="Bildirimin alındı. Ödemen kontrol edilip üyeliğin aktive edilecek.",
-    )
