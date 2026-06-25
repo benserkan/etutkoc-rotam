@@ -786,6 +786,7 @@ def all_subjects(
     """
     from sqlalchemy import or_ as sa_or
     from app.models.curriculum import Subject
+    from app.services.curriculum_progress import exam_subject_visible_for_track
 
     student = _get_owned_student(db, student_id, user.id)
 
@@ -807,6 +808,9 @@ def all_subjects(
             continue
         # Müfredat modeli filtre (öğrencinin modeline uymuyor + ders model-bound ise atla)
         if student_cm and s.curriculum_model and s.curriculum_model != student_cm:
+            continue
+        # AYT alan (track) filtresi — Sözel öğrenci AYT Fizik görmesin vb.
+        if not exam_subject_visible_for_track(s, student.track):
             continue
         # Tekille (ad bazlı — farklı modellerden aynı ders adı varsa ilki kalır)
         if s.name in seen_names:

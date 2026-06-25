@@ -22,10 +22,12 @@ from sqlalchemy import delete as sa_delete
 from app.database import SessionLocal
 from app.models import (
     Book, BookSection, BookType, CurriculumModel, ExamSection, Subject, Topic,
-    User, UserRole,
+    Track, User, UserRole,
 )
 from app.services import curriculum_mapping as cm
-from app.services.curriculum_progress import _applicable_subjects
+from app.services.curriculum_progress import (
+    _applicable_subjects, exam_subject_visible_for_track,
+)
 from app.services.security import hash_password
 from scripts.seed import seed_exam_curriculum
 
@@ -110,6 +112,30 @@ def main() -> int:
             for s in exam_subjects
         )
         check("A7. her sınav dersinin >= 5 konusu var", counts_ok)
+
+        # D: AYT alan (track) filtresi — exam_subject_visible_for_track
+        ayt_edeb = db.query(Subject).filter(
+            Subject.is_builtin.is_(True), Subject.teacher_id.is_(None),
+            Subject.curriculum_model.is_(None), Subject.name == "AYT Edebiyat",
+        ).first()
+        check("D1. SAYISAL → AYT Matematik görünür",
+              exam_subject_visible_for_track(ayt, Track.SAYISAL))
+        check("D2. SÖZEL → AYT Matematik gizli",
+              not exam_subject_visible_for_track(ayt, Track.SOZEL))
+        check("D3. SÖZEL → AYT Edebiyat görünür",
+              ayt_edeb is not None and exam_subject_visible_for_track(ayt_edeb, Track.SOZEL))
+        check("D4. SAYISAL → AYT Edebiyat gizli",
+              ayt_edeb is not None and not exam_subject_visible_for_track(ayt_edeb, Track.SAYISAL))
+        check("D5. TYT herkese ortak (SÖZEL → TYT Matematik görünür)",
+              exam_subject_visible_for_track(tyt, Track.SOZEL))
+        check("D6. alan yok (None) → AYT görünür (gizleme yok)",
+              exam_subject_visible_for_track(ayt, None))
+        check("D7. EA → AYT Matematik görünür + AYT Fizik gizli",
+              exam_subject_visible_for_track(ayt, Track.EA)
+              and not exam_subject_visible_for_track(
+                  db.query(Subject).filter(
+                      Subject.curriculum_model.is_(None), Subject.name == "AYT Fizik",
+                  ).first(), Track.EA))
 
     # --- B) _applicable_subjects YKS dedup (izole koç-sahipli dersler) ---
     ids: dict = {}

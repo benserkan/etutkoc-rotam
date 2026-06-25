@@ -34,6 +34,7 @@ from app.models import (
     StudentBook,
     Subject,
     Topic,
+    Track,
     User,
 )
 
@@ -173,6 +174,38 @@ _SCHOOL_EXAM_SYNONYMS: dict[str, set[str]] = {
 }
 
 
+# YKS alanına (track) göre AYT dersleri. TYT herkese ortaktır → burada yer almaz.
+TRACK_AYT_SUBJECTS: dict[Track, set[str]] = {
+    Track.SAYISAL: {
+        "AYT Matematik", "AYT Geometri", "AYT Fizik", "AYT Kimya", "AYT Biyoloji",
+    },
+    Track.EA: {
+        "AYT Matematik", "AYT Geometri", "AYT Edebiyat", "AYT Tarih", "AYT Coğrafya",
+    },
+    Track.SOZEL: {
+        "AYT Edebiyat", "AYT Tarih", "AYT Coğrafya", "AYT Felsefe Grubu",
+        "AYT Din Kültürü ve Ahlak Bilgisi",
+    },
+    Track.DIL: set(),  # YDT (Yabancı Dil) — sistemde ayrı ders yok
+}
+
+
+def exam_subject_visible_for_track(s: Subject, track: Track | None) -> bool:
+    """AYT sınav dersi öğrencinin alanına (track) uygun mu?
+
+    TYT herkese görünür. AYT yalnız alanına uygun öğrenciye. Alan bilinmiyorsa
+    (track None — örn. 9-10 veya henüz seçmemiş) filtre uygulanmaz (gizleme yok).
+    Sınav dersi olmayan (okul) dersler etkilenmez → True.
+    """
+    if not _is_exam_subject(s):
+        return True
+    if s.exam_section == ExamSection.TYT:
+        return True  # TYT tüm alanlara ortak
+    if track is None:
+        return True
+    return s.name in TRACK_AYT_SUBJECTS.get(track, set())
+
+
 def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subject]:
     """Öğrencinin müfredat dersleri (resmi/koç) — grade + curriculum_model filtreli.
 
@@ -188,11 +221,12 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
         .order_by(Subject.order, Subject.name)
         .all()
     )
-    # Aday geç: grade + model filtresi
+    # Aday geç: grade + model filtresi + AYT alan (track) filtresi
     candidates = [
         s for s in rows
         if s.covers_grade(student.grade_level, is_graduate=student.is_graduate)
         and not (student_cm and s.curriculum_model and s.curriculum_model != student_cm)
+        and exam_subject_visible_for_track(s, student.track)
     ]
     is_yks = bool(student.is_graduate) or (
         student.grade_level is not None and student.grade_level >= 9
