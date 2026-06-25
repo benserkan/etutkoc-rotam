@@ -110,8 +110,31 @@ kapsam = **TYT + AYT Matematik** · kitap detayına **"Dersi değiştir"** ekle.
   OTOMATİK alır (mobil müfredat/ders yüzeyleri yeni dersleri görür, track sunucuda
   filtrelenir) → mobil kod değişikliği/yeni build GEREKMEDİ. Kitap ekleme sihirbazı +
   demo web-özel (mobil koç kütüphane yönetimi web'de — PARITY.md); mobilde karşılığı yok.
-- **KALAN (opsiyonel):** YDT (Yabancı Dil) eklenmedi (konu-bazlı değil; istenirse ayrı).
-  + "kasko" sihirbazı mevcut; istenirse bölüm-içi sürükle-bırak/önizleme zenginleştirmesi.
+- **LGS + Maarif analizi + iyileştirmeler — CANLI (2026-06-25):** TYT/AYT'deki gibi
+  gerçek auto-map ile performans ölçüldü (`scripts/sim_lgs_maarif_mapping.py`).
+  **Bulgular:** LGS 8. sınıf (sınav) %100 (kusursuz); LGS 5-7 %8 (seed'de soyut
+  Maarif "Tema:" adları, kitaplar geleneksel); Maarif lise resmi-adlı %100 /
+  geleneksel-adlı %0 (o kitaplar TYT/AYT omurgasına ait — doğru tasarım).
+  - **#1 Katalog sınıf filtresi (commit `2ea360c`):** TopicRef'e grade_level +
+    sihirbaz "Resmi konulardan ekle"ye sınıf çipleri (sınıf-yayılan derslerde
+    "hepsini ekle" taşması çözüldü).
+  - **#3 Alias (commit `2ea360c`):** kareköklü↔köklü, 1./2. dereceden, ebob/obeb.
+  - **#2 LGS 5-7 tema+alt-başlık (commit `83d6a57`):** LGS Matematik/Türkçe/Fen
+    5-7 → öğrenme alanı (PARENT) + geleneksel konu (LEAF); 8. sınıf DÜZ topics
+    **dokunulmadan korundu** (grade-8 eşleşmeleri sürer). seed.py artık bir derste
+    hem topics hem units işler. `reseed_lgs_5_7.py` (idempotent, scoped: yalnız
+    units'li LGS derslerinde stale 5-7 düz temaları siler) + start.sh. Prod
+    doğrulandı (Mat g8-flat 12/leaf 39, Türkçe 12/23, Fen 7/20, stale 0; Sosyal
+    dokunulmadı). LGS sim %78→%100 (6.sınıf 1/12→12/12). lgs_units 9/9.
+    **Etki:** 5-7 kitap eşleşmeleri null'landı (yeniden eşlenir, auto-map artık
+    çalışır); grade-8 korundu. Migration GEREKMEDİ (seed/reseed).
+  - **DERS:** LGS karma taksonomi (5-7 Maarif tema / 8 geleneksel). Test kitapları
+    geleneksel konu adı kullanır → leaf'ler geleneksel olmalı. 5-7 konu listeleri
+    MEB öğrenme-alanı standardından yazıldı; kullanıcı spot-check edebilir
+    (Maarif iş akışındaki gibi sapan ders `curriculum_data.py`'de düzeltilir).
+- **KALAN (opsiyonel):** Sosyal Bilgiler 5-7 (öğrenme-alanı↔ünite adlandırması
+  belirsiz → ayrı dikkatli pas) + Din/İngilizce zaten somut (gerek yok). YDT
+  eklenmedi. Maarif geleneksel-adlı kitap → TYT/AYT omurgası kullanılmalı.
 - **DERS:** Test kitapları ÖSYM/yayınevi taksonomisiyle düzenlenir; okul müfredatı
   (Maarif tema/Klasik sınıf) omurgası TYT/AYT eşleştirmesi için yetersiz → sınav
   taksonomisi ayrı, model-bağımsız omurga olarak eklendi. Klasik sönümleniyor,
