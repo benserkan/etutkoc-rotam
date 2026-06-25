@@ -17,6 +17,10 @@ python -m scripts.seed || true
 # NULL'lar (Faz 0 ile yeniden eşlenir); veri zaten yeni yapıdaysa ATLAR (güvenli).
 python -m scripts.reseed_maarif_curriculum || true
 
+# LGS 5-7 tema+alt-başlık geçişi (idempotent — stale eski tema yoksa atlar;
+# grade-8 düz konuları + mevcut eşleşmeleri KORUR)
+python -m scripts.reseed_lgs_5_7 || true
+
 # Anasayfa vitrin kartları seed (idempotent — var olanı ezmez, admin düzenlemeleri korunur)
 python -m scripts.seed_landing_cards || true
 

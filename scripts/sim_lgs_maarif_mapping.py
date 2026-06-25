@@ -18,7 +18,14 @@ from scripts.curriculum_data import (  # noqa: E402
 
 
 def lgs_topic_names(spec, grade=None):
-    return [n for (n, g) in spec.get("topics", []) if grade is None or g == grade]
+    # LGS artık hibrit: grade-8 düz "topics" + 5-7 "units" (parent tema + leaf konu).
+    # Eşleştirme adayı = düz topic'ler + unit LEAF'leri (parent tema aday değil).
+    names = [n for (n, g) in spec.get("topics", []) if grade is None or g == grade]
+    for tup in spec.get("units", []):
+        subs = tup[3] if len(tup) > 3 else []
+        if grade is None or tup[2] == grade:
+            names.extend(subs)
+    return names
 
 
 def maarif_leaf_names(spec, grade=None):

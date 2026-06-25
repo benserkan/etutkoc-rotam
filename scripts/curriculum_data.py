@@ -39,29 +39,8 @@ LGS_CURRICULUM: dict[str, dict] = {
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
+        # 8. sınıf (LGS) DÜZ konu — yayınevi kitaplarıyla birebir.
         "topics": [
-            # 5. sınıf — Maarif Modeli temaları (2025-26'dan)
-            ("Tema: Oyun Dünyası", 5),
-            ("Tema: Milli Mücadele ve Atatürk", 5),
-            ("Tema: Duygularımı Tanıyorum", 5),
-            ("Tema: Geleneklerimiz", 5),
-            ("Tema: İletişim ve Sosyal İlişkiler", 5),
-            ("Tema: Sağlıklı Yaşıyorum", 5),
-            # 6. sınıf — temalar
-            ("Tema: Dilimizin Zenginliği", 6),
-            ("Tema: Bağımsızlık Yolu", 6),
-            ("Tema: Farklı Dünyalar", 6),
-            ("Tema: İletişim ve Sosyal İlişkiler", 6),
-            ("Tema: Bilim ve Teknoloji", 6),
-            ("Tema: Lider Ruhlar", 6),
-            # 7. sınıf — temalar
-            ("Tema: Hayat Boyu Gelişim", 7),
-            ("Tema: Bir Hilal Uğruna", 7),
-            ("Tema: İletişim ve Sosyal İlişkiler", 7),
-            ("Tema: Türk Sanatı", 7),
-            ("Tema: Okuma Kültürü", 7),
-            ("Tema: Hak ve Sorumluluklar", 7),
-            # 8. sınıf konuları (mevcut, MEB 2023 baskısı LGS müfredatı)
             ("Sözcükte Anlam", 8),
             ("Cümlede Anlam", 8),
             ("Paragrafta Anlam", 8),
@@ -75,45 +54,33 @@ LGS_CURRICULUM: dict[str, dict] = {
             ("Yazım Kuralları", 8),
             ("Noktalama İşaretleri", 8),
         ],
+        # 5-7: anlam + dil bilgisi + yazım (yayınevi test kitabı düzeni). Dil bilgisi
+        # konuları MEB sıralaması: 5 isim/sıfat · 6 zamir/edat · 7 fiil/zarf/ek fiil.
+        "unit_term": "Öğrenme Alanı",
+        "units": [
+            (1, "Anlam Bilgisi", 5, [
+                "Sözcükte Anlam", "Söz Varlığı (Deyim ve Atasözleri)",
+                "Cümlede Anlam", "Paragrafta Anlam"]),
+            (2, "Dil Bilgisi", 5, ["İsimler (Adlar)", "Sıfatlar (Ön Adlar)"]),
+            (3, "Yazım ve Noktalama", 5, ["Yazım Kuralları", "Noktalama İşaretleri"]),
+            (1, "Anlam Bilgisi", 6, [
+                "Sözcükte Anlam", "Cümlede Anlam", "Paragrafta Anlam"]),
+            (2, "Dil Bilgisi", 6, ["Zamirler (Adıllar)", "Edat, Bağlaç ve Ünlem"]),
+            (3, "Yazım ve Noktalama", 6, ["Yazım Kuralları", "Noktalama İşaretleri"]),
+            (1, "Anlam Bilgisi", 7, [
+                "Sözcükte Anlam", "Cümlede Anlam", "Paragrafta Anlam"]),
+            (2, "Dil Bilgisi", 7, [
+                "Fiiller (Anlam, Kip, Kişi)", "Ek Fiil", "Zarflar (Belirteçler)"]),
+            (3, "Yazım ve Noktalama", 7, ["Yazım Kuralları", "Noktalama İşaretleri"]),
+        ],
     },
     "Matematik": {
         "min_grade": 5, "max_grade": 8,
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
+        # 8. sınıf (LGS sınavı) DÜZ konu — yayınevi kitaplarıyla birebir (%100 eşleşir).
         "topics": [
-            # 5. sınıf — Maarif Modeli temaları
-            ("Geometrik Şekiller", 5),
-            ("Sayılar ve Nicelikler I", 5),
-            ("Geometrik Nicelikler", 5),
-            ("Sayılar ve Nicelikler II", 5),
-            ("İstatistiksel Araştırma Süreci", 5),
-            ("İşlemlerle Cebirsel Düşünme", 5),
-            ("Veriden Olasılığa", 5),
-            # 6. sınıf
-            ("Çarpan ve Katlar, Bölünebilme Kriterleri", 6),
-            ("Asal Sayılar, OBEB ve OKEK", 6),
-            ("Ondalık Gösterimler ve Kesir-Bölme İlişkisi", 6),
-            ("Ölçme Birimleri ve Yüzde Problemleri", 6),
-            ("Bilinmeyen Nicelikler ve Cebirsel İfadeler", 6),
-            ("Sayı ve Şekil Örüntüleri", 6),
-            ("Paralel Doğrular, Açılar ve Dörtgenler", 6),
-            ("Üçgen, Yamuk, Paralelkenar Açıları", 6),
-            ("Alan Ölçme — Dikdörtgen, Paralelkenar, Üçgen", 6),
-            ("Çemberin Uzunluğu ve Çap İlişkisi", 6),
-            ("Veriye Dayalı Karar ve Olasılık Tahmini", 6),
-            # 7. sınıf
-            ("Doğal, Tam ve Rasyonel Sayılar", 7),
-            ("Rasyonel Sayılarla İşlemler ve Problemler", 7),
-            ("Oran ve Orantı, Doğru Orantılı Problemler", 7),
-            ("Cebirsel İfadeler ve Birinci Dereceden Denklem/Eşitsizlikler", 7),
-            ("Yansıma Dönüşümü, Orta Dikme ve Açıortay", 7),
-            ("Eş Küplerle Hacim ve Yüzey Alan", 7),
-            ("Daire ve Daire Dilimi Alanları", 7),
-            ("Eşkenar Dörtgen ve Yamuk Alanı", 7),
-            ("Üçgende Kenarortay, Açıortay, Yükseklik", 7),
-            ("Veri Analizi ve Olasılık (Tümleyen, Ayrık Olaylar)", 7),
-            # 8. sınıf
             ("Çarpanlar ve Katlar", 8),
             ("Üslü İfadeler", 8),
             ("Kareköklü İfadeler", 8),
@@ -127,42 +94,42 @@ LGS_CURRICULUM: dict[str, dict] = {
             ("Dönüşüm Geometrisi", 8),
             ("Geometrik Cisimler", 8),
         ],
+        # 5-7. sınıf: öğrenme alanı (PARENT) + geleneksel konu (LEAF). Yayınevi
+        # test kitapları bu konu adlarıyla düzenlenir → eşleşir. (MEB öğrenme alanları)
+        "unit_term": "Öğrenme Alanı",
+        "units": [
+            (1, "Sayılar ve İşlemler", 5, [
+                "Doğal Sayılar", "Doğal Sayılarla İşlemler", "Kesirler",
+                "Kesirlerle İşlemler", "Ondalık Gösterim", "Yüzdeler"]),
+            (2, "Geometri ve Ölçme", 5, [
+                "Temel Geometrik Kavramlar ve Çizimler", "Üçgen ve Dörtgenler",
+                "Uzunluk ve Zaman Ölçme", "Alan Ölçme", "Geometrik Cisimler"]),
+            (3, "Veri İşleme", 5, ["Veri Toplama ve Değerlendirme"]),
+            (1, "Sayılar ve İşlemler", 6, [
+                "Doğal Sayılarla İşlemler", "Çarpanlar ve Katlar", "Kümeler",
+                "Tam Sayılar", "Kesirlerle İşlemler", "Ondalık Gösterimlerle İşlemler",
+                "Oran"]),
+            (2, "Cebir", 6, ["Cebirsel İfadeler"]),
+            (3, "Geometri ve Ölçme", 6, [
+                "Açılar", "Alan Ölçme", "Çember", "Geometrik Cisimler (Yüzey Alanı ve Hacim)"]),
+            (4, "Veri İşleme", 6, ["Veri Toplama ve Değerlendirme", "Veri Analizi"]),
+            (1, "Sayılar ve İşlemler", 7, [
+                "Tam Sayılarla İşlemler", "Rasyonel Sayılar",
+                "Rasyonel Sayılarla İşlemler", "Oran ve Orantı", "Yüzde Problemleri"]),
+            (2, "Cebir", 7, ["Cebirsel İfadeler", "Eşitlik ve Denklem"]),
+            (3, "Geometri ve Ölçme", 7, [
+                "Doğrular ve Açılar", "Çokgenler", "Çember ve Daire",
+                "Dönüşüm Geometrisi", "Cisimlerin Farklı Yönlerden Görünümleri"]),
+            (4, "Veri İşleme", 7, ["Veri Analizi"]),
+        ],
     },
     "Fen Bilimleri": {
         "min_grade": 5, "max_grade": 8,
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
+        # 8. sınıf (LGS) DÜZ ünite — yayınevi kitaplarıyla birebir.
         "topics": [
-            # 5. sınıf — Maarif Modeli temaları
-            ("Olasılık Spektrumu — Kesin ve İmkansız Olay", 5),
-            ("Kuvveti Tanıyalım", 5),
-            ("Canlıların Yapısına Yolculuk", 5),
-            ("Işığın Dünyası", 5),
-            ("Maddenin Doğası", 5),
-            ("Yaşamımızdaki Elektrik", 5),
-            ("Sürdürülebilir Yaşam ve Geri Dönüşüm", 5),
-            # 6. sınıf
-            ("Güneş Sistemi ve Tutulmalar", 6),
-            ("Kuvvetin Etkisinde Hareket — Bileşke, Sürat, Hız", 6),
-            ("Canlılarda Sistemler — Üreme ve Sinir Sistemi", 6),
-            ("Işığın Yansıması ve Renkler", 6),
-            ("Maddenin Ayırt Edici Özellikleri", 6),
-            ("Elektriğin İletimi ve Direnç", 6),
-            ("Sürdürülebilir Yaşam ve Etkileşim", 6),
-            # 7. sınıf
-            ("Uzay Çağı — Türkiye ve Uzay Araştırmaları", 7),
-            ("Yıldızlar, Galaksiler ve Evren", 7),
-            ("Kuvvet, İş ve Enerji İlişkisi", 7),
-            ("Enerji Dönüşümleri ve Korunumu", 7),
-            ("Sindirim, Dolaşım, Solunum, Boşaltım Sistemleri", 7),
-            ("Işığın Kırılması ve Mercekler", 7),
-            ("Atomun Yapısı ve Element-Bileşik", 7),
-            ("Periyodik Tablo ve İlk 18 Element", 7),
-            ("Karışımlar ve Ayrılması", 7),
-            ("Elektriklenme ve Elektrik Yükleri", 7),
-            ("Besin Zinciri, Enerji Akışı ve Sürdürülebilir Yaşam", 7),
-            # 8. sınıf
             ("Mevsimler ve İklim", 8),
             ("DNA ve Genetik Kod", 8),
             ("Basınç", 8),
@@ -170,6 +137,28 @@ LGS_CURRICULUM: dict[str, dict] = {
             ("Basit Makineler", 8),
             ("Enerji Dönüşümleri ve Çevre Bilimi", 8),
             ("Elektrik Yükleri ve Elektrik Enerjisi", 8),
+        ],
+        # 5-7: öğrenme alanı (PARENT) + ünite (LEAF). Yayınevi kitapları ünite adıyla
+        # düzenlenir → leaf = ünite. (MEB Fen öğrenme alanları)
+        "unit_term": "Öğrenme Alanı",
+        "units": [
+            (1, "Dünya ve Evren", 5, ["Güneş, Dünya ve Ay"]),
+            (2, "Canlılar ve Yaşam", 5, ["Canlılar Dünyası", "İnsan ve Çevre"]),
+            (3, "Madde ve Doğası", 5, ["Maddenin Değişimi"]),
+            (4, "Fiziksel Olaylar", 5, [
+                "Kuvvetin Ölçülmesi ve Sürtünme", "Işığın Yayılması",
+                "Basit Elektrik Devreleri"]),
+            (1, "Dünya ve Evren", 6, ["Güneş Sistemi ve Tutulmalar"]),
+            (2, "Canlılar ve Yaşam", 6, ["Vücudumuzdaki Sistemler"]),
+            (3, "Fiziksel Olaylar", 6, [
+                "Kuvvet ve Hareket", "Ses ve Özellikleri", "Elektriğin İletimi"]),
+            (4, "Madde ve Doğası", 6, ["Madde ve Isı"]),
+            (1, "Dünya ve Evren", 7, ["Güneş Sistemi ve Ötesi"]),
+            (2, "Canlılar ve Yaşam", 7, [
+                "Hücre ve Bölünmeler", "Canlılarda Üreme, Büyüme ve Gelişme"]),
+            (3, "Fiziksel Olaylar", 7, [
+                "Kuvvet ve Enerji", "Işığın Madde ile Etkileşimi", "Elektrik Devreleri"]),
+            (4, "Madde ve Doğası", 7, ["Saf Madde ve Karışımlar"]),
         ],
     },
     "Sosyal Bilgiler": {
