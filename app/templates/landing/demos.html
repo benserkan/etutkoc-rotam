@@ -1540,8 +1540,8 @@
               <div class="mu-fade" style="color:#fff;">
                 <div class="text-6xl mb-3">📚</div>
                 <div class="text-xs uppercase tracking-[0.3em] font-bold mb-2" style="color:#34D399;">ETÜTKOÇ ROTAM · DEMO</div>
-                <h2 class="text-4xl font-extrabold mb-2" style="color:#fff;">Kitap Ekleme ve Kütüphane</h2>
-                <p class="text-base mb-5" style="color:#94A3B8;">Aşama aşama — 8 sahnede kitap kur, bölümle, ata</p>
+                <h2 class="text-4xl font-extrabold mb-2" style="color:#fff;">Kitap Ekleme Sihirbazı</h2>
+                <p class="text-base mb-5" style="color:#94A3B8;">Adım adım — sistem seni yönlendirir: bilgiler, üniteler, eşleştirme, öğrenci</p>
                 <div class="flex items-center justify-center gap-2 text-sm" style="color:#34D399;">
                   <span class="inline-flex items-center justify-center w-8 h-8 rounded-full" style="background:rgba(52,211,153,0.20);">▶</span>
                   <span class="font-semibold">Başlatmak için oynatma tuşuna bas</span>
@@ -1579,177 +1579,192 @@
             </div>
           </div>
 
-          {# Sahne 3: Yeni kitap formu #}
+          {# Sahne 3: Sihirbaz · Adım 1 — Bilgiler #}
           <div class="demo-scene" data-scene="2">
             <div class="demo-scene-inner">
               <div class="mu-bar">
-                <span class="text-base">➕</span>
-                <span class="mu-bar-title">Yeni Kitap</span>
+                <span class="text-base">🪄</span>
+                <span class="mu-bar-title">Yeni Kitap — Sihirbaz</span>
+              </div>
+              <div class="flex items-center gap-1 px-3 pt-2.5 text-[10px] font-semibold mu-fade mu-fade-1">
+                <span class="px-2 py-0.5 rounded-full" style="background:#CFFAFE;color:#155E75;">1 Bilgiler</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#F1F5F9;color:#94A3B8;">2 Üniteler</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#F1F5F9;color:#94A3B8;">3 Eşleştirme</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#F1F5F9;color:#94A3B8;">4 Öğrenci</span>
               </div>
               <div class="p-3 space-y-2.5 text-xs">
-                <div class="mu-fade mu-fade-1">
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">Kitap adı</div>
-                  <div class="border border-stone-200 rounded-md px-3 py-2 font-semibold text-stone-900 bg-white">MEB 8. Sınıf Matematik Soru Bankası</div>
-                </div>
                 <div class="mu-fade mu-fade-2">
-                  <div class="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">Hedef sınıf seviyesi · ders listesini filtreler</div>
-                  <div class="flex gap-1.5 flex-wrap">
-                    <span class="mu-tag" style="background:#0F172A; color:#fff;">LGS (5-8) ✓</span>
-                    <span class="mu-tag" style="background:#F1F5F9; color:#64748B;">Lise (9-12)</span>
-                    <span class="mu-tag" style="background:#F1F5F9; color:#64748B;">Mezun (YKS)</span>
-                    <span class="mu-tag" style="background:#F1F5F9; color:#64748B;">Tüm seviyeler</span>
-                  </div>
+                  <div class="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">Kitap adı</div>
+                  <div class="border border-stone-200 rounded-md px-3 py-2 font-semibold text-stone-900 bg-white">4K Yayınları TYT Matematik</div>
                 </div>
                 <div class="grid grid-cols-2 gap-2 mu-fade mu-fade-3">
                   <div>
-                    <div class="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">Ders · 6 ders eşleşti</div>
-                    <div class="border border-stone-200 rounded-md px-3 py-2 text-stone-900 bg-white">Matematik (LGS)</div>
+                    <div class="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">Ders · Sınav Müfredatı</div>
+                    <div class="border border-stone-200 rounded-md px-3 py-2 text-stone-900 bg-white">TYT Matematik</div>
                   </div>
                   <div>
                     <div class="text-[10px] uppercase tracking-wider font-bold text-stone-400 mb-1">Tip</div>
                     <div class="border border-stone-200 rounded-md px-3 py-2 text-stone-900 bg-white">Soru bankası</div>
                   </div>
                 </div>
-                <div class="flex justify-end pt-1 mu-fade mu-fade-4">
-                  <span class="mu-tag mu-pulse" style="background:#117A86; color:#fff;">Oluştur →</span>
+                <div class="mu-card mu-fade mu-fade-4" style="background:#ECFEFF;border-left:4px solid #0E7490;">
+                  <div class="text-[11px]" style="color:#155E75;">Ders listesinde <b>“Sınav Müfredatı (TYT / AYT)”</b> grubu en üstte — kitabın adıyla birebir ders seçilir.</div>
+                </div>
+                <div class="flex justify-end pt-1 mu-fade mu-fade-5">
+                  <span class="mu-tag mu-pulse" style="background:#117A86; color:#fff;">Oluştur ve devam et →</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {# Sahne 4: Bölümler #}
+          {# Sahne 4: Sihirbaz · Adım 2 — Üniteleri oluştur (yöntem seç) #}
           <div class="demo-scene" data-scene="3">
             <div class="demo-scene-inner">
               <div class="mu-bar">
-                <span class="text-base">📖</span>
-                <span class="mu-bar-title">MEB 8. Matematik · Bölümler</span>
-                <span class="mu-tag ml-auto" style="background:#E0E7FF; color:#3730A3;">Matematik · Soru bankası</span>
+                <span class="text-base">🧩</span>
+                <span class="mu-bar-title">Adım 2 · Üniteleri oluştur</span>
               </div>
-              <div class="p-3 space-y-2">
-                <div class="flex gap-1.5 mu-fade mu-fade-1">
-                  <span class="mu-tag" style="background:#117A86; color:#fff;">+ Bölüm ekle</span>
-                  <span class="mu-tag" style="background:#F1F5F9; color:#334155;">Katalog konularından ekle</span>
+              <div class="flex items-center gap-1 px-3 pt-2.5 text-[10px] font-semibold mu-fade mu-fade-1">
+                <span class="px-2 py-0.5 rounded-full" style="background:#D1FAE5;color:#065F46;">✓ Bilgiler</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#CFFAFE;color:#155E75;">2 Üniteler</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#F1F5F9;color:#94A3B8;">3 Eşleştirme</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#F1F5F9;color:#94A3B8;">4 Öğrenci</span>
+              </div>
+              <div class="p-3 grid grid-cols-3 gap-2 text-xs">
+                <div class="mu-card highlight mu-fade mu-fade-2" style="border:1px solid #0E7490; background:#ECFEFF; position:relative;">
+                  <span class="mu-tag" style="position:absolute; top:-8px; right:6px; background:#0E7490; color:#fff; font-size:9px;">Önerilen</span>
+                  <div class="font-bold text-sm text-stone-900">📋 Resmi konulardan ekle</div>
+                  <div class="text-[10px] text-stone-600 mt-0.5">34 konu hazır — tek tık, otomatik müfredata eşli.</div>
                 </div>
-                <div class="mu-card mu-fade mu-fade-2 flex items-center gap-2">
-                  <span class="flex-1 font-semibold text-sm text-stone-900">Çarpanlar ve Katlar</span>
-                  <span class="text-xs text-stone-500 tabular-nums">40 test · rezerv 0 · tamam 0</span>
+                <div class="mu-card mu-fade mu-fade-3">
+                  <div class="font-bold text-sm text-stone-900">✨ Yapay zekâ önersin</div>
+                  <div class="text-[10px] text-stone-600 mt-0.5">Özel/farklı kitap için üniteleri yapay zekâ üretir (ücretli).</div>
                 </div>
-                <div class="mu-card mu-fade mu-fade-3 flex items-center gap-2">
-                  <span class="flex-1 font-semibold text-sm text-stone-900">Üslü İfadeler</span>
-                  <span class="text-xs text-stone-500 tabular-nums">30 test · rezerv 0 · tamam 0</span>
+                <div class="mu-card mu-fade mu-fade-4">
+                  <div class="font-bold text-sm text-stone-900">✍️ Elle gir</div>
+                  <div class="text-[10px] text-stone-600 mt-0.5">Üniteleri tek tek kendin ekle.</div>
                 </div>
-                <div class="mu-card mu-fade mu-fade-4 flex items-center gap-2">
-                  <span class="flex-1 font-semibold text-sm text-stone-900">Kareköklü İfadeler</span>
-                  <span class="text-xs text-stone-500 tabular-nums">35 test · rezerv 0 · tamam 0</span>
+              </div>
+              <div class="px-3 pb-3 mu-fade mu-fade-5">
+                <div class="mu-card flex items-center gap-2" style="background:#ECFEFF;border-left:4px solid #0E7490;">
+                  <span class="mu-tag mu-pulse" style="background:#0E7490;color:#fff;">34 konuyu ekle</span>
+                  <span class="text-[11px] text-stone-600">Sınav dersinde en hızlı ve en doğru yol.</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {# Sahne 5: AI bölüm önerisi #}
+          {# Sahne 5: Üniteler eklendi — otomatik eşli (+ AI alternatifi) #}
           <div class="demo-scene" data-scene="4">
             <div class="demo-scene-inner">
               <div class="mu-bar">
-                <span class="text-base">✨</span>
-                <span class="mu-bar-title">AI önerisi · yapay zekâ üniteleri önerir</span>
-                <span class="mu-tag ml-auto" style="background:#EDE9FE; color:#5B21B6;">Ücretli paket</span>
+                <span class="text-base">📋</span>
+                <span class="mu-bar-title">Üniteler eklendi · otomatik eşli</span>
+                <span class="mu-tag ml-auto" style="background:#D1FAE5; color:#065F46;">34 ünite</span>
               </div>
               <div class="p-3 space-y-2 text-xs">
-                <div class="mu-card mu-fade mu-fade-1" style="background:#F5F3FF; border-left:4px solid #7C3AED;">
-                  <div class="font-bold text-stone-900 mb-0.5">✨ Boş kitaba yapay zekâdan ünite önerisi</div>
-                  <div class="text-stone-600">Sınıf ipucu opsiyonel — boşsa kitabın hedef sınıfından türetilir.</div>
+                <div class="mu-card mu-fade mu-fade-1 flex items-center gap-2">
+                  <span class="flex-1 font-semibold text-sm text-stone-900">Temel Kavramlar</span>
+                  <span class="mu-tag" style="background:#D1FAE5;color:#065F46;">✓ eşli</span>
                 </div>
-                <div class="flex items-center gap-2 mu-fade mu-fade-2">
-                  <span class="mu-spinner"></span>
-                  <span class="text-stone-500">Yapay zekâ yanıt veriyor (≤30 sn)…</span>
+                <div class="mu-card mu-fade mu-fade-2 flex items-center gap-2">
+                  <span class="flex-1 font-semibold text-sm text-stone-900">Bölme ve Bölünebilme</span>
+                  <span class="mu-tag" style="background:#D1FAE5;color:#065F46;">✓ eşli</span>
                 </div>
-                <div class="mu-card highlight mu-fade mu-fade-3 flex items-center gap-2">
-                  <span class="flex-1 font-semibold text-sm text-stone-900">✓ 9 ünite eklendi</span>
-                  <span class="mu-tag" style="background:#EDE9FE; color:#5B21B6;">taslak şablon kaydedildi</span>
+                <div class="mu-card mu-fade mu-fade-3 flex items-center gap-2">
+                  <span class="flex-1 font-semibold text-sm text-stone-900">Problemler · Fonksiyonlar · Olasılık · …</span>
+                  <span class="mu-tag" style="background:#D1FAE5;color:#065F46;">✓ eşli</span>
                 </div>
-                <div class="text-[11px] text-stone-500 mu-fade mu-fade-4">Önerilen üniteleri ve test sayılarını tek tek düzenleyebilirsin.</div>
+                <div class="mu-card mu-fade mu-fade-4" style="background:#F5F3FF; border-left:4px solid #7C3AED;">
+                  <div class="text-[11px]" style="color:#5B21B6;"><b>Özel kitap mı?</b> Yapay zekâ yolunu seçersen üniteleri üretir; eşleştirmeyi sistem bir sonraki adımda yapar (ücretli paket).</div>
+                </div>
               </div>
             </div>
           </div>
 
-          {# Sahne 6: Öğrenciye atama #}
+          {# Sahne 6: Sihirbaz · Adım 3 — Müfredata eşleştir (otomatik) #}
           <div class="demo-scene" data-scene="5">
             <div class="demo-scene-inner">
               <div class="mu-bar">
+                <span class="text-base">🎯</span>
+                <span class="mu-bar-title">Adım 3 · Müfredata eşleştir</span>
+              </div>
+              <div class="flex items-center gap-1 px-3 pt-2.5 text-[10px] font-semibold mu-fade mu-fade-1">
+                <span class="px-2 py-0.5 rounded-full" style="background:#D1FAE5;color:#065F46;">✓ Bilgiler</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#D1FAE5;color:#065F46;">✓ Üniteler</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#CFFAFE;color:#155E75;">3 Eşleştirme</span>
+                <span style="color:#CBD5E1;">›</span>
+                <span class="px-2 py-0.5 rounded-full" style="background:#F1F5F9;color:#94A3B8;">4 Öğrenci</span>
+              </div>
+              <div class="p-3 space-y-2 text-xs">
+                <div class="mu-card mu-fade mu-fade-2" style="background:#ECFDF5; border-left:4px solid #10B981;">
+                  <div class="text-[11px]" style="color:#065F46;">Resmi konulardan eklediysen <b>tümü zaten eşli</b> — bu adım otomatik atlanır.</div>
+                </div>
+                <div class="text-[11px] text-stone-500 mu-fade mu-fade-3">Yapay zekâ veya elle eklediysen, sistem çoğunu <b>otomatik</b> eşler; sen onaylarsın:</div>
+                <div class="mu-card mu-fade mu-fade-4 flex items-center gap-2">
+                  <span class="flex-1 text-sm text-stone-900">1. Ünite — Temel Kavramlar</span>
+                  <span class="mu-tag" style="background:#FEF3C7;color:#92400E;">→ Temel Kavramlar</span>
+                  <span class="mu-tag" style="background:#DBEAFE;color:#1E40AF;">otomatik</span>
+                </div>
+                <div class="mu-card mu-fade mu-fade-5 flex items-center gap-2">
+                  <span class="flex-1 text-sm text-stone-900">6. Ünite — Üslü İfadeler</span>
+                  <span class="mu-tag" style="background:#FEF3C7;color:#92400E;">→ Üslü Sayılar</span>
+                  <span class="mu-tag" style="background:#DBEAFE;color:#1E40AF;">otomatik</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {# Sahne 7: Sihirbaz · Adım 4 — Öğrenci ata + Özet #}
+          <div class="demo-scene" data-scene="6">
+            <div class="demo-scene-inner">
+              <div class="mu-bar">
                 <span class="text-base">🧑‍🎓</span>
-                <span class="mu-bar-title">MEB 8. Matematik · Öğrenciler</span>
-                <span class="mu-tag ml-auto mu-pulse" style="background:#117A86; color:#fff;">Kaydet</span>
+                <span class="mu-bar-title">Adım 4 · Öğrenci ata</span>
+                <span class="mu-tag ml-auto mu-pulse" style="background:#117A86; color:#fff;">Ata ve bitir</span>
               </div>
               <div class="p-3 space-y-2">
-                <div class="mu-card mu-fade mu-fade-1" style="background:#FFFBEB; border-left:4px solid #F59E0B;">
-                  <div class="text-xs" style="color:#92400E;">Atanmadan kitap, program yaparken öğrencinin listesinde görünmez.</div>
+                <div class="mu-card mu-fade mu-fade-1 flex items-center gap-3">
+                  <span class="inline-flex items-center justify-center w-5 h-5 rounded text-white text-xs" style="background:#117A86;">✓</span>
+                  <span class="flex-1 font-semibold text-sm text-stone-900">Efe T.</span>
+                  <span class="text-xs text-stone-500">12. sınıf · YKS Sayısal</span>
                 </div>
                 <div class="mu-card mu-fade mu-fade-2 flex items-center gap-3">
                   <span class="inline-flex items-center justify-center w-5 h-5 rounded text-white text-xs" style="background:#117A86;">✓</span>
                   <span class="flex-1 font-semibold text-sm text-stone-900">Ayşe K.</span>
-                  <span class="text-xs text-stone-500">8. sınıf · LGS</span>
+                  <span class="text-xs text-stone-500">12. sınıf · YKS</span>
                 </div>
-                <div class="mu-card mu-fade mu-fade-3 flex items-center gap-3">
-                  <span class="inline-flex items-center justify-center w-5 h-5 rounded text-white text-xs" style="background:#117A86;">✓</span>
-                  <span class="flex-1 font-semibold text-sm text-stone-900">Mehmet Y.</span>
-                  <span class="text-xs text-stone-500">7. sınıf · LGS</span>
-                </div>
-                <div class="mu-card mu-fade mu-fade-4 flex items-center gap-3 opacity-60">
-                  <span class="inline-flex items-center justify-center w-5 h-5 rounded border border-stone-300"></span>
-                  <span class="flex-1 font-semibold text-sm text-stone-900">Elif B.</span>
-                  <span class="text-xs text-stone-500">11. sınıf · YKS</span>
+                <div class="mu-card highlight mu-fade mu-fade-3" style="background:#ECFDF5; border-left:4px solid #10B981;">
+                  <div class="font-bold text-sm" style="color:#065F46;">✓ Kitap hazır</div>
+                  <div class="text-[11px] text-stone-600">34 ünite · 34 müfredata eşli · 2 öğrenciye atalı</div>
                 </div>
               </div>
             </div>
           </div>
 
-          {# Sahne 7: Setler + Kitap şablonları #}
-          <div class="demo-scene" data-scene="6">
-            <div class="demo-scene-inner">
-              <div class="mu-bar">
-                <span class="text-base">🗂️</span>
-                <span class="mu-bar-title">Tekrar kullan · Setler ve şablonlar</span>
-              </div>
-              <div class="grid grid-cols-2 gap-3 p-3">
-                <div class="mu-card mu-fade mu-fade-1" style="border-left:4px solid #F59E0B;">
-                  <div class="font-bold text-sm text-stone-900 mb-1">🗂️ Kitap seti</div>
-                  <div class="text-xs text-stone-600 mb-2">"LGS 8. sınıf paketi" · 4 kitap</div>
-                  <div class="space-y-1 text-[11px] text-stone-500">
-                    <div>• Matematik Soru Bankası</div>
-                    <div>• Türkçe Soru Bankası</div>
-                    <div>• Fen Bilimleri · İnkılap</div>
-                  </div>
-                  <div class="mt-2 text-[11px] font-semibold" style="color:#B45309;">Tek atamayla hepsi öğrenciye →</div>
-                </div>
-                <div class="mu-card mu-fade mu-fade-2" style="border-left:4px solid #10B981;">
-                  <div class="font-bold text-sm text-stone-900 mb-1">📐 Kitap şablonu</div>
-                  <div class="text-xs text-stone-600 mb-2">Bölüm yapısını kaydet</div>
-                  <div class="space-y-1 text-[11px] text-stone-500">
-                    <div>Çarpanlar · Üslü · Karekök …</div>
-                    <div class="italic text-stone-400">9 bölümlük yapı</div>
-                  </div>
-                  <div class="mt-2 text-[11px] font-semibold" style="color:#047857;">Başka kitaba tek tıkla uygula →</div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {# Sahne 8: Görev şablonları + CTA #}
+          {# Sahne 8: Sonradan düzenleme + CTA #}
           <div class="demo-scene" data-scene="7">
             <div class="demo-scene-inner transparent">
               <div class="h-full flex flex-col items-center justify-center text-center px-6" style="color:#fff;">
                 <div class="mu-card mu-fade mu-fade-1 w-full max-w-md text-left" style="background:rgba(255,255,255,0.06); border-left:4px solid #6366F1;">
-                  <div class="font-bold text-sm mb-1" style="color:#fff;">📋 Görev şablonu</div>
-                  <div class="text-xs mb-1" style="color:#CBD5E1;">"Günlük 20 matematik" · kitap + bölüm + 20 test</div>
-                  <div class="text-[11px]" style="color:#94A3B8;">Haftalık plana eklerken "Şablondan" ile tek tıkla aynı görev.</div>
+                  <div class="font-bold text-sm mb-1" style="color:#fff;">Sonradan: kitap detayı</div>
+                  <div class="text-[11px]" style="color:#CBD5E1;">Bölüm ekle/çıkar · <b>Dersi değiştir</b> · kitap setleri · şablonlar — hepsi kitabın kendi sayfasında.</div>
                 </div>
                 <div class="mu-fade mu-fade-2 mt-5">
                   <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold mb-3" style="background:rgba(52,211,153,0.15); color:#34D399;">
                     ✓ DEMO TAMAMLANDI
                   </div>
-                  <h3 class="text-2xl font-extrabold mb-2" style="color:#fff;">Kütüphane hazır — sıra programda.</h3>
+                  <h3 class="text-2xl font-extrabold mb-2" style="color:#fff;">Sihirbazla kitabın hazır.</h3>
                   <p class="text-sm mb-4 max-w-md mx-auto" style="color:#94A3B8;">
-                    Kitabı ekledin, bölümledin, öğrenciye atadın. Artık haftalık programda bu kitaptan görev verebilirsin.
+                    Bilgiler, üniteler, eşleştirme, öğrenci — sistem seni adım adım götürdü. Artık haftalık programda bu kitaptan görev verebilirsin.
                   </p>
                   <a href="/teacher/library/new"
                      class="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg font-bold text-sm"
@@ -5453,12 +5468,12 @@
           {% elif is_book_add %}
             <button class="demo-step is-active" data-step="0">1 · Tanıtım</button>
             <button class="demo-step" data-step="1">2 · Kütüphane</button>
-            <button class="demo-step" data-step="2">3 · Yeni kitap</button>
-            <button class="demo-step" data-step="3">4 · Bölümler</button>
-            <button class="demo-step" data-step="4">5 · AI önerisi</button>
-            <button class="demo-step" data-step="5">6 · Öğrenciye ata</button>
-            <button class="demo-step" data-step="6">7 · Set + şablon</button>
-            <button class="demo-step" data-step="7">8 · Görev şablonu + CTA</button>
+            <button class="demo-step" data-step="2">3 · Sihirbaz: Bilgiler</button>
+            <button class="demo-step" data-step="3">4 · Üniteler (yöntem)</button>
+            <button class="demo-step" data-step="4">5 · Üniteler eklendi</button>
+            <button class="demo-step" data-step="5">6 · Müfredat eşleştir</button>
+            <button class="demo-step" data-step="6">7 · Öğrenci + Özet</button>
+            <button class="demo-step" data-step="7">8 · Düzenle + CTA</button>
           {% elif is_program %}
             <button class="demo-step is-active" data-step="0">1 · Tanıtım</button>
             <button class="demo-step" data-step="1">2 · Yeni program</button>
@@ -5875,7 +5890,7 @@
         {% elif is_book_add %}
         <div class="flex items-start justify-between gap-3 flex-wrap">
           <div>
-            <h2 class="text-lg font-bold text-stone-900">📚 Kitap Ekleme ve Kütüphane</h2>
+            <h2 class="text-lg font-bold text-stone-900">📚 Kitap Ekleme Sihirbazı</h2>
             <p class="text-xs text-stone-500 mt-1">8 sahne · ~2 dakika · Türkçe sesli anlatım · koç perspektifi</p>
           </div>
           <div class="flex items-center gap-1.5 text-[10px]">
@@ -5884,20 +5899,20 @@
           </div>
         </div>
         <p class="text-sm text-stone-600 mt-3 leading-relaxed">
-          Yeni kitap ekle → hedef seviye + ders + tip → bölümle (manuel, katalog ya da yapay zekâ) → öğrenciye ata → set ve şablonlarla tekrar kullan.
+          Yeni kitap → adım adım sihirbaz: <b>1 Bilgiler → 2 Üniteler → 3 Eşleştirme → 4 Öğrenci → Özet</b>. Sistem her adımda ne yapacağını söyler, önerilen yolu vurgular.
         </p>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mt-4 text-xs">
-          <div class="p-2.5 rounded-lg" style="background:#EEF2FF;">
-            <div class="font-bold mb-0.5" style="color:#3730A3;">📖 Kitap + bölüm</div>
-            <p class="text-stone-600 text-[11px]">Bölümlerdeki test sayısı = programın temeli (rezerv/kapasite).</p>
+          <div class="p-2.5 rounded-lg" style="background:#ECFEFF;">
+            <div class="font-bold mb-0.5" style="color:#155E75;">📋 Sınav Müfredatı (TYT/AYT)</div>
+            <p class="text-stone-600 text-[11px]">Sınav dersinde resmi konular tek tıkla eklenir + otomatik müfredata eşli.</p>
           </div>
           <div class="p-2.5 rounded-lg" style="background:#F5F3FF;">
-            <div class="font-bold mb-0.5" style="color:#5B21B6;">✨ AI ünite önerisi</div>
-            <p class="text-stone-600 text-[11px]">Boş kitaba yapay zekâdan bölüm önerisi + taslak şablon (ücretli paket).</p>
+            <div class="font-bold mb-0.5" style="color:#5B21B6;">✨ Yapay zekâ ünite önerisi</div>
+            <p class="text-stone-600 text-[11px]">Özel/farklı kitap için üniteleri yapay zekâ üretir (ücretli paket).</p>
           </div>
-          <div class="p-2.5 rounded-lg" style="background:#FFFBEB;">
-            <div class="font-bold mb-0.5" style="color:#92400E;">🗂️ Set + şablon</div>
-            <p class="text-stone-600 text-[11px]">Kitap setleri, kitap şablonları, görev şablonlarıyla tekrar kullan.</p>
+          <div class="p-2.5 rounded-lg" style="background:#ECFDF5;">
+            <div class="font-bold mb-0.5" style="color:#065F46;">🎯 Otomatik eşleştirme</div>
+            <p class="text-stone-600 text-[11px]">Üniteler resmi müfredat konularına otomatik eşlenir; öğrencinin nerede olduğu görünür.</p>
           </div>
         </div>
         {% elif is_program %}
@@ -7116,90 +7131,77 @@
   // "L, G, S" / "Y, K, S"; "AI" yerine "yapay zekâ"; cümleler kısa, virgülle nefes.
   var narrations = [
     // 0 — INTRO
-    "Merhaba. Bu kısa demoda, Etütkoç Rotam'da kütüphanenizi nasıl kuracağınızı göstereceğim. " +
-    "Kitap eklemek, bölümlere ayırmak, öğrenciye atamak, kitap setleri, şablonlar, ve yapay zekâ ünite önerisi. " +
+    "Merhaba. Bu kısa demoda, Etütkoç Rotam'da yeni bir kitabı nasıl ekleyeceğinizi göstereceğim. " +
+    "Artık adım adım bir sihirbaz var; sistem sizi yönlendiriyor. " +
+    "Bilgiler, üniteler, müfredat eşleştirme, ve öğrenci atama. " +
     "Sekiz kısa sahne, yaklaşık iki dakika. Hadi başlayalım.",
 
-    // 1 — Kütüphane: neden + tur
-    "Önce şunu konuşalım: neden kitap ekliyoruz? " +
-    "Kütüphane, tüm programınızın temelidir. " +
-    "Bir öğrenciye günlük program hazırlarken; hangi kitaptan, hangi üniteden, kaç test vereceğinizi buradan seçersiniz. " +
-    "Sistem, her bölümdeki test sayısını bilir. " +
-    "Böylece bir öğrenciye kaç test verdiğinizi, kaçının kaldığını tek bakışta görürsünüz. " +
+    // 1 — Kütüphane: neden + Yeni kitap = sihirbaz
+    "Önce kütüphane. Kütüphane, tüm programınızın temelidir. " +
+    "Bir öğrenciye program hazırlarken; hangi kitaptan, hangi üniteden, kaç test vereceğinizi buradan seçersiniz. " +
     "Kütüphanede dört bölüm var. " +
     "Kitaplar, kitap setleri, kitap şablonları, ve görev şablonları. " +
-    "Yeni bir kitap eklemek için, sağ üstteki Yeni kitap düğmesine basın.",
+    "Yeni bir kitap eklemek için, sağ üstteki Yeni kitap düğmesine basın. " +
+    "Bu düğme, artık sizi adım adım bir sihirbaza götürür.",
 
-    // 2 — Yeni kitap formu
-    "Yeni kitap ekranı sade. " +
-    "Önce kitabın adını yazın. " +
-    "Sonra hedef sınıf seviyesini seçin. Dört hazır seçenek var. " +
-    "L, G, S; beşten sekize. " +
-    "Lise; dokuzdan on ikiye. " +
-    "Mezun; Y, K, S hazırlık. " +
-    "Ya da tüm seviyeler. " +
-    "Bu seçim önemli; çünkü alttaki ders listesini, yalnızca o seviyeye uygun derslerle gösterir. Doğru dersi hızlıca bulursunuz. " +
-    "Sonra dersi, ve kitabın tipini seçin. " +
-    "Tip; soru bankası, fasikül, konu anlatımlı, branş denemesi, ya da genel deneme olabilir. " +
-    "Oluştur düğmesine bastığınızda, kitabın kendi sayfasına geçersiniz.",
+    // 2 — Adım 1: Bilgiler
+    "Birinci adım, kitap bilgileri. " +
+    "Üstte bir ilerleme çubuğu görürsünüz; hangi adımda olduğunuzu gösterir. " +
+    "Önce kitabın adını yazın. Sonra dersi seçin. " +
+    "Burada önemli bir yenilik var. " +
+    "Ders listesinin en üstünde, Sınav Müfredatı; yani, T, Y, T ve A, Y, T grubu yer alır. " +
+    "Bir Y, K, S kitabı için, kitabın adıyla birebir dersi seçersiniz. Örneğin, T, Y, T Matematik. " +
+    "Sonra tipini seçin, ve Oluştur ve devam et düğmesine basın.",
 
-    // 3 — Bölümler
-    "Şimdi kitabı bölümlere ayıralım. " +
-    "Bölümler, kitabın üniteleridir; her birinin bir adı, ve bir test sayısı vardır. " +
-    "Üç yol var. " +
-    "Birincisi, Bölüm ekle ile tek tek; bölüm adını ve test sayısını yazarsınız. " +
-    "İkincisi, Katalog konularından ekle ile; dersin hazır konu listesinden toplu seçersiniz. " +
-    "Üçüncüsünü birazdan göreceğiz; yapay zekâ. " +
-    "Her bölümün yanında üç sayı görürsünüz. Toplam test, rezerv, ve tamamlanan. " +
-    "Rezerv, bir öğrenciye programda ayrılmış testtir. Böylece aynı testi iki kez vermezsiniz.",
+    // 3 — Adım 2: Üniteler (yöntem seç, akıllı öneri)
+    "İkinci adım, üniteleri oluşturmak. " +
+    "Sistem üç yol sunar, ve önerdiğini vurgular. " +
+    "Sınav dersi seçtiyseniz, en üstte, Resmi konulardan ekle önerilir. " +
+    "Tek tıkla, dersin tüm resmi konuları eklenir; ve otomatik olarak müfredata eşlenir. " +
+    "Bu, en hızlı ve en doğru yoldur. " +
+    "İkinci yol, yapay zekâ; özel ya da farklı yapıdaki kitaplar için üniteleri üretir. " +
+    "Üçüncü yol, elle; üniteleri tek tek kendiniz girersiniz.",
 
-    // 4 — AI ünite önerisi
-    "En pratik yol, yapay zekâ ünite önerisi. " +
-    "Kitap henüz boşken, yapay zekâ bu kitabın muhtemel ünitelerini, uygun test sayılarıyla önerir. " +
-    "İsterseniz bir sınıf ipucu yazarsınız; boş bırakırsanız, kitabın hedef sınıfından türetilir. " +
-    "Birkaç saniye içinde üniteler kitaba eklenir; ve aynı zamanda bir taslak şablon olarak kaydedilir. " +
-    "Bu şablonu başka kitaplarda tekrar kullanabilirsiniz. " +
-    "Gelen üniteleri ve test sayılarını, tek tek düzenleyebilirsiniz. " +
-    "Bu özellik ücretli pakette açıktır; ve her çağrı, kredinizden düşer.",
+    // 4 — Üniteler eklendi (otomatik eşli)
+    "Resmi konulardan ekle dediğinizde, üniteler anında gelir. " +
+    "Her birinin yanında, eşli yazısını görürsünüz. " +
+    "Çünkü hepsi, resmi müfredat konusuna otomatik bağlandı. " +
+    "Bu sayede, bir sonraki adım kendiliğinden tamamlanır. " +
+    "Eğer yapay zekâ yolunu seçtiyseniz, üniteler üretilir; eşleştirmeyi sistem bir sonraki adımda yapar.",
 
-    // 5 — Öğrenciye atama
-    "Kitabı bölümledikten sonra, sıra öğrenciye atamada. Öğrenciler sekmesine geçin. " +
+    // 5 — Adım 3: Müfredat eşleştirme
+    "Üçüncü adım, müfredat eşleştirme. " +
+    "Bu adım, her ünitenin hangi resmi konu olduğunu işaretler. " +
+    "Böylece, öğrencinin müfredatta nerede olduğunu görebilirsiniz. " +
+    "Resmi konulardan eklediyseniz, her şey zaten eşli; bu adım otomatik atlanır. " +
+    "Yapay zekâ ya da elle eklediyseniz, sistem çoğunu otomatik eşler. " +
+    "Siz yalnızca kontrol edip onaylarsınız.",
+
+    // 6 — Adım 4: Öğrenci ata + Özet
+    "Dördüncü ve son adım, öğrenci atama. " +
+    "Bu kitabı hangi öğrencilere vereceğinizi işaretleyin, ve bitirin. " +
     "Şuna dikkat: bir kitap hiçbir öğrenciye atanmazsa, program yaparken o öğrencinin listesinde görünmez. " +
-    "Atamak istediğiniz öğrencilerin kutusunu işaretleyin, ve Kaydet düğmesine basın. " +
-    "Daha önce o kitaptan test verilmiş, yani rezervi olan bir öğrenci kilitlidir; yanlışlıkla çıkarılmaz. " +
-    "Kaydetmeden başka sekmeye geçmeyin; sistem sizi uyarır.",
+    "En sonda bir özet çıkar. " +
+    "Kaç ünite, kaçının eşlendiği, ve kaç öğrenciye atandığı, tek bakışta görünür. Kitabınız hazır.",
 
-    // 6 — Set + şablon
-    "İki güçlü kısayol daha var. " +
-    "Birincisi, kitap setleri. " +
-    "Birden çok kitabı bir pakette toplarsınız; örneğin, L, G, S sekizinci sınıf paketi. " +
-    "Sonra bir öğrenciye, tek atamayla setteki tüm kitapları birden verirsiniz. " +
-    "İkincisi, kitap şablonları. " +
-    "Bir kitabın bölüm yapısını kaydeder, başka bir kitaba tek tıkla uygularsınız. " +
-    "Aynı üniteleri defalarca yazmaktan kurtulursunuz.",
-
-    // 7 — Görev şablonu + CTA
-    "Son olarak, görev şablonları. " +
-    "Bunlar, sık kullandığınız görev kalıplarıdır; örneğin, günlük yirmi matematik. " +
-    "Kitabı, bölümü, ve test sayısını bir kez tanımlarsınız. " +
-    "Haftalık programa eklerken, Şablondan diyerek, aynı görevi tek tıkla uygularsınız. " +
-    "Şuna dikkat edin: kitap şablonu, kitabın bölüm yapısını kopyalar; görev şablonu ise, plana hazır bir görev koyar. İkisi farklıdır. " +
+    // 7 — Sonradan düzenleme + CTA
+    "Sihirbaz bittikten sonra, kitabı her zaman düzenleyebilirsiniz. " +
+    "Kitabın kendi sayfasında; bölüm ekleyip çıkarabilir, Dersi değiştir ile başka bir derse taşıyabilir, kitap setleri ve şablonlarla tekrar kullanabilirsiniz. " +
     "Demo burada bitiyor. " +
-    "Kütüphaneniz hazır olduğunda, artık güçlü ve kişisel programlar kurabilirsiniz. " +
-    "Şimdi ilk kitabınızı ekleyin."
+    "Artık ilk kitabınızı, adım adım, kolayca ekleyebilirsiniz."
   ];
   var captions = [
-    "🎬 Tanıtım — Kitap Ekleme · 8 sahne · ~2 dk",
-    "1️⃣ Kütüphane — neden kitap? · 4 bölüm (Kitaplar/Setler/Şablonlar/Görev şablonları)",
-    "2️⃣ Yeni kitap — ad · hedef seviye (ders filtreler) · ders · tip",
-    "3️⃣ Bölümler — manuel · katalogdan · test/rezerv/tamam",
-    "4️⃣ AI önerisi — boş kitaba üniteler + taslak şablon (ücretli)",
-    "5️⃣ Öğrenciye ata — işaretle + Kaydet · atanmazsa görünmez",
-    "6️⃣ Set + şablon — paketi tek atama · bölüm yapısını tekrar kullan",
-    "7️⃣ Görev şablonu + kapanış — 'Şablondan' tek tık · ilk kitabını ekle"
+    "🎬 Tanıtım — Kitap Ekleme Sihirbazı · 8 sahne · ~2 dk",
+    "1️⃣ Kütüphane — neden kitap? · 'Yeni kitap' artık sihirbaz",
+    "2️⃣ Adım 1 · Bilgiler — ad · ders (Sınav Müfredatı TYT/AYT) · tip",
+    "3️⃣ Adım 2 · Üniteler — Resmi konulardan ekle (önerilen) · AI · elle",
+    "4️⃣ Üniteler eklendi — otomatik müfredata eşli",
+    "5️⃣ Adım 3 · Müfredat eşleştirme — otomatik · katalog → atlanır",
+    "6️⃣ Adım 4 · Öğrenci ata + Özet — kitap hazır",
+    "7️⃣ Sonradan düzenle (dersi değiştir/set/şablon) + kapanış"
   ];
-  var fallbackDurations = [10000, 21000, 22000, 19000, 20000, 18000, 17000, 21000];
-  var initialCaption = "🎬 Kitap Ekleme demosunu başlatmak için aşağıdaki ▶ tuşuna bas. Türkçe sesli anlatımla 8 sahne.";
+  var fallbackDurations = [11000, 20000, 23000, 23000, 17000, 20000, 21000, 18000];
+  var initialCaption = "🎬 Kitap Ekleme Sihirbazı demosunu başlatmak için aşağıdaki ▶ tuşuna bas. Türkçe sesli anlatımla 8 sahne.";
 
   {% elif is_program %}
   // TTS notu: ETÜTKOÇ → "Etütkoç"; sayılar yazıyla; LGS → "L, G, S"; AI → "yapay
