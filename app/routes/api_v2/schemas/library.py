@@ -59,6 +59,7 @@ class TopicRef(BaseModel):
     subject_id: int
     is_builtin: bool
     order: int
+    grade_level: int | None = None
 
 
 class TopicListResponse(BaseModel):

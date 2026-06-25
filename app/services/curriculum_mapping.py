@@ -58,9 +58,16 @@ _STOPWORDS = {"ve", "ile"}
 _ALIAS: dict[str, str] = {
     "obeb okek": "ebob ekok",
     "okek obeb": "ebob ekok",
+    "ebob okek": "ebob ekok",
+    "obeb ekok": "ebob ekok",
     # yaygın matematik eşanlam varyantları (yayınevleri "ifadeler"/"sayılar" karışık kullanır)
     "uslu ifadeler": "uslu sayilar",
     "koklu ifadeler": "koklu sayilar",
+    "karekoklu ifadeler": "koklu sayilar",
+    "karekoklu sayilar": "koklu sayilar",
+    # sayı önekli ↔ yazıyla derece (kitaplar "1./2. Dereceden" yazabilir)
+    "1 dereceden denklemler": "birinci dereceden denklemler",
+    "2 dereceden denklemler": "ikinci dereceden denklemler",
 }
 
 

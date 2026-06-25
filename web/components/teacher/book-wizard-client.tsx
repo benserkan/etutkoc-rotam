@@ -265,11 +265,49 @@ function StepSections({
     queryFn: () => getLibraryTopics(book.subject_id),
     staleTime: 60_000,
   });
-  const topicCount = topicsQ.data?.items.length ?? 0;
+  const allTopics = React.useMemo(() => topicsQ.data?.items ?? [], [topicsQ.data]);
   const defaultCount = book.avg_questions_per_test ?? 10;
 
+  // Sınıf-yayılan derslerde (LGS/Maarif) "hepsini ekle" yanlış sınıf konularını da
+  // ekler → sınıf çipleriyle daralt. Varsayılan = kitabın hedef sınıf aralığı.
+  const grades = React.useMemo(
+    () =>
+      Array.from(
+        new Set(
+          allTopics
+            .map((t) => t.grade_level)
+            .filter((g): g is number => g != null),
+        ),
+      ).sort((a, b) => a - b),
+    [allTopics],
+  );
+  const defaultGrades = React.useMemo(() => {
+    const lo = book.target_grade_min;
+    const hi = book.target_grade_max;
+    if (lo != null && hi != null) {
+      const inRange = grades.filter((g) => g >= lo && g <= hi);
+      if (inRange.length) return new Set(inRange);
+    }
+    return new Set(grades);
+  }, [grades, book.target_grade_min, book.target_grade_max]);
+  const [gradeSel, setGradeSel] = React.useState<Set<number> | null>(null);
+  const selGrades = gradeSel ?? defaultGrades;
+  const selectedTopics = allTopics.filter(
+    (t) => t.grade_level == null || selGrades.has(t.grade_level),
+  );
+  const topicCount = selectedTopics.length;
+
+  function toggleGrade(g: number) {
+    setGradeSel((prev) => {
+      const base = prev ?? defaultGrades;
+      const n = new Set(base);
+      if (n.has(g)) n.delete(g);
+      else n.add(g);
+      return n;
+    });
+  }
   function addCatalog() {
-    const items = (topicsQ.data?.items ?? []).map((t) => ({
+    const items = selectedTopics.map((t) => ({
       topic_id: t.id,
       test_count: defaultCount,
     }));
@@ -340,12 +378,43 @@ function StepSections({
       {!hasSections && method === "catalog" ? (
         <Card>
           <CardContent className="p-4 space-y-3">
+            {grades.length > 1 ? (
+              <div className="space-y-1.5">
+                <div className="text-[11px] font-semibold text-muted-foreground">
+                  Sınıf seç (kitabın hedefine göre ön-seçili):
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {grades.map((g) => {
+                    const on = selGrades.has(g);
+                    const cnt = allTopics.filter((t) => t.grade_level === g).length;
+                    return (
+                      <button
+                        key={g}
+                        type="button"
+                        onClick={() => toggleGrade(g)}
+                        className={cn(
+                          "rounded-full border px-2.5 py-1 text-xs font-medium transition",
+                          on
+                            ? "border-cyan-500 bg-cyan-50 text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200"
+                            : "border-border text-muted-foreground hover:bg-muted/50",
+                        )}
+                        aria-pressed={on}
+                      >
+                        {g}. sınıf ({cnt})
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : null}
             <p className="text-sm text-muted-foreground">
               {topicsQ.isLoading
                 ? "Konular yükleniyor…"
                 : topicCount > 0
                   ? `${topicCount} resmi konu, her biri ${defaultCount} test ile eklenecek. Sonra fazlalıkları çıkarabilirsin.`
-                  : "Bu derste resmi konu bulunamadı — yapay zekâ veya elle gir."}
+                  : grades.length > 1
+                    ? "Seçili sınıfta resmi konu yok — başka sınıf seç ya da yapay zekâ/elle gir."
+                    : "Bu derste resmi konu bulunamadı — yapay zekâ veya elle gir."}
             </p>
             <Button
               onClick={addCatalog}

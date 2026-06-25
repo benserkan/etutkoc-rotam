@@ -58,6 +58,7 @@ export interface TopicRef {
   subject_id: number;
   is_builtin: boolean;
   order: number;
+  grade_level: number | null;
 }
 
 export interface TopicListResponse {

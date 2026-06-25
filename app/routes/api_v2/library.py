@@ -415,6 +415,7 @@ def library_subject_topics_v2(
             subject_id=t.subject_id,
             is_builtin=bool(t.is_builtin),
             order=t.order,
+            grade_level=t.grade_level,
         )
         for t in topics
     ]
@@ -694,7 +695,8 @@ def library_book_mapping_suggestions_v2(
         ai_used=ai_used,
         candidate_topics=[
             TopicRef(id=t.id, name=t.name, subject_id=t.subject_id,
-                     is_builtin=bool(t.is_builtin), order=t.order)
+                     is_builtin=bool(t.is_builtin), order=t.order,
+                     grade_level=t.grade_level)
             for t in candidate_topics
         ],
         rows=[MappingSuggestionRow(**r) for r in rows],
