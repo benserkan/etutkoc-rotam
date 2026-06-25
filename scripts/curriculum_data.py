@@ -208,31 +208,29 @@ LGS_CURRICULUM: dict[str, dict] = {
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
+        # 8. sınıf (LGS) DÜZ konu — korunur.
         "topics": [
-            # 5. sınıf
-            ("Allah İnancı", 5),
-            ("Namaz", 5),
-            ("Kur'an-ı Kerim", 5),
-            ("Peygamber Kıssaları", 5),
-            ("Mimarimizde Dinî Motifler", 5),
-            # 6. sınıf
-            ("Peygamber ve İlahi Kitap İnancı", 6),
-            ("Ramazan ve Oruç", 6),
-            ("Ahlaki Davranışlar", 6),
-            ("Peygamberliğinden Önce Hz. Muhammed", 6),
-            ("Kültürümüzde Dinî Motifler", 6),
-            # 7. sınıf
-            ("Melek ve Ahiret İnancı", 7),
-            ("Hac, Umre ve Kurban", 7),
-            ("İslam Düşüncesinde Yorumlar (Tasavvuf, Alevilik-Bektaşilik)", 7),
-            ("Peygamber Olarak Hz. Muhammed (Mekke-Medine)", 7),
-            ("Yaşayan Dünya Dinleri", 7),
-            # 8. sınıf
             ("Kader İnancı", 8),
             ("Zekât, Hac ve Kurban İbadeti", 8),
             ("Din ve Hayat", 8),
             ("Hz. Muhammed'in Örnekliği", 8),
             ("Kur'an-ı Kerim ve Özellikleri", 8),
+        ],
+        # 5-7: sınıf (PARENT) + ünite (LEAF). MEB Din Kültürü üniteleri.
+        "unit_term": "Sınıf",
+        "units": [
+            (5, "Din Kültürü", 5, [
+                "Allah İnancı", "Namaz", "Kur'an-ı Kerim", "Peygamber Kıssaları",
+                "Mimarimizde Dinî Motifler"]),
+            (6, "Din Kültürü", 6, [
+                "Peygamber ve İlahi Kitap İnancı", "Ramazan ve Oruç",
+                "Ahlaki Davranışlar", "Peygamberliğinden Önce Hz. Muhammed",
+                "Kültürümüzde Dinî Motifler"]),
+            (7, "Din Kültürü", 7, [
+                "Melek ve Ahiret İnancı", "Hac, Umre ve Kurban",
+                "İslam Düşüncesinde Yorumlar (Tasavvuf, Alevilik-Bektaşilik)",
+                "Peygamber Olarak Hz. Muhammed (Mekke-Medine)",
+                "Yaşayan Dünya Dinleri"]),
         ],
     },
     "İngilizce": {
@@ -240,6 +238,7 @@ LGS_CURRICULUM: dict[str, dict] = {
         "exam_section": "LGS",
         "curriculum_model": "LGS",
         "available_for_graduate": False,
+        # 8. sınıf (LGS) DÜZ tema — korunur.
         "topics": [
             ("Friendship", 8),
             ("Teen Life", 8),
@@ -251,6 +250,23 @@ LGS_CURRICULUM: dict[str, dict] = {
             ("Chores, Please!", 8),
             ("Science", 8),
             ("Natural Forces", 8),
+        ],
+        # 5-7: sınıf (PARENT) + tema (LEAF). MEB ortaokul İngilizce temaları (2018,
+        # 8. sınıfla tutarlı; kitaplarda yaygın). 6. sınıf web-doğrulandı.
+        "unit_term": "Sınıf",
+        "units": [
+            (5, "İngilizce", 5, [
+                "Hello", "School", "Games and Hobbies", "My Daily Routine",
+                "Health", "Movies", "Party", "Fitness", "The Animal Shelter",
+                "Festivals"]),
+            (6, "İngilizce", 6, [
+                "Life", "Yummy Breakfast", "Downtown", "Weather and Emotions",
+                "At the Fair", "Occupations", "Holidays", "Bookworms",
+                "Saving the Planet", "Democracy"]),
+            (7, "İngilizce", 7, [
+                "Appearance and Personality", "Sports", "Biographies",
+                "Wild Animals", "Television", "Celebrations", "Dreams",
+                "Public Buildings", "Environment", "Planets"]),
         ],
     },
 }
