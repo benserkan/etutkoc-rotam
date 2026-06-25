@@ -90,6 +90,16 @@ LGS_BOOKS = {
         "Basit Makineler", "Enerji Dönüşümleri ve Çevre Bilimi",
         "Elektrik Yükleri ve Elektrik Enerjisi",
     ]),
+    "Sosyal Bilgiler · 6. sınıf (okul)": ("Sosyal Bilgiler", [
+        "Sosyal Bilgiler Öğreniyorum", "Yeryüzünde Yaşam", "İpek Yolunda Türkler",
+        "Ülkemizin Kaynakları", "Ülkemiz ve Dünya", "Demokrasinin Serüveni",
+        "Elektronik Yüzyıl",
+    ]),
+    "Sosyal Bilgiler · 7. sınıf (okul)": ("Sosyal Bilgiler", [
+        "İletişim ve İnsan İlişkileri", "Ülkemizde Nüfus", "Türk Tarihinde Yolculuk",
+        "Zaman İçinde Bilim", "Ekonomi ve Sosyal Hayat", "Yaşayan Demokrasi",
+        "Ülkeler Arası Köprüler",
+    ]),
     "T.C. İnkılap · 8. sınıf (LGS)": ("T.C. İnkılap Tarihi ve Atatürkçülük", [
         "Bir Kahraman Doğuyor", "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar",
         "Millî Bir Destan: Ya İstiklal Ya Ölüm!", "Atatürkçülük ve Çağdaşlaşan Türkiye",

@@ -169,30 +169,23 @@ LGS_CURRICULUM: dict[str, dict] = {
         # Not: 8. sınıfta "T.C. İnkılap Tarihi ve Atatürkçülük" ayrı ders olur,
         # 4-7'de Sosyal Bilgiler tek ders. min_grade=4 koçluk-zincirinin
         # genişlemesi için (5-7 ana kapsam).
-        "topics": [
-            # 5. sınıf — Maarif Modeli öğrenme alanları
-            ("Birlikte Yaşamak", 5),
-            ("Evimiz Dünya", 5),
-            ("Ortak Mirasımız", 5),
-            ("Yaşayan Demokrasimiz", 5),
-            ("Hayatımızdaki Ekonomi", 5),
-            ("Teknoloji ve Sosyal Bilimler", 5),
-            # 6. sınıf — öğrenme alanları
-            ("Birlikte Yaşamak — Gruplar, Roller, Kültürel Bağlar", 6),
-            ("Evimiz Dünya — Konum ve Türk Dünyası", 6),
-            ("Ortak Mirasımız — Türkistan'daki İlk Türk Devletleri", 6),
-            ("İslam Medeniyeti ve Anadolu'nun Türkleşmesi", 6),
-            ("Yaşayan Demokrasimiz — Yönetim ve Vatandaşlık", 6),
-            ("Hayatımızdaki Ekonomi — Kaynaklar ve Meslekler", 6),
-            ("Teknoloji ve Sosyal Bilimler", 6),
-            # 7. sınıf
-            ("Birlikte Yaşamak — Etkili İletişim ve Fırsat Eşitliği", 7),
-            ("Evimiz Dünya — Küreselleşme", 7),
-            ("Osmanlı Cihan Devleti ve Yenilikleri", 7),
-            ("Osmanlı Kültür ve Medeniyeti", 7),
-            ("Cumhuriyet, Demokrasi ve Yönetim", 7),
-            ("Hayatımızdaki Ekonomi — Millî Kalkınma", 7),
-            ("Teknoloji, Bilim ve Toplum", 7),
+        # 5-7: sınıf (PARENT) + gerçek ünite (LEAF). Yayınevi LGS Sosyal kitapları bu
+        # ünite adlarıyla düzenlenir → leaf = ünite. (MEB 2018 + güncel program)
+        "unit_term": "Sınıf",
+        "units": [
+            (5, "Sosyal Bilgiler", 5, [
+                "Birey ve Toplum", "Kültür ve Miras", "İnsanlar, Yerler ve Çevreler",
+                "Bilim, Teknoloji ve Toplum", "Üretim, Dağıtım ve Tüketim",
+                "Etkin Vatandaşlık", "Küresel Bağlantılar"]),
+            (6, "Sosyal Bilgiler", 6, [
+                "Sosyal Bilgiler Öğreniyorum", "Yeryüzünde Yaşam",
+                "İpek Yolunda Türkler", "Ülkemizin Kaynakları", "Ülkemiz ve Dünya",
+                "Demokrasinin Serüveni", "Elektronik Yüzyıl"]),
+            (7, "Sosyal Bilgiler", 7, [
+                "İletişim ve İnsan İlişkileri", "Ülkemizde Nüfus",
+                "Türk Tarihinde Yolculuk", "Zaman İçinde Bilim",
+                "Ekonomi ve Sosyal Hayat", "Yaşayan Demokrasi",
+                "Ülkeler Arası Köprüler"]),
         ],
     },
     "T.C. İnkılap Tarihi ve Atatürkçülük": {
@@ -1368,7 +1361,10 @@ ALL_CURRICULA: dict[str, dict[str, dict]] = {
 # LGS verisinden türetilir.
 
 CURRICULUM: dict[str, list[str]] = {
-    name: [t[0] for t in spec["topics"]]
+    name: (
+        [t[0] for t in spec.get("topics", [])]
+        + [leaf for u in spec.get("units", []) for leaf in (u[3] if len(u) > 3 else [])]
+    )
     for name, spec in LGS_CURRICULUM.items()
 }
 
