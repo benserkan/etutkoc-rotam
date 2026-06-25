@@ -1122,11 +1122,11 @@ function HowItWorks() {
 
         {/* Döngü kapanışı */}
         <Reveal delayMs={120} className="mt-6">
-          <div className="flex items-start gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/70 p-5 text-sm text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
-            <RotateCcw className="mt-0.5 size-5 shrink-0 text-cyan-700" aria-hidden />
-            <p className="leading-relaxed">
-              <b>1–5. adımlar her hafta tekrarlanır;</b> öğrenci sürdürülebilir bir tempoda ilerler.
-              6. adımda <b>kurum, tüm koçların çıktısını birleşik görür</b> — başarı ölçülebilir, kalite standart olur.
+          <div className="flex items-start gap-3 rounded-2xl border border-cyan-200 bg-cyan-50 p-5 text-sm dark:bg-cyan-500/10 dark:border-cyan-500/30">
+            <RotateCcw className="mt-0.5 size-5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+            <p className="leading-relaxed text-slate-700 dark:text-cyan-100">
+              <b className="text-slate-900 dark:text-white">1–5. adımlar her hafta tekrarlanır;</b> öğrenci sürdürülebilir bir tempoda ilerler.
+              6. adımda <b className="text-slate-900 dark:text-white">kurum, tüm koçların çıktısını birleşik görür</b> — başarı ölçülebilir, kalite standart olur.
             </p>
           </div>
         </Reveal>
