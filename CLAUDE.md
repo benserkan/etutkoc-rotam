@@ -140,8 +140,20 @@ kapsam = **TYT + AYT Matematik** · kitap detayına **"Dersi değiştir"** ekle.
   Sosyal Hayat/Yaşayan Demokrasi/Ülkeler Arası Köprüler). reseed otomatik kapsadı
   (prod: 20 eski tema silindi, 21 leaf, 0 stale). LGS sim %100 (64/64). **#2 artık
   Matematik+Türkçe+Fen+Sosyal'in tamamında bitti.**
-- **KALAN (opsiyonel):** Din/İngilizce 5-7 zaten somut adlı (gerek yok). YDT
-  eklenmedi. Maarif geleneksel-adlı kitap → TYT/AYT omurgası kullanılmalı.
+- **Din + İngilizce 5-7 (commit `182bb5e`, MEB-doğrulamalı):** Din 5-7 → sınıf
+  (PARENT) + ünite (LEAF, mevcut MEB-uyumlu konu). İngilizce 5-7 → sınıf + tema
+  (LEAF); **5-7 önceden HİÇ YOKTU** (yalnız 8) → MEB ortaokul İngilizce temaları
+  eklendi (6.sınıf web-doğrulandı; 5/7 2018 standart, 8 ile tutarlı). grade-8 KORUNDU.
+  reseed otomatik kapsadı (prod: Din 15 eski tema silindi; İngilizce yoktu→eklendi).
+  Prod: Din 15 leaf · İngilizce 30 leaf · stale 0. **#2 LGS 5-7 artık 6 dersin
+  TAMAMINDA bitti** (Matematik/Türkçe/Fen/Sosyal/Din/İngilizce). 8. sınıf hepsinde flat+korundu.
+- **MOBİL — kod değişikliği GEREKMEDİ (doğrulandı):** mobil ders listesi
+  `/teacher/students/{id}/all-subjects` (track filtresi + exam sunucuda) + müfredat
+  sekmesi `/curriculum` (unit_name + grade_level + leaf/parent, Maarif OTA'sından
+  beri render ediliyor) → LGS yeni yapısı + track filtresi mobile API'den OTOMATİK
+  yansır. Kitap sihirbazı/katalog/kütüphane web-özel. **Yeni EAS build/OTA gerekmez.**
+- **KALAN (opsiyonel):** YDT (Yabancı Dil) eklenmedi. Maarif lise geleneksel-adlı
+  kitap → TYT/AYT omurgası kullanılmalı (doğru tasarım).
 - **DERS:** Test kitapları ÖSYM/yayınevi taksonomisiyle düzenlenir; okul müfredatı
   (Maarif tema/Klasik sınıf) omurgası TYT/AYT eşleştirmesi için yetersiz → sınav
   taksonomisi ayrı, model-bağımsız omurga olarak eklendi. Klasik sönümleniyor,
