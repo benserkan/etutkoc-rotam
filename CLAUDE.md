@@ -90,9 +90,28 @@ kapsam = **TYT + AYT Matematik** · kitap detayına **"Dersi değiştir"** ekle.
   ön-dolu tablo. Mevcut uçların orkestrasyonu (yeni endpoint/migration YOK). Sekmeli
   kitap detayı (sonradan düzenleme) AYNEN durur. `BookCreateForm` `onCreated`/
   `submitLabel`/`hideCancel` ile sihirbazda yeniden kullanıldı. tsc/eslint temiz.
-- **KALAN (opsiyonel):** AYT track filtresi (şu an AYT dersleri tüm YKS'de görünür,
-  kitapsızsa boş — zararsız). + YDT (Yabancı Dil) eklenmedi (konu-bazlı değil; istenirse ayrı).
-  + konu listeleri web-doğrulaması (rate-limit'le yapılamadı; sapan ders olursa düzeltilir).
+- **Tüm TYT/AYT dersleri — CANLI (commit `07d5801`):** 20 sınav dersi (TYT 10 + AYT 10),
+  ~261 konu, model-bağımsız + exam_section. Kütüphane liste filtresine "Sınav
+  Müfredatı (TYT/AYT)" kategorisi (commit `6e1a649`). Konu listeleri standart ÖSYM/
+  yayınevi taksonomisinden (web-doğrulama rate-limit'le yapılamadı; sapan ders olursa
+  `EXAM_CURRICULUM`'da tek tek düzeltilir).
+- **AYT alan (track) filtresi — CANLI (commit `48952ea`):** `TRACK_AYT_SUBJECTS`
+  (SAYISAL/EA/SÖZEL/DİL) + `exam_subject_visible_for_track`. TYT herkese; AYT yalnız
+  alana uygun; alan yok (track None / 9-10) → gizleme yok. `_applicable_subjects`
+  (müfredat paneli) + weekly_plan `all_subjects` (program ders seçici) ikisinde de.
+  exam_taxonomy 20/20 (D1-D7) · progress 22/22 · weekly_plan 14/14.
+- **Demo "Kitap Ekleme Sihirbazı" — CANLI (commit `f1b0c75`):** `book-add-coach`
+  demosu (tek slug → ana sayfa + /teacher/library "Nasıl kullanılır" + /demos hepsini
+  besler) yeni 4-adımlı sihirbaza göre yeniden üretildi (8 sahne + nav + meta +
+  narration + 8 MP3 Gemini TTS "Kore" + demo_narrations.json snapshot). Akış: Bilgiler
+  (Sınav Müfredatı ders grubu) → Üniteler (katalog önerilen/AI/elle) → Müfredat
+  eşleştirme (otomatik) → Öğrenci + Özet → sonradan düzenleme.
+- **MOBİL:** Sınav taksonomisi + track filtresi backend olduğu için mobil API'den
+  OTOMATİK alır (mobil müfredat/ders yüzeyleri yeni dersleri görür, track sunucuda
+  filtrelenir) → mobil kod değişikliği/yeni build GEREKMEDİ. Kitap ekleme sihirbazı +
+  demo web-özel (mobil koç kütüphane yönetimi web'de — PARITY.md); mobilde karşılığı yok.
+- **KALAN (opsiyonel):** YDT (Yabancı Dil) eklenmedi (konu-bazlı değil; istenirse ayrı).
+  + "kasko" sihirbazı mevcut; istenirse bölüm-içi sürükle-bırak/önizleme zenginleştirmesi.
 - **DERS:** Test kitapları ÖSYM/yayınevi taksonomisiyle düzenlenir; okul müfredatı
   (Maarif tema/Klasik sınıf) omurgası TYT/AYT eşleştirmesi için yetersiz → sınav
   taksonomisi ayrı, model-bağımsız omurga olarak eklendi. Klasik sönümleniyor,
