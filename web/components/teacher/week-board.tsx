@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   Calendar,
@@ -697,6 +698,7 @@ function NewProgramDialogInner({
   studentId: number;
   onClose: () => void;
 }) {
+  const router = useRouter();
   const today = todayIso();
   const [startDate, setStartDate] = React.useState(today);
   const [endDate, setEndDate] = React.useState(addDaysIso(today, 6));
@@ -728,7 +730,17 @@ function NewProgramDialogInner({
         allow_overlap: allowOverlap,
       },
       {
-        onSuccess: () => onClose(),
+        onSuccess: (res) => {
+          onClose();
+          // Yeni programın HAFTASINA geç — yoksa sayfa bugünün haftasında kalır
+          // ve eklenen görevler yanlış haftaya yazılır (06-29 programına 06-22'ye
+          // görev düşmesi bug'ı). program_id ile o aralık görüntülenir.
+          if (res?.data?.id) {
+            router.push(
+              `/teacher/students/${studentId}/week?program_id=${res.data.id}`,
+            );
+          }
+        },
         onError: (err) => {
           const detail = err.detail as
             | { code?: string; overlaps?: WeeklyProgramOverlapItem[] }
