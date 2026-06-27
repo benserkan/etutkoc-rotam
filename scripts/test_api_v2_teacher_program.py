@@ -249,7 +249,9 @@ def main() -> int:
         happy_item_id = (data.get("items") or [{}])[0].get("id")
         ok = (
             r.status_code == 200
-            and data.get("title") == "Smoke happy görev"
+            # NOT: tek kitap-kalemli görevde başlık otomatik oluşturulur
+            # ("{Kitap} — {Bölüm}: N test", 2026-06-25). Sabit başlık beklenmez.
+            and bool(data.get("title"))
             and data.get("planned_count") == 3
             and len(data.get("items", [])) == 1
             and data.get("items")[0]["section_reserved_count"] == 3

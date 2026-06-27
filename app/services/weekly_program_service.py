@@ -206,13 +206,20 @@ def create_program(
     )
     db.add(prog)
     db.flush()
-    # "Ölü rezerv" telafisi: yeni program başlangıcından ÖNCEKİ haftalardan kalan,
-    # tamamlanmamış görevlerin rezervi serbest bırakılır → koç aynı üniteyi yeni
-    # haftada yeniden atayabilir (kapasite kilitli kalmaz). Best-effort.
+    # "Ölü rezerv" telafisi: GEÇMİŞ haftalardan kalan tamamlanmamış görevlerin
+    # rezervi serbest bırakılır → koç aynı üniteyi yeniden atayabilir. Best-effort.
+    # KRİTİK: cutoff = min(program başlangıcı, BU HAFTANIN Pazartesi'si). Program
+    # GELECEK tarihliyse (örn. bugün 06-27, program 06-29) cutoff=start kullanmak
+    # bu haftanın (06-22..28) hâlâ aktif rezervlerini "ölü" sanıp serbest bırakır.
+    # min(...) ile yalnız GERÇEKTEN geçmiş haftalar serbest kalır.
     try:
+        from datetime import date as _date, timedelta as _td
+
         from app.services.task_service import reconcile_past_reservations
 
-        reconcile_past_reservations(db, student_id=student.id, cutoff_date=start)
+        _today = _date.today()
+        _cutoff = min(start, _today - _td(days=_today.weekday()))
+        reconcile_past_reservations(db, student_id=student.id, cutoff_date=_cutoff)
     except Exception:
         logger.exception("create_program: reconcile_past_reservations failed s=%s", student.id)
     logger.info(
