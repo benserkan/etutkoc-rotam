@@ -60,6 +60,11 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
   const widgetRef = React.useRef<HTMLDivElement | null>(null);
   const hasRenderedRef = React.useRef(false);
   const showCaptcha = turnstileEnabled && !!turnstileSiteKey;
+  // Turnstile yüklenme durumu — yavaş/başarısız yüklemede kullanıcı "hata mı?"
+  // sanmasın diye butonu kilitle + net uyarı göster.
+  const [captchaStatus, setCaptchaStatus] = React.useState<
+    "loading" | "ready" | "error"
+  >("loading");
 
   const handleSuccess = React.useCallback((res: LoginResponse) => {
     if (res.must_change_password) {
@@ -84,11 +89,17 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
   const renderWidget = React.useCallback(() => {
     if (!showCaptcha || !widgetRef.current || !window.turnstile) return;
     if (hasRenderedRef.current) return;
-    window.turnstile.render(widgetRef.current, {
-      sitekey: turnstileSiteKey,
-      theme: "auto",
-    });
-    hasRenderedRef.current = true;
+    try {
+      window.turnstile.render(widgetRef.current, {
+        sitekey: turnstileSiteKey,
+        theme: "auto",
+        "error-callback": () => setCaptchaStatus("error"),
+      });
+      hasRenderedRef.current = true;
+      setCaptchaStatus("ready");
+    } catch {
+      setCaptchaStatus("error");
+    }
   }, [showCaptcha, turnstileSiteKey]);
 
   const onSubmit = React.useCallback(async (values: LoginValues) => {
@@ -165,6 +176,7 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
           src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
           strategy="afterInteractive"
           onLoad={renderWidget}
+          onError={() => setCaptchaStatus("error")}
         />
       ) : null}
       <form
@@ -205,11 +217,44 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
           ) : null}
         </div>
 
-        {showCaptcha ? <div ref={widgetRef} className="min-h-[65px]" /> : null}
+        {showCaptcha ? (
+          <div className="space-y-2">
+            <div ref={widgetRef} className="min-h-[65px]" />
+            {captchaStatus === "loading" ? (
+              <p className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+                Güvenlik doğrulaması yükleniyor… Lütfen tamamlanmasını bekleyin.
+              </p>
+            ) : null}
+            {captchaStatus === "error" ? (
+              <p className="text-sm text-destructive">
+                Güvenlik doğrulaması yüklenemedi. Bağlantınızı kontrol edip{" "}
+                <button
+                  type="button"
+                  onClick={() => window.location.reload()}
+                  className="font-medium underline"
+                >
+                  sayfayı yenileyin
+                </button>
+                .
+              </p>
+            ) : null}
+          </div>
+        ) : null}
 
-        <Button type="submit" disabled={isSubmitting} className="w-full">
+        <Button
+          type="submit"
+          disabled={isSubmitting || (showCaptcha && captchaStatus !== "ready")}
+          className="w-full"
+        >
           {isSubmitting ? <Loader2 className="animate-spin" /> : null}
-          {isSubmitting ? "Giriş yapılıyor…" : "Giriş yap"}
+          {isSubmitting
+            ? "Giriş yapılıyor…"
+            : showCaptcha && captchaStatus === "loading"
+              ? "Güvenlik doğrulaması yükleniyor…"
+              : showCaptcha && captchaStatus === "error"
+                ? "Doğrulama yüklenemedi"
+                : "Giriş yap"}
         </Button>
       </form>
     </>

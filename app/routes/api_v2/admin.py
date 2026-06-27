@@ -8319,8 +8319,11 @@ def _contact_item(cr, db: Session | None = None) -> ContactRequestItem:
     requested_amount = None
     linked_prospect_id = None
     source_label = CONTACT_SOURCE_LABELS_TR.get(cr.source, cr.source)
-    if cr.source == "membership_offer" and cr.message:
-        # WhatsApp üyelik teklifi → koç/kurum ayrımı + plan + tutar + aday
+    if cr.source in ("membership_offer", "campaign_link") and cr.message:
+        # WhatsApp üyelik teklifi VE kampanya linki AYNI kodlamayı kullanır
+        # (hedef_tip/hedef_kod/tutar/aday_id) → koç/kurum ayrımı + plan + tutar + aday.
+        # KRİTİK: campaign_link de buraya dahil — yoksa bağımsız koç lead'i
+        # target_kind=None kalıp YANLIŞLIKLA kurum onboarding modalına düşer.
         mt = re.search(r"hedef_tip=(koc|kurum)", cr.message)
         if mt:
             target_kind = "coach" if mt.group(1) == "koc" else "institution"
@@ -8344,8 +8347,9 @@ def _contact_item(cr, db: Session | None = None) -> ContactRequestItem:
             _pi = get_plan_info(requested_plan_code)
             if _pi is not None:
                 target_kind = "coach" if _pi.audience == "solo" else "institution"
-        source_label = ("Üyelik teklifi (koç)" if target_kind == "coach"
-                        else "Üyelik teklifi (kurum)" if target_kind == "institution"
+        _base = "Kampanya linki" if cr.source == "campaign_link" else "Üyelik teklifi"
+        source_label = (f"{_base} (koç)" if target_kind == "coach"
+                        else f"{_base} (kurum)" if target_kind == "institution"
                         else source_label)
     if cr.source == "subscription_request" and cr.message:
         mu = re.search(r"koç_id=(\d+)", cr.message)
