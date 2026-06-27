@@ -176,7 +176,14 @@ def _reconcile_dead_reservations(db: Session, student_id: int) -> None:
 
         today = date.today()
         active = wps.get_active_program(db, student_id=student_id, today=today)
-        cutoff = active.start_date if active is not None else today
+        # Cutoff = aktif programın başlangıcı; program YOKSA (boşluk haftası) BU
+        # HAFTANIN Pazartesi'si. "today" KULLANMA — bu haftanın daha önceki
+        # günlerine (örn. Pzt/Sal görevleri, bugün Cumartesi) atanan rezervleri
+        # "ölü" sanıp serbest bırakır (kalan tam görünür). Yalnız GEÇMİŞ haftalar ölü.
+        cutoff = (
+            active.start_date if active is not None
+            else today - timedelta(days=today.weekday())
+        )
         res = reconcile_past_reservations(db, student_id=student_id, cutoff_date=cutoff)
         if res.get("released_tests"):
             db.commit()
