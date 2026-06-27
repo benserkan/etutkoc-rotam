@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import Link from "next/link";
 import { ApiError } from "@/lib/api";
 import { apiServer } from "@/lib/api-server";
 import { Check, ShieldCheck } from "lucide-react";
@@ -116,8 +117,14 @@ export default async function MembershipPage({
     <main className="force-light min-h-screen bg-slate-50 text-slate-900">
       {/* Marka şeridi */}
       <header className="bg-white border-b border-slate-200">
-        <div className="mx-auto max-w-lg px-5 py-3 flex items-center gap-2.5">
-          <Image src="/etutkoc-logo.svg" alt="ETÜTKOÇ" width={132} height={30} priority />
+        <div className="mx-auto max-w-lg px-5 py-3 flex items-center justify-between gap-2.5">
+          <Link href="/" className="flex items-center" aria-label="ETÜTKOÇ rotam ana sayfa">
+            <Image src="/etutkoc-logo.svg" alt="ETÜTKOÇ rotam" width={132} height={30} priority />
+          </Link>
+          <nav className="flex items-center gap-4 text-sm font-semibold">
+            <Link href="/" className="text-slate-600 hover:text-cyan-700">Anasayfa</Link>
+            <Link href="/login" className="text-cyan-700 hover:text-cyan-800">Giriş</Link>
+          </nav>
         </div>
       </header>
 

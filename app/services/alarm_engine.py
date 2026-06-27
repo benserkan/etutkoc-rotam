@@ -74,9 +74,17 @@ def _val_oldest_queued_long(db: Session) -> int:
 
 
 def _val_error_groups_open(db: Session) -> int:
+    # Yalnız SON 3 GÜNDE görülmüş (aktif) açık hata grupları alarmlar. Bayat
+    # gruplar (3+ gün önce görülmüş — muhtemelen düzeltilmiş, artık tekrar
+    # etmeyen) saatlik yanlış-alarm yaratmasın; panelde + "stale" rozetiyle yine
+    # görünür, sadece email tetiklemez. (Süper admine bayat hata spam'i önlenir.)
+    from datetime import datetime, timedelta, timezone
+
+    cutoff = datetime.now(timezone.utc) - timedelta(days=3)
     return int(
         (db.query(func.count(ErrorEvent.id))
-         .filter(ErrorEvent.resolved_at.is_(None))
+         .filter(ErrorEvent.resolved_at.is_(None),
+                 ErrorEvent.last_seen_at >= cutoff)
          .scalar()) or 0
     )
 

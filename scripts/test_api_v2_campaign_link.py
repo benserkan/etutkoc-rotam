@@ -224,6 +224,25 @@ def main() -> int:
               and cr2 is not None and "hedef_tip=kurum" in (cr2.message or ""),
               f"pr={pr2} msg={cr2.message if cr2 else None}")
 
+        # 12. REGRESYON: campaign_link lead'i admin İletişim Talepleri'nde DOĞRU
+        # tanınır → koç lead'i target_kind=coach + tutar + plan (kurum modalına
+        # DÜŞMEZ); kurum lead'i target_kind=institution. (Bug: campaign_link parse
+        # edilmiyordu → koç lead'i kurum onboarding'ine düşüyordu.)
+        r = admin.get("/api/v2/admin/contact-requests")
+        items = r.json().get("items", []) if r.status_code == 200 else []
+        coach_lead = next((it for it in items if it.get("phone") == PH1
+                           and it.get("source") == "campaign_link"), None)
+        inst_lead = next((it for it in items if it.get("phone") == PH2
+                          and it.get("source") == "campaign_link"), None)
+        check("12a. koç kampanya lead → target_kind=coach + tutar=2000 + plan=solo_pro",
+              coach_lead is not None and coach_lead.get("target_kind") == "coach"
+              and coach_lead.get("requested_amount") == 2000
+              and coach_lead.get("requested_plan_code") == "solo_pro",
+              f"{coach_lead}")
+        check("12b. kurum kampanya lead → target_kind=institution",
+              inst_lead is not None and inst_lead.get("target_kind") == "institution",
+              f"{inst_lead}")
+
     finally:
         cleanup()
 
