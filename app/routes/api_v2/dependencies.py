@@ -99,6 +99,10 @@ def _resolve_from_cookie(request: Request, db: Session) -> User | None:
     user = _decode_access_token(token, db, source="cookie")
     try:
         payload = decode_token(token.strip())
+        if payload.impersonator_id:
+            # Sahte oturum (impersonation): admin'in paneli görebilmesi için
+            # must_change gibi kapılar get_current_user_v2'de atlanır (state işareti).
+            request.state.impersonator_id = payload.impersonator_id
         if payload.session_id:
             from app.services.security_monitor import heartbeat
             if not heartbeat(db, session_token=payload.session_id):
@@ -173,7 +177,9 @@ def get_current_user_v2(
     panel verilerine erişemez (R-001).
     """
     user = _resolve_user_v2(request, creds, db)
-    if user.must_change_password:
+    # Sahte oturumda (impersonation) admin paneli görebilmeli — must_change kapısı
+    # yalnız kullanıcının KENDİ girişinde uygulanır, impersonation'da atlanır.
+    if user.must_change_password and not getattr(request.state, "impersonator_id", None):
         raise _auth_error(
             "Şifrenizi değiştirmeniz gerekiyor",
             "password_change_required",
