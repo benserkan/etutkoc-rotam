@@ -36,7 +36,8 @@ def request_reset(db: Session, *, email: str, ip: str | None) -> str | None:
     """
     email_norm = (email or "").strip().lower()
     user = db.query(User).filter(User.email == email_norm).first()
-    if user is None or not user.is_active:
+    # Demo hesabı (is_demo) → sessizce reset YOK (sabit demo şifresi korunur).
+    if user is None or not user.is_active or user.is_demo:
         return None
 
     # Aynı kullanıcının önceki kullanılmamış tokenlarını geçersiz kıl

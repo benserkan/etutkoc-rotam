@@ -624,6 +624,18 @@ def change_password(
     )
     from app.services.security import hash_password, verify_password
 
+    # Demo hesapları (App Store / Play incelemesi) şifrelerini DEĞİŞTİREMEZ —
+    # mağaza incelemecisine verilen sabit giriş bilgileri korunmalı.
+    if user.is_demo:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={
+                "error": "forbidden",
+                "code": "demo_account_readonly",
+                "message": "Demo hesabının şifresi değiştirilemez.",
+            },
+        )
+
     if is_locked(user):
         secs = lockout_seconds_remaining(user)
         mins = max(1, (secs + 59) // 60)
