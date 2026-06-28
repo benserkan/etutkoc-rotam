@@ -56,6 +56,11 @@ DAILY_AUTO_PAUSE_RATIO_LIMIT = 0.05  # %5
 # pause_reason değerleri
 REASON_MANUAL = "manual"
 REASON_AUTO_INACTIVITY = "auto_inactivity"
+# Koçun "yaz molası / takibe ara ver" eylemi — manuel pause'un özel bir türü.
+# maybe_auto_resume yalnız "auto_*" reason'ları geri açar → summer_break öğrenci
+# giriş yapsa bile mola SÜRER (koç "Takibe devam" ile açar). UI rozeti bu reason'a
+# göre "Yaz molası" gösterebilir.
+REASON_SUMMER_BREAK = "summer_break"
 
 
 # ---------------------------- Yardımcılar ----------------------------

@@ -13,7 +13,9 @@ import {
   Dna,
   Loader2,
   MessageSquare,
+  PauseCircle,
   Pencil,
+  PlayCircle,
   RefreshCw,
   Target,
   Timer,
@@ -21,7 +23,12 @@ import {
 
 import { teacherKeys } from "@/lib/api/teacher";
 import { useTeacherStudent } from "@/lib/hooks/use-teacher-queries";
-import { useSetWeekAnchor, usePatchStudent } from "@/lib/hooks/use-teacher-mutations";
+import {
+  useSetWeekAnchor,
+  usePatchStudent,
+  usePauseStudent,
+  useResumeStudent,
+} from "@/lib/hooks/use-teacher-mutations";
 import {
   Dialog,
   DialogContent,
@@ -140,6 +147,11 @@ export function StudentTabs({ studentId, initial }: Props) {
             <h1 className="text-2xl font-semibold tracking-tight font-display flex items-center gap-3 mt-1">
               <span className="truncate">{s.full_name}</span>
               <WorstWarningDot level={data.worst_warning_level} />
+              {s.is_paused ? (
+                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
+                  <PauseCircle className="size-3.5" aria-hidden /> Yaz molasında
+                </span>
+              ) : null}
             </h1>
             <BadgeRow profile={s} activePhase={data.active_phase ?? null} />
           </div>
@@ -149,6 +161,7 @@ export function StudentTabs({ studentId, initial }: Props) {
             studentName={s.full_name}
             studentEmail={s.email}
             isGraduate={s.is_graduate}
+            isPaused={s.is_paused ?? false}
             onRefresh={refreshAll}
             isRefreshing={q.isFetching}
           />
@@ -470,6 +483,7 @@ function QuickActions({
   studentName,
   studentEmail,
   isGraduate,
+  isPaused,
   onRefresh,
   isRefreshing,
 }: {
@@ -477,11 +491,34 @@ function QuickActions({
   studentName: string;
   studentEmail: string;
   isGraduate: boolean;
+  isPaused: boolean;
   onRefresh: () => void;
   isRefreshing: boolean;
 }) {
   const [waOpen, setWaOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
+  const pauseMut = usePauseStudent(studentId);
+  const resumeMut = useResumeStudent(studentId);
+  const busy = pauseMut.isPending || resumeMut.isPending;
+
+  function togglePause() {
+    if (isPaused) {
+      resumeMut.mutate();
+      return;
+    }
+    if (
+      window.confirm(
+        "Bu öğrenciyi yaz molasına al?\n\n" +
+          "• Koçluk uyarıları (durum/risk/boş gün) ve veli bildirimleri durur.\n" +
+          "• Bugüne kadarki yapılmamış görevlerin rezervi serbest bırakılır " +
+          "(kitabı kaldırabilir/yeniden atayabilirsin).\n" +
+          "• Öğrenci giriş yapabilir; istediğinde 'Takibe devam' ile geri açarsın.",
+      )
+    ) {
+      pauseMut.mutate();
+    }
+  }
+
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <button
@@ -530,6 +567,31 @@ function QuickActions({
           <RefreshCw className="size-3.5" aria-hidden />
         )}
         Yenile
+      </button>
+      <button
+        type="button"
+        onClick={togglePause}
+        disabled={busy}
+        title={
+          isPaused
+            ? "Mola modunu kapat — koçluk takibine devam et"
+            : "Yaz molası — takibi duraklat + ölü rezervi serbest bırak"
+        }
+        className={cn(
+          "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition disabled:opacity-50",
+          isPaused
+            ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+            : "border-amber-300 text-amber-800 hover:bg-amber-50",
+        )}
+      >
+        {busy ? (
+          <Loader2 className="size-3.5 animate-spin" aria-hidden />
+        ) : isPaused ? (
+          <PlayCircle className="size-3.5" aria-hidden />
+        ) : (
+          <PauseCircle className="size-3.5" aria-hidden />
+        )}
+        {isPaused ? "Takibe devam" : "Yaz molası"}
       </button>
       <ActionLink
         href={`/teacher/students/${studentId}/promote`}
@@ -656,6 +718,7 @@ function StatusSummary({
   const hitRate = Math.round((ps.hit_rate_7d ?? 0) * 100);
   const items = data.warning_items ?? [];
   const lvl = data.worst_warning_level;
+  const paused = data.student.is_paused ?? false;
 
   // İyi giden (başarı) sinyalleri — program_summary dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:bg-sky-500/10 dark:border-sky-500/30 dark:text-sky-200 dark:bg-indigo-500/10 dark:border-indigo-500/30 dark:text-indigo-200 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200'den türetilir, linkli.
   const positives: SummaryRow[] = [];
@@ -699,18 +762,30 @@ function StatusSummary({
         <CardTitle className="text-base">Durum Özeti</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className={cn("rounded-lg border p-3", verdict.cls)}>
-          <p className="font-semibold">{verdict.title}</p>
-          <p className="mt-0.5 text-sm opacity-90">
-            Bugün <strong>{todayDone}/{todayTotal}</strong> görev
-            {todayPct != null ? ` (%${todayPct})` : ""} ·{" "}
-            Son 7 gün <strong>{weekDone}/{weekTotal}</strong> görev
-            {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
-            Tutarlılık %{consistency}
-          </p>
-        </div>
+        {paused ? (
+          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-amber-900">
+            <p className="font-semibold flex items-center gap-1.5">
+              <PauseCircle className="size-4" aria-hidden /> Yaz molasında — takip duraklatıldı
+            </p>
+            <p className="mt-0.5 text-sm opacity-90">
+              Koçluk uyarıları ve veli bildirimleri bu öğrenci için durduruldu.
+              Üstteki <strong>“Takibe devam”</strong> ile geri açabilirsin.
+            </p>
+          </div>
+        ) : (
+          <div className={cn("rounded-lg border p-3", verdict.cls)}>
+            <p className="font-semibold">{verdict.title}</p>
+            <p className="mt-0.5 text-sm opacity-90">
+              Bugün <strong>{todayDone}/{todayTotal}</strong> görev
+              {todayPct != null ? ` (%${todayPct})` : ""} ·{" "}
+              Son 7 gün <strong>{weekDone}/{weekTotal}</strong> görev
+              {weekPct != null ? ` (%${weekPct})` : ""} ·{" "}
+              Tutarlılık %{consistency}
+            </p>
+          </div>
+        )}
 
-        {warnings.length > 0 ? (
+        {!paused && warnings.length > 0 ? (
           <div>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               Dikkat gerektirenler
@@ -721,7 +796,7 @@ function StatusSummary({
           </div>
         ) : null}
 
-        {positives.length > 0 ? (
+        {!paused && positives.length > 0 ? (
           <div>
             <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
               İyi giden
@@ -732,7 +807,7 @@ function StatusSummary({
           </div>
         ) : null}
 
-        {warnings.length === 0 && positives.length === 0 ? (
+        {!paused && warnings.length === 0 && positives.length === 0 ? (
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200">
             Henüz yeterli veri yok — program oluşturuldukça durum burada özetlenir.{" "}
             <Link href={`${base}/week`} className="font-medium underline underline-offset-4">

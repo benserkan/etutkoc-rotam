@@ -909,6 +909,22 @@ def feature_discovery_scan(db: Session, *, now: datetime) -> dict:
     }
 
 
+def release_dead_reservations(db: Session, *, now: datetime) -> dict:
+    """Günlük — rezervli öğrencilerde 'ölü rezervi' (geçmiş hafta, yapılmamış,
+    yayında görev) otomatik serbest bırak.
+
+    Koç yeni program/görev-ekle/devret yapmasa bile (yaz tatili / program-arası
+    boşluk) rezerv birikmesin → koç aynı üniteyi yeniden atayabilir + kitap
+    'Kaldır' kilidi (aktif rezerv) açılır. reconcile idempotent + release-only;
+    cari hafta + aktif program rezervleri KORUNUR (create_program ile aynı cutoff
+    mantığı). Bkz. task_service.reconcile_all_active_reservations."""
+    from app.services.task_service import reconcile_all_active_reservations
+    today = _today_utc(now)
+    summary = reconcile_all_active_reservations(db, today=today)
+    logger.info("release_dead_reservations cron: %s", summary)
+    return summary
+
+
 def panel_events_purge(db: Session, *, now: datetime) -> dict:
     """Günlük — 180 günden eski panel ziyaret olaylarını + dokunulmamış
     hızlı-erişim agregat satırlarını siler (sabitlenen/kalıcı kartlar yaşar).
@@ -948,4 +964,6 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "offers_expire": offers_expire,
     # Hızlı erişim kartları (QA-1) — ham olay saklama politikası
     "panel_events_purge": panel_events_purge,
+    # Ölü rezerv telafisi — günlük otomatik serbest bırakma (yaz/program-arası)
+    "release_dead_reservations": release_dead_reservations,
 }

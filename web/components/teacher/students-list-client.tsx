@@ -168,6 +168,10 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
               <span className="text-[10px] uppercase tracking-wide rounded bg-muted px-1.5 py-0.5 text-muted-foreground">
                 pasif
               </span>
+            ) : s.is_paused ? (
+              <span className="text-[10px] uppercase tracking-wide rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5">
+                molada
+              </span>
             ) : null}
             {s.has_pending_request ? (
               <span className="text-[10px] uppercase tracking-wide rounded bg-amber-500/15 text-amber-700 dark:text-amber-300 px-1.5 py-0.5">

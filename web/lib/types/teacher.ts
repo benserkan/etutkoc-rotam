@@ -141,6 +141,7 @@ export interface TeacherStudentListItem {
   email: string;
   grade_level: number | null;
   is_active: boolean;
+  is_paused?: boolean;        // mola modu (takip duraklatıldı)
   last_login_at: string | null;
   worst_warning_level: WarningLevel;
   worst_warning_title: string | null;
@@ -167,6 +168,7 @@ export interface StudentBriefProfile {
   email: string;
   grade_level: number | null;
   is_active: boolean;
+  is_paused?: boolean;        // mola modu (takip duraklatıldı — yaz molası)
   is_graduate: boolean;
   institution_id: number | null;
   teacher_id: number | null;
@@ -185,6 +187,12 @@ export interface StudentBriefProfile {
   exam_date?: string | null;
   graduate_mode?: GraduateMode | null;
   academic_year_name?: string | null;
+}
+
+export interface StudentPauseResult {
+  student: StudentBriefProfile;
+  released_tests: number;   // mola açılışında serbest kalan ölü rezerv (test)
+  released_items: number;
 }
 
 export interface StudentProgramSummary {

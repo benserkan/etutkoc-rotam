@@ -719,6 +719,13 @@ def generate_warnings(
     """Araba-ekranı tarzı akıllı uyarılar. Sadece uyulması gereken durumlarda dön."""
     out: list[Warning] = []
 
+    # Mola modu (is_paused): koçluk takibi duraklatıldı (yaz molası vb.) → koç-yüzü
+    # uyarı ÜRETME. student_snapshot bunu kullandığından durum özeti + öğrenci
+    # listesi rengi + uyarı akışı + rozet hepsi otomatik susar. Veli cron'ları
+    # zaten _all_parent_student_pairs'te paused'ı atlıyor.
+    if getattr(student, "is_paused", False):
+        return out
+
     # Onboarding: yeni oluşturulmuş öğrenci (hesap < 3 gün) inaktivite uyarısı
     # ALMAZ — henüz programı/girişi olmayabilir (false-positive önleme).
     _created = student.created_at

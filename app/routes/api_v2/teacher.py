@@ -193,6 +193,7 @@ from app.routes.api_v2.schemas.teacher import (
     StudentCreateBody,
     StudentCreateResult,
     StudentParentsResponse,
+    StudentPauseResult,
     StudentPatchBody,
     StudentProgramSummary,
     ApplyTaskTemplateBody,
@@ -428,6 +429,7 @@ def _build_brief_profile(student: User) -> StudentBriefProfile:
         email=student.email,
         grade_level=student.grade_level,
         is_active=bool(student.is_active),
+        is_paused=bool(getattr(student, "is_paused", False)),
         is_graduate=bool(getattr(student, "is_graduate", False)),
         institution_id=student.institution_id,
         teacher_id=student.teacher_id,
@@ -530,7 +532,7 @@ def teacher_dashboard_v2(
     risk_assessments = bulk_risk_assessment(db, students=active_students, today=today)
     visible_at_risk = [
         a for a in filter_at_risk(risk_assessments, min_level="medium")
-        if a.student.id not in muted_ids
+        if a.student.id not in muted_ids and not a.student.is_paused
     ]
     at_risk_count = len(visible_at_risk)
     at_risk_critical = sum(1 for a in visible_at_risk if a.level == "critical")
@@ -540,7 +542,7 @@ def teacher_dashboard_v2(
     # muted→ok. Kritik=critical · Uyarı=medium+high · Yolunda=ok. Böylece kart
     # sayısı = tıklanan liste (eski worst_warning_level uyuşmazlığı giderildi).
     _risk_lv = {
-        a.student.id: ("ok" if a.student.id in muted_ids else a.level)
+        a.student.id: ("ok" if (a.student.id in muted_ids or a.student.is_paused) else a.level)
         for a in risk_assessments
     }
     fleet_red = sum(1 for lv in _risk_lv.values() if lv == "critical")
@@ -666,7 +668,8 @@ def teacher_students_v2(
         # bulk_risk_assessment yalnız aktiflere çalışır; pasifler "ok" sayılır
         assessments = bulk_risk_assessment(db, students=actives, today=today)
         for a in assessments:
-            if a.student.id in muted_ids:
+            if a.student.id in muted_ids or a.student.is_paused:
+                # mute VEYA mola modu → risk drilldown'da "ok" (uyarı susar)
                 risk_levels_by_id[a.student.id] = "ok"
             else:
                 risk_levels_by_id[a.student.id] = a.level
@@ -723,6 +726,7 @@ def teacher_students_v2(
             email=s.email,
             grade_level=s.grade_level,
             is_active=bool(s.is_active),
+            is_paused=bool(s.is_paused),
             last_login_at=s.last_login_at,
             worst_warning_level=(sn.worst_warning_level if sn else "green"),
             worst_warning_title=ww_title,
@@ -5535,6 +5539,71 @@ def teacher_reactivate_student_v2(
     db.refresh(student)
     return MutationResponse[StudentBriefProfile](
         data=_build_brief_profile(student),
+        invalidate=_invalidate_for_students(user.id, student.id),
+    )
+
+
+# ---------------------- POST /pause ve /resume (mola modu — yaz molası) ----------------------
+
+
+@router.post(
+    "/students/{student_id}/pause",
+    response_model=MutationResponse[StudentPauseResult],
+)
+def teacher_pause_student_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrenciyi 'mola' moduna al (yaz molası / takibe ara ver).
+
+    is_active'ten FARKLI — öğrenci giriş yapar, planlarını görür; yalnız KOÇLUK
+    TAKİBİ duraklar: durum özeti/öğrenci listesi rengi/uyarı akışı/rozet + veli
+    bildirimleri susar (generate_warnings + _all_parent_student_pairs paused'ı
+    atlar). Ek olarak bugüne kadarki yapılmamış görevlerin ölü rezervi HEMEN
+    serbest bırakılır → koç kitabı 'Kaldır'abilir / üniteyi yeniden atayabilir.
+    """
+    from app.services.pause import REASON_SUMMER_BREAK, pause_user
+    from app.services.task_service import release_due_reservations_for_pause
+
+    student = _get_owned_student(db, student_id, user.id)
+    pause_user(db, student, actor=user, reason=REASON_SUMMER_BREAK)
+    released = release_due_reservations_for_pause(db, student_id=student.id)
+    db.commit()
+    db.refresh(student)
+    return MutationResponse[StudentPauseResult](
+        data=StudentPauseResult(
+            student=_build_brief_profile(student),
+            released_tests=released["released_tests"],
+            released_items=released["released_items"],
+        ),
+        invalidate=_invalidate_for_students(user.id, student.id),
+    )
+
+
+@router.post(
+    "/students/{student_id}/resume",
+    response_model=MutationResponse[StudentPauseResult],
+)
+def teacher_resume_student_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Mola modunu kapat (takibe devam et) — uyarılar tekrar üretilir.
+
+    Serbest bırakılan rezervler geri YÜKLENMEZ (geçmiş görevler kapandı); koç
+    yeni program yaparak devam eder. resume_user manuel resume → 7 gün sticky
+    (otomatik inaktivite cron'u bu süre tekrar pause etmez)."""
+    from app.services.pause import resume_user
+
+    student = _get_owned_student(db, student_id, user.id)
+    resume_user(db, student, actor=user, is_auto_resume=False)
+    db.refresh(student)
+    return MutationResponse[StudentPauseResult](
+        data=StudentPauseResult(
+            student=_build_brief_profile(student),
+        ),
         invalidate=_invalidate_for_students(user.id, student.id),
     )
 

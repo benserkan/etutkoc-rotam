@@ -102,6 +102,7 @@ class TeacherStudentListItem(BaseModel):
     email: str
     grade_level: int | None
     is_active: bool
+    is_paused: bool = False             # mola modu (takip duraklatıldı — uyarı susar)
     last_login_at: datetime | None
 
     # Hızlı durum göstergeleri (StudentSnapshot'tan üretilir)
@@ -137,6 +138,7 @@ class StudentBriefProfile(BaseModel):
     email: str
     grade_level: int | None
     is_active: bool
+    is_paused: bool = False             # mola modu (takip duraklatıldı — uyarı susar)
     is_graduate: bool
     institution_id: int | None
     teacher_id: int | None
@@ -156,6 +158,13 @@ class StudentBriefProfile(BaseModel):
     exam_date: str | None = None             # "YYYY-MM-DD"
     graduate_mode: str | None = None         # "full_time" | "dershane"
     academic_year_name: str | None = None
+
+
+class StudentPauseResult(BaseModel):
+    """POST /students/{id}/pause | /resume — mola modu (yaz molası) sonucu."""
+    student: StudentBriefProfile
+    released_tests: int = 0       # mola açılışında serbest kalan ölü rezerv (test)
+    released_items: int = 0
 
 
 class StudentProgramSummary(BaseModel):

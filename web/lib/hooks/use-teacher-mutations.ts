@@ -45,6 +45,7 @@ import type {
   StudentCreateBody,
   StudentCreateResult,
   StudentPatchBody,
+  StudentPauseResult,
   TaskCreateBody,
   TaskItemBody,
   SetWeekAnchorBody,
@@ -807,6 +808,45 @@ export function useReactivateStudent(studentId: number) {
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       toast.success("Öğrenci aktifleştirildi");
+    },
+  });
+}
+
+/** Mola modu (yaz molası): takibi duraklat + ölü rezervi serbest bırak. */
+export function usePauseStudent(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<StudentPauseResult>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<StudentPauseResult>>(
+        `/api/v2/teacher/students/${studentId}/pause`,
+        { method: "POST" },
+      ),
+    onError: (err) => showError(err, "Mola moduna alınamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const n = res.data.released_tests;
+      toast.success(
+        n > 0
+          ? `Yaz molası açıldı — ${n} test rezervi serbest bırakıldı`
+          : "Yaz molası açıldı — uyarılar durduruldu",
+      );
+    },
+  });
+}
+
+/** Mola modunu kapat — takibe devam et (uyarılar geri gelir). */
+export function useResumeStudent(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<StudentPauseResult>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<StudentPauseResult>>(
+        `/api/v2/teacher/students/${studentId}/resume`,
+        { method: "POST" },
+      ),
+    onError: (err) => showError(err, "Takibe devam edilemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Takibe devam edildi");
     },
   });
 }

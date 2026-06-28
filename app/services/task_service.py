@@ -205,6 +205,73 @@ def reconcile_past_reservations(
     return {"released_tests": released_tests, "released_items": released_items}
 
 
+def reconcile_all_active_reservations(
+    db: Session, *, today: date | None = None,
+) -> dict:
+    """Günlük cron: rezervli HER öğrencide 'ölü rezervi' otomatik serbest bırak.
+
+    Koç yeni program/görev-ekle/devret yapmasa bile (yaz tatili veya program-arası
+    boşluk) ölü rezerv birikmesin. Her öğrenci için cutoff = aktif program start
+    (varsa) yoksa BU HAFTANIN Pazartesi'si — `create_program` ile AYNI mantık
+    (cari hafta korunur, yalnız geçmiş haftalar serbest kalır). Yalnız
+    `reserved_count>0` olan öğrenciler taranır (verimli). reconcile idempotent +
+    release-only → tekrar çalışması güvenli.
+
+    Returns: {students_scanned, students_released, released_tests, released_items}.
+    """
+    from datetime import timedelta as _td
+
+    from app.services.weekly_program_service import get_active_program
+
+    if today is None:
+        today = date.today()
+    this_monday = today - _td(days=today.weekday())
+
+    student_ids = [
+        sid for (sid,) in (
+            db.query(StudentBook.student_id)
+            .join(SectionProgress, SectionProgress.student_book_id == StudentBook.id)
+            .filter(SectionProgress.reserved_count > 0)
+            .distinct()
+            .all()
+        )
+    ]
+    released_tests = 0
+    released_items = 0
+    students_released = 0
+    for sid in student_ids:
+        active = get_active_program(db, student_id=sid, today=today)
+        cutoff = active.start_date if active else this_monday
+        res = reconcile_past_reservations(db, student_id=sid, cutoff_date=cutoff)
+        if res["released_items"] > 0:
+            students_released += 1
+            released_tests += res["released_tests"]
+            released_items += res["released_items"]
+    return {
+        "students_scanned": len(student_ids),
+        "students_released": students_released,
+        "released_tests": released_tests,
+        "released_items": released_items,
+    }
+
+
+def release_due_reservations_for_pause(
+    db: Session, *, student_id: int, today: date | None = None,
+) -> dict:
+    """Mola moduna (yaz molası) geçişte: BUGÜNE KADARKİ (date <= today) yapılmamış,
+    yayında görevlerin ölü rezervini hemen serbest bırak. cutoff = today + 1 gün
+    (bugün dahil) → cari haftanın bekleyen rezervleri de düşer (koç takibi
+    duraklattı). GELECEK tarihli görevlerin rezervi KORUNUR (gerçek plan).
+    İdempotent (reservation_released_at işaretli kalemler tekrar iade edilmez)."""
+    from datetime import timedelta as _td
+
+    if today is None:
+        today = date.today()
+    return reconcile_past_reservations(
+        db, student_id=student_id, cutoff_date=today + _td(days=1),
+    )
+
+
 def list_carryover_candidates(
     db: Session,
     *,
