@@ -87,8 +87,8 @@ export default function TeacherStudentDevRoute() {
     onSuccess: (data) => qc.setQueryData(teacherDevKeys.insight(sid), data),
     onError: (e) => {
       const code = e instanceof ApiError ? e.code : null;
-      if (code === "plan_upgrade_required") Alert.alert("Ücretli pakette", "Yapay zekâ içgörüsü ücretli pakette açıktır. Profil → Paketim'den yükseltebilirsin.");
-      else if (code === "ai_credit_exhausted") Alert.alert("Kredi bitti", "Bu ay yapay zekâ kredin doldu. Kesintisiz devam için paketini yükselt.");
+      if (code === "plan_upgrade_required") Alert.alert("Premium özellik", "Yapay zekâ içgörüsü premium pakette açıktır.");
+      else if (code === "ai_credit_exhausted") Alert.alert("Kredi bitti", "Bu ay yapay zekâ kredin doldu.");
       else if (code === "not_enough_data") Alert.alert("Seans gerekli", "İçgörü için en az bir seans kaydı gerekir. Önce 'Seanslar' sekmesinden seans ekle.");
       else if (code === "ai_unavailable") Alert.alert("Yapay zekâ şu an kullanılamıyor", "Lütfen birkaç dakika sonra tekrar dene.");
       else Alert.alert("Oluşturulamadı", e instanceof ApiError ? e.message : "İşlem başarısız.");
@@ -104,7 +104,7 @@ export default function TeacherStudentDevRoute() {
   function onGenerateInsight() {
     const c = consentQ.data;
     if (c && !c.ai_premium) {
-      Alert.alert("Ücretli pakette", "Yapay zekâ içgörüsü ücretli pakette açıktır. Profil → Paketim'den yükseltebilirsin.");
+      Alert.alert("Premium özellik", "Yapay zekâ içgörüsü premium pakette açıktır.");
       return;
     }
     if (c && !c.consented) {

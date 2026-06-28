@@ -74,8 +74,8 @@ export function DictateButton({
       else Alert.alert("Anlaşılamadı", "Ses metne çevrilemedi, daha net konuşup tekrar dene.");
     } catch (e) {
       const code = e instanceof ApiError ? e.code : null;
-      if (code === "plan_upgrade_required") Alert.alert("Ücretli pakette", "Sesli dikte ücretli pakette açıktır. Profil → Paketim'den yükseltebilirsin.");
-      else if (code === "ai_credit_exhausted") Alert.alert("Kredi bitti", "Bu ay yapay zekâ kredin doldu. Kesintisiz devam için paketini yükselt.");
+      if (code === "plan_upgrade_required") Alert.alert("Premium özellik", "Sesli dikte premium pakette açıktır.");
+      else if (code === "ai_credit_exhausted") Alert.alert("Kredi bitti", "Bu ay yapay zekâ kredin doldu.");
       else if (code === "consent_required") Alert.alert("Onay gerekli", "Sesli dikte için önce açık rıza vermelisin.");
       else if (code === "voice_unreadable") Alert.alert("Anlaşılamadı", "Ses metne çevrilemedi, daha net konuşup tekrar dene.");
       else if (code === "ai_unavailable") Alert.alert("Yapay zekâ kullanılamıyor", "Lütfen birkaç dakika sonra tekrar dene.");

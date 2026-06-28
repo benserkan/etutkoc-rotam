@@ -6,20 +6,11 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PlanView } from "@/components/teacher/plan-view";
 import { ApiError } from "@/lib/api";
-import { getTeacherPlan, requestTeacherSubscription, teacherMiscKeys, upgradeTeacherPlan } from "@/lib/teacher";
+import { getTeacherPlan, requestTeacherSubscription, teacherMiscKeys } from "@/lib/teacher";
 
 export default function TeacherPlanRoute() {
   const qc = useQueryClient();
   const q = useQuery({ queryKey: teacherMiscKeys.plan, queryFn: getTeacherPlan });
-
-  const upMut = useMutation({
-    mutationFn: (plan: string) => upgradeTeacherPlan(plan),
-    onSuccess: () => qc.invalidateQueries({ queryKey: teacherMiscKeys.plan }),
-    onError: (e) => {
-      const msg = e instanceof ApiError ? e.message : "İşlem başarısız";
-      Alert.alert("İşlem başarısız", msg);
-    },
-  });
 
   const subMut = useMutation({
     mutationFn: (v: { plan: string; cycle: string }) => requestTeacherSubscription(v.plan, v.cycle),
@@ -61,8 +52,7 @@ export default function TeacherPlanRoute() {
       ) : (
         <PlanView
           data={q.data}
-          busy={upMut.isPending || subMut.isPending}
-          onUpgrade={(code) => upMut.mutate(code)}
+          busy={subMut.isPending}
           onRequestSubscription={(plan, cycle) => subMut.mutate({ plan, cycle })}
           refreshing={q.isRefetching}
           onRefresh={() => q.refetch()}
