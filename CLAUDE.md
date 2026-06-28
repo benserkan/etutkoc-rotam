@@ -6,6 +6,81 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## Rezerv yaşam döngüsü + Kitaplık temizliği — Faz 0/1a/1b CANLI, Faz 2/3 sırada (2026-06-28, commit `977c175`)
+
+**Bağlam (kullanıcı, Elif/student 34 Kitaplar ekranı):** (1) yaz dönemine girildi,
+bazı kitaplar program-dışı çözülüp bitti ama sisteme işlenmedi; koç kitaplığı
+temizlemek istiyor. (2) 10→11 sınıf geçişinde eski sınıf kitapları kitaplıkta
+kalıyor → zamanla yönetilemez. (3) Elif hâlâ "Rezerv 2/3" gösteriyor; koç "düşmesi
+gerekirdi" diyor → rezerv tutma/serbest bırakma algoritmasının her noktası kontrol
+edilsin. Önce **ihtiyaç analizi** istendi.
+
+**Analiz bulguları (kodla + prod read-only teşhisle kanıtlı):**
+- Rezerv serbest bırakma **tamamen olay-güdümlü**: yalnız (a) `create_program`,
+  (b) görev-ekle kenar çubuğu (`weekly_plan.sidebar_items`), (c) carryover GET/POST
+  → `reconcile_past_reservations`. **Zaman/cron tabanlı serbest bırakma YOKtu.** cutoff
+  = aktif program start (yoksa bu haftanın Pazartesi'si) → cari hafta korunur (doğru).
+- **Muhasebe SAĞLAM**: `diagnose_elif_reserves.py --all` (release-aware; eski
+  `diagnose_section_progress_drift.py` BAYAT — `reservation_released_at`'i saymıyor,
+  yanlış-pozitif drift verir). Prod: **drift 0, taslak-kilit 0**. AMA 4 öğrencide
+  **64 ÖLÜ rezerv** takılıydı (yaz boyunca hiç tetik çalışmadı). Elif'in 5'i ise
+  **cari hafta (06-22) taskleri** = doğru tutuluyor (bug değil); 06-29'da düşerdi.
+- **Yan etki:** kitap "Kaldır" ucu `reserved_count>0` olunca 409 bloke → takılı ölü
+  rezerv kitaplık temizliğini de kilitliyordu.
+- **Kitaplık modeli:** `StudentBook`'ta arşiv/sınıf/yıl etiketi YOK; sınıf yükseltme
+  (`grade_advance.apply`) kitaplara dokunmaz → eski kitaplar kalır. "Kaldır" = sert
+  silme (geri alınamaz, rezervle bloke). Yaz-tekrar nüansı → körü körüne silme YANLIŞ.
+
+**Kullanıcı kararları (AskUserQuestion):** rezerv = **günlük cron + mola modu** ·
+kitaplık temizleme = **arşiv (geri alınabilir)** · başlangıç = **önce Elif teşhisi**.
+
+- **Faz 0 — teşhis (CANLI doğrulandı):** `scripts/diagnose_elif_reserves.py`
+  (`--student-id` / `--name` detay + `--all` sistem-geneli release-aware tarama).
+  Prod'da çalıştırıldı (docker exec lgs-web), yukarıdaki bulgular kanıtlandı.
+- **Faz 1a — günlük ölü-rezerv cron'u (CANLI):** `task_service.reconcile_all_active_
+  reservations(today)` (rezervli her öğrenciyi tarar; per-öğrenci cutoff = aktif
+  program start / bu Pazartesi — `create_program` ile AYNI; idempotent + release-only)
+  + `cron_jobs.release_dead_reservations` + JOB_REGISTRY. **Migration `t4u7x0y1x33t`**
+  (← `s2t5v8w9v11s`): cron seed (günlük 04:10 UTC; `enabled` bind-param `:e=True` —
+  Postgres bool dersi, literal 1 DatatypeMismatch verir). Prod: worker ilk tick'te
+  catch-up çalıştırdı → **64 ölü rezerv serbest** (sistem 131→67 rezerv, ölü 64→0,
+  drift 0). Ölü rezerv düşünce kitap "Kaldır" kilidi de otomatik açılır.
+- **Faz 1b — Mola modu / yaz molası (CANLI, MIGRATION YOK):** mevcut `is_paused`
+  altyapısı yeniden kullanıldı (`is_paused`/`paused_at`/`pause_reason`/`pause_user`/
+  `resume_user` + `_all_parent_student_pairs` zaten paused veli cron'larını atlıyordu).
+  - `pause.REASON_SUMMER_BREAK="summer_break"` (maybe_auto_resume yalnız `auto_*`
+    resume eder → öğrenci giriş yapsa bile mola sürer).
+  - `task_service.release_due_reservations_for_pause` (cutoff=bugün+1 → cari hafta
+    DAHİL serbest; gelecek görevler korunur) — Elif'i anında temizler + Kaldır açar.
+  - **`analytics.generate_warnings` paused→`[]` TEK chokepoint**: `student_snapshot`
+    bunu kullandığından durum özeti + öğrenci listesi rengi + uyarı akışı + rozet
+    hepsi susar. Dashboard fleet + liste risk drilldown ayrıca paused→"ok".
+  - Endpoint'ler `POST /teacher/students/{id}/pause` + `/resume` (sahiplik 404;
+    `StudentPauseResult` = brief + released_tests/items; `_invalidate_for_students`
+    books dahil → Kaldır anında açılır). Mevcut Jinja `pause-alerts` AYRI (dead code).
+  - **UI** (`student-tabs.tsx`): başlık "Yaz molası/Takibe devam" butonu (onaylı,
+    rezerv serbest uyarısıyla) + "Yaz molasında" rozeti; Durum Özeti'nde mola bandı
+    (verdict+uyarı+pozitif gizli); liste satırında "molada" rozeti. `is_paused`
+    StudentBriefProfile + TeacherStudentListItem'a eklendi.
+- **Test:** `test_summer_break_reserve_cron.py` **13/13** (cron past düşürür/cari
+  korur/idempotent · mola cari haftayı da serbest · uyarı susar/geri gelir · resume
+  rezervi geri yüklemez). Regresyon: carryover 20 · teacher_read 12 · teacher_students
+  14 · warning_ack 11 · weekly_plan 14 · card_consistency 23 · alert_correctness 9 ·
+  risk_grace 6 GREEN. tsc/eslint temiz. (run_gorev_checks'teki itemless_solved 0/0
+  ÖNCEDEN bozuk — ilgisiz.)
+- **CANLI doğrulama (2026-06-28):** prod head=`t4u7x0y1x33t` · cron seed enabled
+  (success) · 64 ölü rezerv temizlendi · pause/resume 401 anon · site/login 200.
+- **Elif notu:** 5 rezervi cari hafta → cron'la **06-29** düşer; **bugün** istenirse
+  Elif'e "Yaz molası" anında temizler.
+- **MOBİL:** Faz 1a backend → mobil otomatik faydalanır. Mola modu pause/resume
+  uçları canlı; **mobil koç UI toggle'ı eklenmedi** (kolay follow-up, mobil-only, deploy yok).
+- **SIRADA — Faz 2 (kitaplık arşiv) + Faz 3 (sınıf yükseltmede arşiv checklist'i):**
+  `StudentBook.archived_at` (soft, geri alınabilir) + "Bitti/Arşivle" + "Arşivlenenler"
+  filtresi; sınıf yükseltmede "eski sınıf kitaplarını arşivle?" tek-tek seçimli
+  (yaz-tekrar nüansına saygı, körü körüne silme yok). [[feedback-holistic-change-propagation]]
+
+---
+
 ## Kitap müfredat eşleştirme iyileştirme + TYT/AYT sınav omurgası — 2026-06-24, CANLI (commit `2a8fffb`)
 
 **Bağlam (kullanıcı, Efe TYT Matematik kitabı):** 4K TYT Matematik kitabı eklendi
