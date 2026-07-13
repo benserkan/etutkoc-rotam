@@ -854,6 +854,28 @@ function DetailDialog({
   );
 }
 
+function SummaryStat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone: "emerald" | "rose" | "cyan";
+}) {
+  const cls = {
+    emerald: "text-emerald-700 dark:text-emerald-300",
+    rose: "text-rose-700 dark:text-rose-300",
+    cyan: "text-cyan-700 dark:text-cyan-300",
+  }[tone];
+  return (
+    <div className="rounded-md border border-border bg-card px-2 py-2">
+      <div className={cn("text-xl font-semibold tabular-nums", cls)}>{value}</div>
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+    </div>
+  );
+}
+
 function AttemptButtons({ id, isDue }: { id: number; isDue: boolean }) {
   const attempt = useAttemptWrongQuestion();
   const opts: Array<{ rating: 1 | 2 | 3 | 4; label: string; cls: string }> = [
@@ -911,13 +933,17 @@ function ResolveDialog({
   // Kuyruk mount anında dondurulur (dialog yalnız açıkken mount edilir) —
   // attempt sonrası liste değişse de sıra şaşmaz.
   const [queue] = React.useState<WrongQuestionItem[]>(() => items);
+  // Oturum sonucu — kuyruk bitince ÖZET gösterilir. (Eskiden dialog sessizce
+  // kapanıyordu; tek soruluk kuyrukta "hiçbir şey olmadı" hissi veriyordu.)
+  const [done, setDone] = React.useState(false);
+  const [tally, setTally] = React.useState({ solved: 0, wrong: 0, closed: 0 });
 
   const current = queue[idx];
 
-  function next() {
+  function advance() {
     setReveal(false);
     if (idx + 1 >= queue.length) {
-      onClose();
+      setDone(true);
       qc.invalidateQueries({ queryKey: ["student", "wrong-questions"] });
     } else {
       setIdx(idx + 1);
@@ -926,7 +952,24 @@ function ResolveDialog({
 
   function rate(rating: 1 | 2 | 3 | 4) {
     if (!current) return;
-    attempt.mutate({ id: current.id, body: { rating } }, { onSuccess: next });
+    attempt.mutate(
+      { id: current.id, body: { rating } },
+      {
+        onSuccess: (res) => {
+          setTally((t) => ({
+            solved: t.solved + (rating >= 3 ? 1 : 0),
+            wrong: t.wrong + (rating === 1 ? 1 : 0),
+            closed: t.closed + (res.data.status === "kapandi" ? 1 : 0),
+          }));
+          advance();
+        },
+      },
+    );
+  }
+
+  function finish() {
+    onClose();
+    qc.invalidateQueries({ queryKey: ["student", "wrong-questions"] });
   }
 
   const rateOpts: Array<{ rating: 1 | 2 | 3 | 4; label: string; cls: string }> = [
@@ -947,10 +990,29 @@ function ResolveDialog({
             Yeniden çözme · {Math.min(idx + 1, queue.length)}/{queue.length}
           </DialogTitle>
         </DialogHeader>
-        {!current ? (
-          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
-            Kuyruk boş — hepsi bu kadar! 🎉
-          </p>
+        {done || !current ? (
+          /* Oturum özeti — ne yaptığın açıkça görünür */
+          <div className="px-6 py-8 text-center">
+            <CheckCircle2 className="mx-auto size-10 text-emerald-500" aria-hidden />
+            <h3 className="mt-3 text-base font-semibold text-foreground">
+              Tur bitti
+            </h3>
+            <div className="mx-auto mt-4 grid max-w-sm grid-cols-3 gap-3">
+              <SummaryStat label="çözdün" value={tally.solved} tone="emerald" />
+              <SummaryStat label="yine yanlış" value={tally.wrong} tone="rose" />
+              <SummaryStat label="kapandı" value={tally.closed} tone="cyan" />
+            </div>
+            <p className="mx-auto mt-4 max-w-sm text-xs text-muted-foreground">
+              {tally.closed > 0
+                ? "Kapanan sorular arşivde “Kapanan” filtresinde. Diğerleri, aradan zaman geçince tekrar karşına gelecek."
+                : tally.solved > 0
+                  ? "Bir doğru çözüm daha yaptın. Kapanması için aradan zaman geçmiş ikinci bir doğru çözüm gerekiyor — sistem seni çağıracak."
+                  : "Sorun değil. Sistem bu soruları daha sık karşına getirecek; takıldığın yerde koçunun açıklamasına bakabilirsin."}
+            </p>
+            <Button className="mt-5" onClick={finish}>
+              Tamam
+            </Button>
+          </div>
         ) : (
           <>
             <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
@@ -1038,7 +1100,7 @@ function ResolveDialog({
               <button
                 type="button"
                 className="mt-2 text-xs text-muted-foreground underline-offset-2 hover:underline"
-                onClick={next}
+                onClick={advance}
               >
                 Şimdilik atla →
               </button>
