@@ -54,7 +54,7 @@ export default function InstitutionQuotaScreen() {
             </Section>
           ) : null}
 
-          <Banner kind="info">Limit dolarsa yeni ekleme engellenir. Yükseltme için &quot;Hesap Ayarları&quot; ekranından plan talebi oluştur.</Banner>
+          <Banner kind="info">Limit dolarsa yeni ekleme engellenir.</Banner>
         </>
       )}
     </InstitutionScreen>

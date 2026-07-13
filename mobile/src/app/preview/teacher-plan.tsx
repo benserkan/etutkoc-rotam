@@ -21,7 +21,7 @@ const MOCK: TeacherPlanResponse = {
 export default function TeacherPlanPreview() {
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
-      <PlanView data={MOCK} busy={false} />
+      <PlanView data={MOCK} />
     </SafeAreaView>
   );
 }

@@ -1,28 +1,16 @@
 import { Ionicons } from "@expo/vector-icons";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { router } from "expo-router";
-import { ActivityIndicator, Alert, Pressable, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { PlanView } from "@/components/teacher/plan-view";
-import { ApiError } from "@/lib/api";
-import { getTeacherPlan, requestTeacherSubscription, teacherMiscKeys } from "@/lib/teacher";
+import { getTeacherPlan, teacherMiscKeys } from "@/lib/teacher";
 
+// 3.1.1 notu: bu rota yalnız paket DURUMU gösterir; yükseltme talebi/satın alma
+// akışı mobilde yok (App Review 2026-06-30 reddi sonrası kaldırıldı — plan-view.tsx).
 export default function TeacherPlanRoute() {
-  const qc = useQueryClient();
   const q = useQuery({ queryKey: teacherMiscKeys.plan, queryFn: getTeacherPlan });
-
-  const subMut = useMutation({
-    mutationFn: (v: { plan: string; cycle: string }) => requestTeacherSubscription(v.plan, v.cycle),
-    onSuccess: (res) => {
-      qc.invalidateQueries({ queryKey: teacherMiscKeys.plan });
-      Alert.alert(res.already_pending ? "Talebin zaten alınmış" : "Talebin alındı", res.message);
-    },
-    onError: (e) => {
-      const msg = e instanceof ApiError ? e.message : "İşlem başarısız";
-      Alert.alert("İşlem başarısız", msg);
-    },
-  });
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
@@ -50,13 +38,7 @@ export default function TeacherPlanRoute() {
           </Pressable>
         </View>
       ) : (
-        <PlanView
-          data={q.data}
-          busy={subMut.isPending}
-          onRequestSubscription={(plan, cycle) => subMut.mutate({ plan, cycle })}
-          refreshing={q.isRefetching}
-          onRefresh={() => q.refetch()}
-        />
+        <PlanView data={q.data} refreshing={q.isRefetching} onRefresh={() => q.refetch()} />
       )}
     </SafeAreaView>
   );

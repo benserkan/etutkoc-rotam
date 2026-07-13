@@ -348,7 +348,7 @@ export function SessionsTab({ studentId }: { studentId: number }) {
     try {
       const c = await qc.fetchQuery({ queryKey: ["teacher", "ai-consent"], queryFn: getTeacherAiConsent, staleTime: 60_000 });
       if (!c.ai_premium) {
-        Alert.alert("Premium özellik", "Sesli dikte premium pakette açıktır.");
+        Alert.alert("Kullanılamıyor", "Sesli dikte bu hesapta kapalı.");
         return false;
       }
       if (c.consented) return true;

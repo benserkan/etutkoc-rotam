@@ -32,7 +32,7 @@ const GROUPS: { title: string; items: Item[] }[] = [
     items: [
       { label: "Kredi Kullanımı", sub: "Yapay zekâ kredi tüketimi", icon: "flash-outline", path: "/institution-usage" },
       { label: "Limitler", sub: "Koç/öğrenci kotaları", icon: "speedometer-outline", path: "/institution-quota" },
-      { label: "Hesap Ayarları", sub: "Paket + yükseltme talebi", icon: "settings-outline", path: "/institution-subscription" },
+      { label: "Hesap Ayarları", sub: "Paket durumu", icon: "settings-outline", path: "/institution-subscription" },
     ],
   },
   {

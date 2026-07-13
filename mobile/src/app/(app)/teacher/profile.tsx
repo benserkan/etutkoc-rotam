@@ -37,7 +37,7 @@ export default function TeacherProfileScreen() {
               <Ionicons name="diamond-outline" size={20} color="#0e7490" />
               <View>
                 <Text className="text-[15px] font-medium text-slate-900">Paketim</Text>
-                <Text className="mt-0.5 text-xs text-slate-500">Plan, yapay zekâ kredisi, yükseltme</Text>
+                <Text className="mt-0.5 text-xs text-slate-500">Plan durumu + yapay zekâ kredisi</Text>
               </View>
             </View>
             <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
