@@ -15,6 +15,35 @@ import { LandingClient } from "@/components/landing/landing-client";
  */
 export const dynamic = "force-dynamic";
 
+/**
+ * Google İşletme Profili / yerel arama eşleşmesi için yapılandırılmış işletme
+ * verisi (schema.org JSON-LD). Değerler `app/legal_info.py` COMPANY sözlüğünün
+ * aynasıdır — resmi bilgi değişirse iki yer birlikte güncellenir.
+ */
+const ORG_JSONLD = {
+  "@context": "https://schema.org",
+  "@type": ["LocalBusiness", "EducationalOrganization"],
+  "@id": "https://rotam.etutkoc.com/#organization",
+  name: "Etütkoç Akademi Kişisel Gelişim",
+  legalName:
+    "ETÜTKOÇ Akademi Kişisel Gelişim Özel Eğitim ve Öğretim Hizmetleri Limited Şirketi",
+  url: "https://rotam.etutkoc.com",
+  logo: "https://rotam.etutkoc.com/etutkoc-logo.png",
+  image: "https://rotam.etutkoc.com/etutkoc-logo.png",
+  telephone: "+905056738561",
+  email: "destek@etutkoc.com",
+  address: {
+    "@type": "PostalAddress",
+    streetAddress:
+      "İskenderpaşa Mah. Gazipaşa Cad. Timurcıoğlu Apartmanı No: 12 / İç Kapı No: 6",
+    addressLocality: "Ortahisar",
+    addressRegion: "Trabzon",
+    addressCountry: "TR",
+  },
+  areaServed: "Trabzon",
+  knowsAbout: ["LGS koçluğu", "YKS koçluğu", "öğrenci koçluğu", "eğitim danışmanlığı"],
+};
+
 export default async function HomePage() {
   let role: UserRole | null = null;
   try {
@@ -27,5 +56,13 @@ export default async function HomePage() {
   // redirect() NEXT_REDIRECT fırlatır → try/catch DIŞINDA çağrılmalı
   if (role) redirect(roleHome(role));
 
-  return <LandingClient />;
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(ORG_JSONLD) }}
+      />
+      <LandingClient />
+    </>
+  );
 }
