@@ -10,6 +10,7 @@ import {
   BarChart3,
   Bell,
   BookOpenCheck,
+  BookX,
   CalendarDays,
   CalendarRange,
   ChevronDown,
@@ -55,6 +56,7 @@ const STUDENT_NAV: NavLink[] = [
   { href: "/student/day", label: "Bugün", icon: CalendarDays, badgeKey: "today_open_count" },
   { href: "/student/week", label: "Hafta", icon: CalendarRange },
   { href: "/student/books", label: "Kitaplar", icon: BookOpenCheck },
+  { href: "/student/wrong-questions", label: "Yanlışlarım", icon: BookX },
   { href: "/student/topics", label: "Konu Performansı", icon: Crosshair },
   { href: "/student/requests", label: "Talepler", icon: ListChecks, badgeKey: "pending_count" },
   { href: "/student/surveys", label: "Anketler", icon: ClipboardList },
@@ -65,8 +67,8 @@ const STUDENT_NAV: NavLink[] = [
 ];
 
 // Masaüstünde menü tek satıra sığsın diye: ilk 6 sık kullanılan link yatay
-// kalır; kalan 4 (Odak/Çalışma DNA/Tekrar/Hedefler) "Daha fazla" taşma
-// menüsüne iner. Mobil drawer tüm STUDENT_NAV'ı düz liste gösterir (değişmez).
+// kalır; kalanlar (Anketler/Odak/Çalışma DNA/Tekrar/Hedefler) "Daha fazla"
+// taşma menüsüne iner. Mobil drawer tüm STUDENT_NAV'ı düz liste gösterir.
 const STUDENT_NAV_PRIMARY = STUDENT_NAV.slice(0, 6);
 const STUDENT_NAV_MORE = STUDENT_NAV.slice(6);
 

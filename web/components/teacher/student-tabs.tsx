@@ -44,6 +44,7 @@ import { StudentAnalyticsPanel } from "@/components/teacher/student-analytics-pa
 import { StudentExamsPanel } from "@/components/teacher/student-exams-panel";
 import { StudentSessionsPanel } from "@/components/teacher/student-sessions-panel";
 import { StudentSurveysPanel } from "@/components/teacher/student-surveys-panel";
+import { StudentWrongsPanel } from "@/components/teacher/student-wrongs-panel";
 import { StudentParentsPanel } from "@/components/teacher/student-parents-panel";
 import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
 import { TopicPerformancePanel } from "@/components/shared/topic-performance-panel";
@@ -55,6 +56,7 @@ type TabKey =
   | "curriculum"
   | "topics"
   | "exams"
+  | "wrongs"
   | "sessions"
   | "surveys"
   | "books"
@@ -66,6 +68,7 @@ const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "curriculum", label: "Müfredat" },
   { key: "topics", label: "Konu Performansı" },
   { key: "exams", label: "Denemeler" },
+  { key: "wrongs", label: "Yanlışlar" },
   { key: "sessions", label: "Seanslar" },
   { key: "surveys", label: "Anketler" },
   { key: "books", label: "Kitaplar" },
@@ -79,6 +82,7 @@ function isValidTab(v: string): v is TabKey {
     v === "curriculum" ||
     v === "topics" ||
     v === "exams" ||
+    v === "wrongs" ||
     v === "sessions" ||
     v === "surveys" ||
     v === "books" ||
@@ -297,6 +301,12 @@ export function StudentTabs({ studentId, initial }: Props) {
       {active === "exams" ? (
         <div role="tabpanel" id="tab-panel-exams" aria-labelledby="tab-exams">
           <StudentExamsPanel studentId={studentId} />
+        </div>
+      ) : null}
+
+      {active === "wrongs" ? (
+        <div role="tabpanel" id="tab-panel-wrongs" aria-labelledby="tab-wrongs">
+          <StudentWrongsPanel studentId={studentId} />
         </div>
       ) : null}
 

@@ -136,14 +136,38 @@ mobil Faz 4 (expo-image-picker yeni native build ister, OTA yetmez).
     me 13 · api_v1 GREEN. FastAPI dersi: multipart çoklu dosya `list[UploadFile]
     | None` DEĞİL `list[UploadFile] = File(default=[])` (union tek dosyada
     "Input should be a valid list" verir).
-- **SIRADA:** **Faz 2 (web UI):** öğrenci "Yanlışlarım" (yakalama akışı + liste/
-  filtre + yeniden çözme kartı [foto önde] + Gelişim hub kartı + deneme-sonrası
-  CTA + görev kartından "yanlış ekle") + koç öğrenci detayına "Yanlışlar" sekmesi
-  (özet analitik + koç notu). **Faz 3 (AI):** Gemini vision etiketleme (soru
-  metni OCR + aday-konu-listesinden eşleme + zorluk + Sokratik ipucu; yeni
-  UsageKind AI_WRONG_CAPTURE=2 kredi, assert_ai_premium + consent, curriculum_
-  mapping._ai_suggest deseni) + `open_wrong_topic_map`'i suggestions motoruna ek
-  sinyal olarak bağlama + KS4 seans prompt'una "en çok biriken yanlış konuları".
+- **Faz 2 — web UI ✅ CANLI (frontend-only, migration YOK):**
+  - **Öğrenci `/student/wrong-questions` "Yanlışlarım"** (`wrong-questions-client.tsx`):
+    yakalama dialog'u (çoklu foto `capture=environment` + kaynak çipleri
+    Kitabımdan[kitap→bölüm cascade `getStudentBookSections` reuse → konu otomatik]/
+    Denemeden/Diğer + hata türü çipleri + not) · sayaç çipleri + durum/ders/hata
+    filtreleri (native select) · kart grid (foto küçük görüntü + KAPANDI/YENİDEN
+    ÇÖZ rozetleri + kapanış serisi noktaları ●●) · **yeniden çözme modu** (due
+    kuyruğu kart kart: foto önde + "Takıldım — ipucu/çözümü göster" [ai_hint +
+    koç notu + çözüm fotoğrafı] + 4 sonuç butonu + atla; kuyruk mount'ta donar) ·
+    detay dialog (foto galerisi + vadesi geldiyse attempt + çözüm fotoğrafı ekleme
+    + hata türü düzeltme + sil onaylı). URL prefill `?add=1&task_id&book_id&
+    section_id` → dialog bağlamla açılır.
+  - **Girişler:** site-header STUDENT_NAV +"Yanlışlarım" (BookX, ilk-6 görünür;
+    Anketler more-menüye kaydı) · gün görev kartı ActionsMenu +"Yanlışı arşivle"
+    (ilk kitaplı kalemden bağlam URL'siyle yönlenir).
+  - **Koç:** öğrenci detayına **"Yanlışlar" sekmesi** (`student-wrongs-panel.tsx`,
+    Denemeler'den sonra): 4 KPI (açık/vadesi gelen/30g eklenen/30g KAPANAN) +
+    "en çok biriken konular" + hata türü dağılım barları + durum-filtreli liste +
+    detay dialog'unda **koç açıklaması** yazma (öğrenci yeniden çözerken görür).
+  - lib: `types/wrong-question.ts` + `api/wrong-questions.ts` (keys + multipart
+    create/addImage bare-fetch) + `hooks/use-wrong-question-mutations.ts`
+    (create/update/attempt/addImage/delete/coachNote; kapanışta kutlama toast'ı).
+  - **React lint dersleri:** detay dialog'u state'e ITEM kopyalamak yerine
+    `detailId` + listeden türetme (set-state-in-effect kuralı; silinince dialog
+    kendiliğinden kapanır) · reset-on-open için dialog yalnız açıkken mount +
+    `useState(() => ...)` mount-donması. tsc + eslint temiz; backend smoke 32/32
+    yeniden yeşil.
+- **SIRADA:** **Faz 3 (AI):** Gemini vision etiketleme (soru metni OCR +
+  aday-konu-listesinden eşleme + zorluk + Sokratik ipucu; yeni UsageKind
+  AI_WRONG_CAPTURE=2 kredi, assert_ai_premium + consent, curriculum_mapping.
+  _ai_suggest deseni) + `open_wrong_topic_map`'i suggestions motoruna ek sinyal
+  olarak bağlama + KS4 seans prompt'una "en çok biriken yanlış konuları".
   **Faz 4 (mobil):** kamera akışı — expo-image-picker → YENİ EAS BUILD.
   **Faz 5 (ops.):** veli haftalık raporuna "bu hafta N yanlış kapandı" metriği.
 

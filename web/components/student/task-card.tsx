@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import {
+  BookX,
   CheckCircle2,
   CircleDashed,
   Clock,
@@ -635,6 +636,20 @@ function ActionsMenu({
             onClick={() => {
               setOpen(false);
               onOpenComm("question", task);
+            }}
+          />
+          <MenuItem
+            label="Yanlışı arşivle"
+            icon={<BookX className="size-3.5" />}
+            onClick={() => {
+              setOpen(false);
+              // Yanlış Soru Arşivi'ne bağlamlı git — ilk kitaplı kalemden
+              // ders+konu otomatik etiketlenir (bölümsüz görevde yalnız görev bağı).
+              const first = task.items.find((it) => it.section_id != null);
+              const sp = new URLSearchParams({ add: "1", task_id: String(task.id) });
+              if (first?.book_id) sp.set("book_id", String(first.book_id));
+              if (first?.section_id) sp.set("section_id", String(first.section_id));
+              window.location.href = `/student/wrong-questions?${sp.toString()}`;
             }}
           />
         </div>
