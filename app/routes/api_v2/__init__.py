@@ -50,6 +50,7 @@ from app.routes.api_v2 import support as v2_support
 from app.routes.api_v2 import surveys as v2_surveys
 from app.routes.api_v2 import teacher as v2_teacher
 from app.routes.api_v2 import weekly_plan as v2_weekly_plan
+from app.routes.api_v2 import wrong_questions as v2_wrong_questions
 
 
 router = APIRouter(prefix="/api/v2", tags=["api-v2"])
@@ -81,6 +82,7 @@ router.include_router(v2_support.router)
 router.include_router(v2_messaging.router)
 router.include_router(v2_quick_access.router)
 router.include_router(v2_surveys.router)
+router.include_router(v2_wrong_questions.router)
 router.include_router(v2_testimonials_public.router)
 router.include_router(v2_admin_testimonials.router)
 router.include_router(v2_admin_conversion.router)

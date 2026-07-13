@@ -256,6 +256,24 @@ from app.models.support_request import (
     SupportRequestMessage,
 )
 from app.models.system_secret import SystemSecret
+from app.models.wrong_question import (
+    WQ_CLOSE_STREAK,
+    WQ_ERROR_LABELS_TR,
+    WQ_ERROR_TYPES,
+    WQ_IMAGE_KINDS,
+    WQ_IMAGE_QUESTION,
+    WQ_IMAGE_SOLUTION,
+    WQ_SOURCE_DENEME,
+    WQ_SOURCE_DIGER,
+    WQ_SOURCE_GOREV,
+    WQ_SOURCES,
+    WQ_STATUS_ACIK,
+    WQ_STATUS_KAPANDI,
+    WQ_STATUSES,
+    WQ_STREAK_MIN_GAP_HOURS,
+    WrongQuestion,
+    WrongQuestionImage,
+)
 from app.models.task_template import TaskTemplate, TaskTemplateItem
 from app.models.warning_state import WarningState
 from app.models.panel_behavior import PanelRouteStat, PanelVisitEvent
@@ -531,6 +549,22 @@ __all__ = [
     "CONTACT_STATUS_LABELS_TR",
     "CONTACT_SOURCE_LABELS_TR",
     "SystemSecret",
+    "WQ_CLOSE_STREAK",
+    "WQ_ERROR_LABELS_TR",
+    "WQ_ERROR_TYPES",
+    "WQ_IMAGE_KINDS",
+    "WQ_IMAGE_QUESTION",
+    "WQ_IMAGE_SOLUTION",
+    "WQ_SOURCE_DENEME",
+    "WQ_SOURCE_DIGER",
+    "WQ_SOURCE_GOREV",
+    "WQ_SOURCES",
+    "WQ_STATUS_ACIK",
+    "WQ_STATUS_KAPANDI",
+    "WQ_STATUSES",
+    "WQ_STREAK_MIN_GAP_HOURS",
+    "WrongQuestion",
+    "WrongQuestionImage",
     "SessionCaptureSource",
     "WeeklyProgram",
     "COACH_PAYMENT_METHOD_LABELS",

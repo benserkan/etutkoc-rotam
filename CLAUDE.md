@@ -6,6 +6,49 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## App Store 3.1.1 ret #2 → mobil tamamen durum-only + build 6 RESUBMIT (2026-07-13, SONUÇ BEKLENİYOR)
+
+**Bağlam:** iOS 1.0(5) gönderimi 2026-06-30'da Guideline 3.1.1 ile REDDEDİLDİ —
+önceki "fiyatsız yükseltme talebi" uyumu (commit `4577222`) YETMEDİ: Apple,
+"Yükseltme talebi gönder" butonunu + "ödeme ve aktivasyon uygulama dışında
+düzenlenir" metnini uygulama-dışı ödemeye yönlendirme saydı (incelemeci ekran
+görüntüleriyle Paketim ekranını işaretledi). TR mağazasında kural: ya IAP ya da
+uygulamada satın almaya dair HİÇBİR şey.
+- **Çözüm (commit `21f187d`, 10 dosya, mobil-only):** B2B SaaS deseni (Slack/
+  Notion) — mobil YALNIZ durum gösterir. Kaldırılanlar: koç Paketim yükseltme
+  kartı + satış e-postası (`plan-view.tsx` + rota + preview) · kurum Hesap
+  Ayarları "Planı yükselt (talep)" + FormSheet + abonelik aksiyonları (akademik
+  yıl/duraklat/garanti — web'de durur) · kota banner'ındaki "yükseltme için plan
+  talebi oluştur" · profil alt yazısı "yükseltme" · "premium pakette açıktır"
+  uyarıları → "bu hesapta kapalı" (dictate-button/sessions-tab/teacher-student-dev).
+  Web/backend ödeme akışına (iyzico) DOKUNULMADI. lib fonksiyonları
+  (requestTeacherSubscription vb.) duruyor (kullanılmıyor). Mobil tsc temiz.
+- **Build+submit BEN yaptım** (kullanıcının PowerShell'i bozuk — PATH'te
+  powershell.exe/git yok, eas oradan çalışmıyor; Git Bash'ten `npx eas-cli` ile
+  sorunsuz): iOS **1.0 (build 6)** derlendi (EAS `f7ec641d`, ~6dk) + `eas submit`
+  ile ASC'ye yüklendi (ASC API key EAS sunucularında kayıtlı — submit sorunsuz).
+- **Kullanıcı 2026-07-13:** build 6'yı seçip **Resubmit etti**. Apple'a yanıt
+  taslağı verildi (3.1.3(c) Enterprise Services argümanı — B2B koçluk yönetim
+  platformu companion app'i, uygulamada satılabilir dijital içerik yok).
+- **SIRADA:** inceleme sonucu (1-3 gün). Onay → yayına alma; yeni ret → mesaj
+  ekran görüntüsüyle devam. **Android notu:** aynı temizlik sonraki AAB/Play
+  sürümüne de otomatik gider (Play ödeme politikası da aynı şeyi yasaklıyor).
+  İleride IAP kurulursa yükseltme akışı mobile geri eklenebilir.
+
+## Google İşletme Profili desteği (2026-07-13)
+
+Kullanıcı şirketin Google "İşletmeler" (harita) bölümünde görünmesini istedi.
+Ana iş = **Google İşletme Profili kaydı (KULLANICI AKSİYONU)** — adım adım rehber
++ girilecek bilgiler + kategori önerisi (birincil "Eğitim danışmanı", ek "Koçluk
+merkezi") + hazır işletme açıklaması + video doğrulama uyarısı (kapıda TABELA
+şart) + yorum stratejisi (ilk hedef 10-15) verildi. İşletme adına anahtar kelime
+doldurma YAPMA (kural ihlali). **Kod tarafı (commit `3271063`, CANLI):**
+`web/app/page.tsx` landing'e schema.org **LocalBusiness+EducationalOrganization
+JSON-LD** eklendi (legal_info.py COMPANY aynası — resmi bilgi değişirse ikisi
+birlikte güncellenir); footer NAP zaten vardı. Prod'da doğrulandı.
+
+---
+
 ## Instagram "Kılavuz Koşucu" reklamı — Kampanya A **CANLI/AKTİF** (2026-07-12)
 
 **TÜM detay + hazır metinler + kalınan yer: `docs/reklam-kilavuz-kosucu.md`** (yeni
@@ -35,6 +78,74 @@ ULUSAL koç kitlesi** (henüz başlamadı; Trafik + UTM→Plausible).
   filtresi olarak **Diller=Türkçe** kullanıldı.
 - **DOKUNMA:** Meta portfolyodaki "Test WhatsApp Business Account" + "Etütkoç
   Akademi Koçluk Merkezi" app'i = platform Cloud API (K2) işi, reklamla ilgisiz.
+
+---
+
+## YENİ İŞ — Yanlış Soru Arşivi (YSA) — Faz 1 backend CANLI, Faz 2-5 sırada (2026-07-13, migration `u5v8y1z2y44u`)
+
+**Bağlam:** Rakip analizi (artifact 72ca6f9a; SınavKoçu'nun en güçlü özelliği
+"yanlış soru arşivi") sonrası kullanıcı #5'i seçti: "önce ihtiyaç analizi, sonra
+sıradışı bir yanlış soru arşivi". İhtiyaç analizi sunuldu + onaylandı: klasik
+yanlış defteri 5 nedenle ölür (sürtünme/düzensizlik/dönüş disiplini yok/kapanış
+ölçüsü yok/hata türü bilinmez) → 7 tasarım ilkesi: sıfır sürtünme (foto+bağlam),
+otomatik etiket (görev/bölümden konu kendiliğinden; bağlamsızda AI), hata türü
+metabilişi (5 çip), FSRS'li yeniden çözme + KAPANIŞ mekaniği (aralıklı 2 başarılı
+→ kapandı; yine yanlış → yeniden açılır), koç tanısı (konu birikimi + hata türü
+dağılımı + kapanış hızı), öneri motoruna besleme, deneme entegrasyonu.
+**Kullanıcı kararları (AskUserQuestion):** AI çözüm = SOKRATİK İPUCU (tam çözüm
+YOK) · AI etiketleme = ücretli paket + 2 kredi/foto (koç havuzu, günlük ~10/öğr
+limit; manuel etiketleme HER planda çalışır) · fazlama = önce backend+web,
+mobil Faz 4 (expo-image-picker yeni native build ister, OTA yetmez).
+
+- **Faz 1 — backend ✅ CANLI:** **Migration `u5v8y1z2y44u`** (down: t4u7x0y1x33t,
+  additive, downgrade'li): `wrong_questions` (kaynak bağları task/section/exam
+  SET NULL + subject/topic + error_type + note/coach_note + AI alanları
+  [ai_question_text/ai_hint/difficulty_guess] + durum [acik/kapandi] +
+  correct_streak/attempts + FSRS alanları [state/stability/difficulty/due_at]) +
+  `wrong_question_images` (soru/çözüm fotoğrafı, LargeBinary deferred —
+  support_attachments deseni, S3 yok).
+  - Model `app/models/wrong_question.py` (sabitler: WQ_SOURCES gorev/deneme/diger ·
+    WQ_ERROR_TYPES bilgi/islem/dikkat/sure/yorum/diger + TR etiketleri ·
+    WQ_CLOSE_STREAK=2 · WQ_STREAK_MIN_GAP_HOURS=20).
+  - Servis `wrong_question_service.py` (TEK MERKEZ): `_resolve_context` (bölüm
+    verilirse kitap atanmış mı + topic/subject otomatik türetme; task/exam
+    sahiplik 404) · create (yeni yanlış due=+1 gün — taze yanlışta cevap akılda,
+    ölçüm ertesi gün başlar; task→source=gorev, exam→deneme) · `record_attempt`
+    (FSRS compute_next reuse; rating 1=yine yanlış→streak 0 + kapalıysa YENİDEN
+    AÇILIR · ≥3=başarılı→gap≥20saat ise streak+1 · streak≥2→KAPANDI · rating 2
+    =zor→streak değişmez; aynı-gün spam streak şişirmez) · add_image (jpeg/png/
+    webp ≤6MB, ≤4 foto) · list_for_student (filtreler + counts: total/open/
+    closed/due) · coach_summary (konu birikimi açık-öncelikli + hata türü
+    dağılımı + 30g kapanış/ekleme) · `open_wrong_topic_map` (topic_id→0..1;
+    3+ açık=tam sinyal — Faz 3'te suggestions'a bağlanacak, sözleşme
+    struggling_topic_ids_map ile aynı) · `as_aware` (SQLite naive-datetime
+    normalize — fsrs deseni).
+  - Router `api_v2/wrong_questions.py` (surveys deseni, tek dosya): öğrenci
+    GET/POST list+create (multipart 0..N foto + Form bağlam) · GET/POST {id}
+    (etiket düzeltme) · POST {id}/images (kind=question|solution) · GET {id}/
+    images/{img} · POST {id}/attempt · DELETE. Koç: GET students/{id}/
+    wrong-questions + /summary · POST students/{id}/wrong-questions (seansta
+    öğrenci adına) · POST wrong-questions/{id}/coach-note · GET foto. **Veli
+    BİLİNÇLİ erişemez** (403 — özel çalışma alanı). Sahiplik dışı her şey 404.
+    invalidate: `student:wrong-questions` / `teacher:{tid}:students:{sid}:wrong-questions`.
+  - **Test `test_api_v2_wrong_questions.py` 32/32** (bağlamdan otomatik konu +
+    kaynak türetme + dosya kapıları + due kuyruğu + FSRS kapanış/yeniden açılma/
+    aynı-gün guard + etiket düzeltme + foto erişim izolasyonu [yabancı koç 404,
+    veli 403] + koç özet/koç kaydı/koç notu + öneri beslemesi sözleşmesi +
+    cascade silme). Regresyon: tenant 29 · teacher_read 12 · student_read 11 ·
+    me 13 · api_v1 GREEN. FastAPI dersi: multipart çoklu dosya `list[UploadFile]
+    | None` DEĞİL `list[UploadFile] = File(default=[])` (union tek dosyada
+    "Input should be a valid list" verir).
+- **SIRADA:** **Faz 2 (web UI):** öğrenci "Yanlışlarım" (yakalama akışı + liste/
+  filtre + yeniden çözme kartı [foto önde] + Gelişim hub kartı + deneme-sonrası
+  CTA + görev kartından "yanlış ekle") + koç öğrenci detayına "Yanlışlar" sekmesi
+  (özet analitik + koç notu). **Faz 3 (AI):** Gemini vision etiketleme (soru
+  metni OCR + aday-konu-listesinden eşleme + zorluk + Sokratik ipucu; yeni
+  UsageKind AI_WRONG_CAPTURE=2 kredi, assert_ai_premium + consent, curriculum_
+  mapping._ai_suggest deseni) + `open_wrong_topic_map`'i suggestions motoruna ek
+  sinyal olarak bağlama + KS4 seans prompt'una "en çok biriken yanlış konuları".
+  **Faz 4 (mobil):** kamera akışı — expo-image-picker → YENİ EAS BUILD.
+  **Faz 5 (ops.):** veli haftalık raporuna "bu hafta N yanlış kapandı" metriği.
 
 ---
 
