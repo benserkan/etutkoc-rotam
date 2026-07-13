@@ -27,6 +27,7 @@ class WrongQuestionItem(BaseModel):
     coach_note: str | None
     ai_question_text: str | None
     ai_hint: str | None
+    ai_tagged_at: str | None      # ISO — AI etiketlendi mi (buton gizlemek için)
     difficulty_guess: str | None
     correct_streak: int
     attempts_count: int
@@ -84,6 +85,14 @@ class TopicAccumulationOut(BaseModel):
     subject_name: str | None
     open_count: int
     closed_count: int
+
+
+class AiTagResult(BaseModel):
+    """AI etiketleme sonucu — kayıt + ne değiştiği."""
+    item: WrongQuestionItem
+    matched_topic: bool          # AI konuyu eşleyebildi mi
+    hint_created: bool           # Sokratik ipucu üretildi mi
+    credits_charged: int
 
 
 class WrongQuestionSummaryResponse(BaseModel):

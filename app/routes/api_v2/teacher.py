@@ -2060,6 +2060,22 @@ def teacher_coaching_insight_generate_v2(
             "tags": tags,
         })
     academic = _compute_session_prefill(db, student)
+    # YSA Faz 3: arşivde açık yanlışı biriken konular + hata türü dağılımı →
+    # seans gündeminin en somut girdisi ("neden yanlış yapıyor" sorusunun cevabı)
+    try:
+        from app.services import wrong_question_service as _wqs
+        wq_sum = _wqs.coach_summary(db, student.id)
+        academic["wrong_archive"] = {
+            "open": wq_sum.counts.open,
+            "closed_last_30d": wq_sum.closed_last_30d,
+            "top_topics": [
+                {"topic": t.topic_name, "subject": t.subject_name, "open": t.open_count}
+                for t in wq_sum.by_topic[:5] if t.open_count > 0
+            ],
+            "error_types": wq_sum.by_error_type,
+        }
+    except Exception:  # noqa: BLE001 — içgörü yanlış arşivi olmadan da üretilir
+        pass
 
     owner = CreditOwner.for_user(user)
     insight: dict | None = None

@@ -25,6 +25,7 @@ export interface WrongQuestionItem {
   coach_note: string | null;
   ai_question_text: string | null;
   ai_hint: string | null;
+  ai_tagged_at: string | null;
   difficulty_guess: string | null;
   correct_streak: number;
   attempts_count: number;
@@ -33,6 +34,13 @@ export interface WrongQuestionItem {
   closed_at: string | null;
   created_at: string;
   images: WrongQuestionImageRef[];
+}
+
+export interface AiTagResult {
+  item: WrongQuestionItem;
+  matched_topic: boolean;
+  hint_created: boolean;
+  credits_charged: number;
 }
 
 export interface WrongQuestionCounts {

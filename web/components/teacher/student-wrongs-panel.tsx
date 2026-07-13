@@ -9,6 +9,7 @@ import {
   Loader2,
   MessageSquarePlus,
   RotateCcw,
+  Sparkles,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -24,7 +25,10 @@ import {
   teacherWrongImageUrl,
   wrongQuestionKeys,
 } from "@/lib/api/wrong-questions";
-import { useSetCoachNote } from "@/lib/hooks/use-wrong-question-mutations";
+import {
+  useAiTagWrongQuestion,
+  useSetCoachNote,
+} from "@/lib/hooks/use-wrong-question-mutations";
 import type { WrongQuestionItem } from "@/lib/types/wrong-question";
 import { cn } from "@/lib/utils";
 
@@ -308,6 +312,7 @@ function CoachDetailDialog({
   onClose: () => void;
 }) {
   const setNote = useSetCoachNote();
+  const aiTag = useAiTagWrongQuestion("teacher");
   const [draft, setDraft] = React.useState("");
   const [lastId, setLastId] = React.useState<number | null>(null);
   // Dialog yeni kayıtla açılınca taslağı o kaydın notuyla başlat
@@ -364,6 +369,39 @@ function CoachDetailDialog({
             <p className="text-sm text-muted-foreground">
               <b className="text-foreground">Öğrencinin notu:</b> {item.note}
             </p>
+          ) : null}
+
+          {/* AI etiketleme — konu eşleme + zorluk + öğrenciye yaklaşım ipucu */}
+          {item.ai_hint ? (
+            <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-500/30 dark:bg-violet-500/10">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">
+                <Sparkles className="size-3" aria-hidden />
+                Yapay zekâ ipucu (öğrenci görüyor)
+                {item.difficulty_guess ? (
+                  <span className="ml-auto rounded bg-violet-200/60 px-1.5 py-0.5 text-[10px] font-medium normal-case text-violet-900 dark:bg-violet-500/20 dark:text-violet-200">
+                    {item.difficulty_guess}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-950 dark:text-violet-100">
+                {item.ai_hint}
+              </p>
+            </div>
+          ) : item.images.some((im) => im.kind === "question") ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
+              disabled={aiTag.isPending}
+              onClick={() => aiTag.mutate({ id: item.id })}
+            >
+              {aiTag.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Sparkles className="size-4" aria-hidden />
+              )}
+              Yapay zekâ ile etiketle (konu + yaklaşım ipucu · 2 kredi)
+            </Button>
           ) : null}
           {item.images.filter((im) => im.kind === "solution").length > 0 ? (
             <div>

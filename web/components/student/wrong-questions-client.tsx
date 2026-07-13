@@ -14,6 +14,7 @@ import {
   Loader2,
   Plus,
   RotateCcw,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -37,6 +38,7 @@ import {
 } from "@/lib/api/wrong-questions";
 import {
   useAddWrongImage,
+  useAiTagWrongQuestion,
   useAttemptWrongQuestion,
   useCreateWrongQuestion,
   useDeleteWrongQuestion,
@@ -660,6 +662,7 @@ function DetailDialog({
   const update = useUpdateWrongQuestion();
   const del = useDeleteWrongQuestion();
   const addImage = useAddWrongImage();
+  const aiTag = useAiTagWrongQuestion("student");
   const solutionRef = React.useRef<HTMLInputElement>(null);
 
   if (!item) return null;
@@ -720,6 +723,46 @@ function DetailDialog({
               Fotoğraf yok{item.note ? " — not üzerinden takip ediliyor" : ""}.
             </p>
           )}
+
+          {/* AI etiketleme (Faz 3) — konu eşleme + zorluk + yaklaşım ipucu */}
+          {qImgs.length > 0 ? (
+            item.ai_hint || item.ai_tagged_at || item.ai_question_text ? null : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
+                disabled={aiTag.isPending}
+                onClick={() => aiTag.mutate({ id: item.id })}
+              >
+                {aiTag.isPending ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <Sparkles className="size-4" aria-hidden />
+                )}
+                Yapay zekâ okusun — konuyu etiketle + yaklaşım ipucu ver
+              </Button>
+            )
+          ) : null}
+
+          {item.ai_hint ? (
+            <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 dark:border-violet-500/30 dark:bg-violet-500/10">
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-violet-800 dark:text-violet-300">
+                <Sparkles className="size-3" aria-hidden />
+                Yaklaşım ipucu
+                {item.difficulty_guess ? (
+                  <span className="ml-auto rounded bg-violet-200/60 px-1.5 py-0.5 text-[10px] font-medium normal-case text-violet-900 dark:bg-violet-500/20 dark:text-violet-200">
+                    {item.difficulty_guess}
+                  </span>
+                ) : null}
+              </div>
+              <p className="mt-0.5 whitespace-pre-wrap text-sm text-violet-950 dark:text-violet-100">
+                {item.ai_hint}
+              </p>
+              <p className="mt-1 text-[10px] text-violet-800/70 dark:text-violet-300/70">
+                Yapay zekâ çözümü vermez — yolu gösterir. Çözümü sen bul.
+              </p>
+            </div>
+          ) : null}
 
           {/* Koç açıklaması */}
           {item.coach_note ? (

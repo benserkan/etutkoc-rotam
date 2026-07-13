@@ -510,6 +510,70 @@ def coach_summary(db: Session, student_id: int) -> CoachSummary:
     return out
 
 
+def candidate_topics(db: Session, student: User, coach_id: int) -> list[dict]:
+    """AI konu eşlemesi için ADAY konular — öğrencinin GERÇEK müfredat konuları.
+
+    Kaynak: müfredat omurgası (curriculum_progress._applicable_subjects → sıralı
+    leaf topic'ler). Model yalnız bu listeden id seçebilir → uydurma konu adı
+    sisteme giremez. Kaynağı olan (kitap bölümüne eşli) konular ÖNCE gelir;
+    liste MAX_CANDIDATE_TOPICS ile kırpılır.
+    """
+    from app.services.curriculum_progress import compute_curriculum_progress
+
+    prog = compute_curriculum_progress(db, student, coach_id)
+    with_res: list[dict] = []
+    without_res: list[dict] = []
+    for s in prog.subjects:
+        for t in s.topics:
+            row = {"id": t.topic_id, "name": t.name, "subject_name": s.name}
+            (with_res if t.has_resource else without_res).append(row)
+    return with_res + without_res
+
+
+def apply_ai_tags(
+    db: Session,
+    wq: WrongQuestion,
+    result: dict,
+    *,
+    overwrite_topic: bool = False,
+) -> WrongQuestion:
+    """AI çıktısını kayda uygula (öğrenci sonradan elle düzeltebilir).
+
+    Konu: yalnız BOŞSA doldurulur (öğrencinin/koçun elle seçtiği konu ezilmez);
+    `overwrite_topic=True` ile açıkça yeniden etiketlenebilir.
+    """
+    tid = result.get("topic_id")
+    if tid is not None and (overwrite_topic or wq.topic_id is None):
+        tp = db.get(Topic, int(tid))
+        if tp is not None:
+            wq.topic_id = tp.id
+            wq.subject_id = tp.subject_id
+    qt = (result.get("question_text") or "").strip()
+    if qt:
+        wq.ai_question_text = qt
+    hint = (result.get("hint") or "").strip()
+    if hint:
+        wq.ai_hint = hint
+    diff = (result.get("difficulty") or "").strip() or None
+    if diff:
+        wq.difficulty_guess = diff
+    wq.ai_tagged_at = _now()
+    return wq
+
+
+def primary_question_image(db: Session, wq: WrongQuestion) -> WrongQuestionImage | None:
+    """AI'a gönderilecek soru fotoğrafı (ilk 'question' karesi)."""
+    return (
+        db.query(WrongQuestionImage)
+        .filter(
+            WrongQuestionImage.wrong_question_id == wq.id,
+            WrongQuestionImage.kind == WQ_IMAGE_QUESTION,
+        )
+        .order_by(WrongQuestionImage.id.asc())
+        .first()
+    )
+
+
 def open_wrong_topic_map(db: Session, student_id: int) -> dict[int, float]:
     """Öneri motoru beslemesi: topic_id → normalize 'yanlış birikimi' skoru (0..1).
 

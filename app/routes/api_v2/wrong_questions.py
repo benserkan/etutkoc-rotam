@@ -38,6 +38,7 @@ from app.models import (
 from app.routes.api_v2.dependencies import get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.wrong_question import (
+    AiTagResult,
     CoachNoteBody,
     TopicAccumulationOut,
     WrongQuestionAttemptBody,
@@ -127,6 +128,9 @@ def _to_item(wq: WrongQuestion, *, now=None) -> WrongQuestionItem:
         coach_note=wq.coach_note,
         ai_question_text=wq.ai_question_text,
         ai_hint=wq.ai_hint,
+        ai_tagged_at=(
+            svc.as_aware(wq.ai_tagged_at).isoformat() if wq.ai_tagged_at else None
+        ),
         difficulty_guess=wq.difficulty_guess,
         correct_streak=wq.correct_streak,
         attempts_count=wq.attempts_count,
@@ -176,6 +180,104 @@ def _coach_invalidate(coach_id: int, student_id: int) -> list[str]:
         f"teacher:{coach_id}:students:{student_id}:wrong-questions",
         "student:wrong-questions",
     ]
+
+
+# ============================================================================
+# AI etiketleme (Faz 3) — ortak akış: öğrenci veya koç tetikler, KOÇ öder
+# ============================================================================
+
+
+def _run_ai_tag(
+    db: Session,
+    wq: WrongQuestion,
+    *,
+    student: User,
+    actor: User,
+    invalidate: list[str],
+) -> MutationResponse[AiTagResult]:
+    """Foto → Gemini vision → konu/zorluk/Sokratik ipucu; kayda uygular.
+
+    Kapılar (veli içgörüsü deseni — üretim ÖĞRENCİNİN KOÇUNUN kaynağıyla yapılır):
+      koç yok → 403 · koç ücretli değil → 403 · koç rıza vermemiş → 403 ·
+      fotoğraf yok → 422 · kredi bitti → 402 · okunamadı → 422 · servis → 502
+    """
+    import base64
+
+    from app.models import UsageKind
+    from app.services import wrong_question_service as _svc
+    from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
+    from app.services.ai_wrong_question import tag_wrong_question_photo
+    from app.services.credits import CreditBlocked, CreditOwner, consume_credits
+    from app.services.plans import ai_premium_allowed
+
+    coach = db.get(User, student.teacher_id) if student.teacher_id else None
+    if coach is None:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "no_coach",
+            "message": "Yapay zekâ etiketleme için bağlı bir koç gerekir."})
+    if not ai_premium_allowed(db, coach):
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "plan_upgrade_required",
+            "message": "Yapay zekâ etiketleme koçun paketinde aktif değil."})
+    if coach.ai_capture_consent_at is None:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "consent_required",
+            "message": "Koç henüz yapay zekâ onayını vermemiş."})
+
+    img = _svc.primary_question_image(db, wq)
+    if img is None:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "no_photo",
+            "message": "Etiketleme için sorunun fotoğrafı gerekir."})
+
+    candidates = _svc.candidate_topics(db, student, coach.id)
+    b64 = base64.b64encode(img.data).decode("ascii")
+
+    try:
+        with consume_credits(
+            db, owner=CreditOwner.for_user(coach), kind=UsageKind.AI_WRONG_TAG,
+            actor_user_id=actor.id, autocommit=False,
+        ) as ctx:
+            result = tag_wrong_question_photo(
+                b64, img.content_type, candidates=candidates,
+            )
+            ctx.set_metadata({
+                "student_id": student.id, "wrong_question_id": wq.id,
+                "candidates": len(candidates),
+            })
+    except CreditBlocked:
+        db.rollback()
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Koçun yapay zekâ kredisi bu ay için doldu."})
+    except AIInvalidResponse as e:
+        db.rollback()
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "photo_unreadable",
+            "message": str(e) or "Fotoğraf okunamadı — daha net bir kare deneyin."})
+    except AIServiceUnavailable as e:
+        db.rollback()
+        raise HTTPException(status_code=502, detail={
+            "error": "upstream_unavailable", "code": "ai_unavailable",
+            "message": f"Yapay zekâ servisi şu an kullanılamıyor: {e}"})
+
+    had_topic = wq.topic_id is not None
+    _svc.apply_ai_tags(db, wq, result)
+    db.commit()
+    db.refresh(wq)
+
+    from app.services.credits import KIND_CREDITS
+    return MutationResponse[AiTagResult](
+        data=AiTagResult(
+            item=_to_item(wq),
+            # AI'ın İDDİASI değil, kayda GERÇEKTEN uygulanan sonuç raporlanır
+            # (uydurma/geçersiz konu düşürülmüşse "eşleşti" denmez).
+            matched_topic=(not had_topic) and wq.topic_id is not None,
+            hint_created=bool(wq.ai_hint),
+            credits_charged=KIND_CREDITS.get(UsageKind.AI_WRONG_TAG, 2),
+        ),
+        invalidate=invalidate,
+    )
 
 
 # ============================================================================
@@ -363,6 +465,27 @@ def student_attempt(
     )
 
 
+@router.post(
+    "/student/wrong-questions/{wq_id}/ai-tag",
+    response_model=MutationResponse[AiTagResult],
+)
+def student_ai_tag(
+    wq_id: int,
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Fotoğraftan AI etiketleme: konu eşleme + zorluk + Sokratik ipucu.
+
+    Kredi/paket/rıza öğrencinin KOÇUNA aittir (öğrencinin kredi havuzu yok) —
+    veli içgörüsüyle aynı model. AI tam çözüm VERMEZ (yalnız yaklaşım ipucu).
+    """
+    wq = svc.get_for_student(db, user, wq_id)
+    if wq is None:
+        raise _not_found()
+    return _run_ai_tag(db, wq, student=user, actor=user,
+                       invalidate=_STUDENT_INVALIDATE)
+
+
 @router.delete(
     "/student/wrong-questions/{wq_id}",
     response_model=MutationResponse[dict],
@@ -492,6 +615,26 @@ def teacher_set_coach_note(
     return MutationResponse[WrongQuestionItem](
         data=_to_item(wq), invalidate=_coach_invalidate(user.id, wq.student_id),
     )
+
+
+@router.post(
+    "/teacher/wrong-questions/{wq_id}/ai-tag",
+    response_model=MutationResponse[AiTagResult],
+)
+def teacher_ai_tag(
+    wq_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Koç, öğrencinin arşivlediği soruyu AI ile etiketler (kendi kredisinden)."""
+    wq = svc.get_for_coach(db, user, wq_id)
+    if wq is None:
+        raise _not_found()
+    student = db.get(User, wq.student_id)
+    if student is None:
+        raise _not_found()
+    return _run_ai_tag(db, wq, student=student, actor=user,
+                       invalidate=_coach_invalidate(user.id, student.id))
 
 
 @router.get("/teacher/wrong-questions/{wq_id}/images/{image_id}")

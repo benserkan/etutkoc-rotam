@@ -88,6 +88,7 @@ KIND_CREDITS: dict[UsageKind, int] = {
     UsageKind.AI_PARENT_INSIGHT: 6,  # Gemini — konu perf + deneme → veli içgörüsü (P2b)
     UsageKind.AI_CAREER_SYNTHESIS: 8,  # Gemini — en geniş bağlam (4 anket + akademik veri)
     UsageKind.AI_CURRICULUM_PRIORITY: 4,  # Gemini — sıradaki üniteler akıllı öncelik (Faz 2)
+    UsageKind.AI_WRONG_TAG: 2,  # Gemini vision — tek soru fotoğrafı (dar bağlam, ucuz)
     UsageKind.EMAIL_SEND: 1,
     UsageKind.WHATSAPP_SEND: 5,
     UsageKind.OTHER: 1,

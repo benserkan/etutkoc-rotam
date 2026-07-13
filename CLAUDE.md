@@ -163,13 +163,59 @@ mobil Faz 4 (expo-image-picker yeni native build ister, OTA yetmez).
     kendiliğinden kapanır) · reset-on-open için dialog yalnız açıkken mount +
     `useState(() => ...)` mount-donması. tsc + eslint temiz; backend smoke 32/32
     yeniden yeşil.
-- **SIRADA:** **Faz 3 (AI):** Gemini vision etiketleme (soru metni OCR +
-  aday-konu-listesinden eşleme + zorluk + Sokratik ipucu; yeni UsageKind
-  AI_WRONG_CAPTURE=2 kredi, assert_ai_premium + consent, curriculum_mapping.
-  _ai_suggest deseni) + `open_wrong_topic_map`'i suggestions motoruna ek sinyal
-  olarak bağlama + KS4 seans prompt'una "en çok biriken yanlış konuları".
-  **Faz 4 (mobil):** kamera akışı — expo-image-picker → YENİ EAS BUILD.
+- **Faz 2 düzeltmeleri (kullanıcı testi 13-14 Tem):** (a) **yeni yanlış HEMEN
+  çözülebilir** — `due_at=now` (eskiden +1 gün; aynı gün test edende sarı bant/
+  rozet/çözme butonları hiç görünmüyordu, özellik ölü görünüyordu). Standart SRS
+  davranışı; aralığı FSRS ilk çözümden sonra kurar, kapanış zaten 20s aralık
+  ister → erken pratik seriyi şişirmez. (b) Açık soruda **çözme butonları HER
+  ZAMAN** (vade yalnız hatırlatmayı belirler) + vadesi gelen yoksa "Kendini dene"
+  bandı. (c) **UX kırılımı:** uzun soru fotoğrafı değerlendirme butonlarını ekran
+  dışına itiyordu ("bastım hiçbir şey olmadı" — canlı veri kanıtladı ki tıklamalar
+  KAYDEDİLMİŞTİ) → her iki dialog **kaydırılabilir gövde + SABİT alt aksiyon
+  çubuğu**, foto `max-h`+`object-contain`, butonlarda spinner. (d) Tur bitince
+  **oturum özeti** (çözdün/yine yanlış/kapandı) — sessiz kapanma sorunu. (e) Görev
+  kartında "Yanlışı arşivle" ⋯ menüsünden **görünür BookX ikon butona** taşındı.
+  Test `test_wrong_question_lifecycle` **12/12** (gerçek kullanım: aynı gün 2×
+  çöz→seri şişmez · aralıklı 2. → KAPANIR · yine yanlış → yeniden açılır).
+- **Faz 3 — AI etiketleme + sinyal ✅ (migration YOK):**
+  - `ai_wrong_question.py`: Gemini **vision** → `{question_text, topic_id,
+    difficulty, hint}`. **Sokratik ipucu** (kullanıcı kararı): AI **tam çözüm
+    VERMEZ** — "hangi kavramı hatırla, ilk adım ne" (yanlış AI çözümü riski).
+    **Konu eşleme kapalı-küme**: modele öğrencinin GERÇEK müfredat konuları
+    (aday listesi, kaynaklı olanlar önce) verilir, yalnız o listeden id seçebilir;
+    listede olmayan id `_normalize`'da DÜŞÜRÜLÜR (uydurma konu sisteme giremez) +
+    endpoint `db.get(Topic)` ile ikinci savunma.
+  - Kredi: yeni `UsageKind.AI_WRONG_TAG` = **2 kredi** (dar bağlam). **Kredi/paket/
+    rıza ÖĞRENCİNİN KOÇUNA aittir** (öğrencinin havuzu yok — veli-içgörüsü deseni):
+    koç yok→403 no_coach · ücretsiz→403 plan_upgrade_required · rıza yok→403
+    consent_required · foto yok→422 no_photo · kredi bitti→402 · okunamadı→422
+    photo_unreadable · servis→502. Uçlar: `POST /student/wrong-questions/{id}/ai-tag`
+    + `POST /teacher/wrong-questions/{id}/ai-tag` (ortak `_run_ai_tag`).
+    `apply_ai_tags`: konu yalnız BOŞSA doldurulur (elle seçim EZİLMEZ);
+    `matched_topic` AI'ın iddiasını değil **kayda gerçekten uygulananı** raporlar.
+  - **Öneri motoru sinyali**: `open_wrong_topic_map` (açık yanlış → konu skoru,
+    3+ = tam) `suggestions.suggest_for_date`'e bağlandı → zayıflık +0.55, yeni
+    reason **"Arşivde açık yanlışı var"**, müfredatta ileride olsa bile aday kalır.
+    Yanlış KAPANINCA sinyal düşer (kapanış = öğrenmenin kanıtı).
+  - **KS4 seans içgörüsü**: prompt'a `wrong_archive` (açık sayısı + 30g kapanan +
+    en çok biriken 5 konu + hata türü dağılımı) → "neden yanlış yapıyor"un somut
+    girdisi.
+  - **UI**: öğrenci detayında "Yapay zekâ okusun" butonu (foto varsa, etiketlenmemişse)
+    + mor **"Yaklaşım ipucu"** kartı (zorluk rozeti + "AI çözüm vermez, yolu gösterir");
+    koç panelinde "Yapay zekâ ile etiketle (2 kredi)" + ipucu görünümü. Yeniden
+    çözme modundaki "Takıldım → ipucu/çözüm" katmanı artık AI ipucunu da gösterir.
+  - **Test** `test_api_v2_wrong_question_ai.py` **20/20** (7 kapı + uydurma-konu
+    düşürme [servis + uç] + elle-seçim ezilmez + kredi KOÇtan + koç tetikler +
+    yabancı koç 404 + aday konular gerçek müfredattan + öneri sinyali/skor/kapanış).
+    Regresyon: wrong_questions 32 · lifecycle 12 · suggestions_curriculum 13 ·
+    coaching_insight 11 · admin_usage 21 · ai_entitlement 13 GREEN; tsc/eslint temiz.
+  - **DERS (test verisi):** `Topic.is_builtin` varsayılanı **False** → müfredat
+    sorgusu `or_(is_builtin, teacher_id==coach)` ister; testte koç-sahipli topic
+    yaratılmazsa müfredat panelinde/aday listesinde GÖRÜNMEZ.
+- **SIRADA:** **Faz 4 (mobil):** kamera akışı — expo-image-picker → YENİ EAS BUILD.
   **Faz 5 (ops.):** veli haftalık raporuna "bu hafta N yanlış kapandı" metriği.
+  **Opsiyonel:** yanlış-soru tekrar kuyruğu ile konu-bazlı FSRS "Tekrar" sayfasını
+  tek kuyrukta birleştirme (kullanıcı sordu — ayrı iş).
 
 ---
 

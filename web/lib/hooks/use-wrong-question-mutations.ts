@@ -10,6 +10,7 @@ import {
   createStudentWrongQuestion,
 } from "@/lib/api/wrong-questions";
 import type {
+  AiTagResult,
   WrongQuestionAttemptBody,
   WrongQuestionCreateFields,
   WrongQuestionItem,
@@ -23,6 +24,15 @@ import type {
 
 const ERROR_LABELS: Record<string, string> = {
   wrong_question_not_found: "Kayıt bulunamadı — silinmiş olabilir.",
+  no_coach: "Yapay zekâ etiketleme için bağlı bir koç gerekir.",
+  no_photo: "Etiketleme için sorunun fotoğrafı gerekir.",
+  photo_unreadable:
+    "Fotoğraf okunamadı — daha net, yakın ve düz çekilmiş bir kare deneyin.",
+  plan_upgrade_required:
+    "Yapay zekâ etiketleme koçun ücretli paketinde kullanılabilir.",
+  consent_required: "Koç henüz yapay zekâ onayını vermemiş.",
+  ai_credit_exhausted: "Koçun yapay zekâ kredisi bu ay için doldu.",
+  ai_unavailable: "Yapay zekâ servisi şu an kullanılamıyor — birazdan deneyin.",
   invalid_image_type: "Yalnız JPEG/PNG/WebP fotoğraf yüklenebilir.",
   image_too_large: "Fotoğraf çok büyük (en fazla 6 MB).",
   too_many_images: "Bir soruya en fazla 4 fotoğraf eklenebilir.",
@@ -135,6 +145,37 @@ export function useAddWrongImage() {
       toast.success("Fotoğraf eklendi");
     },
     onError: (e) => showError(e, "Fotoğraf eklenemedi"),
+  });
+}
+
+/**
+ * AI etiketleme — fotoğraftan konu eşleme + zorluk + Sokratik ipucu.
+ * `scope`: öğrenci kendi kaydını, koç öğrencisinin kaydını etiketler.
+ * Kredi/paket/rıza her iki durumda da KOÇA aittir.
+ */
+export function useAiTagWrongQuestion(scope: "student" | "teacher" = "student") {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<AiTagResult>, unknown, { id: number }>({
+    mutationFn: ({ id }) =>
+      api(
+        scope === "teacher"
+          ? `/api/v2/teacher/wrong-questions/${id}/ai-tag`
+          : `/api/v2/student/wrong-questions/${id}/ai-tag`,
+        { method: "POST" },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const d = res.data;
+      const bits: string[] = [];
+      if (d.matched_topic) bits.push("konu eşlendi");
+      if (d.hint_created) bits.push("yaklaşım ipucu hazır");
+      toast.success("Yapay zekâ okudu", {
+        description:
+          (bits.length ? bits.join(" · ") + ". " : "") +
+          `${d.credits_charged} kredi kullanıldı. Yanlışsa etiketi elle düzeltebilirsin.`,
+      });
+    },
+    onError: (e) => showError(e, "Etiketleme yapılamadı"),
   });
 }
 

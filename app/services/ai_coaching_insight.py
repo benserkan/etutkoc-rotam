@@ -67,6 +67,27 @@ def _build_prompt(student_name: str, sessions: list[dict[str, Any]], academic: d
         lines.append("Son 7 günde işlenen üniteler: " + ", ".join(
             f"{u.get('subject')}—{u.get('topic')} ({u.get('tests')} test)" for u in ru[:10]))
 
+    # YSA: öğrencinin arşivlediği YANLIŞ sorular — "neden yanlış yapıyor"un
+    # en somut kanıtı (biriken konular + hata türü dağılımı + kapanış hızı)
+    wa = academic.get("wrong_archive") or {}
+    if wa.get("open") or wa.get("top_topics"):
+        lines.append(
+            f"Yanlış arşivi: {wa.get('open', 0)} açık yanlış, "
+            f"son 30 günde {wa.get('closed_last_30d', 0)} yanlış kapatıldı "
+            "(kapanış = aralıklı iki doğru çözüm)."
+        )
+        tt = wa.get("top_topics") or []
+        if tt:
+            lines.append("Yanlışı en çok biriken konular: " + ", ".join(
+                f"{t.get('subject')}—{t.get('topic')} ({t.get('open')} açık)"
+                for t in tt))
+        et = wa.get("error_types") or {}
+        if et:
+            from app.models import WQ_ERROR_LABELS_TR
+            lines.append("Hata türü dağılımı: " + ", ".join(
+                f"{WQ_ERROR_LABELS_TR.get(k, k)} {v}" for k, v in
+                sorted(et.items(), key=lambda x: -x[1])))
+
     lines.append("\n--- SON SEANSLAR (yeniden eskiye) ---")
     if not sessions:
         lines.append("Kayıtlı seans yok.")

@@ -612,7 +612,18 @@ def suggest_for_date(
         )
     except Exception:
         review_struggle = {}
+    # Yanlış Soru Arşivi sinyali (YSA Faz 3): öğrencinin AÇIK yanlışı biriken
+    # konular → o konunun bölümleri öneride öne çıkar (3+ açık yanlış = tam
+    # sinyal). Kapanan yanlışlar sayılmaz — kapanış zaten öğrenmenin kanıtı.
+    try:
+        from app.services.wrong_question_service import open_wrong_topic_map
+        wrong_struggle: dict[int, float] = open_wrong_topic_map(
+            db, student_id=student_id
+        )
+    except Exception:
+        wrong_struggle = {}
     review_weakness_keys: set[tuple[int, int]] = set()
+    wrong_weakness_keys: set[tuple[int, int]] = set()
     for section_id, ctx in universe.items():
         section = ctx.section
         if section.test_count == 0:
@@ -646,6 +657,10 @@ def suggest_for_date(
             review_boost = review_struggle[topic_id]  # 0..1
             w += 0.50 * review_boost  # max +0.50 ekstra ağırlık
             review_weakness_keys.add((book_id, section_id))
+        # Yanlış Soru Arşivi: açık yanlışı biriken konu → güçlü zayıflık sinyali
+        if topic_id is not None and topic_id in wrong_struggle:
+            w += 0.55 * wrong_struggle[topic_id]  # max +0.55
+            wrong_weakness_keys.add((book_id, section_id))
         if w > 0:
             weakness_scores[(book_id, section_id)] = min(1.0, w)
 
@@ -691,13 +706,15 @@ def suggest_for_date(
         if in_started_topic:
             curriculum_score = min(1.0, curriculum_score + CURRICULUM_STARTED_BONUS)
 
-        # Müfredatta ÇOK ileride + o güne hiç desenli değil + tekrar-kartı
-        # sinyali yok → önerme (kullanıcı şikâyeti: "baştayken ilerisi öneriliyor")
+        # Müfredatta ÇOK ileride + o güne hiç desenli değil + tekrar-kartı /
+        # yanlış-arşivi sinyali yok → önerme (kullanıcı şikâyeti: "baştayken
+        # ilerisi öneriliyor"). Biriken yanlış varsa konu ileride olsa da kalır.
         if (
             rank is not None
             and rank >= CURRICULUM_FAR_RANK
             and freq == 0
             and key not in review_weakness_keys
+            and key not in wrong_weakness_keys
         ):
             continue
 
@@ -751,6 +768,8 @@ def suggest_for_date(
             reasons.append("Başlanan konuyu tamamlama")
         if freq > 0:
             reasons.append(f"Bu güne {freq}× önceden atanmış")
+        if key in wrong_weakness_keys:
+            reasons.append("Arşivde açık yanlışı var")
         if key in review_weakness_keys:
             reasons.append("🧠 Tekrar kartında zorlanılan konu")
         if weakness > 0.3:
