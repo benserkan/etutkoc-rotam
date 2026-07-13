@@ -57,6 +57,7 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | **Öğrenci Gelişim izleme** (DNA/Odak/Tekrar/Hedef) | ✅ | ✅ | "Gelişim izleme" — zorlandığı konular |
 | **Öğrenciye hedef ekle + tekrar kartı seed** | ✅ | ✅ | Gelişim izleme içinde |
 | Program **gelişmiş düzenleme** (sürükle-bırak, rezerv, blok, periyot) | ✅ | ⬜ | web |
+| Gün içi **öneriler** (müfredat-öncelikli) + "Sıradaki üniteler" + kitap grid modal | ✅ | ⬜ | web (haftalık plan yüzeyi); 2026-07-13 müfredat-öncelik + release-aware grid düzeltmeleri backend'de — mobil Müfredat sekmesi (`/curriculum`) dedup düzeltmesinden OTOMATİK faydalanır, mobil kod değişikliği gerekmedi |
 | Kütüphane / kitap CRUD / şablon | ✅ | ⬜ | web (kaynak girişi) |
 | AI koçluk içgörüsü (Gemini) | ✅ | ✅ | "Gelişim izleme → İçgörü"; web+mobil AYNI backend ucu (`/coaching-insight`) |
 | AI foto/ses not (yakalama) | ✅ | ⬜ | web (native kamera/mik sonra) |
