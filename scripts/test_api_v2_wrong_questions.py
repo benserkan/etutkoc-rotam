@@ -146,10 +146,10 @@ def main() -> int:
               wq1["topic_id"] == ids["t1"] and wq1["subject_id"] == ids["subj"]
               and wq1["book_name"] and wq1["section_label"] == "Bölüm 1",
               f"topic={wq1['topic_id']}")
-        check("6. foto kaydedildi + due yarına kuruldu (taze yanlış hemen sorulmaz)",
+        check("6. foto kaydedildi + yeni kart HEMEN çözülebilir (is_due=True)",
               len(wq1["images"]) == 1 and wq1["due_at"] is not None
-              and wq1["is_due"] is False and wq1["status"] == "acik",
-              f"imgs={len(wq1['images'])}, due={wq1['due_at']}")
+              and wq1["is_due"] is True and wq1["status"] == "acik",
+              f"imgs={len(wq1['images'])}, due={wq1['due_at']}, is_due={wq1['is_due']}")
 
         # --- Fotosuz hızlı kayıt + görev/deneme bağlama ---
         r = cs.post("/api/v2/student/wrong-questions",
@@ -183,20 +183,21 @@ def main() -> int:
         # --- Liste + sayaçlar + filtre ---
         r = cs.get("/api/v2/student/wrong-questions")
         d = r.json()
-        check("11. liste + sayaçlar (3 kayıt, hepsi açık, due=0)",
+        check("11. liste + sayaçlar (3 kayıt, hepsi açık; yeni kartlar HEMEN due=3)",
               d["counts"]["total"] == 3 and d["counts"]["open"] == 3
-              and d["counts"]["due"] == 0 and len(d["items"]) == 3,
+              and d["counts"]["due"] == 3 and len(d["items"]) == 3,
               f"counts={d['counts']}")
         r = cs.get(f"/api/v2/student/wrong-questions?error_type=islem")
         check("12. hata türü filtresi", len(r.json()["items"]) == 1)
 
-        # --- Vade + due filtresi (due_at'i geçmişe çek) ---
+        # --- due filtresi: vadesi ileriye atılan kayıt kuyruktan düşer ---
         with SessionLocal() as db:
-            w = db.get(WrongQuestion, ids["wq1"])
-            w.due_at = datetime.now(timezone.utc) - timedelta(hours=1)
+            for wid in (ids["wq2"], ids["wq3"]):
+                db.get(WrongQuestion, wid).due_at = (
+                    datetime.now(timezone.utc) + timedelta(days=3))
             db.commit()
         r = cs.get("/api/v2/student/wrong-questions?due=true")
-        check("13. vadesi gelen 'yeniden çöz' kuyruğu (1 kayıt)",
+        check("13. vadesi gelen 'yeniden çöz' kuyruğu (yalnız 1 kayıt kaldı)",
               r.json()["counts"]["due"] == 1 and len(r.json()["items"]) == 1
               and r.json()["items"][0]["id"] == ids["wq1"],
               r.text[:150])

@@ -62,7 +62,7 @@ export function useCreateWrongQuestion() {
       applyInvalidate(qc, res.invalidate);
       toast.success("Yanlış arşive eklendi", {
         description:
-          "Yarın yeniden çözmen için karşına gelecek — kapanana kadar takipte.",
+          "Hemen yeniden çözebilirsin — kapanması için aradan zaman geçmiş iki doğru çözüm gerekir.",
       });
     },
     onError: (e) => showError(e, "Yanlış eklenemedi"),

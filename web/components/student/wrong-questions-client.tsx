@@ -113,7 +113,11 @@ export function StudentWrongQuestionsClient({
     if (errorFilter && it.error_type !== errorFilter) return false;
     return true;
   });
+  const openItems = data.items.filter((it) => it.status === "acik");
   const dueItems = data.items.filter((it) => it.is_due);
+  // Çözme kuyruğu: vadesi gelenler önce; hiçbiri yoksa açık sorularla
+  // alıştırma yapılabilir (özellik hiçbir zaman "ölü" görünmez).
+  const practiceQueue = dueItems.length > 0 ? dueItems : openItems;
   const subjects = Array.from(
     new Map(
       data.items
@@ -142,24 +146,59 @@ export function StudentWrongQuestionsClient({
         </Button>
       </header>
 
-      {/* Yeniden çözme kuyruğu */}
-      {dueItems.length > 0 ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 dark:border-amber-500/30 dark:bg-amber-500/10">
-          <RotateCcw className="size-5 text-amber-700 dark:text-amber-300" aria-hidden />
+      {/* Yeniden çözme kuyruğu — vadesi gelenler; yoksa açıklarla alıştırma */}
+      {practiceQueue.length > 0 ? (
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3",
+            dueItems.length > 0
+              ? "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10"
+              : "border-cyan-200 bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10",
+          )}
+        >
+          <RotateCcw
+            className={cn(
+              "size-5",
+              dueItems.length > 0
+                ? "text-amber-700 dark:text-amber-300"
+                : "text-cyan-700 dark:text-cyan-300",
+            )}
+            aria-hidden
+          />
           <div className="flex-1 min-w-48">
-            <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
-              Yeniden çözme zamanı: {dueItems.length} soru seni bekliyor
-            </div>
-            <div className="text-xs text-amber-800/80 dark:text-amber-200/70">
-              Bir yanlışı kapatmanın yolu, aradan zaman geçince yeniden çözmek.
-            </div>
+            {dueItems.length > 0 ? (
+              <>
+                <div className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+                  Yeniden çözme zamanı: {dueItems.length} soru seni bekliyor
+                </div>
+                <div className="text-xs text-amber-800/80 dark:text-amber-200/70">
+                  Bir yanlışı kapatmanın yolu, aradan zaman geçince yeniden çözmek.
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="text-sm font-semibold text-cyan-900 dark:text-cyan-200">
+                  Alıştırma: {openItems.length} açık soru
+                </div>
+                <div className="text-xs text-cyan-800/80 dark:text-cyan-200/70">
+                  Sıradakilerin vadesi henüz gelmedi — istersen şimdi de kendini
+                  deneyebilirsin.
+                </div>
+              </>
+            )}
           </div>
           <Button
             size="sm"
-            className="bg-amber-600 text-white hover:bg-amber-700 hover:text-white"
+            className={cn(
+              "text-white hover:text-white",
+              dueItems.length > 0
+                ? "bg-amber-600 hover:bg-amber-700"
+                : "bg-cyan-600 hover:bg-cyan-700",
+            )}
             onClick={() => setResolveOpen(true)}
           >
-            Çözmeye başla <ChevronRight className="size-4" aria-hidden />
+            {dueItems.length > 0 ? "Çözmeye başla" : "Kendini dene"}{" "}
+            <ChevronRight className="size-4" aria-hidden />
           </Button>
         </div>
       ) : null}
@@ -252,7 +291,7 @@ export function StudentWrongQuestionsClient({
       {resolveOpen ? (
         <ResolveDialog
           onClose={() => setResolveOpen(false)}
-          dueItems={dueItems}
+          items={practiceQueue}
         />
       ) : null}
     </div>
@@ -680,8 +719,9 @@ function DetailDialog({
             </p>
           )}
 
-          {/* Yeniden çözme (vadesi geldiyse) */}
-          {!closed && item.is_due ? <AttemptButtons id={item.id} /> : null}
+          {/* Yeniden çözme — açık soruda HER ZAMAN yapılabilir (vade yalnız
+              sistemin ne zaman hatırlatacağını belirler) */}
+          {!closed ? <AttemptButtons id={item.id} isDue={item.is_due} /> : null}
 
           {/* Koç açıklaması */}
           {item.coach_note ? (
@@ -809,7 +849,7 @@ function DetailDialog({
   );
 }
 
-function AttemptButtons({ id }: { id: number }) {
+function AttemptButtons({ id, isDue }: { id: number; isDue: boolean }) {
   const attempt = useAttemptWrongQuestion();
   const opts: Array<{ rating: 1 | 2 | 3 | 4; label: string; cls: string }> = [
     { rating: 1, label: "Yine yanlış", cls: "bg-rose-600 hover:bg-rose-700" },
@@ -822,6 +862,12 @@ function AttemptButtons({ id }: { id: number }) {
       <div className="mb-2 text-xs font-medium text-foreground">
         Soruyu yeniden çözmeyi dene — sonra sonucu işaretle:
       </div>
+      {!isDue ? (
+        <p className="mb-2 text-[11px] text-muted-foreground">
+          Vadesi henüz gelmedi; kapanış için aradan zaman geçmiş iki doğru çözüm
+          gerekir. Yine de şimdi deneyebilirsin.
+        </p>
+      ) : null}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {opts.map((o) => (
           <Button
@@ -845,10 +891,10 @@ function AttemptButtons({ id }: { id: number }) {
 
 function ResolveDialog({
   onClose,
-  dueItems,
+  items,
 }: {
   onClose: () => void;
-  dueItems: WrongQuestionItem[];
+  items: WrongQuestionItem[];
 }) {
   const attempt = useAttemptWrongQuestion();
   const qc = useQueryClient();
@@ -856,7 +902,7 @@ function ResolveDialog({
   const [reveal, setReveal] = React.useState(false);
   // Kuyruk mount anında dondurulur (dialog yalnız açıkken mount edilir) —
   // attempt sonrası liste değişse de sıra şaşmaz.
-  const [queue] = React.useState<WrongQuestionItem[]>(() => dueItems);
+  const [queue] = React.useState<WrongQuestionItem[]>(() => items);
 
   const current = queue[idx];
 

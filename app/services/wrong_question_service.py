@@ -198,9 +198,12 @@ def create_wrong_question(
         error_type=error_type,
         note=(note or "").strip() or None,
         status=WQ_STATUS_ACIK,
-        # Yeni yanlış hemen çözülmemeli — taze yanlışta cevap akılda; ilk
-        # yeniden çözme ertesi güne kurulur (unutma başlasın ki ölçüm gerçek olsun).
-        due_at=now + timedelta(days=1),
+        # Yeni kart HEMEN çözülebilir (standart aralıklı-tekrar davranışı).
+        # Aralık işini FSRS ilk çözümden SONRA yapar; kapanış zaten aralıklı
+        # (≥WQ_STREAK_MIN_GAP_HOURS) iki başarı ister → aynı gün seri şişmez.
+        # (Eski hâli vadeyi yarına kuruyordu; öğrenci yeni eklediği yanlışla hiç
+        # çalışamıyor, özellik ilk kullanımda ölü görünüyordu.)
+        due_at=now,
         **{k: ctx[k] for k in (
             "book_id", "book_section_id", "task_id", "exam_result_id",
             "subject_id", "topic_id",
