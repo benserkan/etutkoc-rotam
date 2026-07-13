@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
   BookX,
   CheckCircle2,
@@ -113,6 +114,10 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
             {Math.round(task.pct * 100)}%
           </p>
         </div>
+
+        {/* Yanlış soru arşivi — menüde saklı kalmasın diye görünür kısayol
+            (kullanıcı geri bildirimi: "görev kartında göremedim") */}
+        <ArchiveWrongButton task={task} />
 
         <ActionsMenu
           task={task}
@@ -643,18 +648,53 @@ function ActionsMenu({
             icon={<BookX className="size-3.5" />}
             onClick={() => {
               setOpen(false);
-              // Yanlış Soru Arşivi'ne bağlamlı git — ilk kitaplı kalemden
-              // ders+konu otomatik etiketlenir (bölümsüz görevde yalnız görev bağı).
-              const first = task.items.find((it) => it.section_id != null);
-              const sp = new URLSearchParams({ add: "1", task_id: String(task.id) });
-              if (first?.book_id) sp.set("book_id", String(first.book_id));
-              if (first?.section_id) sp.set("section_id", String(first.section_id));
-              window.location.href = `/student/wrong-questions?${sp.toString()}`;
+              window.location.href = wrongArchiveHref(task);
             }}
           />
         </div>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * Görev bağlamıyla Yanlış Soru Arşivi'ne gidiş URL'i.
+ * İlk kitaplı kalemden ders+konu otomatik etiketlenir; kitapsız görevde
+ * (video/deneme/etkinlik) yalnız görev bağı taşınır.
+ */
+function wrongArchiveHref(task: StudentTask): string {
+  const first = task.items.find((it) => it.section_id != null);
+  const sp = new URLSearchParams({ add: "1", task_id: String(task.id) });
+  if (first?.book_id) sp.set("book_id", String(first.book_id));
+  if (first?.section_id) sp.set("section_id", String(first.section_id));
+  return `/student/wrong-questions?${sp.toString()}`;
+}
+
+/** Görev kartındaki görünür "yanlışı arşivle" kısayolu. */
+function ArchiveWrongButton({ task }: { task: StudentTask }) {
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            asChild
+            variant="ghost"
+            size="icon"
+            className="size-7 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600"
+          >
+            <Link
+              href={wrongArchiveHref(task)}
+              aria-label="Bu görevden yanlış soru arşivle"
+            >
+              <BookX className="size-4" aria-hidden="true" />
+            </Link>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          Yanlış soruyu arşivle — fotoğrafını çek, sistem tekrar sorsun
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 

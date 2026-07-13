@@ -669,8 +669,10 @@ function DetailDialog({
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      {/* Kaydırılabilir gövde + SABİT alt aksiyon çubuğu: uzun soru fotoğrafı
+          değerlendirme butonlarını ekran dışına itmesin (kullanıcı geri bildirimi) */}
+      <DialogContent className="flex max-h-[88vh] max-w-2xl flex-col overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex flex-wrap items-center gap-2 text-base">
             {closed ? (
               <CheckCircle2 className="size-4 text-emerald-600" aria-hidden />
@@ -683,7 +685,7 @@ function DetailDialog({
             </span>
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4">
           {/* Durum bandı */}
           <div
             className={cn(
@@ -700,7 +702,7 @@ function DetailDialog({
                 : `Açık · doğru serisi ${item.correct_streak}/2 · sistem vakti gelince yeniden soracak.`}
           </div>
 
-          {/* Soru fotoğrafları */}
+          {/* Soru fotoğrafları — yükseklik sınırlı (aksiyon çubuğu hep görünür) */}
           {qImgs.length > 0 ? (
             <div className="space-y-2">
               {qImgs.map((im) => (
@@ -709,7 +711,7 @@ function DetailDialog({
                   key={im.id}
                   src={studentWrongImageUrl(item.id, im.id)}
                   alt="Soru fotoğrafı"
-                  className="w-full rounded-md border border-border"
+                  className="max-h-[52vh] w-full rounded-md border border-border bg-muted object-contain"
                 />
               ))}
             </div>
@@ -718,10 +720,6 @@ function DetailDialog({
               Fotoğraf yok{item.note ? " — not üzerinden takip ediliyor" : ""}.
             </p>
           )}
-
-          {/* Yeniden çözme — açık soruda HER ZAMAN yapılabilir (vade yalnız
-              sistemin ne zaman hatırlatacağını belirler) */}
-          {!closed ? <AttemptButtons id={item.id} isDue={item.is_due} /> : null}
 
           {/* Koç açıklaması */}
           {item.coach_note ? (
@@ -776,7 +774,7 @@ function DetailDialog({
                     key={im.id}
                     src={studentWrongImageUrl(item.id, im.id)}
                     alt="Çözüm fotoğrafı"
-                    className="w-full rounded-md border border-border"
+                    className="max-h-[45vh] w-full rounded-md border border-border bg-muted object-contain"
                   />
                 ))}
               </div>
@@ -844,6 +842,13 @@ function DetailDialog({
             </Button>
           </div>
         </div>
+
+        {/* SABİT aksiyon çubuğu — açık soruda her zaman görünür/erişilebilir */}
+        {!closed ? (
+          <div className="shrink-0 border-t border-border bg-card px-5 py-3">
+            <AttemptButtons id={item.id} isDue={item.is_due} />
+          </div>
+        ) : null}
       </DialogContent>
     </Dialog>
   );
@@ -858,16 +863,15 @@ function AttemptButtons({ id, isDue }: { id: number; isDue: boolean }) {
     { rating: 4, label: "Kolayca çözdüm", cls: "bg-cyan-600 hover:bg-cyan-700" },
   ];
   return (
-    <div className="rounded-md border border-border bg-muted/30 p-3">
+    <div>
       <div className="mb-2 text-xs font-medium text-foreground">
         Soruyu yeniden çözmeyi dene — sonra sonucu işaretle:
+        {!isDue ? (
+          <span className="ml-1 font-normal text-muted-foreground">
+            (vadesi gelmedi ama şimdi de deneyebilirsin)
+          </span>
+        ) : null}
       </div>
-      {!isDue ? (
-        <p className="mb-2 text-[11px] text-muted-foreground">
-          Vadesi henüz gelmedi; kapanış için aradan zaman geçmiş iki doğru çözüm
-          gerekir. Yine de şimdi deneyebilirsin.
-        </p>
-      ) : null}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {opts.map((o) => (
           <Button
@@ -877,7 +881,11 @@ function AttemptButtons({ id, isDue }: { id: number; isDue: boolean }) {
             className={cn("text-white hover:text-white", o.cls)}
             onClick={() => attempt.mutate({ id, body: { rating: o.rating } })}
           >
-            {o.label}
+            {attempt.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              o.label
+            )}
           </Button>
         ))}
       </div>
@@ -921,104 +929,111 @@ function ResolveDialog({
     attempt.mutate({ id: current.id, body: { rating } }, { onSuccess: next });
   }
 
+  const rateOpts: Array<{ rating: 1 | 2 | 3 | 4; label: string; cls: string }> = [
+    { rating: 1, label: "Yine yanlış", cls: "bg-rose-600 hover:bg-rose-700" },
+    { rating: 2, label: "Zor çözdüm", cls: "bg-amber-600 hover:bg-amber-700" },
+    { rating: 3, label: "Çözdüm", cls: "bg-emerald-600 hover:bg-emerald-700" },
+    { rating: 4, label: "Kolayca çözdüm", cls: "bg-cyan-600 hover:bg-cyan-700" },
+  ];
+
   return (
     <Dialog open onOpenChange={(v) => { if (!v) onClose(); }}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      {/* Kaydırılabilir gövde + SABİT değerlendirme çubuğu — uzun soru fotoğrafı
+          butonları ekran dışına itmesin (kullanıcı geri bildirimi 14.07) */}
+      <DialogContent className="flex max-h-[90vh] max-w-2xl flex-col overflow-hidden p-0">
+        <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
             <RotateCcw className="size-4 text-amber-600" aria-hidden />
             Yeniden çözme · {Math.min(idx + 1, queue.length)}/{queue.length}
           </DialogTitle>
         </DialogHeader>
         {!current ? (
-          <p className="py-6 text-center text-sm text-muted-foreground">
+          <p className="px-5 py-8 text-center text-sm text-muted-foreground">
             Kuyruk boş — hepsi bu kadar! 🎉
           </p>
         ) : (
-          <div className="space-y-3">
-            <div className="text-sm text-muted-foreground">
-              {[current.subject_name, current.topic_name ?? current.section_label]
-                .filter(Boolean)
-                .join(" · ") || "Etiketsiz soru"}
-            </div>
-            {current.images.filter((im) => im.kind === "question").map((im) => (
-              // eslint-disable-next-line @next/next/no-img-element -- auth'lu BFF görüntü ucu
-              <img
-                key={im.id}
-                src={studentWrongImageUrl(current.id, im.id)}
-                alt="Soru fotoğrafı"
-                className="w-full rounded-md border border-border"
-              />
-            ))}
-            {current.images.filter((im) => im.kind === "question").length === 0 ? (
-              <div className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-                Bu kaydın fotoğrafı yok — {current.note ? `notun: "${current.note}"` : "kaynağından bulup çöz"}.
+          <>
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 py-4">
+              <div className="text-sm text-muted-foreground">
+                {[current.subject_name, current.topic_name ?? current.section_label]
+                  .filter(Boolean)
+                  .join(" · ") || "Etiketsiz soru"}
               </div>
-            ) : null}
-
-            {/* İpucu / çözüm katmanı */}
-            {(current.coach_note || current.ai_hint ||
-              current.images.some((im) => im.kind === "solution")) ? (
-              !reveal ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="gap-1.5"
-                  onClick={() => setReveal(true)}
-                >
-                  <Eye className="size-4" aria-hidden /> Takıldım — ipucu/çözümü göster
-                </Button>
-              ) : (
-                <div className="space-y-2">
-                  {current.ai_hint ? (
-                    <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-950 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-100">
-                      <b>Yaklaşım ipucu:</b> {current.ai_hint}
-                    </div>
-                  ) : null}
-                  {current.coach_note ? (
-                    <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-950 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
-                      <b>Koçun:</b> {current.coach_note}
-                    </div>
-                  ) : null}
-                  {current.images.filter((im) => im.kind === "solution").map((im) => (
-                    // eslint-disable-next-line @next/next/no-img-element -- auth'lu BFF görüntü ucu
-                    <img
-                      key={im.id}
-                      src={studentWrongImageUrl(current.id, im.id)}
-                      alt="Çözüm fotoğrafı"
-                      className="w-full rounded-md border border-border"
-                    />
-                  ))}
+              {current.images.filter((im) => im.kind === "question").map((im) => (
+                // eslint-disable-next-line @next/next/no-img-element -- auth'lu BFF görüntü ucu
+                <img
+                  key={im.id}
+                  src={studentWrongImageUrl(current.id, im.id)}
+                  alt="Soru fotoğrafı"
+                  className="max-h-[55vh] w-full rounded-md border border-border bg-muted object-contain"
+                />
+              ))}
+              {current.images.filter((im) => im.kind === "question").length === 0 ? (
+                <div className="rounded-md border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
+                  Bu kaydın fotoğrafı yok — {current.note ? `notun: "${current.note}"` : "kaynağından bulup çöz"}.
                 </div>
-              )
-            ) : null}
+              ) : null}
 
-            <div className="rounded-md border border-border bg-muted/30 p-3">
+              {/* İpucu / çözüm katmanı */}
+              {(current.coach_note || current.ai_hint ||
+                current.images.some((im) => im.kind === "solution")) ? (
+                !reveal ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5"
+                    onClick={() => setReveal(true)}
+                  >
+                    <Eye className="size-4" aria-hidden /> Takıldım — ipucu/çözümü göster
+                  </Button>
+                ) : (
+                  <div className="space-y-2">
+                    {current.ai_hint ? (
+                      <div className="rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm text-violet-950 dark:border-violet-500/30 dark:bg-violet-500/10 dark:text-violet-100">
+                        <b>Yaklaşım ipucu:</b> {current.ai_hint}
+                      </div>
+                    ) : null}
+                    {current.coach_note ? (
+                      <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2 text-sm text-cyan-950 dark:border-cyan-500/30 dark:bg-cyan-500/10 dark:text-cyan-100">
+                        <b>Koçun:</b> {current.coach_note}
+                      </div>
+                    ) : null}
+                    {current.images.filter((im) => im.kind === "solution").map((im) => (
+                      // eslint-disable-next-line @next/next/no-img-element -- auth'lu BFF görüntü ucu
+                      <img
+                        key={im.id}
+                        src={studentWrongImageUrl(current.id, im.id)}
+                        alt="Çözüm fotoğrafı"
+                        className="max-h-[45vh] w-full rounded-md border border-border bg-muted object-contain"
+                      />
+                    ))}
+                  </div>
+                )
+              ) : null}
+            </div>
+
+            {/* SABİT değerlendirme çubuğu */}
+            <div className="shrink-0 border-t border-border bg-card px-5 py-3">
               <div className="mb-2 flex items-center gap-1.5 text-xs font-medium text-foreground">
                 <AlertTriangle className="size-3.5 text-amber-600" aria-hidden />
                 Önce KENDİN çöz, sonra işaretle — sistem sana göre plan yapıyor.
               </div>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                <Button size="sm" disabled={attempt.isPending}
-                        className="bg-rose-600 text-white hover:bg-rose-700 hover:text-white"
-                        onClick={() => rate(1)}>
-                  Yine yanlış
-                </Button>
-                <Button size="sm" disabled={attempt.isPending}
-                        className="bg-amber-600 text-white hover:bg-amber-700 hover:text-white"
-                        onClick={() => rate(2)}>
-                  Zor çözdüm
-                </Button>
-                <Button size="sm" disabled={attempt.isPending}
-                        className="bg-emerald-600 text-white hover:bg-emerald-700 hover:text-white"
-                        onClick={() => rate(3)}>
-                  Çözdüm
-                </Button>
-                <Button size="sm" disabled={attempt.isPending}
-                        className="bg-cyan-600 text-white hover:bg-cyan-700 hover:text-white"
-                        onClick={() => rate(4)}>
-                  Kolayca çözdüm
-                </Button>
+                {rateOpts.map((o) => (
+                  <Button
+                    key={o.rating}
+                    size="sm"
+                    disabled={attempt.isPending}
+                    className={cn("text-white hover:text-white", o.cls)}
+                    onClick={() => rate(o.rating)}
+                  >
+                    {attempt.isPending ? (
+                      <Loader2 className="size-3.5 animate-spin" aria-hidden />
+                    ) : (
+                      o.label
+                    )}
+                  </Button>
+                ))}
               </div>
               <button
                 type="button"
@@ -1028,7 +1043,7 @@ function ResolveDialog({
                 Şimdilik atla →
               </button>
             </div>
-          </div>
+          </>
         )}
       </DialogContent>
     </Dialog>
