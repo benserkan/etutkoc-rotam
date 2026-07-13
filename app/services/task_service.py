@@ -405,6 +405,21 @@ def complete_task(
         progress, section = _get_progress(
             db, student_id, it.book_id, it.book_section_id
         )
+        if it.reservation_released_at is not None:
+            # Rezervi serbest bırakılmış (reconcile/cron) kalem: bekleyen kısmı
+            # SAYAÇTA DEĞİL → reserved_count'tan düşme (başka görevlerin canlı
+            # rezervini çalar). Boş kapasiteden doğrudan tamamla.
+            if (
+                progress.reserved_count + progress.completed_count + to_complete
+                > section.test_count
+            ):
+                kalan = section.test_count - progress.reserved_count - progress.completed_count
+                raise ReservationError(
+                    f"Tamamlama kapasiteyi aşıyor (kalan {kalan})."
+                )
+            progress.completed_count += to_complete
+            it.completed_count = it.planned_count
+            continue
         # Güvenlik: rezerv yetersizse rezerv kapasitesi izin veriyorsa ekle
         needed_reserve = to_complete - progress.reserved_count
         if needed_reserve > 0:
@@ -448,9 +463,13 @@ def uncomplete_task(db: Session, task) -> None:
         )
         back = it.completed_count
         progress.completed_count = max(0, progress.completed_count - back)
-        progress.reserved_count += back
-        # Kitap kapasitesini aşma ihtimali: teorik olarak aşmaz çünkü completed+reserved
-        # toplamı yine aynı kalıyor.
+        if it.reservation_released_at is None:
+            progress.reserved_count += back
+            # Kitap kapasitesini aşma ihtimali: teorik olarak aşmaz çünkü
+            # completed+reserved toplamı yine aynı kalıyor.
+        # released kalemde bekleyen kısım bilerek serbest bırakılmıştı →
+        # geri alma rezervi diriltmez (kapasite boşta kalır); aksi hâlde sayaçta
+        # hiçbir canlı kalemin tutmadığı "sahipsiz" rezerv birikir.
         it.completed_count = 0
         # Tamamlama geri alınınca D/Y de sıfırlanır — eski sonucun stale kalmasını önle.
         it.correct_count = None
@@ -496,7 +515,20 @@ def set_item_completion(
     progress, section = _get_progress(
         db, item.task.student_id, item.book_id, item.book_section_id
     )
-    if delta > 0:
+    if item.reservation_released_at is not None:
+        # Released kalem (rezervi reconcile ile serbest bırakılmış): bekleyeni
+        # sayaçta değil → reserved_count'a DOKUNMA (iki yönde de). Artışta boş
+        # kapasite kontrolü yapılır; azalışta kapasite boşta kalır.
+        if delta > 0 and (
+            progress.reserved_count + progress.completed_count + delta
+            > section.test_count
+        ):
+            kalan = section.test_count - progress.reserved_count - progress.completed_count
+            raise ReservationError(
+                f"Tamamlama kapasiteyi aşıyor (kalan {kalan})."
+            )
+        progress.completed_count = max(0, progress.completed_count + delta)
+    elif delta > 0:
         # completed'i artır, reserved'den al (yetmiyorsa kapasiteyi kontrol et)
         needed_reserve = delta - progress.reserved_count
         if needed_reserve > 0:

@@ -976,6 +976,11 @@ def student_book_grid_v2(
         # 1..test_count arası numaralandır; ilk N tanesi tamamlanmış, sonraki M
         # tanesi rezerve, kalan boş (UI'da renkli — bu sıra Jinja şablonuyla aynı).
         idx = 0
+        # Baseline dolgusu: koçun "zaten çözülmüştü" girişi görev kalemi
+        # üretmez — kayıtlı çözüldü fazlası tarihsiz DONE kutusu olur.
+        for _ in range(max(0, completed - len(done_slots))):
+            idx += 1
+            cells.append(BookCell(number=idx, state="DONE"))
         for s in done_slots:
             idx += 1
             cells.append(BookCell(

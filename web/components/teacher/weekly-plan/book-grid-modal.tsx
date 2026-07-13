@@ -280,6 +280,15 @@ function Cell({
       />
     );
   }
+  // Görevsiz DONE = baseline ("öğrenci zaten çözmüştü" girişi) — link yok
+  if (cell.state === "DONE" && !cell.task_date) {
+    return (
+      <div
+        className="aspect-square rounded-sm bg-emerald-500 hover:scale-110 transition-transform"
+        title={`${unitWord.charAt(0).toUpperCase()}${unitWord.slice(1)} ${cell.number}: önceden çözülmüş (sisteme işlendi, göreve bağlı değil)`}
+      />
+    );
+  }
   // DONE veya RESERVED — tıklanabilir
   const tone =
     cell.state === "DONE"

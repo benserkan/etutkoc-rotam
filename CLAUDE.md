@@ -6,6 +6,118 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## Instagram "Kılavuz Koşucu" reklamı — Kampanya A **CANLI/AKTİF** (2026-07-12)
+
+**TÜM detay + hazır metinler + kalınan yer: `docs/reklam-kilavuz-kosucu.md`** (yeni
+sohbette önce onu oku). Özet: paralimpik kılavuz koşucu metaforuyla ETÜTKOÇ tanıtımı.
+İki ayrı iş: **Kampanya A (ANA) = Trabzon YEREL birebir koçluk** (Serkan tek koç,
+hedef WhatsApp'tan ücretsiz tanışma görüşmesi) · **Kampanya B = rotam.etutkoc.com
+ULUSAL koç kitlesi** (henüz başlamadı; Trafik + UTM→Plausible).
+- **Video hazır ✅**: `Desktop\etutkoc-kilavuz-kosucu-v2-seslendirmeli.mp4` (46sn,
+  9:16, -14,4 LUFS) — kullanıcının DaVinci müzikli kurgusu üstüne Gemini TTS "Kore"
+  7 segment seslendirme + bant metinler + logo + kapanış kartı. Yeniden üretim/
+  varyant kaynakları: `Desktop\etutkoc-reklam-kaynak\` (gen_vo.py + build_assets.py).
+- **Kurulum TAMAM ✅ (12 Tem):** IG profesyonel + kategori Eğitim · **FB Sayfası
+  "Etütkoç"** (id 61591843981542) + IG↔Sayfa bağlı · **WhatsApp Business** (0505,
+  `/tanisma` hızlı yanıt) · Reel organik paylaşıldı + profile sabitlendi.
+- **Kampanya A CANLI:** reklam hesabı **573118503086463** · Etkileşim → mesaj
+  yönlendirme **manuel yalnız WhatsApp** · 200 TL/gün · **12→19 Tem** (bitişli) ·
+  Trabzon ili, 32-53 yaş, ergen çocuklu ebeveyn + öğrenci-eğitim ilgisi (kitle
+  ~170 bin) · manuel yerleşim **yalnız IG Akış+Hikâye+Reels** · tüm Advantage+
+  "iyileştirme"leri KAPALI · kreatif = organik Reel. **A/B YOK** (bilinçli — küçük
+  kitlede bütçeyi böler); varyant 2 yalnız CPA>150 TL kalırsa 2. reklam olarak eklenir.
+- **SIRADAKİ:** 15-16 Tem CPA kontrolü (40-90 TL normal) → **19 Tem kampanya
+  otomatik durur → Ads Manager çıktısıyla değerlendirme** (uzat / yeni kanca / Eylül'e
+  dinlendir). Takvim tanışma görüşmeleriyle dolarsa reklamı DURDUR (musluk modeli).
+- **DERS (Meta arayüzü):** adsmanager/billing linkleri IG kimliğine kilitlenip
+  "ig_no_ad_account" verebiliyor → **gizli pencerede FB profiliyle** gir. Konum tipi
+  "bu konumda YAŞAYAN kişiler" Advantage+ modunda arayüzden kaldırılmış → turist
+  filtresi olarak **Diller=Türkçe** kullanıldı.
+- **DOKUNMA:** Meta portfolyodaki "Test WhatsApp Business Account" + "Etütkoç
+  Akademi Koçluk Merkezi" app'i = platform Cloud API (K2) işi, reklamla ilgisiz.
+
+---
+
+## Öneri motoru müfredat-öncelikli + Rezerv görünüm/bütünlük düzeltmeleri — CANLI (2026-07-13)
+
+**Bağlam (kullanıcı, Elif/student 34):** (1) program önerileri müfredatın başındaki
+öğrenciye çok ileriki konuları öneriyordu ("konu öncelik sıralaması yok mu?");
+(2) kitap detay modalında "Sayaç uyumsuzluğu (rezerv 13 ≠ 16)" + "rezerv bırakma
+hâlâ çalışmıyor" algısı. İki sistem de koddan + canlı teşhisle (salt-okuma) ele alındı.
+
+**Teşhis bulguları (kanıtlı):**
+- **Öneri (inline)**: `suggestions.py` müfredat sırasını HİÇ okumuyordu — aday =
+  dow-pattern + zayıflık; sıralama `-score` (Topic.order/frontier yok). Ayrıca
+  `_progress_map` yalnız SectionProgress kaydı olan bölümleri gördüğünden hiç
+  rezerv edilmemiş YENİ kitap önerilere hiç giremiyordu.
+- **"Sıradaki üniteler" paneli Elif'te BOŞtu**: YKS dedup (g≥9) okul derslerini
+  gizleyip TYT'yi gösteriyordu ama Elif'in TÜM kitapları Maarif konularına eşli →
+  TYT konularında "kaynak yok" → panel boş; koç müfredat-körü önerilere mahkûmdu.
+- **Rezerv "uyumsuzluğu" FALSE-POSITIVE**: kayıtlı sayaç (release-aware) DOĞRUydu;
+  modalın "gerçek görev listesi" türetimi (`build_book_grid_slots`) reconcile/cron'un
+  serbest bıraktığı (`reservation_released_at` dolu) kalemleri hâlâ rezerv sayıyordu
+  (Elif: task#1010 released rem=3 → 13 vs 16). Canlı: drift 0, ölü rezerv 0 — cron
+  ÇALIŞIYOR; "bırakmıyor" algısı bu görünüm hatasıydı.
+- **3 GERÇEK sayaç-bozan yol bulundu** (kullanıcı verisinde henüz tetiklenmemiş):
+  released kaleme complete/uncomplete/set_item_completion rezerv transferi yapıp
+  BAŞKA görevlerin canlı rezervini çalıyor/sahipsiz rezerv bırakıyordu; tek-kalem
+  edit released kalemde çift-iade + bayrak temizlememe (H3/H4).
+
+**Düzeltmeler:**
+- **Öneri motoru müfredat-öncelikli** (`suggestions.py`): `_section_universe`
+  (outerjoin — SectionProgress'siz bölümler de evrende) + `_curriculum_signal`
+  (ders bazında AÇIK konular Topic sırasında; rank 0 = frontier). Skor =
+  0.45·müfredat + 0.30·zayıflık + 0.25·desen; başlanan konuya bitirme bonusu
+  (+0.15); rank≥3 + o güne desensiz + tekrar-kartı sinyalsiz → HİÇ önerilmez;
+  desenli ileri konu düşük skorla kalır. Frontier bölümleri (rank≤1) sinyalsiz de
+  aday (yeni öğrenci/kitapta öneri boş kalmaz). Eşlenmemiş bölüm nötr (0.30).
+  Yeni reason'lar: "Müfredatta sıradaki/yaklaşan konu", "Başlanan konuyu
+  tamamlama", "Müfredatta ileride" (+`Suggestion.curriculum_rank`). Frontend
+  `inline-suggestions.tsx` ReasonBadge eşlemeleri (ListOrdered/CircleDotDashed).
+- **YKS dedup kaynak-duyarlı** (`curriculum_progress._applicable_subjects` +
+  `_student_resource_subject_ids`): sınav dersi (TYT/AYT) okul dersinin yerini
+  yalnız KAYNAĞI varsa alır; okul dersi kaynaklı + sınav karşılığı kaynaksız →
+  okul GÖRÜNÜR + kaynaksız sınav karşılığı gizli; ikisi de kaynaksız → eski
+  davranış (sınav omurgası). Elif: 7 Maarif dersi geri geldi → "Sıradaki üniteler"
+  + müfredat paneli doldu. Kitaplar sınav omurgasına taşınınca
+  görünüm kendiliğinden TYT/AYT'ye döner. Mobil müfredat sekmesi aynı endpoint →
+  otomatik düzeldi.
+- **Grid release-aware** (`build_book_grid_slots`): rezerv slot yalnız
+  `reservation_released_at IS NULL` + görev tamamlanmamış kalemlerden; released
+  bekleyen artık "boş" görünür (kapasite gerçekten geri döndü). `include_drafts`
+  paramı: öğretmen grid'i taslak rezervini de sayar (kayıtlı sayaçla birebir);
+  öğrenci grid'ine taslak SIZMAZ. Endpoint'ler (teacher+student) **baseline
+  dolgusu**: "öğrenci zaten çözmüştü" girişi (görevsiz completed) tarihsiz DONE
+  hücresi olur → türetilmiş == kayıtlı → uyarı yalnız GERÇEK tutarsızlıkta çıkar.
+  Modal'da görevsiz DONE hücresi link'siz + "önceden çözülmüş" ipucu.
+- **Sayaç bütünlüğü** (`task_service`): complete_task / uncomplete_task /
+  set_item_completion released kalemde `reserved_count`'a DOKUNMAZ (boş
+  kapasiteden tamamlar / kapasiteyi boşta bırakır; kapasite kontrolü korunur).
+  Tek-kalem edit: released kalemde eski bekleyen iade edilmez (çift-iade yok) +
+  yeniden rezerv edilince bayrak temizlenir (canlanır). `scripts/
+  reconcile_section_progress.py` fixer release-aware yeniden yazıldı (eski hâli
+  cron'un bilerek bıraktığı rezervleri GERİ KİLİTLİYORDU — H5) + baseline korunur.
+- **KURAL:** Rezerv "gerçek" hesabı yapan HER yüzey `reservation_released_at`'i
+  saymalı (tutucu = released değil + görev tamamlanmamış + rem>0 — diagnose
+  tanımı). Release-unaware türetim yasak.
+- **Test:** `test_suggestions_curriculum.py` **13/13** (frontier üstte + rank≥3
+  önerilmez + başlanan konu bonusu + desen kurtarır ama frontier'ı geçemez +
+  eşlenmemiş nötr + SectionProgress'siz kitap önerilir) · `test_book_grid_release_
+  aware.py` **17/17** (released slot yok + taslak öğretmen/öğrenci ayrımı + HTTP
+  grid türetilmiş==kayıtlı + baseline dolgu + released kalemde tamamla/geri-al/
+  kısmi rezerv çalmaz/şişirmez + çift-iade yok). Regresyon: carryover 20 ·
+  summer_cron 13 · curriculum_progress 22 · units 10 · exam_taxonomy 20 ·
+  weekly_plan 14 · carryover_http 17 · teacher_read 12 · teacher_students 14 ·
+  student_read 11 · student_mut 12 · mapping 18 · insights 12 · 5c 19 ·
+  run_gorev_checks (itemless_solved 0/0 hariç — önceden bozuk) GREEN. tsc/eslint
+  temiz (3 eski kontrast uyarısı da düzeltildi: quick-access-strip +
+  task-templates-client hover'ları şeffaf tonala).
+- **MOBİL:** kod değişikliği GEREKMEDİ — öneri/grid yüzeyleri web-özel; mobil koç
+  Müfredat sekmesi `/curriculum` endpoint'inden beslendiği için dedup düzeltmesi
+  OTOMATİK yansır. EAS build/OTA gerekmez.
+
+---
+
 ## Rezerv yaşam döngüsü + Kitaplık temizliği — Faz 0/1a/1b CANLI, Faz 2/3 sırada (2026-06-28, commit `977c175`)
 
 **Bağlam (kullanıcı, Elif/student 34 Kitaplar ekranı):** (1) yaz dönemine girildi,

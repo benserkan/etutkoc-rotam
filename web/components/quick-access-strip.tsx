@@ -189,8 +189,8 @@ function QuickCardTile({
           className={cn(
             "rounded p-1 transition",
             pinned
-              ? "text-cyan-700 hover:bg-cyan-50"
-              : "text-muted-foreground/50 hover:text-cyan-700 hover:bg-cyan-50",
+              ? "text-cyan-700 hover:bg-cyan-500/10"
+              : "text-muted-foreground/50 hover:text-cyan-700 hover:bg-cyan-500/10",
           )}
         >
           <Pin className={cn("size-3.5", pinned && "fill-current")} aria-hidden />
@@ -204,7 +204,7 @@ function QuickCardTile({
             e.stopPropagation();
             onDismiss();
           }}
-          className="rounded p-1 text-muted-foreground/50 transition hover:text-rose-700 hover:bg-rose-50"
+          className="rounded p-1 text-muted-foreground/50 transition hover:text-rose-700 hover:bg-rose-500/10"
         >
           <X className="size-3.5" aria-hidden />
         </button>

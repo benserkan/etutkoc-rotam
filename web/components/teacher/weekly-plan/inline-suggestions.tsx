@@ -8,6 +8,8 @@ import {
   CalendarClock,
   CheckCircle2,
   ChevronDown,
+  CircleDotDashed,
+  ListOrdered,
   Loader2,
   Plus,
   Sparkles,
@@ -362,7 +364,23 @@ function ReasonBadge({ reason }: { reason: string }) {
     Sparkles;
   let tone: Tone = "neutral";
   let text = reason;
-  if (lower.includes("tekrar kart")) {
+  if (lower.includes("müfredatta sıradaki")) {
+    Icon = ListOrdered;
+    tone = "success";
+    text = "Müfredatta sıradaki";
+  } else if (lower.includes("müfredatta yaklaşan")) {
+    Icon = ListOrdered;
+    tone = "info";
+    text = "Müfredatta yaklaşan";
+  } else if (lower.includes("müfredatta ileride")) {
+    Icon = ListOrdered;
+    tone = "amber";
+    text = "Müfredatta ileride";
+  } else if (lower.includes("başlanan konuyu")) {
+    Icon = CircleDotDashed;
+    tone = "info";
+    text = "Konuyu tamamlama";
+  } else if (lower.includes("tekrar kart")) {
     Icon = Brain;
     tone = "rose";
     text = "Tekrar kartında zorlandı";

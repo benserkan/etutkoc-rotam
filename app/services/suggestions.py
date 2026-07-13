@@ -10,6 +10,12 @@ Ana kavramlar:
 
 - **Maturity (olgunluk)**: sistem kaç hafta gözlem yaptı. 0..1 arası ölçek;
   8 haftaya kadar lineer artar, sonra sabitlenir. Düşük maturity → "silik" öneri.
+- **Curriculum priority (müfredat önceliği — ANA sinyal)**: bölümün eşli olduğu
+  konunun, o dersin AÇIK (kalan kapasiteli) konuları içindeki resmi sırası
+  (Topic.order). Frontier (sıradaki konu) = rank 0 → en yüksek öncelik; müfredatta
+  ilerideki konular rank arttıkça cezalanır; çok ilerideki (rank ≥ 3) konular
+  desen/tekrar sinyali yoksa hiç önerilmez. Başlanan (kısmen tamamlanmış) konuya
+  bitirme bonusu verilir. Konuya eşlenmemiş bölüm nötr kalır.
 - **Pattern strength**: o haftagününde belirli (kitap, bölüm) kombosunun kullanılma sıklığı.
 - **Weakness signal**: öğrencinin geride bıraktığı bölümler (düşük yüzde, uzun süredir
   dokunulmamış) daha yüksek skor alır → sistem bu bölümleri öğretmene hatırlatır.
@@ -27,6 +33,7 @@ from datetime import date, timedelta
 from statistics import median
 from typing import Iterable
 
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import (
@@ -50,6 +57,16 @@ REJECT_DECAY_DAYS = 60      # bu kadar gün sonrası ret kaydı etkisiz
 REJECT_STRONG_COUNT = 3     # bu kadar veya üstü ret → öneriyi komple çıkar
 REJECT_SCORE_PENALTY = 0.55 # her aktif reddin score/confidence'a oranlı cezası (decay ile çarpılır)
 
+# --- Müfredat önceliği (curriculum-first skorlama) ---
+CURRICULUM_W = 0.45         # skor bileşeni ağırlıkları: müfredat ANA sinyal
+WEAKNESS_W = 0.30
+PATTERN_W = 0.25
+CURRICULUM_NEUTRAL = 0.30   # konuya eşlenmemiş bölüm — ne öne çıkar ne cezalanır
+CURRICULUM_RANK_DECAY = 0.30  # frontier'dan ileri her açık konu için ceza
+CURRICULUM_FAR_RANK = 3     # bu ve ötesi "müfredatta çok ileride"
+CURRICULUM_STARTED_BONUS = 0.15  # başlanan (kısmen çözülmüş) konuyu bitirme bonusu
+FRONTIER_POOL_RANK = 1      # rank ≤ bu olan bölümler desen/zayıflık olmasa da aday
+
 
 # ---------------------------- Veri türleri ----------------------------
 
@@ -69,6 +86,7 @@ class Suggestion:
     confidence: float           # 0..1 — görsel ağırlık
     score: float                # sıralama için
     reasons: list[str] = field(default_factory=list)
+    curriculum_rank: int | None = None  # dersin açık konuları içinde 0=sıradaki; None=eşlenmemiş
 
 
 @dataclass
@@ -405,21 +423,113 @@ def _allowed_exam_sections(student) -> set[ExamSection | None] | None:
     return None
 
 
-def _progress_map(db: Session, student_id: int) -> dict[int, SectionProgress]:
-    """section_id → SectionProgress (kapasite ve kalan için)."""
-    sps = (
-        db.query(SectionProgress)
-        .join(StudentBook, StudentBook.id == SectionProgress.student_book_id)
-        .options(
-            joinedload(SectionProgress.section).joinedload(BookSection.topic),
-            joinedload(SectionProgress.student_book)
-            .joinedload(StudentBook.book)
-            .joinedload(Book.subject),
+@dataclass
+class _SectionCtx:
+    """Öğrencinin bir kitap bölümü için öneri bağlamı (SectionProgress kaydı
+    olmasa bile var — coalesce 0)."""
+
+    section: BookSection
+    book: Book
+    completed: int
+    reserved: int
+
+    @property
+    def remaining(self) -> int:
+        return max(0, (self.section.test_count or 0) - self.completed - self.reserved)
+
+
+def _section_universe(db: Session, student_id: int) -> dict[int, _SectionCtx]:
+    """section_id → bağlam. Öğrencinin ATANMIŞ tüm kitaplarının TÜM bölümleri.
+
+    Eski `_progress_map` yalnız SectionProgress satırı olan bölümleri görüyordu →
+    hiç dokunulmamış (hiç rezerv edilmemiş) yeni kitabın bölümleri önerilere hiç
+    giremiyordu. Bu sorgu outerjoin ile tam evreni kapsar.
+    """
+    rows = (
+        db.query(
+            BookSection,
+            Book,
+            func.coalesce(SectionProgress.completed_count, 0),
+            func.coalesce(SectionProgress.reserved_count, 0),
         )
+        .select_from(StudentBook)
+        .join(Book, Book.id == StudentBook.book_id)
+        .join(BookSection, BookSection.book_id == Book.id)
+        .outerjoin(
+            SectionProgress,
+            and_(
+                SectionProgress.student_book_id == StudentBook.id,
+                SectionProgress.book_section_id == BookSection.id,
+            ),
+        )
+        .options(joinedload(BookSection.topic), joinedload(Book.subject))
         .filter(StudentBook.student_id == student_id)
         .all()
     )
-    return {sp.book_section_id: sp for sp in sps}
+    return {
+        sec.id: _SectionCtx(section=sec, book=book, completed=int(c or 0), reserved=int(r or 0))
+        for sec, book, c, r in rows
+    }
+
+
+@dataclass
+class _CurriculumSignal:
+    """Bölüm → müfredat sırası sinyali (frontier rank)."""
+
+    rank_by_section: dict[int, int]     # section_id → dersin AÇIK konuları içinde 0-tabanlı sıra
+    started_topic_sections: set[int]    # konusu başlanmış (kısmen çözülmüş) + bitmemiş bölümler
+
+
+def _curriculum_signal(universe: dict[int, _SectionCtx]) -> _CurriculumSignal:
+    """Her bölümün konusunun (Topic) müfredat sırasındaki yerini hesapla.
+
+    Ders bazında: konuya eşli bölümlerin kalan kapasitesi konu düzeyinde
+    toplanır; kalanı > 0 olan (AÇIK) konular resmi sıraya (grade_level, order)
+    dizilir; rank = bu listede 0-tabanlı pozisyon. rank 0 = "müfredatta sıradaki
+    konu" (frontier). Tamamı çözülmüş/rezervli konu listeden düşer → frontier
+    otomatik ilerler. Konuya eşlenmemiş bölümler sinyal dışıdır (nötr skorlanır).
+    """
+    topic_secs: dict[int, list[int]] = {}
+    topic_meta: dict[int, tuple] = {}       # topic_id → (subject_id, order_key)
+    topic_remaining: dict[int, int] = {}
+    topic_completed: dict[int, int] = {}
+    for sid, ctx in universe.items():
+        t = ctx.section.topic
+        if t is None:
+            continue
+        topic_secs.setdefault(t.id, []).append(sid)
+        topic_meta[t.id] = (
+            t.subject_id,
+            (
+                t.grade_level if t.grade_level is not None else 99,
+                t.order if t.order is not None else 9999,
+                t.id,
+            ),
+        )
+        topic_remaining[t.id] = topic_remaining.get(t.id, 0) + ctx.remaining
+        topic_completed[t.id] = topic_completed.get(t.id, 0) + ctx.completed
+
+    by_subject: dict[int, list[int]] = {}
+    for tid, (subj_id, _key) in topic_meta.items():
+        if topic_remaining.get(tid, 0) > 0:
+            by_subject.setdefault(subj_id, []).append(tid)
+    rank_by_topic: dict[int, int] = {}
+    for tids in by_subject.values():
+        tids.sort(key=lambda x: topic_meta[x][1])
+        for i, tid in enumerate(tids):
+            rank_by_topic[tid] = i
+
+    rank_by_section: dict[int, int] = {}
+    started_topic_sections: set[int] = set()
+    for tid, sids in topic_secs.items():
+        r = rank_by_topic.get(tid)
+        started = topic_completed.get(tid, 0) > 0 and topic_remaining.get(tid, 0) > 0
+        for sid in sids:
+            if r is not None:
+                rank_by_section[sid] = r
+            if started:
+                started_topic_sections.add(sid)
+    return _CurriculumSignal(rank_by_section, started_topic_sections)
 
 
 def suggest_for_date(
@@ -462,8 +572,8 @@ def suggest_for_date(
         # Phase tespiti başarısız olursa varsayılan davranış (1.0x)
         phase_capacity_mult = 1.0
 
-    # Mevcut section ilerlemeleri
-    progress_by_section = _progress_map(db, student_id)
+    # Öğrencinin atanmış TÜM kitap bölümleri (SectionProgress kaydı şart değil)
+    universe = _section_universe(db, student_id)
     exclude_set = set(exclude_keys)
 
     # Faz 7: Track + sınav-bölümü filtresi
@@ -473,10 +583,13 @@ def suggest_for_date(
     if student is not None:
         allowed_sections = _allowed_exam_sections(student)
         if allowed_sections is not None:
-            progress_by_section = {
-                sid: sp for sid, sp in progress_by_section.items()
-                if sp.student_book.book.subject.exam_section in allowed_sections
+            universe = {
+                sid: ctx for sid, ctx in universe.items()
+                if ctx.book.subject.exam_section in allowed_sections
             }
+
+    # Müfredat sırası sinyali (frontier rank) — filtrelenmiş evren üzerinde
+    curriculum = _curriculum_signal(universe)
 
     # 1) Pattern adayları — bu haftagünü
     pattern_scores: dict[tuple[int, int], int] = defaultdict(int)
@@ -500,15 +613,15 @@ def suggest_for_date(
     except Exception:
         review_struggle = {}
     review_weakness_keys: set[tuple[int, int]] = set()
-    for section_id, sp in progress_by_section.items():
-        section = sp.section
+    for section_id, ctx in universe.items():
+        section = ctx.section
         if section.test_count == 0:
             continue
-        remaining = section.test_count - sp.completed_count - sp.reserved_count
+        remaining = ctx.remaining
         if remaining <= 0:
             continue
-        progress_pct = (sp.completed_count + sp.reserved_count) / section.test_count
-        book_id = sp.student_book.book_id
+        progress_pct = (ctx.completed + ctx.reserved) / section.test_count
+        book_id = ctx.book.id
         last = model.last_completed.get((book_id, section_id))
         days_gap = (today - last).days if last else None
 
@@ -524,7 +637,7 @@ def suggest_for_date(
                 w += 0.30
             elif days_gap > 7:
                 w += 0.15
-        elif last is None and (sp.reserved_count == 0 and sp.completed_count == 0):
+        elif last is None and (ctx.reserved == 0 and ctx.completed == 0):
             # Hiç dokunulmamış
             w += 0.10
         # Review tekrar kartında zorlanan konu boost'u (Stage 12 → öneri besleme)
@@ -536,20 +649,30 @@ def suggest_for_date(
         if w > 0:
             weakness_scores[(book_id, section_id)] = min(1.0, w)
 
+    # 3) Müfredat frontier adayları — sıradaki konular desen/zayıflık sinyali
+    # olmasa da aday havuzuna girer (yeni öğrenci/yeni kitapta öneri boş kalmasın)
+    frontier_keys: set[tuple[int, int]] = set()
+    for section_id, ctx in universe.items():
+        rank = curriculum.rank_by_section.get(section_id)
+        if rank is not None and rank <= FRONTIER_POOL_RANK and ctx.remaining > 0:
+            frontier_keys.add((ctx.book.id, section_id))
+
     # Aday birleşimi
-    all_keys = (set(pattern_scores.keys()) | set(weakness_scores.keys())) - exclude_set
+    all_keys = (
+        set(pattern_scores.keys()) | set(weakness_scores.keys()) | frontier_keys
+    ) - exclude_set
 
     suggestions: list[Suggestion] = []
     for key in all_keys:
         book_id, section_id = key
-        sp = progress_by_section.get(section_id)
-        if not sp:
+        ctx = universe.get(section_id)
+        if not ctx:
             continue
-        section = sp.section
-        remaining = section.test_count - sp.completed_count - sp.reserved_count
+        section = ctx.section
+        remaining = ctx.remaining
         if remaining <= 0:
             continue
-        book = sp.student_book.book
+        book = ctx.book
         subject = book.subject
 
         freq = pattern_scores.get(key, 0)
@@ -557,6 +680,26 @@ def suggest_for_date(
         pattern_strength = min(1.0, freq / weeks)  # 1x/hafta = 1.0
 
         weakness = weakness_scores.get(key, 0.0)
+
+        # Müfredat önceliği — dersin açık konuları içindeki resmi sıra
+        rank = curriculum.rank_by_section.get(section_id)
+        in_started_topic = section_id in curriculum.started_topic_sections
+        if rank is None:
+            curriculum_score = CURRICULUM_NEUTRAL   # konuya eşlenmemiş bölüm
+        else:
+            curriculum_score = max(0.05, 1.0 - CURRICULUM_RANK_DECAY * rank)
+        if in_started_topic:
+            curriculum_score = min(1.0, curriculum_score + CURRICULUM_STARTED_BONUS)
+
+        # Müfredatta ÇOK ileride + o güne hiç desenli değil + tekrar-kartı
+        # sinyali yok → önerme (kullanıcı şikâyeti: "baştayken ilerisi öneriliyor")
+        if (
+            rank is not None
+            and rank >= CURRICULUM_FAR_RANK
+            and freq == 0
+            and key not in review_weakness_keys
+        ):
+            continue
 
         # Ret sinyali — hem gün-bazlı hem genel
         reject_specific = model.reject_weights.get((dow, book_id, section_id), 0.0)
@@ -570,12 +713,21 @@ def suggest_for_date(
         if total_rejects >= REJECT_STRONG_COUNT:
             continue
 
-        # Skorlar — sıralama için
-        score = 0.55 * pattern_strength + 0.45 * weakness
+        # Skor — müfredat sırası ANA sinyal; zayıflık + öğretmen deseni destekler
+        score = (
+            CURRICULUM_W * curriculum_score
+            + WEAKNESS_W * weakness
+            + PATTERN_W * pattern_strength
+        )
         score *= max(0.0, 1.0 - REJECT_SCORE_PENALTY * min(1.0, reject_weight))
 
-        # Güven — görsel yoğunluk için
-        confidence = mat * (0.55 + 0.45 * pattern_strength) + 0.25 * weakness
+        # Güven — görsel yoğunluk için (müfredat sinyali yeni öğrencide de
+        # görünür olsun diye maturity'den bağımsız katkı verir)
+        confidence = (
+            mat * (0.40 + 0.35 * pattern_strength)
+            + 0.20 * weakness
+            + 0.30 * curriculum_score
+        )
         confidence *= max(0.0, 1.0 - REJECT_SCORE_PENALTY * min(1.0, reject_weight))
         confidence = max(MATURITY_MIN_FLOOR if mat > 0 else 0.0, min(1.0, confidence))
 
@@ -587,8 +739,16 @@ def suggest_for_date(
             typical = 2  # varsayılan
         typical = max(1, min(typical, remaining))
 
-        # Açıklama
+        # Açıklama — müfredat konumu ilk rozet (UI ilk reason'ı gösterir)
         reasons: list[str] = []
+        if rank == 0:
+            reasons.append("Müfredatta sıradaki konu")
+        elif rank == 1:
+            reasons.append("Müfredatta yaklaşan konu")
+        elif rank is not None and rank >= CURRICULUM_FAR_RANK:
+            reasons.append("Müfredatta ileride")
+        if in_started_topic:
+            reasons.append("Başlanan konuyu tamamlama")
         if freq > 0:
             reasons.append(f"Bu güne {freq}× önceden atanmış")
         if key in review_weakness_keys:
@@ -616,9 +776,16 @@ def suggest_for_date(
             confidence=confidence,
             score=score,
             reasons=reasons,
+            curriculum_rank=rank,
         ))
 
-    suggestions.sort(key=lambda s: (-s.score, -s.confidence, s.subject_name, s.book_name))
+    suggestions.sort(key=lambda s: (
+        -s.score,
+        s.curriculum_rank if s.curriculum_rank is not None else 999,
+        -s.confidence,
+        s.subject_name,
+        s.book_name,
+    ))
 
     # Ders çeşitliliği ve tipik hacim
     typical_n = max_suggestions or model.typical_items_per_day.get(dow, 0) or 5

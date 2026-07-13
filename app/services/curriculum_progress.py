@@ -206,14 +206,35 @@ def exam_subject_visible_for_track(s: Subject, track: Track | None) -> bool:
     return s.name in TRACK_AYT_SUBJECTS.get(track, set())
 
 
+def _student_resource_subject_ids(db: Session, student: User) -> set[int]:
+    """Öğrencinin kitap bölümlerinin eşli olduğu konuların ders id'leri.
+
+    'Bu öğrencinin hangi derste GERÇEK kaynağı var?' sorusunun cevabı —
+    StudentBook → Book → BookSection.topic_id → Topic.subject_id (distinct).
+    """
+    rows = (
+        db.query(Topic.subject_id)
+        .join(BookSection, BookSection.topic_id == Topic.id)
+        .join(Book, Book.id == BookSection.book_id)
+        .join(StudentBook, StudentBook.book_id == Book.id)
+        .filter(StudentBook.student_id == student.id)
+        .distinct()
+        .all()
+    )
+    return {r[0] for r in rows}
+
+
 def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subject]:
     """Öğrencinin müfredat dersleri (resmi/koç) — grade + curriculum_model filtreli.
 
-    YKS (lise/mezun) öğrenci için **sınav omurgası**: TYT/AYT kanonik dersleri
-    gösterir; karşılığı olan OKUL dersini (örn. Klasik/Maarif 'Matematik') gizler
-    → panel temiz "TYT/AYT müfredatında nerede". Okul müfredatı verisi silinmez,
-    yalnız bu görünümde sınav dersi tercih edilir. Sınav karşılığı olmayan okul
-    dersleri (henüz kanonik yok) aynen gösterilir → kademeli rollout güvenli."""
+    YKS (lise/mezun) öğrenci için **sınav omurgası** tercih edilir (TYT/AYT
+    kanonik dersleri; okul karşılığı gizlenir) — AMA dedup **kaynak-duyarlı**:
+    öğrencinin kitapları OKUL (Maarif/Klasik) konularına eşliyken sınav dersinde
+    hiç kaynağı yoksa, okul dersi GÖRÜNÜR kalır ve kaynaksız sınav karşılığı
+    gizlenir. Aksi halde (sınav dersinde kaynak var / ikisinde de yok) sınav
+    omurgası tercih edilir (eski davranış). Böylece 9-10. sınıf Maarif öğrencisi
+    "kaynak yok" duvarına çarpmaz; koç kitapları sınav omurgasına taşıdığında
+    görünüm kendiliğinden sınav dersine döner."""
     student_cm = student.effective_curriculum_model
     rows = (
         db.query(Subject)
@@ -231,20 +252,43 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
     is_yks = bool(student.is_graduate) or (
         student.grade_level is not None and student.grade_level >= 9
     )
-    # YKS'de sınav dersi olan base adların okul karşılığını gizle
-    exam_bases = {
-        _exam_base_name(s.name) for s in candidates if _is_exam_subject(s)
+    resource_ids = _student_resource_subject_ids(db, student) if is_yks else set()
+    # base ad → sınav dersleri (TYT Matematik + AYT Matematik → "Matematik")
+    exam_by_base: dict[str, list[Subject]] = {}
+    if is_yks:
+        for s in candidates:
+            if _is_exam_subject(s):
+                exam_by_base.setdefault(_exam_base_name(s.name), []).append(s)
+    # kaynağı olan OKUL dersleri (sınav karşılığının gizlenip gizlenmeyeceği için)
+    school_names_with_res = {
+        s.name for s in candidates
+        if not _is_exam_subject(s) and s.id in resource_ids
     } if is_yks else set()
 
     out: list[Subject] = []
     seen: set[str] = set()
     for s in candidates:
-        # YKS: sınav karşılığı olan okul dersini (TYT/AYT değil, modelli) atla
-        if is_yks and not _is_exam_subject(s) and (
-            s.name in exam_bases
-            or bool(_SCHOOL_EXAM_SYNONYMS.get(s.name, set()) & exam_bases)
-        ):
-            continue
+        if is_yks:
+            if _is_exam_subject(s):
+                # Kaynaksız sınav dersi, kaynaklı okul karşılığı varsa gizlenir
+                base = _exam_base_name(s.name)
+                school_matches = {base} | {
+                    sch for sch, syns in _SCHOOL_EXAM_SYNONYMS.items() if base in syns
+                }
+                if s.id not in resource_ids and (school_matches & school_names_with_res):
+                    continue
+            else:
+                # Okul dersinin sınav karşılıkları (ad + eşanlam köprüsü)
+                bases = {s.name} | _SCHOOL_EXAM_SYNONYMS.get(s.name, set())
+                exam_counterparts = [e for b in bases for e in exam_by_base.get(b, [])]
+                if exam_counterparts:
+                    exam_has_res = any(e.id in resource_ids for e in exam_counterparts)
+                    school_has_res = s.id in resource_ids
+                    # Sınav dersi kaynaklı VEYA okul dersi de kaynaksız → sınav
+                    # omurgası tercih (okul dersini gizle — eski davranış).
+                    # Yalnız "okul kaynaklı + sınav kaynaksız" durumunda okul kalır.
+                    if exam_has_res or not school_has_res:
+                        continue
         if s.name in seen:  # aynı ad farklı modelden tekille (ilk geçen kalır)
             continue
         seen.add(s.name)

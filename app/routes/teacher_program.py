@@ -13,6 +13,7 @@ from app.models import (
     StudentBook,
     Task,
     TaskBookItem,
+    TaskStatus,
     TaskType,
     User,
     UserRole,
@@ -691,6 +692,7 @@ def build_book_grid_slots(
     section_ids: list[int],
     *,
     teacher_student_id: int | None = None,
+    include_drafts: bool = False,
 ) -> dict[int, dict]:
     """Section ID -> {"completed": [...], "reserved": [...]}.
 
@@ -699,30 +701,44 @@ def build_book_grid_slots(
     Cinema-seat'in n'inci kutucuğunun hangi göreve / tarihe ait olduğunu ve
     hedef hafta+anchor URL'sini taşır.
 
+    RELEASE-AWARE (2026-07-13): bir kalemin yapılmamış kısmı yalnız rezerv
+    hâlâ TUTULUYORSA (reservation_released_at IS NULL + görev tamamlanmamış)
+    "reserved" slot üretir. Reconcile/cron ile serbest bırakılmış (released)
+    geçmiş görev kalemleri artık rezerv DEĞİL boş görünür — kayıtlı sayaçla
+    (SectionProgress.reserved_count) aynı tanım. Eski hâli released kalemleri
+    de rezerv sayıp sahte "sayaç uyumsuzluğu" üretiyordu.
+
+    include_drafts: True → taslak görev kalemlerinin bekleyeni de rezerv slot
+    sayılır (taslak da kapasite kilitler; kayıtlı sayaçta vardır). Öğrenci
+    tarafında False bırakılır (yayınlanmamış plan sızmasın).
+
     teacher_student_id: None ise öğrenci tarafı URL'si üretilir;
     aksi halde öğretmen panelinin haftalık görüntüsü için URL üretilir.
     """
     out: dict[int, dict] = {sid: {"completed": [], "reserved": []} for sid in section_ids}
     if not section_ids:
         return out
-    rows = (
+    q = (
         db.query(
             TaskBookItem.book_section_id,
             TaskBookItem.planned_count,
             TaskBookItem.completed_count,
+            TaskBookItem.reservation_released_at,
             Task.id,
             Task.date,
+            Task.status,
         )
         .join(Task, TaskBookItem.task_id == Task.id)
         .filter(
             Task.student_id == student_id,
             TaskBookItem.book_section_id.in_(section_ids),
-            Task.is_draft.is_(False),
         )
         .order_by(Task.date.asc(), Task.id.asc())
-        .all()
     )
-    for sid, planned_n, completed_n, tid, tdate in rows:
+    if not include_drafts:
+        q = q.filter(Task.is_draft.is_(False))
+    rows = q.all()
+    for sid, planned_n, completed_n, released_at, tid, tdate, tstatus in rows:
         if sid not in out:
             continue
         iso = tdate.isoformat()
@@ -732,6 +748,10 @@ def build_book_grid_slots(
             out[sid]["completed"].append({
                 "date": iso, "label": label, "task_id": tid, "url": url,
             })
+        # Rezerv slot = hâlâ tutulan bekleyen kısım (release-aware)
+        holds = released_at is None and tstatus != TaskStatus.COMPLETED
+        if not holds:
+            continue
         remaining = max(0, (planned_n or 0) - (completed_n or 0))
         for _ in range(remaining):
             out[sid]["reserved"].append({

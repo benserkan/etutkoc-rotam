@@ -4584,8 +4584,11 @@ def teacher_patch_task_single_item_v2(
 
     # Rezerv dengeleme (Jinja edit_task.py:560-586 parite)
     try:
+        # Released (reconcile ile serbest bırakılmış) kalemin bekleyeni sayaçta
+        # DEĞİL → tekrar iade etme (çift-iade başka görevlerin rezervini düşürür).
+        was_released = item.reservation_released_at is not None
         old_pending = item.planned_count - item.completed_count
-        if old_pending > 0:
+        if old_pending > 0 and not was_released:
             release_item(
                 db,
                 student_id=task.student_id,
@@ -4604,6 +4607,9 @@ def teacher_patch_task_single_item_v2(
                 section_id=body.section_id,
                 count=new_pending,
             )
+            # Koç düzenledi → kalem yeniden canlı rezerv tutuyor; released
+            # işaretini kaldır ki silme/reconcile yeniden doğru çalışsın.
+            item.reservation_released_at = None
     except ReservationError as e:
         db.rollback()
         raise _reservation_to_http(e)
@@ -5871,8 +5877,11 @@ def teacher_student_book_grid_v2(
 
     pmap = {p.book_section_id: p for p in sb.section_progress}
     section_ids = [sec.id for sec in sb.book.sections]
+    # Öğretmen görünümü: taslak görev rezervi de kapasite kilitler (kayıtlı
+    # sayaçta var) → taslaklar dahil; release-aware slot üretimi (helper içinde).
     slots_map = build_book_grid_slots(
         db, student.id, section_ids, teacher_student_id=student.id,
+        include_drafts=True,
     )
 
     sections_data: list[BookSectionGrid] = []
@@ -5888,6 +5897,12 @@ def teacher_student_book_grid_v2(
 
         cells: list[BookCell] = []
         idx = 0
+        # Baseline dolgusu: koç "öğrenci bu bölümden zaten çözmüştü" girişi
+        # yapmışsa kayıtlı çözüldü sayısı görev kalemlerinden büyüktür — fark,
+        # görevsiz (tarihsiz) DONE kutusu olarak gösterilir.
+        for _ in range(max(0, completed - len(done_slots))):
+            idx += 1
+            cells.append(BookCell(number=idx, state="DONE"))
         for s in done_slots:
             idx += 1
             cells.append(BookCell(

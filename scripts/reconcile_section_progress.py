@@ -3,10 +3,19 @@
 `reserved_count` ve `completed_count` alanları zamanla drift edebilir (bir görev
 direkt silindiğinde, manuel SQL ile temizlik yapıldığında, geçmişte fix'lenmemiş
 bir bug nedeniyle). Bu script her SectionProgress'i şu beklenen değerlere göre
-yeniden hesaplar:
+yeniden hesaplar (RELEASE-AWARE, 2026-07-13 — diagnose_elif_reserves ile aynı
+"tutucu" tanımı):
 
-  expected_completed = sum( completed_count ) of non-draft TaskBookItems
-  expected_reserved  = sum( max(0, planned_count - completed_count) ) of non-draft TaskBookItems
+  expected_reserved  = sum( max(0, planned - completed) ) — yalnız
+                       reservation_released_at IS NULL + görev COMPLETED değil
+                       olan kalemler (TASLAK DAHİL — taslak da kapasite kilitler)
+  expected_completed = sum( completed_count ) of TaskBookItems (taslak dahil;
+                       KAYITLI sayaç bundan BÜYÜKSE dokunulmaz — koçun "zaten
+                       çözmüştü" baseline girişi görev kalemi üretmez)
+
+DİKKAT: Eski sürüm release-UNAWARE idi — reconcile/cron'un bilerek serbest
+bıraktığı ölü rezervleri geri kilitliyordu. Artık kayıtlı sayaçla aynı tanımı
+kullanır; yalnız GERÇEK tutarsızlıkları düzeltir.
 
 Çalıştırma:
   # Önizleme (varsayılan — hiçbir şey değiştirmez):
@@ -31,6 +40,7 @@ from app.models import (
     StudentBook,
     Task,
     TaskBookItem,
+    TaskStatus,
 )
 
 
@@ -52,7 +62,7 @@ def run(student_id: int | None = None, apply_changes: bool = False) -> int:
                 all_section_ids.add(sec.id)
 
         agg: dict[tuple[int, int], dict] = defaultdict(
-            lambda: {"planned": 0, "completed": 0}
+            lambda: {"holding": 0, "completed": 0}
         )
         rows = (
             db.query(
@@ -60,27 +70,31 @@ def run(student_id: int | None = None, apply_changes: bool = False) -> int:
                 TaskBookItem.book_section_id,
                 TaskBookItem.planned_count,
                 TaskBookItem.completed_count,
+                TaskBookItem.reservation_released_at,
+                Task.status,
             )
             .join(Task, TaskBookItem.task_id == Task.id)
             .filter(
                 TaskBookItem.book_section_id.in_(all_section_ids),
-                Task.is_draft.is_(False),
             )
             .all()
         )
-        for sid, sec_id, planned_n, completed_n in rows:
+        for sid, sec_id, planned_n, completed_n, released_at, tstatus in rows:
             key = (sid, sec_id)
-            agg[key]["planned"] += planned_n or 0
             agg[key]["completed"] += completed_n or 0
+            # Tutucu = released değil + görev tamamlanmamış → bekleyen kısmı
+            # sayaçta olmalı (taslak dahil; taslak da kapasite kilitler).
+            if released_at is None and tstatus != TaskStatus.COMPLETED:
+                agg[key]["holding"] += max(0, (planned_n or 0) - (completed_n or 0))
 
         changes: list[dict] = []
         for sb in sbs:
             for sp in sb.section_progress:
                 key = (sb.student_id, sp.book_section_id)
-                planned_sum = agg[key]["planned"]
-                completed_sum = agg[key]["completed"]
-                expected_reserved = max(0, planned_sum - completed_sum)
-                expected_completed = completed_sum
+                expected_reserved = agg[key]["holding"]
+                # Baseline ("zaten çözmüştü") görev kalemi üretmez → kayıtlı
+                # completed, kalem toplamından BÜYÜKSE korunur.
+                expected_completed = max(sp.completed_count, agg[key]["completed"])
                 if (
                     sp.reserved_count != expected_reserved
                     or sp.completed_count != expected_completed

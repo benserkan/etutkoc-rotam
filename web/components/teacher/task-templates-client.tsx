@@ -84,7 +84,7 @@ export function TaskTemplatesClient({ initialTemplates, books }: Props) {
                       if (window.confirm(`"${t.name}" şablonunu sil?`)) del.mutate({ id: t.id });
                     }}
                     disabled={del.isPending}
-                    className="shrink-0 rounded-md border border-border p-1.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+                    className="shrink-0 rounded-md border border-border p-1.5 text-muted-foreground hover:bg-rose-500/10 hover:text-rose-600"
                     aria-label="Sil"
                   >
                     <Trash2 className="size-4" aria-hidden />
