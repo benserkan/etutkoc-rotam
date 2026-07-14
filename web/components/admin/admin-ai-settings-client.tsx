@@ -2,7 +2,17 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Check, Loader2, Lock, Save, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
+import {
+  Activity,
+  AlertTriangle,
+  Check,
+  Loader2,
+  Lock,
+  Save,
+  ShieldCheck,
+  Sparkles,
+  Trash2,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -10,8 +20,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { adminKeys, getAdminAiSettings } from "@/lib/api/admin";
-import { useSetAiSetting, useDeleteAiSetting } from "@/lib/hooks/use-admin-mutations";
-import type { AiSettingItem, AiSettingsResponse } from "@/lib/types/admin";
+import {
+  useDeleteAiSetting,
+  useSetAiSetting,
+  useTestAiKeys,
+} from "@/lib/hooks/use-admin-mutations";
+import type {
+  AiHealthProbe,
+  AiSettingItem,
+  AiSettingsResponse,
+} from "@/lib/types/admin";
 
 const SOURCE_LABELS: Record<string, { label: string; tone: string }> = {
   db: { label: "Panelden", tone: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200" },
@@ -52,6 +70,8 @@ export function AdminAiSettingsClient({ initial }: { initial: AiSettingsResponse
         </span>
       </div>
 
+      <HealthCard />
+
       {get("gemini_paid_api_key") ? (
         <SecretCard item={get("gemini_paid_api_key")!} placeholder="AIza... (ücretli)" />
       ) : null}
@@ -80,6 +100,130 @@ function SourceBadge({ source }: { source: string }) {
       {source === "none" ? <Lock className="size-3" aria-hidden /> : <Check className="size-3" aria-hidden />}
       {s.label}
     </span>
+  );
+}
+
+/**
+ * Bağlantı sağlığı — anahtarları GERÇEK (minik) çağrıyla dener.
+ *
+ * 2026-07-14: canlıda AI sessizce durdu (Google faturalandırma askısı → proje
+ * 403 "denied access" + ücretsiz katmana düşüp 429). Panelden anlamanın yolu
+ * yoktu; ancak bir özelliği deneyip 502 alınca fark ediliyordu.
+ */
+function HealthCard() {
+  const test = useTestAiKeys();
+  const h = test.data;
+
+  const overallTone =
+    h?.overall === "ok"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-900 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200"
+      : h?.overall === "degraded"
+        ? "border-amber-200 bg-amber-50 text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+        : "border-rose-200 bg-rose-50 text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200";
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">
+              Bağlantı sağlığı
+            </h2>
+            <p className="text-xs text-muted-foreground">
+              Anahtarları Google&apos;a küçük bir istekle dener. Kredi düşmez.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5"
+            disabled={test.isPending}
+            onClick={() => test.mutate()}
+          >
+            {test.isPending ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Activity className="size-4" aria-hidden />
+            )}
+            Bağlantıyı test et
+          </Button>
+        </div>
+
+        {h ? (
+          <>
+            <div className={cn("rounded-md border px-3 py-2 text-sm font-medium", overallTone)}>
+              {h.headline}
+            </div>
+            <ul className="space-y-2">
+              {h.probes.map((p) => (
+                <ProbeRow key={`${p.slot}-${p.model}`} probe={p} />
+              ))}
+            </ul>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+const PROBE_TONE: Record<string, string> = {
+  ok: "border-emerald-200 bg-emerald-50 dark:border-emerald-500/30 dark:bg-emerald-500/10",
+  quota: "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10",
+  denied: "border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10",
+  invalid_key: "border-rose-200 bg-rose-50 dark:border-rose-500/30 dark:bg-rose-500/10",
+  not_set: "border-slate-200 bg-slate-50 dark:border-slate-500/30 dark:bg-slate-500/10",
+  network: "border-amber-200 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10",
+  unknown: "border-slate-200 bg-slate-50 dark:border-slate-500/30 dark:bg-slate-500/10",
+};
+
+const PROBE_LABEL: Record<string, string> = {
+  ok: "Çalışıyor",
+  quota: "Kota doldu",
+  denied: "Erişim reddedildi",
+  invalid_key: "Anahtar geçersiz",
+  not_set: "Tanımlı değil",
+  network: "Ulaşılamadı",
+  unknown: "Bilinmiyor",
+};
+
+function ProbeRow({ probe }: { probe: AiHealthProbe }) {
+  const ok = probe.status === "ok";
+  return (
+    <li className={cn("rounded-md border px-3 py-2", PROBE_TONE[probe.status])}>
+      <div className="flex flex-wrap items-center gap-2">
+        {ok ? (
+          <Check className="size-4 text-emerald-700 dark:text-emerald-300" aria-hidden />
+        ) : (
+          <AlertTriangle className="size-4 text-rose-700 dark:text-rose-300" aria-hidden />
+        )}
+        <span className="text-sm font-medium text-slate-900 dark:text-slate-100">
+          {probe.label}
+        </span>
+        <span className="rounded bg-slate-900/5 px-1.5 py-0.5 font-mono text-[10px] text-slate-700 dark:bg-white/10 dark:text-slate-300">
+          {probe.model}
+        </span>
+        <span className="ml-auto text-xs font-semibold text-slate-800 dark:text-slate-200">
+          {PROBE_LABEL[probe.status]}
+          {probe.http_status ? ` · HTTP ${probe.http_status}` : ""}
+        </span>
+      </div>
+      <p className="mt-1 text-xs text-slate-800 dark:text-slate-200">{probe.summary}</p>
+      {probe.action ? (
+        <p className="mt-0.5 text-xs font-medium text-slate-900 dark:text-slate-100">
+          → {probe.action}
+        </p>
+      ) : null}
+      {probe.raw_message ? (
+        <details className="mt-1">
+          <summary className="cursor-pointer text-[11px] text-slate-600 dark:text-slate-400">
+            Google&apos;ın ham mesajı
+          </summary>
+          <pre className="mt-1 overflow-x-auto whitespace-pre-wrap break-words rounded bg-slate-900/5 p-2 text-[10px] text-slate-700 dark:bg-black/30 dark:text-slate-300">
+            {probe.raw_message}
+          </pre>
+        </details>
+      ) : null}
+    </li>
   );
 }
 

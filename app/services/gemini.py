@@ -81,6 +81,19 @@ def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_m
     if resp.status_code != 200:
         snippet = (resp.text or "")[:200]
         logger.warning("Gemini HTTP %s: %s", resp.status_code, snippet)
+        # Google'ın en sık iki blok nedeni ayrıştırılır → süper admin ne yapacağını
+        # bilir ("servis kullanılamıyor" jenerik mesajı 2026-07-14'te teşhisi
+        # geciktirdi: faturalandırma askısı fark edilmedi).
+        low = snippet.lower()
+        if resp.status_code == 403 and "denied access" in low:
+            raise AIServiceUnavailable(
+                "Google bu projeye erişimi kapatmış (genellikle başarısız ödeme → "
+                "faturalandırma askısı). Süper admin → AI Ayarları → 'Bağlantıyı test et'."
+            )
+        if resp.status_code in (400, 401):
+            raise AIServiceUnavailable(
+                "Gemini anahtarı geçersiz. Süper admin → AI Ayarları'ndan yenile."
+            )
         raise AIServiceUnavailable(f"Gemini HTTP {resp.status_code}")
 
     data = resp.json()

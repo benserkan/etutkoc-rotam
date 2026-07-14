@@ -71,6 +71,7 @@ import type {
   QuotaOverrideBody,
   UsageBonusBody,
   UsageMutationResult,
+  AiHealthResponse,
   AiSettingsResponse,
   SetAiSettingBody,
   PricingAdminResponse,
@@ -1899,6 +1900,24 @@ export function useAbuseRemediate() {
 // =============================================================================
 // Sistem ayarları — API anahtarları
 // =============================================================================
+
+/**
+ * Gemini anahtarlarını gerçek (minik) çağrıyla dener → sade Türkçe teşhis.
+ * Kredi düşmez; sağlık kontrolüdür. (2026-07-14 Google faturalandırma askısı
+ * olayından sonra eklendi — panelden anlamanın yolu yoktu.)
+ */
+export function useTestAiKeys() {
+  // eslint-disable-next-line lgs/missing-invalidate -- salt teşhis: sunucu durumunu DEĞİŞTİRMEZ (yalnız Google'a ping atar), bayatlayacak cache yok
+  return useMutation<AiHealthResponse, ApiError, void>({
+    mutationFn: () =>
+      api<AiHealthResponse>("/api/v2/admin/settings/ai/test", { method: "POST" }),
+    onError: (e) => {
+      toast.error(errorTitle(e, "Test yapılamadı"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
 
 export function useSetAiSetting() {
   const qc = useQueryClient();

@@ -3014,6 +3014,24 @@ export interface AiSettingsResponse {
   items: AiSettingItem[];
 }
 
+export interface AiHealthProbe {
+  slot: string; // paid | paid_fallback | free
+  label: string;
+  model: string;
+  is_set: boolean;
+  status: "ok" | "quota" | "denied" | "invalid_key" | "not_set" | "network" | "unknown";
+  summary: string;
+  action: string;
+  http_status: number | null;
+  raw_message: string;
+}
+
+export interface AiHealthResponse {
+  overall: "ok" | "degraded" | "down";
+  headline: string;
+  probes: AiHealthProbe[];
+}
+
 export interface SetAiSettingBody {
   name: string;
   value: string;

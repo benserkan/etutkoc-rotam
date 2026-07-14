@@ -3266,6 +3266,25 @@ class AiSettingsResponse(BaseModel):
     items: list[AiSettingItem]
 
 
+class AiHealthProbe(BaseModel):
+    """Tek anahtar/model denemesinin sonucu."""
+    slot: str                    # paid | paid_fallback | free
+    label: str
+    model: str
+    is_set: bool
+    status: str                  # ok | quota | denied | invalid_key | not_set | network | unknown
+    summary: str                 # sade Türkçe teşhis
+    action: str                  # ne yapmalı
+    http_status: int | None = None
+    raw_message: str = ""        # Google'ın ham mesajı (geliştirici detayı)
+
+
+class AiHealthResponse(BaseModel):
+    overall: str                 # ok | degraded | down
+    headline: str
+    probes: list[AiHealthProbe]
+
+
 class SetAiSettingBody(BaseModel):
     name: str               # SECRET_NAMES + CONFIG_NAMES içinden
     value: str              # düz değer (secret ise şifreli saklanır)

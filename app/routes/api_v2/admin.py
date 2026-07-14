@@ -355,6 +355,8 @@ from app.routes.api_v2.schemas.admin import (
     AlarmRuleUpdateBody,
     AlarmScanResult,
     AlarmsResponse,
+    AiHealthProbe,
+    AiHealthResponse,
     AiSettingItem,
     AiSettingsResponse,
     SetAiSettingBody,
@@ -8135,6 +8137,34 @@ def admin_ai_settings_get_v2(
     """Gemini AI ayarları — anahtarlar maskeli, modeller düz. Kaynak (db/env/default)."""
     from app.services.system_secrets import ai_settings_status
     return AiSettingsResponse(items=[AiSettingItem(**s) for s in ai_settings_status(db)])
+
+
+@router.post("/settings/ai/test", response_model=AiHealthResponse)
+def admin_ai_settings_test_v2(
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Gemini anahtarlarını GERÇEK (minik) çağrıyla dener → sade Türkçe teşhis.
+
+    Kredi düşmez (kullanım metresine yazılmaz) — bu bir sağlık kontrolüdür.
+    2026-07-14: canlıda AI sessizce durdu (Google faturalandırma askısı); panelden
+    anlamanın yolu yoktu → bu uç eklendi.
+    """
+    from app.services.gemini_health import check_gemini_health
+
+    h = check_gemini_health()
+    return AiHealthResponse(
+        overall=h.overall,
+        headline=h.headline,
+        probes=[
+            AiHealthProbe(
+                slot=p.slot, label=p.label, model=p.model, is_set=p.is_set,
+                status=p.status, summary=p.summary, action=p.action,
+                http_status=p.http_status, raw_message=p.raw_message,
+            )
+            for p in h.probes
+        ],
+    )
 
 
 @router.post("/settings/ai", response_model=MutationResponse[AiSettingsResponse])
