@@ -48,29 +48,26 @@ export function hrefForNotificationData(data: NotifData): string | null {
     return `/teacher-student?id=${data.student_id}`;
   }
 
-  // Koç: deneme/yenileme/kredi/teklif → Paket; yeni öğrenci talebi → Talepler
+  // Koç: yeni öğrenci talebi → Talepler; diğerleri → Öğrenciler
+  // (Apple 3.1.1: "Paketim" ekranı mobilden kaldırıldı — plan bildirimleri
+  // artık öğrenci listesine düşer, satın alma/paket ekranı yok.)
   if (type === "coach") {
     const screen = data.screen as string | undefined;
     switch (screen) {
       case "requests":
         return "/(app)/teacher/requests";
-      case "plan":
-        return "/teacher-plan";
       default:
         return "/(app)/teacher/students";
     }
   }
 
-  // Kurum yöneticisi: haftalık özet/kredi/abonelik → ilgili ekran
+  // Kurum yöneticisi: haftalık özet → ilgili ekran; kredi/abonelik ekranları
+  // mobilden kaldırıldı (Apple 3.1.1) → pano.
   if (type === "institution") {
     const screen = data.screen as string | undefined;
     switch (screen) {
       case "digest":
         return data.digest_id != null ? `/institution-digest-detail?id=${data.digest_id}` : "/institution-digest";
-      case "usage":
-        return "/institution-usage";
-      case "subscription":
-        return "/institution-subscription";
       case "activity":
         return "/institution-activity";
       default:

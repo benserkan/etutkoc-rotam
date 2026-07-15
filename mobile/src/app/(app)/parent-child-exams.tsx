@@ -57,7 +57,7 @@ export default function ParentChildExamsRoute() {
     onError: (e) => {
       const code = e instanceof ApiError ? e.code : null;
       if (code === "not_enough_data") Alert.alert("Yeterli veri yok", "Çocuğunuz test çözüp doğru/yanlış girdikçe veya deneme eklendikçe analiz oluşturulabilir.");
-      else if (code === "ai_credit_exhausted") Alert.alert("Kredi doldu", "Koçun yapay zekâ kredisi bu ay için dolmuş. Daha sonra tekrar deneyin.");
+      else if (code === "ai_credit_exhausted") Alert.alert("Kullanılamıyor", "Yapay zekâ analizi şu anda oluşturulamıyor. Daha sonra tekrar deneyin.");
       else if (code === "ai_not_available") Alert.alert("Kullanılamıyor", e instanceof ApiError ? e.message : "Yapay zekâ analizi şu an kullanılamıyor.");
       else if (code === "ai_unavailable") Alert.alert("Yapay zekâ kullanılamıyor", "Birkaç dakika sonra tekrar deneyin.");
       else Alert.alert("Oluşturulamadı", e instanceof ApiError ? e.message : "İşlem başarısız.");

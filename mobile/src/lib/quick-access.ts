@@ -97,8 +97,6 @@ export function mobilePathToCatalogPath(
       return "/teacher/requests";
     case "/teacher/support":
       return "/teacher/support";
-    case "/teacher-plan":
-      return "/teacher/plan";
     // Öğrenci
     case "/student/today":
     case "/day":
@@ -166,12 +164,6 @@ export function mobilePathToCatalogPath(
       return "/institution/invitations";
     case "/institution-digest":
       return "/institution/admin-digest";
-    case "/institution-quota":
-      return "/institution/quota";
-    case "/institution-usage":
-      return "/institution/usage";
-    case "/institution-subscription":
-      return "/institution/subscription";
     case "/institution/support":
       return "/institution/support";
     default:
@@ -210,8 +202,8 @@ export function mobileHrefForCard(card: QuickCard): string | null {
     case "teacher.support":
     case "teacher.support_inbox":
       return "/teacher/support";
-    case "teacher.plan":
-      return "/teacher-plan";
+    // teacher.plan / institution.quota|usage|subscription → mobilde YOK
+    // (Apple 3.1.1 — paket/kredi ekranları kaldırıldı; kart gizlenir)
     // Öğrenci
     case "student.day":
       return "/student/today";
@@ -275,12 +267,6 @@ export function mobileHrefForCard(card: QuickCard): string | null {
       return "/institution-invitations";
     case "institution.admin_digest":
       return "/institution-digest";
-    case "institution.quota":
-      return "/institution-quota";
-    case "institution.usage":
-      return "/institution-usage";
-    case "institution.subscription":
-      return "/institution-subscription";
     case "institution.support":
     case "institution.support_inbox":
       return "/institution/support";

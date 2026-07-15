@@ -1,6 +1,7 @@
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { DeleteAccountRow } from "@/components/account/delete-account-row";
 import { Brand } from "@/components/brand";
 import { useAuth } from "@/lib/auth";
 
@@ -39,6 +40,8 @@ export default function StudentProfileScreen() {
         >
           <Text className="text-[15px] font-semibold text-rose-600">Çıkış yap</Text>
         </Pressable>
+
+        <DeleteAccountRow />
       </ScrollView>
     </SafeAreaView>
   );

@@ -27,18 +27,13 @@ const GROUPS: { title: string; items: Item[] }[] = [
       { label: "Veli Güveni", sub: "Kapsama + bildirim teslimi", icon: "heart-outline", path: "/institution-parent-trust" },
     ],
   },
-  {
-    title: "Üyelik",
-    items: [
-      { label: "Kredi Kullanımı", sub: "Yapay zekâ kredi tüketimi", icon: "flash-outline", path: "/institution-usage" },
-      { label: "Limitler", sub: "Koç/öğrenci kotaları", icon: "speedometer-outline", path: "/institution-quota" },
-      { label: "Hesap Ayarları", sub: "Paket durumu", icon: "settings-outline", path: "/institution-subscription" },
-    ],
-  },
+  // NOT (Apple 3.1.1): "Üyelik" grubu (Kredi Kullanımı / Limitler / Hesap
+  // Ayarları) mobilden kaldırıldı — paket/kota/kredi ekranları uygulama-dışı
+  // satın almaya gönderme sayılıyor. Hesap yönetimi web panelinde.
   {
     title: "Genel",
     items: [
-      { label: "Aktivite Akışı", sub: "Kim katıldı, kim yükseltti", icon: "pulse-outline", path: "/institution-activity" },
+      { label: "Aktivite Akışı", sub: "Kim katıldı, kim davet edildi", icon: "pulse-outline", path: "/institution-activity" },
     ],
   },
 ];

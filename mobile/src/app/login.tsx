@@ -142,7 +142,24 @@ export default function LoginScreen() {
               <View className="mt-1 flex-row items-center justify-center gap-1">
                 <Text className="text-sm text-slate-400">Koç musun, hesabın yok mu?</Text>
                 <Pressable onPress={() => router.push("/signup")} hitSlop={8}>
-                  <Text className="text-sm font-semibold text-brand-700">14 gün ücretsiz dene</Text>
+                  <Text className="text-sm font-semibold text-brand-700">Kayıt ol</Text>
+                </Pressable>
+              </View>
+
+              {/* Apple 2.1(a): giriş ekranında işlevsel yasal bağlantılar */}
+              <View className="mt-3 flex-row items-center justify-center gap-2">
+                <Pressable
+                  onPress={() => void Linking.openURL("https://rotam.etutkoc.com/kullanim-sartlari")}
+                  hitSlop={8}
+                >
+                  <Text className="text-xs font-medium text-slate-400 underline">Kullanım Şartları</Text>
+                </Pressable>
+                <Text className="text-xs text-slate-300">·</Text>
+                <Pressable
+                  onPress={() => void Linking.openURL("https://rotam.etutkoc.com/kvkk")}
+                  hitSlop={8}
+                >
+                  <Text className="text-xs font-medium text-slate-400 underline">Gizlilik Politikası (KVKK)</Text>
                 </Pressable>
               </View>
             </View>

@@ -1,14 +1,14 @@
-import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { DeleteAccountRow } from "@/components/account/delete-account-row";
 import { Brand } from "@/components/brand";
 import { useAuth } from "@/lib/auth";
 
+// NOT (Apple 3.1.1): "Paketim" girişi mobilden kaldırıldı — paket durumu /
+// yapay zekâ kredisi ekranı App Store yönergesi gereği uygulamada gösterilmez.
 export default function TeacherProfileScreen() {
   const { user, signOut } = useAuth();
-  const isSolo = user?.institution_id == null;
 
   return (
     <SafeAreaView className="flex-1 bg-slate-50">
@@ -27,22 +27,6 @@ export default function TeacherProfileScreen() {
             <Text className="text-xs text-slate-400">{user?.email}</Text>
           </View>
         </View>
-
-        {isSolo ? (
-          <Pressable
-            onPress={() => router.push("/teacher-plan")}
-            className="flex-row items-center justify-between rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
-          >
-            <View className="flex-row items-center gap-3">
-              <Ionicons name="diamond-outline" size={20} color="#0e7490" />
-              <View>
-                <Text className="text-[15px] font-medium text-slate-900">Paketim</Text>
-                <Text className="mt-0.5 text-xs text-slate-500">Plan durumu + yapay zekâ kredisi</Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
-          </Pressable>
-        ) : null}
 
         <Pressable
           onPress={() => void Linking.openURL("https://rotam.etutkoc.com/teacher/dashboard")}
@@ -66,6 +50,8 @@ export default function TeacherProfileScreen() {
         >
           <Text className="text-[15px] font-semibold text-rose-600">Çıkış yap</Text>
         </Pressable>
+
+        <DeleteAccountRow />
       </ScrollView>
     </SafeAreaView>
   );

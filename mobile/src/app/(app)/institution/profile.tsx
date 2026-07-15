@@ -1,6 +1,7 @@
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { DeleteAccountRow } from "@/components/account/delete-account-row";
 import { Brand } from "@/components/brand";
 import { useAuth } from "@/lib/auth";
 
@@ -30,7 +31,7 @@ export default function InstitutionProfileScreen() {
           className="rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
         >
           <Text className="text-[15px] font-medium text-slate-900">Web paneli aç</Text>
-          <Text className="mt-0.5 text-xs text-slate-500">Koç yönetimi, analizler, abonelik ve daha fazlası (web)</Text>
+          <Text className="mt-0.5 text-xs text-slate-500">Koç yönetimi, analizler ve daha fazlası (web)</Text>
         </Pressable>
 
         <Pressable
@@ -47,6 +48,8 @@ export default function InstitutionProfileScreen() {
         >
           <Text className="text-[15px] font-semibold text-rose-600">Çıkış yap</Text>
         </Pressable>
+
+        <DeleteAccountRow />
       </ScrollView>
     </SafeAreaView>
   );

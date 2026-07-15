@@ -463,66 +463,14 @@ export function createTeacherStudent(body: StudentCreateBody): Promise<{ data: S
   return apiRequest<{ data: StudentCreateResult }>(`/api/v2/teacher/students`, { method: "POST", body });
 }
 
-// ====== Paket / abonelik ======
-export interface TeacherPlanOption {
-  code: string;
-  label: string;
-  short_description?: string;
-  price_monthly_try: number;
-  max_students: number | null;
-  tier_rank?: number;
-  ai_included?: boolean;
-  is_current?: boolean;
-  is_upgrade?: boolean;
-  is_recommended?: boolean;
-}
-export interface TeacherPlanResponse {
-  plan_code: string;
-  plan_label: string;
-  is_solo: boolean;
-  ai_premium: boolean;
-  trial_active: boolean;
-  trial_days_left: number | null;
-  options: TeacherPlanOption[];
-  note: string | null;
-  status: string;
-  student_count: number;
-  solo_monthly_price: number;
-  recommended_plan: string;
-  annual_paid_months: number;
-  sales_email: string;
-  subscription_status: string | null;
-  subscription_period_end: string | null;
-  subscription_cycle: string | null;
-  post_trial_plan: string | null;
-  post_trial_plan_label: string | null;
-  post_trial_plan_credits: number | null;
-  ai_credits_used: number;
-  ai_credits_allocated: number;
-  has_pending_subscription_request: boolean;
-}
+// NOT (Apple 3.1.1): Paket/abonelik fetcher'ları (getTeacherPlan /
+// upgradeTeacherPlan / requestTeacherSubscription) mobilden KALDIRILDI —
+// "Paketim" ekranı ve tüm paket/kredi yüzeyleri App Store yönergesi gereği
+// uygulamada yok; hesap/paket yönetimi web panelinde.
 export const teacherMiscKeys = {
   week: (id: number, start?: string) => ["teacher", "student", id, "week", start ?? "current"] as const,
   studentBooks: (id: number) => ["teacher", "student", id, "books"] as const,
-  plan: ["teacher", "plan"] as const,
 };
-export function getTeacherPlan(): Promise<TeacherPlanResponse> {
-  return apiRequest<TeacherPlanResponse>(`/api/v2/teacher/plan`);
-}
-export function upgradeTeacherPlan(plan: string): Promise<unknown> {
-  return apiRequest(`/api/v2/teacher/plan/upgrade`, { method: "POST", body: { plan } });
-}
-export interface SubscriptionRequestResult {
-  ok: boolean;
-  already_pending: boolean;
-  message: string;
-}
-export function requestTeacherSubscription(plan?: string, cycle?: string): Promise<SubscriptionRequestResult> {
-  return apiRequest<SubscriptionRequestResult>(`/api/v2/teacher/subscription-request`, {
-    method: "POST",
-    body: { plan: plan ?? null, cycle: cycle ?? null },
-  });
-}
 
 // ====== Öğrenci aktif / pasif ======
 export function deactivateTeacherStudent(id: number): Promise<unknown> {

@@ -4,6 +4,7 @@ import { Link, router } from "expo-router";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
+  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -122,8 +123,8 @@ export default function SignupScreen() {
           </View>
 
           <View className="mt-2">
-            <Text className="text-2xl font-bold text-slate-900">Koç olarak başla</Text>
-            <Text className="mt-1 text-sm text-slate-500">14 gün ücretsiz dene — kart gerekmez. Tüm takip + yapay zekâ hazırlık açık.</Text>
+            <Text className="text-2xl font-bold text-slate-900">Koç hesabı oluştur</Text>
+            <Text className="mt-1 text-sm text-slate-500">Öğrencilerini, programlarını ve gelişimlerini tek yerden takip et.</Text>
           </View>
 
           <Field label="Ad soyad" value={fullName} onChangeText={setFullName} placeholder="Adın Soyadın" autoCapitalize="words" />
@@ -199,11 +200,28 @@ export default function SignupScreen() {
             disabled={busy}
             className={cn("mt-1 items-center rounded-2xl bg-brand-700 py-4", busy ? "opacity-50" : "active:bg-brand-800")}
           >
-            {busy ? <ActivityIndicator color="#fff" /> : <Text className="text-base font-bold text-white">14 gün ücretsiz başla</Text>}
+            {busy ? <ActivityIndicator color="#fff" /> : <Text className="text-base font-bold text-white">Hesabı oluştur</Text>}
           </Pressable>
 
+          {/* Apple 2.1(a): kabul metnindeki yasal belgeler İŞLEVSEL bağlantı olmalı */}
           <Text className="text-center text-xs text-slate-400">
-            Kayıt olarak Kullanım Şartları ve KVKK Aydınlatma Metni&apos;ni kabul etmiş olursun.
+            Kayıt olarak{" "}
+            <Text
+              className="font-semibold text-brand-700 underline"
+              onPress={() => void Linking.openURL("https://rotam.etutkoc.com/kullanim-sartlari")}
+              suppressHighlighting
+            >
+              Kullanım Şartları
+            </Text>
+            {" "}ve{" "}
+            <Text
+              className="font-semibold text-brand-700 underline"
+              onPress={() => void Linking.openURL("https://rotam.etutkoc.com/kvkk")}
+              suppressHighlighting
+            >
+              KVKK Aydınlatma Metni
+            </Text>
+            &apos;ni kabul etmiş olursun.
           </Text>
 
           <View className="mt-1 flex-row items-center justify-center gap-1">

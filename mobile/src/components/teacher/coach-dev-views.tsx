@@ -293,9 +293,9 @@ export function CoachInsightView({ cache, busy, onGenerate }: { cache: CoachingI
         </View>
         <Pressable onPress={onGenerate} disabled={busy} className={cn("flex-row items-center justify-center gap-2 rounded-xl py-3.5", busy ? "bg-violet-300" : "bg-violet-600 active:bg-violet-700")}>
           <Ionicons name="sparkles" size={18} color="#fff" />
-          <Text className="text-base font-semibold text-white">{busy ? "Oluşturuluyor…" : "İçgörü oluştur (kredi)"}</Text>
+          <Text className="text-base font-semibold text-white">{busy ? "Oluşturuluyor…" : "İçgörü oluştur"}</Text>
         </Pressable>
-        <Text className="text-center text-[11px] text-slate-400">Yapay zekâ özelliği — kullanımı kredinden düşer. Yalnız sen görürsün.</Text>
+        <Text className="text-center text-[11px] text-slate-400">Yapay zekâ özelliği — yalnız sen görürsün.</Text>
       </View>
     );
   }
@@ -327,7 +327,7 @@ export function CoachInsightView({ cache, busy, onGenerate }: { cache: CoachingI
         <Text className="text-[11px] text-slate-400">{ins.based_on_sessions} seansa dayanıyor</Text>
         <Pressable onPress={onGenerate} disabled={busy} className={cn("flex-row items-center gap-1.5 rounded-lg border px-3 py-2", busy ? "border-slate-200" : "border-violet-300 active:bg-violet-50")}>
           <Ionicons name="refresh" size={15} color="#7c3aed" />
-          <Text className="text-sm font-semibold text-violet-700">{busy ? "Yenileniyor…" : "Yenile (kredi)"}</Text>
+          <Text className="text-sm font-semibold text-violet-700">{busy ? "Yenileniyor…" : "Yenile"}</Text>
         </Pressable>
       </View>
       <Text className="text-center text-[11px] text-slate-400">Öneri amaçlıdır; klinik teşhis değildir. Yalnız sen görürsün.</Text>

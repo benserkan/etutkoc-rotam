@@ -153,7 +153,7 @@ export default function WelcomeScreen() {
           </Pressable>
         ) : (
           <Pressable onPress={goSignup} className="items-center rounded-2xl bg-brand-700 py-4 active:bg-brand-800">
-            <Text className="text-base font-bold text-white">14 gün ücretsiz dene</Text>
+            <Text className="text-base font-bold text-white">Hesap oluştur</Text>
           </Pressable>
         )}
         <Pressable onPress={goLogin} className="items-center rounded-2xl border border-slate-200 py-4 active:bg-slate-50">

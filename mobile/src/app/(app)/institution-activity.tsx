@@ -7,12 +7,17 @@ import { Empty, InstitutionScreen } from "@/components/institution/ui";
 import { getInstitutionActivityStream, institutionKeys, type ActivityStreamItem, type ActivityStreamResponse } from "@/lib/institution";
 import { cn } from "@/lib/utils";
 
+// NOT (Apple 3.1.1): "Ticari" kategorisi (paket satın alma / plan yükseltme
+// olayları) mobilde GÖSTERİLMEZ — satın almaya gönderme sayılıyor; web'de durur.
 const CAT: Record<string, { label: string; icon: keyof typeof Ionicons.glyphMap; color: string }> = {
   signup: { label: "Kayıt", icon: "person-add", color: "#0284c7" },
   invitation: { label: "Davet", icon: "mail", color: "#7c3aed" },
-  commercial: { label: "Ticari", icon: "card", color: "#059669" },
   change: { label: "Değişim", icon: "swap-horizontal", color: "#d97706" },
 };
+
+function visibleItems(items: ActivityStreamItem[]): ActivityStreamItem[] {
+  return items.filter((i) => i.category !== "commercial" && i.type !== "plan_upgrade" && !i.is_commercial);
+}
 
 function when(iso: string): string {
   const d = new Date(iso);
@@ -21,10 +26,9 @@ function when(iso: string): string {
 
 function Item({ a }: { a: ActivityStreamItem }) {
   const c = CAT[a.category] ?? { label: a.category, icon: "ellipse" as const, color: "#64748b" };
-  const isUpgrade = a.type === "plan_upgrade" || a.is_commercial;
   return (
-    <View className={cn("flex-row gap-3 rounded-xl border bg-white p-3", isUpgrade ? "border-emerald-200" : "border-slate-200")}>
-      <Ionicons name={c.icon} size={20} color={isUpgrade ? "#059669" : c.color} />
+    <View className="flex-row gap-3 rounded-xl border border-slate-200 bg-white p-3">
+      <Ionicons name={c.icon} size={20} color={c.color} />
       <View className="flex-1">
         <Text className="text-sm font-semibold text-slate-900">{a.title}</Text>
         {a.subtitle ? <Text className="text-xs text-slate-500" numberOfLines={2}>{a.subtitle}</Text> : null}
@@ -48,7 +52,8 @@ export default function InstitutionActivityScreen() {
   return (
     <InstitutionScreen<ActivityStreamResponse> title="Aktivite Akışı" query={q} demoContext="activity-stream">
       {(d) => {
-        const items = type ? d.items.filter((i) => i.category === type) : d.items;
+        const all = visibleItems(d.items);
+        const items = type ? all.filter((i) => i.category === type) : all;
         return (
           <>
             <View className="flex-row gap-2">
@@ -64,10 +69,10 @@ export default function InstitutionActivityScreen() {
 
             <View className="flex-row flex-wrap gap-2">
               <Pressable onPress={() => setType(null)} className={cn("rounded-full border px-3 py-1.5", type == null ? "border-brand-600 bg-brand-50" : "border-slate-300 bg-white")}>
-                <Text className={cn("text-xs font-medium", type == null ? "text-brand-700" : "text-slate-600")}>Tümü ({d.items.length})</Text>
+                <Text className={cn("text-xs font-medium", type == null ? "text-brand-700" : "text-slate-600")}>Tümü ({all.length})</Text>
               </Pressable>
               {Object.entries(CAT).map(([key, c]) => {
-                const n = d.counts[key] ?? 0;
+                const n = all.filter((i) => i.category === key).length;
                 if (n === 0) return null;
                 const active = type === key;
                 return (

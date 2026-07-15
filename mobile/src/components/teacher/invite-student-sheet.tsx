@@ -134,7 +134,7 @@ export function InviteStudentSheet({
             <Text className="text-base font-semibold text-white">{busy ? "Oluşturuluyor…" : "Öğrenciyi oluştur"}</Text>
           </Pressable>
           <Text className="text-[11px] text-slate-400">
-            Öğrenci hesabı oluşturulur, geçici şifre verilir. Paket limitin doluysa eklenemez.
+            Öğrenci hesabı oluşturulur, geçici şifre verilir.
           </Text>
         </View>
       )}

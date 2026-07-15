@@ -88,7 +88,7 @@ export default function TeacherStudentDevRoute() {
     onError: (e) => {
       const code = e instanceof ApiError ? e.code : null;
       if (code === "plan_upgrade_required") Alert.alert("Kullanılamıyor", "Yapay zekâ içgörüsü bu hesapta kapalı.");
-      else if (code === "ai_credit_exhausted") Alert.alert("Kredi bitti", "Bu ay yapay zekâ kredin doldu.");
+      else if (code === "ai_credit_exhausted") Alert.alert("Kullanılamıyor", "Bu ay için yapay zekâ kullanım sınırına ulaşıldı. Daha sonra tekrar dene.");
       else if (code === "not_enough_data") Alert.alert("Seans gerekli", "İçgörü için en az bir seans kaydı gerekir. Önce 'Seanslar' sekmesinden seans ekle.");
       else if (code === "ai_unavailable") Alert.alert("Yapay zekâ şu an kullanılamıyor", "Lütfen birkaç dakika sonra tekrar dene.");
       else Alert.alert("Oluşturulamadı", e instanceof ApiError ? e.message : "İşlem başarısız.");
