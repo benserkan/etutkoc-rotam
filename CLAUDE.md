@@ -6,7 +6,52 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
-## App Store 3.1.1 ret #2 → mobil tamamen durum-only + build 6 RESUBMIT (2026-07-13, SONUÇ BEKLENİYOR)
+## App Store ret #3 (3 yönerge) → ticari yüzey SIFIRLANDI + EULA linkleri + uygulama içi hesap silme + build 7 (2026-07-15)
+
+**Bağlam:** Build 6 resubmit'i 2026-07-14'te 3 yönergeyle REDDEDİLDİ (gönderim
+`5b65a5d3`, cihazlar iPhone 17 Pro Max + iPad Air 11 M3): **3.1.1** ("yapay zekâ
+paketi uygulama içinde IAP-dışı satın alınabilir" + "dışarıda satın alınan içerik
+IAP ile satın alınamıyor" + "ücretsiz deneme bitince IAP-dışı ödemeye yönlendirme")
+· **2.1(a)** (kayıt/girişte EULA + Gizlilik Politikası için AKTİF işlevsel link yok
+— signup'ta düz metin "kabul etmiş olursun" vardı, link YOKtu) · **5.1.1(v)**
+(hesap oluşturma var ama uygulama içi hesap SİLME yok). Karar: IAP kurulmadı;
+"durum-only" da yetmedi → **ticari yüzey tamamen sıfırlandı** (reader/companion
+deseni). Commit **`eba6275`** (mobil-only, migration YOK, backend DEĞİŞMEDİ):
+- **3.1.1 — SİLİNEN ekranlar:** koç "Paketim" (`(app)/teacher-plan.tsx` +
+  `plan-view.tsx` + `preview/teacher-plan.tsx`) · kurum "Hesap Ayarları"
+  (`institution-subscription`) + "Kredi Kullanımı" (`institution-usage`) +
+  "Limitler" (`institution-quota` — plan karşılaştırma tablosu içeriyordu).
+  analiz hub'dan "Üyelik" grubu kalktı. **Metinler:** "14 gün ücretsiz dene" →
+  welcome "Hesap oluştur" / login "Kayıt ol" / signup "Koç hesabı oluştur"
+  (deneme+kart+AI pazarlaması silindi) · "İçgörü oluştur (kredi)"/"Yenile (kredi)"
+  → kredisiz · kredi-bitti alert'leri → "yapay zekâ kullanım sınırına ulaşıldı"
+  (satın alma iması yok) · davet "Paket limitin doluysa" silindi · kurum profil
+  "abonelik" kelimesi silindi · aktivite akışı **commercial/plan_upgrade
+  kalemlerini client'ta FİLTRELER** ("Ticari" çipi yok). lib/teacher.ts paket
+  fetcher'ları (getTeacherPlan/upgradeTeacherPlan/requestTeacherSubscription)
+  SİLİNDİ; notification-router plan→Öğrenciler, kurum usage/subscription→pano;
+  quick-access eşlemeleri kalktı (kart gizlenir). `.expo/types/router.d.ts`
+  elle güncellendi (expo start yeniden üretir).
+- **2.1(a):** signup kabul cümlesindeki "Kullanım Şartları" + "KVKK Aydınlatma
+  Metni" artık TIKLANABİLİR (Linking → /kullanim-sartlari + /kvkk, ikisi de canlı
+  200); login altına da aynı iki link eklendi.
+- **5.1.1(v):** yeni `lib/me.ts` (GET /api/v2/me kvkk_status + POST /me/data-delete
+  {confirm:true} + cancel — BACKEND ZATEN VARDI, KVKK 30g grace) + yeni
+  `(app)/account-delete.tsx` (bilgilendirme → onay diyaloğu → "silme talebin
+  alındı {tarih}" + iptal butonu; bekleyen talepte iptal ekranı) + 4 rol profiline
+  paylaşılan `DeleteAccountRow` ("Hesabı sil"). Kalıcı silme; 30 gün yasal süre
+  içinde uygulamadan iptal edilebilir (Apple'a böyle anlatılacak).
+- **Resubmit malzemesi:** `mobile/store/app-review-yanit-2026-07.md` — İngilizce
+  yanıt taslağı + ekran kaydı adımları (Apple fiziksel cihazda silme akışı kaydı
+  istiyor — KULLANICI) + App Review notları + kontrol listesi (build 7 seç, demo
+  hesabın paywall'da olmadığını doğrula).
+- **Build:** iOS **1.0 (build 7)** EAS `47a99916` (ilk deneme DNS ENOTFOUND —
+  tekrar denemeyle düzeldi) + `eas submit` ile ASC'ye. Mobil tsc temiz.
+- **SIRADA:** kullanıcı ekran kaydını alıp build 7 ile resubmit eder; onay →
+  yayın. Android/Play tarafına aynı temizlik sonraki AAB'de otomatik gider.
+  İleride IAP kurulursa paket ekranı + satın alma mobile geri eklenebilir.
+
+## App Store 3.1.1 ret #2 → mobil tamamen durum-only + build 6 RESUBMIT (2026-07-13, REDDEDİLDİ — üstteki bölüm)
 
 **Bağlam:** iOS 1.0(5) gönderimi 2026-06-30'da Guideline 3.1.1 ile REDDEDİLDİ —
 önceki "fiyatsız yükseltme talebi" uyumu (commit `4577222`) YETMEDİ: Apple,
