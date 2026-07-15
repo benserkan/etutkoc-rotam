@@ -80,6 +80,7 @@ export function hrefForNotificationData(data: NotifData): string | null {
     const screen = data.screen as string | undefined;
     if (screen === "requests") return "/(app)/student/requests";
     if (screen === "surveys") return "/student-surveys";
+    if (screen === "wrong_questions") return "/student-wrong-questions";
     return "/(app)/student/today";
   }
 

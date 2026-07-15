@@ -76,7 +76,9 @@ export function DevHubView({
   onOpenReview,
   onOpenGoals,
   onOpenSurveys,
+  onOpenWrong,
   pendingSurveys = 0,
+  pendingWrong = 0,
   refreshing = false,
   onRefresh,
 }: {
@@ -90,7 +92,9 @@ export function DevHubView({
   onOpenReview: () => void;
   onOpenGoals: () => void;
   onOpenSurveys?: () => void;
+  onOpenWrong?: () => void;
   pendingSurveys?: number;
+  pendingWrong?: number;
   refreshing?: boolean;
   onRefresh?: () => void;
 }) {
@@ -130,6 +134,34 @@ export function DevHubView({
             </View>
           </View>
           <Ionicons name="chevron-forward" size={18} color="#4f46e5" />
+        </Pressable>
+      ) : null}
+
+      {/* Yanlışlarım — yanlış soru arşivi (foto çek, sistem tekrar sorar) */}
+      {onOpenWrong ? (
+        <Pressable
+          onPress={onOpenWrong}
+          className="flex-row items-center justify-between rounded-2xl border border-rose-200 bg-rose-50 px-5 py-4 active:bg-rose-100"
+        >
+          <View className="flex-row items-center gap-3">
+            <Ionicons name="close-circle-outline" size={22} color="#e11d48" />
+            <View>
+              <Text className="text-[15px] font-semibold text-rose-900">Yanlışlarım</Text>
+              <Text className="mt-0.5 text-xs text-rose-800">
+                {pendingWrong > 0
+                  ? `${pendingWrong} soru tekrar bekliyor`
+                  : "Yanlış soru arşivin"}
+              </Text>
+            </View>
+          </View>
+          <View className="flex-row items-center gap-2">
+            {pendingWrong > 0 ? (
+              <View className="min-w-6 items-center rounded-full bg-rose-500 px-1.5 py-0.5">
+                <Text className="text-xs font-bold text-white">{pendingWrong}</Text>
+              </View>
+            ) : null}
+            <Ionicons name="chevron-forward" size={18} color="#e11d48" />
+          </View>
         </Pressable>
       ) : null}
 

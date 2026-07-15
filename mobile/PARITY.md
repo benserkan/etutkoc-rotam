@@ -27,6 +27,7 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | **Tekrar (aralıklı — kart değerlendir)** | ✅ | ✅ | FSRS oturumu (1-4) |
 | **Hedefler (oluştur/ilerlet/tamamla)** | ✅ | ✅ | tam yönetim |
 | **Anketler (listele + doldur + sonuç gör)** | ✅ | ✅ | Gelişim hub kartı (bekleyen rozet) + push deep-link |
+| **Yanlış Soru Arşivi (foto çek/galeri + yeniden çöz + AI ipucu)** | ✅ | ✅ | Gelişim hub "Yanlışlarım" kartı (vadesi gelen rozet); kamera=expo-image-picker (build 9); AI etiketleme koç kredisiyle |
 | Bölüm baz "çözülmüş" girişi / projeksiyon detay | ✅ | ⬜ | web |
 
 ## Veli
