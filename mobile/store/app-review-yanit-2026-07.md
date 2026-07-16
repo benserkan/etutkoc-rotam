@@ -1,4 +1,4 @@
-# App Review yanıtı — iOS 1.0 (build 7) — 2026-07
+# App Review yanıtı — iOS 1.0 (build 8) — 2026-07
 
 Ret #2 (2026-07-14, gönderim 5b65a5d3): 3.1.1 + 2.1(a) + 5.1.1(v).
 Bu dosya: App Store Connect'te "Uygulama Yorumuna Yanıt Ver" ile gönderilecek
@@ -6,12 +6,12 @@ Bu dosya: App Store Connect'te "Uygulama Yorumuna Yanıt Ver" ile gönderilecek
 
 ---
 
-## 1) App Store Connect mesajı (İngilizce taslak — build 7 seçilip yeniden gönderilirken yanıt olarak yapıştır)
+## 1) App Store Connect mesajı (İngilizce taslak — build 8 seçilip yeniden gönderilirken yanıt olarak yapıştır)
 
 Hello,
 
 Thank you for the detailed review. We have addressed all three issues in the
-new build 1.0 (7):
+new build 1.0 (8):
 
 **Guideline 3.1.1 — In-App Purchase**
 
@@ -64,7 +64,7 @@ Please let us know if anything else is needed.
 
 ## 2) Ekran kaydı (KULLANICI AKSİYONU — Apple açıkça istedi)
 
-Fiziksel iPhone'da (TestFlight'tan build 7'yi kur) ekran kaydı al:
+Fiziksel iPhone'da (TestFlight'tan build 8'yi kur) ekran kaydı al:
 
 1. Uygulamayı aç → "Hesap oluştur" ile YENİ hesap aç (veya App Review'daki
    demo hesapla giriş yap).
@@ -86,7 +86,7 @@ the app is fully functional for free accounts.
 
 ## 4) Gönderim öncesi kontrol listesi (KULLANICI)
 
-- [ ] App Store Connect → iOS Gönderimi → build **1.0 (7)** seç (build 6'yı çıkar).
+- [ ] App Store Connect → iOS Gönderimi → build **1.0 (8)** seç (build 6'yı çıkar).
 - [ ] Demo hesabın (App Review Bilgileri'ndeki) şifresi geçerli ve hesabın
       **paywall'da olmadığından** emin ol (gerekirse süper adminden ücretli
       plana çek — deneme süresi bitmiş demo koç, görev eklemede nötr de olsa
