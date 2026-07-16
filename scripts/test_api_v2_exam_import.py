@@ -142,12 +142,17 @@ def build_tyt_read() -> dict:
 
 
 def build_lgs_read() -> dict:
+    """K12-tarzı LGS okuma taklidi: ders kısaltmaları ("Din K.ve A.B.", "Tarih")
+    + virgüllü ondalık net + kazanım-cümlesi etiket (gerçek 30.03.2026.pdf'ten)."""
     return {
         "exam_title": f"{PFX} LGS DENEME 1",
         "exam_date": "2026-04-10",
         "grade_hint": 8,
         "type_hints": ["LGS"],
-        "subjects": [],
+        "subjects": [
+            {"name": "Türkçe", "questions": 1, "correct": 0, "wrong": 1,
+             "blank": 0, "net": "14,67"},   # virgüllü ondalık (TR belgesi)
+        ],
         "questions": [
             {"subject": "Matematik", "no": 1, "topic": "Çarpanlar ve Katlar",
              "correct_answer": "A", "student_answer": "A", "result": "dogru"},
@@ -155,6 +160,13 @@ def build_lgs_read() -> dict:
              "correct_answer": "B", "student_answer": "B", "result": "dogru"},
             {"subject": "Türkçe", "no": 1, "topic": "Sözcükte Anlam",
              "correct_answer": "C", "student_answer": "D", "result": "yanlis"},
+            # K12 ders kısaltmaları — çözüm sistem dersine gitmeli
+            {"subject": "Tarih", "no": 1,
+             "topic": "Mustafa Kemal'in çocukluk ve öğrenim hayatı",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            {"subject": "Din K.ve A.B.", "no": 1,
+             "topic": "Zekât ve sadaka ibadetini ayet ve hadislerle açıklar",
+             "correct_answer": "B", "student_answer": "B", "result": "dogru"},
         ],
         "score_info": None,
     }
@@ -534,6 +546,18 @@ def main() -> int:
         check("23a. LGS tespiti (8. sınıf + anahtar kelime)",
               r.status_code == 200 and dl.get("universe") == "lgs"
               and dl.get("section") == "lgs", r.text[:200])
+        lrows = {(x["subject_raw"], x["question_no"]): x for x in dl.get("rows", [])}
+        check("23b. K12 ders kısaltmaları çözüldü (Tarih→İnkılap · Din K.ve A.B.→Din)",
+              lrows.get(("Tarih", 1), {}).get("subject_name")
+              == "T.C. İnkılap Tarihi ve Atatürkçülük"
+              and lrows.get(("Din K.ve A.B.", 1), {}).get("subject_name")
+              == "Din Kültürü ve Ahlak Bilgisi",
+              str({k: v.get("subject_name") for k, v in lrows.items()})[:200])
+        tr_sum = next((s for s in dl.get("subjects", [])
+                       if s["name"] == "Türkçe"), None)
+        check("23c. virgüllü ondalık net parse edildi (14,67 → 14.67)",
+              tr_sum is not None and tr_sum.get("doc_net") == 14.67,
+              str(tr_sum)[:160])
         lgs_payload = {
             "title": dl.get("title"), "exam_date": dl.get("exam_date"),
             "section": "lgs",
@@ -545,9 +569,8 @@ def main() -> int:
         r = ct.post(f"/api/v2/teacher/students/{ids['lgs_student']}/exams/import-confirm",
                     data={"payload": json.dumps(lgs_payload)}, files={"file": pdf_file})
         dnet = r.json().get("data", {}).get("net") if r.status_code == 200 else None
-        check("23b. LGS net cezası /3 (2D 1Y → 1.67)",
-              r.status_code == 200 and dnet == 1.67, r.text[:200])
-        lgs_exam_id = r.json().get("data", {}).get("exam_id")
+        check("23d. LGS net cezası /3 (4D 1Y → 3.67)",
+              r.status_code == 200 and dnet == 3.67, r.text[:200])
 
         # 24) koç deneme listesi yeni kaydı görür (mevcut KP4a ucu — entegrasyon)
         r = ct.get(f"/api/v2/teacher/students/{ids['lgs_student']}/exams")

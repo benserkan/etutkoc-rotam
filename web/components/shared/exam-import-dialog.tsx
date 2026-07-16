@@ -234,7 +234,8 @@ function ImportFlow({
               </div>
               <p className="max-w-sm text-xs text-muted-foreground">
                 Uydurmayı önlemek için belge <b>iki kez bağımsız</b> okunur ve
-                sonuçlar karşılaştırılır — 30-60 saniye sürebilir.
+                sonuçlar karşılaştırılır — uzun belgelerde <b>1-2 dakika</b>{" "}
+                sürebilir, sayfayı kapatma.
               </p>
             </div>
           ) : null}

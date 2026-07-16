@@ -78,10 +78,17 @@ def read_exam_pdf(pdf_base64: str) -> dict[str, Any]:
 
 
 def read_exam_pdf_double(pdf_base64: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    """ÇİFT bağımsız okuma (uydurma önleme katmanı 1). Karşılaştırma servis katmanında."""
-    r1 = read_exam_pdf(pdf_base64)
-    r2 = read_exam_pdf(pdf_base64)
-    return r1, r2
+    """ÇİFT bağımsız okuma (uydurma önleme katmanı 1) — PARALEL çalışır.
+
+    Sıralı iki okuma büyük belgede 2×60-120 sn sürüp kullanıcıyı bekletiyordu;
+    paralelde duvar süresi tek okumaya iner. Karşılaştırma servis katmanında.
+    """
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        f1 = pool.submit(read_exam_pdf, pdf_base64)
+        f2 = pool.submit(read_exam_pdf, pdf_base64)
+        return f1.result(), f2.result()
 
 
 def _clean_answer(v: Any) -> str | None:
@@ -130,6 +137,9 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
                     return None
             net = s.get("net")
             try:
+                # TR belgeleri ondalıkta virgül kullanır ("14,67")
+                if isinstance(net, str):
+                    net = net.replace(",", ".")
                 net = round(float(net), 2) if net is not None else None
             except (TypeError, ValueError):
                 net = None

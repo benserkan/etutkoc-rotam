@@ -94,7 +94,11 @@ def _paying_coach(db: Session, student: User) -> User:
     return coach
 
 
-async def _read_pdf_upload(file: UploadFile | None) -> bytes:
+def _read_pdf_upload(file: UploadFile | None) -> bytes:
+    """Senkron okuma (file.file = SpooledTemporaryFile) — uçlar bilinçli olarak
+    SENKRON def: FastAPI onları threadpool'da çalıştırır. async def + senkron
+    Gemini çağrısı event loop'u kilitleyip gunicorn'un 60 sn worker heartbeat
+    timeout'una takılıyordu (code 134 — canlıda 2026-07-16 yaşandı)."""
     if file is None or not (file.filename or "").strip():
         raise HTTPException(status_code=422, detail={
             "error": "validation", "code": "pdf_required",
@@ -104,7 +108,8 @@ async def _read_pdf_upload(file: UploadFile | None) -> bytes:
         raise HTTPException(status_code=422, detail={
             "error": "validation", "code": "invalid_file_type",
             "message": "Yalnız PDF kabul edilir."})
-    data = await file.read()
+    file.file.seek(0)
+    data = file.file.read()
     if not data:
         raise HTTPException(status_code=422, detail={
             "error": "validation", "code": "pdf_required",
@@ -170,7 +175,7 @@ def _run_analyze(
     )
 
 
-async def _parse_confirm_payload(payload: str) -> ExamImportConfirmBody:
+def _parse_confirm_payload(payload: str) -> ExamImportConfirmBody:
     """Multipart form alanındaki JSON gövdeyi doğrula (dosya + veri tek istekte)."""
     try:
         return ExamImportConfirmBody.model_validate(json.loads(payload))
@@ -221,18 +226,22 @@ def _run_confirm(
     "/teacher/students/{student_id}/exams/import-analyze",
     response_model=ExamImportDraft,
 )
-async def teacher_exam_import_analyze(
+def teacher_exam_import_analyze(
     student_id: int,
     file: UploadFile = File(...),
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """PDF'i analiz et → önizleme taslağı (kayıt YAPMAZ; kredi burada düşer)."""
+    """PDF'i analiz et → önizleme taslağı (kayıt YAPMAZ; kredi burada düşer).
+
+    Bilinçli SENKRON uç (threadpool) — Gemini çağrıları dakikalar sürebilir;
+    async olsaydı event loop kilitlenir, gunicorn worker'ı öldürürdü.
+    """
     student = _get_owned_student(db, user, student_id)
     # koç kendi kapılarından geçer (paket + rıza) — _paying_coach öğrencinin
     # koçunu döndürür; koç yolu için bu zaten user'ın kendisidir.
     coach = _paying_coach(db, student)
-    pdf = await _read_pdf_upload(file)
+    pdf = _read_pdf_upload(file)
     return _run_analyze(db, student=student, coach=coach, actor=user, pdf_bytes=pdf)
 
 
@@ -240,7 +249,7 @@ async def teacher_exam_import_analyze(
     "/teacher/students/{student_id}/exams/import-confirm",
     response_model=MutationResponse[ExamImportConfirmResult],
 )
-async def teacher_exam_import_confirm(
+def teacher_exam_import_confirm(
     student_id: int,
     payload: str = Form(...),
     file: UploadFile | None = File(default=None),
@@ -249,8 +258,8 @@ async def teacher_exam_import_confirm(
 ):
     """Önizlemede düzeltilen taslağı kaydet (kredi düşmez; PDF kanıt olarak saklanır)."""
     student = _get_owned_student(db, user, student_id)
-    body = await _parse_confirm_payload(payload)
-    pdf = await _read_pdf_upload(file) if file and (file.filename or "").strip() else None
+    body = _parse_confirm_payload(payload)
+    pdf = _read_pdf_upload(file) if file and (file.filename or "").strip() else None
     result = _run_confirm(
         db, student=student, actor=user, body=body,
         pdf_bytes=pdf, content_type=(file.content_type if pdf and file else None),
@@ -270,13 +279,13 @@ async def teacher_exam_import_confirm(
 
 
 @router.post("/student/exams/import-analyze", response_model=ExamImportDraft)
-async def student_exam_import_analyze(
+def student_exam_import_analyze(
     file: UploadFile = File(...),
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
     coach = _paying_coach(db, user)
-    pdf = await _read_pdf_upload(file)
+    pdf = _read_pdf_upload(file)
     return _run_analyze(db, student=user, coach=coach, actor=user, pdf_bytes=pdf)
 
 
@@ -284,14 +293,14 @@ async def student_exam_import_analyze(
     "/student/exams/import-confirm",
     response_model=MutationResponse[ExamImportConfirmResult],
 )
-async def student_exam_import_confirm(
+def student_exam_import_confirm(
     payload: str = Form(...),
     file: UploadFile | None = File(default=None),
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
-    body = await _parse_confirm_payload(payload)
-    pdf = await _read_pdf_upload(file) if file and (file.filename or "").strip() else None
+    body = _parse_confirm_payload(payload)
+    pdf = _read_pdf_upload(file) if file and (file.filename or "").strip() else None
     result = _run_confirm(
         db, student=user, actor=user, body=body,
         pdf_bytes=pdf, content_type=(file.content_type if pdf and file else None),

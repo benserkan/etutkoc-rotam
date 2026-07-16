@@ -74,13 +74,18 @@ _TRACK_TO_AYT_SECTION: dict[Track, ExamSection] = {
 
 # Ham ders adı çözümünde ek eşanlamlar — KANONİK anahtara indirger (idempotent;
 # hem sistem ders adı hem belge ham adı aynı fonksiyondan geçer → simetrik).
+# NOT: anahtar/değerler normalize+bağlaç-atma SONRASI hallerdir.
 _SUBJECT_ALIASES: dict[str, str] = {
     "din kulturu ahlak bilgisi": "din kulturu",
+    "din k a b": "din kulturu",          # K12 kısaltması "Din K.ve A.B."
     "turk dili edebiyati": "edebiyat",
     "sosyal bilgiler": "sosyal bilimler",
     "yabanci dil": "ingilizce",
     "matematik geometri": "matematik",
     "fen": "fen bilimleri",
+    # LGS belgeleri "Tarih" der; sistem dersi "T.C. İnkılap Tarihi ve Atatürkçülük".
+    # TYT evreninde de güvenli: "TYT Tarih" adı da bu kanona iner (simetrik).
+    "tarih": "t c inkilap tarihi ataturkculuk",
 }
 
 
