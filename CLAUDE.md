@@ -6,7 +6,7 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
-## App Store ret #3 (3 yönerge) → ticari yüzey SIFIRLANDI + EULA linkleri + uygulama içi hesap silme + build 7 (2026-07-15)
+## App Store ret #3 (3 yönerge) → ticari yüzey SIFIRLANDI + EULA linkleri + uygulama içi hesap silme + build 8 RESUBMIT (2026-07-15/16, SONUÇ BEKLENİYOR)
 
 **Bağlam:** Build 6 resubmit'i 2026-07-14'te 3 yönergeyle REDDEDİLDİ (gönderim
 `5b65a5d3`, cihazlar iPhone 17 Pro Max + iPad Air 11 M3): **3.1.1** ("yapay zekâ
@@ -43,13 +43,20 @@ deseni). Commit **`eba6275`** (mobil-only, migration YOK, backend DEĞİŞMEDİ)
   içinde uygulamadan iptal edilebilir (Apple'a böyle anlatılacak).
 - **Resubmit malzemesi:** `mobile/store/app-review-yanit-2026-07.md` — İngilizce
   yanıt taslağı + ekran kaydı adımları (Apple fiziksel cihazda silme akışı kaydı
-  istiyor — KULLANICI) + App Review notları + kontrol listesi (build 7 seç, demo
+  istiyor — KULLANICI) + App Review notları + kontrol listesi (build 8 seç, demo
   hesabın paywall'da olmadığını doğrula).
-- **Build:** iOS **1.0 (build 7)** EAS `47a99916` (ilk deneme DNS ENOTFOUND —
-  tekrar denemeyle düzeldi) + `eas submit` ile ASC'ye. Mobil tsc temiz.
-- **SIRADA:** kullanıcı ekran kaydını alıp build 7 ile resubmit eder; onay →
-  yayın. Android/Play tarafına aynı temizlik sonraki AAB'de otomatik gider.
-  İleride IAP kurulursa paket ekranı + satın alma mobile geri eklenebilir.
+- **Build:** iOS **1.0 (build 8)** EAS `47a99916` (ilk deneme DNS ENOTFOUND —
+  tekrar denemeyle düzeldi; build numarası 7 atlandı, sorunsuz) + `eas submit`
+  ile ASC'ye (submission `d8a40e17`). Mobil tsc temiz.
+- **Kullanıcı 2026-07-16: RESUBMIT ETTİ** — TestFlight'tan build 8'i kurdu,
+  fiziksel cihazda hesap silme akışının ekran kaydını aldı, hazır İngilizce
+  yanıtla birlikte Apple'a gönderdi; inceleme süreci yeniden başladı.
+- **SIRADA:** inceleme sonucu (1-3 gün). Onay → yayına alma. Yeni ret gelirse
+  3.1.1 için kalan tek yol IAP (StoreKit) kurmak — o zaman ayrı iş olarak
+  planlanır. Android/Play tarafına aynı temizlik sonraki AAB'de otomatik gider;
+  ileride IAP kurulursa paket ekranı + satın alma mobile geri eklenebilir.
+  NOT: notification-router'a öğrenci `wrong_questions` deep-link'i eklendi
+  (YSA Faz 4 hazırlığı, ayrı iş).
 
 ## App Store 3.1.1 ret #2 → mobil tamamen durum-only + build 6 RESUBMIT (2026-07-13, REDDEDİLDİ — üstteki bölüm)
 
