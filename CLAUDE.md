@@ -69,9 +69,13 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   118/120 konu eşleşti (%98; kalan 2 koça). Regresyon: mapping 18 · exam_taxonomy
   20 · teacher_exams 18 · institution_academic 13 · admin_usage 21 · parent_weekly 14
   · wrong_question_ai 24 · units 10 · tenant 29 GREEN; web tsc+eslint temiz.
-- **NOT (Gemini modeli):** `gemini-2.5-pro` artık 404 ("no longer available to new
-  users") → her çağrı flash'a düşüyor (çalışıyor ama boşa tur). Süper admin → AI
-  Ayarları'ndan ücretli model güncellenmeli ("Bağlantıyı test et" ile doğrula).
+- **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
+  `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
+  prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı
+  404 alıp flash'a düşüyor. **CANLIDA okuma PRO ile** (doğrudan pro çağrısıyla
+  199KB tam PDF okundu: 120 soru doğru — belge-uzunluğu reddi YOK). Yerel .env
+  `GEMINI_API_KEY` sırası düzeltildi (sTZ0 öne = ücretli slot). Ücretli anahtar
+  değiştirilirse "Bağlantıyı test et" ile pro erişimi doğrulanmalı.
 - **SIRADA:** **Faz 2** analiz ekranı (konu×deneme ısı haritası + net fırsat
   analizi [sıklık×hata=+net] + kaydırma/süre/istikrar sinyalleri + unutulan/
   gelişen konular + öğrenci yüzeyi) · **Faz 3** sinyal köprüleri (YSA tek-tık +
