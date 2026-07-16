@@ -1,0 +1,591 @@
+"""Deneme PDF içe aktarma (Faz 1) — smoke.
+
+Kapsam:
+- Kapılar: anon 401 · koç ücretsiz 403 · rıza yok 403 · PDF değil 422 ·
+  yabancı öğrenci 404 · kredi 6 (koç havuzundan).
+- Okuma/birleştirme: çift okuma uyuşmazlığı → şüpheli · DC/ÖC'den sonuç
+  türetme sembol okumasını EZER (çelişki → şüpheli) · boş ÖC → "bos".
+- Tespit: TYT (anahtar kelime + öğrenci bağlamı) · LGS (8. sınıf) + ceza /3.
+- NORMALİZASYON (sistemin kalbi): birebir + bağlaç + kesik-etiket ön-eki
+  (deterministik) · evren-tekil geometri dersine YENİDEN ATAMA · kapalı-küme
+  AI ("İşlem Yeteneği" → "Temel Kavramlar") · uydurma id DÜŞÜRÜLÜR ·
+  belirsiz etiket eşleşmez (asla tahmin).
+- ÖĞRENEN SÖZLÜK: confirm sonrası alias yazılır → ikinci analizde AI'sız
+  (topic_source=alias) çözülür · koç düzeltmesi AI'ı ezer, AI koçu EZEMEZ.
+- Confirm: net yeniden hesap + subject_nets + soru satırları + PDF kanıt ·
+  mükerrer 409 / force · evren-dışı topic_id enjeksiyonu düşürülür ·
+  geçersiz sonuç 422.
+
+Gemini monkeypatch'lenir — GERÇEK AI çağrısı YAPILMAZ.
+"""
+from __future__ import annotations
+
+import sys
+
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
+import copy
+import json
+import re
+import secrets
+from datetime import datetime, timezone
+
+from fastapi.testclient import TestClient
+from sqlalchemy import delete as sa_delete
+
+from app.database import SessionLocal
+from app.main import app
+from app.models import (
+    CreditAccount,
+    ExamResult,
+    ExamResultQuestion,
+    ExamTopicAlias,
+    Subject,
+    SuspiciousIp,
+    Topic,
+    UsageEvent,
+    User,
+    UserRole,
+)
+from app.services import ai_exam_import
+from app.services import exam_import_service as svc
+from app.services.rate_limit import get_login_limiter
+from app.services.security import hash_password
+
+PFX = f"exim{secrets.token_hex(3)}"
+PASSWORD = "ExamImport!2026X"
+PDF = b"%PDF-1.4 fake exam report " + b"0" * 200
+passed = 0
+failed: list[str] = []
+
+
+def check(label, cond, detail=""):
+    global passed
+    if cond:
+        passed += 1
+        print(f"  [PASS] {label}")
+    else:
+        failed.append(f"{label} -- {detail}")
+        print(f"  [FAIL] {label} ({detail})")
+
+
+def topic_id(db, subject_name: str, topic_name: str) -> int:
+    t = (
+        db.query(Topic).join(Subject, Subject.id == Topic.subject_id)
+        .filter(Subject.is_builtin.is_(True), Subject.name == subject_name,
+                Topic.name == topic_name)
+        .first()
+    )
+    assert t is not None, f"builtin konu yok: {subject_name} / {topic_name}"
+    return t.id
+
+
+def exam_credits(db, actor_ids: list[int]) -> int:
+    # kind ORM'de enum member döner → value ile karşılaştır (str() ad verir)
+    return sum(
+        e.credits for e in db.query(UsageEvent)
+        .filter(UsageEvent.actor_user_id.in_(actor_ids)).all()
+        if e.kind and "ai_exam_import" in getattr(e.kind, "value", str(e.kind))
+    )
+
+
+# --- Sentetik TYT okuması (Apotemi yapısını KÜÇÜK örnekle taklit eder) ---
+
+def build_tyt_read() -> dict:
+    return {
+        "exam_title": f"{PFX} MOMENTUM TYT",
+        "exam_date": "2026-04-02",
+        "grade_hint": 12,
+        "type_hints": ["TYT"],
+        "subjects": [
+            # Matematik özeti BİLEREK yanlış (correct=4, gerçek 5) → çapraz sağlama yakalar
+            {"name": "Matematik", "questions": 8, "correct": 4, "wrong": 2, "blank": 1, "net": 4.5},
+            {"name": "TYT-TÜRKÇE", "questions": 2, "correct": 1, "wrong": 1, "blank": 0, "net": 0.75},
+            {"name": "Fizik", "questions": 2, "correct": 1, "wrong": 0, "blank": 1, "net": 1.0},
+        ],
+        "questions": [
+            # Türkçe — ders adı "TYT-TÜRKÇE" (önek temizleme testi)
+            {"subject": "TYT-TÜRKÇE", "no": 1, "topic": "Sözcükte Anlam",
+             "correct_answer": "C", "student_answer": "C", "result": "dogru"},
+            {"subject": "TYT-TÜRKÇE", "no": 2, "topic": "Paragrafta Yardımcı Düşü",
+             "correct_answer": "A", "student_answer": "B", "result": "yanlis"},
+            # Matematik
+            {"subject": "Matematik", "no": 1, "topic": "Rasyonel Sayılar",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            {"subject": "Matematik", "no": 2, "topic": "Tek Çift Sayılar",
+             "correct_answer": "B", "student_answer": "C", "result": "yanlis"},
+            {"subject": "Matematik", "no": 3, "topic": "Birinci Dereceden Denk",
+             "correct_answer": "A", "student_answer": None, "result": None},
+            {"subject": "Matematik", "no": 4, "topic": "İşlem Yeteneği",
+             "correct_answer": "E", "student_answer": "E", "result": "dogru"},
+            {"subject": "Matematik", "no": 5, "topic": "Üçgende Alan",
+             "correct_answer": "C", "student_answer": "E", "result": "yanlis"},
+            {"subject": "Matematik", "no": 6, "topic": "Zzz Gizemli Konu",
+             "correct_answer": "B", "student_answer": "B", "result": "dogru"},
+            {"subject": "Matematik", "no": 7, "topic": "Sayı Basamakları",
+             "correct_answer": "B", "student_answer": "B", "result": "dogru"},
+            # sembol "yanlis" ama DC==ÖC → türetme DOĞRU der + şüpheli işaretler
+            {"subject": "Matematik", "no": 8, "topic": "Yüzde Problemleri",
+             "correct_answer": "A", "student_answer": "A", "result": "yanlis"},
+            # Fizik
+            {"subject": "Fizik", "no": 1, "topic": "Isı ve Sıcaklık",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            {"subject": "Fizik", "no": 2, "topic": "Hareket ve Kuvvet",
+             "correct_answer": "B", "student_answer": None, "result": "bos"},
+        ],
+        "score_info": {"score": 356.48, "rank_overall": 6150, "participants": 20573,
+                       "extra": None},
+    }
+
+
+def build_lgs_read() -> dict:
+    return {
+        "exam_title": f"{PFX} LGS DENEME 1",
+        "exam_date": "2026-04-10",
+        "grade_hint": 8,
+        "type_hints": ["LGS"],
+        "subjects": [],
+        "questions": [
+            {"subject": "Matematik", "no": 1, "topic": "Çarpanlar ve Katlar",
+             "correct_answer": "A", "student_answer": "A", "result": "dogru"},
+            {"subject": "Matematik", "no": 2, "topic": "Üslü İfadeler",
+             "correct_answer": "B", "student_answer": "B", "result": "dogru"},
+            {"subject": "Türkçe", "no": 1, "topic": "Sözcükte Anlam",
+             "correct_answer": "C", "student_answer": "D", "result": "yanlis"},
+        ],
+        "score_info": None,
+    }
+
+
+def main() -> int:
+    print(f"\n=== Deneme PDF içe aktarma smoke — {PFX} ===\n")
+    ids: dict = {}
+    with SessionLocal() as db:
+        coach = User(email=f"{PFX}-t@t.invalid", password_hash=hash_password(PASSWORD),
+                     full_name="Koç", role=UserRole.TEACHER, is_active=True,
+                     plan="solo_pro", must_change_password=False,
+                     ai_capture_consent_at=datetime.now(timezone.utc))
+        free_coach = User(email=f"{PFX}-tf@t.invalid", password_hash=hash_password(PASSWORD),
+                          full_name="Ücretsiz Koç", role=UserRole.TEACHER, is_active=True,
+                          plan="solo_free", must_change_password=False,
+                          ai_capture_consent_at=datetime.now(timezone.utc))
+        noconsent_coach = User(email=f"{PFX}-tn@t.invalid", password_hash=hash_password(PASSWORD),
+                               full_name="Rızasız Koç", role=UserRole.TEACHER, is_active=True,
+                               plan="solo_pro", must_change_password=False)
+        student = User(email=f"{PFX}-s@t.invalid", password_hash=hash_password(PASSWORD),
+                       full_name="Öğrenci 12", role=UserRole.STUDENT, is_active=True,
+                       grade_level=12, must_change_password=False)
+        lgs_student = User(email=f"{PFX}-s8@t.invalid", password_hash=hash_password(PASSWORD),
+                           full_name="Öğrenci 8", role=UserRole.STUDENT, is_active=True,
+                           grade_level=8, must_change_password=False)
+        free_student = User(email=f"{PFX}-sf@t.invalid", password_hash=hash_password(PASSWORD),
+                            full_name="Ücretsiz Öğr", role=UserRole.STUDENT, is_active=True,
+                            grade_level=12, must_change_password=False)
+        nc_student = User(email=f"{PFX}-sn@t.invalid", password_hash=hash_password(PASSWORD),
+                          full_name="Rızasız Öğr", role=UserRole.STUDENT, is_active=True,
+                          grade_level=12, must_change_password=False)
+        db.add_all([coach, free_coach, noconsent_coach, student, lgs_student,
+                    free_student, nc_student])
+        db.flush()
+        student.teacher_id = coach.id
+        lgs_student.teacher_id = coach.id
+        free_student.teacher_id = free_coach.id
+        nc_student.teacher_id = noconsent_coach.id
+        db.commit()
+        ids = {
+            "coach": coach.id, "free_coach": free_coach.id,
+            "noconsent_coach": noconsent_coach.id,
+            "student": student.id, "lgs_student": lgs_student.id,
+            "free_student": free_student.id, "nc_student": nc_student.id,
+            # builtin konu id'leri (gerçek TYT taksonomisi)
+            "temel": topic_id(db, "TYT Matematik", "Temel Kavramlar"),
+            "rasyonel": topic_id(db, "TYT Matematik", "Rasyonel Sayılar"),
+            "tekcift": topic_id(db, "TYT Matematik", "Tek ve Çift Sayılar"),
+            "birinci": topic_id(db, "TYT Matematik", "Birinci Dereceden Denklemler"),
+            "ucgen_alan": topic_id(db, "TYT Geometri", "Üçgende Alan"),
+            "paragraf": topic_id(db, "TYT Türkçe", "Paragraf"),
+        }
+
+    get_login_limiter().reset()
+    with SessionLocal() as db:
+        db.execute(sa_delete(SuspiciousIp).where(SuspiciousIp.ip == "testclient"))
+        db.commit()
+
+    # --- monkeypatch: PDF okuma + kapalı-küme AI eşleme (gerçek Gemini YOK) ---
+    read_behavior: dict = {"read": build_tyt_read()}
+    gem_calls = {"label_match": 0}
+    ai_label_map: dict[str, int] = {}  # etiket → dönecek topic_id
+
+    def fake_double(pdf_b64: str):
+        r1 = ai_exam_import._normalize_read(copy.deepcopy(read_behavior["read"]))
+        r2 = ai_exam_import._normalize_read(copy.deepcopy(read_behavior["read"]))
+        # çift-okuma uyuşmazlığı: TYT setinde Matematik no 7'nin ÖC'si 2. okumada farklı
+        for q in r2["questions"]:
+            if q["subject"] == "Matematik" and q.get("no") == 7:
+                q["student_answer"] = "D"
+        return r1, r2
+
+    def fake_generate(parts, *, personal_data, json_mode=True, timeout=45.0,
+                      max_output_tokens=8192, prefer_paid=True):
+        gem_calls["label_match"] += 1
+        prompt = parts[-1]["text"]
+        mappings = []
+        for m in re.finditer(r"^(\d+): (.+?) \(dersi", prompt, re.M):
+            key, label = int(m.group(1)), m.group(2).strip()
+            tid = ai_label_map.get(label)
+            mappings.append({"key": key, "topic_id": tid})
+        return json.dumps({"mappings": mappings})
+
+    orig_double = ai_exam_import.read_exam_pdf_double
+    orig_generate = svc.gemini.generate
+    ai_exam_import.read_exam_pdf_double = fake_double
+    svc.gemini.generate = fake_generate
+
+    try:
+        cs = TestClient(app)
+        ct = TestClient(app)
+        cfs = TestClient(app)
+        cns = TestClient(app)
+        anon = TestClient(app)
+        for cli, mail in ((cs, f"{PFX}-s@t.invalid"), (ct, f"{PFX}-t@t.invalid"),
+                          (cfs, f"{PFX}-sf@t.invalid"), (cns, f"{PFX}-sn@t.invalid")):
+            cli.post("/api/v2/auth/login", json={"email": mail, "password": PASSWORD})
+
+        pdf_file = ("deneme.pdf", PDF, "application/pdf")
+
+        # 1) anon 401
+        r = anon.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        check("1. anonim → 401", r.status_code == 401, r.text[:100])
+
+        # 2) ücretsiz koçun öğrencisi → 403 plan_upgrade_required
+        r = cfs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        check("2. koç ücretsiz pakette → 403 plan_upgrade_required",
+              r.status_code == 403
+              and r.json()["detail"]["code"] == "plan_upgrade_required", r.text[:120])
+
+        # 3) rıza vermemiş koçun öğrencisi → 403 consent_required
+        r = cns.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        check("3. koç rızasız → 403 consent_required",
+              r.status_code == 403
+              and r.json()["detail"]["code"] == "consent_required", r.text[:120])
+
+        # 4) PDF olmayan dosya → 422
+        r = cs.post("/api/v2/student/exams/import-analyze",
+                    files={"file": ("resim.png", b"x" * 50, "image/png")})
+        check("4. PDF değil → 422 invalid_file_type",
+              r.status_code == 422
+              and r.json()["detail"]["code"] == "invalid_file_type", r.text[:120])
+
+        # 5) yabancı öğrenci → 404 (koç yolunda sızıntı yok)
+        r = ct.post(f"/api/v2/teacher/students/{ids['free_student']}/exams/import-analyze",
+                    files={"file": pdf_file})
+        check("5. yabancı öğrenci → 404", r.status_code == 404, r.text[:120])
+
+        # --- 6) MUTLU YOL: analiz (öğrenci tetikler, kredi KOÇTAN) ---
+        ai_label_map.update({
+            "İşlem Yeteneği": ids["temel"],
+            "Paragrafta Yardımcı Düşü": ids["paragraf"],
+            "Zzz Gizemli Konu": 999_999,   # uydurma id — düşürülmeli
+        })
+        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        check("6. analiz 200 + TYT tespiti",
+              r.status_code == 200 and r.json()["universe"] == "tyt"
+              and r.json()["section"] == "tyt" and r.json()["scope"] == "full",
+              r.text[:200])
+        draft = r.json() if r.status_code == 200 else {}
+        rows = {(x["subject_raw"], x["question_no"]): x for x in draft.get("rows", [])}
+
+        def row(subj, no):
+            return rows.get((subj, no), {})
+
+        # 7) deterministik katman
+        check("7a. birebir eşleşme (Rasyonel Sayılar, source=auto)",
+              row("Matematik", 1).get("topic_id") == ids["rasyonel"]
+              and row("Matematik", 1).get("topic_source") == "auto",
+              str(row("Matematik", 1))[:160])
+        check("7b. bağlaç farkı eşleşti (Tek Çift → Tek ve Çift)",
+              row("Matematik", 2).get("topic_id") == ids["tekcift"],
+              str(row("Matematik", 2))[:160])
+        check("7c. KESİK etiket ön-ek eşleşmesi (Birinci Dereceden Denk…)",
+              row("Matematik", 3).get("topic_id") == ids["birinci"],
+              str(row("Matematik", 3))[:160])
+
+        # 8) geometri dersine YENİDEN ATAMA (belge Matematik bölümünde verdi)
+        g = row("Matematik", 5)
+        check("8. geometri sorusu TYT Geometri dersine atandı",
+              g.get("topic_id") == ids["ucgen_alan"]
+              and g.get("subject_name") == "TYT Geometri", str(g)[:160])
+
+        # 9) kapalı-küme AI: İşlem Yeteneği → Temel Kavramlar; uydurma id düşer
+        check("9a. AI anlamsal eşleme (İşlem Yeteneği → Temel Kavramlar)",
+              row("Matematik", 4).get("topic_id") == ids["temel"]
+              and row("Matematik", 4).get("topic_source") == "ai",
+              str(row("Matematik", 4))[:160])
+        check("9b. uydurma topic_id DÜŞÜRÜLDÜ (Zzz → eşleşmedi)",
+              row("Matematik", 6).get("topic_id") is None
+              and row("Matematik", 6).get("topic_source") == "none",
+              str(row("Matematik", 6))[:160])
+        check("9c. kesik Türkçe etiketi AI ile Paragraf'a eşlendi",
+              row("TYT-TÜRKÇE", 2).get("topic_id") == ids["paragraf"],
+              str(row("TYT-TÜRKÇE", 2))[:160])
+
+        # 10) çift okuma uyuşmazlığı → şüpheli
+        check("10. çift okuma uyuşmazlığı (M-7 ÖC farklı) → is_suspect",
+              row("Matematik", 7).get("is_suspect") is True,
+              str(row("Matematik", 7))[:160])
+
+        # 11) DC/ÖC türetmesi sembolü ezer (+ şüpheli)
+        y = row("Matematik", 8)
+        check("11. DC==ÖC ama sembol 'yanlış' → sonuç DOĞRU + şüpheli",
+              y.get("result") == "dogru" and y.get("is_suspect") is True,
+              str(y)[:160])
+
+        # 12) boş ÖC → bos
+        check("12. ÖC boş → sonuç 'bos'",
+              row("Matematik", 3).get("result") == "bos"
+              and row("Fizik", 2).get("result") == "bos",
+              str(row("Fizik", 2))[:160])
+
+        # 13) çapraz sağlama: Matematik özeti (bilerek yanlış) yakalandı
+        chk = {c["code"]: c for c in draft.get("checks", [])}
+        mat_check = next((c for k, c in chk.items()
+                          if k.startswith("subject_counts:matematik")), None)
+        tr_check = next((c for k, c in chk.items()
+                         if k.startswith("subject_counts:tyt turkce")), None)
+        check("13a. özet↔satır çapraz sağlama Matematik'te UYUŞMAZLIK yakaladı",
+              mat_check is not None and mat_check["ok"] is False,
+              str(mat_check)[:160])
+        check("13b. Türkçe özeti tutarlı (ok=True)",
+              tr_check is not None and tr_check["ok"] is True, str(tr_check)[:160])
+        check("13c. tür↔müfredat uyumu kontrolü OK (11/12 eşleşti)",
+              chk.get("universe_match", {}).get("ok") is True,
+              str(chk.get("universe_match"))[:160])
+
+        # 14) kredi: koç havuzundan 6
+        with SessionLocal() as db:
+            used = exam_credits(db, [ids["student"], ids["coach"]])
+        check("14. kredi KOÇUN havuzundan 6 düştü", used == 6, f"used={used}")
+
+        # 15) section_choices okul dahil (manuel tür seçici)
+        vals = {c["value"] for c in draft.get("section_choices", [])}
+        check("15. tür seçici okul dahil tüm türleri sunar",
+              {"tyt", "ayt_say", "lgs", "okul"} <= vals, str(vals))
+
+        # --- 16) CONFIRM: Zzz satırını koç elle Rasyonel'e bağlar ---
+        conf_rows = []
+        for x in draft["rows"]:
+            rr = {k: x[k] for k in ("subject_raw", "question_no", "topic_raw",
+                                    "topic_id", "correct_answer", "student_answer",
+                                    "result", "is_suspect")}
+            if x["topic_raw"] == "Zzz Gizemli Konu":
+                rr["topic_id"] = ids["rasyonel"]
+                rr["manually_edited"] = True
+            conf_rows.append(rr)
+        payload = {
+            "title": draft["title"], "exam_date": draft["exam_date"],
+            "section": draft["section"], "scope": draft["scope"],
+            "grade_hint": draft["grade_hint"], "score_info": draft["score_info"],
+            "rows": conf_rows,
+        }
+        r = cs.post("/api/v2/student/exams/import-confirm",
+                    data={"payload": json.dumps(payload)}, files={"file": pdf_file})
+        d = r.json().get("data", {}) if r.status_code == 200 else {}
+        check("16a. confirm 200 + net doğru (7D 3Y 2B → 6.25)",
+              r.status_code == 200 and d.get("net") == 6.25
+              and d.get("total_correct") == 7 and d.get("total_wrong") == 3
+              and d.get("total_blank") == 2, r.text[:250])
+        check("16b. 12 soru satırı + hepsi konuya bağlandı (elle düzeltme dahil)",
+              d.get("question_count") == 12 and d.get("matched_topic_count") == 12,
+              str(d)[:200])
+        check("16c. yanlış konu id'leri (YSA köprüsü verisi) doğru",
+              sorted(d.get("wrong_topic_ids", [])) == sorted(
+                  [ids["paragraf"], ids["tekcift"], ids["ucgen_alan"]]),
+              str(d.get("wrong_topic_ids")))
+        exam_id = d.get("exam_id")
+
+        with SessionLocal() as db:
+            exam = db.get(ExamResult, exam_id)
+            subj_nets = json.loads(exam.subject_nets or "[]")
+            names = {s["name"] for s in subj_nets}
+            check("16d. kayıt izleri: import_source + PDF kanıt + ders grupları",
+                  exam.import_source == "pdf_import"
+                  and (exam.import_pdf_size or 0) > 0
+                  and {"TYT Türkçe", "TYT Matematik", "TYT Geometri", "TYT Fizik"} <= names,
+                  f"src={exam.import_source} names={names}")
+            qs = db.query(ExamResultQuestion).filter(
+                ExamResultQuestion.exam_result_id == exam_id).all()
+            edited = [q for q in qs if q.manually_edited]
+            check("16e. soru satırları DB'de (ham etiket + normalize konu + elle iz)",
+                  len(qs) == 12 and len(edited) == 1
+                  and edited[0].topic_id == ids["rasyonel"]
+                  and edited[0].topic_label_raw == "Zzz Gizemli Konu",
+                  f"n={len(qs)} edited={len(edited)}")
+
+        # 17) mükerrer: aynı ad+tarih → 409; force → 200
+        r = cs.post("/api/v2/student/exams/import-confirm",
+                    data={"payload": json.dumps(payload)}, files={"file": pdf_file})
+        check("17a. mükerrer deneme → 409 duplicate_exam",
+              r.status_code == 409
+              and r.json()["detail"]["code"] == "duplicate_exam", r.text[:150])
+        r = cs.post("/api/v2/student/exams/import-confirm",
+                    data={"payload": json.dumps({**payload, "force": True})},
+                    files={"file": pdf_file})
+        check("17b. force=True → yine de kaydeder", r.status_code == 200, r.text[:150])
+        force_exam_id = r.json().get("data", {}).get("exam_id")
+
+        # 18) ÖĞRENEN SÖZLÜK: alias'lar yazıldı (AI→ai, elle→coach)
+        with SessionLocal() as db:
+            a_islem = db.query(ExamTopicAlias).filter(
+                ExamTopicAlias.scope == "tyt",
+                ExamTopicAlias.label_key == "islem yetenegi").first()
+            a_zzz = db.query(ExamTopicAlias).filter(
+                ExamTopicAlias.scope == "tyt",
+                ExamTopicAlias.label_key == "zzz gizemli konu").first()
+            check("18. sözlük: İşlem Yeteneği (ai) + Zzz (coach) öğrenildi",
+                  a_islem is not None and a_islem.topic_id == ids["temel"]
+                  and a_islem.source == "ai"
+                  and a_zzz is not None and a_zzz.topic_id == ids["rasyonel"]
+                  and a_zzz.source == "coach",
+                  f"islem={a_islem} zzz={a_zzz}")
+
+        # 19) ikinci analiz: sözlük çözer, AI'ya HİÇ gidilmez
+        before = gem_calls["label_match"]
+        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        d2 = r.json() if r.status_code == 200 else {}
+        rows2 = {(x["subject_raw"], x["question_no"]): x for x in d2.get("rows", [])}
+        islem2 = rows2.get(("Matematik", 4), {})
+        zzz2 = rows2.get(("Matematik", 6), {})
+        check("19a. ikinci analizde İşlem Yeteneği SÖZLÜKTEN çözüldü (alias)",
+              islem2.get("topic_id") == ids["temel"]
+              and islem2.get("topic_source") == "alias", str(islem2)[:160])
+        check("19b. koç düzeltmesi (Zzz→Rasyonel) sözlükten uygulandı",
+              zzz2.get("topic_id") == ids["rasyonel"]
+              and zzz2.get("topic_source") == "alias", str(zzz2)[:160])
+        check("19c. AI çağrısı GEREKMEDİ (maliyet düştü)",
+              gem_calls["label_match"] == before,
+              f"before={before} after={gem_calls['label_match']}")
+        check("19d. mükerrer uyarısı önizlemede (duplicate_exam_id dolu)",
+              d2.get("duplicate_exam_id") == exam_id,
+              str(d2.get("duplicate_exam_id")))
+
+        # 20) AI koç kaydını EZEMEZ: Zzz'yi ai-kaynaklı Temel'e çevirme girişimi
+        conf3 = [dict(rr) for rr in conf_rows]
+        for rr in conf3:
+            if rr["topic_raw"] == "Zzz Gizemli Konu":
+                rr["topic_id"] = ids["temel"]
+                rr["manually_edited"] = False   # ai kaynaklı gibi
+        r = cs.post("/api/v2/student/exams/import-confirm",
+                    data={"payload": json.dumps(
+                        {**payload, "title": payload["title"] + " B",
+                         "rows": conf3})},
+                    files={"file": pdf_file})
+        with SessionLocal() as db:
+            a_zzz = db.query(ExamTopicAlias).filter(
+                ExamTopicAlias.scope == "tyt",
+                ExamTopicAlias.label_key == "zzz gizemli konu").first()
+            check("20. AI, koç düzeltmesini SÖZLÜKTE ezemedi (coach kalır)",
+                  r.status_code == 200 and a_zzz is not None
+                  and a_zzz.topic_id == ids["rasyonel"]
+                  and a_zzz.source == "coach", f"zzz={a_zzz}")
+        exam3_id = r.json().get("data", {}).get("exam_id")
+
+        # 21) evren-dışı topic_id enjeksiyonu → düşürülür (kayıt topic'siz)
+        inj_rows = [dict(rr) for rr in conf_rows]
+        inj_target = next(rr for rr in inj_rows
+                          if rr["subject_raw"] == "TYT-TÜRKÇE"
+                          and rr["question_no"] == 1)
+        inj_target["topic_id"] = 999_999
+        r = cs.post("/api/v2/student/exams/import-confirm",
+                    data={"payload": json.dumps(
+                        {**payload, "title": payload["title"] + " C",
+                         "rows": inj_rows})},
+                    files={"file": pdf_file})
+        inj_ok = False
+        if r.status_code == 200:
+            inj_exam_id = r.json()["data"]["exam_id"]
+            with SessionLocal() as db:
+                q0 = (db.query(ExamResultQuestion)
+                      .filter(ExamResultQuestion.exam_result_id == inj_exam_id,
+                              ExamResultQuestion.subject_name_raw == "TYT-TÜRKÇE",
+                              ExamResultQuestion.question_no == 1).first())
+                inj_ok = q0 is not None and q0.topic_id is None
+        check("21. evren-dışı topic_id enjeksiyonu DÜŞÜRÜLDÜ", inj_ok, r.text[:150])
+
+        # 22) geçersiz sonuç değeri → 422
+        bad = [dict(rr) for rr in conf_rows]
+        bad[0]["result"] = "belki"
+        r = cs.post("/api/v2/student/exams/import-confirm",
+                    data={"payload": json.dumps(
+                        {**payload, "title": payload["title"] + " D", "rows": bad})},
+                    files={"file": pdf_file})
+        check("22. geçersiz sonuç → 422 invalid_result",
+              r.status_code == 422
+              and r.json()["detail"]["code"] == "invalid_result", r.text[:150])
+
+        # --- 23) LGS: 8. sınıf öğrencisi + koç yüzeyi + ceza /3 ---
+        read_behavior["read"] = build_lgs_read()
+        ai_label_map.clear()
+        r = ct.post(f"/api/v2/teacher/students/{ids['lgs_student']}/exams/import-analyze",
+                    files={"file": pdf_file})
+        dl = r.json() if r.status_code == 200 else {}
+        check("23a. LGS tespiti (8. sınıf + anahtar kelime)",
+              r.status_code == 200 and dl.get("universe") == "lgs"
+              and dl.get("section") == "lgs", r.text[:200])
+        lgs_payload = {
+            "title": dl.get("title"), "exam_date": dl.get("exam_date"),
+            "section": "lgs",
+            "rows": [{k: x[k] for k in ("subject_raw", "question_no", "topic_raw",
+                                        "topic_id", "correct_answer",
+                                        "student_answer", "result", "is_suspect")}
+                     for x in dl.get("rows", [])],
+        }
+        r = ct.post(f"/api/v2/teacher/students/{ids['lgs_student']}/exams/import-confirm",
+                    data={"payload": json.dumps(lgs_payload)}, files={"file": pdf_file})
+        dnet = r.json().get("data", {}).get("net") if r.status_code == 200 else None
+        check("23b. LGS net cezası /3 (2D 1Y → 1.67)",
+              r.status_code == 200 and dnet == 1.67, r.text[:200])
+        lgs_exam_id = r.json().get("data", {}).get("exam_id")
+
+        # 24) koç deneme listesi yeni kaydı görür (mevcut KP4a ucu — entegrasyon)
+        r = ct.get(f"/api/v2/teacher/students/{ids['lgs_student']}/exams")
+        titles = [x["title"] for x in r.json().get("rows", [])] if r.status_code == 200 else []
+        check("24. içe aktarılan deneme mevcut Denemeler listesinde",
+              r.status_code == 200 and any(PFX in t for t in titles),
+              str(titles)[:150])
+
+    finally:
+        ai_exam_import.read_exam_pdf_double = orig_double
+        svc.gemini.generate = orig_generate
+        # --- temizlik (SQLite FK cascade kapalı → explicit) ---
+        with SessionLocal() as db:
+            uids = [v for k, v in ids.items()
+                    if k in ("coach", "free_coach", "noconsent_coach", "student",
+                             "lgs_student", "free_student", "nc_student")]
+            exam_ids = [e.id for e in db.query(ExamResult).filter(
+                ExamResult.student_id.in_(uids)).all()]
+            if exam_ids:
+                db.execute(sa_delete(ExamResultQuestion).where(
+                    ExamResultQuestion.exam_result_id.in_(exam_ids)))
+                db.execute(sa_delete(ExamResult).where(ExamResult.id.in_(exam_ids)))
+            db.execute(sa_delete(ExamTopicAlias).where(
+                ExamTopicAlias.created_by_id.in_(uids)))
+            db.execute(sa_delete(UsageEvent).where(
+                UsageEvent.actor_user_id.in_(uids)))
+            db.execute(sa_delete(CreditAccount).where(
+                CreditAccount.owner_id.in_(uids),
+                CreditAccount.owner_type == "user"))
+            db.execute(sa_delete(User).where(User.id.in_(uids)))
+            db.execute(sa_delete(SuspiciousIp).where(SuspiciousIp.ip == "testclient"))
+            db.commit()
+
+    print(f"\n=== {passed} passed, {len(failed)} failed ===")
+    for f in failed:
+        print(f"  FAILED: {f}")
+    return 0 if not failed else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

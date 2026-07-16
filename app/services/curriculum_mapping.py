@@ -27,13 +27,17 @@ logger = logging.getLogger(__name__)
 
 # Türkçe küçük harf + aksan sadeleştirme (eşleştirme için; gösterimde kullanılmaz).
 _TR_MAP = str.maketrans("çğıöşüâîû", "cgiosuaiu")
+# BÜYÜK Türkçe harfler .lower()'dan ÖNCE sadeleştirilir: Python'da "İ".lower()
+# = "i" + U+0307 (combining dot) ürettiğinden "İşlem" ile "işlem" FARKLI anahtara
+# düşüyordu (deneme içe aktarma sözlüğünde casing tutarsızlığı — 2026-07-16).
+_TR_UPPER = str.maketrans("İIÇĞÖŞÜÂÎÛ", "iıçğöşüâîû")
 
 
 def normalize(s: str | None) -> str:
     """Eşleştirme anahtarı: küçük harf + Türkçe sadeleştirme + yalnız harf/rakam."""
     if not s:
         return ""
-    low = s.strip().lower().translate(_TR_MAP)
+    low = s.strip().translate(_TR_UPPER).lower().translate(_TR_MAP)
     # yaygın kitap önekleri/gürültü ("ünite", "konu", "test", "bölüm") sadeleştirme
     cleaned = re.sub(r"[^a-z0-9]+", " ", low).strip()
     return cleaned

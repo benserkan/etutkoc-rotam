@@ -163,8 +163,11 @@ def main():
         check("7. summary count/avg/best/last/first/trend", ok, f"status={r.status_code} {s}")
         check("7b. rows DESC (en yeni ilk)",
               r.status_code == 200 and j["rows"][0]["exam_date"] == "2026-05-10", f"{[x['exam_date'] for x in j['rows']]}")
-        check("7c. section_options 6 adet",
-              r.status_code == 200 and len(j["section_options"]) == 6, f"{len(j.get('section_options', []))}")
+        # 7 tür: LGS + TYT + 4×AYT + OKUL (okul denemesi — PDF içe aktarma, 2026-07-16)
+        check("7c. section_options 7 adet (okul dahil)",
+              r.status_code == 200 and len(j["section_options"]) == 7
+              and any(o["value"] == "okul" for o in j["section_options"]),
+              f"{len(j.get('section_options', []))}")
 
         # 8. başka öğretmenin öğrencisi GET
         r = tc.get(f"/api/v2/teacher/students/{seed['s2_id']}/exams")

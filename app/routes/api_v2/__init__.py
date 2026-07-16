@@ -45,6 +45,7 @@ from app.routes.api_v2 import payment as v2_payment
 from app.routes.api_v2 import pricing_public as v2_pricing_public
 from app.routes.api_v2 import quick_access as v2_quick_access
 from app.routes.api_v2 import settings as v2_settings
+from app.routes.api_v2 import exam_import as v2_exam_import
 from app.routes.api_v2 import student as v2_student
 from app.routes.api_v2 import support as v2_support
 from app.routes.api_v2 import surveys as v2_surveys
@@ -83,6 +84,7 @@ router.include_router(v2_messaging.router)
 router.include_router(v2_quick_access.router)
 router.include_router(v2_surveys.router)
 router.include_router(v2_wrong_questions.router)
+router.include_router(v2_exam_import.router)
 router.include_router(v2_testimonials_public.router)
 router.include_router(v2_admin_testimonials.router)
 router.include_router(v2_admin_conversion.router)

@@ -18,6 +18,10 @@ class ExamSection(str, enum.Enum):
     - LGS: 8. sınıf sınavının bir bölümü (Türkçe, Matematik, Fen, T.C. İnk., Din, İng.)
     - TYT: YKS Temel Yeterlilik (herkes girer): TR, Mat, Fen, Sosyal
     - AYT_SAY/AYT_EA/AYT_SOZ/AYT_DIL: YKS Alan Yeterliği — alana göre değişir
+    - OKUL: okul/sınıf denemesi (Maarif kazanım değerlendirme, yazılı provası vb.)
+      — deneme PDF içe aktarmayla geldi (2026-07-16); Maarif müfredatına normalize
+      edilir. NOT: Postgres native enum'a yeni üye = ALTER TYPE migration
+      (v6w9z2a3z55v'de yapıldı).
     """
     LGS = "lgs"
     TYT = "tyt"
@@ -25,6 +29,7 @@ class ExamSection(str, enum.Enum):
     AYT_EA = "ayt_ea"
     AYT_SOZ = "ayt_soz"
     AYT_DIL = "ayt_dil"
+    OKUL = "okul"
 
 
 EXAM_SECTION_LABELS: dict[ExamSection, str] = {
@@ -34,6 +39,7 @@ EXAM_SECTION_LABELS: dict[ExamSection, str] = {
     ExamSection.AYT_EA: "AYT (Eşit Ağırlık)",
     ExamSection.AYT_SOZ: "AYT (Sözel)",
     ExamSection.AYT_DIL: "AYT (Dil)",
+    ExamSection.OKUL: "Okul Denemesi",
 }
 
 

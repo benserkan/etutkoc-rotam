@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import {
   ChevronDown,
+  FileUp,
   Loader2,
   Minus,
   Pencil,
@@ -22,6 +23,8 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+
+import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
 
 import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
 import {
@@ -57,6 +60,7 @@ const SECTION_TONE: Record<ExamSectionValue, string> = {
   ayt_ea: "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200",
   ayt_soz: "border-violet-200 bg-violet-50 text-violet-700 dark:bg-violet-500/10 dark:border-violet-500/30 dark:text-violet-200",
   ayt_dil: "border-rose-200 bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200",
+  okul: "border-slate-200 bg-slate-100 text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200",
 };
 
 function sectionPenalty(section: ExamSectionValue): number {
@@ -85,6 +89,7 @@ export function StudentExamsPanel({ studentId }: Props) {
     staleTime: 30_000,
   });
   const [addOpen, setAddOpen] = React.useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
   const data = q.data;
 
   // Sınav türleri farklı ölçekte (TYT/120·AYT/80·LGS) → özet + grafik tek TÜRE
@@ -123,11 +128,29 @@ export function StudentExamsPanel({ studentId }: Props) {
             doğru − yanlış/4).
           </p>
         </div>
-        <Button size="sm" onClick={() => setAddOpen(true)}>
-          <Plus className="size-4" aria-hidden />
-          Deneme Ekle
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            className="gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
+            onClick={() => setImportOpen(true)}
+            title="Yayınevi/okul sonuç PDF'ini yükle — sorular konu konu okunur, müfredatına çevrilir"
+          >
+            <FileUp className="size-4" aria-hidden />
+            PDF&apos;ten aktar
+          </Button>
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Plus className="size-4" aria-hidden />
+            Deneme Ekle
+          </Button>
+        </div>
       </div>
+
+      <ExamImportDialog
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        studentId={studentId}
+      />
 
       {q.isLoading && !data ? (
         <p className="text-sm text-muted-foreground">Yükleniyor…</p>

@@ -6,6 +6,77 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Deneme PDF içe aktarma (AI karne okuma) — Faz 1 backend+web BİTTİ (2026-07-16, migration `v6w9z2a3z55v`)
+
+**Bağlam:** Rakip analizinden #1+#6 birleşimi: yayınevi/okul deneme sonuç PDF'i
+(örn. Apotemi konu analizi — `D:\ÖĞRENCİ KOÇLUĞU\...\apotemi-02-04.pdf`) tek
+tuşla okunur → soru-soru konu analizi sisteme akar. **Kullanıcı kararları:**
+koç+öğrenci yükler (öğrenci direkt girer, koç düzeltebilir) · 6 kredi ücretli
+paket KOÇ havuzu (`ai_gate_status` reuse) · geçmiş-15 tablosu İSTENMEDİ (yalnız
+o anki deneme; birikim kendiliğinden oluşur) · YSA köprüsü = tek-tık toplu öneri
+(Faz 3) · **format ezberlenmez** (zorunlu çekirdek: ders→konu→sonuç; DC/ÖC/özet
+opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat adı).
+- **Migration `v6w9z2a3z55v`** (← u5v8y1z2y44u, additive): `exam_result_questions`
+  (soru satırı: ham+normalize ders/konu, DC/ÖC/sonuç, is_suspect/manually_edited) +
+  `exam_topic_aliases` (**evren-anahtarlı ÖĞRENEN sözlük** scope+subject+label_key→
+  topic; source ai|coach; koç AI'ı ezer, AI koçu EZEMEZ) + `exam_results`'a 5 kolon
+  (import_source/pdf kanıt LargeBinary deferred/analysis_meta) + **ExamSection.OKUL**
+  (PG: ALTER TYPE ADD VALUE; downgrade'de üye kalır — zararsız). Etkilenen tüm
+  yüzeyler güncellendi: EXAM_SECTION_LABELS + ExamSectionLiteral + web
+  ExamSectionValue + 2 ton haritası + teacher_exams testi 7 tür.
+- **`ai_exam_import.py`:** Gemini'ye PDF inline (`application/pdf`, ücretli key,
+  personal_data=True, 32K token, 150s) + format-bağımsız okuma prompt'u +
+  savunmacı `_normalize_read`. **Çift okuma** = 2 bağımsız çağrı.
+- **`exam_import_service.py` (TEK MERKEZ):** `merge_reads` (ders bazında hizalama:
+  soru no kesişiyorsa no ile, DEĞİLSE SIRA ile — **gerçek PDF dersi:** Fen 1-20
+  sürekli numaralı, iki okuma Kimya'yı farklı numaralandırıp çift saydırıyordu) ·
+  `_derive_result` (DC/ÖC sembolü EZER; çelişki→şüpheli; ÖC boş→bos) · `run_checks`
+  (KOŞULLU çapraz sağlama: belge özet tablosu VARSA satır sayımlarıyla D/Y/B
+  karşılaştır; tür↔müfredat uyumu <1/3 eşleşmede "tür yanlış olabilir") ·
+  `detect_universe` (anahtar kelime + yapı + öğrenci bağlamı oyları; MSÜ→TYT;
+  AYT alt-türü ders listesinden/track'ten; düşük güven→önizlemede tür seçici) ·
+  `universe_subjects` (**TYT/AYT için `curriculum_model IS NULL` ŞART** — eski
+  okul dersleri de exam_section taşıyor, karışırsa çöker) · `normalize_topics`
+  4 katman: sözlük→deterministik (birebir+bağlaç+**kesik-etiket ön-eki** "Paragrafta
+  Yardımcı Düşü…"+evren-tekil; belirsiz ASLA otomatik bağlanmaz)→kapalı-küme Gemini
+  (ücretsiz key; liste-dışı id düşer)→eşleşmedi (birikime girmez, koç bağlar) ·
+  konu dersi belirler (geometri sorusu "Matematik" bölümünde olsa da TYT Geometri'ye) ·
+  `confirm` (net/toplamlar DÜZELTİLMİŞ satırlardan; topic_id evren doğrulaması —
+  enjeksiyon düşer; mükerrer 409+force; subject_nets üretir → mevcut net trendi/
+  veli/kurum panoları OTOMATİK beslenir) · `_learn_aliases`.
+- **DERS (normalize):** Python `"İ".lower()` = i+combining-dot → "İşlem"≠"işlem"
+  anahtar ayrışması; `curriculum_mapping.normalize`'a `_TR_UPPER` ön-çevirisi
+  eklendi (İIÇĞÖŞÜ → küçük; mapping 18/18 korunur).
+- **Router `api_v2/exam_import.py`:** koç+öğrenci `import-analyze` (multipart PDF
+  ≤10MB → kredi 6 → önizleme taslağı; sunucuda taslak durumu YOK) + `import-confirm`
+  (payload JSON + aynı PDF kanıt; kredi düşmez). Kapılar YSA birebir: no_coach/
+  plan_upgrade_required/consent_required 403 · pdf_unreadable 422 · 402 · 502.
+  Taslak: rows + subjects + checks + match_stats + topic_choices (önizleme konu
+  seçici) + section_choices + duplicate_exam_id + credits_charged.
+- **Web:** `lib/types/exam-import.ts` + `lib/api/exam-import.ts` (multipart bare-fetch)
+  + paylaşılan **`components/shared/exam-import-dialog.tsx`** (yükle→"iki kez
+  okunuyor" spinner→önizleme: tür/ad/tarih düzenlenebilir + başarısız kontroller
+  banner + eşleşme çipleri + ders-gruplu soru tablosu [şüpheli sarı, konu optgroup
+  seçici, DC/ÖC input, sonuç seçici, canlı net] + mükerrer force akışı→sonuç
+  ekranı). Koç girişi: `student-exams-panel` "PDF'ten aktar" butonu (violet).
+  Öğrenci web UI'sı YOK (backend hazır+testli; Faz 2'de analiz ekranıyla gelir).
+- **Test `test_api_v2_exam_import.py` 39/39** (kapılar + normalizasyon katmanları +
+  çift-okuma şüphelisi + DC/ÖC türetme + çapraz sağlama + kredi 6 + confirm/net/
+  mükerrer/enjeksiyon + sözlük öğrenme/reuse/koç-koruması + LGS /3 + mevcut liste
+  entegrasyonu). **GERÇEK Apotemi PDF + GERÇEK Gemini doğrulaması**
+  (`scripts/sim_exam_import_real.py`): 120/120 soru, şüpheli 0, tüm çapraz
+  sağlamalar belgeyle birebir (Türkçe 22.25 ✓ Kimya 0.25 ✓ Mat+Geo=29.0 ✓),
+  118/120 konu eşleşti (%98; kalan 2 koça). Regresyon: mapping 18 · exam_taxonomy
+  20 · teacher_exams 18 · institution_academic 13 · admin_usage 21 · parent_weekly 14
+  · wrong_question_ai 24 · units 10 · tenant 29 GREEN; web tsc+eslint temiz.
+- **NOT (Gemini modeli):** `gemini-2.5-pro` artık 404 ("no longer available to new
+  users") → her çağrı flash'a düşüyor (çalışıyor ama boşa tur). Süper admin → AI
+  Ayarları'ndan ücretli model güncellenmeli ("Bağlantıyı test et" ile doğrula).
+- **SIRADA:** **Faz 2** analiz ekranı (konu×deneme ısı haritası + net fırsat
+  analizi [sıklık×hata=+net] + kaydırma/süre/istikrar sinyalleri + unutulan/
+  gelişen konular + öğrenci yüzeyi) · **Faz 3** sinyal köprüleri (YSA tek-tık +
+  öneri motoru + KS4 içgörü girdisi) · **Faz 4** mobil.
+
 ## App Store ret #3 (3 yönerge) → ticari yüzey SIFIRLANDI + EULA linkleri + uygulama içi hesap silme + build 8 RESUBMIT (2026-07-15/16, SONUÇ BEKLENİYOR)
 
 **Bağlam:** Build 6 resubmit'i 2026-07-14'te 3 yönergeyle REDDEDİLDİ (gönderim

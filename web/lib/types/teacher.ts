@@ -1750,7 +1750,8 @@ export type ExamSectionValue =
   | "ayt_say"
   | "ayt_ea"
   | "ayt_soz"
-  | "ayt_dil";
+  | "ayt_dil"
+  | "okul"; // okul/sınıf denemesi (PDF içe aktarma, 2026-07-16)
 
 export interface ExamSectionOption {
   value: ExamSectionValue;

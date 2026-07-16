@@ -1857,7 +1857,7 @@ class StudentResetPasswordResult(BaseModel):
 # KP4a — Deneme sınavı sonuçları (Akademik Çıktı / Deneme Takibi)
 # =============================================================================
 
-ExamSectionLiteral = Literal["lgs", "tyt", "ayt_say", "ayt_ea", "ayt_soz", "ayt_dil"]
+ExamSectionLiteral = Literal["lgs", "tyt", "ayt_say", "ayt_ea", "ayt_soz", "ayt_dil", "okul"]
 
 
 class ExamSectionOption(BaseModel):

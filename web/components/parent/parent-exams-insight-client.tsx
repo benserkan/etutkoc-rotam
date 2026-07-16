@@ -26,6 +26,7 @@ const SECTION_TONE: Record<string, string> = {
   ayt_ea: "bg-amber-50 text-amber-700",
   ayt_soz: "bg-rose-50 text-rose-700",
   ayt_dil: "bg-sky-50 text-sky-700",
+  okul: "bg-slate-100 text-slate-700",
 };
 
 export function ParentExamsInsightClient({ studentId, studentName }: { studentId: number; studentName?: string }) {
