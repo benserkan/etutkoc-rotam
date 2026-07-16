@@ -45,10 +45,17 @@ class WrongQuestionCountsOut(BaseModel):
     due: int
 
 
+class AiGateOut(BaseModel):
+    """Yapay zekâ etiketleme kullanılabilir mi (öğrenci yüzeyi buton durumu)."""
+    available: bool
+    reason: str          # ok | no_coach | plan_upgrade_required | consent_required
+
+
 class WrongQuestionListResponse(BaseModel):
     items: list[WrongQuestionItem]
     counts: WrongQuestionCountsOut
     error_type_labels: dict[str, str]   # UI çipleri için sabit sözlük
+    ai: AiGateOut
 
 
 class WrongQuestionCreateBody(BaseModel):
@@ -90,9 +97,13 @@ class TopicAccumulationOut(BaseModel):
 class AiTagResult(BaseModel):
     """AI etiketleme sonucu — kayıt + ne değiştiği."""
     item: WrongQuestionItem
-    matched_topic: bool          # AI konuyu eşleyebildi mi
+    matched_topic: bool          # AI konuyu (boş alana) eşledi mi
     hint_created: bool           # Sokratik ipucu üretildi mi
     credits_charged: int
+    # Öğrenci zaten bir konu SEÇMİŞSE ve AI FARKLI bir konuya benzetiyorsa,
+    # önerisi burada döner (kayıt EZİLMEZ; öğrenci "Uygula" derse değişir).
+    suggested_topic_id: int | None = None
+    suggested_topic_name: str | None = None
 
 
 class WrongQuestionSummaryResponse(BaseModel):

@@ -24,6 +24,7 @@ import {
   getWrongQuestions,
   updateWrongQuestion,
   wrongKeys,
+  type AiGate,
   type PhotoAsset,
   type WrongListResponse,
   type WrongQuestion,
@@ -52,6 +53,13 @@ function aiErr(e: unknown): string {
   };
   return (code && map[code]) || (e instanceof ApiError ? e.message : "İşlem başarısız.");
 }
+
+// Buton gizli olduğunda (AI kapalı) gösterilen NET durum notu.
+const AI_GATE_NOTE: Record<string, string> = {
+  no_coach: "Yapay zekâ için bağlı bir koçun olmalı.",
+  plan_upgrade_required: "Koçunun paketinde yapay zekâ henüz açık değil.",
+  consent_required: "Koçun yapay zekâ kullanımını henüz onaylamadı.",
+};
 
 export default function StudentWrongQuestionsScreen() {
   const qc = useQueryClient();
@@ -188,6 +196,7 @@ export default function StudentWrongQuestionsScreen() {
         <DetailSheet
           item={detail}
           errorLabels={data?.error_type_labels ?? {}}
+          ai={data?.ai ?? { available: false, reason: "ok" }}
           onClose={() => setDetailId(null)}
           onChanged={invalidate}
         />
@@ -465,11 +474,13 @@ function CaptureSheet({
 function DetailSheet({
   item,
   errorLabels,
+  ai,
   onClose,
   onChanged,
 }: {
   item: WrongQuestion;
   errorLabels: Record<string, string>;
+  ai: AiGate;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -535,22 +546,30 @@ function DetailSheet({
           />
         ))}
 
-        {/* AI etiketleme / ipucu */}
+        {/* AI etiketleme / ipucu — koçta AI açıksa buton, kapalıysa NET durum
+            notu (çıkmaz hata mesajı yerine "koçun henüz açmadı"). */}
         {qImgs.length > 0 && !item.ai_hint && !item.ai_tagged_at ? (
-          <Pressable
-            onPress={() => aiTag.mutate()}
-            disabled={aiTag.isPending}
-            className="flex-row items-center justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50 py-3 active:bg-violet-100"
-          >
-            {aiTag.isPending ? (
-              <ActivityIndicator size="small" color="#7c3aed" />
-            ) : (
-              <Ionicons name="sparkles" size={16} color="#7c3aed" />
-            )}
-            <Text className="text-sm font-semibold text-violet-800">
-              Yapay zekâ okusun — konu + yaklaşım ipucu
-            </Text>
-          </Pressable>
+          ai.available ? (
+            <Pressable
+              onPress={() => aiTag.mutate()}
+              disabled={aiTag.isPending}
+              className="flex-row items-center justify-center gap-2 rounded-xl border border-violet-300 bg-violet-50 py-3 active:bg-violet-100"
+            >
+              {aiTag.isPending ? (
+                <ActivityIndicator size="small" color="#7c3aed" />
+              ) : (
+                <Ionicons name="sparkles" size={16} color="#7c3aed" />
+              )}
+              <Text className="text-sm font-semibold text-violet-800">
+                Yapay zekâ okusun — konu + yaklaşım ipucu
+              </Text>
+            </Pressable>
+          ) : (
+            <View className="flex-row items-start gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+              <Ionicons name="sparkles" size={15} color="#94a3b8" />
+              <Text className="flex-1 text-xs text-slate-600">{AI_GATE_NOTE[ai.reason] ?? "Yapay zekâ şu an kullanılamıyor."}</Text>
+            </View>
+          )
         ) : null}
         {item.ai_hint ? (
           <View className="rounded-xl border border-violet-200 bg-violet-50 px-3 py-2">

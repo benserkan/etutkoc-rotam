@@ -50,10 +50,22 @@ export interface WrongCounts {
   due: number;
 }
 
+export type AiGateReason =
+  | "ok"
+  | "no_coach"
+  | "plan_upgrade_required"
+  | "consent_required";
+
+export interface AiGate {
+  available: boolean;
+  reason: AiGateReason;
+}
+
 export interface WrongListResponse {
   items: WrongQuestion[];
   counts: WrongCounts;
   error_type_labels: Record<string, string>;
+  ai: AiGate;
 }
 
 export interface AiTagResult {
@@ -61,6 +73,8 @@ export interface AiTagResult {
   matched_topic: boolean;
   hint_created: boolean;
   credits_charged: number;
+  suggested_topic_id: number | null;
+  suggested_topic_name: string | null;
 }
 
 interface Mutated<T> {

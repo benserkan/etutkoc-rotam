@@ -289,6 +289,7 @@ export function StudentWrongQuestionsClient({
         item={detail}
         onClose={() => setDetailId(null)}
         errorLabels={data.error_type_labels}
+        ai={data.ai}
       />
       {resolveOpen ? (
         <ResolveDialog
@@ -650,20 +651,29 @@ function CaptureDialog({
 // Detay dialog'u
 // ---------------------------------------------------------------------------
 
+const AI_GATE_NOTE: Record<string, string> = {
+  no_coach: "Yapay zekâ için bağlı bir koçun olmalı.",
+  plan_upgrade_required: "Koçunun paketinde yapay zekâ henüz açık değil.",
+  consent_required: "Koçun yapay zekâ kullanımını henüz onaylamadı.",
+};
+
 function DetailDialog({
   item,
   onClose,
   errorLabels,
+  ai,
 }: {
   item: WrongQuestionItem | null;
   onClose: () => void;
   errorLabels: Record<string, string>;
+  ai: { available: boolean; reason: string };
 }) {
   const update = useUpdateWrongQuestion();
   const del = useDeleteWrongQuestion();
   const addImage = useAddWrongImage();
   const aiTag = useAiTagWrongQuestion("student");
   const solutionRef = React.useRef<HTMLInputElement>(null);
+  const [suggestion, setSuggestion] = React.useState<{ id: number; name: string } | null>(null);
 
   if (!item) return null;
   const qImgs = item.images.filter((im) => im.kind === "question");
@@ -724,15 +734,31 @@ function DetailDialog({
             </p>
           )}
 
-          {/* AI etiketleme (Faz 3) — konu eşleme + zorluk + yaklaşım ipucu */}
-          {qImgs.length > 0 ? (
-            item.ai_hint || item.ai_tagged_at || item.ai_question_text ? null : (
+          {/* AI etiketleme (Faz 3) — konu eşleme + zorluk + yaklaşım ipucu.
+              Yalnız fotoğraf varsa + henüz etiketlenmemişse; AI koçta açıksa
+              buton, kapalıysa NET durum notu (çıkmaz mesaj yok). */}
+          {qImgs.length > 0 && !item.ai_hint && !item.ai_tagged_at && !item.ai_question_text ? (
+            ai.available ? (
               <Button
                 variant="outline"
                 size="sm"
                 className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
                 disabled={aiTag.isPending}
-                onClick={() => aiTag.mutate({ id: item.id })}
+                onClick={() =>
+                  aiTag.mutate(
+                    { id: item.id },
+                    {
+                      onSuccess: (res) => {
+                        if (res.data.suggested_topic_id && res.data.suggested_topic_name) {
+                          setSuggestion({
+                            id: res.data.suggested_topic_id,
+                            name: res.data.suggested_topic_name,
+                          });
+                        }
+                      },
+                    },
+                  )
+                }
               >
                 {aiTag.isPending ? (
                   <Loader2 className="size-4 animate-spin" aria-hidden />
@@ -741,7 +767,37 @@ function DetailDialog({
                 )}
                 Yapay zekâ okusun — konuyu etiketle + yaklaşım ipucu ver
               </Button>
+            ) : (
+              <div className="flex items-start gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600 dark:border-slate-500/30 dark:bg-slate-500/10 dark:text-slate-300">
+                <Sparkles className="mt-0.5 size-3.5 shrink-0 text-slate-400" aria-hidden />
+                <span>{AI_GATE_NOTE[ai.reason] ?? "Yapay zekâ şu an kullanılamıyor."}</span>
+              </div>
             )
+          ) : null}
+
+          {/* AI, öğrencinin seçtiğinden FARKLI konu önerdiyse (yanlış elle
+              seçimi yakala) — kayıt ezilmez, öğrenci ister uygular */}
+          {suggestion && suggestion.id !== item.topic_id ? (
+            <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+              <Sparkles className="size-3.5 shrink-0" aria-hidden />
+              <span>
+                Yapay zekâ bunu <b>{suggestion.name}</b> konusuna benzetti.
+              </span>
+              <Button
+                size="sm"
+                variant="outline"
+                className="ml-auto h-7 border-amber-400 text-xs text-amber-800 hover:bg-amber-500/10"
+                disabled={update.isPending}
+                onClick={() =>
+                  update.mutate(
+                    { id: item.id, body: { topic_id: suggestion.id } },
+                    { onSuccess: () => setSuggestion(null) },
+                  )
+                }
+              >
+                Bu konuya değiştir
+              </Button>
+            </div>
           ) : null}
 
           {item.ai_hint ? (

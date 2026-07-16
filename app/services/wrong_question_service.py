@@ -510,6 +510,29 @@ def coach_summary(db: Session, student_id: int) -> CoachSummary:
     return out
 
 
+def ai_gate_status(db: Session, student: User) -> tuple[bool, str]:
+    """Bu öğrenci için yapay zekâ etiketleme kullanılabilir mi → (available, reason).
+
+    Üretim öğrencinin KOÇUNUN kaynağıyla yapılır (öğrencinin kredi havuzu yok):
+      - koç yok → "no_coach"
+      - koç ücretli değil (kurumluysa kurum planı) → "plan_upgrade_required"
+      - koç KVKK rızası vermemiş → "consent_required"
+      - hepsi tamam → "ok"
+    UI, buton görünürlüğünü/mesajını buna göre kurar; çıkmaz mesaj yerine
+    "koç/kurum yapay zekâyı henüz açmadı" gibi net durum gösterir.
+    """
+    from app.services.plans import ai_premium_allowed
+
+    coach = db.get(User, student.teacher_id) if student.teacher_id else None
+    if coach is None:
+        return False, "no_coach"
+    if not ai_premium_allowed(db, coach):
+        return False, "plan_upgrade_required"
+    if coach.ai_capture_consent_at is None:
+        return False, "consent_required"
+    return True, "ok"
+
+
 def candidate_topics(db: Session, student: User, coach_id: int) -> list[dict]:
     """AI konu eşlemesi için ADAY konular — öğrencinin GERÇEK müfredat konuları.
 

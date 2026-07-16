@@ -225,7 +225,7 @@ def main() -> int:
               and d["matched_topic"] is True and d["hint_created"] is True,
               r.text[:220])
 
-        # --- Elle seçilmiş konu AI tarafından EZİLMEZ ---
+        # --- Elle seçilmiş konu AI tarafından EZİLMEZ + FARKLI konu ÖNERİLİR ---
         with SessionLocal() as db:
             w = db.get(WrongQuestion, ids["wq"])
             w.topic_id = ids["t_other"]   # öğrenci elle başka konu seçti
@@ -233,9 +233,13 @@ def main() -> int:
             db.commit()
         ai_behavior["topic_id"] = ids["t_ok"]
         r = cs.post(f"/api/v2/student/wrong-questions/{ids['wq']}/ai-tag")
+        d = r.json()["data"]
         check("7. öğrencinin elle seçtiği konu AI tarafından EZİLMEZ",
-              r.json()["data"]["item"]["topic_id"] == ids["t_other"],
-              r.text[:150])
+              d["item"]["topic_id"] == ids["t_other"], r.text[:150])
+        check("7b. AI FARKLI konu görürse ÖNERİ olarak döner (elle seçim ezilmez)",
+              d["suggested_topic_id"] == ids["t_ok"]
+              and d["suggested_topic_name"] == "Bölme ve Bölünebilme",
+              f"suggested={d.get('suggested_topic_id')}")
 
         # --- Kredi KOÇUN havuzundan düşüyor (öğrenci tetiklese de) ---
         with SessionLocal() as db:
@@ -343,6 +347,33 @@ def main() -> int:
             m2 = svc.open_wrong_topic_map(db, ids["student"])
             check("19. yanlış KAPANINCA sinyal düşer (kapanış öğrenmenin kanıtı)",
                   ids["t_ok"] not in m2, f"map={m2}")
+
+        # --- ÇIKMAZ DÜZELTMESİ: liste yanıtı AI erişim durumu (doğruluk testi) ---
+        # (koç rızası olan öğrenci) → available
+        r = cs.get("/api/v2/student/wrong-questions")
+        check("20. rıza+paket tam → liste ai.available=true, reason=ok",
+              r.json()["ai"]["available"] is True and r.json()["ai"]["reason"] == "ok",
+              str(r.json().get("ai")))
+        # rıza kaldırılınca → available=false, reason=consent_required
+        with SessionLocal() as db:
+            db.get(User, ids["coach"]).ai_capture_consent_at = None
+            db.commit()
+        r = cs.get("/api/v2/student/wrong-questions")
+        check("21. koç rızası yoksa → ai.available=false, reason=consent_required "
+              "(öğrenci çıkmaz mesaj yerine net durum görür)",
+              r.json()["ai"]["available"] is False
+              and r.json()["ai"]["reason"] == "consent_required",
+              str(r.json().get("ai")))
+        with SessionLocal() as db:
+            db.get(User, ids["coach"]).ai_capture_consent_at = datetime.now(timezone.utc)
+            db.commit()
+        # ücretsiz koçun öğrencisi → reason=plan_upgrade_required
+        r = cfs.get("/api/v2/student/wrong-questions")
+        check("22. koç ücretsiz pakette → ai.available=false, "
+              "reason=plan_upgrade_required",
+              r.json()["ai"]["available"] is False
+              and r.json()["ai"]["reason"] == "plan_upgrade_required",
+              str(r.json().get("ai")))
     finally:
         aiwq.tag_wrong_question_photo = orig
         with SessionLocal() as db:

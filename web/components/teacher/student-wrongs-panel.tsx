@@ -1,14 +1,17 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   BookX,
   CheckCircle2,
   ImageIcon,
   Loader2,
+  Lock,
   MessageSquarePlus,
   RotateCcw,
+  ShieldCheck,
   Sparkles,
 } from "lucide-react";
 
@@ -19,16 +22,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { getTeacherAiConsent, teacherKeys } from "@/lib/api/teacher";
 import {
   getTeacherStudentWrongQuestions,
   getTeacherStudentWrongSummary,
   teacherWrongImageUrl,
   wrongQuestionKeys,
 } from "@/lib/api/wrong-questions";
+import { useSetAiConsent } from "@/lib/hooks/use-teacher-mutations";
 import {
   useAiTagWrongQuestion,
   useSetCoachNote,
 } from "@/lib/hooks/use-wrong-question-mutations";
+import type { AiConsentResponse } from "@/lib/types/teacher";
 import type { WrongQuestionItem } from "@/lib/types/wrong-question";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +59,36 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
     queryFn: () => getTeacherStudentWrongQuestions(studentId),
     staleTime: 15_000,
   });
+  // AI kapısı — seans panosuyla AYNI: paket (ai_premium) + rıza (consented).
+  const consentQ = useQuery<AiConsentResponse>({
+    queryKey: teacherKeys.aiConsent(),
+    queryFn: getTeacherAiConsent,
+    staleTime: 300_000,
+  });
+  const setConsent = useSetAiConsent();
+  const aiLocked = !!consentQ.data && consentQ.data.ai_premium === false;
+  const [consentOpen, setConsentOpen] = React.useState(false);
+  const [pendingAction, setPendingAction] = React.useState<(() => void) | null>(null);
+
+  // AI etiketleme öncesi rıza kapısı — CoachDetailDialog'a geçer.
+  function gateConsent(action: () => void) {
+    if (!consentQ.data?.consented) {
+      setPendingAction(() => action);
+      setConsentOpen(true);
+      return;
+    }
+    action();
+  }
+  function acceptConsent() {
+    setConsent.mutate(undefined, {
+      onSuccess: () => {
+        setConsentOpen(false);
+        const action = pendingAction;
+        setPendingAction(null);
+        action?.();
+      },
+    });
+  }
 
   const s = summaryQ.data;
   const items = (listQ.data?.items ?? []).filter(
@@ -269,7 +305,49 @@ export function StudentWrongsPanel({ studentId }: { studentId: number }) {
         </>
       )}
 
-      <CoachDetailDialog item={detail} onClose={() => setDetailId(null)} />
+      <CoachDetailDialog
+        item={detail}
+        onClose={() => setDetailId(null)}
+        aiLocked={aiLocked}
+        gateConsent={gateConsent}
+      />
+
+      {/* Yapay zekâ rıza kapısı — seans panosuyla aynı metin */}
+      <Dialog
+        open={consentOpen}
+        onOpenChange={(o) => { if (!o) { setConsentOpen(false); setPendingAction(null); } }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="size-5 text-cyan-600" aria-hidden /> Yapay zekâ özellikleri onayı
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 text-sm text-muted-foreground">
+            <p>
+              Sorunun fotoğrafı; okunmak, konusu etiketlenmek ve öğrenciye bir yaklaşım
+              ipucu üretilmek üzere yapay zekâ hizmetine (Google Gemini) gönderilir.
+              Devam etmek için onayınız gerekir.
+            </p>
+            <ul className="space-y-1.5 text-xs">
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Fotoğraf <strong>saklanmaz</strong>; yalnızca işlenir, ardından silinir.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Sonuç yalnızca <strong>siz ve öğrenci</strong> tarafından görülür; veli erişemez.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-amber-600" aria-hidden /> İşleme yurt dışındaki bir hizmet (Google) tarafından yapılır.</li>
+              <li className="flex gap-2"><ShieldCheck className="size-4 shrink-0 text-emerald-600" aria-hidden /> Yapay zekâ çözümü vermez, yalnızca yol gösterir.</li>
+            </ul>
+            <p className="text-[11px]">Bu onayı dilediğinizde geri çekebilirsiniz; onaysız da soruları elle etiketleyebilirsiniz.</p>
+          </div>
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button variant="ghost" onClick={() => { setConsentOpen(false); setPendingAction(null); }} disabled={setConsent.isPending}>
+              Vazgeç
+            </Button>
+            <Button onClick={acceptConsent} disabled={setConsent.isPending}>
+              {setConsent.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ShieldCheck className="size-4" aria-hidden />}
+              Onaylıyorum, devam et
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -307,9 +385,13 @@ function Kpi({
 function CoachDetailDialog({
   item,
   onClose,
+  aiLocked,
+  gateConsent,
 }: {
   item: WrongQuestionItem | null;
   onClose: () => void;
+  aiLocked: boolean;
+  gateConsent: (action: () => void) => void;
 }) {
   const setNote = useSetCoachNote();
   const aiTag = useAiTagWrongQuestion("teacher");
@@ -388,20 +470,30 @@ function CoachDetailDialog({
               </p>
             </div>
           ) : item.images.some((im) => im.kind === "question") ? (
-            <Button
-              variant="outline"
-              size="sm"
-              className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
-              disabled={aiTag.isPending}
-              onClick={() => aiTag.mutate({ id: item.id })}
-            >
-              {aiTag.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <Sparkles className="size-4" aria-hidden />
-              )}
-              Yapay zekâ ile etiketle (konu + yaklaşım ipucu · 2 kredi)
-            </Button>
+            aiLocked ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                <Lock className="size-4 shrink-0" aria-hidden />
+                Yapay zekâ etiketleme ücretli pakette açıktır.
+                <Link href="/teacher/plan" className="ml-auto font-medium underline">
+                  Paketi görüntüle
+                </Link>
+              </div>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full gap-1.5 border-violet-300 text-violet-700 hover:bg-violet-500/10 hover:text-violet-800 dark:border-violet-500/40 dark:text-violet-300"
+                disabled={aiTag.isPending}
+                onClick={() => gateConsent(() => aiTag.mutate({ id: item.id }))}
+              >
+                {aiTag.isPending ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <Sparkles className="size-4" aria-hidden />
+                )}
+                Yapay zekâ ile etiketle (konu + yaklaşım ipucu · 2 kredi)
+              </Button>
+            )
           ) : null}
           {item.images.filter((im) => im.kind === "solution").length > 0 ? (
             <div>

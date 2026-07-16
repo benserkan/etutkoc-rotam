@@ -38,6 +38,7 @@ from app.models import (
 from app.routes.api_v2.dependencies import get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.wrong_question import (
+    AiGateOut,
     AiTagResult,
     CoachNoteBody,
     TopicAccumulationOut,
@@ -148,8 +149,11 @@ def _to_item(wq: WrongQuestion, *, now=None) -> WrongQuestionItem:
     )
 
 
-def _list_response(db: Session, student_id: int, **filters) -> WrongQuestionListResponse:
-    rows, counts = svc.list_for_student(db, student_id, **filters)
+def _list_response(
+    db: Session, student: User, **filters
+) -> WrongQuestionListResponse:
+    rows, counts = svc.list_for_student(db, student.id, **filters)
+    available, reason = svc.ai_gate_status(db, student)
     return WrongQuestionListResponse(
         items=[_to_item(w) for w in rows],
         counts=WrongQuestionCountsOut(
@@ -157,6 +161,7 @@ def _list_response(db: Session, student_id: int, **filters) -> WrongQuestionList
             closed=counts.closed, due=counts.due,
         ),
         error_type_labels=WQ_ERROR_LABELS_TR,
+        ai=AiGateOut(available=available, reason=reason),
     )
 
 
@@ -261,10 +266,24 @@ def _run_ai_tag(
             "error": "upstream_unavailable", "code": "ai_unavailable",
             "message": f"Yapay zekâ servisi şu an kullanılamıyor: {e}"})
 
+    from app.models import Topic
+
     had_topic = wq.topic_id is not None
+    prev_topic_id = wq.topic_id
+    ai_topic_id = result.get("topic_id")
     _svc.apply_ai_tags(db, wq, result)
     db.commit()
     db.refresh(wq)
+
+    # Öğrenci ZATEN bir konu seçtiyse AI onu EZMEZ; ama AI FARKLI (geçerli) bir
+    # konu öneriyorsa bunu yüzeye çıkar (yanlış elle seçimi yakalamak için).
+    suggested_id = None
+    suggested_name = None
+    if had_topic and ai_topic_id is not None and ai_topic_id != prev_topic_id:
+        sug = db.get(Topic, int(ai_topic_id))
+        if sug is not None:
+            suggested_id = sug.id
+            suggested_name = sug.name
 
     from app.services.credits import KIND_CREDITS
     return MutationResponse[AiTagResult](
@@ -275,6 +294,8 @@ def _run_ai_tag(
             matched_topic=(not had_topic) and wq.topic_id is not None,
             hint_created=bool(wq.ai_hint),
             credits_charged=KIND_CREDITS.get(UsageKind.AI_WRONG_TAG, 2),
+            suggested_topic_id=suggested_id,
+            suggested_topic_name=suggested_name,
         ),
         invalidate=invalidate,
     )
@@ -299,7 +320,7 @@ def student_list_wrong_questions(
 ):
     """Öğrencinin yanlış soru arşivi (filtreli) + sayaçlar."""
     return _list_response(
-        db, user.id, status=status, subject_id=subject_id, topic_id=topic_id,
+        db, user, status=status, subject_id=subject_id, topic_id=topic_id,
         error_type=error_type, source_kind=source_kind, due_only=due, q=q,
     )
 
@@ -527,7 +548,7 @@ def teacher_list_wrong_questions(
 ):
     student = _get_owned_student(db, user, student_id)
     return _list_response(
-        db, student.id, status=status, subject_id=subject_id, topic_id=topic_id,
+        db, student, status=status, subject_id=subject_id, topic_id=topic_id,
         error_type=error_type, source_kind=source_kind, q=q,
     )
 
