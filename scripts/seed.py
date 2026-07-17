@@ -204,9 +204,14 @@ def seed_exam_curriculum(db: Session) -> int:
             subject.available_for_graduate = spec.get("available_for_graduate", False)
             subject.exam_section = exam_section_enum
 
-        existing = {(t.name, t.grade_level) for t in subject.topics}
+        existing = {(t.name, t.grade_level): t for t in subject.topics}
         for topic_order, (topic_name, topic_grade) in enumerate(spec.get("topics", [])):
-            if (topic_name, topic_grade) in existing:
+            cur = existing.get((topic_name, topic_grade))
+            if cur is not None:
+                # liste sırası = müfredat sırası (öneri motoru Topic.order okur);
+                # listeye BAŞA konu eklenince mevcutların sırası da güncellenmeli
+                if cur.order != topic_order:
+                    cur.order = topic_order
                 continue
             db.add(Topic(
                 subject_id=subject.id, name=topic_name, order=topic_order,

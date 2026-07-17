@@ -124,6 +124,42 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
     5.75 ✓ Biyo 6.75 ✓ · 29.04: 22.75/4.00/6.50/3.75 ✓, 134/160 eşleşme —
     kalanların çoğu bilinen AYT-Edebiyat dil-anlatım boşluğu). teacher_exams 18
     GREEN. Frontend değişikliği YOK.
+  - **AYT Matematik taksonomi genişletmesi + NET doğrulaması + kayıtlı
+    içe-aktarımı SATIR DÜZEYİ DÜZENLEME (2026-07-17, CANLI):**
+    (a) Kullanıcı raporu doğru: AYT Mat kitapçıklarının ilk soruları TYT-tabanlı
+    konulardan gelir ama "AYT Matematik" listesi yalnız 12 ileri konuydu → 6
+    cevaplı Mat sorusu eşleşmeden kaldı (prod exam #90 kanıtı: Bölünebilme/
+    Kartezyen/Önermeler/Binom/Sayma/Bileşik Olaylar). `EXAM_CURRICULUM` "AYT
+    Matematik" **12→24 konu** (temel konular listenin BAŞINA = müfredat sırası:
+    Mantık·Kümeler ve Kartezyen Çarpım·Sayı Kümeleri·Bölme ve Bölünebilme·EBOB
+    EKOK·Mutlak Değer·Üslü ve Köklü İfadeler·Denklem ve Eşitsizlikler·
+    Fonksiyonlar·Permütasyon ve Kombinasyon·Binom Açılımı·Olasılık) + seed
+    artık MEVCUT konuların `order`'ını da liste sırasına GÜNCELLER (öneri
+    motoru frontier'ı bozulmaz; başa ekleme çakışma yaratmaz).
+    (b) **NET hesabı doğrulandı — sistem hatası YOK** (prod exam #90 salt-okuma
+    teşhis): toplam 45D 14Y net 41.5 = 16.02 belgesinin TOPLAM satırı birebir;
+    Mat 18.75 + Geo 7.0 = 25.75 = belge AYT-MATEMATİK; Fiz/Kim/Biyo birebir;
+    **konusu eşleşmeyen satırlar da nete DAHİL** (kanıt: konusuz "Bölünebilme
+    Kuralları" doğrusu Mat 20D içinde). Kullanıcının gördüğü fark: 29.04
+    belgesinin "SON 6 SINAV" tablosu 16.02 sınavını **44,00** gösteriyor
+    (yayıncı sonradan yeniden puanlamış: AYT-FEN 15,75→18,25) — belge SÜRÜMÜ
+    farkı; sistem içe aktarılan belgeye sadık. Boş 101 = 21 sayısal + 80
+    cevaplanmayan sözel (belge "TOPLAM 80" yalnız cevaplanan oturumu sayar).
+    (c) **YENİ — satır düzeyi düzenleme:** koç Denemeler kartında (yalnız
+    `import_source=pdf_import`) FileCog "Satırları düzelt" → `ExamImportDialog`
+    EDİT modu (`editExamId`): GET `/teacher/exams/{id}/import-rows` kayıtlı
+    satırları taslak olarak açar — PDF yeniden OKUNMAZ + KREDİ DÜŞMEZ; kayıtlı
+    eşleşme KORUNUR ("kayıtlı" rozeti, elle seçim ezilmez); eşleşmemişler
+    güncel taksonomi + öğrenen sözlük + ücretsiz kapalı-küme AI ile YENİDEN
+    denenir (best-effort) → koç düzeltir → POST aynı uç (`update_imported`:
+    net/toplam/ders kırılımı satırlardan yeniden hesap, soru satırları yerine
+    yazılır, sözlük öğrenir, mükerrer kontrolü yok, PDF kanıtı korunur).
+    `confirm` çekirdeği `_prepare_confirm` olarak paylaşıldı;
+    `ExamResultRow.import_source` eklendi. Kapılar: sahiplik 404 · öğrenci 403
+    (düzeltme koçta) · manuel deneme 422 not_imported. Smoke exam_import
+    **59/59** (27a-g: taslak/koruma/yeniden-eşleme/yeniden-hesap/liste/kapılar)
+    · exam_taxonomy 20 · teacher_exams 18 · tsc/eslint temiz. Migration YOK
+    (taksonomi seed additive — start.sh prod'da otomatik).
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı

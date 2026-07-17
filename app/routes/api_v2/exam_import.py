@@ -21,6 +21,7 @@ from sqlalchemy.orm import Session
 from app.deps import get_db
 from app.models import (
     EXAM_SECTION_LABELS,
+    ExamResult,
     ExamSection,
     UsageKind,
     User,
@@ -74,6 +75,22 @@ def _get_owned_student(db: Session, coach: User, student_id: int) -> User:
             "error": "not_found", "code": "student_not_found",
             "message": "Öğrenci bulunamadı."})
     return student
+
+
+def _get_owned_exam(db: Session, coach: User, exam_id: int) -> tuple[ExamResult, User]:
+    """Deneme + öğrencisi — koç öğrencinin GÜNCEL koçu değilse 404 (sızıntı yok)."""
+    exam = db.get(ExamResult, exam_id)
+    student = db.get(User, exam.student_id) if exam is not None else None
+    if (
+        exam is None
+        or student is None
+        or student.role != UserRole.STUDENT
+        or student.teacher_id != coach.id
+    ):
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "exam_not_found",
+            "message": "Deneme bulunamadı."})
+    return exam, student
 
 
 def _paying_coach(db: Session, student: User) -> User:
@@ -185,18 +202,7 @@ def _parse_confirm_payload(payload: str) -> ExamImportConfirmBody:
             "message": f"Onay verisi çözümlenemedi: {e}"})
 
 
-def _run_confirm(
-    db: Session, *, student: User, actor: User,
-    body: ExamImportConfirmBody, pdf_bytes: bytes | None, content_type: str | None,
-) -> ExamImportConfirmResult:
-    try:
-        exam = svc.confirm(
-            db, student, body.model_dump(),
-            pdf_bytes=pdf_bytes, content_type=content_type, actor=actor,
-        )
-    except svc.ExamImportError as e:
-        db.rollback()
-        raise _svc_error(e)
+def _confirm_result(exam: ExamResult) -> ExamImportConfirmResult:
     matched = [q for q in exam.questions if q.topic_id is not None]
     wrong_topic_ids = sorted({
         q.topic_id for q in matched if q.result == "yanlis" and q.topic_id
@@ -215,6 +221,21 @@ def _run_confirm(
         matched_topic_count=len(matched),
         wrong_topic_ids=wrong_topic_ids,
     )
+
+
+def _run_confirm(
+    db: Session, *, student: User, actor: User,
+    body: ExamImportConfirmBody, pdf_bytes: bytes | None, content_type: str | None,
+) -> ExamImportConfirmResult:
+    try:
+        exam = svc.confirm(
+            db, student, body.model_dump(),
+            pdf_bytes=pdf_bytes, content_type=content_type, actor=actor,
+        )
+    except svc.ExamImportError as e:
+        db.rollback()
+        raise _svc_error(e)
+    return _confirm_result(exam)
 
 
 # ============================================================================
@@ -266,6 +287,65 @@ def teacher_exam_import_confirm(
     )
     return MutationResponse[ExamImportConfirmResult](
         data=result,
+        invalidate=[
+            f"teacher:{user.id}:students:{student.id}:exams",
+            f"teacher:{user.id}:students:{student.id}",
+        ],
+    )
+
+
+@router.get(
+    "/teacher/exams/{exam_id}/import-rows",
+    response_model=ExamImportDraft,
+)
+def teacher_exam_import_rows(
+    exam_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kayıtlı (PDF'ten aktarılmış) denemeyi satır-düzeyi düzenleme için aç.
+
+    Yeni Gemini OKUMASI yapılmaz → KREDİ DÜŞMEZ. Eşleşmemiş konular güncel
+    taksonomi + öğrenen sözlük + kapalı-küme AI (ücretsiz anahtar) ile yeniden
+    denenir. Bilinçli SENKRON uç (best-effort AI çağrısı threadpool'da).
+    """
+    exam, student = _get_owned_exam(db, user, exam_id)
+    try:
+        draft = svc.build_edit_draft(db, student, exam)
+    except svc.ExamImportError as e:
+        db.rollback()
+        raise _svc_error(e)
+    db.commit()  # sözlük hit sayaçları (normalize alias katmanı)
+    return ExamImportDraft(
+        **draft,
+        section_choices=_section_choices(),
+        credits_charged=0,
+    )
+
+
+@router.post(
+    "/teacher/exams/{exam_id}/import-rows",
+    response_model=MutationResponse[ExamImportConfirmResult],
+)
+def teacher_exam_import_rows_update(
+    exam_id: int,
+    body: ExamImportConfirmBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Düzeltilen satırlarla denemeyi YENİDEN kaydet (kredi düşmez).
+
+    Toplamlar/net/ders kırılımı satırlardan yeniden hesaplanır; konu bazlı
+    birikim + net trendi + veli/kurum panoları otomatik güncellenir.
+    """
+    exam, student = _get_owned_exam(db, user, exam_id)
+    try:
+        exam = svc.update_imported(db, student, exam, body.model_dump(), actor=user)
+    except svc.ExamImportError as e:
+        db.rollback()
+        raise _svc_error(e)
+    return MutationResponse[ExamImportConfirmResult](
+        data=_confirm_result(exam),
         invalidate=[
             f"teacher:{user.id}:students:{student.id}:exams",
             f"teacher:{user.id}:students:{student.id}",

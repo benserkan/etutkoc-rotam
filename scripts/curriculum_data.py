@@ -1093,6 +1093,24 @@ EXAM_CURRICULUM: dict[str, dict] = {
         "curriculum_model": None,
         "available_for_graduate": True,
         "topics": [
+            # TYT-tabanlı temel konular — ÖSYM AYT müfredatı TYT'nin üzerine
+            # kuruludur; yayınevi AYT kitapçıklarının İLK soruları bunlardan
+            # gelir (gerçek ÖZDEBİR AYT belgelerinde görüldü, 2026-07-17:
+            # Bölünebilme/Kartezyen Çarpım/Önermeler/Binom/Sayma/Olasılık
+            # soruları eşleşemiyordu)
+            ("Mantık", 11),
+            ("Kümeler ve Kartezyen Çarpım", 11),
+            ("Sayı Kümeleri", 11),
+            ("Bölme ve Bölünebilme", 11),
+            ("EBOB EKOK", 11),
+            ("Mutlak Değer", 11),
+            ("Üslü ve Köklü İfadeler", 11),
+            ("Denklem ve Eşitsizlikler", 11),
+            ("Fonksiyonlar", 11),
+            ("Permütasyon ve Kombinasyon", 11),
+            ("Binom Açılımı", 11),
+            ("Olasılık", 11),
+            # AYT çekirdeği (11-12)
             ("Polinomlar", 11),
             ("İkinci Dereceden Denklemler", 11),
             ("Parabol", 11),

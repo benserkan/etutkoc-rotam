@@ -1008,21 +1008,12 @@ def _parse_date(v: str | None) -> date | None:
 # ============================================================================
 
 
-def confirm(
-    db: Session,
-    student: User,
-    payload: dict,
-    *,
-    pdf_bytes: bytes | None,
-    content_type: str | None,
-    actor: User,
-) -> ExamResult:
-    """Önizlemede onaylanan taslağı kaydet.
+def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
+    """confirm + update_imported ORTAK çekirdeği: doğrulama + satır işleme.
 
-    - Toplamlar + net, DÜZELTİLMİŞ satırlardan yeniden hesaplanır (satırlar esas).
-    - topic_id'ler evren aday kümesine karşı yeniden doğrulanır (dışarıdan
-      rastgele id enjekte edilemez).
-    - Öğrenen sözlük güncellenir: koç düzeltmesi AI eşleşmesini ezer; tersi ezemez.
+    Dönen: title/exam_date/section/universe/totals/net/subject_payload/q_rows
+    (henüz exam'e bağlanmamış ExamResultQuestion listesi) + rows_in (üzerinde
+    sözlük-öğrenme izleri _final_topic/_home_subject_id bırakılmış).
     """
     title = (payload.get("title") or "").strip()[:200]
     if not title:
@@ -1041,24 +1032,6 @@ def confirm(
         raise ExamImportError(422, "no_rows", "En az bir soru satırı gerekir.")
     if len(rows_in) > 400:
         raise ExamImportError(422, "too_many_rows", "Soru sayısı sınırı aşıldı (400).")
-
-    # mükerrer koruması
-    if not payload.get("force"):
-        dup = (
-            db.query(ExamResult.id)
-            .filter(
-                ExamResult.student_id == student.id,
-                ExamResult.title == title,
-                ExamResult.exam_date == exam_date,
-            )
-            .first()
-        )
-        if dup:
-            raise ExamImportError(
-                409, "duplicate_exam",
-                "Bu deneme zaten kayıtlı görünüyor (aynı ad + tarih). "
-                "Yine de kaydetmek için onayla.",
-            )
 
     subjects = universe_subjects(db, universe, student)
     grade_cap = payload.get("grade_hint") or student.grade_level
@@ -1114,9 +1087,52 @@ def confirm(
         subject_payload.append(g)
 
     net = compute_net(totals["correct"], totals["wrong"], section)
+    return {
+        "title": title, "exam_date": exam_date, "section": section,
+        "universe": universe, "totals": totals, "net": net,
+        "subject_payload": subject_payload, "q_rows": q_rows, "rows_in": rows_in,
+    }
 
+
+def confirm(
+    db: Session,
+    student: User,
+    payload: dict,
+    *,
+    pdf_bytes: bytes | None,
+    content_type: str | None,
+    actor: User,
+) -> ExamResult:
+    """Önizlemede onaylanan taslağı kaydet.
+
+    - Toplamlar + net, DÜZELTİLMİŞ satırlardan yeniden hesaplanır (satırlar esas).
+    - topic_id'ler evren aday kümesine karşı yeniden doğrulanır (dışarıdan
+      rastgele id enjekte edilemez).
+    - Öğrenen sözlük güncellenir: koç düzeltmesi AI eşleşmesini ezer; tersi ezemez.
+    """
+    prep = _prepare_confirm(db, student, payload)
+
+    # mükerrer koruması
+    if not payload.get("force"):
+        dup = (
+            db.query(ExamResult.id)
+            .filter(
+                ExamResult.student_id == student.id,
+                ExamResult.title == prep["title"],
+                ExamResult.exam_date == prep["exam_date"],
+            )
+            .first()
+        )
+        if dup:
+            raise ExamImportError(
+                409, "duplicate_exam",
+                "Bu deneme zaten kayıtlı görünüyor (aynı ad + tarih). "
+                "Yine de kaydetmek için onayla.",
+            )
+
+    rows_in = prep["rows_in"]
     meta = {
-        "universe": universe,
+        "universe": prep["universe"],
         "scope": payload.get("scope") or "full",
         "grade_hint": payload.get("grade_hint"),
         "score_info": payload.get("score_info"),
@@ -1128,14 +1144,14 @@ def confirm(
     exam = ExamResult(
         student_id=student.id,
         created_by_id=actor.id,
-        title=title,
-        exam_date=exam_date,
-        section=section,
-        total_correct=totals["correct"],
-        total_wrong=totals["wrong"],
-        total_blank=totals["blank"],
-        net=net,
-        subject_nets=json.dumps(subject_payload, ensure_ascii=False),
+        title=prep["title"],
+        exam_date=prep["exam_date"],
+        section=prep["section"],
+        total_correct=prep["totals"]["correct"],
+        total_wrong=prep["totals"]["wrong"],
+        total_blank=prep["totals"]["blank"],
+        net=prep["net"],
+        subject_nets=json.dumps(prep["subject_payload"], ensure_ascii=False),
         note=(str(payload.get("note") or "").strip()[:500]) or None,
         import_source="pdf_import",
         import_pdf_content_type=content_type if pdf_bytes else None,
@@ -1145,14 +1161,210 @@ def confirm(
     )
     db.add(exam)
     db.flush()
-    for q in q_rows:
+    for q in prep["q_rows"]:
         q.exam_result_id = exam.id
         db.add(q)
 
-    _learn_aliases(db, universe, rows_in, actor=actor)
+    _learn_aliases(db, prep["universe"], rows_in, actor=actor)
     db.commit()
     db.refresh(exam)
     return exam
+
+
+def update_imported(
+    db: Session,
+    student: User,
+    exam: ExamResult,
+    payload: dict,
+    *,
+    actor: User,
+) -> ExamResult:
+    """İçe aktarılmış denemenin satırlarını GÜNCELLE (düzelt + yeniden kaydet).
+
+    Koç düzeltme akışı: kayıtlı satırlar build_edit_draft ile önizleme olarak
+    açılır → düzeltilir → buraya gelir. Toplamlar/net/ders kırılımı satırlardan
+    yeniden hesaplanır; soru satırları YERİNE yazılır; sözlük öğrenir. PDF
+    kanıtına dokunulmaz; kredi düşmez; mükerrer kontrolü yok (aynı kayıt).
+    """
+    if exam.import_source != "pdf_import":
+        raise ExamImportError(
+            422, "not_imported",
+            "Satır düzenleme yalnız PDF'ten aktarılan denemelerde kullanılabilir.")
+    prep = _prepare_confirm(db, student, payload)
+    rows_in = prep["rows_in"]
+
+    try:
+        meta = json.loads(exam.analysis_meta) if exam.analysis_meta else {}
+    except ValueError:
+        meta = {}
+    meta.update({
+        "universe": prep["universe"],
+        "scope": payload.get("scope") or meta.get("scope") or "full",
+        "grade_hint": payload.get("grade_hint") or meta.get("grade_hint"),
+        "suspect_count": sum(1 for r in rows_in if r.get("is_suspect")),
+        "edited_count": sum(1 for r in rows_in if r.get("manually_edited")),
+        "rows_edited_at": datetime.now(timezone.utc).isoformat(),
+    })
+    if payload.get("score_info") is not None:
+        meta["score_info"] = payload.get("score_info")
+
+    exam.title = prep["title"]
+    exam.exam_date = prep["exam_date"]
+    exam.section = prep["section"]
+    exam.total_correct = prep["totals"]["correct"]
+    exam.total_wrong = prep["totals"]["wrong"]
+    exam.total_blank = prep["totals"]["blank"]
+    exam.net = prep["net"]
+    exam.subject_nets = json.dumps(prep["subject_payload"], ensure_ascii=False)
+    if payload.get("note") is not None:
+        exam.note = (str(payload.get("note") or "").strip()[:500]) or None
+    exam.analysis_meta = json.dumps(meta, ensure_ascii=False)
+
+    db.query(ExamResultQuestion).filter(
+        ExamResultQuestion.exam_result_id == exam.id
+    ).delete(synchronize_session=False)
+    db.flush()
+    for q in prep["q_rows"]:
+        q.exam_result_id = exam.id
+        db.add(q)
+
+    _learn_aliases(db, prep["universe"], rows_in, actor=actor)
+    db.commit()
+    db.refresh(exam)
+    return exam
+
+
+def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
+    """Kayıtlı (PDF'ten aktarılmış) denemeyi önizleme-taslağı biçiminde aç.
+
+    Yeni Gemini OKUMASI yapılmaz (kredi düşmez). Kayıtlı konu eşleşmeleri
+    KORUNUR (elle seçim ezilmez ilkesi); eşleşMEMİŞ satırlar güncel taksonomi +
+    öğrenen sözlük + kapalı-küme AI (ücretsiz anahtar, best-effort) ile YENİDEN
+    denenir — taksonomiye sonradan eklenen konular (örn. AYT Matematik'in
+    TYT-tabanlı temel konuları) geriye dönük bağlanabilir.
+    """
+    if exam.import_source != "pdf_import":
+        raise ExamImportError(
+            422, "not_imported",
+            "Satır düzenleme yalnız PDF'ten aktarılan denemelerde kullanılabilir.")
+    section = exam.section
+    universe = universe_for_section(section)
+    try:
+        meta = json.loads(exam.analysis_meta) if exam.analysis_meta else {}
+    except ValueError:
+        meta = {}
+    grade_cap = meta.get("grade_hint") or student.grade_level
+
+    subjects = universe_subjects(db, universe, student)
+    topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
+    topic_by_id = {t.id: t for t in topics}
+    subj_by_id = {s.id: s for s in subjects}
+
+    rows: list[dict] = []
+    for q in sorted(exam.questions, key=lambda x: x.id):
+        rows.append({
+            "exam_part": None,
+            "subject_raw": q.subject_name_raw,
+            "question_no": q.question_no,
+            "topic_raw": q.topic_label_raw,
+            "topic_id": q.topic_id,
+            "correct_answer": q.correct_answer,
+            "student_answer": q.student_answer,
+            "result": q.result,
+            "is_suspect": bool(q.is_suspect),
+        })
+    if not rows:
+        raise ExamImportError(422, "no_rows",
+                              "Bu denemede düzenlenecek soru satırı yok.")
+
+    saved_matched = 0
+    for r in rows:
+        tid = r.get("topic_id")
+        if tid is None:
+            continue
+        tp = topic_by_id.get(tid)
+        if tp is None:
+            r["topic_id"] = None  # konu artık evren adaylarında yok
+            continue
+        _assign_topic(r, tp, subj_by_id, source="kayitli")
+        saved_matched += 1
+
+    unmatched = [r for r in rows if r.get("topic_id") is None]
+    stats = {"alias": 0, "auto": 0, "ai": 0, "none": 0}
+    if unmatched:
+        try:
+            stats = normalize_topics(db, unmatched, universe=universe,
+                                     subjects=subjects, topics=topics)
+        except Exception as e:  # AI best-effort — düzenleme ekranı bloklanmasın
+            logger.warning("exam_import edit-draft yeniden eşleme hatası: %s", e)
+            for r in unmatched:
+                if r.get("topic_id") is None:
+                    r.setdefault("topic_source", "none")
+
+    penalty = section_penalty(section)
+    groups: dict[str, dict] = {}
+    for r in rows:
+        gname = r.get("subject_name") or r.get("subject_raw") or "Diğer"
+        g = groups.setdefault(gname, {
+            "name": gname, "part": None, "questions": 0,
+            "correct": 0, "wrong": 0, "blank": 0,
+        })
+        g["questions"] += 1
+        if r["result"] == EQ_RESULT_DOGRU:
+            g["correct"] += 1
+        elif r["result"] == EQ_RESULT_YANLIS:
+            g["wrong"] += 1
+        elif r["result"] == EQ_RESULT_BOS:
+            g["blank"] += 1
+    subjects_out: list[dict] = []
+    for g in groups.values():
+        g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
+        g["doc_net"] = None
+        subjects_out.append(g)
+
+    topic_choices: list[dict] = []
+    seen: set[int] = set()
+    for t in topics:
+        if t.id in seen:
+            continue
+        seen.add(t.id)
+        sname = next((s.name for s in subjects if s.id == t.subject_id), "?")
+        topic_choices.append({"id": t.id, "name": t.name, "subject_name": sname})
+
+    matched = saved_matched + stats["alias"] + stats["auto"] + stats["ai"]
+    checks = [{
+        "code": "universe_match",
+        "label": "Tür ↔ müfredat uyumu",
+        "ok": matched >= max(1, len(rows) // 3),
+        "detail": f"{matched}/{len(rows)} soru müfredat konusuna eşlendi",
+    }]
+
+    return {
+        "title": exam.title,
+        "exam_date": exam.exam_date.isoformat(),
+        "grade_hint": meta.get("grade_hint"),
+        "universe": universe,
+        "section": section.value,
+        "section_label": EXAM_SECTION_LABELS[section],
+        "scope": meta.get("scope") or "full",
+        "confidence": "high",
+        "parts": [{"part": None, "section": section.value,
+                   "section_label": EXAM_SECTION_LABELS[section],
+                   "question_count": len(rows)}],
+        "subjects": subjects_out,
+        "rows": [
+            {k: v for k, v in r.items() if not k.startswith("_")}
+            for r in rows
+        ],
+        "checks": checks,
+        "suspect_count": sum(1 for r in rows if r.get("is_suspect")),
+        "match_stats": {"alias": stats["alias"],
+                        "auto": stats["auto"] + saved_matched,
+                        "ai": stats["ai"], "none": stats["none"]},
+        "duplicate_exam_id": None,
+        "score_info": meta.get("score_info"),
+        "topic_choices": topic_choices,
+    }
 
 
 def _learn_aliases(db: Session, universe: str, rows_in: list[dict], *, actor: User) -> None:

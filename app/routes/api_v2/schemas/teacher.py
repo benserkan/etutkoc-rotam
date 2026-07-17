@@ -1907,6 +1907,7 @@ class ExamResultRow(BaseModel):
     note: str | None = None
     created_at: datetime
     created_by_name: str | None = None
+    import_source: str | None = None       # "pdf_import" → satır-düzeyi düzenleme açılır
 
 
 class ExamListSummary(BaseModel):

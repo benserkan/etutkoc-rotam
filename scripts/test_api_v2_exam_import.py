@@ -315,6 +315,7 @@ def main() -> int:
             "ucgen_alan": topic_id(db, "TYT Geometri", "Üçgende Alan"),
             "paragraf": topic_id(db, "TYT Türkçe", "Paragraf"),
             "trigonometri": topic_id(db, "AYT Matematik", "Trigonometri"),
+            "limit": topic_id(db, "AYT Matematik", "Limit ve Süreklilik"),
         }
 
     get_login_limiter().reset()
@@ -737,6 +738,11 @@ def main() -> int:
                                         "student_answer", "result", "is_suspect")}
                      for x in ayt_rows],
         }
+        for x in p25["rows"]:
+            # 27c hazırlığı: bir satır eşleşmeden kaydedilsin (düzenleme
+            # akışında güncel taksonomiyle yeniden eşlenecek)
+            if x["subject_raw"] == "Matematik" and x["question_no"] == 2:
+                x["topic_id"] = None
         r = cs.post("/api/v2/student/exams/import-confirm",
                     data={"payload": json.dumps(p25)}, files={"file": pdf_file})
         d25 = r.json().get("data", {}) if r.status_code == 200 else {}
@@ -776,6 +782,76 @@ def main() -> int:
                      and "matematik" in c["code"]), None)
         check("26d. özet ↔ satır çapraz sağlaması part'sız hizalandı (Matematik OK)",
               sc26 is not None and sc26["ok"] is True, str(sc26)[:150])
+
+        # --- 27) KAYITLI İÇE AKTARIMI DÜZENLE (satır düzeyi; kredi düşmez) ---
+        exam25_id = d25.get("exam_id")
+        r = ct.get(f"/api/v2/teacher/exams/{exam25_id}/import-rows")
+        d27 = r.json() if r.status_code == 200 else {}
+        rows27 = d27.get("rows", [])
+        check("27a. düzenleme taslağı açıldı (9 satır · kredi 0 · tek oturum)",
+              r.status_code == 200 and len(rows27) == 9
+              and d27.get("credits_charged") == 0
+              and len(d27.get("parts", [])) == 1
+              and d27.get("section") == "ayt_say", r.text[:200])
+        m1 = next((x for x in rows27 if x["subject_raw"] == "Matematik"
+                   and x["question_no"] == 1), {})
+        check("27b. kayıtlı konu eşleşmesi KORUNDU (kaynak: kayıtlı)",
+              m1.get("topic_id") == ids["trigonometri"]
+              and m1.get("topic_source") == "kayitli", str(m1)[:150])
+        m2 = next((x for x in rows27 if x["subject_raw"] == "Matematik"
+                   and x["question_no"] == 2), {})
+        check("27c. eşleşmemiş satır güncel taksonomi/sözlükle YENİDEN eşlendi",
+              m2.get("topic_id") == ids["limit"]
+              and m2.get("topic_source") in ("auto", "alias"), str(m2)[:150])
+
+        # sonuç düzeltmesi: Mat no1 dogru→yanlis → net 3.5 → 2.25 (AYT /4)
+        upd_rows = []
+        for x in rows27:
+            row = {k: x[k] for k in ("subject_raw", "question_no", "topic_raw",
+                                     "topic_id", "correct_answer",
+                                     "student_answer", "result", "is_suspect")}
+            if x["subject_raw"] == "Matematik" and x["question_no"] == 1:
+                row["result"] = "yanlis"
+                row["manually_edited"] = True
+            upd_rows.append(row)
+        r = ct.post(f"/api/v2/teacher/exams/{exam25_id}/import-rows", json={
+            "title": d27["title"], "exam_date": d27["exam_date"],
+            "section": "ayt_say", "rows": upd_rows,
+        })
+        d27u = r.json().get("data", {}) if r.status_code == 200 else {}
+        check("27d. yeniden kaydet → net/toplamlar güncellendi (3.5 → 2.25)",
+              r.status_code == 200 and d27u.get("net") == 2.25
+              and d27u.get("total_correct") == 3 and d27u.get("total_wrong") == 3
+              and d27u.get("question_count") == 9, r.text[:250])
+        r = ct.get(f"/api/v2/teacher/students/{ids['student']}/exams")
+        lst = r.json().get("rows", []) if r.status_code == 200 else []
+        ex27 = next((x for x in lst if x["id"] == exam25_id), {})
+        check("27e. deneme listesi güncellendi + import_source görünür",
+              ex27.get("net") == 2.25
+              and ex27.get("import_source") == "pdf_import",
+              str({k: ex27.get(k) for k in ("net", "import_source")}))
+
+        # sahiplik + rol + tür kapıları
+        cft = TestClient(app)
+        cft.post("/api/v2/auth/login",
+                 json={"email": f"{PFX}-tf@t.invalid", "password": PASSWORD})
+        r1b = cft.get(f"/api/v2/teacher/exams/{exam25_id}/import-rows")
+        r2b = cs.get(f"/api/v2/teacher/exams/{exam25_id}/import-rows")
+        check("27f. yabancı koç 404 + öğrenci 403",
+              r1b.status_code == 404 and r2b.status_code == 403,
+              f"{r1b.status_code}/{r2b.status_code}")
+        r = ct.post(f"/api/v2/teacher/students/{ids['student']}/exams", json={
+            "title": f"{PFX} manuel deneme", "exam_date": "2026-03-01",
+            "section": "ayt_say", "total_correct": 10, "total_wrong": 5,
+            "total_blank": 5})
+        man_id = ((r.json().get("data") or {}).get("id")
+                  if r.status_code == 200 else None)
+        rman = (ct.get(f"/api/v2/teacher/exams/{man_id}/import-rows")
+                if man_id else r)
+        check("27g. manuel deneme satır-düzenlemeye kapalı (422 not_imported)",
+              man_id is not None and rman.status_code == 422
+              and (rman.json().get("detail") or {}).get("code") == "not_imported",
+              rman.text[:150])
 
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double

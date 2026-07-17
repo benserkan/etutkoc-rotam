@@ -21,10 +21,12 @@ import {
 } from "@/components/ui/dialog";
 import { ApiError } from "@/lib/api";
 import {
+  getExamImportRows,
   studentAnalyzeExamPdf,
   studentConfirmExamImport,
   teacherAnalyzeExamPdf,
   teacherConfirmExamImport,
+  updateExamImportRows,
 } from "@/lib/api/exam-import";
 import { applyInvalidate } from "@/lib/invalidate";
 import type {
@@ -62,6 +64,7 @@ const SOURCE_LABELS: Record<string, string> = {
   auto: "otomatik",
   ai: "AI",
   none: "eşleşmedi",
+  kayitli: "kayıtlı",
 };
 
 interface EditRow extends ImportDraftRow {
@@ -74,11 +77,15 @@ export function ExamImportDialog({
   open,
   onOpenChange,
   studentId,
+  editExamId,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   /** Verilirse koç yüzeyi (o öğrenci adına); verilmezse öğrenci kendi adına. */
   studentId?: number;
+  /** Verilirse DÜZENLEME modu: kayıtlı içe-aktarım satır satır açılır (PDF
+   *  yeniden okunmaz, kredi düşmez); kaydet → mevcut kayıt güncellenir. */
+  editExamId?: number;
 }) {
   // Dialog yalnız açıkken mount edilir → kapatınca state sıfırlanır
   if (!open) return null;
@@ -86,6 +93,7 @@ export function ExamImportDialog({
     <ImportFlow
       onClose={() => onOpenChange(false)}
       studentId={studentId}
+      editExamId={editExamId}
     />
   );
 }
@@ -93,12 +101,15 @@ export function ExamImportDialog({
 function ImportFlow({
   onClose,
   studentId,
+  editExamId,
 }: {
   onClose: () => void;
   studentId?: number;
+  editExamId?: number;
 }) {
   const qc = useQueryClient();
-  const [step, setStep] = React.useState<Step>("pick");
+  const editMode = editExamId != null;
+  const [step, setStep] = React.useState<Step>(editMode ? "analyzing" : "pick");
   const [file, setFile] = React.useState<File | null>(null);
   const [draft, setDraft] = React.useState<ExamImportDraft | null>(null);
   const [rows, setRows] = React.useState<EditRow[]>([]);
@@ -124,6 +135,18 @@ function ImportFlow({
     return p ? `${t} — ${p.section_label}` : t;
   }
 
+  function applyDraft(d: ExamImportDraft) {
+    const firstPart = d.parts[0]?.part ?? null;
+    setDraft(d);
+    setRows(d.rows.map((r) => ({ ...r, manually_edited: false })));
+    setSelectedPart(firstPart);
+    setTitle(autoTitle(d.title, d, firstPart));
+    setTitleTouched(false);
+    setExamDate(d.exam_date ?? "");
+    setSection(d.parts[0]?.section ?? d.section);
+    setStep("preview");
+  }
+
   async function analyze(f: File) {
     setFile(f);
     setStep("analyzing");
@@ -131,21 +154,29 @@ function ImportFlow({
       const d = studentId != null
         ? await teacherAnalyzeExamPdf(studentId, f)
         : await studentAnalyzeExamPdf(f);
-      const firstPart = d.parts[0]?.part ?? null;
-      setDraft(d);
-      setRows(d.rows.map((r) => ({ ...r, manually_edited: false })));
-      setSelectedPart(firstPart);
-      setTitle(autoTitle(d.title, d, firstPart));
-      setTitleTouched(false);
-      setExamDate(d.exam_date ?? "");
-      setSection(d.parts[0]?.section ?? d.section);
-      setStep("preview");
+      applyDraft(d);
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : "Belge analiz edilemedi.";
       toast.error("Analiz başarısız", { description: msg });
       setStep("pick");
     }
   }
+
+  // Düzenleme modu: mount'ta kayıtlı denemeyi taslak olarak yükle (PDF okunmaz)
+  React.useEffect(() => {
+    if (editExamId == null) return;
+    let alive = true;
+    getExamImportRows(editExamId)
+      .then((d) => { if (alive) applyDraft(d); })
+      .catch((e) => {
+        if (!alive) return;
+        const msg = e instanceof ApiError ? e.message : "Deneme yüklenemedi.";
+        toast.error("Düzenleme açılamadı", { description: msg });
+        onClose();
+      });
+    return () => { alive = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- yalnız mount'ta (dialog açıkken remount edilir)
+  }, []);
 
   function switchPart(part: string | null) {
     if (!draft) return;
@@ -204,9 +235,11 @@ function ImportFlow({
       })),
     };
     try {
-      const res = studentId != null
-        ? await teacherConfirmExamImport(studentId, body, file)
-        : await studentConfirmExamImport(body, file);
+      const res = editExamId != null
+        ? await updateExamImportRows(editExamId, body)
+        : studentId != null
+          ? await teacherConfirmExamImport(studentId, body, file)
+          : await studentConfirmExamImport(body, file);
       applyInvalidate(qc, res.invalidate);
       setResult(res.data);
       setStep("done");
@@ -240,7 +273,7 @@ function ImportFlow({
         <DialogHeader className="shrink-0 border-b border-border px-5 py-4">
           <DialogTitle className="flex items-center gap-2 text-base">
             <FileUp className="size-4 text-violet-600" aria-hidden />
-            Deneme sonucunu PDF&apos;ten aktar
+            {editMode ? "İçe aktarılan denemeyi düzenle" : "Deneme sonucunu PDF'ten aktar"}
             {draft ? (
               <span className="text-xs font-normal text-muted-foreground">
                 {draft.section_label}
@@ -262,12 +295,21 @@ function ImportFlow({
             <div className="flex flex-col items-center gap-3 py-14 text-center">
               <Loader2 className="size-8 animate-spin text-violet-600" aria-hidden />
               <div className="text-sm font-medium text-foreground">
-                Yapay zekâ belgeyi okuyor…
+                {editMode ? "Kayıtlı deneme açılıyor…" : "Yapay zekâ belgeyi okuyor…"}
               </div>
               <p className="max-w-sm text-xs text-muted-foreground">
-                Uydurmayı önlemek için belge <b>iki kez bağımsız</b> okunur ve
-                sonuçlar karşılaştırılır — uzun belgelerde <b>1-2 dakika</b>{" "}
-                sürebilir, sayfayı kapatma.
+                {editMode ? (
+                  <>
+                    PDF yeniden okunmaz, <b>kredi düşmez</b> — eşleşmemiş konular
+                    güncel müfredat sözlüğüyle yeniden denenir.
+                  </>
+                ) : (
+                  <>
+                    Uydurmayı önlemek için belge <b>iki kez bağımsız</b> okunur ve
+                    sonuçlar karşılaştırılır — uzun belgelerde <b>1-2 dakika</b>{" "}
+                    sürebilir, sayfayı kapatma.
+                  </>
+                )}
               </p>
             </div>
           ) : null}
@@ -291,7 +333,7 @@ function ImportFlow({
           ) : null}
 
           {step === "done" && result ? (
-            <DoneStep result={result} />
+            <DoneStep result={result} updated={editMode} />
           ) : null}
         </div>
 
@@ -677,12 +719,18 @@ function AnswerInput({
   );
 }
 
-function DoneStep({ result }: { result: ExamImportConfirmResult }) {
+function DoneStep({
+  result,
+  updated,
+}: {
+  result: ExamImportConfirmResult;
+  updated?: boolean;
+}) {
   return (
     <div className="py-6 text-center">
       <CheckCircle2 className="mx-auto size-10 text-emerald-500" aria-hidden />
       <h3 className="mt-3 text-base font-semibold text-foreground">
-        Deneme kaydedildi
+        {updated ? "Deneme güncellendi" : "Deneme kaydedildi"}
       </h3>
       <p className="mt-1 text-sm text-muted-foreground">
         {result.title} · {result.section_label} ·{" "}

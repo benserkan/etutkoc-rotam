@@ -13,6 +13,7 @@ import {
 } from "recharts";
 import {
   ChevronDown,
+  FileCog,
   FileUp,
   Loader2,
   Minus,
@@ -354,6 +355,7 @@ function ExamRow({
 }) {
   const [open, setOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
+  const [importEditOpen, setImportEditOpen] = React.useState(false);
   const del = useDeleteExam();
   const hasSubjects = row.subjects.length > 0;
 
@@ -422,6 +424,17 @@ function ExamRow({
                   />
                 </Button>
               ) : null}
+              {row.import_source === "pdf_import" ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setImportEditOpen(true)}
+                  aria-label="İçe aktarılan satırları düzenle"
+                  title="Soru satırlarını düzelt (konu/sonuç) — net yeniden hesaplanır, kredi düşmez"
+                >
+                  <FileCog className="size-4 text-violet-600" aria-hidden />
+                </Button>
+              ) : null}
               <Button
                 variant="ghost"
                 size="sm"
@@ -445,6 +458,13 @@ function ExamRow({
               </Button>
             </div>
           </div>
+
+          <ExamImportDialog
+            open={importEditOpen}
+            onOpenChange={setImportEditOpen}
+            studentId={studentId}
+            editExamId={row.id}
+          />
 
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogContent className="max-w-lg">

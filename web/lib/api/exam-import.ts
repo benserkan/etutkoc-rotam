@@ -6,7 +6,7 @@
  * Sunucu tarafında taslak durumu yok — dosya client state'inde tutulur ve
  * confirm'de yeniden gönderilir.
  */
-import { ApiError, type MutationResponse } from "@/lib/api";
+import { api, ApiError, type MutationResponse } from "@/lib/api";
 import type {
   ExamImportConfirmBody,
   ExamImportConfirmResult,
@@ -52,6 +52,24 @@ export function teacherConfirmExamImport(
   if (file) fd.append("file", file);
   return multipart<MutationResponse<ExamImportConfirmResult>>(
     `/api/v2/teacher/students/${studentId}/exams/import-confirm`, fd,
+  );
+}
+
+/** Koç: kayıtlı (PDF'ten aktarılmış) denemeyi satır düzenleme için aç.
+ *  Yeni Gemini okuması yok → kredi düşmez; eşleşmemiş konular güncel
+ *  taksonomi/sözlükle yeniden denenir. */
+export function getExamImportRows(examId: number): Promise<ExamImportDraft> {
+  return api<ExamImportDraft>(`/api/v2/teacher/exams/${examId}/import-rows`);
+}
+
+/** Koç: düzeltilen satırlarla denemeyi YENİDEN kaydet (net/kırılım yeniden hesaplanır). */
+export function updateExamImportRows(
+  examId: number,
+  body: ExamImportConfirmBody,
+): Promise<MutationResponse<ExamImportConfirmResult>> {
+  return api<MutationResponse<ExamImportConfirmResult>>(
+    `/api/v2/teacher/exams/${examId}/import-rows`,
+    { method: "POST", body: JSON.stringify(body) },
   );
 }
 

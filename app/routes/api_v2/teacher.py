@@ -1043,6 +1043,7 @@ def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamRes
         note=exam.note,
         created_at=exam.created_at,
         created_by_name=created_by_name,
+        import_source=exam.import_source,
     )
 
 
