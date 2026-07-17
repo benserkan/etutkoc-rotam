@@ -69,6 +69,31 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   118/120 konu eşleşti (%98; kalan 2 koça). Regresyon: mapping 18 · exam_taxonomy
   20 · teacher_exams 18 · institution_academic 13 · admin_usage 21 · parent_weekly 14
   · wrong_question_ai 24 · units 10 · tenant 29 GREEN; web tsc+eslint temiz.
+- **Saha düzeltmeleri (2026-07-17, gerçek belgelerle — hepsi CANLI):**
+  - **Gunicorn worker kill (code 134):** async uçlar senkron Gemini ile event
+    loop'u kilitleyip `--timeout 60`'a takılıyordu ("dosya yüklenmedi") → uçlar
+    SENKRON def (threadpool) + çift okuma PARALEL (ThreadPoolExecutor).
+    KURAL: uzun senkron iş yapan uç ASLA async def olmaz.
+  - **K12 formatı (Yiğit 30.03.2026.pdf, 90 soru):** konu yerine MEB kazanım
+    cümleleri → kapalı-küme AI %98 eşledi. "Din K.ve A.B."/"Tarih"→İnkılap ders
+    eşanlamları + virgüllü ondalık ("14,67"). Prod doğrulandı: 90/90, şüpheli 0.
+  - **Birleşik TG kitapçığı (Berra özdebir-ayt-16-02, 160 soru):** başlıkta hem
+    TYT hem AYT → tespit şaşıyor + oturumların Matematik'leri üst üste binip
+    hepsi şüpheli + bir okumanın boş ÖC'ye DC yazması "boşa doğru" üretiyordu.
+    Çözümler: Gemini `exam_part` etiketi + oturum başına ayrı evren/normalizasyon
+    + UI oturum seçici (koç TYT/AYT'yi ayrı kaydeder; analiz tek → kredi tek;
+    başlığa otomatik "— TYT/AYT" eki) · **AYT alt-türü CEVAPLANAN bölümlerden**
+    (sözel boş + mat/fen dolu → Sayısal; ders listesi birleşik kitapçıkta
+    yanıltıcı) · başlıkta iki anahtar kelime → kelime oyu nötr, Edebiyat varlığı
+    AYT sinyali · **boş-cevap halüsinasyon koruması** (bir okuma boş + diğeri
+    ==DC → BOŞ kazanır; satır sarı olmaz, tek "Boş cevap koruması" toplu uyarısı)
+    · ders adı bölüm-kodu gürültüsü kanonik anahtarla ayıklanır ("Edebiyat
+    (EDE-SOS)"↔"AYT Edebiyat") · kısaltılmış konu adının farklı kesilmesi
+    çelişki sayılmaz (ön-ek toleransı, uzun etiket tutulur). Prod final: tespit
+    AYT (Sayısal) ✓, sözel hepsi BOŞ ✓, **şüpheli 81→3**, 131/160 eşleşme.
+    Smoke **48/48**. Bilinen boşluk: AYT Edebiyat'ın dil-anlatım soruları
+    ("Sözcükte Anlam" vb.) AYT taksonomisinde yok → eşleşmeden kalır (Faz 2'de
+    TYT Türkçe köprüsü düşünülebilir).
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı
