@@ -160,6 +160,32 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
     **59/59** (27a-g: taslak/koruma/yeniden-eşleme/yeniden-hesap/liste/kapılar)
     · exam_taxonomy 20 · teacher_exams 18 · tsc/eslint temiz. Migration YOK
     (taksonomi seed additive — start.sh prod'da otomatik).
+  - **Okul-müfredat sınavı (sınıfa uyarlanmış TYT) → KARMA aday havuzu
+    (2026-07-18, Elif GİS-3 vakası, CANLI):** 10. sınıf Maarif öğrencisinin
+    "TYT formatlı" izleme sınavı (Özdebir GİS: TYT-TÜRKÇE/SOSYAL/MAT/FEN kodlu,
+    TYT puanlı) TYT taksonomisine normalize edilince Türkçe 10/30 kalıyordu —
+    eşleşmeyen 20 sorunun TAMAMI 10. sınıf EDEBİYAT konusu (Mesneviler/Destan/
+    Divan Şiiri…; TYT Türkçe'de edebiyat yoktur — doğru olarak). **Kullanıcı
+    kararları:** eşleştirme = KARMA havuz (Maarif öncelikli + TYT tamamlayıcı) ·
+    kayıt türü = TYT KALIR (GİS netleri gerçek TYT trendiyle aynı seride).
+    Uygulama: `_school_grade_signal` (belge grade_hint → başlıkta "N. SINIF"
+    regex → öğrenci sınıfı; 5-10 → sinyal; TYT'nin gerçek kitlesi 11-12/mezun) +
+    `_normalization_pool` (TEK MERKEZ; analyze + `_prepare_confirm` + 
+    build_edit_draft üçü de kullanır — confirm da karma havuza karşı doğrular,
+    yoksa Maarif topic_id enjeksiyon korumasına takılırdı): TYT evreni + sinyal
+    → adaylar = OKUL evreni dersleri/konuları (effective model, sınıf-capli,
+    LİSTEDE ÖNCE = öncelik) + TYT taksonomisi. AI prompt'a "aynı anlamda birden
+    çok aday → listede önce geleni seç" önceliği. Konu dersi belirler kuralıyla
+    ders kırılımı karma görünür (TDE 21 + TYT Türkçe 9 — bilinçli). GERÇEK
+    Gemini doğrulaması (Elif PDF, grade 10): **114/120 eşleşme (%95; önceden
+    %79), Türkçe 30/30** — edebiyat→Maarif TDE leaf'leri, dil bilgisi→TYT
+    Türkçe; Maarif kazanım-dili Matematik etiketleri birebir; kalan 6 = kesik
+    etiket. Smoke **65/65** (28a-f: karma havuz + tür korunur + seçicide iki
+    grup + confirm kabul). Elif'in mevcut kaydı (exam 91) koçun "Satırları
+    düzelt" butonuyla açılınca aynı havuzla otomatik yeniden eşlenir (kredi
+    düşmez). NOT: Maarif TDE alt başlıklarında dil bilgisi konusu YOK (tema
+    leaf'leri edebi tür odaklı) — dil bilgisi bilinçli TYT'ye akar; istenirse
+    ileride MEB-doğrulamalı dil bilgisi alt başlıkları eklenebilir.
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı

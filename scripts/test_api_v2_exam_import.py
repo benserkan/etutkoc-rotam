@@ -40,6 +40,7 @@ from app.database import SessionLocal
 from app.main import app
 from app.models import (
     CreditAccount,
+    CurriculumModel,
     ExamResult,
     ExamResultQuestion,
     ExamTopicAlias,
@@ -267,6 +268,43 @@ def build_phantom_parts_read() -> dict:
     }
 
 
+def build_school_tyt_read() -> dict:
+    """Sınıfa uyarlanmış "TYT formatlı" okul-müfredat izleme sınavı taklidi —
+    gerçek Elif ÖZDEBİR GİS-3 vakası: belge TYT etiketli ama Türkçe testi
+    10. sınıf Maarif EDEBİYAT konuları soruyor; dil bilgisi soruları da var.
+    Karma havuz beklentisi: edebiyat → Maarif, dil bilgisi → TYT."""
+    return {
+        "exam_title": f"{PFX} 10 SINIF ÖZDEBİR GİS-2",
+        "exam_date": "2026-03-01",
+        "grade_hint": 10,
+        "type_hints": ["TYT"],
+        "subjects": [],
+        "questions": [
+            {"subject": "Türkçe", "no": 1, "topic": "Mesneviler",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            {"subject": "Türkçe", "no": 2, "topic": "Saf Şiir",
+             "correct_answer": "A", "student_answer": "B", "result": "yanlis"},
+            {"subject": "Türkçe", "no": 3, "topic": "Zamir",
+             "correct_answer": "C", "student_answer": "C", "result": "dogru"},
+            {"subject": "Türkçe", "no": 4, "topic": "Söyleşi",
+             "correct_answer": "E", "student_answer": None, "result": "bos"},
+        ],
+        "score_info": None,
+    }
+
+
+def maarif_topic_id(db, subject_name: str, topic_name: str) -> int:
+    t = (
+        db.query(Topic).join(Subject, Subject.id == Topic.subject_id)
+        .filter(Subject.is_builtin.is_(True), Subject.name == subject_name,
+                Subject.curriculum_model == CurriculumModel.MAARIF_LISE,
+                Topic.name == topic_name)
+        .first()
+    )
+    assert t is not None, f"Maarif konu yok: {subject_name} / {topic_name}"
+    return t.id
+
+
 def main() -> int:
     print(f"\n=== Deneme PDF içe aktarma smoke — {PFX} ===\n")
     ids: dict = {}
@@ -294,19 +332,24 @@ def main() -> int:
         nc_student = User(email=f"{PFX}-sn@t.invalid", password_hash=hash_password(PASSWORD),
                           full_name="Rızasız Öğr", role=UserRole.STUDENT, is_active=True,
                           grade_level=12, must_change_password=False)
+        m10_student = User(email=f"{PFX}-s10@t.invalid", password_hash=hash_password(PASSWORD),
+                           full_name="Öğrenci 10 Maarif", role=UserRole.STUDENT,
+                           is_active=True, grade_level=10, must_change_password=False)
         db.add_all([coach, free_coach, noconsent_coach, student, lgs_student,
-                    free_student, nc_student])
+                    free_student, nc_student, m10_student])
         db.flush()
         student.teacher_id = coach.id
         lgs_student.teacher_id = coach.id
         free_student.teacher_id = free_coach.id
         nc_student.teacher_id = noconsent_coach.id
+        m10_student.teacher_id = coach.id
         db.commit()
         ids = {
             "coach": coach.id, "free_coach": free_coach.id,
             "noconsent_coach": noconsent_coach.id,
             "student": student.id, "lgs_student": lgs_student.id,
             "free_student": free_student.id, "nc_student": nc_student.id,
+            "m10_student": m10_student.id,
             # builtin konu id'leri (gerçek TYT taksonomisi)
             "temel": topic_id(db, "TYT Matematik", "Temel Kavramlar"),
             "rasyonel": topic_id(db, "TYT Matematik", "Rasyonel Sayılar"),
@@ -316,6 +359,9 @@ def main() -> int:
             "paragraf": topic_id(db, "TYT Türkçe", "Paragraf"),
             "trigonometri": topic_id(db, "AYT Matematik", "Trigonometri"),
             "limit": topic_id(db, "AYT Matematik", "Limit ve Süreklilik"),
+            "m_safsiir": maarif_topic_id(db, "Türk Dili ve Edebiyatı", "Saf Şiir"),
+            "m_mesnevi": maarif_topic_id(db, "Türk Dili ve Edebiyatı", "Mesnevi"),
+            "sozcuk": topic_id(db, "TYT Türkçe", "Sözcük Türleri"),
         }
 
     get_login_limiter().reset()
@@ -853,6 +899,54 @@ def main() -> int:
               and (rman.json().get("detail") or {}).get("code") == "not_imported",
               rman.text[:150])
 
+        # --- 28) OKUL-MÜFREDAT SINAVI (sınıfa uyarlanmış TYT) — KARMA HAVUZ ---
+        # Gerçek Elif GİS-3 vakası: 10. sınıf Maarif öğrencisi + "TYT" formatlı
+        # izleme sınavı → tür TYT KALIR, adaylar = Maarif (öncelikli) + TYT.
+        read_behavior["read"] = build_school_tyt_read()
+        ai_label_map.clear()
+        ai_label_map["Mesneviler"] = ids["m_mesnevi"]
+        ai_label_map["Zamir"] = ids["sozcuk"]
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
+            files={"file": pdf_file})
+        d28 = r.json() if r.status_code == 200 else {}
+        rows28 = d28.get("rows", [])
+        by_no28 = {x["question_no"]: x for x in rows28}
+        check("28a. tespit TYT (tür değişmedi) + 4 satır",
+              r.status_code == 200 and d28.get("universe") == "tyt"
+              and len(rows28) == 4, r.text[:200])
+        check("28b. edebiyat konusu MAARİF'e bağlandı (Saf Şiir · deterministik)",
+              by_no28.get(2, {}).get("topic_id") == ids["m_safsiir"]
+              and by_no28.get(2, {}).get("subject_name") == "Türk Dili ve Edebiyatı",
+              str(by_no28.get(2))[:150])
+        check("28c. dil bilgisi TYT'ye bağlandı (Zamir → Sözcük Türleri · AI)",
+              by_no28.get(3, {}).get("topic_id") == ids["sozcuk"]
+              and by_no28.get(3, {}).get("subject_name") == "TYT Türkçe",
+              str(by_no28.get(3))[:150])
+        check("28d. AI eşlemesi Maarif konusuna da çalışıyor (Mesneviler → Mesnevi)",
+              by_no28.get(1, {}).get("topic_id") == ids["m_mesnevi"],
+              str(by_no28.get(1))[:150])
+        tc_subj = {t["subject_name"] for t in d28.get("topic_choices", [])}
+        check("28e. konu seçicide Maarif + TYT dersleri birlikte",
+              "Türk Dili ve Edebiyatı" in tc_subj and "TYT Türkçe" in tc_subj,
+              str(sorted(tc_subj))[:200])
+        p28 = {
+            "title": d28.get("title") or f"{PFX} 10 SINIF GİS-2",
+            "exam_date": d28.get("exam_date"), "section": "tyt",
+            "grade_hint": d28.get("grade_hint"),
+            "rows": [{k: x[k] for k in ("subject_raw", "question_no", "topic_raw",
+                                        "topic_id", "correct_answer",
+                                        "student_answer", "result", "is_suspect")}
+                     for x in rows28],
+        }
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-confirm",
+            data={"payload": json.dumps(p28)}, files={"file": pdf_file})
+        d28c = r.json().get("data", {}) if r.status_code == 200 else {}
+        check("28f. confirm karma havuzu KABUL etti (Maarif id düşmedi · net 1.75)",
+              r.status_code == 200 and d28c.get("matched_topic_count") == 4
+              and d28c.get("net") == 1.75, r.text[:250])
+
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double
         svc.gemini.generate = orig_generate
@@ -860,7 +954,8 @@ def main() -> int:
         with SessionLocal() as db:
             uids = [v for k, v in ids.items()
                     if k in ("coach", "free_coach", "noconsent_coach", "student",
-                             "lgs_student", "free_student", "nc_student")]
+                             "lgs_student", "free_student", "nc_student",
+                             "m10_student")]
             exam_ids = [e.id for e in db.query(ExamResult).filter(
                 ExamResult.student_id.in_(uids)).all()]
             if exam_ids:

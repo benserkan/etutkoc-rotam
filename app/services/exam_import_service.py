@@ -159,6 +159,65 @@ def universe_topics(
     return sorted(leafs, key=lambda t: (t.subject_id, t.order, t.id))
 
 
+_GRADE_TITLE_RE = re.compile(r"\b([5-9]|1[0-2])\.?\s*sinif\b")
+
+
+def _school_grade_signal(
+    exam_title: str | None, grade_hint: int | None, student: User,
+) -> int | None:
+    """Okul-müfredat sınavı sinyali (sınıfa uyarlanmış "TYT formatlı" sınavlar).
+
+    TYT'nin gerçek hedef kitlesi 11-12/mezundur; 9-10. sınıf öğrencisinin
+    girdiği TYT formatlı sınav (Özdebir GİS gibi izleme sınavları) neredeyse
+    her zaman SINIF MÜFREDATINA paraleldir — örn. "TYT-TÜRKÇE" testi 10. sınıf
+    edebiyat konuları sorar (Elif GİS-3 vakası, 2026-07). Sinyal önceliği:
+    belge sınıf ipucu → başlıkta "N. SINIF" → öğrencinin sınıfı. Dönen: sınıf
+    (5-10) veya None (gerçek TYT/AYT hazırlık kitlesi).
+    """
+    if grade_hint and 5 <= grade_hint <= 10:
+        return grade_hint
+    m = _GRADE_TITLE_RE.search(normalize(exam_title or ""))
+    if m:
+        g = int(m.group(1))
+        if g <= 10:
+            return g
+    if (not student.is_graduate and student.grade_level
+            and 5 <= student.grade_level <= 10):
+        return student.grade_level
+    return None
+
+
+def _normalization_pool(
+    db: Session, universe: str, student: User, *,
+    grade_cap: int | None, school_grade: int | None,
+) -> tuple[list[Subject], list[Topic]]:
+    """Evren aday havuzu; okul-müfredat sınavında KARMA havuz.
+
+    TYT formatlı sınıf izleme sınavlarında (school_grade sinyali) adaylar =
+    öğrencinin OKUL müfredatı (ÖNCELİKLİ, sınıf-capli — Maarif/Klasik) + TYT
+    taksonomisi (tamamlayıcı). Edebiyat/kazanım-dili konular okul müfredatına,
+    okul listesinde karşılığı olmayanlar (dil bilgisi gibi) TYT'ye bağlanır —
+    hiçbir soru evsiz kalmaz; birikim öğrencinin GERÇEK müfredat takibine akar
+    (kitap eşleşmeleri + öneri motoru + müfredat paneli aynı konuları kullanır).
+    Öncelik = liste sırası (deterministik evren-tekil ve AI aday sırası okul
+    lehine). Kayıt türü (section) DEĞİŞMEZ — yalnız eşleştirme hedefi genişler.
+    """
+    subjects = universe_subjects(db, universe, student)
+    topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
+    if universe != EXAM_UNIVERSE_TYT or not school_grade:
+        return subjects, topics
+    school_subjects = universe_subjects(db, EXAM_UNIVERSE_OKUL, student)
+    if not school_subjects:
+        return subjects, topics
+    school_topics = universe_topics(
+        db, school_subjects, universe=EXAM_UNIVERSE_OKUL, grade_cap=school_grade)
+    seen = {s.id for s in school_subjects}
+    return (
+        school_subjects + [s for s in subjects if s.id not in seen],
+        school_topics + topics,
+    )
+
+
 # ============================================================================
 # Ders çözümü (ham ders adı → sistem dersi)
 # ============================================================================
@@ -273,7 +332,9 @@ def _ai_match_labels(
             "konularına eşle. Etiketler kısaltılmış/farklı adlandırılmış olabilir "
             "(örn. 'İşlem Yeteneği' → 'Temel Kavramlar'); ANLAM olarak eşleştir. "
             "Konu, etiketin dersinden farklı bir derse ait olabilir (örn. geometri "
-            "konusu Matematik bölümünde). Emin değilsen topic_id=null bırak — "
+            "konusu Matematik bölümünde). Aynı anlama gelen birden fazla aday "
+            "varsa listede ÖNCE geleni tercih et (liste öncelik sırasıyladır). "
+            "Emin değilsen topic_id=null bırak — "
             "ASLA zorlama eşleştirme yapma. Yalnız listedeki topic_id'leri kullan.\n\n"
             f"RESMİ KONULAR (topic_id: ad [ders]):\n{topic_lines}\n\n"
             f"ETİKETLER (key: etiket):\n{lab_lines}\n\n"
@@ -856,8 +917,10 @@ def analyze(
 
         universe = det["universe"]
         section = ExamSection(det["section"])
-        subjects = universe_subjects(db, universe, student)
-        topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
+        school_grade = _school_grade_signal(
+            merged.get("exam_title"), merged.get("grade_hint"), student)
+        subjects, topics = _normalization_pool(
+            db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
 
         rows: list[dict] = []
         for q in qlist:
@@ -1033,9 +1096,11 @@ def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
     if len(rows_in) > 400:
         raise ExamImportError(422, "too_many_rows", "Soru sayısı sınırı aşıldı (400).")
 
-    subjects = universe_subjects(db, universe, student)
     grade_cap = payload.get("grade_hint") or student.grade_level
-    topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
+    school_grade = _school_grade_signal(
+        payload.get("title"), payload.get("grade_hint"), student)
+    subjects, topics = _normalization_pool(
+        db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
     topic_by_id = {t.id: t for t in topics}
     subj_by_id = {s.id: s for s in subjects}
     by_key = _subjects_by_key(subjects)
@@ -1254,9 +1319,10 @@ def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
     except ValueError:
         meta = {}
     grade_cap = meta.get("grade_hint") or student.grade_level
-
-    subjects = universe_subjects(db, universe, student)
-    topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
+    school_grade = _school_grade_signal(
+        exam.title, meta.get("grade_hint"), student)
+    subjects, topics = _normalization_pool(
+        db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
     topic_by_id = {t.id: t for t in topics}
     subj_by_id = {s.id: s for s in subjects}
 
