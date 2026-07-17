@@ -52,6 +52,7 @@ from app.models import (
 )
 from app.services import ai_exam_import
 from app.services import exam_import_service as svc
+from app.services.exam_import_service import _subject_key as _subject_key_test
 from app.services.rate_limit import get_login_limiter
 from app.services.security import hash_password
 
@@ -289,6 +290,10 @@ def main() -> int:
             # halüsinasyon simülasyonu: boş Edebiyat no 1'e 2. okuma ÖC=DC yazdı
             if q["subject"] == "Edebiyat" and q.get("no") == 1:
                 q["student_answer"] = "C"
+            # ders adı GÜRÜLTÜSÜ simülasyonu: 2. okuma Fizik'i bölüm koduyla
+            # yazdı (gerçek ÖZDEBİR AYT'de yaşandı) — kanonik anahtar eşlemeli
+            if q["subject"] == "Fizik" and q.get("part") == "ayt":
+                q["subject"] = "Fizik (SAY-2)"
         return r1, r2
 
     def fake_generate(parts, *, personal_data, json_mode=True, timeout=45.0,
@@ -667,6 +672,14 @@ def main() -> int:
         mat_sus = [x for x in rows25 if x["subject_raw"] == "Matematik" and x["is_suspect"]]
         check("25e. oturumlar arası aynı-numara çakışması ŞÜPHELİ üretmedi",
               len(mat_sus) == 0, f"{len(mat_sus)} şüpheli")
+        # ders adı gürültüsü: r2 "Fizik (SAY-2)" yazdı → kanonik anahtar eşledi
+        fiz = [x for x in rows25 if x["exam_part"] == "ayt"
+               and _subject_key_test(x["subject_raw"]) == "fizik"]
+        check("25g. ders adı bölüm-kodu gürültüsü eşleşmeyi BOZMADI (Fizik)",
+              len(fiz) == 3 and all(not x["is_suspect"] for x in fiz)
+              and all(x.get("subject_name") == "AYT Fizik" for x in fiz),
+              f"n={len(fiz)} sus={[x['is_suspect'] for x in fiz]} "
+              f"names={[x.get('subject_name') for x in fiz]}")
         # yalnız AYT oturumunu kaydet (net /4: 4D 2Y 3B → 3.5)
         ayt_rows = [x for x in rows25 if x["exam_part"] == "ayt"]
         p25 = {

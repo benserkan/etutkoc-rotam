@@ -39,6 +39,7 @@ KURALLAR (çok önemli):
 - ASLA satır uydurma: yalnız belgede gerçekten görünen soruları yaz. Okuyamadığın alanı null bırak.
 - Konu adını belgede YAZILDIĞI GİBİ aynen kopyala (kısaltılmışsa kısaltılmış haliyle, örn. "Paragrafta Yardımcı Düşü…"). Düzeltme/uzatma yapma.
 - Soru satırlarında ders, o sorunun ait olduğu ders başlığıdır (örn. Türkçe, Matematik, Fizik). Üst bölüm başlığı ile ders karışırsa en yakın ders başlığını kullan.
+- Ders adını SADE yaz — bölüm kodu/eki EKLEME: "Edebiyat (EDE-SOS)" değil "Edebiyat"; "Tarih-1"/"Tarih SOS-2" değil "Tarih"; "Matematik AYT-MAT" değil "Matematik". Aynı ders belgede iki testte geçiyorsa da aynı sade adı kullan.
 - Cevap sütunları: doğru cevap (DC/CA/anahtar) ve öğrenci cevabı (ÖC/verilen). Öğrenci cevabı hücresi BOŞSA student_answer=null yaz (bu "boş bırakmış" demektir).
 - Sonuç: belge +/- benzeri işaret veriyorsa onu kullan ("dogru"/"yanlis"); öğrenci cevabı boşsa "bos". İşaret yoksa doğru cevap ile öğrenci cevabını karşılaştır. Hiçbiri çıkarılamıyorsa null.
 - Belgede ders bazlı ÖZET tablosu (soru/doğru/yanlış/boş/net) varsa "subjects" içine aynen yaz; yoksa boş liste.

@@ -164,9 +164,20 @@ def universe_topics(
 # ============================================================================
 
 
+# Belge ders adlarına yapışan bölüm-kodu gürültüsü ("Edebiyat (EDE-SOS)",
+# "Tarih SOS-2", "Matematik AYT-MAT" — ÖZDEBİR AYT belgesinde iki okuma AYNI
+# dersi FARKLI ekle yazınca satırlar eşleşemiyordu). Yalnız başka token
+# kalıyorsa ayıklanır ("Fen Bilimleri" gibi gerçek adlar bozulmaz).
+_SUBJECT_NOISE = {"ede", "sos", "say", "soz", "ea", "ayt", "tyt", "mat",
+                  "test", "testi", "dersi"}
+
+
 def _subject_key(name: str | None) -> str:
-    """Ders adı → eşleştirme anahtarı (TYT-/AYT- önekleri + bağlaç atılır)."""
+    """Ders adı → eşleştirme anahtarı (önek + bağlaç + bölüm-kodu eki atılır)."""
     key = _label_key(name)
+    toks = [t for t in key.split() if t not in _SUBJECT_NOISE and not t.isdigit()]
+    if toks:
+        key = " ".join(toks)
     return _SUBJECT_ALIASES.get(key, key)
 
 
@@ -414,12 +425,13 @@ def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
     Dönen: (birleşik okuma, şüpheli satır sayısı).
     """
     def _buckets(read: dict) -> dict[tuple[str | None, str], list[dict]]:
-        # anahtar (oturum, ders) — birleşik TG belgelerinde TYT Matematik ile
-        # AYT Matematik AYRI kovalara düşer; yoksa iç içe geçip hepsi şüpheli
-        # oluyordu (gerçek ÖZDEBİR TG belgesinde yaşandı, 2026-07-17).
+        # anahtar (oturum, KANONİK ders) — birleşik TG belgelerinde TYT/AYT
+        # Matematik AYRI kovalara düşer; kanonik anahtar (_subject_key) iki
+        # okumanın aynı dersi farklı bölüm-koduyla yazmasına da dayanıklı
+        # ("Edebiyat (EDE-SOS)" ↔ "AYT Edebiyat" — ÖZDEBİR AYT'de yaşandı).
         out: dict[tuple[str | None, str], list[dict]] = {}
         for q in read["questions"]:
-            out.setdefault((q.get("part"), normalize(q["subject"])), []).append(q)
+            out.setdefault((q.get("part"), _subject_key(q["subject"])), []).append(q)
         return out
 
     b1, b2 = _buckets(r1), _buckets(r2)
@@ -517,10 +529,11 @@ def run_checks(read: dict, rows: list[dict]) -> list[dict]:
     """
     checks: list[dict] = []
 
-    # satır bazlı (oturum, ders) sayımları — birleşik belgede TYT/AYT ayrışır
+    # satır bazlı (oturum, KANONİK ders) sayımları — birleşik belgede TYT/AYT
+    # ayrışır; kanonik anahtar bölüm-kodu eklerine dayanıklı
     tallies: dict[tuple[str | None, str], dict[str, int]] = {}
     for r in rows:
-        key = (r.get("exam_part"), normalize(r.get("subject_raw")))
+        key = (r.get("exam_part"), _subject_key(r.get("subject_raw")))
         t = tallies.setdefault(key, {"n": 0, "d": 0, "y": 0, "b": 0})
         t["n"] += 1
         res = r.get("result")
@@ -532,12 +545,12 @@ def run_checks(read: dict, rows: list[dict]) -> list[dict]:
             t["b"] += 1
 
     for s in read.get("subjects") or []:
-        key = (s.get("part"), normalize(s["name"]))
+        key = (s.get("part"), _subject_key(s["name"]))
         t = tallies.get(key)
         if t is None and s.get("part") is None:
             # özet part'sız etiketlenmiş olabilir — tek oturumlu eşleşme dene
             cands = [v for (p, sk2), v in tallies.items()
-                     if sk2 == normalize(s["name"])]
+                     if sk2 == _subject_key(s["name"])]
             t = cands[0] if len(cands) == 1 else None
         if t is None:
             continue  # özetteki üst bölüm başlığı (örn. "TYT-SOSYAL") — satırlar alt derste
