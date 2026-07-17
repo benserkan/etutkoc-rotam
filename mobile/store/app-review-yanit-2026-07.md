@@ -1,4 +1,50 @@
-# App Review yanıtı — iOS 1.0 (build 8) — 2026-07
+# App Review — ret #4 sonrası 3.1.3(c) itiraz taslağı (2026-07-17)
+
+Build 8 reti (2026-07-16): yalnız **3.1.1** kaldı (2.1a + 5.1.1v KAPANDI).
+Gerekçe: "app accesses digital content purchased outside the app, such as
+packages, but that content isn't available to purchase using In-App Purchase."
+Apple mesajı ek bilgi vermeye açıkça davet ediyor. Aşağıdaki yanıt 3.1.3(c)
+Enterprise Services muafiyetini savunur (guideline'daki örnek birebir:
+"classroom management tools").
+
+## Gönderilecek yanıt (App Store Connect — aynı mesaj dizisine)
+
+Hello,
+
+Thank you for the review. We believe guideline **3.1.3(c) — Enterprise
+Services** applies to this app, and we would like to provide additional
+information.
+
+ETÜTKOÇ Rotam is a **classroom/coaching management tool** — the exact category
+named as an example in guideline 3.1.3(c). It is sold directly by our company
+(ETÜTKOÇ Akademi Ltd. Şti.) to **educational institutions and professional
+education coaches** for use with their student groups:
+
+- The paid plans are business tools purchased by organizations (private
+  schools, study centers) and professional educators for managing their
+  students. They are not consumer products.
+- The end users inside the iOS app are the coaches themselves and the
+  **students and parents they invite**. Students and parents never purchase
+  anything, have no payment relationship with us, and cannot subscribe to
+  anything — their access is always provisioned by their institution or coach.
+- There are **no consumer, single-user or family sales**: an individual cannot
+  buy anything for personal consumption; every sale is a professional/
+  organizational license used to serve a group of students.
+- The iOS app itself contains no purchasing, no pricing, no upgrade paths and
+  no links to external payment. Accounts created in the app are free, and the
+  app is fully functional with a free account.
+
+Under 3.1.3(c), apps in this situation "may allow enterprise users to access
+previously-purchased content or subscriptions." That is exactly — and only —
+what this app does.
+
+If the review team still considers that some specific content in the app
+falls outside 3.1.3(c), we would greatly appreciate guidance on which content
+that is, and we are happy to discuss this in an App Review appointment.
+
+Thank you for your time.
+
+## Ret #2 arşivi — iOS 1.0 (build 8) — 2026-07
 
 Ret #2 (2026-07-14, gönderim 5b65a5d3): 3.1.1 + 2.1(a) + 5.1.1(v).
 Bu dosya: App Store Connect'te "Uygulama Yorumuna Yanıt Ver" ile gönderilecek

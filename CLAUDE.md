@@ -125,11 +125,25 @@ deseni). Commit **`eba6275`** (mobil-only, migration YOK, backend DEĞİŞMEDİ)
   ile ASC'ye (submission `d8a40e17`). Mobil tsc temiz.
 - **Kullanıcı 2026-07-16: RESUBMIT ETTİ** — TestFlight'tan build 8'i kurdu,
   fiziksel cihazda hesap silme akışının ekran kaydını aldı, hazır İngilizce
-  yanıtla birlikte Apple'a gönderdi; inceleme süreci yeniden başladı.
-- **SIRADA:** inceleme sonucu (1-3 gün). Onay → yayına alma. Yeni ret gelirse
-  3.1.1 için kalan tek yol IAP (StoreKit) kurmak — o zaman ayrı iş olarak
-  planlanır. Android/Play tarafına aynı temizlik sonraki AAB'de otomatik gider;
-  ileride IAP kurulursa paket ekranı + satın alma mobile geri eklenebilir.
+  yanıtla birlikte Apple'a gönderdi.
+- **RET #4 (2026-07-16, build 8, iPad Air 11 M3):** **2.1(a) + 5.1.1(v)
+  KAPANDI** (retde yoklar — yasal linkler + hesap silme kabul edildi). Kalan
+  TEK madde 3.1.1, gerekçe daraldı: "app accesses digital content purchased
+  outside the app, such as packages, but that content isn't available to
+  purchase using In-App Purchase" (3.1.3(b) çok-platform kuralı — iş modelinin
+  kendisi). Ekran kusuru DEĞİL; ticari yüzey temizliği yeterli olmadı.
+- **Kullanıcı kararı (2026-07-17, AskUserQuestion): ÖNCE İTİRAZ.** 3.1.3(c)
+  "Enterprise Services" savunması ("classroom management tools" guideline'daki
+  örnek birebir): B2B satış, uygulamadaki öğrenci/veli asla ödeme yapmaz,
+  tüketici satışı yok, uygulama ücretsiz hesapla tam işlevsel. Hazır İngilizce
+  yanıt: `mobile/store/app-review-yanit-2026-07.md` (en üst bölüm). YENİ BUILD
+  GEREKMEZ — App Store Connect'te aynı mesaj dizisine yanıt verilir; ek olarak
+  Salı/Perşembe "Meet with Apple" App Review randevusu önerildi.
+- **SIRADA:** itiraz sonucu. Tutarsa onay → yayın. Yine 3.1.1 reti gelirse
+  **IAP (StoreKit/RevenueCat) kurulacak** — solo koç paketleri iOS'ta otomatik
+  yenilenen abonelik + backend entitlement; kullanıcı tarafında Paid Apps
+  sözleşmesi + banka/vergi formları + fiyatlandırma kararı (%15-30 komisyon).
+  Android/Play tarafına ticari-yüzey temizliği sonraki AAB'de otomatik gider.
   NOT: notification-router'a öğrenci `wrong_questions` deep-link'i eklendi
   (YSA Faz 4 hazırlığı, ayrı iş).
 
