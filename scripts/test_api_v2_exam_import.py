@@ -172,6 +172,53 @@ def build_lgs_read() -> dict:
     }
 
 
+def build_combined_read() -> dict:
+    """Birleşik TG kitapçığı taklidi (gerçek ÖZDEBİR TG AYT-4 TYT: TYT-19
+    vakası): tek PDF'te TYT + AYT oturumu; ders adları çakışır (Matematik),
+    soru numaraları çakışır; sayısal öğrenci sözel bölümü BOŞ bırakır."""
+    return {
+        "exam_title": f"{PFX} ÖZDEBİR TG AYT-4 TYT: TYT-19",
+        "exam_date": "2026-02-16",
+        "grade_hint": 12,
+        "type_hints": ["AYT", "TYT"],
+        "subjects": [],
+        "questions": [
+            # TYT oturumu (5 soru)
+            {"subject": "Matematik", "part": "tyt", "no": 1, "topic": "Rasyonel Sayılar",
+             "correct_answer": "A", "student_answer": "A", "result": "dogru"},
+            {"subject": "Matematik", "part": "tyt", "no": 2, "topic": "Yüzde Problemleri",
+             "correct_answer": "B", "student_answer": "C", "result": "yanlis"},
+            {"subject": "Türkçe", "part": "tyt", "no": 1, "topic": "Sözcükte Anlam",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            {"subject": "Türkçe", "part": "tyt", "no": 2, "topic": "Cümlede Anlam",
+             "correct_answer": "A", "student_answer": "A", "result": "dogru"},
+            {"subject": "Türkçe", "part": "tyt", "no": 3, "topic": "Yazım Kuralları",
+             "correct_answer": "E", "student_answer": "B", "result": "yanlis"},
+            # AYT oturumu (9 soru) — Matematik AYNI numaralarla (çakışma testi)
+            {"subject": "Matematik", "part": "ayt", "no": 1, "topic": "Trigonometri",
+             "correct_answer": "E", "student_answer": "E", "result": "dogru"},
+            {"subject": "Matematik", "part": "ayt", "no": 2, "topic": "Limit ve Süreklilik",
+             "correct_answer": "A", "student_answer": "B", "result": "yanlis"},
+            {"subject": "Matematik", "part": "ayt", "no": 3, "topic": "Trigonometri",
+             "correct_answer": "C", "student_answer": "C", "result": "dogru"},
+            {"subject": "Fizik", "part": "ayt", "no": 1, "topic": "Vektörler",
+             "correct_answer": "B", "student_answer": "B", "result": "dogru"},
+            {"subject": "Fizik", "part": "ayt", "no": 2, "topic": "Vektörler",
+             "correct_answer": "D", "student_answer": "A", "result": "yanlis"},
+            {"subject": "Fizik", "part": "ayt", "no": 3, "topic": "İtme ve Momentum",
+             "correct_answer": "A", "student_answer": "A", "result": "dogru"},
+            # Edebiyat — sayısal öğrenci BOŞ bıraktı (alt-tür tespiti + halüsinasyon)
+            {"subject": "Edebiyat", "part": "ayt", "no": 1, "topic": "Divan Edebiyatı",
+             "correct_answer": "C", "student_answer": None, "result": "bos"},
+            {"subject": "Edebiyat", "part": "ayt", "no": 2, "topic": "Halk Edebiyatı",
+             "correct_answer": "A", "student_answer": None, "result": "bos"},
+            {"subject": "Edebiyat", "part": "ayt", "no": 3, "topic": "Edebi Türler",
+             "correct_answer": "B", "student_answer": None, "result": "bos"},
+        ],
+        "score_info": None,
+    }
+
+
 def main() -> int:
     print(f"\n=== Deneme PDF içe aktarma smoke — {PFX} ===\n")
     ids: dict = {}
@@ -219,6 +266,7 @@ def main() -> int:
             "birinci": topic_id(db, "TYT Matematik", "Birinci Dereceden Denklemler"),
             "ucgen_alan": topic_id(db, "TYT Geometri", "Üçgende Alan"),
             "paragraf": topic_id(db, "TYT Türkçe", "Paragraf"),
+            "trigonometri": topic_id(db, "AYT Matematik", "Trigonometri"),
         }
 
     get_login_limiter().reset()
@@ -234,10 +282,13 @@ def main() -> int:
     def fake_double(pdf_b64: str):
         r1 = ai_exam_import._normalize_read(copy.deepcopy(read_behavior["read"]))
         r2 = ai_exam_import._normalize_read(copy.deepcopy(read_behavior["read"]))
-        # çift-okuma uyuşmazlığı: TYT setinde Matematik no 7'nin ÖC'si 2. okumada farklı
         for q in r2["questions"]:
-            if q["subject"] == "Matematik" and q.get("no") == 7:
+            # çift-okuma uyuşmazlığı: TYT setinde Matematik no 7 ÖC farklı
+            if q["subject"] == "Matematik" and q.get("no") == 7 and q.get("part") is None:
                 q["student_answer"] = "D"
+            # halüsinasyon simülasyonu: boş Edebiyat no 1'e 2. okuma ÖC=DC yazdı
+            if q["subject"] == "Edebiyat" and q.get("no") == 1:
+                q["student_answer"] = "C"
         return r1, r2
 
     def fake_generate(parts, *, personal_data, json_mode=True, timeout=45.0,
@@ -578,6 +629,57 @@ def main() -> int:
         check("24. içe aktarılan deneme mevcut Denemeler listesinde",
               r.status_code == 200 and any(PFX in t for t in titles),
               str(titles)[:150])
+
+        # --- 25) BİRLEŞİK TG BELGESİ (TYT+AYT tek PDF) — gerçek ÖZDEBİR vakası ---
+        read_behavior["read"] = build_combined_read()
+        ai_label_map.clear()
+        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        dcm = r.json() if r.status_code == 200 else {}
+        pmap = {p["part"]: p for p in dcm.get("parts", [])}
+        check("25a. iki oturum ayrıştı (tyt 5 + ayt 9)",
+              r.status_code == 200 and set(pmap) == {"tyt", "ayt"}
+              and pmap["tyt"]["question_count"] == 5
+              and pmap["ayt"]["question_count"] == 9, r.text[:200])
+        check("25b. AYT alt-türü CEVAPLARDAN tespit (sözel boş → AYT Sayısal)",
+              pmap.get("ayt", {}).get("section") == "ayt_say",
+              str(pmap.get("ayt"))[:150])
+        rows25 = dcm.get("rows", [])
+        tyt_mat = next((x for x in rows25 if x["exam_part"] == "tyt"
+                        and x["subject_raw"] == "Matematik" and x["question_no"] == 1), {})
+        ayt_mat = next((x for x in rows25 if x["exam_part"] == "ayt"
+                        and x["subject_raw"] == "Matematik" and x["question_no"] == 1), {})
+        check("25c. aynı ders adı iki EVRENDE ayrı normalize (TYT Mat ↔ AYT Mat)",
+              tyt_mat.get("topic_id") == ids["rasyonel"]
+              and tyt_mat.get("subject_name") == "TYT Matematik"
+              and ayt_mat.get("topic_id") == ids["trigonometri"]
+              and ayt_mat.get("subject_name") == "AYT Matematik",
+              f"tyt={tyt_mat.get('topic_id')}/{tyt_mat.get('subject_name')} "
+              f"ayt={ayt_mat.get('topic_id')}/{ayt_mat.get('subject_name')}")
+        edb = next((x for x in rows25 if x["subject_raw"] == "Edebiyat"
+                    and x["question_no"] == 1), {})
+        check("25d. boş-uydurma koruması: bir okuma ÖC=DC dedi → BOŞ kalır + şüpheli",
+              edb.get("result") == "bos" and edb.get("student_answer") is None
+              and edb.get("is_suspect") is True, str(edb)[:180])
+        mat_sus = [x for x in rows25 if x["subject_raw"] == "Matematik" and x["is_suspect"]]
+        check("25e. oturumlar arası aynı-numara çakışması ŞÜPHELİ üretmedi",
+              len(mat_sus) == 0, f"{len(mat_sus)} şüpheli")
+        # yalnız AYT oturumunu kaydet (net /4: 4D 2Y 3B → 3.5)
+        ayt_rows = [x for x in rows25 if x["exam_part"] == "ayt"]
+        p25 = {
+            "title": (dcm.get("title") or "") + " — AYT", "exam_date": dcm.get("exam_date"),
+            "section": "ayt_say",
+            "rows": [{k: x[k] for k in ("subject_raw", "question_no", "topic_raw",
+                                        "topic_id", "correct_answer",
+                                        "student_answer", "result", "is_suspect")}
+                     for x in ayt_rows],
+        }
+        r = cs.post("/api/v2/student/exams/import-confirm",
+                    data={"payload": json.dumps(p25)}, files={"file": pdf_file})
+        d25 = r.json().get("data", {}) if r.status_code == 200 else {}
+        check("25f. yalnız AYT oturumu kaydedildi (ayt_say · 9 soru · net 3.5)",
+              r.status_code == 200 and d25.get("section") == "ayt_say"
+              and d25.get("question_count") == 9 and d25.get("net") == 3.5
+              and d25.get("total_blank") == 3, r.text[:250])
 
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double

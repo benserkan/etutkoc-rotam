@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 class ImportDraftRow(BaseModel):
     """Önizleme tablosunun bir soru satırı — her alan düzenlenebilir."""
+    exam_part: str | None = None          # birleşik belgede oturum: tyt|ayt
     subject_raw: str | None = None
     subject_id: int | None = None
     subject_name: str | None = None
@@ -24,12 +25,23 @@ class ImportDraftRow(BaseModel):
 
 class ImportDraftSubject(BaseModel):
     name: str
+    part: str | None = None               # birleşik belgede oturum: tyt|ayt
     questions: int
     correct: int
     wrong: int
     blank: int
     net: float
     doc_net: float | None = None          # belge kendi neti (çapraz kıyas)
+
+
+class ImportPart(BaseModel):
+    """Birleşik belgede (TG kitapçığı) bir sınav oturumu — koç birini seçip
+    kaydeder; ikisini isterse iki ayrı içe aktarma yapar (kredi 1 kez düşer,
+    çünkü analiz tek)."""
+    part: str | None = None               # tyt|ayt (tek sınavlı belgede None)
+    section: str
+    section_label: str
+    question_count: int
 
 
 class ImportCheck(BaseModel):
@@ -68,6 +80,7 @@ class ExamImportDraft(BaseModel):
     section_label: str
     scope: str                             # full|brans
     confidence: str                        # high|medium|low
+    parts: list[ImportPart]                # >1 ise birleşik belge (oturum seçici)
     subjects: list[ImportDraftSubject]
     rows: list[ImportDraftRow]
     checks: list[ImportCheck]

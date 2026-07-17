@@ -410,10 +410,13 @@ def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
     DERS İÇİ SIRA ile eşlenir — aksi halde aynı sorular iki kez sayılır.
     Dönen: (birleşik okuma, şüpheli satır sayısı).
     """
-    def _buckets(read: dict) -> dict[str, list[dict]]:
-        out: dict[str, list[dict]] = {}
+    def _buckets(read: dict) -> dict[tuple[str | None, str], list[dict]]:
+        # anahtar (oturum, ders) — birleşik TG belgelerinde TYT Matematik ile
+        # AYT Matematik AYRI kovalara düşer; yoksa iç içe geçip hepsi şüpheli
+        # oluyordu (gerçek ÖZDEBİR TG belgesinde yaşandı, 2026-07-17).
+        out: dict[tuple[str | None, str], list[dict]] = {}
         for q in read["questions"]:
-            out.setdefault(normalize(q["subject"]), []).append(q)
+            out.setdefault((q.get("part"), normalize(q["subject"])), []).append(q)
         return out
 
     b1, b2 = _buckets(r1), _buckets(r2)
@@ -453,10 +456,22 @@ def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
                 if normalize(q1["topic"]) != normalize(q2["topic"]):
                     suspect = True
                 for f in ("correct_answer", "student_answer", "result"):
-                    if q1.get(f) != q2.get(f):
-                        suspect = True
-                        # boş-olmayan değeri tercih et
-                        base[f] = q1.get(f) if q1.get(f) is not None else q2.get(f)
+                    v1, v2 = q1.get(f), q2.get(f)
+                    if v1 == v2:
+                        continue
+                    suspect = True
+                    filled = v1 if v1 is not None else v2
+                    # HALÜSİNASYON KORUMASI: bir okuma ÖC'yi boş görmüş, diğeri
+                    # DC'nin AYNISINI yazmışsa → vision DC sütununu ÖC sanmış
+                    # olabilir; BOŞ kabul edilir (boş soru "doğru" sayılıp neti
+                    # şişirmesin — sözel bölümü boş bırakan sayısal öğrencide
+                    # yaşandı). Gerçek cevabı kaçırma riski şüpheli işaretiyle
+                    # önizlemede telafi edilir.
+                    if (f == "student_answer" and (v1 is None or v2 is None)
+                            and filled == base.get("correct_answer")):
+                        base[f] = None
+                        continue
+                    base[f] = filled  # boş-olmayan değeri tercih et
             base["_suspect"] = suspect
             if suspect:
                 suspects += 1
@@ -493,11 +508,11 @@ def run_checks(read: dict, rows: list[dict]) -> list[dict]:
     """
     checks: list[dict] = []
 
-    # satır bazlı ders sayımları
-    tallies: dict[str, dict[str, int]] = {}
+    # satır bazlı (oturum, ders) sayımları — birleşik belgede TYT/AYT ayrışır
+    tallies: dict[tuple[str | None, str], dict[str, int]] = {}
     for r in rows:
-        sk = normalize(r.get("subject_raw"))
-        t = tallies.setdefault(sk, {"n": 0, "d": 0, "y": 0, "b": 0})
+        key = (r.get("exam_part"), normalize(r.get("subject_raw")))
+        t = tallies.setdefault(key, {"n": 0, "d": 0, "y": 0, "b": 0})
         t["n"] += 1
         res = r.get("result")
         if res == EQ_RESULT_DOGRU:
@@ -508,8 +523,13 @@ def run_checks(read: dict, rows: list[dict]) -> list[dict]:
             t["b"] += 1
 
     for s in read.get("subjects") or []:
-        sk = normalize(s["name"])
-        t = tallies.get(sk)
+        key = (s.get("part"), normalize(s["name"]))
+        t = tallies.get(key)
+        if t is None and s.get("part") is None:
+            # özet part'sız etiketlenmiş olabilir — tek oturumlu eşleşme dene
+            cands = [v for (p, sk2), v in tallies.items()
+                     if sk2 == normalize(s["name"])]
+            t = cands[0] if len(cands) == 1 else None
         if t is None:
             continue  # özetteki üst bölüm başlığı (örn. "TYT-SOSYAL") — satırlar alt derste
         parts = []
@@ -522,9 +542,11 @@ def run_checks(read: dict, rows: list[dict]) -> list[dict]:
             if s.get(k) is not None and t[dk] != s[k]:
                 ok = False
                 parts.append(f"{label}: satır {t[dk]} ≠ özet {s[k]}")
+        part_tag = f"{s.get('part')}:" if s.get("part") else ""
         checks.append({
-            "code": f"subject_counts:{sk}",
-            "label": f"{s['name']} — özet ↔ soru satırları",
+            "code": f"subject_counts:{part_tag}{normalize(s['name'])}",
+            "label": f"{s['name']} — özet ↔ soru satırları"
+                     + (f" ({s['part'].upper()})" if s.get("part") else ""),
             "ok": ok,
             "detail": "; ".join(parts) if parts else
                       f"{t['n']} soru · {t['d']}D {t['y']}Y {t['b']}B",
@@ -551,17 +573,24 @@ def detect_universe(read: dict, student: User) -> dict:
     grade = read.get("grade_hint") or student.grade_level
 
     votes: dict[str, int] = {u: 0 for u in EXAM_UNIVERSES}
-    # 1) anahtar kelime
-    if re.search(r"\btyt\b|\bmsu\b", h):
+    # 1) anahtar kelime — başlıkta HEM TYT HEM AYT geçiyorsa ("ÖZDEBİR TG AYT-4
+    #    TYT: TYT-19" gibi birleşik kitapçık adları) kelime oyu YANILTICI →
+    #    ikisi de nötrlenir, karar İÇERİĞE (yapı + edebiyat sinyali) kalır.
+    kw_tyt = bool(re.search(r"\btyt\b|\bmsu\b", h))
+    kw_ayt = bool(re.search(r"\bayt\b", h))
+    if kw_tyt and not kw_ayt:
         votes[EXAM_UNIVERSE_TYT] += 2
-    if re.search(r"\bayt\b", h):
+    if kw_ayt and not kw_tyt:
         votes[EXAM_UNIVERSE_AYT] += 2
     if re.search(r"\blgs\b", h):
         votes[EXAM_UNIVERSE_LGS] += 2
     if re.search(r"\bkazanim\b|\byazili\b|\bokul\b", h):
         votes[EXAM_UNIVERSE_OKUL] += 2
-    # 2) yapı
-    if 100 <= n_q <= 130 and n_subj >= 6:
+    # 2) yapı + İÇERİK (AYT belirteci: Edebiyat dersi TYT'de yoktur)
+    has_edb = any("edebiyat" in k or "turk dili" in k for k in subj_keys)
+    if has_edb:
+        votes[EXAM_UNIVERSE_AYT] += 2
+    if 100 <= n_q <= 130 and n_subj >= 6 and not has_edb:
         votes[EXAM_UNIVERSE_TYT] += 1
     elif 70 <= n_q <= 95 and n_subj >= 5 and grade is not None and grade <= 8:
         votes[EXAM_UNIVERSE_LGS] += 1
@@ -584,6 +613,41 @@ def detect_universe(read: dict, student: User) -> dict:
             "scope": scope, "confidence": confidence}
 
 
+def _ayt_section_from_answers(questions: list[dict]) -> ExamSection | None:
+    """AYT alt-türünü ÖĞRENCİNİN CEVAPLADIĞI bölümlerden çıkar (içerik analizi).
+
+    AYT kitapçığında TÜM bölümler basılıdır; öğrenci yalnız alanının bölümlerini
+    cevaplar. Sayısal öğrenci sözel bölümü boş bırakır → hangi bölümler
+    cevaplanmışsa alan odur. Ders listesine bakmak yanıltıcıydı (birleşik
+    kitapçıkta tüm dersler görünür → yanlışlıkla SÖZEL seçiliyordu).
+    """
+    def answered_ratio(pred) -> float | None:
+        rows = [q for q in questions if pred(normalize(q["subject"]))]
+        if len(rows) < 3:
+            return None
+        return sum(1 for q in rows if q.get("student_answer") is not None) / len(rows)
+
+    mat = answered_ratio(lambda s: "matematik" in s or "geometri" in s)
+    fen = answered_ratio(lambda s: any(x in s for x in ("fizik", "kimya", "biyoloji")))
+    edb = answered_ratio(lambda s: "edebiyat" in s or "turk dili" in s)
+    sos = answered_ratio(lambda s: any(x in s for x in ("tarih", "cografya",
+                                                        "felsefe", "din")))
+
+    def on(v: float | None) -> bool:
+        return v is not None and v >= 0.4
+
+    def off(v: float | None) -> bool:
+        return v is not None and v < 0.4
+
+    if on(mat) and on(fen) and (edb is None or off(edb)):
+        return ExamSection.AYT_SAY
+    if on(mat) and on(edb) and (fen is None or off(fen)):
+        return ExamSection.AYT_EA
+    if on(edb) and on(sos) and (mat is None or off(mat)) and (fen is None or off(fen)):
+        return ExamSection.AYT_SOZ
+    return None
+
+
 def _section_for(universe: str, read: dict, student: User) -> ExamSection:
     if universe == EXAM_UNIVERSE_TYT:
         return ExamSection.TYT
@@ -591,19 +655,22 @@ def _section_for(universe: str, read: dict, student: User) -> ExamSection:
         return ExamSection.LGS
     if universe == EXAM_UNIVERSE_OKUL:
         return ExamSection.OKUL
-    # AYT — ders listesinden alan çıkarımı; olmadı öğrencinin alanı; olmadı SAY
+    # AYT alt-türü: 1) CEVAPLANAN bölümler (en güvenilir — içerik analizi)
+    by_answers = _ayt_section_from_answers(read["questions"])
+    if by_answers is not None:
+        return by_answers
+    # 2) öğrencinin sistemdeki alanı
+    if student.track is not None:
+        return _TRACK_TO_AYT_SECTION.get(student.track, ExamSection.AYT_SAY)
+    # 3) ders listesi (tek-alan basılmış branş kitapçıkları)
     subj = " ".join(normalize(q["subject"]) for q in read["questions"])
     has_edb = "edebiyat" in subj or "turk dili" in subj
     has_fen = any(x in subj for x in ("fizik", "kimya", "biyoloji"))
     has_sos2 = any(x in subj for x in ("felsefe", "din"))
-    if has_edb and has_sos2:
+    if has_edb and has_sos2 and not has_fen:
         return ExamSection.AYT_SOZ
-    if has_edb:
+    if has_edb and not has_fen:
         return ExamSection.AYT_EA
-    if has_fen:
-        return ExamSection.AYT_SAY
-    if student.track is not None:
-        return _TRACK_TO_AYT_SECTION.get(student.track, ExamSection.AYT_SAY)
     return ExamSection.AYT_SAY
 
 
@@ -645,72 +712,150 @@ def analyze(
     r1, r2 = ai_exam_import.read_exam_pdf_double(b64)
     merged, _ = merge_reads(r1, r2)
 
-    det = detect_universe(merged, student)
-    if force_section:
-        try:
-            sec = ExamSection(force_section)
-        except ValueError:
-            raise ExamImportError(422, "invalid_section", "Geçersiz sınav türü.")
-        det["universe"] = universe_for_section(sec)
-        det["section"] = sec.value
-        det["confidence"] = "high"
+    # --- BİRLEŞİK BELGE (TG kitapçığı): sorular oturumlara bölünür -----------
+    # Aynı PDF'te hem TYT hem AYT varsa her oturum KENDİ evreninde normalize
+    # edilir; koç önizlemede hangi oturumu kaydedeceğini seçer (ikisi için iki
+    # kayıt). Tek sınavlı belgede davranış eskisiyle aynı.
+    all_q = merged["questions"]
+    n_tyt = sum(1 for q in all_q if q.get("part") == "tyt")
+    n_ayt = sum(1 for q in all_q if q.get("part") == "ayt")
+    multi = n_tyt >= 5 and n_ayt >= 5
 
-    universe = det["universe"]
-    subjects = universe_subjects(db, universe, student)
+    part_defs: list[tuple[str | None, list[dict]]]
+    if multi:
+        tyt_q = [q for q in all_q if q.get("part") == "tyt"]
+        ayt_q = [q for q in all_q if q.get("part") == "ayt"]
+        tyt_subj = {normalize(q["subject"]) for q in tyt_q}
+        ayt_subj = {normalize(q["subject"]) for q in ayt_q}
+        for q in all_q:  # etiketsiz kalanlar ders adına göre oturumuna gider
+            if q.get("part") is not None:
+                continue
+            sk = normalize(q["subject"])
+            if sk in tyt_subj and sk not in ayt_subj:
+                tyt_q.append(q)
+            elif sk in ayt_subj and sk not in tyt_subj:
+                ayt_q.append(q)
+            else:
+                (tyt_q if len(tyt_q) >= len(ayt_q) else ayt_q).append(q)
+        part_defs = [("tyt", tyt_q), ("ayt", ayt_q)]
+    else:
+        part_defs = [(None, all_q)]
+
     grade_cap = merged.get("grade_hint") or student.grade_level
-    topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
+    doc_nets: dict[tuple[str | None, str], float | None] = {
+        (s.get("part"), normalize(s["name"])): s.get("net")
+        for s in merged.get("subjects") or []
+    }
 
-    # okuma satırları → çalışma satırları
-    rows: list[dict] = []
-    for q in merged["questions"]:
-        res, res_conflict = _derive_result(q)
-        rows.append({
-            "subject_raw": q["subject"],
-            "question_no": q.get("no"),
-            "topic_raw": q["topic"],
-            "correct_answer": q.get("correct_answer"),
-            "student_answer": q.get("student_answer"),
-            "result": res,
-            "is_suspect": bool(q.get("_suspect")) or res_conflict or res is None,
+    all_rows: list[dict] = []
+    subjects_out: list[dict] = []
+    parts_out: list[dict] = []
+    topic_choices: list[dict] = []
+    seen_topics: set[int] = set()
+    stats_total = {"alias": 0, "auto": 0, "ai": 0, "none": 0}
+    checks: list[dict] = []
+    first_det: dict | None = None
+
+    for part, qlist in part_defs:
+        # oturum tespiti: part etiketi varsa evren KESİN; AYT alt-türü cevaplanan
+        # bölümlerden. Tek sınavlı belgede genel tespit + force_section geçerli.
+        if part == "tyt":
+            det = {"universe": EXAM_UNIVERSE_TYT, "section": "tyt",
+                   "scope": "full", "confidence": "high"}
+        elif part == "ayt":
+            sec = _section_for(EXAM_UNIVERSE_AYT, {"questions": qlist}, student)
+            det = {"universe": EXAM_UNIVERSE_AYT, "section": sec.value,
+                   "scope": "full", "confidence": "high"}
+        else:
+            det = detect_universe({**merged, "questions": qlist}, student)
+            if force_section:
+                try:
+                    sec = ExamSection(force_section)
+                except ValueError:
+                    raise ExamImportError(422, "invalid_section", "Geçersiz sınav türü.")
+                det["universe"] = universe_for_section(sec)
+                det["section"] = sec.value
+                det["confidence"] = "high"
+        if first_det is None:
+            first_det = det
+
+        universe = det["universe"]
+        section = ExamSection(det["section"])
+        subjects = universe_subjects(db, universe, student)
+        topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
+
+        rows: list[dict] = []
+        for q in qlist:
+            res, res_conflict = _derive_result(q)
+            rows.append({
+                "exam_part": part,
+                "subject_raw": q["subject"],
+                "question_no": q.get("no"),
+                "topic_raw": q["topic"],
+                "correct_answer": q.get("correct_answer"),
+                "student_answer": q.get("student_answer"),
+                "result": res,
+                "is_suspect": bool(q.get("_suspect")) or res_conflict or res is None,
+            })
+
+        stats = normalize_topics(db, rows, universe=universe,
+                                 subjects=subjects, topics=topics)
+        for k in stats_total:
+            stats_total[k] += stats[k]
+
+        # tür-evren çapraz kontrolü (oturum bazında)
+        matched = stats["alias"] + stats["auto"] + stats["ai"]
+        if rows:
+            tag = f" ({part.upper()})" if part else ""
+            checks.append({
+                "code": f"universe_match{':' + part if part else ''}",
+                "label": f"Tür ↔ müfredat uyumu{tag}",
+                "ok": matched >= max(1, len(rows) // 3),
+                "detail": f"{matched}/{len(rows)} soru müfredat konusuna eşlendi"
+                          + ("" if matched >= max(1, len(rows) // 3)
+                             else " — sınav türü yanlış seçilmiş olabilir, üstten değiştirip yeniden deneyin"),
+            })
+
+        # ders özet grupları (oturum etiketli)
+        penalty = section_penalty(section)
+        groups: dict[str, dict] = {}
+        for r in rows:
+            gname = r.get("subject_name") or r.get("subject_raw") or "Diğer"
+            g = groups.setdefault(gname, {
+                "name": gname, "part": part, "questions": 0,
+                "correct": 0, "wrong": 0, "blank": 0,
+            })
+            g["questions"] += 1
+            if r["result"] == EQ_RESULT_DOGRU:
+                g["correct"] += 1
+            elif r["result"] == EQ_RESULT_YANLIS:
+                g["wrong"] += 1
+            elif r["result"] == EQ_RESULT_BOS:
+                g["blank"] += 1
+        for g in groups.values():
+            g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
+            g["doc_net"] = (
+                doc_nets.get((part, normalize(g["name"])))
+                or doc_nets.get((None, normalize(g["name"])))
+            )
+            subjects_out.append(g)
+
+        for t in topics:
+            if t.id not in seen_topics:
+                seen_topics.add(t.id)
+                sname = next((s.name for s in subjects if s.id == t.subject_id), "?")
+                topic_choices.append({"id": t.id, "name": t.name,
+                                      "subject_name": sname})
+
+        parts_out.append({
+            "part": part,
+            "section": det["section"],
+            "section_label": EXAM_SECTION_LABELS[section],
+            "question_count": len(rows),
         })
+        all_rows.extend(rows)
 
-    stats = normalize_topics(db, rows, universe=universe, subjects=subjects, topics=topics)
-    checks = run_checks(merged, rows)
-
-    # tür-evren çapraz kontrolü: konuların çoğu eşleşmediyse tür yanlış olabilir
-    matched = stats["alias"] + stats["auto"] + stats["ai"]
-    if rows:
-        checks.append({
-            "code": "universe_match",
-            "label": "Tür ↔ müfredat uyumu",
-            "ok": matched >= max(1, len(rows) // 3),
-            "detail": f"{matched}/{len(rows)} soru müfredat konusuna eşlendi"
-                      + ("" if matched >= max(1, len(rows) // 3)
-                         else " — sınav türü yanlış seçilmiş olabilir, üstten değiştirip yeniden deneyin"),
-        })
-
-    # ders özet grupları (satırlardan; belge özeti varsa net'i yanına)
-    doc_net_by_key = {normalize(s["name"]): s.get("net")
-                      for s in merged.get("subjects") or []}
-    groups: dict[str, dict] = {}
-    for r in rows:
-        gname = r.get("subject_name") or r.get("subject_raw") or "Diğer"
-        g = groups.setdefault(gname, {"name": gname, "questions": 0, "correct": 0,
-                                      "wrong": 0, "blank": 0})
-        g["questions"] += 1
-        if r["result"] == EQ_RESULT_DOGRU:
-            g["correct"] += 1
-        elif r["result"] == EQ_RESULT_YANLIS:
-            g["wrong"] += 1
-        elif r["result"] == EQ_RESULT_BOS:
-            g["blank"] += 1
-    section = ExamSection(det["section"])
-    penalty = section_penalty(section)
-    subjects_out = []
-    for g in groups.values():
-        g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
-        g["doc_net"] = doc_net_by_key.get(normalize(g["name"]))
-        subjects_out.append(g)
+    checks = run_checks(merged, all_rows) + checks
 
     # mükerrer uyarısı (ad+tarih)
     dup_id = None
@@ -729,33 +874,27 @@ def analyze(
 
     # NOT: burada commit YOK — router, kredi bağlamıyla (consume_credits)
     # birlikte commit eder (alias hit_count artışları da onunla kalıcılaşır).
-    suspect_count = sum(1 for r in rows if r["is_suspect"])
-
-    # Önizlemede koçun konu SEÇEBİLMESİ için evrenin aday konuları
-    subj_names_all = {s.id: s.name for s in subjects}
-    topic_choices = [
-        {"id": t.id, "name": t.name,
-         "subject_name": subj_names_all.get(t.subject_id, "?")}
-        for t in topics
-    ]
+    suspect_count = sum(1 for r in all_rows if r["is_suspect"])
+    assert first_det is not None
 
     return {
         "title": merged.get("exam_title"),
         "exam_date": exam_date.isoformat() if exam_date else None,
         "grade_hint": merged.get("grade_hint"),
-        "universe": universe,
-        "section": det["section"],
-        "section_label": EXAM_SECTION_LABELS[section],
-        "scope": det["scope"],
-        "confidence": det["confidence"],
+        "universe": first_det["universe"],
+        "section": first_det["section"],
+        "section_label": EXAM_SECTION_LABELS[ExamSection(first_det["section"])],
+        "scope": first_det["scope"],
+        "confidence": first_det["confidence"],
+        "parts": parts_out,
         "subjects": subjects_out,
         "rows": [
             {k: v for k, v in r.items() if not k.startswith("_")}
-            for r in rows
+            for r in all_rows
         ],
         "checks": checks,
         "suspect_count": suspect_count,
-        "match_stats": stats,
+        "match_stats": stats_total,
         "duplicate_exam_id": dup_id,
         "score_info": merged.get("score_info"),
         "topic_choices": topic_choices,

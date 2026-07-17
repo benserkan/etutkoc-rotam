@@ -44,6 +44,12 @@ KURALLAR (çok önemli):
 - Belgede ders bazlı ÖZET tablosu (soru/doğru/yanlış/boş/net) varsa "subjects" içine aynen yaz; yoksa boş liste.
 - Puan/sıralama/katılımcı bilgisi varsa "score_info" içine yaz; yoksa null.
 - Sınav adı, tarihi, öğrencinin sınıfı (örn. "12-D" → 12) belgede varsa yaz.
+- ÇOK ÖNEMLİ — BİRLEŞİK BELGELER: Bazı belgeler AYNI dosyada İKİ AYRI sınav
+  oturumu içerir (örn. hem TYT hem AYT bölümleri; "TG" kitapçıkları). Belge
+  bölüm başlıklarından hangi sorunun hangi oturuma ait olduğu anlaşılıyorsa her
+  soruda "exam_part" alanına "tyt" veya "ayt" yaz (ders özetlerinde de "part").
+  Belge TEK sınavsa exam_part=null bırak. Oturumu ASLA tahmin etme — yalnız
+  belgede açıkça yazıyorsa etiketle.
 
 YALNIZ şu JSON nesnesini döndür:
 {
@@ -52,10 +58,10 @@ YALNIZ şu JSON nesnesini döndür:
   "grade_hint": 5-12 arası tam sayı | null,
   "type_hints": ["TYT","AYT","LGS","MSÜ","BRANŞ","OKUL", sınıf ibaresi vb. belgede geçen tür ipuçları],
   "subjects": [
-    {"name": "ders adı", "questions": int|null, "correct": int|null, "wrong": int|null, "blank": int|null, "net": float|null}
+    {"name": "ders adı", "part": "tyt"|"ayt"|null, "questions": int|null, "correct": int|null, "wrong": int|null, "blank": int|null, "net": float|null}
   ],
   "questions": [
-    {"subject": "ders adı", "no": int|null, "topic": "konu adı (aynen)", "correct_answer": "A-E"|null, "student_answer": "A-E"|null, "result": "dogru"|"yanlis"|"bos"|null}
+    {"subject": "ders adı", "part": "tyt"|"ayt"|null, "no": int|null, "topic": "konu adı (aynen)", "correct_answer": "A-E"|null, "student_answer": "A-E"|null, "result": "dogru"|"yanlis"|"bos"|null}
   ],
   "score_info": {"score": float|null, "rank_overall": int|null, "participants": int|null, "extra": "diğer puan/sıralama notları"|null} | null
 }"""
@@ -124,6 +130,10 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
     if isinstance(th, list):
         out["type_hints"] = [str(x).strip() for x in th if str(x).strip()][:10]
 
+    def _part(v: Any) -> str | None:
+        p = str(v).strip().lower() if v else None
+        return p if p in ("tyt", "ayt") else None
+
     subs = data.get("subjects")
     if isinstance(subs, list):
         for s in subs:
@@ -145,6 +155,7 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
                 net = None
             out["subjects"].append({
                 "name": str(s["name"]).strip()[:120],
+                "part": _part(s.get("part")),
                 "questions": _i("questions"),
                 "correct": _i("correct"),
                 "wrong": _i("wrong"),
@@ -172,6 +183,7 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
                 res = None
             out["questions"].append({
                 "subject": subject,
+                "part": _part(q.get("part")),
                 "no": no,
                 "topic": topic,
                 "correct_answer": _clean_answer(q.get("correct_answer")),

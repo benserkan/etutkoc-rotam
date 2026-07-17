@@ -103,11 +103,26 @@ function ImportFlow({
   const [draft, setDraft] = React.useState<ExamImportDraft | null>(null);
   const [rows, setRows] = React.useState<EditRow[]>([]);
   const [title, setTitle] = React.useState("");
+  const [titleTouched, setTitleTouched] = React.useState(false);
   const [examDate, setExamDate] = React.useState("");
   const [section, setSection] = React.useState("");
+  // Birleşik belge (TG kitapçığı): seçili oturum — yalnız o oturumun soruları
+  // kaydedilir; koç ikinci oturum için tekrar "kaydet" yapar (analiz tek, kredi tek).
+  const [selectedPart, setSelectedPart] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<ExamImportConfirmResult | null>(null);
   const [needForce, setNeedForce] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
+
+  const multi = (draft?.parts.length ?? 0) > 1;
+
+  function autoTitle(base: string | null, d: ExamImportDraft, part: string | null): string {
+    // Birleşik belgede oturum adı eklenir — iki oturum ayrı kayıt olduğundan
+    // aynı ad+tarih mükerrer uyarısına takılmasın.
+    const t = base ?? "";
+    if (d.parts.length <= 1) return t;
+    const p = d.parts.find((x) => x.part === part);
+    return p ? `${t} — ${p.section_label}` : t;
+  }
 
   async function analyze(f: File) {
     setFile(f);
@@ -116,17 +131,28 @@ function ImportFlow({
       const d = studentId != null
         ? await teacherAnalyzeExamPdf(studentId, f)
         : await studentAnalyzeExamPdf(f);
+      const firstPart = d.parts[0]?.part ?? null;
       setDraft(d);
       setRows(d.rows.map((r) => ({ ...r, manually_edited: false })));
-      setTitle(d.title ?? "");
+      setSelectedPart(firstPart);
+      setTitle(autoTitle(d.title, d, firstPart));
+      setTitleTouched(false);
       setExamDate(d.exam_date ?? "");
-      setSection(d.section);
+      setSection(d.parts[0]?.section ?? d.section);
       setStep("preview");
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : "Belge analiz edilemedi.";
       toast.error("Analiz başarısız", { description: msg });
       setStep("pick");
     }
+  }
+
+  function switchPart(part: string | null) {
+    if (!draft) return;
+    setSelectedPart(part);
+    const p = draft.parts.find((x) => x.part === part);
+    if (p) setSection(p.section);
+    if (!titleTouched) setTitle(autoTitle(draft.title, draft, part));
   }
 
   function editRow(idx: number, patch: Partial<EditRow>) {
@@ -137,9 +163,15 @@ function ImportFlow({
     ));
   }
 
+  // Birleşik belgede yalnız SEÇİLİ oturumun satırları görünür/kaydedilir
+  const activeRows = React.useMemo(
+    () => (multi ? rows.filter((r) => r.exam_part === selectedPart) : rows),
+    [rows, multi, selectedPart],
+  );
+
   async function save(force: boolean) {
     if (!draft) return;
-    const missing = rows.filter((r) => r.result == null).length;
+    const missing = activeRows.filter((r) => r.result == null).length;
     if (missing > 0) {
       toast.error(`${missing} sorunun sonucu boş`, {
         description: "Sarı işaretli satırlarda Doğru/Yanlış/Boş seçimi yapın.",
@@ -159,7 +191,7 @@ function ImportFlow({
       grade_hint: draft.grade_hint,
       score_info: draft.score_info,
       force,
-      rows: rows.map((r): ConfirmRow => ({
+      rows: activeRows.map((r): ConfirmRow => ({
         subject_raw: r.subject_raw,
         question_no: r.question_no,
         topic_raw: r.topic_raw,
@@ -190,17 +222,17 @@ function ImportFlow({
     }
   }
 
-  // canlı toplamlar (düzeltmeler anında yansır)
+  // canlı toplamlar (düzeltmeler anında yansır; birleşik belgede seçili oturum)
   const tally = React.useMemo(() => {
     const t = { dogru: 0, yanlis: 0, bos: 0, eksik: 0 };
-    for (const r of rows) {
+    for (const r of activeRows) {
       if (r.result) t[r.result] += 1;
       else t.eksik += 1;
     }
     const penalty = section === "lgs" ? 3 : 4;
     const net = Math.max(t.dogru - t.yanlis / penalty, 0);
     return { ...t, net: Math.round(net * 100) / 100 };
-  }, [rows, section]);
+  }, [activeRows, section]);
 
   return (
     <Dialog open onOpenChange={(v) => { if (!v && step !== "analyzing" && step !== "saving") onClose(); }}>
@@ -244,13 +276,16 @@ function ImportFlow({
             <PreviewStep
               draft={draft}
               rows={rows}
+              selectedPart={selectedPart}
+              multi={multi}
               title={title}
               examDate={examDate}
               section={section}
               needForce={needForce}
-              onTitle={setTitle}
+              onTitle={(v) => { setTitle(v); setTitleTouched(true); }}
               onDate={setExamDate}
               onSection={setSection}
+              onSwitchPart={switchPart}
               onEditRow={editRow}
             />
           ) : null}
@@ -354,6 +389,8 @@ function PickStep({
 function PreviewStep({
   draft,
   rows,
+  selectedPart,
+  multi,
   title,
   examDate,
   section,
@@ -361,10 +398,13 @@ function PreviewStep({
   onTitle,
   onDate,
   onSection,
+  onSwitchPart,
   onEditRow,
 }: {
   draft: ExamImportDraft;
   rows: EditRow[];
+  selectedPart: string | null;
+  multi: boolean;
   title: string;
   examDate: string;
   section: string;
@@ -372,21 +412,24 @@ function PreviewStep({
   onTitle: (v: string) => void;
   onDate: (v: string) => void;
   onSection: (v: string) => void;
+  onSwitchPart: (part: string | null) => void;
   onEditRow: (idx: number, patch: Partial<EditRow>) => void;
 }) {
   const failing = draft.checks.filter((c) => !c.ok);
   const stats = draft.match_stats;
 
-  // satırlar ders grubuna göre (orijinal indeks korunur — düzenleme için)
+  // satırlar ders grubuna göre (orijinal indeks korunur — düzenleme için);
+  // birleşik belgede yalnız seçili oturumun satırları
   const groups = React.useMemo(() => {
     const out = new Map<string, { idx: number; row: EditRow }[]>();
     rows.forEach((row, idx) => {
+      if (multi && row.exam_part !== selectedPart) return;
       const key = row.subject_name ?? row.subject_raw ?? "Diğer";
       if (!out.has(key)) out.set(key, []);
       out.get(key)!.push({ idx, row });
     });
     return Array.from(out.entries());
-  }, [rows]);
+  }, [rows, multi, selectedPart]);
 
   // konu seçici — ders adına göre gruplu optgroup
   const topicGroups = React.useMemo(() => {
@@ -400,6 +443,34 @@ function PreviewStep({
 
   return (
     <div className="space-y-4">
+      {/* Birleşik belge (TG kitapçığı) — oturum seçici */}
+      {multi ? (
+        <div className="rounded-md border border-cyan-200 bg-cyan-50 px-3 py-2.5 dark:border-cyan-500/30 dark:bg-cyan-500/10">
+          <div className="text-xs font-medium text-cyan-900 dark:text-cyan-200">
+            Bu belgede <b>{draft.parts.length} sınav oturumu</b> var — hangisini
+            kaydedeceğini seç (diğerini sonra aynı belgeyi seçip tekrar
+            kaydedebilirsin; analiz tek yapıldı, tekrar kredi düşmez):
+          </div>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {draft.parts.map((p) => (
+              <button
+                key={p.part ?? "tek"}
+                type="button"
+                onClick={() => onSwitchPart(p.part)}
+                className={cn(
+                  "rounded-full border px-3 py-1 text-xs font-semibold transition",
+                  selectedPart === p.part
+                    ? "border-cyan-600 bg-cyan-600 text-white"
+                    : "border-cyan-300 bg-card text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300",
+                )}
+              >
+                {p.section_label} · {p.question_count} soru
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
       {/* Kimlik + tür */}
       <div className="grid gap-2 sm:grid-cols-[1fr_auto_auto]">
         <input

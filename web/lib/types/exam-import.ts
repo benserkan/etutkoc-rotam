@@ -6,6 +6,7 @@ export type ImportTopicSource = "alias" | "auto" | "ai" | "none";
 export type ImportResultValue = "dogru" | "yanlis" | "bos";
 
 export interface ImportDraftRow {
+  exam_part: string | null;
   subject_raw: string | null;
   subject_id: number | null;
   subject_name: string | null;
@@ -22,12 +23,20 @@ export interface ImportDraftRow {
 
 export interface ImportDraftSubject {
   name: string;
+  part: string | null;
   questions: number;
   correct: number;
   wrong: number;
   blank: number;
   net: number;
   doc_net: number | null;
+}
+
+export interface ImportPart {
+  part: string | null;
+  section: string;
+  section_label: string;
+  question_count: number;
 }
 
 export interface ImportCheck {
@@ -64,6 +73,7 @@ export interface ExamImportDraft {
   section_label: string;
   scope: "full" | "brans";
   confidence: "high" | "medium" | "low";
+  parts: ImportPart[];
   subjects: ImportDraftSubject[];
   rows: ImportDraftRow[];
   checks: ImportCheck[];
