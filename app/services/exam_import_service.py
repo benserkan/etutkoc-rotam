@@ -468,8 +468,16 @@ def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
             if q1 is None or q2 is None:
                 suspect = True  # yalnız bir okumada var
             else:
-                if normalize(q1["topic"]) != normalize(q2["topic"]):
-                    suspect = True
+                t1, t2 = normalize(q1["topic"]), normalize(q2["topic"])
+                if t1 != t2:
+                    if t1.startswith(t2) or t2.startswith(t1):
+                        # iki okuma kısaltılmış etiketi FARKLI yerden kesmiş
+                        # ("İlk ve Orta Çağlarda Türk D…" vs "…Tü…") — çelişki
+                        # değil; UZUN olanı tut (normalizasyon şansı artar).
+                        if len(q2["topic"]) > len(q1["topic"]):
+                            base["topic"] = q2["topic"]
+                    else:
+                        suspect = True
                 guard_fired = False
                 for f in ("correct_answer", "student_answer", "result"):
                     v1, v2 = q1.get(f), q2.get(f)
