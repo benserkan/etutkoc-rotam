@@ -657,9 +657,13 @@ def main() -> int:
               f"ayt={ayt_mat.get('topic_id')}/{ayt_mat.get('subject_name')}")
         edb = next((x for x in rows25 if x["subject_raw"] == "Edebiyat"
                     and x["question_no"] == 1), {})
-        check("25d. boş-uydurma koruması: bir okuma ÖC=DC dedi → BOŞ kalır + şüpheli",
+        guard_chk = next((c for c in dcm.get("checks", [])
+                          if c["code"] == "blank_answer_guard"), None)
+        check("25d. boş-uydurma koruması: BOŞ kalır + satır sarı DEĞİL + TOPLU uyarı",
               edb.get("result") == "bos" and edb.get("student_answer") is None
-              and edb.get("is_suspect") is True, str(edb)[:180])
+              and edb.get("is_suspect") is False
+              and guard_chk is not None and guard_chk["ok"] is False,
+              f"edb={str(edb)[:120]} guard={guard_chk}")
         mat_sus = [x for x in rows25 if x["subject_raw"] == "Matematik" and x["is_suspect"]]
         check("25e. oturumlar arası aynı-numara çakışması ŞÜPHELİ üretmedi",
               len(mat_sus) == 0, f"{len(mat_sus)} şüpheli")

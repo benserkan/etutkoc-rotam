@@ -83,6 +83,9 @@ _SUBJECT_ALIASES: dict[str, str] = {
     "yabanci dil": "ingilizce",
     "matematik geometri": "matematik",
     "fen": "fen bilimleri",
+    # AYT sınav dersi "AYT Felsefe Grubu"; belgeler kısaca "Felsefe" der.
+    # TYT'de de simetrik güvenli: "TYT Felsefe" adı da aynı kanona iner.
+    "felsefe": "felsefe grubu",
     # LGS belgeleri "Tarih" der; sistem dersi "T.C. İnkılap Tarihi ve Atatürkçülük".
     # TYT evreninde de güvenli: "TYT Tarih" adı da bu kanona iner (simetrik).
     "tarih": "t c inkilap tarihi ataturkculuk",
@@ -455,22 +458,28 @@ def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
             else:
                 if normalize(q1["topic"]) != normalize(q2["topic"]):
                     suspect = True
+                guard_fired = False
                 for f in ("correct_answer", "student_answer", "result"):
                     v1, v2 = q1.get(f), q2.get(f)
                     if v1 == v2:
                         continue
-                    suspect = True
                     filled = v1 if v1 is not None else v2
                     # HALÜSİNASYON KORUMASI: bir okuma ÖC'yi boş görmüş, diğeri
                     # DC'nin AYNISINI yazmışsa → vision DC sütununu ÖC sanmış
                     # olabilir; BOŞ kabul edilir (boş soru "doğru" sayılıp neti
-                    # şişirmesin — sözel bölümü boş bırakan sayısal öğrencide
-                    # yaşandı). Gerçek cevabı kaçırma riski şüpheli işaretiyle
-                    # önizlemede telafi edilir.
+                    # şişirmesin). Sistematik ve kendi kendini düzelten bir
+                    # durum olduğundan satır ŞÜPHELİ boyanmaz (80 sözel satırın
+                    # hepsi sarıya kesiyordu → alarm körlüğü); bunun yerine
+                    # analyze toplu bir kontrol uyarısı üretir.
                     if (f == "student_answer" and (v1 is None or v2 is None)
                             and filled == base.get("correct_answer")):
                         base[f] = None
+                        guard_fired = True
+                        base["_guard_fix"] = True
                         continue
+                    if f == "result" and guard_fired:
+                        continue  # sonuç zaten DC/ÖC'den türetilecek — gürültü yapma
+                    suspect = True
                     base[f] = filled  # boş-olmayan değeri tercih et
             base["_suspect"] = suspect
             if suspect:
@@ -755,6 +764,7 @@ def analyze(
     stats_total = {"alias": 0, "auto": 0, "ai": 0, "none": 0}
     checks: list[dict] = []
     first_det: dict | None = None
+    guard_total = 0
 
     for part, qlist in part_defs:
         # oturum tespiti: part etiketi varsa evren KESİN; AYT alt-türü cevaplanan
@@ -787,6 +797,11 @@ def analyze(
         rows: list[dict] = []
         for q in qlist:
             res, res_conflict = _derive_result(q)
+            # guard'lı satırda sonuç zaten DC/ÖC türetmesiyle düzeltildi —
+            # sembol çelişkisi şüpheli saymaz (toplu uyarı ayrıca verilir)
+            suspect = bool(q.get("_suspect")) or res is None
+            if res_conflict and not q.get("_guard_fix"):
+                suspect = True
             rows.append({
                 "exam_part": part,
                 "subject_raw": q["subject"],
@@ -795,8 +810,10 @@ def analyze(
                 "correct_answer": q.get("correct_answer"),
                 "student_answer": q.get("student_answer"),
                 "result": res,
-                "is_suspect": bool(q.get("_suspect")) or res_conflict or res is None,
+                "is_suspect": suspect,
             })
+        guard_fixes = sum(1 for q in qlist if q.get("_guard_fix"))
+        guard_total += guard_fixes
 
         stats = normalize_topics(db, rows, universe=universe,
                                  subjects=subjects, topics=topics)
@@ -856,6 +873,17 @@ def analyze(
         all_rows.extend(rows)
 
     checks = run_checks(merged, all_rows) + checks
+    if guard_total:
+        checks.append({
+            "code": "blank_answer_guard",
+            "label": "Boş cevap koruması",
+            "ok": False,
+            "detail": (
+                f"{guard_total} soruda iki okuma öğrenci cevabında çelişti "
+                "(biri boş, diğeri doğru cevapla aynı) — bu sorular BOŞ kabul "
+                "edildi. Öğrenci o bölümü gerçekten çözdüyse satırları elle düzelt."
+            ),
+        })
 
     # mükerrer uyarısı (ad+tarih)
     dup_id = None
