@@ -220,6 +220,53 @@ def build_combined_read() -> dict:
     }
 
 
+def build_phantom_parts_read() -> dict:
+    """TEK AYT belgesi ama başlıkta iki sınav adı anılıyor → Gemini'nin sayısal
+    bölümü "tyt", sözeli "ayt" diye HAYALİ oturumlara böldüğü gerçek Berra
+    ÖZDEBİR vakası (AYT-18 / özdebir-özel-ayt-2026.pdf). TYT tarafında Türkçe
+    yok → etiketler inandırıcı değil; servis silmeli (tek oturum + AYT tespiti)."""
+    return {
+        "exam_title": f"{PFX} AYT: ÖZDEBİR ÖZEL DERECE AYT-1 TYT: TYT-19",
+        "exam_date": "2026-04-29",
+        "grade_hint": 12,
+        "type_hints": ["AYT", "TYT"],
+        "subjects": [
+            # özet tablo da hayalî "tyt" etiketi taşıyor — o da temizlenmeli
+            {"name": "Matematik", "part": "tyt", "questions": 4, "correct": 3,
+             "wrong": 1, "blank": 0, "net": 2.75},
+        ],
+        "questions": [
+            # sayısal bölüm — HAYALİ "tyt" etiketi (gerçekte AYT-MAT/AYT-FEN)
+            {"subject": "Matematik", "part": "tyt", "no": 1, "topic": "Trigonometri",
+             "correct_answer": "A", "student_answer": "A", "result": "dogru"},
+            {"subject": "Matematik", "part": "tyt", "no": 2, "topic": "Limit ve Süreklilik",
+             "correct_answer": "B", "student_answer": "C", "result": "yanlis"},
+            {"subject": "Matematik", "part": "tyt", "no": 3, "topic": "Trigonometri",
+             "correct_answer": "C", "student_answer": "C", "result": "dogru"},
+            {"subject": "Matematik", "part": "tyt", "no": 4, "topic": "Belirsiz İntegral",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            {"subject": "Fizik", "part": "tyt", "no": 1, "topic": "Vektörler",
+             "correct_answer": "B", "student_answer": "B", "result": "dogru"},
+            {"subject": "Fizik", "part": "tyt", "no": 2, "topic": "İtme ve Momentum",
+             "correct_answer": "E", "student_answer": "A", "result": "yanlis"},
+            {"subject": "Fizik", "part": "tyt", "no": 3, "topic": "Vektörler",
+             "correct_answer": "D", "student_answer": "D", "result": "dogru"},
+            # sözel bölüm — "ayt" etiketi; sayısal öğrenci BOŞ bıraktı
+            {"subject": "Edebiyat", "part": "ayt", "no": 1, "topic": "Divan Edebiyatı",
+             "correct_answer": "C", "student_answer": None, "result": "bos"},
+            {"subject": "Edebiyat", "part": "ayt", "no": 2, "topic": "Halk Edebiyatı",
+             "correct_answer": "A", "student_answer": None, "result": "bos"},
+            {"subject": "Edebiyat", "part": "ayt", "no": 3, "topic": "Edebi Türler",
+             "correct_answer": "B", "student_answer": None, "result": "bos"},
+            {"subject": "Tarih", "part": "ayt", "no": 1, "topic": "Milli Mücadele",
+             "correct_answer": "D", "student_answer": None, "result": "bos"},
+            {"subject": "Tarih", "part": "ayt", "no": 2, "topic": "Dünya Gücü Osmanlı",
+             "correct_answer": "E", "student_answer": None, "result": "bos"},
+        ],
+        "score_info": None,
+    }
+
+
 def main() -> int:
     print(f"\n=== Deneme PDF içe aktarma smoke — {PFX} ===\n")
     ids: dict = {}
@@ -697,6 +744,38 @@ def main() -> int:
               r.status_code == 200 and d25.get("section") == "ayt_say"
               and d25.get("question_count") == 9 and d25.get("net") == 3.5
               and d25.get("total_blank") == 3, r.text[:250])
+
+        # --- 26) HAYALİ OTURUM ETİKETİ (tek AYT belgesi, başlıkta iki sınav adı) ---
+        # Gerçek Berra ÖZDEBİR vakası: Gemini sayısal bölümü "tyt" diye
+        # etiketledi; TYT tarafında Türkçe olmadığından etiketler İNANDIRICI
+        # DEĞİL → servis siler, belge TEK AYT oturumu olarak işlenir.
+        read_behavior["read"] = build_phantom_parts_read()
+        ai_label_map.clear()
+        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        d26 = r.json() if r.status_code == 200 else {}
+        parts26 = d26.get("parts", [])
+        check("26a. hayalet oturum bölünmesi YOK (tek oturum, part=None)",
+              r.status_code == 200 and len(parts26) == 1
+              and parts26[0]["part"] is None, r.text[:200])
+        check("26b. tespit AYT / Sayısal (TYT DEĞİL — cevaplanan bölümlerden)",
+              d26.get("universe") == "ayt" and d26.get("section") == "ayt_say",
+              f"{d26.get('universe')}/{d26.get('section')}")
+        rows26 = d26.get("rows", [])
+        parts_set26 = {x["exam_part"] for x in rows26}
+        mat26 = next((x for x in rows26 if x["subject_raw"] == "Matematik"
+                      and x["question_no"] == 1), {})
+        check("26c. 'tyt' etiketli satırlar AYT evreninde normalize edildi",
+              parts_set26 == {None}
+              and mat26.get("topic_id") == ids["trigonometri"]
+              and mat26.get("subject_name") == "AYT Matematik",
+              f"parts={parts_set26} mat={mat26.get('topic_id')}"
+              f"/{mat26.get('subject_name')}")
+        # özet tablodaki hayalî part da temizlendi → çapraz sağlama hizalı çalıştı
+        sc26 = next((c for c in d26.get("checks", [])
+                     if c["code"].startswith("subject_counts:")
+                     and "matematik" in c["code"]), None)
+        check("26d. özet ↔ satır çapraz sağlaması part'sız hizalandı (Matematik OK)",
+              sc26 is not None and sc26["ok"] is True, str(sc26)[:150])
 
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double

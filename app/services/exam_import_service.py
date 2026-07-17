@@ -415,6 +415,43 @@ def _assign_topic(row: dict, tp: Topic, subj_by_id: dict[int, Subject], *, sourc
 # ============================================================================
 
 
+def _sanitize_parts(read: dict) -> None:
+    """Gemini'nin oturum (part) etiketlerini deterministik doğrula; inandırıcı
+    değilse SİL (in-place).
+
+    Gerçek birleşik TYT+AYT belgesinde TYT oturumunun alameti farikası TÜRKÇE
+    dersidir (TYT'nin 40 soruluk ana dersi; her TYT'de vardır) — Edebiyat ise
+    YALNIZ AYT'de olur. Sınav ADINDA iki sınavın anılması ("Sınav Adı: AYT:
+    ÖZDEBİR TG AYT-4 TYT: TYT-19" — okul aynı hafta sonu iki sınav yapmış,
+    belge yalnız AYT'nin sonucu) belgeyi birleşik YAPMAZ; Gemini bu tuzağa
+    düşüp tek AYT belgesini hayali iki oturuma bölebiliyor (Berra ÖZDEBİR AYT
+    vakası: sayısal 80 satır "tyt" etiketi aldı → netler TYT diye kaydediliyordu).
+    Etiketler inandırıcı değilse tümü silinir → tek oturum + genel tespit
+    (Edebiyat sinyali doğru şekilde AYT der). MERGE'DEN ÖNCE uygulanır ki iki
+    okuma farklı hayal kurduysa satır hizalama da bozulmasın.
+    """
+    qs = read.get("questions") or []
+    tyt_keys = {_subject_key(q["subject"]) for q in qs if q.get("part") == "tyt"}
+    ayt_keys = {_subject_key(q["subject"]) for q in qs if q.get("part") == "ayt"}
+    if not tyt_keys or not ayt_keys:
+        return  # tek tür etiket / etiketsiz — birleşik iddiası yok, dokunma
+
+    def _has(keys: set[str], *needles: str) -> bool:
+        return any(n in k for k in keys for n in needles)
+
+    plausible = (
+        _has(tyt_keys, "turkce")            # TYT oturumu Türkçe içermek zorunda
+        and not _has(tyt_keys, "edebiyat")  # Edebiyat TYT'de olmaz
+        and not _has(ayt_keys, "turkce")    # Türkçe AYT'de olmaz
+    )
+    if plausible:
+        return
+    for q in qs:
+        q["part"] = None
+    for s in read.get("subjects") or []:
+        s["part"] = None
+
+
 def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
     """İki bağımsız okumayı birleştir; uyuşmayan hücre → satır 'şüpheli'.
 
@@ -622,6 +659,11 @@ def detect_universe(read: dict, student: User) -> dict:
         votes[EXAM_UNIVERSE_AYT] += 2
     if 100 <= n_q <= 130 and n_subj >= 6 and not has_edb:
         votes[EXAM_UNIVERSE_TYT] += 1
+    elif 140 <= n_q <= 170 and has_edb:
+        # tam AYT kitapçığı: 4 test × 40 soru = 160 satır (EDE-SOS/SOS-2/
+        # AYT-MAT/AYT-FEN) — başlık iki anahtar kelimeyle nötrlense de yapı
+        # + Edebiyat birlikte AYT'yi yüksek güvene taşır
+        votes[EXAM_UNIVERSE_AYT] += 1
     elif 70 <= n_q <= 95 and n_subj >= 5 and grade is not None and grade <= 8:
         votes[EXAM_UNIVERSE_LGS] += 1
     elif 60 <= n_q <= 90 and n_subj >= 2:
@@ -740,6 +782,8 @@ def analyze(
     """
     b64 = base64.b64encode(pdf_bytes).decode("ascii")
     r1, r2 = ai_exam_import.read_exam_pdf_double(b64)
+    _sanitize_parts(r1)
+    _sanitize_parts(r2)
     merged, _ = merge_reads(r1, r2)
 
     # --- BİRLEŞİK BELGE (TG kitapçığı): sorular oturumlara bölünür -----------

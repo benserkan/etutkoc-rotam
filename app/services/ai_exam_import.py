@@ -46,11 +46,21 @@ KURALLAR (çok önemli):
 - Puan/sıralama/katılımcı bilgisi varsa "score_info" içine yaz; yoksa null.
 - Sınav adı, tarihi, öğrencinin sınıfı (örn. "12-D" → 12) belgede varsa yaz.
 - ÇOK ÖNEMLİ — BİRLEŞİK BELGELER: Bazı belgeler AYNI dosyada İKİ AYRI sınav
-  oturumu içerir (örn. hem TYT hem AYT bölümleri; "TG" kitapçıkları). Belge
-  bölüm başlıklarından hangi sorunun hangi oturuma ait olduğu anlaşılıyorsa her
-  soruda "exam_part" alanına "tyt" veya "ayt" yaz (ders özetlerinde de "part").
-  Belge TEK sınavsa exam_part=null bırak. Oturumu ASLA tahmin etme — yalnız
-  belgede açıkça yazıyorsa etiketle.
+  oturumunun SORU SATIRLARINI içerir (örn. hem TYT hem AYT bölümleri olan "TG"
+  kitapçıkları). YALNIZ böyle bir belgede her soruda "exam_part" alanına "tyt"
+  veya "ayt" yaz (ders özetlerinde de "part"). Belge TEK sınavsa exam_part=null
+  bırak. Oturumu ASLA tahmin etme — yalnız belgede açıkça yazıyorsa etiketle.
+  TUZAKLARA DİKKAT:
+  * Sınav ADINDA iki sınavın anılması (örn. "Sınav Adı: AYT: ÖZDEBİR TG AYT-4
+    TYT: TYT-19") belgeyi birleşik YAPMAZ — okul o hafta iki sınav yapmıştır ama
+    bu belge yalnız BİRİNİN sonucudur. Soru satırları tek sınava aitse tüm
+    exam_part alanlarını null bırak.
+  * AYT belgelerinde Edebiyat/Tarih/Coğrafya/Felsefe/Din Kültürü bölümleri
+    (EDE-SOS, SOS-2 gibi kodlar) AYT'NİN PARÇASIDIR — bunları "tyt" olarak
+    etiketleme. Matematik/Fizik/Kimya/Biyoloji bölümleri (AYT-MAT, AYT-FEN
+    kodları) da AYT'dir — "tyt" etiketleme.
+  * Gerçek bir TYT oturumunun işareti: "Türkçe" dersi ve TYT kodlu bölüm
+    başlıklarının belgede AYRICA soru satırlarıyla bulunmasıdır.
 
 YALNIZ şu JSON nesnesini döndür:
 {

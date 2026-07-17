@@ -77,7 +77,9 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   - **K12 formatı (Yiğit 30.03.2026.pdf, 90 soru):** konu yerine MEB kazanım
     cümleleri → kapalı-küme AI %98 eşledi. "Din K.ve A.B."/"Tarih"→İnkılap ders
     eşanlamları + virgüllü ondalık ("14,67"). Prod doğrulandı: 90/90, şüpheli 0.
-  - **Birleşik TG kitapçığı (Berra özdebir-ayt-16-02, 160 soru):** başlıkta hem
+  - **Birleşik TG kitapçığı (Berra özdebir-ayt-16-02, 160 soru) (⚠️ birleşik-
+    kitapçık VARSAYIMI YANLIŞTI — 2026-07-17 düzeltmesi bir alttaki maddede):**
+    başlıkta hem
     TYT hem AYT → tespit şaşıyor + oturumların Matematik'leri üst üste binip
     hepsi şüpheli + bir okumanın boş ÖC'ye DC yazması "boşa doğru" üretiyordu.
     Çözümler: Gemini `exam_part` etiketi + oturum başına ayrı evren/normalizasyon
@@ -94,6 +96,34 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
     Smoke **48/48**. Bilinen boşluk: AYT Edebiyat'ın dil-anlatım soruları
     ("Sözcükte Anlam" vb.) AYT taksonomisinde yok → eşleşmeden kalır (Faz 2'de
     TYT Türkçe köprüsü düşünülebilir).
+  - **Hayalet oturum bölünmesi düzeltmesi (2026-07-17, Berra ÖZDEBİR AYT —
+    ÜSTTEKİ VARSAYIMIN TASHİHİ, CANLI):** 16.02 belgesi "birleşik TYT+AYT
+    kitapçığı" DEĞİLMİŞ — PDF metni doğrudan okununca görüldü: TEK AYT sınavı
+    (160 satır = EDE-SOS 40 + SOS-2 40 + AYT-MAT 40 + AYT-FEN 40; DERS ANALİZİ
+    yalnız AYT dersleri, TOPLAM 80 cevaplanan). Başlık "AYT: ÖZDEBİR TG AYT-4
+    TYT: TYT-19" yalnız aynı hafta sonunun TYT kitapçığının ADINI anıyor. Gemini
+    bu tuzağa düşüp sayısal 80 satırı "tyt" etiketliyor, `analyze` de etiketlere
+    körü körüne güvenip (`n_tyt>=5 & n_ayt>=5 → multi`) part="tyt" oturumuna
+    KESİN TYT evreni atıyordu → koç AYT netlerini (45D 14Y 21B · 41.5) "TYT"
+    önizlemesinde görüyordu (29.04 özdebir-özel-ayt-2026.pdf aynı tuzak).
+    Çözüm 3 katman: (1) **`_sanitize_parts`** (asıl güvence; merge'den ÖNCE her
+    okumaya): gerçek TYT oturumunun alameti farikası TÜRKÇE dersi — "tyt"
+    tarafında Türkçe yoksa VEYA Edebiyat varsa VEYA "ayt" tarafında Türkçe varsa
+    TÜM part etiketleri silinir → tek oturum + genel tespit (Edebiyat sinyali
+    AYT der); pre-merge çalıştığı için iki okumanın farklı hayal kurması satır
+    hizalamayı da bozmaz · (2) prompt tuzak uyarıları (başlıkta iki sınav adı ≠
+    birleşik; EDE-SOS/SOS-2/AYT-MAT/AYT-FEN = AYT'nin parçası; gerçek TYT
+    oturumu = Türkçe dersi + TYT kodlu bölümler AYRICA soru satırlarıyla) ·
+    (3) `detect_universe` yapı oyu: 140-170 satır + Edebiyat → AYT +1 (tam AYT
+    kitapçığı → güven high, "emin olamadım" bandı çıkmaz). Oturum seçici GERÇEK
+    birleşik belgeler için aynen durur (Türkçe'li TYT tarafı guard'ı geçer —
+    smoke 25a-g korunuyor). Smoke **52/52** (26a-d yeni: hayalet bölünme yok +
+    AYT_SAY + AYT evreninde normalize + özet çapraz sağlama hizalı). GERÇEK
+    Gemini doğrulaması İKİ PDF'te de: tespit AYT (Sayısal)/high · tek oturum ·
+    şüpheli 0 · netler belgeyle birebir (16.02: Mat+Geo 25.75 ✓ Fiz 3.25 ✓ Kim
+    5.75 ✓ Biyo 6.75 ✓ · 29.04: 22.75/4.00/6.50/3.75 ✓, 134/160 eşleşme —
+    kalanların çoğu bilinen AYT-Edebiyat dil-anlatım boşluğu). teacher_exams 18
+    GREEN. Frontend değişikliği YOK.
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı
