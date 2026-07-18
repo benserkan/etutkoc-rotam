@@ -735,6 +735,12 @@ def detect_universe(read: dict, student: User) -> dict:
     subj_keys = {normalize(q["subject"]) for q in read["questions"]}
     n_subj = len(subj_keys)
     grade = read.get("grade_hint") or student.grade_level
+    # okul-müfredat sınavı sinyali (sınıf ipucu / başlık / öğrenci 5-10):
+    # 9-10 belgeleri Türkçe testini "Türk Dili ve Edebiyatı" diye yazabilir —
+    # bu durumda Edebiyat-varlığı AYT kanıtı DEĞİLDİR (4K GİS-1 vakası:
+    # belge AYT sanılıp karma havuz devreye girmiyordu, 2026-07-18).
+    school_grade = _school_grade_signal(
+        read.get("exam_title"), read.get("grade_hint"), student)
 
     votes: dict[str, int] = {u: 0 for u in EXAM_UNIVERSES}
     # 1) anahtar kelime — başlıkta HEM TYT HEM AYT geçiyorsa ("ÖZDEBİR TG AYT-4
@@ -750,12 +756,16 @@ def detect_universe(read: dict, student: User) -> dict:
         votes[EXAM_UNIVERSE_LGS] += 2
     if re.search(r"\bkazanim\b|\byazili\b|\bokul\b", h):
         votes[EXAM_UNIVERSE_OKUL] += 2
-    # 2) yapı + İÇERİK (AYT belirteci: Edebiyat dersi TYT'de yoktur)
+    # 2) yapı + İÇERİK (AYT belirteci: Edebiyat dersi TYT'de yoktur —
+    #    okul-müfredat sınavı sinyali varken bu belirteç GEÇERSİZ)
     has_edb = any("edebiyat" in k or "turk dili" in k for k in subj_keys)
-    if has_edb:
+    if has_edb and not school_grade:
         votes[EXAM_UNIVERSE_AYT] += 2
-    if 100 <= n_q <= 130 and n_subj >= 6 and not has_edb:
+    if 100 <= n_q <= 130 and n_subj >= 6 and (not has_edb or school_grade):
         votes[EXAM_UNIVERSE_TYT] += 1
+        if school_grade:
+            # sınıfa uyarlanmış TYT izleme sınavı (GİS vb.) — yüksek güven
+            votes[EXAM_UNIVERSE_TYT] += 1
     elif 140 <= n_q <= 170 and has_edb:
         # tam AYT kitapçığı: 4 test × 40 soru = 160 satır (EDE-SOS/SOS-2/
         # AYT-MAT/AYT-FEN) — başlık iki anahtar kelimeyle nötrlense de yapı

@@ -975,6 +975,23 @@ def main() -> int:
               t29 == {"dogru": 2, "yanlis": 1, "bos": 1}, str(t29))
         read_behavior["dual_name"] = False
 
+        # 29c) okul belgesi dersi "Türk Dili ve Edebiyatı" diye yazdı + TYT
+        # anahtar kelimesi YOK → Edebiyat-varlığı AYT kanıtı SAYILMAMALI
+        # (okul sinyali var: başlıkta "10 SINIF" + grade_hint 10)
+        r29c = build_school_tyt_read()
+        r29c["type_hints"] = []
+        for q in r29c["questions"]:
+            q["subject"] = "Türk Dili ve Edebiyatı"
+        read_behavior["read"] = r29c
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
+            files={"file": pdf_file})
+        d29c = r.json() if r.status_code == 200 else {}
+        check("29c. TDE adı + kw'siz okul belgesi AYT sanılmadı (tespit TYT)",
+              r.status_code == 200 and d29c.get("universe") == "tyt",
+              f"{d29c.get('universe')}/{d29c.get('section')}")
+
         # sunum: ders kırılımı SINIF dersinin adıyla TEK grup (TDE 4) —
         # "TYT Türkçe" ayrı grup olarak GÖRÜNMEZ; satırlar display_subject taşır
         subj28 = {s["name"]: s for s in d28.get("subjects", [])}
