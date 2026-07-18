@@ -466,7 +466,8 @@ function PreviewStep({
     const out = new Map<string, { idx: number; row: EditRow }[]>();
     rows.forEach((row, idx) => {
       if (multi && row.exam_part !== selectedPart) return;
-      const key = row.subject_name ?? row.subject_raw ?? "Diğer";
+      // okul-müfredat sınavında sunum = sınıf dersinin adı (display_subject)
+      const key = row.display_subject ?? row.subject_name ?? row.subject_raw ?? "Diğer";
       if (!out.has(key)) out.set(key, []);
       out.get(key)!.push({ idx, row });
     });

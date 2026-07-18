@@ -33,9 +33,11 @@ from app.routes.api_v2.schemas.exam_import import (
     ExamImportConfirmBody,
     ExamImportConfirmResult,
     ExamImportDraft,
+    ExamTopicAnalysisResponse,
     SectionChoice,
 )
 from app.services import exam_import_service as svc
+from app.services import exam_topic_analysis
 from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
 from app.services.credits import CreditBlocked, CreditOwner, KIND_CREDITS, consume_credits
 from app.services.plans import ai_premium_allowed
@@ -353,9 +355,37 @@ def teacher_exam_import_rows_update(
     )
 
 
+@router.get(
+    "/teacher/students/{student_id}/exam-topic-analysis",
+    response_model=ExamTopicAnalysisResponse,
+)
+def teacher_exam_topic_analysis(
+    student_id: int,
+    section: str | None = None,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Konu × deneme analizi (Faz 2): ısı haritası + net fırsat + unutulan/
+    gelişen. Salt-okuma, AI YOK, kredi düşmez."""
+    student = _get_owned_student(db, user, student_id)
+    return ExamTopicAnalysisResponse(
+        **exam_topic_analysis.build_exam_topic_analysis(db, student, section=section))
+
+
 # ============================================================================
 # ÖĞRENCİ uçları (kredi + kapılar yine KOÇUN — YSA deseni)
 # ============================================================================
+
+
+@router.get("/student/exam-topic-analysis", response_model=ExamTopicAnalysisResponse)
+def student_exam_topic_analysis(
+    section: str | None = None,
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Öğrenci kendi konu × deneme analizini görür (Faz 2b UI için hazır uç)."""
+    return ExamTopicAnalysisResponse(
+        **exam_topic_analysis.build_exam_topic_analysis(db, user, section=section))
 
 
 @router.post("/student/exams/import-analyze", response_model=ExamImportDraft)

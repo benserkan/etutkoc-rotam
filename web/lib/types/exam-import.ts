@@ -2,7 +2,7 @@
  * Deneme PDF içe aktarma — API v2 tipleri (schemas/exam_import.py aynası).
  */
 
-export type ImportTopicSource = "alias" | "auto" | "ai" | "none";
+export type ImportTopicSource = "alias" | "auto" | "ai" | "none" | "kayitli";
 export type ImportResultValue = "dogru" | "yanlis" | "bos";
 
 export interface ImportDraftRow {
@@ -10,6 +10,8 @@ export interface ImportDraftRow {
   subject_raw: string | null;
   subject_id: number | null;
   subject_name: string | null;
+  /** Okul-müfredat sınavında sunum grubu (sınıf dersinin adı); yoksa null */
+  display_subject?: string | null;
   question_no: number | null;
   topic_raw: string | null;
   topic_id: number | null;
@@ -123,4 +125,75 @@ export interface ExamImportConfirmResult {
   question_count: number;
   matched_topic_count: number;
   wrong_topic_ids: number[];
+}
+
+// ============================================================================
+// Konu × deneme analizi (Faz 2)
+// ============================================================================
+
+export interface AnalysisSectionOption {
+  value: string;
+  label: string;
+  count: number;
+}
+
+export interface AnalysisExamMeta {
+  id: number;
+  title: string;
+  exam_date: string;
+  net: number;
+}
+
+export interface AnalysisCell {
+  exam_id: number;
+  total: number;
+  correct: number;
+  wrong: number;
+  blank: number;
+  accuracy: number;
+}
+
+export interface AnalysisTopicRow {
+  topic_id: number;
+  topic_name: string;
+  subject_name: string;
+  total: number;
+  correct: number;
+  wrong: number;
+  blank: number;
+  accuracy: number;
+  exams_seen: number;
+  cells: AnalysisCell[];
+}
+
+export interface AnalysisOpportunity {
+  topic_id: number;
+  topic_name: string;
+  subject_name: string;
+  total: number;
+  wrong: number;
+  blank: number;
+  accuracy: number;
+  net_gain_per_exam: number;
+}
+
+export interface AnalysisTrendTopic {
+  topic_id: number;
+  topic_name: string;
+  subject_name: string;
+  first_accuracy: number;
+  last_accuracy: number;
+}
+
+export interface ExamTopicAnalysisResponse {
+  section: string | null;
+  section_label: string | null;
+  section_options: AnalysisSectionOption[];
+  exams: AnalysisExamMeta[];
+  topics: AnalysisTopicRow[];
+  opportunities: AnalysisOpportunity[];
+  forgotten: AnalysisTrendTopic[];
+  improved: AnalysisTrendTopic[];
+  unmatched_questions: number;
+  analyzed_question_count: number;
 }

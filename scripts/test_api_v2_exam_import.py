@@ -946,6 +946,20 @@ def main() -> int:
         check("28f. confirm karma havuzu KABUL etti (Maarif id düşmedi · net 1.75)",
               r.status_code == 200 and d28c.get("matched_topic_count") == 4
               and d28c.get("net") == 1.75, r.text[:250])
+        # sunum: ders kırılımı SINIF dersinin adıyla TEK grup (TDE 4) —
+        # "TYT Türkçe" ayrı grup olarak GÖRÜNMEZ; satırlar display_subject taşır
+        subj28 = {s["name"]: s for s in d28.get("subjects", [])}
+        check("28g. sunum birleşik: tek 'Türk Dili ve Edebiyatı' grubu (4 soru)",
+              set(subj28) == {"Türk Dili ve Edebiyatı"}
+              and subj28["Türk Dili ve Edebiyatı"]["questions"] == 4
+              and all(x.get("display_subject") == "Türk Dili ve Edebiyatı"
+                      for x in rows28), str(subj28)[:200])
+        # kayıtta da birleşik: subject_nets tek TDE grubu
+        with SessionLocal() as db2:
+            ex28 = db2.get(ExamResult, d28c.get("exam_id"))
+            sn28 = {g["name"] for g in json.loads(ex28.subject_nets)} if ex28 else set()
+        check("28h. kayıtlı subject_nets birleşik (tek TDE grubu)",
+              sn28 == {"Türk Dili ve Edebiyatı"}, str(sn28)[:150])
 
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double

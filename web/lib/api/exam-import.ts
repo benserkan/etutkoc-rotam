@@ -11,7 +11,21 @@ import type {
   ExamImportConfirmBody,
   ExamImportConfirmResult,
   ExamImportDraft,
+  ExamTopicAnalysisResponse,
 } from "@/lib/types/exam-import";
+
+/** Konu × deneme analizi (Faz 2) — koç (studentId verilir) / öğrenci (null). */
+export function getExamTopicAnalysis(
+  studentId: number | null,
+  section?: string | null,
+): Promise<ExamTopicAnalysisResponse> {
+  const qs = section ? `?section=${encodeURIComponent(section)}` : "";
+  return api<ExamTopicAnalysisResponse>(
+    studentId != null
+      ? `/api/v2/teacher/students/${studentId}/exam-topic-analysis${qs}`
+      : `/api/v2/student/exam-topic-analysis${qs}`,
+  );
+}
 
 async function multipart<T>(url: string, fd: FormData): Promise<T> {
   // eslint-disable-next-line lgs/no-bare-fetch -- multipart yükleme; api() JSON sarmalayıcısı FormData ile uyumsuz

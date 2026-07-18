@@ -186,6 +186,39 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
     düşmez). NOT: Maarif TDE alt başlıklarında dil bilgisi konusu YOK (tema
     leaf'leri edebi tür odaklı) — dil bilgisi bilinçli TYT'ye akar; istenirse
     ileride MEB-doğrulamalı dil bilgisi alt başlıkları eklenebilir.
+  - **Karma sunum birleştirme (2026-07-18, kullanıcı isteği, CANLI):** karma
+    havuzda ders kırılımı "TDE 21 + TYT Türkçe 9" diye bölünüyordu →
+    `_display_subject_map` (kanonik anahtar → OKUL dersi adı; köprüler:
+    "turkce"→TDE, "geometri"→Matematik) + `_display_name`. Okul-müfredat
+    sınavında ders özet grupları + önizleme tablosu grupları + kayıtlı
+    `subject_nets` SINIF dersinin adıyla TEK grup ("Türk Dili ve Edebiyatı 30").
+    YALNIZ görünüm — konu ataması/birikim değişmez; satırlar
+    `display_subject` alanı taşır (ImportDraftRow şema + dialog grupları).
+    `doc_nets` anahtarı `_subject_key`'e geçti + display köprüsüyle aday-anahtar
+    araması → belge net kıyası ("Matematik 19.75") birleşik grupta da çalışır.
+    Koç panelindeki bayat "veliyle paylaşılmaz" notu gerçeğe uyduruldu
+    (netler veliye görünür — 2026-06-01 kararı). Smoke **67/67** (28g-h).
+- **FAZ 2a — Konu × Deneme Analizi (koç yüzeyi) CANLI (2026-07-18):**
+  `app/services/exam_topic_analysis.py` (salt-okuma, AI YOK, kredi düşmez):
+  içe aktarılan (soru-satırlı) denemelerden TEK türe filtreli analiz — son 12
+  deneme · konu agregasyonu + **konu×deneme ısı haritası** (hücre = o denemede
+  doğru/soru) + **NET FIRSAT** (yanlış×(1+1/ceza)+boş)/deneme = "bu konu
+  kapanırsa deneme başına +X net", ≥2 soru filtresi, top 10) + **UNUTULAN/
+  GELİŞEN** (kronolojik ilk yarı ↔ son yarı doğruluk; Δ≥0.34 + her yarıda ≥2
+  soru) + unmatched sayacı. Uçlar: GET `/teacher/students/{id}/
+  exam-topic-analysis?section=` (sahiplik 404) + GET `/student/
+  exam-topic-analysis` (Faz 2b öğrenci UI için hazır). Şemalar
+  `schemas/exam_import.py` Analysis*. Web: paylaşılan
+  `components/shared/exam-topic-analysis.tsx` (fırsat listesi barlı + ısı
+  haritası tablosu [purge-safe ton kovaları] + unutulan/gelişen kartları +
+  "Satırları düzelt" yönlendirmeli unmatched notu) — koç Denemeler sekmesinde
+  NetTrendChart altında, panelin tür seçicisiyle senkron; veri yoksa hiç
+  render olmaz. Smoke `test_api_v2_exam_topic_analysis.py` **10/10** (varsayılan
+  tür + hücre/agregasyon + fırsat sırası/2.0 + unutulan + tür filtresi +
+  sahiplik 404 + öğrenci kendi ucu + rol 403). tsc/eslint temiz.
+  **KALAN: Faz 2b** öğrenci yüzeyi (/student/exams: liste + PDF'ten aktar +
+  aynı analiz bileşeni) · **Faz 3** sinyal köprüleri (YSA tek-tık + öneri
+  motoru + KS4) · **Faz 4** mobil.
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı

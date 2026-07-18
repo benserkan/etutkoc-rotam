@@ -187,10 +187,35 @@ def _school_grade_signal(
     return None
 
 
+def _display_subject_map(school_subjects: list[Subject]) -> dict[str, str]:
+    """Karma havuzda SUNUM köprüsü: kanonik ders anahtarı → OKUL dersi adı.
+
+    Okul-müfredat sınavında ders kırılımı/önizleme grupları sınıf seviyesinin
+    ders adlarıyla sunulur ("Türk Dili ve Edebiyatı 30" — "TDE 21 + TYT Türkçe
+    9" diye bölünmez; kullanıcı 2026-07-18). YALNIZ görünüm — konu ataması ve
+    birikim değişmez. Lise köprüleri: sınav "Türkçe" ↔ okul "Türk Dili ve
+    Edebiyatı"; sınav "Geometri" okulda ayrı ders değil → Matematik.
+    """
+    m: dict[str, str] = {}
+    for s in school_subjects:
+        m.setdefault(_subject_key(s.name), s.name)
+    if "edebiyat" in m:
+        m.setdefault("turkce", m["edebiyat"])
+    if "matematik" in m:
+        m.setdefault("geometri", m["matematik"])
+    return m
+
+
+def _display_name(base: str, display_map: dict[str, str] | None) -> str:
+    if not display_map or not base:
+        return base
+    return display_map.get(_subject_key(base), base)
+
+
 def _normalization_pool(
     db: Session, universe: str, student: User, *,
     grade_cap: int | None, school_grade: int | None,
-) -> tuple[list[Subject], list[Topic]]:
+) -> tuple[list[Subject], list[Topic], dict[str, str] | None]:
     """Evren aday havuzu; okul-müfredat sınavında KARMA havuz.
 
     TYT formatlı sınıf izleme sınavlarında (school_grade sinyali) adaylar =
@@ -205,16 +230,17 @@ def _normalization_pool(
     subjects = universe_subjects(db, universe, student)
     topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
     if universe != EXAM_UNIVERSE_TYT or not school_grade:
-        return subjects, topics
+        return subjects, topics, None
     school_subjects = universe_subjects(db, EXAM_UNIVERSE_OKUL, student)
     if not school_subjects:
-        return subjects, topics
+        return subjects, topics, None
     school_topics = universe_topics(
         db, school_subjects, universe=EXAM_UNIVERSE_OKUL, grade_cap=school_grade)
     seen = {s.id for s in school_subjects}
     return (
         school_subjects + [s for s in subjects if s.id not in seen],
         school_topics + topics,
+        _display_subject_map(school_subjects),
     )
 
 
@@ -877,8 +903,10 @@ def analyze(
         part_defs = [(None, all_q)]
 
     grade_cap = merged.get("grade_hint") or student.grade_level
+    # kanonik ders anahtarıyla — belge "AYT-MATEMATİK" / "Türkçe" adları grup
+    # adlarıyla ("AYT Matematik" / okul dersi) köprülenebilsin
     doc_nets: dict[tuple[str | None, str], float | None] = {
-        (s.get("part"), normalize(s["name"])): s.get("net")
+        (s.get("part"), _subject_key(s["name"])): s.get("net")
         for s in merged.get("subjects") or []
     }
 
@@ -919,7 +947,7 @@ def analyze(
         section = ExamSection(det["section"])
         school_grade = _school_grade_signal(
             merged.get("exam_title"), merged.get("grade_hint"), student)
-        subjects, topics = _normalization_pool(
+        subjects, topics, display_map = _normalization_pool(
             db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
 
         rows: list[dict] = []
@@ -961,11 +989,13 @@ def analyze(
                              else " — sınav türü yanlış seçilmiş olabilir, üstten değiştirip yeniden deneyin"),
             })
 
-        # ders özet grupları (oturum etiketli)
+        # ders özet grupları (oturum etiketli; okul sınavında SINIF dersi adıyla)
         penalty = section_penalty(section)
         groups: dict[str, dict] = {}
         for r in rows:
-            gname = r.get("subject_name") or r.get("subject_raw") or "Diğer"
+            base = r.get("subject_name") or r.get("subject_raw") or "Diğer"
+            gname = _display_name(base, display_map)
+            r["display_subject"] = gname if display_map else None
             g = groups.setdefault(gname, {
                 "name": gname, "part": part, "questions": 0,
                 "correct": 0, "wrong": 0, "blank": 0,
@@ -979,10 +1009,19 @@ def analyze(
                 g["blank"] += 1
         for g in groups.values():
             g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
-            g["doc_net"] = (
-                doc_nets.get((part, normalize(g["name"])))
-                or doc_nets.get((None, normalize(g["name"])))
-            )
+            keys = {_subject_key(g["name"])}
+            if display_map:
+                keys |= {k for k, v in display_map.items() if v == g["name"]}
+            doc_net = None
+            for p in (part, None):
+                for k in keys:
+                    v = doc_nets.get((p, k))
+                    if v is not None:
+                        doc_net = v
+                        break
+                if doc_net is not None:
+                    break
+            g["doc_net"] = doc_net
             subjects_out.append(g)
 
         for t in topics:
@@ -1099,7 +1138,7 @@ def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
     grade_cap = payload.get("grade_hint") or student.grade_level
     school_grade = _school_grade_signal(
         payload.get("title"), payload.get("grade_hint"), student)
-    subjects, topics = _normalization_pool(
+    subjects, topics, display_map = _normalization_pool(
         db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
     topic_by_id = {t.id: t for t in topics}
     subj_by_id = {s.id: s for s in subjects}
@@ -1139,6 +1178,7 @@ def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
         totals[("correct", "wrong", "blank")[key]] += 1
         gname = (subj_by_id[sid].name if sid in subj_by_id else None) \
             or (str(r.get("subject_raw") or "").strip() or "Diğer")
+        gname = _display_name(gname, display_map)
         g = groups.setdefault(gname, {"name": gname, "correct": 0, "wrong": 0, "blank": 0})
         g[("correct", "wrong", "blank")[key]] += 1
 
@@ -1321,7 +1361,7 @@ def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
     grade_cap = meta.get("grade_hint") or student.grade_level
     school_grade = _school_grade_signal(
         exam.title, meta.get("grade_hint"), student)
-    subjects, topics = _normalization_pool(
+    subjects, topics, display_map = _normalization_pool(
         db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
     topic_by_id = {t.id: t for t in topics}
     subj_by_id = {s.id: s for s in subjects}
@@ -1370,7 +1410,9 @@ def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
     penalty = section_penalty(section)
     groups: dict[str, dict] = {}
     for r in rows:
-        gname = r.get("subject_name") or r.get("subject_raw") or "Diğer"
+        base = r.get("subject_name") or r.get("subject_raw") or "Diğer"
+        gname = _display_name(base, display_map)
+        r["display_subject"] = gname if display_map else None
         g = groups.setdefault(gname, {
             "name": gname, "part": None, "questions": 0,
             "correct": 0, "wrong": 0, "blank": 0,

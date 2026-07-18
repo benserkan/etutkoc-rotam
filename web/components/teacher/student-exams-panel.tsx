@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
+import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 
 import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
 import {
@@ -194,6 +195,7 @@ export function StudentExamsPanel({ studentId }: Props) {
           ) : null}
           <SummaryStrip rows={sectionRows} />
           {sectionRows.length >= 2 ? <NetTrendChart rows={sectionRows} /> : null}
+          <ExamTopicAnalysis studentId={studentId} section={activeSection} />
           <ul className="space-y-2">
             {data.rows.map((row) => (
               <ExamRow
@@ -208,8 +210,8 @@ export function StudentExamsPanel({ studentId }: Props) {
       )}
 
       <p className="text-[11px] text-muted-foreground leading-relaxed">
-        Deneme net sonuçları yalnızca öğretmen ve kurum yöneticisi tarafından
-        görülür; veliyle paylaşılmaz.
+        Deneme adı, tarihi ve netler veli paneli ile haftalık veli raporunda da
+        görünür; koça özel notlar ve soru-satırı detayları paylaşılmaz.
       </p>
 
       <Dialog open={addOpen} onOpenChange={setAddOpen}>

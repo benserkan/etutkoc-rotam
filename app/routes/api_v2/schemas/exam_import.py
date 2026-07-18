@@ -12,6 +12,9 @@ class ImportDraftRow(BaseModel):
     subject_raw: str | None = None
     subject_id: int | None = None
     subject_name: str | None = None
+    # okul-müfredat sınavında SUNUM grubu (sınıf dersinin adı — "TDE 21 +
+    # TYT Türkçe 9" bölünmesi yerine tek "Türk Dili ve Edebiyatı"); None = yok
+    display_subject: str | None = None
     question_no: int | None = None
     topic_raw: str | None = None
     topic_id: int | None = None
@@ -116,6 +119,76 @@ class ExamImportConfirmBody(BaseModel):
     force: bool = False                    # mükerrer uyarısına rağmen kaydet
     score_info: dict[str, Any] | None = None
     rows: list[ConfirmRow]
+
+
+class AnalysisSectionOption(BaseModel):
+    value: str
+    label: str
+    count: int                             # soru-satırlı deneme sayısı
+
+
+class AnalysisExamMeta(BaseModel):
+    id: int
+    title: str
+    exam_date: str
+    net: float
+
+
+class AnalysisCell(BaseModel):
+    """Isı haritası hücresi — bir konunun BİR denemedeki performansı."""
+    exam_id: int
+    total: int
+    correct: int
+    wrong: int
+    blank: int
+    accuracy: float                        # 0..1
+
+
+class AnalysisTopicRow(BaseModel):
+    topic_id: int
+    topic_name: str
+    subject_name: str
+    total: int
+    correct: int
+    wrong: int
+    blank: int
+    accuracy: float
+    exams_seen: int
+    cells: list[AnalysisCell]
+
+
+class AnalysisOpportunity(BaseModel):
+    """Net fırsatı: bu konu kapanırsa deneme başına kazanılabilecek net."""
+    topic_id: int
+    topic_name: str
+    subject_name: str
+    total: int
+    wrong: int
+    blank: int
+    accuracy: float
+    net_gain_per_exam: float
+
+
+class AnalysisTrendTopic(BaseModel):
+    """Unutulan/gelişen konu — ilk yarı ↔ son yarı doğruluk kıyası."""
+    topic_id: int
+    topic_name: str
+    subject_name: str
+    first_accuracy: float
+    last_accuracy: float
+
+
+class ExamTopicAnalysisResponse(BaseModel):
+    section: str | None
+    section_label: str | None
+    section_options: list[AnalysisSectionOption]
+    exams: list[AnalysisExamMeta]
+    topics: list[AnalysisTopicRow]         # ısı haritası satırları (soru sayısı DESC)
+    opportunities: list[AnalysisOpportunity]
+    forgotten: list[AnalysisTrendTopic]
+    improved: list[AnalysisTrendTopic]
+    unmatched_questions: int
+    analyzed_question_count: int
 
 
 class ExamImportConfirmResult(BaseModel):
