@@ -288,6 +288,19 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   (web+mobil OTA `996afd2d`) boş-durum notu: ısı haritası + unutulan/gelişen
   aynı türde **≥2 deneme** ister — tek denemede yalnız net fırsatı görünür
   (elle girilen denemeler soru satırı taşımadığından analize hiç girmez).
+- **Saha düzeltmesi 2 (2026-07-18, Elif 4K GİS-1 — ÇİFT SAYIM + tespit):**
+  (a) İki bağımsız okuma aynı dersi FARKLI adla yazınca ("Türkçe" ↔ "Türk
+  Dili ve Edebiyatı") merge kovaları ayrışıp bölüm İKİ KEZ ekleniyordu
+  (100 soru→125, net 53→68, 50 şüpheli; kullanıcının "Türkçe netleri
+  uyuşmuyor" raporu). Fix: `_SUBJECT_ALIASES["turkce"]="edebiyat"` (simetrik
+  kanon) + `_sanitize_parts` guard'ı HAM ada (normalize) çevrildi (kanon
+  Türkçe/Edebiyat ayrımını sildiği için gerçek birleşik TG kontrolü bozulmasın).
+  (b) Okul sinyali varken Edebiyat-adı AYT kanıtı SAYILMAZ + 100-130 soru
+  yapısı TYT'ye sayılır (+sınıf oyu → high) — belge AYT sanılıp karma havuz
+  devre dışı kalıyordu. Smoke **70/70** (29a-c). GERÇEK Gemini prod
+  doğrulaması: TYT/high · 100 satır · şüpheli 0 · eşleşme 96/100 · kırılım
+  birleşik · Türkçe 15.00 = belge. NOT: Elif'in bozuk kaydı (exam #92, net 68)
+  koç tarafından silinip yeniden aktarılmalı (fix canlı — yeni aktarım doğru).
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı
