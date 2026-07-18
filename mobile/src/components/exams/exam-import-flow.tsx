@@ -36,6 +36,38 @@ import { cn } from "@/lib/utils";
 
 type Step = "pick" | "analyzing" | "preview" | "saving" | "done";
 
+// Beyan seçicileri (BEYAN ESAS — tespit bekçiye döner; boş = otomatik)
+const GRADE_CHOICES = [
+  { value: "", label: "Otomatik" },
+  ...[5, 6, 7, 8, 9, 10, 11, 12].map((g) => ({
+    value: String(g), label: `${g}. Sınıf`,
+  })),
+  { value: "mezun", label: "Mezun" },
+];
+
+function sectionChoicesFor(grade: string): { value: string; label: string }[] {
+  const auto = { value: "", label: "Otomatik" };
+  if (!grade) return [auto];
+  const g = grade === "mezun" ? 13 : Number(grade);
+  if (g >= 5 && g <= 8) {
+    return [auto, { value: "lgs", label: "LGS" },
+            { value: "okul", label: "Okul/Yazılı" }];
+  }
+  if (g >= 9 && g <= 10) {
+    return [auto, { value: "tyt", label: "Sınıf İzleme/TYT" },
+            { value: "okul", label: "Okul/Yazılı" }];
+  }
+  return [
+    auto,
+    { value: "tyt", label: "TYT" },
+    { value: "ayt_say", label: "AYT Say" },
+    { value: "ayt_ea", label: "AYT EA" },
+    { value: "ayt_soz", label: "AYT Söz" },
+    { value: "ayt_dil", label: "AYT Dil" },
+    { value: "okul", label: "Okul/Yazılı" },
+  ];
+}
+
 export function ExamImportFlow({
   visible,
   onClose,
@@ -58,6 +90,8 @@ export function ExamImportFlow({
   const [result, setResult] = React.useState<ExamImportConfirmResult | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [pickerMissing, setPickerMissing] = React.useState(false);
+  const [declGrade, setDeclGrade] = React.useState("");
+  const [declSection, setDeclSection] = React.useState("");
 
   function reset() {
     setStep("pick");
@@ -118,7 +152,11 @@ export function ExamImportFlow({
     setPdf(picked);
     setStep("analyzing");
     try {
-      const d = await analyzeExamPdf(picked, studentId);
+      const d = await analyzeExamPdf(picked, studentId, {
+        declaredSection: declSection || null,
+        declaredGrade:
+          declGrade && declGrade !== "mezun" ? Number(declGrade) : null,
+      });
       const firstPart = d.parts[0]?.part ?? null;
       setDraft(d);
       setSelectedPart(firstPart);
@@ -219,6 +257,60 @@ export function ExamImportFlow({
 
           {step === "pick" ? (
             <View className="gap-3">
+              <View className="gap-2 rounded-2xl border border-slate-200 bg-white p-3">
+                <Text className="text-xs font-medium text-slate-700">
+                  Denemenin sınıfı ve türünü biliyorsan seç — yanlış tür
+                  ihtimali sıfırlanır. Bilmiyorsan Otomatik bırak.
+                </Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                  <View className="flex-row gap-1.5">
+                    {GRADE_CHOICES.map((c) => {
+                      const active = declGrade === c.value;
+                      return (
+                        <Pressable
+                          key={c.value || "auto"}
+                          onPress={() => { setDeclGrade(c.value); setDeclSection(""); }}
+                          className={cn(
+                            "rounded-full border px-3 py-1.5",
+                            active ? "border-brand-700 bg-brand-700"
+                                   : "border-slate-300 bg-white",
+                          )}
+                        >
+                          <Text className={cn("text-xs font-semibold",
+                                              active ? "text-white" : "text-slate-600")}>
+                            {c.label}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </ScrollView>
+                {declGrade ? (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View className="flex-row gap-1.5">
+                      {sectionChoicesFor(declGrade).map((c) => {
+                        const active = declSection === c.value;
+                        return (
+                          <Pressable
+                            key={c.value || "auto"}
+                            onPress={() => setDeclSection(c.value)}
+                            className={cn(
+                              "rounded-full border px-3 py-1.5",
+                              active ? "border-violet-600 bg-violet-600"
+                                     : "border-slate-300 bg-white",
+                            )}
+                          >
+                            <Text className={cn("text-xs font-semibold",
+                                                active ? "text-white" : "text-slate-600")}>
+                              {c.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </ScrollView>
+                ) : null}
+              </View>
               {pickerMissing ? (
                 <View className="rounded-xl border border-amber-200 bg-amber-50 p-3">
                   <Text className="text-xs text-amber-900">

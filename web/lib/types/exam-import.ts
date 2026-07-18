@@ -198,6 +198,37 @@ export interface ExamTopicAnalysisResponse {
   analyzed_question_count: number;
 }
 
+/** Seçici köprü: denemenin bir yanlış sorusu (arşiv durumu işaretli). */
+export interface ExamWrongRow {
+  question_id: number;
+  question_no: number | null;
+  subject: string | null;
+  topic_id: number | null;
+  topic_name: string | null;
+  topic_label_raw: string | null;
+  correct_answer: string | null;
+  student_answer: string | null;
+  archived: boolean;
+}
+
+export interface ExamWrongRowsResponse {
+  exam_id: number;
+  title: string;
+  rows: ExamWrongRow[];
+  error_types: { value: string; label: string }[];
+}
+
+export interface WrongBridgeItem {
+  question_id: number;
+  error_type?: string | null;
+}
+
+/** İçe aktarmada kullanıcı beyanı (BEYAN ESAS — tespit bekçiye döner). */
+export interface ImportDeclaration {
+  declaredSection?: string | null;
+  declaredGrade?: number | null;
+}
+
 /** Deneme → Yanlış Soru Arşivi köprüsü sonucu (Faz 3, idempotent). */
 export interface WrongBridgeResult {
   created: number;

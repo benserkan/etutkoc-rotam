@@ -95,6 +95,28 @@ export interface WrongBridgeResult {
   skipped_no_topic: number;
   total_wrong: number;
 }
+export interface ExamWrongRow {
+  question_id: number;
+  question_no: number | null;
+  subject: string | null;
+  topic_id: number | null;
+  topic_name: string | null;
+  topic_label_raw: string | null;
+  correct_answer: string | null;
+  student_answer: string | null;
+  archived: boolean;
+}
+export interface ExamWrongRowsResponse {
+  exam_id: number;
+  title: string;
+  rows: ExamWrongRow[];
+  error_types: { value: string; label: string }[];
+}
+/** Beyan (BEYAN ESAS — tespit bekçiye döner; boş = otomatik). */
+export interface ImportDeclaration {
+  declaredSection?: string | null;
+  declaredGrade?: number | null;
+}
 
 export interface AnalysisExamMeta {
   id: number;
@@ -231,9 +253,14 @@ function pdfFormPart(form: FormData, pdf: PickedPdf): void {
 export function analyzeExamPdf(
   pdf: PickedPdf,
   studentId?: number | null,
+  decl?: ImportDeclaration,
 ): Promise<ExamImportDraft> {
   const fd = new FormData();
   pdfFormPart(fd, pdf);
+  if (decl?.declaredSection) fd.append("declared_section", decl.declaredSection);
+  if (decl?.declaredGrade != null) {
+    fd.append("declared_grade", String(decl.declaredGrade));
+  }
   return uploadMultipart<ExamImportDraft>(
     studentId != null
       ? `/api/v2/teacher/students/${studentId}/exams/import-analyze`
@@ -290,14 +317,26 @@ export function getExamTopicAnalysis(
   );
 }
 
+export function getExamWrongRows(
+  examId: number,
+  studentId?: number | null,
+): Promise<ExamWrongRowsResponse> {
+  return apiRequest<ExamWrongRowsResponse>(
+    studentId != null
+      ? `/api/v2/teacher/exams/${examId}/wrong-rows`
+      : `/api/v2/student/exams/${examId}/wrong-rows`,
+  );
+}
+
 export function archiveExamWrongs(
   examId: number,
   studentId?: number | null,
+  items?: { question_id: number; error_type?: string | null }[],
 ): Promise<{ data: WrongBridgeResult; invalidate?: string[] }> {
   return apiRequest(
     studentId != null
       ? `/api/v2/teacher/exams/${examId}/wrong-to-archive`
       : `/api/v2/student/exams/${examId}/wrong-to-archive`,
-    { method: "POST" },
+    { method: "POST", body: items ? { items } : {} },
   );
 }

@@ -992,6 +992,40 @@ def main() -> int:
               r.status_code == 200 and d29c.get("universe") == "tyt",
               f"{d29c.get('universe')}/{d29c.get('section')}")
 
+        # --- 30) BEYAN ESAS (sınıf + tür kullanıcıdan; tespit bekçi olur) ---
+        # 30a: TDE adlı + kw'siz belge; beyan tyt + sınıf 10 → karma havuz kesin
+        r30 = build_school_tyt_read()
+        r30["type_hints"] = []
+        r30["grade_hint"] = None  # belgeden sınıf da okunamadı — beyan dolduracak
+        read_behavior["read"] = r30
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
+            data={"declared_section": "tyt", "declared_grade": "10"},
+            files={"file": pdf_file})
+        d30 = r.json() if r.status_code == 200 else {}
+        m30 = next((x for x in d30.get("rows", [])
+                    if x["question_no"] == 2), {})
+        check("30a. beyan esas: tür TYT + sınıf 10 → karma havuz (Saf Şiir Maarif'e)",
+              r.status_code == 200 and d30.get("section") == "tyt"
+              and d30.get("confidence") == "high"
+              and d30.get("grade_hint") == 10
+              and m30.get("topic_id") == ids["m_safsiir"], r.text[:200])
+        # 30b: beyan belgeyle çelişirse BEKÇİ uyarır (TYT belgesine lgs beyanı)
+        read_behavior["read"] = build_tyt_read()
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            data={"declared_section": "lgs"},
+            files={"file": pdf_file})
+        d30b = r.json() if r.status_code == 200 else {}
+        mism = next((c for c in d30b.get("checks", [])
+                     if c["code"] == "declared_mismatch"), None)
+        check("30b. beyan uygulanır (lgs) + çelişki uyarısı üretilir",
+              r.status_code == 200 and d30b.get("section") == "lgs"
+              and mism is not None and mism["ok"] is False,
+              f"sec={d30b.get('section')} mism={mism}")
+
         # sunum: ders kırılımı SINIF dersinin adıyla TEK grup (TDE 4) —
         # "TYT Türkçe" ayrı grup olarak GÖRÜNMEZ; satırlar display_subject taşır
         subj28 = {s["name"]: s for s in d28.get("subjects", [])}

@@ -12,20 +12,36 @@ import type {
   ExamImportConfirmResult,
   ExamImportDraft,
   ExamTopicAnalysisResponse,
+  ExamWrongRowsResponse,
+  ImportDeclaration,
+  WrongBridgeItem,
   WrongBridgeResult,
 } from "@/lib/types/exam-import";
 
-/** Denemenin YANLIŞ sorularını tek tıkla Yanlış Soru Arşivine aktar (Faz 3).
- *  İdempotent — ikinci basış mükerrer üretmez. Koç (studentId dolu) / öğrenci. */
+/** Seçici köprü: denemenin yanlış soruları (arşiv durumu işaretli). */
+export function getExamWrongRows(
+  examId: number,
+  studentId?: number | null,
+): Promise<ExamWrongRowsResponse> {
+  return api<ExamWrongRowsResponse>(
+    studentId != null
+      ? `/api/v2/teacher/exams/${examId}/wrong-rows`
+      : `/api/v2/student/exams/${examId}/wrong-rows`,
+  );
+}
+
+/** Denemenin SEÇİLEN yanlışlarını Yanlış Soru Arşivine aktar (Faz 3).
+ *  İdempotent — aynı seçim mükerrer üretmez. Koç (studentId dolu) / öğrenci. */
 export function archiveExamWrongs(
   examId: number,
   studentId?: number | null,
+  items?: WrongBridgeItem[],
 ): Promise<MutationResponse<WrongBridgeResult>> {
   return api<MutationResponse<WrongBridgeResult>>(
     studentId != null
       ? `/api/v2/teacher/exams/${examId}/wrong-to-archive`
       : `/api/v2/student/exams/${examId}/wrong-to-archive`,
-    { method: "POST" },
+    { method: "POST", body: JSON.stringify(items ? { items } : {}) },
   );
 }
 
@@ -58,13 +74,22 @@ async function multipart<T>(url: string, fd: FormData): Promise<T> {
   return r.json() as Promise<T>;
 }
 
+function appendDeclaration(fd: FormData, decl?: ImportDeclaration): void {
+  if (decl?.declaredSection) fd.append("declared_section", decl.declaredSection);
+  if (decl?.declaredGrade != null) {
+    fd.append("declared_grade", String(decl.declaredGrade));
+  }
+}
+
 /** Koç: öğrencisinin deneme PDF'ini analiz et (kredi düşer, kayıt YAPMAZ). */
 export function teacherAnalyzeExamPdf(
   studentId: number,
   file: File,
+  decl?: ImportDeclaration,
 ): Promise<ExamImportDraft> {
   const fd = new FormData();
   fd.append("file", file);
+  appendDeclaration(fd, decl);
   return multipart<ExamImportDraft>(
     `/api/v2/teacher/students/${studentId}/exams/import-analyze`, fd,
   );
@@ -103,9 +128,13 @@ export function updateExamImportRows(
 }
 
 /** Öğrenci: kendi deneme PDF'ini analiz et (kredi KOÇUN havuzundan). */
-export function studentAnalyzeExamPdf(file: File): Promise<ExamImportDraft> {
+export function studentAnalyzeExamPdf(
+  file: File,
+  decl?: ImportDeclaration,
+): Promise<ExamImportDraft> {
   const fd = new FormData();
   fd.append("file", file);
+  appendDeclaration(fd, decl);
   return multipart<ExamImportDraft>("/api/v2/student/exams/import-analyze", fd);
 }
 

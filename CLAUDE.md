@@ -301,6 +301,30 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   doğrulaması: TYT/high · 100 satır · şüpheli 0 · eşleşme 96/100 · kırılım
   birleşik · Türkçe 15.00 = belge. NOT: Elif'in bozuk kaydı (exam #92, net 68)
   koç tarafından silinip yeniden aktarılmalı (fix canlı — yeni aktarım doğru).
+- **BEYAN ESAS içe aktarma + SEÇİCİ YSA köprüsü (2026-07-19 kullanıcı onayı,
+  CANLI):** (1) **Beyan hibrit:** yükleme adımında sınıf (5-12/Mezun) + tür
+  seçicileri (sınıfa göre daralan liste: 5-8 LGS/Okul · 9-10 "Sınıf İzleme/TYT"
+  /Okul · 11+ TYT/AYT×4/Okul; varsayılan "Otomatik tespit" = eski davranış).
+  Beyan verilirse TESPİT BEKÇİYE döner: analyze `declared_section/declared_grade`
+  (Form) → tür/evren beyandan (confidence high), sınıf beyanı `grade_hint`'i
+  ezer (grade_cap + okul sinyali + confirm/edit otomatik hizalanır; 11-12/mezun
+  beyanı karma havuzu kapatır), tespit beyandan farklıysa **declared_mismatch**
+  uyarısı; birleşik belgede beyan yerine oturum seçici (declared_multi notu).
+  Web PickStep 2 select + mobil pick adımı 2 çip satırı. LGS sözel/sayısal ayrı
+  tür EKLENMEDİ (enum genişletme gerektirir, ihtiyaç düşük); 4. sınıf kapsam
+  dışı. (2) **Seçici köprü** (toplu yığma İPTAL — "arşiv seçilmiş sorular
+  içindir"): yeni GET `/teacher|student/exams/{id}/wrong-rows` (yanlış satırlar
+  + archived işareti + hata türü seçenekleri) + POST body `{items:[{question_id,
+  error_type?}]}` (`bulk_from_exam(selected=…)`; gövdesiz = tümü, geriye uyum).
+  Web `ArchiveWrongsDialog` (ders-gruplu checkbox listesi + satır-başı hata
+  türü seçici + tümünü seç/temizle + arşivde/konusuz rozetleri); mobil seçim
+  Modal'ı (checkbox; hata türü web'de — PARITY). Buton metni "Yanlışlardan
+  arşive soru seç". Smoke exam_import **72/72** (30a-b beyan) + bridge **11/11**
+  (seçici + hata türü + archived işaretleri + gövdesiz geriye uyum).
+  NOT (kavram): YSA kendi FSRS'li yeniden-çözme kuyruğunu İÇERİR (kapanış =
+  aralıklı 2 doğru); `/review` Tekrar sayfası ise KONU-düzeyi ayrı FSRS kuyruğu
+  — ikisi öneri motorunu ayrı sinyallerle besler; tek kuyrukta birleştirme
+  bilinçli ayrı iş (YSA notunda kayıtlı).
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı

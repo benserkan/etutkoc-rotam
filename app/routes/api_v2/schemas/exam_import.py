@@ -191,6 +191,41 @@ class ExamTopicAnalysisResponse(BaseModel):
     analyzed_question_count: int
 
 
+class ExamWrongRow(BaseModel):
+    """Seçici köprü: denemenin bir YANLIŞ sorusu (arşiv durumu işaretli)."""
+    question_id: int
+    question_no: int | None
+    subject: str | None
+    topic_id: int | None
+    topic_name: str | None
+    topic_label_raw: str | None
+    correct_answer: str | None
+    student_answer: str | None
+    archived: bool
+
+
+class ErrorTypeOption(BaseModel):
+    value: str
+    label: str
+
+
+class ExamWrongRowsResponse(BaseModel):
+    exam_id: int
+    title: str
+    rows: list[ExamWrongRow]
+    error_types: list[ErrorTypeOption]
+
+
+class WrongBridgeItem(BaseModel):
+    question_id: int
+    error_type: str | None = None          # bilgi|islem|dikkat|sure|yorum|diger
+
+
+class WrongBridgeBody(BaseModel):
+    """Seçici aktarım gövdesi — items None ise TÜM yanlışlar (geriye uyum)."""
+    items: list[WrongBridgeItem] | None = None
+
+
 class WrongBridgeResult(BaseModel):
     """Deneme → Yanlış Soru Arşivi köprüsü sonucu (Faz 3, idempotent)."""
     created: int

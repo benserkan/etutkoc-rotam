@@ -215,30 +215,90 @@ def create_wrong_question(
     return wq
 
 
-def bulk_from_exam(
-    db: Session,
-    student: User,
-    *,
-    exam: ExamResult,
-    created_by: User,
-) -> dict:
-    """Deneme köprüsü (Faz 3): denemenin YANLIŞ sorularını TEK TIKLA arşive aktar.
+def _bridge_note(exam: ExamResult, q) -> str:
+    """Köprü kartının notu — soruyu deneme kitapçığında ADRESLER + dedup anahtarı."""
+    note = f"{exam.title} · Soru {q.question_no or '?'}"
+    label = (q.topic_label_raw or "").strip()
+    if label:
+        note += f" — {label}"
+    return note[:300]
 
-    Yalnız 'yanlis' + KONUYA BAĞLI satırlar aktarılır — arşivin kapanış/birikim
-    döngüsü konu üzerinden işler; boş bırakılan soru zayıflık kanıtı sayılmaz,
-    konusuz satır da birikime giremez (koç 'Satırları düzelt' ile bağlayıp
-    tekrar aktarabilir). İDEMPOTENT: aynı satır (deneme + konu + üretilen not)
-    daha önce aktarıldıysa atlanır — buton iki kez basılınca mükerrer kart yok.
-    Foto yoktur; öğrenci soruyu deneme kitapçığından bulur (not satırı adresler).
-    """
-    wrong_rows = [q for q in exam.questions if q.result == EQ_RESULT_YANLIS]
-    existing = {
+
+def _bridge_existing(db: Session, student: User, exam: ExamResult) -> set:
+    return {
         (w.topic_id, w.note)
         for w in db.query(WrongQuestion).filter(
             WrongQuestion.student_id == student.id,
             WrongQuestion.exam_result_id == exam.id,
         ).all()
     }
+
+
+def exam_wrong_rows(db: Session, student: User, exam: ExamResult) -> list[dict]:
+    """Seçici köprü için denemenin YANLIŞ satırları (arşiv durumu işaretli).
+
+    Kullanıcı hangi soruların arşive değer olduğunu BURADAN seçer (2026-07-19
+    kararı: tüm yanlışları yığmak arşivi şişirir; arşiv seçilmiş sorular içindir).
+    """
+    wrong = [q for q in sorted(exam.questions, key=lambda x: x.id)
+             if q.result == EQ_RESULT_YANLIS]
+    existing = _bridge_existing(db, student, exam)
+    topic_ids = {q.topic_id for q in wrong if q.topic_id}
+    topics = (db.query(Topic).filter(Topic.id.in_(topic_ids)).all()
+              if topic_ids else [])
+    tmap = {t.id: t for t in topics}
+    snames = {
+        s.id: s.name
+        for s in db.query(Subject).filter(
+            Subject.id.in_({t.subject_id for t in topics})).all()
+    } if topics else {}
+    rows: list[dict] = []
+    for q in wrong:
+        tp = tmap.get(q.topic_id) if q.topic_id else None
+        rows.append({
+            "question_id": q.id,
+            "question_no": q.question_no,
+            "subject": (snames.get(tp.subject_id) if tp else None)
+                       or (q.subject_name_raw or None),
+            "topic_id": q.topic_id if tp else None,
+            "topic_name": tp.name if tp else None,
+            "topic_label_raw": q.topic_label_raw,
+            "correct_answer": q.correct_answer,
+            "student_answer": q.student_answer,
+            "archived": (q.topic_id, _bridge_note(exam, q)) in existing,
+        })
+    return rows
+
+
+def bulk_from_exam(
+    db: Session,
+    student: User,
+    *,
+    exam: ExamResult,
+    created_by: User,
+    selected: list[dict] | None = None,
+) -> dict:
+    """Deneme köprüsü (Faz 3): denemenin yanlışlarını SEÇEREK arşive aktar.
+
+    selected: [{question_id, error_type?}] — yalnız işaretlenen sorular
+    aktarılır ve istenirse hata türü (bilgi/işlem/dikkat/süre/yorum) atanır.
+    None → tüm yanlışlar (geriye uyum — eski mobil istemciler). Yalnız
+    KONUYA BAĞLI satırlar aktarılır (arşivin kapanış/birikim döngüsü konu
+    üzerinden işler). İDEMPOTENT: aynı satır (deneme + konu + not) daha önce
+    aktarıldıysa atlanır. Foto yoktur; not satırı soruyu kitapçıkta adresler.
+    """
+    wrong_rows = [q for q in exam.questions if q.result == EQ_RESULT_YANLIS]
+    sel_map: dict[int, str | None] | None = None
+    if selected is not None:
+        sel_map = {}
+        for it in selected:
+            qid = it.get("question_id")
+            if qid is None:
+                continue
+            et = it.get("error_type")
+            sel_map[int(qid)] = et if et in WQ_ERROR_TYPES else None
+        wrong_rows = [q for q in wrong_rows if q.id in sel_map]
+    existing = _bridge_existing(db, student, exam)
     created = 0
     skipped_existing = 0
     skipped_no_topic = 0
@@ -246,11 +306,7 @@ def bulk_from_exam(
         if q.topic_id is None:
             skipped_no_topic += 1
             continue
-        note = f"{exam.title} · Soru {q.question_no or '?'}"
-        label = (q.topic_label_raw or "").strip()
-        if label:
-            note += f" — {label}"
-        note = note[:300]
+        note = _bridge_note(exam, q)
         if (q.topic_id, note) in existing:
             skipped_existing += 1
             continue
@@ -259,6 +315,7 @@ def bulk_from_exam(
             source_kind=WQ_SOURCE_DENEME,
             exam_result_id=exam.id,
             topic_id=q.topic_id,
+            error_type=(sel_map.get(q.id) if sel_map else None),
             note=note,
         )
         existing.add((q.topic_id, note))

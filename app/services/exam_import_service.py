@@ -879,6 +879,8 @@ def analyze(
     pdf_bytes: bytes,
     *,
     force_section: str | None = None,
+    declared_section: str | None = None,
+    declared_grade: int | None = None,
 ) -> dict:
     """Çift Gemini okuma + birleştirme + kontroller + tespit + normalizasyon.
 
@@ -892,6 +894,13 @@ def analyze(
     _sanitize_parts(r1)
     _sanitize_parts(r2)
     merged, _ = merge_reads(r1, r2)
+
+    # BEYAN ESAS (2026-07-19 kullanıcı kararı): koç/öğrenci yüklerken sınıf +
+    # tür seçtiyse tespit yerine beyan kullanılır; tespit BEKÇİYE döner
+    # (belgeyle çelişirse uyarı). Sınıf beyanı grade_hint'i ezer → grade_cap +
+    # okul sinyali + confirm/edit akışları da otomatik beyanla hizalanır.
+    if declared_grade is not None and 5 <= declared_grade <= 12:
+        merged["grade_hint"] = declared_grade
 
     # --- BİRLEŞİK BELGE (TG kitapçığı): sorular oturumlara bölünür -----------
     # Aynı PDF'te hem TYT hem AYT varsa her oturum KENDİ evreninde normalize
@@ -939,6 +948,14 @@ def analyze(
     checks: list[dict] = []
     first_det: dict | None = None
     guard_total = 0
+    if declared_section and len(part_defs) > 1:
+        checks.append({
+            "code": "declared_multi",
+            "label": "Beyan ↔ birleşik belge",
+            "ok": False,
+            "detail": "Belge iki sınav oturumu içeriyor — tür beyanı yerine "
+                      "oturum seçici kullanılır (her oturum kendi türünde).",
+        })
 
     for part, qlist in part_defs:
         # oturum tespiti: part etiketi varsa evren KESİN; AYT alt-türü cevaplanan
@@ -952,21 +969,39 @@ def analyze(
                    "scope": "full", "confidence": "high"}
         else:
             det = detect_universe({**merged, "questions": qlist}, student)
-            if force_section:
+            detected_section = det["section"]
+            if force_section or declared_section:
                 try:
-                    sec = ExamSection(force_section)
+                    sec = ExamSection(declared_section or force_section)
                 except ValueError:
                     raise ExamImportError(422, "invalid_section", "Geçersiz sınav türü.")
                 det["universe"] = universe_for_section(sec)
                 det["section"] = sec.value
                 det["confidence"] = "high"
+                # BEKÇİ: beyan esas ama tespit belgeden farklı görüyorsa uyar
+                if declared_section and detected_section != sec.value:
+                    checks.append({
+                        "code": "declared_mismatch",
+                        "label": "Beyan ↔ belge içeriği",
+                        "ok": False,
+                        "detail": (
+                            f"Belge içeriği {EXAM_SECTION_LABELS[ExamSection(detected_section)]} "
+                            f"türüne benziyor; sen {EXAM_SECTION_LABELS[sec]} seçtin — "
+                            "emin değilsen üstteki tür seçiciden kontrol et."
+                        ),
+                    })
         if first_det is None:
             first_det = det
 
         universe = det["universe"]
         section = ExamSection(det["section"])
-        school_grade = _school_grade_signal(
-            merged.get("exam_title"), merged.get("grade_hint"), student)
+        if declared_grade is not None:
+            # sınıf beyanı okul sinyalini de belirler (başlık/ipucu heuristiği
+            # devre dışı — 11-12/mezun beyanında karma havuz açılmaz)
+            school_grade = declared_grade if 5 <= declared_grade <= 10 else None
+        else:
+            school_grade = _school_grade_signal(
+                merged.get("exam_title"), merged.get("grade_hint"), student)
         subjects, topics, display_map = _normalization_pool(
             db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
 

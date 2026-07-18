@@ -147,52 +147,77 @@ def main() -> int:
             assert r.status_code == 200, r.text
 
         url1 = f"/api/v2/teacher/exams/{ids['exam1']}/wrong-to-archive"
+        wr1 = f"/api/v2/teacher/exams/{ids['exam1']}/wrong-rows"
 
         r = anon.post(url1)
         check("1. anonim → 401", r.status_code == 401, r.text[:100])
 
-        r = ct.post(url1)
+        r = ct.get(wr1)
+        d = r.json() if r.status_code == 200 else {}
+        rows = d.get("rows", [])
+        by_no = {x["question_no"]: x for x in rows}
+        check("2. seçici liste: 6 yanlış (1 konusuz) · hepsi arşivsiz · 6 hata türü",
+              r.status_code == 200 and len(rows) == 6
+              and sum(1 for x in rows if x["topic_id"] is None) == 1
+              and all(not x["archived"] for x in rows)
+              and len(d.get("error_types", [])) == 6, r.text[:250])
+
+        # SEÇİCİ aktarım (2026-07-19 kararı: tümünü yığma YOK — kullanıcı seçer)
+        items = [
+            {"question_id": by_no[1]["question_id"], "error_type": "dikkat"},
+            {"question_id": by_no[2]["question_id"]},
+            {"question_id": by_no[5]["question_id"]},  # konusuz — atlanmalı
+        ]
+        r = ct.post(url1, json={"items": items})
         d = (r.json().get("data") or {}) if r.status_code == 200 else {}
-        check("2. koç tek-tık: 5 konulu yanlış aktarıldı · 1 konusuz atlandı",
-              r.status_code == 200 and d.get("created") == 5
-              and d.get("skipped_no_topic") == 1 and d.get("total_wrong") == 6,
+        check("3. yalnız SEÇİLENLER aktarıldı (2 yeni · 1 konusuz atlandı)",
+              r.status_code == 200 and d.get("created") == 2
+              and d.get("skipped_no_topic") == 1 and d.get("total_wrong") == 3,
               r.text[:250])
 
         with SessionLocal() as db:
             wqs = db.query(WrongQuestion).filter(
                 WrongQuestion.student_id == ids["student"]).all()
             ok_shape = (
-                len(wqs) == 5
+                len(wqs) == 2
                 and all(w.source_kind == "deneme" for w in wqs)
                 and all(w.exam_result_id == ids["exam1"] for w in wqs)
                 and all(w.subject_id is not None and w.topic_id is not None
                         for w in wqs)
-                and all("Soru" in (w.note or "") for w in wqs)
+                and sum(1 for w in wqs if w.error_type == "dikkat") == 1
             )
-        check("3. arşiv kayıtları doğru (source=deneme · exam bağı · konu+ders · not)",
+        check("4. kayıt şekli doğru + seçilen hata türü atandı (1× dikkat)",
               ok_shape, f"n={len(wqs)}")
 
-        r = ct.post(url1)
+        r = ct.get(wr1)
+        rows2 = (r.json().get("rows") or []) if r.status_code == 200 else []
+        arch = {x["question_no"] for x in rows2 if x["archived"]}
+        check("5. arşiv işaretleri güncellendi (yalnız 1 ve 2)",
+              arch == {1, 2}, str(arch))
+
+        r = ct.post(url1, json={"items": items})
         d = (r.json().get("data") or {}) if r.status_code == 200 else {}
-        check("4. idempotent: ikinci basış mükerrer üretmez (0 yeni · 5 atlandı)",
+        check("6. idempotent: aynı seçim mükerrer üretmez (0 yeni · 2 atlandı)",
               r.status_code == 200 and d.get("created") == 0
-              and d.get("skipped_existing") == 5, r.text[:200])
+              and d.get("skipped_existing") == 2, r.text[:200])
 
-        r = co.post(url1)
-        check("5. yabancı koç → 404", r.status_code == 404, r.text[:100])
+        r1b = co.get(wr1)
+        r2b = cs.post(url1)
+        check("7. yabancı koç 404 + öğrenci koç ucuna 403",
+              r1b.status_code == 404 and r2b.status_code == 403,
+              f"{r1b.status_code}/{r2b.status_code}")
 
-        r = cs.post(url1)
-        check("6. öğrenci koç ucuna erişemez → 403", r.status_code == 403, r.text[:100])
-
+        r = cs.get(f"/api/v2/student/exams/{ids['exam2']}/wrong-rows")
+        n_rows = len((r.json().get("rows") or [])) if r.status_code == 200 else -1
         r = cs.post(f"/api/v2/student/exams/{ids['exam2']}/wrong-to-archive")
         d = (r.json().get("data") or {}) if r.status_code == 200 else {}
-        check("7. öğrenci kendi denemesini aktarır (2 yeni)",
-              r.status_code == 200 and d.get("created") == 2
+        check("8. öğrenci kendi listesi (2) + gövdesiz POST tümünü aktarır (geriye uyum)",
+              n_rows == 2 and r.status_code == 200 and d.get("created") == 2
               and "student:wrong-questions" in (r.json().get("invalidate") or []),
-              r.text[:200])
+              f"rows={n_rows} {r.text[:150]}")
 
         r = cs.post(f"/api/v2/student/exams/{ids['exam1'] + 999999}/wrong-to-archive")
-        check("8. olmayan/yabancı deneme → 404", r.status_code == 404, r.text[:100])
+        check("9. olmayan/yabancı deneme → 404", r.status_code == 404, r.text[:100])
 
         # --- sinyal köprüleri (servis düzeyi) ---
         from app.services.exam_topic_analysis import (
@@ -201,7 +226,7 @@ def main() -> int:
         )
         with SessionLocal() as db:
             wm = exam_weak_topic_map(db, student_id=ids["student"])
-            check("9. öneri sinyali: Rasyonel 4Y → 1.0 · Paragraf 1Y → yok · "
+            check("10. öneri sinyali: Rasyonel 4Y → 1.0 · Paragraf 1Y → yok · "
                   "Temel acc≥.6 → yok",
                   wm.get(ids["rasyonel"]) == 1.0
                   and ids["paragraf"] not in wm
@@ -209,7 +234,7 @@ def main() -> int:
             stu = db.get(User, ids["student"])
             es = exam_insight_summary(db, stu)
             top = (es or {}).get("opportunities", [{}])[0]
-            check("10. KS4 girdisi: özet üretildi + en büyük fırsat Temel/Rasyonel",
+            check("11. KS4 girdisi: özet üretildi + en büyük fırsat Temel/Rasyonel",
                   es is not None and es.get("exams") == 2
                   and top.get("topic") in ("Temel Kavramlar", "Rasyonel Sayılar"),
                   str(es)[:250])

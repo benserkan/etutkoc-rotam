@@ -74,6 +74,44 @@ interface EditRow extends ImportDraftRow {
 
 type Step = "pick" | "analyzing" | "preview" | "saving" | "done";
 
+// Beyan seçicileri (BEYAN ESAS — tespit bekçiye döner): sınıfa göre tür listesi
+const GRADE_CHOICES: { value: string; label: string }[] = [
+  { value: "", label: "Otomatik tespit" },
+  ...[5, 6, 7, 8, 9, 10, 11, 12].map((g) => ({
+    value: String(g),
+    label: `${g}. Sınıf`,
+  })),
+  { value: "mezun", label: "Mezun" },
+];
+
+function sectionChoicesFor(grade: string): { value: string; label: string }[] {
+  const auto = { value: "", label: "Otomatik tespit" };
+  if (!grade) {
+    return [auto];
+  }
+  const g = grade === "mezun" ? 13 : Number(grade);
+  if (g >= 5 && g <= 8) {
+    return [auto, { value: "lgs", label: "LGS" },
+            { value: "okul", label: "Okul Sınavı / Yazılı" }];
+  }
+  if (g >= 9 && g <= 10) {
+    return [
+      auto,
+      { value: "tyt", label: "Sınıf İzleme / TYT formatı" },
+      { value: "okul", label: "Okul Sınavı / Yazılı" },
+    ];
+  }
+  return [
+    auto,
+    { value: "tyt", label: "TYT" },
+    { value: "ayt_say", label: "AYT (Sayısal)" },
+    { value: "ayt_ea", label: "AYT (Eşit Ağırlık)" },
+    { value: "ayt_soz", label: "AYT (Sözel)" },
+    { value: "ayt_dil", label: "AYT (Dil)" },
+    { value: "okul", label: "Okul Sınavı / Yazılı" },
+  ];
+}
+
 export function ExamImportDialog({
   open,
   onOpenChange,
@@ -111,6 +149,9 @@ function ImportFlow({
   const qc = useQueryClient();
   const editMode = editExamId != null;
   const [step, setStep] = React.useState<Step>(editMode ? "analyzing" : "pick");
+  // Beyan (kullanıcı seçimi — boş = otomatik tespit)
+  const [declGrade, setDeclGrade] = React.useState("");
+  const [declSection, setDeclSection] = React.useState("");
   const [file, setFile] = React.useState<File | null>(null);
   const [draft, setDraft] = React.useState<ExamImportDraft | null>(null);
   const [rows, setRows] = React.useState<EditRow[]>([]);
@@ -151,10 +192,15 @@ function ImportFlow({
   async function analyze(f: File) {
     setFile(f);
     setStep("analyzing");
+    const decl = {
+      declaredSection: declSection || null,
+      declaredGrade:
+        declGrade && declGrade !== "mezun" ? Number(declGrade) : null,
+    };
     try {
       const d = studentId != null
-        ? await teacherAnalyzeExamPdf(studentId, f)
-        : await studentAnalyzeExamPdf(f);
+        ? await teacherAnalyzeExamPdf(studentId, f, decl)
+        : await studentAnalyzeExamPdf(f, decl);
       applyDraft(d);
     } catch (e) {
       const msg = e instanceof ApiError ? e.message : "Belge analiz edilemedi.";
@@ -289,6 +335,13 @@ function ImportFlow({
             <PickStep
               fileRef={fileRef}
               onPick={(f) => void analyze(f)}
+              declGrade={declGrade}
+              declSection={declSection}
+              onDeclGrade={(v) => {
+                setDeclGrade(v);
+                setDeclSection("");
+              }}
+              onDeclSection={setDeclSection}
             />
           ) : null}
 
@@ -392,12 +445,55 @@ function ImportFlow({
 function PickStep({
   fileRef,
   onPick,
+  declGrade,
+  declSection,
+  onDeclGrade,
+  onDeclSection,
 }: {
   fileRef: React.RefObject<HTMLInputElement | null>;
   onPick: (f: File) => void;
+  declGrade: string;
+  declSection: string;
+  onDeclGrade: (v: string) => void;
+  onDeclSection: (v: string) => void;
 }) {
+  const sectionChoices = sectionChoicesFor(declGrade);
   return (
     <div className="space-y-4">
+      {/* BEYAN ESAS: sınıf + tür seçilirse tespit bekçiye döner (çelişkide uyarır) */}
+      <div className="rounded-md border border-border bg-muted/30 p-3">
+        <p className="mb-2 text-xs font-medium text-foreground">
+          Denemenin sınıfı ve türünü biliyorsan seç — yanlış tür ihtimali
+          sıfırlanır. Bilmiyorsan &quot;Otomatik tespit&quot; bırak.
+        </p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="text-xs text-muted-foreground">
+            Sınıf
+            <select
+              value={declGrade}
+              onChange={(e) => onDeclGrade(e.target.value)}
+              className="mt-1 h-9 w-full rounded-md border border-border bg-card px-2 text-sm text-foreground"
+            >
+              {GRADE_CHOICES.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-muted-foreground">
+            Sınav türü
+            <select
+              value={declSection}
+              onChange={(e) => onDeclSection(e.target.value)}
+              disabled={!declGrade}
+              className="mt-1 h-9 w-full rounded-md border border-border bg-card px-2 text-sm text-foreground disabled:opacity-60"
+            >
+              {sectionChoices.map((c) => (
+                <option key={c.value} value={c.value}>{c.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+      </div>
       <input
         ref={fileRef}
         type="file"

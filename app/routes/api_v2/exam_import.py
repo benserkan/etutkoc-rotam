@@ -34,7 +34,9 @@ from app.routes.api_v2.schemas.exam_import import (
     ExamImportConfirmResult,
     ExamImportDraft,
     ExamTopicAnalysisResponse,
+    ExamWrongRowsResponse,
     SectionChoice,
+    WrongBridgeBody,
     WrongBridgeResult,
 )
 from app.services import exam_import_service as svc
@@ -155,6 +157,7 @@ def _section_choices() -> list[SectionChoice]:
 
 def _run_analyze(
     db: Session, *, student: User, coach: User, actor: User, pdf_bytes: bytes,
+    declared_section: str | None = None, declared_grade: int | None = None,
 ) -> ExamImportDraft:
     """Çift okuma + normalizasyon; kredi koçun havuzundan (tek seferde 6)."""
     try:
@@ -162,7 +165,9 @@ def _run_analyze(
             db, owner=CreditOwner.for_user(coach), kind=UsageKind.AI_EXAM_IMPORT,
             actor_user_id=actor.id, autocommit=False,
         ) as ctx:
-            draft = svc.analyze(db, student, pdf_bytes)
+            draft = svc.analyze(
+                db, student, pdf_bytes,
+                declared_section=declared_section, declared_grade=declared_grade)
             ctx.set_metadata({
                 "student_id": student.id,
                 "rows": len(draft["rows"]),
@@ -254,20 +259,25 @@ def _run_confirm(
 def teacher_exam_import_analyze(
     student_id: int,
     file: UploadFile = File(...),
+    declared_section: str | None = Form(default=None),
+    declared_grade: int | None = Form(default=None),
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
     """PDF'i analiz et → önizleme taslağı (kayıt YAPMAZ; kredi burada düşer).
 
-    Bilinçli SENKRON uç (threadpool) — Gemini çağrıları dakikalar sürebilir;
-    async olsaydı event loop kilitlenir, gunicorn worker'ı öldürürdü.
+    declared_section/declared_grade: kullanıcı beyanı (BEYAN ESAS — tespit
+    bekçiye döner, çelişkide uyarı üretir). Bilinçli SENKRON uç (threadpool) —
+    Gemini çağrıları dakikalar sürebilir.
     """
     student = _get_owned_student(db, user, student_id)
     # koç kendi kapılarından geçer (paket + rıza) — _paying_coach öğrencinin
     # koçunu döndürür; koç yolu için bu zaten user'ın kendisidir.
     coach = _paying_coach(db, student)
     pdf = _read_pdf_upload(file)
-    return _run_analyze(db, student=student, coach=coach, actor=user, pdf_bytes=pdf)
+    return _run_analyze(db, student=student, coach=coach, actor=user, pdf_bytes=pdf,
+                        declared_section=declared_section,
+                        declared_grade=declared_grade)
 
 
 @router.post(
@@ -357,20 +367,49 @@ def teacher_exam_import_rows_update(
     )
 
 
+def _wrong_rows_response(db: Session, student: User, exam) -> ExamWrongRowsResponse:
+    from app.models import WQ_ERROR_LABELS_TR
+    return ExamWrongRowsResponse(
+        exam_id=exam.id,
+        title=exam.title,
+        rows=wrong_question_service.exam_wrong_rows(db, student, exam),
+        error_types=[{"value": k, "label": v}
+                     for k, v in WQ_ERROR_LABELS_TR.items()],
+    )
+
+
+@router.get(
+    "/teacher/exams/{exam_id}/wrong-rows",
+    response_model=ExamWrongRowsResponse,
+)
+def teacher_exam_wrong_rows(
+    exam_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Seçici köprü: denemenin yanlış soruları (arşiv durumu işaretli) —
+    koç hangilerinin arşive değer olduğunu buradan seçer."""
+    exam, student = _get_owned_exam(db, user, exam_id)
+    return _wrong_rows_response(db, student, exam)
+
+
 @router.post(
     "/teacher/exams/{exam_id}/wrong-to-archive",
     response_model=MutationResponse[WrongBridgeResult],
 )
 def teacher_exam_wrongs_to_archive(
     exam_id: int,
+    body: WrongBridgeBody | None = None,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Denemenin YANLIŞ sorularını tek tıkla Yanlış Soru Arşivine aktar
-    (Faz 3 köprüsü). İdempotent — ikinci basış mükerrer kart üretmez."""
+    """Denemenin SEÇİLEN yanlışlarını Yanlış Soru Arşivine aktar (Faz 3
+    köprüsü). body.items yoksa tümü (geriye uyum). İdempotent."""
     exam, student = _get_owned_exam(db, user, exam_id)
     result = wrong_question_service.bulk_from_exam(
-        db, student, exam=exam, created_by=user)
+        db, student, exam=exam, created_by=user,
+        selected=([i.model_dump() for i in body.items]
+                  if body and body.items is not None else None))
     return MutationResponse[WrongBridgeResult](
         data=WrongBridgeResult(**result),
         invalidate=[
@@ -402,23 +441,43 @@ def teacher_exam_topic_analysis(
 # ============================================================================
 
 
+@router.get(
+    "/student/exams/{exam_id}/wrong-rows",
+    response_model=ExamWrongRowsResponse,
+)
+def student_exam_wrong_rows(
+    exam_id: int,
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    exam = db.get(ExamResult, exam_id)
+    if exam is None or exam.student_id != user.id:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "exam_not_found",
+            "message": "Deneme bulunamadı."})
+    return _wrong_rows_response(db, user, exam)
+
+
 @router.post(
     "/student/exams/{exam_id}/wrong-to-archive",
     response_model=MutationResponse[WrongBridgeResult],
 )
 def student_exam_wrongs_to_archive(
     exam_id: int,
+    body: WrongBridgeBody | None = None,
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
-    """Öğrenci kendi denemesinin yanlışlarını arşive aktarır (idempotent)."""
+    """Öğrenci kendi denemesinin SEÇTİĞİ yanlışlarını arşive aktarır."""
     exam = db.get(ExamResult, exam_id)
     if exam is None or exam.student_id != user.id:
         raise HTTPException(status_code=404, detail={
             "error": "not_found", "code": "exam_not_found",
             "message": "Deneme bulunamadı."})
     result = wrong_question_service.bulk_from_exam(
-        db, user, exam=exam, created_by=user)
+        db, user, exam=exam, created_by=user,
+        selected=([i.model_dump() for i in body.items]
+                  if body and body.items is not None else None))
     invalidate = ["student:wrong-questions"]
     if user.teacher_id:
         invalidate.append(
@@ -441,12 +500,16 @@ def student_exam_topic_analysis(
 @router.post("/student/exams/import-analyze", response_model=ExamImportDraft)
 def student_exam_import_analyze(
     file: UploadFile = File(...),
+    declared_section: str | None = Form(default=None),
+    declared_grade: int | None = Form(default=None),
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
     coach = _paying_coach(db, user)
     pdf = _read_pdf_upload(file)
-    return _run_analyze(db, student=user, coach=coach, actor=user, pdf_bytes=pdf)
+    return _run_analyze(db, student=user, coach=coach, actor=user, pdf_bytes=pdf,
+                        declared_section=declared_section,
+                        declared_grade=declared_grade)
 
 
 @router.post(
