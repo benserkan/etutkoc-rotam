@@ -1339,6 +1339,58 @@ def update_imported(
     return exam
 
 
+def rebuild_subject_nets(db: Session, exam: ExamResult, student: User) -> bool:
+    """Kayıtlı içe-aktarımın ders kırılımını (subject_nets) soru satırlarından
+    GÜNCEL sunum kurallarıyla yeniden kur.
+
+    Sunum birleştirme (okul sınavında sınıf dersi adı — 2026-07-18) yalnız
+    yeni kayıtlarda uygulanır; ondan ÖNCE kaydedilen içe-aktarımların kırılımı
+    karma kalmıştı (Elif GİS-3 vakası). Toplamlar/net DEĞİŞMEZ — yalnız
+    kırılım. Backfill scripti kullanır; değişiklik olduysa True döner
+    (commit ÇAĞIRANIN işi).
+    """
+    if exam.import_source != "pdf_import" or not exam.questions:
+        return False
+    section = exam.section
+    universe = universe_for_section(section)
+    try:
+        meta = json.loads(exam.analysis_meta) if exam.analysis_meta else {}
+    except ValueError:
+        meta = {}
+    grade_cap = meta.get("grade_hint") or student.grade_level
+    school_grade = _school_grade_signal(
+        exam.title, meta.get("grade_hint"), student)
+    subjects, topics, display_map = _normalization_pool(
+        db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
+    topic_by_id = {t.id: t for t in topics}
+    subj_by_id = {s.id: s for s in subjects}
+    penalty = section_penalty(section)
+    groups: dict[str, dict] = {}
+    for q in sorted(exam.questions, key=lambda x: x.id):
+        tp = topic_by_id.get(q.topic_id) if q.topic_id else None
+        sid = tp.subject_id if tp is not None else q.subject_id
+        gname = (subj_by_id[sid].name if sid in subj_by_id else None) \
+            or ((q.subject_name_raw or "").strip() or "Diğer")
+        gname = _display_name(gname, display_map)
+        g = groups.setdefault(gname, {"name": gname, "correct": 0,
+                                      "wrong": 0, "blank": 0})
+        if q.result == EQ_RESULT_DOGRU:
+            g["correct"] += 1
+        elif q.result == EQ_RESULT_YANLIS:
+            g["wrong"] += 1
+        elif q.result == EQ_RESULT_BOS:
+            g["blank"] += 1
+    payload: list[dict] = []
+    for g in groups.values():
+        g["net"] = round(max(g["correct"] - g["wrong"] / penalty, 0.0), 2)
+        payload.append(g)
+    new_json = json.dumps(payload, ensure_ascii=False)
+    if new_json == (exam.subject_nets or ""):
+        return False
+    exam.subject_nets = new_json
+    return True
+
+
 def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
     """Kayıtlı (PDF'ten aktarılmış) denemeyi önizleme-taslağı biçiminde aç.
 

@@ -142,6 +142,15 @@ export function TopicAnalysisCard({
         </View>
       ) : null}
 
+      {d.exams.length < 2 ? (
+        <View className="mt-3 rounded-xl bg-slate-100 px-2.5 py-2">
+          <Text className="text-[10px] text-slate-500">
+            Konu × deneme ısı haritası ile unutulan/gelişen konular, aynı türde
+            en az 2 deneme aktarılınca burada görünür.
+          </Text>
+        </View>
+      ) : null}
+
       {d.exams.length >= 2 && heatTopics.length > 0 ? (
         <View className="mt-3">
           <Text className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">

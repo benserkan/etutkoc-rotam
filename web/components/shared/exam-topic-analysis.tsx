@@ -154,6 +154,14 @@ export function ExamTopicAnalysis({
         </div>
       ) : null}
 
+      {d.exams.length < 2 ? (
+        <p className="rounded-md bg-muted/40 px-2.5 py-2 text-[11px] text-muted-foreground">
+          Konu × deneme <b>ısı haritası</b> ile <b>unutulan / gelişen konular</b>,
+          aynı türde en az <b>2 deneme</b> aktarılınca burada görünür — yeni
+          deneme ekledikçe analiz derinleşir.
+        </p>
+      ) : null}
+
       {d.exams.length >= 2 && heatTopics.length > 0 ? (
         <div>
           <h5 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
@@ -222,8 +230,7 @@ export function ExamTopicAnalysis({
 
       {d.unmatched_questions > 0 ? (
         <p className="text-[11px] text-amber-800 dark:text-amber-300">
-          {d.unmatched_questions} soru müfredat konusuna bağlanmadan kaydedilmiş —
-          denemenin yanındaki &quot;Satırları düzelt&quot; ile bağlarsan analize girer.
+          {`${d.unmatched_questions} soru müfredat konusuna bağlanmadan kaydedilmiş — denemenin yanındaki "Satırları düzelt" ile bağlarsan analize girer.`}
         </p>
       ) : null}
     </section>
