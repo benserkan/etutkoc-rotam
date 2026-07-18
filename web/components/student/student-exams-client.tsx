@@ -4,6 +4,7 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, FileUp, TrendingDown, TrendingUp } from "lucide-react";
 
+import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 import { Button } from "@/components/ui/button";
@@ -237,6 +238,13 @@ function StudentExamRow({ row }: { row: ExamResultRow }) {
                 {row.total_questions} soru
               </p>
             </div>
+            {row.import_source === "pdf_import" ? (
+              <ArchiveExamWrongsButton
+                examId={row.id}
+                wrongCount={row.total_wrong}
+                compact
+              />
+            ) : null}
             {hasSubjects ? (
               <Button
                 variant="ghost"

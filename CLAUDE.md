@@ -230,8 +230,32 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   site-header STUDENT_NAV +"Denemelerim" (GraduationCap, more-menü) +
   panel_behavior kataloğuna `student.exams` satırı. Smoke: quick_access 16 ·
   student_read 11 · tsc/eslint temiz.
-  **KALAN: Faz 3** sinyal köprüleri (YSA tek-tık + öneri motoru + KS4) ·
-  **Faz 4** mobil.
+- **FAZ 3 — Sinyal köprüleri CANLI (2026-07-18, migration YOK):** 3 köprü:
+  (1) **Deneme → YSA tek-tık:** `wrong_question_service.bulk_from_exam` —
+  denemenin YANLIŞ + KONULU satırları tek tıkla arşive (source=deneme +
+  exam bağı + konu/ders + not "Başlık · Soru N — etiket"; foto yok, not
+  adresler). Boş SAYILMAZ, konusuz atlanır (önce "Satırları düzelt").
+  **İdempotent** (deneme+konu+not anahtarı — ikinci basış mükerrer üretmez).
+  Uçlar: POST `/teacher/exams/{id}/wrong-to-archive` (sahiplik 404) + POST
+  `/student/exams/{id}/wrong-to-archive` (kendi; YSA manuel ekleme her planda
+  → kapı yok). UI: paylaşılan `ArchiveExamWrongsButton` (compact=ikon /
+  etiketli) 3 yüzeyde — ExamImportDialog Done adımı + koç deneme satırı +
+  öğrenci deneme satırı; toast created/skipped kırılımı verir.
+  (2) **Öneri motoru:** `exam_topic_analysis.exam_weak_topic_map` (son 90 gün,
+  topic→0..1; 2 yanlış=0.5, 4+=1.0; **boş sayılmaz** — Elif AYT'nin 80 boş
+  sözeli tüm sözel konuları "zayıf" gösterirdi; doğruluk ≥0.6 konu sinyal
+  üretmez) → `suggestions.suggest_for_date` zayıflığa **+0.45** + yeni reason
+  **"Denemelerde yanlış yapılan konu"** (open_wrong_topic_map deseniyle
+  birebir, best-effort try/except). (3) **KS4 içgörü girdisi:**
+  `exam_insight_summary` (varsayılan tür; top 5 net fırsatı + unutulanlar) →
+  coaching-insight `academic["exam_topics"]` → prompt'a "Deneme konu analizi …
+  En büyük net fırsatları … Unutulmuş görünen konular" blokları.
+  Smoke `test_api_v2_exam_wrong_bridge.py` **10/10** (tek-tık + kayıt şekli +
+  idempotent + sahiplik/rol + öğrenci ucu + sinyal haritası eşikleri + KS4
+  özeti). Regresyon: suggestions_curriculum 13 · wrong_questions 32 ·
+  wrong_question_ai 24 · coaching_insight 11 · exam_import 67 ·
+  exam_topic_analysis 10 GREEN; tsc/eslint temiz.
+  **KALAN: Faz 4** mobil (deneme aktarma + analiz ekranları — EAS build ister).
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı

@@ -12,7 +12,22 @@ import type {
   ExamImportConfirmResult,
   ExamImportDraft,
   ExamTopicAnalysisResponse,
+  WrongBridgeResult,
 } from "@/lib/types/exam-import";
+
+/** Denemenin YANLIŞ sorularını tek tıkla Yanlış Soru Arşivine aktar (Faz 3).
+ *  İdempotent — ikinci basış mükerrer üretmez. Koç (studentId dolu) / öğrenci. */
+export function archiveExamWrongs(
+  examId: number,
+  studentId?: number | null,
+): Promise<MutationResponse<WrongBridgeResult>> {
+  return api<MutationResponse<WrongBridgeResult>>(
+    studentId != null
+      ? `/api/v2/teacher/exams/${examId}/wrong-to-archive`
+      : `/api/v2/student/exams/${examId}/wrong-to-archive`,
+    { method: "POST" },
+  );
+}
 
 /** Konu × deneme analizi (Faz 2) — koç (studentId verilir) / öğrenci (null). */
 export function getExamTopicAnalysis(

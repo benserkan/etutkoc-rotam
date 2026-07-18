@@ -20,6 +20,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import (
+    EQ_RESULT_YANLIS,
     Book,
     BookSection,
     ExamResult,
@@ -212,6 +213,63 @@ def create_wrong_question(
     db.add(wq)
     db.flush()
     return wq
+
+
+def bulk_from_exam(
+    db: Session,
+    student: User,
+    *,
+    exam: ExamResult,
+    created_by: User,
+) -> dict:
+    """Deneme köprüsü (Faz 3): denemenin YANLIŞ sorularını TEK TIKLA arşive aktar.
+
+    Yalnız 'yanlis' + KONUYA BAĞLI satırlar aktarılır — arşivin kapanış/birikim
+    döngüsü konu üzerinden işler; boş bırakılan soru zayıflık kanıtı sayılmaz,
+    konusuz satır da birikime giremez (koç 'Satırları düzelt' ile bağlayıp
+    tekrar aktarabilir). İDEMPOTENT: aynı satır (deneme + konu + üretilen not)
+    daha önce aktarıldıysa atlanır — buton iki kez basılınca mükerrer kart yok.
+    Foto yoktur; öğrenci soruyu deneme kitapçığından bulur (not satırı adresler).
+    """
+    wrong_rows = [q for q in exam.questions if q.result == EQ_RESULT_YANLIS]
+    existing = {
+        (w.topic_id, w.note)
+        for w in db.query(WrongQuestion).filter(
+            WrongQuestion.student_id == student.id,
+            WrongQuestion.exam_result_id == exam.id,
+        ).all()
+    }
+    created = 0
+    skipped_existing = 0
+    skipped_no_topic = 0
+    for q in wrong_rows:
+        if q.topic_id is None:
+            skipped_no_topic += 1
+            continue
+        note = f"{exam.title} · Soru {q.question_no or '?'}"
+        label = (q.topic_label_raw or "").strip()
+        if label:
+            note += f" — {label}"
+        note = note[:300]
+        if (q.topic_id, note) in existing:
+            skipped_existing += 1
+            continue
+        create_wrong_question(
+            db, student, created_by=created_by,
+            source_kind=WQ_SOURCE_DENEME,
+            exam_result_id=exam.id,
+            topic_id=q.topic_id,
+            note=note,
+        )
+        existing.add((q.topic_id, note))
+        created += 1
+    db.commit()
+    return {
+        "created": created,
+        "skipped_existing": skipped_existing,
+        "skipped_no_topic": skipped_no_topic,
+        "total_wrong": len(wrong_rows),
+    }
 
 
 def update_tags(

@@ -2077,6 +2077,15 @@ def teacher_coaching_insight_generate_v2(
         }
     except Exception:  # noqa: BLE001 — içgörü yanlış arşivi olmadan da üretilir
         pass
+    # Deneme köprüsü (Faz 3): konu × deneme analizinden net fırsatları +
+    # unutulan konular → seans gündeminin akademik kanıtı
+    try:
+        from app.services.exam_topic_analysis import exam_insight_summary
+        es = exam_insight_summary(db, student)
+        if es:
+            academic["exam_topics"] = es
+    except Exception:  # noqa: BLE001 — içgörü denemesiz de üretilir
+        pass
 
     owner = CreditOwner.for_user(user)
     insight: dict | None = None

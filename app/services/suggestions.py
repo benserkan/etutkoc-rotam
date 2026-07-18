@@ -622,8 +622,18 @@ def suggest_for_date(
         )
     except Exception:
         wrong_struggle = {}
+    # Deneme köprüsü (Faz 3): son 90 günün denemelerinde YANLIŞ çözülen konular
+    # → zayıflık sinyali (2 yanlış = 0.5, 4+ = tam; boş sayılmaz).
+    try:
+        from app.services.exam_topic_analysis import exam_weak_topic_map
+        exam_struggle: dict[int, float] = exam_weak_topic_map(
+            db, student_id=student_id
+        )
+    except Exception:
+        exam_struggle = {}
     review_weakness_keys: set[tuple[int, int]] = set()
     wrong_weakness_keys: set[tuple[int, int]] = set()
+    exam_weakness_keys: set[tuple[int, int]] = set()
     for section_id, ctx in universe.items():
         section = ctx.section
         if section.test_count == 0:
@@ -661,6 +671,10 @@ def suggest_for_date(
         if topic_id is not None and topic_id in wrong_struggle:
             w += 0.55 * wrong_struggle[topic_id]  # max +0.55
             wrong_weakness_keys.add((book_id, section_id))
+        # Deneme sonuçları: son denemelerde yanlışı biriken konu (Faz 3)
+        if topic_id is not None and topic_id in exam_struggle:
+            w += 0.45 * exam_struggle[topic_id]  # max +0.45
+            exam_weakness_keys.add((book_id, section_id))
         if w > 0:
             weakness_scores[(book_id, section_id)] = min(1.0, w)
 
@@ -770,6 +784,8 @@ def suggest_for_date(
             reasons.append(f"Bu güne {freq}× önceden atanmış")
         if key in wrong_weakness_keys:
             reasons.append("Arşivde açık yanlışı var")
+        if key in exam_weakness_keys:
+            reasons.append("Denemelerde yanlış yapılan konu")
         if key in review_weakness_keys:
             reasons.append("🧠 Tekrar kartında zorlanılan konu")
         if weakness > 0.3:

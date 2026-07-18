@@ -11,6 +11,8 @@ Salt-okuma; AI çağrısı YOK (deterministik agregasyon, kredi düşmez).
 """
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 from sqlalchemy.orm import Session, selectinload
 
 from app.models import (
@@ -19,6 +21,7 @@ from app.models import (
     EQ_RESULT_DOGRU,
     EQ_RESULT_YANLIS,
     ExamResult,
+    ExamResultQuestion,
     ExamSection,
     Subject,
     Topic,
@@ -203,4 +206,75 @@ def build_exam_topic_analysis(
         "improved": improved,
         "unmatched_questions": unmatched,
         "analyzed_question_count": analyzed,
+    }
+
+
+# ============================================================================
+# Faz 3 — sinyal köprüleri (öneri motoru + KS4 içgörü)
+# ============================================================================
+
+EXAM_WEAK_WINDOW_DAYS = 90
+EXAM_WEAK_FULL_MISSES = 4  # bu kadar yanlış = tam sinyal (1.0)
+
+
+def exam_weak_topic_map(db: Session, student_id: int) -> dict[int, float]:
+    """Deneme zayıflık haritası (Faz 3 → öneri motoru): topic_id → 0..1.
+
+    Son 90 günün soru-satırlı denemelerinde YANLIŞ çözülen konular. Boş
+    SAYILMAZ — cevaplanmayan oturum/bölüm zayıflık kanıtı değildir (Elif AYT
+    vakasında 80 boş sözel satır tüm sözel konuları "zayıf" gösterirdi).
+    2 yanlış = 0.5 · 4+ yanlış = 1.0; genel doğruluğu ≥ 0.6 olan konu sinyal
+    üretmez (yanlışlar telafi edilmiş). Sözleşme `open_wrong_topic_map` ile
+    aynı — suggestions zayıflık bileşeni olarak tüketir.
+    """
+    cutoff = date.today() - timedelta(days=EXAM_WEAK_WINDOW_DAYS)
+    qrows = (
+        db.query(ExamResultQuestion.topic_id, ExamResultQuestion.result)
+        .join(ExamResult, ExamResult.id == ExamResultQuestion.exam_result_id)
+        .filter(
+            ExamResult.student_id == student_id,
+            ExamResult.exam_date >= cutoff,
+            ExamResultQuestion.topic_id.isnot(None),
+        )
+        .all()
+    )
+    agg: dict[int, dict[str, int]] = {}
+    for tid, res in qrows:
+        a = agg.setdefault(int(tid), {"w": 0, "c": 0, "n": 0})
+        a["n"] += 1
+        if res == EQ_RESULT_YANLIS:
+            a["w"] += 1
+        elif res == EQ_RESULT_DOGRU:
+            a["c"] += 1
+    out: dict[int, float] = {}
+    for tid, a in agg.items():
+        if a["w"] < 2:
+            continue
+        if a["n"] and a["c"] / a["n"] >= 0.6:
+            continue
+        out[tid] = min(1.0, a["w"] / EXAM_WEAK_FULL_MISSES)
+    return out
+
+
+def exam_insight_summary(db: Session, student: User) -> dict | None:
+    """KS4 koçluk içgörüsü prompt girdisi — kompakt konu×deneme özeti.
+
+    Varsayılan (en çok denemesi olan) tür üzerinden: en büyük 5 net fırsatı +
+    unutulan konular. Deneme yoksa None (içgörü denemesiz de üretilir).
+    """
+    d = build_exam_topic_analysis(db, student)
+    if not d["exams"]:
+        return None
+    return {
+        "section_label": d["section_label"],
+        "exams": len(d["exams"]),
+        "opportunities": [
+            {"subject": o["subject_name"], "topic": o["topic_name"],
+             "gain": o["net_gain_per_exam"]}
+            for o in d["opportunities"][:5]
+        ],
+        "forgotten": [
+            {"subject": t["subject_name"], "topic": t["topic_name"]}
+            for t in d["forgotten"][:5]
+        ],
     }

@@ -191,6 +191,14 @@ class ExamTopicAnalysisResponse(BaseModel):
     analyzed_question_count: int
 
 
+class WrongBridgeResult(BaseModel):
+    """Deneme → Yanlış Soru Arşivi köprüsü sonucu (Faz 3, idempotent)."""
+    created: int
+    skipped_existing: int                  # daha önce aktarılmış (mükerrer değil)
+    skipped_no_topic: int                  # konusuz satır (önce 'Satırları düzelt')
+    total_wrong: int
+
+
 class ExamImportConfirmResult(BaseModel):
     exam_id: int
     title: str

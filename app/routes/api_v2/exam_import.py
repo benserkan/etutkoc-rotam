@@ -35,9 +35,11 @@ from app.routes.api_v2.schemas.exam_import import (
     ExamImportDraft,
     ExamTopicAnalysisResponse,
     SectionChoice,
+    WrongBridgeResult,
 )
 from app.services import exam_import_service as svc
 from app.services import exam_topic_analysis
+from app.services import wrong_question_service
 from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
 from app.services.credits import CreditBlocked, CreditOwner, KIND_CREDITS, consume_credits
 from app.services.plans import ai_premium_allowed
@@ -355,6 +357,29 @@ def teacher_exam_import_rows_update(
     )
 
 
+@router.post(
+    "/teacher/exams/{exam_id}/wrong-to-archive",
+    response_model=MutationResponse[WrongBridgeResult],
+)
+def teacher_exam_wrongs_to_archive(
+    exam_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Denemenin YANLIŞ sorularını tek tıkla Yanlış Soru Arşivine aktar
+    (Faz 3 köprüsü). İdempotent — ikinci basış mükerrer kart üretmez."""
+    exam, student = _get_owned_exam(db, user, exam_id)
+    result = wrong_question_service.bulk_from_exam(
+        db, student, exam=exam, created_by=user)
+    return MutationResponse[WrongBridgeResult](
+        data=WrongBridgeResult(**result),
+        invalidate=[
+            f"teacher:{user.id}:students:{student.id}:wrong-questions",
+            "student:wrong-questions",
+        ],
+    )
+
+
 @router.get(
     "/teacher/students/{student_id}/exam-topic-analysis",
     response_model=ExamTopicAnalysisResponse,
@@ -375,6 +400,31 @@ def teacher_exam_topic_analysis(
 # ============================================================================
 # ÖĞRENCİ uçları (kredi + kapılar yine KOÇUN — YSA deseni)
 # ============================================================================
+
+
+@router.post(
+    "/student/exams/{exam_id}/wrong-to-archive",
+    response_model=MutationResponse[WrongBridgeResult],
+)
+def student_exam_wrongs_to_archive(
+    exam_id: int,
+    user: User = Depends(_require_student),
+    db: Session = Depends(get_db),
+):
+    """Öğrenci kendi denemesinin yanlışlarını arşive aktarır (idempotent)."""
+    exam = db.get(ExamResult, exam_id)
+    if exam is None or exam.student_id != user.id:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "exam_not_found",
+            "message": "Deneme bulunamadı."})
+    result = wrong_question_service.bulk_from_exam(
+        db, user, exam=exam, created_by=user)
+    invalidate = ["student:wrong-questions"]
+    if user.teacher_id:
+        invalidate.append(
+            f"teacher:{user.teacher_id}:students:{user.id}:wrong-questions")
+    return MutationResponse[WrongBridgeResult](
+        data=WrongBridgeResult(**result), invalidate=invalidate)
 
 
 @router.get("/student/exam-topic-analysis", response_model=ExamTopicAnalysisResponse)

@@ -25,6 +25,7 @@ import {
   X,
 } from "lucide-react";
 
+import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 
@@ -425,6 +426,14 @@ function ExamRow({
                     aria-hidden
                   />
                 </Button>
+              ) : null}
+              {row.import_source === "pdf_import" ? (
+                <ArchiveExamWrongsButton
+                  examId={row.id}
+                  studentId={studentId}
+                  wrongCount={row.total_wrong}
+                  compact
+                />
               ) : null}
               {row.import_source === "pdf_import" ? (
                 <Button

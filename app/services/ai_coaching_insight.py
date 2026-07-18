@@ -88,6 +88,24 @@ def _build_prompt(student_name: str, sessions: list[dict[str, Any]], academic: d
                 f"{WQ_ERROR_LABELS_TR.get(k, k)} {v}" for k, v in
                 sorted(et.items(), key=lambda x: -x[1])))
 
+    # Deneme köprüsü (Faz 3): konu × deneme analizinden en büyük net
+    # fırsatları + unutulan konular — "hangi konuya çalışsak" sorusunun
+    # ölçülmüş cevabı (PDF'ten aktarılan denemelerin soru satırlarından).
+    ex = academic.get("exam_topics") or {}
+    if ex.get("opportunities") or ex.get("forgotten"):
+        lines.append(
+            f"Deneme konu analizi ({ex.get('section_label')}, "
+            f"son {ex.get('exams')} deneme):")
+        ops = ex.get("opportunities") or []
+        if ops:
+            lines.append("En büyük net fırsatları: " + ", ".join(
+                f"{o.get('subject')}—{o.get('topic')} (+{o.get('gain')} net/deneme)"
+                for o in ops))
+        fg = ex.get("forgotten") or []
+        if fg:
+            lines.append("Unutulmuş görünen konular: " + ", ".join(
+                f"{t.get('subject')}—{t.get('topic')}" for t in fg))
+
     lines.append("\n--- SON SEANSLAR (yeniden eskiye) ---")
     if not sessions:
         lines.append("Kayıtlı seans yok.")

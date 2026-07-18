@@ -197,3 +197,11 @@ export interface ExamTopicAnalysisResponse {
   unmatched_questions: number;
   analyzed_question_count: number;
 }
+
+/** Deneme → Yanlış Soru Arşivi köprüsü sonucu (Faz 3, idempotent). */
+export interface WrongBridgeResult {
+  created: number;
+  skipped_existing: number;
+  skipped_no_topic: number;
+  total_wrong: number;
+}

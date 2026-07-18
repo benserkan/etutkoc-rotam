@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -333,7 +334,7 @@ function ImportFlow({
           ) : null}
 
           {step === "done" && result ? (
-            <DoneStep result={result} updated={editMode} />
+            <DoneStep result={result} updated={editMode} studentId={studentId} />
           ) : null}
         </div>
 
@@ -723,9 +724,11 @@ function AnswerInput({
 function DoneStep({
   result,
   updated,
+  studentId,
 }: {
   result: ExamImportConfirmResult;
   updated?: boolean;
+  studentId?: number;
 }) {
   return (
     <div className="py-6 text-center">
@@ -750,6 +753,18 @@ function DoneStep({
           ? ` ${result.wrong_topic_ids.length} konuda yanlış var.`
           : ""}
       </p>
+      {result.total_wrong > 0 ? (
+        <div className="mt-4 flex flex-col items-center gap-1.5">
+          <ArchiveExamWrongsButton
+            examId={result.exam_id}
+            studentId={studentId}
+            wrongCount={result.total_wrong}
+          />
+          <p className="text-[11px] text-muted-foreground">
+            Yanlışlar arşive girer ve aralıklı tekrar kuyruğunda yeniden çözülür.
+          </p>
+        </div>
+      ) : null}
     </div>
   );
 }
