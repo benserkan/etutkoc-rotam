@@ -278,6 +278,16 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   **KULLANICI AKSİYONU:** PDF seçicinin aktifleşmesi için yeni EAS build
   (Android AAB + iOS — iOS 3.1.1 itirazı sonuçlanınca) → store'a yükleme.
   **Deneme aktarma işinin 4 fazı da TAMAMLANDI.**
+- **Saha düzeltmesi (2026-07-18, Elif ekran görüntüsü):** (a) sunum
+  birleştirmesinden ÖNCE kaydedilen içe-aktarımların ders kırılımı karma
+  kalmıştı (kayıt anı snapshot'ı) → `rebuild_subject_nets` +
+  `scripts/backfill_exam_subject_display.py` (idempotent; prod'da koşuldu:
+  exam #91 birleşik oldu, toplam/net değişmedi). NOT: "konu dersi belirler"
+  gereği tek tük soru belge bölümünden farklı derse sayılabilir (Elif'te 1
+  Mantık sorusu Felsefe→Matematik; toplam net aynı). (b) Analiz kartına
+  (web+mobil OTA `996afd2d`) boş-durum notu: ısı haritası + unutulan/gelişen
+  aynı türde **≥2 deneme** ister — tek denemede yalnız net fırsatı görünür
+  (elle girilen denemeler soru satırı taşımadığından analize hiç girmez).
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı
