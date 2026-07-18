@@ -20,6 +20,7 @@ import type {
   ReviewResponse,
   StudentBooksResponse,
   StudentDayResponse,
+  StudentExamsResponse,
   StudentRequestListResponse,
   StudentWeekResponse,
 } from "@/lib/types/student";
@@ -47,6 +48,8 @@ export const studentKeys = {
   dna: () => ["student", "me", "dna"] as const,
   review: () => ["student", "me", "review"] as const,
   goals: () => ["student", "me", "goals"] as const,
+  // invalidate sözleşmesi "student:exams" (id'siz) → prefix ["student","exams"]
+  exams: () => ["student", "exams"] as const,
 } as const;
 
 // =============================================================================
@@ -121,4 +124,9 @@ export function getStudentReview(): Promise<ReviewResponse> {
 
 export function getStudentGoals(): Promise<GoalListResponse> {
   return api<GoalListResponse>("/api/v2/student/goals");
+}
+
+/** Denemelerim (Faz 2b) — öğrencinin kendi deneme sonuçları (salt-okuma). */
+export function getStudentExams(): Promise<StudentExamsResponse> {
+  return api<StudentExamsResponse>("/api/v2/student/exams");
 }

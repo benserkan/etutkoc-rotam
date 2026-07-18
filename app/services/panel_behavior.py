@@ -146,6 +146,7 @@ _CATALOG: list[CatalogEntry] = [
     _E("student.dna", "/student/dna", "Çalışma DNA"),
     _E("student.focus", "/student/focus", "Odak"),
     _E("student.goals", "/student/goals", "Hedefler"),
+    _E("student.exams", "/student/exams", "Denemelerim"),
     _E("student.requests", "/student/requests", "Taleplerim"),
     _E("student.review", "/student/review", "Aralıklı Tekrar"),
     _E("student.topics", "/student/topics", "Konu Performansı"),

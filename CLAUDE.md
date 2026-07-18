@@ -216,9 +216,22 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   render olmaz. Smoke `test_api_v2_exam_topic_analysis.py` **10/10** (varsayılan
   tür + hücre/agregasyon + fırsat sırası/2.0 + unutulan + tür filtresi +
   sahiplik 404 + öğrenci kendi ucu + rol 403). tsc/eslint temiz.
-  **KALAN: Faz 2b** öğrenci yüzeyi (/student/exams: liste + PDF'ten aktar +
-  aynı analiz bileşeni) · **Faz 3** sinyal köprüleri (YSA tek-tık + öneri
-  motoru + KS4) · **Faz 4** mobil.
+- **FAZ 2b — Öğrenci "Denemelerim" yüzeyi CANLI (2026-07-18, frontend-only +
+  katalog satırı; migration YOK):** `/student/exams` sayfası
+  (`student-exams-client.tsx`): salt-okuma deneme listesi (net + tür rozeti +
+  D/Y/B + açılır ders kırılımı; düzeltme/silme KOÇTA) + **"PDF'ten aktar"**
+  (paylaşılan ExamImportDialog öğrenci modu — kredi/kapılar KOÇUN, YSA deseni;
+  uçlar zaten canlıydı) + tür seçici + 4'lü özet şeridi (deneme/ort/en iyi/son
+  net + trend oku) + **paylaşılan ExamTopicAnalysis** (öğrenci ucu
+  `/student/exam-topic-analysis`). Liste ucu `GET /student/exams` ZATEN vardı
+  (student.py — D2'den beri; frontend'i yoktu). lib: `studentKeys.exams`
+  (["student","exams"] — invalidate "student:exams" ile birebir) +
+  `getStudentExams` + `StudentExamsResponse` (koç şemasından reuse).
+  site-header STUDENT_NAV +"Denemelerim" (GraduationCap, more-menü) +
+  panel_behavior kataloğuna `student.exams` satırı. Smoke: quick_access 16 ·
+  student_read 11 · tsc/eslint temiz.
+  **KALAN: Faz 3** sinyal köprüleri (YSA tek-tık + öneri motoru + KS4) ·
+  **Faz 4** mobil.
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı

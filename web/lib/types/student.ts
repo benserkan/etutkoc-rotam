@@ -504,3 +504,14 @@ export interface GoalListResponse {
   items: GoalItem[];
   summary: GoalSummary;
 }
+
+// ============================================================================
+// Denemelerim (Faz 2b) — koç şemasıyla ORTAK satır/özet tipleri
+// ============================================================================
+
+import type { ExamListSummary, ExamResultRow } from "@/lib/types/teacher";
+
+export interface StudentExamsResponse {
+  summary: ExamListSummary;
+  rows: ExamResultRow[];
+}
