@@ -255,7 +255,29 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   özeti). Regresyon: suggestions_curriculum 13 · wrong_questions 32 ·
   wrong_question_ai 24 · coaching_insight 11 · exam_import 67 ·
   exam_topic_analysis 10 GREEN; tsc/eslint temiz.
-  **KALAN: Faz 4** mobil (deneme aktarma + analiz ekranları — EAS build ister).
+- **FAZ 4 — MOBİL (2026-07-18, mobil-only; backend değişmedi → sunucu deploy
+  YOK):** 3 yüzey: (a) **Öğrenci Denemeler sekmesi** (`exams-view`): "PDF'ten
+  aktar" + `TopicAnalysisCard` (tür seçicisiyle senkron) + kartlarda
+  "Yanlışları arşivle"; (b) **Koç öğrenci Denemeler sekmesi** (`exams-tab`):
+  aynı üçlü (analiz varsayılan türde); (c) paylaşılan RN bileşenleri
+  `components/exams/`: `exam-import-flow` (SADELEŞTİRİLMİŞ akış: PDF seç →
+  çift okuma → ÖZET önizleme [başlık/tarih/tür çipleri + oturum seçici +
+  ders özetleri + kontrol uyarıları + eşleşme istatistiği] → kaydet → sonuç +
+  arşiv butonu; **satır düzeltme bilinçli yalnız web** — okunamayan sonuç
+  varsa kaydet kilitlenir ve web'e yönlendirir; mükerrer→force akışı var) +
+  `topic-analysis-card` (fırsat barları + unutulan/gelişen + yatay kaydırmalı
+  ısı haritası) + `archive-wrongs-button` (idempotent, Alert kırılımlı).
+  `lib/exam-import.ts` web sözleşmesinin aynısı (multipart RN FormData —
+  wrong-questions deseni; confirm PDF'i kanıt olarak yeniden gönderir).
+  **`expo-document-picker ~14.0.8` EKLENDİ (NATİVE)** → PDF seçici yalnız YENİ
+  EAS BUILD'de çalışır; OTA güvenliği için dinamik require + try/catch guard —
+  eski kurulumda "uygulamayı güncelle / web'den aktar" mesajı, analiz + arşiv
+  köprüsü OTA ile eski kurulumda da ÇALIŞIR. `ExamRow.import_source` mobil tipe
+  eklendi. Mobil tsc temiz; lint'te yalnız ÖNCEDEN var olan 2 hata
+  (parent/dashboard + error-boundary — bu işle ilgisiz). PARITY.md güncel.
+  **KULLANICI AKSİYONU:** PDF seçicinin aktifleşmesi için yeni EAS build
+  (Android AAB + iOS — iOS 3.1.1 itirazı sonuçlanınca) → store'a yükleme.
+  **Deneme aktarma işinin 4 fazı da TAMAMLANDI.**
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı

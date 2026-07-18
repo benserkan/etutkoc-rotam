@@ -151,6 +151,8 @@ export interface ExamRow {
   note: string | null;
   created_at: string;
   created_by_name: string | null;
+  /** "pdf_import" → PDF'ten aktarılmış (yanlışları arşive köprüsü açılır) */
+  import_source?: string | null;
 }
 export interface ExamSummary {
   count: number;

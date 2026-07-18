@@ -1,8 +1,11 @@
 import * as React from "react";
 import { Ionicons } from "@expo/vector-icons";
-import { RefreshControl, ScrollView, Text, View } from "react-native";
+import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
+import { ExamImportFlow } from "@/components/exams/exam-import-flow";
+import { TopicAnalysisCard } from "@/components/exams/topic-analysis-card";
 import type { ExamRow, StudentExamsResponse } from "@/lib/student";
 import { cn } from "@/lib/utils";
 
@@ -121,6 +124,11 @@ function ExamCard({ exam }: { exam: ExamRow }) {
           <Text className="mt-0.5 text-[11px] text-slate-400">{exam.total_questions} soru</Text>
         </View>
       </View>
+      {exam.import_source === "pdf_import" && exam.total_wrong > 0 ? (
+        <View className="mt-2 flex-row justify-end">
+          <ArchiveWrongsButton examId={exam.id} wrongCount={exam.total_wrong} compact />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -137,9 +145,20 @@ export function ExamsView({
   const groups = React.useMemo(() => groupBySection(data.rows), [data.rows]);
   const [sel, setSel] = React.useState<string | null>(groups[0]?.section ?? null);
   const selGroup = groups.find((g) => g.section === sel) ?? groups[0];
+  const [importOpen, setImportOpen] = React.useState(false);
 
   const s = data.summary;
   const trendUp = (s.trend_delta ?? 0) >= 0;
+
+  const importButton = (
+    <Pressable
+      onPress={() => setImportOpen(true)}
+      className="flex-row items-center justify-center gap-2 rounded-xl border border-violet-300 bg-white px-4 py-3 active:bg-violet-50"
+    >
+      <Ionicons name="document-attach-outline" size={18} color="#7c3aed" />
+      <Text className="font-semibold text-violet-700">PDF&apos;ten aktar</Text>
+    </Pressable>
+  );
 
   return (
     <SafeAreaView edges={["top"]} className="flex-1 bg-slate-50">
@@ -156,8 +175,10 @@ export function ExamsView({
               Henüz deneme sonucu yok
             </Text>
             <Text className="text-center text-sm text-slate-500">
-              Koçun deneme sonuçlarını girdiğinde netlerin ve gelişimin burada görünür.
+              Deneme sonuç PDF&apos;ini kendin aktarabilirsin — sorular konu konu
+              okunur, netlerin ve konu analizin burada oluşur.
             </Text>
+            <View className="w-full px-4 pt-2">{importButton}</View>
           </View>
         ) : (
           <>
@@ -208,6 +229,11 @@ export function ExamsView({
             ) : null}
             {selGroup ? <NetTrend group={selGroup} /> : null}
 
+            {/* Konu × deneme analizi (Faz 4) — seçili türe göre */}
+            <TopicAnalysisCard section={selGroup?.section ?? null} />
+
+            {importButton}
+
             {/* Liste */}
             <Text className="px-1 pt-1 text-sm font-semibold text-slate-700">Tüm denemeler</Text>
             <View className="gap-2.5">
@@ -218,6 +244,7 @@ export function ExamsView({
           </>
         )}
       </ScrollView>
+      <ExamImportFlow visible={importOpen} onClose={() => setImportOpen(false)} />
     </SafeAreaView>
   );
 }

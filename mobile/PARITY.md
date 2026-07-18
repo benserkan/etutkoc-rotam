@@ -20,6 +20,9 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | Haftalık program | ✅ | ✅ | |
 | Görev talebi (soru/değiştir/kaldır/kaynak değiştir) | ✅ | ✅ | |
 | Denemeler (gör) | ✅ | ✅ | net trend grafiği |
+| **Deneme PDF içe aktar (Faz 4)** | ✅ | ✅ | sadeleştirilmiş önizleme; satır düzeltme web'de; PDF seçici YENİ BUILD ister (guard'lı) |
+| **Konu × deneme analizi (fırsat + ısı haritası + unutulan)** | ✅ | ✅ | tür seçicisiyle senkron |
+| **Yanlışları arşive tek-tık (Faz 3 köprüsü)** | ✅ | ✅ | idempotent |
 | **Günün düşünce notu (autosave)** | ✅ | ✅ | Bugün ekranında, 700ms debounce |
 | **Kitaplarım + ilerleme** | ✅ | ✅ | ders bazlı + kitap progress barı |
 | **Çalışma DNA (analiz)** | ✅ | ✅ | "Gelişim" sekmesi |
@@ -47,6 +50,7 @@ linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 | Öğrenci listesi (uyarı renkli) | ✅ | ✅ | arama + durum |
 | Öğrenci detayı — durum özeti (Genel) | ✅ | ✅ | uyarı + bugün/hafta görev |
 | **Denemeler — sonuç gir/sil** | ✅ | ✅ | net canlı hesap |
+| **Deneme PDF içe aktar + konu analizi + yanlış arşiv köprüsü (Faz 4)** | ✅ | ✅ | satır düzeltme ("Satırları düzelt") yalnız web |
 | **Seanslar — kaydet/gör** | ✅ | ✅ | durum/kanal/gündem/ruh hali |
 | **Tahsilat — ücret + ödeme** | ✅ | ✅ | aylık pano |
 | **Destek — talep/yanıt + gelen kutusu** | ✅ | ✅ | |

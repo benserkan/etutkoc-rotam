@@ -3,6 +3,9 @@ import { Ionicons } from "@expo/vector-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ActivityIndicator, Alert, Pressable, Text, TextInput, View } from "react-native";
 
+import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
+import { ExamImportFlow } from "@/components/exams/exam-import-flow";
+import { TopicAnalysisCard } from "@/components/exams/topic-analysis-card";
 import { FormSheet } from "@/components/ui/form-sheet";
 import {
   createTeacherExam,
@@ -285,14 +288,18 @@ export function ExamsTabView({
   addError,
   onAdd,
   onDelete,
+  studentId,
 }: {
   data: TeacherExamsResponse;
   addBusy: boolean;
   addError: string | null;
   onAdd: (body: TeacherExamCreateBody) => void;
   onDelete?: (examId: number) => void;
+  /** Verilirse PDF içe aktarma + konu analizi + arşiv köprüsü aktifleşir. */
+  studentId?: number;
 }) {
   const [sheetOpen, setSheetOpen] = React.useState(false);
+  const [importOpen, setImportOpen] = React.useState(false);
   const s = data.summary;
 
   function handleAdd(body: TeacherExamCreateBody) {
@@ -329,6 +336,20 @@ export function ExamsTabView({
         <Ionicons name="add-circle-outline" size={20} color="#0e7490" />
         <Text className="text-base font-semibold text-brand-700">Deneme sonucu gir</Text>
       </Pressable>
+
+      {studentId != null ? (
+        <Pressable
+          onPress={() => setImportOpen(true)}
+          className="flex-row items-center justify-center gap-2 rounded-2xl border border-violet-200 bg-violet-50 py-3.5 active:bg-violet-100"
+        >
+          <Ionicons name="document-attach-outline" size={20} color="#7c3aed" />
+          <Text className="text-base font-semibold text-violet-700">
+            PDF&apos;ten aktar (konu konu okunur)
+          </Text>
+        </Pressable>
+      ) : null}
+
+      {studentId != null ? <TopicAnalysisCard studentId={studentId} section={null} /> : null}
 
       {data.rows.length === 0 ? (
         <View className="mt-6 items-center gap-2 px-6">
@@ -377,6 +398,16 @@ export function ExamsTabView({
                     <Text className="text-slate-400">B {e.total_blank}</Text>
                   </Text>
                 </View>
+                {studentId != null && e.import_source === "pdf_import" && e.total_wrong > 0 ? (
+                  <View className="mt-2 flex-row justify-end">
+                    <ArchiveWrongsButton
+                      examId={e.id}
+                      studentId={studentId}
+                      wrongCount={e.total_wrong}
+                      compact
+                    />
+                  </View>
+                ) : null}
               </Pressable>
             );
           })}
@@ -397,6 +428,13 @@ export function ExamsTabView({
           }}
         />
       </FormSheet>
+      {studentId != null ? (
+        <ExamImportFlow
+          visible={importOpen}
+          onClose={() => setImportOpen(false)}
+          studentId={studentId}
+        />
+      ) : null}
     </View>
   );
 }
@@ -453,6 +491,7 @@ export function ExamsTab({ studentId }: { studentId: number }) {
       addError={addError}
       onAdd={(body) => addMut.mutate(body)}
       onDelete={(id) => delMut.mutate(id)}
+      studentId={studentId}
     />
   );
 }
