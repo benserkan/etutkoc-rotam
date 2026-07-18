@@ -378,6 +378,11 @@ def main() -> int:
         r1 = ai_exam_import._normalize_read(copy.deepcopy(read_behavior["read"]))
         r2 = ai_exam_import._normalize_read(copy.deepcopy(read_behavior["read"]))
         for q in r2["questions"]:
+            # ders adı EŞANLAM simülasyonu: 2. okuma aynı dersi farklı adla
+            # yazdı (gerçek 4K GİS vakası: "Türkçe" ↔ "Türk Dili ve Edebiyatı"
+            # → merge kovaları ayrışıp bölüm iki kez sayılıyordu)
+            if read_behavior.get("dual_name") and q["subject"] == "Türkçe":
+                q["subject"] = "Türk Dili ve Edebiyatı"
             # çift-okuma uyuşmazlığı: TYT setinde Matematik no 7 ÖC farklı
             if q["subject"] == "Matematik" and q.get("no") == 7 and q.get("part") is None:
                 q["student_answer"] = "D"
@@ -946,6 +951,30 @@ def main() -> int:
         check("28f. confirm karma havuzu KABUL etti (Maarif id düşmedi · net 1.75)",
               r.status_code == 200 and d28c.get("matched_topic_count") == 4
               and d28c.get("net") == 1.75, r.text[:250])
+        # --- 29) İKİ OKUMA AYNI DERSİ FARKLI ADLA YAZDI (çift sayım koruması) ---
+        # Gerçek 4K GİS-1 vakası: r1 "Türkçe" / r2 "Türk Dili ve Edebiyatı" →
+        # eşanlam kanonu olmadan merge kovaları ayrışıp 4 soru 8 oluyordu.
+        read_behavior["dual_name"] = True
+        ai_label_map.clear()
+        ai_label_map["Mesneviler"] = ids["m_mesnevi"]
+        ai_label_map["Zamir"] = ids["sozcuk"]
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
+            files={"file": pdf_file})
+        d29 = r.json() if r.status_code == 200 else {}
+        rows29 = d29.get("rows", [])
+        check("29a. ÇİFT SAYIM YOK: 4 satır (8 değil) + şüpheli 0",
+              r.status_code == 200 and len(rows29) == 4
+              and d29.get("suspect_count") == 0,
+              f"rows={len(rows29)} sus={d29.get('suspect_count')} {r.text[:120]}")
+        t29 = {"dogru": 0, "yanlis": 0, "bos": 0}
+        for x in rows29:
+            if x["result"] in t29:
+                t29[x["result"]] += 1
+        check("29b. toplamlar tekil (2D 1Y 1B — net şişmedi)",
+              t29 == {"dogru": 2, "yanlis": 1, "bos": 1}, str(t29))
+        read_behavior["dual_name"] = False
+
         # sunum: ders kırılımı SINIF dersinin adıyla TEK grup (TDE 4) —
         # "TYT Türkçe" ayrı grup olarak GÖRÜNMEZ; satırlar display_subject taşır
         subj28 = {s["name"]: s for s in d28.get("subjects", [])}

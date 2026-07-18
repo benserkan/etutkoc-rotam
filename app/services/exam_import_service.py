@@ -89,6 +89,13 @@ _SUBJECT_ALIASES: dict[str, str] = {
     # LGS belgeleri "Tarih" der; sistem dersi "T.C. İnkılap Tarihi ve Atatürkçülük".
     # TYT evreninde de güvenli: "TYT Tarih" adı da bu kanona iner (simetrik).
     "tarih": "t c inkilap tarihi ataturkculuk",
+    # Lise bağlamında "Türkçe" ile "Türk Dili ve Edebiyatı" AYNI derstir —
+    # iki bağımsız Gemini okuması aynı dersi FARKLI adla yazınca merge kovaları
+    # ayrışıp bölüm İKİ KEZ sayılıyordu (Elif 4K GİS-1: Türkçe 25 soru → 50,
+    # net 53 → 68; 2026-07-18). Simetrik güvenli: TYT/LGS "Türkçe" dersleri de
+    # aynı kanona iner, her evrende bu kanona düşen tek sistem dersi bulunur
+    # (karma havuzda okul dersi küçük id ile öncelik alır — istenen).
+    "turkce": "edebiyat",
 }
 
 
@@ -518,8 +525,11 @@ def _sanitize_parts(read: dict) -> None:
     okuma farklı hayal kurduysa satır hizalama da bozulmasın.
     """
     qs = read.get("questions") or []
-    tyt_keys = {_subject_key(q["subject"]) for q in qs if q.get("part") == "tyt"}
-    ayt_keys = {_subject_key(q["subject"]) for q in qs if q.get("part") == "ayt"}
+    # DİKKAT: HAM ad (normalize) kullanılır, kanonik _subject_key DEĞİL —
+    # "turkce"→"edebiyat" eşanlamı kanonda Türkçe/Edebiyat ayrımını siler,
+    # oysa bu guard tam da belgenin KENDİ adlandırmasına bakmak zorunda.
+    tyt_keys = {normalize(q["subject"] or "") for q in qs if q.get("part") == "tyt"}
+    ayt_keys = {normalize(q["subject"] or "") for q in qs if q.get("part") == "ayt"}
     if not tyt_keys or not ayt_keys:
         return  # tek tür etiket / etiketsiz — birleşik iddiası yok, dokunma
 
