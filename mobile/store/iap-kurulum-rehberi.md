@@ -13,24 +13,55 @@
 
 ## SIRA ÖZETİ
 
-1. App Store Connect: Paid Apps sözleşmesi + banka + vergi (bir kez)
+0. **Hesabı kurumsala çevir** (KULLANICI KARARI 2026-07-19: bireysel değil
+   Ltd. Şti. kimliğiyle satış) — D-U-N-S + Apple Support dönüşümü (~1-3 hafta)
+1. App Store Connect: Paid Apps sözleşmesi + banka + vergi (bir kez, ŞİRKET adına)
 2. Small Business Program başvurusu (%30 → %15 komisyon)
 3. App Store Connect: 3 abonelik ürünü oluştur
-4. RevenueCat hesabı + proje kurulumu
+4. RevenueCat hesabı + proje kurulumu (**Adım 0'ı beklemez — paralel yapılabilir**)
 5. Sunucu `.env` + deploy (ben hazırladım — sen değerleri girip deploy edersin)
 6. Mobil anahtar (`app.json`) + **EAS build 9** + TestFlight sandbox testi
 7. App Store'a gönderim (inceleme notu hazır — en altta)
 
 ---
 
+## ADIM 0 — Bireysel hesabı KURUMSALA çevir (önce bu)
+
+Mevcut Apple Developer üyeliği BİREYSEL ("Serkan Aydn" yasal varlık). Karar:
+şirket (ETÜTKOÇ Akademi ... Ltd. Şti.) kimliğiyle satış → dönüşüm gerekli.
+
+1. **D-U-N-S numarası** (süreyi bu belirler):
+   https://developer.apple.com/enroll/duns-lookup/ → şirketi ara (Türkiye).
+   Varsa numarayı not al; yoksa aynı sayfadan ücretsiz başvur
+   (MERSIS 0381113961000001 · vergi 3811139610 · İskenderpaşa Mah. adresi) —
+   ~5-14 iş günü, e-postayla gelir.
+2. **Dönüşüm talebi**: developer.apple.com → Contact Us → Membership →
+   "Convert my individual membership to an organization". İstenecekler:
+   resmi ünvan (D-U-N-S kaydıyla birebir), D-U-N-S, web sitesi (etutkoc.com),
+   kurumsal e-posta.
+3. **İmza yetkisi**: Apple, hesap sahibinin şirketi hukuken bağlama yetkisini
+   doğrulayabilir (şirketi telefonla arayabilir). Münferit imza yetkilisi
+   Avni Bektaş → onu bilgilendir (Apple ararsa "Serkan Aydın yetkilidir"
+   demesi yeterli) + garanti için şirketten yazılı yetkilendirme hazırlat.
+4. Dönüşüm tamamlanınca Business sayfasındaki yasal varlık ŞİRKET olur →
+   Adım 1'e şirket kimliğiyle devam.
+
+NOT: App Store yayını dönüşüm bitene kadar bekler (bilinçli tercih —
+satıcı adı App Store'da şirket görünür, gelir şirkete gider).
+
 ## ADIM 1 — Paid Apps sözleşmesi + banka + vergi (ZORUNLU ön koşul)
+
+> Ekrandaki mavi bant "update your legal entity information prior to signing"
+> diyorsa: önce **Edit Legal Entity** ile yasal bilgiler tamamlanır; Paid Apps
+> Agreement satırı (Status: New) ancak ondan sonra imzalanabilir.
 
 App Store Connect → **Business (İş)** (eski adı Agreements, Tax, and Banking):
 
-1. **Paid Apps Agreement** → "Request" / kabul et (şirket bilgileriyle:
-   ETÜTKOÇ Akademi ... Ltd. Şti.).
-2. **Bank Account**: şirketin TL hesabı (IBAN). Apple ödemeleri buraya yapar
-   (aylık, eşik ~$150 üzeri).
+1. **Paid Apps Agreement** → satırdaki "View" → sözleşmeyi kabul et (Adım 0
+   sonrası şirket kimliğiyle: ETÜTKOÇ Akademi ... Ltd. Şti.).
+2. **Bank Account**: şirketin TL hesabı (IBAN — hesap sahibi adı yasal
+   varlıkla birebir aynı olmalı). Apple ödemeleri buraya yapar (aylık,
+   eşik ~$150 üzeri).
 3. **Tax Forms**: ABD vergi formu (W-8BEN-E — şirket için; "beneficial owner"
    şirket, Türkiye vergi mukimi işaretlenir). Ayrıca varsa Türkiye/diğer
    bölge formları.
