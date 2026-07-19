@@ -1938,6 +1938,9 @@ export interface TeacherPlanResponse {
   subscription_status: string | null;   // active | canceled | past_due | null
   subscription_period_end: string | null;
   subscription_cycle: string | null;
+  // Aboneligin satin alindigi kanal: iyzico | app_store | manual | null.
+  // app_store -> iptal/degisiklik iOS uygulamasindan; web butonlari gizlenir.
+  subscription_platform: string | null;
   // Signup'ta seçilen "14 gün dene" paketinin kodu (solo_pro/elite/unlimited).
   // Trial bitince koç bu pakete geçmek için ödeme yapar; aksi halde solo_free.
   post_trial_plan: string | null;

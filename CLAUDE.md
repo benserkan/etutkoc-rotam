@@ -337,6 +337,86 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   gelişen konular + öğrenci yüzeyi) · **Faz 3** sinyal köprüleri (YSA tek-tık +
   öneri motoru + KS4 içgörü girdisi) · **Faz 4** mobil.
 
+## App Store RET #5 → IAP KARARI + RevenueCat entegrasyonu KODLANDI (2026-07-19, migration `w7x0a3b4a66w`, KULLANICI KURULUMU BEKLİYOR)
+
+**Bağlam:** 3.1.3(c) itirazı REDDEDİLDİ (ret #5, 2026-07-18, submission 5b65a5d3):
+Apple "dışarıda satın alınan içerik IAP'siz + deneme bitince dış ödemeye
+yönlendirme" dedi + **uygulama-içi self-signup formunun ekran görüntüsünü** ekledi
+(birey hesap açıp deneme alıyor → tüketici akışı; enterprise argümanı öldü).
+TR vitrininde dış-link seçeneği YOK (yalnız ABD). **Kullanıcı kararları
+(AskUserQuestion):** IAP kur (login-only kumar reddedildi) · **RevenueCat** ·
+iOS fiyatı **web ile aynı** (2.500/5.000/7.500₺ → Apple kademesi 2.499,99 vb.).
+- **Migration `w7x0a3b4a66w`** (← v6w9z2a3z55v, additive): `users.subscription_platform`
+  (iyzico | app_store | manual | NULL) — kanal işareti. iyzico verify_callback →
+  'iyzico'; admin activate-plan → 'manual'; IAP → 'app_store'.
+- **`app/services/iap_service.py` (TEK MERKEZ):** `PRODUCT_PLANS`
+  (`rotam_solo_pro_monthly`→solo_pro · elite · unlimited; `_yearly` varyantları
+  hazır) · `handle_webhook_event` (INITIAL_PURCHASE/RENEWAL/UNCANCELLATION/
+  PRODUCT_CHANGE→aktive+period_end=Apple bitişi; CANCELLATION→canceled [dönem
+  sonuna kadar erişim — iyzico semantiğiyle aynı]; EXPIRATION→solo_free
+  [YALNIZ platform=app_store — iyzico abonesini Apple olayı DÜŞÜREMEZ];
+  BILLING_ISSUE→yalnız log) · `sync_user_from_revenuecat` (REST /subscribers —
+  satın alma sonrası ANINDA aktivasyon + cron doğrulaması; `_rc_get_subscriber`
+  mock-able) · aktivasyonda pasif öğrenci reaktivasyonu (paywall sözü) +
+  trial temizliği (change_plan reuse). appUserID = **backend User.id**.
+- **Webhook `/webhooks/revenuecat`:** Authorization secret ZORUNLU (boş/yanlış →
+  403 — zeptomail'in "boşsa kabul" deseni bilinçli uygulanmadı: sahte POST
+  bedava abonelik açardı). 500 → RevenueCat retry. Config:
+  `REVENUECAT_WEBHOOK_AUTH` + `REVENUECAT_SECRET_KEY` (compose web+worker + .env.example).
+- **`POST /api/v2/payment/iap/sync`** (koç; kurumlu 403, yapılandırılmamış 503,
+  RC hatası 502) — mobil satın alma bitince çağırır. **Kanal korumaları:**
+  `/payment/init` app_store aboneye 409 · `subscription/cancel|resume` app_store →
+  400 app_store_managed (iptal Apple'da) · `plan/upgrade` app_store → 409 ·
+  `process_renewals` app_store kullanıcıyı past_due YAPMAZ (RC sync; sync yoksa
+  3 gün tolerans → solo_free) + yenileme hatırlatma maili atlamaz→atlar.
+  `TeacherPlanResponse.subscription_platform` + web plan ekranı "App Store'dan
+  yönetiliyor" notu (iptal/geri-al butonları gizli).
+- **Mobil:** `react-native-purchases@9.15.2` (**NATİVE → yeni EAS build şart**;
+  OTA güvenliği dinamik require guard — `lib/iap.ts`: iapSupported/configureIap
+  [girişte appUserID=user.id]/getIapPackages/purchase/restore; anahtar
+  `app.json extra.revenueCatIosKey`, şu an BOŞ — kullanıcı dolduracak).
+  **`(app)/teacher-plan.tsx` "Paketim" GERİ GELDİ** (yalnız bağımsız koç):
+  mevcut paket + durum + 3 tier kartı (StoreKit yerel fiyat) + satın al →
+  StoreKit → `/payment/iap/sync` → aktive + **Satın alımları geri yükle** +
+  abonelik yönetimi linki + EULA/KVKK linkleri + oto-yenileme bildirimi.
+  Web'den alınmış abonelik → yalnız durum ("web'den yönetiliyor", satın alma
+  gizli — çifte tahsilat yok). Android'de satın alma yüzeyi yok (Play Billing
+  ayrı iş; RevenueCat aynı kodla destekler). Profil'e "Paketim" girişi +
+  notification-router coach screen:"plan" → /teacher-plan + typed-routes elle.
+  Mobil tsc + lint temiz; web tsc+eslint temiz.
+- **Smoke `test_api_v2_payment_iap.py` 23 senaryo** (webhook auth 403×2 + TEST +
+  aktive/yenile/iptal/geri-al/bitiş + iyzico kanal koruması + bilinmeyen ürün +
+  user_not_found + kurumlu skip + sync 503/403/aktive/bitiş + init 409 + plan
+  platformu + cancel 400 + cron sync/tolerans).
+- **Ticari yüzey geri-genişletme (kullanıcı isteği "hepsini mobile geri çek"):**
+  KOÇ tarafındaki tüm ödeme yüzeyleri IAP'ye bağlanarak geri geldi:
+  `lib/upsell.ts` (`handleCoachAiGateError`/`showCoachUpgradeAlert` → "Paketleri
+  gör" = /teacher-plan IAP) — içgörü + sesli dikte (dictate-button/sessions-tab)
+  + deneme PDF içe aktarma (koç yüzeyi) kapı/kredi hataları artık Paketim'e
+  yönlendirir (ret#3'ün nötr "kullanım sınırına ulaşıldı" mesajları IAP'yle
+  yeniden satışa bağlanabildi — yönlendirme UYGULAMA İÇİ olduğundan Apple-uyumlu) ·
+  öğrenci davetinde plan_quota_exceeded/paywall_active → Paketim · Öğrenciler
+  ekranına **TrialBanner** (deneme son 3 gün amber + paywall/past_due rose →
+  dokun→Paketim; `/teacher/trial-status` mobil fetcher geri) · içgörü
+  "(kredi)" etiketleri geri · Paketim tier kartlarında `/api/v2/pricing
+  plan_features` bullet'ları (web ile TEK KAYNAK). **KURUM ticari yüzeyleri
+  (Hesap Ayarları/Kredi Kullanımı/Limitler) BİLİNÇLİ geri getirilmedi** —
+  kurum planları IAP'de satılmıyor (custom B2B fiyat); mobilde kurum fiyat/
+  yükseltme göstermek "dışarıda satılan içerik IAP'siz" retini yeniden
+  tetiklerdi. Kurum ticari yönetimi web'de kalır.
+- **KULLANICI AKSİYONU — `mobile/store/iap-kurulum-rehberi.md` (adım adım):**
+  (1) Paid Apps sözleşme+banka+vergi; (2) Small Business Program (%15);
+  (3) ASC abonelik grubu "ETUTKOC Rotam Solo" + 3 ürün (ID'ler kodla birebir:
+  `rotam_solo_pro_monthly` 2.499,99 · `rotam_solo_elite_monthly` 4.999,99 ·
+  `rotam_solo_unlimited_monthly` 7.499,99); (4) RevenueCat proje (IAP .p8 key +
+  ürünler + entitlements + default offering + webhook
+  `https://rotam.etutkoc.com/webhooks/revenuecat` + Authorization) ;
+  (5) prod .env REVENUECAT_* + redeploy; (6) app.json `revenueCatIosKey` (appl_)
+  → **EAS build 9** + TestFlight sandbox testi + paywall ekran görüntüsü;
+  (7) sürümle birlikte 3 aboneliği gönder + hazır İngilizce App Review notu
+  (rehberin sonunda). Yıllık paket bilinçli ertelendi (Apple 1 yıl ≠ akademik
+  10 ay; backend yearly ID'lere hazır).
+
 ## App Store ret #3 (3 yönerge) → ticari yüzey SIFIRLANDI + EULA linkleri + uygulama içi hesap silme + build 8 RESUBMIT (2026-07-15/16, SONUÇ BEKLENİYOR)
 
 **Bağlam:** Build 6 resubmit'i 2026-07-14'te 3 yönergeyle REDDEDİLDİ (gönderim

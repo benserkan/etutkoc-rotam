@@ -119,5 +119,17 @@ class Settings(BaseSettings):
     # Prod: https://rotam.etutkoc.com/api/v2/payment/iyzico/callback
     payment_callback_url: str = "http://127.0.0.1:8081/api/v2/payment/iyzico/callback"
 
+    # ========================================================================
+    # Apple IAP — RevenueCat (App Store 3.1.1 çözümü). Solo koç abonelikleri
+    # iOS'ta App Store üzerinden satılır; RevenueCat webhook + REST sync ile
+    # backend entitlement (User.plan) güncellenir. Boş = IAP kapalı (webhook
+    # yalnız secret doluysa kabul edilir; sync 503 döner).
+    # ========================================================================
+    # RevenueCat Dashboard → Project → Webhooks → Authorization header değeri.
+    revenuecat_webhook_auth: str = ""
+    # RevenueCat REST API secret key (sk_...) — sunucu tarafı subscriber sorgusu.
+    revenuecat_secret_key: str = ""
+    revenuecat_api_base: str = "https://api.revenuecat.com/v1"
+
 
 settings = Settings()

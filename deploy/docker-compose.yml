@@ -93,6 +93,11 @@ services:
       IYZICO_SECRET_KEY: ${IYZICO_SECRET_KEY:-}
       IYZICO_BASE_URL: ${IYZICO_BASE_URL:-https://sandbox-api.iyzipay.com}
       PAYMENT_CALLBACK_URL: ${PAYMENT_CALLBACK_URL:-https://${PUBLIC_DOMAIN}/api/v2/payment/iyzico/callback}
+      # ---- Apple IAP (RevenueCat) — App Store abonelik entegrasyonu ----
+      # Webhook auth: RevenueCat Dashboard'daki Authorization değeriyle birebir.
+      # Secret key (sk_...): sunucu tarafı subscriber sorgusu (satın alma sync).
+      REVENUECAT_WEBHOOK_AUTH: ${REVENUECAT_WEBHOOK_AUTH:-}
+      REVENUECAT_SECRET_KEY: ${REVENUECAT_SECRET_KEY:-}
       # ---- Cloudflare Turnstile (CAPTCHA) — ikisi de boşsa otomatik kapalı ----
       TURNSTILE_SITE_KEY: ${TURNSTILE_SITE_KEY:-}
       TURNSTILE_SECRET_KEY: ${TURNSTILE_SECRET_KEY:-}
@@ -168,6 +173,9 @@ services:
       WHATSAPP_OFFER_TEMPLATE: ${WHATSAPP_OFFER_TEMPLATE:-uyelik_teklifi}
       WHATSAPP_OFFER_IMAGE_URL: ${WHATSAPP_OFFER_IMAGE_URL:-https://rotam.etutkoc.com/wa-offer-header.png}
       WHATSAPP_OFFER_BUTTON_DYNAMIC: ${WHATSAPP_OFFER_BUTTON_DYNAMIC:-false}
+      # RevenueCat sync — yenileme cron'u (process_renewals) app_store abonelerini
+      # RevenueCat'ten doğrular; worker'da da tanımlı olmalı.
+      REVENUECAT_SECRET_KEY: ${REVENUECAT_SECRET_KEY:-}
       LGS_RUN_BACKGROUND: "true"    # SADECE worker'da açık
     depends_on:
       db:

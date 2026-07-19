@@ -76,7 +76,8 @@
       "router": {},
       "eas": {
         "projectId": "e70c9fe3-562c-44a3-ae92-36ad943fed52"
-      }
+      },
+      "revenueCatIosKey": ""
     },
     "owner": "etutkoc",
     "updates": {

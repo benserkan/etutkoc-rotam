@@ -2250,6 +2250,10 @@ class TeacherPlanResponse(BaseModel):
     subscription_status: str | None = None       # active | canceled | past_due | None
     subscription_period_end: str | None = None  # aktif abonede yenileme tarihi (ISO)
     subscription_cycle: str | None = None        # monthly | academic_year
+    # Aboneliğin satın alındığı kanal: iyzico | app_store | manual | None.
+    # app_store → web'de "App Store'dan yönetiliyor" notu; mobil IAP ekranı
+    # yönetim linki gösterir; iyzico ödeme butonları gizlenir.
+    subscription_platform: str | None = None
     # Signup'ta seçilen "14 gün dene" paketinin kodu — trial bitince bu plan'a
     # geçmek için ödeme talep edilir (yoksa solo_free'ye düşer).
     post_trial_plan: str | None = None

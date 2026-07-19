@@ -463,10 +463,89 @@ export function createTeacherStudent(body: StudentCreateBody): Promise<{ data: S
   return apiRequest<{ data: StudentCreateResult }>(`/api/v2/teacher/students`, { method: "POST", body });
 }
 
-// NOT (Apple 3.1.1): Paket/abonelik fetcher'ları (getTeacherPlan /
-// upgradeTeacherPlan / requestTeacherSubscription) mobilden KALDIRILDI —
-// "Paketim" ekranı ve tüm paket/kredi yüzeyleri App Store yönergesi gereği
-// uygulamada yok; hesap/paket yönetimi web panelinde.
+// ====== Paketim — Apple IAP (App Store 3.1.1 çözümü, 2026-07-19) ======
+// Solo koç aboneliği artık iOS'ta App Store IAP (RevenueCat) ile satılır →
+// "Paketim" ekranı IAP satın alma akışıyla GERİ geldi. Uygulama-dışı ödemeye
+// yönlendirme YOKTUR (fiyat/satın alma yalnız StoreKit üzerinden).
+export interface TeacherPlanOption {
+  code: string;
+  label: string;
+  short_description: string;
+  price_monthly_try: number;
+  max_students: number | null;
+  tier_rank: number;
+  ai_included: boolean;
+  is_current: boolean;
+  is_upgrade: boolean;
+  is_recommended: boolean;
+}
+export interface TeacherPlanResponse {
+  plan_code: string;
+  plan_label: string;
+  is_solo: boolean;
+  ai_premium: boolean;
+  trial_active: boolean;
+  trial_days_left: number | null;
+  options: TeacherPlanOption[];
+  note: string | null;
+  status: "trialing" | "active" | "past_due" | "free" | "managed";
+  student_count: number;
+  subscription_status: string | null;
+  subscription_period_end: string | null;
+  subscription_cycle: string | null;
+  subscription_platform: string | null; // iyzico | app_store | manual | null
+  post_trial_plan: string | null;
+  post_trial_plan_label: string | null;
+  ai_credits_used: number;
+  ai_credits_allocated: number;
+}
+export const teacherPlanKeys = {
+  plan: ["teacher", "plan"] as const,
+};
+export function getTeacherPlan(): Promise<TeacherPlanResponse> {
+  return apiRequest<TeacherPlanResponse>(`/api/v2/teacher/plan`);
+}
+export interface IapSyncResponse {
+  ok: boolean;
+  active: boolean;
+  plan_code: string | null;
+  plan_label: string | null;
+  subscription_status: string | null;
+  subscription_period_end: string | null;
+  message: string;
+}
+/** StoreKit satın alması sonrası backend aktivasyonu (RevenueCat sync). */
+export function syncIapPurchase(): Promise<IapSyncResponse> {
+  return apiRequest<IapSyncResponse>(`/api/v2/payment/iap/sync`, {
+    method: "POST",
+    body: {},
+  });
+}
+/** Bağımsız koç deneme/ödeme-duvarı durumu (öğrenciler ekranı banner'ı). */
+export interface TrialStatusResponse {
+  is_solo: boolean;
+  plan_code: string;
+  plan_label: string;
+  trial_active: boolean;
+  days_left: number | null;
+  trial_critical: boolean;
+  student_count: number;
+  student_limit: number;
+  over_limit: boolean;
+  paywall: boolean;
+  past_due: boolean;
+  upgrade_target: string | null;
+}
+export function getTeacherTrialStatus(): Promise<TrialStatusResponse> {
+  return apiRequest<TrialStatusResponse>(`/api/v2/teacher/trial-status`);
+}
+/** Paket pazarlama bullet'ları — /api/v2/pricing tek kaynağından (public). */
+export function getPlanFeatures(): Promise<Record<string, string[]>> {
+  return apiRequest<{ plan_features?: Record<string, string[]> }>(`/api/v2/pricing`, {
+    auth: false,
+  }).then((c) => c.plan_features ?? {});
+}
+
 export const teacherMiscKeys = {
   week: (id: number, start?: string) => ["teacher", "student", id, "week", start ?? "current"] as const,
   studentBooks: (id: number) => ["teacher", "student", id, "books"] as const,

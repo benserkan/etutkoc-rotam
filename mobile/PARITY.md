@@ -10,6 +10,14 @@ yalnız arayüz ayrı.
 Erişim notu: her panelin **Profil** sekmesinde "Web paneli aç" + "Hesap & Şifre"
 linkleri var → mobilde olmayan her şeye tek tıkla web'den ulaşılır.
 
+**Abonelik (2026-07-19, Apple 3.1.1 çözümü):** Solo koç aboneliği iOS'ta
+**App Store IAP** (RevenueCat, `react-native-purchases`) ile satılır — koç
+Profil → **"Paketim"** ekranından StoreKit satın almasıyla paket alır/yönetir.
+Uygulama-dışı ödemeye yönlendirme YOKTUR. Web'den (iyzico) alınmış abonelik
+uygulamada yalnız durum olarak görünür. Kurum ticari yüzeyleri mobilde hâlâ yok
+(B2B — kapsam dışı). Android'de Paketim ekranı satın alma göstermez (Play
+Billing ayrı iş). Kurulum: `store/iap-kurulum-rehberi.md`.
+
 ---
 
 ## Öğrenci

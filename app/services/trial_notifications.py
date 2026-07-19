@@ -148,6 +148,10 @@ def process_renewals(db: Session, *, now: datetime | None = None) -> dict:
         .all()
     )
     for u in upcoming:
+        # App Store aboneliği kendiliğinden yenilenir (Apple bildirir) —
+        # "ödemeni tamamla" hatırlatması yanıltıcı olur, atla.
+        if getattr(u, "subscription_platform", None) == "app_store":
+            continue
         try:
             send_email(
                 to=u.email, template="renewal_reminder",
@@ -175,7 +179,41 @@ def process_renewals(db: Session, *, now: datetime | None = None) -> dict:
     )
     from app.models import PlanChangeReason, PlanOwnerType
     from app.services.plans import SOLO_FREE, change_plan
+    app_store_synced = 0
+    app_store_dropped = 0
     for u in overdue:
+        # App Store (IAP) aboneliği: yenilemeyi Apple yönetir — iyzico
+        # past_due/paywall'ına DÜŞÜRÜLMEZ. Gerçek durum RevenueCat'ten
+        # doğrulanır (yenilendiyse period_end güncellenir, bittiyse
+        # solo_free'ye düşer). RevenueCat erişilemiyorsa 3 gün tolerans,
+        # sonra abonelik bitmiş sayılır.
+        if getattr(u, "subscription_platform", None) == "app_store":
+            handled = False
+            try:
+                from app.services import iap_service
+                if iap_service.is_configured():
+                    iap_service.sync_user_from_revenuecat(db, u, autocommit=False)
+                    handled = True
+                    app_store_synced += 1
+            except Exception:
+                logger.exception("app_store abonelik sync hatası user=%s", u.id)
+            if not handled:
+                pe = u.subscription_period_end
+                if pe is not None and pe.tzinfo is None:
+                    pe = pe.replace(tzinfo=timezone.utc)
+                if pe is not None and pe <= now - timedelta(days=3):
+                    change_plan(
+                        db, owner_type=PlanOwnerType.USER, owner_id=u.id,
+                        new_plan=SOLO_FREE, reason=PlanChangeReason.DOWNGRADE,
+                        note="App Store aboneliği doğrulanamadı — dönem sonu (3 gün tolerans)",
+                        autocommit=False,
+                    )
+                    u.subscription_status = None
+                    u.subscription_period_end = None
+                    u.subscription_cycle = None
+                    u.subscription_platform = None
+                    app_store_dropped += 1
+            continue
         if u.subscription_status == "canceled":
             # İptal edilmişti → dönem sonunda ücretsize düş (past_due değil).
             change_plan(
@@ -186,6 +224,7 @@ def process_renewals(db: Session, *, now: datetime | None = None) -> dict:
             u.subscription_status = None
             u.subscription_period_end = None
             u.subscription_cycle = None
+            u.subscription_platform = None
             canceled_dropped += 1
         else:
             u.subscription_status = "past_due"
@@ -202,9 +241,17 @@ def process_renewals(db: Session, *, now: datetime | None = None) -> dict:
             past_due += 1
 
     db.commit()
-    logger.info("process_renewals: reminded=%s past_due=%s canceled_dropped=%s",
-                reminded, past_due, canceled_dropped)
-    return {"reminded": reminded, "past_due": past_due, "canceled_dropped": canceled_dropped}
+    logger.info(
+        "process_renewals: reminded=%s past_due=%s canceled_dropped=%s "
+        "app_store_synced=%s app_store_dropped=%s",
+        reminded, past_due, canceled_dropped, app_store_synced, app_store_dropped,
+    )
+    return {
+        "reminded": reminded, "past_due": past_due,
+        "canceled_dropped": canceled_dropped,
+        "app_store_synced": app_store_synced,
+        "app_store_dropped": app_store_dropped,
+    }
 
 
 def notify_trial_expired(db: Session, *, user_ids: list[int]) -> int:

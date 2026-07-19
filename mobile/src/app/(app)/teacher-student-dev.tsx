@@ -7,6 +7,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { CoachDnaView, CoachFocusView, CoachGoalsView, CoachInsightView, CoachReviewView } from "@/components/teacher/coach-dev-views";
 import { ApiError } from "@/lib/api";
+import { handleCoachAiGateError } from "@/lib/upsell";
 import {
   createTeacherGoal,
   generateTeacherCoachingInsight,
@@ -87,9 +88,8 @@ export default function TeacherStudentDevRoute() {
     onSuccess: (data) => qc.setQueryData(teacherDevKeys.insight(sid), data),
     onError: (e) => {
       const code = e instanceof ApiError ? e.code : null;
-      if (code === "plan_upgrade_required") Alert.alert("Kullanılamıyor", "Yapay zekâ içgörüsü bu hesapta kapalı.");
-      else if (code === "ai_credit_exhausted") Alert.alert("Kullanılamıyor", "Bu ay için yapay zekâ kullanım sınırına ulaşıldı. Daha sonra tekrar dene.");
-      else if (code === "not_enough_data") Alert.alert("Seans gerekli", "İçgörü için en az bir seans kaydı gerekir. Önce 'Seanslar' sekmesinden seans ekle.");
+      if (handleCoachAiGateError(code)) return;
+      if (code === "not_enough_data") Alert.alert("Seans gerekli", "İçgörü için en az bir seans kaydı gerekir. Önce 'Seanslar' sekmesinden seans ekle.");
       else if (code === "ai_unavailable") Alert.alert("Yapay zekâ şu an kullanılamıyor", "Lütfen birkaç dakika sonra tekrar dene.");
       else Alert.alert("Oluşturulamadı", e instanceof ApiError ? e.message : "İşlem başarısız.");
     },

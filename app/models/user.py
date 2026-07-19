@@ -234,6 +234,11 @@ class User(Base):
         DateTime(timezone=True), nullable=True
     )
     subscription_cycle: Mapped[str | None] = mapped_column(String(20), nullable=True)
+    # Aboneliğin satın alındığı kanal (migration w7x0a3b4a66w):
+    # iyzico (web kart) | app_store (Apple IAP/RevenueCat) | manual (süper admin).
+    # None = abonelik yok. app_store → yenileme/dönem sonu Apple'dan senkronlanır;
+    # process_renewals bu kullanıcıları past_due yapmaz (RevenueCat sync/webhook karar verir).
+    subscription_platform: Mapped[str | None] = mapped_column(String(20), nullable=True)
 
     # Öğrencinin "hafta anchor" tarihi. Set ise: haftalık view bu tarihi
     # bloğun başı sayar (ör. 24 Nisan Cuma → tüm haftalar Cuma-Perşembe).

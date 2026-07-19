@@ -2126,6 +2126,7 @@ def admin_activate_user_plan_v2(
         target.subscription_cycle = cycle
         days = 365 if cycle == "academic_year" else 30
         target.subscription_period_end = _dt.now(_tz.utc) + _td(days=days)
+        target.subscription_platform = "manual"  # süper admin aktivasyonu
         target.trial_ends_at = None  # deneme bitti (aktif ücretli abonelik)
         if not was_paid_active:
             _reactivate_students(db, target, autocommit=False)
@@ -2133,6 +2134,7 @@ def admin_activate_user_plan_v2(
         target.subscription_status = None
         target.subscription_cycle = None
         target.subscription_period_end = None
+        target.subscription_platform = None
     log_action(
         db, action=AuditAction.USER_UPDATE, actor_id=user.id,
         target_type="user", target_id=target.id, request=request,

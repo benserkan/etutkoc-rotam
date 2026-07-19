@@ -15,6 +15,7 @@ import {
   type StudentSessionListResponse,
 } from "@/lib/teacher";
 import { ApiError } from "@/lib/api";
+import { handleCoachAiGateError } from "@/lib/upsell";
 import { cn } from "@/lib/utils";
 import { DemoHint } from "@/components/demos/demo-hint";
 
@@ -348,7 +349,7 @@ export function SessionsTab({ studentId }: { studentId: number }) {
     try {
       const c = await qc.fetchQuery({ queryKey: ["teacher", "ai-consent"], queryFn: getTeacherAiConsent, staleTime: 60_000 });
       if (!c.ai_premium) {
-        Alert.alert("Kullanılamıyor", "Sesli dikte bu hesapta kapalı.");
+        handleCoachAiGateError("plan_upgrade_required");
         return false;
       }
       if (c.consented) return true;

@@ -44,6 +44,7 @@ from app.routes.api_v2.dependencies import (
     get_current_user_v2,
 )
 from app.routes.api_v2.schemas.payment import (
+    IapSyncResponse,
     PaymentHistoryItem,
     PaymentHistoryResponse,
     PaymentInitBody,
@@ -55,7 +56,7 @@ from app.routes.api_v2.schemas.payment import (
     PaymentProviderStatus,
     PaymentResultResponse,
 )
-from app.services import iyzico_service, payment_link_service
+from app.services import iap_service, iyzico_service, payment_link_service
 from app.services.pricing import get_pricing_catalog
 
 
@@ -113,6 +114,18 @@ def post_init_checkout(
 
     Frontend `window.location.href = response.payment_page_url` ile yönlendirir.
     """
+    # Kanal koruması: aboneliği App Store'dan (IAP) alınmış koç iyzico'dan da
+    # satın alırsa çifte tahsilat oluşur — App Store aboneliği bitene kadar engelle.
+    if (
+        getattr(user, "subscription_platform", None) == "app_store"
+        and user.subscription_status in ("active", "canceled")
+    ):
+        raise _payment_error(
+            "Aboneliğin App Store üzerinden yönetiliyor. Paket değişikliği ve "
+            "yenileme iPhone/iPad'deki uygulamadan yapılır.",
+            "app_store_managed",
+            http_status=status.HTTP_409_CONFLICT,
+        )
     try:
         result = iyzico_service.init_checkout(
             db,
@@ -457,3 +470,71 @@ def post_link_checkout(
         raise _payment_error(exc.message, exc.code, http_code) from exc
 
     return PaymentInitResponse(**result)
+
+
+# ============================================================================
+# Apple IAP (RevenueCat) — App Store 3.1.1 çözümü
+# ============================================================================
+
+
+@router.post("/iap/sync", response_model=IapSyncResponse)
+def post_iap_sync(
+    db: Session = Depends(get_db),
+    user: User = Depends(_require_teacher_or_admin),
+) -> IapSyncResponse:
+    """App Store abonelik durumunu RevenueCat'ten çekip planı senkronla.
+
+    Mobil, StoreKit satın alması tamamlanınca (veya "Satın alımları geri
+    yükle"de) bu ucu çağırır — webhook'u beklemeden anında aktivasyon.
+    Kurumlu öğretmen → 403 (paketi kurum yönetir). RevenueCat secret key
+    tanımlı değilse 503.
+    """
+    if user.role == UserRole.TEACHER and user.institution_id is not None:
+        raise _payment_error(
+            "Paketin kurumun tarafından yönetilir.",
+            "managed_by_institution",
+            http_status=status.HTTP_403_FORBIDDEN,
+        )
+    if not iap_service.is_configured():
+        raise _payment_error(
+            "Uygulama içi satın alma doğrulaması şu an yapılandırılmamış.",
+            "iap_not_configured",
+            http_status=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    # Auth dependency'nin user'ı AYRI session'dan gelir — servis mutasyonlarının
+    # kalıcı olması için bu session'a bağlı kopyayla çalışılır.
+    db_user = db.get(User, user.id)
+    if db_user is None:
+        raise _payment_error("Kullanıcı bulunamadı.", "user_not_found",
+                             http_status=status.HTTP_404_NOT_FOUND)
+    try:
+        result = iap_service.sync_user_from_revenuecat(db, db_user)
+    except iap_service.IapError as exc:
+        raise _payment_error(
+            "Satın alma doğrulanamadı. Birkaç dakika içinde otomatik "
+            "aktive edilecek; olmazsa 'Satın alımları geri yükle'yi dene.",
+            exc.code,
+            http_status=status.HTTP_502_BAD_GATEWAY,
+        ) from exc
+
+    from app.services.plans import get_plan_info
+    plan_code = db_user.plan if result.get("active") else result.get("plan_code")
+    info = get_plan_info(plan_code or "")
+    if result.get("active"):
+        message = f"Aboneliğin aktif: {info.label if info else plan_code}"
+    elif result.get("expired"):
+        message = "App Store aboneliğinin süresi dolmuş görünüyor."
+    else:
+        message = "Aktif bir App Store aboneliği bulunamadı."
+    return IapSyncResponse(
+        ok=True,
+        active=bool(result.get("active")),
+        plan_code=plan_code,
+        plan_label=(info.label if info else plan_code),
+        subscription_status=db_user.subscription_status,
+        subscription_period_end=(
+            db_user.subscription_period_end.isoformat()
+            if db_user.subscription_period_end else None
+        ),
+        message=message,
+    )

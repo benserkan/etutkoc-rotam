@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import { apiRequest, clearTokens, getAccessToken, setTokens } from "./api";
+import { configureIap, iapLogout } from "./iap";
 import { registerForPush, unregisterForPush } from "./push";
 
 export interface AppUser {
@@ -113,6 +114,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (status === "authed") void registerForPush();
   }, [status]);
 
+  // Apple IAP (RevenueCat): bağımsız koç girişinde appUserID=User.id ile bağla —
+  // satın alma webhook'u planı bu id üzerinden aktive eder. Best-effort
+  // (iOS + yeni build + anahtar yoksa sessiz no-op).
+  React.useEffect(() => {
+    if (
+      status === "authed" &&
+      user?.role === "teacher" &&
+      user.institution_id == null
+    ) {
+      void configureIap(user.id);
+    }
+  }, [status, user?.id, user?.role, user?.institution_id]);
+
   const signIn = React.useCallback(async (email: string, password: string): Promise<SignInResult> => {
     const res = await apiRequest<LoginResponse>("/api/v2/auth/login", {
       method: "POST",
@@ -160,6 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = React.useCallback(async () => {
     await unregisterForPush(); // token hâlâ geçerliyken sil
+    void iapLogout(); // RevenueCat kimliğini bırak (best-effort)
     try {
       await apiRequest("/api/v2/auth/logout", { method: "POST", auth: true });
     } catch {

@@ -122,3 +122,18 @@ class PaymentLinkPublicInfo(BaseModel):
     requires_login: bool  # link kullanıcı login gerektirir
     provider_available: bool = False  # iyzico aktif mi (kapalıysa "ödeme yakında")
 
+
+
+class IapSyncResponse(BaseModel):
+    """Apple IAP (RevenueCat) satın alma sonrası sunucu senkron sonucu.
+
+    Mobil, StoreKit satın alması biter bitmez POST /payment/iap/sync çağırır;
+    backend RevenueCat'ten abonelik durumunu çekip planı aktive eder.
+    """
+    ok: bool
+    active: bool                    # RevenueCat'te aktif App Store aboneliği var mı
+    plan_code: str | None = None    # aktive edilen plan (yoksa None)
+    plan_label: str | None = None
+    subscription_status: str | None = None   # active | canceled | None
+    subscription_period_end: str | None = None  # ISO — Apple dönem sonu
+    message: str

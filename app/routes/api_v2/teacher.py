@@ -2254,6 +2254,9 @@ def _build_plan_response(db: Session, user: User):
             if is_solo and user.subscription_period_end else None
         ),
         subscription_cycle=user.subscription_cycle if is_solo else None,
+        subscription_platform=(
+            getattr(user, "subscription_platform", None) if is_solo else None
+        ),
         post_trial_plan=post_trial,
         post_trial_plan_label=post_trial_label,
         post_trial_plan_credits=post_trial_credits,
@@ -2394,6 +2397,14 @@ def teacher_subscription_cancel_v2(
             detail={"error": "forbidden", "code": "managed_by_institution",
                     "message": "Paketin kurumun tarafından yönetilir."},
         )
+    if getattr(user, "subscription_platform", None) == "app_store":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "validation", "code": "app_store_managed",
+                    "message": "Aboneliğin App Store üzerinden yönetiliyor. "
+                               "İptal için iPhone/iPad'de Ayarlar → Apple Kimliği → "
+                               "Abonelikler'i kullan."},
+        )
     if user.subscription_status != "active":
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -2422,6 +2433,13 @@ def teacher_subscription_resume_v2(
             status_code=status.HTTP_403_FORBIDDEN,
             detail={"error": "forbidden", "code": "managed_by_institution",
                     "message": "Paketin kurumun tarafından yönetilir."},
+        )
+    if getattr(user, "subscription_platform", None) == "app_store":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={"error": "validation", "code": "app_store_managed",
+                    "message": "Aboneliğin App Store üzerinden yönetiliyor. "
+                               "Yeniden başlatmak için iPhone/iPad'de Abonelikler'i kullan."},
         )
     if user.subscription_status != "canceled":
         raise HTTPException(
@@ -2467,6 +2485,18 @@ def teacher_plan_upgrade_v2(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail={"error": "validation", "code": "invalid_plan",
                     "message": "Yalnız Solo paketleri seçilebilir."},
+        )
+    # App Store aboneliği aktifken plan Apple tarafında yönetilir — burada
+    # değiştirmek Apple aboneliğiyle senkronu bozar (çifte tahsilat riski).
+    if (
+        getattr(user, "subscription_platform", None) == "app_store"
+        and user.subscription_status in ("active", "canceled")
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"error": "conflict", "code": "app_store_managed",
+                    "message": "Aboneliğin App Store üzerinden yönetiliyor. "
+                               "Paket değişikliği iPhone/iPad'deki uygulamadan yapılır."},
         )
 
     # Ödeme duvarından / ücretsizden geliyorsa (aktif-ücretli DEĞİLSE) pasif

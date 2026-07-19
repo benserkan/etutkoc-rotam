@@ -454,6 +454,8 @@ def verify_callback(
                 days = 365 if tx.cycle == "annual" else 30
                 from datetime import timedelta
                 owner.subscription_period_end = datetime.utcnow() + timedelta(days=days)
+                # Kanal işareti (w7x0a3b4a66w): web kart ödemesi = iyzico.
+                owner.subscription_platform = "iyzico"
 
         # Link varsa consumed işaretle
         if link is not None:

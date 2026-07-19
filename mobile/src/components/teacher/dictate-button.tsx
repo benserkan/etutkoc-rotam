@@ -12,7 +12,7 @@ import { File } from "expo-file-system";
 
 import { ApiError } from "@/lib/api";
 import { transcribeSession } from "@/lib/teacher";
-import { cn } from "@/lib/utils";
+import { handleCoachAiGateError } from "@/lib/upsell";
 
 function mmss(ms: number): string {
   const s = Math.floor(ms / 1000);
@@ -74,9 +74,8 @@ export function DictateButton({
       else Alert.alert("Anlaşılamadı", "Ses metne çevrilemedi, daha net konuşup tekrar dene.");
     } catch (e) {
       const code = e instanceof ApiError ? e.code : null;
-      if (code === "plan_upgrade_required") Alert.alert("Kullanılamıyor", "Sesli dikte bu hesapta kapalı.");
-      else if (code === "ai_credit_exhausted") Alert.alert("Kullanılamıyor", "Bu ay için yapay zekâ kullanım sınırına ulaşıldı. Daha sonra tekrar dene.");
-      else if (code === "consent_required") Alert.alert("Onay gerekli", "Sesli dikte için önce açık rıza vermelisin.");
+      if (handleCoachAiGateError(code)) return;
+      if (code === "consent_required") Alert.alert("Onay gerekli", "Sesli dikte için önce açık rıza vermelisin.");
       else if (code === "voice_unreadable") Alert.alert("Anlaşılamadı", "Ses metne çevrilemedi, daha net konuşup tekrar dene.");
       else if (code === "ai_unavailable") Alert.alert("Yapay zekâ kullanılamıyor", "Lütfen birkaç dakika sonra tekrar dene.");
       else Alert.alert("Çevrilemedi", e instanceof ApiError ? e.message : "İşlem başarısız.");

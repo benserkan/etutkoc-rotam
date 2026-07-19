@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -5,8 +6,9 @@ import { DeleteAccountRow } from "@/components/account/delete-account-row";
 import { Brand } from "@/components/brand";
 import { useAuth } from "@/lib/auth";
 
-// NOT (Apple 3.1.1): "Paketim" girişi mobilden kaldırıldı — paket durumu /
-// yapay zekâ kredisi ekranı App Store yönergesi gereği uygulamada gösterilmez.
+// "Paketim" (2026-07-19): Apple IAP entegrasyonuyla geri geldi — solo koç
+// aboneliği uygulamada App Store satın almasıyla (StoreKit) alınır; dış
+// ödemeye yönlendirme yoktur (3.1.1 uyumu). Kurumlu öğretmen görmez.
 export default function TeacherProfileScreen() {
   const { user, signOut } = useAuth();
 
@@ -27,6 +29,18 @@ export default function TeacherProfileScreen() {
             <Text className="text-xs text-slate-400">{user?.email}</Text>
           </View>
         </View>
+
+        {user?.institution_id == null ? (
+          <Pressable
+            onPress={() => router.push("/teacher-plan")}
+            className="rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
+          >
+            <Text className="text-[15px] font-medium text-slate-900">Paketim</Text>
+            <Text className="mt-0.5 text-xs text-slate-500">
+              Abonelik durumun ve paket seçenekleri
+            </Text>
+          </Pressable>
+        ) : null}
 
         <Pressable
           onPress={() => void Linking.openURL("https://rotam.etutkoc.com/teacher/dashboard")}

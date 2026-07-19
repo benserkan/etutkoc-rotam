@@ -14,6 +14,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ApiError } from "@/lib/api";
+import { handleCoachAiGateError } from "@/lib/upsell";
 import {
   analyzeExamPdf,
   confirmExamImport,
@@ -165,6 +166,13 @@ export function ExamImportFlow({
       setSection(d.parts[0]?.section ?? d.section);
       setStep("preview");
     } catch (e) {
+      // Koç yüzeyinde paket/kredi kapısı → Paketim (IAP) yönlendirmesi.
+      // Öğrenci yüzeyinde (studentId null) kapı koça aittir — yalnız mesaj.
+      const code = e instanceof ApiError ? e.code : null;
+      if (studentId != null && handleCoachAiGateError(code)) {
+        setStep("pick");
+        return;
+      }
       setError(e instanceof ApiError ? e.message : "Belge analiz edilemedi.");
       setStep("pick");
     }

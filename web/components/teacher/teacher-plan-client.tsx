@@ -292,6 +292,9 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
   const qc = useQueryClient();
   const [confirmCancel, setConfirmCancel] = React.useState(false);
   const canceled = data.subscription_status === "canceled";
+  // App Store (IAP) aboneliği: iptal/geri alma Apple tarafında yapılır —
+  // buradaki butonlar gizlenir (backend de 400 app_store_managed döner).
+  const appStoreManaged = data.subscription_platform === "app_store";
 
   const cancelMut = useMutation({
     mutationFn: () => cancelSubscription(),
@@ -315,14 +318,21 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
             <p className="text-xs text-muted-foreground">
               O tarihe kadar tüm özellikler açık. Devam etmek istersen iptali geri alabilirsin.
             </p>
-            <Button
-              onClick={() => resumeMut.mutate()}
-              disabled={resumeMut.isPending}
-              className="bg-cyan-700 text-white hover:bg-cyan-800"
-            >
-              {resumeMut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
-              İptali geri al
-            </Button>
+            {appStoreManaged ? (
+              <p className="text-xs text-slate-600">
+                Aboneliğin App Store üzerinden yönetiliyor — yeniden başlatmak için
+                iPhone/iPad&apos;de <strong>Ayarlar → Apple Kimliği → Abonelikler</strong>.
+              </p>
+            ) : (
+              <Button
+                onClick={() => resumeMut.mutate()}
+                disabled={resumeMut.isPending}
+                className="bg-cyan-700 text-white hover:bg-cyan-800"
+              >
+                {resumeMut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+                İptali geri al
+              </Button>
+            )}
           </>
         ) : (
           <>
@@ -335,13 +345,21 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
                 {data.subscription_cycle === "academic_year" ? " (akademik yıl)" : " (aylık)"}
               </p>
             ) : null}
-            <button
-              type="button"
-              onClick={() => setConfirmCancel(true)}
-              className="text-xs text-rose-600 underline-offset-2 hover:underline"
-            >
-              Aboneliği iptal et
-            </button>
+            {appStoreManaged ? (
+              <p className="text-xs text-slate-600">
+                Aboneliğin App Store üzerinden yönetiliyor — paket değişikliği ve iptal,
+                iPhone/iPad&apos;deki uygulamadan veya <strong>Ayarlar → Apple Kimliği →
+                Abonelikler</strong>&apos;den yapılır.
+              </p>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setConfirmCancel(true)}
+                className="text-xs text-rose-600 underline-offset-2 hover:underline"
+              >
+                Aboneliği iptal et
+              </button>
+            )}
           </>
         )}
       </CardContent>

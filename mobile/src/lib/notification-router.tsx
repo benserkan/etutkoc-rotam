@@ -48,14 +48,15 @@ export function hrefForNotificationData(data: NotifData): string | null {
     return `/teacher-student?id=${data.student_id}`;
   }
 
-  // Koç: yeni öğrenci talebi → Talepler; diğerleri → Öğrenciler
-  // (Apple 3.1.1: "Paketim" ekranı mobilden kaldırıldı — plan bildirimleri
-  // artık öğrenci listesine düşer, satın alma/paket ekranı yok.)
+  // Koç: yeni öğrenci talebi → Talepler; plan/abonelik → Paketim (IAP ekranı,
+  // 2026-07-19'da App Store satın almasıyla geri geldi); diğerleri → Öğrenciler.
   if (type === "coach") {
     const screen = data.screen as string | undefined;
     switch (screen) {
       case "requests":
         return "/(app)/teacher/requests";
+      case "plan":
+        return "/teacher-plan";
       default:
         return "/(app)/teacher/students";
     }
