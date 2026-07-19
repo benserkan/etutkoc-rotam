@@ -1302,6 +1302,19 @@ EXAM_CURRICULUM: dict[str, dict] = {
         "min_grade": 11, "max_grade": 12, "exam_section": "AYT_SOZ",
         "curriculum_model": None, "available_for_graduate": True,
         "topics": [
+            # Dil-anlatım bloğu (2026-07-19 benchmark bulgusu): gerçek AYT
+            # Edebiyat kitapçıklarının ilk soruları + okul TM denemeleri
+            # anlam/paragraf/dil bilgisi sorar; bu konular listede yokken
+            # satırlar eşleşmeden kalıyordu (Elvin TM: %50). Adlar TYT Türkçe
+            # ile AYNI (yayınevi dili) → deterministik birebir eşleşir.
+            ("Sözcükte Anlam", 9), ("Cümlede Anlam", 9), ("Paragraf", 9),
+            ("Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları", 9),
+            ("Ses Bilgisi", 9), ("Yazım Kuralları", 9),
+            ("Noktalama İşaretleri", 9), ("Sözcükte Yapı (Ekler)", 9),
+            ("Sözcük Türleri", 10), ("Fiiller (Anlam, Çatı, Kip, Yapı)", 10),
+            ("Fiilimsiler", 10), ("Cümlenin Ögeleri", 10),
+            ("Cümle Türleri", 10), ("Anlatım Bozuklukları", 10),
+            ("Türk Edebiyatının Dönemleri", 9),
             ("Güzel Sanatlar ve Edebiyat", 9), ("Edebi Türler", 10),
             ("Edebi Sanatlar (Söz Sanatları)", 10),
             ("Şiir Bilgisi (Nazım Biçim ve Türleri)", 10),
@@ -1317,6 +1330,22 @@ EXAM_CURRICULUM: dict[str, dict] = {
         "min_grade": 11, "max_grade": 12, "exam_section": "AYT_SOZ",
         "curriculum_model": None, "available_for_graduate": True,
         "topics": [
+            # 9-10. sınıf MEB üniteleri (2026-07-19 benchmark bulgusu): AYT
+            # Tarih tüm liseyi kapsar; okul/yayınevi sonuç belgeleri konuları
+            # MEB ünite adıyla yazar ("Dünya Gücü Osmanlı", "Tarih ve Zaman").
+            # Liste 11-12 ile başlayınca bu satırlar eşleşmeden kalıyordu.
+            ("Tarih ve Zaman", 9), ("İnsanlığın İlk Dönemleri", 9),
+            ("Orta Çağ'da Dünya", 9),
+            ("İlk ve Orta Çağlarda Türk Dünyası", 9),
+            ("İslam Medeniyetinin Doğuşu", 9),
+            ("Türklerin İslamiyet'i Kabulü ve İlk Türk İslam Devletleri", 9),
+            ("Yerleşme ve Devletleşme Sürecinde Selçuklu Türkiyesi", 10),
+            ("Beylikten Devlete Osmanlı Siyaseti", 10),
+            ("Devletleşme Sürecinde Savaşçılar ve Askerler", 10),
+            ("Beylikten Devlete Osmanlı Medeniyeti", 10),
+            ("Dünya Gücü Osmanlı", 10),
+            ("Sultan ve Osmanlı Merkez Teşkilatı", 10),
+            ("Klasik Çağda Osmanlı Toplum Düzeni", 10),
             ("Değişen Dünya Dengeleri Karşısında Osmanlı (1595-1774)", 11),
             ("Değişim Çağında Avrupa ve Osmanlı", 11),
             ("Uluslararası İlişkilerde Denge Stratejisi (1774-1914)", 11),
@@ -1349,6 +1378,11 @@ EXAM_CURRICULUM: dict[str, dict] = {
         "min_grade": 11, "max_grade": 12, "exam_section": "AYT_SOZ",
         "curriculum_model": None, "available_for_graduate": True,
         "topics": [
+            # 10. sınıf MEB üniteleri (2026-07-19): yayınevi belgeleri
+            # "Felsefeyi Tanıma" / "Varlık Felsefesinin Konusu" gibi 10. sınıf
+            # konularını da sorar (AYT'nin felsefe kapsamı 10-11. sınıf).
+            ("Felsefeyi Tanıma", 10), ("Felsefe ile Düşünme", 10),
+            ("Felsefenin Temel Konuları ve Problemleri", 10),
             ("Felsefe: MÖ 6 - MS 2. Yüzyıl", 11),
             ("Felsefe: MS 2 - MS 15. Yüzyıl", 11),
             ("Felsefe: 15-17. Yüzyıl", 11), ("Felsefe: 18-19. Yüzyıl", 11),

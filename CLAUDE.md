@@ -325,6 +325,45 @@ opsiyonel) · konu normalizasyonu = sistemin kalbi (yayınevi adı ≠ müfredat
   aralıklı 2 doğru); `/review` Tekrar sayfası ise KONU-düzeyi ayrı FSRS kuyruğu
   — ikisi öneri motorunu ayrı sinyallerle besler; tek kuyrukta birleştirme
   bilinçli ayrı iş (YSA notunda kayıtlı).
+- **YAYIN-ÖNCESİ BENCHMARK + 3 dayanıklılık düzeltmesi (2026-07-19, GERÇEK
+  Gemini; kod hazır — COMMIT/DEPLOY BEKLİYOR):** kullanıcının 3 öğrencisinin
+  (Elvin 11 · Taha 11 · Berra 12) 12 gerçek belgesiyle toplu ölçüm
+  (`scripts/sim_exam_import_benchmark.py` — vaka filtresi `argv[2]`, skor:
+  eşleşme 35 + net 30 + kontroller 20 + şüpheli 10 + tespit 5; +
+  `sim_exam_import_stability.py` merge tanısı). **Sonuç: 9 sonuç belgesinde
+  net hesabı 40/40 derste belgeyle BİREBİR** (Mat+Geo toplamı belge
+  "MATEMATİK" satırına denk — ayrışma görünüm artefaktı, hata değil); tespit
+  9/9 doğru aile (TM→AYT-EA, KDS sözel→AYT-SÖZ, branş→AYT-SAY dahil).
+  Düzeltme öncesi genel 86.4 → **düzeltme sonrası ~99/100** (Mat+Geo-düzeltmeli).
+  3 bulgu + düzeltmesi:
+  (1) **Tek-tip part etiketi çift sayımı:** Gemini nadiren TÜM satırları
+  "ayt" etiketliyor (3 koşudan 1'inde; özdebir-16-02: 160→311 satır, hepsi
+  şüpheli, netler İKİ KATI) → `_sanitize_parts` tek-tip etiketi (soru+özet)
+  SİLER (tek tip = oturum bilgisi taşımaz ama merge kovasını (part,ders)
+  ayrıştırıyordu). Sonrası: 160 satır · şüpheli 0 · %100 eşleşme · Mat+Geo
+  25.75 belgeyle birebir.
+  (2) **Merge çöküşü güvenlik ağı:** kovalar hiç kesişmezse (şüpheli>%50 VE
+  birleşim>1.4×max) belge özetiyle tutarlı TEK okuma esas (`_summary_agreement`)
+  + `reads_misaligned` FAIL kontrolü — çift sayım artık yapısal olarak imkânsız.
+  (3) **Sonuç-belgesi kapısı:** kitapçık/optik form taramasında Gemini konusuz
+  çöp satır üretiyordu (töder.pdf: 135 satır, %0 eşleşme → koç kaydedebilirdi)
+  → satırların <%30'unda konu varsa **422 `not_result_document`** (kredi
+  düşmez; web+mobil backend mesajını zaten gösteriyor — frontend değişmedi).
+  (4) **AYT sözel taksonomi genişletmesi** (`EXAM_CURRICULUM`, +31 konu,
+  additive seed): AYT Edebiyat +15 (TYT Türkçe aynası dil-anlatım bloğu başa —
+  gerçek AYT/TM kitapçıklarının ilk soruları + "Türk Edebiyatının Dönemleri") ·
+  AYT Tarih +13 (9-10. sınıf MEB üniteleri: "Dünya Gücü Osmanlı", "Tarih ve
+  Zaman"…) · AYT Felsefe +3 (10. sınıf üniteleri). Elvin TM eşleşmesi
+  **%50→%97.5**. Smoke exam_import **75/75** (31a kapı+kredi yok · 31b tek-tip
+  etiket hizalanır · 31c çöküş ağı) · taxonomy 20 · teacher_exams 18 ·
+  topic_analysis 10 · wrong_bridge 11 · mapping 18 · units 10 GREEN.
+  NOT: Berra'nın "berra denemeler" klasöründeki 3 büyük PDF (345_TG 30MB ·
+  apotemi 28MB · töder 9.2MB) SORU KİTAPÇIĞI taraması (sonuç belgesi değil);
+  ilk ikisi zaten 10MB router limitinde reddediliyor. Branş denemelerinde
+  tespit `medium` güven (aile doğru) — kozmetik, dokunulmadı. DERS (dev
+  makinesi): bu ağın DNS'i `generativelanguage.googleapis.com`'u çözmüyor
+  (aile filtresi; google.com SafeSearch IP'sine gidiyor) — sim scriptlerinde
+  DoH-çözümlü IP'ye getaddrinfo yaması var; PROD ETKİLENMEZ.
 - **NOT (Gemini pro erişimi ANAHTARA bağlı, 2026-07-16 doğrulandı):**
   `gemini-2.5-pro` "no longer available to NEW users" — pro erişimi PROJEYE göre:
   prod'un ücretli anahtarı (panelden, …sTZ0) pro'ya 200 veriyor; …4k58 anahtarı

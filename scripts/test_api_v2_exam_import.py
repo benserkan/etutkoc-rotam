@@ -393,6 +393,18 @@ def main() -> int:
             # yazdı (gerçek ÖZDEBİR AYT'de yaşandı) — kanonik anahtar eşlemeli
             if q["subject"] == "Fizik" and q.get("part") == "ayt":
                 q["subject"] = "Fizik (SAY-2)"
+        # 31b: 2. okuma HER satırı tek-tip 'ayt' etiketledi (gerçek ÖZDEBİR
+        # 16-02 çift sayım vakası) — _sanitize_parts silmeli, merge hizalanmalı
+        if read_behavior.get("single_part"):
+            for q in r2["questions"]:
+                q["part"] = "ayt"
+            for s in r2.get("subjects") or []:
+                s["part"] = "ayt"
+        # 31c: 2. okuma dersleri köprülenemez adlarla yazdı → kova kesişimi
+        # sıfır → hizalama çöküşü güvenlik ağı devreye girmeli
+        if read_behavior.get("scramble_subjects"):
+            for q in r2["questions"]:
+                q["subject"] = f"Öteki {q['subject']}"
         return r1, r2
 
     def fake_generate(parts, *, personal_data, json_mode=True, timeout=45.0,
@@ -1040,6 +1052,69 @@ def main() -> int:
             sn28 = {g["name"] for g in json.loads(ex28.subject_nets)} if ex28 else set()
         check("28h. kayıtlı subject_nets birleşik (tek TDE grubu)",
               sn28 == {"Türk Dili ve Edebiyatı"}, str(sn28)[:150])
+
+        # --- 31) DAYANIKLILIK (2026-07-19 gerçek-PDF benchmark bulguları) ----
+        # 31a: kitapçık/optik form taraması → satırlar KONUSUZ → temiz 422
+        # not_result_document + kredi DÜŞMEZ (töder.pdf vakası: 135 çöp satır
+        # taslak olarak koça gidiyordu)
+        r31 = build_tyt_read()
+        for q in r31["questions"]:
+            q["topic"] = ""
+        read_behavior["read"] = r31
+        with SessionLocal() as db31:
+            used_before = db31.query(UsageEvent).filter(
+                UsageEvent.actor_user_id == ids["coach"]).count()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            files={"file": pdf_file})
+        body31 = r.json() if r.status_code == 422 else {}
+        with SessionLocal() as db31:
+            used_after = db31.query(UsageEvent).filter(
+                UsageEvent.actor_user_id == ids["coach"]).count()
+        check("31a. konusuz belge (kitapçık) → 422 not_result_document + kredi yok",
+              r.status_code == 422
+              and body31.get("detail", {}).get("code") == "not_result_document"
+              and used_after == used_before,
+              f"{r.status_code} {r.text[:150]} kredi {used_before}→{used_after}")
+
+        # 31b: tek-tip part etiketi merge kovalarını AYIRMAMALI (çift sayım yok
+        # + güvenlik ağına da düşmez — normal çapraz doğrulama çalışır)
+        read_behavior["read"] = build_tyt_read()
+        read_behavior["single_part"] = True
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            files={"file": pdf_file})
+        d31b = r.json() if r.status_code == 200 else {}
+        mis31b = next((c for c in d31b.get("checks", [])
+                       if c["code"] == "reads_misaligned"), None)
+        check("31b. tek-tip 'ayt' etiketli 2. okuma → 12 satır (24 değil) + "
+              "hizalama sağlam",
+              r.status_code == 200 and len(d31b.get("rows", [])) == 12
+              and mis31b is None and d31b.get("suspect_count", 99) <= 2,
+              f"rows={len(d31b.get('rows', []))} sus={d31b.get('suspect_count')}"
+              f" mis={mis31b is not None} {r.text[:120]}")
+        read_behavior["single_part"] = False
+
+        # 31c: kovalar HİÇ kesişmezse güvenlik ağı: tek okuma esas + uyarı
+        read_behavior["scramble_subjects"] = True
+        ai_label_map.clear()
+        r = ct.post(
+            f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
+            files={"file": pdf_file})
+        d31c = r.json() if r.status_code == 200 else {}
+        mis31c = next((c for c in d31c.get("checks", [])
+                       if c["code"] == "reads_misaligned"), None)
+        # not: 1 şüpheli fikstürün satır-İÇİ çelişkisinden (Mat no 8 sembol
+        # 'yanlis' ama DC==ÖC) — merge'den bağımsız, korunması doğru davranış
+        check("31c. hizalama çöküşü → çift sayım YOK (12 satır) + "
+              "reads_misaligned uyarısı",
+              r.status_code == 200 and len(d31c.get("rows", [])) == 12
+              and d31c.get("suspect_count") == 1
+              and mis31c is not None and mis31c["ok"] is False,
+              f"rows={len(d31c.get('rows', []))} sus={d31c.get('suspect_count')}"
+              f" mis={mis31c} {r.text[:120]}")
+        read_behavior["scramble_subjects"] = False
 
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double

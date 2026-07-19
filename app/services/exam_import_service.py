@@ -530,8 +530,20 @@ def _sanitize_parts(read: dict) -> None:
     # oysa bu guard tam da belgenin KENDİ adlandırmasına bakmak zorunda.
     tyt_keys = {normalize(q["subject"] or "") for q in qs if q.get("part") == "tyt"}
     ayt_keys = {normalize(q["subject"] or "") for q in qs if q.get("part") == "ayt"}
+    if not tyt_keys and not ayt_keys:
+        return  # etiketsiz — birleşik iddiası yok, dokunma
     if not tyt_keys or not ayt_keys:
-        return  # tek tür etiket / etiketsiz — birleşik iddiası yok, dokunma
+        # TEK TİP etiket ("her satır ayt" gibi): oturum bölmesi için bilgi
+        # taşımaz (multi iki türü de ister) ama merge kova anahtarını
+        # (part, ders) ayrıştırır — bir okuma etiketli, diğeri etiketsizse
+        # AYNI belge hizalanamayıp ÇİFT sayılır (GERÇEK vaka: ÖZDEBİR AYT
+        # 16-02, 160 satır → 311 satır + tüm satırlar şüpheli + netler iki
+        # katı). Tek-tip etiketler ve özet part'ları silinir.
+        for q in qs:
+            q["part"] = None
+        for s in read.get("subjects") or []:
+            s["part"] = None
+        return
 
     def _has(keys: set[str], *needles: str) -> bool:
         return any(n in k for k in keys for n in needles)
@@ -640,10 +652,44 @@ def merge_reads(r1: dict, r2: dict) -> tuple[dict, int]:
                 suspects += 1
             merged_rows.append(base)
 
+    # HİZALAMA ÇÖKÜŞÜ GÜVENLİK AĞI: kovalar hiç kesişmediyse (iki okuma ders/
+    # oturum adlandırmasında bambaşka davrandı) birleşim = ÇİFT SAYIM olur ve
+    # netler ikiye katlanır — en tehlikeli hata sınıfı. Belirti: satırların
+    # yarıdan fazlası tek-kaynaklı VE birleşim her iki okumadan belirgin büyük.
+    # Bu durumda belge özetiyle daha tutarlı TEK okuma esas alınır; analyze
+    # önizlemeye 'reads_misaligned' uyarısı basar.
+    n1, n2 = len(r1["questions"]), len(r2["questions"])
+    if (merged_rows and n1 and n2
+            and suspects * 2 > len(merged_rows)
+            and len(merged_rows) * 10 > max(n1, n2) * 14):
+        best = max((r1, r2), key=lambda r: (_summary_agreement(r),
+                                            len(r["questions"])))
+        merged = dict(best)
+        merged["questions"] = [dict(q, _suspect=False)
+                               for q in best["questions"]]
+        merged["_merge_collapsed"] = True
+        return merged, 0
+
     merged = dict(r1)
     merged["questions"] = merged_rows
     # özet tablo: uyuşmuyorsa r1 esas + kontrol katmanı yakalar
     return merged, suspects
+
+
+def _summary_agreement(read: dict) -> int:
+    """Okumanın kendi içi tutarlılığı: belge özet tablosundaki ders başına soru
+    sayısı, satır kovalarıyla kaç derste birebir tutuyor? (Çöküş güvenlik
+    ağında 'hangi okuma esas alınacak' seçimi için.)"""
+    counts: dict[str, int] = {}
+    for q in read.get("questions") or []:
+        k = _subject_key(q.get("subject"))
+        counts[k] = counts.get(k, 0) + 1
+    score = 0
+    for s in read.get("subjects") or []:
+        qn = s.get("questions")
+        if qn is not None and counts.get(_subject_key(s.get("name"))) == qn:
+            score += 1
+    return score
 
 
 def _derive_result(row: dict) -> tuple[str | None, bool]:
@@ -907,6 +953,19 @@ def analyze(
     # edilir; koç önizlemede hangi oturumu kaydedeceğini seçer (ikisi için iki
     # kayıt). Tek sınavlı belgede davranış eskisiyle aynı.
     all_q = merged["questions"]
+
+    # SONUÇ-BELGESİ KAPISI: soru kitapçığı/optik form taramalarında Gemini
+    # satır "uydurabiliyor" ama soru başına KONU analizi yok (GERÇEK vaka:
+    # töder kitapçığı — 135 satır, hepsi konusuz, %0 eşleşme). Zorunlu çekirdek
+    # ders→konu→sonuç olduğundan konusuz belge temiz retle döner (kredi
+    # düşmez — consume_credits istisnada geri alır).
+    topic_filled = sum(1 for q in all_q if (q.get("topic") or "").strip())
+    if not all_q or topic_filled * 10 < len(all_q) * 3:
+        raise ExamImportError(
+            422, "not_result_document",
+            "Bu PDF bir deneme SONUÇ belgesine benzemiyor (soru başına konu "
+            "analizi bulunamadı). Soru kitapçığı veya optik form yerine "
+            "yayınevinin/okulun soru-konu analizli sonuç karnesini yükle.")
     n_tyt = sum(1 for q in all_q if q.get("part") == "tyt")
     n_ayt = sum(1 for q in all_q if q.get("part") == "ayt")
     multi = n_tyt >= 5 and n_ayt >= 5
@@ -948,6 +1007,16 @@ def analyze(
     checks: list[dict] = []
     first_det: dict | None = None
     guard_total = 0
+    if merged.get("_merge_collapsed"):
+        checks.append({
+            "code": "reads_misaligned",
+            "label": "Çift okuma hizalaması",
+            "ok": False,
+            "detail": "İki yapay zekâ okuması satır bazında birbiriyle "
+                      "eşleşemedi; çift sayımı önlemek için belge özetiyle "
+                      "daha tutarlı TEK okuma kullanıldı. Kaydetmeden önce "
+                      "ders netlerini belgeyle karşılaştır.",
+        })
     if declared_section and len(part_defs) > 1:
         checks.append({
             "code": "declared_multi",

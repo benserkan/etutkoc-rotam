@@ -199,8 +199,12 @@ def _score_result_case(d: dict, expected_family: str | None) -> dict:
 
 def main() -> int:
     out_path = Path(sys.argv[1]) if len(sys.argv) > 1 else None
+    only = ({int(x) for x in sys.argv[2].split(",")}
+            if len(sys.argv) > 2 else None)
     results = []
     for i, (who, grade, path, expected, kind, note) in enumerate(CASES, 1):
+        if only and i not in only:
+            continue
         rec: dict = {
             "case": i, "student": who, "grade": grade, "file": path.name,
             "kind": kind, "note": note,
