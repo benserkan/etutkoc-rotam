@@ -453,6 +453,14 @@ iOS fiyatı **web ile aynı** (2.500/5.000/7.500₺ → Apple kademesi 2.499,99 
   doldurdu; şirket **D-U-N-S: 448959103**. Apple e-posta/telefonla dönecek
   (yetki teyidi olası) → SIRADA: Apple yanıtı → Paid Apps (şirket) → banka/
   vergi → abonelik ürünleri → RevenueCat bağlama → EAS build 9.
+  **RevenueCat kurulumu TAMAM (2026-07-19):** proje + App Store app
+  (com.etutkoc.rotam, IAP .p8 key yüklü) + public anahtar
+  `appl_MLtksxrahHSgkZDUbRXNMbHAsGd` app.json'da (commit 216b617) + webhook
+  (Both env, All events) + prod `.env` REVENUECAT_WEBHOOK_AUTH/SECRET_KEY
+  girildi → canlı doğrulandı: ping `auth_configured:true` + **Send test
+  event 200** (web log POST 200). Kalan TEK blokör: Apple kurumsal dönüşüm
+  → sözleşme → ASC'de 3 ürün → RC Products/Entitlements/Offerings bağlama →
+  build 9 + sandbox test + resubmit.
 - **KULLANICI AKSİYONU — `mobile/store/iap-kurulum-rehberi.md` (adım adım):**
   (0) hesabı kurumsala çevir (üstteki karar); (1) Paid Apps sözleşme+banka+vergi; (2) Small Business Program (%15);
   (3) ASC abonelik grubu "ETUTKOC Rotam Solo" + 3 ürün (ID'ler kodla birebir:
