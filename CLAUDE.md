@@ -445,10 +445,14 @@ iOS fiyatı **web ile aynı** (2.500/5.000/7.500₺ → Apple kademesi 2.499,99 
   tetiklerdi. Kurum ticari yönetimi web'de kalır.
 - **KULLANICI KARARI (2026-07-19): Apple hesabı BİREYSEL değil KURUMSAL.**
   Mevcut Developer üyeliği bireysel ("Serkan Aydn") — kullanıcı Ltd. Şti.
-  kimliğiyle satışı seçti → **Adım 0: hesap dönüşümü** (D-U-N-S lookup/başvuru
-  + Apple Support "convert to organization", ~1-3 hafta; imza yetkilisi Avni
-  Bektaş bilgilendirilecek — Apple yetki teyidi için arayabilir). Yayın bu
-  dönüşümü bekler; RevenueCat kurulumu paralel yapılabilir.
+  kimliğiyle satışı seçti → **Adım 0: hesap dönüşümü** (~1-3 hafta; imza
+  yetkilisi Avni Bektaş bilgilendirilecek — Apple yetki teyidi için arayabilir).
+  Yayın bu dönüşümü bekler; RevenueCat kurulumu paralel yapılabilir.
+  **DURUM (2026-07-19): dönüşüm talebi GÖNDERİLDİ** — kullanıcı
+  developer.apple.com/contact/request/migrate-individual-account formunu
+  doldurdu; şirket **D-U-N-S: 448959103**. Apple e-posta/telefonla dönecek
+  (yetki teyidi olası) → SIRADA: Apple yanıtı → Paid Apps (şirket) → banka/
+  vergi → abonelik ürünleri → RevenueCat bağlama → EAS build 9.
 - **KULLANICI AKSİYONU — `mobile/store/iap-kurulum-rehberi.md` (adım adım):**
   (0) hesabı kurumsala çevir (üstteki karar); (1) Paid Apps sözleşme+banka+vergi; (2) Small Business Program (%15);
   (3) ASC abonelik grubu "ETUTKOC Rotam Solo" + 3 ürün (ID'ler kodla birebir:
