@@ -443,8 +443,14 @@ iOS fiyatı **web ile aynı** (2.500/5.000/7.500₺ → Apple kademesi 2.499,99 
   kurum planları IAP'de satılmıyor (custom B2B fiyat); mobilde kurum fiyat/
   yükseltme göstermek "dışarıda satılan içerik IAP'siz" retini yeniden
   tetiklerdi. Kurum ticari yönetimi web'de kalır.
+- **KULLANICI KARARI (2026-07-19): Apple hesabı BİREYSEL değil KURUMSAL.**
+  Mevcut Developer üyeliği bireysel ("Serkan Aydn") — kullanıcı Ltd. Şti.
+  kimliğiyle satışı seçti → **Adım 0: hesap dönüşümü** (D-U-N-S lookup/başvuru
+  + Apple Support "convert to organization", ~1-3 hafta; imza yetkilisi Avni
+  Bektaş bilgilendirilecek — Apple yetki teyidi için arayabilir). Yayın bu
+  dönüşümü bekler; RevenueCat kurulumu paralel yapılabilir.
 - **KULLANICI AKSİYONU — `mobile/store/iap-kurulum-rehberi.md` (adım adım):**
-  (1) Paid Apps sözleşme+banka+vergi; (2) Small Business Program (%15);
+  (0) hesabı kurumsala çevir (üstteki karar); (1) Paid Apps sözleşme+banka+vergi; (2) Small Business Program (%15);
   (3) ASC abonelik grubu "ETUTKOC Rotam Solo" + 3 ürün (ID'ler kodla birebir:
   `rotam_solo_pro_monthly` 2.499,99 · `rotam_solo_elite_monthly` 4.999,99 ·
   `rotam_solo_unlimited_monthly` 7.499,99); (4) RevenueCat proje (IAP .p8 key +
