@@ -5767,6 +5767,7 @@ def _student_book_summary(
             test_count=s.test_count,
             completed_count=sp.completed_count if sp else 0,
             reserved_count=sp.reserved_count if sp else 0,
+            manual_count=(sp.manual_count or 0) if sp else 0,
         ))
 
     book_type = book.type if book and book.type else None
@@ -5826,10 +5827,13 @@ def teacher_set_section_completed_v2(
 ):
     """Bir bölümü 'öğrenci zaten çözmüş' olarak işaretle (geçmiş yıl baseline).
 
-    completed_count'u DOĞRUDAN set eder (görev gerektirmez); o bölümün kalanı
-    (test − rezerv − tamam) düşer → programda bir daha atanmaz. completed_count=0
-    işareti kaldırır. Üst sınır = test_count − reserved_count (aktif rezerv korunur).
+    Artık İZLİ (self_study_service): artış → koç kaydı olarak saklanır; azalış
+    yalnız elle/bağımsız girilen (manual) kısımdan düşülür — görevle çözülenler
+    buradan azaltılamaz. Kalan (test − rezerv − tamam) düşer → programda bir
+    daha atanmaz. Üst sınır = test_count − reserved_count (aktif rezerv korunur).
     """
+    from app.services import self_study_service as ss_svc
+
     student = _get_owned_student(db, student_id, user.id)
     sb = (
         db.query(StudentBook)
@@ -5853,28 +5857,16 @@ def teacher_set_section_completed_v2(
             detail={"error": "not_found", "code": "section_not_found",
                     "message": "Bölüm bu kitaba ait değil."},
         )
-    sp = (
-        db.query(SectionProgress)
-        .filter(SectionProgress.student_book_id == sb.id,
-                SectionProgress.book_section_id == section_id)
-        .first()
-    )
-    if not sp:
-        sp = SectionProgress(
-            student_book_id=sb.id, book_section_id=section_id,
-            reserved_count=0, completed_count=0,
+    try:
+        ss_svc.set_absolute_completed(
+            db, student=student, sb=sb, section=section,
+            actor=user, target=body.completed_count,
         )
-        db.add(sp)
-        db.flush()
-    max_allowed = max(0, int(section.test_count or 0) - int(sp.reserved_count or 0))
-    if body.completed_count > max_allowed:
+    except ss_svc.SelfStudyError as e:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail={"error": "validation", "code": "exceeds_available",
-                    "message": (f"En fazla {max_allowed} test işaretlenebilir "
-                                f"(bölüm {section.test_count} test, {sp.reserved_count} rezerv).")},
+            detail={"error": "validation", "code": e.code, "message": e.message},
         )
-    sp.completed_count = body.completed_count
     db.commit()
     db.refresh(sb)
     return MutationResponse[StudentBookListItem](

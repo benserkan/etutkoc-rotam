@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 
 import type { ResourceBookItem, ResourceSubjectGroup, StudentBooksProgress } from "@/lib/student";
+import { SelfStudyCard } from "@/components/student/self-study-card";
 import { cn } from "@/lib/utils";
 
 const TYPE_LABEL: Record<string, string> = {
@@ -100,6 +101,8 @@ export function BooksView({
         </View>
         <Text className="mt-2 text-xs text-brand-100">{data.remaining_tests} kalan · {data.reserved_tests} programa planlı</Text>
       </View>
+
+      <SelfStudyCard />
 
       {data.subjects.length === 0 ? (
         <View className="mt-6 items-center gap-2 px-6">

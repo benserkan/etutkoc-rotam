@@ -377,6 +377,16 @@ from app.models.focus import (
     StudentBadge,
 )
 from app.models.progress import SectionProgress, StudentBook
+from app.models.self_study import (
+    SS_SOURCE_COACH,
+    SS_SOURCE_LABELS_TR,
+    SS_SOURCE_STUDENT,
+    SS_STATUS_APPROVED,
+    SS_STATUS_LABELS_TR,
+    SS_STATUS_PENDING,
+    SS_STATUS_REJECTED,
+    SelfStudyEntry,
+)
 from app.models.student_day_note import StudentDayNote
 from app.models.quota import InstitutionQuotaOverride
 from app.models.review import (
@@ -705,6 +715,14 @@ __all__ = [
     "RequestStatus",
     "RequestType",
     "SectionProgress",
+    "SS_SOURCE_COACH",
+    "SS_SOURCE_LABELS_TR",
+    "SS_SOURCE_STUDENT",
+    "SS_STATUS_APPROVED",
+    "SS_STATUS_LABELS_TR",
+    "SS_STATUS_PENDING",
+    "SS_STATUS_REJECTED",
+    "SelfStudyEntry",
     "GOAL_KIND_EMOJIS",
     "GOAL_KIND_LABELS_TR",
     "GOAL_STATUS_LABELS_TR",

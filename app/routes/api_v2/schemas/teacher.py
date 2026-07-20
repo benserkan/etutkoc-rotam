@@ -1177,6 +1177,8 @@ class StudentBookSectionProgressRow(BaseModel):
     test_count: int
     completed_count: int
     reserved_count: int
+    # completed'ın elle/bağımsız-çalışma girişinden gelen kısmı (görev dışı)
+    manual_count: int = 0
 
 
 class StudentBookListItem(BaseModel):

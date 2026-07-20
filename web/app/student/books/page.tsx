@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BookOpenCheck, ChevronRight } from "lucide-react";
 
 import { apiServer } from "@/lib/api-server";
+import { StudentSelfStudyPanel } from "@/components/student/self-study-panel";
 import type { BookType, StudentBooksResponse } from "@/lib/types/student";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +44,8 @@ export default async function StudentBooksPage() {
           </span>
         </div>
       </header>
+
+      <StudentSelfStudyPanel />
 
       {data.subjects.length === 0 ? (
         <div className="rounded-lg border border-dashed border-border bg-card px-4 py-10 text-center text-sm text-muted-foreground">

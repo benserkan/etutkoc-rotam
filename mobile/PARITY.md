@@ -33,6 +33,7 @@ Billing ayrı iş). Kurulum: `store/iap-kurulum-rehberi.md`.
 | **Yanlışları arşive tek-tık (Faz 3 köprüsü)** | ✅ | ✅ | idempotent |
 | **Günün düşünce notu (autosave)** | ✅ | ✅ | Bugün ekranında, 700ms debounce |
 | **Kitaplarım + ilerleme** | ✅ | ✅ | ders bazlı + kitap progress barı |
+| **Bağımsız çalışma bildir (tatil/koçsuz)** | ✅ | ✅ | kitap→bölüm→test beyanı + geri çekme; koç onayı/toplu girişi WEB'de; onay push'u Kitaplarım'a deep-link |
 | **Çalışma DNA (analiz)** | ✅ | ✅ | "Gelişim" sekmesi |
 | **Odak (Pomodoro — başlat/çalıştır/bitir)** | ✅ | ✅ | canlı sayaç |
 | **Tekrar (aralıklı — kart değerlendir)** | ✅ | ✅ | FSRS oturumu (1-4) |

@@ -68,6 +68,12 @@ class SectionProgress(Base):
     )
     reserved_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     completed_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    # completed_count'un görev DIŞI (elle/bağımsız çalışma) gelen kısmı.
+    # completed = görevle çözülen + manual; azaltma yalnız manual kısımdan
+    # yapılabilir (self_study_service tek merkez).
+    manual_count: Mapped[int] = mapped_column(
+        Integer, default=0, nullable=False, server_default="0"
+    )
 
     student_book: Mapped["StudentBook"] = relationship(
         "StudentBook", back_populates="section_progress"

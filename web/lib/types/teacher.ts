@@ -1112,6 +1112,8 @@ export interface StudentBookSectionProgressRow {
   test_count: number;
   completed_count: number;
   reserved_count: number;
+  /** completed'ın elle/bağımsız-çalışma girişinden gelen kısmı */
+  manual_count: number;
 }
 
 export interface StudentBookListItem {

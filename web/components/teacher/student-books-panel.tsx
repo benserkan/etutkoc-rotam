@@ -20,6 +20,20 @@ import {
   getTeacherStudentBooks,
   teacherKeys,
 } from "@/lib/api/teacher";
+import { getTeacherSelfStudy, selfStudyKeys } from "@/lib/api/self-study";
+import {
+  useCoachSelfStudyCreate,
+  useDeleteSelfStudyEntry,
+  useReviewSelfStudy,
+} from "@/lib/hooks/use-self-study-mutations";
+import {
+  SelfStudyEntryDialog,
+  SelfStudyEntryRow,
+} from "@/components/shared/self-study";
+import type {
+  SelfStudyListResponse,
+  SelfStudyOptionBook,
+} from "@/lib/types/self-study";
 import { getLibraryBookSet, getLibraryBookSets, libraryKeys } from "@/lib/api/library";
 import { setRecommendedForStudent } from "@/lib/utils/book-sets";
 import {
@@ -188,6 +202,8 @@ export function StudentBooksPanel({ studentId }: Props) {
         </div>
       ) : null}
 
+      <SelfStudyCard studentId={studentId} books={allItems} />
+
       {booksQ.isLoading && !data ? (
         <Card>
           <CardContent className="p-6 text-sm text-muted-foreground">
@@ -223,6 +239,150 @@ export function StudentBooksPanel({ studentId }: Props) {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function SelfStudyCard({
+  studentId,
+  books,
+}: {
+  studentId: number;
+  books: StudentBookListItem[];
+}) {
+  const listQ = useQuery<SelfStudyListResponse>({
+    queryKey: selfStudyKeys.teacherList("me", studentId),
+    queryFn: () => getTeacherSelfStudy(studentId),
+    staleTime: 30_000,
+  });
+  const create = useCoachSelfStudyCreate(studentId);
+  const review = useReviewSelfStudy();
+  const del = useDeleteSelfStudyEntry();
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+
+  const items = listQ.data?.items ?? [];
+  const pending = items.filter((i) => i.status === "pending");
+  const settled = items.filter((i) => i.status !== "pending");
+
+  const optionBooks: SelfStudyOptionBook[] = React.useMemo(
+    () =>
+      books.map((b) => ({
+        student_book_id: b.student_book_id,
+        book_id: b.book_id,
+        book_name: b.book_name,
+        subject_name: b.subject_name,
+        book_type_label: b.book_type_label_tr,
+        sections: b.sections.map((s) => ({
+          section_id: s.section_id,
+          label: s.label,
+          test_count: s.test_count,
+          completed_count: s.completed_count,
+          reserved_count: s.reserved_count,
+          remaining: Math.max(
+            0,
+            s.test_count - s.completed_count - s.reserved_count,
+          ),
+        })),
+      })),
+    [books],
+  );
+
+  const busy = review.isPending || del.isPending;
+
+  return (
+    <Card className="border-l-4 border-l-cyan-500 ring-1 ring-inset ring-cyan-500/10">
+      <CardContent className="p-4 space-y-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="space-y-0.5 min-w-0">
+            <p className="font-medium">Bağımsız çalışma</p>
+            <p className="text-xs text-muted-foreground">
+              Tatilde/program dışında çözülen testleri işle — kayıtlar izli
+              tutulur, kitap ilerlemesi ve öneriler güncellenir.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDialogOpen(true)}
+            disabled={books.length === 0}
+          >
+            <Plus className="size-4" aria-hidden />
+            Bağımsız çalışma girişi
+          </Button>
+        </div>
+
+        {pending.length > 0 ? (
+          <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+            <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+              Öğrenci beyanı — onayını bekliyor ({pending.length})
+            </p>
+            <ul className="divide-y divide-border/60">
+              {pending.map((it) => (
+                <SelfStudyEntryRow
+                  key={it.id}
+                  item={it}
+                  isBusy={busy}
+                  onApprove={() =>
+                    review.mutate({ entryId: it.id, body: { approve: true } })
+                  }
+                  onReject={() => {
+                    if (
+                      window.confirm(
+                        "Bu beyanı reddetmek istiyor musun? İlerlemeye işlenmez.",
+                      )
+                    ) {
+                      review.mutate({ entryId: it.id, body: { approve: false } });
+                    }
+                  }}
+                />
+              ))}
+            </ul>
+          </div>
+        ) : null}
+
+        {settled.length > 0 ? (
+          <details className="group">
+            <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground inline-flex items-center gap-1 list-none [&::-webkit-details-marker]:hidden">
+              <ChevronRight
+                className="size-3 transition-transform group-open:rotate-90"
+                aria-hidden
+              />
+              Geçmiş kayıtlar ({settled.length})
+            </summary>
+            <ul className="mt-1 divide-y divide-border">
+              {settled.slice(0, 15).map((it) => (
+                <SelfStudyEntryRow
+                  key={it.id}
+                  item={it}
+                  isBusy={busy}
+                  onDelete={() => {
+                    if (
+                      window.confirm(
+                        it.status === "approved"
+                          ? `Bu kaydı silmek ilerlemeden ${it.applied_count} testi geri alır. Devam?`
+                          : "Bu kayıt silinsin mi?",
+                      )
+                    ) {
+                      del.mutate({ entryId: it.id });
+                    }
+                  }}
+                />
+              ))}
+            </ul>
+          </details>
+        ) : null}
+
+        <SelfStudyEntryDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          books={optionBooks}
+          mode="coach"
+          isPending={create.isPending}
+          onSubmit={(body) =>
+            create.mutate(body, { onSuccess: () => setDialogOpen(false) })
+          }
+        />
+      </CardContent>
+    </Card>
   );
 }
 
@@ -508,6 +668,14 @@ function SectionRow({
           {s.completed_count > 0 ? (
             <span className="text-emerald-600 dark:text-emerald-400">
               ({s.completed_count} çöz.)
+            </span>
+          ) : null}
+          {s.manual_count > 0 ? (
+            <span
+              className="text-cyan-600 dark:text-cyan-400"
+              title="Görev dışı — elle/bağımsız çalışma girişiyle işlendi"
+            >
+              ({s.manual_count} bağımsız)
             </span>
           ) : null}
         </div>

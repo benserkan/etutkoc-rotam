@@ -6,6 +6,55 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Bağımsız Çalışma Kayıtları (self-study) — Faz 1 CANLI (2026-07-20, migration `x8y1b4c5b77x`)
+
+**Bağlam:** Tatilde öğrenci koçsuz/programsız çalışınca (köy/internetsiz vb.)
+kitap ilerlemesi sistemde eski kalıyordu; koç güncelleyebilmeli AMA kurum koçu
+ilerlemeyi şişirebilir (manipülasyon riski). Analiz bulgusu: kurum karne
+metrikleri (uyum panosu + öğretmen karnesi) GÖREV-bazlı → elle bölüm girişi
+onları ŞİŞİRMEZ; şişen yüzeyler müfredat kapsama/projeksiyon/veli ders barları.
+**Strateji (onaylı):** yasak değil → izli + beyan-temelli + (Faz 3'te) deneme
+çapraz doğrulaması. Faz 2 = kurum raporu + audit + anomali sinyali; Faz 3 =
+deneme-konu tutarlılık rozeti (SIRADA).
+- **Migration `x8y1b4c5b77x`** (← w7x0a3b4a66w, additive): `self_study_entries`
+  (kim girdi [öğrenci beyanı/koç], bölüm, test_count, applied_count, dönem,
+  not, pending/approved/rejected, reviewed_by) + **`section_progress.manual_count`**
+  (completed'ın görev DIŞI kısmı; completed = görevle çözülen + manual).
+- **`self_study_service.py` (TEK MERKEZ):** uygulama kapasiteye KIRPILIR
+  (test−rezerv−çözülmüş; applied_count saklanır → silme birebir geri alır) ·
+  öğrenci beyanı pending (ilerlemeye dokunmaz) → koç onayla/reddet · koç toplu
+  girişi anında onaylı+izli · **AZALTMA yalnız manual kısımdan** (görevle
+  çözülen görev üzerinden düzeltilir — kurum metrik koruması) · eski mutlak
+  endpoint (`.../sections/{id}/completed`) aynı sözleşmeyle servise bağlandı:
+  artış=koç kaydı, azalış=manual'dan entry söndürme, aşım 422 exceeds_available,
+  görev kısmına inen azaltma 422 manual_reduce_exceeds.
+- **Router `api_v2/self_study.py`** (wrong_questions deseni, tek dosya): koç
+  GET/POST `/teacher/students/{id}/self-study` + `/teacher/self-study/{eid}/review`
+  + DELETE (geri alma) · öğrenci GET/POST `/student/self-study` + `/options`
+  (kitap→bölüm+kalan) + DELETE (yalnız pending geri çekme). Sahiplik dışı 404.
+  Push: beyan→koça (coach_student deep-link), onay/ret→öğrenciye (student/books;
+  mobil router'a `screen:"books"` eklendi). BackgroundTasks + taze session.
+- **Web:** paylaşılan `components/shared/self-study.tsx` (giriş dialogu: kitap
+  seç→bölüm başına sayı+Tümü→dönem+not · kayıt satırı+durum çipi) — koç
+  `student-books-panel` üstünde **"Bağımsız çalışma" kartı** (bekleyen beyan
+  onay/ret + toplu giriş + geçmiş kayıtlar/sil + bölüm satırında "(N bağımsız)"
+  rozeti; `StudentBookSectionProgressRow.manual_count`) · öğrenci `/student/books`
+  **"Bağımsız çalışma bildir"** paneli (`student/self-study-panel.tsx`).
+  lib: types/api/hooks (`selfStudyKeys`; invalidate `student:self-study` +
+  `teacher:{tid}:students:{sid}:self-study` + books).
+- **Mobil (JS-only → OTA):** `lib/self-study.ts` + `student/self-study-card.tsx`
+  (Kitaplarım ekranında beyan akışı: kitap→bölüm→sayı→not + bildirimlerim +
+  geri çekme; FormSheet). Koç onay/toplu girişi bilinçli web'de (PARITY.md).
+- **`scripts/backfill_manual_progress.py`** (idempotent): manual_count =
+  max(0, completed − görev kalemi toplamı) — eski elle girişleri işaretler;
+  formül entries sonrası da tutarlı. Prod'da deploy'da bir kez koşulur.
+- **Smoke `test_api_v2_self_study.py` 25/25** (koç toplu+kırpma+atlama · mutlak
+  endpoint artış/azalış/görev-koruması · beyan→onay/ret→uygulama · geri çekme ·
+  silme geri alma · sahiplik 404 · options · inventory yansıması). Regresyon:
+  baseline 7 · book_grid 17 · teacher_read 12 · student_read 11 · student_mut 12 ·
+  suggestions_curriculum 13 · curriculum_progress 22 · weekly_plan 14 · tenant 29
+  GREEN; web tsc+eslint temiz; mobil tsc temiz.
+
 ## YENİ İŞ — Deneme PDF içe aktarma (AI karne okuma) — Faz 1 backend+web BİTTİ (2026-07-16, migration `v6w9z2a3z55v`)
 
 **Bağlam:** Rakip analizinden #1+#6 birleşimi: yayınevi/okul deneme sonuç PDF'i
