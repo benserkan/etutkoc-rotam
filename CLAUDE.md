@@ -100,7 +100,11 @@ deneme-konu tutarlılık rozeti (SIRADA).
   phase2 17 · self_study 25 · curriculum_progress 22 · exam_topic_analysis 10 ·
   teacher_read 12 GREEN; web tsc+eslint + mobil tsc temiz.
   **Bağımsız çalışma stratejisinin 3 fazı da TAMAMLANDI** (izli kayıt →
-  görünürlük/anomali → deneme çaprazı).
+  görünürlük/anomali → deneme çaprazı). **Mobil OTA `c3939723` yayınlandı**
+  (2026-07-21, runtime 1.0.0, android+ios): self-study beyan akışı + müfredat
+  deneme rozeti + 19 Tem'den bekleyen JS (beyan çipleri, IAP guard'lı Paketim
+  yüzeyleri — native modülsüz eski kurulumda guard fallback gösterir; PDF
+  seçici + gerçek IAP yine EAS build 9 ister).
 
 ## YENİ İŞ — Deneme PDF içe aktarma (AI karne okuma) — Faz 1 backend+web BİTTİ (2026-07-16, migration `v6w9z2a3z55v`)
 
