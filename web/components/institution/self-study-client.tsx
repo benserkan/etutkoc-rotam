@@ -10,6 +10,7 @@ import {
 } from "@/lib/api/institution";
 import type {
   InstitutionSelfStudyReportResponse,
+  SelfStudyMismatchRow,
   SelfStudyReportCoachRow,
   SelfStudyReportEntryRow,
 } from "@/lib/types/institution";
@@ -137,11 +138,44 @@ export function InstitutionSelfStudyClient({
         />
         <Kpi
           label="Dikkat işareti"
-          value={s.attention_count}
-          hint={`${s.coaches_with_entries} koç giriş yaptı`}
-          tone={s.attention_count > 0 ? "rose" : undefined}
+          value={s.attention_count + s.mismatch_count}
+          hint={`${s.attention_count} beyansız yüklü giriş · ${s.mismatch_count} deneme çaprazı`}
+          tone={s.attention_count + s.mismatch_count > 0 ? "rose" : undefined}
         />
       </div>
+
+      {data.mismatches.length > 0 ? (
+        <section className="space-y-2">
+          <h2 className="font-display text-lg font-semibold tracking-tight flex items-center gap-2">
+            <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400" aria-hidden />
+            Deneme çaprazı — elle işlendi, denemeler doğrulamıyor
+          </h2>
+          <p className="text-xs text-muted-foreground max-w-3xl">
+            Bu konular ilerlemede büyük ölçüde <strong>elle/bağımsız girişle</strong>{" "}
+            &quot;çözülmüş&quot; görünüyor ama öğrencinin son denemelerinde aynı konuda
+            doğruluk düşük. Deneme sonuçları oynanamayan veridir — girişin gerçeği
+            yansıtıp yansıtmadığını koçla birlikte değerlendirin.
+          </p>
+          <div className="overflow-x-auto rounded-lg border border-amber-500/30">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-amber-500/10 text-left text-xs text-amber-900 dark:text-amber-200">
+                  <th className="px-3 py-2 font-medium">Öğrenci</th>
+                  <th className="px-3 py-2 font-medium">Koç</th>
+                  <th className="px-3 py-2 font-medium">Konu</th>
+                  <th className="px-3 py-2 font-medium text-right">İşlenmiş (elle)</th>
+                  <th className="px-3 py-2 font-medium text-right">Deneme doğruluğu</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {data.mismatches.map((m, i) => (
+                  <MismatchRow key={`${m.student_id}-${m.topic_name}-${i}`} row={m} />
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      ) : null}
 
       <section className="space-y-2">
         <h2 className="font-display text-lg font-semibold tracking-tight">
@@ -271,6 +305,31 @@ function CoachRow({ row: c }: { row: SelfStudyReportCoachRow }) {
       <td className="px-3 py-2 text-right tabular-nums">{c.student_count}</td>
       <td className="px-3 py-2 text-right tabular-nums">
         {c.pending_count > 0 ? c.pending_count : "—"}
+      </td>
+    </tr>
+  );
+}
+
+function MismatchRow({ row: m }: { row: SelfStudyMismatchRow }) {
+  return (
+    <tr>
+      <td className="px-3 py-2 font-medium">{m.student_name}</td>
+      <td className="px-3 py-2">{m.coach_name}</td>
+      <td className="px-3 py-2 max-w-[280px]">
+        <span className="block truncate" title={`${m.subject_name} · ${m.topic_name}`}>
+          {m.topic_name}
+          <span className="text-muted-foreground"> · {m.subject_name}</span>
+        </span>
+      </td>
+      <td className="px-3 py-2 text-right tabular-nums">
+        {m.completed} test
+        <span className="text-amber-700 dark:text-amber-300">
+          {" "}(%{m.manual_share_pct} elle)
+        </span>
+      </td>
+      <td className="px-3 py-2 text-right tabular-nums font-medium text-rose-700 dark:text-rose-300">
+        %{m.accuracy_pct}
+        <span className="font-normal text-muted-foreground"> · {m.answered} soru</span>
       </td>
     </tr>
   );

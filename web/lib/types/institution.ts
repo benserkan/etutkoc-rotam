@@ -892,6 +892,8 @@ export interface SelfStudyReportSummary {
   pending_total: number;
   coaches_with_entries: number;
   attention_count: number;
+  /** Faz 3 — deneme çaprazı: elle-ağırlıklı işlenmiş + denemede düşük doğruluk */
+  mismatch_count: number;
 }
 
 export interface SelfStudyReportCoachRow {
@@ -924,9 +926,23 @@ export interface SelfStudyReportEntryRow {
   note: string | null;
 }
 
+export interface SelfStudyMismatchRow {
+  student_id: number;
+  student_name: string;
+  coach_name: string;
+  subject_name: string;
+  topic_name: string;
+  completed: number;
+  manual: number;
+  manual_share_pct: number;
+  answered: number;
+  accuracy_pct: number;
+}
+
 export interface InstitutionSelfStudyReportResponse {
   days: number;
   summary: SelfStudyReportSummary;
   coaches: SelfStudyReportCoachRow[];
   recent: SelfStudyReportEntryRow[];
+  mismatches: SelfStudyMismatchRow[];
 }

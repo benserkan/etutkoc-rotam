@@ -226,6 +226,12 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
                     {t.has_resource && t.test_total > 0 ? (
                       <Text className="text-[11px] text-slate-400">{t.completed}/{t.test_total} test</Text>
                     ) : null}
+                    {t.exam_mismatch ? (
+                      <Text className="text-[11px] font-medium text-amber-700">
+                        deneme doğrulamıyor %{t.exam_accuracy_pct ?? 0}
+                        {t.exam_manual_heavy ? " · elle girişli" : ""}
+                      </Text>
+                    ) : null}
                   </View>
                   <Text className={cn("text-[10px] font-medium", meta.text)}>{meta.label}</Text>
                 </View>

@@ -857,6 +857,11 @@ export interface CurriculumTopicItem {
   pct: number;
   unit_name: string | null;
   grade_level: number | null;
+  /** Deneme çaprazı (Faz 3): işlenmiş görünen konuda denemeler düşük doğruluk */
+  exam_mismatch: boolean;
+  exam_accuracy_pct: number | null;
+  exam_answered: number | null;
+  exam_manual_heavy: boolean;
 }
 
 export interface CurriculumSubjectItem {

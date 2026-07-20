@@ -33,6 +33,8 @@ from app.models import (
 ATTENTION_MIN_TESTS = 200
 ATTENTION_DIRECT_SHARE = 0.8
 RECENT_LIMIT = 50
+MISMATCH_STUDENT_CAP = 100   # deneme çaprazı taranan öğrenci üst sınırı
+MISMATCH_ROW_LIMIT = 50
 
 
 def build_report(db: Session, institution_id: int, *, days: int = 30) -> dict:
@@ -145,6 +147,10 @@ def build_report(db: Session, institution_id: int, *, days: int = 30) -> dict:
         coach_rows.append(row)
     coach_rows.sort(key=lambda r: (-r["applied_tests"], r["coach_name"].lower()))
 
+    # --- Deneme çaprazı (Faz 3): elle-AĞIRLIKLI işlenmiş konu + denemede düşük
+    # doğruluk. Yalnız dönemde girişi olan öğrenciler taranır (bounded).
+    mismatches = _exam_mismatches(db, entries, coach_by_id)
+
     return {
         "days": days,
         "summary": {
@@ -155,10 +161,50 @@ def build_report(db: Session, institution_id: int, *, days: int = 30) -> dict:
             "pending_total": tot_pending,
             "coaches_with_entries": len(coach_rows),
             "attention_count": sum(1 for r in coach_rows if r["attention"]),
+            "mismatch_count": len(mismatches),
         },
         "coaches": coach_rows,
         "recent": recent,
+        "mismatches": mismatches,
     }
+
+
+def _exam_mismatches(db: Session, entries, coach_by_id: dict) -> list[dict]:
+    """Dönemde girişi olan öğrencilerde elle-ağırlıklı deneme tutarsızlıkları.
+
+    Pedagojik (görev-kaynaklı) tutarsızlık koç panelinde; buraya yalnız
+    manual_heavy satırlar girer — "elle işlendi ama denemeler doğrulamıyor"
+    denetim sinyali. Best-effort: hata raporu bloklamaz.
+    """
+    try:
+        from app.services.exam_consistency import curriculum_exam_mismatches
+
+        students: dict[int, tuple] = {}
+        for e, student in entries:
+            if student.id not in students:
+                students[student.id] = (student, coach_by_id.get(student.teacher_id or 0))
+        rows: list[dict] = []
+        for student, coach in list(students.values())[:MISMATCH_STUDENT_CAP]:
+            for f in curriculum_exam_mismatches(db, student.id):
+                if not f["manual_heavy"]:
+                    continue
+                rows.append({
+                    "student_id": student.id,
+                    "student_name": student.full_name,
+                    "coach_name": coach.full_name if coach else "—",
+                    "subject_name": f["subject_name"],
+                    "topic_name": f["topic_name"],
+                    "completed": f["completed"],
+                    "manual": f["manual"],
+                    "manual_share_pct": f["manual_share_pct"],
+                    "answered": f["answered"],
+                    "accuracy_pct": f["accuracy_pct"],
+                })
+                if len(rows) >= MISMATCH_ROW_LIMIT:
+                    return rows
+        return rows
+    except Exception:  # noqa: BLE001
+        return []
 
 
 def _empty(days: int) -> dict:
@@ -172,7 +218,9 @@ def _empty(days: int) -> dict:
             "pending_total": 0,
             "coaches_with_entries": 0,
             "attention_count": 0,
+            "mismatch_count": 0,
         },
         "coaches": [],
         "recent": [],
+        "mismatches": [],
     }

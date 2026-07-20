@@ -1149,11 +1149,23 @@ def teacher_student_curriculum_v2(
     db: Session = Depends(get_db),
 ):
     """Öğrencinin müfredat ilerlemesi — hibrit omurga (resmi konu sırası + durum +
-    tamamlama oranı + 'nerede'). Eşleşmemiş üniteler 'ekstra' grubunda. Sahiplik 404."""
+    tamamlama oranı + 'nerede'). Eşleşmemiş üniteler 'ekstra' grubunda. Sahiplik 404.
+    + Deneme çapraz doğrulaması (Faz 3): işlenmiş görünen konuda son denemeler
+    düşük doğruluk gösteriyorsa konu satırı işaretlenir (best-effort)."""
     from app.services import curriculum_progress as cp
 
     student = _get_owned_student(db, student_id, user.id)
     res = cp.compute_curriculum_progress(db, student, user.id)
+    try:
+        from app.services.exam_consistency import mismatch_map
+
+        mismatches = mismatch_map(db, student.id)
+    except Exception:  # noqa: BLE001 — rozet best-effort, panel bloklanmaz
+        mismatches = {}
+
+    def _mm(topic_id: int) -> dict:
+        return mismatches.get(topic_id) or {}
+
     return CurriculumProgressResponse(
         curriculum_model=res.curriculum_model,
         grade_level=res.grade_level,
@@ -1173,6 +1185,10 @@ def teacher_student_curriculum_v2(
                         has_resource=t.has_resource, test_total=t.test_total,
                         completed=t.completed, reserved=t.reserved, status=t.status, pct=t.pct,
                         unit_name=t.unit_name, grade_level=t.grade_level,
+                        exam_mismatch=bool(_mm(t.topic_id)),
+                        exam_accuracy_pct=_mm(t.topic_id).get("accuracy_pct"),
+                        exam_answered=_mm(t.topic_id).get("answered"),
+                        exam_manual_heavy=bool(_mm(t.topic_id).get("manual_heavy")),
                     )
                     for t in s.topics
                 ],

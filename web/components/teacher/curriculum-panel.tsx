@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  AlertTriangle,
   Loader2,
   ChevronDown,
   CheckCircle2,
@@ -260,6 +261,21 @@ function SubjectBlock({ subject: s }: { subject: CurriculumSubjectItem }) {
                     {t.has_resource && t.test_total > 0 ? (
                       <span className="ml-2 text-[11px] text-muted-foreground tabular-nums">
                         {t.completed}/{t.test_total} test
+                      </span>
+                    ) : null}
+                    {t.exam_mismatch ? (
+                      <span
+                        className="ml-2 inline-flex items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-800 dark:text-amber-200"
+                        title={
+                          `Kitapta işlenmiş görünüyor ama son denemelerde bu konuda doğruluk %${t.exam_accuracy_pct ?? 0} ` +
+                          `(${t.exam_answered ?? 0} cevaplanmış soru).` +
+                          (t.exam_manual_heavy
+                            ? " İşlenmişin çoğu elle/bağımsız girişten — girişi ve konuyu birlikte gözden geçir."
+                            : " Konu tekrar/pekiştirme istiyor olabilir.")
+                        }
+                      >
+                        <AlertTriangle className="size-3" aria-hidden />
+                        deneme doğrulamıyor %{t.exam_accuracy_pct ?? 0}
                       </span>
                     ) : null}
                   </span>

@@ -827,6 +827,12 @@ class CurriculumTopicItem(BaseModel):
     pct: int
     unit_name: str | None = None     # ait olduğu tema/ünite (Maarif) — UI gruplama
     grade_level: int | None = None   # konunun sınıfı — UI sınıf başlığı
+    # Deneme çapraz doğrulaması (self-study Faz 3): işlenmiş görünen konuda
+    # son denemeler düşük doğruluk gösteriyorsa True + detaylar
+    exam_mismatch: bool = False
+    exam_accuracy_pct: int | None = None   # cevaplananlarda doğruluk % (boş hariç)
+    exam_answered: int | None = None       # son 90g cevaplanmış soru sayısı
+    exam_manual_heavy: bool = False        # işlenmişin çoğu elle/bağımsız girişten
 
 
 class CurriculumSubjectItem(BaseModel):

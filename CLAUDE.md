@@ -74,9 +74,33 @@ deneme-konu tutarlılık rozeti (SIRADA).
   (5 audit op + rapor kırılım/dikkat/izolasyon/gün-filtresi + endpoint +
   dedektör eşik/kapsam/info/dedup). Regresyon: alarms_abuse 21 · self_study 25 ·
   institution 18 · multi_account 4 · audit_kvkk 18 · teacher_read 12 · tenant 29
-  GREEN. **SIRADA — Faz 3:** deneme-konu çapraz doğrulama rozeti ("çözüldü
-  işaretli konu ↔ denemede düşük doğruluk" tutarsızlık sinyali;
-  exam_topic_analysis verisi hazır).
+  GREEN.
+- **FAZ 3 — deneme çapraz doğrulaması CANLI (2026-07-21, migration YOK):**
+  `app/services/exam_consistency.py` — "çözüldü işaretli konu ↔ denemede düşük
+  doğruluk" tutarsızlığı. `topic_exam_stats` (son 90g exam_result_questions,
+  **boş SAYILMAZ** — exam_weak_topic_map/Elif ilkesi) + `topic_progress_agg`
+  (konu-eşli bölümlerin completed/manual/total agregasyonu, SectionProgress'siz
+  bölümler total'e girer) + `curriculum_exam_mismatches` (eşikler: işlenmiş ≥5
+  test VE ≥%50 kapasite · cevaplanmış ≥3 soru · doğruluk <%40; manual_heavy =
+  elle payı ≥%50). İki yüzey: (a) **koç müfredat paneli** — `/teacher/students/
+  {id}/curriculum` topic satırlarına best-effort `exam_mismatch/accuracy_pct/
+  answered/manual_heavy` (additive; try/except panel bloklanmaz) → web
+  curriculum-panel amber "deneme doğrulamıyor %X" rozeti (tooltip elle/pedagojik
+  ayrımı) + mobil koç curriculum-tab satır notu (JS-only, sonraki OTA);
+  PEDAGOJİK değer: görev-kaynaklı "çözmüş ama öğrenememiş" de işaretlenir.
+  (b) **kurum raporu** — build_report'a `mismatches` (YALNIZ manual_heavy —
+  "elle işlendi ama denemeler doğrulamıyor" denetim tablosu; dönemde girişi
+  olan öğrenciler taranır, 100 öğrenci/50 satır cap, best-effort) +
+  summary.mismatch_count; self-study-client'a amber tablo + KPI birleşimi.
+  Deneme verisi manipüle edilemediğinden bu katman elle girişi DE görev
+  işaretlemeyi DE yakalar — stratejinin en güçlü halkası. Smoke
+  `test_api_v2_self_study_phase3.py` **13/13** (boş hariç istatistik + 4 konu
+  senaryosu [elle-tutarsız/görev-tutarsız/iyi/az-işlenmiş] + min-soru + 90g
+  pencere + müfredat rozet alanları + rapor yalnız-elle filtresi). Regresyon:
+  phase2 17 · self_study 25 · curriculum_progress 22 · exam_topic_analysis 10 ·
+  teacher_read 12 GREEN; web tsc+eslint + mobil tsc temiz.
+  **Bağımsız çalışma stratejisinin 3 fazı da TAMAMLANDI** (izli kayıt →
+  görünürlük/anomali → deneme çaprazı).
 
 ## YENİ İŞ — Deneme PDF içe aktarma (AI karne okuma) — Faz 1 backend+web BİTTİ (2026-07-16, migration `v6w9z2a3z55v`)
 

@@ -2492,6 +2492,7 @@ def institution_self_study_report_v2(
     """
     from app.routes.api_v2.schemas.institution import (
         InstitutionSelfStudyReportResponse,
+        SelfStudyMismatchRow,
         SelfStudyReportCoachRow,
         SelfStudyReportEntryRow,
         SelfStudyReportSummary,
@@ -2505,4 +2506,5 @@ def institution_self_study_report_v2(
         summary=SelfStudyReportSummary(**d["summary"]),
         coaches=[SelfStudyReportCoachRow(**c) for c in d["coaches"]],
         recent=[SelfStudyReportEntryRow(**r) for r in d["recent"]],
+        mismatches=[SelfStudyMismatchRow(**m) for m in d.get("mismatches", [])],
     )

@@ -948,6 +948,8 @@ class SelfStudyReportSummary(BaseModel):
     pending_total: int
     coaches_with_entries: int
     attention_count: int
+    # Faz 3 — deneme çaprazı: elle-ağırlıklı işlenmiş + denemede düşük doğruluk
+    mismatch_count: int = 0
 
 
 class SelfStudyReportCoachRow(BaseModel):
@@ -980,8 +982,23 @@ class SelfStudyReportEntryRow(BaseModel):
     note: str | None
 
 
+class SelfStudyMismatchRow(BaseModel):
+    """Deneme çaprazı satırı — elle işlenmiş görünen konu, denemede düşük doğruluk."""
+    student_id: int
+    student_name: str
+    coach_name: str
+    subject_name: str
+    topic_name: str
+    completed: int
+    manual: int
+    manual_share_pct: int
+    answered: int
+    accuracy_pct: int
+
+
 class InstitutionSelfStudyReportResponse(BaseModel):
     days: int
     summary: SelfStudyReportSummary
     coaches: list[SelfStudyReportCoachRow]
     recent: list[SelfStudyReportEntryRow]
+    mismatches: list[SelfStudyMismatchRow] = []
