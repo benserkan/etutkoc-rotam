@@ -27,6 +27,7 @@ import {
   MessageSquare,
   ScrollText,
   Target,
+  TentTree,
   UserCog,
   Users,
   Wallet,
@@ -119,6 +120,11 @@ const NAV_SECTIONS: NavSection[] = [
         href: "/institution/academic",
         label: "Akademik Çıktı",
         icon: LineChart,
+      },
+      {
+        href: "/institution/self-study",
+        label: "Bağımsız Çalışma",
+        icon: TentTree,
       },
       {
         href: "/institution/at-risk",

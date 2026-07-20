@@ -81,6 +81,7 @@ ABUSE_KIND_LABELS_TR: dict[str, str] = {
     "multi_account_same_device": "Tek cihazdan çoklu hesap",
     "unsubscribe_spike": "Toplu sessizleştirme/çıkış",
     "signup_velocity": "Aynı ağdan çoklu koç kaydı",
+    "manual_progress_surge": "Yoğun elle ilerleme girişi (kurum koçu)",
 }
 
 ABUSE_KIND_DESCRIPTIONS_TR: dict[str, str] = {
@@ -104,6 +105,13 @@ ABUSE_KIND_DESCRIPTIONS_TR: dict[str, str] = {
         "limitini çoklu hesapla aşma (çiftlik) girişimi olabilir. Hesapları "
         "inceleyin; mass farming durumunda pasifleştirin."
     ),
+    "manual_progress_surge": (
+        "Kuruma bağlı bir koç son 7 günde olağan dışı hacimde, öğrenci beyanı "
+        "OLMADAN elle ilerleme girişi yaptı. Tatil dönüşü toplu güncelleme "
+        "meşru olabilir; sınıfı iyi gösterme amaçlı şişirme de olabilir. Kurum "
+        "yöneticisinin 'Bağımsız Çalışma' raporundan girişler incelenebilir — "
+        "kurum uyum/karne metrikleri bu girişlerden ETKİLENMEZ (görev-bazlı)."
+    ),
 }
 
 SEVERITY_LABELS_TR: dict[str, str] = {
@@ -125,6 +133,9 @@ THRESHOLD_MASS_NOTIFICATION_PER_HOUR = 200
 THRESHOLD_MULTI_ACCOUNT_DISTINCT_USERS = 3  # 3 hesap/cihaz çiftliği yakalanır;
 # yanlış-pozitif (impersonation + süper admin) dedektörde imp_by/role ile dışlanır
 THRESHOLD_UNSUBSCRIBE_SPIKE_PER_DAY = 10
+# Kurum koçunun 7 günde ÖĞRENCİ BEYANSIZ elle işlediği test eşiği (info sinyal;
+# alarm e-postası tetiklemez — görünürlük amaçlı, tatil dönüşü meşru olabilir)
+THRESHOLD_MANUAL_PROGRESS_TESTS_PER_WEEK = 500
 
 # Dedup penceresi: aynı sinyal 24 saat içinde tekrarsa upsert
 DEDUP_WINDOW_HOURS = 24
@@ -137,6 +148,7 @@ __all__ = [
     "DEDUP_WINDOW_HOURS",
     "SEVERITY_BADGE_COLOR",
     "SEVERITY_LABELS_TR",
+    "THRESHOLD_MANUAL_PROGRESS_TESTS_PER_WEEK",
     "THRESHOLD_MASS_INVITATION_PER_HOUR",
     "THRESHOLD_MASS_NOTIFICATION_PER_HOUR",
     "THRESHOLD_MULTI_ACCOUNT_DISTINCT_USERS",

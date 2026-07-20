@@ -24,7 +24,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Iterable
 
 from sqlalchemy import and_, desc, func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.models import (
     ABUSE_DEDUP_WINDOW_HOURS,
@@ -36,6 +36,7 @@ from app.models import (
     Institution,
     NotificationLog,
     ParentInvitation,
+    THRESHOLD_MANUAL_PROGRESS_TESTS_PER_WEEK,
     THRESHOLD_MASS_INVITATION_PER_HOUR,
     THRESHOLD_MASS_NOTIFICATION_PER_HOUR,
     THRESHOLD_MULTI_ACCOUNT_DISTINCT_USERS,
@@ -53,6 +54,7 @@ KIND_MASS_NOTIFICATION = "mass_notification"
 KIND_MULTI_ACCOUNT = "multi_account_same_device"
 KIND_UNSUBSCRIBE_SPIKE = "unsubscribe_spike"
 KIND_SIGNUP_VELOCITY = "signup_velocity"
+KIND_MANUAL_PROGRESS_SURGE = "manual_progress_surge"
 
 
 def _now() -> datetime:
@@ -359,6 +361,70 @@ def detect_signup_velocity(
     return hits
 
 
+def detect_manual_progress_surge(
+    db: Session, *, window_days: int = 7, threshold: int | None = None
+) -> list[DetectionHit]:
+    """Kurum koçu son window_days içinde öğrenci BEYANSIZ (source=coach) elle
+    ilerleme girişiyle threshold+ test işledi mi?
+
+    Bağımsız çalışma kayıtları (self_study_entries) izlidir; bu dedektör
+    yalnız KURUMA BAĞLI koçları tarar (bağımsız koçun kendi verisini şişirmesi
+    kimseyi yanıltmaz — sinyal gürültüsü olur). Severity DAİMA info: tatil
+    dönüşü toplu güncelleme meşru olabilir; amaç engelleme değil görünürlük
+    (alarm e-postası tetiklemez, panelde görünür).
+    """
+    from app.models import SS_SOURCE_COACH, SS_STATUS_APPROVED, SelfStudyEntry
+
+    threshold = threshold or THRESHOLD_MANUAL_PROGRESS_TESTS_PER_WEEK
+    now = _now()
+    cutoff = now - timedelta(days=window_days)
+    StudentUser = aliased(User)
+    rows = (
+        db.query(
+            User.id.label("coach_id"),
+            User.full_name.label("coach_name"),
+            User.institution_id.label("inst_id"),
+            func.coalesce(func.sum(SelfStudyEntry.applied_count), 0).label("tests"),
+            func.count(SelfStudyEntry.id).label("entries"),
+            func.count(func.distinct(SelfStudyEntry.student_id)).label("students"),
+        )
+        .select_from(SelfStudyEntry)
+        .join(StudentUser, StudentUser.id == SelfStudyEntry.student_id)
+        .join(User, User.id == StudentUser.teacher_id)
+        .filter(
+            SelfStudyEntry.source == SS_SOURCE_COACH,
+            SelfStudyEntry.status == SS_STATUS_APPROVED,
+            SelfStudyEntry.created_at >= cutoff,
+            User.institution_id.isnot(None),
+        )
+        .group_by(User.id, User.full_name, User.institution_id)
+        .having(func.coalesce(func.sum(SelfStudyEntry.applied_count), 0) >= threshold)
+        .all()
+    )
+    hits: list[DetectionHit] = []
+    for r in rows:
+        hits.append(
+            DetectionHit(
+                kind=KIND_MANUAL_PROGRESS_SURGE,
+                actor_user_id=int(r.coach_id),
+                tenant_id=int(r.inst_id) if r.inst_id else None,
+                count=int(r.tests),
+                window_start=cutoff,
+                window_end=now,
+                details={
+                    "coach_name": r.coach_name,
+                    "applied_tests": int(r.tests),
+                    "entries": int(r.entries),
+                    "students": int(r.students),
+                    "threshold": threshold,
+                    "window_days": window_days,
+                },
+                severity="info",
+            )
+        )
+    return hits
+
+
 # ---------------------------- Run-all + listing ----------------------------
 
 
@@ -373,6 +439,7 @@ def run_all(db: Session) -> dict:
         detect_multi_account_same_device,
         detect_unsubscribe_spike,
         detect_signup_velocity,
+        detect_manual_progress_surge,
     ):
         try:
             hits = fn(db)

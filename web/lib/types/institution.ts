@@ -879,3 +879,54 @@ export interface InstitutionBadgesResponse {
   support_answered: number;
   checked_at: string;
 }
+
+// =============================================================================
+// Bağımsız çalışma girişleri raporu (self-study, Faz 2 görünürlük)
+// =============================================================================
+
+export interface SelfStudyReportSummary {
+  entries_total: number;
+  applied_tests_total: number;
+  coach_direct_tests: number;
+  student_declared_tests: number;
+  pending_total: number;
+  coaches_with_entries: number;
+  attention_count: number;
+}
+
+export interface SelfStudyReportCoachRow {
+  coach_id: number;
+  coach_name: string;
+  entries: number;
+  applied_tests: number;
+  coach_direct_entries: number;
+  coach_direct_tests: number;
+  student_declared_entries: number;
+  student_declared_tests: number;
+  pending_count: number;
+  rejected_count: number;
+  student_count: number;
+  coach_direct_share_pct: number;
+  attention: boolean;
+}
+
+export interface SelfStudyReportEntryRow {
+  id: number;
+  created_at: string;
+  coach_name: string;
+  student_name: string;
+  book_name: string;
+  section_label: string;
+  test_count: number;
+  applied_count: number;
+  source: "student" | "coach";
+  status: "pending" | "approved" | "rejected";
+  note: string | null;
+}
+
+export interface InstitutionSelfStudyReportResponse {
+  days: number;
+  summary: SelfStudyReportSummary;
+  coaches: SelfStudyReportCoachRow[];
+  recent: SelfStudyReportEntryRow[];
+}

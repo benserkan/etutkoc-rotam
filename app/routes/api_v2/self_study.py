@@ -11,12 +11,13 @@ Sahiplik dışı her şey 404 (varlık sızıntısı yok). Veli erişemez.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import SessionLocal
 from app.deps import get_db
 from app.models import (
+    AuditAction,
     SS_SOURCE_COACH,
     SS_SOURCE_LABELS_TR,
     SS_SOURCE_STUDENT,
@@ -46,6 +47,7 @@ from app.routes.api_v2.schemas.self_study import (
     SelfStudySkippedItem,
 )
 from app.services import self_study_service as svc
+from app.services.audit import log_action
 
 router = APIRouter(tags=["v2-self-study"])
 
@@ -243,8 +245,9 @@ def teacher_self_study_create_v2(
     body: SelfStudyCreateBody,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
+    request: Request = None,
 ):
-    """Koç toplu girişi — anında onaylı + ilerlemeye uygulanır (izli)."""
+    """Koç toplu girişi — anında onaylı + ilerlemeye uygulanır (izli + audit)."""
     student = _get_owned_student(db, user, student_id)
     items = _resolve_items(db, student, body)
     try:
@@ -260,6 +263,28 @@ def teacher_self_study_create_v2(
         )
     except svc.SelfStudyError as e:
         raise _svc_error(e)
+    log_action(
+        db,
+        action=AuditAction.SELF_STUDY_UPDATE,
+        actor_id=user.id,
+        target_type="user",
+        target_id=student.id,
+        request=request,
+        details={
+            "op": "coach_create",
+            "entries": len(created),
+            "applied_total": sum(e.applied_count for e in created),
+            "skipped": len(skipped),
+            "sections": [
+                {"section_id": e.book_section_id, "applied": e.applied_count}
+                for e in created
+            ][:30],
+            "note": body.note,
+            "period_start": str(body.period_start) if body.period_start else None,
+            "period_end": str(body.period_end) if body.period_end else None,
+        },
+        autocommit=False,
+    )
     db.commit()
     for e in created:
         db.refresh(e)
@@ -279,6 +304,7 @@ def teacher_self_study_review_v2(
     background: BackgroundTasks,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
+    request: Request = None,
 ):
     """Bekleyen öğrenci beyanını onayla (ilerlemeye uygula) / reddet."""
     entry = _get_entry_for_coach(db, user, entry_id)
@@ -292,6 +318,22 @@ def teacher_self_study_review_v2(
     except svc.SelfStudyError as e:
         raise _svc_error(e)
     student = entry.student
+    log_action(
+        db,
+        action=AuditAction.SELF_STUDY_UPDATE,
+        actor_id=user.id,
+        target_type="user",
+        target_id=student.id,
+        request=request,
+        details={
+            "op": "approve" if body.approve else "reject",
+            "entry_id": entry.id,
+            "section_id": entry.book_section_id,
+            "test_count": entry.test_count,
+            "applied": entry.applied_count,
+        },
+        autocommit=False,
+    )
     db.commit()
     db.refresh(entry)
     verdict = "onayladı" if entry.status == SS_STATUS_APPROVED else "reddetti"
@@ -317,11 +359,31 @@ def teacher_self_study_delete_v2(
     entry_id: int,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
+    request: Request = None,
 ):
-    """Kaydı sil — uygulanmışsa ilerlemeden birebir geri alınır."""
+    """Kaydı sil — uygulanmışsa ilerlemeden birebir geri alınır (audit izli)."""
     entry = _get_entry_for_coach(db, user, entry_id)
     student_id = entry.student_id
+    details = {
+        "op": "delete",
+        "entry_id": entry.id,
+        "section_id": entry.book_section_id,
+        "source": entry.source,
+        "status": entry.status,
+        "test_count": entry.test_count,
+    }
     reverted = svc.delete_entry(db, entry)
+    details["reverted"] = reverted
+    log_action(
+        db,
+        action=AuditAction.SELF_STUDY_UPDATE,
+        actor_id=user.id,
+        target_type="user",
+        target_id=student_id,
+        request=request,
+        details=details,
+        autocommit=False,
+    )
     db.commit()
     return MutationResponse[SelfStudyDeleteResult](
         data=SelfStudyDeleteResult(deleted_id=entry_id, reverted_count=reverted),

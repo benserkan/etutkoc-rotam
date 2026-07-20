@@ -21,6 +21,7 @@ import type {
   TeacherScorecardResponse,
   ParentTrustResponse,
   ParentTrustNotificationListResponse,
+  InstitutionSelfStudyReportResponse,
   ActivityStreamResponse,
   InstitutionAcademicResponse,
   CohortTab,
@@ -75,6 +76,8 @@ export const institutionKeys = {
     ["institution", "me", "teacher-scorecard", String(weeks)] as const,
   parentTrust: (days: number) =>
     ["institution", "me", "parent-trust", String(days)] as const,
+  selfStudyReport: (days: number) =>
+    ["institution", "me", "self-study-report", String(days)] as const,
   parentTrustNotifications: (days: number, status: string | null) =>
     ["institution", "me", "parent-trust", "notifications", String(days), status ?? "all"] as const,
   activityStream: (days: number, type: string | null) =>
@@ -189,6 +192,12 @@ export function getInstitutionTeacherScorecard(weeks = 4) {
 export function getInstitutionParentTrust(days = 30) {
   return api<ParentTrustResponse>(
     `/api/v2/institution/parent-trust?days=${days}`,
+  );
+}
+
+export function getInstitutionSelfStudyReport(days = 30) {
+  return api<InstitutionSelfStudyReportResponse>(
+    `/api/v2/institution/self-study-report?days=${days}`,
   );
 }
 

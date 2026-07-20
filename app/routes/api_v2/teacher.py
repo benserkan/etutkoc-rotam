@@ -62,7 +62,7 @@ import string as _string_mod
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
@@ -5824,6 +5824,7 @@ def teacher_set_section_completed_v2(
     body: SectionCompletedBaselineBody,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
+    request: Request = None,
 ):
     """Bir bölümü 'öğrenci zaten çözmüş' olarak işaretle (geçmiş yıl baseline).
 
@@ -5857,6 +5858,14 @@ def teacher_set_section_completed_v2(
             detail={"error": "not_found", "code": "section_not_found",
                     "message": "Bölüm bu kitaba ait değil."},
         )
+    prev_completed = None
+    sp_row = (
+        db.query(SectionProgress)
+        .filter(SectionProgress.student_book_id == sb.id,
+                SectionProgress.book_section_id == section_id)
+        .first()
+    )
+    prev_completed = int(sp_row.completed_count) if sp_row else 0
     try:
         ss_svc.set_absolute_completed(
             db, student=student, sb=sb, section=section,
@@ -5866,6 +5875,25 @@ def teacher_set_section_completed_v2(
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={"error": "validation", "code": e.code, "message": e.message},
+        )
+    if body.completed_count != prev_completed:
+        from app.models import AuditAction
+        from app.services.audit import log_action
+
+        log_action(
+            db,
+            action=AuditAction.SELF_STUDY_UPDATE,
+            actor_id=user.id,
+            target_type="user",
+            target_id=student.id,
+            request=request,
+            details={
+                "op": "absolute_set",
+                "section_id": section_id,
+                "from": prev_completed,
+                "to": body.completed_count,
+            },
+            autocommit=False,
         )
     db.commit()
     db.refresh(sb)

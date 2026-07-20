@@ -2475,3 +2475,34 @@ def institution_academic_v2(
         declining=[AcademicMoverRow(**m) for m in d["declining"]],
         no_exam_program=[AcademicNoExamRow(**n) for n in d["no_exam_program"]],
     )
+
+
+@router.get("/self-study-report")
+def institution_self_study_report_v2(
+    days: int = Query(30, ge=7, le=120),
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Bağımsız Çalışma Girişleri raporu (Faz 2 görünürlük).
+
+    Kurum koçlarının elle/bağımsız ilerleme girişleri: kim, ne kadar, öğrenci
+    beyanıyla mı / koç tek taraflı mı + dikkat işareti (beyansız yüklü giriş).
+    Kurum uyum/karne metrikleri GÖREV-bazlıdır — bu girişlerden ETKİLENMEZ;
+    rapor müfredat/veli görünümünü etkileyen elle girişlerin denetim yüzeyidir.
+    """
+    from app.routes.api_v2.schemas.institution import (
+        InstitutionSelfStudyReportResponse,
+        SelfStudyReportCoachRow,
+        SelfStudyReportEntryRow,
+        SelfStudyReportSummary,
+    )
+    from app.services.institution_self_study import build_report
+
+    inst = _get_institution_or_403(db, user.institution_id)
+    d = build_report(db, inst.id, days=days)
+    return InstitutionSelfStudyReportResponse(
+        days=d["days"],
+        summary=SelfStudyReportSummary(**d["summary"]),
+        coaches=[SelfStudyReportCoachRow(**c) for c in d["coaches"]],
+        recent=[SelfStudyReportEntryRow(**r) for r in d["recent"]],
+    )

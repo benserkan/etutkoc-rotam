@@ -54,6 +54,29 @@ deneme-konu tutarlılık rozeti (SIRADA).
   baseline 7 · book_grid 17 · teacher_read 12 · student_read 11 · student_mut 12 ·
   suggestions_curriculum 13 · curriculum_progress 22 · weekly_plan 14 · tenant 29
   GREEN; web tsc+eslint temiz; mobil tsc temiz.
+- **FAZ 2 — kurum güvencesi CANLI (2026-07-20, migration `y9z2c5d6c88y`):**
+  (a) **Audit izi:** yeni `AuditAction.SELF_STUDY_UPDATE` (PG `ALTER TYPE
+  auditaction ADD VALUE` — [[feedback-postgres-enum-new-member-migration]]);
+  koç girişi/onay/ret/silme/mutlak-set `log_action` ile audit'lenir (op +
+  applied/from-to/reverted detayları; autocommit=False aynı tx). (b) **Kurum
+  raporu:** `institution_self_study.build_report` (koç kırılımı: işlenen test +
+  beyanlı/tek-taraflı + pay% + **dikkat işareti** [≥200 test VE ≥%80 beyansız —
+  advisory, suçlama değil] + son 50 giriş + gün filtresi 7-120) → GET
+  `/institution/self-study-report` → web `/institution/self-study`
+  (`self-study-client.tsx`; sidebar Analiz → "Bağımsız Çalışma", TentTree;
+  bilgi bandı: "uyum/karne metrikleri görev-bazlı — bu girişlerden etkilenmez").
+  (c) **Anomali dedektörü:** `detect_manual_progress_surge` (`abuse_detection`
+  run_all'a bağlı; kurum koçu 7 günde beyansız ≥500 test [THRESHOLD_MANUAL_
+  PROGRESS_TESTS_PER_WEEK] → severity DAİMA info = alarm e-postası tetiklemez,
+  Güvenlik Kamarası panelinde görünür; bağımsız koç BİLİNÇLİ hariç — kendi
+  verisini şişirmesi kimseyi yanıltmaz). Abuse admin UI meta-güdümlü → frontend
+  değişikliği gerekmedi. Smoke `test_api_v2_self_study_phase2.py` **17/17**
+  (5 audit op + rapor kırılım/dikkat/izolasyon/gün-filtresi + endpoint +
+  dedektör eşik/kapsam/info/dedup). Regresyon: alarms_abuse 21 · self_study 25 ·
+  institution 18 · multi_account 4 · audit_kvkk 18 · teacher_read 12 · tenant 29
+  GREEN. **SIRADA — Faz 3:** deneme-konu çapraz doğrulama rozeti ("çözüldü
+  işaretli konu ↔ denemede düşük doğruluk" tutarsızlık sinyali;
+  exam_topic_analysis verisi hazır).
 
 ## YENİ İŞ — Deneme PDF içe aktarma (AI karne okuma) — Faz 1 backend+web BİTTİ (2026-07-16, migration `v6w9z2a3z55v`)
 

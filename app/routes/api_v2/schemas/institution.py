@@ -933,3 +933,55 @@ class CoachInterventionItem(BaseModel):
 
 class CoachInterventionsResponse(BaseModel):
     items: list[CoachInterventionItem]
+
+
+# =============================================================================
+# Bağımsız çalışma girişleri raporu (self-study, Faz 2 görünürlük)
+# =============================================================================
+
+
+class SelfStudyReportSummary(BaseModel):
+    entries_total: int
+    applied_tests_total: int
+    coach_direct_tests: int
+    student_declared_tests: int
+    pending_total: int
+    coaches_with_entries: int
+    attention_count: int
+
+
+class SelfStudyReportCoachRow(BaseModel):
+    coach_id: int
+    coach_name: str
+    entries: int
+    applied_tests: int
+    coach_direct_entries: int
+    coach_direct_tests: int
+    student_declared_entries: int
+    student_declared_tests: int
+    pending_count: int
+    rejected_count: int
+    student_count: int
+    coach_direct_share_pct: int
+    attention: bool
+
+
+class SelfStudyReportEntryRow(BaseModel):
+    id: int
+    created_at: str
+    coach_name: str
+    student_name: str
+    book_name: str
+    section_label: str
+    test_count: int
+    applied_count: int
+    source: str          # student | coach
+    status: str          # pending | approved | rejected
+    note: str | None
+
+
+class InstitutionSelfStudyReportResponse(BaseModel):
+    days: int
+    summary: SelfStudyReportSummary
+    coaches: list[SelfStudyReportCoachRow]
+    recent: list[SelfStudyReportEntryRow]
