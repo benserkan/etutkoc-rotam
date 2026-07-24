@@ -205,6 +205,14 @@
         # Jinja offers_public.py dead-code halinde yayında bekliyor.
         reverse_proxy /offers/* next:3000
 
+        # ---------- Ödeme sayfaları (iyzico) — AÇIK (2026-07-24, EKSİKTİ!) ----------
+        # /payment/result?tx=N (3DS sonrası kullanıcının indiği sonuç sayfası) +
+        # /payment/link/[token] (admin ödeme linki). Bu satırlar yokken müşteri
+        # ödeme SONRASI 404'e düşüyordu (callback API'si /api/v2'de çalışıyordu
+        # ama sonuç sayfası FastAPI'ye düşüp 404 veriyordu — Mayıs testleri
+        # localhost:3000'de olduğu için hiç görünmedi).
+        reverse_proxy /payment/* next:3000
+
         # ---------- WhatsApp Üyelik Teklifi (public) — AÇIK (2026-06-04) ----------
         # /membership/[token] (login'siz markalı üyelik teklifi → talep / havale
         # bildirimi). POST'lar /api/v2/membership/{token}(/request|/havale-claim)
