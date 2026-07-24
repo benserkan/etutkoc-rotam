@@ -516,11 +516,21 @@ export interface BackupStatusInfo {
   health: "ok" | "warn" | "crit";
 }
 
+export interface PaymentStatusInfo {
+  provider_available: boolean;
+  sandbox: boolean;
+  succeeded_24h: number;
+  failed_24h: number;
+  stuck_24h: number; // 30dk+ yarım kalmış 3DS/pending
+  health: "ok" | "warn" | "crit";
+}
+
 export interface SystemHealthResponse {
   crons: CronStatusItem[];
   dispatcher: DispatcherStatusInfo | null;
   database: DatabaseStatusInfo | null;
   backup: BackupStatusInfo | null;
+  payment: PaymentStatusInfo | null;
   overall_health: "ok" | "warn" | "crit";
 }
 

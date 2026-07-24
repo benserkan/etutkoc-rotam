@@ -15,6 +15,9 @@ import type { TrialStatusResponse } from "@/lib/types/teacher";
  * ödeme duvarı. Diğer zamanlarda bant gösterilmez (gürültü olmasın).
  *  - paywall (ücretsiz + limit aşıldı): kırmızı, KAPATILAMAZ → yükselt/arşivle.
  *  - trial_critical (≤3 gün): amber, kapatılabilir geri-sayım.
+ *  - payment_pending (deneme bitti + signup'ta ücretli paket seçilmişti +
+ *    henüz ödenmedi): amber "ödemeni tamamla" hatırlatması — günlük
+ *    kapatılabilir, ertesi gün yeniden görünür (Google tarzı ödeme daveti).
  */
 export function TrialBanner({ enabled }: { enabled: boolean }) {
   const q = useQuery<TrialStatusResponse>({
@@ -39,6 +42,18 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
     // dismissTick: kapatınca yeniden hesapla
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dismissKey, dismissTick]);
+
+  // "Ödemen bekleniyor" bandı için gün-bazlı kapatma anahtarı.
+  const payDismissKey = `trialbanner_paypend_${new Date().toISOString().slice(0, 10)}`;
+  const payDismissed = React.useMemo(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem(payDismissKey) === "1";
+    } catch {
+      return false;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [payDismissKey, dismissTick]);
 
   if (!data || !data.is_solo) return null;
 
@@ -121,6 +136,43 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
             onClick={() => {
               try {
                 window.localStorage.setItem(dismissKey, "1");
+              } catch {
+                /* yoksay */
+              }
+              setDismissTick((t) => t + 1);
+            }}
+            className="shrink-0 rounded p-1 text-amber-700 transition hover:bg-amber-100"
+          >
+            <X className="size-4" aria-hidden />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // 3) Deneme bitti + seçilen paket ödenmedi (kapatılabilir, her gün döner)
+  if (data.payment_pending && !payDismissed) {
+    return (
+      <div className="border-b border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30">
+        <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
+          <Clock className="size-4 shrink-0 text-amber-600" aria-hidden />
+          <p className="flex-1 text-sm text-amber-900">
+            <strong>Denemen bitti — ödemen bekleniyor.</strong>{" "}
+            {data.intended_plan_label ?? "Seçtiğin paket"} ile kaldığın yerden
+            devam etmek için ödemeni tamamla; öğrencilerin ve verilerin duruyor.
+          </p>
+          <Link
+            href="/teacher/plan"
+            className="inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-950 transition hover:bg-amber-400"
+          >
+            Ödemeyi tamamla
+          </Link>
+          <button
+            type="button"
+            aria-label="Kapat"
+            onClick={() => {
+              try {
+                window.localStorage.setItem(payDismissKey, "1");
               } catch {
                 /* yoksay */
               }

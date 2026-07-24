@@ -15,7 +15,8 @@ Add-on'lar plan'ın üzerine eklenir, planı değiştirmez.
 
 Servis fonksiyonları:
 - start_trial(user_or_institution): trial_ends_at set + post_trial_plan set
-- expire_trials() cron: süresi dolmuş trial'ları post_trial_plan'a düşürür
+- expire_trials() cron: süresi dolmuş trial'ları ücretsiz kata düşürür
+  (post_trial_plan yalnız ödeme ekranı ön-seçimi — plana asla yazılmaz)
 - change_plan(...): manuel veya otomatik plan değişikliği + audit log
 """
 
@@ -521,8 +522,9 @@ def start_solo_trial(
 
     plan='solo_trial' set edilir, trial_ends_at=now+14d.
     post_trial_plan: intended_plan geçerli bir ücretli tier ise oraya;
-    aksi halde 'solo_free'. Trial bitince /teacher/plan'da bu paketi seçili
-    görüp ödeme akışına geçer (yoksa solo_free'ye düşer).
+    aksi halde 'solo_free'. DİKKAT: post_trial_plan plana otomatik geçiş
+    HEDEFİ DEĞİLDİR — deneme bitince kullanıcı HER ZAMAN solo_free'ye düşer;
+    bu alan yalnız /teacher/plan ödeme ekranında paketi ön-seçmek içindir.
     """
     if user.institution_id is not None:
         raise ValueError(
@@ -670,7 +672,10 @@ def compute_trial_banner(
 
 
 def expire_trials(db: Session, *, now: datetime | None = None) -> dict:
-    """Cron: süresi dolmuş trial'ları post_trial_plan'a düşürür.
+    """Cron: süresi dolmuş trial'ları ÜCRETSİZ kata düşürür (solo_free /
+    institution_free). post_trial_plan plana YAZILMAZ — yalnız /teacher/plan
+    ödeme ekranında ön-seçim olarak kullanılır (Google tarzı kartsız deneme:
+    deneme biter → ödeme yapılana kadar ücretsiz katta kalınır).
 
     Hem User (bağımsız öğretmen) hem Institution (kurum pilot) için çalışır.
     """
@@ -689,16 +694,22 @@ def expire_trials(db: Session, *, now: datetime | None = None) -> dict:
         .all()
     )
     for u in expired_users:
-        target = u.post_trial_plan or SOLO_FREE
+        # KURAL (2026-07-24): Deneme bitişi ASLA ücretli plana geçirmez.
+        # post_trial_plan yalnız /teacher/plan'da ödeme için ÖN-SEÇİMDİR;
+        # ücretli plana giden tek yol ödeme (iyzico / IAP / admin aktivasyonu).
+        target = SOLO_FREE
         from_plan = u.plan
         u.plan = target
         # trial_ends_at'i siliyoruz; post_trial_plan referans için kalsın
         u.trial_ends_at = None
+        note = "14 günlük deneme bitti — Solo Ücretsiz'e geçildi"
+        if u.post_trial_plan in _VALID_SOLO_PAID_TIERS:
+            note += f" · ödeme bekleyen paket: {u.post_trial_plan}"
         _log_change(
             db, owner_type=PlanOwnerType.USER, owner_id=u.id,
             from_plan=from_plan, to_plan=target,
             reason=PlanChangeReason.TRIAL_EXPIRED,
-            note="14 günlük trial bitti — Solo Ücretsiz'e geçildi",
+            note=note,
         )
         counts["users_expired"] += 1
         counts["expired_user_ids"].append(u.id)
@@ -714,7 +725,8 @@ def expire_trials(db: Session, *, now: datetime | None = None) -> dict:
         .all()
     )
     for i in expired_insts:
-        target = i.post_trial_plan or INSTITUTION_FREE
+        # Kurum pilotu da aynı kural: bitiş daima ücretsiz kata düşer.
+        target = INSTITUTION_FREE
         from_plan = i.plan
         i.plan = target
         i.trial_ends_at = None
@@ -762,6 +774,11 @@ def solo_trial_status(
     # Ödeme duvarı: ücretsiz + limit aşıldı VEYA abonelik yenilenmedi (past_due).
     paywall = (plan == SOLO_FREE and over_limit) or past_due
     trial_critical = (active and days_left is not None and days_left <= 3)
+    # Deneme bitti + signup'ta ücretli paket seçilmişti + hâlâ ödenmedi →
+    # "ödemen bekleniyor" hatırlatma bandı (paywall değilse amber, kapatılabilir).
+    intended = user.post_trial_plan if user.post_trial_plan in _VALID_SOLO_PAID_TIERS else None
+    payment_pending = (plan == SOLO_FREE and not active and intended is not None)
+    intended_info = get_plan_info(intended) if intended else None
     return {
         "is_solo": True,
         "plan_code": plan,
@@ -776,6 +793,11 @@ def solo_trial_status(
         "subscription_status": sub_status,
         "past_due": past_due,
         "upgrade_target": SOLO_PRO if plan in (SOLO_FREE, SOLO_TRIAL) else None,
+        "payment_pending": payment_pending,
+        "intended_plan": intended,
+        "intended_plan_label": (
+            intended_info.label if intended_info else (intended or None)
+        ),
     }
 
 

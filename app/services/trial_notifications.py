@@ -263,12 +263,25 @@ def notify_trial_expired(db: Session, *, user_ids: list[int]) -> int:
         u = db.get(User, uid)
         if u is None or not u.email:
             continue
+        # Signup'ta ücretli paket seçilmişse e-postada adıyla hatırlat
+        # ("paketin ödeme ekranında seçili seni bekliyor").
+        intended_label = None
+        try:
+            from app.services.plans import (
+                _VALID_SOLO_PAID_TIERS, get_plan_info,
+            )
+            if u.post_trial_plan in _VALID_SOLO_PAID_TIERS:
+                pi = get_plan_info(u.post_trial_plan)
+                intended_label = pi.label if pi else u.post_trial_plan
+        except Exception:
+            pass
         try:
             send_email(
                 to=u.email, template="trial_expired",
                 ctx={
                     "full_name": u.full_name or u.email,
                     "upgrade_url_path": "/teacher/plan",
+                    "intended_plan_label": intended_label,
                 },
             )
             sent += 1

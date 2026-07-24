@@ -242,6 +242,35 @@ def orphan_scan(db: Session, *, limit: int = 50) -> dict:
     except Exception:
         pass
 
+    try:
+        # 5) ÖDEME KAYITSIZ ÜCRETLİ PLAN (2026-07-24 dersi): bağımsız koç ücretli
+        # solo planda ama abonelik kaydı yok = hiçbir meşru yoldan (iyzico/IAP/
+        # admin aktivasyonu) geçmemiş → bedava ücretli özellik + hayalet MRR.
+        # Normalde SIFIR olmalı; bulunan her satır incelenmeli.
+        unpaid_paid = (
+            db.query(User.id, User.email, User.plan)
+            .filter(
+                User.role == UserRole.TEACHER,
+                User.institution_id.is_(None),
+                User.plan.in_(["solo_pro", "solo_elite", "solo_unlimited"]),
+                User.subscription_status.is_(None),
+            )
+            .limit(limit)
+            .all()
+        )
+        if unpaid_paid:
+            findings.append({
+                "kind": "paid_plan_no_subscription",
+                "label": "Ödeme kaydı olmayan ücretli plan (bedava ücretli erişim!)",
+                "count": len(unpaid_paid),
+                "samples": [
+                    {"user_id": r[0], "email": r[1], "plan": r[2]}
+                    for r in unpaid_paid[:5]
+                ],
+            })
+    except Exception:
+        logger.exception("orphan: paid-no-subscription fail")
+
     return {
         "total_findings": sum(f["count"] for f in findings),
         "findings": findings,

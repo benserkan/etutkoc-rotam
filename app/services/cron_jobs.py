@@ -550,7 +550,7 @@ def audit_cleanup(db: Session, *, now: datetime) -> dict:
 
 
 def trial_expire(db: Session, *, now: datetime) -> dict:
-    """Süresi dolmuş trial'ları otomatik post_trial_plan'a düşür + trial bildirimleri.
+    """Süresi dolmuş trial'ları ücretsiz kata düşür + trial bildirimleri.
 
     Günlük çalışır (00:15 UTC). Hem bağımsız öğretmen (14g) hem kurum (30g)
     trial'larını izler. İdempotent: zaten geçmişse no-op.

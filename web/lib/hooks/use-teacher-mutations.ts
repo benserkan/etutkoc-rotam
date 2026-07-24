@@ -22,8 +22,6 @@ import type {
   SessionDraftResponse,
   TranscribeResponse,
   CoachingInsightCacheResponse,
-  TeacherPlanResponse,
-  PlanUpgradeBody,
   GoalNodeRow,
   ParentInviteBody,
   ParentInviteResult,
@@ -1597,27 +1595,9 @@ export function useTranscribeAudio(studentId: number) {
   });
 }
 
-export function useUpgradePlan() {
-  const qc = useQueryClient();
-  return useMutation<MutationResponse<TeacherPlanResponse>, ApiError, PlanUpgradeBody>({
-    mutationFn: (body) =>
-      api<MutationResponse<TeacherPlanResponse>>("/api/v2/teacher/plan/upgrade", {
-        method: "POST",
-        body: JSON.stringify(body),
-      }),
-    onSuccess: (res) => {
-      applyInvalidate(qc, res.invalidate);
-      qc.setQueryData(teacherKeys.plan(), res.data);
-      toast.success(`${res.data.plan_label} paketine geçildi`);
-    },
-    onError: (err) => {
-      const code = errorCode(err);
-      if (code === "managed_by_institution") toast.error("Paketiniz kurumunuz tarafından yönetilir");
-      else if (code === "invalid_plan") toast.error("Geçersiz paket seçimi");
-      else showError(err, "Paket yükseltilemedi");
-    },
-  });
-}
+// NOT (2026-07-24): useUpgradePlan KALDIRILDI — arkadaki ödemesiz
+// POST /teacher/plan/upgrade ucu güvenlik nedeniyle kapatıldı. Paket
+// yükseltme yalnız ödemeyle olur: web "Kartla Öde" (iyzico init) / iOS IAP.
 
 export function useGenerateCoachingInsight(studentId: number) {
   const qc = useQueryClient();

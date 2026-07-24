@@ -1960,10 +1960,6 @@ export interface TeacherPlanResponse {
   has_pending_subscription_request: boolean;
 }
 
-export interface PlanUpgradeBody {
-  plan: string;
-}
-
 export interface SubscriptionRequestBody {
   plan: string;    // solo_pro | solo_elite
   cycle: string;   // monthly | academic_year
@@ -1989,6 +1985,10 @@ export interface TrialStatusResponse {
   subscription_status: string | null;
   past_due: boolean;
   upgrade_target: string | null;
+  // Deneme bitti + signup'ta ücretli paket seçilmişti + henüz ödenmedi
+  payment_pending: boolean;
+  intended_plan: string | null;
+  intended_plan_label: string | null;
 }
 
 export interface SessionDraftResponse {

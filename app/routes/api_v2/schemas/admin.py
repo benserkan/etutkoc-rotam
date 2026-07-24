@@ -610,12 +610,23 @@ class BackupStatusInfo(BaseModel):
     health: str  # 'ok' | 'warn' | 'crit'
 
 
+class PaymentStatusInfo(BaseModel):
+    """Ödeme sağlayıcı (iyzico) + son 24 saat işlem sağlığı (2026-07-24)."""
+    provider_available: bool
+    sandbox: bool = False
+    succeeded_24h: int = 0
+    failed_24h: int = 0
+    stuck_24h: int = 0     # 30dk+ yarım kalmış 3DS/pending
+    health: str  # 'ok' | 'warn' | 'crit'
+
+
 class SystemHealthResponse(BaseModel):
     """GET /api/v2/admin/system-health yanıtı."""
     crons: list[CronStatusItem]
     dispatcher: DispatcherStatusInfo | None = None
     database: DatabaseStatusInfo | None = None
     backup: BackupStatusInfo | None = None
+    payment: PaymentStatusInfo | None = None
     overall_health: str  # 'ok' | 'warn' | 'crit'
 
 

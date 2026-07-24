@@ -83,6 +83,7 @@ from app.routes.api_v2.schemas.admin import (
     AuditListResponse,
     AuditLogItem,
     BackupStatusInfo,
+    PaymentStatusInfo,
     CronStatusItem,
     DatabaseStatusInfo,
     DispatcherStatusInfo,
@@ -2750,11 +2751,24 @@ def admin_system_health_v2(
         if snapshot.backup
         else None
     )
+    payment = (
+        PaymentStatusInfo(
+            provider_available=snapshot.payment.provider_available,
+            sandbox=snapshot.payment.sandbox,
+            succeeded_24h=snapshot.payment.succeeded_24h,
+            failed_24h=snapshot.payment.failed_24h,
+            stuck_24h=snapshot.payment.stuck_24h,
+            health=snapshot.payment.health,
+        )
+        if snapshot.payment
+        else None
+    )
     return SystemHealthResponse(
         crons=crons,
         dispatcher=dispatcher,
         database=database,
         backup=backup,
+        payment=payment,
         overall_health=snapshot.overall_health,
     )
 

@@ -86,11 +86,27 @@ class BackupStatus:
 
 
 @dataclass
+class PaymentStatus:
+    """Ödeme sağlayıcı (iyzico) + son 24 saat işlem sağlığı (2026-07-24).
+
+    Amaç: müşteri ödeme adımında sorun yaşarsa süper admin panelden GÖRSÜN.
+    stuck = 30 dakikadan uzun süredir pending/3ds_pending (yarım kalmış 3DS).
+    """
+    provider_available: bool
+    sandbox: bool
+    succeeded_24h: int
+    failed_24h: int
+    stuck_24h: int
+    health: str   # 'ok' | 'warn' | 'crit'
+
+
+@dataclass
 class SystemHealthSnapshot:
     crons: list[CronStatus] = field(default_factory=list)
     dispatcher: DispatcherStatus | None = None
     database: DatabaseStatus | None = None
     backup: BackupStatus | None = None
+    payment: PaymentStatus | None = None
     overall_health: str = "ok"  # 'ok' | 'warn' | 'crit'
 
 
@@ -290,6 +306,56 @@ def collect_backup_status(*, now: datetime | None = None) -> BackupStatus:
     )
 
 
+def collect_payment_status(db: Session, *, now: datetime | None = None) -> PaymentStatus:
+    """Ödeme sağlayıcı erişilebilirliği + son 24 saat işlem kırılımı.
+
+    Sağlık: sağlayıcı yapılandırılmamış/kapalı → crit (ödeme alınamaz);
+    son 24h başarısız veya 30dk+ yarım kalmış işlem → warn; aksi ok.
+    (Best-effort — hata durumunda 'warn' döner, paneli asla kırmaz.)
+    """
+    if now is None:
+        now = datetime.now(timezone.utc)
+    try:
+        from app.models import PaymentTransaction
+        from app.services import iyzico_service
+
+        available = bool(iyzico_service.is_provider_available())
+        sandbox = "sandbox" in ((settings.iyzico_base_url or "").lower())
+        cutoff = now - timedelta(hours=24)
+        stuck_cutoff = now - timedelta(minutes=30)
+
+        def _cnt(*filters) -> int:
+            return int(
+                (db.query(func.count(PaymentTransaction.id))
+                 .filter(PaymentTransaction.created_at >= cutoff, *filters)
+                 .scalar()) or 0
+            )
+
+        succeeded = _cnt(PaymentTransaction.status == "succeeded")
+        failed = _cnt(PaymentTransaction.status == "failed")
+        stuck = _cnt(
+            PaymentTransaction.status.in_(["pending", "3ds_pending"]),
+            PaymentTransaction.created_at < stuck_cutoff,
+        )
+        if not available:
+            health = "crit"
+        elif failed > 0 or stuck > 0:
+            health = "warn"
+        else:
+            health = "ok"
+        return PaymentStatus(
+            provider_available=available, sandbox=sandbox,
+            succeeded_24h=succeeded, failed_24h=failed, stuck_24h=stuck,
+            health=health,
+        )
+    except Exception:
+        logger.exception("collect_payment_status fail")
+        return PaymentStatus(
+            provider_available=False, sandbox=False,
+            succeeded_24h=0, failed_24h=0, stuck_24h=0, health="warn",
+        )
+
+
 def collect_snapshot(db: Session, *, now: datetime | None = None) -> SystemHealthSnapshot:
     if now is None:
         now = datetime.now(timezone.utc)
@@ -297,6 +363,7 @@ def collect_snapshot(db: Session, *, now: datetime | None = None) -> SystemHealt
     dispatcher = collect_dispatcher_status(db, now=now)
     database = collect_database_status(db)
     backup = collect_backup_status(now=now)
+    payment = collect_payment_status(db, now=now)
 
     # Overall — en kötü bileşen
     levels = ["ok", "warn", "crit"]
@@ -310,11 +377,14 @@ def collect_snapshot(db: Session, *, now: datetime | None = None) -> SystemHealt
         worst = database.health
     if backup.health in levels and levels.index(backup.health) > levels.index(worst):
         worst = backup.health
+    if payment.health in levels and levels.index(payment.health) > levels.index(worst):
+        worst = payment.health
 
     return SystemHealthSnapshot(
         crons=crons,
         dispatcher=dispatcher,
         database=database,
         backup=backup,
+        payment=payment,
         overall_health=worst,
     )

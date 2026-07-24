@@ -420,6 +420,18 @@ def verify_callback(
             target_owner_type = PlanOwnerType.USER
             target_owner_id = tx.user_id
 
+        # Ödeme ÖNCESİ durum: aktif-ücretli DEĞİLSE (ücretsiz/paywall/past_due)
+        # ödeme sonrası pasif öğrenciler otomatik geri açılır (banner sözü).
+        was_paid_active = False
+        if target_owner_type == PlanOwnerType.USER:
+            from app.models import User as UserModel
+            pre_owner = db.get(UserModel, target_owner_id)
+            if pre_owner is not None:
+                was_paid_active = (
+                    plans_service.is_paid_plan(pre_owner.plan or "")
+                    and getattr(pre_owner, "subscription_status", None) == "active"
+                )
+
         # Plan'ı aktive et — change_plan reuse (admin activate-plan ile aynı yol)
         try:
             plans_service.change_plan(
@@ -456,6 +468,17 @@ def verify_callback(
                 owner.subscription_period_end = datetime.utcnow() + timedelta(days=days)
                 # Kanal işareti (w7x0a3b4a66w): web kart ödemesi = iyzico.
                 owner.subscription_platform = "iyzico"
+                # Ödeme duvarında pasifleştirilen öğrenciler geri açılır
+                # (yalnız önceden aktif-ücretli DEĞİLSE — kasıtlı arşiv korunur).
+                if not was_paid_active:
+                    try:
+                        plans_service.reactivate_solo_students(
+                            db, owner, autocommit=False,
+                        )
+                    except Exception:  # noqa: BLE001
+                        logger.exception(
+                            "reactivate after payment failed user=%s", owner.id,
+                        )
 
         # Link varsa consumed işaretle
         if link is not None:

@@ -147,7 +147,6 @@ from app.routes.api_v2.schemas.teacher import (
     CoachingInsightResponse,
     ParsePhotoBody,
     ParseVoiceBody,
-    PlanUpgradeBody,
     SessionDraftResponse,
     SubscriptionRequestBody,
     SubscriptionRequestResult,
@@ -2152,8 +2151,9 @@ def teacher_coaching_insight_generate_v2(
 # Bağımsız koç — Paket (plan) görüntüleme + yükseltme
 # =============================================================================
 
-# Self-serve yükseltilebilir solo planlar (ücretli). NOT: ödeme entegrasyonu
-# (Stripe vb.) ayrı bir iştir; şimdilik yükseltme doğrudan plan değişimidir.
+# Satın alınabilir solo planlar (ücretli). Plan değişimi YALNIZ ödemeyle olur
+# (iyzico / App Store IAP / admin manuel aktivasyon) — ödemesiz doğrudan
+# yükseltme ucu 2026-07-24'te kaldırıldı.
 _SOLO_UPGRADE_TARGETS = ("solo_pro", "solo_elite", "solo_unlimited")
 
 
@@ -2183,7 +2183,15 @@ def _build_plan_response(db: Session, user: User):
     elif getattr(user, "subscription_status", None) == "past_due":
         status = "past_due"
     elif is_paid_plan(effective):
-        status = "active"
+        # "Aktif" yalnız GERÇEK abonelik kaydı varsa (iyzico/IAP/admin manuel
+        # aktivasyon hepsi subscription_status doldurur). Ücretli plan +
+        # abonelik kaydı YOK = anormal durum → "payment_required" (ödeme
+        # bekleniyor); UI ödeme çağrısı gösterir, veri bütünlüğü taraması
+        # ayrıca işaretler. (2026-07-24 — ödemesiz solo_pro bug'ı dersinden.)
+        if getattr(user, "subscription_status", None) in ("active", "canceled"):
+            status = "active"
+        else:
+            status = "payment_required"
     else:
         status = "free"
 
@@ -2471,73 +2479,12 @@ def teacher_subscription_resume_v2(
     )
 
 
-@router.post("/plan/upgrade", response_model=MutationResponse[TeacherPlanResponse])
-def teacher_plan_upgrade_v2(
-    body: PlanUpgradeBody,
-    user: User = Depends(_require_teacher),
-    db: Session = Depends(get_db),
-):
-    """Bağımsız koç paket yükseltme (solo_pro | solo_elite).
-
-    NOT: Ödeme entegrasyonu ayrı bir iştir; bu uçta yükseltme doğrudan plan
-    değişimidir (audit'li). Kurumlu öğretmen self-serve yükseltemez.
-    """
-    from app.models import PlanChangeReason, PlanOwnerType
-    from app.services.plans import (
-        change_plan,
-        is_paid_plan,
-        reactivate_solo_students,
-    )
-
-    if user.institution_id is not None:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail={"error": "forbidden", "code": "managed_by_institution",
-                    "message": "Paketiniz kurumunuz tarafından yönetilir."},
-        )
-    target = (body.plan or "").strip()
-    if target not in _SOLO_UPGRADE_TARGETS:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail={"error": "validation", "code": "invalid_plan",
-                    "message": "Yalnız Solo paketleri seçilebilir."},
-        )
-    # App Store aboneliği aktifken plan Apple tarafında yönetilir — burada
-    # değiştirmek Apple aboneliğiyle senkronu bozar (çifte tahsilat riski).
-    if (
-        getattr(user, "subscription_platform", None) == "app_store"
-        and user.subscription_status in ("active", "canceled")
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail={"error": "conflict", "code": "app_store_managed",
-                    "message": "Aboneliğin App Store üzerinden yönetiliyor. "
-                               "Paket değişikliği iPhone/iPad'deki uygulamadan yapılır."},
-        )
-
-    # Ödeme duvarından / ücretsizden geliyorsa (aktif-ücretli DEĞİLSE) pasif
-    # öğrenciler yükseltmede otomatik geri açılır (banner'da verilen söz).
-    was_paid_active = (
-        is_paid_plan(user.plan or "")
-        and getattr(user, "subscription_status", None) == "active"
-    )
-    change_plan(
-        db,
-        owner_type=PlanOwnerType.USER,
-        owner_id=user.id,
-        new_plan=target,
-        reason=PlanChangeReason.UPGRADE,
-        actor_user_id=user.id,
-        note="Bağımsız koç self-serve paket yükseltme",
-        autocommit=True,
-    )
-    if not was_paid_active:
-        reactivate_solo_students(db, user, autocommit=True)
-    db.refresh(user)
-    return MutationResponse[TeacherPlanResponse](
-        data=_build_plan_response(db, user),
-        invalidate=["teacher:me:ai-consent", "teacher:me:plan"],
-    )
+# NOT (2026-07-24): Eski POST /plan/upgrade ucu KALDIRILDI. iyzico öncesi
+# dönemden kalma "ödemesiz doğrudan plan değişimi" arka kapısıydı — API'yi
+# bilen herkes ücretli pakete bedava geçebiliyordu. Ücretli plana giden
+# meşru yollar: iyzico ödemesi (payment/init → callback), iOS App Store
+# aboneliği (webhooks/revenuecat + payment/iap/sync) ve süper admin manuel
+# aktivasyonu (/admin/users/{id}/activate-plan).
 
 
 # =============================================================================

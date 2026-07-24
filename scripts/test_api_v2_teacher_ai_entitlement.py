@@ -12,9 +12,9 @@ Senaryolar:
    6b. trial koç kredi tükenmiş → 402 ai_credit_exhausted
    7. paid koç (solo_pro) GET /plan → ai_premium True
    8. paid koç ai-consent + parse-photo (monkeypatch) → 200 (kapı geçilir)
-   9. free koç POST /plan/upgrade solo_pro → ai_premium True olur, parse-photo 200
-  10. kurumlu öğretmen /plan/upgrade → 403 managed_by_institution
-  11. geçersiz plan → 400 invalid_plan
+   9. free koç MEŞRU aktivasyon (change_plan + abonelik kaydı) → ai_premium True
+  10. ödemesiz /plan/upgrade ucu KALDIRILDI → 404/405 (arka kapı regresyonu)
+  11. paid koç için de /plan/upgrade yok → 404/405
 """
 from __future__ import annotations
 
@@ -78,6 +78,10 @@ def _seed():
         now = datetime.now(timezone.utc)
         free_t, free_s = _mk_teacher(db, "free", "solo_free")
         paid_t, paid_s = _mk_teacher(db, "paid", "solo_pro")
+        # Ücretli plan = gerçek abonelik kaydıyla (2026-07-24 status sıkılaştırması)
+        paid_t.subscription_status = "active"
+        paid_t.subscription_cycle = "monthly"
+        paid_t.subscription_period_end = now + timedelta(days=25)
         trial_t, trial_s = _mk_teacher(db, "trial", "solo_trial", trial_ends_at=now + timedelta(days=10))
         inst_t, inst_s = _mk_teacher(db, "inst", "institution_free", institution_id=inst.id)
         from app.services.credits import CreditOwner, get_or_create_account
@@ -191,21 +195,34 @@ def main():
         r = paid.post(f"/api/v2/teacher/students/{seed['paid_s']}/sessions/parse-photo", json=IMG)
         check("8. paid parse-photo → 200 (kapı geçildi)", r.status_code == 200 and r.json().get("agenda") == "x", f"status={r.status_code} {r.text[:120]}")
 
-        # 9. free yükselt → açılır
-        r = free.post("/api/v2/teacher/plan/upgrade", json={"plan": "solo_pro"})
-        check("9a. free upgrade solo_pro → ai_premium True",
-              r.status_code == 200 and r.json()["data"]["ai_premium"] is True, f"status={r.status_code} {r.text[:140]}")
+        # 9. free koç MEŞRU aktivasyonla (ödeme sonrası abonelik kaydı) → AI açılır.
+        #    (Eski ödemesiz self-serve /plan/upgrade ucu KALDIRILDI — senaryo 10.)
+        with SessionLocal() as db:
+            from app.models import PlanChangeReason, PlanOwnerType
+            from app.services.plans import change_plan
+            change_plan(db, owner_type=PlanOwnerType.USER, owner_id=seed["free_t"],
+                        new_plan="solo_pro", reason=PlanChangeReason.UPGRADE,
+                        note="test: ödeme sonrası aktivasyon", autocommit=False)
+            u = db.get(User, seed["free_t"])
+            u.subscription_status = "active"
+            u.subscription_cycle = "monthly"
+            u.subscription_period_end = datetime.now(timezone.utc) + timedelta(days=30)
+            db.commit()
+        r = free.get("/api/v2/teacher/plan")
+        check("9a. aktivasyon sonrası GET /plan → ai_premium True + status active",
+              r.status_code == 200 and r.json().get("ai_premium") is True
+              and r.json().get("status") == "active", f"status={r.status_code} {r.text[:140]}")
         r = free.post(f"/api/v2/teacher/students/{free_s}/sessions/parse-photo", json=IMG)
-        check("9b. yükseltme sonrası parse-photo → 200", r.status_code == 200, f"status={r.status_code} {r.text[:120]}")
+        check("9b. aktivasyon sonrası parse-photo → 200", r.status_code == 200, f"status={r.status_code} {r.text[:120]}")
 
+        # 10. Ödemesiz yükseltme arka kapısı KAPALI — endpoint artık yok (404/405).
         inst = _login(email("inst"))
         r = inst.post("/api/v2/teacher/plan/upgrade", json={"plan": "solo_pro"})
-        check("10. kurumlu öğretmen upgrade → 403 managed_by_institution",
-              r.status_code == 403 and r.json()["detail"]["code"] == "managed_by_institution", f"status={r.status_code}")
-
+        check("10. ödemesiz /plan/upgrade ucu kaldırıldı → 404/405",
+              r.status_code in (404, 405), f"status={r.status_code}")
         r = paid.post("/api/v2/teacher/plan/upgrade", json={"plan": "solo_free"})
-        check("11. geçersiz hedef → 400 invalid_plan",
-              r.status_code == 400 and r.json()["detail"]["code"] == "invalid_plan", f"status={r.status_code}")
+        check("11. paid koç için de /plan/upgrade yok → 404/405",
+              r.status_code in (404, 405), f"status={r.status_code}")
 
     finally:
         ai_capture.parse_session_photo = orig

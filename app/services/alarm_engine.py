@@ -103,13 +103,89 @@ def _val_abuse_open(db: Session) -> int:
     )
 
 
+def _val_payment_problem_recent(db: Session) -> int:
+    """Son 24 saatte ödeme sorunu sayısı (2026-07-24 üyelik revizyonu).
+
+    Sayılanlar: FAILED işlem + 30 dakikadan eski hâlâ pending/3ds_pending
+    (yarım kalmış 3DS — müşteri ödeme adımında takıldı ya da callback
+    ulaşmadı). Ödeme hacmi düşükken HER sorun süper admin görmeli.
+    """
+    from app.models import PaymentTransaction
+
+    now = _now()
+    cutoff_24h = now - timedelta(hours=24)
+    stuck_cutoff = now - timedelta(minutes=30)
+    failed = int(
+        (db.query(func.count(PaymentTransaction.id))
+         .filter(
+             PaymentTransaction.status == "failed",
+             PaymentTransaction.created_at >= cutoff_24h,
+         )
+         .scalar()) or 0
+    )
+    stuck = int(
+        (db.query(func.count(PaymentTransaction.id))
+         .filter(
+             PaymentTransaction.status.in_(["pending", "3ds_pending"]),
+             PaymentTransaction.created_at >= cutoff_24h,
+             PaymentTransaction.created_at < stuck_cutoff,
+         )
+         .scalar()) or 0
+    )
+    return failed + stuck
+
+
 # Kural key → değer hesaplayıcı + severity hesaplayıcı
 EVALUATORS = {
     "high_failed_logins": _val_high_failed_logins,
     "oldest_queued_long": _val_oldest_queued_long,
     "error_groups_open": _val_error_groups_open,
     "abuse_open": _val_abuse_open,
+    "payment_problem_recent": _val_payment_problem_recent,
 }
+
+
+# Kod-tanımlı yerleşik kurallar — DB'de yoksa İLK değerlendirmede/listelemede
+# idempotent eklenir (migration'sız rollout; "seed'le dolan tablo" kuralının
+# lazy karşılığı — cron saatlik evaluate_all çağırdığı için prod'da kendiliğinden
+# oluşur).
+_BUILTIN_RULES = [
+    {
+        "key": "payment_problem_recent",
+        "name": "Ödeme sorunu (son 24 saat)",
+        "description": (
+            "Başarısız kart ödemesi VEYA 30 dakikadan uzun süredir yarım kalmış "
+            "3D Secure işlemi. Müşteri ödeme adımında hata yaşıyor olabilir — "
+            "iyzico paneli + /admin/security-monitor'dan işlem detayına bak."
+        ),
+        "threshold": 0,          # tek sorun bile alarmlar (hacim düşük)
+        "cooldown_minutes": 360,
+        "channels": "email,in_app",
+    },
+]
+
+
+def _ensure_builtin_rules(db: Session) -> None:
+    """Eksik yerleşik kuralları ekle (idempotent, best-effort)."""
+    try:
+        existing = {k for (k,) in db.query(AlarmRule.key).all()}
+        added = False
+        for spec in _BUILTIN_RULES:
+            if spec["key"] in existing:
+                continue
+            db.add(AlarmRule(
+                key=spec["key"], name=spec["name"],
+                description=spec["description"], threshold=spec["threshold"],
+                cooldown_minutes=spec["cooldown_minutes"], enabled=True,
+                channels=spec["channels"],
+                created_at=_now(), updated_at=_now(),
+            ))
+            added = True
+        if added:
+            db.commit()
+    except Exception:
+        db.rollback()
+        logger.exception("ensure_builtin_rules fail")
 
 
 def _severity_for(rule_key: str, value: int, threshold: int) -> str:
@@ -148,6 +224,7 @@ def _in_cooldown(rule: AlarmRule, *, now: datetime) -> bool:
 def evaluate_all(db: Session) -> list[EvaluationResult]:
     """Tüm enabled kuralları çalıştır. Tetiklenenler için AlarmEvent yaz + bildir."""
     now = _now()
+    _ensure_builtin_rules(db)
     rules = db.query(AlarmRule).all()
     results: list[EvaluationResult] = []
 
@@ -328,6 +405,7 @@ def unacknowledged_count(db: Session) -> int:
 
 
 def list_rules(db: Session) -> list[AlarmRule]:
+    _ensure_builtin_rules(db)
     return list(
         db.query(AlarmRule).order_by(AlarmRule.key).all()
     )

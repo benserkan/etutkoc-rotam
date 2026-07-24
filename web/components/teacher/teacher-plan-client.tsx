@@ -136,6 +136,31 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
         </div>
       ) : null}
 
+      {/* Deneme bitti + seçilen paket henüz ödenmedi — net ödeme daveti */}
+      {!data.trial_active && data.status === "free" && data.post_trial_plan &&
+       data.post_trial_plan !== "solo_free" && data.post_trial_plan_label ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+          <p className="font-semibold">Denemen bitti — ödemen bekleniyor</p>
+          <p className="mt-0.5">
+            Kayıt olurken <strong>{data.post_trial_plan_label}</strong> paketini seçmiştin.
+            Öğrencilerin ve verilerin duruyor; kaldığın yerden tüm özelliklerle devam
+            etmek için aşağıdan <strong>Kartla Öde</strong> ile ödemeni tamamlaman yeterli.
+            Paketin seçili olarak geliyor.
+          </p>
+        </div>
+      ) : null}
+
+      {/* Ödeme kayıtsız ücretli plan (anormal durum) — ödemeye çağır */}
+      {data.status === "payment_required" ? (
+        <div className="rounded-lg border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
+          <p className="font-semibold">Paketinin ödemesi tamamlanmamış görünüyor</p>
+          <p className="mt-0.5">
+            Aboneliğini aktive etmek için aşağıdan ödemeni tamamlayabilir veya
+            bir yanlışlık olduğunu düşünüyorsan destek ekibiyle iletişime geçebilirsin.
+          </p>
+        </div>
+      ) : null}
+
       {/* AI Kredi durumu — trial veya free için ilerleme çubuğu */}
       {data.is_solo && data.ai_credits_allocated > 0 ? (
         <AiCreditMeter
@@ -256,6 +281,9 @@ function StatusLine({ status, daysLeft, subStatus }: { status: string; daysLeft:
   }
   if (status === "free") {
     return <p className="text-xs text-slate-500">Ücretsiz — 3 öğrenci, yapay zekâ kapalı</p>;
+  }
+  if (status === "payment_required") {
+    return <p className="text-xs text-rose-700">Ödeme bekleniyor — paket ödemesi tamamlanmadı</p>;
   }
   return null;
 }
@@ -442,14 +470,22 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-display text-lg font-bold">
-              {data.status === "past_due" ? "Aboneliğini yenile" : "Paketini seç"}
+              {data.status === "past_due"
+                ? "Aboneliğini yenile"
+                : data.status === "payment_required"
+                  ? "Ödemeni tamamla"
+                  : data.status === "free" && intendedFromSignup && data.post_trial_plan_label
+                    ? `Denemen bitti — ${data.post_trial_plan_label} ile devam et`
+                    : "Paketini seç"}
             </p>
             <p className="text-sm text-muted-foreground">
               {data.status === "trialing"
                 ? "Denemen bitmeden geç; tüm öğrencilerin ve yapay zekâ kesintisiz devam etsin."
                 : data.status === "past_due"
                   ? "Aboneliğin yenilenmedi. Ödeyip yenileyerek aktif koçluğa devam et; pasif öğrencilerin otomatik yeniden aktif olur."
-                  : "Öğrenci sayına uygun paketi seç. Yükselttiğinde yapay zekâ açılır ve pasif öğrencilerin otomatik yeniden aktif olur."}
+                  : data.status === "free" && intendedFromSignup
+                    ? "Seçtiğin paket aşağıda hazır. Kartla ödediğin anda tüm özellikler açılır; pasif öğrencilerin otomatik yeniden aktif olur."
+                    : "Öğrenci sayına uygun paketi seç. Yükselttiğinde yapay zekâ açılır ve pasif öğrencilerin otomatik yeniden aktif olur."}
             </p>
           </div>
           {/* Aylık / Akademik yıl toggle */}

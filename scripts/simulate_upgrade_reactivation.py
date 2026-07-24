@@ -1,8 +1,12 @@
 """Paket yükseltmede pasif öğrencilerin OTOMATİK aktifleşmesi — çok koçlu sağlam test.
 
+NOT (2026-07-24): Ödemesiz /teacher/plan/upgrade ucu KALDIRILDI; self-serve
+yükseltme artık iyzico ödemesiyle olur → A ve D senaryoları mock iyzico
+ödemesi (init + callback) üzerinden koşar (verify_callback reaktivasyonunu da test eder).
+
 Senaryolar (her biri ayrı koç):
-   A — Self-serve yükseltme (ücretsiz → solo_pro):
-       8 öğr, 5'i pasif (paywall'da arşivlenmiş) → /teacher/plan/upgrade
+   A — Self-serve yükseltme (ücretsiz → solo_pro, MOCK İYZİCO ÖDEMESİ):
+       8 öğr, 5'i pasif (paywall'da arşivlenmiş) → ödeme başarılı callback
        → 8 öğrencinin TAMAMI aktif + paywall kalkar + program yayınlanabilir.
    B — Admin aktivasyon (ücretsiz → solo_elite):
        6 öğr, 4'ü pasif → /admin/users/{id}/activate-plan
@@ -11,7 +15,7 @@ Senaryolar (her biri ayrı koç):
        5 öğr, 2'si pasif, subscription_status=past_due → admin activate-plan solo_pro
        → change_plan erken-return olsa bile 5 öğrencinin TAMAMI aktif.
    D — KONTROL (aktif-ücretli koç, kasıtlı arşiv KORUNUR):
-       solo_pro + active, 4 öğr, 1'i kasıtlı pasif → solo_elite'e yükselt
+       solo_pro + active, 4 öğr, 1'i kasıtlı pasif → solo_elite ödemesi (mock)
        → kasıtlı pasif öğrenci PASİF KALIR (3 aktif), yanlış geri-açma YOK.
 """
 from __future__ import annotations
@@ -31,10 +35,39 @@ from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
 from app.main import app
-from app.models import User, UserRole
+from app.models import PaymentTransaction, User, UserRole
 from app.models.suspicious_ip import SuspiciousIp
+from app.services import iyzico_service
 from app.services.rate_limit import get_login_limiter
 from app.services.security import hash_password
+
+
+def _mock_create(req: dict) -> dict:
+    return {
+        "status": "success",
+        "conversationId": req.get("conversationId", "x"),
+        "token": f"mock-token-{secrets.token_hex(8)}",
+        "paymentPageUrl": "https://sandbox-cpp.iyzipay.com?token=mock-fake",
+    }
+
+
+def _mock_retrieve_ok(token: str) -> dict:
+    return {"status": "success", "paymentStatus": "SUCCESS", "token": token,
+            "conversationId": "x", "paymentId": "12345"}
+
+
+def _pay_with_card(client: TestClient, plan_code: str) -> tuple[int, int]:
+    """Mock iyzico ödemesi: init → callback(success). Returns (init_status, tx_id)."""
+    r = client.post("/api/v2/payment/init", json={"plan_code": plan_code, "cycle": "monthly"})
+    if r.status_code != 200:
+        return r.status_code, 0
+    tx_id = r.json()["transaction_id"]
+    with SessionLocal() as db:
+        token = db.get(PaymentTransaction, tx_id).provider_reference
+    TestClient(app).post(
+        "/api/v2/payment/iyzico/callback", data={"token": token}, follow_redirects=False,
+    )
+    return r.status_code, tx_id
 
 PFX = f"react_{secrets.token_hex(3)}"
 PWD = hash_password("ReactTest!23")
@@ -99,6 +132,16 @@ def _paywall(coach_id):
         return plans.solo_trial_status(db, user=db.get(User, coach_id))["paywall"]
 
 
+def _plan(coach_id):
+    with SessionLocal() as db:
+        return db.get(User, coach_id).plan
+
+
+def _sub_status(coach_id):
+    with SessionLocal() as db:
+        return db.get(User, coach_id).subscription_status
+
+
 def login(suffix):
     c = TestClient(app)
     r = c.post("/api/v2/auth/login", json={"email": f"{PFX}_{suffix.lower()}@test.invalid", "password": PWDH})
@@ -130,15 +173,22 @@ def main() -> int:
     print(f"\n=== YÜKSELTMEDE PASİF ÖĞRENCİ GERİ-AKTİFLEŞME — {PFX} ===\n")
     get_login_limiter().reset()
     setup()
+    # Mock iyzico SDK (gerçek çağrı yok) — finally'de geri alınır
+    orig_create = iyzico_service._iyzico_call_create
+    orig_retrieve = iyzico_service._iyzico_call_retrieve
+    iyzico_service._iyzico_call_create = _mock_create
+    iyzico_service._iyzico_call_retrieve = _mock_retrieve_ok
     try:
-        # ── A — Self-serve yükseltme (ücretsiz → solo_pro) ──
-        print("A — Self-serve yükseltme (ücretsiz → solo_pro):")
+        # ── A — Self-serve yükseltme (ücretsiz → solo_pro, MOCK iyzico ödemesi) ──
+        print("A — Self-serve yükseltme (ücretsiz → solo_pro, mock iyzico):")
         check("A0 başlangıç: 4 aktif / 8 toplam + paywall=True",
               _active_count(ctx["A"]) == 4 and _total_count(ctx["A"]) == 8 and _paywall(ctx["A"]) is True,
               f"aktif={_active_count(ctx['A'])} paywall={_paywall(ctx['A'])}")
         ca = login("A")
-        r = ca.post("/api/v2/teacher/plan/upgrade", json={"plan": "solo_pro"})
-        check("A1 upgrade → 200", r.status_code == 200, f"status={r.status_code} {r.text[:140]}")
+        st, _tx = _pay_with_card(ca, "solo_pro")
+        check("A1 ödeme (init+callback) → init 200 + plan solo_pro + abonelik aktif",
+              st == 200 and _plan(ctx["A"]) == "solo_pro" and _sub_status(ctx["A"]) == "active",
+              f"init={st} plan={_plan(ctx['A'])} sub={_sub_status(ctx['A'])}")
         check("A2 TÜM öğrenciler aktifleşti (8/8)", _active_count(ctx["A"]) == 8, f"aktif={_active_count(ctx['A'])}")
         check("A3 paywall kalktı (False)", _paywall(ctx["A"]) is False, f"paywall={_paywall(ctx['A'])}")
         # program yayınlama artık serbest
@@ -169,19 +219,24 @@ def main() -> int:
         check("C3 paywall kalktı (False)", _paywall(ctx["C"]) is False, f"paywall={_paywall(ctx['C'])}")
 
         # ── D — KONTROL: aktif-ücretli koç, kasıtlı arşiv KORUNUR ──
-        print("\nD — KONTROL (aktif solo_pro → solo_elite, kasıtlı arşiv korunmalı):")
+        print("\nD — KONTROL (aktif solo_pro → solo_elite ödemesi, kasıtlı arşiv korunmalı):")
         check("D0 başlangıç: 3 aktif / 4 toplam (1 kasıtlı pasif)",
               _active_count(ctx["D"]) == 3 and _total_count(ctx["D"]) == 4, f"aktif={_active_count(ctx['D'])}")
         cd = login("D")
-        r = cd.post("/api/v2/teacher/plan/upgrade", json={"plan": "solo_elite"})
-        check("D1 upgrade → 200", r.status_code == 200, f"status={r.status_code} {r.text[:140]}")
+        st, _tx = _pay_with_card(cd, "solo_elite")
+        check("D1 ödeme (init+callback) → init 200 + plan solo_elite",
+              st == 200 and _plan(ctx["D"]) == "solo_elite",
+              f"init={st} plan={_plan(ctx['D'])}")
         check("D2 kasıtlı pasif KORUNDU (hâlâ 3 aktif, geri-açılmadı)", _active_count(ctx["D"]) == 3,
               f"aktif={_active_count(ctx['D'])} (yanlış geri-açma!)")
 
     finally:
+        iyzico_service._iyzico_call_create = orig_create
+        iyzico_service._iyzico_call_retrieve = orig_retrieve
         with SessionLocal() as db:
             ids = [r[0] for r in db.query(User.id).filter(User.email.like(f"{PFX}_%")).all()]
             if ids:
+                db.execute(sa_delete(PaymentTransaction).where(PaymentTransaction.user_id.in_(ids)))
                 db.execute(sa_delete(User).where(User.id.in_(ids)))
             db.execute(sa_delete(SuspiciousIp).where(SuspiciousIp.ip == "testclient"))
             db.commit()

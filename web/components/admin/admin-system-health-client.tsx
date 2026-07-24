@@ -7,6 +7,7 @@ import {
   Archive,
   CheckCircle2,
   Clock,
+  CreditCard,
   Database,
   Inbox,
   Stethoscope,
@@ -22,6 +23,7 @@ import type {
   DatabaseStatusInfo,
   DispatcherStatusInfo,
   HealthBand,
+  PaymentStatusInfo,
   SystemHealthResponse,
 } from "@/lib/types/admin";
 
@@ -75,6 +77,8 @@ export function AdminSystemHealthClient({ initial }: Props) {
       {data.database && <DatabaseCard database={data.database} />}
 
       {data.backup && <BackupCard backup={data.backup} />}
+
+      {data.payment && <PaymentCard payment={data.payment} />}
     </div>
   );
 }
@@ -492,6 +496,66 @@ function BackupCard({ backup }: { backup: BackupStatusInfo }) {
           <div className="text-xs text-rose-700 mt-3 bg-rose-50 border border-rose-200 rounded p-2 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200">
             ⚠ Yedek dizini boş veya erişilemez. Cron&apos;un çalıştığını + dosya izinlerini kontrol et.
             Komut: <code className="font-mono">bash /opt/etutkoc/deploy/backup.sh</code>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function PaymentCard({ payment }: { payment: PaymentStatusInfo }) {
+  const healthMap = {
+    crit: "text-rose-700",
+    warn: "text-amber-700",
+    ok: "text-emerald-700",
+  };
+  const problem = payment.failed_24h + payment.stuck_24h;
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <h2 className="text-sm font-medium mb-3 inline-flex items-center gap-1.5">
+          <CreditCard className="size-4 text-muted-foreground" aria-hidden />
+          Ödeme (iyzico kartlı ödeme)
+          {payment.sandbox ? (
+            <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+              TEST modu
+            </span>
+          ) : null}
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Sağlayıcı</div>
+            <div className={cn("text-2xl font-bold", payment.provider_available ? "text-emerald-700" : "text-rose-700")}>
+              {payment.provider_available ? "Erişilebilir" : "KAPALI"}
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-1">
+              {payment.provider_available
+                ? "anahtarlar tanımlı, ödeme alınabilir"
+                : "anahtar eksik/geçersiz — müşteri ödeme YAPAMAZ"}
+            </div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Son 24 saat başarılı</div>
+            <div className="text-2xl font-bold tabular-nums text-emerald-700">
+              {payment.succeeded_24h}
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-1">tamamlanan kart ödemesi</div>
+          </div>
+          <div>
+            <div className="text-xs text-muted-foreground mb-2">Son 24 saat sorunlu</div>
+            <div className={cn("text-2xl font-bold tabular-nums", healthMap[payment.health])}>
+              {problem}
+            </div>
+            <div className="text-[11px] text-muted-foreground mt-1">
+              {payment.failed_24h} başarısız · {payment.stuck_24h} yarım kalmış (30 dk+)
+            </div>
+          </div>
+        </div>
+        {problem > 0 ? (
+          <div className="text-xs text-amber-800 mt-3 bg-amber-50 border border-amber-200 rounded p-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+            Bir müşteri ödeme adımında sorun yaşamış olabilir. İşlem detayları için
+            iyzico paneline ve denetim kaydına (PAYMENT_FAILED) bak; müşteri
+            &quot;Tekrar dene&quot; ile yeniden ödeyebilir.
           </div>
         ) : null}
       </CardContent>

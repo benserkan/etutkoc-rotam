@@ -2249,7 +2249,10 @@ class TeacherPlanResponse(BaseModel):
     options: list[TeacherPlanOption]
     note: str | None = None     # kurumlu kullanıcı için açıklama
     # Uygulama-içi abonelik ekranı (Faz 1) — /pricing ile tutarlı tek kaynak.
-    status: str = "free"        # trialing | active | past_due | free | managed
+    # trialing | active | past_due | free | managed | payment_required
+    # payment_required = ücretli plan ama abonelik/ödeme kaydı yok (anormal —
+    # normalde oluşmaz; oluşursa UI ödeme çağrısı gösterir).
+    status: str = "free"
     student_count: int = 0      # bağımsız koçun aktif öğrenci sayısı
     solo_monthly_price: int = 0 # öğrenci sayısına uygun Solo tier aylık ücreti (₺)
     recommended_plan: str = ""  # öğrenci sayısına en uygun solo tier kodu
@@ -2276,10 +2279,6 @@ class TeacherPlanResponse(BaseModel):
     # status=new). True ise UI "Ödeme talebi gönder" butonunu pasifleştirir +
     # "Talebin alındı" gösterir (tekrar gönderim engellenir).
     has_pending_subscription_request: bool = False
-
-
-class PlanUpgradeBody(BaseModel):
-    plan: str                   # hedef solo plan kodu (solo_pro | solo_elite)
 
 
 class SubscriptionRequestBody(BaseModel):
@@ -2309,6 +2308,11 @@ class TrialStatusResponse(BaseModel):
     subscription_status: str | None = None  # active | past_due | canceled | None
     past_due: bool = False          # abonelik yenilenmedi
     upgrade_target: str | None = None
+    # Deneme bitti + signup'ta ücretli paket seçilmişti + henüz ödenmedi →
+    # kalıcı (kapatılabilir) "ödemeni tamamla" hatırlatma bandı.
+    payment_pending: bool = False
+    intended_plan: str | None = None        # signup'ta seçilen paket kodu
+    intended_plan_label: str | None = None  # "Solo Başlangıç" vb.
 
 
 # =============================================================================
