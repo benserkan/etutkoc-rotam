@@ -416,7 +416,15 @@ def verify_callback(
         if link and link.target_owner_type == LINK_OWNER_INSTITUTION:
             target_owner_type = PlanOwnerType.INSTITUTION
             target_owner_id = link.target_owner_id
+        elif link is not None:
+            # Kullanıcı-hedefli link: plan LİNKİN HEDEFİNE aktive edilir —
+            # ödeyene DEĞİL. (2026-07-25 canlı prova bulgusu: süper admin
+            # başka koç adına ödeyince plan yanlışlıkla admin'e yazılıyordu;
+            # Mayıs testlerinde ödeyen==hedef olduğu için görünmemişti.)
+            target_owner_type = PlanOwnerType.USER
+            target_owner_id = link.target_owner_id
         else:
+            # Linksiz self-serve akış (/teacher/plan "Kartla Öde"): ödeyen = hedef.
             target_owner_type = PlanOwnerType.USER
             target_owner_id = tx.user_id
 

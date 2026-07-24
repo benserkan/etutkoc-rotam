@@ -471,6 +471,43 @@ def main() -> int:
         check("21. tek-kullanım: consumed link ikinci checkout → 400",
               r.status_code == 400, f"status={r.status_code}")
 
+        # 21b/21c. KULLANICI-hedefli linki BAŞKASI (süper admin) öderse plan
+        # LİNK HEDEFİNE aktive edilir — ödeyene DEĞİL (2026-07-25 canlı prova
+        # bulgusu: eski kod tx.user_id'yi aktive edip süper admini solo_pro yapmıştı).
+        with SessionLocal() as db:
+            db.get(User, seed["other_coach_id"]).plan = "solo_free"
+            sa_plan_before = db.get(User, seed["super_id"]).plan
+            db.commit()
+        iyzico_service._iyzico_call_create = _mock_create_success
+        r = sa.post("/api/v2/payment/admin/links", json={
+            "target_owner_type": "user", "target_owner_id": seed["other_coach_id"],
+            "plan_code": "solo_pro", "cycle": "monthly", "amount": 10,
+            "expires_in_days": 7,
+        })
+        link_u2_id = r.json().get("id")
+        with SessionLocal() as db:
+            token_u2 = db.get(PaymentLink, link_u2_id).token
+        r = sa.post(f"/api/v2/payment/link/{token_u2}/checkout")
+        tx_u2_id = r.json().get("transaction_id")
+        with SessionLocal() as db:
+            tok_u2 = db.get(PaymentTransaction, tx_u2_id).provider_reference
+        iyzico_service._iyzico_call_retrieve = _mock_retrieve_success_for_token
+        TestClient(app).post(
+            "/api/v2/payment/iyzico/callback",
+            data={"token": tok_u2}, follow_redirects=False,
+        )
+        with SessionLocal() as db:
+            target2 = db.get(User, seed["other_coach_id"])
+            payer2 = db.get(User, seed["super_id"])
+            check("21b. başkası adına ödenen kullanıcı linki → HEDEF aktive",
+                  target2.plan == "solo_pro"
+                  and target2.subscription_status == "active",
+                  f"target_plan={target2.plan} sub={target2.subscription_status}")
+            check("21c. ödeyenin (süper admin) planı DEĞİŞMEDİ",
+                  payer2.plan == sa_plan_before
+                  and payer2.subscription_status is None,
+                  f"payer_plan={payer2.plan} sub={payer2.subscription_status}")
+
         # 22. admin cancel — aktif link (link_user_id)
         r = sa.post(f"/api/v2/payment/admin/links/{link_user_id}/cancel")
         j = r.json()
