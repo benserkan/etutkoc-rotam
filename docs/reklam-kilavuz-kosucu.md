@@ -2,8 +2,10 @@
 
 > Bu dosya, reklam çalışmasının TÜM kararlarını, hazır metinlerini ve kalınan yeri
 > içerir. Yeni sohbette "Instagram reklam işine devam — docs/reklam-kilavuz-kosucu.md
-> oku" demek yeterli. Son güncelleme: 2026-07-20 (Kampanya A sonuç analizi + v3
-> kısa video + Kampanya A2 kurulum planı — bölüm 7).
+> oku" demek yeterli. Son güncelleme: 2026-07-26 (YKS başarı kartları üretildi +
+> carousel A2 setine 2. reklam olarak eklendi + **28 Tem karar çerçevesi** — bölüm 7).
+>
+> **SIRADAKİ İŞ: 28 Temmuz (Salı) değerlendirmesi — doğrudan bölüm 7'ye bak.**
 
 ---
 
@@ -220,7 +222,153 @@ konuşma şablonu. SIRADA: 23 Tem ilk gözlem (dokunma yok) → 24-25 Tem gün+
 yerleşim+yaş/cinsiyet kırılımı ile ara analiz → 27 Tem 7-gün değerlendirmesi.
 WhatsApp protokolü: ≤10 dk tek-soru yanıt + 24s tek hatırlatma.
 
-## 7) Yayın sonrası rutin
+## 7) YKS BAŞARI KARTLARI + A2'ye 2. reklam + **28 TEM KARAR ÇERÇEVESİ** (2026-07-26)
+
+### 7.1 A2 video ara sonucu (20-25 Tem) — kreatif ÇÖZMEDİ
+
+| Ölçüm | Değer |
+|---|---|
+| Harcama | 1.037,59 TL |
+| Konuşma | **4** |
+| Konuşma başına maliyet | **259,40 TL** (hedef 40-90 · eşik 150) |
+| Erişim / Gösterim | 4.038 / 6.772 |
+| Sıklık | 1,68 (yorgunluk YOK) |
+
+Kampanya A'da CPA 159,57 TL idi → **v4 videosu düzeltmedi, iki katına çıkardı.**
+Sıklık düşük olduğu için sebep kreatif yorgunluğu değil.
+
+### 7.2 KRİTİK BULGU — kitle 10 kat daralmış
+
+A2 kurulum ekranında **tahmini hedef kitle 14.400 - 16.900**. Kampanya A'da bu
+sayı **160-189 bin**di. A2'de yaş 32-53 → 35-55 çekilip **"Öğrenci (eğitim)"**
+ilgisi silinince havuz on kat küçülmüş.
+
+**Tez (28 Tem'de sınanacak):** CPA'nın 159 → 259 TL'ye çıkmasının ASIL sebebi
+kreatif değil, bu daralma. 15 binlik havuzda Meta'nın optimize edecek alanı yok;
+CPM yükseliyor. 6 günde havuzun ~%25'ine ulaşıldı, sıklık hızla tırmanacak.
+
+**KURAL: önce kitleyi genişlet, SONRA bütçeyi artır.** Küçük havuza para eklemek
+dönüşüm değil sıklık üretir → CPA'yı DÜŞÜRMEZ, YÜKSELTİR.
+
+### 7.3 YKS başarı kartları — varlıklar ÜRETİLDİ
+
+**Feed carousel (9 kart, 1080×1350):** `Desktop\etutkoc-instagram-carousel\`
+(yükleme sırasına göre yeniden adlandırılmış kopyalar) · ham çıktı
+`Desktop\etutkoc-basari-kartlari\` · script `etutkoc-reklam-kaynak\basari_kartlari_v2.py`
+
+Sıra (kaydırma derinliği düşer → ödül öne alındı; sıralama sayısı soyut, üniversite
+yerleşmesi somut): kapak → **Deniz 2.108** → **Nisanur KTÜ Tıp** → **Kaan %100
+burslu** → Şevval 4.346 → Şimal → Öğrencimiz → farkımız → CTA.
+
+Veri (ÖSYM sonuç belgelerinden): Deniz 2.108 EA 474,50 · Şevval 4.346 SAY 527,36 ·
+Öğrencimiz 18.400 SAY (adını paylaşmak istemedi) · Şimal 19.914 SAY 499,70 —
+hepsi 2026. Kaan 2.400 EA → Özyeğin %100 tam burslu · Nisanur 12.515 SAY 496,88 →
+KTÜ Tıp — 2025.
+
+**Hikâye (5 kare, 1080×1920):** `Desktop\etutkoc-instagram-story\` · script
+`basari_kartlari_story.py`. Kapak · Deniz · Nisanur · Kaan · CTA. Güvenli alan
+üst 250 / alt 420 px. Krem başlık bandı KALDIRILDI (IG'nin beyaz arayüzü krem
+üstünde okunmuyor). Yorumlar kısaltıldı — **cümle birleştirilmedi**, yalnız
+baş/son kırpma + üç nokta (referans metni kurgulanmaz).
+**HENÜZ REKLAMDA KULLANILMADI** — kullanımı 7.6'da.
+
+**Metin dosyaları:** `etutkoc-instagram-carousel\aciklama-metni.txt` (gönderi
+açıklaması) + `reklam-kurulum-notlari.txt` + `etutkoc-instagram-story\hikaye-notlari.txt`
+
+**DERS (ortam):** `D:\LGS-Program\.venv`'de PIL YOK; kart scriptleri **sistem
+python**'u ile çalışır.
+
+### 7.4 Organik paylaşım + reklam (25-26 Tem) — YAYINDA
+
+25 Tem akşamı 9 kart carousel olarak organik paylaşıldı (4:5 orijinal oran,
+filtresiz, konum Trabzon), profile sabitlendi.
+
+26 Tem: A2 setine **2. reklam** eklendi — `YKS Basari Kartlari - Carousel - v1`
+(mevcut gönderiyi kullan → Instagram carousel · CTA WhatsApp'tan Mesaj Gönder ·
+Konuşmalar Başlatın + 3 hazır soru · çok-reklamverenli ve Advantage+ kreatifi
+KAPALI). **İnceleme aşamasında.**
+
+**Set durumu:** 2 reklam (video v4 + carousel), TEK 200 TL/gün bütçeyi paylaşıyor,
+**kitle ve bütçe DEĞİŞTİRİLMEDİ** — tek değişken kreatif.
+
+Reklam metni ayrıca yazılamadı: "mevcut gönderiyi kullan" seçilince ana metin
+gönderi açıklamasından gelir. Bu yüzden açıklama, ilk 125 karakteri reklam kancası
+olacak şekilde yazıldı ("YKS 2026: öğrencilerimiz Türkiye genelinde 2.108 ve
+4.346'ncı sıraya girdi.").
+
+**Hazır sorular (carousel reklamına özel — kaynak ayırt etmeyi de sağlar):**
+"Öğrencilerinizin sonuçlarını gördüm, bilgi almak istiyorum." / "Ücretsiz tanışma
+görüşmesi planlamak istiyorum." / "Fiyat ve kontenjan bilgisi alabilir miyim?"
+Videonunki farklı → **gelen WhatsApp mesajının metni hangi reklamdan geldiğini
+söyler.**
+
+### 7.5 Meta arayüz dersleri (bu turda yakalandı)
+
+- **Mesajlaşma reklamı çoğaltma bozuk:** kopyada `* Facebook Sayfası` boş ve kilitli
+  kalıyor ("Reklamınızdan başlatılan tüm mesajlar 'e gidecek" — ad boş), Instagram
+  gönderi seçici de "Henüz Hiç Instagram Gönderisi Yok" diyor. Kimlik çözülemediği
+  için liste boş; alttaki "Seçilen gönderi" kopyadan miras kalan kayıtlı değerdir,
+  seçicinin çalıştığını KANITLAMAZ. Reklam setinde Sayfa seçili olması yetmiyor,
+  kimlik reklam düzeyinde ayrıca kurulmalı. **Çözüm: taslağı sil, aynı setin içinde
+  + Oluştur ile SIFIRDAN reklam.**
+- **Meta'nın "çoğaltmak yerine yeni bir reklam seti oluşturun" tavsiyesini UYGULAMA**
+  — aynı Trabzon kitlesinde ikinci teklif veren = kendi kendinle açık artırma +
+  bütçe bölünmesi. Çözüm daima aynı setin içinde ikinci REKLAM.
+- **Bütçe reklam bazında bölünemez.** Bütçe reklam SETİ seviyesindedir; iki reklam
+  arasındaki dağıtımı Meta'nın teslimat sistemi yapar (önce keşif, sonra kazanana
+  kaydırma). Zorla 50/50 istemek ancak ayrı set (kötü) veya A/B test aracı (kitleyi
+  böler, 15 binlik havuzda felaket) ile olur — ikisi de yasak.
+- Reklam seti listesindeki **Çoğalt** düğmesi SETİ çoğaltır. Reklam çoğaltmak için
+  bir seviye aşağı inip reklam satırında çoğaltmak gerekir.
+- Reklam adı değiştirmek yeniden incelemeye sokmaz, öğrenmeyi etkilemez.
+
+### 7.6 **28 TEMMUZ (SALI) — KARAR ÇERÇEVESİ**
+
+**Getirilecek veri:**
+1. Ads Manager → **Reklam** seviyesi, tarih aralığı **26-28 Tem**, iki reklam ayrı
+   ayrı. Sütunlar: Sonuçlar · Sonuç başına ücret · Gösterim · Erişim · **Sıklık** ·
+   **TO (bağlantı tıklaması)** · CPC · Harcanan tutar.
+2. WhatsApp: kaç mesaj geldi · kaçı **gerçekten karşılıklı yazışmaya döndü** ·
+   her birinin hangi hazır soruyla geldiği (kaynak ayrımı).
+
+**Karar ağacı:**
+
+- **Carousel CPA belirgin şekilde videonun altındaysa** → video reklamını duraklat,
+  200 TL tamamen carousel'e aksın. Sonra TEK yapısal değişiklik: 7.2'deki kitle
+  genişletmesi.
+- **İkisi de kötüyse (CPA hâlâ 200 TL üstü ve gerçek yanıt ~0)** → sorun kreatif
+  değil. Doğrudan kitle genişletmeye geç; kreatif karşılaştırmasını bırak.
+- **Sıklık > 3** → küçük havuz doyuyor; kitle genişletmesi acil.
+
+**Önerilen kitle genişletmesi (TEK değişiklik olarak yapılır):** detaylı
+hedeflemedeki **"Ergenlik Çağında Çocuğu Olan Anne Babalar (13-17)" kutusunu
+tamamen kaldır.** Meta'nın ebeveyn segmentleri çıkarımsal ve eksik; gerçek velilerin
+çoğunu dışarıda bırakıyor. Trabzon ili + yaş 35-55 + Türkçe zaten güçlü bir filtre.
+Beklenen etki: 15 bin → 100 bin üstü.
+
+**Bütçe artışı (200 → 300 TL) ancak kitle genişledikten ve maliyet düşmeye
+başladıktan SONRA.** Sırası ters yapılırsa para yakar. Ayrıca %50'lik bütçe
+değişimi öğrenme evresini sıfırlar.
+
+**Aynı anda birden fazla değişiklik YAPMA** — kreatif + kitle + bütçe birlikte
+değişirse hangisinin etki ettiği ölçülemez ve üçü de öğrenmeyi sıfırlar.
+
+### 7.7 Açık işler
+
+- **KVKK:** altı öğrenciden "sonucunu ve yorumunu ÜCRETLİ REKLAMDA kullanabilir
+  miyim" onayı alınıp ekran görüntüsü saklanacak (organik paylaşım izni ile reklam
+  izni ayrı işleme amaçları; öğrenciler 18+ olduğu için kendi onayları yeterli).
+  **Teyit edilmedi.**
+- Video reklamının adı hâlâ Meta'nın varsayılanı "Yeni Etkileşim Reklamı";
+  `Kilavuz Kosucu A2 - Reel - v4` yapılırsa rapor okunaklı olur (güvenli işlem).
+- Hikâye kareleri: (a) organik hikâye + **Öne Çıkanlar** (ücretsiz, hemen — son
+  kareye `wa.me/905056738561` bağlantı çıkartması); (b) yalnız Hikâyeler yerleşimli
+  3. reklam — **ancak carousel kazandıktan sonra.** Üç kreatifi 200 TL'ye birden
+  sokmak öğrenmeyi böler. NOT: "mevcut gönderiyi kullan" ile yerleşim başına ayrı
+  görsel verilemez → feed carousel'i Hikâyeler'de altlı üstlü boşlukla görünür
+  (bozuk değil, sadece tam ekran değil).
+
+## 8) Yayın sonrası rutin
 
 - WhatsApp'a 5-10 dk içinde dön (/tanisma şablonu) — dönüşümün yarısı hız.
 - Günlük 5 dk: Ads Manager "sohbet başına maliyet" + "sıklık" sütunları; Reel
