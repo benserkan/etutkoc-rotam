@@ -2,7 +2,8 @@
 
 > Bu dosya, reklam çalışmasının TÜM kararlarını, hazır metinlerini ve kalınan yeri
 > içerir. Yeni sohbette "Instagram reklam işine devam — docs/reklam-kilavuz-kosucu.md
-> oku" demek yeterli. Son güncelleme: 2026-07-12.
+> oku" demek yeterli. Son güncelleme: 2026-07-20 (Kampanya A sonuç analizi + v3
+> kısa video + Kampanya A2 kurulum planı — bölüm 7).
 
 ---
 
@@ -142,7 +143,84 @@ Akademi Koçluk Merkezi" app'i = platformun Cloud API (K2) çalışmasından; bu
 reklamla İLGİSİZ, DOKUNMA. Reklam, telefondaki WhatsApp (Business) uygulamasındaki
 0505 numarasıyla çalışır.
 
-## 6) Yayın sonrası rutin
+## 6) Kampanya A SONUÇ ANALİZİ (12-19 Tem 2026) + v3 video + A2 planı — 2026-07-20
+
+**Veri kaynakları:** Ads Manager "Creative Reporting" xlsx (toplam) + gün×yaş×
+cinsiyet CSV + kullanıcı WhatsApp raporu. Yerleşim kırılımı ALINMADI (eksik).
+
+**Sonuç:** 1.276,52 TL harcama · 7.069 erişim · 10.108 gösterim · sıklık 1,43 ·
+CTR %2,9 (297 tıklama, CPC 4,30) · CPM 126 TL · **8 sohbet · CPA 159,57 TL**
+(hedef 40-90'ın üstünde). **WhatsApp gerçeği: 8 sohbetin HEPSİ hayalet** — tek
+dokunuşla hazır mesaj gönderip hiçbiri yanıt yazmadı → gerçek lead 0.
+
+**Teşhisler (kanıtlı):**
+1. **Mesaj ulaşmadı:** ort. video izlenme 5 sn; koçluk mesajı 0:20'deydi →
+   izleyicilerin ~%90'ı reklamın ne sattığını duymadı (%50 işaretine ulaşan %7,5).
+2. **Tıklama→sohbet %2,7** (normal %15-30): kaçak tıklama-sonrasında; düşük
+   niyetli tıklayıcı + tek genel şablon.
+3. **Kampanya ısınırken bitti:** ilk 4 gün CPA 195 → son 3 gün 138 (18 Tem:
+   **85,8** — hedef bandın içi). Bitişli kampanya öğrenme evresini israf etti.
+4. **Yaş/cinsiyet:** Erkek 45-54 = 3 sohbet @ **55,8 TL** (yıldız). Kadın
+   35-54 = 2 sohbet @ 273 TL. **Advantage+ yaş 32-53 sınırını delmiş**: 18-24'e
+   121 TL (0 sohbet), 55+'ya 171 TL → bütçenin ~%23'ü band dışı.
+
+**KREATİF: v4 ÜRETİLDİ ✅ (reklamda BU kullanılır):**
+`Desktop\etutkoc-kilavuz-kosucu-v4.mp4` (36,0 sn · 1080×1920 · 25fps ·
+-14,6 LUFS · ~25,5 MB). Koçluk mesajı **0:04'te** (amber "LGS ve YKS
+maratonunda / çocuğunuzun kılavuzu."), **0:11-0:18 "tıpkı" köprüsü** (kullanıcı
+isteği: "Tıpkı, görme engelli koşucuya kılavuzluk eden bu koşucu gibi... koç da,
+çocuğunuzun yanında koşar." — video↔koç ilişkisi açıkça kurulur; ekranda GUIDE
+önlüklü koşucu), 0:18 Trabzon+hizmet bantları (4 kısa bant — taşma düzeltildi:
+merkez 72/76px, alt 52px, "Deneme analizi·Veli bilgilendirmesi" İKİYE bölündü),
+0:27 kapanış kartı (logo + "Ücretsiz tanışma görüşmesi" + WhatsApp). Kanca:
+"Madalyayı hiç alamayacak bir koşucu tanıyın." Kurgu: v1'den 0-4,4 (çıkış) +
+5,0-16,4 (kılavuz+atlet) + 29,8-40,8 (yarış→finiş→zafer). Ara sürüm v3-kisa
+(28,4sn, tıpkı köprüsüz) masaüstünde yedek durur.
+Üretim: `etutkoc-reklam-kaynak\gen_vo_v3.py` + `gen_vo_v4.py` (TTS segmentleri
+n1/n2/n2b/n3/n4, Kore sesi; **D:\LGS-Program kökünden çalıştırılır** — DB yolu
+göreli; DoH getaddrinfo yaması içinde) + `build_assets_v4.py` (filters_v4.txt) +
+ffmpeg (**logo girişi `-loop 1` ŞART** — yoksa tek karelik PNG fade'de
+saydamlaşıp kartta kaybolur; `-t 36.0`).
+
+**Kampanya A2 kurulum çerçevesi (yeniden yayın):**
+- v3'ü önce ORGANİK Reel olarak paylaş + profile sabitle → reklamda "mevcut
+  gönderiyi kullan".
+- Amaç/bütçe aynı: Etkileşim → mesaj → yalnız WhatsApp · 200 TL/gün ·
+  **BİTİŞ TARİHİ YOK** (7. gün elle değerlendirme — musluk modeli).
+- Hedefleme: Trabzon (il) · **yaş 35-55, minimum yaş 35 SERT kontrol**
+  (Advantage+ minimumu sert sayar → 18-24 israfı kesilir) · detaylı hedefleme
+  YALNIZ "Ergenlik Çağında Çocuğu Olan Anne Babalar (13-17)" — **"Öğrenci
+  (eğitim)" ÇIKARILDI** · Diller=Türkçe · cinsiyet tümü (kadın dışlanmaz —
+  mesaj artık ilk 10 sn'de net, yeni veriyle tekrar ölçülür).
+- Yerleşim: Manuel yalnız IG Akış+Hikâye+Reels (aynı); **4-5. gün Dağılım→
+  Yerleşim kontrolü** — çöp tıklama Reels'ten geliyorsa Reels kapatılır.
+- Ana metin: varyant 2 (soru kancalı — niyet süzer). CTA "WhatsApp'tan Mesaj Gönder".
+- **Hazır sorular (3 adet)** reklamın WhatsApp şablon ayarına: "Ücretsiz tanışma
+  görüşmesi planlamak istiyorum." / "Koçluk sistemi nasıl işliyor?" / "Fiyat ve
+  kontenjan bilgisi alabilir miyim?" (tek genel şablon 8 hayalet lead üretti).
+- **WhatsApp takip protokolü:** ilk yanıt ≤10 dk ve TEK soru ("Öğrencimiz
+  kaçıncı sınıfta?") — eski /tanisma 3 soruyu birden soruyordu, yanıt maliyeti
+  yüksek · 24 saat sessize BİR nazik hatırlatma ("kontenjan sınırlı" vurgulu).
+- Eşikler: ilk 72 saat dokunma · 5. gün CPA>150 → metin varyantı ekle · sıklık>4
+  → yeni kreatif · 7. gün gün+yaş/cinsiyet+yerleşim kırılımıyla değerlendir.
+
+**KAMPANYA A2 YAYINDA ✅ (2026-07-20):** v4 Reel organik paylaşıldı (linksiz,
+sabitlendi; mavi tik alındı — reklamda güven rozeti) → "Kilavuz Kosucu A2 -
+WhatsApp - Trabzon" kampanyası yayınlandı. Kurulum birebir: Etkileşim → manuel
+yalnız WhatsApp (0505) · konuşma maks · 200 TL/gün · **bitişsiz** · Trabzon +
+yaş 35-55 + YALNIZ "Ergenlik Çağında Çocuğu Olan Anne Babalar (13-17)" +
+Türkçe · manuel yerleşim yalnız IG (Akış+Hikâye+Reels; WhatsApp Durum/platformu
+kaldırıldı) · mevcut gönderi = v4 Reel · CTA WhatsApp · **mesaj şablonu
+"Konuşmalar Başlatın" + 3 hazır soru** (tanışma görüşmesi / sistem / fiyat-
+kontenjan; form bilinçli reddedildi) · çok-reklamverenli + Advantage+
+iyileştirmeleri + **Meta Business Agent (AI yanıt) KAPALI** · kreatif testi yok.
+Kurulum sırasında yakalanan Meta tuzakları: bütçe 300 önerisi→200'e çekildi ·
+yaş önerisi 30-60→35-55 · "Öğrenci (eğitim)" ilgisi silindi · form şablonu→
+konuşma şablonu. SIRADA: 23 Tem ilk gözlem (dokunma yok) → 24-25 Tem gün+
+yerleşim+yaş/cinsiyet kırılımı ile ara analiz → 27 Tem 7-gün değerlendirmesi.
+WhatsApp protokolü: ≤10 dk tek-soru yanıt + 24s tek hatırlatma.
+
+## 7) Yayın sonrası rutin
 
 - WhatsApp'a 5-10 dk içinde dön (/tanisma şablonu) — dönüşümün yarısı hız.
 - Günlük 5 dk: Ads Manager "sohbet başına maliyet" + "sıklık" sütunları; Reel
