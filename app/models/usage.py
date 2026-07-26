@@ -57,6 +57,8 @@ class UsageKind(str, enum.Enum):
     AI_PARENT_COMMENTARY = "ai_parent_commentary"  # Gemini — Rota veli yorumu (program|deneme anlatımı)
     AI_PARENT_COMMENTARY_VOICE = "ai_parent_commentary_voice"  # Gemini TTS — Rota veli yorumu seslendirmesi
     AI_PARENT_CHAT = "ai_parent_chat"           # Gemini — Rota veli sohbeti (soru başına)
+    AI_PARENT_CHAT_STT = "ai_parent_chat_stt"   # Gemini — veli sesli sorusu → metin (P3)
+    AI_PARENT_CHAT_TTS = "ai_parent_chat_tts"   # Gemini TTS — Rota sohbet cevabının sesi (P3)
     AI_CAREER_SYNTHESIS = "ai_career_synthesis"  # Gemini — anket sonuçları + akademik veri → kariyer önerisi
     AI_CURRICULUM_PRIORITY = "ai_curriculum_priority"  # Gemini — sıradaki üniteler akıllı öncelik (Faz 2)
     AI_WRONG_TAG = "ai_wrong_tag"           # Gemini vision — yanlış soru foto → konu/zorluk/Sokratik ipucu (YSA Faz 3)
@@ -77,6 +79,8 @@ USAGE_KIND_LABELS_TR: dict[UsageKind, str] = {
     UsageKind.AI_PARENT_COMMENTARY: "Rota Veli Yorumu",
     UsageKind.AI_PARENT_COMMENTARY_VOICE: "Rota Veli Yorumu (Ses)",
     UsageKind.AI_PARENT_CHAT: "Rota Veli Sohbeti",
+    UsageKind.AI_PARENT_CHAT_STT: "Rota Veli Sohbeti (Sesli Soru)",
+    UsageKind.AI_PARENT_CHAT_TTS: "Rota Veli Sohbeti (Sesli Cevap)",
     UsageKind.AI_CAREER_SYNTHESIS: "AI Kariyer Sentezi",
     UsageKind.AI_CURRICULUM_PRIORITY: "AI Müfredat Önceliği",
     UsageKind.AI_WRONG_TAG: "AI Yanlış Soru Etiketleme",

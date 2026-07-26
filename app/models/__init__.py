@@ -225,6 +225,7 @@ from app.models.coaching_session import (
 )
 from app.models.parent_chat import (  # noqa: E402
     PC_CHAT_DAILY_LIMIT,
+    PC_STT_DAILY_LIMIT,
     PCM_CONTEXT_MESSAGES,
     PCM_MAX_LEN,
     PCM_MIN_LEN,
@@ -570,6 +571,7 @@ __all__ = [
     "PCM_MIN_LEN",
     "PCM_MAX_LEN",
     "PC_CHAT_DAILY_LIMIT",
+    "PC_STT_DAILY_LIMIT",
     "PC_KINDS",
     "PC_KIND_PROGRAM",
     "PC_KIND_DENEME",

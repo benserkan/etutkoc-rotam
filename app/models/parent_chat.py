@@ -7,8 +7,8 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, Index, Integer, String, Text, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy import DateTime, ForeignKey, Index, Integer, LargeBinary, String, Text, func
+from sqlalchemy.orm import Mapped, deferred, mapped_column
 
 from app.database import Base
 
@@ -23,6 +23,8 @@ PCM_CONTEXT_MESSAGES = 10
 # Soru uzunluk sınırları
 PCM_MIN_LEN = 2
 PCM_MAX_LEN = 500
+# Veli başına günde en fazla SESLİ SORU çevirisi (STT)
+PC_STT_DAILY_LIMIT = 15
 
 
 class ParentChatMessage(Base):
@@ -40,6 +42,16 @@ class ParentChatMessage(Base):
     )
     role: Mapped[str] = mapped_column(String(8), nullable=False)
     body: Mapped[str] = mapped_column(Text, nullable=False)
+
+    # P3: Rota cevabının ses önbelleği — ilk dinlemede üretilir, saklanır
+    # (deferred: liste sorguları byte'ları yüklemez). Mesaj immutable → ses
+    # bayatlamaz.
+    audio: Mapped[bytes | None] = deferred(mapped_column(LargeBinary, nullable=True))
+    audio_content_type: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    audio_generated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )

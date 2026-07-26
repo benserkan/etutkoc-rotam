@@ -656,6 +656,7 @@ class ChatMessageModel(BaseModel):
     role: str                       # veli | rota
     body: str
     created_at: datetime
+    has_audio: bool = False         # P3: bu cevap için ses önbelleği hazır mı
 
 
 class ChatChip(BaseModel):
@@ -685,6 +686,17 @@ class ChatAskBody(BaseModel):
 class ChatAskResult(BaseModel):
     messages: list[ChatMessageModel]  # [veli sorusu, rota cevabı]
     daily_left: int = 0
+
+
+class ChatTranscribeBody(BaseModel):
+    """P3: sesli soru → metin. Sonuç input kutusuna dolar, otomatik GÖNDERİLMEZ."""
+    audio_base64: str
+    media_type: str
+
+
+class ChatTranscribeResult(BaseModel):
+    text: str
+    stt_daily_left: int = 0
 
 
 # =============================================================================

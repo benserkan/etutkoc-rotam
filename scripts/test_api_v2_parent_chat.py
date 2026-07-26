@@ -16,6 +16,15 @@ Senaryolar:
  10. günlük limit: kalan hakkı doldur → 429 daily_limit_reached
  11. verisiz çocukta soru → yine cevap (paket boş; model 'veri yok' der) 200
  12. commentary smoke etkileşimi yok (chat kredisi commentary limitine sayılmaz)
+P3 (sohbete ses — STT/TTS monkeypatch):
+ 13. transcribe happy → text + 2 STT kredisi + stt_daily_left=14
+ 14. transcribe kapılar: boş ses 422 + geçersiz tür 422
+ 15. transcribe yabancı veli 404 · free koç 403
+ 16. voice ilk istek → charged=True + 2 TTS kredisi; GET chat has_audio=True
+ 17. voice tekrar → charged=False (önbellek, kredi değişmez)
+ 18. audio GET → 200 + doğru bytes/content-type
+ 19. veli mesajına voice 422 not_rota_message · olmayan mesaj 404
+ 20. STT günlük limiti (15) → kalan hak 200, sonra 429
 """
 from __future__ import annotations
 
@@ -189,12 +198,12 @@ def _login(email: str) -> TestClient:
     return c
 
 
-def _credits(parent_id: int) -> int:
+def _credits(parent_id: int, kind=None) -> int:
     from app.models import UsageKind
     with SessionLocal() as db:
         rows = db.query(UsageEvent).filter(
             UsageEvent.actor_user_id == parent_id,
-            UsageEvent.kind == UsageKind.AI_PARENT_CHAT,
+            UsageEvent.kind == (kind or UsageKind.AI_PARENT_CHAT),
         ).all()
         return sum(r.credits for r in rows)
 
@@ -301,6 +310,107 @@ def main() -> int:
         r = p1.get(f"/api/v2/parent/students/{sid}/commentary?kind=program")
         check("12. commentary daily_left hâlâ 6 (chat sayılmaz)",
               r.status_code == 200 and r.json()["daily_left"] == 6, r.text[:120])
+
+        # ---------------- P3: sohbete ses ----------------
+        import base64
+        from app.models import UsageKind
+        import app.services.ai_session_capture as cap_mod
+        import app.services.tts as tts_mod
+
+        orig_tr = cap_mod.transcribe_audio
+        orig_tts = tts_mod.synthesize_speech
+        FAKE_MP3 = b"ID3FAKEMP3BYTES-P3"
+
+        def _fake_transcribe(audio_base64, media_type, **kw):
+            return "Oğlum programa uyuyor mu?"
+
+        def _fake_tts(text, **kw):
+            return FAKE_MP3, "audio/mpeg"
+
+        cap_mod.transcribe_audio = _fake_transcribe
+        tts_mod.synthesize_speech = _fake_tts
+        try:
+            b64 = base64.b64encode(b"fake-webm-audio-bytes").decode()
+
+            r = p1.post(f"/api/v2/parent/students/{sid}/chat/transcribe",
+                        json={"audio_base64": b64, "media_type": "audio/webm"})
+            d = r.json()
+            check("13. transcribe → metin + 2 STT kredisi + kalan 14",
+                  r.status_code == 200
+                  and d["text"] == "Oğlum programa uyuyor mu?"
+                  and d["stt_daily_left"] == 14
+                  and _credits(seed["p1"], UsageKind.AI_PARENT_CHAT_STT) == 2,
+                  f"{r.status_code} {r.text[:150]}")
+
+            r1 = p1.post(f"/api/v2/parent/students/{sid}/chat/transcribe",
+                         json={"audio_base64": "", "media_type": "audio/webm"})
+            r2 = p1.post(f"/api/v2/parent/students/{sid}/chat/transcribe",
+                         json={"audio_base64": b64, "media_type": "video/avi"})
+            check("14. boş ses 422 + geçersiz tür 422",
+                  r1.status_code == 422 and r1.json()["detail"]["code"] == "audio_required"
+                  and r2.status_code == 422
+                  and r2.json()["detail"]["code"] == "invalid_media_type",
+                  f"{r1.status_code}/{r2.status_code}")
+
+            ra = p2.post(f"/api/v2/parent/students/{sid}/chat/transcribe",
+                         json={"audio_base64": b64, "media_type": "audio/webm"})
+            rb = p2.post(f"/api/v2/parent/students/{seed['free_s']}/chat/transcribe",
+                         json={"audio_base64": b64, "media_type": "audio/webm"})
+            check("15. yabancı veli 404 + free koç 403",
+                  ra.status_code == 404 and rb.status_code == 403,
+                  f"{ra.status_code}/{rb.status_code}")
+
+            # rota mesajı bul (7. senaryoda oluştu)
+            msgs = p1.get(f"/api/v2/parent/students/{sid}/chat").json()["messages"]
+            rota_ids = [m["id"] for m in msgs if m["role"] == "rota"]
+            veli_ids = [m["id"] for m in msgs if m["role"] == "veli"]
+            mid = rota_ids[-1]
+
+            r = p1.post(f"/api/v2/parent/students/{sid}/chat/{mid}/voice")
+            d = r.json()
+            msgs2 = p1.get(f"/api/v2/parent/students/{sid}/chat").json()["messages"]
+            flag = next(m["has_audio"] for m in msgs2 if m["id"] == mid)
+            check("16. voice ilk → charged + 2 TTS kredisi + has_audio",
+                  r.status_code == 200 and d["charged"] is True
+                  and d["audio_content_type"] == "audio/mpeg" and flag is True
+                  and _credits(seed["p1"], UsageKind.AI_PARENT_CHAT_TTS) == 2,
+                  f"{r.status_code} {r.text[:150]}")
+
+            r = p1.post(f"/api/v2/parent/students/{sid}/chat/{mid}/voice")
+            check("17. voice tekrar → önbellek (charged=False, kredi sabit)",
+                  r.status_code == 200 and r.json()["charged"] is False
+                  and _credits(seed["p1"], UsageKind.AI_PARENT_CHAT_TTS) == 2,
+                  r.text[:120])
+
+            r = p1.get(f"/api/v2/parent/students/{sid}/chat/{mid}/audio")
+            check("18. audio GET → bytes + content-type",
+                  r.status_code == 200 and r.content == FAKE_MP3
+                  and r.headers["content-type"].startswith("audio/mpeg"),
+                  f"{r.status_code} {len(r.content)}b")
+
+            rv = p1.post(f"/api/v2/parent/students/{sid}/chat/{veli_ids[0]}/voice")
+            rn = p1.post(f"/api/v2/parent/students/{sid}/chat/99999999/voice")
+            check("19. veli mesajı 422 not_rota + olmayan mesaj 404",
+                  rv.status_code == 422
+                  and rv.json()["detail"]["code"] == "not_rota_message"
+                  and rn.status_code == 404,
+                  f"{rv.status_code}/{rn.status_code}")
+
+            left = p1.post(f"/api/v2/parent/students/{sid}/chat/transcribe",
+                           json={"audio_base64": b64, "media_type": "audio/webm"}
+                           ).json()["stt_daily_left"]
+            codes = []
+            for _ in range(left + 1):
+                rr = p1.post(f"/api/v2/parent/students/{sid}/chat/transcribe",
+                             json={"audio_base64": b64, "media_type": "audio/webm"})
+                codes.append(rr.status_code)
+            check("20. STT günlük limit → kalan 200, sonra 429",
+                  all(c == 200 for c in codes[:-1]) and codes[-1] == 429
+                  and rr.json()["detail"]["code"] == "daily_limit_reached",
+                  str(codes))
+        finally:
+            cap_mod.transcribe_audio = orig_tr
+            tts_mod.synthesize_speech = orig_tts
 
     finally:
         gemini_mod.generate = orig

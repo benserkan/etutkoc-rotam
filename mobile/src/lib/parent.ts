@@ -270,6 +270,8 @@ export interface ChatMessage {
   role: "veli" | "rota";
   body: string;
   created_at: string;
+  /** P3: bu Rota cevabi icin ses onbellegi hazir mi (tekrar dinleme kredisiz) */
+  has_audio: boolean;
 }
 export interface ChatChip {
   id: string;
@@ -301,6 +303,32 @@ export function askParentChat(id: number, message: string) {
     method: "POST",
     body: { message },
   });
+}
+
+// ---- P3: sohbete ses (sesli soru STT + cevap balonu TTS) ----
+export interface ChatTranscribeResult {
+  text: string;
+  stt_daily_left: number;
+}
+/** Sesli soru -> metin; sonuc input kutusuna dolar, otomatik GONDERILMEZ. */
+export function transcribeParentChat(
+  id: number, audioBase64: string, mediaType: string,
+) {
+  return apiRequest<ChatTranscribeResult>(
+    `/api/v2/parent/students/${id}/chat/transcribe`,
+    { method: "POST", body: { audio_base64: audioBase64, media_type: mediaType } },
+  );
+}
+/** Rota cevabinin sesi — ilk istekte uretilir (kredi), sonrasi onbellekten. */
+export function parentChatMessageVoice(id: number, messageId: number) {
+  return apiRequest<CommentaryVoiceResult>(
+    `/api/v2/parent/students/${id}/chat/${messageId}/voice`,
+    { method: "POST" },
+  );
+}
+/** Mesaj degismez -> ses bayatlamaz; cache-bust gerekmez. */
+export function parentChatAudioPath(id: number, messageId: number) {
+  return `/api/v2/parent/students/${id}/chat/${messageId}/audio`;
 }
 
 export function getParentExams(id: number): Promise<ParentExamsResponse> {

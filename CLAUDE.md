@@ -254,9 +254,50 @@ healthz/site 200 · rehber varlıkları (avatar/shot/mp3) 200 · yeni uçlar ano
 rehber gerçek kullanıcının kendi durumuyla açılır; veli asistanı gerçek
 ücretli koç + rıza ister. Mobil değişiklikler OTA yayınlanana kadar canlı
 uygulamaya GİTMEZ (JS-only, sıradaki OTA'ya hazır).
-**SIRADA:** **P3** sohbete ses (sesli soru=dikte STT reuse + sesli cevap=TTS
-katmanı hazır; parent_chat_messages'a ses kolonu küçük migration) → **P4**
-proaktif push tetikleri.
+**PAKET 3 — SOHBETE SES, KOD HAZIR (2026-07-26, migration `d4e7h0j1j33d`,
+COMMIT/DEPLOY BEKLİYOR):** sesli soru (STT) + cevap balonu sesi (TTS).
+- **Migration `d4e7h0j1j33d`** (← c3d6g9h0h22c, additive): `parent_chat_messages`e
+  `audio` (LargeBinary, model'de deferred) + `audio_content_type` +
+  `audio_generated_at`. Mesajlar immutable → ses ASLA bayatlamaz (cache-bust
+  gerekmez). Yerel DB'ye uygulandı.
+- **Yeni kind'lar (migration'sız, ölçüm ayrı):** `AI_PARENT_CHAT_STT`=2
+  ("Rota Veli Sohbeti (Sesli Soru)") + `AI_PARENT_CHAT_TTS`=2 ("… (Sesli
+  Cevap)"). STT günlük rayı `PC_STT_DAILY_LIMIT=15` (soru limitinden AYRI;
+  `parent_chat.stt_daily_count/left`).
+- **3 uç** (parent.py, hepsi kilit-dışı desen): POST `/students/{id}/chat/
+  transcribe` (JSON base64 — koç dikte sözleşmesi; sonuç input kutusuna dolar,
+  OTOMATİK GÖNDERMEZ; ses SAKLANMAZ; kapılar: gate 403 · STT limit 429 ·
+  audio_required/audio_too_large/invalid_media_type 422 · kredi 402) · POST
+  `/chat/{message_id}/voice` (yalnız role=rota — veli mesajı 422
+  not_rota_message; ilk üretim kredi, tekrar charged=False; eşzamanlık: ses
+  belirdiyse ücretsiz dön) · GET `/chat/{message_id}/audio` (stream, no-store).
+  `ChatMessageModel.has_audio` eklendi. Sahiplik dışı 404
+  (`_chat_rota_message_or_404`, undefer audio).
+- **Web** (`rota-chat.tsx`): input yanında mikrofon (MediaRecorder,
+  `pickAudioMime` webm/mp4/ogg + kayıt süresi sayacı + kare-durdur →
+  base64 → transcribe → kutuya dolar) + her Rota balonunda **Dinle/Duraklat**
+  (paylaşılan `Audio`; çalarken o balonun avatarı konuşur; voice POST her
+  tıklamada — hazırsa sunucu ücretsiz döner). lint dersi:
+  `lgs/missing-invalidate` susturması `useMutation` ÇAĞRI satırının üstüne
+  (onSuccess'e değil).
+- **Mobil** (RN paritesi): kayıt = dikte deseni (useAudioRecorder +
+  RecordingPresets + `File(uri).base64()` + media_type "audio/mp4"), balon
+  başına dinle = createAudioPlayer({uri, headers Authorization}) + 600ms
+  playing nabzı. OTA yayınlanana kadar canlıya gitmez.
+- **Test:** smoke chat **20/20** (13-20 P3: transcribe kredi/kapılar/yabancı
+  404 + voice ilk-kredi/önbellek + audio bytes + not_rota 422 + STT limit 429)
+  + commentary 20/20 regresyon; web tsc+eslint, mobil tsc temiz.
+- **GERÇEK ZİNCİR KANITI** (`scripts/sim_p3_voice_real.py`, :8081 + DNS yaması):
+  kendi TTS'imizle üretilen soru sesi → transcribe → GERÇEK Gemini STT;
+  uzun cümle **kelimesi kelimesine** doğru ("Merhaba Rota. Oğlum bu hafta
+  kendisine verilen ödevleri tamamladı mı?…"); çok kısa sentetik kayıtta sapma
+  normal. Voice: gerçek TTS 21.7sn → 374KB MP3 → tekrar charged=False → stream
+  OK. Playwright E2E (:3000): mikrofon + 5 balonda Dinle; önbellekli balonda
+  Dinle→Duraklat→Dinle döngüsü + konuşan avatar doğrulandı; önbelleksiz
+  balonda "Ses hazırlanıyor…" beklenen davranış.
+**SIRADA:** kullanıcı yerelde inceler (mikrofon gerçek cihaz ister) →
+commit+deploy → **P4** proaktif push tetikleri (deneme importu/hafta yayını →
+"Rota yorumlamaya hazır") → mobil OTA.
 
 ---
 
@@ -1244,10 +1285,10 @@ birlikte güncellenir); footer NAP zaten vardı. Prod'da doğrulandı.
 
 ---
 
-## Instagram "Kılavuz Koşucu" reklamı — Kampanya A **CANLI/AKTİF** (2026-07-12)
+## Instagram reklamı — Kampanya A2 CANLI + YKS başarı kartları carousel eklendi (2026-07-26)
 
 **TÜM detay + hazır metinler + kalınan yer: `docs/reklam-kilavuz-kosucu.md`** (yeni
-sohbette önce onu oku). Özet: paralimpik kılavuz koşucu metaforuyla ETÜTKOÇ tanıtımı.
+sohbette önce onu oku — **sıradaki iş bölüm 7.6: 28 Tem karar çerçevesi**). Özet: paralimpik kılavuz koşucu metaforuyla ETÜTKOÇ tanıtımı.
 İki ayrı iş: **Kampanya A (ANA) = Trabzon YEREL birebir koçluk** (Serkan tek koç,
 hedef WhatsApp'tan ücretsiz tanışma görüşmesi) · **Kampanya B = rotam.etutkoc.com
 ULUSAL koç kitlesi** (henüz başlamadı; Trafik + UTM→Plausible).
@@ -1264,9 +1305,22 @@ ULUSAL koç kitlesi** (henüz başlamadı; Trafik + UTM→Plausible).
   ~170 bin) · manuel yerleşim **yalnız IG Akış+Hikâye+Reels** · tüm Advantage+
   "iyileştirme"leri KAPALI · kreatif = organik Reel. **A/B YOK** (bilinçli — küçük
   kitlede bütçeyi böler); varyant 2 yalnız CPA>150 TL kalırsa 2. reklam olarak eklenir.
-- **SIRADAKİ:** 15-16 Tem CPA kontrolü (40-90 TL normal) → **19 Tem kampanya
-  otomatik durur → Ads Manager çıktısıyla değerlendirme** (uzat / yeni kanca / Eylül'e
-  dinlendir). Takvim tanışma görüşmeleriyle dolarsa reklamı DURDUR (musluk modeli).
+- **DURUM (2026-07-26):** Kampanya A bitti (CPA 159,57 TL · 8 sohbetin hepsi hayalet).
+  **Kampanya A2** 20 Tem'den beri yayında (v4 video, bitişsiz, 200 TL/gün) — ara
+  sonuç 20-25 Tem: 1.037,59 TL · **4 konuşma · CPA 259,40 TL** (kreatif düzeltmedi).
+  **KRİTİK BULGU:** A2 kitlesi **14.400-16.900** (A'da 160-189 bin) — yaş 35-55 +
+  tek ilgi kutusu havuzu 10 kat daraltmış; CPA'nın ikiye katlanmasının muhtemel ana
+  sebebi bu. 25 Tem: **9 kartlık YKS başarı carousel'i** organik paylaşıldı +
+  profile sabitlendi; 26 Tem A2 setine **2. reklam** olarak eklendi (aynı 200 TL,
+  kitle DEĞİŞMEDİ → tek değişken kreatif). Ayrıca 5 kare 9:16 hikâye varyantı hazır
+  (henüz kullanılmadı).
+- **SIRADAKİ — 28 Tem (Salı):** reklam bazında 26-28 Tem verisi + WhatsApp'ta
+  **gerçekten yanıt yazan** kişi sayısı → karar ağacı `docs/reklam-kilavuz-kosucu.md`
+  bölüm 7.6. Özet: carousel kazanırsa videoyu duraklat → SONRA tek değişiklik olarak
+  kitleyi genişlet ("Ergenlik Çağında Çocuğu Olan Anne Babalar" kutusunu kaldır) →
+  maliyet düşerse EN SON bütçe 300 TL. **Sıra ters yapılmaz** (küçük havuza para
+  eklemek sıklık üretir, CPA'yı yükseltir). Aynı anda birden fazla değişiklik yasak.
+  Takvim tanışma görüşmeleriyle dolarsa reklamı DURDUR (musluk modeli).
 - **DERS (Meta arayüzü):** adsmanager/billing linkleri IG kimliğine kilitlenip
   "ig_no_ad_account" verebiliyor → **gizli pencerede FB profiliyle** gir. Konum tipi
   "bu konumda YAŞAYAN kişiler" Advantage+ modunda arayüzden kaldırılmış → turist

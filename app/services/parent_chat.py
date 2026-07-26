@@ -69,6 +69,26 @@ def chat_daily_left(db: Session, parent_id: int) -> int:
     return max(0, PC_CHAT_DAILY_LIMIT - chat_daily_count(db, parent_id))
 
 
+def stt_daily_count(db: Session, parent_id: int) -> int:
+    """Velinin bugünkü SESLİ SORU çevirisi (STT) sayısı — kendi rayı (P3)."""
+    day_start = datetime.combine(date.today(), time.min, tzinfo=timezone.utc)
+    return (
+        db.query(func.count(UsageEvent.id))
+        .filter(
+            UsageEvent.kind == UsageKind.AI_PARENT_CHAT_STT,
+            UsageEvent.actor_user_id == parent_id,
+            UsageEvent.occurred_at >= day_start,
+        )
+        .scalar()
+        or 0
+    )
+
+
+def stt_daily_left(db: Session, parent_id: int) -> int:
+    from app.models import PC_STT_DAILY_LIMIT
+    return max(0, PC_STT_DAILY_LIMIT - stt_daily_count(db, parent_id))
+
+
 # ---------------------------------------------------------------------------
 # Geçmiş
 # ---------------------------------------------------------------------------

@@ -89,6 +89,8 @@ KIND_CREDITS: dict[UsageKind, int] = {
     UsageKind.AI_PARENT_COMMENTARY: 6,  # Gemini — Rota veli yorumu (bölümlü metin + TTS metni)
     UsageKind.AI_PARENT_COMMENTARY_VOICE: 2,  # Gemini TTS — yorumun ilk seslendirmesi (tekrar dinleme ücretsiz)
     UsageKind.AI_PARENT_CHAT: 3,  # Gemini — Rota veli sohbeti (soru başına; günlük veli limiti ayrıca)
+    UsageKind.AI_PARENT_CHAT_STT: 2,  # Gemini — veli sesli sorusu → metin (günde 15)
+    UsageKind.AI_PARENT_CHAT_TTS: 2,  # Gemini TTS — sohbet cevabı sesi (ilk dinleme; tekrar ücretsiz)
     UsageKind.AI_CAREER_SYNTHESIS: 8,  # Gemini — en geniş bağlam (4 anket + akademik veri)
     UsageKind.AI_CURRICULUM_PRIORITY: 4,  # Gemini — sıradaki üniteler akıllı öncelik (Faz 2)
     UsageKind.AI_WRONG_TAG: 2,  # Gemini vision — tek soru fotoğrafı (dar bağlam, ucuz)

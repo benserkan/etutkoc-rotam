@@ -1984,7 +1984,10 @@ from app.routes.api_v2.schemas.parent import (  # noqa: E402
 
 
 def _chat_msg_model(m) -> ChatMessageModel:
-    return ChatMessageModel(id=m.id, role=m.role, body=m.body, created_at=m.created_at)
+    return ChatMessageModel(
+        id=m.id, role=m.role, body=m.body, created_at=m.created_at,
+        has_audio=bool(m.audio_content_type),
+    )
 
 
 @router.get("/students/{student_id}/chat")
@@ -2088,4 +2091,208 @@ def parent_chat_ask_v2(
     return ChatAskResult(
         messages=[_chat_msg_model(m1), _chat_msg_model(m2)],
         daily_left=pch.chat_daily_left(db, user.id),
+    )
+
+
+# ---------------------------------------------------------------------------
+# Rota Veli Asistanı P3 — sohbete ses (sesli soru STT + cevap balonu TTS)
+# ---------------------------------------------------------------------------
+
+from app.routes.api_v2.schemas.parent import (  # noqa: E402
+    ChatTranscribeBody,
+    ChatTranscribeResult,
+)
+
+
+def _chat_rota_message_or_404(db: Session, user: User, student_id: int, message_id: int):
+    """Velinin kendi sohbetindeki ROTA mesajı — sahiplik dışı her şey 404."""
+    from sqlalchemy.orm import undefer
+    from app.models import PCM_ROLE_ROTA, ParentChatMessage
+
+    m = (
+        db.query(ParentChatMessage)
+        .options(undefer(ParentChatMessage.audio))
+        .filter(
+            ParentChatMessage.id == message_id,
+            ParentChatMessage.parent_id == user.id,
+            ParentChatMessage.student_id == student_id,
+        )
+        .first()
+    )
+    if m is None:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "message_not_found",
+            "message": "Mesaj bulunamadı."})
+    if m.role != PCM_ROLE_ROTA:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "not_rota_message",
+            "message": "Yalnız Rota\'nın cevapları seslendirilir."})
+    return m
+
+
+@router.post("/students/{student_id}/chat/transcribe")
+def parent_chat_transcribe_v2(
+    student_id: int,
+    body: ChatTranscribeBody,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Sesli soru → DÜZ METİN (input kutusuna dolar, otomatik GÖNDERİLMEZ).
+
+    GİZLİLİK: ses SAKLANMAZ — yalnız bu çağrıda işlenir (ücretli Gemini anahtarı).
+    Kredi koçun havuzundan (2); veli başına günde PC_STT_DAILY_LIMIT çeviri.
+    """
+    from app.models import UsageKind
+    from app.services import parent_chat as pch
+    from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
+    from app.services.ai_session_capture import ALLOWED_AUDIO, transcribe_audio
+    from app.services.credits import (
+        CreditBlocked, CreditOwner, check_credit_available, consume_credits,
+    )
+
+    student = _get_student_or_404(db, user, student_id)
+    coach, ai_available, reason = _parent_insight_gate(db, student)
+    if not ai_available:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_not_available",
+            "message": reason or "Sesli soru şu an kullanılamıyor."})
+
+    if pch.stt_daily_left(db, user.id) <= 0:
+        raise HTTPException(status_code=429, detail={
+            "error": "rate_limited", "code": "daily_limit_reached",
+            "message": "Bugünlük sesli soru hakkın doldu — soruyu yazarak sorabilirsin."})
+
+    audio = (body.audio_base64 or "").strip()
+    if not audio:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "audio_required", "message": "Ses kaydı boş."})
+    if len(audio) > 18_000_000:  # ~13MB ham ses
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "audio_too_large",
+            "message": "Ses kaydı çok uzun/büyük."})
+    if body.media_type not in ALLOWED_AUDIO:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "invalid_media_type",
+            "message": "Desteklenmeyen ses türü (webm/mp4/ogg/mp3/wav)."})
+
+    owner = CreditOwner.for_user(coach)
+    if not check_credit_available(db, owner=owner, kind=UsageKind.AI_PARENT_CHAT_STT).ok:
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu."})
+
+    # Uzun STT çağrısı sırasında SQLite kilidi tutma (2026-07-26 dersi):
+    # ön-kontroller bitti, işlemi kapat → saf çağrı → kısa atomik kredi yazımı.
+    db.commit()
+    try:
+        text = transcribe_audio(audio, body.media_type)
+    except AIInvalidResponse as e:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "voice_unreadable",
+            "message": f"Ses anlaşılamadı: {e}"})
+    except AIServiceUnavailable as e:
+        raise HTTPException(status_code=502, detail={
+            "error": "upstream_unavailable", "code": "ai_unavailable",
+            "message": f"Yapay zekâ servisi şu an kullanılamıyor: {e}"})
+
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_PARENT_CHAT_STT,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            ctx.set_metadata({"student_id": student_id, "by": "parent"})
+        db.commit()
+    except CreditBlocked:
+        db.rollback()
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu."})
+    return ChatTranscribeResult(text=text, stt_daily_left=pch.stt_daily_left(db, user.id))
+
+
+@router.post("/students/{student_id}/chat/{message_id}/voice")
+def parent_chat_voice_v2(
+    student_id: int,
+    message_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Rota cevabının sesi — İLK istekte üretilir (kredi), sonrası önbellekten."""
+    from datetime import datetime as _dt, timezone as _tz
+    from app.models import UsageKind
+    from app.services.ai_book_template import AIServiceUnavailable as _Unavail
+    from app.services.credits import (
+        CreditBlocked, CreditOwner, check_credit_available, consume_credits,
+    )
+    from app.services.tts import MAX_SPEECH_CHARS, synthesize_speech
+
+    student = _get_student_or_404(db, user, student_id)
+    m = _chat_rota_message_or_404(db, user, student.id, message_id)
+    if m.audio is not None and m.audio_content_type:
+        return CommentaryVoiceResult(
+            has_audio=True, audio_content_type=m.audio_content_type, charged=False)
+
+    coach, ai_available, reason = _parent_insight_gate(db, student)
+    if not ai_available:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_not_available",
+            "message": reason or "Seslendirme şu an kullanılamıyor."})
+
+    owner = CreditOwner.for_user(coach)
+    if not check_credit_available(db, owner=owner, kind=UsageKind.AI_PARENT_CHAT_TTS).ok:
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu."})
+
+    # Kilit-dışı TTS (2026-07-26 dersi). Mesaj immutable → içerik yarışı yok.
+    speech = m.body[:MAX_SPEECH_CHARS]
+    db.commit()
+    try:
+        audio, content_type = synthesize_speech(speech)
+    except _Unavail:
+        raise HTTPException(status_code=502, detail={
+            "error": "upstream_unavailable", "code": "ai_unavailable",
+            "message": "Seslendirme servisi şu an kullanılamıyor, birkaç dakika sonra deneyin."})
+
+    # Kısa atomik yazım + yarış koruması
+    m = _chat_rota_message_or_404(db, user, student.id, message_id)
+    if m.audio is not None and m.audio_content_type:
+        # Eşzamanlı başka istek üretti — bizimkini at, ÜCRETSİZ dön
+        return CommentaryVoiceResult(
+            has_audio=True, audio_content_type=m.audio_content_type, charged=False)
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_PARENT_CHAT_TTS,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            ctx.set_metadata({"student_id": student_id, "message_id": message_id, "by": "parent"})
+        m.audio = audio
+        m.audio_content_type = content_type
+        m.audio_generated_at = _dt.now(_tz.utc)
+        db.commit()
+    except CreditBlocked:
+        db.rollback()
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu."})
+    return CommentaryVoiceResult(has_audio=True, audio_content_type=content_type, charged=True)
+
+
+@router.get("/students/{student_id}/chat/{message_id}/audio")
+def parent_chat_audio_v2(
+    student_id: int,
+    message_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Sohbet cevabının sesini akıt (ücretsiz — üretim /voice ucunda)."""
+    student = _get_student_or_404(db, user, student_id)
+    m = _chat_rota_message_or_404(db, user, student.id, message_id)
+    if m.audio is None or not m.audio_content_type:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "audio_not_found",
+            "message": "Henüz seslendirme yok."})
+    return Response(
+        content=m.audio, media_type=m.audio_content_type,
+        headers={"Cache-Control": "private, max-age=0, no-store"},
     )
