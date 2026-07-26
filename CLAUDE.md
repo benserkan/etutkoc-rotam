@@ -107,7 +107,7 @@ iyzico canlı doğrulama = 10₺ gerçek prova + iade.
 
 ---
 
-## YENİ İŞ — Rota Veli Asistanı (soru-cevap + sesli yorumlayıcı) — KARARLAR ALINDI, Paket 1 migration onayı bekliyor (2026-07-26)
+## YENİ İŞ — Rota Veli Asistanı (soru-cevap + sesli yorumlayıcı) — P1+P2 CANLI (2026-07-26, commit `546f84e`)
 
 **Bağlam:** Rakip analizindeki 2 büyük iş (YSA + deneme analizi) bitti; sırada
 veli için AI destekli yorumlama. Kullanıcı çerçevesi: veliler teknolojide zayıf;
@@ -142,8 +142,7 @@ soru sesi SAKLANMAZ; TTS=Gemini "Kore", rehber TTS kuralları).
   platform sübvansiyonu fikri açık ("belki yükün bir kısmını Rotam çekmeli") —
   kod, belirli kind'ları platform karşılayacak esneklikte tutulur; 1-2 ay
   ölçümle karar.
-**PAKET 1 KOD HAZIR (2026-07-26, migration `b2c5f8g9g11b` — dev'de uygulandı;
-COMMIT/DEPLOY BEKLİYOR):**
+**PAKET 1 — CANLI (migration `b2c5f8g9g11b`; deploy 2026-07-26, prod head `c3d6g9h0h22c`, imajda ffmpeg 7.1 doğrulandı):**
 - **Migration `b2c5f8g9g11b`** (← a1b4e7f8e00a, additive): `parent_commentaries`
   (student×kind unique; sections_json + speech_text + based_on_json + audio
   LargeBinary DEFERRED + audio_content_type/generated_at). parent_insights
@@ -197,8 +196,7 @@ COMMIT/DEPLOY BEKLİYOR):**
   commit, dışarıda çağır, kısa atomik yaz (yarış korumalı). (3) Smoke'ta
   UsageEvent sayımı id-reuse kirliliğine açık — seed'de yeni id'lerin eski
   UsageEvent/CreditAccount kalıntıları savunmacı silinir.
-**PAKET 2 KOD HAZIR (2026-07-26, migration `c3d6g9h0h22c` — dev'de uygulandı;
-COMMIT/DEPLOY BEKLİYOR):** yazılı sohbet + kredisiz karşılama + çipler.
+**PAKET 2 — CANLI (migration `c3d6g9h0h22c`; commit `546f84e` ile deploy):** yazılı sohbet + kredisiz karşılama + çipler.
 - **Migration `c3d6g9h0h22c`** (← b2c5f8g9g11b, additive): `parent_chat_messages`
   (parent×student thread; role veli|rota; CASCADE — KVKK silmede gider).
 - **Backend:** `parent_chat.py` (TEK MERKEZ): `build_greeting` kural-tabanlı
@@ -248,14 +246,21 @@ COMMIT/DEPLOY BEKLİYOR):** yazılı sohbet + kredisiz karşılama + çipler.
   **KURAL:** gecikmeye duyarlı AI uçları (sohbet) `prefer_fast=True`;
   json_mode=False düz-metin çağrılarında da max_output_tokens ≥8192 (düşünme
   payı).
-**SIRADA:** kullanıcı yerelde inceler (rehber-veli@etutkoc.demo /
-RehberDemo2026! → Elif → Rota kartı "Rota'ya Sor") → commit+deploy (web+worker+
-next + **Dockerfile ffmpeg rebuild**) → **P3** sohbete ses (sesli soru=dikte
-STT reuse + sesli cevap=TTS katmanı hazır) → **P4** proaktif push tetikleri.
+**DEPLOY (2026-07-26):** commit `d6cc2c8` (rehber) + `546f84e` (P1+P2) +
+`2606611` (reklam docs) → sunucuda pull + pg_dump yedek + Plausible-stop'lu
+imaj rebuild → CANLI doğrulandı: alembic head `c3d6g9h0h22c` · ffmpeg 7.1.5 ·
+healthz/site 200 · rehber varlıkları (avatar/shot/mp3) 200 · yeni uçlar anon
+401. NOT: demo hesaplar (rehber-koc/elif/veli) yalnız DEV'de — prod'da
+rehber gerçek kullanıcının kendi durumuyla açılır; veli asistanı gerçek
+ücretli koç + rıza ister. Mobil değişiklikler OTA yayınlanana kadar canlı
+uygulamaya GİTMEZ (JS-only, sıradaki OTA'ya hazır).
+**SIRADA:** **P3** sohbete ses (sesli soru=dikte STT reuse + sesli cevap=TTS
+katmanı hazır; parent_chat_messages'a ses kolonu küçük migration) → **P4**
+proaktif push tetikleri.
 
 ---
 
-## YENİ İŞ — Rota Rehberi (rol bazlı AI onboarding) — KOÇ Faz 1 KOD HAZIR (2026-07-22, migration `z0a3d6e7d99z`, COMMIT/DEPLOY BEKLİYOR)
+## YENİ İŞ — Rota Rehberi (rol bazlı AI onboarding) — KOÇ + ÖĞRENCİ CANLI (2026-07-26, commit `d6cc2c8`; migration z0a3d6e7d99z + a1b4e7f8e00a)
 
 **Bağlam:** Her rol login olduğunda sistemi keşfetmek yerine bir rehber
 karşılamalı. **Kullanıcı kararları:** format = HİBRİT (sesli ekran-simülasyonu +
