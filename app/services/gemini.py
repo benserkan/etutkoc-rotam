@@ -110,7 +110,7 @@ def _call(model: str, api_key: str, parts: list[dict], *, timeout: float, json_m
 
 def generate(
     parts: list[dict], *, personal_data: bool, timeout: float = 45.0, json_mode: bool = True,
-    max_output_tokens: int = 8192, prefer_paid: bool = True,
+    max_output_tokens: int = 8192, prefer_paid: bool = True, prefer_fast: bool = False,
 ) -> str:
     """Gemini'den metin yanıt al — TÜM AI işlerinde önce **pro** (en zeki model).
 
@@ -126,6 +126,9 @@ def generate(
       dayanıklılık için ücretsiz key(ler) + flash.
 
     prefer_paid: geriye uyum için tutuldu (pro artık her zaman önce denenir).
+    prefer_fast: GECİKMEYE DUYARLI işler (veli sohbeti gibi) için AYNI ücretli
+      anahtarla ÖNCE flash denenir (saniyeler), flash üretemezse pro'ya çıkılır.
+      Anahtar/tier değişmez → KVKK nötr; yalnız model sırası ters döner.
     """
     from app.services.system_secrets import (
         get_gemini_free_keys, get_gemini_model, get_gemini_paid_key,
@@ -134,6 +137,8 @@ def generate(
     pro = get_gemini_model(paid=True)
     flash = get_gemini_model(paid=False)
     paid_models = [pro] + ([flash] if flash and flash != pro else [])
+    if prefer_fast and flash and flash != pro:
+        paid_models = [flash, pro]
 
     # 1) ÜCRETLİ (faturalı) anahtar: önce pro (en zeki), erişilemez/kotasızsa
     #    AYNI anahtarla flash. AIInvalidResponse (içerik/filtre) → yükselir (gerçek

@@ -1687,3 +1687,405 @@ def parent_unsubscribe_v2(
     db.commit()
 
     return ParentUnsubscribeResult(status="unsubscribed")
+
+
+# ---------------------------------------------------------------------------
+# Rota Veli Asistanı P1 — yorumlayıcı (program | deneme) + seslendirme
+# Kredi öğrencinin KOÇUNUN havuzundan; okuma/tekrar dinleme ÜCRETSİZ.
+# ---------------------------------------------------------------------------
+
+from app.routes.api_v2.schemas.parent import (  # noqa: E402
+    CommentaryGenerateBody,
+    CommentaryVoiceResult,
+    ParentCommentaryResponse,
+)
+
+
+def _get_student_or_404(db: Session, user: User, student_id: int) -> User:
+    try:
+        return assert_parent_can_view(db, user, student_id)
+    except ParentAccessDenied:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "student_not_found",
+            "message": "Öğrenci bulunamadı."})
+
+
+def _valid_kind_or_422(kind: str) -> str:
+    from app.models import PC_KINDS
+    if kind not in PC_KINDS:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "invalid_kind",
+            "message": "Geçersiz yorum türü."})
+    return kind
+
+
+def _commentary_row(db: Session, student_id: int, kind: str, *, with_audio: bool = False):
+    from sqlalchemy.orm import undefer
+    from app.models import ParentCommentary
+    q = db.query(ParentCommentary).filter(
+        ParentCommentary.student_id == student_id,
+        ParentCommentary.kind == kind,
+    )
+    if with_audio:
+        q = q.options(undefer(ParentCommentary.audio))
+    return q.first()
+
+
+def _commentary_to_data(row):
+    from app.models import PC_KIND_LABELS_TR
+    from app.routes.api_v2.schemas.parent import CommentarySection, ParentCommentaryData
+    return ParentCommentaryData(
+        kind=row.kind,
+        kind_label=PC_KIND_LABELS_TR.get(row.kind, row.kind),
+        sections=[CommentarySection(**s) for s in row.sections],
+        generated_at=row.generated_at,
+        has_audio=row.audio_content_type is not None,
+        audio_content_type=row.audio_content_type,
+    )
+
+
+def _daily_left(db: Session, parent_id: int) -> int:
+    from app.models import PC_DAILY_GENERATION_LIMIT
+    from app.services.parent_commentary import daily_generation_count
+    return max(0, PC_DAILY_GENERATION_LIMIT - daily_generation_count(db, parent_id))
+
+
+@router.get("/students/{student_id}/commentary")
+def parent_commentary_get_v2(
+    student_id: int,
+    kind: str = Query(...),
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Rota yorumu — önbellekten OKU (ücretsiz). Yoksa commentary=null."""
+    from app.services.parent_commentary import is_stale as _is_stale
+
+    _valid_kind_or_422(kind)
+    student = _get_student_or_404(db, user, student_id)
+    _coach, ai_available, reason = _parent_insight_gate(db, student)
+    row = _commentary_row(db, student.id, kind)
+    if row is None:
+        return ParentCommentaryResponse(
+            commentary=None, is_stale=False, ai_available=ai_available,
+            unavailable_reason=reason, daily_left=_daily_left(db, user.id),
+        )
+    return ParentCommentaryResponse(
+        commentary=_commentary_to_data(row),
+        is_stale=_is_stale(db, row),
+        ai_available=ai_available,
+        unavailable_reason=reason,
+        daily_left=_daily_left(db, user.id),
+    )
+
+
+@router.post("/students/{student_id}/commentary")
+def parent_commentary_generate_v2(
+    student_id: int,
+    body: CommentaryGenerateBody,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Rota yorumu ÜRET/YENİLE — koçun kredisinden düşer (günlük limitli)."""
+    from app.models import UsageKind
+    from app.models.exam_result import ExamResult
+    from app.models.task import Task
+    from app.services.credits import CreditBlocked, CreditOwner, consume_credits
+    from app.services import parent_commentary as pc
+
+    kind = _valid_kind_or_422(body.kind)
+    student = _get_student_or_404(db, user, student_id)
+    coach, ai_available, reason = _parent_insight_gate(db, student)
+    if not ai_available:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_not_available",
+            "message": reason or "Yapay zekâ yorumu şu an kullanılamıyor."})
+
+    if pc.daily_limit_reached(db, user.id):
+        raise HTTPException(status_code=429, detail={
+            "error": "rate_limited", "code": "daily_limit_reached",
+            "message": "Bugünlük yorum hakkın doldu — yarın yeniden deneyebilirsin."})
+
+    # Yeterli veri kontrolü (tür bazlı)
+    if kind == "deneme":
+        has_exam = db.query(ExamResult.id).filter(
+            ExamResult.student_id == student.id).first() is not None
+        if not has_exam:
+            raise HTTPException(status_code=422, detail={
+                "error": "validation", "code": "not_enough_data",
+                "message": "Henüz deneme sonucu yok. Deneme eklendikçe Rota yorumlayabilir."})
+    else:
+        has_task = db.query(Task.id).filter(
+            Task.student_id == student.id, Task.is_draft.is_(False)).first() is not None
+        if not has_task:
+            raise HTTPException(status_code=422, detail={
+                "error": "validation", "code": "not_enough_data",
+                "message": "Henüz yayınlanmış bir program yok. Koç program yayınlayınca Rota yorumlayabilir."})
+
+    owner = CreditOwner.for_user(coach)
+    from app.services.credits import check_credit_available
+    if not check_credit_available(db, owner=owner, kind=UsageKind.AI_PARENT_COMMENTARY).ok:
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu. Yorumlar yeni dönemde devam eder."})
+
+    # Paket açık işlem altında kurulur, sonra işlem KAPATILIR — ~30 sn'lik
+    # Gemini çağrısı sırasında SQLite kilidi tutulmaz (2026-07-26 saha dersi:
+    # kilit çatışması aralıklı 500 üretiyordu).
+    bundle = pc.build_bundle(db, user, student, kind)
+    db.commit()
+    try:
+        result = pc.generate_from_bundle(kind, bundle)
+    except pc.AIInvalidResponse:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "commentary_unreadable",
+            "message": "Yorum oluşturulamadı, lütfen tekrar deneyin."})
+    except pc.AIServiceUnavailable:
+        raise HTTPException(status_code=502, detail={
+            "error": "upstream_unavailable", "code": "ai_unavailable",
+            "message": "Yapay zekâ servisi şu an kullanılamıyor, birkaç dakika sonra deneyin."})
+
+    # Kısa atomik yazım: kredi düş + kaydet (uzun çağrı bitti)
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_PARENT_COMMENTARY,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            ctx.set_metadata({"student_id": student_id, "kind": kind, "by": "parent"})
+        row = pc.upsert_commentary(db, user, student, kind, result)
+        db.commit()
+    except CreditBlocked:
+        db.rollback()
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu. Yorumlar yeni dönemde devam eder."})
+    db.refresh(row)
+    return ParentCommentaryResponse(
+        commentary=_commentary_to_data(row), is_stale=False,
+        ai_available=True, unavailable_reason=None,
+        daily_left=_daily_left(db, user.id),
+    )
+
+
+@router.post("/students/{student_id}/commentary/voice")
+def parent_commentary_voice_v2(
+    student_id: int,
+    body: CommentaryGenerateBody,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Yorumun sesi — İLK istekte üretilir (kredi), sonrası önbellekten (ücretsiz)."""
+    from datetime import datetime as _dt, timezone as _tz
+    from app.models import UsageKind
+    from app.services.credits import CreditBlocked, CreditOwner, consume_credits
+    from app.services.ai_book_template import AIServiceUnavailable as _Unavail
+    from app.services.tts import synthesize_speech
+
+    kind = _valid_kind_or_422(body.kind)
+    student = _get_student_or_404(db, user, student_id)
+    row = _commentary_row(db, student.id, kind, with_audio=True)
+    if row is None or not row.speech_text:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "commentary_not_found",
+            "message": "Önce yorum oluşturulmalı."})
+    if row.audio is not None and row.audio_content_type:
+        return CommentaryVoiceResult(
+            has_audio=True, audio_content_type=row.audio_content_type, charged=False)
+
+    coach, ai_available, reason = _parent_insight_gate(db, student)
+    if not ai_available:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_not_available",
+            "message": reason or "Seslendirme şu an kullanılamıyor."})
+
+    owner = CreditOwner.for_user(coach)
+    from app.services.credits import check_credit_available
+    if not check_credit_available(db, owner=owner, kind=UsageKind.AI_PARENT_COMMENTARY_VOICE).ok:
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu."})
+
+    # Uzun TTS çağrısı sırasında SQLite kilidi tutma (2026-07-26 saha dersi:
+    # eşzamanlı yazmalarla "database is locked" 500'leri) — metni al, işlemi kapat.
+    speech = row.speech_text
+    gen_at = row.generated_at
+    db.commit()
+    try:
+        audio, content_type = synthesize_speech(speech)
+    except _Unavail:
+        raise HTTPException(status_code=502, detail={
+            "error": "upstream_unavailable", "code": "ai_unavailable",
+            "message": "Seslendirme servisi şu an kullanılamıyor, birkaç dakika sonra deneyin."})
+
+    # Kısa atomik yazım + yarış koruması
+    row = _commentary_row(db, student.id, kind, with_audio=True)
+    if row is None or not row.speech_text:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "commentary_not_found",
+            "message": "Önce yorum oluşturulmalı."})
+    if row.audio is not None and row.audio_content_type:
+        # Eşzamanlı başka istek sesi üretti — bizimkini at, ÜCRETSİZ dön
+        return CommentaryVoiceResult(
+            has_audio=True, audio_content_type=row.audio_content_type, charged=False)
+    if row.generated_at != gen_at:
+        # TTS sürerken yorum yenilendi — ürettiğimiz ses ESKİ metne ait
+        raise HTTPException(status_code=409, detail={
+            "error": "conflict", "code": "commentary_changed",
+            "message": "Yorum bu sırada yenilendi — Dinle'ye tekrar basın."})
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_PARENT_COMMENTARY_VOICE,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            ctx.set_metadata({"student_id": student_id, "kind": kind, "by": "parent"})
+        row.audio = audio
+        row.audio_content_type = content_type
+        row.audio_generated_at = _dt.now(_tz.utc)
+        db.commit()
+    except CreditBlocked:
+        db.rollback()
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu."})
+    return CommentaryVoiceResult(has_audio=True, audio_content_type=content_type, charged=True)
+
+
+@router.get("/students/{student_id}/commentary/audio")
+def parent_commentary_audio_v2(
+    student_id: int,
+    kind: str = Query(...),
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Yorum sesini akıt (ücretsiz — üretim /voice ucunda)."""
+    _valid_kind_or_422(kind)
+    student = _get_student_or_404(db, user, student_id)
+    row = _commentary_row(db, student.id, kind, with_audio=True)
+    if row is None or row.audio is None or not row.audio_content_type:
+        raise HTTPException(status_code=404, detail={
+            "error": "not_found", "code": "audio_not_found",
+            "message": "Henüz seslendirme yok."})
+    return Response(
+        content=row.audio, media_type=row.audio_content_type,
+        headers={"Cache-Control": "private, max-age=0, no-store"},
+    )
+
+
+# ---------------------------------------------------------------------------
+# Rota Veli Asistanı P2 — yazılı sohbet (soru başına kredi; karşılama kredisiz)
+# ---------------------------------------------------------------------------
+
+from app.routes.api_v2.schemas.parent import (  # noqa: E402
+    ChatAskBody,
+    ChatAskResult,
+    ChatGreeting,
+    ChatMessageModel,
+    ParentChatResponse,
+)
+
+
+def _chat_msg_model(m) -> ChatMessageModel:
+    return ChatMessageModel(id=m.id, role=m.role, body=m.body, created_at=m.created_at)
+
+
+@router.get("/students/{student_id}/chat")
+def parent_chat_get_v2(
+    student_id: int,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Sohbet geçmişi + kredisiz kural-tabanlı karşılama + hazır çipler."""
+    from app.services import parent_chat as pch
+
+    student = _get_student_or_404(db, user, student_id)
+    _coach, ai_available, reason = _parent_insight_gate(db, student)
+    greeting = pch.build_greeting(db, student)
+    msgs = pch.list_messages(db, user.id, student.id)
+    return ParentChatResponse(
+        messages=[_chat_msg_model(m) for m in msgs],
+        greeting=ChatGreeting(**greeting),
+        ai_available=ai_available,
+        unavailable_reason=reason,
+        daily_left=pch.chat_daily_left(db, user.id),
+    )
+
+
+@router.post("/students/{student_id}/chat")
+def parent_chat_ask_v2(
+    student_id: int,
+    body: ChatAskBody,
+    user: User = Depends(_require_parent),
+    db: Session = Depends(get_db),
+):
+    """Rota'ya soru sor — koçun kredisinden 3 kredi (veli başına günde 10 soru)."""
+    from app.models import PCM_ROLE_ROTA, PCM_ROLE_VELI, ParentChatMessage, UsageKind
+    from app.services import parent_chat as pch
+    from app.services import parent_commentary as pc
+    from app.services.credits import (
+        CreditBlocked, CreditOwner, check_credit_available, consume_credits,
+    )
+
+    student = _get_student_or_404(db, user, student_id)
+    coach, ai_available, reason = _parent_insight_gate(db, student)
+    if not ai_available:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_not_available",
+            "message": reason or "Rota sohbeti şu an kullanılamıyor."})
+
+    if pch.chat_daily_left(db, user.id) <= 0:
+        raise HTTPException(status_code=429, detail={
+            "error": "rate_limited", "code": "daily_limit_reached",
+            "message": "Bugünlük soru hakkın doldu — yarın yeniden sorabilirsin."})
+
+    owner = CreditOwner.for_user(coach)
+    if not check_credit_available(db, owner=owner, kind=UsageKind.AI_PARENT_CHAT).ok:
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu."})
+
+    # Paket + geçmiş okunur, işlem KAPATILIR — uzun Gemini çağrısı sırasında
+    # SQLite kilidi tutulmaz (2026-07-26 dersi).
+    question = body.message.strip()
+    bundle = pc.build_chat_bundle(db, user, student)
+    history = [
+        {"role": m.role, "body": m.body}
+        for m in pch.list_messages(db, user.id, student.id, limit=10)
+    ]
+    student_name = student.full_name
+    db.commit()
+    try:
+        answer = pch.answer_question(student_name, bundle, history, question)
+    except pch.AIInvalidResponse:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "chat_unreadable",
+            "message": "Cevap oluşturulamadı, lütfen tekrar deneyin."})
+    except pch.AIServiceUnavailable:
+        raise HTTPException(status_code=502, detail={
+            "error": "upstream_unavailable", "code": "ai_unavailable",
+            "message": "Yapay zekâ servisi şu an kullanılamıyor, birkaç dakika sonra deneyin."})
+
+    # Kısa atomik yazım: kredi düş + iki mesajı kaydet
+    try:
+        with consume_credits(
+            db, owner=owner, kind=UsageKind.AI_PARENT_CHAT,
+            actor_user_id=user.id, autocommit=False,
+        ) as ctx:
+            ctx.set_metadata({"student_id": student_id, "by": "parent"})
+        m1 = ParentChatMessage(parent_id=user.id, student_id=student.id,
+                               role=PCM_ROLE_VELI, body=question)
+        db.add(m1)
+        db.flush()
+        m2 = ParentChatMessage(parent_id=user.id, student_id=student.id,
+                               role=PCM_ROLE_ROTA, body=answer)
+        db.add(m2)
+        db.commit()
+    except CreditBlocked:
+        db.rollback()
+        raise HTTPException(status_code=402, detail={
+            "error": "payment_required", "code": "ai_credit_exhausted",
+            "message": "Rota bu ay için dinlenmede — koçun yapay zekâ kotası doldu."})
+    db.refresh(m1)
+    db.refresh(m2)
+    return ChatAskResult(
+        messages=[_chat_msg_model(m1), _chat_msg_model(m2)],
+        daily_left=pch.chat_daily_left(db, user.id),
+    )

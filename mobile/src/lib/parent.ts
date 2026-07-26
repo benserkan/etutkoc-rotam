@@ -212,7 +212,96 @@ export interface ParentInsightResponse {
 export const parentP2Keys = {
   exams: (id: number) => ["parent", "student", id, "exams"] as const,
   insight: (id: number) => ["parent", "student", id, "insight"] as const,
+  commentary: (id: number, kind: string) =>
+    ["parent", "student", id, "commentary", kind] as const,
 };
+
+// ---- Rota Veli Asistanı P1 — yorumlayıcı (program | deneme) + seslendirme ----
+export type CommentaryKind = "program" | "deneme";
+export interface CommentarySection {
+  title: string;
+  body: string;
+}
+export interface ParentCommentaryData {
+  kind: CommentaryKind;
+  kind_label: string;
+  sections: CommentarySection[];
+  generated_at: string;
+  has_audio: boolean;
+  audio_content_type: string | null;
+}
+export interface ParentCommentaryResponse {
+  commentary: ParentCommentaryData | null;
+  is_stale: boolean;
+  ai_available: boolean;
+  unavailable_reason: string | null;
+  daily_left: number;
+}
+export interface CommentaryVoiceResult {
+  has_audio: boolean;
+  audio_content_type: string | null;
+  charged: boolean;
+}
+
+export function getParentCommentary(id: number, kind: CommentaryKind) {
+  return apiRequest<ParentCommentaryResponse>(
+    `/api/v2/parent/students/${id}/commentary?kind=${kind}`,
+  );
+}
+export function generateParentCommentary(id: number, kind: CommentaryKind) {
+  return apiRequest<ParentCommentaryResponse>(
+    `/api/v2/parent/students/${id}/commentary`,
+    { method: "POST", body: { kind } },
+  );
+}
+export function generateParentCommentaryVoice(id: number, kind: CommentaryKind) {
+  return apiRequest<CommentaryVoiceResult>(
+    `/api/v2/parent/students/${id}/commentary/voice`,
+    { method: "POST", body: { kind } },
+  );
+}
+export function parentCommentaryAudioPath(id: number, kind: CommentaryKind, bust: string) {
+  return `/api/v2/parent/students/${id}/commentary/audio?kind=${kind}&v=${encodeURIComponent(bust)}`;
+}
+
+// ---- Rota Veli Asistanı P2 — yazılı sohbet ----
+export interface ChatMessage {
+  id: number;
+  role: "veli" | "rota";
+  body: string;
+  created_at: string;
+}
+export interface ChatChip {
+  id: string;
+  label: string;
+  action: "ask" | "commentary";
+  payload: string;
+}
+export interface ParentChatResponse {
+  messages: ChatMessage[];
+  greeting: { text: string; chips: ChatChip[] };
+  ai_available: boolean;
+  unavailable_reason: string | null;
+  daily_left: number;
+}
+export interface ChatAskResult {
+  messages: ChatMessage[];
+  daily_left: number;
+}
+
+export const parentChatKeys = {
+  thread: (id: number) => ["parent", "student", id, "chat"] as const,
+};
+
+export function getParentChat(id: number) {
+  return apiRequest<ParentChatResponse>(`/api/v2/parent/students/${id}/chat`);
+}
+export function askParentChat(id: number, message: string) {
+  return apiRequest<ChatAskResult>(`/api/v2/parent/students/${id}/chat`, {
+    method: "POST",
+    body: { message },
+  });
+}
 
 export function getParentExams(id: number): Promise<ParentExamsResponse> {
   return apiRequest<ParentExamsResponse>(`/api/v2/parent/students/${id}/exams`);

@@ -154,7 +154,104 @@ export interface ParentInsightResponse {
 export const parentP2Keys = {
   exams: (id: number) => ["parent", "me", "students", String(id), "exams"] as const,
   insight: (id: number) => ["parent", "me", "students", String(id), "insight"] as const,
+  commentary: (id: number, kind: string) =>
+    ["parent", "me", "students", String(id), "commentary", kind] as const,
 };
+
+// ---- Rota Veli Asistanı P1 — yorumlayıcı (program | deneme) + seslendirme ----
+export type CommentaryKind = "program" | "deneme";
+
+export interface CommentarySection {
+  title: string;
+  body: string;
+}
+export interface ParentCommentaryData {
+  kind: CommentaryKind;
+  kind_label: string;
+  sections: CommentarySection[];
+  generated_at: string;
+  has_audio: boolean;
+  audio_content_type: string | null;
+}
+export interface ParentCommentaryResponse {
+  commentary: ParentCommentaryData | null;
+  is_stale: boolean;
+  ai_available: boolean;
+  unavailable_reason: string | null;
+  daily_left: number;
+}
+export interface CommentaryVoiceResult {
+  has_audio: boolean;
+  audio_content_type: string | null;
+  charged: boolean;
+}
+
+export function getParentCommentary(studentId: number, kind: CommentaryKind) {
+  return api<ParentCommentaryResponse>(
+    `/api/v2/parent/students/${studentId}/commentary?kind=${kind}`,
+  );
+}
+export function generateParentCommentary(studentId: number, kind: CommentaryKind) {
+  return api<ParentCommentaryResponse>(
+    `/api/v2/parent/students/${studentId}/commentary`,
+    { method: "POST", body: JSON.stringify({ kind }) },
+  );
+}
+export function generateParentCommentaryVoice(studentId: number, kind: CommentaryKind) {
+  return api<CommentaryVoiceResult>(
+    `/api/v2/parent/students/${studentId}/commentary/voice`,
+    { method: "POST", body: JSON.stringify({ kind }) },
+  );
+}
+/** Ses akış URL'i — generated_at cache-bust parametresi olarak eklenir. */
+export function parentCommentaryAudioUrl(
+  studentId: number, kind: CommentaryKind, bust: string,
+) {
+  return `/api/v2/parent/students/${studentId}/commentary/audio?kind=${kind}&v=${encodeURIComponent(bust)}`;
+}
+
+// ---- Rota Veli Asistanı P2 — yazılı sohbet ----
+export interface ChatMessage {
+  id: number;
+  role: "veli" | "rota";
+  body: string;
+  created_at: string;
+}
+export interface ChatChip {
+  id: string;
+  label: string;
+  action: "ask" | "commentary";
+  payload: string;
+}
+export interface ChatGreeting {
+  text: string;
+  chips: ChatChip[];
+}
+export interface ParentChatResponse {
+  messages: ChatMessage[];
+  greeting: ChatGreeting;
+  ai_available: boolean;
+  unavailable_reason: string | null;
+  daily_left: number;
+}
+export interface ChatAskResult {
+  messages: ChatMessage[];
+  daily_left: number;
+}
+
+export const parentChatKeys = {
+  thread: (id: number) => ["parent", "me", "students", String(id), "chat"] as const,
+};
+
+export function getParentChat(studentId: number) {
+  return api<ParentChatResponse>(`/api/v2/parent/students/${studentId}/chat`);
+}
+export function askParentChat(studentId: number, message: string) {
+  return api<ChatAskResult>(`/api/v2/parent/students/${studentId}/chat`, {
+    method: "POST",
+    body: JSON.stringify({ message }),
+  });
+}
 
 export function getParentExams(studentId: number) {
   return api<StudentExamListResponse>(`/api/v2/parent/students/${studentId}/exams`);

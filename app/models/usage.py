@@ -53,7 +53,10 @@ class UsageKind(str, enum.Enum):
     AI_SESSION_VOICE = "ai_session_voice"   # (eski) sesli yapılandırma — yerini AI_TRANSCRIBE aldı
     AI_TRANSCRIBE = "ai_transcribe"         # Gemini — alan dikte (saf ses→metin, KS3b)
     AI_COACHING_INSIGHT = "ai_coaching_insight"  # Gemini — seans geçmişi → koçluk içgörüsü (KS4)
-    AI_PARENT_INSIGHT = "ai_parent_insight"  # Gemini — konu perf + deneme → veli içgörüsü (P2b)
+    AI_PARENT_INSIGHT = "ai_parent_insight"  # Gemini — konu perf + deneme → veli içgörüsü (P2b, Rota yorumuna gömüldü)
+    AI_PARENT_COMMENTARY = "ai_parent_commentary"  # Gemini — Rota veli yorumu (program|deneme anlatımı)
+    AI_PARENT_COMMENTARY_VOICE = "ai_parent_commentary_voice"  # Gemini TTS — Rota veli yorumu seslendirmesi
+    AI_PARENT_CHAT = "ai_parent_chat"           # Gemini — Rota veli sohbeti (soru başına)
     AI_CAREER_SYNTHESIS = "ai_career_synthesis"  # Gemini — anket sonuçları + akademik veri → kariyer önerisi
     AI_CURRICULUM_PRIORITY = "ai_curriculum_priority"  # Gemini — sıradaki üniteler akıllı öncelik (Faz 2)
     AI_WRONG_TAG = "ai_wrong_tag"           # Gemini vision — yanlış soru foto → konu/zorluk/Sokratik ipucu (YSA Faz 3)
@@ -71,6 +74,9 @@ USAGE_KIND_LABELS_TR: dict[UsageKind, str] = {
     UsageKind.AI_TRANSCRIBE: "AI Sesli Dikte",
     UsageKind.AI_COACHING_INSIGHT: "AI Koçluk İçgörüsü",
     UsageKind.AI_PARENT_INSIGHT: "AI Veli İçgörüsü",
+    UsageKind.AI_PARENT_COMMENTARY: "Rota Veli Yorumu",
+    UsageKind.AI_PARENT_COMMENTARY_VOICE: "Rota Veli Yorumu (Ses)",
+    UsageKind.AI_PARENT_CHAT: "Rota Veli Sohbeti",
     UsageKind.AI_CAREER_SYNTHESIS: "AI Kariyer Sentezi",
     UsageKind.AI_CURRICULUM_PRIORITY: "AI Müfredat Önceliği",
     UsageKind.AI_WRONG_TAG: "AI Yanlış Soru Etiketleme",

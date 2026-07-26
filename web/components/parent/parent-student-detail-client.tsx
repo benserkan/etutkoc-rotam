@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { RotaCommentaryCard } from "@/components/parent/rota-commentary-card";
 import {
   getParentStudentOverview,
   parentKeys,
@@ -158,6 +159,9 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
           hint="7 günde aktif gün"
         />
       </div>
+
+      {/* Rota'nın Yorumu — sayılar/grafikler velinin dilinde (tek kapı) */}
+      <RotaCommentaryCard studentId={data.student.id} />
 
       {/* Projeksiyon + ders bazlı (2 sütun) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">

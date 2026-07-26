@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { WarningLevel } from "@/lib/parent";
 import type { ParentStudentOverview } from "@/lib/parent-detail";
+import { RotaCommentaryCard } from "@/components/parent/rota-commentary-card";
 import { cn } from "@/lib/utils";
 
 const WARN: Record<WarningLevel, { dot: string; label: string; text: string }> = {
@@ -119,6 +120,9 @@ export function ParentChildDetailView({
           <Ionicons name="chevron-forward" size={18} color="#7c3aed" />
         </Pressable>
       ) : null}
+
+      {/* Rota'nın Yorumu — sayılar/grafikler velinin dilinde (tek kapı) */}
+      <RotaCommentaryCard studentId={data.student.id} />
 
       {/* Projeksiyon */}
       {proj && proj.total_tests > 0 ? (

@@ -1,21 +1,18 @@
 "use client";
 
 /**
- * Veli — deneme geçmişi + AI içgörü (P2). Üstte "çocuğum için analiz oluştur"
- * (Gemini, koçun kredisinden), altta tüm deneme geçmişi (net + D/Y + ders kırılımı).
+ * Veli — deneme geçmişi (net + D/Y + ders kırılımı).
+ *
+ * Eski "AI Durum Analizi" kartı Rota'nın Yorumu'na GÖMÜLDÜ (2026-07-26):
+ * tek kapı çocuk detay sayfasındaki RotaCommentaryCard — burada yalnız
+ * yönlendirme kutusu kalır.
  */
 import * as React from "react";
 import Link from "next/link";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Sparkles, RefreshCw, TrendingUp, TrendingDown, Heart, Target, AlertCircle, MessageSquarePlus } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Sparkles, TrendingUp, TrendingDown, MessageSquarePlus } from "lucide-react";
 
-import { ApiError } from "@/lib/api";
-import {
-  generateParentInsight,
-  getParentExams,
-  getParentInsight,
-  parentP2Keys,
-} from "@/lib/api/parent";
+import { getParentExams, parentP2Keys } from "@/lib/api/parent";
 import { cn } from "@/lib/utils";
 import { DemoHint } from "@/components/demos/demo-hint";
 
@@ -30,31 +27,7 @@ const SECTION_TONE: Record<string, string> = {
 };
 
 export function ParentExamsInsightClient({ studentId, studentName }: { studentId: number; studentName?: string }) {
-  const qc = useQueryClient();
   const examsQ = useQuery({ queryKey: parentP2Keys.exams(studentId), queryFn: () => getParentExams(studentId) });
-  const insightQ = useQuery({ queryKey: parentP2Keys.insight(studentId), queryFn: () => getParentInsight(studentId) });
-
-  const [genErr, setGenErr] = React.useState<string | null>(null);
-  // setQueryData ile cache doğrudan güncellenir (yanıt yeni içgörüyü içerir) — invalidate gerekmez
-  // eslint-disable-next-line lgs/missing-invalidate
-  const genMut = useMutation({
-    mutationFn: () => generateParentInsight(studentId),
-    onMutate: () => setGenErr(null),
-    onSuccess: (data) => qc.setQueryData(parentP2Keys.insight(studentId), data),
-    onError: (e) => {
-      const code = e instanceof ApiError ? (e.detail?.code ?? null) : null;
-      if (code === "not_enough_data") setGenErr("Analiz için yeterli veri yok. Çocuğunuz test çözüp doğru/yanlış girdikçe veya deneme sonucu eklendikçe oluşturulabilir.");
-      else if (code === "ai_credit_exhausted") setGenErr("Koçun yapay zekâ kredisi bu ay için dolmuş. Daha sonra tekrar deneyin.");
-      else if (code === "ai_not_available") setGenErr(e instanceof ApiError ? e.message : "Yapay zekâ analizi şu an kullanılamıyor.");
-      else if (code === "ai_unavailable") setGenErr("Yapay zekâ servisi şu an kullanılamıyor, birkaç dakika sonra deneyin.");
-      else setGenErr(e instanceof ApiError ? e.message : "Analiz oluşturulamadı.");
-    },
-  });
-
-  const insight = insightQ.data?.insight ?? null;
-  const aiAvailable = insightQ.data?.ai_available ?? false;
-  const isStale = insightQ.data?.is_stale ?? false;
-  const reason = insightQ.data?.unavailable_reason ?? null;
 
   const exams = examsQ.data;
 
@@ -71,58 +44,18 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
         <DemoHint contextKey="ai-insight" role="parent" className="mt-2" />
       </div>
 
-      {/* AI İçgörü */}
-      <div className="rounded-2xl border border-violet-200 bg-violet-50/40 p-5 dark:bg-violet-500/10 dark:border-violet-500/30">
-        <div className="mb-2 flex items-center gap-2">
-          <Sparkles className="size-5 text-violet-600" aria-hidden />
-          <h2 className="text-base font-semibold text-violet-900">Yapay Zekâ Durum Analizi</h2>
-        </div>
-
-        {insightQ.isLoading ? (
-          <p className="text-sm text-muted-foreground">Yükleniyor…</p>
-        ) : insight ? (
-          <div className="space-y-4">
-            {isStale ? (
-              <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
-                <AlertCircle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-                Bu analizden sonra yeni veri (deneme/çözülen test) eklendi. Güncel analiz için yenileyin.
-              </div>
-            ) : null}
-            <p className="text-sm leading-relaxed text-slate-800">{insight.summary}</p>
-            <InsightList icon={<Heart className="size-4 text-emerald-600" aria-hidden />} title="Güçlü yanlar" items={insight.strengths} />
-            <InsightList icon={<Target className="size-4 text-amber-600" aria-hidden />} title="Gelişim alanları" items={insight.focus_areas} />
-            <InsightList icon={<Sparkles className="size-4 text-violet-600" aria-hidden />} title="Evde nasıl destek olabilirsiniz" items={insight.parent_tips} />
-            <div className="flex items-center justify-between border-t border-violet-100 pt-3">
-              <p className="text-[11px] text-muted-foreground">Öneri amaçlıdır; kesin değerlendirme değildir.</p>
-              {aiAvailable ? (
-                <button onClick={() => genMut.mutate()} disabled={genMut.isPending}
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-violet-300 px-3 py-1.5 text-sm font-semibold text-violet-700 hover:bg-violet-50 disabled:opacity-50">
-                  <RefreshCw className={cn("size-3.5", genMut.isPending && "animate-spin")} aria-hidden />
-                  {genMut.isPending ? "Yenileniyor…" : "Yenile"}
-                </button>
-              ) : null}
-            </div>
-          </div>
-        ) : aiAvailable ? (
-          <div className="space-y-3">
-            <p className="text-sm text-slate-700">
-              Çocuğunuzun ders/konu performansı ve deneme sonuçlarından yapay zekâ ile sade bir durum analizi oluşturun.
-            </p>
-            <p className="text-[11px] text-muted-foreground">
-              Bu analiz çocuğunuzun çalışma verilerini yapay zekâ ile işler. Sonucu yalnız siz görürsünüz.
-            </p>
-            <button onClick={() => genMut.mutate()} disabled={genMut.isPending}
-              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50">
-              <Sparkles className="size-4" aria-hidden />
-              {genMut.isPending ? "Oluşturuluyor…" : "Çocuğum için analiz oluştur"}
-            </button>
-          </div>
-        ) : (
-          <p className="text-sm text-slate-600">{reason ?? "Yapay zekâ analizi şu an kullanılamıyor."}</p>
-        )}
-
-        {genErr ? <p className="mt-3 rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{genErr}</p> : null}
-      </div>
+      {/* Rota'nın Yorumu'na yönlendirme — eski AI kartı oraya gömüldü */}
+      <Link
+        href={`/parent/students/${studentId}`}
+        className="flex items-center gap-3 rounded-2xl border border-cyan-200 bg-cyan-50/40 p-4 hover:bg-cyan-50 dark:border-cyan-500/30 dark:bg-cyan-500/10"
+      >
+        <Sparkles className="size-5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+        <span className="text-sm text-cyan-950 dark:text-cyan-100">
+          <span className="font-semibold">Rota&apos;nın Yorumu</span> — deneme
+          sonuçlarının yapay zekâ anlatımı artık çocuğunun sayfasında; okuyabilir
+          ya da sesli dinleyebilirsin.
+        </span>
+      </Link>
 
       {/* Deneme geçmişi */}
       <div>
@@ -192,26 +125,6 @@ export function ParentExamsInsightClient({ studentId, studentName }: { studentId
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-function InsightList({ icon, title, items }: { icon: React.ReactNode; title: string; items: string[] }) {
-  if (!items || items.length === 0) return null;
-  return (
-    <div>
-      <div className="mb-1.5 flex items-center gap-1.5">
-        {icon}
-        <p className="text-sm font-semibold text-slate-700">{title}</p>
-      </div>
-      <ul className="space-y-1">
-        {items.map((s, i) => (
-          <li key={i} className="flex gap-2 text-sm text-slate-700">
-            <span className="text-slate-400">•</span>
-            <span className="flex-1">{s}</span>
-          </li>
-        ))}
-      </ul>
     </div>
   );
 }

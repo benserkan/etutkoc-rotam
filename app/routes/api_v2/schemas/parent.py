@@ -609,6 +609,85 @@ class ParentInsightResponse(BaseModel):
 
 
 # =============================================================================
+# Rota Veli Asistanı P1 — yorumlayıcı (program | deneme) + seslendirme
+# =============================================================================
+
+
+class CommentarySection(BaseModel):
+    title: str
+    body: str
+
+
+class ParentCommentaryData(BaseModel):
+    kind: str                       # program | deneme
+    kind_label: str
+    sections: list[CommentarySection] = []
+    generated_at: datetime
+    has_audio: bool = False
+    audio_content_type: str | None = None
+
+
+class ParentCommentaryResponse(BaseModel):
+    commentary: ParentCommentaryData | None = None
+    is_stale: bool = False
+    ai_available: bool = False
+    unavailable_reason: str | None = None
+    # Velinin bugün kalan üretim hakkı (koç kredisini koruma rayı)
+    daily_left: int = 0
+
+
+class CommentaryGenerateBody(BaseModel):
+    kind: str = Field(pattern="^(program|deneme)$")
+
+
+class CommentaryVoiceResult(BaseModel):
+    has_audio: bool
+    audio_content_type: str | None = None
+    charged: bool = False           # ses bu istekte mi üretildi (kredi düştü mü)
+
+
+# =============================================================================
+# Rota Veli Asistanı P2 — yazılı sohbet
+# =============================================================================
+
+
+class ChatMessageModel(BaseModel):
+    id: int
+    role: str                       # veli | rota
+    body: str
+    created_at: datetime
+
+
+class ChatChip(BaseModel):
+    id: str
+    label: str
+    action: str                     # ask (hazır soruyu gönder) | commentary (P1 kartına köprü)
+    payload: str                    # ask: soru metni · commentary: kind (program|deneme)
+
+
+class ChatGreeting(BaseModel):
+    text: str
+    chips: list[ChatChip] = []
+
+
+class ParentChatResponse(BaseModel):
+    messages: list[ChatMessageModel] = []
+    greeting: ChatGreeting
+    ai_available: bool = False
+    unavailable_reason: str | None = None
+    daily_left: int = 0             # velinin bugün kalan soru hakkı
+
+
+class ChatAskBody(BaseModel):
+    message: str = Field(min_length=2, max_length=500)
+
+
+class ChatAskResult(BaseModel):
+    messages: list[ChatMessageModel]  # [veli sorusu, rota cevabı]
+    daily_left: int = 0
+
+
+# =============================================================================
 # P3 — Veli → koç talebi (çift yönlü; SupportRequest altyapısı)
 # =============================================================================
 

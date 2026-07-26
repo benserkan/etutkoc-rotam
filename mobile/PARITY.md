@@ -48,6 +48,7 @@ Billing ayrı iş). Kurulum: `store/iap-kurulum-rehberi.md`.
 |---|:--:|:--:|---|
 | Pano (çocuk kartları + son deneme) | ✅ | ✅ | |
 | Çocuk detayı (projeksiyon/ders/koç notu) | ✅ | ✅ | |
+| Rota'nın Yorumu (program+deneme AI anlatımı, sesli) | ✅ | ✅ | çocuk detayında; ses expo-audio (Authorization header'lı akış, JS-only → OTA); eski "AI Durum Analizi" kartı buna gömüldü |
 | Çocuğun haftası | ✅ | ✅ | |
 | Bildirimler listesi | ✅ | ✅ | |
 | Tercihler / sessiz saat / WhatsApp doğrulama | ✅ | ⬜ | web (/parent/settings) |

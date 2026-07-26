@@ -223,7 +223,24 @@ from app.models.coaching_session import (
     ParentInsight,
     SessionCaptureSource,
 )
-from app.models.guide import UserGuideState
+from app.models.parent_chat import (  # noqa: E402
+    PC_CHAT_DAILY_LIMIT,
+    PCM_CONTEXT_MESSAGES,
+    PCM_MAX_LEN,
+    PCM_MIN_LEN,
+    PCM_ROLE_ROTA,
+    PCM_ROLE_VELI,
+    PCM_ROLES,
+    ParentChatMessage,
+)
+from app.models.parent_commentary import (  # noqa: E402
+    PC_DAILY_GENERATION_LIMIT,
+    PC_KIND_DENEME,
+    PC_KIND_LABELS_TR,
+    PC_KIND_PROGRAM,
+    PC_KINDS,
+    ParentCommentary,
+)
 from app.models.weekly_program import WeeklyProgram
 from app.models.app_setting import AppSetting
 from app.models.contact_request import (
@@ -296,6 +313,7 @@ from app.models.wrong_question import (
 from app.models.task_template import TaskTemplate, TaskTemplateItem
 from app.models.warning_state import WarningState
 from app.models.panel_behavior import PanelRouteStat, PanelVisitEvent
+from app.models.guide import UserGuideState
 from app.models.owner_contact import OwnerContact
 from app.models.owner_tag import (
     OWNER_TAG_COLORS,
@@ -543,6 +561,20 @@ __all__ = [
     "CoachingChannel",
     "CoachingInsight",
     "ParentInsight",
+    "ParentCommentary",
+    "ParentChatMessage",
+    "PCM_ROLES",
+    "PCM_ROLE_VELI",
+    "PCM_ROLE_ROTA",
+    "PCM_CONTEXT_MESSAGES",
+    "PCM_MIN_LEN",
+    "PCM_MAX_LEN",
+    "PC_CHAT_DAILY_LIMIT",
+    "PC_KINDS",
+    "PC_KIND_PROGRAM",
+    "PC_KIND_DENEME",
+    "PC_KIND_LABELS_TR",
+    "PC_DAILY_GENERATION_LIMIT",
     "CoachingSession",
     "CoachingSessionStatus",
     "AppSetting",
@@ -556,6 +588,7 @@ __all__ = [
     "WarningState",
     "PanelRouteStat",
     "PanelVisitEvent",
+    "UserGuideState",
     "TaskTemplate",
     "TaskTemplateItem",
     "SUPPORT_AUDIENCE_SUPER_ADMIN",
@@ -595,7 +628,6 @@ __all__ = [
     "WrongQuestion",
     "WrongQuestionImage",
     "SessionCaptureSource",
-    "UserGuideState",
     "WeeklyProgram",
     "COACH_PAYMENT_METHOD_LABELS",
     "CoachPayment",

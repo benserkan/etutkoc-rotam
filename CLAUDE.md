@@ -6,6 +6,549 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## ÜYELİK REVİZYONU — Google tarzı kartsız 14g deneme, ödemesiz ücretli plan İMKÂNSIZ — CANLI (2026-07-24, commit `bb1bfc1`, migration YOK)
+
+**Bağlam (kullanıcı, Hatice #87 vakası):** Ticari panoda kullanıcının ödeme
+yapmadan `solo_pro`'da göründüğü fark edildi. Teşhis: **2 kritik delik** —
+(1) `expire_trials` deneme bitince kullanıcıyı `post_trial_plan`'a düşürüyordu;
+2026-05-29 "signup'ta seçilen paketi hatırla" işi bu alana ÜCRETLİ tier yazmaya
+başlayınca cron ödeme almadan ücretliye geçirir oldu (etkilenen: #87 Hatice
+gerçek müşteri + #60 kullanıcının kendi hesabı; MRR hayalet 2.500₺ şişiyordu,
+AI bedava açıktı, kullanıcının paneli "Aktif" gösteriyordu). (2) iyzico öncesi
+dönemden kalma **ödemesiz `POST /teacher/plan/upgrade`** ucu hâlâ açıktı (UI
+çağırmıyordu ama API'den bedava yükseltme mümkündü). **Kullanıcı kararları
+(AskUserQuestion):** deneme sonu = ücretsiz kata düşüş (freemium korunur) ·
+#87 sessizce düzelt (e-posta yok) · #60 meşru manuel aktivasyonla ücretli kalsın ·
+iyzico canlı doğrulama = 10₺ gerçek prova + iade.
+- **KURAL (değişmez):** Ücretli plana giden YALNIZ 3 kapı — iyzico ödemesi
+  (verify_callback) · App Store IAP (webhook/sync) · süper admin manuel
+  aktivasyonu. `post_trial_plan` plana ASLA yazılmaz; yalnız /teacher/plan
+  ödeme ekranı ÖN-SEÇİMİ. Deneme/dönem bitişi daima ücretsiz kata düşürür.
+- **Backend:** `expire_trials` → daima SOLO_FREE/INSTITUTION_FREE + dinamik not
+  ("ödeme bekleyen paket: X") · `/plan/upgrade` endpoint + PlanUpgradeBody
+  SİLİNDİ (web `useUpgradePlan` hook'u da) · `verify_callback`'e ödeme sonrası
+  `reactivate_solo_students` (was_paid_active gate'li — paywall sözü kart
+  ödemesinde de tutulur) · `_build_plan_response` status sıkı: "active" yalnız
+  `subscription_status in (active|canceled)`; ücretli plan + abonelik kaydı yok →
+  **"payment_required"** (defensive; normalde oluşamaz) · `solo_trial_status`'a
+  `payment_pending`/`intended_plan(_label)` (free + deneme bitmiş + niyetli
+  ücretli paket → banner sinyali).
+- **UX (ödeme daveti):** TrialBanner 3. bant — amber "Denemen bitti — ödemen
+  bekleniyor" (günlük kapatılabilir) · /teacher/plan başlık "Denemen bitti —
+  {paket} ile devam et" + payment_required rose kartı; SoloUpgradeCard ön-seçim
+  zaten intendedFromSignup. `trial_expired` e-postası "ödeme zamanı" + seçilen
+  paket adıyla (`intended_plan_label` ctx) + **4 abonelik e-postasında
+  (trial_reminder/expired, renewal_reminder/overdue) ödeme butonu GÖRELİ href
+  idi → e-postada ÖLÜ tıklanıyordu; `app_base_url` önekiyle düzeltildi.**
+- **İzleme (bir daha sessiz olamaz):** `data_integrity.orphan_scan`'e
+  `paid_plan_no_subscription` taraması (bütünlük paneli) · `system_health`'e
+  **PaymentStatus** bloğu + `/admin/system-health` "Ödeme (iyzico)" kartı
+  (sağlayıcı erişilebilir + sandbox rozeti + 24h başarılı/başarısız/30dk+
+  yarım 3DS) · `alarm_engine`'e **`payment_problem_recent`** kuralı (threshold
+  0, 6h cooldown, email+in_app; kural `_ensure_builtin_rules` ile migration'sız
+  lazy-seed — evaluate_all/list_rules idempotent ekler; AlarmRule.created_at
+  elle set edilmeli, server_default yok).
+- **Veri düzeltmesi:** `scripts/fix_unpaid_paid_plans.py` (dry-run varsayılan;
+  yalnız TRIAL_EXPIRED ile ücretliye geçmiş + subscription'sız koçlar; --activate
+  ID ile meşru manuel aktivasyon). Prod'da koşuldu: **#87 → solo_free**
+  (post_trial_plan=solo_pro korundu — panelinde paket ön-seçili + Kartla Öde) ·
+  **#60 → manuel aktivasyon** (active/academic_year/platform=manual). Eski
+  test hesapları (#57/58/59) + App Store demo (#63) BİLİNÇLİ dokunulmadı —
+  bütünlük panelinde `paid_plan_no_subscription` olarak listelenirler (Apple
+  demo hesabı paywall'a düşmemeli; istenirse admin aktivasyonuyla susturulur).
+- **Test:** YENİ `test_subscription_lifecycle.py` **22/22** (signup intended →
+  trial → D-3 hatırlatma+DRAFT teklif → expire=solo_free + ön-seçim + geçmiş
+  notu + e-posta etiketi → payment_pending → AI 403 → /plan/upgrade 404 →
+  mock iyzico ödeme → active+period_end → D-3 yenileme → past_due → paywall
+  403 → tekrar ödeme → 200 → payment_required defensive). Entitlement 13/13
+  (9-11 yeniden yazıldı: meşru aktivasyon + arka kapı 404 regresyonu; seed
+  paid koça subscription_status verildi) · simulate_upgrade_reactivation 15/15
+  (A/D senaryoları mock-iyzico'ya taşındı — callback reaktivasyonunu da test
+  eder). Regresyon: iyzico 27 · trial_status 6 · paywall 5 · renewal 12 ·
+  trial_notifications 4 · IAP 23 · subscription_request 11 · teacher_read 12 ·
+  admin_users 26 · security_overview 14 · alarms_abuse 21 · audit_kvkk 18
+  GREEN; web tsc+eslint temiz.
+- **iyzico canlı güvence planı:** (a) TEK SEFERLİK canlı prova — geçici test
+  koçu + admin ödeme linki ~10₺ → kullanıcı GERÇEK kartla 3DS öder → tx
+  succeeded + aktivasyon + sonuç sayfası doğrulanır → iyzico panelinden iade.
+  (Canlı zincir hiç uçtan uca kanıtlanmamıştı; #60'taki 25.06 `3ds_pending`
+  yarım deneme bunun işaretiydi.) (b) Sürekli: system-health ödeme kartı +
+  payment_problem_recent alarmı + bütünlük taraması.
+- **CANLI PROVA SONUCU (2026-07-25, kullanıcı 10₺ gerçek kartla ödedi) — 2 EK
+  BUG bulundu+düzeltildi+deploy edildi:**
+  (a) **Caddy `/payment/*` yönlendirmesi HİÇ YOKTU** (commit `e77f150`) —
+  müşteri 3DS sonrası `/payment/result`'ta 404 görüyordu (Mayıs testleri
+  localhost:3000'de olduğundan görünmemişti; #60'ın 25.06 yarım 3DS'i muhtemel
+  kurban). `reverse_proxy /payment/* next:3000` + `restart proxy` (reload
+  yetmez kuralı) → 307/200 doğrulandı.
+  (b) **Kullanıcı-hedefli ödeme linki ÖDEYENİ aktive ediyordu** (commit
+  `2d7993d`): `verify_callback` user linkinde `tx.user_id` kullanıyordu →
+  süper admin prova koçu adına ödeyince plan admin'e (#6) yazıldı, hedef free
+  kaldı (Mayıs smoke'larında ödeyen==hedef olduğundan görünmedi). Fix: link
+  varsa `link.target_owner_id` aktive edilir; linksiz self-serve akışta ödeyen.
+  İyzico smoke **27→29** (21b hedef aktive + 21c ödeyen değişmedi).
+  Veri düzeltmesi: #6 → plan 'free' + subscription temizlendi (elle history
+  kaydı — DERS: `change_plan` katalog-dışı eski 'free' kodunu reddeder);
+  prova koçu #103 silindi; tx #2 (10₺ succeeded) kanıt olarak duruyor —
+  **kullanıcı iyzico panelinden iade edecek** (istenirse sonra status
+  'refunded' işaretlenir; iade webhook'u yok).
+  Prova sonrası sağlık: provider available + sandbox=False + 24h 1 başarılı/
+  0 sorunlu · bütünlük taraması yalnız bilinen 4 test hesabını gösteriyor ·
+  alarm 0 · site 200. **Canlı iyzico zinciri (3DS + callback + aktivasyon +
+  sonuç sayfası) artık uçtan uca KANITLI.**
+- **NOT:** admin ödeme linki #8 (2500₺, 27.06'dan beri active, hedef koç
+  ödememiş) hâlâ açık — bayatsa /admin/payment-links'ten iptal edilebilir.
+- **NOT (yenileme gerçeği):** iyzico kart saklama/otomatik tahsilat entegre
+  DEĞİL (iyzico Abonelik = ayrı iş). Her dönem müşteri "Kartla Öde"ye kendisi
+  basar; D-3 hatırlatma + dönem sonunda past_due→paywall bunu zorlar.
+- **DERS:** intended_plan işi eklenirken expire_trials güncellenmemişti —
+  [[feedback-holistic-change-propagation]] ihlalinin ta kendisi. Plan/abonelik
+  alanına yazan HER yeni kod yolu için `test_subscription_lifecycle.py` koşulur.
+
+---
+
+## YENİ İŞ — Rota Veli Asistanı (soru-cevap + sesli yorumlayıcı) — KARARLAR ALINDI, Paket 1 migration onayı bekliyor (2026-07-26)
+
+**Bağlam:** Rakip analizindeki 2 büyük iş (YSA + deneme analizi) bitti; sırada
+veli için AI destekli yorumlama. Kullanıcı çerçevesi: veliler teknolojide zayıf;
+sayı/grafik/terminoloji VELİYE ÇEVRİLMELİ. İki iş, tek çekirdek:
+- **İş 1 — Canlı Soru-Cevap:** veli sesli/yazılı sorar ("Oğlum programa uyuyor
+  mu?"), Rota veriye dayalı somut cevap verir ("dün yapılmayanlar: X, Y — koçla
+  görüş"), sesli/yazılı yanıtlar.
+- **İş 2 — Sesli Yorumlayıcı:** program ilerlemesi + deneme analizi için
+  hazırlanmış bölümlü anlatım (ekran metni rakamlı + TTS metni sayılar yazıyla,
+  TEK Gemini çağrısında ikisi birden); ses ilk dinlemede üretilir, MP3 DB'de
+  saklanır → tekrar dinleme kredisiz.
+**Ortak çekirdek:** (1) Veri Paketleyici — model YALNIZ sunucunun topladığı
+paketi görür (koç-özel notlar girmez; injection yapısal olarak imkânsız;
+maliyet tek çağrı) · (2) Rota Beyni (veli-dili kuralları: suçlayıcı değil,
+somut görev adları, tek eylem önerisi) · (3) Ses Katmanı (STT=koç dikte deseni,
+soru sesi SAKLANMAZ; TTS=Gemini "Kore", rehber TTS kuralları).
+**Kullanıcı kararları (2026-07-26):**
+- Paket sırası ONAYLI: **P1** çekirdek + Yorumlayıcı (metin+ses) → **P2** yazılı
+  sohbet + kredisiz kural-tabanlı karşılama + hazır çipler (çip önce yorum
+  önbelleğine bakar — taze varsa kredisiz döner) → **P3** sohbete ses → **P4**
+  proaktif push (deneme yüklendi → "Rota yorumlamaya hazır").
+- **Eski statik "AI içgörü" kartı (P2b) bu yapıya GÖMÜLÜR** (kart kalkar,
+  parent_insights tablosu dokunulmadan kalır).
+- **Günlük limit ŞART** (veli başına; koruma rayı).
+- **Kredi (geçiş dönemi):** koçun mevcut havuzundan; AYRI UsageKind'lar
+  (AI_PARENT_COMMENTARY vb.) → admin kullanım panosunda veli-AI tüketimi
+  ölçülür ("test yaparız bakalım ne kadar kullanım oluyor"). **Koça sürekli
+  "kredi bitti" uyarısı YOK** — veli tarafında nazik mesaj; koç paket seçerken
+  karar verir.
+- **NOT ALINDI (memory: project-ai-credits-packaging):** ileride TÜM koç
+  paketleri güncellenecek, ücret kademesine göre VELİ KREDİSİ DEĞİŞKEN olacak;
+  platform sübvansiyonu fikri açık ("belki yükün bir kısmını Rotam çekmeli") —
+  kod, belirli kind'ları platform karşılayacak esneklikte tutulur; 1-2 ay
+  ölçümle karar.
+**PAKET 1 KOD HAZIR (2026-07-26, migration `b2c5f8g9g11b` — dev'de uygulandı;
+COMMIT/DEPLOY BEKLİYOR):**
+- **Migration `b2c5f8g9g11b`** (← a1b4e7f8e00a, additive): `parent_commentaries`
+  (student×kind unique; sections_json + speech_text + based_on_json + audio
+  LargeBinary DEFERRED + audio_content_type/generated_at). parent_insights
+  DURUYOR; eski /insight uçları çalışır (eski mobil kırılmaz).
+- **Backend:** `parent_commentary.py` (TEK MERKEZ: program paketi =
+  build_weekly_report BU hafta + bugüne kadarki YAPILMAYAN görev adları + YSA
+  özeti · deneme paketi = son 8 deneme + exam_insight_summary + tür-içi trend +
+  YSA; TEK Gemini çağrısı sections[ekran, rakamlı] + speech_text[TTS kurallı]
+  üretir; imza karşılaştırmalı is_stale; upsert seste TEMİZLER) ·
+  `app/services/tts.py` (runtime Gemini TTS "Kore"; kişisel veri → YALNIZ
+  ücretli anahtar; MP3 [ffmpeg] yoksa WAV fallback — **Dockerfile'a ffmpeg
+  EKLENDİ**) · UsageKind AI_PARENT_COMMENTARY=6 + _VOICE=2 (admin kullanım
+  panosunda ayrı satır → veli-AI tüketimi ölçülür). 4 uç: GET commentary
+  (ücretsiz+is_stale+daily_left) · POST (kredi 6; kapılar P2b gate reuse;
+  **veli başına günde 6 üretim** → 429 daily_limit_reached; verisiz 422) ·
+  POST /voice (ilk kez 2 kredi, sonrası charged=false) · GET /audio (akış,
+  no-store). Smoke `test_api_v2_parent_commentary.py` **20/20**; regresyon
+  parent 20 · insight 11 · weekly_report 14 GREEN.
+- **Web:** `rota-commentary-card.tsx` (Program|Denemeler sekmeli; GuideAvatar
+  konuşma halkası; Dinle/Duraklat + Rota seslendirsin; bayat bandı + Yenile;
+  kibar hata metinleri) çocuk detayına mount; eski "AI Durum Analizi" kartı
+  Denemeler sayfasından KALDIRILDI → cyan yönlendirme kutusu. tsc+eslint temiz.
+- **Mobil (JS-only → OTA):** RN `rota-commentary-card` (expo-audio
+  createAudioPlayer + **Authorization header'lı akış** + playsInSilentMode;
+  avatar API_BASE/static/guide/rota-avatar.png) çocuk detayında; exams ekranı
+  eski içgörü bloğu → yönlendirme. Mobil tsc temiz; PARITY.md güncel.
+- **GERÇEK E2E kanıtı (dev, Elif + rehber-veli):** kart → "Rota yorumlasın" →
+  gerçek Gemini bölümlü yorum ("Perşembe planlanan 7 görevin hiçbiri yapılmadı;
+  Veri Analizi 4 test ve LGS Genel Deneme eksik" + YSA'dan Üslü/Doğrusal tekrar
+  önerisi; deneme sekmesi branş-vs-tam-deneme ölçek uyarısını kendiliğinden
+  yaptı) → "Rota seslendirsin" → gerçek TTS mp3 üretildi, tarayıcıda ÇALDI
+  (Duraklat durumu + avatar halkası). 6 uç 200.
+- **Saha düzeltmesi (2026-07-26, kullanıcı: deneme sekmesinde "Rota
+  seslendirsin" aralıklı HTTP 500):** kök neden = uzun Gemini/TTS çağrısı
+  AÇIK DB işlemi İÇİNDE tutuluyordu (P2b insight deseninden miras) →
+  tarayıcının eşzamanlı yazmalarıyla (panel-visits vb.) SQLite kilit çatışması;
+  bir denemede kredi olayı kalıp ses kaybolduğundan çift ücretlendirme yarışı
+  da vardı. **Fix (üretim + ses uçları yeniden yapılandırıldı):**
+  (1) `check_credit_available` ÖN kontrolü (pahalı çağrıdan önce nazik 402) →
+  (2) paket/metin okunur, **db.commit() ile işlem KAPATILIR** →
+  (3) Gemini/TTS işlem DIŞINDA (`generate_from_bundle` — DB'siz saf fonksiyon) →
+  (4) kısa atomik yazım: yarış korumaları (bu arada ses üretildiyse ÜCRETSİZ
+  dön; yorum yenilendiyse 409 commentary_changed "tekrar bas") + consume +
+  commit. Frontend (web+mobil): mutation onError'da commentary query invalidate
+  (sunucu aslında kaydettiyse arayüz kendine gelir) + 409 mesajı.
+  **KANIT:** TTS sürerken 72 eşzamanlı yazma isteği altında voice 200 +
+  451KB MP3 (eski senaryo birebir). Smoke 20/20 korundu.
+- **DERSLER:** (1) dev backend reload'suz — YENİ ENDPOINT ekleyince
+  run_dev_patched yeniden başlatılmalı (eski süreçte 404). (2) **KURAL: uzun
+  dış çağrı (Gemini/TTS) ASLA açık DB işlemi içinde yapılmaz** — önce oku +
+  commit, dışarıda çağır, kısa atomik yaz (yarış korumalı). (3) Smoke'ta
+  UsageEvent sayımı id-reuse kirliliğine açık — seed'de yeni id'lerin eski
+  UsageEvent/CreditAccount kalıntıları savunmacı silinir.
+**PAKET 2 KOD HAZIR (2026-07-26, migration `c3d6g9h0h22c` — dev'de uygulandı;
+COMMIT/DEPLOY BEKLİYOR):** yazılı sohbet + kredisiz karşılama + çipler.
+- **Migration `c3d6g9h0h22c`** (← b2c5f8g9g11b, additive): `parent_chat_messages`
+  (parent×student thread; role veli|rota; CASCADE — KVKK silmede gider).
+- **Backend:** `parent_chat.py` (TEK MERKEZ): `build_greeting` kural-tabanlı
+  KREDİSİZ karşılama (dün eksik görevler ADLARIYLA > yeni deneme > bugün durumu)
+  + duruma göre dizilen ≤4 çip (`action: ask` hazır soruyu gönderir ·
+  `action: commentary` P1 kartının sekmesine köprü — taze yorum kredisiz) ·
+  `answer_question` SAF fonksiyon (paket + son 10 mesaj + soru → düz metin;
+  kurallar: 2-6 cümle, somut görev adları, uydurma yasak, tek eylem önerisi,
+  konu dışına kibar sınır) · `build_chat_bundle` (program+deneme paketlerinin
+  birleşimi — parent_commentary reuse). Kilit hijyeni P1 deseninin aynısı:
+  paket+geçmiş oku → db.commit → Gemini → kısa atomik (consume + 2 mesaj).
+  Kredi `AI_PARENT_CHAT=3` (ayrı ölçüm satırı) · **veli başına günde 10 soru**
+  (PC_CHAT_DAILY_LIMIT) → 429; commentary limitinden BAĞIMSIZ. 2 uç: GET
+  /students/{id}/chat (geçmiş+karşılama+daily_left, kredisiz) · POST (soru).
+  Smoke `test_api_v2_parent_chat.py` **12/12** (karşılama metni/çipler + kredi
+  + bağlamda önceki sohbet + pakette görev adı [prompt yakalama] + limit +
+  izolasyon); commentary 20 + parent 20 regresyon GREEN.
+- **Web+mobil:** Rota kartı **3 sekmeli** oldu (Program | Denemeler |
+  **Rota'ya Sor**) — `rota-chat.tsx` (web+RN): karşılama balonu + mesaj
+  geçmişi + "Rota düşünüyor…" + çipler + giriş kutusu + "Bugün kalan soru: N";
+  köprü çipi kartın ilgili sekmesini açar. Hata durumunda thread invalidate
+  (sunucu kaydettiyse arayüz toparlar). tsc+eslint (web) + mobil tsc temiz.
+- **GERÇEK E2E kanıtı (dev, Zeynep→Elif):** karşılama "Dün 1 görev eksik
+  kaldı: LGS Genel Deneme — 90 soru" (kredisiz) → "Oğlum programa uyuyor mu?"
+  → gerçek Gemini: "13 görevden 3'ünü tamamladı (%23)... Perşembe Matematik
+  testleri ve Cumartesi LGS Genel Denemesi eksik... geçen haftaki %100'e
+  kıyasla düşüş... koçuyla görüşme faydalı olabilir" + kalan soru 9 + köprü
+  çipi Program sekmesine geçti. DERS: E2E'de sekme tıklaması hydration'dan
+  önce kaçabilir → networkidle + input görünene dek tekrar-tıkla.
+- **Saha düzeltmesi (2026-07-26, kullanıcı: sohbette aralıklı "Cevap
+  oluşturulamadı" + hata sonrası F5'te cevabın görünmesi):** İKİ kök neden:
+  (1) **BOŞ cevap 422'leri** — sohbet `max_output_tokens=2048` idi; 2.5
+  ailesinin DÜŞÜNME tokenları bütçeyi yiyip metni boş bırakıyordu (bilinen
+  tuzağın sohbet tekrarı) → 8192. (2) **Yavaşlık/proxy zaman aşımı** — pro
+  modeli 20-40 sn sürünce Next dev proxy istemciye hata döndürüyor, backend
+  geç bitirip kaydediyordu (F5'te cevap görünme belirtisi). Fix:
+  `gemini.generate`'e **`prefer_fast`** paramı (AYNI ücretli anahtarla ÖNCE
+  flash, üretemezse pro — KVKK nötr, yalnız model sırası) → sohbet ~8-9 sn.
+  Yorumlar (commentary) pro-öncelikli KALIR (derinlik işi). + Frontend
+  (web+mobil): hata durumunda anında + 8 sn + 20 sn GECİKMELİ thread
+  yeniden-eşitleme (backend geç bitirirse arayüz kendine gelir, F5 gerekmez).
+  + Deneme paketine `questions` (soru sayısı) alanı + sohbet kuralına "az
+  sorulu branş netini tam denemeyle doğrudan kıyaslama" → cevap ölçek-farkını
+  açıkça söylüyor ("20 soruda 11.33 · 90 soruluk denemede 61"). Kullanıcının
+  birebir başarısız sorusu canlıda 200 · 8.3 sn. Smoke chat 12/12 +
+  commentary 20/20 (fake'lere **kwargs — yeni param dersi).
+  **KURAL:** gecikmeye duyarlı AI uçları (sohbet) `prefer_fast=True`;
+  json_mode=False düz-metin çağrılarında da max_output_tokens ≥8192 (düşünme
+  payı).
+**SIRADA:** kullanıcı yerelde inceler (rehber-veli@etutkoc.demo /
+RehberDemo2026! → Elif → Rota kartı "Rota'ya Sor") → commit+deploy (web+worker+
+next + **Dockerfile ffmpeg rebuild**) → **P3** sohbete ses (sesli soru=dikte
+STT reuse + sesli cevap=TTS katmanı hazır) → **P4** proaktif push tetikleri.
+
+---
+
+## YENİ İŞ — Rota Rehberi (rol bazlı AI onboarding) — KOÇ Faz 1 KOD HAZIR (2026-07-22, migration `z0a3d6e7d99z`, COMMIT/DEPLOY BEKLİYOR)
+
+**Bağlam:** Her rol login olduğunda sistemi keşfetmek yerine bir rehber
+karşılamalı. **Kullanıcı kararları:** format = HİBRİT (sesli ekran-simülasyonu +
+"şimdi sen yap" gerçek-veri kontrol listesi; gerçek-UI driver.js turu bakım
+maliyeti nedeniyle reddedildi) · ilerleme SUNUCUDA · avatar = play8/1.png'deki
+AI kız ("**Rota**"; yüz kırpımı `app/static/guide/rota-avatar.png`) · Türkçe
+seslendirme (Gemini TTS "Kore", demo hattı reuse) · canlı soru-cevap sohbeti =
+rehber bitişine/Faz 2'ye. İlk rol = KOÇ.
+- **Migration `z0a3d6e7d99z`** (← y9z2c5d6c88y, additive): `user_guide_states`
+  (user×guide_key unique; status in_progress/completed/dismissed +
+  current_chapter + chapters_done JSON). Kontrol listesi SAKLANMAZ —
+  `guide_service.coach_checklist` gerçek veriden EXISTS sorgularıyla hesaplar
+  (kitap-ekle=Book · ogrenci-ata=öğrenci+StudentBook · program-kur=
+  WeeklyProgram|yayınlanmış Task · yayinla-duyur/hafta-takip=yayınlanmış Task ·
+  deneme-gir=ExamResult created_by).
+- **Backend:** `app/services/guide_service.py` (TEK MERKEZ; GUIDE_ROLES rol
+  kapısı — yabancı rol 404, COACH_CHAPTERS 7 bölüm sırası, apply_progress
+  start/chapter_done/complete/dismiss/reset; chapter_done sıradaki bölüme
+  ilerletir, son bölümde completed) + router `api_v2/guides.py` GET/POST
+  `/me/guide/{key}` (+`/progress`; invalidate `me:guide`). Smoke
+  `test_api_v2_guide.py` **14/14**; regresyon quick_access 16 · me 13 GREEN.
+- **İçerik TEK KAYNAK:** `web/components/guide/coach-guide-content.json` —
+  7 bölüm × 34 adım (hosgeldin·kitap-ekle·ogrenci-ata·program-kur·
+  yayinla-duyur·hafta-takip·deneme-gir), TTS kurallarına uygun anlatım
+  (Etütkoç, sayı yazıyla). Aynı dosyayı frontend oynatıcı VE
+  `scripts/generate_guide_audio.py` okur (DNS yaması + demo TTS reuse) →
+  **34/34 MP3** `app/static/guide/audio/{bolum}/{adim}.mp3` (Kore sesi).
+- **Ekran görüntüleri GERÇEK panelden:** `scripts/seed_guide_demo.py`
+  (idempotent, --delete; Aylin Demir koç + Elif Kaya dolu öğrenci: kitap+
+  SectionProgress+yayınlı hafta+3 deneme+2 soru-satırlı pdf_import deneme →
+  analiz dolu; rehber-koc@etutkoc.demo / RehberDemo2026!) +
+  `scripts/capture_guide_shots.py` (+`_fix`; Playwright channel=chrome,
+  1440×900 sabit) → **22 shot** `app/static/guide/shots/*.png` + hedef
+  kutuları % koordinatla `web/components/guide/shot-boxes.json` (capture
+  ÜRETİR; oynatıcı sahnesi aspect 1440/900 → kutular birebir oturur).
+- **Frontend:** `components/guide/` — `guide-avatar` (nefes+konuşma halkası+
+  ekolayzer; globals.css `guide-*` keyframes) · `guide-player` (bölüm rayı
+  kilit/✓ + sahne: shot+vurgu kutusu+imleç tıklama animasyonu+altyazı+konuşan
+  avatar + ses [yoksa süre tahmini] + bölüm sonu "şimdi sen yap" kartı
+  [checklist yeşil olmadan devam kilitli; "daha sonra yaparım" küçük kaçışı
+  var] + tamamlama kartı) · `guide-welcome-dialog` (yalnız status=not_started;
+  dismiss sunucuya) · `/teacher/guide` + guide-client · teacher-shell nav
+  "Rehber" (Compass) + welcome mount. `lib/types|api/guide.ts` +
+  `use-guide.ts` (odakta checklist tazelenir). **proxy.ts statik uzantılara
+  mp3/mp4/wav/webm eklendi** (yoksa dev'de ses /login'e 307'lenir; prod Caddy
+  /static'i zaten FastAPI'ye verir). tsc+eslint temiz; Playwright görsel
+  doğrulama yapıldı (idle/oynatma/altyazı+avatar).
+- **Saha düzeltmesi (2026-07-22, kullanıcı testi — "kitap eklemeden 'eklendi
+  harika' diyor"):** kontrol listesi REHBERDEN ÖNCE var olan veriyi de
+  sayıyordu → **taban çizgisi mekanizması**: checklist artık yalnız
+  `state.started_at` SONRASI oluşan kaydı taze sayar (Book/User.created_at ·
+  StudentBook.assigned_at · WeeklyProgram/Task.created_at · Task.published_at
+  [yayın anı esas] · ExamResult.created_at); `reset` started_at'i de sıfırlar.
+  Yanıta ikinci sinyal `preexisting` eklendi → bölüm sonu kartı ÜÇ durumlu:
+  yeşil "yaptın — harika" (taze) · gök-mavisi "bunu zaten yapmışsın — istersen
+  pekiştir, istersen 'Zaten yapmışım — devam et'" (deneyimli koç dürüst geçiş)
+  · amber kilitli (henüz yok). Yönlendirme butonu + **"Yol: sol menü → ..."
+  hint metni** (content JSON action.hint) artık HER durumda görünür (kullanıcı:
+  "hangi butona basacağı belli değildi"). Smoke **16/16** (15-16: önceden-var
+  taze sayılmaz + start sonrası tanınır). SQLite DERSİ: server_default
+  saniye çözünürlüklü — smoke'ta started_at/created_at geriye tarihlenerek
+  flake önlenir (prod PG mikrosaniye, etkilenmez).
+- **Saha düzeltmesi 2 (2026-07-23, kullanıcı: "sahne net değil + programı kur
+  yüzeysel"):** (a) **Tam ekran**: sahne+kontroller `guide-fs` sarmalayıcısında,
+  sağ üstte Maximize düğmesi (Fullscreen API; globals.css `:fullscreen` oran
+  korumalı). (b) **Zoom in/out**: step.zoom + vurgu kutusu → sahne kutu
+  merkezine yumuşak scale/translate (zoomTransform: ölçek 1.25-2.2, kenar
+  kırpmalı; imleç+vurgu birlikte ölçeklenir). (c) **Programı kur BAŞTAN**:
+  5→**13 adım** (Yeni Program NEDEN basılır + oluşturma diyaloğu + Programlar
+  arşiv menüsü + görev tipleri Video/Deneme formları + Öneriler "Tümünü ekle"
+  + **Kaynak Durumu ÖNCE/SONRA gerçek rezerv değişimi** [Cuma'ya formdan 4
+  test eklenerek çekildi] + "taslak→yayın neden" kapanışı). 7 yeni gerçek shot
+  (`capture_guide_shots_program.py`; add-task formu 3 kademeli select ders→
+  kitap→bölüm + İKİ sayı inputu — ikincisi test sayısı) + 16 yeni TTS.
+  (d) **İzleme kilidi**: TÜM bölümlerde adımlar sonuna kadar OYNAMADAN
+  "Bölümü tamamla" kapalı (ileri atlama izlenmiş saymaz; "Kalan adımları izle"
+  ilk izlenmemişe götürür). (e) **Uygulama zorunluluğu yalnız kurulumda**:
+  kitap-ekle+ogrenci-ata action-kapılı kalır; program-kur kapısız,
+  yayinla-duyur+deneme-gir `action.optional=true` → "istersen dene" yumuşak
+  kart. Elif'in bölümleri topic'lere eşlendi (öneriler dolsun). tsc+eslint
+  temiz; zoom/tam-ekran/kaynak-farkı Playwright'la görsel doğrulandı.
+- **Saha düzeltmesi 3 (2026-07-23, kullanıcı: "anlat ve GÖSTER"):** Programı kur
+  **13→22 adım** — artık her kritik nokta gerçek karelerle gösteriliyor:
+  görev formunun doldurulması (ders→kitap→ünite+kalan görünür) → görevin günde
+  belirmesi → Kaynak Durumu ÖNCE/SONRA (bölüm kırılımı AÇIK; Doğrusal
+  Denklemler rez 4→8, reconcile sonrası sayaçlar tutarlı — stadyum modalındaki
+  "sayaç uyumsuz" uyarısı seed düzeltmesiyle giderildi) → **stadyum modalı**
+  (ızgara simgesi; yeşil/sarı/gri koltuklar + tarih/tıkla-git anlatımı) →
+  Video/Deneme form kareleri → **Periyot** (Sabah çipi seçimi + günün
+  SABAH/ZAMAN BELİRTİLMEMİŞ başlıklarıyla gruplanması) → Öneriler (satır
+  "Ekle"/"Tümünü ekle") → **Sıradaki üniteler** paneli → **Serbest Bloklar
+  ÖRNEKLİ** (özel ders öğretmeninin 40 soruluk ödevi: blok oluştur → güne 10
+  dağıt → kart Dağıtılan 10/40 · kalan 30). 22 TTS yeniden üretildi;
+  `GUIDE_ASSET_VERSION=20260723b`. Çekimler: `capture_guide_shots_program*.py`
+  (DERSLER: görev formu 3 kademeli select + İKİ sayı inputu ikisi de dolmalı ·
+  tip/periyot çipleri <form> DIŞINDA — sayfa düzeyinde textContent.trim() ile
+  bul · blok = İş bloğu seçicisinde "+ Yeni blok oluştur" · metin-eşleşmeli
+  ancestor kutusu yanlış öğeyi bulabilir → kutu shot-boxes.json'da elle
+  düzeltilebilir [blok-kart örneği]). Varlıklar ~12MB (38 shot + 51 mp3).
+- **Saha düzeltmesi 4 (2026-07-23, kullanıcı: "Öneriler en güçlü kısım — uzun
+  anlat + vurgu yanlış"):** Öneriler tek adımdan **4 adımlık derin anlatıma**
+  çıktı (program-kur 22→25 adım): ① mor şerit tanıtımı (kutu elle düzeltildi —
+  önceki ancestor DERS DAĞILIMI'na oturuyordu) + tıkla-aç ② motorun
+  parametreleri 1-3 (müfredat sırası/frontier + deneme analizleri [AI karne
+  okuması] + Yanlış Soru Arşivi sinyali; kapanınca düşer) — yeni
+  `oneriler-acik` karesi (liste AÇIK: ZAYIF rozeti · güven %19 · "Dikkat
+  gerekiyor" · sayı girişi · Ekle/× · "veri biriktikçe keskinleşir" dipnotu)
+  ③ parametre 4-5 (gün deseni + kalan kapasite) + rozet/güven şeffaflığı
+  (kutu: öneri satırı) ④ kullanım (sayı ayarla · Ekle · çarpı reddet · Tümünü
+  ekle · rezerv otomatiği · "son karar koçta") (kutu: Ekle düğmesi).
+  Anlatım gerçek motor ağırlıklarıyla uyumlu (0.45 müfredat + 0.30 zayıflık
+  [YSA/deneme] + 0.25 desen — suggestions.py). oneri-rozet/liste kutuları elle
+  sabitlendi (metin eşleşmesi "müfredatta sırada"yı sağ panelde bulmuştu).
+  10 TTS yenilendi; `GUIDE_ASSET_VERSION=20260723c`; adım vurguları Playwright
+  ile tek tek doğrulandı.
+- **Saha düzeltmesi 5 (2026-07-23, kullanıcı: "logout sonrası izleme
+  ilerlemem kayboldu + izleme zorunlu olmasın"):** (a) **Migration
+  `a1b4e7f8e00a`** (← z0a3d6e7d99z, additive): `user_guide_states.
+  steps_watched` (bölüm→izlenen adım indeksleri JSON). Yeni progress action
+  **`watch`** (chapter+step; invalidate BOŞ — adım başına churn yok; reset
+  temizler). Oynatıcı her adım bitişinde sunucuya yazar; `played` state
+  sunucudan tohumlanır → oturum düşse/cihaz değişse de **"Kaldığın yerden
+  devam et (Adım N)"** ile kalınan adımdan sürer (Playwright: adım izle →
+  reload → devam etiketi doğrulandı). (b) **Tüm kilitler kalktı**: bölüm
+  listesi serbest gezinilir (Lock yok), izleme kilidi ve action kapısı
+  KALDIRILDI — "Bölümü tamamla" hep aktif; kartlar bilgi verir (yeşil
+  yaptın / mavi zaten yapmışsın / amber henüz değil + yol tarifi) ama
+  engellemez; izlenmemiş adım varsa gri "istersen sonra dön" notu +
+  "Kaldığım yerden izle". Smoke **18/18** (17: watch kalıcı+mükerrersiz+
+  invalidate boş · 18: chapter'sız 422).
+- **Saha düzeltmesi 6 (2026-07-24, kullanıcı: "PDF'ten aktar yüzeysel — örnek
+  belge göster, gerçekten yükle, grafiklerin yorumunu anlat"):** Deneme sonucu
+  bölümü 5→**14 adım**, GERÇEK uçtan uca simülasyonla: `gen_ornek_karne.py`
+  (HTML→Chrome print-to-PDF; **PIL metin çizimi bu ortamda SEGFAULT** →
+  Playwright ile üretildi) sentetik "Karekök LGS Deneme 3 · Konu Analizli
+  Sonuç Karnesi" (20 soru, gerçek LGS konu adları, net 11,33) →
+  `capture_guide_shots_exam.py` belgeyi demo koçla Elif'e GERÇEKTEN yükledi
+  (Gemini çift okuma ~35sn, 6 kredi): beyan seçicili diyalog → "iki kez
+  okunuyor" → önizleme (**18 otomatik + 2 AI eşleşme**, canlı net 11.33,
+  soru tablosu) → kayıt ekranı (KPI + "Yanlışlardan arşive soru seç") →
+  yenilenen panel + Net Gelişimi → Konu Analizi (fırsat +2.56 net/deneme ·
+  ısı haritası Üslü 3/3→0/3→0/3 · unutulan/gelişen kartları — unutma sinyali
+  seed'de kurgulandı: eski denemede Üslü doğru, yenide yanlış). Anlatım
+  yorum katmanı içerir: branş (20 soru) neti genel (90 soru) yanında düşük
+  görünür — trend inişi ≠ kötüleşme; fırsat listesi = programın önceliği;
+  soldan sağa kızaran satır = unutma. 14 TTS; `GUIDE_ASSET_VERSION=20260724a`;
+  varlıklar ~16MB (48 shot + 63 mp3). Elif'e kalıcı: "LGS DENEME SINAVI - 3"
+  (gerçek import, PDF kanıtlı).
+- **Saha düzeltmesi 7 (2026-07-24, kullanıcı: "kitap ekle yüzeysel + 'Sınav
+  Müfredatı grubunu seç' yanlış yönlendirme — göremedim"):** Kitap ekle bölümü
+  6→**22 adım**, GERÇEK yolculukla (`capture_guide_shots_book.py`): "Sınav
+  Yayınları LGS Fen Bilimleri Soru Bankası" sıfırdan — ad → **hedef sınıf 4 ön
+  ayar + İnce ayar (8-8)** → **ders listesi AÇIK KARE** (select `size` hilesi;
+  L G S hedefinde "LGS Müfredatı" grubu) → **YKS karesi** (Mezun ön ayarında
+  "Sınav Müfredatı (TYT/AYT)" grubu belirir — kullanıcının göremediği nokta
+  artık "hangi grup ne zaman görünür" olarak öğretiliyor; eski anlatım
+  düzeltildi) → tip listesi açık → yöntem kartları (katalog paneli: "7 resmi
+  konu, her biri 10 test" varsayılanı; **gerçek Gemini ünite önerisi**: 7 ünite
+  test sayılarıyla; elle-gir gerekçesi: özel föy/karma kaynak) → test sayısı
+  önemi + kitap detayı Bölümler düzeltme karesi → **eşleştirme**: 7/7 otomatik
+  öneri karesi + İKİNCİ kitapla (Palme fasikül, elle 3 ünite) **kısmi eşleşme**
+  karesi ("Elektrik Ünitesi Tekrarı" eşleşmedi → dropdown'dan elle bağlandı;
+  "Karma Tekrar Föyü" bilerek boş — "eşleşmeyen analize karışmaz, göreve engel
+  değil") → Elif'e atama → "Kitap hazır: 7 ünite · 7 eşli · 1 atalı" özeti →
+  öğrenci Kitaplar sekmesinde görünüş → **kütüphane araçları 3 kare** (kitap
+  setleri · kitap şablonları · görev şablonları) → "neden kitap" giriş adımı
+  (rezerv/öneri/analiz hepsi kitaptan). 22 TTS; `GUIDE_ASSET_VERSION=20260724b`;
+  varlıklar ~20MB (66 shot + 79 mp3). Demo kütüphaneye kalıcı: Fen SB (id 155,
+  Elif'e atalı) + Palme fasikül (kısmi eşleşme örneği).
+- **Saha düzeltmesi 8 (2026-07-24, kullanıcı: "kitap ekle adım 19'da tekrar +
+  takılma, 20'ye geçmiyor"):** Ses motoru mimari hatası — oynatma effect'inin
+  bağımlılıkları kararsızdı (`onProgress` inline arrow → her render'da yeni →
+  `markPlayed`→`advance` zinciri → effect yeniden kurulup ÇALAN SESİ BAŞTAN
+  BAŞLATIYORDU; watch kaydının yanıtı/odak yenilemesi her geldiğinde tekrar +
+  adım sonuna ulaşamama). Ayrıca sessize alma da adımı baştan başlatıyordu ve
+  `markPlayed` yan etkisi setStepIdx updater İÇİNDEYDİ (StrictMode çift koşum
+  riski). Düzeltme: effect bağımlılıkları BİLİNÇLİ dar `[playing, chapter.key,
+  stepIdx]`; advance/onProgress/muted/played **ref'lerden** okunur (ref
+  senkronizasyonu render'da DEĞİL commit-sonrası effect'te — React Compiler
+  "Cannot access refs during render" kuralı); muted ayrı küçük effect'le
+  `a.muted` günceller (kesintisiz); markPlayed yan etkisi updater dışına +
+  playedRef mükerrer korumasına taşındı. E2E kanıt: adım 19→22 otomatik akış
+  14.0/28.1/46.1 sn (MP3 süreleriyle birebir). KURAL: ses/oynatıcı effect'i
+  yalnız kimlik (bölüm+adım) bağımlılığı taşır; callback'ler daima ref'ten.
+- **DEV ORTAM DERSLERİ (2026-07-22/23):** (1) Kullanıcının gördüğü "Jest worker
+  encountered 2 child process exceptions" + "Next.js (stale)" hatası = bayat/
+  bozulan dev süreci (uygulama hatası DEĞİL) → süreci öldür + `.next` sil +
+  yeniden başlat. (2) `.next` silinince Google Fonts yeniden iner ama BU AĞ
+  fonts.gstatic.com'u da engelliyor (Gemini DNS sorunu ailesi) → Turbopack her
+  sayfada 500 verir; **`next dev --webpack`** toleranslı (şu an dev böyle
+  çalışıyor). Kalıcı çözüm: yönetici PowerShell'de hosts'a
+  `142.251.27.95 fonts.googleapis.com` + `172.217.21.227 fonts.gstatic.com`
+  (**UYGULANDI 2026-07-23** — UAC'li Start-Process ile; iki domain de artık
+  çözülüyor → normal `pnpm dev`/Turbopack tekrar çalışır). (3) pnpm dev'i
+  öldürünce yetim node çocuğu 3000'i tutabilir → yeni süreç ELIFECYCLE ile
+  sessiz ölür; porta Get-NetTCPConnection ile bak. (3b) Backend'i yeniden
+  başlatınca Next dev proxy'sinin keep-alive havuzu BAYAT kalır → tarayıcıdan
+  giden /api istekleri sonsuz asılı kalır; Next dev de yeniden başlatılmalı.
+  (3c) Dev SQLite tek-yazar: uzun istek (PDF analizi ~40sn) sırasında paralel
+  yazmalar "database is locked" veriyordu → `app/database.py` sqlite
+  connect_args'a `timeout: 60` eklendi (prod PG etkilenmez). (3d) Backend'de
+  Gemini gerektiren yerel işler için `scripts/run_dev_patched.py` (DNS yamalı
+  uvicorn). (4) **Rehber varlık
+  önbelleği**: MP3/PNG aynı URL üstüne yeniden üretilince tarayıcı ESKİ sesi
+  çalar → `coach-guide-data.ts GUIDE_ASSET_VERSION` (?v= paramı) her yeniden
+  üretimde ARTIRILIR (2026-07-23 saha bulgusu; /static Cache-Control
+  göndermiyor, heuristik önbellek).
+- **ÖĞRENCİ REHBERİ KOD HAZIR (2026-07-26, migration YOK — commit/deploy
+  bekliyor):** koç rehberi onayı ("tam istediğim gibi") sonrası öğrenci turu.
+  - **Backend genelleme:** `guide_service.GUIDE_ROLES` +student_onboarding
+    (STUDENT; yabancı rol 404) + `STUDENT_CHAPTERS` 7 bölüm (ogr-hosgeldin·
+    ogr-bugun·ogr-kitaplar·ogr-yanlislar·ogr-denemeler·ogr-gelisim·
+    ogr-iletisim) + `CHAPTERS_BY_GUIDE`; checklist_for öğrenci için ({},{}) —
+    action'lar yalnız yumuşak öneri (optional). Smoke `test_api_v2_guide.py`
+    **20/20** (19-20: öğrenci 200 + 7 ogr bölümü, koç 404, watch kalıcı).
+  - **Frontend genelleme:** `GUIDES` registry (coach-guide-data.ts) ·
+    GuidePlayer `content` prop · GuideClient/GuideWelcomeDialog props
+    (guideKey/guideHref/description/menuHint) · `/student/guide` sayfası ·
+    site-header STUDENT_NAV +"Rehber" (Compass, Daha fazla menüsünün başı) ·
+    student layout'a karşılama diyaloğu mount.
+  - **İçerik:** `student-guide-content.json` — **7 bölüm × 37 adım** (günlük
+    akış işaretle+D/Y+günün notu · hafta/kitaplar/kitap detay/bağımsız çalışma ·
+    YSA 7 adım [neden klasik defter ölür + foto ekleme + AI Sokratik ipucu +
+    yeniden çözme + aralıklı-2-doğru kapanış] · denemeler [PDF aktar + özet
+    şeridi + konu analizi/ısı haritası + arşive köprü] · gelişim [konu perf/
+    tekrar FSRS/hedef/odak/DNA] · talepler+anketler + final). 2 opsiyonel
+    action (Bugün'e git · ilk yanlışını arşivle).
+  - **Demo veri:** `seed_guide_demo_student.py` (idempotent, WQ notu işaretli):
+    Elif'e bugün görevleri (tamamlanmış 24D/6Y test + video) + günün notu +
+    4 yanlış (2 Chrome-render foto + AI ipucu + kapanmış + deneme bağlı) +
+    3 tekrar kartı + 2 hedef + 5 odak oturumu + 2 talep (bekleyen+yanıtlı) +
+    2 anket ataması + 1 bağımsız beyan. + `enrich_guide_demo_dna.py`: son 3
+    haftaya 12 tamamlanmış akşam görevi (SectionProgress bump'lı) → DNA
+    "Akşamcı (18-22)" + konu perf %75 doldu ("Yetersiz veri" karesi çözüldü).
+  - **Çekimler:** `capture_guide_shots_student.py` (cgs helpers reuse; nav
+    retry + login hydration bekleme + **devtools rozeti gizleme CSS'i**
+    [tsqd palmiyesi + nextjs-portal] + Türkçe ı/I tuzağı: get_by_text
+    case-insensitive "NET FIRSATI"≠"Net fırsatı" → küçük harf bekle) →
+    **25 gerçek shot** + kutular (ogr-konu-analiz kutusu elle düzeltildi;
+    gun-notu End-scroll ile yeniden). 37 TTS (`generate_guide_audio.py
+    --guide student` paramı eklendi). `GUIDE_ASSET_VERSION=20260726a`.
+  - **E2E kanıt:** karşılama diyaloğu (not_started) → Rehberi başlat →
+    oynatıcı 7 bölüm + ses 200 (?v=20260726a) → adım 1→2 otomatik geçiş
+    25 sn (MP3 süresi) → watch POST → reload → "Kaldığın yerden devam" ✓.
+    tsc+eslint temiz; backend smoke 20/20.
+  - **DERSLER:** (1) seed'in "bugün" görevleri tarih değişince geçmişte kalır —
+    çekim öncesi bugüne taşı + mükerrer program görevi silersen SectionProgress
+    rezervini canlı görevlerden yeniden hesapla. (2) Playwright get_by_text
+    string eşleşmesi case-insensitive → sayfa açıklamasındaki "konu analizin"
+    başlık beklemesini erken geçirir; benzersiz KÜÇÜK harf metin bekle.
+    (3) TTS "L G S" yazımı yalnız SESLENDİRME metnine — UI verisine (hedef
+    adı) sızdırma. (4) Stale next dev "Jest worker" hatası kareye yakalanırsa
+    kill + .next sil + yeniden başlat, sonra o sayfaları yeniden çek.
+  - **Saha düzeltmesi (2026-07-26, kullanıcı: "özellik tanıtımı değil KULLANIM
+    — sen yapmalı ve göstermelisin"):** anlatım tanıtım kipinden **uygulamalı
+    kipe** yeniden yazıldı — **37→49 adım**, GERÇEK tıklama dizileriyle
+    önce/sonra kareleri (`capture_guide_shots_student2/3.py`, +14 yeni shot):
+    · **Bugün 8 adım:** bekleyen video görevi CANLI işaretlendi (daire vurgusu
+      → üzeri çizildi + manşet %33→%67) + kalem ayar düğmesinden D/Y girme
+      sayfası (ÇÖZDÜĞÜM TEST 3 + Doğru 24/Yanlış 6 + Kaydet) + günün notu.
+    · **YSA 10 adım:** "Yanlış ekle" formu birlikte dolduruldu (Chrome-render
+      soru fotoğrafı set_input_files + Kitabımdan → kitap → ünite + İşlem
+      hatası çipi + not) → GERÇEK eklendi (listede yeni kart + "hemen yeniden
+      çözebilirsin" toast'ı) → yeniden çözmede "Çözdüm" basıldı ("bir doğru
+      daha — sonraki aralıklı çözümde kapanır" + kuyruk 2/4'e geçti).
+    · **Denemeler 9 adım:** örnek karne İKİNCİ kez gerçek Gemini'yle okutuldu
+      (okunuyor karesi → önizleme: 20 eşleşme + net 11.33 + "Kontrol ettim,
+      kaydet"; Vazgeç'le kapatıldı — mükerrer kayıt yok) + "Yanlışlardan
+      arşive soru seç" diyaloğunda 2 soru işaretli kare.
+    · **Talepler 7 adım:** yeni pending görev seed'lendi (Doğrusal 4 test,
+      rezerv bump'lı) → ⋯ menü → "Sayıyı değiştir" dolduruldu (2 + gerekçe)
+      → GERÇEK gönderildi → kartta sarı **Bekliyor** rozeti karesi →
+      Taleplerim'de en üstte; menü karesi bonus ders: bekleyen talep varken
+      sayı/kaynak/çıkar SOLUK (ikinci talep açılmaz). Anket doldurma karesi:
+      likert "4" seçili + ilerleme 1/32.
+    · 49 TTS yeniden üretildi; `GUIDE_ASSET_VERSION=20260726b`; varlıklar
+      ~31MB (105 shot + 128 mp3). tsc+eslint temiz; oynatıcıda zoom+kutu+yeni
+      kareler Playwright'la doğrulandı. Elif'in rehber durumu kullanıcı
+      incelemesi için not_started'a sıfırlandı.
+    · **DERSLER:** (5) diyalog içi tıklamada seçiciyi `[role="dialog"]`
+      kapsamına al — arka plandaki eş metin (filtre çipi/rozet) overlay'e
+      takılıp timeout verir. (6) Radix dialog gönderim anında yakalanmasın:
+      submit sonrası dialogun KAPANMASINI bekle, sonra kartı çek. (7) Görev
+      menüsü aşağı açılır — sayfa dibindeki kartta menü viewport dışına
+      taşar; önce mouse.wheel ile kartı yukarı it.
+- **SIRADA:** kullanıcı yerelde inceler (öğrenci: rehber-elif@etutkoc.demo /
+  RehberDemo2026!) → commit+deploy → veli/kurum rehberleri → Faz 2 canlı
+  "Rota'ya sor" sohbeti (Gemini, kredi kararıyla). Rehber tamamlanınca
+  completion kartında sohbet yer tutucusu hazır. NOT: seed_guide_demo* yalnız
+  dev (start.sh'e EKLENMEZ); shots/audio repo'ya girer (~26MB, 91 shot + 116 mp3).
+
+---
+
 ## YENİ İŞ — Bağımsız Çalışma Kayıtları (self-study) — Faz 1 CANLI (2026-07-20, migration `x8y1b4c5b77x`)
 
 **Bağlam:** Tatilde öğrenci koçsuz/programsız çalışınca (köy/internetsiz vb.)
@@ -553,6 +1096,19 @@ iOS fiyatı **web ile aynı** (2.500/5.000/7.500₺ → Apple kademesi 2.499,99 
   doldurdu; şirket **D-U-N-S: 448959103**. Apple e-posta/telefonla dönecek
   (yetki teyidi olası) → SIRADA: Apple yanıtı → Paid Apps (şirket) → banka/
   vergi → abonelik ürünleri → RevenueCat bağlama → EAS build 9.
+  **DURUM (2026-07-26): MİGRASYON BAŞLATILDI** — Developer Support (Dae,
+  **case 102946152921**) 6 maddelik ön-bilgi gönderdi; analiz: hiçbiri bizi
+  etkilemiyor (uygulama yayınlanmadı, bireysel hesapta satış/kazanç/Paid Apps
+  sözleşmesi yok; Satış-Trend raporu kaybı + banka maddesi etkisiz). Kullanıcı
+  "start the migration" yanıtını GÖNDERDİ + Avni Bektaş'ı bilgilendirdi
+  (Apple yetki teyidi için arayabilir). etutkoc.com 200 doğrulandı (tam ünvan
+  yalnız rotam.etutkoc.com footer'ında — etutkoc.com footer'ına ekleme
+  kullanıcıya önerildi, opsiyonel). **DİKKAT: migrasyon sürerken Sertifika/
+  Profil portalı KAPALI → yeni iOS EAS build ALINMAZ** (TestFlight/ASC/
+  Android/OTA etkilenmez). Team ID 9TJVPNB82Z + uygulama korunur; süre
+  ~birkaç gün-3 hafta. Bitince: Paid Apps (şirket) → banka/vergi → ASC'de
+  3 abonelik ürünü → RevenueCat Products/Entitlements/Offerings → build 9 +
+  sandbox IAP testi → resubmit.
   **RevenueCat kurulumu TAMAM (2026-07-19):** proje + App Store app
   (com.etutkoc.rotam, IAP .p8 key yüklü) + public anahtar
   `appl_MLtksxrahHSgkZDUbRXNMbHAsGd` app.json'da (commit 216b617) + webhook
