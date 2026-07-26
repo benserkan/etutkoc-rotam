@@ -14,6 +14,7 @@ import {
   CalendarDays,
   CalendarRange,
   ChevronDown,
+  Compass,
   ClipboardList,
   Crosshair,
   GraduationCap,
@@ -60,6 +61,7 @@ const STUDENT_NAV: NavLink[] = [
   { href: "/student/wrong-questions", label: "Yanlışlarım", icon: BookX },
   { href: "/student/topics", label: "Konu Performansı", icon: Crosshair },
   { href: "/student/requests", label: "Talepler", icon: ListChecks, badgeKey: "pending_count" },
+  { href: "/student/guide", label: "Rehber", icon: Compass },
   { href: "/student/exams", label: "Denemelerim", icon: GraduationCap },
   { href: "/student/surveys", label: "Anketler", icon: ClipboardList },
   { href: "/student/focus", label: "Odak", icon: Timer },
@@ -69,8 +71,8 @@ const STUDENT_NAV: NavLink[] = [
 ];
 
 // Masaüstünde menü tek satıra sığsın diye: ilk 6 sık kullanılan link yatay
-// kalır; kalanlar (Anketler/Odak/Çalışma DNA/Tekrar/Hedefler) "Daha fazla"
-// taşma menüsüne iner. Mobil drawer tüm STUDENT_NAV'ı düz liste gösterir.
+// kalır; kalanlar (Rehber/Denemelerim/Anketler/Odak/Çalışma DNA/Tekrar/
+// Hedefler) "Daha fazla" taşma menüsüne iner. Mobil drawer düz liste gösterir.
 const STUDENT_NAV_PRIMARY = STUDENT_NAV.slice(0, 6);
 const STUDENT_NAV_MORE = STUDENT_NAV.slice(6);
 

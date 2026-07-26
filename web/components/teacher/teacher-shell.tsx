@@ -9,6 +9,7 @@ import {
   ArrowUpRight,
   BookOpen,
   CalendarRange,
+  Compass,
   Gauge,
   Gem,
   Inbox,
@@ -35,6 +36,7 @@ import type { InstitutionRef } from "@/lib/types/me";
 import { useLogout } from "@/lib/hooks/use-logout";
 import { getTeacherBadges, teacherKeys } from "@/lib/api/teacher";
 import { TrialBanner } from "@/components/teacher/trial-banner";
+import { GuideWelcomeDialog } from "@/components/guide/guide-welcome-dialog";
 import { PhoneVerifyBanner } from "@/components/me/phone-verify-banner";
 import { ImpersonationBanner } from "@/components/impersonation-banner";
 import type { TeacherBadgesResponse } from "@/lib/types/teacher";
@@ -55,6 +57,7 @@ interface NavLink {
 
 const TEACHER_NAV: NavLink[] = [
   { href: "/teacher/dashboard", label: "Pano", icon: LayoutDashboard },
+  { href: "/teacher/guide", label: "Rehber", icon: Compass },
   { href: "/teacher/students", label: "Öğrenciler", icon: Users, badgeKey: "at_risk_count" },
   { href: "/teacher/bulk-wa", label: "Toplu WhatsApp", icon: MessageSquare },
   { href: "/teacher/requests", label: "Talepler", icon: Inbox, badgeKey: "pending_request_count" },
@@ -161,6 +164,13 @@ export function TeacherShell({ user, institution, children }: Props) {
         <ImpersonationBanner />
         <PhoneVerifyBanner phoneVerified={user.phone_verified ?? true} />
         <TrialBanner enabled={user.role === "teacher"} />
+        <GuideWelcomeDialog
+          enabled={user.role === "teacher"}
+          guideKey="coach_onboarding"
+          guideHref="/teacher/guide"
+          description="Sana sistemi adım adım, sesli anlatımla göstereceğim: kitap eklemekten haftalık program kurmaya, veli bilgilendirmesinden deneme analizine. Kurulum adımlarında sıra sana da geçer — sen yaparsın, ben kontrol ederim. Bölüm bölüm ilerler; istediğin an ara verip kaldığın yerden devam edersin."
+          menuHint="Sol menüdeki Rehber bağlantısından dilediğin an başlatabilirsin."
+        />
         <div className="mx-auto max-w-6xl px-4 py-6 sm:py-8">{children}</div>
       </main>
 

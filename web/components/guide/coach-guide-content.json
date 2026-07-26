@@ -1,0 +1,623 @@
+{
+  "guideKey": "coach_onboarding",
+  "narrator": "Rota",
+  "chapters": [
+    {
+      "key": "hosgeldin",
+      "title": "Hoş geldin",
+      "subtitle": "Rota'yla tanış, sistemin mantığını kavra",
+      "steps": [
+        {
+          "caption": "Merhaba! Ben Rota. Etütkoç Rotam'a hoş geldin. Bu sistemin amacı çok net: öğrencilerine hedefe giden net bir rota çizmek. Ben de sana bu rotayı adım adım göstereceğim.",
+          "shot": null,
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Giriş yaptığında seni bu pano karşılar. Öğrencilerinin genel durumu, uyarılar ve hızlı erişim kartları hep burada. Şimdilik boş görünebilir — birazdan birlikte dolduracağız.",
+          "shot": "panel",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Sol menüdeki Öğrenciler sayfası, koçluğunun kalbi. Her öğrencinin satırında durumunu bir bakışta görürsün; kırmızı ve turuncu satırlar ilgi bekleyen öğrencileri öne çıkarır.",
+          "shot": "ogrenciler",
+          "target": "nav-ogrenciler",
+          "click": false
+        },
+        {
+          "caption": "Ve işte en önemli yer: kütüphanen. Etütkoç Rotam'da her program kitaplardan kurulur. Önce kitabını tanıtırsın, sonra öğrencine atarsın, sonra da haftalık programa test test dağıtırsın.",
+          "shot": "kutuphane",
+          "target": "nav-kitaplar",
+          "click": false
+        },
+        {
+          "caption": "Planımız şu: önce kütüphanene bir kitap ekleyeceğiz, sonra öğrencine atayacağız, haftalık programını kuracağız, veliye duyuracağız ve deneme sonucu girmeyi öğreneceğiz. Kurulum adımlarında sıra sana da gelecek; ileri bölümlerde ise izlemen yeterli. Hazırsan başlayalım!",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "kitap-ekle",
+      "title": "Kitap ekle",
+      "subtitle": "Sistemin temeli — bir kitabı sıfırdan, adım adım",
+      "steps": [
+        {
+          "caption": "Kütüphane neden bu kadar önemli? Çünkü Etütkoç Rotam'da her şey kitaptan doğar: haftalık görevler kitabın ünitelerinden atanır, rezerv sistemi kitabın test kapasitesini izler; müfredat ilerlemesi, akıllı öneriler ve deneme analizleri, ünitelerin resmi konulara bağlanmasıyla çalışır. Kitabı doğru tanıtırsan sistemin tamamı senin için çalışır. Şimdi bir kitabı sıfırdan, hiçbir adımı atlamadan ekleyeceğiz.",
+          "shot": null,
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Kütüphane sayfasındayız. Sağ üstteki Yeni Kitap düğmesine tıklıyorum. Karşımıza dört adımlı bir sihirbaz çıkacak — merak etme, her adımda ne yaptığını sana anlatır.",
+          "shot": "kutuphane",
+          "target": "yeni-kitap",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Birinci adım: bilgiler. Önce kitabın adını kapaktaki gibi yazıyorum: Sınav Yayınları L G S Fen Bilimleri Soru Bankası. Sonra HEDEF SINIF SEVİYESİ — dört ön ayar var: L G S beş-sekiz, Lise dokuz-oniki, Mezun yani Y K S hazırlık, ve hedef belirtmeden Tüm seviyeler. Bu seçim alttaki ders listesini o seviyeye uygun derslerle süzer. Kitabımız L G S kitabı — L G S'yi seçiyorum.",
+          "shot": "sihirbaz-ad",
+          "target": "sinif-kartlari",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "İnce ayar, özel aralık içindir: bu kitap yalnız sekizinci sınıfa uygunsa min sekiz, maks sekiz diyorum; mezun öğrencilere de uygun bir kaynaksa Mezun için kutusunu işaretlerim. Böylece kitap, yanlış seviyedeki öğrenciye hiç önerilmez.",
+          "shot": "sihirbaz-ince",
+          "target": "ince-alanlari",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Sıra derste. Liste müfredat gruplarına ayrılır ve hedef seviyene göre süzülür: L G S seçtiğimiz için karşımızda LGS Müfredatı grubu var — Fen Bilimleri'ni seçiyorum.",
+          "shot": "sihirbaz-ders-acik",
+          "target": "ders-listesi",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Peki lise ya da mezun kitabı ekleseydik? O zaman listenin başında Sınav Müfredatı — T Y T, A Y T — grubu belirir. Y K S kitabında dersi BU gruptan seçmek önemlidir: deneme analizleri ve konu takibi en doğru bu omurgada çalışır. Yani hangi grubu göreceğin, hedef seviye seçimine bağlıdır — L G S kitabında LGS grubu, Y K S kitabında Sınav Müfredatı.",
+          "shot": "sihirbaz-ders-yks",
+          "target": "ders-listesi",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Tip seçimi: Soru bankası, Fasikül, Konu anlatımlı, Branş denemesi, Genel deneme. Bu ayrım önemli — deneme tipindeki kitaplar test hacmine karışmaz, istatistikleri ayrı tutulur. Bizimki soru bankası. Yayınevini de yazıp Oluştur ve devam et diyorum.",
+          "shot": "sihirbaz-tip",
+          "target": "tip-listesi",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "İkinci adım: üniteler. Üç yol var ve hangisini neden seçeceğini bilmek deneme yanılmayı bitirir. Resmi konulardan ekle: dersin resmi konu listesini hazır getirir. Yapay zekâ önersin: kitabın GERÇEK ünite yapısını adından ve yayınevinden çıkarır. Elle gir: tam kontrol sende. Sırayla bakalım.",
+          "shot": "sihirbaz-yontem",
+          "target": "katalog-karti",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Resmi konular yolu: sınıf çipleriyle süzersin — sekizinci sınıfta yedi resmi konu var ve her biri varsayılan ON testle eklenir. En hızlı yol budur, üstelik konular müfredata otomatik eşli gelir. Varsayılan test sayısına takılma: ortalama bir başlangıçtır, gerçek sayıları sonra işlersin. Önemli olan, resmi konuların doğru görünüyor olması.",
+          "shot": "sihirbaz-katalog",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Biz bu kitap için yapay zekâyı seçtik. Neden? Çünkü kitabın basılı ünite düzeni resmi listeden farklı olabilir. Yapay zekâ, kitabın adından ve yayınevinden yedi üniteyi TEST SAYILARIYLA birlikte önerdi ve listeye ekledi. Resmi liste dururken buna ihtiyaç var, çünkü görevleri kitabın GERÇEK yapısından atarsın — kitap neyse, sistemde o olmalı.",
+          "shot": "sihirbaz-ai-sonuc",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Elle gir ne zaman? Yapay zekânın standart adlandıramayacağı kaynaklarda: öğretmenin kendi föyü, kurumun özel fasikülü, karma bir derleme... Ünite adını ve test sayısını tek tek kendin yazarsın. Kural şu: katalog hızlıdır, yapay zekâ kitaba sadıktır, elle giriş özel kaynaklar içindir.",
+          "shot": "sihirbaz-yontem",
+          "target": "elle-karti",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Test sayısı neden önemli? Rezerv sistemi ve program dağıtımı bu sayılara dayanır: bu üniteden kaç test kaldı hesabı buradan yapılır. Başlangıçta ortalama değerle ilerle; kitap eline geçince gerçek sayıları kitap detayındaki Bölümler sekmesinden düzeltirsin — her satır yerinde düzenlenir.",
+          "shot": "kitap-bolumler",
+          "target": "bolum-satiri",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Üçüncü adım: müfredat eşleştirme — sihirbazın en kritik ekranı. Ünite resmi konuya bağlanınca sistem öğrencinin müfredatta NEREDE olduğunu bilir; akıllı öneriler, konu takibi ve deneme analizleri hep bu bağla çalışır. Bak: yapay zekânın yedi ünitesinin yedisi de otomatik önerildi — amber kutular önerilerdir; Eşleştir ve devam dersen uygulanır.",
+          "shot": "sihirbaz-esles",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Her zaman yüzde yüz olmaz. Başka bir kitapta üç üniteden yalnız biri otomatik eşleşti: Elektrik Ünitesi Tekrarı, yayınevi diliyle yazıldığı için sistem emin olamadı; Karma Tekrar Föyü ise zaten tek konuya ait değil.",
+          "shot": "sihirbaz-esles-kismi",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Düzeltmesi tek hamle: satırdaki listeyi açıp doğru resmi konuyu seçiyorum — Elektrik Yükleri ve Elektrik Enerjisi. Karma föyü ise bilerek BOŞ bırakıyorum; bu bir hata değil: eşleşmeyen bölüm analizlere karışmaz ama görev atamana engel de olmaz. Sonradan kitap detayındaki Müfredata eşleştir ekranından her zaman bağlarsın.",
+          "shot": "sihirbaz-esles-duzelt",
+          "target": "duzeltilen-satir",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Dördüncü adım: öğrenci. Kitabı şimdi atarsan öğrencinin kitaplığına hemen düşer — Elif'i işaretleyip Ata ve bitir diyorum. Atlamak da serbest; kitabı sonra öğrenci sayfasından da atayabilirsin.",
+          "shot": "sihirbaz-ogrenci",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Ve özet ekranı: kitap hazır — yedi ünite, yedisi müfredata eşli, bir öğrenciye atalı. Bu üç sayıyı böyle görmek, kitabın sisteme TAM bağlandığının kanıtıdır.",
+          "shot": "sihirbaz-tamam",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Atandığını nereden görürsün? Öğrencinin sayfasında Kitaplar sekmesi: yeni kitap, üniteleriyle birlikte orada. Artık program görevleri bu ünitelerden atanır, Kaynak Durumu kapasiteyi izler, müfredat paneli ilerlemeyi gösterir.",
+          "shot": "ogrenci-kitap-yeni",
+          "target": "yeni-kitap-satiri",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Kütüphanenin üç yardımcı aracı daha var. Birincisi Kitap setleri: sınıf ya da alan bazlı hazır paketler — beş kitabı tek atamayla verirsin; yeni öğrenci gelince tek tek kitap atamakla uğraşmazsın.",
+          "shot": "kutup-setler",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "İkincisi Kitap şablonları: bir kitabın ünite yapısını şablon olarak saklarsın; aynı kitabı başka bir öğrenci ya da yeni yıl için eklerken yapıyı tek tıkla uygularsın — üniteleri bir daha girmezsin.",
+          "shot": "kutup-sablonlar",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Üçüncüsü Görev şablonları: sık verdiğin görev kalıpları — kitap, bölüm ve test sayısıyla. Haftalık programda Şablondan dersin, aynı görev tek tıkla güne yerleşir. Üç araç da aynı amaca hizmet eder: kurulumu BİR kez yap, sonra hep hızlı çalış.",
+          "shot": "kutup-gorev-sablon",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Şimdi sıra sende. Aşağıdaki düğmeyle kütüphaneye git ve ilk kitabını ekle. Ben burada bekliyorum — kitabın eklendiğini kendim kontrol edeceğim!",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "Kütüphaneye git, ilk kitabını ekle",
+        "href": "/teacher/library",
+        "checkKey": "kitap-ekle",
+        "doneLabel": "Kitabın eklendi",
+        "hint": "Yol: sol menü → Kitaplar → sağ üstte \"Yeni kitap\" → sihirbazı tamamla."
+      }
+    },
+    {
+      "key": "ogrenci-ata",
+      "title": "Öğrenci + atama",
+      "subtitle": "Öğrencini ekle, kitabını bağla",
+      "steps": [
+        {
+          "caption": "Sıradaki adım: öğrencin. Öğrenciler sayfasında Yeni Öğrenci düğmesine tıklıyoruz. Adını ve sınıfını yazman yeterli — sistem giriş için geçici bir şifre üretir, sen de öğrencine iletirsin.",
+          "shot": "ogrenciler",
+          "target": "yeni-ogrenci",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Öğrenciyi ekleyince detay sayfası açılır. Sekmelere dikkat: genel durum, analitik, denemeler, seanslar, kitaplar... Koçluğun tüm araçları bu tek sayfada toplanır.",
+          "shot": "ogrenci-detay",
+          "target": "ogrenci-sekmeler",
+          "click": false
+        },
+        {
+          "caption": "Kitaplar sekmesine geçiyoruz. Kitap ata düğmesiyle kütüphanendeki kitabı bu öğrenciye bağlıyoruz. Artık sistem bu öğrenci için kitabın bütün ünitelerini ve test kapasitesini biliyor.",
+          "shot": "ogrenci-kitaplar",
+          "target": "kitap-ata",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Atama tamamlanınca her ünitenin kaç testi olduğunu ve ne kadarının çözüldüğünü bu ekranda görürsün. Öğrenci kitabın bir kısmını daha önce çözdüyse bölüm satırından işleyebilirsin — program kalan kapasiteye göre kurulur.",
+          "shot": "ogrenci-kitap-detay",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Sıra sende: bir öğrenci ekle ve kitabını ata. İkisi de tamamsa bir sonraki bölümde programı kuruyoruz!",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "Öğrenci ekle ve kitabını ata",
+        "href": "/teacher/students",
+        "checkKey": "ogrenci-ata",
+        "doneLabel": "Öğrenci eklendi ve kitap atandı",
+        "hint": "Yol: sol menü → Öğrenciler → \"Yeni öğrenci\" ile ekle → öğrencinin sayfasında Kitaplar sekmesi → \"Kitap ata\"."
+      }
+    },
+    {
+      "key": "program-kur",
+      "title": "Programı kur",
+      "subtitle": "En önemli bölüm — acele etmeden, her ayrıntısıyla",
+      "steps": [
+        {
+          "caption": "En kritik bölümdeyiz: haftalık program. Bu bölümde acele etmeyeceğiz; programın nasıl kurulduğunu, görev tiplerini, akıllı önerileri ve Kaynak Durumu'nu tek tek göstereceğim. Sen şimdilik yalnızca izle — bu bölümde uygulama zorunlu değil, ama bölümü bitirmeden bir sonrakine geçemezsin.",
+          "shot": null,
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Öğrencinin sayfasından Haftalık Program ekranına geçtik. İlk düğmemiz: Yeni Program. Görevler tek başına durmaz; bir haftalık çerçevenin içinde yaşar. Bu düğme, o çerçeveyi açar — yeni bir hafta kurmadan görev ekleyemezsin.",
+          "shot": "hafta",
+          "target": "yeni-program-btn",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Yeni Program penceresinde haftanın başlangıç gününü seçersin; istersen programa özel bir ad verirsin, mesela Bayram Haftası. Kaydettiğinde karşına boş bir hafta gelir — artık günlere görev eklemeye hazırsın.",
+          "shot": "yeni-program-dialog",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Üstteki Programlar menüsü, geçmiş haftaların arşividir. Eski bir haftayı açıp inceleyebilir, o haftada yapılmayan işleri tek tıkla yeni haftaya devredebilirsin. Sınava kadar her hafta burada birikir — öğrencinin bütün yolculuğu kayıt altındadır.",
+          "shot": "programlar-menu",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Ekranın düzenine bak: üstte Hafta Izgarası yedi günü tek bakışta gösterir. Ortada günler tek tek açılır; sağda Kaynak Durumu panelin var. Bir güne tıkladığında o günün düzenleyicisi açılır.",
+          "shot": "hafta",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Pazartesiyi seçtim ve Yeni görev ekleye bastım — görev formu açıldı. Üstte görev tipleri sıralı: Test, Deneme, Blok, Video, Özet, Tekrar ve Diğer. En sık kullanacağın tip Test — yani soru bankasından ünite çözdürmek.",
+          "shot": "gorev-ekle",
+          "target": "gorev-ekle-form",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Formu adım adım dolduruyorum: ders Matematik, kitap üç boyut L G S soru bankası, ünite Doğrusal Denklemler. Ünite seçerken yanında kaç test kaldığını görürsün — elle saymana gerek yok. Bu güne dört test yazıyorum ve Ekle'ye basıyorum.",
+          "shot": "gorev-form-dolu",
+          "target": "gorev-form",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Ve işte görev günün içinde: kitap adı, ünite ve test sayısıyla hazır. Öğrenci programı açtığında tam bu satırı görecek; çözdükçe işaretleyecek, doğru ve yanlış sayılarını girecek.",
+          "shot": "gorev-eklendi",
+          "target": "gorev-satiri",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Şimdi sağdaki Kaynak Durumu'na yakından bakalım. Matematik dersini ve kitabı açtım: her ünitenin çözülen, rezerve edilen ve kalan test sayıları burada. Doğrusal Denklemler satırına dikkat — az önce eklediğimiz dört test rezervede görünüyor.",
+          "shot": "kaynak-once",
+          "target": "kaynak-panel",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Aynı üniteye dört test daha ekledim ve panel anında güncellendi: rezerv sekize çıktı, kalan azaldı. Rezerv şu demek: bu testler bu haftaya söz verildi — aynı soruları yanlışlıkla bir daha atayamazsın. Görevi silersen rezerv anında kitaba geri döner.",
+          "shot": "kaynak-sonra",
+          "target": "kaynak-panel",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Bir kitabın tam haritasını görmek istersen paneldeki ızgara simgesine tıkla: karşına stadyum görünümü çıkar. Her kutu bir test: yeşiller çözülmüş, sarılar bu haftaya rezerve, griler henüz boş. Kutunun üzerine gelirsen tarihini görürsün; tıklarsan o günün programına gidersin. Kitabın neresinde olduğunu kuş bakışı gösterir.",
+          "shot": "stadyum-modal",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Görev yalnızca test değildir. Video tipiyle bir YouTube ya da ders videosu bağlantısı eklersin; özet, tekrar ve diğer tipleriyle kitapsız etkinlikler verirsin. Öğrenci bunları da tamamladım diye işaretler — hepsi görev tamamlama yüzdesine sayılır.",
+          "shot": "gorev-video",
+          "target": "video-form",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Deneme kutucuğu tam denemeler içindir: ada denemenin ismini yazarsın, soru sayısını seçersin — doksan ya da yüz yirmi hazır gelir. Deneme, test hacminden ayrı sayılır; istatistikler birbirine karışmaz.",
+          "shot": "gorev-deneme",
+          "target": "deneme-form",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Bazı öğrenciler günü sabah, öğle ve akşam dilimleriyle çalışır. Formdaki Periyot çiplerinden birini seçersen görev o dilime yerleşir. Sabah'ı seçip iki testlik bir görev ekliyorum.",
+          "shot": "gorev-periyot",
+          "target": "periyot-cipleri",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Ve gün artık dilimlere ayrıldı: Sabah başlığının altında az önceki görev, saati belirtilmemişler kendi bölümünde. Öğrenci gününü sabah, öğle, akşam düzeniyle görür — özellikle yoğun yaz programlarında çok işe yarar.",
+          "shot": "hafta-periyot",
+          "target": "periyot-baslik",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Ve şimdi programın en güçlü taraflarından biri: Öneriler. Her günün altında bu mor şerit durur; yanındaki sayı, o gün için kaç hazır öneri olduğunu söyler. Bu liste rastgele değildir — öneri motoru, öğrencinin bütün verisini tarayarak hazırlar. Şeride tıklayıp listeyi açıyorum.",
+          "shot": "oneriler",
+          "target": "oneriler-row",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Motor önerileri hazırlarken şu parametrelere bakar. Bir: müfredat sırası — öğrencinin resmi müfredatta tam nerede olduğunu bilir; sıradaki konuyu öne alır, başlanmış konuyu bitirmeye öncelik verir, çok ilerideki konuyu önermez. İki: deneme analizleri — yapay zekânın karnelerden soru soru okuduğu verilerle, denemelerde yanlış yapılan konular öne çıkar. Üç: Yanlış Soru Arşivi — arşivde açık yanlışı biriken konular sinyal üretir; öğrenci yanlışlarını kapattıkça öneri kendiliğinden düşer.",
+          "shot": "oneriler-acik",
+          "target": "oneri-liste",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Dört: çalışma alışkanlığı — hangi gün hangi derse çalışıldığının deseni. Beş: kitap kapasitesi — ünitelerin kalan testleri. Ve hepsi şeffaftır: her önerinin üzerinde nedeni yazar — zayıf konu, dikkat gerekiyor, müfredatta sıradaki konu gibi rozetler ve bir güven yüzdesi görürsün. Denemeler, işaretlemeler ve yanlışlar biriktikçe öneriler keskinleşir.",
+          "shot": "oneriler-acik",
+          "target": "oneri-rozet",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Kullanması tek tık: test sayısını istersen ayarlarsın, Ekle dersin — öneri o güne görev olur, rezervi otomatik ayrılır. Uymayan öneriyi çarpıyla reddedersin; Tümünü ekle hepsini birden yerleştirir. Son karar her zaman sende: motor yorulmadan hatırlar, koç olarak sen seçersin.",
+          "shot": "oneriler-acik",
+          "target": "oneri-ekle",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Sağ üstteki Sıradaki üniteler paneli müfredat pusulandır: öğrencinin sırada hangi üniteleri varsa listeler; kaynağı hazır olanı doğrudan güne atayabilirsin. İstersen yapay zekâdan öncelik sırası da istersin — hangi ünite önce, neden.",
+          "shot": "siradaki-uniteler",
+          "target": "siradaki-panel",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Şimdi en güçlü araçlardan biri: Serbest Bloklar. Bir örnekle anlatayım: pazartesi günü matematik özel ders öğretmeni öğrencine kırk soruluk bir ödev verdi. Bu kaynak senin kütüphanende yok — ama takipsiz de kalmamalı. Görev tipinden Blok'u seçiyorum ve yeni blok oluşturuyorum: adı Özel Ders Matematik Ödevi, toplamı kırk soru.",
+          "shot": "blok-yeni",
+          "target": "blok-form",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Bloğu günlere dağıtmak görev eklemek kadar kolay: bloğu seçiyorum, bu güne on soru diyorum. Kalanını hafta içine bölersin — salıya on, çarşambaya on, cumaya on gibi. Öğrenci her gün kendi payını çözer ve işaretler.",
+          "shot": "blok-gorev",
+          "target": "blok-form",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Serbest Bloklar kartı muhasebeyi kendisi tutar: kırk sorunun onu dağıtıldı, otuzu bekliyor. Ödev bitene kadar hem sen hem öğrenci nerede kalındığını bilir. Avantajı büyük: sisteme kitap eklemeden, dışarıdan gelen her işi aynı disiplinle takip edersin.",
+          "shot": "blok-karti",
+          "target": "blok-kart",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Günler doldukça ızgara renklenir; görevleri sürükleyip başka bir güne taşıyabilirsin. Ve önemli bir ayrıntı: program şu an taslak — yalnızca sen görüyorsun. Öğrencinin panelinde görünmesi için yayınlaman gerekir; onu bir sonraki bölümde gösteriyorum.",
+          "shot": "hafta-izgara",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Bu kadar! İstersen şimdi kendi öğrencinde bir hafta kur, istersen doğrudan devam et — bu bölümde uygulama zorunlu değil. Hazır olduğunda yayınlama ve veli duyurusuna geçelim.",
+          "shot": null,
+          "target": null,
+          "click": false,
+          "zoom": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "yayinla-duyur",
+      "title": "Yayınla + duyur",
+      "subtitle": "Programı öğrenciye aç, veliyi bilgilendir",
+      "steps": [
+        {
+          "caption": "Program hazır ama henüz taslak. Öğrencinin görebilmesi için yayınlaman gerekiyor. Haftayı yayınla düğmesi tüm haftayı tek seferde açar; istersen gün gün de yayınlayabilirsin.",
+          "shot": "yayinla",
+          "target": "yayinla-btn",
+          "click": true
+        },
+        {
+          "caption": "Yayından sonra Veliye duyur devreye girer. Önce sana birebir önizleme gösterir: veli hangi günleri, hangi dersleri, kaç testi görecek — hepsi gözünün önünde. Onaylarsan veliye şık bir e-posta gider, mobil uygulamada bildirim düşer.",
+          "shot": "veliye-duyur",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Veli bilgilendirmesi bu sistemin en sevilen tarafı: sen programı kurarsın, veli haftalık gelişmeleri kendiliğinden alır. Güven böyle kurulur.",
+          "shot": null,
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Hazır olduğunda programını yayınla; istersen veli önizlemesinden geçir. Bu bölümde de izlemen yeterli — şimdi haftayı takip etmeye geçiyoruz.",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "Programı yayınla",
+        "href": "/teacher/students",
+        "checkKey": "yayinla-duyur",
+        "doneLabel": "Program yayınlandı",
+        "hint": "Yol: öğrencinin Haftalık Program sayfası → üstte \"Tüm haftayı yayınla\" → istersen ardından \"Veliye duyur\".",
+        "optional": true
+      }
+    },
+    {
+      "key": "hafta-takip",
+      "title": "Haftayı takip et",
+      "subtitle": "İşaretlemeleri izle, uyarıları yakala",
+      "steps": [
+        {
+          "caption": "Program yayında — peki öğrenci çalışıyor mu? Öğrenci her görevi tamamladığında işaretler, doğru yanlış sayılarını girer. Sen de gün ve hafta görünümünde ilerlemeyi anlık izlersin.",
+          "shot": "gun-takip",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Öğrenci sayfasındaki Durum Özeti sana yalın bir fotoğraf verir: neler yolunda, neler dikkat istiyor. Her uyarının yanındaki bağlantı seni doğrudan kanıta götürür.",
+          "shot": "durum-ozeti",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Panodaki uyarı akışı ise tüm öğrencilerini birden tarar: üç gündür giriş yapmayan, programı boş kalan, temposu düşen... Gördüm diyerek uyarıyı erteleyebilirsin — durum düzelmezse sistem tekrar hatırlatır.",
+          "shot": "pano-uyari",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Takip alışkanlık işidir: günde bir kez panoya bakmak, çoğu sorunu daha küçükken yakalamanı sağlar. Hazırsan son bölüme geçelim: deneme sonuçları.",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "deneme-gir",
+      "title": "Deneme sonucu",
+      "subtitle": "PDF'ten aktar, analiz kendiliğinden gelsin",
+      "steps": [
+        {
+          "caption": "Son bölüm: denemeler. Öğrencinin Denemeler sekmesindeyiz. Elle giriş her zaman var: Deneme Ekle dersin, toplam doğru yanlışı ya da ders ders kırılımı yazarsın — net hesabını sistem yapar: L G S'de yanlışın üçte biri, Y K S'de dörtte biri doğruyu götürür.",
+          "shot": "denemeler",
+          "target": "deneme-ekle",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Ama asıl sihir bu düğmede: PDF'ten aktar. Soruları tek tek girmek yerine, yayınevinin verdiği karneyi olduğu gibi yüklersin — gerisini yapay zekâ halleder.",
+          "shot": "denemeler",
+          "target": "pdf-aktar",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Peki hangi belge? Deneme şirketlerinin dağıttığı KONU ANALİZLİ SONUÇ KARNESİ — işte böyle görünür: her soru için ders, konu, doğru cevap, öğrencinin cevabı ve sonuç; altta ders özeti. Sistem şablon ezberlemez — çekirdek bilgi ders, konu ve sonuçtur; hangi yayınevi, hangi düzen olursa olsun okur. Belge P D F olmalı, on megabayttan küçük — ve soru kitapçığı değil, SONUÇ belgesi.",
+          "shot": "ornek-pdf",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Düğmeye bastığımda bu pencere açılır. Üstte sınıf ve tür beyanı: denemenin türünü biliyorsan seç — yanlış tespit ihtimali sıfırlanır; emin değilsen Otomatik tespit bırak. Ben sekizinci sınıf ve L G S seçtim. Şimdi kesikli kutuya tıklayıp karne dosyasını veriyorum.",
+          "shot": "deneme-pdf",
+          "target": "dosya-kutusu",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Analiz başladı. Yapay zekâ belgeyi İKİ KEZ bağımsız okur ve iki okumayı karşılaştırır — tek okumanın hayal görmesi diğerine takılır. İşlem koç havuzundan altı kredi kullanır; bir iki dakika sürebilir, bu sırada bekliyoruz.",
+          "shot": "aktar-yukleniyor",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Ve önizleme karşımızda. Üstte deneme adı, tarihi ve türü — belgeden okundu, istersen elle düzeltirsin. Şu mor çipler kalite raporudur: yirmi sorunun on sekizi otomatik eşleşti, ikisini yapay zekâ eşledi. En altta net CANLI hesaplanıyor: on bir nokta otuz üç — belgedeki özetle birebir.",
+          "shot": "aktar-onizleme",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Tabloya yakından bakalım: her satırda sorunun belgedeki konusu, senin müfredatındaki karşılığı, doğru cevap, öğrencinin cevabı ve sonuç var. İki okumanın çeliştiği satır sarı 'şüpheli' işaretlenir; konu yanlış bağlandıysa açılır listeden düzeltirsin. Kaydetmeden önce son söz hep sende.",
+          "shot": "aktar-tablo",
+          "target": "soru-tablosu",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Kontrol ettim, kaydet diyorum. Ve işte: deneme kaydedildi — net on bir nokta otuz üç; on üç doğru, beş yanlış, iki boş. Yirmi sorunun yirmisi müfredat konusuna bağlandı; belge de kanıt olarak saklandı. Şu kırmızı düğme çok kıymetli: Yanlışlardan arşive soru seç — yanlış çıkan soruları tek tıkla Yanlış Soru Arşivi'ne gönderirsin; orada aralıklı tekrarla kapanana dek yeniden çözülür.",
+          "shot": "aktar-kayit",
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Kaydettiğimiz anda panel güncellendi: deneme sayısı, ortalama, en iyi ve son net. Net Gelişimi grafiği aynı türün denemelerini kronolojik çizer. Yorum uyarısı: yirmi soruluk branş denemesinin neti, doksan soruluk genel denemenin yanında doğal olarak düşük görünür — çizgideki her iniş kötüleşme değildir; asıl hikâye konu analizindedir.",
+          "shot": "denemeler-sonuc",
+          "target": "net-trend",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "İşte o analiz. NET FIRSATI listesi şunu söyler: bu konu kapanırsa deneme başına kaç net kazanılır. Üslü İfadeler tek başına iki buçuk netten fazla taşıyor — dokuz soruda beş yanlış, doğruluk yüzde otuz üç. Program yaparken önceliğin bu listedir: en yüksek getirili konudan başla.",
+          "shot": "analiz-firsat",
+          "target": "firsat-listesi",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Konu çarpı deneme ısı haritası: her hücre, o denemede o konudan kaç doğru yapıldığını gösterir — yeşil iyi, kırmızı kötü. Satırı soldan sağa oku: Üslü İfadeler üçte üçten sıfıra düşmüş; bu bir UNUTMA sinyalidir. Baştan sona kırmızı satır ise konunun hiç oturmadığını söyler.",
+          "shot": "analiz-isi",
+          "target": "isi-tablosu",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Sistem bu okumayı senin için de yapar. Unutulan konular kartı: önceden bilinirken son denemelerde düşenler — Üslü İfadeler yüzde elliden sıfıra; hemen tekrar programına al. Yanındaki Gelişen konular kartı emeğin kanıtı: Çarpanlar ve Katlar yüzde otuz üçten yüze çıkmış. Bunu öğrencinle paylaş — motivasyonun en sağlam yakıtı budur.",
+          "shot": "analiz-unutulan",
+          "target": "unutulan-karti",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Özetle: denemeleri ister elle gir, ister karneyi P D F'ten aktar. Veri biriktikçe net gelişimi, konu analizi, akıllı öneriler ve veli raporları hep birlikte güçlenir. İstersen şimdi kendi öğrencinde dene — zorunlu değil.",
+          "shot": null,
+          "target": null,
+          "click": false,
+          "zoom": false
+        },
+        {
+          "caption": "Ve hepsi bu! Artık Etütkoç Rotam'ın temel akışını biliyorsun: kitap, atama, program, yayın, takip ve deneme. Ben sol menüdeki Rehber bağlantısında her zaman buradayım. Şimdi git, öğrencilerine hedefe giden net rotayı çiz. Başarılar koçum!",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "Deneme sonucu gir",
+        "href": "/teacher/students",
+        "checkKey": "deneme-gir",
+        "doneLabel": "Deneme sonucu girildi",
+        "hint": "Yol: Öğrenciler → öğrenciyi seç → Denemeler sekmesi → \"Deneme Ekle\" ya da \"PDF'ten aktar\".",
+        "optional": true
+      }
+    }
+  ]
+}

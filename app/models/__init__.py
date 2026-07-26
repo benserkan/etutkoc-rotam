@@ -223,6 +223,7 @@ from app.models.coaching_session import (
     ParentInsight,
     SessionCaptureSource,
 )
+from app.models.guide import UserGuideState
 from app.models.weekly_program import WeeklyProgram
 from app.models.app_setting import AppSetting
 from app.models.contact_request import (
@@ -594,6 +595,7 @@ __all__ = [
     "WrongQuestion",
     "WrongQuestionImage",
     "SessionCaptureSource",
+    "UserGuideState",
     "WeeklyProgram",
     "COACH_PAYMENT_METHOD_LABELS",
     "CoachPayment",

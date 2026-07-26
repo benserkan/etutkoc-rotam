@@ -6,7 +6,15 @@ from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
 from app.config import settings
 
 
-connect_args = {"check_same_thread": False} if settings.database_url.startswith("sqlite") else {}
+# SQLite (yalnız dev): tek-yazar kilidi. Varsayılan 5 sn bekleme, uzun süren
+# istek (örn. deneme PDF analizi ~40 sn Gemini) sırasında paralel yazmaları
+# (oturum heartbeat'i, ziyaret izleyici) "database is locked" ile düşürüyordu.
+# timeout=60 → yazan bekler, çakışma kaybolur. Prod (Postgres) etkilenmez.
+connect_args = (
+    {"check_same_thread": False, "timeout": 60}
+    if settings.database_url.startswith("sqlite")
+    else {}
+)
 
 engine = create_engine(
     settings.database_url,
