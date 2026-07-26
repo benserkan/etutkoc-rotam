@@ -254,12 +254,12 @@ healthz/site 200 · rehber varlıkları (avatar/shot/mp3) 200 · yeni uçlar ano
 rehber gerçek kullanıcının kendi durumuyla açılır; veli asistanı gerçek
 ücretli koç + rıza ister. Mobil değişiklikler OTA yayınlanana kadar canlı
 uygulamaya GİTMEZ (JS-only, sıradaki OTA'ya hazır).
-**PAKET 3 — SOHBETE SES, KOD HAZIR (2026-07-26, migration `d4e7h0j1j33d`,
-COMMIT/DEPLOY BEKLİYOR):** sesli soru (STT) + cevap balonu sesi (TTS).
+**PAKET 3 — SOHBETE SES, CANLI (2026-07-26, commit `08234ce`, migration
+`d4e7h0j1j33d` prod head):** sesli soru (STT) + cevap balonu sesi (TTS).
 - **Migration `d4e7h0j1j33d`** (← c3d6g9h0h22c, additive): `parent_chat_messages`e
   `audio` (LargeBinary, model'de deferred) + `audio_content_type` +
   `audio_generated_at`. Mesajlar immutable → ses ASLA bayatlamaz (cache-bust
-  gerekmez). Yerel DB'ye uygulandı.
+  gerekmez).
 - **Yeni kind'lar (migration'sız, ölçüm ayrı):** `AI_PARENT_CHAT_STT`=2
   ("Rota Veli Sohbeti (Sesli Soru)") + `AI_PARENT_CHAT_TTS`=2 ("… (Sesli
   Cevap)"). STT günlük rayı `PC_STT_DAILY_LIMIT=15` (soru limitinden AYRI;
@@ -295,9 +295,15 @@ COMMIT/DEPLOY BEKLİYOR):** sesli soru (STT) + cevap balonu sesi (TTS).
   OK. Playwright E2E (:3000): mikrofon + 5 balonda Dinle; önbellekli balonda
   Dinle→Duraklat→Dinle döngüsü + konuşan avatar doğrulandı; önbelleksiz
   balonda "Ses hazırlanıyor…" beklenen davranış.
-**SIRADA:** kullanıcı yerelde inceler (mikrofon gerçek cihaz ister) →
-commit+deploy → **P4** proaktif push tetikleri (deneme importu/hafta yayını →
-"Rota yorumlamaya hazır") → mobil OTA.
+- **DEPLOY (2026-07-26):** commit `85b176b` (reklam docs) + `08234ce` (P3) →
+  sunucuda pull + pg_dump yedek (`pre_p3_*.dump`) + Plausible-stop'lu rebuild →
+  CANLI doğrulandı: alembic head `d4e7h0j1j33d` · healthz/site 200 · 3 yeni uç
+  anon 401 · tüm container'lar taze+healthy. **DERS (deploy):** uzun SSH
+  heredoc script'i sessizce KESİLEBİLİYOR (yalnız ilk adımlar koşar, exit 0) —
+  deploy adımlarını ayrı tek-satır ssh komutlarıyla koş + her adımı doğrula.
+  Compose servis adları: `plausible_db`/`plausible_events_db` (tire değil).
+**SIRADA:** **P4** proaktif push tetikleri (deneme importu/hafta yayını →
+"Rota yorumlamaya hazır") → mobil OTA (Rota kartı+sohbet+P3 JS-only bekliyor).
 
 ---
 
