@@ -1,3 +1,4 @@
+import { router } from "expo-router";
 import { Linking, Pressable, ScrollView, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -25,6 +26,16 @@ export default function ParentProfileScreen() {
             <Text className="text-xs text-slate-400">{user?.email}</Text>
           </View>
         </View>
+
+        <Pressable
+          onPress={() => router.push("/guide")}
+          className="rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 active:bg-cyan-100"
+        >
+          <Text className="text-[15px] font-semibold text-cyan-900">Rehber</Text>
+          <Text className="mt-0.5 text-xs text-cyan-800">
+            Rota, veli panelini sesli anlatarak gezdirir
+          </Text>
+        </Pressable>
 
         <Pressable
           onPress={() => void Linking.openURL("https://rotam.etutkoc.com/parent/settings")}

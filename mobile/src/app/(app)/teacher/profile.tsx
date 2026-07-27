@@ -43,6 +43,16 @@ export default function TeacherProfileScreen() {
         ) : null}
 
         <Pressable
+          onPress={() => router.push("/guide")}
+          className="rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 active:bg-cyan-100"
+        >
+          <Text className="text-[15px] font-semibold text-cyan-900">Rehber</Text>
+          <Text className="mt-0.5 text-xs text-cyan-800">
+            Rota, koç panelini sesli anlatarak gezdirir
+          </Text>
+        </Pressable>
+
+        <Pressable
           onPress={() => router.push("/teacher-appointments")}
           className="rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
         >

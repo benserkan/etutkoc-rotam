@@ -42,6 +42,7 @@ Billing ayrı iş). Kurulum: `store/iap-kurulum-rehberi.md`.
 | **Yanlış Soru Arşivi (foto çek/galeri + yeniden çöz + AI ipucu)** | ✅ | ✅ | Gelişim hub "Yanlışlarım" kartı (vadesi gelen rozet); kamera=expo-image-picker (build 9); AI etiketleme koç kredisiyle |
 | Bölüm baz "çözülmüş" girişi / projeksiyon detay | ✅ | ⬜ | web |
 | **Görüşmelerim (online randevu)** | ✅ | ✅ | Bugün ekranında "Sıradaki görüşme" bandı + `/student-appointments`: Katıl (Linking) + slot seçip görüşme iste + bekleyeni geri çek + geçmiş; push deep-link `screen:"appointments"` |
+| **Rehber (Rota sesli tanıtım turu)** | ✅ | ✅ | `/guide` — 3 rol (öğrenci/veli/koç) tek oynatıcı: shot+vurgu kutusu+zoom+MP3 (backend /static akışı)+altyazı+watch ilerleme (web↔mobil kaldığın yerden devam); içerik JSON'ları web'den KOPYA (`assets/guide/` — içerik/TTS yenilenince kopyala + GUIDE_ASSET_VERSION eşitle); girişler: öğrenci Gelişim hub + veli/koç Profil |
 
 ## Veli
 

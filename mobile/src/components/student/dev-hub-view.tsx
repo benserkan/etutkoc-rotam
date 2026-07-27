@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 
 import type { DnaResponse, FocusResponse, GoalListResponse, ReviewResponse } from "@/lib/student";
@@ -108,6 +109,23 @@ export function DevHubView({
       contentContainerClassName="px-4 py-4 gap-4"
       refreshControl={onRefresh ? <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#0e7490" /> : undefined}
     >
+      {/* Rehber — Rota'nın sesli tanıtım turu */}
+      <Pressable
+        onPress={() => router.push("/guide")}
+        className="flex-row items-center justify-between rounded-2xl border border-cyan-200 bg-cyan-50 px-5 py-4 active:bg-cyan-100"
+      >
+        <View className="flex-row items-center gap-3">
+          <Ionicons name="compass-outline" size={22} color="#0e7490" />
+          <View>
+            <Text className="text-[15px] font-semibold text-cyan-900">Rehber</Text>
+            <Text className="mt-0.5 text-xs text-cyan-800">
+              Rota sistemi sesli anlatarak gezdirir
+            </Text>
+          </View>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color="#0e7490" />
+      </Pressable>
+
       {/* Kitaplarım kısayolu */}
       <Pressable
         onPress={onOpenBooks}

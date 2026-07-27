@@ -1,0 +1,381 @@
+{
+  "guideKey": "student_onboarding",
+  "narrator": "Rota",
+  "chapters": [
+    {
+      "key": "ogr-hosgeldin",
+      "title": "Hoş geldin",
+      "subtitle": "Rota'yla tanış — sistem senin için nasıl çalışır",
+      "steps": [
+        {
+          "caption": "Merhaba! Ben Rota. Etütkoç Rotam'a hoş geldin. Burada işler şöyle yürür: koçun senin için haftalık bir program hazırlar; senin işinse her gün küçük ama altın değerinde — görevlerini yap, işaretle, doğru ve yanlış sayılarını gir. Gerisini sistem üstlenir: ilerlemeni ölçer, unuttuklarını tam zamanında hatırlatır, koçuna ve ailene emeğini gösterir.",
+          "shot": null,
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Üst menü senin haritan: Bugün, Hafta, Kitaplar, Yanlışlarım, Konu Performansı, Talepler... Sağdaki Daha fazla menüsünde de dahası var: Denemelerim, Anketler, Odak, Tekrar, Hedefler — ve ben, Rehber. Hepsini bu turda tek tek gezeceğiz.",
+          "shot": "ogr-bugun",
+          "target": "ust-menu",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Bu rehberde sana yalnız anlatmayacağım — birlikte YAPACAĞIZ: görev işaretleyeceğiz, doğru-yanlış gireceğiz, arşive yanlış ekleyeceğiz, deneme karnesi okutacağız, koça talep göndereceğiz. Sen de rehber biter bitmez aynılarını kendi hesabında yapacaksın. Başlayalım!",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "ogr-bugun",
+      "title": "Bugün",
+      "subtitle": "Görevi işaretle · doğru-yanlış gir · not düş",
+      "steps": [
+        {
+          "caption": "İşte Bugün sayfan — günün karargâhı. Üstteki manşete bak: üç görevden biri bitmiş, yüzde otuz üçtesin. Karekök görevi tamamlanmış; video görevi ve dört testlik doğrusal denklemler görevi seni bekliyor. Şimdi birlikte bir görev bitireceğiz.",
+          "shot": "ogr-bugun",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Video görevini ele alalım. Her görev kartının solunda bir daire var — işaretleme düğmesi. Videoyu izledin, bitti; şimdi bu daireye dokunuyoruz.",
+          "shot": "ogr-gorev-isaretle",
+          "target": "isaret-dugmesi",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Ve işte! Görevin üzeri çizildi, kart yeşile döndü, manşet yüzde altmış yediye fırladı. Aynı anda koçunun panelinde de göründü: Elif videoyu bitirdi. Bu tek dokunuş, sistemle konuşmanın en kısa yolu — yaptığın hiçbir emek görünmez kalmaz.",
+          "shot": "ogr-gorev-tamam",
+          "target": "tamam-gorev",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Test görevinde bir adım daha var: sayılar. Tamamlanmış karekök görevine bak — üç test çözülmüş ve altında yirmi dört doğru, altı yanlış yazıyor. Peki bu sayılar nereden girildi?",
+          "shot": "ogr-gorev-sonuc",
+          "target": "sonuc-alani",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Kalem satırının sağındaki ayar düğmesinden. Açılan bu pencerede önce çözdüğün test sayısını, altına da toplam doğru ve yanlış sayını yazıyorsun — sonra Kaydet. Hepsi otuz saniye. Ama bu otuz saniye her şeyin ham maddesi: konu analizlerin, zayıf konularının tespiti, koçunun sana yazacağı program hep buradan beslenir.",
+          "shot": "ogr-dy-gir",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Görev yalnız test değildir: video, özet, tekrar gibi görevlerde sayı yoktur — işaretlemen yeter. Tam deneme görevinde ise kartın altındaki Çözdüğüm soru sayısını gir bağlantısını kullanırsın.",
+          "shot": "ogr-gorev-tamam",
+          "target": "video-gorev",
+          "click": false
+        },
+        {
+          "caption": "Sayfanın en altında Günün Notu var. Aklına takılanı buraya yaz — düğme yok, yazdıkça kendiliğinden kaydedilir ve koçun görür. Bak: paragraf sorularında yavaşım, yarın kronometreyle deneyeceğim. Böyle tek bir cümle bile koçun için altın değerinde bir sinyaldir.",
+          "shot": "ogr-gun-notu",
+          "target": "not-kutusu",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Alışkanlığın şu olsun: akşam çalışman bitince iki dakika ayır — işaretle, sayıları gir, bir cümle not düş. Bu ritim oturduğunda sistem seni gerçekten tanımaya başlar. Şimdi sıra sende: bugünkü görevlerinden birini işaretle.",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "Bugün sayfana git",
+        "href": "/student/day",
+        "checkKey": "",
+        "doneLabel": "Bugün sayfası",
+        "hint": "Üst menü → Bugün. Görevin solundaki daireye dokun; test görevinde ayar düğmesinden doğru-yanlış gir.",
+        "optional": true
+      }
+    },
+    {
+      "key": "ogr-kitaplar",
+      "title": "Hafta + Kitaplarım",
+      "subtitle": "Haftana hâkim ol · kitap dışı emeğini bildir",
+      "steps": [
+        {
+          "caption": "Hafta sayfası haftanın tamamını tek bakışta gösterir: hangi gün ne var, neler bitti, neler bekliyor. Yeşil tik yapılmış, boş kutu bekliyor demek. Bir güne tıklarsan o günün detayı açılır. Dünü kaçırdıysan burada görürsün — telafisini koçunla konuşursun.",
+          "shot": "ogr-hafta",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Kitaplarım sayfası kitap yolculuğun: her kitapta ne kadar çözdün, ne kadar kaldı. Yeşil bölüm çözdüklerin, sarı bölüm bu haftaya ayrılmış rezerv. Bir kitaba tıklayınca içi açılır.",
+          "shot": "ogr-kitaplar",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "İşte kitabın içi — ünite ünite, test test. Yeşil kutular çözdüğün testler, sarılar bu haftanın programına ayrılanlar, boşlar sırada bekleyenler. Stadyum koltuğu gibi: hangi ünitenin ne kadar dolduğunu tek bakışta görürsün.",
+          "shot": "ogr-kitap-detay",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Peki tatildesin, internetin yok, koçsuz çalıştın? Emeğin kaybolmaz. Kitaplarım'ın üstündeki Bağımsız çalışma bildir düğmesine bas — bu pencere açılır.",
+          "shot": "ogr-bagimsiz",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Doldurması basit: kitabı seç, istersen dönemi ve bir not yaz — köydeydim, kendi çalıştım gibi. Sonra bölümlere kaç test çözdüğünü girip Koça gönder'e bas. Koçun onaylayınca çözdüklerin ilerlemene işlenir; kitap kapasiten güncel kalır.",
+          "shot": "ogr-bagimsiz-dolu",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Unutma: kitap ilerlemen programının temelidir. Sistem kalan kapasiteni doğru bilirse, koçun sana tam sana göre görev yazar. Sistem dışında çözdüğün hiçbir testi kayıp sayma — bildir, işlensin.",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "ogr-yanlislar",
+      "title": "Yanlış Soru Arşivi",
+      "subtitle": "Birlikte yanlış ekleyeceğiz, çözeceğiz, kapatacağız",
+      "steps": [
+        {
+          "caption": "Şimdi sistemin en güçlü silahı: Yanlış Soru Arşivi. Klasik yanlış defteri neden işe yaramaz? Yazması zahmetlidir, dönüp bakılmaz ve ne zaman tekrar edileceği belli olmaz. Rotam bu üç sorunu da çözer. Ve bunu sana anlatarak değil — birlikte YAPARAK göstereceğim.",
+          "shot": null,
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Yanlışlarım sayfan: arşivindeki her yanlış bir kart. Üstteki sarı bant çözme vakti gelen soruları söylüyor; filtrelerle açık, kapanan ve hata türüne göre süzebilirsin. Şimdi birlikte yeni bir yanlış ekleyelim — sağ üstteki Yanlış ekle'ye basıyoruz.",
+          "shot": "ogr-yanlislar",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Karşına bu pencere çıkar. En üstte fotoğraf alanı — telefondan kamerayı açar, bilgisayardan dosya seçer. Altında sorunun kaynağı ve hata türü. Hadi dolduralım.",
+          "shot": "ogr-yanlis-ekle",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Birlikte doldurduk: sorunun fotoğrafını ekledik — bir. Kitabımdan'ı seçip kitabı ve üniteyi işaretledik; konu kendiliğinden etiketlendi — iki. Neden yanlış yaptın sorusuna dürüst cevap verdik: işlem hatası — üç. Bir cümle de not düştük: işareti değiştirmeyi unuttum. Şimdi Arşive ekle'ye basıyoruz.",
+          "shot": "ogr-yanlis-doldur",
+          "target": "arsive-ekle",
+          "click": true
+        },
+        {
+          "caption": "Ve işte orada! Doğrusal Denklemler kartın listenin en başında — fotoğrafı, İşlem hatası rozeti ve Yeniden Çöz etiketiyle. Sistem sağ altta söylüyor: hemen yeniden çözebilirsin; kapanması için aradan zaman geçmiş iki doğru çözüm gerekir. Eklemek işte bu kadar: fotoğraf, iki dokunuş, bitti.",
+          "shot": "ogr-yanlis-eklendi",
+          "target": "yeni-kart",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Bir karta dokununca detayı açılır. Takıldığın soruda yapay zekâdan ipucu isteyebilirsin — sana çözümü VERMEZ; hangi kavramı hatırlaman gerektiğini, ilk adımın ne olduğunu söyler. Bak: negatif üs, tabanın tersini almak demektir... Balık değil, olta. Cevabı yine sen bulursun.",
+          "shot": "ogr-ai-ipucu",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Şimdi çözme vakti. Sarı banttaki Çözmeye başla'ya basınca sorular tek tek karşına gelir. Kural net: önce KENDİN çöz — kâğıtta, gerçekten. Sonra dürüstçe işaretle: Yine yanlış, Zor çözdüm, Çözdüm ya da Kolayca çözdüm.",
+          "shot": "ogr-yeniden-coz",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Çözdüm dedik — ve bak sağ alttaki mesaja: kaydedildi, bir doğru daha; bir sonraki aralıklı çözümde kapanır. Kuyruk da ikinci soruya geçti bile: iki bölü dört. Her cevabın, o sorunun sana ne zaman tekrar sorulacağını belirler — sistem aralıkları sana göre ayarlar.",
+          "shot": "ogr-coz-sonuc",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Kapanış kuralı: bir yanlış, ARALIKLI iki doğru çözümle kapanır — art arda aynı gün değil. Kapandıysa o soruyu gerçekten öğrendin demektir. Sonra yine şaşırırsan kart kendiliğinden yeniden açılır. Sistem seni yalancı ilerlemeyle asla avutmaz.",
+          "shot": null,
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Altın kural: her yanlış değerlidir. Görevden, denemeden, okuldaki yaprak testten — nereden gelirse gelsin fotoğrafla, arşive at. Sen unut, sistem hatırlasın. Şimdi sıra sende: ilk yanlışını ekle.",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "İlk yanlışını arşivle",
+        "href": "/student/wrong-questions",
+        "checkKey": "",
+        "doneLabel": "Yanlış arşivlendi",
+        "hint": "Yanlışlarım → Yanlış ekle → fotoğraf çek, kaynağı ve hata türünü seç, Arşive ekle.",
+        "optional": true
+      }
+    },
+    {
+      "key": "ogr-denemeler",
+      "title": "Denemelerim",
+      "subtitle": "Karneni birlikte okutuyoruz — soru soru",
+      "steps": [
+        {
+          "caption": "Denemelerim sayfası: tüm sonuçların — net, doğru, yanlış, soru sayısı. Üstte özetin: altı deneme, ortalaman, en iyin, son netin. Şimdi bu sayfanın en güçlü özelliğini birlikte kullanacağız: deneme karnesini sisteme kendin okutmak.",
+          "shot": "ogr-denemeler",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "PDF'ten aktar'a bastık — bu pencere açıldı. Yayınevinin ya da okulun verdiği konu analizli sonuç karnesini seçeceğiz. Sınıfını ve sınav türünü biliyorsan üstten söyle; bilmiyorsan Otomatik tespit'e bırak — sistem kendisi anlar.",
+          "shot": "ogr-deneme-pdf",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Belgeyi seçtik ve yapay zekâ okumaya başladı. Güvenlik için iki kez okunur — iki okuma birbirini tutmazsa o satır sarıyla işaretlenir, kaydetmeden düzeltirsin. Yaklaşık yarım dakika sürer; kredisi koçunun havuzundan düşer.",
+          "shot": "ogr-pdf-okunuyor",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Ve sonuç! Yirmi sorunun yirmisi de konusuna bağlandı. Her satırda senin cevabın, doğru cevap ve sonuç var; net on bir virgül otuz üç kendiliğinden hesaplandı. Yanlış okunan bir satır olursa buradan düzeltirsin. Kontrol ettim, kaydet'e basınca deneme listene düşer — koçun da aynı sonucu görür.",
+          "shot": "ogr-pdf-onizleme",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Kaydedilen her deneme üstteki özet şeridini besler: deneme sayın, ortalaman, en iyi ve son netin — yanındaki ok yükselişte misin, inişte misin söyler. Küçük bir uyarı: az sorulu branş denemesinin neti doğal olarak düşük görünür; her iniş kötüleşme değildir.",
+          "shot": "ogr-net-trend",
+          "target": "net-trend",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Asıl hazine Konu Analizi: hangi konu sana deneme başına kaç net kaybettiriyor? Net Fırsatı listesi çalışma sıranı söyler — bak, Üslü İfadeler kapansa deneme başına iki buçuk net gelecek. Isı haritasında soldan sağa kızaran satır unutmakta olduğun konudur. Çalışmana buradan yön ver.",
+          "shot": "ogr-konu-analiz",
+          "target": "analiz-alani",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Şimdi en güzel köprü: denemede yanlış yaptığın soruları arşive taşımak. Deneme satırının sağındaki bu kırmızı simgeye basıyoruz.",
+          "shot": "ogr-deneme-arsiv",
+          "target": "arsiv-btn",
+          "click": true,
+          "zoom": true
+        },
+        {
+          "caption": "Denemedeki yanlışların liste hâlinde geldi — konusu ve senin cevabınla birlikte. Hepsini eklemek şart değil: tekrar çözmeye değer bulduklarını işaretle. Biz Üslü İfadeler'den iki soruyu seçtik, istersen hata türünü de söyle. Seçilenleri arşive ekle'ye basınca bu sorular yeniden çözme kuyruğuna girer. Deneme biter, öğrenme başlar.",
+          "shot": "ogr-arsiv-sec",
+          "target": "arsiv-gonder",
+          "click": false
+        },
+        {
+          "caption": "Denemeler biriktikçe sistem keskinleşir: konu analizin netleşir, koçunun gördüğü öneriler güçlenir, ailene giden raporlar zenginleşir. Her denemeden sonra alışkanlığın bu olsun: karneyi yükle, yanlışları arşive seç.",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "ogr-gelisim",
+      "title": "Gelişim araçları",
+      "subtitle": "Konu Performansı · Tekrar · Hedefler · Odak · DNA",
+      "steps": [
+        {
+          "caption": "Konu Performansı sayfası: ders ders, konu konu doğruluk oranların. Görevlerde girdiğin her doğru-yanlış burada birikir — bak: otuz yedi test, yüzde yetmiş beş doğruluk. Derse dokununca konu konu açılır; kırmızı görünen konu tekrar ister. Bugün sayfasında sayı girmenin karşılığı işte bu netlik.",
+          "shot": "ogr-konu-perf",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Tekrar sayfası unutmaya karşı kalkanın. Beyin öğrendiğini zamanla siler; sistem her konuyu tam unutacağın anda önüne getirir. Kullanımı tek düğme: karttaki Hatırlamayı dene'ye bas, konuyu içinden anlat, sonra dürüst işaretle — Hatırlamadım, Zor, İyi ya da Kolay. Aralıklar cevabına göre kurulur.",
+          "shot": "ogr-tekrar",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Hedefler sayfası: koçunla koyduğunuz hedefler ve ilerlemen. Bak: bu hafta altmış test hedefinin otuz sekizindesin. Sayıyı kutuya yazıp Güncelle'ye basarak ilerlemeni kendin işlersin; hedefi bitirince Tamamlandı'ya basarsın. Yeni hedef düğmesiyle kendi hedefini de ekleyebilirsin.",
+          "shot": "ogr-hedefler",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Odak sayfası: dikkat dağınıklığına karşı Pomodoro sayacın. Süreyi seç — yirmi beş dakika iyi bir başlangıç — istersen etiket yaz, Seansı başlat'a bas ve telefonu ters çevir. Bak: beş günlük serin ve yetmiş puanın var; yarıda kalan seans bile dürüstçe kaydedilir. Kendinle yarışırsın.",
+          "shot": "ogr-odak",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Çalışma DNA'n: sistem verilerinden çalışma karakterini çıkarır. Bak ne demiş: Akşamcı — on sekiz yirmi iki arası verimlisin, en yoğun saatin yirmi. Kendini tanı; en zor konuyu en verimli saatine koy. Bu sayfa sen işaretledikçe akıllanır.",
+          "shot": "ogr-dna",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Bu araçlar süs değil: tekrar kartların ve zayıf konuların, koçunun gördüğü akıllı önerileri besler; programın sana göre şekillenir. Haftada bir Konu Performansı'na ve DNA'na bak — kendini verinle tanı.",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "ogr-iletisim",
+      "title": "Talepler + Anketler",
+      "subtitle": "Koçundan görev değişikliği istemeyi birlikte yapıyoruz",
+      "steps": [
+        {
+          "caption": "Görev sana uymuyorsa sessiz kalma — sistemden iste. Diyelim yarın okulda matematik sınavın var ama koçun bugüne dört test koymuş. Görev kartının sağındaki üç nokta menüsünden Sayıyı değiştir'i seçtik: yeni sayıyı yazdık — iki — ve derdimizi dürüstçe anlattık. Şimdi Talep gönder'e basıyoruz.",
+          "shot": "ogr-talep-doldur",
+          "target": null,
+          "click": true
+        },
+        {
+          "caption": "Gönderildi! Görevinin yanında artık sarı Bekliyor rozeti var. Görev olduğu gibi durur — koçun onaylarsa sayı kendiliğinden düşer, reddederse sana açıklamasını yazar. Karar her zaman koçta ama sesin her zaman duyulur.",
+          "shot": "ogr-talep-bekliyor",
+          "target": "bekliyor-gorev",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Menünün tamamına bakalım: Sayıyı değiştir, Kaynağı değiştir — başka kitaptan çalışmak istersen, Çıkar — görevin kaldırılmasını önerirsin, Koçuna sor — serbest soru, ve Yanlışı arşivle. Dikkat: bekleyen talebimiz olduğu için ilk üçü şu an soluk — aynı göreve ikinci değişiklik talebi açılmaz, önce koçun yanıtlar.",
+          "shot": "ogr-gorev-menu",
+          "target": "gorev-menu",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Taleplerim sayfasında hepsinin durumu: az önce gönderdiğimiz talep en üstte, Bekliyor rozetiyle — istersen Geri çek. Alttaki soruya ise koç yanıt yazmış bile: aferin, karekök ünitesinin son iki testini bitir. Cevap geldiğinde bildirim de alırsın.",
+          "shot": "ogr-talepler",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Anketler: koçun seni daha iyi tanımak için anket gönderir — çoklu zekâ, sınav kaygısı, çalışma alışkanlıkları... Bunlar not değil, pusuladır: koçun sana nasıl yaklaşacağını bunlarla ayarlar.",
+          "shot": "ogr-anketler",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Doldurmak böyle: soruyu oku, seni en iyi anlatan sayıya dokun — biz dörde bastık, alttaki ilerleme bir bölü otuz iki oldu. Doğru ya da yanlış cevap yok; tek ricam dürüst olman. Yarıda bırakacaksan Kaydet — kaldığın yerden devam edersin; bitirince Anketi Tamamla.",
+          "shot": "ogr-anket-isaretle",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Ve hepsi bu! Artık Rotam'ı yalnız tanımıyorsun — kullandın: görev işaretledin, doğru-yanlış girdin, arşive yanlış ekledin, çözdün, karne okuttun, koçuna talep gönderdin. Sana tek cümlelik sır: Rotam'ı en iyi kullanan öğrenci, en çok işaretleyen öğrencidir. Ben menüdeki Rehber'deyim; istediğinde dön, yeniden izle. Şimdi git ve rotanı çiz. Başarılar!",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    }
+  ]
+}

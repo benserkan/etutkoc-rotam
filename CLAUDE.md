@@ -148,9 +148,18 @@ yetmez, href union'ına da eklenmeli). PARITY.md güncel; mobil tsc temiz.
 **KULLANICI AKSİYONU (OAuth ön şartı — kod beklemiyor):** Google Cloud projesi
 + OAuth client + consent screen + doğrulama başvurusu → `.env`
 GOOGLE_OAUTH_CLIENT_ID/SECRET (rehber: deploy/GOOGLE_OAUTH_SETUP.md).
-**SIRADA:** mobil OTA yayını (randevu ekranları + bekleyen diğer JS işleri) →
-randevu badge'i (koç bekleyen istek sayısı) → F5 (ops.) gömülü görüşme /
-"Seansı başlat" anında KS4 içgörü yan paneli.
+**MOBİL OTA YAYINLANDI (2026-07-28, update grubu `b449d8af`, android+ios,
+runtime 1.0.0, commit 9023eb0):** Rota veli asistanı (yorum+sohbet+sesli soru/
+cevap) + P4 push router + randevu ekranları + seans köprüsü — TÜM mevcut
+kurulumlara (Play kapalı test v6/v7/v8 + TestFlight build 8) sonraki açılışta
+iner. **Android v9 build başlatıldı** (EAS `04e913ed`, autoIncrement vc9):
+expo-document-picker (PDF deneme aktarımı) + expo-image-picker (YSA kamera) +
+react-native-purchases native'leri İLK KEZ bu AAB'de — kullanıcı EAS'tan
+indirip Play Console kapalı teste yükleyecek. iOS build 9 Apple kurumsal
+dönüşüm bitene dek ALINAMAZ (sertifika portalı kapalı); TestFlight build 8
+OTA ile güncel. Rehber sistemi BİLİNÇLİ web-only (mobilde yok).
+**SIRADA:** v9 AAB'yi Play'e yükleme (kullanıcı) → randevu badge'i (koç
+bekleyen istek sayısı) → F5 (ops.) gömülü görüşme / KS4 içgörü yan paneli.
 
 ---
 
