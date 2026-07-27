@@ -557,6 +557,66 @@ def start_solo_trial(
     return user
 
 
+def extend_solo_trial(
+    db: Session, *, user: User, days: int,
+    actor_user_id: int, intended_plan: str | None = None,
+    autocommit: bool = True,
+) -> User:
+    """Süper admin: bağımsız koçun denemesini uzat / yeniden başlat.
+
+    KURAL: bu yol ASLA ücretli plana geçirmez — plan yalnız SOLO_TRIAL yapılır;
+    ücretli plana giden 3 kapı (iyzico / IAP / admin manuel aktivasyonu)
+    değişmez. Deneme aktifse mevcut bitişin ÜZERİNE eklenir; bitmişse
+    (solo_free'ye düşmüş) şimdi+days ile yeniden başlar — expire_trials cron'u
+    yeni bitişte yine ücretsiz kata düşürür.
+
+    intended_plan verilirse post_trial_plan güncellenir (/teacher/plan ödeme
+    ekranı ÖN-SEÇİMİ — plana asla otomatik yazılmaz); verilmezse mevcut değer
+    KORUNUR (signup'ta seçilen paket kaybolmaz).
+    """
+    if user.institution_id is not None:
+        raise ValueError(
+            f"extend_solo_trial: kurumlu kullanıcı (#{user.id}) — bireysel deneme uygun değil"
+        )
+    now = datetime.now(timezone.utc)
+    from_plan = user.plan
+
+    ends = user.trial_ends_at
+    if ends is not None and ends.tzinfo is None:  # SQLite naive normalize
+        ends = ends.replace(tzinfo=timezone.utc)
+    base = ends if (user.plan == SOLO_TRIAL and ends and ends > now) else now
+
+    user.plan = SOLO_TRIAL
+    user.trial_ends_at = base + timedelta(days=days)
+    if intended_plan in _VALID_SOLO_PAID_TIERS:
+        user.post_trial_plan = intended_plan
+    # Deneme = ödeme yok; bayat abonelik kalıntısı bırakma (paid-aktif koç bu
+    # fonksiyona endpoint guard'ı nedeniyle hiç gelmez).
+    user.subscription_status = None
+    user.subscription_cycle = None
+    user.subscription_period_end = None
+    user.subscription_platform = None
+
+    note = (
+        f"Deneme {days} gün uzatıldı (süper admin) · "
+        f"yeni bitiş: {user.trial_ends_at:%Y-%m-%d}"
+    )
+    if user.post_trial_plan and user.post_trial_plan != SOLO_FREE:
+        note += f" · ödeme ön-seçimi: {user.post_trial_plan}"
+    _log_change(
+        db, owner_type=PlanOwnerType.USER, owner_id=user.id,
+        from_plan=from_plan, to_plan=SOLO_TRIAL,
+        reason=PlanChangeReason.ADMIN_OVERRIDE,
+        actor_user_id=actor_user_id,
+        note=note,
+    )
+    if autocommit:
+        db.commit()
+    else:
+        db.flush()
+    return user
+
+
 def start_institution_trial(
     db: Session, *, institution: Institution, days: int = INSTITUTION_TRIAL_DAYS,
     actor_user_id: int | None = None, autocommit: bool = True,

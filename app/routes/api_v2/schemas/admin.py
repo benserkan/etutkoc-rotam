@@ -477,6 +477,13 @@ class AdminActivatePlanBody(BaseModel):
     cycle: str = "monthly"                 # monthly | academic_year
 
 
+class AdminExtendTrialBody(BaseModel):
+    """Süper admin — bağımsız koçun denemesini uzat / yeniden başlat."""
+    days: int = Field(14, ge=1, le=60)
+    # Ödeme ekranı ön-seçimi (post_trial_plan); boş → mevcut değer korunur.
+    intended_plan: str | None = Field(None, max_length=32)
+
+
 # =============================================================================
 # P3 — Impersonate
 # =============================================================================

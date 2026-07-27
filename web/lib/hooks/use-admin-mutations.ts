@@ -118,6 +118,8 @@ function errorTitle(e: unknown, fallback: string): string {
       return "Kurum bulunamadı";
     case "user_not_found":
       return "Kullanıcı bulunamadı";
+    case "paid_subscription_active":
+      return "Ücretli abonelik var";
     case "invalid_owner_type":
       return "Geçersiz sahip türü";
     case "name_or_email_required":
@@ -572,6 +574,30 @@ export function useActivateUserPlan(userId: number) {
     onError: (e) => {
       toast.error(errorTitle(e, "Aktivasyon başarısız"), {
         description: errorMessage(e, "Plan aktive edilemedi."),
+      });
+    },
+  });
+}
+
+export function useExtendUserTrial(userId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<AdminUserMutationResult>,
+    Error,
+    { days: number; intended_plan?: string | null }
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<AdminUserMutationResult>>(
+        `/api/v2/admin/users/${userId}/extend-trial`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(res.data.message);
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Deneme uzatılamadı"), {
+        description: errorMessage(e, "Deneme süresi uzatılamadı."),
       });
     },
   });

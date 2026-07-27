@@ -58,6 +58,7 @@ from app.routes.api_v2.schemas.admin import (
     AdminImpersonateResult,
     AdminIndependentTeachersResponse,
     AdminActivatePlanBody,
+    AdminExtendTrialBody,
     AdminUserChangeRoleBody,
     AdminUserCreateBody,
     AdminUserCreateResult,
@@ -2148,6 +2149,83 @@ def admin_activate_user_plan_v2(
         data=AdminUserMutationResult(
             user=_user_to_admin_item(target),
             message=f"Abonelik aktive edildi: {info.label if info else plan}",
+        ),
+        invalidate=_users_invalidate(),
+    )
+
+
+@router.post(
+    "/users/{user_id}/extend-trial",
+    response_model=MutationResponse[AdminUserMutationResult],
+)
+def admin_extend_user_trial_v2(
+    user_id: int,
+    body: AdminExtendTrialBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Bağımsız koçun deneme süresini uzat / yeniden başlat (süper admin).
+
+    Deneme bitmiş (solo_free'ye düşmüş) koç yeniden solo_trial olur; aktif
+    denemede bitişin üzerine eklenir. Ücretli plana GEÇİRMEZ (3-kapı kuralı);
+    aktif/iptal ücretli abonesi olan koçta 409 — ödeyen müşteri denemeye
+    düşürülemez.
+    """
+    from app.services.plans import (
+        _VALID_SOLO_PAID_TIERS,
+        extend_solo_trial,
+        is_paid_plan as _is_paid,
+    )
+
+    target = db.get(User, user_id)
+    if not target:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "user_not_found",
+                    "message": "Kullanıcı bulunamadı."},
+        )
+    if target.role != UserRole.TEACHER or target.institution_id is not None:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "not_solo_teacher",
+                    "message": "Deneme yalnız bağımsız koç için uzatılabilir."},
+        )
+    if _is_paid(target.plan or "") and target.subscription_status in ("active", "canceled"):
+        raise HTTPException(
+            status_code=409,
+            detail={"error": "conflict", "code": "paid_subscription_active",
+                    "message": "Bu koçun ücretli aboneliği var — deneme uzatılamaz. "
+                               "Gerekirse abonelik aktivasyonu kartını kullan."},
+        )
+    intended = (body.intended_plan or "").strip() or None
+    if intended is not None and intended not in _VALID_SOLO_PAID_TIERS:
+        raise HTTPException(
+            status_code=400,
+            detail={"error": "invalid", "code": "invalid_plan",
+                    "message": "Geçersiz ön-seçim paketi (solo_pro / solo_elite / solo_unlimited)."},
+        )
+    extend_solo_trial(
+        db, user=target, days=body.days, actor_user_id=user.id,
+        intended_plan=intended, autocommit=False,
+    )
+    log_action(
+        db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+        target_type="user", target_id=target.id, request=request,
+        details={"action": "extend_trial", "days": body.days,
+                 "intended_plan": intended,
+                 "trial_ends_at": target.trial_ends_at.isoformat()},
+        autocommit=False,
+    )
+    db.commit()
+    db.refresh(target)
+    return MutationResponse[AdminUserMutationResult](
+        data=AdminUserMutationResult(
+            user=_user_to_admin_item(target),
+            message=(
+                f"Deneme {body.days} gün uzatıldı — yeni bitiş "
+                f"{target.trial_ends_at:%d.%m.%Y}"
+            ),
         ),
         invalidate=_users_invalidate(),
     )

@@ -33,6 +33,7 @@ import { Label } from "@/components/ui/label";
 import { adminKeys, getAdminUser } from "@/lib/api/admin";
 import {
   useActivateUserPlan,
+  useExtendUserTrial,
   useChangeUserRole,
   useDeleteAdminUser,
   useEditAdminUser,
@@ -323,8 +324,75 @@ function SubscriptionCard({ target }: { target: AdminUserListItem }) {
             {isActive ? "Güncelle / Yenile" : "Aktive et"}
           </Button>
         </div>
+        <TrialExtendSection target={target} paidActive={isActive || sub === "canceled"} />
       </CardContent>
     </Card>
+  );
+}
+
+/**
+ * Deneme uzatma — ödeme YAPMADAN ek süre. Ücretli plana geçirmez; deneme
+ * bitmiş koç yeniden solo_trial olur (bitmişse şimdi+N, aktifse bitiş+N).
+ * Ücretli abonede gizli (backend de 409 ile korur).
+ */
+function TrialExtendSection({
+  target,
+  paidActive,
+}: {
+  target: AdminUserListItem;
+  paidActive: boolean;
+}) {
+  const mut = useExtendUserTrial(target.id);
+  const [days, setDays] = React.useState("14");
+  const [intended, setIntended] = React.useState("");
+  if (paidActive) return null;
+  const n = Number(days);
+  const valid = Number.isFinite(n) && n >= 1 && n <= 60;
+  return (
+    <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 space-y-2 dark:bg-amber-500/10 dark:border-amber-500/30">
+      <p className="text-xs font-medium text-amber-900 dark:text-amber-200">
+        Denemeyi uzat (ödemesiz ek süre)
+      </p>
+      <p className="text-[11px] text-amber-800/90 dark:text-amber-200/80">
+        Koç yeniden deneme moduna geçer: sınırsız öğrenci + yapay zekâ açık.
+        Süre bitince otomatik ücretsiz kata düşer — ücretli plana geçirmez.
+      </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <Input
+          type="number"
+          min={1}
+          max={60}
+          value={days}
+          onChange={(e) => setDays(e.target.value)}
+          className="w-20 bg-card"
+          aria-label="Gün"
+        />
+        <span className="text-xs text-amber-900 dark:text-amber-200">gün</span>
+        <select
+          value={intended}
+          onChange={(e) => setIntended(e.target.value)}
+          className="rounded border border-input bg-card px-2 py-2 text-xs"
+          aria-label="Ödeme ön-seçimi"
+        >
+          <option value="">Ödeme ön-seçimi: mevcut kalsın</option>
+          <option value="solo_pro">Solo Başlangıç</option>
+          <option value="solo_elite">Solo</option>
+          <option value="solo_unlimited">Solo Sınırsız</option>
+        </select>
+        <Button
+          variant="outline"
+          disabled={!valid || mut.isPending}
+          onClick={() => {
+            if (!window.confirm(`Deneme ${n} gün uzatılsın mı?`)) return;
+            mut.mutate({ days: n, intended_plan: intended || null });
+          }}
+          className="border-amber-400 text-amber-900 hover:bg-amber-100 hover:text-amber-900 dark:text-amber-200 dark:hover:bg-amber-500/20 dark:hover:text-amber-200"
+        >
+          {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+          Denemeyi uzat
+        </Button>
+      </div>
+    </div>
   );
 }
 
