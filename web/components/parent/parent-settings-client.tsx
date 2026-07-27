@@ -103,6 +103,7 @@ type ParentPreferencesBody = {
   drop_alert: boolean;
   teacher_note: boolean;
   exam_approaching: boolean;
+  appointment: boolean;
   daily_summary_wa: boolean;
   weekly_report_wa: boolean;
   empty_day_wa: boolean;
@@ -206,6 +207,7 @@ function PreferencesForm({
     drop_alert: preferences.drop_alert_enabled,
     teacher_note: preferences.teacher_note_enabled,
     exam_approaching: preferences.exam_approaching_enabled,
+    appointment: preferences.appointment_enabled ?? true,
     daily_summary_wa: preferences.daily_summary_wa_enabled,
     weekly_report_wa: preferences.weekly_report_wa_enabled,
     empty_day_wa: preferences.empty_day_alert_wa_enabled,
@@ -262,6 +264,35 @@ function PreferencesForm({
         </div>
 
         <div className="divide-y divide-border">
+          {/* Randevu bildirimi — tek kanal (e-posta + uygulama bildirimi) */}
+          <div className="grid grid-cols-[1fr_auto_auto] items-center gap-1 px-5 py-2.5 hover:bg-muted/40 transition-colors">
+            <div className="min-w-0">
+              <div className="text-sm font-medium">Görüşme bildirimi ve hatırlatması</div>
+              <div className="text-xs text-muted-foreground mt-0.5">
+                Koçluk görüşmesi planlandığında / değiştiğinde + görüşmeden önce
+                hatırlatma (e-posta ve uygulama bildirimi birlikte)
+              </div>
+            </div>
+            <label
+              className={cn(
+                "inline-flex items-center justify-center px-3 py-1.5 cursor-pointer rounded",
+                state.appointment ? "text-[#117A86]" : "text-muted-foreground",
+              )}
+              aria-label="Görüşme bildirimi — E-posta ve uygulama"
+            >
+              <input
+                type="checkbox"
+                checked={state.appointment}
+                onChange={(e) =>
+                  setState((s) => ({ ...s, appointment: e.target.checked }))
+                }
+                className="size-4 accent-[#117A86] cursor-pointer"
+              />
+            </label>
+            <div className="px-3 text-center text-xs text-muted-foreground" aria-hidden>
+              —
+            </div>
+          </div>
           {PREF_ROWS.map((row) => (
             <div
               key={row.emailKey}

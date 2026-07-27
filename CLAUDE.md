@@ -45,11 +45,82 @@ series` (haftalık gün/saat tekrar) · `coach_availability_windows` (self-servi
 slotlar) · koç Google OAuth refresh token (Fernet şifreli — system_secrets
 deseni) · hatırlatma cron (D-1 + 1 saat; sessiz saat kurallı) + created/updated/
 cancelled push+e-posta (öğrenci+veli).
-**KULLANICI AKSİYONU (OAuth ön şartı):** Google Cloud projesi + OAuth client +
-consent screen + doğrulama başvurusu (rehber yazılacak; .env GOOGLE_OAUTH_
-CLIENT_ID/SECRET).
-**SIRADA:** kullanıcı "başla" deyince Paket 1 (migration önce gösterilir —
-riskli-sprint kuralı).
+**PAKET 1 — BACKEND + WEB KOD-TAMAM (2026-07-27, migration `e5f8i1k2k55e`
+dev'de uygulandı — COMMIT/DEPLOY BEKLİYOR):**
+- **Migration `e5f8i1k2k55e`** (← d4e7h0j1j33d, additive, downgrade'li):
+  `coaching_appointment_series` (haftalık kural) + `coaching_appointments`
+  (tek randevu; status/source düz VARCHAR — PG enum yükü yok; reminder_d1/h1
+  damgaları) + `coach_availability_windows` (self-servis slotlar) +
+  `coach_google_accounts` (refresh token Fernet — system_secrets._encrypt) +
+  `parent_notification_prefs.appointment_enabled` (default TRUE) + cron seed
+  `appointment_maintenance` (10 dk interval; bool bind :e=True dersi uygulandı).
+- **Saat modeli:** Date + "HH:MM" TR duvar saati (TR sabit UTC+3; `now_tr()` =
+  UTC+3). UTC dönüşümü yok — koçun girdiği saat aynen görünür/karşılaştırılır.
+- **`appointment_service.py` (TEK MERKEZ):** create_by_coach (çakışma +
+  geçmiş-tarih kapıları; weekly→seri+28g occurrence) · materialize_series
+  (idempotent; iptal edilen occurrence yeniden üretilmez; çakışan gün atlanır) ·
+  update_series (saat değişimi→gelecek scheduled silinip yeniden üretilir;
+  pasif→gelecek iptal) · update_appointment (saat değişince hatırlatma
+  damgaları sıfırlanır) · set_status (cancelled/done/no_show; done→ileride KS1
+  köprüsü) · approve/reject_request · replace_availability + available_slots
+  (pencere→slot üretimi; aktif randevu çakışması + 60dk lead eleme) ·
+  create_request (slot GEÇERLİLİK doğrulaması — uydurma saat kabul edilmez;
+  öğrenci başına tek bekleyen istek) · run_maintenance (cron: seri roll-forward
+  + D-1/H-1 hatırlatma; **KİLİT HİJYENİ: damga ÖNCE + commit, gönderim işlem
+  DIŞINDA** — comm_log kendi-oturum SQLite kilidi dersi CRON'a da uygulandı;
+  damga-önce = at-most-once).
+- **`google_meet.py`:** OAuth (state=PyJWT 20dk + `prompt=consent`; refresh
+  token Fernet) · Calendar API events.insert conferenceData→Meet linki (seri =
+  TEK tekrarlayan etkinlik RRULE:FREQ=WEEKLY → tek link her hafta) · saat
+  değişiminde tekil etkinlik PATCH (seri occurrence taşımada DOKUNULMAZ) ·
+  iptalde tekil DELETE · hepsi best-effort (hata→account.last_error, randevu
+  ASLA bloklanmaz) · `_post_form`/`_api_request` mock-able (smoke).
+  `is_configured()` = env GOOGLE_OAUTH_CLIENT_ID/SECRET dolu — boşken tüm
+  yüzeyler gizli (doğrulama sürerken link alanı çalışır).
+- **Router `api_v2/appointments.py` (14 uç):** koç GET bundle (takvim+pending+
+  seriler+uygunluk+google) · POST create/update/status/approve/reject ·
+  series update · availability replace · google connect-url/disconnect ·
+  **public GET /api/v2/google/oauth/callback** (state'ten kimlik; 303 →
+  /teacher/appointments?google=connected|error|denied) · öğrenci GET liste/
+  slots + POST request/withdraw · veli GET çocuk randevuları (assert_parent_
+  can_view 404). Sahiplik dışı 404. Bildirimler BackgroundTasks
+  (`notify_appointment_event_bg`: scheduled/updated/cancelled/request_approved/
+  request_rejected → öğrenci push+e-posta + veli [muted+appointment_enabled+
+  unsubscribed süzgeçli]); öğrenci isteği→koça push. 3 e-posta şablonu:
+  appointment_scheduled/cancelled/reminder (emoji'siz; "Görüşmeye katıl"
+  butonu; **DERS: `_render` app_base_url'i kendisi enjekte eder — ctx'e
+  koyma, 'multiple values' TypeError verir**).
+- **Web:** `/teacher/appointments` (14 günlük takvim + hafta gezgini + bekleyen
+  istek bandı onay/red + haftalık plan listesi [saat değiştir/kapat] + Google
+  kartı [bağla/kaldır/son hata] + Yeni görüşme dialogu [öğrenci/tarih/saat/süre/
+  haftalık checkbox/link/not] + Uygunluk dialogu [replace-all satırlar]) ·
+  `/student/appointments` ("Sıradaki görüşmen" hero + Katıl + slot çipli
+  "Görüşme iste" + bekleyen isteği geri çek + geçmiş) · veli çocuk detayına
+  `ParentAppointmentsCard` (yaklaşan yoksa render olmaz) · veli ayarlarına
+  "Görüşme bildirimi ve hatırlatması" toggle satırı · nav: teacher-shell
+  "Görüşmeler" (Video) + STUDENT_NAV "Görüşmelerim" (more-menü). lib:
+  types/api/hooks (`appointmentKeys`; invalidate "teacher:{id}:appointments" +
+  "student:appointments"). tsc + eslint temiz.
+- **Test:** `test_api_v2_appointments.py` **34/34** (atama + kapılar + seri
+  üretim/güncelleme/pasif + sahiplik 404 + pencere/slot + istek yaşam döngüsü +
+  withdraw + damga sıfırlama + iptal + veli görünürlük/pref süzgeci + cron
+  D-1/H-1/idempotent + google 409 + mock OAuth/link/elle-link-öncelik).
+  Regresyon: parent 20 · parent_wa_channel 14 · teacher_read 12 ·
+  student_read 11 · tenant 29 GREEN.
+- **Deploy hazırlığı:** docker-compose web env + .env.example GOOGLE_OAUTH_* +
+  **`deploy/GOOGLE_OAUTH_SETUP.md`** (Cloud projesi → consent screen [test
+  kullanıcıları + doğrulama] → OAuth client + redirect URI
+  `https://rotam.etutkoc.com/api/v2/google/oauth/callback` → .env → doğrulama;
+  sorun giderme). Worker'a Google env GEREKMEZ (OAuth yalnız web'de; cron
+  hatırlatması Google çağırmaz).
+**KULLANICI AKSİYONU (OAuth ön şartı — kod beklemiyor):** Google Cloud projesi
++ OAuth client + consent screen + doğrulama başvurusu → `.env`
+GOOGLE_OAUTH_CLIENT_ID/SECRET (rehber: deploy/GOOGLE_OAUTH_SETUP.md).
+**SIRADA:** commit + deploy (kullanıcı isteyince) → **mobil yüzeyler**
+(JS-only OTA: öğrenci Görüşmelerim + veli kartı + koç liste; push router'a
+`screen:"appointments"` deep-link — data zaten gönderiliyor) → **F4 seans
+köprüsü** (randevudan "Seansı başlat" → KS1 prefill + KS4 içgörü + done→KS2
+tahsilat) → randevu badge'i (koç bekleyen istek sayısı).
 
 ---
 

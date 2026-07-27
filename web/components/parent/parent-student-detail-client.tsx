@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotaCommentaryCard } from "@/components/parent/rota-commentary-card";
+import { ParentAppointmentsCard } from "@/components/parent/parent-appointments-card";
 import {
   getParentStudentOverview,
   parentKeys,
@@ -116,6 +117,9 @@ export function ParentStudentDetailClient({ initial, studentId }: Props) {
           </Link>
         </Button>
       </div>
+
+      {/* Sıradaki koçluk görüşmesi (varsa) */}
+      <ParentAppointmentsCard studentId={data.student.id} />
 
       {/* 4 metrik kart */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">

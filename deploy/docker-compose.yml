@@ -87,6 +87,11 @@ services:
       GEMINI_FREE_API_KEYS: ${GEMINI_FREE_API_KEYS:-}  # virgülle ayrılmış ücretsiz key'ler
       GEMINI_PAID_MODEL: ${GEMINI_PAID_MODEL:-gemini-2.5-pro}
       GEMINI_FREE_MODEL: ${GEMINI_FREE_MODEL:-gemini-2.5-flash}
+      # ---- Google OAuth (randevu sistemi — koçun kendi hesabından Meet linki) ----
+      # Boşsa "Google ile bağlan" yüzeyleri gizli; elle link yapıştırma çalışır.
+      # Kurulum: deploy/GOOGLE_OAUTH_SETUP.md
+      GOOGLE_OAUTH_CLIENT_ID: ${GOOGLE_OAUTH_CLIENT_ID:-}
+      GOOGLE_OAUTH_CLIENT_SECRET: ${GOOGLE_OAUTH_CLIENT_SECRET:-}
       # ---- Ödeme (Iyzico) — boş key = test modu; canlı için gerçek key + prod URL ----
       # Üretim: IYZICO_BASE_URL=https://api.iyzipay.com (sandbox: https://sandbox-api.iyzipay.com)
       IYZICO_API_KEY: ${IYZICO_API_KEY:-}

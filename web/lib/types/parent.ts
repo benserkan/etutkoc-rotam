@@ -323,6 +323,8 @@ export interface ParentPreferencesInfo {
   new_program_alert_enabled: boolean;
   teacher_note_enabled: boolean;
   exam_approaching_enabled: boolean;
+  // Randevu/görüşme bildirimi + hatırlatması (e-posta+push; default açık)
+  appointment_enabled: boolean;
   // WhatsApp tarafı (default kapalı, opt-in — KVKK)
   daily_summary_wa_enabled: boolean;
   weekly_report_wa_enabled: boolean;

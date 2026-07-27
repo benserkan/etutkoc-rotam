@@ -26,6 +26,7 @@ import {
   RotateCcw,
   Target,
   Timer,
+  Video,
   UserCog,
   X,
 } from "lucide-react";
@@ -61,6 +62,7 @@ const STUDENT_NAV: NavLink[] = [
   { href: "/student/wrong-questions", label: "Yanlışlarım", icon: BookX },
   { href: "/student/topics", label: "Konu Performansı", icon: Crosshair },
   { href: "/student/requests", label: "Talepler", icon: ListChecks, badgeKey: "pending_count" },
+  { href: "/student/appointments", label: "Görüşmelerim", icon: Video },
   { href: "/student/guide", label: "Rehber", icon: Compass },
   { href: "/student/exams", label: "Denemelerim", icon: GraduationCap },
   { href: "/student/surveys", label: "Anketler", icon: ClipboardList },

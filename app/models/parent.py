@@ -195,6 +195,12 @@ class ParentNotificationPref(Base):
         Boolean, default=False, nullable=False, server_default=sa_text("false")
     )
 
+    # Randevu/görüşme bildirimi + hatırlatması (e-posta+push; varsayılan AÇIK
+    # opt-out — küçük yaşta öğrencide veli hatırlatması no-show'u azaltır).
+    appointment_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=False, server_default=sa_text("true")
+    )
+
     # 18 yaş altı öğrenciye doğrudan WA gönderim için veli onayı (KVKK 3.5).
     # Aktivasyon ekranında işaretlenmezse öğrenciye doğrudan WA gitmez;
     # yalnızca veliye veya panele yansır.

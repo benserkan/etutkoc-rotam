@@ -826,6 +826,7 @@ def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferences
             new_program_alert_enabled=True,
             teacher_note_enabled=True,
             exam_approaching_enabled=True,
+            appointment_enabled=True,
             daily_summary_wa_enabled=False,
             weekly_report_wa_enabled=False,
             empty_day_alert_wa_enabled=False,
@@ -846,6 +847,7 @@ def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferences
         new_program_alert_enabled=pref.new_program_alert_enabled,
         teacher_note_enabled=pref.teacher_note_enabled,
         exam_approaching_enabled=pref.exam_approaching_enabled,
+        appointment_enabled=bool(getattr(pref, "appointment_enabled", True)),
         daily_summary_wa_enabled=bool(getattr(pref, "daily_summary_wa_enabled", False)),
         weekly_report_wa_enabled=bool(getattr(pref, "weekly_report_wa_enabled", False)),
         empty_day_alert_wa_enabled=bool(getattr(pref, "empty_day_alert_wa_enabled", False)),
@@ -1000,6 +1002,7 @@ def update_preferences_v2(
     pref.drop_alert_enabled = body.drop_alert
     pref.teacher_note_enabled = body.teacher_note
     pref.exam_approaching_enabled = body.exam_approaching
+    pref.appointment_enabled = body.appointment
 
     # P0 — WhatsApp kanal toggle'ları
     pref.daily_summary_wa_enabled = body.daily_summary_wa

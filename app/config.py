@@ -76,6 +76,13 @@ class Settings(BaseSettings):
     gemini_paid_model: str = "gemini-2.5-pro"
     gemini_free_model: str = "gemini-2.5-flash"
 
+    # Google OAuth (randevu sistemi — koçun KENDİ hesabından Meet linki üretimi).
+    # Boşsa "Google ile bağlan" yüzeyleri GİZLİ; link alanı (elle yapıştırma)
+    # her durumda çalışır. Google Cloud Console'da OAuth client oluşturulup
+    # doğrulama tamamlanınca doldurulur (kurulum rehberi: deploy/GOOGLE_OAUTH_SETUP.md).
+    google_oauth_client_id: str = ""
+    google_oauth_client_secret: str = ""
+
     # Native mobile / external API katmanı
     jwt_secret: str = "dev-only-change-me-jwt"  # production'da güçlü random secret
     jwt_algorithm: str = "HS256"

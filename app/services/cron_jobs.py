@@ -935,6 +935,17 @@ def panel_events_purge(db: Session, *, now: datetime) -> dict:
     return counts
 
 
+def appointment_maintenance(db: Session, *, now: datetime) -> dict:
+    """10 dk'da bir — online görüşme randevu bakımı: haftalık serilerin
+    occurrence üretimi (28 gün ileri) + D-1 ve 1-saat hatırlatma push/e-postaları
+    (öğrenci + pref'i açık veliler). Best-effort; idempotent (damgalı)."""
+    from app.services.appointment_service import run_maintenance
+    summary = run_maintenance(db, now_utc=now)
+    if summary.get("d1_sent") or summary.get("h1_sent") or summary.get("series_generated"):
+        logger.info("appointment_maintenance: %s", summary)
+    return summary
+
+
 JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "daily_summary": daily_summary,
     "weekly_backstop": weekly_backstop,
@@ -966,4 +977,6 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "panel_events_purge": panel_events_purge,
     # Ölü rezerv telafisi — günlük otomatik serbest bırakma (yaz/program-arası)
     "release_dead_reservations": release_dead_reservations,
+    # Online görüşme randevuları — seri üretimi + hatırlatmalar (10 dk)
+    "appointment_maintenance": appointment_maintenance,
 }

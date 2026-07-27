@@ -349,6 +349,8 @@ class ParentPreferencesInfo(BaseModel):
     new_program_alert_enabled: bool
     teacher_note_enabled: bool
     exam_approaching_enabled: bool
+    # Randevu/görüşme bildirimi + hatırlatması (e-posta+push; default açık)
+    appointment_enabled: bool = True
     # P0 — WhatsApp kanal toggle'ları
     daily_summary_wa_enabled: bool = False
     weekly_report_wa_enabled: bool = False
@@ -411,6 +413,8 @@ class ParentPreferencesBody(BaseModel):
     drop_alert: bool
     teacher_note: bool
     exam_approaching: bool
+    # Randevu bildirimi (opsiyonel — eski istemci göndermezse açık kalır)
+    appointment: bool = True
     # P0 — WhatsApp kanal toggle'ları (opsiyonel, default False)
     daily_summary_wa: bool = False
     weekly_report_wa: bool = False
