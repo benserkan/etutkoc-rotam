@@ -113,14 +113,44 @@ dev'de uygulandı — COMMIT/DEPLOY BEKLİYOR):**
   `https://rotam.etutkoc.com/api/v2/google/oauth/callback` → .env → doğrulama;
   sorun giderme). Worker'a Google env GEREKMEZ (OAuth yalnız web'de; cron
   hatırlatması Google çağırmaz).
+**CANLI (2026-07-27, commit `5b0e7dc` deploy edildi):** prod head
+`e5f8i1k2k55e` → sonra F4 ile `f6g9j2l3l66f` · healthz/site 200 · yeni uçlar
+anon 401 · **appointment_maintenance cron'u prod'da ilk tick success** ·
+pg_dump yedek `pre_appt_20260727_1500.dump` · Plausible-stop'lu rebuild.
+**MOBİL YÜZEYLER KOD-TAMAM (commit `9b3f78c`, JS-only — sıradaki OTA'ya hazır):**
+`lib/appointments.ts` · öğrenci `/student-appointments` (Katıl + slot seçip
+görüşme iste + geri çek + geçmiş) + Bugün ekranında "Sıradaki görüşme" bandı ·
+koç `/teacher-appointments` (14g liste + istek onay/red + Katıl + Seansı
+kaydet/Gelmedi; planlama web'de) — Profil → Görüşmeler · veli çocuk detayında
+"Sıradaki koçluk görüşmesi" kartı · notification-router: student/coach
+`screen:"appointments"` + parent `kind:"appointment"` deep-link; typed routes
+elle (DERS: `.expo/types/router.d.ts` düz `href` union'ı
+`` `/rota${`?${string}`...}` `` biçiminde — yalnız pathname-objesine eklemek
+yetmez, href union'ına da eklenmeli). PARITY.md güncel; mobil tsc temiz.
+**F4 — RANDEVU→SEANS KÖPRÜSÜ KOD-TAMAM (2026-07-27, migration `f6g9j2l3l66f`):**
+- Migration: `coaching_sessions.appointment_id` (FK SET NULL + index, additive).
+- POST `/teacher/appointments/{id}/record-session` {outcome done|no_show,
+  agenda, coach_note, next_change, mood}: done→gündem ZORUNLU (KS1 sözleşmesi)
+  + DONE seans (channel=ONLINE, tarih/süre randevudan, auto_snapshot Kova 1
+  `_compute_session_prefill` ile) → **KS2 tahsilata otomatik sayılır**;
+  no_show→NO_SHOW seans (iz kalır, ücrete sayılmaz) + varsayılan gündem.
+  Randevu başına TEK seans (mükerrer 422 session_exists) · pending 422 ·
+  iptal/red 422 not_recordable · KS4 içgörü cache bayatlar. Takvim GET'i
+  `session_id` döner (tek sorgu map).
+- Web: randevu kartında geçmiş scheduled → "Seansı kaydet" (dialog: Yapıldı/
+  Gelmedi + gündem + not + ruh hali); kaydedilince "Seans kaydedildi" rozeti;
+  invalidate tahsilatı da bayatlar. Mobil: "Seansı kaydet" FormSheet (gündem
+  zorunlu) + "Gelmedi" onayı record-session'a bağlı → tahsilat mobilde de işler.
+- Smoke **42/42** (22a-h: gündem zorunlu + DONE/NO_SHOW seans şekli + mükerrer
+  + pending/iptal kapıları + session_id bundle + yabancı 404; DERS: 22g'de
+  silinmiş kayda db.get id-reuse tuzağı — taze kayıt kur). Regresyon: sessions
+  14 · billing 17 GREEN; web tsc+eslint + mobil tsc temiz.
 **KULLANICI AKSİYONU (OAuth ön şartı — kod beklemiyor):** Google Cloud projesi
 + OAuth client + consent screen + doğrulama başvurusu → `.env`
 GOOGLE_OAUTH_CLIENT_ID/SECRET (rehber: deploy/GOOGLE_OAUTH_SETUP.md).
-**SIRADA:** commit + deploy (kullanıcı isteyince) → **mobil yüzeyler**
-(JS-only OTA: öğrenci Görüşmelerim + veli kartı + koç liste; push router'a
-`screen:"appointments"` deep-link — data zaten gönderiliyor) → **F4 seans
-köprüsü** (randevudan "Seansı başlat" → KS1 prefill + KS4 içgörü + done→KS2
-tahsilat) → randevu badge'i (koç bekleyen istek sayısı).
+**SIRADA:** mobil OTA yayını (randevu ekranları + bekleyen diğer JS işleri) →
+randevu badge'i (koç bekleyen istek sayısı) → F5 (ops.) gömülü görüşme /
+"Seansı başlat" anında KS4 içgörü yan paneli.
 
 ---
 

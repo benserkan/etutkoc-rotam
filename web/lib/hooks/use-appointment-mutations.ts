@@ -10,6 +10,8 @@ import type {
   AppointmentMutationResult,
   AppointmentUpdateBody,
   AvailabilityWindowItem,
+  RecordSessionBody,
+  RecordSessionResult,
   SeriesUpdateResult,
 } from "@/lib/types/appointment";
 
@@ -27,6 +29,9 @@ const ERROR_LABELS: Record<string, string> = {
   pending_exists:
     "Bekleyen bir görüşme isteğin zaten var — koçun yanıtlamasını bekle ya da geri çek.",
   slot_unavailable: "Bu saat artık uygun değil — listeden boş bir saat seç.",
+  session_exists: "Bu görüşmenin seans kaydı zaten var.",
+  agenda_required: "Yapılan seans için gündem (ne konuşuldu) zorunlu.",
+  not_recordable: "İptal edilmiş randevudan seans kaydedilemez.",
   invalid_window: "Bitiş saati başlangıçtan sonra olmalı.",
   invalid_weekday: "Gün seçimi geçersiz.",
   no_coach: "Görüşme isteği için bir koça bağlı olman gerekir.",
@@ -202,6 +207,30 @@ export function useReplaceAvailability() {
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       toast.success("Uygunluk saatleri kaydedildi");
+    },
+  });
+}
+
+export function useRecordSession() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<RecordSessionResult>,
+    ApiError,
+    { apptId: number } & RecordSessionBody
+  >({
+    mutationFn: ({ apptId, ...body }) =>
+      api<MutationResponse<RecordSessionResult>>(
+        `/api/v2/teacher/appointments/${apptId}/record-session`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (err) => showErr(err, "Seans kaydedilemedi"),
+    onSuccess: (res, vars) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(
+        vars.outcome === "done"
+          ? "Seans kaydedildi — tahsilata işlendi"
+          : "Gelmedi olarak kaydedildi",
+      );
     },
   });
 }

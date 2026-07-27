@@ -27,6 +27,7 @@ import {
   useApproveAppointment,
   useCreateAppointment,
   useDisconnectGoogle,
+  useRecordSession,
   useRejectAppointment,
   useReplaceAvailability,
   useSetAppointmentStatus,
@@ -130,6 +131,7 @@ export function AppointmentsClient({ initial, students }: Props) {
   const [createOpen, setCreateOpen] = React.useState(false);
   const [availOpen, setAvailOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<AppointmentItem | null>(null);
+  const [recording, setRecording] = React.useState<AppointmentItem | null>(null);
 
   const days = React.useMemo(() => {
     const out: { date: string; items: AppointmentItem[] }[] = [];
@@ -218,6 +220,7 @@ export function AppointmentsClient({ initial, students }: Props) {
               items={items}
               isToday={date === todayISO()}
               onEdit={setEditing}
+              onRecord={setRecording}
             />
           ))}
         </div>
@@ -237,6 +240,12 @@ export function AppointmentsClient({ initial, students }: Props) {
       />
       {editing && (
         <EditDialog appt={editing} onClose={() => setEditing(null)} />
+      )}
+      {recording && (
+        <RecordSessionDialog
+          appt={recording}
+          onClose={() => setRecording(null)}
+        />
       )}
     </div>
   );
@@ -386,11 +395,13 @@ function DayRow({
   items,
   isToday,
   onEdit,
+  onRecord,
 }: {
   date: string;
   items: AppointmentItem[];
   isToday: boolean;
   onEdit: (a: AppointmentItem) => void;
+  onRecord: (a: AppointmentItem) => void;
 }) {
   const weekday = WEEKDAYS[new Date(`${date}T12:00:00`).getDay() === 0 ? 6 : new Date(`${date}T12:00:00`).getDay() - 1];
   if (items.length === 0) {
@@ -413,7 +424,7 @@ function DayRow({
       </span>
       <div className="flex-1 space-y-1.5">
         {items.map((a) => (
-          <AppointmentCard key={a.id} appt={a} onEdit={onEdit} />
+          <AppointmentCard key={a.id} appt={a} onEdit={onEdit} onRecord={onRecord} />
         ))}
       </div>
     </div>
@@ -423,9 +434,11 @@ function DayRow({
 function AppointmentCard({
   appt,
   onEdit,
+  onRecord,
 }: {
   appt: AppointmentItem;
   onEdit: (a: AppointmentItem) => void;
+  onRecord: (a: AppointmentItem) => void;
 }) {
   const setStatus = useSetAppointmentStatus();
   const active = appt.status === "scheduled" || appt.status === "pending";
@@ -466,6 +479,21 @@ function AppointmentCard({
               Katıl
             </a>
           )}
+          {/* F4 — seans kaydedildiyse rozet; biten görüşmede "Seansı kaydet" */}
+          {appt.session_id ? (
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 px-1.5">
+              <Check className="size-3.5" aria-hidden />
+              Seans kaydedildi
+            </span>
+          ) : (appt.status === "done" || appt.status === "no_show") ? (
+            <Button
+              variant="ghost" size="sm"
+              className="h-7 px-2 text-cyan-700 dark:text-cyan-400"
+              onClick={() => onRecord(appt)}
+            >
+              Seansı kaydet
+            </Button>
+          ) : null}
           {appt.status === "scheduled" && (
             <>
               <Button
@@ -476,24 +504,13 @@ function AppointmentCard({
                 <Pencil className="size-3.5" aria-hidden />
               </Button>
               {appt.is_past ? (
-                <>
-                  <Button
-                    variant="ghost" size="sm"
-                    className="h-7 px-2 text-emerald-700 dark:text-emerald-400"
-                    disabled={setStatus.isPending}
-                    onClick={() => setStatus.mutate({ apptId: appt.id, status: "done" })}
-                  >
-                    Yapıldı
-                  </Button>
-                  <Button
-                    variant="ghost" size="sm"
-                    className="h-7 px-2 text-rose-700 dark:text-rose-400"
-                    disabled={setStatus.isPending}
-                    onClick={() => setStatus.mutate({ apptId: appt.id, status: "no_show" })}
-                  >
-                    Gelmedi
-                  </Button>
-                </>
+                <Button
+                  size="sm"
+                  className="h-7 px-2.5 bg-cyan-700 hover:bg-cyan-800 text-white hover:text-white text-xs"
+                  onClick={() => onRecord(appt)}
+                >
+                  Seansı kaydet
+                </Button>
               ) : (
                 <Button
                   variant="ghost" size="sm"
@@ -849,6 +866,141 @@ function EditDialog({
               disabled={update.isPending}
             >
               {update.isPending ? "Kaydediliyor…" : "Kaydet"}
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// F4 — Seansı kaydet dialogu (randevu → KS1 seans + KS2 tahsilat)
+// ---------------------------------------------------------------------------
+
+function RecordSessionDialog({
+  appt,
+  onClose,
+}: {
+  appt: AppointmentItem;
+  onClose: () => void;
+}) {
+  const record = useRecordSession();
+  const [outcome, setOutcome] = React.useState<"done" | "no_show">("done");
+  const [agenda, setAgenda] = React.useState("");
+  const [note, setNote] = React.useState("");
+  const [mood, setMood] = React.useState<string>("");
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (outcome === "done" && !agenda.trim()) {
+      toast.error("Yapılan seans için gündem (ne konuşuldu) zorunlu");
+      return;
+    }
+    record.mutate(
+      {
+        apptId: appt.id,
+        outcome,
+        agenda: agenda.trim() || undefined,
+        coach_note: note.trim() || undefined,
+        mood: mood ? Number(mood) : undefined,
+      },
+      { onSuccess: () => onClose() },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle>Seansı kaydet — {appt.student_name}</DialogTitle>
+          <DialogDescription>
+            {fmtShort(appt.date)} {appt.weekday_label} {appt.start_time} görüşmesi
+            seans kaydına dönüşür; yapılan seans tahsilat panosuna otomatik işlenir.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setOutcome("done")}
+              className={cn(
+                "rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors",
+                outcome === "done"
+                  ? "border-emerald-600 bg-emerald-600 text-white"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              Yapıldı
+            </button>
+            <button
+              type="button"
+              onClick={() => setOutcome("no_show")}
+              className={cn(
+                "rounded-lg border px-3 py-2.5 text-sm font-semibold transition-colors",
+                outcome === "no_show"
+                  ? "border-rose-600 bg-rose-600 text-white"
+                  : "border-border bg-background hover:bg-muted",
+              )}
+            >
+              Öğrenci gelmedi
+            </button>
+          </div>
+          {outcome === "done" && (
+            <>
+              <label className="block text-sm">
+                <span className="font-medium">Gündem — ne konuşuldu?</span>
+                <textarea
+                  value={agenda}
+                  onChange={(e) => setAgenda(e.target.value)}
+                  rows={3}
+                  placeholder="Örn. deneme analizi + haftalık plan + motivasyon"
+                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                  required
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium">Görüşme notu (isteğe bağlı)</span>
+                <textarea
+                  value={note}
+                  onChange={(e) => setNote(e.target.value)}
+                  rows={2}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                />
+              </label>
+              <label className="block text-sm">
+                <span className="font-medium">Öğrencinin ruh hali (isteğe bağlı)</span>
+                <select
+                  value={mood}
+                  onChange={(e) => setMood(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2 text-sm"
+                >
+                  <option value="">Seçme</option>
+                  <option value="1">1 — Çok düşük</option>
+                  <option value="2">2 — Düşük</option>
+                  <option value="3">3 — Orta</option>
+                  <option value="4">4 — İyi</option>
+                  <option value="5">5 — Çok iyi</option>
+                </select>
+              </label>
+            </>
+          )}
+          {outcome === "no_show" && (
+            <p className="text-xs text-muted-foreground rounded-lg border border-border px-3 py-2.5">
+              &quot;Gelmedi&quot; kaydı iz bırakır ama tahsilata SAYILMAZ. İstersen
+              not ekleyebilirsin.
+            </p>
+          )}
+          <div className="flex justify-end gap-2 pt-1">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Vazgeç
+            </Button>
+            <Button
+              type="submit"
+              className="bg-cyan-700 hover:bg-cyan-800 text-white hover:text-white"
+              disabled={record.isPending}
+            >
+              {record.isPending ? "Kaydediliyor…" : "Kaydet"}
             </Button>
           </div>
         </form>

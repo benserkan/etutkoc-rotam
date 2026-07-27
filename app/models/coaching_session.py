@@ -90,6 +90,16 @@ class CoachingSession(Base):
         ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
+    # F4 köprüsü: bu seans bir online randevudan kaydedildiyse bağı (mükerrer
+    # kayıt engeli + randevu satırında "seans kaydedildi" durumu).
+    appointment_id: Mapped[int | None] = mapped_column(
+        ForeignKey(
+            "coaching_appointments.id", ondelete="SET NULL",
+            name="fk_session_appointment",
+        ),
+        nullable=True, index=True,
+    )
+
     session_date: Mapped[date] = mapped_column(Date, nullable=False)
     status: Mapped[CoachingSessionStatus] = mapped_column(
         Enum(CoachingSessionStatus), nullable=False,

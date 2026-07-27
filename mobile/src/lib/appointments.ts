@@ -15,6 +15,8 @@ export interface AppointmentItem {
   student_id: number;
   student_name: string;
   coach_name: string | null;
+  /** F4: bu randevudan kaydedilen seans (varsa) */
+  session_id?: number | null;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:MM
   duration_min: number;
@@ -129,6 +131,22 @@ export function rejectAppointment(
   return apiRequest(`/api/v2/teacher/appointments/${apptId}/reject`, {
     method: "POST",
     body: { reason },
+  });
+}
+
+/** F4 — biten görüşmeyi tek adımda KS1 seans kaydına çevir (done → tahsilata sayılır). */
+export function recordAppointmentSession(
+  apptId: number,
+  body: {
+    outcome: "done" | "no_show";
+    agenda?: string;
+    coach_note?: string;
+    mood?: number;
+  },
+): Promise<unknown> {
+  return apiRequest(`/api/v2/teacher/appointments/${apptId}/record-session`, {
+    method: "POST",
+    body,
   });
 }
 

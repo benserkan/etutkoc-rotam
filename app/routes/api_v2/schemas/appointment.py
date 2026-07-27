@@ -15,6 +15,7 @@ class AppointmentItem(BaseModel):
     student_id: int
     student_name: str
     coach_name: str | None = None
+    session_id: int | None = None  # F4: bu randevudan kaydedilen KS1 seansı
     date: str                      # YYYY-MM-DD
     start_time: str                # HH:MM
     duration_min: int
@@ -152,6 +153,20 @@ class ParentAppointmentsResponse(BaseModel):
 
 class GoogleConnectUrlResponse(BaseModel):
     url: str
+
+
+class RecordSessionBody(BaseModel):
+    """F4 — randevudan tek adımda seans kaydı (KS1) + tahsilat zinciri (KS2)."""
+    outcome: str = Field(pattern="^(done|no_show)$")
+    agenda: str | None = Field(default=None, max_length=5000)
+    coach_note: str | None = Field(default=None, max_length=8000)
+    next_change: str | None = Field(default=None, max_length=2000)
+    mood: int | None = Field(default=None, ge=1, le=5)
+
+
+class RecordSessionResult(BaseModel):
+    appointment: "AppointmentItem"
+    session_id: int
 
 
 class AppointmentMutationResult(BaseModel):

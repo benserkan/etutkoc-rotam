@@ -16,6 +16,8 @@ export interface AppointmentItem {
   student_id: number;
   student_name: string;
   coach_name: string | null;
+  /** F4: bu randevudan kaydedilen KS1 seansı (varsa) */
+  session_id?: number | null;
   date: string; // YYYY-MM-DD
   start_time: string; // HH:MM
   duration_min: number;
@@ -128,4 +130,17 @@ export interface StudentAppointmentsResponse {
 export interface ParentAppointmentsResponse {
   student_name: string;
   upcoming: AppointmentItem[];
+}
+
+export interface RecordSessionBody {
+  outcome: "done" | "no_show";
+  agenda?: string;
+  coach_note?: string;
+  next_change?: string;
+  mood?: number;
+}
+
+export interface RecordSessionResult {
+  appointment: AppointmentItem;
+  session_id: number;
 }

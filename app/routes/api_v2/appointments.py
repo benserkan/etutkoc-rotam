@@ -52,6 +52,8 @@ from app.routes.api_v2.schemas.appointment import (
     GoogleConnectUrlResponse,
     GoogleStatusInfo,
     ParentAppointmentsResponse,
+    RecordSessionBody,
+    RecordSessionResult,
     RejectBody,
     SeriesItem,
     SeriesUpdateBody,
@@ -148,7 +150,12 @@ def _parse_date(value: str, *, code: str = "invalid_date") -> date_cls:
         })
 
 
-def _to_item(appt: CoachingAppointment, *, viewer_role: str = "teacher") -> AppointmentItem:
+def _to_item(
+    appt: CoachingAppointment,
+    *,
+    viewer_role: str = "teacher",
+    session_map: dict[int, int] | None = None,
+) -> AppointmentItem:
     is_past = False
     try:
         end_dt = svc.appt_start_dt(appt) + timedelta(minutes=appt.duration_min or 40)
@@ -160,6 +167,7 @@ def _to_item(appt: CoachingAppointment, *, viewer_role: str = "teacher") -> Appo
         student_id=appt.student_id,
         student_name=(appt.student.full_name if appt.student else "—"),
         coach_name=(appt.coach.full_name if appt.coach else None),
+        session_id=(session_map or {}).get(appt.id),
         date=appt.date.isoformat(),
         start_time=appt.start_time,
         duration_min=appt.duration_min or 40,
@@ -272,11 +280,22 @@ def teacher_appointments_v2(
         )
         .all()
     )
+    # F4 — hangi randevunun seansı kaydedilmiş (tek sorgu)
+    session_map: dict[int, int] = {}
+    appt_ids = [a.id for a in items]
+    if appt_ids:
+        from app.models import CoachingSession
+
+        session_map = dict(
+            db.query(CoachingSession.appointment_id, CoachingSession.id)
+            .filter(CoachingSession.appointment_id.in_(appt_ids))
+            .all()
+        )
     g = svc.google_status(db, user)
     return TeacherAppointmentsResponse(
         start=start_d.isoformat(),
         end=end_d.isoformat(),
-        items=[_to_item(a) for a in items],
+        items=[_to_item(a, session_map=session_map) for a in items],
         pending=[_to_item(a) for a in pending],
         series=[_series_item(s) for s in series_rows],
         availability=_availability_items(db, user.id),
@@ -522,6 +541,123 @@ def teacher_availability_replace_v2(
             availability=_availability_items(db, user.id)
         ),
         invalidate=_teacher_invalidate(user.id),
+    )
+
+
+# ============================================================================
+# F4 — randevudan seans kaydı (KS1 köprüsü; DONE seans KS2 tahsilata sayılır)
+# ============================================================================
+
+
+@router.post(
+    "/teacher/appointments/{appt_id}/record-session",
+    response_model=MutationResponse[RecordSessionResult],
+)
+def teacher_appointment_record_session_v2(
+    appt_id: int,
+    body: RecordSessionBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Biten görüşmeyi tek adımda KS1 seans kaydına çevir.
+
+    - outcome=done → randevu 'done' + DONE seans (KS2 tahsilata sayılır;
+      gündem zorunlu — KS1 sözleşmesi).
+    - outcome=no_show → randevu 'no_show' + NO_SHOW seans (iz kalır,
+      ücrete sayılmaz).
+    Randevu başına TEK seans (mükerrer → 422 session_exists). Otomatik
+    snapshot (Kova 1) seans anında hesaplanıp saklanır; KS4 içgörü cache'i
+    bayatlar.
+    """
+    import json as _json
+
+    from app.models import (
+        APPT_STATUS_DONE,
+        APPT_STATUS_NO_SHOW,
+        CoachingChannel,
+        CoachingSession,
+        CoachingSessionStatus,
+    )
+    from app.routes.api_v2.teacher import (
+        _compute_session_prefill,
+        _mark_insight_stale,
+    )
+
+    appt = _get_coach_appt(db, user, appt_id)
+
+    if appt.status == APPT_STATUS_PENDING:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "pending_needs_review",
+            "message": "Bekleyen istek önce onaylanmalı ya da reddedilmeli.",
+        })
+    if appt.status not in (APPT_STATUS_SCHEDULED, APPT_STATUS_DONE, APPT_STATUS_NO_SHOW):
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "not_recordable",
+            "message": "İptal edilmiş/reddedilmiş randevudan seans kaydedilemez.",
+        })
+    existing = (
+        db.query(CoachingSession)
+        .filter(CoachingSession.appointment_id == appt.id)
+        .first()
+    )
+    if existing is not None:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "session_exists",
+            "message": "Bu görüşmenin seans kaydı zaten var.",
+        })
+
+    student = db.get(User, appt.student_id)
+    if student is None:
+        raise _not_found()
+
+    agenda = (body.agenda or "").strip()
+    if body.outcome == "done" and not agenda:
+        raise HTTPException(status_code=422, detail={
+            "error": "validation", "code": "agenda_required",
+            "message": "Yapılan seans için gündem (ne konuşuldu) zorunlu.",
+        })
+    if body.outcome == "no_show" and not agenda:
+        agenda = "Öğrenci görüşmeye gelmedi."
+
+    s = CoachingSession(
+        coach_id=user.id,
+        student_id=student.id,
+        appointment_id=appt.id,
+        session_date=appt.date,
+        status=(
+            CoachingSessionStatus.DONE
+            if body.outcome == "done"
+            else CoachingSessionStatus.NO_SHOW
+        ),
+        duration_min=appt.duration_min,
+        channel=CoachingChannel.ONLINE,
+        agenda=agenda[:5000],
+        coach_note=(body.coach_note or "").strip()[:8000] or None,
+        next_change=(body.next_change or "").strip()[:2000] or None,
+        mood=body.mood,
+    )
+    s.auto_snapshot = _json.dumps(
+        _compute_session_prefill(db, student), ensure_ascii=False
+    )
+    db.add(s)
+    appt.status = (
+        APPT_STATUS_DONE if body.outcome == "done" else APPT_STATUS_NO_SHOW
+    )
+    _mark_insight_stale(db, student.id)  # yeni seans → KS4 içgörü cache bayatlar
+    db.commit()
+    db.refresh(s)
+    db.refresh(appt)
+    return MutationResponse[RecordSessionResult](
+        data=RecordSessionResult(
+            appointment=_to_item(appt, session_map={appt.id: s.id}),
+            session_id=s.id,
+        ),
+        invalidate=[
+            f"teacher:{user.id}:appointments",
+            f"teacher:{user.id}:students:{student.id}:sessions",
+            f"teacher:{user.id}:students:{student.id}",
+            "teacher:me:billing",
+        ],
     )
 
 

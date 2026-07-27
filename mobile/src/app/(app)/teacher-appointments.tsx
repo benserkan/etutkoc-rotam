@@ -10,15 +10,18 @@ import {
   RefreshControl,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { FormSheet } from "@/components/ui/form-sheet";
 import {
   approveAppointment,
   apptKeys,
   fmtApptDate,
   getTeacherAppointments,
+  recordAppointmentSession,
   rejectAppointment,
   setAppointmentStatus,
   type AppointmentItem,
@@ -50,6 +53,12 @@ export default function TeacherAppointmentsRoute() {
     onSuccess: invalidate,
     onError: () => Alert.alert("Olmadı", "Durum güncellenemedi."),
   });
+  const noShow = useMutation({
+    mutationFn: (id: number) => recordAppointmentSession(id, { outcome: "no_show" }),
+    onSuccess: invalidate,
+    onError: () => Alert.alert("Olmadı", "Kaydedilemedi."),
+  });
+  const [recording, setRecording] = React.useState<AppointmentItem | null>(null);
 
   const data = q.data;
   const byDate = React.useMemo(() => {
@@ -184,15 +193,23 @@ export default function TeacherAppointmentsRoute() {
                       {a.is_past ? (
                         <>
                           <Pressable
-                            onPress={() => status.mutate({ id: a.id, s: "done" })}
-                            disabled={status.isPending}
-                            className="rounded-lg border border-emerald-300 px-3 py-1.5 active:bg-emerald-50"
+                            onPress={() => setRecording(a)}
+                            className="rounded-lg bg-emerald-600 px-3 py-1.5 active:bg-emerald-700"
                           >
-                            <Text className="text-xs font-semibold text-emerald-700">Yapıldı</Text>
+                            <Text className="text-xs font-bold text-white">Seansı kaydet</Text>
                           </Pressable>
                           <Pressable
-                            onPress={() => status.mutate({ id: a.id, s: "no_show" })}
-                            disabled={status.isPending}
+                            onPress={() =>
+                              Alert.alert(
+                                "Gelmedi",
+                                `${a.student_name} görüşmeye gelmedi olarak kaydedilsin mi? (Tahsilata sayılmaz)`,
+                                [
+                                  { text: "Vazgeç", style: "cancel" },
+                                  { text: "Kaydet", style: "destructive", onPress: () => noShow.mutate(a.id) },
+                                ],
+                              )
+                            }
+                            disabled={noShow.isPending}
                             className="rounded-lg border border-rose-300 px-3 py-1.5 active:bg-rose-50"
                           >
                             <Text className="text-xs font-semibold text-rose-700">Gelmedi</Text>
@@ -218,6 +235,25 @@ export default function TeacherAppointmentsRoute() {
                       )}
                     </View>
                   ) : null}
+                  {a.status === "done" || a.status === "no_show" ? (
+                    a.session_id ? (
+                      <View className="mt-1 flex-row items-center gap-1">
+                        <Ionicons name="checkmark-circle" size={13} color="#047857" />
+                        <Text className="text-[11px] font-semibold text-emerald-700">
+                          Seans kaydedildi
+                        </Text>
+                      </View>
+                    ) : (
+                      <Pressable
+                        onPress={() => setRecording(a)}
+                        className="mt-1.5 self-start rounded-lg border border-emerald-300 px-3 py-1.5 active:bg-emerald-50"
+                      >
+                        <Text className="text-xs font-semibold text-emerald-700">
+                          Seansı kaydet
+                        </Text>
+                      </Pressable>
+                    )
+                  ) : null}
                 </View>
               ))}
             </View>
@@ -229,6 +265,96 @@ export default function TeacherAppointmentsRoute() {
           </Text>
         </ScrollView>
       )}
+
+      {recording ? (
+        <RecordSheet
+          appt={recording}
+          onClose={() => setRecording(null)}
+          onSaved={() => {
+            setRecording(null);
+            invalidate();
+          }}
+        />
+      ) : null}
     </SafeAreaView>
+  );
+}
+
+/** F4 — biten görüşmeyi seans kaydına çevir (gündem zorunlu; tahsilata sayılır). */
+function RecordSheet({
+  appt,
+  onClose,
+  onSaved,
+}: {
+  appt: AppointmentItem;
+  onClose: () => void;
+  onSaved: () => void;
+}) {
+  const [agenda, setAgenda] = React.useState("");
+  const [note, setNote] = React.useState("");
+  const save = useMutation({
+    mutationFn: () =>
+      recordAppointmentSession(appt.id, {
+        outcome: "done",
+        agenda: agenda.trim(),
+        coach_note: note.trim() || undefined,
+      }),
+    onSuccess: () => {
+      onSaved();
+      Alert.alert("Kaydedildi", "Seans kaydedildi — tahsilata işlendi.");
+    },
+    onError: () => Alert.alert("Olmadı", "Seans kaydedilemedi — tekrar dene."),
+  });
+
+  return (
+    <FormSheet visible title={`Seansı kaydet — ${appt.student_name}`} onClose={onClose}>
+      <View className="gap-3">
+        <Text className="text-xs text-slate-500">
+          {fmtApptDate(appt)} {appt.start_time} görüşmesi seans kaydına dönüşür;
+          yapılan seans tahsilat panosuna otomatik işlenir.
+        </Text>
+        <View>
+          <Text className="mb-1.5 text-xs font-bold text-slate-500">
+            Gündem — ne konuşuldu? (zorunlu)
+          </Text>
+          <TextInput
+            value={agenda}
+            onChangeText={setAgenda}
+            placeholder="Örn. deneme analizi + haftalık plan + motivasyon"
+            multiline
+            numberOfLines={3}
+            className="min-h-[72px] rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            placeholderTextColor="#94a3b8"
+            textAlignVertical="top"
+          />
+        </View>
+        <View>
+          <Text className="mb-1.5 text-xs font-bold text-slate-500">
+            Görüşme notu (isteğe bağlı)
+          </Text>
+          <TextInput
+            value={note}
+            onChangeText={setNote}
+            multiline
+            numberOfLines={2}
+            className="min-h-[52px] rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900"
+            textAlignVertical="top"
+          />
+        </View>
+        <Pressable
+          onPress={() => save.mutate()}
+          disabled={!agenda.trim() || save.isPending}
+          className={
+            !agenda.trim() || save.isPending
+              ? "items-center rounded-xl bg-slate-300 px-4 py-3"
+              : "items-center rounded-xl bg-emerald-600 px-4 py-3 active:bg-emerald-700"
+          }
+        >
+          <Text className="font-bold text-white">
+            {save.isPending ? "Kaydediliyor…" : "Kaydet"}
+          </Text>
+        </Pressable>
+      </View>
+    </FormSheet>
   );
 }

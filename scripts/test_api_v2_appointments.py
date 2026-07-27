@@ -19,6 +19,8 @@ from app.config import settings
 from app.database import SessionLocal
 from app.models import (
     APPT_STATUS_CANCELLED,
+    APPT_STATUS_DONE,
+    APPT_STATUS_NO_SHOW,
     APPT_STATUS_PENDING,
     APPT_STATUS_REJECTED,
     APPT_STATUS_SCHEDULED,
@@ -26,6 +28,9 @@ from app.models import (
     CoachGoogleAccount,
     CoachingAppointment,
     CoachingAppointmentSeries,
+    CoachingChannel,
+    CoachingSession,
+    CoachingSessionStatus,
     ParentNotificationPref,
     ParentStudentLink,
     User,
@@ -82,6 +87,9 @@ def clean():
     users = db.query(User).filter(User.email.like(f"%{SUF}@x.com")).all()
     uids = [u.id for u in users]
     if uids:
+        db.query(CoachingSession).filter(
+            CoachingSession.student_id.in_(uids)
+        ).delete(synchronize_session=False)
         db.query(CoachingAppointment).filter(
             CoachingAppointment.student_id.in_(uids)
             | CoachingAppointment.coach_id.in_(uids)
@@ -516,6 +524,115 @@ try:
         google_meet._api_request = orig_api
         settings.google_oauth_client_id = ""
         settings.google_oauth_client_secret = ""
+
+    # ---- 22) F4 — randevudan seans kaydı (KS1 köprüsü) ----
+    from app.routes.api_v2.appointments import (
+        teacher_appointment_record_session_v2,
+    )
+    from app.routes.api_v2.schemas.appointment import RecordSessionBody
+
+    try:
+        teacher_appointment_record_session_v2(
+            appt_id=r1.id, body=RecordSessionBody(outcome="done"),
+            user=coach, db=db,
+        )
+        check("22a. gündemsiz done reddedilir", False)
+    except HTTPException as e:
+        check("22a. gündemsiz done reddedilir",
+              e.detail["code"] == "agenda_required")
+
+    res = teacher_appointment_record_session_v2(
+        appt_id=r1.id,
+        body=RecordSessionBody(
+            outcome="done",
+            agenda="Deneme analizi + haftalık plan konuşuldu",
+            mood=4,
+        ),
+        user=coach, db=db,
+    )
+    sess = db.get(CoachingSession, res.data.session_id)
+    db.refresh(r1)
+    check("22b. done -> DONE seans (online, süre, bağ) + randevu done",
+          sess is not None
+          and sess.status == CoachingSessionStatus.DONE
+          and sess.channel == CoachingChannel.ONLINE
+          and sess.appointment_id == r1.id
+          and sess.duration_min == r1.duration_min
+          and sess.session_date == r1.date
+          and sess.auto_snapshot
+          and r1.status == APPT_STATUS_DONE)
+
+    try:
+        teacher_appointment_record_session_v2(
+            appt_id=r1.id,
+            body=RecordSessionBody(outcome="done", agenda="tekrar"),
+            user=coach, db=db,
+        )
+        check("22c. mükerrer seans reddedilir", False)
+    except HTTPException as e:
+        check("22c. mükerrer seans reddedilir",
+              e.detail["code"] == "session_exists")
+
+    bundle = teacher_appointments_v2(user=coach, db=db)
+    row = next((a for a in bundle.items if a.id == r1.id), None)
+    check("22d. takvim satırında session_id",
+          row is not None and row.session_id == sess.id)
+
+    res = teacher_appointment_record_session_v2(
+        appt_id=r2.id, body=RecordSessionBody(outcome="no_show"),
+        user=coach, db=db,
+    )
+    sess2 = db.get(CoachingSession, res.data.session_id)
+    db.refresh(r2)
+    check("22e. no_show -> NO_SHOW seans + varsayılan gündem",
+          sess2 is not None
+          and sess2.status == CoachingSessionStatus.NO_SHOW
+          and "gelmedi" in sess2.agenda.lower()
+          and r2.status == APPT_STATUS_NO_SHOW)
+
+    res = student_appointment_request_v2(
+        body=StudentRequestBody(date=tomorrow.isoformat(), start_time="15:00"),
+        background=bg, user=stu, db=db,
+    )
+    pend_id = res.data.appointment.id
+    try:
+        teacher_appointment_record_session_v2(
+            appt_id=pend_id,
+            body=RecordSessionBody(outcome="done", agenda="x"),
+            user=coach, db=db,
+        )
+        check("22f. pending istekten seans olmaz", False)
+    except HTTPException as e:
+        check("22f. pending istekten seans olmaz",
+              e.detail["code"] == "pending_needs_review")
+
+    # Taze iptal kaydı (appt1 test 17'de silinmişti — SQLite id-reuse tuzağı)
+    cancelled_appt = CoachingAppointment(
+        coach_id=coach.id, student_id=stu.id,
+        date=tomorrow, start_time="09:00", duration_min=40,
+        status=APPT_STATUS_CANCELLED,
+    )
+    db.add(cancelled_appt); db.commit()
+    try:
+        teacher_appointment_record_session_v2(
+            appt_id=cancelled_appt.id,
+            body=RecordSessionBody(outcome="done", agenda="x"),
+            user=coach, db=db,
+        )
+        check("22g. iptal randevudan seans olmaz", False)
+    except HTTPException as e:
+        check("22g. iptal randevudan seans olmaz",
+              e.detail["code"] == "not_recordable")
+
+    try:
+        teacher_appointment_record_session_v2(
+            appt_id=r1.id,
+            body=RecordSessionBody(outcome="done", agenda="x"),
+            user=other, db=db,
+        )
+        check("22h. yabancı koç 404", False)
+    except HTTPException as e:
+        check("22h. yabancı koç 404", e.status_code == 404)
 
 finally:
     clean()
