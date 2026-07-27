@@ -15,8 +15,10 @@ export const metadata = { title: "Görüşmeler" };
 export default async function TeacherAppointmentsPage() {
   const [data, students] = await Promise.all([
     apiServer<TeacherAppointmentsResponse>("/api/v2/teacher/appointments"),
+    // page_size backend'de en fazla 100 (le=100) — 200 istemek 422 + SSR 500
+    // yapıyordu (2026-07-27 canlı bulgusu).
     apiServer<TeacherStudentListResponse>(
-      "/api/v2/teacher/students?page_size=200",
+      "/api/v2/teacher/students?page_size=100",
     ),
   ]);
   return <AppointmentsClient initial={data} students={students.items} />;
