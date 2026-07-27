@@ -158,8 +158,18 @@ react-native-purchases native'leri İLK KEZ bu AAB'de — kullanıcı EAS'tan
 indirip Play Console kapalı teste yükleyecek. iOS build 9 Apple kurumsal
 dönüşüm bitene dek ALINAMAZ (sertifika portalı kapalı); TestFlight build 8
 OTA ile güncel. Rehber sistemi BİLİNÇLİ web-only (mobilde yok).
-**SIRADA:** v9 AAB'yi Play'e yükleme (kullanıcı) → randevu badge'i (koç
-bekleyen istek sayısı) → F5 (ops.) gömülü görüşme / KS4 içgörü yan paneli.
+**REHBER MOBİLDE (2026-07-28, commit `90d189b`, OTA grubu `47c63753`):**
+3 rol tek RN oynatıcı (`/guide` + lib/guide.ts + components/guide/guide-player):
+shot + vurgu kutusu + Animated zoom (web zoomTransform portu — RN'de
+transform-origin yok, merkez-odaklı çeviri elle) + expo-audio MP3 akışı
+(backend /static/guide; yüklenemezse süre tahmini) + altyazı + watch ilerleme
+(web↔mobil kaldığın yerden devam) + bölüm sonu checklist kartı (kapısız).
+Girişler: öğrenci Gelişim hub kartı + veli/koç Profil "Rehber". İçerik
+JSON'ları web'den KOPYA (`mobile/assets/guide/`) — **KURAL: içerik/TTS
+yenilenince JSON'ları kopyala + mobil GUIDE_ASSET_VERSION'ı web ile eşitle.**
+**SIRADA:** v9 AAB'yi Play'e yükleme (kullanıcı; EAS build `04e913ed`) →
+randevu badge'i (koç bekleyen istek sayısı) → F5 (ops.) gömülü görüşme /
+KS4 içgörü yan paneli.
 
 ---
 

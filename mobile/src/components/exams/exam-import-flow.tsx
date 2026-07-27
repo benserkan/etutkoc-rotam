@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { SafeAreaView } from "react-native-safe-area-context";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { ArchiveWrongsButton } from "@/components/exams/archive-wrongs-button";
 import { ApiError } from "@/lib/api";
@@ -80,6 +80,7 @@ export function ExamImportFlow({
   studentId?: number | null;
 }) {
   const qc = useQueryClient();
+  const insets = useSafeAreaInsets();
   const [step, setStep] = React.useState<Step>("pick");
   const [pdf, setPdf] = React.useState<PickedPdf | null>(null);
   const [draft, setDraft] = React.useState<ExamImportDraft | null>(null);
@@ -245,14 +246,26 @@ export function ExamImportFlow({
 
   return (
     <Modal visible={visible} animationType="slide" onRequestClose={close}>
-      <SafeAreaView className="flex-1 bg-slate-50">
+      {/* NOT: Modal ayrı native hiyerarşide açıldığından SafeAreaView'ın
+          native inset ölçümü iOS'ta boş dönebiliyor (çentik altına taşma,
+          2026-07-28 TestFlight bulgusu) → insets root provider'dan hook'la
+          okunup elle uygulanır. */}
+      <View
+        className="flex-1 bg-slate-50"
+        style={{ paddingTop: Math.max(insets.top, 8), paddingBottom: insets.bottom }}
+      >
         {/* Başlık çubuğu */}
         <View className="flex-row items-center justify-between border-b border-slate-200 bg-white px-4 py-3">
           <Text className="text-base font-bold text-slate-900">
             Deneme sonucunu PDF&apos;ten aktar
           </Text>
-          <Pressable onPress={close} hitSlop={10}>
-            <Ionicons name="close" size={22} color="#475569" />
+          <Pressable
+            onPress={close}
+            hitSlop={14}
+            className="size-9 items-center justify-center rounded-full active:bg-slate-100"
+            accessibilityLabel="Kapat"
+          >
+            <Ionicons name="close" size={24} color="#475569" />
           </Pressable>
         </View>
 
@@ -619,7 +632,7 @@ export function ExamImportFlow({
             </Pressable>
           </View>
         ) : null}
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 }
