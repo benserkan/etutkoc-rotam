@@ -43,6 +43,16 @@ export default function TeacherProfileScreen() {
         ) : null}
 
         <Pressable
+          onPress={() => router.push("/teacher-appointments")}
+          className="rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
+        >
+          <Text className="text-[15px] font-medium text-slate-900">Görüşmeler</Text>
+          <Text className="mt-0.5 text-xs text-slate-500">
+            Online görüşme randevuların ve öğrenci istekleri
+          </Text>
+        </Pressable>
+
+        <Pressable
           onPress={() => void Linking.openURL("https://rotam.etutkoc.com/teacher/dashboard")}
           className="rounded-2xl border border-slate-200 bg-white px-5 py-4 active:bg-slate-50"
         >

@@ -39,6 +39,7 @@ export function hrefForNotificationData(data: NotifData): string | null {
       case "empty_day":
       case "daily_summary":
       case "rota_commentary": // P4: yeni deneme → Rota kartı çocuk detayında
+      case "appointment": // randevu planlandı/değişti/hatırlatma → çocuk detayı (görüşme kartı)
       default:
         return `/parent-child?id=${sid}`; // çocuk detayı
     }
@@ -56,6 +57,8 @@ export function hrefForNotificationData(data: NotifData): string | null {
     switch (screen) {
       case "requests":
         return "/(app)/teacher/requests";
+      case "appointments": // görüşme isteği → randevu listesi
+        return "/teacher-appointments";
       case "plan":
         return "/teacher-plan";
       default:
@@ -81,6 +84,7 @@ export function hrefForNotificationData(data: NotifData): string | null {
   if (type === "student") {
     const screen = data.screen as string | undefined;
     if (screen === "requests") return "/(app)/student/requests";
+    if (screen === "appointments") return "/student-appointments";
     if (screen === "surveys") return "/student-surveys";
     if (screen === "wrong_questions") return "/student-wrong-questions";
     if (screen === "books") return "/student-books";

@@ -3,6 +3,7 @@ import { Pressable, ScrollView, Text, View } from "react-native";
 
 import type { WarningLevel } from "@/lib/parent";
 import type { ParentStudentOverview } from "@/lib/parent-detail";
+import { ParentAppointmentsCard } from "@/components/parent/appointments-card";
 import { RotaCommentaryCard } from "@/components/parent/rota-commentary-card";
 import { cn } from "@/lib/utils";
 
@@ -120,6 +121,9 @@ export function ParentChildDetailView({
           <Ionicons name="chevron-forward" size={18} color="#7c3aed" />
         </Pressable>
       ) : null}
+
+      {/* Sıradaki koçluk görüşmesi (varsa) */}
+      <ParentAppointmentsCard studentId={data.student.id} />
 
       {/* Rota'nın Yorumu — sayılar/grafikler velinin dilinde (tek kapı) */}
       <RotaCommentaryCard studentId={data.student.id} />

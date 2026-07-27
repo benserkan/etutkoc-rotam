@@ -41,6 +41,7 @@ Billing ayrı iş). Kurulum: `store/iap-kurulum-rehberi.md`.
 | **Anketler (listele + doldur + sonuç gör)** | ✅ | ✅ | Gelişim hub kartı (bekleyen rozet) + push deep-link |
 | **Yanlış Soru Arşivi (foto çek/galeri + yeniden çöz + AI ipucu)** | ✅ | ✅ | Gelişim hub "Yanlışlarım" kartı (vadesi gelen rozet); kamera=expo-image-picker (build 9); AI etiketleme koç kredisiyle |
 | Bölüm baz "çözülmüş" girişi / projeksiyon detay | ✅ | ⬜ | web |
+| **Görüşmelerim (online randevu)** | ✅ | ✅ | Bugün ekranında "Sıradaki görüşme" bandı + `/student-appointments`: Katıl (Linking) + slot seçip görüşme iste + bekleyeni geri çek + geçmiş; push deep-link `screen:"appointments"` |
 
 ## Veli
 
@@ -51,7 +52,8 @@ Billing ayrı iş). Kurulum: `store/iap-kurulum-rehberi.md`.
 | Rota'nın Yorumu (program+deneme AI anlatımı, sesli) | ✅ | ✅ | çocuk detayında; ses expo-audio (Authorization header'lı akış, JS-only → OTA); eski "AI Durum Analizi" kartı buna gömüldü |
 | Çocuğun haftası | ✅ | ✅ | |
 | Bildirimler listesi | ✅ | ✅ | |
-| Tercihler / sessiz saat / WhatsApp doğrulama | ✅ | ⬜ | web (/parent/settings) |
+| Tercihler / sessiz saat / WhatsApp doğrulama | ✅ | ⬜ | web (/parent/settings); randevu bildirimi toggle'ı da web'de |
+| **Sıradaki koçluk görüşmesi kartı** | ✅ | ✅ | çocuk detayında; "Görüşmeye katıl" linki; randevu push'u (kind:"appointment") çocuk detayına düşer |
 
 ## Koç (Öğretmen)
 
@@ -62,6 +64,7 @@ Billing ayrı iş). Kurulum: `store/iap-kurulum-rehberi.md`.
 | **Denemeler — sonuç gir/sil** | ✅ | ✅ | net canlı hesap |
 | **Deneme PDF içe aktar + konu analizi + yanlış arşiv köprüsü (Faz 4)** | ✅ | ✅ | satır düzeltme ("Satırları düzelt") yalnız web |
 | **Seanslar — kaydet/gör** | ✅ | ✅ | durum/kanal/gündem/ruh hali |
+| **Görüşmeler (online randevu)** | ✅ | 🔶 | mobil: 14 günlük liste + istek onay/red + Katıl + yapıldı/gelmedi/iptal (Profil → Görüşmeler + push deep-link); PLANLAMA (yeni randevu/haftalık seri/uygunluk saatleri/Google Meet bağlantısı) yalnız web |
 | **Tahsilat — ücret + ödeme** | ✅ | ✅ | aylık pano |
 | **Destek — talep/yanıt + gelen kutusu** | ✅ | ✅ | |
 | **Haftalık programı gör** | ✅ | ✅ | "Program" sekmesi (gün kartları + %) |
