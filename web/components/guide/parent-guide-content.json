@@ -1,0 +1,502 @@
+{
+  "guideKey": "parent_onboarding",
+  "narrator": "Rota",
+  "chapters": [
+    {
+      "key": "veli-hosgeldin",
+      "title": "Hoş geldin",
+      "subtitle": "Panelin ilk bakışta — sayıların Türkçesi",
+      "steps": [
+        {
+          "caption": "Merhaba! Ben Rota — Etütkoç Rotam'ın veli asistanıyım. Bu panel, çocuğunun çalışma emeğini sana göstermek için yapıldı. İçinde çok düğme, çok sayı var; ama korkma — hiçbirini ezberlemene gerek yok. Bu turda her şeyi birlikte, adım adım, gerçek ekranlar üzerinde yapacağız. Teknolojiyle aran nasıl olursa olsun, tur bitince nereye basacağını bileceksin.",
+          "shot": null,
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Giriş yaptığında seni bu Panel karşılar. Her çocuğun için bir kart vardır. Karttaki üç bilgi günün özetidir: bugün kaç görev yapıldı, son yedi günde planlananın yüzde kaçı tamamlandı ve kaç gündür düzenli çalışıyor.",
+          "shot": "veli-panel",
+          "target": "cocukKarti",
+          "click": false
+        },
+        {
+          "caption": "Sayıların Türkçesi şu: ekranda yüzde altmış görüyorsun, çünkü son yedi günde planlanan beş görevden üçü yapılmış. Yüzde yükseldikçe renk yeşile döner, düştükçe turuncuya ve kırmızıya. Yani renge bakmak bile çoğu zaman yeter: yeşil iyi, kırmızı ilgi istiyor.",
+          "shot": "veli-panel",
+          "target": "cocukKarti",
+          "zoom": true,
+          "click": false
+        },
+        {
+          "caption": "Kartın altındaki koyu kutu son denemeyi gösterir: deneme, gerçek sınavın provasıdır. Net ise işin özü — doğruların içinden yanlışların götürdüğü pay çıkarıldığında geriye kalan, gerçekten kazanılmış soru sayısıdır. Bu tanımı da unutabilirsin; birazdan göreceğin gibi bu sayıları senin yerine ben yorumluyorum.",
+          "shot": "veli-panel",
+          "target": "sonDeneme",
+          "click": false
+        },
+        {
+          "caption": "Şimdi çocuğunun kartına tıklıyoruz. Açılan sayfa çocuğunun detay sayfası: üstte hızlı düğmeler ve dört özet kutu var. Ve hemen altında benim kartım seni bekliyor — turun asıl yıldızı orası. Bir sonraki bölümde onu birlikte kullanacağız.",
+          "shot": "veli-cocuk-detay",
+          "target": "rotaKart",
+          "click": true
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "veli-rota-program",
+      "title": "Rota'nın Yorumu — Program",
+      "subtitle": "Sayıları senin dilinde anlatan asistan",
+      "steps": [
+        {
+          "caption": "Bu kart benim: Rota'nın Yorumu. Üç sekmesi var: Program, Denemeler ve Rota'ya Sor. Görevi şu: paneldeki bütün sayıları, yüzdeleri, grafikleri senin yerine okuyup sana günlük Türkçeyle anlatmak. Şimdi Program sekmesindeyiz.",
+          "shot": "veli-rota-bos",
+          "target": "kart",
+          "click": false
+        },
+        {
+          "caption": "Tek yapman gereken şu düğmeye basmak: Rota yorumlasın. Hadi birlikte basalım.",
+          "shot": "veli-rota-bos",
+          "target": "yorumlaButon",
+          "click": true
+        },
+        {
+          "caption": "Bastık. Şu anda çocuğunun bu haftaki bütün program verilerini topluyorum: hangi görevler planlanmış, hangileri yapılmış, geçen haftayla fark ne. Bu birkaç saniye sürer — hazırlanırken bekle.",
+          "shot": "veli-rota-hazirlaniyor",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Ve işte yorumum geldi. Başlıklar hâlinde, sade cümlelerle: bu hafta ne planlandı, ne yapıldı, gidişat nasıl. Rakam yığını yok — okuyacağın şey bir öğretmenin sana anlatması gibi.",
+          "shot": "veli-rota-yorum",
+          "target": "bolumler",
+          "click": false
+        },
+        {
+          "caption": "Şuna özellikle dikkat: eksikleri adıyla söylerim. Perşembe gününün matematik testleri ya da cumartesi denemesi yapılmadıysa bunu açıkça yazarım. Böylece akşam çocuğunla ne konuşacağını tam olarak bilirsin — genel geçer laflar değil, somut görev adları.",
+          "shot": "veli-rota-yorum",
+          "target": "bolumler",
+          "zoom": true,
+          "click": false
+        },
+        {
+          "caption": "Okumak zor geliyorsa ya da vaktin yoksa dinle: Rota seslendirsin düğmesine bas. Yorumu sana sesli anlatayım.",
+          "shot": "veli-rota-yorum",
+          "target": "seslendirButon",
+          "click": true
+        },
+        {
+          "caption": "Ses bir kez hazırlanınca saklanır; düğme Dinle ve Duraklat olur. Yemek yaparken, yoldayken, işten dönerken — kulağınla takip et. Aynı yorumu tekrar tekrar dinlemek hiçbir hak tüketmez.",
+          "shot": "veli-rota-dinle",
+          "target": "dinleButon",
+          "click": false
+        },
+        {
+          "caption": "Zaman geçip yeni veriler geldikçe kartın üstünde yorumun eski kaldığını söyleyen bir şerit belirir; o zaman Yenile'ye basarsın, taze yorum gelir. Günde altı yenileme hakkın var — bu bilinçli bir sınır, ihtiyacın olandan fazlası zaten gerekmez.",
+          "shot": "veli-rota-yorum",
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "Kendi panelinde dene",
+        "href": "/parent",
+        "checkKey": "",
+        "doneLabel": "Panel",
+        "hint": "Yol: Panel → çocuğunun kartına tıkla → Rota'nın Yorumu kartında Rota yorumlasın düğmesine bas.",
+        "optional": true
+      }
+    },
+    {
+      "key": "veli-rota-deneme",
+      "title": "Rota'nın Yorumu — Denemeler",
+      "subtitle": "Deneme sonuçlarını grafiksiz anla",
+      "steps": [
+        {
+          "caption": "Sıra denemelerde. Çocuğun deneme sınavına girdikçe sonuçlar sisteme işlenir; sayfalar dolusu grafik ve tablo oluşur. Sen bunların hiçbirinde boğulma — aynı kartın Denemeler sekmesine geçmen yeterli. Şimdi birlikte geçelim.",
+          "shot": "veli-deneme-bos",
+          "target": "denemeSekme",
+          "click": true
+        },
+        {
+          "caption": "Yine aynı alışkanlık: Rota yorumlasın düğmesine bas. Bu sefer son denemeleri, netlerin gidişatını ve hangi konuların fırsat olduğunu toplayıp anlatacağım.",
+          "shot": "veli-deneme-bos",
+          "target": "yorumlaButon",
+          "click": true
+        },
+        {
+          "caption": "İşte deneme yorumu: son denemede kaç net yapıldı, önceki denemelere göre yükseliş mi düşüş mü var, hangi konular kapanırsa net artar. Hepsi başlık başlık, sade cümlelerle.",
+          "shot": "veli-deneme-yorum",
+          "target": "bolumler",
+          "click": false
+        },
+        {
+          "caption": "Bir inceliğe dikkat: yirmi soruluk küçük bir branş denemesi ile doksan soruluk genel deneme aynı terazide tartılmaz. Küçük denemedeki on bir net ile büyük denemedeki altmış bir net arasında çelişki yoktur — bu farkı yorumun içinde ben zaten açıklarım. Sen yanlış alarma kapılmazsın.",
+          "shot": "veli-deneme-yorum",
+          "target": "bolumler",
+          "zoom": true,
+          "click": false
+        },
+        {
+          "caption": "Deneme yorumunu da seslendirebilirsin — düğmeler aynı: Rota seslendirsin, sonra Dinle.",
+          "shot": "veli-deneme-yorum",
+          "target": "seslendirButon",
+          "click": false
+        },
+        {
+          "caption": "Ham veriyi merak edersen üstteki Denemeler ve Analiz düğmesi tüm listeyi ve grafikleri açar: deneme geçmişi, net gelişimi, konu analizi. Ama sıramız şu: önce yorumumu oku ya da dinle; grafiklere ancak canın isterse gir.",
+          "shot": "veli-deneme-analiz",
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "veli-rota-sor",
+      "title": "Rota'ya Sor",
+      "subtitle": "Yazarak ya da konuşarak — aklına geleni sor",
+      "steps": [
+        {
+          "caption": "Geldik en sevdiğim yere: Rota'ya Sor. Burası benimle sohbet ettiğin yer. Sekmeyi açar açmaz seni günün özetiyle karşılarım — mesela dün eksik kalan görevi adıyla söylerim. Bu karşılama tamamen ücretsizdir; sekmeyi istediğin kadar açıp kapatabilirsin.",
+          "shot": "veli-sor-karsilama",
+          "target": "karsilama",
+          "click": false
+        },
+        {
+          "caption": "Ne soracağını bilemiyorsan dert değil: hazır soru düğmeleri var. Dün neler yapılmadı, programa uyuyor mu, haftayı yorumla, denemeleri yorumla... Birine dokunman yeterli.",
+          "shot": "veli-sor-karsilama",
+          "target": "cipler",
+          "click": false
+        },
+        {
+          "caption": "Hadi birine dokunalım: Programa uyuyor mu? Dokununca sorun baloncuk olarak görünür ve ben düşünmeye başlarım — çocuğunun gerçek verilerine bakıyorum, uydurmuyorum.",
+          "shot": "veli-sor-dusunuyor",
+          "target": null,
+          "click": true
+        },
+        {
+          "caption": "Ve cevap: kaç görevden kaçı yapılmış, hangi görevler eksik, geçen haftaya göre durum ne. İki ile altı cümle arasında, isim vererek, net konuşurum.",
+          "shot": "veli-sor-cevap",
+          "target": "cevap",
+          "click": false
+        },
+        {
+          "caption": "Cevabın sonunda çoğu zaman tek bir öneri bulursun: mesela koçuyla şu konuyu görüşmen faydalı olabilir. Amacım suçlamak değil, sana atılabilecek en faydalı tek adımı göstermek.",
+          "shot": "veli-sor-cevap",
+          "target": "cevap",
+          "zoom": true,
+          "click": false
+        },
+        {
+          "caption": "Kendi sorunu da yazabilirsin: alttaki kutuya dokun, aklındakini gündelik dilde yaz — matematikte durumu nasıl, bu hafta düzeldi mi, neye çalışsın... Sonra Sor düğmesine bas.",
+          "shot": "veli-sor-yaz",
+          "target": "soruKutusu",
+          "click": false
+        },
+        {
+          "caption": "Şimdi işin en güzel kısmı: yazmak zor geliyorsa KONUŞ. Kutunu yanındaki mikrofon düğmesine dokun.",
+          "shot": "veli-sor-yaz",
+          "target": "mikrofon",
+          "click": true
+        },
+        {
+          "caption": "Mikrofona dokununca kayıt başlar; düğme kırmızıya döner ve süre sayar. Normal konuşman yeterli; örneğin oğlum bu hafta ödevlerini yaptı mı diye sorabilirsin. Bitince kırmızı düğmeye tekrar dokun.",
+          "shot": "veli-sor-kayit",
+          "target": "kayitButon",
+          "click": false
+        },
+        {
+          "caption": "Konuşman yazıya çevrilir ve soru kutusuna dolar. Dikkat: kendiliğinden gönderilMEZ — önce yazıyı okursun, istersen düzeltirsin, sonra Sor'a basarsın. Kontrol her zaman sende. Ses kaydın hiçbir yerde saklanmaz.",
+          "shot": "veli-sor-cevrildi",
+          "target": "soruKutusu",
+          "click": false
+        },
+        {
+          "caption": "Cevaplarımı dinlemek de mümkün: her cevabımın altında küçük bir Dinle düğmesi var. Dokun, cevabı sesli okuyayım. Son bir bilgi: günde on soru hakkın var; kalanını kutunun altında görürsün. Ve içiniz rahat olsun — koçun kendine yazdığı özel notlar bana asla görünmez, ben yalnız çocuğunun çalışma verilerini görürüm.",
+          "shot": "veli-sor-dinle",
+          "target": "dinleButon",
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "Rota'ya bir soru sor",
+        "href": "/parent",
+        "checkKey": "",
+        "doneLabel": "Panel",
+        "hint": "Yol: Panel → çocuğunun kartı → Rota'nın Yorumu kartında Rota'ya Sor sekmesi → hazır sorulardan birine dokun.",
+        "optional": true
+      }
+    },
+    {
+      "key": "veli-rapor",
+      "title": "Haftalık Rapor",
+      "subtitle": "Geçen hafta nasıl geçti — kıyaslamalı karne",
+      "steps": [
+        {
+          "caption": "Çocuğunun sayfasının en üstünde Haftalık Rapor düğmesi var. Haftada bir kez buraya bakmak, çoğu velinin bütün ihtiyacını karşılar. Tıklayalım.",
+          "shot": "veli-cocuk-detay",
+          "target": "raporButon",
+          "click": true
+        },
+        {
+          "caption": "Raporun en üstünde geçen haftanın karnesi durur: tamamlama yüzdesi, çözülen soru ve çalışılan gün — her biri bir önceki haftayla kıyaslı. Yukarı ok gidişatın iyileştiğini, aşağı ok gevşediğini söyler. Oklara bakmak yeterli.",
+          "shot": "veli-rapor",
+          "target": "manset",
+          "click": false
+        },
+        {
+          "caption": "Biraz aşağıda dersler var: hangi derse en çok çalışılmış, hangisi en çok aksatılmış — ikisi de etiketle işaretlenir. Çocuğunla konuşurken elinde somut bir başlık olur: bu hafta fen biraz geride kalmış mesela.",
+          "shot": "veli-rapor-dersler",
+          "target": "dersler",
+          "click": false
+        },
+        {
+          "caption": "Daha da aşağıda haftanın günleri tek tek: hangi gün ne yapılmış, hangi gün boş geçmiş. Deneme girildiyse net ve gidişat da bu raporda görünür.",
+          "shot": "veli-rapor-gunler",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Önümüzdeki haftayı merak ediyorsan detay sayfasındaki Haftalık Programı Gör düğmesi koçun kurduğu haftayı gün gün açar: hangi gün hangi görev, yapılanların üstünde işaret. Çocuğuna ne zaman ne sorman gerektiğini buradan bilirsin.",
+          "shot": "veli-hafta-program",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Ve unutma: bütün bunları bana da sorabilirsin. Rota'ya Sor sekmesine gidip haftayı yorumla demen yeterli — raporu senin için ben özetlerim.",
+          "shot": "veli-sor-karsilama",
+          "target": "cipler",
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "veli-program",
+      "title": "Haftalık Programı Gör",
+      "subtitle": "Koçun kurduğu hafta gün gün önünde",
+      "steps": [
+        {
+          "caption": "Sırada panelin dört güçlü sayfası var; hepsine çocuğunun sayfasındaki şu düğme sırasından gireceğiz. İlk durak: Haftalık Programı Gör. Koçun bu hafta için kurduğu planın aynısını sen de göreceksin. Dokunalım.",
+          "shot": "veli-hizli-butonlar",
+          "target": "programButon",
+          "click": true
+        },
+        {
+          "caption": "Karşında yedi günlük program: her gün bir kart. Pazartesiye bak — sağ üstte günün özeti duruyor: iki görevden biri yapılmış, altı testin dördü çözülmüş. Kartın içinde görevler tek tek: ders etiketi, kitabın adı, konu ve kaç test istendiği.",
+          "shot": "veli-program-genel",
+          "target": "hafta",
+          "click": false
+        },
+        {
+          "caption": "Yapılan görevin yanında yeşil bir tamamlandı işareti belirir; sayılar da dolar — dörtte dört gibi. Çocuğun görevi işaretlediği anda burası güncellenir. Akşam olduğunda bugün ne yapıldı sorusunun cevabı zaten ekranda.",
+          "shot": "veli-program-genel",
+          "target": "tamamRozeti",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Perşembe yoğun bir gün: yedi görev, yirmi iki test. Satırı okumayı bilince her şey burada: Doğrusal Denklemler konusundan dört test istenmiş, henüz sıfırı yapılmış. Artık çocuğuna bugün ders çalıştın mı diye değil, doğrusal denklem testleri nasıl gitti diye sorabilirsin — fark büyük.",
+          "shot": "veli-program-gun",
+          "target": "gorevSatiri",
+          "click": false
+        },
+        {
+          "caption": "Sağ üstteki oklarla önceki ya da sonraki yedi güne geçersin; Bu hafta düğmesi seni bugüne döndürür. Bu sayfa salt okunurdur: programı koç kurar, öğrenci işaretler, sen izlersin. Bir değişiklik gerektiğini düşünüyorsan üst menüden Koça Talep gönderebilirsin.",
+          "shot": "veli-program-genel",
+          "target": "gezinme",
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "veli-konu",
+      "title": "Konu Performansı",
+      "subtitle": "Hangi konu sağlam, hangisi tekrar ister — renklerin dili",
+      "steps": [
+        {
+          "caption": "İkinci kapı benim en sevdiklerimden: Konu Performansı. Karne notu sana dersi söyler ama konuyu söylemez. Bu sayfa, matematikte iyi cümlesini hangi konuda iyi, hangisinde değil seviyesine indirir. Girelim.",
+          "shot": "veli-hizli-butonlar",
+          "target": "konuButon",
+          "click": true
+        },
+        {
+          "caption": "Üst şerit genel fotoğraf: kırk beş test çözülmüş, üç yüz yirmi dört doğru, yüz yirmi altı yanlış — genel doğruluk yüzde yetmiş iki. Doğruluk şöyle hesaplanır: doğru sayısı, doğru artı yanlış toplamına bölünür. Çocuğun görevlerinde girdiği her doğru-yanlış burada birikir.",
+          "shot": "veli-konu-ozet",
+          "target": "ozetKartlar",
+          "click": false
+        },
+        {
+          "caption": "Renkler üç mesaj taşır: yüzde yetmiş ve üstü yeşil, sağlam demek. Kırk ile yetmiş arası sarı, dikkat demek. Kırkın altı kırmızı, tekrar ister demek. Matematik yüzde yetmiş beşle yeşil; Fen Bilimleri yüzde elli dokuzla sarı. Ama en kritik nokta şu: dersin ortalaması hikâyenin tamamı değildir.",
+          "shot": "veli-konu-dersler",
+          "target": "fenKart",
+          "click": false
+        },
+        {
+          "caption": "Fen'e dokundum, konular açıldı — ve işte asıl hikâye: Basınç konusu üç testte yüzde otuz yedide kalmış, kırmızı. Hemen altındaki Mevsimler ve İklim ise yüzde seksenle gayet iyi. Yani Fen zayıf demek yanlış; Basınç zayıf demek doğru. Sarı bir dersin içindeki kırmızı konuyu bulmak — bu sayfanın en değerli işi budur.",
+          "shot": "veli-konu-fen-acik",
+          "target": "basincSatiri",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Yeşil derslerin içine de bakmaya değer: Matematik genelde iyi ama Doğrusal Denklemler yüzde altmış yedide, sarı. Satırın sağındaki son tarihi de önemli — o konuya en son ne zaman çalışıldığını gösterir. Uzun süredir dokunulmamış zayıf bir konu sınava kadar sessizce unutulur; bu tarih onu ele verir.",
+          "shot": "veli-konu-mat-acik",
+          "target": "dogrusalSatiri",
+          "click": false
+        },
+        {
+          "caption": "Peki bu sayfayla ne yapacaksın? Çocuğa neden yapamıyorsun demek için değil, doğru soruyu sormak için kullan. Koçla görüşürken Basınç için planda ne var diyebilirsin; ya da aynı soruyu bana, Rota'ya Sor sekmesinden sorabilirsin. Koçun program önerileri de zaten bu veriyle beslenir — zayıf konu kendiliğinden programa düşer.",
+          "shot": "veli-konu-dersler",
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": {
+        "label": "Konu Performansı'na göz at",
+        "href": "/parent",
+        "checkKey": "",
+        "doneLabel": "Panel",
+        "hint": "Yol: Panel → çocuğunun kartı → Konu Performansı düğmesi → derse dokun, konuları aç.",
+        "optional": true
+      }
+    },
+    {
+      "key": "veli-deneme-analiz",
+      "title": "Denemeler & Analiz",
+      "subtitle": "Net nasıl okunur, hangi denemeler kıyaslanır",
+      "steps": [
+        {
+          "caption": "Üçüncü kapı: Denemeler ve Analiz. Deneme sonuçları velilerin en çok baktığı ama en kolay yanlış okuduğu yerdir. Bu bölümde tabloyu doğru okumayı birlikte öğreneceğiz — iki de tuzak göstereceğim. Girelim.",
+          "shot": "veli-hizli-butonlar",
+          "target": "denemeButon",
+          "click": true
+        },
+        {
+          "caption": "Özet şerit üç sayı verir: altı deneme girilmiş, ortalama net otuz üç, en iyi net altmış bir. Peki net ne demek? Doğru sayısından yanlışların bir kısmı düşülür: L G S'de üç yanlış bir doğruyu götürür. Bu yüzden net, ham doğru sayısından daha dürüst bir ölçüdür.",
+          "shot": "veli-analiz-ozet",
+          "target": "ozetKartlar",
+          "click": false
+        },
+        {
+          "caption": "Bir kartı birlikte okuyalım: L G S Deneme altı, on beş Temmuz. Büyük sayı net: altmış bir. Sağ altta kırılım: altmış altı doğru, on beş yanlış, dokuz boş. Hesabı tutturalım: altmış altı doğrudan, on beş yanlışın üçte biri olan beş düşülür — altmış bir. Artık karttaki her sayının nereden geldiğini biliyorsun.",
+          "shot": "veli-analiz-kart",
+          "target": "lgsKarti",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "En üstteki kayda dikkat: bu deneme, koçun yüklediği PDF karneden yapay zekâyla okunmuş. Kartın altındaki gri çipler ders kırılımını verir — Matematik net on bir virgül otuz üç gibi. Ders ders net görmek, denemeyi hangi dersin taşıdığını, hangisinin geride kaldığını söyler.",
+          "shot": "veli-analiz-karne",
+          "target": "dersCipleri",
+          "click": false
+        },
+        {
+          "caption": "Birinci tuzak: Matematik Branş Denemesi'nin neti on iki virgül altmış yedi. Kötü mü? Hayır! Bu yirmi soruluk, tek derslik bir deneme; doksan soruluk genel denemeyle yan yana konmaz. Kural şu: denemeyi yalnız kendi türüyle kıyasla — genel denemeyi genel denemeyle, branş denemesini branş denemesiyle.",
+          "shot": "veli-analiz-kart",
+          "target": "bransKarti",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "İkinci tuzak tam altta: ilk denemeden bu yana eksi otuz yedi net yazıyor. Panik yok! İlk kayıt doksan soruluk genel deneme, en son kayıt yirmi soruluk branş karnesi — bu gösterge farklı boy denemeler karışınca yanılabilir. Gerçek gidişata bak: L G S genel denemeleri kırk sekiz, elli beş, altmış bir diye yükseliyor. Elif aslında tırmanışta.",
+          "shot": "veli-analiz-trend",
+          "target": "trendRozeti",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Aklına takılan olursa iki kapın var: yukarıdaki mavi kutu seni Rota'nın Yorumu'na götürür — deneme analizimi sesli de dinleyebilirsin. Sağdaki Koça deneme hakkında sor düğmesi ise doğrudan koça mesaj başlatır. Sayılar hakkında tahmin yürütmene gerek yok; sormak bir dokunuş.",
+          "shot": "veli-analiz-ozet",
+          "target": "sorButonu",
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "veli-seans",
+      "title": "Seans Hareketleri",
+      "subtitle": "Koçluk seansları ve ödeme kaydı — tam şeffaflık",
+      "steps": [
+        {
+          "caption": "Son kapı: Seans Hareketleri. Koçunla aranızdaki emeğin ve ücretin şeffaf defteri: hangi seans yapılmış, hangi ay ne tahakkuk etmiş, ne ödenmiş — hepsi burada. Girelim.",
+          "shot": "veli-hizli-butonlar",
+          "target": "seansButon",
+          "click": true
+        },
+        {
+          "caption": "En üstteki kart hesabın özetidir. Seans ücreti iki bin lira; bugüne dek tahakkuk on iki bin, ödenen on bin — açık hesap iki bin lira. Kart kırmızıysa ödenmemiş bakiye var demektir; hesap kapandığında yeşile döner. Bu sayfada sürpriz fatura diye bir şey yoktur.",
+          "shot": "veli-seans-genel",
+          "target": "acikHesap",
+          "click": false
+        },
+        {
+          "caption": "Pencere düğmeleri dönemi seçer: üç, altı, on iki ya da yirmi dört ay. Uzun listeyle boğuşmayalım — üç aya daraltıyorum, son dönem netleşsin.",
+          "shot": "veli-seans-genel",
+          "target": "pencere",
+          "click": true
+        },
+        {
+          "caption": "Aylık hesap tablosunu satır satır okuyalım: Temmuz'da iki seans yapılmış; tahakkuk dört bin, ödenen iki bin — kalan sütununda kırmızı iki bin. Haziran ve Mayıs satırlarında kalan yerine çizgi var: o aylar kapanmış. Kısacası kırmızı gördüğün satır, henüz kapanmamış ay demektir.",
+          "shot": "veli-seans-aylik",
+          "target": "aylikTablo",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Sağda seans listesi: tarih, süre ve kanal — yüz yüze mi, online mı. Yeşil yapıldı rozeti tahsilata sayılır; turuncu ertelendi sayılmaz. Bak: on üç Temmuz seansı ertelenmiş, ücret işlememiş. Yapılmayan seansın parası istenmez; sistem bunu kendiliğinden böyle tutar.",
+          "shot": "veli-seans-aylik",
+          "target": "ertelendiRozeti",
+          "click": false,
+          "zoom": true
+        },
+        {
+          "caption": "Ödemeler bölümü her ödemeyi tek tek listeler: tutar, tarih, yöntem — nakit ya da havale — ve hangi ayı kapattığı. Bir not: koçun seans içinde tuttuğu özel notlar burada görünmez; o alan koçluğun mutfağıdır. Ama bir sayı sana ters gelirse çekinme, doğrudan koçunla konuş — bu sayfa zaten o konuşmayı kolaylaştırmak için var.",
+          "shot": "veli-seans-odeme",
+          "target": "kismiOdeme",
+          "click": false
+        }
+      ],
+      "action": null
+    },
+    {
+      "key": "veli-iletisim",
+      "title": "Koça Talep ve Bildirimler",
+      "subtitle": "Koçla iletişim + telefonuna gelen haberler",
+      "steps": [
+        {
+          "caption": "Bazen sorunun muhatabı ben değil, koçun kendisidir: özel bir durum, bir rica, bir görüşme isteği. Üst menüdeki Koça Talep bölümüne gir, Koça yeni soru düğmesine bas: konuyu seç, derdini yaz, gönder. Şimdi birlikte bir talep dolduralım — bak, form bu kadar.",
+          "shot": "veli-talep-form",
+          "target": "form",
+          "click": true
+        },
+        {
+          "caption": "Gönderdik. Talebin koçun panelinde görünür; koç cevap yazınca aynı sayfada, konuşma biçiminde okursun. Yani koça ulaşmak için telefon numarası aramana gerek yok — her şey burada, kayıt altında.",
+          "shot": "veli-talep-liste",
+          "target": "talep",
+          "click": false
+        },
+        {
+          "caption": "Bildirimler sayfası sana gönderilen her haberi listeler: haftalık rapor çıktı, yeni program yayınlandı, yeni deneme girildi... Uygulamayı telefonuna kurduysan bunlar bildirim olarak da düşer — mesela yeni bir deneme girildiğinde sana Rota yorumlamaya hazır diye haber veririm; dokunduğunda doğrudan çocuğunun sayfası açılır.",
+          "shot": "veli-bildirimler",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Ayarlar sayfasında hangi bildirimlerin geleceğini sen seçersin: e-posta açık mı kapalı mı, gece hangi saatlerde sessiz kalınsın. Fazla mesaj sevmeyen veli için her şey kısılabilir; hiçbir ayar zorunlu değildir.",
+          "shot": "veli-ayarlar",
+          "target": null,
+          "click": false
+        },
+        {
+          "caption": "Tur bitti — tebrikler! Özet çok kısa: günlük merakın için çocuğunun kartındaki Rota'nın Yorumu kartını kullan; aklına ne gelirse Rota'ya Sor'a yaz ya da söyle; haftada bir Haftalık Rapor'a bak. Bu rehber üst menüde Rehber bağlantısında hep duruyor — istediğin bölümü istediğin zaman yeniden izleyebilirsin. Ben hep buradayım.",
+          "shot": null,
+          "target": null,
+          "click": false
+        }
+      ],
+      "action": null
+    }
+  ]
+}

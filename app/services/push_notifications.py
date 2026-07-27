@@ -209,3 +209,91 @@ def notify_coach_student_progress(
         )
     except Exception as e:  # noqa: BLE001
         logger.warning("coach progress push failed (non-fatal): %s", e)
+
+
+# ---------------------------------------------------------------------------
+# P4 — Rota Veli Asistanı proaktif push: yeni deneme sonucu → veliye
+# "Rota yorumlamaya hazır" (MOBİL-ONLY, e-posta YOK).
+# ---------------------------------------------------------------------------
+
+# {(parent_id, student_id): son_push_epoch} — aynı oturumda çift import
+# (birleşik TYT+AYT gibi) veliyi bombardımana uğratmasın.
+_parent_rota_last: dict[tuple[int, int], float] = {}
+PARENT_ROTA_THROTTLE_SECONDS = 6 * 60 * 60  # veli+öğrenci başına 6 saatte 1
+
+
+def notify_parents_rota_exam_ready(
+    db: Session,
+    *,
+    student_id: int,
+    student_name: str,
+) -> None:
+    """Yeni deneme sonucu girilince bağlı velilere Rota daveti push'u.
+
+    Kapı: Rota gerçekten kullanılabilir olmalı (koç ücretli paket + AI onayı)
+    — aksi halde veli ölü bir karta davet edilirdi. Sessize alınmış (muted)
+    veli linkleri atlanır. Satır DÜZELTME akışları bu fonksiyonu ÇAĞIRMAZ
+    (yeni bilgi değil). Best-effort — asla raise etmez.
+    """
+    try:
+        from app.models import ParentStudentLink, User
+        from app.services.plans import ai_premium_allowed
+
+        student = db.get(User, student_id)
+        if student is None or not student.teacher_id:
+            return
+        coach = db.get(User, student.teacher_id)
+        if coach is None or not ai_premium_allowed(db, coach):
+            return
+        if coach.ai_capture_consent_at is None:
+            return
+
+        links = (
+            db.query(ParentStudentLink)
+            .filter(
+                ParentStudentLink.student_id == student_id,
+                ParentStudentLink.muted.is_(False),
+            )
+            .all()
+        )
+        now = time.time()
+        for link in links:
+            key = (link.parent_id, student_id)
+            last = _parent_rota_last.get(key)
+            if last is not None and (now - last) < PARENT_ROTA_THROTTLE_SECONDS:
+                continue
+            _parent_rota_last[key] = now
+            send_push_to_user(
+                db,
+                user_id=link.parent_id,
+                title="Rota yorumlamaya hazır",
+                body=(
+                    f"{student_name} için yeni deneme sonucu girildi. "
+                    "Rota'nın yorumunu okuyabilir ya da dinleyebilirsin."
+                ),
+                data={
+                    "type": "parent_notification",
+                    "kind": "rota_commentary",
+                    "student_id": student_id,
+                },
+            )
+    except Exception as e:  # noqa: BLE001
+        logger.warning("parent rota push failed (non-fatal): %s", e)
+
+
+def notify_parents_rota_exam_ready_bg(student_id: int, student_name: str) -> None:
+    """BackgroundTasks hedefi — taze session açar, yanıtı ASLA bloklamaz.
+
+    Deneme kaydeden isteğin (koç import onayı / manuel giriş / öğrenci import)
+    yanıtı gönderildikten sonra çalışır (Expo çağrısı 10s sürebilir).
+    """
+    try:
+        from app.database import SessionLocal
+
+        with SessionLocal() as s:
+            notify_parents_rota_exam_ready(
+                s, student_id=student_id, student_name=student_name,
+            )
+            s.commit()
+    except Exception:  # noqa: BLE001
+        logger.exception("parent rota bg push failed student=%s", student_id)

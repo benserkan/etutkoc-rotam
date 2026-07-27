@@ -4,7 +4,9 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePanelVisitTracker } from "@/lib/hooks/use-panel-visit-tracker";
-import { Bell, HeartHandshake, LayoutDashboard, LogOut, MessageSquare, Settings, UserCog, X, Menu } from "lucide-react";
+import { Bell, HeartHandshake, LayoutDashboard, LogOut, MessageSquare, Settings, UserCog, X, Menu,
+  Compass,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -39,6 +41,7 @@ interface NavLink {
 
 const NAV_LINKS: NavLink[] = [
   { href: "/parent", label: "Panel", icon: LayoutDashboard, exact: true },
+  { href: "/parent/guide", label: "Rehber", icon: Compass },
   { href: "/parent/support", label: "Koça Talep", icon: MessageSquare },
   { href: "/parent/notifications", label: "Bildirimler", icon: Bell },
   { href: "/parent/settings", label: "Ayarlar", icon: Settings },

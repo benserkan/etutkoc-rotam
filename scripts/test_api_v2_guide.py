@@ -25,6 +25,9 @@ Senaryolar:
   19. ÖĞRENCİ REHBERİ: öğrenci student_onboarding'i açar (ogr-* bölümleri),
       koç student_onboarding'e 404 (rol izolasyonu iki yönlü)
   20. öğrenci chapter_done akışı ogr sırasında ilerler + watch kalıcı
+  21. VELİ REHBERİ: veli parent_onboarding'i açar (veli-* 10 bölüm),
+      koç/öğrenci parent_onboarding'e 404
+  22. veli chapter_done + watch kalıcı
 """
 from __future__ import annotations
 
@@ -106,6 +109,7 @@ def setup():
     with SessionLocal() as db:
         coach = _user(db, "coach", UserRole.TEACHER, plan="solo_pro")
         coach_b = _user(db, "coach_b", UserRole.TEACHER, plan="solo_pro")
+        parent = _user(db, "veli", UserRole.PARENT)
         student = _user(db, "s1", UserRole.STUDENT, teacher_id=coach.id, grade_level=8)
         db.commit()
         ctx.update(coach=coach.id, coach_b=coach_b.id, s1=student.id)
@@ -393,6 +397,41 @@ def main() -> int:
             "20. öğrenci akışı: sıradaki bölüm + watch kalıcı",
             d["state"]["current_chapter"] == "ogr-bugun"
             and d2["state"]["steps_watched"]["ogr-bugun"] == [2],
+            f"{d['state']} {d2['state'].get('steps_watched')}",
+        )
+
+        # 21-22. Veli rehberi
+        ve = login("veli")
+        PBASE = "/api/v2/me/guide/parent_onboarding"
+        r = ve.get(PBASE)
+        d = r.json()
+        r2 = c.get(PBASE)
+        r3 = st.get(PBASE)
+        check(
+            "21. veli rehberi: veli 200 + veli bölümleri; koç/öğrenci 404",
+            r.status_code == 200
+            and d["chapters"][0] == "veli-hosgeldin"
+            and len(d["chapters"]) == 10
+            and "veli-rota-sor" in d["chapters"]
+            and "veli-konu" in d["chapters"]
+            and "veli-deneme-analiz" in d["chapters"]
+            and "veli-seans" in d["chapters"]
+            and "veli-program" in d["chapters"]
+            and r2.status_code == 404 and r3.status_code == 404,
+            f"{r.status_code}/{r2.status_code}/{r3.status_code} {d.get('chapters')}",
+        )
+        ve.post(f"{PBASE}/progress", json={"action": "start"})
+        r = ve.post(
+            f"{PBASE}/progress",
+            json={"action": "chapter_done", "chapter": "veli-hosgeldin"},
+        )
+        d = r.json()
+        ve.post(f"{PBASE}/progress", json={"action": "watch", "chapter": "veli-rota-program", "step": 3})
+        d2 = ve.get(PBASE).json()
+        check(
+            "22. veli akışı: sıradaki bölüm + watch kalıcı",
+            d["state"]["current_chapter"] == "veli-rota-program"
+            and d2["state"]["steps_watched"]["veli-rota-program"] == [3],
             f"{d['state']} {d2['state'].get('steps_watched')}",
         )
     finally:

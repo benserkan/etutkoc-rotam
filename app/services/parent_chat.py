@@ -52,7 +52,9 @@ __all__ = [
 # ---------------------------------------------------------------------------
 
 def chat_daily_count(db: Session, parent_id: int) -> int:
-    day_start = datetime.combine(date.today(), time.min, tzinfo=timezone.utc)
+    day_start = datetime.combine(
+        datetime.now(timezone.utc).date(), time.min, tzinfo=timezone.utc
+    )  # UTC günü — yerel saat UTC'den ilerideyken (TR 00:00-03:00) sayaç delinmesin
     return (
         db.query(func.count(UsageEvent.id))
         .filter(
@@ -71,7 +73,9 @@ def chat_daily_left(db: Session, parent_id: int) -> int:
 
 def stt_daily_count(db: Session, parent_id: int) -> int:
     """Velinin bugünkü SESLİ SORU çevirisi (STT) sayısı — kendi rayı (P3)."""
-    day_start = datetime.combine(date.today(), time.min, tzinfo=timezone.utc)
+    day_start = datetime.combine(
+        datetime.now(timezone.utc).date(), time.min, tzinfo=timezone.utc
+    )  # UTC günü — yerel saat UTC'den ilerideyken (TR 00:00-03:00) sayaç delinmesin
     return (
         db.query(func.count(UsageEvent.id))
         .filter(

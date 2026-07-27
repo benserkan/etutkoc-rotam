@@ -10,6 +10,7 @@
  */
 import rawContent from "./coach-guide-content.json";
 import rawStudentContent from "./student-guide-content.json";
+import rawParentContent from "./parent-guide-content.json";
 import rawBoxes from "./shot-boxes.json";
 
 export interface GuideBox {
@@ -55,11 +56,13 @@ export interface CoachGuideContent {
 
 export const COACH_GUIDE = rawContent as CoachGuideContent;
 export const STUDENT_GUIDE = rawStudentContent as CoachGuideContent;
+export const PARENT_GUIDE = rawParentContent as CoachGuideContent;
 
 /** guide_key → içerik (oynatıcı + rehber sayfası buradan çözer). */
 export const GUIDES: Record<string, CoachGuideContent> = {
   [COACH_GUIDE.guideKey]: COACH_GUIDE,
   [STUDENT_GUIDE.guideKey]: STUDENT_GUIDE,
+  [PARENT_GUIDE.guideKey]: PARENT_GUIDE,
 };
 
 export const GUIDE_STATIC_BASE = "/static/guide";
@@ -69,7 +72,7 @@ export const GUIDE_STATIC_BASE = "/static/guide";
  * tarayıcı önbelleği bayat kalmasın diye. MP3/PNG yeniden üretince ARTIR
  * (aksi halde kullanıcı eski sesi duyar — 2026-07-23 saha bulgusu).
  */
-const GUIDE_ASSET_VERSION = "20260726b";
+const GUIDE_ASSET_VERSION = "20260727b";
 
 export const GUIDE_AVATAR_SRC = `${GUIDE_STATIC_BASE}/rota-avatar.png?v=${GUIDE_ASSET_VERSION}`;
 

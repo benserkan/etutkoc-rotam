@@ -5,6 +5,7 @@ import { ApiError } from "@/lib/api";
 import type { MyAccountResponse } from "@/lib/types/me";
 import { roleHome } from "@/lib/role-home";
 import { ParentShell } from "@/components/parent/parent-shell";
+import { GuideWelcomeDialog } from "@/components/guide/guide-welcome-dialog";
 
 /**
  * /(parent)/* — Veli paneli korumalı layout.
@@ -36,5 +37,16 @@ export default async function ParentLayout({
     redirect(roleHome(role));
   }
 
-  return <ParentShell user={data.user}>{children}</ParentShell>;
+  return (
+    <ParentShell user={data.user}>
+      <GuideWelcomeDialog
+        enabled
+        guideKey="parent_onboarding"
+        guideHref="/parent/guide"
+        description="Sana veli panelini adım adım, sesli anlatımla göstereceğim: çocuğunun kartını okumaktan Rota'nın yorumlarına, sesli soru sormaktan haftalık rapora. Teknoloji bilgisi gerekmez — her adımı ekranda birlikte yapacağız."
+        menuHint="Üst menüdeki Rehber bağlantısı her zaman durur; istediğin bölümü sonra da izleyebilirsin."
+      />
+      {children}
+    </ParentShell>
+  );
 }

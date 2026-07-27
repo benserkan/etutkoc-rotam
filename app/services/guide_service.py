@@ -32,6 +32,7 @@ from app.models.guide import (
     GUIDE_STATUS_DISMISSED,
     GUIDE_STATUS_IN_PROGRESS,
     GUIDE_STUDENT_ONBOARDING,
+    GUIDE_PARENT_ONBOARDING,
 )
 from app.models.user import UserRole
 
@@ -39,6 +40,7 @@ from app.models.user import UserRole
 GUIDE_ROLES: dict[str, UserRole] = {
     GUIDE_COACH_ONBOARDING: UserRole.TEACHER,
     GUIDE_STUDENT_ONBOARDING: UserRole.STUDENT,
+    GUIDE_PARENT_ONBOARDING: UserRole.PARENT,
 }
 
 # Rehber bölüm anahtarları (frontend içerikle eşleşir; sıra önemli)
@@ -62,9 +64,26 @@ STUDENT_CHAPTERS = [
     "ogr-iletisim",
 ]
 
+# Veli rehberi — teknolojiye uzak veli için uygulamalı tur; ağırlık Rota
+# Veli Asistanı'nda (yorum + deneme + sohbet). Checklist YOK (yalnız yumuşak
+# öneri action'ları — checklist_for boş döndürür).
+PARENT_CHAPTERS = [
+    "veli-hosgeldin",
+    "veli-rota-program",
+    "veli-rota-deneme",
+    "veli-rota-sor",
+    "veli-rapor",
+    "veli-program",
+    "veli-konu",
+    "veli-deneme-analiz",
+    "veli-seans",
+    "veli-iletisim",
+]
+
 CHAPTERS_BY_GUIDE: dict[str, list[str]] = {
     GUIDE_COACH_ONBOARDING: COACH_CHAPTERS,
     GUIDE_STUDENT_ONBOARDING: STUDENT_CHAPTERS,
+    GUIDE_PARENT_ONBOARDING: PARENT_CHAPTERS,
 }
 
 PROGRESS_ACTIONS = {"start", "chapter_done", "watch", "complete", "dismiss", "reset"}

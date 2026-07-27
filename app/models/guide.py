@@ -17,6 +17,7 @@ from app.database import Base
 # Rehber anahtarları
 GUIDE_COACH_ONBOARDING = "coach_onboarding"
 GUIDE_STUDENT_ONBOARDING = "student_onboarding"
+GUIDE_PARENT_ONBOARDING = "parent_onboarding"
 
 # status değerleri
 GUIDE_STATUS_IN_PROGRESS = "in_progress"

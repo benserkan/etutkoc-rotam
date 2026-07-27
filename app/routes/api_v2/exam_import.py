@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import json
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, Form, HTTPException, UploadFile
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
@@ -286,6 +286,7 @@ def teacher_exam_import_analyze(
 )
 def teacher_exam_import_confirm(
     student_id: int,
+    background_tasks: BackgroundTasks,
     payload: str = Form(...),
     file: UploadFile | None = File(default=None),
     user: User = Depends(_require_teacher),
@@ -299,6 +300,11 @@ def teacher_exam_import_confirm(
         db, student=student, actor=user, body=body,
         pdf_bytes=pdf, content_type=(file.content_type if pdf and file else None),
     )
+    # P4: yeni deneme → veliye "Rota yorumlamaya hazır" push'u (yanıt sonrası,
+    # taze session; throttle + mute + Rota-kapısı fonksiyonun içinde).
+    from app.services.push_notifications import notify_parents_rota_exam_ready_bg
+    background_tasks.add_task(
+        notify_parents_rota_exam_ready_bg, student.id, student.full_name)
     return MutationResponse[ExamImportConfirmResult](
         data=result,
         invalidate=[
@@ -517,6 +523,7 @@ def student_exam_import_analyze(
     response_model=MutationResponse[ExamImportConfirmResult],
 )
 def student_exam_import_confirm(
+    background_tasks: BackgroundTasks,
     payload: str = Form(...),
     file: UploadFile | None = File(default=None),
     user: User = Depends(_require_student),
@@ -528,6 +535,10 @@ def student_exam_import_confirm(
         db, student=user, actor=user, body=body,
         pdf_bytes=pdf, content_type=(file.content_type if pdf and file else None),
     )
+    # P4: yeni deneme → veliye "Rota yorumlamaya hazır" push'u (yanıt sonrası).
+    from app.services.push_notifications import notify_parents_rota_exam_ready_bg
+    background_tasks.add_task(
+        notify_parents_rota_exam_ready_bg, user.id, user.full_name)
     invalidate = ["student:exams"]
     if user.teacher_id:
         invalidate.append(f"teacher:{user.teacher_id}:students:{user.id}:exams")

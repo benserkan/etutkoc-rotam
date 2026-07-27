@@ -120,8 +120,13 @@ def _program_bundle(db: Session, parent: User, student: User, today: date) -> di
         "comparison": report["comparison"],
         "verdict_level": report["verdict_level"],
         # Yapılmayanlar YALNIZ bugüne kadar olan günlerden — yarının görevi
-        # "aksama" değildir.
-        "missing_tasks_so_far": _missing_tasks(db, student.id, monday, today),
+        # "aksama" değildir. Pencere DAİMA dünü kapsar: Pazartesi günü hafta
+        # yeni başladığından "bu hafta" boş kalır ama veli "dün neler
+        # yapılmadı?" diye sorar (Pazar görevleri) — karşılama adları
+        # söylerken modelin paketi boş kalmasın (2026-07-27 Pazartesi dersi).
+        "missing_tasks_so_far": _missing_tasks(
+            db, student.id, min(monday, today - timedelta(days=1)), today
+        ),
     }
     wa = _wrong_archive_brief(db, student.id)
     if wa:
@@ -236,7 +241,9 @@ def is_stale(db: Session, row: ParentCommentary, today: date | None = None) -> b
 # ---------------------------------------------------------------------------
 
 def daily_generation_count(db: Session, parent_id: int) -> int:
-    day_start = datetime.combine(date.today(), time.min, tzinfo=timezone.utc)
+    day_start = datetime.combine(
+        datetime.now(timezone.utc).date(), time.min, tzinfo=timezone.utc
+    )  # UTC günü — yerel saat UTC'den ilerideyken (TR 00:00-03:00) sayaç delinmesin
     return (
         db.query(func.count(UsageEvent.id))
         .filter(

@@ -62,7 +62,7 @@ import string as _string_mod
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
@@ -1388,6 +1388,7 @@ def teacher_student_exams_v2(
 def teacher_create_exam_v2(
     student_id: int,
     body: ExamCreateBody,
+    background_tasks: BackgroundTasks,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
@@ -1415,6 +1416,11 @@ def teacher_create_exam_v2(
     db.add(exam)
     db.commit()
     db.refresh(exam)
+    # P4: yeni deneme → veliye "Rota yorumlamaya hazır" push'u (yanıt sonrası,
+    # taze session; throttle + mute + Rota-kapısı fonksiyonun içinde).
+    from app.services.push_notifications import notify_parents_rota_exam_ready_bg
+    background_tasks.add_task(
+        notify_parents_rota_exam_ready_bg, student.id, student.full_name)
     return MutationResponse[ExamResultRow](
         data=_build_exam_row(exam, created_by_name=user.full_name),
         invalidate=[

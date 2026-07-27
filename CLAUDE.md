@@ -6,6 +6,53 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Online Görüşme / Randevu Sistemi (koç↔öğrenci) — KARARLAR ALINDI (2026-07-27, kod BAŞLAMADI)
+
+**Bağlam:** Şehir dışına online koçluk veren koç için sistemde randevu/takvim/
+görüşme linki/hatırlatma YOK — her şey WhatsApp+Zoom'la dışarıda. Mevcut
+`CoachingSession.channel=online` yalnız GEÇMİŞE dönük kayıt. Acılar: saat
+kararlaştırma ping-pongu · no-show · link kaosu · erteleme kaosu · görüşme→
+seans kaydı(KS1)→tahsilat(KS2) kopukluğu.
+**Araştırma bulguları (2026-07-27):** Google One İŞE YARAMAZ (kişisel tek-hesap
+aboneliği; platform altyapısı olamaz, host sorunu + ToS). ÖNEMLİ: ücretsiz
+Gmail'de 1:1 Meet 24 saate kadar — 60dk sınırı yalnız 3+ kişide → koçun bedava
+hesabı 1:1 koçluğa yeter. Meet linki API ile üretme = koç KENDİ hesabını OAuth
+ile bağlamalı (Calendar API conferenceData; service account yalnız Workspace).
+Google Cloud projesi + OAuth consent + Google doğrulaması gerekir (sensitive
+scope; doğrulanana dek 100 test kullanıcı + uyarı ekranı). Zoom API ücretsizde
+1:1 dahil 40dk sınırlı. meet.jit.si moderatöre login ister; JaaS free 25 MAU;
+self-host Jitsi VPS'e sığmaz. Benzer platformlar (TutorBird vb.) çoğunlukla
+"koç kendi linkini yapıştırır + sistem hatırlatmalara gömer" modeli; gömülüler
+Lessonspace gibi ücretli servis.
+**Kullanıcı kararları (AskUserQuestion, 2026-07-27):**
+- **Video:** link alanı + Google OAuth BİRLİKTE ilk paketten — bağlanan koça
+  sistem koçun kendi hesabından Meet linki üretir (Calendar API; koçun kişisel
+  takvimine de düşer), bağlanmayan elle yapıştırır. OAuth doğrulama sürerken
+  link alanı çalışır (feature-flag/config ile OAuth sonradan açılır).
+- **Randevu modeli:** BAŞTAN self-servis dahil — koç uygunluk pencereleri
+  tanımlar, öğrenci/veli boş slottan randevu ister, koç onaylar; koç doğrudan
+  da atayabilir. Haftalık tekrarlayan randevu (sabit gün/saat) ilk pakette.
+- **Veli:** randevuları görür + görüşme öncesi hatırlatma alır (bildirim
+  tercihlerine yeni tür, kapatılabilir).
+- **Kapsam:** İlk paket = F1 (randevu çekirdeği + takvim) + F2 (hatırlatma/
+  bildirim) + link alanı (+OAuth). F4 (randevudan "Seansı başlat" → KS1 prefill
+  + KS4 içgörü + KS2 tahsilat köprüsü) sonraki paket. Gömülü görüşme yok.
+**Taslak veri modeli (migration henüz yazılmadı):** `coaching_appointments`
+(coach+student+starts_at UTC+duration+status planned/pending_approval/confirmed/
+cancelled/done/no_show + source coach|self_service + series_id + meeting_link +
+link_source manual|google_meet + google_event_id + not) · `coaching_appointment_
+series` (haftalık gün/saat tekrar) · `coach_availability_windows` (self-servis
+slotlar) · koç Google OAuth refresh token (Fernet şifreli — system_secrets
+deseni) · hatırlatma cron (D-1 + 1 saat; sessiz saat kurallı) + created/updated/
+cancelled push+e-posta (öğrenci+veli).
+**KULLANICI AKSİYONU (OAuth ön şartı):** Google Cloud projesi + OAuth client +
+consent screen + doğrulama başvurusu (rehber yazılacak; .env GOOGLE_OAUTH_
+CLIENT_ID/SECRET).
+**SIRADA:** kullanıcı "başla" deyince Paket 1 (migration önce gösterilir —
+riskli-sprint kuralı).
+
+---
+
 ## ÜYELİK REVİZYONU — Google tarzı kartsız 14g deneme, ödemesiz ücretli plan İMKÂNSIZ — CANLI (2026-07-24, commit `bb1bfc1`, migration YOK)
 
 **Bağlam (kullanıcı, Hatice #87 vakası):** Ticari panoda kullanıcının ödeme
@@ -302,8 +349,44 @@ uygulamaya GİTMEZ (JS-only, sıradaki OTA'ya hazır).
   heredoc script'i sessizce KESİLEBİLİYOR (yalnız ilk adımlar koşar, exit 0) —
   deploy adımlarını ayrı tek-satır ssh komutlarıyla koş + her adımı doğrula.
   Compose servis adları: `plausible_db`/`plausible_events_db` (tire değil).
-**SIRADA:** **P4** proaktif push tetikleri (deneme importu/hafta yayını →
-"Rota yorumlamaya hazır") → mobil OTA (Rota kartı+sohbet+P3 JS-only bekliyor).
+**PAKET 4 — PROAKTİF PUSH, KOD HAZIR (2026-07-27, migration YOK —
+COMMIT/DEPLOY BEKLİYOR):** yeni deneme sonucu → bağlı velilere
+**"Rota yorumlamaya hazır"** push'u (MOBİL-ONLY, e-posta yok).
+- **Tetikler (3 uç, BackgroundTasks + taze session — yanıtı bloklamaz):**
+  koç import-confirm · öğrenci import-confirm · koç manuel deneme girişi
+  (`teacher_create_exam_v2`). **Satır düzeltme/deneme güncelleme TETİKLEMEZ**
+  (yeni bilgi değil). DERS: teacher.py `from __future__ import annotations`
+  kullandığından eksik `BackgroundTasks` importu sessizce boot'u geçebilir —
+  fastapi importuna eklendi.
+- **`push_notifications.notify_parents_rota_exam_ready(_bg)`:** Rota-kapısı
+  (koç ücretli paket + AI onayı — kapalıysa veli ölü karta davet edilmez) ·
+  muted veli linki atlanır · veli+öğrenci başına **6 saatte 1** throttle
+  (birleşik TYT+AYT çift import spam yapmaz). data = `{type:
+  parent_notification, kind: rota_commentary, student_id}` → mobil router'ın
+  MEVCUT default dalı çocuk detayına (Rota kartı) düşürür — **eski kurulumlar
+  OTA'sız da doğru yere gider**; router'a açık `rota_commentary` case'i eklendi.
+- **Hafta yayınına YENİ push BİLİNÇLİ eklenmedi:** publish-week zaten veliye
+  "Yeni program" e-posta+push gönderiyor — ikincisi bilgi-bombardımanı
+  kuralını ihlal ederdi.
+- **2 GERÇEK BUG bulundu+düzeltildi (P4 regresyonu sırasında):**
+  (a) **Günlük sayaç UTC/yerel açığı** — chat/STT/commentary günlük
+  sayaçları `date.today()` (YEREL) gününü UTC gün başına çeviriyordu →
+  yerel saat UTC'den ilerideyken (TR 00:00-03:00) day_start gelecekte kalır,
+  sayaç 0 sayar, **günlük limitler delinir** (prod UTC olduğundan orada
+  görünmüyordu; dev'de gece koşusu yakaladı). Üç sayaç da
+  `datetime.now(timezone.utc).date()`'e sabitlendi.
+  (b) **Pazartesi paket boşluğu** — program paketinin `missing_tasks_so_far`
+  penceresi bu haftanın Pazartesi'sinden başlıyordu → Pazartesi günü dünkü
+  (Pazar) yapılmayanlar pakete GİRMİYORDU; veli "dün neler yapılmadı?"
+  sorunca karşılama adları söylerken model paketi boş görüyordu. Pencere
+  `min(monday, today-1)` — dün daima kapsamda.
+- **Test:** YENİ `test_api_v2_parent_rota_push.py` **8/8** (veli push + data ·
+  muted atlanır · throttle · free-koç kapısı · koçsuz · manuel giriş bg push ·
+  güncelleme push YOK · import-confirm bg push [svc.confirm stub]). Regresyon:
+  chat 20/20 · commentary 20/20 · teacher_exams 18 · exam_import 75 ·
+  push_expansion 9 GREEN; mobil tsc temiz. Web değişikliği YOK (push mobil).
+**SIRADA:** commit+deploy → mobil OTA (Rota kartı+sohbet+P3+P4 router JS-only
+bekliyor). **Veli asistanının 4 paketi de KOD-TAMAM.**
 
 ---
 
@@ -593,11 +676,73 @@ rehber bitişine/Faz 2'ye. İlk rol = KOÇ.
       submit sonrası dialogun KAPANMASINI bekle, sonra kartı çek. (7) Görev
       menüsü aşağı açılır — sayfa dibindeki kartta menü viewport dışına
       taşar; önce mouse.wheel ile kartı yukarı it.
-- **SIRADA:** kullanıcı yerelde inceler (öğrenci: rehber-elif@etutkoc.demo /
-  RehberDemo2026!) → commit+deploy → veli/kurum rehberleri → Faz 2 canlı
-  "Rota'ya sor" sohbeti (Gemini, kredi kararıyla). Rehber tamamlanınca
-  completion kartında sohbet yer tutucusu hazır. NOT: seed_guide_demo* yalnız
-  dev (start.sh'e EKLENMEZ); shots/audio repo'ya girer (~26MB, 91 shot + 116 mp3).
+- **VELİ REHBERİ KOD-TAMAM (2026-07-27, migration YOK — COMMIT/DEPLOY
+  BEKLİYOR):** teknolojiye uzak veli için uygulamalı tur; ağırlık Rota Veli
+  Asistanı'nda (yorum + deneme + sohbet + sesli soru).
+  - **Backend:** `GUIDE_PARENT_ONBOARDING` (models/guide + guide_service
+    GUIDE_ROLES=PARENT) + `PARENT_CHAPTERS` **6 bölüm** (veli-hosgeldin ·
+    veli-rota-program · veli-rota-deneme · veli-rota-sor · veli-rapor ·
+    veli-iletisim); checklist YOK (yalnız yumuşak öneri). Smoke
+    `test_api_v2_guide.py` **22/22** (21-22: veli 200 + veli bölümleri,
+    koç/öğrenci 404, watch kalıcı).
+  - **İçerik:** `parent-guide-content.json` — **6 bölüm × 40 adım**
+    (5+8+6+10+6+5); Rota birinci ağızdan anlatır ("en sevdiğim yer:
+    Rota'ya Sor"). **24 gerçek shot** + 25 vurgu kutusu
+    (`capture_guide_shots_parent.py` + `refresh_guide_demo_parent.py`;
+    rehber-veli demo hesabıyla panel/detay/rapor/Rota kartı/sohbet/STT/
+    talep/bildirim/ayar kareleri).
+  - **Frontend:** GUIDES registry +PARENT_GUIDE · `/parent/guide` sayfası ·
+    parent-shell nav "Rehber" (Compass) · (parent) layout'a
+    GuideWelcomeDialog. `GUIDE_ASSET_VERSION=20260727a`.
+  - **Ses:** **40/40 MP3** (Kore). Bilgisayar resetiyle 17/40'ta kalmıştı;
+    2026-07-27 oturumunda tamamlandı. **TTS DERSİ:** anlatım metninde
+    "...söyle: <örnek cümle>" kalıbı — model talimat sanıp YALNIZ örneği
+    okuyor (178ch → 2.4sn kesik). Dolaylı anlatıma çevir ("... diye
+    sorabilirsin"); üretim sonrası **süre/karakter taraması** yap
+    (>22 ch/s ≈ kesik; normal ~14-16).
+  - **Doğrulama (2026-07-27):** guide 22/22 · rota_push 8/8 · chat 20/20 ·
+    commentary 20/20 · teacher_exams 18 · exam_import 75 · push_expansion 9
+    GREEN; web tsc+eslint + mobil tsc temiz.
+  - **Saha düzeltmesi (2026-07-27, kullanıcı: "haftalık program / konu
+    performansı / deneme analizi / seans hareketleri sayfalarına rehberde hiç
+    değinmedik — uygulamalı ekle"):** veli rehberi **6→10 bölüm · 40→64 adım**
+    (PARENT_CHAPTERS + smoke 22/22 güncellendi; veli-rapor "Haftalık Rapor"
+    olarak yeniden adlandı, adımları/sesleri DOKUNULMADI — pozisyonel audio):
+    · **veli-program (5):** hafta sayfası gün kartları + günün özeti (bir bölü
+      iki görev) + yeşil tamamlandı işareti + Perşembe dolu gün satır okuma +
+      gezinme/salt-okunur. FIX: veli hafta istemcisinde etkinlik görevinin tip
+      çipi ham "OTHER" basıyordu → TASK_TYPE_LABELS'a other:"Diğer" eklendi.
+    · **veli-konu (6, kritik noktalar):** doğruluk formülü + renk eşikleri
+      (≥70 yeşil / 40-70 sarı / <40 kırmızı) + "ders ortalaması hikâyenin
+      tamamı değil": Fen %59 SARI ama içinde Basınç %37 KIRMIZI (derse tıkla →
+      konu bul) + "son:" tarihi = unutulma sinyali + veriyle ne yapılır (koça/
+      Rota'ya doğru soru). Veri için `enrich_guide_demo_topics.py` (idempotent
+      [konu-demo]): Elif'e 8 tamamlanmış Fen görevi — Basınç bilinçli zayıf.
+    · **veli-deneme-analiz (7, tablo okuma):** net formülü (L G S'de üç yanlış
+      bir doğruyu götürür) + kart okuma (66D 15Y → 61 net hesabı) + karne
+      importu ders çipleri + İKİ TUZAK: branş (20 soru) neti genel denemeyle
+      (90) kıyaslanmaz · alt "ilk denemeden bu yana −37 net" göstergesi karışık
+      türlerde yanılır — gerçek gidişat L G S genelleri 48→55→61.
+    · **veli-seans (6):** açık hesap kartı (tahakkuk/ödenen/kalan) + pencere
+      daraltma (canlı tık) + aylık tablo satır okuma (kapalı ay çizgi / kırmızı
+      kalan) + yapıldı-ertelendi rozetleri (ertelenen ücret işletmez) + ödeme
+      listesi + gizlilik notu. Veri için `seed_guide_demo_sessions.py`
+      (idempotent, --reset; bugüne göreli aylar): ücret 2.000₺ · 7 seans (6
+      yapıldı + 1 ertelendi) · eski 2 ay ödemeyle kapalı, bu ay kısmi → açık
+      hesap 2.000₺.
+    · 14 yeni gerçek shot + kutular (`capture_guide_shots_parent2.py`; trend
+      rozeti sayfa dibinde altyazı arkasında kalıyordu → gövdeye geçici
+      padding-bottom + scrollIntoView block:center ile ORTALANMIŞ yeniden
+      çekim — DERS: zoom hedefi sayfanın son öğesiyse kare ortalanarak
+      çekilmeli) · 24 TTS (kesik taraması temiz, 12-17 ch/s) ·
+      `GUIDE_ASSET_VERSION=20260727b` · Playwright oynatıcı doğrulaması
+      (10 bölüm rayda + zoom/kutu/altyazı + ses 200) · rehber-veli state
+      not_started'a sıfırlandı. Varlıklar ~44MB (143 shot + 192 mp3).
+- **SIRADA:** commit+deploy (veli rehberi + P4 push birlikte) → kullanıcı
+  yerelde inceler (öğrenci: rehber-elif@etutkoc.demo · veli: rehber-veli
+  hesabı / RehberDemo2026!) → kurum rehberi → Faz 2 canlı "Rota'ya sor"
+  (Gemini, kredi kararıyla). NOT: seed/refresh_guide_demo* yalnız dev
+  (start.sh'e EKLENMEZ); shots/audio repo'ya girer (~35MB, 115 shot + 156 mp3).
 
 ---
 

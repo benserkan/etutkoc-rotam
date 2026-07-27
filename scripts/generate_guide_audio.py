@@ -62,6 +62,7 @@ ROOT = Path(__file__).resolve().parent.parent
 CONTENT_BY_GUIDE = {
     "coach": ROOT / "web" / "components" / "guide" / "coach-guide-content.json",
     "student": ROOT / "web" / "components" / "guide" / "student-guide-content.json",
+    "parent": ROOT / "web" / "components" / "guide" / "parent-guide-content.json",
 }
 OUT_ROOT = ROOT / "app" / "static" / "guide" / "audio"
 VOICE = "Kore"

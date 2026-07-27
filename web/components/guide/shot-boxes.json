@@ -712,5 +712,516 @@
         "h": 5.78
       }
     }
+  },
+  "veli-panel": {
+    "targets": {
+      "cocukKarti": {
+        "x": 11.81,
+        "y": 23.39,
+        "w": 38.06,
+        "h": 48.39
+      },
+      "sonDeneme": {
+        "x": 13.47,
+        "y": 53.28,
+        "w": 34.93,
+        "h": 11.39
+      }
+    }
+  },
+  "veli-cocuk-detay": {
+    "targets": {
+      "raporButon": {
+        "x": 11.81,
+        "y": 22.0,
+        "w": 12.92,
+        "h": 5.78
+      },
+      "rotaKart": {
+        "x": 12.2,
+        "y": 43.8,
+        "w": 75.6,
+        "h": 21.2
+      }
+    }
+  },
+  "veli-rota-bos": {
+    "targets": {
+      "yorumlaButon": {
+        "x": 13.26,
+        "y": 57.39,
+        "w": 12.29,
+        "h": 5.78
+      },
+      "kart": {
+        "x": 12.2,
+        "y": 43.8,
+        "w": 75.6,
+        "h": 21.2
+      }
+    }
+  },
+  "veli-rota-hazirlaniyor": {
+    "targets": {}
+  },
+  "veli-rota-yorum": {
+    "targets": {
+      "seslendirButon": {
+        "x": 13.26,
+        "y": 53.94,
+        "w": 12.79,
+        "h": 5.33
+      }
+    }
+  },
+  "veli-rota-dinle": {
+    "targets": {
+      "dinleButon": {
+        "x": 13.26,
+        "y": 53.94,
+        "w": 7.1,
+        "h": 5.33
+      }
+    }
+  },
+  "veli-deneme-bos": {
+    "targets": {
+      "denemeSekme": {
+        "x": 73.35,
+        "y": 47.39,
+        "w": 6.88,
+        "h": 4.44
+      },
+      "yorumlaButon": {
+        "x": 13.26,
+        "y": 57.39,
+        "w": 12.29,
+        "h": 5.78
+      }
+    }
+  },
+  "veli-deneme-yorum": {
+    "targets": {
+      "seslendirButon": {
+        "x": 13.26,
+        "y": 53.94,
+        "w": 12.79,
+        "h": 5.33
+      }
+    }
+  },
+  "veli-deneme-analiz": {
+    "targets": {}
+  },
+  "veli-sor-karsilama": {
+    "targets": {
+      "karsilama": {
+        "x": 15.76,
+        "y": 53.83,
+        "w": 48.92,
+        "h": 5.56
+      },
+      "cipler": {
+        "x": 13.26,
+        "y": 90.72,
+        "w": 73.47,
+        "h": 4.22
+      }
+    }
+  },
+  "veli-sor-dusunuyor": {
+    "targets": {}
+  },
+  "veli-sor-cevap": {
+    "targets": {
+      "cevap": {
+        "x": 15.76,
+        "y": 72.73,
+        "w": 62.34,
+        "h": 16.86
+      }
+    }
+  },
+  "veli-sor-yaz": {
+    "targets": {
+      "soruKutusu": {
+        "x": 13.26,
+        "y": 94.94,
+        "w": 64.22,
+        "h": 5.06
+      },
+      "mikrofon": {
+        "x": 77.21,
+        "y": 94.94,
+        "w": 3.61,
+        "h": 5.06
+      }
+    }
+  },
+  "veli-sor-kayit": {
+    "targets": {
+      "kayitButon": {
+        "x": 74.95,
+        "y": 94.83,
+        "w": 5.87,
+        "h": 5.17
+      }
+    }
+  },
+  "veli-sor-cevrildi": {
+    "targets": {
+      "soruKutusu": {
+        "x": 13.26,
+        "y": 94.83,
+        "w": 64.22,
+        "h": 5.17
+      }
+    }
+  },
+  "veli-sor-dinle": {
+    "targets": {
+      "dinleButon": {
+        "x": 16.67,
+        "y": 85.39,
+        "w": 4.99,
+        "h": 3.08
+      }
+    }
+  },
+  "veli-rapor": {
+    "targets": {
+      "manset": {
+        "x": 11.81,
+        "y": 25.78,
+        "w": 76.39,
+        "h": 6.89
+      }
+    }
+  },
+  "veli-rapor-dersler": {
+    "targets": {
+      "dersler": {
+        "x": 11.81,
+        "y": 69.5,
+        "w": 76.39,
+        "h": 22.06
+      }
+    }
+  },
+  "veli-rapor-gunler": {
+    "targets": {}
+  },
+  "veli-hafta-program": {
+    "targets": {}
+  },
+  "veli-talep-form": {
+    "targets": {
+      "form": {
+        "x": 31.81,
+        "y": 24.72,
+        "w": 36.39,
+        "h": 50.56
+      }
+    }
+  },
+  "veli-talep-liste": {
+    "targets": {
+      "talep": {
+        "x": 11.81,
+        "y": 25.78,
+        "w": 25.83,
+        "h": 13.89
+      }
+    }
+  },
+  "veli-bildirimler": {
+    "targets": {}
+  },
+  "veli-ayarlar": {
+    "targets": {}
+  },
+  "veli-hizli-butonlar": {
+    "targets": {
+      "programButon": {
+        "x": 24.45,
+        "y": 22.0,
+        "w": 16.47,
+        "h": 5.78
+      },
+      "konuButon": {
+        "x": 40.64,
+        "y": 22.0,
+        "w": 14.84,
+        "h": 5.78
+      },
+      "denemeButon": {
+        "x": 55.21,
+        "y": 22.0,
+        "w": 15.6,
+        "h": 5.78
+      },
+      "seansButon": {
+        "x": 70.53,
+        "y": 22.0,
+        "w": 14.73,
+        "h": 5.78
+      }
+    }
+  },
+  "veli-program-genel": {
+    "targets": {
+      "hafta": {
+        "x": 11.81,
+        "y": 21.11,
+        "w": 76.39,
+        "h": 20.0
+      },
+      "gezinme": {
+        "x": 69.77,
+        "y": 10.0,
+        "w": 18.42,
+        "h": 4.89
+      },
+      "tamamRozeti": {
+        "x": 48.51,
+        "y": 34.56,
+        "w": 6.24,
+        "h": 3.11
+      }
+    }
+  },
+  "veli-program-gun": {
+    "targets": {
+      "gunKarti": {
+        "x": 11.81,
+        "y": 41.56,
+        "w": 76.39,
+        "h": 52.78
+      },
+      "gorevSatiri": {
+        "x": 11.88,
+        "y": 73.33,
+        "w": 76.25,
+        "h": 7.89
+      },
+      "gunOzeti": {
+        "x": 75.35,
+        "y": 43.44,
+        "w": 4.76,
+        "h": 3.11
+      }
+    }
+  },
+  "veli-konu-ozet": {
+    "targets": {
+      "ozetKartlar": {
+        "x": 11.81,
+        "y": 27.94,
+        "w": 76.39,
+        "h": 8.72
+      },
+      "genelDogruluk": {
+        "x": 68.89,
+        "y": 27.94,
+        "w": 19.31,
+        "h": 8.72
+      }
+    }
+  },
+  "veli-konu-dersler": {
+    "targets": {
+      "matRozet": {
+        "x": 80.65,
+        "y": 39.47,
+        "w": 6.36,
+        "h": 3.56
+      },
+      "fenRozet": {
+        "x": 80.59,
+        "y": 48.42,
+        "w": 6.42,
+        "h": 3.56
+      },
+      "fenKart": {
+        "x": 11.81,
+        "y": 46.06,
+        "w": 76.39,
+        "h": 9.39
+      }
+    }
+  },
+  "veli-konu-fen-acik": {
+    "targets": {
+      "basincSatiri": {
+        "x": 12.43,
+        "y": 55.0,
+        "w": 75.14,
+        "h": 8.67
+      },
+      "mevsimlerSatiri": {
+        "x": 12.43,
+        "y": 62.33,
+        "w": 75.14,
+        "h": 8.67
+      }
+    }
+  },
+  "veli-konu-mat-acik": {
+    "targets": {
+      "dogrusalSatiri": {
+        "x": 12.43,
+        "y": 75.39,
+        "w": 75.14,
+        "h": 8.67
+      },
+      "sonTarih": {
+        "x": 82.71,
+        "y": 78.89,
+        "w": 4.3,
+        "h": 3.17
+      }
+    }
+  },
+  "veli-analiz-ozet": {
+    "targets": {
+      "ozetKartlar": {
+        "x": 11.81,
+        "y": 37.78,
+        "w": 76.39,
+        "h": 8.72
+      },
+      "rotaKopru": {
+        "x": 11.81,
+        "y": 25.33,
+        "w": 76.39,
+        "h": 7.33
+      },
+      "sorButonu": {
+        "x": 73.29,
+        "y": 33.56,
+        "w": 14.91,
+        "h": 4.67
+      }
+    }
+  },
+  "veli-analiz-karne": {
+    "targets": {
+      "karneKarti": {
+        "x": 11.81,
+        "y": 46.5,
+        "w": 76.39,
+        "h": 19.83
+      },
+      "dersCipleri": {
+        "x": 12.99,
+        "y": 59.83,
+        "w": 74.03,
+        "h": 4.61
+      }
+    }
+  },
+  "veli-analiz-kart": {
+    "targets": {
+      "lgsKarti": {
+        "x": 11.81,
+        "y": 59.22,
+        "w": 76.39,
+        "h": 15.67
+      },
+      "netDegeri": {
+        "x": 12.99,
+        "y": 66.28,
+        "w": 2.67,
+        "h": 6.72
+      },
+      "dyb": {
+        "x": 80.87,
+        "y": 69.89,
+        "w": 6.15,
+        "h": 3.11
+      },
+      "bransKarti": {
+        "x": 11.81,
+        "y": 74.44,
+        "w": 76.39,
+        "h": 15.67
+      }
+    }
+  },
+  "veli-analiz-trend": {
+    "targets": {
+      "trendRozeti": {
+        "x": 11.81,
+        "y": 47.78,
+        "w": 16.31,
+        "h": 4.44
+      },
+      "sonKarne": {
+        "x": 11.81,
+        "y": 32.11,
+        "w": 76.39,
+        "h": 15.67
+      }
+    }
+  },
+  "veli-seans-genel": {
+    "targets": {
+      "acikHesap": {
+        "x": 15.69,
+        "y": 24.41,
+        "w": 68.61,
+        "h": 13.61
+      },
+      "pencere": {
+        "x": 15.69,
+        "y": 38.47,
+        "w": 68.61,
+        "h": 4.22
+      }
+    }
+  },
+  "veli-seans-aylik": {
+    "targets": {
+      "aylikTablo": {
+        "x": 15.69,
+        "y": 42.69,
+        "w": 34.17,
+        "h": 52.28
+      },
+      "buAySatiri": {
+        "x": 15.76,
+        "y": 50.93,
+        "w": 34.03,
+        "h": 5.44
+      },
+      "seansListesi": {
+        "x": 50.14,
+        "y": 42.69,
+        "w": 34.17,
+        "h": 52.28
+      },
+      "ertelendiRozeti": {
+        "x": 51.04,
+        "y": 55.3,
+        "w": 7.68,
+        "h": 3.83
+      }
+    }
+  },
+  "veli-seans-odeme": {
+    "targets": {
+      "odemeler": {
+        "x": 15.69,
+        "y": 68.74,
+        "w": 68.61,
+        "h": 31.26
+      },
+      "kismiOdeme": {
+        "x": 15.76,
+        "y": 73.41,
+        "w": 68.47,
+        "h": 10.0
+      }
+    }
   }
 }

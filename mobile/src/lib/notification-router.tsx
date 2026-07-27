@@ -38,6 +38,7 @@ export function hrefForNotificationData(data: NotifData): string | null {
       case "exam_approaching":
       case "empty_day":
       case "daily_summary":
+      case "rota_commentary": // P4: yeni deneme → Rota kartı çocuk detayında
       default:
         return `/parent-child?id=${sid}`; // çocuk detayı
     }

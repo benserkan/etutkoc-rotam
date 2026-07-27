@@ -50,6 +50,7 @@ const TASK_TYPE_LABELS: Record<string, string> = {
   tekrar: "Tekrar",
   konu: "Konu",
   deneme: "Deneme",
+  other: "Diğer",
 };
 
 /**
