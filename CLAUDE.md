@@ -6,6 +6,63 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Anasayfa tanıtım videosu (Rota konuşuyor) — CANLI (2026-07-29, commit `4ac0952`, migration YOK)
+
+**Bağlam (kullanıcı):** Site araçları metinle anlatılıyordu; gençler video izliyor,
+veliler "vaadin karşılığını" görmek istiyor. İstenen: 3 dk'yı geçmeyen, sistemin
+TAMAMINI anlatan, **gerçek konuşan insan**lı (Rota'nın kendisi) tek video; ziyaretçiyi
+karşılayan modalda oynasın, modal kapanınca hero'nun HEMEN ALTINDA kalıcı dursun.
+- **Konuşan Rota = HeyGen photo-avatar (Avatar IV) + BİZİM Kore sesimiz.** Rehberdeki
+  yana bakan avatar dudak senkronuna uygun değildi → aynı karakterin **cepheden
+  portresi** Gemini image ile üretildi (`Desktop/rota-heygen-test/portre-*.png`).
+  HeyGen'e ses dosyası YÜKLENİR (kendi TTS'i kullanılmaz) — panel içindeki Rota ile
+  aynı ses. Kullanıcı hesabı: HeyGen Creator (~29$/ay), tek render = tüm metin.
+  **DERS:** tek fotoğraftan canlandırma balon/yarım ekranda gerçek çekimden ayırt
+  edilmiyor; tam ekran uzun süre gösterilirse yapaylık fark edilir → kurguda tam
+  kadraj yalnız açılış/kapanış.
+- **Metin = SATIŞ metni (kullanıcı direktifi: "tanıtan değil pazarlayan"):** 8 sahne —
+  kanca (karneyi kaç saatte analiz edersin?) · acı (Excel+WhatsApp+klasör, "emeği
+  görünmeyen koç fiyatını konuşamaz") · **5 ayrıştırıcı**: PDF karne→AI konu analizi ·
+  kitaba bağlı program+kalan kapasite · YSA (kapanana kadar takip) · veli tarafı
+  (Rota anlatır/sesli) · kurum panosu (bağımsız koç + dershane/etüt/okul segmenti) ·
+  kapanış (14 gün, kart yok). Sesler `scripts`'siz üretildi: sahne başına Kore mp3 +
+  birleşik dosya (`Desktop/rota-heygen-test/final-ses/`).
+- **Kurgu (3 revizyon sonrası kilitlendi):** ① gerçek ekran görüntüsü KÜÇÜK kalıyor,
+  okunmuyor → **stilize temsili kartlar** (dev punto, barlar, çipler; "sistemde bu
+  var" hissi yeterli, birebir ekran şart değil) ② avatar ÖNDE (yuvarlak balon
+  "emeğin karşılığını yansıtmıyor") → sağda tam boy sabit ③ bölüm geçişlerinde
+  **slogan kartı** ("DENEME ANALİZİ — Karneyi bırak, gerisi bende") ④ kesme/mavi flaş
+  şikâyeti → **tek parça render**: Rota 133 sn boyunca yer değiştirmez, sol içerik
+  19 durum xfade (0,45 sn) ile erir. Karaoke (kelime kelime boyanan) altyazı tüm
+  video boyunca. Kurum sahnesi için izole demo: `scripts/seed_video_demo_kurum.py`
+  (Atlas Etüt Merkezi, 4 koç × 6 öğrenci, uyum profilleri %92/%79/%53/%35 — yalnız
+  DEV, `--delete` ile kalkar).
+  **DERS (ffmpeg):** 19 katmanı tek filtre grafiğinde overlay etmek 10 dk'yı aşıyor →
+  **iki geçiş**: (1) sol akış xfade zinciri (1020×1080), (2) avatar+altyazı bindirme.
+  Decode işi ~18 kat azalır.
+- **Site entegrasyonu:** `web/components/landing/tour-video.tsx` — `WelcomeVideoModal`
+  (ilk ziyarette 2,5 sn gecikmeli; video **sessiz otomatik** başlar [tarayıcı sesli
+  autoplay'i engeller; altyazılı olduğu için sessizde de anlaşılır] + "Sesi aç" ile
+  baştan sesli; "Bir daha gösterme" → localStorage, işaretsizse yalnız oturum) +
+  `TourVideoSection` (hero'nun hemen altında `#tanitim`, kalıcı). Video
+  `app/static/video/rotam-tanitim.mp4` (27 MB, CRF 23 + faststart) + poster;
+  `/static/*` dev'de next.config rewrite, prod'da Caddy → FastAPI.
+- **Telemetri (yeni tablo YOK):** `record_event` yalnız DB'de var olan slug'ı kabul
+  ettiğinden **gizli** (`status=hidden`) `tanitim-videosu` FeatureCard'ı seed edilir
+  (`scripts/seed_landing_video_card.py`, start.sh'te) → anasayfada GÖRÜNMEZ, yalnız
+  ölçüm taşır: impression (modal/bölüm) · view (oynatıldı) · demo_click (yarısı
+  izlendi) · cta_click. Dönüşüm hunisi (conversion_service) videoyu izleyip üye olanı
+  ilişkilendirir.
+- **Doğrulama:** Playwright masaüstü 10/11 + mobil (taşma/kapatma/oynatma) OK ·
+  telemetri DB'de teyit (impression+view) · tsc+eslint temiz. **DERS (mobil):**
+  flex zincirinde tek bir `min-w-0` eksikliği (modal başlığı) modali viewport dışına
+  taşırıp kapatma düğmesini erişilemez yapıyordu — `fixed inset-0 flex` içindeki
+  kutuda min-w-0 zinciri şart.
+- **SIRADA (kullanıcı):** reklam kısaları için "farklı bir fikir" bekleniyor (dikey
+  Reels varyantı hazır üretilebilir: aynı avatar + üstte panel düzeni).
+
+---
+
 ## YENİ İŞ — Online Görüşme / Randevu Sistemi (koç↔öğrenci) — KARARLAR ALINDI (2026-07-27, kod BAŞLAMADI)
 
 **Bağlam:** Şehir dışına online koçluk veren koç için sistemde randevu/takvim/
