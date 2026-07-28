@@ -101,7 +101,7 @@ def compute_action_center(db: Session, *, institution_id: int) -> dict:
             items.append({
                 "severity": sev,
                 "category": "at_risk",
-                "title": f"{a.student.full_name or a.student.email} — {a.level_label} risk (skor {a.score})",
+                "title": f"{a.student.full_name or a.student.email} — {a.level_label} (risk skoru {a.score})",
                 "description": (f"Koç: {tname}" + (f" · {ind}" if ind else "")),
                 "teacher_name": tname,
                 "count": 1,

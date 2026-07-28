@@ -167,9 +167,32 @@ transform-origin yok, merkez-odaklı çeviri elle) + expo-audio MP3 akışı
 Girişler: öğrenci Gelişim hub kartı + veli/koç Profil "Rehber". İçerik
 JSON'ları web'den KOPYA (`mobile/assets/guide/`) — **KURAL: içerik/TTS
 yenilenince JSON'ları kopyala + mobil GUIDE_ASSET_VERSION'ı web ile eşitle.**
-**SIRADA:** v9 AAB'yi Play'e yükleme (kullanıcı; EAS build `04e913ed`) →
-randevu badge'i (koç bekleyen istek sayısı) → F5 (ops.) gömülü görüşme /
-KS4 içgörü yan paneli.
+**ANDROID AAB HAZIR (2026-07-28, EAS build `6dd3f11a`, versionCode **15**,
+80 MB):** `https://expo.dev/artifacts/eas/fw1QqBNqFi4LvtuPch-3JFeaOqnxBxFOODbrI73y6wc.aab`
+— içinde expo-document-picker (PDF deneme aktarımı) + expo-image-picker (YSA
+kamera) + react-native-purchases native'leri İLK KEZ var. **KULLANICI: Play
+Console → kapalı test → yeni sürüm → bu AAB'yi yükle.**
+**5 BAŞARISIZ BUILD — 3 GERÇEK KÖK NEDEN + DERSLER (2026-07-28):**
+(1) **npm sürüm uyuşmazlığı (asıl neden, 3 build yaktı):** yerel npm 11'in
+yazdığı `package-lock.json`'u EAS imajındaki **npm 10.9.3** `npm ci` reddediyor
+("Missing: @emnapi/* / typescript from lock file"); platforma özel opsiyonel
+paketlerin alt bağımlılıkları kayıyor. **KURAL: mobil lock DAİMA EAS'ın npm
+sürümüyle üretilir** (`npx -y npm@10.9.3 install`) + `npm ci --dry-run` HEM
+npm10 HEM npm11 ile doğrulanır. EAS npm sürümü build log'unda ("- npm X.Y.Z").
+Ek tuzak: node_modules dururken lock yenilemek opsiyonel paketleri düşürür →
+`rm -rf node_modules package-lock.json` ile sıfırdan üret.
+(2) **babel-preset-expo taşındı:** taze lock onu `expo/node_modules` altına
+nested koyunca EAS Bundle fazı "Cannot find module babel-preset-expo" verdi →
+üst düzey devDependency olarak **`~54.0.12` PINLENDİ** (latest 57 Hermes'in
+desteklemediği private field'ları dönüştürmüyor → `hermesc exit 2`). Ayrıca
+expo doctor peer eksiği `expo-asset` eklendi.
+(3) **DNS:** bu ağ `storage.googleapis.com`'u çözmedi (EAS yükleme sunucusu,
+Gemini DNS sorunu ailesi) → hosts'a `142.251.208.123 storage.googleapis.com`
+eklendi (UAC'li script).
+**KURAL (yeni):** EAS'a göndermeden ÖNCE yerelde `npx expo export --platform
+android` koş — paketleme/Hermes hatası kuyrukta saat kaybettirmeden yakalanır.
+**SIRADA:** Play kapalı teste v9(vc15) yükleme (kullanıcı) → randevu badge'i
+(koç bekleyen istek sayısı) → F5 (ops.) gömülü görüşme / KS4 içgörü yan paneli.
 
 ---
 
