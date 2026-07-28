@@ -47,6 +47,7 @@ import { getPublicTestimonials, testimonialKeys } from "@/lib/api/testimonials";
 import type { TestimonialPublicItem } from "@/lib/types/testimonial";
 import { Reveal } from "@/components/landing/reveal";
 import { MockupByType, MOCKUP_ICON } from "@/components/landing/mockups";
+import { TourVideoSection, WelcomeVideoModal } from "@/components/landing/tour-video";
 import { demosForRole, demoPlayUrl, type DemoRole } from "@/lib/demos";
 import { PricingCards } from "@/components/pricing/pricing-cards";
 import { BrandLogo } from "@/components/brand-logo";
@@ -78,6 +79,7 @@ export function LandingClient() {
     <div className="force-light min-h-screen bg-background text-foreground">
       <Header />
       <Hero />
+      <TourVideoSection variant={variant} />
       <Reassurance />
       <HowItWorks />
       <DemoGallery />
@@ -92,6 +94,7 @@ export function LandingClient() {
       <div className="h-20 md:hidden" aria-hidden />
       <StickyMobileCta />
       <FloatingWhatsAppAuto />
+      <WelcomeVideoModal variant={variant} />
     </div>
   );
 }

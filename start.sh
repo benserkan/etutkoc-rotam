@@ -23,6 +23,7 @@ python -m scripts.reseed_lgs_5_7 || true
 
 # Anasayfa vitrin kartları seed (idempotent — var olanı ezmez, admin düzenlemeleri korunur)
 python -m scripts.seed_landing_cards || true
+python -m scripts.seed_landing_video_card || true
 
 # Vitrin kartlarına demo videolarını bağla (idempotent — yalnız demo_slug boş olanı,
 # admin'in elle bağladığı demolar korunur). "Demo İzle" butonu + demo_click telemetrisi.
