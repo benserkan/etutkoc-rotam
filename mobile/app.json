@@ -67,7 +67,8 @@
           "photosPermission": "ETÜTKOÇ Rotam, yanlış yaptığın soruların fotoğrafını arşivine eklemen için fotoğraflarına erişir. Fotoğraflar yalnız sen ve koçun görür.",
           "cameraPermission": "ETÜTKOÇ Rotam, yanlış yaptığın soruların fotoğrafını çekip arşivine eklemen için kameraya erişir. Fotoğraflar yalnız sen ve koçun görür."
         }
-      ]
+      ],
+      "expo-asset"
     ],
     "experiments": {
       "typedRoutes": true
