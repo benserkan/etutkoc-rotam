@@ -31,6 +31,35 @@
 | Satış süreci tanımsız | Kim aranacak, ne söylenecek, kaç adımda kapanacak — yazılı değil |
 | Satış kapasitesi | Tek kişi (Serkan) hem koçluk yapıyor hem satış yapacak → **haftalık saat bütçesi gerçekçi olmalı** |
 
+### EN KRİTİK BULGU — sorun fiyat değil, KURULUM (2026-07-29 canlı veri)
+
+Bağımsız koç kayıtlarının tamamı tek tek incelendi (test/demo/kendi hesabı ayıklandı):
+
+| Hesap | Öğrenci | Kitap | Görev | Yorum |
+|---|---|---|---|---|
+| Hatice G. (#87) | 4 | 1 | **0** | Gerçek müşteri — öğrenci girdi, **tek görev bile atayamadan durdu** |
+| M. Ferda G. (#52) | 0 | 0 | 0 | Kaydoldu, hiç başlamadı |
+| Hanife B. (#61) | 0 | 0 | 0 | Kaydoldu, hiç başlamadı |
+| M. Özdemir (#93) | 0 | 0 | 0 | Kaydoldu, hiç başlamadı |
+| #63 (Apple demo), #60 (kendi), #51/57/58/59 (test) | — | — | — | Gerçek müşteri değil |
+
+> **Dışarıdan gelen hiç kimse çekirdek döngüyü (kitap ekle → öğrenci ata →
+> program kur → öğrenci işaretler) kendi başına tamamlayamadı.**
+
+Bunun üç sonucu var ve stratejinin tamamını belirler:
+
+1. **Fiyat itirazı henüz hiç test edilmedi.** Kimse ödeme ekranına kadar
+   gelmedi; deneme ücretsizdi. "Pahalı mı?" sorusunun cevabı elimizde YOK.
+2. **Şu an reklam vermek parayı yakmak olur.** Reklam daha çok kayıt getirir,
+   kayıtlar aynı duvarda ölür. Önce duvarı kaldırmak gerekir.
+3. **Satışın merkezine "kurulumu ben yaparım" konmalı.** Ürün self-servis
+   kurulumda tökezliyor; elle kurulum bir zayıflık değil, şu an **en güçlü
+   satış argümanı** (bkz. 6.2 ve 9).
+
+**Hemen yapılacak:** Hatice G. aranacak. Sistemde öğrencisi olan, dışarıdan
+gelmiş tek gerçek kişi — deneme uzatması tek başına işe yaramaz, kurulumun
+birlikte tamamlanması gerekir. İlk vaka çalışması adayı odur.
+
 ### ÖNEMLİ AYRIM — iki farklı iş, iki farklı reklam
 
 Bu ayrım karıştırılırsa bütün strateji yanlış kurulur:
@@ -255,6 +284,43 @@ Amaç: **Para değil referans** kazanmak. İlk 3 kurum + 10 koç.
 
 ## 6) Satış süreci
 
+### 6.0 Kurumda KİME ulaşılır? (ve kime ulaşılmaz)
+
+**İK'ya mail atılmaz.** Etüt merkezi ve dershaneler 5-30 kişilik işletmelerdir,
+çoğunda İK departmanı zaten yoktur; olduğu yerde (özel okul) İK bordro ve
+personel işleriyle ilgilenir — öğrenci takip yazılımı satın alma yetkisi yoktur.
+
+| Kurum tipi | Gerçek karar verici | İkna edilecek ikinci kişi |
+|---|---|---|
+| Etüt merkezi / küçük dershane | **Kurucu / işletme sahibi** (çoğu zaman aynı kişi müdür) | Baş koç |
+| Orta-büyük dershane | **Genel müdür / kurum müdürü** | Rehberlik koordinatörü |
+| Özel okul | **Kurucu temsilcisi veya müdür** | **Rehberlik (PDR) koordinatörü** ← asıl şampiyon |
+
+> Özel okulda yolu PDR koordinatörü açar: sistemin çözdüğü sorun onun sorunudur.
+> Ama imzayı müdür/kurucu atar. İkisini de aynı toplantıya almak en kısa yoldur.
+
+**Kanal gerçekliği (Türkiye eğitim sektörü):**
+
+| Kanal | Gerçekte işe yarar mı? |
+|---|---|
+| **Telefon → randevu** | ✅ En etkili. Kurucuya santral üzerinden ulaşılır. |
+| **Yüz yüze ziyaret** | ✅ Yerelde (Trabzon) en yüksek dönüşüm. Kapıdan girmek mail atmaktan kolaydır. |
+| **WhatsApp** | ✅ Randevu sonrası ana yazışma kanalı. İlk temas için değil. |
+| **Referans / tanıdık** | ✅✅ Sektör ilişki üzerine kurulu; tek bir tanıdık 5 kapı açar. |
+| Soğuk e-posta (info@) | ⚠️ Zayıf. Sekretere düşer, kurucuya ulaşmaz. Ancak telefonun ARDINDAN "konuştuğumuz gibi" diye gönderilirse işe yarar. |
+| LinkedIn | ❌ Bu segmentte neredeyse ölü. Dershane kurucusu LinkedIn'de değil. |
+
+**Kurum listesi nereden çıkar** (elimizdeki CSV kurum listesi DEĞİL, koç listesi):
+1. **MEB Özel Öğretim Kurumları** — il/ilçe bazında resmi kurum listesi
+2. **Google Haritalar** — "{il} etüt merkezi", "{il} dershane", "{il} özel okul"
+   → ad + telefon + adres + yorum sayısı (canlılık göstergesi)
+3. **Yerel özel okullar/dershaneler dernekleri** üye listeleri
+4. **Instagram** — kurum hesapları; takipçi ve paylaşım sıklığı "diri mi" der
+
+> Hedef liste kalitesi sayıdan önemlidir. 40 doğru kurum, 400 rastgele kayıttan
+> iyidir. Her satır: kurum adı · ilçe · telefon · kurucu/müdür adı (bulunabiliyorsa)
+> · koç/öğretmen sayısı tahmini → **Hedef Havuzu** modülüne girilir.
+
 ### 6.1 Huni (kurum)
 
 ```
@@ -309,6 +375,60 @@ Liste (40)
 | "Velilerimiz kullanamaz" | "Veli için tasarım ilkemiz tek cümle: grafik okumasın. Yapay zekâ raporu sesli anlatıyor, veli soru soruyor. Teknolojiye en uzak veli için tasarlandı." |
 | "Verilerimiz güvende mi?" | "KVKK uyumlu; sunucular Türkiye erişimli, veriler şifreli. Koça özel notlar veliye asla görünmez. Ayrıca aydınlatma metinleri ve veri silme hakkı sistemde tanımlı." |
 | "Düşünelim" | "Tabii. Şunu önereyim: pilot ücretsiz ve altı hafta. Düşünmek yerine **denemek** daha kolay karar verdirir. Pazartesi kurulumu yapalım, beğenmezseniz kapatırsınız." |
+
+### 6.4.1 İki büyük engel — ve nasıl aşılır
+
+Kurum satışında gerçekten yolu kapatan iki şey var. İkisi de fiyat değil.
+
+#### Engel 1 — "Zaten bir yazılımımız var"
+
+Doğru: hemen her kurumda bir yazılım vardır. Ama ne olduğuna bakınca boşluk
+ortaya çıkıyor:
+
+| Kurumda genelde olan | Ne yapar | Ne YAPMAZ |
+|---|---|---|
+| Öğrenci işleri / muhasebe yazılımı (K12 tipi) | Kayıt, taksit, yoklama, karne | Koçun haftalık programını, öğrencinin ne çözdüğünü, konunun kapanıp kapanmadığını **görmez** |
+| Yayınevinin optik okuma yazılımı | Deneme sonucunu okur, sıralama verir | Sonucu **programa çevirmez**; "bu öğrenciye önümüzdeki hafta ne yaptıralım" sorusunu boş bırakır |
+| Excel + WhatsApp | Koç kendi düzenini kurar | Kurum **hiçbir şey göremez**; koç ayrılınca bilgi de gider |
+
+**Konumlandırma kuralı: yerine geçmiyoruz, boşluğu dolduruyoruz.**
+Bu cümle satışın merkezinde durmalı — çünkü "yazılımınızı değiştirin" demek
+kapıyı kapatır, "mevcut yazılımınız devam etsin" demek riski sıfırlar.
+
+> **Kurucuya sorulacak üç soru** (mevcut yazılım savunmasını kendiliğinden çökertir):
+> 1. "Şu an bu odadan, hangi koçunuzun programının **fiilen işlediğini** görebiliyor musunuz?"
+> 2. "Bir öğrenci üç haftadır sessizce geride kalıyorsa bunu **kim, ne zaman** fark ediyor?"
+> 3. "Veliniz çocuğunun bu hafta ne yaptığını **size sormadan** görebiliyor mu?"
+>
+> Üçüne de "hayır" gelir. Rotam tam olarak bu üç sorunun sistemidir.
+
+#### Engel 2 — Değişim direnci (yeni sistem, yeni veri, yeni öğrenme)
+
+Haklı bir korku: kurum "yeni yazılım" deyince **veri girme + eğitim + direnç**
+görüyor. Panzehir, değişimi mümkün olduğunca ORTADAN KALDIRMAK:
+
+| Korku | Karşı hamle |
+|---|---|
+| "Verileri kim girecek?" | **Kurulumu biz yapıyoruz.** Kitaplar, üniteler, öğrenciler, müfredat eşleştirmesi — pilot başlamadan tarafımızdan girilir. Kurumun yükü sıfır. |
+| "Koçlarım öğrenemez" | **Sesli rehber sistemde hazır** — koç/öğrenci/veli için ayrı, adım adım, ekran üstünde. Kurum eğitim vermek zorunda değil. |
+| "Ya çalışmazsa, işimiz yarıda kalır" | **Paralel çalışma.** Mevcut düzeni bırakmalarını istemiyoruz; 6 hafta yan yana yürür. Beğenilmezse hiçbir şey kaybedilmez. |
+| "Bütün kurumu buna bağlamak riskli" | **Tek koçla başlıyoruz.** 1 koç + 5-10 öğrenci. Görünür sonuç alınınca yayılır. |
+| "Alışkanlıklarımız değişecek" | Koç zaten program yazıyor, deneme giriyor, veliye durum anlatıyor. Rotam **yeni iş eklemiyor**, aynı işi tek yerde topluyor. |
+
+> Bu beş hamlenin ortak fikri şudur: **kurumdan istenen tek şey "izin vermek".**
+> Emek bizde, risk bizde, karar onlarda. Bu çerçeve kurulduğunda "hayır" demek
+> için gerekçe kalmıyor.
+
+#### Peki asıl engel fiyat mı, güven mi?
+
+Elimizdeki veri net konuşuyor: **ikisi de değil — engel KURULUM.** (bkz. bölüm 1)
+Dışarıdan gelen dört kayıttan üçü hiç başlamadı, biri öğrenci girip görev
+atayamadan durdu. Kimse ödeme ekranını görmedi bile.
+
+Sıralama şöyle: **kurulum > güven > fiyat.**
+- Kurulum çözülmezse güven konuşulmaz (kimse ürünü görmüyor).
+- Güven çözülmezse fiyat konuşulmaz ("pahalı" çoğu zaman "ikna olmadım" demektir).
+- Fiyat, ilk üç müşteriden sonra gerçekten test edilebilir.
 
 ### 6.5 Bağımsız koç kanalı — topluluk yaklaşımı
 
@@ -402,35 +522,68 @@ Kurumlarda nakit akışı ve bağlılık için bunu öne çıkar.
 
 ---
 
-## 10) Haftalık ritim (Aşama 1 boyunca)
+## 10) Haftalık ritim — 15-20 saat nasıl bölünür
 
-| Gün | İş |
+Onaylanan bütçe: **haftada 15-20 saat.** Bu ciddi bir kapasitedir; dağıtılmazsa
+"bir şeylerle uğraşmak"a dönüşür. Sabit bloklar hâlinde ayrılır:
+
+| Gün | Blok | Saat | İş |
+|---|---|---|---|
+| Pazartesi | Hazırlık | 2 | Ölçüm gözden geçirme (15 dk) + haftanın **10 kurumluk** listesini çıkar (MEB listesi / Haritalar) + kurucu adlarını bul |
+| Salı | **Satış** | 4 | 09:30-11:30 telefon (10-15 arama) · 14:00-16:00 demo (1-2 adet) |
+| Çarşamba | **Kurulum** | 4 | Pilot kurumların verisini gir, koçla birebir oturum, takıldıkları yeri düzelt |
+| Perşembe | **Satış** | 4 | Telefon + demo (Salı ile aynı düzen) |
+| Cuma | Takip + içerik | 3 | Geri dönmeyenleri ara · teklif gönder · koç grubuna 1 paylaşım · kısa video kes |
+| — | Yedek | 2-3 | Taşan işler (kurulum genelde taşar) |
+
+**Haftalık çıktı hedefi (Aşama 1):**
+
+| Ölçü | Hedef |
 |---|---|
-| Pazartesi | Ölçüm gözden geçirme (15 dk) + haftanın hedef listesi (10 kurum) |
-| Salı | **Satış günü** — telefon teması (sabah), demo (öğleden sonra) |
-| Çarşamba | Pilot destek görüşmeleri + kurulum |
-| Perşembe | **Satış günü** — telefon + demo |
-| Cuma | İçerik/topluluk paylaşımı + teklif takibi (geri dönmeyenler) |
+| Yeni temas edilen kurum | 10 |
+| Randevuya dönen | 4 |
+| Yapılan demo | 2 |
+| Başlayan pilot | 1 (iki haftada bir) |
 
-> Satış günleri koçluk seansı konmaz. Karışırsa satış her zaman kaybeder.
+> **Değişmez kural:** Salı ve Perşembe satış bloklarına koçluk seansı konmaz.
+> Aynı takvimde yarışırlarsa satış her zaman kaybeder — çünkü seansın müşterisi
+> bellidir, satışın müşterisi henüz yoktur.
+
+**İlk iki hafta istisnası:** yeni kurum aranmadan önce elde olan sıcak kişiler
+bitirilir (Hatice + diğer üç kayıt). Onlar zaten kapıdan girmiş insanlar;
+yeni kapı çalmadan önce açık olanı tamamlamak en ucuz kazançtır.
 
 ---
 
 ## 11) Sıradaki iş
 
-**Şu an bekleyen karar (kullanıcı):**
-1. Segment önceliği onayı — *kurum öncelikli* öneriliyor
-2. Kurucu Müşteri teklifinin şartları (6 hafta ücretsiz + 12 ay %40 indirim)
-3. Haftalık satışa ayrılabilecek gerçek saat sayısı
-4. Rotam reklamı: Aşama 2'ye bırakılsın mı, yoksa küçük bir test turu şimdi mi?
-   *(Öneri: Aşama 2 — ama Meta pikseli şimdiden eklenmeli, veri birikmeye başlasın)*
+**Kararlar (2026-07-29 itibarıyla):**
 
-**Onay sonrası ilk üretilecekler (Aşama 0):**
+| Karar | Durum |
+|---|---|
+| Segment önceliği: kurum öncelikli | ✅ Onaylandı |
+| Kurucu Müşteri teklifi (6 hafta ücretsiz + 12 ay %40) | ✅ Onaylandı |
+| Haftalık satış kapasitesi | ✅ **15-20 saat** (bkz. bölüm 10) |
+| Meta pikseli | ✅ Kod canlıda — `META_PIXEL_ID` girilince aktifleşir |
+| Rotam reklamı | Aşama 2'ye bırakıldı (önce kurulum duvarı kaldırılacak) |
+
+**BU HAFTA — sıra bu (yeni kurum aramadan önce):**
+
+1. [ ] **Hatice G. aranacak** (0544 776 60 93) — 4 öğrenci girmiş, görev
+       atayamamış. Ekran paylaşımıyla kurulumu birlikte tamamla. İlk vaka adayı.
+2. [ ] Diğer üç kayıt aranacak: M. Ferda Güven, Hanife Balcı, M. Özdemir —
+       "neden devam etmediniz?" sorusu, ürün için en değerli bilgi.
+3. [ ] Kurulum duvarını gösteren ölçüm: kaç kişi kayıt → kaç kişi ilk görevi
+       atadı? (bu oran düzelmeden reklam yok)
+4. [ ] Trabzon'da **10 kurumluk** ilk liste (MEB özel öğretim + Haritalar) →
+       Hedef Havuzu'na gir
+5. [ ] Meta Etkinlik Yöneticisi'nden piksel kimliğini al → sunucu `.env`
+
+**Aşama 0 malzemeleri:**
 - [ ] Kurumsal teklif dosyası (2 sayfa PDF)
 - [ ] Vaka çalışması: ETÜTKOÇ kendi öğrencileri + ÖSYM sonuçları
-- [ ] 40 kurumluk hedef listesi → Hedef Havuzu modülüne giriş
 - [ ] Referans toplama akışı: mevcut kullanıcılara "deneyimini paylaş" daveti
-- [ ] *(Reklam için)* Meta pikseli + dikey kısa kesitler
+- [ ] *(Reklam için)* dikey kısa kesitler (tanıtım videosundan)
 
 ---
 
@@ -441,3 +594,22 @@ Kurumlarda nakit akışı ve bağlılık için bunu öne çıkar.
 - `docs/rotam-tanitim-kilavuzu.pdf` *(depoda değil, komutla üretilir)* — 63 sayfa
   özellik + fayda kılavuzu; kurumsal görüşmelerde ek olarak gönderilir
 - Tanıtım videosu — anasayfada ve `/opt/etutkoc/media/video/` içinde
+- `web/components/meta-pixel.tsx` — Meta pikseli + KVKK izin listesi
+  (piksel yalnız anonim pazarlama sayfalarında çalışır)
+
+### Elimizdeki ham liste hakkında not (2026-07-29)
+
+`koç listesi.csv` ve `kocular.csv` **birebir aynı dosya** (aynı md5). İçerik
+832 satır görünüyor ama gerçekte:
+
+| Ne | Sayı | Kullanılabilirlik |
+|---|---|---|
+| Armut.com koç profili | 279 kişi | Ad var, **iletişim YOK** (e-posta hep `destek@armut.com`) → Instagram/Google ile zenginleştirilmeli |
+| Web sitesi kazıması | 71 işletme | Telefon var. `name` sütunu **blog başlığı** — kimlik = alan adı |
+| — bunlardan kurumsal aday (kurs/akademi) | 17 | Küçük kurs merkezleri; dershane/özel okul **yok** |
+| — bağımsız koç / danışmanlık | 44 | Koç kanalı için gerçek hedef |
+| — özel ders pazar yeri | 10 | İşletme değil, düşük öncelik |
+
+> **Sonuç: bu liste KOÇ segmenti için değerli, KURUM segmentini açmıyor.**
+> Kurum listesi ayrıca üretilmeli (bkz. 6.0). Temizlenmiş çıktılar:
+> `Desktop/rotam-hedef-listesi.csv` ve `Desktop/rotam-armut-koclar.csv`.
