@@ -137,6 +137,12 @@ services:
       # Yedek dizinini read-only mount et — /admin/system-health backup kartı
       # son yedek tarihi/boyutu/sayısını okuyabilsin (backup.sh aynı yere yazar)
       - ../backups:/opt/etutkoc/backups:ro
+      # BÜYÜK MEDYA (tanıtım videosu vb.) — repoda TAŞINMAZ, sunucuda kalıcı.
+      # Neden: 27MB'lık video git push'u dakikalara çıkarıyor, depoyu şişiriyor ve
+      # her deploy'da yeniden yükleniyordu. Buradaki dosyalar deploy'lardan
+      # etkilenmez; yeni video = tek dosya kopyalama (kod değişikliği YOK).
+      #   sunucu: /opt/etutkoc/media/video/  → /static/video/... adresinden servis
+      - ../media/video:/app/app/static/video
     # Web sağlıklı olduğunda worker + next bağlanabilir
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost:8000/healthz"]

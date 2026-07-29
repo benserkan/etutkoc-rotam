@@ -33,3 +33,9 @@ _meb_research/
 # cron yanlış fatura için mail atabilir (bu durum 2026-05-26'da yaşandı).
 # Lokalde scripts/ altında DURUR ama git'e konulmaz.
 scripts/seed_demo_*.py
+
+# Büyük medya (tanıtım videosu vb.) — sunucuda kalıcı klasörde durur
+# (deploy/docker-compose.yml: ../media/video → /app/app/static/video).
+# Repoya konmaz: push'u dakikalara çıkarıyor, depoyu şişiriyor ve videoyu
+# değiştirmek kod değişikliği gerektiriyordu. Yerelde bu klasör dolu kalır.
+app/static/video/
