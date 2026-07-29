@@ -39,3 +39,10 @@ scripts/seed_demo_*.py
 # Repoya konmaz: push'u dakikalara çıkarıyor, depoyu şişiriyor ve videoyu
 # değiştirmek kod değişikliği gerektiriyordu. Yerelde bu klasör dolu kalır.
 app/static/video/
+
+# Tanıtım kılavuzu üretim çalışma alanı (ekran kareleri + ara HTML) ve PDF çıktısı.
+# Kaynak metin scripts/tanitim_doc_content.py'de; kılavuz komutla yeniden üretilir:
+#   python -m scripts.capture_tanitim_shots koc|kurum   (kareler)
+#   python -m scripts.build_tanitim_pdf                 (PDF)
+.doc-build/
+docs/rotam-tanitim-kilavuzu.pdf
