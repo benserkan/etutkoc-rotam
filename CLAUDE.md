@@ -63,6 +63,47 @@ karşılayan modalda oynasın, modal kapanınca hero'nun HEMEN ALTINDA kalıcı 
 
 ---
 
+## YENİ İŞ — Rotam büyüme/satış stratejisi + Meta pikseli — CANLI (2026-07-29)
+
+**Belge: `docs/buyume-stratejisi.md`** (yeni sohbette önce onu oku). Amaç: Rotam'ı
+eğitim koçu + etüt/dershane/özel okula tanıtıp ödeyen üye kazanmak.
+- **EN KRİTİK BULGU (canlı veri):** dışarıdan gelen 4 gerçek koç kaydından 3'ü
+  HİÇ başlamamış, 1'i (Hatice #87: 4 öğrenci, 1 kitap) **tek görev atayamadan**
+  durmuş → **kimse çekirdek döngüyü (kitap→öğrenci→program→işaretle) kendi
+  başına tamamlayamadı.** Engel sıralaması **kurulum > güven > fiyat** (kimse
+  ödeme ekranını görmedi → fiyat itirazı hiç test edilmedi). Sonuç: (a) şu an
+  reklam para yakar, (b) "kurulumu BEN yaparım" satışın merkezi argümanı.
+- **ÖNEMLİ AYRIM:** yayındaki Instagram kampanyası **ETÜTKOÇ koçluk hizmeti**
+  içindir (Trabzon B2C, `docs/reklam-kilavuz-kosucu.md`); **Rotam için hiç
+  reklam yapılmadı** → "reklam çalışmıyor" dersi buradan çıkarılamaz.
+- **Kararlar:** kurum öncelikli · Kurucu Müşteri Programı (6 hafta ücretsiz
+  pilot + 12 ay %40, karşılığı yazılı referans + vaka hakkı) · haftada 15-20
+  saat (Salı+Perşembe satış blokları, koçluk seansı KONMAZ) · reklam Aşama 2'ye.
+- **Kurumda muhatap:** İK DEĞİL — kurucu/genel müdür; özel okulda yolu **PDR
+  koordinatörü** açar, imzayı müdür atar. LinkedIn bu segmentte ölü; telefon +
+  yüz yüze + referans işler. Kurum listesi: MEB özel öğretim + Google Haritalar
+  (elimizdeki CSV kurum listesi DEĞİL).
+- **Kullanıcının CSV'si:** `koç listesi.csv` = `kocular.csv` (aynı md5). 832
+  satır → 279 Armut profili (**iletişim YOK**) + 71 işletme (44 koç · 17 kurs/
+  akademi · 10 pazaryeri). `name` sütunu blog başlığı, kimlik = alan adı.
+  Temiz çıktı: `Desktop/rotam-hedef-listesi.csv` + `rotam-armut-koclar.csv`
+  (üretici: scratchpad `clean_prospects.py`).
+- **META PİKSELİ CANLI (commit `1b0a1e2`, migration YOK):**
+  `web/components/meta-pixel.tsx` — piksel `1325199212465622`, sunucu `.env`
+  `META_PIXEL_ID` (boşsa script HİÇ basılmaz). **KVKK izin listesi:** yalnız
+  `/` · `/pricing` · `/iletisim` · `/demos` · `/signup*`; panel yolları
+  (`/teacher/students/228`) ve token'lı linkler (`/membership/<token>`,
+  `/offers/<token>`) Meta'ya GİTMEZ. Dönüşüm olayları: signup →
+  `CompleteRegistration`, kurumsal teklif + iletişim formu → `Lead`
+  (`trackMetaEvent()`, piksel kapalıysa sessiz no-op). Playwright canlı
+  doğrulama **5/5** (3 pazarlama sayfası çalıştı + /login + /kvkk çalışmadı).
+  **KURAL: yeni public pazarlama sayfası eklenirse allowlist'e de eklenmeli.**
+- **SIRADA (kullanıcı):** Hatice G. aranacak (kurulumu birlikte bitir → ilk
+  vaka) · diğer 3 kayda "neden devam etmediniz" · kayıt→ilk görev oranı ölçümü
+  (bu düzelmeden reklam yok) · Trabzon'da 10 kurumluk liste → Hedef Havuzu.
+
+---
+
 ## YENİ İŞ — Online Görüşme / Randevu Sistemi (koç↔öğrenci) — KARARLAR ALINDI (2026-07-27, kod BAŞLAMADI)
 
 **Bağlam:** Şehir dışına online koçluk veren koç için sistemde randevu/takvim/
