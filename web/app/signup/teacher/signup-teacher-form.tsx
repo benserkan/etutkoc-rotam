@@ -12,6 +12,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import { api, ApiError } from "@/lib/api";
 import type { UserPublic } from "@/lib/types/me";
+import { trackMetaEvent } from "@/components/meta-pixel";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -169,6 +170,11 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
         }),
       });
       qc.clear();
+      // Reklam dönüşüm ölçümü — piksel kapalıysa sessizce no-op.
+      trackMetaEvent("CompleteRegistration", {
+        content_name: intendedPlan || "solo_trial",
+        status: "trial",
+      });
       toast.success(`Hoş geldin, ${res.user.full_name}`, {
         description: res.email_verification_sent
           ? "E-postana doğrulama bağlantısı gönderdik."

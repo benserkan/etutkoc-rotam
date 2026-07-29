@@ -19,6 +19,7 @@ import {
 
 import { ApiError } from "@/lib/api";
 import { submitContactRequest } from "@/lib/api/pricing";
+import { trackMetaEvent } from "@/components/meta-pixel";
 import type { PricingCatalog } from "@/lib/types/pricing";
 import { BrandLogo } from "@/components/brand-logo";
 import { FloatingWhatsApp } from "@/components/contact/floating-whatsapp";
@@ -89,7 +90,11 @@ export function IletisimClient({
         source: form.topic,
         turnstile_token: showCaptcha ? (window.turnstile?.getResponse() ?? "") : "",
       }),
-    onSuccess: () => setDone(true),
+    onSuccess: () => {
+      setDone(true);
+      // Reklam dönüşüm ölçümü — piksel kapalıysa sessizce no-op.
+      trackMetaEvent("Lead", { content_name: form.topic });
+    },
     onError: () => {
       if (showCaptcha && window.turnstile) window.turnstile.reset();
     },

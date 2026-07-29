@@ -3,6 +3,7 @@ import { Inter, Plus_Jakarta_Sans } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/components/query-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { MetaPixel } from "@/components/meta-pixel";
 import "./globals.css";
 
 // Türkçe karakter için latin-ext zorunlu.
@@ -63,6 +64,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   // PLAUSIBLE_DOMAIN tanımlı değilse hiç basılmaz (kapalı kalır).
   const plausibleDomain = process.env.PLAUSIBLE_DOMAIN || "";
   const plausibleSrc = process.env.PLAUSIBLE_SRC || "/js/script.js";
+  // Meta (Facebook/Instagram) pikseli — reklam yeniden hedefleme + dönüşüm
+  // ölçümü. Plausible'dan FARKLI: kişisel veri işler → yalnız anonim
+  // pazarlama sayfalarında çalışır (bkz. components/meta-pixel.tsx allowlist).
+  // META_PIXEL_ID boşsa hiç yüklenmez.
+  const metaPixelId = process.env.META_PIXEL_ID || "";
 
   return (
     <html lang="tr" className={`${inter.variable} ${display.variable}`} suppressHydrationWarning>
@@ -83,6 +89,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <QueryProvider>
             {children}
             <Toaster />
+            {metaPixelId ? <MetaPixel pixelId={metaPixelId} /> : null}
           </QueryProvider>
         </ThemeProvider>
       </body>

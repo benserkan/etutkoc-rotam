@@ -17,6 +17,7 @@ import {
 
 import { ApiError } from "@/lib/api";
 import { submitContactRequest } from "@/lib/api/pricing";
+import { trackMetaEvent } from "@/components/meta-pixel";
 import type { PricingCatalog } from "@/lib/types/pricing";
 
 interface TurnstileApi {
@@ -112,7 +113,11 @@ export function InstitutionContact({
         source: "pricing_institution",
         turnstile_token: showCaptcha ? (window.turnstile?.getResponse() ?? "") : "",
       }),
-    onSuccess: () => setDone(true),
+    onSuccess: () => {
+      setDone(true);
+      // Reklam dönüşüm ölçümü — piksel kapalıysa sessizce no-op.
+      trackMetaEvent("Lead", { content_name: "pricing_institution" });
+    },
     onError: () => {
       // CAPTCHA token tek-kullanımlık → her hatadan sonra sıfırla
       if (showCaptcha && window.turnstile) window.turnstile.reset();

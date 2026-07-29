@@ -231,6 +231,10 @@ services:
       PLAUSIBLE_SRC: ${PLAUSIBLE_SRC:-/js/script.js}
       PLAUSIBLE_SHARED_URL: ${PLAUSIBLE_SHARED_URL:-}
       PLAUSIBLE_DASHBOARD_URL: ${PLAUSIBLE_DASHBOARD_URL:-}
+      # ---- Meta (Facebook/Instagram) pikseli — reklam ölçümü (boşsa kapalı) ----
+      # Yalnız ANONİM pazarlama sayfalarında çalışır (/, /pricing, /iletisim,
+      # /demos, /signup*) — panel içi yollar Meta'ya GİTMEZ (KVKK).
+      META_PIXEL_ID: ${META_PIXEL_ID:-}
     depends_on:
       web:
         condition: service_healthy
