@@ -358,8 +358,8 @@ def evaluate_all(db: Session) -> list[EvaluationResult]:
         delivery_parts: list[str] = []
         if "email" in channels:
             try:
-                _send_email_to_super_admins(db, rule=rule, event=event)
-                delivery_parts.append("email:ok")
+                ok, total = _send_email_to_super_admins(db, rule=rule, event=event)
+                delivery_parts.append(f"email:{ok}/{total}")
             except Exception:
                 logger.exception("alarm email fail rule=%s", rule.key)
                 delivery_parts.append("email:fail")
@@ -403,19 +403,26 @@ def _active_super_admins(db: Session) -> list[User]:
 def _send_push_to_super_admins(
     db: Session, *, rule: AlarmRule, event: AlarmEvent
 ) -> int:
-    """Mobil push — kaç süper admine gönderildi döner. ASLA raise etmez."""
-    from app.services.push_notifications import safe_push
+    """Mobil push — GERÇEKTEN gönderilen mesaj sayısını döner. ASLA raise etmez.
+
+    Kayıtlı cihaz yoksa 0 döner: "push:0" teslimat kaydında görünür. Bunu
+    "push:N" gibi göstermek yanlış güven verirdi — bu alarmın var olma sebebi
+    tam olarak sessiz başarısızlıktı.
+    """
+    from app.services.push_notifications import send_push_to_user
 
     sent = 0
     for a in _active_super_admins(db):
-        safe_push(
-            db,
-            user_id=a.id,
-            title=f"[{event.severity.upper()}] {rule.name}",
-            body=f"Değer: {event.value} (eşik: {event.threshold}). Panelden kontrol et.",
-            data={"type": "admin_alarm", "rule_key": rule.key, "screen": "alarms"},
-        )
-        sent += 1
+        try:
+            sent += send_push_to_user(
+                db,
+                user_id=a.id,
+                title=f"[{event.severity.upper()}] {rule.name}",
+                body=f"Değer: {event.value} (eşik: {event.threshold}). Panelden kontrol et.",
+                data={"type": "admin_alarm", "rule_key": rule.key, "screen": "alarms"},
+            )
+        except Exception:  # noqa: BLE001
+            logger.warning("alarm push fail user=%s", a.id, exc_info=True)
     return sent
 
 
@@ -443,16 +450,21 @@ def _alarm_email_recipients(db: Session) -> list[str]:
 
 def _send_email_to_super_admins(
     db: Session, *, rule: AlarmRule, event: AlarmEvent
-) -> None:
-    """E-posta tüm aktif süper admin'lere + config'teki ek alıcılara."""
+) -> tuple[int, int]:
+    """E-posta süper adminlere + ek alıcılara. (başarılı, toplam) döner.
+
+    send_email bool döndürür; onu OLDUĞU GİBİ raporlarız. Eskiden istisna
+    fırlamadığı sürece "email:ok" yazılıyordu — sağlayıcı reddetse bile başarılı
+    görünüyordu. E-posta kesintisini 10 gün gizleyen körlük tam olarak buydu.
+    """
     try:
         from app.services.email_service import send_email
     except Exception:
         logger.warning("email_service unavailable — alarm log only")
-        return
+        return (0, 0)
     recipients = _alarm_email_recipients(db)
     if not recipients:
-        return
+        return (0, 0)
     ctx = {
         "rule_name": rule.name,
         "rule_key": rule.key,
@@ -462,11 +474,14 @@ def _send_email_to_super_admins(
         "severity": event.severity,
         "triggered_at_display": event.triggered_at.strftime("%d %B %Y, %H:%M UTC"),
     }
+    ok = 0
     for addr in recipients:
         try:
-            send_email(addr, "security_alarm_triggered", ctx)
+            if send_email(addr, "security_alarm_triggered", ctx):
+                ok += 1
         except Exception:
             logger.exception("alarm email send fail to=%s", addr)
+    return (ok, len(recipients))
 
 
 # ---------------------------- Listing + ack ----------------------------
@@ -512,12 +527,19 @@ def acknowledge(
     return row
 
 
-def unacknowledged_count(db: Session) -> int:
-    return int(
-        (db.query(func.count(AlarmEvent.id))
-         .filter(AlarmEvent.acknowledged_at.is_(None))
-         .scalar()) or 0
+def unacknowledged_count(db: Session, *, hours: int | None = None) -> int:
+    """Görülmemiş alarm sayısı. hours verilirse yalnız o pencere.
+
+    Sol menü rozeti `hours=72` kullanır: geçmişte aylarca birikmiş, artık
+    geçerli olmayan alarmlar (prod'da 2300+) rozeti anlamsız bir sayıya
+    çevirip alarm körlüğü yaratıyordu. Panel toplamları parametresiz çağırır.
+    """
+    q = db.query(func.count(AlarmEvent.id)).filter(
+        AlarmEvent.acknowledged_at.is_(None)
     )
+    if hours is not None:
+        q = q.filter(AlarmEvent.triggered_at >= _now() - timedelta(hours=hours))
+    return int(q.scalar() or 0)
 
 
 def list_rules(db: Session) -> list[AlarmRule]:

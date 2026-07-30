@@ -172,10 +172,19 @@ def main() -> int:
                 f"trig={res.triggered if res else None} delta={after - before} "
                 f"sev={ev.severity if ev else None}",
             )
+            # 7b. Teslimat raporu DÜRÜST olmalı: kayıtlı cihaz yoksa push:0,
+            # e-posta sağlayıcı reddederse email:0/N. "ok" yazıp geçmek, bu
+            # alarmın engellemek için var olduğu sessiz başarısızlığın ta kendisi.
+            ds = (ev.delivery_status or "") if ev else ""
             check(
-                "7b. Teslimat durumunda push kanalı raporlanıyor",
-                ev is not None and "push:" in (ev.delivery_status or ""),
-                f"delivery={ev.delivery_status if ev else None}",
+                "7b. Teslimat raporu gerçek sayı veriyor (push:0 = cihaz yok)",
+                "push:0" in ds and "in_app:ok" in ds,
+                f"delivery={ds}",
+            )
+            check(
+                "7c. E-posta teslimatı gerçek başarı sayısıyla raporlanıyor",
+                any(p.startswith("email:") and "/" in p for p in ds.split("|")),
+                f"delivery={ds}",
             )
 
             # 8. Cooldown
@@ -225,10 +234,27 @@ def main() -> int:
             )
 
             # 11. Rozet sayacı
+            all_unack = ae.unacknowledged_count(db)
+            recent_unack = ae.unacknowledged_count(db, hours=72)
             check(
                 "11. Görülmemiş alarm rozeti > 0 (in_app kanalı görünür)",
-                ae.unacknowledged_count(db) > 0,
-                f"unack={ae.unacknowledged_count(db)}",
+                recent_unack > 0, f"unack72={recent_unack}",
+            )
+            # Rozet penceresi: eski birikinti (prod'da 2300+) rozeti şişirmemeli
+            old_ev = AlarmEvent(
+                rule_key=RULE_KEY, rule_name="eski", value=1, threshold=0,
+                severity="warn", channels_attempted="in_app",
+                delivery_status="in_app:ok",
+                triggered_at=datetime.now(timezone.utc) - timedelta(days=30),
+            )
+            db.add(old_ev)
+            db.commit()
+            check(
+                "11b. 30 gün önceki alarm rozete GİRMEZ (alarm körlüğü koruması)",
+                ae.unacknowledged_count(db, hours=72) == recent_unack
+                and ae.unacknowledged_count(db) == all_unack + 1,
+                f"unack72={ae.unacknowledged_count(db, hours=72)} (bekl {recent_unack}) "
+                f"tum={ae.unacknowledged_count(db)} (bekl {all_unack + 1})",
             )
 
     finally:

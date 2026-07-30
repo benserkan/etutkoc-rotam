@@ -432,7 +432,8 @@ def admin_badges_v2(
     from app.services.alarm_engine import unacknowledged_count as _unack
 
     try:
-        unack_alarms = _unack(db)
+        # 72 saat: eski/çözülmüş alarm birikintisi rozeti şişirmesin.
+        unack_alarms = _unack(db, hours=72)
     except Exception:  # noqa: BLE001
         unack_alarms = 0
 
