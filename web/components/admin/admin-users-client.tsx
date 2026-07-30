@@ -328,8 +328,8 @@ function UserRow({ user }: { user: AdminUserListItem }) {
         {user.last_login_at ? formatDateTime(user.last_login_at) : "—"}
       </td>
       <td className="px-4 py-2">
-        {user.locked_until ? (
-          <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-200 inline-flex items-center gap-0.5">
+        {user.locked_now ? (
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 inline-flex items-center gap-0.5">
             <Lock className="size-2.5" aria-hidden />
             kilitli
           </span>

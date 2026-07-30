@@ -118,8 +118,8 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
                 bağımsız
               </span>
             )}
-            {t.locked_until && (
-              <span className="text-xs px-2 py-0.5 rounded bg-amber-50 text-amber-700 border border-amber-300 inline-flex items-center gap-1">
+            {t.locked_now && (
+              <span className="text-xs px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-300 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200 inline-flex items-center gap-1">
                 <Lock className="size-3" aria-hidden />
                 kilitli
               </span>
@@ -570,11 +570,25 @@ function SecurityCard({
           </DRow>
           <DRow label="Başarısız giriş sayısı">
             <span className="tabular-nums">{target.failed_login_count}</span>
+            {target.failed_login_count > 0 && (
+              <span className="ml-1 opacity-70">
+                (kilit süresi dolunca ya da başarılı girişte sıfırlanır)
+              </span>
+            )}
           </DRow>
-          <DRow label="Kilit bitişi">
-            {target.locked_until
-              ? formatDateTime(target.locked_until)
-              : "yok"}
+          <DRow label="Kilit durumu">
+            {target.locked_now ? (
+              <span className="text-rose-700 dark:text-rose-300 font-medium">
+                Kilitli — {formatDateTime(target.locked_until!)} tarihinde açılır
+              </span>
+            ) : target.locked_until ? (
+              <span>
+                Kilit yok — süresi {formatDateTime(target.locked_until)}{" "}
+                tarihinde doldu
+              </span>
+            ) : (
+              "yok"
+            )}
           </DRow>
           <DRow label="Şifre değişimi">
             {passwordChangedAt ? formatDate(passwordChangedAt) : "—"}

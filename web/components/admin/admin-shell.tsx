@@ -62,7 +62,7 @@ import type { AdminBadgesResponse } from "@/lib/types/admin";
 import type { UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
 
-type AdminBadgeKey = "support_pending" | "contact_new";
+type AdminBadgeKey = "support_pending" | "contact_new" | "unack_alarms";
 
 function adminBadgeValue(
   badges: AdminBadgesResponse | undefined,
@@ -166,7 +166,7 @@ const NAV_SECTIONS: NavSection[] = [
       { href: "/admin/communication-health", label: "İletişim Sağlığı", icon: MessagesSquare },
       { href: "/admin/security-monitor/live", label: "Canlı Akış", icon: Activity },
       { href: "/admin/security-monitor/sessions", label: "Oturumlar", icon: ShieldAlert },
-      { href: "/admin/security-monitor/alarms", label: "Alarmlar", icon: AlertOctagon },
+      { href: "/admin/security-monitor/alarms", label: "Alarmlar", icon: AlertOctagon, badgeKey: "unack_alarms" },
       { href: "/admin/security-monitor/abuse", label: "Suistimal", icon: Flame },
       { href: "/admin/security-monitor/activity", label: "Aktivite", icon: CalendarDays },
     ],

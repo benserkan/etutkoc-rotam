@@ -152,6 +152,21 @@ class AuditLogItem(BaseModel):
 # =============================================================================
 
 
+class AdminEmailHealth(BaseModel):
+    """Panoda kırmızı bant için e-posta gönderim sağlığı (son 24 saat).
+
+    E-posta çökünce alarm e-postası da gitmez; süper adminin bunu GÖRDÜĞÜ tek
+    güvenilir yer panonun kendisidir (2026-07-30 10 günlük sessiz kesinti dersi).
+    """
+    attempts_24h: int = 0
+    failed_24h: int = 0
+    failure_pct: int = 0
+    # Örnek yetersizse (az gönderim) uyarı basma — yanlış alarm olur.
+    degraded: bool = False
+    last_success_at: datetime | None = None
+    last_error: str | None = None
+
+
 class AdminDashboardResponse(BaseModel):
     """GET /api/v2/admin/dashboard yanıtı.
 
@@ -159,6 +174,7 @@ class AdminDashboardResponse(BaseModel):
     """
     counts: AdminDashboardCounts
     failed_logins_24h: int
+    email_health: AdminEmailHealth = AdminEmailHealth()
     pending_subscription_requests: int = 0   # koç "öde ve devam et" → onay bekliyor
     pending_contact_requests: int = 0        # tüm bekleyen iletişim talepleri
     health_summary: HealthSummary
@@ -406,6 +422,9 @@ class AdminUserListItem(BaseModel):
     last_login_at: datetime | None = None
     last_login_ip: str | None = None
     locked_until: datetime | None = None
+    # locked_until GEÇMİŞTE de olabilir (kilit bitti ama damga duruyor) — panelin
+    # "kilitli mi?" sorusunu tarihe bakarak tahmin etmesi karışıklık yaratıyordu.
+    locked_now: bool = False
     failed_login_count: int = 0
     must_change_password: bool = False
     created_at: datetime | None = None
@@ -3477,6 +3496,9 @@ class AdminBadgesResponse(BaseModel):
     """
     support_pending: int
     contact_new: int = 0
+    # Görülmemiş alarm (e-posta kesintisi vb.). E-posta çöktüğünde alarm
+    # e-postası GİTMEZ → bu rozet uyarının fark edildiği tek güvenilir yüzey.
+    unack_alarms: int = 0
     checked_at: datetime
 
 

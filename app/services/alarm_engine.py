@@ -135,6 +135,51 @@ def _val_payment_problem_recent(db: Session) -> int:
     return failed + stuck
 
 
+# E-posta sağlığı alarmı için en az kaç deneme birikmeli (düşük hacimde tek bir
+# hard-bounce %100 başarısızlık gibi görünür → yanlış alarm).
+EMAIL_HEALTH_MIN_SAMPLE = 5
+EMAIL_HEALTH_WINDOW_HOURS = 24
+
+
+def _val_email_delivery_failing(db: Session) -> int:
+    """Son 24 saatte BAŞARISIZ e-posta yüzdesi (0-100).
+
+    2026-07-30: ZeptoMail deneme süresi dolunca SMTP 535 vermeye başladı ve
+    e-posta gönderimi 10 GÜN boyunca tamamen durdu — kimse fark etmedi, çünkü
+    (a) bu durumu ölçen bir kural yoktu, (b) var olan alarmlar da e-postayla
+    gönderiliyordu. Bu kural İletişim Sağlığı sayfasıyla AYNI veriyi
+    (communication_logs) ve AYNI başarı/başarısızlık tanımını kullanır — panel
+    ne gösteriyorsa alarm da onu ölçer.
+
+    Örnek kayıp: şifre sıfırlama e-postası ulaşmayan koç hesabını açamaz.
+    """
+    from app.models.communication_log import (
+        CHANNEL_EMAIL,
+        FAILURE_STATUSES,
+        SUCCESS_STATUSES,
+    )
+    from app.models import CommunicationLog
+
+    cutoff = _now() - timedelta(hours=EMAIL_HEALTH_WINDOW_HOURS)
+    rows = (
+        db.query(CommunicationLog.status, func.count(CommunicationLog.id))
+        .filter(
+            CommunicationLog.channel == CHANNEL_EMAIL,
+            CommunicationLog.created_at >= cutoff,
+        )
+        .group_by(CommunicationLog.status)
+        .all()
+    )
+    counts = {str(s): int(c) for s, c in rows}
+    success = sum(counts.get(s, 0) for s in SUCCESS_STATUSES)
+    failure = sum(counts.get(s, 0) for s in FAILURE_STATUSES)
+    attempts = success + failure
+    # queued/suppressed sayılmaz: henüz denenmedi ya da bilinçli gönderilmedi.
+    if attempts < EMAIL_HEALTH_MIN_SAMPLE:
+        return 0
+    return int(round(failure * 100.0 / attempts))
+
+
 # Kural key → değer hesaplayıcı + severity hesaplayıcı
 EVALUATORS = {
     "high_failed_logins": _val_high_failed_logins,
@@ -142,6 +187,7 @@ EVALUATORS = {
     "error_groups_open": _val_error_groups_open,
     "abuse_open": _val_abuse_open,
     "payment_problem_recent": _val_payment_problem_recent,
+    "email_delivery_failing": _val_email_delivery_failing,
 }
 
 
@@ -161,6 +207,23 @@ _BUILTIN_RULES = [
         "threshold": 0,          # tek sorun bile alarmlar (hacim düşük)
         "cooldown_minutes": 360,
         "channels": "email,in_app",
+    },
+    {
+        "key": "email_delivery_failing",
+        "name": "E-posta gönderimi başarısız",
+        "description": (
+            "Son 24 saatte denenen e-postaların büyük kısmı ulaşmadı. Sağlayıcı "
+            "(ZeptoMail) reddediyor olabilir — abonelik/kota bitmiş, API anahtarı "
+            "değişmiş ya da alan adı doğrulaması düşmüş olabilir. Şifre sıfırlama "
+            "ve veli bildirimleri bu süre boyunca ULAŞMAZ. "
+            "/admin/communication-health sayfasından hata mesajına bak."
+        ),
+        # %40 üstü başarısızlık → uyarı, %80 üstü → kritik (severity 2x kuralı).
+        # Tam kesinti (%100) daima kritik.
+        "threshold": 40,
+        "cooldown_minutes": 360,
+        # push ÖNCE: e-posta çöktüğünde e-posta kanalı bu alarmı taşıyamaz.
+        "channels": "push,in_app,email",
     },
 ]
 
@@ -300,6 +363,16 @@ def evaluate_all(db: Session) -> list[EvaluationResult]:
             except Exception:
                 logger.exception("alarm email fail rule=%s", rule.key)
                 delivery_parts.append("email:fail")
+        if "push" in channels:
+            # E-postadan BAĞIMSIZ kanal — e-posta çöktüğünde alarmı taşıyan tek
+            # yol budur (2026-07-30 dersi: 10 günlük e-posta kesintisi fark
+            # edilmedi çünkü uyarı da e-postayla gönderiliyordu).
+            try:
+                sent = _send_push_to_super_admins(db, rule=rule, event=event)
+                delivery_parts.append(f"push:{sent}")
+            except Exception:
+                logger.exception("alarm push fail rule=%s", rule.key)
+                delivery_parts.append("push:fail")
         if "in_app" in channels:
             # In-app şu an: AlarmEvent satırı zaten yazılı → /admin/security-monitor/alarms görür
             delivery_parts.append("in_app:ok")
@@ -319,21 +392,66 @@ def evaluate_all(db: Session) -> list[EvaluationResult]:
     return results
 
 
+def _active_super_admins(db: Session) -> list[User]:
+    return (
+        db.query(User)
+        .filter(User.role == UserRole.SUPER_ADMIN, User.is_active.is_(True))
+        .all()
+    )
+
+
+def _send_push_to_super_admins(
+    db: Session, *, rule: AlarmRule, event: AlarmEvent
+) -> int:
+    """Mobil push — kaç süper admine gönderildi döner. ASLA raise etmez."""
+    from app.services.push_notifications import safe_push
+
+    sent = 0
+    for a in _active_super_admins(db):
+        safe_push(
+            db,
+            user_id=a.id,
+            title=f"[{event.severity.upper()}] {rule.name}",
+            body=f"Değer: {event.value} (eşik: {event.threshold}). Panelden kontrol et.",
+            data={"type": "admin_alarm", "rule_key": rule.key, "screen": "alarms"},
+        )
+        sent += 1
+    return sent
+
+
+def _alarm_email_recipients(db: Session) -> list[str]:
+    """Süper admin e-postaları + config'teki ek alıcılar (tekilleştirilmiş).
+
+    Ek alıcı gerekçesi: kurumsal alan adı/posta kutusu sorunlu olduğunda bile
+    ulaşılabilir bir adres (örn. kişisel Gmail) kalsın.
+    """
+    from app.config import settings
+
+    out: list[str] = []
+    seen: set[str] = set()
+    for a in _active_super_admins(db):
+        if a.email and a.email.lower() not in seen:
+            seen.add(a.email.lower())
+            out.append(a.email)
+    for raw in (settings.alarm_extra_emails or "").split(","):
+        addr = raw.strip()
+        if addr and "@" in addr and addr.lower() not in seen:
+            seen.add(addr.lower())
+            out.append(addr)
+    return out
+
+
 def _send_email_to_super_admins(
     db: Session, *, rule: AlarmRule, event: AlarmEvent
 ) -> None:
-    """E-posta tüm aktif süper admin'lere — email_service kullan."""
+    """E-posta tüm aktif süper admin'lere + config'teki ek alıcılara."""
     try:
         from app.services.email_service import send_email
     except Exception:
         logger.warning("email_service unavailable — alarm log only")
         return
-    admins = (
-        db.query(User)
-        .filter(User.role == UserRole.SUPER_ADMIN, User.is_active.is_(True))
-        .all()
-    )
-    if not admins:
+    recipients = _alarm_email_recipients(db)
+    if not recipients:
         return
     ctx = {
         "rule_name": rule.name,
@@ -344,13 +462,11 @@ def _send_email_to_super_admins(
         "severity": event.severity,
         "triggered_at_display": event.triggered_at.strftime("%d %B %Y, %H:%M UTC"),
     }
-    for a in admins:
-        if not a.email:
-            continue
+    for addr in recipients:
         try:
-            send_email(a.email, "security_alarm_triggered", ctx)
+            send_email(addr, "security_alarm_triggered", ctx)
         except Exception:
-            logger.exception("alarm email send fail to=%s", a.email)
+            logger.exception("alarm email send fail to=%s", addr)
 
 
 # ---------------------------- Listing + ack ----------------------------

@@ -15,6 +15,7 @@ import {
   Heart,
   Inbox,
   Megaphone,
+  MailWarning,
   Send,
   Shield,
   Stethoscope,
@@ -32,6 +33,7 @@ import { getAdminDashboard, getAdminActivityStream, adminKeys } from "@/lib/api/
 import type { ActivityStreamResponse } from "@/lib/types/institution";
 import type {
   AdminDashboardResponse,
+  AdminEmailHealth,
   AuditLogItem,
   HealthAssessmentItem,
   HealthLevel,
@@ -88,6 +90,10 @@ export function AdminDashboardClient({ initial }: Props) {
           (s) => s.href,
         )}
       />
+
+      {data.email_health?.degraded && (
+        <EmailOutageBanner health={data.email_health} />
+      )}
 
       <AccountsOverview counts={data.counts} health={data.health_summary} activity={data.teacher_activity_summary} />
 
@@ -455,6 +461,59 @@ const TONE_CLASSES: Record<
 // ============================================================================
 // 2. Failed logins banner
 // ============================================================================
+
+function EmailOutageBanner({ health }: { health: AdminEmailHealth }) {
+  const lastOk = health.last_success_at
+    ? new Date(health.last_success_at).toLocaleString("tr-TR", {
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : null;
+  return (
+    <div className="rounded-md border border-rose-300 bg-rose-50 px-4 py-3 flex items-start gap-3 dark:bg-rose-500/10 dark:border-rose-500/30">
+      <MailWarning
+        className="size-5 shrink-0 mt-0.5 text-rose-700 dark:text-rose-300"
+        aria-hidden
+      />
+      <div className="flex-1 text-sm">
+        <div className="font-semibold text-rose-900 dark:text-rose-200">
+          E-posta gönderimi çalışmıyor
+        </div>
+        <div className="text-rose-800 dark:text-rose-200/90 mt-1">
+          Son 24 saatte denenen{" "}
+          <strong className="tabular-nums">{health.attempts_24h}</strong>{" "}
+          e-postanın{" "}
+          <strong className="tabular-nums">{health.failed_24h}</strong> tanesi (
+          <strong className="tabular-nums">%{health.failure_pct}</strong>)
+          ulaşmadı. Şifre sıfırlama ve veli bildirimleri bu süre boyunca
+          gitmiyor.
+          {lastOk && (
+            <>
+              {" "}
+              Son başarılı gönderim:{" "}
+              <strong className="tabular-nums">{lastOk}</strong>.
+            </>
+          )}
+        </div>
+        {health.last_error && (
+          <div className="mt-1.5 text-xs font-mono text-rose-900/80 dark:text-rose-200/70 break-all">
+            Sağlayıcı hatası: {health.last_error}
+          </div>
+        )}
+        <div className="mt-2">
+          <Link
+            href="/admin/communication-health"
+            className="underline font-medium text-rose-900 dark:text-rose-200 hover:text-rose-950"
+          >
+            İletişim sağlığını aç
+          </Link>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function FailedLoginsBanner({ count }: { count: number }) {
   return (

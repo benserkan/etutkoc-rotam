@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     # Email içindeki linkler için public URL (deploy sonrası değişir)
     app_base_url: str = "http://127.0.0.1:8081"
 
+    # Alarm e-postası için EK alıcılar (virgülle ayrılmış). Süper admin hesabının
+    # e-postası dışında da haber almak isteyen adresler (örn. kişisel Gmail —
+    # kurumsal alan adı çökerse ulaşılabilir kalır).
+    alarm_extra_emails: str = ""
+
     # SMS — pluggable sağlayıcı (P1 2026-05-30, VatanSMS 2026-05-31).
     # Yalnız telefon doğrulama OTP'si için kullanılır; otomatik SMS bildirimi YOK.
     # sms_enabled=false iken log-only (dev): kullanıcı paneline kod dev_test_code

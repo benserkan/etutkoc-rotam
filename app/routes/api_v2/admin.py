@@ -52,6 +52,7 @@ from app.routes.api_v2.schemas.admin import (
     AccountUnarchiveBody,
     AdminBadgesResponse,
     AdminDashboardCounts,
+    AdminEmailHealth,
     AdminDashboardResponse,
     AdminImpersonateBody,
     AdminImpersonateEndResult,
@@ -428,9 +429,17 @@ def admin_badges_v2(
         .filter(ContactRequest.status == CONTACT_STATUS_NEW)
         .count()
     )
+    from app.services.alarm_engine import unacknowledged_count as _unack
+
+    try:
+        unack_alarms = _unack(db)
+    except Exception:  # noqa: BLE001
+        unack_alarms = 0
+
     return AdminBadgesResponse(
         support_pending=support_svc.pending_count_super_admin(db),
         contact_new=contact_new,
+        unack_alarms=unack_alarms,
         checked_at=datetime.now(timezone.utc),
     )
 
@@ -705,6 +714,7 @@ def admin_dashboard_v2(
     return AdminDashboardResponse(
         counts=counts,
         failed_logins_24h=failed_logins_24h,
+        email_health=_email_health_for_dashboard(db),
         pending_subscription_requests=pending_subscription_requests,
         pending_contact_requests=pending_contact_requests,
         health_summary=health_summary,
@@ -1606,6 +1616,7 @@ def _institution_to_ref_brief(inst: Institution | None) -> InstitutionRefBrief |
 
 
 def _user_to_admin_item(u: User) -> AdminUserListItem:
+    from app.services.auth_security import is_locked as _is_locked
     from app.services.plans import is_trial_active
     return AdminUserListItem(
         id=u.id,
@@ -1618,6 +1629,7 @@ def _user_to_admin_item(u: User) -> AdminUserListItem:
         last_login_at=u.last_login_at,
         last_login_ip=u.last_login_ip,
         locked_until=u.locked_until,
+        locked_now=_is_locked(u),
         failed_login_count=u.failed_login_count or 0,
         must_change_password=bool(u.must_change_password),
         created_at=u.created_at,
@@ -1631,6 +1643,76 @@ def _user_to_admin_item(u: User) -> AdminUserListItem:
         is_demo=bool(getattr(u, "is_demo", False)),
         demo_label=getattr(u, "demo_label", None),
     )
+
+
+def _email_health_for_dashboard(db: Session) -> AdminEmailHealth:
+    """Panonun e-posta kesintisi bandı — alarm kuralıyla AYNI eşik/pencere.
+
+    Alarm e-postası, e-posta çöktüğünde gönderilemez; bu bant süper adminin
+    kesintiyi gördüğü birincil yüzeydir. Best-effort: hata olursa pano çökmez.
+    """
+    from app.models import CommunicationLog
+    from app.models.communication_log import (
+        CHANNEL_EMAIL,
+        FAILURE_STATUSES,
+        SUCCESS_STATUSES,
+    )
+    from app.services.alarm_engine import (
+        EMAIL_HEALTH_MIN_SAMPLE,
+        EMAIL_HEALTH_WINDOW_HOURS,
+        _val_email_delivery_failing,
+    )
+
+    try:
+        since = datetime.now(timezone.utc) - timedelta(hours=EMAIL_HEALTH_WINDOW_HOURS)
+        rows = (
+            db.query(CommunicationLog.status, sa_func.count(CommunicationLog.id))
+            .filter(
+                CommunicationLog.channel == CHANNEL_EMAIL,
+                CommunicationLog.created_at >= since,
+            )
+            .group_by(CommunicationLog.status)
+            .all()
+        )
+        counts = {str(s): int(c) for s, c in rows}
+        success = sum(counts.get(s, 0) for s in SUCCESS_STATUSES)
+        failed = sum(counts.get(s, 0) for s in FAILURE_STATUSES)
+        attempts = success + failed
+        pct = _val_email_delivery_failing(db)
+
+        last_success_at = (
+            db.query(sa_func.max(CommunicationLog.created_at))
+            .filter(
+                CommunicationLog.channel == CHANNEL_EMAIL,
+                CommunicationLog.status.in_(list(SUCCESS_STATUSES)),
+            )
+            .scalar()
+        )
+        last_error = None
+        if failed:
+            last_error = (
+                db.query(CommunicationLog.error)
+                .filter(
+                    CommunicationLog.channel == CHANNEL_EMAIL,
+                    CommunicationLog.status.in_(list(FAILURE_STATUSES)),
+                    CommunicationLog.error.isnot(None),
+                    CommunicationLog.created_at >= since,
+                )
+                .order_by(CommunicationLog.id.desc())
+                .limit(1)
+                .scalar()
+            )
+        return AdminEmailHealth(
+            attempts_24h=attempts,
+            failed_24h=failed,
+            failure_pct=pct,
+            degraded=attempts >= EMAIL_HEALTH_MIN_SAMPLE and pct >= 40,
+            last_success_at=last_success_at,
+            last_error=(last_error or None),
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("dashboard email health fail")
+        return AdminEmailHealth()
 
 
 def _users_invalidate() -> list[str]:

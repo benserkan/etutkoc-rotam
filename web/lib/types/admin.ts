@@ -108,9 +108,21 @@ export interface AuditLogItem {
   via_admin: number | null;
 }
 
+/** Panoda e-posta kesintisi bandı (son 24 saat gönderim sağlığı). */
+export interface AdminEmailHealth {
+  attempts_24h: number;
+  failed_24h: number;
+  failure_pct: number;
+  /** true → bant göster (yeterli örnek + eşik aşıldı). */
+  degraded: boolean;
+  last_success_at: string | null;
+  last_error: string | null;
+}
+
 export interface AdminDashboardResponse {
   counts: AdminDashboardCounts;
   failed_logins_24h: number;
+  email_health?: AdminEmailHealth;
   pending_subscription_requests?: number;
   pending_contact_requests?: number;
   health_summary: HealthSummary;
@@ -332,6 +344,8 @@ export interface AdminUserListItem {
   last_login_at: string | null;
   last_login_ip: string | null;
   locked_until: string | null;
+  /** Kilit ŞU AN aktif mi (sunucuda hesaplanır — locked_until geçmişte olabilir). */
+  locked_now: boolean;
   failed_login_count: number;
   must_change_password: boolean;
   created_at: string | null;
@@ -3176,6 +3190,8 @@ export interface OnboardCoachResult {
 export interface AdminBadgesResponse {
   support_pending: number;
   contact_new: number;
+  /** Görülmemiş alarm sayısı — "Gördüm" deyince düşer. */
+  unack_alarms?: number;
   checked_at: string;
 }
 

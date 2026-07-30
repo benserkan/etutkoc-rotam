@@ -71,9 +71,29 @@ def lockout_seconds_remaining(user: User, now: datetime | None = None) -> int:
     return max(0, int(delta))
 
 
+def clear_expired_lockout(user: User, now: datetime | None = None) -> bool:
+    """Süresi DOLMUŞ kilidi temizle + sayacı sıfırla. Temizlendiyse True.
+
+    Kilit süresi bir cezadır; süre dolunca ceza biter. Sayaç sıfırlanmazsa
+    kullanıcı kalıcı olarak "tek yanlış = anında kilit" moduna düşer (eşiğe
+    bir kez ulaşan hesap bir daha asla 5 hak alamaz). Kilit aktifken çağrılırsa
+    hiçbir şey yapmaz — cezayı erken bitirmez.
+    """
+    if user.locked_until is None:
+        return False
+    if is_locked(user, now):
+        return False
+    user.locked_until = None
+    user.failed_login_count = 0
+    return True
+
+
 def register_failed_login(user: User, now: datetime | None = None) -> bool:
     """Başarısız giriş kaydet. Eşik aşılırsa kilitle. Kilit aktif edildiyse True döner."""
     now = now or datetime.now(timezone.utc)
+    # Önceki kilidin süresi dolmuşsa sayaç sıfırdan başlar (yoksa eşiğe bir kez
+    # ulaşmış hesapta her yanlış deneme anında yeniden kilitlerdi).
+    clear_expired_lockout(user, now)
     user.failed_login_count = (user.failed_login_count or 0) + 1
     threshold, duration_min = LOCKOUT_POLICY.get(user.role, DEFAULT_LOCKOUT)
     if user.failed_login_count >= threshold:
