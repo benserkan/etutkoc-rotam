@@ -2342,6 +2342,9 @@ export interface IntegrityCronJob {
   last_run_at: string | null;
   age_hours: number | null;
   level: string;
+  /** "gunluk" | "haftalik" | "N dk aralik" — esik sikliga gore degisir. */
+  schedule_label: string | null;
+  expected_within_hours: number | null;
   last_status: string | null;
   last_error: string | null;
 }

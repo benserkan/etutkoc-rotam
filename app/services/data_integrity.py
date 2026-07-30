@@ -325,23 +325,32 @@ def kvkk_sla_check(db: Session) -> dict:
 # ---------------------------- Cron drift ----------------------------
 
 
-def cron_drift_check(db: Session, *, hours_warn: int = 25, hours_crit: int = 48) -> dict:
-    """Cron job'larının son çalışma tazeliği."""
+def cron_drift_check(db: Session) -> dict:
+    """Cron job'larının son çalışma tazeliği.
+
+    Eşikler işin SIKLIĞINA göre (`system_health.cron_thresholds_hours` — tek
+    kaynak). Eskiden herkese düz 25/48 saat uygulanıyordu; haftalık işler
+    çalıştıktan 48 saat sonra "kritik" görünüyordu, yani haftanın 5 günü
+    sağlıklı oldukları hâlde kırmızıydı (2026-07-31 saha bulgusu).
+    """
+    from app.services.system_health import cron_thresholds_hours
+
     rows = db.query(CronSchedule).all()
     now = _now()
     out: list[dict] = []
     for r in rows:
         if not getattr(r, "enabled", True):
             continue
+        warn_h, crit_h = cron_thresholds_hours(r)
         last = _aware(getattr(r, "last_run_at", None))
         if last is None:
             level = "warn"
             age_hours: int | None = None
         else:
             age_hours = int((now - last).total_seconds() / 3600)
-            if age_hours >= hours_crit:
+            if age_hours >= crit_h:
                 level = "critical"
-            elif age_hours >= hours_warn:
+            elif age_hours >= warn_h:
                 level = "warn"
             else:
                 level = "ok"
@@ -350,6 +359,13 @@ def cron_drift_check(db: Session, *, hours_warn: int = 25, hours_crit: int = 48)
             "last_run_at": last,
             "age_hours": age_hours,
             "level": level,
+            # Panelde "89 saat oldu ama neden kritik değil?" sorusunu yanıtlar.
+            "schedule_label": (
+                f"{r.interval_minutes} dk aralık" if r.interval_minutes
+                else "haftalık" if r.day_of_week is not None
+                else "günlük"
+            ),
+            "expected_within_hours": int(warn_h),
             "last_status": getattr(r, "last_status", None),
             "last_error": (getattr(r, "last_error", None) or "")[:200] or None,
         })

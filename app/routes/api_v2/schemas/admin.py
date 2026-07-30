@@ -2576,6 +2576,10 @@ class IntegrityCronJob(BaseModel):
     last_run_at: datetime | None = None
     age_hours: int | None = None
     level: str
+    # "günlük" / "haftalık" / "N dk aralık" — "89 saat olmuş ama neden sorun
+    # değil?" sorusunu panelde yanıtlar (eşik sıklığa göre değişir).
+    schedule_label: str | None = None
+    expected_within_hours: int | None = None
     last_status: str | None = None
     last_error: str | None = None
 

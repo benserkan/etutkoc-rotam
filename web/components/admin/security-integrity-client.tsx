@@ -242,6 +242,7 @@ export function SecurityIntegrityClient({ initial }: Props) {
                 <thead className="text-[11px] uppercase tracking-wide text-muted-foreground">
                   <tr>
                     <th className="px-2 py-1 text-left">Görev</th>
+                    <th className="px-2 py-1 text-left">Sıklık</th>
                     <th className="px-2 py-1 text-left">Son çalışma</th>
                     <th className="px-2 py-1 text-center">Durum</th>
                   </tr>
@@ -250,6 +251,14 @@ export function SecurityIntegrityClient({ initial }: Props) {
                   {cron.jobs.map((j) => (
                     <tr key={j.job_key}>
                       <td className="px-2 py-1 font-mono text-[11px]">{j.job_key}</td>
+                      <td className="px-2 py-1 text-[11px] text-muted-foreground whitespace-nowrap">
+                        {j.schedule_label ?? "—"}
+                        {j.expected_within_hours != null ? (
+                          <span className="block opacity-70">
+                            {j.expected_within_hours} saatte bir beklenir
+                          </span>
+                        ) : null}
+                      </td>
                       <td className="px-2 py-1 text-muted-foreground">
                         {j.last_run_at ? (
                           <>

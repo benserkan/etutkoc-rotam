@@ -46,6 +46,26 @@ CRON_STALE_HOURS_WARN = 25      # 25h (günlük cron için)
 CRON_STALE_HOURS_CRIT = 48      # 48h (kesin sorun)
 
 
+def cron_thresholds_hours(schedule: CronSchedule) -> tuple[float, float]:
+    """Bu cron için (uyarı, kritik) tazelik eşiği — SAAT cinsinden, TEK KAYNAK.
+
+    Eşik işin SIKLIĞINA göre değişir; düz 25/48 saat uygulamak haftalık işleri
+    haftanın 5 günü "kritik" gösterir (2026-07-31 saha bulgusu: Pazartesi çalışan
+    feature_discovery_scan/drop_alert/admin_weekly_digest Cuma günü kırmızıydı —
+    hepsi sağlıklıydı). Bütünlük paneli ile Sistem Sağlığı sayfası bu fonksiyonu
+    PAYLAŞIR, böylece iki yüzey asla çelişmez.
+    """
+    if schedule.interval_minutes:
+        # Aralıklı iş (5/10/60 dk): birkaç turu kaçırmak normal (worker yeniden
+        # başlatma), ama saatlerce sessizlik gerçek arızadır.
+        iv_h = schedule.interval_minutes / 60.0
+        return (max(2.0, iv_h * 6), max(6.0, iv_h * 20))
+    if schedule.day_of_week is not None:
+        # Haftalık: bir hafta + 1 saat tolerans; iki tur kaçarsa kritik.
+        return (24 * 7 + 1, 24 * 8)
+    return (float(CRON_STALE_HOURS_WARN), float(CRON_STALE_HOURS_CRIT))
+
+
 @dataclass
 class CronStatus:
     schedule: CronSchedule
@@ -128,10 +148,7 @@ def _cron_health(
     if last is None:
         return (None, "never")
     hours = (now - last).total_seconds() / 3600
-    # day_of_week NULL = günlük; aksi haftalık
-    is_weekly = schedule.day_of_week is not None
-    warn_h = (24 * 7 + 1) if is_weekly else CRON_STALE_HOURS_WARN
-    crit_h = (24 * 8) if is_weekly else CRON_STALE_HOURS_CRIT
+    warn_h, crit_h = cron_thresholds_hours(schedule)
     if hours >= crit_h:
         return (hours, "crit")
     if hours >= warn_h:
