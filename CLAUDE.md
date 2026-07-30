@@ -6,6 +6,81 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Kilit sayacı bug'ı + E-POSTA 10 GÜNDÜR ÖLÜ — CANLI (2026-07-30, commit `c49a6be`+`2135585`, migration YOK)
+
+**Tetikleyici:** koç #87 (Hatice, gerçek müşteri) "sürekli şifre bloklaması"
+yaşıyordu. Teşhis iki BAĞIMSIZ sorun ortaya çıkardı; ikincisi çok daha ağır.
+
+**BUG 1 — kilit sayacı hiç sıfırlanmıyordu (`auth_security.py`):**
+`register_failed_login` sayacı YALNIZ başarılı girişte sıfırlıyordu; kilit
+süresi dolunca sayaç eşikte kalıyordu → eşiğe bir kez ulaşan hesap **kalıcı
+olarak "tek yanlış = anında 10 dk kilit"** moduna düşüyordu. #87 kanıtı: 01:23'te
+5. yanlışta kilitlendi, **19 saat sonra** 20:17'de tek yanlış denemeyle
+`failed_count 6 + triggered_lock true` → 20:27'ye yeni kilit. Kullanıcının
+"kilit 20:27 ama o saatte deneme var" çelişkisi buydu: kilit 01:23'ten değil
+**20:17'de YENİDEN** kurulmuştu. Fix: `clear_expired_lockout()` — süresi dolmuş
+kilitte sayaç sıfırlanır, **aktif kilitte no-op** (ceza erken bitmez). Merkezî
+→ 5 giriş noktası kapsanır (web · api_v1 mobil · 2FA · şifre değiştirme · Jinja).
+`test_lockout_counter_reset.py` **12/12** (#87 senaryosu birebir; eski kodun
+count=6+anında-kilit ürettiği ayrıca kanıtlandı).
++ Admin panel: `locked_until` geçmişte olsa da "kilitli" yazıyordu → `locked_now`
+(sunucuda hesaplanan) eklendi; kart "Kilitli — HH:MM'de açılır" / "Kilit yok —
+süresi HH:MM'de doldu" ayrımını yapar.
+
+**BUG 2 (ASIL) — e-posta 21 Tem'den beri TAMAMEN ölü, 10 gün fark edilmedi:**
+- **Kanıt:** 20 Haz 16:14 → 20 Tem 23:44 arası **340 başarılı, 0 hata**; 21 Tem
+  16:06'dan itibaren **82 ardışık başarısız, 0 başarılı**, hepsi
+  `(535, b'Authentication Failed')`. Canlı SMTP testi de reddediyor.
+- **Kök neden:** ZeptoMail **müşteri doğrulama formu HİÇ gönderilmemiş**
+  ("Doğrulama formu henüz gönderilmedi" · "0/10000 e-posta mevcut" · doğrulanana
+  dek 100/gün limit). Deneme penceresi 20 Haz'da başlayıp **31 gün sonra** doldu
+  → Mail Agent devre dışı → SMTP 535. **Çapraz doğrulama:** ZeptoMail panosu
+  "son 30 gün 118 gönderildi" diyor; bizim log'da 30 Haz–20 Tem toplamı **tam
+  118** → iki sistem birebir uyuşuyor.
+- **DİKKAT (kavram):** `rotam@etutkoc.com` posta kutusu **Zoho Mail**'de,
+  işlemsel gönderim **ZeptoMail**'de — AYRI ürünler. Zoho webmail'den mail
+  gidiyor olması ZeptoMail hakkında HİÇBİR ŞEY söylemez (kullanıcı bu testle
+  yanıldı).
+- **Neden sessiz kaldı:** (a) e-posta teslimatını ölçen alarm kuralı YOKtu,
+  (b) mevcut alarmların kanalı `email` → kesinti kendini susturdu (27 Tem'de
+  gerçekten bir güvenlik alarmı tetiklendi, e-postası gidemedi).
+
+**EKLENEN İZLEME (hepsi CANLI):**
+- `alarm_engine` yeni kural **`email_delivery_failing`** — `communication_logs`
+  son 24s başarısızlık %'si; İletişim Sağlığı sayfasıyla AYNI veri+tanım. Eşik
+  **%40** (>%80 kritik), **min 5 örnek** (düşük hacimde yanlış alarm yok);
+  queued/suppressed paydaya girmez. Kanallar `push,in_app,email`.
+- Alarm motoruna **push kanalı** (e-postadan bağımsız taşıyıcı) +
+  **`ALARM_EXTRA_EMAILS`** (compose web+worker; prod'da `benserkan@gmail.com` —
+  kurumsal alan adı sorunluyken ulaşılabilir adres kalsın).
+- **Süper admin panosuna kırmızı kesinti bandı** (`email_health`: deneme/hata/%
+  + son başarılı gönderim + **sağlayıcı hata mesajı** + İletişim Sağlığı linki).
+  E-posta gidemezken uyarının görüldüğü BİRİNCİL yüzey.
+- Sol menü **"Alarmlar" rozeti** (`unack_alarms`, **72 saat** penceresi —
+  parametresiz sayım prod'da **2308** döndürüyordu [Haziran'dan kalma
+  abuse_open 1503 + error_groups 651] → rozet alarm körlüğü üretirdi).
+- **DÜRÜSTLÜK DÜZELTMESİ (canlı doğrulamada çıktı):** `delivery_status`
+  "email:ok" yazıyordu — `send_email` istisna fırlatmadıkça başarılı sayılıyordu,
+  sağlayıcı reddetse bile. Ve "push:1" gerçek gönderim değil çağrı sayısıydı.
+  Artık gerçek sayılar: canlı çıktı **`email:0/2|push:0|in_app:ok`**
+  (2 alıcı denendi 0 gitti · kayıtlı cihaz yok · yalnız panel çalıştı).
+  **KURAL: teslimat raporu asla "ok" varsaymaz — sağlayıcının dönüşü raporlanır.**
+- `test_email_health_alarm.py` **15/15**. Regresyon: auth 14 · auth_p1 10 ·
+  auth_p2 11 · auth_p4 14 · api_v1 47 · me 13 · admin 13 · admin_users 26 ·
+  alarms_abuse 21 · communication_health 10 · comm_log 28 · security_overview 14 ·
+  oldest_queued 4. web tsc+eslint temiz.
+
+**KULLANICI AKSİYONU (kod beklemiyor):** ZeptoMail → **Müşteri Doğrulama formunu
+gönder** (onay ~2 iş günü). Onaylanana kadar e-posta AKMAZ. Sonrasında SMTP
+token'ının hâlâ geçerli olduğu `docker compose exec web python` ile test edilmeli.
+**SIRADA:** e-posta akınca (1) alarm e-postasının benserkan@gmail.com'a düştüğünü
+doğrula, (2) **#87 Hatice "şifremi unuttum" akışını uçtan uca test et** — hesabı
+şu an kilitli DEĞİL (sayaç 6 ama fix canlı → sonraki yanlış denemede 1'e döner).
+NOT: #87'nin denemesi 10 Ağu'ya kadar aktif; şifresi 7 Tem kayıttan beri hiç
+değişmemiş, hiç şifre sıfırlama talebi kaydı YOK.
+
+---
+
 ## YENİ İŞ — Anasayfa tanıtım videosu (Rota konuşuyor) — CANLI (2026-07-29, commit `4ac0952`, migration YOK)
 
 **Bağlam (kullanıcı):** Site araçları metinle anlatılıyordu; gençler video izliyor,
