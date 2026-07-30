@@ -26,12 +26,32 @@ LEN=${#P}
 [ "$LEN" -eq 0 ] && { echo "Bos deger — iptal, degisiklik yok"; exit 1; }
 
 echo "Girilen deger: uzunluk=$LEN  onizleme=${P:0:6}***${P: -4}"
-if [ "$LEN" -lt 8 ]; then
-  echo "UYARI: cok kisa ($LEN) — eksik yapistirmis olabilirsin."
-elif [ "$LEN" -gt 40 ] && [ "$LEN" -lt 100 ]; then
-  echo "UYARI: uzunluk ($LEN) ne Zoho app sifresine (~16) ne ZeptoMail token'ina (~144) benziyor."
+
+# --- Sekil dogrulamasi (2026-07-30: SSH komut satiri token'a karisip .env'e
+# 697 karakterlik cop yazilmisti; onizleme gosterildi ama gozden kacti).
+# Sifre/token daima base64-benzeri: harf, rakam ve + / = . _ - . Komut satirinda
+# bulunan @ " ' bosluk : gibi karakterler ASLA olmaz → uyari degil, RED.
+if [ "$LEN" -lt 8 ] || [ "$LEN" -gt 200 ]; then
+  echo "HATA: uzunluk ($LEN) makul araligin (8-200) disinda."
+  echo "      Zoho app sifresi ~16, ZeptoMail token'i ~144 karakterdir."
+  echo "      Muhtemelen fazladan metin (komut satiri?) yapistirildi. Iptal."
+  exit 1
 fi
-read -r -p "Bu degeri uygulayalim mi? (e/h): " OK
+case "$P" in
+  ssh*|*@*|*\"*|*\'*|*bash*|*docker*)
+    echo "HATA: deger komut satiri metnine benziyor (ssh/@/tirnak/bash iceriyor)."
+    echo "      YALNIZCA panelden kopyaladigin sifre/token yapistirilmali. Iptal."
+    exit 1 ;;
+esac
+if printf '%s' "$P" | grep -q '[^A-Za-z0-9+/=._-]'; then
+  echo "HATA: deger beklenmeyen karakter iceriyor (yalnizca A-Z a-z 0-9 + / = . _ - olmali)."
+  echo "      Yanlis alan kopyalanmis olabilir. Iptal."
+  exit 1
+fi
+
+echo
+echo ">>> Bu deger BASKA bir sey degil, panelden kopyaladigin sifre/token mi?"
+read -r -p "    Uygulayalim mi? (e/h): " OK
 [ "$OK" = "e" ] || { echo "Iptal — degisiklik yok"; exit 1; }
 
 BACKUP=".env.bak.$(date +%Y%m%d_%H%M%S)"
