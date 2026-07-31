@@ -87,11 +87,21 @@ def _aware(dt: datetime | None) -> datetime | None:
 
 
 def _detect_active_impersonations(db: Session) -> list[AttentionItem]:
-    """Her aktif sahte oturum bir CRITICAL kart."""
+    """Her GERÇEKTEN aktif sahte oturum bir CRITICAL kart.
+
+    2026-07-31: `expires_at` kontrolü yoktu — süresi dolmuş ama kapatılmamış
+    kayıtlar (admin "Admin'e dön" yerine sekmeyi kapatınca kalır) sonsuza kadar
+    kritik uyarı üretiyordu; prod'da 5 haftalık bir kayıt hâlâ listedeydi.
+    Erişim JWT süresiyle çoktan bitmişti. `impersonation.list_active` ile aynı
+    kural — iki yüzey çelişmemeli.
+    """
     now = _now()
     rows = (
         db.query(ImpersonationSession)
-        .filter(ImpersonationSession.ended_at.is_(None))
+        .filter(
+            ImpersonationSession.ended_at.is_(None),
+            ImpersonationSession.expires_at > now,
+        )
         .all()
     )
     items: list[AttentionItem] = []
@@ -150,6 +160,10 @@ bir risk yoktur (kimse o makinenin başında değil); orada kalan şey yalnızca
 kapanmamış bir kayıttır ve onu `stale_session_cleanup` cron'u toplar."""
 IDLE_ALERT_MAX_HOURS = 24
 
+"""Dikkat Odasi = "SIMDI ne yapmaliyim". Bu kadar gundur tekrarlamamis bir sinyal
+artik aktif sorun degildir; kayit ilgili detay sayfasinda durmaya devam eder."""
+ATTENTION_MAX_STALE_DAYS = 14
+
 
 def _detect_super_admin_long_idle(
     db: Session, *, idle_minutes: int = 60
@@ -175,16 +189,30 @@ def _detect_super_admin_long_idle(
         )
         .all()
     )
-    items: list[AttentionItem] = []
+    # Ayni yonetici gun icinde birkac kez giris yapip cikis yapmadiysa her oturum
+    # ayri uyari uretirdi (prod'da tek kisi icin 4 ayni satir). Uyari kisi
+    # bazindadir: en son hareket eden oturumu bildir, digerlerini sayiya kat.
+    newest: dict[int, tuple] = {}
+    extra: dict[int, int] = {}
     for sess, user in rows:
+        ls = _aware(sess.last_seen_at) or now
+        prev = newest.get(user.id)
+        extra[user.id] = extra.get(user.id, 0) + 1
+        if prev is None or ls > (_aware(prev[0].last_seen_at) or now):
+            newest[user.id] = (sess, user)
+
+    items: list[AttentionItem] = []
+    for uid, (sess, user) in newest.items():
         last_seen = _aware(sess.last_seen_at) or now
         idle_min = int((now - last_seen).total_seconds() / 60)
+        others = extra.get(uid, 1) - 1
+        more = f" (+{others} açık oturum daha)" if others > 0 else ""
         items.append(AttentionItem(
             severity="warn",
             icon="⏱",
             title=f"Idle süper admin oturumu: {user.full_name or user.email}",
             description=(
-                f"{idle_min} dk hareketsiz · IP: {sess.ip or '—'}. "
+                f"{idle_min} dk hareketsiz · IP: {sess.ip or '—'}{more}. "
                 f"Tanımadığın bir oturumsa uzaktan kapat."
             ),
             action_url="/admin/security-monitor/sessions",
@@ -340,10 +368,22 @@ def _detect_unack_alarms(db: Session) -> list[AttentionItem]:
 
 
 def _detect_open_abuse_signals(db: Session) -> list[AttentionItem]:
-    """Açık abuse sinyali."""
+    """Açık abuse sinyali — yalnız warn/critical ve SON dönemde görülmüş.
+
+    2026-07-31: filtre yoktu; Haziran'dan kalma `info` sinyalleri (kendi test
+    girişlerimiz) Dikkat Odası'nda duruyordu. Alarm kuralı (`_val_abuse_open`)
+    zaten `info`'yu saymıyor — iki yüzey aynı ölçüyü kullanmalı, yoksa panel
+    "dikkat!" derken alarm sessiz kalıyor. Sinyaller Suistimal sayfasında
+    tam listeyle görünmeye devam eder.
+    """
+    cutoff = _now() - timedelta(days=ATTENTION_MAX_STALE_DAYS)
     rows = (
         db.query(AbuseSignal)
-        .filter(AbuseSignal.resolved_at.is_(None))
+        .filter(
+            AbuseSignal.resolved_at.is_(None),
+            AbuseSignal.severity != "info",
+            AbuseSignal.last_seen_at >= cutoff,
+        )
         .order_by(desc(AbuseSignal.last_seen_at))
         .limit(5)
         .all()
@@ -403,6 +443,10 @@ def _detect_open_critical_errors(db: Session) -> list[AttentionItem]:
         last = _aware(r.last_seen_at)
         stale_days = (now - last).days if last else None
         is_stale = stale_days is not None and stale_days >= 3
+        # Haftalardir tekrarlamamis hata "dikkat" konusu degil — Sistem Sagligi
+        # sayfasinda bayat rozetiyle durur, Dikkat Odasi'ni doldurmaz.
+        if stale_days is not None and stale_days >= ATTENTION_MAX_STALE_DAYS:
+            continue
         stale_note = ""
         if is_stale:
             stale_note = (

@@ -167,6 +167,26 @@ def main() -> int:
             check("12. 20 gün önceki kayıt uyarı ÜRETMEZ (masa riski yok)",
                   not any("28800 dk" in i.description for i in found), texts[:120])
 
+            # 13-15. Dikkat Odasi dedektorleri: bayat kayit yuzeye cikmamali
+            from app.services.attention_engine import (
+                _detect_active_impersonations,
+                _detect_open_abuse_signals,
+            )
+            db.query(ImpersonationSession).filter(
+                ImpersonationSession.id == ids["exp"]).update({"ended_at": None})
+            db.commit()
+            imp_items = _detect_active_impersonations(db)
+            check("13. Dikkat Odasi suresi dolmus sahte oturumu GOSTERMEZ",
+                  not any("bayat test kaydi" in i.description for i in imp_items),
+                  f"{[i.description[:40] for i in imp_items]}")
+            check("14. Dikkat Odasi canli sahte oturumu GOSTERIR",
+                  any("canli test kaydi" in i.description for i in imp_items),
+                  f"{[i.description[:40] for i in imp_items]}")
+            # idle uyarisi kisi basina tekil mi (ayni admin icin 2 acik oturum var)
+            idle_items = _detect_super_admin_long_idle(db)
+            check("15. Idle uyarisi kisi basina TEK (mukerrer satir yok)",
+                  len(idle_items) <= 1, f"adet={len(idle_items)}")
+
     finally:
         with SessionLocal() as db:
             db.execute(sa_delete(AlarmEvent).where(AlarmEvent.rule_key == f"{PFX}_rule"))
