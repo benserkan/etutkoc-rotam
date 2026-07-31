@@ -145,6 +145,28 @@ def main() -> int:
             check("10. Kayıt SİLİNMEDİ (denetim izi korunur) + kim onayladı yazılı",
                   oa is not None and oa.acknowledged_by_user_id == ids["admin"],
                   f"by={oa.acknowledged_by_user_id}")
+            # 11-12. Idle super admin uyarisi: 1-24 saat penceresi
+            from app.services.attention_engine import _detect_super_admin_long_idle
+            db.query(ActiveSession).filter(
+                ActiveSession.session_token == f"{PFX}_new").delete()
+            db.commit()
+            adm = db.get(User, ids["admin"])
+            recent = ActiveSession(
+                session_token=f"{PFX}_idle_recent", user_id=adm.id,
+                role=UserRole.SUPER_ADMIN, ip="1.2.3.4",
+                login_at=now - timedelta(hours=3), last_seen_at=now - timedelta(hours=3))
+            ancient = ActiveSession(
+                session_token=f"{PFX}_idle_old", user_id=adm.id,
+                role=UserRole.SUPER_ADMIN, ip="1.2.3.4",
+                login_at=now - timedelta(days=20), last_seen_at=now - timedelta(days=20))
+            db.add_all([recent, ancient]); db.commit()
+            found = _detect_super_admin_long_idle(db)
+            texts = " ".join(i.description for i in found)
+            check("11. 3 saat idle süper admin oturumu uyarı üretir",
+                  any("180 dk" in i.description for i in found), texts[:120])
+            check("12. 20 gün önceki kayıt uyarı ÜRETMEZ (masa riski yok)",
+                  not any("28800 dk" in i.description for i in found), texts[:120])
+
     finally:
         with SessionLocal() as db:
             db.execute(sa_delete(AlarmEvent).where(AlarmEvent.rule_key == f"{PFX}_rule"))

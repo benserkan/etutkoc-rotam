@@ -144,12 +144,26 @@ def _detect_active_impersonations(db: Session) -> list[AttentionItem]:
     return items
 
 
+"""Bu uyarının kapsadığı risk "masada açık unutulmuş oturum" — yani BUGÜN
+bırakılmış, birinin başına geçebileceği bir oturum. Günler önceki kayıtta böyle
+bir risk yoktur (kimse o makinenin başında değil); orada kalan şey yalnızca
+kapanmamış bir kayıttır ve onu `stale_session_cleanup` cron'u toplar."""
+IDLE_ALERT_MAX_HOURS = 24
+
+
 def _detect_super_admin_long_idle(
     db: Session, *, idle_minutes: int = 60
 ) -> list[AttentionItem]:
-    """60dk+ idle süper admin oturumu — unutulmuş oturum riski."""
+    """1-24 saat arası idle süper admin oturumu — unutulmuş oturum riski.
+
+    2026-07-31: üst sınır yoktu; haftalar önceki her kapanmamış kayıt "unutulmuş
+    oturum" diye uyarı üretiyordu (prod'da tek seferde 11 uyarı). Uyarının
+    önerdiği eylem — "tanımadığın oturumsa uzaktan kapat" — 3 hafta önceki bir
+    kayıt için anlamsız.
+    """
     now = _now()
     cutoff = now - timedelta(minutes=idle_minutes)
+    floor = now - timedelta(hours=IDLE_ALERT_MAX_HOURS)
     rows = (
         db.query(ActiveSession, User)
         .join(User, User.id == ActiveSession.user_id)
@@ -157,6 +171,7 @@ def _detect_super_admin_long_idle(
             ActiveSession.terminated_at.is_(None),
             User.role == UserRole.SUPER_ADMIN,
             ActiveSession.last_seen_at < cutoff,
+            ActiveSession.last_seen_at >= floor,
         )
         .all()
     )
