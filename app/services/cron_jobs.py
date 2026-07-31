@@ -797,6 +797,64 @@ def abuse_scan(db: Session, *, now: datetime) -> dict:
 # Retention sabitleri
 ERROR_EVENT_RETENTION_DAYS = 30
 SLOW_REQUEST_RETENTION_DAYS = 7
+# Bu süredir hiç hareket görmemiş oturum kaydı "bayat" sayılır ve kapatılır.
+# JWT/cookie ömürleri zaten çok daha kısa; kayıt açık kalması yalnızca kullanıcı
+# çıkış yapmadan sekmeyi kapattığı için olur.
+STALE_SESSION_DAYS = 30
+
+
+def stale_session_cleanup(db: Session, *, now: datetime) -> dict:
+    """Gerçekliğini yitirmiş oturum kayıtlarını kapat (veri SİLİNMEZ).
+
+    2026-07-31 saha bulgusu: Güvenlik Kamarası "9 aktif oturum" gösteriyordu ama
+    6'sı 72-75 GÜN önceden, IP 127.0.0.1 — ilk kurulum dönemine ait, hiç
+    sonlandırılmamış kayıtlar. Aynı şekilde süresi dolmuş ama kapatılmamış
+    kimliğe-bürünme oturumları beş haftadır "aktif" görünüp kritik uyarı
+    üretiyordu. İkisinde de erişim çoktan bitmişti; sorun kaydın kapanmamasıydı.
+
+    İki iş yapar:
+      1. STALE_SESSION_DAYS'dir hareketsiz ActiveSession → terminated
+      2. expires_at geçmiş ama ended_at boş ImpersonationSession → ended
+
+    Kayıtlar silinmez, yalnızca kapatılır — denetim izi korunur.
+    """
+    from app.models import ActiveSession, ImpersonationSession
+
+    cutoff = now - timedelta(days=STALE_SESSION_DAYS)
+    stale = (
+        db.query(ActiveSession)
+        .filter(
+            ActiveSession.terminated_at.is_(None),
+            ActiveSession.last_seen_at < cutoff,
+        )
+        .all()
+    )
+    for s in stale:
+        s.terminated_at = now
+        s.termination_reason = "stale_cleanup"
+
+    expired_imp = (
+        db.query(ImpersonationSession)
+        .filter(
+            ImpersonationSession.ended_at.is_(None),
+            ImpersonationSession.expires_at <= now,
+        )
+        .all()
+    )
+    for i in expired_imp:
+        i.ended_at = i.expires_at  # gerçekte eriştiği son an
+
+    db.commit()
+    logger.info(
+        "stale_session_cleanup: %d oturum + %d kimliğe-bürünme kapatıldı (cutoff=%s)",
+        len(stale), len(expired_imp), cutoff.isoformat(),
+    )
+    return {
+        "sessions_closed": len(stale),
+        "impersonations_closed": len(expired_imp),
+        "cutoff": cutoff.isoformat(),
+        "stale_days": STALE_SESSION_DAYS,
+    }
 
 
 def error_event_retention(db: Session, *, now: datetime) -> dict:
@@ -979,4 +1037,6 @@ JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "release_dead_reservations": release_dead_reservations,
     # Online görüşme randevuları — seri üretimi + hatırlatmalar (10 dk)
     "appointment_maintenance": appointment_maintenance,
+    # Bayat oturum + kapanmamış kimliğe-bürünme kaydı temizliği (günlük)
+    "stale_session_cleanup": stale_session_cleanup,
 }

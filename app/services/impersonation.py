@@ -123,13 +123,26 @@ def is_expired(row: ImpersonationSession, *, now: datetime | None = None) -> boo
     return expires is not None and expires <= now
 
 
-def list_active(db: Session) -> list[dict]:
-    """Şu an aktif (ended_at NULL ve süresi dolmamış) oturumlar."""
+def list_active(db: Session, *, include_expired: bool = False) -> list[dict]:
+    """Şu an GERÇEKTEN aktif (ended_at NULL ve süresi dolmamış) oturumlar.
+
+    2026-07-31: sorgu yalnız `ended_at`'e bakıyordu; süresi dolmuş ama açıkça
+    kapatılmamış oturumlar (admin "Admin'e dön" yerine sekmeyi kapatınca kayıt
+    açık kalır) sonsuza kadar "aktif" görünüp her biri KRİTİK uyarı üretiyordu —
+    prod'da 5 haftalık bir kayıt hâlâ listedeydi. Erişim zaten JWT süresiyle
+    bitmişti; sorun yalnızca kaydın kapanmamasıydı.
+
+    `include_expired=True` denetim amaçlı tam listeyi verir (kapanmamış kayıtları
+    görmek için); varsayılan yüzeyler yalnız canlı oturumları saymalı.
+    """
     now = _now()
+    q = db.query(ImpersonationSession).filter(
+        ImpersonationSession.ended_at.is_(None)
+    )
+    if not include_expired:
+        q = q.filter(ImpersonationSession.expires_at > now)
     rows = (
-        db.query(ImpersonationSession)
-        .filter(ImpersonationSession.ended_at.is_(None))
-        .order_by(desc(ImpersonationSession.started_at))
+        q.order_by(desc(ImpersonationSession.started_at))
         .limit(50)
         .all()
     )

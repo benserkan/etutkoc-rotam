@@ -1891,6 +1891,16 @@ export function useAlarmAck() {
   );
 }
 
+/** Belirtilen saatten eski gorulmemis alarmlari toplu onayla (birikinti temizligi). */
+export function useAlarmAckOlder() {
+  return useSecurityAction<{ hours: number }>(
+    ({ hours }) =>
+      `/api/v2/admin/security-monitor/alarms/ack-older?hours=${hours}`,
+    null,
+    "Eski alarmlar onaylanamadı",
+  );
+}
+
 export function useAlarmUpdateRule() {
   return useSecurityAction<{ ruleId: number; body: AlarmRuleUpdateBody }>(
     ({ ruleId }) => `/api/v2/admin/security-monitor/alarms/rules/${ruleId}/update`,

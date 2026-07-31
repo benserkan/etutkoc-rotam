@@ -527,6 +527,36 @@ def acknowledge(
     return row
 
 
+def acknowledge_older_than(
+    db: Session, *, user_id: int, hours: int, autocommit: bool = True
+) -> int:
+    """Belirtilen saatten ESKİ görülmemiş alarmları toplu "gördüm" işaretle.
+
+    2026-07-31: prod'da 2308 onaysız alarm birikmişti (çoğu Haziran'dan,
+    kuralları o zamandan beri düzeltilmiş). Tek tek kapatmak imkânsız olduğu
+    için Dikkat Odası aylardır geçersiz uyarılarla doluydu ve gerçek bir sorun
+    aradan seçilemiyordu. Kayıt SİLİNMEZ — yalnızca "görüldü" damgası basılır.
+
+    Kaç kayıt işaretlendiğini döner.
+    """
+    cutoff = _now() - timedelta(hours=hours)
+    rows = (
+        db.query(AlarmEvent)
+        .filter(
+            AlarmEvent.acknowledged_at.is_(None),
+            AlarmEvent.triggered_at < cutoff,
+        )
+        .all()
+    )
+    now = _now()
+    for r in rows:
+        r.acknowledged_at = now
+        r.acknowledged_by_user_id = user_id
+    if autocommit:
+        db.commit()
+    return len(rows)
+
+
 def unacknowledged_count(db: Session, *, hours: int | None = None) -> int:
     """Görülmemiş alarm sayısı. hours verilirse yalnız o pencere.
 
@@ -627,6 +657,7 @@ def live_event_stream(db: Session, *, since_seconds: int = 300, limit: int = 50)
 __all__ = [
     "EvaluationResult",
     "acknowledge",
+    "acknowledge_older_than",
     "evaluate_all",
     "list_recent_events",
     "list_rules",

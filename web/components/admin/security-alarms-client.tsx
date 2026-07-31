@@ -3,13 +3,13 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { BellRing, Radio, ScanSearch } from "lucide-react";
+import { BellRing, CheckCheck, Radio, ScanSearch } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { adminKeys, getAdminSecurityAlarms } from "@/lib/api/admin";
-import { useAlarmAck, useAlarmScan, useAlarmUpdateRule } from "@/lib/hooks/use-admin-mutations";
+import { useAlarmAck, useAlarmAckOlder, useAlarmScan, useAlarmUpdateRule } from "@/lib/hooks/use-admin-mutations";
 import type { AlarmRuleItem, AlarmsResponse } from "@/lib/types/admin";
 import { fmtDateTime } from "@/components/admin/security-ui";
 
@@ -34,6 +34,7 @@ export function SecurityAlarmsClient({ initial }: Props) {
 
   const scan = useAlarmScan();
   const ack = useAlarmAck();
+  const ackOlder = useAlarmAckOlder();
 
   return (
     <div className="space-y-5">
@@ -56,11 +57,34 @@ export function SecurityAlarmsClient({ initial }: Props) {
         </Link>
       </header>
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="text-sm"><b>{d.unack_count}</b> onaylanmamış alarm</div>
-        <Button size="sm" onClick={() => scan.mutate()} disabled={scan.isPending}>
-          <ScanSearch className="size-4" aria-hidden /> {scan.isPending ? "Taranıyor…" : "Şimdi tara"}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          {d.unack_count > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => {
+                if (
+                  window.confirm(
+                    "72 saatten ESKİ görülmemiş alarmlar 'görüldü' işaretlensin mi?\n\n" +
+                      "Kayıtlar silinmez; yalnızca Dikkat Odası'ndan düşerler. " +
+                      "Son 72 saatteki alarmlara dokunulmaz.",
+                  )
+                ) {
+                  ackOlder.mutate({ hours: 72 });
+                }
+              }}
+              disabled={ackOlder.isPending}
+            >
+              <CheckCheck className="size-4" aria-hidden />
+              {ackOlder.isPending ? "İşaretleniyor…" : "Eskileri temizle"}
+            </Button>
+          ) : null}
+          <Button size="sm" onClick={() => scan.mutate()} disabled={scan.isPending}>
+            <ScanSearch className="size-4" aria-hidden /> {scan.isPending ? "Taranıyor…" : "Şimdi tara"}
+          </Button>
+        </div>
       </div>
 
       {/* Kurallar */}

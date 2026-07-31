@@ -8113,6 +8113,35 @@ def admin_security_alarms_ack_v2(
 
 
 @router.post(
+    "/security-monitor/alarms/ack-older",
+    response_model=MutationResponse[SecurityActionResult],
+)
+def admin_security_alarms_ack_older_v2(
+    hours: int = Query(72, ge=1, le=24 * 365),
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Belirtilen saatten eski görülmemiş alarmları toplu onayla.
+
+    Aylarca birikmiş, kuralları o zamandan beri düzeltilmiş alarmlar Dikkat
+    Odası'nı doldurup gerçek sorunu görünmez yapıyordu (2026-07-31: 2308 kayıt).
+    Kayıt silinmez, yalnızca "görüldü" damgası basılır.
+    """
+    from app.services.alarm_engine import acknowledge_older_than
+
+    n = acknowledge_older_than(db, user_id=user.id, hours=hours)
+    return MutationResponse[SecurityActionResult](
+        data=SecurityActionResult(
+            message=(
+                f"{n} eski alarm görüldü olarak işaretlendi."
+                if n else "İşaretlenecek eski alarm yok."
+            )
+        ),
+        invalidate=_SECURITY_ALARMS_INVALIDATE,
+    )
+
+
+@router.post(
     "/security-monitor/alarms/rules/{rule_id}/update",
     response_model=MutationResponse[SecurityActionResult],
 )
