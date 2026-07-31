@@ -6,6 +6,68 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Güvenlik Kamarası yanlış-alarm temizliği — CANLI (2026-07-31, migration `g7h0k3m4m77g`)
+
+**Tetikleyici:** kullanıcı Güvenlik Kamarası ekran görüntüsü paylaştı — **11 kritik
+uyarı**. Denetimde **hiçbirinin güncel olmadığı** çıktı. Ortak hastalık (bugünün
+5. tekrarı): panel "hâlâ doğru" ile "bir zamanlar doğruydu, kimse kapatmadı"
+ayrımını yapmıyor.
+
+**Düzeltilen 6 kaynak:**
+1. **Cron tazeliği (`data_integrity.cron_drift_check`)** — TÜM işlere düz 25s/48s
+   eşiği uygulanıyordu; haftalık işler (Pazartesi çalışan feature_discovery_scan/
+   drop_alert/admin_weekly_digest) **haftanın 5 günü kritikti**. `system_health`
+   zaten doğru yapıyordu → iki yüzey çelişiyordu. Eşik hesabı TEK KAYNAĞA alındı
+   (`system_health.cron_thresholds_hours`): günlük 25/48s · haftalık 169s/8g ·
+   **aralıklı iş** 6×/20× aralık (yeni — 10 dk'lık iş 24 saat sessiz kalsa bile
+   "ok" görünüyordu). Panele "Sıklık" sütunu ("haftalık · 169 saatte bir beklenir").
+2. **`impersonation.list_active`** — docstring "süresi dolmamış" diyordu ama
+   sorguda `expires_at` filtresi YOKtu. Admin "Admin'e dön" yerine sekmeyi
+   kapatınca kayıt açık kalıyor → sonsuza kadar "aktif" + KRİTİK (prod'da 5
+   haftalık kayıt listedeydi). Erişim JWT süresiyle çoktan bitmişti.
+   +`include_expired` (denetim için).
+3. **`attention_engine._detect_active_impersonations`** — AYNI hatanın ikizi,
+   ayrı sorgu. Aynı kurala bağlandı.
+4. **`_detect_open_abuse_signals`** — filtre yoktu; alarm kuralı
+   (`_val_abuse_open`) `info`'yu saymazken dedektör sayıyordu. Artık
+   warn/critical + son 14 gün.
+5. **`_detect_open_critical_errors`** — 17 gündür tekrarlamamış hata uyarı
+   üretiyordu → 14 günden eskisi Dikkat Odası'na girmez (Sistem Sağlığı'nda
+   bayat rozetiyle durur).
+6. **`_detect_super_admin_long_idle`** — üst sınır yoktu (haftalar önceki kayıt
+   "masada unutulmuş oturum" sanılıyordu) + kişi başına tekilleştirilmedi (tek
+   kişi için 4 aynı satır). Artık **1-24 saat** penceresi + kişi başına tek
+   satır ("+N açık oturum daha").
+
+**Yeni cron `stale_session_cleanup`** (migration `g7h0k3m4m77g`, yalnız
+cron_schedules satırı; bool bind `:e=True` kuralı): günlük 04:20 UTC —
+30 gündür hareketsiz ActiveSession → terminated (`reason=stale_cleanup`) +
+süresi dolmuş ama kapanmamış ImpersonationSession → `ended_at=expires_at`.
+**Kayıt SİLİNMEZ**, yalnız kapatılır (denetim izi korunur). 30 gün eşiği
+refresh token ömrüyle hizalı — kullanıcı 3 hafta sonra dönüp oturumunu
+sürdürebilir. Prod ilk koşuda **489 oturum + tüm kapanmamış kimliğe-bürünme**
+kapattı; kalan 167 oturumun hiçbiri 30 günü aşmıyor.
+
+**Toplu alarm onayı:** `acknowledge_older_than()` + POST
+`/security-monitor/alarms/ack-older?hours=N` + Alarmlar sayfasına
+"Eskileri temizle" butonu (onaylı, varsayılan 72 saat). Kayıt silinmez,
+"görüldü" damgası basılır. Prod'da **2308 → 1**.
+
+**SONUÇ (prod):** Dikkat Odası **11 kritik + 1 uyarı → 1 kritik + 1 uyarı**
+(kalan kritik = gerçek e-posta kesintisi alarmı, sorun çözülmüş; kullanıcı
+"Gördüm" ile kapatabilir).
+
+**Test:** `test_cron_freshness_thresholds` 10/10 · `test_security_stale_records`
+16/16. Regresyon: security_overview 14 · sessions 17 · alarms_abuse 21 ·
+impersonation_bff 8 · admin 13 · admin_users 26. web tsc+eslint temiz.
+
+**KURAL:** Bir dedektör "şu an dikkat" listesine kart koyuyorsa, aynı olguyu
+ölçen alarm kuralıyla AYNI filtreyi kullanmalı; ayrıca her "açık/aktif" sorgusu
+kaydın hâlâ geçerli olup olmadığını (expires_at / last_seen tazeliği) sormalı.
+Yoksa panel gerçek sorunu gürültüde kaybeder.
+
+---
+
 ## YENİ İŞ — Kilit sayacı bug'ı + E-POSTA 10 GÜNDÜR ÖLÜ — CANLI (2026-07-30, commit `c49a6be`+`2135585`, migration YOK)
 
 **Tetikleyici:** koç #87 (Hatice, gerçek müşteri) "sürekli şifre bloklaması"
