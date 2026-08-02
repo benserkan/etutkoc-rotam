@@ -46,6 +46,15 @@ DEFAULT_LEARNING_STEPS_MIN = [10, 60]  # AGAIN sonrası 10dk, sonra 1 saat (in-s
 MIN_INTERVAL_DAYS = 1
 MAX_INTERVAL_DAYS = 365 * 3  # 3 yıl üst sınır
 
+# Aynı gün içindeki tekrar başarılar aralığı UZATMAZ.
+# Gerekçe: stability çarpımsal büyür (başarıda ~×2.5-5.6). Kullanıcı arka arkaya
+# "çözdüm"e basarsa (yavaş arayüz, çift dokunuş, alıştırma amaçlı tekrar) vade
+# katlanarak ileri fırlar — sahada 8 basışta 191.381 güne (2029) çıktığı görüldü.
+# Kısa aralıklı tekrar uzun süreli hafızanın kanıtı değildir; alıştırmadır.
+# rating=1 (yine yanlış) BU KURALIN DIŞINDADIR — unutma gerçek bilgidir, aralığı
+# kısaltması gerekir. WQ_STREAK_MIN_GAP_HOURS ile aynı eşik (tutarlı politika).
+SAME_DAY_GAP_HOURS = 20
+
 
 # Rating → enum-friendly sabitler
 RATING_AGAIN = 1
@@ -84,6 +93,9 @@ class FsrsState:
     last_reviewed_at: datetime | None = None
     review_count: int = 0
     lapse_count: int = 0
+    # Kartın hâlihazırdaki vadesi. Aynı gün tekrarında vade İLERİ ATILMAZ,
+    # olduğu gibi korunur (verilmezse eski stabiliteden yeniden türetilir).
+    due_at: datetime | None = None
 
     def copy(self) -> "FsrsState":
         return FsrsState(
@@ -93,6 +105,7 @@ class FsrsState:
             last_reviewed_at=self.last_reviewed_at,
             review_count=self.review_count,
             lapse_count=self.lapse_count,
+            due_at=self.due_at,
         )
 
 
@@ -105,6 +118,9 @@ class FsrsResult:
     scheduled_days: float
     due_at: datetime
     elapsed_days: float
+    # True ise: aynı gün içinde tekrar başarı → vade/stabilite İLERLETİLMEDİ.
+    # Çağıran taraf bunu "alıştırma yapıldı, program değişmedi" diye yorumlar.
+    same_day_practice: bool = False
 
 
 # ============================================================================
@@ -194,6 +210,8 @@ def compute_next(
     if now.tzinfo is None:
         now = now.replace(tzinfo=timezone.utc)
 
+    same_day_practice = False
+
     # NEW kart → ilk değerlendirme (last_reviewed_at None)
     if state.state == STATE_NEW or state.last_reviewed_at is None:
         new_s = _initial_stability(rating)
@@ -206,14 +224,32 @@ def compute_next(
             last = last.replace(tzinfo=timezone.utc)
         elapsed = max(0.0, (now - last).total_seconds() / 86400.0)
         new_d = _difficulty_update(state.difficulty, rating)
-        new_s = _stability_update(state.stability, new_d, rating, elapsed)
-        if rating == RATING_AGAIN:
-            new_state = STATE_RELEARNING
+
+        if rating != RATING_AGAIN and elapsed * 24.0 < SAME_DAY_GAP_HOURS:
+            # Aynı gün tekrar başarı: alıştırma. Stabilite ve vade DEĞİŞMEZ;
+            # yalnız zorluk algısı güncellenir (gerçek bilgi taşır).
+            same_day_practice = True
+            new_s = state.stability
+            new_state = state.state
         else:
-            new_state = STATE_REVIEW
+            new_s = _stability_update(state.stability, new_d, rating, elapsed)
+            new_state = STATE_RELEARNING if rating == RATING_AGAIN else STATE_REVIEW
 
     sched = _scheduled_days(new_s, retention)
-    due = now + timedelta(days=sched)
+    if same_day_practice:
+        # Vade ileri atılmaz: varsa mevcut vade korunur, yoksa son tekrardan
+        # itibaren eski stabiliteyle türetilir (now'a kaydırılmaz).
+        due = state.due_at
+        if due is None:
+            anchor = state.last_reviewed_at or now
+            if anchor.tzinfo is None:
+                anchor = anchor.replace(tzinfo=timezone.utc)
+            due = anchor + timedelta(days=sched)
+        elif due.tzinfo is None:
+            due = due.replace(tzinfo=timezone.utc)
+    else:
+        due = now + timedelta(days=sched)
+
     return FsrsResult(
         stability=new_s,
         difficulty=new_d,
@@ -221,6 +257,7 @@ def compute_next(
         scheduled_days=sched,
         due_at=due,
         elapsed_days=elapsed,
+        same_day_practice=same_day_practice,
     )
 
 

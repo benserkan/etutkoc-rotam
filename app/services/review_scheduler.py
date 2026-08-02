@@ -280,6 +280,7 @@ def record_review(
         last_reviewed_at=card.last_reviewed_at,
         review_count=card.review_count,
         lapse_count=card.lapse_count,
+        due_at=card.due_at,
     )
 
     result = compute_next(prev, rating, now)

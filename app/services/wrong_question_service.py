@@ -431,6 +431,7 @@ def record_attempt(
         difficulty=wq.fsrs_difficulty,
         state=wq.fsrs_state,
         last_reviewed_at=wq.last_reviewed_at,
+        due_at=as_aware(wq.due_at),
     )
     res = compute_next(state, rating, now)
     wq.fsrs_stability = res.stability

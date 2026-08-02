@@ -368,6 +368,89 @@ değişirse hangisinin etki ettiği ölçülemez ve üçü de öğrenmeyi sıfı
   görsel verilemez → feed carousel'i Hikâyeler'de altlı üstlü boşlukla görünür
   (bozuk değil, sadece tam ekran değil).
 
+### 7.8 **30 TEMMUZ — YAŞ KIRILIMI ANALİZİ: teşhis değişti** (CSV: `573118503086463-Reklamlar-6-Tem-2026-30-Tem-2026.csv`)
+
+**A2 kampanyası toplamı (20-30 Tem):** 2.110,21 TL · 14.005 gösterim · 7.075 erişim ·
+**6 konuşma · 351,70 TL/konuşma** · sıklık 1,98.
+
+Reklam bazında: video (`Yeni Etkileşim Reklamı`) 1.229,63 TL → 4 konuşma (307,41 TL) ·
+carousel 880,20 TL → 2 konuşma (440,10 TL). **Ama bu iki sayı yanıltıcı** — asıl
+kırılım yaşta.
+
+#### Bulgu 1 — bütçenin %36'sı hedef yaş DIŞINA gitti
+
+Reklam seti yaşı **35-55** olarak kuruldu. Gerçekleşen:
+
+| Yaş | Harcama | Konuşma | Konuşma başına |
+|---|---|---|---|
+| 18-24 | 453,82 TL | 0 | — |
+| 25-34 | 295,09 TL | 1 | 295,09 TL |
+| 35-44 | 523,80 TL | 1 | 523,80 TL |
+| **45-54** | **683,53 TL** | **3** | **227,84 TL** |
+| **55-64** | **136,34 TL** | **1** | **136,34 TL** |
+| 65+ | 17,64 TL | 0 | — |
+| **Toplam** | **2.110,33 TL** | **6** | **351,72 TL** |
+
+Hedef bandın tamamen dışındaki yaşlara (18-34 + 65+) **766,55 TL = bütçenin %36,3'ü**
+harcandı ve karşılığında 1 konuşma geldi (766 TL'ye). Kampanya A'da bu oran %23'tü;
+"minimum yaş 35 sert kontrol" önlemi **işe yaramadı, kaçak büyüdü.**
+
+#### Bulgu 2 — 7.2'deki "havuz doydu" tezi YANLIŞ çıktı
+
+Sıklık 1,5-2,0 arasında (eşik 3). Havuz doymuyor. Sebep şu: **Meta dar havuzda
+sıkışmıyor, ondan KAÇIYOR.** "En yüksek hacim" teklif stratejisi ucuz gösterim
+arar; CPM yaşla birlikte sert yükseliyor (18-24'te 80-105 TL → 45-54'te 223-251 TL
+→ 55-64'te 301-371 TL). Meta bütçeyi ucuz gençlere kaydırıp "hacim" üretiyor,
+ama o gösterimler satın alamayacak kişilere gidiyor.
+
+> Düzeltme: kitle genişletmesi tek başına bunu **çözmez**. Önce yaş kaçağı kapatılmalı.
+
+#### Bulgu 3 — dönüşen yaş 45-64, hedeflenen 35-44 değil
+
+45-64 bandı: 819,87 TL → **4 konuşma → 204,97 TL**. 35-44 bandı: 523,80 TL → 1
+konuşma → 523,80 TL. Kampanya A'da da yıldız segment 45-54'tü (erkek, 55,8 TL).
+İki kampanya da aynı şeyi söylüyor.
+
+**Neden mantıklı:** kreatif artık **YKS** kanıtı (üniversite sonuçları). 18 yaşında
+bir çocuğun velisi 45-60 yaşındadır. Hedefleme ise "13-17 çocuklu ebeveyn" (LGS/lise
+çağı) — **kreatif ile kitle birbirini tutmuyor.**
+
+#### Bulgu 4 — carousel doğru yaşta EŞİĞİN ALTINDA çalışıyor
+
+| Reklam | 18-34'e harcanan | 45-64'e harcanan | 45-64 konuşma başına |
+|---|---|---|---|
+| Carousel | 457,64 TL (bütçesinin %52'si) → 0 konuşma | 282,54 TL | **141,27 TL** |
+| Video | 291,27 TL (%24) → 1 konuşma | 537,33 TL | 268,67 TL |
+
+Carousel bütçesinin yarısını 18-34'e yedirdi (başarı kartları öğrenciyi çekiyor:
+18-24'te tüm-tıklama TO %1,71, 25-34'te %2,05 — 35-44'te %0,66). **Ama doğru yaşta
+141 TL/konuşma = 150 TL eşiğinin ALTINDA.** Yani kreatif çalışıyor, hedefleme bozuk.
+
+#### Sonuç — kararı belirleyen tek sayı
+
+Bütün bu tablo, konuşmaların **gerçek yanıta dönüp dönmediğine** bağlı. Kampanya
+A'da 8/8 hayaletti. A2'de şablon değişti (3 hazır soru = daha yüksek niyet eşiği).
+
+- **6 konuşmanın ≥2'si gerçekten yazıştıysa** → makine çalışıyor. TEK değişiklik:
+  yaşı **45-64**'e sabitle (Advantage+ hedef kitle kontrollerinden sert sınır).
+  Aynı anda "Ergenlik Çağında Çocuğu Olan Anne Babalar (13-17)" kutusu kaldırılır —
+  YKS kreatifiyle zaten yanlış segment. Bu bir yeniden kurulumdur, yeni taban çizgisi
+  sayılır.
+- **0-1 yanıt geldiyse** → sorun hedefleme değil **teklif/huni**. Tıklama satın
+  almaya devam etmenin anlamı yok; durdur, Ağustos ortasında dönüşüm eylemi
+  değiştirilerek (form + geri arama, ya da iniş sayfası) yeniden kur.
+
+**Mevsim notu:** 30 Temmuz tatil dip noktası; koçluk kararı Ağustos sonu-Eylül'de
+verilir. Dosyanın kendi "musluk modeli" kuralı bu pencereyi işaret ediyor.
+30 Tem - 20 Ağu arası kesintisiz yayın ≈ 5.000 TL (KDV dahil) ve en zayıf pencerede.
+
+**Hesap notu:** Ads Manager'da **yayınlanmamış 1 taslak değişiklik** duruyor
+("Gözden Geçir ve Yayınla (1)"). 7.5'teki bozuk çoğaltma taslağı olabilir —
+kontrol edilip silinmeli.
+
+**KVKK:** altı öğrenciden ücretli reklam onayı **alındı ve teyit edildi** (2026-07-30).
+7.7'deki açık madde kapandı.
+
 ## 8) Yayın sonrası rutin
 
 - WhatsApp'a 5-10 dk içinde dön (/tanisma şablonu) — dönüşümün yarısı hız.

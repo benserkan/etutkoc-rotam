@@ -40,6 +40,18 @@ const RATE: { rating: 1 | 2 | 3 | 4; label: string; cls: string }[] = [
   { rating: 4, label: "Kolayca", cls: "bg-cyan-700" },
 ];
 
+/** Vade tarihini öğrencinin anlayacağı dile çevir ("vadesi gelmedi" yetmiyor). */
+function dueLabel(iso: string | null): string {
+  if (!iso) return "henüz planlanmadı";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "henüz planlanmadı";
+  const days = Math.ceil((d.getTime() - Date.now()) / 86_400_000);
+  if (days <= 0) return "bugün";
+  if (days === 1) return "yarın";
+  const tarih = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  return `${tarih} (${days} gün sonra)`;
+}
+
 function aiErr(e: unknown): string {
   const code = e instanceof ApiError ? e.code : null;
   const map: Record<string, string> = {
@@ -612,21 +624,43 @@ function DetailSheet({
         {/* Yeniden çöz (açık soruda her zaman) */}
         {!closed ? (
           <View className="rounded-xl border border-slate-200 bg-slate-50 p-3">
-            <Text className="mb-2 text-xs font-medium text-slate-700">
-              Yeniden çöz, sonra sonucu işaretle
-              {!item.is_due ? " (vadesi gelmedi ama deneyebilirsin)" : ""}:
+            <Text className="text-xs font-medium text-slate-700">
+              Yeniden çöz, sonra sonucu işaretle:
             </Text>
+            {item.is_due ? (
+              <Text className="mb-2 mt-0.5 text-[11px] text-amber-700">
+                Tekrar zamanı geldi.
+              </Text>
+            ) : (
+              <Text className="mb-2 mt-0.5 text-[11px] text-slate-500">
+                Sıradaki tekrarın {dueLabel(item.due_at)}. İstersen şimdi de deneyebilirsin —
+                aynı gün içindeki tekrarlar tarihi ileri atmaz.
+              </Text>
+            )}
             <View className="flex-row gap-2">
-              {RATE.map((o) => (
-                <Pressable
-                  key={o.rating}
-                  onPress={() => attempt.mutate(o.rating)}
-                  disabled={attempt.isPending}
-                  className={cn("flex-1 items-center rounded-lg py-2.5", o.cls)}
-                >
-                  <Text className="text-[11px] font-semibold text-white">{o.label}</Text>
-                </Pressable>
-              ))}
+              {RATE.map((o) => {
+                // Basılan butonun kendisi dönüyor; diğerleri soluklaşır.
+                // Görsel geri bildirim olmadığı için öğrenci üst üste basıyordu.
+                const busy = attempt.isPending && attempt.variables === o.rating;
+                return (
+                  <Pressable
+                    key={o.rating}
+                    onPress={() => attempt.mutate(o.rating)}
+                    disabled={attempt.isPending}
+                    className={cn(
+                      "min-h-[38px] flex-1 items-center justify-center rounded-lg py-2.5",
+                      o.cls,
+                      attempt.isPending && !busy && "opacity-40",
+                    )}
+                  >
+                    {busy ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text className="text-[11px] font-semibold text-white">{o.label}</Text>
+                    )}
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
         ) : null}
@@ -819,16 +853,27 @@ function ResolveSheet({
               Önce KENDİN çöz, sonra işaretle:
             </Text>
             <View className="flex-row gap-2">
-              {RATE.map((o) => (
-                <Pressable
-                  key={o.rating}
-                  onPress={() => rate(o.rating)}
-                  disabled={attempt.isPending}
-                  className={cn("flex-1 items-center rounded-lg py-2.5", o.cls)}
-                >
-                  <Text className="text-[11px] font-semibold text-white">{o.label}</Text>
-                </Pressable>
-              ))}
+              {RATE.map((o) => {
+                const busy = attempt.isPending && attempt.variables === o.rating;
+                return (
+                  <Pressable
+                    key={o.rating}
+                    onPress={() => rate(o.rating)}
+                    disabled={attempt.isPending}
+                    className={cn(
+                      "min-h-[38px] flex-1 items-center justify-center rounded-lg py-2.5",
+                      o.cls,
+                      attempt.isPending && !busy && "opacity-40",
+                    )}
+                  >
+                    {busy ? (
+                      <ActivityIndicator size="small" color="#fff" />
+                    ) : (
+                      <Text className="text-[11px] font-semibold text-white">{o.label}</Text>
+                    )}
+                  </Pressable>
+                );
+              })}
             </View>
             <Pressable onPress={advance} className="mt-2 self-start">
               <Text className="text-xs text-slate-500 underline">Şimdilik atla →</Text>

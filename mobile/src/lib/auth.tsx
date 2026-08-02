@@ -3,6 +3,22 @@ import * as React from "react";
 import { apiRequest, clearTokens, getAccessToken, setTokens } from "./api";
 import { configureIap, iapLogout } from "./iap";
 import { registerForPush, unregisterForPush } from "./push";
+import { queryClient } from "./query";
+
+/**
+ * Oturum değişiminde ÖNCEKİ kullanıcının önbelleğini bırakma.
+ *
+ * queryClient bir modül tekilidir ve uygulama kökünde sağlanır; web'in aksine
+ * mobilde çıkış tam sayfa yenilemesi yapmadığı için önbellek çıkıştan SAĞ ÇIKAR.
+ * Sonuç (saha hatası 2026-08-02): yeni kullanıcı girdiğinde üstteki hızlı erişim
+ * kartlarında bir öncekinin kayıtları görünüyor, dokununca yetkisi olmayan bir
+ * kaydı isteyip "Program yüklenemedi" hatası alıyordu.
+ *
+ * KURAL: mobilde oturum kuran/kapatan HER yol bu fonksiyonu çağırır.
+ */
+function resetSessionCache(): void {
+  queryClient.clear();
+}
 
 export interface AppUser {
   id: number;
@@ -74,6 +90,7 @@ async function finishLogin(res: LoginResponse): Promise<SignInResult> {
   }
   if (res.access_token) {
     await setTokens(res.access_token, res.refresh_token);
+    resetSessionCache(); // farklı kullanıcıya geçilmiş olabilir
   }
   return {
     kind: "ok",
@@ -149,6 +166,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
     if (res.access_token) {
       await setTokens(res.access_token, res.refresh_token);
+      resetSessionCache();
     }
     setUser(res.user);
     setStatus("authed");
@@ -181,6 +199,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // sunucu hatası önemli değil — yerel token'ı temizle
     }
     await clearTokens();
+    resetSessionCache(); // önceki kullanıcının verisi ekranda kalmasın
     setUser(null);
     setStatus("guest");
   }, []);
