@@ -143,6 +143,56 @@ değişmemiş, hiç şifre sıfırlama talebi kaydı YOK.
 
 ---
 
+## SAHA HATASI — FSRS vade patlaması + mobil Yanlışlarım 4 hata — CANLI (2026-08-02, commit `0e19771`, migration YOK)
+
+**Bağlam:** Kullanıcı Android kapalı testte (v9/vc15) Yanlışlarım'ı denedi, 4 şikâyet
+bildirdi. Teşhiste **ikisinin aynı zincirin halkaları** olduğu çıktı.
+- **① VADE PATLAMASI (kök neden, backend).** `compute_next` aynı gün içindeki tekrar
+  başarıları da gerçek tekrar sayıyordu; stabilite çarpımsal büyüdüğünden (başarıda
+  ~×2,5-5,6) her basış vadeyi katlıyordu. Canlı kanıt: id 46 → **8 basış · stabilite
+  191.381 gün · vade 2029** (öğrenci soruyu bir daha asla görmez). **Koruma yarımdı:**
+  `correct_streak` 20 saat aralık kuralıyla korunuyordu ama FSRS koşulsuz çalışıyordu.
+  Fix `fsrs.SAME_DAY_GAP_HOURS=20` — aynı gün başarı stabiliteyi/vadeyi İLERLETMEZ,
+  yalnız zorluk güncellenir; **rating=1 (yine yanlış) KURAL DIŞI** (unutma gerçek
+  bilgidir, aralığı kısaltmalı). `FsrsState.due_at` eklendi → vade "şimdi"ye kaymaz;
+  `FsrsResult.same_day_practice` bayrağı. **Düzeltme çekirdekte** → hem Yanlışlarım
+  (`wrong_question_service`) hem konu-tekrar kuyruğu (`review_scheduler`) korunur.
+- **② BUTON TEPKİSİZ (mobil) = ①'in tetikleyicisi.** Basılan butonun görsel geri
+  bildirimi yoktu (`onSuccess` liste refetch'i bekliyordu) → öğrenci üst üste bastı.
+  Basılan buton artık döner (`attempt.variables` ile), diğerleri soluklaşır.
+- **③ FOTOĞRAF GÖRÜNMÜYOR (mobil).** Yükleme ÇALIŞIYORDU (DB'de 635/374/126 kB JPEG,
+  `kind=question` doğru) — sorun render'daydı: **expo-image NativeWind'e kayıtlı
+  değil** → `className` sessizce düşüyor, görsel 0×0 çiziliyor. `cssInterop(Image,
+  {className:"style"})`. **KURAL: NativeWind dışı bir bileşene className verilecekse
+  önce cssInterop ile kaydedilir; yoksa hata görünmez biçimde geçer.**
+- **④ OTURUM SIZINTISI (mobil).** `queryClient` modül tekili; mobilde çıkış tam sayfa
+  yenilemesi yapmadığı için önbellek çıkıştan sağ kalıyordu → yeni kullanıcı girince
+  öncekinin hızlı erişim kartları görünüyor, dokununca "Program yüklenemedi".
+  `resetSessionCache()` oturum kuran/kapatan **üç yolda da** (finishLogin/signUp/
+  signOut). Web etkilenmez (login tam sayfa gezinmesi yapar).
+- **UX:** "vadesi gelmedi" artık tarihi söylüyor — "Sıradaki tekrarın 15 Ağustos
+  (13 gün sonra)" + "aynı gün içindeki tekrarlar tarihi ileri atmaz" notu.
+- **Test:** YENİ `test_fsrs_same_day_guard.py` **19/19**; 2. senaryo iddianın
+  **ayırt edici** olduğunu kanıtlar (eşiği geçen gerçek tekrar HÂLÂ büyütür — koruma
+  öğrenmeyi bozmuyor). Regresyon: stage12_fsrs 50 · wrong_question_lifecycle 12 ·
+  wrong_questions 32 · wrong_question_ai 24 · student_secondary 12 GREEN; mobil tsc
+  temiz; `npx expo export --platform android` temiz.
+- **Veri onarımı:** `scripts/fix_crammed_wq_due_dates.py` (dry-run varsayılan; tespit
+  = tekrarlar arası ortalama boşluk < 20 saat → program güvenilmez). Prod'da koşuldu:
+  **5 kayıt** onarıldı (4'ü demo hesabı + 1 gerçek öğrenci; hepsi 01-02 Ağustos
+  testinden — eski gerçek veride hasar YOK). Konu-tekrar kuyruğu temiz (en yüksek
+  stabilite 10 gün). Ratingler loglanmadığından onarım **tedbirli** yönde: tek başarılı
+  tekrar varsayılır (stabilite 10 gün), soru dolaşıma erken döner.
+- **DERS (yinelenen desen):** Aynı olguyu koruyan iki mekanizmadan biri korunup diğeri
+  açık bırakılırsa koruma yok sayılır. `correct_streak` 20 saat isterken FSRS 0 saniye
+  kabul ediyordu. **Bir davranışa kural koyarken "bu olguyu ölçen başka kod var mı,
+  o da aynı kuralı uyguluyor mu?" diye sor** — [[feedback-holistic-change-propagation]].
+- **Deploy:** backend web+worker rebuild (yedek `pre_fsrs_20260802_1838.dump`) ·
+  mobil **OTA grubu `4d0ce83a`** (runtime 1.0.0, android+ios) → kapalı test + TestFlight
+  build 8 kurulumlarına sonraki açılışta iner.
+
+---
+
 ## YENİ İŞ — Anasayfa tanıtım videosu (Rota konuşuyor) — CANLI (2026-07-29, commit `4ac0952`, migration YOK)
 
 **Bağlam (kullanıcı):** Site araçları metinle anlatılıyordu; gençler video izliyor,
