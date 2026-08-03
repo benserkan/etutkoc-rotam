@@ -26,9 +26,9 @@ from app.models.plan_history import PlanChangeHistory, PlanChangeReason, PlanOwn
 
 
 _PLAN_LABELS_TR = {
-    "solo_free": "Solo Ücretsiz", "solo_trial": "Solo Deneme (14g)",
-    "solo_pro": "Solo Pro", "solo_elite": "Solo Elite",
-    "solo_unlimited": "Solo Sınırsız",
+    "solo_free": "Keşif (Ücretsiz)", "solo_trial": "Deneme (14g)",
+    "solo_pro": "Patika", "solo_elite": "Rota",
+    "solo_unlimited": "Zirve",
     "institution_free": "Kurum Tanıma", "institution_trial": "Kurum Deneme",
     "etut_standart": "Etüt Standart", "dershane_pro": "Dershane Pro",
     "enterprise": "Enterprise",

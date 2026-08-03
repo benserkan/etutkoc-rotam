@@ -340,7 +340,7 @@ def _ai_credit_exhausted_error(user: User, exc_message: str) -> HTTPException:
     from app.services.plans import PLAN_CATALOG
     post_plan = user.post_trial_plan or "solo_pro"
     pti = PLAN_CATALOG.get(post_plan)
-    upgrade_label = pti.label if pti else "Solo Başlangıç"
+    upgrade_label = pti.label if pti else "Patika"
     return HTTPException(
         status_code=status.HTTP_402_PAYMENT_REQUIRED,
         detail={
@@ -2603,7 +2603,7 @@ def teacher_subscription_request_v2(
         coach_count=count,
         source="subscription_request",
         message=(
-            f"Solo Pro abonelik talebi · {cycle_label} · {count} öğrenci · "
+            f"Bireysel koç abonelik talebi · {cycle_label} · {count} öğrenci · "
             f"{price_note} · koç_id={user.id}"
         ),
     )

@@ -190,7 +190,7 @@ def main() -> int:
         tn.notify_trial_expired(SessionLocal(), user_ids=result.get("expired_user_ids", []))
         exp_mail = next((m for m in captured_emails if m.get("template") == "trial_expired"), None)
         check("3d. bitiş e-postası → intended_plan_label dolu",
-              exp_mail is not None and (exp_mail["ctx"].get("intended_plan_label") or "").startswith("Solo"),
+              exp_mail is not None and (exp_mail["ctx"].get("intended_plan_label") or "") == "Patika",
               f"mail={exp_mail}")
 
         # ── 4. Ödeme bekleniyor durumu ──

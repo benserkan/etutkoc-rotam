@@ -426,9 +426,9 @@ _SOLO_SUGGESTIONS: dict[str, list[SuggestedAction]] = {
     ],
     "over_student_limit": [
         SuggestedAction(kind="call", icon="📞", label="Yükseltme görüşmesi",
-                        summary="Deneme bitti, limit aşıldı — Solo'ya geçiş için ara", color="indigo"),
+                        summary="Deneme bitti, limit aşıldı — ücretli pakete geçiş için ara", color="indigo"),
         SuggestedAction(kind="offer_sent", icon="🎁", label="Yükseltme teklifi",
-                        summary="Solo Pro yükseltme teklifi sun", color="emerald"),
+                        summary="Patika yükseltme teklifi sun", color="emerald"),
     ],
 }
 

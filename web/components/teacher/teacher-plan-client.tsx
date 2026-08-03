@@ -28,56 +28,13 @@ import {
 } from "@/lib/api/payment";
 import { useInitPaymentCheckout } from "@/lib/hooks/use-payment-mutations";
 import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
+import { CreditCostsTable, PlanFaq, PlanMatrix } from "@/components/pricing/plan-extras";
+import type { PricingCatalog } from "@/lib/types/pricing";
 import type { TeacherPlanResponse } from "@/lib/types/teacher";
 
 function tl(n: number): string {
   return `${n.toLocaleString("tr-TR")} ₺`;
 }
-
-// Tier-bazlı özellik listesi + kredi (Google Workspace tarzı detaylı kart için).
-// Her tier "alt tier'ın TÜM özelliklerine ek olarak..." mantığıyla yazıldı.
-interface TierDetails {
-  features: string[];
-  credits: number;       // aylık AI kredi
-  badge?: string;        // "En popüler" gibi
-}
-const TIER_DETAILS: Record<string, TierDetails> = {
-  solo_pro: {
-    credits: 1500,
-    features: [
-      "10 öğrenciye kadar bireysel koçluk",
-      "Aylık 1.500 yapay zekâ kredisi",
-      "Sesli dikte + fotoğraftan seans notu",
-      "AI koçluk içgörüsü (sonraki seans hazırlığı)",
-      "Veliye otomatik ilerleme bildirimi",
-      "Deneme / net takibi + akademik grafik",
-      "Tükenen öğrenciyi geç olmadan gör (risk paneli)",
-    ],
-  },
-  solo_elite: {
-    credits: 4000,
-    badge: "En popüler",
-    features: [
-      "Solo Başlangıç'taki tüm özellikler",
-      "25 öğrenciye kadar koçluk",
-      "Aylık 4.000 yapay zekâ kredisi (~2,5×)",
-      "Aylık veya akademik yıl (2 ay bedava)",
-      "Aralıklı tekrar + öğrenci DNA analizi",
-      "Çoklu sınav tipinde net takibi (LGS/TYT/AYT)",
-    ],
-  },
-  solo_unlimited: {
-    credits: 8000,
-    features: [
-      "Solo'daki tüm özellikler",
-      "Sınırsız öğrenci",
-      "Aylık 8.000 yapay zekâ kredisi (~5×)",
-      "Yüksek hacimde AI içgörü + foto/dikte",
-      "Aile/öğrenci başına özel veli kanalı",
-      "Öncelikli destek",
-    ],
-  },
-};
 
 function studentCapLabel(max: number | null): string {
   return max == null ? "Sınırsız öğrenci" : `${max} öğrenciye kadar`;
@@ -93,7 +50,7 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
   const data = q.data ?? initial;
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 p-4 sm:p-6">
+    <div className="mx-auto max-w-6xl space-y-5 p-4 sm:p-6">
       <header className="space-y-1">
         <h1 className="flex items-center gap-2 text-xl font-semibold">
           <Gem className="size-5 text-cyan-700" aria-hidden /> Abonelik
@@ -132,7 +89,7 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
                 olur ve ay başında otomatik yenilenir.
               </>
             ) : null}
-            {" "}Ödemezsen <strong>Solo Ücretsiz</strong>&apos;e (3 öğrenci, yapay zekâ kapalı) düşersin.
+            {" "}Ödemezsen <strong>Keşif</strong>&apos;e (ücretsiz — 3 öğrenci, yapay zekâ kapalı) düşersin.
           </p>
         </div>
       ) : null}
@@ -162,8 +119,11 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
         </div>
       ) : null}
 
-      {/* AI Kredi durumu — trial veya free için ilerleme çubuğu */}
-      {data.is_solo && data.ai_credits_allocated > 0 ? (
+      {/* AI Kredi durumu — YALNIZ AI'ın açık olduğu durumlarda (deneme/aktif).
+          Ücretsizde çubuk göstermek "kredim var ama kullanamıyorum" karışıklığı
+          yaratıyordu (kullanıcı ekran görüntüsü, 2026-08-04). */}
+      {data.is_solo && data.ai_credits_allocated > 0 &&
+        (data.status === "trialing" || data.status === "active") ? (
         <AiCreditMeter
           used={data.ai_credits_used}
           allocated={data.ai_credits_allocated}
@@ -183,6 +143,9 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
         <SoloUpgradeCard data={data} />
       )}
 
+      {/* Krediler ne yapar + paket karşılaştırma + SSS (public /pricing ile ortak) */}
+      <PlanExtras />
+
       {/* Yapay zekâ: kullanım dökümü (kim/ne harcadı) + onay anahtarı */}
       <AiUsageCard />
       <AiConsentCard />
@@ -193,6 +156,22 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
         Öğrenci ve veli özellikleri de senin havuzundan harcar — kişi bazında
         açma/kapatma öğrenci sayfasındaki &quot;Yapay zekâ erişimi&quot; kartındadır.
       </p>
+    </div>
+  );
+}
+
+function PlanExtras() {
+  const q = useQuery<PricingCatalog>({
+    queryKey: pricingKeys.catalog(),
+    queryFn: getPricingCatalog,
+    staleTime: 5 * 60_000,
+  });
+  if (!q.data) return null;
+  return (
+    <div className="space-y-5">
+      <CreditCostsTable rows={q.data.credit_costs ?? []} />
+      <PlanMatrix catalog={q.data} />
+      <PlanFaq />
     </div>
   );
 }
@@ -440,7 +419,8 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
     queryFn: getPricingCatalog,
     staleTime: 5 * 60_000,
   });
-  const planFeatures = pricingQ.data?.plan_features ?? {};
+  const catalogCards = pricingQ.data?.cards ?? [];
+  const cardFor = (code: string) => catalogCards.find((c) => c.plan === code);
 
   // Yükseltilebilir Solo paketleri (3 kapaklı tier).
   // Öncelik: signup'ta seçilen paket (post_trial_plan) > recommended (öğrenci
@@ -528,7 +508,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         <div className="grid gap-4 lg:grid-cols-3">
           {tiers.map((t) => {
             const isSel = t.code === selected;
-            const details = TIER_DETAILS[t.code];
+            const cCard = cardFor(t.code);
             const tierMonthly = yearly ? Math.round((t.price_monthly_try * months) / 12) : t.price_monthly_try;
             const tierYearlyTotal = t.price_monthly_try * months;
             const isIntended = data.post_trial_plan === t.code;
@@ -544,9 +524,9 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
                 )}
               >
                 {/* Üst rozetler */}
-                {details?.badge ? (
+                {cCard?.badge ? (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-0.5 text-[11px] font-bold text-cyan-950 shadow-sm">
-                    {details.badge}
+                    {cCard.badge}
                   </span>
                 ) : null}
                 {isIntended ? (
@@ -578,32 +558,39 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
                   ) : (
                     <p className="text-[11px] text-slate-500">aylık · istediğin zaman iptal</p>
                   )}
+                  {cCard?.per_student_note ? (
+                    <p className="text-[11px] font-medium text-cyan-700">{cCard.per_student_note}</p>
+                  ) : null}
                 </div>
 
-                {/* AI kredi ön plana çıkar */}
-                {details ? (
+                {/* AI kredi ön plana çıkar — insan diliyle */}
+                {cCard?.credits_monthly ? (
                   <div className="mb-4 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2 dark:bg-cyan-500/10 dark:border-cyan-500/30">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800">Aylık yapay zekâ kredisi</p>
-                    <p className="font-display text-2xl font-extrabold text-cyan-900">{details.credits.toLocaleString("tr-TR")} <span className="text-xs font-medium text-cyan-700">kredi</span></p>
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800 dark:text-cyan-300">Aylık yapay zekâ kredisi</p>
+                    <p className="font-display text-2xl font-extrabold text-cyan-900 dark:text-cyan-200">{cCard.credits_monthly.toLocaleString("tr-TR")} <span className="text-xs font-medium text-cyan-700 dark:text-cyan-300">kredi</span></p>
+                    {cCard.credit_note ? (
+                      <p className="mt-1 text-[11px] leading-4 text-cyan-800 dark:text-cyan-300">{cCard.credit_note}</p>
+                    ) : null}
                   </div>
                 ) : null}
 
-                {/* Özellik listesi — TEK KAYNAK (API plan_features), yoksa yerel fallback */}
-                {(() => {
-                  const feats = planFeatures[t.code]?.length
-                    ? planFeatures[t.code]
-                    : details?.features ?? [];
-                  return feats.length ? (
-                    <ul className="mb-5 space-y-2 text-sm">
-                      {feats.map((f) => (
-                        <li key={f} className="flex items-start gap-2">
-                          <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
-                          <span className="text-slate-700">{f}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  ) : null;
-                })()}
+                {/* Kademeli özellikler — TEK KAYNAK (katalog kartı):
+                    "Öncekinin hepsi, artı:" + yalnız bu kademenin yenileri */}
+                {cCard ? (
+                  <ul className="mb-5 space-y-2 text-sm">
+                    {cCard.inherits ? (
+                      <li className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">
+                        {cCard.inherits}
+                      </li>
+                    ) : null}
+                    {cCard.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+                        <span className="text-slate-700">{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
 
                 {/* CTA — plan adı kart başlığında zaten büyük; buton sadeleşti */}
                 <div className="mt-auto">
@@ -639,7 +626,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
         open={open}
         onClose={() => setOpen(false)}
         plan={selected}
-        planLabel={selTier?.label ?? "Solo"}
+        planLabel={selTier?.label ?? "Rota"}
         cycle={yearly ? "academic_year" : "monthly"}
         priceLabel={`${tl(shownMonthly)}/ay (${yearly ? "akademik yıl" : "aylık"})`}
         salesEmail={data.sales_email}

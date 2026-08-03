@@ -26,11 +26,15 @@ _DEFAULTS: dict[str, Any] = {
     # free=3 (ücretsiz). Ücretli: ≤10 / ≤25 / sınırsız. max_students=null → sınırsız.
     "solo_trial_days": 14,
     "solo_free_students": 3,
+    # Görünen adlar (2026-08-04 yenilemesi, kullanıcı onaylı): koçun yolculuğu —
+    # Keşif (ücretsiz) → Patika → Rota (amiral, marka adıyla aynı) → Zirve.
+    # KOD adları DB/iyzico/App Store'a gömülü — ASLA değişmez.
     "solo_tiers": [
-        {"code": "solo_pro", "label": "Solo Başlangıç", "max_students": 10, "monthly": 2500},
-        {"code": "solo_elite", "label": "Solo", "max_students": 25, "monthly": 5000},
-        {"code": "solo_unlimited", "label": "Solo Sınırsız", "max_students": None, "monthly": 7500},
+        {"code": "solo_pro", "label": "Patika", "max_students": 10, "monthly": 2500},
+        {"code": "solo_elite", "label": "Rota", "max_students": 25, "monthly": 5000},
+        {"code": "solo_unlimited", "label": "Zirve", "max_students": None, "monthly": 7500},
     ],
+    "solo_free_label": "Keşif",
     # --- Kurum (B2B) ---
     # Toplam kademe fiyatı (koç-başı DEĞİL): ≤10 → 10k, ≤50 → 30k, 50+ → özel teklif.
     # max_coaches → öğretmen limiti; öğrenci limiti = öğretmen × students_per_coach.
@@ -144,19 +148,90 @@ def _fmt(n: int) -> str:
 # hangi dille). Yeni "can alıcı" özellik çıkınca tek yer güncellenir.
 # ----------------------------------------------------------------------------
 
-# Ücretli solo planlarda ortak yapay zekâ / koçluk gücü (fayda-odaklı dil).
-_AI_FEATURES = [
-    "Her görüşme öncesi yapay zekâ 'bugün şunu konuş' özetini hazırlar",
-    "Görüşmeyi sesle anlat ya da formu fotoğrafla — notlar kendiliğinden yazılır",
-    "Tükenen veya uzaklaşan öğrenciyi geç olmadan gör",
-    "Veliye otomatik ilerleme bildirimi + deneme/net gelişim grafiği",
-]
-# Ücretsiz (free) — temel takip.
+# --- KADEMELİ İÇERİK (2026-08-04): "Öncekinin hepsi, artı…" modeli ---
+# Keşif = çekirdek döngünün tamamı (AI'sız). Her ücretli kademe yalnız
+# YENİ kazandırdıklarını listeler; kümülatif liste features_for_plan üretir.
+
+# Keşif (ücretsiz) — çekirdek döngü, AI yok.
 _FREE_FEATURES = [
-    "Haftalık plan + günlük görev yönetimi",
-    "Veliye e-posta ile ilerleme bildirimi",
-    "Aralıklı tekrar ile kalıcı öğrenme",
+    "Kitap → haftalık program → günlük takip: çekirdek döngünün tamamı",
+    "Veli daveti + haftalık e-posta raporu",
+    "Deneme girişi + net gelişim grafiği",
+    "Yanlış Soru Arşivi (fotoğrafla, aralıklı tekrarla kapat)",
+    "Mobil uygulama (öğrenci · veli · koç)",
+    "Sesli rehber turuyla kolay kurulum",
 ]
+# Patika — "Keşif'tekilerin hepsi, artı:" (yapay zekâ paketi açılır)
+_TIER1_NEW = [
+    "AI karne okuma — deneme PDF'ini yükle, soru soru konu analizi çıksın",
+    "Rota Veli Asistanı — veline sesli yorum + yazılı ve sesli sohbet",
+    "Yanlış sorularda yapay zekâ yaklaşım ipucu",
+    "Seansı sesle anlat ya da formu fotoğrafla — notlar kendiliğinden yazılır",
+    "Görüşme öncesi yapay zekâ 'bugün şunu konuş' hazırlığı",
+    "Tükenen veya uzaklaşan öğrenciyi geç olmadan gör",
+    "Randevu sistemi + Google Meet bağlantısı",
+]
+# Rota — "Patika'dakilerin hepsi, artı:"
+_TIER2_NEW = [
+    "Veli asistanı tam kapasite — her veliye haftalık sesli yorum yetişir",
+    "AI kariyer sentezi — anketler + gerçek net verisiyle hedef önerisi",
+    "Öncelikli destek",
+]
+# Zirve — "Rota'dakilerin hepsi, artı:"
+_TIER3_NEW = [
+    "Birebir kurulum ve taşıma desteği — kitaplarını ve öğrencilerini birlikte kurarız",
+    "Yeni özelliklere erken erişim",
+]
+
+# Kademeye göre yeni-özellik listesi (kart kademeli anlatımı için).
+_TIER_NEW_BY_IDX = [_TIER1_NEW, _TIER2_NEW, _TIER3_NEW]
+
+
+def _tier_credits(code: str) -> int:
+    """Aylık kredi tahsisi — credits.PLAN_ALLOCATIONS TEK KAYNAK (sayı burada
+    tekrarlanmaz; tahsis değişikliği ayrı karardır)."""
+    from app.services.credits import PLAN_ALLOCATIONS
+    return int(PLAN_ALLOCATIONS.get(code, 0))
+
+
+def _credit_note(idx: int, code: str) -> str:
+    """Kredinin insan dili — '1.500 kredi' tek başına hiçbir şey anlatmıyor."""
+    n = _fmt(_tier_credits(code))
+    if idx == 0:
+        return (f"Aylık {n} yapay zekâ kredisi — her öğrenci için ayda 2 karne "
+                "okuma + haftalık veli yorumu + soru etiketlemeye rahat yeter")
+    if idx == 1:
+        return (f"Aylık {n} yapay zekâ kredisi — veli asistanı tam kapasite, "
+                "25 öğrencide bile sıkışmazsın")
+    return (f"Aylık {n} yapay zekâ kredisi — en yoğun kullanımda bile tavana "
+            "takılmazsın")
+
+
+def credit_costs_public() -> list[dict[str, Any]]:
+    """'Krediler ne yapar?' tablosu — işlem başına maliyet (KIND_CREDITS tek
+    kaynağından, sunum etiketiyle)."""
+    from app.models import UsageKind
+    from app.services.credits import KIND_CREDITS
+
+    rows = [
+        ("AI karne okuma (deneme PDF)", UsageKind.AI_EXAM_IMPORT),
+        ("Veli sesli yorumu (metin + ses)", None),  # yorum 6 + ses 2 — birleşik
+        ("Veli sohbet sorusu", UsageKind.AI_PARENT_CHAT),
+        ("Yanlış soru AI ipucu", UsageKind.AI_WRONG_TAG),
+        ("Görüşme öncesi AI hazırlık", UsageKind.AI_COACHING_INSIGHT),
+        ("Sesli dikte (seans notu)", UsageKind.AI_TRANSCRIBE),
+        ("Fotoğraftan seans notu", UsageKind.AI_SESSION_CAPTURE),
+        ("AI kariyer sentezi", UsageKind.AI_CAREER_SYNTHESIS),
+    ]
+    out: list[dict[str, Any]] = []
+    for label, kind in rows:
+        if kind is None:
+            credits = (KIND_CREDITS[UsageKind.AI_PARENT_COMMENTARY]
+                       + KIND_CREDITS[UsageKind.AI_PARENT_COMMENTARY_VOICE])
+        else:
+            credits = KIND_CREDITS[kind]
+        out.append({"label": label, "credits": int(credits)})
+    return out
 # Kurum — kurum gözü + erken müdahale + veli güveni.
 _INSTITUTION_FEATURES = [
     "Koçların tüm araçları + kurum gözü",
@@ -185,13 +260,17 @@ def features_for_plan(plan_code: str | None) -> list[str]:
     by_code = {t["code"]: (i, t) for i, t in enumerate(solo_tiers)}
     inst_codes = {t["code"] for t in cfg["institution_tiers"]}
 
-    if plan_code in ("solo_trial",):
-        plan_code = solo_tiers[0]["code"]  # deneme = pro deneyimi
+    is_trial = plan_code in ("solo_trial",)
+    if is_trial:
+        plan_code = solo_tiers[1]["code"]  # deneme = Rota deneyimi
     if plan_code in by_code:
         idx, t = by_code[plan_code]
-        out = [f"{_cap_note(t).capitalize()} tam takip", *_AI_FEATURES]
-        if idx >= 1:  # elite + sınırsız → öncelikli destek
-            out.append("Öncelikli destek")
+        out = [f"{_cap_note(t).capitalize()} tam takip"]
+        if not is_trial:
+            # Denemede kredi tavanı 50 — Rota'nın 4.000'lik satırı YALAN olurdu.
+            out.append(_credit_note(idx, t["code"]))
+        for i in range(idx + 1):
+            out.extend(_TIER_NEW_BY_IDX[i])
         return out
     if plan_code in ("solo_free", "free"):
         fs = int(cfg["solo_free_students"])
@@ -210,62 +289,69 @@ def features_for_plan(plan_code: str | None) -> list[str]:
     return []
 
 
+def _per_student_note(t: dict[str, Any]) -> str:
+    """ROI mikro-satırı (CoachAccountable deseni): öğrenci başına aylık maliyet."""
+    mx = t.get("max_students")
+    if not mx:
+        return ""
+    per = int(round(int(t["monthly"]) / int(mx)))
+    return f"öğrenci başına ~{_fmt(per)} ₺/ay"
+
+
 def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
     free_students = int(cfg["solo_free_students"])
+    free_label = str(cfg.get("solo_free_label") or "Keşif")
     tiers = cfg["solo_tiers"]
     t1, t2, t3 = tiers[0], tiers[1], tiers[2]
 
     def cap_note(t: dict[str, Any]) -> str:
         return _cap_note(t)
 
+    def tier_card(idx: int, t: dict[str, Any], *, tagline: str, tone: str,
+                  highlight: bool, badge: str | None,
+                  inherits: str) -> dict[str, Any]:
+        return {
+            "key": t["code"], "audience": "solo", "plan": t["code"],
+            "name": t["label"], "tagline": tagline,
+            "monthly": int(t["monthly"]), "price_label": _fmt(t["monthly"]) + " ₺",
+            "price_unit": "/ay", "tone": tone,
+            "price_hidden": False, "price_caption": "",
+            "price_note": f"{cap_note(t)} · 14 gün ücretsiz dene",
+            "per_student_note": _per_student_note(t),
+            "highlight": highlight, "badge": badge, "corner": None,
+            "cta": "14 gün ücretsiz dene", "cta_href": "/signup/teacher?plan=" + t["code"],
+            # Kademeli anlatım: inherits satırı + yalnız bu kademenin YENİLERİ.
+            "inherits": inherits,
+            "features": list(_TIER_NEW_BY_IDX[idx]),
+            "credit_note": _credit_note(idx, t["code"]),
+            "credits_monthly": _tier_credits(t["code"]),
+            "excluded": [],
+        }
+
     cards: list[dict[str, Any]] = [
         {
             "key": "free", "audience": "solo", "plan": "solo_free",
-            "name": "Ücretsiz", "tagline": "Yeni başlayan koç için",
+            "name": free_label, "tagline": "Sistemi keşfet — süresiz ücretsiz",
             "monthly": 0, "price_label": "Ücretsiz", "price_unit": "", "tone": "plain",
             "price_hidden": False, "price_caption": "",
             "price_note": f"{free_students} öğrenciye kadar, süresiz",
+            "per_student_note": "",
             "highlight": False, "badge": None, "corner": None,
             "cta": "Ücretsiz başla", "cta_href": "/signup/teacher",
-            "features": features_for_plan("solo_free"),
-            "excluded": ["Yapay zekâ özellikleri", "Sınırsız öğrenci"],
+            "inherits": "",
+            "features": [f"{free_students} öğrenciye kadar tam takip", *_FREE_FEATURES],
+            "credit_note": "", "credits_monthly": 0,
+            "excluded": [f"Yapay zekâ özellikleri ({t1['label']} ve üzeri)"],
         },
-        {
-            "key": "solo_pro", "audience": "solo", "plan": t1["code"],
-            "name": t1["label"], "tagline": "Küçük ama düzenli büyüyen koç için",
-            "monthly": int(t1["monthly"]), "price_label": _fmt(t1["monthly"]) + " ₺",
-            "price_unit": "/ay", "tone": "plain",
-            "price_hidden": False, "price_caption": "",
-            "price_note": f"{cap_note(t1)} · 14 gün ücretsiz dene",
-            "highlight": False, "badge": None, "corner": None,
-            "cta": "14 gün ücretsiz dene", "cta_href": "/signup/teacher?plan=" + t1["code"],
-            "features": features_for_plan(t1["code"]),
-            "excluded": [],
-        },
-        {
-            "key": "solo_elite", "audience": "solo", "plan": t2["code"],
-            "name": t2["label"], "tagline": "Yoğun, yapay zekâ kullanan koç için",
-            "monthly": int(t2["monthly"]), "price_label": _fmt(t2["monthly"]) + " ₺",
-            "price_unit": "/ay", "tone": "featured",
-            "price_hidden": False, "price_caption": "",
-            "price_note": f"{cap_note(t2)} · 14 gün ücretsiz dene",
-            "highlight": True, "badge": "En popüler", "corner": None,
-            "cta": "14 gün ücretsiz dene", "cta_href": "/signup/teacher?plan=" + t2["code"],
-            "features": features_for_plan(t2["code"]),
-            "excluded": [],
-        },
-        {
-            "key": "solo_unlimited", "audience": "solo", "plan": t3["code"],
-            "name": t3["label"], "tagline": "Mini-kurum ölçeğindeki güç koçu için",
-            "monthly": int(t3["monthly"]), "price_label": _fmt(t3["monthly"]) + " ₺",
-            "price_unit": "/ay", "tone": "plain",
-            "price_hidden": False, "price_caption": "",
-            "price_note": f"{cap_note(t3)} · 14 gün ücretsiz dene",
-            "highlight": False, "badge": None, "corner": None,
-            "cta": "14 gün ücretsiz dene", "cta_href": "/signup/teacher?plan=" + t3["code"],
-            "features": features_for_plan(t3["code"]),
-            "excluded": [],
-        },
+        tier_card(0, t1, tagline="Yola çıktın — ilk 10 öğrencin",
+                  tone="plain", highlight=False, badge=None,
+                  inherits=f"{free_label}'tekilerin hepsi, artı:"),
+        tier_card(1, t2, tagline="Tam kapasite koçluk",
+                  tone="featured", highlight=True, badge="En popüler",
+                  inherits=f"{t1['label']}'dakilerin hepsi, artı:"),
+        tier_card(2, t3, tagline="Tavan yok — mini kurum ölçeği",
+                  tone="plain", highlight=False, badge=None,
+                  inherits=f"{t2['label']}'dakilerin hepsi, artı:"),
         {
             "key": "institution", "audience": "institution", "plan": "etut_standart",
             "name": "Kurum", "tagline": "Etüt, dershane ve özel okullar için",
@@ -297,6 +383,8 @@ def get_pricing_catalog() -> dict[str, Any]:
     return {
         "cards": _marketing_cards(cfg),
         "plan_features": plan_features,
+        # "Krediler ne yapar?" tablosu (işlem başına maliyet, sunum etiketiyle)
+        "credit_costs": credit_costs_public(),
         "currency": cfg["currency"],
         "annual_paid_months": int(cfg["annual_paid_months"]),
         "contact": {

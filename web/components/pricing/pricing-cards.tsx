@@ -19,11 +19,24 @@ function selectCards(catalog: PricingCatalog, variant: CardsVariant): PricingCar
   const cards = catalog.cards;
   if (variant === "solo") return cards.filter((c) => c.audience === "solo");
   if (variant === "institution") return cards.filter((c) => c.audience === "institution");
-  // landing: özet üçlü — Ücretsiz + öne çıkan Solo + Kurum
+  // landing: özet üçlü — Ücretsiz + öne çıkan paket + Kurum.
+  // Öne çıkan kart kademeli modelde yalnız KENDİ yeniliklerini taşır
+  // ("Patika'dakilerin hepsi, artı:") — vitrin üçlüsünde Patika görünmediği
+  // için kümülatif listeden derlenmiş "öne çıkanlar" gösterilir.
   const free = cards.find((c) => c.key === "free");
-  const featured = cards.find((c) => c.audience === "solo" && c.highlight)
+  const featuredRaw = cards.find((c) => c.audience === "solo" && c.highlight)
     ?? cards.find((c) => c.audience === "solo");
   const inst = cards.find((c) => c.audience === "institution");
+  let featured = featuredRaw;
+  if (featuredRaw?.inherits) {
+    const cumulative = catalog.plan_features[featuredRaw.plan] ?? [];
+    featured = {
+      ...featuredRaw,
+      inherits: "",
+      // ilk 2 satır (kapasite + kredi) kartta zaten ayrı gösteriliyor
+      features: cumulative.slice(2, 9),
+    };
+  }
   return [free, featured, inst].filter(Boolean) as PricingCard[];
 }
 
@@ -150,11 +163,33 @@ function PlanCard({ card, yearly, months }: { card: PricingCard; yearly: boolean
         <span className={cn("font-display font-extrabold", card.price_hidden ? "text-2xl" : "text-4xl")}>{priceLabel}</span>
         {priceUnit ? <span className={cn("text-sm font-medium", onColor ? "text-white/70" : "text-muted-foreground")}>{priceUnit}</span> : null}
         {priceNote ? <p className={cn("mt-1.5 text-xs", onColor ? "text-white/70" : "text-muted-foreground")}>{priceNote}</p> : null}
+        {card.per_student_note ? (
+          <p className={cn("mt-0.5 text-[11px] font-medium", onColor ? "text-amber-200" : "text-cyan-700")}>
+            {card.per_student_note}
+          </p>
+        ) : null}
       </div>
 
-      <div className={cn("my-6 h-px", onColor ? "bg-white/20" : "bg-slate-100")} />
+      {/* Kredi insan-dili — "1.500 kredi" tek başına bir şey anlatmıyor */}
+      {card.credit_note ? (
+        <div className={cn(
+          "mt-4 rounded-lg border px-3 py-2 text-xs leading-5",
+          onColor
+            ? "border-white/25 bg-white/10 text-white/90"
+            : "border-cyan-200 bg-cyan-50/70 text-cyan-900",
+        )}>
+          {card.credit_note}
+        </div>
+      ) : null}
+
+      <div className={cn("my-5 h-px", onColor ? "bg-white/20" : "bg-slate-100")} />
 
       <ul className="flex-1 space-y-2.5 text-sm">
+        {card.inherits ? (
+          <li className={cn("text-xs font-bold uppercase tracking-wide", onColor ? "text-amber-200" : "text-cyan-700")}>
+            {card.inherits}
+          </li>
+        ) : null}
         {card.features.map((f) => (
           <li key={f} className="flex items-start gap-2.5">
             <Check className={cn("mt-0.5 size-4 shrink-0", onColor ? "text-amber-300" : "text-emerald-600")} aria-hidden />

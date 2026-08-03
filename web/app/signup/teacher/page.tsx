@@ -12,7 +12,7 @@ import { SignupTeacherForm } from "./signup-teacher-form";
  *
  * ?plan=solo_pro ile gelindiğinde seçilen paketin detayları gösterilir; anasayfa
  * kartıyla TUTARLI (aynı /api/v2/pricing kaynağı). 14 gün çerçevesi DÜRÜST:
- * denemede sınırsız öğrenci + tüm takip açık, yapay zekâ Solo'ya geçince devreye
+ * denemede sınırsız öğrenci + tüm takip açık, yapay zekâ ücretli pakete geçince devreye
  * girer (AI ücretli — trial/free kapalı, maliyet koruması).
  */
 export const dynamic = "force-dynamic";
@@ -89,7 +89,7 @@ function PlanValuePanel({
         <p className="mt-1.5 flex items-start gap-2">
           <Lock className="mt-0.5 size-3.5 shrink-0 opacity-70" aria-hidden />
           <span>
-            Yükseltmezsen hesabın <strong>Solo Ücretsiz</strong>&apos;e ({freeStudents} öğrenci)
+            Yükseltmezsen hesabın <strong>Keşif</strong>&apos;e (ücretsiz — {freeStudents} öğrenci)
             kibarca düşer ve yapay zekâ kapanır; verilerin korunur. <strong>{planName}</strong>
             {" "}paketine geçince öğrenci kapasiten ve yapay zekâ kesintisiz devam eder.
           </span>
@@ -137,7 +137,7 @@ export default async function SignupTeacherPage({
     soloTiers.find((t) => t.code === (soloCard?.plan ?? planParam)) ??
     soloTiers.find((t) => t.code === planParam) ??
     null;
-  const planLabel = soloCard?.name ?? selectedTier?.label ?? "Solo";
+  const planLabel = soloCard?.name ?? selectedTier?.label ?? "Rota";
   const capText =
     selectedTier && selectedTier.max_students != null
       ? `${selectedTier.max_students} öğrenciye kadar`

@@ -49,12 +49,16 @@ def main():
     cards = j.get("cards", [])
     card_keys = {c.get("key") for c in cards}
     solo_card = next((c for c in cards if c.get("key") == "solo_elite"), {})
+    # 2026-08-04 kademeli model: öne çıkan kart yalnız KENDİ yeniliklerini
+    # listeler (≥3) + "öncekinin hepsi" satırı + kredi insan-dili taşır.
     check("1d. pazarlama kartları (free + 3 solo + institution) + En popüler",
           card_keys == {"free", "solo_pro", "solo_elite", "solo_unlimited", "institution"}
           and solo_card.get("highlight") is True
-          and len(solo_card.get("features", [])) >= 4
+          and len(solo_card.get("features", [])) >= 3
+          and "hepsi" in (solo_card.get("inherits") or "")
+          and "kredi" in (solo_card.get("credit_note") or "")
           and solo_card.get("plan") == "solo_elite",
-          f"keys={card_keys} solo={solo_card.get('plan')}")
+          f"keys={card_keys} solo={solo_card.get('plan')} inherits={solo_card.get('inherits')}")
     check("1c. AI free=kapalı, ücretli=açık",
           j.get("solo", {}).get("free", {}).get("ai_included") is False
           and j.get("solo", {}).get("ai_included") is True, f"{j.get('solo')}")

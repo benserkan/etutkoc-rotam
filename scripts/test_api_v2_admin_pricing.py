@@ -3,7 +3,7 @@
 Senaryolar:
    1. Anonim GET → 401
    2. Teacher GET → 403
-   3. Super GET → config + defaults (solo_bands, institution_tiers)
+   3. Super GET → config + defaults (solo_tiers, institution_tiers)
    4. POST override (solo 6-15 bandı 4500) → kaydedilir
    5. /api/v2/pricing (public) override'ı yansıtır + compute_solo_monthly güncel
    6. POST geçersiz (boş band) → 400
@@ -100,35 +100,37 @@ def main():
         sc = _login(SUPER_EMAIL)
         r = sc.get(URL)
         j = r.json()
+        # 2026-08-04: şema 2026-05-23'te solo_bands → solo_tiers'a geçmişti;
+        # test bayat kalmıştı — güncel kapaklı-tier şemasına uyarlandı.
         check("3. Super GET → config + defaults",
-              r.status_code == 200 and len(j["config"]["solo_bands"]) == 3
+              r.status_code == 200 and len(j["config"]["solo_tiers"]) == 3
               and len(j["config"]["institution_tiers"]) == 3
-              and j["defaults"]["solo_bands"][1]["monthly"] == 4000, f"{r.text[:160]}")
+              and j["defaults"]["solo_tiers"][1]["monthly"] == 5000, f"{r.text[:160]}")
 
-        # 4. override: 6-15 bandını 4500 yap
+        # 4. override: orta tier'ı (Rota) 5500 yap
         cfg = copy.deepcopy(j["config"])
-        cfg["solo_bands"][1]["monthly"] = 4500
+        cfg["solo_tiers"][1]["monthly"] = 5500
         r = sc.post(URL, json=cfg)
         check("4. POST override → 200", r.status_code == 200
-              and r.json()["data"]["config"]["solo_bands"][1]["monthly"] == 4500, f"status={r.status_code} {r.text[:160]}")
+              and r.json()["data"]["config"]["solo_tiers"][1]["monthly"] == 5500, f"status={r.status_code} {r.text[:160]}")
 
         # 5. public /pricing + calculator override'ı yansıtır
         r = TestClient(app).get("/api/v2/pricing")
-        pub_ok = r.status_code == 200 and r.json()["solo"]["bands"][1]["monthly"] == 4500
-        calc_ok = pricing.compute_solo_monthly(15) == 4500
+        pub_ok = r.status_code == 200 and r.json()["solo"]["tiers"][1]["monthly"] == 5500
+        calc_ok = pricing.compute_solo_monthly(15) == 5500
         check("5. public /pricing + compute override yansır", pub_ok and calc_ok,
               f"pub={pub_ok} calc={pricing.compute_solo_monthly(15)}")
 
-        # 6. geçersiz: boş band
-        bad = copy.deepcopy(cfg); bad["solo_bands"] = []
+        # 6. geçersiz: boş tier listesi
+        bad = copy.deepcopy(cfg); bad["solo_tiers"] = []
         r = sc.post(URL, json=bad)
-        check("6. boş band → 400", r.status_code == 400 and r.json()["detail"]["code"] == "invalid_pricing", f"status={r.status_code}")
+        check("6. boş tier → 400", r.status_code == 400 and r.json()["detail"]["code"] == "invalid_pricing", f"status={r.status_code}")
 
         # 7. reset → default
         r = sc.post(f"{URL}/reset")
         check("7. reset → 200 + default", r.status_code == 200
-              and r.json()["data"]["config"]["solo_bands"][1]["monthly"] == 4000, f"status={r.status_code}")
-        check("7b. calculator default'a döndü", pricing.compute_solo_monthly(15) == 4000,
+              and r.json()["data"]["config"]["solo_tiers"][1]["monthly"] == 5000, f"status={r.status_code}")
+        check("7b. calculator default'a döndü", pricing.compute_solo_monthly(15) == 5000,
               f"calc={pricing.compute_solo_monthly(15)}")
 
     finally:

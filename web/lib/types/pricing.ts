@@ -36,8 +36,18 @@ export interface PricingCard {
   badge: string | null;   // "En popüler"
   corner: string | null;  // "60 Gün Garanti"
   cta: string;
-  features: string[];
+  features: string[];     // kademeli model: yalnız bu kademenin YENİLERİ
   excluded: string[];
+  // Kademeli anlatım + kredi insan-dili (2026-08-04)
+  inherits?: string;          // "Keşif'tekilerin hepsi, artı:"
+  credit_note?: string;       // "Aylık 1.500 kredi — ... rahat yeter"
+  credits_monthly?: number;   // 0 = kredi yok (ücretsiz)
+  per_student_note?: string;  // "öğrenci başına ~250 ₺/ay"
+}
+
+export interface CreditCostRow {
+  label: string;
+  credits: number;
 }
 
 export interface PricingContact {
@@ -50,6 +60,7 @@ export interface PricingContact {
 export interface PricingCatalog {
   cards: PricingCard[];
   plan_features: Record<string, string[]>;  // plan kodu → pazarlama bullet'ları (TEK KAYNAK)
+  credit_costs: CreditCostRow[];            // "Krediler ne yapar?" tablosu
   currency: string;
   annual_paid_months: number;
   contact: PricingContact;

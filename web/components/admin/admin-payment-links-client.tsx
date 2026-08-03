@@ -440,9 +440,9 @@ function CreateLinkDialog({
                   </>
                 ) : (
                   <>
-                    <option value="solo_pro">Solo Başlangıç</option>
-                    <option value="solo_elite">Solo</option>
-                    <option value="solo_unlimited">Solo Sınırsız</option>
+                    <option value="solo_pro">Patika</option>
+                    <option value="solo_elite">Rota</option>
+                    <option value="solo_unlimited">Zirve</option>
                   </>
                 )}
               </select>

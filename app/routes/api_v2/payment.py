@@ -235,11 +235,11 @@ def get_history(
 
 
 _PLAN_LABELS_TR: dict[str, str] = {
-    "solo_free": "Solo Ücretsiz",
-    "solo_trial": "Solo Deneme",
-    "solo_pro": "Solo Başlangıç",
-    "solo_elite": "Solo",
-    "solo_unlimited": "Solo Sınırsız",
+    "solo_free": "Keşif (Ücretsiz)",
+    "solo_trial": "14 Gün Ücretsiz Deneme",
+    "solo_pro": "Patika",
+    "solo_elite": "Rota",
+    "solo_unlimited": "Zirve",
     "institution_free": "Kurum Tanıma",
     "institution_trial": "Kurum Deneme",
     "etut_standart": "Etüt Standart",

@@ -48,9 +48,9 @@ logger = logging.getLogger(__name__)
 # Bireysel bağımsız öğretmen yolu (B2C self-serve)
 SOLO_TRIAL = "solo_trial"
 SOLO_FREE = "solo_free"
-SOLO_PRO = "solo_pro"          # ≤10 öğrenci (Solo Başlangıç)
-SOLO_ELITE = "solo_elite"     # ≤25 öğrenci (Solo)
-SOLO_UNLIMITED = "solo_unlimited"  # 25+ sınırsız (Solo Sınırsız)
+SOLO_PRO = "solo_pro"          # ≤10 öğrenci (görünen ad: Patika)
+SOLO_ELITE = "solo_elite"     # ≤25 öğrenci (görünen ad: Rota)
+SOLO_UNLIMITED = "solo_unlimited"  # 25+ sınırsız (görünen ad: Zirve)
 
 # Kurumsal yol (B2B sözleşmeli)
 INSTITUTION_TRIAL = "institution_trial"
@@ -93,19 +93,19 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
     # ---------- BİREYSEL ----------
     SOLO_TRIAL: PlanInfo(
         code=SOLO_TRIAL,
-        label="14 Günlük Pro Deneme",
+        label="14 Gün Ücretsiz Deneme",
         short_description="Tüm pro özellikler 14 gün ücretsiz",
         long_description=(
-            "Yeni kayıtlarda otomatik aktive olur. 14 gün boyunca Solo Pro'nun "
-            "tüm özellikleri sınırsızca açıktır. Süre sonunda otomatik olarak "
-            "Solo Ücretsiz'e geçilir; eski raporların korunur."
+            "Yeni kayıtlarda otomatik aktive olur. 14 gün boyunca Rota deneyimi — "
+            "tüm özellikler sınırsızca açıktır. Süre sonunda otomatik olarak "
+            "Keşif'e (ücretsiz) geçilir; eski raporların korunur."
         ),
         price_monthly_try=0,
         price_yearly_try=0,
         audience="solo",
         tier_rank=0,
         features_included=[
-            "Tüm Solo Pro özellikleri",
+            "Tüm Rota özellikleri",
             "Sınırsız öğrenci",
             "Yapay zeka şablon önerisi",
             "WhatsApp veli bildirim",
@@ -117,7 +117,7 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
     ),
     SOLO_FREE: PlanInfo(
         code=SOLO_FREE,
-        label="Solo Ücretsiz",
+        label="Keşif (Ücretsiz)",
         short_description="3 öğrenciye kadar, manuel raporlama",
         long_description=(
             "Trial bittikten sonra varsayılan plan. En fazla 3 aktif öğrenci. "
@@ -144,11 +144,11 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
     ),
     SOLO_PRO: PlanInfo(
         code=SOLO_PRO,
-        label="Solo Başlangıç",
-        short_description="10 öğrenciye kadar, AI dahil",
+        label="Patika",
+        short_description="10 öğrenciye kadar — yapay zekâ paketi açılır",
         long_description=(
-            "Küçük ama düzenli büyüyen koçluk için. 10 aktif öğrenciye kadar, "
-            "yapay zeka özellikleri + veli bildirimi + haftalık raporlar dahil."
+            "Yola çıktın — ilk 10 öğrencin. AI karne okuma, Rota Veli Asistanı, "
+            "yanlış soru ipuçları ve seans yapay zekâsı bu pakette açılır."
         ),
         price_monthly_try=2500,
         price_yearly_try=25000,  # 10 ay (2 ay bedava)
@@ -165,16 +165,15 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
             "Sınırsız öğrenci",
             "Veli portalı",
         ],
-        cta_label="Solo Başlangıç'a Geç",
+        cta_label="Patika'ya Geç",
     ),
     SOLO_ELITE: PlanInfo(
         code=SOLO_ELITE,
-        label="Solo",
-        short_description="25 öğrenciye kadar, AI dahil",
+        label="Rota",
+        short_description="25 öğrenciye kadar — tam kapasite koçluk",
         long_description=(
-            "Yoğun, yapay zekâ kullanan koç için en popüler plan. 25 aktif "
-            "öğrenciye kadar, tüm yapay zeka özellikleri + veli bildirimi + "
-            "haftalık/günlük raporlar + öncelikli destek."
+            "En popüler paket. 25 aktif öğrenciye kadar, veli asistanı tam "
+            "kapasite + AI kariyer sentezi + öncelikli destek."
         ),
         price_monthly_try=5000,
         price_yearly_try=50000,  # 10 ay
@@ -188,16 +187,16 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
             "Öncelikli destek",
         ],
         features_excluded=["Sınırsız öğrenci"],
-        cta_label="Solo'ya Yükselt",
+        cta_label="Rota'ya Yükselt",
         badge="⭐ En Popüler",
     ),
     SOLO_UNLIMITED: PlanInfo(
         code=SOLO_UNLIMITED,
-        label="Solo Sınırsız",
+        label="Zirve",
         short_description="Sınırsız öğrenci, tüm özellikler",
         long_description=(
-            "Mini-kurum ölçeğindeki güç koçu için. Sınırsız öğrenci, tüm yapay "
-            "zeka özellikleri, veli bildirimi, haftalık/günlük raporlar, öncelikli destek."
+            "Tavan yok — mini kurum ölçeği. Sınırsız öğrenci, birebir kurulum "
+            "ve taşıma desteği, yeni özelliklere erken erişim, öncelikli destek."
         ),
         price_monthly_try=7500,
         price_yearly_try=75000,  # 10 ay
@@ -211,7 +210,7 @@ PLAN_CATALOG: dict[str, PlanInfo] = {
             "Öncelikli destek",
         ],
         features_excluded=[],
-        cta_label="Sınırsız'a Yükselt",
+        cta_label="Zirve'ye Yükselt",
     ),
 
     # ---------- KURUMSAL ----------
@@ -404,9 +403,9 @@ def ai_premium_allowed(db: Session, user: User) -> bool:
 SOLO_STUDENT_LIMITS: dict[str, int] = {
     SOLO_TRIAL: -1,        # trial sırasında pro deneyim — sınırsız (kredi tavanlı)
     SOLO_FREE: 3,          # ücretsiz tier — 3 öğrenci (sert sınır)
-    SOLO_PRO: 10,          # Solo Başlangıç — ≤10 öğrenci (sert sınır)
-    SOLO_ELITE: 25,        # Solo — ≤25 öğrenci (sert sınır)
-    SOLO_UNLIMITED: -1,    # Solo Sınırsız — sınırsız
+    SOLO_PRO: 10,          # Patika — ≤10 öğrenci (sert sınır)
+    SOLO_ELITE: 25,        # Rota — ≤25 öğrenci (sert sınır)
+    SOLO_UNLIMITED: -1,    # Zirve — sınırsız
 }
 
 

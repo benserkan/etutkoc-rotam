@@ -358,9 +358,9 @@ const PLAN_DEFAULT_AMOUNTS: Record<string, number> = {
  * Başarı sonrası geçici şifre + URL'yi gösteren sonuç ekranı.
  */
 const SOLO_PLANS: { code: string; label: string; monthly: number }[] = [
-  { code: "solo_pro", label: "Solo Başlangıç (≤10 öğr)", monthly: 2500 },
-  { code: "solo_elite", label: "Solo (≤25 öğr)", monthly: 5000 },
-  { code: "solo_unlimited", label: "Solo Sınırsız", monthly: 7500 },
+  { code: "solo_pro", label: "Patika (≤10 öğr)", monthly: 2500 },
+  { code: "solo_elite", label: "Rota (≤25 öğr)", monthly: 5000 },
+  { code: "solo_unlimited", label: "Zirve (sınırsız)", monthly: 7500 },
 ];
 
 function CoachOnboardDialog({ item }: { item: ContactRequestItem }) {

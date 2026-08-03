@@ -70,7 +70,7 @@ V_BASLANGIC = V("baslangic", "Başlangıç saati", "03:00")
 V_BITIS = V("bitis", "Bitiş saati", "05:00")
 V_TALEP_NO = V("talep_no", "Talep numarası", "#12345")
 V_DURUM = V("durum", "Durum açıklaması", "çözüldü")
-V_PAKET = V("paket_adi", "Paket adı", "Solo Pro")
+V_PAKET = V("paket_adi", "Paket adı", "Patika")
 
 
 # 35 ŞABLON

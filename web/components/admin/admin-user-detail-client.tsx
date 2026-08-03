@@ -222,18 +222,18 @@ export function AdminUserDetailClient({ initial, userId }: Props) {
 // ============================================================================
 
 const SOLO_PLAN_OPTIONS: { value: string; label: string }[] = [
-  { value: "solo_pro", label: "Solo Başlangıç (≤10)" },
-  { value: "solo_elite", label: "Solo (≤25)" },
-  { value: "solo_unlimited", label: "Solo Sınırsız" },
-  { value: "solo_free", label: "Solo Ücretsiz" },
+  { value: "solo_pro", label: "Patika (≤10)" },
+  { value: "solo_elite", label: "Rota (≤25)" },
+  { value: "solo_unlimited", label: "Zirve (sınırsız)" },
+  { value: "solo_free", label: "Keşif (Ücretsiz)" },
 ];
 
 const SOLO_PLAN_LABELS: Record<string, string> = {
   solo_trial: "14 Günlük Deneme",
-  solo_free: "Solo Ücretsiz",
-  solo_pro: "Solo Başlangıç",
-  solo_elite: "Solo",
-  solo_unlimited: "Solo Sınırsız",
+  solo_free: "Keşif (Ücretsiz)",
+  solo_pro: "Patika",
+  solo_elite: "Rota",
+  solo_unlimited: "Zirve",
 };
 
 function fmtShortDate(iso: string | null | undefined): string {

@@ -11,7 +11,11 @@ import { PricingCards } from "@/components/pricing/pricing-cards";
 import { InstitutionContact } from "@/components/pricing/institution-contact";
 import { FloatingWhatsApp } from "@/components/contact/floating-whatsapp";
 import { PaymentMethods } from "@/components/payment-methods";
-import type { PricingCatalog } from "@/lib/types/pricing";
+import { CreditCostsTable, PlanFaq, PlanMatrix } from "@/components/pricing/plan-extras";
+import { useQuery } from "@tanstack/react-query";
+import { getPublicTestimonials, testimonialKeys } from "@/lib/api/testimonials";
+import type { TestimonialPublicResponse } from "@/lib/types/testimonial";
+import type { PricingCatalog, SoloTier } from "@/lib/types/pricing";
 
 function tl(n: number): string {
   return `${n.toLocaleString("tr-TR")} ₺`;
@@ -82,9 +86,25 @@ export function PricingClient({
 
         {tab === "solo" ? (
           <>
-            <div className="mt-10">
+            {/* Anthropic deseni: kullanıcıyı pakete yönlendiren mini seçici */}
+            <StudentCountPicker tiers={catalog.solo.tiers} freeStudents={catalog.solo.free.students} />
+
+            <div className="mt-8">
               <PricingCards initial={catalog} variant="solo" />
             </div>
+
+            {/* Güven şeridi */}
+            <p className="mt-6 text-center text-xs text-muted-foreground">
+              {catalog.solo.trial_days} gün ücretsiz deneme · kart bilgisi istemez · istediğin zaman iptal · verilerin hep senin
+            </p>
+
+            <div className="mx-auto mt-10 max-w-4xl space-y-5">
+              <PlanMatrix catalog={catalog} defaultOpen />
+              <CreditCostsTable rows={catalog.credit_costs ?? []} />
+              <PlanFaq />
+            </div>
+
+            <TestimonialBand />
 
             {/* Bağımsız koç — paket sınırları özeti */}
             <div className="mt-14">
@@ -201,5 +221,77 @@ export function PricingClient({
       </div>
       <FloatingWhatsApp phone={catalog.contact.whatsapp} />
     </main>
+  );
+}
+
+
+/* ── "Kaç öğrencin var?" — öğrenci sayısından paket önerisi (Anthropic mini sihirbaz deseni) ── */
+function StudentCountPicker({ tiers, freeStudents }: { tiers: SoloTier[]; freeStudents: number }) {
+  const [count, setCount] = React.useState(10);
+  const tier =
+    count <= freeStudents
+      ? null
+      : tiers.find((t) => t.max_students == null || count <= t.max_students) ?? tiers[tiers.length - 1];
+  return (
+    <div className="mx-auto mt-8 flex max-w-xl flex-col items-center gap-2 rounded-2xl border border-cyan-200 bg-cyan-50/50 px-5 py-4 text-center">
+      <label htmlFor="student-count" className="text-sm font-semibold text-cyan-900">
+        Kaç öğrencin var?
+      </label>
+      <input
+        id="student-count"
+        type="range"
+        min={1}
+        max={40}
+        value={count}
+        onChange={(e) => setCount(Number(e.target.value))}
+        className="w-full accent-cyan-700"
+      />
+      <p className="text-sm text-cyan-900">
+        <span className="font-display text-lg font-extrabold">{count >= 40 ? "40+" : count}</span> öğrenci →{" "}
+        {tier ? (
+          <>
+            sana uygun paket <span className="font-bold">{tier.label}</span>{" "}
+            <span className="text-cyan-700">({tl(tier.monthly)}/ay)</span>
+          </>
+        ) : (
+          <>
+            <span className="font-bold">Keşif</span> ile ücretsiz başlayabilirsin
+          </>
+        )}
+      </p>
+    </div>
+  );
+}
+
+/* ── Referans bandı — yayınlanmış yorumlar (sosyal kanıt; yoksa hiç render olmaz) ── */
+function TestimonialBand() {
+  const q = useQuery<TestimonialPublicResponse>({
+    queryKey: testimonialKeys.public(null),
+    queryFn: () => getPublicTestimonials(null, 6),
+    staleTime: 5 * 60_000,
+  });
+  const items = (q.data?.items ?? []).slice(0, 3);
+  if (items.length === 0) return null;
+  return (
+    <div className="mx-auto mt-12 max-w-5xl">
+      <h2 className="text-center font-display text-lg font-bold">Kullananlar ne diyor?</h2>
+      <div className="mt-5 grid gap-4 md:grid-cols-3">
+        {items.map((t) => (
+          <figure key={t.id} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+            <blockquote className="text-sm leading-6 text-slate-700">
+              &ldquo;{t.content.length > 220 ? t.content.slice(0, 220) + "…" : t.content}&rdquo;
+            </blockquote>
+            <figcaption className="mt-3 text-xs font-semibold text-slate-900">
+              {t.author_name}
+              {t.author_role_label || t.institution_name ? (
+                <span className="font-normal text-muted-foreground">
+                  {" "}· {t.institution_name ?? t.author_role_label}
+                </span>
+              ) : null}
+            </figcaption>
+          </figure>
+        ))}
+      </div>
+    </div>
   );
 }
