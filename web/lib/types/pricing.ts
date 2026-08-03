@@ -50,6 +50,12 @@ export interface CreditCostRow {
   credits: number;
 }
 
+export interface FeatureGlossaryEntry {
+  term: string;                // madde kısa başlığıyla birebir eşleşir
+  explanation: string;         // sade, ilk-kez-okuyan dili
+  image: string | null;        // gerçek ürün ekranı (/static/guide/shots/...)
+}
+
 export interface PricingContact {
   sales_email: string;
   support_email: string;
@@ -61,6 +67,7 @@ export interface PricingCatalog {
   cards: PricingCard[];
   plan_features: Record<string, string[]>;  // plan kodu → pazarlama bullet'ları (TEK KAYNAK)
   credit_costs: CreditCostRow[];            // "Krediler ne yapar?" tablosu
+  feature_glossary: FeatureGlossaryEntry[]; // tıkla-gör balonlar (tek kaynak)
   currency: string;
   annual_paid_months: number;
   contact: PricingContact;

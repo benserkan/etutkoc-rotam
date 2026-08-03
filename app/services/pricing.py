@@ -167,17 +167,17 @@ _FREE_FEATURES = [
 # Patika — "Keşif'tekilerin hepsi, artı:" (yapay zekâ paketi açılır)
 _TIER1_NEW = [
     "AI karne okuma — deneme sonucu PDF'inden konu analizi",
-    "Rota Veli Asistanı — veline sesli yorum + sohbet",
-    "AI yaklaşım ipucu — yanlış sorularda",
+    "Veliye yapay zekâ asistanı — durumu sesli anlatır, soruları yanıtlar",
+    "Yanlışına ipucu — cevabı söylemez, çözüm yolunu gösterir",
     "Sesli/fotoğraflı seans notu — kendiliğinden yazılır",
-    "AI görüşme hazırlığı — \"bugün şunu konuş\"",
+    "Görüşme öncesi özet — \"bugün şunu konuş\" listesi",
     "Erken uyarı — kopan öğrenciyi geç olmadan gör",
     "Randevu + Google Meet",
 ]
 # Rota — "Patika'dakilerin hepsi, artı:"
 _TIER2_NEW = [
     "Veli asistanı tam kapasite — her veliye haftalık sesli yorum",
-    "AI kariyer sentezi — anket + gerçek netlerle hedef",
+    "Kariyer önerisi — anket + gerçek netlerle hedef bölüm",
     "Öncelikli destek",
 ]
 # Zirve — "Rota'dakilerin hepsi, artı:"
@@ -205,6 +205,120 @@ def _credit_note(idx: int, code: str) -> str:
     if idx == 1:
         return f"{n} kredi/ay — veli asistanı tam kapasitede bile yeter"
     return f"{n} kredi/ay — tavana takılmazsın"
+
+
+# ----------------------------------------------------------------------------
+# ÖZELLİK SÖZLÜĞÜ — tıkla-gör balonlar (2026-08-04, kullanıcı onaylı mekanizma).
+# Kart maddesindeki KISA BAŞLIK ("term") buradaki anahtara birebir eşleşirse
+# arayüz noktalı altçizgi basar; dokununca sade açıklama + (varsa) GERÇEK ürün
+# ekranı açılır. Görseller rehber çekimlerinden (demo veri — kişisel veri yok).
+# KURAL: yeni özellik maddesi eklerken başlığı buraya da tanımla; görsel yoksa
+# image=None (yalnız metin balonu).
+# ----------------------------------------------------------------------------
+_SHOTS = "/static/guide/shots"
+
+FEATURE_GLOSSARY: list[dict[str, Any]] = [
+    {
+        "term": "AI karne okuma",
+        "explanation": (
+            "Denemeden sonra eline geçen sonuç karnesini (PDF dosyası) sisteme "
+            "yüklersin. Yapay zekâ belgeyi iki kez okur, her sorunun konusunu ve "
+            "doğru/yanlışını çıkarır; netler ve konu boşlukları kendiliğinden "
+            "işlenir — elle giriş yok."
+        ),
+        "image": f"{_SHOTS}/aktar-onizleme.png",
+    },
+    {
+        "term": "Veliye yapay zekâ asistanı",
+        "explanation": (
+            "Sistemin yapay zekâ asistanı (adı Rota), veliye çocuğunun haftasını "
+            "ve deneme gelişimini SESLİ anlatır; veli yazarak ya da konuşarak "
+            "soru sorar. Kimse velinle görüşmez — veli uygulamadan dinler ve "
+            "sorar. Kullanım senin kredinden düşer; istediğin veliye kapatabilirsin."
+        ),
+        "image": f"{_SHOTS}/veli-rota-dinle.png",
+    },
+    {
+        "term": "Yanlışına ipucu",
+        "explanation": (
+            "Öğrenci yanlış yaptığı sorunun fotoğrafını arşive atar. Yapay zekâ "
+            "çözümü SÖYLEMEZ; 'hangi kavramı hatırla, ilk adım ne' diye yol "
+            "gösterir — cevabı öğrenci kendisi bulur."
+        ),
+        "image": f"{_SHOTS}/ogr-ai-ipucu.png",
+    },
+    {
+        "term": "Yanlış Soru Arşivi",
+        "explanation": (
+            "Öğrenci yanlışının fotoğrafını çeker, arşive atar. Sistem soruyu "
+            "unutma eğrisine göre doğru zamanda yeniden sorar; aralıklı iki "
+            "doğru çözüm soruyu 'öğrenildi' olarak kapatır."
+        ),
+        "image": f"{_SHOTS}/ogr-yanlislar.png",
+    },
+    {
+        "term": "Görüşme öncesi özet",
+        "explanation": (
+            "Öğrenciyle görüşmeden önce yapay zekâ; son seans notlarını, "
+            "programa uyumu ve deneme verisini okuyup sana 'bugün şunu konuş' "
+            "gündem listesi hazırlar. Görüşmeye hazırlıklı girersin."
+        ),
+        "image": None,
+    },
+    {
+        "term": "Sesli/fotoğraflı seans notu",
+        "explanation": (
+            "Görüşme bitince ya sesle anlatırsın ya da elindeki formun "
+            "fotoğrafını çekersin — seans kaydı kendiliğinden yazılır. "
+            "Not tutmakla vakit kaybetmezsin."
+        ),
+        "image": None,
+    },
+    {
+        "term": "Erken uyarı",
+        "explanation": (
+            "Tempo düşüşü, üst üste boş günler ve tükenmişlik sinyalleri "
+            "panelde erken görünür; öğrenci kopmadan müdahale edersin."
+        ),
+        "image": None,
+    },
+    {
+        "term": "Randevu + Google Meet",
+        "explanation": (
+            "Öğrenci ya da veli, senin boş saatlerinden randevu ister; sen "
+            "onaylarsın. Görüşme bağlantısı (Google Meet) ve hatırlatmalar "
+            "otomatik gider."
+        ),
+        "image": None,
+    },
+    {
+        "term": "Veli asistanı tam kapasite",
+        "explanation": (
+            "4.000 kredi, 25 öğrencinin HER velisine haftalık sesli yorum + "
+            "sohbet için rahatça yeter — veli 'bu hafta ne yaptı?' diye seni "
+            "aramaz, asistana sorar."
+        ),
+        "image": f"{_SHOTS}/veli-rota-yorum.png",
+    },
+    {
+        "term": "Kariyer önerisi",
+        "explanation": (
+            "Meslek ilgisi ve beceri anketleri, öğrencinin GERÇEK deneme "
+            "netleriyle birleştirilir; yapay zekâ hedef bölüm/alan önerir ve "
+            "sana hedef görüşmesi gündemi çıkarır."
+        ),
+        "image": None,
+    },
+    {
+        "term": "Birebir kurulum ve taşıma",
+        "explanation": (
+            "Kitaplarını, öğrencilerini ve mevcut Excel/WhatsApp düzenini "
+            "birlikte sisteme taşırız — ekranı paylaşır, kurulumu beraber "
+            "bitiririz. Tek başına uğraşmazsın."
+        ),
+        "image": None,
+    },
+]
 
 
 def credit_costs_public() -> list[dict[str, Any]]:
@@ -385,6 +499,8 @@ def get_pricing_catalog() -> dict[str, Any]:
         "plan_features": plan_features,
         # "Krediler ne yapar?" tablosu (işlem başına maliyet, sunum etiketiyle)
         "credit_costs": credit_costs_public(),
+        # Tıkla-gör balonlar: kısa başlık → sade açıklama + gerçek ekran karesi
+        "feature_glossary": FEATURE_GLOSSARY,
         "currency": cfg["currency"],
         "annual_paid_months": int(cfg["annual_paid_months"]),
         "contact": {

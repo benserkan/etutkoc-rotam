@@ -7,6 +7,7 @@ import { Check, Lock, ShieldCheck } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
+import { FeatureLine, buildGlossaryMap, type GlossaryMap } from "@/components/pricing/feature-info";
 import type { PricingCard, PricingCatalog } from "@/lib/types/pricing";
 
 function fmt(n: number): string {
@@ -106,14 +107,20 @@ export function PricingCards({
 
       <div className={cn("grid items-stretch gap-6", gridCols)}>
         {cards.map((card) => (
-          <PlanCard key={card.key} card={card} yearly={yearly} months={months} />
+          <PlanCard
+            key={card.key}
+            card={card}
+            yearly={yearly}
+            months={months}
+            glossary={buildGlossaryMap(catalog.feature_glossary)}
+          />
         ))}
       </div>
     </div>
   );
 }
 
-function PlanCard({ card, yearly, months }: { card: PricingCard; yearly: boolean; months: number }) {
+function PlanCard({ card, yearly, months, glossary }: { card: PricingCard; yearly: boolean; months: number; glossary?: GlossaryMap }) {
   const featured = card.tone === "featured" || card.highlight;
   const dark = card.tone === "dark";
   const onColor = featured || dark;   // koyu/renkli zemin → açık metin
@@ -193,7 +200,7 @@ function PlanCard({ card, yearly, months }: { card: PricingCard; yearly: boolean
         {card.features.map((f) => (
           <li key={f} className="flex items-start gap-2.5">
             <Check className={cn("mt-0.5 size-4 shrink-0", onColor ? "text-amber-300" : "text-emerald-600")} aria-hidden />
-            <FeatureText text={f} onColor={onColor} />
+            <FeatureLine text={f} glossary={glossary} tone={onColor ? "onColor" : "light"} />
           </li>
         ))}
         {card.excluded.map((f) => (
@@ -215,24 +222,5 @@ function PlanCard({ card, yearly, months }: { card: PricingCard; yearly: boolean
         {card.cta}
       </Link>
     </div>
-  );
-}
-
-/**
- * "Kısa Başlık — detay" maddesi: başlık belirgin, detay soluk ve küçük.
- * Uzun cümle-maddelerin kartı duvara çevirmesini önler (taranabilirlik).
- */
-function FeatureText({ text, onColor }: { text: string; onColor: boolean }) {
-  const i = text.indexOf(" — ");
-  if (i < 0) {
-    return <span className={onColor ? "text-white/95" : "text-foreground/85"}>{text}</span>;
-  }
-  return (
-    <span className={onColor ? "text-white/95" : "text-foreground/90"}>
-      <span className="font-medium">{text.slice(0, i)}</span>
-      <span className={cn("ml-1 text-xs", onColor ? "text-white/60" : "text-muted-foreground")}>
-        {text.slice(i + 3)}
-      </span>
-    </span>
   );
 }

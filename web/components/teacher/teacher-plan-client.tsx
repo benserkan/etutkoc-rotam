@@ -29,6 +29,7 @@ import {
 import { useInitPaymentCheckout } from "@/lib/hooks/use-payment-mutations";
 import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import { CreditCostsTable, PlanFaq, PlanMatrix } from "@/components/pricing/plan-extras";
+import { FeatureLine, buildGlossaryMap } from "@/components/pricing/feature-info";
 import type { PricingCatalog } from "@/lib/types/pricing";
 import type { TeacherPlanResponse } from "@/lib/types/teacher";
 
@@ -583,22 +584,15 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
                         {cCard.inherits}
                       </li>
                     ) : null}
-                    {cCard.features.map((f) => {
-                      const di = f.indexOf(" — ");
-                      return (
-                        <li key={f} className="flex items-start gap-2">
-                          <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
-                          {di < 0 ? (
-                            <span className="text-slate-700">{f}</span>
-                          ) : (
-                            <span className="text-slate-800">
-                              <span className="font-medium">{f.slice(0, di)}</span>
-                              <span className="ml-1 text-xs text-slate-500">{f.slice(di + 3)}</span>
-                            </span>
-                          )}
-                        </li>
-                      );
-                    })}
+                    {cCard.features.map((f) => (
+                      <li key={f} className="flex items-start gap-2">
+                        <Check className="mt-0.5 size-4 shrink-0 text-emerald-600" aria-hidden />
+                        <FeatureLine
+                          text={f}
+                          glossary={buildGlossaryMap(pricingQ.data?.feature_glossary)}
+                        />
+                      </li>
+                    ))}
                   </ul>
                 ) : null}
 
