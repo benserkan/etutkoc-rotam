@@ -236,10 +236,49 @@ ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
   tıkla-büyüt sunulur, ya stilize temsil kullanılır.** NOT (kullanıcıya söylendi): /pricing referans
   bandı YAYINLANMIŞ tüm yorumları gösterir — şu an öğrenci yorumları (koçluk
   hizmeti) görünüyor; /admin/testimonials'tan küratörlük yapılmalı.
-- **SIRADA (ayrı onay):** Faz 2 — admin'den KODSUZ kart içeriği yönetimi +
-  bağlamsal yükseltme anları (kapasite dolunca özellik-adlı teklif; karne okuma
-  sonucu ekranında "Patika'da her denemede") + deneme değer sayacı · Faz 3 —
-  kredi ek paketi + iptal-anı anketi.
+- **FAZ 2 — KOD-TAMAM (2026-08-04 gece, otonom mod — kullanıcı "onay otomatik
+  sende süreci sonuna kadar bitir"; migration YOK):** 4 parça:
+  - **2A — kodsuz kart içeriği (backend):** `pricing.py` içerik katmanı —
+    `CONTENT_KEY="pricing_content"` app_settings override'ı (taglines /
+    free_features / tier_new / credit_notes[{kredi} yer tutucu] / glossary);
+    `content_defaults()` + `_content()` (üst-anahtar replace, tip kontrollü) +
+    `content_warnings()` (40+ karakter ayraçsız madde + görselsiz açıklama
+    uyarısı — advisory). Katalog + plan_features + FEATURE_GLOSSARY anında
+    override'dan beslenir (deploy gerekmez). Admin uçları: GET/POST
+    `/admin/settings/pricing-content` + `/reset` (boş özellik listesi 400 ·
+    glossary term/explanation zorunlu · görsel yalnız `/static/` · audit
+    SYSTEM_SETTING_UPDATE). Smoke `test_api_v2_pricing_content.py` **12/12**.
+  - **2B — /admin/pricing içerik editörü:** `admin-pricing-content-client.tsx`
+    (fiyat editörünün altında "Kart İçerikleri" kartı): tagline + kredi notu
+    inputları, satır-başına-madde textarea'ları (Keşif + 3 kademe), sözlük
+    satır editörü (terim/görsel/açıklama + ekle/sil), uyarılar amber kutu,
+    Kaydet/Sıfırla (onaylı). Kullanıcının "kartlar 2-3 ay bayat kaldı"
+    sorununun kalıcı çözümü — bundan sonra kart maddesi panelden güncellenir.
+  - **2C — bağlamsal yükseltme anı:** solo kapasite 422'si
+    (`plan_quota_exceeded`) artık öneri yükü taşır (recommended_plan/label/
+    monthly/students/credits + current_plan_label) → web
+    `upgrade-moment-dialog.tsx` ("Patika doldu (10/10) — büyüyorsun!" +
+    Rota kutusu fiyatlı + 3 gerekçe) → CTA `/teacher/plan?plan=solo_elite`
+    ön-seçili (page searchParams → TeacherPlanClient initialPlan →
+    SoloUpgradeCard en yüksek öncelik). **Canlı testin yakaladığı gerçek
+    boşluk düzeltildi:** AKTİF abone /teacher/plan'da yalnız
+    ActiveSubscriptionCard görüyordu → paket büyütme yolu YOKtu; artık aktif
+    abonede (App Store hariç) altına "Paketini büyüt" başlıklı
+    SoloUpgradeCard da gelir (kartla öde = mevcut yenileme akışı).
+  - **2D — deneme değer sayacı:** `TrialStatusResponse.trial_value`
+    (UsageEvent agregasyonu: karne=AI_EXAM_IMPORT · veli=6 AI_PARENT_* kind ·
+    etiket=AI_WRONG_TAG · icgoru=AI_COACHING_INSIGHT · toplam_kredi;
+    best-effort, yalnız trial_active + kullanım>0). Kritik deneme bandı:
+    "Denemende şimdiden **1 karne okundu · 1 veli yorumu/sohbeti** —
+    paketinde böyle devam eder."
+  - **Test:** faz2_moments **7/7** (422 öneri yükü + trial_value null→dolu +
+    deneme koçu serbest) · pricing_content 12/12 · regresyon pricing 8 ·
+    admin_pricing · trial_status 6 · lifecycle 22 · entitlement 13 · paywall 5 ·
+    teacher_read 12 · tenant 29 GREEN · web tsc+eslint temiz · **Playwright
+    canlı 9/9** (editör round-trip → /pricing yansıması + Sıfırla · dolu koç →
+    dialog → ?plan= ön-seçim · kritik bantta değer satırı).
+- **SIRADA (ayrı onay — bilinçli otonom YAPILMADI, ödeme-kritik):** Faz 3 —
+  kredi ek paketi satışı (iyzico) + iptal-anı neden anketi.
 
 ---
 

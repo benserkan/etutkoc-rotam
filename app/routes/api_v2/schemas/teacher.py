@@ -2359,7 +2359,10 @@ class TrialStatusResponse(BaseModel):
     # kalıcı (kapatılabilir) "ödemeni tamamla" hatırlatma bandı.
     payment_pending: bool = False
     intended_plan: str | None = None        # signup'ta seçilen paket kodu
-    intended_plan_label: str | None = None  # "Solo Başlangıç" vb.
+    intended_plan_label: str | None = None  # "Patika" vb.
+    # Faz 2D — deneme değer sayacı: "değeri gördün" anlatımı (yalnız trial_active
+    # iken dolar; hepsi 0 ise banner satır basmaz)
+    trial_value: dict | None = None  # {karne, veli, etiket, icgoru, toplam_kredi}
 
 
 # =============================================================================

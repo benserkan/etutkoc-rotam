@@ -2028,6 +2028,8 @@ export interface TrialStatusResponse {
   payment_pending: boolean;
   intended_plan: string | null;
   intended_plan_label: string | null;
+  /** Deneme değer sayacı — {karne, veli, etiket, icgoru, toplam_kredi}; 0'sa yok */
+  trial_value: Record<string, number> | null;
 }
 
 export interface SessionDraftResponse {

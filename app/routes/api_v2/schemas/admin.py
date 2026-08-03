@@ -3379,6 +3379,32 @@ class PricingAdminResponse(BaseModel):
     defaults: dict        # kod varsayılanı (sıfırlama için)
 
 
+# --- Kart içerikleri (Faz 2A — kodsuz yönetim) ---
+
+
+class GlossaryEntryIn(BaseModel):
+    term: str
+    explanation: str
+    image: str | None = None
+    image_w: int | None = None
+    image_h: int | None = None
+    image_full: str | None = None
+
+
+class PricingContentBody(BaseModel):
+    taglines: dict[str, str]
+    free_features: list[str]
+    tier_new: dict[str, list[str]]
+    credit_notes: dict[str, str]     # {kredi} yer tutucusu korunmalı
+    glossary: list[GlossaryEntryIn]
+
+
+class PricingContentAdminResponse(BaseModel):
+    config: dict          # etkin içerik (override dahil)
+    defaults: dict        # kod varsayılanı
+    warnings: list[str] = []  # biçim/sözlük-senkron tavsiyeleri (bloklamaz)
+
+
 # ----------------------------- İletişim talepleri -----------------------------
 
 

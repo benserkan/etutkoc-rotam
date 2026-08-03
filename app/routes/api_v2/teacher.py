@@ -2536,7 +2536,46 @@ def teacher_trial_status_v2(
 ):
     """Bağımsız koç trial geri-sayım + ödeme-duvarı durumu (teacher-shell banner)."""
     from app.services.plans import solo_trial_status
-    return TrialStatusResponse(**solo_trial_status(db, user=user))
+    payload = solo_trial_status(db, user=user)
+
+    # Faz 2D — deneme değer sayacı: denemede üretilen somut değer ("3 karne
+    # okundu, 5 veli yorumu…"). Best-effort — hata banner'ı bloklamaz.
+    if payload.get("trial_active"):
+        try:
+            from app.models.usage import UsageEvent, UsageKind, UsageOwnerType
+            rows = (
+                db.query(UsageEvent.kind, func.count(UsageEvent.id),
+                         func.coalesce(func.sum(UsageEvent.credits), 0))
+                .filter(
+                    UsageEvent.owner_type == UsageOwnerType.USER,
+                    UsageEvent.owner_id == user.id,
+                )
+                .group_by(UsageEvent.kind)
+                .all()
+            )
+            karne = veli = etiket = icgoru = toplam = 0
+            veli_kinds = {UsageKind.AI_PARENT_COMMENTARY, UsageKind.AI_PARENT_CHAT,
+                          UsageKind.AI_PARENT_COMMENTARY_VOICE,
+                          UsageKind.AI_PARENT_CHAT_STT, UsageKind.AI_PARENT_CHAT_TTS,
+                          UsageKind.AI_PARENT_INSIGHT}
+            for kind, cnt, credits in rows:
+                toplam += int(credits)
+                if kind == UsageKind.AI_EXAM_IMPORT:
+                    karne += int(cnt)
+                elif kind in veli_kinds:
+                    veli += int(cnt)
+                elif kind == UsageKind.AI_WRONG_TAG:
+                    etiket += int(cnt)
+                elif kind == UsageKind.AI_COACHING_INSIGHT:
+                    icgoru += int(cnt)
+            if toplam > 0:
+                payload["trial_value"] = {
+                    "karne": karne, "veli": veli, "etiket": etiket,
+                    "icgoru": icgoru, "toplam_kredi": toplam,
+                }
+        except Exception:  # noqa: BLE001 — sayaç süs, banner asıl iş
+            pass
+    return TrialStatusResponse(**payload)
 
 
 @router.post("/subscription-request", response_model=MutationResponse[SubscriptionRequestResult])
@@ -5460,6 +5499,13 @@ def _check_student_creation_quota(
         from app.services.plans import check_solo_student_quota
         result = check_solo_student_quota(db, teacher=teacher, extra_count=1)
         if not result.ok:
+            # BAĞLAMSAL YÜKSELTME ANI (Faz 2C): Reforge bulgusu — jenerik
+            # "yükselt" yerine ÖZELLİK ADI + PLAN FİYATI + TEK TIK %28 fazla
+            # çevirir. 422 detayı, sihirbaz-tarzı gerekçeli teklif diyaloğunu
+            # besleyecek öneri yükünü taşır.
+            from app.services.credits import PLAN_ALLOCATIONS
+            from app.services.pricing import solo_tier_for_students
+            rec = solo_tier_for_students((result.current or 0) + 1)
             raise HTTPException(
                 status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
                 detail={
@@ -5474,6 +5520,13 @@ def _check_student_creation_quota(
                         "current": result.current,
                         "scope": "solo",
                         "upgrade_target": result.upgrade_target_code,
+                        "current_plan_label": result.plan_label,
+                        "recommended_plan": rec["code"],
+                        "recommended_label": rec["label"],
+                        "recommended_monthly": int(rec["monthly"]),
+                        "recommended_students": rec["max_students"],  # None = sınırsız
+                        "recommended_credits": int(
+                            PLAN_ALLOCATIONS.get(rec["code"], 0)),
                     },
                 },
             )

@@ -3099,6 +3099,31 @@ export interface PricingConfig {
   institution_tiers: InstitutionTierCfg[];
   contact?: ContactChannelsCfg;
 }
+// --- Kart içerikleri (Faz 2A — kodsuz yönetim) ---
+
+export interface PricingGlossaryEntry {
+  term: string;
+  explanation: string;
+  image: string | null;
+  image_w?: number | null;
+  image_h?: number | null;
+  image_full?: string | null;
+}
+
+export interface PricingContentConfig {
+  taglines: Record<string, string>;
+  free_features: string[];
+  tier_new: Record<string, string[]>;
+  credit_notes: Record<string, string>;
+  glossary: PricingGlossaryEntry[];
+}
+
+export interface PricingContentAdminResponse {
+  config: PricingContentConfig;
+  defaults: PricingContentConfig;
+  warnings: string[];
+}
+
 export interface PricingAdminResponse {
   config: PricingConfig;
   defaults: PricingConfig;

@@ -41,7 +41,13 @@ function studentCapLabel(max: number | null): string {
   return max == null ? "Sınırsız öğrenci" : `${max} öğrenciye kadar`;
 }
 
-export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse }) {
+export function TeacherPlanClient({
+  initial,
+  initialPlan = null,
+}: {
+  initial: TeacherPlanResponse;
+  initialPlan?: string | null;
+}) {
   const q = useQuery<TeacherPlanResponse>({
     queryKey: teacherKeys.plan(),
     queryFn: getTeacherPlan,
@@ -139,9 +145,17 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
           {data.note ?? "Paketin kurumun tarafından yönetilir."}
         </div>
       ) : data.status === "active" ? (
-        <ActiveSubscriptionCard data={data} />
+        <>
+          <ActiveSubscriptionCard data={data} />
+          {/* Aktif abone de bir üst pakete kartla geçebilmeli — yükseltme anı
+              CTA'sı (?plan=) burada karşılık bulur. App Store abonesi hariç
+              (paket değişikliği Apple'da). */}
+          {data.subscription_platform !== "app_store" ? (
+            <SoloUpgradeCard data={data} initialPlan={initialPlan} />
+          ) : null}
+        </>
       ) : (
-        <SoloUpgradeCard data={data} />
+        <SoloUpgradeCard data={data} initialPlan={initialPlan} />
       )}
 
       {/* Krediler ne yapar + paket karşılaştırma + SSS (public /pricing ile ortak) */}
@@ -409,7 +423,13 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
   );
 }
 
-function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
+function SoloUpgradeCard({
+  data,
+  initialPlan = null,
+}: {
+  data: TeacherPlanResponse;
+  initialPlan?: string | null;
+}) {
   const [yearly, setYearly] = React.useState(false);
   const [open, setOpen] = React.useState(false);
   const months = data.annual_paid_months || 10;
@@ -432,6 +452,7 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
       ? data.post_trial_plan
       : "";
   const recommended =
+    (initialPlan && tiers.some((t) => t.code === initialPlan) ? initialPlan : "") ||
     intendedFromSignup ||
     data.recommended_plan ||
     tiers.find((t) => t.is_recommended)?.code ||
@@ -462,18 +483,22 @@ function SoloUpgradeCard({ data }: { data: TeacherPlanResponse }) {
                 ? "Aboneliğini yenile"
                 : data.status === "payment_required"
                   ? "Ödemeni tamamla"
-                  : data.status === "free" && intendedFromSignup && data.post_trial_plan_label
-                    ? `Denemen bitti — ${data.post_trial_plan_label} ile devam et`
-                    : "Paketini seç"}
+                  : data.status === "active"
+                    ? "Paketini büyüt"
+                    : data.status === "free" && intendedFromSignup && data.post_trial_plan_label
+                      ? `Denemen bitti — ${data.post_trial_plan_label} ile devam et`
+                      : "Paketini seç"}
             </p>
             <p className="text-sm text-muted-foreground">
               {data.status === "trialing"
                 ? "Denemen bitmeden geç; tüm öğrencilerin ve yapay zekâ kesintisiz devam etsin."
                 : data.status === "past_due"
                   ? "Aboneliğin yenilenmedi. Ödeyip yenileyerek aktif koçluğa devam et; pasif öğrencilerin otomatik yeniden aktif olur."
-                  : data.status === "free" && intendedFromSignup
-                    ? "Seçtiğin paket aşağıda hazır. Kartla ödediğin anda tüm özellikler açılır; pasif öğrencilerin otomatik yeniden aktif olur."
-                    : "Öğrenci sayına uygun paketi seç. Yükselttiğinde yapay zekâ açılır ve pasif öğrencilerin otomatik yeniden aktif olur."}
+                  : data.status === "active"
+                    ? "Öğrenci sayın büyüdüyse bir üst pakete kartla ödeyerek geçebilirsin — yeni paket ödemeyle birlikte hemen açılır."
+                    : data.status === "free" && intendedFromSignup
+                      ? "Seçtiğin paket aşağıda hazır. Kartla ödediğin anda tüm özellikler açılır; pasif öğrencilerin otomatik yeniden aktif olur."
+                      : "Öğrenci sayına uygun paketi seç. Yükselttiğinde yapay zekâ açılır ve pasif öğrencilerin otomatik yeniden aktif olur."}
             </p>
           </div>
           {/* Aylık / Akademik yıl toggle */}

@@ -121,14 +121,15 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <Clock className="size-4 shrink-0 text-amber-600" aria-hidden />
           <p className="flex-1 text-sm text-amber-900">
-            <strong>Pro denemeniz {left} bitiyor.</strong>{" "}
-            Solo&apos;ya geçerek tüm öğrencileriniz ve yapay zekâ özellikleriyle devam edin.
+            <strong>Denemen {left} bitiyor.</strong>{" "}
+            <TrialValueLine value={data.trial_value} />
+            Paketine geçerek tüm öğrencilerin ve yapay zekâ özellikleriyle devam et.
           </p>
           <Link
             href="/teacher/plan"
             className="inline-flex shrink-0 items-center justify-center rounded-lg bg-amber-500 px-3 py-1.5 text-xs font-semibold text-amber-950 transition hover:bg-amber-400"
           >
-            Solo&apos;ya geç
+            Paketini seç
           </Link>
           <button
             type="button"
@@ -189,4 +190,23 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
 
   // Diğer durumlar (trial başı, normal ücretsiz, ücretli) → bant yok.
   return null;
+}
+
+/**
+ * Deneme değer sayacı (Faz 2D): "değeri gördün" anlatımı — denemede üretilen
+ * somut çıktıları sayar. Hiç kullanım yoksa hiçbir şey basmaz.
+ */
+function TrialValueLine({ value }: { value: Record<string, number> | null | undefined }) {
+  if (!value) return null;
+  const parts: string[] = [];
+  if (value.karne) parts.push(`${value.karne} karne okundu`);
+  if (value.veli) parts.push(`${value.veli} veli yorumu/sohbeti`);
+  if (value.etiket) parts.push(`${value.etiket} soru etiketlendi`);
+  if (value.icgoru) parts.push(`${value.icgoru} görüşme özeti`);
+  if (parts.length === 0) return null;
+  return (
+    <>
+      Denemende şimdiden <strong>{parts.join(" · ")}</strong> — paketinde böyle devam eder.{" "}
+    </>
+  );
 }

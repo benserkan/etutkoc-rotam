@@ -364,6 +364,8 @@ from app.routes.api_v2.schemas.admin import (
     AiSettingsResponse,
     SetAiSettingBody,
     PricingAdminResponse,
+    PricingContentAdminResponse,
+    PricingContentBody,
     PricingConfigBody,
     ContactRequestItem,
     ContactRequestListResponse,
@@ -9034,6 +9036,95 @@ def admin_onboard_coach_v2(
         ),
         invalidate=["admin:dashboard", "admin:users", "admin:payment-links",
                     "admin:prospects", *_CONTACT_INVALIDATE],
+    )
+
+
+def _pricing_content_response() -> "PricingContentAdminResponse":
+    from app.services import pricing
+    eff = pricing._content()
+    return PricingContentAdminResponse(
+        config=eff,
+        defaults=pricing.content_defaults(),
+        warnings=pricing.content_warnings(eff),
+    )
+
+
+@router.get("/settings/pricing-content", response_model=PricingContentAdminResponse)
+def admin_pricing_content_get_v2(
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Kart içerikleri (özellik maddeleri/tagline/kredi notu/sözlük) — kodsuz
+    yönetim. Kod varsayılanı + varsa DB override'ı birlikte döner."""
+    return _pricing_content_response()
+
+
+@router.post(
+    "/settings/pricing-content",
+    response_model=MutationResponse[PricingContentAdminResponse],
+)
+def admin_pricing_content_set_v2(
+    body: PricingContentBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Kart içeriği override'ını kaydet — /pricing + Paketim + anasayfa + üyelik
+    teklifi + mobil Paketim ANINDA bu içeriği gösterir (deploy gerekmez)."""
+    from app.services import app_settings as app_settings_svc
+    from app.services import pricing
+
+    payload = body.model_dump()
+    # Doğrulama: boş madde/terim ayıkla; görsel yolları yalnız /static altından
+    payload["free_features"] = [f.strip() for f in payload["free_features"] if f.strip()]
+    payload["tier_new"] = {
+        k: [f.strip() for f in v if f.strip()] for k, v in payload["tier_new"].items()
+    }
+    if not payload["free_features"] or not any(payload["tier_new"].values()):
+        raise HTTPException(status_code=400, detail={
+            "error": "validation", "code": "invalid_content",
+            "message": "Özellik listeleri boş olamaz."})
+    for g in payload["glossary"]:
+        if not g["term"].strip() or not g["explanation"].strip():
+            raise HTTPException(status_code=400, detail={
+                "error": "validation", "code": "invalid_content",
+                "message": "Sözlük terimi ve açıklaması boş olamaz."})
+        for key in ("image", "image_full"):
+            if g.get(key) and not str(g[key]).startswith("/static/"):
+                raise HTTPException(status_code=400, detail={
+                    "error": "validation", "code": "invalid_content",
+                    "message": "Görsel yolları /static/ altından olmalı."})
+    app_settings_svc.set_json(db, pricing.CONTENT_KEY, payload, actor_user_id=user.id)
+    log_action(
+        db, action=AuditAction.SYSTEM_SETTING_UPDATE, actor_id=user.id,
+        target_type="pricing_content", request=request, details={"action": "set"},
+    )
+    return MutationResponse[PricingContentAdminResponse](
+        data=_pricing_content_response(),
+        invalidate=_PRICING_INVALIDATE,
+    )
+
+
+@router.post(
+    "/settings/pricing-content/reset",
+    response_model=MutationResponse[PricingContentAdminResponse],
+)
+def admin_pricing_content_reset_v2(
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """İçerik override'ını sil → kod varsayılanına dön."""
+    from app.services import app_settings as app_settings_svc
+    from app.services import pricing
+    app_settings_svc.delete(db, pricing.CONTENT_KEY)
+    log_action(
+        db, action=AuditAction.SYSTEM_SETTING_UPDATE, actor_id=user.id,
+        target_type="pricing_content", request=request, details={"action": "reset"},
+    )
+    return MutationResponse[PricingContentAdminResponse](
+        data=_pricing_content_response(),
+        invalidate=_PRICING_INVALIDATE,
     )
 
 

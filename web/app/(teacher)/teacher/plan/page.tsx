@@ -10,7 +10,13 @@ import { TeacherPlanClient } from "@/components/teacher/teacher-plan-client";
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Paket" };
 
-export default async function TeacherPlanPage() {
+export default async function TeacherPlanPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ plan?: string }>;
+}) {
   const data = await apiServer<TeacherPlanResponse>("/api/v2/teacher/plan");
-  return <TeacherPlanClient initial={data} />;
+  // Bağlamsal yükseltme anından gelen ön-seçim (?plan=solo_elite)
+  const { plan } = await searchParams;
+  return <TeacherPlanClient initial={data} initialPlan={plan ?? null} />;
 }

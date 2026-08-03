@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { Loader2, Plus } from "lucide-react";
 
 import { useCreateStudent } from "@/lib/hooks/use-teacher-mutations";
+import { ApiError } from "@/lib/api";
+import {
+  UpgradeMomentDialog,
+  parseUpgradeMoment,
+  type UpgradeMomentPayload,
+} from "@/components/teacher/upgrade-moment-dialog";
 import type {
   GraduateMode,
   StudentCreateBody,
@@ -44,6 +50,9 @@ export function StudentCreateButton() {
   const [open, setOpen] = React.useState(false);
   const [result, setResult] = React.useState<StudentCreateResult | null>(null);
   const mut = useCreateStudent();
+  // Bağlamsal yükseltme anı: kapasite dolunca jenerik toast yerine gerekçeli teklif
+  const [upgradeMoment, setUpgradeMoment] =
+    React.useState<UpgradeMomentPayload | null>(null);
 
   function handleClose(o: boolean) {
     if (mut.isPending) return;
@@ -81,6 +90,14 @@ export function StudentCreateButton() {
                   { body },
                   {
                     onSuccess: (res) => setResult(res.data),
+                    onError: (err) => {
+                      if (
+                        err instanceof ApiError &&
+                        err.detail.code === "plan_quota_exceeded"
+                      ) {
+                        setUpgradeMoment(parseUpgradeMoment(err.detail.details));
+                      }
+                    },
                   },
                 )
               }
@@ -88,6 +105,10 @@ export function StudentCreateButton() {
           )}
         </DialogContent>
       </Dialog>
+      <UpgradeMomentDialog
+        payload={upgradeMoment}
+        onClose={() => setUpgradeMoment(null)}
+      />
     </>
   );
 }

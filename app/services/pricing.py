@@ -200,11 +200,11 @@ def _tier_credits(code: str) -> int:
 def _credit_note(idx: int, code: str) -> str:
     """Kredinin insan dili — '1.500 kredi' tek başına hiçbir şey anlatmıyor."""
     n = _fmt(_tier_credits(code))
-    if idx == 0:
-        return f"{n} kredi/ay — 10 öğrencilik tam kullanıma rahat yeter"
-    if idx == 1:
-        return f"{n} kredi/ay — veli asistanı tam kapasitede bile yeter"
-    return f"{n} kredi/ay — tavana takılmazsın"
+    notes = _content()["credit_notes"]
+    fallback = ["{kredi} kredi/ay — 10 öğrencilik tam kullanıma rahat yeter",
+                "{kredi} kredi/ay — veli asistanı tam kapasitede bile yeter",
+                "{kredi} kredi/ay — tavana takılmazsın"][min(idx, 2)]
+    return str(notes.get(code) or fallback).replace("{kredi}", n)
 
 
 # ----------------------------------------------------------------------------
@@ -330,6 +330,80 @@ FEATURE_GLOSSARY: list[dict[str, Any]] = [
 ]
 
 
+# ----------------------------------------------------------------------------
+# İÇERİK OVERRIDE KATMANI (Faz 2A, 2026-08-05) — "kartlar bayatladı" sorununun
+# kalıcı çözümü: süper admin kart maddelerini / tagline'ları / kredi notlarını /
+# sözlüğü /admin/pricing'den KODSUZ günceller. Kod = varsayılan; app_settings
+# 'pricing_content' = override (fiyat override'ıyla aynı desen). Üst-düzey
+# anahtar bazında değiştirme: override'da olan anahtar bütünüyle geçerli olur.
+# ----------------------------------------------------------------------------
+
+CONTENT_KEY = "pricing_content"
+
+
+def content_defaults() -> dict[str, Any]:
+    """Kod varsayılanı (sıfırlama + editörde 'varsayılan' sütunu için)."""
+    import copy
+    return copy.deepcopy({
+        "taglines": {
+            "free": "Sistemi keşfet — süresiz ücretsiz",
+            "solo_pro": "Yola çıktın — ilk 10 öğrencin",
+            "solo_elite": "Tam kapasite koçluk",
+            "solo_unlimited": "Tavan yok — mini kurum ölçeği",
+        },
+        "free_features": list(_FREE_FEATURES),
+        "tier_new": {
+            "solo_pro": list(_TIER1_NEW),
+            "solo_elite": list(_TIER2_NEW),
+            "solo_unlimited": list(_TIER3_NEW),
+        },
+        # {kredi} yer tutucusu tahsis sayısıyla değiştirilir (sayı çoğaltılmaz)
+        "credit_notes": {
+            "solo_pro": "{kredi} kredi/ay — 10 öğrencilik tam kullanıma rahat yeter",
+            "solo_elite": "{kredi} kredi/ay — veli asistanı tam kapasitede bile yeter",
+            "solo_unlimited": "{kredi} kredi/ay — tavana takılmazsın",
+        },
+        "glossary": [dict(g) for g in FEATURE_GLOSSARY],
+    })
+
+
+def _content() -> dict[str, Any]:
+    """Etkin içerik = kod varsayılanı + DB override (üst-düzey anahtar bazında)."""
+    cfg = content_defaults()
+    override = app_settings.get_json(CONTENT_KEY, {}) or {}
+    if isinstance(override, dict):
+        for key, val in override.items():
+            if key in cfg and type(val) is type(cfg[key]):
+                cfg[key] = val
+    return cfg
+
+
+def content_warnings(content: dict[str, Any]) -> list[str]:
+    """Editör için tavsiye uyarıları (bloklamaz):
+    - madde biçim kuralı: "Kısa Başlık — detay" (yoğunluk dersi, 2026-08-04)
+    - sözlük terimi hiçbir maddede geçmiyorsa balon asla açılmaz
+    """
+    warns: list[str] = []
+    all_feats: list[str] = list(content.get("free_features") or [])
+    for feats in (content.get("tier_new") or {}).values():
+        all_feats.extend(feats or [])
+    for f in all_feats:
+        # Kısa, kendinden-anlaşılır başlıklar ("Öncelikli destek") ayraçsız
+        # olabilir; sorun UZUN cümle-maddelerdir (kart duvara döner).
+        if " — " not in f and len(f) > 40:
+            warns.append(f"Madde biçimi: '{f[:40]}…' — 'Kısa Başlık — detay' formatında değil")
+    titles = {f.split(" — ")[0] for f in all_feats}
+    for g in content.get("glossary") or []:
+        if g.get("term") and g["term"] not in titles:
+            warns.append(f"Sözlük terimi hiçbir maddede geçmiyor: '{g['term']}' (balon açılmaz)")
+    return warns
+
+
+def feature_glossary() -> list[dict[str, Any]]:
+    """Etkin sözlük (override dahil) — katalog bunu döndürür."""
+    return _content()["glossary"]
+
+
 def credit_costs_public() -> list[dict[str, Any]]:
     """'Krediler ne yapar?' tablosu — işlem başına maliyet (KIND_CREDITS tek
     kaynağından, sunum etiketiyle)."""
@@ -388,16 +462,17 @@ def features_for_plan(plan_code: str | None) -> list[str]:
         plan_code = solo_tiers[1]["code"]  # deneme = Rota deneyimi
     if plan_code in by_code:
         idx, t = by_code[plan_code]
+        tier_new = _content()["tier_new"]
         out = [f"{_cap_note(t).capitalize()} tam takip"]
         if not is_trial:
             # Denemede kredi tavanı 50 — Rota'nın 4.000'lik satırı YALAN olurdu.
             out.append(_credit_note(idx, t["code"]))
         for i in range(idx + 1):
-            out.extend(_TIER_NEW_BY_IDX[i])
+            out.extend(tier_new.get(solo_tiers[i]["code"], []))
         return out
     if plan_code in ("solo_free", "free"):
         fs = int(cfg["solo_free_students"])
-        return [f"{fs} öğrenciye kadar tam takip", *_FREE_FEATURES]
+        return [f"{fs} öğrenciye kadar tam takip", *_content()["free_features"]]
     if plan_code in inst_codes or plan_code in (
         "institution_free", "institution_trial", "etut_standart", "dershane_pro", "enterprise"
     ):
@@ -430,6 +505,8 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
     def cap_note(t: dict[str, Any]) -> str:
         return _cap_note(t)
 
+    content = _content()
+
     def tier_card(idx: int, t: dict[str, Any], *, tagline: str, tone: str,
                   highlight: bool, badge: str | None,
                   inherits: str) -> dict[str, Any]:
@@ -445,7 +522,7 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
             "cta": "14 gün ücretsiz dene", "cta_href": "/signup/teacher?plan=" + t["code"],
             # Kademeli anlatım: inherits satırı + yalnız bu kademenin YENİLERİ.
             "inherits": inherits,
-            "features": list(_TIER_NEW_BY_IDX[idx]),
+            "features": list(content["tier_new"].get(t["code"], [])),
             "credit_note": _credit_note(idx, t["code"]),
             "credits_monthly": _tier_credits(t["code"]),
             "excluded": [],
@@ -454,7 +531,8 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
     cards: list[dict[str, Any]] = [
         {
             "key": "free", "audience": "solo", "plan": "solo_free",
-            "name": free_label, "tagline": "Sistemi keşfet — süresiz ücretsiz",
+            "name": free_label,
+            "tagline": content["taglines"].get("free", "Sistemi keşfet — süresiz ücretsiz"),
             "monthly": 0, "price_label": "Ücretsiz", "price_unit": "", "tone": "plain",
             "price_hidden": False, "price_caption": "",
             "price_note": f"{free_students} öğrenciye kadar, süresiz",
@@ -462,17 +540,18 @@ def _marketing_cards(cfg: dict[str, Any]) -> list[dict[str, Any]]:
             "highlight": False, "badge": None, "corner": None,
             "cta": "Ücretsiz başla", "cta_href": "/signup/teacher",
             "inherits": "",
-            "features": [f"{free_students} öğrenciye kadar tam takip", *_FREE_FEATURES],
+            "features": [f"{free_students} öğrenciye kadar tam takip",
+                         *content["free_features"]],
             "credit_note": "", "credits_monthly": 0,
             "excluded": [f"Yapay zekâ özellikleri ({t1['label']} ve üzeri)"],
         },
-        tier_card(0, t1, tagline="Yola çıktın — ilk 10 öğrencin",
+        tier_card(0, t1, tagline=content["taglines"].get(t1["code"], ""),
                   tone="plain", highlight=False, badge=None,
                   inherits=f"{free_label}'tekilerin hepsi, artı:"),
-        tier_card(1, t2, tagline="Tam kapasite koçluk",
+        tier_card(1, t2, tagline=content["taglines"].get(t2["code"], ""),
                   tone="featured", highlight=True, badge="En popüler",
                   inherits=f"{t1['label']}'dakilerin hepsi, artı:"),
-        tier_card(2, t3, tagline="Tavan yok — mini kurum ölçeği",
+        tier_card(2, t3, tagline=content["taglines"].get(t3["code"], ""),
                   tone="plain", highlight=False, badge=None,
                   inherits=f"{t2['label']}'dakilerin hepsi, artı:"),
         {
@@ -509,7 +588,7 @@ def get_pricing_catalog() -> dict[str, Any]:
         # "Krediler ne yapar?" tablosu (işlem başına maliyet, sunum etiketiyle)
         "credit_costs": credit_costs_public(),
         # Tıkla-gör balonlar: kısa başlık → sade açıklama + gerçek ekran karesi
-        "feature_glossary": FEATURE_GLOSSARY,
+        "feature_glossary": feature_glossary(),
         "currency": cfg["currency"],
         "annual_paid_months": int(cfg["annual_paid_months"]),
         "contact": {

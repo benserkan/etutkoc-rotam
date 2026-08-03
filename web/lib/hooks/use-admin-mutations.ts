@@ -5,9 +5,11 @@ import { toast } from "sonner";
 
 import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
-import { uploadInstitutionLogo } from "@/lib/api/admin";
+import { adminKeys, uploadInstitutionLogo } from "@/lib/api/admin";
 import type {
   AccountArchiveBody,
+  PricingContentAdminResponse,
+  PricingContentConfig,
   AccountArchiveResult,
   AccountBulkArchiveBody,
   AccountUnarchiveBody,
@@ -1988,6 +1990,54 @@ export function useDeleteAiSetting() {
     },
     onError: (e) => {
       toast.error(errorTitle(e, "Ayar silinemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+export function useSavePricingContent() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<PricingContentAdminResponse>,
+    ApiError,
+    PricingContentConfig
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<PricingContentAdminResponse>>(
+        "/api/v2/admin/settings/pricing-content",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.setQueryData(adminKeys.pricingContent(), res.data);
+      toast.success("Kart içerikleri kaydedildi", {
+        description: "/pricing, Paketim, anasayfa ve mobil ANINDA bu içeriği gösterir.",
+      });
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Kaydedilemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+export function useResetPricingContent() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<PricingContentAdminResponse>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<PricingContentAdminResponse>>(
+        "/api/v2/admin/settings/pricing-content/reset",
+        { method: "POST" },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.setQueryData(adminKeys.pricingContent(), res.data);
+      toast.success("Kart içerikleri kod varsayılanına döndü");
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Sıfırlanamadı"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
       });
     },

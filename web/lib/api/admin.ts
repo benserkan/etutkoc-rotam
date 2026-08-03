@@ -13,6 +13,7 @@ import type {
   WaTemplatePreviewResult,
 } from "@/lib/types/whatsapp-template";
 import type {
+  PricingContentAdminResponse,
   AccountHistoryResponse,
   AccountOwnerType,
   AdminBadgesResponse,
@@ -255,6 +256,7 @@ export const adminKeys = {
     ["admin", "security", "abuse", onlyOpen ? "1" : "0", kind ?? ""] as const,
   aiSettings: () => ["admin", "settings", "ai"] as const,
   pricing: () => ["admin", "settings", "pricing"] as const,
+  pricingContent: () => ["admin", "settings", "pricing-content"] as const,
   contactRequests: (status: string | null) =>
     ["admin", "contact-requests", status ?? ""] as const,
   // P2 — WhatsApp şablon registry
@@ -292,6 +294,10 @@ export function getAdminAiSettings() {
 
 export function getAdminPricing() {
   return api<PricingAdminResponse>("/api/v2/admin/settings/pricing");
+}
+
+export function getAdminPricingContent() {
+  return api<PricingContentAdminResponse>("/api/v2/admin/settings/pricing-content");
 }
 
 export function getAdminContactRequests(status: string | null = null) {
