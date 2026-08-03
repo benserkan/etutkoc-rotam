@@ -55,6 +55,7 @@ import secrets
 from datetime import date, datetime, timezone
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response, status
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
@@ -144,6 +145,8 @@ from app.routes.api_v2.schemas.institution import (
     SubscriptionResponse,
     SubscriptionStatusInfo,
     SubscriptionUpgradeRequestBody,
+    TeacherAiToggleBody,
+    TeacherAiToggleResult,
     TeacherCardResponse,
     TeacherCardStudentRow,
     TeacherCreateBody,
@@ -154,6 +157,7 @@ from app.routes.api_v2.schemas.institution import (
     UsageBreakdownEntry,
     UsageDailyPoint,
     UsageEventItem,
+    UsagePersonRow,
     UsageResponse,
     WeekOverWeekInfo,
 )
@@ -874,6 +878,47 @@ def institution_teacher_card_v2(
         overall_rate_pct=overall_rate,
         total_deneme_planned=total_deneme_planned,
         total_deneme_completed=total_deneme_completed,
+        ai_enabled=teacher.ai_self_disabled_at is None,
+    )
+
+
+@router.post(
+    "/teachers/{teacher_id}/ai-toggle",
+    response_model=MutationResponse[TeacherAiToggleResult],
+)
+def institution_teacher_ai_toggle_v2(
+    teacher_id: int,
+    body: TeacherAiToggleBody,
+    request: Request,
+    user: User = Depends(_require_institution_admin),
+    db: Session = Depends(get_db),
+):
+    """Koçun AI kullanımını kurum adına aç/kapat (audit'li).
+
+    Kapalıyken koçun kendi AI'ı + öğrencilerinin tetiklemeleri + velilerin
+    Rota AI'ı kurum havuzundan HİÇ harcayamaz (tek anahtar, alt-ağaç dahil).
+    """
+    from app.services.audit import log_action
+
+    teacher = _get_owned_teacher(db, teacher_id, user.institution_id)
+    new_disabled = None if body.enabled else datetime.now(timezone.utc)
+    if (teacher.ai_self_disabled_at is None) != body.enabled:
+        teacher.ai_self_disabled_at = new_disabled
+        db.add(teacher)
+        log_action(
+            db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+            target_type="user", target_id=teacher.id, request=request,
+            details={"op": "ai_toggle_teacher", "enabled": body.enabled},
+            autocommit=False,
+        )
+        db.commit()
+        db.refresh(teacher)
+    return MutationResponse[TeacherAiToggleResult](
+        data=TeacherAiToggleResult(
+            teacher_id=teacher.id,
+            ai_enabled=teacher.ai_self_disabled_at is None,
+        ),
+        invalidate=[f"institution:{user.institution_id}:teachers"],
     )
 
 
@@ -2145,7 +2190,61 @@ def institution_usage_v2(
         ))
         used_so_far -= e.credits  # bir önceki olay bu kadar az kullandırmıştı
 
+    # Kişi kırılımı — bu ay kim harcadı (kurum gözetim mekanizması, 2026-08-03)
+    person_rows = (
+        db.query(
+            UsageEvent.actor_user_id,
+            func.coalesce(func.sum(UsageEvent.credits), 0),
+            func.count(UsageEvent.id),
+        )
+        .filter(
+            UsageEvent.owner_type == owner.type,
+            UsageEvent.owner_id == owner.id,
+            UsageEvent.period_year_month == period,
+        )
+        .group_by(UsageEvent.actor_user_id)
+        .all()
+    )
+    p_actor_ids = sorted({r[0] for r in person_rows if r[0] is not None})
+    p_actors: dict[int, User] = {}
+    if p_actor_ids:
+        p_actors = {
+            u.id: u for u in db.query(User).filter(User.id.in_(p_actor_ids)).all()
+        }
+
+    def _p_role(uid: int | None) -> str:
+        if uid is None:
+            return "Sistem"
+        a = p_actors.get(uid)
+        if a is None:
+            return "Silinmiş kullanıcı"
+        return {
+            UserRole.TEACHER: "Koç",
+            UserRole.STUDENT: "Öğrenci",
+            UserRole.PARENT: "Veli",
+            UserRole.INSTITUTION_ADMIN: "Yönetici",
+        }.get(a.role, "Diğer")
+
+    person_breakdown = sorted(
+        (
+            UsagePersonRow(
+                user_id=uid,
+                name=(
+                    (p_actors[uid].full_name or p_actors[uid].email)
+                    if uid in p_actors
+                    else ("Otomatik (sistem)" if uid is None else f"#{uid}")
+                ),
+                role_label=_p_role(uid),
+                credits=int(credits),
+                count=int(count),
+            )
+            for uid, credits, count in person_rows
+        ),
+        key=lambda r: -r.credits,
+    )
+
     return UsageResponse(
+        person_breakdown=person_breakdown,
         institution=_institution_brief(inst),
         account=UsageAccountInfo(
             period_year_month=account.period_year_month,

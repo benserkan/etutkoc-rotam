@@ -39,6 +39,7 @@ import {
 import type { GorevBreakdown, TeacherStudentDetailResponse } from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { StudentAiCard } from "@/components/teacher/student-ai-card";
 import { StudentBooksPanel } from "@/components/teacher/student-books-panel";
 import { StudentAnalyticsPanel } from "@/components/teacher/student-analytics-panel";
 import { StudentExamsPanel } from "@/components/teacher/student-exams-panel";
@@ -228,6 +229,9 @@ export function StudentTabs({ studentId, initial }: Props) {
             today={data.gorev_today ?? null}
             week={data.gorev_week ?? null}
           />
+
+          {/* Yapay zekâ erişimi — öğrenci/veli AI harcamasını kişi bazında yönet */}
+          <StudentAiCard studentId={studentId} />
 
           {/* Hafta Anchor'ı yalnız aktif (explicit) program YOKKEN anlamlı —
               fallback hizalama mekanizması. Aktif program varsa kart gizlenir

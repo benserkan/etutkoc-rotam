@@ -99,13 +99,27 @@ def _get_owned_exam(db: Session, coach: User, exam_id: int) -> tuple[ExamResult,
     return exam, student
 
 
-def _paying_coach(db: Session, student: User) -> User:
-    """Kredi + kapı sahibi koç (YSA deseni) — yoksa/kapalıysa 403."""
+def _paying_coach(db: Session, student: User, *, actor: User | None = None) -> User:
+    """Kredi + kapı sahibi koç (YSA deseni) — yoksa/kapalıysa 403.
+
+    actor verilirse ve öğrenci kendisi tetikliyorsa öğrencinin AI anahtarı
+    da yoklanır (koç kapatmışsa 403; koçun kendi tetiklemesi serbest).
+    """
     coach = db.get(User, student.teacher_id) if student.teacher_id else None
     if coach is None:
         raise HTTPException(status_code=403, detail={
             "error": "forbidden", "code": "no_coach",
             "message": "PDF analizi için bağlı bir koç gerekir."})
+    if (actor is not None and actor.id == student.id
+            and student.ai_self_disabled_at is not None):
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_disabled_by_coach",
+            "message": "Koçun, yapay zekâ PDF okumayı senin için kapatmış. "
+                       "Açtırmak için koçunla görüşebilirsin."})
+    if coach.ai_self_disabled_at is not None:
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_disabled_by_institution",
+            "message": "Yapay zekâ kullanımı kurum tarafından kapatılmış."})
     if not ai_premium_allowed(db, coach):
         raise HTTPException(status_code=403, detail={
             "error": "forbidden", "code": "plan_upgrade_required",
@@ -511,7 +525,7 @@ def student_exam_import_analyze(
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
-    coach = _paying_coach(db, user)
+    coach = _paying_coach(db, user, actor=user)
     pdf = _read_pdf_upload(file)
     return _run_analyze(db, student=user, coach=coach, actor=user, pdf_bytes=pdf,
                         declared_section=declared_section,

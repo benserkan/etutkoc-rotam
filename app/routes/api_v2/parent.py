@@ -344,6 +344,12 @@ def _parent_insight_gate(db: Session, student: User):
     coach = db.get(User, student.teacher_id) if student.teacher_id else None
     if coach is None:
         return None, False, "Bu öğrencinin bağlı bir koçu yok; analiz oluşturulamıyor."
+    if student.ai_parent_disabled_at is not None:
+        # Koç bu öğrencinin veli AI özelliklerini kapatmış (kredi koçundur).
+        return coach, False, "Koç, yapay zekâ asistanını bu öğrenci için kapatmış. Açtırmak için koçla görüşebilirsin."
+    if coach.ai_self_disabled_at is not None:
+        # Kurum yöneticisi koçun AI kullanımını kapatmış → alt-ağaç da durur.
+        return coach, False, "Yapay zekâ kullanımı kurum tarafından kapatılmış."
     if not ai_premium_allowed(db, coach):
         return coach, False, "Yapay zekâ analizi koçun paketinde aktif değil."
     if coach.ai_capture_consent_at is None:

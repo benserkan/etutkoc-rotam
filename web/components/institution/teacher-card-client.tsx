@@ -3,13 +3,21 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Lock, MessageSquare } from "lucide-react";
+import { Lock, MessageSquare, Sparkles } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { DemoHint } from "@/components/demos/demo-hint";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
+import { useTeacherAiToggle } from "@/lib/hooks/use-institution-mutations";
 import {
   getInstitutionTeacherCard,
   institutionKeys,
@@ -93,6 +101,9 @@ export function TeacherCardClient({ initial, teacherId }: Props) {
           doğrudan iletişime geç.
         </div>
       </div>
+
+      {/* AI erişimi — kurum, koçun (ve alt-ağacının) havuz harcamasını yönetir */}
+      <AiAccessCard teacherId={teacherId} enabled={data.ai_enabled} />
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <KpiCard label="Öğrenci" value={students.length} sub="bu koça bağlı" />
@@ -259,4 +270,86 @@ function rateColorClass(pct: number | null): string {
   if (pct >= 70) return "text-emerald-700";
   if (pct >= 40) return "text-amber-700";
   return "text-rose-700";
+}
+
+/**
+ * Yapay zekâ erişim kartı (2026-08-03) — kurum yöneticisi koçun AI kullanımını
+ * kapatabilir. Kapalıyken koç + öğrencileri + velileri kurum kredi havuzundan
+ * HİÇ harcayamaz (tek anahtar, alt-ağaç dahil). Audit'e işlenir.
+ */
+function AiAccessCard({ teacherId, enabled }: { teacherId: number; enabled: boolean }) {
+  const mut = useTeacherAiToggle(teacherId);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  return (
+    <section
+      className={cn(
+        "rounded-lg border p-4",
+        enabled
+          ? "border-border bg-card"
+          : "border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10",
+      )}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="flex items-center gap-2 text-sm font-semibold">
+            <Sparkles className="size-4 text-violet-600" aria-hidden />
+            Yapay zekâ kullanımı
+            {!enabled ? (
+              <span className="rounded bg-amber-200 px-1.5 py-0.5 text-[10px] font-bold text-amber-900 dark:bg-amber-500/30 dark:text-amber-200">
+                KAPALI
+              </span>
+            ) : null}
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {enabled
+              ? "Bu koç, öğrencileri ve velileri yapay zekâ özelliklerinde kurum kredi havuzunu kullanabilir."
+              : "Kapalı — koç, öğrencileri ve velileri kurum havuzundan yapay zekâ harcaması yapamaz."}
+          </p>
+        </div>
+        {enabled ? (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setConfirmOpen(true)}
+            disabled={mut.isPending}
+            className="text-rose-700 hover:text-rose-800"
+          >
+            Kapat
+          </Button>
+        ) : (
+          <Button size="sm" onClick={() => mut.mutate(true)} disabled={mut.isPending}>
+            Aç
+          </Button>
+        )}
+      </div>
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Yapay zekâ kullanımını kapat?</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">
+            Bu koçun kendi araçları, öğrencilerinin yapay zekâ tetiklemeleri ve
+            velilerinin Rota asistanı{" "}
+            <span className="font-medium text-foreground">tamamen durur</span>;
+            kurum kredi havuzundan harcama yapılmaz. İstediğinde yeniden
+            açabilirsin; kayıtlı veriler silinmez.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Vazgeç
+            </Button>
+            <Button
+              className="bg-rose-600 text-white hover:bg-rose-700"
+              onClick={() =>
+                mut.mutate(false, { onSuccess: () => setConfirmOpen(false) })
+              }
+              disabled={mut.isPending}
+            >
+              Kapat
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </section>
+  );
 }

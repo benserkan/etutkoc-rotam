@@ -69,6 +69,7 @@ from sqlalchemy.orm import Session, joinedload
 from app.deps import get_db
 from app.models import (
     AcademicYear,
+    AuditAction,
     Book,
     BookSection,
     COACH_PAYMENT_METHOD_LABELS,
@@ -143,6 +144,12 @@ from app.routes.api_v2.schemas.teacher import (
     BillingTotals,
     BillingMonthResponse,
     AiConsentResponse,
+    AiTogglesBody,
+    AiTogglesResponse,
+    AiUsageEventRow,
+    AiUsageKindRow,
+    AiUsagePersonRow,
+    AiUsageResponse,
     CoachingInsightCacheResponse,
     CoachingInsightResponse,
     ParsePhotoBody,
@@ -1790,6 +1797,223 @@ def _require_ai_premium(db: Session, user: User) -> None:
     (kitap-AI önerisiyle aynı kapı; tutarlılık için tek kaynak)."""
     from app.routes.api_v2.dependencies import assert_ai_premium
     assert_ai_premium(db, user)
+
+
+@router.post("/ai-consent/revoke", response_model=MutationResponse[AiConsentResponse])
+def teacher_ai_consent_revoke_v2(
+    request: Request,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """AI açık rızasını GERİ AL — koçun toptan kapatma anahtarı.
+
+    Etki: koçun kendi AI'ı + öğrencilerin AI tetiklemeleri + veli Rota AI'ı
+    (hepsi consent_required'a düşer). Tekrar vermek için mevcut onay akışı
+    (POST /ai-consent) yeterlidir.
+    """
+    from app.services.audit import log_action
+    from app.services.plans import ai_premium_allowed, effective_plan_for_user
+
+    if user.ai_capture_consent_at is not None:
+        user.ai_capture_consent_at = None
+        db.add(user)
+        log_action(
+            db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+            target_type="user", target_id=user.id, request=request,
+            details={"op": "ai_consent_revoked"}, autocommit=False,
+        )
+        db.commit()
+        db.refresh(user)
+    return MutationResponse[AiConsentResponse](
+        data=AiConsentResponse(
+            consented=False, consent_at=None,
+            ai_premium=ai_premium_allowed(db, user),
+            plan_code=effective_plan_for_user(db, user),
+        ),
+        invalidate=["teacher:me:ai-consent"],
+    )
+
+
+@router.get("/students/{student_id}/ai-toggles", response_model=AiTogglesResponse)
+def teacher_student_ai_toggles_get_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin AI erişim anahtarları (koç görünümü)."""
+    student = _get_owned_student(db, student_id, user.id)
+    return AiTogglesResponse(
+        student_ai_enabled=student.ai_self_disabled_at is None,
+        parent_ai_enabled=student.ai_parent_disabled_at is None,
+    )
+
+
+@router.post(
+    "/students/{student_id}/ai-toggles",
+    response_model=MutationResponse[AiTogglesResponse],
+)
+def teacher_student_ai_toggles_set_v2(
+    student_id: int,
+    body: AiTogglesBody,
+    request: Request,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrenci bazında AI erişimini aç/kapat (kısmi güncelleme, audit'li).
+
+    student_ai_enabled=False → öğrencinin kendi tetiklediği AI durur (YSA
+    etiketleme, deneme PDF okutma); koçun kendi tetiklemeleri sürer.
+    parent_ai_enabled=False → bu öğrencinin velileri Rota AI kullanamaz.
+    """
+    from app.services.audit import log_action
+
+    student = _get_owned_student(db, student_id, user.id)
+    now = datetime.now(timezone.utc)
+    changed: dict[str, bool] = {}
+    if body.student_ai_enabled is not None:
+        student.ai_self_disabled_at = None if body.student_ai_enabled else now
+        changed["student_ai_enabled"] = body.student_ai_enabled
+    if body.parent_ai_enabled is not None:
+        student.ai_parent_disabled_at = None if body.parent_ai_enabled else now
+        changed["parent_ai_enabled"] = body.parent_ai_enabled
+    if changed:
+        db.add(student)
+        log_action(
+            db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+            target_type="user", target_id=student.id, request=request,
+            details={"op": "ai_toggles", **changed}, autocommit=False,
+        )
+        db.commit()
+        db.refresh(student)
+    return MutationResponse[AiTogglesResponse](
+        data=AiTogglesResponse(
+            student_ai_enabled=student.ai_self_disabled_at is None,
+            parent_ai_enabled=student.ai_parent_disabled_at is None,
+        ),
+        invalidate=[f"teacher:{user.id}:students:{student.id}:ai-toggles"],
+    )
+
+
+@router.get("/ai-usage", response_model=AiUsageResponse)
+def teacher_ai_usage_v2(
+    days: int = Query(30, ge=7, le=120),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Koçun AI kredi dökümü: tür + kişi (kim harcadı) kırılımı + son olaylar.
+
+    Bağımsız koçta havuz kendisi (owner=user); kurum koçunda havuz kurumun —
+    yalnız KENDİ alt-ağacının (kendisi + öğrencileri + o öğrencilerin velileri)
+    olayları gösterilir, meslektaşların harcaması sızmaz.
+    """
+    from app.models.parent import ParentStudentLink
+    from app.models.usage import (
+        USAGE_KIND_LABELS_TR,
+        UsageEvent,
+        UsageOwnerType,
+    )
+
+    since = datetime.now(timezone.utc) - timedelta(days=days)
+
+    student_ids = {
+        sid for (sid,) in db.query(User.id).filter(
+            User.role == UserRole.STUDENT, User.teacher_id == user.id,
+        ).all()
+    }
+    parent_ids: set[int] = set()
+    if student_ids:
+        parent_ids = {
+            pid for (pid,) in db.query(ParentStudentLink.parent_id).filter(
+                ParentStudentLink.student_id.in_(student_ids),
+            ).all()
+        }
+
+    if user.institution_id:
+        owner_type, owner_id = UsageOwnerType.INSTITUTION, user.institution_id
+        subtree = student_ids | parent_ids | {user.id}
+    else:
+        owner_type, owner_id = UsageOwnerType.USER, user.id
+        subtree = None  # kendi havuzu — tüm olaylar zaten kendi alt-ağacı
+
+    q = db.query(UsageEvent).filter(
+        UsageEvent.owner_type == owner_type,
+        UsageEvent.owner_id == owner_id,
+        UsageEvent.occurred_at >= since,
+    )
+    if subtree is not None:
+        q = q.filter(UsageEvent.actor_user_id.in_(subtree))
+    rows = q.order_by(UsageEvent.occurred_at.desc()).all()
+
+    def _kind_label(kind) -> str:
+        try:
+            return USAGE_KIND_LABELS_TR.get(kind, kind.value)
+        except Exception:
+            return str(kind)
+
+    # Aktör adı + rol etiketi (tek sorgu, N+1 yok)
+    actor_ids = sorted({e.actor_user_id for e in rows if e.actor_user_id})
+    actors = {
+        u.id: u for u in db.query(User).filter(User.id.in_(actor_ids)).all()
+    } if actor_ids else {}
+
+    def _role_label(uid: int | None) -> str:
+        if uid is None:
+            return "Sistem"
+        if uid == user.id:
+            return "Koç (sen)"
+        a = actors.get(uid)
+        if a is None:
+            return "Silinmiş kullanıcı"
+        if a.role == UserRole.STUDENT:
+            return "Öğrenci"
+        if a.role == UserRole.PARENT:
+            return "Veli"
+        return "Diğer"
+
+    def _actor_name(uid: int | None) -> str:
+        if uid is None:
+            return "Otomatik (sistem)"
+        a = actors.get(uid)
+        return (a.full_name or a.email) if a else f"#{uid}"
+
+    kind_agg: dict[str, dict] = {}
+    person_agg: dict[int | None, dict] = {}
+    for e in rows:
+        kv = e.kind.value if hasattr(e.kind, "value") else str(e.kind)
+        k = kind_agg.setdefault(
+            kv, {"kind": kv, "label": _kind_label(e.kind), "credits": 0, "count": 0})
+        k["credits"] += e.credits
+        k["count"] += 1
+        p = person_agg.setdefault(
+            e.actor_user_id,
+            {"user_id": e.actor_user_id, "name": _actor_name(e.actor_user_id),
+             "role_label": _role_label(e.actor_user_id),
+             "credits": 0, "count": 0, "last_at": None})
+        p["credits"] += e.credits
+        p["count"] += 1
+        if p["last_at"] is None:  # rows DESC — ilk görülen en yenisi
+            p["last_at"] = e.occurred_at.isoformat() if e.occurred_at else None
+
+    return AiUsageResponse(
+        days=days,
+        total_credits=sum(e.credits for e in rows),
+        total_count=len(rows),
+        kinds=sorted(
+            (AiUsageKindRow(**k) for k in kind_agg.values()),
+            key=lambda r: -r.credits),
+        persons=sorted(
+            (AiUsagePersonRow(**p) for p in person_agg.values()),
+            key=lambda r: -r.credits),
+        events=[
+            AiUsageEventRow(
+                at=e.occurred_at.isoformat() if e.occurred_at else "",
+                kind_label=_kind_label(e.kind),
+                credits=e.credits,
+                actor_name=_actor_name(e.actor_user_id),
+            )
+            for e in rows[:20]
+        ],
+    )
 
 
 @router.get("/ai-consent", response_model=AiConsentResponse)

@@ -200,6 +200,20 @@ class User(Base):
     ai_capture_consent_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
+    # AI erişim anahtarları (2026-08-03 — koç/kurum müdahale mekanizması):
+    # ai_self_disabled_at — bu kullanıcının KENDİ tetiklediği AI kapalı.
+    #   Öğrencide: koçu kapatmış (YSA etiketleme, deneme PDF okutma).
+    #   Koçta: kurum yöneticisi kapatmış → koçun kendi AI'ı + alt-ağacındaki
+    #   tüm öğrenci/veli harcaması durur (havuz kurumundur).
+    # ai_parent_disabled_at — YALNIZ öğrenci satırında anlamlı: bu öğrencinin
+    #   velileri Rota AI kullanamaz. Veli User'ına konmaz — velinin başka
+    #   koçtaki çocuğu etkilenmemeli (kapı öğrenci üzerinden çözülür).
+    ai_self_disabled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    ai_parent_disabled_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
 
     @property
     def two_factor_enabled(self) -> bool:

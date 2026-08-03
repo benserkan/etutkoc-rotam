@@ -6,6 +6,7 @@ import { Check, CheckCircle2, Clock, CreditCard, Gem, Loader2, Lock, Mail, Spark
 
 import { cn } from "@/lib/utils";
 import { applyInvalidate } from "@/lib/invalidate";
+import { AiConsentCard, AiUsageCard } from "@/components/teacher/ai-usage-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -182,9 +183,15 @@ export function TeacherPlanClient({ initial }: { initial: TeacherPlanResponse })
         <SoloUpgradeCard data={data} />
       )}
 
+      {/* Yapay zekâ: kullanım dökümü (kim/ne harcadı) + onay anahtarı */}
+      <AiUsageCard />
+      <AiConsentCard />
+
       <p className="text-[11px] text-muted-foreground">
         Yapay zekâ özellikleri (sesli dikte, fotoğraftan seans doldurma, koçluk içgörüsü)
         ücretli pakette ve aktif denemede açıktır; kullanım kendi kredinden düşer.
+        Öğrenci ve veli özellikleri de senin havuzundan harcar — kişi bazında
+        açma/kapatma öğrenci sayfasındaki &quot;Yapay zekâ erişimi&quot; kartındadır.
       </p>
     </div>
   );

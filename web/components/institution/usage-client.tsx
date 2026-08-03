@@ -27,6 +27,7 @@ import type {
   UsageBreakdownEntry,
   UsageDailyPoint,
   UsageEventItem,
+  UsagePersonRow,
   UsageResponse,
 } from "@/lib/types/institution";
 import { UsageDailyBarChart } from "@/components/institution/usage-daily-bar-chart";
@@ -54,7 +55,7 @@ export function UsageClient({ initial }: Props) {
     staleTime: 30_000,
   });
   const data = q.data ?? initial;
-  const { institution, account, breakdown, series, events, warn_threshold_pct } =
+  const { institution, account, breakdown, person_breakdown, series, events, warn_threshold_pct } =
     data;
 
   return (
@@ -120,6 +121,9 @@ export function UsageClient({ initial }: Props) {
         />
         <DailySeriesCard series={series} />
       </div>
+
+      {/* Kişi kırılımı — bu ay krediyi KİM harcadı (2026-08-03) */}
+      <PersonBreakdownCard rows={person_breakdown ?? []} />
 
       <PlanInfoBlock
         plan={account.plan_code}
@@ -372,6 +376,74 @@ function KindBreakdownCard({
               );
             })}
           </ul>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================================================
+// Kişi kırılımı — bu ay krediyi kim harcadı
+// ============================================================================
+
+const PERSON_ROLE_TONE: Record<string, string> = {
+  "Koç": "bg-cyan-50 text-cyan-800 dark:bg-cyan-500/10 dark:text-cyan-200",
+  "Öğrenci": "bg-sky-50 text-sky-800 dark:bg-sky-500/10 dark:text-sky-200",
+  "Veli": "bg-emerald-50 text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-200",
+  "Yönetici": "bg-violet-50 text-violet-800 dark:bg-violet-500/10 dark:text-violet-200",
+};
+
+function PersonBreakdownCard({ rows }: { rows: UsagePersonRow[] }) {
+  return (
+    <Card>
+      <CardContent className="p-5">
+        <h3 className="text-sm font-semibold mb-1 flex items-center gap-1.5">
+          <CircleDashed className="size-4 text-muted-foreground" aria-hidden />
+          Krediyi Kim Kullandı? (bu ay)
+        </h3>
+        <p className="text-xs text-muted-foreground mb-3">
+          Koç, öğrenci ve veli tetiklemeleri dahil — her satır bir kişinin bu
+          aydaki toplam yapay zekâ harcamasıdır.
+        </p>
+        {rows.length === 0 ? (
+          <p className="text-sm text-muted-foreground italic">
+            Bu ay henüz kredi tüketen işlem yapılmadı.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/50 text-muted-foreground text-xs">
+                <tr>
+                  <th className="text-left px-3 py-2 font-medium">Kişi</th>
+                  <th className="text-left px-3 py-2 font-medium">Rol</th>
+                  <th className="text-right px-3 py-2 font-medium">İşlem</th>
+                  <th className="text-right px-3 py-2 font-medium">Kredi</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {rows.map((r) => (
+                  <tr key={r.user_id ?? "system"}>
+                    <td className="px-3 py-2">{r.name}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={
+                          "rounded px-1.5 py-0.5 text-[10px] font-medium " +
+                          (PERSON_ROLE_TONE[r.role_label] ??
+                            "bg-slate-100 text-slate-600 dark:bg-slate-500/10 dark:text-slate-300")
+                        }
+                      >
+                        {r.role_label}
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-right tabular-nums">{r.count}</td>
+                    <td className="px-3 py-2 text-right font-medium tabular-nums">
+                      {r.credits}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         )}
       </CardContent>
     </Card>

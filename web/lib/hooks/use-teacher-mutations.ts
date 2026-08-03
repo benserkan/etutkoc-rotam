@@ -19,6 +19,7 @@ import type {
   CoachingSessionRow,
   PaymentCreateBody,
   AiConsentResponse,
+  AiTogglesResponse,
   SessionDraftResponse,
   TranscribeResponse,
   CoachingInsightCacheResponse,
@@ -1545,6 +1546,44 @@ export function useSetAiConsent() {
       api<MutationResponse<AiConsentResponse>>("/api/v2/teacher/ai-consent", { method: "POST" }),
     onError: (err) => showError(err, "Onay kaydedilemedi"),
     onSuccess: (res) => applyInvalidate(qc, res.invalidate),
+  });
+}
+
+export function useRevokeAiConsent() {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<AiConsentResponse>, ApiError, void>({
+    mutationFn: () =>
+      api<MutationResponse<AiConsentResponse>>("/api/v2/teacher/ai-consent/revoke", {
+        method: "POST",
+      }),
+    onError: (err) => showError(err, "Onay geri alınamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Yapay zekâ onayın geri alındı", {
+        description:
+          "Senin, öğrencilerinin ve velilerin tüm yapay zekâ özellikleri durdu. İstediğinde yeniden açabilirsin.",
+      });
+    },
+  });
+}
+
+export function useSetStudentAiToggles(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<AiTogglesResponse>,
+    ApiError,
+    { student_ai_enabled?: boolean; parent_ai_enabled?: boolean }
+  >({
+    mutationFn: (body) =>
+      api<MutationResponse<AiTogglesResponse>>(
+        `/api/v2/teacher/students/${studentId}/ai-toggles`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onError: (err) => showError(err, "Ayar kaydedilemedi"),
+    onSuccess: (res) => {
+      qc.setQueryData(teacherKeys.aiToggles(studentId), res.data);
+      applyInvalidate(qc, res.invalidate);
+    },
   });
 }
 

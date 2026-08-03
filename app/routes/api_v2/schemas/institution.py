@@ -148,6 +148,18 @@ class TeacherCardResponse(BaseModel):
     overall_rate_pct: int | None = None
     total_deneme_planned: int = 0
     total_deneme_completed: int = 0
+    # AI erişimi (2026-08-03): kurum yöneticisi bu koçun AI kullanımını
+    # kapatabilir — kapalıyken koç + öğrencileri + velileri havuzdan harcayamaz.
+    ai_enabled: bool = True
+
+
+class TeacherAiToggleBody(BaseModel):
+    enabled: bool
+
+
+class TeacherAiToggleResult(BaseModel):
+    teacher_id: int
+    ai_enabled: bool
 
 
 # =============================================================================
@@ -550,10 +562,20 @@ class UsageAccountInfo(BaseModel):
     total_event_count: int = 0
 
 
+class UsagePersonRow(BaseModel):
+    """Bu ay krediyi KİM harcadı — kişi kırılımı (2026-08-03)."""
+    user_id: int | None = None
+    name: str
+    role_label: str            # Koç · Öğrenci · Veli · Sistem
+    credits: int
+    count: int
+
+
 class UsageResponse(BaseModel):
     institution: InstitutionBrief
     account: UsageAccountInfo
     breakdown: list[UsageBreakdownEntry]
+    person_breakdown: list[UsagePersonRow] = []
     series: list[UsageDailyPoint]
     events: list[UsageEventItem]
     warn_threshold_pct: int

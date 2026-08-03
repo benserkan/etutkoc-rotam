@@ -15,6 +15,7 @@ import type {
   SubscriptionRequestResult,
   SubscriptionStatusInfo,
   SubscriptionUpgradeRequestBody,
+  TeacherAiToggleResult,
   TeacherCreateBody,
   TeacherCreateResult,
   TeacherSummaryItem,
@@ -101,6 +102,35 @@ export function useCreateInstitutionTeacher() {
     onSuccess: (res) => applyInvalidate(qc, res.invalidate),
     onError: (e) => {
       toast.error(errorTitle(e, "Öğretmen eklenemedi"), {
+        description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
+      });
+    },
+  });
+}
+
+export function useTeacherAiToggle(teacherId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<TeacherAiToggleResult>, Error, boolean>({
+    mutationFn: (enabled) =>
+      api<MutationResponse<TeacherAiToggleResult>>(
+        `/api/v2/institution/teachers/${teacherId}/ai-toggle`,
+        { method: "POST", body: JSON.stringify({ enabled }) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success(
+        res.data.ai_enabled
+          ? "Yapay zekâ kullanımı açıldı"
+          : "Yapay zekâ kullanımı kapatıldı",
+        {
+          description: res.data.ai_enabled
+            ? "Koç, öğrencileri ve velileri yeniden kullanabilir."
+            : "Koç, öğrencileri ve velileri kurum havuzundan harcayamaz.",
+        },
+      );
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Ayar kaydedilemedi"), {
         description: errorMessage(e, "Beklenmeyen bir hata oluştu."),
       });
     },

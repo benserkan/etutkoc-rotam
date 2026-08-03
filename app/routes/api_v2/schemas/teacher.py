@@ -2181,6 +2181,53 @@ class AiConsentResponse(BaseModel):
     plan_code: str | None = None    # geçerli plan kodu (UI yükseltme yönlendirmesi)
 
 
+# --- AI erişim anahtarları + kullanım dökümü (2026-08-03) ---
+
+
+class AiTogglesResponse(BaseModel):
+    """Öğrenci bazında AI erişim durumu (koç yönetir)."""
+    student_ai_enabled: bool   # öğrencinin kendi tetiklediği AI (YSA etiket, PDF)
+    parent_ai_enabled: bool    # bu öğrencinin velilerinin Rota AI'ı
+
+
+class AiTogglesBody(BaseModel):
+    """Yalnız gönderilen alan değişir (kısmi güncelleme)."""
+    student_ai_enabled: bool | None = None
+    parent_ai_enabled: bool | None = None
+
+
+class AiUsageKindRow(BaseModel):
+    kind: str
+    label: str
+    credits: int
+    count: int
+
+
+class AiUsagePersonRow(BaseModel):
+    user_id: int | None = None
+    name: str
+    role_label: str            # Öğrenci · Veli · Koç (sen) · Sistem
+    credits: int
+    count: int
+    last_at: str | None = None
+
+
+class AiUsageEventRow(BaseModel):
+    at: str
+    kind_label: str
+    credits: int
+    actor_name: str
+
+
+class AiUsageResponse(BaseModel):
+    days: int
+    total_credits: int
+    total_count: int
+    kinds: list[AiUsageKindRow]
+    persons: list[AiUsagePersonRow]
+    events: list[AiUsageEventRow]
+
+
 class ParsePhotoBody(BaseModel):
     image_base64: str
     media_type: str  # image/jpeg | image/png | image/webp

@@ -285,6 +285,14 @@ def assert_ai_premium(db: Session, user: User) -> None:
     """
     from app.services.plans import ai_premium_allowed
 
+    if user.ai_self_disabled_at is not None:
+        # Kurum yöneticisi bu koçun AI kullanımını kapatmış (havuz kurumundur).
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail={"error": "forbidden", "code": "ai_disabled_by_institution",
+                    "message": "Yapay zekâ kullanımı kurum yöneticiniz tarafından "
+                               "kapatılmış. Açtırmak için kurumunuzla görüşün."},
+        )
     if not ai_premium_allowed(db, user):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,

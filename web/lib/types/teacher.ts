@@ -1914,6 +1914,45 @@ export interface AiConsentResponse {
   plan_code: string | null;
 }
 
+// --- AI erişim anahtarları + kullanım dökümü (2026-08-03) ---
+
+export interface AiTogglesResponse {
+  student_ai_enabled: boolean;
+  parent_ai_enabled: boolean;
+}
+
+export interface AiUsageKindRow {
+  kind: string;
+  label: string;
+  credits: number;
+  count: number;
+}
+
+export interface AiUsagePersonRow {
+  user_id: number | null;
+  name: string;
+  role_label: string;
+  credits: number;
+  count: number;
+  last_at: string | null;
+}
+
+export interface AiUsageEventRow {
+  at: string;
+  kind_label: string;
+  credits: number;
+  actor_name: string;
+}
+
+export interface AiUsageResponse {
+  days: number;
+  total_credits: number;
+  total_count: number;
+  kinds: AiUsageKindRow[];
+  persons: AiUsagePersonRow[];
+  events: AiUsageEventRow[];
+}
+
 export interface TeacherPlanOption {
   code: string;
   label: string;

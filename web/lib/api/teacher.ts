@@ -30,6 +30,8 @@ import type {
   BillingMonthResponse,
   StudentPaymentsResponse,
   AiConsentResponse,
+  AiTogglesResponse,
+  AiUsageResponse,
   CoachingInsightCacheResponse,
   TeacherPlanResponse,
   TrialStatusResponse,
@@ -213,6 +215,9 @@ export const teacherKeys = {
   studentPayments: (id: number) =>
     ["teacher", "me", "students", String(id), "payments"] as const,
   aiConsent: () => ["teacher", "me", "ai-consent"] as const,
+  aiToggles: (id: number) =>
+    ["teacher", "me", "students", String(id), "ai-toggles"] as const,
+  aiUsage: (days: number) => ["teacher", "me", "ai-usage", String(days)] as const,
   coachingInsight: (id: number) =>
     ["teacher", "me", "students", String(id), "coaching-insight"] as const,
   plan: () => ["teacher", "me", "plan"] as const,
@@ -313,6 +318,14 @@ export function getTeacherStudentPayments(
 
 export function getTeacherAiConsent(): Promise<AiConsentResponse> {
   return api<AiConsentResponse>("/api/v2/teacher/ai-consent");
+}
+
+export function getTeacherAiToggles(studentId: number): Promise<AiTogglesResponse> {
+  return api<AiTogglesResponse>(`/api/v2/teacher/students/${studentId}/ai-toggles`);
+}
+
+export function getTeacherAiUsage(days: number): Promise<AiUsageResponse> {
+  return api<AiUsageResponse>(`/api/v2/teacher/ai-usage?days=${days}`);
 }
 
 export function getTeacherCoachingInsight(

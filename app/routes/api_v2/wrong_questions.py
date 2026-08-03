@@ -220,6 +220,18 @@ def _run_ai_tag(
         raise HTTPException(status_code=403, detail={
             "error": "forbidden", "code": "no_coach",
             "message": "Yapay zekâ etiketleme için bağlı bir koç gerekir."})
+    if actor.id == student.id and student.ai_self_disabled_at is not None:
+        # Koç bu öğrencinin AI tetiklemesini kapatmış; koçun KENDİ tetiklemesi
+        # serbest kalır (kendi kredisini bilerek harcıyor).
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_disabled_by_coach",
+            "message": "Koçun, yapay zekâ etiketlemeyi senin için kapatmış. "
+                       "Açtırmak için koçunla görüşebilirsin."})
+    if coach.ai_self_disabled_at is not None:
+        # Kurum, koçun AI kullanımını kapatmış → havuzdan hiçbir harcama olmaz.
+        raise HTTPException(status_code=403, detail={
+            "error": "forbidden", "code": "ai_disabled_by_institution",
+            "message": "Yapay zekâ kullanımı kurum tarafından kapatılmış."})
     if not ai_premium_allowed(db, coach):
         raise HTTPException(status_code=403, detail={
             "error": "forbidden", "code": "plan_upgrade_required",

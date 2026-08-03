@@ -109,6 +109,13 @@ export interface TeacherCardResponse {
   overall_rate_pct: number | null;
   total_deneme_planned: number;
   total_deneme_completed: number;
+  /** Kurum bu koçun AI kullanımını kapatabilir (2026-08-03). */
+  ai_enabled: boolean;
+}
+
+export interface TeacherAiToggleResult {
+  teacher_id: number;
+  ai_enabled: boolean;
 }
 
 export interface RosterRowItem {
@@ -597,10 +604,19 @@ export interface UsageEventItem {
   balance_after: number | null;
 }
 
+export interface UsagePersonRow {
+  user_id: number | null;
+  name: string;
+  role_label: string;
+  credits: number;
+  count: number;
+}
+
 export interface UsageResponse {
   institution: InstitutionBrief;
   account: UsageAccountInfo;
   breakdown: UsageBreakdownEntry[];
+  person_breakdown: UsagePersonRow[];
   series: UsageDailyPoint[];
   events: UsageEventItem[];
   warn_threshold_pct: number;
