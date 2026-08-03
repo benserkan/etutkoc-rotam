@@ -339,6 +339,21 @@ function WrongCard({ item, onOpen }: { item: WrongQuestion; onOpen: () => void }
 // Fotoğraf seçici (kamera / galeri)
 // ---------------------------------------------------------------------------
 
+/**
+ * Fotoğraf seçici bu kurulumda kullanılabilir mi? (iOS TestFlight build 8'de
+ * expo-image-picker native modülü YOK — build 9'a kadar.) Basmadan ÖNCE tespit
+ * edip dürüst bilgi göstermek için; expo-modules-core build 8'de mevcut.
+ */
+function imagePickerAvailable(): boolean {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- OTA guard
+    const core = require("expo-modules-core") as typeof import("expo-modules-core");
+    return core.requireOptionalNativeModule("ExponentImagePicker") != null;
+  } catch {
+    return false;
+  }
+}
+
 async function pickPhoto(source: "camera" | "library"): Promise<PhotoAsset | null> {
   // OTA GÜVENLİĞİ: expo-image-picker NATİVE modüldür; iOS TestFlight build 8'de
   // yok (yalnız Android v9+). İKİ tuzak birden var:
@@ -370,10 +385,16 @@ async function pickPhoto(source: "camera" | "library"): Promise<PhotoAsset | nul
     return { uri: r.assets[0].uri, mimeType: r.assets[0].mimeType, fileName: r.assets[0].fileName };
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (/native module|ExponentImagePicker|ExpoImagePicker|TurboModule/i.test(msg)) {
+    // Saha (2026-08-03 iOS): hata her zaman "Cannot find native module" değil —
+    // UnavailabilityError "...is not available on ios..." kalıbı da geliyor.
+    // Kalıp tutmazsa bile modül yokluğunu doğrudan yoklayıp doğru mesajı ver.
+    if (
+      /native module|Exponent?ImagePicker|TurboModule|not available|Unavailab/i.test(msg) ||
+      !imagePickerAvailable()
+    ) {
       Alert.alert(
-        "Uygulama güncellemesi gerekli",
-        "Fotoğraf eklemek bu sürümde desteklenmiyor. Uygulamanın yeni sürümü yayınlanana kadar fotoğrafı web'den (rotam.etutkoc.com) ekleyebilirsin.",
+        "Bu sürümde fotoğraf yok",
+        "Fotoğraf çekme/seçme, uygulamanın yeni sürümüyle gelecek. Şimdilik soruyu notunla ekleyebilir ya da fotoğraflı eklemek için web'i (rotam.etutkoc.com) kullanabilirsin.",
       );
     } else {
       Alert.alert("Fotoğraf seçilemedi", "Bir sorun oluştu. Lütfen tekrar dene.");
@@ -394,6 +415,7 @@ function CaptureSheet({
   const [photo, setPhoto] = React.useState<PhotoAsset | null>(null);
   const [errorType, setErrorType] = React.useState<string>("");
   const [note, setNote] = React.useState("");
+  const pickerOk = React.useMemo(imagePickerAvailable, []);
   const create = useMutation({
     mutationFn: () =>
       createWrongQuestion(
@@ -431,7 +453,7 @@ function CaptureSheet({
               <Ionicons name="close" size={16} color="#fff" />
             </Pressable>
           </View>
-        ) : (
+        ) : pickerOk ? (
           <View className="flex-row gap-2">
             <Pressable
               onPress={async () => setPhoto((await pickPhoto("camera")) ?? null)}
@@ -447,6 +469,19 @@ function CaptureSheet({
               <Ionicons name="images" size={26} color="#0e7490" />
               <Text className="text-xs font-semibold text-slate-600">Galeriden seç</Text>
             </Pressable>
+          </View>
+        ) : (
+          // iOS build 8: native modül yok — basıp hata almak yerine baştan
+          // dürüst bilgi + notla ekleme yolu açık kalır.
+          <View className="rounded-xl border border-amber-300 bg-amber-50 p-3">
+            <Text className="text-xs font-semibold text-amber-900">
+              Bu sürümde fotoğraf eklenemiyor
+            </Text>
+            <Text className="mt-1 text-xs leading-4 text-amber-800">
+              Fotoğraf çekme/seçme, uygulamanın App Store&apos;a gelecek yeni sürümüyle
+              açılacak. Şimdilik soruyu aşağıya not yazarak ekleyebilirsin; fotoğraflı
+              eklemek istersen web&apos;den (rotam.etutkoc.com) girebilirsin.
+            </Text>
           </View>
         )}
 
