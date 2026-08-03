@@ -143,6 +143,59 @@ değişmemiş, hiç şifre sıfırlama talebi kaydı YOK.
 
 ---
 
+## YENİ İŞ — AI erişim kontrolleri (koç/kurum müdahale mekanizması) — CANLI (2026-08-03, commit `4b5ecc4`, migration `h8i1l4n5n88h`)
+
+**Tetikleyici:** müşteri sorusu — "koç olarak öğrenci/velilerin AI kullanımını
+aç/kapat, sınırla, gözlemle yapabiliyor muyum?" Denetim: bu kontroller YOKtu
+(koç yalnız toplam kredi görüyordu; AI onayı tek yönlüydü — geri alınamıyordu;
+kişi bazında anahtar hiç yoktu). Kullanıcı kararı: gözlem + aç/kapat, kurum ve
+bağımsız koç için.
+
+- **Migration `h8i1l4n5n88h`** (← g7h0k3m4m77g, additive): `users.ai_self_disabled_at`
+  (kendi tetiklediği AI kapalı — öğrencide koç kapatır; koçta kurum yöneticisi
+  kapatır → ALT-AĞAÇ dahil durur, havuz kurumundur) + `users.ai_parent_disabled_at`
+  (YALNIZ öğrenci satırında: velileri Rota AI kullanamaz. Veli User'ına konmaz —
+  velinin başka koçtaki çocuğu etkilenmemeli; kapı öğrenci üzerinden çözülür).
+- **KAPILAR (4 chokepoint, bütüncül):** `dependencies.assert_ai_premium`
+  (`ai_disabled_by_institution`) · `parent._parent_insight_gate` (10 çağrı noktası —
+  commentary/chat/voice/insight tek yerden) · `wrong_questions` ai-tag gate ·
+  `exam_import._paying_coach(actor=)`. Öğrenci-tetikleme ayrımı actor ile:
+  **koçun kendi tetiklemesi HER ZAMAN sürer** (kendi kredisini bilerek harcar),
+  yalnız öğrencinin tetiklemesi `ai_disabled_by_coach` alır.
+- **Gözlem:** GET `/teacher/ai-usage?days=7-120` — tür + KİŞİ kırılımı (ad + rol
+  [Öğrenci/Veli/Koç (sen)/Sistem] + kredi) + son 20 işlem. Kurum koçu kurum
+  havuzunda yalnız KENDİ alt-ağacını görür (actor süzgeci — meslektaş sızmaz).
+  `/institution/usage` yanıtına `person_breakdown` (bu ay kim harcadı) + tablo.
+- **Aç/kapat:** koç → GET/POST `/teacher/students/{id}/ai-toggles`
+  {student_ai_enabled, parent_ai_enabled} (kısmi güncelleme; sahiplik 404) ·
+  kurum → POST `/institution/teachers/{id}/ai-toggle` {enabled} (yabancı kurum
+  404; öğretmen kartına `ai_enabled`) · koç onayı GERİ ALINABİLİR: POST
+  `/teacher/ai-consent/revoke` (toptan kapatma; yeniden POST /ai-consent ile açılır).
+  Hepsi audit'li (USER_UPDATE, `op: ai_toggles|ai_toggle_teacher|ai_consent_revoked`).
+- **Web:** Paketim'e `AiUsageCard` (7/30/90 gün + tür/kişi tabloları + son
+  işlemler) + `AiConsentCard` (durum + onaylı geri alma) · öğrenci detay Genel'e
+  `StudentAiCard` (2 anahtar: öğrenci özellikleri + veli asistanı) · kurum
+  öğretmen kartına `AiAccessCard` (KAPALI rozeti + onaylı kapatma) · kurum
+  kullanımına kişi tablosu. Mobil BİLİNÇLİ yok (AI/ticari yönetim web'de — PARITY).
+- **Test:** YENİ `test_api_v2_ai_controls.py` **32/32** (toggle kapıları + koç
+  tetiklemesi sürer + revoke döngüsü + kurum alt-ağaç kapanışı + yabancı 404 +
+  kullanım dökümü rolleri + meslektaş sızmaz + person_breakdown). Regresyon:
+  ai_entitlement 13 · wrong_question_ai 24 · commentary 20 · chat 20 · insight 11 ·
+  parent 20 · exam_import 75 · teacher_read 12 · institution 18 · tenant 29 GREEN.
+  Canlı tarayıcı (dev) koç UI 7/7. tsc+eslint temiz.
+- **Deploy:** prod head `h8i1l4n5n88h` · yedek `pre_aictl_20260803_2257.dump` ·
+  web+worker+next rebuild · yeni uçlar anon 401 · healthz 200.
+- **DERS (dev):** dev backend'de Pazartesi cron telafisi event loop'u bloklar
+  (SQLite kilidi 60 sn/deneme) → dev DB'de `cron_schedules.last_run_at=now`
+  yapıp başlat. Yeni endpoint = run_dev_patched YENİDEN başlat + Next dev de
+  (bayat keep-alive).
+- **SIRADA (istenirse):** koç tanımlı kişi-başı günlük limitler (3. mekanizma —
+  şimdilik sistem sabiti: veli yorum 6/gün · sohbet 10/gün · sesli soru 15/gün) ·
+  veli/öğrenci arayüzünde "koçun kapattı" durumunun buton gizlemeye çevrilmesi
+  (şu an kibar 403 mesajı + insight gate reason ile geliyor).
+
+---
+
 ## SAHA HATASI — FSRS vade patlaması + mobil Yanlışlarım 4 hata — CANLI (2026-08-02, commit `0e19771`, migration YOK)
 
 **Bağlam:** Kullanıcı Android kapalı testte (v9/vc15) Yanlışlarım'ı denedi, 4 şikâyet
