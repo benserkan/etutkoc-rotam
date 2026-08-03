@@ -196,8 +196,21 @@ ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
   ≤3 öğr + AI'sız → Keşif; ≤3 öğr ama AI istiyor → "ücretsize sığar ama AI için
   ücretli gerekir"; birebir kurulum isteği paketi ZORLA yükseltmez (Zirve notu:
   "kurulunca düşürebilirsin"). Atlayan `#paketler`'e kayar. Canlı 7 senaryo GREEN.
-  **"karne" ilk geçişte tanımlanır**: "karne (deneme sonucu PDF)" — kredi notu,
-  kredi tablosu, matris, sihirbaz sorusu; sonraki geçişler yalın "karne".
+  **"karne" ilk geçişte tanımlanır**: "karne (deneme sonucu PDF)" — Patika
+  maddesi, kredi tablosu, matris, sihirbaz açıklaması; sonraki geçişler yalın "karne".
+- **YOĞUNLUK DÜZELTMESİ (2026-08-04 akşam, kullanıcı eleştirisi — "tasarım
+  sınıfta bırakır"):** içerik doğruydu, sunum duvar gibiydi. (a) **Madde biçim
+  kuralı: "Kısa Başlık — kısa detay"** (pricing.py'de zorunlu format) — kart
+  render'ı başlığı kalın, detayı soluk/küçük basar (`FeatureText` /
+  teacher-plan'da aynı bölme); 3 satıra sarkan cümle-maddeler bitti. (b) kredi
+  notu TEK SATIR ("1.500 kredi/ay — 10 öğrencilik tam kullanıma rahat yeter").
+  (c) tekrarlar: "bir bakışta" tablosu SİLİNDİ, matris varsayılan KAPALI.
+  (d) sihirbaz tasarımı: gradyan başlık bandı + "Soru 1/4" + radio-dot
+  seçenekler + çerçeveli öneri kutusu. Tam-sayfa ekran görüntüsüyle doğrulandı.
+  **KURAL: paket kartı maddesi eklerken " — " ayraçlı kısa-başlık formatı
+  zorunlu; cümle-madde yasak.** NOT (kullanıcıya söylendi): /pricing referans
+  bandı YAYINLANMIŞ tüm yorumları gösterir — şu an öğrenci yorumları (koçluk
+  hizmeti) görünüyor; /admin/testimonials'tan küratörlük yapılmalı.
 - **SIRADA (ayrı onay):** Faz 2 — admin'den KODSUZ kart içeriği yönetimi +
   bağlamsal yükseltme anları (kapasite dolunca özellik-adlı teklif; karne okuma
   sonucu ekranında "Patika'da her denemede") + deneme değer sayacı · Faz 3 —
