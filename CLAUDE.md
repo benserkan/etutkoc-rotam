@@ -199,12 +199,38 @@ bildirdi. Teşhiste **ikisinin aynı zincirin halkaları** olduğu çıktı.
   açık bırakılırsa koruma yok sayılır. `correct_streak` 20 saat isterken FSRS 0 saniye
   kabul ediyordu. **Bir davranışa kural koyarken "bu olguyu ölçen başka kod var mı,
   o da aynı kuralı uyguluyor mu?" diye sor** — [[feedback-holistic-change-propagation]].
+- **DEVAM (2026-08-03, commit `c82e6fe`+`d2baa91`): "2 Ağustos (1095 gün sonra)" —
+  ikinci zehir dalgası + 2 yapısal tavan.** Kullanıcının ekran görüntüsü ilk onarımın
+  kaçırdığı kaydı çıkardı: **#4 (Temmuz sorusu, kullanıcının İLK şikâyeti)** 26 basışla
+  stabilite **21 MİLYAR gün**; onarım anında KAPALI olduğu için atlanmıştı — "yine
+  yanlış" ile yeniden açılınca zehir geri geldi (vade = bugün+1095 = aralık tavanı;
+  ekranda yıl gösterilmediği için "2 Ağustos" diye görünüyordu). Düzeltmeler:
+  (a) **`MAX_STABILITY_DAYS=1095`** — aralık kırpılıyordu ama stabilitenin kendisi
+  sınırsızdı; artık her compute_next çıkışında (aynı-gün yolu dâhil) kırpılır → eski
+  zehirli kayıt ilk dokunuşta normalleşir. (b) **`LAPSE_STABILITY_CAP_DAYS=30`** —
+  unutulan kart en geç ~1 ay içinde döner (0.3×tavan-altı kartlarda davranış birebir
+  aynı, testle kanıtlı). (c) onarım betiğine 2. kriter: `stabilite > tavan` →
+  **kapalılar DÂHİL** taranır (kapalıda yalnız stabilite sıfırlanır). Prod'da koşuldu:
+  #4 → stabilite 10, vade yarın; sistemde tavan üstü 0. **DERS: kapalı/arşiv kayıt
+  yeniden açılabilir — veri onarımı "şu an görünmeyen" kayıtları da taramalı.**
+  (d) Mobil `pickPhoto`: Metro inline-requires yüzünden `require()` başarılı olup
+  native çağrı SONRADAN patlıyordu → guard yalnız require'ı sarınca iOS'ta "foto
+  çek/galeri hiçbir şey olmuyor" sessizliği oluştu; try/catch artık TÜM gövdeyi
+  sarar + net Alert. (e) vade metni farklı yıldaysa yılı söyler.
+- **KAPSAMLI TEST (kullanıcı isteği):** backend 119 senaryo (guard 25 + stage12 50 +
+  lifecycle 12 + wrong_questions 32) + **YENİ `scripts/live_wq_e2e.py` 21/21** (gerçek
+  tarayıcı :3000: fotoğraflı ekleme → kartta 0×0-değil render kanıtı → aynı-gün
+  koruması canlı HTTP → yine-yanlış → koç görünümü → temizlik) + prod anon kapıları
+  401. Dev SQLite DERSİ: backend açılışta Pazartesi cron telafisi event loop'u
+  bloklar (her kilit 60 sn) → dev DB'de `cron_schedules.last_run_at=now` yapıp başlat.
 - **Deploy:** backend web+worker rebuild (yedek `pre_fsrs_20260802_1838.dump`) ·
   mobil OTA zinciri: `4d0ce83a` (4 düzeltme — ama cssInterop çökmesini getirdi) →
-  `eacaf6fa` (image-picker guard) → **`5f7d0e6a` (GEÇERLİ: cssInterop kaldırıldı,
-  açık-style deseni)** — runtime 1.0.0, android+ios; kapalı test + TestFlight build 8
-  kurulumlarına sonraki açılışta iner (çökme düzeltmesi için uygulamayı tamamen
-  kapatıp 2 kez açmak gerekir: ilk açılış indirir, ikincisi çalıştırır).
+  `eacaf6fa` (image-picker guard) → `5f7d0e6a` (cssInterop kaldırıldı, açık-style
+  deseni) → **`6b930555` (GEÇERLİ: pickPhoto sessiz-hata + vade metninde yıl)** —
+  runtime 1.0.0, android+ios (çökme düzeltmesi için uygulamayı tamamen kapatıp
+  2 kez açmak gerekir: ilk açılış indirir, ikincisi çalıştırır). iOS'ta fotoğraf
+  ekleme build 9'a kadar "uygulamayı güncelle / web'den ekle" mesajı verir
+  (native modül yok); Android v9'da normal çalışır.
 
 ---
 
