@@ -208,7 +208,22 @@ ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
   (d) sihirbaz tasarımı: gradyan başlık bandı + "Soru 1/4" + radio-dot
   seçenekler + çerçeveli öneri kutusu. Tam-sayfa ekran görüntüsüyle doğrulandı.
   **KURAL: paket kartı maddesi eklerken " — " ayraçlı kısa-başlık formatı
-  zorunlu; cümle-madde yasak.** NOT (kullanıcıya söylendi): /pricing referans
+  zorunlu; cümle-madde yasak.**
+- **TIKLA-GÖR BALONLAR + SADE DİL (2026-08-04 gece, commit `1ba30cd`+devamı,
+  kullanıcı onaylı):** "Rota Veli Asistanı bu nedir? velimle birisi mi
+  konuşacak?" eleştirisi → iki katman: (1) DİL — marka adı etiketten çıktı
+  ("Veliye yapay zekâ asistanı — durumu sesli anlatır", "Yanlışına ipucu —
+  cevabı söylemez, yolu gösterir", "Görüşme öncesi özet", "Kariyer önerisi");
+  matris etiketleri dahil. (2) **`FEATURE_GLOSSARY`** (pricing.py TEK KAYNAK,
+  11 terim): kart maddesindeki kısa başlık sözlükte varsa NOKTALI ALTÇİZGİ olur;
+  dokununca kompakt Dialog — 1-2 cümle sade açıklama + (5 terimde) rehber
+  çekimlerinden **GERÇEK ürün ekranı** (ogr-ai-ipucu / veli-rota-dinle /
+  aktar-onizleme / ogr-yanlislar / veli-rota-yorum; görsel yalnız balon
+  açılınca yüklenir). `feature-info.tsx FeatureLine` iki yüzeyde ortak
+  (pricing-cards + teacher-plan). Veli asistanı balonunda güven cümlesi:
+  "Kimse velinle görüşmez — veli uygulamadan dinler ve sorar." Canlı 9/9.
+  **KURAL: yeni kart maddesi eklerken başlığı FEATURE_GLOSSARY'ye de tanımla
+  (görsel yoksa image=None) — "bu ne?" sorusu cevapsız kalmasın.** NOT (kullanıcıya söylendi): /pricing referans
   bandı YAYINLANMIŞ tüm yorumları gösterir — şu an öğrenci yorumları (koçluk
   hizmeti) görünüyor; /admin/testimonials'tan küratörlük yapılmalı.
 - **SIRADA (ayrı onay):** Faz 2 — admin'den KODSUZ kart içeriği yönetimi +
