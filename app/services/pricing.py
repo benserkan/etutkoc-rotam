@@ -215,7 +215,11 @@ def _credit_note(idx: int, code: str) -> str:
 # KURAL: yeni özellik maddesi eklerken başlığı buraya da tanımla; görsel yoksa
 # image=None (yalnız metin balonu).
 # ----------------------------------------------------------------------------
-_SHOTS = "/static/guide/shots"
+_SHOTS = "/static/guide/shots"        # tam kare (1440x900) — "Ekranın tamamını gör"
+_CROPS = "/static/pricing-shots"      # odak kırpımı — balonda OKUNUR boyut
+# DERS: tam ekran görüntüsü küçük boyutta gösterilince okunmuyor (tanıtım
+# videosu + balon v1'de aynı hata). Kırpımlar scripts/gen_pricing_feature_crops.py
+# ile üretilir; kutu değişince script yeniden koşulur.
 
 FEATURE_GLOSSARY: list[dict[str, Any]] = [
     {
@@ -226,7 +230,8 @@ FEATURE_GLOSSARY: list[dict[str, Any]] = [
             "doğru/yanlışını çıkarır; netler ve konu boşlukları kendiliğinden "
             "işlenir — elle giriş yok."
         ),
-        "image": f"{_SHOTS}/aktar-onizleme.png",
+        "image": f"{_CROPS}/aktar-onizleme.png", "image_w": 896, "image_h": 505,
+        "image_full": f"{_SHOTS}/aktar-onizleme.png",
     },
     {
         "term": "Veliye yapay zekâ asistanı",
@@ -236,7 +241,8 @@ FEATURE_GLOSSARY: list[dict[str, Any]] = [
             "soru sorar. Kimse velinle görüşmez — veli uygulamadan dinler ve "
             "sorar. Kullanım senin kredinden düşer; istediğin veliye kapatabilirsin."
         ),
-        "image": f"{_SHOTS}/veli-rota-dinle.png",
+        "image": f"{_CROPS}/veli-rota-dinle.png", "image_w": 836, "image_h": 418,
+        "image_full": f"{_SHOTS}/veli-rota-dinle.png",
     },
     {
         "term": "Yanlışına ipucu",
@@ -245,7 +251,8 @@ FEATURE_GLOSSARY: list[dict[str, Any]] = [
             "çözümü SÖYLEMEZ; 'hangi kavramı hatırla, ilk adım ne' diye yol "
             "gösterir — cevabı öğrenci kendisi bulur."
         ),
-        "image": f"{_SHOTS}/ogr-ai-ipucu.png",
+        "image": f"{_CROPS}/ogr-ai-ipucu.png", "image_w": 670, "image_h": 420,
+        "image_full": f"{_SHOTS}/ogr-ai-ipucu.png",
     },
     {
         "term": "Yanlış Soru Arşivi",
@@ -254,7 +261,8 @@ FEATURE_GLOSSARY: list[dict[str, Any]] = [
             "unutma eğrisine göre doğru zamanda yeniden sorar; aralıklı iki "
             "doğru çözüm soruyu 'öğrenildi' olarak kapatır."
         ),
-        "image": f"{_SHOTS}/ogr-yanlislar.png",
+        "image": f"{_CROPS}/ogr-yanlislar.png", "image_w": 992, "image_h": 474,
+        "image_full": f"{_SHOTS}/ogr-yanlislar.png",
     },
     {
         "term": "Görüşme öncesi özet",
@@ -298,7 +306,8 @@ FEATURE_GLOSSARY: list[dict[str, Any]] = [
             "sohbet için rahatça yeter — veli 'bu hafta ne yaptı?' diye seni "
             "aramaz, asistana sorar."
         ),
-        "image": f"{_SHOTS}/veli-rota-yorum.png",
+        "image": f"{_CROPS}/veli-rota-yorum.png", "image_w": 836, "image_h": 418,
+        "image_full": f"{_SHOTS}/veli-rota-yorum.png",
     },
     {
         "term": "Kariyer önerisi",

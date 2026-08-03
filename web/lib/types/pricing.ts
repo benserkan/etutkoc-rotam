@@ -53,7 +53,10 @@ export interface CreditCostRow {
 export interface FeatureGlossaryEntry {
   term: string;                // madde kısa başlığıyla birebir eşleşir
   explanation: string;         // sade, ilk-kez-okuyan dili
-  image: string | null;        // gerçek ürün ekranı (/static/guide/shots/...)
+  image: string | null;        // KIRPILMIŞ odak görseli (küçükte okunur)
+  image_w?: number;            // kırpım boyutları (aspect için)
+  image_h?: number;
+  image_full?: string | null;  // tam kare — "Ekranın tamamını gör"
 }
 
 export interface PricingContact {
