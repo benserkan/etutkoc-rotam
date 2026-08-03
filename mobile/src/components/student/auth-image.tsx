@@ -2,24 +2,24 @@ import * as React from "react";
 import { View } from "react-native";
 import { Image } from "expo-image";
 import { Ionicons } from "@expo/vector-icons";
-import { cssInterop } from "nativewind";
 
 import { wrongImageSource } from "@/lib/wrong-questions";
 import { cn } from "@/lib/utils";
 
 /**
- * expo-image ÜÇÜNCÜ TARAF bileşendir; NativeWind onu tanımaz, dolayısıyla
- * `className` sessizce yok sayılır ve görsel 0x0 boyutla çizilir (foto "yok"
- * görünür — saha hatası 2026-08-02). Aşağıdaki kayıt className'i style'a çevirir.
- * KURAL: NativeWind dışı bir bileşene className verilecekse önce burada olduğu
- * gibi cssInterop ile kaydedilir; yoksa hata görünmez biçimde geçer.
- */
-cssInterop(Image, { className: "style" });
-
-/**
  * Auth'lu BFF ucundan (Bearer header) yanlış-soru fotoğrafı gösterir.
  * Token secure-store'da olduğundan kaynak asenkron çözülür; çözülene kadar
- * yer tutucu görünür. (Kod tabanında header'lı Image ilk kez.)
+ * yer tutucu görünür.
+ *
+ * NEDEN sarmalayıcı View + açık style (className DEĞİL):
+ * expo-image NativeWind'e kayıtlı olmadığından className sessizce düşer ve
+ * görsel 0×0 çizilir (saha hatası 2026-08-02: "fotoğraf görünmüyor").
+ * İlk düzeltme modül kapsamında `cssInterop(Image, ...)` çağırmaktı; bu,
+ * "nativewind" JS modülünü üretimde İLK KEZ require ederek her iki platformda
+ * ekranı route yüklenirken çökertti (2026-08-03 "ErrorBoundary of undefined").
+ * KURAL: expo-image boyutu daima açık style ile verilir; className yalnız
+ * çekirdek RN bileşenlerinde (View/Text/Pressable) kullanılır — rehber
+ * oynatıcısı ve çekim önizlemesiyle aynı, üretimde kanıtlı desen.
  */
 export function AuthImage({
   wqId,
@@ -54,12 +54,13 @@ export function AuthImage({
     );
   }
   return (
-    <Image
-      source={src}
-      contentFit={contentFit}
-      transition={120}
-      className={className}
-      style={{ backgroundColor: "#f1f5f9" }}
-    />
+    <View className={cn("overflow-hidden", className)}>
+      <Image
+        source={src}
+        contentFit={contentFit}
+        transition={120}
+        style={{ width: "100%", height: "100%", backgroundColor: "#f1f5f9" }}
+      />
+    </View>
   );
 }
