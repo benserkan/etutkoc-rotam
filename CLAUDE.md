@@ -223,7 +223,17 @@ ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
   (pricing-cards + teacher-plan). Veli asistanı balonunda güven cümlesi:
   "Kimse velinle görüşmez — veli uygulamadan dinler ve sorar." Canlı 9/9.
   **KURAL: yeni kart maddesi eklerken başlığı FEATURE_GLOSSARY'ye de tanımla
-  (görsel yoksa image=None) — "bu ne?" sorusu cevapsız kalmasın.** NOT (kullanıcıya söylendi): /pricing referans
+  (görsel yoksa image=None) — "bu ne?" sorusu cevapsız kalmasın.**
+- **KIRPILMIŞ ODAK GÖRSELLERİ (2026-08-05, kullanıcı "bu hatanı düzeltemedik"):**
+  balon v1 tam kareyi (1440×900) 448px'e sıkıştırıyordu — HİÇBİR ŞEY okunmuyordu
+  (tanıtım videosundaki dersle AYNI hata). Kalıcı çözüm:
+  `scripts/gen_pricing_feature_crops.py` 5 karenin İLGİLİ BÖLGESİNİ kırpar →
+  `app/static/pricing-shots/` (repo'ya girer; kutu değişince script yeniden
+  koşulur); FEATURE_GLOSSARY `image`=kırpım + `image_w/h` + `image_full`=tam
+  kare; balon kırpımı OKUNUR boyutta gösterir, "Ekranın tamamını gör" tam kareyi
+  max-w-4xl pencerede açar. **DEĞİŞMEZ KURAL (3 kez tekrarlanan hata): tam ekran
+  görüntüsü küçük boyutta ASLA gösterilmez — ya ilgili bölge kırpılır, ya
+  tıkla-büyüt sunulur, ya stilize temsil kullanılır.** NOT (kullanıcıya söylendi): /pricing referans
   bandı YAYINLANMIŞ tüm yorumları gösterir — şu an öğrenci yorumları (koçluk
   hizmeti) görünüyor; /admin/testimonials'tan küratörlük yapılmalı.
 - **SIRADA (ayrı onay):** Faz 2 — admin'den KODSUZ kart içeriği yönetimi +
