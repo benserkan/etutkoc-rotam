@@ -13,7 +13,6 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Ionicons } from "@expo/vector-icons";
 import { Image } from "expo-image";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import * as ImagePicker from "expo-image-picker";
 
 import { ApiError } from "@/lib/api";
 import {
@@ -335,6 +334,23 @@ function WrongCard({ item, onOpen }: { item: WrongQuestion; onOpen: () => void }
 // ---------------------------------------------------------------------------
 
 async function pickPhoto(source: "camera" | "library"): Promise<PhotoAsset | null> {
+  // OTA GÜVENLİĞİ: expo-image-picker NATİVE modüldür; iOS TestFlight build 8'de
+  // yok (yalnız Android v9+). Üst düzey static import TÜM EKRANI çökertiyordu
+  // (route modülü yüklenemez → "Cannot read property 'ErrorBoundary' of
+  // undefined"). expo-document-picker guard deseniyle ekran açılır, yalnız
+  // fotoğraf ekleme eski kurulumda kibarca devre dışı kalır.
+  let ImagePicker: typeof import("expo-image-picker");
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports -- OTA
+    // güvenliği: native modül eski kurulumda yoksa import ANINDA patlamasın
+    ImagePicker = require("expo-image-picker");
+  } catch {
+    Alert.alert(
+      "Uygulama güncellemesi gerekli",
+      "Fotoğraf eklemek bu sürümde desteklenmiyor. Uygulamanın yeni sürümü yayınlanana kadar fotoğrafı web'den (rotam.etutkoc.com) ekleyebilirsin.",
+    );
+    return null;
+  }
   if (source === "camera") {
     const perm = await ImagePicker.requestCameraPermissionsAsync();
     if (!perm.granted) {
