@@ -186,6 +186,18 @@ ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
   Prod'da app_settings pricing override YOK (yalnız membership_havale) → kod
   varsayılanı canlı. **KURAL: paket görünen adı/madde değişikliği YALNIZ
   pricing.py'de yapılır; plan KOD adlarına dokunmak yasak.**
+- **PAKET SEÇİM SİHİRBAZI — CANLI (2026-08-04, commit `1b596c5`):** kullanıcı
+  fikri ("öğrenci sayısı tek kriter mi?" — değil: yalnız TABAN). `plan-wizard.tsx`
+  /pricing'de 4 soru: öğrenci sayısı (kapasite tabanı) → AI karne okuma yoğunluğu →
+  veli asistanı kapsamı (en büyük kredi tüketicisi) → kurulum tercihi (Zirve
+  ayrıcalığı). Tahmini aylık kredi ihtiyacı GERÇEK maliyetlerden
+  (`catalog.credit_costs` — sayı çoğaltılmaz) hesaplanır; kapasite paketinin
+  tahsisi %85'i aşarsa bir üst paket GEREKÇESİYLE önerilir. Dürüstlük kuralları:
+  ≤3 öğr + AI'sız → Keşif; ≤3 öğr ama AI istiyor → "ücretsize sığar ama AI için
+  ücretli gerekir"; birebir kurulum isteği paketi ZORLA yükseltmez (Zirve notu:
+  "kurulunca düşürebilirsin"). Atlayan `#paketler`'e kayar. Canlı 7 senaryo GREEN.
+  **"karne" ilk geçişte tanımlanır**: "karne (deneme sonucu PDF)" — kredi notu,
+  kredi tablosu, matris, sihirbaz sorusu; sonraki geçişler yalın "karne".
 - **SIRADA (ayrı onay):** Faz 2 — admin'den KODSUZ kart içeriği yönetimi +
   bağlamsal yükseltme anları (kapasite dolunca özellik-adlı teklif; karne okuma
   sonucu ekranında "Patika'da her denemede") + deneme değer sayacı · Faz 3 —
