@@ -162,9 +162,21 @@ bildirdi. Teşhiste **ikisinin aynı zincirin halkaları** olduğu çıktı.
   Basılan buton artık döner (`attempt.variables` ile), diğerleri soluklaşır.
 - **③ FOTOĞRAF GÖRÜNMÜYOR (mobil).** Yükleme ÇALIŞIYORDU (DB'de 635/374/126 kB JPEG,
   `kind=question` doğru) — sorun render'daydı: **expo-image NativeWind'e kayıtlı
-  değil** → `className` sessizce düşüyor, görsel 0×0 çiziliyor. `cssInterop(Image,
-  {className:"style"})`. **KURAL: NativeWind dışı bir bileşene className verilecekse
-  önce cssInterop ile kaydedilir; yoksa hata görünmez biçimde geçer.**
+  değil** → `className` sessizce düşüyor, görsel 0×0 çiziliyor.
+  **⚠️ İLK FIX ÜRETİMİ ÇÖKERTTİ (2026-08-03, commit `d2baa91` + `67a8394`):** modül
+  kapsamında `cssInterop(Image, ...)` çağrısı "nativewind" JS modülünü üretimde İLK
+  KEZ require etti (className sistemi jsx-runtime'dan çalışır; nativewind ana girişini
+  başka hiçbir dosya import etmiyor) → react-native-css-interop ana giriş grafiği route
+  yüklenirken değerlendirilince Yanlışlarım ekranı **iki platformda birden** "Cannot
+  read property 'ErrorBoundary' of undefined" ile çöktü (expo-router gerçek hatayı
+  maskeler). **DOĞRU KURAL: expo-image (ve NativeWind-dışı her bileşen) boyutu daima
+  AÇIK style ile alır (`style={{width:"100%",height:"100%"}}` + sarmalayıcı View'da
+  className/overflow-hidden — rehber oynatıcısı deseni); cssInterop YASAK.**
+  Ayrıca iOS TestFlight build 8'de `expo-image-picker` native modülü YOK (yalnız
+  Android v9/vc15'te var) → route dosyasındaki üst düzey static import iOS'ta ekranı
+  ayrıca çökertirdi; expo-document-picker guard desenine çevrildi (dinamik require +
+  try/catch, eski kurulumda "web'den ekle" mesajı). Build 8 sonrası eklenen 4 native
+  bağımlılık tarandı: korumasız tek static import buydu.
 - **④ OTURUM SIZINTISI (mobil).** `queryClient` modül tekili; mobilde çıkış tam sayfa
   yenilemesi yapmadığı için önbellek çıkıştan sağ kalıyordu → yeni kullanıcı girince
   öncekinin hızlı erişim kartları görünüyor, dokununca "Program yüklenemedi".
@@ -188,8 +200,11 @@ bildirdi. Teşhiste **ikisinin aynı zincirin halkaları** olduğu çıktı.
   kabul ediyordu. **Bir davranışa kural koyarken "bu olguyu ölçen başka kod var mı,
   o da aynı kuralı uyguluyor mu?" diye sor** — [[feedback-holistic-change-propagation]].
 - **Deploy:** backend web+worker rebuild (yedek `pre_fsrs_20260802_1838.dump`) ·
-  mobil **OTA grubu `4d0ce83a`** (runtime 1.0.0, android+ios) → kapalı test + TestFlight
-  build 8 kurulumlarına sonraki açılışta iner.
+  mobil OTA zinciri: `4d0ce83a` (4 düzeltme — ama cssInterop çökmesini getirdi) →
+  `eacaf6fa` (image-picker guard) → **`5f7d0e6a` (GEÇERLİ: cssInterop kaldırıldı,
+  açık-style deseni)** — runtime 1.0.0, android+ios; kapalı test + TestFlight build 8
+  kurulumlarına sonraki açılışta iner (çökme düzeltmesi için uygulamayı tamamen
+  kapatıp 2 kez açmak gerekir: ilk açılış indirir, ikincisi çalıştırır).
 
 ---
 
