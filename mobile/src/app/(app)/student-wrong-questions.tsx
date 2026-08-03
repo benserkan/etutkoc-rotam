@@ -47,7 +47,13 @@ function dueLabel(iso: string | null): string {
   const days = Math.ceil((d.getTime() - Date.now()) / 86_400_000);
   if (days <= 0) return "bugün";
   if (days === 1) return "yarın";
-  const tarih = d.toLocaleDateString("tr-TR", { day: "numeric", month: "long" });
+  const tarih = d.toLocaleDateString("tr-TR", {
+    day: "numeric",
+    month: "long",
+    // Farklı yıldaysa yılı da söyle — "2 Ağustos" diye gösterilen 2029 vadesi
+    // kullanıcıyı yanıltmıştı (saha, 2026-08-03).
+    ...(d.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
+  });
   return `${tarih} (${days} gün sonra)`;
 }
 
@@ -335,38 +341,45 @@ function WrongCard({ item, onOpen }: { item: WrongQuestion; onOpen: () => void }
 
 async function pickPhoto(source: "camera" | "library"): Promise<PhotoAsset | null> {
   // OTA GÜVENLİĞİ: expo-image-picker NATİVE modüldür; iOS TestFlight build 8'de
-  // yok (yalnız Android v9+). Üst düzey static import TÜM EKRANI çökertiyordu
-  // (route modülü yüklenemez → "Cannot read property 'ErrorBoundary' of
-  // undefined"). expo-document-picker guard deseniyle ekran açılır, yalnız
-  // fotoğraf ekleme eski kurulumda kibarca devre dışı kalır.
-  let ImagePicker: typeof import("expo-image-picker");
+  // yok (yalnız Android v9+). İKİ tuzak birden var:
+  // (1) üst düzey static import ekranı route yüklenirken çökertiyordu;
+  // (2) Metro inline-requires yüzünden `require("expo-image-picker")` BAŞARILI
+  //     olur (JS yüklenir) — native modül ancak İLK API ÇAĞRISINDA aranıp o
+  //     anda fırlatır. Bu yüzden try/catch TÜM gövdeyi sarmalı; yalnız
+  //     require'ı sarmak "butona bastım hiçbir şey olmadı" sessizliği üretir
+  //     (saha hatası 2026-08-03, iOS).
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports -- OTA
-    // güvenliği: native modül eski kurulumda yoksa import ANINDA patlamasın
-    ImagePicker = require("expo-image-picker");
-  } catch {
-    Alert.alert(
-      "Uygulama güncellemesi gerekli",
-      "Fotoğraf eklemek bu sürümde desteklenmiyor. Uygulamanın yeni sürümü yayınlanana kadar fotoğrafı web'den (rotam.etutkoc.com) ekleyebilirsin.",
-    );
-    return null;
-  }
-  if (source === "camera") {
-    const perm = await ImagePicker.requestCameraPermissionsAsync();
-    if (!perm.granted) {
-      Alert.alert(
-        "Kamera izni gerekli",
-        "Soru fotoğrafı çekmek için kameraya izin ver (telefon ayarlarından da açabilirsin).",
-      );
-      return null;
+    // güvenliği: native modül eski kurulumda import ANINDA da patlayabilir
+    const ImagePicker: typeof import("expo-image-picker") = require("expo-image-picker");
+    if (source === "camera") {
+      const perm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!perm.granted) {
+        Alert.alert(
+          "Kamera izni gerekli",
+          "Soru fotoğrafı çekmek için kameraya izin ver (telefon ayarlarından da açabilirsin).",
+        );
+        return null;
+      }
+      const r = await ImagePicker.launchCameraAsync({ quality: 0.6, mediaTypes: "images" });
+      if (r.canceled || !r.assets?.[0]) return null;
+      return { uri: r.assets[0].uri, mimeType: r.assets[0].mimeType, fileName: r.assets[0].fileName };
     }
-    const r = await ImagePicker.launchCameraAsync({ quality: 0.6, mediaTypes: "images" });
+    const r = await ImagePicker.launchImageLibraryAsync({ quality: 0.6, mediaTypes: "images" });
     if (r.canceled || !r.assets?.[0]) return null;
     return { uri: r.assets[0].uri, mimeType: r.assets[0].mimeType, fileName: r.assets[0].fileName };
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/native module|ExponentImagePicker|ExpoImagePicker|TurboModule/i.test(msg)) {
+      Alert.alert(
+        "Uygulama güncellemesi gerekli",
+        "Fotoğraf eklemek bu sürümde desteklenmiyor. Uygulamanın yeni sürümü yayınlanana kadar fotoğrafı web'den (rotam.etutkoc.com) ekleyebilirsin.",
+      );
+    } else {
+      Alert.alert("Fotoğraf seçilemedi", "Bir sorun oluştu. Lütfen tekrar dene.");
+    }
+    return null;
   }
-  const r = await ImagePicker.launchImageLibraryAsync({ quality: 0.6, mediaTypes: "images" });
-  if (r.canceled || !r.assets?.[0]) return null;
-  return { uri: r.assets[0].uri, mimeType: r.assets[0].mimeType, fileName: r.assets[0].fileName };
 }
 
 function CaptureSheet({

@@ -27,6 +27,8 @@ except Exception:
 from datetime import datetime, timedelta, timezone
 
 from app.services.fsrs import (
+    LAPSE_STABILITY_CAP_DAYS,
+    MAX_STABILITY_DAYS,
     RATING_AGAIN,
     RATING_EASY,
     RATING_GOOD,
@@ -195,6 +197,52 @@ check(
     "aynı gün alıştırmada son-tekrar çapası korunuyor",
     abs((new7.last_reviewed_at - T0).total_seconds()) < 60,
     f"{new7.last_reviewed_at} != {T0}",
+)
+
+# ---------------------------------------------------------------------------
+print("\n8) Zehirli eski kayıt (tavan öncesi şişmiş stabilite) normalleşiyor")
+# ---------------------------------------------------------------------------
+# Saha kanıtı (kayıt #4): Temmuz'da 26 basış → stabilite 21 MİLYAR gün; kayıt
+# kapanıp "yine yanlış" ile yeniden açılınca zehir geri geldi (vade 2029).
+POISON = 21_014_815_184.0
+stp = FsrsState(POISON, 1.2, STATE_REVIEW, last_reviewed_at=T0 - timedelta(days=18))
+resp = compute_next(stp, RATING_GOOD, T0)
+check(
+    "başarıda stabilite tavana kırpılıyor",
+    resp.stability <= MAX_STABILITY_DAYS,
+    f"{resp.stability}",
+)
+check(
+    "vade en fazla 3 yıl ileride",
+    (resp.due_at - T0).days <= MAX_STABILITY_DAYS,
+    f"{(resp.due_at - T0).days} gün",
+)
+resp1 = compute_next(stp, RATING_AGAIN, T0)
+check(
+    "unutmada zehirli kart GÜNLER içinde döner (yıllar değil)",
+    resp1.stability <= LAPSE_STABILITY_CAP_DAYS,
+    f"{resp1.stability}",
+)
+check(
+    "unutma vadesi ~1 ay bandında",
+    (resp1.due_at - T0).days <= LAPSE_STABILITY_CAP_DAYS + 1,
+    f"{(resp1.due_at - T0).days} gün",
+)
+# Aynı-gün korumasi zehri TAŞIMAZ (elapsed < eşik + şişkin state)
+stp2 = FsrsState(POISON, 1.2, STATE_REVIEW, last_reviewed_at=T0 - timedelta(hours=2))
+resp2 = compute_next(stp2, RATING_GOOD, T0)
+check("aynı-gün yolunda da tavan geçerli", resp2.stability <= MAX_STABILITY_DAYS)
+
+# ---------------------------------------------------------------------------
+print("\n9) Meşru unutma davranışı küçük kartta DEĞİŞMEDİ")
+# ---------------------------------------------------------------------------
+# 0.3× çarpanı LAPSE tavanının altında kalan kartlarda birebir eski davranış.
+stn = FsrsState(40.0, 5.0, STATE_REVIEW, last_reviewed_at=T0 - timedelta(days=30))
+resn = compute_next(stn, RATING_AGAIN, T0)
+check(
+    "stabilite 40 → 12 (0.3×, tavana takılmadan)",
+    abs(resn.stability - 12.0) < 0.01,
+    f"{resn.stability}",
 )
 
 # ---------------------------------------------------------------------------

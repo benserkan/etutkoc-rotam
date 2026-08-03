@@ -8,10 +8,16 @@ arka arkaya basılan her buton vadeyi katlıyordu; sahada 8 basışta 191.381 g�
 Çekirdek hata `fsrs.SAME_DAY_GAP_HOURS` koruması ile giderildi; bu betik ondan
 ÖNCE bozulmuş kayıtları temizler.
 
-TESPİT: tekrarlar sıkıştırılmışsa program güvenilmezdir —
-    (son_deneme - olusturma) < (deneme_sayisi - 1) * 20 saat
-Yani kayıt en az iki denemeye sahip ama denemeler arası ortalama boşluk kapanış
-kuralının istediği 20 saatin altında.
+TESPİT (iki kriter, İKİSİ DE taranır):
+  A) Sıkışık tekrar: (son_deneme - olusturma) < (deneme_sayisi - 1) * 20 saat
+     — en az iki deneme var ama aralar kapanış kuralının istediği 20 saatin
+     altında (yalnız AÇIK kayıtlar; kapalı kayıtta program çalışmıyor).
+  B) Tavan aşımı: fsrs_stability > MAX_STABILITY_DAYS (1095) — korumalı
+     algoritma bu değeri ÜRETEMEZ; varlığı eski zehirin kanıtıdır. KAPALI
+     kayıtlar DAHİL taranır: saha dersi (2026-08-03, kayıt #4) — Temmuz'da
+     26 basışla 21 milyar güne çıkan kayıt kapalı olduğu için ilk onarımdan
+     kaçtı, "yine yanlış" ile yeniden açılınca zehir geri geldi (vade 2029).
+     Kapalı kayıtta yalnız stabilite sıfırlanır, status/streak DEĞİŞMEZ.
 
 ONARIM: tek başarılı tekrar yapılmış gibi sıfırla (stabilite 10 gün = RATING_GOOD
 başlangıcı), vade = son denemeden 1 gün sonra. Ratingler kayıtlı olmadığı için
@@ -37,10 +43,13 @@ except Exception:
 import argparse
 from datetime import datetime, timedelta, timezone
 
+from sqlalchemy import or_
+
 from app.database import SessionLocal
 from app.models import User
 from app.models.wrong_question import WQ_STATUS_ACIK, WrongQuestion
 from app.services.fsrs import (
+    MAX_STABILITY_DAYS,
     REQUEST_RETENTION,
     SAME_DAY_GAP_HOURS,
     STATE_REVIEW,
@@ -70,8 +79,10 @@ def main() -> int:
         rows = (
             db.query(WrongQuestion)
             .filter(
-                WrongQuestion.status == WQ_STATUS_ACIK,
-                WrongQuestion.attempts_count >= 2,
+                or_(
+                    WrongQuestion.attempts_count >= 2,
+                    WrongQuestion.fsrs_stability > MAX_STABILITY_DAYS,
+                )
             )
             .order_by(WrongQuestion.id)
             .all()
@@ -83,9 +94,17 @@ def main() -> int:
             last = _aware(wq.last_attempt_at)
             if created is None or last is None:
                 continue
+            # Kriter B: tavan aşımı — status ne olursa olsun onar.
+            poisoned = wq.fsrs_stability > MAX_STABILITY_DAYS
+            # Kriter A: sıkışık tekrar — yalnız açık kayıtta anlamlı.
             span_h = (last - created).total_seconds() / 3600.0
-            if span_h >= (wq.attempts_count - 1) * SAME_DAY_GAP_HOURS:
-                continue  # tekrarlar gerçekten aralıklı — dokunma
+            crammed = (
+                wq.status == WQ_STATUS_ACIK
+                and wq.attempts_count >= 2
+                and span_h < (wq.attempts_count - 1) * SAME_DAY_GAP_HOURS
+            )
+            if not (poisoned or crammed):
+                continue
             hedef.append((wq, last + timedelta(days=sched)))
 
         if not hedef:
@@ -97,14 +116,14 @@ def main() -> int:
             for u in db.query(User).filter(User.id.in_([w.student_id for w, _ in hedef])).all()
         }
 
-        print(f"{'ID':>5}  {'ÖĞRENCİ':<22} {'DEN':>3}  {'STABİLİTE':>12}  {'ESKİ VADE':<12} -> YENİ VADE")
-        print("-" * 84)
+        print(f"{'ID':>5}  {'ÖĞRENCİ':<22} {'DURUM':<8} {'DEN':>3}  {'STABİLİTE':>14}  {'ESKİ VADE':<12} -> YENİ VADE")
+        print("-" * 96)
         for wq, yeni in hedef:
             eski = _aware(wq.due_at)
             gun = (eski - now).days if eski else 0
             print(
                 f"{wq.id:>5}  {(isim.get(wq.student_id) or '?')[:22]:<22} "
-                f"{wq.attempts_count:>3}  {wq.fsrs_stability:>10.1f}g  "
+                f"{wq.status:<8} {wq.attempts_count:>3}  {wq.fsrs_stability:>12.1f}g  "
                 f"{eski:%Y-%m-%d} ({gun:+5}g) -> {yeni:%Y-%m-%d}"
             )
 

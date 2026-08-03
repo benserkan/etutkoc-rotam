@@ -46,6 +46,17 @@ DEFAULT_LEARNING_STEPS_MIN = [10, 60]  # AGAIN sonrası 10dk, sonra 1 saat (in-s
 MIN_INTERVAL_DAYS = 1
 MAX_INTERVAL_DAYS = 365 * 3  # 3 yıl üst sınır
 
+# Stabilitenin kendisi de sınırlı — aralık zaten MAX_INTERVAL_DAYS'e kırpılır,
+# ama stabilite sınırsız büyürse "zehir" kayıtta birikir ve her sonraki hesap
+# tavandan başlar (saha: 26 basışta 21 MİLYAR güne çıktı; kayıt kapanıp yeniden
+# açılınca zehir geri geldi). 1095 üstü stabilitenin programa hiçbir katkısı yok.
+MAX_STABILITY_DAYS = float(MAX_INTERVAL_DAYS)
+
+# Unutma (rating=1) sonrası stabilite tavanı: çok oturmuş kartta bile 0.3×
+# çarpanı yüzlerce gün bırakabilir — oysa unutulan bilgi GÜNLER içinde yeniden
+# test edilmeli. Küçük kartlarda (0.3×old < 30) davranış DEĞİŞMEZ.
+LAPSE_STABILITY_CAP_DAYS = 30.0
+
 # Aynı gün içindeki tekrar başarılar aralığı UZATMAZ.
 # Gerekçe: stability çarpımsal büyür (başarıda ~×2.5-5.6). Kullanıcı arka arkaya
 # "çözdüm"e basarsa (yavaş arayüz, çift dokunuş, alıştırma amaçlı tekrar) vade
@@ -168,8 +179,9 @@ def _difficulty_update(old_d: float, rating: int) -> float:
 def _stability_update(old_s: float, new_d: float, rating: int, elapsed_days: float) -> float:
     """Rating + retrievability'ye göre yeni stability."""
     if rating == RATING_AGAIN:
-        # Lapse: stability büyük oranda düşer, ama tamamen sıfırlanmaz
-        return max(0.5, old_s * 0.3)
+        # Lapse: stability büyük oranda düşer, ama tamamen sıfırlanmaz.
+        # Tavanlı — unutulan kart en geç ~1 ay içinde yeniden test edilir.
+        return max(0.5, min(old_s * 0.3, LAPSE_STABILITY_CAP_DAYS))
     # Retrievability — son tekrardan beri ne kadar "unutuldu"
     s_safe = max(old_s, 0.1)
     r = math.exp(-elapsed_days / s_safe)
@@ -234,6 +246,10 @@ def compute_next(
         else:
             new_s = _stability_update(state.stability, new_d, rating, elapsed)
             new_state = STATE_RELEARNING if rating == RATING_AGAIN else STATE_REVIEW
+
+    # Tavanlar her yoldan geçerli — eski (tavan öncesi) kayıttan gelen şişkin
+    # stabilite de burada normalleşir, aynı-gün korumasında bile taşınmaz.
+    new_s = min(new_s, MAX_STABILITY_DAYS)
 
     sched = _scheduled_days(new_s, retention)
     if same_day_practice:
