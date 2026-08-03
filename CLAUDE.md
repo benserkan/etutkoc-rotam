@@ -143,6 +143,56 @@ değişmemiş, hiç şifre sıfırlama talebi kaydı YOK.
 
 ---
 
+## YENİ İŞ — Üyelik paket yenilemesi Faz 1 (Keşif/Patika/Rota/Zirve) — CANLI (2026-08-04, commit `608c203`, migration YOK)
+
+**Tetikleyici (kullanıcı):** kartlar 2-3 aydır bayat (AI karne okuma, YSA, Rota
+Veli Asistanı, randevu, mobil hiç girmemiş) · 3 ücretli kartta maddeler birebir
+aynı (farklılaşma sıfır) · "Solo" iç jargonu müşteriye sızmış · /teacher/plan
+max-w-3xl dar kutu · kredi soyut. **Analiz + model: `docs/uyelik-paket-yenileme.md`**
+(7 aşamalı uçtan uca üyelik akış modeli — Notion/Anthropic/Slack/Canva/
+CoachAccountable benchmark'ı; ONAY alınmış 4 karar: ad seti A · hizmet
+ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
+- **GÖRÜNEN ADLAR** (KOD adları DB/iyzico/RevenueCat'te SABİT — migration yok,
+  churn riski sıfır): solo_free=**Keşif** · solo_pro=**Patika** ·
+  solo_elite=**Rota** (en popüler, marka adıyla aynı) · solo_unlimited=**Zirve** ·
+  trial="14 Gün Ücretsiz Deneme — Rota deneyimi". Kurum etiketleri DEĞİŞMEDİ.
+- **Kademeli içerik (pricing.py TEK KAYNAK):** "Öncekinin hepsi, artı:" modeli —
+  kartlar `inherits` + yalnız KENDİ yeniliklerini taşır; `features_for_plan`
+  kümülatif üretir (membership/mobil geriye uyumlu). Landing özet üçlüsünde
+  kademeli kart kümülatife çevrilir (Patika görünmeden "Patika'dakilerin hepsi"
+  denmez). Kredi insan-dili: `credit_note` (sayılar `credits.PLAN_ALLOCATIONS`'tan
+  — tekrarlanmaz) + `credit_costs` tablosu (KIND_CREDITS'ten) + `per_student_note`
+  ROI satırı ("öğrenci başına ~250 ₺/ay"). **Denemede kredi satırı BİLİNÇLİ yok**
+  (tavan 50 iken "4.000" yalan olurdu).
+- **Web:** /teacher/plan **max-w-6xl** + SoloUpgradeCard'daki hardcoded
+  TIER_DETAILS SİLİNDİ (bayat kartların kök nedeni) → katalog kartı; ücretsizde
+  AI kredi çubuğu GİZLENDİ ("0/200 ama AI kapalı" tutarsızlığı) · paylaşılan
+  `components/pricing/plan-extras.tsx`: CreditCostsTable + PlanMatrix (kategorili
+  karşılaştırma) + PlanFaq — /teacher/plan VE /pricing ortak · /pricing: "Kaç
+  öğrencin var?" kaydırıcısı (paket önerisi) + güven şeridi + matris + SSS +
+  **referans bandı (testimonials İLK KEZ pricing'e bağlandı)**.
+- **"Solo" süpürmesi:** PLAN_CATALOG + payment.py + activity_stream + teacher.py
+  + action_center + signup + admin (user-detail/contact/payment-links) istemcileri.
+  **Mobil Paketim API'den beslenir → OTA'sız düzelir**; App Store ürün GÖRÜNEN
+  adları ASC'den elle güncellenmeli (kullanıcı, iOS build 9 sürecinde).
+- **Test:** pricing 8 (kademeli sözleşmeye güncellendi) · **admin_pricing 8 —
+  2026-05-23'ten beri BAYATTI** (solo_bands→solo_tiers; modernize edildi) ·
+  lifecycle 22 · entitlement 13 · iyzico 29 · IAP 23 · membership 19 · signup 13 ·
+  renewal 12 · sub-request 11 · trial 6 · paywall 5 · contact 13 · landing 8+8 ·
+  institution 18 · tenant 29 GREEN. Canlı tarayıcı: /pricing (adlar + seçici +
+  matris + SSS) + /teacher/plan (geniş + kademeli) + landing + signup GREEN.
+- **Deploy:** DB yedeği `pre_paket_20260804_0038.dump` + web/worker/next rebuild;
+  prod SSR doğrulandı (Keşif/Patika/Rota/Zirve + tüm yeni bloklar; "Solo" yok).
+  Prod'da app_settings pricing override YOK (yalnız membership_havale) → kod
+  varsayılanı canlı. **KURAL: paket görünen adı/madde değişikliği YALNIZ
+  pricing.py'de yapılır; plan KOD adlarına dokunmak yasak.**
+- **SIRADA (ayrı onay):** Faz 2 — admin'den KODSUZ kart içeriği yönetimi +
+  bağlamsal yükseltme anları (kapasite dolunca özellik-adlı teklif; karne okuma
+  sonucu ekranında "Patika'da her denemede") + deneme değer sayacı · Faz 3 —
+  kredi ek paketi + iptal-anı anketi.
+
+---
+
 ## YENİ İŞ — AI erişim kontrolleri (koç/kurum müdahale mekanizması) — CANLI (2026-08-03, commit `4b5ecc4`, migration `h8i1l4n5n88h`)
 
 **Tetikleyici:** müşteri sorusu — "koç olarak öğrenci/velilerin AI kullanımını
