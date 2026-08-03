@@ -170,15 +170,15 @@ function PlanCard({ card, yearly, months }: { card: PricingCard; yearly: boolean
         ) : null}
       </div>
 
-      {/* Kredi insan-dili — "1.500 kredi" tek başına bir şey anlatmıyor */}
+      {/* Kredi insan-dili — tek satır, taranabilir */}
       {card.credit_note ? (
         <div className={cn(
-          "mt-4 rounded-lg border px-3 py-2 text-xs leading-5",
+          "mt-3 flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs",
           onColor
             ? "border-white/25 bg-white/10 text-white/90"
             : "border-cyan-200 bg-cyan-50/70 text-cyan-900",
         )}>
-          {card.credit_note}
+          <span aria-hidden>✦</span> {card.credit_note}
         </div>
       ) : null}
 
@@ -193,7 +193,7 @@ function PlanCard({ card, yearly, months }: { card: PricingCard; yearly: boolean
         {card.features.map((f) => (
           <li key={f} className="flex items-start gap-2.5">
             <Check className={cn("mt-0.5 size-4 shrink-0", onColor ? "text-amber-300" : "text-emerald-600")} aria-hidden />
-            <span className={onColor ? "text-white/95" : "text-foreground/85"}>{f}</span>
+            <FeatureText text={f} onColor={onColor} />
           </li>
         ))}
         {card.excluded.map((f) => (
@@ -215,5 +215,24 @@ function PlanCard({ card, yearly, months }: { card: PricingCard; yearly: boolean
         {card.cta}
       </Link>
     </div>
+  );
+}
+
+/**
+ * "Kısa Başlık — detay" maddesi: başlık belirgin, detay soluk ve küçük.
+ * Uzun cümle-maddelerin kartı duvara çevirmesini önler (taranabilirlik).
+ */
+function FeatureText({ text, onColor }: { text: string; onColor: boolean }) {
+  const i = text.indexOf(" — ");
+  if (i < 0) {
+    return <span className={onColor ? "text-white/95" : "text-foreground/85"}>{text}</span>;
+  }
+  return (
+    <span className={onColor ? "text-white/95" : "text-foreground/90"}>
+      <span className="font-medium">{text.slice(0, i)}</span>
+      <span className={cn("ml-1 text-xs", onColor ? "text-white/60" : "text-muted-foreground")}>
+        {text.slice(i + 3)}
+      </span>
+    </span>
   );
 }

@@ -154,14 +154,25 @@ function OptionButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "w-full rounded-xl border-2 px-4 py-3 text-left transition",
+        "flex w-full items-start gap-3 rounded-xl border-2 px-4 py-3 text-left transition",
         selected
-          ? "border-cyan-600 bg-cyan-50"
-          : "border-slate-200 bg-white hover:border-cyan-300",
+          ? "border-cyan-600 bg-cyan-50 shadow-sm"
+          : "border-slate-200 bg-white hover:border-cyan-300 hover:shadow-sm",
       )}
     >
-      <span className="block text-sm font-semibold text-slate-900">{title}</span>
-      {desc ? <span className="mt-0.5 block text-xs text-slate-600">{desc}</span> : null}
+      <span
+        aria-hidden
+        className={cn(
+          "mt-0.5 grid size-4 shrink-0 place-items-center rounded-full border-2",
+          selected ? "border-cyan-600 bg-cyan-600" : "border-slate-300 bg-white",
+        )}
+      >
+        {selected ? <span className="size-1.5 rounded-full bg-white" /> : null}
+      </span>
+      <span>
+        <span className="block text-sm font-semibold text-slate-900">{title}</span>
+        {desc ? <span className="mt-0.5 block text-xs text-slate-600">{desc}</span> : null}
+      </span>
     </button>
   );
 }
@@ -188,37 +199,44 @@ export function PlanWizard({
   const back = () => setStep((s) => Math.max(0, s - 1));
 
   return (
-    <div className="mx-auto mt-8 max-w-xl rounded-2xl border border-cyan-200 bg-white p-6 shadow-sm">
-      <div className="flex items-center justify-between gap-2">
-        <h2 className="flex items-center gap-2 font-display text-base font-bold text-slate-900">
-          <Wand2 className="size-4 text-cyan-700" aria-hidden />
-          Paket seçim sihirbazı
+    <div className="mx-auto mt-8 max-w-2xl overflow-hidden rounded-3xl border border-cyan-200 bg-white shadow-lg shadow-cyan-900/10">
+      {/* Başlık bandı */}
+      <div className="flex items-center justify-between gap-3 bg-gradient-to-r from-cyan-700 to-cyan-900 px-6 py-4">
+        <h2 className="flex items-center gap-2.5 font-display text-base font-bold text-white">
+          <span className="grid size-8 place-items-center rounded-xl bg-white/15">
+            <Wand2 className="size-4 text-amber-300" aria-hidden />
+          </span>
+          Sana uygun paketi bulalım
         </h2>
-        <div className="flex items-center gap-1" aria-hidden>
-          {[0, 1, 2, 3].map((i) => (
-            <span
-              key={i}
-              className={cn(
-                "h-1.5 w-5 rounded-full",
-                i <= Math.min(step, 3) ? "bg-cyan-600" : "bg-slate-200",
-              )}
-            />
-          ))}
+        <div className="flex items-center gap-2">
+          {!done ? (
+            <span className="text-xs font-semibold text-white/80">Soru {Math.min(step, 3) + 1}/4</span>
+          ) : null}
+          <div className="flex items-center gap-1" aria-hidden>
+            {[0, 1, 2, 3].map((i) => (
+              <span
+                key={i}
+                className={cn(
+                  "h-1.5 w-5 rounded-full transition-colors",
+                  i <= Math.min(step, 3) ? "bg-amber-300" : "bg-white/25",
+                )}
+              />
+            ))}
+          </div>
         </div>
       </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        4 kısa soruyla gerçekte hangi pakete ihtiyacın olduğunu birlikte bulalım —
-        ya da{" "}
+      <div className="px-6 py-5 sm:px-8">
+      <p className="text-xs text-muted-foreground">
+        4 kısa soru — cevaplarına göre gerekçeli öneri.{" "}
         <button type="button" onClick={onSkip} className="font-medium text-cyan-700 underline">
-          atla, kartlardan kendim seçeyim
+          Atla, kartlardan kendim seçeyim
         </button>
-        .
       </p>
 
       <div className="mt-5">
         {step === 0 ? (
           <div>
-            <p className="text-sm font-semibold text-slate-900">1 · Kaç öğrencin var?</p>
+            <p className="font-display text-lg font-bold text-slate-900">Kaç öğrencin var?</p>
             <input
               type="range"
               min={1}
@@ -240,11 +258,12 @@ export function PlanWizard({
           </div>
         ) : step === 1 ? (
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-900">
-              2 · Deneme karnelerini (deneme sonucu PDF dosyası) yapay zekâya okutmak ister misin?
+            <p className="font-display text-lg font-bold text-slate-900">
+              Deneme karnelerini yapay zekâya okutmak ister misin?
             </p>
             <p className="text-xs text-muted-foreground">
-              Karneyi yüklersin; sistem soru soru okuyup konu analizini çıkarır — elle giriş yerine.
+              Karneyi (deneme sonucu PDF dosyası) yüklersin; sistem soru soru okuyup
+              konu analizini çıkarır — elle giriş yerine.
             </p>
             <OptionButton
               title="Hayır, denemeleri elle girerim"
@@ -268,8 +287,8 @@ export function PlanWizard({
           </div>
         ) : step === 2 ? (
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-900">
-              3 · Velilere yapay zekâ asistanı (Rota) açmak ister misin?
+            <p className="font-display text-lg font-bold text-slate-900">
+              Velilere yapay zekâ asistanı açmak ister misin?
             </p>
             <p className="text-xs text-muted-foreground">
               Veli, çocuğunun durumunu Rota&apos;dan sesli yorum ve sohbetle öğrenir —
@@ -297,7 +316,7 @@ export function PlanWizard({
           </div>
         ) : step === 3 ? (
           <div className="space-y-2">
-            <p className="text-sm font-semibold text-slate-900">4 · Kuruluma nasıl başlamak istersin?</p>
+            <p className="font-display text-lg font-bold text-slate-900">Kuruluma nasıl başlamak istersin?</p>
             <OptionButton
               title="Kendim kurarım"
               desc="Sesli rehber turu adım adım yol gösterir"
@@ -314,16 +333,18 @@ export function PlanWizard({
           </div>
         ) : rec ? (
           <div>
-            <p className="text-xs font-bold uppercase tracking-wide text-cyan-700">
-              Sana uygun paket
-            </p>
-            <div className="mt-2 flex items-baseline justify-between gap-3">
-              <h3 className="font-display text-2xl font-extrabold text-slate-900">
-                {rec.tier ? rec.tier.label : rec.freeLabel}
-              </h3>
-              <p className="text-lg font-bold text-slate-900">
-                {rec.tier ? `${rec.tier.monthly.toLocaleString("tr-TR")} ₺/ay` : "Ücretsiz"}
+            <div className="rounded-2xl border-2 border-cyan-600 bg-gradient-to-b from-cyan-50/80 to-white px-4 py-3">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-cyan-700">
+                Sana uygun paket
               </p>
+              <div className="mt-1 flex items-baseline justify-between gap-3">
+                <h3 className="font-display text-3xl font-extrabold text-slate-900">
+                  {rec.tier ? rec.tier.label : rec.freeLabel}
+                </h3>
+                <p className="text-xl font-bold text-slate-900">
+                  {rec.tier ? `${rec.tier.monthly.toLocaleString("tr-TR")} ₺/ay` : "Ücretsiz"}
+                </p>
+              </div>
             </div>
             <ul className="mt-3 space-y-1.5">
               {rec.reasons.map((r) => (
@@ -368,6 +389,7 @@ export function PlanWizard({
             </button>
           </div>
         ) : null}
+      </div>
       </div>
     </div>
   );

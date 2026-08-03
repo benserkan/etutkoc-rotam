@@ -35,7 +35,6 @@ export function PricingClient({
   turnstileEnabled?: boolean;
   turnstileSiteKey?: string | null;
 }) {
-  const solo = catalog.solo;
   const [tab, setTab] = React.useState<Tab>(initialType === "kurum" ? "institution" : "solo");
 
   return (
@@ -105,48 +104,13 @@ export function PricingClient({
             </p>
 
             <div className="mx-auto mt-10 max-w-4xl space-y-5">
-              <PlanMatrix catalog={catalog} defaultOpen />
+              <PlanMatrix catalog={catalog} />
               <CreditCostsTable rows={catalog.credit_costs ?? []} />
               <PlanFaq />
             </div>
 
             <TestimonialBand />
 
-            {/* Bağımsız koç — paket sınırları özeti */}
-            <div className="mt-14">
-              <div className="mx-auto max-w-2xl rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h2 className="font-display text-lg font-bold">Bağımsız koç paketleri — bir bakışta</h2>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  Ücretsiz {solo.free.students} öğrenciye kadar, süresiz. Öğrenci sayın büyüdükçe
-                  paketini yükselt. {solo.trial_days} gün boyunca tüm özellikler ücretsiz denenir.
-                </p>
-                <table className="mt-4 w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-100 text-left text-xs text-muted-foreground">
-                      <th className="pb-2 font-medium">Paket</th>
-                      <th className="pb-2 font-medium">Öğrenci</th>
-                      <th className="pb-2 text-right font-medium">Aylık</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-slate-50">
-                      <td className="py-2 font-medium">Ücretsiz</td>
-                      <td className="py-2">{solo.free.students} öğrenciye kadar</td>
-                      <td className="py-2 text-right font-semibold">0 ₺</td>
-                    </tr>
-                    {solo.tiers.map((t) => (
-                      <tr key={t.code} className="border-b border-slate-50">
-                        <td className="py-2 font-medium">{t.label}</td>
-                        <td className="py-2">
-                          {t.max_students == null ? "Sınırsız öğrenci" : `${t.max_students} öğrenciye kadar`}
-                        </td>
-                        <td className="py-2 text-right font-semibold">{tl(t.monthly)}/ay</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
           </>
         ) : (
           <>

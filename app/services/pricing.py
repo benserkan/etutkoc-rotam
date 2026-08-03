@@ -153,34 +153,37 @@ def _fmt(n: int) -> str:
 # YENİ kazandırdıklarını listeler; kümülatif liste features_for_plan üretir.
 
 # Keşif (ücretsiz) — çekirdek döngü, AI yok.
+# BİÇİM KURALI: her madde "Kısa Başlık — kısa detay". Kart, başlığı kalın,
+# detayı soluk basar → sayfa TARANABİLİR kalır (2026-08-04 yoğunluk düzeltmesi:
+# 3 satıra sarkan cümle-maddeler kartları okunmaz yapıyordu).
 _FREE_FEATURES = [
-    "Kitap → haftalık program → günlük takip: çekirdek döngünün tamamı",
-    "Veli daveti + haftalık e-posta raporu",
-    "Deneme girişi + net gelişim grafiği",
-    "Yanlış Soru Arşivi (fotoğrafla, aralıklı tekrarla kapat)",
-    "Mobil uygulama (öğrenci · veli · koç)",
-    "Sesli rehber turuyla kolay kurulum",
+    "Haftalık program + günlük takip — kitap, görev, işaretleme",
+    "Veli raporu — davet + haftalık e-posta",
+    "Deneme takibi — elle giriş + net grafiği",
+    "Yanlış Soru Arşivi — fotoğrafla, aralıklı tekrar",
+    "Mobil uygulama — öğrenci · veli · koç",
+    "Sesli rehber turu — kolay kurulum",
 ]
 # Patika — "Keşif'tekilerin hepsi, artı:" (yapay zekâ paketi açılır)
 _TIER1_NEW = [
-    "AI karne okuma — deneme sonucu PDF'ini yükle, soru soru konu analizi çıksın",
-    "Rota Veli Asistanı — veline sesli yorum + yazılı ve sesli sohbet",
-    "Yanlış sorularda yapay zekâ yaklaşım ipucu",
-    "Seansı sesle anlat ya da formu fotoğrafla — notlar kendiliğinden yazılır",
-    "Görüşme öncesi yapay zekâ 'bugün şunu konuş' hazırlığı",
-    "Tükenen veya uzaklaşan öğrenciyi geç olmadan gör",
-    "Randevu sistemi + Google Meet bağlantısı",
+    "AI karne okuma — deneme sonucu PDF'inden konu analizi",
+    "Rota Veli Asistanı — veline sesli yorum + sohbet",
+    "AI yaklaşım ipucu — yanlış sorularda",
+    "Sesli/fotoğraflı seans notu — kendiliğinden yazılır",
+    "AI görüşme hazırlığı — \"bugün şunu konuş\"",
+    "Erken uyarı — kopan öğrenciyi geç olmadan gör",
+    "Randevu + Google Meet",
 ]
 # Rota — "Patika'dakilerin hepsi, artı:"
 _TIER2_NEW = [
-    "Veli asistanı tam kapasite — her veliye haftalık sesli yorum yetişir",
-    "AI kariyer sentezi — anketler + gerçek net verisiyle hedef önerisi",
+    "Veli asistanı tam kapasite — her veliye haftalık sesli yorum",
+    "AI kariyer sentezi — anket + gerçek netlerle hedef",
     "Öncelikli destek",
 ]
 # Zirve — "Rota'dakilerin hepsi, artı:"
 _TIER3_NEW = [
-    "Birebir kurulum ve taşıma desteği — kitaplarını ve öğrencilerini birlikte kurarız",
-    "Yeni özelliklere erken erişim",
+    "Birebir kurulum ve taşıma — kitaplarını, öğrencilerini birlikte kurarız",
+    "Erken erişim — yeni özellikler önce sende",
 ]
 
 # Kademeye göre yeni-özellik listesi (kart kademeli anlatımı için).
@@ -198,14 +201,10 @@ def _credit_note(idx: int, code: str) -> str:
     """Kredinin insan dili — '1.500 kredi' tek başına hiçbir şey anlatmıyor."""
     n = _fmt(_tier_credits(code))
     if idx == 0:
-        return (f"Aylık {n} yapay zekâ kredisi — her öğrenci için ayda 2 karne "
-                "(deneme sonucu PDF'i) okuma + haftalık veli yorumu + soru "
-                "etiketlemeye rahat yeter")
+        return f"{n} kredi/ay — 10 öğrencilik tam kullanıma rahat yeter"
     if idx == 1:
-        return (f"Aylık {n} yapay zekâ kredisi — veli asistanı tam kapasite, "
-                "25 öğrencide bile sıkışmazsın")
-    return (f"Aylık {n} yapay zekâ kredisi — en yoğun kullanımda bile tavana "
-            "takılmazsın")
+        return f"{n} kredi/ay — veli asistanı tam kapasitede bile yeter"
+    return f"{n} kredi/ay — tavana takılmazsın"
 
 
 def credit_costs_public() -> list[dict[str, Any]]:
