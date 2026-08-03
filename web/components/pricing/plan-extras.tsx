@@ -97,7 +97,7 @@ function buildMatrix(catalog: PricingCatalog): { plans: string[]; groups: Matrix
           label: "Aylık yapay zekâ kredisi",
           cells: (credits.length === 4 ? credits : ["—", "1.500", "4.000", "8.000"]) as [Cell, Cell, Cell, Cell],
         },
-        { label: "AI karne okuma (deneme PDF → konu analizi)", cells: [false, true, true, true] },
+        { label: "AI karne okuma (deneme sonucu PDF → konu analizi)", cells: [false, true, true, true] },
         { label: "Yanlış soruda AI yaklaşım ipucu", cells: [false, true, true, true] },
         { label: "Sesli dikte + fotoğraftan seans notu", cells: [false, true, true, true] },
         { label: "Görüşme öncesi AI hazırlık", cells: [false, true, true, true] },

@@ -12,10 +12,11 @@ import { InstitutionContact } from "@/components/pricing/institution-contact";
 import { FloatingWhatsApp } from "@/components/contact/floating-whatsapp";
 import { PaymentMethods } from "@/components/payment-methods";
 import { CreditCostsTable, PlanFaq, PlanMatrix } from "@/components/pricing/plan-extras";
+import { PlanWizard } from "@/components/pricing/plan-wizard";
 import { useQuery } from "@tanstack/react-query";
 import { getPublicTestimonials, testimonialKeys } from "@/lib/api/testimonials";
 import type { TestimonialPublicResponse } from "@/lib/types/testimonial";
-import type { PricingCatalog, SoloTier } from "@/lib/types/pricing";
+import type { PricingCatalog } from "@/lib/types/pricing";
 
 function tl(n: number): string {
   return `${n.toLocaleString("tr-TR")} ₺`;
@@ -86,10 +87,15 @@ export function PricingClient({
 
         {tab === "solo" ? (
           <>
-            {/* Anthropic deseni: kullanıcıyı pakete yönlendiren mini seçici */}
-            <StudentCountPicker tiers={catalog.solo.tiers} freeStudents={catalog.solo.free.students} />
+            {/* Paket seçim sihirbazı — ihtiyaçtan pakete (atlayan kartlardan seçer) */}
+            <PlanWizard
+              catalog={catalog}
+              onSkip={() =>
+                document.getElementById("paketler")?.scrollIntoView({ behavior: "smooth" })
+              }
+            />
 
-            <div className="mt-8">
+            <div id="paketler" className="mt-8 scroll-mt-24">
               <PricingCards initial={catalog} variant="solo" />
             </div>
 
@@ -224,44 +230,6 @@ export function PricingClient({
   );
 }
 
-
-/* ── "Kaç öğrencin var?" — öğrenci sayısından paket önerisi (Anthropic mini sihirbaz deseni) ── */
-function StudentCountPicker({ tiers, freeStudents }: { tiers: SoloTier[]; freeStudents: number }) {
-  const [count, setCount] = React.useState(10);
-  const tier =
-    count <= freeStudents
-      ? null
-      : tiers.find((t) => t.max_students == null || count <= t.max_students) ?? tiers[tiers.length - 1];
-  return (
-    <div className="mx-auto mt-8 flex max-w-xl flex-col items-center gap-2 rounded-2xl border border-cyan-200 bg-cyan-50/50 px-5 py-4 text-center">
-      <label htmlFor="student-count" className="text-sm font-semibold text-cyan-900">
-        Kaç öğrencin var?
-      </label>
-      <input
-        id="student-count"
-        type="range"
-        min={1}
-        max={40}
-        value={count}
-        onChange={(e) => setCount(Number(e.target.value))}
-        className="w-full accent-cyan-700"
-      />
-      <p className="text-sm text-cyan-900">
-        <span className="font-display text-lg font-extrabold">{count >= 40 ? "40+" : count}</span> öğrenci →{" "}
-        {tier ? (
-          <>
-            sana uygun paket <span className="font-bold">{tier.label}</span>{" "}
-            <span className="text-cyan-700">({tl(tier.monthly)}/ay)</span>
-          </>
-        ) : (
-          <>
-            <span className="font-bold">Keşif</span> ile ücretsiz başlayabilirsin
-          </>
-        )}
-      </p>
-    </div>
-  );
-}
 
 /* ── Referans bandı — yayınlanmış yorumlar (sosyal kanıt; yoksa hiç render olmaz) ── */
 function TestimonialBand() {

@@ -163,7 +163,7 @@ _FREE_FEATURES = [
 ]
 # Patika — "Keşif'tekilerin hepsi, artı:" (yapay zekâ paketi açılır)
 _TIER1_NEW = [
-    "AI karne okuma — deneme PDF'ini yükle, soru soru konu analizi çıksın",
+    "AI karne okuma — deneme sonucu PDF'ini yükle, soru soru konu analizi çıksın",
     "Rota Veli Asistanı — veline sesli yorum + yazılı ve sesli sohbet",
     "Yanlış sorularda yapay zekâ yaklaşım ipucu",
     "Seansı sesle anlat ya da formu fotoğrafla — notlar kendiliğinden yazılır",
@@ -199,7 +199,8 @@ def _credit_note(idx: int, code: str) -> str:
     n = _fmt(_tier_credits(code))
     if idx == 0:
         return (f"Aylık {n} yapay zekâ kredisi — her öğrenci için ayda 2 karne "
-                "okuma + haftalık veli yorumu + soru etiketlemeye rahat yeter")
+                "(deneme sonucu PDF'i) okuma + haftalık veli yorumu + soru "
+                "etiketlemeye rahat yeter")
     if idx == 1:
         return (f"Aylık {n} yapay zekâ kredisi — veli asistanı tam kapasite, "
                 "25 öğrencide bile sıkışmazsın")
@@ -214,7 +215,7 @@ def credit_costs_public() -> list[dict[str, Any]]:
     from app.services.credits import KIND_CREDITS
 
     rows = [
-        ("AI karne okuma (deneme PDF)", UsageKind.AI_EXAM_IMPORT),
+        ("AI karne okuma (deneme sonucu PDF)", UsageKind.AI_EXAM_IMPORT),
         ("Veli sesli yorumu (metin + ses)", None),  # yorum 6 + ses 2 — birleşik
         ("Veli sohbet sorusu", UsageKind.AI_PARENT_CHAT),
         ("Yanlış soru AI ipucu", UsageKind.AI_WRONG_TAG),
