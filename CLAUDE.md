@@ -226,11 +226,15 @@ bildirdi. Teşhiste **ikisinin aynı zincirin halkaları** olduğu çıktı.
 - **Deploy:** backend web+worker rebuild (yedek `pre_fsrs_20260802_1838.dump`) ·
   mobil OTA zinciri: `4d0ce83a` (4 düzeltme — ama cssInterop çökmesini getirdi) →
   `eacaf6fa` (image-picker guard) → `5f7d0e6a` (cssInterop kaldırıldı, açık-style
-  deseni) → **`6b930555` (GEÇERLİ: pickPhoto sessiz-hata + vade metninde yıl)** —
-  runtime 1.0.0, android+ios (çökme düzeltmesi için uygulamayı tamamen kapatıp
-  2 kez açmak gerekir: ilk açılış indirir, ikincisi çalıştırır). iOS'ta fotoğraf
-  ekleme build 9'a kadar "uygulamayı güncelle / web'den ekle" mesajı verir
-  (native modül yok); Android v9'da normal çalışır.
+  deseni) → `6b930555` (pickPhoto sessiz-hata + vade metninde yıl) →
+  **`a2192b3e` (GEÇERLİ: iOS foto ön-tespit)** — runtime 1.0.0, android+ios
+  (uygulamayı tamamen kapatıp 2 kez açmak gerekir: ilk açılış indirir, ikincisi
+  çalıştırır). **iOS foto dersi:** hata kalıbı "Cannot find native module" değil
+  UnavailabilityError ailesi gelebiliyor → catch kalıbına güvenme,
+  `expo-modules-core.requireOptionalNativeModule("ExponentImagePicker")` ile
+  BASMADAN ÖNCE tespit et; CaptureSheet modül yoksa foto butonları yerine amber
+  bilgi kutusu gösterir, notla ekleme açık kalır. iOS'ta foto build 9'a kadar
+  YOK; Android v9'da normal.
 
 ---
 
