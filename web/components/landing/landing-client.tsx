@@ -46,6 +46,7 @@ import type { LandingCard, LandingResponse } from "@/lib/types/landing";
 import { getPublicTestimonials, testimonialKeys } from "@/lib/api/testimonials";
 import type { TestimonialPublicItem } from "@/lib/types/testimonial";
 import { Reveal } from "@/components/landing/reveal";
+import { HeroV2 } from "@/components/landing/hero-v2";
 import { MockupByType, MOCKUP_ICON } from "@/components/landing/mockups";
 import { TourVideoSection, WelcomeVideoModal } from "@/components/landing/tour-video";
 import { demosForRole, demoPlayUrl, type DemoRole } from "@/lib/demos";
@@ -66,7 +67,7 @@ const NAV = [
 // Kurumsal demo/teklif → /pricing kurumsal formu (zengin: koç sayısı + fayda).
 const DEMO_MAIL = "/pricing?type=kurum#kurumsal";
 
-export function LandingClient() {
+export function LandingClient({ heroVariant = "v1" }: { heroVariant?: "v1" | "v2" } = {}) {
   const q = useQuery<LandingResponse>({
     queryKey: landingKeys.cards(5, "teacher"),
     queryFn: () => getLandingCards(5, "teacher"),
@@ -78,7 +79,7 @@ export function LandingClient() {
   return (
     <div className="force-light min-h-screen bg-background text-foreground">
       <Header />
-      <Hero />
+      {heroVariant === "v2" ? <HeroV2 /> : <Hero />}
       <TourVideoSection variant={variant} />
       <Reassurance />
       <HowItWorks />

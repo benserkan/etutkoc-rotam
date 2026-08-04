@@ -259,3 +259,56 @@
 .guide-fs:fullscreen > div:not(.guide-stage) {
   width: min(100vw - 2rem, calc((100vh - 7rem) * 1.6));
 }
+
+/* ── Hero v2 — "Rota iş başında" sahnesi (2026-08-05) ─────────────────
+   9 sn'lik CSS döngüsü: karne süzülür → Rota okur → 2 gerçek analiz kartı
+   belirir. Saf CSS (JS zamanlaması yok — hydration/reload'a dayanıklı). */
+@keyframes hv2-karne {
+  0% { opacity: 0; transform: translate(-48px, 8px) rotate(-6deg); }
+  5%, 26% { opacity: 1; transform: translate(0, 0) rotate(-3deg); }
+  32%, 100% { opacity: 0; transform: translate(36px, -10px) scale(0.9) rotate(0deg); }
+}
+@keyframes hv2-crop1 {
+  0%, 30% { opacity: 0; transform: translateY(14px) scale(0.94) rotate(-1.5deg); }
+  35%, 60% { opacity: 1; transform: translateY(0) scale(1) rotate(-1.5deg); }
+  66%, 100% { opacity: 0; transform: translateY(-10px) scale(0.97) rotate(-1.5deg); }
+}
+@keyframes hv2-crop2 {
+  0%, 62% { opacity: 0; transform: translateY(14px) scale(0.94) rotate(1.5deg); }
+  67%, 95% { opacity: 1; transform: translateY(0) scale(1) rotate(1.5deg); }
+  100% { opacity: 0; transform: translateY(-10px) scale(0.97) rotate(1.5deg); }
+}
+@keyframes hv2-bubble1 { 0%, 2% { opacity: 0; transform: translateY(6px); } 6%, 27% { opacity: 1; transform: translateY(0); } 32%, 100% { opacity: 0; transform: translateY(-4px); } }
+@keyframes hv2-bubble2 { 0%, 31% { opacity: 0; transform: translateY(6px); } 36%, 61% { opacity: 1; transform: translateY(0); } 66%, 100% { opacity: 0; transform: translateY(-4px); } }
+@keyframes hv2-bubble3 { 0%, 63% { opacity: 0; transform: translateY(6px); } 68%, 95% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-4px); } }
+@keyframes hv2-ring {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(14, 116, 144, 0.35); }
+  50% { box-shadow: 0 0 0 14px rgba(14, 116, 144, 0); }
+}
+@keyframes hv2-word {
+  0% { opacity: 0; transform: translateY(0.5em); }
+  12%, 88% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-0.4em); }
+}
+@keyframes hv2-dots { 0%, 20% { opacity: 0.25; } 50% { opacity: 1; } 80%, 100% { opacity: 0.25; } }
+.hv2-scene-karne { animation: hv2-karne 9s ease-in-out infinite; }
+.hv2-scene-crop1 { animation: hv2-crop1 9s ease-in-out infinite; }
+.hv2-scene-crop2 { animation: hv2-crop2 9s ease-in-out infinite; }
+.hv2-bubble-1 { animation: hv2-bubble1 9s ease-in-out infinite; }
+.hv2-bubble-2 { animation: hv2-bubble2 9s ease-in-out infinite; }
+.hv2-bubble-3 { animation: hv2-bubble3 9s ease-in-out infinite; }
+.hv2-ring { animation: hv2-ring 2.8s ease-out infinite; }
+.hv2-word { display: inline-block; animation: hv2-word 2.6s ease-in-out both; }
+.hv2-dot { animation: hv2-dots 1.2s ease-in-out infinite; }
+.hv2-dot:nth-child(2) { animation-delay: 0.18s; }
+.hv2-dot:nth-child(3) { animation-delay: 0.36s; }
+@media (prefers-reduced-motion: reduce) {
+  .hv2-scene-karne, .hv2-scene-crop1, .hv2-scene-crop2,
+  .hv2-bubble-1, .hv2-bubble-2, .hv2-bubble-3, .hv2-ring, .hv2-word, .hv2-dot {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  /* hareket kapalıyken sahnede yalnız ilk kart + ilk balon kalsın */
+  .hv2-scene-crop2, .hv2-bubble-2, .hv2-bubble-3 { opacity: 0 !important; }
+}

@@ -26,6 +26,7 @@ const PUBLIC_PATHS_EXACT = new Set<string>([
 ]);
 
 const PUBLIC_PATHS_PREFIX = [
+  "/hero-onizleme",
   "/login",
   "/signup",
   // Şifre sıfırlama akışı: token ile gelir, oturum yok — public olmalı.

@@ -229,6 +229,8 @@
         # /pricing public üyelik sayfası (Next.js). Veri /api/v2/pricing'den
         # (tek kaynak app/services/pricing.py). Jinja plans/pricing.html dead-code.
         reverse_proxy /pricing next:3000
+        # Hero v2 tasarim onizlemesi (2026-08-05) — begenilirse anasayfaya alinip kaldirilir
+        reverse_proxy /hero-onizleme next:3000
 
         # /iletisim public iletişim sayfası (Next.js) — çok kanallı + form.
         # Veri/kanal bilgisi /api/v2/pricing'den; gönderim /api/v2/contact (Turnstile).
