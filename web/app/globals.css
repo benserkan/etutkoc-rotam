@@ -313,3 +313,56 @@
   /* hareket kapalıyken sahnede yalnız ilk kart + ilk balon kalsın */
   .hv2-scene-crop2, .hv2-bubble-2, .hv2-bubble-3 { opacity: 0 !important; }
 }
+
+/* ── Hero v3.1 — 5 perdelik sahne (16 sn): karne → analiz → veli sesli →
+   hata defteri → program önerisi. Pencereler ~%3 arayla ayrık. ── */
+@keyframes hv3-karne {
+  0% { opacity: 0; transform: translate(-48px, 8px) rotate(-6deg); }
+  3%, 14% { opacity: 1; transform: translate(0, 0) rotate(-3deg); }
+  18%, 100% { opacity: 0; transform: translate(36px, -10px) scale(0.9); }
+}
+@keyframes hv3-card1 {
+  0%, 17% { opacity: 0; transform: translateY(14px) scale(0.95) rotate(-1.2deg); }
+  21%, 34% { opacity: 1; transform: translateY(0) scale(1) rotate(-1.2deg); }
+  38%, 100% { opacity: 0; transform: translateY(-10px) scale(0.97) rotate(-1.2deg); }
+}
+@keyframes hv3-card2 {
+  0%, 37% { opacity: 0; transform: translateY(14px) scale(0.95) rotate(1.2deg); }
+  41%, 54% { opacity: 1; transform: translateY(0) scale(1) rotate(1.2deg); }
+  58%, 100% { opacity: 0; transform: translateY(-10px) scale(0.97) rotate(1.2deg); }
+}
+@keyframes hv3-card3 {
+  0%, 57% { opacity: 0; transform: translateY(14px) scale(0.95) rotate(-1.2deg); }
+  61%, 74% { opacity: 1; transform: translateY(0) scale(1) rotate(-1.2deg); }
+  78%, 100% { opacity: 0; transform: translateY(-10px) scale(0.97) rotate(-1.2deg); }
+}
+@keyframes hv3-card4 {
+  0%, 77% { opacity: 0; transform: translateY(14px) scale(0.95) rotate(1.2deg); }
+  81%, 95% { opacity: 1; transform: translateY(0) scale(1) rotate(1.2deg); }
+  99%, 100% { opacity: 0; transform: translateY(-10px) scale(0.97) rotate(1.2deg); }
+}
+@keyframes hv3-bub1 { 0%, 1% { opacity: 0; transform: translateY(6px); } 4%, 15% { opacity: 1; transform: translateY(0); } 19%, 100% { opacity: 0; } }
+@keyframes hv3-bub2 { 0%, 20% { opacity: 0; transform: translateY(6px); } 24%, 35% { opacity: 1; transform: translateY(0); } 39%, 100% { opacity: 0; } }
+@keyframes hv3-bub3 { 0%, 40% { opacity: 0; transform: translateY(6px); } 44%, 55% { opacity: 1; transform: translateY(0); } 59%, 100% { opacity: 0; } }
+@keyframes hv3-bub4 { 0%, 60% { opacity: 0; transform: translateY(6px); } 64%, 75% { opacity: 1; transform: translateY(0); } 79%, 100% { opacity: 0; } }
+@keyframes hv3-bub5 { 0%, 80% { opacity: 0; transform: translateY(6px); } 84%, 96% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; } }
+.hv3-karne { animation: hv3-karne 16s ease-in-out infinite; }
+.hv3-card1 { animation: hv3-card1 16s ease-in-out infinite; }
+.hv3-card2 { animation: hv3-card2 16s ease-in-out infinite; }
+.hv3-card3 { animation: hv3-card3 16s ease-in-out infinite; }
+.hv3-card4 { animation: hv3-card4 16s ease-in-out infinite; }
+.hv3-bub-1 { animation: hv3-bub1 16s ease-in-out infinite; }
+.hv3-bub-2 { animation: hv3-bub2 16s ease-in-out infinite; }
+.hv3-bub-3 { animation: hv3-bub3 16s ease-in-out infinite; }
+.hv3-bub-4 { animation: hv3-bub4 16s ease-in-out infinite; }
+.hv3-bub-5 { animation: hv3-bub5 16s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .hv3-karne, .hv3-card1, .hv3-card2, .hv3-card3, .hv3-card4,
+  .hv3-bub-1, .hv3-bub-2, .hv3-bub-3, .hv3-bub-4, .hv3-bub-5 {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .hv3-karne, .hv3-card2, .hv3-card3, .hv3-card4,
+  .hv3-bub-2, .hv3-bub-3, .hv3-bub-4, .hv3-bub-5 { opacity: 0 !important; }
+}

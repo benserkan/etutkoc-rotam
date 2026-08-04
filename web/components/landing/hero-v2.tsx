@@ -24,6 +24,7 @@ import Image from "next/image";
 import {
   ArrowRight,
   BadgeCheck,
+  BookX,
   Check,
   FileText,
   Play,
@@ -98,11 +99,27 @@ export function HeroV2() {
             <span className="mt-2 block text-slate-900">Sen koçluğa odaklan.</span>
           </h1>
 
-          <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600">
-            Rota deneme karnesini <b className="text-slate-900">40 saniyede</b> konu konu okur,
-            veline durumu <b className="text-slate-900">sesli anlatır</b>, yanlışları kapanana
-            kadar takip eder. Karar ve dokunuş hep sende kalır.
+          <p className="mt-6 max-w-xl text-lg font-medium leading-relaxed text-slate-700">
+            Rota, yapay zekâ destekli dijital koç asistanıdır.
           </p>
+          <ul className="mt-3 max-w-xl space-y-2 text-[15px] leading-snug text-slate-600">
+            <li className="flex items-start gap-2.5">
+              <span className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-700"><FileText className="size-3" aria-hidden /></span>
+              <span>Deneme sonuçlarını <b className="text-slate-900">40 saniyede</b> konu konu okur, koç için <b className="text-slate-900">analiz tabloları</b> oluşturur.</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-700"><Play className="ml-px size-3 fill-current" aria-hidden /></span>
+              <span>Veliye haftalık programı ve deneme değerlendirmesini <b className="text-slate-900">sesli anlatır</b> — iletişimi canlı tutar.</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-700"><BookX className="size-3" aria-hidden /></span>
+              <span>Öğrencinin <b className="text-slate-900">hata defterini</b> dijital tutar, öğrenme gerçekleşene kadar takip eder.</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <span className="mt-1 flex size-5 shrink-0 items-center justify-center rounded-full bg-cyan-100 text-cyan-700"><Sparkles className="size-3" aria-hidden /></span>
+              <span>Haftalık programın hazırlanmasına yardım eder, görevler için <b className="text-slate-900">yapay zekâ önerileri</b> sunar.</span>
+            </li>
+          </ul>
 
           <div className="mt-7 flex flex-wrap items-center gap-3">
             <Link
@@ -173,9 +190,9 @@ export function HeroV2() {
 function RotaScene() {
   const [videoOpen, setVideoOpen] = React.useState(false);
   return (
-    <div className="relative mx-auto h-[500px] w-full max-w-[560px] select-none sm:h-[540px]">
+    <div className="relative mx-auto h-[560px] w-full max-w-[600px] select-none sm:h-[600px]">
       {/* Rota portresi — sahnenin yıldızı (büyütüldü) + oynat rozeti */}
-      <div className="absolute right-0 top-0 z-20 w-[225px] sm:w-[270px]">
+      <div className="absolute right-0 top-0 z-20 w-[245px] sm:w-[305px]">
         <button
           type="button"
           onClick={() => setVideoOpen(true)}
@@ -208,25 +225,29 @@ function RotaScene() {
       </div>
 
       {/* Konuşma balonları — sahneyle senkron, anlamlı tam cümleler */}
-      <div className="absolute left-0 top-0 z-30 w-[200px] sm:left-2 sm:w-64">
-        <Bubble cls="hv2-bubble-1">
+      <div className="absolute left-0 top-0 z-30 w-[200px] sm:left-1 sm:w-[270px]">
+        <Bubble cls="hv3-bub-1">
           Koçum karne yükledi — <b>120 soruyu</b> tek tek okuyorum
           <span className="ml-0.5 inline-flex">
             <span className="hv2-dot">.</span><span className="hv2-dot">.</span><span className="hv2-dot">.</span>
           </span>
         </Bubble>
-        <Bubble cls="hv2-bubble-2">
-          Bitti: her soruyu <b>konusuyla eşledim</b>. Üslü İfadeler&apos;de 3 yanlış
-          var — programa tekrar ekledim.
+        <Bubble cls="hv3-bub-2">
+          Analiz hazır: her soruyu <b>konusuyla eşledim</b> — koçun tablosunu çıkardım.
         </Bubble>
-        <Bubble cls="hv2-bubble-3">
-          Veliye de <b>sesli anlattım</b>: &quot;Elif iyi gidiyor, matematikte küçük
-          bir eksik kaldı.&quot;
+        <Bubble cls="hv3-bub-3">
+          Veliye haftalık programı ve deneme sonucunu <b>sesli anlattım</b>.
+        </Bubble>
+        <Bubble cls="hv3-bub-4">
+          Yanlışları <b>hata defterine</b> ekledim — öğrenilene kadar takipteyim.
+        </Bubble>
+        <Bubble cls="hv3-bub-5">
+          Haftaya <b>Üslü İfadeler tekrarı</b> önerdim — koç tek tıkla programa ekledi.
         </Bubble>
       </div>
 
       {/* Faz A — karne dosyası Rota'ya süzülür */}
-      <div className="hv2-scene-karne absolute left-2 top-[195px] z-10 w-64 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl">
+      <div className="hv3-karne absolute left-2 top-[195px] z-10 w-64 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl">
         <div className="flex items-center gap-2.5">
           <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
             <FileText className="size-5" aria-hidden />
@@ -243,7 +264,7 @@ function RotaScene() {
       </div>
 
       {/* Faz B — TASARLANMIŞ analiz vinyeti (gerçek verilerle, büyük punto) */}
-      <div className="hv2-scene-crop1 absolute bottom-10 left-0 z-10 w-[330px] max-w-[92%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[360px]">
+      <div className="hv3-card1 absolute bottom-10 left-0 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Deneme analizi hazır</span>
           <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800">40 saniye</span>
@@ -268,7 +289,7 @@ function RotaScene() {
       </div>
 
       {/* Faz C — TASARLANMIŞ veli vinyeti (sesli anlatım oynatıcısı) */}
-      <div className="hv2-scene-crop2 absolute bottom-10 left-4 z-10 w-[330px] max-w-[92%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[360px]">
+      <div className="hv3-card2 absolute bottom-10 left-4 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
         <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
           <span className="text-xs font-bold text-slate-700">Veli uygulaması</span>
           <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">az önce</span>
@@ -302,6 +323,66 @@ function RotaScene() {
           <p className="mt-3 text-[12px] leading-snug text-slate-600">
             &quot;Elif bu hafta 13 görevden 10&apos;unu bitirdi. Matematikte Üslü
             İfadeler&apos;i birlikte tekrar edeceğiz…&quot;
+          </p>
+        </div>
+      </div>
+
+      {/* Faz D — hata defteri vinyeti (YSA: dijital yanlış takibi) */}
+      <div className="hv3-card3 absolute bottom-10 left-0 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+          <span className="text-xs font-bold text-slate-700">Dijital hata defteri</span>
+          <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-bold text-rose-700">takipte</span>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center gap-3">
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
+              <BookX className="size-5" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-900">Üslü İfadeler · Soru 7</p>
+              <p className="text-[11px] text-slate-500">Karekök LGS-3&apos;ten otomatik eklendi</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-1.5 text-[11px] font-semibold">
+            <span className="rounded-full bg-rose-50 px-2 py-1 text-rose-700">✗ yanlış</span>
+            <span className="text-slate-300">→</span>
+            <span className="rounded-full bg-emerald-50 px-2 py-1 text-emerald-700">✓ yeniden çözüldü</span>
+            <span className="text-slate-300">→</span>
+            <span className="rounded-full bg-amber-50 px-2 py-1 text-amber-700">tekrar: 15 Ağu</span>
+          </div>
+          <p className="mt-3 rounded-lg bg-cyan-50 px-3 py-2 text-[12px] font-medium leading-snug text-cyan-900">
+            <Sparkles className="mr-1 inline size-3.5 text-amber-500" aria-hidden />
+            Aralıklı iki doğrudan sonra <b>öğrenildi</b> sayılır — Rota hatırlatır.
+          </p>
+        </div>
+      </div>
+
+      {/* Faz E — haftalık program + yapay zekâ görev önerisi vinyeti */}
+      <div className="hv3-card4 absolute bottom-10 left-4 z-10 w-[350px] max-w-[94%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[400px]">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+          <span className="text-xs font-bold text-slate-700">Haftalık program · Perşembe</span>
+          <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-800">Rota önerisi</span>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/60 px-3 py-2">
+            <div>
+              <p className="text-[13px] font-semibold text-slate-800">Fen · Basınç — 1 test</p>
+              <p className="text-[10px] text-slate-500">dünkü görev</p>
+            </div>
+            <span className="text-sm font-bold text-emerald-600">✓</span>
+          </div>
+          <div className="mt-2 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50/70 px-3 py-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[13px] font-bold text-slate-900">Matematik · Üslü İfadeler — 2 test</p>
+              <span className="rounded-full bg-cyan-700 px-2.5 py-1 text-[10px] font-bold text-white">Ekle</span>
+            </div>
+            <p className="mt-0.5 text-[11px] font-medium text-amber-800">
+              <Sparkles className="mr-0.5 inline size-3 text-amber-500" aria-hidden />
+              Denemede 3 yanlış + hata defterinde açık soru — tekrar zamanı
+            </p>
+          </div>
+          <p className="mt-3 text-[12px] leading-snug text-slate-600">
+            Öneriler gerçek verilerden gelir; <b>son karar her zaman koçta</b>.
           </p>
         </div>
       </div>
