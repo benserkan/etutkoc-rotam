@@ -329,7 +329,58 @@ def _event_details(
             d["summary"] = moments.silent_summary_text(db)
         except Exception:
             logger.warning("moment_silent summary fail")
+    elif rule_key == "payment_problem_recent":
+        # Alarm kendini açıklasın (2026-08-04 kullanıcı isteği): hangi işlem,
+        # kim, ne durumda + müdahale ipucu — panelde alarm satırının altında.
+        try:
+            d["summary"] = _payment_problem_summary(db)
+        except Exception:
+            logger.warning("payment_problem summary fail")
     return d
+
+
+def _payment_problem_summary(db: Session) -> str:
+    """Son 24 saatin sorunlu ödeme işlemleri — okunur tek satır/işlem."""
+    from app.models import PaymentTransaction, User as UserModel
+
+    now = _now()
+    cutoff_24h = now - timedelta(hours=24)
+    stuck_cutoff = now - timedelta(minutes=30)
+    txs = (
+        db.query(PaymentTransaction)
+        .filter(
+            PaymentTransaction.created_at >= cutoff_24h,
+            (
+                (PaymentTransaction.status == "failed")
+                | (
+                    PaymentTransaction.status.in_(["pending", "3ds_pending"])
+                    & (PaymentTransaction.created_at < stuck_cutoff)
+                )
+            ),
+        )
+        .order_by(PaymentTransaction.id.desc())
+        .limit(10)
+        .all()
+    )
+    if not txs:
+        return "Sorunlu işlem kalmadı (pencere içinde çözülmüş)."
+    parts = []
+    for t in txs:
+        u = db.get(UserModel, t.user_id)
+        email = "?"
+        if u and u.email and "@" in u.email:
+            email = u.email[:3] + "***" + u.email[u.email.find("@"):]
+        if t.status == "failed":
+            durum = f"BAŞARISIZ ({(t.status_reason or 'sebep yok')[:60]})"
+            ipucu = "kart reddedildi — gerekirse müşteriyle iletişime geç"
+        else:
+            durum = "YARIM 3DS (müşteri ödeme sayfasını yarıda bıraktı ya da callback ulaşmadı)"
+            ipucu = "iyzico panelinde tahsilat VARSA manuel aktive et; yoksa satış fırsatı"
+        ts = t.created_at.strftime("%d/%m %H:%M") if t.created_at else "?"
+        parts.append(
+            f"işlem #{t.id} · {email} · {t.plan_code} {t.amount} TL · {durum} · {ts} UTC → {ipucu}"
+        )
+    return " || ".join(parts)
 
 
 def evaluate_all(db: Session) -> list[EvaluationResult]:
