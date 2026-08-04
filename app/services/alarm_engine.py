@@ -180,6 +180,25 @@ def _val_email_delivery_failing(db: Session) -> int:
     return int(round(failure * 100.0 / attempts))
 
 
+def _val_moment_silent(db: Session) -> int:
+    """Sessiz kalan bağlamsal uyarı (moment) sayısı — Faz C (2026-08-04).
+
+    moments.silent_moment_report: koşulu sağlayan + panelde gerçekten gezinen
+    (login / ilgili sayfa ziyareti) ama son 48 saatte sinyali ALMAYAN kullanıcı
+    sayısı. 0'dan büyükse bir bağlamsal uyarı yüzeyi kırılmış demektir
+    (koşul kodu, endpoint kancası veya kayıt zinciri). E-posta kesintisi
+    dersinin bağlamsal uyarılara uygulanması: ölçülmeyen kırılma sessiz kalır.
+    """
+    from app.services import moments
+
+    try:
+        # 90 günden eski gösterim izlerini fırsatçı temizle (ayrı cron yok)
+        moments.purge_old_events(db)
+    except Exception:
+        logger.warning("moment purge fail (non-fatal)")
+    return moments.silent_total(db)
+
+
 # Kural key → değer hesaplayıcı + severity hesaplayıcı
 EVALUATORS = {
     "high_failed_logins": _val_high_failed_logins,
@@ -188,6 +207,7 @@ EVALUATORS = {
     "abuse_open": _val_abuse_open,
     "payment_problem_recent": _val_payment_problem_recent,
     "email_delivery_failing": _val_email_delivery_failing,
+    "moment_silent": _val_moment_silent,
 }
 
 
@@ -223,6 +243,20 @@ _BUILTIN_RULES = [
         "threshold": 40,
         "cooldown_minutes": 360,
         # push ÖNCE: e-posta çöktüğünde e-posta kanalı bu alarmı taşıyamaz.
+        "channels": "push,in_app,email",
+    },
+    {
+        "key": "moment_silent",
+        "name": "Bağlamsal uyarı gösterilmedi (moment sessiz)",
+        "description": (
+            "Koşulu sağlayan ve panelde gezinen bir kullanıcıya beklenen "
+            "bağlamsal uyarı (deneme bitiyor bandı, ödeme duvarı, kredi azaldı "
+            "kartı...) son 48 saatte hiç sunulmadı. Uyarı yüzeyi kırılmış "
+            "olabilir — koşul kodu, API kancası veya banner. Detay: alarm "
+            "kaydındaki özet + scripts/run_moment_checks.py ile yerinde test."
+        ),
+        "threshold": 0,           # tek sessiz kullanıcı bile alarmlar
+        "cooldown_minutes": 720,  # günde en çok 2 kez
         "channels": "push,in_app,email",
     },
 ]
@@ -282,6 +316,20 @@ def _in_cooldown(rule: AlarmRule, *, now: datetime) -> bool:
     if last is None:
         return False
     return (now - last).total_seconds() < rule.cooldown_minutes * 60
+
+
+def _event_details(
+    db: Session, *, rule_key: str, value: int, threshold: int,
+) -> dict:
+    """AlarmEvent.details_json — kurala özgü okunur özet (best-effort)."""
+    d: dict = {"value": value, "threshold": threshold}
+    if rule_key == "moment_silent":
+        try:
+            from app.services import moments
+            d["summary"] = moments.silent_summary_text(db)
+        except Exception:
+            logger.warning("moment_silent summary fail")
+    return d
 
 
 def evaluate_all(db: Session) -> list[EvaluationResult]:
@@ -348,7 +396,11 @@ def evaluate_all(db: Session) -> list[EvaluationResult]:
             severity=severity,
             channels_attempted=",".join(channels),
             delivery_status="pending",
-            details_json=json.dumps({"value": value, "threshold": rule.threshold}),
+            details_json=json.dumps(
+                _event_details(db, rule_key=rule.key, value=value,
+                               threshold=rule.threshold),
+                ensure_ascii=False,
+            ),
             triggered_at=now,
         )
         db.add(event)

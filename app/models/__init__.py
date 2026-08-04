@@ -334,6 +334,7 @@ from app.models.wrong_question import (
 )
 from app.models.task_template import TaskTemplate, TaskTemplateItem
 from app.models.warning_state import WarningState
+from app.models.moment_event import MomentEvent
 from app.models.panel_behavior import PanelRouteStat, PanelVisitEvent
 from app.models.guide import UserGuideState
 from app.models.owner_contact import OwnerContact
@@ -610,6 +611,7 @@ __all__ = [
     "SUPPORT_ATTACH_MAX_PER_REQUEST",
     "WarningState",
     "PanelRouteStat",
+    "MomentEvent",
     "PanelVisitEvent",
     "UserGuideState",
     "TaskTemplate",

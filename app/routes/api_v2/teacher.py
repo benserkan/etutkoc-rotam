@@ -2473,6 +2473,18 @@ def _build_plan_response(db: Session, user: User):
         except Exception:
             pass
 
+    # Faz C — moment gösterim izi: bu yanıt CreditPackCard sinyalini taşıyor
+    # (frontend render koşuluyla BİREBİR aynı: aktif abone + iyzico/manuel +
+    # kullanım >= %80). record_moment best-effort — yanıtı asla kırmaz.
+    if (
+        is_solo and status == "active"
+        and getattr(user, "subscription_platform", None) != "app_store"
+        and ai_alloc > 0 and ai_used / ai_alloc >= 0.8
+    ):
+        from app.services.moments import record_moment
+        record_moment(db, user_id=user.id, moment_key="credit_low")
+        db.commit()
+
     # Bekleyen abonelik/ödeme talebi (subscription-request idempotency'siyle aynı sorgu)
     has_pending_sub = False
     if is_solo:
@@ -2576,6 +2588,18 @@ def teacher_trial_status_v2(
                 }
         except Exception:  # noqa: BLE001 — sayaç süs, banner asıl iş
             pass
+
+    # Faz C — moment gösterim izi: bu yanıt banner sinyalini taşıyor.
+    # (record_moment kendi içinde best-effort; endpoint'i asla kırmaz.)
+    from app.services.moments import record_moment
+    if payload.get("trial_critical"):
+        record_moment(db, user_id=user.id, moment_key="trial_critical")
+    if payload.get("paywall"):
+        record_moment(db, user_id=user.id, moment_key="paywall")
+    elif payload.get("payment_pending"):
+        record_moment(db, user_id=user.id, moment_key="payment_pending")
+    db.commit()
+
     return TrialStatusResponse(**payload)
 
 

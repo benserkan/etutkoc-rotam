@@ -327,9 +327,35 @@ ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
     kredi alınınca tavan büyür → oran düşer → kart kendiliğinden kaybolur.
     Canlı 5/5 (0 kullanım GİZLİ · %97 GÖRÜNÜR · bitti başlığı). **KURAL:
     bağlamsal teklif/uyarı kartı ancak tetikleyen KOŞUL oluşunca render
-    edilir — "her ihtimale karşı" sayfaya kart yığmak yasak.** Kullanıcı
-    site-geneli "akıllı görünürlük + uyarı doğrulama sistemi" istedi — risk
-    analizi + yol haritası sunuldu (onay bekliyor).
+    edilir — "her ihtimale karşı" sayfaya kart yığmak yasak.**
+  - **FAZ C+D — MOMENT SAĞLIK SİSTEMİ CANLI (2026-08-04, kullanıcı onaylı;
+    migration `j0k3n6p7p00j`):** "beklenen uyarı gösterilmezse süper adminin
+    haberi olsun" (e-posta kesintisi dersinin bağlamsal uyarılara uygulanması).
+    - **`app/services/moments.py` (TEK MERKEZ):** MOMENTS registry — 4 kayıt:
+      trial_critical · paywall · payment_pending (surface=global,
+      /teacher/trial-status her koç sayfasında çekilir) · credit_low
+      (surface=plan_page — kanıt panel_visit_events `teacher.plan` ziyareti;
+      sayfayı hiç açmayana yanlış alarm üretmez). `record_moment` (best-effort,
+      kullanıcı+moment+GÜN tekil `moment_events` tablosu) trial-status + plan
+      uçlarına kancalandı — koşul, frontend render koşuluyla BİREBİR.
+    - **Sessizlik taraması:** `silent_moment_report` — koşulu sağlayan + panel
+      kanıtı olan (48s login / sayfa ziyareti) ama sinyal ALMAYAN kullanıcılar.
+      Alarm motoruna yerleşik kural **`moment_silent`** (lazy-seed, eşik 0,
+      cooldown 12h, kanallar push+in_app+email; details_json'a kullanıcı-bazlı
+      özet). 90 günden eski izler alarm değerlendirmesinde fırsatçı temizlenir
+      (ayrı cron YOK). SCAN_CAP=500 (kırpma log'lanır).
+    - **`scripts/run_moment_checks.py` — TEK KOMUT** (run_gorev_checks deseni):
+      moment_health 16 + faz2_moments 7 + credit_packs 19 + trial_status 6.
+      **KURAL: bağlamsal kart/uyarı mantığına dokunan her değişiklikten sonra
+      koşulur; kırmızıysa deploy yasak. Yeni bağlamsal kart = (1) MOMENTS
+      kaydı + (2) uca record_moment + (3) test_moment_health senaryosu —
+      üçü birden yoksa kart 'ölçüsüz', eklenemez.**
+    - test_moment_health 16/16 (sessiz yakalama → sinyalle temizlenme → günlük
+      dedup → alarm seed/tetik → panel-kanıtsız kullanıcı sayılmaz). Regresyon:
+      lifecycle 22 · paywall 5 · teacher_read 12 · entitlement 13 ·
+      pricing_content 12 · alarms_abuse 21 · tenant 29 GREEN.
+    - Faz B (merkezî moments[] ucu) BİLİNÇLİ yapılmadı — yalnız bundan sonra
+      eklenecek kartlar için düşünülecek (çalışan koşulları taşıma riski).
   - **KONTRAST SİTE-GENELİ DENETİMİ (2026-08-04):** eslint
     `lgs/no-unsafe-contrast` kuralı genişletildi (+`bg-white`+tema-token
     sınıfı) → site genelinde 0 ihlal. Kırık desen taraması (`dark:bg` var +
