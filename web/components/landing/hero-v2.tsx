@@ -82,7 +82,7 @@ export function HeroV2() {
               <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-400 opacity-60" />
               <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
             </span>
-            Rota çalışıyor — yapay zekâ koç asistanın
+            Rota çalışıyor — öğrenci koçunun yapay zekâ asistanı
           </span>
 
           <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.06] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.4rem]">
@@ -100,7 +100,7 @@ export function HeroV2() {
           </h1>
 
           <p className="mt-6 max-w-xl text-lg font-medium leading-relaxed text-slate-700">
-            Rota, yapay zekâ destekli dijital koç asistanıdır.
+            Rota, öğrenci koçlarının yapay zekâ destekli dijital asistanıdır.
           </p>
           <ul className="mt-3 max-w-xl space-y-2 text-[15px] leading-snug text-slate-600">
             <li className="flex items-start gap-2.5">
@@ -219,7 +219,7 @@ function RotaScene() {
         </button>
         <div className="mx-auto -mt-3 w-fit rounded-full border border-cyan-100 bg-white px-3 py-1 text-center shadow-md [transform:rotate(2deg)]">
           <p className="text-xs font-bold text-slate-900">
-            Rota <span className="font-medium text-slate-500">· koç asistanın</span>
+            Rota <span className="font-medium text-slate-500">· dijital asistanın</span>
           </p>
         </div>
       </div>
