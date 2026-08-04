@@ -56,12 +56,6 @@ const GRAIN =
   "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E\")";
 
 export function HeroV2() {
-  const [wi, setWi] = React.useState(0);
-  React.useEffect(() => {
-    const t = setInterval(() => setWi((i) => (i + 1) % ROTATING.length), 2600);
-    return () => clearInterval(t);
-  }, []);
-
   return (
     <section className="relative overflow-hidden bg-[#f7f5f0]">
       {/* Diyagonal cyan blok (Udemy dersi: simetriyi kır) + grain dokusu */}
@@ -87,12 +81,19 @@ export function HeroV2() {
 
           <h1 className="mt-5 font-display text-4xl font-extrabold leading-[1.06] tracking-tight text-slate-900 sm:text-5xl lg:text-[3.4rem]">
             <span className="relative block h-[1.34em] overflow-hidden">
-              {/* key değişince animasyon yeniden başlar — kelime akar */}
-              <span key={wi} className="hv2-word relative text-cyan-700">
-                {ROTATING[wi]}
-                <svg className="absolute left-0 top-[1.02em] w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none" aria-hidden>
-                  <path d="M2 5.5C40 1.5 160 2.5 198 5" stroke="#EBA62E" strokeWidth="3.5" strokeLinecap="round" />
-                </svg>
+              {/* CSS şeridi: kelimeler dikey sütunda yumuşak kayar (hv3-words);
+                  aralarda tamamen sabit — React zamanlayıcı yarışı yok */}
+              <span className="hv3-words block">
+                {[...ROTATING, ROTATING[0]].map((w, i) => (
+                  <span key={i} className="block h-[1.34em]">
+                    <span className="relative inline-block text-cyan-700">
+                      {w}
+                      <svg className="absolute left-0 top-[1.02em] w-full" viewBox="0 0 200 8" fill="none" preserveAspectRatio="none" aria-hidden>
+                        <path d="M2 5.5C40 1.5 160 2.5 198 5" stroke="#EBA62E" strokeWidth="3.5" strokeLinecap="round" />
+                      </svg>
+                    </span>
+                  </span>
+                ))}
               </span>
             </span>
             Rota&apos;ya bırak.
@@ -225,7 +226,7 @@ function RotaScene() {
       </div>
 
       {/* Konuşma balonları — sahneyle senkron, anlamlı tam cümleler */}
-      <div className="absolute left-0 top-0 z-30 w-[200px] sm:left-1 sm:w-[270px]">
+      <div className="absolute right-[150px] top-[22px] z-30 w-44 sm:right-[292px] sm:top-[30px] sm:w-[270px]">
         <Bubble cls="hv3-bub-1">
           Koçum karne yükledi — <b>120 soruyu</b> tek tek okuyorum
           <span className="ml-0.5 inline-flex">
@@ -454,11 +455,15 @@ function TopicRow({
 }
 
 function Bubble({ cls, children }: { cls: string; children: React.ReactNode }) {
+  // Kuyruk balonun SAĞINDA — konuşma Rota'dan (sağdaki portreden) çıkıyor.
   return (
     <div className={`${cls} absolute left-0 top-0 w-full`}>
-      <div className="relative rounded-2xl rounded-tl-sm border border-cyan-100 bg-white px-3.5 py-2.5 text-[13px] font-medium leading-snug text-slate-800 shadow-lg">
+      <div className="relative rounded-2xl rounded-tr-none border border-cyan-100 bg-white px-3.5 py-2.5 text-[13px] font-medium leading-snug text-slate-800 shadow-lg">
         {children}
-        <span className="absolute -left-1.5 top-3 size-3 rotate-45 border-b border-l border-cyan-100 bg-white" aria-hidden />
+        <span
+          className="absolute -right-[9px] top-2 size-0 border-y-[9px] border-l-[10px] border-y-transparent border-l-white drop-shadow-[1px_0_0_rgba(207,250,254,1)]"
+          aria-hidden
+        />
       </div>
     </div>
   );

@@ -366,3 +366,23 @@
   .hv3-karne, .hv3-card2, .hv3-card3, .hv3-card4,
   .hv3-bub-2, .hv3-bub-3, .hv3-bub-4, .hv3-bub-5 { opacity: 0 !important; }
 }
+
+/* Hero v3.2 — dönen kelime ŞERİDİ (kullanıcı: "kesik kesik" düzelt).
+   React interval + remount yerine tek deterministik CSS şeridi: 5 kelime +
+   ilkinin kopyası dikey sütunda; her 2,6 sn'de 0,4 sn'lik yumuşak yukarı
+   kayış, aralarda TAM sabit. */
+@keyframes hv3-words {
+  0%, 16.9% { transform: translateY(0); }
+  20%, 36.9% { transform: translateY(-1.34em); }
+  40%, 56.9% { transform: translateY(-2.68em); }
+  60%, 76.9% { transform: translateY(-4.02em); }
+  80%, 96.9% { transform: translateY(-5.36em); }
+  100% { transform: translateY(-6.7em); }
+}
+.hv3-words {
+  animation: hv3-words 13s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+  will-change: transform;
+}
+@media (prefers-reduced-motion: reduce) {
+  .hv3-words { animation: none !important; transform: none !important; }
+}
