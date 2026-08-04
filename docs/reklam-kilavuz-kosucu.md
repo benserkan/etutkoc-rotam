@@ -353,6 +353,64 @@ değişimi öğrenme evresini sıfırlar.
 **Aynı anda birden fazla değişiklik YAPMA** — kreatif + kitle + bütçe birlikte
 değişirse hangisinin etki ettiği ölçülemez ve üçü de öğrenmeyi sıfırlar.
 
+### 7.6.1 **5 AĞUSTOS (LGS AÇIKLAMA GÜNÜ) — VERİ ANALİZİ + REVİZYON KARARI**
+
+**Veri (Ads Manager dışa aktarım, 1 Tem–5 Ağu, reklam düzeyi):**
+
+| Metrik | Video (v4) | Carousel (YKS kartları) |
+|---|---|---|
+| Sonuç (mesaj konuşması) | 4 | 3 |
+| Harcama | 1.235,13 TL | 1.782,38 TL |
+| **CPA** | **308,78 TL** | **594,13 TL** |
+| Erişim / Gösterim | 4.543 / 7.914 | 6.000 / 13.868 |
+| Sıklık | 1,74 | **2,31** |
+| CPM | 156,07 TL | 128,52 TL |
+| CTR (bağlantı) | %0,66 | %0,71 |
+| CTR (tümü) | %0,99 | **%1,38** |
+| Kalite sıralaması | Ortalama | Alt %35 |
+| Etkileşim sıralaması | Alt %35 | **Üstü** |
+| Dönüşüm sıralaması | Alt %35 | Ortalama |
+
+**Okuma:**
+1. **Karar ağacının "İKİSİ DE KÖTÜ" dalı gerçekleşti** (CPA 309 ve 594; ikisi de
+   200 üstü) → sorun kreatif değil, **KİTLE** (7.6'nın öngörüsü doğrulandı:
+   14-17 bin'lik havuz + 129-156 TL CPM). Kampanya A'nın geniş kitlesi (~170 bin)
+   CPA 159 üretmişti.
+2. **Carousel etkileşim tuzağına düştü:** Meta bütçenin %59'unu carousel'e
+   akıttı (etkileşim sıralaması "üstü", CTR-tümü 1,38) ama tıklayanlar veli
+   değil — konuşma başına 594 TL. YKS başarı kartları ÖĞRENCİ beğenisi
+   topluyor, 35-55 veli kitlesinden WhatsApp konuşması üretmiyor. Ayrıca
+   kalite sıralaması alt %35 (Meta cezalandırıyor) ve sıklık 2,31'e dayandı.
+3. Video zayıf ama konuşma üretmeye devam eden tek kreatif (dar kitleye rağmen).
+
+**KARAR (LGS günü revizyonu — tek oturumda üç düzenleme, tek öğrenme
+sıfırlaması; bu bir A/B adımı değil, pazar-anı etrafında FAZ SIFIRLAMASI):**
+1. **Carousel reklamı DURAKLAT** — 594 TL CPA + bütçe emişi + LGS gündeminde
+   YKS mesajı yanlış an. (Organik gönderi profilde sabit kalır.)
+2. **Kitleyi genişlet:** "Ergenlik Çağında Çocuğu Olan Anne Babalar (13-17)"
+   kutusu TAMAMEN kaldırılır → Trabzon ili + 35-55 + Türkçe (~100 bin+).
+3. **Ana metnin kancası LGS-anına çevrilir** (aynı düzenleme oturumunda —
+   ek sıfırlama maliyeti yok). Hazır metin 7.6.2'de.
+4. **Bütçe 200 TL/gün KALIR.** Kontrol: 8 Ağu (Cuma) sabah — CPA ≤ 200 TL'ye
+   düştüyse 300'e çık; düşmediyse kreatif yenileme konuşulur.
+5. **Operasyon (en kritik):** LGS günü mesaja DAKİKALAR içinde dönül; hayalet
+   filtresi için ilk yanıta eleme sorusu: "Öğrenciniz eylülde kaçıncı sınıfa
+   geçiyor? Ücretsiz tanışma için hangi gün uygun?"
+
+### 7.6.2 LGS-anı reklam metni (hazır)
+
+**Birincil metin (ilk 125 karakter kanca):**
+"LGS sonuçları açıklandı. Tebrikler! Peki eylülde 8. sınıfa geçecek çocuğunuz
+için plan hazır mı? Trabzon'da birebir eğitim koçluğu: haftalık program, deneme
+analizi ve veli bilgilendirmesi tek sistemde. Kontenjan sınırlı — ücretsiz
+tanışma görüşmesi için yazın."
+
+**Hazır sorular (video reklamı — kaynak ayrımı korunur):** mevcutlar kalır.
+
+**Organik (ücretsiz, bugün):** story — "LGS sonuçları açıklandı 🎉 Tüm
+öğrencilerimizi tebrik ederiz. 2027 LGS kadromuz için ön kayıt başladı" +
+WhatsApp çıkartması.
+
 ### 7.7 Açık işler
 
 - **KVKK:** altı öğrenciden "sonucunu ve yorumunu ÜCRETLİ REKLAMDA kullanabilir
