@@ -28,6 +28,7 @@ import {
   FileText,
   Play,
   Sparkles,
+  X,
 } from "lucide-react";
 
 import { Reveal } from "@/components/landing/reveal";
@@ -39,6 +40,7 @@ const ROTATING = [
   "Veli iletişimini",
   "Yanlış takibini",
   "Program raporunu",
+  "Randevu telaşını",
 ];
 
 const SEGMENTS: { label: string; href: string }[] = [
@@ -160,23 +162,44 @@ export function HeroV2() {
   );
 }
 
-/** Karne → Rota → gerçek analiz kartları. Zamanlama globals.css hv2-*. */
+/** Karne → Rota → analiz kartları. Zamanlama globals.css hv2-*.
+ *
+ * v3 (kullanıcı geri bildirimi): ham ekran kırpımları küçükte okunmuyordu ve
+ * karmaşıktı → kartlar TASARLANMIŞ vinyetler oldu (Photoshop-tasarımcı
+ * yaklaşımı): büyük punto, 2-3 bilgi, renkli durum çubukları. İçerikteki HER
+ * DEĞER gerçek üründen (Elif'in gerçek karne importu: 120 soru, net 11,33,
+ * Üslü İfadeler zayıflığı; Rota veli yorumunun gerçek cümle kalıbı). Portre
+ * büyüdü + köşesinde ▶ rozeti (tanıtım videosunu modalda açar). */
 function RotaScene() {
+  const [videoOpen, setVideoOpen] = React.useState(false);
   return (
-    <div className="relative mx-auto h-[460px] w-full max-w-[560px] select-none sm:h-[500px]">
-      {/* Rota portresi — dijital insanımız; sahnenin sabit merkezi (sağ üst) */}
-      <div className="absolute right-0 top-0 z-20 w-[190px] sm:w-[215px]">
-        <div className="hv2-ring overflow-hidden rounded-3xl border-4 border-white shadow-2xl shadow-cyan-950/30 [transform:rotate(2deg)]">
-          <Image
-            src="/static/landing/rota-portre.jpg"
-            alt="Rota — Rotam'ın yapay zekâ koç asistanı"
-            width={430}
-            height={430}
-            className="block h-auto w-full"
-            priority
-            unoptimized
-          />
-        </div>
+    <div className="relative mx-auto h-[500px] w-full max-w-[560px] select-none sm:h-[540px]">
+      {/* Rota portresi — sahnenin yıldızı (büyütüldü) + oynat rozeti */}
+      <div className="absolute right-0 top-0 z-20 w-[225px] sm:w-[270px]">
+        <button
+          type="button"
+          onClick={() => setVideoOpen(true)}
+          className="group relative block w-full cursor-pointer"
+          aria-label="Rota'nın 2 dakikalık tanıtımını izle"
+        >
+          <span className="hv2-ring block overflow-hidden rounded-3xl border-4 border-white shadow-2xl shadow-cyan-950/30 [transform:rotate(2deg)]">
+            <Image
+              src="/static/landing/rota-portre.jpg"
+              alt="Rota — Rotam'ın yapay zekâ koç asistanı"
+              width={540}
+              height={540}
+              className="block h-auto w-full transition group-hover:scale-[1.03]"
+              priority
+              unoptimized
+            />
+          </span>
+          <span className="absolute -bottom-2 -right-2 flex items-center gap-1.5 rounded-full bg-amber-400 py-1.5 pl-2 pr-3 shadow-lg ring-4 ring-white transition group-hover:scale-105 [transform:rotate(2deg)]">
+            <span className="flex size-6 items-center justify-center rounded-full bg-amber-950/90 text-white">
+              <Play className="ml-0.5 size-3 fill-current" aria-hidden />
+            </span>
+            <span className="text-xs font-bold text-amber-950">2 dk izle</span>
+          </span>
+        </button>
         <div className="mx-auto -mt-3 w-fit rounded-full border border-cyan-100 bg-white px-3 py-1 text-center shadow-md [transform:rotate(2deg)]">
           <p className="text-xs font-bold text-slate-900">
             Rota <span className="font-medium text-slate-500">· koç asistanın</span>
@@ -184,94 +207,178 @@ function RotaScene() {
         </div>
       </div>
 
-      {/* Konuşma balonları — Rota'nın GERÇEK ürün cümleleri (uydurma yok) */}
-      <div className="absolute right-[128px] top-[6px] z-30 w-40 sm:right-[178px] sm:w-56">
+      {/* Konuşma balonları — sahneyle senkron, anlamlı tam cümleler */}
+      <div className="absolute left-0 top-0 z-30 w-[200px] sm:left-2 sm:w-64">
         <Bubble cls="hv2-bubble-1">
-          Karne geldi — okuyorum
-          <span className="ml-1 inline-flex">
+          Koçum karne yükledi — <b>120 soruyu</b> tek tek okuyorum
+          <span className="ml-0.5 inline-flex">
             <span className="hv2-dot">.</span><span className="hv2-dot">.</span><span className="hv2-dot">.</span>
           </span>
         </Bubble>
-        <Bubble cls="hv2-bubble-2">120 soruyu konularına ayırdım — net 11,33.</Bubble>
-        <Bubble cls="hv2-bubble-3">Veline sesli anlattım bile.</Bubble>
+        <Bubble cls="hv2-bubble-2">
+          Bitti: her soruyu <b>konusuyla eşledim</b>. Üslü İfadeler&apos;de 3 yanlış
+          var — programa tekrar ekledim.
+        </Bubble>
+        <Bubble cls="hv2-bubble-3">
+          Veliye de <b>sesli anlattım</b>: &quot;Elif iyi gidiyor, matematikte küçük
+          bir eksik kaldı.&quot;
+        </Bubble>
       </div>
 
       {/* Faz A — karne dosyası Rota'ya süzülür */}
-      <div className="hv2-scene-karne absolute left-2 top-[120px] z-10 w-60 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl">
+      <div className="hv2-scene-karne absolute left-2 top-[195px] z-10 w-64 rounded-xl border border-slate-200 bg-white p-3.5 shadow-xl">
         <div className="flex items-center gap-2.5">
-          <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
-            <FileText className="size-4.5" aria-hidden />
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-rose-50 text-rose-500">
+            <FileText className="size-5" aria-hidden />
           </span>
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-slate-900">karekok-lgs-deneme-3.pdf</p>
-            <p className="text-[11px] text-slate-500">Koç yükledi · deneme sonuç karnesi</p>
+            <p className="text-[11px] text-slate-500">Koç yükledi · deneme karnesi</p>
           </div>
         </div>
+        <div className="mt-2.5 h-1.5 overflow-hidden rounded-full bg-slate-100">
+          <div className="h-full w-2/3 rounded-full bg-cyan-600" />
+        </div>
+        <p className="mt-1 text-right text-[10px] font-medium text-cyan-700">Rota okuyor…</p>
       </div>
 
-      {/* Faz B — GERÇEK karne analizi ekranı (kırpılmış odak) */}
-      <div className="hv2-scene-crop1 absolute bottom-8 left-0 z-10 w-[370px] max-w-[88%] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-        <MiniChrome label="Deneme analizi · önizleme" />
-        <Image
-          src="/static/pricing-shots/aktar-onizleme.png"
-          alt="Rotam karne okuma — soru soru konu eşleşmesi (gerçek ekran)"
-          width={896}
-          height={505}
-          className="block h-auto w-full"
-          unoptimized
-        />
-        <div className="flex items-center justify-between bg-cyan-700 px-3 py-1.5 text-[11px] font-semibold text-white">
-          <span>20 soru · konularıyla eşleşti</span>
-          <span className="rounded bg-white/20 px-1.5 py-0.5">40 sn</span>
+      {/* Faz B — TASARLANMIŞ analiz vinyeti (gerçek verilerle, büyük punto) */}
+      <div className="hv2-scene-crop1 absolute bottom-10 left-0 z-10 w-[330px] max-w-[92%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[360px]">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+          <span className="text-xs font-bold text-slate-700">Deneme analizi hazır</span>
+          <span className="rounded-full bg-cyan-100 px-2 py-0.5 text-[10px] font-bold text-cyan-800">40 saniye</span>
+        </div>
+        <div className="p-4">
+          <div className="flex items-baseline justify-between">
+            <p className="text-sm font-semibold text-slate-900">Karekök LGS-3</p>
+            <p className="font-display text-2xl font-extrabold text-slate-900">
+              11,33 <span className="text-xs font-semibold text-slate-500">net</span>
+            </p>
+          </div>
+          <div className="mt-3 space-y-2">
+            <TopicRow name="Çarpanlar ve Katlar" pct={100} tone="emerald" note="tam" />
+            <TopicRow name="Kareköklü İfadeler" pct={66} tone="amber" note="1 boş" />
+            <TopicRow name="Üslü İfadeler" pct={25} tone="rose" note="3 yanlış" />
+          </div>
+          <p className="mt-3 rounded-lg bg-cyan-50 px-3 py-2 text-[12px] font-medium leading-snug text-cyan-900">
+            <Sparkles className="mr-1 inline size-3.5 text-amber-500" aria-hidden />
+            Üslü İfadeler haftalık programa <b>tekrar olarak eklendi</b>.
+          </p>
         </div>
       </div>
 
-      {/* Faz C — GERÇEK veli sesli yorum ekranı */}
-      <div className="hv2-scene-crop2 absolute bottom-8 left-6 z-10 w-[370px] max-w-[88%] overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-        <MiniChrome label="Veli uygulaması · Rota anlatıyor" />
-        <Image
-          src="/static/pricing-shots/veli-rota-dinle.png"
-          alt="Rota veli asistanı — durumu sesli anlatır (gerçek ekran)"
-          width={836}
-          height={418}
-          className="block h-auto w-full"
-          unoptimized
-        />
-        <div className="flex items-center justify-between bg-amber-500 px-3 py-1.5 text-[11px] font-semibold text-amber-950">
-          <span>Veliye sesli özet hazır</span>
-          <span className="inline-flex items-center gap-1">
-            <Play className="size-3 fill-current" aria-hidden /> Dinle
-          </span>
+      {/* Faz C — TASARLANMIŞ veli vinyeti (sesli anlatım oynatıcısı) */}
+      <div className="hv2-scene-crop2 absolute bottom-10 left-4 z-10 w-[330px] max-w-[92%] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl sm:w-[360px]">
+        <div className="flex items-center justify-between border-b border-slate-100 bg-slate-50 px-4 py-2">
+          <span className="text-xs font-bold text-slate-700">Veli uygulaması</span>
+          <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-bold text-emerald-800">az önce</span>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/static/landing/rota-portre.jpg"
+              alt=""
+              width={44}
+              height={44}
+              className="size-11 shrink-0 rounded-full border-2 border-cyan-200 object-cover"
+              unoptimized
+            />
+            <div className="min-w-0">
+              <p className="text-sm font-bold text-slate-900">Rota&apos;nın sesli yorumu</p>
+              <p className="text-[11px] text-slate-500">Elif&apos;in bu haftası · 1 dk 42 sn</p>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-2.5 rounded-xl bg-cyan-700 px-3.5 py-2.5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-white text-cyan-800">
+              <Play className="ml-0.5 size-3.5 fill-current" aria-hidden />
+            </span>
+            <span className="flex h-6 flex-1 items-center gap-[3px]" aria-hidden>
+              {[9, 14, 8, 18, 12, 20, 10, 16, 7, 13, 17, 9, 15, 11, 19, 8, 12, 6].map((h, i) => (
+                <span key={i} className="w-[3px] rounded-full bg-cyan-200/80" style={{ height: `${h}px` }} />
+              ))}
+            </span>
+            <span className="text-[11px] font-bold text-cyan-100">0:00</span>
+          </div>
+          <p className="mt-3 text-[12px] leading-snug text-slate-600">
+            &quot;Elif bu hafta 13 görevden 10&apos;unu bitirdi. Matematikte Üslü
+            İfadeler&apos;i birlikte tekrar edeceğiz…&quot;
+          </p>
         </div>
       </div>
 
-      {/* Dürüstlük imzası — "insan eli değmiş" hissinin en ucuz kanıtı */}
+      {/* Dürüstlük imzası — değerler gerçek üründen */}
       <p className="absolute -bottom-4 left-0 z-10 inline-flex items-center gap-1.5 text-[11px] font-medium text-cyan-100/90 lg:-bottom-1 lg:text-slate-400">
         <ArrowRight className="size-3 -rotate-45" aria-hidden />
-        Gerçek panel görüntüleri — temsili tasarım değil
+        Sahnedeki tüm sayılar gerçek üründen — tamamı için tanıtımı izle
       </p>
+
+      {/* ▶ rozeti → tanıtım videosu modalı */}
+      {videoOpen ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm"
+          onClick={() => setVideoOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Rotam tanıtım videosu"
+        >
+          <div
+            className="relative w-full max-w-3xl overflow-hidden rounded-2xl bg-black shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              type="button"
+              onClick={() => setVideoOpen(false)}
+              className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80"
+              aria-label="Videoyu kapat"
+            >
+              <X className="size-5" aria-hidden />
+            </button>
+            <video
+              src="/static/video/rotam-tanitim.mp4"
+              controls
+              autoPlay
+              playsInline
+              className="block aspect-video w-full"
+            />
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** Analiz vinyetindeki konu satırı — büyük punto, renkli durum çubuğu. */
+function TopicRow({
+  name, pct, tone, note,
+}: {
+  name: string; pct: number; tone: "emerald" | "amber" | "rose"; note: string;
+}) {
+  const bar = tone === "emerald" ? "bg-emerald-500" : tone === "amber" ? "bg-amber-400" : "bg-rose-500";
+  const chip = tone === "emerald"
+    ? "bg-emerald-50 text-emerald-700"
+    : tone === "amber"
+      ? "bg-amber-50 text-amber-700"
+      : "bg-rose-50 text-rose-700";
+  return (
+    <div>
+      <div className="flex items-center justify-between">
+        <p className="text-[13px] font-semibold text-slate-800">{name}</p>
+        <span className={`rounded px-1.5 py-0.5 text-[10px] font-bold ${chip}`}>{note}</span>
+      </div>
+      <div className="mt-1 h-2 overflow-hidden rounded-full bg-slate-100">
+        <div className={`h-full rounded-full ${bar}`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }
 
 function Bubble({ cls, children }: { cls: string; children: React.ReactNode }) {
   return (
-    <div className={`${cls} absolute right-0 top-0 w-full`}>
-      <div className="relative rounded-2xl rounded-tr-sm border border-cyan-100 bg-white px-3.5 py-2.5 text-[13px] font-medium leading-snug text-slate-800 shadow-lg">
+    <div className={`${cls} absolute left-0 top-0 w-full`}>
+      <div className="relative rounded-2xl rounded-tl-sm border border-cyan-100 bg-white px-3.5 py-2.5 text-[13px] font-medium leading-snug text-slate-800 shadow-lg">
         {children}
-        <span className="absolute -right-1.5 top-3 size-3 rotate-45 border-r border-t border-cyan-100 bg-white" aria-hidden />
+        <span className="absolute -left-1.5 top-3 size-3 rotate-45 border-b border-l border-cyan-100 bg-white" aria-hidden />
       </div>
-    </div>
-  );
-}
-
-function MiniChrome({ label }: { label: string }) {
-  return (
-    <div className="flex items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-3 py-1.5">
-      <span className="size-2 rounded-full bg-rose-400" />
-      <span className="size-2 rounded-full bg-amber-400" />
-      <span className="size-2 rounded-full bg-emerald-400" />
-      <span className="ml-1.5 text-[10px] font-medium text-slate-500">{label}</span>
     </div>
   );
 }
