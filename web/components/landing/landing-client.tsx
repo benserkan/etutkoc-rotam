@@ -67,7 +67,9 @@ const NAV = [
 // Kurumsal demo/teklif → /pricing kurumsal formu (zengin: koç sayısı + fayda).
 const DEMO_MAIL = "/pricing?type=kurum#kurumsal";
 
-export function LandingClient({ heroVariant = "v1" }: { heroVariant?: "v1" | "v2" } = {}) {
+// heroVariant: "v2" = Rota is basinda sahnesi (2026-08-05 kullanici onayiyla VARSAYILAN);
+// "v1" eski gradyan hero — hizli geri donus icin korunuyor.
+export function LandingClient({ heroVariant = "v2" }: { heroVariant?: "v1" | "v2" } = {}) {
   const q = useQuery<LandingResponse>({
     queryKey: landingKeys.cards(5, "teacher"),
     queryFn: () => getLandingCards(5, "teacher"),

@@ -580,6 +580,26 @@ karşılayan modalda oynasın, modal kapanınca hero'nun HEMEN ALTINDA kalıcı 
   kutuda min-w-0 zinciri şart.
 - **SIRADA (kullanıcı):** reklam kısaları için "farklı bir fikir" bekleniyor (dikey
   Reels varyantı hazır üretilebilir: aynı avatar + üstte panel düzeni).
+- **HERO v2 "ROTA İŞ BAŞINDA" — ANASAYFADA CANLI (2026-08-05, kullanıcı onaylı,
+  commit zinciri `b8c470a`→sonrası):** eski gradyan+mock hero "AI şablonu
+  kokuyor" eleştirisiyle yeniden tasarlandı (rakip taraması: Photomath/Doping/
+  Kopilot/Udemy/Duolingo desenleri → özgün sentez). `hero-v2.tsx`:
+  (a) CSS ŞERİT başlık — 5 dönen kelime ("Karne okumayı/Veli iletişimini/
+  Yanlış takibini/Program raporunu/Randevu telaşını") + "Rota'ya bırak. Sen
+  koçluğa odaklan."; şerit deterministik CSS (hv3-words, React interval YOK —
+  kesik his düzeltmesi); (b) Rota'nın GERÇEK portresi (HeyGen,
+  /static/landing/rota-portre.jpg, 305px) + "2 dk izle" rozeti → tanıtım
+  videosu modal; konuşma balonu kuyruk portreye bakar; (c) 16 sn'lik 5 PERDE
+  sahne (hv3-*): karne→analiz vinyeti→veli sesli vinyeti→hata defteri
+  vinyeti→program+öneri vinyeti — hepsi TASARLANMIŞ vinyet (ham ekran
+  kırpımı DEĞİL; kullanıcı "küçükte okunmuyor" dedi), değerler gerçek üründen
+  (120 soru · net 11,33 · Üslü İfadeler); (d) açıklama = kullanıcı metni:
+  "Rota, öğrenci koçlarının yapay zekâ destekli dijital asistanıdır" + 4
+  ikonlu yetkinlik maddesi; (e) segment çipleri + diyagonal grain'li cyan
+  blok. LandingClient `heroVariant` prop (varsayılan v2; v1 hızlı geri dönüş
+  için duruyor). /hero-onizleme önizleme rotası yayına alınırken KALDIRILDI
+  (proxy+Caddy dahil). **KURAL: hero'da ham panel ekranı küçük boyutta
+  kullanılmaz — tasarlanmış vinyet + gerçek değerler.**
 
 ---
 
