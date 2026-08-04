@@ -539,6 +539,18 @@ def _send_email_to_super_admins(
 # ---------------------------- Listing + ack ----------------------------
 
 
+def _details_summary(details_json: str | None) -> str | None:
+    """AlarmEvent.details_json icindeki 'summary' alani (varsa)."""
+    if not details_json:
+        return None
+    try:
+        d = json.loads(details_json)
+        v = d.get("summary")
+        return str(v) if v else None
+    except Exception:
+        return None
+
+
 def list_recent_events(
     db: Session, *, hours: int = 72, only_unacknowledged: bool = False, limit: int = 50
 ) -> list[dict]:
@@ -562,6 +574,8 @@ def list_recent_events(
             "triggered_at": tr,
             "acknowledged_at": _aware(r.acknowledged_at),
             "age_seconds": int((now - tr).total_seconds()),
+            # Kurala ozgu okunur ozet (moment_silent: hangi uyari kimde sessiz)
+            "summary": _details_summary(r.details_json),
         })
     return out
 

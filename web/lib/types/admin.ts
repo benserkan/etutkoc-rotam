@@ -2954,6 +2954,7 @@ export interface AlarmEventItem {
   triggered_at: string | null;
   acknowledged_at: string | null;
   age_seconds: number;
+  summary?: string | null; // kurala özgü okunur detay
 }
 
 export interface AlarmsResponse {

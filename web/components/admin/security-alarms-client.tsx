@@ -120,7 +120,13 @@ export function SecurityAlarmsClient({ initial }: Props) {
                 {d.events.map((e) => (
                   <tr key={e.id} className={cn("hover:bg-muted/40", !e.acknowledged_at && "bg-amber-50/30")}>
                     <td className="px-3 py-1.5"><span className={cn("rounded px-2 py-0.5 text-[11px]", sevTone(e.severity))}>{e.severity}</span></td>
-                    <td className="px-3 py-1.5"><div>{e.rule_name}</div><code className="text-[10px] text-muted-foreground">{e.rule_key}</code></td>
+                    <td className="px-3 py-1.5">
+                      <div>{e.rule_name}</div>
+                      <code className="text-[10px] text-muted-foreground">{e.rule_key}</code>
+                      {e.summary ? (
+                        <p className="mt-0.5 max-w-md text-[11px] leading-4 text-amber-800 dark:text-amber-300">{e.summary}</p>
+                      ) : null}
+                    </td>
                     <td className="px-3 py-1.5 text-right"><span className="font-semibold">{e.value}</span> <span className="text-[11px] text-muted-foreground">/ {e.threshold}</span></td>
                     <td className="px-3 py-1.5 text-[11px] text-muted-foreground">{fmtDateTime(e.triggered_at)}</td>
                     <td className="px-3 py-1.5 text-[11px] text-muted-foreground">{e.delivery_status ?? "—"}</td>

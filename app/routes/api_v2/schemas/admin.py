@@ -3213,6 +3213,7 @@ class AlarmEventItem(BaseModel):
     triggered_at: datetime | None = None
     acknowledged_at: datetime | None = None
     age_seconds: int
+    summary: str | None = None  # kurala özgü okunur detay (örn. moment kırılımı)
 
 
 class AlarmsResponse(BaseModel):
