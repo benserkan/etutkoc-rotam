@@ -155,6 +155,7 @@ from app.routes.api_v2.schemas.teacher import (
     ParsePhotoBody,
     ParseVoiceBody,
     SessionDraftResponse,
+    SubscriptionCancelBody,
     SubscriptionRequestBody,
     SubscriptionRequestResult,
     TranscribeResponse,
@@ -2677,13 +2678,29 @@ def teacher_subscription_request_v2(
     )
 
 
+# İptal-anı neden anketi (Faz 3B) — reason_code → okunur etiket.
+_CANCEL_REASON_LABELS = {
+    "price": "Fiyat yüksek geldi",
+    "usage": "Yeterince kullanmadım",
+    "missing_feature": "İhtiyacım olan bir özellik yok",
+    "season_break": "Dönem/sezon bitti (ara veriyorum)",
+    "student_drop": "Öğrenci sayım azaldı",
+    "other": "Başka bir neden",
+}
+
+
 @router.post("/subscription/cancel", response_model=MutationResponse[SubscriptionRequestResult])
 def teacher_subscription_cancel_v2(
+    body: SubscriptionCancelBody | None = None,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
     """Aktif aboneliği iptal et (yenilenmez). Dönem sonuna kadar erişim sürer,
-    sonra ücretsize düşer. Ödeme gerektirmez → self-serve."""
+    sonra ücretsize düşer. Ödeme gerektirmez → self-serve.
+
+    Faz 3B: gövde opsiyonel neden anketi taşır → İletişim Talepleri'ne
+    "İptal bildirimi (koç)" olarak düşer + satışa e-posta (kurtarma fırsatı).
+    Anket best-effort — kaydı BLOKLAMAZ (iptal her koşulda işlenir)."""
     if user.institution_id is not None:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -2705,6 +2722,51 @@ def teacher_subscription_cancel_v2(
                     "message": "İptal edilecek aktif abonelik yok."},
         )
     user.subscription_status = "canceled"
+
+    # Faz 3B — neden anketi (best-effort; iptalin kendisini asla bloklamaz)
+    try:
+        reason_code = (body.reason_code if body else None) or None
+        note = ((body.note if body else None) or "").strip()
+        if reason_code or note:
+            from app.models.contact_request import ContactRequest
+            from app.services import pricing
+            from app.services.plans import PLAN_CATALOG
+
+            reason_label = _CANCEL_REASON_LABELS.get(
+                reason_code or "", reason_code or "—",
+            )
+            pti = PLAN_CATALOG.get(user.plan or "")
+            plan_label = pti.label if pti else (user.plan or "—")
+            msg = (
+                f"Abonelik iptali · paket={plan_label} · neden={reason_label}"
+                + (f" · not={note}" if note else "")
+                + f" · koç_id={user.id}"
+            )
+            db.add(ContactRequest(
+                name=user.full_name or user.email,
+                email=user.email,
+                source="cancel_feedback",
+                message=msg[:2000],
+            ))
+            try:
+                from app.services.email_service import send_email
+                catalog = pricing.get_pricing_catalog()
+                to = (catalog.get("contact") or {}).get("sales_email") or ""
+                if "<" in to and ">" in to:
+                    to = to.split("<", 1)[1].rstrip(">").strip()
+                if to:
+                    send_email(to=to, template="contact_request_admin", ctx={
+                        "name": user.full_name or user.email,
+                        "email": user.email, "phone": "",
+                        "institution_name": "", "coach_count": "",
+                        "source_label": "İptal bildirimi (koç)",
+                        "message": msg,
+                    })
+            except Exception:
+                logger.exception("İptal bildirimi satış maili gönderilemedi")
+    except Exception:
+        logger.exception("İptal anketi kaydedilemedi (iptal yine işlendi)")
+
     db.commit()
     return MutationResponse[SubscriptionRequestResult](
         data=SubscriptionRequestResult(

@@ -4,6 +4,7 @@
  * Endpoint sözleşmesi:
  *   GET  /api/v2/payment/provider-status        → PaymentProviderStatus
  *   POST /api/v2/payment/init                   → PaymentInitResponse (koç self-serve)
+ *   POST /api/v2/payment/credit-pack/init       → PaymentInitResponse (kredi ek paketi)
  *   GET  /api/v2/payment/transactions/{tx_id}   → PaymentResult
  *   GET  /api/v2/payment/history                → PaymentHistoryResponse
  *

@@ -26,7 +26,7 @@ import {
   getPaymentProviderStatus,
   paymentKeys,
 } from "@/lib/api/payment";
-import { useInitPaymentCheckout } from "@/lib/hooks/use-payment-mutations";
+import { useInitCreditPackCheckout, useInitPaymentCheckout } from "@/lib/hooks/use-payment-mutations";
 import { getPricingCatalog, pricingKeys } from "@/lib/api/pricing";
 import { CreditCostsTable, PlanFaq, PlanMatrix } from "@/components/pricing/plan-extras";
 import { FeatureLine, buildGlossaryMap } from "@/components/pricing/feature-info";
@@ -140,8 +140,16 @@ export function TeacherPlanClient({
         />
       ) : null}
 
+      {/* Kredi ek paketi (Faz 3) — yalnız aktif iyzico/manuel aboneler.
+          Satın alınan kredi devreder (ay sonunda yanmaz); paket yükseltme
+          çoğu zaman daha avantajlı — kart bunu açıkça söyler. */}
+      {data.is_solo && data.status === "active" &&
+        data.subscription_platform !== "app_store" ? (
+        <CreditPackCard />
+      ) : null}
+
       {data.status === "managed" || !data.is_solo ? (
-        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30">
+        <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-300">
           {data.note ?? "Paketin kurumun tarafından yönetilir."}
         </div>
       ) : data.status === "active" ? (
@@ -214,7 +222,11 @@ function AiCreditMeter({
 
   const barColor = exhausted ? "bg-rose-500" : low ? "bg-amber-500" : "bg-emerald-500";
   const ringColor = exhausted ? "border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30" : low ? "border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30" : "border-emerald-200 bg-emerald-50 dark:bg-emerald-500/10 dark:border-emerald-500/30";
-  const textColor = exhausted ? "text-rose-900" : low ? "text-amber-900" : "text-emerald-900";
+  const textColor = exhausted
+    ? "text-rose-900 dark:text-rose-200"
+    : low
+      ? "text-amber-900 dark:text-amber-200"
+      : "text-emerald-900 dark:text-emerald-200";
 
   // Deneme kredisi vs. paket kredisi karşılaştırması
   const hasIntendedPlan = trialActive && postTrialPlanLabel && postTrialPlanCredits && postTrialPlanCredits > 0;
@@ -232,17 +244,17 @@ function AiCreditMeter({
           <span className="ml-2 font-semibold">({remaining.toLocaleString("tr-TR")} kaldı)</span>
         </p>
       </div>
-      <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/70">
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/70 dark:bg-white/15">
         <div className={cn("h-full transition-all", barColor)} style={{ width: `${pct}%` }} />
       </div>
 
       {/* Deneme açıklaması — kullanıcı 50'nin "denemeye özel" tavan olduğunu görsün */}
       {hasIntendedPlan ? (
-        <div className="mt-2 rounded-md border border-current/20 bg-white/50 px-3 py-2 text-xs">
+        <div className="mt-2 rounded-md border border-current/20 bg-white/50 px-3 py-2 text-xs dark:bg-white/10">
           <p>
             <strong>{allocated} kredi yalnız deneme süresine özeldir.</strong>{" "}
-            <strong className="text-cyan-800">{postTrialPlanLabel}</strong> paketine geçtiğinde
-            aylık <strong className="text-cyan-800">{(postTrialPlanCredits ?? 0).toLocaleString("tr-TR")} kredi</strong>{" "}
+            <strong className="text-cyan-800 dark:text-cyan-300">{postTrialPlanLabel}</strong> paketine geçtiğinde
+            aylık <strong className="text-cyan-800 dark:text-cyan-300">{(postTrialPlanCredits ?? 0).toLocaleString("tr-TR")} kredi</strong>{" "}
             ({multiplier > 1 ? `~${multiplier}× daha fazla` : "yenilenen kredi"}) tanımlanır ve ay başında otomatik yenilenir.
           </p>
         </div>
@@ -253,7 +265,7 @@ function AiCreditMeter({
           <strong>Krediniz bitti.</strong>
           {trialActive && postTrialPlanLabel
             ? ` Deneme süreniz devam etse de yapay zekâ için ${postTrialPlanLabel} paketine geçmeniz gerekir.`
-            : " Ay başında otomatik yenilenir veya paketinizi yükseltebilirsiniz."}
+            : " Ay başında otomatik yenilenir; paketini yükseltebilir veya aşağıdan ek kredi alabilirsin."}
         </p>
       ) : low ? (
         <p className="mt-2 text-xs">
@@ -266,25 +278,105 @@ function AiCreditMeter({
   );
 }
 
+/**
+ * Kredi ek paketi kartı (Faz 3) — kredisi azalan/tükenen aktif abone için
+ * tek seferlik iyzico satın alması. Satın alınan kredi devreder (ay sonunda
+ * yanmaz). Dürüstlük: birim fiyat paket biriminden yüksek — kart, kalıcı
+ * ihtiyaçta yükseltmenin daha avantajlı olduğunu söyler.
+ */
+function CreditPackCard() {
+  const providerQ = useQuery({
+    queryKey: paymentKeys.providerStatus(),
+    queryFn: getPaymentProviderStatus,
+    staleTime: 5 * 60_000,
+  });
+  const pricingQ = useQuery({
+    queryKey: pricingKeys.catalog(),
+    queryFn: getPricingCatalog,
+    staleTime: 5 * 60_000,
+  });
+  const buyMut = useInitCreditPackCheckout();
+  const [buying, setBuying] = React.useState<string | null>(null);
+
+  const packs = pricingQ.data?.credit_packs ?? [];
+  if (providerQ.data?.available !== true || packs.length === 0) return null;
+
+  function buy(code: string) {
+    setBuying(code);
+    buyMut.mutate(
+      { pack_code: code },
+      {
+        onSuccess: (res) => { window.location.href = res.payment_page_url; },
+        onError: () => setBuying(null),
+      },
+    );
+  }
+
+  return (
+    <Card>
+      <CardContent className="space-y-3 p-4">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <p className="flex items-center gap-2 text-sm font-semibold">
+            <Sparkles className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
+            Kredin ay bitmeden tükendi mi? Ek kredi al
+          </p>
+          <p className="text-[11px] text-muted-foreground">
+            Tek seferlik · kullanılana kadar geçerli — ay sonunda yanmaz
+          </p>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-3">
+          {packs.map((p) => (
+            <button
+              key={p.code}
+              type="button"
+              onClick={() => buy(p.code)}
+              disabled={buyMut.isPending}
+              className="group rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left transition hover:border-cyan-400 hover:shadow-sm disabled:opacity-60 dark:border-slate-700 dark:bg-slate-900 dark:hover:border-cyan-500"
+            >
+              <p className="font-display text-lg font-extrabold text-slate-900 dark:text-slate-100">
+                +{p.credits.toLocaleString("tr-TR")} <span className="text-xs font-medium text-slate-500 dark:text-slate-400">kredi</span>
+              </p>
+              <p className="mt-0.5 flex items-center justify-between text-sm">
+                <span className="font-semibold text-cyan-800 dark:text-cyan-300">{tl(p.price)}</span>
+                {buying === p.code && buyMut.isPending ? (
+                  <Loader2 className="size-4 animate-spin text-cyan-700" aria-hidden />
+                ) : (
+                  <span className="text-[10px] text-slate-500 dark:text-slate-400">Kartla öde →</span>
+                )}
+              </p>
+            </button>
+          ))}
+        </div>
+        <p className="text-[11px] text-muted-foreground">
+          Her ay kredin yetmiyorsa bir üst paket çoğu zaman daha avantajlı —
+          yukarıdan paketini büyütebilirsin. Ödeme 3D Secure ile iyzico
+          üzerinden alınır; kredi, ödeme onaylanınca anında hesabına eklenir.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+
 function StatusLine({ status, daysLeft, subStatus }: { status: string; daysLeft: number | null; subStatus?: string | null }) {
   if (status === "trialing") {
     const d = daysLeft ?? 0;
-    return <p className="text-xs text-amber-700">Deneme sürümü — {d <= 0 ? "bugün bitiyor" : `${d} gün kaldı`}</p>;
+    return <p className="text-xs text-amber-700 dark:text-amber-400">Deneme sürümü — {d <= 0 ? "bugün bitiyor" : `${d} gün kaldı`}</p>;
   }
   if (status === "active") {
     if (subStatus === "canceled") {
-      return <p className="text-xs text-amber-700">İptal edildi — dönem sonunda sona erecek</p>;
+      return <p className="text-xs text-amber-700 dark:text-amber-400">İptal edildi — dönem sonunda sona erecek</p>;
     }
-    return <p className="text-xs text-emerald-700">Aktif abonelik</p>;
+    return <p className="text-xs text-emerald-700 dark:text-emerald-400">Aktif abonelik</p>;
   }
   if (status === "past_due") {
-    return <p className="text-xs text-rose-700">Aboneliğin yenilenmedi — yenileme gerekli</p>;
+    return <p className="text-xs text-rose-700 dark:text-rose-400">Aboneliğin yenilenmedi — yenileme gerekli</p>;
   }
   if (status === "free") {
-    return <p className="text-xs text-slate-500">Ücretsiz — 3 öğrenci, yapay zekâ kapalı</p>;
+    return <p className="text-xs text-slate-500 dark:text-slate-400">Ücretsiz — 3 öğrenci, yapay zekâ kapalı</p>;
   }
   if (status === "payment_required") {
-    return <p className="text-xs text-rose-700">Ödeme bekleniyor — paket ödemesi tamamlanmadı</p>;
+    return <p className="text-xs text-rose-700 dark:text-rose-400">Ödeme bekleniyor — paket ödemesi tamamlanmadı</p>;
   }
   return null;
 }
@@ -308,7 +400,9 @@ function AiPill({
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-xs font-medium",
-        aiPremium ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "border-amber-200 bg-amber-50 text-amber-800",
+        aiPremium
+          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-300"
+          : "border-amber-200 bg-amber-50 text-amber-800 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-300",
       )}
     >
       {aiPremium ? <Sparkles className="size-3.5" aria-hidden /> : <Lock className="size-3.5" aria-hidden />}
@@ -325,8 +419,16 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
   // buradaki butonlar gizlenir (backend de 400 app_store_managed döner).
   const appStoreManaged = data.subscription_platform === "app_store";
 
+  // Faz 3B — iptal-anı neden anketi (opsiyonel; seçmeden de iptal edilebilir)
+  const [cancelReason, setCancelReason] = React.useState<string>("");
+  const [cancelNote, setCancelNote] = React.useState("");
   const cancelMut = useMutation({
-    mutationFn: () => cancelSubscription(),
+    mutationFn: () =>
+      cancelSubscription(
+        cancelReason || cancelNote.trim()
+          ? { reason_code: cancelReason || null, note: cancelNote.trim() || null }
+          : undefined,
+      ),
     onSuccess: (res) => { applyInvalidate(qc, res.invalidate); setConfirmCancel(false); },
   });
   const resumeMut = useMutation({
@@ -339,7 +441,7 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
       <CardContent className="space-y-3 p-4">
         {canceled ? (
           <>
-            <p className="flex items-start gap-2 text-sm font-medium text-amber-800">
+            <p className="flex items-start gap-2 text-sm font-medium text-amber-800 dark:text-amber-300">
               <Clock className="mt-0.5 size-4 shrink-0" aria-hidden />
               Aboneliğin iptal edildi
               {data.subscription_period_end ? <> — <strong>{fmtDate(data.subscription_period_end)}</strong> tarihinde sona erecek.</> : "."}
@@ -365,7 +467,7 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
           </>
         ) : (
           <>
-            <p className="flex items-center gap-2 text-sm font-medium text-emerald-700">
+            <p className="flex items-center gap-2 text-sm font-medium text-emerald-700 dark:text-emerald-400">
               <CheckCircle2 className="size-4" aria-hidden /> Aboneliğin aktif — tüm yapay zekâ özellikleri açık.
             </p>
             {data.subscription_period_end ? (
@@ -384,7 +486,7 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
               <button
                 type="button"
                 onClick={() => setConfirmCancel(true)}
-                className="text-xs text-rose-600 underline-offset-2 hover:underline"
+                className="text-xs text-rose-600 underline-offset-2 hover:underline dark:text-rose-400"
               >
                 Aboneliği iptal et
               </button>
@@ -404,6 +506,48 @@ function ActiveSubscriptionCard({ data }: { data: TeacherPlanResponse }) {
             tüm özellikler açık kalır</strong>; sonra ücretsiz sürüme döner.
             Öğrencilerin ve verilerin silinmez.
           </p>
+
+          {/* Faz 3B — tek soruluk neden anketi (opsiyonel) */}
+          <div className="space-y-2">
+            <p className="text-xs font-semibold">
+              Ayrılma nedenini paylaşır mısın? <span className="font-normal text-muted-foreground">(isteğe bağlı — daha iyi olmamıza yardım eder)</span>
+            </p>
+            <div className="space-y-1">
+              {[
+                ["price", "Fiyat yüksek geldi"],
+                ["usage", "Yeterince kullanmadım"],
+                ["missing_feature", "İhtiyacım olan bir özellik yok"],
+                ["season_break", "Dönem/sezon bitti (ara veriyorum)"],
+                ["student_drop", "Öğrenci sayım azaldı"],
+                ["other", "Başka bir neden"],
+              ].map(([code, label]) => (
+                <label
+                  key={code}
+                  className="flex cursor-pointer items-center gap-2 rounded-md px-1.5 py-1 text-sm hover:bg-muted/60"
+                >
+                  <input
+                    type="radio"
+                    name="cancel-reason"
+                    checked={cancelReason === code}
+                    onChange={() => setCancelReason(code)}
+                    className="size-3.5 accent-cyan-700"
+                  />
+                  {label}
+                </label>
+              ))}
+            </div>
+            {cancelReason ? (
+              <textarea
+                value={cancelNote}
+                onChange={(e) => setCancelNote(e.target.value)}
+                maxLength={500}
+                rows={2}
+                placeholder="Eklemek istediğin bir şey var mı? (isteğe bağlı)"
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              />
+            ) : null}
+          </div>
+
           <DialogFooter className="gap-2 pt-2">
             <Button variant="ghost" onClick={() => setConfirmCancel(false)} disabled={cancelMut.isPending}>
               Vazgeç
@@ -523,9 +667,9 @@ function SoloUpgradeCard({
 
         {/* Aktif öğrenci durumu */}
         <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200">
-          Şu an <strong className="text-slate-900">{data.student_count}</strong> aktif öğrencin var.
+          Şu an <strong className="text-slate-900 dark:text-slate-100">{data.student_count}</strong> aktif öğrencin var.
           {data.post_trial_plan && data.post_trial_plan !== "solo_free" ? (
-            <> Kayıtta seçtiğin paket: <strong className="text-cyan-800">{data.post_trial_plan_label}</strong>.</>
+            <> Kayıtta seçtiğin paket: <strong className="text-cyan-800 dark:text-cyan-300">{data.post_trial_plan_label}</strong>.</>
           ) : null}
           {" "}{cycleLabel}.
         </div>
@@ -591,11 +735,11 @@ function SoloUpgradeCard({
 
                 {/* AI kredi ön plana çıkar — insan diliyle */}
                 {cCard?.credits_monthly ? (
-                  <div className="mb-4 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2 dark:bg-cyan-500/10 dark:border-cyan-500/30">
-                    <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800 dark:text-cyan-300">Aylık yapay zekâ kredisi</p>
-                    <p className="font-display text-2xl font-extrabold text-cyan-900 dark:text-cyan-200">{cCard.credits_monthly.toLocaleString("tr-TR")} <span className="text-xs font-medium text-cyan-700 dark:text-cyan-300">kredi</span></p>
+                  <div className="mb-4 rounded-lg border border-cyan-200 bg-cyan-50/70 px-3 py-2">
+                    <p className="text-[10px] font-bold uppercase tracking-wide text-cyan-800">Aylık yapay zekâ kredisi</p>
+                    <p className="font-display text-2xl font-extrabold text-cyan-900">{cCard.credits_monthly.toLocaleString("tr-TR")} <span className="text-xs font-medium text-cyan-700">kredi</span></p>
                     {cCard.credit_note ? (
-                      <p className="mt-1 text-[11px] leading-4 text-cyan-800 dark:text-cyan-300">{cCard.credit_note}</p>
+                      <p className="mt-1 text-[11px] leading-4 text-cyan-800">{cCard.credit_note}</p>
                     ) : null}
                   </div>
                 ) : null}
@@ -644,8 +788,8 @@ function SoloUpgradeCard({
         </div>
 
         {/* Alt bilgi: seçili olanın özet açıklaması */}
-        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-[11px] text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30">
-          Seçili paket <strong className="text-slate-900">{selTier?.label}</strong> · {tl(shownMonthly)}/ay.
+        <div className="rounded-md border border-slate-200 bg-slate-50/60 px-3 py-2 text-[11px] text-slate-600 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-300">
+          Seçili paket <strong className="text-slate-900 dark:text-slate-100">{selTier?.label}</strong> · {tl(shownMonthly)}/ay.
           Aylık AI kredisi (sesli dikte 3, fotoğraftan not 5, koçluk içgörüsü 6 kredi başına) ay başında otomatik yenilenir.
           {data.status === "past_due" ? " Aboneliğin yenilenmedi — ödeme ile aktif koçluğa devam eder." : null}
         </div>
@@ -708,7 +852,7 @@ function UpgradeDialog({
         <div className="space-y-3 text-sm">
           <div className="rounded-lg border border-cyan-200 bg-cyan-50/60 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
             <span className="text-muted-foreground">Seçilen:</span>{" "}
-            <span className="font-semibold text-cyan-900">{planLabel} · {priceLabel}</span>
+            <span className="font-semibold text-cyan-900 dark:text-cyan-200">{planLabel} · {priceLabel}</span>
           </div>
           {cardAvailable ? (
             <p className="flex items-start gap-2 text-muted-foreground">

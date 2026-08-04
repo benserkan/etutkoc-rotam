@@ -2340,6 +2340,15 @@ class SubscriptionRequestResult(BaseModel):
     already_pending: bool = False
 
 
+class SubscriptionCancelBody(BaseModel):
+    """İptal-anı neden anketi (Faz 3B, opsiyonel — eski istemci gövdesiz çağırır)."""
+    reason_code: str | None = Field(
+        default=None,
+        pattern="^(price|usage|missing_feature|season_break|student_drop|other)$",
+    )
+    note: str | None = Field(default=None, max_length=500)
+
+
 class TrialStatusResponse(BaseModel):
     """Bağımsız koç trial/ödeme-duvarı durumu — teacher-shell banner için."""
     is_solo: bool

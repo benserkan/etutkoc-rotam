@@ -63,7 +63,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
       return (
         <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
           <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-start gap-2.5 text-sm text-rose-900">
+            <div className="flex items-start gap-2.5 text-sm text-rose-900 dark:text-rose-200">
               <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
               <span>
                 <strong>Aboneliğin yenilenmedi.</strong> Öğrencilerin ve verilerin
@@ -83,7 +83,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
     return (
       <div className="border-b border-rose-200 bg-rose-50 dark:bg-rose-500/10 dark:border-rose-500/30">
         <div className="mx-auto flex max-w-6xl flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-2.5 text-sm text-rose-900">
+          <div className="flex items-start gap-2.5 text-sm text-rose-900 dark:text-rose-200">
             <Lock className="mt-0.5 size-4 shrink-0 text-rose-600" aria-hidden />
             <span>
               <strong>Deneme süreniz bitti.</strong> {data.student_count} öğrenciniz var;
@@ -120,7 +120,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
       <div className="border-b border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <Clock className="size-4 shrink-0 text-amber-600" aria-hidden />
-          <p className="flex-1 text-sm text-amber-900">
+          <p className="flex-1 text-sm text-amber-900 dark:text-amber-200">
             <strong>Denemen {left} bitiyor.</strong>{" "}
             <TrialValueLine value={data.trial_value} />
             Paketine geçerek tüm öğrencilerin ve yapay zekâ özellikleriyle devam et.
@@ -157,7 +157,7 @@ export function TrialBanner({ enabled }: { enabled: boolean }) {
       <div className="border-b border-amber-200 bg-amber-50 dark:bg-amber-500/10 dark:border-amber-500/30">
         <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5">
           <Clock className="size-4 shrink-0 text-amber-600" aria-hidden />
-          <p className="flex-1 text-sm text-amber-900">
+          <p className="flex-1 text-sm text-amber-900 dark:text-amber-200">
             <strong>Denemen bitti — ödemen bekleniyor.</strong>{" "}
             {data.intended_plan_label ?? "Seçtiğin paket"} ile kaldığın yerden
             devam etmek için ödemeni tamamla; öğrencilerin ve verilerin duruyor.

@@ -2251,6 +2251,7 @@ def institution_usage_v2(
             plan_code=account.plan_code,
             allocated_credits=account.allocated_credits,
             bonus_credits=account.bonus_credits,
+            purchased_credits=account.purchased_credits or 0,
             total_allocated=account.total_allocated,
             used_credits=account.used_credits,
             remaining_credits=account.remaining_credits,

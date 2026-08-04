@@ -59,6 +59,13 @@ export interface FeatureGlossaryEntry {
   image_full?: string | null;  // tam kare — "Ekranın tamamını gör"
 }
 
+export interface CreditPack {
+  code: string;       // pack_500 | pack_1500 | pack_4000
+  credits: number;
+  price: number;      // TL, tek seferlik
+  per_credit: number; // TL/kredi (bilgi)
+}
+
 export interface PricingContact {
   sales_email: string;
   support_email: string;
@@ -70,6 +77,7 @@ export interface PricingCatalog {
   cards: PricingCard[];
   plan_features: Record<string, string[]>;  // plan kodu → pazarlama bullet'ları (TEK KAYNAK)
   credit_costs: CreditCostRow[];            // "Krediler ne yapar?" tablosu
+  credit_packs: CreditPack[];               // kredi ek paketleri (Faz 3)
   feature_glossary: FeatureGlossaryEntry[]; // tıkla-gör balonlar (tek kaynak)
   currency: string;
   annual_paid_months: number;

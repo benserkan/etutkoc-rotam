@@ -3353,6 +3353,7 @@ def _credit_account_to_info(acc) -> UsageAccountInfo:
         used_credits=acc.used_credits or 0,
         allocated_credits=acc.allocated_credits,
         bonus_credits=acc.bonus_credits or 0,
+        purchased_credits=acc.purchased_credits or 0,
         total_allocated=acc.total_allocated,
         remaining_credits=acc.remaining_credits,
         usage_pct=int(acc.usage_pct),
@@ -8589,7 +8590,7 @@ def _contact_item(cr, db: Session | None = None) -> ContactRequestItem:
         source_label = (f"{_base} (koç)" if target_kind == "coach"
                         else f"{_base} (kurum)" if target_kind == "institution"
                         else source_label)
-    if cr.source == "subscription_request" and cr.message:
+    if cr.source in ("subscription_request", "cancel_feedback") and cr.message:
         mu = re.search(r"koç_id=(\d+)", cr.message)
         if mu:
             linked_user_id = int(mu.group(1))

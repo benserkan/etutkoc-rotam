@@ -550,6 +550,7 @@ class UsageAccountInfo(BaseModel):
     plan_code: str
     allocated_credits: int
     bonus_credits: int
+    purchased_credits: int = 0
     total_allocated: int
     used_credits: int
     remaining_credits: int

@@ -353,9 +353,13 @@ export function submitSubscriptionRequest(
   );
 }
 
-export function cancelSubscription(): Promise<MutationResponse<SubscriptionRequestResult>> {
+export function cancelSubscription(
+  body?: { reason_code?: string | null; note?: string | null },
+): Promise<MutationResponse<SubscriptionRequestResult>> {
+  // Faz 3B: opsiyonel iptal-anı neden anketi — gövdesiz çağrı geriye uyumlu.
   return api<MutationResponse<SubscriptionRequestResult>>(
-    "/api/v2/teacher/subscription/cancel", { method: "POST" },
+    "/api/v2/teacher/subscription/cancel",
+    { method: "POST", ...(body ? { body: JSON.stringify(body) } : {}) },
   );
 }
 

@@ -178,6 +178,12 @@ class CreditAccount(Base):
     used_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     # Super admin manuel eklediği bonus kredi (ayrı izleme — UI'da göster)
     bonus_credits: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    # Kredi ek paketi satın alımları (iyzico, Faz 3). Bonus'tan farkı: ay
+    # sonunda YANMAZ — yeni dönem hesabı açılırken kullanılmayan kısım devreder
+    # (kullanım önce tahsisat+bonus'tan, en son satın alınandan düşmüş sayılır).
+    purchased_credits: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0, server_default="0",
+    )
 
     # Plan kodu (snapshot — kurumun planı sonradan değişirse bu period için
     # ne ile başladığını görmek için). 'free' | 'starter' | 'professional' | custom
@@ -214,8 +220,23 @@ class CreditAccount(Base):
 
     @property
     def total_allocated(self) -> int:
-        """Tahsis + bonus toplamı — UI'da 'kullanılabilir tavan'."""
-        return self.allocated_credits + self.bonus_credits
+        """Tahsis + bonus + satın alınan toplamı — UI'da 'kullanılabilir tavan'."""
+        return (
+            self.allocated_credits
+            + self.bonus_credits
+            + (self.purchased_credits or 0)
+        )
+
+    @property
+    def purchased_leftover(self) -> int:
+        """Dönem kapanırken devredecek satın-alınan kredi.
+
+        Kullanım önce tahsisat+bonus havuzundan düşmüş sayılır; satın alınan
+        kredi en son tüketilir → devir = purchased - max(0, used - (alloc+bonus)).
+        """
+        base = self.allocated_credits + self.bonus_credits
+        overflow = max(0, (self.used_credits or 0) - base)
+        return max(0, (self.purchased_credits or 0) - overflow)
 
     @property
     def remaining_credits(self) -> int:

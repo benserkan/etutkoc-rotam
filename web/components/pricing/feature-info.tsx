@@ -73,10 +73,13 @@ export function FeatureLine({
   );
 
   return (
-    <span className={onColor ? "text-white/95" : "text-foreground/90"}>
+    // "light" tonu BEYAZ KART zemininde kullanılır → renkler EXPLICIT (tema
+    // token'ı YASAK: koyu temada foreground beyaza döner, beyaz kartta
+    // görünmez olur — 2026-08-04 /teacher/plan kontrast hatasının kök nedeni).
+    <span className={onColor ? "text-white/95" : "text-slate-800"}>
       {titleEl}
       {detail ? (
-        <span className={cn("ml-1 text-xs", onColor ? "text-white/60" : "text-muted-foreground")}>
+        <span className={cn("ml-1 text-xs", onColor ? "text-white/60" : "text-slate-500")}>
           {detail}
         </span>
       ) : null}

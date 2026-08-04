@@ -47,6 +47,7 @@ from sqlalchemy.orm import Session
 from app.config import settings
 from app.models import (
     AuditAction,
+    CYCLE_ONE_TIME,
     PROVIDER_IYZICO,
     STATUS_3DS_PENDING,
     STATUS_FAILED,
@@ -159,13 +160,18 @@ def init_checkout(
     plan_code: str | None = None,
     cycle: str | None = None,
     payment_link: PaymentLink | None = None,
+    credit_pack: dict[str, Any] | None = None,
     ip_address: str | None = None,
 ) -> dict[str, Any]:
     """Iyzico Checkout Form başlat → paymentPageUrl + transaction_id döner.
 
-    İki mod:
+    Üç mod:
       - Self-serve (koç): plan_code + cycle verilir → pricing.py'dan fiyat
       - Link (kurum): payment_link verilir → fiyat/plan/cycle linkten
+      - Kredi ek paketi (Faz 3): credit_pack (pricing.credit_pack_by_code
+        çıktısı) verilir → tek seferlik satın alma; tx.cycle='one_time' işareti
+        verify_callback'te PLAN AKTİVASYONUNDAN ayırır (kredi yazılır, plan/
+        abonelik alanlarına ASLA dokunulmaz).
 
     Frontend `paymentPageUrl`'a yönlendirir. 3DS sonrası Iyzico bizim
     payment_callback_url'imize form-POST eder.
@@ -176,7 +182,11 @@ def init_checkout(
             "Ödeme sağlayıcı şu an kullanılamıyor (sandbox key tanımlı değil).",
         )
 
-    if payment_link is not None:
+    if credit_pack is not None:
+        plan_code = str(credit_pack["code"])
+        cycle = CYCLE_ONE_TIME
+        amount = Decimal(str(credit_pack["price"]))
+    elif payment_link is not None:
         if not payment_link.is_usable:
             raise PaymentError(
                 "payment_link_unusable",
@@ -223,7 +233,7 @@ def init_checkout(
     if (
         not buyer_email
         or "@" not in buyer_email
-        or buyer_email.lower().endswith((".local", ".test", ".example"))
+        or buyer_email.lower().endswith((".local", ".test", ".example", ".invalid"))
     ):
         buyer_email = "noreply@etutkoc.com"
 
@@ -264,7 +274,11 @@ def init_checkout(
         "basketItems": [
             {
                 "id": basket_id,
-                "name": f"ETÜTKOÇ Rotam — {plan_code} ({cycle})",
+                "name": (
+                    f"ETÜTKOÇ Rotam — {credit_pack['credits']} yapay zekâ kredisi (ek paket)"
+                    if credit_pack is not None
+                    else f"ETÜTKOÇ Rotam — {plan_code} ({cycle})"
+                ),
                 "category1": "Eğitim",
                 "category2": "SaaS Abonelik",
                 "itemType": "VIRTUAL",
@@ -273,7 +287,13 @@ def init_checkout(
         ],
     }
 
-    tx.raw_request = request
+    # Kredi paketi bilgisi işleme anında (verify) fiyat/kredi değişse bile
+    # ödeme anındaki değerle işlensin diye tx'e gömülür (SDK'ya gitmez).
+    tx.raw_request = (
+        {**request, "_credit_pack": dict(credit_pack)}
+        if credit_pack is not None
+        else request
+    )
 
     # SDK çağrısı (smoke'da _iyzico_call_create monkeypatch'lenebilir)
     try:
@@ -407,6 +427,61 @@ def verify_callback(
         tx.status = STATUS_SUCCEEDED
         tx.status_reason = None
         tx.completed_at = datetime.utcnow()
+
+        # --- KREDİ EK PAKETİ (Faz 3) — plan aktivasyonundan KESİN AYRIM ---
+        # one_time işlem plan/abonelik alanlarına ASLA dokunmaz; yalnız satın
+        # alınan kredi kovasına yazar (devreden — ay sonunda yanmaz).
+        if tx.cycle == CYCLE_ONE_TIME:
+            from app.models.usage import UsageOwnerType
+            from app.services import pricing as _pricing
+            from app.services.credits import CreditOwner, grant_purchased_credits
+
+            pack_info = (tx.raw_request or {}).get("_credit_pack") or {}
+            credits_amount = int(pack_info.get("credits") or 0)
+            if credits_amount <= 0:
+                # Ödeme anı bilgisi kayıpsa güncel katalogdan çöz (yedek yol)
+                pack = _pricing.credit_pack_by_code(tx.plan_code)
+                credits_amount = int(pack["credits"]) if pack else 0
+
+            if credits_amount > 0:
+                payer = db.get(User, tx.user_id)
+                owner = CreditOwner(
+                    type=UsageOwnerType.USER,
+                    id=tx.user_id,
+                    plan_code=(payer.plan if payer else None) or "free",
+                )
+                try:
+                    grant_purchased_credits(
+                        db, owner=owner, amount=credits_amount,
+                        note=f"Iyzico kredi paketi #{tx.id} ({tx.plan_code})",
+                    )
+                except Exception as exc:  # noqa: BLE001
+                    # Para alındı ama kredi yazılamadı — kritik iz bırak.
+                    tx.status_reason = f"CREDIT_GRANT_FAILED: {exc!s}"[:500]
+                    logger.exception(
+                        "Credit pack paid but grant failed tx=%s", tx.id,
+                    )
+            else:
+                tx.status_reason = "CREDIT_PACK_UNRESOLVED: kredi miktarı çözülemedi"
+                logger.error("Credit pack amount unresolved tx=%s", tx.id)
+
+            audit_service.log_action(
+                db,
+                action=AuditAction.PAYMENT_SUCCEEDED,
+                actor_id=tx.user_id,
+                target_type="payment_transaction",
+                target_id=tx.id,
+                details={
+                    "kind": "credit_pack",
+                    "pack": tx.plan_code,
+                    "credits": credits_amount,
+                    "amount": str(tx.amount),
+                    "ip": ip_address,
+                },
+                autocommit=False,
+            )
+            db.commit()
+            return tx
 
         # Plan target'ı belirle: link varsa link'ten (kurum olabilir), yoksa user (self-serve)
         link: PaymentLink | None = None

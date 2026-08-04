@@ -684,6 +684,7 @@ export interface UsageAccountInfo {
   used_credits: number;
   allocated_credits: number;
   bonus_credits: number;
+  purchased_credits?: number;
   total_allocated: number;
   remaining_credits: number;
   usage_pct: number;

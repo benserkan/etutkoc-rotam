@@ -277,8 +277,60 @@ ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
     teacher_read 12 · tenant 29 GREEN · web tsc+eslint temiz · **Playwright
     canlı 9/9** (editör round-trip → /pricing yansıması + Sıfırla · dolu koç →
     dialog → ?plan= ön-seçim · kritik bantta değer satırı).
-- **SIRADA (ayrı onay — bilinçli otonom YAPILMADI, ödeme-kritik):** Faz 3 —
-  kredi ek paketi satışı (iyzico) + iptal-anı neden anketi.
+- **FAZ 3 — KOD-TAMAM (2026-08-04, kullanıcı "faz 3 devam" onayı; migration
+  `i9j2m5o6o99i`):** kredi ek paketi (iyzico) + iptal-anı neden anketi.
+  - **Kredi ek paketi (kullanıcı onaylı):** 3 boy — 500=900₺ · 1.500=2.400₺ ·
+    4.000=5.500₺ (birim fiyat BİLİNÇLİ plan biriminden yüksek [Patika 1,67 ·
+    Rota 1,25 · Zirve 0,94 ₺/kr] → yükseltme cazip kalır); **satın alınan kredi
+    DEVREDEN** — `credit_accounts.purchased_credits` AYRI kova, ay sonunda
+    yanmaz; yeni dönem hesabı açılırken `purchased_leftover` (kullanım önce
+    tahsisat+bonus'tan düşmüş sayılır) EN YENİ önceki dönemden taşınır
+    (`get_or_create_account` zincir devri). `pricing._DEFAULTS["credit_packs"]`
+    (app_settings override'lı) + katalogda `credit_packs`.
+  - **Ödeme yolu:** POST `/payment/credit-pack/init` (kapılar: kurumlu 403 ·
+    ücretli aktif/iptal-dönem-içi abonelik ŞART 403 `credit_pack_requires_
+    subscription` · App Store 409 · bilinmeyen paket 404) →
+    `init_checkout(credit_pack=)` `cycle=one_time` + pack bilgisi
+    `raw_request._credit_pack`'e gömülü → **verify_callback'te one_time dalı
+    PLAN AKTİVASYONUNDAN KESİN AYRI**: yalnız `grant_purchased_credits`
+    (blocked_until temizlenir — ödenen kredi anında kullanılır), plan/abonelik
+    alanlarına ASLA dokunmaz; audit kind=credit_pack. Kredi tükendi mesajı
+    artık ek krediyi de söyler.
+  - **İptal anketi:** POST `/subscription/cancel` opsiyonel gövde
+    {reason_code: price|usage|missing_feature|season_break|student_drop|other,
+    note} — best-effort `ContactRequest source=cancel_feedback` ("İptal
+    bildirimi (koç)" etiketi, koç_id parse → admin'den koç sayfası linki) +
+    satışa e-posta (kurtarma fırsatı). Gövdesiz eski istemci aynen çalışır.
+    Web: iptal onay dialoğunda radio neden listesi + opsiyonel not.
+  - **Web:** /teacher/plan `CreditPackCard` (aktif iyzico/manuel abonede, kredi
+    çubuğunun altında; 3 boy + "kullanılana kadar geçerli — ay sonunda yanmaz"
+    + dürüstlük notu "her ay yetmiyorsa üst paket daha avantajlı"; provider
+    kapalıysa render olmaz) · admin/kurum kullanım şemalarına
+    `purchased_credits` (admin satırında "+N satın alınan"); `total_allocated`
+    property satın alınanı kapsar → tüm %/kalan yüzeyleri otomatik doğru.
+  - **KONTRAST DÜZELTMESİ (kullanıcı ekran görüntüsü — "font color sorunu"):**
+    /teacher/plan koyu temada birçok metin görünmezdi. İki kök neden:
+    (a) `FeatureLine` beyaz kart içinde TEMA TOKEN'I kullanıyordu
+    (`text-foreground` koyu temada beyaza döner) → explicit slate'e çevrildi;
+    (b) beyaz tier kartı İÇİNDEKİ kutulara yanlışlıkla `dark:` varyant
+    verilmişti (kart hep beyaz — koyu varyant açık metni beyaz karta basıyordu)
+    → içerideki dark: varyantlar SİLİNDİ. Ek: AiCreditMeter/StatusLine/AiPill/
+    bilgi kutuları/trial-banner bantlarına `dark:text-*-200/300/400` eklendi.
+    **KURAL: beyaz sabit-zeminli kart içinde tema token'ı ve dark: varyant
+    YASAK — renkler explicit; tonlu tema-uyumlu kutularda ise koyu metin
+    varyantı (dark:text-{c}-200) ZORUNLU.** Ayrıca `PAID_PLAN_CODES`'a eksik
+    solo_unlimited eklendi (latent) + iyzico e-posta fallback'ine `.invalid`.
+  - **Test:** YENİ `test_api_v2_credit_packs.py` **19/19** (katalog + 4 kapı +
+    mock init/callback: kredi yazılır + PLAN DEĞİŞMEZ [kritik] + idempotent +
+    başarısız ödeme yazmaz + zincir ay devri 2 senaryo + iptal anketi
+    ContactRequest/gövdesiz geriye uyum). Regresyon: iyzico 29 · lifecycle 22 ·
+    entitlement 13 · sub-request 11 · renewal 12 · IAP 23 · admin usage 21 ·
+    kurum p3 18 · pricing 8 · pricing_content 12 · faz2_moments 7 · paywall 5 ·
+    tenant 29 GREEN (stage6_credits bilinen bayat). **Canlı (dev, koyu tema)
+    8/8**: kart + 3 boy + iptal anketi → DB'de neden kaydı; init GERÇEK iyzico
+    sandbox'tan paymentPageUrl aldı. Koyu tema tam-sayfa ekran görüntüsüyle
+    kontrast doğrulandı. Mobil BİLİNÇLİ yok (Apple 3.1.1 — IAP dışı kredi
+    satışı gösterilemez; web-only).
 
 ---
 

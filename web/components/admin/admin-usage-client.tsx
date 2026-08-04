@@ -217,6 +217,9 @@ function UsageBar({ account }: { account: UsageAccountInfo }) {
       </div>
       <div className="text-[10px] text-muted-foreground mt-0.5">
         {account.used_credits} / {account.total_allocated}
+        {(account.purchased_credits ?? 0) > 0 && (
+          <span className="text-cyan-600"> (+{account.purchased_credits} satın alınan)</span>
+        )}
         {account.bonus_credits > 0 && (
           <span className="text-violet-600"> (+{account.bonus_credits} bonus)</span>
         )}

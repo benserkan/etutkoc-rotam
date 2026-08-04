@@ -43,6 +43,14 @@ function errorTitle(e: unknown, fallback: string): string {
       return "Eksik giriş";
     case "payment_link_unusable":
       return "Link artık geçerli değil";
+    case "credit_pack_not_found":
+      return "Kredi paketi bulunamadı";
+    case "credit_pack_requires_subscription":
+      return "Önce paket gerekli";
+    case "credit_pack_institution":
+      return "Kurum kredisi panelden yönetilir";
+    case "app_store_managed":
+      return "Abonelik App Store'da yönetiliyor";
     case "link_owner_invalid":
       return "Hedef türü geçersiz";
     case "link_target_not_found":
@@ -119,6 +127,26 @@ export function useCancelPaymentLink() {
  * onSuccess: pending PaymentTransaction yazıldı, history sayfasında görünsün
  * diye `payment:history` invalidate edilir.
  */
+/** Kredi ek paketi satın alma (Faz 3) — tek seferlik iyzico ödemesi. */
+export function useInitCreditPackCheckout() {
+  const qc = useQueryClient();
+  return useMutation<PaymentInitResponse, Error, { pack_code: string }>({
+    mutationFn: (body) =>
+      api<PaymentInitResponse>("/api/v2/payment/credit-pack/init", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: paymentKeys.history() });
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "Ödeme başlatılamadı"), {
+        description: errorMessage(e, "Kredi paketi ödemesi başlatılamadı."),
+      });
+    },
+  });
+}
+
 export function useInitPaymentCheckout() {
   const qc = useQueryClient();
   return useMutation<PaymentInitResponse, Error, PaymentInitBody>({

@@ -12,6 +12,11 @@ class PaymentInitBody(BaseModel):
     cycle: str = Field(..., pattern="^(monthly|annual)$")
 
 
+class CreditPackInitBody(BaseModel):
+    """Kredi ek paketi satın alma (Faz 3) — pricing.credit_packs kodu."""
+    pack_code: str = Field(..., min_length=1, max_length=50)
+
+
 class PaymentInitResponse(BaseModel):
     transaction_id: int
     payment_page_url: str

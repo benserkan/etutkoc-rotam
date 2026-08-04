@@ -214,6 +214,21 @@ def get_or_create_account(
     if acc:
         return acc
 
+    # Satın alınan kredi devri (Faz 3): önceki en yeni dönemin kullanılmamış
+    # purchased kovası yeni döneme taşınır (bonus/tahsisat DEVRETMEZ — yalnız
+    # parayla alınan kredi yanmaz).
+    prev = (
+        db.query(CreditAccount)
+        .filter(
+            CreditAccount.owner_type == owner.type,
+            CreditAccount.owner_id == owner.id,
+            CreditAccount.period_year_month < period,
+        )
+        .order_by(CreditAccount.period_year_month.desc())
+        .first()
+    )
+    carried = prev.purchased_leftover if prev is not None else 0
+
     allocation = PLAN_ALLOCATIONS.get(owner.plan_code, PLAN_ALLOCATIONS["free"])
     acc = CreditAccount(
         owner_type=owner.type,
@@ -222,6 +237,7 @@ def get_or_create_account(
         allocated_credits=allocation,
         used_credits=0,
         bonus_credits=0,
+        purchased_credits=carried,
         plan_code=owner.plan_code,
         hard_block_enabled=False,
     )
@@ -522,6 +538,35 @@ def consume_credits(
         actor_user_id=actor_user_id, metadata=ctx.metadata,
         autocommit=autocommit,
     )
+
+
+# ---------------------------- Kredi ek paketi (Faz 3) ----------------------------
+
+
+def grant_purchased_credits(
+    db: Session, *, owner: CreditOwner, amount: int,
+    note: str | None = None, now: datetime | None = None,
+) -> CreditAccount:
+    """İyzico kredi ek paketi ödemesi sonrası satın alınan krediyi işle.
+
+    purchased_credits kovasına eklenir (bonus'tan AYRI): ay sonunda yanmaz,
+    yeni dönem hesabı açılırken kullanılmayan kısım devreder. Ayrıca aktif bir
+    cooldown/tükenme bloğu varsa temizlenir — koç ödediği krediyi ANINDA
+    kullanabilmeli.
+    """
+    if amount <= 0:
+        raise ValueError("grant_purchased_credits: amount > 0 olmalı")
+    if now is None:
+        now = datetime.now(timezone.utc)
+    acc = get_or_create_account(db, owner=owner, period=current_period(now))
+    acc.purchased_credits = (acc.purchased_credits or 0) + amount
+    acc.blocked_until = None
+    db.flush()
+    logger.info(
+        "grant_purchased_credits: %s#%s +%d (%s)",
+        owner.type.value, owner.id, amount, note or "credit_pack",
+    )
+    return acc
 
 
 # ---------------------------- Aylık refill ----------------------------

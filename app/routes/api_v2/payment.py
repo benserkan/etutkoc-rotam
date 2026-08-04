@@ -47,6 +47,7 @@ from app.routes.api_v2.schemas.payment import (
     IapSyncResponse,
     PaymentHistoryItem,
     PaymentHistoryResponse,
+    CreditPackInitBody,
     PaymentInitBody,
     PaymentInitResponse,
     PaymentLinkCreateBody,
@@ -57,6 +58,7 @@ from app.routes.api_v2.schemas.payment import (
     PaymentResultResponse,
 )
 from app.services import iap_service, iyzico_service, payment_link_service
+from app.services import pricing as pricing_service
 from app.services.pricing import get_pricing_catalog
 
 
@@ -140,6 +142,72 @@ def post_init_checkout(
             "payment_plan_invalid": status.HTTP_400_BAD_REQUEST,
             "payment_amount_invalid": status.HTTP_400_BAD_REQUEST,
             "payment_cycle_invalid": status.HTTP_400_BAD_REQUEST,
+        }.get(exc.code, status.HTTP_400_BAD_REQUEST)
+        raise _payment_error(exc.message, exc.code, http_status=http_code) from exc
+
+    return PaymentInitResponse(**result)
+
+
+@router.post("/credit-pack/init", response_model=PaymentInitResponse)
+def post_credit_pack_init(
+    body: CreditPackInitBody,
+    request: Request,
+    db: Session = Depends(get_db),
+    user: User = Depends(_require_teacher_or_admin),
+) -> PaymentInitResponse:
+    """Kredi ek paketi satın alma (Faz 3) — tek seferlik iyzico ödemesi.
+
+    Kapılar:
+      - Kurumlu koç 403 (kurum kredisi süper admin bonusuyla yönetilir)
+      - Ücretli aktif/iptal-dönem-içi abonelik ŞART (deneme/ücretsiz → önce
+        paket alınır; kredi paketi paket satışını İKAME ETMEZ)
+      - App Store abonesi 409 (kanal koruması — /init ile aynı kural)
+    Ödeme başarıyla dönerse verify_callback satın alınan krediyi devreden
+    kovaya yazar; plan/abonelik alanlarına dokunulmaz.
+    """
+    if user.institution_id is not None:
+        raise _payment_error(
+            "Kurum kredisi kurum yönetimi üzerinden sağlanır — süper admin ile "
+            "iletişime geçin.",
+            "credit_pack_institution",
+            http_status=status.HTTP_403_FORBIDDEN,
+        )
+    if getattr(user, "subscription_platform", None) == "app_store":
+        raise _payment_error(
+            "Aboneliğin App Store üzerinden yönetiliyor.",
+            "app_store_managed",
+            http_status=status.HTTP_409_CONFLICT,
+        )
+    from app.services import plans as plans_service
+    if not (
+        plans_service.is_paid_plan(user.plan or "")
+        and user.subscription_status in ("active", "canceled")
+    ):
+        raise _payment_error(
+            "Kredi ek paketi aktif bir ücretli abonelik gerektirir. Önce "
+            "paketini seç — paket kredileri zaten içerir.",
+            "credit_pack_requires_subscription",
+            http_status=status.HTTP_403_FORBIDDEN,
+        )
+
+    pack = pricing_service.credit_pack_by_code(body.pack_code)
+    if pack is None:
+        raise _payment_error(
+            "Böyle bir kredi paketi yok.",
+            "credit_pack_not_found",
+            http_status=status.HTTP_404_NOT_FOUND,
+        )
+
+    try:
+        result = iyzico_service.init_checkout(
+            db,
+            user=user,
+            credit_pack=pack,
+            ip_address=_client_ip(request),
+        )
+    except iyzico_service.PaymentError as exc:
+        http_code = {
+            "payment_provider_unavailable": status.HTTP_503_SERVICE_UNAVAILABLE,
         }.get(exc.code, status.HTTP_400_BAD_REQUEST)
         raise _payment_error(exc.message, exc.code, http_status=http_code) from exc
 

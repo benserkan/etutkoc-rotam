@@ -800,6 +800,7 @@ class UsageAccountInfo(BaseModel):
     used_credits: int
     allocated_credits: int
     bonus_credits: int
+    purchased_credits: int = 0
     total_allocated: int
     remaining_credits: int
     usage_pct: int

@@ -571,6 +571,7 @@ export interface UsageAccountInfo {
   plan_code: string;
   allocated_credits: number;
   bonus_credits: number;
+  purchased_credits?: number;
   total_allocated: number;
   used_credits: number;
   remaining_credits: number;

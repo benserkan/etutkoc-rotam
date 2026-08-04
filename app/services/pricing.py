@@ -53,6 +53,15 @@ _DEFAULTS: dict[str, Any] = {
          "max_coaches": None, "monthly_total": None, "price_hidden": True, "white_label": True,
          "short": "Özel okul, zincir ve kurumlar için özel sözleşme + white-label."},
     ],
+    # --- Kredi ek paketleri (Faz 3, 2026-08-04 kullanıcı onaylı) ---
+    # Tek seferlik iyzico satın alımı; kredi KULLANILANA KADAR geçerli (devreder).
+    # Birim fiyat bilinçli olarak plan birim fiyatının ÜSTÜNDE (Patika 1,67 ·
+    # Rota 1,25 · Zirve 0,94 ₺/kredi) → paket yükseltme her zaman daha cazip.
+    "credit_packs": [
+        {"code": "pack_500", "credits": 500, "price": 900},
+        {"code": "pack_1500", "credits": 1500, "price": 2400},
+        {"code": "pack_4000", "credits": 4000, "price": 5500},
+    ],
     # --- İletişim (kurumsal talep + destek) ---
     "contact": {
         "sales_email": "satis@etutkoc.com",
@@ -63,7 +72,12 @@ _DEFAULTS: dict[str, Any] = {
 }
 
 # Ücretli plan kodları (entitlement — AI premium açık). Düzenlenebilir değil.
-PAID_PLAN_CODES = {"solo_pro", "solo_elite", "etut_standart", "dershane_pro", "enterprise"}
+# NOT: asıl AI kapısı plans.is_paid_plan (fiyat != 0); bu küme yardımcı.
+# solo_unlimited eksikti (latent bug) — 2026-08-04 eklendi.
+PAID_PLAN_CODES = {
+    "solo_pro", "solo_elite", "solo_unlimited",
+    "etut_standart", "dershane_pro", "enterprise",
+}
 TRIAL_PLAN_CODES = {"solo_trial", "institution_trial"}
 
 
@@ -129,6 +143,41 @@ def annual_total(monthly: int) -> int:
 
 def is_paid_plan_code(plan_code: str | None) -> bool:
     return (plan_code or "") in PAID_PLAN_CODES
+
+
+def credit_packs() -> list[dict[str, Any]]:
+    """Satılabilir kredi ek paketleri (kod default + app_settings override).
+
+    Her paket: {code, credits, price} + türetilmiş per_credit (2 hane).
+    Bozuk override satırları sessizce atlanır (defansif — ödeme yüzeyi).
+    """
+    raw = _cfg().get("credit_packs") or []
+    out: list[dict[str, Any]] = []
+    for p in raw:
+        if not isinstance(p, dict):
+            continue
+        code = str(p.get("code") or "").strip()
+        try:
+            credits = int(p.get("credits") or 0)
+            price = int(p.get("price") or 0)
+        except (TypeError, ValueError):
+            continue
+        if not code or credits <= 0 or price <= 0:
+            continue
+        out.append({
+            "code": code,
+            "credits": credits,
+            "price": price,
+            "per_credit": round(price / credits, 2),
+        })
+    return out
+
+
+def credit_pack_by_code(code: str | None) -> dict[str, Any] | None:
+    """Tek paket — ödeme başlatma/doğrulama için."""
+    if not code:
+        return None
+    return next((p for p in credit_packs() if p["code"] == code), None)
 
 
 # ----------------------------- Katalog (UI için) -----------------------------
@@ -587,6 +636,8 @@ def get_pricing_catalog() -> dict[str, Any]:
         "plan_features": plan_features,
         # "Krediler ne yapar?" tablosu (işlem başına maliyet, sunum etiketiyle)
         "credit_costs": credit_costs_public(),
+        # Kredi ek paketleri (Faz 3) — /teacher/plan "Ek kredi al" kartı
+        "credit_packs": credit_packs(),
         # Tıkla-gör balonlar: kısa başlık → sade açıklama + gerçek ekran karesi
         "feature_glossary": feature_glossary(),
         "currency": cfg["currency"],
