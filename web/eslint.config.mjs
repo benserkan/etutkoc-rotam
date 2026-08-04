@@ -142,6 +142,10 @@ const lgsPlugin = {
         const BG_LIGHT =
           /\bbg-(?:slate|gray|zinc|neutral|stone|red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose)-(50|100)\b/;
         const TOKEN_TEXT = /\btext-(foreground|muted-foreground)\b/;
+        // 2026-08-04 /teacher/plan bulgusu (2. hata sınıfı): bg-white sabit
+        // zemin + tema-token metin — koyu temada token beyaza çözülür,
+        // beyaz zeminde görünmez olur.
+        const BG_WHITE = /\bbg-white\b/;
         function check(node, value) {
           if (typeof value !== "string") return;
           const bg = value.match(BG_LIGHT);
@@ -151,6 +155,12 @@ const lgsPlugin = {
               node,
               messageId: "unsafe",
               data: { shade: bg[1], token: "text-" + tk[1] },
+            });
+          } else if (tk && BG_WHITE.test(value) && !/\bdark:bg-/.test(value)) {
+            context.report({
+              node,
+              messageId: "unsafe",
+              data: { shade: "white", token: "text-" + tk[1] },
             });
           }
         }

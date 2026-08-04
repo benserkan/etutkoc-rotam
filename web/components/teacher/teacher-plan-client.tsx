@@ -140,12 +140,19 @@ export function TeacherPlanClient({
         />
       ) : null}
 
-      {/* Kredi ek paketi (Faz 3) — yalnız aktif iyzico/manuel aboneler.
-          Satın alınan kredi devreder (ay sonunda yanmaz); paket yükseltme
-          çoğu zaman daha avantajlı — kart bunu açıkça söyler. */}
+      {/* Kredi ek paketi (Faz 3) — yalnız aktif iyzico/manuel aboneler VE
+          YALNIZ İHTİYAÇ ANINDA: kullanım %80'i geçince (mevcut kredi-uyarı
+          eşiğiyle aynı semantik) veya kredi bitince. Dolu kredide göstermek
+          sayfayı şişiriyordu (kullanıcı ekran görüntüsü, 2026-08-04).
+          Ek kredi alınınca tavan büyür → oran %80 altına iner → kart
+          kendiliğinden kaybolur (kendi kendini düzenler). */}
       {data.is_solo && data.status === "active" &&
-        data.subscription_platform !== "app_store" ? (
-        <CreditPackCard />
+        data.subscription_platform !== "app_store" &&
+        data.ai_credits_allocated > 0 &&
+        data.ai_credits_used / data.ai_credits_allocated >= 0.8 ? (
+        <CreditPackCard
+          exhausted={data.ai_credits_used >= data.ai_credits_allocated}
+        />
       ) : null}
 
       {data.status === "managed" || !data.is_solo ? (
@@ -284,7 +291,7 @@ function AiCreditMeter({
  * yanmaz). Dürüstlük: birim fiyat paket biriminden yüksek — kart, kalıcı
  * ihtiyaçta yükseltmenin daha avantajlı olduğunu söyler.
  */
-function CreditPackCard() {
+function CreditPackCard({ exhausted = false }: { exhausted?: boolean }) {
   const providerQ = useQuery({
     queryKey: paymentKeys.providerStatus(),
     queryFn: getPaymentProviderStatus,
@@ -318,7 +325,9 @@ function CreditPackCard() {
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <p className="flex items-center gap-2 text-sm font-semibold">
             <Sparkles className="size-4 text-cyan-700 dark:text-cyan-400" aria-hidden />
-            Kredin ay bitmeden tükendi mi? Ek kredi al
+            {exhausted
+              ? "Kredin bitti — ek kredi alarak hemen devam et"
+              : "Kredin azalıyor — ay bitmeden ek kredi alabilirsin"}
           </p>
           <p className="text-[11px] text-muted-foreground">
             Tek seferlik · kullanılana kadar geçerli — ay sonunda yanmaz

@@ -320,6 +320,24 @@ ayrıcalıkları evet · Faz 1 onaylı · kredi tahsisleri dokunulmadı).
     YASAK — renkler explicit; tonlu tema-uyumlu kutularda ise koyu metin
     varyantı (dark:text-{c}-200) ZORUNLU.** Ayrıca `PAID_PLAN_CODES`'a eksik
     solo_unlimited eklendi (latent) + iyzico e-posta fallback'ine `.invalid`.
+  - **BAĞLAMSAL GÖRÜNÜRLÜK (2026-08-04, kullanıcı eleştirisi "1500 kredisi
+    dururken ek kredi kartı ne alaka"):** CreditPackCard artık YALNIZ kullanım
+    ≥%80 (mevcut kredi-uyarı eşiğiyle aynı semantik) veya kredi bitince
+    görünür; başlık duruma göre ("Kredin azalıyor…" / "Kredin bitti…"). Ek
+    kredi alınınca tavan büyür → oran düşer → kart kendiliğinden kaybolur.
+    Canlı 5/5 (0 kullanım GİZLİ · %97 GÖRÜNÜR · bitti başlığı). **KURAL:
+    bağlamsal teklif/uyarı kartı ancak tetikleyen KOŞUL oluşunca render
+    edilir — "her ihtimale karşı" sayfaya kart yığmak yasak.** Kullanıcı
+    site-geneli "akıllı görünürlük + uyarı doğrulama sistemi" istedi — risk
+    analizi + yol haritası sunuldu (onay bekliyor).
+  - **KONTRAST SİTE-GENELİ DENETİMİ (2026-08-04):** eslint
+    `lgs/no-unsafe-contrast` kuralı genişletildi (+`bg-white`+tema-token
+    sınıfı) → site genelinde 0 ihlal. Kırık desen taraması (`dark:bg` var +
+    koyu metin var + `dark:text` yok): 2 vaka bulundu+düzeltildi (membership
+    onay kutusu + pricing SSS notu). Tema-uyumlu panellerdeki tüm `bg-white`
+    kartların çocukları explicit renk kullanıyor (tek ihlalci teacher-plan'dı,
+    düzeltildi); parent-settings dev-stub kutularına dark varyant eklendi.
+    Açık rozet+koyu metin (dark'ta parlak ama OKUNUR) bilinçli dokunulmadı.
   - **Test:** YENİ `test_api_v2_credit_packs.py` **19/19** (katalog + 4 kapı +
     mock init/callback: kredi yazılır + PLAN DEĞİŞMEZ [kritik] + idempotent +
     başarısız ödeme yazmaz + zincir ay devri 2 senaryo + iptal anketi

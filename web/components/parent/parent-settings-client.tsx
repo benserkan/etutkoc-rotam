@@ -735,7 +735,7 @@ function WhatsAppPendingPanel({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
   return (
     <div className="space-y-3">
       <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
-        <code className="bg-white/60 px-1.5 py-0.5 rounded font-mono">
+        <code className="bg-white/60 px-1.5 py-0.5 rounded font-mono dark:bg-white/10">
           +{whatsapp.pending_phone}
         </code>{" "}
         numarasına 6 haneli kod gönderildi. WhatsApp uygulamanızı açıp kodu
@@ -743,11 +743,11 @@ function WhatsAppPendingPanel({ whatsapp }: { whatsapp: ParentWhatsAppInfo }) {
       </div>
 
       {whatsapp.dev_test_code && (
-        <div className="rounded-md border border-slate-300 bg-slate-100 p-2 text-xs flex items-center gap-2">
+        <div className="rounded-md border border-slate-300 bg-slate-100 p-2 text-xs flex items-center gap-2 text-slate-800 dark:bg-slate-500/10 dark:border-slate-500/30 dark:text-slate-200">
           <ShieldCheck className="size-4 text-slate-600 shrink-0" aria-hidden />
           <span className="font-semibold">DEV:</span>
           <span>WhatsApp gönderimi devre dışı (stub). Test kodu:</span>
-          <code className="bg-white px-2 py-0.5 rounded border border-slate-300 font-mono">
+          <code className="bg-white px-2 py-0.5 rounded border border-slate-300 font-mono text-slate-900">
             {whatsapp.dev_test_code}
           </code>
         </div>
