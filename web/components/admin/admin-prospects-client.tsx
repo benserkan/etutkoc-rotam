@@ -3,9 +3,9 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Gift, Loader2, MessageCircle, Pencil, Plus, Search, Smartphone, Trash2, Upload, X } from "lucide-react";
+import { AtSign, Copy, Gift, Loader2, MessageCircle, Pencil, Plus, Search, Smartphone, Trash2, Upload, X } from "lucide-react";
 
-import { adminKeys, getAdminProspects } from "@/lib/api/admin";
+import { adminKeys, getAdminProspects, getAdminWhatsAppTemplates } from "@/lib/api/admin";
 import {
   useCreateProspect, useUpdateProspect, useSetProspectStatus, useDeleteProspect,
   useCreateProspectOffer, useImportProspects, type ProspectImportReport,
@@ -50,6 +50,30 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
   });
   const data = query.data ?? initial;
   const statuses = data.meta.statuses;
+
+  // Instagram DM metni — TEK KAYNAK: WhatsApp Şablonları paneli
+  // (koc_kesif_instagram_dm). Metin panelden değişince buraya anında yansır.
+  const tplQ = useQuery({
+    queryKey: adminKeys.whatsappTemplates("admin_yonetici", null, false),
+    queryFn: () => getAdminWhatsAppTemplates("admin_yonetici", null, false),
+    staleTime: 10 * 60_000,
+  });
+  const dmTemplate =
+    tplQ.data?.items.find((t) => t.key === "koc_kesif_instagram_dm")?.content_template ?? "";
+
+  const [copiedId, setCopiedId] = React.useState<number | null>(null);
+  async function copyDm(row: ProspectItem) {
+    const first = (row.name.split(" ")[0] || row.name).trim();
+    const text = (dmTemplate || "Merhaba {{koc_adi}},").replace(/\{\{koc_adi\}\}/g, first);
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopiedId(row.id);
+      toast.success("DM metni kopyalandı — Instagram'da yapıştır");
+      window.setTimeout(() => setCopiedId((c) => (c === row.id ? null : c)), 2500);
+    } catch {
+      toast.error("Kopyalanamadı");
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -114,7 +138,7 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
           <thead className="bg-muted/40 text-[11px] uppercase tracking-wide text-muted-foreground">
             <tr>
               <th className="px-3 py-2 text-left">Ad / Kurum</th>
-              <th className="px-3 py-2 text-left">Telefon</th>
+              <th className="px-3 py-2 text-left">Kanal</th>
               <th className="px-3 py-2 text-left">Tip</th>
               <th className="px-3 py-2 text-left">Şehir</th>
               <th className="px-3 py-2 text-left">Durum</th>
@@ -129,7 +153,17 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
                   <div className="font-medium">{p.name}</div>
                   {p.org_name ? <div className="text-xs text-muted-foreground">{p.org_name}</div> : null}
                 </td>
-                <td className="px-3 py-2 tabular-nums">{p.phone}</td>
+                <td className="px-3 py-2">
+                  {p.instagram ? (
+                    <div className="text-[13px] font-medium text-fuchsia-700 dark:text-fuchsia-400">
+                      @{p.instagram}
+                    </div>
+                  ) : null}
+                  {p.phone ? (
+                    <div className="text-xs tabular-nums text-muted-foreground">{p.phone}</div>
+                  ) : null}
+                  {!p.instagram && !p.phone ? <span className="text-muted-foreground">—</span> : null}
+                </td>
                 <td className="px-3 py-2">{p.kind_label}</td>
                 <td className="px-3 py-2 text-muted-foreground">{p.city ?? "—"}</td>
                 <td className="px-3 py-2">
@@ -145,10 +179,24 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
                             className="rounded p-1.5 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
                       <Gift className="size-4" />
                     </button>
-                    <a href={`https://wa.me/${p.phone}`} target="_blank" rel="noopener noreferrer"
-                       title="WhatsApp'tan yaz" className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10">
-                      <MessageCircle className="size-4" />
-                    </a>
+                    {p.instagram ? (
+                      <>
+                        <button onClick={() => copyDm(p)} title="DM metnini kopyala"
+                                className="rounded p-1.5 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
+                          <Copy className={cn("size-4", copiedId === p.id && "text-emerald-600")} />
+                        </button>
+                        <a href={`https://instagram.com/${p.instagram}`} target="_blank" rel="noopener noreferrer"
+                           title="Instagram profilini aç (DM)" className="rounded p-1.5 text-fuchsia-600 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10">
+                          <AtSign className="size-4" />
+                        </a>
+                      </>
+                    ) : null}
+                    {p.phone ? (
+                      <a href={`https://wa.me/${p.phone}`} target="_blank" rel="noopener noreferrer"
+                         title="WhatsApp'tan yaz" className="rounded p-1.5 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-500/10">
+                        <MessageCircle className="size-4" />
+                      </a>
+                    ) : null}
                     <button onClick={() => setEditRow(p)} title="Düzenle" className="rounded p-1.5 text-slate-500 hover:bg-muted">
                       <Pencil className="size-4" />
                     </button>
@@ -167,8 +215,10 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
       </Card>
 
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        WhatsApp ikonu şu an telefonundan manuel mesaj açar. Kurumsal başlıklı (Cloud API)
-        otomatik teklif gönderimi — Meta Business doğrulaması tamamlanınca aktive olacak (K2).
+        <b>Kopyala</b> → DM metnini panoya alır, <b>@</b> → Instagram profilini açar
+        (metni yapıştırıp gönderirsin — Instagram hazır metinli link desteklemez).
+        WhatsApp ikonu telefonundan hazır metinle açar. Günde 10-15 mesajı geçme;
+        yanıt gelen kaydı &quot;İletişim kuruldu&quot;ya çek.
       </p>
 
       {importOpen ? <ImportDialog onClose={() => setImportOpen(false)} /> : null}

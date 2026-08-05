@@ -76,7 +76,9 @@ class SalesProspect(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
-    phone: Mapped[str] = mapped_column(String(32), nullable=False)  # E.164 normalize
+    # DM-öncelikli akış (2026-08-05): Instagram'daki koçların çoğu telefon
+    # yayımlamıyor → telefon opsiyonel; kimlik `instagram` olabilir.
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)  # E.164
     kind: Mapped[str] = mapped_column(String(16), nullable=False, default=PROSPECT_KIND_COACH)
     org_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     email: Mapped[str | None] = mapped_column(String(200), nullable=True)

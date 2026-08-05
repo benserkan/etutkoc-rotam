@@ -466,6 +466,37 @@ SEED_TEMPLATES: list[dict] = [
 
     # ========== F. Süper admin → Yönetici/Koç (5) ==========
     {
+        # Instagram DM — ilk temas (2026-08-05 saha bulgusu: koçların çoğu
+        # telefon yayımlamıyor, DM tek kanal). Tanımadığın kişinin DM'i
+        # 'mesaj istekleri' klasörüne düşer ve orada YALNIZ İLK SATIR
+        # görünür → ilk cümle kancadır, satış cümlesi olamaz. Link YOK
+        # (ilk mesajdaki bağlantı spam filtresini tetikler).
+        "key": "koc_kesif_instagram_dm",
+        "category": CATEGORY_ADMIN_YONETICI,
+        "target_role": TARGET_SUPER_ADMIN,
+        "name_tr": "Koç keşif — Instagram DM (ilk temas)",
+        "description": (
+            "Instagram DM ilk teması. İlk cümle mesaj-isteği önizlemesinde "
+            "görünen tek satırdır; meslektaş dili + somut referans. Linksiz, "
+            "kısa. Günde 10-15 hesabı geçme."
+        ),
+        "content_template": (
+            "Merhaba {{koc_adi}}, ben de öğrenci koçuyum — Trabzon'da "
+            "çalışıyorum, paylaşımlarınızı takip ediyorum.\n\n"
+            "Kendi öğrencilerim için bir sistem geliştirdim: deneme "
+            "karnesinin PDF'ini yüklüyorum, yapay zekâ soru soru konu "
+            "analizini çıkarıyor ve veliye durumu sesli anlatıyor.\n\n"
+            "Satış için yazmıyorum; sahadaki bir meslektaş olarak fikrinizi "
+            "merak ediyorum — işinize yarar mı, eksiği ne olur?\n\n"
+            "İsterseniz bir deneme karnesi atın, sistemin çıkardığı analizi "
+            "size göndereyim. İlgilenmezseniz de rahatsız etmem, iyi çalışmalar."
+        ),
+        "variables": [V_KOC],
+        "allow_bulk": False,
+        "allow_freeform_note": True,
+        "sort_order": 4,
+    },
+    {
         # Koç keşif — Instagram/web'den bulunan bağımsız koça İLK TEMAS.
         # Satış değil MESLEKTAŞ GÖRÜŞÜ istemi (2026-08-05 kararı): dönüş
         # yapan zaten Rotam'dan haberdar olmuş olur. Çıkma cümlesi ZORUNLU.

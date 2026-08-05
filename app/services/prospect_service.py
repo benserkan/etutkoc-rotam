@@ -44,7 +44,7 @@ def _now() -> datetime:
 
 def create_prospect(
     db: Session, *, actor_user_id: int | None,
-    name: str, phone: str, kind: str = PROSPECT_KIND_COACH,
+    name: str, phone: str | None = None, kind: str = PROSPECT_KIND_COACH,
     org_name: str | None = None, email: str | None = None, city: str | None = None,
     source: str = "manual", opt_in: bool = False, note: str | None = None,
     instagram: str | None = None,
@@ -52,21 +52,38 @@ def create_prospect(
     name = (name or "").strip()
     if len(name) < 2:
         raise ProspectError("invalid_name", "Ad en az 2 karakter olmalı.")
-    norm = normalize_e164_tr(phone or "")
-    if not norm:
+    handle = _clean_handle(instagram)
+    norm = normalize_e164_tr(phone or "") if (phone or "").strip() else None
+    if (phone or "").strip() and not norm:
         raise ProspectError("invalid_phone", "Geçerli bir cep telefonu girin (5XX...).")
+    if not norm and not handle:
+        # DM-öncelikli akışta telefon opsiyonel ama kimliksiz kayıt olmaz.
+        raise ProspectError(
+            "identity_required",
+            "Telefon veya Instagram kullanıcı adından en az biri gerekli.",
+        )
     if kind not in PROSPECT_KINDS:
         kind = PROSPECT_KIND_COACH
     if source not in PROSPECT_SOURCES:
         source = "manual"
-    # Aynı telefon zaten varsa tekrar ekleme (dedup)
-    existing = db.query(SalesProspect).filter(SalesProspect.phone == norm).first()
-    if existing is not None:
-        raise ProspectError("duplicate_phone",
-                            f"Bu telefon zaten havuzda: {existing.name}")
+    # Dedup: telefon VE instagram ayrı ayrı kontrol edilir
+    if norm:
+        existing = db.query(SalesProspect).filter(SalesProspect.phone == norm).first()
+        if existing is not None:
+            raise ProspectError("duplicate_phone",
+                                f"Bu telefon zaten havuzda: {existing.name}")
+    if handle:
+        existing = (
+            db.query(SalesProspect)
+            .filter(SalesProspect.instagram == handle)
+            .first()
+        )
+        if existing is not None:
+            raise ProspectError("duplicate_instagram",
+                                f"Bu Instagram hesabı zaten havuzda: {existing.name}")
     p = SalesProspect(
         name=name, phone=norm, kind=kind,
-        instagram=_clean_handle(instagram),
+        instagram=handle,
         org_name=(org_name or "").strip() or None,
         email=(email or "").strip() or None,
         city=(city or "").strip() or None,
@@ -224,15 +241,19 @@ def import_prospects_csv(
 
     reader = _csv.DictReader(_io.StringIO(text), delimiter=delim)
     header_map = _map_headers(list(reader.fieldnames or []))
-    if "name" not in header_map.values() or "phone" not in header_map.values():
+    fields = set(header_map.values())
+    if "name" not in fields or not ({"phone", "instagram"} & fields):
         raise ProspectError(
             "missing_columns",
-            "CSV'de en az 'ad' ve 'telefon' sütunları olmalı "
+            "CSV'de 'ad' + ('telefon' veya 'instagram') sütunları olmalı "
             f"(bulunan başlıklar: {', '.join(reader.fieldnames or []) or 'yok'}).",
         )
 
     existing_phones = {
         p for (p,) in db.query(SalesProspect.phone).all() if p
+    }
+    existing_handles = {
+        h for (h,) in db.query(SalesProspect.instagram).all() if h
     }
     seen_in_file: set[str] = set()
     created = 0
@@ -254,20 +275,26 @@ def import_prospects_csv(
         if not name and not phone_raw:
             total -= 1
             continue  # tamamen boş satır
-        norm = normalize_e164_tr(phone_raw)
+        norm = normalize_e164_tr(phone_raw) if phone_raw else None
+        handle = _clean_handle(row.get("instagram"))
         if len(name) < 2:
             invalid.append({"row": idx, "name": name, "phone": phone_raw,
                             "reason": "ad en az 2 karakter olmalı"})
             continue
-        if not norm:
+        if phone_raw and not norm:
             invalid.append({"row": idx, "name": name, "phone": phone_raw,
                             "reason": "geçerli cep telefonu değil (sabit hat WhatsApp'a uygun değil)"})
             continue
-        if norm in seen_in_file:
+        if not norm and not handle:
+            invalid.append({"row": idx, "name": name, "phone": phone_raw,
+                            "reason": "telefon veya instagram gerekli"})
+            continue
+        key = norm or f"ig:{handle}"
+        if key in seen_in_file:
             skipped_duplicate += 1
             continue
-        seen_in_file.add(norm)
-        if norm in existing_phones:
+        seen_in_file.add(key)
+        if (norm and norm in existing_phones) or (handle and handle in existing_handles):
             skipped_existing += 1
             continue
 
@@ -280,7 +307,7 @@ def import_prospects_csv(
             kind = default_kind
 
         if len(preview) < 20:
-            preview.append({"name": name, "phone": norm, "kind": kind,
+            preview.append({"name": name, "phone": norm or "", "kind": kind,
                             "city": row.get("city") or None})
         if dry_run:
             created += 1
@@ -291,7 +318,7 @@ def import_prospects_csv(
             org_name=(row.get("org_name") or "").strip()[:200] or None,
             email=(row.get("email") or "").strip()[:200] or None,
             city=(row.get("city") or "").strip()[:80] or None,
-            instagram=_clean_handle(row.get("instagram")),
+            instagram=handle,
             source=source if source in PROSPECT_SOURCES else "manual",
             opt_in=False,  # toplu liste ASLA izinli sayılmaz
             note=(row.get("note") or "").strip() or None,

@@ -20,14 +20,17 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Check, Loader2, MessageCircle, Plus, UserPlus } from "lucide-react";
+import {
+  ArrowLeft, AtSign, Check, Copy, Loader2, MessageCircle, Plus, UserPlus,
+} from "lucide-react";
 
 import { adminKeys, getAdminProspects, getAdminWhatsAppTemplates } from "@/lib/api/admin";
 import { useCreateProspect } from "@/lib/hooks/use-admin-mutations";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-const TEMPLATE_KEY = "koc_kesif_ilk_temas";
+const WA_TEMPLATE_KEY = "koc_kesif_ilk_temas";
+const DM_TEMPLATE_KEY = "koc_kesif_instagram_dm";
 
 /** Şablon bulunamazsa (seed koşmamışsa) kullanılan yedek metin. */
 const FALLBACK_MESSAGE =
@@ -38,7 +41,7 @@ const FALLBACK_MESSAGE =
   "olarak fikrinizi merak ediyorum: işinize yarar mı, eksiği ne?\n\nTek seferlik yazıyorum; " +
   "ilgilenmezseniz rahatsız etmem. İyi çalışmalar.";
 
-type Added = { name: string; phone: string; instagram: string | null };
+type Added = { name: string; phone: string | null; instagram: string | null };
 
 export function ProspectQuickAdd() {
   const [name, setName] = React.useState("");
@@ -50,6 +53,7 @@ export function ProspectQuickAdd() {
   const [added, setAdded] = React.useState<Added | null>(null);
   const [session, setSession] = React.useState<Added[]>([]);
   const [error, setError] = React.useState<string | null>(null);
+  const [copied, setCopied] = React.useState<string | null>(null);
   const nameRef = React.useRef<HTMLInputElement>(null);
 
   const mut = useCreateProspect();
@@ -60,8 +64,11 @@ export function ProspectQuickAdd() {
     queryFn: () => getAdminWhatsAppTemplates("admin_yonetici", null, false),
     staleTime: 10 * 60_000,
   });
-  const template =
-    tplQ.data?.items.find((t) => t.key === TEMPLATE_KEY)?.content_template ??
+  const waTemplate =
+    tplQ.data?.items.find((t) => t.key === WA_TEMPLATE_KEY)?.content_template ??
+    FALLBACK_MESSAGE;
+  const dmTemplate =
+    tplQ.data?.items.find((t) => t.key === DM_TEMPLATE_KEY)?.content_template ??
     FALLBACK_MESSAGE;
 
   // Bugünkü toplam (spam raylarını göz önünde tut: günde 10-15 hedefi)
@@ -72,10 +79,25 @@ export function ProspectQuickAdd() {
   });
   const total = listQ.data?.items.length ?? 0;
 
+  function firstName(a: Added): string {
+    return (a.name.split(" ")[0] || a.name).trim();
+  }
+
   function waHref(a: Added): string {
-    const first = (a.name.split(" ")[0] || a.name).trim();
-    const text = template.replace(/\{\{koc_adi\}\}/g, first);
+    const text = waTemplate.replace(/\{\{koc_adi\}\}/g, firstName(a));
     return `https://wa.me/${a.phone}?text=${encodeURIComponent(text)}`;
+  }
+
+  /** DM metnini panoya kopyala → Instagram'da yapıştır (IG deep-link metin taşımaz). */
+  async function copyDm(a: Added) {
+    const text = dmTemplate.replace(/\{\{koc_adi\}\}/g, firstName(a));
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(a.instagram ?? a.name);
+      window.setTimeout(() => setCopied(null), 2500);
+    } catch {
+      setError("Kopyalanamadı — metni Şablonlar sayfasından alabilirsin.");
+    }
   }
 
   function submit(e: React.FormEvent) {
@@ -83,12 +105,16 @@ export function ProspectQuickAdd() {
     setError(null);
     const n = name.trim();
     const p = phone.trim();
+    const ig = instagram.trim();
     if (n.length < 2) { setError("Ad en az 2 karakter olmalı."); return; }
-    if (!p) { setError("Telefon zorunlu."); return; }
+    if (!p && !ig) {
+      setError("Instagram kullanıcı adı veya telefon gerekli.");
+      return;
+    }
     mut.mutate(
       {
-        name: n, phone: p, kind,
-        instagram: instagram.trim() || null,
+        name: n, phone: p || undefined, kind,
+        instagram: ig || null,
         city: city.trim() || null,
         note: note.trim() || null,
         source: "manual",
@@ -97,7 +123,7 @@ export function ProspectQuickAdd() {
       {
         onSuccess: (res) => {
           const rec: Added = {
-            name: res.data.name, phone: res.data.phone,
+            name: res.data.name, phone: res.data.phone ?? null,
             instagram: res.data.instagram ?? null,
           };
           setAdded(rec);
@@ -126,8 +152,9 @@ export function ProspectQuickAdd() {
       <div>
         <h1 className="text-xl font-bold">Hızlı ekle</h1>
         <p className="mt-0.5 text-[13px] leading-snug text-muted-foreground">
-          Instagram&apos;da koç hesabını aç → <b>Ara</b> düğmesinden numarayı kopyala →
-          buraya yapıştır. Yalnız <b>işletme iletişimi yayımlı</b> hesapları ekle.
+          Koç hesabını bul → kullanıcı adını buraya yaz → <b>DM metnini kopyala</b> →
+          Instagram&apos;da yapıştır. Telefon yayımlıysa ekle (varsa WhatsApp daha güçlü),
+          yoksa boş bırak.
         </p>
       </div>
 
@@ -137,14 +164,36 @@ export function ProspectQuickAdd() {
           <p className="flex items-center gap-2 text-sm font-semibold text-emerald-900 dark:text-emerald-200">
             <Check className="size-4" aria-hidden /> {added.name} havuza eklendi
           </p>
-          <a
-            href={waHref(added)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-base font-semibold text-white active:bg-emerald-700"
-          >
-            <MessageCircle className="size-5" aria-hidden /> WhatsApp&apos;ta aç (metin hazır)
-          </a>
+          {added.instagram ? (
+            <>
+              <button
+                type="button"
+                onClick={() => copyDm(added)}
+                className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-4 text-base font-semibold text-white active:bg-cyan-800"
+              >
+                <Copy className="size-5" aria-hidden />
+                {copied === added.instagram ? "Kopyalandı ✓" : "DM metnini kopyala"}
+              </button>
+              <a
+                href={`https://instagram.com/${added.instagram}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl border-2 border-cyan-600 px-4 text-base font-semibold text-cyan-800 active:bg-cyan-50 dark:text-cyan-300"
+              >
+                <AtSign className="size-5" aria-hidden /> Profili aç → DM&apos;e yapıştır
+              </a>
+            </>
+          ) : null}
+          {added.phone ? (
+            <a
+              href={waHref(added)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-emerald-600 px-4 text-base font-semibold text-white active:bg-emerald-700"
+            >
+              <MessageCircle className="size-5" aria-hidden /> WhatsApp&apos;ta aç (metin hazır)
+            </a>
+          ) : null}
           <button
             type="button"
             onClick={() => { setAdded(null); nameRef.current?.focus(); }}
@@ -187,18 +236,7 @@ export function ProspectQuickAdd() {
             />
           </Field>
 
-          <Field label="Telefon *">
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              placeholder="0555 123 45 67"
-              inputMode="tel"
-              autoComplete="tel"
-              className={INPUT}
-            />
-          </Field>
-
-          <Field label="Instagram">
+          <Field label="Instagram *">
             <input
               value={instagram}
               onChange={(e) => setInstagram(e.target.value)}
@@ -206,6 +244,17 @@ export function ProspectQuickAdd() {
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
+              className={INPUT}
+            />
+          </Field>
+
+          <Field label="Telefon (varsa)">
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="yayımlamamışsa boş bırak"
+              inputMode="tel"
+              autoComplete="tel"
               className={INPUT}
             />
           </Field>
@@ -260,18 +309,45 @@ export function ProspectQuickAdd() {
                 <div className="min-w-0">
                   <p className="truncate text-sm font-medium">{a.name}</p>
                   <p className="truncate text-xs text-muted-foreground">
-                    {a.phone}{a.instagram ? ` · @${a.instagram}` : ""}
+                    {a.instagram ? `@${a.instagram}` : ""}
+                    {a.instagram && a.phone ? " · " : ""}{a.phone ?? ""}
                   </p>
                 </div>
-                <a
-                  href={waHref(a)}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex size-11 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 active:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400"
-                  aria-label={`${a.name} — WhatsApp'ta aç`}
-                >
-                  <MessageCircle className="size-5" aria-hidden />
-                </a>
+                <div className="flex shrink-0 items-center gap-1.5">
+                  {a.instagram ? (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => copyDm(a)}
+                        className="flex size-11 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 active:bg-cyan-100 dark:bg-cyan-500/10 dark:text-cyan-400"
+                        aria-label={`${a.name} — DM metnini kopyala`}
+                      >
+                        {copied === a.instagram ? <Check className="size-5" aria-hidden />
+                                                : <Copy className="size-5" aria-hidden />}
+                      </button>
+                      <a
+                        href={`https://instagram.com/${a.instagram}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex size-11 items-center justify-center rounded-full bg-fuchsia-50 text-fuchsia-700 active:bg-fuchsia-100 dark:bg-fuchsia-500/10 dark:text-fuchsia-400"
+                        aria-label={`${a.name} — Instagram profili`}
+                      >
+                        <AtSign className="size-5" aria-hidden />
+                      </a>
+                    </>
+                  ) : null}
+                  {a.phone ? (
+                    <a
+                      href={waHref(a)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex size-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-700 active:bg-emerald-100 dark:bg-emerald-500/10 dark:text-emerald-400"
+                      aria-label={`${a.name} — WhatsApp'ta aç`}
+                    >
+                      <MessageCircle className="size-5" aria-hidden />
+                    </a>
+                  ) : null}
+                </div>
               </div>
             ))}
           </Card>
@@ -279,9 +355,10 @@ export function ProspectQuickAdd() {
       ) : null}
 
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        Kayıtlar <b>izinsiz (opt-in yok)</b> olarak eklenir. Mesaj kendi telefonundan,
-        birebir gider; günde <b>10-15</b> mesajı geçme. Yanıt gelirse durum
-        Havuz&apos;dan &quot;İletişim kuruldu&quot;ya çekilir.
+DM ipucu: mesaj isteği kutusunda <b>yalnız ilk satır</b> görünür — kanca ilk
+        cümlededir, ilk mesaja <b>link koyma</b> (spam filtresi). Günde <b>10-15</b>
+        hesabı geçme. Yanıt gelirse durumu Havuz&apos;dan
+        &quot;İletişim kuruldu&quot;ya çek.
       </p>
     </div>
   );

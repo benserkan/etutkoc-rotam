@@ -38,7 +38,7 @@ router = APIRouter(prefix="/admin/prospects", tags=["v2-admin-prospects"])
 
 class ProspectCreateBody(BaseModel):
     name: str
-    phone: str
+    phone: str | None = None
     instagram: str | None = None
     kind: str = "coach"
     org_name: str | None = None
@@ -96,7 +96,7 @@ def _item(p: SalesProspect) -> dict:
 
 
 def _err(e: ps.ProspectError):
-    code = 409 if e.code in ("duplicate_phone",) else 422
+    code = 409 if e.code in ("duplicate_phone", "duplicate_instagram") else 422
     raise HTTPException(status_code=code, detail={"error": "prospect", "code": e.code, "message": e.message})
 
 

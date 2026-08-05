@@ -3345,7 +3345,7 @@ export interface CommLogFilters {
 export interface ProspectItem {
   id: number;
   name: string;
-  phone: string;
+  phone: string | null;
   instagram?: string | null;
   kind: string;
   kind_label: string;
@@ -3395,7 +3395,8 @@ export interface ProspectOfferResult {
 }
 export interface ProspectCreateBody {
   name: string;
-  phone: string;
+  /** DM-öncelikli akış (2026-08-05): telefon opsiyonel; kimlik instagram olabilir. */
+  phone?: string | null;
   instagram?: string | null;
   kind?: string;
   org_name?: string | null;
