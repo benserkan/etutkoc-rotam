@@ -481,7 +481,7 @@ SEED_TEMPLATES: list[dict] = [
             "Günde 10-15 hesabı geçme. Cevap gelirse 2. mesaj: koc_kesif_dm_devam."
         ),
         "content_template": (
-            "Merhaba, ben Serkan Aydın — ben de eğitim koçuyum, Trabzon'da "
+            "Merhaba, ben Serkan Aydın. Ben de eğitim koçuyum, Trabzon'da "
             "çalışıyorum.\n\n"
             "Kendi öğrencilerim için kullandığım araçları (program hazırlama, "
             "deneme analizi, veli görüşmeleri, anketler) yapay zekâ destekli "
@@ -490,7 +490,7 @@ SEED_TEMPLATES: list[dict] = [
             "soru soru analiz ediyor; veliler de öğrencinin gelişimini kendi "
             "panelinden takip edip yapay zekânın sesli yorumunu "
             "dinleyebiliyor.\n\n"
-            "Satmak için yazmıyorum — sahadaki bir meslektaş olarak fikrinizi "
+            "Satmak için yazmıyorum. Sahadaki bir meslektaş olarak fikrinizi "
             "merak ediyorum: böyle bir şey işinize yarar mı, eksiği ne "
             "olur?\n\n"
             "İsterseniz size bir test hesabı açayım, kendiniz deneyin. "
