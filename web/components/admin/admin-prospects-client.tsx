@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Gift, Loader2, MessageCircle, Pencil, Plus, Search, Trash2, Upload, X } from "lucide-react";
+import { Copy, Gift, Loader2, MessageCircle, Pencil, Plus, Search, Smartphone, Trash2, Upload, X } from "lucide-react";
 
 import { adminKeys, getAdminProspects } from "@/lib/api/admin";
 import {
@@ -61,6 +62,11 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Button variant="outline" asChild>
+            <Link href="/admin/prospects/hizli">
+              <Smartphone className="size-4" aria-hidden /> Telefondan hızlı ekle
+            </Link>
+          </Button>
           <Button variant="outline" onClick={() => setImportOpen(true)}>
             <Upload className="size-4" aria-hidden /> CSV ile toplu ekle
           </Button>

@@ -19,6 +19,18 @@ from app.models.sales_prospect import (
 from app.services.phone_service import normalize_e164_tr
 
 
+def _clean_handle(v: str | None) -> str | None:
+    """@user, instagram.com/user, boşluk → 'user' (küçük harf)."""
+    h = (v or "").strip()
+    if not h:
+        return None
+    for pre in ("https://", "http://", "www.", "instagram.com/", "instagr.am/"):
+        if h.lower().startswith(pre):
+            h = h[len(pre):]
+    h = h.split("?")[0].split("/")[0].lstrip("@").strip().lower()
+    return h[:80] or None
+
+
 class ProspectError(Exception):
     def __init__(self, code: str, message: str) -> None:
         self.code = code
@@ -35,6 +47,7 @@ def create_prospect(
     name: str, phone: str, kind: str = PROSPECT_KIND_COACH,
     org_name: str | None = None, email: str | None = None, city: str | None = None,
     source: str = "manual", opt_in: bool = False, note: str | None = None,
+    instagram: str | None = None,
 ) -> SalesProspect:
     name = (name or "").strip()
     if len(name) < 2:
@@ -53,6 +66,7 @@ def create_prospect(
                             f"Bu telefon zaten havuzda: {existing.name}")
     p = SalesProspect(
         name=name, phone=norm, kind=kind,
+        instagram=_clean_handle(instagram),
         org_name=(org_name or "").strip() or None,
         email=(email or "").strip() or None,
         city=(city or "").strip() or None,
@@ -157,6 +171,7 @@ _CSV_FIELD_ALIASES: dict[str, tuple[str, ...]] = {
     "email": ("eposta", "e-posta", "email", "mail"),
     "city": ("sehir", "şehir", "city", "il"),
     "note": ("not", "note", "aciklama", "açıklama", "notlar"),
+    "instagram": ("instagram", "ig", "instagram_hesabi", "hesap"),
 }
 
 
@@ -276,6 +291,7 @@ def import_prospects_csv(
             org_name=(row.get("org_name") or "").strip()[:200] or None,
             email=(row.get("email") or "").strip()[:200] or None,
             city=(row.get("city") or "").strip()[:80] or None,
+            instagram=_clean_handle(row.get("instagram")),
             source=source if source in PROSPECT_SOURCES else "manual",
             opt_in=False,  # toplu liste ASLA izinli sayılmaz
             note=(row.get("note") or "").strip() or None,

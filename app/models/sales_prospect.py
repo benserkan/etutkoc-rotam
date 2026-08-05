@@ -81,6 +81,8 @@ class SalesProspect(Base):
     org_name: Mapped[str | None] = mapped_column(String(200), nullable=True)
     email: Mapped[str | None] = mapped_column(String(200), nullable=True)
     city: Mapped[str | None] = mapped_column(String(80), nullable=True)
+    # Instagram kullanıcı adı (@ olmadan) — bireysel koç keşfinde kimlik
+    instagram: Mapped[str | None] = mapped_column(String(80), nullable=True)
     source: Mapped[str] = mapped_column(String(24), nullable=False, default="manual")
     status: Mapped[str] = mapped_column(String(20), nullable=False, default=PROSPECT_STATUS_NEW)
     # WhatsApp izni (Meta opt-in/kalite politikası için) — soğuk listede dikkat.

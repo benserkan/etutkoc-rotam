@@ -3346,6 +3346,7 @@ export interface ProspectItem {
   id: number;
   name: string;
   phone: string;
+  instagram?: string | null;
   kind: string;
   kind_label: string;
   org_name: string | null;
@@ -3395,6 +3396,7 @@ export interface ProspectOfferResult {
 export interface ProspectCreateBody {
   name: string;
   phone: string;
+  instagram?: string | null;
   kind?: string;
   org_name?: string | null;
   email?: string | null;

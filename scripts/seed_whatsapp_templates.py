@@ -466,6 +466,37 @@ SEED_TEMPLATES: list[dict] = [
 
     # ========== F. Süper admin → Yönetici/Koç (5) ==========
     {
+        # Koç keşif — Instagram/web'den bulunan bağımsız koça İLK TEMAS.
+        # Satış değil MESLEKTAŞ GÖRÜŞÜ istemi (2026-08-05 kararı): dönüş
+        # yapan zaten Rotam'dan haberdar olmuş olur. Çıkma cümlesi ZORUNLU.
+        "key": "koc_kesif_ilk_temas",
+        "category": CATEGORY_ADMIN_YONETICI,
+        "target_role": TARGET_SUPER_ADMIN,
+        "name_tr": "Koç keşif — ilk temas (görüş isteme)",
+        "description": (
+            "Bağımsız koça meslektaş olarak ilk temas. Satış dili YOK; "
+            "geri bildirim ister. Yalnız iş için yayımlanmış numaralara, "
+            "günde 10-15 mesajı geçmeden, TEK SEFER gönderilir."
+        ),
+        "content_template": (
+            "Merhaba {{koc_adi}}, ben Serkan Aydın — Trabzon'da öğrenci "
+            "koçluğu yapıyorum. Paylaşımlarınızı takip ediyorum.\n\n"
+            "Kendi öğrencilerim için bir sistem geliştirdim: deneme "
+            "karnesinin PDF'ini yüklüyorsun, yapay zekâ soru soru konu "
+            "analizini çıkarıyor; veliye durumu sesli anlatıyor.\n\n"
+            "Satış için yazmıyorum — sahada olan bir meslektaş olarak "
+            "fikrinizi merak ediyorum: işinize yarar mı, eksiği ne? "
+            "İsterseniz bir deneme karnesi gönderin, sistemin çıkardığı "
+            "analizi size ileteyim.\n\n"
+            "Tek seferlik yazıyorum; ilgilenmezseniz rahatsız etmem. "
+            "İyi çalışmalar."
+        ),
+        "variables": [V_KOC],
+        "allow_bulk": False,   # TOPLU GÖNDERİM KAPALI — birebir temas kuralı
+        "allow_freeform_note": True,
+        "sort_order": 5,
+    },
+    {
         "key": "admin_yonetici_sistem_duyuru",
         "category": CATEGORY_ADMIN_YONETICI,
         "target_role": TARGET_SUPER_ADMIN,

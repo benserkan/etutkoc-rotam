@@ -39,6 +39,7 @@ router = APIRouter(prefix="/admin/prospects", tags=["v2-admin-prospects"])
 class ProspectCreateBody(BaseModel):
     name: str
     phone: str
+    instagram: str | None = None
     kind: str = "coach"
     org_name: str | None = None
     email: str | None = None
@@ -82,6 +83,7 @@ def _item(p: SalesProspect) -> dict:
         "org_name": p.org_name,
         "email": p.email,
         "city": p.city,
+        "instagram": p.instagram,
         "source": p.source,
         "source_label": PROSPECT_SOURCE_LABELS_TR.get(p.source, p.source),
         "status": p.status,
@@ -130,6 +132,7 @@ def create_prospect(
             db, actor_user_id=user.id, name=body.name, phone=body.phone,
             kind=body.kind, org_name=body.org_name, email=body.email,
             city=body.city, source=body.source, opt_in=body.opt_in, note=body.note,
+            instagram=body.instagram,
         )
         db.commit()
     except ps.ProspectError as e:
