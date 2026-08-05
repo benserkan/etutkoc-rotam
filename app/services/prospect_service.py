@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 
 from app.models import SalesProspect
 from app.models.sales_prospect import (
-    PROSPECT_KINDS, PROSPECT_KIND_COACH, PROSPECT_STATUSES, PROSPECT_STATUS_NEW,
-    PROSPECT_SOURCES,
+    PROSPECT_KINDS, PROSPECT_KIND_COACH, PROSPECT_KIND_INSTITUTION,
+    PROSPECT_STATUSES, PROSPECT_STATUS_NEW, PROSPECT_SOURCES,
 )
 from app.services.phone_service import normalize_e164_tr
 
@@ -143,3 +143,157 @@ def counts_by_status(db: Session) -> dict[str, int]:
     rows = db.query(SalesProspect.status, _f.count(SalesProspect.id)).group_by(
         SalesProspect.status).all()
     return {str(s): int(c) for s, c in rows}
+
+
+# ---------------------------- Toplu içe aktarma (CSV) ----------------------------
+
+# Kabul edilen başlıklar (TR/EN eşanlamlı) — kullanıcı Excel/Sheets'ten ne
+# aktarırsa aktarsın çalışsın diye esnek.
+_CSV_FIELD_ALIASES: dict[str, tuple[str, ...]] = {
+    "name": ("ad", "isim", "ad_soyad", "name", "isletme", "işletme", "unvan"),
+    "phone": ("telefon", "tel", "phone", "gsm", "cep", "whatsapp"),
+    "kind": ("tur", "tür", "kind", "tip", "kategori"),
+    "org_name": ("kurum_adi", "kurum", "org", "org_name", "isletme_adi", "marka"),
+    "email": ("eposta", "e-posta", "email", "mail"),
+    "city": ("sehir", "şehir", "city", "il"),
+    "note": ("not", "note", "aciklama", "açıklama", "notlar"),
+}
+
+
+def _norm_header(h: str) -> str:
+    return (h or "").strip().lower().replace("﻿", "").replace(" ", "_")
+
+
+def _map_headers(fieldnames: list[str]) -> dict[str, str]:
+    """CSV başlığı → model alanı eşlemesi (bulunamayan alan atlanır)."""
+    out: dict[str, str] = {}
+    for raw in fieldnames or []:
+        key = _norm_header(raw)
+        for field, aliases in _CSV_FIELD_ALIASES.items():
+            if key in aliases:
+                out[raw] = field
+                break
+    return out
+
+
+def import_prospects_csv(
+    db: Session, *, actor_user_id: int | None, csv_text: str,
+    source: str = "manual", default_kind: str = PROSPECT_KIND_COACH,
+    dry_run: bool = False, max_rows: int = 1000,
+) -> dict:
+    """CSV metnini Hedef Havuzu'na aktar (Faz: koç keşif listesi, 2026-08-05).
+
+    Dürüstlük kuralları:
+    - Telefon `normalize_e164_tr` ile doğrulanır; SABİT HAT KABUL EDİLMEZ
+      (WhatsApp'a gönderilemez → sessizce eklemek yanlış veri olur).
+    - Havuzda aynı telefon varsa ATLANIR (mevcut kayıt EZİLMEZ).
+    - Aynı dosyada tekrarlayan telefon bir kez alınır.
+    - `opt_in` HER ZAMAN False — toplu listeden gelen kayıt izinli sayılmaz
+      (Meta politikası + KVKK; izin ancak kişi dönüş yapınca oluşur).
+    - dry_run=True → hiçbir şey yazılmaz, yalnız rapor döner (önizleme).
+
+    Dönen rapor: {created, skipped_duplicate, skipped_existing, invalid[],
+    total_rows, preview[]}
+    """
+    import csv as _csv
+    import io as _io
+
+    text = (csv_text or "").lstrip("﻿")
+    if not text.strip():
+        raise ProspectError("empty_csv", "Dosya boş.")
+
+    # Ayraç tespiti (virgül / noktalı virgül / sekme — Excel TR ; kullanır)
+    first_line = text.splitlines()[0] if text.splitlines() else ""
+    delim = ";" if first_line.count(";") > first_line.count(",") else (
+        "	" if first_line.count("	") > first_line.count(",") else ",")
+
+    reader = _csv.DictReader(_io.StringIO(text), delimiter=delim)
+    header_map = _map_headers(list(reader.fieldnames or []))
+    if "name" not in header_map.values() or "phone" not in header_map.values():
+        raise ProspectError(
+            "missing_columns",
+            "CSV'de en az 'ad' ve 'telefon' sütunları olmalı "
+            f"(bulunan başlıklar: {', '.join(reader.fieldnames or []) or 'yok'}).",
+        )
+
+    existing_phones = {
+        p for (p,) in db.query(SalesProspect.phone).all() if p
+    }
+    seen_in_file: set[str] = set()
+    created = 0
+    skipped_duplicate = 0   # dosya içi tekrar
+    skipped_existing = 0    # havuzda zaten var
+    invalid: list[dict] = []
+    preview: list[dict] = []
+    total = 0
+
+    for idx, raw_row in enumerate(reader, start=2):  # 1 = başlık satırı
+        if total >= max_rows:
+            invalid.append({"row": idx, "reason": f"satır sınırı ({max_rows}) aşıldı"})
+            break
+        total += 1
+        row = {header_map[k]: (v or "").strip()
+               for k, v in raw_row.items() if k in header_map}
+        name = row.get("name", "")
+        phone_raw = row.get("phone", "")
+        if not name and not phone_raw:
+            total -= 1
+            continue  # tamamen boş satır
+        norm = normalize_e164_tr(phone_raw)
+        if len(name) < 2:
+            invalid.append({"row": idx, "name": name, "phone": phone_raw,
+                            "reason": "ad en az 2 karakter olmalı"})
+            continue
+        if not norm:
+            invalid.append({"row": idx, "name": name, "phone": phone_raw,
+                            "reason": "geçerli cep telefonu değil (sabit hat WhatsApp'a uygun değil)"})
+            continue
+        if norm in seen_in_file:
+            skipped_duplicate += 1
+            continue
+        seen_in_file.add(norm)
+        if norm in existing_phones:
+            skipped_existing += 1
+            continue
+
+        kind = (row.get("kind") or default_kind).strip().lower()
+        if kind in ("kurum", "institution", "kurumsal"):
+            kind = PROSPECT_KIND_INSTITUTION
+        elif kind in ("koç", "koc", "coach", "bağımsız koç", "bagimsiz koc"):
+            kind = PROSPECT_KIND_COACH
+        elif kind not in PROSPECT_KINDS:
+            kind = default_kind
+
+        if len(preview) < 20:
+            preview.append({"name": name, "phone": norm, "kind": kind,
+                            "city": row.get("city") or None})
+        if dry_run:
+            created += 1
+            continue
+
+        p = SalesProspect(
+            name=name[:160], phone=norm, kind=kind,
+            org_name=(row.get("org_name") or "").strip()[:200] or None,
+            email=(row.get("email") or "").strip()[:200] or None,
+            city=(row.get("city") or "").strip()[:80] or None,
+            source=source if source in PROSPECT_SOURCES else "manual",
+            opt_in=False,  # toplu liste ASLA izinli sayılmaz
+            note=(row.get("note") or "").strip() or None,
+            status=PROSPECT_STATUS_NEW, created_by_admin_id=actor_user_id,
+        )
+        db.add(p)
+        created += 1
+
+    if not dry_run and created:
+        db.flush()
+
+    return {
+        "created": created,
+        "skipped_duplicate": skipped_duplicate,
+        "skipped_existing": skipped_existing,
+        "invalid": invalid[:50],
+        "invalid_count": len(invalid),
+        "total_rows": total,
+        "preview": preview,
+        "dry_run": dry_run,
+    }

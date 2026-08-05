@@ -8,7 +8,7 @@ from __future__ import annotations
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
 from app.config import settings
@@ -46,6 +46,14 @@ class ProspectCreateBody(BaseModel):
     source: str = "manual"
     opt_in: bool = False
     note: str | None = None
+
+
+class ProspectImportBody(BaseModel):
+    """CSV toplu içe aktarma gövdesi (metin olarak; dosya frontend'de okunur)."""
+    csv_text: str = Field(..., min_length=1, max_length=2_000_000)
+    source: str = "manual"
+    default_kind: str = "coach"
+    dry_run: bool = False
 
 
 class ProspectUpdateBody(BaseModel):
@@ -128,6 +136,34 @@ def create_prospect(
         db.rollback()
         _err(e)
     return {"data": _item(p), "invalidate": ["admin:prospects"]}
+
+
+@router.post("/import")
+def import_prospects(
+    body: ProspectImportBody,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """CSV toplu içe aktarma (koç keşif listesi, 2026-08-05).
+
+    `dry_run=true` → yalnız önizleme/rapor, hiçbir kayıt yazılmaz.
+    Mevcut telefon EZİLMEZ (atlanır); opt_in daima False (soğuk liste).
+    """
+    try:
+        report = ps.import_prospects_csv(
+            db, actor_user_id=user.id, csv_text=body.csv_text,
+            source=body.source, default_kind=body.default_kind,
+            dry_run=body.dry_run,
+        )
+        if body.dry_run:
+            db.rollback()
+        else:
+            db.commit()
+    except ps.ProspectError as e:
+        db.rollback()
+        _err(e)
+    return {"data": report,
+            "invalidate": [] if body.dry_run else ["admin:prospects"]}
 
 
 @router.post("/{prospect_id}")

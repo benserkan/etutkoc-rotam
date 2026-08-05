@@ -2347,6 +2347,50 @@ export function useDeleteTestimonial() {
 // =============================================================================
 type ProspectResp = { data: ProspectItem; invalidate?: string[] };
 
+/** CSV toplu içe aktarma raporu (backend prospect_service.import_prospects_csv). */
+export type ProspectImportReport = {
+  created: number;
+  skipped_duplicate: number;
+  skipped_existing: number;
+  invalid: { row: number; name?: string; phone?: string; reason: string }[];
+  invalid_count: number;
+  total_rows: number;
+  preview: { name: string; phone: string; kind: string; city: string | null }[];
+  dry_run: boolean;
+};
+
+/** CSV toplu içe aktarma (dry_run=true → yalnız önizleme, DB'ye yazmaz). */
+export function useImportProspects() {
+  const qc = useQueryClient();
+  return useMutation<
+    { data: ProspectImportReport; invalidate: string[] },
+    Error,
+    { csv_text: string; dry_run?: boolean; default_kind?: string }
+  >({
+    mutationFn: (body) =>
+      api<{ data: ProspectImportReport; invalidate: string[] }>(
+        "/api/v2/admin/prospects/import",
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      if (!res.data.dry_run) {
+        toast.success(`${res.data.created} aday havuza eklendi`, {
+          description:
+            `${res.data.skipped_existing} zaten kayıtlı · ` +
+            `${res.data.skipped_duplicate} dosya içi tekrar · ` +
+            `${res.data.invalid_count} geçersiz satır`,
+        });
+      }
+    },
+    onError: (e) => {
+      toast.error(errorTitle(e, "İçe aktarma başarısız"), {
+        description: errorMessage(e, "CSV okunamadı."),
+      });
+    },
+  });
+}
+
 export function useCreateProspect() {
   const qc = useQueryClient();
   return useMutation<ProspectResp, Error, ProspectCreateBody>({

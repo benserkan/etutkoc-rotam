@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Copy, Gift, MessageCircle, Pencil, Plus, Search, Trash2, X } from "lucide-react";
+import { Copy, Gift, Loader2, MessageCircle, Pencil, Plus, Search, Trash2, Upload, X } from "lucide-react";
 
 import { adminKeys, getAdminProspects } from "@/lib/api/admin";
 import {
   useCreateProspect, useUpdateProspect, useSetProspectStatus, useDeleteProspect,
-  useCreateProspectOffer,
+  useCreateProspectOffer, useImportProspects, type ProspectImportReport,
 } from "@/lib/hooks/use-admin-mutations";
 import type { ProspectItem, ProspectListResponse, ProspectPlanOption } from "@/lib/types/admin";
 import { toast } from "sonner";
@@ -35,6 +35,7 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
   const [createOpen, setCreateOpen] = React.useState(false);
   const [editRow, setEditRow] = React.useState<ProspectItem | null>(null);
   const [offerRow, setOfferRow] = React.useState<ProspectItem | null>(null);
+  const [importOpen, setImportOpen] = React.useState(false);
 
   React.useEffect(() => {
     const t = setTimeout(() => setQ(searchInput.trim()), 350);
@@ -59,9 +60,14 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
             özel üyelik teklifi göndereceğin satış adayları burada toplanır.
           </p>
         </div>
-        <Button onClick={() => setCreateOpen(true)}>
-          <Plus className="size-4" /> Yeni Hedef
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
+            <Upload className="size-4" aria-hidden /> CSV ile toplu ekle
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="size-4" /> Yeni Hedef
+          </Button>
+        </div>
       </div>
 
       {/* Durum sayımları + filtre */}
@@ -159,6 +165,7 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
         otomatik teklif gönderimi — Meta Business doğrulaması tamamlanınca aktive olacak (K2).
       </p>
 
+      {importOpen ? <ImportDialog onClose={() => setImportOpen(false)} /> : null}
       {createOpen ? <ProspectDialog kinds={data.meta.kinds} onClose={() => setCreateOpen(false)} /> : null}
       {editRow ? <ProspectDialog kinds={data.meta.kinds} row={editRow} onClose={() => setEditRow(null)} /> : null}
       {offerRow ? <OfferDialog row={offerRow} plans={data.meta.plans} onClose={() => setOfferRow(null)} /> : null}
@@ -356,6 +363,126 @@ function ProspectDialog({ kinds, row, onClose }: { kinds: Record<string, string>
             <Button type="submit" disabled={mut.isPending}>{isEdit ? "Kaydet" : "Ekle"}</Button>
           </div>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/**
+ * CSV toplu içe aktarma (2026-08-05) — koç keşif listesini havuza alır.
+ *
+ * Akış: dosya seç → ÖNİZLE (dry-run, DB'ye yazmaz) → rapor → "Havuza ekle".
+ * Kurallar backend'de: sabit hat reddedilir (WhatsApp'a gönderilemez),
+ * mevcut telefon ezilmez, opt_in daima False (soğuk liste izinli sayılmaz).
+ */
+function ImportDialog({ onClose }: { onClose: () => void }) {
+  const [csvText, setCsvText] = React.useState("");
+  const [fileName, setFileName] = React.useState("");
+  const [report, setReport] = React.useState<ProspectImportReport | null>(null);
+  const mut = useImportProspects();
+  const fileRef = React.useRef<HTMLInputElement>(null);
+
+  function pick(e: React.ChangeEvent<HTMLInputElement>) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    setFileName(f.name);
+    setReport(null);
+    const reader = new FileReader();
+    reader.onload = () => setCsvText(String(reader.result ?? ""));
+    reader.readAsText(f, "utf-8");
+  }
+
+  function preview() {
+    mut.mutate({ csv_text: csvText, dry_run: true }, {
+      onSuccess: (res) => setReport(res.data),
+    });
+  }
+
+  function commit() {
+    mut.mutate({ csv_text: csvText }, {
+      onSuccess: () => onClose(),
+    });
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+        <DialogHeader><DialogTitle>CSV ile toplu ekle</DialogTitle></DialogHeader>
+
+        <div className="space-y-3 text-sm">
+          <div className="rounded-lg border border-cyan-200 bg-cyan-50 px-3 py-2 text-[12px] leading-relaxed text-cyan-900 dark:bg-cyan-500/10 dark:border-cyan-500/30 dark:text-cyan-200">
+            Sütunlar: <code className="font-mono">ad, telefon</code> (zorunlu) ·
+            <code className="ml-1 font-mono">tur, kurum_adi, eposta, sehir, not</code> (isteğe bağlı).
+            Excel&apos;in <code className="font-mono">;</code> ayracı da okunur.
+            <br />
+            Sabit hat numaraları <b>alınmaz</b> (WhatsApp gönderilemez), havuzda
+            zaten olan telefon <b>ezilmez</b>, tüm kayıtlar <b>izinsiz (opt-in yok)</b>
+            olarak eklenir.
+          </div>
+
+          <div className="flex items-center gap-2">
+            <input ref={fileRef} type="file" accept=".csv,text/csv,text/plain"
+                   onChange={pick} className="hidden" />
+            <Button type="button" variant="outline" onClick={() => fileRef.current?.click()}>
+              <Upload className="size-4" aria-hidden /> Dosya seç
+            </Button>
+            <span className="text-xs text-muted-foreground">
+              {fileName || "CSV dosyası seçilmedi"}
+            </span>
+          </div>
+
+          {csvText ? (
+            <textarea
+              value={csvText}
+              onChange={(e) => { setCsvText(e.target.value); setReport(null); }}
+              rows={6}
+              className="w-full rounded-md border border-input bg-background px-3 py-2 font-mono text-[11px]"
+            />
+          ) : null}
+
+          {report ? (
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-3 dark:bg-slate-500/10 dark:border-slate-500/30">
+              <p className="text-[13px] font-semibold text-slate-900 dark:text-slate-100">
+                Önizleme — {report.total_rows} satır okundu
+              </p>
+              <ul className="mt-1.5 space-y-0.5 text-[12px] text-slate-700 dark:text-slate-300">
+                <li>✅ Eklenecek: <b>{report.created}</b></li>
+                <li>↩︎ Havuzda zaten var: {report.skipped_existing}</li>
+                <li>⧉ Dosya içi tekrar: {report.skipped_duplicate}</li>
+                <li>⚠︎ Geçersiz satır: {report.invalid_count}</li>
+              </ul>
+              {report.invalid.length ? (
+                <div className="mt-2 max-h-28 overflow-y-auto rounded border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                  {report.invalid.map((i) => (
+                    <div key={`${i.row}-${i.reason}`}>
+                      satır {i.row}: {i.name || i.phone || "—"} → {i.reason}
+                    </div>
+                  ))}
+                </div>
+              ) : null}
+              {report.preview.length ? (
+                <div className="mt-2 max-h-28 overflow-y-auto text-[11px] text-slate-600 dark:text-slate-400">
+                  {report.preview.map((r) => (
+                    <div key={r.phone}>{r.name} · {r.phone} · {r.kind}{r.city ? ` · ${r.city}` : ""}</div>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+        </div>
+
+        <div className="flex justify-end gap-2 pt-2">
+          <Button variant="ghost" onClick={onClose} disabled={mut.isPending}>Vazgeç</Button>
+          <Button variant="outline" onClick={preview} disabled={!csvText || mut.isPending}>
+            Önizle
+          </Button>
+          <Button onClick={commit}
+                  disabled={!report || report.created === 0 || mut.isPending}
+                  className="bg-cyan-700 text-white hover:bg-cyan-800">
+            {mut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+            Havuza ekle{report ? ` (${report.created})` : ""}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
