@@ -466,30 +466,65 @@ SEED_TEMPLATES: list[dict] = [
 
     # ========== F. Süper admin → Yönetici/Koç (5) ==========
     {
-        # Instagram DM — ilk temas (2026-08-05 saha bulgusu: koçların çoğu
-        # telefon yayımlamıyor, DM tek kanal). Tanımadığın kişinin DM'i
-        # 'mesaj istekleri' klasörüne düşer ve orada YALNIZ İLK SATIR
-        # görünür → ilk cümle kancadır, satış cümlesi olamaz. Link YOK
-        # (ilk mesajdaki bağlantı spam filtresini tetikler).
+        # Instagram DM — İLK TEMAS (2026-08-06, kullanıcının kendi metni
+        # kısaltılarak). Kurallar: (a) istek kutusunda yalnız İLK SATIR
+        # görünür → kanca ilk cümlede, (b) LİNK YOK (spam filtresi + 'sonra
+        # bakarım' kaçışı), (c) yüzde/iddia YOK — yalnız doğrulanabilir
+        # somut olgu (40 sn karne okuma), (d) risksiz teklif: test hesabı.
+        # Detaylı anlatım CEVAP GELİNCE (koc_kesif_dm_devam).
         "key": "koc_kesif_instagram_dm",
         "category": CATEGORY_ADMIN_YONETICI,
         "target_role": TARGET_SUPER_ADMIN,
-        "name_tr": "Koç keşif — Instagram DM (ilk temas)",
+        "name_tr": "Koç keşif — Instagram DM (1. mesaj)",
         "description": (
-            "Instagram DM ilk teması. İlk cümle mesaj-isteği önizlemesinde "
-            "görünen tek satırdır; meslektaş dili + somut referans. Linksiz, "
-            "kısa. Günde 10-15 hesabı geçme."
+            "Instagram DM ilk teması. Meslektaş dili, linksiz, ~600 karakter. "
+            "Günde 10-15 hesabı geçme. Cevap gelirse 2. mesaj: koc_kesif_dm_devam."
         ),
         "content_template": (
-            "Merhaba {{koc_adi}}, ben de öğrenci koçuyum — Trabzon'da "
-            "çalışıyorum, paylaşımlarınızı takip ediyorum.\n\n"
-            "Kendi öğrencilerim için bir sistem geliştirdim: deneme "
-            "karnesinin PDF'ini yüklüyorum, yapay zekâ soru soru konu "
-            "analizini çıkarıyor ve veliye durumu sesli anlatıyor.\n\n"
-            "Satış için yazmıyorum; sahadaki bir meslektaş olarak fikrinizi "
-            "merak ediyorum — işinize yarar mı, eksiği ne olur?\n\n"
-            "İsterseniz bir deneme karnesi atın, sistemin çıkardığı analizi "
-            "size göndereyim. İlgilenmezseniz de rahatsız etmem, iyi çalışmalar."
+            "Merhaba, ben Serkan Aydın — ben de eğitim koçuyum, Trabzon'da "
+            "çalışıyorum.\n\n"
+            "Kendi öğrencilerim için kullandığım araçları (program hazırlama, "
+            "deneme analizi, veli görüşmeleri, anketler) yapay zekâ destekli "
+            "tek bir sisteme taşıdım; 3 aydır kendi öğrencilerimde "
+            "kullanıyorum. Örneğin bir deneme karnesinin PDF'ini 40 saniyede "
+            "soru soru analiz ediyor; veliler de öğrencinin gelişimini kendi "
+            "panelinden takip edip yapay zekânın sesli yorumunu "
+            "dinleyebiliyor.\n\n"
+            "Satmak için yazmıyorum — sahadaki bir meslektaş olarak fikrinizi "
+            "merak ediyorum: böyle bir şey işinize yarar mı, eksiği ne "
+            "olur?\n\n"
+            "İsterseniz size bir test hesabı açayım, kendiniz deneyin. "
+            "İlgilenmezseniz de rahatsız etmem, iyi çalışmalar."
+        ),
+        "variables": [V_KOC],
+        "allow_bulk": False,
+        "allow_freeform_note": True,
+        "sort_order": 3,
+    },
+    {
+        # DM 2. mesaj — YALNIZ CEVAP GELİNCE. Link ve detay burada; ilk
+        # mesajda taşınmaz. Kapanış ürünü ANLATMAK yerine GÖSTERMEYE çağırır.
+        "key": "koc_kesif_dm_devam",
+        "category": CATEGORY_ADMIN_YONETICI,
+        "target_role": TARGET_SUPER_ADMIN,
+        "name_tr": "Koç keşif — DM 2. mesaj (cevap geldiğinde)",
+        "description": (
+            "İlk DM'e yanıt veren koça gönderilir: sistemin adı + link + üç "
+            "somut fayda + test hesabı teklifi. İlk temasta KULLANMA."
+        ),
+        "content_template": (
+            "Sistemin adı Rotam: rotam.etutkoc.com\n\n"
+            "Bende işi en çok kolaylaştıran üç şey: deneme karnesini elle "
+            "işlemeyi tamamen bıraktım (PDF'i yüklüyorum, konu konu analiz "
+            "çıkıyor, zayıf konular programa öneri olarak düşüyor); veli "
+            "iletişimi kendi kendine yürüyor (veli panelden takip ediyor, "
+            "yapay zekâ haftalık durumu sesli anlatıyor — velilerim artık "
+            "düzenli dinliyor); yanlış sorular öğrenilene kadar takipte "
+            "kalıyor.\n\n"
+            "Bana kazandırdığı zamanla daha fazla öğrenci alabilir hâle "
+            "geldim. İsterseniz hesabınızı açayım, kendi bir denemenizle "
+            "test edin — çıkan analizi görünce ne demek istediğim daha net "
+            "olur."
         ),
         "variables": [V_KOC],
         "allow_bulk": False,

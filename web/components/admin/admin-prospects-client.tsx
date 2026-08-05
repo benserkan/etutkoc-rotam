@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { AtSign, Copy, Gift, Loader2, MessageCircle, Pencil, Plus, Search, Smartphone, Trash2, Upload, X } from "lucide-react";
+import { AtSign, Copy, CopyPlus, Gift, Loader2, MessageCircle, Pencil, Plus, Search, Smartphone, Trash2, Upload, X } from "lucide-react";
 
 import { adminKeys, getAdminProspects, getAdminWhatsAppTemplates } from "@/lib/api/admin";
 import {
@@ -60,16 +60,25 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
   });
   const dmTemplate =
     tplQ.data?.items.find((t) => t.key === "koc_kesif_instagram_dm")?.content_template ?? "";
+  // 2. mesaj: YALNIZ cevap gelince (link + detay burada)
+  const dm2Template =
+    tplQ.data?.items.find((t) => t.key === "koc_kesif_dm_devam")?.content_template ?? "";
 
-  const [copiedId, setCopiedId] = React.useState<number | null>(null);
-  async function copyDm(row: ProspectItem) {
+  const [copiedId, setCopiedId] = React.useState<string | null>(null);
+  async function copyDm(row: ProspectItem, step: 1 | 2 = 1) {
     const first = (row.name.split(" ")[0] || row.name).trim();
-    const text = (dmTemplate || "Merhaba {{koc_adi}},").replace(/\{\{koc_adi\}\}/g, first);
+    const tpl = step === 1 ? dmTemplate : dm2Template;
+    const text = (tpl || "Merhaba {{koc_adi}},").replace(/\{\{koc_adi\}\}/g, first);
     try {
       await navigator.clipboard.writeText(text);
-      setCopiedId(row.id);
-      toast.success("DM metni kopyalandı — Instagram'da yapıştır");
-      window.setTimeout(() => setCopiedId((c) => (c === row.id ? null : c)), 2500);
+      const mark = `${row.id}-${step}`;
+      setCopiedId(mark);
+      toast.success(
+        step === 1
+          ? "1. mesaj kopyalandı — Instagram'da yapıştır"
+          : "2. mesaj kopyalandı (link + detay)",
+      );
+      window.setTimeout(() => setCopiedId((c) => (c === mark ? null : c)), 2500);
     } catch {
       toast.error("Kopyalanamadı");
     }
@@ -181,9 +190,13 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
                     </button>
                     {p.instagram ? (
                       <>
-                        <button onClick={() => copyDm(p)} title="DM metnini kopyala"
+                        <button onClick={() => copyDm(p, 1)} title="1. mesajı kopyala (ilk temas)"
                                 className="rounded p-1.5 text-cyan-600 hover:bg-cyan-50 dark:hover:bg-cyan-500/10">
-                          <Copy className={cn("size-4", copiedId === p.id && "text-emerald-600")} />
+                          <Copy className={cn("size-4", copiedId === `${p.id}-1` && "text-emerald-600")} />
+                        </button>
+                        <button onClick={() => copyDm(p, 2)} title="2. mesajı kopyala (cevap geldiyse — link + detay)"
+                                className="rounded p-1.5 text-violet-600 hover:bg-violet-50 dark:hover:bg-violet-500/10">
+                          <CopyPlus className={cn("size-4", copiedId === `${p.id}-2` && "text-emerald-600")} />
                         </button>
                         <a href={`https://instagram.com/${p.instagram}`} target="_blank" rel="noopener noreferrer"
                            title="Instagram profilini aç (DM)" className="rounded p-1.5 text-fuchsia-600 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-500/10">
@@ -215,7 +228,8 @@ export function AdminProspectsClient({ initial }: { initial: ProspectListRespons
       </Card>
 
       <p className="text-[11px] leading-relaxed text-muted-foreground">
-        <b>Kopyala</b> → DM metnini panoya alır, <b>@</b> → Instagram profilini açar
+        <b>Kopyala</b> → 1. mesaj (ilk temas), <b>Kopyala+</b> → 2. mesaj
+        (yalnız cevap geldiyse: link + detay), <b>@</b> → Instagram profilini açar
         (metni yapıştırıp gönderirsin — Instagram hazır metinli link desteklemez).
         WhatsApp ikonu telefonundan hazır metinle açar. Günde 10-15 mesajı geçme;
         yanıt gelen kaydı &quot;İletişim kuruldu&quot;ya çek.

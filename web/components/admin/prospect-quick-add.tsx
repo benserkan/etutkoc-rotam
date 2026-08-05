@@ -21,7 +21,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
-  ArrowLeft, AtSign, Check, Copy, Loader2, MessageCircle, Plus, UserPlus,
+  ArrowLeft, AtSign, Check, Copy, CopyPlus, Loader2, MessageCircle, Plus, UserPlus,
 } from "lucide-react";
 
 import { adminKeys, getAdminProspects, getAdminWhatsAppTemplates } from "@/lib/api/admin";
@@ -31,6 +31,8 @@ import { Card } from "@/components/ui/card";
 
 const WA_TEMPLATE_KEY = "koc_kesif_ilk_temas";
 const DM_TEMPLATE_KEY = "koc_kesif_instagram_dm";
+/** 2. mesaj — YALNIZ cevap gelince (link + detay). */
+const DM2_TEMPLATE_KEY = "koc_kesif_dm_devam";
 
 /** Şablon bulunamazsa (seed koşmamışsa) kullanılan yedek metin. */
 const FALLBACK_MESSAGE =
@@ -70,6 +72,8 @@ export function ProspectQuickAdd() {
   const dmTemplate =
     tplQ.data?.items.find((t) => t.key === DM_TEMPLATE_KEY)?.content_template ??
     FALLBACK_MESSAGE;
+  const dm2Template =
+    tplQ.data?.items.find((t) => t.key === DM2_TEMPLATE_KEY)?.content_template ?? "";
 
   // Bugünkü toplam (spam raylarını göz önünde tut: günde 10-15 hedefi)
   const listQ = useQuery({
@@ -88,12 +92,14 @@ export function ProspectQuickAdd() {
     return `https://wa.me/${a.phone}?text=${encodeURIComponent(text)}`;
   }
 
-  /** DM metnini panoya kopyala → Instagram'da yapıştır (IG deep-link metin taşımaz). */
-  async function copyDm(a: Added) {
-    const text = dmTemplate.replace(/\{\{koc_adi\}\}/g, firstName(a));
+  /** DM metnini panoya kopyala → Instagram'da yapıştır (IG deep-link metin taşımaz).
+   *  step=1 ilk temas · step=2 cevap geldiğinde gönderilen detay (link burada). */
+  async function copyDm(a: Added, step: 1 | 2 = 1) {
+    const tpl = step === 1 ? dmTemplate : (dm2Template || dmTemplate);
+    const text = tpl.replace(/\{\{koc_adi\}\}/g, firstName(a));
     try {
       await navigator.clipboard.writeText(text);
-      setCopied(a.instagram ?? a.name);
+      setCopied(`${a.instagram ?? a.name}-${step}`);
       window.setTimeout(() => setCopied(null), 2500);
     } catch {
       setError("Kopyalanamadı — metni Şablonlar sayfasından alabilirsin.");
@@ -168,12 +174,16 @@ export function ProspectQuickAdd() {
             <>
               <button
                 type="button"
-                onClick={() => copyDm(added)}
+                onClick={() => copyDm(added, 1)}
                 className="mt-3 flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-cyan-700 px-4 text-base font-semibold text-white active:bg-cyan-800"
               >
                 <Copy className="size-5" aria-hidden />
-                {copied === added.instagram ? "Kopyalandı ✓" : "DM metnini kopyala"}
+                {copied === `${added.instagram}-1` ? "Kopyalandı ✓" : "1. mesajı kopyala"}
               </button>
+              <p className="mt-2 text-[11px] leading-snug text-emerald-800 dark:text-emerald-300">
+                Cevap gelince <b>2. mesajı</b> (link + detay) alttaki listeden mor
+                düğmeyle kopyalarsın.
+              </p>
               <a
                 href={`https://instagram.com/${added.instagram}`}
                 target="_blank"
@@ -318,12 +328,21 @@ export function ProspectQuickAdd() {
                     <>
                       <button
                         type="button"
-                        onClick={() => copyDm(a)}
+                        onClick={() => copyDm(a, 1)}
                         className="flex size-11 items-center justify-center rounded-full bg-cyan-50 text-cyan-700 active:bg-cyan-100 dark:bg-cyan-500/10 dark:text-cyan-400"
-                        aria-label={`${a.name} — DM metnini kopyala`}
+                        aria-label={`${a.name} — 1. mesajı kopyala`}
                       >
-                        {copied === a.instagram ? <Check className="size-5" aria-hidden />
-                                                : <Copy className="size-5" aria-hidden />}
+                        {copied === `${a.instagram}-1` ? <Check className="size-5" aria-hidden />
+                                                       : <Copy className="size-5" aria-hidden />}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => copyDm(a, 2)}
+                        className="flex size-11 items-center justify-center rounded-full bg-violet-50 text-violet-700 active:bg-violet-100 dark:bg-violet-500/10 dark:text-violet-400"
+                        aria-label={`${a.name} — 2. mesajı kopyala (cevap geldiyse)`}
+                      >
+                        {copied === `${a.instagram}-2` ? <Check className="size-5" aria-hidden />
+                                                       : <CopyPlus className="size-5" aria-hidden />}
                       </button>
                       <a
                         href={`https://instagram.com/${a.instagram}`}
