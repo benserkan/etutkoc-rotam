@@ -3202,6 +3202,8 @@ class AlarmRuleItem(BaseModel):
     channels: str | None = None
     last_triggered_at: datetime | None = None
     last_value: int | None = None
+    # Son 30 günde kaç kez "yanlış alarm" işaretlendi — eşik gözden geçirme sinyali
+    false_positive_30d: int = 0
 
 
 class AlarmEventItem(BaseModel):
@@ -3216,6 +3218,54 @@ class AlarmEventItem(BaseModel):
     acknowledged_at: datetime | None = None
     age_seconds: int
     summary: str | None = None  # kurala özgü okunur detay (örn. moment kırılımı)
+    resolved_at: datetime | None = None
+    resolution_note: str | None = None
+    false_positive: bool = False
+
+
+class AlarmEvidenceItem(BaseModel):
+    baslik: str
+    detay: str = ""
+    href: str | None = None
+    ton: str = "slate"
+    zaman: datetime | None = None
+
+
+class AlarmGuideLink(BaseModel):
+    etiket: str
+    href: str
+
+
+class AlarmDiagnosisResponse(BaseModel):
+    """GET /api/v2/admin/security-monitor/alarms/{id}/diagnose — Teşhis Kartı."""
+    rule_key: str
+    rule_name: str
+    severity: str
+    triggered_at: datetime | None = None
+    value: int
+    threshold: int
+    birim: str = ""
+    ne_oldu: str
+    neden: str
+    ne_yapmali: list[str]
+    baglantilar: list[AlarmGuideLink]
+    sorumlu: str
+    guncel_deger: int | None = None
+    hala_gecerli: bool
+    degerlendirme_hatasi: str | None = None
+    kanit: list[AlarmEvidenceItem]
+    son_30g_tetik: int
+    son_30g_yanlis_alarm: int
+    gurultu_uyarisi: bool
+    acknowledged_at: datetime | None = None
+    resolved_at: datetime | None = None
+    resolution_note: str | None = None
+    false_positive: bool = False
+
+
+class AlarmResolveBody(BaseModel):
+    note: str = ""
+    false_positive: bool = False
 
 
 class AlarmsResponse(BaseModel):

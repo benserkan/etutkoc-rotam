@@ -239,7 +239,7 @@ export function SecuritySystemClient({ initial }: Props) {
       <header>
         <h1 className="inline-flex items-center gap-2 font-display text-2xl font-semibold tracking-tight">
           <ServerCrash className="size-6 text-slate-700" aria-hidden />
-          Sistem Sağlığı
+          Uygulama Hataları
         </h1>
         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
           Yakalanan uygulama hataları (açık gruplar), en çok hata üreten uç noktalar

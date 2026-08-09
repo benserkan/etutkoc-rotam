@@ -10,7 +10,8 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { adminKeys, getAdminSecurityAlarms } from "@/lib/api/admin";
 import { useAlarmAck, useAlarmAckOlder, useAlarmScan, useAlarmUpdateRule } from "@/lib/hooks/use-admin-mutations";
-import type { AlarmRuleItem, AlarmsResponse } from "@/lib/types/admin";
+import type { AlarmEventItem, AlarmRuleItem, AlarmsResponse } from "@/lib/types/admin";
+import { AlarmDiagnosisDialog } from "@/components/admin/alarm-diagnosis-dialog";
 import { fmtDateTime } from "@/components/admin/security-ui";
 
 interface Props {
@@ -34,6 +35,8 @@ export function SecurityAlarmsClient({ initial }: Props) {
 
   const scan = useAlarmScan();
   const ack = useAlarmAck();
+  // Alarm korlugune karsi: satira tiklayinca "hala gecerli mi + ne yapmali + kanit".
+  const [teshis, setTeshis] = React.useState<AlarmEventItem | null>(null);
   const ackOlder = useAlarmAckOlder();
 
   return (
@@ -118,7 +121,15 @@ export function SecurityAlarmsClient({ initial }: Props) {
               </thead>
               <tbody className="divide-y divide-border">
                 {d.events.map((e) => (
-                  <tr key={e.id} className={cn("hover:bg-muted/40", !e.acknowledged_at && "bg-amber-50/30")}>
+                  <tr
+                    key={e.id}
+                    onClick={() => setTeshis(e)}
+                    className={cn(
+                      "cursor-pointer hover:bg-muted/40",
+                      !e.acknowledged_at && "bg-amber-50/30",
+                      e.resolved_at && "opacity-60",
+                    )}
+                  >
                     <td className="px-3 py-1.5"><span className={cn("rounded px-2 py-0.5 text-[11px]", sevTone(e.severity))}>{e.severity}</span></td>
                     <td className="px-3 py-1.5">
                       <div>{e.rule_name}</div>
@@ -130,12 +141,25 @@ export function SecurityAlarmsClient({ initial }: Props) {
                     <td className="px-3 py-1.5 text-right"><span className="font-semibold">{e.value}</span> <span className="text-[11px] text-muted-foreground">/ {e.threshold}</span></td>
                     <td className="px-3 py-1.5 text-[11px] text-muted-foreground">{fmtDateTime(e.triggered_at)}</td>
                     <td className="px-3 py-1.5 text-[11px] text-muted-foreground">{e.delivery_status ?? "—"}</td>
-                    <td className="px-3 py-1.5 text-right">
-                      {e.acknowledged_at ? (
-                        <span className="text-[11px] text-muted-foreground">✓ Onaylı</span>
-                      ) : (
-                        <button type="button" className="text-xs font-medium text-emerald-600 hover:text-emerald-800" onClick={() => ack.mutate({ eventId: e.id })}>Gördüm</button>
-                      )}
+                    <td className="px-3 py-1.5 text-right" onClick={(ev) => ev.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          type="button"
+                          className="text-xs font-medium text-cyan-700 hover:text-cyan-900 dark:text-cyan-400"
+                          onClick={() => setTeshis(e)}
+                        >
+                          Teşhis
+                        </button>
+                        {e.resolved_at ? (
+                          <span className={cn("text-[11px]", e.false_positive ? "text-amber-700 dark:text-amber-400" : "text-emerald-700 dark:text-emerald-400")}>
+                            {e.false_positive ? "Yanlış alarm" : "Çözüldü"}
+                          </span>
+                        ) : e.acknowledged_at ? (
+                          <span className="text-[11px] text-muted-foreground">✓ Onaylı</span>
+                        ) : (
+                          <button type="button" className="text-xs font-medium text-emerald-600 hover:text-emerald-800" onClick={() => ack.mutate({ eventId: e.id })}>Gördüm</button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -144,6 +168,12 @@ export function SecurityAlarmsClient({ initial }: Props) {
           </div>
         )}
       </Card>
+
+      <AlarmDiagnosisDialog
+        event={teshis}
+        open={teshis !== null}
+        onOpenChange={(v) => { if (!v) setTeshis(null); }}
+      />
     </div>
   );
 }
@@ -174,6 +204,12 @@ function RuleRow({ rule }: { rule: AlarmRuleItem }) {
         <div className="font-medium">{rule.name}</div>
         {rule.description ? <div className="text-xs text-muted-foreground">{rule.description}</div> : null}
         <code className="text-[10px] text-muted-foreground">{rule.key}</code>
+        {/* Gürültü sinyali: çok sayıda "yanlış alarm" işareti → eşik/tanım gözden geçirilmeli. */}
+        {rule.false_positive_30d >= 3 ? (
+          <div className="mt-1 inline-flex items-center gap-1 rounded bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-900 dark:bg-amber-500/15 dark:text-amber-300">
+            Son 30 günde {rule.false_positive_30d} kez yanlış alarm — eşiği gözden geçir
+          </div>
+        ) : null}
         {rule.last_triggered_at ? <span className="ml-2 text-[10px] text-muted-foreground">son tetik: {fmtDateTime(rule.last_triggered_at)}</span> : null}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:flex lg:items-center">

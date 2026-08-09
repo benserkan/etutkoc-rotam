@@ -58,7 +58,7 @@ export function AdminSystemHealthClient({ initial }: Props) {
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight font-display mt-1 inline-flex items-center gap-2">
           <Stethoscope className="size-6 text-emerald-700" aria-hidden />
-          Sistem Sağlığı
+          Altyapı Sağlığı
         </h1>
         <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
           Otomatik görevler, veliye bildirim kuyruğu ve veritabanı — anlık tablo.

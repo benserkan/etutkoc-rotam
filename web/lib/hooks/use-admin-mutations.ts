@@ -1893,6 +1893,17 @@ export function useAlarmAck() {
   );
 }
 
+/** Alarmi cozumle: "sorun giderildi" ya da "bu yanlis alarmdi".
+ *  "Gordum" (ack) yalniz sessize alir; bu NEDEN kapandigini kaydeder ve
+ *  yanlis alarm isaretleri kural basina sayilarak gurultulu kurali gorunur yapar. */
+export function useAlarmResolve() {
+  return useSecurityAction<{ eventId: number; note: string; falsePositive: boolean }>(
+    ({ eventId }) => `/api/v2/admin/security-monitor/alarms/${eventId}/resolve`,
+    ({ note, falsePositive }) => ({ note, false_positive: falsePositive }),
+    "Alarm çözümlenemedi",
+  );
+}
+
 /** Belirtilen saatten eski gorulmemis alarmlari toplu onayla (birikinti temizligi). */
 export function useAlarmAckOlder() {
   return useSecurityAction<{ hours: number }>(

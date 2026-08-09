@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { usePanelVisitTracker } from "@/lib/hooks/use-panel-visit-tracker";
 import {
+  Bug,
   Activity,
   AlertOctagon,
   BarChart3,
@@ -121,7 +122,7 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin/audit", label: "Audit Log", icon: FileText },
       { href: "/admin/kvkk", label: "KVKK", icon: Scale },
-      { href: "/admin/system-health", label: "Sistem Sağlığı", icon: Stethoscope },
+      { href: "/admin/system-health", label: "Altyapı Sağlığı", icon: Stethoscope },
       { href: "/admin/announcements", label: "Duyurular", icon: Megaphone },
     ],
   },
@@ -161,7 +162,7 @@ const NAV_SECTIONS: NavSection[] = [
     links: [
       { href: "/admin/security-monitor", label: "Genel Bakış", icon: Shield },
       { href: "/admin/security-monitor/integrity", label: "Veri Bütünlüğü", icon: DatabaseZap },
-      { href: "/admin/security-monitor/system", label: "Sistem Sağlığı", icon: Stethoscope },
+      { href: "/admin/security-monitor/system", label: "Uygulama Hataları", icon: Bug },
       { href: "/admin/security-monitor/notifications", label: "Bildirim Sağlığı", icon: BellRing },
       { href: "/admin/communication-health", label: "İletişim Sağlığı", icon: MessagesSquare },
       { href: "/admin/security-monitor/live", label: "Canlı Akış", icon: Activity },

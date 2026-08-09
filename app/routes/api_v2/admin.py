@@ -353,7 +353,11 @@ from app.routes.api_v2.schemas.admin import (
     AbuseResponse,
     AbuseScanResult,
     AbuseSignalItem,
+    AlarmDiagnosisResponse,
     AlarmEventItem,
+    AlarmEvidenceItem,
+    AlarmGuideLink,
+    AlarmResolveBody,
     AlarmRuleItem,
     AlarmRuleUpdateBody,
     AlarmScanResult,
@@ -8045,8 +8049,11 @@ def admin_security_alarms_v2(
         unacknowledged_count,
     )
 
+    from app.services.alarm_diagnosis import false_positive_counts
+
     rules = list_rules(db)
     events = list_recent_events(db, hours=72, limit=50)
+    yanlis = false_positive_counts(db)
     return AlarmsResponse(
         rules=[
             AlarmRuleItem(
@@ -8054,11 +8061,91 @@ def admin_security_alarms_v2(
                 threshold=r.threshold, cooldown_minutes=r.cooldown_minutes,
                 enabled=r.enabled, channels=r.channels,
                 last_triggered_at=r.last_triggered_at, last_value=r.last_value,
+                false_positive_30d=yanlis.get(r.key, 0),
             )
             for r in rules
         ],
         events=[AlarmEventItem(**e) for e in events],
         unack_count=unacknowledged_count(db),
+    )
+
+
+@router.get(
+    "/security-monitor/alarms/{event_id}/diagnose",
+    response_model=AlarmDiagnosisResponse,
+)
+def admin_security_alarm_diagnose_v2(
+    event_id: int,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Alarm Teşhis Kartı — ne oldu / neden / ne yapmalı + canlı durum + kanıt.
+
+    Alarm körlüğüne karşı: süper admin alarmın hâlâ geçerli olup olmadığını ve
+    kimi ilgilendirdiğini panelden görebilsin (2026-08-09).
+    """
+    from app.models import AlarmEvent
+    from app.services.alarm_diagnosis import diagnose
+
+    ev = db.get(AlarmEvent, event_id)
+    if ev is None:
+        raise HTTPException(status_code=404, detail="alarm_not_found")
+    return AlarmDiagnosisResponse(**diagnose(db, ev))
+
+
+@router.post(
+    "/security-monitor/alarms/{event_id}/resolve",
+    response_model=MutationResponse[SecurityActionResult],
+)
+def admin_security_alarm_resolve_v2(
+    event_id: int,
+    body: AlarmResolveBody,
+    request: Request,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Alarmı çözümle — "sorun giderildi" ya da "bu yanlış alarmdı".
+
+    "Gördüm" (ack) yalnız sessize alır; bu uç NEDEN kapandığını kaydeder.
+    false_positive işaretleri kural başına sayılır → gürültülü kural görünür
+    hale gelir ve eşiği gözden geçirilebilir.
+    """
+    from app.models import AlarmEvent
+
+    ev = db.get(AlarmEvent, event_id)
+    if ev is None:
+        raise HTTPException(status_code=404, detail="alarm_not_found")
+
+    now = datetime.now(timezone.utc)
+    ev.resolved_at = now
+    ev.resolved_by_user_id = user.id
+    ev.resolution_note = (body.note or "").strip()[:2000] or None
+    ev.false_positive = bool(body.false_positive)
+    if ev.acknowledged_at is None:  # çözmek görmeyi de kapsar
+        ev.acknowledged_at = now
+        ev.acknowledged_by_user_id = user.id
+    db.commit()
+
+    log_action(
+        db,
+        action=AuditAction.USER_UPDATE,
+        actor_id=user.id,
+        target_type="alarm_resolve",
+        target_id=event_id,
+        request=request,
+        details={
+            "rule_key": ev.rule_key,
+            "false_positive": ev.false_positive,
+            "note": ev.resolution_note or "",
+        },
+    )
+    return MutationResponse[SecurityActionResult](
+        data=SecurityActionResult(
+            message=("Yanlış alarm olarak işaretlendi"
+                     if ev.false_positive else "Çözüldü olarak işaretlendi"),
+            ok=True,
+        ),
+        invalidate=_SECURITY_ALARMS_INVALIDATE,
     )
 
 

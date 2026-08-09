@@ -64,6 +64,7 @@ import type {
   ActiveUsersDrillResponse,
   InstitutionHeatmapResponse,
   LiveFeedResponse,
+  AlarmDiagnosisResponse,
   AlarmsResponse,
   AbuseResponse,
   AiSettingsResponse,
@@ -252,6 +253,8 @@ export const adminKeys = {
     ["admin", "security", "live", String(sinceSeconds)] as const,
   // G4 — Alarmlar + Suistimal
   securityAlarms: () => ["admin", "security", "alarms"] as const,
+  alarmDiagnosis: (id: number) =>
+    ["admin", "security", "alarms", "diagnose", id] as const,
   securityAbuse: (onlyOpen: boolean, kind: string | null) =>
     ["admin", "security", "abuse", onlyOpen ? "1" : "0", kind ?? ""] as const,
   aiSettings: () => ["admin", "settings", "ai"] as const,
@@ -702,6 +705,13 @@ export function getAdminSecurityLiveFeed(sinceSeconds = 600) {
 
 export function getAdminSecurityAlarms() {
   return api<AlarmsResponse>("/api/v2/admin/security-monitor/alarms");
+}
+
+/** Alarm Teşhis Kartı — alarma tıklanınca açılan derin analiz. */
+export async function getAlarmDiagnosis(id: number) {
+  return api<AlarmDiagnosisResponse>(
+    `/api/v2/admin/security-monitor/alarms/${id}/diagnose`,
+  );
 }
 
 export function getAdminSecurityAbuse(onlyOpen = true, kind: string | null = null) {

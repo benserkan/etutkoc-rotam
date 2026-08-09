@@ -9,7 +9,7 @@ import { AdminSystemHealthClient } from "@/components/admin/admin-system-health-
  */
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Sistem Sağlığı — Süper Admin" };
+export const metadata = { title: "Altyapı Sağlığı — Süper Admin" };
 
 export default async function AdminSystemHealthPage() {
   const data = await apiServer<SystemHealthResponse>(

@@ -627,6 +627,10 @@ def list_recent_events(
             "age_seconds": int((now - tr).total_seconds()),
             # Kurala ozgu okunur ozet (moment_silent: hangi uyari kimde sessiz)
             "summary": _details_summary(r.details_json),
+            # Çözümleme durumu (2026-08-09) — "Gördüm" ile "çözüldü" ayrı.
+            "resolved_at": _aware(r.resolved_at),
+            "resolution_note": r.resolution_note,
+            "false_positive": bool(r.false_positive),
         })
     return out
 

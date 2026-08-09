@@ -9,7 +9,7 @@ import { SecuritySystemClient } from "@/components/admin/security-system-client"
  */
 export const dynamic = "force-dynamic";
 
-export const metadata = { title: "Sistem Sağlığı — Süper Admin" };
+export const metadata = { title: "Uygulama Hataları — Süper Admin" };
 
 export default async function SecuritySystemPage() {
   const data = await apiServer<SystemHealthDataResponse>(

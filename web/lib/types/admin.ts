@@ -2943,6 +2943,8 @@ export interface AlarmRuleItem {
   channels: string | null;
   last_triggered_at: string | null;
   last_value: number | null;
+  /** Son 30 günde kaç kez "yanlış alarm" işaretlendi — eşik gözden geçirme sinyali. */
+  false_positive_30d: number;
 }
 
 export interface AlarmEventItem {
@@ -2957,6 +2959,54 @@ export interface AlarmEventItem {
   acknowledged_at: string | null;
   age_seconds: number;
   summary?: string | null; // kurala özgü okunur detay
+  resolved_at: string | null;
+  resolution_note: string | null;
+  false_positive: boolean;
+}
+
+export interface AlarmEvidenceItem {
+  baslik: string;
+  detay: string;
+  href: string | null;
+  ton: string;
+  zaman: string | null;
+}
+
+export interface AlarmGuideLink {
+  etiket: string;
+  href: string;
+}
+
+/** Alarm Teşhis Kartı — ne oldu / neden / ne yapmalı + canlı durum + kanıt. */
+export interface AlarmDiagnosisResponse {
+  rule_key: string;
+  rule_name: string;
+  severity: string;
+  triggered_at: string | null;
+  value: number;
+  threshold: number;
+  birim: string;
+  ne_oldu: string;
+  neden: string;
+  ne_yapmali: string[];
+  baglantilar: AlarmGuideLink[];
+  sorumlu: string;
+  guncel_deger: number | null;
+  hala_gecerli: boolean;
+  degerlendirme_hatasi: string | null;
+  kanit: AlarmEvidenceItem[];
+  son_30g_tetik: number;
+  son_30g_yanlis_alarm: number;
+  gurultu_uyarisi: boolean;
+  acknowledged_at: string | null;
+  resolved_at: string | null;
+  resolution_note: string | null;
+  false_positive: boolean;
+}
+
+export interface AlarmResolveBody {
+  note: string;
+  false_positive: boolean;
 }
 
 export interface AlarmsResponse {
