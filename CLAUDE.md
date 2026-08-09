@@ -6,6 +6,76 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Alarm körlüğü kapsamlı çözüm: Teşhis Kartı — CANLI (2026-08-09, migration `m3n6q9s0s33m`)
+
+**Tetikleyici:** `moment_silent` alarmı 07-09 Ağustos arası **4 kez** çaldı (#87
+Hatice, gerçek müşteri). Kullanıcı: "bu alarmlarda süper admin ne yapacak
+bilmiyorum · derinlemesine sorun analizi yapamıyorum · **alarm körlüğü bu
+projede tekrarlayan bir sorun, bunu kapsamlı çözelim**".
+
+**BULGU 1 — alarm YANLIŞTI, sistem doğru çalışıyordu.** `silent_moment_report`
+"panelde gezdi" kanıtı olarak `last_login_at` damgasına bakıyordu. Bu TEK bir
+alan olduğundan 7 Ağu 08:30'da girip çıkan koç **9 Ağu'ya kadar "panelde
+aktif"** sayıldı; bu aralıkta denemesi kritik eşiğe (≤3 gün) girdi, koç panelde
+olmadığı için banner gösterilemedi, tarama yine de "gösterilmedi" dedi. Koç
+panele döndüğü ilk dakikada (09 Ağu 06:23) sinyal kaydedildi — yani üretim
+kodu kusursuzdu. **Düzeltme:** kanıt artık GERÇEK sayfa ziyareti
+(`panel_visit_events`, `teacher.%`) + yeni `MomentSpec.since` ile koşulun
+doğduğu ana göre kesilir (son ziyaret koşuldan önceyse sinyali görmesi
+fiziksel olarak mümkün değildi → sessiz sayılmaz). trial_critical=bitiş−3g ·
+paywall/payment_pending=bitiş · credit_low=None(yedek: pencerede ziyaret).
+Prod verisiyle doğrulandı: 4 alarm anının **dördünde de** yeni kural "alarm
+yok" diyor. `test_moment_health` 16→**18** (saha vakası birebir test).
+
+**BULGU 2 — panelde teşhis aracı yoktu.** Kök nedene ancak prod'da elle 5 SQL
+sorgusuyla inildi. Yeni **`app/services/alarm_diagnosis.py`** —
+`error_translator` deseninin alarmlara taşınması. Alarma tıkla → **Teşhis Kartı**:
+1. **CANLI DURUM** — kural o anda yeniden hesaplanır ("sorun sürüyor" /
+   "şu an geçerli değil, kapatabilirsin"). Bugünkü vakada 2 gün oyalamazdı.
+2. **SADE DİL** — 7 kuralın HEPSİ için ne oldu / neden / ne yapmalısın +
+   sorumlu etiketi (senin aksiyonun · kod düzeltmesi · dış sağlayıcı).
+3. **KANIT** — kuralı tetikleyen kayıtlar ad/e-posta ile, tıklanabilir
+   (kaba kuvvet denemeleri · açık abuse · başarısız ödeme · ulaşmayan e-posta ·
+   sessiz kullanıcı · açık hata grubu · bekleyen bildirim).
+4. **ÇÖZÜMLEME** — "Çözüldü" (notlu) / **"Bu yanlış alarm"**.
+
+**Migration `m3n6q9s0s33m`** (← l2m5p8r9r22l, additive, downgrade'li):
+`alarm_events` +resolved_at +resolved_by_user_id +resolution_note
++false_positive. Uçlar: GET `/security-monitor/alarms/{id}/diagnose` · POST
+`/{id}/resolve` {note, false_positive}.
+
+**Gürültü geri bildirim döngüsü (asıl kalıcı çözüm):** `false_positive`
+işaretleri kural başına 30 günlük sayılır → kural satırında **"Son 30 günde N
+kez yanlış alarm — eşiği gözden geçir"** rozeti + teşhis kartında
+`gurultu_uyarisi`. Bugünkü hata bu düğme olsaydı ilk gün işaretlenirdi.
+
+**Ham `#87` süpürmesi:** `moments.silent_summary_text` artık
+`Ad <e-posta> (#id)` basar; **Canlı Akış** aktörleri tek sorguda çözüp
+`/admin/users/{id}`'ye tıklanabilir gösterir. Denetimde aktif oturum listesi
+(user_full_name+user_email) ve abuse sinyalleri (actor_full_name+actor_email)
+zaten ad taşıyordu — eksik olan bu ikisiydi.
+
+**IA düzeltmesi (kullanıcı: "ikisi karışıyor"):** iki ayrı sayfa da "Sistem
+Sağlığı" adındaydı → Denetim > **"Altyapı Sağlığı"** (`/admin/system-health`:
+cron/dispatcher/veritabanı/yedek/ödeme/e-posta) · Güvenlik Kamarası >
+**"Uygulama Hataları"** (`/admin/security-monitor/system`: hata grupları +
+yavaş istekler + Hata Tercümanı).
+
+**KURAL:** Yeni alarm kuralı eklerken `alarm_diagnosis.GUIDES`'a rehber +
+`_KANIT`'a kanıt çözücü EKLE. `test_api_v2_alarm_diagnosis.py` "her yerleşik
+kuralın rehberi var" senaryosu rehbersiz kuralda KIRILIR — açıklamasız alarm
+girmesin.
+
+**Test:** YENİ `test_api_v2_alarm_diagnosis.py` **24/24** · moment_health 18 ·
+`run_moment_checks` 4/4 GREEN. Regresyon: alarms_abuse 21 · security_overview
+14 · sessions 17 · admin 13. web tsc+eslint temiz. Deploy: yedek
+`pre_alarmdx_20260809_1402.dump` + web/worker/next rebuild; prod head
+`m3n6q9s0s33m`, 7 kanıt çözücüsü hatasız. NOT: `test_error_translator`ın
+canlı bölümü ayakta dev backend ister — bu işten ÖNCE de aynı hatayı
+veriyordu (stash ile doğrulandı).
+
+---
+
 ## YENİ İŞ — Güvenlik Kamarası yanlış-alarm temizliği — CANLI (2026-07-31, migration `g7h0k3m4m77g`)
 
 **Tetikleyici:** kullanıcı Güvenlik Kamarası ekran görüntüsü paylaştı — **11 kritik
