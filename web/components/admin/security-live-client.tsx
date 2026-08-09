@@ -118,7 +118,21 @@ function LiveRow({ item }: { item: LiveFeedItem }) {
           <span className={cn("rounded px-1.5 py-0.5 text-[10px]", m.badge)}>{item.type}</span>
         </div>
         <div className="mt-0.5 text-xs text-muted-foreground">
-          {item.actor_id ? <>aktör #{item.actor_id} · </> : null}
+          {item.actor_id ? (
+            <>
+              {/* Ham "#87" kimseye bir şey anlatmıyordu — ad/e-posta öne, id parantezde. */}
+              <a
+                href={`/admin/users/${item.actor_id}`}
+                className="font-medium text-foreground underline-offset-2 hover:underline"
+              >
+                {item.actor_name || item.actor_email || `#${item.actor_id}`}
+              </a>
+              {item.actor_name && item.actor_email ? (
+                <span className="text-muted-foreground"> ({item.actor_email})</span>
+              ) : null}{" "}
+              ·{" "}
+            </>
+          ) : null}
           {item.ip ? <code className="font-mono">{item.ip}</code> : null}
           {item.details ? <> {item.actor_id || item.ip ? "· " : ""}{item.details}</> : null}
         </div>

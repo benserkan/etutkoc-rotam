@@ -2911,6 +2911,8 @@ export interface LiveFeedItem {
   ts: string | null;
   title: string;
   actor_id: number | null;
+  actor_name: string | null;
+  actor_email: string | null;
   ip: string | null;
   details: string;
   severity: string;

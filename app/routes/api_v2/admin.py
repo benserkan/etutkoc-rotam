@@ -7878,6 +7878,8 @@ def admin_security_live_feed_v2(
                 ts=it.get("ts"),
                 title=it["title"],
                 actor_id=it.get("actor_id"),
+                actor_name=it.get("actor_name"),
+                actor_email=it.get("actor_email"),
                 ip=it.get("ip"),
                 details=it.get("details") or "",
                 severity=it["severity"],

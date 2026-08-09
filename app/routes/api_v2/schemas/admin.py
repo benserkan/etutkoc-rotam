@@ -3158,6 +3158,8 @@ class LiveFeedItem(BaseModel):
     ts: datetime | None = None
     title: str
     actor_id: int | None = None
+    actor_name: str | None = None
+    actor_email: str | None = None
     ip: str | None = None
     details: str = ""
     severity: str  # critical | warn | info

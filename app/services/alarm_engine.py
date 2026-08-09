@@ -743,13 +743,26 @@ def live_event_stream(db: Session, *, since_seconds: int = 300, limit: int = 50)
         .limit(limit)
         .all()
     )
+    # Ham "#87" süper admine hiçbir şey anlatmıyor — aktörleri tek sorguda çöz.
+    actor_ids = {a.actor_id for a in audits if a.actor_id}
+    kimlik: dict[int, tuple[str | None, str | None]] = {}
+    if actor_ids:
+        from app.models import User
+        for u in db.query(User.id, User.full_name, User.email).filter(
+            User.id.in_(actor_ids)
+        ).all():
+            kimlik[u.id] = (u.full_name, u.email)
+
     items: list[dict] = []
     for a in audits:
+        ad, eposta = kimlik.get(a.actor_id or 0, (None, None))
         items.append({
             "type": "audit",
             "ts": _aware(a.created_at),
             "title": a.action.value if hasattr(a.action, "value") else str(a.action),
             "actor_id": a.actor_id,
+            "actor_name": ad,
+            "actor_email": eposta,
             "ip": a.ip_address,
             "details": a.email_attempted or "",
             "severity": "critical" if a.action.value in (
@@ -763,6 +776,8 @@ def live_event_stream(db: Session, *, since_seconds: int = 300, limit: int = 50)
             "ts": _aware(e.triggered_at),
             "title": e.rule_name,
             "actor_id": None,
+            "actor_name": None,
+            "actor_email": None,
             "ip": None,
             "details": f"{e.value} (eşik: {e.threshold})",
             "severity": e.severity,
