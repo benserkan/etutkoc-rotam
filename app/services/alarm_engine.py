@@ -18,6 +18,7 @@ Kural değer hesaplamaları:
 from __future__ import annotations
 
 import json
+import re
 import logging
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
@@ -590,14 +591,44 @@ def _send_email_to_super_admins(
 # ---------------------------- Listing + ack ----------------------------
 
 
-def _details_summary(details_json: str | None) -> str | None:
+# Ham "#87" süper admine hiçbir şey anlatmıyor. Özet metni alarm ANINDA
+# üretilip details_json'a yazıldığı için ESKİ kayıtlar eski biçimi taşır;
+# bu yüzden çeviri GÖSTERİM anında yapılır (geçmiş alarmlar da düzelir).
+# Negatif lookbehind: yeni biçim zaten "Ad <e-posta> (#87)" — parantez içindeki
+# id'yi tekrar çevirip metni ikilemeyelim.
+_KULLANICI_ID_RE = re.compile(r"(?<!\()#(\d+)")
+
+
+def _humanize_user_ids(db: Session, text: str | None) -> str | None:
+    """Metindeki '#87' gibi ham kullanıcı id'lerini ad + e-posta ile değiştir."""
+    if not text:
+        return text
+    ids = {int(x) for x in _KULLANICI_ID_RE.findall(text)}
+    if not ids:
+        return text
+    try:
+        adlar: dict[int, str] = {}
+        for u in (db.query(User.id, User.full_name, User.email)
+                  .filter(User.id.in_(ids)).all()):
+            isim = (u.full_name or "").strip() or "(adsız)"
+            adlar[u.id] = (f"{isim} <{u.email}> (#{u.id})" if u.email
+                           else f"{isim} (#{u.id})")
+    except Exception:
+        logger.warning("alarm özetinde kullanıcı adı çözülemedi")
+        return text
+    return _KULLANICI_ID_RE.sub(
+        lambda m: adlar.get(int(m.group(1)), m.group(0)), text,
+    )
+
+
+def _details_summary(db: Session, details_json: str | None) -> str | None:
     """AlarmEvent.details_json icindeki 'summary' alani (varsa)."""
     if not details_json:
         return None
     try:
         d = json.loads(details_json)
         v = d.get("summary")
-        return str(v) if v else None
+        return _humanize_user_ids(db, str(v)) if v else None
     except Exception:
         return None
 
@@ -626,7 +657,7 @@ def list_recent_events(
             "acknowledged_at": _aware(r.acknowledged_at),
             "age_seconds": int((now - tr).total_seconds()),
             # Kurala ozgu okunur ozet (moment_silent: hangi uyari kimde sessiz)
-            "summary": _details_summary(r.details_json),
+            "summary": _details_summary(db, r.details_json),
             # Çözümleme durumu (2026-08-09) — "Gördüm" ile "çözüldü" ayrı.
             "resolved_at": _aware(r.resolved_at),
             "resolution_note": r.resolution_note,

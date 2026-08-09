@@ -188,6 +188,48 @@ def main() -> int:
               kural is not None and kural["false_positive_30d"] >= 3,
               str(kural and kural["false_positive_30d"]))
 
+        # --- 7) GEÇMİŞ alarmlarda ham id → ad (gösterim anında çeviri) ---
+        print("\n6) Eski alarm özetindeki ham '#id' ad/e-postaya çevrilir")
+        with SessionLocal() as db:
+            eski = AlarmEvent(
+                rule_key="moment_silent", rule_name="Bağlamsal uyarı gösterilmedi",
+                value=1, threshold=0, severity="warn",
+                channels_attempted="in_app", delivery_status="in_app:ok",
+                triggered_at=now - timedelta(hours=1),
+                # Düzeltmeden ÖNCEKİ biçim — prod'daki geçmiş kayıtların aynısı
+                details_json=('{"value": 1, "threshold": 0, "summary": '
+                              f'"Deneme bitiyor bandı (son 3 gün): 1 kullanıcı [#{koc_id}]"}}'),
+            )
+            db.add(eski)
+            db.commit()
+            eski_id = eski.id
+
+        r = c.get("/api/v2/admin/security-monitor/alarms")
+        satir = next((e for e in r.json()["events"] if e["id"] == eski_id), None)
+        ozet = (satir or {}).get("summary") or ""
+        check("eski kayıtta ham '#id' kalmadı", f"[#{koc_id}]" not in ozet, ozet)
+        check("eski kayıtta kullanıcı adı görünüyor", "Teşhis Koç" in ozet, ozet)
+        check("id parantez içinde referans olarak korunuyor",
+              f"(#{koc_id})" in ozet, ozet)
+
+        # Yeni biçim ikilenmemeli (negatif lookbehind koruması)
+        with SessionLocal() as db:
+            y = AlarmEvent(
+                rule_key="moment_silent", rule_name="Bağlamsal uyarı gösterilmedi",
+                value=1, threshold=0, severity="warn",
+                channels_attempted="in_app", delivery_status="in_app:ok",
+                triggered_at=now - timedelta(minutes=30),
+                details_json=('{"value": 1, "threshold": 0, "summary": '
+                              f'"Deneme bitiyor: 1 kullanıcı — Teşhis Koç <x@y.z> (#{koc_id})"}}'),
+            )
+            db.add(y)
+            db.commit()
+            yeni_id = y.id
+        r = c.get("/api/v2/admin/security-monitor/alarms")
+        s2 = next((e for e in r.json()["events"] if e["id"] == yeni_id), {}).get("summary") or ""
+        check("yeni biçim ikilenmiyor", s2.count("Teşhis Koç") == 1, s2)
+        yeni_ids += [eski_id, yeni_id]
+
         r = c.get(f"/api/v2/admin/security-monitor/alarms/{yeni_ids[0]}/diagnose")
         dd = r.json()
         check("gürültü uyarısı yükseldi", dd["gurultu_uyarisi"] is True,
@@ -197,6 +239,9 @@ def main() -> int:
     finally:
         with SessionLocal() as db:
             ids = [u.id for u in db.query(User).filter(User.email.like(f"{PFX}-%")).all()]
+            if ids:
+                db.execute(sa_delete(AlarmEvent).where(
+                    AlarmEvent.details_json.like(f"%(#{ids[0]})%")))
             db.execute(sa_delete(AlarmEvent).where(
                 AlarmEvent.rule_key == "moment_silent",
                 AlarmEvent.resolution_note.in_([

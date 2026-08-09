@@ -30,11 +30,11 @@
 Mevcut Apple Developer üyeliği BİREYSEL ("Serkan Aydn" yasal varlık). Karar:
 şirket (ETÜTKOÇ Akademi ... Ltd. Şti.) kimliğiyle satış → dönüşüm gerekli.
 
-1. **D-U-N-S numarası** (süreyi bu belirler):
-   https://developer.apple.com/enroll/duns-lookup/ → şirketi ara (Türkiye).
-   Varsa numarayı not al; yoksa aynı sayfadan ücretsiz başvur
-   (MERSIS 0381113961000001 · vergi 3811139610 · İskenderpaşa Mah. adresi) —
-   ~5-14 iş günü, e-postayla gelir.
+1. **D-U-N-S numarası** — ✅ ALINDI (2026-08-09): **448959103**
+   (ETÜTKOÇ Akademi Ltd. Şti. · MERSIS 0381113961000001 · vergi 3811139610 ·
+   İskenderpaşa Mah. adresi). Sorgu/doğrulama:
+   https://developer.apple.com/enroll/duns-lookup/ (Türkiye).
+   Dönüşüm talebinde resmi ünvan bu D-U-N-S kaydıyla BİREBİR aynı yazılmalı.
 2. **Dönüşüm talebi**: developer.apple.com → Contact Us → Membership →
    "Convert my individual membership to an organization". İstenecekler:
    resmi ünvan (D-U-N-S kaydıyla birebir), D-U-N-S, web sitesi (etutkoc.com),
