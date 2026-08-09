@@ -18,12 +18,24 @@ KAYIT (registry) — her moment:
   key       : moment_events.moment_key + alarm mesajındaki ad
   label     : insan-dili ad
   surface   : "global"  → sinyal her koç sayfasında çekilen /teacher/trial-status
-              ile taşınır → "panelde gezdi" kanıtı son 48s login yeter.
+              ile taşınır → kanıt: pencerede HERHANGİ bir teacher.* sayfa
+              ziyareti (panel_visit_events).
               "plan_page" → sinyal yalnız /teacher/plan yanıtında taşınır →
-              kanıt panel_visit_events'te teacher.plan ziyareti ister
+              kanıt: pencerede teacher.plan ziyareti
               (sayfayı hiç açmayan koç için yanlış alarm üretmemek İÇİN).
   evaluate  : (db, user, now) -> bool — koşul ŞU AN sağlanıyor mu
               (endpoint'lerin kullandığı gerçek servislerle AYNI kaynaktan).
+  since     : (db, user, now) -> datetime|None — koşul NE ZAMAN doğru oldu.
+              Kullanıcının SON ziyareti bu andan ÖNCEYSE sinyali görmesi
+              fiziksel olarak mümkün değildi → sessiz sayılmaz.
+
+KANIT KURALI — NEDEN "login" DEĞİL (2026-08-09 saha bulgusu):
+İlk sürüm kanıt olarak `last_login_at` son 48 saatte mi diye bakıyordu. Bu
+TEK bir damga olduğundan, 7 Ağustos'ta girip çıkan koç 9 Ağustos'a kadar
+"panelde aktif" sayıldı; bu aralıkta denemesi kritik eşiğe girdi, koç panelde
+olmadığı için banner gösterilemedi ve sistem kendi kendine "gösterilmedi"
+alarmı üretti (2 gün boyunca 4 yanlış alarm). Kanıt artık GERÇEK sayfa
+ziyaretidir + koşulun doğru olduğu ana göre kesilir.
 
 Yeni bağlamsal kart eklerken: (1) buraya kayıt ekle, (2) sinyali taşıyan
 endpoint'e record_moment çağrısı koy, (3) scripts/test_moment_health.py'ye
@@ -131,6 +143,17 @@ def _eval_credit_low(db: Session, user: User, now: datetime) -> bool:
     return total > 0 and (acc.used_credits or 0) / total >= 0.8
 
 
+def _since_trial_critical(db: Session, user: User, now: datetime) -> datetime | None:
+    """Deneme kritik eşiğine (son 3 gün) girdiği an."""
+    end = getattr(user, "trial_ends_at", None)
+    return (end - timedelta(days=3)) if end else None
+
+
+def _since_trial_end(db: Session, user: User, now: datetime) -> datetime | None:
+    """Deneme bitişi — paywall/ödeme-bekliyor bantları o an doğar."""
+    return getattr(user, "trial_ends_at", None)
+
+
 @dataclass(frozen=True)
 class MomentSpec:
     key: str
@@ -138,6 +161,8 @@ class MomentSpec:
     surface: str  # "global" | "plan_page"
     evaluate: Callable[[Session, User, datetime], bool]
     note: str = ""
+    # Koşulun doğru olduğu an; None → "pencerede ziyaret varsa yeter".
+    since: Callable[[Session, User, datetime], datetime | None] | None = None
 
 
 MOMENTS: list[MomentSpec] = [
@@ -146,6 +171,7 @@ MOMENTS: list[MomentSpec] = [
         label="Deneme bitiyor bandı (son 3 gün)",
         surface="global",
         evaluate=_eval_trial_critical,
+        since=_since_trial_critical,
         note="TrialBanner amber — /teacher/trial-status her koç sayfasında çekilir",
     ),
     MomentSpec(
@@ -153,6 +179,7 @@ MOMENTS: list[MomentSpec] = [
         label="Ödeme duvarı bandı",
         surface="global",
         evaluate=_eval_paywall,
+        since=_since_trial_end,
         note="TrialBanner rose — kapatılamaz",
     ),
     MomentSpec(
@@ -160,6 +187,7 @@ MOMENTS: list[MomentSpec] = [
         label="Denemen bitti — ödemen bekleniyor bandı",
         surface="global",
         evaluate=_eval_payment_pending,
+        since=_since_trial_end,
     ),
     MomentSpec(
         key="credit_low",
@@ -185,31 +213,23 @@ class SilentMomentRow:
     silent_user_ids: list[int] = field(default_factory=list)
 
 
-def _recent_login_user_ids(db: Session, cutoff: datetime) -> set[int]:
-    rows = (
-        db.query(User.id)
-        .filter(
-            User.role == UserRole.TEACHER,
-            User.institution_id.is_(None),
-            User.is_active.is_(True),
-            User.last_login_at >= cutoff,
-        )
-        .all()
-    )
-    return {r[0] for r in rows}
+def _last_visit_map(
+    db: Session, cutoff: datetime, *, only_plan_page: bool = False,
+) -> dict[int, datetime]:
+    """user_id → pencere içindeki EN SON panel ziyareti.
 
-
-def _plan_page_visitor_ids(db: Session, cutoff: datetime) -> set[int]:
-    rows = (
-        db.query(PanelVisitEvent.user_id)
-        .filter(
-            PanelVisitEvent.route_key == "teacher.plan",
-            PanelVisitEvent.created_at >= cutoff,
-        )
-        .distinct()
-        .all()
-    )
-    return {r[0] for r in rows}
+    Kanıt olarak giriş damgası değil gerçek sayfa ziyareti kullanılır; ayrıca
+    "en son ne zaman" bilgisi, koşulun doğru olduğu ana göre kesme yapmayı
+    (bkz. MomentSpec.since) mümkün kılar.
+    """
+    q = db.query(
+        PanelVisitEvent.user_id, func.max(PanelVisitEvent.created_at),
+    ).filter(PanelVisitEvent.created_at >= cutoff)
+    if only_plan_page:
+        q = q.filter(PanelVisitEvent.route_key == "teacher.plan")
+    else:
+        q = q.filter(PanelVisitEvent.route_key.like("teacher.%"))
+    return {uid: son for uid, son in q.group_by(PanelVisitEvent.user_id).all()}
 
 
 def _served_user_ids(db: Session, key: str, cutoff: datetime) -> set[int]:
@@ -256,19 +276,33 @@ def silent_moment_report(
         )
         coaches = coaches[:SCAN_CAP]
 
-    logged_in = _recent_login_user_ids(db, cutoff)
-    plan_visitors = _plan_page_visitor_ids(db, cutoff)
+    genel_ziyaret = _last_visit_map(db, cutoff)
+    plan_ziyaret = _last_visit_map(db, cutoff, only_plan_page=True)
 
     out: list[SilentMomentRow] = []
     for spec in MOMENTS:
-        evidence = logged_in if spec.surface == "global" else plan_visitors
+        ziyaret = genel_ziyaret if spec.surface == "global" else plan_ziyaret
         eligible: set[int] = set()
         for u in coaches:
-            if u.id not in evidence:
-                continue
+            son_ziyaret = ziyaret.get(u.id)
+            if son_ziyaret is None:
+                continue  # panele hiç girmemiş — sinyali göremezdi
             try:
-                if spec.evaluate(db, u, now):
-                    eligible.add(u.id)
+                if not spec.evaluate(db, u, now):
+                    continue
+                # Koşul, kullanıcının SON ziyaretinden SONRA doğru olduysa
+                # sinyali görmesi mümkün değildi → sessiz sayma.
+                if spec.since is not None:
+                    basladi = spec.since(db, u, now)
+                    if basladi is not None:
+                        if basladi.tzinfo is None:
+                            basladi = basladi.replace(tzinfo=timezone.utc)
+                        sz = son_ziyaret
+                        if sz.tzinfo is None:
+                            sz = sz.replace(tzinfo=timezone.utc)
+                        if sz < basladi:
+                            continue
+                eligible.add(u.id)
             except Exception:
                 logger.exception(
                     "moment evaluate hata (key=%s user=%s)", spec.key, u.id,
@@ -295,11 +329,20 @@ def silent_summary_text(db: Session, *, now: datetime | None = None) -> str:
     rows = [r for r in silent_moment_report(db, now=now) if r.silent_user_ids]
     if not rows:
         return "Sessiz moment yok."
+
+    # Ham "#87" süper admine hiçbir şey anlatmıyordu — ad + e-posta ile göster.
+    tum_ids = {i for r in rows for i in r.silent_user_ids[:5]}
+    adlar: dict[int, str] = {}
+    if tum_ids:
+        for u in db.query(User).filter(User.id.in_(tum_ids)).all():
+            ad = (u.full_name or "").strip() or "(adsız)"
+            adlar[u.id] = f"{ad} <{u.email}> (#{u.id})" if u.email else f"{ad} (#{u.id})"
+
     parts = []
     for r in rows:
-        ids = ", ".join(f"#{i}" for i in r.silent_user_ids[:5])
-        extra = f" (+{len(r.silent_user_ids) - 5})" if len(r.silent_user_ids) > 5 else ""
-        parts.append(f"{r.label}: {len(r.silent_user_ids)} kullanıcı [{ids}{extra}]")
+        kim = ", ".join(adlar.get(i, f"#{i}") for i in r.silent_user_ids[:5])
+        extra = f" (+{len(r.silent_user_ids) - 5} kişi daha)" if len(r.silent_user_ids) > 5 else ""
+        parts.append(f"{r.label}: {len(r.silent_user_ids)} kullanıcı — {kim}{extra}")
     return " · ".join(parts)
 
 

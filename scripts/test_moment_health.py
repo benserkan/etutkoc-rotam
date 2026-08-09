@@ -91,6 +91,14 @@ def main() -> int:
         # low koçu /teacher/plan sayfasını ziyaret etmiş (plan_page kanıtı)
         db.add(PanelVisitEvent(user_id=ids["low"], role="teacher",
                                route_key="teacher.plan", dwell_ms=5000, source="web"))
+        # KANIT KURALI (2026-08-09): "global" momentlerde de kanıt GERÇEK sayfa
+        # ziyaretidir (eski hâli last_login_at damgasına bakıyordu → koç panelde
+        # yokken koşul kritikleşince yanlış alarm üretiyordu). Kritik + sağlıklı
+        # koça da ziyaret yaz ki senaryolar kanıt yokluğuyla değil KOŞULLA ayrışsın.
+        for uid in (ids["crit"], ids["ok"]):
+            db.add(PanelVisitEvent(user_id=uid, role="teacher",
+                                   route_key="teacher.students", dwell_ms=5000,
+                                   source="web", created_at=now))
         db.commit()
 
     get_login_limiter().reset()
@@ -170,12 +178,39 @@ def main() -> int:
 
         print("\n5) Panel kanıtı olmayan kullanıcı SAYILMAZ (yanlış alarm koruması)")
         with SessionLocal() as db:
-            u = db.get(User, ids["crit"])
-            u.last_login_at = now - timedelta(days=10)  # 48s penceresi dışı
+            # Ziyaretini 48s penceresinin dışına al — koç panelde değil.
+            db.query(PanelVisitEvent).filter(
+                PanelVisitEvent.user_id == ids["crit"]).update(
+                {"created_at": now - timedelta(days=10)}, synchronize_session=False)
+            db.get(User, ids["crit"]).last_login_at = now - timedelta(days=10)
             db.commit()
             report = {r_.key: r_.silent_user_ids for r_ in moments.silent_moment_report(db)}
             check("10 gündür girmeyen kritik koç sessiz SAYILMAZ",
                   ids["crit"] not in report["trial_critical"], str(report))
+
+        print("\n6) SAHA VAKASI: koşul, koçun son ziyaretinden SONRA doğru oldu")
+        with SessionLocal() as db:
+            # Hatice (#87) senaryosu: 7 Ağu'da girdi (o an kritik DEĞİL),
+            # 8 Ağu'da deneme kritik eşiğe girdi, koç panele hiç dönmedi.
+            # Banner gösterilemezdi → sessiz SAYILMAMALI.
+            u = db.get(User, ids["crit"])
+            u.trial_ends_at = now + timedelta(days=2)   # kritik (≤3 gün)
+            db.query(PanelVisitEvent).filter(
+                PanelVisitEvent.user_id == ids["crit"]).update(
+                # kritik eşik = bitiş-3g = now-1g; ziyaret ondan ÖNCE
+                {"created_at": now - timedelta(hours=36)}, synchronize_session=False)
+            db.commit()
+            report = {r_.key: r_.silent_user_ids for r_ in moments.silent_moment_report(db)}
+            check("koşul son ziyaretten sonra doğduysa sessiz SAYILMAZ",
+                  ids["crit"] not in report["trial_critical"], str(report))
+            # Aynı koç panele DÖNERSE (ziyaret koşuldan sonra) → yine sessiz sayılır
+            db.query(PanelVisitEvent).filter(
+                PanelVisitEvent.user_id == ids["crit"]).update(
+                {"created_at": now - timedelta(minutes=5)}, synchronize_session=False)
+            db.commit()
+            report = {r_.key: r_.silent_user_ids for r_ in moments.silent_moment_report(db)}
+            check("panele döndüğünde tekrar sessiz sayılır (kırılma tespiti sürüyor)",
+                  ids["crit"] in report["trial_critical"], str(report))
     finally:
         with SessionLocal() as db:
             db.execute(sa_delete(MomentEvent).where(
