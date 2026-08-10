@@ -6,6 +6,93 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YENİ İŞ — Ortak Kitap Kataloğu + içindekiler fotoğrafından BİREBİR test sayısı — CANLI (2026-08-11, commit `1712e86`, migration `n4o7r0t1t44n`)
+
+**Tetikleyici:** koçlar "müfredattan kitap oluşturunca sabit test sayısını tek
+tek düzeltmek çok zaman alıyor; Dijimind'de kapak fotoğrafı yükleyince içerik
+birebir geliyor" dedi. **Araştırma bulgusu (2026-08-10):** çekilebilecek hazır
+API YOK — dağıtımcı XML/KiBO feed'leri yalnız ticari metadata; Pakodemy/Doping
+kapalı lisans; Dijimind'in sırrı AI değil birikmiş veritabanı. Kapaktan test
+sayısı fiziksel olarak okunamaz; birebir kaynak = İÇİNDEKİLER sayfası + birikimli
+katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
+`docs/kitap-katalog-tasarimi.md`** (3 tık ilkesi + koruma rayları).
+
+- **Migration `n4o7r0t1t44n`** (← m3n6q9s0s33m, additive, downgrade'li):
+  KATALOG = global BookTemplate (modeldeki "NULL teacher_id = system-template"
+  notu hayata geçti; YENİ TABLO YOK). `book_templates.teacher_id` nullable +
+  catalog_status (NULL=kişisel · pending/verified/hidden) + source
+  (admin_seed/coach_contribution/ai_read) + name/publisher_normalized (index)
+  + contributed_by/verified_by/verified_at + usage_count;
+  `book_template_sections.topic_id` (verified kayıt MÜFREDAT EŞLEŞTİRMESİNİ de
+  taşır — builtin topic) + `AuditAction.BOOK_CATALOG_UPDATE` (PG ALTER TYPE).
+- **Okuma motoru `app/services/ai_book_structure.py`:** içindekiler foto(≤6)/
+  PDF(≤10MB) → Gemini vision **ÇİFT paralel okuma** (exam_import deseni; uçlar
+  SENKRON def) → sıra+etiket hizalı merge: test sayısı çelişkisi → `suspect`
+  (önizlemede amber); **null KORUNUR** (içindekilerde yazmıyorsa UYDURULMAZ —
+  koç doldurur); <2 bölüm → 422 `not_a_toc`. `identify_cover` = kapaktan yalnız
+  KİMLİK (ad/yayınevi/ders/sınıf → katalog eşleşmesi); kapak içerik üretmez.
+  **KREDİSİZ** (personal_data=False → ücretsiz anahtar): `UsageKind.AI_BOOK_READ`
+  = 0 kredi ölçüm satırı (record_usage KULLANILMAZ — 1'e clamp'ler; UsageEvent
+  doğrudan yazılır, CreditAccount'a dokunulmaz) + koç başına günlük 30 okuma
+  tavanı (UTC gün; aşımda 429 `daily_read_limit`; not_a_toc da sayılır).
+  **Prompt dersleri (gerçek benchmark'tan):** test satırları içindekilerde AYRI
+  SATIRLAR olabilir ("Mini Hız Testi - 1") → ait olduğu konuya SAYILIR, ayrı
+  bölüm yazılmaz; önsöz/cevap anahtarı/çözümler/sözlük ELENİR.
+- **`app/services/book_catalog.py` (TEK MERKEZ):** verified-only arama
+  (normalize tam>önek>içerir + usage_count) · `find_duplicate` (normalize
+  ad+yayınevi; aynı ad farklı yayınevi = farklı kitap) · create/update/set_status
+  · `contribute_from_sections` (koç katkısı → DAİMA pending, anonim;
+  contributed_by yalnız denetim izi) · builtin süzgeci (katalog kaydına yalnız
+  builtin ders/konu bağlanır — kişisel konu SIZMAZ) · **deterministik
+  `auto_map_sections`** (curriculum_mapping `_label_key` katmanı, AI'sız/kredisiz;
+  create+update sonrası best-effort — admin elle eşleştirmez).
+- **Koç uçları (library router):** POST `book-structure/read` + `identify-cover`
+  · GET `book-catalog/search` (yalnız verified) + `/{id}` · POST
+  `book-catalog/contribute` (mükerrer → hata değil `already_in_catalog` bilgisi)
+  · **POST /books artık verified katalog `template_id`'sini kabul eder**
+  (`get_owned_or_catalog_template`; başka koçun kişisel şablonu/pending → 404;
+  topic'ler yalnız AYNI derste kopyalanır; usage_count++) · POST
+  `sections/bulk` (etiket-bazlı toplu bölüm — foto önizlemesinin "Uygula"sı).
+- **Admin (`admin_book_catalog.py`, `/admin/book-catalog`):** liste+sayımlar ·
+  `/read` (seed aracı, tavansız) · create (publish→verified) · update (sections
+  replace) · verify/hide/delete (delete yalnız usage_count=0; aksi 409 →
+  hide öner) · `/subjects` (builtin; **route sırası: /read + /subjects,
+  /{entry_id}'den ÖNCE** — whatsapp preview dersi) · hepsi BOOK_CATALOG_UPDATE
+  audit'li · admin-shell "Sistem → Kitap Kataloğu" + `book_catalog_pending`
+  rozeti (onayla/reddet → düşer).
+- **Web:** `/admin/book-catalog` (KPI + durum filtre + arama + tablo + PDF/foto
+  okuma dialogu + pending Onayla) · sihirbaz Adım 1 **CatalogQuickStart**
+  (ad yaz/kapak tarat → "Yapısını kullan" TEK TIK: kitap + birebir test sayıları
+  + eşleştirme katalogdan; 3 tık: ad→kullan→oluştur) · Adım 2 **"Fotoğraftan
+  oku"** yöntemi (ÖNERİLEN; PhotoReadPanel → SectionsDraftEditor önizleme:
+  suspect amber + eksik sayı kırmızı + **"tümüne uygula"** toplu aracı) · Adım
+  4'te katkı checkbox'ı (varsayılan açık; katalogdan oluşturulan kitap için
+  görünmez; best-effort). Paylaşılan: `components/book-catalog/*` +
+  `lib/{types,api}/book-catalog.ts` + `use-book-catalog-mutations.ts`.
+- **Test:** YENİ `test_ai_book_structure.py` **12/12** (merge/suspect/null/
+  fallback/tavan/0-kredi) + `test_api_v2_book_catalog.py` **28/28** (izolasyon:
+  kişisel şablon↔katalog çift yönlü sızmaz · pending koça görünmez · katalogdan
+  kitap topic+usage · contribute builtin süzgeci+dedup · moderasyon+audit+rozet
+  · okuma kapıları+429 + sections/bulk). Regresyon: teacher_library 24 ·
+  book_grid 17 · mapping 18 · tenant 29 GREEN. web tsc+eslint temiz.
+  **GERÇEK Gemini benchmark'ı (`sim_book_structure_real.py`, DNS yamalı):**
+  2 yayınevi ÖRNEK PDF'i (satın alma GEREKMEDİ — yayınevlerinin kendi tanıtım
+  PDF'leri içindekiler içerir): Hız ve Renk → 8 konu + test sayıları birebir,
+  çöp satırlar elendi; ENS → 7 bölüm, sayılar içindekilerde yok → dürüstçe boş
+  (uydurma yok). **Seed stratejisi kanıtlandı.**
+- **Deploy:** yedek `pre_bookcat_20260810_2145.dump` + Plausible-stop'lu
+  web/worker/next rebuild; prod head `n4o7r0t1t44n`.
+- **KURAL:** Kitap yapısı verisi tek yönde akar: okuma/katkı → pending →
+  süper admin verified → koçlar. Koçlar yalnız verified görür; kişisel şablon
+  sorguları teacher_id filtresini KORUR. Test sayısı alanına AI tahmini ASLA
+  yazılmaz (null bırakılır). Yeni bağlamda: kart maddesi/vitrin işlerinde bu
+  özellik "birebir test sayısı — kitaptan okunur" diye pazarlanabilir.
+- **SIRADA (kullanıcı):** /admin/book-catalog'dan ilk 10-20 popüler kitabı
+  örnek PDF'lerle seed et (yayınevi siteleri + lisedestek.com KitapOrnekPDF
+  deseni) → koç sihirbazında canlı dene. Mobil BİLİNÇLİ yok (PARITY.md).
+
+---
+
 ## YENİ İŞ — Alarm körlüğü kapsamlı çözüm: Teşhis Kartı — CANLI (2026-08-09, migration `m3n6q9s0s33m`)
 
 **Tetikleyici:** `moment_silent` alarmı 07-09 Ağustos arası **4 kez** çaldı (#87

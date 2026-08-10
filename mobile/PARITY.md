@@ -78,6 +78,7 @@ Billing ayrı iş). Kurulum: `store/iap-kurulum-rehberi.md`.
 | Program **gelişmiş düzenleme** (sürükle-bırak, rezerv, blok, periyot) | ✅ | ⬜ | web |
 | Gün içi **öneriler** (müfredat-öncelikli) + "Sıradaki üniteler" + kitap grid modal | ✅ | ⬜ | web (haftalık plan yüzeyi); 2026-07-13 müfredat-öncelik + release-aware grid düzeltmeleri backend'de — mobil Müfredat sekmesi (`/curriculum`) dedup düzeltmesinden OTOMATİK faydalanır, mobil kod değişikliği gerekmedi |
 | Kütüphane / kitap CRUD / şablon | ✅ | ⬜ | web (kaynak girişi) |
+| **Ortak Kitap Kataloğu + içindekiler fotoğrafından okuma** (2026-08-11) | ✅ | ⬜ | BİLİNÇLİ web-only (kütüphane yönetimi web'de); koç telefon fotoğrafını web sihirbazından `capture=environment` ile çeker |
 | AI koçluk içgörüsü (Gemini) | ✅ | ✅ | "Gelişim izleme → İçgörü"; web+mobil AYNI backend ucu (`/coaching-insight`) |
 | AI foto/ses not (yakalama) | ✅ | ⬜ | web (native kamera/mik sonra) |
 | Kaynak kullanım oranları / akademik yıl / sınıf yükseltme | ✅ | ⬜ | web (seyrek/yönetsel) |
