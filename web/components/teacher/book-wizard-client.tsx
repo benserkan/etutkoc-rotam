@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   ArrowRight,
   BookOpen,
+  Camera,
   Check,
   CheckCircle2,
   ListChecks,
@@ -41,6 +42,9 @@ import type { TeacherStudentListItem } from "@/lib/types/teacher";
 import { isExamSubject } from "@/lib/utils/subjects";
 
 import { BookCreateForm } from "@/components/teacher/book-create-form";
+import { CatalogQuickStart } from "@/components/book-catalog/catalog-quick-start";
+import { PhotoReadPanel } from "@/components/book-catalog/photo-read-panel";
+import { useContributeCatalog } from "@/lib/hooks/use-book-catalog-mutations";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -72,6 +76,8 @@ interface Props {
 export function BookWizardClient({ subjects, templates, students }: Props) {
   const [step, setStep] = React.useState(1);
   const [bookId, setBookId] = React.useState<number | null>(null);
+  // Katalogdan oluşturulan kitap TEKRAR kataloğa önerilmez (mükerrer katkı yok)
+  const [fromCatalog, setFromCatalog] = React.useState(false);
 
   const bookQ = useQuery<LibraryBookDetailResponse>({
     queryKey: bookId ? libraryKeys.book(bookId) : ["library", "book", "none"],
@@ -108,6 +114,11 @@ export function BookWizardClient({ subjects, templates, students }: Props) {
             setBookId(b.id);
             setStep(2);
           }}
+          onCreatedFromCatalog={(b) => {
+            setFromCatalog(true);
+            setBookId(b.id);
+            setStep(2);
+          }}
         />
       ) : null}
 
@@ -132,6 +143,7 @@ export function BookWizardClient({ subjects, templates, students }: Props) {
             <StepAssign
               book={book}
               students={students}
+              canContribute={!fromCatalog}
               onBack={() => setStep(3)}
               onDone={() => setStep(5)}
             />
@@ -214,18 +226,21 @@ function StepInfo({
   subjects,
   templates,
   onCreated,
+  onCreatedFromCatalog,
 }: {
   subjects: SubjectRef[];
   templates: BookTemplateListItem[];
   onCreated: (book: LibraryBookDetailResponse) => void;
+  onCreatedFromCatalog: (book: LibraryBookDetailResponse) => void;
 }) {
   return (
     <div className="space-y-3">
       <StepNarration>
-        <strong>1. Adım — Kitap bilgileri.</strong> Ders, tip ve hedef sınıfı
-        seç. YKS kitabı için <strong>“Sınav Müfredatı (TYT / AYT)”</strong>{" "}
-        grubundan dersi seçmen, sonraki adımları kolaylaştırır.
+        <strong>1. Adım — Kitap bilgileri.</strong> Önce katalogda ara — kitap
+        tanımlıysa yapısı (üniteler + birebir test sayıları) tek tıkla gelir.
+        Yoksa alttaki formla oluştur.
       </StepNarration>
+      <CatalogQuickStart onCreated={onCreatedFromCatalog} />
       <BookCreateForm
         subjects={subjects}
         templates={templates}
@@ -253,9 +268,9 @@ function StepSections({
   onNext: () => void;
 }) {
   const hasSections = book.sections.length > 0;
-  const [method, setMethod] = React.useState<"catalog" | "ai" | "manual" | null>(
-    null,
-  );
+  const [method, setMethod] = React.useState<
+    "photo" | "catalog" | "ai" | "manual" | null
+  >(null);
 
   const catalogMut = useBulkSectionsFromCatalog(book.id);
   const aiMut = useAiSuggestSections(book.id);
@@ -340,27 +355,36 @@ function StepSections({
           </CardContent>
         </Card>
       ) : method !== "manual" ? (
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Fotoğraftan oku — birebir test sayıları (YENİ, önerilen) */}
+          <MethodCard
+            recommended
+            active={method === "photo"}
+            icon={Camera}
+            title="Fotoğraftan oku"
+            desc="Kitabın İçindekiler sayfasını çek — üniteler ve test sayıları KİTAPTAN birebir okunur (kredi harcamaz)."
+            onClick={() => setMethod("photo")}
+          />
           {/* Katalog */}
           <MethodCard
-            recommended={isExam}
+            recommended={false}
             active={method === "catalog"}
             icon={ListChecks}
             title="Resmi konulardan ekle"
             desc={
               isExam
-                ? `Bu ders için ${topicCount || "resmi"} konu hazır — tek tıkla ekle, müfredata otomatik eşli gelir (eşleştirme adımı atlanır).`
-                : `Bu dersin resmi konularını (${topicCount || "—"}) hazır ekle.`
+                ? `Bu ders için ${topicCount || "resmi"} konu hazır — müfredata otomatik eşli gelir; test sayılarını sonra düzeltirsin.`
+                : `Bu dersin resmi konularını (${topicCount || "—"}) hazır ekle; test sayılarını sonra düzeltirsin.`
             }
             onClick={() => setMethod("catalog")}
           />
           {/* AI */}
           <MethodCard
-            recommended={!isExam}
+            recommended={false}
             active={method === "ai"}
             icon={Wand2}
             title="Yapay zekâ önersin"
-            desc="Kitap adı ve yayınevinden ünite listesini yapay zekâ oluştursun (ücretli pakette)."
+            desc="Kitap adı ve yayınevinden tipik ünite yapısını yapay zekâ tahmin etsin (ücretli pakette; birebir değildir)."
             onClick={() => setMethod("ai")}
           />
           {/* Manuel — bu dalda method asla "manual" değil (seçilince ayrı panel) */}
@@ -374,6 +398,8 @@ function StepSections({
           />
         </div>
       ) : null}
+
+      {!hasSections && method === "photo" ? <PhotoReadPanel book={book} /> : null}
 
       {!hasSections && method === "catalog" ? (
         <Card>
@@ -808,11 +834,13 @@ function StepMapping({
 function StepAssign({
   book,
   students,
+  canContribute,
   onBack,
   onDone,
 }: {
   book: LibraryBookDetailResponse;
   students: TeacherStudentListItem[];
+  canContribute: boolean;
   onBack: () => void;
   onDone: () => void;
 }) {
@@ -821,8 +849,35 @@ function StepAssign({
     [students],
   );
   const [sel, setSel] = React.useState<Set<number>>(new Set());
+  const [share, setShare] = React.useState(true);
   const assignMut = useAssignBookToStudents(book.id);
+  const contribute = useContributeCatalog();
 
+  // Katkı yalnız anlamlı yapıda önerilir (katalogdan gelmemiş + ≥2 bölüm)
+  const showShare = canContribute && book.sections.length >= 2;
+
+  function maybeContribute() {
+    if (!showShare || !share) return;
+    // Best-effort — koçun akışını asla bloklamaz; mükerrerse sunucu sessizce geçer.
+    contribute.mutate({
+      name: book.name,
+      publisher: book.publisher,
+      type: book.type,
+      subject_id: book.subject_id,
+      target_grade_min: book.target_grade_min,
+      target_grade_max: book.target_grade_max,
+      target_graduate: book.target_graduate,
+      sections: book.sections.map((s) => ({
+        label: s.label,
+        test_count: s.test_count,
+        topic_id: s.topic_id,
+      })),
+    });
+  }
+  function finish() {
+    maybeContribute();
+    onDone();
+  }
   function toggle(id: number) {
     setSel((p) => {
       const n = new Set(p);
@@ -834,7 +889,7 @@ function StepAssign({
   function assign() {
     assignMut.mutate(
       { body: { student_ids: Array.from(sel) } },
-      { onSuccess: onDone },
+      { onSuccess: finish },
     );
   }
 
@@ -874,12 +929,29 @@ function StepAssign({
         </CardContent>
       </Card>
 
+      {showShare ? (
+        <label className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-muted/30 px-3 py-2 text-sm">
+          <input
+            type="checkbox"
+            checked={share}
+            onChange={(e) => setShare(e.target.checked)}
+            className="mt-0.5"
+          />
+          <span className="text-muted-foreground">
+            Bu kitabın yapısını (ünite + test sayıları){" "}
+            <strong className="text-foreground">ortak kataloğa öner</strong> —
+            onaylanırsa diğer koçlar tek tıkla kullanır.{" "}
+            <span className="text-xs">Adın görünmez; öğrenci verisi paylaşılmaz.</span>
+          </span>
+        </label>
+      ) : null}
+
       <div className="flex items-center justify-between">
         <Button variant="ghost" onClick={onBack}>
           <ArrowLeft className="size-4" aria-hidden /> Geri
         </Button>
         <div className="flex gap-2">
-          <Button variant="outline" onClick={onDone}>
+          <Button variant="outline" onClick={finish}>
             Atla
           </Button>
           <Button

@@ -10,6 +10,7 @@ import {
   AlertOctagon,
   BarChart3,
   BellRing,
+  BookOpen,
   Building2,
   CalendarDays,
   FlaskConical,
@@ -63,7 +64,11 @@ import type { AdminBadgesResponse } from "@/lib/types/admin";
 import type { UserPublic } from "@/lib/types/me";
 import { ROLE_LABELS_TR } from "@/lib/types/me";
 
-type AdminBadgeKey = "support_pending" | "contact_new" | "unack_alarms";
+type AdminBadgeKey =
+  | "support_pending"
+  | "contact_new"
+  | "unack_alarms"
+  | "book_catalog_pending";
 
 function adminBadgeValue(
   badges: AdminBadgesResponse | undefined,
@@ -176,6 +181,7 @@ const NAV_SECTIONS: NavSection[] = [
     title: "Sistem",
     links: [
       { href: "/admin/settings", label: "AI Ayarları", icon: KeyRound },
+      { href: "/admin/book-catalog", label: "Kitap Kataloğu", icon: BookOpen, badgeKey: "book_catalog_pending" },
       { href: "/admin/pricing", label: "Ücretlendirme", icon: CircleDollarSign },
       { href: "/admin/whatsapp-templates", label: "WhatsApp Şablonları", icon: MessageSquare },
       { href: "/admin/whatsapp-dispatch-log", label: "WhatsApp Audit", icon: Activity },

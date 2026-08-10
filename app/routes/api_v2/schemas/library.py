@@ -229,6 +229,16 @@ class SectionsBulkFromCatalogBody(BaseModel):
     items: list[BulkCatalogTopicItem]
 
 
+class BulkLabelSectionItem(BaseModel):
+    label: str
+    test_count: int                  # ≥1 (okuma önizlemesinde doldurulmuş olmalı)
+
+
+class SectionsBulkCreateBody(BaseModel):
+    """Etiket-bazlı toplu bölüm (fotoğraftan okuma 'Uygula' adımı)."""
+    items: list[BulkLabelSectionItem]
+
+
 class BulkCatalogResult(BaseModel):
     added_count: int
     skipped_existing_count: int      # zaten ekli topic'ler atlandı
@@ -413,6 +423,121 @@ class AddBooksToSetBody(BaseModel):
 class AddBooksToSetResult(BaseModel):
     added_count: int
     skipped_existing_count: int
+
+
+# =============================================================================
+# Kitap yapısı okuma (içindekiler foto/PDF) + Ortak Kitap Kataloğu
+# =============================================================================
+
+
+class StructureReadSection(BaseModel):
+    label: str
+    test_count: int | None       # null = içindekilerde yazmıyor (koç doldurur)
+    suspect: bool = False        # çift okuma çelişkisi — önizlemede amber
+
+
+class StructureReadResult(BaseModel):
+    book_title: str | None
+    publisher: str | None
+    subject_hint: str | None
+    grade_hint: int | None
+    sections: list[StructureReadSection]
+    warnings: list[str]
+    read_count: int              # 2 = çift okuma, 1 = doğrulama okuması düştü
+    reads_left_today: int | None = None  # koç ucu doldurur; admin sınırsız (None)
+
+
+class CatalogSectionItem(BaseModel):
+    label: str
+    test_count: int
+    order: int
+    topic_id: int | None = None
+    topic_name: str | None = None
+
+
+class CatalogEntryBrief(BaseModel):
+    id: int
+    name: str
+    publisher: str | None
+    type: BookTypeLiteral
+    subject_id: int | None
+    subject_name: str | None
+    target_grade_min: int | None
+    target_grade_max: int | None
+    target_graduate: bool
+    section_count: int
+    total_tests: int
+    mapped_count: int            # müfredat eşli bölüm sayısı
+    usage_count: int
+    status: str                  # pending | verified | hidden (koç ucunda hep verified)
+    source: str | None = None    # admin görünümü (admin_seed / coach_contribution / ai_read)
+    created_at: datetime
+
+
+class CatalogSearchResponse(BaseModel):
+    items: list[CatalogEntryBrief]
+    total: int
+
+
+class CatalogEntryDetail(CatalogEntryBrief):
+    sections: list[CatalogSectionItem]
+
+
+class CoverIdentifyResult(BaseModel):
+    book_title: str | None
+    publisher: str | None
+    subject_hint: str | None
+    grade_hint: int | None
+    exam_hint: str | None
+    catalog_matches: list[CatalogEntryBrief]
+    reads_left_today: int | None = None
+
+
+class ContributeSectionItem(BaseModel):
+    label: str
+    test_count: int              # ≥1 (kitap oluşturulduğunda zaten dolu)
+    topic_id: int | None = None
+
+
+class CatalogContributeBody(BaseModel):
+    name: str
+    publisher: str | None = None
+    type: BookTypeLiteral
+    subject_id: int | None = None
+    target_grade_min: int | None = None
+    target_grade_max: int | None = None
+    target_graduate: bool = False
+    sections: list[ContributeSectionItem]
+
+
+class CatalogContributeResult(BaseModel):
+    status: str                  # "pending" | "already_in_catalog"
+    entry_id: int | None = None
+
+
+# Admin gövdeleri (create = contribute şeması + admin alanları)
+class AdminCatalogCreateBody(CatalogContributeBody):
+    publish: bool = True         # True → doğrudan verified; False → pending
+
+
+class AdminCatalogUpdateBody(BaseModel):
+    """None geçilen alanlar değişmez; sections verilirse tamamen yer değiştirir."""
+    name: str | None = None
+    publisher: str | None = None
+    type: BookTypeLiteral | None = None
+    subject_id: int | None = None
+    target_grade_min: int | None = None
+    target_grade_max: int | None = None
+    target_graduate: bool | None = None
+    sections: list[ContributeSectionItem] | None = None
+
+
+class AdminCatalogListResponse(BaseModel):
+    items: list[CatalogEntryBrief]
+    total: int
+    verified_count: int
+    pending_count: int
+    hidden_count: int
 
 
 # =============================================================================

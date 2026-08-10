@@ -48,7 +48,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
@@ -100,13 +100,23 @@ from app.routes.api_v2.schemas.library import (
     BookTemplateListItem,
     BookTemplateListResponse,
     BulkCatalogResult,
+    CatalogContributeBody,
+    CatalogContributeResult,
+    CatalogEntryBrief,
+    CatalogEntryDetail,
+    CatalogSearchResponse,
+    CatalogSectionItem,
+    CoverIdentifyResult,
     DeletedRef,
     SaveAsTemplateBody,
     SectionCreateBody,
     SectionPatchBody,
+    SectionsBulkCreateBody,
     SectionsBulkFromCatalogBody,
     MappingSuggestionRow,
     MappingSuggestionsResponse,
+    StructureReadResult,
+    StructureReadSection,
     SubjectListResponse,
     SubjectRef,
     TopicListResponse,
@@ -517,7 +527,15 @@ def library_book_create_v2(
 
     template: BookTemplate | None = None
     if body.template_id is not None:
-        template = _get_owned_template(db, body.template_id, user.id)
+        # Koçun KENDİ şablonu VEYA verified Ortak Kitap Kataloğu kaydı.
+        # Başka koçun kişisel şablonu / pending / hidden → 404 (sızıntı yok).
+        from app.services import book_catalog as catalog_svc
+
+        template = catalog_svc.get_owned_or_catalog_template(
+            db, body.template_id, user.id,
+        )
+        if template is None:
+            raise _not_found("template_not_found", "Şablon bulunamadı.")
 
     book = Book(
         teacher_id=user.id,
@@ -533,13 +551,20 @@ def library_book_create_v2(
     db.add(book)
     db.flush()
     if template:
+        # Müfredat eşleştirmesi de taşınır (katalog kayıtları builtin topic
+        # taşır) — yalnız kitap AYNI derse bağlanıyorsa (farklı ders seçildiyse
+        # konular o derse ait olmaz → NULL, koç auto-map ile eşler).
+        copy_topics = template.subject_id == body.subject_id
         for ts in template.sections:
             db.add(BookSection(
                 book_id=book.id,
                 label=ts.label,
                 test_count=ts.default_test_count,
                 order=ts.order,
+                topic_id=(ts.topic_id if copy_topics else None),
             ))
+        if template.is_catalog:
+            catalog_svc.bump_usage(template)
     db.commit()
     db.refresh(book)
     return MutationResponse[BookDetailResponse](
@@ -852,6 +877,61 @@ def library_sections_bulk_v2(
     )
 
 
+@router.post(
+    "/books/{book_id}/sections/bulk",
+    response_model=MutationResponse[BulkCatalogResult],
+)
+def library_sections_bulk_labels_v2(
+    book_id: int,
+    body: SectionsBulkCreateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Etiket-bazlı TOPLU bölüm ekleme (fotoğraftan okuma önizlemesinin
+    'Uygula'sı). Aynı etiketli mevcut bölüm atlanır; SectionProgress satırları
+    atanmış öğrenciler için kurulur. Deterministik müfredat auto-map'i 3. adım
+    (eşleştirme önerileri) zaten yapar — burada yalnız yapı yazılır."""
+    book = _get_owned_book(db, book_id, user.id)
+    items = [
+        it for it in (body.items or [])
+        if (it.label or "").strip() and it.test_count >= 1
+    ]
+    if not items:
+        raise _validation_error("no_sections", "En az bir bölüm gerekli (test sayıları dolu olmalı).")
+    existing_labels = {s.label.strip().lower() for s in (book.sections or [])}
+    max_order = max((s.order for s in book.sections or []), default=-1)
+    added = 0
+    skipped = 0
+    for it in items:
+        label = it.label.strip()[:255]
+        if label.lower() in existing_labels:
+            skipped += 1
+            continue
+        existing_labels.add(label.lower())
+        max_order += 1
+        sec = BookSection(
+            book_id=book.id,
+            label=label,
+            test_count=min(int(it.test_count), 500),
+            order=max_order,
+        )
+        db.add(sec)
+        db.flush()
+        for sb in book.student_books or []:
+            db.add(SectionProgress(
+                student_book_id=sb.id,
+                book_section_id=sec.id,
+                reserved_count=0,
+                completed_count=0,
+            ))
+        added += 1
+    db.commit()
+    return MutationResponse[BulkCatalogResult](
+        data=BulkCatalogResult(added_count=added, skipped_existing_count=skipped),
+        invalidate=_invalidate_book(user.id, book.id),
+    )
+
+
 @router.patch(
     "/books/{book_id}/sections/{section_id}",
     response_model=MutationResponse[BookSectionItem],
@@ -1132,6 +1212,294 @@ def library_ai_suggest_v2(
             suggestions=[_build_section_item(db, s) for s in new_sections],
         ),
         invalidate=_invalidate_book(user.id, book.id),
+    )
+
+
+# =============================================================================
+# Kitap yapısı okuma (içindekiler foto/PDF) + Ortak Kitap Kataloğu
+# =============================================================================
+
+
+def _collect_structure_files(files: list[UploadFile]) -> list[tuple[bytes, str]]:
+    """Yükleme doğrulaması: 1 PDF (≤10MB) VEYA ≤6 görsel (jpeg/png/webp ≤8MB)."""
+    from app.services.ai_book_structure import (
+        ALLOWED_IMAGE_TYPES,
+        MAX_IMAGE_BYTES,
+        MAX_IMAGES,
+        MAX_PDF_BYTES,
+        PDF_MIME,
+    )
+
+    files = [f for f in (files or []) if f is not None]
+    if not files:
+        raise _validation_error("no_files", "En az bir fotoğraf veya PDF yükleyin.")
+    pdfs = [f for f in files if (f.content_type or "").lower() == PDF_MIME]
+    if pdfs:
+        if len(files) > 1:
+            raise _validation_error(
+                "mixed_files", "PDF tek başına yüklenmeli (fotoğrafla karıştırmayın).",
+            )
+        raw = pdfs[0].file.read()
+        if not raw:
+            raise _validation_error("empty_file", "Dosya boş.")
+        if len(raw) > MAX_PDF_BYTES:
+            raise _validation_error("file_too_large", "PDF en fazla 10 MB olabilir.")
+        return [(raw, PDF_MIME)]
+    if len(files) > MAX_IMAGES:
+        raise _validation_error(
+            "too_many_files", f"En fazla {MAX_IMAGES} fotoğraf yüklenebilir.",
+        )
+    out: list[tuple[bytes, str]] = []
+    for f in files:
+        ct = (f.content_type or "").lower()
+        if ct not in ALLOWED_IMAGE_TYPES:
+            raise _validation_error(
+                "invalid_media_type", "Yalnız JPEG/PNG/WebP fotoğraf veya PDF yükleyin.",
+            )
+        raw = f.file.read()
+        if not raw:
+            raise _validation_error("empty_file", "Dosya boş.")
+        if len(raw) > MAX_IMAGE_BYTES:
+            raise _validation_error("file_too_large", "Her fotoğraf en fazla 8 MB olabilir.")
+        out.append((raw, ct))
+    return out
+
+
+def _check_read_cap(db: Session, user: User) -> int:
+    """Günlük okuma tavanı (kredi yok — kötüye kullanım rayı). Kalanı döndürür."""
+    from app.services.ai_book_structure import (
+        AI_BOOK_READ_DAILY_LIMIT,
+        book_read_count_today,
+    )
+
+    used = book_read_count_today(db, user.id)
+    if used >= AI_BOOK_READ_DAILY_LIMIT:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail={
+                "error": "rate_limited",
+                "code": "daily_read_limit",
+                "message": "Bugünlük okuma hakkın doldu — yarın tekrar deneyebilirsin.",
+            },
+        )
+    return AI_BOOK_READ_DAILY_LIMIT - used - 1
+
+
+def _ai_upstream_error(message: str) -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_502_BAD_GATEWAY,
+        detail={
+            "error": "upstream_unavailable",
+            "code": "ai_provider_error",
+            "message": message,
+        },
+    )
+
+
+def _catalog_brief(db: Session, tpl: BookTemplate) -> CatalogEntryBrief:
+    secs = sorted(tpl.sections or [], key=lambda s: (s.order, s.id))
+    subject_name: str | None = None
+    if tpl.subject_id is not None:
+        row = db.query(Subject.name).filter(Subject.id == tpl.subject_id).first()
+        subject_name = row[0] if row else None
+    return CatalogEntryBrief(
+        id=tpl.id,
+        name=tpl.name,
+        publisher=tpl.publisher,
+        type=tpl.type.value if tpl.type else "soru_bankasi",
+        subject_id=tpl.subject_id,
+        subject_name=subject_name,
+        target_grade_min=tpl.target_grade_min,
+        target_grade_max=tpl.target_grade_max,
+        target_graduate=bool(tpl.target_graduate),
+        section_count=len(secs),
+        total_tests=sum(s.default_test_count for s in secs),
+        mapped_count=sum(1 for s in secs if s.topic_id is not None),
+        usage_count=int(tpl.usage_count or 0),
+        status=tpl.catalog_status or "verified",
+        source=tpl.source,
+        created_at=tpl.created_at,
+    )
+
+
+def _catalog_detail(db: Session, tpl: BookTemplate) -> CatalogEntryDetail:
+    brief = _catalog_brief(db, tpl)
+    secs = sorted(tpl.sections or [], key=lambda s: (s.order, s.id))
+    return CatalogEntryDetail(
+        **brief.model_dump(),
+        sections=[
+            CatalogSectionItem(
+                label=s.label,
+                test_count=s.default_test_count,
+                order=s.order,
+                topic_id=s.topic_id,
+                topic_name=s.topic.name if s.topic else None,
+            )
+            for s in secs
+        ],
+    )
+
+
+@router.post("/book-structure/read", response_model=StructureReadResult)
+def library_structure_read_v2(
+    files: list[UploadFile] = File(default=[]),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """İçindekiler foto/PDF → ünite + BİREBİR test sayısı taslağı.
+
+    Kredi DÜŞMEZ (kişisel veri değil → ücretsiz anahtar); günlük tavan +
+    0 kredilik ölçüm kaydı. Çift okuma; çelişen satır suspect. Yanıt yalnız
+    TASLAK — kayıt sihirbazda koç onayıyla olur. SENKRON def (uzun Gemini
+    çağrısı event loop'u kilitlemesin — exam_import dersi).
+    """
+    from app.services import ai_book_structure as abs_svc
+
+    files_data = _collect_structure_files(files)
+    reads_left = _check_read_cap(db, user)
+    try:
+        result = abs_svc.read_structure(files_data)
+    except abs_svc.NotATocError as e:
+        # Gemini çağrısı yapıldı → tavana sayılır (başarısız foto spam'i önlenir)
+        abs_svc.record_book_read(db, user, mode="toc", section_count=0, autocommit=True)
+        raise _validation_error("not_a_toc", str(e))
+    except abs_svc.AIServiceUnavailable as e:
+        raise _ai_upstream_error(f"AI servisi kullanılamıyor: {e}")
+    except abs_svc.AIInvalidResponse as e:
+        raise _ai_upstream_error(f"AI yanıtı işlenemedi: {e}")
+    abs_svc.record_book_read(
+        db, user, mode="toc", section_count=len(result["sections"]), autocommit=True,
+    )
+    return StructureReadResult(
+        book_title=result["book_title"],
+        publisher=result["publisher"],
+        subject_hint=result["subject_hint"],
+        grade_hint=result["grade_hint"],
+        sections=[StructureReadSection(**s) for s in result["sections"]],
+        warnings=result["warnings"],
+        read_count=result["read_count"],
+        reads_left_today=reads_left,
+    )
+
+
+@router.post("/book-structure/identify-cover", response_model=CoverIdentifyResult)
+def library_identify_cover_v2(
+    file: UploadFile = File(...),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kapak fotoğrafı → kitap kimliği + katalog eşleşmeleri. İçerik ÜRETMEZ —
+    kapağın tek rolü kitabı tanıyıp katalogdaki kayda eşlemek."""
+    from app.services import ai_book_structure as abs_svc
+    from app.services import book_catalog as catalog_svc
+    from app.services.ai_book_structure import ALLOWED_IMAGE_TYPES, MAX_IMAGE_BYTES
+
+    ct = (file.content_type or "").lower()
+    if ct not in ALLOWED_IMAGE_TYPES:
+        raise _validation_error("invalid_media_type", "Yalnız JPEG/PNG/WebP fotoğraf yükleyin.")
+    raw = file.file.read()
+    if not raw:
+        raise _validation_error("empty_file", "Dosya boş.")
+    if len(raw) > MAX_IMAGE_BYTES:
+        raise _validation_error("file_too_large", "Fotoğraf en fazla 8 MB olabilir.")
+
+    reads_left = _check_read_cap(db, user)
+    try:
+        info = abs_svc.identify_cover(raw, ct)
+    except abs_svc.AIServiceUnavailable as e:
+        raise _ai_upstream_error(f"AI servisi kullanılamıyor: {e}")
+    except abs_svc.AIInvalidResponse as e:
+        raise _ai_upstream_error(f"AI yanıtı işlenemedi: {e}")
+    abs_svc.record_book_read(db, user, mode="cover", section_count=0, autocommit=True)
+    matches = catalog_svc.find_matches(db, info["book_title"], info["publisher"])
+    return CoverIdentifyResult(
+        book_title=info["book_title"],
+        publisher=info["publisher"],
+        subject_hint=info["subject_hint"],
+        grade_hint=info["grade_hint"],
+        exam_hint=info["exam_hint"],
+        catalog_matches=[_catalog_brief(db, m) for m in matches],
+        reads_left_today=reads_left,
+    )
+
+
+@router.get("/book-catalog/search", response_model=CatalogSearchResponse)
+def library_catalog_search_v2(
+    q: str = Query(..., min_length=2, max_length=120),
+    subject_id: int | None = Query(None),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Ortak Kitap Kataloğu araması — YALNIZ yayında (verified) kayıtlar."""
+    from app.services import book_catalog as catalog_svc
+
+    rows = catalog_svc.search_catalog(db, q, subject_id=subject_id)
+    return CatalogSearchResponse(
+        items=[_catalog_brief(db, t) for t in rows], total=len(rows),
+    )
+
+
+@router.get("/book-catalog/{entry_id}", response_model=CatalogEntryDetail)
+def library_catalog_detail_v2(
+    entry_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    from app.services import book_catalog as catalog_svc
+
+    try:
+        entry = catalog_svc.get_catalog_entry(db, entry_id)
+    except catalog_svc.CatalogError as e:
+        raise _not_found(e.code, e.message)
+    return _catalog_detail(db, entry)
+
+
+@router.post(
+    "/book-catalog/contribute",
+    response_model=MutationResponse[CatalogContributeResult],
+)
+def library_catalog_contribute_v2(
+    body: CatalogContributeBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Koç katkısı → pending katalog kaydı (anonim; süper admin onaylar).
+
+    Mükerrer (aynı normalize ad+yayınevi zaten pending/verified) → hata değil,
+    `status="already_in_catalog"` bilgisi (sihirbaz sessizce geçer).
+    """
+    from app.services import book_catalog as catalog_svc
+
+    try:
+        book_type = BookType(body.type)
+    except ValueError:
+        raise _validation_error("invalid_type", "Geçersiz kitap tipi.")
+    try:
+        entry = catalog_svc.contribute_from_sections(
+            db,
+            user,
+            name=body.name,
+            publisher=body.publisher,
+            book_type=book_type,
+            subject_id=body.subject_id,
+            target_grade_min=body.target_grade_min,
+            target_grade_max=body.target_grade_max,
+            target_graduate=bool(body.target_graduate),
+            sections=[s.model_dump() for s in (body.sections or [])],
+        )
+    except catalog_svc.CatalogError as e:
+        if e.code == "already_in_catalog":
+            return MutationResponse[CatalogContributeResult](
+                data=CatalogContributeResult(
+                    status="already_in_catalog", entry_id=e.entry_id,
+                ),
+                invalidate=[],
+            )
+        raise _validation_error(e.code, e.message)
+    db.commit()
+    return MutationResponse[CatalogContributeResult](
+        data=CatalogContributeResult(status="pending", entry_id=entry.id),
+        invalidate=[],
     )
 
 

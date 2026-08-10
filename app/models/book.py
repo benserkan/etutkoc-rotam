@@ -176,6 +176,22 @@ class BookSetItem(Base):
     book: Mapped["Book"] = relationship("Book")
 
 
+# Ortak Kitap Kataloğu durumları (catalog_status; NULL = kişisel şablon).
+# pending  : koç katkısı — süper admin onayı bekler, koçlara GÖRÜNMEZ
+# verified : yayında — tüm koçlar arayıp tek tıkla kullanır
+# hidden   : yayından kaldırıldı (geri alınabilir)
+CATALOG_STATUS_PENDING = "pending"
+CATALOG_STATUS_VERIFIED = "verified"
+CATALOG_STATUS_HIDDEN = "hidden"
+CATALOG_STATUSES = (
+    CATALOG_STATUS_PENDING, CATALOG_STATUS_VERIFIED, CATALOG_STATUS_HIDDEN,
+)
+
+CATALOG_SOURCE_ADMIN_SEED = "admin_seed"
+CATALOG_SOURCE_COACH = "coach_contribution"
+CATALOG_SOURCE_AI_READ = "ai_read"
+
+
 class BookTemplate(Base):
     """Yeniden kullanılabilir kitap yapı şablonu (ünite isimleri + default test sayıları).
 
@@ -184,15 +200,19 @@ class BookTemplate(Base):
     kaydedilir; kullanıcı düzenleyip "is_verified=True"a yükselttiğinde
     güvenilir şablon olur.
 
-    Şu an sadece teacher_id'ye bağlı (kişisel kütüphane). İleride paylaşım
-    açılırsa NULL teacher_id system-template olarak yorumlanabilir.
+    İKİ KİMLİK (2026-08-11, Ortak Kitap Kataloğu):
+    - Kişisel şablon: teacher_id dolu + catalog_status NULL (eski davranış).
+    - Katalog kaydı : teacher_id NULL + catalog_status dolu (pending/verified/
+      hidden). Yayınevi kitabının GERÇEK yapısı (ünite + birebir test sayısı +
+      builtin müfredat eşleştirmesi) bir kez tanımlanır, tüm koçlar kullanır.
+      Kişisel sorgular teacher_id filtresini korur → katalog satırı sızmaz.
     """
 
     __tablename__ = "book_templates"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    teacher_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    teacher_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=True, index=True
     )
     name: Mapped[str] = mapped_column(String(255), nullable=False)
     publisher: Mapped[str | None] = mapped_column(String(255), nullable=True)
@@ -211,9 +231,40 @@ class BookTemplate(Base):
     is_ai_generated: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
 
+    # --- Ortak Kitap Kataloğu alanları (NULL = kişisel şablon) -------------
+    catalog_status: Mapped[str | None] = mapped_column(
+        String(16), nullable=True, index=True
+    )
+    source: Mapped[str | None] = mapped_column(String(24), nullable=True)
+    # Eşleştirme-arama anahtarları (curriculum_mapping.normalize ile üretilir)
+    name_normalized: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, index=True
+    )
+    publisher_normalized: Mapped[str | None] = mapped_column(
+        String(255), nullable=True, index=True
+    )
+    # Denetim izi — koçlara ANONİM gösterilir (yalnız admin görür)
+    contributed_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    verified_by_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True
+    )
+    verified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    # Kaç koç bu kayıttan kitap oluşturdu (arama sıralama sinyali)
+    usage_count: Mapped[int] = mapped_column(
+        Integer, default=0, server_default="0", nullable=False
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    @property
+    def is_catalog(self) -> bool:
+        return self.catalog_status is not None
 
     sections: Mapped[list["BookTemplateSection"]] = relationship(
         "BookTemplateSection",
@@ -233,11 +284,17 @@ class BookTemplateSection(Base):
     template_id: Mapped[int] = mapped_column(
         ForeignKey("book_templates.id", ondelete="CASCADE"), nullable=False, index=True
     )
+    # Katalog kayıtlarında müfredat eşleştirmesi de taşınır (yalnız BUILTIN
+    # topic bağlanır — herkes için geçerli). Kişisel şablonlarda NULL kalır.
+    topic_id: Mapped[int | None] = mapped_column(
+        ForeignKey("topics.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     label: Mapped[str] = mapped_column(String(255), nullable=False)
     default_test_count: Mapped[int] = mapped_column(Integer, default=10, nullable=False)
     order: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
 
     template: Mapped["BookTemplate"] = relationship("BookTemplate", back_populates="sections")
+    topic: Mapped["Topic | None"] = relationship("Topic")
 
     def __repr__(self) -> str:
         return f"<BookTemplateSection {self.label} x{self.default_test_count}>"

@@ -77,6 +77,8 @@ class AuditAction(str, enum.Enum):
     TESTIMONIAL_MODERATE = "testimonial_moderate"
     # Bağımsız çalışma kaydı (elle ilerleme girişi) — koç girişi/onay/ret/silme
     SELF_STUDY_UPDATE = "self_study_update"
+    # Ortak Kitap Kataloğu — süper admin moderasyonu (oluştur/düzenle/onay/gizle/sil)
+    BOOK_CATALOG_UPDATE = "book_catalog_update"
 
 
 AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
@@ -114,6 +116,7 @@ AUDIT_ACTION_LABELS: dict[AuditAction, str] = {
     AuditAction.PAYMENT_REFUNDED: "Ödeme iade edildi",
     AuditAction.TESTIMONIAL_MODERATE: "Yorum/referans yayın durumu değişti",
     AuditAction.SELF_STUDY_UPDATE: "Bağımsız çalışma / elle ilerleme girişi",
+    AuditAction.BOOK_CATALOG_UPDATE: "Kitap kataloğu güncellendi",
     AuditAction.USER_PAUSE_ALERTS: "Kullanıcı uyarıları susturuldu (manuel)",
     AuditAction.USER_RESUME_ALERTS: "Kullanıcı uyarıları açıldı (manuel)",
     AuditAction.USER_AUTO_PAUSE: "Kullanıcı otomatik pasifleştirildi (sessizlik)",

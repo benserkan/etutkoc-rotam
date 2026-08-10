@@ -3583,6 +3583,8 @@ class AdminBadgesResponse(BaseModel):
     # Görülmemiş alarm (e-posta kesintisi vb.). E-posta çöktüğünde alarm
     # e-postası GİTMEZ → bu rozet uyarının fark edildiği tek güvenilir yüzey.
     unack_alarms: int = 0
+    # Ortak Kitap Kataloğu — onay bekleyen koç katkısı (onayla/reddet → düşer).
+    book_catalog_pending: int = 0
     checked_at: datetime
 
 

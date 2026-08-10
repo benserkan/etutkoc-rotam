@@ -3274,6 +3274,8 @@ export interface AdminBadgesResponse {
   contact_new: number;
   /** Görülmemiş alarm sayısı — "Gördüm" deyince düşer. */
   unack_alarms?: number;
+  /** Kitap Kataloğu onay bekleyen koç katkısı — onayla/reddet → düşer. */
+  book_catalog_pending?: number;
   checked_at: string;
 }
 

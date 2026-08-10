@@ -443,10 +443,18 @@ def admin_badges_v2(
     except Exception:  # noqa: BLE001
         unack_alarms = 0
 
+    try:
+        from app.services.book_catalog import status_counts as _catalog_counts
+
+        book_catalog_pending = _catalog_counts(db).get("pending", 0)
+    except Exception:  # noqa: BLE001
+        book_catalog_pending = 0
+
     return AdminBadgesResponse(
         support_pending=support_svc.pending_count_super_admin(db),
         contact_new=contact_new,
         unack_alarms=unack_alarms,
+        book_catalog_pending=book_catalog_pending,
         checked_at=datetime.now(timezone.utc),
     )
 

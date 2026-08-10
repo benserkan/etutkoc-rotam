@@ -226,6 +226,32 @@ export function useBulkSectionsFromCatalog(bookId: number) {
   });
 }
 
+export function useBulkCreateSections(bookId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<BulkCatalogResult>,
+    ApiError,
+    { items: { label: string; test_count: number }[] }
+  >({
+    mutationFn: ({ items }) =>
+      api<MutationResponse<BulkCatalogResult>>(
+        `/api/v2/teacher/library/books/${bookId}/sections/bulk`,
+        { method: "POST", body: JSON.stringify({ items }) },
+      ),
+    onError: (err) => showError(err, "Bölümler eklenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const r = res.data;
+      toast.success(
+        `${r.added_count} bölüm eklendi` +
+          (r.skipped_existing_count > 0
+            ? ` · ${r.skipped_existing_count} mevcut atlandı`
+            : ""),
+      );
+    },
+  });
+}
+
 export function usePatchSection(bookId: number) {
   const qc = useQueryClient();
   return useMutation<
