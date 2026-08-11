@@ -10,60 +10,91 @@
   {
    "label": "AÇILAR",
    "test_count": 18,
-   "source": "scan",
-   "page": 5
+   "source": "scan"
   },
   {
    "label": "ÖZEL ÜÇGENLER",
    "test_count": 20,
-   "source": "scan",
-   "page": 44
+   "source": "scan"
   },
   {
    "label": "BENZERLİK",
    "test_count": 22,
-   "source": "scan",
-   "page": 94
+   "source": "scan"
   },
   {
    "label": "ÜÇGENDE YARDIMCI ELEMANLAR",
    "test_count": 26,
    "source": "scan",
-   "page": 142,
    "flag": "scan_mismatch"
   },
   {
    "label": "ÜÇGENDE ALAN",
    "test_count": 20,
-   "source": "scan",
-   "page": 196
+   "source": "scan"
   },
   {
    "label": "GENEL DÖRTGENLER - YAMUK",
    "test_count": 27,
-   "source": "scan",
-   "page": 234
+   "source": "scan"
   },
   {
    "label": "PARALELKENAR - EŞKENAR DÖRTGEN - DELTOİD",
    "test_count": 28,
-   "source": "scan",
-   "page": 288
+   "source": "scan"
   },
   {
    "label": "DİKDÖRTGEN - KARE",
    "test_count": 28,
-   "source": "scan",
-   "page": 353
+   "source": "scan"
   },
   {
    "label": "ÇOKGENLER",
    "test_count": 13,
-   "source": "scan",
-   "page": 415
+   "source": "scan"
+  },
+  {
+   "label": "ÇEMBERDE AÇI",
+   "test_count": 19,
+   "source": "scan"
+  },
+  {
+   "label": "ÇEMBERDE UZUNLUK",
+   "test_count": 24,
+   "source": "scan"
+  },
+  {
+   "label": "DAİREDE ALAN",
+   "test_count": 16,
+   "source": "scan"
+  },
+  {
+   "label": "NOKTA ANALİTİĞİ",
+   "test_count": 17,
+   "source": "scan"
+  },
+  {
+   "label": "DOĞRU ANALİTİĞİ",
+   "test_count": 25,
+   "source": "scan"
+  },
+  {
+   "label": "DÖNÜŞÜMLER",
+   "test_count": 18,
+   "source": "scan"
+  },
+  {
+   "label": "ÇEMBER ANALİTİĞİ",
+   "test_count": 18,
+   "source": "scan"
+  },
+  {
+   "label": "KATI CİSİMLER",
+   "test_count": 24,
+   "source": "scan"
   }
  ],
  "warnings": [
-  "ÜÇGENDE YARDIMCI ELEMANLAR: uyuşmazlık 36/26 — zinciri temiz geçiş (26) alındı"
+  "BİRLEŞİK KAYIT: 345 Geometri cilt 1 (Açılar→Çokgenler, 202 test) + cilt 2 (Çember→Katı Cisimler, 161 test) tek kitap olarak; sıra kitap sırası."
  ]
 }
