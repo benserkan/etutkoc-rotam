@@ -30,6 +30,29 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## SAHA — Öğrenci listesi varsayılan AKTİF + KVKK hayalet süzgeci (2026-08-11, commit `68c2388`, migration YOK)
+
+**Tetikleyici (Hatice + kullanıcı):** pratik için açılan pasif hesaplar listeyi
+kalabalıklaştırıyor ("gözü takılıyor"); KVKK ile silinen hesap koç listesinde
+"(Silinen Kullanıcı)" hayalet satırı olarak duruyordu. Pasif ≠ "hiç görme" —
+üç ayrı ihtiyaç tespit edildi: (1) pasif-ama-dursun, (2) pratik hesap
+(gözden uzak), (3) KVKK silinen (hiç görünmemeli).
+
+- GET `/teacher/students` yeni **`status`** parametresi (aktif/pasif/tum;
+  parametresiz=tum → mobil + eski istemciler ETKİLENMEZ) + **anonymized-%@
+  kvkk.local hesaplar hiçbir görünümde listelenmez** (kayıt DB'de durur —
+  denetim; hayalet satır KVKK'nın ruhuna aykırıydı).
+- Web liste varsayılanı **"Aktif öğrenciler"**; durum seçici (Aktif / Pasifler /
+  Tümü) filtre barında; aktif görünüm boşsa pasiflere yönlendiren boş-durum
+  metni. Pratik hesaplar pasife alınınca varsayılan görünümden düşer — ayrı
+  "arşiv" durumu/migration GEREKMEDİ.
+- Smoke 6b (teacher_students 15/15): pasif aktif-görünümde yok/pasifte var +
+  KVKK hayaleti hiçbir görünümde yok. NOT: görev geçmişli öğrenci DELETE'i
+  bilinçli 409 has_history kalır (veri güvenliği) — pratik hesabın yolu silme
+  değil pasif+gizli görünüm.
+
+---
+
 ## YENİ İŞ — Ortak Kitap Kataloğu + içindekiler fotoğrafından BİREBİR test sayısı — CANLI (2026-08-11, commit `1712e86`, migration `n4o7r0t1t44n`)
 
 **Tetikleyici:** koçlar "müfredattan kitap oluşturunca sabit test sayısını tek
