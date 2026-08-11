@@ -1,0 +1,126 @@
+{
+ "name": "345 TYT Fizik Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "TYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Fizik Bilimine Giriş",
+   "test_count": 7,
+   "source": "scan",
+   "page": 6
+  },
+  {
+   "label": "Madde ve Özellikleri",
+   "test_count": 11,
+   "source": "scan",
+   "page": 20
+  },
+  {
+   "label": "Hareket",
+   "test_count": 13,
+   "source": "scan",
+   "page": 44
+  },
+  {
+   "label": "Kuvvet",
+   "test_count": 14,
+   "source": "scan",
+   "page": 70
+  },
+  {
+   "label": "Enerji",
+   "test_count": 15,
+   "source": "scan",
+   "page": 100
+  },
+  {
+   "label": "Isı ve Sıcaklık",
+   "test_count": 15,
+   "source": "scan",
+   "page": 130
+  },
+  {
+   "label": "Elektrostatik",
+   "test_count": 11,
+   "source": "scan",
+   "page": 162
+  },
+  {
+   "label": "Elektrik Akımı",
+   "test_count": 14,
+   "source": "scan",
+   "page": 184
+  },
+  {
+   "label": "Manyetizma",
+   "test_count": 6,
+   "source": "scan",
+   "page": 212
+  },
+  {
+   "label": "Basınç",
+   "test_count": 13,
+   "source": "scan",
+   "page": 226
+  },
+  {
+   "label": "Kaldırma Kuvveti",
+   "test_count": 10,
+   "source": "scan",
+   "page": 252
+  },
+  {
+   "label": "Yay Dalgaları",
+   "test_count": 6,
+   "source": "scan",
+   "page": 274
+  },
+  {
+   "label": "Su Dalgaları",
+   "test_count": 8,
+   "source": "scan",
+   "page": 286
+  },
+  {
+   "label": "Ses ve Deprem Dalgası",
+   "test_count": 6,
+   "source": "scan",
+   "page": 302
+  },
+  {
+   "label": "Işık Akısı - Aydınlanma - Gölge Olayları",
+   "test_count": 4,
+   "source": "scan",
+   "page": 316
+  },
+  {
+   "label": "Yansıma ve Düzlem Aynalar",
+   "test_count": 4,
+   "source": "scan",
+   "page": 324
+  },
+  {
+   "label": "Yansıma ve Küresel Aynalar",
+   "test_count": 7,
+   "source": "scan",
+   "page": 332
+  },
+  {
+   "label": "Işığın Kırılması",
+   "test_count": 5,
+   "source": "scan",
+   "page": 346
+  },
+  {
+   "label": "Mercekler",
+   "test_count": 7,
+   "source": "scan",
+   "page": 356
+  }
+ ],
+ "warnings": []
+}
