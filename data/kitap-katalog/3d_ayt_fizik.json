@@ -1,0 +1,409 @@
+{
+ "name": "3D AYT Fizik Soru Bankası",
+ "publisher": "3D Yayınları",
+ "subject": "AYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Vektörler",
+   "test_count": 3,
+   "source": "toc"
+  },
+  {
+   "label": "Kuvvet ve Denge",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Tork ve Denge",
+   "test_count": 5,
+   "source": "scan"
+  },
+  {
+   "label": "Ağırlık Merkezi",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (01. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (01. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Doğrusal Hareket",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Sabit Hızlı İki Cismin Birbirine Göre Hareketi",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Hareketli Bir Ortamdaki Sabit Hızlı Cisimlerin Bileşke ve Bağıl Hareketleri",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Düşey Doğrultuda Atış Hareketleri",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Hava Direnci ve Bağıl Hız",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "İki Boyutta Atış Hareketleri",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Atış Hareketleri (Karma)",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (02. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (02. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Newton'un Hareket Yasaları",
+   "test_count": 5,
+   "source": "scan"
+  },
+  {
+   "label": "İş, Güç ve Enerji Kavramları",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Mekanik Enerji Korunumu",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Mekanik Enerjisi Korunmayan Sistemler",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Yayda Depolanan Enerji",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "İtme ve Çizgisel Momentum",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (03. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (03. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "TÜMEVARIM - I",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Düzgün Çembersel Hareket",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Açısal Momentum",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Kütle Çekim Kuvveti ve Kepler Yasaları",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Basit Harmonik Hareket",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (04. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (04. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Elektriksel Kuvvet ve Elektriksel Alan",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Elektriksel Potansiyel Enerji",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Elektriksel Potansiyel",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Paralel Levhalar",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Sığaçlar",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Dielektrik (Karma)",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (05. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (05. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "TÜMEVARIM - II",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Manyetik Alan",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Manyetik Kuvvet",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Yüklü Parçacıkların Manyetik Alandaki Hareketi",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Elektromanyetik İndüksiyon",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Alternatif Akım",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Transformatörler",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (06. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (06. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Su Dalgasında Kırınım",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Su Dalgasında Girişim",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Işığın Tek Yarıkta Kırınımı ve Çift Yarıkta Girişimi",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Doppler Olayı",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Elektromanyetik Dalgalar",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (07. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (07. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Thomson ve Rutherford Atom Modelleri",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Bohr Atom Modelinin Temel Kavramları",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Atomun Uyarılması",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Modern Atom Teorisine Giriş",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Büyük Patlama Teorisi (Big - Bang) ve Evrenin Oluşumu",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Atomaltı Parçacıklar",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Radyoaktivite",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (08. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (08. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Özel Görelilik Kuramı",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Siyah Cisim Işıması",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Fotoelektrik Olay",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Compton Saçılması",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Işığın İkili Yapısı, Fotonların Özellikleri ve De Broglie Hipotezi",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Bire Bir ÖSYM (09. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (09. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "TÜMEVARIM - III",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Görüntüleme Cihazları",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Yarı İletken Teknolojisi",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Süperiletkenlik",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Nanoteknoloji",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Lazer Işınları",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Modern Fiziğin Teknolojideki Uygulamaları - Karma",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (10. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan"
+  }
+ ],
+ "warnings": [
+  "ÖSYM 07 (Test 13, s.237-238) içindekiler sayfa hatası nedeniyle EM Dalgalar aralığına yutulmuştu — şerit görüntüsüyle teyit edilip ayrıştırıldı (EM 5→4, ÖSYM07=1); ÖSYM 09 kategori kararsızlığı 4→2 (Test 11-12, süren numara)."
+ ]
+}
