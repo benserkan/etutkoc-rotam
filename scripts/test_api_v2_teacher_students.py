@@ -292,6 +292,36 @@ def main() -> int:
             f"status={r.status_code} is_active={data.get('is_active')}",
         )
 
+        # ===== 6b. GET /students durum filtresi + KVKK süzgeci (2026-08-11) =====
+        # Öğrenci şu an pasif: status=aktif listede YOK · status=pasif VAR ·
+        # parametresiz (tum) VAR. KVKK-anonim hesap hiçbir görünümde YOK.
+        with SessionLocal() as _db:
+            _kvkk = User(
+                email=f"anonymized-999{PFX[-3:]}@kvkk.local",
+                password_hash="", full_name="(Silinen Kullanıcı)",
+                role=UserRole.STUDENT, is_active=False, teacher_id=seed["teacher_id"],
+            )
+            _db.add(_kvkk)
+            _db.commit()
+            _kvkk_id = _kvkk.id
+        try:
+            r_a = client.get("/api/v2/teacher/students", params={"status": "aktif", "page_size": 100})
+            r_p = client.get("/api/v2/teacher/students", params={"status": "pasif", "page_size": 100})
+            r_t = client.get("/api/v2/teacher/students", params={"page_size": 100})
+            ids_a = {i["id"] for i in r_a.json().get("items", [])}
+            ids_p = {i["id"] for i in r_p.json().get("items", [])}
+            ids_t = {i["id"] for i in r_t.json().get("items", [])}
+            check(
+                "6b. durum filtresi: pasif aktifte yok/pasifte var + KVKK hayaleti hiçbir yerde yok",
+                new_id not in ids_a and new_id in ids_p and new_id in ids_t
+                and _kvkk_id not in ids_a and _kvkk_id not in ids_p and _kvkk_id not in ids_t,
+                f"aktif={new_id in ids_a} pasif={new_id in ids_p} tum={new_id in ids_t} kvkk_gorunur={_kvkk_id in ids_t}",
+            )
+        finally:
+            with SessionLocal() as _db:
+                _db.query(User).filter(User.id == _kvkk_id).delete()
+                _db.commit()
+
         # ===== 7. POST /reactivate → is_active=True =====
         r = client.post(f"/api/v2/teacher/students/{new_id}/reactivate")
         body = r.json() if r.text else {}

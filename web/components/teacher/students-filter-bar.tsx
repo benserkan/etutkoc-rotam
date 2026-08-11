@@ -10,12 +10,21 @@ export interface FilterValues {
   q: string;
   grade_level: string; // "" | "5" .. "12" | "graduate"
   risk: "all" | "ok" | "medium" | "high" | "critical";
+  /** Varsayılan "aktif" — pasifler (pratik/eski kayıtlar) listeyi
+   *  kalabalıklaştırmasın; filtreyle açılır (2026-08-11 saha isteği). */
+  status: "aktif" | "pasif" | "tum";
   page_size: 25 | 50 | 100;
 }
 
 interface Props {
   initial: FilterValues;
 }
+
+const STATUS_OPTIONS: Array<{ value: FilterValues["status"]; label: string }> = [
+  { value: "aktif", label: "Aktif öğrenciler" },
+  { value: "pasif", label: "Pasifler (koçluk sonlandırılmış)" },
+  { value: "tum", label: "Tümü" },
+];
 
 const RISK_OPTIONS: Array<{ value: FilterValues["risk"]; label: string }> = [
   { value: "all", label: "Tüm risk seviyeleri" },
@@ -125,6 +134,13 @@ export function StudentsFilterBar({ initial }: Props) {
     });
   }
 
+  function onChangeStatus(v: FilterValues["status"]) {
+    applyParam((sp) => {
+      if (v && v !== "aktif") sp.set("status", v);
+      else sp.delete("status");
+    });
+  }
+
   function onChangePageSize(v: number) {
     applyParam((sp) => {
       if (v === 25) sp.delete("page_size");
@@ -144,6 +160,7 @@ export function StudentsFilterBar({ initial }: Props) {
     !!initial.q ||
     !!initial.grade_level ||
     initial.risk !== "all" ||
+    initial.status !== "aktif" ||
     initial.page_size !== 25;
 
   return (
@@ -155,6 +172,12 @@ export function StudentsFilterBar({ initial }: Props) {
         onChange={(e) => onChangeQ(e.target.value)}
         className="w-full sm:w-64"
         aria-label="Öğrenci ara"
+      />
+      <Select
+        value={initial.status}
+        onChange={(v) => onChangeStatus(v as FilterValues["status"])}
+        options={STATUS_OPTIONS as Array<{ value: string; label: string }>}
+        ariaLabel="Durum filtresi"
       />
       <Select
         value={initial.grade_level}

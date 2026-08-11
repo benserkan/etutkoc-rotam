@@ -232,6 +232,8 @@ export interface TeacherStudentsListParams {
   q?: string;
   grade_level?: number;
   risk?: "all" | "ok" | "medium" | "high" | "critical";
+  /** aktif / pasif / tum — verilmezse backend "tum" (geriye uyum). */
+  status?: "aktif" | "pasif" | "tum";
   page?: number;
   page_size?: number;
 }
@@ -376,6 +378,7 @@ export function getTeacherStudents(
     q: params.q,
     grade_level: params.grade_level,
     risk: params.risk,
+    status: params.status,
     page: params.page,
     page_size: params.page_size,
   });

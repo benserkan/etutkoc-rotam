@@ -49,17 +49,22 @@ export default async function TeacherStudentsPage({ searchParams }: PageProps) {
     | 50
     | 100;
   const page = toInt(firstStr(sp.page)) ?? 1;
+  const statusRaw = firstStr(sp.status);
+  const status: FilterValues["status"] =
+    statusRaw === "pasif" || statusRaw === "tum" ? statusRaw : "aktif";
 
   const initialFilters: FilterValues = {
     q,
     grade_level: grade,
     risk,
+    status,
     page_size: pageSize,
   };
 
   const qs = new URLSearchParams();
   if (q) qs.set("q", q);
   if (risk !== "all") qs.set("risk", risk);
+  qs.set("status", status);
   const gradeNum = toInt(grade);
   if (gradeNum !== undefined) qs.set("grade_level", String(gradeNum));
   if (page > 1) qs.set("page", String(page));

@@ -63,10 +63,11 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
         ? Number(filters.grade_level)
         : undefined,
       risk: filters.risk,
+      status: filters.status,
       page,
       page_size: filters.page_size,
     }),
-    [filters.q, filters.grade_level, filters.risk, filters.page_size, page],
+    [filters.q, filters.grade_level, filters.risk, filters.status, filters.page_size, page],
   );
 
   const q = useTeacherStudents(
@@ -126,7 +127,9 @@ export function StudentsListClient({ initial, initialFilters, initialPage }: Pro
             <p className="p-6 text-sm text-muted-foreground">Yükleniyor…</p>
           ) : !data || data.items.length === 0 ? (
             <p className="p-6 text-sm text-muted-foreground">
-              Sonuç yok. Filtreyi gevşetmeyi deneyebilirsin.
+              {filters.status === "aktif"
+                ? "Aktif öğrenci yok. Koçluğu sonlandırılmış kayıtlar için üstteki durum filtresinden “Pasifler”i seçebilirsin."
+                : "Sonuç yok. Filtreyi gevşetmeyi deneyebilirsin."}
             </p>
           ) : (
             <ul className="divide-y divide-border">
@@ -543,9 +546,13 @@ function readFilters(
   const q = sp.get("q") ?? "";
   const grade = sp.get("grade_level") ?? "";
   const risk = (sp.get("risk") ?? "all") as FilterValues["risk"];
+  const rawStatus = sp.get("status");
+  const status = (
+    rawStatus === "pasif" || rawStatus === "tum" ? rawStatus : "aktif"
+  ) as FilterValues["status"];
   const ps = Number(sp.get("page_size") ?? fallback.page_size);
   const pageSize = (ps === 50 || ps === 100 ? ps : 25) as 25 | 50 | 100;
-  return { q, grade_level: grade, risk, page_size: pageSize };
+  return { q, grade_level: grade, risk, status, page_size: pageSize };
 }
 
 function readPage(sp: URLSearchParams, fallback: number): number {
@@ -563,6 +570,7 @@ function isSameAsInitial(
     filters.q === initialFilters.q &&
     filters.grade_level === initialFilters.grade_level &&
     filters.risk === initialFilters.risk &&
+    filters.status === initialFilters.status &&
     filters.page_size === initialFilters.page_size &&
     page === initialPage
   );

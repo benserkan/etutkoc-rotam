@@ -630,6 +630,10 @@ def teacher_students_v2(
     q: str | None = Query(None, max_length=120, description="Ad/email arama"),
     grade_level: int | None = Query(None, ge=5, le=13),
     risk: str | None = Query(None, description="all / ok / medium / high / critical"),
+    status_filter: str | None = Query(
+        None, alias="status", pattern="^(aktif|pasif|tum)$",
+        description="aktif / pasif / tum (verilmezse tum — geriye uyum)",
+    ),
     page: int = Query(1, ge=1),
     page_size: int = Query(25, ge=1, le=100),
     user: User = Depends(_require_teacher),
@@ -651,7 +655,19 @@ def teacher_students_v2(
     base_q = (
         db.query(User)
         .filter(User.teacher_id == user.id, User.role == UserRole.STUDENT)
+        # KVKK ile silinmiş (anonimleştirilmiş) hesaplar koç listesinde HİÇ
+        # görünmez — kişi silinmek istedi, "(Silinen Kullanıcı)" hayalet satırı
+        # hem listeyi kirletiyor hem KVKK'nın ruhuna aykırı (2026-08-11 saha
+        # vakası). Kayıt DB'de durur (denetim), yalnız listelenmez.
+        .filter(~User.email.like("anonymized-%@kvkk.local"))
     )
+    # Durum filtresi: web varsayılanı "aktif" gönderir (pasifler gözden uzak —
+    # pratik/eski kayıtlar listeyi kalabalıklaştırmasın); parametresiz = tum
+    # (mobil + eski istemciler etkilenmez).
+    if status_filter == "aktif":
+        base_q = base_q.filter(User.is_active.is_(True))
+    elif status_filter == "pasif":
+        base_q = base_q.filter(User.is_active.is_(False))
     if grade_level is not None:
         base_q = base_q.filter(User.grade_level == grade_level)
     if q:
