@@ -286,7 +286,24 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   ünite içi sürekli "Test N" + ünite sonu "Bire Bir ÖSYM (ÜNİTE)" + "Gündelik
   Hayatta Fizik (ÜNİTE)" + üniteler arası TÜMEVARIM (kendi serisi, bantları
   farklı renkte — tarama görmeyebilir, boşluk analizi şart).
-- **ADMİN PANEL KESKİNLİK DEĞERLENDİRMESİ (2026-08-12, kullanıcı sorusu):**
+- **BİLGİ SARMAL TYT MATEMATİK — CANLI (2026-08-12, commit `cc71a3c`, prod
+  id=83): 24 bölüm · 167 test · 23/24 eşli** (tek boş: İkinci Dereceden
+  Denklemler — TYT taksonomisinde yok, AYT konusu; dürüstçe boş). **İKİNCİ
+  TOC-HALÜSİNASYON SINIFI:** Gemini içindekiler okuması 3 bölümü (Mutlak
+  Değer · İşçi · Hareket Problemleri) DÜPEDÜZ ATLADI + KARIŞIM=1 gibi yanlış
+  sayılar üretti; metin-modu gövde taraması da başlık-sahiplenmesini eksik TOC
+  satırlarına yaptığından yanlışlar birleşiyordu. **ÇÖZÜM DESENİ (metin
+  katmanlı kitapta zemin gerçeği = GÖVDE):** BİLGİ ALANI sayfaları bölüm
+  sınırı; bant sayfaları (KAZANIM TESTİ / ÖSYM TİPİ / YILDIZLAR YARIŞIYOR /
+  SARMAL TEST — **numarasızlar dahil**, tek testlik kategori yalın basılıyor)
+  test sayısı; kontak-föy (üst şeritlerin tek görselde istiflenmesi) ile göz
+  teyidi. TOC kesişiminde 19/20 birebir çıktı. Bilgi Sarmal deseni: bölüm başı
+  "Bilgi Alanı" konu anlatımı (teste sayılmaz, katalog satırı yapılmaz) +
+  KAZANIM 1..k + ÖSYM TİPİ 1..m + Yıldızlar Yarışıyor + GLOBAL numaralı
+  SARMAL TEST (1..12, bulunduğu bölüme sayılır). Sayfa başlıklarında konu adı
+  YOK — ad ataması sıra hizasıyla (24 TOC adı ↔ 24 gövde segmenti). NOT:
+  içindekiler her testi tek satır listeler ama PDF metin akışı kolonlar arası
+  karıştığından satır-üçlüsü parse güvenilmez; gövde-önce yaklaşım şart.
   henüz "gözetimsiz tek tık" DEĞİL — v4'ten beri ~12 kitabın ~8'i en az bir
   kod kuralı/şerit teyidi istedi; 3D TYT Fizik'te sıfır-uyarılı koşu bile 7
   test eksik saydı. Algoritma admin-sınıfı, TESLİMAT değil: (a) 10MB uç sınırı
