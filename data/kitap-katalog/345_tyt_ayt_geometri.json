@@ -1,0 +1,69 @@
+{
+ "name": "345 TYT-AYT Geometri Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "TYT Geometri",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "AÇILAR",
+   "test_count": 18,
+   "source": "scan",
+   "page": 5
+  },
+  {
+   "label": "ÖZEL ÜÇGENLER",
+   "test_count": 20,
+   "source": "scan",
+   "page": 44
+  },
+  {
+   "label": "BENZERLİK",
+   "test_count": 22,
+   "source": "scan",
+   "page": 94
+  },
+  {
+   "label": "ÜÇGENDE YARDIMCI ELEMANLAR",
+   "test_count": 26,
+   "source": "scan",
+   "page": 142,
+   "flag": "scan_mismatch"
+  },
+  {
+   "label": "ÜÇGENDE ALAN",
+   "test_count": 20,
+   "source": "scan",
+   "page": 196
+  },
+  {
+   "label": "GENEL DÖRTGENLER - YAMUK",
+   "test_count": 27,
+   "source": "scan",
+   "page": 234
+  },
+  {
+   "label": "PARALELKENAR - EŞKENAR DÖRTGEN - DELTOİD",
+   "test_count": 28,
+   "source": "scan",
+   "page": 288
+  },
+  {
+   "label": "DİKDÖRTGEN - KARE",
+   "test_count": 28,
+   "source": "scan",
+   "page": 353
+  },
+  {
+   "label": "ÇOKGENLER",
+   "test_count": 13,
+   "source": "scan",
+   "page": 415
+  }
+ ],
+ "warnings": [
+  "ÜÇGENDE YARDIMCI ELEMANLAR: uyuşmazlık 36/26 — zinciri temiz geçiş (26) alındı"
+ ]
+}

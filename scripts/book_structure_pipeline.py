@@ -609,6 +609,16 @@ def main() -> int:
                 warnings.append(f"'{it['label']}': sayfa numarası yok — taranamadı, elle doldurun.")
                 continue
             vals = [r[0].get(i) for r in results]
+            gaps_per_pass = [sum(1 for idx, _ in r[1] if idx == i) for r in results]
+            if len(vals) > 1 and vals[0] != vals[1] and min(gaps_per_pass) != max(gaps_per_pass):
+                # Uyuşmazlıkta ZİNCİRİ TEMİZ geçiş kazanır — kopuk zincir
+                # (seri içi kayıp numaralar) hayalet-seri bozulmasının imzası.
+                it["test_count"] = vals[gaps_per_pass.index(min(gaps_per_pass))]
+                it["source"] = "scan_text" if text_mode else "scan"
+                it["flag"] = "scan_mismatch"
+                warnings.append(
+                    f"'{it['label']}': iki tarama uyuşmadı ({vals[0]}/{vals[1]}) — zinciri temiz geçiş ({it['test_count']}) alındı.")
+                continue
             it["test_count"] = max((v for v in vals if v), default=None)
             it["source"] = "scan_text" if text_mode else "scan"
             if it["test_count"] is None:
