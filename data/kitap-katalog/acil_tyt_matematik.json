@@ -1,0 +1,230 @@
+{
+ "name": "Acil Matematiğin İlacı TYT Soru Bankası",
+ "publisher": "Acil Yayınları",
+ "subject": "TYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Sayı Kümeleri / Tam Sayılar - Harfli İfadeler",
+   "test_count": 4,
+   "source": "scan",
+   "page": 6
+  },
+  {
+   "label": "Tek - Çift Sayılar",
+   "test_count": 2,
+   "source": "scan",
+   "page": 14
+  },
+  {
+   "label": "Ardışık Sayılar",
+   "test_count": 2,
+   "source": "scan",
+   "page": 18
+  },
+  {
+   "label": "Asal Sayılar",
+   "test_count": 2,
+   "source": "scan",
+   "page": 22
+  },
+  {
+   "label": "Faktöriyel",
+   "test_count": 2,
+   "source": "scan",
+   "page": 26
+  },
+  {
+   "label": "Basamak Kavramı / En Büyük En Küçük Değer Bulma",
+   "test_count": 3,
+   "source": "scan",
+   "page": 30
+  },
+  {
+   "label": "Bölme - Bölünebilme",
+   "test_count": 4,
+   "source": "scan",
+   "page": 36
+  },
+  {
+   "label": "EBOB - EKOK",
+   "test_count": 4,
+   "source": "scan",
+   "page": 44
+  },
+  {
+   "label": "Periyodik Problemler",
+   "test_count": 2,
+   "source": "scan",
+   "page": 52
+  },
+  {
+   "label": "Rasyonel Sayılar",
+   "test_count": 6,
+   "source": "scan",
+   "page": 58
+  },
+  {
+   "label": "Birinci Dereceden Denklemler",
+   "test_count": 5,
+   "source": "scan",
+   "page": 70
+  },
+  {
+   "label": "Basit Eşitsizlik",
+   "test_count": 5,
+   "source": "scan",
+   "page": 82
+  },
+  {
+   "label": "Mutlak Değer",
+   "test_count": 4,
+   "source": "scan",
+   "page": 92
+  },
+  {
+   "label": "Üslü Sayılar",
+   "test_count": 5,
+   "source": "scan",
+   "page": 102
+  },
+  {
+   "label": "Köklü Sayılar",
+   "test_count": 5,
+   "source": "scan",
+   "page": 112
+  },
+  {
+   "label": "Çarpanlara Ayırma",
+   "test_count": 6,
+   "source": "scan",
+   "page": 123
+  },
+  {
+   "label": "Oran - Orantı",
+   "test_count": 6,
+   "source": "scan",
+   "page": 135
+  },
+  {
+   "label": "Sayı Problemleri",
+   "test_count": 6,
+   "source": "scan",
+   "page": 148
+  },
+  {
+   "label": "Kesir Problemleri",
+   "test_count": 3,
+   "source": "scan",
+   "page": 160
+  },
+  {
+   "label": "Yaş Problemleri",
+   "test_count": 5,
+   "source": "scan",
+   "page": 166
+  },
+  {
+   "label": "İşçi Problemleri",
+   "test_count": 4,
+   "source": "scan",
+   "page": 176
+  },
+  {
+   "label": "Hız Problemleri",
+   "test_count": 4,
+   "source": "scan",
+   "page": 184
+  },
+  {
+   "label": "Yüzde Problemleri",
+   "test_count": 3,
+   "source": "scan",
+   "page": 192
+  },
+  {
+   "label": "Kâr - Zarar Problemleri",
+   "test_count": 2,
+   "source": "scan",
+   "page": 198
+  },
+  {
+   "label": "Bilinçli Tüketim Aritmetiği",
+   "test_count": 2,
+   "source": "scan",
+   "page": 202
+  },
+  {
+   "label": "Karışım Problemleri",
+   "test_count": 3,
+   "source": "scan",
+   "page": 206
+  },
+  {
+   "label": "Sayısal - Sözel Mantık",
+   "test_count": 3,
+   "source": "scan",
+   "page": 212
+  },
+  {
+   "label": "Mantık",
+   "test_count": 3,
+   "source": "scan",
+   "page": 219
+  },
+  {
+   "label": "Kümeler",
+   "test_count": 7,
+   "source": "scan",
+   "page": 225
+  },
+  {
+   "label": "Fonksiyonlar",
+   "test_count": 11,
+   "source": "scan",
+   "page": 240
+  },
+  {
+   "label": "Polinomlar",
+   "test_count": 7,
+   "source": "scan",
+   "page": 263
+  },
+  {
+   "label": "Permütasyon",
+   "test_count": 4,
+   "source": "scan",
+   "page": 278
+  },
+  {
+   "label": "Kombinasyon",
+   "test_count": 4,
+   "source": "scan",
+   "page": 286
+  },
+  {
+   "label": "Binom Açılımı",
+   "test_count": 2,
+   "source": "scan",
+   "page": 294
+  },
+  {
+   "label": "Olasılık",
+   "test_count": 5,
+   "source": "scan",
+   "page": 298
+  },
+  {
+   "label": "Veri - Grafik",
+   "test_count": 5,
+   "source": "scan",
+   "page": 309
+  }
+ ],
+ "warnings": [
+  "Sayı Kümeleri + Tam Sayılar ve Basamak Kavramı + En Büyük/En Küçük kitapta birleşik bölüm (bant görüntüsüyle teyitli)."
+ ]
+}

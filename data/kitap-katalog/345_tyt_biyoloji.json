@@ -1,0 +1,96 @@
+{
+ "name": "345 TYT Biyoloji Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "TYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Biyoloji ve Canlıların Ortak Özellikleri",
+   "test_count": 6,
+   "source": "scan",
+   "page": 6
+  },
+  {
+   "label": "İnorganik Bileşikler, Karbonhidratlar, Lipitler, Proteinler, Vitaminler",
+   "test_count": 11,
+   "source": "scan",
+   "page": 18
+  },
+  {
+   "label": "Enzimler",
+   "test_count": 8,
+   "source": "scan",
+   "page": 36
+  },
+  {
+   "label": "Nükleik Asitler",
+   "test_count": 6,
+   "source": "scan",
+   "page": 50
+  },
+  {
+   "label": "ATP ve Sağlıklı Beslenme",
+   "test_count": 5,
+   "source": "scan",
+   "page": 60
+  },
+  {
+   "label": "Hücrenin Yapısı",
+   "test_count": 11,
+   "source": "scan",
+   "page": 70
+  },
+  {
+   "label": "Hücre Zarından Madde Geçişleri",
+   "test_count": 11,
+   "source": "scan",
+   "page": 88
+  },
+  {
+   "label": "Canlıların Çeşitliliği ve Sınıflandırılması",
+   "test_count": 6,
+   "source": "scan",
+   "page": 108
+  },
+  {
+   "label": "Canlı Alemleri ve Virüsler",
+   "test_count": 13,
+   "source": "scan",
+   "page": 118
+  },
+  {
+   "label": "Hücre Bölünmeleri",
+   "test_count": 9,
+   "source": "scan",
+   "page": 142
+  },
+  {
+   "label": "Eşeyli ve Eşeysiz Üreme",
+   "test_count": 8,
+   "source": "scan",
+   "page": 158
+  },
+  {
+   "label": "Mendel Genetiği, Eş Baskınlık, Çok Alellilik, Kan Grupları",
+   "test_count": 10,
+   "source": "scan",
+   "page": 174
+  },
+  {
+   "label": "Eşeye Bağlı Kalıtım ve Genetik Varyasyonlar",
+   "test_count": 9,
+   "source": "scan",
+   "page": 192
+  },
+  {
+   "label": "Ekosistem Ekolojisi ve Güncel Çevre Sorunları",
+   "test_count": 12,
+   "source": "scan",
+   "page": 210
+  }
+ ],
+ "warnings": []
+}

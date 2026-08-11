@@ -74,8 +74,8 @@ import fitz
 from app.services import gemini
 
 BATCH = 10
-STRIP_H = 0.18
-STRIP_DPI = 100
+STRIP_H = 0.20
+STRIP_DPI = 120
 
 TOC_PROMPT = """Sana bir soru bankasının İLK sayfalarını sırayla veriyorum (kapak/tanıtım/içindekiler karışık olabilir).
 GÖREV: İÇİNDEKİLER sayfalarını bul ve konu listesini çıkar.
@@ -100,7 +100,8 @@ Her şerit için basılı numarayı yaz; görünmüyorsa null.
 YALNIZ şu JSON: {"pages": [int|null, ...]} — şerit sayısı kadar, sırayla."""
 
 BANNER_PROMPT = """Sana bir soru bankasının sayfa ÜST ŞERİTLERİNİ sırayla veriyorum.
-Bir soru grubunun sayfasında başlık BANDI bulunabilir: "TEST 3", "ÖSYM TADINDA SORULAR 2", "ORİJİNAL SORULAR" gibi TEST/SORULAR içeren grup başlığı (logolu/çerçeveli bant).
+Bir soru grubunun sayfasında başlık BANDI bulunabilir: "TEST 3", "3. bölüm KAZANIM ODAKLI SORULAR", "KARMA SORULAR 2", "GÜNLÜK HAYAT UYGULAMALARI 1", "ÖSYM TADINDA SORULAR 2", "ORİJİNAL SORULAR" gibi grup başlığı (logolu/rozet/puzzle çerçeveli olabilir; numara rozetin İÇİNDE olabilir).
+- "t" alanına bandın TAM metnini yaz (tür adı dahil — "KARMA SORULAR", "GÜNLÜK HAYAT UYGULAMALARI" gibi ayrımlar önemli).
 - Bant NUMARALI ise: {"n": numara, "t": "bant metni"}
 - Bant var ama NUMARASIZ ise (örn. yalnız "ORİJİNAL SORULAR"): {"n": null, "t": "bant metni"}
 - Bant yoksa (yalnız KONU ADI başlığı, filigran, boş sayfa) → null. Konu adı başlığı bant DEĞİLDİR.
@@ -108,6 +109,11 @@ YALNIZ şu JSON: {"strips": [ {"n":int|null,"t":str} | null, ... ]} — şerit s
 
 
 def norm_cat(t: str | None) -> str:
+    """Bant kategorisi. AYRI kategoriler ayrı sayaçtır (seri-yürüyüş kategori
+    başına koşar) — Fizik/Biyoloji'de 'Karma Sorular'/'Günlük Hayat' kendi
+    1..N'iyle akar; tek kovada birleşince kaçan sayfalar hayalet seri üretir.
+    Ortak-sayaçlı çiftlerde (Biyotik ANALİZ→SENTEZ) ayırmak zararsız:
+    seri-yürüyüş min..max saydığından toplam değişmez."""
     if not t:
         return "test"
     s = unicodedata.normalize("NFKD", t).encode("ascii", "ignore").decode().lower()
@@ -115,6 +121,12 @@ def norm_cat(t: str | None) -> str:
         return "osym_tadinda"
     if "orijinal" in s or "original" in s:
         return "orijinal"
+    if "karma" in s:
+        return "karma"
+    if "gunluk" in s or "hayat" in s:
+        return "gunluk"
+    if "sentez" in s:
+        return "sentez"
     return "test"
 
 
@@ -384,54 +396,61 @@ def attribute_pages_text(doc, items: list[dict], offset: int, banner_pages: list
     return owned
 
 
-def count_items_global(ordered: list[tuple[int, list[int] | None, bool]], banners: BannerMap):
-    """Kitap SIRASINDA global sayım. ordered: (item_idx, sayfa_listesi|None, uygula);
-    uygula=False → sayısı içindekilerden bilinen konu (yalnız zincir ilerletilir);
-    sayfa_listesi=None → sayfası bilinmeyen konu (zincir sıfırlanır).
+def _series_walk(nums: list[int]) -> tuple[int, list[str]]:
+    """Sayfa SIRASINDAKİ bant numaralarından test sayısı: ardışık tekrar = aynı
+    test (bant her sayfada tekrarlanır); numara DÜŞÜŞÜ = yeni alt seri (Fizik'te
+    bir içindekiler-konusu içinde alt bölümler 1'den yeniden başlar). Toplam =
+    Σ(seri_max − seri_min + 1) — konu-başına 1..N (345) ve süren sayaç m..M
+    (Biyotik) tek kuralda. Seri içi kayıp numaralar uyarı üretir."""
+    series: list[dict] = []
+    cur: dict | None = None
+    for n in nums:
+        if cur is not None and n == cur["last"]:
+            continue
+        if cur is None or n < cur["last"]:
+            cur = {"min": n, "max": n, "seen": {n}, "last": n}
+            series.append(cur)
+        else:
+            cur["max"] = max(cur["max"], n)
+            cur["seen"].add(n)
+            cur["last"] = n
+    total, gaps = 0, []
+    for s in series:
+        total += s["max"] - s["min"] + 1
+        missing = sorted(set(range(s["min"], s["max"] + 1)) - s["seen"])
+        if missing:
+            gaps.append(f"{missing} görülmedi ({s['min']}..{s['max']})")
+    return total, gaps
 
-    Numara örüntüsü aralık bazında çözülür:
-    - aralık min'i 1 → KONU-BAŞINA sıfırlanan numaralandırma (345 tarzı): sayı = max
-    - aralık min'i > önceki konunun max'ı → ünite boyunca SÜREN numaralandırma
-      (Biyotik ANALİZ/SENTEZ ortak sayacı): sayı = max − önceki max
-    Yalnız NUMARASIZ görülen kategori (tekil "ORİJİNAL SORULAR") 1 sayılır.
-    """
-    prev_max: dict[str, int] = {}
+
+def count_items_global(ordered: list[tuple[int, list[int] | None, bool]], banners: BannerMap):
+    """ordered: (item_idx, sahiplenilen sayfalar|None, uygula). Kategori başına
+    seri-yürüyüş sayımı (_series_walk); yalnız NUMARASIZ görülen kategori
+    (tekil "ORİJİNAL SORULAR") 1 sayılır."""
     counts: dict[int, int | None] = {}
     warns: list[tuple[int, str]] = []
     for idx, pages, apply in ordered:
-        if pages is None:
-            prev_max = {}
-            if apply:
-                counts[idx] = None
+        if not apply:
             continue
-        cats: dict[str, set[int]] = {}
+        if pages is None:
+            counts[idx] = None
+            continue
+        cats: dict[str, list[int]] = {}
         unnum: set[str] = set()
         for bp in pages:
             for n, t in banners.get(bp, []):
                 if n is None:
                     unnum.add(t)
                 else:
-                    cats.setdefault(t, set()).add(n)
+                    cats.setdefault(t, []).append(n)
         total = 0
         for t, nums in sorted(cats.items()):
-            mn, mx = min(nums), max(nums)
-            pm = prev_max.get(t)
-            if pm is not None and mn > pm:
-                total += mx - pm
-                missing = sorted(set(range(pm + 1, mx + 1)) - nums)
-                if missing and apply:
-                    warns.append((idx, f"{t}: {missing} görülmedi ({pm+1}..{mx})"))
-            else:
-                total += mx
-                missing = sorted(set(range(1, mx + 1)) - nums)
-                if missing and apply:
-                    warns.append((idx, f"{t}: {missing} görülmedi (1..{mx})"))
-                if pm is not None and 1 < mn <= pm and apply:
-                    warns.append((idx, f"{t}: numara örüntüsü belirsiz (min {mn}, önceki max {pm}) — yeniden başlangıç varsayıldı"))
-            prev_max[t] = mx
+            c, gaps = _series_walk(nums)
+            total += c
+            for g in gaps:
+                warns.append((idx, f"{t}: {g}"))
         total += len(unnum - set(cats))
-        if apply:
-            counts[idx] = total or None
+        counts[idx] = total or None
     return counts, warns
 
 
