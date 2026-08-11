@@ -304,6 +304,16 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   YOK — ad ataması sıra hizasıyla (24 TOC adı ↔ 24 gövde segmenti). NOT:
   içindekiler her testi tek satır listeler ama PDF metin akışı kolonlar arası
   karıştığından satır-üçlüsü parse güvenilmez; gövde-önce yaklaşım şart.
+- **BİYOTİK TYT BİYOLOJİ — CANLI (2026-08-12, prod id=84): 42 bölüm ·
+  120 test · 39/42 eşli** (3 bilinçli boş: Bilimsel Yöntem [taksonomide yok]
+  + 2 karma değerlendirme). **Azınlık-TOC guard'ının ilk gerçek yakalaması:**
+  içindekilerin Ünite Değerlendirmelere uydurduğu "1"ler taramayla 5/8/4/6/5'e
+  düzeldi (guard olmasaydı 20 test sessizce eksik sayılırdı). Başlık
+  sahiplenmesi tutmayan 5 konu (bantlar vardı, sayfa başlığı TOC etiketiyle
+  eşleşmedi) ünite içi süren-sayaç zinciriyle deterministik dolduruldu — tüm
+  ünite zincirleri boşluksuz kapandı (en güçlü doğrulama sinyali). Cevap
+  anahtarı sayfası tek sahte bant üretti (s.177), örüntü çözücü zaten yuttu.
+- **ADMİN PANEL KESKİNLİK DEĞERLENDİRMESİ (2026-08-12, kullanıcı sorusu):**
   henüz "gözetimsiz tek tık" DEĞİL — v4'ten beri ~12 kitabın ~8'i en az bir
   kod kuralı/şerit teyidi istedi; 3D TYT Fizik'te sıfır-uyarılı koşu bile 7
   test eksik saydı. Algoritma admin-sınıfı, TESLİMAT değil: (a) 10MB uç sınırı
