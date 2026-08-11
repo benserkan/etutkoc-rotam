@@ -1,0 +1,270 @@
+{
+ "name": "Orijinal TYT Matematik Soru Bankası",
+ "publisher": "Orijinal Yayınları",
+ "subject": "TYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Temel Kavramlar",
+   "test_count": 8,
+   "source": "toc",
+   "page": 12
+  },
+  {
+   "label": "Tek ve Çift Sayılar",
+   "test_count": 3,
+   "source": "toc",
+   "page": 26
+  },
+  {
+   "label": "Basamak Kavramı",
+   "test_count": 3,
+   "source": "toc",
+   "page": 32
+  },
+  {
+   "label": "Özel Sayı Tanımlama",
+   "test_count": 1,
+   "source": "toc",
+   "page": 38
+  },
+  {
+   "label": "Ardışık Sayılar",
+   "test_count": 4,
+   "source": "toc",
+   "page": 40
+  },
+  {
+   "label": "Faktöriyel - Asal ve Aralarında Asal Sayılar",
+   "test_count": 3,
+   "source": "toc",
+   "page": 46
+  },
+  {
+   "label": "Bölme ve Bölünebilme",
+   "test_count": 6,
+   "source": "toc",
+   "page": 52
+  },
+  {
+   "label": "EBOB-EKOK",
+   "test_count": 5,
+   "source": "toc",
+   "page": 62
+  },
+  {
+   "label": "Rasyonel Sayılar",
+   "test_count": 7,
+   "source": "toc",
+   "page": 70
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (1. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 84
+  },
+  {
+   "label": "Birinci Dereceden Denklem ve Eşitsizlikler",
+   "test_count": 6,
+   "source": "toc",
+   "page": 92
+  },
+  {
+   "label": "Basit Eşitsizlikler",
+   "test_count": 6,
+   "source": "toc",
+   "page": 102
+  },
+  {
+   "label": "Mutlak Değer",
+   "test_count": 7,
+   "source": "toc",
+   "page": 112
+  },
+  {
+   "label": "Üslü Sayılar",
+   "test_count": 8,
+   "source": "toc",
+   "page": 124
+  },
+  {
+   "label": "Köklü Sayılar",
+   "test_count": 9,
+   "source": "toc",
+   "page": 138
+  },
+  {
+   "label": "Çarpanlara Ayırma",
+   "test_count": 6,
+   "source": "toc",
+   "page": 154
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (2. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 166
+  },
+  {
+   "label": "Oran - Orantı",
+   "test_count": 7,
+   "source": "toc",
+   "page": 172
+  },
+  {
+   "label": "Sayı Problemleri",
+   "test_count": 8,
+   "source": "toc",
+   "page": 184
+  },
+  {
+   "label": "Kesir Problemleri",
+   "test_count": 4,
+   "source": "toc",
+   "page": 200
+  },
+  {
+   "label": "Yaş Problemleri",
+   "test_count": 3,
+   "source": "toc",
+   "page": 206
+  },
+  {
+   "label": "İşçi Problemleri",
+   "test_count": 4,
+   "source": "toc",
+   "page": 212
+  },
+  {
+   "label": "Hareket Problemleri",
+   "test_count": 7,
+   "source": "toc",
+   "page": 218
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (3. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 231
+  },
+  {
+   "label": "Yüzde - Kâr - Zarar Problemleri",
+   "test_count": 7,
+   "source": "toc",
+   "page": 240
+  },
+  {
+   "label": "Karışım Problemleri",
+   "test_count": 4,
+   "source": "toc",
+   "page": 252
+  },
+  {
+   "label": "Grafik Problemleri",
+   "test_count": 2,
+   "source": "toc",
+   "page": 258
+  },
+  {
+   "label": "Periyodik Durumlar",
+   "test_count": 4,
+   "source": "toc",
+   "page": 262
+  },
+  {
+   "label": "Sayısal ve Sözel Mantık Problemleri",
+   "test_count": 5,
+   "source": "toc",
+   "page": 266
+  },
+  {
+   "label": "Problem Denemeleri",
+   "test_count": 6,
+   "source": "toc",
+   "page": 275
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (4. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 289
+  },
+  {
+   "label": "Permütasyon",
+   "test_count": 5,
+   "source": "toc",
+   "page": 296
+  },
+  {
+   "label": "Kombinasyon",
+   "test_count": 4,
+   "source": "toc",
+   "page": 304
+  },
+  {
+   "label": "Binom",
+   "test_count": 2,
+   "source": "toc",
+   "page": 312
+  },
+  {
+   "label": "Olasılık",
+   "test_count": 5,
+   "source": "toc",
+   "page": 316
+  },
+  {
+   "label": "İstatistik",
+   "test_count": 4,
+   "source": "toc",
+   "page": 328
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (5. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 334
+  },
+  {
+   "label": "Mantık",
+   "test_count": 5,
+   "source": "toc",
+   "page": 340
+  },
+  {
+   "label": "Kümeler ve Kartezyen Çarpım",
+   "test_count": 7,
+   "source": "toc",
+   "page": 350
+  },
+  {
+   "label": "Fonksiyon",
+   "test_count": 9,
+   "source": "toc",
+   "page": 364
+  },
+  {
+   "label": "Polinomlar",
+   "test_count": 3,
+   "source": "toc",
+   "page": 384
+  },
+  {
+   "label": "2. Dereceden Denklemler",
+   "test_count": 4,
+   "source": "toc",
+   "page": 392
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (6. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 399
+  }
+ ],
+ "warnings": []
+}
