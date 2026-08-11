@@ -1,0 +1,312 @@
+{
+ "name": "345 AYT Kimya Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "AYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Atomun Kuantum Modeli",
+   "test_count": 1,
+   "source": "scan",
+   "page": 6
+  },
+  {
+   "label": "Elektron Dizilimleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 12
+  },
+  {
+   "label": "Periyodik Özellikler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 16
+  },
+  {
+   "label": "Elementleri Tanıyalım",
+   "test_count": 1,
+   "source": "scan",
+   "page": 22
+  },
+  {
+   "label": "Yükseltgenme Basamakları",
+   "test_count": 7,
+   "source": "scan",
+   "page": 26
+  },
+  {
+   "label": "Gazların Özellikleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 40
+  },
+  {
+   "label": "Gaz Yasaları",
+   "test_count": 1,
+   "source": "scan",
+   "page": 42
+  },
+  {
+   "label": "İdeal Gaz Yasası",
+   "test_count": 1,
+   "source": "scan",
+   "page": 46
+  },
+  {
+   "label": "Gazlarda Kinetik Teori",
+   "test_count": 1,
+   "source": "scan",
+   "page": 50
+  },
+  {
+   "label": "Gaz Karışımları",
+   "test_count": 1,
+   "source": "scan",
+   "page": 52
+  },
+  {
+   "label": "Gerçek Gazlar",
+   "test_count": 7,
+   "source": "scan",
+   "page": 58
+  },
+  {
+   "label": "Çözücü - Çözünen Etkileşimleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 72
+  },
+  {
+   "label": "Derişim Birimleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 74
+  },
+  {
+   "label": "Kolligatif Özellikler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 82
+  },
+  {
+   "label": "Çözünürlük",
+   "test_count": 1,
+   "source": "scan",
+   "page": 90
+  },
+  {
+   "label": "Çözünürlüğe Etki Eden Faktörler",
+   "test_count": 7,
+   "source": "scan",
+   "page": 92
+  },
+  {
+   "label": "Tepkimelerde Isı Değişimi",
+   "test_count": 1,
+   "source": "scan",
+   "page": 108
+  },
+  {
+   "label": "Entalpi Türleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 112
+  },
+  {
+   "label": "Bağ Enerjileri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 116
+  },
+  {
+   "label": "Tepkime Isılarının Toplanabilirliği",
+   "test_count": 5,
+   "source": "scan",
+   "page": 118
+  },
+  {
+   "label": "Kimyasal Tepkimeler ve Çarpışma Teorisi",
+   "test_count": 1,
+   "source": "scan",
+   "page": 128
+  },
+  {
+   "label": "Tepkime Hızı",
+   "test_count": 1,
+   "source": "scan",
+   "page": 130
+  },
+  {
+   "label": "Tepkime Hızını Etkileyen Faktörler",
+   "test_count": 5,
+   "source": "scan",
+   "page": 134
+  },
+  {
+   "label": "Kimyasal Denge",
+   "test_count": 1,
+   "source": "scan",
+   "page": 152
+  },
+  {
+   "label": "Dengeyi Etkileyen Faktörler",
+   "test_count": 6,
+   "source": "scan",
+   "page": 160
+  },
+  {
+   "label": "Asit - Baz",
+   "test_count": 1,
+   "source": "scan",
+   "page": 176
+  },
+  {
+   "label": "Çözünürlük Dengesi",
+   "test_count": 7,
+   "source": "scan",
+   "page": 188
+  },
+  {
+   "label": "İndirgenme - Yükseltgenme Tepkimeleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 206
+  },
+  {
+   "label": "Metalik Aktiflik",
+   "test_count": 1,
+   "source": "scan",
+   "page": 212
+  },
+  {
+   "label": "Elektrokimyasal Hücreler ve Elektrot Potansiyelleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 214
+  },
+  {
+   "label": "Elektroliz",
+   "test_count": 7,
+   "source": "scan",
+   "page": 226
+  },
+  {
+   "label": "Organik ve Anorganik Bileşikler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 244
+  },
+  {
+   "label": "Basit ve Molekül Formül",
+   "test_count": 1,
+   "source": "scan",
+   "page": 246
+  },
+  {
+   "label": "Doğada Karbon",
+   "test_count": 1,
+   "source": "scan",
+   "page": 248
+  },
+  {
+   "label": "Lewis Formülleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 250
+  },
+  {
+   "label": "Hibritleşme ve Molekül Geometrisi",
+   "test_count": 6,
+   "source": "scan",
+   "page": 252
+  },
+  {
+   "label": "Hidrokarbonlar/Alkanlar",
+   "test_count": 1,
+   "source": "scan",
+   "page": 266
+  },
+  {
+   "label": "Hidrokarbonlar/Alkenler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 274
+  },
+  {
+   "label": "Hidrokarbonlar/Alkinler",
+   "test_count": 6,
+   "source": "scan",
+   "page": 280
+  },
+  {
+   "label": "Aromatik Bileşikler (Arenler)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 296
+  },
+  {
+   "label": "Fonksiyonel Gruplar",
+   "test_count": 1,
+   "source": "scan",
+   "page": 298
+  },
+  {
+   "label": "Alkoller",
+   "test_count": 1,
+   "source": "scan",
+   "page": 300
+  },
+  {
+   "label": "Eterler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 304
+  },
+  {
+   "label": "Karbonil Bileşikleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 306
+  },
+  {
+   "label": "Karboksilik Asitler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 310
+  },
+  {
+   "label": "Esterler",
+   "test_count": 6,
+   "source": "scan",
+   "page": 314
+  },
+  {
+   "label": "Fosil Yakıtlar",
+   "test_count": 1,
+   "source": "scan",
+   "page": 326
+  },
+  {
+   "label": "Alternatif Enerji Kaynakları",
+   "test_count": 1,
+   "source": "scan",
+   "page": 328
+  },
+  {
+   "label": "Sürdürülebilirlik",
+   "test_count": 1,
+   "source": "scan",
+   "page": 330
+  },
+  {
+   "label": "Nanoteknoloji",
+   "test_count": 3,
+   "source": "scan",
+   "page": 332
+  }
+ ],
+ "warnings": []
+}
