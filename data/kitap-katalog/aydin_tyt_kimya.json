@@ -1,0 +1,365 @@
+{
+ "name": "Aydın TYT Kimya Soru Bankası",
+ "publisher": "Aydın Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Kimya Nedir?",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Kimya Ne İşe Yarar?",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Güvenliğimiz ve Kimya",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Maddenin Sınıflandırılması",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYA BİLİMİ)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Atom Modelleri",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Atom Altı Tanecikler",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Atomların Kimliği",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (ATOM VE YAPISI)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Periyodik Sistem ve Özellikleri",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Elementlerin Özelliklerine Göre Sınıflandırılması",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Periyodik Değişen Özellikler",
+   "test_count": 7,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (PERİYODİK SİSTEM)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Kimyasal Tür Nedir?",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "İyonik Bağlar",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Kovalent Bağlar",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Metalik Bağlar",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Bileşiklerin Adlandırılması",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Zayıf Etkileşimler",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYASAL TÜRLER ARASI ETKİLEŞİMLER)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Gazların Özellikleri ve Su Döngüsü",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Katılar",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Sıvılar",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Gazlar",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Atmosfer ve Bağıl Nem",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Maddenin Halleri ve Plazma",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (MADDENİN HÂLLERİ)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Su ve Hayat",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Çevre Kimyası",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (DOĞA VE KİMYA)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Kütlenin Korunumu ve Sabit Oranlar Yasası",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Sabit Oranlar Yasası",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Katlı Oranlar Yasası",
+   "test_count": 5,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYANIN TEMEL YASALARI)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Mol - Kütle - Tanecik Hacim İlişkisi",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Mol - akb İlişkisi",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Mol - Karışım Problemleri",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Formül Bulma - Kristal Su Problemleri",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (MOL KAVRAMI)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Tepkime Denklemleri",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Yanma Tepkimeleri",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Çözünme - Çökelme Tepkimeleri",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Asit - Baz Tepkimeleri",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYASAL TEPKİME TÜRLERİ)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Denklem Katsayılarının Yorumlanması",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Artan Madde Problemleri",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Verim - Safsızlık Problemleri",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Karışım-Atom Kütlesi Bulma Problemleri",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYASAL HESAPLAMALAR)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Homojen ve Heterojen Karışımlar",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Çözünmenin Moleküler Temeli",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Derişim Türleri",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Karışımların Ayrılması",
+   "test_count": 6,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KARIŞIMLAR)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Asitleri ve Bazları Tanıyalım",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Asitlerin ve Bazların Tepkimeleri ve Özellikleri",
+   "test_count": 5,
+   "source": "scan"
+  },
+  {
+   "label": "Hayatımızda Asitler ve Bazlar",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Tuzların Kullanım Alanları",
+   "test_count": 3,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (ASİTLER, BAZLAR VE TUZLAR)",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Temizlik Malzemeleri, Sabunlar",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Temizlik Malzemeleri, Deterjanlar",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Temizlik Malzemeleri, Hijyen Amaçlı Kullanılan Maddeler",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Polimerler",
+   "test_count": 2,
+   "source": "scan"
+  },
+  {
+   "label": "Kozmetik Ürünler",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "İlaçlar",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Hazır Gıdalar",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Yenilebilir Yağlar",
+   "test_count": 1,
+   "source": "scan"
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular (KİMYA HER YERDE)",
+   "test_count": 2,
+   "source": "scan"
+  }
+ ],
+ "warnings": [
+  "ÖZET satırları (konu anlatımı, test içermez) katalogdan çıkarıldı; bölüm-ayraç sayfalarının \"N. BÖLÜM\" okumaları temizlendi (5 beceri bölümü 1 teste düzeltildi, şeritle teyitli).",
+  "İç tutarlılık: 13 ünitenin 13ünde konu testleri toplamı + 1 = Beceri Temelli test numarası (ünite-içi süren numara)."
+ ]
+}

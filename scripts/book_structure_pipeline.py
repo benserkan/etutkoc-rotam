@@ -111,6 +111,7 @@ BANNER_PROMPT = """Sana bir soru bankasının sayfa ÜST ŞERİTLERİNİ sırayl
 Bir soru grubunun sayfasında başlık BANDI bulunabilir: "TEST 3", "3. bölüm KAZANIM ODAKLI SORULAR", "KARMA SORULAR 2", "GÜNLÜK HAYAT UYGULAMALARI 1", "ÖSYM TADINDA SORULAR 2", "ORİJİNAL SORULAR" gibi grup başlığı (logolu/rozet/puzzle çerçeveli olabilir; numara rozetin İÇİNDE olabilir).
 - "t" alanına bandın TAM metnini yaz (tür adı dahil — "KARMA SORULAR", "GÜNLÜK HAYAT UYGULAMALARI" gibi ayrımlar önemli).
 - DİKKAT: sayfada PAZARLAMA ROZETİ olabilir ("1 SORU 1 YORUM", "3D", seri logosu) — bunlar bant DEĞİLDİR ve numarası ALINMAZ. "TEST 8" ile "1 SORU YORUM" aynı şeritteyse numara 8'dir (TEST'in bitişiğindeki numara esastır).
+- "N. BÖLÜM" / "N. ÜNİTE" AYRAÇ sayfası (bölüm kapağı) bant DEĞİLDİR → null; bölüm numarasını test numarası sanma.
 - Bant NUMARALI ise: {"n": numara, "t": "bant metni"}
 - Bant var ama NUMARASIZ ise (örn. yalnız "ORİJİNAL SORULAR"): {"n": null, "t": "bant metni"}
 - Bant yoksa (yalnız KONU ADI başlığı, filigran, boş sayfa) → null. Konu adı başlığı bant DEĞİLDİR.
@@ -335,6 +336,10 @@ def scan_ranges_once(doc, book_pages: list[int], offset: int) -> BannerMap:
         for j, bp in enumerate(chunk):
             v = got[j] if j < len(got) else None
             if isinstance(v, dict) and v.get("t"):
+                ts = unicodedata.normalize("NFKD", str(v["t"])).encode("ascii", "ignore").decode().lower()
+                # "N. BÖLÜM"/"N. ÜNİTE" ayraç kapağı test bandı değildir (Aydın dersi)
+                if ("bolum" in ts or "unite" in ts) and not any(k in ts for k in ("test", "soru", "osym", "orijinal", "analiz", "sentez", "karma")):
+                    continue
                 n = v.get("n")
                 out[bp] = [(n if isinstance(n, int) else None, norm_cat(v.get("t")))]
         if (i // BATCH) % 8 == 7:
