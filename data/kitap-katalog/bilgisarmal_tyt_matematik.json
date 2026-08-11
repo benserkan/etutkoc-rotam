@@ -1,0 +1,159 @@
+{
+ "name": "Bilgi Sarmal TYT Matematik Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "GERÇEK SAYILAR",
+   "test_count": 18,
+   "source": "scan_text",
+   "page": 12
+  },
+  {
+   "label": "BÖLÜNEBİLME",
+   "test_count": 7,
+   "source": "scan_text",
+   "page": 52
+  },
+  {
+   "label": "EBOB – EKOK",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 68
+  },
+  {
+   "label": "RASYONEL SAYILAR",
+   "test_count": 9,
+   "source": "scan_text",
+   "page": 82
+  },
+  {
+   "label": "BİRİNCİ DERECEDEN DENKLEMLER",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 102
+  },
+  {
+   "label": "BİRİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "test_count": 7,
+   "source": "scan_text",
+   "page": 116
+  },
+  {
+   "label": "MUTLAK DEĞER",
+   "test_count": 7,
+   "source": "scan_text",
+   "page": 132
+  },
+  {
+   "label": "ÜSLÜ SAYILAR",
+   "test_count": 9,
+   "source": "scan_text",
+   "page": 148
+  },
+  {
+   "label": "KÖKLÜ SAYILAR",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 168
+  },
+  {
+   "label": "ORAN ORANTI",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 186
+  },
+  {
+   "label": "SAYI VE KESİR PROBLEMLERİ",
+   "test_count": 12,
+   "source": "scan_text",
+   "page": 204
+  },
+  {
+   "label": "YAŞ PROBLEMLERİ",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 230
+  },
+  {
+   "label": "YÜZDE, KÂR – ZARAR PROBLEMLERİ",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 242
+  },
+  {
+   "label": "KARIŞIM PROBLEMLERİ",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 256
+  },
+  {
+   "label": "İŞÇİ PROBLEMLERİ",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 266
+  },
+  {
+   "label": "HAREKET PROBLEMLERİ",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 274
+  },
+  {
+   "label": "VERİ VE GRAFİKLER",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 288
+  },
+  {
+   "label": "MANTIK",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 300
+  },
+  {
+   "label": "KÜMELER",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 312
+  },
+  {
+   "label": "FONKSİYONLAR",
+   "test_count": 9,
+   "source": "scan_text",
+   "page": 328
+  },
+  {
+   "label": "ÇARPANLARA AYIRMA",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 350
+  },
+  {
+   "label": "POLİNOMLAR",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 362
+  },
+  {
+   "label": "İKİNCİ DERECEDEN DENKLEMLER",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 372
+  },
+  {
+   "label": "SAYMA VE OLASILIK",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 382
+  }
+ ],
+ "warnings": [
+  "AI içindekiler okuması 3 bölümü atlamıştı (Mutlak Değer/İşçi/Hareket) + KARIŞIM=1 gibi yanlış sayılar — yapı GÖVDEDEN deterministik yeniden kuruldu: BİLGİ ALANI sayfaları bölüm sınırı, bant sayfaları (KAZANIM TESTİ/ÖSYM TİPİ/YILDIZLAR YARIŞIYOR/SARMAL TEST, numarasızlar dahil) test sayısı. 24 bölüm · 167 test; kontak-föy görsel teyidi: Karışım 4 + İşçi 3 + Hareket 6, Eşitsizlik 7, Mutlak Değer 7.",
+  "SARMAL TEST global numaralı kümülatif seri (1..12) — bulunduğu bölümün testi olarak sayıldı."
+ ]
+}
