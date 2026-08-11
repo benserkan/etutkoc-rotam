@@ -1,0 +1,234 @@
+{
+ "name": "Biyotik AYT Biyoloji Soru Bankası",
+ "publisher": "Biyotik Yayınları",
+ "subject": "AYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Sinir Sistemi",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 9
+  },
+  {
+   "label": "Sinir Sistemi Genel Tekrar",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 25
+  },
+  {
+   "label": "Endokrin Sistem",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 29
+  },
+  {
+   "label": "Endokrin Sistem Genel Tekrar",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 37
+  },
+  {
+   "label": "Duyu Organları",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 41
+  },
+  {
+   "label": "Duyu Organları Genel Tekrar",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 49
+  },
+  {
+   "label": "Destek ve Hareket Sistemi",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 53
+  },
+  {
+   "label": "Destek ve Hareket Sistemi Genel Tekrar",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 61
+  },
+  {
+   "label": "Sindirim Sistemi",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 65
+  },
+  {
+   "label": "Sindirim Sistemi Genel Tekrar",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 75
+  },
+  {
+   "label": "Dolaşım Sistemi",
+   "test_count": 7,
+   "source": "scan_text",
+   "page": 81
+  },
+  {
+   "label": "Dolaşım Sistemi Genel Tekrar",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 95
+  },
+  {
+   "label": "Solunum Sistemi",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 101
+  },
+  {
+   "label": "Solunum Sistemi Genel Tekrar",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 109
+  },
+  {
+   "label": "Üriner Sistem",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 113
+  },
+  {
+   "label": "Üriner Sistem Genel Tekrar",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 123
+  },
+  {
+   "label": "Üreme Sistemi ve Embriyonik Gelişim",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 127
+  },
+  {
+   "label": "Üreme Sistemi ve Embriyonik Gelişim Genel Tekrar",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 137
+  },
+  {
+   "label": "Nükleik Asitler",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 145
+  },
+  {
+   "label": "Genetik Şifre ve Protein Sentezi",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 155
+  },
+  {
+   "label": "Biyoteknoloji ve Genetik Mühendisliği",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 163
+  },
+  {
+   "label": "Ünite Değerlendirme (Genden Proteine)",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 167
+  },
+  {
+   "label": "Canlılık ve Enerji",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 175
+  },
+  {
+   "label": "Fotosentez: Enerjinin Bağlanması",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 179
+  },
+  {
+   "label": "Fotosentez ve Kemosentez",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 191
+  },
+  {
+   "label": "Hücresel Solunum ve Fermantasyon",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 193
+  },
+  {
+   "label": "Fotosentez ve Solunum",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 205
+  },
+  {
+   "label": "Ünite Değerlendirme (Canlılarda Enerji Dönüşümleri)",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 207
+  },
+  {
+   "label": "Bitkilerin Temel Kısımlarının Yapısı ve Görevleri",
+   "test_count": 7,
+   "source": "scan_text",
+   "page": 215
+  },
+  {
+   "label": "Bitkisel Hormonlar ve Bitkilerde Hareket",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 229
+  },
+  {
+   "label": "Bitkilerde Beslenme ve Taşıma",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 235
+  },
+  {
+   "label": "Çiçekli Bitkilerde Eşeyli Üreme",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 243
+  },
+  {
+   "label": "Ünite Değerlendirme (Bitki Biyolojisi)",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 251
+  },
+  {
+   "label": "Komünite Ekolojisi",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 259
+  },
+  {
+   "label": "Popülasyon Ekolojisi",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 263
+  },
+  {
+   "label": "Canlılar ve Çevre",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 267
+  },
+  {
+   "label": "Ünite Değerlendirme (Ekoloji, Canlılar ve Çevre)",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 271
+  }
+ ],
+ "warnings": []
+}

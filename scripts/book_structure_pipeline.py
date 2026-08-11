@@ -37,6 +37,7 @@ except Exception:
 import argparse
 import base64
 import json
+import re
 import unicodedata
 from pathlib import Path
 
@@ -81,12 +82,17 @@ GÖREV: İÇİNDEKİLER sayfalarını bul ve konu listesini çıkar.
 KURALLAR:
 - Yalnız içindekilerde GERÇEKTEN yazan konu/bölüm satırlarını al; sırayla.
 - "BÖLÜM 07", "ÜNİTE 3" gibi SADECE NUMARA taşıyan grup başlıklarını ALMA — altındaki konuları al.
+  Ünite/bölüm başlığı AD içeriyorsa ("ÜNİTE 1 İNSAN FİZYOLOJİSİ") o da bir KONU satırı DEĞİLDİR;
+  altındaki konulara "unit" alanı olarak yaz.
+- DİKKAT: "Ünite Değerlendirme", "Ünite Sonu Testi", "Genel Tekrar" gibi ünite içi/sonu
+  ÇALIŞMA satırları KONUDUR — bunları AL (unit alanıyla birlikte).
 - Önsöz, cevap anahtarı, çözümler, sözlük, dizin gibi çalışma-dışı satırları ALMA.
-- Her konu için: label (yazıldığı gibi), page (satırın gösterdiği başlangıç sayfa numarası; yoksa null),
+- Her konu için: label (yazıldığı gibi), unit (bulunduğu ünitenin adı; yoksa null),
+  page (satırın gösterdiği başlangıç sayfa numarası; yoksa null),
   test_count (içindekiler o konu için test adedi VERİYORSA; test listesi ayrı satırlarsa ADEDİNİ say; vermiyorsa null — ASLA TAHMİN ETME).
 - Kitap adı / yayınevi görünüyorsa yaz; ders tahmini (subject_hint) yaz.
 YALNIZ şu JSON: {"book_title": str|null, "publisher": str|null, "subject_hint": str|null,
- "items": [{"label": str, "page": int|null, "test_count": int|null}]}"""
+ "items": [{"label": str, "unit": str|null, "page": int|null, "test_count": int|null}]}"""
 
 PAGENO_PROMPT = """Sana kitap sayfalarının ALT şeritlerini sırayla veriyorum.
 Her şeritte sayfanın BASILI sayfa numarası görünebilir (genelde alt-orta/alt-köşe).
@@ -128,10 +134,16 @@ def _img_part(pix) -> dict:
 
 
 def read_toc_once(doc, n_pages: int) -> dict:
-    parts = []
-    for i in range(min(n_pages, doc.page_count)):
-        parts.append(_img_part(doc[i].get_pixmap(dpi=75)))
-    parts.append(gemini.text_part(TOC_PROMPT))
+    # Dijital PDF: içindekiler METİNDEN okunur (iki okuma aynı girdiyi görür →
+    # satır düşürme/uydurma azalır); taranmışta görüntüden.
+    pages = [doc[i] for i in range(min(n_pages, doc.page_count))]
+    texts = [p.get_text().strip() for p in pages]
+    if sum(1 for t in texts if len(t) > 150) >= len(pages) * 0.6:
+        blob = "\n\n".join(f"--- SAYFA {i+1} ---\n{t[:4000]}" for i, t in enumerate(texts))
+        parts = [gemini.text_part(TOC_PROMPT + "\n\nSAYFA METİNLERİ:\n" + blob)]
+    else:
+        parts = [_img_part(p.get_pixmap(dpi=75)) for p in pages]
+        parts.append(gemini.text_part(TOC_PROMPT))
     data = _gen(parts, timeout=120)
     items = []
     for it in data.get("items") or []:
@@ -142,8 +154,10 @@ def read_toc_once(doc, n_pages: int) -> dict:
             continue
         pg = it.get("page")
         tc = it.get("test_count")
+        unit = it.get("unit")
         items.append({
             "label": label[:255],
+            "unit": str(unit).strip()[:120] if unit else None,
             "page": int(pg) if isinstance(pg, int) and pg > 0 else None,
             "test_count": int(tc) if isinstance(tc, int) and tc > 0 else None,
         })
@@ -249,12 +263,14 @@ def calibrate_offset(doc, sample_pages: list[int]) -> tuple[int | None, list[str
 
 
 # ============================================================================
-# C) Gövde taraması (v2: kategori-max + zincir denetimi + çift geçiş)
+# C) Gövde taraması (v3: metin katmanı > görüntü; global numara-örüntüsü sayacı)
 # ============================================================================
 
+BannerMap = dict[int, list[tuple[int | None, str]]]  # kitap sayfası → [(numara|None, kategori)]
 
-def scan_ranges_once(doc, book_pages: list[int], offset: int) -> dict[int, tuple[int, str]]:
-    out: dict[int, tuple[int, str]] = {}
+
+def scan_ranges_once(doc, book_pages: list[int], offset: int) -> BannerMap:
+    out: BannerMap = {}
     for i in range(0, len(book_pages), BATCH):
         chunk = book_pages[i:i + BATCH]
         parts = []
@@ -278,34 +294,145 @@ def scan_ranges_once(doc, book_pages: list[int], offset: int) -> dict[int, tuple
             v = got[j] if j < len(got) else None
             if isinstance(v, dict) and v.get("t"):
                 n = v.get("n")
-                out[bp] = (n if isinstance(n, int) else None, norm_cat(v.get("t")))
+                out[bp] = [(n if isinstance(n, int) else None, norm_cat(v.get("t")))]
         if (i // BATCH) % 8 == 7:
             print(f"    …parça {i//BATCH+1}/{(len(book_pages)+BATCH-1)//BATCH}")
     return out
 
 
-def analyze_range(start: int, end_excl: int, banners: dict[int, tuple[int | None, str]]):
-    """Kategori başına EN BÜYÜK numara toplamı; yalnız NUMARASIZ görülen
-    kategori (örn. tekil "ORİJİNAL SORULAR" seti) 1 test sayılır — bant her
-    sayfada tekrarlanabildiğinden numarasız tekrarlar ekstra sayılmaz."""
-    cats: dict[str, set[int]] = {}
-    unnumbered: set[str] = set()
-    for bp in range(start, end_excl):
-        if bp in banners:
-            n, t = banners[bp]
-            if n is None:
-                unnumbered.add(t)
+# Metin-katmanlı (dijital) PDF: bantlar üst bölge BÜYÜK PUNTO metninden
+# deterministik çıkar. DERS (Biyotik): cevap-anahtarı sayfalarında "ANALİZ 1 2 3…"
+# soru-numarası ızgarası küçük fontta — yalnız iri span'lerde arayınca hayalet
+# numara girmez; gerçek bant numarası iri fonttadır.
+_TXT_BANNERS = [
+    (re.compile(r"ÖSYM\s*TADINDA\D{0,30}?(\d{1,3})", re.IGNORECASE), "osym_tadinda"),
+    (re.compile(r"OR[İIiı]J[İIiı]NAL\s*(?:®\s*)?SORULAR\D{0,15}?(\d{1,3})?", re.IGNORECASE), "orijinal"),
+    (re.compile(r"ANAL[İIiı]Z\D{0,15}?(\d{1,3})", re.IGNORECASE), "test"),
+    (re.compile(r"SENTEZ\D{0,15}?(\d{1,3})", re.IGNORECASE), "test"),
+    (re.compile(r"(\d{1,3})\s*\.\s*TEST\b", re.IGNORECASE), "test"),
+    (re.compile(r"\bTEST\D{0,10}?(\d{1,3})", re.IGNORECASE), "test"),
+]
+_TXT_TOP_FRAC = 0.30
+_TXT_HEADER_FRAC = 0.09  # bölüm adı başlığı en tepede; soru metni ~%10'dan başlar
+_TXT_BIG_SIZE = 12.0
+
+
+def _page_top_text(page, min_size: float | None = None, frac: float = _TXT_TOP_FRAC) -> str:
+    h = page.rect.height
+    lines: list[str] = []
+    for blk in page.get_text("dict").get("blocks", []):
+        if blk.get("type") != 0 or blk["bbox"][1] > h * frac:
+            continue
+        for ln in blk.get("lines", []):
+            spans = ln.get("spans", [])
+            if min_size is not None:
+                spans = [sp for sp in spans if sp.get("size", 0) >= min_size]
+            if spans:
+                lines.append(" ".join(sp.get("text", "") for sp in spans))
+    return " ".join(lines)
+
+
+def has_text_layer(doc, book_pages: list[int], offset: int) -> bool:
+    sample = book_pages[:: max(1, len(book_pages) // 10)][:10]
+    ok = sum(1 for bp in sample if len(doc[bp - 1 + offset].get_text().strip()) > 120)
+    return bool(sample) and ok / len(sample) >= 0.7
+
+
+def scan_ranges_text(doc, book_pages: list[int], offset: int) -> BannerMap:
+    out: BannerMap = {}
+    for bp in book_pages:
+        txt = _page_top_text(doc[bp - 1 + offset], min_size=_TXT_BIG_SIZE)
+        found: list[tuple[int | None, str]] = []
+        for rex, cat in _TXT_BANNERS:
+            for m in rex.finditer(txt):
+                n = m.group(1)
+                found.append((int(n) if n else None, cat))
+        if found:
+            out[bp] = sorted(set(found), key=lambda x: (x[1], x[0] or 0))
+    return out
+
+
+def _norm_label(s: str) -> str:
+    s = unicodedata.normalize("NFKD", s).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", " ", s).strip()
+
+
+def attribute_pages_text(doc, items: list[dict], offset: int, banner_pages: list[int]) -> dict[int, list[int]]:
+    """Dijital PDF'te her sayfanın üst başlığında BÖLÜM ADI yazar → bantlı
+    sayfalar içindekiler sayfa numarasına güvenmeden başlık eşleşmesiyle
+    sahiplenilir (monoton ilerleyen imleç + en uzun etiket; mükerrer etiketler
+    ["Ünite Değerlendirme"] imleç sayesinde doğru üniteye düşer)."""
+    labels = [(i, _norm_label(it.get("base_label") or it["label"])) for i, it in enumerate(items)]
+    owned: dict[int, list[int]] = {}
+    unmatched = 0
+    cur = 0
+    for bp in banner_pages:
+        # Yalnız EN TEPE bandı (başlık satırı) — soru metnindeki konu-adı geçişleri
+        # ("sindirim", "sinir sistemi") sayfayı yanlış konuya atamasın.
+        txt = _norm_label(_page_top_text(doc[bp - 1 + offset], frac=_TXT_HEADER_FRAC))
+        best, blen = None, 0
+        for i, nl in labels:
+            if i >= cur and nl and nl in txt and len(nl) > blen:
+                best, blen = i, len(nl)
+        if best is None:  # başlık eşleşmedi → sahiplenme (geriye dönük atama YASAK)
+            unmatched += 1
+            continue
+        cur = best
+        owned.setdefault(best, []).append(bp)
+    if unmatched:
+        print(f"   [i] başlık eşleşmeyen bantlı sayfa: {unmatched}")
+    return owned
+
+
+def count_items_global(ordered: list[tuple[int, list[int] | None, bool]], banners: BannerMap):
+    """Kitap SIRASINDA global sayım. ordered: (item_idx, sayfa_listesi|None, uygula);
+    uygula=False → sayısı içindekilerden bilinen konu (yalnız zincir ilerletilir);
+    sayfa_listesi=None → sayfası bilinmeyen konu (zincir sıfırlanır).
+
+    Numara örüntüsü aralık bazında çözülür:
+    - aralık min'i 1 → KONU-BAŞINA sıfırlanan numaralandırma (345 tarzı): sayı = max
+    - aralık min'i > önceki konunun max'ı → ünite boyunca SÜREN numaralandırma
+      (Biyotik ANALİZ/SENTEZ ortak sayacı): sayı = max − önceki max
+    Yalnız NUMARASIZ görülen kategori (tekil "ORİJİNAL SORULAR") 1 sayılır.
+    """
+    prev_max: dict[str, int] = {}
+    counts: dict[int, int | None] = {}
+    warns: list[tuple[int, str]] = []
+    for idx, pages, apply in ordered:
+        if pages is None:
+            prev_max = {}
+            if apply:
+                counts[idx] = None
+            continue
+        cats: dict[str, set[int]] = {}
+        unnum: set[str] = set()
+        for bp in pages:
+            for n, t in banners.get(bp, []):
+                if n is None:
+                    unnum.add(t)
+                else:
+                    cats.setdefault(t, set()).add(n)
+        total = 0
+        for t, nums in sorted(cats.items()):
+            mn, mx = min(nums), max(nums)
+            pm = prev_max.get(t)
+            if pm is not None and mn > pm:
+                total += mx - pm
+                missing = sorted(set(range(pm + 1, mx + 1)) - nums)
+                if missing and apply:
+                    warns.append((idx, f"{t}: {missing} görülmedi ({pm+1}..{mx})"))
             else:
-                cats.setdefault(t, set()).add(n)
-    total, gaps = 0, []
-    for t, nums in sorted(cats.items()):
-        mx = max(nums)
-        total += mx
-        missing = sorted(set(range(1, mx + 1)) - nums)
-        if missing:
-            gaps.append(f"{t}: {missing} görülmedi (1..{mx})")
-    total += len(unnumbered - set(cats))  # yalnız numarasız görülen kategoriler
-    return total, gaps
+                total += mx
+                missing = sorted(set(range(1, mx + 1)) - nums)
+                if missing and apply:
+                    warns.append((idx, f"{t}: {missing} görülmedi (1..{mx})"))
+                if pm is not None and 1 < mn <= pm and apply:
+                    warns.append((idx, f"{t}: numara örüntüsü belirsiz (min {mn}, önceki max {pm}) — yeniden başlangıç varsayıldı"))
+            prev_max[t] = mx
+        total += len(unnum - set(cats))
+        if apply:
+            counts[idx] = total or None
+    return counts, warns
 
 
 # ============================================================================
@@ -343,6 +470,16 @@ def main() -> int:
     missing = [it for it in items if it["test_count"] is None]
     print(f"   test sayısı içindekilerde: {len(items)-len(missing)}/{len(items)} konu")
 
+    # Mükerrer etiketleri ünite adıyla ayrıştır ("Ünite Değerlendirme" ×4 gibi)
+    from collections import Counter
+
+    dupes = {lbl for lbl, c in Counter(it["label"] for it in items).items() if c > 1}
+    for it in items:
+        if it["label"] in dupes and it.get("unit"):
+            it["base_label"] = it["label"]
+            # DİKKAT: .title() Türkçe İ'yi bozar (Protei̇ne) — ünite adı olduğu gibi
+            it["label"] = f"{it['label']} ({it['unit']})"[:255]
+
     offset = 0
     if missing:
         # B) Ofset
@@ -372,30 +509,74 @@ def main() -> int:
                 s, e = pages_by_item[i]
                 need_pages.extend(range(s, e))
         need_pages = sorted(set(bp for bp in need_pages if 0 <= bp - 1 + offset < doc.page_count))
-        print(f"\nC) Gövde taraması: {len(need_pages)} sayfa × 2 bağımsız geçiş…")
-        s1 = scan_ranges_once(doc, need_pages, offset)
-        print("   1. geçiş tamam — 2. geçiş (doğrulama)…")
-        s2 = scan_ranges_once(doc, need_pages, offset)
+
+        text_mode = has_text_layer(doc, need_pages, offset)
+        ordered: list[tuple[int, list[int] | None, bool]] = []
+        if text_mode:
+            # Dijital PDF: TÜM gövde metinden taranır (bedava) + aralıklar içindekiler
+            # sayfa numarasına güvenmeden BAŞLIK eşleşmesiyle kurulur (Sindirim=65 dersi).
+            first_page = min((it["page"] for it in items if it["page"]), default=1)
+            all_pages = [bp for bp in range(first_page, book_last + 1) if 0 <= bp - 1 + offset < doc.page_count]
+            print(f"\nC) Gövde taraması: {len(all_pages)} sayfa — METİN KATMANI (deterministik)…")
+            tmap = scan_ranges_text(doc, all_pages, offset)
+            if len(tmap) < len(all_pages) * 0.25:
+                print("   metin modunda az bant bulundu → GÖRÜNTÜ taramasına dönülüyor")
+                text_mode = False
+            else:
+                owned = attribute_pages_text(doc, items, offset, sorted(tmap))
+                for i, it in enumerate(items):
+                    pages = owned.get(i)
+                    if pages:
+                        ordered.append((i, pages, it["test_count"] is None))
+                    elif it["test_count"] is None:
+                        ordered.append((i, None, True))
+                passes = [tmap]
+        if not text_mode:
+            print(f"\nC) Gövde taraması: {len(need_pages)} sayfa × 2 bağımsız GÖRÜNTÜ geçişi…")
+            s1 = scan_ranges_once(doc, need_pages, offset)
+            print("   1. geçiş tamam — 2. geçiş (doğrulama)…")
+            s2 = scan_ranges_once(doc, need_pages, offset)
+            passes = [s1, s2]
+            for i, it in enumerate(items):
+                rng = pages_by_item.get(i)
+                pages = list(range(rng[0], rng[1])) if rng else None
+                ordered.append((i, pages, it["test_count"] is None))
+
+        results = [count_items_global(ordered, p) for p in passes]
         for i, it in enumerate(items):
             if it["test_count"] is not None:
                 it["source"] = "toc"
                 continue
-            if i not in pages_by_item:
+            if not text_mode and i not in pages_by_item:
                 it["source"] = "unknown"
                 it["flag"] = "no_page"
                 warnings.append(f"'{it['label']}': sayfa numarası yok — taranamadı, elle doldurun.")
                 continue
-            s, e = pages_by_item[i]
-            t1, g1 = analyze_range(s, e, s1)
-            t2, g2 = analyze_range(s, e, s2)
-            it["test_count"] = max(t1, t2) or None
-            it["source"] = "scan"
-            if t1 != t2:
+            vals = [r[0].get(i) for r in results]
+            it["test_count"] = max((v for v in vals if v), default=None)
+            it["source"] = "scan_text" if text_mode else "scan"
+            if it["test_count"] is None:
+                it["flag"] = "no_banner"
+                warnings.append(f"'{it['label']}': bant bulunamadı — elle doldurun.")
+            elif len(vals) > 1 and vals[0] != vals[1]:
                 it["flag"] = "scan_mismatch"
-                warnings.append(f"'{it['label']}': iki tarama uyuşmadı ({t1}/{t2}) — büyük olan alındı, kontrol edin.")
-            for g in set(g1) | set(g2):
-                warnings.append(f"'{it['label']}': zincir kopuğu {g}")
+                warnings.append(f"'{it['label']}': iki tarama uyuşmadı ({vals[0]}/{vals[1]}) — büyük olan alındı, kontrol edin.")
+        seen_w: set[tuple[int, str]] = set()
+        for _, ws in results:
+            for idx, msg in ws:
+                if (idx, msg) not in seen_w:
+                    seen_w.add((idx, msg))
+                    warnings.append(f"'{items[idx]['label']}': {msg}")
+        scan_debug = {
+            "mode": "text" if text_mode else "vision",
+            "passes": [
+                {str(bp): ["%s#%s" % (t, n if n is not None else "-") for n, t in v]
+                 for bp, v in sorted(p.items())}
+                for p in passes
+            ],
+        }
     else:
+        scan_debug = None
         for it in items:
             it["source"] = "toc"
 
@@ -429,6 +610,9 @@ def main() -> int:
     }
     out_path = args.out or (Path(args.pdf).stem[:40].strip().replace(" ", "_") + "_yapi.json")
     Path(out_path).write_text(json.dumps(out, ensure_ascii=False, indent=1), encoding="utf-8")
+    if scan_debug is not None:
+        Path(str(out_path) + ".raw.json").write_text(
+            json.dumps(scan_debug, ensure_ascii=False, indent=1), encoding="utf-8")
     print(f"\nJSON: {out_path}  →  seed: PYTHONPATH=. python scripts/seed_book_catalog_json.py {out_path}")
     return 0
 
