@@ -154,12 +154,18 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
       <div
         className={cn(
           "grid grid-cols-12 items-center gap-3 px-4 py-3 hover:bg-muted transition-colors",
-          dim ? "opacity-60" : levelRowClass(s.worst_warning_level),
+          !dim && levelRowClass(s.worst_warning_level),
         )}
       >
+        {/* Pasif satır soluklaştırması İÇERİK hücrelerine uygulanır — satırın
+            tamamına opacity verilirse içinde açılan ⋯ menüsü de yarı saydam
+            oluyordu (2026-08-11 saha bulgusu: menü okunmuyor sanılıyordu). */}
         <Link
           href={`/teacher/students/${s.id}`}
-          className="col-span-12 sm:col-span-4 min-w-0 hover:underline"
+          className={cn(
+            "col-span-12 sm:col-span-4 min-w-0 hover:underline",
+            dim && "opacity-60",
+          )}
         >
           <span className="flex items-center gap-2">
             <WarningDot level={s.worst_warning_level} />
@@ -196,13 +202,13 @@ function StudentRow({ s }: { s: TeacherStudentListItem }) {
             </span>
           ) : null}
         </Link>
-        <span className="hidden sm:block sm:col-span-2 text-sm text-muted-foreground">
+        <span className={cn("hidden sm:block sm:col-span-2 text-sm text-muted-foreground", dim && "opacity-60")}>
           {s.grade_level !== null ? `${s.grade_level}. sınıf` : "Mezun"}
         </span>
-        <span className="hidden sm:block sm:col-span-2 text-sm tabular-nums">
+        <span className={cn("hidden sm:block sm:col-span-2 text-sm tabular-nums", dim && "opacity-60")}>
           Bugün: {s.today_gorev_done ?? 0}/{s.today_gorev_total ?? 0} görev
         </span>
-        <span className="hidden sm:block sm:col-span-1 text-sm tabular-nums">
+        <span className={cn("hidden sm:block sm:col-span-1 text-sm tabular-nums", dim && "opacity-60")}>
           Hafta: %{weekPct}
         </span>
         <span className="col-span-12 sm:col-span-3 flex items-center justify-end gap-2 text-xs">
