@@ -110,6 +110,7 @@ YALNIZ şu JSON: {"pages": [int|null, ...]} — şerit sayısı kadar, sırayla.
 BANNER_PROMPT = """Sana bir soru bankasının sayfa ÜST ŞERİTLERİNİ sırayla veriyorum.
 Bir soru grubunun sayfasında başlık BANDI bulunabilir: "TEST 3", "3. bölüm KAZANIM ODAKLI SORULAR", "KARMA SORULAR 2", "GÜNLÜK HAYAT UYGULAMALARI 1", "ÖSYM TADINDA SORULAR 2", "ORİJİNAL SORULAR" gibi grup başlığı (logolu/rozet/puzzle çerçeveli olabilir; numara rozetin İÇİNDE olabilir).
 - "t" alanına bandın TAM metnini yaz (tür adı dahil — "KARMA SORULAR", "GÜNLÜK HAYAT UYGULAMALARI" gibi ayrımlar önemli).
+- DİKKAT: sayfada PAZARLAMA ROZETİ olabilir ("1 SORU 1 YORUM", "3D", seri logosu) — bunlar bant DEĞİLDİR ve numarası ALINMAZ. "TEST 8" ile "1 SORU YORUM" aynı şeritteyse numara 8'dir (TEST'in bitişiğindeki numara esastır).
 - Bant NUMARALI ise: {"n": numara, "t": "bant metni"}
 - Bant var ama NUMARASIZ ise (örn. yalnız "ORİJİNAL SORULAR"): {"n": null, "t": "bant metni"}
 - Bant yoksa (yalnız KONU ADI başlığı, filigran, boş sayfa) → null. Konu adı başlığı bant DEĞİLDİR.
@@ -430,12 +431,19 @@ def _series_walk(nums: list[int]) -> tuple[int, list[str]]:
     test (bant her sayfada tekrarlanır); numara DÜŞÜŞÜ = yeni alt seri (Fizik'te
     bir içindekiler-konusu içinde alt bölümler 1'den yeniden başlar). Toplam =
     Σ(seri_max − seri_min + 1) — konu-başına 1..N (345) ve süren sayaç m..M
-    (Biyotik) tek kuralda. Seri içi kayıp numaralar uyarı üretir."""
+    (Biyotik) tek kuralda. GÜRÜLTÜ ATLAMA (KR Akademi "1 SORU 1 YORUM" rozeti):
+    akışı kesen düşük numaradan sonra seri KALDIĞI YERDEN sürüyorsa
+    (…8, 1, 9 → 9 = son±1) o gözlem rozet/yanlış-okumadır, atlanır; gerçek alt
+    seri başlangıcı (…5, 1, 2) devam etmediği için etkilenmez."""
     series: list[dict] = []
     cur: dict | None = None
-    for n in nums:
+    for i, n in enumerate(nums):
         if cur is not None and n == cur["last"]:
             continue
+        if cur is not None and n < cur["last"]:
+            nxt = next((m for m in nums[i + 1:] if m != n), None)
+            if nxt is not None and cur["last"] <= nxt <= cur["last"] + 1:
+                continue  # gürültü: mevcut seri devam ediyor
         if cur is None or n < cur["last"]:
             cur = {"min": n, "max": n, "seen": {n}, "last": n}
             series.append(cur)

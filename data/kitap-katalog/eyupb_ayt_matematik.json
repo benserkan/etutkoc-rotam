@@ -1,0 +1,102 @@
+{
+ "name": "Eyüp B AYT Matematik Soru Bankası",
+ "publisher": "KR Akademi Yayınları",
+ "subject": "AYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "İKİNCİ DERECEDEN DENKLEMLER",
+   "test_count": 8,
+   "source": "scan",
+   "page": 6
+  },
+  {
+   "label": "POLİNOM",
+   "test_count": 11,
+   "source": "scan",
+   "page": 21
+  },
+  {
+   "label": "PARABOL",
+   "test_count": 10,
+   "source": "scan",
+   "page": 42
+  },
+  {
+   "label": "EŞİTSİZLİKLER",
+   "test_count": 10,
+   "source": "scan",
+   "page": 62
+  },
+  {
+   "label": "FONKSİYON UYGULAMALARI",
+   "test_count": 10,
+   "source": "scan",
+   "page": 82
+  },
+  {
+   "label": "TRİGONOMETRİ",
+   "test_count": 20,
+   "source": "scan",
+   "page": 102
+  },
+  {
+   "label": "LOGARİTMA",
+   "test_count": 14,
+   "source": "scan",
+   "page": 142
+  },
+  {
+   "label": "DİZİLER",
+   "test_count": 7,
+   "source": "scan",
+   "page": 170
+  },
+  {
+   "label": "LİMİT",
+   "test_count": 13,
+   "source": "scan",
+   "page": 184
+  },
+  {
+   "label": "TÜREV",
+   "test_count": 27,
+   "source": "scan",
+   "page": 210
+  },
+  {
+   "label": "İNTEGRAL",
+   "test_count": 18,
+   "source": "scan",
+   "page": 264
+  },
+  {
+   "label": "SAYMA",
+   "test_count": 4,
+   "source": "scan",
+   "page": 300
+  },
+  {
+   "label": "BİNOM",
+   "test_count": 1,
+   "source": "scan",
+   "page": 308
+  },
+  {
+   "label": "OLASILIK",
+   "test_count": 2,
+   "source": "scan",
+   "page": 310
+  },
+  {
+   "label": "SAYMA OLASILIK",
+   "test_count": 4,
+   "source": "scan",
+   "page": 314
+  }
+ ],
+ "warnings": []
+}
