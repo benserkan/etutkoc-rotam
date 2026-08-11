@@ -331,6 +331,18 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   netleştirildi (Genden Proteine 2 · Enerji Dönüşümleri 3, fiziksel konuma
   alındı; taksonomideki şemsiye konulara eşleşti); ÜREME↔Sistemler Karma
   sayfa sırası içerikle düzeltildi. Sistemler Karma çok-konulu → bilinçli boş.
+- **TWINS TYT BİYOLOJİ — CANLI (2026-08-12, prod id=88): 29 bölüm · 61 test ·
+  27/29 eşli.** YENİ YAYINEVİ + YENİ YAPI SINIFI: klasik TEST bölümlemesi hiç
+  yok — konu föyleri (üst bantta konu adı, sürekli soru no; ANALİZ / İKİZ
+  SORULAR / SORABİLİRLER blokları) + ünite sonu turuncu değerlendirme
+  sayfaları; içindekiler yalnız 6 ünite. Pipeline ilk koşuda "6 konu · 6 test"
+  üretti (bariz yanlış; sayfa/test=18 bandın çok dışında) → yapı 6 ünitenin
+  TÜM sayfa şeritlerinin kontak-föy göz taramasıyla elle çıkarıldı. Test
+  birimi KULLANICI KARARI: **2 sayfa ≈ 1 test** (yukarı yuvarlama). Çok-konulu
+  2 ÜD bilinçli boş (Biyotik kararlarıyla tutarlı); prod AI varyansı (ÜD
+  HÜCRE boş kalmıştı) dev kararına elle hizalandı. KURAL: föy-tarzı kitapta
+  (bant=konu adı, test yok) pipeline çalışmaz — kontak-föy + kullanıcı birim
+  kararı yolu izlenir.
 - **ADMİN PANEL KESKİNLİK DEĞERLENDİRMESİ (2026-08-12, kullanıcı sorusu):**
   henüz "gözetimsiz tek tık" DEĞİL — v4'ten beri ~12 kitabın ~8'i en az bir
   kod kuralı/şerit teyidi istedi; 3D TYT Fizik'te sıfır-uyarılı koşu bile 7
