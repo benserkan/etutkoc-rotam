@@ -1,0 +1,146 @@
+{
+ "name": "Yayın Denizi Pro Dil Bilgisi Soru Bankası",
+ "publisher": "Yayın Denizi Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Ses Bilgisi",
+   "test_count": 3,
+   "source": "manual",
+   "page": 11
+  },
+  {
+   "label": "Yazım Kuralları",
+   "test_count": 3,
+   "source": "manual",
+   "page": 17
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 3,
+   "source": "manual",
+   "page": 23
+  },
+  {
+   "label": "Sözcükte Yapı",
+   "test_count": 3,
+   "source": "manual",
+   "page": 29
+  },
+  {
+   "label": "Karma Test (Bölüm 1)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 35
+  },
+  {
+   "label": "İsim (Ad)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 43
+  },
+  {
+   "label": "Sıfat (Ön Ad)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 49
+  },
+  {
+   "label": "Zamir (Adıl)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 55
+  },
+  {
+   "label": "Zarf (Belirteç)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 61
+  },
+  {
+   "label": "Edat (İlgeç), Bağlaç, Ünlem",
+   "test_count": 3,
+   "source": "manual",
+   "page": 67
+  },
+  {
+   "label": "Fiil (Eylem)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 73
+  },
+  {
+   "label": "Ek Fiil (Ek Eylem)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 79
+  },
+  {
+   "label": "Fiil Çatısı (Eylemde Çatı)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 85
+  },
+  {
+   "label": "Fiilimsi (Eylemsi)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 91
+  },
+  {
+   "label": "Karma Test (Bölüm 2)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 97
+  },
+  {
+   "label": "Kelime Grupları",
+   "test_count": 3,
+   "source": "manual",
+   "page": 105
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 3,
+   "source": "manual",
+   "page": 111
+  },
+  {
+   "label": "Cümle Türleri",
+   "test_count": 3,
+   "source": "manual",
+   "page": 117
+  },
+  {
+   "label": "Karma Test (Bölüm 3)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 123
+  },
+  {
+   "label": "Anlatım Bozukluğu (Anlama Dayalı)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 131
+  },
+  {
+   "label": "Anlatım Bozukluğu (Yapıya Dayalı)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 137
+  },
+  {
+   "label": "Denemeler",
+   "test_count": 15,
+   "source": "manual",
+   "page": 143
+  }
+ ],
+ "warnings": [
+  "Kullanıcı tanımı (2026-08-12): içindekiler görselinden elle — her konu 3 test + 15 denemelik Denemeler bölümü; müfredat eşleştirmesi bilinçli YAPILMADI (--no-map)."
+ ]
+}
