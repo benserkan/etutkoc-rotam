@@ -1,0 +1,222 @@
+{
+ "name": "345 TYT Kimya Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Simyadan Kimyaya",
+   "test_count": 2,
+   "source": "scan",
+   "page": 6
+  },
+  {
+   "label": "Kimya Disiplinleri ve Kimyacıların Çalışma Alanları",
+   "test_count": 2,
+   "source": "scan",
+   "page": 10
+  },
+  {
+   "label": "Kimyanın Sembolik Dili",
+   "test_count": 3,
+   "source": "scan",
+   "page": 14
+  },
+  {
+   "label": "Kimya Uygulamalarında İş Sağlığı ve Güvenliği",
+   "test_count": 8,
+   "source": "scan",
+   "page": 20
+  },
+  {
+   "label": "Atom Modelleri",
+   "test_count": 2,
+   "source": "scan",
+   "page": 36
+  },
+  {
+   "label": "Atomun Yapısı",
+   "test_count": 3,
+   "source": "scan",
+   "page": 40
+  },
+  {
+   "label": "Periyodik Sistem",
+   "test_count": 3,
+   "source": "scan",
+   "page": 46
+  },
+  {
+   "label": "Periyodik Özellikler",
+   "test_count": 10,
+   "source": "scan",
+   "page": 52
+  },
+  {
+   "label": "Kimyasal Türler Arası Etkileşimlerin Sınıflandırılması",
+   "test_count": 1,
+   "source": "scan",
+   "page": 72
+  },
+  {
+   "label": "Güçlü Etkileşimler",
+   "test_count": 6,
+   "source": "scan",
+   "page": 74
+  },
+  {
+   "label": "Zayıf Etkileşimler",
+   "test_count": 3,
+   "source": "scan",
+   "page": 86
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 9,
+   "source": "scan",
+   "page": 92
+  },
+  {
+   "label": "Maddenin Fiziksel Halleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 110
+  },
+  {
+   "label": "Katılar",
+   "test_count": 1,
+   "source": "scan",
+   "page": 112
+  },
+  {
+   "label": "Sıvılar",
+   "test_count": 3,
+   "source": "scan",
+   "page": 114
+  },
+  {
+   "label": "Gazlar",
+   "test_count": 1,
+   "source": "scan",
+   "page": 120
+  },
+  {
+   "label": "Hal Değişimi",
+   "test_count": 1,
+   "source": "scan",
+   "page": 122
+  },
+  {
+   "label": "Hal Değişimi Grafiği",
+   "test_count": 8,
+   "source": "scan",
+   "page": 124
+  },
+  {
+   "label": "Su ve Hayat",
+   "test_count": 2,
+   "source": "scan",
+   "page": 140
+  },
+  {
+   "label": "Çevre Kimyası",
+   "test_count": 6,
+   "source": "scan",
+   "page": 144
+  },
+  {
+   "label": "Kimyanın Temel Kanunları",
+   "test_count": 3,
+   "source": "scan",
+   "page": 156
+  },
+  {
+   "label": "Mol Kavramı",
+   "test_count": 3,
+   "source": "scan",
+   "page": 162
+  },
+  {
+   "label": "Kimyasal Tepkimeler ve Denklemler",
+   "test_count": 3,
+   "source": "scan",
+   "page": 168
+  },
+  {
+   "label": "Kimyasal Tepkimelerde Hesaplamalar",
+   "test_count": 11,
+   "source": "scan",
+   "page": 174
+  },
+  {
+   "label": "Karışımların Sınıflandırılması",
+   "test_count": 2,
+   "source": "scan",
+   "page": 196
+  },
+  {
+   "label": "Çözünme Süreci",
+   "test_count": 1,
+   "source": "scan",
+   "page": 200
+  },
+  {
+   "label": "Derişim Birimleri",
+   "test_count": 3,
+   "source": "scan",
+   "page": 202
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 2,
+   "source": "scan",
+   "page": 208
+  },
+  {
+   "label": "Ayırma ve Saflaştırma Teknikleri",
+   "test_count": 10,
+   "source": "scan",
+   "page": 212
+  },
+  {
+   "label": "Asitler ve Bazlar",
+   "test_count": 3,
+   "source": "scan",
+   "page": 232
+  },
+  {
+   "label": "Asitlerin ve Bazların Tepkimeleri",
+   "test_count": 3,
+   "source": "scan",
+   "page": 238
+  },
+  {
+   "label": "Hayatımızda Asitler ve Bazlar",
+   "test_count": 2,
+   "source": "scan",
+   "page": 244
+  },
+  {
+   "label": "Tuzlar",
+   "test_count": 8,
+   "source": "scan",
+   "page": 248
+  },
+  {
+   "label": "Yaygın Günlük Hayat Kimyasalları",
+   "test_count": 3,
+   "source": "scan",
+   "page": 264
+  },
+  {
+   "label": "Gıdalar",
+   "test_count": 6,
+   "source": "scan",
+   "page": 270
+  }
+ ],
+ "warnings": []
+}
