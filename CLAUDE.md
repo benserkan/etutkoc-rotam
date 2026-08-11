@@ -258,9 +258,50 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   2.0-2.1 tüm 345 kitaplarında tutarlı. `scripts/toc_slice.py` (commit
   `d65cede`): tam kitaptan panel için ≤10MB içindekiler dilimi (10MB uyarısı
   bilinçli — panel aracı içindekiler içindir, gövde sayımı pipeline'da).
-- **SIRADA (kullanıcı):** sıradaki 345/diğer yayınevi kitapları boru hattıyla
-  seed edilecek ("sırada başka kitaplar da var") → koç sihirbazında canlı dene
-  (Matematik id=57 + Kimya id=66 hazır). Mobil BİLİNÇLİ yok (PARITY.md).
+- **v4 SONRASI SEED EDİLEN KİTAPLAR (2026-08-11/12, ara oturumlar — CLAUDE.md
+  güncellenmemişti, kayıt commit başlıklarında):** 345 AYT Kimya 50/110 (v4
+  ilk-seferde temiz, `0fc3156`) · Orijinal AYT Mat 204 test (+TOC dayanıklılığı,
+  `6940aa0`) · 3D AYT Mat 27/148 (`9c7ed0f`) · Orijinal TYT Mat 43/202
+  (`ff7be12`) · Bilgi Sarmal TYT-AYT Geometri 21/189 (+test-satırlı içindekiler
+  kuralı, `4b5b64a`) · Eyüp B AYT Mat 15/159 (+rozet-gürültüsü, `7081cbd`) ·
+  345 TYT-AYT Geometri 17/363 (2 cilt birleştirme + zinciri-temiz-geçiş,
+  `20bad97`+`7e7bd97`) · 3D AYT Fizik 79/153 (şerit-teyitli 3 düzeltme,
+  `7caccc4`) · Aydın TYT Kimya 70/139 (+bölüm-ayraç guard, `e31b051`) ·
+  345 TYT Paragraf 7/85 (eşleştirmesiz, seeder `--no-map`, `fae90b3`).
+- **3D TYT FİZİK — CANLI (2026-08-12, commit `353fe27`, prod id=82): 87 bölüm ·
+  143 test · 80/87 eşli** (7 bilinçli boş: TÜMEVARIM I-V kümülatif + 2 karma
+  Elektrik-Manyetizma ünite satırı; AI'ın TÜMEVARIM-V→Manyetizma yanlış eşlemesi
+  dev+prod'da elle NULL'landı). **SESSİZ EKSİK SAYIM DERSİ + kalıcı guard:**
+  içindekiler test sayısı basmayan kitapta Gemini TOC okuması tek satırlık
+  TÜMEVARIM'lara "1" UYDURDU (5 satır) → pipeline TOC sayısına güvenip o
+  aralıkları taramadan çıkardı → 12 test 5 sayıldı (136 vs gerçek 143); iki
+  geçiş birebir + zincir temiz olduğundan hiçbir uyarı çıkmadı — raw'daki
+  BANTSIZ SAYFA BOŞLUKLARI (119-126, 185-188…) gözle incelenince yakalandı
+  (TÜMEVARIM'ların kendi turkuaz "Test 01.." serisi var: I=4, II-V=2'şer).
+  **KURAL (`book_structure_pipeline.py`): içindekiler test sayısı satırların
+  <%20'sindeyse model çıkarımı sayılır → güvenilmez, o konular da gövde
+  taramasına katılır + tarama/TOC farkı uyarı basar.** Ayrıca "Birer Bir ÖSYM"
+  okuma hatası basılı ada ("Bire Bir ÖSYM", içindekiler görüntüsüyle teyit)
+  düzeltildi; ofset 0 + Enerjinin Korunumu=2 şerit teyitli. 3D bölüm deseni:
+  ünite içi sürekli "Test N" + ünite sonu "Bire Bir ÖSYM (ÜNİTE)" + "Gündelik
+  Hayatta Fizik (ÜNİTE)" + üniteler arası TÜMEVARIM (kendi serisi, bantları
+  farklı renkte — tarama görmeyebilir, boşluk analizi şart).
+- **ADMİN PANEL KESKİNLİK DEĞERLENDİRMESİ (2026-08-12, kullanıcı sorusu):**
+  henüz "gözetimsiz tek tık" DEĞİL — v4'ten beri ~12 kitabın ~8'i en az bir
+  kod kuralı/şerit teyidi istedi; 3D TYT Fizik'te sıfır-uyarılı koşu bile 7
+  test eksik saydı. Algoritma admin-sınıfı, TESLİMAT değil: (a) 10MB uç sınırı
+  ↔ 300-400MB tam kitap (chunked upload/sunucu yolu gerek), (b) ~10 dk koşu →
+  senkron istek olamaz, job+ilerleme gerek, (c) insan gözü adımı (pending
+  taslak + SectionsDraftEditor benzeri inceleme) şart. Önerilen ara adım:
+  bilinen yayınevleri için admin "tam kitap işleme" job'u + SERT KAPILAR
+  (çift geçiş uyuşmazlığı / zincir kopuğu / sayfa-test oranı 1.8-2.2 bandı
+  dışı / bantsız-boşluk toplamı > %3 / eşleşme <%70 → "elle incele" bayrağı);
+  kapılardan temiz geçen koşu pending'e düşer, admin onaylar. Yeni yayınevi
+  DAİMA script+insan ile.
+- **SIRADA (kullanıcı):** sıradaki kitaplar boru hattıyla seed (3D klasöründe
+  bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT Paragraf · 2025 AYT Mat[eski
+  baskı, muhtemel atla]) → koç sihirbazında canlı dene. Mobil BİLİNÇLİ yok
+  (PARITY.md).
 
 ---
 
