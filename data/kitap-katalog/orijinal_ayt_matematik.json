@@ -1,0 +1,150 @@
+{
+ "name": "Orijinal AYT Matematik Soru Bankası",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Polinomlar",
+   "test_count": 10,
+   "source": "toc",
+   "page": 8
+  },
+  {
+   "label": "2. Dereceden Denklemler",
+   "test_count": 9,
+   "source": "toc",
+   "page": 24
+  },
+  {
+   "label": "Karmaşık Sayılar",
+   "test_count": 2,
+   "source": "toc",
+   "page": 40
+  },
+  {
+   "label": "Eşitsizlikler",
+   "test_count": 9,
+   "source": "toc",
+   "page": 44
+  },
+  {
+   "label": "Parabol",
+   "test_count": 9,
+   "source": "toc",
+   "page": 62
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (1. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 80
+  },
+  {
+   "label": "Trigonometri – I",
+   "test_count": 10,
+   "source": "toc",
+   "page": 88
+  },
+  {
+   "label": "Trigonometri – II",
+   "test_count": 4,
+   "source": "toc",
+   "page": 108
+  },
+  {
+   "label": "Trigonometri – III",
+   "test_count": 7,
+   "source": "toc",
+   "page": 116
+  },
+  {
+   "label": "Trigonometri – IV",
+   "test_count": 5,
+   "source": "toc",
+   "page": 130
+  },
+  {
+   "label": "Fonksiyonlar",
+   "test_count": 19,
+   "source": "toc",
+   "page": 142
+  },
+  {
+   "label": "Logaritma",
+   "test_count": 15,
+   "source": "toc",
+   "page": 182
+  },
+  {
+   "label": "Diziler",
+   "test_count": 12,
+   "source": "toc",
+   "page": 208
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (2. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 228
+  },
+  {
+   "label": "Limit",
+   "test_count": 15,
+   "source": "toc",
+   "page": 238
+  },
+  {
+   "label": "Türev",
+   "test_count": 32,
+   "source": "toc",
+   "page": 268
+  },
+  {
+   "label": "İntegral",
+   "test_count": 26,
+   "source": "toc",
+   "page": 332
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (3. BÖLÜM)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 382
+  },
+  {
+   "label": "Permütasyon",
+   "test_count": 3,
+   "source": "toc",
+   "page": 390
+  },
+  {
+   "label": "Kombinasyon",
+   "test_count": 3,
+   "source": "toc",
+   "page": 396
+  },
+  {
+   "label": "Binom",
+   "test_count": 3,
+   "source": "toc",
+   "page": 402
+  },
+  {
+   "label": "Olasılık",
+   "test_count": 4,
+   "source": "toc",
+   "page": 406
+  },
+  {
+   "label": "ÖSYM'DE ÇIKMIŞ SORULAR (4. BÖLÜM)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 414
+  }
+ ],
+ "warnings": []
+}

@@ -130,9 +130,12 @@ def norm_cat(t: str | None) -> str:
     return "test"
 
 
-def _gen(parts, timeout=90):
+def _gen(parts, timeout=90, max_output_tokens=16384):
+    # 16K çıktı bütçesi: 2.5 ailesinde düşünme tokenları bütçeden düşer —
+    # uzun içindekiler JSON'u 8K'da kesilip AIInvalidResponse veriyordu.
     raw = gemini.generate(parts, personal_data=False, json_mode=True,
-                          timeout=timeout, prefer_fast=True)
+                          timeout=timeout, prefer_fast=True,
+                          max_output_tokens=max_output_tokens)
     return gemini.extract_json(raw)
 
 
@@ -156,7 +159,10 @@ def read_toc_once(doc, n_pages: int) -> dict:
     else:
         parts = [_img_part(p.get_pixmap(dpi=75)) for p in pages]
         parts.append(gemini.text_part(TOC_PROMPT))
-    data = _gen(parts, timeout=120)
+    try:
+        data = _gen(parts, timeout=120)
+    except Exception:  # noqa: BLE001 — tek tekrar (kesik JSON / geçici hata)
+        data = _gen(parts, timeout=120)
     items = []
     for it in data.get("items") or []:
         if not isinstance(it, dict):
@@ -188,7 +194,22 @@ def read_toc(doc, n_pages: int) -> tuple[dict, list[str]]:
     warnings: list[str] = []
     with ThreadPoolExecutor(max_workers=2) as pool:
         f1, f2 = pool.submit(read_toc_once, doc, n_pages), pool.submit(read_toc_once, doc, n_pages)
-        r1, r2 = f1.result(), f2.result()
+        r1 = r2 = None
+        err = None
+        try:
+            r1 = f1.result()
+        except Exception as e:  # noqa: BLE001
+            err = e
+        try:
+            r2 = f2.result()
+        except Exception as e:  # noqa: BLE001
+            err = e
+    if r1 is None and r2 is None:
+        raise err  # her iki okuma da çöktü
+    if r1 is None or r2 is None:
+        warnings.append("İçindekiler okumalarından biri başarısız — TEK okuma esas alındı, kontrol edin.")
+        one = r1 or r2
+        return one, warnings
     base, other = (r1, r2) if len(r1["items"]) >= len(r2["items"]) else (r2, r1)
     if len(r1["items"]) != len(r2["items"]):
         warnings.append(
