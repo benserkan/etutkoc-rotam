@@ -173,10 +173,38 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   test" girer (baseline/bağımsız çalışma altyapısı, SectionProgress.completed):
   kalan kapasite yalnız O ÖĞRENCİDE düşer, programda atanmaz, kitap/katalog
   etkilenmez (baseline 7 + self_study 25 testleri yeşil).
-- **SIRADA (kullanıcı):** /admin/book-catalog'dan ilk 10-20 popüler kitabı
-  örnek PDF'lerle seed et (yayınevi siteleri + lisedestek.com KitapOrnekPDF
-  deseni) → koç sihirbazında canlı dene (345 kaydı hazır). Mobil BİLİNÇLİ yok
-  (PARITY.md).
+- **BORU HATTI — tam PDF → katalog TEK KOMUT (2026-08-11, commit `8ca7f4c`,
+  İKİNCİ KATALOG KAYDI: 345 TYT Kimya):** 345-Matematik'te elle kanıtlanan
+  yöntem algoritmaya döküldü — `scripts/book_structure_pipeline.py`
+  (içindekiler çift okuma → basılı-sayfa-no ile ofset OTO-kalibrasyonu →
+  v2 gövde taraması çift geçiş → JSON) + `scripts/seed_book_catalog_json.py`
+  (JSON → verified kayıt + auto-map + kapalı-küme AI; dedup + --reset).
+  JSON'lar `data/kitap-katalog/` altında repo'da (provenance). Kimya koşusunda
+  3 YENİ DERS + kalıcı düzeltme:
+  (a) **Ofset off-by-one:** kalibrasyon konu BAŞLANGIÇ sayfasından örnekliyordu
+  ama o sayfalarda basılı numara YOK → yanlış ofset(-1) her aralığın başına
+  önceki konunun SON test bandını sızdırıp sayıları şişirdi (142→131).
+  KURAL: örnek daima iç sayfadan (başlangıç+1) + doğrulama FARK verirse ofset
+  okunandan OTO-DÜZELTİLİR (yalnız uyarı değil). Sınır sızması belirtisi:
+  aralığın ilk sayfasındaki bant numarası önceki konunun toplamına eşitse
+  ofset şüphelidir; zincir kopukları da artefakt olabilir.
+  (b) **Numarasız grup bandı:** ünite sonu tekil "ORİJİNAL ® SORULAR" setleri
+  numarasız → iki geçiş de sayamıyordu (131→138; 7 ünitede +1, şeritle gözle
+  doğrulandı). KURAL: bant numarasızsa {n:null} yakalanır; yalnız numarasız
+  görülen kategori = 1 test (tekrarlar eklenmez).
+  (c) **Dev DNS aralıklı şaşıyor** (koşu ORTASINDA bile) → DNS sarmalayıcı
+  DAİMA kurulur (önce normal çözüm, olmazsa sabit IP) + tarama parçalarına
+  1 retry. Dev'de AI eşleme turdan tura değişken — prod'da sorunsuz (Kimya
+  35/35 tek seferde).
+  Sonuç: **Kimya 35 konu · 138 test · sıfır uyarı (iki geçiş birebir) ·
+  35/35 eşli**; prod entry id=66 (dev id=11). Prod seed akışı: git pull +
+  docker cp (seeder+JSON) + `docker exec lgs-web python -m
+  scripts.seed_book_catalog_json data/kitap-katalog/<kitap>.json` (rebuild
+  GEREKMEZ; sonraki deploy dosyaları imaja alır). Yeni kitap = 2 komut:
+  pipeline (~10 dk, 2 geçiş) → gözden geçir → seed.
+- **SIRADA (kullanıcı):** sıradaki 345/diğer yayınevi kitapları boru hattıyla
+  seed edilecek ("sırada başka kitaplar da var") → koç sihirbazında canlı dene
+  (Matematik id=57 + Kimya id=66 hazır). Mobil BİLİNÇLİ yok (PARITY.md).
 
 ---
 
