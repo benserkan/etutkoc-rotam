@@ -230,6 +230,34 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   iki yöntem birbirini çapraz doğruladı. Ham tarama `<out>.raw.json`'a dökülür
   (teşhis). Biyotik: **37 konu · 128 test · sıfır uyarı · 36/37 eşli** (tek
   eşleşmeyen: iki taksonomi konusunu kapsayan karma ÜD — bilinçli boş).
+- **BORU HATTI v4 — SERİ-YÜRÜYÜŞ SAYACI + KATEGORİ AYRIMI (2026-08-11, commit
+  `aad4b80`+`a526be8`; 4.-6. KAYITLAR: 345 TYT Biyoloji prod id=68 · Acil TYT
+  Matematik id=69 · 345 TYT Fizik id=70):** Fizik/Biyoloji koşuları SESSİZ
+  düşük-sayım açığını çıkardı — 345, konu içinde AYRI alt seriler basıyor
+  ("N. bölüm KAZANIM ODAKLI" + "KARMA SORULAR N" + "GÜNLÜK HAYAT UYGULAMALARI
+  N", hepsi 1'den başlar); hepsi "test" kovasında birleşince kategori-max
+  kuralı yalnız en uzun seriyi sayıyordu (Biyoloji 88, gerçek 125; Fizik 91,
+  gerçek 176) — Kimya etkilenmedi (oradaki seriler TEST/ÖSYM/ORİJİNAL diye
+  zaten ayrı anahtar kelimeliydi; sayfa/test≈2.0 kanıtı). İki kalıcı düzeltme:
+  (a) **`_series_walk`**: sayfa sırasında numara DÜŞÜŞÜ = yeni alt seri;
+  toplam = Σ(max−min+1). Konu-başına 1..N (345/Acil/Kimya), süren sayaç m..M
+  (Biyotik ANALİZ→SENTEZ) ve konu-içi alt seriler tek kuralda; prev_max devri
+  kaldırıldı. (b) **norm_cat kategori ayrımı** (karma/gunluk/sentez ayrı) +
+  dpi 100→120, şerit %18→%20 — stilize puzzle-rozet numaralı taranmış
+  kitapta (Fizik) tek kovada kaçan sayfalar hayalet seri kırıyordu; ayrımdan
+  sonra **19/19 konuda iki geçiş birebir, sıfır uyarı**. ARA YÖNTEM DERSİ:
+  4-geçişli sayfa-oyu birleşimi denendi ve REDDEDİLDİ (14/19 mutabakatsız,
+  oy hiçbir geçişin görmediği kombinasyonlar üretebiliyor) — doğru çözüm
+  daha çok geçiş değil kategori izolasyonu. Acil koşusu ayrıca: kitapta
+  BİRLEŞİK başlık çiftleri olabilir (içindekiler 2 satır, tek bant "BASAMAK
+  KAVRAMI / EN BÜYÜK EN KÜÇÜK DEĞER BULMA Test-I") → şeritle teyit edilip
+  JSON'da birleştirilir; Acil roman rakamı kullanır (Test-I), Gemini arapçaya
+  çevirir. Sayılar: Biyoloji **14 konu · 125 test** (iki geçiş 14/14 birebir) ·
+  Acil **36 bölüm · 150 test** (38→36 birleştirme; 36/36 eşli) · Fizik
+  **19 konu · 176 test** (19/19 eşli). Sağlamlık göstergesi: sayfa/test ≈
+  2.0-2.1 tüm 345 kitaplarında tutarlı. `scripts/toc_slice.py` (commit
+  `d65cede`): tam kitaptan panel için ≤10MB içindekiler dilimi (10MB uyarısı
+  bilinçli — panel aracı içindekiler içindir, gövde sayımı pipeline'da).
 - **SIRADA (kullanıcı):** sıradaki 345/diğer yayınevi kitapları boru hattıyla
   seed edilecek ("sırada başka kitaplar da var") → koç sihirbazında canlı dene
   (Matematik id=57 + Kimya id=66 hazır). Mobil BİLİNÇLİ yok (PARITY.md).
