@@ -1,0 +1,104 @@
+{
+ "name": "Apotemi Maarif Paragraf Soru Bankası",
+ "publisher": "Apotemi Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Fasikül 1",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 2",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 3",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 4",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 5",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 6",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 7",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 8",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 9",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 10",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 11",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 12",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 13",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 14",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 15",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 16",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 17",
+   "test_count": 2,
+   "source": "manual"
+  },
+  {
+   "label": "Fasikül 18",
+   "test_count": 2,
+   "source": "manual"
+  }
+ ],
+ "warnings": [
+  "Kullanıcı tanımı (2026-08-12, cevap anahtarı görselinden): 18 fasikül, her fasikül 2 test sayılır (Fasikül N Test 1/Test 2; fasikül başına ~30-42 soru). Müfredat eşleştirmesi bilinçli YOK (--no-map, paragraf)."
+ ]
+}
