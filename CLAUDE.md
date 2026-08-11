@@ -323,6 +323,14 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   36 test, --no-map.** Cevap anahtarı görselinden kullanıcı tanımı: her
   fasikül (~30-42 soru) sisteme 2 test sayılır ("Fasikül N" bölümü,
   test_count=2 → koç Test 1/Test 2 diye atar). TYT Türkçe, 9-12+mezun.
+- **AYDIN AYT BİYOLOJİ — CANLI (2026-08-12, prod id=87): 22 bölüm · 139 test ·
+  21/22 eşli.** İçindekiler 22/22 sayı verdi; **KÜRESEL numara zinciri
+  doğrulaması** (Aydın bantları yerel + kitap-geneli çift numara basar):
+  1..139 sıfır kopuk + 22 yerel segment çok-kümesi TOC ile birebir — taramasız
+  TOC güveni bu kitapta böyle kanıtlandı. İki yalın KARMA TEST ünite adıyla
+  netleştirildi (Genden Proteine 2 · Enerji Dönüşümleri 3, fiziksel konuma
+  alındı; taksonomideki şemsiye konulara eşleşti); ÜREME↔Sistemler Karma
+  sayfa sırası içerikle düzeltildi. Sistemler Karma çok-konulu → bilinçli boş.
 - **ADMİN PANEL KESKİNLİK DEĞERLENDİRMESİ (2026-08-12, kullanıcı sorusu):**
   henüz "gözetimsiz tek tık" DEĞİL — v4'ten beri ~12 kitabın ~8'i en az bir
   kod kuralı/şerit teyidi istedi; 3D TYT Fizik'te sıfır-uyarılı koşu bile 7
