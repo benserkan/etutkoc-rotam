@@ -202,6 +202,34 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   scripts.seed_book_catalog_json data/kitap-katalog/<kitap>.json` (rebuild
   GEREKMEZ; sonraki deploy dosyaları imaja alır). Yeni kitap = 2 komut:
   pipeline (~10 dk, 2 geçiş) → gözden geçir → seed.
+- **BORU HATTI v3 — FARKLI YAYINEVİ GENELLEMESİ (2026-08-11, commit `bd0e236`,
+  ÜÇÜNCÜ KAYIT: Biyotik AYT Biyoloji, prod id=67):** Biyotik koşusu 2 yapısal
+  farklılık çıkardı, ikisi de kalıcı çözüldü:
+  (a) **METİN-KATMANI MODU:** dijital PDF'te (metin katmanı ≥%70 sayfada)
+  gövde taraması Gemini'siz, METİNDEN — bantlar üst bölge **BÜYÜK PUNTO
+  (≥12pt)** span'lerinden regex'le (ANALİZ/SENTEZ/TEST/ÖSYM TADINDA/ORİJİNAL).
+  TUZAK: cevap-anahtarı sayfalarında "ANALİZ 1 2 3…" soru-numarası ızgarası
+  küçük fonttadır — punto filtresi olmadan hayalet numara üretir. İçindekiler
+  de metinden okunur (satır düşürme azalır). Az bant bulunursa (<%25 sayfa)
+  otomatik görüntü moduna döner.
+  (b) **NUMARA ÖRÜNTÜSÜ ÇÖZÜMÜ:** Biyotik'te ANALİZ+SENTEZ (Genel Tekrar)
+  ORTAK sayaçla ÜNİTE boyunca kesintisiz akar (konu başına 1'den başlamaz) →
+  kategori-max kuralı 822 test saymıştı. Kural artık aralık bazında: min=1 →
+  konu-başına sıfırlanan (345 tarzı, sayı=max); min > önceki konunun max'ı →
+  süren sayaç (sayı = max − önceki max). İki tarz tek algoritmada.
+  (c) **BAŞLIK SAHİPLENMESİ:** dijital PDF'te aralıklar içindekiler sayfa
+  numarasına GÜVENMEDEN kurulur — her sayfanın EN TEPE bandındaki (%9) bölüm
+  adı, monoton imleç + en-uzun-etiket ile eşlenir (içindekilerin "Sindirim=65"
+  yanlışı böyle etkisizleşti). TUZAK: tam üst-%30 metniyle eşleme yapılırsa
+  soru metnindeki konu-adı geçişleri ("sindirim", "sinir sistemi") sayfayı
+  yanlış konuya atar; geriye-dönük atama YASAK. Mükerrer içindekiler etiketi
+  ("Ünite Değerlendirme" ×4) ünite adıyla ayrıştırılır; `.title()` Türkçe
+  İ'yi bozar (Protei̇ne) — ünite adı olduğu gibi kullanılır.
+  **Doğrulama deseni:** metin modunun ünite toplamları, bağımsız GÖRÜNTÜ
+  taramasının ünite-max numaralarıyla birebir çıktı (67/14/19/21/7 = 128) —
+  iki yöntem birbirini çapraz doğruladı. Ham tarama `<out>.raw.json`'a dökülür
+  (teşhis). Biyotik: **37 konu · 128 test · sıfır uyarı · 36/37 eşli** (tek
+  eşleşmeyen: iki taksonomi konusunu kapsayan karma ÜD — bilinçli boş).
 - **SIRADA (kullanıcı):** sıradaki 345/diğer yayınevi kitapları boru hattıyla
   seed edilecek ("sırada başka kitaplar da var") → koç sihirbazında canlı dene
   (Matematik id=57 + Kimya id=66 hazır). Mobil BİLİNÇLİ yok (PARITY.md).
