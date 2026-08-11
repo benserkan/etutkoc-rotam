@@ -1,0 +1,188 @@
+{
+ "name": "Twins TYT Biyoloji Soru Bankası",
+ "publisher": "KR Akademi (Twins)",
+ "subject": "TYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Canlıların Ortak Özellikleri",
+   "test_count": 1,
+   "source": "manual",
+   "page": 6
+  },
+  {
+   "label": "Organik Bileşikler",
+   "test_count": 2,
+   "source": "manual",
+   "page": 7
+  },
+  {
+   "label": "Karbonhidratlar",
+   "test_count": 1,
+   "source": "manual",
+   "page": 10
+  },
+  {
+   "label": "Lipitler",
+   "test_count": 1,
+   "source": "manual",
+   "page": 12
+  },
+  {
+   "label": "Nükleik Asitler",
+   "test_count": 1,
+   "source": "manual",
+   "page": 13
+  },
+  {
+   "label": "Ünite Değerlendirme (YAŞAM BİLİMİ BİYOLOJİ)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 15
+  },
+  {
+   "label": "Çekirdek",
+   "test_count": 1,
+   "source": "manual",
+   "page": 22
+  },
+  {
+   "label": "Sitoplazma ve Organeller",
+   "test_count": 2,
+   "source": "manual",
+   "page": 23
+  },
+  {
+   "label": "Hücre Zarı",
+   "test_count": 1,
+   "source": "manual",
+   "page": 26
+  },
+  {
+   "label": "Hücre Zarından Madde Taşınması",
+   "test_count": 2,
+   "source": "manual",
+   "page": 28
+  },
+  {
+   "label": "Ünite Değerlendirme (HÜCRE)",
+   "test_count": 4,
+   "source": "manual",
+   "page": 31
+  },
+  {
+   "label": "Canlıların Çeşitliliği ve Sınıflandırılması",
+   "test_count": 1,
+   "source": "manual",
+   "page": 39
+  },
+  {
+   "label": "Canlı Âlemlerinin Özellikleri",
+   "test_count": 3,
+   "source": "manual",
+   "page": 40
+  },
+  {
+   "label": "Virüsler",
+   "test_count": 1,
+   "source": "manual",
+   "page": 46
+  },
+  {
+   "label": "Ünite Değerlendirme (CANLILAR DÜNYASI)",
+   "test_count": 5,
+   "source": "manual",
+   "page": 47
+  },
+  {
+   "label": "Eşeysiz Üreme",
+   "test_count": 1,
+   "source": "manual",
+   "page": 57
+  },
+  {
+   "label": "Mitoz",
+   "test_count": 4,
+   "source": "manual",
+   "page": 58
+  },
+  {
+   "label": "Mitoz ve Mayoz",
+   "test_count": 1,
+   "source": "manual",
+   "page": 65
+  },
+  {
+   "label": "Mayoz",
+   "test_count": 1,
+   "source": "manual",
+   "page": 66
+  },
+  {
+   "label": "Ünite Değerlendirme (HÜCRE BÖLÜNMELERİ)",
+   "test_count": 4,
+   "source": "manual",
+   "page": 67
+  },
+  {
+   "label": "Soyağaçları",
+   "test_count": 1,
+   "source": "manual",
+   "page": 75
+  },
+  {
+   "label": "Eşeye Bağlı Kalıtım",
+   "test_count": 6,
+   "source": "manual",
+   "page": 76
+  },
+  {
+   "label": "Genetik Varyasyonların Biyolojik Çeşitliliği Açıklamadaki Rolü",
+   "test_count": 1,
+   "source": "manual",
+   "page": 88
+  },
+  {
+   "label": "Ünite Değerlendirme (KALITIM VE BİYOÇEŞİTLİLİK)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 89
+  },
+  {
+   "label": "Ekosistemde Madde ve Enerji Akışı",
+   "test_count": 4,
+   "source": "manual",
+   "page": 96
+  },
+  {
+   "label": "Doğal Kaynaklar ve Biyolojik Çeşitliliğin Korunması",
+   "test_count": 1,
+   "source": "manual",
+   "page": 104
+  },
+  {
+   "label": "Madde Döngüleri",
+   "test_count": 1,
+   "source": "manual",
+   "page": 105
+  },
+  {
+   "label": "Güncel Çevre Sorunları",
+   "test_count": 1,
+   "source": "manual",
+   "page": 106
+  },
+  {
+   "label": "Ünite Değerlendirme (EKOLOJİ VE GÜNCEL ÇEVRE SORUNLARI)",
+   "test_count": 3,
+   "source": "manual",
+   "page": 107
+  }
+ ],
+ "warnings": [
+  "Kitapta klasik TEST bölümlemesi yok — konu föyleri (üst bantta konu adı, sürekli soru numarası; ANALİZ/İKİZ SORULAR/SORABİLİRLER blokları) + ünite sonu değerlendirme sayfaları. Yapı 6 ünitenin tüm sayfa şeritlerinin kontak-föy göz taramasıyla çıkarıldı; test birimi KULLANICI KARARI (2026-08-12): 2 sayfa ≈ 1 test (yukarı yuvarlama)."
+ ]
+}
