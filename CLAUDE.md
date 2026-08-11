@@ -6,6 +6,30 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## SAHA DÜZELTMELERİ — Hatice (#87) üç şikâyet (2026-08-11, commit `1219cfb`+`ad0cc40`, migration YOK)
+
+1. **Pasif öğrenci aktive edilemiyor şikâyeti = ZAMANLAMA.** Kapılar canlıda
+   simüle edildi: paket solo_pro aktif (manuel, dönem sonu 2027-08-10), paywall
+   yok, kota 2+1≤10 → engel YOK. Deneme 10 Ağu'da bitmiş → solo_free penceresinde
+   denemiş; paket aktivasyonundan sonra sorun kalmadı ("tekrar dene" yeterli).
+2. **⋯ menüsü şeffaf görünüyordu:** pasif satır dim'i (`opacity-60`) satırın
+   TAMAMINDA olduğundan içinde açılan menü de yarı saydamdı — en çok pasif
+   öğrencide kullanılan menü tam orada okunmuyordu. Dim yalnız içerik
+   hücrelerine alındı; eylem sütunu+menü tam opak. **KURAL: satır-düzeyi
+   opacity, içinde açılan overlay'lere miras kalır — dim daima içerik
+   hücrelerine uygulanır.**
+3. **"Sınıfı güncelleyemedim → sil+yeniden ekle → e-posta kayıtlı" çıkmazı:**
+   (a) "Profili Düzenle" dialoğunda SINIF ALANI YOKTU (backend PATCH tam
+   destekliyordu) → dialog'a sınıf (5-12/Mezun) + alan (11+/mezun) + çalışma
+   şekli (mezun) eklendi; sınıf değişim notu ("müfredat yeni sınıfa göre,
+   kitap/ilerleme korunur"). (b) create e-posta çakışması koçun KENDİ
+   öğrencisiyse yol gösterici **409 `email_taken_own_student`** (+details
+   student_id/is_active; mesaj Profili Düzenle + ⋯ yeniden başlat'a yönlendirir);
+   başkasının hesabında kimlik SIZDIRILMAZ (jenerik email_taken korunur).
+   teacher_students smoke senaryo 2 yeni sözleşmede (14/14).
+
+---
+
 ## YENİ İŞ — Ortak Kitap Kataloğu + içindekiler fotoğrafından BİREBİR test sayısı — CANLI (2026-08-11, commit `1712e86`, migration `n4o7r0t1t44n`)
 
 **Tetikleyici:** koçlar "müfredattan kitap oluşturunca sabit test sayısını tek
