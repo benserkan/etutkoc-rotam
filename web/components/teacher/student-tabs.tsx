@@ -36,7 +36,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { GorevBreakdown, TeacherStudentDetailResponse } from "@/lib/types/teacher";
+import type {
+  GorevBreakdown,
+  GraduateMode,
+  StudentBriefProfile,
+  StudentPatchBody,
+  TeacherStudentDetailResponse,
+  Track,
+} from "@/lib/types/teacher";
+import {
+  GRADUATE_MODE_LABELS_TR,
+  TRACK_LABELS_TR,
+} from "@/lib/types/teacher";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { StudentAiCard } from "@/components/teacher/student-ai-card";
@@ -164,9 +175,9 @@ export function StudentTabs({ studentId, initial }: Props) {
           <QuickActions
             studentId={studentId}
             studentName={s.full_name}
-            studentEmail={s.email}
             isGraduate={s.is_graduate}
             isPaused={s.is_paused ?? false}
+            profile={s}
             onRefresh={refreshAll}
             isRefreshing={q.isFetching}
           />
@@ -495,17 +506,17 @@ function Pill({
 function QuickActions({
   studentId,
   studentName,
-  studentEmail,
   isGraduate,
   isPaused,
+  profile,
   onRefresh,
   isRefreshing,
 }: {
   studentId: number;
   studentName: string;
-  studentEmail: string;
   isGraduate: boolean;
   isPaused: boolean;
+  profile: StudentBriefProfile;
   onRefresh: () => void;
   isRefreshing: boolean;
 }) {
@@ -538,7 +549,7 @@ function QuickActions({
       <button
         type="button"
         onClick={() => setEditOpen(true)}
-        title="Öğrenci ad ve e-posta bilgisini düzenle"
+        title="Öğrenci ad, e-posta, sınıf ve alan bilgisini düzenle"
         className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-muted transition"
       >
         <Pencil className="size-3.5" aria-hidden />
@@ -548,8 +559,7 @@ function QuickActions({
         open={editOpen}
         onClose={() => setEditOpen(false)}
         studentId={studentId}
-        initialFullName={studentName}
-        initialEmail={studentEmail}
+        profile={profile}
       />
       <button
         type="button"
@@ -1284,30 +1294,28 @@ function weekdayFromIso(iso: string): number {
 }
 
 // =============================================================================
-// EditStudentProfileDialog — koç ad + e-posta düzenleme
-// (M2: koç öğrenci e-postasını güncelleyebilir; şifre dokunulmaz)
+// EditStudentProfileDialog — koç ad + e-posta + sınıf/alan düzenleme
+// (M2: e-posta; 2026-08-11: sınıf/alan/mezun eklendi — koç yanlış girilen
+// sınıfı düzeltemiyordu, "sil + yeniden ekle" çıkmazına düşüyordu)
 // =============================================================================
 
 function EditStudentProfileDialog({
   open,
   onClose,
   studentId,
-  initialFullName,
-  initialEmail,
+  profile,
 }: {
   open: boolean;
   onClose: () => void;
   studentId: number;
-  initialFullName: string;
-  initialEmail: string;
+  profile: StudentBriefProfile;
 }) {
   if (!open) return null;
   return (
     <EditStudentProfileDialogInner
       onClose={onClose}
       studentId={studentId}
-      initialFullName={initialFullName}
-      initialEmail={initialEmail}
+      profile={profile}
     />
   );
 }
@@ -1315,26 +1323,47 @@ function EditStudentProfileDialog({
 function EditStudentProfileDialogInner({
   onClose,
   studentId,
-  initialFullName,
-  initialEmail,
+  profile,
 }: {
   onClose: () => void;
   studentId: number;
-  initialFullName: string;
-  initialEmail: string;
+  profile: StudentBriefProfile;
 }) {
+  const initialFullName = profile.full_name;
+  const initialEmail = profile.email;
+  // "mezun" özel değeri sınıf seçicide sınıflarla birlikte sunulur
+  const initialGradeValue = profile.is_graduate
+    ? "mezun"
+    : String(profile.grade_level ?? "");
   const [fullName, setFullName] = React.useState(initialFullName);
   const [email, setEmail] = React.useState(initialEmail);
+  const [gradeValue, setGradeValue] = React.useState(initialGradeValue);
+  const [track, setTrack] = React.useState<string>(profile.track ?? "");
+  const [gradMode, setGradMode] = React.useState<string>(
+    profile.graduate_mode ?? "",
+  );
   const mut = usePatchStudent(studentId);
+
+  const isGraduate = gradeValue === "mezun";
+  const gradeNum = isGraduate ? null : Number(gradeValue) || null;
+  const trackRequired = isGraduate || (gradeNum !== null && gradeNum >= 11);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const body: { full_name?: string; email?: string } = {};
+    const body: StudentPatchBody = {};
     const trimmedName = fullName.trim();
     const trimmedEmail = email.trim();
     if (trimmedName !== initialFullName.trim()) body.full_name = trimmedName;
     if (trimmedEmail.toLowerCase() !== initialEmail.toLowerCase())
       body.email = trimmedEmail;
+    if (gradeValue !== initialGradeValue) {
+      body.is_graduate = isGraduate;
+      if (!isGraduate && gradeNum !== null) body.grade_level = gradeNum;
+    }
+    if (trackRequired && track && track !== (profile.track ?? ""))
+      body.track = track as Track;
+    if (isGraduate && gradMode && gradMode !== (profile.graduate_mode ?? ""))
+      body.graduate_mode = gradMode as GraduateMode;
     if (Object.keys(body).length === 0) {
       onClose();
       return;
@@ -1382,6 +1411,74 @@ function EditStudentProfileDialogInner({
               doğrulanmamış sayılır. Şifre değişmez, oturum kesilmez.
             </p>
           </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1.5">
+                Sınıf
+              </label>
+              <select
+                value={gradeValue}
+                onChange={(e) => setGradeValue(e.target.value)}
+                className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">— seçilmedi —</option>
+                {[5, 6, 7, 8, 9, 10, 11, 12].map((g) => (
+                  <option key={g} value={String(g)}>
+                    {g}. sınıf
+                  </option>
+                ))}
+                <option value="mezun">Mezun</option>
+              </select>
+            </div>
+            {trackRequired ? (
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1.5">
+                  Alan
+                </label>
+                <select
+                  value={track}
+                  onChange={(e) => setTrack(e.target.value)}
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  required
+                >
+                  <option value="">— seç —</option>
+                  {(Object.keys(TRACK_LABELS_TR) as Track[]).map((t) => (
+                    <option key={t} value={t}>
+                      {TRACK_LABELS_TR[t]}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : null}
+            {isGraduate ? (
+              <div className={trackRequired ? "col-span-2" : ""}>
+                <label className="block text-xs uppercase tracking-wider text-muted-foreground font-medium mb-1.5">
+                  Çalışma şekli
+                </label>
+                <select
+                  value={gradMode}
+                  onChange={(e) => setGradMode(e.target.value)}
+                  className="w-full px-3 py-2 border border-input bg-background rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                  required
+                >
+                  <option value="">— seç —</option>
+                  {(Object.keys(GRADUATE_MODE_LABELS_TR) as GraduateMode[]).map(
+                    (m) => (
+                      <option key={m} value={m}>
+                        {GRADUATE_MODE_LABELS_TR[m]}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+            ) : null}
+          </div>
+          {gradeValue !== initialGradeValue ? (
+            <p className="text-[11px] text-amber-700 dark:text-amber-300">
+              Sınıf değişince müfredat görünümü ve öneriler yeni sınıfa göre
+              hesaplanır; kitaplar ve ilerleme aynen korunur.
+            </p>
+          ) : null}
           <DialogFooter>
             <button
               type="button"

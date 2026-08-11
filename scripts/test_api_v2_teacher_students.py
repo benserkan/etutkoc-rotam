@@ -208,19 +208,24 @@ def main() -> int:
         )
 
         # ===== 2. POST /students duplicate email → 409 =====
+        # Koçun KENDİ öğrencisiyse yol gösterici kod + details döner
+        # (2026-08-11: "sil + yeniden ekle" çıkmazına yönlendirme).
         r = client.post(
             "/api/v2/teacher/students",
             json={"full_name": "Aynı", "email": s1_email, "grade_level": 8},
         )
         body = r.json() if r.text else {}
+        det = body.get("detail", {})
         ok = (
             r.status_code == 409
-            and body.get("detail", {}).get("code") == "email_taken"
+            and det.get("code") == "email_taken_own_student"
+            and det.get("details", {}).get("student_id") == new_id
+            and det.get("details", {}).get("is_active") is True
         )
         check(
-            "2. POST /students duplicate email → 409",
+            "2. POST /students duplicate email → 409 own-student yol göstericisi",
             ok,
-            f"status={r.status_code} code={body.get('detail', {}).get('code')}",
+            f"status={r.status_code} code={det.get('code')} details={det.get('details')}",
         )
 
         # ===== 3. POST /students 11. sınıf track yok → 422 track_required =====

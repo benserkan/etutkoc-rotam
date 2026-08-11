@@ -5681,8 +5681,37 @@ def teacher_create_student_v2(
                 "Mezun öğrenciler için çalışma şekli zorunlu.",
             )
 
-    # Email çakışma — case-insensitive
-    if db.query(User.id).filter(User.email == email).first():
+    # Email çakışma — case-insensitive. Çakışan hesap koçun KENDİ öğrencisiyse
+    # çıkmaz mesaj yerine YOL GÖSTER (2026-08-11 saha vakası: koç sınıfı yanlış
+    # girilen öğrenciyi "silip yeniden ekleme" yoluna gidip bu duvara çarptı).
+    # Başkasının hesabıysa kimlik SIZDIRILMAZ — jenerik mesaj.
+    existing = db.query(User).filter(User.email == email).first()
+    if existing is not None:
+        if existing.role == UserRole.STUDENT and existing.teacher_id == user.id:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail={
+                    "error": "conflict",
+                    "code": "email_taken_own_student",
+                    "message": (
+                        f"Bu e-posta zaten öğrencin {existing.full_name} adına kayıtlı"
+                        + ("" if existing.is_active else " (koçluk sonlandırılmış)")
+                        + ". Yeniden eklemek yerine mevcut kaydı kullan: bilgilerini "
+                        "(sınıf dahil) öğrenci sayfasındaki 'Profili Düzenle' ile "
+                        "güncelleyebilirsin"
+                        + (
+                            "" if existing.is_active
+                            else "; koçluğu listede ⋯ menüsünden yeniden başlatabilirsin"
+                        )
+                        + "."
+                    ),
+                    "details": {
+                        "student_id": existing.id,
+                        "full_name": existing.full_name,
+                        "is_active": existing.is_active,
+                    },
+                },
+            )
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
             detail={

@@ -131,6 +131,8 @@ function errorTitle(e: unknown, fallback: string): string {
       return "Silinemiyor: aktif rezerv var";
     case "email_taken":
       return "E-posta zaten kayıtlı";
+    case "email_taken_own_student":
+      return "Bu öğrencin zaten kayıtlı";
     case "already_invited":
       return "Bekleyen davet var";
     case "already_linked":
