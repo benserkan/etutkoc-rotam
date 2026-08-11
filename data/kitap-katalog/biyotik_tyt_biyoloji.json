@@ -1,0 +1,267 @@
+{
+ "name": "Biyotik TYT Biyoloji Soru Bankası",
+ "publisher": "Biyotik Yayınları",
+ "subject": "TYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Canlıların Ortak Özellikleri ve Grafik Yorumlama",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 9
+  },
+  {
+   "label": "Bilimsel Yöntem",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 19
+  },
+  {
+   "label": "İnorganik Maddeler",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 23
+  },
+  {
+   "label": "Organik Maddelere Giriş ve Karbonhidratlar",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 29
+  },
+  {
+   "label": "Karbonhidratlar",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 31
+  },
+  {
+   "label": "Lipitler",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 35
+  },
+  {
+   "label": "Proteinler",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 39
+  },
+  {
+   "label": "Karbonhidratlar, Lipit ve Proteinler",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 43
+  },
+  {
+   "label": "Enzimler",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 45
+  },
+  {
+   "label": "Vitaminler, Nükleik Asitler, ATP ve Hormonlar",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 53
+  },
+  {
+   "label": "Ünite Değerlendirme (YAŞAM BİLİMİ BİYOLOJİ)",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 59
+  },
+  {
+   "label": "Hücre Teorisine Giriş ve Hücre Zarının Yapısı",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 71
+  },
+  {
+   "label": "Difüzyon ve Osmoz",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 73
+  },
+  {
+   "label": "Aktif Taşıma, Endositoz ve Ekzositoz",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 77
+  },
+  {
+   "label": "Difüzyon, Osmoz, Aktif Taşıma, Endositoz ve Ekzositoz",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 79
+  },
+  {
+   "label": "Sitoplazma, Ribozom ve Endoplazmik Retikulum",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 83
+  },
+  {
+   "label": "Golgi Aygıtı, Koful ve Lizozom",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 87
+  },
+  {
+   "label": "Sentrozom, Mitokondri ve Plastitler",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 89
+  },
+  {
+   "label": "Çekirdek, Hücre İskeleti, Hücre Çeperi ve Hücrelerin Karşılaştırılması",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 93
+  },
+  {
+   "label": "Ünite Değerlendirme (HÜCRE)",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 95
+  },
+  {
+   "label": "Canlıların Çeşitliliği ve Sınıflandırılması",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 113
+  },
+  {
+   "label": "Bakteriler ve Arkeler Alemi",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 119
+  },
+  {
+   "label": "Bakteri, Arke ve Protista Alemi",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 125
+  },
+  {
+   "label": "Protista, Bitki ve Mantarlar Alemi",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 129
+  },
+  {
+   "label": "Hayvanlar Alemi",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 133
+  },
+  {
+   "label": "Virüsler",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 137
+  },
+  {
+   "label": "Ünite Değerlendirme (CANLILAR DÜNYASI)",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 141
+  },
+  {
+   "label": "Mitoz Bölünme",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 151
+  },
+  {
+   "label": "Eşeysiz Üreme",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 161
+  },
+  {
+   "label": "Mayoz Bölünme",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 167
+  },
+  {
+   "label": "Eşeyli Üreme",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 175
+  },
+  {
+   "label": "Ünite Değerlendirme (HÜCRE BÖLÜNMELERİ)",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 179
+  },
+  {
+   "label": "Kalıtıma Giriş ve Gamet Oluşumu",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 193
+  },
+  {
+   "label": "Mendel Genetiği ve Çaprazlamalar",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 197
+  },
+  {
+   "label": "Kontrol Çaprazlaması, Eş baskınlık, Çok Alellik ve Kan Grupları",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 203
+  },
+  {
+   "label": "Kan Grupları",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 207
+  },
+  {
+   "label": "Eşeye Bağlı Kalıtım ve Soyağaçları",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 211
+  },
+  {
+   "label": "Mitokondriyal Kalıtım, Modifikasyon ve Mutasyon Kavramları",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 219
+  },
+  {
+   "label": "Ünite Değerlendirme (KALITIMIN GENEL İLKELERİ)",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 221
+  },
+  {
+   "label": "Ekosistem Ekolojisi",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 233
+  },
+  {
+   "label": "Güncel Çevre Sorunları, Doğal Kaynaklar ve Biyolojik Çeşitliliğin Korunması",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 241
+  },
+  {
+   "label": "Bölüm Değerlendirme",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 247
+  }
+ ],
+ "warnings": [
+  "Azınlık-TOC guard tetiklendi: içindekilerin Ünite Değerlendirmelere uydurduğu '1'ler taramayla 5/8/4/6/5 düzeltildi.",
+  "5 konuda başlık sahiplenmesi tutmadı (bantlar vardı) — ünite içi süren sayaç zinciriyle deterministik dolduruldu: Canlıların Ortak Özellikleri=5 (#1-5) · Karbonhidrat-Lipit-Protein karma=1 (#18) · Canlıların Çeşitliliği=3 (#1-3) · Mitokondriyal Kalıtım=1 (#14) · Bölüm Değerlendirme=5 (#8-12, Ekoloji). Tüm ünite zincirleri boşluksuz kapanıyor."
+ ]
+}
