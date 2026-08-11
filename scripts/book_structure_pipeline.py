@@ -531,6 +531,20 @@ def main() -> int:
     missing = [it for it in items if it["test_count"] is None]
     print(f"   test sayısı içindekilerde: {len(items)-len(missing)}/{len(items)} konu")
 
+    # AZINLIK-TOC-SAYISI GÜVENSİZDİR (3D TYT Fizik dersi, 2026-08-12): gerçek
+    # test-sayılı içindekiler sayıyı TÜM satırlarda basar. Sayı yalnız azınlık
+    # satırda görünüyorsa model çıkarımıdır (tek satırlık TÜMEVARIM'a "1" uydurdu,
+    # aralıkları taranmayınca 12 test 5 sayıldı) → güvenme, gövde taramasına kat.
+    toc_counted = [it for it in items if it["test_count"] is not None]
+    if toc_counted and len(toc_counted) < max(3, len(items) // 5):
+        for it in toc_counted:
+            it["toc_claimed"] = it["test_count"]
+            it["test_count"] = None
+        missing = [it for it in items if it["test_count"] is None]
+        warnings.append(
+            f"İçindekiler test sayısı yalnız {len(toc_counted)}/{len(items)} satırda — "
+            "azınlık sayı model çıkarımı olabilir, o konular da gövde taramasıyla sayıldı.")
+
     # Mükerrer etiketleri ünite adıyla ayrıştır ("Ünite Değerlendirme" ×4 gibi)
     from collections import Counter
 
@@ -632,6 +646,11 @@ def main() -> int:
             elif len(vals) > 1 and vals[0] != vals[1]:
                 it["flag"] = "scan_mismatch"
                 warnings.append(f"'{it['label']}': iki tarama uyuşmadı ({vals[0]}/{vals[1]}) — büyük olan alındı, kontrol edin.")
+        for it in items:
+            claimed = it.get("toc_claimed")
+            if claimed is not None and it.get("test_count") not in (None, claimed):
+                warnings.append(
+                    f"'{it['label']}': içindekiler {claimed} demişti, tarama {it['test_count']} buldu — tarama esas alındı.")
         seen_w: set[tuple[int, str]] = set()
         for _, ws in results:
             for idx, msg in ws:

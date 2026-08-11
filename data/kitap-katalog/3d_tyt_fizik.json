@@ -1,0 +1,537 @@
+{
+ "name": "3D TYT Fizik Soru Bankası",
+ "publisher": "3D Yayınları",
+ "subject": "TYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Fizik Biliminin Tanımı ve Diğer Disiplinlerle İlişkisi",
+   "test_count": 1,
+   "source": "scan",
+   "page": 11
+  },
+  {
+   "label": "Fizik Biliminin Alt Dalları",
+   "test_count": 1,
+   "source": "scan",
+   "page": 13
+  },
+  {
+   "label": "Fiziksel Niteliklerin Sınıflandırılması",
+   "test_count": 1,
+   "source": "scan",
+   "page": 15
+  },
+  {
+   "label": "Bilimsel Araştırma Merkezleri ve Bilimsel Etik",
+   "test_count": 1,
+   "source": "scan",
+   "page": 17
+  },
+  {
+   "label": "Fizik Bilimine Giriş - Karma",
+   "test_count": 1,
+   "source": "scan",
+   "page": 19
+  },
+  {
+   "label": "Bire Bir ÖSYM (FİZİK BİLİMİNE GİRİŞ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 21
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (FİZİK BİLİMİNE GİRİŞ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 23
+  },
+  {
+   "label": "Kütle - Hacim ve Özkütle",
+   "test_count": 3,
+   "source": "scan",
+   "page": 25
+  },
+  {
+   "label": "Katılarda Boyutlar Arası İlişkiler ve Dayanıklılık",
+   "test_count": 2,
+   "source": "scan",
+   "page": 31
+  },
+  {
+   "label": "Adezyon, Kohezyon, Yüzey Gerilimi ve Kılcallık",
+   "test_count": 2,
+   "source": "scan",
+   "page": 35
+  },
+  {
+   "label": "Madde Özellikleri - Karma",
+   "test_count": 1,
+   "source": "scan",
+   "page": 39
+  },
+  {
+   "label": "Bire Bir ÖSYM (MADDE VE ÖZELLİKLERİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 41
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (MADDE VE ÖZELLİKLERİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 43
+  },
+  {
+   "label": "Katı Basıncı",
+   "test_count": 2,
+   "source": "scan",
+   "page": 45
+  },
+  {
+   "label": "Sıvı Basıncı",
+   "test_count": 2,
+   "source": "scan",
+   "page": 49
+  },
+  {
+   "label": "Gaz Basıncı",
+   "test_count": 2,
+   "source": "scan",
+   "page": 53
+  },
+  {
+   "label": "Akışkanlar Mekaniği",
+   "test_count": 2,
+   "source": "scan",
+   "page": 57
+  },
+  {
+   "label": "Basınç Karma",
+   "test_count": 2,
+   "source": "scan",
+   "page": 61
+  },
+  {
+   "label": "Bire Bir ÖSYM (BASINÇ)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 65
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (BASINÇ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 69
+  },
+  {
+   "label": "Sıvıların Kaldırma Kuvveti",
+   "test_count": 5,
+   "source": "scan",
+   "page": 71
+  },
+  {
+   "label": "Bire Bir ÖSYM (KALDIRMA KUVVETİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 81
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (KALDIRMA KUVVETİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 83
+  },
+  {
+   "label": "Isı, Sıcaklık ve İç Enerji",
+   "test_count": 1,
+   "source": "scan",
+   "page": 85
+  },
+  {
+   "label": "Termometreler",
+   "test_count": 2,
+   "source": "scan",
+   "page": 87
+  },
+  {
+   "label": "Isı Alış - Verişi ve Isıl Denge",
+   "test_count": 2,
+   "source": "scan",
+   "page": 91
+  },
+  {
+   "label": "Hal Değişimi",
+   "test_count": 2,
+   "source": "scan",
+   "page": 95
+  },
+  {
+   "label": "Isının Yayılma Yolları",
+   "test_count": 1,
+   "source": "scan",
+   "page": 99
+  },
+  {
+   "label": "Genleşme",
+   "test_count": 3,
+   "source": "scan",
+   "page": 101
+  },
+  {
+   "label": "Küresel Isınma ve Hissedilen Sıcaklık",
+   "test_count": 1,
+   "source": "scan",
+   "page": 107
+  },
+  {
+   "label": "Isı ve Sıcaklık / Karma",
+   "test_count": 2,
+   "source": "scan",
+   "page": 109
+  },
+  {
+   "label": "Bire Bir ÖSYM (ISI - SICAKLIK VE GENLEŞME)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 113
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (ISI - SICAKLIK VE GENLEŞME)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 117
+  },
+  {
+   "label": "TÜMEVARIM - I",
+   "test_count": 4,
+   "source": "scan",
+   "page": 119
+  },
+  {
+   "label": "Hareket Kavramı ve Çeşitleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 127
+  },
+  {
+   "label": "Temel Hareket Kavramları",
+   "test_count": 2,
+   "source": "scan",
+   "page": 129
+  },
+  {
+   "label": "Düzgün Doğrusal Hareket",
+   "test_count": 3,
+   "source": "scan",
+   "page": 133
+  },
+  {
+   "label": "İvme",
+   "test_count": 1,
+   "source": "scan",
+   "page": 139
+  },
+  {
+   "label": "Boyutlu Cisimlerin Hareketi",
+   "test_count": 1,
+   "source": "scan",
+   "page": 141
+  },
+  {
+   "label": "Hareket Karma",
+   "test_count": 1,
+   "source": "scan",
+   "page": 143
+  },
+  {
+   "label": "Bire Bir ÖSYM (HAREKET)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 145
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (HAREKET)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 147
+  },
+  {
+   "label": "Kuvvetin Özellikleri ve Kuvvet Çeşitleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 149
+  },
+  {
+   "label": "Newton'ın Birinci Hareket Yasası : Eylemsizlik",
+   "test_count": 1,
+   "source": "scan",
+   "page": 151
+  },
+  {
+   "label": "Newton'ın İkinci Hareket Yasası : Kuvvet - İvme İlişkisi",
+   "test_count": 1,
+   "source": "scan",
+   "page": 153
+  },
+  {
+   "label": "Newton'ın Üçüncü Hareket Yasası : Etki - Tepki Kuvveti",
+   "test_count": 1,
+   "source": "scan",
+   "page": 155
+  },
+  {
+   "label": "Sürtünme Kuvveti",
+   "test_count": 1,
+   "source": "scan",
+   "page": 157
+  },
+  {
+   "label": "Dinamik - Karma",
+   "test_count": 2,
+   "source": "scan",
+   "page": 159
+  },
+  {
+   "label": "Bire Bir ÖSYM (NEWTON'UN HAREKET YASALARI)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 163
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (NEWTON'UN HAREKET YASALARI)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 165
+  },
+  {
+   "label": "İş",
+   "test_count": 1,
+   "source": "scan",
+   "page": 167
+  },
+  {
+   "label": "Güç",
+   "test_count": 1,
+   "source": "scan",
+   "page": 169
+  },
+  {
+   "label": "Enerji",
+   "test_count": 1,
+   "source": "scan",
+   "page": 171
+  },
+  {
+   "label": "Enerjinin Korunumu",
+   "test_count": 2,
+   "source": "scan",
+   "page": 173
+  },
+  {
+   "label": "Enerji Kaynakları",
+   "test_count": 1,
+   "source": "scan",
+   "page": 177
+  },
+  {
+   "label": "İş, Güç, Enerji - Karma",
+   "test_count": 1,
+   "source": "scan",
+   "page": 179
+  },
+  {
+   "label": "Bire Bir ÖSYM (İŞ - GÜÇ - ENERJİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 181
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (İŞ - GÜÇ - ENERJİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 183
+  },
+  {
+   "label": "TÜMEVARIM - II",
+   "test_count": 2,
+   "source": "scan",
+   "page": 185
+  },
+  {
+   "label": "Elektrostatik",
+   "test_count": 3,
+   "source": "scan",
+   "page": 189
+  },
+  {
+   "label": "Direnç ve Dirençlerin Bağlanması",
+   "test_count": 2,
+   "source": "scan",
+   "page": 195
+  },
+  {
+   "label": "Elektrik Akımı ve Potansiyel Fark",
+   "test_count": 3,
+   "source": "scan",
+   "page": 199
+  },
+  {
+   "label": "Devreler",
+   "test_count": 2,
+   "source": "scan",
+   "page": 205
+  },
+  {
+   "label": "Elektrik Enerjisi ve Güç",
+   "test_count": 2,
+   "source": "scan",
+   "page": 209
+  },
+  {
+   "label": "Lambalı Devreler",
+   "test_count": 2,
+   "source": "scan",
+   "page": 213
+  },
+  {
+   "label": "Manyetizma",
+   "test_count": 1,
+   "source": "scan",
+   "page": 217
+  },
+  {
+   "label": "Akım - Manyetik Alan İlişkisi",
+   "test_count": 1,
+   "source": "scan",
+   "page": 219
+  },
+  {
+   "label": "Elektrik Karma",
+   "test_count": 1,
+   "source": "scan",
+   "page": 221
+  },
+  {
+   "label": "Bire Bir ÖSYM (ELEKTRİK VE MANYETİZMA)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 223
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (ELEKTRİK VE MANYETİZMA)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 225
+  },
+  {
+   "label": "TÜMEVARIM - III",
+   "test_count": 2,
+   "source": "scan",
+   "page": 227
+  },
+  {
+   "label": "Aydınlanma",
+   "test_count": 1,
+   "source": "scan",
+   "page": 231
+  },
+  {
+   "label": "Gölge Oluşumu",
+   "test_count": 2,
+   "source": "scan",
+   "page": 233
+  },
+  {
+   "label": "Düzlem Aynalar",
+   "test_count": 2,
+   "source": "scan",
+   "page": 237
+  },
+  {
+   "label": "Küresel Aynalar",
+   "test_count": 3,
+   "source": "scan",
+   "page": 241
+  },
+  {
+   "label": "Kırılma",
+   "test_count": 4,
+   "source": "scan",
+   "page": 247
+  },
+  {
+   "label": "Renkler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 255
+  },
+  {
+   "label": "Mercekler",
+   "test_count": 3,
+   "source": "scan",
+   "page": 257
+  },
+  {
+   "label": "Bire Bir ÖSYM (OPTİK)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 263
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (OPTİK)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 267
+  },
+  {
+   "label": "TÜMEVARIM - IV",
+   "test_count": 2,
+   "source": "scan",
+   "page": 269
+  },
+  {
+   "label": "Dalgaların Genel Özellikleri",
+   "test_count": 1,
+   "source": "scan",
+   "page": 273
+  },
+  {
+   "label": "Ses Dalgaları",
+   "test_count": 2,
+   "source": "scan",
+   "page": 275
+  },
+  {
+   "label": "Yay Dalgaları",
+   "test_count": 3,
+   "source": "scan",
+   "page": 279
+  },
+  {
+   "label": "Su Dalgaları",
+   "test_count": 3,
+   "source": "scan",
+   "page": 285
+  },
+  {
+   "label": "Gündelik Hayatta Fizik (DALGALAR)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 291
+  },
+  {
+   "label": "TÜMEVARIM - V",
+   "test_count": 2,
+   "source": "scan",
+   "page": 293
+  }
+ ],
+ "warnings": [
+  "Ofset 0 + Enerjinin Korunumu=2 test şerit görüntüsüyle teyit (s.173 '- 1', s.175 '- 2').",
+  "TÜMEVARIM I-V bantları taramada görünmedi (turkuaz kendi Test 01.. serisi) — sayfa aralıkları şeritle sayıldı: I=4 (s.120-127), II-V=2'şer; toplam 12. 'Birer Bir ÖSYM' okuma hatası 'Bire Bir ÖSYM' olarak düzeltildi (içindekiler basılı adı)."
+ ]
+}
