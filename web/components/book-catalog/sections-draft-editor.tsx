@@ -22,6 +22,9 @@ export interface DraftSection {
   label: string;
   test_count: number | null;
   suspect?: boolean;
+  /** Mevcut müfredat bağı — editör DOKUNMAZ, kaydetmede aynen geri gönderilir
+   *  (admin düzenlemesi kürasyonu silmesin; 2026-08-11 bug'ı). Yeni satır: null. */
+  topic_id?: number | null;
 }
 
 interface Props {
@@ -45,7 +48,7 @@ export function SectionsDraftEditor({ sections, onChange, disabled }: Props) {
   };
   const remove = (i: number) => onChange(sections.filter((_, idx) => idx !== i));
   const add = () =>
-    onChange([...sections, { label: "", test_count: 10, suspect: false }]);
+    onChange([...sections, { label: "", test_count: 10, suspect: false, topic_id: null }]);
   const applyAll = () => {
     const n = Number(bulkCount);
     if (!Number.isFinite(n) || n < 1) return;

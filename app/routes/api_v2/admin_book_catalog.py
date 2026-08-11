@@ -282,6 +282,11 @@ def admin_catalog_update_v2(
     except catalog_svc.CatalogError as e:
         raise _http_error(e)
     if body.ai_map and body.sections is not None:
+        # Sections REPLACE edildi → ilişki koleksiyonu bayat olabilir (silinen
+        # eski satırları gösterir, AI boşları göremez — 2026-08-11 bug'ı).
+        # Taze yüklet, sonra eşle.
+        db.flush()
+        db.expire(entry, ["sections"])
         catalog_svc.ai_map_sections(db, entry)
     _audit(db, user, "update", entry)
     db.commit()

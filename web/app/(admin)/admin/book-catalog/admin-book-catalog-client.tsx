@@ -147,6 +147,8 @@ function formFromDetail(d: CatalogEntryDetail): EntryFormState {
       label: s.label,
       test_count: s.test_count,
       suspect: false,
+      // Müfredat bağı korunur — kaydetmede aynen geri gider (kürasyon silinmez)
+      topic_id: s.topic_id,
     })),
   };
 }
@@ -223,6 +225,7 @@ function EntryDialog({
       sections: form.sections.map((s) => ({
         label: s.label.trim(),
         test_count: s.test_count ?? 0,
+        topic_id: s.topic_id ?? null,
       })),
     };
     if (mode === "create") {

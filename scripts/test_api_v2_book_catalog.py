@@ -434,12 +434,13 @@ def main() -> int:
             "sections": [{"label": "Bozuk", "test_count": 0}],
         })
         check(
-            "18. admin update replace + test_count<1 → 422",
+            "18. admin update replace + topic KORUNUR + test_count<1 → 422",
             r.status_code == 200 and d.get("section_count") == 3
             and d.get("total_tests") == 16
+            and d.get("mapped_count", 0) >= 1  # gönderilen topic_id düşmez (2026-08-11 bug regresyonu)
             and r2.status_code == 422
             and r2.json()["detail"]["code"] == "invalid_test_count",
-            f"u={r.status_code} d={str(d)[:120]} bad={r2.status_code}",
+            f"u={r.status_code} d={str(d)[:140]} bad={r2.status_code}",
         )
 
         # ===== 19. hide → koçtan kaybolur =====
