@@ -501,6 +501,44 @@ def auto_map_sections(
     return n
 
 
+def ai_map_sections(
+    db: Session,
+    entry: BookTemplate,
+    sections: list[BookTemplateSection] | None = None,
+) -> int:
+    """Deterministik eşlemeden KALAN bölümler için kapalı-küme Gemini eşleme.
+
+    Yalnız builtin aday listesinden seçim (uydurma konu giremez); best-effort —
+    anahtar yok/hata → 0 döner, kayıt bloklanmaz. Kişisel veri değil (ücretsiz
+    anahtar). BookTemplateSection, cm._ai_suggest'in beklediği (id, label)
+    alanlarını taşır (duck-typing).
+    """
+    if entry.subject_id is None:
+        return 0
+    from app.services import curriculum_mapping as cm
+
+    topics = _builtin_leaf_topics(db, entry.subject_id)
+    secs = [
+        s for s in (sections if sections is not None else (entry.sections or []))
+        if s.topic_id is None
+    ]
+    if not secs or not topics:
+        return 0
+    try:
+        suggestions = cm._ai_suggest(secs, topics)  # type: ignore[arg-type]
+    except Exception:  # noqa: BLE001
+        logger.warning("Katalog AI eşleme atlandı (entry=%s)", entry.id, exc_info=True)
+        return 0
+    valid = {t.id for t in topics}
+    n = 0
+    for s in secs:
+        hit = suggestions.get(s.id)
+        if hit and hit[0] in valid:
+            s.topic_id = hit[0]
+            n += 1
+    return n
+
+
 def status_counts(db: Session) -> dict[str, int]:
     rows = (
         db.query(BookTemplate.catalog_status)

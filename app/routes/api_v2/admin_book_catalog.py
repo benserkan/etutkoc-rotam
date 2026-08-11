@@ -198,7 +198,10 @@ def admin_catalog_create_v2(
         )
     except catalog_svc.CatalogError as e:
         raise _http_error(e)
-    _audit(db, user, "create", entry)
+    ai_mapped = 0
+    if body.ai_map:
+        ai_mapped = catalog_svc.ai_map_sections(db, entry)
+    _audit(db, user, "create", entry, extra={"ai_mapped": ai_mapped})
     db.commit()
     db.refresh(entry)
     return MutationResponse[CatalogEntryDetail](
@@ -278,6 +281,8 @@ def admin_catalog_update_v2(
         )
     except catalog_svc.CatalogError as e:
         raise _http_error(e)
+    if body.ai_map and body.sections is not None:
+        catalog_svc.ai_map_sections(db, entry)
     _audit(db, user, "update", entry)
     db.commit()
     db.refresh(entry)

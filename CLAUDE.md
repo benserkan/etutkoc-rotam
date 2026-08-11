@@ -87,9 +87,45 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   sorguları teacher_id filtresini KORUR. Test sayısı alanına AI tahmini ASLA
   yazılmaz (null bırakılır). Yeni bağlamda: kart maddesi/vitrin işlerinde bu
   özellik "birebir test sayısı — kitaptan okunur" diye pazarlanabilir.
+- **GERÇEK KİTAP TESTİ — 345 TYT Matematik (2026-08-11, İLK KATALOG KAYDI):**
+  kullanıcı 263MB/416 sayfa TARANMIŞ tam kitabı verdi ("yüklerken zorlukları
+  deneyimle"). Bulgular + düzeltmeler:
+  (a) İçindekiler okuması 30/30 konu — ama İLK koşuda bir okuma "BÖLÜM 07"
+  grup başlıklarını bölüm sandı (çift-okuma suspect yakaladı) → prompt kuralı
+  + deterministik `_GROUP_HEADER_RE` süzgeci ("BÖLÜM/ÜNİTE N" salt-numara
+  başlıkları elenir). (b) Bu kitabın içindekilerinde TEST SAYISI YOK (yaygın
+  vaka) → sayılar kitap GÖVDESİNDEN sayıldı: son-sayfa örneklemesi YANILTICI
+  çıktı çünkü kitapta 3 soru kategorisi var (Klasikleşmiş/ÖSYM Tadında/Orijinal
+  Sorular) ve TEST numarası KATEGORİ BAŞINA yeniden başlıyor; doğru yöntem =
+  her sayfanın üst şeridini kırpıp (yükseklik %14, dpi 80) 14'lü gruplar
+  halinde Gemini'ye "numaralı grup bandı var mı" diye taratmak — bant SAYISI
+  = test adedi (numara değeri değil). 416 sayfa ≈ 30 flash çağrısı. Görsel
+  Zeka bölümlerinde bant "TEST N" değil "ÖSYM TADINDA SORULAR N" → geniş
+  kalıp şart. Sonuç: **30 konu · 216 test** (iç tutarlılık: bant sayısı ≈
+  kategori × max numara). (c) Müfredat eşleşmesi 12/30 → `_ALIAS`'a TYT kitap
+  eşanlamlıları eklendi (gerçel sayılar→temel kavramlar · hız→hareket ·
+  emek→işçi · sayı/kesir→sayı-kesir · asal çarpanlar→asal sayılar vb.;
+  **çakışma taraması ZORUNLU**: yalın "esitsizlikler" alias'ı birebir
+  "Eşitsizlikler" konusunu bozacağı için BİLİNÇLİ eklenmedi) → 26/30
+  deterministik; + admin create/update'e `ai_map` (kapalı-küme Gemini,
+  varsayılan açık, best-effort) → 29/30 ("Tanım ve Formül Kullanabilme"
+  taksonomisiz — doğru olarak eşsiz). Alias regresyonu: mapping 18 ·
+  exam_taxonomy 20 · exam_import 75 GREEN. `scripts/seed_book_catalog_345.py`
+  (idempotent, --reset; 3 görsel-mantık bölümü elle küratörlü →
+  "Sayısal Yetenek Problemleri") dev+prod'da koşuldu — katalogda ilk gerçek
+  verified kayıt. NOT: 10MB uç sınırı tam kitabı kabul etmez — İÇİNDEKİLER
+  sayfaları yüklenir; tam-PDF gövde taraması şimdilik script'le (ileride
+  admin aracı olabilir).
+- **KOÇ İHTİYACI CEVABI (kullanıcı sorusu):** (1) sıfır kullanım = katalogdan
+  tek tık, sayı düzeltme yok. (2) öğrenci kitabı kısmen çözmüşse test SAYISI
+  DEĞİŞMEZ — koç öğrenci detay > Kitaplar panelinde bölüme "önceden çözülmüş
+  test" girer (baseline/bağımsız çalışma altyapısı, SectionProgress.completed):
+  kalan kapasite yalnız O ÖĞRENCİDE düşer, programda atanmaz, kitap/katalog
+  etkilenmez (baseline 7 + self_study 25 testleri yeşil).
 - **SIRADA (kullanıcı):** /admin/book-catalog'dan ilk 10-20 popüler kitabı
   örnek PDF'lerle seed et (yayınevi siteleri + lisedestek.com KitapOrnekPDF
-  deseni) → koç sihirbazında canlı dene. Mobil BİLİNÇLİ yok (PARITY.md).
+  deseni) → koç sihirbazında canlı dene (345 kaydı hazır). Mobil BİLİNÇLİ yok
+  (PARITY.md).
 
 ---
 

@@ -66,6 +66,9 @@ KURALLAR (çok önemli):
   * İçindekiler test bilgisi hiç vermiyorsa test_count=null yaz — ASLA TAHMİN ETME.
 - ÇALIŞMA BÖLÜMÜ OLMAYAN satırları listeye ALMA: önsöz/sunuş, içindekiler,
   cevap anahtarı, çözümler, kavramlar sözlüğü, dizin, yazar hakkında vb.
+- SADECE NUMARA taşıyan GRUP başlıklarını listeye ALMA: "BÖLÜM 07", "ÜNİTE 3"
+  gibi altında konu listesi olan ara başlıklar bölüm DEĞİLDİR — onların
+  altındaki KONULARI çıkar. (Adı da olan üniteler kalır: "1. Ünite — Sayılar".)
 - Alt başlıklar değil ÜNİTE/BÖLÜM düzeyini çıkar: testlerin bağlandığı düzey esas alınır.
 - Birden çok görsel/sayfa verdiysem hepsi AYNI kitabın devamıdır — tek liste halinde sırayla birleştir, tekrar eden başlıkları bir kez yaz.
 - Kitap adı/yayınevi belgede görünüyorsa yaz; görünmüyorsa null.
@@ -132,6 +135,16 @@ def _clean_grade(v: Any) -> int | None:
     return n if 4 <= n <= 12 else None
 
 
+import re as _re
+
+# "BÖLÜM 07" / "ÜNİTE 3" / "UNIT 2" — adı olmayan salt-numara grup başlığı.
+# Deterministik süzgeç (prompt kuralının kod tarafı): model kaçırırsa da girmez.
+_GROUP_HEADER_RE = _re.compile(
+    r"^\s*(bölüm|bolum|ünite|unite|unit|chapter|kısım|kisim)\s*[-:.]?\s*\d+\s*$",
+    _re.IGNORECASE,
+)
+
+
 def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
     sections: list[dict[str, Any]] = []
     for item in data.get("sections") or []:
@@ -139,6 +152,8 @@ def _normalize_read(data: dict[str, Any]) -> dict[str, Any]:
             continue
         label = _clean_str(item.get("label"))
         if not label:
+            continue
+        if _GROUP_HEADER_RE.match(label):
             continue
         sections.append({"label": label, "test_count": _clean_count(item.get("test_count"))})
     return {

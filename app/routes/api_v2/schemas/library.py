@@ -518,6 +518,9 @@ class CatalogContributeResult(BaseModel):
 # Admin gövdeleri (create = contribute şeması + admin alanları)
 class AdminCatalogCreateBody(CatalogContributeBody):
     publish: bool = True         # True → doğrudan verified; False → pending
+    # Deterministik eşlemeden kalan bölümler kapalı-küme Gemini ile eşlensin
+    # (best-effort; ücretsiz anahtar; uydurma konu giremez)
+    ai_map: bool = True
 
 
 class AdminCatalogUpdateBody(BaseModel):
@@ -530,6 +533,7 @@ class AdminCatalogUpdateBody(BaseModel):
     target_grade_max: int | None = None
     target_graduate: bool | None = None
     sections: list[ContributeSectionItem] | None = None
+    ai_map: bool = True
 
 
 class AdminCatalogListResponse(BaseModel):

@@ -203,6 +203,7 @@ def main() -> int:
                 {"label": "Bölme Bölünebilme", "test_count": 9},
             ],
             "publish": True,
+            "ai_map": False,  # smoke deterministik kalsın (gerçek Gemini çağrısı yok)
         }
         r = admin.post("/api/v2/admin/book-catalog", json=create_body)
         d = r.json().get("data", {}) if r.status_code == 200 else {}
@@ -421,6 +422,7 @@ def main() -> int:
         # ===== 18. admin update: sections replace + geçersiz sayı 422 =====
         r = admin.post(f"/api/v2/admin/book-catalog/{contrib_id}", json={
             "name": f"Karekök LGS Fen Bilimleri {PFX}",
+            "ai_map": False,
             "sections": [
                 {"label": "Basınç", "test_count": 7, "topic_id": seed["builtin_topic1_id"]},
                 {"label": "Kaldırma Kuvveti", "test_count": 5},

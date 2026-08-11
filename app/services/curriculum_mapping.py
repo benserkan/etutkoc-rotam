@@ -72,6 +72,29 @@ _ALIAS: dict[str, str] = {
     # sayı önekli ↔ yazıyla derece (kitaplar "1./2. Dereceden" yazabilir)
     "1 dereceden denklemler": "birinci dereceden denklemler",
     "2 dereceden denklemler": "ikinci dereceden denklemler",
+    # TYT soru bankası yaygın bölüm adları ↔ resmi TYT taksonomisi
+    # (2026-08-11, 345 TYT Matematik gerçek-kitap denemesinden; alias yalnız
+    # hedef anahtar aday listesinde VARSA eşler — başka müfredatta zararsız).
+    "gercel sayilar": "temel kavramlar",
+    "gercel sayilar 1": "temel kavramlar",
+    "gercel sayilar 2": "temel kavramlar",
+    "faktoriyel kavrami": "faktoriyel",
+    "basamak kavrami": "sayi basamaklari",
+    "hiz problemleri": "hareket problemleri",
+    "surat problemleri": "hareket problemleri",
+    "emek problemleri": "isci problemleri",
+    "isci emek problemleri": "isci problemleri",
+    "asal carpanlar": "asal sayilar",
+    "grafik yorumlama": "grafik problemleri",
+    "sayi problemleri": "sayi kesir problemleri",
+    "kesir problemleri": "sayi kesir problemleri",
+    "sayma olasilik": "olasilik",
+    "kumeler kartezyen carpim": "kumeler",
+    "i ii bilinmeyenli denklemler": "birinci dereceden denklemler",
+    "bir iki bilinmeyenli denklemler": "birinci dereceden denklemler",
+    "i ii bilinmeyenli esitsizlikler": "basit esitsizlikler",
+    # NOT: yalın "esitsizlikler" alias'ı BİLİNÇLİ YOK — Maarif/AYT'de birebir
+    # "Eşitsizlikler" konusu var; alias exact eşleşmeyi bozardı (2026-08-11 taraması).
 }
 
 
