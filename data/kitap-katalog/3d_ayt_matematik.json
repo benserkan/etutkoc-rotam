@@ -1,0 +1,176 @@
+{
+ "name": "3D AYT Matematik Soru Bankası",
+ "publisher": "3D Yayınları",
+ "subject": "AYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Polinomlar",
+   "test_count": 6,
+   "source": "scan",
+   "page": 9
+  },
+  {
+   "label": "Bire Bir ÖSYM (POLİNOMLAR)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 21
+  },
+  {
+   "label": "II. Dereceden Denklemler",
+   "test_count": 7,
+   "source": "scan",
+   "page": 23
+  },
+  {
+   "label": "Bire Bir ÖSYM (II. DERECEDEN DENKLEMLER)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 37
+  },
+  {
+   "label": "II. Dereceden Fonksiyonların Grafikleri",
+   "test_count": 6,
+   "source": "scan",
+   "page": 39
+  },
+  {
+   "label": "Bire Bir ÖSYM (II. DERECEDEN FONKSİYONLARIN GRAFİKLERİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 51
+  },
+  {
+   "label": "Denklem ve Eşitsizlik Sistemleri",
+   "test_count": 6,
+   "source": "scan",
+   "page": 53
+  },
+  {
+   "label": "Bire Bir ÖSYM (DENKLEM VE EŞİTSİZLİK SİSTEMLERİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 65
+  },
+  {
+   "label": "TÜMEVARIM - I",
+   "test_count": 9,
+   "source": "scan",
+   "page": 67
+  },
+  {
+   "label": "Fonksiyonlar",
+   "test_count": 5,
+   "source": "scan",
+   "page": 85
+  },
+  {
+   "label": "Bire Bir ÖSYM (FONKSİYONLAR)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 95
+  },
+  {
+   "label": "Trigonometri",
+   "test_count": 15,
+   "source": "scan",
+   "page": 97
+  },
+  {
+   "label": "Bire Bir ÖSYM (TRİGONOMETRİ)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 127
+  },
+  {
+   "label": "Logaritma",
+   "test_count": 8,
+   "source": "scan",
+   "page": 129
+  },
+  {
+   "label": "Bire Bir ÖSYM (LOGARİTMA)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 145
+  },
+  {
+   "label": "TÜMEVARIM - II",
+   "test_count": 8,
+   "source": "scan",
+   "page": 147
+  },
+  {
+   "label": "Diziler",
+   "test_count": 8,
+   "source": "scan",
+   "page": 163
+  },
+  {
+   "label": "Bire Bir ÖSYM (DİZİLER)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 179
+  },
+  {
+   "label": "Limit ve Süreklilik",
+   "test_count": 7,
+   "source": "scan",
+   "page": 181
+  },
+  {
+   "label": "Bire Bir ÖSYM (LİMİT VE SÜREKLİLİK)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 195
+  },
+  {
+   "label": "Türev",
+   "test_count": 17,
+   "source": "scan",
+   "page": 199
+  },
+  {
+   "label": "Bire Bir ÖSYM (TÜREV)",
+   "test_count": 4,
+   "source": "scan",
+   "page": 233
+  },
+  {
+   "label": "İntegral",
+   "test_count": 13,
+   "source": "scan",
+   "page": 241
+  },
+  {
+   "label": "Bire Bir ÖSYM (İNTEGRAL)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 267
+  },
+  {
+   "label": "Sayma ve Olasılık",
+   "test_count": 5,
+   "source": "scan",
+   "page": 271
+  },
+  {
+   "label": "Bire Bir ÖSYM (SAYMA VE OLASILIK)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 281
+  },
+  {
+   "label": "TÜMEVARIM - III",
+   "test_count": 11,
+   "source": "scan",
+   "page": 283
+  }
+ ],
+ "warnings": [
+  "Basılı sayfa numarası okunamadı — ofset 0 varsayıldı, sayıları kontrol edin."
+ ]
+}
