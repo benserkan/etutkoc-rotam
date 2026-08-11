@@ -1,0 +1,148 @@
+{
+ "name": "Aydın AYT Biyoloji Soru Bankası",
+ "publisher": "Aydın Yayınları",
+ "subject": "AYT Biyoloji",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "SİNİR SİSTEMİ",
+   "test_count": 6,
+   "source": "toc",
+   "page": 7
+  },
+  {
+   "label": "DUYU ORGANLARI",
+   "test_count": 3,
+   "source": "toc",
+   "page": 19
+  },
+  {
+   "label": "ENDOKRİN SİSTEM",
+   "test_count": 7,
+   "source": "toc",
+   "page": 25
+  },
+  {
+   "label": "DESTEK VE HAREKET SİSTEMİ",
+   "test_count": 8,
+   "source": "toc",
+   "page": 39
+  },
+  {
+   "label": "SİNDİRİM SİSTEMİ",
+   "test_count": 7,
+   "source": "toc",
+   "page": 55
+  },
+  {
+   "label": "DOLAŞIM SİSTEMİ",
+   "test_count": 8,
+   "source": "toc",
+   "page": 69
+  },
+  {
+   "label": "BAĞIŞIKLIK SİSTEMİ",
+   "test_count": 2,
+   "source": "toc",
+   "page": 85
+  },
+  {
+   "label": "SOLUNUM SİSTEMİ",
+   "test_count": 6,
+   "source": "toc",
+   "page": 89
+  },
+  {
+   "label": "BOŞALTIM SİSTEMİ",
+   "test_count": 6,
+   "source": "toc",
+   "page": 101
+  },
+  {
+   "label": "ÜREME - EMBRİYONİK GELİŞME",
+   "test_count": 4,
+   "source": "toc",
+   "page": 113
+  },
+  {
+   "label": "SİSTEMLER KARMA TEST",
+   "test_count": 4,
+   "source": "toc",
+   "page": 121
+  },
+  {
+   "label": "KOMÜNİTE VE POPÜLASYON EKOLOJİSİ",
+   "test_count": 12,
+   "source": "toc",
+   "page": 129
+  },
+  {
+   "label": "NÜKLEİK ASİTLER – PROTEİN SENTEZİ",
+   "test_count": 10,
+   "source": "toc",
+   "page": 153
+  },
+  {
+   "label": "BİYOTEKNOLOJİ",
+   "test_count": 6,
+   "source": "toc",
+   "page": 173
+  },
+  {
+   "label": "KARMA TEST (GENDEN PROTEİNE)",
+   "test_count": 2,
+   "source": "toc",
+   "page": 185
+  },
+  {
+   "label": "FOTOSENTEZ – KEMOSENTEZ",
+   "test_count": 11,
+   "source": "toc",
+   "page": 189
+  },
+  {
+   "label": "FERMENTASYON – HÜCRESEL SOLUNUM",
+   "test_count": 13,
+   "source": "toc",
+   "page": 211
+  },
+  {
+   "label": "KARMA TEST (ENERJİ DÖNÜŞÜMLERİ)",
+   "test_count": 3,
+   "source": "toc",
+   "page": 237
+  },
+  {
+   "label": "BİTKİLERDE DOKU – ORGAN YAPISI VE MADDE TAŞIMASI",
+   "test_count": 9,
+   "source": "toc",
+   "page": 243
+  },
+  {
+   "label": "BİTKİLERDE BESLENME VE BİTKİ HORMONLARI",
+   "test_count": 3,
+   "source": "toc",
+   "page": 261
+  },
+  {
+   "label": "BİTKİLERDE EŞEYLİ ÜREME",
+   "test_count": 5,
+   "source": "toc",
+   "page": 267
+  },
+  {
+   "label": "CANLILAR VE ÇEVRE",
+   "test_count": 4,
+   "source": "toc",
+   "page": 277
+  }
+ ],
+ "warnings": [
+  "İçindekiler 22/22 test sayısı verdi; gövde metin bantlarındaki KÜRESEL numara zinciri 1..139 SIFIR kopukla doğrulandı + 22 yerel segment sayı çok-kümesi TOC ile birebir.",
+  "İki yalın KARMA TEST satırı kitaptaki gerçek konumuna alındı ve ünite bağlamıyla adlandırıldı: Genden Proteine (2 test, s.185) · Enerji Dönüşümleri (3 test, s.237).",
+  "ÜREME (s.113) ↔ Sistemler Karma (s.121) sırası sayfa içeriğiyle doğrulanıp düzeltildi."
+ ]
+}
