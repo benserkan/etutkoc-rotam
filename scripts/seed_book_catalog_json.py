@@ -4,7 +4,9 @@
 deterministik auto-map (alias katmanı) + kapalı-küme AI tamamlama (best-effort).
 Aynı ad+yayınevi katalogda varsa dokunmaz; `--reset` siler + yeniden kurar.
 
-Kullanım: PYTHONPATH=. python scripts/seed_book_catalog_json.py <json> [--reset]
+Kullanım: PYTHONPATH=. python scripts/seed_book_catalog_json.py <json> [--reset] [--no-map]
+  --no-map: müfredat eşleştirmesi YAPILMAZ (MEB müfredatıyla örtüşmeyen
+  kitaplar — örn. paragraf/branş-özel yapılar; kitap yapısı olduğu gibi korunur)
 """
 from __future__ import annotations
 
@@ -99,7 +101,12 @@ def main() -> int:
             dedup=True,
         )
         db.flush()
-        ai_n = svc.ai_map_sections(db, entry)
+        if "--no-map" in sys.argv:
+            ai_n = 0
+            for s in entry.sections:
+                s.topic_id = None  # deterministik auto-map da geri alınır
+        else:
+            ai_n = svc.ai_map_sections(db, entry)
         db.commit()
         db.refresh(entry)
         mapped = sum(1 for s in entry.sections if s.topic_id is not None)

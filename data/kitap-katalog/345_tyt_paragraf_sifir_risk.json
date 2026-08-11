@@ -1,0 +1,50 @@
+{
+ "name": "345 TYT Paragraf Sıfır Risk Soru Bankası",
+ "publisher": "345 Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "KEŞFET: FARKLI SORU TÜRLERİ İLE TANIŞ!",
+   "test_count": 9,
+   "source": "scan"
+  },
+  {
+   "label": "ÖLÇ: SORULARI ANLA, ZAMANI YAKALA!",
+   "test_count": 9,
+   "source": "scan"
+  },
+  {
+   "label": "PLANLA: SORULARI ANLA, ZAMANINDA TAMAMLA!",
+   "test_count": 9,
+   "source": "scan"
+  },
+  {
+   "label": "ODAKLAN: SADECE İHTİYACIN OLANA!",
+   "test_count": 10,
+   "source": "scan"
+  },
+  {
+   "label": "ZENGİNLEŞTİR: FARKLI TEMALARLA KENDİNİ GELİŞTİR!",
+   "test_count": 15,
+   "source": "scan"
+  },
+  {
+   "label": "BAŞAR: SEVİYELERİ ADIM ADIM AŞ!",
+   "test_count": 22,
+   "source": "scan"
+  },
+  {
+   "label": "RİSKLERİ SIFIRLA: SORULARDA TAKILMA!",
+   "test_count": 11,
+   "source": "scan"
+  }
+ ],
+ "warnings": [
+  "MEB müfredatıyla örtüşmeyen paragraf kitabı — kullanıcı talimatıyla müfredat eşleştirmesi YAPILMADI; kitabın kendi bölüm yapısı korundu.",
+  "DEĞERLENDİR bölümü cevap anahtarı çıktı (s.356 ızgara görüntüsüyle teyitli) — katalogdan çıkarıldı."
+ ]
+}
