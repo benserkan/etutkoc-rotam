@@ -17,7 +17,7 @@ Sahiplik: koç yalnız kendi öğrencisinin atamasını görür (404 — sızın
 """
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.deps import get_db
@@ -59,6 +59,7 @@ from app.routes.api_v2.schemas.survey import (
     TeacherStudentSurveysResponse,
 )
 from app.services import survey_service
+from app.services.email_service import send_email
 from app.services.push_notifications import safe_push
 
 router = APIRouter(tags=["v2-surveys"])
@@ -226,6 +227,7 @@ def teacher_student_surveys(
 def teacher_assign_survey(
     student_id: int,
     body: SurveyAssignBody,
+    background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
     teacher: User = Depends(_require_teacher),
 ) -> MutationResponse[SurveyAssignResult]:
@@ -264,6 +266,20 @@ def teacher_assign_survey(
         title="Yeni anket",
         body=f"Koçun senden bir anket doldurmanı istiyor: {template.title}",
         data={"type": "student", "screen": "surveys"},
+    )
+    # Öğrenciye E-POSTA — mobil uygulaması olmayan öğrenci push'u alamıyordu,
+    # anketten haberi olmuyordu (2026-08-11 saha bulgusu). BackgroundTasks:
+    # SMTP gecikmesi koçun isteğini bloklamasın; send_email kendi içinde
+    # hata yutar + comm_log'a yazar (İletişim Sağlığı'nda izlenir).
+    background_tasks.add_task(
+        send_email,
+        student.email,
+        "survey_assigned",
+        {
+            "student": {"full_name": student.full_name},
+            "teacher": {"full_name": teacher.full_name},
+            "survey": {"title": template.title, "note": (body.note or "").strip()},
+        },
     )
     return MutationResponse(
         data=SurveyAssignResult(assignment_id=assignment.id),

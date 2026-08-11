@@ -79,6 +79,9 @@ export const teacherKeys = {
       "students",
       params.q ?? "",
       params.risk ?? "all",
+      // status anahtara DAHİL olmalı — eksikken filtre değişimi aynı cache'i
+      // gösterip "filtre çalışmıyor" görünüyordu (2026-08-11 saha bulgusu)
+      params.status ?? "tum",
       params.grade_level ?? "",
       String(params.page ?? 1),
       String(params.page_size ?? 25),
