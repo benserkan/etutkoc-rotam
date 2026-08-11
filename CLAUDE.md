@@ -313,6 +313,12 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   eşleşmedi) ünite içi süren-sayaç zinciriyle deterministik dolduruldu — tüm
   ünite zincirleri boşluksuz kapandı (en güçlü doğrulama sinyali). Cevap
   anahtarı sayfası tek sahte bant üretti (s.177), örüntü çözücü zaten yuttu.
+- **YAYIN DENİZİ PRO DİL BİLGİSİ — CANLI (2026-08-12, prod id=85): 22 bölüm ·
+  78 test · eşleştirme bilinçli YOK (--no-map).** PDF değil İÇİNDEKİLER
+  GÖRSELİNDEN kullanıcı tanımı: 21 konu × 3'er test (kullanıcı direktifi) +
+  15 denemelik "Denemeler" bölümü. Karma Test satırları bölüm numarasıyla
+  ayrıştırıldı ("Karma Test (Bölüm N)"). Subject TYT Türkçe, 9-12+mezun
+  (Paragraf kitabı paraleli).
 - **ADMİN PANEL KESKİNLİK DEĞERLENDİRMESİ (2026-08-12, kullanıcı sorusu):**
   henüz "gözetimsiz tek tık" DEĞİL — v4'ten beri ~12 kitabın ~8'i en az bir
   kod kuralı/şerit teyidi istedi; 3D TYT Fizik'te sıfır-uyarılı koşu bile 7
