@@ -87,9 +87,17 @@ KURALLAR:
 - DİKKAT: "Ünite Değerlendirme", "Ünite Sonu Testi", "Genel Tekrar" gibi ünite içi/sonu
   ÇALIŞMA satırları KONUDUR — bunları AL (unit alanıyla birlikte).
 - Önsöz, cevap anahtarı, çözümler, sözlük, dizin gibi çalışma-dışı satırları ALMA.
-- Her konu için: label (yazıldığı gibi), unit (bulunduğu ünitenin adı; yoksa null),
+- ÇOK ÖNEMLİ — bazı kitapların içindekileri HER TESTİ ayrı satır listeler
+  ("Kazanım Testi - 1", "Kazanım Testi - 2", "Test 3", "ÖSYM Tipi"...). Bu satırlar
+  KONU DEĞİLDİR ve items'a TEK TEK YAZILMAZ: konu = üst başlık satırı (örn.
+  "DOĞRUDA AÇILAR"); test_count = o konunun altındaki test satırlarının TOPLAM ADEDİ
+  (Kazanım Testi + Test + ÖSYM Tipi vb. hepsi); page = konunun İLK sayfası.
+  "Bilgi Alanı", "Konu Anlatımı", "Çözümler" satırları test SAYILMAZ; ADLI test
+  satırları ("Yıldızlar Yarışıyor", "Sarmal Test", "Bölüm Değerlendirme") test SAYILIR.
+  İçindekiler listesini SONUNA KADAR işle — SON KONUYU DÜŞÜRME.
+- Her konu için: label (yazıldığı gibi), unit (bulunduğu ünitenin/bölümün adı; yoksa null),
   page (satırın gösterdiği başlangıç sayfa numarası; yoksa null),
-  test_count (içindekiler o konu için test adedi VERİYORSA; test listesi ayrı satırlarsa ADEDİNİ say; vermiyorsa null — ASLA TAHMİN ETME).
+  test_count (içindekiler o konu için test adedi VERİYORSA veya test satırlarından SAYILABİLİYORSA; vermiyorsa null — ASLA TAHMİN ETME).
 - Kitap adı / yayınevi görünüyorsa yaz; ders tahmini (subject_hint) yaz.
 YALNIZ şu JSON: {"book_title": str|null, "publisher": str|null, "subject_hint": str|null,
  "items": [{"label": str, "unit": str|null, "page": int|null, "test_count": int|null}]}"""

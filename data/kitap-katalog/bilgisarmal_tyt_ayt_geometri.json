@@ -1,0 +1,140 @@
+{
+ "name": "Bilgi Sarmal TYT-AYT Geometri Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Geometri",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "DOĞRUDA AÇILAR",
+   "test_count": 7,
+   "source": "toc",
+   "page": 12
+  },
+  {
+   "label": "ÜÇGENDE AÇILAR",
+   "test_count": 7,
+   "source": "toc",
+   "page": 29
+  },
+  {
+   "label": "DİK ÜÇGEN",
+   "test_count": 10,
+   "source": "toc",
+   "page": 43
+  },
+  {
+   "label": "İKİZKENAR VE EŞKENAR ÜÇGEN",
+   "test_count": 8,
+   "source": "toc",
+   "page": 63
+  },
+  {
+   "label": "ÜÇGENDE YARDIMCI DOĞRULAR",
+   "test_count": 11,
+   "source": "toc",
+   "page": 79
+  },
+  {
+   "label": "ÜÇGENDE EŞLİK VE BENZERLİK",
+   "test_count": 13,
+   "source": "toc",
+   "page": 101
+  },
+  {
+   "label": "ÜÇGENDE ALAN",
+   "test_count": 11,
+   "source": "toc",
+   "page": 127
+  },
+  {
+   "label": "AÇI - KENAR BAĞINTILARI",
+   "test_count": 6,
+   "source": "toc",
+   "page": 149
+  },
+  {
+   "label": "ÇOKGENLER VE DÖRTGENLER",
+   "test_count": 10,
+   "source": "toc",
+   "page": 162
+  },
+  {
+   "label": "PARALELKENAR",
+   "test_count": 8,
+   "source": "toc",
+   "page": 183
+  },
+  {
+   "label": "EŞKENAR DÖRTGEN VE DELTOİD",
+   "test_count": 6,
+   "source": "toc",
+   "page": 199
+  },
+  {
+   "label": "DİKDÖRTGEN",
+   "test_count": 7,
+   "source": "toc",
+   "page": 211
+  },
+  {
+   "label": "KARE",
+   "test_count": 8,
+   "source": "toc",
+   "page": 225
+  },
+  {
+   "label": "YAMUK",
+   "test_count": 11,
+   "source": "toc",
+   "page": 241
+  },
+  {
+   "label": "ÇEMBERDE AÇILAR",
+   "test_count": 7,
+   "source": "toc",
+   "page": 264
+  },
+  {
+   "label": "ÇEMBERDE UZUNLUK",
+   "test_count": 8,
+   "source": "toc",
+   "page": 279
+  },
+  {
+   "label": "DAİREDE ALAN",
+   "test_count": 11,
+   "source": "toc",
+   "page": 295
+  },
+  {
+   "label": "KATI CİSİMLER",
+   "test_count": 16,
+   "source": "toc",
+   "page": 318
+  },
+  {
+   "label": "NOKTANIN VE DOĞRUNUN ANALİTİK İNCELENMESİ",
+   "test_count": 9,
+   "source": "toc",
+   "page": 352
+  },
+  {
+   "label": "DÖNÜŞÜMLER",
+   "test_count": 5,
+   "source": "toc",
+   "page": 371
+  },
+  {
+   "label": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+   "test_count": 10,
+   "source": "toc",
+   "page": 381
+  }
+ ],
+ "warnings": [
+  "Dönüşümler 4→5 + son konu (Çemberin Analitik İncelenmesi, 10) içindekilerin deterministik parse edilmesiyle düzeltildi/eklendi."
+ ]
+}
