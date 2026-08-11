@@ -319,6 +319,10 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   15 denemelik "Denemeler" bölümü. Karma Test satırları bölüm numarasıyla
   ayrıştırıldı ("Karma Test (Bölüm N)"). Subject TYT Türkçe, 9-12+mezun
   (Paragraf kitabı paraleli).
+- **APOTEMİ MAARİF PARAGRAF — CANLI (2026-08-12, prod id=86): 18 fasikül ·
+  36 test, --no-map.** Cevap anahtarı görselinden kullanıcı tanımı: her
+  fasikül (~30-42 soru) sisteme 2 test sayılır ("Fasikül N" bölümü,
+  test_count=2 → koç Test 1/Test 2 diye atar). TYT Türkçe, 9-12+mezun.
 - **ADMİN PANEL KESKİNLİK DEĞERLENDİRMESİ (2026-08-12, kullanıcı sorusu):**
   henüz "gözetimsiz tek tık" DEĞİL — v4'ten beri ~12 kitabın ~8'i en az bir
   kod kuralı/şerit teyidi istedi; 3D TYT Fizik'te sıfır-uyarılı koşu bile 7
