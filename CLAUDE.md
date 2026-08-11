@@ -94,15 +94,19 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   grup başlıklarını bölüm sandı (çift-okuma suspect yakaladı) → prompt kuralı
   + deterministik `_GROUP_HEADER_RE` süzgeci ("BÖLÜM/ÜNİTE N" salt-numara
   başlıkları elenir). (b) Bu kitabın içindekilerinde TEST SAYISI YOK (yaygın
-  vaka) → sayılar kitap GÖVDESİNDEN sayıldı: son-sayfa örneklemesi YANILTICI
-  çıktı çünkü kitapta 3 soru kategorisi var (Klasikleşmiş/ÖSYM Tadında/Orijinal
-  Sorular) ve TEST numarası KATEGORİ BAŞINA yeniden başlıyor; doğru yöntem =
-  her sayfanın üst şeridini kırpıp (yükseklik %14, dpi 80) 14'lü gruplar
-  halinde Gemini'ye "numaralı grup bandı var mı" diye taratmak — bant SAYISI
-  = test adedi (numara değeri değil). 416 sayfa ≈ 30 flash çağrısı. Görsel
-  Zeka bölümlerinde bant "TEST N" değil "ÖSYM TADINDA SORULAR N" → geniş
-  kalıp şart. Sonuç: **30 konu · 216 test** (iç tutarlılık: bant sayısı ≈
-  kategori × max numara). (c) Müfredat eşleşmesi 12/30 → `_ALIAS`'a TYT kitap
+  vaka) → sayılar kitap GÖVDESİNDEN sayıldı. **İKİ YANLIŞ VARSAYIM KULLANICI
+  TARAFINDAN YAKALANDI (Mutlak Değer 9 yerine 7 saymıştım):** (i) son-sayfa
+  örneklemesi yanıltır — 3 soru kategorisi var (Klasikleşmiş TEST N / ÖSYM
+  Tadında Sorular N / Orijinal Sorular N), numara KATEGORİ başına 1'den
+  başlar; (ii) "bant sayısı = test adedi" de yanlış — bant testin HER
+  SAYFASINDA tekrarlanır (çift sayım) + "TEST" kelimesiz bantlar kaçar (eksik
+  sayım). **DOĞRU YÖNTEM (v2, KURAL):** üst şeritleri (yükseklik %18, dpi 100)
+  10'lu gruplarla tarat → (kategori, numara) çıkar → konu toplamı = kategori
+  başına EN BÜYÜK numara toplamı → 1..N ZİNCİR DENETİMİ (kopukluk = kaçırılmış
+  sayfa) → ÇİFT bağımsız tarama karşılaştırması. v2: iki tarama 30/30 konuda
+  birebir, zincir kopukluğu 0, Mutlak Değer=9 kullanıcı sayımı + kontak-föy
+  göz doğrulamasıyla teyit. Sonuç: **30 konu · 202 test** (~2 sayfa/test iç
+  tutarlılığı). 416 sayfa ≈ 2×42 flash çağrısı. (c) Müfredat eşleşmesi 12/30 → `_ALIAS`'a TYT kitap
   eşanlamlıları eklendi (gerçel sayılar→temel kavramlar · hız→hareket ·
   emek→işçi · sayı/kesir→sayı-kesir · asal çarpanlar→asal sayılar vb.;
   **çakışma taraması ZORUNLU**: yalın "esitsizlikler" alias'ı birebir
@@ -111,7 +115,7 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   varsayılan açık, best-effort) → 29/30 ("Tanım ve Formül Kullanabilme"
   taksonomisiz — doğru olarak eşsiz). Alias regresyonu: mapping 18 ·
   exam_taxonomy 20 · exam_import 75 GREEN. `scripts/seed_book_catalog_345.py`
-  (idempotent, --reset; 3 görsel-mantık bölümü elle küratörlü →
+  (idempotent, --reset; v2 sayılarıyla 202 test; 3 görsel-mantık bölümü elle küratörlü →
   "Sayısal Yetenek Problemleri") dev+prod'da koşuldu — katalogda ilk gerçek
   verified kayıt. NOT: 10MB uç sınırı tam kitabı kabul etmez — İÇİNDEKİLER
   sayfaları yüklenir; tam-PDF gövde taraması şimdilik script'le (ileride

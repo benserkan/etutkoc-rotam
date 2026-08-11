@@ -1,12 +1,17 @@
 """Ortak Kitap Kataloğu — 345 TYT Matematik Soru Bankası seed'i (İLK GERÇEK KAYIT).
 
 2026-08-11 gerçek-kitap denemesinin ürünü: yapı 416 sayfalık kitabın kendisinden
-çıkarıldı (içindekiler = 30 konu; test adetleri sayfa-şeridi taramasıyla sayıldı
-— kitapta 3 soru kategorisi var [Klasikleşmiş/ÖSYM Tadında/Orijinal], TEST
-numarası kategori başına yeniden başlıyor; adet = numaralı bant sayısı).
-Toplam 216 test. Müfredat eşleştirmesi: 26 deterministik (alias katmanı) +
-3 elle küratörlü (görsel-mantık bölümleri → Sayısal Yetenek Problemleri);
-"Tanım ve Formül Kullanabilme" bilinçli eşsiz (taksonomide karşılığı yok).
+çıkarıldı (içindekiler = 30 konu; test adetleri tam-gövde taramasıyla).
+SAYIM YÖNTEMİ (v2 — kullanıcı v1'de hata yakaladı, Mutlak Değer 9 yerine 7):
+kitapta 3 soru kategorisi var (Klasikleşmiş TEST N / ÖSYM Tadında Sorular N /
+Orijinal Sorular N), numaralar kategori başına 1'den başlar ve BANT TESTİN HER
+SAYFASINDA TEKRARLANIR → doğru ölçü bant SAYISI DEĞİL, kategori başına EN BÜYÜK
+numara toplamı + 1..N zincir denetimi + ÇİFT bağımsız tarama karşılaştırması.
+v2'de iki tarama 30/30 konuda birebir uyuştu, zincir kopukluğu 0, Mutlak
+Değer=9 kullanıcı sayımıyla doğrulandı. Toplam 202 test.
+Müfredat eşleştirmesi: 26 deterministik (alias katmanı) + 3 elle küratörlü
+(görsel-mantık bölümleri → Sayısal Yetenek Problemleri); "Tanım ve Formül
+Kullanabilme" bilinçli eşsiz (taksonomide karşılığı yok).
 
 İdempotent: aynı ad+yayınevi katalogda varsa dokunmaz. `--reset` siler + yeniden
 kurar (usage_count sıfırlanır — yalnız gerekiyorsa).
@@ -31,36 +36,36 @@ SUBJECT_NAME = "TYT Matematik"
 
 # (bölüm adı, test adedi, elle küratörlü konu adı | None=auto-map'e bırak)
 SECTIONS: list[tuple[str, int, str | None]] = [
-    ("Gerçel Sayılar - 1", 8, None),
+    ("Gerçel Sayılar - 1", 12, None),
     ("Gerçel Sayılar - 2", 8, None),
-    ("Faktöriyel Kavramı", 4, None),
-    ("Basamak Kavramı", 5, None),
+    ("Faktöriyel Kavramı", 2, None),
+    ("Basamak Kavramı", 4, None),
     ("Görsel Zeka", 5, "Sayısal Yetenek Problemleri"),
     ("Sayısal - Sözel Mantık", 3, "Sayısal Yetenek Problemleri"),
-    ("Örüntülü Sayı Grupları", 4, "Sayısal Yetenek Problemleri"),
-    ("I ve II Bilinmeyenli Denklemler", 6, None),
-    ("I ve II Bilinmeyenli Eşitsizlikler", 8, None),
-    ("Mutlak Değer", 7, None),
+    ("Örüntülü Sayı Grupları", 6, "Sayısal Yetenek Problemleri"),
+    ("I ve II Bilinmeyenli Denklemler", 5, None),
+    ("I ve II Bilinmeyenli Eşitsizlikler", 7, None),
+    ("Mutlak Değer", 9, None),
     ("Üslü Sayılar", 10, None),
-    ("Köklü Sayılar", 17, None),
+    ("Köklü Sayılar", 11, None),
     ("Tanım ve Formül Kullanabilme", 2, None),  # taksonomide karşılığı yok — eşsiz kalır
-    ("Oran - Orantı", 8, None),
-    ("Çarpanlara Ayırma", 8, None),
-    ("Sayı Problemleri", 13, None),
-    ("Kesir Problemleri", 8, None),
-    ("Yaş Problemleri", 12, None),
-    ("Yüzde Problemleri", 10, None),
+    ("Oran - Orantı", 7, None),
+    ("Çarpanlara Ayırma", 7, None),
+    ("Sayı Problemleri", 16, None),
+    ("Kesir Problemleri", 7, None),
+    ("Yaş Problemleri", 8, None),
+    ("Yüzde Problemleri", 9, None),
     ("Karışım Problemleri", 6, None),
-    ("Hız Problemleri", 6, None),
-    ("Grafik Yorumlama", 2, None),
-    ("Emek Problemleri", 4, None),
-    ("Asal Çarpanlar", 2, None),
-    ("Bölme - Bölünebilme", 6, None),
-    ("EBOB - EKOK", 6, None),
-    ("Mantık", 8, None),
-    ("Kümeler - Kartezyen Çarpım", 8, None),
-    ("Fonksiyonlar", 12, None),
-    ("Sayma - Olasılık", 10, None),
+    ("Hız Problemleri", 8, None),
+    ("Grafik Yorumlama", 4, None),
+    ("Emek Problemleri", 3, None),
+    ("Asal Çarpanlar", 3, None),
+    ("Bölme - Bölünebilme", 5, None),
+    ("EBOB - EKOK", 5, None),
+    ("Mantık", 6, None),
+    ("Kümeler - Kartezyen Çarpım", 7, None),
+    ("Fonksiyonlar", 10, None),
+    ("Sayma - Olasılık", 7, None),
 ]
 
 
