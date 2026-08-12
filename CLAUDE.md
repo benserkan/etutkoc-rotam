@@ -6,6 +6,42 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## ÖĞRENCİ E-POSTA FALLBACK'İ — CANLI (2026-08-12, migration `o5p8s1u2u55o`)
+
+**Tetikleyici (kullanıcı):** uygulama store'da yayınlanana kadar push fiilen
+ulaşmıyor; cihazsız öğrencinin tek kanalı e-posta. "Mail konusunda hassasım —
+gidiyor görünüp gitmemesinin izahı olamaz" → güçlü test şartıyla onaylandı.
+- **KURAL: cihaz kayıtlıysa YALNIZ push (çift bildirim yok); cihaz yoksa
+  e-posta.** Tek merkez `app/services/student_email_fallback.py` (guard'lar:
+  email geçerli + aktif + cihazsız + comm_log dedup; kvkk.local hariç).
+- **Kapsam:** publish-week + "Veliye duyur" → `student_new_program` maili
+  (BackgroundTasks + taze session, 24s dedup) · yeni cron
+  **`student_weekly_email`** (günlük 06:00 UTC=09:00 TR, 6 gün dedup → fiilen
+  haftada 1; gece 23:55 backstop'a bağlanmadı — öğrenciye gece maili olmaz) →
+  `student_weekly_summary` maili. **Velisiz öğrenci de kapsanır** (Hatice
+  vakasının cevabı). Anket ataması (`fe39ea5`) + talep yanıtı zaten vardı.
+- Şablonlar veli şablonlarının öğrenciye-hitap uyarlaması (AYNI
+  `_build_daily_breakdown` üreticisi — sayılar veli mailiyle birebir tutarlı);
+  footer'da "mobil uygulama kurulu olmadığı için e-posta gönderildi" notu.
+- Migration `o5p8s1u2u55o` (← n4o7r0t1t44n): yalnız cron seed (`:e=True` bool
+  bind dersi uygulanmış), downgrade'li. Prod head bu.
+- **GÜÇLÜ TEST `test_student_email_fallback.py` 17/17:** sahte SMTP
+  el-sıkışmasına kadar GERÇEK yol (settings email_enabled=True + smtplib.SMTP
+  monkeypatch) — şablon render + mesaj kurulumu + teslim + comm_log 'sent'
+  YALNIZ teslim sonrası; cihazlı/dedup/görevsiz/velisiz/SMTP-hatası(failed
+  dürüstlüğü)/cron-seed senaryoları. Regresyon: weekly_plan 14 · comm_log 28 ·
+  surveys 18 · parent_weekly 14 · teacher_read 12 GREEN.
+- **PROD CANLI KANIT:** geçici koç+öğrenci (benserkan+rotamtest@gmail.com) ile
+  GERÇEK ZeptoMail gönderimi — iki mail de `sent` + provider_message_id
+  (kullanıcının gerçek gelen kutusuna düştü); geçici kullanıcılar silindi,
+  comm_log kanıtı durur. NOT: cron ertesi sabah 09:00 TR'de TÜM cihazsız
+  görevli öğrencilere İLK haftalık özeti atar (bilinçli go-live).
+- Anket e-postası zaman çizgisi: Hatice'nin atamaları (10-11 Ağu) özellik
+  deploy'undan (11 Ağu ~11:00 TR) saatler önceydi — o yüzden gitmemişti;
+  artık her atamada gider.
+
+---
+
 ## SAHA DÜZELTMELERİ — 4 sorun tek pakette (2026-08-12, commit `00b5b9d`, migration YOK)
 
 1. **"Hatice'nin sisteminde kimseye mail gitmedi" = ARIZA DEĞİL, kullanım.**
