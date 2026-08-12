@@ -6,7 +6,7 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
-## SAHA DÜZELTMELERİ — 4 sorun tek pakette (2026-08-12, commit `e40e2ed`, migration YOK)
+## SAHA DÜZELTMELERİ — 4 sorun tek pakette (2026-08-12, commit `00b5b9d`, migration YOK)
 
 1. **"Hatice'nin sisteminde kimseye mail gitmedi" = ARIZA DEĞİL, kullanım.**
    Prod teşhisi: e-posta hattı SAĞLIKLI (son 10 gün 34 sent / 0 fail — başka
