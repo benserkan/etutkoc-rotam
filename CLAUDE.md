@@ -6,6 +6,40 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## SAHA DÜZELTMELERİ — 4 sorun tek pakette (2026-08-12, commit `e40e2ed`, migration YOK)
+
+1. **"Hatice'nin sisteminde kimseye mail gitmedi" = ARIZA DEĞİL, kullanım.**
+   Prod teşhisi: e-posta hattı SAĞLIKLI (son 10 gün 34 sent / 0 fail — başka
+   kiracılara haftalık rapor/davet/program mailleri akıyor). Hatice (#87)
+   kiracısında e-posta ÜRETECEK olay yok: **6 öğrencisinin hiçbirine veli
+   bağlanmamış** (tüm parent_* mail kategorileri veliye gider; veli yoksa mail
+   doğmaz). Öğrenci bildirimleri tasarım gereği push+in-app; kiracıda kayıtlı
+   mobil cihaz da yok → 6 push "suppressed/no_device". ÇÖZÜM KOD DEĞİL:
+   Hatice öğrencilerine veli davet etmeli (+öğrenciler mobil app kurarsa push).
+2. **Katalog araması kelime-bazlı yapıldı** (`book_catalog.search_catalog`):
+   eski hâli sorguyu TEK substring arıyordu → "TYT BİYOLOJİ twins Soru
+   Bankası" bulunamıyordu. Yeni: sorgu kelimelere bölünür, HER kelime
+   ad+yayınevi birleşiminde aranır (sıra bağımsız) + compact tolerans
+   ("3 4 5"→"345", bitişik/ayrık yazım); sıralama ad-birebir > tüm-kelimeler-
+   adda > compact > dağılmış, eşitlikte usage_count. Sihirbaz listesi 5
+   kırpması → 20 (max-h scroll) — "345" artık TÜM 345 kitaplarını gösterir.
+   book_catalog smoke 28/28.
+3. **Menü temizliği:** koç sol menüsünden "AI İçgörü" kaldırıldı (sayfa
+   URL'den durur); hafta başlığındaki "Tanı" butonu kaldırıldı
+   (`/teacher/students/{id}/diagnostics` route'u YOK — Jinja kalıntısı 404).
+4. **Periyot sürükle-bırak KAYIT bug'ı (kritik, Playwright'la kanıtlandı):**
+   sabah→öğle taşıma görsel çalışıyor ama KAYDEDİLMİYORDU. Kök neden:
+   `week-day-card` optimistik `setQueriesData` prefix'i hafta-NOTLARI alt
+   sorgusunu da yakalıyordu (`[...studentWeek,"notes"]` — verisi DİZİ) →
+   updater `prev.days.map`'te throw → PATCH hiç atılmıyor, ama hafta cache'i
+   güncellendiğinden taşınmış GÖRÜNÜYORdu (yenileyince geri). Fix:
+   `Array.isArray(prev.days)` guard'ı. **KURAL: `setQueriesData` prefix
+   eşleşmesi ALT sorguları da yakalar — updater daima veri şeklini doğrular.**
+   Repro+fix dev'de gerçek tarayıcı sürüklemesiyle uçtan uca doğrulandı
+   (PATCH 200 + DB period değişimi + reload kalıcı).
+
+---
+
 ## SAHA DÜZELTMELERİ — Hatice (#87) üç şikâyet (2026-08-11, commit `1219cfb`+`ad0cc40`, migration YOK)
 
 1. **Pasif öğrenci aktive edilemiyor şikâyeti = ZAMANLAMA.** Kapılar canlıda
