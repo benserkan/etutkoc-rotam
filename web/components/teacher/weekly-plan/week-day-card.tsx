@@ -724,8 +724,12 @@ function TaskList({
       const setPeriodInCache = (p: TaskPeriod | null) =>
         qc.setQueriesData<TeacherStudentWeekResponse>(
           { queryKey: ["teacher", "me", "students", String(studentId), "week"] },
+          // DİKKAT: prefix, hafta notları gibi ALT sorguları da yakalar
+          // ([...studentWeek, "notes"] — verisi dizi). days olmayan cache'e
+          // dokunma; yoksa updater throw eder ve PATCH hiç atılmaz
+          // (2026-08-12 saha bug'ı: taşıma görünür ama kaydedilmezdi).
           (prev) =>
-            prev
+            prev && Array.isArray(prev.days)
               ? {
                   ...prev,
                   days: prev.days.map((d) => ({

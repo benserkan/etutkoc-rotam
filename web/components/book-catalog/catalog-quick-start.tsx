@@ -97,7 +97,7 @@ export function CatalogQuickStart({ onCreated }: Props) {
         out.push(e);
       }
     }
-    return out.slice(0, 5);
+    return out.slice(0, 20);
   }, [coverMatches, searchQ.data]);
 
   const busy = identify.isPending || createBook.isPending;
@@ -158,7 +158,7 @@ export function CatalogQuickStart({ onCreated }: Props) {
         ) : null}
 
         {items.length > 0 ? (
-          <ul className="space-y-1.5">
+          <ul className="max-h-72 space-y-1.5 overflow-y-auto pr-1">
             {items.map((e) => (
               <li
                 key={e.id}

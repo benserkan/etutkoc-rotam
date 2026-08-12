@@ -74,42 +74,59 @@ def search_catalog(
     subject_id: int | None = None,
     limit: int = SEARCH_LIMIT,
 ) -> list[BookTemplate]:
-    """Verified kayıtlarda ad/yayınevi araması.
+    """Verified kayıtlarda ad/yayınevi araması — KELİME BAZLI, sıra bağımsız.
 
-    Sıralama: tam normalize eşleşme > ad-öneki > içerir; eşitlikte usage_count.
-    Aday kümesi küçük olduğundan sıralama Python'da yapılır.
+    Koç kitap adını hangi sırayla yazarsa yazsın bulur ("TYT Biyoloji twins"
+    ↔ "Twins TYT Biyoloji"): sorgu kelimelere bölünür, HER kelime ad+yayınevi
+    birleşiminde geçmelidir. Bitişik/ayrık yazım toleransı için boşluksuz
+    (compact) karşılaştırma da yapılır ("3 4 5" → "345", "soru bankası" ↔
+    "sorubankası"). Katalog küçük olduğundan eşleşme+sıralama Python'da.
+
+    Sıralama: ad birebir > tüm kelimeler adda (ad-öneki önce) > compact
+    eşleşme > kelimeler ad+yayınevine dağılmış; eşitlikte usage_count.
     """
     nq = normalized_key(q)
     if len(nq) < 2:
         return []
-    like = f"%{nq}%"
+    tokens = [t for t in nq.split() if t]
+    long_tokens = [t for t in tokens if len(t) >= 2]
+    compact_q = nq.replace(" ", "")
+
     rows = (
         _catalog_base(db)
-        .filter(
-            BookTemplate.catalog_status == CATALOG_STATUS_VERIFIED,
-            or_(
-                BookTemplate.name_normalized.like(like),
-                BookTemplate.publisher_normalized.like(like),
-            ),
-        )
+        .filter(BookTemplate.catalog_status == CATALOG_STATUS_VERIFIED)
         .all()
     )
     if subject_id is not None:
         rows = [r for r in rows if r.subject_id == subject_id]
 
-    def rank(t: BookTemplate) -> tuple:
+    ranked: list[tuple[tuple, BookTemplate]] = []
+    for t in rows:
         name_n = t.name_normalized or ""
+        pub_n = t.publisher_normalized or ""
+        hay = f"{name_n} {pub_n}".strip()
+        hay_compact = hay.replace(" ", "")
+        name_compact = name_n.replace(" ", "")
+
+        eff_tokens = long_tokens or tokens
+        all_in_hay = bool(eff_tokens) and all(tok in hay for tok in eff_tokens)
+        compact_hit = len(compact_q) >= 2 and compact_q in hay_compact
+        if not all_in_hay and not compact_hit:
+            continue
+
+        in_name = sum(1 for tok in eff_tokens if tok in name_n)
         if name_n == nq:
             r = 0
-        elif name_n.startswith(nq):
-            r = 1
-        elif nq in name_n:
-            r = 2
+        elif eff_tokens and in_name == len(eff_tokens):
+            r = 1 if name_n.startswith(eff_tokens[0]) else 2
+        elif compact_q and compact_q in name_compact:
+            r = 3
         else:
-            r = 3  # yalnız yayınevi eşleşti
-        return (r, -(t.usage_count or 0), t.name or "")
+            r = 4  # kelimeler ad+yayınevine dağılmış / yalnız yayınevi
+        ranked.append(((r, -in_name, -(t.usage_count or 0), t.name or ""), t))
 
-    return sorted(rows, key=rank)[:limit]
+    ranked.sort(key=lambda x: x[0])
+    return [t for _, t in ranked[:limit]]
 
 
 def find_matches(
