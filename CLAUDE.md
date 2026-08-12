@@ -42,6 +42,47 @@ gidiyor görünüp gitmemesinin izahı olamaz" → güçlü test şartıyla onay
 
 ---
 
+## RUTİN GÖREVLER — "Haftaya yay" + ızgara taşı/kopyala — CANLI (2026-08-12, migration YOK)
+
+**Tetikleyici (Hatice önerisi, kullanıcı onaylı tasarım):** her gün tekrar eden
+görevler (paragraf/problem rutini) gün gün elle giriliyordu. KURALLAR: en çok
+3 tık · gün kartlarına görsel ekleme YOK · rezerv sayarak dağıt, kaynak
+bitince "test kalmadı" uyarısı.
+- **"Haftaya yay" (3 tık):** koç görevi her zamanki gibi girer → satırdaki
+  CalendarRange ikonu → gün çipleri (kalan program günleri seçili gelir,
+  kaynak+geçmiş kilitli) → "N güne yay". Kopyalar TASLAK iner (yayınlamadan
+  öğrenci görmez). Test görevlerinde rezerv GÜN GÜN düşer; **"bölüm biterse
+  kitabın sıradaki bölümünden devam" anahtarı (varsayılan AÇIK)** kitap
+  sırasında ilerler (kopya gerekirse ÇOK KALEMLİ olur: 1 test bölüm2 + 2 test
+  bölüm3); kaynak biterse o güne kalan konur (partial), sonrası atlanır + net
+  uyarı. **Mükerrer koruması:** hedef günde aynı imzalı görev (kitaplıda aynı
+  birincil bölüm; diğerlerinde başlık+tip) varsa atlanır — tekrar basmak
+  güvenli. Periyot kopyalanır; `period` override alanı var (ızgara kopyası
+  kullanır).
+- **Hafta Izgarası etkileşimli oldu:** çip sürükle → başka güne/periyoda TAŞI
+  (mevcut PATCH date/period — dünkü dnd fix'inin üstüne); **Ctrl basılı
+  bırak → KOPYALA** (tek-günlük spread, continue_sections=false; bölüm boşsa
+  "test kalmadı" toast'ı). Saatli (hour-bound) görev sürüklenmez; geçmiş güne
+  bırakılamaz; sürüklerken alt ipucu moda göre değişir; hedef gün cyan halka.
+  Izgaraya buton EKLENMEDİ (görsel yük sıfır).
+- **Backend:** `POST /teacher/tasks/{id}/spread` (TaskSpreadBody: dates +
+  continue_sections + period) — `_create_task_with_items` reuse (rezerv
+  invariant'ına yeni kod dokunmaz); `_section_kalan` StudentBook üzerinden
+  (SectionProgress **student_book_id** anahtarlı — student_id DEĞİL, smoke
+  yakaladı). Sonuç: created/partial/skipped(reason)/warning.
+- **Test:** `test_task_spread.py` **16/16** (bölüm-devam çok-kalemli kopya +
+  3 bölümün tam rezerv muhasebesi + partial/exhausted + dedup + etkinlik/
+  kitapsız-deneme + periyot override + geçmiş/bozuk tarih + yabancı 404) ·
+  regresyon weekly_plan 14 · teacher_read 12 · carryover 20 · tsc+eslint
+  temiz · **Playwright E2E:** yay (2 güne, taslak+periyot korunur) + sürükle-
+  taşı (PATCH 200, 12→14) + Ctrl-kopyala (spread 200, kaynak yerinde).
+  DERS tekrarı: dev backend reload'suz — yeni endpoint sonrası run_dev_patched
+  yeniden başlatılmalı (E2E ilk koşuda 404'ü bundan yedi).
+- Gelecek fikri (yapılMADI): program oluştururken "geçen haftanın rutinlerini
+  taşı" — şablon+yay kombinasyonu şimdilik yeterli.
+
+---
+
 ## LOGIN TAKILMASI — TAM SAYFA GEÇİŞ (2026-08-12, migration YOK)
 
 **Saha bug'ı:** giriş başarılı + "Hoş geldin" toast'ı var ama panel açılmıyor,
