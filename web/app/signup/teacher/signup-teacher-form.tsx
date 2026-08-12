@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Script from "next/script";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -61,7 +60,6 @@ interface Props {
 }
 
 export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intendedPlan }: Props) {
-  const router = useRouter();
   const qc = useQueryClient();
   const [isSubmitting, setSubmitting] = React.useState(false);
   const widgetRef = React.useRef<HTMLDivElement | null>(null);
@@ -180,8 +178,8 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
           ? "E-postana doğrulama bağlantısı gönderdik."
           : undefined,
       });
-      router.refresh();
-      router.push("/teacher/dashboard");
+      // Tam sayfa geçiş — refresh+push yarışı (login saha bug'ı 2026-08-12)
+      window.location.assign("/teacher/dashboard");
     } catch (e) {
       if (showCaptcha && window.turnstile) window.turnstile.reset();
       if (e instanceof ApiError) {
@@ -217,7 +215,7 @@ export function SignupTeacherForm({ turnstileEnabled, turnstileSiteKey, intended
     } finally {
       setSubmitting(false);
     }
-  }, [showCaptcha, form, qc, router, intendedPlan, phoneRequired, phoneVerified, phoneToken]);
+  }, [showCaptcha, form, qc, intendedPlan, phoneRequired, phoneVerified, phoneToken]);
 
   return (
     <>

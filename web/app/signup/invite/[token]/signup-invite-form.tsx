@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -52,7 +51,6 @@ interface Props {
 }
 
 export function SignupInviteForm({ token, defaultEmail, defaultFullName, role }: Props) {
-  const router = useRouter();
   const qc = useQueryClient();
   const [isSubmitting, setSubmitting] = React.useState(false);
 
@@ -79,8 +77,8 @@ export function SignupInviteForm({ token, defaultEmail, defaultFullName, role }:
       toast.success(`Hoş geldin, ${res.user.full_name}`, {
         description: res.email_verification_sent ? "E-postana doğrulama bağlantısı gönderdik." : undefined,
       });
-      router.refresh();
-      router.push(defaultLandingFor((res.user.role as UserRole) ?? role));
+      // Tam sayfa geçiş — refresh+push yarışı (login saha bug'ı 2026-08-12)
+      window.location.assign(defaultLandingFor((res.user.role as UserRole) ?? role));
     } catch (e) {
       if (e instanceof ApiError) {
         const code = e.detail?.code;

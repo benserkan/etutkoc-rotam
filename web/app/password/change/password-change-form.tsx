@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -41,7 +40,6 @@ interface Props {
 }
 
 export function PasswordChangeForm({ isForced }: Props) {
-  const router = useRouter();
   const qc = useQueryClient();
   const [isSubmitting, setSubmitting] = React.useState(false);
 
@@ -76,8 +74,8 @@ export function PasswordChangeForm({ isForced }: Props) {
           // role alınamazsa student fallback
         }
       }
-      router.refresh();
-      router.push(defaultLandingFor(role));
+      // Tam sayfa geçiş — refresh+push yarışı (login saha bug'ı 2026-08-12)
+      window.location.assign(defaultLandingFor(role));
     } catch (e) {
       if (e instanceof ApiError) {
         const code = e.detail?.code;

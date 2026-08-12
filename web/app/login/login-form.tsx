@@ -2,14 +2,13 @@
 
 import * as React from "react";
 import Script from "next/script";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-import { useQueryClient } from "@tanstack/react-query";
 
 import { api, ApiError } from "@/lib/api";
 import type { LoginResponse } from "@/lib/types/me";
@@ -45,10 +44,8 @@ interface Props {
 }
 
 export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const returnUrlParam = searchParams.get("returnUrl");
-  const qc = useQueryClient();
 
   const form = useForm<LoginValues>({
     resolver: zodResolver(LoginSchema),
@@ -67,24 +64,25 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
   >("loading");
 
   const handleSuccess = React.useCallback((res: LoginResponse) => {
+    // TAM SAYFA geçiş — router.refresh()+router.push ikilisi App Router'da
+    // yarışıp navigasyonu iptal edebiliyor ve kullanıcı login'de takılı
+    // kalıyordu (2026-08-12 saha bug'ı: "Hoş geldin" toast'ı var, panel yok).
+    // Tam yükleme taze çerezle SSR'ı garanti eder + istemci durumunu sıfırlar
+    // (qc.clear gerekmez — JS bağlamı zaten atılır).
     if (res.must_change_password) {
       toast.warning("Şifrenizi değiştirmeniz gerekiyor.", {
         description: "Devam etmeden önce hesap güvenliği için şifrenizi yenileyin.",
       });
-      qc.clear();
-      router.refresh();
-      router.push("/password/change");
+      window.location.assign("/password/change");
       return;
     }
-    qc.clear();
     const role = res.user?.role ?? "student";
     // returnUrl yalnız kullanıcının kendi panel alanına aitse onurlandırılır;
     // aksi halde rolün kendi paneline (rol-uyuşmazlığı + open-redirect koruması)
     const target = safeReturnUrl(returnUrlParam, role) ?? roleHome(role);
     if (res.user) toast.success(`Hoş geldin, ${res.user.full_name}`);
-    router.refresh();
-    router.push(target);
-  }, [qc, router, returnUrlParam]);
+    window.location.assign(target);
+  }, [returnUrlParam]);
 
   const renderWidget = React.useCallback(() => {
     if (!showCaptcha || !widgetRef.current || !window.turnstile) return;
@@ -104,6 +102,7 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
 
   const onSubmit = React.useCallback(async (values: LoginValues) => {
     setSubmitting(true);
+    let redirecting = false;
     try {
       let turnstileToken = "";
       if (showCaptcha) {
@@ -125,8 +124,10 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
         return;
       }
 
+      redirecting = true; // handleSuccess daima tam-sayfa geçiş başlatır
       handleSuccess(res);
     } catch (e) {
+      redirecting = false;
       // Her hatadan sonra CAPTCHA token tek-kullanımlık → sıfırla
       if (showCaptcha && window.turnstile) {
         window.turnstile.reset();
@@ -161,7 +162,9 @@ export function LoginForm({ turnstileEnabled, turnstileSiteKey }: Props) {
         });
       }
     } finally {
-      setSubmitting(false);
+      // Yönlendirme başladıysa butonu "Giriş yapılıyor…" durumunda bırak —
+      // sayfa yüklenirken tekrar tıklanabilir olmasın.
+      if (!redirecting) setSubmitting(false);
     }
   }, [showCaptcha, form, handleSuccess]);
 
@@ -278,11 +281,13 @@ function TwoFactorStep({
     e.preventDefault();
     setSubmitting(true);
     setError(null);
+    let redirecting = false;
     try {
       const res = await api<LoginResponse>("/api/v2/auth/2fa/verify", {
         method: "POST",
         body: JSON.stringify({ challenge, code: code.trim() }),
       });
+      redirecting = true;
       onSuccess(res);
     } catch (err) {
       if (err instanceof ApiError) {
@@ -301,7 +306,7 @@ function TwoFactorStep({
         setError("Sunucuya ulaşılamadı.");
       }
     } finally {
-      setSubmitting(false);
+      if (!redirecting) setSubmitting(false);
     }
   }
 
