@@ -1004,9 +1004,21 @@ def appointment_maintenance(db: Session, *, now: datetime) -> dict:
     return summary
 
 
+def student_weekly_email(db: Session, *, now: datetime) -> dict:
+    """Günlük 06:00 UTC — cihazsız öğrencilere haftalık gelişim özeti e-postası.
+
+    Dedup (6 gün, comm_log) fiilen haftada 1'e indirir; cihaz kayıtlıysa
+    e-posta ATILMAZ (push kanalı esas). Velisiz öğrenci de kapsanır.
+    """
+    from app.services.student_email_fallback import run_student_weekly_emails
+
+    return run_student_weekly_emails(db, now=now)
+
+
 JOB_REGISTRY: dict[str, Callable[[Session], dict]] = {
     "daily_summary": daily_summary,
     "weekly_backstop": weekly_backstop,
+    "student_weekly_email": student_weekly_email,
     "drop_alert": drop_alert,
     "exam_approaching": exam_approaching,
     "audit_cleanup": audit_cleanup,

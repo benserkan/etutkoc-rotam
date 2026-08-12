@@ -26,7 +26,7 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session, joinedload
 
 from app.deps import get_db
@@ -377,6 +377,7 @@ def publish_day(
 def publish_week(
     student_id: int,
     body: PublishWeekBody,
+    background_tasks: BackgroundTasks,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ) -> MutationResponse[PublishResult]:
@@ -414,6 +415,13 @@ def publish_week(
             )
         except Exception:
             logger.exception("Program yayın bildirim hatası student=%s", student.id)
+        # Cihazsız öğrenciye program e-postası (2026-08-12) — SMTP isteği
+        # bloklamasın diye BackgroundTasks + taze session; dedup 24s.
+        from app.services.student_email_fallback import send_student_new_program_bg
+
+        background_tasks.add_task(
+            send_student_new_program_bg, student.id, start.isoformat(), end.isoformat(),
+        )
 
     return MutationResponse[PublishResult](
         data=PublishResult(
@@ -480,6 +488,7 @@ def reorder_tasks(
 def notify_parents(
     student_id: int,
     body: NotifyParentsBody,
+    background_tasks: BackgroundTasks,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ) -> MutationResponse[NotifyParentsResult]:
@@ -493,6 +502,12 @@ def notify_parents(
         db, student=student, week_start=start, week_end=end,
     )
     db.commit()
+    # Cihazsız öğrenciye de program e-postası (2026-08-12; dedup 24s).
+    from app.services.student_email_fallback import send_student_new_program_bg
+
+    background_tasks.add_task(
+        send_student_new_program_bg, student.id, start.isoformat(), end.isoformat(),
+    )
 
     no_tasks = bool(summary.get("no_tasks"))
     fired = int(summary.get("fired", 0) or 0)

@@ -1,0 +1,150 @@
+Subject: ETÜTKOÇ Rotam · Yeni haftalık programın hazır
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 20px;">
+      <img src="{{ app_base_url }}/etutkoc-mark.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
+      <span style="font-size: 18px; font-weight: 800;">
+        <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
+      </span>
+    </div>
+
+    <h2 style="font-size: 16px; color: #0f172a; margin: 0 0 6px;">Merhaba {{ student_name }} — Yeni Haftalık Programın</h2>
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 16px;">
+      {{ week_start }} — {{ week_end }}
+    </div>
+
+    <p style="margin: 0 0 12px; line-height: 1.55;">
+      Koçun senin için toplam <b>{{ total_tasks }} görev</b> planladı. Gün gün ne çalışacağın aşağıda — görevlerini panelden işaretlemeyi unutma.
+    </p>
+
+    {# Günlük Program — tarih + gün + görev detayı (ders·konu·planlanan soru sayısı) #}
+    {% if daily_breakdown %}
+    <h3 style="font-size: 14px; color: #0f172a; margin: 18px 0 10px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+      Günlük Program
+    </h3>
+    <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px;">
+      {% for day in daily_breakdown %}
+      <tr>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #f1f5f9; vertical-align: top; width: 96px;">
+          <div style="font-weight: 700; color: #117A86;">{{ day.day_name }}</div>
+          <div style="font-size: 11px; color: #64748b;">{{ day.day_label }}</div>
+        </td>
+        <td style="padding: 8px 10px; border-bottom: 1px solid #f1f5f9;">
+          {% if day.has_tasks %}
+            {# Ders bazlı gruplu — her ders başlık, altında konu (bölüm) + test sayısı #}
+            {% for grp in day.subject_groups %}
+              <div style="margin-bottom: 6px;">
+                <div style="font-weight: 700; color: #0f172a; margin-bottom: 2px;">{{ grp.subject }}</div>
+                {% for it in grp.rows %}
+                <div style="margin: 0 0 2px 12px;">
+                  <span style="color: #334155;">{{ it.section or it.book }}</span>{% if it.section and it.book %} <span style="color: #94a3b8;">· {{ it.book }}</span>{% endif %}
+                  <span style="float: right; font-variant-numeric: tabular-nums; color: #475569;">
+                    <b>{{ it.planned }}</b> test
+                  </span>
+                </div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+            {% if day.denemeler %}
+              <div style="margin-bottom: 6px;">
+                <div style="font-weight: 700; color: #7c3aed; margin-bottom: 2px;">Denemeler</div>
+                {% for d in day.denemeler %}
+                <div style="margin: 0 0 2px 12px;">
+                  <span style="color: #334155;">{{ d.title }}</span>
+                  <span style="float: right; font-variant-numeric: tabular-nums; color: #475569;">
+                    {% if d.is_tam %}<b>{{ d.planned }}</b> soru{% else %}<b>{{ d.planned }}</b> deneme{% endif %}
+                  </span>
+                </div>
+                {% endfor %}
+              </div>
+            {% endif %}
+            {% if day.activities %}
+              <div style="margin-bottom: 4px;">
+                <div style="font-weight: 700; color: #0891b2; margin-bottom: 2px;">Diğer çalışmalar</div>
+                {% for a in day.activities %}
+                <div style="margin: 0 0 2px 12px; color: #475569; font-style: italic;">{{ a.title or a.type }}</div>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <div style="margin-top: 4px; font-size: 11px; color: #64748b; text-align: right;">
+              <b>{{ day.gorev_total or 0 }}</b> görev{% if (day.test_planned or 0) > 0 %} · {{ day.test_planned }} test{% endif %}{% if (day.deneme_count or 0) > 0 %} · {{ day.deneme_count }} deneme{% endif %}
+            </div>
+          {% else %}
+            <span style="color: #cbd5e1; font-style: italic;">— görev yok —</span>
+          {% endif %}
+        </td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    {# M3 — Son 90 günde girilen denemeler (bilgi amaçlı, en yeni → en eski) #}
+    <h3 style="font-size: 14px; color: #0f172a; margin: 22px 0 6px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+      Son 3 ayın denemeleri
+    </h3>
+    {% if recent_exams and recent_exams|length > 0 %}
+    <table style="width: 100%; border-collapse: collapse; font-size: 12.5px; margin-bottom: 8px;">
+      <thead>
+        <tr style="background: #f8fafc;">
+          <th style="text-align: left; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 11px;">Tarih</th>
+          <th style="text-align: left; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 11px;">Deneme</th>
+          <th style="text-align: right; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 11px;">Net</th>
+          <th style="text-align: right; padding: 6px 8px; border-bottom: 1px solid #e2e8f0; color: #64748b; font-weight: 600; font-size: 11px;">D / Y / B</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for ex in recent_exams %}
+        <tr>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; color: #475569; white-space: nowrap;">
+            {{ ex.date_iso or "—" }}
+          </td>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; color: #0f172a;">
+            {{ ex.title }}
+            {% if ex.section %}<span style="color: #94a3b8;"> · {{ ex.section }}</span>{% endif %}
+          </td>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; text-align: right; color: #117A86; font-weight: 700; font-variant-numeric: tabular-nums;">
+            {{ "%.2f"|format(ex.net) if ex.net is not none else "—" }}
+          </td>
+          <td style="padding: 6px 8px; border-bottom: 1px solid #f1f5f9; text-align: right; color: #475569; font-variant-numeric: tabular-nums;">
+            <span style="color: #059669;">{{ ex.correct }}</span> /
+            <span style="color: #dc2626;">{{ ex.wrong }}</span> /
+            <span style="color: #94a3b8;">{{ ex.blank }}</span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p style="margin: 4px 0 12px; font-size: 11px; color: #94a3b8; font-style: italic;">
+      Son 90 günde sisteme girilmiş tüm denemeler, güncel → eski sırada.
+    </p>
+    {% else %}
+    <div style="background: #fef3c7; border: 1px solid #fde68a; border-radius: 8px; padding: 10px 14px; margin: 6px 0 14px; font-size: 12.5px; color: #78350f;">
+      Son 90 günde sisteme yüklenmiş denemen yok. Yeni deneme girildiğinde
+      sonuçların burada otomatik görünür.
+    </div>
+    {% endif %}
+
+    <p style="margin: 14px 0; font-size: 13px; color: #475569; line-height: 1.55;">
+      Bu program sana özel hazırlandı; hafta içinde koçun gerektiğinde güncelleyebilir.
+      Görevlerini tamamladıkça panelden işaretle — koçun ve ailen ilerlemeni oradan takip eder.
+    </p>
+
+    <p style="margin: 20px 0 0;">
+      <a href="{{ app_base_url }}/student/week"
+         style="display: inline-block; background: #117A86; color: white; padding: 11px 22px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
+        Programı görüntüle →
+      </a>
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 14px;">
+    <p style="margin: 0; font-size: 10px; color: #94a3b8; line-height: 1.55;">
+      Bu mail otomatik gönderildi · ETÜTKOÇ Rotam · {{ app_base_url }}<br>
+      Mobil uygulama telefonuna kurulu olmadığı için bu bildirim e-posta ile gönderildi.
+    </p>
+  </div>
+</body>
+</html>
