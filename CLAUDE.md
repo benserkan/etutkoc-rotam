@@ -42,6 +42,24 @@ gidiyor görünüp gitmemesinin izahı olamaz" → güçlü test şartıyla onay
 
 ---
 
+## LOGIN TAKILMASI — TAM SAYFA GEÇİŞ (2026-08-12, migration YOK)
+
+**Saha bug'ı:** giriş başarılı + "Hoş geldin" toast'ı var ama panel açılmıyor,
+login'de takılı (F5 düzeltiyor — çerez kurulmuş). Kök neden: `router.refresh()`
++ `router.push()` ikilisi App Router'da YARIŞIYOR (refresh login sayfasını
+yeniden render ederken push navigasyonu iptal edilebiliyor) — aralıklı.
+**Fix:** 4 kimlik formu (login + 2FA adımı + signup teacher/invite +
+password-change) `window.location.assign` ile TAM SAYFA geçer — taze çerezle
+SSR garantili, yarış imkânsız, istemci durumu sıfır (qc.clear gerekmez);
+yönlendirme sırasında buton "Giriş yapılıyor…" kilitli. Playwright 4/4
+(returnUrl'lü 3 tekrar + roleHome). **KURAL: oturum kuran/yıkan akışlar
+(login/signup/şifre/logout) SPA push değil DAİMA tam sayfa geçiş yapar;
+refresh+push ikilisi navigasyon amaçlı kullanılmaz.** NOT: React Compiler
+lint'i onSubmit içinde ref okumaya izin vermez → "yönlendirme başladı" işareti
+ref değil YEREL değişkenle tutulur.
+
+---
+
 ## SAHA DÜZELTMELERİ — 4 sorun tek pakette (2026-08-12, commit `00b5b9d`, migration YOK)
 
 1. **"Hatice'nin sisteminde kimseye mail gitmedi" = ARIZA DEĞİL, kullanım.**
