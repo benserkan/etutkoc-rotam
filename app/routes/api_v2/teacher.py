@@ -240,6 +240,9 @@ from app.routes.api_v2.schemas.teacher import (
     WorkBlockListResponse,
     WorkBlockUpdateBody,
     TaskPatchBody,
+    TaskSpreadBody,
+    TaskSpreadResult,
+    TaskSpreadSkip,
     TaskSingleItemEditBody,
     TeacherBadgesResponse,
     TeacherBookListItem,
@@ -4620,6 +4623,220 @@ def teacher_patch_task_v2(
     db.refresh(task)
     return MutationResponse[TeacherTask](
         data=_build_teacher_task(db, task),
+        invalidate=_invalidate_for_task(task, user.id),
+    )
+
+
+# ---------------------- POST /tasks/{task_id}/spread ----------------------
+
+
+def _section_kalan(db: Session, student_id: int, section: BookSection) -> int:
+    """Bölümde rezerv edilebilir kalan test (test_count − completed − reserved).
+
+    SectionProgress student_book anahtarlıdır — kitap öğrenciye atanmamışsa 0.
+    """
+    sb = (
+        db.query(StudentBook)
+        .filter(
+            StudentBook.student_id == student_id,
+            StudentBook.book_id == section.book_id,
+        )
+        .first()
+    )
+    if sb is None:
+        return 0
+    prog = (
+        db.query(SectionProgress)
+        .filter(
+            SectionProgress.student_book_id == sb.id,
+            SectionProgress.book_section_id == section.id,
+        )
+        .first()
+    )
+    used = (prog.completed_count + prog.reserved_count) if prog else 0
+    return max(0, (section.test_count or 0) - used)
+
+
+def _spread_alloc_for_day(
+    db: Session,
+    *,
+    student_id: int,
+    src_items: list[TaskBookItem],
+    continue_sections: bool,
+) -> tuple[list[TaskItemBody], int, int]:
+    """Bir hedef gün için kalem tahsisi.
+
+    Kaynak görevin kitaplı kalemleri birebir denenır; kapasite yetmezse ve
+    continue_sections açıksa AYNI kitabın sıradaki bölümlerinden (order sırası)
+    tamamlanır. Döner: (kalemler, istenen_toplam, tahsis_edilen_toplam).
+    Kitapsız kalemler (deneme/blok satırı) kapasitesiz — aynen kopyalanır.
+    """
+    out: list[TaskItemBody] = []
+    want_total = 0
+    got_total = 0
+    for it in src_items:
+        want = it.planned_count or 0
+        want_total += want
+        if it.book_id is None:
+            # Kitapsız kalem — rezerv yok, aynen kopyala.
+            out.append(TaskItemBody(book_id=None, section_id=None,
+                                    label=it.label, planned_count=want))
+            got_total += want
+            continue
+        section = db.get(BookSection, it.book_section_id)
+        if section is None:
+            continue
+        remaining = want
+        take = min(remaining, _section_kalan(db, student_id, section))
+        if take > 0:
+            out.append(TaskItemBody(book_id=it.book_id, section_id=section.id,
+                                    planned_count=take))
+            got_total += take
+            remaining -= take
+        if remaining > 0 and continue_sections:
+            nxt_sections = (
+                db.query(BookSection)
+                .filter(
+                    BookSection.book_id == it.book_id,
+                    BookSection.order > section.order,
+                )
+                .order_by(BookSection.order)
+                .all()
+            )
+            for ns in nxt_sections:
+                if remaining <= 0:
+                    break
+                take = min(remaining, _section_kalan(db, student_id, ns))
+                if take <= 0:
+                    continue
+                out.append(TaskItemBody(book_id=it.book_id, section_id=ns.id,
+                                        planned_count=take))
+                got_total += take
+                remaining -= take
+    return out, want_total, got_total
+
+
+@router.post(
+    "/tasks/{task_id}/spread",
+    response_model=MutationResponse[TaskSpreadResult],
+)
+def teacher_spread_task_v2(
+    task_id: int,
+    body: TaskSpreadBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Görevi seçilen günlere çoğalt (rutin görev — 2026-08-12 Hatice önerisi).
+
+    Kopyalar TASLAK iner (yayınlamadan öğrenci görmez). Test görevlerinde
+    rezerv gün gün düşer; kaynak biterse kalan günler atlanır + uyarı. Aynı
+    günde aynı görev varsa atlanır (mükerrer koruması — tekrar basmak güvenli).
+    """
+    task = _get_owned_task(db, task_id, user.id)
+    student = db.get(User, task.student_id)
+    assert_active_coaching(db, user)
+    if body.period is not None:
+        _validate_period(body.period or None)
+
+    src_items = list(task.book_items or [])
+    has_book_items = any(it.book_id is not None for it in src_items)
+    today = date.today()
+
+    created: list[str] = []
+    partial: list[str] = []
+    skipped: list[dict] = []
+    exhausted_from: str | None = None
+
+    # Tarihler: sırala + tekilleştir; kaynak günü ve geçmişi atla.
+    seen: set[str] = set()
+    for ds in sorted(set(body.dates)):
+        if ds in seen:
+            continue
+        seen.add(ds)
+        try:
+            d = _parse_iso_date(ds)
+        except HTTPException:
+            skipped.append({"date": ds, "reason": "invalid_date"})
+            continue
+        if d == task.date:
+            continue  # kaynak gün — sessizce atla
+        if d < today:
+            skipped.append({"date": ds, "reason": "past_date"})
+            continue
+
+        # Mükerrer koruması: aynı günde aynı imzalı görev varsa atla.
+        day_tasks = (
+            db.query(Task)
+            .options(joinedload(Task.book_items))
+            .filter(Task.student_id == student.id, Task.date == d)
+            .all()
+        )
+        dup = False
+        src_primary_section = next(
+            (it.book_section_id for it in src_items if it.book_id is not None), None,
+        )
+        for t2 in day_tasks:
+            if has_book_items and src_primary_section is not None:
+                if any(bi.book_section_id == src_primary_section for bi in (t2.book_items or [])):
+                    dup = True
+                    break
+            elif t2.title == task.title and t2.type == task.type:
+                dup = True
+                break
+        if dup:
+            skipped.append({"date": ds, "reason": "duplicate"})
+            continue
+
+        # Kalem tahsisi (rezerv farkındalıklı)
+        items, want, got = _spread_alloc_for_day(
+            db, student_id=student.id, src_items=src_items,
+            continue_sections=body.continue_sections,
+        )
+        if has_book_items and got <= 0:
+            skipped.append({"date": ds, "reason": "source_exhausted"})
+            if exhausted_from is None:
+                exhausted_from = ds
+            continue
+
+        payload = TaskCreateBody(
+            date=ds,
+            type=task.type.value,
+            title=task.title,
+            period=(body.period or None) if body.period is not None else task.period,
+            is_draft=True,
+            notes=task.notes,
+            items=items,
+            work_block_id=task.work_block_id,
+        )
+        try:
+            _create_task_with_items(db, student=student, payload=payload)
+        except ReservationError as e:
+            db.rollback()
+            skipped.append({"date": ds, "reason": "reserve_failed"})
+            logger.warning("spread rezerv hatası %s: %s", ds, e)
+            continue
+        db.commit()
+        if has_book_items and got < want:
+            partial.append(ds)
+            if exhausted_from is None:
+                exhausted_from = ds
+        created.append(ds)
+
+    warning = None
+    if exhausted_from is not None:
+        warning = (
+            f"Kaynak {exhausted_from} tarihinden itibaren yetmedi — "
+            "kitapta rezerv edilebilir test kalmadı"
+            + ("" if body.continue_sections else " (yalnız seçili bölüm sayıldı)")
+            + ". Kaynak Durumu panelinden kalanları görebilirsin."
+        )
+
+    return MutationResponse[TaskSpreadResult](
+        data=TaskSpreadResult(
+            created=created, partial=partial,
+            skipped=[TaskSpreadSkip(**s) for s in skipped],
+            warning=warning,
+        ),
         invalidate=_invalidate_for_task(task, user.id),
     )
 

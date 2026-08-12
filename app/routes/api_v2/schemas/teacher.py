@@ -960,6 +960,31 @@ class CarryoverResult(BaseModel):
     target_date: str
 
 
+class TaskSpreadBody(BaseModel):
+    """POST /api/v2/teacher/tasks/{task_id}/spread — görevi başka günlere yay.
+
+    Rutin görevler (2026-08-12): koç Pazartesi'ye girdiği görevi haftanın kalan
+    günlerine 3 tıkla çoğaltır. Test görevlerinde rezervden düşülerek gün gün
+    ilerlenir; `continue_sections=True` iken bölüm biterse AYNI kitabın sıradaki
+    bölümlerinden devam edilir. Kaynak biterse kalan günler atlanır + uyarı.
+    """
+    dates: list[str]                   # "YYYY-MM-DD" hedef günler (kaynak gün hariç)
+    continue_sections: bool = True     # bölüm biterse kitabın sıradakinden devam
+    period: str | None = None          # override; None = kaynak görevin periyodu
+
+
+class TaskSpreadSkip(BaseModel):
+    date: str
+    reason: str  # past_date | duplicate | source_exhausted | reserve_failed | invalid_date
+
+
+class TaskSpreadResult(BaseModel):
+    created: list[str]                 # görev oluşturulan günler
+    partial: list[str]                 # istenenden az testle oluşturulan günler
+    skipped: list[TaskSpreadSkip]
+    warning: str | None = None
+
+
 class TaskPatchBody(BaseModel):
     """PATCH /api/v2/teacher/tasks/{task_id}
 

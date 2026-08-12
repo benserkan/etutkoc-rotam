@@ -3,6 +3,12 @@
 import * as React from "react";
 import { ChevronDown, LayoutGrid } from "lucide-react";
 
+import { toast } from "sonner";
+
+import {
+  useMoveTaskDate,
+  useSpreadTask,
+} from "@/lib/hooks/use-teacher-mutations";
 import { cn } from "@/lib/utils";
 import type { TeacherStudentWeekDay, TeacherTask } from "@/lib/types/teacher";
 import {
@@ -163,7 +169,17 @@ function shortDate(iso: string): string {
   return `${d} ${TR_MONTHS_SHORT[m - 1]}`;
 }
 
-function SubjGroupBlock({ g }: { g: SubjGroup }) {
+const GRID_TASK_MIME = "text/x-week-grid-task";
+
+function SubjGroupBlock({
+  g,
+  dayDate,
+  onDragState,
+}: {
+  g: SubjGroup;
+  dayDate: string;
+  onDragState?: (dragging: boolean) => void;
+}) {
   const tone = toneForKey(g.key, g.name);
   return (
     <div>
@@ -177,7 +193,28 @@ function SubjGroupBlock({ g }: { g: SubjGroup }) {
         {g.tasks.map((t) => {
           const mk = MARK[gorevState(t)];
           return (
-            <li key={t.id} className="flex items-start gap-1 text-[10px] leading-snug">
+            <li
+              key={t.id}
+              draggable={t.scheduled_hour == null}
+              onDragStart={(e) => {
+                e.dataTransfer.setData(
+                  GRID_TASK_MIME,
+                  JSON.stringify({ taskId: t.id, sourceDate: dayDate }),
+                );
+                e.dataTransfer.effectAllowed = "copyMove";
+                onDragState?.(true);
+              }}
+              onDragEnd={() => onDragState?.(false)}
+              className={cn(
+                "flex items-start gap-1 text-[10px] leading-snug",
+                t.scheduled_hour == null && "cursor-grab active:cursor-grabbing",
+              )}
+              title={
+                t.scheduled_hour == null
+                  ? "Sürükle: başka güne taşı · Ctrl ile bırak: kopyala"
+                  : "Saat atanmış görev taşınamaz"
+              }
+            >
               <span className={cn("shrink-0 font-bold", mk.cls)} aria-hidden>
                 {mk.ch}
               </span>
@@ -217,6 +254,75 @@ export function WeekGrid({
   onOpenDay: (date: string) => void;
 }) {
   const [collapsed, setCollapsed] = React.useState(false);
+  // Surukle-tasi / Ctrl+kopyala (2026-08-12) — cip suruklenirken ipucu + hedef halkasi
+  const [dragging, setDragging] = React.useState(false);
+  const [dragOverDate, setDragOverDate] = React.useState<string | null>(null);
+  const moveMut = useMoveTaskDate();
+  const spreadMut = useSpreadTask();
+
+  const handleDrop = React.useCallback(
+    (e: React.DragEvent, targetDate: string, period?: "morning" | "noon" | "evening" | "") => {
+      const raw = e.dataTransfer.getData(GRID_TASK_MIME);
+      if (!raw) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setDragOverDate(null);
+      setDragging(false);
+      let data: { taskId: number; sourceDate: string };
+      try {
+        data = JSON.parse(raw);
+      } catch {
+        return;
+      }
+      const copy = e.ctrlKey || e.metaKey;
+      const targetDay = days.find((d) => d.date === targetDate);
+      if (targetDay?.is_past) {
+        toast.warning("Geçmiş güne bırakılamaz.");
+        return;
+      }
+      if (copy) {
+        spreadMut.mutate(
+          {
+            taskId: data.taskId,
+            body: {
+              dates: [targetDate],
+              continue_sections: false,
+              ...(period !== undefined ? { period: period || "" } : {}),
+            },
+          },
+          {
+            onSuccess: (res) => {
+              const r = res.data;
+              if (r.created.length > 0) {
+                toast.success("Kopyalandı (taslak)", {
+                  description: r.warning ?? undefined,
+                });
+              } else if (r.skipped.some((x) => x.reason === "duplicate")) {
+                toast.info("Aynı görev o günde zaten var — kopyalanmadı.");
+              } else if (r.skipped.some((x) => x.reason === "source_exhausted")) {
+                toast.warning("Bölümde rezerv edilebilir test kalmadı.");
+              } else if (r.skipped.some((x) => x.reason === "past_date")) {
+                toast.warning("Geçmiş güne kopyalanamaz.");
+              }
+            },
+          },
+        );
+        return;
+      }
+      if (targetDate === data.sourceDate && period === undefined) return;
+      moveMut.mutate(
+        {
+          taskId: data.taskId,
+          body: {
+            date: targetDate,
+            ...(period !== undefined ? { period: period || "" } : {}),
+          },
+        },
+        { onSuccess: () => toast.success("Görev taşındı") },
+      );
+    },
+    [days, moveMut, spreadMut],
+  );
 
   const totalTasks = days.reduce((a, d) => a + d.tasks.length, 0);
 
@@ -258,6 +364,16 @@ export function WeekGrid({
                   key={day.date}
                   type="button"
                   onClick={() => onOpenDay(day.date)}
+                  onDragOver={(e) => {
+                    if (!e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = e.ctrlKey || e.metaKey ? "copy" : "move";
+                    setDragOverDate(day.date);
+                  }}
+                  onDragLeave={() =>
+                    setDragOverDate((v) => (v === day.date ? null : v))
+                  }
+                  onDrop={(e) => handleDrop(e, day.date)}
                   className={cn(
                     "flex flex-col text-left rounded-lg border min-h-[64px] overflow-hidden transition-colors",
                     isOpen
@@ -265,6 +381,8 @@ export function WeekGrid({
                       : day.is_today
                         ? "border-foreground/25 bg-card hover:bg-muted/30"
                         : "border-border bg-card hover:bg-muted/30",
+                    dragOverDate === day.date &&
+                      "ring-2 ring-cyan-400 ring-offset-1 ring-offset-background",
                   )}
                   title={`${day.dow_label} — düzenlemek için tıkla`}
                 >
@@ -294,14 +412,45 @@ export function WeekGrid({
                       </p>
                     ) : (
                       sections.map((sec) => (
-                        <div key={sec.pkey ?? "_"} className="space-y-1">
+                        <div
+                          key={sec.pkey ?? "_"}
+                          className="space-y-1"
+                          onDragOver={
+                            sec.pkey
+                              ? (e) => {
+                                  if (!e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
+                                  e.preventDefault();
+                                  e.dataTransfer.dropEffect =
+                                    e.ctrlKey || e.metaKey ? "copy" : "move";
+                                  setDragOverDate(day.date);
+                                }
+                              : undefined
+                          }
+                          onDrop={
+                            sec.pkey
+                              ? (e) =>
+                                  handleDrop(
+                                    e,
+                                    day.date,
+                                    sec.pkey === "none"
+                                      ? ""
+                                      : (sec.pkey as "morning" | "noon" | "evening"),
+                                  )
+                              : undefined
+                          }
+                        >
                           {sec.pkey ? (
                             <div className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground border-b border-border/50 pb-0.5">
                               {PERIOD_LABELS[sec.pkey] ?? PERIOD_LABELS.none}
                             </div>
                           ) : null}
                           {sec.groups.map((g) => (
-                            <SubjGroupBlock key={g.key} g={g} />
+                            <SubjGroupBlock
+                              key={g.key}
+                              g={g}
+                              dayDate={day.date}
+                              onDragState={setDragging}
+                            />
                           ))}
                         </div>
                       ))
@@ -318,10 +467,19 @@ export function WeekGrid({
             })}
           </div>
           <p className="px-4 pb-2.5 text-[11px] text-muted-foreground italic">
-            Bir güne tıkla → o günün düzenleyicisi aşağıda açılır.
-            <span className="not-italic"> ✓</span> yapıldı ·
-            <span className="not-italic"> ◐</span> kısmen ·
-            <span className="not-italic"> ☐</span> yapılmadı
+            {dragging ? (
+              <span className="not-italic font-medium text-cyan-700 dark:text-cyan-300">
+                Bırak: güne taşı · Ctrl basılıyken bırak: kopyala
+              </span>
+            ) : (
+              <>
+                Bir güne tıkla → düzenleyici açılır. Görevi sürükle →
+                başka güne/periyoda taşı; Ctrl ile bırak → kopyala.
+                <span className="not-italic"> ✓</span> yapıldı ·
+                <span className="not-italic"> ◐</span> kısmen ·
+                <span className="not-italic"> ☐</span> yapılmadı
+              </>
+            )}
           </p>
         </>
       )}

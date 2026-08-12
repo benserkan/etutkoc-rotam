@@ -371,6 +371,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
               studentId={studentId}
               weekStartDate={data.start_date}
               day={d}
+              weekDays={data.days}
               subjects={subjectsForGrouping}
               focusedSubjectId={focusedSubjectId}
               onFocusSubject={setFocusedSubjectId}

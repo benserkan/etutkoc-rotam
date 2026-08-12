@@ -25,6 +25,7 @@ import {
   GripVertical,
   Layers,
   Loader2,
+  CalendarRange,
   Pencil,
   Plus,
   Rocket,
@@ -45,6 +46,7 @@ import {
   useDeleteTask,
   usePatchTask,
   usePatchTaskSingleItem,
+  useSpreadTask,
 } from "@/lib/hooks/use-teacher-mutations";
 import {
   Dialog,
@@ -63,6 +65,9 @@ import type {
   TeacherStudentWeekResponse,
   TeacherTask,
 } from "@/lib/types/teacher";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import {
   findSubjectByExactName,
@@ -118,12 +123,15 @@ interface Props {
   // Devret sürükle-bırak: bir zaman dilimi (periyot) başlığına bırakılınca o
   // periyoda taşı (week-board day-level drop period=null fallback'tir).
   onCarryoverDrop?: (period: TaskPeriod | null, taskId: number) => void;
+  // "Haftaya yay" dialoğu için haftanın günleri (rutin görev — 2026-08-12)
+  weekDays?: TeacherStudentWeekDay[];
 }
 
 export function WeekDayCard({
   studentId,
   day,
   subjects,
+  weekDays,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parent kontratı için tutuluyor
   focusedSubjectId,
   onFocusSubject,
@@ -271,6 +279,7 @@ export function WeekDayCard({
         studentId={studentId}
         day={day}
         subjects={subjects}
+        weekDays={weekDays}
         onCarryoverDrop={onCarryoverDrop}
       />
 
@@ -636,11 +645,13 @@ function TaskList({
   day,
   subjects,
   onCarryoverDrop,
+  weekDays,
 }: {
   studentId: number;
   day: TeacherStudentWeekDay;
   subjects: SubjectRef[];
   onCarryoverDrop?: (period: TaskPeriod | null, taskId: number) => void;
+  weekDays?: TeacherStudentWeekDay[];
 }) {
   const reorderMut = useReorderTasks(studentId);
   const patchTask = usePatchTask(studentId, day.date);
@@ -823,6 +834,7 @@ function TaskList({
                   dayDate={day.date}
                   task={task}
                   subjects={subjects}
+                  weekDays={weekDays}
                 />
               </React.Fragment>
             );
@@ -838,14 +850,17 @@ function SortableTaskRow({
   dayDate,
   task,
   subjects,
+  weekDays,
 }: {
   studentId: number;
   dayDate: string;
   task: TeacherTask;
   subjects: SubjectRef[];
+  weekDays?: TeacherStudentWeekDay[];
 }) {
   const deleteMut = useDeleteTask(studentId, dayDate);
   const [editOpen, setEditOpen] = React.useState(false);
+  const [spreadOpen, setSpreadOpen] = React.useState(false);
   const hourBound = task.scheduled_hour !== null;
   const {
     attributes,
@@ -1053,6 +1068,17 @@ function SortableTaskRow({
         ) : null}
       </div>
       <div className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0">
+        {weekDays && weekDays.length > 1 ? (
+          <button
+            type="button"
+            onClick={() => setSpreadOpen(true)}
+            className="inline-flex items-center gap-1 px-1.5 py-1 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition"
+            title="Haftaya yay — bu görevi seçtiğin günlere çoğalt"
+            aria-label="Haftaya yay"
+          >
+            <CalendarRange className="size-3.5" aria-hidden />
+          </button>
+        ) : null}
         <button
           type="button"
           onClick={() => setEditOpen(true)}
@@ -1093,6 +1119,15 @@ function SortableTaskRow({
         dayDate={dayDate}
         task={task}
       />
+      {spreadOpen && weekDays ? (
+        <SpreadTaskDialog
+          open={spreadOpen}
+          onOpenChange={setSpreadOpen}
+          task={task}
+          sourceDate={dayDate}
+          weekDays={weekDays}
+        />
+      ) : null}
     </div>
   );
 }
@@ -1678,4 +1713,176 @@ function parseISO(iso: string): { y: number; m: number; d: number } | null {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
   if (!m) return null;
   return { y: Number(m[1]), m: Number(m[2]), d: Number(m[3]) };
+}
+
+
+// ---------------------------------------------------------------------------
+// "Haftaya yay" — rutin görev dağıtımı (2026-08-12, Hatice önerisi)
+// ---------------------------------------------------------------------------
+
+const SPREAD_SKIP_LABELS: Record<string, string> = {
+  past_date: "geçmiş gün",
+  duplicate: "aynı görev zaten vardı",
+  source_exhausted: "kaynakta test kalmadı",
+  reserve_failed: "rezerv edilemedi",
+  invalid_date: "geçersiz tarih",
+};
+
+const DOW_SHORT: Record<string, string> = {
+  Pazartesi: "Pzt", Salı: "Sal", Çarşamba: "Çar", Perşembe: "Per",
+  Cuma: "Cum", Cumartesi: "Cmt", Pazar: "Paz",
+};
+
+function SpreadTaskDialog({
+  open,
+  onOpenChange,
+  task,
+  sourceDate,
+  weekDays,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  task: TeacherTask;
+  sourceDate: string;
+  weekDays: TeacherStudentWeekDay[];
+}) {
+  const spreadMut = useSpreadTask();
+  const hasBookItems = task.items.some((it) => it.book_id != null);
+  // Varsayılan: kaynak gün + geçmiş günler HARİÇ tüm program günleri seçili.
+  const [selected, setSelected] = React.useState<Set<string>>(
+    () =>
+      new Set(
+        weekDays
+          .filter((d) => d.date !== sourceDate && !d.is_past)
+          .map((d) => d.date),
+      ),
+  );
+  const [continueSections, setContinueSections] = React.useState(true);
+
+  const toggle = (date: string) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) next.delete(date);
+      else next.add(date);
+      return next;
+    });
+
+  const apply = () => {
+    spreadMut.mutate(
+      {
+        taskId: task.id,
+        body: {
+          dates: [...selected],
+          continue_sections: continueSections,
+        },
+      },
+      {
+        onSuccess: (res) => {
+          const r = res.data;
+          if (r.created.length > 0) {
+            toast.success(`${r.created.length} güne yayıldı`, {
+              description:
+                r.partial.length > 0
+                  ? `${r.partial.length} güne kaynaktan kalan kadar konuldu.`
+                  : "Kopyalar taslak olarak eklendi — yayınlayınca öğrenci görür.",
+            });
+          }
+          const dupCount = r.skipped.filter((x) => x.reason === "duplicate").length;
+          if (dupCount > 0) {
+            toast.info(`${dupCount} gün atlandı — aynı görev zaten vardı.`);
+          }
+          if (r.warning) {
+            toast.warning("Kaynak yetmedi", { description: r.warning });
+          } else if (r.created.length === 0 && dupCount === 0) {
+            const first = r.skipped[0];
+            toast.warning("Hiçbir güne eklenemedi", {
+              description: first
+                ? SPREAD_SKIP_LABELS[first.reason] ?? first.reason
+                : undefined,
+            });
+          }
+          onOpenChange(false);
+        },
+      },
+    );
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <CalendarRange className="size-4" aria-hidden />
+            Haftaya yay
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <p className="text-sm text-muted-foreground">
+            <span className="font-medium text-foreground">{task.title}</span>{" "}
+            görevi seçtiğin günlere kopyalanır (taslak olarak — yayınlayınca
+            öğrenci görür).
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {weekDays.map((d) => {
+              const isSource = d.date === sourceDate;
+              const disabled = isSource || d.is_past;
+              const on = selected.has(d.date);
+              return (
+                <button
+                  key={d.date}
+                  type="button"
+                  disabled={disabled}
+                  onClick={() => toggle(d.date)}
+                  className={cn(
+                    "px-2.5 py-1.5 rounded-lg border text-xs font-medium transition",
+                    disabled
+                      ? "border-border text-muted-foreground/50 cursor-not-allowed"
+                      : on
+                        ? "border-cyan-500 bg-cyan-50 text-cyan-900 dark:bg-cyan-500/15 dark:text-cyan-200"
+                        : "border-border text-muted-foreground hover:border-foreground/40",
+                  )}
+                  title={
+                    isSource ? "Kaynak gün" : d.is_past ? "Geçmiş gün" : undefined
+                  }
+                >
+                  {DOW_SHORT[d.dow_label] ?? d.dow_label}
+                  {isSource ? " (bu)" : ""}
+                </button>
+              );
+            })}
+          </div>
+          {hasBookItems ? (
+            <label className="flex items-start gap-2 text-sm cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={continueSections}
+                onChange={(e) => setContinueSections(e.target.checked)}
+                className="mt-0.5"
+              />
+              <span>
+                Bölüm biterse kitabın <b>sıradaki bölümünden</b> devam et
+                <span className="block text-xs text-muted-foreground">
+                  Kapalıysa yalnız bu görevdeki bölümün kalanı dağıtılır.
+                </span>
+              </span>
+            </label>
+          ) : null}
+          <div className="flex justify-end gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)}>
+              Vazgeç
+            </Button>
+            <Button
+              onClick={apply}
+              disabled={selected.size === 0 || spreadMut.isPending}
+            >
+              {spreadMut.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : null}
+              {selected.size} güne yay
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
 }

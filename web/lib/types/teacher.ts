@@ -833,6 +833,24 @@ export interface TaskCreateBody {
   work_block_id?: number | null;    // opsiyonel serbest iş bloğu bağı (Katman 3)
 }
 
+export interface TaskSpreadBody {
+  dates: string[];
+  continue_sections?: boolean;
+  period?: TaskPeriod | "" | null;   // override; verilmezse kaynak görevin periyodu
+}
+
+export interface TaskSpreadSkip {
+  date: string;
+  reason: string; // past_date | duplicate | source_exhausted | reserve_failed | invalid_date
+}
+
+export interface TaskSpreadResult {
+  created: string[];
+  partial: string[];
+  skipped: TaskSpreadSkip[];
+  warning: string | null;
+}
+
 export interface TaskPatchBody {
   title?: string | null;
   type?: TaskType | null;

@@ -52,6 +52,8 @@ import type {
   TaskItemPatchBody,
   TaskItemResultBody,
   TaskPatchBody,
+  TaskSpreadBody,
+  TaskSpreadResult,
   TaskSingleItemEditBody,
   WorkBlock,
   WorkBlockCreateBody,
@@ -451,6 +453,53 @@ export function usePatchTaskSingleItem(_studentId: number) {
       applyInvalidate(qc, res.invalidate);
       toast.success("Görev güncellendi");
     },
+  });
+}
+
+/**
+ * Görevi başka günlere yay (rutin görev — 2026-08-12). Kopyalar taslak iner;
+ * test görevlerinde rezerv gün gün düşer, kaynak biterse uyarı döner.
+ */
+export function useSpreadTask() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<TaskSpreadResult>,
+    ApiError,
+    { taskId: number; body: TaskSpreadBody }
+  >({
+    mutationFn: ({ taskId, body }) =>
+      api<MutationResponse<TaskSpreadResult>>(
+        `/api/v2/teacher/tasks/${taskId}/spread`,
+        { method: "POST", body: JSON.stringify(body) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+    },
+    onError: (err) => showError(err, "Görev yayılamadı"),
+  });
+}
+
+/**
+ * Görevi başka güne/periyoda taşı (Hafta Izgarası sürükle-bırak).
+ * Mevcut PATCH /tasks/{id} ucunu kullanır; optimistik yok — yanıtın
+ * invalidate listesi hafta+gün cache'lerini tazeler.
+ */
+export function useMoveTaskDate() {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<TeacherTask>,
+    ApiError,
+    { taskId: number; body: TaskPatchBody }
+  >({
+    mutationFn: ({ taskId, body }) =>
+      api<MutationResponse<TeacherTask>>(`/api/v2/teacher/tasks/${taskId}`, {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+    },
+    onError: (err) => showError(err, "Görev taşınamadı"),
   });
 }
 
