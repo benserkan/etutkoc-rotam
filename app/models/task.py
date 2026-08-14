@@ -131,10 +131,10 @@ class TaskBookItem(Base):
     # Kitapsız "deneme" kalemi (tam LGS/TYT denemesi) için book/section NULL olabilir;
     # bu durumda label deneme adını taşır, rezerv/kapasite atlanır.
     book_id: Mapped[int | None] = mapped_column(
-        ForeignKey("books.id", ondelete="RESTRICT"), nullable=True, index=True
+        ForeignKey("books.id", ondelete="SET NULL"), nullable=True, index=True
     )
     book_section_id: Mapped[int | None] = mapped_column(
-        ForeignKey("book_sections.id", ondelete="RESTRICT"), nullable=True, index=True
+        ForeignKey("book_sections.id", ondelete="SET NULL"), nullable=True, index=True
     )
     label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     planned_count: Mapped[int] = mapped_column(Integer, nullable=False)

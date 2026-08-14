@@ -105,6 +105,20 @@ def main():
             check("4. scheduled_at NULL + eski (130dk) due → en eski=~130 dönmeli",
                   val is not None and 128 <= val <= 132, f"val={val}")
 
+        # Senaryo 5 (2026-08-14 yanlış-kritik alarmı): gece 23:55'te kuyruğa
+        # girip 07:00'ye ertelenen rapor — vadesi 1 dk önce geldi. Yaş çapası
+        # queued_at olsaydı 425 dk 'kritik' görünürdü; doğrusu ~1 dk.
+        with SessionLocal() as db:
+            db.execute(sa_delete(NotificationLog).where(NotificationLog.id.in_(ids)))
+            db.commit()
+            ids.clear()
+            _mk(db, queued_min_ago=425, scheduled_at=now - timedelta(minutes=1),
+                next_attempt_at=None)
+            db.commit()
+            val = oldest_queued_minutes(db)
+            check("5. queued 425dk önce ama vade 1dk önce geldi → yaş ~1 (425 DEĞİL)",
+                  val is not None and 0 <= val <= 3, f"val={val}")
+
     finally:
         with SessionLocal() as db:
             if ids:

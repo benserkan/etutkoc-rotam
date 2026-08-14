@@ -103,8 +103,12 @@ def oldest_queued_minutes(db: Session) -> int | None:
     Yoksa None.
     """
     now = _now()
-    oldest = (
-        db.query(func.min(NotificationLog.queued_at))
+    rows = (
+        db.query(
+            NotificationLog.queued_at,
+            NotificationLog.scheduled_at,
+            NotificationLog.next_attempt_at,
+        )
         .filter(NotificationLog.status == NotificationStatus.QUEUED)
         .filter(
             (NotificationLog.scheduled_at.is_(None))
@@ -114,12 +118,26 @@ def oldest_queued_minutes(db: Session) -> int | None:
             (NotificationLog.next_attempt_at.is_(None))
             | (NotificationLog.next_attempt_at <= now)
         )
-        .scalar()
+        .all()
     )
-    if oldest is None:
+    if not rows:
         return None
-    oldest = _aware(oldest)
-    age_sec = (now - oldest).total_seconds()
+    # Yaş çapası = satırın GÖNDERİLEBİLİR OLDUĞU an (queued/scheduled/next'in
+    # en büyüğü), queued_at DEĞİL. Aksi halde gece 23:55'te kuyruğa girip
+    # sessiz saatle 07:00'ye ertelenen haftalık rapor, alarm motoru 07:00'de
+    # dispatcher'dan önce baktığında "425 dk takılı" görünüyordu (2026-08-14
+    # yanlış-kritik alarmı). Vadesi 1 dk önce gelen satırın yaşı ~1 dk'dır.
+    def _ready_at(q, sched, nxt):
+        t = _aware(q)
+        for x in (sched, nxt):
+            if x is not None:
+                xa = _aware(x)
+                if xa > t:
+                    t = xa
+        return t
+
+    oldest_ready = min(_ready_at(*r) for r in rows)
+    age_sec = (now - oldest_ready).total_seconds()
     return max(0, int(age_sec / 60))
 
 

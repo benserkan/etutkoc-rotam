@@ -64,6 +64,8 @@ from app.models import (
     SectionProgress,
     StudentBook,
     Subject,
+    Task,
+    TaskBookItem,
     Topic,
     User,
     UserRole,
@@ -674,6 +676,7 @@ def library_book_delete_v2(
             "has_progress",
             "Kitapta ilerleme/rezerv var — silinemez. Önce öğrencilerin görevlerini boşalt.",
         )
+    _detach_task_items_for_sections(db, book, list(book.sections or []))
     db.delete(book)
     db.commit()
     return MutationResponse[DeletedRef](
@@ -987,6 +990,43 @@ def library_section_patch_v2(
     )
 
 
+def _detach_task_items_for_sections(db: Session, book: Book, sections: list) -> int:
+    """Silinecek bölümlere bağlı GÖREV KALEMLERİNİ kopar — görev geçmişi korunur.
+
+    Saha bug'ı (2026-08-14): koç kitap atamasını kaldırınca SectionProgress
+    CASCADE ile gider, progress guard'ları geçer ama task_book_items hâlâ
+    bölümü işaret eder → DELETE FK ihlaliyle 500 veriyordu (11 hata grubu).
+    Blok-silme deseniyle tutarlı çözüm (block_detached, 2026-06-18): kalemin
+    görünen adı label'a yazılır, FK'lar NULL'a çekilir, görev block_detached=True
+    ile 'Diğer' sınıfına düşer (deneme sayılmaz). Aktif rezerv/ilerleme
+    guard'ları bu fonksiyondan ÖNCE çalışır — buraya yalnız geçmiş düşer.
+    """
+    sec_ids = [sec.id for sec in sections]
+    if not sec_ids:
+        return 0
+    items = (
+        db.query(TaskBookItem)
+        .filter(TaskBookItem.book_section_id.in_(sec_ids))
+        .all()
+    )
+    if not items:
+        return 0
+    label_map = {sec.id: (sec.label or "") for sec in sections}
+    task_ids: set[int] = set()
+    for it in items:
+        if not it.label:
+            composed = f"{book.name} — {label_map.get(it.book_section_id, '')}".strip(" —")
+            it.label = composed[:255] or book.name[:255]
+        it.book_id = None
+        it.book_section_id = None
+        task_ids.add(it.task_id)
+    if task_ids:
+        db.query(Task).filter(Task.id.in_(task_ids)).update(
+            {Task.block_detached: True}, synchronize_session=False,
+        )
+    return len(items)
+
+
 @router.delete(
     "/books/{book_id}/sections/{section_id}",
     response_model=MutationResponse[DeletedRef],
@@ -1008,6 +1048,7 @@ def library_section_delete_v2(
             "Bölümde rezerv/tamam test var — silinemez.",
             {"reserved": reserved, "completed": completed},
         )
+    _detach_task_items_for_sections(db, book, [section])
     db.delete(section)
     db.commit()
     return MutationResponse[DeletedRef](
@@ -1049,6 +1090,7 @@ def library_clear_sections_v2(
             "Bölümlerde rezerv/tamam test var — temizlenemez.",
             {"reserved": reserved, "completed": completed},
         )
+    _detach_task_items_for_sections(db, book, list(book.sections or []))
     for s in list(book.sections or []):
         db.delete(s)
     db.commit()
