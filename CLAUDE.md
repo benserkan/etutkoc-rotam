@@ -42,6 +42,40 @@ gidiyor görünüp gitmemesinin izahı olamaz" → güçlü test şartıyla onay
 
 ---
 
+## KİTAP SİLME FK 500'LERİ + KUYRUK ALARMI YANLIŞ-KRİTİĞİ — CANLI (2026-08-14, migration `p6q9t2v3v66p`)
+
+**Tetikleyici:** panelde 11 açık hata grubu (koçlar katalog kitaplarını silerken
+DELETE/clear-sections 500) + 2 gün üst üste "Kuyrukta uzun süre bekleyen
+bildirim" KRİTİK (424/425 dk).
+1. **Kitap/bölüm silme 500 (FK ihlali):** koç kitap ATAMASINI KALDIRINCA
+   SectionProgress CASCADE ile silinir → silme uçlarının progress guard'ları
+   (reserved/completed>0 → 409) BOŞ görüp geçer ama `task_book_items` bölümü
+   hâlâ işaret eder → `task_book_items_book_section_id_fkey` ihlali → 500.
+   **Fix (blok-silme deseniyle tutarlı KOPARMA):** `library.py
+   _detach_task_items_for_sections` — silinen bölümlerin kalemlerinde label'a
+   "Kitap — Bölüm" yazılır, book_id/section_id NULL'lanır, görev
+   `block_detached=True` olur ('Diğer' sınıfı; deneme SAYILMAZ — 2026-06-18
+   blok kararının aynısı); görev geçmişi öğrenci/koç görünümünde kalır. Üç uca
+   bağlandı (tekil bölüm + clear-sections + kitap silme); aktif rezerv 409
+   guard'ları AYNEN. **Migration `p6q9t2v3v66p`:** task_book_items book/section
+   FK'ları RESTRICT→SET NULL (uygulama-dışı cascade yolları — admin kullanıcı
+   silme → books zinciri — için son savunma; SQLite'ta atlanır, model
+   ondelete="SET NULL" güncellendi). Smoke `test_book_delete_task_history`
+   **10/10** (repro birebir + guard korunumu + geçmiş görünürlüğü).
+2. **oldest_queued_long yanlış-kritik:** 2026-06-07 fix'i FİLTREYİ due-aware
+   yapmıştı ama YAŞ ÇAPASI queued_at kalmıştı → 23:55'te kuyruklanıp sessiz
+   saatle 07:00'ye ertelenen haftalık rapor, alarm motoru 07:00'de
+   dispatcher'dan bir tik önce bakınca "425 dk takılı" görünüyordu (mail 1 dk
+   sonra normal gitti; 13 Ağu 424 / 14 Ağu 425 = tam 23:55→07:00 farkı).
+   **Fix:** yaş = satırın GÖNDERİLEBİLİR olduğu an (queued/scheduled/
+   next_attempt'in en büyüğü). `test_oldest_queued_due_aware` 4→**5** (senaryo
+   5: queued 425 dk önce + vade 1 dk önce → yaş ~1). **KURAL: bekleme-yaşı
+   metriği daima 'işlem yapılabilir olduğu andan' ölçülür — kayıt anından değil.**
+- Deploy sonrası prod'daki 11 hata grubu fix notuyla Çözüldü işaretlendi +
+  ilgili alarmlar onaylandı.
+
+---
+
 ## RUTİN GÖREVLER — "Haftaya yay" + ızgara taşı/kopyala — CANLI (2026-08-12, migration YOK)
 
 **Tetikleyici (Hatice önerisi, kullanıcı onaylı tasarım):** her gün tekrar eden
