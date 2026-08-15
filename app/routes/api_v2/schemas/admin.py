@@ -3624,6 +3624,34 @@ class DemoSeedResult(BaseModel):
     summary: str
 
 
+class DemoUniverseBody(BaseModel):
+    """POST /api/v2/admin/demo-universe body — dolu kurumsal evren."""
+    label: str = Field(min_length=3, max_length=80)   # kurum/hesap adı
+    coach_count: int = Field(ge=1, le=6)
+    students_per_coach: int = Field(ge=1, le=8)       # her öğrenciye 1 veli
+    with_audio: bool = False                          # Rota yorumlarına gerçek TTS
+
+
+class DemoUniverseAccount(BaseModel):
+    """Evren hesabı — kurulum bitmeden ÖNCE bilinen deterministik kimlik."""
+    role_label: str          # Yönetici / Koç (LGS) / Öğrenci / Veli
+    full_name: str
+    email: str
+    group: str | None = None  # LGS | TYT | YKS (koç/öğrenci/veli satırlarında)
+
+
+class DemoUniverseResult(BaseModel):
+    """Dolu evren oluşturma yanıtı — kurulum arka planda sürer."""
+    seed_id: str
+    label: str
+    slug: str
+    password: str
+    building: bool = True
+    estimated_minutes: int
+    note: str
+    accounts: list[DemoUniverseAccount]
+
+
 class DemoSessionListItem(BaseModel):
     """Demo seansları sayfası — bir kart için özet."""
     seed_id: str

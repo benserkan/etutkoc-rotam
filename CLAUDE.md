@@ -6,6 +6,45 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## MARHAN AKADEMİ DEMO EVRENİ — CANLI (2026-08-15, commit `9db7758`, migration YOK)
+
+**Tetikleyici (kullanıcı):** mizaç-temelli yaklaşımı ürün olarak satan firma ile
+AR-GE görüşmesi — "4-6 ay kullanılmış kurum" hissi veren tam demo evren istendi
+(Kübra Merve Marhan adına; kurumsal→koç→öğrenci→veli zinciri birbirine bağlı).
+- **`scripts/seed_marhan_demo.py`** (tek komut; `--delete` tam süpürme;
+  `--with-audio` = Rota veli yorumlarına gerçek Gemini TTS; `--source-names`
+  deneme havuzu). Deterministik rng(20260815). **İçerik:** Marhan Akademi
+  (etut_standart) + yönetici + 3 koç (Ayşe Yıldız/LGS · Mehmet Kaya/TYT ·
+  Selin Arslan/YKS) + koç başına 5 öğrenci (arketipler: yıldız %92 · iyi %78 ·
+  orta %60 · düşen %38 · riskli %15 — kurum panolarında ayrışırlar) + 15 veli.
+  Kitaplar: LGS elle 2 · TYT/YKS verified katalog şablonlarından (topic eşli).
+  10 haftalık rezerv-tutarlı görev geçmişi (geçmiş yapılmayanlar released,
+  cari hafta rezervli) · GERÇEK karne havuzu kopyası (Elif Demirci/Taha Güven/
+  Yiğit Eren Aydın/Elvin Türkmen'in soru-satırlı denemeleri sınıf-uyumlu
+  dağıtıldı — konu×deneme analizi + net fırsatları dolu) · YSA 2-3/öğrenci ·
+  anketler tamamlanmış skorlarla (survey_service.save_answers — koç panelinde
+  boyut analizleri) + birkaç bekleyen · görev talepleri + veli→koç destek
+  talebi · **öğrenci başına 5 seans raporu** (gündem/koç notu/ruh hali +
+  auto_snapshot `_compute_session_prefill`'den gerçek) + **AI koçluk içgörüsü
+  cache'i** (arketipe özel özet/gündem/ipucu/dikkat; is_stale=False) + **Rota
+  veli yorumları** (program+deneme; sections gerçek görev adları/netlerden,
+  based_on `compute_signature` ile bayat-değil, speech_text TTS-kurallı).
+- **DERSLER:** (a) hesaplar bugün açılınca onboarding-grace TÜM risk
+  sinyallerini bastırıyor → `created_at` ~175 gün geriye alınır (StudentBook
+  assigned_at dahil); (b) `"İ".lower()` e-postada combining-dot üretir →
+  ad→e-posta çevriminde İ/I önce çevrilir; (c) autoflush kapalı — yeni add'lenen
+  satırı re-query etme, nesne referansını tut.
+- **Doğrulama:** dev'de 32/32 yüzey kontrolü (kurum dashboard/uyum/karne/risk ·
+  koç deneme+analiz+anket sonuçları+YSA+seans+içgörü+talepler · öğrenci ·
+  veli pano+Rota yorumları+haftalık rapor). Prod: pg_dump
+  `pre_marhan_20260815.dump` + docker cp + `--with-audio` ile kuruldu.
+- **Hesaplar (şifre tümü `MarhanDemo2026!`):** yönetici
+  marhan-yonetici@etutkoc.demo · koçlar marhan-koc1..3@etutkoc.demo · öğrenci
+  marhan-<ad.soyad>@etutkoc.demo · veli marhan-veli.<ad.soyad>@etutkoc.demo.
+  Kaldırmak = `--delete` (kurum + 34 kullanıcı + tüm bağlı veri).
+
+---
+
 ## ÖĞRENCİ E-POSTA FALLBACK'İ — CANLI (2026-08-12, migration `o5p8s1u2u55o`)
 
 **Tetikleyici (kullanıcı):** uygulama store'da yayınlanana kadar push fiilen

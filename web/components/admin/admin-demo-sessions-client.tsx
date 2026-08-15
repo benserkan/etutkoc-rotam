@@ -22,11 +22,15 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { adminKeys, getAdminDemoSessions } from "@/lib/api/admin";
-import { useDeleteDemoSession } from "@/lib/hooks/use-admin-mutations";
+import {
+  useCreateDemoUniverse,
+  useDeleteDemoSession,
+} from "@/lib/hooks/use-admin-mutations";
 import type {
   DemoKind,
   DemoSessionListItem,
   DemoSessionListResponse,
+  DemoUniverseResult,
 } from "@/lib/types/admin";
 import { cn } from "@/lib/utils";
 
@@ -87,6 +91,8 @@ export function AdminDemoSessionsClient({ initial }: Props) {
         </p>
       </header>
 
+      <UniverseCreator />
+
       {items.length === 0 ? (
         <Card>
           <CardContent className="py-10 text-center">
@@ -111,6 +117,188 @@ export function AdminDemoSessionsClient({ initial }: Props) {
         </div>
       )}
     </div>
+  );
+}
+
+function UniverseCreator() {
+  const [label, setLabel] = React.useState("");
+  const [coachCount, setCoachCount] = React.useState(3);
+  const [studentsPerCoach, setStudentsPerCoach] = React.useState(5);
+  const [withAudio, setWithAudio] = React.useState(false);
+  const [result, setResult] = React.useState<DemoUniverseResult | null>(null);
+  const create = useCreateDemoUniverse();
+
+  function handleCreate() {
+    create.mutate(
+      {
+        label: label.trim(),
+        coach_count: coachCount,
+        students_per_coach: studentsPerCoach,
+        with_audio: withAudio,
+      },
+      { onSuccess: (res) => setResult(res) },
+    );
+  }
+
+  function copyAll() {
+    if (!result) return;
+    const lines = [
+      `${result.label} — demo hesaplar (şifre tümü: ${result.password})`,
+      ...result.accounts.map(
+        (a) =>
+          `${a.role_label}${a.group ? ` [${a.group}]` : ""}: ${a.full_name} · ${a.email}`,
+      ),
+    ];
+    void navigator.clipboard.writeText(lines.join("\n"));
+  }
+
+  const totalAccounts = 1 + coachCount + coachCount * studentsPerCoach * 2;
+
+  return (
+    <>
+      <Card className="mb-5 border-cyan-200 dark:border-cyan-500/30">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Building2 className="size-4 text-cyan-700" aria-hidden />
+            <h2 className="text-sm font-semibold">
+              Dolu Kurumsal Evren Oluştur
+            </h2>
+          </div>
+          <p className="text-xs text-muted-foreground mb-3">
+            &quot;Aylardır kullanılıyor&quot; hissi veren tam demo: 10 haftalık görev
+            geçmişi + gerçek karne kopyaları + yanlış soru arşivi + anket
+            analizleri + seans raporları + yapay zekâ içgörüleri + Rota veli
+            yorumları. Tüm hesaplar birbirine bağlı kurulur.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 items-end">
+            <label className="block sm:col-span-2">
+              <span className="text-xs font-medium">Kurum / hesap adı</span>
+              <input
+                type="text"
+                value={label}
+                onChange={(e) => setLabel(e.target.value)}
+                placeholder="Örn. Marhan Akademi"
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-1.5 text-sm"
+              />
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium">Koç sayısı</span>
+              <select
+                value={coachCount}
+                onChange={(e) => setCoachCount(Number(e.target.value))}
+                className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+              >
+                {[1, 2, 3, 4, 5, 6].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="text-xs font-medium">Öğrenci / koç</span>
+              <select
+                value={studentsPerCoach}
+                onChange={(e) => setStudentsPerCoach(Number(e.target.value))}
+                className="mt-1 w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
+              >
+                {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
+                  <option key={n} value={n}>{n}</option>
+                ))}
+              </select>
+            </label>
+          </div>
+          <div className="mt-3 flex items-center justify-between gap-3 flex-wrap">
+            <label className="inline-flex items-center gap-2 text-xs">
+              <input
+                type="checkbox"
+                checked={withAudio}
+                onChange={(e) => setWithAudio(e.target.checked)}
+                className="size-3.5"
+              />
+              <span>
+                Rota veli yorumlarına <b>gerçek ses</b> üret (kurulum uzar,
+                yapay zekâ seslendirme kullanır)
+              </span>
+            </label>
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-muted-foreground">
+                Toplam {totalAccounts} hesap (her öğrenciye 1 veli)
+              </span>
+              <Button
+                size="sm"
+                onClick={handleCreate}
+                disabled={create.isPending || label.trim().length < 3}
+                className="bg-cyan-700 hover:bg-cyan-800 text-white"
+              >
+                {create.isPending ? (
+                  <Loader2 className="size-4 animate-spin" aria-hidden />
+                ) : (
+                  <FlaskConical className="size-4" aria-hidden />
+                )}
+                Evreni Kur
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Sonuç dialogu — hesaplar anında, kurulum arka planda */}
+      <Dialog open={result !== null} onOpenChange={(o) => !o && setResult(null)}>
+        <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FlaskConical className="size-4 text-cyan-700" aria-hidden />
+              {result?.label} — hesaplar hazırlanıyor
+            </DialogTitle>
+          </DialogHeader>
+          {result ? (
+            <div className="space-y-3 py-1">
+              <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded px-3 py-2 dark:bg-amber-500/10 dark:border-amber-500/30 dark:text-amber-200">
+                {result.note}
+              </p>
+              <p className="text-sm">
+                Şifre (tüm hesaplar):{" "}
+                <code className="bg-muted px-1.5 py-0.5 rounded font-semibold">
+                  {result.password}
+                </code>
+              </p>
+              <div className="border rounded-md overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b bg-muted/50 text-left">
+                      <th className="px-2 py-1.5 font-medium">Rol</th>
+                      <th className="px-2 py-1.5 font-medium">Ad</th>
+                      <th className="px-2 py-1.5 font-medium">E-posta</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.accounts.map((a) => (
+                      <tr key={a.email} className="border-b last:border-0">
+                        <td className="px-2 py-1 whitespace-nowrap">
+                          {a.role_label}
+                          {a.group ? (
+                            <span className="ml-1 text-muted-foreground">
+                              [{a.group}]
+                            </span>
+                          ) : null}
+                        </td>
+                        <td className="px-2 py-1 whitespace-nowrap">{a.full_name}</td>
+                        <td className="px-2 py-1 font-mono">{a.email}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+          <DialogFooter>
+            <Button variant="outline" onClick={copyAll}>
+              Tümünü kopyala
+            </Button>
+            <Button onClick={() => setResult(null)}>Kapat</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

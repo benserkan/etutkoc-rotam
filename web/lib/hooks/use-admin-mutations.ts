@@ -2213,7 +2213,47 @@ export function useDeleteWaTemplate() {
 // M5 — Demo Ekosistem Oluştur
 // =============================================================================
 
-import type { DemoKind, DemoSeedResult, DemoSessionDeleteResult } from "@/lib/types/admin";
+import type {
+  DemoKind,
+  DemoSeedResult,
+  DemoSessionDeleteResult,
+  DemoUniverseResult,
+} from "@/lib/types/admin";
+
+export function useCreateDemoUniverse() {
+  const qc = useQueryClient();
+  return useMutation<
+    DemoUniverseResult,
+    ApiError,
+    {
+      label: string;
+      coach_count: number;
+      students_per_coach: number;
+      with_audio: boolean;
+    }
+  >({
+    mutationFn: (body) =>
+      api<DemoUniverseResult>("/api/v2/admin/demo-universe", {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onSuccess: () => {
+      // Kurulum arka planda — liste bitince dolar; yine de bayatlat
+      qc.invalidateQueries({ queryKey: ["admin", "demo-sessions"] });
+      qc.invalidateQueries({ queryKey: ["admin", "users"] });
+      qc.invalidateQueries({ queryKey: ["admin", "institutions"] });
+    },
+    onError: (e) => {
+      const code = e.detail?.code as string | undefined;
+      const messages: Record<string, string> = {
+        universe_exists:
+          "Bu adla bir demo evren zaten var — önce onu sil veya adı değiştir.",
+        role_required: "Bu işlem yalnız süper admin içindir.",
+      };
+      toast.error((code && messages[code]) || "Demo evren oluşturulamadı");
+    },
+  });
+}
 
 export function useCreateDemoEcosystem() {
   const qc = useQueryClient();

@@ -3305,6 +3305,24 @@ export interface DemoSeedResult {
   summary: string;
 }
 
+export interface DemoUniverseAccount {
+  role_label: string;
+  full_name: string;
+  email: string;
+  group: string | null;
+}
+
+export interface DemoUniverseResult {
+  seed_id: string;
+  label: string;
+  slug: string;
+  password: string;
+  building: boolean;
+  estimated_minutes: number;
+  note: string;
+  accounts: DemoUniverseAccount[];
+}
+
 export interface DemoSessionListItem {
   seed_id: string;
   kind: DemoKind;

@@ -829,11 +829,43 @@ def delete_demo_session(db: Session, *, seed_id: str) -> dict:
     counts: dict[str, int] = {}
 
     if user_ids:
-        # Öğrenci verisi
-        counts["exams"] = db.query(ExamResult).filter(
-            ExamResult.student_id.in_(user_ids)
-        ).count()
-        db.execute(sa_delete(ExamResult).where(ExamResult.student_id.in_(user_ids)))
+        # Öğrenci verisi (soru satırları → deneme; dev SQLite FK kapalı olduğu
+        # için explicit — prod PG'de CASCADE zaten kapsar)
+        from app.models.exam_result import ExamResultQuestion as _ERQ
+        exam_ids = [
+            eid for (eid,) in db.query(ExamResult.id)
+            .filter(ExamResult.student_id.in_(user_ids)).all()
+        ]
+        counts["exams"] = len(exam_ids)
+        if exam_ids:
+            db.execute(sa_delete(_ERQ).where(_ERQ.exam_result_id.in_(exam_ids)))
+            db.execute(sa_delete(ExamResult).where(ExamResult.id.in_(exam_ids)))
+
+        # Dolu evren ekleri: YSA + anket atamaları + görev talepleri +
+        # destek yazışmaları + Rota veli yorumları
+        from app.models import SupportRequest as _SR, TaskRequest as _TR
+        from app.models import WrongQuestion as _WQ
+        from app.models.parent_commentary import ParentCommentary as _PC
+        from app.models.support_request import SupportRequestMessage as _SRM
+        from app.models.survey import SurveyAssignment as _SA
+        from app.models.wrong_question import WrongQuestionImage as _WQI
+
+        wq_ids = [wid for (wid,) in db.query(_WQ.id)
+                  .filter(_WQ.student_id.in_(user_ids)).all()]
+        if wq_ids:
+            db.execute(sa_delete(_WQI).where(_WQI.wrong_question_id.in_(wq_ids)))
+            db.execute(sa_delete(_WQ).where(_WQ.id.in_(wq_ids)))
+        db.execute(sa_delete(_SA).where(
+            (_SA.student_id.in_(user_ids)) | (_SA.teacher_id.in_(user_ids))))
+        db.execute(sa_delete(_TR).where(
+            (_TR.student_id.in_(user_ids)) | (_TR.teacher_id.in_(user_ids))))
+        sr_ids = [rid for (rid,) in db.query(_SR.id).filter(
+            (_SR.requester_id.in_(user_ids))
+            | (_SR.target_user_id.in_(user_ids))).all()]
+        if sr_ids:
+            db.execute(sa_delete(_SRM).where(_SRM.request_id.in_(sr_ids)))
+            db.execute(sa_delete(_SR).where(_SR.id.in_(sr_ids)))
+        db.execute(sa_delete(_PC).where(_PC.student_id.in_(user_ids)))
 
         counts["sessions"] = db.query(CoachingSession).filter(
             (CoachingSession.student_id.in_(user_ids))

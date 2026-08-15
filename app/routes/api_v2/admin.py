@@ -28,7 +28,7 @@ import logging
 import re
 from datetime import datetime, timedelta, timezone
 
-from fastapi import APIRouter, Depends, File, HTTPException, Query, Request, Response, UploadFile, status
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, Query, Request, Response, UploadFile, status
 from sqlalchemy import func as sa_func
 from sqlalchemy.orm import Session, joinedload
 
@@ -80,6 +80,9 @@ from app.routes.api_v2.schemas.admin import (
     DemoSessionDeleteResult,
     DemoSessionListItem,
     DemoSessionListResponse,
+    DemoUniverseAccount,
+    DemoUniverseBody,
+    DemoUniverseResult,
     AuditActorBrief,
     AuditListItem,
     AuditListResponse,
@@ -9812,6 +9815,116 @@ def admin_demo_seed_v2(
         ],
         student_count=result.student_count,
         summary=result.summary,
+    )
+
+
+def _build_universe_background(plan, with_audio: bool) -> None:
+    """Dolu evreni taze session ile kur (BackgroundTasks — istek bloklanmaz)."""
+    import logging
+
+    from app.database import SessionLocal
+    from app.services.demo_universe import build_universe
+
+    db = SessionLocal()
+    try:
+        summary = build_universe(db, plan, with_audio=with_audio)
+        logging.getLogger(__name__).info("demo_universe built: %s", summary)
+    except Exception:
+        db.rollback()
+        logging.getLogger(__name__).exception(
+            "demo_universe build failed (seed_id=%s)", plan.seed_id)
+    finally:
+        db.close()
+
+
+@router.post(
+    "/demo-universe",
+    response_model=DemoUniverseResult,
+)
+def admin_demo_universe_v2(
+    body: DemoUniverseBody,
+    background_tasks: BackgroundTasks,
+    user: User = Depends(_require_super_admin),
+    db: Session = Depends(get_db),
+):
+    """Dolu kurumsal demo evreni — "aylardır kullanılıyor" hissi veren hesap seti.
+
+    Ad + koç sayısı + koç başına öğrenci girilir; sistem birbirine bağlı tam
+    evreni ARKA PLANDA kurar (görev geçmişi + denemeler + YSA + anketler +
+    seanslar + AI içgörü + Rota veli yorumları). Hesap adları deterministik
+    olduğundan liste ANINDA döner; kurulum bitince evren
+    /admin/demo-sessions listesinde görünür ve oradan silinir.
+    """
+    from app.services.demo_universe import plan_universe
+
+    plan = plan_universe(
+        label=body.label,
+        coach_count=body.coach_count,
+        students_per_coach=body.students_per_coach,
+    )
+    if db.query(User).filter(User.email == plan.admin_email).first():
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": "conflict",
+                "code": "universe_exists",
+                "message": "Bu adla bir demo evren zaten var — önce onu sil "
+                           "veya farklı bir ad kullan.",
+            },
+        )
+
+    accounts: list[DemoUniverseAccount] = [
+        DemoUniverseAccount(role_label="Kurum Yöneticisi",
+                            full_name=plan.admin_name, email=plan.admin_email),
+    ]
+    for pc in plan.coaches:
+        accounts.append(DemoUniverseAccount(
+            role_label=f"Koç ({pc.group})", full_name=pc.name,
+            email=pc.email, group=pc.group))
+        for ps in pc.students:
+            accounts.append(DemoUniverseAccount(
+                role_label="Öğrenci", full_name=ps.name,
+                email=ps.email, group=pc.group))
+            accounts.append(DemoUniverseAccount(
+                role_label=f"Veli ({ps.parent_relation})",
+                full_name=ps.parent_name, email=ps.parent_email,
+                group=pc.group))
+
+    n_students = body.coach_count * body.students_per_coach
+    est = 2 + (round(n_students * 2 * 25 / 60) if body.with_audio else 0)
+
+    background_tasks.add_task(_build_universe_background, plan, body.with_audio)
+
+    try:
+        log_action(
+            db,
+            action=AuditAction.INSTITUTION_CREATE,
+            actor_id=user.id,
+            target_type="demo_universe",
+            target_id=None,
+            details={
+                "seed_id": plan.seed_id,
+                "label": plan.label,
+                "coach_count": body.coach_count,
+                "students_per_coach": body.students_per_coach,
+                "with_audio": body.with_audio,
+            },
+            autocommit=True,
+        )
+    except Exception:
+        db.rollback()
+
+    return DemoUniverseResult(
+        seed_id=plan.seed_id,
+        label=plan.label,
+        slug=plan.slug,
+        password=plan.password,
+        building=True,
+        estimated_minutes=est,
+        note=(f"Evren arka planda kuruluyor (~{est} dk). Bitince "
+              "'Demo Oturumları' listesinde görünür; hesaplar o andan itibaren "
+              "giriş yapabilir."),
+        accounts=accounts,
     )
 
 
