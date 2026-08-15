@@ -42,6 +42,28 @@ AR-GE görüşmesi — "4-6 ay kullanılmış kurum" hissi veren tam demo evren 
   marhan-yonetici@etutkoc.demo · koçlar marhan-koc1..3@etutkoc.demo · öğrenci
   marhan-<ad.soyad>@etutkoc.demo · veli marhan-veli.<ad.soyad>@etutkoc.demo.
   Kaldırmak = `--delete` (kurum + 34 kullanıcı + tüm bağlı veri).
+- **ALGORİTMAYA DÖNÜŞTÜ — CANLI (2026-08-15, commit `3bd23f3`, migration YOK):**
+  kullanıcı isteğiyle Marhan algoritması **`app/services/demo_universe.py`**
+  parametreli servisine genelleştirildi (TEK KAYNAK — evren algoritması artık
+  burada bakılır; seed_marhan_demo.py bir kerelik artefakt olarak donduruldu).
+  Süper admin **/admin/demo-sessions** sayfası "Dolu Kurumsal Evren Oluştur"
+  kartı: ad + koç sayısı (1-6) + öğrenci/koç (1-8) + sesli-yorum checkbox →
+  `POST /admin/demo-universe` → hesap adları DETERMİNİSTİK (plan aşaması,
+  seed_id'den) olduğundan hesap listesi + şifre (`RotamDemo2026!`) ANINDA
+  döner; kurulum BackgroundTasks'ta taze session ile sürer (~2 dk; sesliyse
+  +öğrenci×~1 dk) → bitince evren demo-sessions listesinde görünür, mevcut
+  Sil akışıyla kaldırılır. Tüm kayıtlar `is_demo + demo_seed_id` (Institution
+  dahil) → mevcut liste/silme aynen çalışır. Deneme havuzu artık ada bağlı
+  değil: sistemdeki soru-satırlı denemeler (demo hesaplar hariç) sınıf-uyumlu
+  kopyalanır. Koç grupları LGS/TYT/YKS döngüsü; arketipler öğrenci sırasına
+  göre döner. `delete_demo_session` kapanışı genişletildi (ExamResultQuestion
+  + YSA(+foto) + anket ataması + görev talebi + destek(+mesaj) + Rota yorumu
+  — dev SQLite FK-kapalı için explicit; prod PG cascade zaten kapsıyordu).
+  Smoke `test_api_v2_demo_universe.py` **12/12** (plan determinizmi + anında
+  hesap listesi + bg build + evren koçu girişi + 409 + kapanış); regresyon
+  demo_seed_cleanup 13 · admin_demo_seed 12 · admin_demo_sessions 12 GREEN;
+  tsc+eslint temiz. Prod: yedek `pre_demouniverse_20260815.dump` + web/worker/
+  next rebuild; healthz 200 · uç anon 401.
 
 ---
 
