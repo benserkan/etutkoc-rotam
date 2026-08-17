@@ -579,10 +579,54 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   dışı / bantsız-boşluk toplamı > %3 / eşleşme <%70 → "elle incele" bayrağı);
   kapılardan temiz geçen koşu pending'e düşer, admin onaylar. Yeni yayınevi
   DAİMA script+insan ile.
-- **SIRADA (kullanıcı):** sıradaki kitaplar boru hattıyla seed (3D klasöründe
-  bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT Paragraf · 2025 AYT Mat[eski
-  baskı, muhtemel atla]) → koç sihirbazında canlı dene. Mobil BİLİNÇLİ yok
-  (PARITY.md).
+- **4 KİTAP DAHA — CANLI (2026-08-17, commit'ler `46b08e0`/`ce2e9eb`/`5181b06`/
+  `c264be4`; prod id 103-106):** dördü de farklı desen çıkardı, üçünde pipeline
+  YETMEDİ — deterministik/başlık-sahiplenme teknikleri kazandı:
+  - **3D TYT Kimya (id=103): 78 bölüm · 132 test · 73/78 eşli.** Taranmış PDF'te
+    basılı sayfa no OKUNAMADI (ofset kalibre edilemedi) + içindekiler gövdeyle
+    hizasız + test taşımayan ara başlıklar. **YENİ TEKNİK — başlık-sahiplenme
+    (görüntü modu):** 132 test başlangıcının üst bandı Gemini'ye 10'lu batch'lerle
+    okutuldu (sol=konu başlığı · sağ=BÖLÜM/TÜMEVARIM Test NN rozeti) → bölüm
+    listesi GÖVDE-ÖNCE kuruldu. DERSLER: (a) batch görsellerine basılan kırmızı
+    sayfa etiketini model yanlış okuyabilir — eşleme SIRA ile yapılır (132
+    satır=132 başlangıç); (b) `_gen` JSON NESNESİ döndürür (liste isteme,
+    {"rows": []} sarmala; extract_json zaten parse eder); (c) "Bire Bir ÖSYM"
+    önceki bölüm serisinin SON numarasını taşır (ayrı seri değil) — TOC satırı
+    ayrı, testi önceki konudan ayrıştırılır; (d) azınlık-TOC guard'ı TÜMEVARIM
+    uydurma "1"lerini yine yakaladı (5+6+6+7). TÜMEVARIM I-IV + Beceri bilinçli
+    eşleşmesiz.
+  - **ProFizik TYT Fizik (id=104): 88 bölüm · 113 test · 88/88 eşli.** Kitap
+    taranMADI — kullanıcının 3 içindekiler FOTOĞRAFINDAN elle aktarım (üniteler
+    01-08; konu testleri 1'er + "ÖSYM Tarzında" grupları ünite parantezli).
+    **EKSİK: 08 sonrası üniteler (muhtemelen Dalgalar/Optik) fotoğraflarda yok**
+    — kullanıcı son içindekiler sayfasını çekerse eklenecek (uydurulmadı; not
+    JSON'da). ÖSYM gruplarının Elektrik/Manyetizma ataması elle (7-8→Manyetizma).
+  - **Orbital TYT Kimya (id=105): 71 bölüm · 141 test · 71/71 eşli.** Dijital
+    PDF; Gemini içindekiler okuması KUYRUĞU KESTİ (10-11. üniteler kayıptı,
+    tek okuma) → içindekiler METİN KATMANINDAN deterministik parser'la çıkarıldı
+    (s/p/d Testleri yapısı: konu testleri + "p Testleri (ÜNİTE)" grubu +
+    "Deneme N"; fi/fl LİGATÜR onarımı şart — "Saık"→"Saflık"; ünite adı satır
+    sarması birleştirilir). Gövde bant-başlangıç sayısıyla çapraz uyum (139≈141).
+    Deneme satırları ünitesinin konusuna komşu-satır kuralıyla elle bağlandı.
+  - **Paraf İQ TYT Fizik (id=106): 85 bölüm · 153 test · 82/85 eşli.** Yeni
+    yayınevi deseni: içindekiler test LİSTELEMİYOR (yalnız 4 blok türü sayfası);
+    pipeline bant tespiti 53'te kalmıştı (Kavrayalım/Sınav Provası bantları üst
+    şerit heuristiğine takılmadı). Çözüm: GÖVDE metin katmanından deterministik
+    tarama — her sayfada kategori (KAVRAYALIM/PEKİŞTİRELİM/SINAV PROVASI/
+    IQ YORUM/KARMA TEST) + "Test · N" + ÜNİTE no; Kavrayalım testleri sayfa üstü
+    KONU ADLARIYLA bölündü (Türkçe .title() combining-dot tuzağı — tr_title
+    elle). Ünite-içi süren numara tek sayaç (Kavrayalım 1..k → Pekiştirelim →
+    Sınav → IQ devam eder); Karma Testler üçer ünite (Ü3/Ü6/Ü9 sonrası; bilinçli
+    eşleşmesiz ×3). Çapraz sayım 153/153; sayfa/test 2.15.
+  - **DERS (operasyonel):** arka plan zincirlerinde tetik işareti LOG dosyasına
+    yazılmalı (echo görev stdout'una gider, zincir uyanmaz) — Orbital bu yüzden
+    saatlerce başlamadı sanılıp elle başlatıldı; bayat zincir sonra aynı
+    işaretle İKİNCİ Paraf koşusu başlattı (aynı komut olduğundan zararsız ama
+    yarış — zincir yerine bitiş bildirimiyle elle tetik tercih edilir).
+- **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
+  üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
+  Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
+  dene. Mobil BİLİNÇLİ yok (PARITY.md).
 
 ---
 
