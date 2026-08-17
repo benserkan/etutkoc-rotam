@@ -3347,6 +3347,7 @@ def _build_teacher_task_item(
         section_remaining=remaining,
         correct_count=item.correct_count,
         wrong_count=item.wrong_count,
+        blank_count=item.blank_count,
     )
 
 
@@ -4934,6 +4935,7 @@ def _teacher_validate_result_distribution(
     completed: int,
     correct: int | None,
     wrong: int | None,
+    blank: int | None = None,
     is_book_item: bool,
 ) -> None:
     """D/Y validation — birim duyarlı (öğrenci simetrisi).
@@ -4944,24 +4946,25 @@ def _teacher_validate_result_distribution(
     """
     c = correct if correct is not None else 0
     w = wrong if wrong is not None else 0
-    if c < 0 or w < 0:
+    b = blank if blank is not None else 0
+    if c < 0 or w < 0 or b < 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
                 "error": "validation_error",
                 "code": "invalid_result_distribution",
-                "message": "Doğru ve yanlış sayıları negatif olamaz.",
+                "message": "Doğru, yanlış ve boş sayıları negatif olamaz.",
             },
         )
-    if not is_book_item and c + w > completed:
+    if not is_book_item and c + w + b > completed:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
                 "error": "validation_error",
                 "code": "invalid_result_distribution",
                 "message": (
-                    f"Doğru ({c}) + Yanlış ({w}) = {c + w}, çözülen "
-                    f"({completed}) sorudan fazla olamaz."
+                    f"Doğru ({c}) + Yanlış ({w}) + Boş ({b}) = {c + w + b}, "
+                    f"çözülen ({completed}) sorudan fazla olamaz."
                 ),
             },
         )
@@ -5003,12 +5006,14 @@ def teacher_set_task_item_result_v2(
         completed=effective_completed,
         correct=body.correct,
         wrong=body.wrong,
+        blank=body.blank,
         is_book_item=item.book_id is not None,
     )
 
     try:
         svc_set_item_completion(
-            db, item, body.completed, correct=body.correct, wrong=body.wrong
+            db, item, body.completed,
+            correct=body.correct, wrong=body.wrong, blank=body.blank,
         )
     except ReservationError as e:
         db.rollback()

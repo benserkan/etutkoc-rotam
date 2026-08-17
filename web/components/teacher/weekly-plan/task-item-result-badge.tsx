@@ -41,7 +41,10 @@ export function TaskItemResultBadge({
   const [sheetOpen, setSheetOpen] = React.useState(false);
   const mutate = useSetTaskItemResult(studentId, dateIso);
 
-  const hasResult = item.correct_count != null || item.wrong_count != null;
+  const hasResult =
+    item.correct_count != null ||
+    item.wrong_count != null ||
+    item.blank_count != null;
   const isDeneme = item.book_id == null;
 
   function handleSubmit(r: CompleteSheetResult) {
@@ -53,6 +56,7 @@ export function TaskItemResultBadge({
           completed: r.completed,
           correct: r.correct,
           wrong: r.wrong,
+          blank: r.blank,
         },
       },
       {
@@ -79,17 +83,12 @@ export function TaskItemResultBadge({
           <span className="text-rose-700 font-medium">
             {item.wrong_count ?? 0}Y
           </span>
-          {(() => {
-            const c = item.correct_count ?? 0;
-            const w = item.wrong_count ?? 0;
-            const blank = Math.max(0, item.completed_count - c - w);
-            return blank > 0 ? (
-              <>
-                <span className="text-muted-foreground/60">·</span>
-                <span className="text-muted-foreground">{blank}B</span>
-              </>
-            ) : null;
-          })()}
+          {(item.blank_count ?? 0) > 0 ? (
+            <>
+              <span className="text-muted-foreground/60">·</span>
+              <span className="text-muted-foreground">{item.blank_count}B</span>
+            </>
+          ) : null}
         </button>
       ) : (
         <button
@@ -131,6 +130,7 @@ export function TaskItemResultBadge({
         }
         initialCorrect={item.correct_count}
         initialWrong={item.wrong_count}
+        initialBlank={item.blank_count}
         isDeneme={isDeneme}
         saving={mutate.isPending}
       />

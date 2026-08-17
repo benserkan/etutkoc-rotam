@@ -337,12 +337,14 @@ export interface TeacherTaskItem {
   // Opsiyonel sonuç — öğrenci girdiyse veya koç düzelttiyse.
   correct_count: number | null;
   wrong_count: number | null;
+  blank_count: number | null;
 }
 
 export interface TaskItemResultBody {
   completed: number;
   correct?: number | null;
   wrong?: number | null;
+  blank?: number | null;
 }
 
 export interface TaskSingleItemEditBody {

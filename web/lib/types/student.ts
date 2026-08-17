@@ -37,6 +37,7 @@ export interface StudentTaskItem {
   // Opsiyonel sonuç — "Tamam + sayıyla" sheet'inden gelir; null girilmedi.
   correct: number | null;
   wrong: number | null;
+  blank: number | null;
 }
 
 export type TaskPeriod = "morning" | "noon" | "evening";

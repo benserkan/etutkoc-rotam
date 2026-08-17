@@ -75,9 +75,10 @@ interface MutationContext {
 
 interface TaskMutationParams {
   task: StudentTask;
-  // Opsiyonel D/Y — yalnız tek kalemli görevde uygulanır (backend kuralı).
+  // Opsiyonel D/Y/B — yalnız tek kalemli görevde uygulanır (backend kuralı).
   correct?: number | null;
   wrong?: number | null;
+  blank?: number | null;
   // Opsiyonel çözülen soru — yalnız KALEMSİZ (etkinlik) görevde (backend kuralı).
   solvedCount?: number | null;
 }
@@ -86,7 +87,7 @@ export function useCompleteTask(dateIso: string) {
   const qc = useQueryClient();
   return useMutation<MutationResponse<StudentTask>, ApiError, TaskMutationParams, MutationContext>({
     mutationKey: ["student", "mutate-task", dateIso, "complete"],
-    mutationFn: ({ task, correct, wrong, solvedCount }) =>
+    mutationFn: ({ task, correct, wrong, blank, solvedCount }) =>
       api<MutationResponse<StudentTask>>(
         `/api/v2/student/tasks/${task.id}/complete`,
         {
@@ -94,11 +95,12 @@ export function useCompleteTask(dateIso: string) {
           body: JSON.stringify({
             correct: correct ?? null,
             wrong: wrong ?? null,
+            blank: blank ?? null,
             solved_count: solvedCount ?? null,
           }),
         },
       ),
-    onMutate: async ({ task, correct, wrong, solvedCount }) => {
+    onMutate: async ({ task, correct, wrong, blank, solvedCount }) => {
       await qc.cancelQueries({ queryKey: studentKeys.day(dateIso) });
       const isSingleItem = task.items.length === 1;
       const previous = patchTaskInDayCache(qc, dateIso, task.id, (t) => ({
@@ -117,6 +119,7 @@ export function useCompleteTask(dateIso: string) {
           // Sadece tek kalemli görevde D/Y uygulanır (backend simetrisi).
           correct: isSingleItem && idx === 0 && correct !== undefined ? correct : it.correct,
           wrong: isSingleItem && idx === 0 && wrong !== undefined ? wrong : it.wrong,
+          blank: isSingleItem && idx === 0 && blank !== undefined ? blank : it.blank,
         })),
       }));
       return { previous };
@@ -155,9 +158,10 @@ export function useUncompleteTask(dateIso: string) {
           ...it,
           completed: 0,
           is_full: false,
-          // Uncomplete D/Y'yi sıfırlar (backend simetrisi).
+          // Uncomplete D/Y/B'yi sıfırlar (backend simetrisi).
           correct: null,
           wrong: null,
+          blank: null,
         })),
       }));
       return { previous };
@@ -183,16 +187,17 @@ interface SetItemParams {
   task: StudentTask;
   itemId: number;
   completed: number;
-  // Opsiyonel D/Y — sheet'ten geçirilir; null/undefined → güncellenmez.
+  // Opsiyonel D/Y/B — sheet'ten geçirilir; null/undefined → güncellenmez.
   correct?: number | null;
   wrong?: number | null;
+  blank?: number | null;
 }
 
 export function useSetItemCompleted(dateIso: string) {
   const qc = useQueryClient();
   return useMutation<MutationResponse<StudentTask>, ApiError, SetItemParams, MutationContext>({
     mutationKey: ["student", "mutate-task", dateIso, "set-item"],
-    mutationFn: ({ task, itemId, completed, correct, wrong }) =>
+    mutationFn: ({ task, itemId, completed, correct, wrong, blank }) =>
       api<MutationResponse<StudentTask>>(
         `/api/v2/student/tasks/${task.id}/items/${itemId}/set-completed`,
         {
@@ -201,10 +206,11 @@ export function useSetItemCompleted(dateIso: string) {
             completed,
             correct: correct ?? null,
             wrong: wrong ?? null,
+            blank: blank ?? null,
           }),
         },
       ),
-    onMutate: async ({ task, itemId, completed, correct, wrong }) => {
+    onMutate: async ({ task, itemId, completed, correct, wrong, blank }) => {
       await qc.cancelQueries({ queryKey: studentKeys.day(dateIso) });
       const previous = patchTaskInDayCache(qc, dateIso, task.id, (t) => {
         const items = t.items.map((it) => {
@@ -227,6 +233,12 @@ export function useSetItemCompleted(dateIso: string) {
                 : wrong !== undefined
                   ? wrong
                   : it.wrong,
+            blank:
+              effectiveCompleted === 0
+                ? null
+                : blank !== undefined
+                  ? blank
+                  : it.blank,
           };
         });
         const planned = items.reduce((s, it) => s + it.planned, 0);

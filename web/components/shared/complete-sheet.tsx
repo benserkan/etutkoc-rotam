@@ -25,6 +25,7 @@ export interface CompleteSheetResult {
   completed: number;
   correct: number | null;
   wrong: number | null;
+  blank: number | null;
 }
 
 interface Props {
@@ -39,6 +40,7 @@ interface Props {
   initialCompleted?: number;
   initialCorrect?: number | null;
   initialWrong?: number | null;
+  initialBlank?: number | null;
   // Deneme tipi mi? (Sadece tamamla linkini gizlemek için)
   // Aynı zamanda completed birimini belirler:
   //   - true (kitapsız deneme): completed = soru sayısı, D/Y aynı birim → c+w ≤ completed
@@ -72,6 +74,7 @@ function CompleteSheetInner({
   initialCompleted,
   initialCorrect,
   initialWrong,
+  initialBlank,
   isDeneme = false,
   allowSkipResult,
   saving = false,
@@ -86,6 +89,9 @@ function CompleteSheetInner({
   );
   const [wrongStr, setWrongStr] = React.useState<string>(
     initialWrong != null ? String(initialWrong) : "",
+  );
+  const [blankStr, setBlankStr] = React.useState<string>(
+    initialBlank != null ? String(initialBlank) : "",
   );
 
   // Body scroll lock — arka plan kaymasın. Sheet kapanınca eski overflow geri.
@@ -119,9 +125,18 @@ function CompleteSheetInner({
 
   const correct = correctStr === "" ? null : Number(correctStr);
   const wrong = wrongStr === "" ? null : Number(wrongStr);
+  const blank = blankStr === "" ? null : Number(blankStr);
 
   // Akıllı tamamla yalnız Deneme'de (aynı birim) — kitaplı testte completed=3
   // ise "yanlış = 3 - 0 = 3" önerisi yanlış olur.
+  function suggestBlank(c: number, w: number) {
+    // Denemede D+Y dolunca boş otomatik önerilir (kullanıcı üzerine yazabilir)
+    if (!isDeneme || blankStr !== "") return;
+    if (c >= 0 && w >= 0 && c + w <= completed) {
+      setBlankStr(String(Math.max(0, completed - c - w)));
+    }
+  }
+
   function onCorrectChange(v: string) {
     setCorrectStr(v);
     if (!isDeneme) return;
@@ -129,6 +144,9 @@ function CompleteSheetInner({
     if (v !== "" && Number.isFinite(n) && n >= 0 && n <= completed) {
       if (wrongStr === "") {
         setWrongStr(String(Math.max(0, completed - n)));
+        setBlankStr((b) => (b === "" ? "0" : b));
+      } else {
+        suggestBlank(n, Number(wrongStr));
       }
     }
   }
@@ -140,6 +158,9 @@ function CompleteSheetInner({
     if (v !== "" && Number.isFinite(n) && n >= 0 && n <= completed) {
       if (correctStr === "") {
         setCorrectStr(String(Math.max(0, completed - n)));
+        setBlankStr((b) => (b === "" ? "0" : b));
+      } else {
+        suggestBlank(Number(correctStr), n);
       }
     }
   }
@@ -151,20 +172,22 @@ function CompleteSheetInner({
   // Validation
   //   - c ≥ 0, w ≥ 0 (her durumda)
   //   - c + w ≤ completed (yalnız Deneme'de — aynı birim)
-  const totalAnswered = (correct ?? 0) + (wrong ?? 0);
+  const totalAnswered = (correct ?? 0) + (wrong ?? 0) + (blank ?? 0);
   const negativeInput =
-    (correct != null && correct < 0) || (wrong != null && wrong < 0);
+    (correct != null && correct < 0) ||
+    (wrong != null && wrong < 0) ||
+    (blank != null && blank < 0);
   const denemeOverflow = isDeneme && totalAnswered > completed;
   const invalidDistribution = negativeInput || denemeOverflow;
 
   function handleSave() {
     if (invalidDistribution || saving) return;
-    onSubmit({ completed, correct, wrong });
+    onSubmit({ completed, correct, wrong, blank });
   }
 
   function handleSkipResult() {
     if (saving) return;
-    onSubmit({ completed, correct: null, wrong: null });
+    onSubmit({ completed, correct: null, wrong: null, blank: null });
   }
 
   if (!open) return null;
@@ -302,7 +325,7 @@ function CompleteSheetInner({
                 ? "Çözdüğün sorulardan kaçı doğru / yanlış?"
                 : "Çözdüğün testlerdeki toplam doğru / yanlış soru sayısı."}
             </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-3 gap-2">
               <div>
                 <span className="block text-[11px] text-emerald-700 font-medium mb-1">
                   Doğru
@@ -331,26 +354,28 @@ function CompleteSheetInner({
                   className="w-full text-2xl font-bold text-center tabular-nums py-2.5 border border-rose-200 bg-rose-50/50 rounded-lg text-rose-900 placeholder:text-rose-300 focus:outline-none focus:ring-2 focus:ring-rose-500"
                 />
               </div>
-            </div>
-            {/* Boş soru hesabı — yalnız Deneme dark:bg-emerald-500/10 dark:border-emerald-500/30 dark:text-emerald-200 dark:bg-rose-500/10 dark:border-rose-500/30 dark:text-rose-200'de (aynı birim) anlamlı */}
-            {isDeneme &&
-            correct != null &&
-            wrong != null &&
-            (correct + wrong) < completed ? (
-              <p className="text-[11px] text-muted-foreground mt-2 text-center">
-                Boş bıraktığın:{" "}
-                <span className="font-medium tabular-nums">
-                  {completed - correct - wrong}
+              <div>
+                <span className="block text-[11px] text-slate-600 font-medium mb-1">
+                  Boş
                 </span>
-              </p>
-            ) : null}
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  value={blankStr}
+                  onChange={(e) => setBlankStr(e.target.value)}
+                  placeholder="—"
+                  className="w-full text-2xl font-bold text-center tabular-nums py-2.5 border border-slate-200 bg-slate-50/50 rounded-lg text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400"
+                />
+              </div>
+            </div>
             {negativeInput ? (
               <p className="text-[11px] text-rose-700 mt-2 text-center font-medium">
-                Doğru ve yanlış sayıları negatif olamaz
+                Doğru, yanlış ve boş sayıları negatif olamaz
               </p>
             ) : denemeOverflow ? (
               <p className="text-[11px] text-rose-700 mt-2 text-center font-medium">
-                Doğru + Yanlış ({totalAnswered}) çözdüğünden ({completed} soru) fazla olamaz
+                Doğru + Yanlış + Boş ({totalAnswered}) çözdüğünden ({completed} soru) fazla olamaz
               </p>
             ) : null}
           </div>

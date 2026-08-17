@@ -185,6 +185,7 @@ def _build_task_item(item: TaskBookItem) -> StudentTaskItem:
         max_completable=item.planned_count,
         correct=item.correct_count,
         wrong=item.wrong_count,
+        blank=item.blank_count,
     )
 
 
@@ -193,6 +194,7 @@ def _validate_result_distribution(
     completed: int,
     correct: int | None,
     wrong: int | None,
+    blank: int | None = None,
     is_book_item: bool,
 ) -> None:
     """D/Y validation — birim duyarlı.
@@ -205,21 +207,22 @@ def _validate_result_distribution(
     Kitapsız deneme (`is_book_item=False`):
       - completed = **soru sayısı** (planned = soru)
       - correct/wrong = **soru sayısı** (aynı birim)
-      - Kural: c ≥ 0, w ≥ 0 ve c + w ≤ completed (boş = completed − c − w)
+      - Kural: c ≥ 0, w ≥ 0, b ≥ 0 ve c + w + b ≤ completed
     """
     c = correct if correct is not None else 0
     w = wrong if wrong is not None else 0
-    if c < 0 or w < 0:
+    b = blank if blank is not None else 0
+    if c < 0 or w < 0 or b < 0:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
                 "error": "validation_error",
                 "code": "invalid_result_distribution",
-                "message": "Doğru ve yanlış sayıları negatif olamaz.",
+                "message": "Doğru, yanlış ve boş sayıları negatif olamaz.",
             },
         )
     # Toplam ≤ completed kuralı yalnız kitapsız denemede geçerli (aynı birim).
-    if not is_book_item and c + w > completed:
+    if not is_book_item and c + w + b > completed:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail={
@@ -1298,17 +1301,19 @@ def complete_task_v2(
     # D/Y validation — tek kalemli görevde uygulanır (servis de tek-kalem kontrolü yapar)
     correct = body.correct if body else None
     wrong = body.wrong if body else None
+    blank = body.blank if body else None
     if len(task.book_items) == 1:
         single = task.book_items[0]
         _validate_result_distribution(
             completed=single.planned_count,  # complete → planlanan tam
             correct=correct,
             wrong=wrong,
+            blank=blank,
             is_book_item=single.book_id is not None,
         )
 
     try:
-        svc_complete_task(db, task, correct=correct, wrong=wrong)
+        svc_complete_task(db, task, correct=correct, wrong=wrong, blank=blank)
     except ReservationError as e:
         db.rollback()
         raise _reservation_error_response(e)
@@ -1412,12 +1417,14 @@ def set_item_completed_v2(
         completed=effective_completed,
         correct=body.correct,
         wrong=body.wrong,
+        blank=body.blank,
         is_book_item=item.book_id is not None,
     )
 
     try:
         svc_set_item_completion(
-            db, item, body.completed, correct=body.correct, wrong=body.wrong
+            db, item, body.completed,
+            correct=body.correct, wrong=body.wrong, blank=body.blank,
         )
     except ReservationError as e:
         db.rollback()

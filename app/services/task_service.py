@@ -380,6 +380,7 @@ def complete_task(
     *,
     correct: int | None = None,
     wrong: int | None = None,
+    blank: int | None = None,
 ) -> None:
     """Görevdeki tüm kalemleri planlanan miktar kadar çözüldüye çevir.
     Her kalem için: reserved'den (planned - already_completed) kadarını completed'e transfer et.
@@ -435,13 +436,17 @@ def complete_task(
         progress.reserved_count -= to_complete
         progress.completed_count += to_complete
         it.completed_count = it.planned_count
-    # Tek kalemli görevde D/Y uygulanır (mobil "Tamam + sayıyla" sheet'i).
-    if len(task.book_items) == 1 and (correct is not None or wrong is not None):
+    # Tek kalemli görevde D/Y/B uygulanır (mobil "Tamam + sayıyla" sheet'i).
+    if len(task.book_items) == 1 and (
+        correct is not None or wrong is not None or blank is not None
+    ):
         single = task.book_items[0]
         if correct is not None and correct >= 0:
             single.correct_count = correct
         if wrong is not None and wrong >= 0:
             single.wrong_count = wrong
+        if blank is not None and blank >= 0:
+            single.blank_count = blank
     task.status = TaskStatus.COMPLETED
     from datetime import datetime, timezone
     task.completed_at = datetime.now(timezone.utc)
@@ -457,6 +462,10 @@ def uncomplete_task(db: Session, task) -> None:
             continue
         if it.book_id is None:
             it.completed_count = 0  # kitapsız deneme kalemi — rezerv yok
+            # D/Y/B de sıfırlanır (kitaplı kalemle simetri; stale sonuç kalmasın)
+            it.correct_count = None
+            it.wrong_count = None
+            it.blank_count = None
             continue
         progress, section = _get_progress(
             db, student_id, it.book_id, it.book_section_id
@@ -471,9 +480,10 @@ def uncomplete_task(db: Session, task) -> None:
         # geri alma rezervi diriltmez (kapasite boşta kalır); aksi hâlde sayaçta
         # hiçbir canlı kalemin tutmadığı "sahipsiz" rezerv birikir.
         it.completed_count = 0
-        # Tamamlama geri alınınca D/Y de sıfırlanır — eski sonucun stale kalmasını önle.
+        # Tamamlama geri alınınca D/Y/B de sıfırlanır — eski sonucun stale kalmasını önle.
         it.correct_count = None
         it.wrong_count = None
+        it.blank_count = None
     task.status = TaskStatus.PENDING
     task.completed_at = None
 
@@ -485,6 +495,7 @@ def set_item_completion(
     *,
     correct: int | None = None,
     wrong: int | None = None,
+    blank: int | None = None,
 ) -> None:
     """Tek bir kalemin tamamlanan sayısını manuel ayarla (kısmi tamamlama).
     new_completed: 0..planned_count arası. SectionProgress'i uygun şekilde günceller.
@@ -505,12 +516,12 @@ def set_item_completion(
     if delta == 0:
         # Sayım değişmediyse bile D/Y güncellemesi yapılabilir (örn. öğrenci
         # tamamlama yaptıktan sonra D/Y'yi sonradan girer).
-        _apply_result_fields(item, new_completed, correct, wrong)
+        _apply_result_fields(item, new_completed, correct, wrong, blank)
         return
     if item.book_id is None:
         # Kitapsız deneme kalemi: rezerv/kapasite yok, doğrudan ayarla.
         item.completed_count = new_completed
-        _apply_result_fields(item, new_completed, correct, wrong)
+        _apply_result_fields(item, new_completed, correct, wrong, blank)
         return
     progress, section = _get_progress(
         db, item.task.student_id, item.book_id, item.book_section_id
@@ -548,7 +559,7 @@ def set_item_completion(
         progress.completed_count = max(0, progress.completed_count + delta)  # delta negatif
         progress.reserved_count -= delta  # delta negatif; yani arttırır
     item.completed_count = new_completed
-    _apply_result_fields(item, new_completed, correct, wrong)
+    _apply_result_fields(item, new_completed, correct, wrong, blank)
     # Görev durumu güncelleme çağrı yerinde yapılabilir
 
 
@@ -557,6 +568,7 @@ def _apply_result_fields(
     new_completed: int,
     correct: int | None,
     wrong: int | None,
+    blank: int | None = None,
 ) -> None:
     """D/Y alanlarını item üzerine güvenle uygula.
 
@@ -570,10 +582,13 @@ def _apply_result_fields(
     if new_completed == 0:
         item.correct_count = None
         item.wrong_count = None
+        item.blank_count = None
         return
     if correct is not None:
         item.correct_count = max(0, correct)
     if wrong is not None:
         item.wrong_count = max(0, wrong)
+    if blank is not None:
+        item.blank_count = max(0, blank)
 
 

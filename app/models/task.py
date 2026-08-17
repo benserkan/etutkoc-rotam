@@ -141,6 +141,9 @@ class TaskBookItem(Base):
     completed_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     correct_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     wrong_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Boş bırakılan soru sayısı — D+Y ile birlikte "kaç soru gerçekten çözüldü"
+    # görünürlüğü (NULL = girilmemiş; eski kayıtlar NULL kalır).
+    blank_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # "Ölü rezerv" izi: haftası/programı geçmiş tamamlanmamış görevin yapılmamış
     # rezerv kısmı serbest bırakılınca doldurulur (reconcile_past_reservations).
     # NULL = canlı rezerv; dolu = serbest bırakıldı → tekrar iade edilmez (görev

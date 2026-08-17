@@ -666,6 +666,12 @@ export function useSetTaskItemResult(studentId: number, dateIso: string) {
                   : body.wrong !== undefined
                     ? body.wrong
                     : it.wrong_count,
+              blank_count:
+                effectiveCompleted === 0
+                  ? null
+                  : body.blank !== undefined
+                    ? body.blank
+                    : it.blank_count,
             };
           });
           const completed = items.reduce((s, it) => s + it.completed_count, 0);

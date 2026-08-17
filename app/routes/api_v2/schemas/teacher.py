@@ -344,6 +344,7 @@ class TeacherTaskItem(BaseModel):
     # Sonuç (opsiyonel) — koç hem görüntüler hem düzenler.
     correct_count: int | None = None
     wrong_count: int | None = None
+    blank_count: int | None = None
 
 
 class TeacherTask(BaseModel):
@@ -1013,11 +1014,13 @@ class TaskItemResultBody(BaseModel):
     yanlış girdiyse koç düzeltir. Boş D/Y geçirmek (None) → o alan değişmez;
     `0` geçmek → temizlemek anlamı (öğrenci eski D/Y'sini sıfırlamak için).
 
-    Validation: correct + wrong ≤ completed. completed > planned_count → klamp.
+    Validation: correct + wrong + blank ≤ completed (kitapsız). completed >
+    planned_count → klamp.
     """
     completed: int
     correct: int | None = None
     wrong: int | None = None
+    blank: int | None = None
 
 
 class TaskSingleItemEditBody(BaseModel):

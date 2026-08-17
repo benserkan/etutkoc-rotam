@@ -22,6 +22,7 @@ export interface ItemUpdate {
   completed: number;
   correct: number | null;
   wrong: number | null;
+  blank: number | null;
 }
 
 interface Row {
@@ -33,6 +34,7 @@ interface Row {
   completed: number;
   correct: string;
   wrong: string;
+  blank: string;
 }
 
 function buildRows(task: StudentTask): Row[] {
@@ -47,6 +49,7 @@ function buildRows(task: StudentTask): Row[] {
       completed: it.completed,
       correct: it.correct != null ? String(it.correct) : "",
       wrong: it.wrong != null ? String(it.wrong) : "",
+      blank: it.blank != null ? String(it.blank) : "",
     }));
 }
 
@@ -162,13 +165,15 @@ export function TaskSheetContent({
     setRows((rs) => rs.map((r) => (r.itemId === itemId ? { ...r, ...patch } : r)));
   }
 
-  // Kitapsız deneme: doğru + yanlış ≤ çözülen (soru). Kitap kalemi: kısıt yok.
+  // Kitapsız deneme: doğru + yanlış + boş ≤ çözülen (soru). Kitap kalemi: kısıt yok.
   const localError = (() => {
     for (const r of rows) {
       if (!r.isBookItem) {
         const c = parseNum(r.correct) ?? 0;
         const w = parseNum(r.wrong) ?? 0;
-        if (c + w > r.completed) return `Doğru + yanlış, çözülen ${r.completed} soruyu geçemez.`;
+        const b = parseNum(r.blank) ?? 0;
+        if (c + w + b > r.completed)
+          return `Doğru + yanlış + boş, çözülen ${r.completed} soruyu geçemez.`;
       }
     }
     return null;
@@ -182,6 +187,7 @@ export function TaskSheetContent({
         completed: r.completed,
         correct: parseNum(r.correct),
         wrong: parseNum(r.wrong),
+        blank: parseNum(r.blank),
       })),
     );
   }
@@ -240,11 +246,12 @@ export function TaskSheetContent({
               <View className="flex-row gap-3">
                 <NumField label="Doğru (soru)" value={r.correct} onChangeText={(v) => setRow(r.itemId, { correct: v })} />
                 <NumField label="Yanlış (soru)" value={r.wrong} onChangeText={(v) => setRow(r.itemId, { wrong: v })} />
+                <NumField label="Boş (soru)" value={r.blank} onChangeText={(v) => setRow(r.itemId, { blank: v })} />
               </View>
             </View>
           ))}
           <Text className="text-[11px] text-slate-400">
-            Doğru/yanlış soru sayısıdır, boş bırakabilirsin. Sonra düzeltebilirsin.
+            Doğru/yanlış/boş soru sayısıdır; istemezsen girmeyebilirsin. Sonra düzeltebilirsin.
           </Text>
 
           {localError || error ? (

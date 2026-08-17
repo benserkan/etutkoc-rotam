@@ -80,6 +80,7 @@ class StudentTaskItem(BaseModel):
     # Koç da düzenleyebilir. Analiz: haftalık doğruluk oranı.
     correct: int | None = None
     wrong: int | None = None
+    blank: int | None = None
 
 
 class StudentTask(BaseModel):
@@ -423,6 +424,7 @@ class SetCompletedBody(BaseModel):
     completed: int
     correct: int | None = None
     wrong: int | None = None
+    blank: int | None = None
 
 
 class CompleteTaskBody(BaseModel):
@@ -439,6 +441,7 @@ class CompleteTaskBody(BaseModel):
     """
     correct: int | None = None
     wrong: int | None = None
+    blank: int | None = None
     solved_count: int | None = None
 
 

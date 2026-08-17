@@ -17,6 +17,7 @@ export interface StudentTaskItem {
   is_full: boolean;
   correct: number | null;
   wrong: number | null;
+  blank: number | null;
 }
 
 export type TaskStatus = "pending" | "in_progress" | "completed" | string;
@@ -272,7 +273,7 @@ export function getStudentWeek(start?: string): Promise<StudentWeekResponse> {
 // ilgili query'leri elle invalidate ediyoruz (web applyInvalidate karşılığı sade).
 export function completeTask(
   taskId: number,
-  body?: { solved_count?: number; correct?: number | null; wrong?: number | null },
+  body?: { solved_count?: number; correct?: number | null; wrong?: number | null; blank?: number | null },
 ): Promise<unknown> {
   return apiRequest(`/api/v2/student/tasks/${taskId}/complete`, { method: "POST", body: body ?? {} });
 }
@@ -285,7 +286,7 @@ export function uncompleteTask(taskId: number): Promise<unknown> {
 export function setItemCompleted(
   taskId: number,
   itemId: number,
-  body: { completed: number; correct?: number | null; wrong?: number | null },
+  body: { completed: number; correct?: number | null; wrong?: number | null; blank?: number | null },
 ): Promise<unknown> {
   return apiRequest(`/api/v2/student/tasks/${taskId}/items/${itemId}/set-completed`, {
     method: "POST",

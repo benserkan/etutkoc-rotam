@@ -318,7 +318,8 @@ function ItemRow({
 
   // Kitapsız deneme kaleminde de D/Y mantıklı (TYT branş denemesi → 40 soru/35 D/5 Y)
   const isDeneme = item.book_id == null;
-  const hasResult = item.correct != null || item.wrong != null;
+  const hasResult =
+    item.correct != null || item.wrong != null || item.blank != null;
 
   function inc() {
     if (blocked || item.completed >= max) return;
@@ -337,6 +338,7 @@ function ItemRow({
         completed: r.completed,
         correct: r.correct,
         wrong: r.wrong,
+        blank: r.blank,
       },
       {
         onSuccess: () => setSheetOpen(false),
@@ -362,6 +364,7 @@ function ItemRow({
             <ResultBadge
               correct={item.correct}
               wrong={item.wrong}
+              blank={item.blank}
               completed={item.completed}
               onEdit={() => setSheetOpen(true)}
               blocked={blocked}
@@ -430,6 +433,7 @@ function ItemRow({
         initialCompleted={item.completed > 0 ? item.completed : item.planned}
         initialCorrect={item.correct}
         initialWrong={item.wrong}
+        initialBlank={item.blank}
         isDeneme={isDeneme}
         saving={setItem.isPending}
       />
@@ -445,17 +449,20 @@ function ItemRow({
 function ResultBadge({
   correct,
   wrong,
+  blank,
   completed,
   onEdit,
   blocked,
 }: {
   correct: number | null;
   wrong: number | null;
+  blank: number | null;
   completed: number;
   onEdit: () => void;
   blocked: boolean;
 }) {
-  const hasResult = correct != null || wrong != null;
+  const hasResult = correct != null || wrong != null || blank != null;
+  void completed;
   if (!hasResult) {
     return (
       <button
@@ -465,13 +472,13 @@ function ResultBadge({
         className="inline-flex items-center gap-1 mt-0.5 text-[11px] text-muted-foreground hover:text-foreground transition disabled:opacity-40"
       >
         <Plus className="size-2.5" aria-hidden />
-        doğru/yanlış ekle
+        doğru/yanlış/boş ekle
       </button>
     );
   }
   const c = correct ?? 0;
   const w = wrong ?? 0;
-  const blank = Math.max(0, completed - c - w);
+  const b = blank ?? 0;
   return (
     <button
       type="button"
@@ -483,10 +490,10 @@ function ResultBadge({
       <span className="text-emerald-700 font-medium">{c} doğru</span>
       <span className="text-muted-foreground/60">·</span>
       <span className="text-rose-700 font-medium">{w} yanlış</span>
-      {blank > 0 ? (
+      {b > 0 ? (
         <>
           <span className="text-muted-foreground/60">·</span>
-          <span className="text-muted-foreground">{blank} boş</span>
+          <span className="text-muted-foreground">{b} boş</span>
         </>
       ) : null}
     </button>

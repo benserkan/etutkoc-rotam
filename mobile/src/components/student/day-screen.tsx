@@ -122,6 +122,7 @@ export function DayScreen({ date, safeTop = true }: { date?: string; safeTop?: b
                   completed: u.completed,
                   correct: u.correct,
                   wrong: u.wrong,
+                  blank: u.blank,
                 });
               }
             })
