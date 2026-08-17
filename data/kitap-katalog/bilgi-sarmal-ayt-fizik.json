@@ -1,0 +1,420 @@
+{
+ "name": "Bilgi Sarmal AYT Fizik Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "AYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Vektörler",
+   "test_count": 4,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Kesişen Kuvvetler",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Tork ve Denge",
+   "test_count": 4,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi (Vektör Kesişen Kuvvet)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Ağırlık ve Kütle Merkezi",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 4,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi (Basit Makineler Kütle Merkezi)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi (Kuvvet)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 1",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Doğrusal Hareket",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Bağıl Hareket",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Birleşik Hareket",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi – 1",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi – 1",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 2",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Newton'un Hareket Yasaları",
+   "test_count": 5,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi – 2",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "İş, Güç ve Enerji",
+   "test_count": 5,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi – 3",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi – 2",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 3",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Yeryüzünde Hareket",
+   "test_count": 6,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi – 4",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "İtme ve Çizgisel Momentum",
+   "test_count": 5,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi – 5",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 4",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Çembersel Hareket",
+   "test_count": 5,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Dönerek Öteleme Hareketi ve Eylemsizlik Momenti",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi – 6",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Açısal Momentum",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Kepler Yasaları ve Genel Çekim Yasası",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 5",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Basit Harmonik Hareket",
+   "test_count": 4,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi – 7",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi – 3",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 6",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektriksel Kuvvet",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektrik Alan",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektriksel Potansiyel",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektriksel Potansiyel Enerji",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 7",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Yüklü Parçacıkların Düzgün Elektrik Alandaki Hareketi",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sığaçlar",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi (Elektrik)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 8",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Manyetik Alan",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Manyetik Kuvvet",
+   "test_count": 5,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 9",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektromanyetik İndüksiyon",
+   "test_count": 4,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Alternatif Akım",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Transformatörler",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi (Manyetizma)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 10",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Su Dalgalarında Kırınım - Girişim",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Işıkta Kırınım ve Girişim",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Doppler Olayı",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektromanyetik Dalgalar",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi (Modern Fizik)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi (Dalga Mekaniği)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 11",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Atom Modelleri",
+   "test_count": 5,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Büyük Patlama ve Evrenin Oluşumu",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Atom Altı Parçacıklar",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Radyoaktivite",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi (Atom Fiziğine Giriş ve Radyoaktivite)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi (Atom Fiziğine Giriş Ve Radyoaktivite)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 12",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Özel Görelilik",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Fotoelektrik Olayı",
+   "test_count": 5,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Compton Saçılması",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "De Broglie Dalga Boyu ve Işığın İkili Doğası",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi (Modern Fizik)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi (Modern Fizik)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 13",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "ÖSYM Tipi (Modern Fizik)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Simülasyon Testi (Modern Fizik)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 14",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 15",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 16",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 17",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sarmal Test – 18",
+   "test_count": 1,
+   "source": "body_text_parse"
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Bölüm listesi gövde metin katmanından deterministik kuruldu (TEST başlıkları 'BÖLÜM - Konu – N' 17pt; ÖSYM Tipi konu adlı; Sarmal/Simülasyon kendi serileri). Pipeline TOC okuması kesikti (72 test); gövde 158 test, bölüm-içi zincirler boşluksuz, sayfa/test 2.18."
+ ]
+}
