@@ -215,7 +215,9 @@ function CompleteSheetInner({
           - dış padding payı (üst+alt = 1.5rem mobilde, 3rem masaüstünde). */}
       <div
         className={cn(
-          "relative w-full max-w-md bg-card rounded-2xl shadow-2xl",
+          // overflow-hidden: header/footer'ın kare köşeli bg-card şeritleri
+          // rounded-2xl köşelerin ÜSTÜNE taşmasın (köşe stil bozulması)
+          "relative w-full max-w-md bg-card rounded-2xl shadow-2xl overflow-hidden",
           "border border-border flex flex-col",
           "max-h-[calc(100dvh-1.5rem)] sm:max-h-[calc(100dvh-3rem)]",
         )}
