@@ -623,6 +623,18 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
     saatlerce başlamadı sanılıp elle başlatıldı; bayat zincir sonra aynı
     işaretle İKİNCİ Paraf koşusu başlattı (aynı komut olduğundan zararsız ama
     yarış — zincir yerine bitiş bildirimiyle elle tetik tercih edilir).
+  - **Bilgi Sarmal AYT Fizik (id=108→107): 81 bölüm · 158 test · 63/81 eşli
+    (2026-08-17, commit `e859cbe`).** Pipeline 72 test görmüştü (TOC kesik +
+    kategori serileri tek kovada). Gövde-önce metin yürüyüşü: TEST başlıkları
+    17pt "BÖLÜM - Konu – N" (3 varyant: konu adı satır sarması · başlık 15pt'e
+    düşer · sonek eksik — kural gevşetilip "Test+rakam varsa TEST" yapıldı);
+    Test numarası BÖLÜM BAŞINA sıfırlanır → tekilleştirme anahtarı (kategori,
+    bölüm, no) OLMALI (bölümsüz anahtar 117→39'a düşürmüştü). ÖSYM Tipi
+    sayfaları konu adı taşır; Sarmal Test – 1..18 + Simülasyon Testi ayrı
+    seriler. 7 bölüm (KUVVET/HAREKET/ELEKTRİK/MANYETİZMA/DALGA MEKANİĞİ/
+    MODERN FİZİK/ATOM FİZİĞİ — sonuncusu tüm-büyük-harf önek ayrıştırması),
+    zincirler boşluksuz, sayfa/test 2.18. Sarmal ×18 kümülatif karma →
+    bilinçli eşleşmesiz; ÖSYM Tipi/Simülasyon komşu-satır konusuna bağlandı.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
