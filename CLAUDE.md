@@ -6,6 +6,32 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## GÖREV D/Y GİRİŞİNE BOŞ SAYISI — CANLI (2026-08-17, commit `ff6c96f`, migration `q7r0u3w4w77q`)
+
+**Tetikleyici (kullanıcı):** öğrenci görevde yalnız doğru/yanlış giriyordu; boş
+görünmeyince koç kaç sorunun GERÇEKTEN çözüldüğünü göremiyordu. Web + mobil.
+- **Migration `q7r0u3w4w77q`** (← p6q9t2v3v66p, additive): `task_book_items.
+  blank_count` (nullable; eski kayıtlar NULL = girilmemiş). Prod head bu.
+- **Backend:** öğrenci `set-completed`/`complete` + koç `/result` body'lerine
+  `blank`; doğrulama kitapsız denemede **c+w+b ≤ çözülen** (kitaplı görevde
+  D/Y/B soru sayısı, tavansız — birim farkı korunur); serializer'lar
+  `blank`/`blank_count` döner; sentinel None = alan korunur, completed=0 → üçü
+  de NULL. **Yan düzeltme:** kitapsız kalemde `uncomplete_task` D/Y'yi hiç
+  temizlemiyormuş (continue dalı atlıyordu) — simetri sağlandı.
+- **Web:** paylaşılan `CompleteSheet` 3 alanlı (Doğru/Yanlış/Boş); denemede
+  D+Y girilince boş OTOMATİK önerilir (React kuralı: effect'te setState yasak →
+  öneri event handler'da). Öğrenci task-card + koç task-item-result-badge
+  rozetleri "NB" gösterir (artık türetilmiş değil gerçek değer).
+- **Mobil (JS-only → OTA `0e063d30`, runtime 1.0.0, android+ios):** task-sheet
+  "Boş (soru)" alanı + doğrulama + lib gövdeleri. Store build gerekmedi.
+- **Test `test_api_v2_blank_count.py` 10/10** (kaydet/dön + deneme kuralı 422 +
+  complete/uncomplete + sentinel korunumu + negatif 422 + koç düzeltme/görme).
+  Regresyon: student_mutations 12 · weekly_plan 14 · teacher_read 12 GREEN.
+- Deploy: yedek `pre_blank_20260817.dump` + web/worker/next rebuild; prod head
+  `q7r0u3w4w77q`, kolon + healthz doğrulandı.
+
+---
+
 ## MARHAN AKADEMİ DEMO EVRENİ — CANLI (2026-08-15, commit `9db7758`, migration YOK)
 
 **Tetikleyici (kullanıcı):** mizaç-temelli yaklaşımı ürün olarak satan firma ile
