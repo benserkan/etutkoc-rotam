@@ -1,0 +1,523 @@
+{
+ "name": "3D TYT Kimya Soru Bankası",
+ "publisher": "3D Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Simyadan Kimya'ya",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 9
+  },
+  {
+   "label": "Kimya Disiplinleri ve Kimyacıların Çalışma Alanları",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 13
+  },
+  {
+   "label": "Kimyanın Sembolik Dili",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 17
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYA BİLİMİ) - 1",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 21
+  },
+  {
+   "label": "Kimya Uygulamalarında İş Sağlığı ve Güvenliği",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 23
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYA BİLİMİ) - 2",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 27
+  },
+  {
+   "label": "Atom Modelleri",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 29
+  },
+  {
+   "label": "Atomdaki Temel Tanecikler ve Eşitlikler",
+   "test_count": 3,
+   "source": "title_pass",
+   "page": 33
+  },
+  {
+   "label": "Bire Bir ÖSYM (ATOM YAPISI VE PERİYODİK SİSTEM) - 1",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 39
+  },
+  {
+   "label": "Periyodik Sistem ve Elektron Dizilimleri",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 41
+  },
+  {
+   "label": "Periyodik Sistemde Gruplar ve Özellikleri",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 45
+  },
+  {
+   "label": "Periyodik Özelliklerin Değişimi",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 49
+  },
+  {
+   "label": "Bire Bir ÖSYM (ATOM YAPISI VE PERİYODİK SİSTEM) - 2",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 53
+  },
+  {
+   "label": "TÜMEVARIM - I",
+   "test_count": 5,
+   "source": "title_pass",
+   "page": 55
+  },
+  {
+   "label": "Kimyasal Türler",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 65
+  },
+  {
+   "label": "Atom ve İyonların Lewis Yapısı",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 67
+  },
+  {
+   "label": "İyonik Bileşiklerin Oluşumu ve Adlandırılması",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 69
+  },
+  {
+   "label": "İyonik Bileşiklerde Çözünme",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 73
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYASAL TÜRLER ARASI ETKİLEŞİMLER) - 1",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 75
+  },
+  {
+   "label": "Kovalent Bağlı Bileşiklerin Oluşumu ve Adlandırılması",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 77
+  },
+  {
+   "label": "Kovalent Bağlı Moleküllerde Polarlık",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 81
+  },
+  {
+   "label": "Metalik Bağ",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 83
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYASAL TÜRLER ARASI ETKİLEŞİMLER) - 2",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 85
+  },
+  {
+   "label": "Van der Waals Etkileşimleri ve Hidrojen Bağı",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 87
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 91
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYASAL TÜRLER ARASI ETKİLEŞİMLER) - 3",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 95
+  },
+  {
+   "label": "Katılar ve Özellikleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 97
+  },
+  {
+   "label": "Sıvılar ve Özellikleri",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 99
+  },
+  {
+   "label": "Gazlar ve Özellikleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 103
+  },
+  {
+   "label": "Saf Maddelerde Hâl Değişimi",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 105
+  },
+  {
+   "label": "Bire Bir ÖSYM (MADDENİN HALLERİ)",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 109
+  },
+  {
+   "label": "Su ve Hayat",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 111
+  },
+  {
+   "label": "Çevre Kimyası",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 113
+  },
+  {
+   "label": "Bire Bir ÖSYM (DOĞA VE KİMYA)",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 117
+  },
+  {
+   "label": "TÜMEVARIM - II",
+   "test_count": 6,
+   "source": "title_pass",
+   "page": 119
+  },
+  {
+   "label": "Kütlenin Korunumu Kanunu",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 131
+  },
+  {
+   "label": "Sabit Oranlar Kanunu",
+   "test_count": 3,
+   "source": "title_pass",
+   "page": 133
+  },
+  {
+   "label": "Katlı Oranlar Kanunu",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 139
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYASAL HESAPLAMALAR) - 1",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 143
+  },
+  {
+   "label": "Mol Kavramı",
+   "test_count": 3,
+   "source": "title_pass",
+   "page": 145
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYASAL HESAPLAMALAR) - 2",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 151
+  },
+  {
+   "label": "Tepkime Denklemi ve Tepkime Denkleştirme",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 153
+  },
+  {
+   "label": "Yanma Tepkimeleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 155
+  },
+  {
+   "label": "Asit - Baz (Nötralleşme) Tepkimeleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 157
+  },
+  {
+   "label": "Analiz - Sentez ve Çözünme - Çökelme Tepkimeleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 159
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYASAL HESAPLAMALAR) - 3",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 161
+  },
+  {
+   "label": "Tepkime Denklemlerinde Mollü Geçiş Problemleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 163
+  },
+  {
+   "label": "Sınırlayıcı Bileşen - Verim ve Artan Madde Problemleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 165
+  },
+  {
+   "label": "Saflık - Karışım - Formül Bulma Problemleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 167
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYASAL HESAPLAMALAR) - 4",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 169
+  },
+  {
+   "label": "Homojen - Heterojen Karışımlar ve Çözünme Süreci",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 171
+  },
+  {
+   "label": "Kütlece Yüzde Derişim",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 175
+  },
+  {
+   "label": "Derişim Çeşitleri ve ppm Kavramı",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 179
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 181
+  },
+  {
+   "label": "Bire Bir ÖSYM (KARIŞIMLAR) - 1",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 185
+  },
+  {
+   "label": "Tanecik Boyutu Farkıyla Ayırma",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 187
+  },
+  {
+   "label": "Yoğunluk Farkıyla Ayırma",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 189
+  },
+  {
+   "label": "Çözünürlük Farkıyla Ayırma",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 191
+  },
+  {
+   "label": "Kaynama Noktası Farkıyla Ayırma",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 193
+  },
+  {
+   "label": "Bire Bir ÖSYM (KARIŞIMLAR) - 2",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 195
+  },
+  {
+   "label": "TÜMEVARIM - III",
+   "test_count": 6,
+   "source": "title_pass",
+   "page": 197
+  },
+  {
+   "label": "Asitler, Bazlar ve Özellikleri",
+   "test_count": 2,
+   "source": "title_pass",
+   "page": 209
+  },
+  {
+   "label": "Nötralleşme Tepkimeleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 213
+  },
+  {
+   "label": "pH ve pOH Kavramları - Asit Baz İndikatörleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 215
+  },
+  {
+   "label": "Bire Bir ÖSYM (ASİTLER, BAZLAR VE TUZLAR) - 1",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 217
+  },
+  {
+   "label": "Asitler ve Bazların Metallerle Tepkimeleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 219
+  },
+  {
+   "label": "Yaygın Asit ve Bazların Kullanım Alanları",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 221
+  },
+  {
+   "label": "Asit ve Bazların Fayda ve Zararları",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 223
+  },
+  {
+   "label": "Tuzlar",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 225
+  },
+  {
+   "label": "Bire Bir ÖSYM (ASİTLER, BAZLAR VE TUZLAR) - 2",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 227
+  },
+  {
+   "label": "Temizlik Malzemeleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 229
+  },
+  {
+   "label": "Polimerler",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 231
+  },
+  {
+   "label": "Kozmetikler ve İlaçlar",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 233
+  },
+  {
+   "label": "Hazır Gıdalar",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 235
+  },
+  {
+   "label": "Yenilebilir Yağ Türleri",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 237
+  },
+  {
+   "label": "Bire Bir ÖSYM (KİMYA HER YERDE)",
+   "test_count": 1,
+   "source": "title_pass",
+   "page": 239
+  },
+  {
+   "label": "TÜMEVARIM - IV",
+   "test_count": 7,
+   "source": "title_pass",
+   "page": 241
+  },
+  {
+   "label": "Beceri Temelli Yeni Nesil Sorular",
+   "test_count": 9,
+   "source": "title_pass",
+   "page": 255
+  }
+ ],
+ "warnings": [
+  "'Kimyasal Türler': sayfa uyuşmazlığı (67/65)",
+  "'Atom ve İyonların Lewis Yapısı': sayfa uyuşmazlığı (69/67)",
+  "'İyonik Bileşiklerin Oluşumu ve Adlandırılması': sayfa uyuşmazlığı (73/69)",
+  "'İyonik Bileşiklerde Çözünme': sayfa uyuşmazlığı (75/73)",
+  "'Kovalent Bağlı Bileşiklerin Oluşumu ve Adlandırılması': sayfa uyuşmazlığı (81/77)",
+  "'Kovalent Bağlı Moleküllerde Polarlık': sayfa uyuşmazlığı (83/81)",
+  "'Metalik Bağ': sayfa uyuşmazlığı (85/83)",
+  "'Zayıf Etkileşimler': sayfa uyuşmazlığı (91/87)",
+  "'Van der Waals Etkileşimleri ve Hidrojen Bağı': sayfa uyuşmazlığı (95/91)",
+  "'Fiziksel ve Kimyasal Değişimler': sayfa uyuşmazlığı (99/95)",
+  "'Katılar ve Özellikleri': sayfa uyuşmazlığı (105/97)",
+  "'Sıvılar ve Özellikleri': sayfa uyuşmazlığı (109/99)",
+  "'Gazlar ve Özellikleri': sayfa uyuşmazlığı (111/103)",
+  "'Saf Maddelerde Hal Değişimi': sayfa uyuşmazlığı (113/105)",
+  "'Mol Kavramı': sayfa uyuşmazlığı (149/145)",
+  "'Tepkime Denklemi ve Tepkime Denkleştirme': sayfa uyuşmazlığı (155/153)",
+  "'Yanma Tepkimeleri': sayfa uyuşmazlığı (157/155)",
+  "'Asit - Baz (Nötralleşme) Tepkimeleri': sayfa uyuşmazlığı (159/157)",
+  "'Analiz - Sentez ve Çözünme - Çökelme Tepkimeleri': sayfa uyuşmazlığı (161/159)",
+  "'Tepkime Denklemlerinde Mollü Geçiş Problemleri': sayfa uyuşmazlığı (165/163)",
+  "'Sınırlayıcı Bileşen - Verim ve Artan Madde Problemleri': sayfa uyuşmazlığı (167/165)",
+  "'Saflık - Karışım - Formül Bulma Problemleri': sayfa uyuşmazlığı (169/167)",
+  "'Çözeltiler': sayfa uyuşmazlığı (175/171)",
+  "'Homojen - Heterojen Karışımlar ve Çözünme Süreci': sayfa uyuşmazlığı (177/171)",
+  "'Kütlece Yüzde Derişim': sayfa uyuşmazlığı (179/175)",
+  "'Derişim Çeşitleri ve ppm Kavramı': sayfa uyuşmazlığı (181/179)",
+  "'Koligatif Özellikler': sayfa uyuşmazlığı (183/181)",
+  "'Tanecik Boyutu Farkıyla Ayırma': sayfa uyuşmazlığı (189/187)",
+  "'Yoğunluk Farkıyla Ayırma': sayfa uyuşmazlığı (191/189)",
+  "'Çözünürlük Farkıyla Ayırma': sayfa uyuşmazlığı (193/191)",
+  "'Kaynama Noktası Farkıyla Ayırma': sayfa uyuşmazlığı (195/193)",
+  "İçindekiler test sayısı yalnız 4/85 satırda — azınlık sayı model çıkarımı olabilir, o konular da gövde taramasıyla sayıldı.",
+  "Basılı sayfa numarası okunamadı — ofset 0 varsayıldı, sayıları kontrol edin.",
+  "'Birer Bir ÖSYM (ATOM YAPISI VE PERİYODİK SİSTEM)': bant bulunamadı — elle doldurun.",
+  "'Birer Bir ÖSYM (KARIŞIMLAR)': bant bulunamadı — elle doldurun.",
+  "'TÜMEVARIM - I': içindekiler 1 demişti, tarama 5 buldu — tarama esas alındı.",
+  "'TÜMEVARIM - III (KARIŞIMLAR)': içindekiler 1 demişti, tarama 6 buldu — tarama esas alındı.",
+  "'TÜMEVARIM - IV': içindekiler 1 demişti, tarama 7 buldu — tarama esas alındı.",
+  "'Beceri Temelli Yeni Nesil Sorular': içindekiler 1 demişti, tarama 9 buldu — tarama esas alındı."
+ ],
+ "notes": [
+  "Bölüm listesi gövde başlık-sahiplenme geçişiyle kuruldu (içindekiler sayfaları hizasız + test taşımayan ara başlıklar elendi); 132 test başlangıcının üst bandı Gemini ile okundu, seri numaralarıyla çapraz doğrulandı."
+ ]
+}
