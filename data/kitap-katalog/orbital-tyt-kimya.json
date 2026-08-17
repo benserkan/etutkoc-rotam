@@ -1,0 +1,373 @@
+{
+ "name": "Orbital TYT Kimya Soru Bankası",
+ "publisher": "Orbital Yayınları",
+ "subject": "TYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Simyadan Kimyaya",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kimya Disiplinleri",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kimyanın Sembolik Dili",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kimya Uygulamalarında İş Sağlığı ve Güvenliği",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kimya Laboratuvarlarında Kullanılan Temel Malzemeler",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (KİMYA BİLİMİ)",
+   "test_count": 4,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 1",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Atom Teorileri",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Atomun Yapısı",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Elementlerin Yerleşim Esasları",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Periyodik Özellikler",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (ATOM VE PERİYODİK SİSTEM)",
+   "test_count": 4,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 2",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kimyasal Türler Arası Etkileşimler ve Sınıandırılması",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "İyonik Bağ",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "İyonik Bileşiklerin Adlandırılması",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kovalent Bağ",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kovalent Bağlı Bileşiklerin Adlandırılması",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Metalik Bağ",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Zayıf Etkileşimler",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (KİMYASAL TÜRLER ARASI ETKİLEŞİMLER)",
+   "test_count": 4,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 3",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Maddenin Fiziksel Halleri",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Katılar",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Sıvılar",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Gazlar",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Hal Değişim Grakleri",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (MADDENİN HALLERİ)",
+   "test_count": 4,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 4",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Su ve Hayat",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Çevre Kimyası",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (DOĞA VE KİMYA)",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 5",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kütlenin Korunumu Yasası",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Sabit Oranlar Yasası",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Katlı Oranlar Yasası",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (KİMYANIN TEMEL KANUNLARI)",
+   "test_count": 4,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 6",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Mol − Tanecik Sayısı İlişkisi",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Mol − Kütle İlişkisi",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Bağıl Atom Kütlesi ve akb",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Mol − Hacim İlişkisi",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (MOL KAVRAMI)",
+   "test_count": 5,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 7",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kimyasal Tepkimeler ve Denklemler",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Denklemli Miktar Geçişleri",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Artan Madde Problemleri",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Saık, Verim ve Yüzde Problemleri",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Mol Kütlesi ve Formül Bulma Problemleri",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Karışım Problemleri",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (KİMYASAL TEPKİMELER VE HESAPLAMALAR)",
+   "test_count": 5,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 8",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Karışımların Sınıandırılması",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Çözünme Olgusu",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Çözeltiler ve Derişimleri",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Karışımları Ayırma ve Saaştırma Yöntemleri",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (KARIŞIMLAR)",
+   "test_count": 4,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 9",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Asitlerin ve Bazların Genel Özellikleri",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Asitlerin ve Bazların Tepkimeleri",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Tuzlar",
+   "test_count": 3,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (ASİTLER, BAZLAR VE TUZLAR)",
+   "test_count": 4,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 10",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Temizlik Malzemeleri",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Polimerler",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Kozmetikler ve İlaçlar",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Hazır Gıdalar ve Yağlar",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "p Testleri (KİMYA HER YERDE)",
+   "test_count": 2,
+   "source": "toc_text_parse"
+  },
+  {
+   "label": "Deneme 11",
+   "test_count": 1,
+   "source": "toc_text_parse"
+  }
+ ],
+ "warnings": [
+  "İçindekiler okumalarından biri başarısız — TEK okuma esas alındı, kontrol edin.",
+  "'Asitlerin ve Bazların Tepkimeleri': bant bulunamadı — elle doldurun."
+ ],
+ "notes": [
+  "İçindekiler deterministik metin parser'ıyla çıkarıldı (Gemini tek-okuma kuyruğu kesmişti; 10-11. üniteler eksikti). s/p/d Testleri yapısı: konu testleri + p Testleri (ünite pekiştirme) + Deneme N."
+ ]
+}
