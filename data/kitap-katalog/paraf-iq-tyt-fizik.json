@@ -1,0 +1,440 @@
+{
+ "name": "Paraf İQ TYT Fizik Soru Bankası",
+ "publisher": "Paraf Yayınları",
+ "subject": "TYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Fizik Biliminin Önemi",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Fiziğin Uygulama Alanları",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Fiziksel Niceliklerin Sınıflandırılması",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Bilim Araştırma Merkezleri",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (FİZİK BİLİMİNE GİRİŞ)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (FİZİK BİLİMİNE GİRİŞ)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (FİZİK BİLİMİNE GİRİŞ)",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Kütle Ve Hacim",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Özkütle",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Dayanıklılık",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Adezyon Ve Kohezyon",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Yüzey Gerilimi Ve Kılcallık",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (MADDE VE ÖZELLİKLERİ)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (MADDE VE ÖZELLİKLERİ)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (MADDE VE ÖZELLİKLERİ)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Isı Ve Sıcaklık",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Isı - Sıcaklık İlişkisi Ve Öz Isı",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Hâl Değişimi",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Isı Alışverişi",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Enerji İletim Yolları Ve Enerji İletim Hızı",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Genleşme",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (ISI VE SICAKLIK)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (ISI VE SICAKLIK)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (ISI VE SICAKLIK)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Karma Testler (ÜNİTE 1-3)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Katı Basıncı",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sıvı Basıncı",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sıvı Basıncının İletilmesi",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Açık Hava Ve Gaz Basıncı",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Hareketli Akışkanların Basıncı",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Kaldırma Kuvvetinin Değişkenleri",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Kaldırma Kuvvetinin Uygulamaları",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (BASINÇ VE KALDIRMA KUVVETİ)",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (BASINÇ VE KALDIRMA KUVVETİ)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (BASINÇ VE KALDIRMA KUVVETİ)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Konum, Yer Değiştirme, Sürat Ve Hız",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Düzgün Doğrusal Hareket",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Kuvvet",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Newton’ın Hareket Yasaları",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sürtünme Kuvveti",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (HAREKET VE KUVVET)",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (HAREKET VE KUVVET)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (HAREKET VE KUVVET)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "İş, Enerji Ve Güç",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Mekanik Enerji",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Enerjinin Korunumu Ve Enerji Dönüşümleri",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Verim",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Enerji Kaynakları",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (ENERJİ)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (ENERJİ)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (ENERJİ)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Karma Testler (ÜNİTE 4-6)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektrik Yükleri",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektriklenme Çeşitleri",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Yük Dağılımı Ve Elektroskop",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektriksel Kuvvet Ve Elektrik Alan",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektrik Akımı, Potansiyel Fark Ve Direnç",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Dirençlerin Bağlanması",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Üreteçlerin Bağlanması",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Elektriksel Enerji Ve Güç",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Lambalı Devreler",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Mıknatıs Ve Manyetik Alan",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Akım Ve Manyetik Alan",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (ELEKTRİK VE MANYETİZMA)",
+   "test_count": 4,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (ELEKTRİK VE MANYETİZMA)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (ELEKTRİK VE MANYETİZMA)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Dalgaların Temel Değişkenleri",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Yay Dalgaları",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Su Dalgaları",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Ses Dalgaları",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Deprem Dalgaları",
+   "test_count": 1,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (DALGALAR)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (DALGALAR)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (DALGALAR)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Aydınlanma",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Gölge",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Düzlem Aynalar",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Küresel Aynalar",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Kırılma",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Mercekler",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Prizmalar Ve Renk",
+   "test_count": 3,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Pekiştirelim (OPTİK)",
+   "test_count": 4,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Sınav Provası (OPTİK)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "IQ Yorum (OPTİK)",
+   "test_count": 2,
+   "source": "body_text_parse"
+  },
+  {
+   "label": "Karma Testler (ÜNİTE 7-9)",
+   "test_count": 3,
+   "source": "body_text_parse"
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Bölüm listesi gövde metin katmanından deterministik çıkarıldı (Kavrayalım testleri sayfa üstü konu adlarıyla bölündü; Pekiştirelim/Sınav Provası/IQ Yorum ünite bazlı; Karma Testler üçer ünite kapsar). Toplam ünite-içi seri sayımıyla çapraz doğrulandı (153)."
+ ]
+}
