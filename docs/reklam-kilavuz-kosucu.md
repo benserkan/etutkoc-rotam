@@ -2,10 +2,11 @@
 
 > Bu dosya, reklam çalışmasının TÜM kararlarını, hazır metinlerini ve kalınan yeri
 > içerir. Yeni sohbette "Instagram reklam işine devam — docs/reklam-kilavuz-kosucu.md
-> oku" demek yeterli. Son güncelleme: 2026-07-26 (YKS başarı kartları üretildi +
-> carousel A2 setine 2. reklam olarak eklendi + **28 Tem karar çerçevesi** — bölüm 7).
+> oku" demek yeterli. Son güncelleme: 2026-08-18 (30 günlük A2 verisi okundu +
+> **A3 Yerleştirme Kartları** fazı planlandı — bölüm 9).
 >
-> **SIRADAKİ İŞ: 28 Temmuz (Salı) değerlendirmesi — doğrudan bölüm 7'ye bak.**
+> **SIRADAKİ İŞ: bölüm 9.5 (revizyon) — kullanıcı kartları bitirince Facebook Sayfası
+> doldur → Ads Manager tek oturum (IG+FB, 18–64) → defter → 26 Ağu kararı.**
 
 ---
 
@@ -516,3 +517,152 @@ kontrol edilip silinmeli.
   yorumlarına aynı gün yanıt.
 - Sıklık > 4 → yeni kanca varyantlı video üretilir (bölüm 2'deki kaynaklarla).
 - Takvim dolunca reklamı durdur; Eylül kayıt döneminde yeniden aç.
+
+
+## 9) **A3 — YERLEŞTİRME KARTLARI** (2026-08-18): 30 günlük A2 verisi + yeni carousel planı
+
+**Kaynak:** `D:/ÖĞRENCİ KOÇLUĞU/reklam verileri/573118503086463-Reklamlar-19-Tem-2026-18-Ağu-2026.xlsx`
+(reklam düzeyi, 19 Tem–18 Ağu). **Strateji belgesi (tam):**
+https://claude.ai/code/artifact/c2e48abc-18b9-4a0e-861d-65af3ffb7dea ·
+kopyala-yapıştır notlar: `Desktop/etutkoc-yerlestirme-kartlari/reklam-kurulum-notlari-A3.txt`.
+
+### 9.1 Veri (30 gün, iki reklam aynı sette, bütçe artık **350 TL/gün**)
+
+| Ölçüm | Video v4 | Carousel (sıralama kartları) | Toplam |
+|---|---|---|---|
+| Harcama | 1.599 TL (%21) | 6.008 TL (%79) | **7.607 TL** |
+| Konuşma | 6 | 12 | **18** |
+| Konuşma başına | 267 TL | **501 TL** | **423 TL** (hedef 40–90 · tavan 150) |
+| Erişim / Gösterim | 5.511 / 9.563 | 13.923 / 43.765 | — / 53.328 |
+| Sıklık | 1,74 | **3,14** (eşik 3 aşıldı) | — |
+| CPM | 167 TL | 137 TL | 143 TL |
+| Bağlantı tıklaması · CPC · CTR | 63 · 25,4 · %0,66 | 240 · 25,0 · %0,55 | 303 · 25,1 · %0,57 |
+| Kalite · Etkileşim · Dönüşüm sıralaması | Ort · alt %35 · alt %35 | Ort · Ort · Ort | — |
+
+**5 Ağu'dan bu yana (13 gün):** 4.590 TL (353/gün) → 11 konuşma → **417 TL**;
+carousel bütçenin **%92'sini** aldı (9 konuşma, 470 TL), video 364 TL → 2 konuşma
+(182 TL). Yani 5 Ağu kararı (carousel duraklat / bütçe 200 kalsın) uygulanmamış
+görünüyor; sonuç değişmedi. Tıklama→konuşma %5,9 (Kampanya A %2,7; normal %15–30).
+Set 30 günde 18 olayla **hiç öğrenme evresinden çıkmadı** (çıkış ≈ 7 günde 50 olay).
+Bilinmeyen: 18 konuşmanın kaçı GERÇEK yazışma (kararı belirleyen tek sayı).
+
+### 9.2 Kararlar (kullanıcı isteği: yerleştirme sonuçlarıyla yeni carousel; sıralama reklamı dursun)
+
+1. **YKS Basari Kartlari - Carousel - v1 → DURAKLAT** (501 TL, sıklık 3,14, doydu;
+   yeni carousel aynı temanın somut hâli — ikisi yan yana Meta eskisini besler).
+2. **Video açık kalır** (konuşma başına en ucuz; farklı mesaj) → ad
+   `Kilavuz Kosucu A2 - Reel - v4`.
+3. **Yeni reklam `Yerlestirme Kartlari - Carousel - v1` AYNI sete 3. reklam** —
+   ayrı set/kampanya YOK (auction çakışması + bütçe bölünmesi). "Öğrenmeyi
+   bozmadan" mümkün değil (Meta: sete yeni reklam eklemek = önemli düzenleme =
+   öğrenme yeniden başlar) AMA set zaten hiç öğrenmedi → korunacak bir şey yok.
+   Tüm değişiklikler TEK oturumda, tek sıfırlama, yeni taban çizgisi = A3 gün 1.
+4. **Hedefleme aynı oturumda:** yaş **45–64 SERT** ("Orijinal hedef kitle
+   seçeneklerine geç" — üst sınır ancak orada sert; önceki "35 sert" sızdırmıştı),
+   detaylı hedefleme BOŞ (ebeveyn kutusu gider), Trabzon il + Türkçe. Gerekçe 7.8:
+   45–64 → 205 TL/konuşma vs 18–34 → 766 TL; carousel doğru yaşta 141 TL'ydi.
+   Yerleştirme kreatifinin izleyicisi 12. sınıf/mezun velisi. 5. günde hacim
+   yetmezse alt sınır 40.
+5. **Bütçe 350 kalır — şartlı:** 18 konuşmanın ≥4–5'i gerçek yazışmaysa. 0–2 ise
+   200'e in, 7. günde dönüşüm eylemini değiştir (form + geri arama; 7.8'in B dalı).
+6. **Kreatif kurulumu "mevcut gönderi" DEĞİL, doğrudan carousel reklamı:** kart
+   başına başlık ("Üniversite · Bölüm"), veliye yazılmış birincil metin, kart sırası
+   optimizasyonu KAPALI, otomatik profil son kartı AÇIK. Organik paylaşım ayrıca
+   (Tanıt düğmesine basılmaz).
+
+### 9.3 Yeni carousel — 7 kart (kapak + 6 öğrenci; ayrı CTA kartı yok)
+
+Kahraman = **yerleştiği üniversite (beyaz, büyük) + bölüm (altın, büyük)**;
+ÖSYM yerleştirme belgeli rozeti; künye ad·puan türü·başarı sırası; 1–2 cümle yorum
+(veli yorumu varsa öğrenci yorumunun yerine). Kapak: "Öğrencilerimiz nereye
+yerleşti?" + 6 satırlık liste (kaydırmayan da tamamını görür). Sıra kuralı: en
+tanınır üç sonuç (Tıp/Hukuk/Müh./devlet/tam burs) 2–4. kartta. Üniversite logosu
+YOK (marka hakkı), emoji yok, garanti dili yok, kişisel durum iması yok.
+**Üretici:** `Desktop/etutkoc-reklam-kaynak/yerlestirme_kartlari.py` (sistem
+python; aynı lacivert/altın şablon; STUDENTS listesi tek kaynak) →
+`Desktop/etutkoc-yerlestirme-kartlari/01…07.png`. Şu an Nisanur (KTÜ Tıp) ve Kaan
+(Özyeğin, %100 burslu) gerçek; Deniz/Şevval/Şimal/Öğrencimiz 2026 yerleştirmesi
+köşeli parantezli bekliyor (kart altına "ÖRNEK KART" notu basılır, veri girilince
+kalkar). **İzin:** 30 Tem onayı sonuç+yorum içindi; üniversite/bölüm yeni kişisel
+veri → kısa yeniden teyit + ekran görüntüsü.
+
+**Metinler** (tam hâli artifact + notlar dosyasında): birincil metin kancası "YKS
+2026 yerleştirme sonuçları açıklandı: öğrencilerimiz […] altı farklı üniversiteye
+yerleşti." · hazır sorular BU reklama özel (kaynak ayrımı): "Yerleştirme
+sonuçlarınızı gördüm; çocuğum için 2027 YKS hazırlığı hakkında bilgi almak
+istiyorum." / "Ücretsiz tanışma görüşmesi için uygun bir gün konuşabilir miyiz?" /
+"Yeni dönem kontenjan ve ücret bilgisi alabilir miyim?" · WhatsApp ilk yanıt ≤10 dk
+tek soru ("eylülde kaçıncı sınıf / mezun mu? hangi gün uygun?").
+
+### 9.4 Takvim + eşikler
+
+22 Ağu (72 s): dokunma; Dağılım→Yaş'ta 18–44 harcaması 0 mı teyit · 24 Ağu (5. gün):
+video >350 TL/konuşma → duraklat; hacim <700 gösterim/gün → yaş 40 · **26 Ağu (7.
+gün) ANA KARAR:** ≤200 + gerçek yanıt ≥%30 → devam (bütçe ancak şimdi, ≤%20 adım) ·
+200–300 → devam, tek değişiklik metin varyantı · >300 VEYA yanıt 0–1 → durdur, form
++ geri arama yapısı · 2 Eyl (14. gün): sıklık >3 hikâye karesi/kart sırası, >4 yeni
+kreatif · takvim dolarsa durdur. Eylül'de LGS/lise velisi (35–45) ayrı mini faz
+düşünülebilir — A3 bilinçli YKS velisi fazı.
+
+**Açık (kullanıcıdan):** 4 öğrencinin yerleştirme verisi + izin teyidi + 18
+konuşmanın gerçek yanıt sayısı + setin mevcut ayarlarının teyidi (yaş/ebeveyn
+kutusu/Advantage+/bütçe).
+
+
+### 9.5 **REVİZYON (18 Ağu akşam) — saha bilgisi teşhisi değiştirdi: iki-kanal modeli**
+
+**Kullanıcı bilgisi:** sıralama carousel'i ASLINDA çalıştı — Instagram'da kartı gören
+ÖĞRENCİLER aileleriyle paylaştı, aileler koçluk için ARADI: **6–7 verimli telefon
+görüşmesi**; 18 konuşmanın belki 6–7'si gerçek ve istekli veliler. Reklam izinleri
+alındı; ÖSYM belgesi gerekmiyor; **kartları kullanıcı kendisi tasarlıyor** (script
+referans olarak duruyor). Gözlem: gençler Instagram'da, aileler Facebook'ta.
+
+**Ne değişti (9.2'yi ezer):**
+- Meta'nın "konuşma" metriği asıl dönüşüm yolunu (öğrenci→aile→telefon) görmüyor →
+  7.8'deki "18–34 boşa gitti / yaş 45–64" çıkarımı GEÇERSİZ; sabahki 45–64 önerisi
+  geri çekildi. **Yaş 18–64.** A2'nin gerçek tabanı ≈ 7.607 TL ÷ 6–7 verimli görüşme
+  ≈ **1.100–1.250 TL/verimli görüşme** (Ads Manager'ın 423 TL'si değil).
+- **Yerleşim manuel Instagram + FACEBOOK** (FB Akış · Marketplace · Hikâyeler · Reels
+  + IG Akış · Hikâyeler · Reels; Audience Network/Messenger/sağ sütun/in-stream/arama
+  KAPALI). Bugüne dek veliye hiç ulaşılmamıştı. Ön şart: **Facebook Sayfası doldur**
+  (profil/kapak/hakkında + Reel + carousel'ler) — boş sayfa güveni bitirir.
+- Tek set korunur (350 TL/gün ikiye bölünmez); iki kanal DEFTERDEN ölçülür: her
+  arama/mesajda "nereden ulaştınız — IG'de çocuğunuz mu gösterdi / Facebook / tanıdık".
+  Yalnız bir platform bütçenin ≥%85'ini alıp görüşmeler öbüründen gelirse iki set
+  (IG 18–34 · FB 35–64; yaşlar kesişmez).
+- Eski carousel yine duraklatılır (yorgun, sıklık 3,14; yenisi aynı mekanizmanın
+  somut hâli) ama 5. günde yenisi tutmazsa geri açılır. Video kalır. Bütçe 350 →
+  26 Ağu'da takvimde yer varsa 420 (≤%20).
+- Kart kontrol listesi (kullanıcı tasarımı için): IG akış 4:5, FB akış 1:1 →
+  1080×1350 tasarla, üniversite+bölüm+telefon ortadaki 1080×1080 karede kalsın
+  (Ads Manager yerleşime göre kırpma) ya da 1:1 her yerde; kenar ≥60 px, en küçük
+  yazı ~28 px; kahraman üniversite→bölüm; telefon her kartta (aile karttan arıyor);
+  logo/emoji/garanti yok; en güçlü 3 sonuç 2–4. kartta. Birincil metne telefon
+  numarası eklendi ("…yazın ya da arayın: 0505 673 85 61").
+- **26 Ağu eşikleri (verimli görüşme başına, defterden):** ≤800 TL + takvimde yer →
+  devam + 420 · 800–1.500 → devam, metin varyantı · >1.500 veya 0–1 → form + geri
+  arama / "Şimdi Ara" yapısı.
+
+Artifact aynı URL'de güncellendi; `reklam-kurulum-notlari-A3.txt` revize.
+
+**Kartlar HAZIR (18 Ağu 13:45, kullanıcı tasarımı):** `D:/ÖĞRENCİ KOÇLUĞU/2026
+YERLEŞTİRME SONUÇLARI/kartlar/` — 7 × 1080×1080 (turuncu/lacivert seri, `build_cards.py`
++ KAYNAKLAR.md; üniversite logoları tanımlayıcı kullanımla VAR — Meta reddederse
+kapatılır). Veri: Şevval Yılmaz AYBÜ Tıp · Deniz Efe Erol ODTÜ Uluslararası İlişkiler
+(İng.) · Şimal Günay RTEÜ Tıp · Berra Demirbaş İTÜ Şehir ve Bölge Planlama (İng.) ·
+Zeynep Bayraktar Türk-Alman Ü. Makine Müh. (Almanca) · Öğrencimiz RTEÜ Tıp → kanca
+"6 öğrencimizden 3'ü Tıp Fakültesi'ne yerleşti" (117 kr). Reklam kart sırası: özet →
+Şevval (Tıp) → Deniz (ODTÜ) → Şimal (RTEÜ Tıp, bölge) → Berra (İTÜ) → Zeynep (TAÜ) →
+Öğrencimiz. Kurulum notu (metin/başlık/şablon/adımlar): aynı klasörde
+`reklam-kurulum-A3.txt` (kopyası Desktop/etutkoc-yerlestirme-kartlari/).
+
+**A3 YAYINDA ✅ (2026-08-18 akşam):** aynı sette 3 reklam — `Yerlestirme Kartlari -
+Carousel - v1` (yeni, açık) · `Yeni Etkileşim Reklamı` (video, açık; ad değişikliği
+yapılmadı — opsiyonel) · `YKS Basari Kartlari - Carousel - v1` (KAPALI, silinmedi).
+Set: yaş 18–64 · detaylı hedefleme boş · yerleşim manuel Facebook+Instagram · 350 TL/gün.
+Yayın tek seferde (set + Meta'nın 2 kreatif uyarlaması); yeni reklam "İşlem Sürüyor →
+İnceleniyor → Aktif". Meta arayüz dersi: yeni reklam paneli "Yayınla" yalnız o reklamı
+yayınlar, set taslakları "Gözden Geçir ve Yayınla"da bekler — ayrıca basılmalı; anahtar
+(açık/kapalı) taslak varken "birden fazla güncelleme yayınlanacak" uyarısı verir →
+önce taslakları yayınla, sonra anahtarı kapat. **SIRADA:** 72 saat dokunma · FB Sayfası
+doldur + IG organik carousel · defter · 22 Ağu bak · 24 Ağu 5. gün · **26 Ağu ana karar**.

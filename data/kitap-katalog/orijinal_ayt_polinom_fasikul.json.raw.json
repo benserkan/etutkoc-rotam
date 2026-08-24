@@ -1,0 +1,2243 @@
+{
+ "dividers": [
+  {
+   "pdf_idx": 2,
+   "bolum_no": 1,
+   "bolum_adi": "POLİNOMLAR",
+   "items": [
+    {
+     "label": "SABİT POLİNOM - SIFIR POLİNOMU",
+     "page": 5
+    },
+    {
+     "label": "POLİNOMLARIN EŞİTLİĞİ",
+     "page": 6
+    },
+    {
+     "label": "POLİNOMLARDA DERECE",
+     "page": 7
+    },
+    {
+     "label": "POLİNOMLARDA TOPLAMA-ÇIKARMA-ÇARPMA",
+     "page": 8
+    },
+    {
+     "label": "KATSAYILAR TOPLAMI VE SABİT TERİM",
+     "page": 9
+    },
+    {
+     "label": "POLİNOMLARDA BÖLME",
+     "page": 19
+    },
+    {
+     "label": "BAZI BİLGİLERİ VERİLEN POLİNOMLARIN İNŞASI",
+     "page": 20
+    },
+    {
+     "label": "ÖSYM TARZI TARAMA TESTLERİ",
+     "page": 31
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 46,
+   "bolum_no": 2,
+   "bolum_adi": "ÇARPANLARA AYIRMA",
+   "items": [
+    {
+     "label": "ORTAK ÇARPAN PARANTEZİNE ALMA",
+     "page": 48
+    },
+    {
+     "label": "GRUPLANDIRARAK ÇARPANLARA AYIRMA",
+     "page": 49
+    },
+    {
+     "label": "ÖZDEŞLİKLER",
+     "page": 55
+    },
+    {
+     "label": "ax² + bx + c ÜÇ TERİMLİSİNİN ÇARPANLARA AYRILMASI",
+     "page": 60
+    },
+    {
+     "label": "RASYONEL İFADELERİ SADELEŞTİRME",
+     "page": 63
+    },
+    {
+     "label": "ÖSYM TARZI TARAMA TESTLERİ",
+     "page": 74
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 85,
+   "bolum_no": 3,
+   "bolum_adi": "İKİNCİ DERECEDEN DENKLEMLER",
+   "items": [
+    {
+     "label": "ÇARPANLARA AYIRARAK DENKLEMİN ÇÖZÜM KÜMESİNİ BULMA",
+     "page": 87
+    },
+    {
+     "label": "DİSKRİMİNANTTAN FAYDALANARAK DENKLEMİN ÇÖZÜM KÜMESİNİ BULMA",
+     "page": 89
+    },
+    {
+     "label": "DEĞİŞKEN DEĞİŞTİRME YÖNTEMİ",
+     "page": 90
+    },
+    {
+     "label": "KÖKLÜ VE MUTLAK DEĞERLİ DENKLEMLER",
+     "page": 91
+    },
+    {
+     "label": "İKİNCİ DERECEDEN DENKLEMİN KÖK-KATSAYI İLİŞKİSİ",
+     "page": 97
+    },
+    {
+     "label": "KÖKLERİ VERİLEN İKİNCİ DERECEDEN DENKLEMİN BULUNMASI",
+     "page": 98
+    },
+    {
+     "label": "İKİNCİ DERECEDEN İKİ BİLİNMEYENLİ DENKLEM SİSTEMLERİ",
+     "page": 100
+    },
+    {
+     "label": "ÖSYM TARZI TARAMA TESTLERİ",
+     "page": 120
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 110,
+   "bolum_no": 4,
+   "bolum_adi": "KARMAŞIK SAYILAR",
+   "items": [
+    {
+     "label": "KARMAŞIK SAYILAR",
+     "page": 112
+    },
+    {
+     "label": "i'NİN KUVVETLERİ",
+     "page": 113
+    },
+    {
+     "label": "İKİ KARMAŞIK SAYININ EŞİTLİĞİ",
+     "page": 114
+    },
+    {
+     "label": "BİR KARMAŞIK SAYININ EŞLENİĞİ",
+     "page": 114
+    },
+    {
+     "label": "ÖSYM TARZI TARAMA TESTLERİ",
+     "page": 120
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 131,
+   "bolum_no": 5,
+   "bolum_adi": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "items": [
+    {
+     "label": "BİRİNCİ DERECEDEN BİR BİLİNMEYENLİ EŞİTSİZLİKLER",
+     "page": 133
+    },
+    {
+     "label": "İKİNCİ DERECEDEN BİR BİLİNMEYENLİ EŞİTSİZLİKLER",
+     "page": 134
+    },
+    {
+     "label": "ÇARPIM VE BÖLÜM BİÇİMİNDEKİ EŞİTSİZLİKLER",
+     "page": 136
+    },
+    {
+     "label": "MUTLAK DEĞERLİ EŞİTSİZLİKLER",
+     "page": 137
+    },
+    {
+     "label": "EŞİTSİZLİK SİSTEMLERİ",
+     "page": 138
+    },
+    {
+     "label": "ÖSYM TARZI TARAMA TESTLERİ",
+     "page": 148
+    }
+   ],
+   "is_divider": true
+  },
+  {
+   "pdf_idx": 163,
+   "bolum_no": 6,
+   "bolum_adi": "PARABOL",
+   "items": [
+    {
+     "label": "PARABOLÜN EKSENLERİ KESTİĞİ NOKTALAR",
+     "page": 166
+    },
+    {
+     "label": "PARABOLÜN TEPE NOKTASI",
+     "page": 167
+    },
+    {
+     "label": "SİMETRİ EKSENİ",
+     "page": 168
+    },
+    {
+     "label": "PARABOLÜN EN BÜYÜK VE EN KÜÇÜK DEĞERİ",
+     "page": 169
+    },
+    {
+     "label": "PARABOLÜN ÇİZİLMESİ",
+     "page": 170
+    },
+    {
+     "label": "PARABOL DENKLEMİNİN YAZILMASI",
+     "page": 181
+    },
+    {
+     "label": "PARABOL İLE DOĞRUNUN BİRBİRİNE GÖRE DURUMLARI",
+     "page": 182
+    },
+    {
+     "label": "PARABOLDE SİMETRİ VE ÖTELEME",
+     "page": 183
+    },
+    {
+     "label": "İKİNCİ DERECEDEN İKİ BİLİNMEYENLİ EŞİTSİZLİKLER",
+     "page": 184
+    },
+    {
+     "label": "ÖSYM TARZI TARAMA TESTLERİ",
+     "page": 195
+    }
+   ],
+   "is_divider": true
+  }
+ ],
+ "scan1": {
+  "0": {
+   "h": null,
+   "b": "ÖN SÖZ",
+   "n": null
+  },
+  "1": {
+   "h": "POLİNOMlar",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "3": {
+   "h": "POLİNOMlar",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "4": {
+   "h": "POLİNOMlar",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "5": {
+   "h": "POLİNOMlar",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "6": {
+   "h": "POLİNOMlar",
+   "b": "ÖRNEK - 15",
+   "n": 15
+  },
+  "7": {
+   "h": "POLİNOMlar",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "8": {
+   "h": "POLİNOMlar",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "9": {
+   "h": "POLİNOMlar",
+   "b": null,
+   "n": null
+  },
+  "11": {
+   "h": "POLİNOMLAR",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "12": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "13": {
+   "h": "POLİNOMLAR",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "14": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "15": {
+   "h": "POLİNOM",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "16": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "17": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "18": {
+   "h": "POLİNOMLAR",
+   "b": "POLİNOMLARDA BÖLME",
+   "n": null
+  },
+  "19": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "20": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "21": {
+   "h": "POLİNOMLAR",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "22": {
+   "h": "POLİNOMLAR",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "23": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "24": {
+   "h": "POLİNOMLAR",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "25": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "26": {
+   "h": "POLİNOMLAR",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "27": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "28": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "29": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "30": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "31": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "32": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "33": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "34": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "35": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "36": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "37": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "38": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "39": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "40": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "41": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "42": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "43": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "44": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "45": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "47": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÇARPANLARA AYIRMA",
+   "n": null
+  },
+  "48": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "49": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "50": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "51": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "52": {
+   "h": null,
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "53": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "54": {
+   "h": null,
+   "b": "SORU-1",
+   "n": 1
+  },
+  "55": {
+   "h": null,
+   "b": "SORU-4",
+   "n": 4
+  },
+  "56": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "57": {
+   "h": null,
+   "b": "SORU-7",
+   "n": 7
+  },
+  "58": {
+   "h": null,
+   "b": "SORU-10",
+   "n": 10
+  },
+  "59": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "60": {
+   "h": null,
+   "b": "ÖZDEŞLİKLER",
+   "n": null
+  },
+  "61": {
+   "h": null,
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "62": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖRNEK - 37",
+   "n": 37
+  },
+  "63": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "64": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "65": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "66": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "67": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "68": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "69": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "70": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "71": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "72": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "73": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "74": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "75": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "76": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "77": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "78": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "79": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "80": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "81": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "82": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "83": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "84": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "86": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "İKİNCİ DERECEDEN DENKLEMLER",
+   "n": null
+  },
+  "87": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "88": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "89": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "90": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "91": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "92": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "93": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "94": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "95": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "96": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "97": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "98": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "99": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "100": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖRNEK - 11",
+   "n": 11
+  },
+  "101": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "102": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "103": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "104": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "105": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "106": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "107": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "108": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "109": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "111": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "112": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "KARMAŞIK SAYILAR",
+   "n": null
+  },
+  "113": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "114": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "115": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "116": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": null,
+   "n": null
+  },
+  "117": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "SORU-1",
+   "n": 1
+  },
+  "118": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "SORU-7",
+   "n": 7
+  },
+  "119": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "120": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "121": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "122": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "123": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "124": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "125": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "126": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "127": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "128": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "129": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "130": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "132": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "n": null
+  },
+  "133": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "134": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "135": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "136": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "137": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "138": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "139": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "140": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "141": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "SORU-5",
+   "n": 5
+  },
+  "142": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "143": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "144": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖRNEK - 12",
+   "n": 12
+  },
+  "145": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "146": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "147": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "148": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "149": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "150": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "151": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "152": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "153": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "154": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "155": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "156": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "157": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "158": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "159": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "160": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "161": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "162": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "164": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "165": {
+   "h": "PARABOL",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "166": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "167": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "168": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "169": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "170": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "171": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "172": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "173": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "174": {
+   "h": "PARABOL",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "175": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "176": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "177": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "178": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "179": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "180": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "181": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "182": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "183": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "184": {
+   "h": "PARABOL",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "185": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "186": {
+   "h": "PARABOL",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "187": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "188": {
+   "h": "PARABOL",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "189": {
+   "h": "PARABOL",
+   "b": "SORU-6",
+   "n": 6
+  },
+  "190": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "191": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "192": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "193": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "194": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "195": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "196": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "197": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "198": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "199": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "200": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "201": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "202": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "203": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "204": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "205": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "206": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "207": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  }
+ },
+ "scan2": {
+  "0": {
+   "h": null,
+   "b": null,
+   "n": null
+  },
+  "1": {
+   "h": "AYT ORİJİNAL POLİNOMlar, ÇARPANLARA AYIRMA, İKİNCİ DERECEDEN DENKLEMLER, KARMAŞIK SAYILAR, İKİNCİ DERECEDEN EŞİTSİZLİKLER, PARABOL FASİKÜLÜ",
+   "b": "AYRAÇ",
+   "n": null
+  },
+  "3": {
+   "h": "POLİNOMlar",
+   "b": "POLİNOMlar",
+   "n": null
+  },
+  "4": {
+   "h": "POLİNOMlar",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "5": {
+   "h": "POLİNOMlar",
+   "b": "ÖRNEK - 9",
+   "n": 9
+  },
+  "6": {
+   "h": "POLİNOMlar",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "7": {
+   "h": "POLİNOMlar",
+   "b": "POLİNOMLARDA TOPLAMA-ÇIKARMA",
+   "n": null
+  },
+  "8": {
+   "h": "POLİNOMlar",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "9": {
+   "h": "POLİNOMlar",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "10": {
+   "h": "POLİNOMlar",
+   "b": null,
+   "n": null
+  },
+  "11": {
+   "h": "POLİNOMLAR",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "12": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "13": {
+   "h": "POLİNOMLAR",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "14": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "15": {
+   "h": "POLİNOM",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "16": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "17": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "18": {
+   "h": "POLİNOMLAR",
+   "b": "POLİNOMLARDA BÖLME",
+   "n": null
+  },
+  "19": {
+   "h": "POLİNOMLAR",
+   "b": "ÖRNEK - 3",
+   "n": 3
+  },
+  "20": {
+   "h": "POLİNOMLAR",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "21": {
+   "h": "POLİNOMLAR",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "22": {
+   "h": "POLİNOMLAR",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "23": {
+   "h": "POLİNOMLAR",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "24": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "25": {
+   "h": "POLİNOMLAR",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "26": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "27": {
+   "h": "POLİNOMLAR",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "28": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "29": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "30": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "31": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "32": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "33": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "34": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "35": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "36": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "37": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "38": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "39": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "40": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "41": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "42": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "43": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "44": {
+   "h": "POLİNOMLAR",
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "45": {
+   "h": "POLİNOMLAR",
+   "b": null,
+   "n": null
+  },
+  "47": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÇARPANLARA AYIRMA",
+   "n": null
+  },
+  "48": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "49": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "50": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "51": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "52": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "53": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "54": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖZDEŞLİKLER",
+   "n": null
+  },
+  "55": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "56": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "57": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "58": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "59": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "60": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "61": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "Terim Ekleyip Çıkararak Çarpanlara Ayırma",
+   "n": null
+  },
+  "62": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖRNEK - 37",
+   "n": 37
+  },
+  "63": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "64": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "65": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "66": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "67": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "68": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "69": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "70": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "71": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "72": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "73": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "74": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "75": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "76": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "77": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "78": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "79": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "80": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "81": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "82": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "83": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "84": {
+   "h": "ÇARPANLARA AYIRMA",
+   "b": null,
+   "n": null
+  },
+  "86": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "İKİNCİ DERECEDEN DENKLEMLER",
+   "n": null
+  },
+  "87": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖRNEK - 5",
+   "n": 5
+  },
+  "88": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "89": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "90": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "91": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "92": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "93": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "94": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "95": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "96": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "97": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "98": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "99": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "100": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "101": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "102": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "103": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "104": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "105": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "106": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "107": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "108": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "109": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "111": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "112": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "KARMAŞIK SAYILAR",
+   "n": null
+  },
+  "113": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": null,
+   "n": null
+  },
+  "114": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "115": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "116": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "117": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "118": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": null,
+   "n": null
+  },
+  "119": {
+   "h": "KARMAŞIK SAYILAR",
+   "b": null,
+   "n": null
+  },
+  "120": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "121": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "122": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "123": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "124": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "125": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "126": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "127": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "128": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "129": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "130": {
+   "h": "İKİNCİ DERECEDEN DENKLEMLER",
+   "b": null,
+   "n": null
+  },
+  "132": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "n": null
+  },
+  "133": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "134": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "135": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "136": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "137": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ORİJİNAL BİLGİ NOTU",
+   "n": null
+  },
+  "138": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "139": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "140": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "KAZANIM TEST",
+   "n": null
+  },
+  "141": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "142": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "143": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "SORU-1",
+   "n": 1
+  },
+  "144": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "SORU-3",
+   "n": 3
+  },
+  "145": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "146": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "147": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-1",
+   "n": 1
+  },
+  "148": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "149": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "150": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "151": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "152": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "153": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "154": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "155": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "156": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "157": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "158": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "159": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "160": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "161": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": "ÖSYM TARZI TARAMA TEST-8",
+   "n": 8
+  },
+  "162": {
+   "h": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+   "b": null,
+   "n": null
+  },
+  "164": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 2",
+   "n": 2
+  },
+  "165": {
+   "h": "PARABOL",
+   "b": "ÇÖZÜM",
+   "n": null
+  },
+  "166": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "167": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 7",
+   "n": 7
+  },
+  "168": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "169": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 10",
+   "n": 10
+  },
+  "170": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 13",
+   "n": 13
+  },
+  "171": {
+   "h": "PARABOL",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "172": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "173": {
+   "h": "PARABOL",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "174": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "175": {
+   "h": "PARABOL",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE",
+   "n": null
+  },
+  "176": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "177": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "178": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "179": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "180": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "181": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 4",
+   "n": 4
+  },
+  "182": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 6",
+   "n": 6
+  },
+  "183": {
+   "h": "PARABOL",
+   "b": "ÖRNEK - 8",
+   "n": 8
+  },
+  "184": {
+   "h": "PARABOL",
+   "b": "KAZANIM TEST-1",
+   "n": 1
+  },
+  "185": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "186": {
+   "h": "PARABOL",
+   "b": "KAZANIM TEST-2",
+   "n": 2
+  },
+  "187": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "188": {
+   "h": "PARABOL",
+   "b": "BİR DE ORİJİNAL'DEN DİNLE!",
+   "n": null
+  },
+  "189": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "190": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "191": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI ÇÖZÜMLÜ ÖRNEKLER",
+   "n": null
+  },
+  "192": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "193": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "194": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TEST",
+   "n": null
+  },
+  "195": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "196": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-2",
+   "n": 2
+  },
+  "197": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "198": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-3",
+   "n": 3
+  },
+  "199": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "200": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-4",
+   "n": 4
+  },
+  "201": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "202": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-5",
+   "n": 5
+  },
+  "203": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "204": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-6",
+   "n": 6
+  },
+  "205": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  },
+  "206": {
+   "h": "PARABOL",
+   "b": "ÖSYM TARZI TARAMA TEST-7",
+   "n": 7
+  },
+  "207": {
+   "h": "PARABOL",
+   "b": null,
+   "n": null
+  }
+ }
+}

@@ -661,6 +661,26 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
     MODERN FİZİK/ATOM FİZİĞİ — sonuncusu tüm-büyük-harf önek ayrıştırması),
     zincirler boşluksuz, sayfa/test 2.18. Sarmal ×18 kümülatif karma →
     bilinçli eşleşmesiz; ÖSYM Tipi/Simülasyon komşu-satır konusuna bağlandı.
+  - **Orijinal AYT Mat Polinom Fasikülü (Polinomlar–Parabol) — CANLI (2026-08-19,
+    prod id=108 · dev id=38): 15 satır · 58 test · 15/15 eşli.** İLK KONU ANLATIMLI
+    FASİKÜL → yeni **`scripts/fasikul_structure.py`** (fasikül modu; soru bankası
+    pipeline'ı global içindekiler ister, fasikülde yok): (a) BÖLÜM ayraç sayfaları
+    doygun-renk oranıyla (>%30) bulunur + Gemini okur (alt başlık + sayfa); (b)
+    tüm sayfa üst şeritleri ÇİFT geçiş → **geçişler parça bazında ±1-3 sayfa
+    KAYIYOR ve bant düşürüyor → iki geçiş BİRİM düzeyinde BİRLEŞTİRİLİR** (tek
+    geçiş 48, birleşim 58 = gözle teyitli gerçek); (c) numara ALT-GRUPTA yeniden
+    başlar ("Kazanım Test-1" aynı bölümde 2 kez) → aynı anahtar yalnız ≤3 sayfa
+    yakınsa aynı birim; (d) **sayfa başlığındaki bölüm adı ayraç aralığını ezer**
+    (İkinci Dereceden Denklemler'in tarama testleri fiziksel olarak Karmaşık
+    Sayılar'ın arkasında s.119-130); (e) testler alt başlık tek tek değil KONU
+    GRUBU sonunda kümelenir (Kazanım 1-2 + ÖSYM Tarzı Test) → katalog satırı =
+    "Bölüm · İlk Alt Başlık – Son Alt Başlık" + bölüm başına "ÖSYM Tarzı Tarama
+    Testleri" satırı; 0 testli alt başlık satır olmaz. SAYILMAYAN: Örnek/Çözümlü
+    örnek + "Bir de Orijinal'den Dinle" (9 sayfa; `--include-dinle` ile sayılır).
+    `--from-raw` ile Gemini'siz yeniden hesap. Prod seed: scp JSON →
+    `docker exec lgs-web mkdir -p /app/data/kitap-katalog` + docker cp + seeder
+    (commit YOK; JSON+script yerelde, sonraki commit'le repoya girer).
+    AYT taksonomisinde "Çarpanlara Ayırma" yok → Polinomlar'a eşli (doğru).
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
@@ -2949,10 +2969,29 @@ birlikte güncellenir); footer NAP zaten vardı. Prod'da doğrulandı.
 
 ---
 
-## Instagram reklamı — Kampanya A2 CANLI + YKS başarı kartları carousel eklendi (2026-07-26)
+## Instagram+Facebook reklamı — **A3 Yerleştirme Kartları YAYINDA** (2026-08-18 akşam; 3 reklam/1 set: yeni carousel + video açık, eski carousel kapalı; yaş 18–64, FB+IG, 350 TL/gün; ana karar 26 Ağu — `docs/reklam-kilavuz-kosucu.md` bölüm 9.5)
 
 **TÜM detay + hazır metinler + kalınan yer: `docs/reklam-kilavuz-kosucu.md`** (yeni
-sohbette önce onu oku — **sıradaki iş bölüm 7.6: 28 Tem karar çerçevesi**). Özet: paralimpik kılavuz koşucu metaforuyla ETÜTKOÇ tanıtımı.
+sohbette önce onu oku — **sıradaki iş bölüm 9: A3 kurulumu**). Özet: paralimpik kılavuz koşucu metaforuyla ETÜTKOÇ tanıtımı.
+- **A3 (2026-08-18, plan hazır — KURULUM KULLANICI VERİSİNİ BEKLİYOR):** 19 Tem–18
+  Ağu xlsx: 7.607 TL → 18 konuşma → **423 TL/konuşma** (carousel %79 bütçe, 501 TL,
+  sıklık 3,14 doydu; video 267 TL). 5 Ağu kararı uygulanmamış görünüyor (carousel
+  açık, bütçe 350). Karar: sıralama carousel'i DURAKLAT · video kalır · yeni
+  **"Yerlestirme Kartlari - Carousel - v1"** (kapak + 6 öğrenci: üniversite + bölüm)
+  AYNI sete 3. reklam (doğrudan carousel, "mevcut gönderi" değil) · tek oturum, tek
+  sıfırlama (set zaten hiç öğrenmedi). **REVİZYON (aynı gün akşam, saha bilgisi):**
+  sıralama carousel'i ASLINDA çalıştı — öğrenci IG'de gördü → aileye gösterdi → aile
+  ARADI (6–7 verimli telefon; Meta bunu görmez) → sabahki "45–64 sert" GERİ ÇEKİLDİ,
+  **iki-kanal modeli: yaş 18–64 + yerleşim manuel Instagram+FACEBOOK** (aile FB'de;
+  önce FB Sayfası doldurulur) · ölçüm Ads Manager değil DEFTER ("nereden ulaştınız")
+  · A2 gerçek tabanı ≈1.100–1.250 TL/verimli görüşme · bütçe 350 → 26 Ağu'da 420.
+  Kartları KULLANICI tasarlıyor (izinler alındı, ÖSYM belgesi gerekmiyor); script
+  `Desktop/etutkoc-reklam-kaynak/yerlestirme_kartlari.py` referans. Notlar
+  `Desktop/etutkoc-yerlestirme-kartlari/reklam-kurulum-notlari-A3.txt`. Strateji
+  artifact: https://claude.ai/code/artifact/c2e48abc-18b9-4a0e-861d-65af3ffb7dea ·
+  ana karar **26 Ağu** (≤800 TL/verimli görüşme devam+420 · 800–1.500 metin varyantı ·
+  >1.500 veya 0–1 → form+geri arama; bir platform ≥%85 ama görüşmeler öbüründen →
+  iki set IG 18–34 / FB 35–64).
 İki ayrı iş: **Kampanya A (ANA) = Trabzon YEREL birebir koçluk** (Serkan tek koç,
 hedef WhatsApp'tan ücretsiz tanışma görüşmesi) · **Kampanya B = rotam.etutkoc.com
 ULUSAL koç kitlesi** (henüz başlamadı; Trafik + UTM→Plausible).

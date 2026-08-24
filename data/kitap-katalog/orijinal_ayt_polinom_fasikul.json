@@ -1,0 +1,1114 @@
+{
+ "name": "Orijinal AYT Matematik Polinom Fasikülü (Polinomlar – Parabol)",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "fasikul",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Polinomlar · Sabit Polinom - Sıfır Polinomu – Katsayılar Toplamı ve Sabit Terim",
+   "test_count": 3,
+   "source": "scan",
+   "page": 10,
+   "cats": {
+    "kazanim": 2,
+    "osym_test": 1
+   },
+   "subtopics": [
+    "Sabit Polinom - Sıfır Polinomu",
+    "Polinomların Eşitliği",
+    "Polinomlarda Derece",
+    "Polinomlarda Toplama-çıkarma-çarpma",
+    "Katsayılar Toplamı ve Sabit Terim"
+   ]
+  },
+  {
+   "label": "Polinomlar · Polinomlarda Bölme – Bazı Bilgileri Verilen Polinomların İnşası",
+   "test_count": 3,
+   "source": "scan",
+   "page": 24,
+   "cats": {
+    "kazanim": 2,
+    "osym_test": 1
+   },
+   "subtopics": [
+    "Polinomlarda Bölme",
+    "Bazı Bilgileri Verilen Polinomların İnşası"
+   ]
+  },
+  {
+   "label": "Polinomlar · ÖSYM Tarzı Tarama Testleri",
+   "test_count": 8,
+   "source": "scan",
+   "page": 32,
+   "cats": {
+    "tarama": 8
+   },
+   "subtopics": [
+    "ÖSYM Tarzı Tarama Testleri"
+   ]
+  },
+  {
+   "label": "Çarpanlara Ayırma · Ortak Çarpan Parantezine Alma – Gruplandırarak Çarpanlara Ayırma",
+   "test_count": 1,
+   "source": "scan",
+   "page": 52,
+   "cats": {
+    "kazanim": 1
+   },
+   "subtopics": [
+    "Ortak Çarpan Parantezine Alma",
+    "Gruplandırarak Çarpanlara Ayırma"
+   ]
+  },
+  {
+   "label": "Çarpanlara Ayırma · Özdeşlikler – Rasyonel İfadeleri Sadeleştirme",
+   "test_count": 3,
+   "source": "scan",
+   "page": 65,
+   "cats": {
+    "kazanim": 2,
+    "osym_test": 1
+   },
+   "subtopics": [
+    "Özdeşlikler",
+    "ax² + Bx + C Üç Terimlisinin Çarpanlara Ayrılması",
+    "Rasyonel İfadeleri Sadeleştirme"
+   ]
+  },
+  {
+   "label": "Çarpanlara Ayırma · ÖSYM Tarzı Tarama Testleri",
+   "test_count": 6,
+   "source": "scan",
+   "page": 74,
+   "cats": {
+    "tarama": 6
+   },
+   "subtopics": [
+    "ÖSYM Tarzı Tarama Testleri"
+   ]
+  },
+  {
+   "label": "İkinci Dereceden Denklemler · Çarpanlara Ayırarak Denklemin Çözüm Kümesini Bulma – Köklü ve Mutlak Değerli Denklemler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 93,
+   "cats": {
+    "kazanim": 1
+   },
+   "subtopics": [
+    "Çarpanlara Ayırarak Denklemin Çözüm Kümesini Bulma",
+    "Diskriminanttan Faydalanarak Denklemin Çözüm Kümesini Bulma",
+    "Değişken Değiştirme Yöntemi",
+    "Köklü ve Mutlak Değerli Denklemler"
+   ]
+  },
+  {
+   "label": "İkinci Dereceden Denklemler · İkinci Dereceden Denklemin Kök-katsayı İlişkisi – İkinci Dereceden İki Bilinmeyenli Denklem Sistemleri",
+   "test_count": 3,
+   "source": "scan",
+   "page": 102,
+   "cats": {
+    "kazanim": 2,
+    "osym_test": 1
+   },
+   "subtopics": [
+    "İkinci Dereceden Denklemin Kök-katsayı İlişkisi",
+    "Kökleri Verilen İkinci Dereceden Denklemin Bulunması",
+    "İkinci Dereceden İki Bilinmeyenli Denklem Sistemleri"
+   ]
+  },
+  {
+   "label": "İkinci Dereceden Denklemler · ÖSYM Tarzı Tarama Testleri",
+   "test_count": 6,
+   "source": "scan",
+   "page": 121,
+   "cats": {
+    "tarama": 6
+   },
+   "subtopics": [
+    "ÖSYM Tarzı Tarama Testleri"
+   ]
+  },
+  {
+   "label": "Karmaşık Sayılar · Karmaşık Sayılar – Bir Karmaşık Sayının Eşleniği",
+   "test_count": 1,
+   "source": "scan",
+   "page": 117,
+   "cats": {
+    "kazanim": 1
+   },
+   "subtopics": [
+    "Karmaşık Sayılar",
+    "İ'nin Kuvvetleri",
+    "İki Karmaşık Sayının Eşitliği",
+    "Bir Karmaşık Sayının Eşleniği"
+   ]
+  },
+  {
+   "label": "İkinci Dereceden Eşitsizlikler · Birinci Dereceden Bir Bilinmeyenli Eşitsizlikler – Eşitsizlik Sistemleri",
+   "test_count": 2,
+   "source": "scan",
+   "page": 140,
+   "cats": {
+    "kazanim": 1,
+    "osym_test": 1
+   },
+   "subtopics": [
+    "Birinci Dereceden Bir Bilinmeyenli Eşitsizlikler",
+    "İkinci Dereceden Bir Bilinmeyenli Eşitsizlikler",
+    "Çarpım ve Bölüm Biçimindeki Eşitsizlikler",
+    "Mutlak Değerli Eşitsizlikler",
+    "Eşitsizlik Sistemleri"
+   ]
+  },
+  {
+   "label": "İkinci Dereceden Eşitsizlikler · ÖSYM Tarzı Tarama Testleri",
+   "test_count": 8,
+   "source": "scan",
+   "page": 149,
+   "cats": {
+    "tarama": 8
+   },
+   "subtopics": [
+    "ÖSYM Tarzı Tarama Testleri"
+   ]
+  },
+  {
+   "label": "Parabol · Parabolün Eksenleri Kestiği Noktalar – Parabolün Çizilmesi",
+   "test_count": 3,
+   "source": "scan",
+   "page": 173,
+   "cats": {
+    "kazanim": 2,
+    "osym_test": 1
+   },
+   "subtopics": [
+    "Parabolün Eksenleri Kestiği Noktalar",
+    "Parabolün Tepe Noktası",
+    "Simetri Ekseni",
+    "Parabolün En Büyük ve En Küçük Değeri",
+    "Parabolün Çizilmesi"
+   ]
+  },
+  {
+   "label": "Parabol · Parabol Denkleminin Yazılması – İkinci Dereceden İki Bilinmeyenli Eşitsizlikler",
+   "test_count": 3,
+   "source": "scan",
+   "page": 186,
+   "cats": {
+    "kazanim": 2,
+    "osym_test": 1
+   },
+   "subtopics": [
+    "Parabol Denkleminin Yazılması",
+    "Parabol ile Doğrunun Birbirine Göre Durumları",
+    "Parabolde Simetri ve Öteleme",
+    "İkinci Dereceden İki Bilinmeyenli Eşitsizlikler"
+   ]
+  },
+  {
+   "label": "Parabol · ÖSYM Tarzı Tarama Testleri",
+   "test_count": 7,
+   "source": "scan",
+   "page": 196,
+   "cats": {
+    "tarama": 7
+   },
+   "subtopics": [
+    "ÖSYM Tarzı Tarama Testleri"
+   ]
+  }
+ ],
+ "warnings": [
+  "Karmaşık Sayılar: ayraçta 'ÖSYM Tarzı Tarama Testleri' var ama tarama bandı bulunamadı (başka bölümün başlığı altında olabilir)."
+ ],
+ "meta": {
+  "dividers": [
+   {
+    "pdf_idx": 2,
+    "bolum_no": 1,
+    "bolum_adi": "POLİNOMLAR",
+    "items": [
+     {
+      "label": "SABİT POLİNOM - SIFIR POLİNOMU",
+      "page": 5
+     },
+     {
+      "label": "POLİNOMLARIN EŞİTLİĞİ",
+      "page": 6
+     },
+     {
+      "label": "POLİNOMLARDA DERECE",
+      "page": 7
+     },
+     {
+      "label": "POLİNOMLARDA TOPLAMA-ÇIKARMA-ÇARPMA",
+      "page": 8
+     },
+     {
+      "label": "KATSAYILAR TOPLAMI VE SABİT TERİM",
+      "page": 9
+     },
+     {
+      "label": "POLİNOMLARDA BÖLME",
+      "page": 19
+     },
+     {
+      "label": "BAZI BİLGİLERİ VERİLEN POLİNOMLARIN İNŞASI",
+      "page": 20
+     },
+     {
+      "label": "ÖSYM TARZI TARAMA TESTLERİ",
+      "page": 31
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 46,
+    "bolum_no": 2,
+    "bolum_adi": "ÇARPANLARA AYIRMA",
+    "items": [
+     {
+      "label": "ORTAK ÇARPAN PARANTEZİNE ALMA",
+      "page": 48
+     },
+     {
+      "label": "GRUPLANDIRARAK ÇARPANLARA AYIRMA",
+      "page": 49
+     },
+     {
+      "label": "ÖZDEŞLİKLER",
+      "page": 55
+     },
+     {
+      "label": "ax² + bx + c ÜÇ TERİMLİSİNİN ÇARPANLARA AYRILMASI",
+      "page": 60
+     },
+     {
+      "label": "RASYONEL İFADELERİ SADELEŞTİRME",
+      "page": 63
+     },
+     {
+      "label": "ÖSYM TARZI TARAMA TESTLERİ",
+      "page": 74
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 85,
+    "bolum_no": 3,
+    "bolum_adi": "İKİNCİ DERECEDEN DENKLEMLER",
+    "items": [
+     {
+      "label": "ÇARPANLARA AYIRARAK DENKLEMİN ÇÖZÜM KÜMESİNİ BULMA",
+      "page": 87
+     },
+     {
+      "label": "DİSKRİMİNANTTAN FAYDALANARAK DENKLEMİN ÇÖZÜM KÜMESİNİ BULMA",
+      "page": 89
+     },
+     {
+      "label": "DEĞİŞKEN DEĞİŞTİRME YÖNTEMİ",
+      "page": 90
+     },
+     {
+      "label": "KÖKLÜ VE MUTLAK DEĞERLİ DENKLEMLER",
+      "page": 91
+     },
+     {
+      "label": "İKİNCİ DERECEDEN DENKLEMİN KÖK-KATSAYI İLİŞKİSİ",
+      "page": 97
+     },
+     {
+      "label": "KÖKLERİ VERİLEN İKİNCİ DERECEDEN DENKLEMİN BULUNMASI",
+      "page": 98
+     },
+     {
+      "label": "İKİNCİ DERECEDEN İKİ BİLİNMEYENLİ DENKLEM SİSTEMLERİ",
+      "page": 100
+     },
+     {
+      "label": "ÖSYM TARZI TARAMA TESTLERİ",
+      "page": 120
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 110,
+    "bolum_no": 4,
+    "bolum_adi": "KARMAŞIK SAYILAR",
+    "items": [
+     {
+      "label": "KARMAŞIK SAYILAR",
+      "page": 112
+     },
+     {
+      "label": "i'NİN KUVVETLERİ",
+      "page": 113
+     },
+     {
+      "label": "İKİ KARMAŞIK SAYININ EŞİTLİĞİ",
+      "page": 114
+     },
+     {
+      "label": "BİR KARMAŞIK SAYININ EŞLENİĞİ",
+      "page": 114
+     },
+     {
+      "label": "ÖSYM TARZI TARAMA TESTLERİ",
+      "page": 120
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 131,
+    "bolum_no": 5,
+    "bolum_adi": "İKİNCİ DERECEDEN EŞİTSİZLİKLER",
+    "items": [
+     {
+      "label": "BİRİNCİ DERECEDEN BİR BİLİNMEYENLİ EŞİTSİZLİKLER",
+      "page": 133
+     },
+     {
+      "label": "İKİNCİ DERECEDEN BİR BİLİNMEYENLİ EŞİTSİZLİKLER",
+      "page": 134
+     },
+     {
+      "label": "ÇARPIM VE BÖLÜM BİÇİMİNDEKİ EŞİTSİZLİKLER",
+      "page": 136
+     },
+     {
+      "label": "MUTLAK DEĞERLİ EŞİTSİZLİKLER",
+      "page": 137
+     },
+     {
+      "label": "EŞİTSİZLİK SİSTEMLERİ",
+      "page": 138
+     },
+     {
+      "label": "ÖSYM TARZI TARAMA TESTLERİ",
+      "page": 148
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 163,
+    "bolum_no": 6,
+    "bolum_adi": "PARABOL",
+    "items": [
+     {
+      "label": "PARABOLÜN EKSENLERİ KESTİĞİ NOKTALAR",
+      "page": 166
+     },
+     {
+      "label": "PARABOLÜN TEPE NOKTASI",
+      "page": 167
+     },
+     {
+      "label": "SİMETRİ EKSENİ",
+      "page": 168
+     },
+     {
+      "label": "PARABOLÜN EN BÜYÜK VE EN KÜÇÜK DEĞERİ",
+      "page": 169
+     },
+     {
+      "label": "PARABOLÜN ÇİZİLMESİ",
+      "page": 170
+     },
+     {
+      "label": "PARABOL DENKLEMİNİN YAZILMASI",
+      "page": 181
+     },
+     {
+      "label": "PARABOL İLE DOĞRUNUN BİRBİRİNE GÖRE DURUMLARI",
+      "page": 182
+     },
+     {
+      "label": "PARABOLDE SİMETRİ VE ÖTELEME",
+      "page": 183
+     },
+     {
+      "label": "İKİNCİ DERECEDEN İKİ BİLİNMEYENLİ EŞİTSİZLİKLER",
+      "page": 184
+     },
+     {
+      "label": "ÖSYM TARZI TARAMA TESTLERİ",
+      "page": 195
+     }
+    ],
+    "is_divider": true
+   }
+  ],
+  "offset": -1,
+  "zero_test_subtopics": [],
+  "excluded_pages": {
+   "x_ornek": 51,
+   "x_dinle": 9
+  },
+  "units": [
+   {
+    "bolum_i": 0,
+    "cat": "kazanim",
+    "n": 1,
+    "first": 8,
+    "last": 9,
+    "pages": [
+     8,
+     9
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "kazanim",
+    "n": 2,
+    "first": 11,
+    "last": 11,
+    "pages": [
+     11
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "osym_test",
+    "n": null,
+    "first": 16,
+    "last": 16,
+    "pages": [
+     16
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "kazanim",
+    "n": 1,
+    "first": 22,
+    "last": 23,
+    "pages": [
+     22,
+     23
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "kazanim",
+    "n": 2,
+    "first": 24,
+    "last": 25,
+    "pages": [
+     24,
+     25
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "osym_test",
+    "n": null,
+    "first": 28,
+    "last": 29,
+    "pages": [
+     28,
+     29
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "tarama",
+    "n": 1,
+    "first": 30,
+    "last": 30,
+    "pages": [
+     30
+    ],
+    "only": "1"
+   },
+   {
+    "bolum_i": 0,
+    "cat": "tarama",
+    "n": 2,
+    "first": 32,
+    "last": 33,
+    "pages": [
+     32,
+     33
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "tarama",
+    "n": 3,
+    "first": 34,
+    "last": 37,
+    "pages": [
+     34,
+     37
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "tarama",
+    "n": 4,
+    "first": 36,
+    "last": 36,
+    "pages": [
+     36
+    ],
+    "only": "2"
+   },
+   {
+    "bolum_i": 0,
+    "cat": "tarama",
+    "n": 5,
+    "first": 38,
+    "last": 38,
+    "pages": [
+     38
+    ],
+    "only": "2"
+   },
+   {
+    "bolum_i": 0,
+    "cat": "tarama",
+    "n": 6,
+    "first": 40,
+    "last": 40,
+    "pages": [
+     40
+    ],
+    "only": "2"
+   },
+   {
+    "bolum_i": 0,
+    "cat": "tarama",
+    "n": 7,
+    "first": 42,
+    "last": 42,
+    "pages": [
+     42
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 0,
+    "cat": "tarama",
+    "n": 8,
+    "first": 44,
+    "last": 44,
+    "pages": [
+     44
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "kazanim",
+    "n": null,
+    "first": 50,
+    "last": 50,
+    "pages": [
+     50
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "kazanim",
+    "n": 1,
+    "first": 63,
+    "last": 63,
+    "pages": [
+     63
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "kazanim",
+    "n": 2,
+    "first": 65,
+    "last": 65,
+    "pages": [
+     65
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "osym_test",
+    "n": null,
+    "first": 71,
+    "last": 71,
+    "pages": [
+     71
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "tarama",
+    "n": 1,
+    "first": 72,
+    "last": 73,
+    "pages": [
+     72,
+     73
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "tarama",
+    "n": 2,
+    "first": 75,
+    "last": 75,
+    "pages": [
+     75
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "tarama",
+    "n": 3,
+    "first": 77,
+    "last": 77,
+    "pages": [
+     77
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "tarama",
+    "n": 4,
+    "first": 79,
+    "last": 79,
+    "pages": [
+     79
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "tarama",
+    "n": 5,
+    "first": 81,
+    "last": 81,
+    "pages": [
+     81
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 1,
+    "cat": "tarama",
+    "n": 6,
+    "first": 83,
+    "last": 83,
+    "pages": [
+     83
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 2,
+    "cat": "kazanim",
+    "n": null,
+    "first": 91,
+    "last": 91,
+    "pages": [
+     91
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 2,
+    "cat": "kazanim",
+    "n": 1,
+    "first": 100,
+    "last": 101,
+    "pages": [
+     100,
+     101
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 2,
+    "cat": "kazanim",
+    "n": 2,
+    "first": 102,
+    "last": 102,
+    "pages": [
+     102
+    ],
+    "only": "2"
+   },
+   {
+    "bolum_i": 2,
+    "cat": "osym_test",
+    "n": null,
+    "first": 109,
+    "last": 109,
+    "pages": [
+     109
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 2,
+    "cat": "tarama",
+    "n": 1,
+    "first": 119,
+    "last": 120,
+    "pages": [
+     119,
+     120
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 2,
+    "cat": "tarama",
+    "n": 2,
+    "first": 121,
+    "last": 122,
+    "pages": [
+     121,
+     122
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 2,
+    "cat": "tarama",
+    "n": 3,
+    "first": 123,
+    "last": 123,
+    "pages": [
+     123
+    ],
+    "only": "1"
+   },
+   {
+    "bolum_i": 2,
+    "cat": "tarama",
+    "n": 4,
+    "first": 125,
+    "last": 125,
+    "pages": [
+     125
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 2,
+    "cat": "tarama",
+    "n": 5,
+    "first": 127,
+    "last": 127,
+    "pages": [
+     127
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 2,
+    "cat": "tarama",
+    "n": 6,
+    "first": 129,
+    "last": 129,
+    "pages": [
+     129
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 3,
+    "cat": "kazanim",
+    "n": null,
+    "first": 115,
+    "last": 116,
+    "pages": [
+     115,
+     116
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "kazanim",
+    "n": null,
+    "first": 138,
+    "last": 140,
+    "pages": [
+     138,
+     140
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "osym_test",
+    "n": null,
+    "first": 145,
+    "last": 145,
+    "pages": [
+     145
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "tarama",
+    "n": 1,
+    "first": 147,
+    "last": 147,
+    "pages": [
+     147
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "tarama",
+    "n": 2,
+    "first": 149,
+    "last": 149,
+    "pages": [
+     149
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "tarama",
+    "n": 3,
+    "first": 151,
+    "last": 151,
+    "pages": [
+     151
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "tarama",
+    "n": 4,
+    "first": 153,
+    "last": 153,
+    "pages": [
+     153
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "tarama",
+    "n": 5,
+    "first": 155,
+    "last": 155,
+    "pages": [
+     155
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "tarama",
+    "n": 6,
+    "first": 157,
+    "last": 157,
+    "pages": [
+     157
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "tarama",
+    "n": 7,
+    "first": 159,
+    "last": 159,
+    "pages": [
+     159
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 4,
+    "cat": "tarama",
+    "n": 8,
+    "first": 161,
+    "last": 161,
+    "pages": [
+     161
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "kazanim",
+    "n": 1,
+    "first": 171,
+    "last": 174,
+    "pages": [
+     171,
+     174
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "kazanim",
+    "n": 2,
+    "first": 173,
+    "last": 173,
+    "pages": [
+     173
+    ],
+    "only": "2"
+   },
+   {
+    "bolum_i": 5,
+    "cat": "osym_test",
+    "n": null,
+    "first": 178,
+    "last": 178,
+    "pages": [
+     178
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "kazanim",
+    "n": 1,
+    "first": 184,
+    "last": 184,
+    "pages": [
+     184
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "kazanim",
+    "n": 2,
+    "first": 186,
+    "last": 186,
+    "pages": [
+     186
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "osym_test",
+    "n": null,
+    "first": 192,
+    "last": 194,
+    "pages": [
+     192,
+     194
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "tarama",
+    "n": 1,
+    "first": 194,
+    "last": 194,
+    "pages": [
+     194
+    ],
+    "only": "1"
+   },
+   {
+    "bolum_i": 5,
+    "cat": "tarama",
+    "n": 2,
+    "first": 196,
+    "last": 196,
+    "pages": [
+     196
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "tarama",
+    "n": 3,
+    "first": 198,
+    "last": 200,
+    "pages": [
+     198,
+     200
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "tarama",
+    "n": 4,
+    "first": 200,
+    "last": 203,
+    "pages": [
+     200,
+     203
+    ],
+    "both": true
+   },
+   {
+    "bolum_i": 5,
+    "cat": "tarama",
+    "n": 5,
+    "first": 202,
+    "last": 202,
+    "pages": [
+     202
+    ],
+    "only": "2"
+   },
+   {
+    "bolum_i": 5,
+    "cat": "tarama",
+    "n": 6,
+    "first": 204,
+    "last": 204,
+    "pages": [
+     204
+    ],
+    "only": "2"
+   },
+   {
+    "bolum_i": 5,
+    "cat": "tarama",
+    "n": 7,
+    "first": 206,
+    "last": 206,
+    "pages": [
+     206
+    ],
+    "both": true
+   }
+  ]
+ }
+}
