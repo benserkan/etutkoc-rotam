@@ -6,6 +6,57 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## HAFTALIK KOÇ RAPORU + SEANS GÜNDEMİ KÖPRÜSÜ — CANLI (2026-08-25, migration `r8s1v4x5x88r`)
+
+**Tetikleyici (kullanıcı):** Emir için elle üretilen haftalık rapor (dump+HTML
+scriptleri) çok beğenildi → "koç butona basınca sistem aynı formatı üretsin +
+Seans gündemi bölümü Seanslar sekmesine entegre olsun."
+- **Migration `r8s1v4x5x88r`** (← q7r0u3w4w77q, additive): `coaching_reports`
+  (student/coach, week_start/end, version, data_json, agenda_json,
+  ai_agenda_json+ai_generated_at) + `coaching_sessions.report_id` (FK SET NULL)
+  + `coaching_sessions.agenda_items` (JSON list). Prod head bu.
+- **TEK MERKEZ `app/services/weekly_coach_report.py`:** `default_window`
+  (yayınlanmış son görev günü → geriye 7g) · `collect` (tüm analizler mevcut
+  servislerden: gorev_stats gün-gün + ders/konu D/Y/B agregasyonu ·
+  curriculum_progress · topic_performance · kitap/ünite ilerleme · branş deneme
+  netleri (TYT_PENALTY=4) · YSA özeti · snapshot · DNA · talepler · self-study
+  baseline; her blok `_safe` — biri düşerse rapor düşmez) · `derive` (türetilmiş
+  ölçüler; render+kural ortak) · **`build_agenda` KURAL MOTORU** (kredisiz, 10
+  kural: özet/yük-enerji[mesaj anahtar kelimeleri]/zayıf konular[<%80, ≥20
+  cevap]/ders odağı/branş trend[≥2 set δ≤-2 düşüş]/kaynak hijyeni['bitti'
+  sinyalleri+başlanmamış kitap]/bekleyen talep/boş sistemler[YSA+deneme]/gece
+  ritmi[≥%50]/gelecek hafta) · `render_html` (rapor formatı — scripts'teki elle
+  sürümle birebir; AI gündemi varsa kural maddeleri <details> altında) ·
+  `create_report` (aynı hafta → version+1) · `insight_bundle` (KS4'e rakamlı
+  paket). Scriptler (`dump_student_weekly_report` + `build_weekly_report_html`)
+  ince sarmalayıcıya çevrildi — algoritma tek yerde.
+- **Router `api_v2/coaching_reports.py`:** GET/POST `/teacher/students/{id}/
+  weekly-reports` · GET `/teacher/weekly-reports/{id}` (+`/html` — HTMLResponse,
+  yeni sekme/yazdır) · POST `/{id}/ai-agenda` (KS4 kredisi AI_COACHING_INSIGHT,
+  `generate_report_agenda` [ai_coaching_insight.py] akıcı rakamlı gündem yazar,
+  rapora cache'lenir; kilit-dışı desen: oku+commit→AI→kısa atomik yaz).
+  Sahiplik 404.
+- **Seans köprüsü:** `CoachingSessionCreateBody.report_id+agenda_items`
+  (`_validate_session_report`: yabancı rapor 422 report_mismatch) · prefill'e
+  `latest_report_id/week/agenda` (AI varsa AI, yoksa kural) · **KS4 içgörü
+  prompt'una `academic["weekly_report"]`** (en güncel raporun insight_bundle'ı —
+  içgörü artık notlara ek ölçülmüş haftaya dayanır) · rapor HTML'inde "Bu
+  gündemle seans aç" → `/teacher/students/{id}?report={id}#sessions`.
+- **Web (Seanslar sekmesi):** "Haftalık rapor (N)" butonu → rapor bölümü
+  (Bu hafta için üret · satırda hafta+sürüm+gündem sayısı+AI rozeti+seans
+  kaydedildi · "AI gündemi yaz" [rıza kapısı gateConsent + aiLocked] · "Raporu
+  aç" yeni sekme) · Yeni Seans formunda **rapor gündemi checklist'i** (amber
+  kutu; işaretlenen madde gündem alanına eklenir + seans report_id+agenda_items
+  ile rapora bağlanır).
+- **Test `test_api_v2_weekly_report.py` 18/18** (pencere otomatiği + kural
+  motoru içerikleri + HTML + version + sahiplik + seans bağı/mismatch +
+  prefill + AI cache mock + KS4 weekly_report girdisi). Regresyon: sessions 14 ·
+  coaching_insight 11 · teacher_read 12 GREEN; tsc+eslint temiz. E2E (dev,
+  Playwright): rapor üret → HTML açıldı → formda checklist doğrulandı.
+- Mobil BİLİNÇLİ yok (rapor HTML linki mobil tarayıcıda açılır; PARITY).
+
+---
+
 ## GÖREV D/Y GİRİŞİNE BOŞ SAYISI — CANLI (2026-08-17, commit `ff6c96f`, migration `q7r0u3w4w77q`)
 
 **Tetikleyici (kullanıcı):** öğrenci görevde yalnız doğru/yanlış giriyordu; boş

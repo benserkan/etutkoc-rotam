@@ -14,6 +14,8 @@
  */
 import { api, type MutationResponse } from "@/lib/api";
 import type {
+  CoachingReportDetail,
+  CoachingReportListResponse,
   BookOptionsResponse,
   DashboardWarningsFeedResponse,
   PromoteFormResponse,
@@ -223,6 +225,10 @@ export const teacherKeys = {
   aiUsage: (days: number) => ["teacher", "me", "ai-usage", String(days)] as const,
   coachingInsight: (id: number) =>
     ["teacher", "me", "students", String(id), "coaching-insight"] as const,
+  weeklyReports: (id: number) =>
+    ["teacher", "me", "students", String(id), "weekly-reports"] as const,
+  weeklyReport: (reportId: number) =>
+    ["teacher", "me", "weekly-reports", String(reportId)] as const,
   plan: () => ["teacher", "me", "plan"] as const,
   trialStatus: () => ["teacher", "me", "trial-status"] as const,
 } as const;
@@ -339,6 +345,24 @@ export function getTeacherCoachingInsight(
   return api<CoachingInsightCacheResponse>(
     `/api/v2/teacher/students/${studentId}/coaching-insight`,
   );
+}
+
+export function getTeacherWeeklyReports(
+  studentId: number,
+): Promise<CoachingReportListResponse> {
+  return api<CoachingReportListResponse>(
+    `/api/v2/teacher/students/${studentId}/weekly-reports`,
+  );
+}
+
+export function getTeacherWeeklyReport(
+  reportId: number,
+): Promise<CoachingReportDetail> {
+  return api<CoachingReportDetail>(`/api/v2/teacher/weekly-reports/${reportId}`);
+}
+
+export function teacherWeeklyReportHtmlUrl(reportId: number): string {
+  return `/api/v2/teacher/weekly-reports/${reportId}/html`;
 }
 
 export function getTeacherPlan(): Promise<TeacherPlanResponse> {

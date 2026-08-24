@@ -2072,6 +2072,9 @@ class CoachingSessionCreateBody(BaseModel):
     mood: int | None = None  # 1-5
     tags: list[str] = []
     capture_source: SessionCaptureSourceLiteral | None = None
+    # Haftalık rapor köprüsü (2026-08-19): seans bir rapordan açıldıysa
+    report_id: int | None = None
+    agenda_items: list[str] = []
 
 
 class CoachingSessionRow(BaseModel):
@@ -2089,6 +2092,8 @@ class CoachingSessionRow(BaseModel):
     tags: list[str]
     auto_snapshot: dict | None = None
     capture_source: str
+    report_id: int | None = None
+    agenda_items: list[str] = []
     created_at: datetime
 
 
@@ -2135,6 +2140,10 @@ class SessionPrefillResponse(BaseModel):
     latest_exam: SessionPrefillExam | None = None
     exam_count: int
     recent_units: list[SessionCoveredUnit] = []   # Faz 3: son 7 günde işlenen üniteler
+    # Haftalık rapor köprüsü (2026-08-19): en güncel raporun gündem maddeleri
+    latest_report_id: int | None = None
+    latest_report_week: str | None = None         # "12–18 Ağustos" görünümü frontend'de
+    latest_report_agenda: list[dict] = []         # [{key,title,detail,severity}] (AI varsa AI)
 
 
 # =============================================================================

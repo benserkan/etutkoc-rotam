@@ -123,6 +123,15 @@ class CoachingSession(Base):
     # Kova 1 — seans anındaki otomatik veri (JSON, geçmiş korunur)
     auto_snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
 
+    # Haftalık rapor köprüsü (2026-08-19): seans bir haftalık koç raporundan
+    # açıldıysa bağı + rapor gündeminden seçilen maddeler (JSON list[str]).
+    # Rapor silinirse bağ düşer, seans kalır (SET NULL).
+    report_id: Mapped[int | None] = mapped_column(
+        ForeignKey("coaching_reports.id", ondelete="SET NULL", name="fk_session_report"),
+        nullable=True, index=True,
+    )
+    agenda_items: Mapped[str | None] = mapped_column(Text, nullable=True)
+
     capture_source: Mapped[SessionCaptureSource] = mapped_column(
         Enum(SessionCaptureSource), nullable=False,
         server_default=SessionCaptureSource.MANUAL.name,
@@ -140,6 +149,49 @@ class CoachingSession(Base):
 
     def __repr__(self) -> str:
         return f"<CoachingSession s={self.student_id} {self.session_date} {self.status.value}>"
+
+
+class CoachingReport(Base):
+    """Haftalık koç raporu (2026-08-19) — "Haftalık rapor oluştur" butonunun kaydı.
+
+    Programın işlendiği son güne kadar geriye 7 günlük pencere için tüm analizler
+    (`data_json`: görev/test/deneme seyri, ders-konu D/Y, branş denemeleri, müfredat
+    kapsama, kitap ilerlemesi, talepler, DNA…) + kural motorunun ürettiği seans
+    gündemi (`agenda_json`) + istenirse KS4 AI'ın yazdığı akıcı gündem
+    (`ai_agenda_json`, kredili, bir kez). HTML görünüm bu JSON'dan her seferinde
+    aynı formatla üretilir (saklanmaz). Aynı hafta yeniden üretilirse yeni sürüm.
+
+    Gizlilik (KVKK): yalnız raporu üreten koç erişir (sahiplik 404); veli/öğrenci görmez.
+    """
+    __tablename__ = "coaching_reports"
+    __table_args__ = (
+        Index("ix_coaching_report_student_week", "student_id", "week_start"),
+    )
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True)
+    student_id: Mapped[int] = mapped_column(
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    coach_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
+    )
+    week_start: Mapped[date] = mapped_column(Date, nullable=False)
+    week_end: Mapped[date] = mapped_column(Date, nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False, server_default="1")
+
+    data_json: Mapped[str] = mapped_column(Text, nullable=False, server_default="{}")
+    agenda_json: Mapped[str | None] = mapped_column(Text, nullable=True)      # kural motoru
+    ai_agenda_json: Mapped[str | None] = mapped_column(Text, nullable=True)   # KS4 (kredili)
+    ai_generated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+    student: Mapped["User"] = relationship("User", foreign_keys=[student_id])
+
+    def __repr__(self) -> str:
+        return f"<CoachingReport s={self.student_id} {self.week_start}..{self.week_end} v{self.version}>"
 
 
 class CoachingInsight(Base):

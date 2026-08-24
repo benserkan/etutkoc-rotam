@@ -30,6 +30,7 @@ from app.routes.api_v2 import campaign_public as v2_campaign_public
 from app.routes.api_v2 import admin_testimonials as v2_admin_testimonials
 from app.routes.api_v2 import appointments as v2_appointments
 from app.routes.api_v2 import auth as v2_auth
+from app.routes.api_v2 import coaching_reports as v2_coaching_reports
 from app.routes.api_v2 import contact_public as v2_contact_public
 from app.routes.api_v2 import testimonials_public as v2_testimonials_public
 from app.routes.api_v2 import csv_ops as v2_csv
@@ -93,6 +94,7 @@ router.include_router(v2_wrong_questions.router)
 router.include_router(v2_exam_import.router)
 router.include_router(v2_self_study.router)
 router.include_router(v2_appointments.router)
+router.include_router(v2_coaching_reports.router)
 router.include_router(v2_testimonials_public.router)
 router.include_router(v2_admin_testimonials.router)
 router.include_router(v2_admin_conversion.router)

@@ -19,12 +19,16 @@ import {
   Sparkles,
   Square,
   Trash2,
+  FileBarChart2,
+  ExternalLink,
 } from "lucide-react";
 import { DemoHint } from "@/components/demos/demo-hint";
 
 import {
   getTeacherStudentSessions,
   getTeacherSessionPrefill,
+  getTeacherWeeklyReports,
+  teacherWeeklyReportHtmlUrl,
   getTeacherAiConsent,
   getTeacherCoachingInsight,
   teacherKeys,
@@ -37,6 +41,8 @@ import {
   useParseSessionPhoto,
   useTranscribeAudio,
   useGenerateCoachingInsight,
+  useCreateWeeklyReport,
+  useGenerateReportAiAgenda,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
   AiConsentResponse,
@@ -44,6 +50,7 @@ import type {
   CoachingSessionCreateBody,
   CoachingSessionRow,
   SessionChannel,
+  CoachingReportRow,
   SessionPrefillResponse,
   SessionStatus,
   StudentSessionListResponse,
@@ -133,6 +140,17 @@ export function StudentSessionsPanel({ studentId }: Props) {
   const [consentOpen, setConsentOpen] = React.useState(false);
   const [pendingAction, setPendingAction] = React.useState<(() => void) | null>(null);
   const [insightOpen, setInsightOpen] = React.useState(false);
+  const [reportsOpen, setReportsOpen] = React.useState(false);
+
+  // Haftalık raporlar (kredisiz kural motoru; AI gündemi ayrı butonla)
+  const reportsQ = useQuery<{ rows: CoachingReportRow[] }>({
+    queryKey: teacherKeys.weeklyReports(studentId),
+    queryFn: () => getTeacherWeeklyReports(studentId),
+    staleTime: 30_000,
+  });
+  const createReport = useCreateWeeklyReport(studentId);
+  const genAiAgenda = useGenerateReportAiAgenda(studentId);
+  const reports = reportsQ.data?.rows ?? [];
 
   // İçgörü cache'i — açılınca okunur, KREDİ DÜŞMEZ (yalnız "Oluştur/Yenile" düşer)
   const insightQ = useQuery<CoachingInsightCacheResponse>({
@@ -210,6 +228,20 @@ export function StudentSessionsPanel({ studentId }: Props) {
           >
             {aiLocked ? <Lock className="size-4" aria-hidden /> : <Lightbulb className="size-4" aria-hidden />} İçgörü
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="border-cyan-200 text-cyan-700 hover:bg-cyan-50 hover:text-cyan-800"
+            onClick={() => {
+              if (reports.length === 0) createReport.mutate({}, { onSuccess: () => setReportsOpen(true) });
+              else setReportsOpen((v) => !v);
+            }}
+            disabled={createReport.isPending}
+            title="Haftanın verisinden rapor + seans gündemi üret (kredisiz)"
+          >
+            {createReport.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <FileBarChart2 className="size-4" aria-hidden />}
+            Haftalık rapor{reports.length > 0 ? ` (${reports.length})` : ""}
+          </Button>
           <Button size="sm" onClick={openNew}>
             <Plus className="size-4" aria-hidden /> Yeni Seans
           </Button>
@@ -225,6 +257,65 @@ export function StudentSessionsPanel({ studentId }: Props) {
             Paketi görüntüle
           </Link>
         </div>
+      ) : null}
+
+      {reportsOpen ? (
+        <section className="rounded-lg border border-cyan-200 bg-cyan-50/40 p-3 dark:bg-cyan-500/10 dark:border-cyan-500/30">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-sm font-semibold text-cyan-900 dark:text-cyan-200">Haftalık raporlar</p>
+            <Button size="sm" variant="outline" onClick={() => createReport.mutate({})} disabled={createReport.isPending}>
+              {createReport.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Plus className="size-4" aria-hidden />}
+              Bu hafta için üret
+            </Button>
+          </div>
+          {reports.length === 0 ? (
+            <p className="text-xs text-cyan-900/70 dark:text-cyan-200/70">Henüz rapor yok.</p>
+          ) : (
+            <ul className="space-y-1.5">
+              {reports.map((r) => (
+                <li key={r.id} className="flex flex-wrap items-center gap-2 rounded-md border border-cyan-200/70 bg-white px-2.5 py-1.5 text-xs dark:bg-transparent dark:border-cyan-500/30">
+                  <span className="font-semibold text-slate-900 dark:text-cyan-100">
+                    {formatTRDate(r.week_start)} – {formatTRDate(r.week_end)}
+                  </span>
+                  {r.version > 1 ? <span className="text-muted-foreground">s{r.version}</span> : null}
+                  <span className="text-muted-foreground">{r.agenda_count} gündem maddesi</span>
+                  {r.has_ai_agenda ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2 py-0.5 font-medium text-violet-700 dark:bg-violet-500/15 dark:text-violet-300">
+                      <Sparkles className="size-3" aria-hidden /> AI gündemi
+                    </span>
+                  ) : null}
+                  {r.session_count > 0 ? <span className="text-emerald-700 dark:text-emerald-300">seans kaydedildi</span> : null}
+                  <span className="ml-auto inline-flex items-center gap-1.5">
+                    {!r.has_ai_agenda ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 rounded-md border border-violet-200 px-2 py-1 font-medium text-violet-700 hover:bg-violet-50 disabled:opacity-50 dark:border-violet-500/30 dark:text-violet-300 dark:hover:bg-violet-500/10"
+                        onClick={() => gateConsent(() => genAiAgenda.mutate({ reportId: r.id }))}
+                        disabled={aiLocked || genAiAgenda.isPending}
+                        title={aiLocked ? "Ücretli pakette kullanılabilir" : "Yapay zekâ akıcı seans gündemi yazar (kredi)"}
+                      >
+                        {genAiAgenda.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Sparkles className="size-3.5" aria-hidden />}
+                        AI gündemi yaz
+                      </button>
+                    ) : null}
+                    <a
+                      href={teacherWeeklyReportHtmlUrl(r.id)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-md border border-cyan-300 bg-cyan-600 px-2 py-1 font-medium text-white hover:bg-cyan-700"
+                    >
+                      <ExternalLink className="size-3.5" aria-hidden /> Raporu aç
+                    </a>
+                  </span>
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="mt-2 text-[11px] text-cyan-900/70 dark:text-cyan-200/60">
+            Rapor: haftanın seyri, ders-konu doğru/yanlış, branş denemeleri, müfredat kapsama ve
+            veriden çıkan seans gündemi. Yeni Seans formunda gündem maddelerini seçip seansa aktarabilirsiniz.
+          </p>
+        </section>
       ) : null}
 
       {q.isLoading && !data ? (
@@ -619,6 +710,8 @@ function SessionForm({
   const [tags, setTags] = React.useState((editing?.tags ?? []).join(", "));
   const [error, setError] = React.useState<string | null>(null);
   const [captureSource, setCaptureSource] = React.useState<CaptureSource>("manual");
+  // Haftalık rapor gündemi köprüsü — seçilen maddeler seansa bağlanır
+  const [pickedAgenda, setPickedAgenda] = React.useState<string[]>(editing?.agenda_items ?? []);
 
   // Dikte (alan-bazlı ses → metin)
   const [dictation, setDictation] = React.useState<{ field: DictField; phase: "recording" | "processing" } | null>(null);
@@ -746,6 +839,10 @@ function SessionForm({
       mood,
       tags: tags.split(",").map((t) => t.trim()).filter(Boolean),
     };
+    if (!isEdit && pickedAgenda.length > 0 && prefill.data?.latest_report_id) {
+      body.report_id = prefill.data.latest_report_id;
+      body.agenda_items = pickedAgenda;
+    }
     if (isEdit && editing) {
       update.mutate({ sessionId: editing.id, body }, { onSuccess: () => onDone() });
     } else {
@@ -788,6 +885,46 @@ function SessionForm({
           ) : (
             <p className="text-muted-foreground">Veri alınamadı (yine de seansı kaydedebilirsiniz).</p>
           )}
+        </div>
+      ) : null}
+
+      {!isEdit && (prefill.data?.latest_report_agenda?.length ?? 0) > 0 ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50/60 p-3 text-xs dark:bg-amber-500/10 dark:border-amber-500/30">
+          <p className="mb-1.5 font-semibold text-amber-900 dark:text-amber-200">
+            Haftalık rapor gündemi — seansa aktarmak istediklerini işaretle
+          </p>
+          <ul className="max-h-44 space-y-1 overflow-y-auto pr-1">
+            {prefill.data!.latest_report_agenda!.map((a) => {
+              const label = a.title;
+              const checked = pickedAgenda.includes(label);
+              return (
+                <li key={label}>
+                  <label className="flex cursor-pointer items-start gap-2">
+                    <input
+                      type="checkbox"
+                      className="mt-0.5 accent-amber-600"
+                      checked={checked}
+                      onChange={() => {
+                        setPickedAgenda((prev) => {
+                          const next = checked ? prev.filter((x) => x !== label) : [...prev, label];
+                          return next;
+                        });
+                        if (!checked) setAgenda((v) => appendText(v, `• ${label}: ${a.detail}`));
+                      }}
+                    />
+                    <span className="text-amber-950 dark:text-amber-100">
+                      <b>{a.title}</b>
+                      {a.severity === "high" ? <span className="ml-1 rounded bg-rose-100 px-1 text-[10px] font-semibold text-rose-700 dark:bg-rose-500/15 dark:text-rose-300">öncelikli</span> : null}
+                      <span className="block text-amber-900/70 dark:text-amber-200/70">{a.detail}</span>
+                    </span>
+                  </label>
+                </li>
+              );
+            })}
+          </ul>
+          <p className="mt-1.5 text-[11px] text-amber-900/70 dark:text-amber-200/60">
+            İşaretlenen maddeler gündem alanına eklenir ve seans rapora bağlanır.
+          </p>
         </div>
       ) : null}
 

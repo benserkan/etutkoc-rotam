@@ -1605,6 +1605,15 @@ def _get_owned_session(db: Session, session_id: int, teacher_id: int) -> Coachin
     return s
 
 
+def _load_str_list(raw: str | None) -> list[str]:
+    if not raw:
+        return []
+    try:
+        return [str(x) for x in json.loads(raw)]
+    except (ValueError, TypeError):
+        return []
+
+
 def _build_session_row(s: CoachingSession) -> CoachingSessionRow:
     tags: list[str] = []
     if s.tags:
@@ -1633,6 +1642,8 @@ def _build_session_row(s: CoachingSession) -> CoachingSessionRow:
         tags=tags,
         auto_snapshot=snap,
         capture_source=s.capture_source.value,
+        report_id=s.report_id,
+        agenda_items=_load_str_list(s.agenda_items),
         created_at=s.created_at,
     )
 
@@ -1662,6 +1673,20 @@ def _validate_session_body(body: CoachingSessionCreateBody) -> tuple[date, str]:
     return sd, agenda
 
 
+def _validate_session_report(db: Session, body: CoachingSessionCreateBody, student_id: int) -> None:
+    """Seansa bağlanan haftalık rapor bu öğrencinin olmalı (yabancı rapor 422)."""
+    if not body.report_id:
+        return
+    from app.models import CoachingReport
+    r = db.get(CoachingReport, body.report_id)
+    if r is None or r.student_id != student_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "report_mismatch",
+                    "message": "Rapor bu öğrenciye ait değil."},
+        )
+
+
 def _apply_session_body(s: CoachingSession, body: CoachingSessionCreateBody, sd: date, agenda: str) -> None:
     s.session_date = sd
     s.status = CoachingSessionStatus(body.status)
@@ -1675,6 +1700,12 @@ def _apply_session_body(s: CoachingSession, body: CoachingSessionCreateBody, sd:
     s.tags = json.dumps(clean_tags, ensure_ascii=False) if clean_tags else None
     if body.capture_source:
         s.capture_source = SessionCaptureSource(body.capture_source)
+    # Haftalık rapor köprüsü: rapor bağı yalnız pozitifse yazılır (edit'te korunur)
+    if body.report_id is not None:
+        s.report_id = body.report_id or None
+    if body.agenda_items:
+        clean = [str(a).strip() for a in body.agenda_items if a and str(a).strip()]
+        s.agenda_items = json.dumps(clean, ensure_ascii=False) if clean else None
 
 
 @router.get("/students/{student_id}/sessions", response_model=StudentSessionListResponse)
@@ -1726,7 +1757,30 @@ def teacher_session_prefill_v2(
         latest_exam=SessionPrefillExam(**d["latest_exam"]) if d["latest_exam"] else None,
         exam_count=d["exam_count"],
         recent_units=[SessionCoveredUnit(**u) for u in d.get("recent_units", [])],
+        **_latest_report_fields(db, student.id),
     )
+
+
+def _latest_report_fields(db: Session, student_id: int) -> dict:
+    """Seans formu için en güncel haftalık raporun gündemi (best-effort)."""
+    try:
+        from app.models import CoachingReport as _CR
+        from app.services import weekly_coach_report as _wcr
+        r = (db.query(_CR).filter(_CR.student_id == student_id)
+             .order_by(_CR.week_end.desc(), _CR.version.desc()).first())
+        if r is None:
+            return {}
+        agenda = _wcr.load_ai_agenda(r) or _wcr.load_agenda(r)
+        return {
+            "latest_report_id": r.id,
+            "latest_report_week": f"{r.week_start.isoformat()}/{r.week_end.isoformat()}",
+            "latest_report_agenda": [
+                {"key": a.get("key"), "title": a.get("title"), "detail": a.get("detail"),
+                 "severity": a.get("severity")} for a in agenda[:12]
+            ],
+        }
+    except Exception:  # noqa: BLE001 — prefill rapor olmadan da çalışır
+        return {}
 
 
 @router.post("/students/{student_id}/sessions", response_model=MutationResponse[CoachingSessionRow])
@@ -1739,6 +1793,7 @@ def teacher_create_session_v2(
     """Seans kaydı oluştur. Otomatik snapshot (Kova 1) seans anında hesaplanıp saklanır."""
     student = _get_owned_student(db, student_id, user.id)
     sd, agenda = _validate_session_body(body)
+    _validate_session_report(db, body, student.id)
     s = CoachingSession(coach_id=user.id, student_id=student.id)
     _apply_session_body(s, body, sd, agenda)
     s.auto_snapshot = json.dumps(_compute_session_prefill(db, student), ensure_ascii=False)
@@ -1774,6 +1829,7 @@ def teacher_update_session_v2(
     """Seans kaydını düzenle (auto_snapshot dokunulmaz — o günün verisi sabit kalır)."""
     s = _get_owned_session(db, session_id, user.id)
     sd, agenda = _validate_session_body(body)
+    _validate_session_report(db, body, s.student_id)
     _apply_session_body(s, body, sd, agenda)
     _mark_insight_stale(db, s.student_id)  # seans değişti → içgörü cache bayatlar
     db.commit()
@@ -2350,6 +2406,18 @@ def teacher_coaching_insight_generate_v2(
         if es:
             academic["exam_topics"] = es
     except Exception:  # noqa: BLE001 — içgörü denemesiz de üretilir
+        pass
+    # Haftalık rapor köprüsü (2026-08-19): en güncel rapor varsa ölçülmüş hafta
+    # verisi (gün gün seyir + ders/konu D/Y + branş denemeleri + mesajlar) —
+    # içgörü yalnız seans notlarına değil rakamlara da dayanır.
+    try:
+        from app.models import CoachingReport as _CR
+        from app.services import weekly_coach_report as _wcr
+        _r = (db.query(_CR).filter(_CR.student_id == student.id)
+              .order_by(_CR.week_end.desc(), _CR.version.desc()).first())
+        if _r is not None:
+            academic["weekly_report"] = _wcr.insight_bundle(_wcr.load_data(_r), _wcr.load_agenda(_r))
+    except Exception:  # noqa: BLE001 — içgörü raporsuz da üretilir
         pass
 
     owner = CreditOwner.for_user(user)

@@ -18,7 +18,7 @@ from app.services import gemini
 
 logger = logging.getLogger(__name__)
 
-__all__ = ["generate_coaching_insight", "AIInvalidResponse", "AIServiceUnavailable"]
+__all__ = ["generate_coaching_insight", "generate_report_agenda", "AIInvalidResponse", "AIServiceUnavailable"]
 
 
 def _list_of_str(v: Any, *, limit: int) -> list[str]:
@@ -157,4 +157,81 @@ def generate_coaching_insight(
     out = _normalize_insight(gemini.extract_json(text))
     if not out["summary"] and not out["agenda_suggestions"]:
         raise AIInvalidResponse("İçgörü üretilemedi (boş yanıt)")
+    return out
+
+
+# ============================================================================
+# Haftalık rapor → "Seans gündemi" (2026-08-19)
+# ============================================================================
+def _normalize_report_agenda(obj: dict[str, Any]) -> dict[str, Any]:
+    items: list[dict[str, str]] = []
+    for x in (obj.get("agenda") or []):
+        if isinstance(x, dict):
+            t = str(x.get("title") or "").strip()
+            d = str(x.get("detail") or "").strip()
+            if t or d:
+                items.append({"title": t or d[:60], "detail": d})
+        elif isinstance(x, str) and x.strip():
+            items.append({"title": x.strip()[:60], "detail": x.strip()})
+    return {
+        "summary": str(obj.get("summary") or "").strip(),
+        "agenda": items[:10],
+        "psychological_tips": _list_of_str(obj.get("psychological_tips"), limit=5),
+        "watch_outs": _list_of_str(obj.get("watch_outs"), limit=4),
+    }
+
+
+def _build_report_prompt(student_name: str, bundle: dict[str, Any], sessions: list[dict[str, Any]]) -> str:
+    import json as _json
+    lines: list[str] = []
+    lines.append(
+        "Sen, lise/üniversite sınavına hazırlanan öğrencilerle çalışan deneyimli bir eğitim "
+        "koçuna danışmanlık yapan bir asistansın. Aşağıda öğrencinin BİR HAFTALIK programının "
+        "ölçülmüş verisi (görev/test/deneme seyri, ders ve konu bazlı doğru-yanlış, branş "
+        "denemeleri, müfredat kapsama, başlanmamış kaynaklar, öğrencinin koçuna yazdığı mesajlar, "
+        "çalışma saatleri) ve kural motorunun çıkardığı ham gündem maddeleri var. Koçun bir "
+        "sonraki koçluk SEANSI için 'Seans gündemi — veriden çıkan başlıklar' yaz."
+    )
+    lines.append(f"\nÖğrenci: {student_name}")
+    lines.append("\n--- HAFTANIN VERİSİ (JSON) ---")
+    lines.append(_json.dumps(bundle, ensure_ascii=False)[:14000])
+    if sessions:
+        lines.append("\n--- ÖNCEKİ SEANSLAR (yeniden eskiye) ---")
+        for s in sessions[:4]:
+            lines.append(f"[{s.get('session_date')}] gündem: {s.get('agenda') or '-'} | not: {s.get('coach_note') or '-'} | değişiklik: {s.get('next_change') or '-'}")
+    lines.append(
+        "\n--- GÖREV ---\n"
+        "YALNIZ şu JSON nesnesini döndür (açıklama, markdown yok):\n"
+        "{\n"
+        '  "summary": "haftanın 2-3 cümlelik gidişat özeti (rakamlı)",\n'
+        '  "agenda": [{"title": "kısa başlık", "detail": "2-4 cümle: somut rakam + karar ya da koça soru"}],\n'
+        '  "psychological_tips": ["koça yaklaşım önerileri (2-4)"],\n'
+        '  "watch_outs": ["dikkat edilecek riskler (0-3)"]\n'
+        "}\n"
+        "Kurallar: Türkçe yaz. 7-10 gündem maddesi, ÖNCELİK SIRASIYLA (önce takdir/özet, sonra en "
+        "kritik olanlar, en sonda gelecek hafta programı). Her madde verilen rakamlara dayansın; "
+        "uydurma. Ders ve konu adlarını aynen kullan. Öğrenci mesajlarındaki sinyalleri (zorlanma, "
+        "enerji, kaynak bitti, bekleyen soru) maddelere yedir. Sıcak ama net; koçluk dili; tıbbi/"
+        "klinik teşhis yok. Her madde bir KARAR ya da bir SORU içersin."
+    )
+    return "\n".join(lines)
+
+
+def generate_report_agenda(
+    student_name: str,
+    bundle: dict[str, Any],
+    sessions: list[dict[str, Any]] | None = None,
+    *,
+    timeout: float = 60.0,
+) -> dict[str, Any]:
+    """Haftalık rapor paketi → akıcı, rakamlı seans gündemi (+ KS4 cache alanları).
+
+    Raises: AIServiceUnavailable / AIInvalidResponse (endpoint çevirir).
+    """
+    prompt = _build_report_prompt(student_name, bundle, sessions or [])
+    text = gemini.generate([gemini.text_part(prompt)], personal_data=True, timeout=timeout,
+                           max_output_tokens=12288)
+    out = _normalize_report_agenda(gemini.extract_json(text))
+    if not out["agenda"]:
+        raise AIInvalidResponse("Gündem üretilemedi (boş yanıt)")
     return out

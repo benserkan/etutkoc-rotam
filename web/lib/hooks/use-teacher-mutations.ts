@@ -7,6 +7,8 @@ import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
 import { teacherKeys } from "@/lib/api/teacher";
 import type {
+  CoachingReportDetail,
+  CoachingReportRow,
   BulkResult,
   BulkTasksBody,
   CarryoverBody,
@@ -1694,6 +1696,47 @@ export function useTranscribeAudio(studentId: number) {
 // NOT (2026-07-24): useUpgradePlan KALDIRILDI — arkadaki ödemesiz
 // POST /teacher/plan/upgrade ucu güvenlik nedeniyle kapatıldı. Paket
 // yükseltme yalnız ödemeyle olur: web "Kartla Öde" (iyzico init) / iOS IAP.
+
+export function useCreateWeeklyReport(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<MutationResponse<CoachingReportRow>, ApiError, { weekEnd?: string | null }>({
+    mutationFn: ({ weekEnd }) =>
+      api<MutationResponse<CoachingReportRow>>(
+        `/api/v2/teacher/students/${studentId}/weekly-reports`,
+        { method: "POST", body: JSON.stringify(weekEnd ? { week_end: weekEnd } : {}) },
+      ),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({ queryKey: teacherKeys.sessionPrefill(studentId) });
+      toast.success("Haftalık rapor oluşturuldu");
+    },
+    onError: (err) => showError(err, "Rapor oluşturulamadı"),
+  });
+}
+
+export function useGenerateReportAiAgenda(studentId: number) {
+  const qc = useQueryClient();
+  // POST = AI gündemi üret (KREDİ DÜŞER, KS4 kredisi). Sonuç rapora cache'lenir.
+  return useMutation<CoachingReportDetail, ApiError, { reportId: number }>({
+    mutationFn: ({ reportId }) =>
+      api<CoachingReportDetail>(`/api/v2/teacher/weekly-reports/${reportId}/ai-agenda`, { method: "POST" }),
+    onSuccess: (data) => {
+      qc.setQueryData(teacherKeys.weeklyReport(data.id), data);
+      qc.invalidateQueries({ queryKey: teacherKeys.weeklyReports(studentId) });
+      qc.invalidateQueries({ queryKey: teacherKeys.sessionPrefill(studentId) });
+      toast.success("AI seans gündemi hazır");
+    },
+    onError: (err) => {
+      const code = errorCode(err);
+      if (code === "consent_required") toast.error("Önce AI işleme onayı gerekli");
+      else if (code === "plan_upgrade_required") toast.error("Bu özellik ücretli pakette", { description: "Paketinizi yükseltin." });
+      else if (code === "ai_credit_exhausted") showCreditExhaustedToast(err);
+      else if (code === "agenda_unreadable") toast.error("Gündem üretilemedi", { description: "Lütfen tekrar deneyin." });
+      else if (code === "ai_unavailable") toast.error("AI servisi şu an kullanılamıyor");
+      else showError(err, "Gündem üretilemedi");
+    },
+  });
+}
 
 export function useGenerateCoachingInsight(studentId: number) {
   const qc = useQueryClient();

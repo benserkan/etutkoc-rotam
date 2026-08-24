@@ -1880,6 +1880,51 @@ export interface SessionPrefillResponse {
   latest_exam: SessionPrefillExam | null;
   exam_count: number;
   recent_units?: SessionCoveredUnit[];
+  // Haftalık rapor köprüsü — en güncel raporun gündem maddeleri
+  latest_report_id?: number | null;
+  latest_report_week?: string | null;
+  latest_report_agenda?: ReportAgendaItem[];
+}
+
+// ============================================================================
+// Haftalık koç raporu (2026-08-19)
+// ============================================================================
+export interface ReportAgendaItem {
+  key?: string | null;
+  title: string;
+  detail: string;
+  severity?: "high" | "medium" | "info" | null;
+}
+
+export interface CoachingReportRow {
+  id: number;
+  week_start: string;
+  week_end: string;
+  version: number;
+  generated_at: string;
+  has_ai_agenda: boolean;
+  agenda_count: number;
+  session_count: number;
+}
+
+export interface CoachingReportListResponse {
+  rows: CoachingReportRow[];
+}
+
+export interface CoachingReportDetail {
+  id: number;
+  student_id: number;
+  student_name: string;
+  week_start: string;
+  week_end: string;
+  version: number;
+  generated_at: string;
+  agenda: ReportAgendaItem[];
+  ai_agenda: ReportAgendaItem[] | null;
+  ai_summary: string | null;
+  ai_tips: string[];
+  ai_watch_outs: string[];
+  ai_generated_at: string | null;
 }
 
 export interface CoachingSessionCreateBody {
@@ -1893,6 +1938,9 @@ export interface CoachingSessionCreateBody {
   mood?: number | null;
   tags?: string[];
   capture_source?: string;
+  // Haftalık rapor köprüsü
+  report_id?: number | null;
+  agenda_items?: string[];
 }
 
 export interface CoachingSessionRow {
@@ -1911,6 +1959,8 @@ export interface CoachingSessionRow {
   auto_snapshot: SessionPrefillResponse | null;
   capture_source: string;
   created_at: string;
+  report_id?: number | null;
+  agenda_items?: string[];
 }
 
 export interface CoachingSessionSummary {
