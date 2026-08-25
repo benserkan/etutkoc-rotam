@@ -191,6 +191,22 @@ def get_weekly_report_html_v2(
     return HTMLResponse(content=html)
 
 
+@router.get("/weekly-reports/{report_id}/parent-html")
+def get_weekly_report_parent_html_v2(
+    report_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Raporun VELİ SÜRÜMÜ (sade, olumlu dil; koç gündemi/mesajlar yok).
+
+    Koç açar, yazdırır/PDF'ler ve veliyle paylaşır. Aynı data_json'dan üretilir.
+    """
+    from app.services.weekly_parent_report import render_parent_html
+
+    r = _get_owned_report(db, report_id, user.id)
+    return HTMLResponse(content=render_parent_html(wcr.load_data(r)))
+
+
 @router.post("/weekly-reports/{report_id}/ai-agenda", response_model=CoachingReportDetail)
 def generate_report_ai_agenda_v2(
     report_id: int,

@@ -365,6 +365,10 @@ export function teacherWeeklyReportHtmlUrl(reportId: number): string {
   return `/api/v2/teacher/weekly-reports/${reportId}/html`;
 }
 
+export function teacherWeeklyReportParentHtmlUrl(reportId: number): string {
+  return `/api/v2/teacher/weekly-reports/${reportId}/parent-html`;
+}
+
 export function getTeacherPlan(): Promise<TeacherPlanResponse> {
   return api<TeacherPlanResponse>("/api/v2/teacher/plan");
 }

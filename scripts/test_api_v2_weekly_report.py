@@ -16,6 +16,8 @@ Senaryolar:
   12. prefill → latest_report_id + latest_report_agenda dolu
   13. AI gündem (monkeypatch) → detail.ai_agenda dolu + has_ai_agenda + ikinci GET ücretsiz cache
   14. KS4 içgörü prompt'una weekly_report paketi giriyor (monkeypatch ile yakala)
+  15. Veli sürümü HTML → 200 + sade başlıklar + HASSAS İÇERİK YOK (mesaj/gündem/eksik listesi)
+  16. Yabancı koç veli sürümü → 404
 """
 from __future__ import annotations
 
@@ -296,6 +298,20 @@ def main():
                   f"status={r.status_code} wr={'ok' if wr else None} {r.text[:160]}")
         finally:
             aci.generate_coaching_insight = orig2
+
+        # 15. veli sürümü
+        r = tc.get(f"/api/v2/teacher/weekly-reports/{rep_id}/parent-html")
+        ok = (r.status_code == 200 and "Haftalık Veli Raporu" in r.text
+              and "Bu hafta nasıl geçti?" in r.text and "İyi gidenler" in r.text)
+        check("15. veli sürümü HTML → sade başlıklar", ok, f"status={r.status_code}")
+        leaks = [b for b in ("hocam bu kitap bitti", "Seans gündemi", "Yanlış Soru Arşivi",
+                             "D/Y girilmedi", "Yapılmadı (") if b in r.text]
+        check("15b. veli sürümünde hassas içerik YOK", r.status_code == 200 and not leaks,
+              f"leaks={leaks}")
+
+        # 16. yabancı koç → 404
+        r = t2c.get(f"/api/v2/teacher/weekly-reports/{rep_id}/parent-html")
+        check("16. yabancı koç veli sürümü → 404", r.status_code == 404, f"status={r.status_code}")
 
     finally:
         _cleanup(seed)

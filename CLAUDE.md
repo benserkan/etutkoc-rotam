@@ -53,6 +53,19 @@ Seans gündemi bölümü Seanslar sekmesine entegre olsun."
   prefill + AI cache mock + KS4 weekly_report girdisi). Regresyon: sessions 14 ·
   coaching_insight 11 · teacher_read 12 GREEN; tsc+eslint temiz. E2E (dev,
   Playwright): rapor üret → HTML açıldı → formda checklist doğrulandı.
+- **VELİ SÜRÜMÜ (2026-08-25, aynı paket):** `app/services/weekly_parent_report.py`
+  `render_parent_html` — aynı CoachingReport data_json'ından sade/olumlu dilli
+  ikinci görünüm (parent_commentary ilkeleri: suçlayıcı değil, somut; koç
+  gündemi/öğrenci mesajları/YSA eleştirisi/"D-Y girilmedi"/gece-ritmi GİRMEZ;
+  deneme netleri paylaşılır [2026-06-01]; açık görevler tek yumuşak cümle
+  "planlanarak önümüzdeki haftaya taşınıyor"). Bölümler: özet şeridi + "Bu hafta
+  nasıl geçti?" + haftanın seyri (sade) + ders bazlı + branş netleri (trend
+  cümleli) + "İyi gidenler ve odağımız" (güçlü/çalışılacak konu çipleri +
+  sıradaki müfredat) + "Koçunuzdan" kapanışı. GET `/teacher/weekly-reports/{id}/
+  parent-html` (koç auth; koç yazdırır/PDF'ler, veliyle paylaşır — veli paneline
+  otomatik gösterim BİLİNÇLİ yok, koç kontrolünde). Web: rapor satırında yeşil
+  "Veli sürümü" linki. Smoke 21/21 (15-16: sade başlıklar + hassas-içerik-yok
+  sızıntı taraması + yabancı 404).
 - Mobil BİLİNÇLİ yok (rapor HTML linki mobil tarayıcıda açılır; PARITY).
 
 ---

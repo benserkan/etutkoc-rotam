@@ -29,6 +29,7 @@ import {
   getTeacherSessionPrefill,
   getTeacherWeeklyReports,
   teacherWeeklyReportHtmlUrl,
+  teacherWeeklyReportParentHtmlUrl,
   getTeacherAiConsent,
   getTeacherCoachingInsight,
   teacherKeys,
@@ -298,6 +299,15 @@ export function StudentSessionsPanel({ studentId }: Props) {
                         AI gündemi yaz
                       </button>
                     ) : null}
+                    <a
+                      href={teacherWeeklyReportParentHtmlUrl(r.id)}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 rounded-md border border-emerald-200 px-2 py-1 font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-500/30 dark:text-emerald-300 dark:hover:bg-emerald-500/10"
+                      title="Veliyle paylaşılacak sade sürüm (yazdır/PDF)"
+                    >
+                      <ExternalLink className="size-3.5" aria-hidden /> Veli sürümü
+                    </a>
                     <a
                       href={teacherWeeklyReportHtmlUrl(r.id)}
                       target="_blank"
