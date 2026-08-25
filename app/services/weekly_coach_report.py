@@ -718,6 +718,8 @@ def render_html(d: dict, agenda: list[dict], ai_agenda: list[dict] | None = None
     tw_total = m["total_wrong"] or 1
     rows = []
     for name in sorted(m["subj"].keys(), key=lambda n: SUBJ_ORDER.index(n) if n in SUBJ_ORDER else 99):
+        if name == "—":
+            continue  # derssiz kalemler — genel toplamda zaten sayılı
         s = m["subj"][name]
         rows.append(f"""<tr><td class="lbl">{_esc(name)}</td><td class="num">{s['gorev_done']} / {s['gorev_total']}</td>
   <td class="num">{s['test_completed']} / {s['test_planned']}</td><td class="num">{s['D']}</td><td class="num red">{s['Y']}</td><td class="num">{s['B'] or '—'}</td>

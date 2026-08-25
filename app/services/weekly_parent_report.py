@@ -125,6 +125,8 @@ def render_parent_html(d: dict) -> str:
     # Ders bazlı (sade)
     rows = []
     for name in sorted(m["subj"].keys(), key=lambda n: SUBJ_ORDER.index(n) if n in SUBJ_ORDER else 99):
+        if name == "—":
+            continue  # derssiz kalemler (etkinlik vb.) — genel toplamda zaten sayılı
         s = m["subj"][name]
         rows.append(f"""<tr><td class="lbl">{_esc(name)}</td><td class="num">{s['gorev_done']} / {s['gorev_total']}</td>
   <td class="num">{s['test_completed']} / {s['test_planned']}</td>
