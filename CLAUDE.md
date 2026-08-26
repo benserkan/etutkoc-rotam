@@ -758,6 +758,22 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
     (kategori,no) kümesi 107/107 birebir + zincirler boşluksuz + kontak-föy göz
     teyidi. KULLANICI TALİMATI: alt başlıklar satır yapılmadı — yalnız 6 bölüm
     adı + bölüm toplamı (16/8/28/25/24/6).
+  - **Bilgi Sarmal 2026 TYT-AYT Dil Bilgisi — CANLI (2026-08-26, prod id=110 ·
+    dev id=40): 23 bölüm · 103 test · 19/23 eşli.** Taranmış PDF (320 s, metin
+    katmanı yok) AMA içindekiler TEST-SATIRLI + sayfa numaralı (p3-p4 yüksek
+    DPI okundu) → gövde doğrulaması tüm kitabın üst şeritleri 12 kontak-föyde
+    (s9-s315, y=%5.5-12.5, dpi 85): her test/sarmal/ÖSYM/simülasyon başlangıcı
+    içindekilerdeki sayfayla BİREBİR — iki kaynak 103/103, sıfır uyuşmazlık.
+    SORDUK/SORDULAR ara bölümleri (s72/108/239/284) test değil; s315+ cevap
+    anahtarı. Desen: konu testleri + ünite-sonu Simülasyon karma serileri
+    (Ad Soylu 6 · Fiiller 3 · Ü4 ortak sayaçta Cümlenin Ögeleri 2 + Cümle
+    Türleri 1 · Anlatım Bozukluğu 1) + kümülatif Sarmal 1-6 + ÖSYM Tipi ×2.
+    Satır tasarımı: tek-konulu simülasyonlar KONUSUNA sayıldı (Cümlenin
+    Ögeleri 7 = 5+2 sim); çok-konulu karma/sarmal satırları ayrı + bilinçli
+    eşleşmesiz (kullanıcı talimatı: eşleşmeyen kitap konusu adıyla kalır).
+    Prod AI varyansı (Ad Soylu Karma boş kalmıştı) dev kararına elle hizalandı
+    (→ Sözcük Türleri). Eşlemeler: ad soylu türler→"Sözcük Türleri" şemsiyesi ·
+    Fiilde Çatı/Ek-Fiil→Fiiller · Yeni Nesil bilinçli boş.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
