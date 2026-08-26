@@ -745,6 +745,19 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
     `docker exec lgs-web mkdir -p /app/data/kitap-katalog` + docker cp + seeder
     (commit YOK; JSON+script yerelde, sonraki commit'le repoya girer).
     AYT taksonomisinde "Çarpanlara Ayırma" yok → Polinomlar'a eşli (doğru).
+  - **Limit Kronometre TYT Paragraf — CANLI (2026-08-26, prod id=109 · dev
+    id=39): 6 bölüm · 107 test · --no-map.** Dijital PDF, tam metin katmanı;
+    içindekiler YOK → gövde-önce deterministik tarama. Kronometre deseni: bölüm
+    içi test serileri kademeli KATEGORİ adlarıyla (ISINMA/GİRİŞ/GELİŞME/SONUÇ
+    Testi; her seri 1'den numaralanır). Sayfa üst bandı iki formda: test
+    BAŞLANGIÇ sayfası = 15pt kategori + 12pt "TESTİ" + **20pt test no** +
+    15pt "İdeal çözme süreniz N dk" (y≈93 — numara TUZAĞI, y<60 filtresiyle
+    elenir); devam sayfası = 13pt kategori + 15pt no (y<60). Konu anlatımı
+    sayfaları "BÖLÜM" bantlı, araları "OKUMA PARÇASI" + kitap sonu Paragraf
+    Sözlüğü — teste sayılmaz. Doğrulama: başlangıç-sayfası sayımı × benzersiz
+    (kategori,no) kümesi 107/107 birebir + zincirler boşluksuz + kontak-föy göz
+    teyidi. KULLANICI TALİMATI: alt başlıklar satır yapılmadı — yalnız 6 bölüm
+    adı + bölüm toplamı (16/8/28/25/24/6).
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
