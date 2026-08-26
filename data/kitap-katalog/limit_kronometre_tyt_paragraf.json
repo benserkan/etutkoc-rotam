@@ -1,0 +1,48 @@
+{
+ "name": "Limit Kronometre TYT Paragraf Soru Bankası",
+ "publisher": "Limit Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Deterministik metin-katmanı taraması (2026-08-26): test = üst banttaki ISINMA/GİRİŞ/GELİŞME/SONUÇ Testi serileri; iki bağımsız yöntem (20pt başlangıç-sayfası sayımı × benzersiz kategori+numara kümesi) 107/107 birebir, zincirler boşluksuz.",
+  "Kullanıcı talimatı: alt başlıklar (konu özeti, Okuma Parçası, ısınma/giriş/gelişme/sonuç ayrımı) katalog satırı YAPILMADI — yalnız 6 bölüm + bölüm başına TOPLAM test.",
+  "Konu anlatımı ('BÖLÜM' bantlı sayfalar), OKUMA PARÇASI araları ve Paragraf Sözlüğü teste sayılmadı.",
+  "Paragraf kitabı — müfredat eşleştirmesi YAPILMADI (345 TYT Paragraf paraleli; seeder --no-map).",
+  "Üst banttaki 15pt 'İdeal çözme süreniz N dk' sayısı test numarası DEĞİL — tarama y<60 filtresiyle eledi."
+ ],
+ "sections": [
+  {
+   "label": "Sözcükte, Söz Öbeklerinde ve Cümlede Anlam",
+   "test_count": 16,
+   "source": "scan"
+  },
+  {
+   "label": "Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları",
+   "test_count": 8,
+   "source": "scan"
+  },
+  {
+   "label": "Paragrafta Konu ve Ana Düşünce",
+   "test_count": 28,
+   "source": "scan"
+  },
+  {
+   "label": "Paragrafta Yapı - Boşluk ve Diyalog Tamamlama",
+   "test_count": 25,
+   "source": "scan"
+  },
+  {
+   "label": "Paragrafta Yardımcı Düşünceler",
+   "test_count": 24,
+   "source": "scan"
+  },
+  {
+   "label": "Karma Testler",
+   "test_count": 6,
+   "source": "scan"
+  }
+ ]
+}
