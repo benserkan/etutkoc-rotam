@@ -1,0 +1,42 @@
+{
+ "name": "Bilgi Sarmal 2026 TYT-AYT Dil Bilgisi Soru Bankası",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "İçindekiler (PDF p3-p4) test-satırlı ve sayfa numaralı — yüksek DPI görüntüden okundu; TOPLAM 103 test.",
+  "Gövde doğrulaması (2026-08-26): tüm kitabın üst şeritleri 12 kontak-föyde tarandı (s9-s315); her test/sarmal/ÖSYM/simülasyon başlangıcı içindekilerdeki sayfayla BİREBİR eşleşti — gövde toplamı da 103.",
+  "SORDUK/SORDULAR ara bölümleri (s72, s108, s239, s284) test DEĞİL — sayılmadı; s315 sonrası cevap anahtarı.",
+  "Sarmal Testler kümülatif karma: 1-2 (Ü1 sonu), 3-5 (Ü3 sonu), 6 (kitap sonu) — kendi satırlarında, bilinçli eşleşmesiz kalabilir.",
+  "Simülasyonlar konu-karma: Ad Soylu Sözcükler 6 · Fiiller 3 · Cümlenin Ögeleri 2 + Cümle Türleri 1 (Ü4 ortak sayaç) · Anlatım Bozukluğu 1 — ait oldukları karma satırında.",
+  "Kullanıcı talimatı: müfredat eşleştirmesi YAPILIR (auto-map + kapalı-küme AI); eşleşmeyen satırlar kitap konusu adıyla aynen kalır."
+ ],
+ "sections": [
+  {"label": "Ses Bilgisi", "test_count": 3, "source": "toc+scan"},
+  {"label": "Yazım Kuralları", "test_count": 8, "source": "toc+scan"},
+  {"label": "Noktalama İşaretleri", "test_count": 3, "source": "toc+scan"},
+  {"label": "Sarmal Test 1-2 + ÖSYM Tipi (1. Ünite Karma)", "test_count": 4, "source": "toc+scan"},
+  {"label": "Sözcükte Yapı", "test_count": 12, "source": "toc+scan"},
+  {"label": "Adlar", "test_count": 3, "source": "toc+scan"},
+  {"label": "Sıfatlar", "test_count": 3, "source": "toc+scan"},
+  {"label": "Zamirler", "test_count": 3, "source": "toc+scan"},
+  {"label": "Zarflar", "test_count": 3, "source": "toc+scan"},
+  {"label": "Tamlamalar", "test_count": 5, "source": "toc+scan"},
+  {"label": "Edat - Bağlaç - Ünlem", "test_count": 4, "source": "toc+scan"},
+  {"label": "Ad Soylu Sözcükler Karma (Simülasyon)", "test_count": 6, "source": "toc+scan"},
+  {"label": "Fiiller", "test_count": 5, "source": "toc+scan"},
+  {"label": "Ek-Fiil", "test_count": 2, "source": "toc+scan"},
+  {"label": "Fiilimsi", "test_count": 4, "source": "toc+scan"},
+  {"label": "Fiiller Karma (Simülasyon)", "test_count": 3, "source": "toc+scan"},
+  {"label": "Sarmal Test 3-5 + ÖSYM Tipi (3. Ünite Karma)", "test_count": 4, "source": "toc+scan"},
+  {"label": "Cümlenin Ögeleri", "test_count": 7, "source": "toc+scan"},
+  {"label": "Fiilde Çatı", "test_count": 5, "source": "toc+scan"},
+  {"label": "Cümle Türleri", "test_count": 5, "source": "toc+scan"},
+  {"label": "Anlatım Bozukluğu", "test_count": 5, "source": "toc+scan"},
+  {"label": "Yeni Nesil Dil Bilgisi", "test_count": 5, "source": "toc+scan"},
+  {"label": "Sarmal Test 6 (Genel Karma)", "test_count": 1, "source": "toc+scan"}
+ ]
+}
