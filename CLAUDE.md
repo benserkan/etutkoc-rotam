@@ -745,6 +745,28 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
     `docker exec lgs-web mkdir -p /app/data/kitap-katalog` + docker cp + seeder
     (commit YOK; JSON+script yerelde, sonraki commit'le repoya girer).
     AYT taksonomisinde "Çarpanlara Ayırma" yok → Polinomlar'a eşli (doğru).
+    **YENİDEN DOĞRULAMA + SAYIM REVİZYONU (2026-08-29):** kullanıcı "test
+    sayıları hatalı" şüphesiyle 208 sayfanın TAMAMI kontak-föy ile gözle
+    tarandı → eski 58 sayım kendi kuralına göre birebir doğruydu (benzer adlı
+    KAZANIM TEST'ler (bölüm,kategori,numara)+yakınlık kuralıyla doğru ayrışmış;
+    scan-drift artefaktları sonucu etkilememiş). AMA **KULLANICI KARARI
+    DEĞİŞTİ: "Bir de Orijinal'den Dinle" (10 blok; SORU-1..10 şıksız açık uçlu
+    + video çözüm) ve "ÖSYM Tarzı Çözümlü Örnekler" (7 blok; şıksız) blokları
+    da 1'er TEST sayılır — öğrenci bunları da çözüyor → toplam 58→75.**
+    Fasikül deseni: grup sonunda Kazanım Test(-1/-2) → Dinle → Çözümlü
+    Örnekler (her grupta yok) → ÖSYM Tarzı Test (yalnız Polinomlar G1/G2 +
+    Çarpanlara G2 + İkinci Der. G2 + Eşitsizlikler + Parabol G1/G2'de) →
+    bölüm sonu Tarama 1..N. Uygulama: JSON + dev id=38 + prod id=108 YERİNDE
+    güncellendi (satır/etiket/topic aynı, yalnız test_count; yeni satır
+    dağılımı 5/4/8 · 2/5/6 · 3/5/6 · 2 · 4/8 · 5/5/7). **Prod Book 348
+    (koç=Serkan, öğrenci=Emir #113): yalnız İkinci Dereceden ve SONRASI
+    güncellendi (o6:1→3 · o7:3→5 · o9:1→2 · o10:2→4 · o12:3→5 · o13:3→5 =
+    58→69)** — Polinomlar + Çarpanlara satırları BİLİNÇLİ eski sayıda
+    (öğrenci çözüp bitirdi; artırmak hayalet "kalan" üretir, kullanıcı
+    talimatı). KURAL: bu fasikülde ve bundan sonra Orijinal fasiküllerinde
+    dinle + çözümlü örnek blokları test sayılır (fasikul_structure.py
+    varsayılanı hâlâ saymaz — yeni fasikülde --include-dinle + örnek
+    blokları elle eklenir ya da script güncellenir).
   - **Limit Kronometre TYT Paragraf — CANLI (2026-08-26, prod id=109 · dev
     id=39): 6 bölüm · 107 test · --no-map.** Dijital PDF, tam metin katmanı;
     içindekiler YOK → gövde-önce deterministik tarama. Kronometre deseni: bölüm
@@ -774,6 +796,54 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
     Prod AI varyansı (Ad Soylu Karma boş kalmıştı) dev kararına elle hizalandı
     (→ Sözcük Türleri). Eşlemeler: ad soylu türler→"Sözcük Türleri" şemsiyesi ·
     Fiilde Çatı/Ek-Fiil→Fiiller · Yeni Nesil bilinçli boş.
+- **EYÜP B TYT MATEMATİK — CANLI (2026-08-30, prod id=111 · dev id=41): 33 konu ·
+  205 test · 33/33 eşli.** Dijital PDF (384 s, tam metin katmanı) → Gemini'siz
+  DETERMİNİSTİK gövde taraması: üst bantta 13pt `TEST-N` (bazen "TEST-" + numara
+  ayrı span) + 10pt seri etiketi + 10pt konu adı + 27pt bölüm no. **KR Akademi
+  deseni: 3 paralel seri** — ÖĞRENİYORUM (12 soru) · GELİŞİYORUM (12 soru) ·
+  **1 SORU YORUM** (~7 soru, yorum ağırlıklı ama cevap anahtarlı normal test →
+  test SAYILIR). Test sayısı = benzersiz (konu, seri, numara) üçlüsü; her test
+  2 sayfa. Basılı sayfa no = PDF idx − 1, **0 sapma** (382 sayfanın tamamı
+  tarandı, bantsız sayfa yok). **Çapraz doğrulama: içindekilerdeki 28 konu
+  başlangıç sayfasının TAMAMI gövdeyle birebir.** İki zincir boşluğu incelendi,
+  kayıp test YOK: (a) YÜZDE→KÂR-ZARAR ortak ÖĞRENİYORUM sayacında TEST-4
+  BASILMAMIŞ (yayınevi atlaması; s.245→246 kesintisiz), (b) B7 sonunda
+  GELİŞİYORUM sayacı OLASILIK(1,2)→VERİ ANALİZİ(3,4,5) diye sürüyor
+  (Biyotik süren-sayaç deseni). İçindekilerde tek satır olan "YÜZDE VE KÂR-ZARAR
+  PROBLEMLERİ" gövdede üçe ayrık (YÜZDE 3 + KÂR-ZARAR 3 + ortak karma set 4) →
+  **fiziksel bant adları korundu** (koç kitabı açınca aynı başlığı görür).
+  sayfa/test 1.86. JSON `data/kitap-katalog/eyupb_tyt_matematik.json` (commit
+  bekliyor). Eşleşme notları: POZİTİF-NEGATİF + SAYILAR → "Temel Kavramlar",
+  PERİYODİK PROBLEMLER → "Sayısal Yetenek Problemleri", HIZ → "Hareket
+  Problemleri", SAYMA-PERMÜTASYON-KOMBİNASYON → "Permütasyon".
+  **DERS: metin katmanlı kitapta font-boyutu+font-adı imzası (13pt ExtraBold =
+  test bandı) pipeline'dan daha ucuz ve kesin — Gemini/kredi harcanmadı.**
+- **ORBİTAL AYT KİMYA — CANLI (2026-08-30, prod id=112 · dev id=42): 118 satır ·
+  152 test · 105/105 konu satırı eşli** (kalan 13 = denemeler, çok konulu →
+  bilinçli eşsiz; Orbital TYT deseniyle aynı). Dijital PDF (368 s) → **Gemini
+  KULLANILMADI**; İKİ BAĞIMSIZ KAYNAK çapraz doğrulandı: (1) test-satırlı
+  içindekiler (s.4-5) deterministik parse, (2) gövde üst bantları (14.6pt
+  `TEST N` + `s Testi`/`p Testi` + konu adı + `DENEME - N`). **13/13 ünitede test
+  numara kümeleri BİREBİR** (139 bant = 107 s + 32 p) + denemeler 13/13. Sayfa
+  bütçesi ((s+p)×2 + 6 sayfa deneme bloğu) 12/13 ünitede tam; Ü13'te 10 vs 12 =
+  son deneme bloğu kısa (kayıp test yok). Orbital deseni: ünite başına s Testleri
+  (konu konu) + p Testleri (ünite pekiştirme, **ünite içinde ortak sayaçla devam
+  eder** → p numaraları s'nin bittiği yerden başlar) + 1 Deneme; her test 2 sayfa.
+  **KONU ADI GÖVDEDEN alındı — içindekilerden daha güvenilir:** içindekilerdeki
+  dizgi hatası "Eterlerlerin Adlandırılması" gövdede doğru ("Eterlerin"), "Aldehit
+  ve Ketonların…" gövdede "Aldehitler ve Ketonların…". Tek ters vaka "Denge Kesri
+  (Qc)" — gövdede alt indis `c` ayrı fontta olduğundan düşüyor, içindekiler sürümü
+  alındı. Uzun adlar gövde bandında ÇOK SPAN'e bölünür → (y,x) sıralı birleştirme
+  şart (yoksa "(Hess Yasası)" gibi kuyruk parçası ad sanılır). Ad sonundaki −1/−2
+  sonekleri tek satırda birleşti (Orbital TYT deseni). JSON
+  `data/kitap-katalog/orbital_ayt_kimya.json` (commit bekliyor).
+  **LİGATÜR KURALI (kalıcı):** Orbital PDF'lerinde fi/fl/ti/° gömülü fontlarda
+  PUA karakteri olarak gelir ve font başına KOD DEĞİŞİR (fi=U+E064/E05C/E038/E042,
+  fl=U+E065/E039/E03C/E043/E05D/E01C/E03B, ti=U+E02E/E02F/E02B, °=U+E049, ℓ=U+E001);
+  onarımsız "Grafikleri"→"Grakleri", "Aktiflik"→"Aktiik" olur. **Aynı oturumda
+  2026-08-17'de seed edilen Orbital TYT Kimya kaydının 5 satırındaki artefakt
+  (U+E062=fl, U+E061=fi) dev+prod+JSON'da düzeltildi** — koç panelinde bozuk kutu
+  görünüyordu. Yeni PDF'te ligatür taraması (PUA aralığı U+E000-F8FF) ZORUNLU adım.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
