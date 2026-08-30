@@ -863,6 +863,21 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   onarımsız "Kesişen Kuvvetlerin Dengesi" → "Kesşen Kuvvetlern Denges" oluyordu.
   Ligatür taraması artık yalnız fi/fl değil, **PUA aralığının tamamı** için yapılır.
   JSON `data/kitap-katalog/aydin_ayt_fizik.json`.
+- **BİLGİ SARMAL 25'Lİ TYT-AYT PARAGRAF BRANŞ DENEMESİ — CANLI (2026-08-31,
+  prod id=114 · dev id=44): 25 deneme · müfredat eşleştirmesi YOK (--no-map,
+  kullanıcı talimatı).** **Katalogdaki İLK `brans_denemesi` tipli kayıt** — soru
+  bankası değil: sistemde deneme kitapları "deneme" kategorisinde sayılır, TEST
+  hacmine girmez (DENEME≠TEST kuralı; `gorev_stats.classify_gorev`). Dijital PDF
+  (240 s) → Gemini KULLANILMADI: her sayfanın üst bandında `DENEME - N`, deneme
+  başlangıç sayfası ayrıca 11pt "PARAGRAF DENEMESİ" bandı taşır. 25/25 başlangıç
+  bandı, numaralar 1..25 kesintisiz, sayfa aralıkları boşluksuz (idx 2-231) +
+  cevap anahtarı. **Soru sayısı denemeye göre KADEMELİ artıyor** (kitabın kendi
+  ilerlemesi): 1-5→22 · 6-10→23 · 11-15→24 · 16-20→25 · 21-25→26; her denemenin
+  ilk sayfasındaki "Bu testte N soru vardır" ibaresinden okundu ve **satır
+  etiketine yazıldı** ("Deneme 7 (23 soru)") — koç görev atarken soru sayısını
+  görsün. Deneme başına sayfa 7-12 arası değişir (paragraf uzunluğu); birim =
+  1 deneme, sayfa DEĞİL. subject "TYT Türkçe" (345 Paragraf deseni), 9-12+mezun.
+  JSON `data/kitap-katalog/bilgisarmal_tyt_ayt_paragraf_deneme.json`.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
