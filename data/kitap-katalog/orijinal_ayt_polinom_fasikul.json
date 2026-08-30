@@ -9,12 +9,14 @@
  "sections": [
   {
    "label": "Polinomlar · Sabit Polinom - Sıfır Polinomu – Katsayılar Toplamı ve Sabit Terim",
-   "test_count": 3,
+   "test_count": 5,
    "source": "scan",
    "page": 10,
    "cats": {
     "kazanim": 2,
-    "osym_test": 1
+    "osym_test": 1,
+    "dinle": 1,
+    "cozumlu_ornek": 1
    },
    "subtopics": [
     "Sabit Polinom - Sıfır Polinomu",
@@ -26,12 +28,13 @@
   },
   {
    "label": "Polinomlar · Polinomlarda Bölme – Bazı Bilgileri Verilen Polinomların İnşası",
-   "test_count": 3,
+   "test_count": 4,
    "source": "scan",
    "page": 24,
    "cats": {
     "kazanim": 2,
-    "osym_test": 1
+    "osym_test": 1,
+    "dinle": 1
    },
    "subtopics": [
     "Polinomlarda Bölme",
@@ -52,11 +55,12 @@
   },
   {
    "label": "Çarpanlara Ayırma · Ortak Çarpan Parantezine Alma – Gruplandırarak Çarpanlara Ayırma",
-   "test_count": 1,
+   "test_count": 2,
    "source": "scan",
    "page": 52,
    "cats": {
-    "kazanim": 1
+    "kazanim": 1,
+    "dinle": 1
    },
    "subtopics": [
     "Ortak Çarpan Parantezine Alma",
@@ -65,12 +69,14 @@
   },
   {
    "label": "Çarpanlara Ayırma · Özdeşlikler – Rasyonel İfadeleri Sadeleştirme",
-   "test_count": 3,
+   "test_count": 5,
    "source": "scan",
    "page": 65,
    "cats": {
     "kazanim": 2,
-    "osym_test": 1
+    "osym_test": 1,
+    "dinle": 1,
+    "cozumlu_ornek": 1
    },
    "subtopics": [
     "Özdeşlikler",
@@ -92,11 +98,13 @@
   },
   {
    "label": "İkinci Dereceden Denklemler · Çarpanlara Ayırarak Denklemin Çözüm Kümesini Bulma – Köklü ve Mutlak Değerli Denklemler",
-   "test_count": 1,
+   "test_count": 3,
    "source": "scan",
    "page": 93,
    "cats": {
-    "kazanim": 1
+    "kazanim": 1,
+    "dinle": 1,
+    "cozumlu_ornek": 1
    },
    "subtopics": [
     "Çarpanlara Ayırarak Denklemin Çözüm Kümesini Bulma",
@@ -107,12 +115,14 @@
   },
   {
    "label": "İkinci Dereceden Denklemler · İkinci Dereceden Denklemin Kök-katsayı İlişkisi – İkinci Dereceden İki Bilinmeyenli Denklem Sistemleri",
-   "test_count": 3,
+   "test_count": 5,
    "source": "scan",
    "page": 102,
    "cats": {
     "kazanim": 2,
-    "osym_test": 1
+    "osym_test": 1,
+    "dinle": 1,
+    "cozumlu_ornek": 1
    },
    "subtopics": [
     "İkinci Dereceden Denklemin Kök-katsayı İlişkisi",
@@ -134,11 +144,12 @@
   },
   {
    "label": "Karmaşık Sayılar · Karmaşık Sayılar – Bir Karmaşık Sayının Eşleniği",
-   "test_count": 1,
+   "test_count": 2,
    "source": "scan",
    "page": 117,
    "cats": {
-    "kazanim": 1
+    "kazanim": 1,
+    "dinle": 1
    },
    "subtopics": [
     "Karmaşık Sayılar",
@@ -149,12 +160,14 @@
   },
   {
    "label": "İkinci Dereceden Eşitsizlikler · Birinci Dereceden Bir Bilinmeyenli Eşitsizlikler – Eşitsizlik Sistemleri",
-   "test_count": 2,
+   "test_count": 4,
    "source": "scan",
    "page": 140,
    "cats": {
     "kazanim": 1,
-    "osym_test": 1
+    "osym_test": 1,
+    "dinle": 1,
+    "cozumlu_ornek": 1
    },
    "subtopics": [
     "Birinci Dereceden Bir Bilinmeyenli Eşitsizlikler",
@@ -178,12 +191,14 @@
   },
   {
    "label": "Parabol · Parabolün Eksenleri Kestiği Noktalar – Parabolün Çizilmesi",
-   "test_count": 3,
+   "test_count": 5,
    "source": "scan",
    "page": 173,
    "cats": {
     "kazanim": 2,
-    "osym_test": 1
+    "osym_test": 1,
+    "dinle": 1,
+    "cozumlu_ornek": 1
    },
    "subtopics": [
     "Parabolün Eksenleri Kestiği Noktalar",
@@ -195,12 +210,14 @@
   },
   {
    "label": "Parabol · Parabol Denkleminin Yazılması – İkinci Dereceden İki Bilinmeyenli Eşitsizlikler",
-   "test_count": 3,
+   "test_count": 5,
    "source": "scan",
    "page": 186,
    "cats": {
     "kazanim": 2,
-    "osym_test": 1
+    "osym_test": 1,
+    "dinle": 1,
+    "cozumlu_ornek": 1
    },
    "subtopics": [
     "Parabol Denkleminin Yazılması",
@@ -1109,6 +1126,7 @@
     ],
     "both": true
    }
-  ]
+  ],
+  "revizyon_20260829": "Kullanici karari: 'Bir de Orijinal den Dinle' bloklari (10 adet, SORU 1-10, video cozumlu) ve 'OSYM Tarzi Cozumlu Ornekler' bloklari (7 adet) artik 1er TEST sayilir — ogrenci bunlari da cozuyor. 58 -> 75 test. 208 sayfa kontak-foy ile gozle dogrulanmis zemin gercegine dayanir. Prod Book 348 (Emir) yalniz Ikinci Dereceden ve sonrasinda guncellendi (Polinomlar + Carpanlara cozulmustu)."
  }
 }
