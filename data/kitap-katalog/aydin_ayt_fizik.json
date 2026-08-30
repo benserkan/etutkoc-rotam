@@ -1,0 +1,224 @@
+{
+ "name": "Aydın AYT Fizik Konu Özetli Soru Bankası",
+ "publisher": "Aydın Yayınları",
+ "subject": "AYT Fizik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Vektörler",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 15
+  },
+  {
+   "label": "Kesişen Kuvvetlerin Dengesi",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 25
+  },
+  {
+   "label": "Tork ve Denge",
+   "test_count": 6,
+   "source": "body_band",
+   "page": 35
+  },
+  {
+   "label": "Kütle Merkezi",
+   "test_count": 6,
+   "source": "body_band",
+   "page": 47
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 8,
+   "source": "body_band",
+   "page": 59
+  },
+  {
+   "label": "Doğrusal Hareket (Bir Boyutta Sabit İvmeli Hareket)",
+   "test_count": 6,
+   "source": "body_band",
+   "page": 93
+  },
+  {
+   "label": "Bağıl Hareket",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 105
+  },
+  {
+   "label": "Atışlar (Bir Boyutta ve İki Boyutta Sabit İvmeli Hareket)",
+   "test_count": 7,
+   "source": "body_band",
+   "page": 115
+  },
+  {
+   "label": "Newton’un Hareket Yasaları",
+   "test_count": 7,
+   "source": "body_band",
+   "page": 129
+  },
+  {
+   "label": "İş, Enerji ve Güç",
+   "test_count": 7,
+   "source": "body_band",
+   "page": 143
+  },
+  {
+   "label": "İtme ve Çizgisel Momentum",
+   "test_count": 7,
+   "source": "body_band",
+   "page": 157
+  },
+  {
+   "label": "Çembersel Hareket",
+   "test_count": 8,
+   "source": "body_band",
+   "page": 171
+  },
+  {
+   "label": "Açısal Momentum ve Tork",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 187
+  },
+  {
+   "label": "Kütle Çekim Kuvveti ve Kepler Yasaları",
+   "test_count": 4,
+   "source": "body_band",
+   "page": 193
+  },
+  {
+   "label": "Basit Harmonik Hareket",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 201
+  },
+  {
+   "label": "Elektrostatik",
+   "test_count": 10,
+   "source": "body_band",
+   "page": 219
+  },
+  {
+   "label": "Düzgün Elektrik Alan ve Sığa",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 239
+  },
+  {
+   "label": "Elektrik Akımının Manyetik Etkisi",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 249
+  },
+  {
+   "label": "Manyetik Kuvvet",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 259
+  },
+  {
+   "label": "Manyetik Akı ve İndüksiyon Akımı",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 265
+  },
+  {
+   "label": "Alternatif Akım ve Transformatörler",
+   "test_count": 4,
+   "source": "body_band",
+   "page": 275
+  },
+  {
+   "label": "Su Dalgalarında Girişim ve Kırınım",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 289
+  },
+  {
+   "label": "Işıkta Girişim ve Kırınım",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 299
+  },
+  {
+   "label": "Su ve Ses Dalgalarında Doppler Olayı, Ses Dalgalarında Girişim",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 309
+  },
+  {
+   "label": "Elektromanyetik Dalgalar",
+   "test_count": 4,
+   "source": "body_band",
+   "page": 313
+  },
+  {
+   "label": "Atom Kavramının Tarihsel Gelişimi",
+   "test_count": 6,
+   "source": "body_band",
+   "page": 329
+  },
+  {
+   "label": "Büyük Patlama ve Evrenin Oluşumu",
+   "test_count": 4,
+   "source": "body_band",
+   "page": 341
+  },
+  {
+   "label": "Radyoaktivite",
+   "test_count": 4,
+   "source": "body_band",
+   "page": 349
+  },
+  {
+   "label": "Özel Görelilik",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 363
+  },
+  {
+   "label": "Kuantum Fiziğine Giriş",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 369
+  },
+  {
+   "label": "Fotoelektrik Olay",
+   "test_count": 5,
+   "source": "body_band",
+   "page": 373
+  },
+  {
+   "label": "Compton Saçılması ve De Broglie Dalga Boyu",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 383
+  },
+  {
+   "label": "Modern Fiziğin Teknolojideki Uygulamaları",
+   "test_count": 4,
+   "source": "body_band",
+   "page": 389
+  },
+  {
+   "label": "Birimler",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 397
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Dijital PDF (398 s, metin katmanı) — Gemini KULLANILMADI. Aydın deseni: test başlangıç sayfasında 19.4pt 'TEST' + yerel numara, sağda 15.5pt KÜRESEL numara; konu adı üst bantta (font bölümden bölüme değişir → boyut+konum ile tespit). Her test 2 sayfa; konu anlatımı ('Konu Özetli') sayfaları bant taşımaz, sayılmaz.",
+  "KÜRESEL ZİNCİR DOĞRULAMASI: 170 test bandının küresel numaraları 1..170 — sıfır kopuk, sıfır mükerrer. Her konunun yerel numaraları da 1..N kesintisiz. Aydın AYT Biyoloji'de kanıtlanan yöntemin aynısı.",
+  "ÇAPRAZ DOĞRULAMA: içindekilerdeki 34 konu başlangıç sayfasının TAMAMI gövdedeki ilk test sayfasıyla birebir uyuştu.",
+  "Konu adları GÖVDEDEN alındı (içindekiler bazılarını kısaltıyor): örn. içindekiler 'Doğrusal Hareket' → gövde 'Doğrusal Hareket (Bir Boyutta Sabit İvmeli Hareket)', 'Atış Hareketleri' → 'Atışlar (Bir Boyutta ve İki Boyutta Sabit İvmeli Hareket)'.",
+  "PUA ligatür/harf onarımı: bu kitapta 'i' harfi gömülü fontlarda özel-kullanım karakteri olarak gelir ve font başına kod değişir (i=U+E00C/E010/E011/E012/E014, fi=U+E058/E04E, fl=U+E059/E017). Onarımsız 'Kesişen Kuvvetlerin Dengesi' → 'Kesşen Kuvvetlern Denges' oluyordu.",
+  "Son satır 'Birimler' (2 test, s.397) kitabın ek bölümü — bant ve küresel numara taşıdığı için test sayıldı; taksonomide karşılığı yok, eşleşmesiz kalması normal."
+ ]
+}
