@@ -73,7 +73,7 @@
    "source": "toc_text_parse"
   },
   {
-   "label": "Kimyasal Türler Arası Etkileşimler ve Sınıandırılması",
+   "label": "Kimyasal Türler Arası Etkileşimler ve Sınıflandırılması",
    "test_count": 2,
    "source": "toc_text_parse"
   },
@@ -143,7 +143,7 @@
    "source": "toc_text_parse"
   },
   {
-   "label": "Hal Değişim Grakleri",
+   "label": "Hal Değişim Grafikleri",
    "test_count": 2,
    "source": "toc_text_parse"
   },
@@ -248,7 +248,7 @@
    "source": "toc_text_parse"
   },
   {
-   "label": "Saık, Verim ve Yüzde Problemleri",
+   "label": "Saflık, Verim ve Yüzde Problemleri",
    "test_count": 1,
    "source": "toc_text_parse"
   },
@@ -273,7 +273,7 @@
    "source": "toc_text_parse"
   },
   {
-   "label": "Karışımların Sınıandırılması",
+   "label": "Karışımların Sınıflandırılması",
    "test_count": 2,
    "source": "toc_text_parse"
   },
@@ -293,7 +293,7 @@
    "source": "toc_text_parse"
   },
   {
-   "label": "Karışımları Ayırma ve Saaştırma Yöntemleri",
+   "label": "Karışımları Ayırma ve Saflaştırma Yöntemleri",
    "test_count": 3,
    "source": "toc_text_parse"
   },
@@ -368,6 +368,7 @@
   "'Asitlerin ve Bazların Tepkimeleri': bant bulunamadı — elle doldurun."
  ],
  "notes": [
-  "İçindekiler deterministik metin parser'ıyla çıkarıldı (Gemini tek-okuma kuyruğu kesmişti; 10-11. üniteler eksikti). s/p/d Testleri yapısı: konu testleri + p Testleri (ünite pekiştirme) + Deneme N."
+  "İçindekiler deterministik metin parser'ıyla çıkarıldı (Gemini tek-okuma kuyruğu kesmişti; 10-11. üniteler eksikti). s/p/d Testleri yapısı: konu testleri + p Testleri (ünite pekiştirme) + Deneme N.",
+  "2026-08-30: PUA ligatür artefaktları onarıldı (U+E062=fl, U+E061=fi) — koç panelinde bozuk kutu karakteri görünüyordu."
  ]
 }

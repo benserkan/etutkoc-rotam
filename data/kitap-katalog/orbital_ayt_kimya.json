@@ -1,0 +1,728 @@
+{
+ "name": "Orbital AYT Kimya Soru Bankası",
+ "publisher": "Orbital Yayınları",
+ "subject": "AYT Kimya",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Kuantum Sayıları",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 8
+  },
+  {
+   "label": "Elektron Dizilimi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 12
+  },
+  {
+   "label": "Küresel Simetri ve Uyarılmış Hal",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 14
+  },
+  {
+   "label": "Elektron Dizilimi ve Kuantum Numaraları",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 16
+  },
+  {
+   "label": "Periyodik Sistemde Yer Bulma",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 18
+  },
+  {
+   "label": "Periyodik Özellikler",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 20
+  },
+  {
+   "label": "Elementleri Tanıyalım",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 24
+  },
+  {
+   "label": "Yükseltgenme Basamakları",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 26
+  },
+  {
+   "label": "p Testleri (MODERN ATOM TEORİSİ)",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 28
+  },
+  {
+   "label": "Deneme 1",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 34
+  },
+  {
+   "label": "Gazların Genel Özellikleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 40
+  },
+  {
+   "label": "İdeal Gaz Denklemi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 42
+  },
+  {
+   "label": "Gaz Yasaları",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 44
+  },
+  {
+   "label": "Gazların Yoğunluğu",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 48
+  },
+  {
+   "label": "Kapların Birleştirilmesi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 50
+  },
+  {
+   "label": "Kısmi Basınç",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 52
+  },
+  {
+   "label": "Gazların Su Üstünde Toplanması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 56
+  },
+  {
+   "label": "Gazlarda Kinetik Teori",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 58
+  },
+  {
+   "label": "Gerçek Gazlar − İdeal Gazlar",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 62
+  },
+  {
+   "label": "p Testleri (GAZLAR)",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 64
+  },
+  {
+   "label": "Deneme 2",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 70
+  },
+  {
+   "label": "Çözücü − Çözünen Etkileşimleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 76
+  },
+  {
+   "label": "Kütlece Yüzde (%) Derişim",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 78
+  },
+  {
+   "label": "Hacimce Yüzde (%) Derişim",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 80
+  },
+  {
+   "label": "ppm",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 82
+  },
+  {
+   "label": "Molar Derişim",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 84
+  },
+  {
+   "label": "İyonların Molar Derişimi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 86
+  },
+  {
+   "label": "Mol Kesri − Molal Derişim",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 88
+  },
+  {
+   "label": "Derişim Birimleri Arasındaki Dönüşümler",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 90
+  },
+  {
+   "label": "Koligatif Özellikler (Buhar Basıncı)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 92
+  },
+  {
+   "label": "Koligatif Özellikler (Kaynama Noktası)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 94
+  },
+  {
+   "label": "Koligatif Özellikler (Donma Noktası)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 96
+  },
+  {
+   "label": "Koligatif Özellikler",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 98
+  },
+  {
+   "label": "Çözelti Türleri ve Çözünürlük Hesaplamaları",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 100
+  },
+  {
+   "label": "Çözünürlüğe Etki Eden Faktörler",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 102
+  },
+  {
+   "label": "Çözünürlüğe Etki Eden Faktörler Hesaplama Soruları",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 104
+  },
+  {
+   "label": "p Testleri (ÇÖZELTİLER)",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 106
+  },
+  {
+   "label": "Deneme 3",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 112
+  },
+  {
+   "label": "Tepkimelerde Isı Değişimi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 118
+  },
+  {
+   "label": "Oluşum Entalpisi ve Entalpi Çeşitleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 120
+  },
+  {
+   "label": "Madde Miktarı ve Tepkime Isısı İlişkisi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 122
+  },
+  {
+   "label": "Tepkime Isılarının Toplanabilirliği (Hess Yasası)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 124
+  },
+  {
+   "label": "Bağ Enerjileri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 126
+  },
+  {
+   "label": "p Testleri (KİMYA VE ENERJİ)",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 128
+  },
+  {
+   "label": "Deneme 4",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 132
+  },
+  {
+   "label": "Çarpışma Teorisi ve PE−TK Grafikleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 138
+  },
+  {
+   "label": "Tepkime Hızları",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 140
+  },
+  {
+   "label": "Tepkime Hızlarının Ölçülmesi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 142
+  },
+  {
+   "label": "Hız İfadesi",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 144
+  },
+  {
+   "label": "Tepkime Hızına Etki Eden Faktörler",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 148
+  },
+  {
+   "label": "Başlangıç Hızları Yöntemi ile Hız İfadesinin Bulunması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 152
+  },
+  {
+   "label": "p Testleri (KİMYASAL TEPKİMELERDE HIZ)",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 154
+  },
+  {
+   "label": "Deneme 5",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 158
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimlerde Denge",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 164
+  },
+  {
+   "label": "Denge Sabiti ve Denge Derişimlerinin Hesaplanması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 166
+  },
+  {
+   "label": "Kısmi Basınçlar Türünden Denge Sabiti",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 168
+  },
+  {
+   "label": "Denge Sabitinin Değişimi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 170
+  },
+  {
+   "label": "Dengenin Kontrolü − Denge Kesri (Qc)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 172
+  },
+  {
+   "label": "Dengeye Etki Eden Faktörler − Le Chatelier Prensipleri",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 174
+  },
+  {
+   "label": "p Testleri (DENGE)",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 178
+  },
+  {
+   "label": "Deneme 6",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 184
+  },
+  {
+   "label": "Suyun Otoiyonizasyonu ve pH−pOH",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 190
+  },
+  {
+   "label": "Bronsted−Lowry Asit Baz Tanımı",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 194
+  },
+  {
+   "label": "Kuvvetli Asit Bazlarda pH−pOH Hesabı",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 196
+  },
+  {
+   "label": "Zayıf Asit Bazlarda pH−pOH Hesabı",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 198
+  },
+  {
+   "label": "Nötrleşme Tepkimeleri",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 200
+  },
+  {
+   "label": "Titrasyon",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 204
+  },
+  {
+   "label": "Tampon ve Tuzlar",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 206
+  },
+  {
+   "label": "p Testleri (ASİT − BAZ DENGESİ)",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 208
+  },
+  {
+   "label": "Deneme 7",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 214
+  },
+  {
+   "label": "Çözünürlük ve Çözünürlük Çarpımı",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 220
+  },
+  {
+   "label": "Çözünürlüğe Ortak İyon Etkisi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 224
+  },
+  {
+   "label": "Çözünürlüğe Sıcaklık Etkisi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 226
+  },
+  {
+   "label": "p Testleri (ÇÖZÜNÜRLÜK DENGESİ)",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 228
+  },
+  {
+   "label": "Deneme 8",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 232
+  },
+  {
+   "label": "İndirgenme−Yükseltgenme Tepkimeleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 238
+  },
+  {
+   "label": "İndirgenme − Yükseltgenme Tepkimelerinin Denkleştirilmesi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 240
+  },
+  {
+   "label": "Aktiflik",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 242
+  },
+  {
+   "label": "Elektrotlar ve Elektrokimyasal Hücreler",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 244
+  },
+  {
+   "label": "Elektrot Potansiyelleri",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 246
+  },
+  {
+   "label": "Derişim Pilleri ve Nernst Denklemi",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 250
+  },
+  {
+   "label": "Elektrot Potansiyelleri ve Aktiflik",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 252
+  },
+  {
+   "label": "Elektroliz",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 254
+  },
+  {
+   "label": "p Testleri (KİMYA VE ELEKTRİK)",
+   "test_count": 3,
+   "source": "body_band",
+   "page": 258
+  },
+  {
+   "label": "Deneme 9",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 264
+  },
+  {
+   "label": "Anorganik ve Organik Bileşikler",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 270
+  },
+  {
+   "label": "Basit Formül ve Molekül Formülü",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 272
+  },
+  {
+   "label": "Doğada Karbon",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 274
+  },
+  {
+   "label": "Lewis Formülleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 276
+  },
+  {
+   "label": "Hibritleşme − Molekül Geometrileri",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 278
+  },
+  {
+   "label": "p Testleri (KARBON KİMYASINA GİRİŞ)",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 282
+  },
+  {
+   "label": "Deneme 10",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 286
+  },
+  {
+   "label": "Alkanların Adlandırılması",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 292
+  },
+  {
+   "label": "Alkanlarda İzomeri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 296
+  },
+  {
+   "label": "Alkanların Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 298
+  },
+  {
+   "label": "Alkenlerin Adlandırılması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 300
+  },
+  {
+   "label": "Alkenlerde İzomeri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 302
+  },
+  {
+   "label": "Alkenlerin Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 304
+  },
+  {
+   "label": "Alkinlerin Adlandırılması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 306
+  },
+  {
+   "label": "Alkinlerin Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 308
+  },
+  {
+   "label": "Aromatik Bileşikler",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 310
+  },
+  {
+   "label": "p Testleri (HİDROKARBONLAR)",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 312
+  },
+  {
+   "label": "Deneme 11",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 316
+  },
+  {
+   "label": "Fonksiyonel Gruplar",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 322
+  },
+  {
+   "label": "Alkollerin Adlandırılması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 324
+  },
+  {
+   "label": "Alkollerin Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 326
+  },
+  {
+   "label": "Eterlerin Adlandırılması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 328
+  },
+  {
+   "label": "Alkol − Eter İzomerliği",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 330
+  },
+  {
+   "label": "Aldehitler ve Ketonların Adlandırılması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 332
+  },
+  {
+   "label": "Aldehit ve Ketonlarda İzomeri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 334
+  },
+  {
+   "label": "Aldehitler ve Ketonların Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 336
+  },
+  {
+   "label": "Karboksilik Asitler ve Esterlerin Adlandırılması",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 338
+  },
+  {
+   "label": "Karboksilik Asit ve Esterlerin Fiziksel ve Kimyasal Özellikleri",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 340
+  },
+  {
+   "label": "p Testleri (FONKSİYONEL GRUPLAR)",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 342
+  },
+  {
+   "label": "Deneme 12",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 346
+  },
+  {
+   "label": "Enerji Kaynakları ve Bilimsel Gelişmeler",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 352
+  },
+  {
+   "label": "p Testleri (ENERJİ KAYNAKLARI VE BİLİMSEL GELİŞMELER)",
+   "test_count": 2,
+   "source": "body_band",
+   "page": 354
+  },
+  {
+   "label": "Deneme 13",
+   "test_count": 1,
+   "source": "toc_text_parse",
+   "page": 358
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Dijital PDF (368 s, metin katmanı) — Gemini KULLANILMADI. İki BAĞIMSIZ kaynak çapraz doğrulandı: (1) test-satırlı içindekiler (s.4-5) deterministik parse, (2) gövde üst bantları (14.6pt 'TEST N' + 's Testi' + konu adı + 'DENEME - N'). 13/13 ünitede test numara kümeleri BİREBİR (139 test bandı) + denemeler 13/13.",
+  "Sayfa bütçesi 12/13 ünitede tam kapandı ((s+p)×2 + 6 sayfa deneme bloğu); 13. ünitede 10 vs 12 — son deneme bloğu 4 sayfa (analiz sayfası kısa), kayıp test yok.",
+  "Orbital deseni: her ünitede s Testleri (konu konu) + p Testleri (ünite pekiştirme, ünite içinde ortak sayaçla devam eder) + ünite sonu 1 Deneme. Her test 2 sayfa.",
+  "Konu adları GÖVDE bandından alındı (içindekilerden daha güvenilir): içindekilerdeki 'Eterlerlerin Adlandırılması' dizgi hatası gövdede 'Eterlerin Adlandırılması'; 'Aldehit ve Ketonların...' gövdede 'Aldehitler ve Ketonların...'. Tek istisna 'Denge Kesri (Qc)' — gövdede alt indis 'c' ayrı fontta olduğu için düştü, içindekiler sürümü alındı.",
+  "PDF gömülü fontlarının PUA ligatürleri onarıldı (font başına farklı kod, aynı çift): fi=U+E064/E05C/E038/E042, fl=U+E065/E039/E03C/E043/E05D/E01C/E03B, ti=U+E02E/E02F/E02B, °=U+E049, ℓ=U+E001. Onarımsız 'Grafikleri'→'Grakleri', 'Aktiflik'→'Aktiik' oluyordu.",
+  "Ad sonundaki −1/−2 sonekleri tek satırda birleştirildi (Orbital TYT Kimya deseni): örn. 'Kuantum Sayıları−1/−2' → 'Kuantum Sayıları' 2 test."
+ ]
+}
