@@ -844,6 +844,25 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   2026-08-17'de seed edilen Orbital TYT Kimya kaydının 5 satırındaki artefakt
   (U+E062=fl, U+E061=fi) dev+prod+JSON'da düzeltildi** — koç panelinde bozuk kutu
   görünüyordu. Yeni PDF'te ligatür taraması (PUA aralığı U+E000-F8FF) ZORUNLU adım.
+- **AYDIN AYT FİZİK (Konu Özetli) — CANLI (2026-08-30, prod id=113 · dev id=43):
+  34 konu · 170 test · 33/34 eşli** (tek eşsiz: "Birimler" = kitabın ek bölümü,
+  taksonomide karşılığı yok — bilinçli). Dijital PDF (398 s) → **Gemini
+  KULLANILMADI**. Aydın deseni (Biyoloji'de kanıtlanan): test başlangıç sayfasında
+  19.4pt `TEST` + yerel numara, sağda 15.5pt **KÜRESEL** numara; her test 2 sayfa;
+  "Konu Özetli" anlatım sayfaları bant taşımaz → sayılmaz. **KÜRESEL ZİNCİR
+  1..170 sıfır kopuk + sıfır mükerrer**, her konunun yerel zinciri de 1..N tam;
+  ayrıca **içindekilerdeki 34 konu başlangıç sayfasının TAMAMI** gövdeyle birebir.
+  Konu adı GÖVDEDEN alındı — içindekiler kısaltıyor ("Doğrusal Hareket" → gövde
+  "Doğrusal Hareket (Bir Boyutta Sabit İvmeli Hareket)"; "Atış Hareketleri" →
+  "Atışlar (Bir Boyutta ve İki Boyutta Sabit İvmeli Hareket)").
+  **DERS — konu adı fontu BÖLÜMDEN BÖLÜME değişir** (f267/f83/f241/f76…): font
+  adına bağlanan tespit 2. bölümden sonra 124 testte konuyu kaçırdı → **boyut
+  (10.5pt) + konum (üst bant, x>150) + "TEST/rakam değil"** ile tespit doğru.
+  **YENİ PUA SINIFI: bu kitapta "i" HARFİ özel-kullanım karakteri** (font başına
+  kod değişir: i=U+E00C/E010/E011/E012/E014, fi=U+E058/E04E, fl=U+E059/E017) —
+  onarımsız "Kesişen Kuvvetlerin Dengesi" → "Kesşen Kuvvetlern Denges" oluyordu.
+  Ligatür taraması artık yalnız fi/fl değil, **PUA aralığının tamamı** için yapılır.
+  JSON `data/kitap-katalog/aydin_ayt_fizik.json`.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
