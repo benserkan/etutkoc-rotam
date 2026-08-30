@@ -1,0 +1,216 @@
+{
+ "name": "Eyüp B TYT Matematik Soru Bankası",
+ "publisher": "KR Akademi Yayınları",
+ "subject": "TYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "TEMEL KAVRAMLAR",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 1
+  },
+  {
+   "label": "TEK - ÇİFT SAYILAR",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 9
+  },
+  {
+   "label": "POZİTİF - NEGATİF SAYILAR",
+   "test_count": 1,
+   "source": "scan_text",
+   "page": 12
+  },
+  {
+   "label": "ARDIŞIK SAYILAR",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 14
+  },
+  {
+   "label": "FAKTÖRİYEL",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 17
+  },
+  {
+   "label": "ASAL SAYILAR VE ASAL ÇARPANLARINA AYIRMA",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 20
+  },
+  {
+   "label": "SAYILAR",
+   "test_count": 7,
+   "source": "scan_text",
+   "page": 30
+  },
+  {
+   "label": "BASAMAK KAVRAMI",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 44
+  },
+  {
+   "label": "BÖLME - BÖLÜNEBİLME",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 53
+  },
+  {
+   "label": "EBOB - EKOK",
+   "test_count": 7,
+   "source": "scan_text",
+   "page": 64
+  },
+  {
+   "label": "PERİYODİK PROBLEMLER",
+   "test_count": 2,
+   "source": "scan_text",
+   "page": 76
+  },
+  {
+   "label": "RASYONEL SAYILAR",
+   "test_count": 9,
+   "source": "scan_text",
+   "page": 80
+  },
+  {
+   "label": "1. DERECEDEN DENKLEMLER",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 95
+  },
+  {
+   "label": "BASİT EŞİTSİZLİKLER",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 110
+  },
+  {
+   "label": "MUTLAK DEĞER",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 124
+  },
+  {
+   "label": "ÜSLÜ SAYILAR",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 139
+  },
+  {
+   "label": "KÖKLÜ SAYILAR",
+   "test_count": 9,
+   "source": "scan_text",
+   "page": 154
+  },
+  {
+   "label": "ÇARPANLARA AYIRMA",
+   "test_count": 9,
+   "source": "scan_text",
+   "page": 171
+  },
+  {
+   "label": "ORAN - ORANTI",
+   "test_count": 8,
+   "source": "scan_text",
+   "page": 188
+  },
+  {
+   "label": "SAYI PROBLEMLERİ",
+   "test_count": 10,
+   "source": "scan_text",
+   "page": 204
+  },
+  {
+   "label": "KESİR PROBLEMLERİ",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 223
+  },
+  {
+   "label": "YAŞ PROBLEMLERİ",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 233
+  },
+  {
+   "label": "YÜZDE PROBLEMLERİ",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 240
+  },
+  {
+   "label": "KÂR - ZARAR PROBLEMLERİ",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 246
+  },
+  {
+   "label": "YÜZDE VE KÂR-ZARAR PROBLEMLERİ",
+   "test_count": 4,
+   "source": "scan_text",
+   "page": 251
+  },
+  {
+   "label": "KARIŞIM PROBLEMLERİ",
+   "test_count": 3,
+   "source": "scan_text",
+   "page": 258
+  },
+  {
+   "label": "HIZ PROBLEMLERİ",
+   "test_count": 7,
+   "source": "scan_text",
+   "page": 263
+  },
+  {
+   "label": "MANTIK",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 277
+  },
+  {
+   "label": "KÜMELER VE KARTEZYEN ÇARPIMI",
+   "test_count": 11,
+   "source": "scan_text",
+   "page": 288
+  },
+  {
+   "label": "FONKSİYONLAR",
+   "test_count": 15,
+   "source": "scan_text",
+   "page": 310
+  },
+  {
+   "label": "SAYMA - PERMÜTASYON - KOMBİNASYON",
+   "test_count": 12,
+   "source": "scan_text",
+   "page": 339
+  },
+  {
+   "label": "OLASILIK",
+   "test_count": 5,
+   "source": "scan_text",
+   "page": 362
+  },
+  {
+   "label": "VERİ ANALİZİ VE GRAFİKLER",
+   "test_count": 6,
+   "source": "scan_text",
+   "page": 372
+  }
+ ],
+ "warnings": [
+  "Dijital PDF (metin katmanı) — gövde deterministik tarandı: üst bantta 13pt 'TEST-N' + 10pt seri etiketi (ÖĞRENİYORUM / GELİŞİYORUM / 1 SORU YORUM) + 10pt konu adı. Test sayısı = benzersiz (konu, seri, numara) üçlüsü. 382 basılı sayfanın tamamı tarandı; basılı sayfa no = PDF indeksi - 1 (0 sapma).",
+  "İçindekilerdeki 28 konu başlangıç sayfasının TAMAMI gövdeyle birebir uyuştu (çapraz doğrulama).",
+  "İki numara boşluğu incelendi, kayıp test YOK: (1) YÜZDE→KÂR-ZARAR ortak ÖĞRENİYORUM sayacında TEST-4 basılmamış (yayınevi atlaması; s.245→246 kesintisiz), (2) B7 sonunda GELİŞİYORUM sayacı OLASILIK(1,2) → VERİ ANALİZİ(3,4,5) diye sürüyor.",
+  "İçindekilerde tek satır olan 'YÜZDE VE KÂR-ZARAR PROBLEMLERİ' gövdede üçe ayrılmış: YÜZDE PROBLEMLERİ (3) + KÂR - ZARAR PROBLEMLERİ (3) + ortak GELİŞİYORUM/1 SORU YORUM seti 'YÜZDE VE KÂR-ZARAR PROBLEMLERİ' (4). Kitaptaki fiziksel bant adları korundu.",
+  "'1 SORU YORUM' serisi de cevap anahtarlı çoktan seçmeli test (yorum ağırlıklı, ~7 soru); ÖĞRENİYORUM/GELİŞİYORUM 12 soruluk. Üçü de test birimi sayıldı."
+ ]
+}
