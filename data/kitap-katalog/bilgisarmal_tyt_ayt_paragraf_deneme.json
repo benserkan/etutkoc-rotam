@@ -1,0 +1,169 @@
+{
+ "name": "Bilgi Sarmal 25'li TYT-AYT Paragraf Branş Denemesi",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "brans_denemesi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Deneme 1 (22 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 3
+  },
+  {
+   "label": "Deneme 2 (22 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 13
+  },
+  {
+   "label": "Deneme 3 (22 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 21
+  },
+  {
+   "label": "Deneme 4 (22 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 28
+  },
+  {
+   "label": "Deneme 5 (22 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 38
+  },
+  {
+   "label": "Deneme 6 (23 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 46
+  },
+  {
+   "label": "Deneme 7 (23 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 54
+  },
+  {
+   "label": "Deneme 8 (23 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 63
+  },
+  {
+   "label": "Deneme 9 (23 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 70
+  },
+  {
+   "label": "Deneme 10 (23 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 78
+  },
+  {
+   "label": "Deneme 11 (24 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 86
+  },
+  {
+   "label": "Deneme 12 (24 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 95
+  },
+  {
+   "label": "Deneme 13 (24 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 104
+  },
+  {
+   "label": "Deneme 14 (24 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 113
+  },
+  {
+   "label": "Deneme 15 (24 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 121
+  },
+  {
+   "label": "Deneme 16 (25 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 129
+  },
+  {
+   "label": "Deneme 17 (25 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 138
+  },
+  {
+   "label": "Deneme 18 (25 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 148
+  },
+  {
+   "label": "Deneme 19 (25 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 157
+  },
+  {
+   "label": "Deneme 20 (25 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 167
+  },
+  {
+   "label": "Deneme 21 (26 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 177
+  },
+  {
+   "label": "Deneme 22 (26 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 186
+  },
+  {
+   "label": "Deneme 23 (26 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 198
+  },
+  {
+   "label": "Deneme 24 (26 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 209
+  },
+  {
+   "label": "Deneme 25 (26 soru)",
+   "test_count": 1,
+   "source": "body_band",
+   "page": 221
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Branş DENEME kitabı (soru bankası değil) — type=brans_denemesi. Sistemde deneme kitapları 'deneme' kategorisinde sayılır, test hacmine girmez (DENEME≠TEST kuralı).",
+  "Kullanıcı talimatıyla MÜFREDAT EŞLEŞTİRMESİ YAPILMADI (--no-map): paragraf denemeleri tek bir MEB konusuna karşılık gelmez.",
+  "Dijital PDF (240 s) — Gemini KULLANILMADI. Her sayfanın üst bandında 'DENEME - N'; deneme başlangıç sayfası ayrıca 11pt 'PARAGRAF DENEMESİ' bandı taşır. 25/25 deneme bandı bulundu, numaralar 1..25 kesintisiz, sayfa aralıkları boşluksuz (idx 2-231); ardından cevap anahtarı sayfaları.",
+  "Soru sayısı denemeye göre KADEMELİ artıyor (kitabın kendi ilerlemesi): 1-5 → 22, 6-10 → 23, 11-15 → 24, 16-20 → 25, 21-25 → 26 soru. Her satırın etiketine yazıldı ki koç görev atarken soru sayısını görsün. Sayılar her denemenin ilk sayfasındaki 'Bu testte N soru vardır' ibaresinden okundu.",
+  "Deneme başına sayfa sayısı 7-12 arasında değişir (paragraf uzunlukları) — sayfa sayısı test birimi DEĞİL; birim = 1 deneme."
+ ]
+}
