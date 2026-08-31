@@ -895,6 +895,28 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   Kâr-Zarar 4 · Karışım 1 · İşçi 1 · Hareket 3 · Grafik 2 = 19), simülasyonlar
   ayrı satır (30). TYT Matematik taksonomisiyle 8/8 birebir uydu.
   JSON `data/kitap-katalog/bilgisarmal_tyt_problemler.json`.
+- **ARI YAYINLARI PARAGRAFIN RİTMİ — CANLI (2026-08-31, prod id=116 · dev id=46):
+  6 satır · 111 test · müfredat eşleştirmesi YOK (--no-map, kullanıcı talimatı).**
+  **TARANMIŞ PDF (377 s) — bantlar GÖRÜNTÜDE**, metin katmanında yok (OCR katmanı
+  var ama üst bantları yakalamıyor). Bu oturumun **Gemini kullanılan TEK kitabı**:
+  şeritler 12'li batch'lerle vision ile tarandı (kitap yapısı → `personal_data=False`
+  = ücretsiz anahtar, **kredi düşmez**), sonra kritik noktalar kontak-föy ile GÖZLE
+  doğrulandı. **KÜRESEL ZİNCİR 1..86 kesintisiz, 6 bölüm tek sayaçla akar:**
+  Konu-Ana Düşünce 1-19 (19) · Yardımcı Düşünce 20-43 (24) · Paragrafta Yapı 44-64
+  (21) · Anlatım Teknikleri 65-80 (16) · Özel Bölüm 81-86 (6). **Dört konu sınırının
+  (19/20 · 43/44 · 64/65 · 80/81) DÖRDÜ DE şerit görüntüsüyle tek tek teyit edildi.**
+  **AI ŞERİT OKUMASININ İKİ HATASI GÖZLE YAKALANDI (kalıcı ders):** (1) TEST-44 "yok"
+  görünüyordu — aslında Paragrafta Yapı'nın İLK testi (bölüm özeti / "SORU DETAYI"
+  sayfaları arasında kaldığı için AI kaçırmış); (2) TEST-66 kaçmıştı; ayrıca AI bu
+  bölgede sayfa indekslerini ~2 kaydırmıştı. **KURAL: taranmış kitapta AI şerit
+  okuması TEK BAŞINA yeterli DEĞİL — küresel zincir denetimi + her konu sınırının
+  göz teyidi zorunlu.** Her test 2 sayfa (8 soru); "SORU DETAYI"/"BÖLÜM ÖZETİ"/
+  "STRATEJİK ADIMLAR"/çözüm sayfaları sayılmadı.
+  **'Sıfır Risk' (s.306-356) test bloklarına BÖLÜNMEMİŞ** — soru numaraları 1..200
+  kesintisiz akan karma havuz; kitabın test birimi 8 soru olduğundan **200 soru =
+  25 test** sayıldı (Twins TYT Biyoloji'deki birim-kararı deseni), etikete soru
+  sayısı yazıldı. s.358+ Paragraf Sözlük, s.372+ cevap anahtarları katalog dışı.
+  JSON `data/kitap-katalog/ari_paragrafin_ritmi.json`.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
