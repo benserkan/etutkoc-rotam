@@ -1,0 +1,57 @@
+{
+ "name": "Arı Yayınları Paragrafın Ritmi",
+ "publisher": "Arı Yayıncılık",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Paragrafta Konu - Ana Düşünce",
+   "test_count": 19,
+   "source": "body_band",
+   "page": 20
+  },
+  {
+   "label": "Paragrafta Yardımcı Düşünce",
+   "test_count": 24,
+   "source": "body_band",
+   "page": 84
+  },
+  {
+   "label": "Paragrafta Yapı",
+   "test_count": 21,
+   "source": "body_band",
+   "page": 163
+  },
+  {
+   "label": "Anlatım Teknikleri",
+   "test_count": 16,
+   "source": "body_band",
+   "page": 236
+  },
+  {
+   "label": "Özel Bölüm",
+   "test_count": 6,
+   "source": "body_band",
+   "page": 288
+  },
+  {
+   "label": "Sıfır Risk (200 soruluk karma havuz)",
+   "test_count": 25,
+   "source": "body_band",
+   "page": 306
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "TARANMIŞ PDF (377 s) — üst bantlar (konu adı + sarı kutuda 'TEST - N') GÖRÜNTÜDE, metin katmanında yok. Bantlar Gemini vision ile şerit şerit tarandı (kitap yapısı = kişisel veri değil → ücretsiz anahtar, KREDİ DÜŞMEZ), sonra kritik noktalar kontak-föy ile GÖZLE doğrulandı.",
+  "KÜRESEL NUMARA ZİNCİRİ 1..86 kesintisiz — 6 bölüm boyunca tek sayaçla akar: Konu-Ana Düşünce 1-19 · Yardımcı Düşünce 20-43 · Paragrafta Yapı 44-64 · Anlatım Teknikleri 65-80 · Özel Bölüm 81-86. Konu sınırlarının DÖRDÜ DE (19/20, 43/44, 64/65, 80/81) şerit görüntüsüyle tek tek teyit edildi.",
+  "AI TARAMASININ İKİ HATASI GÖZLE YAKALANDI: (1) TEST-44 'yok' görünüyordu — aslında Paragrafta Yapı'nın İLK testi (bölüm özeti/soru detayı sayfaları arasında kaldığı için kaçmıştı); (2) TEST-66 kaçmıştı, Anlatım Teknikleri'nin ikinci testi. AI ayrıca bu bölgede sayfa indekslerini ~2 kaydırmıştı; numaralar zincir + gözle düzeltildi. DERS: taranmış kitapta AI şerit okuması TEK BAŞINA yeterli değil, zincir denetimi + sınır sayfalarının göz teyidi şart.",
+  "Her test 2 sayfa (8 soru: sayfa başına 4). Bölüm başlarındaki 'SORU DETAYI', 'BÖLÜM ÖZETİ', 'STRATEJİK ADIMLAR' ve çözüm sayfaları test SAYILMADI.",
+  "'Sıfır Risk' bölümü (s.306-356) test bloklarına BÖLÜNMEMİŞ: soru numaraları 1'den 200'e kesintisiz akan karma havuz. Kitabın kendi test birimi 8 soru olduğundan 200 soru = 25 test sayıldı (Twins TYT Biyoloji'deki birim-kararı deseni). Etikete soru sayısı yazıldı ki koç neyi attığını görsün.",
+  "Kullanıcı talimatı: müfredata uyum zorunlu değil — eşleştirme yapılmadı (--no-map); paragraf soru tipleri tek bir MEB konusuna karşılık gelmez.",
+  "s.358+ 'Paragraf Sözlük' ve s.372+ cevap anahtarları — katalog dışı."
+ ]
+}
