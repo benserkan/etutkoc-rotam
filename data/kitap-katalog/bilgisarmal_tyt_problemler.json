@@ -1,0 +1,247 @@
+{
+ "name": "Bilgi Sarmal TYT Problemler",
+ "publisher": "Bilgi Sarmal Yayınları",
+ "subject": "TYT Matematik",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Oran-Orantı Problemleri",
+   "test_count": 2,
+   "source": "toc_image",
+   "page": 11
+  },
+  {
+   "label": "Sayı ve Kesir Problemleri",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 30
+  },
+  {
+   "label": "Yaş Problemleri",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 44
+  },
+  {
+   "label": "Yüzde, Kâr-Zarar Problemleri",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 50
+  },
+  {
+   "label": "Karışım Problemleri",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 60
+  },
+  {
+   "label": "İşçi Problemleri",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 65
+  },
+  {
+   "label": "Hareket Problemleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 71
+  },
+  {
+   "label": "Grafik Problemleri",
+   "test_count": 2,
+   "source": "toc_image",
+   "page": 82
+  },
+  {
+   "label": "Simülasyon Testi 1",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 86
+  },
+  {
+   "label": "Simülasyon Testi 2",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 89
+  },
+  {
+   "label": "Simülasyon Testi 3",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 92
+  },
+  {
+   "label": "Simülasyon Testi 4",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 95
+  },
+  {
+   "label": "Simülasyon Testi 5",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 98
+  },
+  {
+   "label": "Simülasyon Testi 6",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 101
+  },
+  {
+   "label": "Simülasyon Testi 7",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 104
+  },
+  {
+   "label": "Simülasyon Testi 8",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 107
+  },
+  {
+   "label": "Simülasyon Testi 9",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 110
+  },
+  {
+   "label": "Simülasyon Testi 10",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 113
+  },
+  {
+   "label": "Simülasyon Testi 11",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 116
+  },
+  {
+   "label": "Simülasyon Testi 12",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 119
+  },
+  {
+   "label": "Simülasyon Testi 13",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 122
+  },
+  {
+   "label": "Simülasyon Testi 14",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 125
+  },
+  {
+   "label": "Simülasyon Testi 15",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 128
+  },
+  {
+   "label": "Simülasyon Testi 16",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 131
+  },
+  {
+   "label": "Simülasyon Testi 17",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 134
+  },
+  {
+   "label": "Simülasyon Testi 18",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 137
+  },
+  {
+   "label": "Simülasyon Testi 19",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 140
+  },
+  {
+   "label": "Simülasyon Testi 20",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 143
+  },
+  {
+   "label": "Simülasyon Testi 21",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 146
+  },
+  {
+   "label": "Simülasyon Testi 22",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 149
+  },
+  {
+   "label": "Simülasyon Testi 23",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 152
+  },
+  {
+   "label": "Simülasyon Testi 24",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 155
+  },
+  {
+   "label": "Simülasyon Testi 25",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 158
+  },
+  {
+   "label": "Simülasyon Testi 26",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 161
+  },
+  {
+   "label": "Simülasyon Testi 27",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 164
+  },
+  {
+   "label": "Simülasyon Testi 28",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 167
+  },
+  {
+   "label": "Simülasyon Testi 29",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 170
+  },
+  {
+   "label": "Simülasyon Testi 30",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 173
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "TARANMIŞ PDF (176 s, metin katmanı YOK) — yapı içindekiler sayfasının GÖRÜNTÜSÜNDEN okundu, gövde şerit görüntüleriyle teyit edildi (s.11 'ORYANTASYON TESTİ - 1', s.86 'SİMÜLASYON TESTİ - 1', s.173 'SİMÜLASYON TESTİ - 30').",
+  "SAYFA ARİTMETİĞİ KUSURSUZ KAPANIYOR: 19 oryantasyon testi 2'şer sayfa (11-12, 13-14, 30-31, ... 84-85), 30 simülasyon testi 3'er sayfa (86-88 ... 173-175); 173+3 = 176 = kitabın sayfa sayısı.",
+  "'SICAK BÖLGE' bölümleri TEST DEĞİL — çözümlü örnek anlatımı (ÖRNEK-N + ÇÖZÜM, s.16 görüntüsüyle teyitli); katalog satırı yapılmadı, test sayılmadı. 'Problemin Navigasyonu' (s.5) ve 'Simülasyon Günlüğüm' (s.6) da takip sayfaları.",
+  "Konu satırlarının test sayısı = o konunun ORYANTASYON testleri: Oran-Orantı 2 (OT 1-2) · Sayı-Kesir 5 (OT 3-7) · Yaş 1 (OT 8) · Yüzde/Kâr-Zarar 4 (OT 9-12) · Karışım 1 (OT 13) · İşçi 1 (OT 14) · Hareket 3 (OT 15-17) · Grafik 2 (OT 18-19) = 19. Simülasyon testleri karma olduğu için ayrı satır (30) — toplam 49 test.",
+  "Simülasyon testleri karma/kümülatif → tek MEB konusuna karşılık gelmez, müfredat eşleşmesiz kalması normal (kullanıcı: müfredat zorunlu değil)."
+ ]
+}
