@@ -878,6 +878,23 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   görsün. Deneme başına sayfa 7-12 arası değişir (paragraf uzunluğu); birim =
   1 deneme, sayfa DEĞİL. subject "TYT Türkçe" (345 Paragraf deseni), 9-12+mezun.
   JSON `data/kitap-katalog/bilgisarmal_tyt_ayt_paragraf_deneme.json`.
+- **BİLGİ SARMAL 2025 TYT PROBLEMLER — CANLI (2026-08-31, prod id=115 · dev
+  id=45): 38 satır · 49 test · 8/8 konu satırı eşli** (30 simülasyon satırı karma
+  → bilinçli eşsiz; kullanıcı: müfredat zorunlu değil). **TARANMIŞ PDF (176 s,
+  metin katmanı YOK)** — bu oturumun tek görüntü-tabanlı kitabı; yapı içindekiler
+  sayfasının GÖRÜNTÜSÜNDEN okundu, gövde şeritleriyle teyit (s.11 "ORYANTASYON
+  TESTİ - 1" · s.86 "SİMÜLASYON TESTİ - 1" · s.173 "SİMÜLASYON TESTİ - 30").
+  **Gemini yine KULLANILMADI** — içindekiler okunaklıydı, sayım gözle yapıldı.
+  **SAYFA ARİTMETİĞİ KUSURSUZ KAPANIYOR** (bu kitapta zemin doğrulaması budur):
+  19 oryantasyon testi 2'şer sayfa (11-12 … 84-85) + 30 simülasyon 3'er sayfa
+  (86-88 … 173-175) → 173+3 = 176 = kitabın sayfa sayısı.
+  **"SICAK BÖLGE" TEST DEĞİL** — çözümlü örnek anlatımı (ÖRNEK-N + ÇÖZÜM, s.16
+  görüntüsüyle teyitli); katalog satırı yapılmadı. "Problemin Navigasyonu" (s.5)
+  + "Simülasyon Günlüğüm" (s.6) da takip sayfası. Konu satırı test sayısı = o
+  konunun ORYANTASYON testleri (Oran-Orantı 2 · Sayı-Kesir 5 · Yaş 1 · Yüzde/
+  Kâr-Zarar 4 · Karışım 1 · İşçi 1 · Hareket 3 · Grafik 2 = 19), simülasyonlar
+  ayrı satır (30). TYT Matematik taksonomisiyle 8/8 birebir uydu.
+  JSON `data/kitap-katalog/bilgisarmal_tyt_problemler.json`.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
