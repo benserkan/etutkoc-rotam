@@ -6,6 +6,44 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## PROGRAM TARİHİ DÜZELTME + BOŞ PROGRAM SİLME — CANLI (2026-09-03, commit `c80efc7`, migration YOK)
+
+**Tetikleyici (koç):** "02-08 Eylül yerine 03-09 Eylül tarihleriyle program
+oluşturdum, düzeltemedim; mecburen 02-08 için ikinci program açtım."
+- **KÖK NEDEN — ölü özellik:** backend uçları (`POST .../programs/{id}` +
+  `.../delete`) ve frontend hook'ları (`useUpdateProgram` / `useDeleteProgram`)
+  **ZATEN VARDI ve testliydi**, ama hiçbir ekrana bağlanmamıştı → UI'da düzenle/
+  sil düğmesi yok. **DERS: "hook/endpoint var" ≠ "özellik var" — bir yetenek
+  eklendiğinde onu tetikleyen görünür bir yüzey aynı pakette olmalı; yoksa
+  kullanıcı için hiç yok demektir.** (WP3'te dropdown salt-okuma link listesi
+  olarak bırakılmıştı.)
+- **Backend (additive):** `WeeklyProgramItem.task_count` — program başına görev
+  sayısı. `_wp_task_counts` TEK sorgu: Task'ta `program_id` OLMADIĞI için (WP
+  tasarımı: program = tarih-aralığı kapısı) öğrencinin tüm görev TARİHLERİ bir
+  kez çekilip aralıklara dağıtılır → N+1 yok. Hem `/programs` listesi hem week
+  yanıtındaki `_wp_to_brief` döner (UI ikisinden de besleniyor).
+- **UI (`week-board.tsx`):** başlıkta **"Tarihleri düzenle"** düğmesi
+  (görüntülenen program) + Programlar dropdown satırlarında görev sayısı /
+  amber **"boş"** rozeti + kalem (düzenle) ve çöp (sil) düğmeleri. Dropdown
+  satırı Link'ten flex satıra çevrildi (Link içinde buton olmaz).
+- **EditProgramDialog:** tarih + etiket; 1-14 gün doğrulaması; çakışma 409 →
+  uyarı listesi + `allow_overlap` onayı (NewProgramDialog deseninin aynısı).
+  Kaydedince `?program_id=` ile programın KENDİ aralığına yönlendirir — yoksa
+  sayfa eski pencerede kalıp koç düzelttiği haftayı göremiyordu.
+- **DeleteProgramDialog:** boş programda (task_count=0) uyarısız onay; görevli
+  programda görev sayısı + **"görevler KORUNUR"** açıklaması (program yalnız
+  tarih-aralığı kapısı — silinmesi görev geçmişini silmez) + opsiyonel
+  "görevleri de sil" (rezerv iadeli, `delete_tasks=true`).
+- **Test:** `test_api_v2_weekly_programs.py` **13→17** (13 task_count boş/dolu ·
+  14 SAHA senaryosu: yanlış tarihli programı 1 gün geri kaydır · 15a boş program
+  sil · 15b görevli program silinince görevler korunur). Regresyon:
+  teacher_program 14 · weekly_plan 14 · teacher_read 12 · carryover 20 ·
+  carryover_http 17 GREEN; tsc+eslint temiz. Mobil BİLİNÇLİ yok (program
+  yönetimi web — PARITY).
+- Deploy: web+worker+next rebuild (Plausible-stop'lu); healthz/site 200, uç anon 401.
+
+---
+
 ## HAFTALIK KOÇ RAPORU + SEANS GÜNDEMİ KÖPRÜSÜ — CANLI (2026-08-25, migration `r8s1v4x5x88r`)
 
 **Tetikleyici (kullanıcı):** Emir için elle üretilen haftalık rapor (dump+HTML
