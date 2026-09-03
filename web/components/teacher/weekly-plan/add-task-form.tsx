@@ -204,7 +204,7 @@ export function AddTaskForm({
   }));
 
   return (
-    <div className="px-4 py-4 border-t border-border/60 bg-card">
+    <div className="@container px-4 py-4 border-t border-border/60 bg-card">
       <div className="mb-3">
         <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
           Görev tipi
@@ -459,9 +459,9 @@ function TestForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-3">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-        <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
+        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
+        <div className="@2xl:col-span-2">
           <Label>Ders</Label>
           <Select
             value={subjectId === "" ? "" : String(subjectId)}
@@ -475,7 +475,7 @@ function TestForm({
             ))}
           </Select>
         </div>
-        <div className="md:col-span-3">
+        <div className="@2xl:col-span-3">
           <Label>Kitap</Label>
           <Select
             value={bookId === "" ? "" : String(bookId)}
@@ -496,7 +496,7 @@ function TestForm({
             ))}
           </Select>
         </div>
-        <div className="md:col-span-3">
+        <div className="@2xl:col-span-3">
           <Label>Ünite / Deneme</Label>
           <Select
             value={sectionId === "" ? "" : String(sectionId)}
@@ -516,7 +516,7 @@ function TestForm({
             ))}
           </Select>
         </div>
-        <div className="md:col-span-2">
+        <div className="@2xl:col-span-2">
           <Label>Adet</Label>
           <Input
             type="number"
@@ -526,7 +526,7 @@ function TestForm({
             className="text-right tabular-nums"
           />
         </div>
-        <div className="md:col-span-1 flex justify-end">
+        <div className="@2xl:col-span-1 flex justify-end">
           <SubmitButton
             pending={create.isPending}
             disabled={bookId === "" || sectionId === "" || !plannedCount}
@@ -605,9 +605,9 @@ function DenemeForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-        <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-        <div className="md:col-span-6">
+      <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
+        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
+        <div className="@2xl:col-span-6">
           <Label>Deneme adı</Label>
           <Input
             type="text"
@@ -617,7 +617,7 @@ function DenemeForm({
             placeholder="Örn. Mebi LGS Tam Deneme 7"
           />
         </div>
-        <div className="md:col-span-3">
+        <div className="@2xl:col-span-3">
           <Label>Soru sayısı</Label>
           <Input
             type="number"
@@ -628,7 +628,7 @@ function DenemeForm({
             className="text-right tabular-nums"
           />
         </div>
-        <div className="md:col-span-2 flex justify-end">
+        <div className="@2xl:col-span-2 flex justify-end">
           <SubmitButton
             pending={create.isPending}
             disabled={!title.trim() || !count || Number(count) < 1}
@@ -916,9 +916,9 @@ function BlockForm({
               kalan {selectedBlock.remaining}/{selectedBlock.total_count} {selectedBlock.unit}
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-            <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-            <div className="md:col-span-6">
+          <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
+            <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
+            <div className="@2xl:col-span-6">
               <Label>Bu görevin konusu / etiketi (opsiyonel)</Label>
               <Input
                 type="text"
@@ -928,7 +928,7 @@ function BlockForm({
                 placeholder={`örn. Bölüm 1 · boş bırakılırsa "${selectedBlock.title}"`}
               />
             </div>
-            <div className="md:col-span-3">
+            <div className="@2xl:col-span-3">
               <Label>Bu güne kaç {selectedBlock.unit}</Label>
               <Input
                 type="number"
@@ -939,7 +939,7 @@ function BlockForm({
                 className="text-right tabular-nums"
               />
             </div>
-            <div className="md:col-span-2 flex justify-end">
+            <div className="@2xl:col-span-2 flex justify-end">
               <SubmitButton
                 pending={create.isPending}
                 disabled={!count || Number(count) < 1}
@@ -1030,9 +1030,9 @@ function VideoForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-        <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
+        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
+        <div className="@2xl:col-span-2">
           <Label>Ders</Label>
           <Select
             value={subjectId === "" ? "" : String(subjectId)}
@@ -1050,7 +1050,7 @@ function VideoForm({
             ))}
           </Select>
         </div>
-        <div className="md:col-span-5">
+        <div className="@2xl:col-span-5">
           <Label>Video bağlantısı</Label>
           <Input
             type="url"
@@ -1060,7 +1060,7 @@ function VideoForm({
             className="font-mono"
           />
         </div>
-        <div className="md:col-span-3">
+        <div className="@2xl:col-span-3">
           <Label>Açıklama</Label>
           <Input
             type="text"
@@ -1070,7 +1070,7 @@ function VideoForm({
             placeholder="Örn. Trigonometri giriş"
           />
         </div>
-        <div className="md:col-span-1 flex justify-end">
+        <div className="@2xl:col-span-1 flex justify-end">
           <SubmitButton
             pending={create.isPending}
             disabled={subjectId === "" || !linkUrl.trim()}
@@ -1140,9 +1140,9 @@ function OzetForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-        <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-        <div className="md:col-span-3">
+      <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
+        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
+        <div className="@2xl:col-span-3">
           <Label>Ders</Label>
           <Select
             value={subjectId === "" ? "" : String(subjectId)}
@@ -1160,7 +1160,7 @@ function OzetForm({
             ))}
           </Select>
         </div>
-        <div className="md:col-span-7">
+        <div className="@2xl:col-span-7">
           <Label>Özet çıkarılacak konu</Label>
           <Input
             type="text"
@@ -1170,7 +1170,7 @@ function OzetForm({
             placeholder="Örn. Atatürk ilkelerinin sınıflandırılması"
           />
         </div>
-        <div className="md:col-span-1 flex justify-end">
+        <div className="@2xl:col-span-1 flex justify-end">
           <SubmitButton
             pending={create.isPending}
             disabled={subjectId === "" || !notes.trim()}
@@ -1246,9 +1246,9 @@ function TekrarForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-        <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-        <div className="md:col-span-3">
+      <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
+        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
+        <div className="@2xl:col-span-3">
           <Label>Ders</Label>
           <Select
             value={subjectId === "" ? "" : String(subjectId)}
@@ -1267,7 +1267,7 @@ function TekrarForm({
             ))}
           </Select>
         </div>
-        <div className="md:col-span-7">
+        <div className="@2xl:col-span-7">
           <Label>Tekrar edilecek konu</Label>
           <Input
             type="text"
@@ -1277,7 +1277,7 @@ function TekrarForm({
             placeholder="Örn. Üçgenlerde benzerlik"
           />
         </div>
-        <div className="md:col-span-1 flex justify-end">
+        <div className="@2xl:col-span-1 flex justify-end">
           <SubmitButton
             pending={create.isPending}
             disabled={subjectId === "" || !notes.trim()}
@@ -1424,9 +1424,9 @@ function OtherForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-2">
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-        <HourInput value={hour} onChange={setHour} className="md:col-span-1" />
-        <div className="md:col-span-2">
+      <div className="grid grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12 gap-3 items-end">
+        <HourInput value={hour} onChange={setHour} className="@2xl:col-span-1" />
+        <div className="@2xl:col-span-2">
           <Label>Ders</Label>
           <Select
             value={subjectId === "" ? "" : String(subjectId)}
@@ -1444,7 +1444,7 @@ function OtherForm({
             ))}
           </Select>
         </div>
-        <div className="md:col-span-3">
+        <div className="@2xl:col-span-3">
           <Label>Başlık</Label>
           <Input
             type="text"
@@ -1454,7 +1454,7 @@ function OtherForm({
             placeholder="Örn. Konu özeti hazırla"
           />
         </div>
-        <div className="md:col-span-5">
+        <div className="@2xl:col-span-5">
           <Label>Açıklama (opsiyonel)</Label>
           <Input
             type="text"
@@ -1464,7 +1464,7 @@ function OtherForm({
             placeholder="Detay açıklama"
           />
         </div>
-        <div className="md:col-span-1 flex justify-end">
+        <div className="@2xl:col-span-1 flex justify-end">
           <SubmitButton
             pending={create.isPending}
             disabled={subjectId === "" || !title.trim()}

@@ -13,6 +13,8 @@ import {
   FileEdit,
   Loader2,
   Megaphone,
+  PanelRightClose,
+  PanelRightOpen,
   Pencil,
   Printer,
   Rocket,
@@ -170,6 +172,16 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
   // Veliye duyur — gönderim öncesi önizleme modalı
   const [announceOpen, setAnnounceOpen] = React.useState(false);
   const [programsDropdownOpen, setProgramsDropdownOpen] = React.useState(false);
+  // Sağ panel (Kaynak Durumu / Serbest Bloklar / Devret) katlanabilir: görev
+  // eklerken gün kartı ~360px daha genişler — form alanları sıkışmasın
+  // (koç geri bildirimi 2026-09-03: "en önemli kısım burası, ferah olmalı").
+  // Tercih tarayıcıda saklanır.
+  // NOT: tercih localStorage'da SAKLANMIYOR — effect içinde setState React
+  // Compiler kuralına takılıyor (react-hooks/set-state-in-effect) ve lazy
+  // initializer SSR/hydration uyuşmazlığı üretirdi. Oturum içi state yeterli:
+  // koç panelini kapatıp o oturumda geniş kartla çalışır.
+  const [sideOpen, setSideOpen] = React.useState(true);
+  const toggleSide = React.useCallback(() => setSideOpen((v) => !v), []);
   // Program düzenle/sil — tarih hatasıyla oluşturulan programı düzeltmek veya
   // boş programı kaldırmak için (koç geri bildirimi 2026-09-03).
   const [editProgram, setEditProgram] = React.useState<WeeklyProgramItem | null>(null);
@@ -278,6 +290,23 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
               }}
             />
           ) : null}
+          <button
+            type="button"
+            onClick={toggleSide}
+            className="hidden xl:inline-flex rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted items-center gap-1.5"
+            title={
+              sideOpen
+                ? "Yan paneli gizle — gün kartı genişlesin"
+                : "Yan paneli göster (Kaynak Durumu · Serbest Bloklar)"
+            }
+          >
+            {sideOpen ? (
+              <PanelRightClose className="size-4" aria-hidden />
+            ) : (
+              <PanelRightOpen className="size-4" aria-hidden />
+            )}
+            {sideOpen ? "Paneli gizle" : "Panel"}
+          </button>
           <Link
             href={`/teacher/students/${studentId}/program/print${
               currentProgramId
@@ -363,7 +392,12 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
         }}
       />
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1fr_380px] gap-6">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-6",
+          sideOpen && "xl:grid-cols-[1fr_360px]",
+        )}
+      >
         <div className="space-y-4 min-w-0">
           <WeekNotesCard
             studentId={studentId}
@@ -371,7 +405,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
             notes={notes}
           />
 
-          <div id="day-editor" className="grid grid-cols-1 lg:grid-cols-[184px_1fr] gap-3 scroll-mt-4">
+          <div id="day-editor" className="grid grid-cols-1 lg:grid-cols-[150px_1fr] gap-3 scroll-mt-4">
             {/* Gün fihristi — tıkla, sağdaki kart değişsin (uzun kaydırma yok) */}
             <nav
               className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0"
@@ -540,6 +574,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           </div>
         </div>
 
+        {sideOpen ? (
         <aside className="xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto rounded-lg border border-border bg-card">
           <CarryoverPanel
             studentId={studentId}
@@ -560,6 +595,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
             onOpenBookGrid={setGridBookId}
           />
         </aside>
+        ) : null}
       </div>
 
       <BookGridModal
