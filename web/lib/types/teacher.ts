@@ -518,6 +518,8 @@ export interface WeeklyProgramItem {
   is_active: boolean;
   created_at: string;
   label: string;
+  /** Bu programın tarih aralığındaki görev sayısı (taslak dahil) — 0 = boş program. */
+  task_count: number;
 }
 
 export interface WeeklyProgramOverlapItem {

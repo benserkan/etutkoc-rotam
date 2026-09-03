@@ -2488,6 +2488,9 @@ class WeeklyProgramItem(BaseModel):
     is_active: bool                # bugünü içeriyor mu
     created_at: datetime
     label: str                     # UI'da gösterilecek varsayılan ad
+    # Bu programın tarih aralığındaki görev sayısı (taslak dahil). Koç "boş
+    # programı sil" kararını buna bakarak verir; 0 ise silme uyarısız yapılır.
+    task_count: int = 0
 
 
 class WeeklyProgramListResponse(BaseModel):

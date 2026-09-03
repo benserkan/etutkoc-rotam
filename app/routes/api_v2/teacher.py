@@ -4124,6 +4124,8 @@ def teacher_student_week_v2(
                 current_prog = p
                 break
 
+    _wp_counts = _wp_task_counts(db, student.id, all_progs)
+
     def _wp_to_brief(p):
         return WeeklyProgramItem(
             id=p.id,
@@ -4136,6 +4138,7 @@ def teacher_student_week_v2(
             is_active=p.contains(today),
             created_at=p.created_at,
             label=p.label,
+            task_count=_wp_counts.get(p.id, 0),
         )
 
     return TeacherStudentWeekResponse(
@@ -8891,7 +8894,25 @@ def teacher_reset_student_password_v2(
 # =============================================================================
 
 
-def _wp_to_item(p, *, today: date) -> WeeklyProgramItem:
+def _wp_task_counts(db: Session, student_id: int, programs) -> dict[int, int]:
+    """Program başına görev sayısı — TEK sorgu (N+1 yok).
+
+    Program-görev bağı tarih aralığıyla kurulur (WeeklyProgram tasarımı: Task'ta
+    program_id yok), o yüzden öğrencinin tüm görev TARİHLERİ bir kez çekilip
+    aralıklara dağıtılır. Taslak görevler de sayılır — koç "bu program boş mu?"
+    sorusunun yanıtını buradan alır.
+    """
+    if not programs:
+        return {}
+    rows = db.query(Task.date).filter(Task.student_id == student_id).all()
+    dates = [r[0] for r in rows if r[0] is not None]
+    out: dict[int, int] = {}
+    for p in programs:
+        out[p.id] = sum(1 for d in dates if p.start_date <= d <= p.end_date)
+    return out
+
+
+def _wp_to_item(p, *, today: date, task_count: int = 0) -> WeeklyProgramItem:
     return WeeklyProgramItem(
         id=p.id,
         student_id=p.student_id,
@@ -8903,6 +8924,7 @@ def _wp_to_item(p, *, today: date) -> WeeklyProgramItem:
         is_active=p.contains(today),
         created_at=p.created_at,
         label=p.label,
+        task_count=task_count,
     )
 
 
@@ -8954,10 +8976,14 @@ def teacher_list_programs_v2(
     programs = list_programs(db, student_id=student.id)
     active = get_active_program(db, student_id=student.id, today=today)
     unlinked = get_unlinked_task_summary(db, student_id=student.id)
+    _wp_counts = _wp_task_counts(db, student.id, programs)
 
     return WeeklyProgramListResponse(
         student_id=student.id,
-        items=[_wp_to_item(p, today=today) for p in programs],
+        items=[
+            _wp_to_item(p, today=today, task_count=_wp_counts.get(p.id, 0))
+            for p in programs
+        ],
         active_program_id=active.id if active else None,
         unlinked_task_count=int(unlinked["count"]) if unlinked else 0,
         unlinked_earliest=(

@@ -13,14 +13,19 @@ import {
   FileEdit,
   Loader2,
   Megaphone,
+  Pencil,
   Printer,
   Rocket,
   Sparkles,
+  Trash2,
+  TriangleAlert,
 } from "lucide-react";
 
 import {
   useCarryover,
   useCreateProgram,
+  useDeleteProgram,
+  useUpdateProgram,
   useWrapLegacyTasks,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
@@ -159,10 +164,16 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
   // Veliye duyur — gönderim öncesi önizleme modalı
   const [announceOpen, setAnnounceOpen] = React.useState(false);
   const [programsDropdownOpen, setProgramsDropdownOpen] = React.useState(false);
+  // Program düzenle/sil — tarih hatasıyla oluşturulan programı düzeltmek veya
+  // boş programı kaldırmak için (koç geri bildirimi 2026-09-03).
+  const [editProgram, setEditProgram] = React.useState<WeeklyProgramItem | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<WeeklyProgramItem | null>(null);
   const currentProgramId = data.current_program_id ?? null;
   const currentProgramName = data.current_program_name;
   const currentProgramDayCount = data.current_program_day_count;
   const allPrograms = data.programs ?? [];
+  const currentProgram =
+    allPrograms.find((p) => p.id === currentProgramId) ?? null;
   const unlinkedTaskCount = data.unlinked_task_count ?? 0;
   const unlinkedEarliest = data.unlinked_earliest;
   const unlinkedLatest = data.unlinked_latest;
@@ -199,8 +210,21 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
                   {currentProgramDayCount ?? data.days?.length ?? 7} gün
                 </span>
               </h1>
-              <p className="text-sm text-muted-foreground">
-                {data.start_date} → {data.end_date}
+              <p className="text-sm text-muted-foreground flex items-center gap-2">
+                <span>
+                  {data.start_date} → {data.end_date}
+                </span>
+                {currentProgram ? (
+                  <button
+                    type="button"
+                    onClick={() => setEditProgram(currentProgram)}
+                    className="inline-flex items-center gap-1 rounded border border-border px-1.5 py-0.5 text-[11px] hover:bg-muted"
+                    title="Bu programın tarihlerini/etiketini düzelt"
+                  >
+                    <Pencil className="size-3" aria-hidden />
+                    Tarihleri düzenle
+                  </button>
+                ) : null}
               </p>
             </>
           ) : (
@@ -238,6 +262,14 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
               currentProgramId={currentProgramId}
               open={programsDropdownOpen}
               onOpenChange={setProgramsDropdownOpen}
+              onEdit={(p) => {
+                setProgramsDropdownOpen(false);
+                setEditProgram(p);
+              }}
+              onDelete={(p) => {
+                setProgramsDropdownOpen(false);
+                setDeleteTarget(p);
+              }}
             />
           ) : null}
           <Link
@@ -447,6 +479,23 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
         bookId={gridBookId}
       />
 
+      {/* Program düzenle / sil (tarih hatası düzeltme) */}
+      {editProgram ? (
+        <EditProgramDialog
+          studentId={studentId}
+          program={editProgram}
+          onClose={() => setEditProgram(null)}
+        />
+      ) : null}
+      {deleteTarget ? (
+        <DeleteProgramDialog
+          studentId={studentId}
+          program={deleteTarget}
+          isCurrent={deleteTarget.id === currentProgramId}
+          onClose={() => setDeleteTarget(null)}
+        />
+      ) : null}
+
       {/* WP3 — Yeni program dialog */}
       <NewProgramDialog
         open={newProgramOpen}
@@ -477,12 +526,16 @@ function ProgramsDropdown({
   currentProgramId,
   open,
   onOpenChange,
+  onEdit,
+  onDelete,
 }: {
   studentId: number;
   programs: WeeklyProgramItem[];
   currentProgramId: number | null;
   open: boolean;
   onOpenChange: (v: boolean) => void;
+  onEdit: (p: WeeklyProgramItem) => void;
+  onDelete: (p: WeeklyProgramItem) => void;
 }) {
   const ref = React.useRef<HTMLDivElement>(null);
   React.useEffect(() => {
@@ -513,29 +566,58 @@ function ProgramsDropdown({
           {programs.map((p) => {
             const isCurrent = p.id === currentProgramId;
             return (
-              <Link
+              <div
                 key={p.id}
-                href={`/teacher/students/${studentId}/week?program_id=${p.id}`}
-                onClick={() => onOpenChange(false)}
                 className={cn(
-                  "block px-3 py-2 rounded text-sm hover:bg-muted",
+                  "group flex items-stretch gap-1 rounded",
                   isCurrent && "bg-cyan-50 border border-cyan-200",
                 )}
               >
-                <div className="flex items-center gap-2 justify-between">
-                  <span className="font-medium truncate">
-                    {p.name || `${p.start_date} – ${p.end_date}`}
-                  </span>
-                  {p.is_active ? (
-                    <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
-                      Bu hafta
+                <Link
+                  href={`/teacher/students/${studentId}/week?program_id=${p.id}`}
+                  onClick={() => onOpenChange(false)}
+                  className="flex-1 min-w-0 px-3 py-2 rounded text-sm hover:bg-muted"
+                >
+                  <div className="flex items-center gap-2 justify-between">
+                    <span className="font-medium truncate">
+                      {p.name || `${p.start_date} – ${p.end_date}`}
                     </span>
-                  ) : null}
+                    {p.is_active ? (
+                      <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        Bu hafta
+                      </span>
+                    ) : null}
+                  </div>
+                  <div className="text-[11px] text-muted-foreground mt-0.5">
+                    {p.start_date} → {p.end_date} · {p.day_count} gün ·{" "}
+                    {p.task_count > 0 ? (
+                      <span>{p.task_count} görev</span>
+                    ) : (
+                      <span className="text-amber-700">boş</span>
+                    )}
+                  </div>
+                </Link>
+                <div className="flex items-center gap-0.5 pr-1">
+                  <button
+                    type="button"
+                    onClick={() => onEdit(p)}
+                    className="rounded p-1.5 text-slate-500 hover:bg-muted hover:text-slate-900"
+                    title="Tarihleri / etiketi düzenle"
+                    aria-label="Programı düzenle"
+                  >
+                    <Pencil className="size-3.5" aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onDelete(p)}
+                    className="rounded p-1.5 text-slate-500 hover:bg-rose-50 hover:text-rose-700"
+                    title="Programı sil"
+                    aria-label="Programı sil"
+                  >
+                    <Trash2 className="size-3.5" aria-hidden />
+                  </button>
                 </div>
-                <div className="text-[11px] text-muted-foreground mt-0.5">
-                  {p.start_date} → {p.end_date} · {p.day_count} gün
-                </div>
-              </Link>
+              </div>
             );
           })}
         </div>
@@ -642,6 +724,320 @@ function UnlinkedTasksBanner({
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// =============================================================================
+// Program düzenle / sil — tarih hatasıyla oluşturulmuş programı düzeltmek veya
+// yanlış aralıkta açılmış boş programı kaldırmak için (koç geri bildirimi).
+// =============================================================================
+
+function EditProgramDialog({
+  studentId,
+  program,
+  onClose,
+}: {
+  studentId: number;
+  program: WeeklyProgramItem;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [startDate, setStartDate] = React.useState(program.start_date);
+  const [endDate, setEndDate] = React.useState(program.end_date);
+  const [name, setName] = React.useState(program.name ?? "");
+  const [overlaps, setOverlaps] = React.useState<WeeklyProgramOverlapItem[]>([]);
+  const [allowOverlap, setAllowOverlap] = React.useState(false);
+  const update = useUpdateProgram(studentId);
+
+  const dayCount = React.useMemo(() => {
+    const a = Date.parse(startDate);
+    const b = Date.parse(endDate);
+    if (Number.isNaN(a) || Number.isNaN(b)) return 0;
+    return Math.floor((b - a) / 86400000) + 1;
+  }, [startDate, endDate]);
+  const validDays = dayCount >= 1 && dayCount <= 14;
+  const changed =
+    startDate !== program.start_date ||
+    endDate !== program.end_date ||
+    (name.trim() || null) !== (program.name ?? null);
+
+  function handleSubmit() {
+    if (!validDays) return;
+    update.mutate(
+      {
+        programId: program.id,
+        body: {
+          start_date: startDate,
+          end_date: endDate,
+          name: name.trim() || null,
+          allow_overlap: allowOverlap,
+        },
+      },
+      {
+        onSuccess: (res) => {
+          onClose();
+          // Tarih değiştiyse görüntülenen pencere kayar — programın kendi
+          // aralığına götür ki koç düzelttiği haftayı görsün.
+          router.push(
+            `/teacher/students/${studentId}/week?program_id=${res.data.id}`,
+          );
+          router.refresh();
+        },
+        onError: (e) => {
+          const detail = (e.detail ?? {}) as {
+            code?: string;
+            overlaps?: WeeklyProgramOverlapItem[];
+          };
+          if (detail.code === "overlap") setOverlaps(detail.overlaps ?? []);
+        },
+      },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Pencil className="size-5 text-cyan-700" aria-hidden />
+            Programı düzenle
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <p className="text-xs text-muted-foreground">
+            Tarihleri değiştirdiğinde bu aralıktaki görevler yerinde kalır —
+            görevler tarihe bağlıdır, programa değil. Yanlış aralıkta
+            oluşturduğun programı buradan düzeltebilirsin.
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="wp-edit-start">Başlangıç tarihi</Label>
+              <Input
+                id="wp-edit-start"
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setOverlaps([]);
+                  setAllowOverlap(false);
+                }}
+              />
+            </div>
+            <div>
+              <Label htmlFor="wp-edit-end">Bitiş tarihi (dahil)</Label>
+              <Input
+                id="wp-edit-end"
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setOverlaps([]);
+                  setAllowOverlap(false);
+                }}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 text-sm">
+            <Clock className="size-4 text-muted-foreground" aria-hidden />
+            <span>
+              Süre:{" "}
+              <b
+                className={cn(
+                  "tabular-nums",
+                  validDays ? "text-cyan-700" : "text-rose-700",
+                )}
+              >
+                {dayCount} gün
+              </b>
+              {!validDays ? (
+                <span className="text-rose-700 ml-2 text-xs">
+                  (1–14 gün arası olmalı)
+                </span>
+              ) : null}
+            </span>
+          </div>
+
+          <div>
+            <Label htmlFor="wp-edit-name">Etiket (opsiyonel)</Label>
+            <Input
+              id="wp-edit-name"
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="örn. Bayram Sonrası Hafta"
+              maxLength={120}
+            />
+          </div>
+
+          {overlaps.length > 0 ? (
+            <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 text-sm">
+              <p className="font-semibold text-amber-900 mb-2">
+                Yeni tarihler {overlaps.length} programla çakışıyor:
+              </p>
+              <ul className="space-y-1 text-amber-900">
+                {overlaps.map((o) => (
+                  <li
+                    key={o.program_id}
+                    className="text-xs flex items-center justify-between"
+                  >
+                    <span>
+                      <b>{o.label}</b> ({o.start_date} → {o.end_date})
+                    </span>
+                    <span className="text-amber-800">
+                      {o.overlap_days} gün, {o.task_count_in_overlap} görev
+                    </span>
+                  </li>
+                ))}
+              </ul>
+              <label className="flex items-center gap-2 mt-3 text-xs text-amber-900">
+                <input
+                  type="checkbox"
+                  checked={allowOverlap}
+                  onChange={(e) => setAllowOverlap(e.target.checked)}
+                />
+                <span>Çakışmaya rağmen kaydet (eski programlar değişmez)</span>
+              </label>
+            </div>
+          ) : null}
+        </div>
+        <DialogFooter>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-md border border-border hover:bg-muted"
+          >
+            Vazgeç
+          </button>
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={
+              update.isPending ||
+              !validDays ||
+              !changed ||
+              (overlaps.length > 0 && !allowOverlap)
+            }
+            className="px-4 py-2 text-sm rounded-md bg-cyan-600 hover:bg-cyan-700 text-white inline-flex items-center gap-2 disabled:opacity-50"
+          >
+            {update.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Pencil className="size-3.5" aria-hidden />
+            )}
+            Kaydet
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function DeleteProgramDialog({
+  studentId,
+  program,
+  isCurrent,
+  onClose,
+}: {
+  studentId: number;
+  program: WeeklyProgramItem;
+  isCurrent: boolean;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [deleteTasks, setDeleteTasks] = React.useState(false);
+  const del = useDeleteProgram(studentId);
+  const isEmpty = program.task_count === 0;
+
+  function handleDelete() {
+    del.mutate(
+      { programId: program.id, deleteTasks: isEmpty ? false : deleteTasks },
+      {
+        onSuccess: () => {
+          onClose();
+          if (isCurrent) {
+            router.push(`/teacher/students/${studentId}/week`);
+          }
+          router.refresh();
+        },
+      },
+    );
+  }
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Trash2 className="size-5 text-rose-600" aria-hidden />
+            Programı sil
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3 py-2 text-sm">
+          <div className="rounded-md border border-border bg-muted/40 p-3">
+            <p className="font-medium text-slate-900">
+              {program.name || `${program.start_date} – ${program.end_date}`}
+            </p>
+            <p className="text-xs text-slate-600 mt-0.5">
+              {program.start_date} → {program.end_date} · {program.day_count} gün
+            </p>
+          </div>
+
+          {isEmpty ? (
+            <p className="text-slate-700">
+              Bu program <b>boş</b> — içinde görev yok. Silmek güvenli.
+            </p>
+          ) : (
+            <div className="rounded-lg border-2 border-amber-300 bg-amber-50 p-3 text-amber-900">
+              <p className="flex items-start gap-2">
+                <TriangleAlert className="size-4 mt-0.5 shrink-0" aria-hidden />
+                <span>
+                  Bu tarih aralığında <b>{program.task_count} görev</b> var.
+                  Programı silmek görevleri silmez — görevler tarihe bağlıdır ve
+                  varsayılan olarak <b>korunur</b>.
+                </span>
+              </p>
+              <label className="flex items-start gap-2 mt-3 text-xs">
+                <input
+                  type="checkbox"
+                  checked={deleteTasks}
+                  onChange={(e) => setDeleteTasks(e.target.checked)}
+                  className="mt-0.5"
+                />
+                <span>
+                  Bu aralıktaki {program.task_count} görevi de sil (kitap
+                  rezervleri iade edilir). <b>Geri alınamaz.</b>
+                </span>
+              </label>
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 text-sm rounded-md border border-border hover:bg-muted"
+          >
+            Vazgeç
+          </button>
+          <button
+            type="button"
+            onClick={handleDelete}
+            disabled={del.isPending}
+            className="px-4 py-2 text-sm rounded-md bg-rose-600 hover:bg-rose-700 text-white inline-flex items-center gap-2 disabled:opacity-50"
+          >
+            {del.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Trash2 className="size-3.5" aria-hidden />
+            )}
+            {!isEmpty && deleteTasks
+              ? "Programı ve görevleri sil"
+              : "Programı sil"}
+          </button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 

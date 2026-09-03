@@ -12,6 +12,9 @@
 10. wrap-legacy: programa bağlı olmayan 5 görev → 200 + tek "Eski Dönem" program
 11. Başka koçun öğrencisi (sahiplik) → 404 not_found
 12. Anon → 401, başka rol → 403
+13. task_count: boş program 0, görevli program N (UI "boş mu?" göstergesi)
+14. SAHA: yanlış tarihle açılan programı 1 gün geri kaydır → 200 + tarihler düzelir
+15. Boş programı sil → 200; görevli programı sil (delete_tasks=false) → görevler KORUNUR
 """
 from __future__ import annotations
 
@@ -324,6 +327,100 @@ def main() -> int:
         ok = r.status_code == 422 and code == "no_unlinked_tasks"
         check("10b. wrap-legacy yine → 422 no_unlinked_tasks",
               ok, f"status={r.status_code} code={code}")
+
+        # 13. task_count — UI'daki "boş program" göstergesinin kaynağı.
+        #     P3 (wrap-legacy) 5 legacy görevi kapsar; P1 [today..today+6] boş.
+        r = client.get(f"/api/v2/teacher/students/{sid}/programs")
+        body = r.json() if r.text else {}
+        by_id = {it["id"]: it for it in body.get("items", [])}
+        p3 = by_id.get(p3_id) or {}
+        p1 = by_id.get(p1_id) or {}
+        ok = (
+            r.status_code == 200
+            and p3.get("task_count") == 5
+            and p1.get("task_count") == 0
+        )
+        check("13. task_count: görevli=5, boş=0",
+              ok, f"p3={p3.get('task_count')} p1={p1.get('task_count')}")
+
+        # 14. SAHA SENARYOSU (koç geri bildirimi): program yanlış tarihle
+        #     açıldı (02-08 yerine 03-09) → tek adımda 1 gün geri kaydır.
+        wrong_start = today + timedelta(days=31)
+        wrong_end = today + timedelta(days=37)
+        r = client.post(
+            f"/api/v2/teacher/students/{sid}/programs",
+            json={
+                "start_date": wrong_start.isoformat(),
+                "end_date": wrong_end.isoformat(),
+                "name": "Yanlış Tarihli",
+            },
+        )
+        wrong_id = (r.json().get("data") or {}).get("id") if r.text else None
+        if wrong_id:
+            created_program_ids.append(wrong_id)
+        fixed_start = wrong_start - timedelta(days=1)
+        fixed_end = wrong_end - timedelta(days=1)
+        r = client.post(
+            f"/api/v2/teacher/students/{sid}/programs/{wrong_id}",
+            json={
+                "start_date": fixed_start.isoformat(),
+                "end_date": fixed_end.isoformat(),
+            },
+        )
+        body = r.json() if r.text else {}
+        d = body.get("data", {})
+        ok = (
+            r.status_code == 200
+            and d.get("start_date") == fixed_start.isoformat()
+            and d.get("end_date") == fixed_end.isoformat()
+            and d.get("day_count") == 7
+        )
+        check("14. yanlış tarihli programı 1 gün geri kaydır → düzeldi",
+              ok, f"status={r.status_code} {d.get('start_date')}→{d.get('end_date')}")
+
+        # 15a. Boş programı sil (görev yok → uyarısız silinir)
+        r = client.post(
+            f"/api/v2/teacher/students/{sid}/programs/{wrong_id}/delete",
+            json={"delete_tasks": False},
+        )
+        body = r.json() if r.text else {}
+        gone = client.get(f"/api/v2/teacher/students/{sid}/programs").json()
+        still = [it for it in gone.get("items", []) if it["id"] == wrong_id]
+        ok = (
+            r.status_code == 200
+            and body.get("data", {}).get("tasks_deleted") == 0
+            and not still
+        )
+        check("15a. boş programı sil → 200, listeden düştü",
+              ok, f"status={r.status_code} kalan={len(still)}")
+
+        # 15b. Görevli programı sil (delete_tasks=False) → GÖREVLER KORUNUR.
+        #      Program yalnız bir tarih-aralığı kapısıdır; silinmesi öğrencinin
+        #      görev geçmişini silmemeli.
+        with SessionLocal() as db2:
+            before = (
+                db2.query(Task)
+                .filter(Task.student_id == sid)
+                .count()
+            )
+        r = client.post(
+            f"/api/v2/teacher/students/{sid}/programs/{p3_id}/delete",
+            json={"delete_tasks": False},
+        )
+        body = r.json() if r.text else {}
+        with SessionLocal() as db2:
+            after = (
+                db2.query(Task)
+                .filter(Task.student_id == sid)
+                .count()
+            )
+        ok = (
+            r.status_code == 200
+            and body.get("data", {}).get("tasks_deleted") == 0
+            and after == before
+        )
+        check("15b. görevli programı sil → görevler korunur",
+              ok, f"status={r.status_code} önce={before} sonra={after}")
 
         # 11. Başka koçun öğrencisi
         r = client.get(
