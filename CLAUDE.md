@@ -65,6 +65,29 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   breakpoint'i dar kapta yanlış karar verir.** Panel tercihi localStorage'a
   YAZILMAZ (effect'te setState React Compiler kuralına takılıyor, lazy
   initializer SSR/hydration uyuşmazlığı üretir) — oturum içi state.
+- **DEVAM — IZGARAYA SAĞ TIK MENÜSÜ (2026-09-03, commit `e4549b4`):** koç
+  "görevin üzerine sağ tıklayıp taşı/kopyala/sil yapabilsem" dedi (sürükle-bırak
+  vardı, fare dostu alternatif yoktu). Göreve sağ tık → menü (başlıkta görev
+  adı): **Başka güne taşı · Başka güne kopyala · Günü düzenle · Görevi sil**.
+  Taşı/Kopyala seçilince ızgara **"hedef gün seç" moduna** girer — uygun günler
+  amber halkalı, geçmiş günler soluk, altta iptal bandı (Vazgeç/ESC); hedefe
+  tıklanınca mevcut `moveMut` (PATCH date) / `spreadMut` (kopya→taslak) çalışır.
+  Saat atanmış görevde "taşı" kapalı (mevcut kural). Sil = onaylı + kapasite
+  iadesi uyarısı.
+  **GERÇEK BUG (geliştirmede yakalandı, kalıcı ders): menü öğeleri `onClick`
+  ile ÇALIŞMAZ** — dışarı-tıklama dinleyicisi `mousedown`da menüyü kapatıyor,
+  buton unmount olduğu için click hiç tetiklenmiyor (React'in stopPropagation'ı
+  yetmedi). **Menü öğeleri `onMouseDown` kullanır.** Aynı desen başka bir
+  context-menu yazılırsa tekrar eder.
+  **Test:** YENİ `scripts/live_grid_context_menu.py` **7/7** (kendi seed'ini
+  kurar/temizler; dev sunucu + Playwright ister): menü açılır · kopyala +1 görev ·
+  **taşı toplam sabit AMA görevin TARİHİ hedefe değişir** (ilk sürüm yalnız
+  "toplam sabit" bakıyordu — taşıma olmasa da geçerdi, tarih karşılaştırmasıyla
+  ayırt edici yapıldı) · sil −1 + kapasite uyarısı. Regresyon: weekly_plan 15 ·
+  teacher_read 12 · task_spread 16 GREEN.
+  **DERS (Playwright):** `has_text="Pazar"` **"Pazartesi"yi de yakalar**
+  (substring) → test geçmiş güne tıklayıp sessizce başarısız oluyordu; gün
+  butonları `title` taşıdığı için `button[title*="Pazar —"]` ile kesin seçilir.
 - Mobil BİLİNÇLİ yok (hafta planı editörü web — PARITY).
 
 ---
