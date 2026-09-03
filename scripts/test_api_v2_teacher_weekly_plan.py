@@ -15,6 +15,11 @@ Senaryolar (14):
   12. GET /sidebar-items?subject_id=N → filtre çalışır
   13. GET /books-by-subject + /book-sections + /section-stats cascade
   14. Cross-tenant 404 (başka öğretmenin öğrencisinin endpoint'leri)
+  15. KAPASİTE TAZELİĞİ (saha bug'ı 2026-09-03): göreve test atanınca
+      section-stats "kalan" GERÇEKTEN azalır + create yanıtının invalidate
+      listesi kapasite yüzeylerini (section-stats/book-sections/book-grid/
+      next-units/curriculum/books) bayatlatır. Bu liste eksikken koç başka
+      güne geçtiğinde eski "kalan"ı görüyordu (sayfa yenilenene kadar).
 """
 from __future__ import annotations
 
@@ -442,6 +447,50 @@ def main() -> int:
         )
         check("13. Cascade books-by-subject + book-sections + section-stats",
               ok, f"r1={r1.status_code}/{len(b1.get('items', []))} r2={r2.status_code}/{len(b2.get('items', []))} r3={r3.status_code}")
+
+        # ===== 15. Kapasite tazeliği: kalan azalır + invalidate kapsar =====
+        r = client.get(
+            f"/api/v2/teacher/students/{seed['student_id']}/section-stats?section_id={seed['section1_id']}"
+        )
+        before = (r.json() if r.text else {}).get("remaining")
+        r = client.post(
+            f"/api/v2/teacher/students/{seed['student_id']}/tasks",
+            json={
+                "date": today.isoformat(),
+                "type": "test",
+                "title": "Kapasite tazeliği testi",
+                "is_draft": False,
+                "items": [
+                    {
+                        "book_id": seed["book_id"],
+                        "section_id": seed["section1_id"],
+                        "planned_count": 3,
+                    }
+                ],
+            },
+        )
+        created = r.json() if r.text else {}
+        inv = created.get("invalidate", []) or []
+        sid_s = str(seed["student_id"])
+        need = ["section-stats", "book-sections", "book-grid", "next-units",
+                "curriculum", "books"]
+        missing = [
+            k for k in need
+            if not any(x.endswith(f":students:{sid_s}:{k}") for x in inv)
+        ]
+        r2 = client.get(
+            f"/api/v2/teacher/students/{seed['student_id']}/section-stats?section_id={seed['section1_id']}"
+        )
+        after = (r2.json() if r2.text else {}).get("remaining")
+        ok = (
+            r.status_code == 200
+            and isinstance(before, int)
+            and isinstance(after, int)
+            and after == before - 3      # rezerv düştü → kalan azaldı
+            and not missing              # UI bu değişikliği görebiliyor
+        )
+        check("15. kapasite: kalan 3 azaldı + invalidate kapasite yüzeylerini kapsıyor",
+              ok, f"before={before} after={after} eksik_invalidate={missing}")
 
         # ===== 14. Cross-tenant 404 =====
         r1 = client.get(

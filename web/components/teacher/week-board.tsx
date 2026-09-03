@@ -126,6 +126,12 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
   const [openDate, setOpenDate] = React.useState<string | null>(
     todayDay ? todayDay.date : data.days[0]?.date ?? null,
   );
+  // Gün FİHRİSTİ (2026-09-03 koç geri bildirimi): 7 gün kartı alt alta
+  // açıldığında içerik o kadar uzuyordu ki günler arası geçiş uzun kaydırma
+  // gerektiriyordu. Artık solda gün listesi, sağda YALNIZ seçili günün kartı
+  // render edilir — ızgaradan bir güne tıklamak da burayı değiştirir.
+  const selectedDay =
+    data.days.find((d) => d.date === openDate) ?? todayDay ?? data.days[0] ?? null;
   const sidebarQ = useQuery<SidebarResponse>({
     queryKey: teacherKeys.studentSidebar(studentId, focusedSubjectId),
     queryFn: () => getStudentSidebar(studentId, focusedSubjectId),
@@ -350,7 +356,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           if (typeof window !== "undefined") {
             window.requestAnimationFrame(() => {
               document
-                .getElementById(`day-${date}`)
+                .getElementById("day-editor")
                 ?.scrollIntoView({ behavior: "smooth", block: "start" });
             });
           }
@@ -365,72 +371,158 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
             notes={notes}
           />
 
-          {data.days.map((d) => (
-            <div
-              key={d.date}
-              onDragOver={(e) => {
-                if (d.is_past) return; // geçmiş güne taşıma yok (Hata 1)
-                if (e.dataTransfer.types.includes(CARRY_MIME)) {
-                  e.preventDefault();
-                  e.dataTransfer.dropEffect = "copy";
-                  if (dragOverDate !== d.date) setDragOverDate(d.date);
-                }
-              }}
-              onDragLeave={(e) => {
-                // yalnız kartı tamamen terk edince temizle (alt öğelere girince değil)
-                if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-                  setDragOverDate((cur) => (cur === d.date ? null : cur));
-                }
-              }}
-              onDrop={(e) => {
-                const raw = e.dataTransfer.getData(CARRY_MIME);
-                setDragOverDate(null);
-                if (!raw || d.is_past) return;
-                e.preventDefault();
-                const tid = Number(raw);
-                if (!Number.isFinite(tid)) return;
-                carryDnd.mutate({
-                  body: { target_date: d.date, period: null, task_ids: [tid] },
-                });
-              }}
-              className={cn(
-                "rounded-lg transition",
-                dragOverDate === d.date &&
-                  "ring-2 ring-amber-400 ring-offset-2 ring-offset-background",
-              )}
+          <div id="day-editor" className="grid grid-cols-1 lg:grid-cols-[184px_1fr] gap-3 scroll-mt-4">
+            {/* Gün fihristi — tıkla, sağdaki kart değişsin (uzun kaydırma yok) */}
+            <nav
+              className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0"
+              aria-label="Günler"
             >
-            <WeekDayCard
-              studentId={studentId}
-              weekStartDate={data.start_date}
-              day={d}
-              weekDays={data.days}
-              subjects={subjectsForGrouping}
-              focusedSubjectId={focusedSubjectId}
-              onFocusSubject={setFocusedSubjectId}
-              isOpen={openDate === d.date}
-              onSetOpen={(nowOpen) => {
-                if (nowOpen) setOpenDate(d.date);
-                else if (openDate === d.date) setOpenDate(null);
-              }}
-              maturityValue={data.maturity_value ?? 0}
-              maturityLabel={data.maturity_label ?? ""}
-              weeksObserved={data.weeks_observed ?? 0}
-              daysObserved={data.days_observed ?? 0}
-              activePhase={data.active_phase ?? null}
-              trackRequired={data.track_required ?? false}
-              trackMissing={data.track_missing ?? false}
-              trackLabel={data.track_label ?? null}
-              onCarryoverDrop={
-                d.is_past
-                  ? undefined
-                  : (period, taskId) =>
+              {data.days.map((d) => {
+                const active = selectedDay?.date === d.date;
+                const total = d.tasks_count ?? d.tasks.length;
+                const doneTasks = d.tasks.filter(
+                  (t) =>
+                    t.status === "completed" ||
+                    (t.planned_count > 0 && t.completed_count >= t.planned_count),
+                ).length;
+                const pct = total > 0 ? Math.round((doneTasks / total) * 100) : 0;
+                return (
+                  <button
+                    key={d.date}
+                    type="button"
+                    onClick={() => setOpenDate(d.date)}
+                    onDragOver={(e) => {
+                      if (d.is_past) return;
+                      if (e.dataTransfer.types.includes(CARRY_MIME)) {
+                        e.preventDefault();
+                        e.dataTransfer.dropEffect = "copy";
+                        if (dragOverDate !== d.date) setDragOverDate(d.date);
+                      }
+                    }}
+                    onDragLeave={(e) => {
+                      if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+                        setDragOverDate((cur) => (cur === d.date ? null : cur));
+                      }
+                    }}
+                    onDrop={(e) => {
+                      const raw = e.dataTransfer.getData(CARRY_MIME);
+                      setDragOverDate(null);
+                      if (!raw || d.is_past) return;
+                      e.preventDefault();
+                      const tid = Number(raw);
+                      if (!Number.isFinite(tid)) return;
+                      setOpenDate(d.date);
                       carryDnd.mutate({
-                        body: { target_date: d.date, period, task_ids: [taskId] },
-                      })
-              }
-            />
+                        body: { target_date: d.date, period: null, task_ids: [tid] },
+                      });
+                    }}
+                    className={cn(
+                      "shrink-0 lg:w-full text-left rounded-lg border px-2.5 py-2 transition",
+                      active
+                        ? "border-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 dark:border-cyan-500/40"
+                        : "border-border hover:bg-muted",
+                      dragOverDate === d.date &&
+                        "ring-2 ring-amber-400 ring-offset-1 ring-offset-background",
+                    )}
+                    aria-current={active ? "true" : undefined}
+                  >
+                    <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
+                      <span
+                        className={cn(
+                          "text-sm font-semibold",
+                          active
+                            ? "text-cyan-900 dark:text-cyan-200"
+                            : "text-foreground",
+                        )}
+                      >
+                        {d.dow_label}
+                      </span>
+                      {d.is_today ? (
+                        <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-200 dark:border-emerald-500/30">
+                          bugün
+                        </span>
+                      ) : null}
+                      {(d.draft_count ?? 0) > 0 ? (
+                        <span className="text-[9px] uppercase tracking-wider px-1 py-0.5 rounded bg-amber-100 text-amber-800 border border-amber-200 dark:bg-amber-500/15 dark:text-amber-200 dark:border-amber-500/30">
+                          taslak
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-muted-foreground tabular-nums">
+                      {total === 0 ? (
+                        <span className="italic">boş</span>
+                      ) : (
+                        <>
+                          {doneTasks}/{total} görev
+                          {(d.test_planned ?? 0) > 0 ? (
+                            <>
+                              {" · "}
+                              {d.test_completed ?? 0}/{d.test_planned} test
+                            </>
+                          ) : null}
+                        </>
+                      )}
+                    </div>
+                    {total > 0 ? (
+                      <div className="mt-1 h-1 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className={cn(
+                            "h-full rounded-full",
+                            pct >= 70
+                              ? "bg-emerald-500"
+                              : pct >= 40
+                                ? "bg-amber-500"
+                                : "bg-rose-500",
+                          )}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                    ) : null}
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Seçili günün kartı — yalnız bu render edilir */}
+            <div className="min-w-0">
+              {selectedDay ? (
+                <WeekDayCard
+                  key={selectedDay.date}
+                  studentId={studentId}
+                  weekStartDate={data.start_date}
+                  day={selectedDay}
+                  weekDays={data.days}
+                  subjects={subjectsForGrouping}
+                  focusedSubjectId={focusedSubjectId}
+                  onFocusSubject={setFocusedSubjectId}
+                  isOpen
+                  onSetOpen={() => {
+                    /* fihristte gün kartı daima açık — kapatma yok */
+                  }}
+                  maturityValue={data.maturity_value ?? 0}
+                  maturityLabel={data.maturity_label ?? ""}
+                  weeksObserved={data.weeks_observed ?? 0}
+                  daysObserved={data.days_observed ?? 0}
+                  activePhase={data.active_phase ?? null}
+                  trackRequired={data.track_required ?? false}
+                  trackMissing={data.track_missing ?? false}
+                  trackLabel={data.track_label ?? null}
+                  onCarryoverDrop={
+                    selectedDay.is_past
+                      ? undefined
+                      : (period, taskId) =>
+                          carryDnd.mutate({
+                            body: {
+                              target_date: selectedDay.date,
+                              period,
+                              task_ids: [taskId],
+                            },
+                          })
+                  }
+                />
+              ) : null}
             </div>
-          ))}
+          </div>
 
           <div className="flex gap-3 text-xs text-muted-foreground mt-2">
             <span className="italic">

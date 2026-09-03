@@ -54,17 +54,46 @@ function taskUnit(t: TeacherTask): string {
   return "test";
 }
 
+// Izgarada koçun aradığı bilgi KONU'dur — ders adı zaten grup başlığında,
+// kaynak adı ise dar hücrede etiketi taşırıp konuyu kırpıyordu (saha geri
+// bildirimi 2026-09-03: "345 TYT-AYT Geometri ..." görünüyor, konu görünmüyor).
+// Kaynak adı + kapasite tooltip'e alındı.
 function taskLabel(t: TeacherTask): string {
   const first = t.items.find((it) => it.book_id != null) ?? t.items[0];
   if (first?.book_id) {
-    return (
-      first.book_name + (first.section_label ? ` · ${first.section_label}` : "")
-    );
+    return first.section_label || first.topic_name || first.book_name;
   }
   // Etkinlik: başlık "{Ders} · {içerik}" → içerik kısmını göster.
   const sep = t.title.indexOf(" · ");
   if (sep > 0 && sep < t.title.length - 3) return t.title.substring(sep + 3);
   return t.title || "—";
+}
+
+// Hover detayı: kaynak + bölüm + ilerleme + o bölümde KALAN kapasite.
+// (Kalan, koçun "bu konudan daha atayabilir miyim?" sorusunun yanıtı.)
+function taskTooltip(t: TeacherTask, dragHint: string): string {
+  const lines: string[] = [];
+  if (t.title) lines.push(t.title);
+  for (const it of t.items) {
+    if (it.book_id) {
+      const parts = [it.book_name];
+      if (it.section_label) parts.push(it.section_label);
+      let line = parts.join(" · ");
+      if (it.planned_count > 0) {
+        line += ` — ${it.completed_count}/${it.planned_count} test`;
+      }
+      if (typeof it.section_remaining === "number") {
+        line += ` (bölümde kalan: ${it.section_remaining})`;
+      }
+      lines.push(line);
+    } else if (it.planned_count > 0) {
+      lines.push(`${it.book_name || "Deneme"} — ${it.completed_count}/${it.planned_count}`);
+    }
+  }
+  if ((t.solved_count ?? 0) > 0) lines.push(`Çözülen: ${t.solved_count} soru`);
+  if (t.scheduled_hour != null) lines.push(`Saat: ${t.scheduled_hour}`);
+  lines.push(dragHint);
+  return lines.join("\n");
 }
 
 function isActivity(t: TeacherTask): boolean {
@@ -209,11 +238,12 @@ function SubjGroupBlock({
                 "flex items-start gap-1 text-[10px] leading-snug",
                 t.scheduled_hour == null && "cursor-grab active:cursor-grabbing",
               )}
-              title={
+              title={taskTooltip(
+                t,
                 t.scheduled_hour == null
                   ? "Sürükle: başka güne taşı · Ctrl ile bırak: kopyala"
-                  : "Saat atanmış görev taşınamaz"
-              }
+                  : "Saat atanmış görev taşınamaz",
+              )}
             >
               <span className={cn("shrink-0 font-bold", mk.cls)} aria-hidden>
                 {mk.ch}

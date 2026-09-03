@@ -3516,6 +3516,22 @@ def _invalidate_for_task(task: Task, teacher_id: int) -> list[str]:
         f"teacher:{teacher_id}:students:{sid}:sidebar",
         # Serbest iş blokları: bağlı görev ekle/sil/düzenle → dağıtılan/kalan değişir
         f"teacher:{teacher_id}:students:{sid}:work-blocks",
+        # KAPASİTE YÜZEYLERİ — görev ekle/sil/düzenle rezervi değiştirir; bu
+        # sorgular bayatlarsa koç "kalan test"i YANLIŞ görür (saha bug'ı
+        # 2026-09-03: Salı'ya 3 test atandı, Çarşamba formunda kalan hâlâ eski
+        # değeri gösteriyordu — sayfa yenilenene kadar).
+        #   section-stats  → form altındaki BÖLÜMDE/ÇÖZÜLMÜŞ/KALAN kutusu
+        #   book-sections  → ünite açılır listesindeki "kalan N"
+        #   book-grid      → kitap ızgara modalı (koltuk görünümü)
+        #   next-units     → "Sıradaki üniteler" paneli (kalan kapasite)
+        #   curriculum     → müfredat paneli (işlenen/rezerv)
+        #   books          → öğrenci kitapları paneli (bölüm ilerlemesi)
+        f"teacher:{teacher_id}:students:{sid}:section-stats",
+        f"teacher:{teacher_id}:students:{sid}:book-sections",
+        f"teacher:{teacher_id}:students:{sid}:book-grid",
+        f"teacher:{teacher_id}:students:{sid}:next-units",
+        f"teacher:{teacher_id}:students:{sid}:curriculum",
+        f"teacher:{teacher_id}:students:{sid}:books",
         # Kaynak Durumu sidebar'ı: kitap/section rezerv sayıları değiştiyse
         # yenilensin (görev ekle/sil/düzenle hepsinde geçerli)
         f"teacher:{teacher_id}:dashboard",
