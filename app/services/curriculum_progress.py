@@ -227,14 +227,19 @@ def _student_resource_subject_ids(db: Session, student: User) -> set[int]:
 def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subject]:
     """Öğrencinin müfredat dersleri (resmi/koç) — grade + curriculum_model filtreli.
 
-    YKS (lise/mezun) öğrenci için **sınav omurgası** tercih edilir (TYT/AYT
-    kanonik dersleri; okul karşılığı gizlenir) — AMA dedup **kaynak-duyarlı**:
-    öğrencinin kitapları OKUL (Maarif/Klasik) konularına eşliyken sınav dersinde
-    hiç kaynağı yoksa, okul dersi GÖRÜNÜR kalır ve kaynaksız sınav karşılığı
-    gizlenir. Aksi halde (sınav dersinde kaynak var / ikisinde de yok) sınav
-    omurgası tercih edilir (eski davranış). Böylece 9-10. sınıf Maarif öğrencisi
-    "kaynak yok" duvarına çarpmaz; koç kitapları sınav omurgasına taşıdığında
-    görünüm kendiliğinden sınav dersine döner."""
+    SINAV OMURGASI (TYT/AYT) YALNIZ 11-12 VE MEZUNDA tercih edilir. Orada dedup
+    **kaynak-duyarlı**: öğrencinin kitapları OKUL (Maarif/Klasik) konularına
+    eşliyken sınav dersinde hiç kaynağı yoksa okul dersi GÖRÜNÜR kalır; aksi
+    halde sınav omurgası kazanır.
+
+    9-10. SINIF (Maarif) FARKLI (saha 2026-09-04): bu öğrenci TYT/AYT değil,
+    OKUL müfredatını takip eder → okul dersleri DAİMA görünür, TYT/AYT dersleri
+    ancak koç o derse KAYNAK atadıysa listelenir (erken YKS hazırlığı).
+    Önceki sürümde `is_yks = grade >= 9` olduğu için 8'den 9'a geçen öğrencinin
+    (kitapları hâlâ LGS → Maarif derslerinde kaynak yok) müfredat paneli
+    Maarif konuları yerine TYT konularını gösteriyordu.
+
+    5-8 (LGS): dedup yok — okul dersleri olduğu gibi."""
     student_cm = student.effective_curriculum_model
     rows = (
         db.query(Subject)
@@ -249,13 +254,20 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
         and not (student_cm and s.curriculum_model and s.curriculum_model != student_cm)
         and exam_subject_visible_for_track(s, student.track)
     ]
-    is_yks = bool(student.is_graduate) or (
-        student.grade_level is not None and student.grade_level >= 9
+    # Sınav omurgası (TYT/AYT) tercihi YALNIZ 11-12 + mezunda.
+    exam_backbone = bool(student.is_graduate) or (
+        student.grade_level is not None and student.grade_level >= 11
     )
-    resource_ids = _student_resource_subject_ids(db, student) if is_yks else set()
+    # 9-10: okul (Maarif) omurgası esas; sınav dersi yalnız KAYNAKLIYSA görünür.
+    early_yks = (not exam_backbone) and student.grade_level in (9, 10)
+    resource_ids = (
+        _student_resource_subject_ids(db, student)
+        if (exam_backbone or early_yks)
+        else set()
+    )
     # base ad → sınav dersleri (TYT Matematik + AYT Matematik → "Matematik")
     exam_by_base: dict[str, list[Subject]] = {}
-    if is_yks:
+    if exam_backbone:
         for s in candidates:
             if _is_exam_subject(s):
                 exam_by_base.setdefault(_exam_base_name(s.name), []).append(s)
@@ -263,12 +275,16 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
     school_names_with_res = {
         s.name for s in candidates
         if not _is_exam_subject(s) and s.id in resource_ids
-    } if is_yks else set()
+    } if exam_backbone else set()
 
     out: list[Subject] = []
     seen: set[str] = set()
     for s in candidates:
-        if is_yks:
+        if early_yks:
+            # 9-10 Maarif: okul dersi daima kalır, sınav dersi kaynak ister.
+            if _is_exam_subject(s) and s.id not in resource_ids:
+                continue
+        elif exam_backbone:
             if _is_exam_subject(s):
                 # Kaynaksız sınav dersi, kaynaklı okul karşılığı varsa gizlenir
                 base = _exam_base_name(s.name)
