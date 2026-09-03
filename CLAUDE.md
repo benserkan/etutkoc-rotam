@@ -6,6 +6,52 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## HAFTA PLANI — 3 SAHA DÜZELTMESİ (ızgara konu · gün fihristi · kalan test) — CANLI (2026-09-03, commit `6d43971`, migration YOK)
+
+**Tetikleyici (koç, 3 madde + ekran görüntüleri):**
+
+1. **IZGARADA KONU GÖRÜNMÜYORDU.** Satır etiketi `kitap adı · bölüm` idi; dar
+   hücrede kitap adı yeri doldurup konuyu kırpıyordu ("345 TYT-AYT Geometri …").
+   Koç ızgarada **ders (grup başlığı) + KONU + test sayısı** arar; kaynak adı
+   gürültü. `week-grid.taskLabel` artık `section_label → topic_name → book_name`
+   sırasıyla KONUYU yazar; kaynak adı + ilerleme + **bölümde kalan kapasite**
+   hover tooltip'ine taşındı (`taskTooltip`).
+2. **GÜN KARTLARI → FİHRİST.** 7 gün kartı alt alta açılınca içerik o kadar
+   uzuyordu ki günler arası geçiş uzun kaydırma istiyordu. Artık **solda gün
+   listesi** (ad + görev/test özeti + ilerleme çubuğu + bugün/taslak rozeti),
+   **sağda YALNIZ seçili günün kartı** render edilir (`#day-editor`,
+   `lg:grid-cols-[184px_1fr]`). Izgaradan bir güne tıklamak da bu seçimi
+   değiştirir (scroll hedefi `day-${date}` → `day-editor`). Carryover sürükle-
+   bırak hedefi gün kartından **fihrist satırlarına** taşındı → koç gün
+   değiştirmeden başka güne bırakabiliyor. `WeekDayCard` `isOpen` sabit true,
+   `onSetOpen` no-op (kart artık kapanmaz).
+3. **KALAN TEST SAYISI GÜNCELLENMİYORDU (asıl bug).** Görev oluşturma yanıtının
+   `_invalidate_for_task` listesi `sidebar`'ı bayatlatıyordu ama **"kalan"ın
+   beslendiği `section-stats` / `book-sections` sorgularını KAPSAMIYORDU**
+   (üstelik frontend `staleTime: 30_000`). Koç Salı'ya 3 test atayıp Çarşamba'ya
+   geçince kalan hâlâ eski değeri gösteriyordu — sayfa yenilenene kadar. Listeye
+   **6 kapasite yüzeyi** eklendi: `section-stats · book-sections · book-grid ·
+   next-units · curriculum · books`. Backend HESABI ZATEN DOĞRUYDU (test:
+   before=15 → after=12); sorun tamamen cache tazeliğiydi.
+   **KURAL: rezervi değiştiren her mutation, kapasite gösteren TÜM sorguları
+   bayatlatmalı — bir yüzey listede yoksa koç yanlış "kalan" görür ve fazladan
+   test atar.**
+- **Test:** `test_api_v2_teacher_weekly_plan.py` **14→15** (senaryo 15: görev
+  atanınca kalan GERÇEKTEN 3 azalıyor + invalidate 6 kapasite yüzeyini kapsıyor).
+  **Testin ayırt ediciliği kanıtlandı:** fix geçici kaldırılınca KIRMIZI
+  (eksik_invalidate 6 anahtar), geri konunca yeşil. Regresyon: teacher_read 12 ·
+  teacher_program 14 · weekly_programs 17 · book_grid_release_aware 17 ·
+  task_templates 11 GREEN; tsc+eslint temiz.
+- **Görsel doğrulama (dev, Playwright):** fihrist render edildi, Cuma'ya
+  tıklayınca sağ taraf anında değişti (kaydırma yok), ızgarada konu adı görünür.
+  İlk çekimde seçili günün adı rozetlerle sıkışıp "Perşe…" diye kırpılmıştı →
+  başlık satırı `flex-wrap` yapıldı (rozet alt satıra iner, gün adı tam görünür).
+  Geçici seed (v2wp_*) temizlendi. **DERS: login TAM SAYFA geçiş yapıyor →
+  Playwright'ta `networkidle` yetmez, sabit bekleme gerekir.**
+- Mobil BİLİNÇLİ yok (hafta planı editörü web — PARITY).
+
+---
+
 ## PROGRAM TARİHİ DÜZELTME + BOŞ PROGRAM SİLME — CANLI (2026-09-03, commit `c80efc7`, migration YOK)
 
 **Tetikleyici (koç):** "02-08 Eylül yerine 03-09 Eylül tarihleriyle program
