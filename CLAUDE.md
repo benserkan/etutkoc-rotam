@@ -48,6 +48,23 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
   başlık satırı `flex-wrap` yapıldı (rozet alt satıra iner, gün adı tam görünür).
   Geçici seed (v2wp_*) temizlendi. **DERS: login TAM SAYFA geçiş yapıyor →
   Playwright'ta `networkidle` yetmez, sabit bekleme gerekir.**
+- **DEVAM — GÜN KARTINA NEFES (2026-09-03, commit `3999944`):** fihrist sonrası
+  koç "kart dar kaldı, görev ekledikçe scroll giriyor" dedi. İki kaynak:
+  (a) **form viewport breakpoint'i kullanıyordu** — `md:grid-cols-12 +
+  md:col-span-N`; `md` viewport'a bakar, KABIN genişliğine değil → dar kartta
+  12 kolon tek satıra sıkışıp "Ekle" kırpılıyordu. **Tailwind v4 container
+  query'sine çevrildi**: form köküne `@container`, satırlar
+  `grid-cols-1 @md:grid-cols-2 @2xl:grid-cols-12` (7 satır, 32 col-span) →
+  ölçü artık kartın kendi genişliği. (b) **sabit 380px sağ panel** → başlığa
+  **"Paneli gizle"** düğmesi (Kaynak Durumu/Serbest Bloklar/Devret kolonu
+  kapanır, kart ~360px genişler); panel 380→360px, fihrist 184→150px.
+  Playwright ölçümü: "Ekle" genişliği panel açıkken 242px (2'li satır),
+  kapalıyken 62px (tek satır) — iki durumda da kırpılma yok.
+  **DERS: kart/kolon içine giren form satırlarında `md:`/`lg:` YASAK —
+  container query (`@container` + `@md:`/`@2xl:`) kullanılır; viewport
+  breakpoint'i dar kapta yanlış karar verir.** Panel tercihi localStorage'a
+  YAZILMAZ (effect'te setState React Compiler kuralına takılıyor, lazy
+  initializer SSR/hydration uyuşmazlığı üretir) — oturum içi state.
 - Mobil BİLİNÇLİ yok (hafta planı editörü web — PARITY).
 
 ---
