@@ -377,6 +377,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
       ) : null}
 
       <WeekGrid
+        studentId={studentId}
         days={data.days}
         subjects={subjectsForGrouping}
         openDate={openDate}

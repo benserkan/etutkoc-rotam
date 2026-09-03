@@ -1,11 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, LayoutGrid } from "lucide-react";
+import {
+  ArrowRightLeft,
+  ChevronDown,
+  Copy,
+  LayoutGrid,
+  MousePointerClick,
+  PencilLine,
+  Trash2,
+} from "lucide-react";
 
 import { toast } from "sonner";
 
 import {
+  useDeleteTask,
   useMoveTaskDate,
   useSpreadTask,
 } from "@/lib/hooks/use-teacher-mutations";
@@ -204,10 +213,12 @@ function SubjGroupBlock({
   g,
   dayDate,
   onDragState,
+  onContext,
 }: {
   g: SubjGroup;
   dayDate: string;
   onDragState?: (dragging: boolean) => void;
+  onContext?: (t: TeacherTask, dayDate: string, x: number, y: number) => void;
 }) {
   const tone = toneForKey(g.key, g.name);
   return (
@@ -234,6 +245,12 @@ function SubjGroupBlock({
                 onDragState?.(true);
               }}
               onDragEnd={() => onDragState?.(false)}
+              onContextMenu={(e) => {
+                if (!onContext) return;
+                e.preventDefault();
+                e.stopPropagation();
+                onContext(t, dayDate, e.clientX, e.clientY);
+              }}
               className={cn(
                 "flex items-start gap-1 text-[10px] leading-snug",
                 t.scheduled_hour == null && "cursor-grab active:cursor-grabbing",
@@ -273,11 +290,13 @@ function SubjGroupBlock({
 }
 
 export function WeekGrid({
+  studentId,
   days,
   subjects,
   openDate,
   onOpenDay,
 }: {
+  studentId: number;
   days: TeacherStudentWeekDay[];
   subjects: SubjectRef[];
   openDate: string | null;
@@ -289,6 +308,99 @@ export function WeekGrid({
   const [dragOverDate, setDragOverDate] = React.useState<string | null>(null);
   const moveMut = useMoveTaskDate();
   const spreadMut = useSpreadTask();
+
+  // --- Sağ tık menüsü (koç isteği 2026-09-03): sürükle-bırakın klavye/fare
+  // dostu alternatifi. Taşı/Kopyala seçilince ızgara "hedef gün seç" moduna
+  // girer; Sil onaylı çalışır.
+  const [menu, setMenu] = React.useState<{
+    taskId: number;
+    label: string;
+    date: string;
+    canMove: boolean;
+    x: number;
+    y: number;
+  } | null>(null);
+  const [pending, setPending] = React.useState<{
+    mode: "move" | "copy";
+    taskId: number;
+    label: string;
+    sourceDate: string;
+  } | null>(null);
+  const [confirmDel, setConfirmDel] = React.useState<{
+    taskId: number;
+    label: string;
+    date: string;
+  } | null>(null);
+  const delMut = useDeleteTask(studentId, confirmDel?.date ?? "");
+
+  // ESC → açık menüyü / bekleyen hedef seçimini iptal et
+  React.useEffect(() => {
+    if (!menu && !pending) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMenu(null);
+        setPending(null);
+      }
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, [menu, pending]);
+
+  // Menü açıkken dışarı tıklama kapatır. DİKKAT: dinleyici 'mousedown'da
+  // çalıştığı için menü öğeleri de onClick DEĞİL onMouseDown kullanır —
+  // aksi halde menü, butonun click'i tetiklenmeden unmount oluyordu.
+  React.useEffect(() => {
+    if (!menu) return;
+    const onDown = () => setMenu(null);
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [menu]);
+
+  const applyPending = React.useCallback(
+    (targetDate: string) => {
+      if (!pending) return;
+      const targetDay = days.find((d) => d.date === targetDate);
+      if (targetDay?.is_past) {
+        toast.warning("Geçmiş güne taşınamaz.");
+        return;
+      }
+      if (targetDate === pending.sourceDate && pending.mode === "move") {
+        setPending(null);
+        return;
+      }
+      if (pending.mode === "move") {
+        moveMut.mutate(
+          { taskId: pending.taskId, body: { date: targetDate } },
+          {
+            onSuccess: () => toast.success("Görev taşındı"),
+          },
+        );
+      } else {
+        spreadMut.mutate(
+          {
+            taskId: pending.taskId,
+            body: { dates: [targetDate], continue_sections: false },
+          },
+          {
+            onSuccess: (res) => {
+              const r = res.data;
+              if (r.created.length > 0) {
+                toast.success("Kopyalandı (taslak)", {
+                  description: r.warning ?? undefined,
+                });
+              } else if (r.skipped.some((x) => x.reason === "duplicate")) {
+                toast.info("Bu görev o günde zaten var.");
+              } else {
+                toast.warning(r.warning ?? "Kopyalanamadı.");
+              }
+            },
+          },
+        );
+      }
+      setPending(null);
+    },
+    [pending, days, moveMut, spreadMut],
+  );
 
   const handleDrop = React.useCallback(
     (e: React.DragEvent, targetDate: string, period?: "morning" | "noon" | "evening" | "") => {
@@ -393,7 +505,13 @@ export function WeekGrid({
                 <button
                   key={day.date}
                   type="button"
-                  onClick={() => onOpenDay(day.date)}
+                  onClick={() => {
+                    if (pending) {
+                      applyPending(day.date);
+                      return;
+                    }
+                    onOpenDay(day.date);
+                  }}
                   onDragOver={(e) => {
                     if (!e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
                     e.preventDefault();
@@ -413,8 +531,17 @@ export function WeekGrid({
                         : "border-border bg-card hover:bg-muted/30",
                     dragOverDate === day.date &&
                       "ring-2 ring-cyan-400 ring-offset-1 ring-offset-background",
+                    pending && !day.is_past &&
+                      "ring-2 ring-amber-400 ring-offset-1 ring-offset-background cursor-copy",
+                    pending && day.is_past && "opacity-40",
                   )}
-                  title={`${day.dow_label} — düzenlemek için tıkla`}
+                  title={
+                    pending
+                      ? `${day.dow_label} — buraya ${
+                          pending.mode === "move" ? "taşı" : "kopyala"
+                        }`
+                      : `${day.dow_label} — düzenlemek için tıkla`
+                  }
                 >
                   <div
                     className={cn(
@@ -480,6 +607,16 @@ export function WeekGrid({
                               g={g}
                               dayDate={day.date}
                               onDragState={setDragging}
+                              onContext={(t, dd, x, y) =>
+                                setMenu({
+                                  taskId: t.id,
+                                  label: taskLabel(t),
+                                  date: dd,
+                                  canMove: t.scheduled_hour == null,
+                                  x,
+                                  y,
+                                })
+                              }
                             />
                           ))}
                         </div>
@@ -496,6 +633,23 @@ export function WeekGrid({
               );
             })}
           </div>
+          {pending ? (
+            <div className="mx-4 mb-2 flex items-center gap-2 rounded-md border-2 border-amber-300 bg-amber-50 px-3 py-2 text-[12px] text-amber-900 dark:bg-amber-500/10 dark:border-amber-500/40 dark:text-amber-200">
+              <MousePointerClick className="size-4 shrink-0" aria-hidden />
+              <span className="min-w-0 flex-1">
+                <b>{pending.label}</b> —{" "}
+                {pending.mode === "move" ? "taşınacak" : "kopyalanacak"} günü
+                seç (ızgarada bir güne tıkla).
+              </span>
+              <button
+                type="button"
+                onClick={() => setPending(null)}
+                className="shrink-0 rounded border border-amber-400 px-2 py-0.5 text-[11px] hover:bg-amber-100 dark:hover:bg-amber-500/20"
+              >
+                Vazgeç (ESC)
+              </button>
+            </div>
+          ) : null}
           <p className="px-4 pb-2.5 text-[11px] text-muted-foreground italic">
             {dragging ? (
               <span className="not-italic font-medium text-cyan-700 dark:text-cyan-300">
@@ -513,6 +667,124 @@ export function WeekGrid({
           </p>
         </>
       )}
+      {menu ? (
+        <div
+          className="fixed z-50 w-52 rounded-md border border-border bg-popover p-1 shadow-lg"
+          style={{
+            left: Math.min(menu.x, (typeof window !== "undefined" ? window.innerWidth : 1200) - 220),
+            top: Math.min(menu.y, (typeof window !== "undefined" ? window.innerHeight : 800) - 200),
+          }}
+          onMouseDown={(e) => e.stopPropagation()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          <p className="px-2 py-1.5 text-[11px] font-medium text-muted-foreground truncate border-b border-border/60 mb-1">
+            {menu.label}
+          </p>
+          <button
+            type="button"
+            disabled={!menu.canMove}
+            onMouseDown={() => {
+              setPending({
+                mode: "move",
+                taskId: menu.taskId,
+                label: menu.label,
+                sourceDate: menu.date,
+              });
+              setMenu(null);
+            }}
+            className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted inline-flex items-center gap-2 disabled:opacity-40"
+            title={menu.canMove ? "" : "Saat atanmış görev taşınamaz"}
+          >
+            <ArrowRightLeft className="size-3.5" aria-hidden />
+            Başka güne taşı
+          </button>
+          <button
+            type="button"
+            onMouseDown={() => {
+              setPending({
+                mode: "copy",
+                taskId: menu.taskId,
+                label: menu.label,
+                sourceDate: menu.date,
+              });
+              setMenu(null);
+            }}
+            className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted inline-flex items-center gap-2"
+          >
+            <Copy className="size-3.5" aria-hidden />
+            Başka güne kopyala
+          </button>
+          <button
+            type="button"
+            onMouseDown={() => {
+              onOpenDay(menu.date);
+              setMenu(null);
+            }}
+            className="w-full text-left px-2 py-1.5 rounded text-sm hover:bg-muted inline-flex items-center gap-2"
+          >
+            <PencilLine className="size-3.5" aria-hidden />
+            Günü düzenle
+          </button>
+          <div className="my-1 border-t border-border/60" />
+          <button
+            type="button"
+            onMouseDown={() => {
+              setConfirmDel({
+                taskId: menu.taskId,
+                label: menu.label,
+                date: menu.date,
+              });
+              setMenu(null);
+            }}
+            className="w-full text-left px-2 py-1.5 rounded text-sm text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10 inline-flex items-center gap-2"
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+            Görevi sil
+          </button>
+        </div>
+      ) : null}
+
+      {confirmDel ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-sm rounded-lg border border-border bg-card p-4 shadow-xl">
+            <p className="font-semibold flex items-center gap-2">
+              <Trash2 className="size-4 text-rose-600" aria-hidden />
+              Görevi sil
+            </p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              <b className="text-foreground">{confirmDel.label}</b> görevi
+              silinecek. Kitaptan ayrılan test kapasitesi geri iade edilir.
+            </p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDel(null)}
+                className="px-3 py-1.5 text-sm rounded-md border border-border hover:bg-muted"
+              >
+                Vazgeç
+              </button>
+              <button
+                type="button"
+                disabled={delMut.isPending}
+                onClick={() =>
+                  delMut.mutate(
+                    { taskId: confirmDel.taskId },
+                    {
+                      onSuccess: () => {
+                        toast.success("Görev silindi");
+                        setConfirmDel(null);
+                      },
+                    },
+                  )
+                }
+                className="px-3 py-1.5 text-sm rounded-md bg-rose-600 text-white hover:bg-rose-700 disabled:opacity-50"
+              >
+                Sil
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
