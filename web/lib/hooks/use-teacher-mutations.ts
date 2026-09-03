@@ -5,7 +5,8 @@ import { toast } from "sonner";
 
 import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
-import { teacherKeys } from "@/lib/api/teacher";
+import {
+  reconcileBookCounters, teacherKeys } from "@/lib/api/teacher";
 import type {
   CoachingReportDetail,
   CoachingReportRow,
@@ -2043,5 +2044,45 @@ export function useWrapLegacyTasks(studentId: number) {
       }
       showError(e, "İşlem başarısız");
     },
+  });
+}
+
+/**
+ * Kitap ızgarasındaki sayaç uyumsuzluğunu onar (ölü rezervi serbest bırakır).
+ * Koç geri bildirimi 2026-09-03: uyarı görünüyordu ama düzeltme yolu yoktu.
+ */
+export function useReconcileBookCounters(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{
+      fixed: number;
+      details: {
+        section: string;
+        reserved: [number, number];
+        completed: [number, number];
+      }[];
+    }>,
+    ApiError,
+    { bookId: number }
+  >({
+    mutationFn: ({ bookId }) => reconcileBookCounters(studentId, bookId),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const n = res.data?.fixed ?? 0;
+      if (n > 0) {
+        const first = res.data?.details?.[0];
+        toast.success(
+          n === 1 ? "Sayaç düzeltildi" : `${n} bölümün sayacı düzeltildi`,
+          {
+            description: first
+              ? `${first.section}: rezerv ${first.reserved[0]} → ${first.reserved[1]}`
+              : undefined,
+          },
+        );
+      } else {
+        toast.info("Sayaçlar zaten doğru — düzeltilecek bir şey yok.");
+      }
+    },
+    onError: (e) => showError(e, "Sayaçlar düzeltilemedi"),
   });
 }

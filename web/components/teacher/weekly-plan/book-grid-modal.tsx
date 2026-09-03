@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, BookOpen, Loader2 } from "lucide-react";
+import { AlertTriangle, BookOpen, Loader2, Wrench } from "lucide-react";
 
 import {
   getTeacherStudentBookGrid,
@@ -20,6 +20,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useReconcileBookCounters } from "@/lib/hooks/use-teacher-mutations";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -73,6 +74,10 @@ function Body({
   bookId: number;
   onClose: () => void;
 }) {
+  // Sayaç uyumsuzluğunu koç kendisi düzeltebilsin (2026-09-03): ölü rezerv
+  // takılı kalınca o bölüme yeni test atanamıyordu, onarım yalnız SSH ile
+  // yapılabiliyordu.
+  const reconcile = useReconcileBookCounters(studentId);
   const q = useQuery<BookGridResponse>({
     queryKey: teacherKeys.studentBookGrid(studentId, bookId),
     queryFn: () => getTeacherStudentBookGrid(studentId, bookId),
@@ -154,11 +159,27 @@ function Body({
             className="size-3.5 text-amber-700 flex-shrink-0 mt-0.5"
             aria-hidden
           />
-          <div>
+          <div className="flex-1">
             <b>Sayaç uyumsuzluğu:</b> kayıtlı sayaç (rezerv{" "}
             {data.total_reserved} · çözüldü {data.total_completed}) gerçek
             görev listesinden farklı (rezerv {slotReserved} · çözüldü{" "}
             {slotDone}). Aşağıdaki görünüm gerçek görevlerden üretilmiştir.
+            <div className="mt-1.5">
+              <button
+                type="button"
+                disabled={reconcile.isPending}
+                onClick={() => reconcile.mutate({ bookId })}
+                className="inline-flex items-center gap-1.5 rounded-md border border-amber-400 bg-amber-100 px-2 py-1 text-[11px] font-medium text-amber-900 hover:bg-amber-200 disabled:opacity-50 dark:bg-amber-500/20 dark:text-amber-100 dark:hover:bg-amber-500/30"
+                title="Sayaçları gerçek görev listesinden yeniden hesapla — takılı kalan rezerv serbest kalır"
+              >
+                {reconcile.isPending ? (
+                  <Loader2 className="size-3 animate-spin" aria-hidden />
+                ) : (
+                  <Wrench className="size-3" aria-hidden />
+                )}
+                Sayaçları düzelt
+              </button>
+            </div>
           </div>
         </div>
       ) : null}

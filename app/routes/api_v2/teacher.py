@@ -6591,6 +6591,76 @@ def teacher_set_section_completed_v2(
     )
 
 
+# ---------------------- POST .../books/{book_id}/reconcile-counters ----------------------
+
+
+@router.post(
+    "/students/{student_id}/books/{book_id}/reconcile-counters",
+    response_model=MutationResponse[dict],
+)
+def teacher_reconcile_book_counters_v2(
+    student_id: int,
+    book_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kitap ızgarasındaki "sayaç uyumsuzluğu"nu koçun kendisi düzeltsin.
+
+    SectionProgress sayaçları (rezerv/çözüldü) gerçek görev verisinden sapmış
+    olabilir — ölü rezerv takılı kalınca koç o bölüme yeni test atayamaz
+    ("rezerv kaldıramıyorum", saha 2026-09-03). Onarım bugüne kadar yalnız
+    `scripts/reconcile_section_progress.py` ile (SSH) yapılabiliyordu.
+
+    Hesap `section_counter_service` ile TEK MERKEZDE: release-aware, taslak
+    dahil, baseline ("zaten çözmüştü") girişi KORUNUR. İdempotent — sapma
+    yoksa hiçbir şey yazmaz.
+    """
+    from app.services.section_counter_service import reconcile_student_book
+
+    student = _get_owned_student(db, student_id, user.id)
+    sb = (
+        db.query(StudentBook)
+        .filter(StudentBook.student_id == student.id, StudentBook.book_id == book_id)
+        .first()
+    )
+    if not sb:
+        raise HTTPException(
+            status_code=404,
+            detail={
+                "error": "not_found",
+                "code": "book_not_assigned",
+                "message": "Bu kitap bu öğrenciye atanmamış.",
+            },
+        )
+    result = reconcile_student_book(db, student_book_id=sb.id)
+    if result["fixed"]:
+        from app.services.audit import log_action
+
+        log_action(
+            db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+            target_type="user", target_id=student.id,
+            details={
+                "op": "reconcile_section_counters",
+                "book_id": book_id,
+                "fixed": result["fixed"],
+                "changes": result["details"],
+            },
+            autocommit=False,
+        )
+    db.commit()
+    return MutationResponse[dict](
+        data=result,
+        invalidate=[
+            f"teacher:{user.id}:students:{student_id}:book-grid",
+            f"teacher:{user.id}:students:{student_id}:books",
+            f"teacher:{user.id}:students:{student_id}:sidebar",
+            f"teacher:{user.id}:students:{student_id}:section-stats",
+            f"teacher:{user.id}:students:{student_id}:book-sections",
+            f"teacher:{user.id}:students:{student_id}:week",
+        ],
+    )
+
+
 # ---------------------- GET /students/{id}/books/{book_id}/grid (cinema-seat) ----------------------
 
 

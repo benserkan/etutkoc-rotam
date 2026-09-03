@@ -696,3 +696,23 @@ export function getTaskTemplates(): Promise<
     "/api/v2/teacher/task-templates",
   );
 }
+
+/** Kitap ızgarasındaki "sayaç uyumsuzluğu"nu onarır (koç tetikler). */
+export async function reconcileBookCounters(
+  studentId: number,
+  bookId: number,
+): Promise<
+  MutationResponse<{
+    fixed: number;
+    details: {
+      section: string;
+      reserved: [number, number];
+      completed: [number, number];
+    }[];
+  }>
+> {
+  return api(
+    `/api/v2/teacher/students/${studentId}/books/${bookId}/reconcile-counters`,
+    { method: "POST" },
+  );
+}
