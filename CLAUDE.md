@@ -6,6 +6,41 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## SAYAÇ UYUMSUZLUĞU — koç kendisi düzeltebiliyor (ölü rezerv) — CANLI (2026-09-03, commit `7a6a73f`, migration YOK)
+
+**Tetikleyici (koç):** 345 TYT Fizik · "İş, Güç ve Enerji" bölümünde kitap
+ızgarası **"Sayaç uyumsuzluğu: kayıtlı rezerv 3 · gerçek 0"** diyordu; ölü
+rezerv takılı kaldığı için o bölüme yeni test atanamıyordu ("rezerv
+kaldıramıyorum").
+- **Teşhis (prod, salt-okuma `reconcile_section_progress` dry-run):** TÜM
+  sistemde tek sapma — Taha Güven (#84); bölümdeki **5 görevin HEPSİ
+  COMPLETED** olduğu hâlde `SectionProgress.reserved_count=3` kalmış. Görev
+  tarihleri Temmuz 2026 → **2026-07-13'te düzeltilen rezerv bug'larından kalma
+  artefakt** (yeni bir yol değil; fix sonrası yeni drift üretilmemiş).
+- **ASIL EKSİK (ürün):** onarım YALNIZ `scripts/reconcile_section_progress.py`
+  ile, yani SSH ile yapılabiliyordu — panel sorunu GÖSTERİYOR ama düzeltme eli
+  vermiyordu. (Program düzenle/sil ile aynı desen: teşhis var, aksiyon yok.)
+- **YENİ `app/services/section_counter_service.py` (TEK MERKEZ):**
+  `compute_fixes` / `apply_fixes` / `reconcile_student_book`. Kurallar aynen
+  korundu — release-aware (`reservation_released_at IS NULL` + görev COMPLETED
+  değil), TASLAK dahil, **baseline ("zaten çözmüştü") completed'ı DÜŞÜRMEZ**.
+  CLI script artık kendi hesabını yapmıyor, bu servisi çağırıyor.
+- **Yeni uç:** `POST /teacher/students/{id}/books/{book_id}/reconcile-counters`
+  (sahiplik 404 · idempotent · audit `op=reconcile_section_counters` ·
+  kapasite yüzeylerini invalidate eder). **UI:** kitap ızgarası uyarı bandına
+  **"Sayaçları düzelt"** düğmesi + sonuç toast'ı ("rezerv 3 → 0").
+- **Test:** YENİ `test_api_v2_reconcile_counters.py` **7/7** — ölü rezerv
+  temizlenir · idempotent · **AKTİF (tamamlanmamış) görevin rezervi KORUNUR**
+  (onarım canlı planı bozmaz) · baseline korunur · **onarımdan sonra bölüme
+  yeni test ATANABİLİR** (asıl şikâyetin testi) · sahiplik 404. Regresyon:
+  book_grid_release_aware 17 · carryover 20 · weekly_plan 15 ·
+  section_completed_baseline 7 GREEN.
+- **Prod onarımı yapıldı:** Taha Güven #84 rezerv 3→0; sistem geneli tarama
+  artık **"Drift yok"**; bölüm kapasitesi 22 test − 19 çözüldü − 0 rezerv =
+  **3 atanabilir**.
+
+---
+
 ## HAFTA PLANI — 3 SAHA DÜZELTMESİ (ızgara konu · gün fihristi · kalan test) — CANLI (2026-09-03, commit `6d43971`, migration YOK)
 
 **Tetikleyici (koç, 3 madde + ekran görüntüleri):**
