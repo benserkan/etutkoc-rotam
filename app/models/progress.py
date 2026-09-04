@@ -27,6 +27,12 @@ class StudentBook(Base):
     assigned_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+    # Soft arşiv (P4): geçen yılın kitabı kütüphaneyi kalabalıklaştırmasın.
+    # Kayıt SİLİNMEZ — görev geçmişi + sayaçlar korunur; yalnız ileriye dönük
+    # yüzeylerde (kaynak seçimi, kapasite, öneri, müfredat) gizlenir.
+    archived_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True, index=True
+    )
 
     student: Mapped["User"] = relationship(
         "User", back_populates="student_books", foreign_keys=[student_id]
@@ -35,6 +41,10 @@ class StudentBook(Base):
     section_progress: Mapped[list["SectionProgress"]] = relationship(
         "SectionProgress", back_populates="student_book", cascade="all, delete-orphan"
     )
+
+    @property
+    def is_archived(self) -> bool:
+        return self.archived_at is not None
 
     @property
     def total_tests(self) -> int:

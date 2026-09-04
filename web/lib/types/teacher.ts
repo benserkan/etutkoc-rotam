@@ -1157,12 +1157,42 @@ export interface StudentBookListItem {
   section_reserved_total: number;
   section_completed_total: number;
   has_reservations: boolean;
+  /** P4 soft arşiv — kayıt silinmez, yalnız ileriye dönük yüzeylerde gizlenir. */
+  is_archived?: boolean;
+  archived_on?: string | null;
   sections: StudentBookSectionProgressRow[];
 }
 
 export interface StudentBookListResponse {
   items: StudentBookListItem[];
   total: number;
+  archived_count?: number;
+  showing_archived?: boolean;
+}
+
+/** P4 — geçen dönemin kitapları (arşiv önerisi). */
+export interface ArchiveCandidateItem {
+  book_id: number;
+  book_name: string;
+  subject_name?: string | null;
+  assigned_on?: string | null;
+  total_tests: number;
+  completed_tests: number;
+  reserved_tests: number;
+}
+
+export interface ArchiveCandidatesResponse {
+  student_id: number;
+  period_started_on?: string | null;
+  period_label?: string | null;
+  candidates: ArchiveCandidateItem[];
+}
+
+export interface BookArchiveResult {
+  student_id: number;
+  changed: number;
+  archived_count: number;
+  message: string;
 }
 
 export interface StudentBookAssignBody {

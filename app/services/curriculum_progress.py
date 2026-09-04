@@ -217,7 +217,10 @@ def _student_resource_subject_ids(db: Session, student: User) -> set[int]:
         .join(BookSection, BookSection.topic_id == Topic.id)
         .join(Book, Book.id == BookSection.book_id)
         .join(StudentBook, StudentBook.book_id == Book.id)
-        .filter(StudentBook.student_id == student.id)
+        .filter(
+            StudentBook.student_id == student.id,
+            StudentBook.archived_at.is_(None),   # P4: arşivli kaynak sayılmaz
+        )
         .distinct()
         .all()
     )
@@ -337,7 +340,10 @@ def compute_curriculum_progress(
                 SectionProgress.book_section_id == BookSection.id,
             ),
         )
-        .filter(StudentBook.student_id == student.id)
+        .filter(
+            StudentBook.student_id == student.id,
+            StudentBook.archived_at.is_(None),   # P4: arşivli kitap kapsamaya girmez
+        )
         .all()
     )
 
@@ -526,6 +532,7 @@ def next_units_for_assignment(
             ),
         )
         .filter(StudentBook.student_id == student.id,
+                StudentBook.archived_at.is_(None),   # P4
                 BookSection.topic_id.isnot(None))
         .all()
     )

@@ -300,7 +300,10 @@ def book_track_mismatches(db: Session, student) -> list[dict]:
     sbs = (
         db.query(StudentBook)
         .options(joinedload(StudentBook.book).joinedload(Book.subject))
-        .filter(StudentBook.student_id == student.id)
+        .filter(
+            StudentBook.student_id == student.id,
+            StudentBook.archived_at.is_(None),   # P4: arşivliden öneri gelmez
+        )
         .all()
     )
     mismatches = []
@@ -338,7 +341,10 @@ def diagnostic_priority_subjects(
     sbs = (
         db.query(StudentBook)
         .options(joinedload(StudentBook.book).joinedload(Book.subject))
-        .filter(StudentBook.student_id == student.id)
+        .filter(
+            StudentBook.student_id == student.id,
+            StudentBook.archived_at.is_(None),   # P4: arşivliden öneri gelmez
+        )
         .all()
     )
     subjects_in_lib: dict[int, dict] = {}
@@ -463,7 +469,10 @@ def _section_universe(db: Session, student_id: int) -> dict[int, _SectionCtx]:
             ),
         )
         .options(joinedload(BookSection.topic), joinedload(Book.subject))
-        .filter(StudentBook.student_id == student_id)
+        .filter(
+            StudentBook.student_id == student_id,
+            StudentBook.archived_at.is_(None),   # P4: arşivliden öneri gelmez
+        )
         .all()
     )
     return {

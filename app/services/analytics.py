@@ -373,7 +373,10 @@ def inventory_totals(
             joinedload(StudentBook.book).joinedload(Book.sections),
             joinedload(StudentBook.section_progress),
         )
-        .filter(StudentBook.student_id == student_id)
+        .filter(
+            StudentBook.student_id == student_id,
+            StudentBook.archived_at.is_(None),   # P4: arşivli kitap sayılmaz
+        )
         .all()
     )
     for sb in sbs:
@@ -659,7 +662,10 @@ def subject_breakdown(
             joinedload(StudentBook.book).joinedload(Book.sections),
             joinedload(StudentBook.section_progress),
         )
-        .filter(StudentBook.student_id == student_id)
+        .filter(
+            StudentBook.student_id == student_id,
+            StudentBook.archived_at.is_(None),   # P4: arşivli kitap sayılmaz
+        )
         .all()
     )
     bucket: dict[int, dict] = {}

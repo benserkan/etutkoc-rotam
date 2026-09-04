@@ -165,6 +165,46 @@ oluşturdum, düzeltemedim; mecburen 02-08 için ikinci program açtım."
 
 ---
 
+## KİTAP ARŞİVİ (P4) — CANLI (2026-09-04, migration `t5u8x1y2x66t`)
+
+**Tetikleyici:** sınıf atlayınca geçen yılın kitapları kütüphanede kalıyordu
+(Yiğit'te 58 kitap ataması). **Silme YANLIŞ** — yaz tekrarı için kitap gerekebilir
+ve görev geçmişi kitaba bağlı; ayrıca "Kaldır" rezerv varsa 409 veriyor.
+- **Migration `t5u8x1y2x66t`** (← s3t6w9x0w55s, additive+index): `student_books.
+  archived_at` (nullable). **ARŞİV = SOFT + GERİ ALINABİLİR** — kayıt SİLİNMEZ;
+  görev geçmişi, TaskBookItem, SectionProgress sayaçları, deneme/analiz AYNEN kalır.
+- **TEK MERKEZ `app/services/book_archive.py`:** `set_archived` (idempotent) ·
+  `archived_count` · `archive_candidates(before=)`.
+- **FİLTRE NEREYE (kritik ayrım):** *İleriye dönük* 6 yüzey GİZLER — koç kitap
+  paneli (`?include_archived=true` ile görünür) · öğrenci "Kitaplarım" +
+  Kaynak Durumu · koç Kaynak Durumu + görev kaynak seçici (weekly_plan) · öneri
+  motoru (suggestions ×3) · müfredat kapsama + "sıradaki üniteler" +
+  `_student_resource_subject_ids` · bağımsız çalışma seçenekleri ·
+  **`analytics.inventory_totals` + `subject_breakdown`** (geçen yılın kitabı
+  projeksiyonu şişirmesin, "başlanmadı" uyarısı üretmesin). *Geçmiş/analiz/sayaç
+  onarımı/silme* DOKUNULMADI.
+- **Koruma:** arşivli kitaba YENİ GÖREV ATANAMAZ (`_ensure_student_book_assigned`
+  → 422 `book_archived`); arşivden önceki görevler bozulmadan çalışır.
+  **Yeniden atama arşivden ÇIKARIR** (409 değil) — koç ayrıca "geri al" demesin.
+- **Uçlar:** `POST /teacher/students/{id}/books/archive` {book_ids, archived}
+  (toplu, idempotent, audit `op=archive_books`) · `GET .../books/archive-candidates`
+  (**P2 dönem sınırını kullanır**: güncel dönem başlamadan atanmış aktif kitaplar;
+  dönem yoksa boş → körü körüne öneri yok) · `GET .../books?include_archived=true`.
+- **UI:** kitap panelinde "Arşivlenenler (N)" toggle + kartta Arşivle/Arşivden çıkar
+  + "Arşivde" rozeti · üstte amber **"Geçen dönemden N kitap duruyor"** bandı →
+  **tek tek seçimli** dialog (varsayılan hepsi işaretli; koç yaz tekrarı için
+  tutacağını çıkarır — körü körüne silme YOK).
+- **Test `test_api_v2_book_archive.py` 14/14** — iki yönü birden korur: gizlenmesi
+  gerekenler (6 yüzey) + **KORUNMASI gerekenler** (görev+kalem+sayaç+atama kaydı).
+  **Ayırt edicilik KANITLI:** öğrenci/analytics/müfredat filtreleri tek tek
+  bozulunca ilgili senaryolar kırmızıya döndü. Regresyon: library 24 ·
+  book_grid_release_aware 17 · weekly_plan 15 · self_study 25 · curriculum_progress
+  22 · suggestions_curriculum 13 · student_read 11 · teacher_read 12 · baseline 7 ·
+  grade_periods 15 GREEN; tsc+eslint temiz.
+- Mobil BİLİNÇLİ yok (kitap yönetimi web — PARITY).
+
+---
+
 ## SINIF DÖNEMİ DAMGASI (P2) — CANLI (2026-09-04, migration `s3t6w9x0w55s`)
 
 **Tetikleyici (kullanıcı):** Yiğit Eren 8'den 9'a geçti; geçen yılın 607 görevi +

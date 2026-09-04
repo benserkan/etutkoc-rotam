@@ -1234,12 +1234,18 @@ class StudentBookListItem(BaseModel):
     section_reserved_total: int
     section_completed_total: int
     has_reservations: bool                  # silme bloklanır mı?
+    is_archived: bool = False               # P4 soft arşiv
+    archived_on: str | None = None
     sections: list[StudentBookSectionProgressRow]
 
 
 class StudentBookListResponse(BaseModel):
     items: list[StudentBookListItem]
     total: int
+    # Arşiv (P4): varsayılan liste yalnız AKTİF kitapları döner; koç
+    # "Arşivlenenler (N)" ile açar (?include_archived=true).
+    archived_count: int = 0
+    showing_archived: bool = False
 
 
 class StudentBookAssignBody(BaseModel):
@@ -2570,3 +2576,37 @@ class GradePeriodMutationResult(BaseModel):
     student_id: int
     period_id: int | None = None
     message: str
+
+
+# ============================== Kitap arşivi (P4) =============================
+
+
+class BookArchiveBody(BaseModel):
+    """POST /api/v2/teacher/students/{id}/books/archive"""
+    book_ids: list[int] = []
+    archived: bool = True          # False = arşivden çıkar
+
+
+class BookArchiveResult(BaseModel):
+    student_id: int
+    changed: int
+    archived_count: int
+    message: str
+
+
+class ArchiveCandidateItem(BaseModel):
+    book_id: int
+    book_name: str
+    subject_name: str | None = None
+    assigned_on: str | None = None
+    total_tests: int = 0
+    completed_tests: int = 0
+    reserved_tests: int = 0
+
+
+class ArchiveCandidatesResponse(BaseModel):
+    """Sınıf yükseltme sonrası 'geçen dönemin kitaplarını arşivleyelim mi?' adımı."""
+    student_id: int
+    period_started_on: str | None = None
+    period_label: str | None = None
+    candidates: list[ArchiveCandidateItem] = []

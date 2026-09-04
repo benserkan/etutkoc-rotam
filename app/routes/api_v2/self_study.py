@@ -417,7 +417,10 @@ def student_self_study_options_v2(
             joinedload(StudentBook.book).joinedload(Book.sections),
             joinedload(StudentBook.section_progress),
         )
-        .filter(StudentBook.student_id == user.id)
+        .filter(
+            StudentBook.student_id == user.id,
+            StudentBook.archived_at.is_(None),   # P4: arşivliye beyan yapılmaz
+        )
         .all()
     )
     books: list[SelfStudyOptionBook] = []

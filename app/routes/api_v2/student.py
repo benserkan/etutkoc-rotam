@@ -293,7 +293,10 @@ def _build_resource_sidebar(db: Session, student_id: int) -> ResourceSidebar:
             joinedload(StudentBook.book).joinedload(Book.subject),
             joinedload(StudentBook.section_progress),
         )
-        .filter(StudentBook.student_id == student_id)
+        .filter(
+            StudentBook.student_id == student_id,
+            StudentBook.archived_at.is_(None),   # P4: arşivli kitap gizli
+        )
         .all()
     )
 

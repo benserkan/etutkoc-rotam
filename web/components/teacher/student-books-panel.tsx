@@ -6,6 +6,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
   AlertTriangle,
+  Archive,
+  ArchiveRestore,
   ChevronRight,
   ExternalLink,
   Loader2,
@@ -17,6 +19,7 @@ import {
 import {
   getTeacherBooks,
   getTeacherStudent,
+  getArchiveCandidates,
   getTeacherStudentBooks,
   teacherKeys,
 } from "@/lib/api/teacher";
@@ -40,9 +43,11 @@ import {
   useAssignBook,
   useBulkAssignBooks,
   useSetSectionCompleted,
+  useArchiveBooks,
   useUnassignBook,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
+  ArchiveCandidatesResponse,
   StudentBookListItem,
   StudentBookListResponse,
   StudentBookSectionProgressRow,
@@ -120,11 +125,14 @@ export function StudentBooksPanel({ studentId }: Props) {
   const subjectParam = searchParams.get("subject_id");
   const activeSubjectId = subjectParam ? Number(subjectParam) : null;
 
+  // P4: varsayılan yalnız AKTİF kitaplar; arşivlenenler istenince yüklenir.
+  const [showArchived, setShowArchived] = React.useState(false);
   const booksQ = useQuery<StudentBookListResponse>({
-    queryKey: teacherKeys.studentBooks(studentId),
-    queryFn: () => getTeacherStudentBooks(studentId),
+    queryKey: teacherKeys.studentBooks(studentId, showArchived),
+    queryFn: () => getTeacherStudentBooks(studentId, showArchived),
     staleTime: 30_000,
   });
+  const archivedCount = booksQ.data?.archived_count ?? 0;
   const [assignOpen, setAssignOpen] = React.useState(false);
   const data = booksQ.data;
   const allItems = React.useMemo(() => data?.items ?? [], [data]);
@@ -174,11 +182,28 @@ export function StudentBooksPanel({ studentId }: Props) {
             ) : null}
           </p>
         </div>
-        <Button size="sm" onClick={() => setAssignOpen(true)}>
-          <Plus className="size-4" aria-hidden />
-          Kitap ata
-        </Button>
+        <div className="flex items-center gap-2">
+          {archivedCount > 0 || showArchived ? (
+            <Button
+              size="sm"
+              variant={showArchived ? "secondary" : "outline"}
+              onClick={() => setShowArchived((v) => !v)}
+              title="Arşivlenen kitaplar gizlenir; kayıt ve görev geçmişi durur."
+            >
+              <Archive className="size-4" aria-hidden />
+              {showArchived
+                ? "Arşivi gizle"
+                : `Arşivlenenler (${archivedCount})`}
+            </Button>
+          ) : null}
+          <Button size="sm" onClick={() => setAssignOpen(true)}>
+            <Plus className="size-4" aria-hidden />
+            Kitap ata
+          </Button>
+        </div>
       </div>
+
+      <ArchiveSuggestionBand studentId={studentId} />
 
       {groups.length > 1 ? (
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
@@ -454,6 +479,8 @@ function BookCard({
 }) {
   const tone = subjectTone(book.subject_id);
   const mut = useUnassignBook(studentId);
+  const archiveMut = useArchiveBooks(studentId);
+  const isArchived = Boolean(book.is_archived);
 
   const total = book.section_total_tests;
   const done = book.section_completed_total;
@@ -477,11 +504,25 @@ function BookCard({
   }
 
   return (
-    <Card className={cn("border-l-4 ring-1 ring-inset", tone.border, tone.ring)}>
+    <Card
+      className={cn(
+        "border-l-4 ring-1 ring-inset",
+        tone.border,
+        tone.ring,
+        isArchived && "bg-slate-50/70 dark:bg-slate-500/5",
+      )}
+    >
       <CardContent className="p-4 space-y-3">
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="font-medium truncate">{book.book_name}</p>
+            <div className="flex items-center gap-2 min-w-0">
+              <p className="font-medium truncate">{book.book_name}</p>
+              {isArchived ? (
+                <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:bg-slate-500/20 dark:text-slate-200">
+                  Arşivde
+                </span>
+              ) : null}
+            </div>
             <p className="text-xs text-muted-foreground truncate">
               {book.publisher ?? "—"} · {book.book_type_label_tr}
             </p>
@@ -558,6 +599,32 @@ function BookCard({
               <Trash2 className="size-3.5" aria-hidden />
             )}
             Kaldır
+          </Button>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 text-xs"
+            disabled={archiveMut.isPending}
+            onClick={() =>
+              archiveMut.mutate({
+                bookIds: [book.book_id],
+                archived: !isArchived,
+              })
+            }
+            title={
+              isArchived
+                ? "Kitabı yeniden kullanıma aç"
+                : "Kitabı arşive al — kayıt ve görev geçmişi korunur, kütüphaneden gizlenir."
+            }
+          >
+            {archiveMut.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : isArchived ? (
+              <ArchiveRestore className="size-3.5" aria-hidden />
+            ) : (
+              <Archive className="size-3.5" aria-hidden />
+            )}
+            {isArchived ? "Arşivden çıkar" : "Arşivle"}
           </Button>
         </div>
       </CardContent>
@@ -1146,5 +1213,128 @@ function SetApplyForm({
         </div>
       </div>
     </form>
+  );
+}
+
+/**
+ * P4 — "Geçen dönemden kalan kitaplar" bandı.
+ *
+ * Sınır P2'den gelir (güncel dönemin başlangıcı). Körü körüne arşivleme YOK:
+ * koç hangi kitabı arşivleyeceğini tek tek seçer — yaz tekrarı için tutmak
+ * isteyebilir. Dönem yoksa veya aday kalmadıysa bant hiç render edilmez.
+ */
+function ArchiveSuggestionBand({ studentId }: { studentId: number }) {
+  const q = useQuery<ArchiveCandidatesResponse>({
+    queryKey: teacherKeys.archiveCandidates(studentId),
+    queryFn: () => getArchiveCandidates(studentId),
+    staleTime: 60_000,
+  });
+  const archiveMut = useArchiveBooks(studentId);
+  const [open, setOpen] = React.useState(false);
+  const [picked, setPicked] = React.useState<number[]>([]);
+
+  const candidates = q.data?.candidates ?? [];
+  if (candidates.length === 0) return null;
+
+  function toggle(id: number) {
+    setPicked((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+  }
+
+  return (
+    <>
+      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="min-w-0">
+            <p className="font-medium text-amber-900 dark:text-amber-200">
+              Geçen dönemden {candidates.length} kitap duruyor
+            </p>
+            <p className="text-xs text-amber-800/90 dark:text-amber-300/90">
+              {q.data?.period_label ? `${q.data.period_label} ` : ""}dönemi
+              başlamadan atanmıştı. Arşivlemek kütüphaneyi sadeleştirir; kayıt
+              ve görev geçmişi silinmez, istediğinde geri alırsın.
+            </p>
+          </div>
+          <Button
+            size="sm"
+            variant="outline"
+            className="shrink-0 border-amber-300 bg-white text-amber-900 hover:bg-amber-100 hover:text-amber-900 dark:border-amber-500/40 dark:bg-transparent dark:text-amber-200"
+            onClick={() => {
+              setPicked(candidates.map((cd) => cd.book_id));
+              setOpen(true);
+            }}
+          >
+            <Archive className="size-4" aria-hidden />
+            Gözden geçir
+          </Button>
+        </div>
+      </div>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Geçen dönemin kitaplarını arşivle</DialogTitle>
+          </DialogHeader>
+          <p className="text-xs text-muted-foreground">
+            Arşivlenen kitap kütüphaneden, görev kaynak seçicisinden ve müfredat
+            kapsamasından gizlenir. Geçmiş görevler, çözülmüş test sayıları ve
+            analizler olduğu gibi kalır. Yaz tekrarı için tutmak istediğin
+            kitabın işaretini kaldır.
+          </p>
+          <div className="max-h-72 space-y-1.5 overflow-y-auto">
+            {candidates.map((cd) => (
+              <label
+                key={cd.book_id}
+                className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm hover:bg-muted/50"
+              >
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={picked.includes(cd.book_id)}
+                  onChange={() => toggle(cd.book_id)}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">
+                    {cd.book_name}
+                  </span>
+                  <span className="block text-xs text-muted-foreground">
+                    {cd.subject_name ?? "—"}
+                    {cd.assigned_on ? ` · ${cd.assigned_on} tarihinde atandı` : ""}
+                    {" · "}
+                    {cd.completed_tests}/{cd.total_tests} test çözülmüş
+                    {cd.reserved_tests > 0
+                      ? ` · ${cd.reserved_tests} rezerv`
+                      : ""}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setOpen(false)}>
+              Vazgeç
+            </Button>
+            <Button
+              size="sm"
+              disabled={picked.length === 0 || archiveMut.isPending}
+              onClick={() =>
+                archiveMut.mutate(
+                  { bookIds: picked, archived: true },
+                  { onSuccess: () => setOpen(false) },
+                )
+              }
+            >
+              {archiveMut.isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden />
+              ) : (
+                <Archive className="size-4" aria-hidden />
+              )}
+              {picked.length} kitabı arşivle
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

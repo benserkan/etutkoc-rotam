@@ -114,6 +114,10 @@ from app.models import (
 from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import (
+    ArchiveCandidateItem,
+    ArchiveCandidatesResponse,
+    BookArchiveBody,
+    BookArchiveResult,
     GradePeriodItem,
     GradePeriodListResponse,
     GradePeriodUpdateBody,
@@ -297,7 +301,7 @@ from app.routes.api_v2.schemas.teacher import (
     TeacherTaskItem,
     TeacherWeekNote,
 )
-from app.services import grade_period_service
+from app.services import book_archive, grade_period_service
 from app.services.analytics import student_snapshot
 from app.services.request_service import (
     RequestError,
@@ -3568,9 +3572,13 @@ def _ensure_section_belongs_to_book(
 def _ensure_student_book_assigned(
     db: Session, student_id: int, book_id: int,
 ) -> None:
-    """Kitap öğrenciye atanmamışsa 422 (mevcut sözleşme: öğretmen önce atamalı)."""
+    """Kitap öğrenciye atanmamışsa 422 (mevcut sözleşme: öğretmen önce atamalı).
+
+    P4: ARŞİVLİ kitap da reddedilir — gizli kaynağa görev atamak tutarsızlık
+    üretir. Arşivden önce oluşturulmuş görevler bozulmadan çalışmaya devam eder.
+    """
     sb = (
-        db.query(StudentBook.id)
+        db.query(StudentBook.id, StudentBook.archived_at)
         .filter(
             StudentBook.student_id == student_id,
             StudentBook.book_id == book_id,
@@ -3584,6 +3592,15 @@ def _ensure_student_book_assigned(
                 "error": "validation",
                 "code": "book_not_assigned",
                 "message": "Bu kitap öğrenciye atanmamış. Önce kitabı atayın.",
+            },
+        )
+    if sb[1] is not None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation",
+                "code": "book_archived",
+                "message": "Bu kitap arşivde. Kullanmak için önce arşivden çıkarın.",
             },
         )
 
@@ -3996,11 +4013,14 @@ def teacher_student_week_v2(
         for n in notes_q
     ]
 
-    # Öğrenciye atanmış kitaplar (ders bazlı özet için)
+    # Öğrenciye atanmış kitaplar (ders bazlı özet için) — arşivliler HARİÇ (P4)
     assignments = (
         db.query(StudentBook)
         .options(joinedload(StudentBook.book).joinedload(Book.subject))
-        .filter(StudentBook.student_id == student.id)
+        .filter(
+            StudentBook.student_id == student.id,
+            StudentBook.archived_at.is_(None),
+        )
         .all()
     )
     subjects_map: dict[int, object] = {}
@@ -6485,6 +6505,8 @@ def _student_book_summary(
         section_reserved_total=reserved_total,
         section_completed_total=completed_total,
         has_reservations=(reserved_total > 0),
+        is_archived=sb.archived_at is not None,
+        archived_on=sb.archived_at.date().isoformat() if sb.archived_at else None,
         sections=section_rows,
     )
 
@@ -6495,20 +6517,33 @@ def _student_book_summary(
 )
 def teacher_student_books_v2(
     student_id: int,
+    include_archived: bool = False,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
+    """Öğrenciye atanmış kitaplar.
+
+    P4: varsayılan yalnız AKTİF kitaplar; arşivlenenler `?include_archived=true`
+    ile gelir (kayıt silinmez, geçmiş görevler bozulmaz).
+    """
     student = _get_owned_student(db, student_id, user.id)
-    sbs = (
+    q = (
         db.query(StudentBook)
         .options(joinedload(StudentBook.book).joinedload(Book.subject))
         .filter(StudentBook.student_id == student.id)
-        .all()
     )
+    if not include_archived:
+        q = q.filter(StudentBook.archived_at.is_(None))
+    sbs = q.all()
     items = [_student_book_summary(db, sb) for sb in sbs]
     # Ders adına, ardından kitap adına göre — frontend gruplama bunu varsayar
     items.sort(key=lambda x: (x.subject_name.lower(), x.book_name.lower()))
-    return StudentBookListResponse(items=items, total=len(items))
+    return StudentBookListResponse(
+        items=items,
+        total=len(items),
+        archived_count=book_archive.archived_count(db, student.id),
+        showing_archived=bool(include_archived),
+    )
 
 
 @router.post(
@@ -6824,14 +6859,25 @@ def teacher_assign_book_v2(
         )
 
     # Duplicate?
-    existing = (
-        db.query(StudentBook.id)
+    existing_sb = (
+        db.query(StudentBook)
         .filter(
             StudentBook.student_id == student.id,
             StudentBook.book_id == book.id,
         )
         .first()
     )
+    # P4: arşivli kitap yeniden atanırsa çakışma DEĞİL — arşivden çıkar
+    # (koç ayrıca "geri al" demek zorunda kalmasın).
+    if existing_sb is not None and existing_sb.archived_at is not None:
+        existing_sb.archived_at = None
+        db.commit()
+        return MutationResponse[StudentBookListItem](
+            data=_student_book_summary(db, existing_sb),
+            invalidate=_invalidate_for_students(user.id, student.id)
+            + [f"teacher:{user.id}:students:{student.id}:books"],
+        )
+    existing = existing_sb.id if existing_sb else None
     if existing:
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -6913,15 +6959,21 @@ def teacher_assign_books_bulk_v2(
     valid_by_id = {b.id: b for b in valid_books}
     invalid_ids = [bid for bid in requested if bid not in valid_by_id]
 
+    # P4: ARŞİVLİ atama "zaten var" sayılmaz — yeniden atanınca arşivden çıkar.
     already = {
         row.book_id
         for row in db.query(StudentBook.book_id)
         .filter(
             StudentBook.student_id == student.id,
+            StudentBook.archived_at.is_(None),
             StudentBook.book_id.in_(list(valid_by_id.keys())) if valid_by_id else False,
         )
         .all()
     }
+    if valid_by_id:
+        book_archive.set_archived(
+            db, student.id, list(valid_by_id.keys()), archived=False
+        )
     already_ids = [bid for bid in requested if bid in already]
 
     created: list[StudentBook] = []
@@ -7948,6 +8000,7 @@ def teacher_student_review_v2(
             .join(StudentBook, StudentBook.book_id == BookSection.book_id)
             .filter(
                 StudentBook.student_id == student.id,
+                StudentBook.archived_at.is_(None),   # P4: arşivliden öneri yok
                 BookSection.topic_id.in_(topic_ids),
             )
             .all()
@@ -9759,4 +9812,105 @@ def teacher_delete_grade_period_v2(
         data=_grade_period_payload(db, student),
         invalidate=_invalidate_for_students(user.id, student.id)
         + [f"teacher:{user.id}:students:{student.id}:grade-periods"],
+    )
+
+
+# =============================================================================
+# Kitap arşivi (P4, 2026-09-04)
+# =============================================================================
+#
+# Sınıf atlayınca geçen yılın kitapları kütüphaneyi kalabalıklaştırıyordu.
+# ARŞİV = SOFT + GERİ ALINABİLİR: kayıt silinmez, görev geçmişi ve sayaçlar
+# korunur; kitap yalnız ileriye dönük yüzeylerde gizlenir. Silme (`DELETE`)
+# ayrı akış olarak durur — rezerv varsa hâlâ 409 verir.
+
+
+@router.get(
+    "/students/{student_id}/books/archive-candidates",
+    response_model=ArchiveCandidatesResponse,
+)
+def teacher_book_archive_candidates_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Geçen döneme ait (güncel dönem başlamadan atanmış) aktif kitaplar.
+
+    Sınır P2'den gelir — sınıf yükseltmede açılan dönemin başlangıcı. Dönem
+    yoksa aday listesi boş döner (öneri yapılmaz, körü körüne arşiv yok).
+    """
+    student = _get_owned_student(db, student_id, user.id)
+    period = grade_period_service.current_period(db, student.id)
+    before = period.started_on if period else None
+    cands = book_archive.archive_candidates(db, student.id, before=before)
+    return ArchiveCandidatesResponse(
+        student_id=student.id,
+        period_started_on=before.isoformat() if before else None,
+        period_label=(period.grade_label if period else None),
+        candidates=[ArchiveCandidateItem(**c) for c in cands],
+    )
+
+
+@router.post(
+    "/students/{student_id}/books/archive",
+    response_model=MutationResponse[BookArchiveResult],
+)
+def teacher_archive_books_v2(
+    student_id: int,
+    body: BookArchiveBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Kitapları arşivle / arşivden çıkar (toplu, idempotent).
+
+    Sayaçlara ve görevlere DOKUNULMAZ — yalnız görünürlük değişir.
+    """
+    student = _get_owned_student(db, student_id, user.id)
+    ids = [int(b) for b in (body.book_ids or [])]
+    if not ids:
+        raise _validation_error("no_books", "En az bir kitap seçmelisiniz.")
+
+    from app.services.audit import log_action
+
+    changed = book_archive.set_archived(
+        db, student.id, ids, archived=bool(body.archived)
+    )
+    log_action(
+        db,
+        action=AuditAction.USER_UPDATE,
+        actor_id=user.id,
+        target_type="user",
+        target_id=student.id,
+        details={
+            "op": "archive_books" if body.archived else "unarchive_books",
+            "book_ids": ids,
+            "changed": changed,
+        },
+        autocommit=False,
+    )
+    db.commit()
+
+    total_archived = book_archive.archived_count(db, student.id)
+    if changed == 0:
+        msg = "Değişiklik yok — kitaplar zaten istenen durumdaydı."
+    elif body.archived:
+        msg = f"{changed} kitap arşive alındı. Görev geçmişi korundu."
+    else:
+        msg = f"{changed} kitap arşivden çıkarıldı."
+    return MutationResponse[BookArchiveResult](
+        data=BookArchiveResult(
+            student_id=student.id,
+            changed=changed,
+            archived_count=total_archived,
+            message=msg,
+        ),
+        invalidate=_invalidate_for_students(user.id, student.id)
+        + [
+            f"teacher:{user.id}:students:{student.id}:books",
+            f"teacher:{user.id}:students:{student.id}:book-grid",
+            f"teacher:{user.id}:students:{student.id}:section-stats",
+            f"teacher:{user.id}:students:{student.id}:book-sections",
+            f"teacher:{user.id}:students:{student.id}:next-units",
+            f"teacher:{user.id}:students:{student.id}:curriculum",
+        ],
     )

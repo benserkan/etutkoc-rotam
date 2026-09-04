@@ -685,7 +685,10 @@ def _build_sidebar(
             joinedload(StudentBook.book).joinedload(Book.sections).joinedload(BookSection.topic),
             joinedload(StudentBook.section_progress),
         )
-        .filter(StudentBook.student_id == student_id)
+        .filter(
+            StudentBook.student_id == student_id,
+            StudentBook.archived_at.is_(None),   # P4: arşivli kitap gizli
+        )
         .all()
     )
     if focused_subject_id is not None:
@@ -870,7 +873,10 @@ def books_by_subject(
     sbs = (
         db.query(StudentBook)
         .options(joinedload(StudentBook.book).joinedload(Book.subject))
-        .filter(StudentBook.student_id == student.id)
+        .filter(
+            StudentBook.student_id == student.id,
+            StudentBook.archived_at.is_(None),   # P4: arşivliden görev atanmaz
+        )
         .all()
     )
     out: list[BookOption] = []

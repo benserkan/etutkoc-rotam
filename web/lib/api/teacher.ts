@@ -14,6 +14,8 @@
  */
 import { api, type MutationResponse } from "@/lib/api";
 import type {
+  ArchiveCandidatesResponse,
+  BookArchiveResult,
   CoachingReportDetail,
   CoachingReportListResponse,
   BookOptionsResponse,
@@ -98,8 +100,12 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "week", start] as const,
   studentPrograms: (id: number) =>
     ["teacher", "me", "students", String(id), "programs"] as const,
-  studentBooks: (id: number) =>
-    ["teacher", "me", "students", String(id), "books"] as const,
+  studentBooks: (id: number, includeArchived = false) =>
+    includeArchived
+      ? (["teacher", "me", "students", String(id), "books", "all"] as const)
+      : (["teacher", "me", "students", String(id), "books"] as const),
+  archiveCandidates: (id: number) =>
+    ["teacher", "me", "students", String(id), "books", "archive-candidates"] as const,
   studentParents: (id: number) =>
     ["teacher", "me", "students", String(id), "parents"] as const,
   carryoverCandidates: (id: number, programId?: number | null) =>
@@ -493,9 +499,34 @@ export function getTeacherStudentPrograms(
   );
 }
 
-export function getTeacherStudentBooks(id: number): Promise<StudentBookListResponse> {
+export function getTeacherStudentBooks(
+  id: number,
+  includeArchived = false,
+): Promise<StudentBookListResponse> {
+  const q = includeArchived ? "?include_archived=true" : "";
   return api<StudentBookListResponse>(
-    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/books`,
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/books${q}`,
+  );
+}
+
+/** P4 — geçen dönemden kalan kitaplar (arşiv önerisi). */
+export function getArchiveCandidates(
+  id: number,
+): Promise<ArchiveCandidatesResponse> {
+  return api<ArchiveCandidatesResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/books/archive-candidates`,
+  );
+}
+
+/** P4 — kitapları arşivle / arşivden çıkar (toplu, idempotent). */
+export function archiveStudentBooks(
+  id: number,
+  bookIds: number[],
+  archived: boolean,
+): Promise<MutationResponse<BookArchiveResult>> {
+  return api<MutationResponse<BookArchiveResult>>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(id))}/books/archive`,
+    { method: "POST", body: JSON.stringify({ book_ids: bookIds, archived }) },
   );
 }
 

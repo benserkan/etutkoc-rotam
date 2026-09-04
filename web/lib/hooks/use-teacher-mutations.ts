@@ -6,8 +6,12 @@ import { toast } from "sonner";
 import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
 import {
-  reconcileBookCounters, teacherKeys } from "@/lib/api/teacher";
+  archiveStudentBooks,
+  reconcileBookCounters,
+  teacherKeys,
+} from "@/lib/api/teacher";
 import type {
+  BookArchiveResult,
   CoachingReportDetail,
   CoachingReportRow,
   BulkResult,
@@ -2084,5 +2088,33 @@ export function useReconcileBookCounters(studentId: number) {
       }
     },
     onError: (e) => showError(e, "Sayaçlar düzeltilemedi"),
+  });
+}
+
+/**
+ * P4 — kitapları arşivle / arşivden çıkar.
+ * Soft arşiv: kayıt silinmez, görev geçmişi ve sayaçlar korunur; kitap yalnız
+ * ileriye dönük yüzeylerde (kaynak seçici, kapasite, öneri, müfredat) gizlenir.
+ */
+export function useArchiveBooks(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<BookArchiveResult>,
+    ApiError,
+    { bookIds: number[]; archived: boolean }
+  >({
+    mutationFn: ({ bookIds, archived }) =>
+      archiveStudentBooks(studentId, bookIds, archived),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({
+        queryKey: teacherKeys.archiveCandidates(studentId),
+      });
+      qc.invalidateQueries({
+        queryKey: teacherKeys.studentBooks(studentId, true),
+      });
+      toast.success(res.data?.message ?? "Arşiv güncellendi");
+    },
+    onError: (e) => showError(e, "Arşiv güncellenemedi"),
   });
 }
