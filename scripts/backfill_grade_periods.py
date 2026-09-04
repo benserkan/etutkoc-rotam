@@ -53,8 +53,15 @@ def run(student_id: int | None = None, apply_changes: bool = False) -> int:
         print(f"Taranan ogrenci     : {len(students)}")
 
         planned: list[tuple[User, int, str]] = []
+        repairs: list = []
         for s in students:
             if gp.list_periods(db, s.id):
+                # Zaten donemi var — yalniz ilk donem baslangici gecmise donuk
+                # girilmis kaydi kapsamiyorsa geriye cek (idempotent onarim).
+                rows = sorted(gp.list_periods(db, s.id), key=lambda p: p.started_on)
+                earliest = gp.earliest_data_date(db, s.id)
+                if earliest is not None and earliest < rows[0].started_on:
+                    repairs.append((s, rows[0].started_on, earliest))
                 continue
             has_old = (
                 db.query(Task.id)
@@ -84,9 +91,15 @@ def run(student_id: int | None = None, apply_changes: bool = False) -> int:
                 planned.append((s, 1, f"1 donem: {cur_label} [{min(created_on, today)} -]"))
 
         print(f"Donemi olmayan      : {len(planned)}")
-        if not planned:
+        print(f"Ilk donem onarimi   : {len(repairs)}")
+        if not planned and not repairs:
             print("Yapilacak bir sey yok.")
             return 0
+
+        if repairs:
+            print("\n--- ILK DONEM ONARIMI (gecmise donuk kayit kapsansin) ---")
+            for s, old_start, new_start in repairs:
+                print(f"  #{s.id:<5} {(s.full_name or '')[:32]:<32} {old_start} -> {new_start}")
 
         print("\n--- PLAN ---")
         for s, n, note in planned:
@@ -95,6 +108,11 @@ def run(student_id: int | None = None, apply_changes: bool = False) -> int:
         if not apply_changes:
             print("\nDry-run (varsayilan) - hicbir sey yazilmadi. Uygulamak icin: --apply")
             return 0
+
+        repaired = 0
+        for s, _o, _n in repairs:
+            if gp.repair_first_start(db, s.id) is not None:
+                repaired += 1
 
         created_total = 0
         for s, _n, _note in planned:
@@ -108,7 +126,10 @@ def run(student_id: int | None = None, apply_changes: bool = False) -> int:
                 db, s, today=today, has_old_data=has_old
             )
         db.commit()
-        print(f"\n{created_total} donem kaydi olusturuldu ve commit edildi.")
+        print(
+            f"\n{created_total} donem kaydi olusturuldu, "
+            f"{repaired} ilk donem onarildi ve commit edildi."
+        )
         return 0
     finally:
         db.close()

@@ -121,7 +121,16 @@ def period_for_date(
     for p in rows:
         if p.ended_on is None or d <= p.ended_on:
             return p
-    return None
+    if rows:
+        return None
+    # Tarih tüm dönemlerden ÖNCE (geçmişe dönük kayıt) → en eski döneme say.
+    oldest = (
+        db.query(StudentGradePeriod)
+        .filter(StudentGradePeriod.student_id == student_id)
+        .order_by(StudentGradePeriod.started_on.asc())
+        .first()
+    )
+    return oldest
 
 
 # =============================================================================
@@ -282,6 +291,50 @@ def delete_period(db: Session, period: StudentGradePeriod) -> None:
 # =============================================================================
 
 
+def earliest_data_date(db: Session, student_id: int) -> date | None:
+    """Öğrencinin EN ESKİ görev/deneme tarihi.
+
+    Koç geçmişe dönük veri girebilir (Yiğit'in 4 Şubat denemesi hesabın 23
+    Nisan'daki açılışından ÖNCE). İlk dönem hesap tarihinde başlarsa böyle
+    kayıtlar hiçbir döneme düşmez ve dönem filtrelerinde KAYBOLUR.
+    """
+    from app.models import ExamResult, Task
+
+    t = (
+        db.query(Task.date)
+        .filter(Task.student_id == student_id)
+        .order_by(Task.date.asc())
+        .first()
+    )
+    e = (
+        db.query(ExamResult.exam_date)
+        .filter(ExamResult.student_id == student_id)
+        .order_by(ExamResult.exam_date.asc())
+        .first()
+    )
+    dates = [d[0] for d in (t, e) if d and d[0]]
+    return min(dates) if dates else None
+
+
+def repair_first_start(db: Session, student_id: int) -> date | None:
+    """İlk dönemin başlangıcını en eski veriye kadar geriye çek (idempotent).
+
+    Yeni başlangıç döndürür; değişiklik gerekmiyorsa None.
+    """
+    rows = sorted(
+        list_periods(db, student_id), key=lambda p: (p.started_on, p.id)
+    )
+    if not rows:
+        return None
+    first = rows[0]
+    earliest = earliest_data_date(db, student_id)
+    if earliest is None or earliest >= first.started_on:
+        return None
+    first.started_on = earliest
+    db.flush()
+    return earliest
+
+
 def _previous_grade(student: User) -> tuple[int | None, bool]:
     """Bir önceki öğretim yılındaki sınıf tahmini."""
     if student.is_graduate:
@@ -332,6 +385,10 @@ def backfill_student(
     ref = today or date.today()
     created = getattr(student, "created_at", None)
     created_on = created.date() if created is not None else ref
+    # Geçmişe dönük girilmiş kayıtlar ilk dönemin DIŞINDA kalmasın.
+    earliest = earliest_data_date(db, student.id)
+    if earliest is not None and earliest < created_on:
+        created_on = earliest
     boundary = academic_year_start_date(ref)
 
     prev_grade, prev_is_grad = _previous_grade(student)

@@ -203,11 +203,18 @@ istedi ("onayım olmadan kod güncellemesi yapma") → P1-P5 yol haritası onayl
     GET ucunda **lazy fallback** de var (script koşulmasa da UI tutarlı).
   - **Bu pakette HİÇBİR GÖRÜNÜM DEĞİŞMEDİ** — dönem yalnız kaydedilir; filtreleme
     P3'te. Geri alma maliyeti tek tablo düşürmek.
-  - **Test `test_api_v2_grade_periods.py` 14/14** (4 sınır uç durumu + damga ayrımı
+  - **Test `test_api_v2_grade_periods.py` 15/15** (4 sınır uç durumu + damga ayrımı
     + Yiğit senaryosunun birebir kopyası + koç düzeltmeleri + sahiplik 404 +
     period_for_date). **Ayırt edicilik KANITLI:** sınır formülü geçici bozulunca
     3 senaryo kırmızıya döndü. Regresyon: 5c 19 · teacher_students 15 · teacher_read
     12 · academic_csv 14 · curriculum_grade9 5 GREEN.
+  - **GEÇMİŞE DÖNÜK KAYIT BOŞLUĞU (prod doğrulamasında yakalandı):** Yiğit'in 3
+    denemesinden biri (4 Şubat) hesabın açılışından (23 Nisan) ÖNCE tarihliydi →
+    ilk dönem hesap tarihinde başlayınca o kayıt HİÇBİR döneme düşmüyordu (P3
+    filtresi onu kaybederdi). Düzeltme: ilk dönemin başlangıcı = `min(created_at,
+    en eski görev/deneme tarihi)` (`earliest_data_date`) + backfill script'ine
+    **idempotent `repair_first_start` onarımı** (dönemi olan öğrencide de koşar) +
+    `period_for_date` savunması. Dev'de 18, prod'da onarım koşuldu.
   - **DERS (smoke):** dönem testinde seed hesapları **geriye tarihlenmeli**
     (`created_at`) — bugün açılmış hesabın 1 Eylül'de başlayan geçmiş dönemi
     OLAMAZ; gerçekçi olmayan seed sınır testini yanlış negatif yapar.

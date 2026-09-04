@@ -106,6 +106,17 @@ def seed() -> dict:
         db.add(ExamResult(student_id=yigit.id, title="LGS Deneme",
                           exam_date=date(2026, 5, 9), section=ExamSection.LGS,
                           total_correct=60, total_wrong=15, total_blank=15, net=55.0))
+        # SAHA BOSLUGU (prod 2026-09-04): kocun GECMISE DONUK girdigi deneme
+        # hesabin acilisindan (20 Nisan) ONCE tarihli. Ilk donem hesap
+        # tarihinde baslarsa bu kayit hicbir doneme dusmez ve KAYBOLUR.
+        db.add(ExamResult(student_id=yigit.id, title="Eski LGS Deneme",
+                          exam_date=date(2026, 2, 4), section=ExamSection.LGS,
+                          total_correct=50, total_wrong=20, total_blank=20, net=45.0))
+        # DEV SQLite hijyeni: FK CASCADE kapali oldugundan silinmis
+        # ogrencilerin donem satirlari yetim kalir ve id yeniden kullanilinca
+        # yeni ogrenciye miras gecer (prod PG'de CASCADE var, sorun degil).
+        db.execute(sa_delete(StudentGradePeriod).where(
+            StudentGradePeriod.student_id.in_([yigit.id, srv.id, foreign.id])))
         db.commit()
         return {"coach_id": coach.id, "other_id": other.id,
                 "yigit": yigit.id, "srv": srv.id, "foreign": foreign.id}
@@ -200,9 +211,9 @@ def main() -> int:
 
         # C — Yiğit senaryosu: sınır öncesi tüm veri ÖNCEKİ döneme
         pl = sorted(body.get("periods", []), key=lambda p: p["started_on"])
-        check("6. sınır öncesi görev+denemeler ÖNCEKİ döneme, güncel dönem boş",
+        check("6. sınır öncesi görev+denemeler (GEÇMİŞE DÖNÜK dahil) ÖNCEKİ döneme",
               len(pl) == 2
-              and pl[0]["task_count"] == 6 and pl[0]["exam_count"] == 1
+              and pl[0]["task_count"] == 6 and pl[0]["exam_count"] == 2
               and pl[1]["task_count"] == 0 and pl[1]["exam_count"] == 0,
               f"{[(p['grade_label'], p['task_count'], p['exam_count']) for p in pl]}")
 
@@ -282,6 +293,12 @@ def main() -> int:
         check("13. yabancı öğrenci 404 + başka öğrencinin dönemi 404",
               r1.status_code == 404 and r2.status_code == 404,
               f"{r1.status_code}/{r2.status_code}")
+
+        # 15. ilk dönem, hesap açılışından ÖNCEKİ kaydı kapsıyor mu
+        first = sorted(periods(sid), key=lambda p: p.started_on)[0]
+        check("15. ilk dönem, hesap açılışından ÖNCEKİ kaydı kapsıyor",
+              first.started_on <= date(2026, 2, 4),
+              f"ilk dönem başlangıcı={first.started_on} (deneme 2026-02-04)")
 
         # 14. period_for_date
         with SessionLocal() as db:
