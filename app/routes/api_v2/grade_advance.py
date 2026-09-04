@@ -34,6 +34,7 @@ from app.models import (
     UserRole,
 )
 from app.routes.api_v2.dependencies import _auth_error, get_current_user_v2
+from app.services import grade_period_service
 from app.routes.api_v2.schemas.academic import (
     GradeAdvanceApplyBody,
     GradeAdvanceApplyResult,
@@ -317,6 +318,8 @@ def apply(
             preserved_count += 1
 
         # Profil alanlarını uygula — Task/TaskBookItem/SectionProgress'a DOKUNMA
+        prev_snapshot = grade_period_service.snapshot_of(s)
+        grade_changed = (new_grade, new_is_grad) != (s.grade_level, bool(s.is_graduate))
         s.grade_level = new_grade
         s.is_graduate = new_is_grad
         if new_track is not None:
@@ -327,6 +330,17 @@ def apply(
             s.graduate_mode = None
         if body.target_academic_year_id is not None:
             s.academic_year_id = body.target_academic_year_id
+        # Dönem damgası (P2): geçmiş yılın görev/deneme/kitapları YERİNDE kalır,
+        # yalnız sınır kaydedilir. Sınıf gerçekten değiştiyse yeni dönem açılır;
+        # aynı sınıf yeniden uygulanırsa yalnız güncel dönem düzeltilir.
+        db.flush()
+        db.expire(s, ["academic_year"])
+        if grade_changed:
+            grade_period_service.stamp_advance(
+                db, s, previous_snapshot=prev_snapshot
+            )
+        else:
+            grade_period_service.correct_current(db, s)
         advanced += 1
 
     db.commit()

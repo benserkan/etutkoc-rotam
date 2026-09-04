@@ -99,6 +99,7 @@ from app.models import (
     RequestType,
     SectionProgress,
     StudentBook,
+    StudentGradePeriod,
     Task,
     TaskBookItem,
     TaskRequest,
@@ -113,6 +114,9 @@ from app.models import (
 from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import (
+    GradePeriodItem,
+    GradePeriodListResponse,
+    GradePeriodUpdateBody,
     BulkResult,
     BulkTasksBody,
     BurnoutSignalRow,
@@ -293,6 +297,7 @@ from app.routes.api_v2.schemas.teacher import (
     TeacherTaskItem,
     TeacherWeekNote,
 )
+from app.services import grade_period_service
 from app.services.analytics import student_snapshot
 from app.services.request_service import (
     RequestError,
@@ -6228,6 +6233,13 @@ def teacher_patch_student_v2(
     student.graduate_mode = new_grad_mode if new_is_graduate else None
     student.academic_year_id = new_year_id
 
+    # Dönem damgası (P2) — profil düzeltmesi YENİ DÖNEM AÇMAZ: burada sınıf
+    # değişimi "yanlış girilmiş bilgiyi düzeltme" demektir. Yeni öğretim yılına
+    # geçiş için Sınıf Yükseltme akışı kullanılır (o yeni dönem açar).
+    db.flush()
+    db.expire(student, ["academic_year"])
+    grade_period_service.correct_current(db, student)
+
     db.commit()
     db.refresh(student)
     return MutationResponse[StudentBriefProfile](
@@ -7527,6 +7539,10 @@ def teacher_promote_v2(
     if entry_year is not None and not (2000 <= entry_year <= 2100):
         entry_year = None
 
+    prev_snapshot = grade_period_service.snapshot_of(student)
+    grade_changed = (new_grade, new_is_graduate) != (
+        student.grade_level, bool(student.is_graduate)
+    )
     student.grade_level = new_grade
     student.is_graduate = new_is_graduate
     student.track = track_enum
@@ -7534,6 +7550,17 @@ def teacher_promote_v2(
     student.entry_year_grade9 = entry_year
     if parsed_year_id is not None:
         student.academic_year_id = parsed_year_id
+
+    # Dönem damgası (P2) — sınıf yükseltme YENİ dönem açar; geçmiş yılın
+    # görev/deneme/kitapları yerinde kalır, yalnız sınır kaydedilir.
+    db.flush()
+    db.expire(student, ["academic_year"])
+    if grade_changed:
+        grade_period_service.stamp_advance(
+            db, student, previous_snapshot=prev_snapshot
+        )
+    else:
+        grade_period_service.correct_current(db, student)
 
     db.commit()
     db.refresh(student)
@@ -9564,3 +9591,172 @@ def teacher_delete_work_block_v2(
     )
 
 
+
+
+# =============================================================================
+# Sınıf dönemleri (P2, 2026-09-04)
+# =============================================================================
+#
+# Öğrenci sınıf atlayınca geçmiş yılın verisi yerinde kalır; hangi döneme ait
+# olduğu tarihinden çözülür. Bu uçlar yalnız SINIRI okur/düzeltir — hiçbir
+# görev/deneme/kitap satırına dokunmaz.
+
+_CURRICULUM_PERIOD_LABELS = {
+    "lgs": "LGS Müfredatı",
+    "maarif_lise": "Maarif Modeli",
+    "klasik_lise": "Klasik Lise",
+}
+
+
+def _grade_period_counts(db: Session, student_id: int, p) -> tuple[int, int]:
+    """(görev, deneme) sayısı — sınırın doğru çizilip çizilmediğini gösterir."""
+    tq = db.query(func.count(Task.id)).filter(
+        Task.student_id == student_id, Task.date >= p.started_on
+    )
+    eq = db.query(func.count(ExamResult.id)).filter(
+        ExamResult.student_id == student_id, ExamResult.exam_date >= p.started_on
+    )
+    if p.ended_on is not None:
+        tq = tq.filter(Task.date <= p.ended_on)
+        eq = eq.filter(ExamResult.exam_date <= p.ended_on)
+    return (int(tq.scalar() or 0), int(eq.scalar() or 0))
+
+
+def _grade_period_item(db: Session, p, year_names: dict) -> GradePeriodItem:
+    tasks, exams = _grade_period_counts(db, p.student_id, p)
+    return GradePeriodItem(
+        id=p.id,
+        grade_level=p.grade_level,
+        is_graduate=bool(p.is_graduate),
+        grade_label=p.grade_label,
+        curriculum_model=p.curriculum_model,
+        curriculum_label=_CURRICULUM_PERIOD_LABELS.get(p.curriculum_model or ""),
+        track=p.track,
+        academic_year_id=p.academic_year_id,
+        academic_year_name=year_names.get(p.academic_year_id),
+        started_on=p.started_on.isoformat(),
+        ended_on=p.ended_on.isoformat() if p.ended_on else None,
+        is_current=p.ended_on is None,
+        task_count=tasks,
+        exam_count=exams,
+    )
+
+
+def _grade_period_payload(db: Session, student) -> GradePeriodListResponse:
+    periods = grade_period_service.list_periods(db, student.id)
+    if not periods:
+        # Lazy geriye dönük doldurma: dönemi olmayan öğrenciye ilk bakışta açılır
+        # (toplu backfill script'i koşmamışsa da UI tutarlı kalsın). Best-effort.
+        has_old = (
+            db.query(Task.id).filter(Task.student_id == student.id).first() is not None
+        )
+        try:
+            grade_period_service.backfill_student(
+                db, student, has_old_data=has_old
+            )
+            db.commit()
+        except Exception:
+            db.rollback()
+        periods = grade_period_service.list_periods(db, student.id)
+
+    year_ids = {p.academic_year_id for p in periods if p.academic_year_id}
+    year_names: dict = {}
+    if year_ids:
+        year_names = {
+            y.id: y.name
+            for y in db.query(AcademicYear).filter(AcademicYear.id.in_(year_ids)).all()
+        }
+    return GradePeriodListResponse(
+        student_id=student.id,
+        periods=[_grade_period_item(db, p, year_names) for p in periods],
+    )
+
+
+def _get_owned_period(db: Session, student_id: int, period_id: int):
+    p = (
+        db.query(StudentGradePeriod)
+        .filter(
+            StudentGradePeriod.id == period_id,
+            StudentGradePeriod.student_id == student_id,
+        )
+        .first()
+    )
+    if not p:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={
+                "error": "not_found",
+                "code": "period_not_found",
+                "message": "Dönem bulunamadı.",
+            },
+        )
+    return p
+
+
+@router.get(
+    "/students/{student_id}/grade-periods",
+    response_model=GradePeriodListResponse,
+)
+def teacher_grade_periods_v2(
+    student_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Öğrencinin sınıf dönemleri (en yeni önce) + dönem başına görev/deneme sayısı."""
+    student = _get_owned_student(db, student_id, user.id)
+    return _grade_period_payload(db, student)
+
+
+@router.post(
+    "/students/{student_id}/grade-periods/{period_id}",
+    response_model=MutationResponse[GradePeriodListResponse],
+)
+def teacher_update_grade_period_v2(
+    student_id: int,
+    period_id: int,
+    body: GradePeriodUpdateBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Dönem başlangıcını düzelt (otomatik sınır yanlış çıkarsa)."""
+    student = _get_owned_student(db, student_id, user.id)
+    period = _get_owned_period(db, student.id, period_id)
+    try:
+        new_start = date.fromisoformat(body.started_on)
+    except ValueError:
+        raise _validation_error("invalid_date", "Tarih GG.AA.YYYY biçiminde olmalı.")
+    try:
+        grade_period_service.update_period_start(db, period, new_start)
+    except grade_period_service.GradePeriodError as e:
+        raise _validation_error(e.code, e.message)
+    db.commit()
+    return MutationResponse[GradePeriodListResponse](
+        data=_grade_period_payload(db, student),
+        invalidate=_invalidate_for_students(user.id, student.id)
+        + [f"teacher:{user.id}:students:{student.id}:grade-periods"],
+    )
+
+
+@router.post(
+    "/students/{student_id}/grade-periods/{period_id}/delete",
+    response_model=MutationResponse[GradePeriodListResponse],
+)
+def teacher_delete_grade_period_v2(
+    student_id: int,
+    period_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Gereksiz dönemi sil — aralığı komşu dönem devralır, VERİ SİLİNMEZ."""
+    student = _get_owned_student(db, student_id, user.id)
+    period = _get_owned_period(db, student.id, period_id)
+    try:
+        grade_period_service.delete_period(db, period)
+    except grade_period_service.GradePeriodError as e:
+        raise _validation_error(e.code, e.message)
+    db.commit()
+    return MutationResponse[GradePeriodListResponse](
+        data=_grade_period_payload(db, student),
+        invalidate=_invalidate_for_students(user.id, student.id)
+        + [f"teacher:{user.id}:students:{student.id}:grade-periods"],
+    )

@@ -2532,3 +2532,41 @@ class WeeklyProgramWrapLegacyBody(BaseModel):
     """POST /api/v2/teacher/students/{id}/programs/wrap-legacy
     Tek tık "Eski Dönem programı yarat" akışı."""
     name: str | None = None        # default "Eski Dönem"
+
+
+# ============================ Sınıf dönemleri (P2) ============================
+
+
+class GradePeriodItem(BaseModel):
+    """Öğrencinin bir sınıf dönemi (8. sınıf 2025-26 gibi)."""
+    id: int
+    grade_level: int | None = None
+    is_graduate: bool = False
+    grade_label: str
+    curriculum_model: str | None = None
+    curriculum_label: str | None = None
+    track: str | None = None
+    academic_year_id: int | None = None
+    academic_year_name: str | None = None
+    started_on: str
+    ended_on: str | None = None
+    is_current: bool
+    # Sınırın doğru çizilip çizilmediğini koç bir bakışta görsün diye:
+    task_count: int = 0
+    exam_count: int = 0
+
+
+class GradePeriodListResponse(BaseModel):
+    student_id: int
+    periods: list[GradePeriodItem] = []
+
+
+class GradePeriodUpdateBody(BaseModel):
+    """POST /api/v2/teacher/students/{id}/grade-periods/{period_id}"""
+    started_on: str        # YYYY-MM-DD
+
+
+class GradePeriodMutationResult(BaseModel):
+    student_id: int
+    period_id: int | None = None
+    message: str

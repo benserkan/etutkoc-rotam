@@ -165,6 +165,59 @@ oluşturdum, düzeltemedim; mecburen 02-08 için ikinci program açtım."
 
 ---
 
+## SINIF DÖNEMİ DAMGASI (P2) — CANLI (2026-09-04, migration `s3t6w9x0w55s`)
+
+**Tetikleyici (kullanıcı):** Yiğit Eren 8'den 9'a geçti; geçen yılın 607 görevi +
+3 LGS denemesi + 58 kitap ataması "bu yıl" ile karışıyordu. Kullanıcı önce ANALİZ
+istedi ("onayım olmadan kod güncellemesi yapma") → P1-P5 yol haritası onaylandı.
+- **P1 — müfredat omurgası düzeltmesi ✅ CANLI (commit `b6e7d52`, migration YOK):**
+  `curriculum_progress._applicable_subjects` sınav omurgasını (TYT/AYT) **YALNIZ
+  11-12 + mezunda** tercih eder; **9-10 (Maarif) okul dersleri DAİMA görünür**,
+  TYT/AYT dersi ancak KAYNAK atandıysa listelenir. Eski kural `grade >= 9` olduğu
+  için 8→9 geçen öğrencinin (kitapları hâlâ LGS → Maarif'te "kaynak yok") paneli
+  TYT konularını gösteriyordu. `test_curriculum_grade9_maarif.py` **5/5**; prod'da
+  Yiğit'in paneli 9 Maarif dersiyle doğrulandı.
+- **P2 — dönem damgası ✅ CANLI (migration `s3t6w9x0w55s`, additive+downgrade'li):**
+  `student_grade_periods` (öğrenci · sınıf · müfredat modeli · alan · akademik yıl ·
+  started_on/ended_on; `ended_on IS NULL` = güncel). **Veri satırlarına kolon
+  EKLENMEZ, hiçbir kayıt taşınmaz/silinmez** — hangi döneme ait olduğu TARİHİNDEN
+  çözülür (`period_for_date`).
+  - **SINIR KURALI (tek merkez `app/services/grade_period_service.py`):**
+    `başlangıç = min(yükseltme tarihi, aynı takvim yılının 1 Eylül'ü)`, alt sınır
+    önceki dönem başlangıcı+1. Geç yükseltme (10 Ekim → 1 Eylül'e çekilir; Eylül-
+    Ekim çalışması YENİ sınıfa) ve erken yükseltme (15 Temmuz yaz kampı → 15 Temmuz
+    kalır; yaz çalışması ESKİ sınıfa karışmaz) tek formülle doğru sonuç verir.
+  - **DAMGA AYRIMI (kritik):** Sınıf Yükseltme (`grade-advance/apply` + `students/
+    {id}/promote`) → **YENİ DÖNEM**; Profil Düzenle'den sınıf değişimi (`PATCH
+    students/{id}`) → **yeni dönem AÇMAZ**, güncel dönemi düzeltir (`correct_current`).
+    Aksi halde bir yazım hatası sahte dönem açıp veriyi ikiye bölerdi. Sınıf
+    gerçekten değişmediyse yükseltme yolu da yalnız düzeltir.
+  - **Koç düzeltmesi (kullanıcı kararı):** `GET/POST /teacher/students/{id}/
+    grade-periods[/{pid}][/delete]` — dönem listesi (dönem başına görev+deneme
+    sayısı: sınır doğru mu, koç bir bakışta görür) + başlangıç düzeltme (komşu
+    dönemin bitişi birlikte kayar) + gereksiz dönemi silme (aralığı komşu devralır,
+    **görevler SİLİNMEZ**; tek dönem silinemez → 422). Arayüzü P3'te.
+  - **Geriye dönük doldurma** `scripts/backfill_grade_periods.py` (dry-run
+    varsayılan, idempotent): sınır = mevcut öğretim yılının 1 Eylül'ü; kaydı
+    eskiyse + sınır öncesi verisi varsa iki dönem (sınıf−1 + güncel), yoksa tek.
+    GET ucunda **lazy fallback** de var (script koşulmasa da UI tutarlı).
+  - **Bu pakette HİÇBİR GÖRÜNÜM DEĞİŞMEDİ** — dönem yalnız kaydedilir; filtreleme
+    P3'te. Geri alma maliyeti tek tablo düşürmek.
+  - **Test `test_api_v2_grade_periods.py` 14/14** (4 sınır uç durumu + damga ayrımı
+    + Yiğit senaryosunun birebir kopyası + koç düzeltmeleri + sahiplik 404 +
+    period_for_date). **Ayırt edicilik KANITLI:** sınır formülü geçici bozulunca
+    3 senaryo kırmızıya döndü. Regresyon: 5c 19 · teacher_students 15 · teacher_read
+    12 · academic_csv 14 · curriculum_grade9 5 GREEN.
+  - **DERS (smoke):** dönem testinde seed hesapları **geriye tarihlenmeli**
+    (`created_at`) — bugün açılmış hesabın 1 Eylül'de başlayan geçmiş dönemi
+    OLAMAZ; gerçekçi olmayan seed sınır testini yanlış negatif yapar.
+- **SIRADA (onaylı sıra):** P4 kitap arşivi (`StudentBook.archived_at` + arşiv
+  filtresi + yükseltmede arşiv adımı) → P3 "bu dönem" varsayılanı (konu performansı/
+  deneme trendi/müfredat/analitik + "önceki dönem" geçişi + dönem düzeltme arayüzü)
+  → P5 8→9 geçiş sihirbazı (yalnız müfredat modeli değişince).
+
+---
+
 ## HAFTALIK KOÇ RAPORU + SEANS GÜNDEMİ KÖPRÜSÜ — CANLI (2026-08-25, migration `r8s1v4x5x88r`)
 
 **Tetikleyici (kullanıcı):** Emir için elle üretilen haftalık rapor (dump+HTML
