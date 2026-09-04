@@ -10,6 +10,10 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Target, CheckCircle2, XCircle } from "lucide-react";
 
 import { DemoHint } from "@/components/demos/demo-hint";
+import {
+  PeriodContextNote,
+  PeriodSwitcher,
+} from "@/components/shared/period-switcher";
 
 import {
   getParentTopicPerformance,
@@ -50,19 +54,23 @@ export function TopicPerformancePanel({
   studentId?: number;
 }) {
   const audience: "coach" | "student" | "parent" = source === "teacher" ? "coach" : source;
+  // P3: varsayılan GÜNCEL dönem (parametresiz istek). Geçen yılın performansı
+  // bu yılın tablosuna karışmaz; seçiciyle geri getirilebilir.
+  const [period, setPeriod] = React.useState<string | undefined>(undefined);
   const queryKey =
     source === "student"
-      ? topicPerfKeys.student()
+      ? topicPerfKeys.student(period)
       : source === "parent"
-        ? topicPerfKeys.parent(studentId ?? 0)
-        : topicPerfKeys.teacher(studentId ?? 0);
+        ? topicPerfKeys.parent(studentId ?? 0, period)
+        : topicPerfKeys.teacher(studentId ?? 0, period);
   const fetcher = (): Promise<TopicPerformanceResponse> =>
     source === "student"
-      ? getStudentTopicPerformance()
+      ? getStudentTopicPerformance(period)
       : source === "parent"
-        ? getParentTopicPerformance(studentId ?? 0)
-        : getTeacherTopicPerformance(studentId ?? 0);
+        ? getParentTopicPerformance(studentId ?? 0, period)
+        : getTeacherTopicPerformance(studentId ?? 0, period);
   const q = useQuery({ queryKey, queryFn: fetcher });
+  const periodMeta = q.data?.period ?? null;
   const [open, setOpen] = React.useState<Set<number>>(new Set());
 
   if (q.isLoading) {
@@ -84,7 +92,10 @@ export function TopicPerformancePanel({
 
   if (subjects.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card p-6 text-center">
+      <div className="space-y-3">
+        <PeriodSwitcher meta={periodMeta} value={period} onChange={setPeriod} />
+        <PeriodContextNote meta={periodMeta} value={period} />
+        <div className="rounded-xl border border-border bg-card p-6 text-center">
         <Target className="mx-auto mb-2 size-7 text-muted-foreground" aria-hidden />
         <p className="text-sm font-medium text-foreground">Henüz konu performansı yok</p>
         <p className="mx-auto mt-1 max-w-md text-xs text-muted-foreground">
@@ -92,6 +103,7 @@ export function TopicPerformancePanel({
             ? "Test çözüp doğru/yanlış sayını girdikçe her dersin konularındaki performansın burada birikir."
             : `${who} çözdüğü testlerde doğru/yanlış girildikçe ders ve konu bazında performans burada görünür.`}
         </p>
+        </div>
       </div>
     );
   }
@@ -110,6 +122,8 @@ export function TopicPerformancePanel({
       {source === "teacher" ? (
         <DemoHint contextKey="topic-performance" role="teacher" />
       ) : null}
+      <PeriodSwitcher meta={periodMeta} value={period} onChange={setPeriod} />
+      <PeriodContextNote meta={periodMeta} value={period} />
       {/* Açıklama */}
       <div className="rounded-lg border border-border bg-muted/40 px-4 py-3">
         <p className="text-xs leading-relaxed text-muted-foreground">

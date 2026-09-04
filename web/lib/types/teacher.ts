@@ -7,6 +7,7 @@
  * imzalarında kullanılır. Mutation hook'ları Paket 7'de eklenir.
  */
 import type { TaskStatus, TaskType, BookType } from "@/lib/types/student";
+import type { PeriodFilterMeta } from "@/lib/types/period";
 
 export type { TaskStatus, TaskType, BookType };
 
@@ -1875,6 +1876,8 @@ export interface StudentExamListResponse {
   summary: ExamListSummary;
   rows: ExamResultRow[];
   section_options: ExamSectionOption[];
+  /** P3 — hangi sınıf dönemine göre süzüldü. */
+  period?: PeriodFilterMeta | null;
 }
 
 // =============================================================================

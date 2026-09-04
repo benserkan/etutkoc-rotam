@@ -4,6 +4,7 @@ from __future__ import annotations
 from typing import Any
 
 from pydantic import BaseModel, Field
+from app.routes.api_v2.schemas.period import PeriodFilterMeta
 
 
 class ImportDraftRow(BaseModel):
@@ -189,6 +190,8 @@ class ExamTopicAnalysisResponse(BaseModel):
     improved: list[AnalysisTrendTopic]
     unmatched_questions: int
     analyzed_question_count: int
+    # P3: hangi sınıf dönemine göre süzüldü
+    period: "PeriodFilterMeta | None" = None
 
 
 class ExamWrongRow(BaseModel):

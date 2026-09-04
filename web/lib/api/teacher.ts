@@ -13,6 +13,7 @@
  * ama uzunluk eşleşmesi yapılmaz; her queryKey o teacher'a özeldir (cookie).
  */
 import { api, type MutationResponse } from "@/lib/api";
+import type { GradePeriodListResponse } from "@/lib/types/period";
 import type {
   ArchiveCandidatesResponse,
   BookArchiveResult,
@@ -104,6 +105,8 @@ export const teacherKeys = {
     includeArchived
       ? (["teacher", "me", "students", String(id), "books", "all"] as const)
       : (["teacher", "me", "students", String(id), "books"] as const),
+  gradePeriods: (id: number) =>
+    ["teacher", "me", "students", String(id), "grade-periods"] as const,
   archiveCandidates: (id: number) =>
     ["teacher", "me", "students", String(id), "books", "archive-candidates"] as const,
   studentParents: (id: number) =>
@@ -216,8 +219,8 @@ export const teacherKeys = {
   taskTemplates: () => ["teacher", "me", "task-templates"] as const,
   studentWorkBlocks: (id: number) =>
     ["teacher", "me", "students", String(id), "work-blocks"] as const,
-  studentExams: (id: number) =>
-    ["teacher", "me", "students", String(id), "exams"] as const,
+  studentExams: (id: number, period?: string) =>
+    ["teacher", "me", "students", String(id), "exams", period ?? "current"] as const,
   studentSessions: (id: number) =>
     ["teacher", "me", "students", String(id), "sessions"] as const,
   sessionPrefill: (id: number) =>
@@ -289,9 +292,11 @@ export function getTeacherBadges(): Promise<TeacherBadgesResponse> {
 
 export function getTeacherStudentExams(
   studentId: number,
+  period?: string,
 ): Promise<StudentExamListResponse> {
+  const q = period ? `?period=${encodeURIComponent(period)}` : "";
   return api<StudentExamListResponse>(
-    `/api/v2/teacher/students/${studentId}/exams`,
+    `/api/v2/teacher/students/${studentId}/exams${q}`,
   );
 }
 
@@ -744,6 +749,38 @@ export async function reconcileBookCounters(
 > {
   return api(
     `/api/v2/teacher/students/${studentId}/books/${bookId}/reconcile-counters`,
+    { method: "POST" },
+  );
+}
+
+/** P2/P3 — öğrencinin sınıf dönemleri (görev/deneme sayılı). */
+export function getGradePeriods(
+  studentId: number,
+): Promise<GradePeriodListResponse> {
+  return api<GradePeriodListResponse>(
+    `/api/v2/teacher/students/${studentId}/grade-periods`,
+  );
+}
+
+/** Dönem başlangıcını düzelt (komşu dönemin bitişi birlikte kayar). */
+export function updateGradePeriod(
+  studentId: number,
+  periodId: number,
+  startedOn: string,
+): Promise<MutationResponse<GradePeriodListResponse>> {
+  return api<MutationResponse<GradePeriodListResponse>>(
+    `/api/v2/teacher/students/${studentId}/grade-periods/${periodId}`,
+    { method: "POST", body: JSON.stringify({ started_on: startedOn }) },
+  );
+}
+
+/** Gereksiz dönemi sil — aralığı komşu devralır, GÖREVLER SİLİNMEZ. */
+export function deleteGradePeriod(
+  studentId: number,
+  periodId: number,
+): Promise<MutationResponse<GradePeriodListResponse>> {
+  return api<MutationResponse<GradePeriodListResponse>>(
+    `/api/v2/teacher/students/${studentId}/grade-periods/${periodId}/delete`,
     { method: "POST" },
   );
 }

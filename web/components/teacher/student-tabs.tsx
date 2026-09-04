@@ -51,6 +51,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { StudentAiCard } from "@/components/teacher/student-ai-card";
+import { GradePeriodsCard } from "@/components/teacher/grade-periods-card";
 import { StudentBooksPanel } from "@/components/teacher/student-books-panel";
 import { StudentAnalyticsPanel } from "@/components/teacher/student-analytics-panel";
 import { StudentExamsPanel } from "@/components/teacher/student-exams-panel";
@@ -240,6 +241,9 @@ export function StudentTabs({ studentId, initial }: Props) {
             today={data.gorev_today ?? null}
             week={data.gorev_week ?? null}
           />
+
+          {/* Sınıf dönemleri — sınır yanlışsa koç düzeltir (tek dönemde gizli) */}
+          <GradePeriodsCard studentId={studentId} />
 
           {/* Yapay zekâ erişimi — öğrenci/veli AI harcamasını kişi bazında yönet */}
           <StudentAiCard studentId={studentId} />

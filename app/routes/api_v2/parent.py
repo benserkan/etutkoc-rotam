@@ -222,6 +222,7 @@ def parent_student_detail_v2(
 @router.get("/students/{student_id}/topic-performance")
 def parent_student_topic_performance_v2(
     student_id: int,
+    period: str | None = None,
     user: User = Depends(_require_parent),
     db: Session = Depends(get_db),
 ):
@@ -238,13 +239,21 @@ def parent_student_topic_performance_v2(
                     "message": "Öğrenci bulunamadı."},
         )
     from app.routes.api_v2.schemas.teacher import build_topic_performance_response
+    from app.services import grade_period_service
     from app.services.topic_performance import compute_topic_performance
-    return build_topic_performance_response(compute_topic_performance(db, student.id))
+
+    # P3: veli de varsayılan olarak BU dönemi görür (geçen yıl karışmasın).
+    win = grade_period_service.resolve_window(db, student.id, period)
+    return build_topic_performance_response(
+        compute_topic_performance(db, student.id, start=win.start, end=win.end),
+        grade_period_service.build_filter_meta(db, student.id, win),
+    )
 
 
 @router.get("/students/{student_id}/exams")
 def parent_student_exams_v2(
     student_id: int,
+    period: str | None = None,
     user: User = Depends(_require_parent),
     db: Session = Depends(get_db),
 ):
@@ -266,12 +275,17 @@ def parent_student_exams_v2(
     from app.routes.api_v2.schemas.teacher import (
         ExamListSummary, StudentExamListResponse,
     )
-    exams = (
-        db.query(ExamResult)
-        .filter(ExamResult.student_id == student.id)
-        .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc())
-        .all()
-    )
+    from app.services import grade_period_service
+
+    # P3: veli de varsayılan olarak BU dönemin denemelerini görür; geçen yıl
+    # silinmez, `?period=<id>` / `?period=all` ile erişilir.
+    win = grade_period_service.resolve_window(db, student.id, period)
+    q = db.query(ExamResult).filter(ExamResult.student_id == student.id)
+    if win.start is not None:
+        q = q.filter(ExamResult.exam_date >= win.start)
+    if win.end is not None:
+        q = q.filter(ExamResult.exam_date <= win.end)
+    exams = q.order_by(ExamResult.exam_date.desc(), ExamResult.id.desc()).all()
     rows = []
     for e in exams:
         r = _build_exam_row(e, created_by_name=None)
@@ -291,6 +305,7 @@ def parent_student_exams_v2(
     )
     return StudentExamListResponse(
         summary=summary, rows=rows, section_options=_exam_section_options(),
+        period=grade_period_service.build_filter_meta(db, student.id, win),
     )
 
 

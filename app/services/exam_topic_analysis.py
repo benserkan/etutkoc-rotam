@@ -44,19 +44,29 @@ def _acc(c: int, n: int) -> float:
 
 def build_exam_topic_analysis(
     db: Session, student: User, *, section: str | None = None,
+    period: str | None = None,
 ) -> dict:
     """Konu bazlı deneme analizi — tek sınav türüne filtreli.
 
     section None → en çok soru-satırlı denemesi olan tür seçilir (varsayılan).
     Soru satırı olmayan (elle girilmiş) denemeler analize girmez.
+
+    P3: varsayılan GÜNCEL SINIF DÖNEMİ — geçen yılın ısı haritası bu yılın
+    analizine karışmaz (`period="all"` tüm geçmiş).
     """
-    exams_all = (
+    from app.services import grade_period_service
+
+    win = grade_period_service.resolve_window(db, student.id, period)
+    q = (
         db.query(ExamResult)
         .options(selectinload(ExamResult.questions))
         .filter(ExamResult.student_id == student.id)
-        .order_by(ExamResult.exam_date.asc(), ExamResult.id.asc())
-        .all()
     )
+    if win.start is not None:
+        q = q.filter(ExamResult.exam_date >= win.start)
+    if win.end is not None:
+        q = q.filter(ExamResult.exam_date <= win.end)
+    exams_all = q.order_by(ExamResult.exam_date.asc(), ExamResult.id.asc()).all()
     exams_all = [e for e in exams_all if e.questions]
 
     # tür seçenekleri (soru-satırlı deneme sayısıyla)
@@ -87,6 +97,8 @@ def build_exam_topic_analysis(
         "exams": [], "topics": [], "opportunities": [],
         "forgotten": [], "improved": [],
         "unmatched_questions": 0, "analyzed_question_count": 0,
+        # Boş sonuçta da dönem bilgisi gitmeli — UI seçiciyi çizebilsin.
+        "period": grade_period_service.build_filter_meta(db, student.id, win),
     }
     if not exams:
         return empty
@@ -206,6 +218,7 @@ def build_exam_topic_analysis(
         "improved": improved,
         "unmatched_questions": unmatched,
         "analyzed_question_count": analyzed,
+        "period": grade_period_service.build_filter_meta(db, student.id, win),
     }
 
 

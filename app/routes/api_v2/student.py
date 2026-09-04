@@ -557,13 +557,23 @@ def save_day_note_v2(
 
 @router.get("/topic-performance")
 def student_topic_performance_v2(
+    period: str | None = None,
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
-    """Öğrencinin kendi ders → konu test performansı (çözülen test + D/Y + doğruluk)."""
+    """Öğrencinin kendi ders → konu test performansı (çözülen test + D/Y + doğruluk).
+
+    P3: varsayılan güncel sınıf dönemi (`?period=all` tüm geçmiş).
+    """
     from app.routes.api_v2.schemas.teacher import build_topic_performance_response
+    from app.services import grade_period_service
     from app.services.topic_performance import compute_topic_performance
-    return build_topic_performance_response(compute_topic_performance(db, user.id))
+
+    win = grade_period_service.resolve_window(db, user.id, period)
+    return build_topic_performance_response(
+        compute_topic_performance(db, user.id, start=win.start, end=win.end),
+        grade_period_service.build_filter_meta(db, user.id, win),
+    )
 
 
 @router.get("/week", response_model=StudentWeekResponse)
@@ -876,8 +886,25 @@ def student_week_print_v2(
     )
 
 
+def _exam_period_query(db: Session, student_id: int, period: str | None):
+    """Deneme sorgusuna sınıf dönemi penceresini uygular (P3).
+
+    Dönem kaydı yoksa filtre uygulanmaz — eski davranış birebir korunur.
+    """
+    from app.services import grade_period_service
+
+    win = grade_period_service.resolve_window(db, student_id, period)
+    q = db.query(ExamResult).filter(ExamResult.student_id == student_id)
+    if win.start is not None:
+        q = q.filter(ExamResult.exam_date >= win.start)
+    if win.end is not None:
+        q = q.filter(ExamResult.exam_date <= win.end)
+    return q
+
+
 @router.get("/exams", response_model=StudentExamsResponse)
 def student_exams_v2(
+    period: str | None = None,
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
@@ -890,8 +917,7 @@ def student_exams_v2(
     from app.routes.api_v2.schemas.teacher import ExamListSummary
 
     exams = (
-        db.query(ExamResult)
-        .filter(ExamResult.student_id == user.id)
+        _exam_period_query(db, user.id, period)
         .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc())
         .all()
     )
@@ -908,7 +934,14 @@ def student_exams_v2(
         first_net=first_net,
         trend_delta=round(last_net - first_net, 2) if (count >= 2 and last_net is not None and first_net is not None) else None,
     )
-    return StudentExamsResponse(summary=summary, rows=rows)
+    from app.services import grade_period_service as _gps
+
+    _win = _gps.resolve_window(db, user.id, period)  # meta için (filtre yukarıda)
+    return StudentExamsResponse(
+        summary=summary,
+        rows=rows,
+        period=_gps.build_filter_meta(db, user.id, _win),
+    )
 
 
 @router.get("/books", response_model=StudentBooksResponse)

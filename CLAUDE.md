@@ -165,6 +165,53 @@ oluşturdum, düzeltemedim; mecburen 02-08 için ikinci program açtım."
 
 ---
 
+## "BU DÖNEM" VARSAYILANI (P3) — CANLI (2026-09-04, migration YOK)
+
+**Kullanıcı ihtiyacı (birebir):** "geçen yılın deneme sonuçlarına bir yerden
+ulaşılmalı ama ASIL OLAN bu yılın deneme sonuçlarının göz önünde olması."
+→ geçmiş veri SİLİNMEZ, varsayılan görünümden ÇIKAR; seçiciyle geri gelir.
+- **TEK MERKEZ** `grade_period_service`: `resolve_window(db, sid, ref)` →
+  `PeriodWindow(start, end, applied)` · `build_filter_meta` (UI seçici verisi) ·
+  `period_options` · `period_label`. `ref`: yok/"current" = GÜNCEL DÖNEM
+  (varsayılan) · "all" = tüm geçmiş · "<id>" = belirli dönem.
+  **Dönem kaydı yoksa `applied=False` → filtre UYGULANMAZ, eski davranış birebir
+  korunur** (geriye uyum garantisi).
+- **Ortak şema** `schemas/period.py` `PeriodFilterMeta` — 3 rolün tüm dönem-duyarlı
+  uçları aynı bloğu döner; UI tek seçici çizer. **Tek dönemliyse `options` BOŞ**
+  → seçici hiç görünmez (gereksiz kontrol yok).
+- **Dönem-duyarlı yüzeyler (9 uç):** deneme listesi/özeti (koç+öğrenci+veli) ·
+  konu performansı (koç+öğrenci+veli) · deneme konu analizi/ısı haritası
+  (koç+öğrenci) · koç analitiğindeki deneme bloğu.
+- **ANALİTİK PANOSU BİLİNÇLİ ZAMAN-PENCERELİ KALDI** (son 7/30/35 gün: tempo,
+  haftalık trend, aktivite takvimi) — "son 30 gün" derken 30 günü göstermeli.
+  Yalnız deneme bloğu güncel dönemin dışına taşmaz (deneme listesiyle çelişmesin).
+- **MÜFREDAT KAPSAMA BİLİNÇLİ KAPSAM DIŞI:** SectionProgress sayaçları kümülatif
+  ve TARİHSİZ → döneme bölünemez. Geçen yılın kitabı P4 ARŞİVİYLE düşer (doğru
+  çözüm orası).
+- **UI:** paylaşılan `components/shared/period-switcher.tsx` — çip seçici
+  ("9. Sınıf (2026-2027) · bu dönem" / "8. Sınıf (2025-2026)" / "Tümü") +
+  güncel dönem dışındayken amber **PeriodContextNote** ("bu, öğrencinin güncel
+  dönemi değil"). Deneme paneli + konu performansı paneli (3 yüzey ortak) mount.
+  Query key'lere `period` segmenti eklendi (cache karışmaz).
+- **DÖNEM DÜZELTME ARAYÜZÜ** (P2 backend'i buraya bağlandı):
+  `components/teacher/grade-periods-card.tsx` — öğrenci detayı Genel sekmesinde,
+  **yalnız 2+ dönemde görünür**: dönem satırı (sınıf + aralık + görev/deneme
+  sayısı + müfredat) · başlangıç düzeltme (date input, komşu bitiş birlikte kayar)
+  · silme (onayda "N görev ve M deneme SİLİNMEZ" yazar). İlk dönemin başlangıcı
+  sabit (kayıt tarihi).
+- **Test `test_api_v2_period_views.py` 13/13** — varsayılan bu dönem · önceki
+  dönem GERİ GELİR · tümü · özet döneme göre (bu dönem ort 70 / geçen 45) ·
+  meta+seçenekler · konu perf 4 vs 14 test · öğrenci+veli aynı varsayılan ·
+  analiz meta · **dönemsiz öğrenci eski davranış** · tek dönemde seçici gizli ·
+  sahiplik 404. **Ayırt edicilik KANITLI:** pencere bozulunca 7 senaryo kırmızı.
+  Regresyon: teacher_exams 18 · topic_performance 14 · exam_topic_analysis 10 ·
+  exam_import 75 · parent 20 · parent_weekly · parent_insight 11 · student_read 11 ·
+  analytics_rich 10 · grade_periods 15 · book_archive 14 GREEN; tsc+eslint temiz.
+- Mobil BİLİNÇLİ yok (uçlar `period` parametresini destekliyor; mobil varsayılan
+  = güncel dönem, yani doğru davranışı OTA'sız alır — seçici sonraki pakette).
+
+---
+
 ## KİTAP ARŞİVİ (P4) — CANLI (2026-09-04, migration `t5u8x1y2x66t`)
 
 **Tetikleyici:** sınıf atlayınca geçen yılın kitapları kütüphanede kalıyordu

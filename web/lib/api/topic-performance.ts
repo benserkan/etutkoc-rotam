@@ -3,6 +3,7 @@
  * Backend: GET .../topic-performance (teacher/student/parent).
  */
 import { api } from "@/lib/api";
+import type { PeriodFilterMeta } from "@/lib/types/period";
 
 export interface TopicPerfRow {
   topic_id: number | null;
@@ -36,20 +37,36 @@ export interface TopicPerformanceOverall {
 export interface TopicPerformanceResponse {
   overall: TopicPerformanceOverall;
   subjects: SubjectPerfRow[];
+  /** P3 — hangi sınıf dönemine göre süzüldü. */
+  period?: PeriodFilterMeta | null;
 }
 
 export const topicPerfKeys = {
-  teacher: (studentId: number) => ["teacher", "student", studentId, "topic-performance"] as const,
-  student: () => ["student", "topic-performance"] as const,
-  parent: (studentId: number) => ["parent", "student", studentId, "topic-performance"] as const,
+  teacher: (studentId: number, period?: string) =>
+    ["teacher", "student", studentId, "topic-performance", period ?? "current"] as const,
+  student: (period?: string) =>
+    ["student", "topic-performance", period ?? "current"] as const,
+  parent: (studentId: number, period?: string) =>
+    ["parent", "student", studentId, "topic-performance", period ?? "current"] as const,
 };
 
-export function getTeacherTopicPerformance(studentId: number) {
-  return api<TopicPerformanceResponse>(`/api/v2/teacher/students/${studentId}/topic-performance`);
+/** P3: `period` verilmezse backend GÜNCEL dönemi uygular. */
+function periodQuery(period?: string): string {
+  return period ? `?period=${encodeURIComponent(period)}` : "";
 }
-export function getStudentTopicPerformance() {
-  return api<TopicPerformanceResponse>(`/api/v2/student/topic-performance`);
+
+export function getTeacherTopicPerformance(studentId: number, period?: string) {
+  return api<TopicPerformanceResponse>(
+    `/api/v2/teacher/students/${studentId}/topic-performance${periodQuery(period)}`,
+  );
 }
-export function getParentTopicPerformance(studentId: number) {
-  return api<TopicPerformanceResponse>(`/api/v2/parent/students/${studentId}/topic-performance`);
+export function getStudentTopicPerformance(period?: string) {
+  return api<TopicPerformanceResponse>(
+    `/api/v2/student/topic-performance${periodQuery(period)}`,
+  );
+}
+export function getParentTopicPerformance(studentId: number, period?: string) {
+  return api<TopicPerformanceResponse>(
+    `/api/v2/parent/students/${studentId}/topic-performance${periodQuery(period)}`,
+  );
 }

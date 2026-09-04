@@ -446,14 +446,18 @@ def teacher_exam_wrongs_to_archive(
 def teacher_exam_topic_analysis(
     student_id: int,
     section: str | None = None,
+    period: str | None = None,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
     """Konu × deneme analizi (Faz 2): ısı haritası + net fırsat + unutulan/
-    gelişen. Salt-okuma, AI YOK, kredi düşmez."""
+    gelişen. Salt-okuma, AI YOK, kredi düşmez.
+
+    P3: varsayılan güncel sınıf dönemi (`?period=all` tüm geçmiş)."""
     student = _get_owned_student(db, user, student_id)
     return ExamTopicAnalysisResponse(
-        **exam_topic_analysis.build_exam_topic_analysis(db, student, section=section))
+        **exam_topic_analysis.build_exam_topic_analysis(
+            db, student, section=section, period=period))
 
 
 # ============================================================================
@@ -509,12 +513,16 @@ def student_exam_wrongs_to_archive(
 @router.get("/student/exam-topic-analysis", response_model=ExamTopicAnalysisResponse)
 def student_exam_topic_analysis(
     section: str | None = None,
+    period: str | None = None,
     user: User = Depends(_require_student),
     db: Session = Depends(get_db),
 ):
-    """Öğrenci kendi konu × deneme analizini görür (Faz 2b UI için hazır uç)."""
+    """Öğrenci kendi konu × deneme analizini görür (Faz 2b UI için hazır uç).
+
+    P3: varsayılan güncel sınıf dönemi (`?period=all` tüm geçmiş)."""
     return ExamTopicAnalysisResponse(
-        **exam_topic_analysis.build_exam_topic_analysis(db, user, section=section))
+        **exam_topic_analysis.build_exam_topic_analysis(
+            db, user, section=section, period=period))
 
 
 @router.post("/student/exams/import-analyze", response_model=ExamImportDraft)

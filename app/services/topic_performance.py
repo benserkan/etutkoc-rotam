@@ -11,6 +11,8 @@ Koç / öğrenci / veli yüzeyleri AYNI servisi kullanır (tek kaynak).
 """
 from __future__ import annotations
 
+from datetime import date  # noqa: F401  (tip ipucu)
+
 from dataclasses import dataclass, field
 from datetime import datetime
 
@@ -50,11 +52,21 @@ def _acc(correct: int, wrong: int) -> int | None:
     return int(round(100 * correct / ans)) if ans > 0 else None
 
 
-def compute_topic_performance(db: Session, student_id: int) -> list[SubjectPerf]:
+def compute_topic_performance(
+    db: Session,
+    student_id: int,
+    *,
+    start: "date | None" = None,
+    end: "date | None" = None,
+) -> list[SubjectPerf]:
     """Öğrencinin ders → konu test performansı (çözülen test + D/Y + doğruluk).
 
     Yalnız çözülmüş (completed_count > 0) test-kitabı kalemleri. Aynı isimli konular
     (farklı kitaplarda) ders içinde BİRLEŞTİRİLİR (konu = ders içi etiket/topic_id).
+
+    P3: `start`/`end` verilirse yalnız o SINIF DÖNEMİNİN görevleri sayılır
+    (geçen yılın performansı bu yılın tablosuna karışmasın). Verilmezse tüm
+    geçmiş — eski davranış birebir korunur.
     """
     rows = (
         db.query(
@@ -76,8 +88,12 @@ def compute_topic_performance(db: Session, student_id: int) -> list[SubjectPerf]
         .filter(TaskBookItem.book_section_id.isnot(None))
         .filter(TaskBookItem.completed_count > 0)
         .filter(Book.type.notin_(gorev_stats.DENEME_BOOK_TYPES))
-        .all()
     )
+    if start is not None:
+        rows = rows.filter(Task.date >= start)
+    if end is not None:
+        rows = rows.filter(Task.date <= end)
+    rows = rows.all()
 
     # subject_id → {meta, order, topics: {topic_key → agg}}
     subjects: dict[int, dict] = {}

@@ -27,6 +27,10 @@ import {
 
 import { ArchiveExamWrongsButton } from "@/components/shared/archive-exam-wrongs-button";
 import { ExamImportDialog } from "@/components/shared/exam-import-dialog";
+import {
+  PeriodContextNote,
+  PeriodSwitcher,
+} from "@/components/shared/period-switcher";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
 
 import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
@@ -86,11 +90,15 @@ interface Props {
 }
 
 export function StudentExamsPanel({ studentId }: Props) {
+  // P3: varsayılan GÜNCEL dönem — geçen yılın denemeleri "bu yılın gidişatı"
+  // tablosunu bozmaz; seçiciyle geri getirilir (veri hiçbir zaman silinmez).
+  const [period, setPeriod] = React.useState<string | undefined>(undefined);
   const q = useQuery<StudentExamListResponse>({
-    queryKey: teacherKeys.studentExams(studentId),
-    queryFn: () => getTeacherStudentExams(studentId),
+    queryKey: teacherKeys.studentExams(studentId, period),
+    queryFn: () => getTeacherStudentExams(studentId, period),
     staleTime: 30_000,
   });
+  const periodMeta = q.data?.period ?? null;
   const [addOpen, setAddOpen] = React.useState(false);
   const [importOpen, setImportOpen] = React.useState(false);
   const data = q.data;
@@ -155,13 +163,18 @@ export function StudentExamsPanel({ studentId }: Props) {
         studentId={studentId}
       />
 
+      <PeriodSwitcher meta={periodMeta} value={period} onChange={setPeriod} />
+      <PeriodContextNote meta={periodMeta} value={period} />
+
       {q.isLoading && !data ? (
         <p className="text-sm text-muted-foreground">Yükleniyor…</p>
       ) : !data || data.rows.length === 0 ? (
         <Card>
           <CardContent className="p-6 text-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              Henüz deneme sonucu girilmemiş.
+              {period && period !== "current"
+                ? "Bu dönemde deneme sonucu yok."
+                : "Henüz deneme sonucu girilmemiş."}
             </p>
             <Button size="sm" variant="outline" onClick={() => setAddOpen(true)}>
               <Plus className="size-4" aria-hidden />

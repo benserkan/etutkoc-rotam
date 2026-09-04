@@ -429,3 +429,119 @@ def backfill_student(
     db.add(StudentGradePeriod(student_id=student.id, started_on=boundary, **snap))
     db.flush()
     return 2
+
+
+# =============================================================================
+# Dönem penceresi (P3 — "bu dönem" varsayılanı)
+# =============================================================================
+
+
+class PeriodWindow:
+    """Bir görünümün hangi tarih aralığını göstereceği.
+
+    `applied=False` → filtre YOK (tüm geçmiş). Dönem kaydı olmayan öğrencide
+    veya `ref="all"` istendiğinde böyle olur; eski davranış korunur.
+    """
+
+    __slots__ = ("period", "start", "end", "applied", "key")
+
+    def __init__(
+        self,
+        period: StudentGradePeriod | None,
+        start: date | None,
+        end: date | None,
+        applied: bool,
+        key: str,
+    ) -> None:
+        self.period = period
+        self.start = start
+        self.end = end
+        self.applied = applied
+        self.key = key
+
+    def contains(self, d: date | None) -> bool:
+        if d is None or not self.applied:
+            return True
+        if self.start is not None and d < self.start:
+            return False
+        if self.end is not None and d > self.end:
+            return False
+        return True
+
+
+def resolve_window(
+    db: Session, student_id: int, ref: str | None = None
+) -> PeriodWindow:
+    """`ref` → dönem penceresi.
+
+    ref: None/"current" = güncel dönem (VARSAYILAN) · "all" = tüm geçmiş ·
+         "<period_id>" = belirli dönem. Geçersiz/bulunamayan id → güncel.
+    """
+    token = (ref or "current").strip().lower()
+    if token == "all":
+        return PeriodWindow(None, None, None, False, "all")
+
+    period: StudentGradePeriod | None = None
+    if token not in ("current", ""):
+        try:
+            pid = int(token)
+        except ValueError:
+            pid = None
+        if pid is not None:
+            period = (
+                db.query(StudentGradePeriod)
+                .filter(
+                    StudentGradePeriod.id == pid,
+                    StudentGradePeriod.student_id == student_id,
+                )
+                .first()
+            )
+    if period is None:
+        period = current_period(db, student_id)
+    if period is None:
+        # Dönem kaydı yok → filtre uygulanmaz (eski davranış birebir korunur).
+        return PeriodWindow(None, None, None, False, "all")
+    return PeriodWindow(
+        period, period.started_on, period.ended_on, True, str(period.id)
+    )
+
+
+def period_label(p: StudentGradePeriod) -> str:
+    """UI seçici etiketi: '9. Sınıf (2026-2027)' benzeri kısa ad."""
+    year = p.started_on.year if p.started_on else None
+    if p.started_on and p.started_on.month < ACADEMIC_MONTH:
+        year = p.started_on.year - 1
+    span = f"{year}-{year + 1}" if year else ""
+    return f"{p.grade_label} ({span})" if span else p.grade_label
+
+
+def period_options(db: Session, student_id: int) -> list[dict]:
+    """Dönem seçici için liste (en yeni önce) — UI'de 'bu dönem/önceki dönem'."""
+    return [
+        {
+            "id": p.id,
+            "label": period_label(p),
+            "grade_label": p.grade_label,
+            "started_on": p.started_on.isoformat(),
+            "ended_on": p.ended_on.isoformat() if p.ended_on else None,
+            "is_current": p.ended_on is None,
+        }
+        for p in list_periods(db, student_id)
+    ]
+
+
+def build_filter_meta(db: Session, student_id: int, win: PeriodWindow) -> dict:
+    """`PeriodFilterMeta` gövdesi — tüm dönem-duyarlı uçlar bunu döner."""
+    opts = period_options(db, student_id)
+    label = None
+    if win.period is not None:
+        label = period_label(win.period)
+    return {
+        "applied": win.applied,
+        "active_key": win.key,
+        "active_label": label,
+        "started_on": win.start.isoformat() if win.start else None,
+        "ended_on": win.end.isoformat() if win.end else None,
+        # Tek dönem varsa seçici anlamsız — UI gereksiz kontrol çizmesin.
+        "options": opts if len(opts) > 1 else [],
+    }

@@ -18,12 +18,15 @@ from pydantic import BaseModel
 
 # Deneme (ExamResult) modelleri koç şemasıyla ORTAK — öğrenci salt-okuma görür.
 from app.routes.api_v2.schemas.teacher import ExamListSummary, ExamResultRow
+from app.routes.api_v2.schemas.period import PeriodFilterMeta
 
 
 class StudentExamsResponse(BaseModel):
     """GET /api/v2/student/exams — öğrencinin kendi deneme sonuçları (salt-okuma)."""
     summary: ExamListSummary
     rows: list[ExamResultRow]
+    # P3: hangi sınıf dönemine göre süzüldü
+    period: "PeriodFilterMeta | None" = None
 
 
 # Task.type enum — app/models/task.py:TaskType ile birebir 5 değer

@@ -1160,17 +1160,23 @@ def _validate_and_compute_exam(body: "ExamCreateBody") -> dict:
 )
 def teacher_student_topic_performance_v2(
     student_id: int,
+    period: str | None = None,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
     """Öğrencinin ders → konu test performansı (çözülen test + D/Y + doğruluk).
 
     Sahiplik 404. DENEME kitapları hariç (deneme ayrı yüzeyde).
+    P3: varsayılan GÜNCEL DÖNEM — geçen yılın performansı bu yılın tablosuna
+    karışmaz. `?period=all` tüm geçmiş, `?period=<id>` belirli dönem.
     """
     student = _get_owned_student(db, student_id, user.id)
     from app.services.topic_performance import compute_topic_performance
+
+    win = grade_period_service.resolve_window(db, student.id, period)
     return build_topic_performance_response(
-        compute_topic_performance(db, student.id)
+        compute_topic_performance(db, student.id, start=win.start, end=win.end),
+        grade_period_service.build_filter_meta(db, student.id, win),
     )
 
 
@@ -1367,20 +1373,24 @@ def teacher_student_next_units_ai_v2(
 )
 def teacher_student_exams_v2(
     student_id: int,
+    period: str | None = None,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
     """Öğrencinin deneme sonuçları — özet (ortalama/en iyi/gelişim) + liste.
 
     Sahiplik 404: başkasının öğrencisi veya cross-tenant erişim.
+    P3: varsayılan GÜNCEL DÖNEM. Geçen yılın denemeleri silinmez — `?period=<id>`
+    veya `?period=all` ile görülür; ama "bu yılın gidişatı" tablosunu bozmaz.
     """
     student = _get_owned_student(db, student_id, user.id)
-    exams = (
-        db.query(ExamResult)
-        .filter(ExamResult.student_id == student.id)
-        .order_by(ExamResult.exam_date.desc(), ExamResult.id.desc())
-        .all()
-    )
+    win = grade_period_service.resolve_window(db, student.id, period)
+    q = db.query(ExamResult).filter(ExamResult.student_id == student.id)
+    if win.start is not None:
+        q = q.filter(ExamResult.exam_date >= win.start)
+    if win.end is not None:
+        q = q.filter(ExamResult.exam_date <= win.end)
+    exams = q.order_by(ExamResult.exam_date.desc(), ExamResult.id.desc()).all()
     # created_by isimleri (tek sorguda)
     creator_ids = {e.created_by_id for e in exams if e.created_by_id}
     names: dict[int, str] = {}
@@ -1414,6 +1424,7 @@ def teacher_student_exams_v2(
         summary=summary,
         rows=rows,
         section_options=_exam_section_options(),
+        period=grade_period_service.build_filter_meta(db, student.id, win),
     )
 
 
@@ -8695,11 +8706,21 @@ def teacher_student_analytics_v2(
     def _sec_val(s):
         return s.value if hasattr(s, "value") else (str(s) if s else None)
 
+    # P3 — analitik panosu bilinçli olarak ZAMAN PENCERELİ kalır (son 7/30/35
+    # gün: tempo, haftalık trend, aktivite takvimi). "Son 30 gün" derken 30 günü
+    # göstermeli. AMA deneme bloğu dönem-duyarlı deneme listesi/analiziyle
+    # ÇELİŞMESİN diye güncel dönemin dışına taşmaz.
+    _exam_win = grade_period_service.resolve_window(db, student.id, None)
+    _exam_q = db.query(ExamResult).filter(
+        ExamResult.student_id == student.id,
+        ExamResult.exam_date >= today - timedelta(days=60),
+    )
+    if _exam_win.start is not None:
+        _exam_q = _exam_q.filter(ExamResult.exam_date >= _exam_win.start)
+    if _exam_win.end is not None:
+        _exam_q = _exam_q.filter(ExamResult.exam_date <= _exam_win.end)
     exam_rows = (
-        db.query(ExamResult)
-        .filter(ExamResult.student_id == student.id,
-                ExamResult.exam_date >= today - timedelta(days=60))
-        .order_by(ExamResult.exam_date.desc(), ExamResult.created_at.desc())
+        _exam_q.order_by(ExamResult.exam_date.desc(), ExamResult.created_at.desc())
         .limit(8).all()
     )
     exam_trend = [

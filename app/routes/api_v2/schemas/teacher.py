@@ -22,6 +22,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
+from app.routes.api_v2.schemas.period import PeriodFilterMeta
+
 
 # =============================================================================
 # Ortak tipler
@@ -1965,6 +1967,8 @@ class StudentExamListResponse(BaseModel):
     summary: ExamListSummary
     rows: list[ExamResultRow]
     section_options: list[ExamSectionOption]
+    # P3: hangi sınıf dönemine göre süzüldü
+    period: PeriodFilterMeta | None = None
 
 
 # =============================================================================
@@ -2007,9 +2011,13 @@ class TopicPerformanceOverall(BaseModel):
 class TopicPerformanceResponse(BaseModel):
     overall: TopicPerformanceOverall
     subjects: list[SubjectPerfRow]
+    # P3: hangi sınıf dönemine göre süzüldü (applied=False → tüm geçmiş)
+    period: PeriodFilterMeta | None = None
 
 
-def build_topic_performance_response(subjects: list) -> "TopicPerformanceResponse":
+def build_topic_performance_response(
+    subjects: list, period: "PeriodFilterMeta | None" = None,
+) -> "TopicPerformanceResponse":
     """topic_performance.SubjectPerf listesini API yanıtına çevirir (3 yüzey ortak)."""
     rows: list[SubjectPerfRow] = []
     t_tests = t_correct = t_wrong = 0
@@ -2053,7 +2061,7 @@ def build_topic_performance_response(subjects: list) -> "TopicPerformanceRespons
         subject_count=len(rows),
         topic_count=topic_count,
     )
-    return TopicPerformanceResponse(overall=overall, subjects=rows)
+    return TopicPerformanceResponse(overall=overall, subjects=rows, period=period)
 
 
 # =============================================================================
