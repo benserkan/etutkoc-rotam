@@ -6,8 +6,16 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, GraduationCap, Loader2, TriangleAlert } from "lucide-react";
 
-import { getTeacherPromoteForm, teacherKeys } from "@/lib/api/teacher";
-import { usePromoteStudent } from "@/lib/hooks/use-teacher-mutations";
+import {
+  getTeacherPromoteForm,
+  getTransitionPreview,
+  teacherKeys,
+} from "@/lib/api/teacher";
+import {
+  useArchiveBooks,
+  usePromoteStudent,
+} from "@/lib/hooks/use-teacher-mutations";
+import type { TransitionPreview } from "@/lib/types/period";
 import type {
   GradeChoice,
   GraduateMode,
@@ -103,27 +111,75 @@ function FormBody({
     curriculumPreview.key !== initial.current_curriculum_model;
 
   const promote = usePromoteStudent(studentId);
+  const archiveMut = useArchiveBooks(studentId);
 
-  function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  // P5 — SİHİRBAZ: müfredat MODELİ değişiyorsa (8→9 LGS→Maarif gibi) doğrudan
+  // yükseltmek yerine önce "ne olacak" gösterilir: dönem sınırı, geçen döneme
+  // yazılacak veri ve arşivlenebilecek eski kitaplar. 9→10 gibi model
+  // değişmeyen geçişlerde bu adım ATLANIR — koçu gereksiz ekrandan geçirmeyiz.
+  const [preview, setPreview] = React.useState<TransitionPreview | null>(null);
+  const [previewLoading, setPreviewLoading] = React.useState(false);
+  const [archivePicks, setArchivePicks] = React.useState<number[]>([]);
+
+  function buildBody() {
     const entryNum = entryYear ? Number(entryYear) : null;
+    return {
+      grade,
+      academic_year_id: yearId === "" ? null : yearId,
+      track: track || null,
+      graduate_mode: isGraduate ? (graduateMode || null) : null,
+      entry_year_grade9:
+        entryNum && entryNum >= 2000 && entryNum <= 2100 ? entryNum : null,
+    };
+  }
+
+  function runPromote(archiveIds: number[]) {
     promote.mutate(
-      {
-        body: {
-          grade,
-          academic_year_id: yearId === "" ? null : yearId,
-          track: track || null,
-          graduate_mode: isGraduate ? (graduateMode || null) : null,
-          entry_year_grade9:
-            entryNum && entryNum >= 2000 && entryNum <= 2100 ? entryNum : null,
-        },
-      },
+      { body: buildBody() },
       {
         onSuccess: () => {
-          router.push(`/teacher/students/${studentId}`);
+          // Yükseltme başarılı → seçilen eski kitapları arşivle (best-effort;
+          // arşiv başarısız olsa bile yükseltme geçerli kalır).
+          if (archiveIds.length > 0) {
+            archiveMut.mutate(
+              { bookIds: archiveIds, archived: true },
+              {
+                onSettled: () =>
+                  router.push(`/teacher/students/${studentId}`),
+              },
+            );
+          } else {
+            router.push(`/teacher/students/${studentId}`);
+          }
         },
       },
     );
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    // Önizleme zaten açıksa bu tıklama "uygula" demektir.
+    if (preview) {
+      runPromote(archivePicks);
+      return;
+    }
+    if (!isCurriculumChanging) {
+      runPromote([]);
+      return;
+    }
+    setPreviewLoading(true);
+    try {
+      const p = await getTransitionPreview(
+        studentId, grade, yearId === "" ? null : yearId,
+      );
+      setPreview(p);
+      setArchivePicks(p.archive_candidates.map((cd) => cd.book_id));
+    } catch {
+      // Önizleme alınamazsa akışı kilitleme — normal yükseltmeye düş.
+      runPromote([]);
+    } finally {
+      setPreviewLoading(false);
+    }
   }
 
   return (
@@ -321,6 +377,21 @@ function FormBody({
                 </div>
               ) : null}
 
+              {preview ? (
+                <TransitionPreviewPanel
+                  preview={preview}
+                  picks={archivePicks}
+                  onTogglePick={(id) =>
+                    setArchivePicks((prev) =>
+                      prev.includes(id)
+                        ? prev.filter((x) => x !== id)
+                        : [...prev, id],
+                    )
+                  }
+                  onBack={() => setPreview(null)}
+                />
+              ) : null}
+
               <div className="flex items-center justify-between pt-3 border-t border-border">
                 <Link
                   href={`/teacher/students/${studentId}`}
@@ -328,15 +399,26 @@ function FormBody({
                 >
                   Vazgeç
                 </Link>
-                <Button type="submit" disabled={promote.isPending}>
-                  {promote.isPending ? (
+                <Button
+                  type="submit"
+                  disabled={
+                    promote.isPending || archiveMut.isPending || previewLoading
+                  }
+                >
+                  {promote.isPending || archiveMut.isPending || previewLoading ? (
                     <Loader2 className="size-4 animate-spin" aria-hidden />
                   ) : (
                     <GraduationCap className="size-4" aria-hidden />
                   )}
-                  {initial.is_graduate
-                    ? "Yeni yıla geç ve kaydet"
-                    : "Yükselt ve kaydet"}
+                  {preview
+                    ? archivePicks.length > 0
+                      ? `Uygula (${archivePicks.length} kitabı arşivle)`
+                      : "Uygula"
+                    : isCurriculumChanging
+                      ? "Devam et — ne olacağını göster"
+                      : initial.is_graduate
+                        ? "Yeni yıla geç ve kaydet"
+                        : "Yükselt ve kaydet"}
                 </Button>
               </div>
             </form>
@@ -421,4 +503,104 @@ function deriveCurriculum({
     label: "Klasik Lise",
     explain: `9'a ${entry}'te girdi → Klasik (son nesil)`,
   };
+}
+
+/**
+ * P5 — geçiş önizlemesi: yükseltme uygulanmadan ÖNCE ne olacağını gösterir.
+ *
+ * Yalnız müfredat MODELİ değiştiğinde (8→9 gibi) render edilir. Üç şeyi
+ * açıkça söyler: (1) omurga değişiyor, (2) geçen yılın verisi silinmiyor —
+ * geçen döneme yazılıyor, (3) eski kitaplar arşivlenebilir (tek tek seçimli;
+ * yaz tekrarı için tutulacak kitabın işareti kaldırılır).
+ */
+function TransitionPreviewPanel({
+  preview,
+  picks,
+  onTogglePick,
+  onBack,
+}: {
+  preview: TransitionPreview;
+  picks: number[];
+  onTogglePick: (bookId: number) => void;
+  onBack: () => void;
+}) {
+  return (
+    <div className="rounded-lg border border-cyan-300 bg-cyan-50/60 p-4 space-y-3 dark:border-cyan-500/40 dark:bg-cyan-500/10">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold text-cyan-900 dark:text-cyan-100">
+            Uygulanınca ne olacak?
+          </h3>
+          <p className="text-xs text-cyan-900/80 dark:text-cyan-200/80">
+            {preview.current_grade_label} ({preview.current_curriculum_label})
+            {" → "}
+            {preview.target_grade_label} ({preview.target_curriculum_label})
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onBack}
+          className="text-xs text-cyan-900/70 underline underline-offset-2 dark:text-cyan-200/70"
+        >
+          Geri dön
+        </button>
+      </div>
+
+      <ul className="space-y-1 text-xs text-cyan-950 dark:text-cyan-100">
+        {preview.notes.map((n, i) => (
+          <li key={i} className="flex gap-1.5">
+            <span aria-hidden>•</span>
+            <span>{n}</span>
+          </li>
+        ))}
+      </ul>
+
+      <div className="rounded-md bg-white/70 px-3 py-2 text-xs text-slate-800 dark:bg-slate-900/40 dark:text-slate-200">
+        Yeni dönem <strong>{preview.period_boundary}</strong> tarihinde başlar.
+        Önceki döneme <strong>{preview.previous_task_count} görev</strong> ve{" "}
+        <strong>{preview.previous_exam_count} deneme</strong> yazılır — bunlar
+        silinmez, dönem seçicisinden her zaman görülebilir.
+      </div>
+
+      {preview.archive_candidates.length > 0 ? (
+        <div className="space-y-1.5">
+          <p className="text-xs font-medium text-cyan-900 dark:text-cyan-100">
+            Geçen dönemin kitapları ({picks.length}/
+            {preview.archive_candidates.length} seçili)
+          </p>
+          <div className="max-h-56 space-y-1 overflow-y-auto">
+            {preview.archive_candidates.map((cd) => (
+              <label
+                key={cd.book_id}
+                className="flex cursor-pointer items-start gap-2 rounded-md border border-cyan-200 bg-white/80 p-2 text-xs text-slate-800 dark:border-cyan-500/30 dark:bg-slate-900/40 dark:text-slate-200"
+              >
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={picks.includes(cd.book_id)}
+                  onChange={() => onTogglePick(cd.book_id)}
+                />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">
+                    {cd.book_name}
+                  </span>
+                  <span className="block text-slate-600 dark:text-slate-400">
+                    {cd.subject_name ?? "—"} · {cd.completed_tests}/
+                    {cd.total_tests} test çözülmüş
+                    {cd.reserved_tests > 0
+                      ? ` · ${cd.reserved_tests} rezerv`
+                      : ""}
+                  </span>
+                </span>
+              </label>
+            ))}
+          </div>
+          <p className="text-[11px] text-cyan-900/70 dark:text-cyan-200/70">
+            Yaz tekrarı için tutmak istediğin kitabın işaretini kaldır.
+            Arşivlenen kitap silinmez; istediğinde geri alırsın.
+          </p>
+        </div>
+      ) : null}
+    </div>
+  );
 }

@@ -114,6 +114,7 @@ from app.models import (
 from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import (
+    TransitionPreviewResponse,
     ArchiveCandidateItem,
     ArchiveCandidatesResponse,
     BookArchiveBody,
@@ -301,7 +302,7 @@ from app.routes.api_v2.schemas.teacher import (
     TeacherTaskItem,
     TeacherWeekNote,
 )
-from app.services import book_archive, grade_period_service
+from app.services import book_archive, grade_period_service, grade_transition
 from app.services.analytics import student_snapshot
 from app.services.request_service import (
     RequestError,
@@ -9988,3 +9989,71 @@ def teacher_archive_books_v2(
             f"teacher:{user.id}:students:{student.id}:curriculum",
         ],
     )
+
+
+# =============================================================================
+# Sınıf geçişi önizlemesi (P5, 2026-09-05)
+# =============================================================================
+#
+# 8→9 geçişi 9→10'dan FARKLIDIR: müfredat MODELİ değişir (LGS → Maarif).
+# Bu uç YALNIZ ÖNİZLEME üretir — uygulama mevcut, test edilmiş uçlarla yapılır:
+#   POST .../promote        → profil + dönem damgası (P2)
+#   POST .../books/archive  → kitap arşivi (P4)
+
+
+@router.get(
+    "/students/{student_id}/transition-preview",
+    response_model=TransitionPreviewResponse,
+)
+def teacher_transition_preview_v2(
+    student_id: int,
+    grade: str,
+    academic_year_id: int | None = None,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Yükseltme uygulanırsa ne olacağını göster (yazma YOK).
+
+    `grade`: "9" | "12" | "graduate" — promote formundaki seçimle aynı sözleşme.
+    """
+    student = _get_owned_student(db, student_id, user.id)
+
+    raw = (grade or "").strip().lower()
+    if raw == "graduate":
+        new_grade: int | None = None
+        new_is_graduate = True
+    else:
+        try:
+            new_grade = int(raw)
+        except ValueError:
+            raise _validation_error("invalid_grade", "Sınıf değeri geçersiz.")
+        new_is_graduate = False
+        if not (5 <= new_grade <= 12):
+            raise _validation_error("invalid_grade", "Sınıf 5-12 aralığında olmalı.")
+
+    ay_start: int | None = None
+    if academic_year_id is not None:
+        year = (
+            db.query(AcademicYear)
+            .filter(
+                AcademicYear.id == academic_year_id,
+                AcademicYear.teacher_id == user.id,
+            )
+            .first()
+        )
+        if not year:
+            raise _validation_error(
+                "invalid_academic_year", "Akademik yıl bulunamadı veya sizin değil."
+            )
+        ay_start = year.start_year
+
+    data = grade_transition.build_preview(
+        db, student,
+        new_grade=new_grade,
+        new_is_graduate=new_is_graduate,
+        academic_year_start=ay_start,
+    )
+    data["archive_candidates"] = [
+        ArchiveCandidateItem(**c) for c in data["archive_candidates"]
+    ]
+    return TransitionPreviewResponse(**data)

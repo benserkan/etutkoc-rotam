@@ -13,7 +13,10 @@
  * ama uzunluk eşleşmesi yapılmaz; her queryKey o teacher'a özeldir (cookie).
  */
 import { api, type MutationResponse } from "@/lib/api";
-import type { GradePeriodListResponse } from "@/lib/types/period";
+import type {
+  GradePeriodListResponse,
+  TransitionPreview,
+} from "@/lib/types/period";
 import type {
   ArchiveCandidatesResponse,
   BookArchiveResult,
@@ -782,5 +785,18 @@ export function deleteGradePeriod(
   return api<MutationResponse<GradePeriodListResponse>>(
     `/api/v2/teacher/students/${studentId}/grade-periods/${periodId}/delete`,
     { method: "POST" },
+  );
+}
+
+/** P5 — yükseltme uygulanırsa ne olacağını önceden göster (yazma YOK). */
+export function getTransitionPreview(
+  studentId: number,
+  grade: string,
+  academicYearId?: number | null,
+): Promise<TransitionPreview> {
+  const q = new URLSearchParams({ grade });
+  if (academicYearId != null) q.set("academic_year_id", String(academicYearId));
+  return api<TransitionPreview>(
+    `/api/v2/teacher/students/${studentId}/transition-preview?${q.toString()}`,
   );
 }

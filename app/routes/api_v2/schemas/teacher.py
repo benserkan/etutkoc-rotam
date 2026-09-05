@@ -2621,3 +2621,31 @@ class ArchiveCandidatesResponse(BaseModel):
     period_started_on: str | None = None
     period_label: str | None = None
     candidates: list[ArchiveCandidateItem] = []
+
+
+# ========================= Sınıf geçişi önizlemesi (P5) =======================
+
+
+class TransitionPreviewResponse(BaseModel):
+    """GET /api/v2/teacher/students/{id}/transition-preview
+
+    Yükseltme uygulanırsa NE OLACAĞINI önceden gösterir; hiçbir şeyi değiştirmez.
+    """
+    student_id: int
+    current_grade_label: str
+    current_curriculum: str | None = None
+    current_curriculum_label: str | None = None
+    target_grade_label: str
+    target_curriculum: str | None = None
+    target_curriculum_label: str | None = None
+    # Müfredat modeli değişiyor mu (8→9 LGS→Maarif gibi)
+    model_changes: bool = False
+    needs_wizard: bool = False
+    # P2 — açılacak dönemin sınırı + geçen döneme yazılacak veri
+    period_boundary: str
+    previous_period_label: str | None = None
+    previous_task_count: int = 0
+    previous_exam_count: int = 0
+    # P4 — arşiv adayları
+    archive_candidates: list[ArchiveCandidateItem] = []
+    notes: list[str] = []

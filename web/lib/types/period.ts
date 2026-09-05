@@ -45,3 +45,30 @@ export interface GradePeriodListResponse {
   student_id: number;
   periods: GradePeriodItem[];
 }
+
+/** P5 — sınıf geçişi önizlemesi (8→9 gibi model değişimlerinde sihirbaz). */
+export interface TransitionPreview {
+  student_id: number;
+  current_grade_label: string;
+  current_curriculum: string | null;
+  current_curriculum_label: string | null;
+  target_grade_label: string;
+  target_curriculum: string | null;
+  target_curriculum_label: string | null;
+  model_changes: boolean;
+  needs_wizard: boolean;
+  period_boundary: string;
+  previous_period_label: string | null;
+  previous_task_count: number;
+  previous_exam_count: number;
+  archive_candidates: {
+    book_id: number;
+    book_name: string;
+    subject_name?: string | null;
+    assigned_on?: string | null;
+    total_tests: number;
+    completed_tests: number;
+    reserved_tests: number;
+  }[];
+  notes: string[];
+}

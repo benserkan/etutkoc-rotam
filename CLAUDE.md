@@ -310,6 +310,43 @@ ve görev geçmişi kitaba bağlı; ayrıca "Kaldır" rezerv varsa 409 veriyor.
 
 ---
 
+## 8→9 GEÇİŞ SİHİRBAZI (P5) — CANLI (2026-09-05, migration YOK)
+
+**Kullanıcı sorusu (birebir):** "8'den 9'a geçme ile 9'dan 10'a geçme
+arasındaki farkı gözeterek ele al." FARK: 8→9'da müfredat **MODELİ** değişir
+(LGS → Maarif) — konu omurgası tamamen değişir, kitaplar hâlâ LGS'dir,
+geçen yılın 600+ görevi "bu yıl" ile karışır. 9→10'da model AYNI.
+- **YENİ YAZMA YOLU AÇILMADI (bilinçli):** sihirbaz yalnız ÖNİZLEME ucu +
+  arayüz. Uygulama mevcut, TEST EDİLMİŞ uçlarla: `POST .../promote`
+  (profil + P2 dönem damgası) → `POST .../books/archive` (P4). Böylece
+  rezerv/dönem invariant'larına yeni kod dokunmaz.
+- **`app/services/grade_transition.build_preview`** (salt-okuma): mevcut/hedef
+  müfredat modeli (`derive_curriculum_model`) · `model_changes` +
+  **`needs_wizard`** · P2 sınırı (`compute_boundary`) · sınırdan ÖNCEKİ
+  görev/deneme sayısı (geçen döneme yazılacak) · P4 arşiv adayları ·
+  sade-dil `notes`.
+- **Uç:** `GET /teacher/students/{id}/transition-preview?grade=9&academic_year_id=N`
+  (grade: "9" | "12" | "graduate" — promote sözleşmesiyle aynı). Sahiplik 404 ·
+  geçersiz sınıf/yıl 422.
+- **UI (`promote-form.tsx`):** model DEĞİŞMİYORSA akış aynen eskisi gibi
+  (tek tık yükselt) — koç gereksiz ekrandan geçmez. Model değişiyorsa buton
+  **"Devam et — ne olacağını göster"** olur → cyan önizleme paneli: omurga
+  değişimi + "yeni dönem {tarih}'te başlar, önceki döneme N görev/M deneme
+  yazılır, SİLİNMEZ" + geçen dönemin kitapları **tek tek seçimli** (hepsi
+  işaretli gelir; yaz tekrarı için tutulacak çıkarılır) → **"Uygula (N kitabı
+  arşivle)"** promote + archive'ı ardışık çalıştırır. Önizleme alınamazsa
+  akış KİLİTLENMEZ, normal yükseltmeye düşer.
+- **Test `test_api_v2_transition_preview.py` 9/9** — 8→9 model değişir
+  (needs_wizard=True) · **9→10 değişmez (False)** · P2 sınırı · geçen döneme
+  yazılacak sayılar · arşiv adayı · notlar · **ÖNİZLEME HİÇBİR ŞEYİ
+  DEĞİŞTİRMEZ** (profil/dönem/arşiv snapshot karşılaştırması) · 12→mezun ·
+  kapılar. **Ayırt edicilik KANITLI:** `model_changes` sabitlenince 9→10
+  senaryosu kırmızıya döndü. Regresyon: grade_periods 15 · book_archive 14 ·
+  5c 19 GREEN; tsc+eslint temiz.
+- **P1-P5 TAMAMLANDI.** Sıra: sınıf yükseltme sonrası saha gözlemi.
+
+---
+
 ## SINIF DÖNEMİ DAMGASI (P2) — CANLI (2026-09-04, migration `s3t6w9x0w55s`)
 
 **Tetikleyici (kullanıcı):** Yiğit Eren 8'den 9'a geçti; geçen yılın 607 görevi +
