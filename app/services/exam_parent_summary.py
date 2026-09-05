@@ -72,6 +72,19 @@ def _fmt(n: float) -> str:
     return f"{n:.2f}".replace(".", ",")
 
 
+def _wilson_lower(correct: int, total: int, z: float = 1.96) -> float:
+    """Doğruluk için Wilson %95 alt sınırı — az soruyla gelen yüksek oranı
+    cezalandırır (5/5 = 0.57 iken 36/40 = 0.77). Veliye "en güçlü ders"
+    söylerken tesadüfi bir %100'ü öne çıkarmamak için."""
+    if total <= 0:
+        return 0.0
+    p = correct / total
+    denom = 1 + z * z / total
+    centre = p + z * z / (2 * total)
+    margin = z * ((p * (1 - p) / total + z * z / (4 * total * total)) ** 0.5)
+    return max(0.0, (centre - margin) / denom)
+
+
 def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
     """Veli e-postasının içeriği: sayılar + konuşma dilinde cümleler."""
     subjects = _subjects(exam)
@@ -121,10 +134,15 @@ def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
     ]
     best = worst = None
     if ranked:
-        # Doğruluk oranına göre — ham net ders uzunluğuna bağlı, kıyas bozar.
+        # HAM ORAN YETMEZ: 5 soruda %100, 40 soruda %90'dan güçlü kanıt değil
+        # (küçük örneklem tesadüfü). Wilson alt sınırı az soruyu cezalandırır:
+        #   5/5  → 0.57   ·   36/40 → 0.77   ·   3/5 → 0.23
+        # Böylece "en rahat olduğu bölüm" gerçekten istikrarlı olanı gösterir.
         def acc(s: dict) -> float:
             answered = s["correct"] + s["wrong"]
-            return (s["correct"] / answered) if answered else 0.0
+            if not answered:
+                return 0.0
+            return _wilson_lower(s["correct"], answered)
 
         ranked_sorted = sorted(ranked, key=acc)
         worst = ranked_sorted[0]

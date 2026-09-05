@@ -111,8 +111,11 @@ def seed() -> dict:
             db.flush()
             return e
 
+        # KÜÇÜK ÖRNEKLEM TUZAĞI: Din 5/5 (%100) ham oranda Türkçe 36/40'ı (%90)
+        # geçer ama 5 soruluk kanıt zayıftır — Wilson alt sınırı bunu eler.
         nets = (
             '[{"name":"TYT Türkçe","correct":36,"wrong":4,"blank":0,"net":35.0},'
+            '{"name":"TYT Din Kültürü","correct":5,"wrong":0,"blank":0,"net":5.0},'
             '{"name":"TYT Matematik","correct":20,"wrong":18,"blank":2,"net":15.5},'
             '{"name":"Sosyal Bilimler","correct":2,"wrong":0,"blank":0,"net":2.0,'
             '"unmatched":true}]'
@@ -213,7 +216,7 @@ def main() -> int:
         check("3. içerik: net + D/Y/B + ders kırılımı + öğrenci linki",
               p.get("net_text") == "52,50" and p.get("correct") == 58
               and p.get("wrong") == 22 and p.get("blank") == 40
-              and len(p.get("subjects", [])) == 3
+              and len(p.get("subjects", [])) == 4
               and p.get("student_id") == sid
               and p.get("__template") == "parent_exam_result",
               f"net={p.get('net_text')} subjects={len(p.get('subjects', []))}")
@@ -224,6 +227,11 @@ def main() -> int:
               and p.get("delta") == -0.5
               and p.get("prev_title") == "Önceki TYT Denemesi",
               f"delta={p.get('delta')} prev={p.get('prev_title')} | {narr[:160]}")
+
+        # ---- 4b. KÜÇÜK ÖRNEKLEM: 5/5 ders "en rahat" diye öne çıkmamalı
+        check("4b. az soruluk %100 ders 'en güçlü' sayılmaz (Wilson alt sınırı)",
+              "Din Kültürü" not in narr and "TYT Türkçe" in narr,
+              f"{narr[:220]}")
 
         # ---- 7. kıyas AYNI TÜR içinde (AYT karışmadı)
         check("7. karşılaştırma AYNI TÜR içinde (AYT ile TYT kıyaslanmadı)",
