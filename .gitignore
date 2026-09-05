@@ -51,3 +51,8 @@ docs/rotam-tanitim-kilavuzu.pdf
 *.db-wal
 *.db-shm
 *.db-journal
+
+# Öğrenci verisi içeren geçici karne/rapor dosyaları — repo PUBLIC, asla girmesin
+rapor_*.pdf
+rapor_*.html
+*_karne*.pdf
