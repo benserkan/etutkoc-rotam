@@ -308,6 +308,7 @@ class WeeklyReportResponse(BaseModel):
 NotificationKindLiteral = Literal[
     "daily_summary", "empty_day", "weekly_report", "new_program",
     "drop_alert", "teacher_note", "invitation", "otp", "exam_approaching",
+    "exam_result",
 ]
 NotificationChannelLiteral = Literal["email", "whatsapp", "sms"]
 NotificationStatusLiteral = Literal["queued", "sent", "failed", "suppressed"]
@@ -349,6 +350,7 @@ class ParentPreferencesInfo(BaseModel):
     new_program_alert_enabled: bool
     teacher_note_enabled: bool
     exam_approaching_enabled: bool
+    exam_result_enabled: bool
     # Randevu/görüşme bildirimi + hatırlatması (e-posta+push; default açık)
     appointment_enabled: bool = True
     # P0 — WhatsApp kanal toggle'ları
@@ -358,7 +360,8 @@ class ParentPreferencesInfo(BaseModel):
     drop_alert_wa_enabled: bool = False
     new_program_alert_wa_enabled: bool = False
     teacher_note_wa_enabled: bool = False
-    exam_approaching_wa_enabled: bool = False
+    exam_approaching_wa_enabled: bool
+    exam_result_wa_enabled: bool = False
     child_whatsapp_consent: bool = False
     quiet_hours_start: str  # HH:MM
     quiet_hours_end: str
@@ -413,6 +416,7 @@ class ParentPreferencesBody(BaseModel):
     drop_alert: bool
     teacher_note: bool
     exam_approaching: bool
+    exam_result: bool = True
     # Randevu bildirimi (opsiyonel — eski istemci göndermezse açık kalır)
     appointment: bool = True
     # P0 — WhatsApp kanal toggle'ları (opsiyonel, default False)
@@ -423,6 +427,7 @@ class ParentPreferencesBody(BaseModel):
     drop_alert_wa: bool = False
     teacher_note_wa: bool = False
     exam_approaching_wa: bool = False
+    exam_result_wa: bool = False
     child_whatsapp_consent: bool = False
     quiet_start: str = Field(default="22:00", description="HH:MM")
     quiet_end: str = Field(default="07:00", description="HH:MM")

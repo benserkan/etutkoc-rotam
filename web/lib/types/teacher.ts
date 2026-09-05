@@ -1865,6 +1865,8 @@ export interface ExamResultRow {
   created_by_name: string | null;
   /** "pdf_import" → satır-düzeyi düzenleme (içe aktarımı düzelt) açılabilir */
   import_source: string | null;
+  /** Koç veliye duyurduysa damga — düğme 'Duyuruldu'ya döner. */
+  parent_notified_at?: string | null;
 }
 
 export interface ExamListSummary {
@@ -2262,4 +2264,13 @@ export interface ApplyTaskTemplateBody {
   date: string;
   scheduled_hour?: number | null;
   is_draft?: boolean | null;
+}
+
+/** POST /api/v2/teacher/exams/{id}/notify-parents */
+export interface ExamNotifyParentsResult {
+  exam_id: number;
+  queued: number;
+  suppressed?: number;
+  notified_at?: string | null;
+  message: string;
 }

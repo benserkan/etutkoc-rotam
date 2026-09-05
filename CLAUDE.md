@@ -310,6 +310,53 @@ ve görev geçmişi kitaba bağlı; ayrıca "Kaldır" rezerv varsa 409 veriyor.
 
 ---
 
+## DENEME SONUCU VELİ DUYURUSU — CANLI (2026-09-05, migration `v7w0z3a4z88v`)
+
+**Tetikleyici:** koç "deneme yüklendi, veliye bildirim gidiyor mu?" diye sordu.
+**Teşhis (prod veri):** GİTMİYOR — iki bağımsız kapı: (a) mevcut push
+(`notify_parents_rota_exam_ready`) **ücretli paket + AI onayı** ister (koç
+`free`), (b) velinin kayıtlı mobil cihazı yok. O bildirim zaten MOBİL-ONLY.
+Veli denemeyi ancak panele girerse veya haftalık raporda görüyordu.
+**Kullanıcı kararı:** koç düğmeye basınca veliye E-POSTA (program duyurusu deseni).
+- **Migration `v7w0z3a4z88v`** (← u6v9y2z3y77u): `notificationkind` enum'una
+  **EXAM_RESULT** (PG `ALTER TYPE`) + `parent_notification_prefs.
+  exam_result_enabled` (opt-out, TRUE) + `exam_result_wa_enabled` (opt-in,
+  FALSE) + `exam_results.parent_notified_at`.
+- **İçerik `app/services/exam_parent_summary.py` — KURAL TABANLI, KREDİSİZ**
+  (koçun AI paketi GEREKMEZ): net + D/Y/B + ders kırılımı + **aynı TÜR içindeki
+  bir önceki denemeye göre delta** (TYT↔AYT kıyası YASAK — 2026-07-17 tuzağı) +
+  konuşma dilinde 2-4 cümle. Veli dili: suçlayıcı değil, tek odak önerisi,
+  koça özel not ve soru-satırı PAYLAŞILMAZ. "En zayıf ders" ancak fark ≥%15 ve
+  ders ≥5 soruysa söylenir (2 soruluk dersten yargı çıkarılmaz).
+- **Şablon** `emails/parent_exam_result.html`: net şeridi (▲/▼ delta) + "Bu
+  deneme ne anlatıyor?" + ders tablosu + **veli paneli linki** + unsubscribe.
+  Ondalıklar Türkçe virgüllü.
+- **Uç** `POST /teacher/exams/{id}/notify-parents` — deneme başına BİR KEZ
+  (mükerrer 409 `already_notified`), muted veli atlanır, velisiz 422.
+- **İKİ DÜRÜSTLÜK KURALI (test sırasında yakalandı):**
+  1. `enqueue_notification` tercih kapalıyken de satır yazar
+     (status=SUPPRESSED, denetim izi) → `len(logs)` "gönderildi" SAYILMAZ;
+     yalnız QUEUED sayılır, `suppressed` ayrı raporlanır. Aksi hâlde koça
+     "1 veliye gönderildi" yalanı söylenirdi (2026-07-30 "teslimat raporu ok
+     varsaymaz" dersinin tekrarı).
+  2. Üretim hatası SESSİZCE yutulup "tercihler kapalı" denmez → 500
+     `notify_failed` + **damga atılmaz** (koç tekrar deneyebilsin). Bir import
+     hatası tam olarak böyle maskelenmişti.
+  Ayrıca hiç gerçek gönderim yoksa damga atılmaz — düğme "Veliye duyur" kalır.
+- **UI:** deneme satırında ✉ **"Veliye duyur"** (onaylı; ne paylaşılacağı
+  yazıyor) → duyurulunca yeşil **"Duyuruldu"** rozeti. Veli tarafında yeni
+  tercih satırı **"Deneme sonucu"** (ayarlar + aktivasyon matrisi, e-posta+WA).
+- **Test `test_api_v2_exam_notify_parents.py` 11/11** — damga akışı · içerik ·
+  delta · **ilk denemede farklı dil** · **suçlayıcı sözcük taraması** ·
+  aynı-tür kıyas · mükerrer 409 · muted/velisiz · tercih kapalı · sahiplik.
+  **Ayırt edicilik KANITLI** (suppressed'i "gönderildi" sayınca kırmızı).
+  **TEST DERSİ:** ilk yazdığım "yasak sözcük yok" kontrolü BOŞ metinde de
+  geçiyordu (yanlış PASS) → önce metnin üretildiği doğrulanır.
+  Regresyon: teacher_exams 18 · parent 20 · parent_wa_channel 14 ·
+  parent_invitation 17 GREEN; tsc+eslint temiz.
+
+---
+
 ## DENEME KARTI 2 SAHA DÜZELTMESİ — CANLI (2026-09-05, migration YOK)
 
 **Tetikleyici (koç, /teacher/students/113#exams ekran görüntüsü):**

@@ -1,0 +1,115 @@
+Subject: ETÜTKOÇ Rotam · {{ student_name }} · {{ exam_title }} sonucu
+
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"></head>
+<body style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 580px; margin: 0 auto; padding: 24px; color: #1e293b; background: #f8fafc;">
+  <div style="background: white; border-radius: 12px; padding: 28px; border: 1px solid #e2e8f0;">
+    <div style="border-bottom: 2px solid #117A86; padding-bottom: 12px; margin-bottom: 20px;">
+      <img src="{{ app_base_url }}/etutkoc-mark.png" alt="" width="36" height="36" style="object-fit: contain; vertical-align: middle; margin-right: 8px;" />
+      <span style="font-size: 18px; font-weight: 800;">
+        <span style="color: #117A86;">etütkoç</span><span style="color: #94a3b8; margin: 0 3px;">·</span><span style="color: #E8AC2D;">rotam</span>
+      </span>
+    </div>
+
+    <h2 style="font-size: 17px; margin: 0 0 4px; color: #0f172a;">
+      {{ student_name }} · deneme sonucu
+    </h2>
+    <div style="font-size: 12px; color: #64748b; margin-bottom: 18px;">
+      {{ exam_title }} · {{ exam_date_tr }}{% if section_label %} · {{ section_label }}{% endif %}
+    </div>
+
+    {# --- Net şeridi: en çok merak edilen sayı en üstte --- #}
+    <table style="width: 100%; border-collapse: collapse; margin-bottom: 18px;">
+      <tr>
+        <td style="background: #f0fdfa; border: 1px solid #99f6e4; border-radius: 10px; padding: 16px 18px;">
+          <div style="font-size: 32px; font-weight: 800; color: #0f766e; line-height: 1;">
+            {{ net_text }}
+          </div>
+          <div style="font-size: 11px; color: #0f766e; letter-spacing: .04em; text-transform: uppercase; margin-top: 2px;">
+            net
+          </div>
+          <div style="font-size: 12.5px; color: #334155; margin-top: 10px;">
+            {{ total_questions }} soruda
+            <b style="color: #059669;">{{ correct }} doğru</b> ·
+            <b style="color: #e11d48;">{{ wrong }} yanlış</b> ·
+            <span style="color: #64748b;">{{ blank }} boş</span>
+          </div>
+
+          {% if delta_direction == "up" %}
+          <div style="font-size: 12.5px; color: #047857; margin-top: 8px; font-weight: 600;">
+            ▲ Bir önceki denemeye göre {{ delta_text }} net artış
+          </div>
+          {% elif delta_direction == "down" %}
+          <div style="font-size: 12.5px; color: #b45309; margin-top: 8px; font-weight: 600;">
+            ▼ Bir önceki denemeye göre {{ delta_text }} net geride
+          </div>
+          {% elif delta_direction == "flat" %}
+          <div style="font-size: 12.5px; color: #475569; margin-top: 8px; font-weight: 600;">
+            ● Bir önceki denemeyle aynı seviyede
+          </div>
+          {% endif %}
+          {% if prev_title %}
+          <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
+            Karşılaştırma: {{ prev_title }} ({{ prev_date_tr }}) · {{ prev_net_text }} net
+          </div>
+          {% endif %}
+        </td>
+      </tr>
+    </table>
+
+    {# --- Koç yorumu: konuşma dili, suçlayıcı değil --- #}
+    {% if narrative %}
+    <h3 style="font-size: 14px; color: #0f172a; margin: 0 0 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+      Bu deneme ne anlatıyor?
+    </h3>
+    {% for line in narrative %}
+    <p style="margin: 0 0 9px; line-height: 1.6; font-size: 13.5px;">{{ line }}</p>
+    {% endfor %}
+    {% endif %}
+
+    {# --- Ders kırılımı --- #}
+    {% if subjects %}
+    <h3 style="font-size: 14px; color: #0f172a; margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+      Ders bazında
+    </h3>
+    <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+      <tr style="color: #64748b; font-size: 11px;">
+        <td style="padding: 4px 6px;">Ders</td>
+        <td style="padding: 4px 6px; text-align: right;">D</td>
+        <td style="padding: 4px 6px; text-align: right;">Y</td>
+        <td style="padding: 4px 6px; text-align: right;">B</td>
+        <td style="padding: 4px 6px; text-align: right;">Net</td>
+      </tr>
+      {% for s in subjects %}
+      <tr>
+        <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9;">{{ s.name }}</td>
+        <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; color: #059669;">{{ s.correct }}</td>
+        <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; color: #e11d48;">{{ s.wrong }}</td>
+        <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; color: #94a3b8;">{{ s.blank }}</td>
+        <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; font-weight: 700;">{{ ("%.2f"|format(s.net))|replace(".", ",") }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+    {% endif %}
+
+    <p style="margin: 18px 0 0; font-size: 12.5px; color: #475569; line-height: 1.6;">
+      Konu konu hangi soruların doğru, hangilerinin yanlış olduğunu ve
+      önceki denemelerle gelişim grafiğini Rotam'dan görebilirsiniz.
+    </p>
+
+    <p style="margin: 16px 0 0;">
+      <a href="{{ app_base_url }}/parent/students/{{ student_id }}/exams"
+         style="display: inline-block; background: #117A86; color: white; padding: 11px 22px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 14px;">
+        Deneme detayını gör →
+      </a>
+    </p>
+
+    <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 24px 0 14px;">
+    <p style="margin: 0; font-size: 10px; color: #94a3b8; line-height: 1.55;">
+      Bu bildirimi koçunuz gönderdi · ETÜTKOÇ Rotam · {{ app_base_url }}<br>
+      Bildirimleri kapatmak için: <a href="{{ app_base_url }}/parent/unsubscribe/{{ unsubscribe_token }}" style="color: #94a3b8;">tek tıkla kapat</a>
+    </p>
+  </div>
+</body>
+</html>

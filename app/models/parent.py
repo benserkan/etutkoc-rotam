@@ -53,6 +53,9 @@ class NotificationKind(str, enum.Enum):
     # böylece aynı veliye 8. sınıf çocuğu için "LGS yaklaşıyor", 12. sınıf için
     # "YKS yaklaşıyor" yazılır. Tetikleyici cron + idempotent (her eşik bir kez).
     EXAM_APPROACHING = "exam_approaching"
+    # Deneme sonucu duyurusu — koç "Veliye duyur" düğmesine basınca (2026-09-05).
+    # OTOMATİK DEĞİL: program duyurusuyla aynı desen, koçun kasıtlı eylemi.
+    EXAM_RESULT = "exam_result"
 
 
 class NotificationChannel(str, enum.Enum):
@@ -169,6 +172,11 @@ class ParentNotificationPref(Base):
     exam_approaching_enabled: Mapped[bool] = mapped_column(
         Boolean, default=True, nullable=False, server_default=sa_text("true")
     )
+    # Deneme sonucu duyurusu (2026-09-05) — koç düğmeye basınca. Varsayılan
+    # AÇIK (opt-out): velinin en çok merak ettiği bilgi deneme sonucudur.
+    exam_result_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=True, nullable=False, server_default=sa_text("true")
+    )
 
     # WhatsApp tarafı toggle'ları (P0 — 2026-05-30). Veli aktivasyonda
     # varsayılan KAPALI (opt-in, KVKK gereği). Producer step 2 kanala göre
@@ -192,6 +200,9 @@ class ParentNotificationPref(Base):
         Boolean, default=False, nullable=False, server_default=sa_text("false")
     )
     exam_approaching_wa_enabled: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False, server_default=sa_text("false")
+    )
+    exam_result_wa_enabled: Mapped[bool] = mapped_column(
         Boolean, default=False, nullable=False, server_default=sa_text("false")
     )
 

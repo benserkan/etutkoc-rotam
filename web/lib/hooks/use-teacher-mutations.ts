@@ -7,11 +7,13 @@ import { api, ApiError, type MutationResponse } from "@/lib/api";
 import { applyInvalidate } from "@/lib/invalidate";
 import {
   archiveStudentBooks,
+  notifyParentsExam,
   reconcileBookCounters,
   teacherKeys,
 } from "@/lib/api/teacher";
 import type {
   BookArchiveResult,
+  ExamNotifyParentsResult,
   CoachingReportDetail,
   CoachingReportRow,
   BulkResult,
@@ -2116,5 +2118,47 @@ export function useArchiveBooks(studentId: number) {
       toast.success(res.data?.message ?? "Arşiv güncellendi");
     },
     onError: (e) => showError(e, "Arşiv güncellenemedi"),
+  });
+}
+
+/**
+ * Deneme sonucunu veliye duyur (2026-09-05).
+ * Program duyurusuyla aynı desen: otomatik değil, koçun kasıtlı eylemi.
+ * Damga yalnız GERÇEK gönderim olduğunda atılır — tüm veliler bildirimi
+ * kapatmışsa düğme "Veliye duyur" olarak kalır.
+ */
+export function useNotifyParentsExam(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<ExamNotifyParentsResult>,
+    ApiError,
+    { examId: number }
+  >({
+    mutationFn: ({ examId }) => notifyParentsExam(examId),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({ queryKey: teacherKeys.studentExams(studentId) });
+      const d = res.data;
+      if (d && d.queued > 0) {
+        toast.success(d.message);
+      } else {
+        toast.info(d?.message ?? "Gönderim yapılmadı");
+      }
+    },
+    onError: (e) => {
+      const code =
+        e instanceof ApiError
+          ? ((e.detail as { code?: string } | undefined)?.code ?? "")
+          : "";
+      if (code === "already_notified") {
+        toast.info("Bu denemenin duyurusu zaten yapılmış.");
+        return;
+      }
+      if (code === "no_parent") {
+        toast.error("Bu öğrenciye bağlı veli yok.");
+        return;
+      }
+      showError(e, "Duyuru gönderilemedi");
+    },
   });
 }

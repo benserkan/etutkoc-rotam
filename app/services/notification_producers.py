@@ -783,3 +783,51 @@ def produce_teacher_note(
             )
         )
     return logs
+
+
+def produce_exam_result(
+    db: Session,
+    *,
+    parent: User,
+    student: User,
+    exam,
+) -> list[NotificationLog]:
+    """Koç "Veliye duyur" düğmesine bastı — deneme sonucu e-postası.
+
+    OTOMATİK DEĞİL (program duyurusuyla aynı desen): veliye deneme başına en
+    fazla bir kez, koçun kasıtlı eylemiyle gider. İçerik kural tabanlı ve
+    KREDİSİZ üretilir (`exam_parent_summary`) — koçun AI paketi gerekmez.
+
+    Koça özel notlar ve soru-satırı detayları PAYLAŞILMAZ; yalnız net, D/Y/B,
+    ders kırılımı ve konuşma dilinde kısa yorum.
+    """
+    from app.services.exam_parent_summary import (
+        build_parent_exam_summary,
+        format_tr_date,
+    )
+
+    summary = build_parent_exam_summary(db, exam)
+    payload: dict[str, Any] = {
+        "__template": "parent_exam_result",
+        "student_id": student.id,
+        "student_name": student.full_name,
+        **summary,
+        "exam_date_tr": format_tr_date(summary.get("exam_date")),
+        "prev_date_tr": format_tr_date(summary.get("prev_date")),
+        "unsubscribe_token": _unsub_token(db, parent.id),
+    }
+
+    return [
+        enqueue_notification(
+            db,
+            parent_id=parent.id,
+            student_id=student.id,
+            kind=NotificationKind.EXAM_RESULT,
+            channel=NotificationChannel.EMAIL,
+            subject=(
+                f"{student.full_name} · {exam.title} sonucu "
+                f"({summary['net_text']} net)"
+            ),
+            payload=payload,
+        )
+    ]

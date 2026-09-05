@@ -1955,6 +1955,8 @@ class ExamResultRow(BaseModel):
     total_questions: int
     net: float
     subjects: list[ExamSubjectRow]
+    # Koç veliye duyurduysa damga — düğme "Duyuruldu"ya döner (2026-09-05)
+    parent_notified_at: str | None = None
     note: str | None = None
     created_at: datetime
     created_by_name: str | None = None
@@ -2653,3 +2655,12 @@ class TransitionPreviewResponse(BaseModel):
     # P4 — arşiv adayları
     archive_candidates: list[ArchiveCandidateItem] = []
     notes: list[str] = []
+
+
+class ExamNotifyParentsResult(BaseModel):
+    """POST /api/v2/teacher/exams/{id}/notify-parents"""
+    exam_id: int
+    queued: int                       # GERÇEKTEN kuyruğa giren (suppressed hariç)
+    suppressed: int = 0               # velinin kapattığı bildirimler
+    notified_at: str | None = None    # yalnız gerçek gönderim olduysa damga
+    message: str

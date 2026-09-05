@@ -285,7 +285,8 @@ export type ParentNotificationKind =
   | "teacher_note"
   | "invitation"
   | "otp"
-  | "exam_approaching";
+  | "exam_approaching"
+  | "exam_result";
 
 export type ParentNotificationChannel = "email" | "whatsapp" | "sms";
 export type ParentNotificationStatus =
@@ -323,6 +324,7 @@ export interface ParentPreferencesInfo {
   new_program_alert_enabled: boolean;
   teacher_note_enabled: boolean;
   exam_approaching_enabled: boolean;
+  exam_result_enabled: boolean;
   // Randevu/görüşme bildirimi + hatırlatması (e-posta+push; default açık)
   appointment_enabled: boolean;
   // WhatsApp tarafı (default kapalı, opt-in — KVKK)
@@ -333,6 +335,7 @@ export interface ParentPreferencesInfo {
   new_program_alert_wa_enabled: boolean;
   teacher_note_wa_enabled: boolean;
   exam_approaching_wa_enabled: boolean;
+  exam_result_wa_enabled: boolean;
   // 18 yaş altı öğrenciye doğrudan WA için veli onayı
   child_whatsapp_consent: boolean;
   quiet_hours_start: string;
@@ -378,6 +381,7 @@ export interface ParentPreferencesBody {
   drop_alert: boolean;
   teacher_note: boolean;
   exam_approaching: boolean;
+  exam_result: boolean;
   // WhatsApp
   daily_summary_wa: boolean;
   weekly_report_wa: boolean;
@@ -386,6 +390,7 @@ export interface ParentPreferencesBody {
   drop_alert_wa: boolean;
   teacher_note_wa: boolean;
   exam_approaching_wa: boolean;
+  exam_result_wa: boolean;
   child_whatsapp_consent: boolean;
   quiet_start: string;
   quiet_end: string;

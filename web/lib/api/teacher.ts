@@ -19,6 +19,7 @@ import type {
 } from "@/lib/types/period";
 import type {
   ArchiveCandidatesResponse,
+  ExamNotifyParentsResult,
   BookArchiveResult,
   CoachingReportDetail,
   CoachingReportListResponse,
@@ -798,5 +799,15 @@ export function getTransitionPreview(
   if (academicYearId != null) q.set("academic_year_id", String(academicYearId));
   return api<TransitionPreview>(
     `/api/v2/teacher/students/${studentId}/transition-preview?${q.toString()}`,
+  );
+}
+
+/** Deneme sonucunu bağlı velilere e-posta ile duyur (deneme başına bir kez). */
+export function notifyParentsExam(
+  examId: number,
+): Promise<MutationResponse<ExamNotifyParentsResult>> {
+  return api<MutationResponse<ExamNotifyParentsResult>>(
+    `/api/v2/teacher/exams/${examId}/notify-parents`,
+    { method: "POST" },
   );
 }

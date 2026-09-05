@@ -56,6 +56,7 @@ export function ParentInvitationClient({ invitation }: Props) {
     new_program_email: true,
     teacher_note_email: true,
     exam_approaching_email: true,
+    exam_result_email: true,
     daily_summary_wa: false,
     weekly_report_wa: false,
     empty_day_wa: false,
@@ -63,6 +64,7 @@ export function ParentInvitationClient({ invitation }: Props) {
     new_program_wa: false,
     teacher_note_wa: false,
     exam_approaching_wa: false,
+    exam_result_wa: false,
   });
   const [quietStart, setQuietStart] = React.useState("22:00");
   const [quietEnd, setQuietEnd] = React.useState("07:00");
@@ -434,6 +436,12 @@ const PREF_ROWS: Array<{
     waKey: "exam_approaching_wa",
     title: "Sınav yaklaşıyor",
     desc: "Sınava 30 / 7 / 1 gün kala",
+  },
+  {
+    emailKey: "exam_result_email",
+    waKey: "exam_result_wa",
+    title: "Deneme sonucu",
+    desc: "Koç deneme sonucunu paylaştığında",
   },
 ];
 

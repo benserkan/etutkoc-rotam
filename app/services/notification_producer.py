@@ -51,6 +51,7 @@ _KIND_TO_PREF_FIELD: dict[NotificationKind, str] = {
     NotificationKind.DROP_ALERT: "drop_alert_enabled",
     NotificationKind.TEACHER_NOTE: "teacher_note_enabled",
     NotificationKind.EXAM_APPROACHING: "exam_approaching_enabled",
+    NotificationKind.EXAM_RESULT: "exam_result_enabled",
     # INVITATION ve OTP her zaman gönderilir — pref kontrolü yok
 }
 
@@ -64,6 +65,7 @@ _KIND_TO_PREF_FIELD_WA: dict[NotificationKind, str] = {
     NotificationKind.DROP_ALERT: "drop_alert_wa_enabled",
     NotificationKind.TEACHER_NOTE: "teacher_note_wa_enabled",
     NotificationKind.EXAM_APPROACHING: "exam_approaching_wa_enabled",
+    NotificationKind.EXAM_RESULT: "exam_result_wa_enabled",
 }
 
 # WhatsApp olmasa da gönderilen tip (INVITATION/OTP gibi sistem mesajları)

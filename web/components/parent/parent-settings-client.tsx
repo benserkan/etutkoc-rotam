@@ -93,6 +93,12 @@ const PREF_ROWS: Array<{
     title: "Sınav yaklaşıyor",
     desc: "Sınav tarihine 30, 7 ve 1 gün kala (LGS / YKS)",
   },
+  {
+    emailKey: "exam_result",
+    waKey: "exam_result_wa",
+    title: "Deneme sonucu",
+    desc: "Koç deneme sonucunu paylaştığında (net, ders kırılımı, gelişim)",
+  },
 ];
 
 type ParentPreferencesBody = {
@@ -103,6 +109,7 @@ type ParentPreferencesBody = {
   drop_alert: boolean;
   teacher_note: boolean;
   exam_approaching: boolean;
+  exam_result: boolean;
   appointment: boolean;
   daily_summary_wa: boolean;
   weekly_report_wa: boolean;
@@ -111,6 +118,7 @@ type ParentPreferencesBody = {
   drop_alert_wa: boolean;
   teacher_note_wa: boolean;
   exam_approaching_wa: boolean;
+  exam_result_wa: boolean;
   child_whatsapp_consent: boolean;
   quiet_start: string;
   quiet_end: string;
@@ -207,6 +215,7 @@ function PreferencesForm({
     drop_alert: preferences.drop_alert_enabled,
     teacher_note: preferences.teacher_note_enabled,
     exam_approaching: preferences.exam_approaching_enabled,
+    exam_result: preferences.exam_result_enabled,
     appointment: preferences.appointment_enabled ?? true,
     daily_summary_wa: preferences.daily_summary_wa_enabled,
     weekly_report_wa: preferences.weekly_report_wa_enabled,
@@ -215,6 +224,7 @@ function PreferencesForm({
     drop_alert_wa: preferences.drop_alert_wa_enabled,
     teacher_note_wa: preferences.teacher_note_wa_enabled,
     exam_approaching_wa: preferences.exam_approaching_wa_enabled,
+    exam_result_wa: preferences.exam_result_wa_enabled,
     child_whatsapp_consent: preferences.child_whatsapp_consent,
     quiet_start: preferences.quiet_hours_start,
     quiet_end: preferences.quiet_hours_end,

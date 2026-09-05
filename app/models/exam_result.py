@@ -91,6 +91,11 @@ class ExamResult(Base):
     # --- PDF içe aktarma izleri (2026-07-16; manuel kayıtlarda hepsi NULL) ---
     # import_source: "pdf_import" — Gemini ile PDF'ten okundu.
     import_source: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # Koç "Veliye duyur" düğmesine bastıysa damga (2026-09-05) — düğme
+    # "Duyuruldu"ya döner + mükerrer duyuru engellenir.
+    parent_notified_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     import_pdf_content_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
     import_pdf_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Belge kanıt olarak saklanır (support_attachments deseni) — deferred:

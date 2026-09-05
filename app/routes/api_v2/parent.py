@@ -847,6 +847,7 @@ def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferences
             new_program_alert_enabled=True,
             teacher_note_enabled=True,
             exam_approaching_enabled=True,
+            exam_result_enabled=True,
             appointment_enabled=True,
             daily_summary_wa_enabled=False,
             weekly_report_wa_enabled=False,
@@ -855,6 +856,7 @@ def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferences
             new_program_alert_wa_enabled=False,
             teacher_note_wa_enabled=False,
             exam_approaching_wa_enabled=False,
+            exam_result_wa_enabled=False,
             child_whatsapp_consent=False,
             quiet_hours_start="22:00",
             quiet_hours_end="07:00",
@@ -868,6 +870,7 @@ def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferences
         new_program_alert_enabled=pref.new_program_alert_enabled,
         teacher_note_enabled=pref.teacher_note_enabled,
         exam_approaching_enabled=pref.exam_approaching_enabled,
+        exam_result_enabled=bool(getattr(pref, "exam_result_enabled", True)),
         appointment_enabled=bool(getattr(pref, "appointment_enabled", True)),
         daily_summary_wa_enabled=bool(getattr(pref, "daily_summary_wa_enabled", False)),
         weekly_report_wa_enabled=bool(getattr(pref, "weekly_report_wa_enabled", False)),
@@ -876,6 +879,7 @@ def _build_preferences(pref: ParentNotificationPref | None) -> ParentPreferences
         new_program_alert_wa_enabled=bool(getattr(pref, "new_program_alert_wa_enabled", False)),
         teacher_note_wa_enabled=bool(getattr(pref, "teacher_note_wa_enabled", False)),
         exam_approaching_wa_enabled=bool(getattr(pref, "exam_approaching_wa_enabled", False)),
+        exam_result_wa_enabled=bool(getattr(pref, "exam_result_wa_enabled", False)),
         child_whatsapp_consent=bool(getattr(pref, "child_whatsapp_consent", False)),
         quiet_hours_start=_format_time(pref.quiet_hours_start, "22:00"),
         quiet_hours_end=_format_time(pref.quiet_hours_end, "07:00"),
@@ -1023,6 +1027,7 @@ def update_preferences_v2(
     pref.drop_alert_enabled = body.drop_alert
     pref.teacher_note_enabled = body.teacher_note
     pref.exam_approaching_enabled = body.exam_approaching
+    pref.exam_result_enabled = body.exam_result
     pref.appointment_enabled = body.appointment
 
     # P0 — WhatsApp kanal toggle'ları
@@ -1033,6 +1038,7 @@ def update_preferences_v2(
     pref.drop_alert_wa_enabled = body.drop_alert_wa
     pref.teacher_note_wa_enabled = body.teacher_note_wa
     pref.exam_approaching_wa_enabled = body.exam_approaching_wa
+    pref.exam_result_wa_enabled = body.exam_result_wa
     pref.child_whatsapp_consent = body.child_whatsapp_consent
 
     qs = _parse_time_str(body.quiet_start)
@@ -1582,6 +1588,7 @@ def parent_invitation_accept_v2(
             new_program_alert_enabled=_bool_pref("new_program_email", True),
             teacher_note_enabled=_bool_pref("teacher_note_email", True),
             exam_approaching_enabled=_bool_pref("exam_approaching_email", True),
+            exam_result_enabled=_bool_pref("exam_result_email", True),
             # WhatsApp — default kapalı, aktivasyon ekranı açabilir (opt-in)
             daily_summary_wa_enabled=_bool_pref("daily_summary_wa", False),
             weekly_report_wa_enabled=_bool_pref("weekly_report_wa", False),

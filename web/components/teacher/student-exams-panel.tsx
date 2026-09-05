@@ -12,6 +12,8 @@ import {
   YAxis,
 } from "recharts";
 import {
+  Mail,
+  MailCheck,
   ChevronDown,
   FileCog,
   FileUp,
@@ -37,6 +39,7 @@ import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
 import {
   useCreateExam,
   useDeleteExam,
+  useNotifyParentsExam,
   useUpdateExam,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
@@ -373,6 +376,7 @@ function ExamRow({
   const [editOpen, setEditOpen] = React.useState(false);
   const [importEditOpen, setImportEditOpen] = React.useState(false);
   const del = useDeleteExam();
+  const notifyMut = useNotifyParentsExam(studentId);
   const hasSubjects = row.subjects.length > 0;
 
   function onDelete() {
@@ -461,6 +465,44 @@ function ExamRow({
                   <FileCog className="size-4 text-violet-600" aria-hidden />
                 </Button>
               ) : null}
+              {/* Veliye duyur — duyurulduysa düğme "Duyuruldu"ya döner (2026-09-05) */}
+              {row.parent_notified_at ? (
+                <span
+                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-1 text-[11px] font-medium text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
+                  title={`Veliye duyuruldu · ${formatTRDate(row.parent_notified_at.slice(0, 10))}`}
+                >
+                  <MailCheck className="size-3.5" aria-hidden />
+                  Duyuruldu
+                </span>
+              ) : (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  disabled={notifyMut.isPending}
+                  onClick={() => {
+                    if (
+                      !window.confirm(
+                        `"${row.title}" sonucunu veliye e-posta ile duyurmak istiyor musunuz?
+
+` +
+                          "Net, ders kırılımı ve bir önceki denemeye göre değişim paylaşılır. " +
+                          "Koça özel notlar ve soru-satırı detayları gönderilmez.",
+                      )
+                    ) {
+                      return;
+                    }
+                    notifyMut.mutate({ examId: row.id });
+                  }}
+                  aria-label="Sonucu veliye duyur"
+                  title="Sonucu veliye e-posta ile duyur"
+                >
+                  {notifyMut.isPending ? (
+                    <Loader2 className="size-4 animate-spin" aria-hidden />
+                  ) : (
+                    <Mail className="size-4 text-teal-600" aria-hidden />
+                  )}
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="sm"

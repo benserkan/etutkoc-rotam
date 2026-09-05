@@ -114,6 +114,7 @@ from app.models import (
 from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import (
+    ExamNotifyParentsResult,
     TransitionPreviewResponse,
     ArchiveCandidateItem,
     ArchiveCandidatesResponse,
@@ -1068,6 +1069,9 @@ def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamRes
             subjects = []
     return ExamResultRow(
         id=exam.id,
+        parent_notified_at=(
+            exam.parent_notified_at.isoformat() if exam.parent_notified_at else None
+        ),
         title=exam.title,
         exam_date=exam.exam_date.isoformat(),
         section=exam.section.value,
@@ -10058,3 +10062,122 @@ def teacher_transition_preview_v2(
         ArchiveCandidateItem(**c) for c in data["archive_candidates"]
     ]
     return TransitionPreviewResponse(**data)
+
+
+# =============================================================================
+# Deneme sonucunu veliye duyur (2026-09-05)
+# =============================================================================
+#
+# Program duyurusuyla aynı desen: OTOMATİK DEĞİL, koçun kasıtlı eylemi.
+# İçerik kural tabanlı + KREDİSİZ (koçun AI paketi gerekmez); koça özel notlar
+# ve soru-satırı detayları veliye GİTMEZ.
+
+
+@router.post(
+    "/exams/{exam_id}/notify-parents",
+    response_model=MutationResponse[ExamNotifyParentsResult],
+)
+def teacher_notify_parents_exam_v2(
+    exam_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Deneme sonucunu bağlı velilere e-posta ile duyur (deneme başına bir kez)."""
+    from app.models import NotificationStatus, ParentStudentLink
+    from app.services.notification_producers import produce_exam_result
+
+    exam = _get_owned_exam(db, exam_id, user.id)
+    student = db.get(User, exam.student_id)
+    if student is None:
+        raise _validation_error("student_not_found", "Öğrenci bulunamadı.")
+
+    if exam.parent_notified_at is not None:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "error": "conflict",
+                "code": "already_notified",
+                "message": "Bu denemenin duyurusu zaten yapıldı.",
+            },
+        )
+
+    # Sessize alınmış (muted) veli bağı atlanır — producer ayrıca velinin
+    # bildirim tercihini ve abonelikten çıkışını kontrol eder.
+    links = (
+        db.query(ParentStudentLink)
+        .filter(
+            ParentStudentLink.student_id == student.id,
+            ParentStudentLink.muted.is_(False),
+        )
+        .all()
+    )
+    if not links:
+        raise _validation_error(
+            "no_parent",
+            "Bu öğrenciye bağlı (sessize alınmamış) veli yok.",
+        )
+
+    queued = 0
+    suppressed = 0
+    failures: list[str] = []
+    for link in links:
+        parent = db.get(User, link.parent_id)
+        if parent is None or not parent.is_active:
+            continue
+        try:
+            logs = produce_exam_result(db, parent=parent, student=student, exam=exam)
+            # DİKKAT: enqueue_notification, veli tercihi kapalıyken de satır
+            # yazar (status=SUPPRESSED, denetim izi). Bunu "gönderildi" saymak
+            # koça YALAN söylemek olur — yalnız gerçekten kuyruğa gireni say.
+            for log in logs:
+                if log.status == NotificationStatus.QUEUED:
+                    queued += 1
+                else:
+                    suppressed += 1
+        except Exception as e:
+            # Üretim hatasını SESSİZCE yutup "tercihler kapalı" demek yanıltıcı
+            # olurdu (2026-09-05: bir import hatası tam olarak böyle maskelendi).
+            import logging
+
+            logging.getLogger(__name__).exception("produce_exam_result failed")
+            failures.append(f"{parent.full_name}: {type(e).__name__}")
+
+    if failures:
+        # Damga atma — koç tekrar deneyebilsin.
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail={
+                "error": "server_error",
+                "code": "notify_failed",
+                "message": "Bildirim hazırlanamadı: " + "; ".join(failures[:3]),
+            },
+        )
+    # Hiç gerçek gönderim yoksa DAMGA ATMA — koç "duyurdum" sanmasın, düğme
+    # "Veliye duyur" olarak kalsın (tercih açılınca tekrar denenebilir).
+    if queued:
+        exam.parent_notified_at = datetime.now(timezone.utc)
+    db.commit()
+
+    if queued:
+        msg = f"{queued} veliye deneme sonucu gönderildi."
+        if suppressed:
+            msg += f" ({suppressed} veli bu bildirimi kapatmış.)"
+    else:
+        msg = (
+            "Gönderim yapılmadı — veli(ler) deneme sonucu bildirimini kapatmış."
+        )
+    return MutationResponse[ExamNotifyParentsResult](
+        data=ExamNotifyParentsResult(
+            exam_id=exam.id,
+            queued=queued,
+            suppressed=suppressed,
+            notified_at=(
+                exam.parent_notified_at.isoformat()
+                if exam.parent_notified_at else None
+            ),
+            message=msg,
+        ),
+        invalidate=_invalidate_for_students(user.id, student.id)
+        + [f"teacher:{user.id}:students:{student.id}:exams"],
+    )
