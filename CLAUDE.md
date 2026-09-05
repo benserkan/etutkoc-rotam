@@ -196,16 +196,30 @@ sayfasında **"Mevcut görev" ile "Önerilen değişiklik" AYNI** görünüyordu
 - **#141 KURTARILAMAZ (dürüst not):** o talepte eski kalem silinmiş,
   `task_title_snapshot` boş, canlı görevde yalnız yeni kitap (Orijinal) var →
   eski kaynağın adı kalıcı olarak kayıp. Düzeltme bundan SONRAKİ talepler için.
-- **DERS (dev):** talep testleri `communication_logs` INSERT'i yüzünden dev
-  SQLite'ta yanıt başına ~60 sn kilit bekler (prod PG etkilenmez). Snapshot
-  testinde `_notify_resolved_safe` monkeypatch ile susturuldu — bildirim yolu
-  kendi testlerinde kapsanıyor. AYRICA: iki test koşusu aynı anda çalışırsa
-  kilit kalıcılaşır + iptal edilen koşu YETİM python süreci bırakır (DB'yi
-  tutar) → PID ile öldür, `lgs.db-journal` kalıntısını sil.
-- **`test_api_v2_teacher_requests.py` ÖNCEDEN BOZUK** (bu işle İLGİSİZ):
-  5 senaryodan sonra kendi comm_log yazımıyla kilitlenip `section_progress`
-  UPDATE'inde patlıyor. **Stash testiyle kanıtlandı** — değişiklikler geri
-  alındığında da aynı hata. Düzeltmesi ayrı iş (bildirim susturma deseni).
+- **DEVAMI — KİLİT KÖKTEN ÇÖZÜLDÜ (2026-09-05, aynı gün):** "test önceden
+  bozuk, ayrı iş" değerlendirmem EKSİKTİ; asıl sebep bir ÜRÜN deseni hatasıydı.
+  `send_email` → `comm_log` AÇIK yazma transaction'ının İÇİNDE kendi
+  SessionLocal'ını açıyordu → dev SQLite tek-yazar kilidi (yanıt başına ~60 sn)
+  ve prod'da gereksiz uzayan istek. **CLAUDE.md kuralının e-posta hâli: uzun/dış
+  çağrı açık DB işleminin içinde yapılmaz.**
+  - `request_service`: `approve_request`/`reject_request`/`respond_question`'a
+    **`notify: bool = True`** (geriye uyum — mobil/Jinja çağıranlar değişmez) +
+    yeni public `notify_request_resolved(db, req, action)`.
+  - v2 uçları `notify=False` ile çağırıp **COMMIT SONRASI** bildiriyor.
+  - **SONUÇ: `test_api_v2_teacher_requests.py` artık 14/14** (saniyeler içinde).
+- **DEV SQLite WAL (`app/database.py`):** sqlite bağlantılarında
+  `journal_mode=WAL` + `synchronous=NORMAL` + `busy_timeout=60000` (event
+  listener, yalnız sqlite → **prod PG ETKİLENMEZ**). WAL'da okuyucu yazarı,
+  yazar okuyucuyu bloklamaz. `.gitignore`'a `*.db-wal/-shm/-journal`.
+- **`scripts/dev_unlock.py` (YENİ):** iptal edilen test koşusu Windows'ta YETİM
+  python çocuğu bırakıp DB'yi tutuyordu; sebebi görünmediği için testler
+  saatlerce asılı kalabiliyordu. Araç: yetim `scripts/test_*` süreçlerini yaşıyla
+  listeler → `--kill` → journal/WAL artığını siler → **yazma erişimini fiilen
+  doğrular**. GÜVENLİK: DB zaten yazılabilirse öldürmeyi REDDEDER (o an koşan
+  meşru testi kesmesin) — zorlamak için `--kill --force`. Dev sunucusu
+  (uvicorn/run_dev_patched/app.main) ve kullanıcının diğer projeleri filtre
+  DIŞINDA (canlı doğrulandı: `app.py` süreçlerine dokunmadı).
+  **DERS:** bu makinede `powershell` PATH'te YOK → tam yol (`%SystemRoot%\...  v1.0\powershell.exe`) denenmeden araç sessizce "0 süreç" raporluyordu.
 
 ---
 

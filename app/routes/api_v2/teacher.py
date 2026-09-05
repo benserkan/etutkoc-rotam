@@ -307,6 +307,7 @@ from app.services.request_service import (
     RequestError,
     approve_request as svc_approve_request,
     pending_count_for_teacher,
+    notify_request_resolved as svc_notify_request_resolved,
     reject_request as svc_reject_request,
     respond_question as svc_respond_question,
 )
@@ -5784,8 +5785,11 @@ def teacher_approve_request_v2(
     affected_date: date | None = None
     sp = db.begin_nested()
     try:
+        # notify=False: bildirim COMMIT SONRASI gönderilir — comm_log yazımı
+        # açık transaction içinde kalırsa SQLite tek-yazar kilidine takılır ve
+        # istek gereksiz uzar (2026-09-05).
         affected_task = svc_approve_request(
-            db, teacher=user, req=req, response=body.response,
+            db, teacher=user, req=req, response=body.response, notify=False,
         )
         if affected_task is not None:
             affected_date = affected_task.date
@@ -5801,6 +5805,7 @@ def teacher_approve_request_v2(
         raise
     db.commit()
     db.refresh(req)
+    svc_notify_request_resolved(db, req, "approved")
     return MutationResponse[TeacherRequestDetail](
         data=_build_request_detail(db, req),
         invalidate=_invalidate_for_request(req, user.id, affected_date=affected_date),
@@ -5842,12 +5847,15 @@ def teacher_reject_request_v2(
             },
         )
     try:
-        svc_reject_request(db, teacher=user, req=req, response=reason)
+        svc_reject_request(
+            db, teacher=user, req=req, response=reason, notify=False,
+        )
         db.commit()
     except RequestError as e:
         db.rollback()
         raise _request_error_to_http(e)
     db.refresh(req)
+    svc_notify_request_resolved(db, req, "rejected")
     return MutationResponse[TeacherRequestDetail](
         data=_build_request_detail(db, req),
         invalidate=_invalidate_for_request(req, user.id),
@@ -5898,12 +5906,15 @@ def teacher_respond_request_v2(
             },
         )
     try:
-        svc_respond_question(db, teacher=user, req=req, response=response_text)
+        svc_respond_question(
+            db, teacher=user, req=req, response=response_text, notify=False,
+        )
         db.commit()
     except RequestError as e:
         db.rollback()
         raise _request_error_to_http(e)
     db.refresh(req)
+    svc_notify_request_resolved(db, req, "answered")
     return MutationResponse[TeacherRequestDetail](
         data=_build_request_detail(db, req),
         invalidate=_invalidate_for_request(req, user.id),

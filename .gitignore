@@ -46,3 +46,8 @@ app/static/video/
 #   python -m scripts.build_tanitim_pdf                 (PDF)
 .doc-build/
 docs/rotam-tanitim-kilavuzu.pdf
+
+# SQLite WAL yan dosyaları (dev)
+*.db-wal
+*.db-shm
+*.db-journal

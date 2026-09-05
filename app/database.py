@@ -23,6 +23,28 @@ engine = create_engine(
     future=True,
 )
 
+# SQLite (yalnız dev) — WAL: okuyucular yazarı, yazar okuyucuları BLOKLAMAZ.
+# Varsayılan (rollback journal) modda tek bir yazma transaction'ı tüm okumaları
+# da kilitliyor; uzun istekler + arka plan yazımları (comm_log, panel ziyareti,
+# heartbeat) birbirini "database is locked" ile düşürüyordu. WAL bunu büyük
+# ölçüde ortadan kaldırır; kalan yazar-yazar çakışmasını `timeout=60` yutar.
+# Prod (Postgres) ETKİLENMEZ — event yalnız sqlite bağlantılarında çalışır.
+if settings.database_url.startswith("sqlite"):
+    from sqlalchemy import event as _sa_event
+
+    @_sa_event.listens_for(engine, "connect")
+    def _sqlite_pragmas(dbapi_conn, _rec):  # pragma: no cover (dev-only)
+        cur = dbapi_conn.cursor()
+        try:
+            cur.execute("PRAGMA journal_mode=WAL")
+            cur.execute("PRAGMA synchronous=NORMAL")
+            cur.execute("PRAGMA busy_timeout=60000")
+        except Exception:
+            pass
+        finally:
+            cur.close()
+
+
 SessionLocal = sessionmaker(bind=engine, autoflush=False, autocommit=False, future=True)
 
 

@@ -356,8 +356,27 @@ def snapshot_task_state(db: Session, req: TaskRequest) -> None:
     req.task_items_snapshot = json.dumps(items, ensure_ascii=False)
 
 
+def notify_request_resolved(db: Session, req: TaskRequest, action: str) -> None:
+    """Yanıt bildirimini COMMIT SONRASI gönder (2026-09-05).
+
+    E-posta/push yolu `comm_log`'a yazar; bu yazım AÇIK bir transaction içinde
+    yapılırsa dev SQLite tek-yazar kilidine takılır (yanıt başına ~60 sn) ve
+    prod'da da isteği gereksiz uzatır. CLAUDE.md kuralının e-posta hâli:
+    uzun/dış çağrı açık DB işleminin İÇİNDE yapılmaz.
+
+    Endpoint'ler `notify=False` ile servis çağırır, commit eder, sonra bunu
+    çağırır. Best-effort: asla raise etmez.
+    """
+    try:
+        _notify_resolved_safe(db, req, action)
+    except Exception:
+        import logging
+        logging.getLogger(__name__).exception("notify_request_resolved failed")
+
+
 def reject_request(
-    db: Session, *, teacher: User, req: TaskRequest, response: str | None = None
+    db: Session, *, teacher: User, req: TaskRequest, response: str | None = None,
+    notify: bool = True,
 ) -> None:
     if req.teacher_id != teacher.id:
         raise RequestError("Bu talep size ait değil.")
@@ -367,11 +386,13 @@ def reject_request(
     req.status = RequestStatus.REJECTED
     req.teacher_response = (response or "").strip() or None
     req.responded_at = datetime.now(timezone.utc)
-    _notify_resolved_safe(db, req, "rejected")
+    if notify:
+        _notify_resolved_safe(db, req, "rejected")
 
 
 def respond_question(
-    db: Session, *, teacher: User, req: TaskRequest, response: str
+    db: Session, *, teacher: User, req: TaskRequest, response: str,
+    notify: bool = True,
 ) -> None:
     if req.teacher_id != teacher.id:
         raise RequestError("Bu talep size ait değil.")
@@ -384,11 +405,13 @@ def respond_question(
     req.teacher_response = response.strip()
     req.status = RequestStatus.RESOLVED
     req.responded_at = datetime.now(timezone.utc)
-    _notify_resolved_safe(db, req, "answered")
+    if notify:
+        _notify_resolved_safe(db, req, "answered")
 
 
 def approve_request(
-    db: Session, *, teacher: User, req: TaskRequest, response: str | None = None
+    db: Session, *, teacher: User, req: TaskRequest, response: str | None = None,
+    notify: bool = True,
 ) -> Task | None:
     """Talebi onayla ve uygula. Uygulanan/yeni Task döner (varsa)."""
     if req.teacher_id != teacher.id:
@@ -420,7 +443,8 @@ def approve_request(
     req.status = RequestStatus.APPROVED
     req.teacher_response = (response or "").strip() or req.teacher_response
     req.responded_at = datetime.now(timezone.utc)
-    _notify_resolved_safe(db, req, "approved")
+    if notify:
+        _notify_resolved_safe(db, req, "approved")
     return affected_task
 
 
