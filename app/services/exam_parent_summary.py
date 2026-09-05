@@ -10,6 +10,12 @@ VELİ DİLİ İLKELERİ (weekly_parent_report ile aynı çizgi):
   · Koça özel notlar, soru-satırı detayları GİRMEZ (yalnız ders bazı + net).
   · Karşılaştırma AYNI SINAV TÜRÜ içinde yapılır (TYT 120 soru ile AYT 80
     soruyu kıyaslamak yanıltıcı olur — 2026-07-17'de yaşanan tuzak).
+  · ALANA GÖRE ODAK: sayısal öğrenciye "Coğrafya'ya ağırlık vereceğiz" demek
+    koçluk değil tablo okumaktır. Odak yalnız alanın BELKEMİĞİ derslerinden
+    seçilir; alan-dışı ders tabloda görünür ama cümleye girmez.
+  · KONU DÜZEYİ: deneme içe aktarılmışsa (soru satırı + konu eşleşmesi var)
+    "matematikte 3 soruda takıldı: Fonksiyonlar, ..." denir. Ders adı tek
+    başına koça da veliye de bir şey söylemez; konu söyler.
 """
 from __future__ import annotations
 
@@ -19,6 +25,9 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from app.models import ExamResult
+from app.models.curriculum import Subject, Topic
+from app.models.exam_result import EQ_RESULT_YANLIS, ExamResultQuestion
+from app.models.user import Track
 
 # Bir dersi "öne çıkan" saymak için en az bu kadar soru olmalı — 2 soruluk
 # bir dersten "en güçlü dersi" çıkarmak yanıltıcı olur.
@@ -85,6 +94,81 @@ def _wilson_lower(correct: int, total: int, z: float = 1.96) -> float:
     return max(0.0, (centre - margin) / denom)
 
 
+# Bir dersi "odak" olarak önermek için en az bu kadar YANLIŞ olmalı — tek
+# yanlış tesadüftür, ondan zayıflık çıkarmak veliyi yanıltır.
+MIN_WRONG_FOR_FOCUS = 2
+
+# Odak cümlesinde en fazla kaç ders / ders başına kaç konu adı geçsin.
+MAX_FOCUS_SUBJECTS = 2
+MAX_TOPICS_PER_SUBJECT = 3
+
+# Alanın belkemiği dersleri (ders adı "TYT Matematik" / "AYT Geometri" gibi
+# önekli gelir → anahtar kelimeyle eşleşir). Türkçe her alanda kritiktir:
+# TYT'nin en yüksek soru ağırlıklı dersi.
+_TRACK_CORE: dict[Track, set[str]] = {
+    Track.SAYISAL: {"matematik", "geometri", "fizik", "kimya", "biyoloji", "turkce"},
+    Track.EA: {"matematik", "geometri", "turkce", "edebiyat", "tarih", "cografya"},
+    Track.SOZEL: {"turkce", "edebiyat", "tarih", "cografya", "felsefe", "din"},
+    Track.DIL: {"turkce", "ingilizce", "yabanci dil"},
+}
+
+_TR_MAP = str.maketrans("İIıŞşĞğÜüÖöÇç", "iiissgguuoocc")
+
+
+def _norm(text: str | None) -> str:
+    """Türkçe-güvenli sadeleştirme ('TYT Türkçe' → 'tyt turkce')."""
+    return (text or "").translate(_TR_MAP).lower()
+
+
+def _is_core_subject(name: str, track: Track | None) -> bool:
+    """Ders öğrencinin alanının belkemiği mi? Alan yoksa (LGS / 9-10 / henüz
+    seçmemiş) filtre uygulanmaz — hepsi kritik sayılır."""
+    keywords = _TRACK_CORE.get(track) if track else None
+    if not keywords:
+        return True
+    n = _norm(name)
+    return any(k in n for k in keywords)
+
+
+def _short_subject(name: str) -> str:
+    """Veli cümlesinde sınav öneki gürültü: 'TYT Matematik' → 'Matematik'."""
+    for prefix in ("TYT ", "AYT ", "YDT ", "LGS "):
+        if name.startswith(prefix):
+            return name[len(prefix):]
+    return name
+
+
+def _short_topic(name: str) -> str:
+    """'Katı Cisimler (Prizma, Piramit, ...)' → 'Katı Cisimler'."""
+    return name.split("(")[0].strip(" -–") or name
+
+
+def _wrong_topics_by_subject(db: Session, exam: ExamResult) -> dict[str, list[str]]:
+    """Ders → yanlış yapılan KONU adları (müfredata bağlanmış sorulardan).
+
+    Yalnız içe aktarılmış (soru satırlı) denemelerde doludur; elle girilen
+    denemede boş döner → çağıran ders-bazlı eski dile düşer.
+    """
+    rows = (
+        db.query(Subject.name, Topic.name)
+        .select_from(ExamResultQuestion)
+        .join(Subject, Subject.id == ExamResultQuestion.subject_id)
+        .join(Topic, Topic.id == ExamResultQuestion.topic_id)
+        .filter(
+            ExamResultQuestion.exam_result_id == exam.id,
+            ExamResultQuestion.result == EQ_RESULT_YANLIS,
+        )
+        .all()
+    )
+    out: dict[str, list[str]] = {}
+    for subject_name, topic_name in rows:
+        bucket = out.setdefault(subject_name, [])
+        label = _short_topic(topic_name)
+        if label not in bucket:  # aynı konudan 2 yanlış → tek kez yaz
+            bucket.append(label)
+    return out
+
+
 def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
     """Veli e-postasının içeriği: sayılar + konuşma dilinde cümleler."""
     subjects = _subjects(exam)
@@ -127,23 +211,28 @@ def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
             "istikrarlı bir tablo."
         )
 
-    # En güçlü ders + odaklanılacak ders (yeterli soru sayısı olanlardan)
+    # --- Odak ALANA GÖRE daralır: sayısal öğrenciye "Coğrafya'ya ağırlık
+    # vereceğiz" demek koçluk değil. Alan-dışı ders tabloda görünür, cümleye
+    # girmez. Alan yoksa (LGS / 9-10) filtre uygulanmaz.
+    track = exam.student.track if exam.student else None
     ranked = [
         s for s in subjects
-        if not s["unmatched"] and s["questions"] >= MIN_QUESTIONS_FOR_HIGHLIGHT
+        if not s["unmatched"]
+        and s["questions"] >= MIN_QUESTIONS_FOR_HIGHLIGHT
+        and _is_core_subject(s["name"], track)
     ]
+
+    # HAM ORAN YETMEZ: 5 soruda %100, 40 soruda %90'dan güçlü kanıt değil
+    # (küçük örneklem tesadüfü). Wilson alt sınırı az soruyu cezalandırır:
+    #   5/5  → 0.57   ·   36/40 → 0.77   ·   3/5 → 0.23
+    def acc(s: dict) -> float:
+        answered = s["correct"] + s["wrong"]
+        if not answered:
+            return 0.0
+        return _wilson_lower(s["correct"], answered)
+
     best = worst = None
     if ranked:
-        # HAM ORAN YETMEZ: 5 soruda %100, 40 soruda %90'dan güçlü kanıt değil
-        # (küçük örneklem tesadüfü). Wilson alt sınırı az soruyu cezalandırır:
-        #   5/5  → 0.57   ·   36/40 → 0.77   ·   3/5 → 0.23
-        # Böylece "en rahat olduğu bölüm" gerçekten istikrarlı olanı gösterir.
-        def acc(s: dict) -> float:
-            answered = s["correct"] + s["wrong"]
-            if not answered:
-                return 0.0
-            return _wilson_lower(s["correct"], answered)
-
         ranked_sorted = sorted(ranked, key=acc)
         worst = ranked_sorted[0]
         best = ranked_sorted[-1]
@@ -153,13 +242,36 @@ def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
 
     if best is not None:
         lines.append(
-            f"En rahat olduğu bölüm {best['name']} "
+            f"En rahat olduğu bölüm {_short_subject(best['name'])} "
             f"({best['correct']} doğru / {best['questions']} soru)."
         )
-    if worst is not None:
+
+    # --- Odak cümlesi: önce KONU düzeyi (içe aktarılmış denemede soru satırı
+    # var → "matematikte şu konularda takıldı"), yoksa ders düzeyine düşer.
+    # Ders adı tek başına ne koça ne veliye bir şey söyler; konu söyler.
+    wrong_topics = _wrong_topics_by_subject(db, exam)
+    focus_bits: list[str] = []
+    for s in sorted(
+        (s for s in ranked if s["wrong"] >= MIN_WRONG_FOR_FOCUS), key=acc
+    )[:MAX_FOCUS_SUBJECTS]:
+        topics = wrong_topics.get(s["name"], [])[:MAX_TOPICS_PER_SUBJECT]
+        if topics:
+            focus_bits.append(
+                f"{_short_subject(s['name'])} ({s['wrong']} soru): "
+                + ", ".join(topics)
+            )
+
+    if focus_bits:
         lines.append(
-            f"Önümüzdeki dönemde {worst['name']} bölümüne ağırlık vereceğiz; "
-            "programına bu konudan çalışma ekleyeceğiz."
+            "Bu denemede en çok şu konularda takıldı — " + " · ".join(focus_bits) + "."
+        )
+        lines.append(
+            "Programına önümüzdeki dönemde bu konulardan çalışma ekleyeceğiz."
+        )
+    elif worst is not None:
+        lines.append(
+            f"Önümüzdeki dönemde {_short_subject(worst['name'])} bölümüne "
+            "ağırlık vereceğiz; programına bu konudan çalışma ekleyeceğiz."
         )
 
     return {
@@ -186,6 +298,7 @@ def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
             prev.exam_date.isoformat() if prev is not None and prev.exam_date else None
         ),
         "subjects": subjects,
+        "focus_topics": focus_bits,
         "narrative": lines,
     }
 

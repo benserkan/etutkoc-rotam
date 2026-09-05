@@ -17,6 +17,10 @@ Senaryolar:
   10. Velisi olmayan öğrenci → 422 no_parent
   11. Veli tercihi kapalıysa e-posta ÜRETİLMEZ ama akış patlamaz
   12. Sahiplik: başka koçun denemesi → 404
+  13. ALAN FARKINDALIĞI: sayısal öğrenciye alan-dışı ders (Coğrafya) odak
+      olarak ÖNERİLMEZ — tabloda görünür ama cümleye girmez
+  14. KONU DÜZEYİ: içe aktarılmış denemede "şu konularda takıldı" + gerçek
+      konu adları (ders adı tek başına koçluk değil)
 """
 from __future__ import annotations
 
@@ -34,6 +38,8 @@ from fastapi.testclient import TestClient
 from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
+from app.models.curriculum import Subject, Topic
+from app.models.exam_result import ExamResultQuestion
 from app.main import app
 from app.models import (
     ExamResult,
@@ -43,6 +49,7 @@ from app.models import (
     ParentNotificationPref,
     ParentStudentLink,
     SuspiciousIp,
+    Track,
     User,
     UserRole,
 )
@@ -78,7 +85,7 @@ def seed() -> dict:
         db.flush()
         st = User(email=f"{PFX}_s@test.invalid", password_hash=hash_password(PWD),
                   full_name="Emir Deneme", role=UserRole.STUDENT, is_active=True,
-                  teacher_id=coach.id, grade_level=12)
+                  teacher_id=coach.id, grade_level=12, track=Track.SAYISAL)
         solo = User(email=f"{PFX}_s2@test.invalid", password_hash=hash_password(PWD),
                     full_name="Velisiz Öğrenci", role=UserRole.STUDENT,
                     is_active=True, teacher_id=coach.id, grade_level=12)
@@ -113,10 +120,13 @@ def seed() -> dict:
 
         # KÜÇÜK ÖRNEKLEM TUZAĞI: Din 5/5 (%100) ham oranda Türkçe 36/40'ı (%90)
         # geçer ama 5 soruluk kanıt zayıftır — Wilson alt sınırı bunu eler.
+        # ALAN TUZAĞI: Coğrafya 3/5 tablodaki EN ZAYIF ders — ama öğrenci
+        # SAYISAL, alan-dışı derse "ağırlık vereceğiz" demek koçluk değil.
         nets = (
             '[{"name":"TYT Türkçe","correct":36,"wrong":4,"blank":0,"net":35.0},'
             '{"name":"TYT Din Kültürü","correct":5,"wrong":0,"blank":0,"net":5.0},'
             '{"name":"TYT Matematik","correct":20,"wrong":18,"blank":2,"net":15.5},'
+            '{"name":"TYT Coğrafya","correct":3,"wrong":2,"blank":0,"net":2.5},'
             '{"name":"Sosyal Bilimler","correct":2,"wrong":0,"blank":0,"net":2.0,'
             '"unmatched":true}]'
         )
@@ -125,6 +135,33 @@ def seed() -> dict:
                   ExamSection.TYT, 58, 20, 42, 53.0)
         cur = mk(st.id, "ÜçDörtBeş TYT Son Düzlük", date(2026, 9, 2),
                  ExamSection.TYT, 58, 22, 40, 52.5, nets)
+        # İçe aktarılmış denemenin soru satırları — konu düzeyi dilin kaynağı.
+        # Coğrafya'da da yanlış var: alan filtresi çalışmazsa cümleye sızar.
+        subj_ids: dict[str, int] = {}
+        for sname, topics in (
+            ("TYT Matematik", ["Fonksiyonlar", "Yaş Problemleri"]),
+            ("TYT Coğrafya", ["Nüfus", "Yerin Şekillenmesi"]),
+        ):
+            sub = db.query(Subject).filter(Subject.name == sname).first()
+            if sub is None:
+                sub = Subject(name=sname, teacher_id=None)
+                db.add(sub)
+                db.flush()
+            subj_ids[sname] = sub.id
+            for tname in topics:
+                tp = (db.query(Topic)
+                      .filter(Topic.subject_id == sub.id, Topic.name == tname)
+                      .first())
+                if tp is None:
+                    tp = Topic(subject_id=sub.id, name=tname, order=0)
+                    db.add(tp)
+                    db.flush()
+                db.add(ExamResultQuestion(
+                    exam_result_id=cur.id, subject_id=sub.id, topic_id=tp.id,
+                    result="yanlis",
+                ))
+        db.flush()
+
         # AYT denemesi — TYT ile kıyaslanmamalı
         ayt = mk(st.id, "AYT Denemesi", date(2026, 9, 1),
                  ExamSection.AYT_SAY, 30, 8, 42, 28.0)
@@ -156,6 +193,11 @@ def cleanup(s: dict) -> None:
             ParentNotificationPref.parent_id.in_(ids)))
         db.execute(sa_delete(ParentStudentLink).where(
             ParentStudentLink.parent_id.in_(ids)))
+        exam_ids = [r[0] for r in db.query(ExamResult.id)
+                    .filter(ExamResult.student_id.in_(ids)).all()]
+        if exam_ids:
+            db.execute(sa_delete(ExamResultQuestion).where(
+                ExamResultQuestion.exam_result_id.in_(exam_ids)))
         db.execute(sa_delete(ExamResult).where(ExamResult.student_id.in_(ids)))
         db.execute(sa_delete(SuspiciousIp).where(SuspiciousIp.ip == "testclient"))
         db.execute(sa_delete(User).where(User.id.in_(ids)))
@@ -216,7 +258,7 @@ def main() -> int:
         check("3. içerik: net + D/Y/B + ders kırılımı + öğrenci linki",
               p.get("net_text") == "52,50" and p.get("correct") == 58
               and p.get("wrong") == 22 and p.get("blank") == 40
-              and len(p.get("subjects", [])) == 4
+              and len(p.get("subjects", [])) == 5
               and p.get("student_id") == sid
               and p.get("__template") == "parent_exam_result",
               f"net={p.get('net_text')} subjects={len(p.get('subjects', []))}")
@@ -230,8 +272,22 @@ def main() -> int:
 
         # ---- 4b. KÜÇÜK ÖRNEKLEM: 5/5 ders "en rahat" diye öne çıkmamalı
         check("4b. az soruluk %100 ders 'en güçlü' sayılmaz (Wilson alt sınırı)",
-              "Din Kültürü" not in narr and "TYT Türkçe" in narr,
+              "Din Kültürü" not in narr and "Türkçe" in narr,
               f"{narr[:220]}")
+
+        # ---- 13. ALAN: sayısal öğrenciye Coğrafya odak olarak önerilmez
+        check("13. alan-dışı ders (Coğrafya) odak cümlesine GİRMEZ, tabloda var",
+              "Coğrafya" not in narr
+              and any("Coğrafya" in (x.get("name") or "")
+                      for x in p.get("subjects", [])),
+              f"{narr[:240]}")
+
+        # ---- 14. KONU DÜZEYİ: gerçek konu adları geçmeli
+        check("14. konu düzeyi dil: 'şu konularda takıldı' + konu adları",
+              "konularda takıldı" in narr
+              and "Fonksiyonlar" in narr and "Yaş Problemleri" in narr
+              and "Nüfus" not in narr,
+              f"{narr[:240]}")
 
         # ---- 7. kıyas AYNI TÜR içinde (AYT karışmadı)
         check("7. karşılaştırma AYNI TÜR içinde (AYT ile TYT kıyaslanmadı)",
