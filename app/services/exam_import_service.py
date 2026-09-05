@@ -1300,10 +1300,22 @@ def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
 
         key = ("dogru", "yanlis", "bos").index(res)
         totals[("correct", "wrong", "blank")[key]] += 1
-        gname = (subj_by_id[sid].name if sid in subj_by_id else None) \
+        # Konu müfredata bağlandıysa ders Rotam taksonomisinden gelir; yoksa
+        # BELGENİN ham ders adı kullanılır ("Sosyal Bilimler" gibi Rotam'da
+        # KARŞILIĞI OLMAYAN bir ad olabilir). Böyle bir satırı gerçek bir
+        # dersmiş gibi göstermek yanıltıcı (saha 2026-09-05: koç "böyle bir ders
+        # yok" dedi) → `unmatched` bayrağıyla işaretlenir, UI ayırt eder.
+        matched = sid in subj_by_id
+        gname = (subj_by_id[sid].name if matched else None) \
             or (str(r.get("subject_raw") or "").strip() or "Diğer")
         gname = _display_name(gname, display_map)
-        g = groups.setdefault(gname, {"name": gname, "correct": 0, "wrong": 0, "blank": 0})
+        g = groups.setdefault(
+            gname,
+            {"name": gname, "correct": 0, "wrong": 0, "blank": 0,
+             "unmatched": True},
+        )
+        if matched:
+            g["unmatched"] = False
         g[("correct", "wrong", "blank")[key]] += 1
 
         # sözlük öğrenmesi için izler

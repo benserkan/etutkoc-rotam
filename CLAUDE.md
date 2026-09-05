@@ -310,6 +310,33 @@ ve görev geçmişi kitaba bağlı; ayrıca "Kaldır" rezerv varsa 409 veriyor.
 
 ---
 
+## DENEME KARTI 2 SAHA DÜZELTMESİ — CANLI (2026-09-05, migration YOK)
+
+**Tetikleyici (koç, /teacher/students/113#exams ekran görüntüsü):**
+1. **Net başlığa yapışıyordu:** net kutusu `w-16` (64px) sabitti; "102.75"
+   `text-2xl`'de ~78px → taşıp deneme adına değiyordu. `w-24` + `gap-4` +
+   `whitespace-nowrap` (LGS/TYT'de net 6 haneye kadar çıkar).
+2. **"Sosyal Bilimler 2 doğru" — Rotam'da BÖYLE BİR DERS YOK.** Kök neden
+   `_prepare_confirm`: ders grubu `konu eşleştiyse Rotam dersi, YOKSA BELGENİN
+   HAM ders adı`. Emir'in denemesinde 2 soru müfredat konusuna bağlanamamış →
+   local raporun kendi başlığı ("Sosyal Bilimler") gerçek bir dersmiş gibi
+   satır olmuş (Din Kültürü 5 soruydu → 3 eşleşti + 2 sahte satıra düştü).
+   **Düzeltme:** grup artık `unmatched` bayrağı taşır (JSON, şema/migration
+   YOK) → `ExamSubjectRow.unmatched` → UI'da amber **"müfredata bağlanmadı"**
+   rozeti + tooltip. Net hesabı DEĞİŞMEZ (o sorular toplam nete zaten giriyor).
+   **ASIL çözüm koçta:** "Satırları düzelt" ile 2 soruyu bağlayınca satır
+   kaybolur, Din Kültürü 5'e çıkar. Bayrak yalnız görünürlüğü dürüstleştirir.
+   **Eski kayıtlarda bayrak YOK** (rozet çıkmaz) — üstteki sarı "N soru
+   müfredat konusuna bağlanmadan kaydedilmiş" uyarısı zaten bilgiyi veriyor;
+   satır düzeltilip yeniden kaydedilince bayrak da gelir.
+- Regresyon: exam_import 75 · teacher_exams 18 · exam_topic_analysis 10 ·
+  period_views 13 GREEN; tsc+eslint temiz.
+- **DERS (test koşumu):** 4 suite ARDIŞIK koşarken exam_topic_analysis 3/10
+  düştü, TEK BAŞINA 10/10 — WAL'a rağmen yazar-yazar çakışması olabiliyor.
+  Kırmızı gördüğünde suite'i tek başına tekrarla.
+
+---
+
 ## 8→9 GEÇİŞ SİHİRBAZI (P5) — CANLI (2026-09-05, migration YOK)
 
 **Kullanıcı sorusu (birebir):** "8'den 9'a geçme ile 9'dan 10'a geçme

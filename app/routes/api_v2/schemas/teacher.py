@@ -1937,6 +1937,10 @@ class ExamSubjectRow(BaseModel):
     wrong: int
     blank: int
     net: float
+    # True → bu satır Rotam müfredat dersine BAĞLANMAMIŞ; ad belgeden geldiği
+    # gibi ("Sosyal Bilimler" gibi taksonomide karşılığı olmayan bir başlık
+    # olabilir). UI bunu gerçek dersten ayırır; koç satırları düzeltince kaybolur.
+    unmatched: bool = False
 
 
 class ExamResultRow(BaseModel):

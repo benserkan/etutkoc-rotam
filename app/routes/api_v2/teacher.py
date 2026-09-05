@@ -1061,6 +1061,7 @@ def _build_exam_row(exam: ExamResult, *, created_by_name: str | None) -> ExamRes
                         wrong=int(item.get("wrong", 0)),
                         blank=int(item.get("blank", 0)),
                         net=float(item.get("net", 0.0)),
+                        unmatched=bool(item.get("unmatched", False)),
                     )
                 )
         except (ValueError, TypeError, AttributeError):

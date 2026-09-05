@@ -390,9 +390,11 @@ function ExamRow({
     <li>
       <Card>
         <CardContent className="p-3">
-          <div className="flex items-center gap-3">
-            <div className="text-center shrink-0 w-16">
-              <p className="text-2xl font-semibold tabular-nums leading-none">
+          <div className="flex items-center gap-4">
+            {/* Net kutusu: "120.00" 6 haneye kadar çıkar — dar sabit genişlikte
+                başlığa yapışıyordu (saha, 2026-09-05). */}
+            <div className="text-center shrink-0 w-24">
+              <p className="text-2xl font-semibold tabular-nums leading-none whitespace-nowrap">
                 {row.net.toFixed(2)}
               </p>
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground mt-0.5">
@@ -519,7 +521,17 @@ function ExamRow({
                 <tbody>
                   {row.subjects.map((s, i) => (
                     <tr key={i} className="border-t border-border/50">
-                      <td className="py-1">{s.name}</td>
+                      <td className="py-1">
+                        {s.name}
+                        {s.unmatched ? (
+                          <span
+                            className="ml-1.5 inline-flex items-center rounded border border-amber-300 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+                            title="Bu satır bir Rotam dersine bağlanmadı — ad denemenin kendi başlığından geldi. 'Satırları düzelt' ile konuları bağlayınca doğru derse geçer."
+                          >
+                            müfredata bağlanmadı
+                          </span>
+                        ) : null}
+                      </td>
                       <td className="py-1 text-right tabular-nums text-emerald-600">
                         {s.correct}
                       </td>

@@ -1844,6 +1844,8 @@ export interface ExamSubjectRow {
   wrong: number;
   blank: number;
   net: number;
+  /** true → Rotam dersine bağlanmadı; ad belgeden geldi. */
+  unmatched?: boolean;
 }
 
 export interface ExamResultRow {
