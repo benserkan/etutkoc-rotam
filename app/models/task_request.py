@@ -101,6 +101,12 @@ class TaskRequest(Base):
     # `_apply_remove` (request_service) silmeden önce yazar.
     task_title_snapshot: Mapped[str | None] = mapped_column(String(200), nullable=True)
     task_date_snapshot: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # Talebin YANITLANDIĞI andaki görev kalemleri (JSON liste):
+    #   [{"book_name","section_label","planned_count","completed_count","unit"}]
+    # REPLACE/CHANGE onayı görevi değiştirdiği için "Mevcut görev" bloğu canlı
+    # görevden okununca önerilenle aynı görünüyordu (2026-09-05 saha hatası).
+    # Yanıt anında dondurulur; eski taleplerde NULL → UI canlı göreve düşer.
+    task_items_snapshot: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

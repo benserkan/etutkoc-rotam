@@ -165,6 +165,50 @@ oluşturdum, düzeltemedim; mecburen 02-08 için ikinci program açtım."
 
 ---
 
+## TALEP DETAYI — "Mevcut görev" onay sonrası donuyor — CANLI (2026-09-05, migration `u6v9y2z3y77u`)
+
+**Tetikleyici (koç, /teacher/requests/141):** öğrenci "Kaynağı değiştir" talebi
+açtı ("orijinalden başlamak daha iyi olur"); koç ONAYLADIKTAN sonra detay
+sayfasında **"Mevcut görev" ile "Önerilen değişiklik" AYNI** görünüyordu → koç
+"neyi onayladım, öğrenci neyi değiştirmek istemişti" sorusunu yanıtlayamıyordu.
+- **KÖK NEDEN:** "Mevcut görev" bloğu CANLI görevden okunuyordu. `_apply_replace`
+  eski kalemleri SİLER + başlığı yeni kaynağa göre YENİDEN YAZAR (`_apply_change`
+  de sayıyı ezer) → onaydan sonra canlı hâl önerilenle özdeş. Snapshot YALNIZ
+  REMOVE'da vardı (`task_title/date_snapshot`, silinen görev için).
+- **Migration `u6v9y2z3y77u`** (← t5u8x1y2x66t, additive): `task_requests.
+  task_items_snapshot` (Text/JSON: book_name · section_label · planned · completed
+  · unit).
+- **`request_service.snapshot_task_state`** — approve VE reject akışında,
+  **uygulamadan ÖNCE** çağrılır; başlık + tarih + kalemleri dondurur. İdempotent
+  (snapshot varsa dokunmaz). Bekleyen talepte hâlâ CANLI görev gösterilir
+  (koç onaylamadan önce güncel hâli görmeli) — donma yalnız yanıt anında.
+- **Detay ucu snapshot-öncelikli** (`_build_request_detail`): snapshot varsa
+  ondan kurulur + `current_is_snapshot=True`; yoksa canlı göreve düşer →
+  **eski taleplerde davranış birebir korunur**. Başlık/tarih de snapshot
+  öncelikli (detay + liste satırı, ikisi de).
+- **UI:** blok başlığı **"Talep anındaki görev"** + "onay/red anında dondurulmuş
+  hâli; güncel hâl için o günün programına bak" notu (link).
+- **Test `test_api_v2_request_snapshot.py` 9/9** — bekleyen canlı · REPLACE onayı
+  sonrası eski KİTAP görünür · başlık/tarih · bayrak · önerilen farkı ·
+  **onay GERÇEKTEN uygulandı** (snapshot canlıyı maskelemesin) · CHANGE'de eski
+  sayı · red · snapshot'sız eski kayıt. **Ayırt edicilik KANITLI:** snapshot
+  kapatılınca test 2 tam olarak sahadaki hatayı üretti.
+- **#141 KURTARILAMAZ (dürüst not):** o talepte eski kalem silinmiş,
+  `task_title_snapshot` boş, canlı görevde yalnız yeni kitap (Orijinal) var →
+  eski kaynağın adı kalıcı olarak kayıp. Düzeltme bundan SONRAKİ talepler için.
+- **DERS (dev):** talep testleri `communication_logs` INSERT'i yüzünden dev
+  SQLite'ta yanıt başına ~60 sn kilit bekler (prod PG etkilenmez). Snapshot
+  testinde `_notify_resolved_safe` monkeypatch ile susturuldu — bildirim yolu
+  kendi testlerinde kapsanıyor. AYRICA: iki test koşusu aynı anda çalışırsa
+  kilit kalıcılaşır + iptal edilen koşu YETİM python süreci bırakır (DB'yi
+  tutar) → PID ile öldür, `lgs.db-journal` kalıntısını sil.
+- **`test_api_v2_teacher_requests.py` ÖNCEDEN BOZUK** (bu işle İLGİSİZ):
+  5 senaryodan sonra kendi comm_log yazımıyla kilitlenip `section_progress`
+  UPDATE'inde patlıyor. **Stash testiyle kanıtlandı** — değişiklikler geri
+  alındığında da aynı hata. Düzeltmesi ayrı iş (bildirim susturma deseni).
+
+---
+
 ## "BU DÖNEM" VARSAYILANI (P3) — CANLI (2026-09-04, migration YOK)
 
 **Kullanıcı ihtiyacı (birebir):** "geçen yılın deneme sonuçlarına bir yerden

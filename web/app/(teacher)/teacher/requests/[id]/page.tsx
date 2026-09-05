@@ -90,7 +90,22 @@ export default async function TeacherRequestDetailPage({ params }: PageProps) {
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Mevcut görev</CardTitle>
+            <CardTitle className="text-base">
+              {req.current_is_snapshot ? "Talep anındaki görev" : "Mevcut görev"}
+            </CardTitle>
+            {req.current_is_snapshot ? (
+              <p className="text-xs text-muted-foreground">
+                Onay/red anında dondurulmuş hâli — öğrencinin neyi değiştirmek
+                istediği burada görünür. Görevin güncel hâli için{" "}
+                <Link
+                  href={`/teacher/students/${req.student_id}/day?date=${req.task_date}`}
+                  className="underline underline-offset-2"
+                >
+                  o günün programına
+                </Link>{" "}
+                bak.
+              </p>
+            ) : null}
           </CardHeader>
           <CardContent className="space-y-2 text-sm">
             {req.task_id ? (

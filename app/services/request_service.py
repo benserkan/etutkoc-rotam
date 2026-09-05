@@ -13,6 +13,8 @@ Akış:
 
 from __future__ import annotations
 
+import json
+
 from datetime import date, datetime, timezone
 
 from sqlalchemy import func
@@ -311,6 +313,49 @@ def withdraw_request(db: Session, *, student: User, req: TaskRequest) -> None:
     req.responded_at = datetime.now(timezone.utc)
 
 
+def snapshot_task_state(db: Session, req: TaskRequest) -> None:
+    """Talebe konu görevin YANIT ANINDAKİ hâlini dondur (2026-09-05 saha hatası).
+
+    REPLACE/CHANGE onayı görevi yerinde değiştirir (kalemler silinir, başlık
+    yeniden yazılır). "Mevcut görev" bloğu canlı görevden okununca onay sonrası
+    ÖNERİLENLE AYNI görünüyor ve koç neyi onayladığını göremiyordu.
+
+    Bu yüzden uygulamadan ÖNCE başlık + tarih + kalemler saklanır. İdempotent:
+    zaten snapshot varsa dokunulmaz (yeniden yanıtlama akışı olsa da bozulmaz).
+    """
+    if req.task_id is None or req.task_items_snapshot is not None:
+        return
+    task = (
+        db.query(Task)
+        .options(
+            joinedload(Task.book_items).joinedload(TaskBookItem.book),
+            joinedload(Task.book_items).joinedload(TaskBookItem.section),
+        )
+        .filter(Task.id == req.task_id)
+        .first()
+    )
+    if task is None:
+        return
+    if not req.task_title_snapshot:
+        req.task_title_snapshot = task.title
+    if not req.task_date_snapshot:
+        req.task_date_snapshot = task.date
+
+    items: list[dict] = []
+    for it in task.book_items:
+        book = getattr(it, "book", None)
+        section = getattr(it, "section", None)
+        btype = getattr(getattr(book, "type", None), "value", None)
+        items.append({
+            "book_name": (book.name if book else None) or it.label or "—",
+            "section_label": section.label if section else None,
+            "planned_count": int(it.planned_count or 0),
+            "completed_count": int(it.completed_count or 0),
+            "unit": "deneme" if btype in ("brans_denemesi", "genel_deneme") else "test",
+        })
+    req.task_items_snapshot = json.dumps(items, ensure_ascii=False)
+
+
 def reject_request(
     db: Session, *, teacher: User, req: TaskRequest, response: str | None = None
 ) -> None:
@@ -318,6 +363,7 @@ def reject_request(
         raise RequestError("Bu talep size ait değil.")
     if req.status != RequestStatus.PENDING:
         raise RequestError("Sadece bekleyen talepler reddedilebilir.")
+    snapshot_task_state(db, req)
     req.status = RequestStatus.REJECTED
     req.teacher_response = (response or "").strip() or None
     req.responded_at = datetime.now(timezone.utc)
@@ -349,6 +395,10 @@ def approve_request(
         raise RequestError("Bu talep size ait değil.")
     if req.status != RequestStatus.PENDING:
         raise RequestError("Sadece bekleyen talepler onaylanabilir.")
+
+    # Görevi değiştirmeden ÖNCE talep anındaki hâli dondur — koç sonradan
+    # "neyi onayladım" sorusunu yanıtlayabilsin.
+    snapshot_task_state(db, req)
 
     affected_task: Task | None = None
 

@@ -1134,6 +1134,9 @@ class TeacherRequestDetail(BaseModel):
 
     # Mevcut görev snapshot'ı (varsa) — diff için
     current_items: list[TeacherTaskItem] = []
+    # True → "Mevcut görev" bloğu TALEP ANINDAKİ dondurulmuş hâli gösteriyor
+    # (onay görevi değiştirdiği için canlı hâl önerilenle aynı olurdu).
+    current_is_snapshot: bool = False
 
     created_at: datetime
     updated_at: datetime

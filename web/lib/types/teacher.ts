@@ -1080,6 +1080,8 @@ export interface TeacherRequestDetail {
   proposed_count: number | null;
   proposed_date: string | null;
   current_items: TeacherTaskItem[];
+  /** true → "Mevcut görev" bloğu talep anındaki dondurulmuş hâli gösteriyor. */
+  current_is_snapshot?: boolean;
   created_at: string;
   updated_at: string;
   responded_at: string | null;

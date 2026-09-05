@@ -5507,10 +5507,11 @@ def _build_request_list_item(req: TaskRequest) -> TeacherRequestListItem:
         status=req.status.value,
         task_id=req.task_id,
         # Task silindiyse (REMOVE onaylanmış) snapshot'tan göster — audit izi
-        task_title=(req.task.title if req.task else req.task_title_snapshot),
+        task_title=(req.task_title_snapshot
+                    or (req.task.title if req.task else None)),
         task_date=(
-            req.task.date.isoformat() if req.task
-            else (req.task_date_snapshot.isoformat() if req.task_date_snapshot else None)
+            req.task_date_snapshot.isoformat() if req.task_date_snapshot
+            else (req.task.date.isoformat() if req.task else None)
         ),
         message=req.message,
         proposed_count=req.proposed_count,
@@ -5522,9 +5523,48 @@ def _build_request_list_item(req: TaskRequest) -> TeacherRequestListItem:
 
 
 def _build_request_detail(db: Session, req: TaskRequest) -> TeacherRequestDetail:
-    """Diff için mevcut task'ın kalemlerini de döndür."""
+    """Diff için görevin TALEP ANINDAKİ hâlini döndür.
+
+    2026-09-05 saha hatası: REPLACE/CHANGE onayı görevi yerinde değiştirdiği
+    için canlı görevden okunan "Mevcut görev" bloğu önerilenle AYNI görünüyordu
+    → koç neyi onayladığını göremiyordu. Yanıtlanmış talepte artık yanıt anında
+    dondurulan snapshot gösterilir; snapshot yoksa (eski kayıtlar) canlı göreve
+    düşülür — geriye uyum korunur.
+    """
+    import json as _json
+
     current_items: list[TeacherTaskItem] = []
-    if req.task and req.task.book_items:
+    snapshot_used = False
+    if req.task_items_snapshot:
+        try:
+            rows = _json.loads(req.task_items_snapshot) or []
+        except (ValueError, TypeError):
+            rows = []
+        for r in rows:
+            label = r.get("book_name") or "—"
+            if r.get("section_label"):
+                label = f"{label} · {r['section_label']}"
+            # Dondurulmuş kalem: canlı kapasite alanları anlamsız (o an geçerliydi),
+            # 0 bırakılır — UI "talep anındaki hâli" etiketiyle gösterir.
+            current_items.append(TeacherTaskItem(
+                id=0,
+                book_id=None,
+                book_name=label,
+                book_type=("brans_denemesi" if r.get("unit") == "deneme" else None),
+                subject_id=None,
+                subject_name=None,
+                section_id=None,
+                section_label=r.get("section_label"),
+                topic_name=None,
+                planned_count=int(r.get("planned_count") or 0),
+                completed_count=int(r.get("completed_count") or 0),
+                section_total_tests=0,
+                section_reserved_count=0,
+                section_completed_count=0,
+                section_remaining=0,
+            ))
+        snapshot_used = bool(current_items)
+    if not snapshot_used and req.task and req.task.book_items:
         section_ids = [it.book_section_id for it in req.task.book_items]
         sp_map = _section_progress_map(db, req.task.student_id, section_ids)
         current_items = [
@@ -5539,10 +5579,11 @@ def _build_request_detail(db: Session, req: TaskRequest) -> TeacherRequestDetail
         status=req.status.value,
         task_id=req.task_id,
         # Task silindiyse (REMOVE onaylanmış) snapshot'tan göster — audit izi
-        task_title=(req.task.title if req.task else req.task_title_snapshot),
+        task_title=(req.task_title_snapshot
+                    or (req.task.title if req.task else None)),
         task_date=(
-            req.task.date.isoformat() if req.task
-            else (req.task_date_snapshot.isoformat() if req.task_date_snapshot else None)
+            req.task_date_snapshot.isoformat() if req.task_date_snapshot
+            else (req.task.date.isoformat() if req.task else None)
         ),
         message=req.message,
         teacher_response=req.teacher_response,
@@ -5553,6 +5594,7 @@ def _build_request_detail(db: Session, req: TaskRequest) -> TeacherRequestDetail
         proposed_count=req.proposed_count,
         proposed_date=req.proposed_date.isoformat() if req.proposed_date else None,
         current_items=current_items,
+        current_is_snapshot=snapshot_used,
         created_at=req.created_at,
         updated_at=req.updated_at,
         responded_at=req.responded_at,
