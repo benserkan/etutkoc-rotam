@@ -219,7 +219,7 @@ sayfasında **"Mevcut görev" ile "Önerilen değişiklik" AYNI** görünüyordu
   meşru testi kesmesin) — zorlamak için `--kill --force`. Dev sunucusu
   (uvicorn/run_dev_patched/app.main) ve kullanıcının diğer projeleri filtre
   DIŞINDA (canlı doğrulandı: `app.py` süreçlerine dokunmadı).
-  **DERS:** bu makinede `powershell` PATH'te YOK → tam yol (`%SystemRoot%\...  v1.0\powershell.exe`) denenmeden araç sessizce "0 süreç" raporluyordu.
+  **DERS:** bu makinede `powershell` PATH'te YOK → tam yol (`%SystemRoot%/System32/WindowsPowerShell/v1.0/powershell.exe`) denenmeden araç sessizce "0 süreç" raporluyordu.
 
 ---
 
