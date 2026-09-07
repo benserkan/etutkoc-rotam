@@ -827,6 +827,14 @@ class TaskCreateBody(BaseModel):
     work_block_id: int | None = None
 
 
+class TaskQuantityResponse(BaseModel):
+    """Koçun bu derste tipik verdiği test sayısı (öğrenilmiş öntanımlı)."""
+    quantity: int
+    source: str          # student | coach | default
+    sample_size: int
+    reason: str          # "bu derste genelde 3" — koça gerekçe gösterilir
+
+
 class TopicCloseBody(BaseModel):
     """POST /teacher/students/{id}/topics/{topic_id}/close"""
     note: str | None = None

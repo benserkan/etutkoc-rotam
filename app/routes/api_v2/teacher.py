@@ -253,6 +253,7 @@ from app.routes.api_v2.schemas.teacher import (
     TaskSpreadBody,
     TaskSpreadResult,
     TaskSpreadSkip,
+    TaskQuantityResponse,
     TaskSingleItemEditBody,
     TopicCloseBody,
     TeacherBadgesResponse,
@@ -319,7 +320,7 @@ from app.services.risk_analysis import (
     filter_at_risk,
     get_active_mutes,
 )
-from app.services import topic_closure
+from app.services import task_quantity, topic_closure
 from app.services.task_service import (
     ReservationError,
     release_item,
@@ -4337,6 +4338,35 @@ def teacher_create_task_v2(
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
         warnings=overflow,
+    )
+
+
+# ---------------------- Görev miktarı önerisi (koçun alışkanlığı) ----------------------
+
+
+@router.get(
+    "/students/{student_id}/task-quantity",
+    response_model=TaskQuantityResponse,
+)
+def teacher_task_quantity_v2(
+    student_id: int,
+    subject_id: int | None = Query(None),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Bu derste koçun tipik verdiği test sayısı — form öntanımlısı.
+
+    Koç her görevde sayıyı elle yazmak zorunda kalmasın: canlı veride ders
+    bazında görevlerin %58-72'si aynı sayıda. Gerekçesi de döner ("bu derste
+    genelde 3") — kara kutu tahmin değil, koç neye baktığımızı görür.
+    """
+    student = _get_owned_student(db, student_id, user.id)
+    sug = task_quantity.learned_quantity(
+        db, coach_id=user.id, subject_id=subject_id, student_id=student.id,
+    )
+    return TaskQuantityResponse(
+        quantity=sug.quantity, source=sug.source,
+        sample_size=sug.sample_size, reason=sug.reason,
     )
 
 
