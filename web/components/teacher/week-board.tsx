@@ -70,6 +70,7 @@ import { WeekDayCard } from "./weekly-plan/week-day-card";
 import { WeekNotesCard } from "./weekly-plan/week-notes-card";
 import { ResourceSidebar } from "./weekly-plan/resource-sidebar";
 import { CarryoverPanel } from "./weekly-plan/carryover-panel";
+import { CurriculumBoard } from "./weekly-plan/curriculum-board";
 import { NextUnitsPanel } from "./weekly-plan/next-units-panel";
 import { WeekGrid } from "./weekly-plan/week-grid";
 import { WorkBlockPanel } from "./weekly-plan/work-block-panel";
@@ -581,6 +582,13 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
             studentId={studentId}
             programId={currentProgramId}
             weekDays={data.days}
+          />
+          {/* P5: koçun "kapatayım mı / ek görev mi" kararı — konu kartları.
+              Sıradaki Üniteler paneli DURUYOR (tek tık atama + AI önceliklendirme);
+              bu panel onun karar katmanı. */}
+          <CurriculumBoard
+            studentId={studentId}
+            dayDate={openDate ?? data.days[0]?.date ?? ""}
           />
           <NextUnitsPanel studentId={studentId} weekDays={data.days} />
           <WorkBlockPanel studentId={studentId} />

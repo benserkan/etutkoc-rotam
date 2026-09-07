@@ -228,6 +228,56 @@ interface DayCacheCtx {
 // TASK CRUD
 // =============================================================================
 
+/**
+ * Konu kapatma (P2/P5) — müfredat tamamlanmasının kaynağı koçun kararıdır,
+ * kitabın test sayacı değil. İdempotent; iki kez basmak güvenli.
+ */
+export function useCloseTopic(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{ topic_id: number; closed: boolean }>,
+    ApiError,
+    { topicId: number; note?: string }
+  >({
+    mutationFn: ({ topicId, note }) =>
+      api<MutationResponse<{ topic_id: number; closed: boolean }>>(
+        `/api/v2/teacher/students/${studentId}/topics/${topicId}/close`,
+        { method: "POST", body: JSON.stringify({ note: note ?? null }) },
+      ),
+    onError: (e) => showError(e, "Konu kapatılamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "topic-board"],
+      });
+      toast.success("Konu kapatıldı");
+    },
+  });
+}
+
+export function useReopenTopic(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{ topic_id: number; closed: boolean }>,
+    ApiError,
+    { topicId: number }
+  >({
+    mutationFn: ({ topicId }) =>
+      api<MutationResponse<{ topic_id: number; closed: boolean }>>(
+        `/api/v2/teacher/students/${studentId}/topics/${topicId}/reopen`,
+        { method: "POST" },
+      ),
+    onError: (e) => showError(e, "Konu yeniden açılamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      qc.invalidateQueries({
+        queryKey: ["teacher", "me", "students", String(studentId), "topic-board"],
+      });
+      toast.success("Konu yeniden açıldı");
+    },
+  });
+}
+
 export function useCreateTask(studentId: number) {
   const qc = useQueryClient();
   return useMutation<

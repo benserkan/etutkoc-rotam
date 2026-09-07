@@ -29,6 +29,7 @@ import type {
   ReviewStruggleResponse,
   SectionOptionsResponse,
   TaskPickerResponse,
+  TopicBoardResponse,
   SectionStatsResponse,
   SidebarResponse,
   SubjectListResponse,
@@ -137,6 +138,11 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "all-subjects"] as const,
   studentTaskPicker: (id: number, q: string) =>
     ["teacher", "me", "students", String(id), "task-picker", q] as const,
+  studentTopicBoard: (id: number, subjectId: number | "") =>
+    [
+      "teacher", "me", "students", String(id), "topic-board",
+      subjectId === "" ? "" : String(subjectId),
+    ] as const,
   studentBooksBySubject: (id: number, subjectId: number | null) =>
     [
       "teacher",
@@ -602,6 +608,18 @@ export function getTaskPicker(
   const qs = buildQuery({ q: q.trim() });
   return api<TaskPickerResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/task-picker${qs}`,
+  );
+}
+
+export function getTopicBoard(
+  studentId: number,
+  subjectId: number | null,
+): Promise<TopicBoardResponse> {
+  const qs = buildQuery({
+    subject_id: subjectId !== null ? String(subjectId) : "",
+  });
+  return api<TopicBoardResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/topic-board${qs}`,
   );
 }
 

@@ -818,6 +818,55 @@ export interface ReviewStruggleResponse {
 // Mutation body'leri — Paket 7'de kullanılacak (şimdilik referans)
 // =============================================================================
 
+/** Müfredat panelindeki bir kaynak. */
+export interface BoardSourceItem {
+  book_id: number;
+  book_name: string;
+  section_id: number;
+  section_label: string;
+  total: number;
+  remaining: number;
+  full: boolean;
+}
+
+/** Müfredat panelindeki konu kartı — kapatma kararının tüm girdileri. */
+export interface BoardTopicItem {
+  topic_id: number;
+  name: string;
+  order: number;
+  unit_name: string | null;
+  status: string;
+  closed: boolean;
+  closed_at: string | null;
+  tests_solved: number;
+  correct: number;
+  wrong: number;
+  /** D/Y girilmemişse null — doğruluk UYDURULMAZ */
+  accuracy_pct: number | null;
+  last_solved_at: string | null;
+  sourceless_completed: number;
+  remaining: number;
+  exam_wrong: number;
+  open_wrongs: number;
+  /** ready | caution | none — ipucu, KARAR değil */
+  readiness: string;
+  readiness_note: string;
+  sources: BoardSourceItem[];
+}
+
+export interface BoardSubjectItem {
+  subject_id: number;
+  name: string;
+  total_topics: number;
+  closed_topics: number;
+  coverage_pct: number;
+  topics: BoardTopicItem[];
+}
+
+export interface TopicBoardResponse {
+  subjects: BoardSubjectItem[];
+}
+
 /** Görev kutusundaki bir kaynak (kitap bölümü). */
 export interface PickerSourceItem {
   book_id: number;

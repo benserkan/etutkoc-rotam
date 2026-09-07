@@ -253,10 +253,14 @@ from app.routes.api_v2.schemas.teacher import (
     TaskSpreadBody,
     TaskSpreadResult,
     TaskSpreadSkip,
+    BoardSourceItem,
+    BoardSubjectItem,
+    BoardTopicItem,
     PickerGroupItem,
     PickerSourceItem,
     PickerTopicItem,
     TaskPickerResponse,
+    TopicBoardResponse,
     TaskQuantityResponse,
     TaskSingleItemEditBody,
     TopicCloseBody,
@@ -324,7 +328,7 @@ from app.services.risk_analysis import (
     filter_at_risk,
     get_active_mutes,
 )
-from app.services import task_picker, task_quantity, topic_closure
+from app.services import task_picker, task_quantity, topic_board, topic_closure
 from app.services.task_service import (
     ReservationError,
     release_item,
@@ -4423,6 +4427,65 @@ def teacher_task_quantity_v2(
     return TaskQuantityResponse(
         quantity=sug.quantity, source=sug.source,
         sample_size=sug.sample_size, reason=sug.reason,
+    )
+
+
+# ---------------------- Müfredat paneli (konu kartları + kapatma kararı) ----------------------
+
+
+@router.get(
+    "/students/{student_id}/topic-board",
+    response_model=TopicBoardResponse,
+)
+def teacher_topic_board_v2(
+    student_id: int,
+    subject_id: int | None = Query(None),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Müfredat paneli: konu sırası + performans + kalan + kapatma ipucu.
+
+    Koçun dört sorusu tek yerde: hangi konuları gördük · ne kadar çözüldü ·
+    testi kaldı mı · ek görev mi vereyim kapatayım mı. Sistem ipucu üretir,
+    KARAR koçundur.
+    """
+    student = _get_owned_student(db, student_id, user.id)
+    data = topic_board.build_topic_board(
+        db, student=student, coach_id=user.id, subject_id=subject_id,
+    )
+    return TopicBoardResponse(
+        subjects=[
+            BoardSubjectItem(
+                subject_id=s.subject_id, name=s.name,
+                total_topics=s.total_topics, closed_topics=s.closed_topics,
+                coverage_pct=s.coverage_pct,
+                topics=[
+                    BoardTopicItem(
+                        topic_id=t.topic_id, name=t.name, order=t.order,
+                        unit_name=t.unit_name, status=t.status,
+                        closed=t.closed, closed_at=t.closed_at,
+                        tests_solved=t.tests_solved, correct=t.correct,
+                        wrong=t.wrong, accuracy_pct=t.accuracy_pct,
+                        last_solved_at=t.last_solved_at,
+                        sourceless_completed=t.sourceless_completed,
+                        remaining=t.remaining, exam_wrong=t.exam_wrong,
+                        open_wrongs=t.open_wrongs,
+                        readiness=t.readiness, readiness_note=t.readiness_note,
+                        sources=[
+                            BoardSourceItem(
+                                book_id=x.book_id, book_name=x.book_name,
+                                section_id=x.section_id,
+                                section_label=x.section_label,
+                                total=x.total, remaining=x.remaining, full=x.full,
+                            )
+                            for x in t.sources
+                        ],
+                    )
+                    for t in s.topics
+                ],
+            )
+            for s in data
+        ]
     )
 
 

@@ -827,6 +827,52 @@ class TaskCreateBody(BaseModel):
     work_block_id: int | None = None
 
 
+class BoardSourceItem(BaseModel):
+    book_id: int
+    book_name: str
+    section_id: int
+    section_label: str
+    total: int
+    remaining: int
+    full: bool
+
+
+class BoardTopicItem(BaseModel):
+    """Müfredat panelindeki bir konu kartı — kapatma kararının tüm girdileri."""
+    topic_id: int
+    name: str
+    order: int
+    unit_name: str | None = None
+    status: str                    # kapali|devam|planlandi|baslanmadi|kaynak_yok
+    closed: bool = False
+    closed_at: str | None = None
+    tests_solved: int = 0
+    correct: int = 0
+    wrong: int = 0
+    accuracy_pct: int | None = None      # D/Y girilmemişse None — uydurulmaz
+    last_solved_at: str | None = None
+    sourceless_completed: int = 0
+    remaining: int = 0
+    exam_wrong: int = 0
+    open_wrongs: int = 0
+    readiness: str = "none"              # ready | caution | none
+    readiness_note: str = ""
+    sources: list[BoardSourceItem] = []
+
+
+class BoardSubjectItem(BaseModel):
+    subject_id: int
+    name: str
+    total_topics: int
+    closed_topics: int
+    coverage_pct: int
+    topics: list[BoardTopicItem] = []
+
+
+class TopicBoardResponse(BaseModel):
+    subjects: list[BoardSubjectItem] = []
+
+
 class PickerSourceItem(BaseModel):
     """Konunun altındaki bir kaynak (kitap bölümü)."""
     book_id: int
