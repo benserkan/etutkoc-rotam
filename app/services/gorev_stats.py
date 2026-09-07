@@ -82,6 +82,11 @@ def classify_gorev(task: Task) -> str:
         return "etkinlik"
     # Soru-hacimli görev. Görevde tek kalem olduğu için ilk kalem belirleyici.
     items = task.book_items
+    # KAYNAKSIZ KONU görevi (2026-09-07): kitapsız AMA topic_id dolu → koç
+    # müfredattan konu verdi, kaynak belirtmedi. Bu bir DENEME değil TEST'tir;
+    # tam_deneme sayılırsa deneme sayıları şişer (DENEME≠TEST kuralı).
+    if any(it.book_id is None and getattr(it, "topic_id", None) for it in items):
+        return "test"
     if any(it.book_id is None for it in items):
         return "tam_deneme"
     for it in items:

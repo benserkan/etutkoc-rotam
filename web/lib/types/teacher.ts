@@ -821,6 +821,8 @@ export interface ReviewStruggleResponse {
 export interface TaskItemBody {
   book_id: number | null;
   section_id: number | null;
+  /** Kaynaksız kalem: kitap yok ama müfredat konusu var (2026-09-07). */
+  topic_id?: number | null;
   label?: string | null;        // kitapsız deneme kaleminde deneme adı
   planned_count: number;
   /**
@@ -886,6 +888,14 @@ export interface CurriculumTopicItem {
   pct: number;
   unit_name: string | null;
   grade_level: number | null;
+  /**
+   * Koç "bu konu bitti" dedi mi (2026-09-07). Müfredat tamamlanmasının kaynağı
+   * kitabın test sayacı DEĞİL koçun kararıdır.
+   */
+  closed?: boolean;
+  closed_at?: string | null;
+  /** Kaynaksız (kitapsız ama konuya bağlı) görevlerden çözülen test sayısı */
+  sourceless_completed?: number;
   /** Deneme çaprazı (Faz 3): işlenmiş görünen konuda denemeler düşük doğruluk */
   exam_mismatch: boolean;
   exam_accuracy_pct: number | null;

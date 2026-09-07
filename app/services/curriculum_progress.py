@@ -33,10 +33,13 @@ from app.models import (
     SectionProgress,
     StudentBook,
     Subject,
+    Task,
+    TaskBookItem,
     Topic,
     Track,
     User,
 )
+from app.services import topic_closure
 
 
 @dataclass
@@ -52,6 +55,11 @@ class TopicProgress:
     pct: int            # konu içi derinlik: completed/test_total
     unit_name: str | None = None    # ait olduğu tema/ünite (Maarif) — UI gruplama
     grade_level: int | None = None  # konunun sınıfı — UI sınıf başlığı (tekrar eden tema adı ayrımı)
+    # Koç "bu konu bitti" dedi mi (2026-09-07) — müfredat tamamlanmasının kaynağı
+    closed: bool = False
+    closed_at: str | None = None
+    # Kaynaksız (kitapsız ama konuya bağlı) görevlerden çözülen test sayısı
+    sourceless_completed: int = 0
 
 
 @dataclass
@@ -101,11 +109,37 @@ class CurriculumProgress:
     projection: "CurriculumProjection | None" = None
 
 
-def _status(has_resource: bool, completed: int, reserved: int, test_total: int) -> str:
+def _status(
+    has_resource: bool,
+    completed: int,
+    reserved: int,
+    test_total: int,
+    *,
+    closed: bool = False,
+    sourceless_completed: int = 0,
+    sourceless_planned: int = 0,
+) -> str:
+    """Konunun durumu.
+
+    KOÇ KARARI HER ŞEYİN ÜSTÜNDE (2026-09-07): koç öğrenciyle görüşüp konuyu
+    kapattıysa konu TAMAMLANMIŞTIR — kitapta test kalmış olması bunu değiştirmez.
+    Bir konunun bitip bitmediği kaynağın sayacından değil koçtan okunur.
+
+    Kaynaksız çalışma (kitapsız ama konuya bağlı görev) da konuyu "işlenmiş"
+    yapar; kitabı olmayan konu artık otomatik "kaynak_yok" değildir.
+    """
+    if closed:
+        return "tamamlandi"
     if not has_resource:
+        if sourceless_completed > 0:
+            return "devam"
+        if sourceless_planned > 0:
+            return "planlandi"
         return "kaynak_yok"
     if completed <= 0:
-        return "planlandi" if reserved > 0 else "baslanmadi"
+        if reserved > 0 or sourceless_planned > 0:
+            return "planlandi"
+        return "devam" if sourceless_completed > 0 else "baslanmadi"
     if test_total > 0 and completed >= test_total:
         return "tamamlandi"
     return "devam"
@@ -347,6 +381,34 @@ def compute_curriculum_progress(
         .all()
     )
 
+    # KAYNAKSIZ GÖREVLER (2026-09-07): kitapsız ama konuya bağlı kalemler.
+    # Koç kitap seçmeden müfredattan konu verdiğinde de o konu "işlenmiş"
+    # sayılmalı — yoksa kaynaksız çalışılan konu panelde "kaynak yok" görünür
+    # ve koçun kafası karışır.
+    sourceless_rows = (
+        db.query(
+            TaskBookItem.topic_id.label("topic_id"),
+            func.coalesce(func.sum(TaskBookItem.planned_count), 0).label("planned"),
+            func.coalesce(func.sum(TaskBookItem.completed_count), 0).label("completed"),
+        )
+        .select_from(Task)
+        .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+        .filter(
+            Task.student_id == student.id,
+            Task.is_draft.is_(False),
+            TaskBookItem.book_id.is_(None),
+            TaskBookItem.topic_id.isnot(None),
+        )
+        .group_by(TaskBookItem.topic_id)
+        .all()
+    )
+    sourceless: dict[int, dict] = {
+        r.topic_id: {"planned": int(r.planned or 0), "completed": int(r.completed or 0)}
+        for r in sourceless_rows
+    }
+    # Koçun kapattığı konular — durum hesabının en üst otoritesi
+    closures = topic_closure.closure_map(db, student.id)
+
     # topic_id → agregat (test/completed/reserved)
     by_topic: dict[int, dict] = {}
     extras: list[ExtraSection] = []
@@ -419,23 +481,45 @@ def compute_curriculum_progress(
             test_total = agg["test"] if agg else 0
             comp = agg["completed"] if agg else 0
             resv = agg["reserved"] if agg else 0
-            st = _status(has_res, comp, resv, test_total)
-            pct = min(100, round(100 * comp / test_total)) if test_total > 0 else 0
+            sl = sourceless.get(t.id) or {"planned": 0, "completed": 0}
+            closure = closures.get(t.id)
+            is_closed = closure is not None
+            st = _status(
+                has_res, comp, resv, test_total,
+                closed=is_closed,
+                sourceless_completed=sl["completed"],
+                sourceless_planned=sl["planned"],
+            )
+            if is_closed:
+                pct = 100  # koç kapattı → konu bitti (kitapta test kalmış olabilir)
+            elif test_total > 0:
+                pct = min(100, round(100 * comp / test_total))
+            else:
+                pct = 0
             tps.append(TopicProgress(
                 topic_id=t.id, name=t.name, order=t.order, has_resource=has_res,
                 test_total=test_total, completed=comp, reserved=resv, status=st, pct=pct,
                 unit_name=parent_name_by_id.get(t.parent_id) if t.parent_id else None,
                 grade_level=t.grade_level,
+                closed=is_closed,
+                closed_at=(closure.closed_at.isoformat() if closure and closure.closed_at else None),
+                sourceless_completed=sl["completed"],
             ))
             if not has_res:
                 no_res += 1
-            if comp > 0:
+            # "İşlendi" sayımı kaynaklı çözümü de kaynaksız çalışmayı da kapsar;
+            # kapatılan konu her hâlde işlenmiş sayılır.
+            if comp > 0 or sl["completed"] > 0 or is_closed:
                 started += 1
                 last_name = t.name  # order'lı → en son işlenen
             if st == "tamamlandi":
                 completed_topics += 1
-            if next_name is None and has_res and comp <= 0:
-                next_name = t.name  # ilk kaynaklı-başlanmamış = sıradaki
+            # Sıradaki = kapatılmamış + hiç dokunulmamış ilk kaynaklı konu
+            if (
+                next_name is None and has_res and comp <= 0
+                and not is_closed and sl["completed"] <= 0
+            ):
+                next_name = t.name
         total = len(topics)
         cov = round(100 * started / total) if total else 0
         out_subjects.append(SubjectProgress(
@@ -545,6 +629,11 @@ def next_units_for_assignment(
         agg["test"] += int(r.test_count or 0)
         agg["completed"] += int(r.completed or 0)
 
+    # Koçun kapattığı konular ARTIK ÖNERİLMEZ (2026-09-07): koç görüşmede
+    # "bitti" dediyse panel onu "sıradaki ünite" diye tekrar önermemeli —
+    # yoksa kapatma kararı bir yüzeyde geçerli, diğerinde yok sayılmış olur.
+    closed_ids = topic_closure.closed_topic_ids(db, student.id)
+
     subjects = _applicable_subjects(db, student, coach_id)
     subj_ids = [s.id for s in subjects]
     topics_by_subject: dict[int, list[Topic]] = {}
@@ -563,6 +652,8 @@ def next_units_for_assignment(
         for t in topics_by_subject.get(s.id, []):
             if picked >= per_subject:
                 break
+            if t.id in closed_ids:
+                continue  # koç kapattı → atla
             agg = by_topic_agg.get(t.id)
             if agg is None:
                 continue  # kaynak yok → atla

@@ -18,7 +18,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.models import Book, BookSection, Subject, Task, TaskBookItem
+from app.models import Book, BookSection, Subject, Task, TaskBookItem, Topic
 from app.services import gorev_stats
 
 
@@ -93,7 +93,37 @@ def compute_topic_performance(
         rows = rows.filter(Task.date >= start)
     if end is not None:
         rows = rows.filter(Task.date <= end)
-    rows = rows.all()
+
+    # KAYNAKSIZ KONU kalemleri (2026-09-07): book_id NULL + topic_id dolu.
+    # Koç kitap seçmeden müfredattan konu verdiğinde de performans birikmeli —
+    # yoksa "kaynaksız verdim, doğruluk görünmüyor" boşluğu doğar. Ders bilgisi
+    # kitaptan değil KONUDAN gelir (Topic.subject_id).
+    topic_rows = (
+        db.query(
+            Subject.id.label("subject_id"),
+            Subject.name.label("subject_name"),
+            Subject.order.label("subject_order"),
+            Topic.id.label("topic_id"),
+            Topic.name.label("topic_label"),
+            TaskBookItem.completed_count,
+            TaskBookItem.correct_count,
+            TaskBookItem.wrong_count,
+            Task.completed_at,
+        )
+        .select_from(Task)
+        .join(TaskBookItem, TaskBookItem.task_id == Task.id)
+        .join(Topic, Topic.id == TaskBookItem.topic_id)
+        .join(Subject, Subject.id == Topic.subject_id)
+        .filter(Task.student_id == student_id)
+        .filter(TaskBookItem.book_id.is_(None))
+        .filter(TaskBookItem.completed_count > 0)
+    )
+    if start is not None:
+        topic_rows = topic_rows.filter(Task.date >= start)
+    if end is not None:
+        topic_rows = topic_rows.filter(Task.date <= end)
+
+    rows = rows.all() + topic_rows.all()
 
     # subject_id → {meta, order, topics: {topic_key → agg}}
     subjects: dict[int, dict] = {}

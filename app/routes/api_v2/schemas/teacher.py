@@ -790,11 +790,16 @@ class WorkBlockUpdateBody(BaseModel):
 class TaskItemBody(BaseModel):
     """POST /tasks ve POST /tasks/{id}/items için kalem.
 
-    Kitapsız "deneme" kalemi: book_id/section_id None + label (deneme adı) verilir;
-    rezerv/kapasite atlanır, sadece planned_count hacme sayar.
+    Üç kalem tipi:
+      · kitaplı        → book_id + section_id (rezerv/kapasite işler)
+      · kitapsız deneme → book_id None + label (tam deneme adı)
+      · KAYNAKSIZ KONU  → book_id None + topic_id (2026-09-07): koç kitap
+        seçmeden müfredattan konu verir. Rezerv/kapasite atlanır ama konu bağı
+        sayesinde görev müfredat takibine ve konu performansına GİRER.
     """
     book_id: int | None = None
     section_id: int | None = None
+    topic_id: int | None = None      # kaynaksız kalemde müfredat konusu
     label: str | None = None         # kitapsız deneme kaleminde deneme adı
     planned_count: int               # ≥1 — service ek olarak kontrol eder
     # Kayıtlı kapasite dolsa bile atamaya izin ver (2026-09-07). Kitabın test
@@ -822,6 +827,11 @@ class TaskCreateBody(BaseModel):
     work_block_id: int | None = None
 
 
+class TopicCloseBody(BaseModel):
+    """POST /teacher/students/{id}/topics/{topic_id}/close"""
+    note: str | None = None
+
+
 class CurriculumTopicItem(BaseModel):
     topic_id: int
     name: str
@@ -834,6 +844,12 @@ class CurriculumTopicItem(BaseModel):
     pct: int
     unit_name: str | None = None     # ait olduğu tema/ünite (Maarif) — UI gruplama
     grade_level: int | None = None   # konunun sınıfı — UI sınıf başlığı
+    # Koç "bu konu bitti" dedi mi (2026-09-07). Müfredat tamamlanmasının
+    # kaynağı kitabın sayacı DEĞİL koçun kararıdır.
+    closed: bool = False
+    closed_at: str | None = None
+    # Kaynaksız (kitapsız ama konuya bağlı) görevlerden çözülen test sayısı
+    sourceless_completed: int = 0
     # Deneme çapraz doğrulaması (self-study Faz 3): işlenmiş görünen konuda
     # son denemeler düşük doğruluk gösteriyorsa True + detaylar
     exam_mismatch: bool = False

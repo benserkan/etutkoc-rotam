@@ -433,6 +433,7 @@ from app.models.self_study import (
 )
 from app.models.student_day_note import StudentDayNote
 from app.models.student_period import StudentGradePeriod
+from app.models.topic_closure import TopicClosure
 from app.models.quota import InstitutionQuotaOverride
 from app.models.review import (
     STATE_LABELS_TR as REVIEW_STATE_LABELS_TR,
@@ -795,6 +796,7 @@ __all__ = [
     "StudentBook",
     "StudentDayNote",
     "StudentGradePeriod",
+    "TopicClosure",
     "Subject",
     "SuggestionFeedback",
     "SuspiciousIp",

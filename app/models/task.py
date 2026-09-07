@@ -136,6 +136,14 @@ class TaskBookItem(Base):
     book_section_id: Mapped[int | None] = mapped_column(
         ForeignKey("book_sections.id", ondelete="SET NULL"), nullable=True, index=True
     )
+    # KAYNAKSIZ AMA KONUYA BAĞLI kalem (2026-09-07): koç kitap seçmeden
+    # müfredattan konu verir. book_id NULL olduğu için rezerv/kapasite atlanır,
+    # ama konu bağı sayesinde görev müfredat takibine ve konu performansına
+    # girer. Kitaplı kalemde konu zaten BookSection.topic_id'den gelir; bu alan
+    # yalnız kitapsız kalemde doldurulur.
+    topic_id: Mapped[int | None] = mapped_column(
+        ForeignKey("topics.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     label: Mapped[str | None] = mapped_column(String(255), nullable=True)
     planned_count: Mapped[int] = mapped_column(Integer, nullable=False)
     completed_count: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
@@ -156,6 +164,7 @@ class TaskBookItem(Base):
     task: Mapped["Task"] = relationship("Task", back_populates="book_items")
     book: Mapped["Book | None"] = relationship("Book")
     section: Mapped["BookSection | None"] = relationship("BookSection")
+    topic: Mapped["Topic | None"] = relationship("Topic")
 
     def __repr__(self) -> str:
         return f"<TaskBookItem {self.planned_count} from section {self.book_section_id}>"

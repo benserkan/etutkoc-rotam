@@ -254,6 +254,7 @@ from app.routes.api_v2.schemas.teacher import (
     TaskSpreadResult,
     TaskSpreadSkip,
     TaskSingleItemEditBody,
+    TopicCloseBody,
     TeacherBadgesResponse,
     TeacherBookListItem,
     TeacherBookListResponse,
@@ -318,6 +319,7 @@ from app.services.risk_analysis import (
     filter_at_risk,
     get_active_mutes,
 )
+from app.services import topic_closure
 from app.services.task_service import (
     ReservationError,
     release_item,
@@ -1234,6 +1236,8 @@ def teacher_student_curriculum_v2(
                         has_resource=t.has_resource, test_total=t.test_total,
                         completed=t.completed, reserved=t.reserved, status=t.status, pct=t.pct,
                         unit_name=t.unit_name, grade_level=t.grade_level,
+                        closed=t.closed, closed_at=t.closed_at,
+                        sourceless_completed=t.sourceless_completed,
                         exam_mismatch=bool(_mm(t.topic_id)),
                         exam_accuracy_pct=_mm(t.topic_id).get("accuracy_pct"),
                         exam_answered=_mm(t.topic_id).get("answered"),
@@ -3705,6 +3709,30 @@ def _compose_single_item_title(book: Book, section: BookSection, planned_count: 
     return f"{book.name} — {section.label}: {planned_count} {unit_word}"
 
 
+def _ensure_topic_accessible(db: Session, topic_id: int | None, student: User) -> None:
+    """Kaynaksız kalemin konusu bu öğrenci için geçerli mi?
+
+    Resmi müfredat konusu (is_builtin) herkese açıktır; koçun kendi tanımladığı
+    konu yalnız kendi öğrencilerine verilebilir. Geçersiz/yabancı konu → 422
+    (sessizce yok saymak koçu yanıltır: görev oluşur ama müfredata bağlanmaz).
+    """
+    if topic_id is None:
+        return
+    from app.models import Topic
+
+    topic = db.query(Topic).filter(Topic.id == topic_id).first()
+    coach_id = student.teacher_id
+    if topic is None or not (topic.is_builtin or topic.teacher_id == coach_id):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={
+                "error": "validation",
+                "code": "topic_not_found",
+                "message": "Seçilen müfredat konusu bulunamadı.",
+            },
+        )
+
+
 def _create_task_with_items(
     db: Session,
     *,
@@ -3749,7 +3777,12 @@ def _create_task_with_items(
     for it in payload.items:
         _ensure_count_positive(it.planned_count)
         if it.book_id is None:
-            continue  # kitapsız deneme kalemi — kapasite/atama yok
+            # Kitapsız kalem — kapasite/atama yok. topic_id verilmişse
+            # ENJEKSİYON KORUMASI: konu gerçekten var olmalı ve ya resmi
+            # müfredattan (builtin) ya da bu koçun kendi konusu olmalı.
+            # Aksi hâlde başka koçun/öğrencinin konusu göreve bağlanabilirdi.
+            _ensure_topic_accessible(db, getattr(it, "topic_id", None), student)
+            continue
         _ensure_section_belongs_to_book(db, it.book_id, it.section_id)
         _ensure_student_book_assigned(db, student.id, it.book_id)
 
@@ -3800,12 +3833,22 @@ def _create_task_with_items(
 
     for it in payload.items:
         if it.book_id is None:
-            # Kitapsız deneme kalemi: rezerv yok, label deneme adını taşır.
+            # Kitapsız kalem: rezerv/kapasite YOK.
+            #   · topic_id doluysa  → KAYNAKSIZ KONU görevi (2026-09-07):
+            #     koç kitap seçmeden müfredattan konu verdi. Konu bağı sayesinde
+            #     müfredat takibine ve konu performansına girer; label konu adını
+            #     taşır ki koç/öğrenci ne çalışacağını görsün.
+            #   · topic_id boşsa    → tam deneme kalemi (eski davranış).
+            topic_id = getattr(it, "topic_id", None)
+            fallback_label = (payload.title or "").strip() or (
+                "Konu çalışması" if topic_id else "Deneme"
+            )
             db.add(TaskBookItem(
                 task_id=task.id,
                 book_id=None,
                 book_section_id=None,
-                label=(getattr(it, "label", None) or (payload.title or "").strip() or "Deneme"),
+                topic_id=topic_id,
+                label=(getattr(it, "label", None) or fallback_label),
                 planned_count=it.planned_count,
                 completed_count=0,
             ))
@@ -4294,6 +4337,69 @@ def teacher_create_task_v2(
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
         warnings=overflow,
+    )
+
+
+# ---------------------- Konu kapatma (müfredat tamamlanması) ----------------------
+#
+# KULLANICI KARARI (2026-09-07): "koç öğrenciyle görüşmesinde konu bitti mi
+# sorsun; bittiğinde müfredat panelinden işaretlensin. Müfredatın tamamlanması
+# böylece doğru izlenir." Kitabın test sayacı otorite DEĞİL — koçun kararı.
+
+
+@router.post(
+    "/students/{student_id}/topics/{topic_id}/close",
+    response_model=MutationResponse[dict],
+)
+def teacher_close_topic_v2(
+    student_id: int,
+    topic_id: int,
+    body: TopicCloseBody | None = None,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Konuyu 'bitti' işaretle. İdempotent — iki kez basmak güvenli."""
+    student = _get_owned_student(db, student_id, user.id)
+    _ensure_topic_accessible(db, topic_id, student)
+    row = topic_closure.close_topic(
+        db, student_id=student.id, topic_id=topic_id, actor=user,
+        note=(body.note if body else None),
+    )
+    db.commit()
+    return MutationResponse[dict](
+        data={
+            "topic_id": topic_id,
+            "closed": True,
+            "closed_at": row.closed_at.isoformat() if row.closed_at else None,
+        },
+        invalidate=[
+            f"teacher:{user.id}:students:{student.id}:curriculum",
+            f"teacher:{user.id}:students:{student.id}:next-units",
+        ],
+    )
+
+
+@router.post(
+    "/students/{student_id}/topics/{topic_id}/reopen",
+    response_model=MutationResponse[dict],
+)
+def teacher_reopen_topic_v2(
+    student_id: int,
+    topic_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Konuyu yeniden aç (yanlış kapatıldıysa). İdempotent."""
+    student = _get_owned_student(db, student_id, user.id)
+    _ensure_topic_accessible(db, topic_id, student)
+    topic_closure.reopen_topic(db, student_id=student.id, topic_id=topic_id)
+    db.commit()
+    return MutationResponse[dict](
+        data={"topic_id": topic_id, "closed": False},
+        invalidate=[
+            f"teacher:{user.id}:students:{student.id}:curriculum",
+            f"teacher:{user.id}:students:{student.id}:next-units",
+        ],
     )
 
 
