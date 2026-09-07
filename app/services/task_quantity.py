@@ -40,9 +40,15 @@ DEFAULT_QUANTITY = 3
 # Kaç kalem geriye bakılır (koçun güncel alışkanlığı; eski alışkanlık kaymış olabilir)
 WINDOW = 20
 
-# Öğrenci-özel medyana geçmek için gereken en az örnek. Altındaysa koçun o
-# dersteki genel medyanı daha güvenilir (tek-iki görevden alışkanlık çıkmaz).
+# Öğrenci-özel tipiğe geçmek için gereken en az örnek. Altındaysa koçun o
+# dersteki geneli daha güvenilir (tek-iki görevden alışkanlık çıkmaz).
 MIN_STUDENT_SAMPLES = 5
+
+# Koçun ders genelini "alışkanlık" saymak için gereken en az örnek.
+# CANLI DOĞRULAMADA YAKALANDI (2026-09-07): eşiksiz sürüm 4 kalemden
+# "bu derste genelde 12 test" diyordu — tek seferlik büyük bir atama
+# alışkanlık sanılıyordu. Yeterli veri yoksa uydurmak yerine varsayılana düş.
+MIN_COACH_SAMPLES = 5
 
 
 @dataclass
@@ -161,7 +167,7 @@ def learned_quantity(
             )
 
     general = _recent_counts(db, coach_id=coach_id, subject_id=subject_id)
-    if general:
+    if len(general) >= MIN_COACH_SAMPLES:
         q = _typical(general)
         return QuantitySuggestion(
             quantity=q, source="coach", sample_size=len(general),

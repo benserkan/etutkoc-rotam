@@ -18,6 +18,8 @@ Senaryolar:
    9. Ortalama değil EN SIK DEĞER (tek '40 test' girişi öneriyi kaydırmaz)
    9b. Mod ortancadan ayrışınca EN SIK olan kazanır (canlı veride 5 kat fark)
   10. Endpoint sahiplik: başka koçun öğrencisi → 404
+  11. Az örnekten alışkanlık ÇIKARILMAZ (canlı doğrulamada yakalandı:
+      4 kalemden "genelde 12 test" deniyordu)
 """
 from __future__ import annotations
 
@@ -151,8 +153,9 @@ def main() -> int:
             # gerçekten ölçülebilsin.
             for n in (2, 3, 3, 3, 3, 3, 3, 4, 4):
                 mktask(st2, b_mat, s_mat, n)
-            # Türkçe: 5,5,5 → 5 (ders ayrışması)
-            for n in (5, 5, 5):
+            # Türkçe: 5×5 → 5 (ders ayrışması). Eşik (MIN_COACH_SAMPLES=5)
+            # kadar örnek şart: altında sistem bilerek varsayılana düşer.
+            for n in (5, 5, 5, 5, 5):
                 mktask(st2, b_tur, s_tur, n)
             # Deneme kitabı: 1,1,1 → SAYILMAMALI (Matematik dersinde)
             for _ in range(3):
@@ -289,6 +292,40 @@ def main() -> int:
             f"medyan={_median(dizi)} mod={_typical(dizi)}",
         )
 
+        # ---- 11. Az örnek → uydurma yok. CANLI DOĞRULAMADA YAKALANDI:
+        #          eşiksiz sürüm 4 kalemlik bir dersten "genelde 12" diyordu.
+        with SessionLocal() as db:
+            st_obj = db.get(User, ids["student"])
+            az = Subject(name=f"{PFX} Az Veri", teacher_id=ids["coach"], order=9)
+            db.add(az)
+            db.flush()
+            b_az = Book(name=f"{PFX} Az SB", teacher_id=ids["coach"],
+                        subject_id=az.id, type=BookType.SORU_BANKASI)
+            db.add(b_az)
+            db.flush()
+            s_az = BookSection(book_id=b_az.id, label="B", order=1, test_count=999)
+            db.add(s_az)
+            db.flush()
+            ids["az"] = az.id
+            ids["b_az"] = b_az.id
+            for i in range(4):   # eşiğin ALTINDA (4 < 5)
+                t = Task(student_id=st_obj.id,
+                         date=date.today() - timedelta(days=i + 1),
+                         type=TaskType.TEST, title="x", is_draft=False)
+                db.add(t)
+                db.flush()
+                db.add(TaskBookItem(task_id=t.id, book_id=b_az.id,
+                                    book_section_id=s_az.id, planned_count=12))
+            db.commit()
+        with SessionLocal() as db:
+            g11 = learned_quantity(db, coach_id=ids["coach"], subject_id=ids["az"],
+                                   student_id=ids["student"])
+            check(
+                "11. 4 kalemden alışkanlık çıkarılmaz → varsayılan 3",
+                g11.quantity == DEFAULT_QUANTITY and g11.source == "default",
+                f"{g11}",
+            )
+
         # ---- 10. Endpoint + sahiplik
         c = TestClient(app)
         r = c.post("/api/v2/auth/login",
@@ -320,11 +357,12 @@ def main() -> int:
                                .where(TaskBookItem.task_id.in_(tids)))
                     db.execute(sa_delete(Task).where(Task.id.in_(tids)))
             bids = [v for k, v in ids.items()
-                    if k in ("b_mat", "b_tur", "b_den", "b_other")]
+                    if k in ("b_mat", "b_tur", "b_den", "b_other", "b_az")]
             if bids:
                 db.execute(sa_delete(BookSection).where(BookSection.book_id.in_(bids)))
                 db.execute(sa_delete(Book).where(Book.id.in_(bids)))
-            sids = [v for k, v in ids.items() if k in ("mat", "tur", "bos", "omat")]
+            sids = [v for k, v in ids.items()
+                    if k in ("mat", "tur", "bos", "omat", "az")]
             if sids:
                 db.execute(sa_delete(Topic).where(Topic.subject_id.in_(sids)))
                 db.execute(sa_delete(Subject).where(Subject.id.in_(sids)))
