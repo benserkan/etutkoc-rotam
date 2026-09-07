@@ -22,6 +22,7 @@ import {
 } from "@/lib/hooks/use-teacher-mutations";
 import type { WorkBlock, WorkBlockListResponse } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+import { PinnableSection } from "./pinnable-section";
 
 const UNITS = ["test", "soru", "deneme"] as const;
 
@@ -42,27 +43,27 @@ export function WorkBlockPanel({ studentId }: { studentId: number }) {
   const [showNew, setShowNew] = React.useState(false);
   const blocks = q.data?.items ?? [];
 
+  const active = blocks.filter((b) => b.status !== "archived").length;
   return (
-    <div className="border-b border-border">
-      <div className="px-4 py-3 flex items-center justify-between gap-2">
-        <div className="min-w-0">
-          <p className="font-medium text-foreground flex items-center gap-1.5">
-            <Boxes className="size-4 text-muted-foreground" aria-hidden />
-            Serbest Bloklar
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Sistemde olmayan kaynak (özel ders / ödev) — dağıtılan / kalan
-          </p>
-        </div>
+    <PinnableSection
+      id="week:work-blocks"
+      icon={<Boxes className="size-4" aria-hidden />}
+      title="Serbest Bloklar"
+      summary={active > 0 ? `${active} aktif` : "henüz blok yok"}
+      headerRight={
         <button
           type="button"
           onClick={() => setShowNew((v) => !v)}
-          className="flex-shrink-0 inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/50 transition"
+          className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-[11px] font-medium text-foreground hover:bg-muted/50 transition"
         >
           {showNew ? <X className="size-3" aria-hidden /> : <Plus className="size-3" aria-hidden />}
           {showNew ? "Vazgeç" : "Yeni"}
         </button>
-      </div>
+      }
+    >
+      <p className="px-4 pb-1 text-xs text-muted-foreground">
+        Sistemde olmayan kaynak (özel ders / ödev) — dağıtılan / kalan
+      </p>
 
       {showNew ? (
         <NewBlockForm studentId={studentId} onDone={() => setShowNew(false)} />
@@ -84,7 +85,7 @@ export function WorkBlockPanel({ studentId }: { studentId: number }) {
           ))
         )}
       </div>
-    </div>
+    </PinnableSection>
   );
 }
 

@@ -13,8 +13,10 @@ import {
   FileEdit,
   Loader2,
   Megaphone,
-  PanelRightClose,
-  PanelRightOpen,
+  PanelLeftClose,
+  PanelLeftOpen,
+  Pin,
+  PinOff,
   Pencil,
   Printer,
   Rocket,
@@ -74,6 +76,7 @@ import { CurriculumBoard } from "./weekly-plan/curriculum-board";
 import { NextUnitsPanel } from "./weekly-plan/next-units-panel";
 import { WeekGrid } from "./weekly-plan/week-grid";
 import { WorkBlockPanel } from "./weekly-plan/work-block-panel";
+import { useSectionPref } from "@/lib/hooks/use-section-prefs";
 
 /**
  * Öğretmen — haftalık plan ekranı (Paket 3.5a).
@@ -181,8 +184,12 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
   // Compiler kuralına takılıyor (react-hooks/set-state-in-effect) ve lazy
   // initializer SSR/hydration uyuşmazlığı üretirdi. Oturum içi state yeterli:
   // koç panelini kapatıp o oturumda geniş kartla çalışır.
-  const [sideOpen, setSideOpen] = React.useState(true);
-  const toggleSide = React.useCallback(() => setSideOpen((v) => !v), []);
+  // Sol gün fihristi: raptiyeli (tercih tarayıcıda). Katlıyken 44px şerit —
+  // gün kısaltması + tamamlanma noktası, tıklama/sürükle-bırak korunur;
+  // kart o alanı kazanır. "Paneli gizle" düğmesi kaldırıldı (2026-09-08):
+  // başlıkta, bölümlerin 600px üstündeydi ve dört bölümü tek anahtarla
+  // götürüyordu — artık her bölüm başında kendi raptiyesi var.
+  const dayNav = useSectionPref("week:day-nav", true);
   // Program düzenle/sil — tarih hatasıyla oluşturulan programı düzeltmek veya
   // boş programı kaldırmak için (koç geri bildirimi 2026-09-03).
   const [editProgram, setEditProgram] = React.useState<WeeklyProgramItem | null>(null);
@@ -291,23 +298,6 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
               }}
             />
           ) : null}
-          <button
-            type="button"
-            onClick={toggleSide}
-            className="hidden xl:inline-flex rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted items-center gap-1.5"
-            title={
-              sideOpen
-                ? "Yan paneli gizle — gün kartı genişlesin"
-                : "Yan paneli göster (Kaynak Durumu · Serbest Bloklar)"
-            }
-          >
-            {sideOpen ? (
-              <PanelRightClose className="size-4" aria-hidden />
-            ) : (
-              <PanelRightOpen className="size-4" aria-hidden />
-            )}
-            {sideOpen ? "Paneli gizle" : "Panel"}
-          </button>
           <Link
             href={`/teacher/students/${studentId}/program/print${
               currentProgramId
@@ -394,12 +384,8 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
         }}
       />
 
-      <div
-        className={cn(
-          "grid grid-cols-1 gap-6",
-          sideOpen && "xl:grid-cols-[1fr_360px]",
-        )}
-      >
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_var(--side-w)]"
+           style={{ "--side-w": "360px" } as React.CSSProperties}>
         <div className="space-y-4 min-w-0">
           <WeekNotesCard
             studentId={studentId}
@@ -407,12 +393,54 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
             notes={notes}
           />
 
-          <div id="day-editor" className="grid grid-cols-1 lg:grid-cols-[150px_1fr] gap-3 scroll-mt-4">
-            {/* Gün fihristi — tıkla, sağdaki kart değişsin (uzun kaydırma yok) */}
+          <div
+            id="day-editor"
+            className={cn(
+              "grid grid-cols-1 gap-3 scroll-mt-4",
+              dayNav.open ? "lg:grid-cols-[150px_1fr]" : "lg:grid-cols-[44px_1fr]",
+            )}
+          >
+            {/* Gün fihristi — tıkla, sağdaki kart değişsin (uzun kaydırma yok).
+                Raptiye: geniş (ad + sayı + çubuk) ↔ şerit (kısaltma + nokta). */}
             <nav
               className="flex lg:flex-col gap-1 overflow-x-auto lg:overflow-visible pb-1 lg:pb-0"
               aria-label="Günler"
+              data-section="week:day-nav"
+              data-open={dayNav.open ? "1" : "0"}
             >
+              <button
+                type="button"
+                onClick={dayNav.togglePin}
+                className={cn(
+                  "hidden lg:flex items-center justify-center rounded-md border border-border py-1 transition",
+                  dayNav.pinned
+                    ? "text-amber-600 hover:bg-amber-500/15 dark:text-amber-400"
+                    : "text-muted-foreground/60 hover:bg-muted hover:text-foreground",
+                )}
+                title={dayNav.pinned ? "Gün listesi sabit — kaldır" : "Gün listesini sabitle (hep geniş)"}
+                aria-label={dayNav.pinned ? "Gün listesi sabitlemesini kaldır" : "Gün listesini sabitle"}
+                aria-pressed={dayNav.pinned}
+              >
+                {dayNav.pinned ? (
+                  <Pin className="size-3.5 fill-current" aria-hidden />
+                ) : (
+                  <PinOff className="size-3.5" aria-hidden />
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={dayNav.toggle}
+                className="hidden lg:flex items-center justify-center rounded-md border border-border py-1 text-muted-foreground/60 hover:bg-muted hover:text-foreground transition"
+                title={dayNav.open ? "Gün listesini daralt" : "Gün listesini genişlet"}
+                aria-label={dayNav.open ? "Gün listesini daralt" : "Gün listesini genişlet"}
+                aria-expanded={dayNav.open}
+              >
+                {dayNav.open ? (
+                  <PanelLeftClose className="size-3.5" aria-hidden />
+                ) : (
+                  <PanelLeftOpen className="size-3.5" aria-hidden />
+                )}
+              </button>
               {data.days.map((d) => {
                 const active = selectedDay?.date === d.date;
                 const total = d.tasks_count ?? d.tasks.length;
@@ -453,7 +481,8 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
                       });
                     }}
                     className={cn(
-                      "shrink-0 lg:w-full text-left rounded-lg border px-2.5 py-2 transition",
+                      "shrink-0 lg:w-full text-left rounded-lg border transition",
+                      dayNav.open ? "px-2.5 py-2" : "px-0 py-1.5 lg:text-center",
                       active
                         ? "border-cyan-400 bg-cyan-50 dark:bg-cyan-500/10 dark:border-cyan-500/40"
                         : "border-border hover:bg-muted",
@@ -461,7 +490,43 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
                         "ring-2 ring-amber-400 ring-offset-1 ring-offset-background",
                     )}
                     aria-current={active ? "true" : undefined}
+                    title={
+                      dayNav.open
+                        ? undefined
+                        : `${d.dow_label} — ${total === 0 ? "boş" : `${doneTasks}/${total} görev`}`
+                    }
                   >
+                    {!dayNav.open ? (
+                      // ŞERİT: 3 harf + tamamlanma noktası. Bilgi yitmez —
+                      // tooltip tam metni taşır; aktif gün cyan çerçeveli.
+                      <div className="flex flex-col items-center gap-0.5 lg:px-0 px-2">
+                        <span
+                          className={cn(
+                            "text-[11px] font-semibold leading-none",
+                            active ? "text-cyan-900 dark:text-cyan-200" : "text-foreground",
+                          )}
+                        >
+                          {d.dow_label.slice(0, 3)}
+                        </span>
+                        <span
+                          className={cn(
+                            "size-1.5 rounded-full",
+                            total === 0
+                              ? "bg-muted-foreground/30"
+                              : pct >= 70
+                                ? "bg-emerald-500"
+                                : pct >= 40
+                                  ? "bg-amber-500"
+                                  : "bg-rose-500",
+                          )}
+                          aria-hidden
+                        />
+                        {d.is_today ? (
+                          <span className="size-1 rounded-full bg-cyan-500" aria-hidden title="bugün" />
+                        ) : null}
+                      </div>
+                    ) : (
+                    <>
                     <div className="flex flex-wrap items-center gap-x-1.5 gap-y-0.5">
                       <span
                         className={cn(
@@ -514,6 +579,8 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
                         />
                       </div>
                     ) : null}
+                    </>
+                    )}
                   </button>
                 );
               })}
@@ -576,7 +643,8 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           </div>
         </div>
 
-        {sideOpen ? (
+        {/* Sağ panel: her bölüm kendi raptiyesiyle açılır/katlanır (PinnableSection).
+            Tümü katlıysa yalnız başlık satırları kalır — ayrı "gizle" düğmesi yok. */}
         <aside className="xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto rounded-lg border border-border bg-card">
           <CarryoverPanel
             studentId={studentId}
@@ -604,7 +672,6 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
             onOpenBookGrid={setGridBookId}
           />
         </aside>
-        ) : null}
       </div>
 
       <BookGridModal

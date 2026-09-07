@@ -1,7 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { ChevronRight, Grid3x3, Loader2 } from "lucide-react";
+import { ChevronRight, Grid3x3, Library, Loader2 } from "lucide-react";
+
+import { PinnableSection } from "./pinnable-section";
 
 import type {
   SidebarBook,
@@ -74,16 +76,16 @@ export function ResourceSidebar({
     });
   }
 
+  const subjectCount = data?.subjects.length ?? 0;
   return (
-    <div>
-      <div className="px-4 py-3 border-b border-border sticky top-0 bg-card z-10 flex items-center justify-between">
-        <div>
-          <p className="font-medium text-foreground">Kaynak Durumu</p>
-          <p className="text-xs text-muted-foreground">
-            Ders bazında kitap ilerlemesi
-          </p>
-        </div>
-        {focusedSubjectId !== null ? (
+    <PinnableSection
+      id="week:resources"
+      icon={<Library className="size-4" aria-hidden />}
+      title="Kaynak Durumu"
+      summary={subjectCount > 0 ? `${subjectCount} ders` : undefined}
+      defaultOpen
+      headerRight={
+        focusedSubjectId !== null ? (
           <button
             type="button"
             onClick={onClearFocus}
@@ -91,8 +93,10 @@ export function ResourceSidebar({
           >
             Tümü
           </button>
-        ) : null}
-      </div>
+        ) : null
+      }
+    >
+      <p className="px-4 pb-1 text-xs text-muted-foreground">Ders bazında kitap ilerlemesi</p>
 
       {focusedSubjectId !== null && data && data.subjects.length > 0 ? (
         <div className="px-4 py-2 bg-indigo-50 border-b border-indigo-100 text-[11px] flex items-center justify-between gap-2">
@@ -134,7 +138,7 @@ export function ResourceSidebar({
         <span className="text-amber-600">⏳ rez.</span>
         <span className="text-foreground">⎯ kalan</span>
       </div>
-    </div>
+    </PinnableSection>
   );
 }
 

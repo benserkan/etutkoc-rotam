@@ -208,20 +208,22 @@ def main() -> int:
                 later.click()
                 page.wait_for_timeout(1200)
 
-            # ---- 1. Paneli aç
-            head = page.query_selector('button:has-text("Müfredat")')
-            check("0. Müfredat paneli sağ panelde", head is not None)
-            if head is None:
+            # ---- 1. Panel (raptiyeli bölüm, 2026-09-08). Müfredat varsayılan
+            #         AÇIK gelir — katlıysa başlığa tıklayıp aç.
+            sec = page.query_selector('[data-section="week:curriculum"]')
+            check("0. Müfredat paneli sağ panelde", sec is not None)
+            if sec is None:
                 page.screenshot(path="/tmp/board_fail.png")
                 b.close()
                 return 1
-            head.click()
+            if sec.get_attribute("data-open") != "1":
+                sec.query_selector("button[aria-expanded]").click()
             page.wait_for_timeout(2500)
             check("1. panel açılır ve konular listelenir",
                   page.query_selector('text="Temiz Konu"') is not None)
 
             # ---- 2+3. Temiz konu detayı
-            page.click('button:has-text("Temiz Konu")')
+            page.click('[data-section="week:curriculum"] button:has-text("Temiz Konu")')
             page.wait_for_timeout(1200)
             ready = page.query_selector("text=kapatmaya hazır")
             check("2/3. temiz konu detayı + 'kapatmaya hazır' ipucu",
@@ -248,7 +250,7 @@ def main() -> int:
                       f"kalan={_closed(ids['student'])}")
 
             # ---- 4. EMİR VAKASI
-            page.click('button:has-text("Yaş Problemleri")')
+            page.click('[data-section="week:curriculum"] button:has-text("Yaş Problemleri")')
             page.wait_for_timeout(1500)
             caution = page.query_selector("text=kapatmadan önce bak")
             check(
@@ -268,7 +270,7 @@ def main() -> int:
                       f"{before} → {_tasks(ids['student'])}")
 
             # ---- 8. Kaynaksız konu
-            free = page.query_selector('button:has-text("Kaynaksız Konu")')
+            free = page.query_selector('[data-section="week:curriculum"] button:has-text("Kaynaksız Konu")')
             check("8a. kaynağı olmayan konu da panelde listelenir",
                   free is not None)
             if free:

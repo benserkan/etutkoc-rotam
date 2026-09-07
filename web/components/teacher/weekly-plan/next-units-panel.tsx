@@ -4,7 +4,6 @@ import * as React from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Compass,
-  ChevronDown,
   Loader2,
   Plus,
   Sparkles,
@@ -27,6 +26,7 @@ import type {
   TeacherStudentWeekDay,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+import { PinnableSection } from "./pinnable-section";
 
 function fmtDate(iso: string): string {
   const [, m, d] = iso.split("-");
@@ -52,7 +52,6 @@ export function NextUnitsPanel({
     queryFn: () => getTeacherNextUnits(studentId),
     staleTime: 30_000,
   });
-  const [expanded, setExpanded] = React.useState(false);
   const [assignFor, setAssignFor] = React.useState<NextUnitItem | null>(null);
 
   // eslint-disable-next-line lgs/missing-invalidate -- setQueryData ile doğrudan güncellenir (öneri sıralaması, yan etkisiz)
@@ -80,25 +79,15 @@ export function NextUnitsPanel({
   if (q.isLoading || units.length === 0) return null;
 
   return (
-    <div className="border-b border-cyan-200 bg-cyan-50/50 dark:bg-cyan-500/10 dark:border-cyan-500/30">
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center gap-2 px-4 py-2.5 text-left transition hover:bg-cyan-100/50"
-        aria-expanded={expanded}
-      >
-        <Compass className="size-4 shrink-0 text-cyan-700" aria-hidden />
-        <span className="min-w-0 flex-1 text-sm font-medium text-cyan-900">
-          Sıradaki üniteler ({units.length})
-          <span className="ml-1 font-normal text-cyan-700">· müfredatta sırada</span>
-        </span>
-        <ChevronDown
-          className={cn("size-4 shrink-0 text-cyan-600 transition-transform", expanded && "rotate-180")}
-          aria-hidden
-        />
-      </button>
-
-      {!expanded ? null : (
+    <PinnableSection
+      id="week:next-units"
+      tone="cyan"
+      icon={<Compass className="size-4" aria-hidden />}
+      title={<>Sıradaki üniteler ({units.length})</>}
+      summary="müfredatta sırada"
+      className="border-cyan-200 bg-cyan-50/50 dark:bg-cyan-500/10 dark:border-cyan-500/30"
+    >
+      {(
         <>
           <div className="flex items-center justify-between gap-2 px-4 pb-2">
             <p className="text-[11px] text-cyan-800">
@@ -175,7 +164,7 @@ export function NextUnitsPanel({
           qc.invalidateQueries({ queryKey: teacherKeys.studentNextUnits(studentId) });
         }}
       />
-    </div>
+    </PinnableSection>
   );
 }
 

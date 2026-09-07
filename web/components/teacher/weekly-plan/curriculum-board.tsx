@@ -19,8 +19,6 @@ import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Check,
-  ChevronDown,
-  ChevronRight,
   Loader2,
   RotateCcw,
   TriangleAlert,
@@ -39,6 +37,8 @@ import type {
   TopicBoardResponse,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+import { useSectionPref } from "@/lib/hooks/use-section-prefs";
+import { PinnableSection } from "./pinnable-section";
 
 const DOT: Record<string, string> = {
   kapali: "bg-emerald-500",
@@ -67,7 +67,7 @@ export function CurriculumBoard({
   /** Aktif gün — "+N test" bu güne yazar */
   dayDate: string;
 }) {
-  const [open, setOpen] = React.useState(false);
+  const { open } = useSectionPref("week:curriculum", true);
   const [subjectId, setSubjectId] = React.useState<number | "">("");
   const [expanded, setExpanded] = React.useState<number | null>(null);
 
@@ -122,27 +122,17 @@ export function CurriculumBoard({
   }
 
   return (
-    <div className="border-b border-border/60">
-      <button
-        type="button"
-        onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center gap-2 px-4 py-3 text-left hover:bg-muted/40"
-      >
-        {open ? (
-          <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-        ) : (
-          <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-        )}
-        <span className="text-sm font-semibold text-foreground">Müfredat</span>
-        {active ? (
-          <span className="ml-auto text-[11px] tabular-nums text-muted-foreground">
-            {active.closed_topics}/{active.total_topics} kapalı · %
-            {active.coverage_pct}
-          </span>
-        ) : null}
-      </button>
-
-      {open ? (
+    <PinnableSection
+      id="week:curriculum"
+      title="Müfredat"
+      defaultOpen
+      summary={
+        active
+          ? `${active.closed_topics}/${active.total_topics} kapalı · %${active.coverage_pct}`
+          : undefined
+      }
+    >
+      {(
         <div className="px-4 pb-3">
           {subjects.length > 1 ? (
             <select
@@ -339,7 +329,7 @@ export function CurriculumBoard({
             </ul>
           )}
         </div>
-      ) : null}
-    </div>
+      )}
+    </PinnableSection>
   );
 }
