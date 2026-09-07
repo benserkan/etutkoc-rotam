@@ -37,6 +37,9 @@ class MutationResponse(BaseModel, Generic[T]):
     """
     data: T
     invalidate: list[str] = []
+    # İşlem BAŞARILI ama koçun bilmesi gereken durum (örn. kayıtlı kapasite
+    # aşılarak atama). Hata değildir — frontend bilgilendirme olarak gösterir.
+    warnings: list[str] = []
 
 
 class SimpleOk(BaseModel):

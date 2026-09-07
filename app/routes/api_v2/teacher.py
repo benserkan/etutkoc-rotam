@@ -322,6 +322,7 @@ from app.services.task_service import (
     ReservationError,
     release_item,
     release_task_items,
+    remaining_for,
     reserve_item,
     set_item_completion as svc_set_item_completion,
 )
@@ -3709,11 +3710,16 @@ def _create_task_with_items(
     *,
     student: User,
     payload: TaskCreateBody | "BulkTasksBody.tasks",  # noqa: F821 (tip ipucu)
+    overflow_out: list[str] | None = None,
 ) -> Task:
     """TaskCreateBody veya BulkTaskItem'dan tek bir Task üret.
 
     Rezervi her kalem için reserve_item ile açar; kapasite hatası ReservationError
     çağrıya ulaşır (çağıran wrap eder).
+
+    overflow_out: verilirse, kayıtlı kapasitesi aşılarak atanan kalemler için
+    koça gösterilecek uyarı cümleleri buraya yazılır (kalem yine oluşur —
+    `allow_over_capacity` bayrağı bunu bilinçli seçtiği anlamına gelir).
     """
     d = _parse_iso_date(payload.date)
     sched = _validate_scheduled_hour(payload.scheduled_hour)
@@ -3804,13 +3810,27 @@ def _create_task_with_items(
                 completed_count=0,
             ))
             continue
-        # reserve_item kapasite aşımında ReservationError fırlatır
+        # reserve_item kapasite aşımında ReservationError fırlatır — koç
+        # bilinçli "yine de ata" dediyse (allow_over_capacity) aşıma izin verilir.
+        over = bool(getattr(it, "allow_over_capacity", False))
+        if over and overflow_out is not None:
+            kalan, toplam = remaining_for(
+                db, student_id=student.id,
+                book_id=it.book_id, section_id=it.section_id,
+            )
+            asim = it.planned_count - kalan
+            if asim > 0:
+                overflow_out.append(
+                    f"Kayıtlı kapasite {asim} test aşıldı "
+                    f"(bölümde {kalan}/{toplam} boştu) — görev yine de oluşturuldu."
+                )
         reserve_item(
             db,
             student_id=student.id,
             book_id=it.book_id,
             section_id=it.section_id,
             count=it.planned_count,
+            allow_over_capacity=over,
         )
         db.add(TaskBookItem(
             task_id=task.id,
@@ -4257,8 +4277,11 @@ def teacher_create_task_v2(
     """Yeni görev + kalem(ler) oluştur. Rezervleri açar, kapasite aşımında 422."""
     student = _get_owned_student(db, student_id, user.id)
     assert_active_coaching(db, user)
+    overflow: list[str] = []
     try:
-        task = _create_task_with_items(db, student=student, payload=body)
+        task = _create_task_with_items(
+            db, student=student, payload=body, overflow_out=overflow,
+        )
     except ReservationError as e:
         db.rollback()
         raise _reservation_to_http(e)
@@ -4270,6 +4293,7 @@ def teacher_create_task_v2(
     return MutationResponse[TeacherTask](
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
+        warnings=overflow,
     )
 
 
@@ -5030,6 +5054,17 @@ def teacher_add_task_item_v2(
     _ensure_section_belongs_to_book(db, body.book_id, body.section_id)
     _ensure_student_book_assigned(db, task.student_id, body.book_id)
 
+    warnings: list[str] = []
+    if body.allow_over_capacity:
+        kalan, toplam = remaining_for(
+            db, student_id=task.student_id,
+            book_id=body.book_id, section_id=body.section_id,
+        )
+        if body.planned_count > kalan:
+            warnings.append(
+                f"Kayıtlı kapasite {body.planned_count - kalan} test aşıldı "
+                f"(bölümde {kalan}/{toplam} boştu) — kalem yine de eklendi."
+            )
     try:
         reserve_item(
             db,
@@ -5037,6 +5072,7 @@ def teacher_add_task_item_v2(
             book_id=body.book_id,
             section_id=body.section_id,
             count=body.planned_count,
+            allow_over_capacity=body.allow_over_capacity,
         )
     except ReservationError as e:
         db.rollback()
@@ -5054,6 +5090,7 @@ def teacher_add_task_item_v2(
     return MutationResponse[TeacherTask](
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
+        warnings=warnings,
     )
 
 
@@ -5218,14 +5255,26 @@ def teacher_patch_task_item_v2(
             invalidate=_invalidate_for_task(task, user.id),
         )
 
+    warnings: list[str] = []
     try:
         if delta > 0:
+            if body.allow_over_capacity:
+                kalan, toplam = remaining_for(
+                    db, student_id=task.student_id,
+                    book_id=item.book_id, section_id=item.book_section_id,
+                )
+                if delta > kalan:
+                    warnings.append(
+                        f"Kayıtlı kapasite {delta - kalan} test aşıldı "
+                        f"(bölümde {kalan}/{toplam} boştu) — sayı yine de artırıldı."
+                    )
             reserve_item(
                 db,
                 student_id=task.student_id,
                 book_id=item.book_id,
                 section_id=item.book_section_id,
                 count=delta,
+                allow_over_capacity=body.allow_over_capacity,
             )
         else:
             release_item(
@@ -5245,6 +5294,7 @@ def teacher_patch_task_item_v2(
     return MutationResponse[TeacherTask](
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
+        warnings=warnings,
     )
 
 
@@ -5325,6 +5375,7 @@ def teacher_patch_task_single_item_v2(
         )
 
     # Rezerv dengeleme (Jinja edit_task.py:560-586 parite)
+    single_warnings: list[str] = []
     try:
         # Released (reconcile ile serbest bırakılmış) kalemin bekleyeni sayaçta
         # DEĞİL → tekrar iade etme (çift-iade başka görevlerin rezervini düşürür).
@@ -5342,12 +5393,23 @@ def teacher_patch_task_single_item_v2(
             item.completed_count if not source_changed else 0
         )
         if new_pending > 0:
+            if body.allow_over_capacity:
+                kalan, toplam = remaining_for(
+                    db, student_id=task.student_id,
+                    book_id=body.book_id, section_id=body.section_id,
+                )
+                if new_pending > kalan:
+                    single_warnings.append(
+                        f"Kayıtlı kapasite {new_pending - kalan} test aşıldı "
+                        f"(bölümde {kalan}/{toplam} boştu) — görev yine de kaydedildi."
+                    )
             reserve_item(
                 db,
                 student_id=task.student_id,
                 book_id=body.book_id,
                 section_id=body.section_id,
                 count=new_pending,
+                allow_over_capacity=body.allow_over_capacity,
             )
             # Koç düzenledi → kalem yeniden canlı rezerv tutuyor; released
             # işaretini kaldır ki silme/reconcile yeniden doğru çalışsın.
@@ -5383,6 +5445,7 @@ def teacher_patch_task_single_item_v2(
     return MutationResponse[TeacherTask](
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
+        warnings=single_warnings,
     )
 
 

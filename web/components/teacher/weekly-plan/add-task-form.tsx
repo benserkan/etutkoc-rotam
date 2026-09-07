@@ -18,6 +18,7 @@ import {
   Repeat,
   Sun,
   Sunrise,
+  TriangleAlert,
   Video,
 } from "lucide-react";
 
@@ -427,6 +428,20 @@ function TestForm({
     onFocusSubject(num === "" ? null : num);
   }
 
+  // Seçili bölümde kayıtlı kapasite yetiyor mu? (yetmiyorsa engel değil, uyarı)
+  const selectedSection = React.useMemo(
+    () =>
+      sectionId === ""
+        ? undefined
+        : (sectionsQ.data?.items ?? []).find((s) => s.id === sectionId),
+    [sectionsQ.data, sectionId],
+  );
+  const wanted = Number(plannedCount);
+  const overflow =
+    selectedSection && Number.isFinite(wanted) && wanted > 0
+      ? Math.max(0, wanted - selectedSection.remaining)
+      : 0;
+
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (bookId === "" || sectionId === "") return;
@@ -442,7 +457,16 @@ function TestForm({
           scheduled_hour: scheduledHour,
           period: period,
           items: [
-            { book_id: bookId, section_id: sectionId, planned_count: count },
+            {
+              book_id: bookId,
+              section_id: sectionId,
+              planned_count: count,
+              // Kayıtlı kapasite yetmiyorsa engel çıkarma: koç aşımı formda
+              // amber uyarı olarak zaten GÖRÜYOR ve bilerek gönderiyor.
+              // Kitabın test sayısı gerçeği her zaman yansıtmaz (yayınevi
+              // sayımı, sistem dışı çözülen testler) — envanter yardımcıdır.
+              allow_over_capacity: overflow > 0,
+            },
           ],
         },
       },
@@ -533,6 +557,19 @@ function TestForm({
           />
         </div>
       </div>
+      {overflow > 0 && selectedSection ? (
+        <p className="flex items-start gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-2 text-[12px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+          <TriangleAlert className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+          <span>
+            <b>{selectedSection.label}</b> bölümünde kayıtlı kapasite{" "}
+            {selectedSection.remaining === 0
+              ? "kalmadı"
+              : `${selectedSection.remaining} test`}
+            {" "}— <b>{overflow} test</b> aşılacak. Görev yine de oluşturulur;
+            kitabın test sayısı gerçeği her zaman yansıtmaz.
+          </span>
+        </p>
+      ) : null}
       {statsQ.data ? <SectionStatsMini stats={statsQ.data} /> : null}
     </form>
   );

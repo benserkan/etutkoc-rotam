@@ -797,6 +797,10 @@ class TaskItemBody(BaseModel):
     section_id: int | None = None
     label: str | None = None         # kitapsız deneme kaleminde deneme adı
     planned_count: int               # ≥1 — service ek olarak kontrol eder
+    # Kayıtlı kapasite dolsa bile atamaya izin ver (2026-09-07). Kitabın test
+    # sayısı gerçeği her zaman yansıtmaz; envanter koçun programını
+    # engellememeli. Varsayılan False → eski davranış (422) korunur.
+    allow_over_capacity: bool = False
 
 
 class TaskCreateBody(BaseModel):
@@ -1007,6 +1011,7 @@ class TaskPatchBody(BaseModel):
 class TaskItemPatchBody(BaseModel):
     """PATCH /api/v2/teacher/tasks/{task_id}/items/{item_id}"""
     planned_count: int
+    allow_over_capacity: bool = False
 
 
 class TaskItemResultBody(BaseModel):
@@ -1046,6 +1051,7 @@ class TaskSingleItemEditBody(BaseModel):
     planned_count: int
     notes: str | None = None
     link_url: str | None = None
+    allow_over_capacity: bool = False
 
 
 class BulkTaskItem(BaseModel):

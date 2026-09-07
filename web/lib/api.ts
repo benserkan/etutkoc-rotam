@@ -125,4 +125,9 @@ export async function api<T>(path: string, opts: ApiOptions = {}): Promise<T> {
 export interface MutationResponse<T> {
   data: T;
   invalidate: string[];
+  /**
+   * İşlem BAŞARILI ama koçun bilmesi gereken durum (örn. kayıtlı kapasite
+   * aşılarak atama). Hata değildir — `showWarnings` ile bilgi toast'ı basılır.
+   */
+  warnings?: string[];
 }

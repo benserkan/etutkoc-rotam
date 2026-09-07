@@ -40,7 +40,7 @@ try:
     tid = t.id
 
     # 1) Çözülen soru ile tamamla
-    res = complete_task_v2(tid, CompleteTaskBody(solved_count=20), stu, db)
+    res = complete_task_v2(tid, CompleteTaskBody(solved_count=20), user=stu, db=db)
     db.refresh(t)
     check("1. itemless complete solved_count=20 kaydedildi", t.solved_count == 20, f"got {t.solved_count}")
     check("2. status COMPLETED", t.status == TaskStatus.COMPLETED)
@@ -54,14 +54,14 @@ try:
     check("7. gorev_done=1 (manşet görev tamam)", g.gorev_done == 1)
 
     # 3) Geri al -> solved_count temizlenir + test_completed 0
-    uncomplete_task_v2(tid, stu, db)
+    uncomplete_task_v2(tid, user=stu, db=db)
     db.refresh(t)
     check("8. uncomplete -> solved_count temizlendi", t.solved_count is None, f"got {t.solved_count}")
     g2 = gorev_stats.summarize([t])
     check("9. uncomplete sonrası test_completed=0", g2.test_completed == 0)
 
     # 4) 0 girince None (sayılmaz)
-    complete_task_v2(tid, CompleteTaskBody(solved_count=0), stu, db)
+    complete_task_v2(tid, CompleteTaskBody(solved_count=0), user=stu, db=db)
     db.refresh(t)
     check("10. solved_count=0 -> None (sayılmaz)", t.solved_count is None)
 finally:

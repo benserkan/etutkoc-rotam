@@ -358,6 +358,7 @@ export interface TaskSingleItemEditBody {
   planned_count: number;
   notes?: string | null;
   link_url?: string | null;
+  allow_over_capacity?: boolean;
 }
 
 export type TaskPeriod = "morning" | "noon" | "evening";
@@ -822,6 +823,11 @@ export interface TaskItemBody {
   section_id: number | null;
   label?: string | null;        // kitapsız deneme kaleminde deneme adı
   planned_count: number;
+  /**
+   * Kayıtlı kapasite dolsa bile atamaya izin ver (2026-09-07). Kitabın test
+   * sayısı gerçeği her zaman yansıtmaz; envanter programı engellememeli.
+   */
+  allow_over_capacity?: boolean;
 }
 
 export interface TaskCreateBody {
@@ -1010,6 +1016,7 @@ export interface CarryoverResult {
 
 export interface TaskItemPatchBody {
   planned_count: number;
+  allow_over_capacity?: boolean;
 }
 
 export interface BulkTaskItem {

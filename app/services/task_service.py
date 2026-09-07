@@ -65,6 +65,20 @@ def _get_progress(
     return progress, section
 
 
+def remaining_for(
+    db: Session,
+    *,
+    student_id: int,
+    book_id: int,
+    section_id: int,
+) -> tuple[int, int]:
+    """(kalan, kayıtlı test sayısı) — uyarı metni ve aşım hesabı için."""
+    progress, section = _get_progress(db, student_id, book_id, section_id)
+    total = int(section.test_count or 0)
+    used = int(progress.reserved_count) + int(progress.completed_count)
+    return max(0, total - used), total
+
+
 def reserve_item(
     db: Session,
     *,
@@ -72,12 +86,29 @@ def reserve_item(
     book_id: int,
     section_id: int,
     count: int,
+    allow_over_capacity: bool = False,
 ) -> SectionProgress:
-    """Rezerv ekle. Kapasite aşılırsa ReservationError."""
+    """Rezerv ekle. Kapasite aşılırsa ReservationError.
+
+    allow_over_capacity=True → kayıtlı kapasite aşılsa da rezerv açılır
+    (2026-09-07, koç geri bildirimi). Gerekçe: kitabın test sayısı gerçeği her
+    zaman yansıtmaz — yayınevi sayımı şaşar, öğrenci sistem dışı test çözer,
+    bölüm atlanır. Canlı veride 462 bölümün kapasitesi dolu ve konuların
+    %66'sında tek kaynak var; kapı kapanınca koç programı KURAMIYOR.
+    Envanter bir yardımcıdır, otorite değil: sayaç yine tutulur, yalnız
+    engellemez. Aşım ızgarada fazladan kutu olarak görünür
+    (build_book_grid_slots slotları görevlerden üretir, test_count ile
+    sınırlamaz) → sahte "sayaç uyumsuzluğu" doğmaz.
+
+    VARSAYILAN False: bayrağı geçirmeyen tüm mevcut çağrılar (öğrenci talebi
+    onayı, Jinja yolları, öneri kabulü) eskisi gibi kapasiteyle korunur.
+    """
     if count < 1:
         raise ReservationError("Test sayısı en az 1 olmalı.")
     progress, section = _get_progress(db, student_id, book_id, section_id)
-    if progress.reserved_count + progress.completed_count + count > section.test_count:
+    if not allow_over_capacity and (
+        progress.reserved_count + progress.completed_count + count > section.test_count
+    ):
         kalan = section.test_count - progress.reserved_count - progress.completed_count
         raise ReservationError(
             f"Bu üniteden sadece {kalan} test kaldı; {count} rezerv edilemez."

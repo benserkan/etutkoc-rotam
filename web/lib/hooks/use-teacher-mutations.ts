@@ -175,6 +175,20 @@ function errorTitle(e: unknown, fallback: string): string {
   }
 }
 
+/**
+ * Backend'in "işlem oldu ama bunu bil" mesajları (MutationResponse.warnings).
+ * Hata DEĞİL — örn. kayıtlı kapasite aşılarak yapılan atama. Başarı toast'ının
+ * yerine geçer ki koç iki bildirim birden görmesin.
+ */
+function showWarnings(res: { warnings?: string[] }, successTitle: string): void {
+  const w = res.warnings ?? [];
+  if (w.length === 0) {
+    toast.success(successTitle);
+    return;
+  }
+  toast.warning(successTitle, { description: w.join(" · ") });
+}
+
 function showError(e: unknown, fallbackTitle: string) {
   toast.error(errorTitle(e, fallbackTitle), {
     description: errorMessage(e, "Sunucu hatası."),
@@ -229,7 +243,7 @@ export function useCreateTask(studentId: number) {
     onError: (err) => showError(err, "Görev oluşturulamadı"),
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
-      toast.success("Görev eklendi");
+      showWarnings(res, "Görev eklendi");
     },
   });
 }
@@ -460,7 +474,7 @@ export function usePatchTaskSingleItem(_studentId: number) {
     },
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
-      toast.success("Görev güncellendi");
+      showWarnings(res, "Görev güncellendi");
     },
   });
 }
@@ -569,7 +583,7 @@ export function useAddTaskItem(studentId: number, dateIso: string) {
     onError: (err) => showError(err, "Kalem eklenemedi"),
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
-      toast.success("Kalem eklendi");
+      showWarnings(res, "Kalem eklendi");
       // Optimistic update yapmadık (yeni kalem ID'si server'dan gelir);
       // invalidate gün cache'ini bayatlayıp yeniden çeker.
       void studentId;
@@ -623,6 +637,13 @@ export function usePatchTaskItem(studentId: number, dateIso: string) {
     },
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
+      // Sessiz akış (optimistik güncelleme) — yalnız kapasite aşımı gibi
+      // koçun bilmesi gereken bir durum varsa bildirim çıkar.
+      if ((res.warnings ?? []).length > 0) {
+        toast.warning("Kalem güncellendi", {
+          description: (res.warnings ?? []).join(" · "),
+        });
+      }
     },
   });
 }
