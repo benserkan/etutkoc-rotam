@@ -253,6 +253,10 @@ from app.routes.api_v2.schemas.teacher import (
     TaskSpreadBody,
     TaskSpreadResult,
     TaskSpreadSkip,
+    PickerGroupItem,
+    PickerSourceItem,
+    PickerTopicItem,
+    TaskPickerResponse,
     TaskQuantityResponse,
     TaskSingleItemEditBody,
     TopicCloseBody,
@@ -320,7 +324,7 @@ from app.services.risk_analysis import (
     filter_at_risk,
     get_active_mutes,
 )
-from app.services import task_quantity, topic_closure
+from app.services import task_picker, task_quantity, topic_closure
 from app.services.task_service import (
     ReservationError,
     release_item,
@@ -4338,6 +4342,58 @@ def teacher_create_task_v2(
         data=_build_teacher_task(db, task),
         invalidate=_invalidate_for_task(task, user.id),
         warnings=overflow,
+    )
+
+
+# ---------------------- Görev ekleme kutusu (3 tık) ----------------------
+
+
+@router.get(
+    "/students/{student_id}/task-picker",
+    response_model=TaskPickerResponse,
+)
+def teacher_task_picker_v2(
+    student_id: int,
+    q: str | None = Query(None, max_length=80),
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Görev kutusu: konu ekseninde aday listesi, kaynaklar konunun altında.
+
+    Koç "türev çalışsın" diye düşünür, "345'in 12. ünitesi" diye değil. Bu
+    bilgi bugüne kadar üç ayrı uçta dağınıktı (müfredat · öneri motoru ·
+    kitap ağacı); kutu hepsini tek yerde toplar. Kapasitesi dolu bölüm
+    GİZLENMEZ, `full` ile işaretlenir (P1: envanter engel değil).
+    """
+    student = _get_owned_student(db, student_id, user.id)
+    groups = task_picker.build_task_picker(
+        db, student=student, coach_id=user.id, q=q,
+    )
+    return TaskPickerResponse(
+        groups=[
+            PickerGroupItem(
+                key=g.key, label=g.label,
+                items=[
+                    PickerTopicItem(
+                        topic_id=i.topic_id, topic_name=i.topic_name,
+                        subject_id=i.subject_id, subject_name=i.subject_name,
+                        status=i.status, badge=i.badge,
+                        quantity=i.quantity, quantity_reason=i.quantity_reason,
+                        sources=[
+                            PickerSourceItem(
+                                book_id=s.book_id, book_name=s.book_name,
+                                section_id=s.section_id,
+                                section_label=s.section_label,
+                                total=s.total, remaining=s.remaining, full=s.full,
+                            )
+                            for s in i.sources
+                        ],
+                    )
+                    for i in g.items
+                ],
+            )
+            for g in groups
+        ]
     )
 
 

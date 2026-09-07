@@ -827,6 +827,40 @@ class TaskCreateBody(BaseModel):
     work_block_id: int | None = None
 
 
+class PickerSourceItem(BaseModel):
+    """Konunun altındaki bir kaynak (kitap bölümü)."""
+    book_id: int
+    book_name: str
+    section_id: int
+    section_label: str
+    total: int
+    remaining: int
+    full: bool           # kapasite doldu — gizlenmez, işaretlenir (P1)
+
+
+class PickerTopicItem(BaseModel):
+    topic_id: int
+    topic_name: str
+    subject_id: int
+    subject_name: str
+    status: str
+    badge: str | None = None      # sıradaki | zayıf | son çalışılan | kapalı
+    quantity: int                 # koçun bu derste tipik verdiği sayı (P3)
+    quantity_reason: str
+    sources: list[PickerSourceItem] = []
+
+
+class PickerGroupItem(BaseModel):
+    key: str
+    label: str
+    items: list[PickerTopicItem] = []
+
+
+class TaskPickerResponse(BaseModel):
+    """Görev ekleme kutusunun içeriği — konu ekseninde, kaynaklar altta."""
+    groups: list[PickerGroupItem] = []
+
+
 class TaskQuantityResponse(BaseModel):
     """Koçun bu derste tipik verdiği test sayısı (öğrenilmiş öntanımlı)."""
     quantity: int

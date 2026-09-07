@@ -39,6 +39,7 @@ import {
   useCreateWorkBlock,
 } from "@/lib/hooks/use-teacher-mutations";
 import { useTeacherStudent } from "@/lib/hooks/use-teacher-queries";
+import { TaskQuickAdd } from "./task-quick-add";
 import type {
   BookOptionsResponse,
   ReviewStruggleResponse,
@@ -180,6 +181,10 @@ export function AddTaskForm({
   const [type, setType] = React.useState<TaskType>("test");
   // M6 — opsiyonel periyot. Null = atanmamış (default).
   const [period, setPeriod] = React.useState<TaskPeriod | null>(null);
+  // P4 (2026-09-07): varsayılan HIZLI KUTU. Eski ayrıntılı form kaldırılmadı —
+  // "Ayrıntılı form" ile açılır (geri dönüş yolu korunur, koç zorlanmaz).
+  // Canlı veride görevlerin %78'i TEST; kutu tam onu 3 tıka indiriyor.
+  const [detailed, setDetailed] = React.useState(false);
 
   // TEST için: sidebar — yalnız kitap atanmış dersler (cascade ders→kitap→ünite)
   const allSidebarQ = useQuery<SidebarResponse>({
@@ -204,12 +209,59 @@ export function AddTaskForm({
     name: s.name,
   }));
 
+  if (!detailed) {
+    return (
+      <div className="@container px-4 py-4 border-t border-border/60 bg-card space-y-2.5">
+        <TaskQuickAdd
+          studentId={studentId}
+          dayDate={dayDate}
+          period={period}
+          onAfterAdd={onAfterAdd}
+        />
+        <div className="flex flex-wrap items-center gap-1.5">
+          {/* Nadir tipler ana ekranı doldurmasın: canlı veride Video %3,3,
+              Özet/Tekrar %0,3. Tek tıkla ayrıntılı forma geçerler. */}
+          {TYPE_TILES.filter((t) => t.key !== "test").map(({ key, label, Icon }) => (
+            <button
+              key={key}
+              type="button"
+              onClick={() => {
+                setType(key);
+                setDetailed(true);
+              }}
+              className="inline-flex items-center gap-1 rounded-md border border-border bg-card px-2 py-1 text-[11.5px] text-foreground hover:bg-muted/60"
+            >
+              <Icon className="size-3" aria-hidden />
+              {label}
+            </button>
+          ))}
+          <button
+            type="button"
+            onClick={() => setDetailed(true)}
+            className="ml-auto text-[11.5px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            Ayrıntılı form
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="@container px-4 py-4 border-t border-border/60 bg-card">
       <div className="mb-3">
-        <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium mb-2">
-          Görev tipi
-        </p>
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium">
+            Görev tipi
+          </p>
+          <button
+            type="button"
+            onClick={() => setDetailed(false)}
+            className="text-[11.5px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+          >
+            Hızlı ekleme
+          </button>
+        </div>
         <div className="grid grid-cols-4 sm:grid-cols-7 gap-1.5">
           {TYPE_TILES.map(({ key, label, Icon }) => {
             const active = type === key;

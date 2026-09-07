@@ -28,6 +28,7 @@ import type {
   PromoteFormResponse,
   ReviewStruggleResponse,
   SectionOptionsResponse,
+  TaskPickerResponse,
   SectionStatsResponse,
   SidebarResponse,
   SubjectListResponse,
@@ -134,6 +135,8 @@ export const teacherKeys = {
     ] as const,
   studentAllSubjects: (id: number) =>
     ["teacher", "me", "students", String(id), "all-subjects"] as const,
+  studentTaskPicker: (id: number, q: string) =>
+    ["teacher", "me", "students", String(id), "task-picker", q] as const,
   studentBooksBySubject: (id: number, subjectId: number | null) =>
     [
       "teacher",
@@ -589,6 +592,16 @@ export function getStudentAllSubjects(
 ): Promise<SubjectListResponse> {
   return api<SubjectListResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/all-subjects`,
+  );
+}
+
+export function getTaskPicker(
+  studentId: number,
+  q: string,
+): Promise<TaskPickerResponse> {
+  const qs = buildQuery({ q: q.trim() });
+  return api<TaskPickerResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/task-picker${qs}`,
   );
 }
 

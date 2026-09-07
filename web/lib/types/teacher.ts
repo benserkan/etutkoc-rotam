@@ -818,6 +818,41 @@ export interface ReviewStruggleResponse {
 // Mutation body'leri — Paket 7'de kullanılacak (şimdilik referans)
 // =============================================================================
 
+/** Görev kutusundaki bir kaynak (kitap bölümü). */
+export interface PickerSourceItem {
+  book_id: number;
+  book_name: string;
+  section_id: number;
+  section_label: string;
+  total: number;
+  remaining: number;
+  /** Kapasite doldu — gizlenmez, işaretlenir (P1: envanter engel değil). */
+  full: boolean;
+}
+
+export interface PickerTopicItem {
+  topic_id: number;
+  topic_name: string;
+  subject_id: number;
+  subject_name: string;
+  status: string;
+  badge: string | null;
+  /** Koçun bu derste tipik verdiği sayı (P3) + gerekçesi */
+  quantity: number;
+  quantity_reason: string;
+  sources: PickerSourceItem[];
+}
+
+export interface PickerGroupItem {
+  key: string;
+  label: string;
+  items: PickerTopicItem[];
+}
+
+export interface TaskPickerResponse {
+  groups: PickerGroupItem[];
+}
+
 export interface TaskItemBody {
   book_id: number | null;
   section_id: number | null;
