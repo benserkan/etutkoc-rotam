@@ -72,6 +72,15 @@ def check(label, cond, detail=""):
 
 def seed() -> dict:
     with SessionLocal() as db:
+        # Yarıda kesilen koşuların yetim section_progress artığını süpür
+        # (SQLite FK cascade kapalı; id yeniden kullanımı UNIQUE'e çarpar).
+        from sqlalchemy import text
+
+        db.execute(text(
+            "DELETE FROM section_progress "
+            "WHERE student_book_id NOT IN (SELECT id FROM student_books)"
+        ))
+        db.commit()
         coach = User(email=f"{PFX}_t@test.invalid", password_hash=hash_password(PWD_PLAIN),
                      full_name="Canlı Koç", role=UserRole.TEACHER, is_active=True)
         db.add(coach)

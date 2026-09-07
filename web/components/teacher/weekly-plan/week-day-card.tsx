@@ -26,9 +26,12 @@ import {
   Layers,
   Loader2,
   CalendarRange,
+  Moon,
   Pencil,
   Plus,
   Rocket,
+  Sun,
+  Sunrise,
   Trash2,
 } from "lucide-react";
 
@@ -281,6 +284,7 @@ export function WeekDayCard({
         subjects={subjects}
         weekDays={weekDays}
         onCarryoverDrop={onCarryoverDrop}
+        onFocusSubject={onFocusSubject}
       />
 
       <div className="px-5 py-3 border-t border-border border-l-[3px] border-l-sky-400/70 bg-sky-500/[0.04]">
@@ -502,6 +506,56 @@ const PERIOD_LABELS: Record<string, string> = {
   evening: "Akşam",
   none: "Zaman belirtilmemiş",
 };
+
+/**
+ * Periyot BÖLGESİ görsel kimliği (2026-09-07 yeniden tasarım).
+ *
+ * ÖLÇÜLDÜ: eski hâlde periyot başlığı ↔ kart zemini ΔE 2,8 (insan gözü için
+ * "aynı renk"), ders başlığı ↔ periyot başlığı ΔE 0,0. Üç hiyerarşi katmanı
+ * aynı gri şeritti; koç "sabah-öğle-akşam ayrılmıyor" dedi — haklıydı.
+ *
+ * İLKE: her katmana FARKLI görsel kanal. Periyot = BÖLGE (zemin + çerçeve +
+ * koyu başlık şeridi + günün saatine uygun ikon), ders = RENK (satır rayı +
+ * soluk satır zemini), görev = SATIR. Renk iki katmana birden verilmez.
+ *
+ * Tonlar günün saatine göre ANLAMLI (kullanıcı kararı): sabah sıcak/açık,
+ * öğle nötr/parlak, akşam serin/koyu. Düşük doygunluk → ders renkleriyle
+ * yarışmaz ama bölgeyi hissettirir. Hedef bölge ↔ kart ΔE ≥ 10.
+ * Tonlu zemin → koyu tema için dark: varyantı ZORUNLU (kontrast kuralı).
+ */
+const PERIOD_ZONE: Record<
+  string,
+  { Icon: typeof Sun; zone: string; head: string; headText: string; hint: string }
+> = {
+  morning: {
+    Icon: Sunrise,
+    zone: "bg-orange-100 border-orange-300 dark:bg-orange-500/[0.10] dark:border-orange-500/30",
+    head: "bg-orange-900 dark:bg-orange-950",
+    headText: "text-orange-50",
+    hint: "Sabaha ekle",
+  },
+  noon: {
+    Icon: Sun,
+    zone: "bg-yellow-100 border-yellow-300 dark:bg-yellow-500/[0.10] dark:border-yellow-500/30",
+    head: "bg-yellow-700 dark:bg-yellow-900",
+    headText: "text-yellow-50",
+    hint: "Öğleye ekle",
+  },
+  evening: {
+    Icon: Moon,
+    zone: "bg-indigo-100 border-indigo-300 dark:bg-indigo-500/[0.12] dark:border-indigo-500/30",
+    head: "bg-indigo-950 dark:bg-indigo-950",
+    headText: "text-indigo-50",
+    hint: "Akşama ekle",
+  },
+  none: {
+    Icon: Clock,
+    zone: "bg-muted/40 border-border",
+    head: "bg-slate-700 dark:bg-slate-800",
+    headText: "text-slate-50",
+    hint: "Zamansız ekle",
+  },
+};
 function periodRank(p: string | null | undefined): number {
   return p && p in PERIOD_RANK ? PERIOD_RANK[p] : 3;
 }
@@ -547,32 +601,6 @@ function dayTaskOrder(
   return result;
 }
 
-function SubjectGroupHeader({
-  subj,
-  count,
-}: {
-  subj: TaskSubject;
-  count: number;
-}) {
-  const hue = subjectHue(subj.name);
-  return (
-    <div
-      className="flex items-center gap-2 px-4 pt-3 pb-1.5 bg-muted/20 border-l-[3px]"
-      style={{ borderLeftColor: `hsl(${hue}, 45%, 65%)` }}
-    >
-      <span
-        className="size-2 rounded-full flex-shrink-0"
-        style={{ backgroundColor: `hsl(${hue}, 55%, 52%)` }}
-        aria-hidden
-      />
-      <span className="text-xs font-semibold text-foreground">{subj.name}</span>
-      <span className="text-[11px] text-muted-foreground tabular-nums">
-        · {count} görev
-      </span>
-    </div>
-  );
-}
-
 function PeriodHeader({
   pkey,
   count,
@@ -589,6 +617,7 @@ function PeriodHeader({
       ? (pkey as TaskPeriod)
       : null;
   const droppable = !!onCarryoverDrop;
+  const PZ = PERIOD_ZONE[pkey] ?? PERIOD_ZONE.none;
   return (
     <div
       onDragOver={
@@ -618,18 +647,22 @@ function PeriodHeader({
           : undefined
       }
       className={cn(
-        "flex items-center gap-2 px-4 py-2 bg-foreground/[0.07] border-y border-border transition",
-        over && "bg-amber-200/60 ring-2 ring-inset ring-amber-400",
+        // Koyu başlık şeridi: bölgenin en üst katmanı, kart zemininden
+        // belirgin ayrışır (eski gri şerit ΔE 2,8'di). Yuvarlak üst köşe
+        // bölge çerçevesiyle birleşir.
+        "flex items-center gap-2 px-3 py-1.5 rounded-t-md transition",
+        PZ.head,
+        over && "ring-2 ring-inset ring-amber-300",
       )}
     >
-      <Clock className="size-3.5 text-foreground/70 flex-shrink-0" aria-hidden />
-      <span className="text-[12px] uppercase tracking-wider font-bold text-foreground">
+      <PZ.Icon className={cn("size-3.5 flex-shrink-0", PZ.headText)} aria-hidden />
+      <span className={cn("text-[11.5px] uppercase tracking-wider font-bold", PZ.headText)}>
         {PERIOD_LABELS[pkey] ?? PERIOD_LABELS.none}
       </span>
       {over ? (
-        <span className="text-[10px] font-semibold text-amber-800">→ buraya bırak</span>
+        <span className="text-[10px] font-semibold text-amber-200">→ buraya bırak</span>
       ) : null}
-      <span className="ml-auto text-[10px] text-muted-foreground tabular-nums bg-background/70 rounded-full px-2 py-0.5">
+      <span className={cn("ml-auto text-[10.5px] tabular-nums opacity-80", PZ.headText)}>
         {count} görev
       </span>
     </div>
@@ -646,13 +679,18 @@ function TaskList({
   subjects,
   onCarryoverDrop,
   weekDays,
+  onFocusSubject,
 }: {
   studentId: number;
   day: TeacherStudentWeekDay;
   subjects: SubjectRef[];
   onCarryoverDrop?: (period: TaskPeriod | null, taskId: number) => void;
   weekDays?: TeacherStudentWeekDay[];
+  onFocusSubject?: (subjectId: number | null) => void;
 }) {
+  // Periyoda DOĞRUDAN ekleme (2026-09-07): her bölgenin altında "+ Sabaha
+  // ekle". Açılan form o periyot ön-seçili gelir → koç çip seçmez (3 tık).
+  const [openAddPk, setOpenAddPk] = React.useState<string | null>(null);
   const reorderMut = useReorderTasks(studentId);
   const patchTask = usePatchTask(studentId, day.date);
   const qc = useQueryClient();
@@ -690,17 +728,6 @@ function TaskList({
     return m;
   }, [day.tasks]);
 
-  // Ders grup başına sayı — periyot kullanılıyorsa periyot+ders bazlı anahtar.
-  const groupCounts = React.useMemo(() => {
-    const m = new Map<string, number>();
-    for (const t of day.tasks) {
-      const pk = usePeriods ? periodKey(t.period) : "_";
-      const k = `${pk}|${taskSubject(t, subjects).key}`;
-      m.set(k, (m.get(k) ?? 0) + 1);
-    }
-    return m;
-  }, [day.tasks, subjects, usePeriods]);
-
   // Periyot başına toplam görev (periyot başlığında gösterilir).
   const periodCounts = React.useMemo(() => {
     const m = new Map<string, number>();
@@ -715,6 +742,40 @@ function TaskList({
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
   );
 
+  // Fare/pointer'ın SON konumu — bırakma anında hangi bölgede olduğunu
+  // bulmak için. dnd-kit'in activatorEvent+delta hesabı aktivasyon eşiğine
+  // göre kayabiliyor; gerçek konum tek doğruluk kaynağı.
+  const lastPointer = React.useRef<{ x: number; y: number } | null>(null);
+  React.useEffect(() => {
+    function onMove(ev: PointerEvent) {
+      lastPointer.current = { x: ev.clientX, y: ev.clientY };
+    }
+    document.addEventListener("pointermove", onMove, { passive: true });
+    return () => document.removeEventListener("pointermove", onMove);
+  }, []);
+
+  // Bırakma noktasının HANGİ BÖLGEDE olduğunu koordinatla bul (2026-09-07).
+  // dnd-kit `over` = en yakın SATIR merkezi; sıralama animasyonu sırasında
+  // satırlar kayınca fare Öğle bölgesinde olsa da `over` Akşam satırına
+  // düşebiliyor → görev yanlış periyoda gidiyordu (tarayıcı testinde yakalandı:
+  // bırakılan bölge Öğle, kaydedilen periyot evening). Bölge tasarımında doğru
+  // davranış: fare hangi bölgenin içinde bırakıldıysa o periyot kazanır.
+  const zoneAtPointer = React.useCallback((x: number, y: number): string | null => {
+    // Sürüklenen satır (transform ile fare altında) kendi kaynak bölgesinin
+    // DOM çocuğu → elementFromPoint onu yakalarsa yanlış bölge çıkar. Bunun
+    // için geometriye bak: fare hangi bölgenin dikdörtgeni içinde?
+    const secs = Array.from(
+      document.querySelectorAll<HTMLElement>("section[data-period]"),
+    );
+    for (const sec of secs) {
+      const r = sec.getBoundingClientRect();
+      if (x >= r.left && x <= r.right && y >= r.top && y <= r.bottom) {
+        return sec.dataset.period ?? null;
+      }
+    }
+    return null;
+  }, []);
+
   function onDragEnd(e: DragEndEvent) {
     const { active, over } = e;
     if (!over || active.id === over.id) return;
@@ -722,13 +783,18 @@ function TaskList({
     const overTask = tasksById.get(Number(over.id));
     if (!activeTask || !overTask) return;
 
+    // Hedef periyot: önce fare koordinatındaki bölge, yoksa üstüne düşülen satır.
+    let targetPk = periodKey(overTask.period);
+    if (usePeriods && lastPointer.current) {
+      const z = zoneAtPointer(lastPointer.current.x, lastPointer.current.y);
+      if (z) targetPk = z;
+    }
+
     // (1) Farklı periyot bölümüne bırakıldı → görevin periyodunu hedef bölüme TAŞI
     // (mıknatıs: o periyodun ders grubuna girer; sayfa yenilense de kalıcı).
-    if (
-      usePeriods &&
-      periodKey(activeTask.period) !== periodKey(overTask.period)
-    ) {
-      const targetPeriod = overTask.period ?? null; // null = Zaman belirtilmemiş
+    if (usePeriods && periodKey(activeTask.period) !== targetPk) {
+      const targetPeriod: TaskPeriod | null =
+        targetPk === "none" ? null : (targetPk as TaskPeriod); // null = Zaman belirtilmemiş
       const prevPeriod = activeTask.period ?? null;
       // OPTİMİSTİK: week cache'inde period'u hemen güncelle → editör + Hafta
       // Izgarası ANINDA yeni periyoda taşır (refetch beklenmez). Hata → geri al.
@@ -754,7 +820,7 @@ function TaskList({
         );
       setPeriodInCache(targetPeriod);
       patchTask.mutate(
-        { taskId: activeTask.id, body: { period: overTask.period ?? "" } },
+        { taskId: activeTask.id, body: { period: targetPeriod ?? "" } },
         { onError: () => setPeriodInCache(prevPeriod) },
       );
       return;
@@ -796,50 +862,96 @@ function TaskList({
       onDragEnd={onDragEnd}
     >
       <SortableContext items={orderedIds} strategy={verticalListSortingStrategy}>
-        <div className="divide-y divide-border/60 border-t border-border">
-          {orderedIds.map((id, idx) => {
-            const task = tasksById.get(id);
-            if (!task) return null;
-            const subj = taskSubject(task, subjects);
-            const pk = usePeriods ? periodKey(task.period) : "_";
-            const prevTask =
-              idx > 0 ? tasksById.get(orderedIds[idx - 1]) : undefined;
-            const prevPk = prevTask
-              ? usePeriods
-                ? periodKey(prevTask.period)
-                : "_"
-              : null;
-            const prevSubjKey = prevTask
-              ? taskSubject(prevTask, subjects).key
-              : null;
-            const showPeriod = usePeriods && pk !== prevPk;
-            const showSubject = showPeriod || subj.key !== prevSubjKey;
-            return (
-              <React.Fragment key={id}>
-                {showPeriod ? (
+        {usePeriods ? (
+          // PERİYOT BÖLGELERİ (2026-09-07): her periyot ayrı çerçeveli blok —
+          // zemin tonu günün saatine göre, koyu başlık şeridi, bölgeler arası
+          // boşluk. Ders başlıkları KALDIRILDI: eski hâlde periyot içinde
+          // derse göre gruplama periyot başına ders başına 1 görev üretiyor,
+          // 9 görev için 9 ders başlığı çiziliyordu (kartın %30'u başlıktı).
+          // Ders bilgisi artık satırın kendisinde: kalın ders adı + renkli
+          // ray + soluk satır zemini. Sıra yine derse göre (mıknatıs korunur).
+          <div className="space-y-3 px-3 pt-3 pb-1">
+            {(["morning", "noon", "evening", "none"] as const).map((pk) => {
+              const ids = orderedIds.filter((id) => {
+                const t = tasksById.get(id);
+                return t ? periodKey(t.period) === pk : false;
+              });
+              if (ids.length === 0) return null;
+              const PZ = PERIOD_ZONE[pk];
+              return (
+                <section
+                  key={pk}
+                  // @container: satır içindeki kitap adı KABIN genişliğine göre
+                  // gizlenir (viewport'a göre değil — dar sağ panelde yanlış karar)
+                  className={cn("@container rounded-md border overflow-hidden", PZ.zone)}
+                  aria-label={PERIOD_LABELS[pk]}
+                  data-period={pk}
+                >
                   <PeriodHeader
                     pkey={pk}
-                    count={periodCounts.get(pk) ?? 1}
+                    count={periodCounts.get(pk) ?? ids.length}
                     onCarryoverDrop={onCarryoverDrop}
                   />
-                ) : null}
-                {showSubject ? (
-                  <SubjectGroupHeader
-                    subj={subj}
-                    count={groupCounts.get(`${pk}|${subj.key}`) ?? 1}
-                  />
-                ) : null}
+                  <div className="divide-y divide-black/[0.06] dark:divide-white/[0.06]">
+                    {ids.map((id) => {
+                      const task = tasksById.get(id);
+                      if (!task) return null;
+                      return (
+                        <SortableTaskRow
+                          key={id}
+                          studentId={studentId}
+                          dayDate={day.date}
+                          task={task}
+                          subjects={subjects}
+                          weekDays={weekDays}
+                        />
+                      );
+                    })}
+                  </div>
+                  {openAddPk === pk ? (
+                    <div className="border-t border-black/[0.06] dark:border-white/[0.06] bg-card">
+                      <AddTaskForm
+                        studentId={studentId}
+                        dayDate={day.date}
+                        onFocusSubject={onFocusSubject ?? (() => {})}
+                        onAfterAdd={() => {}}
+                        initialPeriod={pk === "none" ? null : (pk as TaskPeriod)}
+                      />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setOpenAddPk(pk)}
+                      className="flex w-full items-center gap-1.5 px-3 py-1.5 text-[11.5px] text-slate-600 hover:text-slate-900 hover:bg-slate-500/10 dark:text-slate-300 dark:hover:text-slate-100 transition"
+                    >
+                      <Plus className="size-3" aria-hidden />
+                      {PZ.hint}
+                    </button>
+                  )}
+                </section>
+              );
+            })}
+          </div>
+        ) : (
+          // Periyotsuz gün: tek liste, ders sırasıyla (Katman 1). Ders
+          // başlığı burada da yok — ders satırın kendisinde okunur.
+          <div className="@container divide-y divide-border/60 border-t border-border">
+            {orderedIds.map((id) => {
+              const task = tasksById.get(id);
+              if (!task) return null;
+              return (
                 <SortableTaskRow
+                  key={id}
                   studentId={studentId}
                   dayDate={day.date}
                   task={task}
                   subjects={subjects}
                   weekDays={weekDays}
                 />
-              </React.Fragment>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </SortableContext>
     </DndContext>
   );
@@ -907,34 +1019,83 @@ function SortableTaskRow({
     video: "#38bdf8", ozet: "#34d399", tekrar: "#a78bfa", other: "#94a3b8",
   };
 
-  const style: React.CSSProperties = {
+  // DERS RENGİ SATIR ZEMİNİNDE (2026-09-07): eski hâlde renk yalnız 10px'lik
+  // rozetteydi, satır zeminleri dersten bağımsız AYNIYDI (ölçüm: Matematik ↔
+  // Fizik satırı ΔE 0,0). Göz zemini tarar, rozeti OKUR — okumak çabadır.
+  // Şimdi ders hue'su ray (%45 doygun) + soluk zemin (%8 alfa) olarak satırda;
+  // farklı ders satırları okumadan ayrışır. Blok/deneme kendi tonunu korur.
+  // Satır zemini bölge tonunun ÜSTÜNE değil YERİNE çizilir: beyaz taban +
+  // ders tonu (%14). Bölge rengi çerçeve + şerit + satırlar arası boşlukta
+  // kalır; satırlar kendi zemininde ayrışır (iki ton üst üste = çamur).
+  const rowTint = primarySubjectName
+    ? `hsl(${hue}, 65%, 91%)`
+    : isBlock
+      ? "hsl(258, 60%, 95%)"
+      : isDeneme
+        ? "hsl(239, 60%, 95%)"
+        : "hsl(0, 0%, 99%)";
+  // Koyu temada açık pastel zemin beyaza yakın parlar → aynı hue'nun koyu tonu.
+  const rowTintDark = primarySubjectName
+    ? `hsla(${hue}, 45%, 60%, 0.16)`
+    : isBlock
+      ? "rgba(139, 92, 246, 0.16)"
+      : isDeneme
+        ? "rgba(99, 102, 241, 0.16)"
+        : "rgba(255,255,255,0.03)";
+  const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    "--row-light": rowTint,
+    "--row-dark": rowTintDark,
     borderLeftColor:
       primarySubjectName
-        ? `hsl(${hue}, 45%, 65%)`
+        ? `hsl(${hue}, 55%, 55%)`
         : isBlock
           ? "#8b5cf6" // violet — serbest blok
           : isDeneme
             ? "#6366f1" // indigo — deneme
             : ACTIVITY_ACCENT[task.type] ?? "transparent",
     opacity: isDragging ? 0.5 : 1,
-  };
+  } as React.CSSProperties;
 
   const typeTone =
     TASK_TYPE_TONE[task.type] ?? "bg-muted text-muted-foreground border-border";
+
+  // KOMPAKT BAŞLIK: "Kitap — Bölüm: N test" biçimindeki başlıkta kitap adı
+  // çoğu zaman ders adını tekrar eder ("Matematik Soru Bankası"). Ders adı
+  // satır başında kalın yazılacağı için başlığı böl: bölüm ana metin, kitap
+  // ikincil (soluk). Biçim tutmuyorsa başlık olduğu gibi kalır.
+  let primaryText = displayTitle;
+  let secondaryText: string | null = null;
+  const dash = displayTitle.indexOf(" — ");
+  if (dash > 0 && task.items.length === 1 && task.items[0].book_id !== null) {
+    secondaryText = displayTitle.slice(0, dash);       // kitap
+    primaryText = displayTitle.slice(dash + 3);         // "Bölüm: N test"
+    // Kitap adı ders adını tekrar ediyorsa ("Matematik Soru Bankası") ön eki
+    // at → "Soru Bankası". Ölçümde ders adı 3 ders için 30 kez yazılıyordu;
+    // kaynağı bu tekrardı. Ders adı satırda zaten kalın, bir kez yeter.
+    if (primarySubjectName) {
+      const plain = primarySubjectName.replace(/^(TYT|AYT|LGS)\s+/i, "");
+      for (const pref of [primarySubjectName, plain]) {
+        if (pref && secondaryText.toLocaleLowerCase("tr").startsWith(pref.toLocaleLowerCase("tr") + " ")) {
+          secondaryText = secondaryText.slice(pref.length + 1);
+          break;
+        }
+      }
+    }
+  }
+  // TEST rozeti gösterilmez: görevlerin %78'i test, her satırda yazmak bilgi
+  // değil gürültü. Diğer tipler (video/deneme/blok/diğer) rozetini taşır.
+  const showTypeBadge = isBlock || isDeneme || task.type !== "test";
 
   return (
     <div
       ref={setNodeRef}
       id={`task-${task.id}`}
       className={cn(
-        "px-4 py-2.5 flex items-start gap-3 border-l-[3px] task-row transition-colors",
-        isBlock
-          ? "bg-violet-500/[0.05] hover:bg-violet-500/[0.09]"
-          : isDeneme
-            ? "bg-indigo-500/[0.05] hover:bg-indigo-500/[0.09]"
-            : "hover:bg-muted/30",
+        "px-3 py-1.5 flex items-center gap-2.5 border-l-[3px] task-row transition-colors",
+        "bg-[var(--row-light)] dark:bg-[var(--row-dark)]",
+        "hover:brightness-[0.97] dark:hover:brightness-110",
       )}
       style={style}
     >
@@ -963,31 +1124,35 @@ function SortableTaskRow({
         </span>
       ) : null}
       <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-baseline gap-x-2 gap-y-0.5 flex-wrap">
           {primarySubjectName ? (
             <span
-              className="text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded whitespace-nowrap"
-              style={{
-                background: `hsl(${hue}, 60%, 92%)`,
-                color: `hsl(${hue}, 50%, 28%)`,
-              }}
+              className="text-[13px] font-semibold whitespace-nowrap text-[var(--subj-light)] dark:text-[var(--subj-dark)]"
+              style={
+                {
+                  "--subj-light": `hsl(${hue}, 45%, 32%)`,
+                  "--subj-dark": `hsl(${hue}, 60%, 78%)`,
+                } as React.CSSProperties
+              }
               title={primarySubjectName}
             >
               {primarySubjectName}
             </span>
           ) : null}
-          <span
-            className={cn(
-              "text-[10px] uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded border",
-              isBlock
-                ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-950/40 dark:text-violet-200 dark:border-violet-800"
-                : isDeneme
-                  ? "bg-indigo-100 text-indigo-700 border-indigo-300"
-                  : typeTone,
-            )}
-          >
-            {isBlock ? "Blok" : isDeneme ? "Deneme" : (TASK_TYPE_LABELS[task.type] ?? task.type)}
-          </span>
+          {showTypeBadge ? (
+            <span
+              className={cn(
+                "text-[10px] uppercase tracking-wider font-semibold px-1.5 py-px rounded border self-center",
+                isBlock
+                  ? "bg-violet-100 text-violet-700 border-violet-300 dark:bg-violet-950/40 dark:text-violet-200 dark:border-violet-800"
+                  : isDeneme
+                    ? "bg-indigo-100 text-indigo-700 border-indigo-300 dark:bg-indigo-950/40 dark:text-indigo-200 dark:border-indigo-800"
+                    : typeTone,
+              )}
+            >
+              {isBlock ? "Blok" : isDeneme ? "Deneme" : (TASK_TYPE_LABELS[task.type] ?? task.type)}
+            </span>
+          ) : null}
           {isBlock && task.planned_count > 0 ? (
             <span className="text-[11px] text-violet-700 dark:text-violet-300 font-medium tabular-nums">
               {task.planned_count} {task.work_block_unit ?? "test"}
@@ -1006,8 +1171,8 @@ function SortableTaskRow({
               taslak
             </span>
           ) : null}
-          <span className="text-sm font-medium text-foreground">
-            {displayTitle}
+          <span className="text-[13px] text-foreground">
+            {primaryText}
           </span>
           {task.completed_count > 0 ? (
             <span className="text-xs text-emerald-700 tabular-nums">
@@ -1068,6 +1233,14 @@ function SortableTaskRow({
         ) : null}
       </div>
       <div className="flex items-center gap-2 text-xs whitespace-nowrap flex-shrink-0">
+        {secondaryText ? (
+          <span
+            className="hidden @xl:inline text-[11px] text-muted-foreground truncate max-w-[11rem]"
+            title={secondaryText}
+          >
+            {secondaryText}
+          </span>
+        ) : null}
         {weekDays && weekDays.length > 1 ? (
           <button
             type="button"

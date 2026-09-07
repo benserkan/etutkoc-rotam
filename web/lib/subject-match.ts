@@ -48,9 +48,45 @@ function nameHashNum(name: string): number {
   );
 }
 
-/** Ders adına göre stabil hue (0-359) — aynı ad daima aynı renk. */
+/**
+ * Ders adı → hue. Aynı ad daima aynı renk.
+ *
+ * 2026-09-08: `hash % 360` sürekli hue üretiyordu → iki ders rastgele 10°
+ * arayla düşebiliyordu (ölçüm: Fizik ↔ Türkçe satır zemini ΔE 1,1 = aynı
+ * renk). Gün kartında ders artık ZEMİN rengiyle okunuyor; birbirine yakın
+ * iki hue tasarımı boşa çıkarır.
+ *
+ * İki katman: (1) yaygın dersler SABİT hue (Matematik hep mavi, Türkçe hep
+ * kırmızı — koç öğrencinin tamamında aynı rengi görür); (2) diğerleri 12'lik
+ * AYRIK paletten (30° aralık) hash ile. Sabit atamalar paletle çakışmaz diye
+ * palet kovaları sabitlerin arasına yerleştirildi.
+ */
+const SUBJECT_FIXED_HUE: Array<[RegExp, number]> = [
+  [/matematik/, 215],     // mavi
+  [/geometri/, 190],      // turkuaz
+  [/turkce|edebiyat|paragraf|dil bilgisi/, 355], // kırmızı
+  [/fizik/, 25],          // turuncu
+  [/kimya/, 280],         // mor
+  [/biyoloji/, 140],      // yeşil
+  [/tarih|inkilap/, 40],  // kahve-altın
+  [/cografya/, 95],       // yeşil-sarı
+  [/felsefe|din|sosyal/, 320], // pembe-mor
+  [/ingilizce|yabanci|dil$/, 170], // deniz yeşili
+  [/fen/, 160],           // yeşil-turkuaz
+];
+const SUBJECT_PALETTE = [5, 50, 80, 125, 155, 200, 230, 260, 295, 335, 20, 110];
+
+const TR_FOLD: Record<string, string> = {
+  ç: "c", ğ: "g", ı: "i", ö: "o", ş: "s", ü: "u", i̇: "i",
+};
+
 export function subjectHue(name: string): number {
-  return nameHashNum(name) % 360;
+  // Türkçe harfleri sadeleştir ki "Türkçe" → "turkce" regex'e uysun
+  const low = normSubjectName(name).replace(/[çğıöşü]/g, (ch) => TR_FOLD[ch] ?? ch);
+  for (const [re, hue] of SUBJECT_FIXED_HUE) {
+    if (re.test(low)) return hue;
+  }
+  return SUBJECT_PALETTE[nameHashNum(name) % SUBJECT_PALETTE.length];
 }
 
 /** Ders adına göre stabil ton indeksi (0..n-1) — Tailwind ton paleti için. */

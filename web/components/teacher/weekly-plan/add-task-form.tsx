@@ -170,6 +170,8 @@ interface Props {
   dayDate: string;
   onFocusSubject: (id: number | null) => void;
   onAfterAdd: () => void;
+  /** Periyot bölgesinden açıldıysa ön-seçili periyot */
+  initialPeriod?: TaskPeriod | null;
 }
 
 export function AddTaskForm({
@@ -177,10 +179,13 @@ export function AddTaskForm({
   dayDate,
   onFocusSubject,
   onAfterAdd,
+  initialPeriod = null,
 }: Props) {
   const [type, setType] = React.useState<TaskType>("test");
-  // M6 — opsiyonel periyot. Null = atanmamış (default).
-  const [period, setPeriod] = React.useState<TaskPeriod | null>(null);
+  // M6 — opsiyonel periyot. Null = atanmamış (default). Periyot bölgesinin
+  // altındaki "+ Sabaha ekle" ile açıldıysa o periyot seçili gelir (2026-09-07)
+  // — koç periyot çipini ayrıca seçmez.
+  const [period, setPeriod] = React.useState<TaskPeriod | null>(initialPeriod);
   // P4 (2026-09-07): varsayılan HIZLI KUTU. Eski ayrıntılı form kaldırılmadı —
   // "Ayrıntılı form" ile açılır (geri dönüş yolu korunur, koç zorlanmaz).
   // Canlı veride görevlerin %78'i TEST; kutu tam onu 3 tıka indiriyor.
