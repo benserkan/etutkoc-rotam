@@ -98,6 +98,13 @@ _ALIAS: dict[str, str] = {
     "i ii bilinmeyenli denklemler": "birinci dereceden denklemler",
     "bir iki bilinmeyenli denklemler": "birinci dereceden denklemler",
     "i ii bilinmeyenli esitsizlikler": "basit esitsizlikler",
+    # 3D TYT Matematik gerçek bölüm adları (prod backfill 2026-09-08 — deterministik
+    # katman guard'a takıldı: artan sözcük anlamlı; koç bu adlarla eşleştiriyor)
+    "hiz hareket problemleri": "hareket problemleri",
+    "sayisal mantik problemleri": "sayisal yetenek problemleri",
+    "asal aralarinda asal sayilar": "asal sayilar",
+    "tek cift sayilar isaret incelemesi": "tek cift sayilar",
+    "merkezi egilim yayilim olculeri grafik turleri": "veri istatistik",
     # NOT: yalın "esitsizlikler" alias'ı BİLİNÇLİ YOK — Maarif/AYT'de birebir
     # "Eşitsizlikler" konusu var; alias exact eşleşmeyi bozardı (2026-08-11 taraması).
 }
