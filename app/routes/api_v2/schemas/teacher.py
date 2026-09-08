@@ -869,8 +869,16 @@ class BoardSubjectItem(BaseModel):
     topics: list[BoardTopicItem] = []
 
 
+class BoardSubjectOptionItem(BaseModel):
+    """Ders seçici — filtre ne olursa olsun TÜM uygulanabilir dersler."""
+    subject_id: int
+    name: str
+    has_source: bool
+
+
 class TopicBoardResponse(BaseModel):
     subjects: list[BoardSubjectItem] = []
+    subject_options: list[BoardSubjectOptionItem] = []
 
 
 class PickerSourceItem(BaseModel):

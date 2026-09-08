@@ -5,7 +5,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   History,
   Loader2,
-  ChevronDown,
   Plus,
   Info,
   Boxes,
@@ -28,6 +27,7 @@ import type {
   TeacherStudentWeekDay,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
+import { PinnableSection } from "./pinnable-section";
 
 const PERIODS: { key: TaskPeriod; label: string }[] = [
   { key: "morning", label: "Sabah" },
@@ -71,7 +71,6 @@ export function CarryoverPanel({
 
   const candidates = React.useMemo(() => q.data?.candidates ?? [], [q.data]);
   const mode = q.data?.mode ?? "plan";
-  const [expanded, setExpanded] = React.useState(false);
   const [addFor, setAddFor] = React.useState<CarryoverCandidate | null>(null);
 
   if (q.isLoading || candidates.length === 0) return null;
@@ -80,52 +79,25 @@ export function CarryoverPanel({
   const isBrowse = mode === "browse";
 
   return (
-    <div
-      className={cn(
-        "border-b",
-        isBrowse ? "border-slate-200 bg-slate-50/60 dark:bg-slate-500/10 dark:border-slate-500/30" : "border-amber-200 bg-amber-50/60 dark:bg-amber-500/10 dark:border-amber-500/30",
-      )}
-    >
-      {/* Varsayılan kapalı — tek satır özet */}
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className={cn(
-          "flex w-full items-center gap-2 px-4 py-2.5 text-left transition",
-          isBrowse ? "hover:bg-slate-100/60" : "hover:bg-amber-100/50",
-        )}
-        aria-expanded={expanded}
-      >
-        {isBrowse ? (
-          <Info className="size-4 shrink-0 text-slate-500" aria-hidden />
+    <PinnableSection
+      id="week:carryover"
+      tone={isBrowse ? "neutral" : "amber"}
+      icon={
+        isBrowse ? (
+          <Info className="size-4" aria-hidden />
         ) : (
-          <History className="size-4 shrink-0 text-amber-700" aria-hidden />
-        )}
-        <span
-          className={cn(
-            "min-w-0 flex-1 text-sm font-medium",
-            isBrowse ? "text-slate-700" : "text-amber-900",
-          )}
-        >
-          {isBrowse ? "Bu haftada yapılmayanlar" : "Geçen haftadan eksikler"} ({candidates.length})
-          {totalRemaining > 0 ? (
-            <span className={cn("ml-1 font-normal", isBrowse ? "text-slate-500" : "text-amber-700")}>
-              · {totalRemaining} test
-            </span>
-          ) : null}
-        </span>
-        <ChevronDown
-          className={cn(
-            "size-4 shrink-0 transition-transform",
-            isBrowse ? "text-slate-400" : "text-amber-600",
-            expanded && "rotate-180",
-          )}
-          aria-hidden
-        />
-      </button>
-
-      {!expanded ? null : (
-        <>
+          <History className="size-4" aria-hidden />
+        )
+      }
+      title={isBrowse ? "Bu haftada yapılmayanlar" : "Geçen haftadan eksikler"}
+      summary={`${candidates.length} görev${totalRemaining > 0 ? ` · ${totalRemaining} test` : ""}`}
+      className={
+        isBrowse
+          ? "bg-slate-50/60 dark:bg-slate-500/10"
+          : "bg-amber-50/60 dark:bg-amber-500/10"
+      }
+    >
+      <div>
           <p
             className={cn(
               "px-4 pb-2 text-xs",
@@ -198,8 +170,7 @@ export function CarryoverPanel({
               </li>
             ))}
           </ul>
-        </>
-      )}
+      </div>
 
       {/* Hedef gün + periyot seçim modalı */}
       <AddToDayDialog
@@ -215,7 +186,7 @@ export function CarryoverPanel({
           );
         }}
       />
-    </div>
+    </PinnableSection>
   );
 }
 

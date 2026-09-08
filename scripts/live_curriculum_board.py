@@ -208,9 +208,20 @@ def main() -> int:
                 later.click()
                 page.wait_for_timeout(1200)
 
-            # ---- 1. Panel (raptiyeli bölüm, 2026-09-08). Müfredat varsayılan
-            #         AÇIK gelir — katlıysa başlığa tıklayıp aç.
+            # ---- 1. Panel (v2 şerit, 2026-09-08). Müfredat varsayılan olarak
+            #         sabit DEĞİL → şeritteki simgesinden PEEK açılır; bu testte
+            #         dışarı-tıklama kapatmasın diye raptiyeyle panele yerleştir.
             sec = page.query_selector('[data-section="week:curriculum"]')
+            if sec is None:
+                rail_btn = page.query_selector('[data-rail="week:curriculum"]')
+                if rail_btn:
+                    rail_btn.click()
+                    page.wait_for_timeout(800)
+                    pin = page.query_selector('[data-section="week:curriculum"] button[aria-pressed]')
+                    if pin:
+                        pin.click()
+                        page.wait_for_timeout(600)
+                sec = page.query_selector('[data-section="week:curriculum"]')
             check("0. Müfredat paneli sağ panelde", sec is not None)
             if sec is None:
                 page.screenshot(path="/tmp/board_fail.png")

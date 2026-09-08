@@ -16,9 +16,10 @@
  */
 
 import * as React from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   Check,
+  ListChecks,
   Loader2,
   RotateCcw,
   TriangleAlert,
@@ -37,7 +38,6 @@ import type {
   TopicBoardResponse,
 } from "@/lib/types/teacher";
 import { cn } from "@/lib/utils";
-import { useSectionPref } from "@/lib/hooks/use-section-prefs";
 import { PinnableSection } from "./pinnable-section";
 
 const DOT: Record<string, string> = {
@@ -67,7 +67,6 @@ export function CurriculumBoard({
   /** Aktif gün — "+N test" bu güne yazar */
   dayDate: string;
 }) {
-  const { open } = useSectionPref("week:curriculum", true);
   const [subjectId, setSubjectId] = React.useState<number | "">("");
   const [expanded, setExpanded] = React.useState<number | null>(null);
 
@@ -75,7 +74,8 @@ export function CurriculumBoard({
     queryKey: teacherKeys.studentTopicBoard(studentId, subjectId),
     queryFn: () =>
       getTopicBoard(studentId, subjectId === "" ? null : subjectId),
-    enabled: open,
+    // Ders değişince eski liste kalsın (seçici kaybolmasın, boş flaş olmasın)
+    placeholderData: keepPreviousData,
     staleTime: 30_000,
   });
 
@@ -84,10 +84,14 @@ export function CurriculumBoard({
   const create = useCreateTask(studentId);
 
   const subjects = boardQ.data?.subjects ?? [];
+  // SAHA BUG'I (2026-09-08): seçici `subjects` listesinden kuruluyordu; ders
+  // seçilince yanıt yalnız o dersi taşıdığından seçici KAYBOLUYORDU. Artık
+  // filtreden bağımsız `subject_options`.
+  const options = boardQ.data?.subject_options ?? [];
   const active =
-    subjectId === ""
+    (subjectId === ""
       ? subjects[0]
-      : subjects.find((s) => s.subject_id === subjectId);
+      : subjects.find((s) => s.subject_id === subjectId)) ?? subjects[0];
 
   function assign(t: BoardTopicItem, count: number, sourceless: boolean) {
     const src = t.sources[0];
@@ -125,7 +129,7 @@ export function CurriculumBoard({
     <PinnableSection
       id="week:curriculum"
       title="Müfredat"
-      defaultOpen
+      icon={<ListChecks className="size-4" aria-hidden />}
       summary={
         active
           ? `${active.closed_topics}/${active.total_topics} kapalı · %${active.coverage_pct}`
@@ -134,16 +138,20 @@ export function CurriculumBoard({
     >
       {(
         <div className="px-4 pb-3">
-          {subjects.length > 1 ? (
+          {options.length > 1 ? (
             <select
-              value={subjectId === "" ? String(subjects[0]?.subject_id ?? "") : String(subjectId)}
+              value={
+                subjectId === ""
+                  ? String(active?.subject_id ?? options[0]?.subject_id ?? "")
+                  : String(subjectId)
+              }
               onChange={(e) => setSubjectId(Number(e.target.value))}
               className="mb-2 w-full rounded-md border border-border bg-background px-2 py-1 text-[12px]"
               aria-label="Ders seç"
             >
-              {subjects.map((s) => (
+              {options.map((s) => (
                 <option key={s.subject_id} value={s.subject_id}>
-                  {s.name}
+                  {s.has_source ? s.name : `${s.name} (kaynak yok)`}
                 </option>
               ))}
             </select>

@@ -83,7 +83,7 @@ export function ResourceSidebar({
       icon={<Library className="size-4" aria-hidden />}
       title="Kaynak Durumu"
       summary={subjectCount > 0 ? `${subjectCount} ders` : undefined}
-      defaultOpen
+      defaultPinned
       headerRight={
         focusedSubjectId !== null ? (
           <button

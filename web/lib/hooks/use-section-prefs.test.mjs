@@ -1,73 +1,79 @@
 /**
- * resolveOpen — saf karar fonksiyonu birim testi (2026-09-08).
- * Çalıştır: node web/lib/hooks/use-section-prefs.test.mjs
+ * Bölüm tercihi saf fonksiyonları — birim testi (v2, 2026-09-08).
+ * Çalıştır: node web/lib/hooks/use-section-prefs.test.mjs   (web/ içinden: node lib/hooks/...)
  *
- * Tarayıcı testi (scripts/live_section_pins.py) kullanıcı akışını doğrular;
- * bu dosya karar tablosunun HER hücresini kapsar. Canlı testte yakalanan bug
- * (1 kullanım varsayılanı eziyordu → ilk tıklama bölümü katlıyordu) burada
- * kalıcı senaryo.
+ * v1'in iki sahada yakalanan hatası burada KALICI senaryo:
+ *   (a) raptiye boşken bölüm açık gelmez (simge ne diyorsa o);
+ *   (b) kullanım sayısı ne olursa olsun aç/kapa kararına KARIŞMAZ
+ *       (v1'de ≥2 kullanımı olan bölüm elle kapatılamıyordu).
+ * Tarayıcı testi (scripts/live_section_pins.py) akışı doğrular; bu dosya karar
+ * tablosunun her hücresini kapsar. TS kaynağı gerçek derleyiciyle (typescript
+ * transpileModule) JS'e çevrilir — regex ile tip sıyırma yok.
  */
 import { strict as assert } from "node:assert";
+import { createRequire } from "node:module";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-// TS dosyasını derlemeden test etmek için resolveOpen'ı metinden çıkarıp
-// değerlendiriyoruz (fonksiyon saf, dış bağımlılığı yok).
 const here = dirname(fileURLToPath(import.meta.url));
+const require = createRequire(import.meta.url);
+const ts = require("typescript");
+
 const src = readFileSync(join(here, "use-section-prefs.ts"), "utf8");
-const WINDOW = Number(src.match(/USAGE_WINDOW_DAYS = (\d+)/)[1]);
-const MIN = Number(src.match(/USAGE_MIN_HITS = (\d+)/)[1]);
-const body = src.slice(
-  src.indexOf("export function resolveOpen("),
-  src.indexOf("\n}\n", src.indexOf("export function resolveOpen(")) + 3,
+const js = ts.transpileModule(src, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2020 },
+}).outputText;
+const exportsObj = {};
+new Function("require", "exports", js)(
+  (name) => {
+    if (name === "react") return { useSyncExternalStore: () => { throw new Error("hook dışı"); } };
+    throw new Error(`beklenmeyen import: ${name}`);
+  },
+  exportsObj,
 );
-const prune = `function pruneHits(hits, now){const c=now-${WINDOW}*86400000;return hits.filter(t=>t>=c);}`;
-const resolveOpen = new Function(
-  `${prune}\nconst USAGE_MIN_HITS=${MIN};\n${body
-    .replace("export function", "function")
-    .replace(/: SectionPref \| null/g, "")
-    .replace(/: boolean/g, "")
-    .replace(/: number = Date\.now\(\)/, " = Date.now()")}\nreturn resolveOpen;`,
-)();
+const { resolveOpen, orderByUsage, pruneHits, USAGE_WINDOW_DAYS } = exportsObj;
 
 const NOW = 1_800_000_000_000;
 const DAY = 86_400_000;
-const pref = (o) => ({ mode: "auto", hits: [], lastManualOpen: null, ...o });
 let n = 0;
 const t = (label, got, exp) => {
   n++;
-  assert.equal(got, exp, `${label}: beklenen ${exp}, gelen ${got}`);
+  assert.deepEqual(got, exp, `${label}: beklenen ${JSON.stringify(exp)}, gelen ${JSON.stringify(got)}`);
   console.log(`  [PASS] ${label}`);
 };
 
-// --- varsayılan
-t("tercih yok → varsayılan (açık)", resolveOpen(null, true, NOW), true);
-t("tercih yok → varsayılan (katlı)", resolveOpen(null, false, NOW), false);
+// --- resolveOpen(pinned, collapsedInSession, openedInSession)
+t("sabit → açık", resolveOpen(true, false, false), true);
+t("sabit + oturumda katlı → kapalı", resolveOpen(true, true, false), false);
+t("sabit + katlı + (anlamsız) geçici-açık bayrağı → yine kapalı", resolveOpen(true, true, true), false);
+t("(a) raptiye BOŞ → açılışta KAPALI", resolveOpen(false, false, false), false);
+t("raptiye boş + şeritten geçici açıldı → açık", resolveOpen(false, false, true), true);
+t("raptiye boş + geçici açık + (anlamsız) katlı bayrağı → açık", resolveOpen(false, true, true), true);
 
-// --- sabit
-t("sabit → hep açık", resolveOpen(pref({ mode: "pinned" }), false, NOW), true);
+// --- (b) kullanım açık/kapalıya karışmaz: karar fonksiyonu 'hits' almaz.
+t("(b) karar fonksiyonu kullanım sayısını almaz (3 parametre)", resolveOpen.length, 3);
 
-// --- BUG SENARYOSU: 1 kullanım varsayılanı EZMEZ
-t("açık varsayılan + 1 iç tıklama → AÇIK KALIR",
-  resolveOpen(pref({ hits: [NOW - 1000] }), true, NOW), true);
-t("katlı varsayılan + 1 iç tıklama → katlı kalır",
-  resolveOpen(pref({ hits: [NOW - 1000] }), false, NOW), false);
+// --- pruneHits: pencere
+t("pencere dışı damga budanır",
+  pruneHits([NOW - (USAGE_WINDOW_DAYS + 1) * DAY, NOW - DAY], NOW), [NOW - DAY]);
 
-// --- alışkanlık
-t("≥2 taze kullanım → açık (varsayılan katlı olsa da)",
-  resolveOpen(pref({ hits: [NOW - DAY, NOW - 2 * DAY] }), false, NOW), true);
-t("2 kullanım ama 8 gün önce → söner, katlı",
-  resolveOpen(pref({ hits: [NOW - 8 * DAY, NOW - 9 * DAY], lastManualOpen: true }), false, NOW), false);
-
-// --- elle karar
-t("elle açtı (1 hit) → açık",
-  resolveOpen(pref({ hits: [NOW - 1000], lastManualOpen: true }), false, NOW), true);
-t("elle kapattı → katlı (taze kullanım olsa da 1 tane)",
-  resolveOpen(pref({ hits: [NOW - 1000], lastManualOpen: false }), true, NOW), false);
-t("elle kapattı ama ≥2 kullanım → alışkanlık kazanır, açık",
-  resolveOpen(pref({ hits: [NOW - 1000, NOW - 2000], lastManualOpen: false }), false, NOW), true);
-t("elle açtı, sonra 8 gün kullanmadı → katlanır",
-  resolveOpen(pref({ hits: [NOW - 8 * DAY], lastManualOpen: true }), true, NOW), false);
+// --- orderByUsage: son 7 gün kullanımı çok olan önce; eşitlikte varsayılan sıra
+const ids = ["a", "b", "c", "d"];
+const pref = (hits, pinned = false) => ({ pinned, hits });
+t("kullanım yok → varsayılan sıra",
+  orderByUsage(ids, { a: null, b: null, c: null, d: null }, NOW), ["a", "b", "c", "d"]);
+t("c en çok kullanılan → başa",
+  orderByUsage(ids, { a: null, b: pref([NOW - DAY]), c: pref([NOW - DAY, NOW - 2 * DAY, NOW - 3 * DAY]), d: null }, NOW),
+  ["c", "b", "a", "d"]);
+t("8 gün önceki kullanım sayılmaz (söner)",
+  orderByUsage(ids, { a: null, b: pref([NOW - 8 * DAY, NOW - 9 * DAY]), c: pref([NOW - DAY]), d: null }, NOW),
+  ["c", "a", "b", "d"]);
+t("sabitlik sırayı DEĞİŞTİRMEZ (şerit ve panel aynı düzen)",
+  orderByUsage(ids, { a: null, b: null, c: pref([], true), d: pref([NOW - DAY]) }, NOW),
+  ["d", "a", "b", "c"]);
+t("eşit kullanımda kararlı (varsayılan sıra korunur)",
+  orderByUsage(ids, { a: pref([NOW - DAY]), b: pref([NOW - 2 * DAY]), c: null, d: pref([NOW - DAY]) }, NOW),
+  ["a", "b", "d", "c"]);
 
 console.log(`\n=== ${n}/${n} geçti ===`);

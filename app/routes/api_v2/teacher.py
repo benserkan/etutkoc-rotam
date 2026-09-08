@@ -255,6 +255,7 @@ from app.routes.api_v2.schemas.teacher import (
     TaskSpreadSkip,
     BoardSourceItem,
     BoardSubjectItem,
+    BoardSubjectOptionItem,
     BoardTopicItem,
     PickerGroupItem,
     PickerSourceItem,
@@ -4450,10 +4451,16 @@ def teacher_topic_board_v2(
     KARAR koçundur.
     """
     student = _get_owned_student(db, student_id, user.id)
-    data = topic_board.build_topic_board(
+    page = topic_board.build_topic_board(
         db, student=student, coach_id=user.id, subject_id=subject_id,
     )
     return TopicBoardResponse(
+        subject_options=[
+            BoardSubjectOptionItem(
+                subject_id=o.subject_id, name=o.name, has_source=o.has_source,
+            )
+            for o in page.options
+        ],
         subjects=[
             BoardSubjectItem(
                 subject_id=s.subject_id, name=s.name,
@@ -4484,7 +4491,7 @@ def teacher_topic_board_v2(
                     for t in s.topics
                 ],
             )
-            for s in data
+            for s in page.subjects
         ]
     )
 

@@ -863,8 +863,16 @@ export interface BoardSubjectItem {
   topics: BoardTopicItem[];
 }
 
+/** Ders seçici satırı — filtre uygulansa da tüm uygulanabilir dersler (2026-09-08). */
+export interface BoardSubjectOption {
+  subject_id: number;
+  name: string;
+  has_source: boolean;
+}
+
 export interface TopicBoardResponse {
   subjects: BoardSubjectItem[];
+  subject_options: BoardSubjectOption[];
 }
 
 /** Görev kutusundaki bir kaynak (kitap bölümü). */

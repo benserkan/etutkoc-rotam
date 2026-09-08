@@ -97,6 +97,25 @@ class BoardSubject:
     topics: list[BoardTopic]
 
 
+@dataclass
+class BoardSubjectOption:
+    """Ders seçici satırı — filtre uygulansa da TÜM uygulanabilir dersler.
+
+    SAHA BUG'I (2026-09-08): ders seçilince yanıt yalnız o dersi taşıyordu →
+    panel "tek ders varsa seçici gizli" kuralıyla açılır listeyi KALDIRIYORDU;
+    koç başka derse dönemiyordu. Seçenek listesi artık filtreden bağımsız.
+    """
+    subject_id: int
+    name: str
+    has_source: bool
+
+
+@dataclass
+class TopicBoardPage:
+    subjects: list[BoardSubject]
+    options: list[BoardSubjectOption]
+
+
 def _exam_wrong_counts(db: Session, student_id: int) -> dict[int, int]:
     """Son 90 günün denemelerinde konu başına YANLIŞ sayısı."""
     from datetime import date, timedelta
@@ -182,29 +201,17 @@ def build_topic_board(
     student: User,
     coach_id: int,
     subject_id: int | None = None,
-) -> list[BoardSubject]:
-    """Ders(ler) için konu kartları — müfredat sırasında."""
-    subjects = _applicable_subjects(db, student, coach_id)
-    if subject_id is not None:
-        subjects = [s for s in subjects if s.id == subject_id]
-    if not subjects:
-        return []
-    subj_ids = [s.id for s in subjects]
+) -> TopicBoardPage:
+    """Ders için konu kartları — müfredat sırasında.
 
-    topics = (
-        db.query(Topic)
-        .filter(
-            Topic.subject_id.in_(subj_ids),
-            or_(Topic.is_builtin.is_(True), Topic.teacher_id == coach_id),
-        )
-        .order_by(Topic.subject_id, Topic.order, Topic.id)
-        .all()
-    )
-    parent_ids = {t.parent_id for t in topics if t.parent_id}
-    parent_names = {t.id: t.name for t in topics if t.id in parent_ids}
-    leaves = [t for t in topics if t.id not in parent_ids]
+    `subject_id` yoksa kaynağı olan İLK ders açılır (12. sınıfta 20+ ders var;
+    hepsini hesaplamak hem yavaş hem gereksiz). `options` her durumda TÜM
+    uygulanabilir dersleri taşır → ders seçici hiç kaybolmaz.
+    """
+    all_subjects = _applicable_subjects(db, student, coach_id)
 
-    # --- kaynaklar (kalan kapasite)
+    # --- kaynaklar (kalan kapasite) — ders seçiminden ÖNCE: seçenek sırası
+    #     "kaynağı olan ders öne" kuralına bağlı (P4/P5 ile aynı ilke).
     src_rows = (
         db.query(
             BookSection.topic_id,
@@ -244,6 +251,46 @@ def build_topic_board(
                 full=(total > 0 and rem <= 0),
             )
         )
+    source_subject_ids: set[int] = set()
+    if sources:
+        source_subject_ids = {
+            int(sid)
+            for (sid,) in db.query(Topic.subject_id)
+            .filter(Topic.id.in_(list(sources.keys())))
+            .distinct()
+            .all()
+        }
+    ordered = sorted(
+        all_subjects,
+        key=lambda x: (x.id not in source_subject_ids, x.order or 0, x.name or ""),
+    )
+    options = [
+        BoardSubjectOption(
+            subject_id=x.id, name=x.name, has_source=x.id in source_subject_ids,
+        )
+        for x in ordered
+    ]
+
+    if subject_id is not None:
+        subjects = [x for x in ordered if x.id == subject_id]
+    else:
+        subjects = ordered[:1]
+    if not subjects:
+        return TopicBoardPage(subjects=[], options=options)
+    subj_ids = [s.id for s in subjects]
+
+    topics = (
+        db.query(Topic)
+        .filter(
+            Topic.subject_id.in_(subj_ids),
+            or_(Topic.is_builtin.is_(True), Topic.teacher_id == coach_id),
+        )
+        .order_by(Topic.subject_id, Topic.order, Topic.id)
+        .all()
+    )
+    parent_ids = {t.parent_id for t in topics if t.parent_id}
+    parent_names = {t.id: t.name for t in topics if t.id in parent_ids}
+    leaves = [t for t in topics if t.id not in parent_ids]
 
     # --- performans (kitaplı + kaynaksız kalemler birlikte)
     from app.services.topic_performance import compute_topic_performance
@@ -352,4 +399,4 @@ def build_topic_board(
             coverage_pct=round(100 * touched / len(rows)) if rows else 0,
             topics=rows,
         ))
-    return out
+    return TopicBoardPage(subjects=out, options=options)

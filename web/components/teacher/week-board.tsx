@@ -16,7 +16,6 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Pin,
-  PinOff,
   Pencil,
   Printer,
   Rocket,
@@ -49,6 +48,7 @@ import { DemoHint } from "@/components/demos/demo-hint";
 import { cn } from "@/lib/utils";
 
 import {
+  getCarryoverCandidates,
   getStudentAllSubjects,
   getStudentSidebar,
   getStudentWeekNotes,
@@ -59,6 +59,7 @@ import {
   usePublishWeek,
 } from "@/lib/hooks/use-weekly-plan-mutations";
 import type {
+  CarryoverCandidatesResponse,
   SidebarResponse,
   SubjectListResponse,
   TeacherStudentWeekResponse,
@@ -76,7 +77,18 @@ import { CurriculumBoard } from "./weekly-plan/curriculum-board";
 import { NextUnitsPanel } from "./weekly-plan/next-units-panel";
 import { WeekGrid } from "./weekly-plan/week-grid";
 import { WorkBlockPanel } from "./weekly-plan/work-block-panel";
-import { useSectionPref } from "@/lib/hooks/use-section-prefs";
+import {
+  useSectionOrder,
+  useSectionPref,
+  useSectionStates,
+} from "@/lib/hooks/use-section-prefs";
+import { PeekHost, SideRail } from "./weekly-plan/side-rail";
+import {
+  SIDE_PANEL_W,
+  SIDE_RAIL_W,
+  SIDE_SECTION_DEFAULTS,
+  SIDE_SECTION_IDS,
+} from "./weekly-plan/side-sections";
 
 /**
  * Öğretmen — haftalık plan ekranı (Paket 3.5a).
@@ -198,6 +210,60 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
   const currentProgramName = data.current_program_name;
   const currentProgramDayCount = data.current_program_day_count;
   const allPrograms = data.programs ?? [];
+  // Sağ taraf (2026-09-08 v2): sabit bölümler PANELDE, diğerleri ŞERİTTE;
+  // şeritten tıklanan bölüm PEEK olarak editörün üstünde açılır (tek seferde
+  // bir tane). Sıra = son 7 gün kullanım, sayfa yüklenişinde donar.
+  const sideOrder = useSectionOrder(SIDE_SECTION_IDS);
+  const sideStates = useSectionStates(SIDE_SECTION_IDS, SIDE_SECTION_DEFAULTS);
+  const carryoverQ = useQuery<CarryoverCandidatesResponse>({
+    queryKey: teacherKeys.carryoverCandidates(studentId, currentProgramId),
+    queryFn: () => getCarryoverCandidates(studentId, currentProgramId),
+    staleTime: 15_000,
+  });
+  const carryoverCount = carryoverQ.data?.candidates.length ?? 0;
+  const dockedIds = sideOrder.filter(
+    (id) =>
+      sideStates[id]?.pinned &&
+      !(id === "week:carryover" && carryoverCount === 0),
+  );
+  const peekId =
+    sideOrder.find((id) => sideStates[id]?.open && !sideStates[id]?.pinned) ??
+    null;
+  const sideW = dockedIds.length > 0 ? SIDE_PANEL_W + 8 + SIDE_RAIL_W : SIDE_RAIL_W;
+  // Bölüm bileşenleri — yalnız görünenler (sabit ya da peek) render edilir.
+  const sidePanels: Record<string, React.ReactNode> = {
+    "week:carryover": (
+      <CarryoverPanel
+        studentId={studentId}
+        programId={currentProgramId}
+        weekDays={data.days}
+      />
+    ),
+    // P5: koçun "kapatayım mı / ek görev mi" kararı — konu kartları.
+    // Sıradaki Üniteler DURUYOR (tek tık atama + AI önceliklendirme); bu panel
+    // onun karar katmanı.
+    "week:curriculum": (
+      <CurriculumBoard
+        studentId={studentId}
+        dayDate={openDate ?? data.days[0]?.date ?? ""}
+      />
+    ),
+    "week:next-units": <NextUnitsPanel studentId={studentId} weekDays={data.days} />,
+    "week:work-blocks": <WorkBlockPanel studentId={studentId} />,
+    "week:resources": (
+      <ResourceSidebar
+        data={sidebarQ.data}
+        isLoading={sidebarQ.isLoading}
+        focusedSubjectId={focusedSubjectId}
+        onClearFocus={() => setFocusedSubjectId(null)}
+        openSubjects={openSubjects}
+        setOpenSubjects={setOpenSubjects}
+        openBooks={openBooks}
+        setOpenBooks={setOpenBooks}
+        onOpenBookGrid={setGridBookId}
+      />
+    ),
+  };
   const currentProgram =
     allPrograms.find((p) => p.id === currentProgramId) ?? null;
   const unlinkedTaskCount = data.unlinked_task_count ?? 0;
@@ -384,8 +450,15 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
         }}
       />
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_var(--side-w)]"
-           style={{ "--side-w": "360px" } as React.CSSProperties}>
+      <div
+        className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_var(--side-w)]"
+        style={
+          {
+            "--side-w": `${sideW}px`,
+            "--panel-w": `${SIDE_PANEL_W}px`,
+          } as React.CSSProperties
+        }
+      >
         <div className="space-y-4 min-w-0">
           <WeekNotesCard
             studentId={studentId}
@@ -424,7 +497,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
                 {dayNav.pinned ? (
                   <Pin className="size-3.5 fill-current" aria-hidden />
                 ) : (
-                  <PinOff className="size-3.5" aria-hidden />
+                  <Pin className="size-3.5" aria-hidden />
                 )}
               </button>
               <button
@@ -643,34 +716,37 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           </div>
         </div>
 
-        {/* Sağ panel: her bölüm kendi raptiyesiyle açılır/katlanır (PinnableSection).
-            Tümü katlıysa yalnız başlık satırları kalır — ayrı "gizle" düğmesi yok. */}
-        <aside className="xl:sticky xl:top-4 xl:self-start xl:max-h-[calc(100vh-2rem)] xl:overflow-y-auto rounded-lg border border-border bg-card">
-          <CarryoverPanel
-            studentId={studentId}
-            programId={currentProgramId}
-            weekDays={data.days}
+        {/* Sağ taraf: [sabit bölümler paneli][şerit]. Şerit her zaman; panel
+            yalnız sabit bölüm varken → hiç sabit yoksa editör ~320px kazanır.
+            Sabit olmayan bölüm şeritten PEEK ile editörün üstünde açılır
+            (editör yer değiştirmez). Dar ekranda şerit yatay satır, peek altında. */}
+        <aside
+          className="relative flex flex-col gap-2 xl:sticky xl:top-4 xl:flex-row xl:items-start xl:self-start"
+          data-side-panel=""
+          data-docked={dockedIds.length}
+          data-peek-id={peekId ?? ""}
+        >
+          {dockedIds.length > 0 ? (
+            <div
+              className="order-3 rounded-lg border border-border bg-card xl:order-1 xl:max-h-[calc(100vh-2rem)] xl:w-[var(--panel-w)] xl:overflow-y-auto"
+              data-docked-panel=""
+            >
+              {dockedIds.map((id) => (
+                <React.Fragment key={id}>{sidePanels[id]}</React.Fragment>
+              ))}
+            </div>
+          ) : null}
+          <SideRail
+            className="order-1 xl:order-2"
+            badges={{ "week:carryover": carryoverCount || undefined }}
+            hidden={carryoverCount === 0 ? ["week:carryover"] : undefined}
           />
-          {/* P5: koçun "kapatayım mı / ek görev mi" kararı — konu kartları.
-              Sıradaki Üniteler paneli DURUYOR (tek tık atama + AI önceliklendirme);
-              bu panel onun karar katmanı. */}
-          <CurriculumBoard
-            studentId={studentId}
-            dayDate={openDate ?? data.days[0]?.date ?? ""}
-          />
-          <NextUnitsPanel studentId={studentId} weekDays={data.days} />
-          <WorkBlockPanel studentId={studentId} />
-          <ResourceSidebar
-            data={sidebarQ.data}
-            isLoading={sidebarQ.isLoading}
-            focusedSubjectId={focusedSubjectId}
-            onClearFocus={() => setFocusedSubjectId(null)}
-            openSubjects={openSubjects}
-            setOpenSubjects={setOpenSubjects}
-            openBooks={openBooks}
-            setOpenBooks={setOpenBooks}
-            onOpenBookGrid={setGridBookId}
-          />
+          <PeekHost
+            peekId={peekId}
+            className="order-2 xl:absolute xl:right-[60px] xl:top-0 xl:z-30 xl:max-h-[calc(100vh-2rem)] xl:w-[var(--panel-w)] xl:overflow-y-auto"
+          >
+            {peekId ? sidePanels[peekId] : null}
+          </PeekHost>
         </aside>
       </div>
 
