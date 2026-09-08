@@ -4,7 +4,7 @@
  * Sağ ŞERİT (rail) + geçici bölüm yuvası (peek host) — 2026-09-08.
  *
  * KOÇ: "sağ kısım epeyce yer kaplıyor; en sık kullanılanlar öne çıksın; program
- * hazırlama kısmına alan açılsın." Tasarım: sol gün fihristinin 44px şeridinin (bu şerit 52px — etiket sığsın)
+ * hazırlama kısmına alan açılsın." Tasarım: sol gün fihristinin 44px şeridinin (bu şerit 56px — etiket sığsın)
  * simetriği — editör iki ince şerit arasında.
  *
  *   · Şerit her bölüm için simge + kısa etiket taşır (etiket = keşfedilebilirlik;
@@ -15,7 +15,7 @@
  *   · Sabit olmayan: tıklayınca PEEK — 320px'lik geçici panel şeridin solunda,
  *     editörün üstünde açılır (editör YER DEĞİŞTİRMEZ). Esc / dışarı tıklama /
  *     X kapatır; raptiye panele yerleştirir. Aynı anda tek peek.
- *   · Hiç sabit yoksa sağ taraf yalnız 52px şerittir → editör ~320px kazanır.
+ *   · Hiç sabit yoksa sağ taraf yalnız 56px şerittir → editör ~320px kazanır.
  *
  * Dar ekran (<xl): şerit yatay bir sıra olur, peek onun altında satır içi açılır.
  */
@@ -62,7 +62,7 @@ export function SideRail({
       data-rail=""
       className={cn(
         "flex shrink-0 gap-0.5 rounded-lg border border-border bg-card p-1",
-        "flex-row overflow-x-auto xl:w-[52px] xl:flex-col xl:overflow-visible",
+        "flex-row overflow-x-auto xl:w-[56px] xl:flex-col xl:overflow-visible",
         className,
       )}
     >
@@ -113,7 +113,7 @@ function RailButton({ def, badge }: { def: SideSectionDef; badge?: number }) {
       aria-pressed={open}
       title={title}
       className={cn(
-        "relative flex shrink-0 flex-col items-center gap-0.5 rounded-md px-1.5 py-1.5 text-muted-foreground transition",
+        "relative flex shrink-0 flex-col items-center gap-0.5 rounded-md px-0.5 py-1.5 text-muted-foreground transition",
         "min-w-[56px] xl:min-w-0 xl:w-full",
         open ? ACTIVE_TONE[def.tone] : "hover:bg-muted hover:text-foreground",
       )}

@@ -164,6 +164,10 @@ def main() -> int:
                   len(r_ids) == 4 and "week:carryover" not in r_ids, str(r_ids))
             check("1b. her simgenin görünür etiketi var",
                   all(l for l in labels) and any("Kaynak" in l for l in labels), str(labels))
+            clipped = page.evaluate(
+                "() => [...document.querySelectorAll('[data-rail] button[data-rail] span.truncate')].filter(s => s.scrollWidth > s.clientWidth + 1).map(s => s.textContent)"
+            )
+            check("1c. şerit etiketleri KIRPILMIYOR (Müfredat/Sıradaki sığar)", clipped == [], str(clipped))
 
             # ---- 2. varsayılan
             st_res = sec_state(page, "week:resources")
@@ -181,7 +185,7 @@ def main() -> int:
             # ---- 3. ölçüm (sabit panel)
             aside0 = rect(page, "[data-side-panel]")
             ed0 = rect(page, "#day-editor")
-            check("3. sabit panel + şerit ≈ 380px",
+            check("3. sabit panel + şerit ≈ 384px",
                   aside0 is not None and 370 <= aside0["w"] <= 390, str(aside0))
 
             # ---- 4. raptiyeyi kaldır → peek → Esc → şerit-only, editör genişler
@@ -194,8 +198,8 @@ def main() -> int:
             esc(page)
             aside1 = rect(page, "[data-side-panel]")
             ed1 = rect(page, "#day-editor")
-            check("4b. Esc → sağ taraf yalnız şerit (≈52px)",
-                  aside1 is not None and 48 <= aside1["w"] <= 56 and docked_count(page) == 0,
+            check("4b. Esc → sağ taraf yalnız şerit (≈56px)",
+                  aside1 is not None and 48 <= aside1["w"] <= 60 and docked_count(page) == 0,
                   f"{aside1} docked={docked_count(page)}")
             check("4c. EDİTÖR ≥300px GENİŞLEDİ",
                   ed0 and ed1 and ed1["w"] - ed0["w"] >= 300,
@@ -206,7 +210,7 @@ def main() -> int:
             go()
             aside2 = rect(page, "[data-side-panel]")
             check("5. yenilemede şerit-only kalıcı, editör geniş",
-                  docked_count(page) == 0 and aside2 and aside2["w"] <= 56
+                  docked_count(page) == 0 and aside2 and aside2["w"] <= 60
                   and rect(page, "#day-editor")["w"] >= ed1["w"] - 2,
                   f"docked={docked_count(page)} aside={aside2}")
 

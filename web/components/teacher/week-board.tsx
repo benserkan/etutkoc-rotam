@@ -743,7 +743,7 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           />
           <PeekHost
             peekId={peekId}
-            className="order-2 xl:absolute xl:right-[60px] xl:top-0 xl:z-30 xl:max-h-[calc(100vh-2rem)] xl:w-[var(--panel-w)] xl:overflow-y-auto"
+            className="order-2 xl:absolute xl:right-[64px] xl:top-0 xl:z-30 xl:max-h-[calc(100vh-2rem)] xl:w-[var(--panel-w)] xl:overflow-y-auto"
           >
             {peekId ? sidePanels[peekId] : null}
           </PeekHost>

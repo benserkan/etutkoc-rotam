@@ -85,4 +85,4 @@ export function sideSectionDef(id: string): SideSectionDef | undefined {
 
 /** Panel genişliği (sabit bölüm varken) ve şerit genişliği — tek yerde. */
 export const SIDE_PANEL_W = 320;
-export const SIDE_RAIL_W = 52; // etiketler ("Müfredat", "Sıradaki") 44px'te kırpılıyordu
+export const SIDE_RAIL_W = 56; // etiketler ("Müfredat", "Sıradaki") 44/52px'te kırpılıyordu
