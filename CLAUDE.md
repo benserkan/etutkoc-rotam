@@ -6,6 +6,95 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## KAYNAK-KONU NORMALİZASYONU (kitap bölümü ↔ resmi konu bağı) — CANLI (2026-09-08, commit `c8f6825` + `bde5bee`, migration YOK)
+
+**Tetikleyici (koç):** "TYT Matematik'te iki kaynak var (Orijinal, 3D); birinde
+'Bölme Bölünebilme', diğerinde 'Bölme Bölünebilme Kuralları'. Müfredat kısmı
+yalnız adı birebir uyan yayının test sayısını alıyor — yayınevi adlandırmasıyla
+müfredat konusu arasındaki bağı nasıl kuracağız? Ayrıca öğrenci detay Müfredat
+sekmesi ile hafta panelindeki Müfredat uyumlu mu?"
+- **TEŞHİS (prod salt-okuma, öğrenci 157):** iki yüzey AYNI 34 konuyu listeliyor
+  (küme tutarlı — ikisi de `_applicable_subjects` + builtin/koç + LEAF) ama
+  3D-TYT Matematik'in 39 bölümünden 16'sı (Bölme ve Bölünebilme Kuralları
+  dahil) `topic_id` NULL → hiçbir yüzeyde sayılmıyor ve **hiçbir yerde
+  gösterilmiyordu**. Sistem genelinde 4033 bölüm-atamanın ~600'ü bağsız.
+  İkincil tutarsızlıklar: `topic_board` + `task_picker` sınıf filtresi
+  uygulamıyordu (9-10 Maarif öğrencisinde hafta paneli 11-12 konularını da
+  dökerdi, sekme dökmüyordu); board'da "tamamlandi" yoktu (sekme
+  'tamamlandi' derken panel 'devam').
+- **BAĞ = `BookSection.topic_id`.** Normalizasyon katmanı `curriculum_mapping`
+  (deterministik, AI YOK, kredi YOK, **belirsizde ASLA bağlamaz**):
+  1. **exact** — mevcut anahtar (önek/bağlaç/alias).
+  2. **learned** — `learned_label_map(db, subject_id)`: ÖĞRENİLMİŞ SÖZLÜK —
+     aynı derste doğrulanmış katalog kayıtları + koçların uyguladığı
+     eşleştirmeler (etiket-anahtarı → konu). Prod TYT Mat korpusu 40+ öğretici
+     çift ("sayma permutasyon" → Permütasyon, "yuzde kar zarar problemleri" →
+     Yüzde…). **Çelişen anahtar (≥2 farklı konu) DIŞLANIR.**
+  3. **tail** — anlamsız kuyruk atılır (`_GENERIC_TAIL`: Kuralları/Özellikleri/
+     Testleri/Uygulamaları/I-II…) → tekrar dene.
+  4. **contain** — konu sözcükleri etikette TAM geçiyor + artan sözcükler
+     yalnız anlamsız kuyruk + TEK aday. **GUARD kanıtı:** "Asal Çarpanlara
+     Ayırma ve Bölen Sayısı" → artan {asal, bölen, sayısı} anlamlı →
+     BAĞLANMAZ ("Çarpanlara Ayırma"ya yanlış gitmesin). Kalan → modalda AI
+     önerisi → koç onayı (mevcut akış).
+  `resolve_label` / `candidate_topics_for_book` / `auto_apply_sections`;
+  `suggest_for_book` + `book_catalog.auto_map_sections` aynı katmanı kullanır.
+- **OTOMATİK BAĞ (koç "Uygula" beklemez):** tek bölüm ekle · `sections/bulk`
+  (fotoğraftan okuma; `auto_mapped_count` döner) · AI önerili bölümler ·
+  şablon uygula · katalogdan farklı derse kopyalanan kitap. Yalnız NULL olanlar.
+  (2026-06-24 "auto-map yalnız önerir" kararı deterministik+guard'lı katmanla
+  gevşetildi; AI önerisi hâlâ koç onaylı.)
+- **GERİYE DÖNÜK:** `scripts/backfill_section_topics.py` (dry-run varsayılan ·
+  `--apply` · `--subject-id/--book-id/--coach-id` · `--templates`; idempotent).
+  **Prod koşuldu:** 843 boş bölümden **89 bağlandı** (exact 45 · learned 35 ·
+  tail 8 · contain 1) + katalogda 36 (85 Yayın Denizi 6/22, 90 Edebiyat Sokağı
+  17/18, 95 3D-TYT Mat 4/16, 98 Barış AYT Mat 8/9, 109 Limit Paragraf 1/6 —
+  hepsi birebir ad eşleşmesi; 85/109 daha önce `--no-map` seed'lenmişti,
+  istenirse geri alınır). İkinci koşu 0 (idempotent). Kalan 754'ün büyük kısmı
+  bilinçli bağsız (Simülasyon/ÖSYM/TÜMEVARIM/deneme kümülatifleri, taksonomi
+  dışı "2. Dereceden Denklemler" vb.).
+  **157 doğrulandı:** "Bölme ve Bölünebilme" artık Orijinal 6 + **3D 4** →
+  kalan 10; Permütasyon/Binom/Basit Eşitsizlikler de iki kaynaklı; 3D 23→27 eşli
+  (alias ekiyle **→32/39**; kalan 7 = TÜMEVARIM I-IV + Bire Bir ÖSYM kümülatif ·
+  "Asal Çarpanlara Ayırma ve Bölen Sayısı" guard → koç · "İkinci Dereceden
+  Denklemler" TYT taksonomisinde yok).
+- **GÖRÜNÜRLÜK:** `topic_board` ders başına `unmapped_sections` (bölüm + kitap +
+  test) → hafta paneli Müfredat'ta amber not **"N bölüm müfredata bağlı değil —
+  M test sayıma GİRMİYOR"** + kitap başına **"Eşleştir"** → `/teacher/library/
+  books/{id}?map=1` (eşleştirme modalı AÇIK gelir; `page.tsx searchParams` →
+  `initialMapOpen`). Öğrenci detay sekmesi zaten "müfredat-dışı ekstra" listeler.
+- **TEK KONU KÜMESİ:** `curriculum_progress.leaf_topics_for_student` (builtin/
+  koç + LEAF + kümülatif sınıf filtresi) → sekme, `topic_board`, `task_picker`
+  üçü de bunu kullanır. Board `tamamlandi` (completed ≥ total) sekmeyle aynı.
+- **Alias eki (3D gerçek adları, deterministik guard'a takılanlar):** hız-hareket
+  → Hareket Problemleri · sayısal mantık → Sayısal Yetenek · asal ve aralarında
+  asal → Asal Sayılar · tek-çift + işaret incelemesi → Tek ve Çift Sayılar ·
+  merkezi eğilim/yayılım/grafik türleri → Veri ve İstatistik. Çakışma taraması:
+  mapping 18 · exam_taxonomy 20 · exam_import 75 GREEN. Prod TYT Mat ikinci
+  koşu: +15 bölüm (5 etiket × 3 kitap kopyası).
+- **Peek başlığı:** özet kaldırıldı (koyu tema kontrolünde "Serbest Bloklar" →
+  "S.." kırpılıyordu; başlık + Yeni + Sabitle + X 320px'e sığmıyordu). Koyu
+  temada şerit/peek/sabit panel ekran görüntüleriyle doğrulandı, kontrast temiz.
+- **Test:** YENİ `test_curriculum_mapping_v2.py` **13/13** (kuyruk · öğrenilmiş
+  koç/katalog · kapsama guard · çelişki guard · kümülatif etiket · roma rakamı ·
+  auto_apply yalnız boşlara · suggest aynı katman · HTTP bulk/tek bölüm ·
+  backfill dry-run yazmaz / apply yazar / idempotent) · `test_api_v2_topic_board`
+  11→**14** (unmapped_sections · tamamlandi · sınıf filtresi 10 vs 12) ·
+  `live_curriculum_board` 11→**14** (not + link + modal açık). Regresyon:
+  curriculum_mapping 18 · task_picker 11 · curriculum_progress 22 · units 10 ·
+  book_catalog 28 · teacher_library 24 · weekly_plan 15 · live_section_pins 33;
+  tsc + eslint temiz.
+- **DERSLER:** (a) dev backend reload'suz — backend değişince yeniden başlat
+  (canlı testte `unmapped_sections` eski süreçten gelmedi, panel çöktü →
+  frontend'e savunmacı `?.length` de eklendi). (b) `docker exec -i` zincirinde
+  ilk komut stdin'i yutar — heredoc'lu doğrulama betiği AYRI ssh ile koşulur.
+  (c) Bu ortamda ~100 satırı aşan bash heredoc'ları kesiliyor → yama betikleri
+  dosyaya yazılıp çalıştırılır. (d) dev SQLite'ta eski `Book.type='test'`
+  artıkları ORM'de patlıyor → backfill `Book.type.in_(list(BookType))` filtreli.
+- Mobil BİLİNÇLİ yok (kütüphane/eşleştirme web — PARITY).
+
+---
+
 ## SAĞ ŞERİT (RAIL) + RAPTİYE v2 + MÜFREDAT DERS SEÇİCİ FIX — CANLI (2026-09-08, commit `7651c28` + `0fdae92`, migration YOK)
 
 **Tetikleyici (koç, 3 ekran görüntüsü):** (1) Müfredat'ta ders değiştirince
