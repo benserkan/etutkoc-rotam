@@ -242,6 +242,7 @@ class SectionsBulkCreateBody(BaseModel):
 class BulkCatalogResult(BaseModel):
     added_count: int
     skipped_existing_count: int      # zaten ekli topic'ler atlandı
+    auto_mapped_count: int = 0       # deterministik müfredat bağı kurulan bölüm (2026-09-08)
 
 
 # =============================================================================

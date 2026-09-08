@@ -60,6 +60,8 @@ interface Props {
   templates: BookTemplateListItem[];
   students: TeacherStudentListItem[];
   subjects: SubjectRef[];
+  /** `?map=1` ile gelindiyse eşleştirme modalı açık başlar */
+  initialMapOpen?: boolean;
 }
 
 export function BookDetailClient({
@@ -68,6 +70,7 @@ export function BookDetailClient({
   templates,
   students,
   subjects,
+  initialMapOpen = false,
 }: Props) {
   const router = useRouter();
   const [active, setActive] = React.useState<Tab>("sections");
@@ -223,7 +226,7 @@ export function BookDetailClient({
       </div>
 
       {active === "sections" ? (
-        <SectionsTab book={book} topics={topics} />
+        <SectionsTab book={book} topics={topics} initialMapOpen={initialMapOpen} />
       ) : null}
       {active === "students" ? (
         <AssignmentsTab book={book} students={students} />
@@ -303,13 +306,15 @@ export function BookDetailClient({
 function SectionsTab({
   book,
   topics,
+  initialMapOpen = false,
 }: {
   book: LibraryBookDetailResponse;
   topics: TopicRef[];
+  initialMapOpen?: boolean;
 }) {
   const [addOpen, setAddOpen] = React.useState(false);
   const [bulkOpen, setBulkOpen] = React.useState(false);
-  const [mapOpen, setMapOpen] = React.useState(false);
+  const [mapOpen, setMapOpen] = React.useState(initialMapOpen);
   const clearMut = useClearSections(book.id);
 
   // Müfredata eşleşmemiş ünite sayısı (rozet için).

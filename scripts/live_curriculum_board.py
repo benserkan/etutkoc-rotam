@@ -106,7 +106,10 @@ def seed() -> dict:
                               test_count=12, topic_id=t_clean.id)
         s_exam = BookSection(book_id=book.id, label="Yaş Bölümü", order=2,
                              test_count=12, topic_id=t_exam.id)
-        db.add_all([s_clean, s_exam])
+        # Müfredata BAĞLI OLMAYAN bölüm — panel notu + 'Eşleştir' linki (2026-09-08)
+        s_un = BookSection(book_id=book.id, label="Karma Tekrar Testi", order=3,
+                           test_count=5, topic_id=None)
+        db.add_all([s_clean, s_exam, s_un])
         db.flush()
         sb = StudentBook(student_id=st.id, book_id=book.id)
         db.add(sb)
@@ -298,6 +301,26 @@ def main() -> int:
                 check("8b. 'Kaynaksız' → konuya bağlı kitapsız görev oluştu",
                       _tasks(ids["student"]) == before + 1 and ok,
                       f"gorev={_tasks(ids['student'])} konulu={ok}")
+
+            # ---- 9. Müfredata bağlı olmayan bölüm notu + Eşleştir linki (2026-09-08)
+            note = page.query_selector('[data-section="week:curriculum"] [data-unmapped-note]')
+            note_txt = note.inner_text() if note else ""
+            link = page.query_selector('[data-section="week:curriculum"] [data-unmapped-note] a:has-text("Eşleştir")')
+            href = link.get_attribute("href") if link else None
+            check("9a. bağlı olmayan bölüm notu: '1 bölüm … 5 test … GİRMİYOR' + kitap adı",
+                  note is not None and "1 bölüm" in note_txt and "5 test" in note_txt
+                  and "Karma Tekrar Testi" in note_txt,
+                  note_txt[:120])
+            check("9b. 'Eşleştir' linki kitap sayfasına ?map=1 ile gider",
+                  href is not None and href.endswith(f"/teacher/library/books/{ids['book']}?map=1"),
+                  str(href))
+            if link:
+                link.click()
+                page.wait_for_timeout(3500)
+                dlg = page.query_selector('[role="dialog"][data-state="open"]')
+                dlg_txt = dlg.inner_text() if dlg else ""
+                check("9c. link eşleştirme modalını AÇIK getirir (koç tek tıkla eşleştirir)",
+                      dlg is not None and "Karma Tekrar Testi" in dlg_txt, dlg_txt[:100])
 
             page.screenshot(path="/tmp/board_final.png")
             b.close()

@@ -38,7 +38,10 @@ from app.models import (
     User,
 )
 from app.services import task_quantity, topic_closure
-from app.services.curriculum_progress import _applicable_subjects
+from app.services.curriculum_progress import (
+    _applicable_subjects,
+    leaf_topics_for_student,
+)
 
 # Grup başına en fazla kaç konu gösterilir (kutu kısa kalmalı).
 CURRICULUM_PER_SUBJECT = 2
@@ -220,18 +223,10 @@ def build_task_picker(
     subj_by_id = {s.id: s for s in subjects}
     subj_ids = list(subj_by_id)
 
-    topics = (
-        db.query(Topic)
-        .filter(
-            Topic.subject_id.in_(subj_ids),
-            or_(Topic.is_builtin.is_(True), Topic.teacher_id == coach_id),
-        )
-        .order_by(Topic.subject_id, Topic.order, Topic.id)
-        .all()
-    )
-    # Tema/ünite başlıkları (çocuğu olan konular) atanabilir birim değil
-    parent_ids = {t.parent_id for t in topics if t.parent_id}
-    leaf_topics = [t for t in topics if t.id not in parent_ids]
+    # Konu kümesi TEK MERKEZDEN (sekme + hafta paneliyle aynı: builtin/koç +
+    # LEAF + sınıf filtresi). Tema/ünite başlıkları atanabilir birim değil.
+    leaf_set = leaf_topics_for_student(db, student, coach_id, subj_ids)
+    leaf_topics = [t for sid in subj_ids for t in leaf_set.by_subject.get(sid, [])]
 
     sources = _sources_by_topic(db, student.id)
     closed = topic_closure.closed_topic_ids(db, student.id)

@@ -18,6 +18,9 @@ Senaryolar:
    8. D/Y girilmemişse doğruluk UYDURULMAZ (accuracy_pct None)
    9. Kapatılan konu closed=True + closed_at
   10. subject_id filtresi
+  12. müfredata bağlı olmayan bölüm `unmapped_sections`te listelenir (sayıma girmez)
+  13. kaynağı biten konu 'tamamlandi' (sekmeyle aynı sözlük)
+  14. sınıf filtresi: 10. sınıf öğrencisi 11. sınıf konusunu GÖRMEZ, 12. sınıf görür
   11. Sahiplik: başka koçun öğrencisi → 404
 """
 from __future__ import annotations
@@ -132,7 +135,17 @@ def main() -> int:
                              teacher_id=coach.id)
             t_fizik = Topic(subject_id=other_subj.id, name="Fizik Konusu",
                             order=1, teacher_id=coach.id)
-            db.add_all([t_clean, t_exam, t_arch, t_thin, t_nodv, t_closed, t_fizik])
+            t_done = Topic(subject_id=subj.id, name="Bitmiş Konu", order=7,
+                           teacher_id=coach.id)
+            t_hi = Topic(subject_id=subj.id, name="Onbir Konusu", order=8,
+                         teacher_id=coach.id, grade_level=11)
+            db.add_all([t_clean, t_exam, t_arch, t_thin, t_nodv, t_closed, t_fizik,
+                        t_done, t_hi])
+            db.flush()
+            st10 = User(email=f"{PFX}_s10@test.invalid", password_hash=hash_password(PWDH),
+                        full_name="Onuncu", role=UserRole.STUDENT, is_active=True,
+                        teacher_id=coach.id, grade_level=10)
+            db.add(st10)
             db.flush()
 
             book = Book(name=f"{PFX} SB", teacher_id=coach.id,
@@ -147,6 +160,7 @@ def main() -> int:
                 ("thin", t_thin, 10, 2),
                 ("nodv", t_nodv, 10, 4),
                 ("closed", t_closed, 8, 0),
+                ("done", t_done, 4, 4),
             ):
                 sec = BookSection(book_id=book.id, label=f"{topic.name} Bölümü",
                                   order=len(secs) + 1, test_count=total,
@@ -154,6 +168,11 @@ def main() -> int:
                 db.add(sec)
                 db.flush()
                 secs[key] = (sec, done)
+            # Müfredata BAĞLI OLMAYAN bölüm (topic_id NULL) — sayıma girmez, listelenir
+            un_sec = BookSection(book_id=book.id, label="Karma Tekrar Testi",
+                                 order=99, test_count=5, topic_id=None)
+            db.add(un_sec)
+            db.flush()
             sb = StudentBook(student_id=st.id, book_id=book.id)
             db.add(sb)
             db.flush()
@@ -179,6 +198,7 @@ def main() -> int:
             solve(secs["arch"][0], 6, 55, 5)      # %92 AMA arşivde açık yanlış
             solve(secs["thin"][0], 2, 20, 0)      # %100 ama az veri
             solve(secs["nodv"][0], 4, 0, 0)       # D/Y girilmemiş
+            solve(secs["done"][0], 4, 36, 4)      # kaynak bitti → tamamlandi
 
             # EMİR VAKASI: görevde iyi ama denemede yanlış
             ex = ExamResult(student_id=st.id, title="Deneme", exam_date=date.today(),
@@ -201,7 +221,8 @@ def main() -> int:
                        other_subject=other_subj.id, book=book.id, exam=ex.id,
                        t_clean=t_clean.id, t_exam=t_exam.id, t_arch=t_arch.id,
                        t_thin=t_thin.id, t_nodv=t_nodv.id, t_closed=t_closed.id,
-                       t_fizik=t_fizik.id)
+                       t_fizik=t_fizik.id, t_done=t_done.id, t_hi=t_hi.id,
+                       student10=st10.id, un_sec=un_sec.id)
             db.commit()
 
         c = TestClient(app)
@@ -303,6 +324,31 @@ def main() -> int:
             and len(payload.get("subjects", [])) == 1,
             f"ders={len(payload.get('subjects', []))}",
         )
+
+        # ---- 12. eşleşmemiş bölüm listelenir, sayıma girmez
+        un = (subj_row or {}).get("unmapped_sections", [])
+        check(
+            "12. müfredata bağlı olmayan bölüm unmapped_sections'ta (kitap adıyla), sayımda değil",
+            len(un) == 1 and un[0]["label"] == "Karma Tekrar Testi"
+            and un[0]["test_count"] == 5 and un[0]["book_id"] == ids["book"]
+            and _topic(payload, ids["un_sec"]) is None,
+            str(un),
+        )
+
+        # ---- 13. kaynağı biten konu tamamlandi
+        t13 = _topic(payload, ids["t_done"]) or {}
+        check("13. kaynağı biten konu status='tamamlandi' (sekmeyle aynı)",
+              t13.get("status") == "tamamlandi" and t13.get("remaining") == 0,
+              str({k: t13.get(k) for k in ("status", "remaining", "tests_solved")}))
+
+        # ---- 14. sınıf filtresi (tek merkez leaf_topics_for_student)
+        r14 = c.get(f"/api/v2/teacher/students/{ids['student10']}/topic-board",
+                    params={"subject_id": ids["subject"]})
+        p14 = r14.json() if r14.status_code == 200 else {}
+        check("14. 10. sınıf öğrencisi 11. sınıf konusunu GÖRMEZ; 12. sınıf görür",
+              r14.status_code == 200 and _topic(p14, ids["t_hi"]) is None
+              and _topic(payload, ids["t_hi"]) is not None,
+              f"{r14.status_code} st10={_topic(p14, ids['t_hi'])} st12={bool(_topic(payload, ids['t_hi']))}")
 
         # ---- 11. Sahiplik
         r11 = c.get(

@@ -122,14 +122,12 @@ export function PinnableSection({
             ) : null}
           </button>
         ) : (
+          // Peek başlığında ÖZET YOK: başlık + headerRight + "Sabitle" + X 320px'e
+          // sığmıyordu ("Serbest Bloklar" → "S.."); özet katlı başlığın bilgisidir,
+          // peek zaten içeriği gösterir. Koyu tema kontrolünde yakalandı.
           <div className="flex min-w-0 flex-1 items-center gap-2 px-3.5 py-2.5">
             {icon ? <span className={cn("shrink-0", T.icon)}>{icon}</span> : null}
             <span className={cn("min-w-0 truncate text-sm font-medium", T.title)}>{title}</span>
-            {summary ? (
-              <span className="ml-auto shrink-0 text-[11px] text-muted-foreground tabular-nums">
-                {summary}
-              </span>
-            ) : null}
           </div>
         )}
         {open && headerRight ? <div className="shrink-0">{headerRight}</div> : null}

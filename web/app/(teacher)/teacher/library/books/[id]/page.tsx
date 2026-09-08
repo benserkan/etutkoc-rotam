@@ -21,6 +21,9 @@ export const dynamic = "force-dynamic";
 
 interface PageProps {
   params: Promise<{ id: string }>;
+  /** `?map=1` → Bölümler sekmesinde müfredat eşleştirme modalı açık gelir
+   *  (hafta paneli "Eşleştir" linki, 2026-09-08). */
+  searchParams?: Promise<{ map?: string }>;
 }
 
 export async function generateMetadata({ params }: PageProps) {
@@ -28,8 +31,10 @@ export async function generateMetadata({ params }: PageProps) {
   return { title: `Kitap #${id}` };
 }
 
-export default async function BookDetailPage({ params }: PageProps) {
+export default async function BookDetailPage({ params, searchParams }: PageProps) {
   const { id } = await params;
+  const sp = (await searchParams) ?? {};
+  const initialMapOpen = sp.map === "1";
   const numericId = Number(id);
   if (!Number.isInteger(numericId) || numericId <= 0) notFound();
 
@@ -65,6 +70,7 @@ export default async function BookDetailPage({ params }: PageProps) {
       templates={templates.items}
       students={students.items}
       subjects={subjects.items}
+      initialMapOpen={initialMapOpen}
     />
   );
 }

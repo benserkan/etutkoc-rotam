@@ -860,6 +860,15 @@ class BoardTopicItem(BaseModel):
     sources: list[BoardSourceItem] = []
 
 
+class BoardUnmappedSectionItem(BaseModel):
+    """Müfredata bağlı olmayan bölüm — sayıma girmez, koç eşleştirmeli."""
+    section_id: int
+    label: str
+    test_count: int
+    book_id: int
+    book_name: str
+
+
 class BoardSubjectItem(BaseModel):
     subject_id: int
     name: str
@@ -867,6 +876,7 @@ class BoardSubjectItem(BaseModel):
     closed_topics: int
     coverage_pct: int
     topics: list[BoardTopicItem] = []
+    unmapped_sections: list[BoardUnmappedSectionItem] = []
 
 
 class BoardSubjectOptionItem(BaseModel):

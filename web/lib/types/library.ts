@@ -209,6 +209,8 @@ export interface SectionsBulkFromCatalogBody {
 export interface BulkCatalogResult {
   added_count: number;
   skipped_existing_count: number;
+  /** Deterministik müfredat bağı kurulan bölüm sayısı (2026-09-08) */
+  auto_mapped_count?: number;
 }
 
 // =============================================================================

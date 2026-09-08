@@ -349,6 +349,52 @@ def _applicable_subjects(db: Session, student: User, coach_id: int) -> list[Subj
     return out
 
 
+@dataclass
+class LeafTopicSet:
+    """Öğrencinin göreceği LEAF konular (ders bazında) + tema/ünite adları."""
+    by_subject: dict[int, list[Topic]]
+    parent_names: dict[int, str]
+
+
+def leaf_topics_for_student(
+    db: Session, student: User, coach_id: int, subject_ids: list[int],
+) -> LeafTopicSet:
+    """TEK MERKEZ (2026-09-08): müfredat sekmesi, hafta paneli (topic_board) ve
+    görev kutusu (task_picker) AYNI konu kümesini görsün.
+      · builtin VEYA koçun kendi konusu
+      · yalnız LEAF (çocuğu olan tema/ünite başlığı gruplamadır)
+      · sınıf filtresi kümülatif: grade_level <= öğrencinin sınıfı (mezun/bilinmeyen → hepsi)
+      · sıra: Topic.order, id
+    Daha önce topic_board ve task_picker sınıf filtresini UYGULAMIYORDU → 9-10.
+    sınıf Maarif öğrencisinde hafta paneli 11-12 konularını da listeliyordu,
+    sekme listelemiyordu — iki yüzey çelişiyordu.
+    """
+    if not subject_ids:
+        return LeafTopicSet({}, {})
+    all_topics = (
+        db.query(Topic)
+        .filter(
+            Topic.subject_id.in_(subject_ids),
+            or_(Topic.is_builtin.is_(True), Topic.teacher_id == coach_id),
+        )
+        .order_by(Topic.subject_id, Topic.order, Topic.id)
+        .all()
+    )
+    max_grade = (
+        99 if (student.is_graduate or student.grade_level is None) else student.grade_level
+    )
+    has_children = {t.parent_id for t in all_topics if t.parent_id is not None}
+    parent_names = {t.id: t.name for t in all_topics if t.id in has_children}
+    by_subject: dict[int, list[Topic]] = {}
+    for t in all_topics:
+        if t.id in has_children:
+            continue
+        if t.grade_level is not None and t.grade_level > max_grade:
+            continue
+        by_subject.setdefault(t.subject_id, []).append(t)
+    return LeafTopicSet(by_subject, parent_names)
+
+
 def compute_curriculum_progress(
     db: Session, student: User, coach_id: int,
 ) -> CurriculumProgress:
@@ -432,45 +478,19 @@ def compute_curriculum_progress(
     subjects = _applicable_subjects(db, student, coach_id)
     subj_ids = [s.id for s in subjects]
     subj_name_cache = {s.id: s.name for s in subjects}
-    topics_by_subject: dict[int, list[Topic]] = {}
-    if subj_ids:
-        all_topics = (
-            db.query(Topic)
-            .filter(
-                Topic.subject_id.in_(subj_ids),
-                or_(Topic.is_builtin.is_(True), Topic.teacher_id == coach_id),
-            )
-            .order_by(Topic.order, Topic.id)
-            .all()
-        )
-        for t in all_topics:
-            topics_by_subject.setdefault(t.subject_id, []).append(t)
-
-    # Öğrencinin sınıfına kadar (kümülatif) göster — tüm müfredatı 12'ye kadar
-    # dökmek mantıksız (10. sınıf öğrencisine 11-12 konuları gösterilmez). Mezun
-    # veya sınıfı bilinmeyen → tümü.
-    max_grade = 99 if (student.is_graduate or student.grade_level is None) else student.grade_level
+    leaf_set = leaf_topics_for_student(db, student, coach_id, subj_ids)
 
     # 3) Ders bazında topic durumları
     out_subjects: list[SubjectProgress] = []
     g_total = g_started = 0
     for s in subjects:
-        all_topics = topics_by_subject.get(s.id, [])
-        if not all_topics:
-            continue
         # Tema/ünite (parent) topic'leri yalnız GRUPLAMA içindir; "konu" sayımı +
-        # durum yalnız LEAF (alt başlık) üzerinden. Düz müfredatta (LGS/Klasik)
-        # tüm topic'ler parent'sız + çocuksuz → hepsi leaf. Maarif'te leaf = alt başlık.
-        # Sınıf filtresi: yalnız grade_level <= öğrencinin sınıfı (kümülatif).
-        parent_name_by_id = {t.id: t.name for t in all_topics}
-        has_children = {t.parent_id for t in all_topics if t.parent_id is not None}
-        topics = [
-            t for t in all_topics
-            if t.id not in has_children
-            and (t.grade_level is None or t.grade_level <= max_grade)
-        ]
+        # durum yalnız LEAF (alt başlık) üzerinden; sınıf filtresi kümülatif —
+        # hepsi leaf_topics_for_student'ta (topic_board/task_picker ile ortak).
+        topics = leaf_set.by_subject.get(s.id, [])
         if not topics:
             continue
+        parent_name_by_id = leaf_set.parent_names
         tps: list[TopicProgress] = []
         started = completed_topics = no_res = 0
         last_name: str | None = None

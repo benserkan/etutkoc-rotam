@@ -256,6 +256,7 @@ from app.routes.api_v2.schemas.teacher import (
     BoardSourceItem,
     BoardSubjectItem,
     BoardSubjectOptionItem,
+    BoardUnmappedSectionItem,
     BoardTopicItem,
     PickerGroupItem,
     PickerSourceItem,
@@ -4489,6 +4490,14 @@ def teacher_topic_board_v2(
                         ],
                     )
                     for t in s.topics
+                ],
+                unmapped_sections=[
+                    BoardUnmappedSectionItem(
+                        section_id=u.section_id, label=u.label,
+                        test_count=u.test_count, book_id=u.book_id,
+                        book_name=u.book_name,
+                    )
+                    for u in s.unmapped
                 ],
             )
             for s in page.subjects

@@ -507,13 +507,16 @@ def auto_map_sections(
     if not topics:
         return 0
     by_norm = cm._topics_by_norm(topics)
+    # Öğrenilmiş sözlük (doğrulanmış katalog + koç eşleştirmeleri) + kuyruk/kapsama
+    # (2026-09-08 normalizasyon katmanı) — yalnız builtin aday listesinden döner.
+    learned = cm.learned_label_map(db, entry.subject_id)
     n = 0
     for sec in sections if sections is not None else (entry.sections or []):
         if sec.topic_id is not None:
             continue
-        t = by_norm.get(cm._label_key(sec.label))
-        if t is not None:
-            sec.topic_id = t.id
+        m = cm.resolve_label(sec.label, by_norm, learned)
+        if m is not None:
+            sec.topic_id = m.topic.id
             n += 1
     return n
 

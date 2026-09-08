@@ -854,6 +854,15 @@ export interface BoardTopicItem {
   sources: BoardSourceItem[];
 }
 
+/** Müfredata bağlı olmayan bölüm — sayıma girmez, koç eşleştirmeli (2026-09-08). */
+export interface BoardUnmappedSectionItem {
+  section_id: number;
+  label: string;
+  test_count: number;
+  book_id: number;
+  book_name: string;
+}
+
 export interface BoardSubjectItem {
   subject_id: number;
   name: string;
@@ -861,6 +870,7 @@ export interface BoardSubjectItem {
   closed_topics: number;
   coverage_pct: number;
   topics: BoardTopicItem[];
+  unmapped_sections: BoardUnmappedSectionItem[];
 }
 
 /** Ders seçici satırı — filtre uygulansa da tüm uygulanabilir dersler (2026-09-08). */

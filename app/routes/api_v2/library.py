@@ -53,6 +53,7 @@ from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.deps import get_db
+from app.services import curriculum_mapping as cm
 from app.models import (
     Book,
     BookSection,
@@ -567,6 +568,8 @@ def library_book_create_v2(
             ))
         if template.is_catalog:
             catalog_svc.bump_usage(template)
+        db.flush()
+        cm.auto_apply_sections(db, book)  # farklı derse kopyalandıysa boş kalanları dene
     db.commit()
     db.refresh(book)
     return MutationResponse[BookDetailResponse](
@@ -800,6 +803,10 @@ def library_section_create_v2(
     )
     db.add(section)
     db.flush()
+    if section.topic_id is None:
+        # Normalizasyon katmanı: etiket resmi konuyla (exact/öğrenilmiş/kuyruk)
+        # eşleşiyorsa bağ HEMEN kurulur — koç "Uygula" beklemez (2026-09-08).
+        cm.auto_apply_sections(db, book, [section])
     for sb in book.student_books or []:
         db.add(SectionProgress(
             student_book_id=sb.id,
@@ -905,6 +912,7 @@ def library_sections_bulk_labels_v2(
     max_order = max((s.order for s in book.sections or []), default=-1)
     added = 0
     skipped = 0
+    new_secs: list[BookSection] = []
     for it in items:
         label = it.label.strip()[:255]
         if label.lower() in existing_labels:
@@ -927,10 +935,16 @@ def library_sections_bulk_labels_v2(
                 reserved_count=0,
                 completed_count=0,
             ))
+        new_secs.append(sec)
         added += 1
+    # Normalizasyon katmanı: deterministik bağ hemen kurulur; kalan modalda AI/koç.
+    auto_mapped = len(cm.auto_apply_sections(db, book, new_secs)) if new_secs else 0
     db.commit()
     return MutationResponse[BulkCatalogResult](
-        data=BulkCatalogResult(added_count=added, skipped_existing_count=skipped),
+        data=BulkCatalogResult(
+            added_count=added, skipped_existing_count=skipped,
+            auto_mapped_count=auto_mapped,
+        ),
         invalidate=_invalidate_book(user.id, book.id),
     )
 
@@ -1219,6 +1233,8 @@ def library_ai_suggest_v2(
                 completed_count=0,
             ))
         new_sections.append(new_sec)
+    if new_sections:
+        cm.auto_apply_sections(db, book, new_sections)  # deterministik müfredat bağı
 
     # Draft template
     tpl = BookTemplate(
@@ -1756,6 +1772,7 @@ def library_apply_template_v2(
                 completed_count=0,
             ))
         added += 1
+    cm.auto_apply_sections(db, book)  # deterministik müfredat bağı (yalnız boş olanlar)
     db.commit()
     return MutationResponse[ApplyTemplateResult](
         data=ApplyTemplateResult(added_count=added, overwrote=bool(body.overwrite)),

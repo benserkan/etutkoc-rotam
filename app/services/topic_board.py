@@ -44,7 +44,10 @@ from app.models import (
     User,
 )
 from app.services import topic_closure
-from app.services.curriculum_progress import _applicable_subjects
+from app.services.curriculum_progress import (
+    _applicable_subjects,
+    leaf_topics_for_student,
+)
 from app.services.exam_parent_summary import _wilson_lower
 
 # Kapatmaya hazır demek için gereken en az kanıt.
@@ -62,6 +65,7 @@ class BoardSource:
     total: int
     remaining: int
     full: bool
+    completed: int = 0
 
 
 @dataclass
@@ -88,6 +92,22 @@ class BoardTopic:
 
 
 @dataclass
+class BoardUnmapped:
+    """Müfredata BAĞLI OLMAYAN bölüm (topic_id NULL) — sayımlara girmez.
+
+    KOÇ (2026-09-08): iki kaynaktan birinin 'Bölme ve Bölünebilme Kuralları'
+    bölümü konuya bağlanmadığı için panel yalnız öteki kaynağın testini
+    sayıyordu ve bunu GÖSTERMİYORDU. Artık ders başına listelenir + kitap
+    sayfasındaki eşleştirme modalına link verilir.
+    """
+    section_id: int
+    label: str
+    test_count: int
+    book_id: int
+    book_name: str
+
+
+@dataclass
 class BoardSubject:
     subject_id: int
     name: str
@@ -95,6 +115,7 @@ class BoardSubject:
     closed_topics: int
     coverage_pct: int
     topics: list[BoardTopic]
+    unmapped: list[BoardUnmapped] = field(default_factory=list)
 
 
 @dataclass
@@ -249,6 +270,7 @@ def build_topic_board(
                 book_id=r.book_id, book_name=r.book_name, section_id=r.id,
                 section_label=r.label, total=total, remaining=rem,
                 full=(total > 0 and rem <= 0),
+                completed=int(r.completed or 0),
             )
         )
     source_subject_ids: set[int] = set()
@@ -279,18 +301,36 @@ def build_topic_board(
         return TopicBoardPage(subjects=[], options=options)
     subj_ids = [s.id for s in subjects]
 
-    topics = (
-        db.query(Topic)
-        .filter(
-            Topic.subject_id.in_(subj_ids),
-            or_(Topic.is_builtin.is_(True), Topic.teacher_id == coach_id),
+    # Konu kümesi TEK MERKEZDEN (müfredat sekmesi + görev kutusuyla aynı:
+    # builtin/koç + LEAF + sınıf filtresi) — iki yüzey çelişmesin.
+    leaf_set = leaf_topics_for_student(db, student, coach_id, subj_ids)
+    parent_names = leaf_set.parent_names
+    leaves = [t for sid in subj_ids for t in leaf_set.by_subject.get(sid, [])]
+
+    # Müfredata bağlı olmayan bölümler (ders bazında) — sayıma girmez, GÖSTERİLİR.
+    unmapped_rows = (
+        db.query(
+            BookSection.id, BookSection.label, BookSection.test_count,
+            Book.id, Book.name, Book.subject_id,
         )
-        .order_by(Topic.subject_id, Topic.order, Topic.id)
+        .select_from(StudentBook)
+        .join(Book, Book.id == StudentBook.book_id)
+        .join(BookSection, BookSection.book_id == Book.id)
+        .filter(
+            StudentBook.student_id == student.id,
+            StudentBook.archived_at.is_(None),
+            BookSection.topic_id.is_(None),
+            Book.subject_id.in_(subj_ids),
+        )
+        .order_by(Book.name, BookSection.order, BookSection.id)
         .all()
     )
-    parent_ids = {t.parent_id for t in topics if t.parent_id}
-    parent_names = {t.id: t.name for t in topics if t.id in parent_ids}
-    leaves = [t for t in topics if t.id not in parent_ids]
+    unmapped_by_subject: dict[int, list[BoardUnmapped]] = {}
+    for sec_id, label, tc, bid, bname, bsid in unmapped_rows:
+        unmapped_by_subject.setdefault(int(bsid), []).append(BoardUnmapped(
+            section_id=sec_id, label=label, test_count=int(tc or 0),
+            book_id=bid, book_name=bname,
+        ))
 
     # --- performans (kitaplı + kaynaksız kalemler birlikte)
     from app.services.topic_performance import compute_topic_performance
@@ -365,6 +405,14 @@ def build_topic_board(
             if is_closed:
                 status = "kapali"
                 closed_n += 1
+            elif (
+                secs
+                and sum(x.completed for x in secs) >= sum(x.total for x in secs) > 0
+            ):
+                # Sekmeyle AYNI kural (curriculum_progress._status:
+                # completed >= test_total → tamamlandi). Koç kararı değil,
+                # kaynağın sayacı; kapatma ayrı (P2).
+                status = "tamamlandi"
             elif tests > 0 or sl > 0:
                 status = "devam"
             elif secs:
@@ -398,5 +446,6 @@ def build_topic_board(
             closed_topics=closed_n,
             coverage_pct=round(100 * touched / len(rows)) if rows else 0,
             topics=rows,
+            unmapped=unmapped_by_subject.get(s.id, []),
         ))
     return TopicBoardPage(subjects=out, options=options)

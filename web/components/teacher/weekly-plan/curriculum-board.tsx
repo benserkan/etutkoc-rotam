@@ -16,6 +16,7 @@
  */
 
 import * as React from "react";
+import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   Check,
@@ -34,6 +35,7 @@ import {
   useReopenTopic,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
+  BoardSubjectItem,
   BoardTopicItem,
   TopicBoardResponse,
 } from "@/lib/types/teacher";
@@ -42,6 +44,7 @@ import { PinnableSection } from "./pinnable-section";
 
 const DOT: Record<string, string> = {
   kapali: "bg-emerald-500",
+  tamamlandi: "bg-emerald-300 ring-1 ring-emerald-500",
   devam: "bg-cyan-500",
   planlandi: "bg-amber-400",
   baslanmadi: "bg-slate-300 dark:bg-slate-600",
@@ -50,6 +53,13 @@ const DOT: Record<string, string> = {
 
 function metricLine(t: BoardTopicItem): string {
   if (t.closed) return "kapatıldı";
+  if (t.status === "tamamlandi") {
+    const acc =
+      t.accuracy_pct === null || t.accuracy_pct === undefined
+        ? ""
+        : ` · %${t.accuracy_pct}`;
+    return `kaynak bitti${acc}`;
+  }
   const solved = t.tests_solved + t.sourceless_completed;
   if (solved <= 0) return t.remaining > 0 ? `${t.remaining} test hazır` : "—";
   const acc =
@@ -336,8 +346,59 @@ export function CurriculumBoard({
               })}
             </ul>
           )}
+
+          {/* Müfredata BAĞLI OLMAYAN bölümler: sayıma girmez, GÖSTERİLİR.
+              Koç (2026-09-08): ikinci kaynağın "Bölme ve Bölünebilme Kuralları"
+              bölümü bağlı olmadığı için panel yalnız birinci kaynağı sayıyordu
+              ve bunu söylemiyordu. */}
+          {active && (active.unmapped_sections?.length ?? 0) > 0 ? (
+            <UnmappedNote items={active.unmapped_sections} />
+          ) : null}
         </div>
       )}
     </PinnableSection>
+  );
+}
+
+function UnmappedNote({ items }: { items: BoardSubjectItem["unmapped_sections"] }) {
+  const byBook = new Map<number, { name: string; labels: string[]; tests: number }>();
+  for (const u of items) {
+    const b = byBook.get(u.book_id) ?? { name: u.book_name, labels: [], tests: 0 };
+    b.labels.push(u.label);
+    b.tests += u.test_count;
+    byBook.set(u.book_id, b);
+  }
+  const total = items.reduce((s, u) => s + u.test_count, 0);
+  return (
+    <div
+      className="mt-2 rounded-md border border-amber-200 bg-amber-50/60 px-2 py-1.5 text-[11px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+      data-unmapped-note
+    >
+      <p className="flex items-start gap-1 font-medium">
+        <TriangleAlert className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+        <span>
+          {items.length} bölüm müfredata bağlı değil — {total} test yukarıdaki
+          konu sayımlarına GİRMİYOR.
+        </span>
+      </p>
+      <ul className="mt-1 space-y-0.5">
+        {[...byBook.entries()].map(([bookId, b]) => (
+          <li key={bookId} className="flex items-baseline gap-1">
+            <span className="min-w-0 flex-1 truncate">
+              <span className="font-medium">{b.name}</span>
+              {": "}
+              {b.labels.slice(0, 3).join(" · ")}
+              {b.labels.length > 3 ? ` +${b.labels.length - 3}` : ""}
+            </span>
+            <Link
+              href={`/teacher/library/books/${bookId}?map=1`}
+              className="shrink-0 font-semibold underline underline-offset-2 hover:text-amber-950 dark:hover:text-amber-100"
+            >
+              Eşleştir
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
