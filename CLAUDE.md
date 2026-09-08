@@ -6,6 +6,41 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## ÖĞRENCİ DETAY BAŞLIĞI v2 — kimlik + 2 eylem + "İşlemler" menüsü + gruplu sekmeler + Gelişim sekmesi — CANLI (2026-09-08, migration YOK)
+
+**Tetikleyici (koç, ekran görüntüsü):** `/teacher/students/113` başlığı "sıkışık
+ve amatörce": dokuz farklı renkli düğme (Profili Düzenle · WA Gönder · Yenile ·
+Yaz molası · Yeni Yıl · Hedefler · Tekrar · DNA · Odak · Haftalık Program) yan
+yana, kimlik sütunu daralınca ad kırpılıyor ("Emir A…") ve rozetler alt alta
+diziliyor; altta on düz sekme taşıyor.
+- **Başlık:** kart içinde tam genişlik kimlik bloğu — baş harf **avatarı**
+  (durum rengiyle halka) · ad **KIRPILMAZ** (`break-words`) · durum artık
+  **yazıyla** rozet ("Kritik uyarı / Dikkat gerekiyor / Yolunda", tıkla →
+  Genel'deki Durum Özeti; eski yalnız renkli nokta okunmuyordu) · rozetler tek
+  satır. Sağda YALNIZ iki birincil eylem: **Haftalık Program** (dolu) +
+  **WhatsApp**; gerisi **"İşlemler ▾"** menüsünde gruplu (Öğrenci: Profili
+  düzenle · Yeni yıl/Sınıf yükselt · Yaz molası/Takibe devam — Veri: Yenile),
+  her maddede bir satırlık açıklama. Dar ekranda eylemler alta iner.
+- **YENİ `components/ui/dropdown-menu.tsx`** (Radix DropdownMenu, shadcn
+  deseni) — elle yazılan menülerin "mousedown'da kapanınca click tetiklenmez"
+  tuzağına (2026-09-03 sağ tık menüsü) girmemek için.
+- **Sekmeler GRUPLU + simgeli:** Genel · **Program** (Müfredat, Kitaplar) ·
+  **Akademik** (Analitik, Konu Performansı, Denemeler, Yanlışlar) · **Koçluk**
+  (Seanslar, Anketler, **Gelişim**) · **Aile** (Veliler). Küçük büyük-harf
+  grup başlıkları, gruplar arası ayraç. Sığmazsa **kaydırma değil sarma**
+  (1280px'te "Veliler" gizli kalıyordu → ikinci satır).
+- **YENİ "Gelişim" sekmesi** (`student-dev-hub.tsx`, hash `#dev`): başlıktaki
+  dört renkli düğme (Hedefler · Tekrar · DNA · Odak) buraya kart olarak taşındı
+  — her kartta ne işe yaradığı + o anki özet ölçü (aktif/başarılan hedef ·
+  vadesi gelen tekrar kartı · kronotip + tükenmişlik · odak serisi/30 gün dk)
+  + "Aç". Mobil "Gelişim" hub'ının web karşılığı; dört sorgu yalnız sekme
+  açıkken çalışır.
+- Doğrulama: tsc + eslint temiz; açık/koyu tema, menü açık, Gelişim sekmesi ve
+  820px dar ekran Playwright ekran görüntüleriyle incelendi. Header düğmelerine
+  tıklayan canlı test yok (grep). Mobil BİLİNÇLİ yok.
+
+---
+
 ## KAYNAK-KONU NORMALİZASYONU (kitap bölümü ↔ resmi konu bağı) — CANLI (2026-09-08, commit `c8f6825` + `bde5bee`, migration YOK)
 
 **Tetikleyici (koç):** "TYT Matematik'te iki kaynak var (Orijinal, 3D); birinde

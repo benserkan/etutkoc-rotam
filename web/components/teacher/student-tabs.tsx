@@ -7,18 +7,29 @@ import {
   Activity,
   AlertTriangle,
   ArrowUpCircle,
-  Brain,
+  BarChart3,
+  BookX,
   CalendarRange,
   CheckCircle2,
-  Dna,
+  ChevronDown,
+  ClipboardList,
+  GraduationCap,
+  HeartHandshake,
+  LayoutDashboard,
+  Library,
+  ListChecks,
   Loader2,
+  type LucideIcon,
   MessageSquare,
+  MoreHorizontal,
   PauseCircle,
   Pencil,
+  Percent,
   PlayCircle,
   RefreshCw,
+  Sparkles,
   Target,
-  Timer,
+  Video,
 } from "lucide-react";
 
 import { teacherKeys } from "@/lib/api/teacher";
@@ -62,6 +73,15 @@ import { StudentParentsPanel } from "@/components/teacher/student-parents-panel"
 import { WaSendDialog } from "@/components/messaging/wa-send-dialog";
 import { TopicPerformancePanel } from "@/components/shared/topic-performance-panel";
 import { CurriculumPanel } from "@/components/teacher/curriculum-panel";
+import { StudentDevHub } from "@/components/teacher/student-dev-hub";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type TabKey =
   | "summary"
@@ -73,19 +93,45 @@ type TabKey =
   | "sessions"
   | "surveys"
   | "books"
-  | "parents";
+  | "parents"
+  | "dev";
 
-const TABS: Array<{ key: TabKey; label: string }> = [
-  { key: "summary", label: "Genel" },
-  { key: "analytics", label: "Analitik" },
-  { key: "curriculum", label: "Müfredat" },
-  { key: "topics", label: "Konu Performansı" },
-  { key: "exams", label: "Denemeler" },
-  { key: "wrongs", label: "Yanlışlar" },
-  { key: "sessions", label: "Seanslar" },
-  { key: "surveys", label: "Anketler" },
-  { key: "books", label: "Kitaplar" },
-  { key: "parents", label: "Veliler" },
+/**
+ * Sekmeler GRUPLU (2026-09-08): koç "üst menü ve alt kısım sıkışık, amatörce"
+ * dedi — on düz sekme yerine beş küçük kategori (Genel · Program · Akademik ·
+ * Koçluk · Aile), her sekmede simge. "Gelişim" YENİ: başlıktaki dört renkli
+ * düğme (Hedefler/Tekrar/DNA/Odak) buraya, kart + özet ölçü olarak taşındı.
+ */
+const TAB_GROUPS: Array<{
+  label: string | null;
+  tabs: Array<{ key: TabKey; label: string; icon: LucideIcon }>;
+}> = [
+  { label: null, tabs: [{ key: "summary", label: "Genel", icon: LayoutDashboard }] },
+  {
+    label: "Program",
+    tabs: [
+      { key: "curriculum", label: "Müfredat", icon: ListChecks },
+      { key: "books", label: "Kitaplar", icon: Library },
+    ],
+  },
+  {
+    label: "Akademik",
+    tabs: [
+      { key: "analytics", label: "Analitik", icon: BarChart3 },
+      { key: "topics", label: "Konu Performansı", icon: Percent },
+      { key: "exams", label: "Denemeler", icon: GraduationCap },
+      { key: "wrongs", label: "Yanlışlar", icon: BookX },
+    ],
+  },
+  {
+    label: "Koçluk",
+    tabs: [
+      { key: "sessions", label: "Seanslar", icon: Video },
+      { key: "surveys", label: "Anketler", icon: ClipboardList },
+      { key: "dev", label: "Gelişim", icon: Sparkles },
+    ],
+  },
+  { label: "Aile", tabs: [{ key: "parents", label: "Veliler", icon: HeartHandshake }] },
 ];
 
 function isValidTab(v: string): v is TabKey {
@@ -99,7 +145,8 @@ function isValidTab(v: string): v is TabKey {
     v === "sessions" ||
     v === "surveys" ||
     v === "books" ||
-    v === "parents"
+    v === "parents" ||
+    v === "dev"
   );
 }
 
@@ -150,27 +197,41 @@ export function StudentTabs({ studentId, initial }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* === Header === */}
-      <header className="space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              <Link href="/teacher/students" className="hover:underline">
-                ← Öğrenciler
-              </Link>
-              {" · "}
-              {s.is_active ? "Aktif" : "Pasif"}
-            </p>
-            <h1 className="text-2xl font-semibold tracking-tight font-display flex items-center gap-3 mt-1">
-              <span className="truncate">{s.full_name}</span>
-              <WorstWarningDot level={data.worst_warning_level} />
-              {s.is_paused ? (
-                <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800">
-                  <PauseCircle className="size-3.5" aria-hidden /> Yaz molasında
-                </span>
-              ) : null}
-            </h1>
-            <BadgeRow profile={s} activePhase={data.active_phase ?? null} />
+      {/* === Header (v2, 2026-09-08) ===
+          Koç: "üst menü sıkışık, amatörce". Eski: dokuz farklı renkli düğme +
+          dar kimlik sütununda alt alta rozetler + kırpılmış ad ("Emir A…").
+          Yeni: kimlik bloğu tam genişlik (baş harf avatarı · ad KIRPILMAZ ·
+          durum yazıyla · tek satır rozetler) — sağda yalnız iki birincil
+          eylem (Haftalık Program, WhatsApp) + "İşlemler" menüsü. Gelişim
+          araçları "Gelişim" sekmesine taşındı. */}
+      <header className="rounded-xl border border-border bg-card px-4 py-3 sm:px-5" data-student-header>
+        <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+          <Link href="/teacher/students" className="hover:underline">
+            ← Öğrenciler
+          </Link>
+          {" · "}
+          {s.is_active ? "Aktif" : "Pasif"}
+        </p>
+        <div className="mt-1.5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+            <Avatar name={s.full_name} level={data.worst_warning_level} />
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                <h1 className="break-words font-display text-2xl font-semibold leading-tight tracking-tight">
+                  {s.full_name}
+                </h1>
+                <StatusPill
+                  level={data.worst_warning_level}
+                  onClick={() => selectTab("summary")}
+                />
+                {s.is_paused ? (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                    <PauseCircle className="size-3.5" aria-hidden /> Yaz molasında
+                  </span>
+                ) : null}
+              </div>
+              <BadgeRow profile={s} activePhase={data.active_phase ?? null} />
+            </div>
           </div>
 
           <QuickActions
@@ -185,35 +246,60 @@ export function StudentTabs({ studentId, initial }: Props) {
         </div>
       </header>
 
-      {/* === Tab şeridi === */}
+      {/* === Tab şeridi — gruplu (Genel · Program · Akademik · Koçluk · Aile) === */}
       <div
         role="tablist"
         aria-label="Öğrenci paneli sekmeleri"
-        className="flex items-center gap-1 border-b border-border overflow-x-auto"
+        className="flex flex-wrap items-end gap-x-1 gap-y-1.5 border-b border-border"
+        data-tab-groups
       >
-        {TABS.map((t) => {
-          const isActive = active === t.key;
-          return (
-            <button
-              key={t.key}
-              type="button"
-              role="tab"
-              aria-selected={isActive}
-              aria-controls={`tab-panel-${t.key}`}
-              id={`tab-${t.key}`}
-              onClick={() => selectTab(t.key)}
-              className={cn(
-                "px-3 py-2 -mb-px text-sm border-b-2 transition-colors whitespace-nowrap",
-                isActive
-                  ? "border-foreground font-medium"
-                  : "border-transparent text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t.label}
-            </button>
-          );
-        })}
+        {TAB_GROUPS.map((g, gi) => (
+          <div
+            key={gi}
+            className={cn(
+              "flex shrink-0 flex-col",
+              gi > 0 && "ml-1.5 border-l border-border pl-1.5",
+            )}
+            data-tab-group={g.label ?? "genel"}
+          >
+            <span className="px-2 text-[9.5px] font-semibold uppercase leading-none tracking-wider text-muted-foreground/70">
+              {g.label ?? "\u00a0"}
+            </span>
+            <div className="-mb-px flex items-center gap-0.5">
+              {g.tabs.map((t) => {
+                const isActive = active === t.key;
+                const Icon = t.icon;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="tab"
+                    aria-selected={isActive}
+                    aria-controls={`tab-panel-${t.key}`}
+                    id={`tab-${t.key}`}
+                    onClick={() => selectTab(t.key)}
+                    className={cn(
+                      "flex items-center gap-1.5 whitespace-nowrap border-b-2 px-2 py-1.5 text-[13px] transition-colors",
+                      isActive
+                        ? "border-foreground font-medium text-foreground"
+                        : "border-transparent text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    <Icon className="size-3.5 shrink-0" aria-hidden />
+                    {t.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </div>
+
+      {active === "dev" ? (
+        <div role="tabpanel" id="tab-panel-dev" aria-labelledby="tab-dev">
+          <StudentDevHub studentId={studentId} />
+        </div>
+      ) : null}
 
       {active === "summary" ? (
         <div
@@ -360,25 +446,62 @@ export function StudentTabs({ studentId, initial }: Props) {
 // Header parçaları
 // =============================================================================
 
-function WorstWarningDot({ level }: { level: "green" | "amber" | "red" }) {
-  const cls =
-    level === "red"
-      ? "bg-rose-500"
-      : level === "amber"
-        ? "bg-amber-500"
-        : "bg-emerald-500";
-  const title =
-    level === "red"
-      ? "Kritik uyarı var"
-      : level === "amber"
-        ? "Dikkat gereken durumlar var"
-        : "Yolunda";
+type WarnLevel = "green" | "amber" | "red";
+
+const LEVEL_TEXT: Record<WarnLevel, string> = {
+  red: "Kritik uyarı",
+  amber: "Dikkat gerekiyor",
+  green: "Yolunda",
+};
+
+/** Durum: renkli nokta + YAZI (eski: yalnız nokta — "turuncu nokta ne?"). Tıkla → Genel'deki Durum Özeti. */
+function StatusPill({ level, onClick }: { level: WarnLevel; onClick: () => void }) {
+  const cls: Record<WarnLevel, string> = {
+    red: "border-rose-300 bg-rose-50 text-rose-800 dark:border-rose-500/40 dark:bg-rose-500/10 dark:text-rose-200",
+    amber: "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200",
+    green: "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-200",
+  };
+  const dot: Record<WarnLevel, string> = {
+    red: "bg-rose-500",
+    amber: "bg-amber-500",
+    green: "bg-emerald-500",
+  };
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-xs font-medium transition hover:brightness-95",
+        cls[level],
+      )}
+      title="Durum özetine git"
+      data-status-pill={level}
+    >
+      <span className={cn("size-2 rounded-full", dot[level])} aria-hidden />
+      {LEVEL_TEXT[level]}
+    </button>
+  );
+}
+
+/** Baş harf avatarı — durum rengiyle halka (ad kırpılmaz, avatar tanınırlık verir). */
+function Avatar({ name, level }: { name: string; level: WarnLevel }) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials = (parts[0]?.[0] ?? "") + (parts.length > 1 ? parts[parts.length - 1][0] ?? "" : "");
+  const ring: Record<WarnLevel, string> = {
+    red: "ring-rose-400",
+    amber: "ring-amber-400",
+    green: "ring-emerald-400",
+  };
   return (
     <span
-      className={cn("inline-block size-3 rounded-full flex-shrink-0", cls)}
-      title={title}
-      aria-label={title}
-    />
+      className={cn(
+        "flex size-12 shrink-0 select-none items-center justify-center rounded-full bg-muted text-base font-semibold text-foreground ring-2 ring-offset-2 ring-offset-card",
+        ring[level],
+      )}
+      aria-hidden
+    >
+      {initials.toLocaleUpperCase("tr")}
+    </span>
   );
 }
 
@@ -549,31 +672,87 @@ function QuickActions({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex shrink-0 flex-wrap items-center gap-2" data-quick-actions>
+      <Link
+        href={`/teacher/students/${studentId}/week`}
+        className="inline-flex items-center gap-1.5 rounded-md bg-foreground px-3 py-2 text-sm font-medium text-background transition hover:bg-foreground/90"
+      >
+        <CalendarRange className="size-4" aria-hidden />
+        Haftalık Program
+      </Link>
       <button
         type="button"
-        onClick={() => setEditOpen(true)}
-        title="Öğrenci ad, e-posta, sınıf ve alan bilgisini düzenle"
-        className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2.5 py-1.5 text-xs hover:bg-muted transition"
+        onClick={() => setWaOpen(true)}
+        title="Öğrenciye WhatsApp gönder"
+        className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-sm text-emerald-800 transition hover:bg-emerald-100 dark:border-emerald-500/30 dark:bg-emerald-500/10 dark:text-emerald-200 dark:hover:bg-emerald-500/20"
       >
-        <Pencil className="size-3.5" aria-hidden />
-        Profili Düzenle
+        <MessageSquare className="size-4" aria-hidden />
+        WhatsApp
       </button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button
+            type="button"
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-3 py-2 text-sm transition hover:bg-muted data-[state=open]:bg-muted"
+            data-actions-menu
+          >
+            <MoreHorizontal className="size-4" aria-hidden />
+            İşlemler
+            <ChevronDown className="size-3.5 text-muted-foreground" aria-hidden />
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-64">
+          <DropdownMenuLabel>Öğrenci</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+            <Pencil aria-hidden />
+            <span className="flex flex-col">
+              <span>Profili düzenle</span>
+              <span className="text-[11px] text-muted-foreground">ad · e-posta · sınıf · alan</span>
+            </span>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={`/teacher/students/${studentId}/promote`}>
+              <ArrowUpCircle aria-hidden />
+              <span className="flex flex-col">
+                <span>{isGraduate ? "Yeni yıl" : "Sınıf yükselt"}</span>
+                <span className="text-[11px] text-muted-foreground">
+                  {isGraduate
+                    ? "akademik yıl, alan ve çalışma şekli"
+                    : "yıl başında bir sonraki sınıfa taşı"}
+                </span>
+              </span>
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem onSelect={togglePause} disabled={busy}>
+            {isPaused ? <PlayCircle aria-hidden /> : <PauseCircle aria-hidden />}
+            <span className="flex flex-col">
+              <span>{isPaused ? "Takibe devam" : "Yaz molası"}</span>
+              <span className="text-[11px] text-muted-foreground">
+                {isPaused
+                  ? "mola modunu kapat, koçluk takibi sürsün"
+                  : "takibi duraklat, ölü rezervi serbest bırak"}
+              </span>
+            </span>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel>Veri</DropdownMenuLabel>
+          <DropdownMenuItem onSelect={onRefresh} disabled={isRefreshing}>
+            {isRefreshing ? (
+              <Loader2 className="animate-spin" aria-hidden />
+            ) : (
+              <RefreshCw aria-hidden />
+            )}
+            Yenile
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+
       <EditStudentProfileDialog
         open={editOpen}
         onClose={() => setEditOpen(false)}
         studentId={studentId}
         profile={profile}
       />
-      <button
-        type="button"
-        onClick={() => setWaOpen(true)}
-        title="Öğrenciye WhatsApp gönder"
-        className="inline-flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 text-emerald-800 px-2.5 py-1.5 text-xs hover:bg-emerald-100 transition"
-      >
-        <MessageSquare className="size-3.5" aria-hidden />
-        WA Gönder
-      </button>
       <WaSendDialog
         open={waOpen}
         onOpenChange={setWaOpen}
@@ -582,127 +761,7 @@ function QuickActions({
         title={`${studentName} (Öğrenci) — WhatsApp Mesajı`}
         defaultCategory="ogrenci"
       />
-      <button
-        type="button"
-        onClick={onRefresh}
-        disabled={isRefreshing}
-        title="Veriyi yeniden çek"
-        className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1.5 text-xs hover:bg-muted disabled:opacity-50 transition"
-      >
-        {isRefreshing ? (
-          <Loader2 className="size-3.5 animate-spin" aria-hidden />
-        ) : (
-          <RefreshCw className="size-3.5" aria-hidden />
-        )}
-        Yenile
-      </button>
-      <button
-        type="button"
-        onClick={togglePause}
-        disabled={busy}
-        title={
-          isPaused
-            ? "Mola modunu kapat — koçluk takibine devam et"
-            : "Yaz molası — takibi duraklat + ölü rezervi serbest bırak"
-        }
-        className={cn(
-          "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition disabled:opacity-50",
-          isPaused
-            ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-            : "border-amber-300 text-amber-800 hover:bg-amber-50",
-        )}
-      >
-        {busy ? (
-          <Loader2 className="size-3.5 animate-spin" aria-hidden />
-        ) : isPaused ? (
-          <PlayCircle className="size-3.5" aria-hidden />
-        ) : (
-          <PauseCircle className="size-3.5" aria-hidden />
-        )}
-        {isPaused ? "Takibe devam" : "Yaz molası"}
-      </button>
-      <ActionLink
-        href={`/teacher/students/${studentId}/promote`}
-        icon={<ArrowUpCircle className="size-3.5" aria-hidden />}
-        label={isGraduate ? "Yeni Yıl" : "Sınıf Yükselt"}
-        title={
-          isGraduate
-            ? "Yeni öğretim yılı için akademik yıl, alan ve çalışma şeklini güncelle"
-            : "Akademik yıl başında öğrenciyi bir sonraki sınıfa taşı"
-        }
-        tone="violet"
-      />
-      <ActionLink
-        href={`/teacher/students/${studentId}/goals`}
-        icon={<Target className="size-3.5" aria-hidden />}
-        label="Hedefler"
-        title="Sınav, ders ve operasyonel hedef ağacını yönet"
-        tone="amber"
-      />
-      <ActionLink
-        href={`/teacher/students/${studentId}/review`}
-        icon={<Brain className="size-3.5" aria-hidden />}
-        label="Tekrar"
-        title="Aralıklı tekrar (FSRS) kartlarını yönet"
-        tone="emerald"
-      />
-      <ActionLink
-        href={`/teacher/students/${studentId}/dna`}
-        icon={<Dna className="size-3.5" aria-hidden />}
-        label="DNA"
-        title="Çalışma DNA profili + tükenmişlik analizi"
-        tone="sky"
-      />
-      <ActionLink
-        href={`/teacher/students/${studentId}/focus`}
-        icon={<Timer className="size-3.5" aria-hidden />}
-        label="Odak"
-        title="Pomodoro istatistikleri + rozetler"
-        tone="rose"
-      />
-      <Link
-        href={`/teacher/students/${studentId}/week`}
-        className="inline-flex items-center gap-1.5 rounded-md bg-foreground text-background px-3 py-1.5 text-xs font-medium hover:bg-foreground/90 transition"
-      >
-        <CalendarRange className="size-3.5" aria-hidden />
-        Haftalık Program
-      </Link>
     </div>
-  );
-}
-
-function ActionLink({
-  href,
-  icon,
-  label,
-  title,
-  tone,
-}: {
-  href: string;
-  icon: React.ReactNode;
-  label: string;
-  title: string;
-  tone: "violet" | "amber" | "emerald" | "sky" | "rose";
-}) {
-  const toneClass: Record<typeof tone, string> = {
-    violet: "border-violet-200 text-violet-700 hover:bg-violet-50",
-    amber: "border-amber-200 text-amber-800 hover:bg-amber-50",
-    emerald: "border-emerald-200 text-emerald-700 hover:bg-emerald-50",
-    sky: "border-sky-200 text-sky-700 hover:bg-sky-50",
-    rose: "border-rose-200 text-rose-700 hover:bg-rose-50",
-  };
-  return (
-    <Link
-      href={href}
-      title={title}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1.5 text-xs transition",
-        toneClass[tone],
-      )}
-    >
-      {icon}
-      {label}
-    </Link>
   );
 }
 
