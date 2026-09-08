@@ -20,6 +20,8 @@ import Link from "next/link";
 import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import {
   Check,
+  ChevronDown,
+  ChevronRight,
   ListChecks,
   Loader2,
   RotateCcw,
@@ -167,6 +169,14 @@ export function CurriculumBoard({
             </select>
           ) : null}
 
+          {/* Müfredata BAĞLI OLMAYAN bölümler: sayıma girmez, GÖSTERİLİR — listenin
+              ÜSTÜNDE ki koç aşağıdaki sayıların eksik olduğunu önce görsün. Koç
+              (2026-09-08): ikinci kaynağın "Bölme ve Bölünebilme Kuralları"
+              bölümü bağlı olmadığı için panel yalnız birinci kaynağı sayıyordu. */}
+          {active && (active.unmapped_sections?.length ?? 0) > 0 ? (
+            <UnmappedNote items={active.unmapped_sections} />
+          ) : null}
+
           {boardQ.isLoading ? (
             <p className="py-3 text-center text-xs text-muted-foreground">
               <Loader2 className="mr-1 inline h-3 w-3 animate-spin" />
@@ -188,18 +198,19 @@ export function CurriculumBoard({
                       onClick={() =>
                         setExpanded(isOpen ? null : t.topic_id)
                       }
-                      className="flex w-full items-center gap-2 rounded px-1.5 py-1.5 text-left hover:bg-muted/50"
+                      className="flex w-full items-start gap-2 rounded px-1.5 py-1.5 text-left hover:bg-muted/50"
                     >
                       <span
                         className={cn(
-                          "h-1.5 w-1.5 shrink-0 rounded-full",
+                          "mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full",
                           DOT[t.status] ?? DOT.baslanmadi,
                         )}
                         aria-hidden
                       />
                       <span
                         className={cn(
-                          "truncate text-[12.5px]",
+                          // KIRPMA YOK: uzun konu adı ikinci satıra sarar
+                          "min-w-0 flex-1 whitespace-normal break-words text-[12.5px] leading-snug",
                           t.closed
                             ? "text-muted-foreground line-through"
                             : "text-foreground",
@@ -213,7 +224,7 @@ export function CurriculumBoard({
                       {t.readiness === "ready" ? (
                         <Check className="h-3 w-3 shrink-0 text-emerald-600 dark:text-emerald-400" />
                       ) : null}
-                      <span className="ml-auto whitespace-nowrap text-[10.5px] tabular-nums text-muted-foreground">
+                      <span className="ml-auto shrink-0 whitespace-nowrap pt-px text-[10.5px] tabular-nums text-muted-foreground">
                         {metricLine(t)}
                       </span>
                     </button>
@@ -346,14 +357,6 @@ export function CurriculumBoard({
               })}
             </ul>
           )}
-
-          {/* Müfredata BAĞLI OLMAYAN bölümler: sayıma girmez, GÖSTERİLİR.
-              Koç (2026-09-08): ikinci kaynağın "Bölme ve Bölünebilme Kuralları"
-              bölümü bağlı olmadığı için panel yalnız birinci kaynağı sayıyordu
-              ve bunu söylemiyordu. */}
-          {active && (active.unmapped_sections?.length ?? 0) > 0 ? (
-            <UnmappedNote items={active.unmapped_sections} />
-          ) : null}
         </div>
       )}
     </PinnableSection>
@@ -361,6 +364,12 @@ export function CurriculumBoard({
 }
 
 function UnmappedNote({ items }: { items: BoardSubjectItem["unmapped_sections"] }) {
+  // KOÇ (ekran görüntüsü, 2026-09-08): dar panelde "345 TYT Matematik Soru
+  // Bankası: Ta…" — kırpılmış metin bilgi vermiyor, sinir bozuyor. KURAL: bu
+  // panelde metin KIRPILMAZ; sığmıyorsa satır kaydırılır ya da açılır ayrıntıya
+  // alınır. Varsayılan tek satır (sayı + test), açınca kitap başına tam ad +
+  // bölüm adları alt alta.
+  const [open, setOpen] = React.useState(false);
   const byBook = new Map<number, { name: string; labels: string[]; tests: number }>();
   for (const u of items) {
     const b = byBook.get(u.book_id) ?? { name: u.book_name, labels: [], tests: 0 };
@@ -371,34 +380,53 @@ function UnmappedNote({ items }: { items: BoardSubjectItem["unmapped_sections"] 
   const total = items.reduce((s, u) => s + u.test_count, 0);
   return (
     <div
-      className="mt-2 rounded-md border border-amber-200 bg-amber-50/60 px-2 py-1.5 text-[11px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+      className="mb-2 rounded-md border border-amber-200 bg-amber-50/60 text-[11px] leading-snug text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
       data-unmapped-note
     >
-      <p className="flex items-start gap-1 font-medium">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="flex w-full items-start gap-1.5 px-2 py-1.5 text-left"
+      >
         <TriangleAlert className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
-        <span>
-          {items.length} bölüm müfredata bağlı değil — {total} test yukarıdaki
-          konu sayımlarına GİRMİYOR.
+        <span className="min-w-0 flex-1 whitespace-normal">
+          <span className="font-medium">{items.length} bölüm müfredata bağlı değil</span>
+          {" · "}
+          {total} test aşağıdaki sayımlarda yok
         </span>
-      </p>
-      <ul className="mt-1 space-y-0.5">
-        {[...byBook.entries()].map(([bookId, b]) => (
-          <li key={bookId} className="flex items-baseline gap-1">
-            <span className="min-w-0 flex-1 truncate">
-              <span className="font-medium">{b.name}</span>
-              {": "}
-              {b.labels.slice(0, 3).join(" · ")}
-              {b.labels.length > 3 ? ` +${b.labels.length - 3}` : ""}
-            </span>
-            <Link
-              href={`/teacher/library/books/${bookId}?map=1`}
-              className="shrink-0 font-semibold underline underline-offset-2 hover:text-amber-950 dark:hover:text-amber-100"
+        {open ? (
+          <ChevronDown className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+        ) : (
+          <ChevronRight className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
+        )}
+      </button>
+      {open ? (
+        <ul className="space-y-1.5 px-2 pb-2">
+          {[...byBook.entries()].map(([bookId, b]) => (
+            <li
+              key={bookId}
+              className="rounded border border-amber-200/70 bg-background/50 px-2 py-1.5 dark:border-amber-500/20"
             >
-              Eşleştir
-            </Link>
-          </li>
-        ))}
-      </ul>
+              <p className="whitespace-normal break-words font-medium">{b.name}</p>
+              <p className="mt-0.5 whitespace-normal break-words text-[10.5px] opacity-90">
+                {b.labels.join(" · ")}
+              </p>
+              <div className="mt-1 flex items-center justify-between gap-2">
+                <span className="text-[10.5px] tabular-nums">
+                  {b.labels.length} bölüm · {b.tests} test
+                </span>
+                <Link
+                  href={`/teacher/library/books/${bookId}?map=1`}
+                  className="shrink-0 font-semibold underline underline-offset-2 hover:text-amber-950 dark:hover:text-amber-100"
+                >
+                  Eşleştir →
+                </Link>
+              </div>
+            </li>
+          ))}
+        </ul>
+      ) : null}
     </div>
   );
 }

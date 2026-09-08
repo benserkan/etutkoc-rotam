@@ -304,7 +304,15 @@ def main() -> int:
 
             # ---- 9. Müfredata bağlı olmayan bölüm notu + Eşleştir linki (2026-09-08)
             note = page.query_selector('[data-section="week:curriculum"] [data-unmapped-note]')
+            if note:
+                # varsayılan tek satır (katlı) → ayrıntı için aç
+                note.query_selector("button[aria-expanded]").click()
+                page.wait_for_timeout(400)
             note_txt = note.inner_text() if note else ""
+            clipped = page.evaluate(
+                "() => [...document.querySelectorAll('[data-unmapped-note] *')].filter(e => getComputedStyle(e).textOverflow === 'ellipsis' && e.scrollWidth > e.clientWidth + 1).length"
+            )
+            check("9-. notta KIRPILMIŞ metin yok (ellipsis ile taşan öğe 0)", clipped == 0, str(clipped))
             link = page.query_selector('[data-section="week:curriculum"] [data-unmapped-note] a:has-text("Eşleştir")')
             href = link.get_attribute("href") if link else None
             check("9a. bağlı olmayan bölüm notu: '1 bölüm … 5 test … GİRMİYOR' + kitap adı",

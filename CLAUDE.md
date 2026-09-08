@@ -59,8 +59,11 @@ sekmesi ile hafta panelindeki Müfredat uyumlu mu?"
   "Asal Çarpanlara Ayırma ve Bölen Sayısı" guard → koç · "İkinci Dereceden
   Denklemler" TYT taksonomisinde yok).
 - **GÖRÜNÜRLÜK:** `topic_board` ders başına `unmapped_sections` (bölüm + kitap +
-  test) → hafta paneli Müfredat'ta amber not **"N bölüm müfredata bağlı değil —
-  M test sayıma GİRMİYOR"** + kitap başına **"Eşleştir"** → `/teacher/library/
+  test) → hafta paneli Müfredat'ta, listenin ÜSTÜNDE, amber tek satır **"N bölüm
+  müfredata bağlı değil · M test aşağıdaki sayımlarda yok"** → tıklayınca kitap
+  başına tam ad + bölüm adları (satır kaydırma, **KIRPMA YOK** — koç "…: Ta…"
+  kırpmasına sert tepki verdi, [[feedback-no-truncated-text]]; konu satırları da
+  artık sarar) + **"Eşleştir →"** → `/teacher/library/
   books/{id}?map=1` (eşleştirme modalı AÇIK gelir; `page.tsx searchParams` →
   `initialMapOpen`). Öğrenci detay sekmesi zaten "müfredat-dışı ekstra" listeler.
 - **TEK KONU KÜMESİ:** `curriculum_progress.leaf_topics_for_student` (builtin/
