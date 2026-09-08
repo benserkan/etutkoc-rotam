@@ -6,6 +6,193 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## SAĞ ŞERİT (RAIL) + RAPTİYE v2 + MÜFREDAT DERS SEÇİCİ FIX — CANLI (2026-09-08, commit `7651c28` + `0fdae92`, migration YOK)
+
+**Tetikleyici (koç, 3 ekran görüntüsü):** (1) Müfredat'ta ders değiştirince
+açılır liste kayboluyordu; (2) "sabitleme devre dışı görünüyor ama menü açık —
+mantık ters, açılışta kapalı olması gerekmez mi?"; (3) "bastığımda menü
+kapanmıyor"; (4) "sağ kısım epeyce yer kaplıyor; en sık kullanılanlar öne
+çıksın; program hazırlama kısmına alan açılsın; kullanışlılık testlerini yap."
+- **KÖK NEDENLER:** (1) `topic-board` yanıtı `subject_id` verilince YALNIZ o
+  dersi taşıyordu → panel "tek ders → seçici gizli" kuralıyla `<select>`'i
+  kaldırıyordu; ayrıca `subject_id` yokken 12. sınıfta 20+ dersin tamamı
+  hesaplanıyordu. (2+3) v1 raptiye modeli (`3a48d25`, aynı gün) iki durumu tek
+  simgeye sıkıştırmıştı: raptiye BOŞ ama "alışkanlık" (≥2 kullanım/7 gün) bölümü
+  AÇIK tutuyordu ve aynı kural elle kapatmayı da EZİYORDU (`resolveOpen`:
+  recent≥2 → true) → koç kapatamıyordu. `PinOff` ikonu da "devre dışı"
+  okunuyordu. **DERS: bir simge iki durumu taşıyamaz; simge ne diyorsa o.**
+- **MODEL v2 (`web/lib/hooks/use-section-prefs.ts`, yeniden yazıldı):**
+  · **pinned (raptiye DOLU)** → panelde SABİT, her açılışta açık; başlıktan
+    oturum içinde katlanır, yenilemede yine açık.
+  · **unpinned (raptiye BOŞ)** → açılışta KAPALI; sağ **ŞERİTTEKİ** simgesinden
+    tek tıkla **GEÇİCİ (peek)** açılır — 320px, şeridin solunda, **editörün
+    ÜSTÜNDE** (editör yer değiştirmez). Esc / dışarı tıklama / X kapatır;
+    "Sabitle" panele yerleştirir. Aynı anda tek peek. Açık Radix diyalog varken
+    dışarı tıklama yok sayılır (diyalog unmount olmasın).
+  · **Kullanım sayacı açık/kapalıya KARIŞMAZ; yalnız SIRAYI belirler** (son 7
+    gün; çok kullanılan şeritte ve panelde üstte) — sayfa yüklenişinde donar
+    (`useSectionOrder`), oturumda bölümler yer değiştirmez.
+  · **Hiç sabit yoksa sağ taraf yalnız 56px şerit → editör ~320px kazanır**
+    (ölçüldü: +330px). Varsayılan: yalnız Kaynak Durumu sabit (canlı veride en
+    çok kullanılan) — raptiye dolu = açık, tutarlı.
+  · Şerit = simge + kısa etiket ("Kaynak/Müfredat/Sıradaki/Bloklar/Devret";
+    yalnız simge okunmaz); sabit bölüm kehribar çubukla işaretli; Devret adayı
+    varsa rozetli, yoksa gizli. Dar ekran (<xl): şerit yatay satır, peek altında
+    satır içi. Sol gün fihristi aynı hook'la (sabit=geniş, değil=44px şerit).
+  · v1 kaydı (`mode:"pinned"|"auto"`) geriye uyumlu okunur; v1'de auto+açık
+    olan bölümler artık şeritte (kullanıcının istediği bu).
+- **Dosyalar:** YENİ `weekly-plan/side-sections.ts` (kayıt: id/başlık/kısa
+  etiket/ipucu/ikon/ton/varsayılan — yeni bölüm = 1 satır + week-board eşlemesi)
+  + `side-rail.tsx` (SideRail + PeekHost) · `pinnable-section.tsx` docked/peek
+  iki görünüm (peek'te "Sabitle" yazılı raptiye + X; Pin dolu/boş) ·
+  `week-board.tsx` aside = [sabit panel 320][şerit 56], peek absolute; **yalnız
+  görünen bölüm render edilir** (sabit ya da peek — kapalı bölümün sorgusu da
+  çalışmaz) · `CarryoverPanel` aynı iskelete taşındı (kendi başlığı kalktı).
+- **Backend (bug 1):** `topic_board.build_topic_board` → `TopicBoardPage(subjects,
+  options)`: `subject_options` filtreden bağımsız TÜM dersler (kaynağı olan öne);
+  `subject_id` yoksa yalnız İLK ders hesaplanır (perf). Şema+uç additive
+  (`TopicBoardResponse.subject_options`). `curriculum-board`: seçici
+  options'tan + `keepPreviousData` (ders değişince boş flaş yok).
+- **Test:** `use-section-prefs.test.mjs` **13/13** — TS kaynağı GERÇEK
+  derleyiciyle (`typescript.transpileModule`) çalıştırılır (regex tip sıyırma
+  kırılgandı): (a) raptiye boş → kapalı, (b) karar fonksiyonu kullanım sayısını
+  ALMAZ (3 parametre), sıralama. `live_section_pins.py` **33/33** (GERÇEK
+  TARAYICI, kullanışlılık ölçümleri): 4 etiketli simge + **etiket kırpılma
+  denetimi** (44/52px'te "Kayn…" kırpılıyordu → 56px) · varsayılan Kaynak
+  sabit+dolu · raptiye kaldır → peek kalır → Esc → 56px, **editör ≥300px
+  genişler** · yenilemede kalıcı · peek editörün üstünde, editör yer
+  değiştirmez · **BUG 1: ders değişince seçici KALIR + yeni konular** ·
+  Esc/dışarı/tek-peek · Sabitle → panel + kalıcı · **BUG 3: başlık 1→0→1→0
+  takılmaz** · sıralama · iç tıklama kapatmaz · dar ekran · gün fihristi.
+  Regresyon: topic_board 11 · live_curriculum_board 11 (şerit üzerinden açar) ·
+  live_day_card_redesign 10 · live_task_quick_add 14 · live_grid_context_menu 7;
+  tsc + eslint (tam) temiz. **TEST DERSİ:** dar ekranda şerit sayfanın altında →
+  tıklama kaydırınca viewport ölçüsü yanıltır; `rect()` belge koordinatı.
+- **DEV DERSLERİ:** (a) dev backend (`run_dev_patched`) reload'suz — backend
+  değişince YENİDEN başlat (ilk canlı koşuda `subject_options` gelmedi, eski
+  süreçti). (b) Claude Code arka plan görevi olarak başlatılan dev sunucuları
+  "bellek düşük" gerekçesiyle öldürüldü (18 GB boşken) → sunucuları PowerShell
+  `Start-Process cmd /c ... > log` ile AYRIK başlat.
+- Deploy: web+worker+next rebuild (Plausible-stop'lu); healthz/site 200, uç
+  anon 401. Mobil BİLİNÇLİ yok (hafta planı editörü web — PARITY).
+
+---
+
+## PROGRAM PLANLAMA P1-P5 + GÜN KARTI + BÖLÜM RAPTİYELERİ — CANLI (2026-09-07/08, 8 commit `f2650a9`→`3a48d25`, migration `w8x1a4b5a99w`)
+
+**Oturum notu (2026-09-08):** bu 8 paket önceki oturumda commit+push+deploy
+edildi (prod git `3a48d25`, web+next 00:49'da rebuild, worker P5 sonrası
+rebuild, alembic head `w8x1a4b5a99w`) ama bilgisayar kapandığı için CLAUDE.md
+o gün yazılamadı; bu bölüm commit gövdelerinden derlendi. Ayrıntı:
+`git log -8 --format=%B`.
+
+**Tetikleyici (koç):** "bir konuda 4 test girdiğimde öğrencinin testi kalmadığı
+veya önceden çözdüğü zaman program kurarken sorun oluyor" + "hangi konuya
+geçeceğiz, hangi konuları gördük, konunun çözülecek testi kaldı mı, ek görev mi
+kapatma mı" + gün kartı / sağ panel okunabilirlik ekran görüntüleri.
+
+- **P1 — kapasite ENGELDEN UYARIYA (`f2650a9`):** canlı veri: 3348 takipli
+  bölümün %14'ü dolu, 43'ünde aşım, öğrenci-konu çiftlerinin %66'sında TEK
+  kaynak → dolunca çıkış yoktu. **KURAL: kitabın test sayısı YARDIMCI, otorite
+  değil** — sayaç tutulur, kapıyı kapatmaz. `reserve_item(allow_over_capacity=
+  False)` (varsayılan False → öğrenci talebi/Jinja/öneri yolları eskisi gibi
+  korunur); 4 koç yolu bayrağı destekler; `MutationResponse.warnings` ("işlem
+  oldu ama bunu bil" kanalı, additive) → frontend `showWarnings()` + formda amber
+  uyarı, ekstra onay kutusu YOK. Izgara aşımı doğru karşılıyor (sahte sayaç
+  uyumsuzluğu doğmaz). `test_api_v2_capacity_override.py` 8/8. **Yan düzeltme:**
+  `test_itemless_solved_count.py` aylardır 0/0 patlıyordu (2026-06-06'da
+  complete_task_v2 imzasına BackgroundTasks eklenince pozisyonel argümanlar
+  kaymıştı) → keyword'e çevrildi 10/10; **run_gorev_checks artık TAM 82/82.**
+- **P2 — konu kapatma + kaynaksız (konuya bağlı) görev (`fca0d66`, migration
+  `w8x1a4b5a99w` ← v7w0z3a4z88v, additive):** `topic_closures` (student+topic
+  tekil, kim/ne zaman/not) + `task_book_items.topic_id` (kitapsız AMA konuya
+  bağlı kalem). **Kullanıcı kararı:** müfredat tamamlanmasının kaynağı kitabın
+  sayacı DEĞİL koçun kararı (görüşmede "konu bitti mi" sorup panelden kapatır).
+  Kaynaksız kalem: rezerv/kapasite ATLANIR ama müfredat + konu performansı
+  BESLENİR; `classify_gorev` topic_id'li kitapsız kalemi TEST sayar (DENEME≠TEST).
+  `_status` üç otoriteyi ayırır: koç kararı > kaynak sayacı > kaynaksız çalışma;
+  kapatılan konu pct=100 + "sıradaki" olarak önerilmez (müfredat paneli VE
+  Sıradaki Üniteler — iki yüzey birden). Enjeksiyon koruması
+  `_ensure_topic_accessible` (422). `test_api_v2_topic_closure.py` 12/12
+  (ayırt edicilik: 3 mekanizma tek tek kapatılınca 7/11).
+- **P3 — görev miktarı koçun alışkanlığından (`20e2b85` + `02f86b4`, migration
+  YOK):** "koç genelde 3 test 2 test verir; ders bazında öğrenmeli." İki katman:
+  o öğrencide ≥5 örnek varsa öğrenci tipiği, yoksa koçun ders geneli
+  (**MIN_COACH_SAMPLES=5** — düzeltme: 4 kalemlik tek atama "alışkanlık"
+  sanılıyordu, prod'da "TYT Mat → 10 (n=4)"), o da yoksa 3. **MOD, medyan değil**
+  (prod ölçümü: mod %63 / medyan %60 tam isabet; TYT Fizik'te medyan 1/20, mod
+  10/20). Pencere son 20 kalem; deneme kitapları HARİÇ, kaynaksız kalemler DAHİL.
+  `GET /teacher/students/{id}/task-quantity?subject_id=` gerekçeyle döner ("bu
+  derste genelde 3"). `test_task_quantity_learning.py` 12/12.
+- **P4 — görev ekleme kutusu 3 tık (`9cb8302`):** eski form ~9 etkileşim; 7 tip
+  çipi eşit ağırlıktaydı (canlı: TEST %78 · Video %3 · Özet/Tekrar %0,3).
+  **Arama birimi KONU, kaynaklar konunun altında** ("türev çalışsın", "345'in 12.
+  ünitesi" değil). YENİ `task_picker` servisi tek uç: müfredatta sıradaki ·
+  zayıf/tekrar · son çalıştıkları + arama; her konuda "Kaynak belirtmeden ver"
+  (P2); dolu bölüm gizlenmez, işaretlenir (P1); adet P3'ten ön-dolu. Testin
+  yakaladığı: 12. sınıfta 23 dersten 46 satır dökülüyordu → kaynağı olan dersler
+  öne + tavan 12; Escape listeyi kapatmıyordu → handler. Eski form "Ayrıntılı
+  form" ile duruyor (nadir tipler oraya). `test_api_v2_task_picker.py` 11/11 +
+  `live_task_quick_add.py` 14/14 (gerçek tarayıcı, 3 tık sayımla).
+- **P5 — Müfredat paneli karar ekranı (`3e8bd82`):** 5 bilgi (çözülen test +
+  doğruluk · kalan kapasite · denemede o konu · arşivde açık yanlış · kapatıldı
+  mı) 5 ayrı yüzeydeydi → YENİ `topic_board` servisi konu ekseninde birleştirir.
+  **Kapatma İPUCU, karar değil:** ready / caution (denemede yanlış VEYA arşivde
+  açık yanlış) / none. **Emir vakası teste gömüldü:** Yaş Problemleri görevde
+  %96 ama 02.09 denemesinde yanlış → "kapatmadan önce bak". D/Y girilmemişse
+  doğruluk UYDURULMAZ; ipucu Wilson alt sınırına bakar. UI: sağ panelde katlanır
+  "Müfredat" bölümü (kompakt satır → tıkla detay + [+3 test] [Kaynaksız ver]
+  [Konuyu kapat]); Sıradaki Üniteler KALDIRILMADI (o atama katmanı, bu karar
+  katmanı). Varsayılan ders: kaynağı olanlar öne (P4'teki sorunun tekrarı).
+  `test_api_v2_topic_board.py` 11/11 + `live_curriculum_board.py` 11/11
+  (ayırt edicilik: ipucu bozulunca 8/11 ve tam yanıltıcı çıktı üretti).
+- **GÜN KARTI YENİDEN TASARIMI (`099c544`, frontend):** "sabah/öğle/akşam
+  ayrılmıyor, zeminler aynı." **Tahmin değil ÖLÇÜM** (`audit_day_card_
+  perception.py`, gerçek piksel ΔE CIE76): periyot başlığı↔kart ΔE 2,8→85,9 ·
+  ders satırı↔ders satırı 0→18,8 · 9 görevlik gün 1437→836px (tek ekran) ·
+  satır 78→35px · ders başlığı 9→0. Üç kök neden: (1) hiyerarşi yazı stiliyle
+  kodlanmıştı → **periyot = BÖLGE** (çerçeveli blok, saate göre zemin: sabah
+  turuncu · öğle sarı · akşam indigo, ☀◐☾ ikon); (2) ders başlığı her periyotta
+  sıfırlanıyordu → ders başlıkları KALDIRILDI, ders bilgisi satırın kendisinde;
+  (3) ders rengi rozetteydi → satır ZEMİNİNDE (%65 doygunluk); `subjectHue`
+  hash%360 iki dersi 10° araya düşürüyordu → **11 yaygın ders SABİT hue**
+  (Matematik hep mavi, Türkçe hep kırmızı) + 12'lik ayrık palet. TEST rozeti
+  kalktı; kitap adı ders adını tekrar ediyorsa önek atılır (dar kapta `@xl`
+  container query ile gizlenir). **"+ Sabaha ekle"** → P4 kutusu periyot ön-
+  seçili (`AddTaskForm.initialPeriod`). **DnD gerçek düzeltme:** dnd-kit `over`
+  en yakın satır merkezi → fare Öğle'deyken görev Akşam'a gidebiliyordu; bırakma
+  noktasının bölgesi geometriyle (pointer + `section[data-period]` rect)
+  bulunur. Koyu tema dark: varyantlı. `live_day_card_redesign.py` 10/10.
+  **TEST DERSLERİ:** page.mouse dnd-kit PointerSensor'u tetiklemez (sentetik
+  PointerEvent zinciri) · sürükleme sayfayı kaydırır, hedef KAYDIRMA SONRASI
+  ölçülmeli · yarıda kesilen koşuların yetim section_progress artığı UNIQUE'e
+  çarpar → seed başlamadan süpür.
+- **BÖLÜM RAPTİYELERİ — sağ panel + gün fihristi (`3a48d25`, frontend):**
+  koç: "sağdaki bölümleri gizle/göster; alışkanlığa göre yoğun kullanılan
+  görünsün; 'Paneli gizle' çok yukarıda, kaldır; raptiye bölüm başlarında."
+  **Model — iki durum tek simge:** pinned (raptiye DOLU) → hep açık · auto
+  (BOŞ) → son 7 günde ≥2 kullanım varsa açık, yoksa katlı; başlığa/içeriğe
+  tıklama kullanım sayar. Katlı satır özet taşır ("Sıradaki üniteler (14)",
+  "0/34 kapalı · %53"). **Kalıcılık TARAYICIDA** (kullanıcı kararı):
+  `useSyncExternalStore` + localStorage (sunucu snapshot varsayılan → hydration
+  uyuşmazlığı yok, effect yok; daha önce effect-setState/lazy-init yüzünden
+  kaçınılmıştı) — try/catch'li. YENİ `lib/hooks/use-section-prefs.ts`
+  (`resolveOpen` saf karar) + `weekly-plan/pinnable-section.tsx` ortak iskelet;
+  Müfredat / Sıradaki üniteler / Serbest Bloklar / Kaynak Durumu buna oturdu.
+  Sol gün fihristi raptiye + daralt → 44px şerit (kart 106px kazanır; tıklama +
+  sürükle-bırak hedefi korunur). "Paneli gizle" KALDIRILDI. İlk açılış: Kaynak
+  Durumu + Müfredat AÇIK. **Canlı testin bug'ı:** açık Müfredat'ta konuya
+  tıklamak bölümü KATLIYORDU (1 kullanım varsayılanı eziyordu) → koç elle karar
+  vermediyse varsayılan geçerli. `use-section-prefs.test.mjs` 11/11 (node) +
+  `live_section_pins.py` 10/10; regresyon day_card 10 · curriculum_board 11
+  (seçiciler bölüme kapsandı — has-text ızgara kolonunu yakalıyordu) ·
+  quick_add 14.
+- Mobil BİLİNÇLİ yok (hafta planı editörü web — PARITY). **Deploy notu:**
+  P1-P3 backend (web+worker), P4-P5 backend+frontend, gün kartı + raptiyeler
+  yalnız next; prod'da hepsi canlı.
+
+---
+
 ## SAYAÇ UYUMSUZLUĞU — koç kendisi düzeltebiliyor (ölü rezerv) — CANLI (2026-09-03, commit `7a6a73f`, migration YOK)
 
 **Tetikleyici (koç):** 345 TYT Fizik · "İş, Güç ve Enerji" bölümünde kitap
