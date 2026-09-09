@@ -1,0 +1,297 @@
+{
+ "name": "3D TYT Matematik Video Destekli Defter",
+ "publisher": "3D Yayınları",
+ "subject": "TYT Matematik",
+ "type": "konu_anlatimli",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Temel Kavramlar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 7,
+   "pages": 8
+  },
+  {
+   "label": "Tek ve Çift Sayılar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 15,
+   "pages": 6
+  },
+  {
+   "label": "Ardışık Tam Sayılar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 21,
+   "pages": 6
+  },
+  {
+   "label": "Faktöriyel",
+   "test_count": 1,
+   "source": "icindekiler+orneklem",
+   "page": 27,
+   "pages": 4
+  },
+  {
+   "label": "Asal ve Aralarında Asal Sayılar",
+   "test_count": 1,
+   "source": "icindekiler+orneklem",
+   "page": 31,
+   "pages": 4
+  },
+  {
+   "label": "Sayı Basamakları",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 35,
+   "pages": 6
+  },
+  {
+   "label": "Bölme - Bölünebilme",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 41,
+   "pages": 10
+  },
+  {
+   "label": "Asal Çarpanlara Ayırma",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 51,
+   "pages": 6
+  },
+  {
+   "label": "Ebob - Ekok",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 57,
+   "pages": 10
+  },
+  {
+   "label": "Periyodik Problemler",
+   "test_count": 1,
+   "source": "icindekiler+orneklem",
+   "page": 67,
+   "pages": 4
+  },
+  {
+   "label": "Rasyonel Sayılar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 71,
+   "pages": 8
+  },
+  {
+   "label": "I. Dereceden Bir Bilinmeyenli Denklemler",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 79,
+   "pages": 8
+  },
+  {
+   "label": "Basit Eşitsizlikler",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 87,
+   "pages": 8
+  },
+  {
+   "label": "Mutlak Değer",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 95,
+   "pages": 8
+  },
+  {
+   "label": "Üslü Sayılar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 103,
+   "pages": 10
+  },
+  {
+   "label": "Köklü Sayılar",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 113,
+   "pages": 10
+  },
+  {
+   "label": "Çarpanlara Ayırma",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 123,
+   "pages": 12
+  },
+  {
+   "label": "Oran - Orantı",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 135,
+   "pages": 12
+  },
+  {
+   "label": "Sayı Problemleri",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 147,
+   "pages": 12
+  },
+  {
+   "label": "Kesir Problemleri",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 159,
+   "pages": 6
+  },
+  {
+   "label": "Yaş Problemleri",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 165,
+   "pages": 6
+  },
+  {
+   "label": "İşçi Problemleri",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 171,
+   "pages": 6
+  },
+  {
+   "label": "Hız Problemleri",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 177,
+   "pages": 12
+  },
+  {
+   "label": "Yüzde Problemleri",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 189,
+   "pages": 8
+  },
+  {
+   "label": "Karışım Problemleri",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 197,
+   "pages": 6
+  },
+  {
+   "label": "Grafik Problemleri",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 203,
+   "pages": 8
+  },
+  {
+   "label": "Veri",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 211,
+   "pages": 6
+  },
+  {
+   "label": "Kümeler ve Kartezyen Çarpım",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 217,
+   "pages": 12
+  },
+  {
+   "label": "Küme Problemleri",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 229,
+   "pages": 6
+  },
+  {
+   "label": "Fonksiyonlar",
+   "test_count": 4,
+   "source": "icindekiler+orneklem",
+   "page": 235,
+   "pages": 18
+  },
+  {
+   "label": "Fonksiyonun Tersi",
+   "test_count": 5,
+   "source": "icindekiler+orneklem",
+   "page": 253,
+   "pages": 22
+  },
+  {
+   "label": "Sayma, Küme ve Fonksiyon İlişkisi",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 275,
+   "pages": 6
+  },
+  {
+   "label": "Sayma",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 281,
+   "pages": 14
+  },
+  {
+   "label": "Kombinasyon",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 295,
+   "pages": 14
+  },
+  {
+   "label": "Binom",
+   "test_count": 2,
+   "source": "icindekiler+orneklem",
+   "page": 309,
+   "pages": 6
+  },
+  {
+   "label": "Olasılık",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 315,
+   "pages": 12
+  },
+  {
+   "label": "Mantık",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 327,
+   "pages": 12
+  },
+  {
+   "label": "Polinomlar",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 339,
+   "pages": 14
+  },
+  {
+   "label": "İkinci Dereceden Denklemler",
+   "test_count": 3,
+   "source": "icindekiler+orneklem",
+   "page": 353,
+   "pages": 12
+  },
+  {
+   "label": "Karmaşık Sayılar",
+   "test_count": 1,
+   "source": "icindekiler+orneklem",
+   "page": 365,
+   "pages": 3
+  }
+ ],
+ "warnings": [
+  "Kitap soru bankası DEĞİL, konu anlatımlı 'video destekli defter' (Örnek / Bire Bir ÖSYM / Beceri Temelli Soru / Meraklısına Soru blokları). Klasik 'TEST N' bandı YOK → numara tabanlı boru hattı bu kitapta çalışmaz; yapı içindekilerden, test birimi gövde örneklemesinden kuruldu.",
+  "TEST BİRİMİ: 18 sayfalık örneklem (kitabın geneline yayılmış, vision) sayfa başına ~2,4 soru bloğu ölçtü (ayrıca ~1,8 çözümlü örnek). test_count = ceil(sayfa × 2,4 / 12). İstenirse tek komutla değiştirilebilir (--reset ile yeniden seed).",
+  "TARAMA EKSİK: PDF 319 sayfa, kitap basılı 367+ sayfa; ofset kitap boyunca kayıyor (pdf s5=7, s60=68, s130=149, s200=223, s280=322) → taramada ~47 sayfa yok. Bölüm uzunlukları içindekilerin basılı sayfa numaralarından hesaplandığı için bu eksiklikten ETKİLENMEZ.",
+  "Son bölüm (Karmaşık Sayılar) tarama basılı 367'de bittiği için 4 sayfa varsayıldı (1 test); kitabın gerçek uzunluğu daha fazlaysa artırılmalı."
+ ]
+}
