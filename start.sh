@@ -37,12 +37,16 @@ python -m scripts.seed_whatsapp_templates || true
 python -m scripts.seed_surveys || true
 
 # Gunicorn ile başlat (uvicorn worker'ları)
+# --timeout 300: deneme PDF içe aktarma gibi UZUN AI uçları (Gemini okuması
+# 125 soruluk karnede ~130 sn) 60 sn'lik eski sınırın altında güvenle
+# tamamlanamıyordu. Uçlar senkron def (threadpool) olduğu için event loop
+# bloklanmaz; bu sınır yalnız gerçekten uzun isteklere nefes verir.
 PORT="${PORT:-8000}"
 WORKERS="${WORKERS:-2}"
 exec gunicorn app.main:app \
     -w "$WORKERS" \
     -k uvicorn.workers.UvicornWorker \
     -b "0.0.0.0:$PORT" \
-    --timeout 60 \
+    --timeout 300 \
     --access-logfile - \
     --error-logfile -

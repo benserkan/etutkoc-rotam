@@ -30,7 +30,12 @@ PDF_MIME = "application/pdf"
 # 100-160 soru satırı + özet ~6-8K token; 2.5'in düşünme tokenı da bütçeden
 # yediği için yüksek tutulur (yarım JSON = parse hatası).
 _MAX_OUTPUT_TOKENS = 32768
-_TIMEOUT = 150.0
+# PROD ÖLÇÜMÜ (2026-09-09, 125 soruluk ÇAP Maarif karnesi, 2,2 MB):
+# pro 126,7 sn · flash 79,9 sn (ikisi de 125 soruyu eksiksiz okudu). Eski 150 sn
+# sınırı pro'nun HEMEN üstündeydi; üstelik çift okuma İKİ PRO'yu paralel
+# çalıştırdığı için Gemini tarafında ikisi birden yavaşlayıp sınırı aşıyordu →
+# "read operation timed out" → flash'a fallback (+80 sn) → istek 3-4 dakika.
+_TIMEOUT = 240.0
 
 _READ_PROMPT = """Sana bir DENEME SINAVI SONUÇ BELGESİ (PDF) veriyorum. Görevin belgedeki veriyi eksiksiz ve UYDURMADAN çıkarmak.
 
@@ -78,8 +83,12 @@ YALNIZ şu JSON nesnesini döndür:
 }"""
 
 
-def read_exam_pdf(pdf_base64: str) -> dict[str, Any]:
-    """Tek Gemini okuması → yapılandırılmış dict. AIInvalidResponse/AIServiceUnavailable fırlatır."""
+def read_exam_pdf(pdf_base64: str, *, prefer_fast: bool = False) -> dict[str, Any]:
+    """Tek Gemini okuması → yapılandırılmış dict.
+
+    prefer_fast=True → AYNI ücretli anahtarla ÖNCE flash denenir (KVKK nötr;
+    yalnız model sırası değişir). AIInvalidResponse/AIServiceUnavailable fırlatır.
+    """
     raw = gemini.generate(
         [
             gemini.inline_part(pdf_base64, PDF_MIME),
@@ -89,22 +98,28 @@ def read_exam_pdf(pdf_base64: str) -> dict[str, Any]:
         json_mode=True,
         timeout=_TIMEOUT,
         max_output_tokens=_MAX_OUTPUT_TOKENS,
+        prefer_fast=prefer_fast,
     )
     data = gemini.extract_json(raw)
     return _normalize_read(data)
 
 
 def read_exam_pdf_double(pdf_base64: str) -> tuple[dict[str, Any], dict[str, Any]]:
-    """ÇİFT bağımsız okuma (uydurma önleme katmanı 1) — PARALEL çalışır.
+    """ÇİFT bağımsız okuma (uydurma önleme katmanı 1) — PARALEL, FARKLI MODEL.
 
-    Sıralı iki okuma büyük belgede 2×60-120 sn sürüp kullanıcıyı bekletiyordu;
-    paralelde duvar süresi tek okumaya iner. Karşılaştırma servis katmanında.
+    Okuma 1 = pro (en zeki), Okuma 2 = flash. Neden farklı model (2026-09-09):
+      * İKİ PRO paralel çalışınca Gemini tarafında ikisi birden yavaşlıyor ve
+        timeout'a takılıyordu (125 soruluk karnede pro tek başına 126,7 sn —
+        sınırın dibinde). Şimdi duvar süresi ≈ tek pro okuması.
+      * "Bağımsız iki okuma" ilkesi GÜÇLENİR: aynı modelin aynı hatayı iki kez
+        yapma olasılığı, farklı modellerin aynı hatayı yapmasından yüksektir.
+    Karşılaştırma/merge servis katmanında (uyuşmazlık → şüpheli hücre).
     """
     from concurrent.futures import ThreadPoolExecutor
 
     with ThreadPoolExecutor(max_workers=2) as pool:
-        f1 = pool.submit(read_exam_pdf, pdf_base64)
-        f2 = pool.submit(read_exam_pdf, pdf_base64)
+        f1 = pool.submit(read_exam_pdf, pdf_base64)                    # pro
+        f2 = pool.submit(read_exam_pdf, pdf_base64, prefer_fast=True)  # flash
         return f1.result(), f2.result()
 
 

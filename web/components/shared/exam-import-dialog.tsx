@@ -398,8 +398,8 @@ function ImportFlow({
                 ) : (
                   <>
                     Uydurmayı önlemek için belge <b>iki kez bağımsız</b> okunur ve
-                    sonuçlar karşılaştırılır — uzun belgelerde <b>1-2 dakika</b>{" "}
-                    sürebilir, sayfayı kapatma.
+                    sonuçlar karşılaştırılır — 100+ soruluk karnelerde{" "}
+                    <b>2-3 dakika</b> sürebilir, sayfayı kapatma.
                   </>
                 )}
               </p>
