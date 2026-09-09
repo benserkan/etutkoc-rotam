@@ -4485,6 +4485,7 @@ def teacher_topic_board_v2(
                                 section_id=x.section_id,
                                 section_label=x.section_label,
                                 total=x.total, remaining=x.remaining, full=x.full,
+                                completed=x.completed, recommended=x.recommended,
                             )
                             for x in t.sources
                         ],

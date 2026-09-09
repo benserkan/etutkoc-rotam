@@ -56,3 +56,8 @@ docs/rotam-tanitim-kilavuzu.pdf
 rapor_*.pdf
 rapor_*.html
 *_karne*.pdf
+
+# Yerel canlı-test ekran görüntüleri + dev sunucu logları
+.shots/
+.dev-api.log
+.dev-next.log

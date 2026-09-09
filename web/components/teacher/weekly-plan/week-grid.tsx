@@ -53,7 +53,7 @@ const MARK: Record<GState, { ch: string; cls: string }> = {
   todo: { ch: "☐", cls: "text-muted-foreground/60" },
 };
 
-const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
+export const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
 
 function taskUnit(t: TeacherTask): string {
   if (t.work_block_unit) return t.work_block_unit; // serbest blok birimi öncelikli
@@ -112,7 +112,7 @@ function isActivity(t: TeacherTask): boolean {
 }
 
 // Ders bazlı renk — day-board ile aynı stable hash → ton.
-const SUBJECT_TONES = [
+export const SUBJECT_TONES = [
   { text: "text-indigo-700 dark:text-indigo-300", dot: "bg-indigo-500" },
   { text: "text-emerald-700 dark:text-emerald-300", dot: "bg-emerald-500" },
   { text: "text-amber-700 dark:text-amber-300", dot: "bg-amber-500" },
@@ -122,10 +122,10 @@ const SUBJECT_TONES = [
   { text: "text-fuchsia-700 dark:text-fuchsia-300", dot: "bg-fuchsia-500" },
   { text: "text-sky-700 dark:text-sky-300", dot: "bg-sky-500" },
 ];
-const OTHER_TONE = { text: "text-muted-foreground", dot: "bg-slate-400" };
+export const OTHER_TONE = { text: "text-muted-foreground", dot: "bg-slate-400" };
 
 // Ders ADINA göre ton — aynı ad daima aynı renk (editör/yazdırma ile tutarlı).
-function toneForKey(key: string, name: string) {
+export function toneForKey(key: string, name: string) {
   if (key === "other") return OTHER_TONE;
   return SUBJECT_TONES[subjectToneIndex(name, SUBJECT_TONES.length)];
 }
@@ -139,7 +139,7 @@ interface SubjGroup {
 
 // Görevin ders grubu — ADA göre anahtar (subjectGroupKey): aynı isimli ders
 // (test + branş deneme + video " · " öneki) TEK grupta birleşir.
-function taskSubjKey(t: TeacherTask, subjects?: SubjectRef[]): { key: string; name: string } {
+export function taskSubjKey(t: TeacherTask, subjects?: SubjectRef[]): { key: string; name: string } {
   const ws = t.items.find((it) => it.subject_id != null);
   if (ws?.subject_id != null) {
     const nm = ws.subject_name ?? "Ders";

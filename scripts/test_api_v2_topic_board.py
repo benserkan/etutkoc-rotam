@@ -139,8 +139,12 @@ def main() -> int:
                            teacher_id=coach.id)
             t_hi = Topic(subject_id=subj.id, name="Onbir Konusu", order=8,
                          teacher_id=coach.id, grade_level=11)
+            # ÇOK KAYNAKLI konu (koç 2026-09-09): aynı konuya bağlı 3 bölüm —
+            # "+3 test" hangisine yazacak? Bkz. senaryo 15.
+            t_multi = Topic(subject_id=subj.id, name="Çok Kaynaklı Konu", order=9,
+                            teacher_id=coach.id)
             db.add_all([t_clean, t_exam, t_arch, t_thin, t_nodv, t_closed, t_fizik,
-                        t_done, t_hi])
+                        t_done, t_hi, t_multi])
             db.flush()
             st10 = User(email=f"{PFX}_s10@test.invalid", password_hash=hash_password(PWDH),
                         full_name="Onuncu", role=UserRole.STUDENT, is_active=True,
@@ -180,6 +184,30 @@ def main() -> int:
                 db.add(SectionProgress(student_book_id=sb.id, book_section_id=sec.id,
                                        reserved_count=0, completed_count=done))
             db.flush()
+
+            # --- ÇOK KAYNAKLI konu: aynı Topic'e bağlı ÜÇ bölüm, üç ayrı kitap.
+            #   A "Devam"  : 12 test, 6 çözülmüş → kalan 6   (BAŞLANMIŞ)
+            #   B "Yeni"   : 20 test, 0 çözülmüş → kalan 20  (kalanı EN ÇOK)
+            #   C "Biten"  :  5 test, 5 çözülmüş → kalan 0   (DOLU)
+            # Eski sıra (full, -remaining) B'yi seçiyordu = hiç açılmamış kitap.
+            multi_books: dict[str, int] = {}
+            for tag, total, done in (("A", 12, 6), ("B", 20, 0), ("C", 5, 5)):
+                b = Book(name=f"{PFX} Kaynak {tag}", teacher_id=coach.id,
+                         subject_id=subj.id, type=BookType.SORU_BANKASI)
+                db.add(b)
+                db.flush()
+                sec = BookSection(book_id=b.id, label=f"Çok Kaynaklı Bölüm {tag}",
+                                  order=1, test_count=total, topic_id=t_multi.id)
+                db.add(sec)
+                db.flush()
+                sbx = StudentBook(student_id=st.id, book_id=b.id)
+                db.add(sbx)
+                db.flush()
+                db.add(SectionProgress(student_book_id=sbx.id,
+                                       book_section_id=sec.id,
+                                       reserved_count=0, completed_count=done))
+                db.flush()
+                multi_books[tag] = b.id
 
             # Performans görevleri
             def solve(sec, tests, correct, wrong, day_off=5):
@@ -222,7 +250,9 @@ def main() -> int:
                        t_clean=t_clean.id, t_exam=t_exam.id, t_arch=t_arch.id,
                        t_thin=t_thin.id, t_nodv=t_nodv.id, t_closed=t_closed.id,
                        t_fizik=t_fizik.id, t_done=t_done.id, t_hi=t_hi.id,
-                       student10=st10.id, un_sec=un_sec.id)
+                       student10=st10.id, un_sec=un_sec.id,
+                       t_multi=t_multi.id, book_a=multi_books["A"],
+                       book_b=multi_books["B"], book_c=multi_books["C"])
             db.commit()
 
         c = TestClient(app)
@@ -350,6 +380,45 @@ def main() -> int:
               and _topic(payload, ids["t_hi"]) is not None,
               f"{r14.status_code} st10={_topic(p14, ids['t_hi'])} st12={bool(_topic(payload, ids['t_hi']))}")
 
+        # ---- 15. ÇOK KAYNAKLI konu: "+3 test" hangi kitaba yazacak?
+        #      Koç (2026-09-09): iki kaynak varken panel sessizce seçiyordu ve
+        #      sıra "kalanı en çok" olduğu için HİÇ AÇILMAMIŞ kitap kazanıyordu.
+        #      Kural artık: kapasitesi olan + BAŞLANMIŞ kaynak önerilir.
+        multi = _topic(payload, ids["t_multi"]) or {}
+        msrc = multi.get("sources", [])
+        check(
+            "15a. çok kaynaklı konuda ÖNERİLEN = başlanmış kaynak "
+            "(kalanı en çok olan değil)",
+            len(msrc) == 3
+            and msrc[0]["book_id"] == ids["book_a"]
+            and msrc[0]["recommended"] is True
+            and msrc[0]["completed"] == 6,
+            str([(s["book_id"], s["completed"], s["remaining"], s["full"],
+                  s["recommended"]) for s in msrc]),
+        )
+        check(
+            "15b. dolu kaynak listenin SONUNDA (kapasitesi olan önce)",
+            len(msrc) == 3
+            and msrc[1]["book_id"] == ids["book_b"]
+            and msrc[2]["book_id"] == ids["book_c"]
+            and msrc[2]["full"] is True,
+            str([(s["book_id"], s["full"]) for s in msrc]),
+        )
+        check(
+            "15c. yalnız TEK kaynak 'recommended' işaretli",
+            sum(1 for s in msrc if s["recommended"]) == 1,
+            str([s["recommended"] for s in msrc]),
+        )
+        check(
+            "15d. her kaynak kendi adı/bölümü/sayacıyla döner (koç seçebilsin)",
+            all(
+                s.get("book_name") and s.get("section_label")
+                and "completed" in s and "remaining" in s
+                for s in msrc
+            ),
+            str(msrc[:1]),
+        )
+
         # ---- 11. Sahiplik
         r11 = c.get(
             f"/api/v2/teacher/students/{ids['foreign_student']}/topic-board"
@@ -380,17 +449,19 @@ def main() -> int:
                     db.execute(sa_delete(TaskBookItem)
                                .where(TaskBookItem.task_id.in_(tids)))
                     db.execute(sa_delete(Task).where(Task.id.in_(tids)))
-            if ids.get("book"):
+            bids = [ids[k] for k in ("book", "book_a", "book_b", "book_c")
+                    if ids.get(k)]
+            if bids:
                 sbids = [r[0] for r in db.query(StudentBook.id)
-                         .filter(StudentBook.book_id == ids["book"]).all()]
+                         .filter(StudentBook.book_id.in_(bids)).all()]
                 if sbids:
                     db.execute(sa_delete(SectionProgress)
                                .where(SectionProgress.student_book_id.in_(sbids)))
                     db.execute(sa_delete(StudentBook)
                                .where(StudentBook.id.in_(sbids)))
                 db.execute(sa_delete(BookSection)
-                           .where(BookSection.book_id == ids["book"]))
-                db.execute(sa_delete(Book).where(Book.id == ids["book"]))
+                           .where(BookSection.book_id.in_(bids)))
+                db.execute(sa_delete(Book).where(Book.id.in_(bids)))
             for key in ("subject", "other_subject"):
                 if ids.get(key):
                     db.execute(sa_delete(Topic).where(Topic.subject_id == ids[key]))

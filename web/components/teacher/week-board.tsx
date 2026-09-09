@@ -75,6 +75,7 @@ import { ResourceSidebar } from "./weekly-plan/resource-sidebar";
 import { CarryoverPanel } from "./weekly-plan/carryover-panel";
 import { CurriculumBoard } from "./weekly-plan/curriculum-board";
 import { NextUnitsPanel } from "./weekly-plan/next-units-panel";
+import { SubjectMix } from "./weekly-plan/subject-mix";
 import { WeekGrid } from "./weekly-plan/week-grid";
 import { WorkBlockPanel } from "./weekly-plan/work-block-panel";
 import {
@@ -449,6 +450,11 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
           }
         }}
       />
+
+      {/* Ders Dağılımı (2026-09-09) — ızgaranın hemen altında, tam genişlik.
+          Hafta bütününe bakılan yer burası; gün kartını ve sağ paneli
+          daraltmadan haftanın ders dengesini gösterir (TYT/AYT ayrı). */}
+      <SubjectMix days={data.days} subjects={subjectsForGrouping} />
 
       <div
         className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_var(--side-w)]"

@@ -827,6 +827,10 @@ export interface BoardSourceItem {
   total: number;
   remaining: number;
   full: boolean;
+  /** O bölümde çözülmüş test — "devam ettiğimiz kaynak" işareti */
+  completed: number;
+  /** Sistemin önerdiği kaynak (listede ilk) — koç yine de satırdan seçer */
+  recommended: boolean;
 }
 
 /** Müfredat panelindeki konu kartı — kapatma kararının tüm girdileri. */

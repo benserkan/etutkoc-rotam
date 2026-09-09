@@ -835,6 +835,10 @@ class BoardSourceItem(BaseModel):
     total: int
     remaining: int
     full: bool
+    #: O bölümde çözülmüş test — "devam ettiğimiz kaynak" işareti (2026-09-09).
+    completed: int = 0
+    #: Sistemin önerdiği kaynak; panel bunu "devam" rozetiyle üste koyar.
+    recommended: bool = False
 
 
 class BoardTopicItem(BaseModel):

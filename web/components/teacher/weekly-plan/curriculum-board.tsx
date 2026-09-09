@@ -37,6 +37,7 @@ import {
   useReopenTopic,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
+  BoardSourceItem,
   BoardSubjectItem,
   BoardTopicItem,
   TopicBoardResponse,
@@ -105,9 +106,19 @@ export function CurriculumBoard({
       ? subjects[0]
       : subjects.find((s) => s.subject_id === subjectId)) ?? subjects[0];
 
-  function assign(t: BoardTopicItem, count: number, sourceless: boolean) {
-    const src = t.sources[0];
-    const title = sourceless || !src
+  /**
+   * Görev yaz. `src` verilmezse kaynaksız (konuya bağlı, kitapsız) kalem.
+   *
+   * KOÇ (2026-09-09): eskiden kaynak `t.sources[0]` ile SESSİZCE seçiliyordu;
+   * iki kaynaklı konuda koç hangi kitaba yazdığını bilmiyordu. Artık kaynak
+   * satırdan seçilir — tık sayısı aynı (konu → satırdaki +N).
+   */
+  function assign(
+    t: BoardTopicItem,
+    count: number,
+    src: BoardSourceItem | null,
+  ) {
+    const title = !src
       ? `${t.name} — ${count} test`
       : `${src.book_name} — ${src.section_label}: ${count} test`;
     create.mutate({
@@ -118,7 +129,7 @@ export function CurriculumBoard({
         scheduled_hour: null,
         period: null,
         items: [
-          sourceless || !src
+          !src
             ? {
                 book_id: null,
                 section_id: null,
@@ -286,13 +297,75 @@ export function CurriculumBoard({
                           ) : null}
                         </dl>
 
-                        {t.sources.length > 0 ? (
-                          <p className="truncate text-[10.5px] text-muted-foreground">
-                            {t.sources[0].book_name} ·{" "}
-                            {t.sources[0].full
-                              ? "kapasite doldu"
-                              : `${t.sources[0].remaining} kaldı`}
-                          </p>
+                        {/* KAYNAK SEÇİMİ (2026-09-09): "+3 test" hangi kitaba
+                            yazıyor sorusunun cevabı. Her kaynak kendi satırında,
+                            kendi butonuyla — koç görerek seçer, tık sayısı aynı
+                            (konu → satırdaki +3). Sistem "devam" ettiğini önerir
+                            ama dayatmaz. */}
+                        {t.closed ? null : t.sources.length > 0 ? (
+                          <div className="space-y-1">
+                            <p className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                              {t.sources.length > 1
+                                ? `Kaynak seç (${t.sources.length})`
+                                : "Kaynak"}
+                            </p>
+                            <ul className="space-y-1">
+                              {t.sources.map((s) => (
+                                <li
+                                  key={s.section_id}
+                                  className={cn(
+                                    "flex items-center gap-1.5 rounded-md border px-1.5 py-1",
+                                    s.recommended && t.sources.length > 1
+                                      ? "border-cyan-300 bg-cyan-50/60 dark:border-cyan-500/40 dark:bg-cyan-500/10"
+                                      : "border-border bg-background",
+                                  )}
+                                >
+                                  {/* KIRPMA YOK — uzun kitap/bölüm adı sarar */}
+                                  <span className="min-w-0 flex-1 whitespace-normal break-words text-[11px] leading-snug">
+                                    <span className="font-medium text-foreground">
+                                      {s.book_name}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                      {" · "}
+                                      {s.section_label}
+                                    </span>
+                                    <span className="mt-0.5 block text-[10px] tabular-nums text-muted-foreground">
+                                      {/* Rozet DOLGULU: ton + dark: varyantı
+                                          koyu temada kontrastı yitiriyordu
+                                          (ölçüm: 1.09). Dolgu iki temada okunur. */}
+                                      {s.recommended && t.sources.length > 1 ? (
+                                        <span className="mr-1 rounded bg-cyan-600 px-1 py-px text-[9px] font-semibold uppercase tracking-wide text-white">
+                                          devam
+                                        </span>
+                                      ) : null}
+                                      {s.completed}/{s.total} çözüldü ·{" "}
+                                      {s.full ? (
+                                        <span className="text-amber-700 dark:text-amber-300">
+                                          kapasite doldu
+                                        </span>
+                                      ) : (
+                                        `${s.remaining} kaldı`
+                                      )}
+                                    </span>
+                                  </span>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 shrink-0 px-2 text-[11px]"
+                                    disabled={create.isPending}
+                                    onClick={() => assign(t, 3, s)}
+                                    title={
+                                      s.full
+                                        ? `${s.book_name} — kapasite dolu, yine de 3 test yaz (uyarı verilir)`
+                                        : `${s.book_name} — bu kaynaktan 3 test yaz`
+                                    }
+                                  >
+                                    +3 test
+                                  </Button>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
                         ) : (
                           <p className="text-[10.5px] text-muted-foreground">
                             Bu konuda kaynak yok
@@ -315,23 +388,12 @@ export function CurriculumBoard({
                             </Button>
                           ) : (
                             <>
-                              {t.sources.length > 0 ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 px-2 text-[11px]"
-                                  disabled={create.isPending}
-                                  onClick={() => assign(t, 3, false)}
-                                >
-                                  +3 test
-                                </Button>
-                              ) : null}
                               <Button
                                 size="sm"
                                 variant="outline"
                                 className="h-7 px-2 text-[11px]"
                                 disabled={create.isPending}
-                                onClick={() => assign(t, 3, true)}
+                                onClick={() => assign(t, 3, null)}
                               >
                                 <Zap className="mr-1 h-3 w-3" />
                                 Kaynaksız ver

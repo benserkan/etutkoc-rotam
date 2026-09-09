@@ -66,6 +66,40 @@ class BoardSource:
     remaining: int
     full: bool
     completed: int = 0
+    #: Sistemin önerdiği kaynak (listede ilk). Koç yine de satırdan seçebilir.
+    recommended: bool = False
+
+
+def _rank_sources(secs: list[BoardSource]) -> list[BoardSource]:
+    """Kaynak sırası — koçun "hangi kitaptan?" sorusunun cevabı.
+
+    SAHA BUG'I (2026-09-09, koç): aynı konuya bağlı iki kaynak varken
+    "+3 test" hangisine yazdığını SÖYLEMİYORDU. Eski sıra `(full, -remaining)`
+    olduğu için **en çok kalanı olan** kitap seçiliyordu — yani çoğu zaman
+    henüz HİÇ AÇILMAMIŞ ikinci kitap (örn. 345 Kimya 41/138 çözülmüşken
+    Aydın Kimya 0/139 kazanıyordu). Koç ise başladığı kitaptan devam etmek
+    ister; yarım bırakılan kitap birikir.
+
+    Yeni sıra:
+      1. kapasitesi olan (dolu olmayan) önce,
+      2. BAŞLANMIŞ olan önce (completed > 0) — en çok ilerlemiş en üstte,
+      3. eşitlikte kalanı çok olan, sonra kitap adı (kararlı sıra).
+
+    İlk sıradaki `recommended=True` — panel onu "devam" diye işaretler.
+    """
+    ranked = sorted(
+        secs,
+        key=lambda x: (
+            x.full,                 # dolu kaynak en sona
+            x.completed <= 0,       # başlanmış kaynak öne (devam ilkesi)
+            -x.completed,           # en çok ilerlemiş önce
+            -x.remaining,           # sonra kapasitesi bol olan
+            x.book_name or "",
+        ),
+    )
+    for i, s in enumerate(ranked):
+        s.recommended = i == 0
+    return ranked
 
 
 @dataclass
@@ -437,7 +471,7 @@ def build_topic_board(
                 remaining=sum(x.remaining for x in secs),
                 exam_wrong=ew, open_wrongs=ow,
                 readiness=readiness, readiness_note=note,
-                sources=sorted(secs, key=lambda x: (x.full, -x.remaining)),
+                sources=_rank_sources(secs),
             ))
         if not rows:
             continue
