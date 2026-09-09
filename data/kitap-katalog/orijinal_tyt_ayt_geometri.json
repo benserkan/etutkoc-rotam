@@ -1,0 +1,192 @@
+{
+ "name": "Orijinal TYT-AYT Geometri Soru Bankası",
+ "publisher": "Orijinal Yayınları",
+ "subject": "TYT Geometri",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Temel Kavramlar ve Doğruda Açılar",
+   "test_count": 3,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Üçgende Açılar",
+   "test_count": 8,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Dik ve Özel Üçgenler",
+   "test_count": 10,
+   "source": "govde+toc"
+  },
+  {
+   "label": "İkizkenar Üçgen",
+   "test_count": 6,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Eşkenar Üçgen",
+   "test_count": 6,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Üçgende Açıortay Bağıntıları",
+   "test_count": 6,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Üçgende Kenarortay Bağıntıları",
+   "test_count": 6,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Üçgende Eşlik ve Benzerlik",
+   "test_count": 13,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Üçgende Merkezler",
+   "test_count": 3,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Üçgende Alan",
+   "test_count": 11,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Üçgende Açı-Kenar Bağıntıları",
+   "test_count": 5,
+   "source": "govde(goz-teyitli)"
+  },
+  {
+   "label": "ÖSYM'de Çıkmış Sorular — Üçgenler (16 soru)",
+   "test_count": 2,
+   "source": "govde(numarasiz blok)"
+  },
+  {
+   "label": "Çokgen ve Düzgün Çokgenler",
+   "test_count": 9,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Dörtgenler",
+   "test_count": 5,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Deltoid",
+   "test_count": 3,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Paralelkenar",
+   "test_count": 10,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Eşkenar Dörtgen",
+   "test_count": 6,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Dikdörtgen",
+   "test_count": 10,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Kare",
+   "test_count": 9,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Yamuk",
+   "test_count": 9,
+   "source": "govde+toc"
+  },
+  {
+   "label": "ÖSYM'de Çıkmış Sorular — Çokgenler ve Dörtgenler (12 soru)",
+   "test_count": 1,
+   "source": "govde(numarasiz blok)"
+  },
+  {
+   "label": "Çemberde Açı",
+   "test_count": 9,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Çemberde Uzunluk",
+   "test_count": 11,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Dairede Çevre ve Alan",
+   "test_count": 11,
+   "source": "govde+toc"
+  },
+  {
+   "label": "ÖSYM'de Çıkmış Sorular — Çember ve Daire (12 soru)",
+   "test_count": 1,
+   "source": "govde(numarasiz blok)"
+  },
+  {
+   "label": "Noktanın Analitik İncelenmesi",
+   "test_count": 8,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Doğrunun Analitik İncelenmesi",
+   "test_count": 11,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Analitik Düzlemde Dönüşümler",
+   "test_count": 7,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Çemberin Analitik İncelenmesi",
+   "test_count": 9,
+   "source": "govde+toc"
+  },
+  {
+   "label": "ÖSYM'de Çıkmış Sorular — Analitik Geometri (10 soru)",
+   "test_count": 1,
+   "source": "govde(numarasiz blok)"
+  },
+  {
+   "label": "Prizmalar",
+   "test_count": 11,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Piramit",
+   "test_count": 7,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Küre",
+   "test_count": 3,
+   "source": "govde+toc"
+  },
+  {
+   "label": "Dönel Cisimler",
+   "test_count": 1,
+   "source": "govde+toc"
+  },
+  {
+   "label": "ÖSYM'de Çıkmış Sorular — Katı Cisimler (20 soru)",
+   "test_count": 2,
+   "source": "govde(numarasiz blok)"
+  }
+ ],
+ "warnings": [
+  "Dijital PDF (432 sayfa, tam metin katmanı) → gövde taraması Gemini'siz, font imzasıyla yapıldı (20pt kategori + 16pt konu + 11pt TEST-N). ÜÇ KAYNAK (içindekiler test aralıkları / gövde font imzası / boru hattı) 30 konunun 29'unda BİREBİR.",
+  "'Üçgende Açı-Kenar Bağıntıları': içindekiler 4 test yazıyor ama gövdede 5 numaralı bant var (TEST-5 = ÖSYM Tarzı Orijinal Sorular) — kontak föy göz teyidiyle doğrulandı, içindekiler dizgi eksiği; GÖVDE esas alındı.",
+  "'Çemberde Uzunluk': yayınevi TEST-2'yi iki sayfada birden basmış, TEST-3 hiç basılmamış (dizgi hatası). Sayfa akışı kesintisiz, fiziksel test sayısı 11 (içindekiler de 11 diyor) — kayıp test YOK.",
+  "Her bölüm sonundaki 'ÖSYM'de Çıkmış Sorular' blokları test numarası TAŞIMAZ (bu yüzden numara tabanlı sayım kaçırır): 16/12/12/10/20 soru → kitabın standart test birimi olan 12 soruya bölünüp yukarı yuvarlandı (2/1/1/1/2)."
+ ]
+}
