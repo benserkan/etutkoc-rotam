@@ -6,6 +6,92 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## HAFTANIN DERS DENGESİ ŞERİDİ + MÜFREDATTA KAYNAK SEÇİMİ — CANLI (2026-09-09, commit `ada0c27`, migration YOK)
+
+**Tetikleyici (koç, iki istek):** (1) "programı hazırlarken ders bazında (TYT ve
+AYT ayrı) görev yüzdelerini görmek istiyorum — örneğin AYT Matematik %35;
+sıkıştırmadan, sayfa bütünlüğünü bozmadan"; (2) "müfredatta konuya tıklayıp
++3 test dediğimde hangi kaynaktan ekleyeceğini bilmiyorum — seçimi neye göre
+yapıyor? 3 tık ilkesini geçmeden kaynağı nasıl seçeriz?"
+
+- **YENİ `weekly-plan/subject-mix.tsx` — "Haftanın Ders Dengesi":** Hafta
+  Izgarası'nın ALTINDA tam genişlik katlanabilir şerit (gün kartını ve sağ
+  paneli daraltmaz; ölçüldü: yatay taşma 0, gün kartı ≥700px). Başlıkta
+  **TYT/AYT blok özeti**, altında yığılmış çubuk + ders çipleri
+  (`%pay` + "N görev · M test"). **İki metrik tek yüzde:** `Test` (planlanan
+  test hacmi — DENEME≠TEST, deneme kitapları + kitapsız denemeler sayılmaz) /
+  `Görev` (madde adedi) — tek tık toggle; çipte İKİ sayı birden yazılı, hangi
+  mod açık olursa olsun bilgi kaybolmaz. Gruplama/renk **week-grid ile AYNI**
+  (`taskSubjKey`/`toneForKey`/`DENEME_TYPES` export edildi) → branş denemesi ve
+  video görevi de adından doğru derse düşer.
+  **ADLANDIRMA:** gün kartında zaten "DERS DAĞILIMI" (o günün özeti) var; iki
+  başlık karışmasın diye hafta şeridi "Haftanın Ders Dengesi".
+- **KAYNAK SEÇİMİ — kök neden:** `topic_board` `sources` sırası
+  `(full, -remaining)` idi → "+3 test" **kalanı en çok** olan kaynağa gidiyordu,
+  yani çoğu zaman **hiç açılmamış ikinci kitap** (345 Kimya 41/138 çözülmüşken
+  Aydın Kimya 0/139 kazanıyordu) ve panel bunu SÖYLEMİYORDU (`t.sources[0]`
+  sessizce seçiliyor, detayda yalnız ilk kaynak `truncate` ile yazıyordu).
+  **Yeni `_rank_sources`:** kapasitesi olan → **BAŞLANMIŞ** (`completed>0`, en
+  çok ilerlemiş) → kalanı bol → kitap adı; ilk sıra `recommended=True`
+  (devam ilkesi: yarım kitap birikmesin).
+  **UI:** detayda kaynaklar **ayrı satırlarda**, her satırda kendi **"+3 test"**
+  butonu + kitap · bölüm adı (KIRPMA YOK, sarar) + "N/M çözüldü · K kaldı";
+  önerilen satır cyan çerçeve + **"devam"** rozeti; dolu kaynak en sonda
+  ("kapasite doldu", buton kalır — P1 uyarı akışıyla geçer).
+  **Tık sayısı DEĞİŞMEDİ:** konu → satırdaki +3 (2 tık).
+  Şema additive: `BoardSourceItem` +`completed` +`recommended`.
+- **Test:** `test_api_v2_topic_board` 14→**18** (15a-d çok kaynaklı konu).
+  **AYIRT EDİCİ KANIT:** eski sıralama geri konunca 15a/15b KIRMIZI (hiç
+  açılmamış kitap seçiliyor). YENİ **`scripts/live_subject_mix.py` 11/11**
+  (gerçek tarayıcı; kendi seed'i, yüzdeler elde hesaplanabilir sabit sayılarla):
+  şerit + TYT/AYT özeti + %35 çipi + Görev/Test toggle + **düzen bozulmadı** +
+  iki kaynak satırı + "devam" rozeti + **İKİNCİ satırın butonu görevi O kaynağa
+  yazar** + kırpma yok + **koyu tema kontrast ölçümü**. Regresyon:
+  live_curriculum_board 15 · task_picker 11 · curriculum_progress 22 ·
+  curriculum_units 10 · weekly_plan · teacher_read · **run_gorev_checks 82/82**;
+  tsc + eslint temiz.
+- **KOYU TEMA DERSİ:** "devam" rozeti `bg-cyan-100 text-cyan-900` +
+  `dark:bg-cyan-500/25 dark:text-cyan-100` ile koyu temada **1.09 kontrast**
+  veriyordu (dark metin varyantı uygulanmıyordu) → **DOLGULU**
+  (`bg-cyan-600 text-white`) çevrildi. **KURAL: küçük rozetlerde ton+dark:
+  varyant çifti yerine dolgulu (koyu zemin + beyaz metin) tercih et; canlı
+  teste kontrast ölçümü koy.** Bileşene `data-section="week:subject-mix"`
+  test kancası eklendi (ölçüm kapsamı daraltılabilsin).
+- **JSX DERSİ:** `{/* yorum */}` ternary'nin **ifade konumunda** olamaz
+  (`cond ? {/*...*/}<span/> : null` → "Parsing ecmascript source code failed");
+  yorum ternary'den ÖNCE, child konumuna konur.
+- Deploy: web+worker+next rebuild (Plausible-stop'lu); healthz/site 200, uç anon
+  401. Prod doğrulaması (öğrenci 157, salt-okuma): 3 kaynaklı konularda dolu
+  kaynaklar sona gitti, koç üç kaynağı da görüyor. Mobil BİLİNÇLİ yok (hafta
+  planı editörü web — PARITY).
+
+---
+
+## EMİR (#113) PERFORMANS ANALİZİ — koçluk notu (2026-09-09, kod değişikliği YOK)
+
+Koç "birkaç gündür görev performansı düşük" dedi; prod salt-okuma teşhisi:
+- **Düşüş trend DEĞİL:** 4 hafta %95-97 bandı, kırılma yalnız **7-8 Eylül**
+  (maçların başlaması). 8 Eyl: 11 görevin 4'ü, 23 testin 9'u.
+- **ÖLÇÜM UYARISI:** panelde "doğruluk %85→%95" artışının çoğu **ürün
+  değişikliği** — `blank_count` 17-18 Ağustos'ta canlıya alındı (öncesi boşlar
+  yanlışa yazılıyordu). Karşılaştırılabilir metrik **tam isabet** (D ÷ tüm
+  sorular): %84 → %86, yani **stabil**. Koça "doğruluk yerine tam isabet + boş
+  oranına bak" denildi.
+- **Boş oranı = zorlanma sensörü:** Çarpanlara Ayırma Orijinal'de **%28 boş**,
+  345'te **%14** (yanlış ikisinde de 1) → "bilmiyor" değil "giremiyor".
+  Benzer: 2. dereceden kök-katsayı %23 · Üçgende Yardımcı Elemanlar %19.
+- **Yük:** gün başı görev 7,8 → **12** (test ~20 sabit) · tik saatleri
+  01:00-02:11 · günde 4-5 saat spor → uyku ~5 saat.
+- **Stratejik boşluk:** SAYISAL mezun, TYT 102,75 net (2 Eyl) ama emeğin ~%85'i
+  TYT'de; **AYT Fen (Fizik/Kimya/Biyoloji) kitabı hiç atanmamış**. Öneri:
+  hacim değil kapsam — AYT'ye kaydır. (Ders Dengesi şeridi bu dengesizliği
+  program KURULURKEN göstermek için yapıldı.)
+- Ayrıca: 4 talep 13-23 gündür cevapsız · Türkçe tamamlama %65 (dil bilgisi
+  konu bilgisi eksik, iki dil bilgisi kitabı açık, biri 0/103) · 6 kitap hiç
+  açılmamış · 9 Eylül itibarıyla **program yok**.
+
+---
+
 ## MAARİF MODELİ SINAV TÜRLERİ — deneme içe aktarma (2026-09-09, migration `x9y2b5c6b00x`)
 
 **Tetikleyici (koç, saha):** 11. sınıf Maarif öğrencisi Elif Demirci (#34) için
