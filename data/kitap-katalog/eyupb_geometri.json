@@ -1,0 +1,177 @@
+{
+ "name": "Eyüp B Geometri Soru Bankası",
+ "publisher": "KR Akademi Yayınları",
+ "subject": "TYT Geometri",
+ "type": "soru_bankasi",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "sections": [
+  {
+   "label": "Doğruda Açı",
+   "test_count": 4,
+   "source": "scan_header",
+   "page": 5
+  },
+  {
+   "label": "Üçgende Açı",
+   "test_count": 8,
+   "source": "scan_header",
+   "page": 15
+  },
+  {
+   "label": "Dik Üçgen",
+   "test_count": 8,
+   "source": "scan_header",
+   "page": 32
+  },
+  {
+   "label": "İkizkenar Üçgen",
+   "test_count": 5,
+   "source": "scan_header",
+   "page": 49
+  },
+  {
+   "label": "Eşkenar Üçgen",
+   "test_count": 3,
+   "source": "scan_header",
+   "page": 59
+  },
+  {
+   "label": "Açıortay",
+   "test_count": 6,
+   "source": "scan_header",
+   "page": 66
+  },
+  {
+   "label": "Kenarortay",
+   "test_count": 5,
+   "source": "scan_header",
+   "page": 78
+  },
+  {
+   "label": "Üçgende Benzerlik",
+   "test_count": 11,
+   "source": "scan_header",
+   "page": 88
+  },
+  {
+   "label": "Üçgende Alan",
+   "test_count": 9,
+   "source": "scan_header",
+   "page": 110
+  },
+  {
+   "label": "Üçgende Açı-Kenar Bağıntıları",
+   "test_count": 3,
+   "source": "scan_header",
+   "page": 128
+  },
+  {
+   "label": "Üçgende Merkezler",
+   "test_count": 2,
+   "source": "scan_header",
+   "page": 134
+  },
+  {
+   "label": "Çokgenler",
+   "test_count": 4,
+   "source": "scan_header",
+   "page": 138
+  },
+  {
+   "label": "Dörtgenler",
+   "test_count": 2,
+   "source": "scan_header",
+   "page": 147
+  },
+  {
+   "label": "Deltoid",
+   "test_count": 2,
+   "source": "scan_header",
+   "page": 150
+  },
+  {
+   "label": "Yamuk",
+   "test_count": 8,
+   "source": "scan_header",
+   "page": 156
+  },
+  {
+   "label": "Paralelkenar",
+   "test_count": 7,
+   "source": "scan_header",
+   "page": 173
+  },
+  {
+   "label": "Eşkenar Dörtgen",
+   "test_count": 5,
+   "source": "scan_header",
+   "page": 187
+  },
+  {
+   "label": "Dikdörtgen",
+   "test_count": 7,
+   "source": "scan_header",
+   "page": 197
+  },
+  {
+   "label": "Kare",
+   "test_count": 6,
+   "source": "scan_header",
+   "page": 211
+  },
+  {
+   "label": "Çemberde Açı",
+   "test_count": 7,
+   "source": "scan_header",
+   "page": 224
+  },
+  {
+   "label": "Çemberde Uzunluk",
+   "test_count": 7,
+   "source": "scan_header",
+   "page": 238
+  },
+  {
+   "label": "Dairede Alan",
+   "test_count": 2,
+   "source": "scan_header",
+   "page": 252
+  },
+  {
+   "label": "Nokta Analitiği",
+   "test_count": 6,
+   "source": "scan_header",
+   "page": 256
+  },
+  {
+   "label": "Doğrunun Analitiği",
+   "test_count": 10,
+   "source": "scan_header",
+   "page": 269
+  },
+  {
+   "label": "Dönüşümler",
+   "test_count": 4,
+   "source": "scan_header",
+   "page": 290
+  },
+  {
+   "label": "Çember Analitiği",
+   "test_count": 4,
+   "source": "scan_header",
+   "page": 297
+  },
+  {
+   "label": "Katı Cisimler",
+   "test_count": 9,
+   "source": "scan_header",
+   "page": 306
+  }
+ ],
+ "warnings": [
+  "Taranmış PDF'te ~13 mükerrer sayfa (basılı numara kayması: pdf 220→218, 260→246) → bölümler içindekiler aralığından değil sayfa başlığındaki bölüm ADI/numarasından atandı (başlık sahiplenmesi); test = bölüm içi tekil TEST-N (ÖĞRENİYORUM/GELİŞİYORUM/1 SORU YORUM tek sayaç).",
+  "PDF basılı 325. sayfada (Katı Cisimler TEST-9 sonu) bitiyor; cevap anahtarı/son sayfalar taramada yok — Katı Cisimler'de 9 test sayıldı, kitabın devamı olup olmadığı bu taramadan doğrulanamaz."
+ ]
+}
