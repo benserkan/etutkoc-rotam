@@ -22,6 +22,12 @@ class ExamSection(str, enum.Enum):
       — deneme PDF içe aktarmayla geldi (2026-07-16); Maarif müfredatına normalize
       edilir. NOT: Postgres native enum'a yeni üye = ALTER TYPE migration
       (v6w9z2a3z55v'de yapıldı).
+    - MAARIF_*: Maarif Modeli deneme türleri (2026-09-09, migration x9y2b5c6b00x).
+      Sınav SİSTEMİ değişmiyor, karşılıkları: 1. Basamak ≈ TYT (9-10 konuları) ·
+      2. Basamak ≈ AYT (11-12). Ayrıca yayınevlerinin sınıf düzeyi denemeleri
+      (Maarif 9/10/11). Bu yıl 9-10-11 Maarif modelde; 12 ve mezunlar klasik
+      YKS'de → MAARIF_2 enum'da hazır ama beyan listesinde henüz gösterilmez.
+      Net cezası TYT/AYT ile aynı (4 yanlış 1 doğru — ÇAP karnesiyle doğrulandı).
     """
     LGS = "lgs"
     TYT = "tyt"
@@ -30,6 +36,11 @@ class ExamSection(str, enum.Enum):
     AYT_SOZ = "ayt_soz"
     AYT_DIL = "ayt_dil"
     OKUL = "okul"
+    MAARIF_1 = "maarif_1"
+    MAARIF_2 = "maarif_2"
+    MAARIF_9 = "maarif_9"
+    MAARIF_10 = "maarif_10"
+    MAARIF_11 = "maarif_11"
 
 
 EXAM_SECTION_LABELS: dict[ExamSection, str] = {
@@ -40,6 +51,27 @@ EXAM_SECTION_LABELS: dict[ExamSection, str] = {
     ExamSection.AYT_SOZ: "AYT (Sözel)",
     ExamSection.AYT_DIL: "AYT (Dil)",
     ExamSection.OKUL: "Okul Denemesi",
+    ExamSection.MAARIF_1: "Maarif 1. Basamak",
+    ExamSection.MAARIF_2: "Maarif 2. Basamak",
+    ExamSection.MAARIF_9: "Maarif 9. Sınıf",
+    ExamSection.MAARIF_10: "Maarif 10. Sınıf",
+    ExamSection.MAARIF_11: "Maarif 11. Sınıf",
+}
+
+# Maarif deneme türleri (evren + kapsam kararlarında tek kaynak)
+MAARIF_SECTIONS: tuple[ExamSection, ...] = (
+    ExamSection.MAARIF_1, ExamSection.MAARIF_2,
+    ExamSection.MAARIF_9, ExamSection.MAARIF_10, ExamSection.MAARIF_11,
+)
+
+# Türün kapsadığı EN ÜST sınıf → konu havuzu bu sınıfa kadar açılır.
+# 1. Basamak 9-10 müfredatını ölçer (TYT gibi kümülatif), 2. Basamak 11-12.
+MAARIF_SECTION_GRADE_CAP: dict[ExamSection, int] = {
+    ExamSection.MAARIF_9: 9,
+    ExamSection.MAARIF_10: 10,
+    ExamSection.MAARIF_1: 10,
+    ExamSection.MAARIF_11: 11,
+    ExamSection.MAARIF_2: 12,
 }
 
 

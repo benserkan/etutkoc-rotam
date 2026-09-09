@@ -16,6 +16,11 @@ const SECTION_TONE: Record<string, { bg: string; text: string }> = {
   ayt_ea: { bg: "bg-amber-50", text: "text-amber-700" },
   ayt_soz: { bg: "bg-rose-50", text: "text-rose-700" },
   ayt_dil: { bg: "bg-sky-50", text: "text-sky-700" },
+  maarif_1: { bg: "bg-teal-50", text: "text-teal-700" },
+  maarif_2: { bg: "bg-fuchsia-50", text: "text-fuchsia-700" },
+  maarif_9: { bg: "bg-lime-50", text: "text-lime-800" },
+  maarif_10: { bg: "bg-sky-50", text: "text-sky-700" },
+  maarif_11: { bg: "bg-blue-50", text: "text-blue-700" },
 };
 
 export default function ParentChildExamsRoute() {

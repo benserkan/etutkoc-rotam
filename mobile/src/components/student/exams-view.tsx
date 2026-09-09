@@ -26,6 +26,11 @@ const SECTION_TONE: Record<string, { bg: string; text: string; bar: string }> = 
   ayt_ea: { bg: "bg-amber-50", text: "text-amber-700", bar: "bg-amber-500" },
   ayt_soz: { bg: "bg-rose-50", text: "text-rose-700", bar: "bg-rose-500" },
   ayt_dil: { bg: "bg-sky-50", text: "text-sky-700", bar: "bg-sky-500" },
+  maarif_1: { bg: "bg-teal-50", text: "text-teal-700", bar: "bg-teal-500" },
+  maarif_2: { bg: "bg-fuchsia-50", text: "text-fuchsia-700", bar: "bg-fuchsia-500" },
+  maarif_9: { bg: "bg-lime-50", text: "text-lime-800", bar: "bg-lime-500" },
+  maarif_10: { bg: "bg-sky-50", text: "text-sky-700", bar: "bg-sky-500" },
+  maarif_11: { bg: "bg-blue-50", text: "text-blue-700", bar: "bg-blue-500" },
 };
 function tone(section: string) {
   return SECTION_TONE[section] ?? { bg: "bg-slate-100", text: "text-slate-600", bar: "bg-slate-400" };

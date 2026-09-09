@@ -43,9 +43,11 @@ from app.models import (
     EXAM_SECTION_LABELS,
     EXAM_UNIVERSE_AYT,
     EXAM_UNIVERSE_LGS,
+    EXAM_UNIVERSE_MAARIF,
     EXAM_UNIVERSE_OKUL,
     EXAM_UNIVERSE_TYT,
     EXAM_UNIVERSES,
+    MAARIF_SECTION_GRADE_CAP,
     CurriculumModel,
     ExamResult,
     ExamResultQuestion,
@@ -98,6 +100,22 @@ _SUBJECT_ALIASES: dict[str, str] = {
     "turkce": "edebiyat",
 }
 
+# BİRLEŞİK (grup) ders adları → kapsadıkları sistem derslerinin kanonik
+# anahtarları. Maarif Model karneleri (ve K12 belgeleri) dersleri sınav
+# bölümüne göre birleştirir: "Fen Bilimleri 20 soru" tek satırdır, oysa
+# müfredatta Fizik/Kimya/Biyoloji AYRI derstir → ham ad hiçbir derse
+# çözülemiyor, konu havuzu bulunamıyor, sorular eşleşmeden kalıyordu
+# (ÇAP Maarif 1. Basamak, öğrenci #34 — 45/125 soru evsizdi).
+# Grup çözülünce konu adayları O GRUBUN derslerinden gelir; nihai ders yine
+# KONUdan türer ("konu dersi belirler" ilkesi bozulmaz).
+_SUBJECT_GROUPS: dict[str, tuple[str, ...]] = {
+    "fen bilimleri": ("fizik", "kimya", "biyoloji"),
+    "sosyal bilimler": (
+        "t c inkilap tarihi ataturkculuk",  # "Tarih" alias'ının kanonu
+        "cografya", "felsefe grubu", "din kulturu",
+    ),
+}
+
 
 class ExamImportError(Exception):
     """Servis hatası — router HTTP koduna çevirir."""
@@ -138,6 +156,13 @@ def universe_subjects(db: Session, universe: str, student: User) -> list[Subject
         ).all()
     if universe == EXAM_UNIVERSE_LGS:
         return q.filter(Subject.curriculum_model == CurriculumModel.LGS).all()
+    if universe == EXAM_UNIVERSE_MAARIF:
+        # Maarif denemesinin omurgası DAİMA Maarif müfredatıdır (öğrencinin
+        # kendi modeline bakılmaz: koç Maarif türü beyan ettiyse hedef budur).
+        # Ders bazında sınıf filtresi UYGULANMAZ — kapsamı konu grade_cap'i
+        # belirler; ders elenirse o dersin konuları da havuzdan düşerdi.
+        return q.filter(
+            Subject.curriculum_model == CurriculumModel.MAARIF_LISE).all()
     # OKUL — öğrencinin okul müfredatı (Maarif/Klasik), sınıfını kapsayan dersler
     model = student.effective_curriculum_model
     subs = q.filter(Subject.curriculum_model == model).all()
@@ -160,7 +185,8 @@ def universe_topics(
     topics = db.query(Topic).filter(Topic.subject_id.in_(sids)).all()
     parent_ids = {t.parent_id for t in topics if t.parent_id is not None}
     leafs = [t for t in topics if t.id not in parent_ids]
-    if universe in (EXAM_UNIVERSE_OKUL, EXAM_UNIVERSE_LGS) and grade_cap:
+    if universe in (EXAM_UNIVERSE_OKUL, EXAM_UNIVERSE_LGS,
+                    EXAM_UNIVERSE_MAARIF) and grade_cap:
         leafs = [t for t in leafs
                  if t.grade_level is None or t.grade_level <= grade_cap]
     return sorted(leafs, key=lambda t: (t.subject_id, t.order, t.id))
@@ -194,6 +220,26 @@ def _school_grade_signal(
     return None
 
 
+def _group_display_entries(raw_keys: set[str] | None) -> dict[str, str]:
+    """Belgede BİRLEŞİK ders adı geçiyorsa alt dersleri o ada topla (SUNUM).
+
+    "Fen Bilimleri 20" basan karnede kırılımı "Fizik 8 / Kimya 6 / Biyoloji 6"
+    diye bölmek belgeyle çelişir (2026-07-18 sunum-birleştirme kararının aynısı).
+    Grup adı belgede GEÇMİYORSA (dersleri ayrı basan Maarif sınıf denemeleri)
+    hiçbir şey eklenmez — dersler kendi adlarıyla kalır.
+    """
+    out: dict[str, str] = {}
+    if not raw_keys:
+        return out
+    for gkey, members in _SUBJECT_GROUPS.items():
+        if gkey not in raw_keys:
+            continue
+        label = " ".join(w.capitalize() for w in gkey.split())
+        for m in members:
+            out[m] = label
+    return out
+
+
 def _display_subject_map(school_subjects: list[Subject]) -> dict[str, str]:
     """Karma havuzda SUNUM köprüsü: kanonik ders anahtarı → OKUL dersi adı.
 
@@ -219,9 +265,45 @@ def _display_name(base: str, display_map: dict[str, str] | None) -> str:
     return display_map.get(_subject_key(base), base)
 
 
+def _maarif_pool(
+    db: Session, student: User, *, section: ExamSection | None,
+    raw_keys: set[str] | None,
+) -> tuple[list[Subject], list[Topic], dict[str, str] | None]:
+    """Maarif denemesi havuzu: Maarif müfredatı (ÖNCELİKLİ) + sınav taksonomisi.
+
+    Kapsam türden gelir (MAARIF_SECTION_GRADE_CAP): 1. Basamak 9-10 konularını
+    ölçer, 11. Sınıf denemesi 9-11, 2. Basamak 9-12. Tamamlayıcı taksonomi
+    1./9./10. için TYT, 11./2. için AYT — Maarif ders listesinde karşılığı
+    olmayan sorular (paragraf/dil bilgisi gibi) evsiz kalmasın diye. Öncelik
+    liste sırasıdır → eşleşme Maarif konusuna gider, birikim öğrencinin gerçek
+    müfredat takibine akar.
+    """
+    cap = MAARIF_SECTION_GRADE_CAP.get(section) if section else None
+    school = universe_subjects(db, EXAM_UNIVERSE_MAARIF, student)
+    school_topics = universe_topics(
+        db, school, universe=EXAM_UNIVERSE_MAARIF, grade_cap=cap)
+    comp_universe = (
+        EXAM_UNIVERSE_AYT
+        if section in (ExamSection.MAARIF_11, ExamSection.MAARIF_2)
+        else EXAM_UNIVERSE_TYT
+    )
+    comp_subjects = universe_subjects(db, comp_universe, student)
+    comp_topics = universe_topics(
+        db, comp_subjects, universe=comp_universe, grade_cap=None)
+    seen = {s.id for s in school}
+    display = _display_subject_map(school)
+    display.update(_group_display_entries(raw_keys))
+    return (
+        school + [s for s in comp_subjects if s.id not in seen],
+        school_topics + comp_topics,
+        display,
+    )
+
+
 def _normalization_pool(
     db: Session, universe: str, student: User, *,
     grade_cap: int | None, school_grade: int | None,
+    section: ExamSection | None = None, raw_keys: set[str] | None = None,
 ) -> tuple[list[Subject], list[Topic], dict[str, str] | None]:
     """Evren aday havuzu; okul-müfredat sınavında KARMA havuz.
 
@@ -234,6 +316,8 @@ def _normalization_pool(
     Öncelik = liste sırası (deterministik evren-tekil ve AI aday sırası okul
     lehine). Kayıt türü (section) DEĞİŞMEZ — yalnız eşleştirme hedefi genişler.
     """
+    if universe == EXAM_UNIVERSE_MAARIF:
+        return _maarif_pool(db, student, section=section, raw_keys=raw_keys)
     subjects = universe_subjects(db, universe, student)
     topics = universe_topics(db, subjects, universe=universe, grade_cap=grade_cap)
     if universe != EXAM_UNIVERSE_TYT or not school_grade:
@@ -244,10 +328,12 @@ def _normalization_pool(
     school_topics = universe_topics(
         db, school_subjects, universe=EXAM_UNIVERSE_OKUL, grade_cap=school_grade)
     seen = {s.id for s in school_subjects}
+    display = _display_subject_map(school_subjects)
+    display.update(_group_display_entries(raw_keys))
     return (
         school_subjects + [s for s in subjects if s.id not in seen],
         school_topics + topics,
-        _display_subject_map(school_subjects),
+        display,
     )
 
 
@@ -290,6 +376,27 @@ def resolve_subject(raw_name: str | None, by_key: dict[str, Subject]) -> Subject
     if not raw_name:
         return None
     return by_key.get(_subject_key(raw_name))
+
+
+def resolve_subject_group(
+    raw_name: str | None, by_key: dict[str, Subject],
+) -> list[int]:
+    """Birleşik ders adının kapsadığı sistem derslerinin id'leri (yoksa boş).
+
+    "Fen Bilimleri" → [Fizik.id, Kimya.id, Biyoloji.id]. Konu adayları bu
+    derslerin konularından kurulur; hangisine ait olduğunu KONU söyler.
+    """
+    if not raw_name:
+        return []
+    members = _SUBJECT_GROUPS.get(_subject_key(raw_name))
+    if not members:
+        return []
+    out: list[int] = []
+    for m in members:
+        s = by_key.get(m)
+        if s is not None and s.id not in out:
+            out.append(s.id)
+    return out
 
 
 # ============================================================================
@@ -453,7 +560,15 @@ def normalize_topics(
             continue
 
         # Katman 1 — deterministik (birebir + ön-ek + evren-tekil)
-        home_map = home_maps.get(home_sid, {}) if home_sid else {}
+        if home_sid:
+            home_map = home_maps.get(home_sid, {})
+        else:
+            # ham ad birleşik ders olabilir ("Fen Bilimleri") → grubun
+            # derslerinin konuları tek havuzda aday olur
+            home_map = {}
+            for gsid in resolve_subject_group(row.get("subject_raw"), by_key):
+                for gk, gt in home_maps.get(gsid, {}).items():
+                    home_map.setdefault(gk, gt)
         det = _deterministic_match(lkey, home_map, universe_map)
         if det is not None:
             _assign_topic(row, det, subj_by_id, source="auto")
@@ -802,10 +917,29 @@ def detect_universe(read: dict, student: User) -> dict:
         votes[EXAM_UNIVERSE_LGS] += 2
     if re.search(r"\bkazanim\b|\byazili\b|\bokul\b", h):
         votes[EXAM_UNIVERSE_OKUL] += 2
+    # Maarif Modeli denemeleri (2026-09-09): başlık "ÇAP Maarif Model Birinci
+    # Basamak Sınavı" gibi; "maarif" tek başına güçlü sinyal, "basamak" onu
+    # pekiştirir. Kelime tanınmadığı için bu belgeler tek oyla TYT'ye düşüp
+    # "emin olamadım" bandına takılıyordu (ÇAP karnesi, öğrenci #34).
+    if re.search(r"\bmaarif\b", h):
+        votes[EXAM_UNIVERSE_MAARIF] += 2
+    if re.search(r"\bbasamak\b", h):
+        votes[EXAM_UNIVERSE_MAARIF] += 1
     # 2) yapı + İÇERİK (AYT belirteci: Edebiyat dersi TYT'de yoktur —
     #    okul-müfredat sınavı sinyali varken bu belirteç GEÇERSİZ)
     has_edb = any("edebiyat" in k or "turk dili" in k for k in subj_keys)
-    if has_edb and not school_grade:
+    # Maarif 1. Basamak YAPI İMZASI: Türk Dili ve Edebiyatı + BİRLEŞİK ders
+    # adları (Fen Bilimleri / Sosyal Bilimler) + ~125 soru. TYT'de ders
+    # "Türkçe"dir, LGS'de Edebiyat yoktur → bu üçlü Maarif'e özgüdür.
+    has_group_subj = any(k in _SUBJECT_GROUPS for k in subj_keys)
+    if has_edb and has_group_subj and 100 <= n_q <= 140:
+        votes[EXAM_UNIVERSE_MAARIF] += 2
+    # Edebiyat AYT belirtecidir AMA birleşik ders adı ("Fen Bilimleri" /
+    # "Sosyal Bilimler") varsa belge AYT OLAMAZ: AYT kitapçığı dersleri ayrı
+    # basar (AYT-FEN yerine Fizik/Kimya/Biyoloji satırları). Bu durumda
+    # Edebiyat sinyali Maarif 1. Basamak'a aittir (okul sinyalinin AYT oyunu
+    # geçersiz kılmasının aynısı — 4K GİS-1 dersi, 2026-07-18).
+    if has_edb and not school_grade and not has_group_subj:
         votes[EXAM_UNIVERSE_AYT] += 2
     if 100 <= n_q <= 130 and n_subj >= 6 and (not has_edb or school_grade):
         votes[EXAM_UNIVERSE_TYT] += 1
@@ -873,6 +1007,37 @@ def _ayt_section_from_answers(questions: list[dict]) -> ExamSection | None:
     return None
 
 
+_MAARIF_GRADE_TITLE_RE = re.compile(r"\b(9|10|11|12)\.?\s*sinif\b")
+
+
+def _maarif_section_for(read: dict, student: User) -> ExamSection:
+    """Maarif alt-türü: başlık → yapı → öğrencinin sınıfı.
+
+    Kullanıcı kuralı (2026-09-09): 1. Basamak ancak 10. sınıf müfredatı
+    tamamlanınca anlamlıdır (TYT mantığı) — 9. sınıf öğrencisinin "1. Basamak"
+    sınavı olmaz; belirsizlikte sınıf denemesine düşülür.
+    """
+    h = normalize(read.get("exam_title") or "")
+    if re.search(r"\bikinci basamak\b|\b2\s*basamak\b", h):
+        return ExamSection.MAARIF_2
+    if re.search(r"\bbirinci basamak\b|\b1\s*basamak\b", h):
+        return ExamSection.MAARIF_1
+    m = _MAARIF_GRADE_TITLE_RE.search(h)
+    if m:
+        return {9: ExamSection.MAARIF_9, 10: ExamSection.MAARIF_10,
+                11: ExamSection.MAARIF_11, 12: ExamSection.MAARIF_2}[int(m.group(1))]
+    subj_keys = {normalize(q.get("subject") or "") for q in read.get("questions") or []}
+    has_edb = any("edebiyat" in k or "turk dili" in k for k in subj_keys)
+    has_group = any(k in _SUBJECT_GROUPS for k in subj_keys)
+    if has_edb and has_group and 100 <= len(read.get("questions") or []) <= 140:
+        return ExamSection.MAARIF_1  # tam basamak formatı
+    grade = read.get("grade_hint") or student.grade_level
+    if student.is_graduate or (grade or 0) >= 12:
+        return ExamSection.MAARIF_2
+    return {9: ExamSection.MAARIF_9, 10: ExamSection.MAARIF_10}.get(
+        grade or 0, ExamSection.MAARIF_11)
+
+
 def _section_for(universe: str, read: dict, student: User) -> ExamSection:
     if universe == EXAM_UNIVERSE_TYT:
         return ExamSection.TYT
@@ -880,6 +1045,8 @@ def _section_for(universe: str, read: dict, student: User) -> ExamSection:
         return ExamSection.LGS
     if universe == EXAM_UNIVERSE_OKUL:
         return ExamSection.OKUL
+    if universe == EXAM_UNIVERSE_MAARIF:
+        return _maarif_section_for(read, student)
     # AYT alt-türü: 1) CEVAPLANAN bölümler (en güvenilir — içerik analizi)
     by_answers = _ayt_section_from_answers(read["questions"])
     if by_answers is not None:
@@ -907,6 +1074,11 @@ _SECTION_TO_UNIVERSE = {
     ExamSection.AYT_DIL: EXAM_UNIVERSE_AYT,
     ExamSection.LGS: EXAM_UNIVERSE_LGS,
     ExamSection.OKUL: EXAM_UNIVERSE_OKUL,
+    ExamSection.MAARIF_1: EXAM_UNIVERSE_MAARIF,
+    ExamSection.MAARIF_2: EXAM_UNIVERSE_MAARIF,
+    ExamSection.MAARIF_9: EXAM_UNIVERSE_MAARIF,
+    ExamSection.MAARIF_10: EXAM_UNIVERSE_MAARIF,
+    ExamSection.MAARIF_11: EXAM_UNIVERSE_MAARIF,
 }
 
 
@@ -1071,8 +1243,10 @@ def analyze(
         else:
             school_grade = _school_grade_signal(
                 merged.get("exam_title"), merged.get("grade_hint"), student)
+        raw_keys = {_subject_key(q.get("subject")) for q in qlist}
         subjects, topics, display_map = _normalization_pool(
-            db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
+            db, universe, student, grade_cap=grade_cap, school_grade=school_grade,
+            section=section, raw_keys=raw_keys)
 
         rows: list[dict] = []
         for q in qlist:
@@ -1263,7 +1437,9 @@ def _prepare_confirm(db: Session, student: User, payload: dict) -> dict:
     school_grade = _school_grade_signal(
         payload.get("title"), payload.get("grade_hint"), student)
     subjects, topics, display_map = _normalization_pool(
-        db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
+        db, universe, student, grade_cap=grade_cap, school_grade=school_grade,
+        section=section,
+        raw_keys={_subject_key(r.get("subject_raw")) for r in rows_in})
     topic_by_id = {t.id: t for t in topics}
     subj_by_id = {s.id: s for s in subjects}
     by_key = _subjects_by_key(subjects)
@@ -1497,7 +1673,9 @@ def rebuild_subject_nets(db: Session, exam: ExamResult, student: User) -> bool:
     school_grade = _school_grade_signal(
         exam.title, meta.get("grade_hint"), student)
     subjects, topics, display_map = _normalization_pool(
-        db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
+        db, universe, student, grade_cap=grade_cap, school_grade=school_grade,
+        section=section,
+        raw_keys={_subject_key(q.subject_name_raw) for q in exam.questions})
     topic_by_id = {t.id: t for t in topics}
     subj_by_id = {s.id: s for s in subjects}
     penalty = section_penalty(section)
@@ -1550,7 +1728,9 @@ def build_edit_draft(db: Session, student: User, exam: ExamResult) -> dict:
     school_grade = _school_grade_signal(
         exam.title, meta.get("grade_hint"), student)
     subjects, topics, display_map = _normalization_pool(
-        db, universe, student, grade_cap=grade_cap, school_grade=school_grade)
+        db, universe, student, grade_cap=grade_cap, school_grade=school_grade,
+        section=section,
+        raw_keys={_subject_key(q.subject_name_raw) for q in exam.questions})
     topic_by_id = {t.id: t for t in topics}
     subj_by_id = {s.id: s for s in subjects}
 

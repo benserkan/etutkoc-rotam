@@ -54,12 +54,21 @@ function sectionChoicesFor(grade: string): { value: string; label: string }[] {
     return [auto, { value: "lgs", label: "LGS" },
             { value: "okul", label: "Okul/Yazılı" }];
   }
-  if (g >= 9 && g <= 10) {
-    return [auto, { value: "tyt", label: "Sınıf İzleme/TYT" },
+  // Maarif Modeli (2026-09-09): 1. Basamak ≈ TYT (9-10 konuları), 2. Basamak ≈
+  // AYT (11-12). 1. Basamak 10. sınıf müfredatı tamamlanınca anlamlı → 9'da YOK.
+  // 12/mezun bu yıl klasik YKS'de → Maarif gösterilmez.
+  if (g === 9) {
+    return [auto, { value: "maarif_9", label: "Maarif 9. Sınıf" },
+            { value: "tyt", label: "Sınıf İzleme/TYT" },
             { value: "okul", label: "Okul/Yazılı" }];
   }
-  return [
-    auto,
+  if (g === 10) {
+    return [auto, { value: "maarif_10", label: "Maarif 10. Sınıf" },
+            { value: "maarif_1", label: "Maarif 1. Basamak" },
+            { value: "tyt", label: "Sınıf İzleme/TYT" },
+            { value: "okul", label: "Okul/Yazılı" }];
+  }
+  const yks = [
     { value: "tyt", label: "TYT" },
     { value: "ayt_say", label: "AYT Say" },
     { value: "ayt_ea", label: "AYT EA" },
@@ -67,6 +76,11 @@ function sectionChoicesFor(grade: string): { value: string; label: string }[] {
     { value: "ayt_dil", label: "AYT Dil" },
     { value: "okul", label: "Okul/Yazılı" },
   ];
+  if (g === 11) {
+    return [auto, { value: "maarif_1", label: "Maarif 1. Basamak" },
+            { value: "maarif_11", label: "Maarif 11. Sınıf" }, ...yks];
+  }
+  return [auto, ...yks];
 }
 
 export function ExamImportFlow({

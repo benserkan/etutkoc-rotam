@@ -163,11 +163,20 @@ def main():
         check("7. summary count/avg/best/last/first/trend", ok, f"status={r.status_code} {s}")
         check("7b. rows DESC (en yeni ilk)",
               r.status_code == 200 and j["rows"][0]["exam_date"] == "2026-05-10", f"{[x['exam_date'] for x in j['rows']]}")
-        # 7 tür: LGS + TYT + 4×AYT + OKUL (okul denemesi — PDF içe aktarma, 2026-07-16)
-        check("7c. section_options 7 adet (okul dahil)",
-              r.status_code == 200 and len(j["section_options"]) == 7
-              and any(o["value"] == "okul" for o in j["section_options"]),
-              f"{len(j.get('section_options', []))}")
+        # 12 tür: LGS + TYT + 4×AYT + OKUL + 5×MAARIF
+        # (Maarif Modeli denemeleri — 2026-09-09, migration x9y2b5c6b00x)
+        _sec_vals = {o["value"] for o in j.get("section_options", [])}
+        check("7c. section_options 12 adet (okul + 5 Maarif dahil)",
+              r.status_code == 200 and len(j["section_options"]) == 12
+              and "okul" in _sec_vals
+              and {"maarif_1", "maarif_2", "maarif_9", "maarif_10",
+                   "maarif_11"} <= _sec_vals,
+              f"{len(j.get('section_options', []))} {sorted(_sec_vals)}")
+        check("7d. Maarif etiketleri okunur (1. Basamak / 11. Sınıf)",
+              r.status_code == 200
+              and any(o["label"] == "Maarif 1. Basamak" for o in j["section_options"])
+              and any(o["label"] == "Maarif 11. Sınıf" for o in j["section_options"]),
+              f"{[o['label'] for o in j.get('section_options', [])]}")
 
         # 8. başka öğretmenin öğrencisi GET
         r = tc.get(f"/api/v2/teacher/students/{seed['s2_id']}/exams")

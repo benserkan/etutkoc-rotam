@@ -1932,7 +1932,14 @@ export type ExamSectionValue =
   | "ayt_ea"
   | "ayt_soz"
   | "ayt_dil"
-  | "okul"; // okul/sınıf denemesi (PDF içe aktarma, 2026-07-16)
+  | "okul" // okul/sınıf denemesi (PDF içe aktarma, 2026-07-16)
+  // Maarif Modeli denemeleri (2026-09-09): 1. Basamak ≈ TYT (9-10),
+  // 2. Basamak ≈ AYT (11-12) + sınıf düzeyi denemeleri.
+  | "maarif_1"
+  | "maarif_2"
+  | "maarif_9"
+  | "maarif_10"
+  | "maarif_11";
 
 export interface ExamSectionOption {
   value: ExamSectionValue;

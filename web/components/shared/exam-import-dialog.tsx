@@ -84,31 +84,69 @@ const GRADE_CHOICES: { value: string; label: string }[] = [
   { value: "mezun", label: "Mezun" },
 ];
 
-function sectionChoicesFor(grade: string): { value: string; label: string }[] {
-  const auto = { value: "", label: "Otomatik tespit" };
-  if (!grade) {
-    return [auto];
-  }
+type SectionGroup = { group: string | null; options: { value: string; label: string }[] };
+
+const YKS_OPTIONS = [
+  { value: "tyt", label: "TYT" },
+  { value: "ayt_say", label: "AYT (Sayısal)" },
+  { value: "ayt_ea", label: "AYT (Eşit Ağırlık)" },
+  { value: "ayt_soz", label: "AYT (Sözel)" },
+  { value: "ayt_dil", label: "AYT (Dil)" },
+];
+const OKUL_OPTION = { value: "okul", label: "Okul Sınavı / Yazılı" };
+
+/**
+ * Beyan listesi — sınıfa göre. Maarif Modeli kuralı (kullanıcı, 2026-09-09):
+ * 1. Basamak ≈ TYT (9-10 konuları), 2. Basamak ≈ AYT (11-12). 1. Basamak
+ * ancak 10. sınıf müfredatı tamamlanınca anlamlıdır → 9. sınıfta SUNULMAZ.
+ * Bu yıl 9-10-11 Maarif modelde; 12 ve mezunlar klasik YKS'de → onlara Maarif
+ * gösterilmez. 2. Basamak seneye (12. sınıf Maarif'e geçince) açılır.
+ */
+function sectionChoicesFor(grade: string): SectionGroup[] {
+  const auto: SectionGroup = { group: null, options: [{ value: "", label: "Otomatik tespit" }] };
+  if (!grade) return [auto];
   const g = grade === "mezun" ? 13 : Number(grade);
   if (g >= 5 && g <= 8) {
-    return [auto, { value: "lgs", label: "LGS" },
-            { value: "okul", label: "Okul Sınavı / Yazılı" }];
+    return [auto, { group: null, options: [{ value: "lgs", label: "LGS" }, OKUL_OPTION] }];
   }
-  if (g >= 9 && g <= 10) {
+  if (g === 9) {
     return [
       auto,
-      { value: "tyt", label: "Sınıf İzleme / TYT formatı" },
-      { value: "okul", label: "Okul Sınavı / Yazılı" },
+      { group: "Maarif Modeli", options: [{ value: "maarif_9", label: "Maarif 9. Sınıf" }] },
+      { group: "Diğer", options: [{ value: "tyt", label: "Sınıf İzleme / TYT formatı" }, OKUL_OPTION] },
+    ];
+  }
+  if (g === 10) {
+    return [
+      auto,
+      {
+        group: "Maarif Modeli",
+        options: [
+          { value: "maarif_10", label: "Maarif 10. Sınıf" },
+          { value: "maarif_1", label: "Maarif 1. Basamak" },
+        ],
+      },
+      { group: "Diğer", options: [{ value: "tyt", label: "Sınıf İzleme / TYT formatı" }, OKUL_OPTION] },
+    ];
+  }
+  if (g === 11) {
+    return [
+      auto,
+      {
+        group: "Maarif Modeli",
+        options: [
+          { value: "maarif_1", label: "Maarif 1. Basamak" },
+          { value: "maarif_11", label: "Maarif 11. Sınıf" },
+        ],
+      },
+      { group: "YKS", options: YKS_OPTIONS },
+      { group: "Diğer", options: [OKUL_OPTION] },
     ];
   }
   return [
     auto,
-    { value: "tyt", label: "TYT" },
-    { value: "ayt_say", label: "AYT (Sayısal)" },
-    { value: "ayt_ea", label: "AYT (Eşit Ağırlık)" },
-    { value: "ayt_soz", label: "AYT (Sözel)" },
-    { value: "ayt_dil", label: "AYT (Dil)" },
-    { value: "okul", label: "Okul Sınavı / Yazılı" },
+    { group: "YKS", options: YKS_OPTIONS },
+    { group: "Diğer", options: [OKUL_OPTION] },
   ];
 }
 
@@ -487,9 +525,19 @@ function PickStep({
               disabled={!declGrade}
               className="mt-1 h-9 w-full rounded-md border border-border bg-card px-2 text-sm text-foreground disabled:opacity-60"
             >
-              {sectionChoices.map((c) => (
-                <option key={c.value} value={c.value}>{c.label}</option>
-              ))}
+              {sectionChoices.map((grp, i) =>
+                grp.group ? (
+                  <optgroup key={grp.group} label={grp.group}>
+                    {grp.options.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </optgroup>
+                ) : (
+                  grp.options.map((c) => (
+                    <option key={c.value || `auto-${i}`} value={c.value}>{c.label}</option>
+                  ))
+                ),
+              )}
             </select>
           </label>
         </div>

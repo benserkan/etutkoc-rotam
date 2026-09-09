@@ -6,6 +6,81 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## MAARİF MODELİ SINAV TÜRLERİ — deneme içe aktarma (2026-09-09, migration `x9y2b5c6b00x`)
+
+**Tetikleyici (koç, saha):** 11. sınıf Maarif öğrencisi Elif Demirci (#34) için
+"ÇAP **Maarif Model Birinci Basamak** Sınavı" karnesi yüklenemedi — beyan
+listesinde Maarif türü YOK, "Otomatik tespit" → *"hangi sınav türü olduğundan
+emin olamadım"*, konular eşleşmedi.
+- **ÜÇ KÖK NEDEN (kod + gerçek belgeyle kanıtlandı):** (1) `ExamSection`'da
+  Maarif türü yoktu (lgs/tyt/ayt×4/okul); 11. sınıf beyan listesi TYT+AYT×4+Okul.
+  (2) Tespit motoru başlıkta yalnız `tyt|msu|ayt|lgs|kazanim|yazili|okul`
+  arıyordu → **"maarif"/"basamak" tanınmıyordu**; yapı kuralı 100-130 soruda
+  **≥6 ders** istiyor ama karnede **4 BİRLEŞİK ders** var (TDE 40 · Sosyal
+  Bilimler 25 · Matematik 40 · Fen Bilimleri 20 = 125) → tek oyla ("öğrenci 9+
+  → TYT") düşük güven. (3) **"Fen Bilimleri" / "Sosyal Bilimler" birleşik ders
+  adlarının Maarif müfredatında karşılığı YOK** (Fizik/Kimya/Biyoloji ve
+  Tarih/Coğrafya/Felsefe/Din ayrı ders) → ham ad hiçbir derse çözülemiyor,
+  o dersin konu havuzu bulunamıyor, 45/125 soru evsiz kalıyordu.
+- **KULLANICI MODELİ (2026-09-09):** Maarif'te sınav SİSTEMİ değişmiyor —
+  **1. Basamak ≈ TYT** (9-10 konuları), **2. Basamak ≈ AYT** (11-12). Bu yıl
+  9-10-11 Maarif modelde; **12 ve mezunlar klasik YKS'de** (2. Basamak seneye).
+  **1. Basamak ancak 10. sınıf müfredatı tamamlanınca anlamlı → 9. sınıfta
+  SUNULMAZ** (TYT/AYT mantığının aynısı).
+- **Migration `x9y2b5c6b00x`** (← w8x1a4b5a99w): `examsection` enum'una
+  `MAARIF_1/2/9/10/11` (PG `ALTER TYPE ADD VALUE`, SQLite'ta no-op; additive,
+  downgrade no-op). MAARIF_2 şimdiden eklendi (seneye migration'sız açılsın),
+  beyan listesinde BU YIL gösterilmez.
+- **Yeni evren `EXAM_UNIVERSE_MAARIF`:** omurga DAİMA Maarif müfredatı
+  (öğrencinin kendi modeline bakılmaz), kapsam TÜRDEN gelir
+  (`MAARIF_SECTION_GRADE_CAP`: 9→9 · 10→10 · **1. Basamak→10** · 11→11 ·
+  2. Basamak→12). Tamamlayıcı taksonomi: 1./9./10. → TYT, 11./2. → AYT
+  (Maarif listesinde karşılığı olmayan soru evsiz kalmasın; öncelik Maarif).
+- **BİRLEŞİK DERS KÖPRÜSÜ `_SUBJECT_GROUPS`:** "fen bilimleri" →
+  Fizik+Kimya+Biyoloji · "sosyal bilimler" → Tarih+Coğrafya+Felsefe+Din. Ham ad
+  gruba çözülünce konu adayları O GRUBUN derslerinden gelir; **nihai ders yine
+  KONUdan türer** ("konu dersi belirler" ilkesi bozulmadı). SUNUM ayrı:
+  `_group_display_entries` belgede grup adı geçiyorsa kırılımı "Fen Bilimleri"
+  olarak birleşik tutar (2026-07-18 sunum-birleştirme kararının aynısı);
+  dersleri ayrı basan Maarif sınıf denemelerinde hiçbir şey birleştirilmez.
+- **TESPİT:** "maarif" +2 · "basamak" +1 · **yapı imzası** (TDE + birleşik ders
+  + 100-140 soru) +2. **KRİTİK GUARD:** birleşik ders adı varsa **Edebiyat'ın
+  AYT oyu GEÇERSİZ** — AYT kitapçığı dersleri ayrı basar; bu guard olmadan
+  yapı-imzalı belge AYT'ye kayıyordu (testin yakaladığı gerçek açık).
+  Alt tür: başlık ("birinci/ikinci basamak", "N. sınıf") → yapı → öğrenci sınıfı.
+- **Net cezası 4** (belgeden doğrulandı: 25D 11Y → 22,25 = 25 − 11/4).
+- **YAYILIM:** EXAM_SECTION_LABELS · MAARIF_SECTIONS/GRADE_CAP export ·
+  `_SECTION_TO_UNIVERSE` · 4 havuz çağrısı (`analyze` · `_prepare_confirm` ·
+  edit/draft ×2) `section`+`raw_keys` alır · `ExamSectionLiteral` (7→12) ·
+  web `ExamSectionValue` + **3 ton haritası** + beyan seçicisi **optgroup'lu**
+  (Maarif / YKS / Diğer) · mobil 3 ton + kısaltma haritası + çip listesi.
+- **Test:** YENİ `test_api_v2_exam_import_maarif.py` **20/20** (tespit ·
+  9. sınıfta 1. Basamak YOK · "İkinci Basamak" · kelimesiz yapı imzası ·
+  grup köprüsü + nihai ders · sınıf kapsamı [11. konu 1. Basamak'ta aday DEĞİL,
+  maarif_11'de aday] · sunum birleştirme · net /4 · kayıt · **TYT regresyonu**).
+  **AYIRT EDİCİLİK KANITLI:** tespit oyları kapatılınca 8a/8b, grup köprüsü
+  kapatılınca 5b kırmızı. `teacher_exams` 18→**19** (7 tür → 12 tür sözleşmesi).
+  Regresyon: exam_import 75 · topic_analysis 10 · wrong_bridge 11 ·
+  period_views 13 GREEN; web tsc+eslint temiz (mobil `preview/*` 6 hatası
+  ÖNCEDEN var — stash'le doğrulandı, bu işle ilgisiz).
+- **GERÇEK BELGE DOĞRULAMASI** (`sim_exam_import_real.py`, gerçek Gemini,
+  kayıt yok): ÇAP karnesi → **tespit `maarif / Maarif 1. Basamak · güven
+  YÜKSEK`** · **120/125 soru (%96) müfredat konusuna eşlendi** · 4 dersin neti
+  belgeyle BİREBİR (22,25 / 15,00 / 24,00 / 13,75) · şüpheli 0 · kazanım
+  cümleleri Maarif konularına bağlandı ("Açık hava basıncına ilişkin çıkarım
+  yapabilme" → Açık Hava Basıncı). Eşleşmeyen 5 satır TDE tema adları
+  (Halk Edebiyatı / Söz Sanatları / İslamiyet Öncesi / Divan Şiiri Nazım
+  Biçimleri) — koç önizlemede bağlar.
+- **BİLİNEN KÜÇÜK KUSUR:** aynı ada sahip konu hem Maarif hem TYT/AYT
+  taksonomisinde varsa AI bazen tamamlayıcı listeyi seçiyor (gerçek koşuda 2
+  "Fonksiyonlar" satırı TYT Matematik'e gitti). Ders özeti display_map ile
+  birleşik göründüğü için koça yansımıyor; istenirse aday sıralamasında Maarif'i
+  zorlayan post-işlem eklenir.
+- **NOT (kullanıcı):** Elif'in ESKİ 10. sınıf denemeleri "TYT" olarak
+  kaydedilmişti — bilinçli, dokunulmadı.
+
+---
+
 ## ÖĞRENCİ DETAY BAŞLIĞI v2 — kimlik + 2 eylem + "İşlemler" menüsü + gruplu sekmeler + Gelişim sekmesi — CANLI (2026-09-08, migration YOK)
 
 **Tetikleyici (koç, ekran görüntüsü):** `/teacher/students/113` başlığı "sıkışık

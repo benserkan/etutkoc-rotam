@@ -137,8 +137,12 @@ EXAM_UNIVERSE_TYT = "tyt"
 EXAM_UNIVERSE_AYT = "ayt"
 EXAM_UNIVERSE_LGS = "lgs"
 EXAM_UNIVERSE_OKUL = "okul"
+# Maarif denemeleri: omurga öğrencinin MAARIF müfredatıdır (sınıf-capli),
+# TYT/AYT taksonomisi tamamlayıcı olarak eklenir (2026-09-09).
+EXAM_UNIVERSE_MAARIF = "maarif"
 EXAM_UNIVERSES = (
     EXAM_UNIVERSE_TYT, EXAM_UNIVERSE_AYT, EXAM_UNIVERSE_LGS, EXAM_UNIVERSE_OKUL,
+    EXAM_UNIVERSE_MAARIF,
 )
 
 

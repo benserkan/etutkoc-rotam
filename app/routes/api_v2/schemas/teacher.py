@@ -2032,7 +2032,12 @@ class StudentResetPasswordResult(BaseModel):
 # KP4a — Deneme sınavı sonuçları (Akademik Çıktı / Deneme Takibi)
 # =============================================================================
 
-ExamSectionLiteral = Literal["lgs", "tyt", "ayt_say", "ayt_ea", "ayt_soz", "ayt_dil", "okul"]
+# ExamSection enum'unun aynası — yeni tür eklenince BURASI da genişletilir
+# (2026-09-09: Maarif Modeli türleri).
+ExamSectionLiteral = Literal[
+    "lgs", "tyt", "ayt_say", "ayt_ea", "ayt_soz", "ayt_dil", "okul",
+    "maarif_1", "maarif_2", "maarif_9", "maarif_10", "maarif_11",
+]
 
 
 class ExamSectionOption(BaseModel):
