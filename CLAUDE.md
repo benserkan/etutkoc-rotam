@@ -78,6 +78,38 @@ emin olamadım"*, konular eşleşmedi.
   zorlayan post-işlem eklenir.
 - **NOT (kullanıcı):** Elif'in ESKİ 10. sınıf denemeleri "TYT" olarak
   kaydedilmişti — bilinçli, dokunulmadı.
+- **PERFORMANS PAKETİ (aynı gün, koç "yükleme tamamlanmıyor" dedi):** canlıda
+  ilk yükleme denemesi 3-4 dakika sürüp bitmiyordu. Prod loglarında
+  `Gemini çağrısı başarısız: The read operation timed out`.
+  **PROD ÖLÇÜMÜ (aynı 125 soruluk karne, 2,2 MB):** pro **126,7 sn** ·
+  flash **79,9 sn** (ikisi de 125 soruyu eksiksiz okudu) → eski `_TIMEOUT=150`
+  pro'nun HEMEN üstündeydi ve `read_exam_pdf_double` **İKİ PRO'yu paralel**
+  çalıştırdığı için Gemini tarafında ikisi birden yavaşlayıp sınırı aşıyordu;
+  timeout → flash fallback (+80 sn) → istek 3-4 dk. Düzeltmeler:
+  · `_TIMEOUT` 150 → **240** · çift okuma **pro + flash** (duvar süresi tek
+  pro'ya iner; ayrıca "bağımsız iki okuma" ilkesi güçlenir — aynı model aynı
+  hatayı iki kez yapabilir) · `_ai_match_labels` partileri **PARALEL** (≤4) +
+  parti 25 → **40** · **AI aday listesi gruba daraltıldı** (ham ders birleşikse
+  adaylar yalnız o grubun dersleri: ~750 konu → ~200) · gunicorn
+  `--timeout` 60 → **300** (güvenlik ağı; uçlar zaten senkron/threadpool) ·
+  önizleme metni "100+ soruluk karnelerde 2-3 dakika sürebilir".
+  **Ölçülen toplam (aynı karne, prod):** 309 sn → 257 sn → **267,8 sn**;
+  paralelleştirme+daraltma süreyi belirgin düşürmedi çünkü darboğaz OKUMA
+  (~130 sn, pro'nun kendi hızı). Bekleme metni "3-5 dakika" olarak
+  dürüstleştirildi. Caddy `/api/v2/*` isteklerini doğrudan FastAPI'ye verdiği
+  için (proxy timeout YOK) bu süre güvenli; asıl çözüm ileride arka plan işi +
+  bildirim olur. **KURAL: uzun AI ucu eklerken model timeout'u ile gunicorn/proxy
+  sınırı BİRLİKTE ayarlanır; aynı modeli paralel iki kez çağırmak servis
+  tarafında ikisini de yavaşlatır — çift okuma FARKLI modelle yapılır.**
+- **DERS KAYMASI + GRUP KISITI (ölçümün yakaladığı gerçek veri hatası):** AI bir
+  "Fen Bilimleri" sorusunu Coğrafya konusuna bağlayınca ders kırılımı belgeden
+  kaydı (Fen 19 / Sosyal 26 — belgede 20 / 25). Grup dışı AI önerisi artık
+  REDDEDİLİR (satır boş kalır, koç bağlar). **İLK SÜRÜM FAZLA KATIYDI:** kısıt
+  ders KİMLİĞİ kıyaslıyordu; aynı ders hem Maarif hem TYT taksonomisinde
+  bulunabildiği için ("Biyoloji" ↔ "TYT Biyoloji") geçerli eşleşmeler düşüyordu
+  → kısıt **kanonik ders anahtarına** çevrildi (`group_member_keys`).
+  Test: `exam_import_maarif` 20 → **22** (11a grup dışı REDDEDİLDİ ·
+  11b grup içi KABUL).
 
 ---
 

@@ -399,7 +399,7 @@ function ImportFlow({
                   <>
                     Uydurmayı önlemek için belge <b>iki kez bağımsız</b> okunur ve
                     sonuçlar karşılaştırılır — 100+ soruluk karnelerde{" "}
-                    <b>2-3 dakika</b> sürebilir, sayfayı kapatma.
+                    <b>3-5 dakika</b> sürebilir (ölçüldü), sayfayı kapatma.
                   </>
                 )}
               </p>
