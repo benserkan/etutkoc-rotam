@@ -1706,6 +1706,53 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
   25 test** sayıldı (Twins TYT Biyoloji'deki birim-kararı deseni), etikete soru
   sayısı yazıldı. s.358+ Paragraf Sözlük, s.372+ cevap anahtarları katalog dışı.
   JSON `data/kitap-katalog/ari_paragrafin_ritmi.json`.
+- **GEOMETRİ + 3D MAT PAKETİ — CANLI (2026-09-09, prod id 118-120):** kullanıcı
+  8 Eylül gecesi 7 PDF indirmiş, biri işlenmiş ama **hiçbiri yüklenmemişti**
+  (dev'de duruyordu, prod'da yoktu) — "yükleme tamamlanamadı" bu kopuk halkaydı.
+  - **Eyüp B Geometri Soru Bankası (prod id=118): 27 bölüm · 154 test · 27/27
+    eşli.** Önceki oturumun boru hattı çıktısı (taranmış 176 MB; ~13 mükerrer
+    sayfa + basılı numara kayması → başlık sahiplenmesiyle atandı) commit +
+    prod seed edildi. NOT: tarama basılı 325'te bitiyor, Katı Cisimler 9 test —
+    kitabın devamı bu taramadan doğrulanamıyor (2027 VDK sürümünde teyit edilir).
+  - **Orijinal TYT-AYT Geometri Soru Bankası (prod id=119): 35 satır · 233 test ·
+    35/35 eşli.** Dijital PDF (432 s, tam metin katmanı) → **Gemini'siz font
+    imzası** taraması (20pt kategori + 16pt konu + **11pt TEST-N, x>500**);
+    numara KONU başına sıfırlanır, 3 kategori (Kazanımlarla Öğreten / ÖSYM Tarzı /
+    ÖSYM Tarzı Orijinal) tek sayaçta akar. **ÜÇ KAYNAK** (içindekiler test
+    aralıkları "(Test 1-2-3)" · gövde font imzası · boru hattı) 30 konunun
+    **29'unda birebir**. İki gerçek düzeltme: (a) *Üçgende Açı-Kenar Bağıntıları*
+    içindekilerde 4, gövdede 5 bant (TEST-5 = ÖSYM Tarzı Orijinal) → **kontak föy
+    göz teyidi**, gövde esas (TOC dizgi eksiği); (b) *Çemberde Uzunluk* TEST-2
+    iki kez basılmış, TEST-3 hiç yok (yayınevi dizgi hatası) — sayfa akışı
+    kesintisiz → 11 test, kayıp yok. **BANTSIZ BOŞLUK DERSİ tekrar kanıtlandı:**
+    her bölüm sonunda **"ÖSYM'de Çıkmış Sorular"** bloğu var (16/12/12/10/20
+    soru), test numarası TAŞIMAZ → hem numara taraması hem boru hattı kaçırır;
+    12 soruluk test birimiyle 2/1/1/1/2 olarak eklendi (etikete soru sayısı).
+  - **3D TYT Matematik Video Destekli Defter (prod id=120): 40 bölüm · 92 test ·
+    37/40 eşli · tip `konu_anlatimli`.** **YENİ YAPI SINIFI — DEFTER:** soru
+    bankası değil; içerik Örnek / Bire Bir ÖSYM / Beceri Temelli Soru /
+    Meraklısına Soru blokları, **klasik "TEST N" bandı YOK** → numara tabanlı
+    boru hattı çalışmaz (Twins sınıfı; koşu Gemini "write operation timed out"
+    ile de tıkandı, durduruldu). Yapı **içindekilerden** (40 bölüm + basılı
+    başlangıç sayfaları, yüksek çözünürlükte okundu); **bölüm uzunluğu = sonraki
+    bölümün başlangıcı − kendi başlangıcı** → taramadaki eksik sayfalardan
+    ETKİLENMEZ. Test birimi 18 sayfalık vision örnekleminden: **~2,4 soru
+    bloğu/sayfa** (+~1,8 çözümlü örnek) → `ceil(sayfa × 2,4 / 12)`.
+    **TARAMA EKSİK:** PDF 319 sayfa ↔ kitap 367+ sayfa, ofset kitap boyunca
+    kayıyor (pdf s5=7 · s60=68 · s130=149 · s200=223 · s280=322) → ~47 sayfa yok;
+    son bölüm (Karmaşık Sayılar) tutucu 1 test. 3 eşsiz satır bilinçli:
+    İkinci Dereceden Denklemler + Karmaşık Sayılar (TYT taksonomisinde yok, AYT
+    konusu) + Sayma-Küme-Fonksiyon İlişkisi (karma). Prod'da ayrıca koç katkısı
+    `id=95 "3D-TYT MATEMATİK"` (39 bölüm) duruyor — bu resmi kayıt onun düzgün hâli.
+  - **KURAL (birim kararı):** "TEST N" bandı olmayan defter/föy kitaplarında test
+    sayısı UYDURULMAZ; gövdeden **soru bloğu yoğunluğu ölçülür** (küçük örneklem,
+    dpi≤70 — tam çözünürlük Gemini yüklemesini zaman aşımına düşürür) ve 12
+    soruluk sistem birimine bölünür; varsayım JSON `warnings`'e yazılır,
+    `--reset` ile tek komutta değiştirilebilir.
+  - **DERS (araç):** bu ortamda bash heredoc Türkçe karakteri bozuyor
+    ("MATEMATİK" eşleşmiyor) → Türkçe metin içeren betikler **Write ile dosyaya**
+    yazılır, argümanlar runner .py içinden verilir (PowerShell ANSI tuzağının
+    heredoc hâli).
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı
