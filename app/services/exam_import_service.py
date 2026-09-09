@@ -378,6 +378,20 @@ def resolve_subject(raw_name: str | None, by_key: dict[str, Subject]) -> Subject
     return by_key.get(_subject_key(raw_name))
 
 
+def group_member_keys(raw_name: str | None) -> set[str]:
+    """Birleşik ders adının kapsadığı KANONİK ders anahtarları (yoksa boş).
+
+    Kimlik (subject.id) değil ANAHTAR kullanılır: aynı ders hem Maarif hem
+    TYT/AYT taksonomisinde bulunabilir ("Biyoloji" ↔ "TYT Biyoloji") ve ikisi de
+    "Fen Bilimleri" grubunun meşru üyesidir. Kimlik bazlı kısıt, AI sınav
+    taksonomisindeki karşılığı seçtiğinde geçerli eşleşmeleri düşürüyordu
+    (prod ölçümü 2026-09-09).
+    """
+    if not raw_name:
+        return set()
+    return set(_SUBJECT_GROUPS.get(_subject_key(raw_name)) or ())
+
+
 def resolve_subject_group(
     raw_name: str | None, by_key: dict[str, Subject],
 ) -> list[int]:
@@ -597,14 +611,35 @@ def normalize_topics(
         ai_pending.setdefault((home_sid, lkey), []).append(idx)
 
     if use_ai and ai_pending:
+        items = list(ai_pending.items())
         label_items = [
             {"key": i, "subject": (subj_names.get(sid) if sid else rows[idxs[0]].get("subject_raw")),
              "label": rows[idxs[0]].get("topic_raw") or ""}
-            for i, ((sid, _lk), idxs) in enumerate(ai_pending.items())
+            for i, ((sid, _lk), idxs) in enumerate(items)
         ]
-        ai_hits = _ai_match_labels(label_items, topics, subj_names)
+        # ADAY DARALTMA: ham ders BİRLEŞİKSE ("Fen Bilimleri") o etiketin
+        # adayları yalnız grubun dersleridir. İki kazanç: (1) prompt küçülür —
+        # tüm havuz ~750 konu, grup ~200 → eşleme belirgin hızlanır (prod:
+        # eşleme tek başına ~180 sn sürüyordu); (2) AI grup dışına ÇIKAMAZ,
+        # ders kırılımı belgeyle tutarlı kalır.
+        by_group: dict[str, list[dict]] = {}
+        rest: list[dict] = []
+        for li, ((sid, _lk), idxs) in zip(label_items, items):
+            gkeys = group_member_keys(rows[idxs[0]].get("subject_raw")) if sid is None else set()
+            if gkeys:
+                by_group.setdefault(_subject_key(rows[idxs[0]].get("subject_raw")), []).append(li)
+            else:
+                rest.append(li)
+        ai_hits: dict[int, int] = {}
+        if rest:
+            ai_hits.update(_ai_match_labels(rest, topics, subj_names))
+        for gkey, gitems in by_group.items():
+            members = set(_SUBJECT_GROUPS.get(gkey) or ())
+            gsids = {s.id for s in subjects if _subject_key(s.name) in members}
+            gtopics = [t for t in topics if t.subject_id in gsids]
+            ai_hits.update(_ai_match_labels(gitems, gtopics or topics, subj_names))
         topic_by_id = {t.id: t for t in topics}
-        for i, ((_sid, _lk), idxs) in enumerate(ai_pending.items()):
+        for i, ((_sid, _lk), idxs) in enumerate(items):
             tid = ai_hits.get(i)
             tp = topic_by_id.get(tid) if tid else None
             # GRUP KISITI: ham ders birleşikse ("Fen Bilimleri") eşleşme O
@@ -614,9 +649,10 @@ def normalize_topics(
             # satır 'eşleşmedi' kalır, koç önizlemede bağlar (yanlış derse
             # yazmaktansa boş bırakmak dürüst).
             if tp is not None and _sid is None:
-                gids = resolve_subject_group(
-                    rows[idxs[0]].get("subject_raw"), by_key)
-                if gids and tp.subject_id not in gids:
+                gkeys = group_member_keys(rows[idxs[0]].get("subject_raw"))
+                tp_subj = subj_by_id.get(tp.subject_id)
+                if gkeys and (tp_subj is None
+                              or _subject_key(tp_subj.name) not in gkeys):
                     logger.info(
                         "exam_import: grup dışı AI eşleşmesi reddedildi "
                         "(%s → %s)", rows[idxs[0]].get("subject_raw"), tp.name)
