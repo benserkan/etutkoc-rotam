@@ -29,6 +29,7 @@ except Exception:
 
 import copy
 import json
+import re
 import secrets
 from datetime import datetime, timezone
 
@@ -196,10 +197,19 @@ def main() -> int:
         r2 = ai_exam_import._normalize_read(copy.deepcopy(read_behavior["read"]))
         return r1, r2
 
+    ai_label_map: dict[str, int] = {}  # etiket → AI'ın döndüreceği topic_id
+
     def fake_generate(parts, *, personal_data, json_mode=True, timeout=45.0,
                       max_output_tokens=8192, prefer_paid=True, **kw):
-        # AI katmanı BİLEREK boş — eşleşmeler deterministik katmandan gelmeli
-        return json.dumps({"mappings": []})
+        # Varsayılan BOŞ (eşleşmeler deterministik katmandan gelmeli);
+        # ai_label_map doluysa o etiket için istenen topic_id döndürülür.
+        prompt = parts[-1]["text"]
+        mappings = []
+        for m in re.finditer(r"^(\d+): (.+?) \(dersi", prompt, re.M):
+            key, label = int(m.group(1)), m.group(2).strip()
+            if label in ai_label_map:
+                mappings.append({"key": key, "topic_id": ai_label_map[label]})
+        return json.dumps({"mappings": mappings})
 
     orig_double = ai_exam_import.read_exam_pdf_double
     orig_generate = svc.gemini.generate
@@ -335,6 +345,28 @@ def main() -> int:
             fen_q = [q for q in qrows if q.subject_name_raw == "Fen Bilimleri"]
             check("10d. soru satırında ham ad 'Fen Bilimleri' + normalize konu Fizik",
                   any(q.topic_id == ids["fizik10"] for q in fen_q), str(len(fen_q)))
+
+        # --- 11) GRUP KISITI: AI grup DIŞINA çıkamaz ---
+        # "Fen Bilimleri" satırına AI bir TARİH konusu önerirse REDDEDİLMELİ
+        # (prod'da tam bu yüzden ders kırılımı belgeden kaymıştı: Fen 19 /
+        # Sosyal 26 — belgede 20 / 25).
+        read_behavior["read"] = build_maarif_read(
+            f"{PFX} ÇAP Maarif Model Birinci Basamak Sınavı")
+        read_behavior["read"]["questions"][1]["topic"] = "Zzz Bilinmeyen Kazanım"
+        ai_label_map.clear()
+        ai_label_map["Zzz Bilinmeyen Kazanım"] = ids["tarih10"]   # grup DIŞI
+        r = ct.post(base, files={"file": pdf_file})
+        rows11 = {x["topic_raw"]: x for x in (r.json().get("rows") or [])}
+        check("11a. 'Fen Bilimleri' → Tarih konusu AI önerisi REDDEDİLDİ",
+              rows11.get("Zzz Bilinmeyen Kazanım", {}).get("topic_id") is None,
+              str(rows11.get("Zzz Bilinmeyen Kazanım"))[:200])
+        ai_label_map["Zzz Bilinmeyen Kazanım"] = ids["fizik10"]   # grup İÇİ
+        r = ct.post(base, files={"file": pdf_file})
+        rows12 = {x["topic_raw"]: x for x in (r.json().get("rows") or [])}
+        check("11b. aynı satıra grup İÇİ (Fizik) öneri KABUL edildi",
+              rows12.get("Zzz Bilinmeyen Kazanım", {}).get("topic_id") == ids["fizik10"],
+              str(rows12.get("Zzz Bilinmeyen Kazanım"))[:200])
+        ai_label_map.clear()
 
     finally:
         ai_exam_import.read_exam_pdf_double = orig_double

@@ -444,7 +444,10 @@ def _deterministic_match(
     return None
 
 
-_AI_LABEL_BATCH = 25
+# Parti başına etiket sayısı. 40: 125 soruluk karnede parti sayısını 5'ten 3'e
+# indirir (aday konu listesi zaten her partide tekrar gönderiliyor — az parti =
+# az tekrar = hızlı). Partiler ayrıca PARALEL çalışır.
+_AI_LABEL_BATCH = 40
 
 
 def _ai_match_labels(
@@ -462,8 +465,11 @@ def _ai_match_labels(
     )
     out: dict[int, int] = {}
     valid_ids = {t.id for t in candidates}
-    for i in range(0, len(labels), _AI_LABEL_BATCH):
-        batch = labels[i:i + _AI_LABEL_BATCH]
+    batches = [labels[i:i + _AI_LABEL_BATCH]
+               for i in range(0, len(labels), _AI_LABEL_BATCH)]
+
+    def _run_batch(batch: list[dict]) -> dict[int, int]:
+        res: dict[int, int] = {}
         lab_lines = "\n".join(
             f"{r['key']}: {r['label']} (dersi: {r['subject'] or '?'})" for r in batch
         )
@@ -496,9 +502,21 @@ def _ai_match_labels(
                     continue
                 k, tid = m.get("key"), m.get("topic_id")
                 if k in keys and tid in valid_ids:
-                    out[int(k)] = int(tid)
+                    res[int(k)] = int(tid)
         except Exception as e:  # noqa: BLE001 — best-effort katman
             logger.warning("exam_import AI konu eşleme parti hatası: %s", e)
+        return res
+
+    # Partiler PARALEL: 125 soruluk karnede ~5 parti sıralı çalışınca eşleme tek
+    # başına ~180 sn sürüyordu (prod ölçümü 2026-09-09; toplam istek 309 sn).
+    # Her parti bağımsız → paralelde duvar süresi tek partiye iner.
+    if len(batches) == 1:
+        return _run_batch(batches[0])
+    from concurrent.futures import ThreadPoolExecutor
+
+    with ThreadPoolExecutor(max_workers=min(4, len(batches))) as pool:
+        for part in pool.map(_run_batch, batches):
+            out.update(part)
     return out
 
 
@@ -589,6 +607,20 @@ def normalize_topics(
         for i, ((_sid, _lk), idxs) in enumerate(ai_pending.items()):
             tid = ai_hits.get(i)
             tp = topic_by_id.get(tid) if tid else None
+            # GRUP KISITI: ham ders birleşikse ("Fen Bilimleri") eşleşme O
+            # GRUBUN derslerinden olmalı. Prod ölçümünde AI bir Fen sorusunu
+            # Coğrafya konusuna bağlayınca ders kırılımı belgeden kaydı
+            # (Fen 19/Sosyal 26 — belgede 20/25). Grup dışı eşleşme REDDEDİLİR;
+            # satır 'eşleşmedi' kalır, koç önizlemede bağlar (yanlış derse
+            # yazmaktansa boş bırakmak dürüst).
+            if tp is not None and _sid is None:
+                gids = resolve_subject_group(
+                    rows[idxs[0]].get("subject_raw"), by_key)
+                if gids and tp.subject_id not in gids:
+                    logger.info(
+                        "exam_import: grup dışı AI eşleşmesi reddedildi "
+                        "(%s → %s)", rows[idxs[0]].get("subject_raw"), tp.name)
+                    tp = None
             for ridx in idxs:
                 if tp is not None:
                     _assign_topic(rows[ridx], tp, subj_by_id, source="ai")
