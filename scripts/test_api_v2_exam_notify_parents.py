@@ -33,6 +33,17 @@ Senaryolar:
   21. Gövdesiz POST eski davranışı korur (mobil/eski istemci kırılmaz)
   22. Duyurulmuş denemede önizleme already_notified=True der
   23. Sahiplik: başka koçun denemesinin önizlemesi → 404
+
+  "EN RAHAT OLDUĞU BÖLÜM" MANTIK DÜZELTMESİ (2026-09-10, koç ekran görüntüsü:
+  "en rahat bölüm Matematik çıkmış ama Fen 15'te 15/20 — formül doğru mu?"):
+  24. ELİF VAKASI: oran doğru/TOPLAM SORU (boş DAHİL) — cümledeki sayıyla
+      aynı temel. Boş hariç bakınca 26/34 olan Matematik, 15/20 olan Fen'i
+      geçiyordu; veli ise "26 doğru / 40 soru" (%65) okuyordu.
+  25. Maarif/okul birleşik ders adları alan filtresine takılmaz
+      ("Fen Bilimleri" SAYISAL'ın belkemiği, "Türk Dili ve Edebiyatı" = Türkçe)
+  26. Tek aday kalırsa "en rahat" DENMEZ (karşılaştırma iddiası, tek dersle olmaz)
+  27. Hiçbir derste yarıyı geçemediyse "en rahat" DENMEZ
+  28. Soru sayısı farkı adil: 20 soruluk %80 ile 40 soruluk %80'de büyük olan kazanır
 """
 from __future__ import annotations
 
@@ -184,6 +195,44 @@ def seed() -> dict:
         plain = mk(st.id, "Gövdesiz TYT", date(2026, 9, 12),
                    ExamSection.TYT, 50, 20, 50, 45.0, nets)
 
+        # --- ELİF VAKASI (saha, 2026-09-10): Maarif birleşik ders adları +
+        #     boş bırakılan sorular. Beklenen "en rahat": Fen (15/20 = %75),
+        #     Matematik DEĞİL (26/40 = %65 — boş hariç bakılınca %76 görünüp
+        #     kazanıyordu).
+        elif_nets = (
+            '[{"name":"Fen Bilimleri","correct":15,"wrong":5,"blank":0,"net":13.75},'
+            '{"name":"Matematik","correct":26,"wrong":8,"blank":6,"net":24.0},'
+            '{"name":"Sosyal Bilimler","correct":16,"wrong":4,"blank":5,"net":15.0},'
+            '{"name":"Türk Dili ve Edebiyatı","correct":25,"wrong":11,"blank":4,'
+            '"net":22.25}]'
+        )
+        elif_exam = mk(st.id, "ÇAP Maarif Birinci Basamak", date(2026, 9, 13),
+                       ExamSection.TYT, 82, 28, 15, 75.0, elif_nets)
+
+        # Tek aday: SAYISAL öğrencide yalnız Matematik core → karşılaştırma yok
+        solo_nets = (
+            '[{"name":"Matematik","correct":30,"wrong":5,"blank":5,"net":28.75},'
+            '{"name":"Sosyal Bilimler","correct":16,"wrong":4,"blank":5,"net":15.0}]'
+        )
+        solo_subj = mk(st.id, "Tek Ders TYT", date(2026, 9, 14),
+                       ExamSection.TYT, 46, 9, 10, 43.75, solo_nets)
+
+        # Hiçbir derste yarı yok → "en rahat" cümlesi kurulmamalı
+        weak_nets = (
+            '[{"name":"Matematik","correct":10,"wrong":20,"blank":10,"net":5.0},'
+            '{"name":"Fen Bilimleri","correct":8,"wrong":10,"blank":2,"net":5.5}]'
+        )
+        weak_exam = mk(st.id, "Zayıf TYT", date(2026, 9, 15),
+                       ExamSection.TYT, 18, 30, 12, 10.5, weak_nets)
+
+        # Soru sayısı adaleti: aynı %80, farklı hacim → büyük örneklem kazanır
+        size_nets = (
+            '[{"name":"Matematik","correct":32,"wrong":6,"blank":2,"net":30.5},'
+            '{"name":"Fen Bilimleri","correct":16,"wrong":3,"blank":1,"net":15.25}]'
+        )
+        size_exam = mk(st.id, "Hacim TYT", date(2026, 9, 16),
+                       ExamSection.TYT, 48, 9, 3, 45.75, size_nets)
+
         # AYT denemesi — TYT ile kıyaslanmamalı
         ayt = mk(st.id, "AYT Denemesi", date(2026, 9, 1),
                  ExamSection.AYT_SAY, 30, 8, 42, 28.0)
@@ -201,6 +250,8 @@ def seed() -> dict:
             "parent_id": parent.id, "muted_parent": muted_parent.id,
             "prev": prev.id, "cur": cur.id, "ayt": ayt.id,
             "edited": edited.id, "limits": limits.id, "plain": plain.id,
+            "elif": elif_exam.id, "solo_subj": solo_subj.id,
+            "weak": weak_exam.id, "size": size_exam.id,
             "muted_exam": muted_exam.id, "solo_exam": solo_exam.id,
             "foreign_exam": foreign_exam.id,
         }
@@ -461,6 +512,43 @@ def main() -> int:
         check("11. veli tercihi kapalıyken akış patlamaz (queued=0)",
               r.status_code == 200 and r.json()["data"]["queued"] == 0,
               f"status={r.status_code} {r.text[:140]} before={before}")
+
+        # ---- 24-28. "EN RAHAT OLDUĞU BÖLÜM" mantığı (koç saha bulgusu)
+        #      Önizleme ucundan okunur — gönderim gerekmez, damga harcanmaz.
+        def narr_of(exam_id: int) -> list[str]:
+            pv = c.get(f"/api/v2/teacher/exams/{exam_id}/parent-preview")
+            return pv.json().get("narrative", []) if pv.status_code == 200 else []
+
+        el = " ".join(narr_of(s["elif"]))
+        check(
+            "24/25. ELİF VAKASI: 'en rahat' = Fen Bilimleri (15/20=%75), "
+            "Matematik (26/40=%65) DEĞİL — oran TOPLAM soru üzerinden",
+            "En rahat olduğu bölüm Fen Bilimleri (15 doğru / 20 soru)" in el
+            and "En rahat olduğu bölüm Matematik" not in el,
+            el[:300],
+        )
+
+        so = " ".join(narr_of(s["solo_subj"]))
+        check(
+            "26. tek karşılaştırılabilir ders kalırsa 'en rahat' DENMEZ",
+            "En rahat olduğu bölüm" not in so and len(so) > 40,
+            so[:220],
+        )
+
+        wk = " ".join(narr_of(s["weak"]))
+        check(
+            "27. hiçbir derste yarıyı geçemediyse 'en rahat' DENMEZ",
+            "En rahat olduğu bölüm" not in wk and len(wk) > 40,
+            wk[:220],
+        )
+
+        sz = " ".join(narr_of(s["size"]))
+        check(
+            "28. aynı %80'de büyük örneklem kazanır (40 soruluk Matematik, "
+            "20 soruluk Fen'i geçer)",
+            "En rahat olduğu bölüm Matematik (32 doğru / 40 soru)" in sz,
+            sz[:260],
+        )
 
         # ---- 21. TERCİH KAPALIYKEN önizleme bunu SÖYLER (koç boşuna beklemesin)
         #      Bastırma kararı gerçek gönderimle AYNI fonksiyondan gelir

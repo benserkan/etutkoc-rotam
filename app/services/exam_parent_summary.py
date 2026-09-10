@@ -102,14 +102,40 @@ MIN_WRONG_FOR_FOCUS = 2
 MAX_FOCUS_SUBJECTS = 2
 MAX_TOPICS_PER_SUBJECT = 3
 
+# "En rahat / en zayıf bölüm" bir KARŞILAŞTIRMA iddiası — en az bu kadar
+# karşılaştırılabilir ders olmalı. Tek aday kalmışsa cümle kurulmaz
+# (2026-09-10: alan filtresi diğerlerini eleyince sistem tek dersi
+# karşılaştırmasız "en rahat" ilan ediyordu).
+MIN_SUBJECTS_FOR_COMPARISON = 2
+
+# Hiçbir derste yarıdan fazlasını yapamadıysa "en rahat olduğu bölüm" demek
+# veliyi yanıltır — o denemede rahat olduğu bir bölüm yoktur.
+MIN_BEST_ACCURACY = 0.50
+
 # Alanın belkemiği dersleri (ders adı "TYT Matematik" / "AYT Geometri" gibi
 # önekli gelir → anahtar kelimeyle eşleşir). Türkçe her alanda kritiktir:
 # TYT'nin en yüksek soru ağırlıklı dersi.
+# SAHA HATASI (2026-09-10, koç): Maarif/okul sınavlarında dersler BİRLEŞİK
+# adla gelir ("Fen Bilimleri", "Sosyal Bilimler", "Türk Dili ve Edebiyatı").
+# Liste yalnız TYT/AYT adlarıyla yazıldığı için SAYISAL bir öğrencide
+# "Fen Bilimleri" (alanın belkemiği!) ve "Türk Dili ve Edebiyatı" eleniyor,
+# geriye TEK ders kalıyordu → sistem karşılaştırma yapmadan ona "en rahat
+# olduğu bölüm" diyordu. Birleşik adlar da anahtar kelime olarak eklendi.
 _TRACK_CORE: dict[Track, set[str]] = {
-    Track.SAYISAL: {"matematik", "geometri", "fizik", "kimya", "biyoloji", "turkce"},
-    Track.EA: {"matematik", "geometri", "turkce", "edebiyat", "tarih", "cografya"},
-    Track.SOZEL: {"turkce", "edebiyat", "tarih", "cografya", "felsefe", "din"},
-    Track.DIL: {"turkce", "ingilizce", "yabanci dil"},
+    Track.SAYISAL: {
+        "matematik", "geometri", "fizik", "kimya", "biyoloji",
+        "fen bilimleri", "fen",
+        "turkce", "turk dili", "edebiyat",
+    },
+    Track.EA: {
+        "matematik", "geometri", "turkce", "turk dili", "edebiyat",
+        "tarih", "cografya", "sosyal bilimler",
+    },
+    Track.SOZEL: {
+        "turkce", "turk dili", "edebiyat", "tarih", "cografya", "felsefe",
+        "din", "sosyal bilimler",
+    },
+    Track.DIL: {"turkce", "turk dili", "edebiyat", "ingilizce", "yabanci dil"},
 }
 
 _TR_MAP = str.maketrans("İIıŞşĞğÜüÖöÇç", "iiissgguuoocc")
@@ -222,23 +248,39 @@ def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
         and _is_core_subject(s["name"], track)
     ]
 
+    # ORAN = doğru / TOPLAM SORU (boş DAHİL).
+    #
+    # SAHA HATASI (2026-09-10, koç): oran `doğru/(doğru+yanlış)` ile
+    # hesaplanıyordu — yani boş bırakılanlar paydadan düşüyordu. Cümlede ise
+    # "26 doğru / 40 soru" yazıyordu. Veli %65 okurken sistem %76'ya göre
+    # karar veriyordu; 15/20 (%75) yapılan Fen, 26/8/6 olan Matematik'e
+    # kaybediyordu. İki sebeple toplam soru doğru payda:
+    #   · Gösterilen sayı ile karar AYNI temele oturur (koç/veli doğrulayabilir).
+    #   · Boş bırakmak da "o soruyu yapamadı" demektir; "en rahat olduğu bölüm"
+    #     derken bunu yok saymak dersi olduğundan iyi gösterir.
+    #
     # HAM ORAN YETMEZ: 5 soruda %100, 40 soruda %90'dan güçlü kanıt değil
-    # (küçük örneklem tesadüfü). Wilson alt sınırı az soruyu cezalandırır:
-    #   5/5  → 0.57   ·   36/40 → 0.77   ·   3/5 → 0.23
+    # (küçük örneklem tesadüfü). Wilson alt sınırı az soruyu cezalandırır →
+    # 20 soruluk Sosyal ile 40 soruluk Türkçe adil kıyaslanır.
     def acc(s: dict) -> float:
-        answered = s["correct"] + s["wrong"]
-        if not answered:
+        total = s["questions"]
+        if not total:
             return 0.0
-        return _wilson_lower(s["correct"], answered)
+        return _wilson_lower(s["correct"], total)
 
     best = worst = None
-    if ranked:
+    if len(ranked) >= MIN_SUBJECTS_FOR_COMPARISON:
+        # "En rahat/en zayıf" bir KARŞILAŞTIRMA iddiasıdır: tek aday kalmışsa
+        # (diğerleri alan-dışı ya da az soruluysa) kurulmaz.
         ranked_sorted = sorted(ranked, key=acc)
         worst = ranked_sorted[0]
         best = ranked_sorted[-1]
         if best is worst or acc(best) - acc(worst) < 0.15:
             # Dersler birbirine yakınsa "en zayıf" demek haksızlık olur.
             worst = None
+        # Hiçbir derste rahat değilse "en rahat" demek veliyi yanıltır.
+        if best["correct"] / best["questions"] < MIN_BEST_ACCURACY:
+            best = None
 
     if best is not None:
         lines.append(
