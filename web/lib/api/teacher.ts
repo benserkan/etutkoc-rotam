@@ -19,7 +19,9 @@ import type {
 } from "@/lib/types/period";
 import type {
   ArchiveCandidatesResponse,
+  ExamNotifyParentsBody,
   ExamNotifyParentsResult,
+  ExamParentPreviewResponse,
   BookArchiveResult,
   CoachingReportDetail,
   CoachingReportListResponse,
@@ -234,6 +236,9 @@ export const teacherKeys = {
     ["teacher", "me", "students", String(id), "work-blocks"] as const,
   studentExams: (id: number, period?: string) =>
     ["teacher", "me", "students", String(id), "exams", period ?? "current"] as const,
+  /** Deneme duyurusu önizlemesi — gönderim öncesi salt-okuma içerik. */
+  examParentPreview: (examId: number) =>
+    ["teacher", "me", "exams", String(examId), "parent-preview"] as const,
   studentSessions: (id: number) =>
     ["teacher", "me", "students", String(id), "sessions"] as const,
   sessionPrefill: (id: number) =>
@@ -833,12 +838,25 @@ export function getTransitionPreview(
   );
 }
 
-/** Deneme sonucunu bağlı velilere e-posta ile duyur (deneme başına bir kez). */
+/** Deneme sonucunu bağlı velilere e-posta ile duyur (deneme başına bir kez).
+ *
+ * `body` verilirse koçun önizlemede düzenlediği metin gönderilir; verilmezse
+ * kural motorunun önerisi gider (eski davranış). */
 export function notifyParentsExam(
   examId: number,
+  body?: ExamNotifyParentsBody,
 ): Promise<MutationResponse<ExamNotifyParentsResult>> {
   return api<MutationResponse<ExamNotifyParentsResult>>(
     `/api/v2/teacher/exams/${examId}/notify-parents`,
-    { method: "POST" },
+    { method: "POST", body: body ? JSON.stringify(body) : undefined },
+  );
+}
+
+/** Veliye gidecek deneme e-postasının içeriği — gönderim YOK, salt okuma. */
+export function getExamParentPreview(
+  examId: number,
+): Promise<ExamParentPreviewResponse> {
+  return api<ExamParentPreviewResponse>(
+    `/api/v2/teacher/exams/${examId}/parent-preview`,
   );
 }

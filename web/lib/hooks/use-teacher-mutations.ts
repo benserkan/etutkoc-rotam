@@ -13,6 +13,7 @@ import {
 } from "@/lib/api/teacher";
 import type {
   BookArchiveResult,
+  ExamNotifyParentsBody,
   ExamNotifyParentsResult,
   CoachingReportDetail,
   CoachingReportRow,
@@ -2203,9 +2204,9 @@ export function useNotifyParentsExam(studentId: number) {
   return useMutation<
     MutationResponse<ExamNotifyParentsResult>,
     ApiError,
-    { examId: number }
+    { examId: number; body?: ExamNotifyParentsBody }
   >({
-    mutationFn: ({ examId }) => notifyParentsExam(examId),
+    mutationFn: ({ examId, body }) => notifyParentsExam(examId, body),
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
       qc.invalidateQueries({ queryKey: teacherKeys.studentExams(studentId) });

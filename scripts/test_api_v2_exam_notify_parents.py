@@ -21,6 +21,18 @@ Senaryolar:
       olarak ÖNERİLMEZ — tabloda görünür ama cümleye girmez
   14. KONU DÜZEYİ: içe aktarılmış denemede "şu konularda takıldı" + gerçek
       konu adları (ders adı tek başına koçluk değil)
+
+  ÖNİZLE-DÜZENLE-GÖNDER (2026-09-10, koç isteği: "mail içeriği önizlenmeli ve
+  düzenlenebilmeli; bazı ifadeleri kaldırmak isteyebilirim"):
+  15. Önizleme ucu gönderim YAPMAZ (salt okuma) + içerik mailin aynısı
+  16. Önizlemede alıcı veliler + GİTMEYECEKLERİN SEBEBİ görünür
+  17. Koçun DÜZENLEDİĞİ metin gider (kural motorunun cümlesi değil)
+  18. include_subjects=false → ders tablosu maile GİRMEZ
+  19. narrative=[] → yorumsuz gider (sayılar durur, mail patlamaz)
+  20. Doğrulama: fazla satır kırpılır · uzun satır kesilir · boş satır atılır
+  21. Gövdesiz POST eski davranışı korur (mobil/eski istemci kırılmaz)
+  22. Duyurulmuş denemede önizleme already_notified=True der
+  23. Sahiplik: başka koçun denemesinin önizlemesi → 404
 """
 from __future__ import annotations
 
@@ -162,6 +174,16 @@ def seed() -> dict:
                 ))
         db.flush()
 
+        # Düzenleme senaryoları için ayrı denemeler (her duyuru tek seferlik).
+        # DİKKAT: tarihleri `cur`dan SONRA — araya girerlerse cur'un "bir
+        # önceki TYT" kıyası değişir ve senaryo 4/7 yanlış kırmızı verir.
+        edited = mk(st.id, "Düzenlenecek TYT", date(2026, 9, 10),
+                    ExamSection.TYT, 50, 20, 50, 45.0, nets)
+        limits = mk(st.id, "Sınır TYT", date(2026, 9, 11),
+                    ExamSection.TYT, 50, 20, 50, 45.0, nets)
+        plain = mk(st.id, "Gövdesiz TYT", date(2026, 9, 12),
+                   ExamSection.TYT, 50, 20, 50, 45.0, nets)
+
         # AYT denemesi — TYT ile kıyaslanmamalı
         ayt = mk(st.id, "AYT Denemesi", date(2026, 9, 1),
                  ExamSection.AYT_SAY, 30, 8, 42, 28.0)
@@ -178,6 +200,7 @@ def seed() -> dict:
             "solo_id": solo.id, "muted_st": muted_st.id, "foreign_id": foreign.id,
             "parent_id": parent.id, "muted_parent": muted_parent.id,
             "prev": prev.id, "cur": cur.id, "ayt": ayt.id,
+            "edited": edited.id, "limits": limits.id, "plain": plain.id,
             "muted_exam": muted_exam.id, "solo_exam": solo_exam.id,
             "foreign_exam": foreign_exam.id,
         }
@@ -202,6 +225,18 @@ def cleanup(s: dict) -> None:
         db.execute(sa_delete(SuspiciousIp).where(SuspiciousIp.ip == "testclient"))
         db.execute(sa_delete(User).where(User.id.in_(ids)))
         db.commit()
+
+
+def _log_count(parent_id: int) -> int:
+    """Bu veliye yazılmış EXAM_RESULT satır sayısı — önizlemenin gönderim
+    yapmadığını kanıtlamak için (salt okuma iddiası ölçülür)."""
+    with SessionLocal() as db:
+        return (
+            db.query(NotificationLog)
+            .filter(NotificationLog.parent_id == parent_id,
+                    NotificationLog.kind == NotificationKind.EXAM_RESULT)
+            .count()
+        )
 
 
 def last_payload(parent_id: int) -> dict:
@@ -244,7 +279,31 @@ def main() -> int:
               cur_row is not None and cur_row.get("parent_notified_at") is None,
               f"{cur_row}")
 
-        # ---- 2. duyur
+        # ---- 15. ÖNİZLEME salt okuma + içerik mailin aynısı
+        pv = c.get(f"/api/v2/teacher/exams/{s['cur']}/parent-preview")
+        pvd = pv.json() if pv.status_code == 200 else {}
+        logs_before = _log_count(s["parent_id"])
+        pv2 = c.get(f"/api/v2/teacher/exams/{s['cur']}/parent-preview")
+        check("15. önizleme GÖNDERİM YAPMAZ + net/D-Y-B/ders/yorum döner",
+              pv.status_code == 200 and pv2.status_code == 200
+              and _log_count(s["parent_id"]) == logs_before
+              and pvd.get("net_text") == "52,50"
+              and pvd.get("correct") == 58 and pvd.get("wrong") == 22
+              and len(pvd.get("subjects", [])) == 5
+              and len(pvd.get("narrative", [])) >= 2
+              and pvd.get("already_notified") is False,
+              f"status={pv.status_code} log {logs_before}→{_log_count(s['parent_id'])} "
+              f"net={pvd.get('net_text')} subj={len(pvd.get('subjects', []))}")
+
+        # ---- 16. alıcı listesi: kime gidecek, kime gitmeyecek + SEBEP
+        recips = pvd.get("recipients", [])
+        check("16. önizlemede alıcı veliler + gidecek sayısı",
+              len(recips) == 1 and recips[0]["blocked"] is False
+              and pvd.get("deliverable_count") == 1
+              and recips[0]["name"] == "Duyuru Veli",
+              f"{recips} deliverable={pvd.get('deliverable_count')}")
+
+        # ---- 2. duyur (GÖVDESİZ — eski davranış)
         r = c.post(f"/api/v2/teacher/exams/{s['cur']}/notify-parents")
         data = r.json().get("data", {}) if r.text else {}
         rows2 = c.get(f"/api/v2/teacher/students/{sid}/exams?period=all").json()
@@ -310,6 +369,72 @@ def main() -> int:
               and "ilk deneme" in " ".join(p_ayt.get("narrative", [])).lower(),
               f"delta={p_ayt.get('delta')}")
 
+        # ---- 22. duyurulmuş denemenin önizlemesi "zaten duyuruldu" der
+        pv3 = c.get(f"/api/v2/teacher/exams/{s['cur']}/parent-preview").json()
+        check("22. duyurulmuş denemede önizleme already_notified=True + damga",
+              pv3.get("already_notified") is True and bool(pv3.get("notified_at")),
+              f"{pv3.get('already_notified')} {pv3.get('notified_at')}")
+
+        # ---- 17/18. KOÇUN DÜZENLEDİĞİ metin gider + ders tablosu çıkarılabilir
+        #      (asıl istek: "bazı ifadeleri kaldırmak isteyebilirim")
+        r = c.post(
+            f"/api/v2/teacher/exams/{s['edited']}/notify-parents",
+            json={
+                "narrative": [
+                    "Merhaba, Emir bu denemede 45 net çıkardı.",
+                    "Görüşmemizde ayrıntısını konuşacağız.",
+                ],
+                "include_subjects": False,
+            },
+        )
+        pe = last_payload(s["parent_id"])
+        auto_line = "Programına önümüzdeki dönemde"
+        check("17. koçun düzenlediği metin gider — kural motorunun cümlesi GİTMEZ",
+              r.status_code == 200 and r.json()["data"]["queued"] == 1
+              and pe.get("narrative") == [
+                  "Merhaba, Emir bu denemede 45 net çıkardı.",
+                  "Görüşmemizde ayrıntısını konuşacağız.",
+              ]
+              and not any(auto_line in ln for ln in pe.get("narrative", [])),
+              f"status={r.status_code} narrative={pe.get('narrative')}")
+        check("18. include_subjects=false → ders tablosu maile GİRMEZ "
+              "(sayılar durur)",
+              pe.get("subjects") == [] and pe.get("net_text") == "45,00"
+              and pe.get("correct") == 50,
+              f"subjects={pe.get('subjects')} net={pe.get('net_text')}")
+
+        # ---- 19/20. yorumsuz gönderim + doğrulama sınırları
+        long_line = "A" * 900
+        r = c.post(
+            f"/api/v2/teacher/exams/{s['limits']}/notify-parents",
+            json={
+                "narrative": (
+                    ["  ", "", long_line]
+                    + [f"satır {i}" for i in range(20)]
+                ),
+            },
+        )
+        pl = last_payload(s["parent_id"])
+        nl = pl.get("narrative", [])
+        check("20. doğrulama: boş satır atılır · uzun satır kesilir · "
+              "satır sayısı sınırlanır",
+              r.status_code == 200 and len(nl) == 12
+              and all(len(x) <= 500 for x in nl)
+              and nl[0] == "A" * 500 and "" not in nl,
+              f"n={len(nl)} ilk={len(nl[0]) if nl else 0}")
+
+        # ---- 19. tamamen yorumsuz (koç hepsini sildi) — mail yine gider
+        r = c.post(
+            f"/api/v2/teacher/exams/{s['plain']}/notify-parents",
+            json={"narrative": [], "include_subjects": True},
+        )
+        pp = last_payload(s["parent_id"])
+        check("19. narrative=[] → yorumsuz gider, sayılar+tablo durur",
+              r.status_code == 200 and r.json()["data"]["queued"] == 1
+              and pp.get("narrative") == [] and len(pp.get("subjects", [])) == 5,
+              f"status={r.status_code} narr={pp.get('narrative')} "
+              f"subj={len(pp.get('subjects', []))}")
+
         # ---- 8. mükerrer
         r = c.post(f"/api/v2/teacher/exams/{s['cur']}/notify-parents")
         check("8. mükerrer duyuru → 409 already_notified",
@@ -337,10 +462,24 @@ def main() -> int:
               r.status_code == 200 and r.json()["data"]["queued"] == 0,
               f"status={r.status_code} {r.text[:140]} before={before}")
 
-        # ---- 12. sahiplik
+        # ---- 21. TERCİH KAPALIYKEN önizleme bunu SÖYLER (koç boşuna beklemesin)
+        #      Bastırma kararı gerçek gönderimle AYNI fonksiyondan gelir
+        #      (notification_producer.suppression_reason) — çelişemez.
+        pv4 = c.get(f"/api/v2/teacher/exams/{s['ayt']}/parent-preview").json()
+        rec4 = pv4.get("recipients", [])
+        check("21. veli bildirimi kapatmışsa önizleme SEBEBİYLE gösterir "
+              "(gidecek sayısı 0)",
+              len(rec4) == 1 and rec4[0]["blocked"] is True
+              and "kapatmış" in (rec4[0].get("blocked_label") or "")
+              and pv4.get("deliverable_count") == 0,
+              f"{rec4} deliverable={pv4.get('deliverable_count')}")
+
+        # ---- 12/23. sahiplik
         r = c.post(f"/api/v2/teacher/exams/{s['foreign_exam']}/notify-parents")
-        check("12. başka koçun denemesi → 404", r.status_code == 404,
-              f"{r.status_code}")
+        r23 = c.get(f"/api/v2/teacher/exams/{s['foreign_exam']}/parent-preview")
+        check("12/23. başka koçun denemesi → 404 (gönderim VE önizleme)",
+              r.status_code == 404 and r23.status_code == 404,
+              f"post={r.status_code} preview={r23.status_code}")
     finally:
         cleanup(s)
 

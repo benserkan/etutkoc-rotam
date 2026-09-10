@@ -2801,3 +2801,74 @@ class ExamNotifyParentsResult(BaseModel):
     suppressed: int = 0               # velinin kapattığı bildirimler
     notified_at: str | None = None    # yalnız gerçek gönderim olduysa damga
     message: str
+
+
+# --- Deneme duyurusu: gönderim öncesi önizleme + koç düzenlemesi (2026-09-10) --
+
+
+class ExamNotifyParentsBody(BaseModel):
+    """Koçun önizlemede düzenlediği içerik.
+
+    İkisi de opsiyonel — gövdesiz POST eski davranışı korur (kural motorunun
+    ürettiği metin + ders tablosu). Mobil/eski istemciler etkilenmez.
+    """
+    #: None = kural motorunun önerisi. [] = yorumsuz (yalnız sayılar) gider.
+    narrative: list[str] | None = None
+    #: Ders kırılımı tablosu maile girsin mi.
+    include_subjects: bool = True
+
+
+class ExamParentPreviewSubject(BaseModel):
+    name: str
+    correct: int
+    wrong: int
+    blank: int
+    net: float
+    questions: int
+    #: Müfredata bağlanmamış satır (ham belge başlığı) — koç uyarılır.
+    unmatched: bool = False
+
+
+class ExamParentPreviewRecipient(BaseModel):
+    parent_id: int
+    name: str
+    #: True ise bu veliye GİTMEZ; sebebi `blocked_label`.
+    blocked: bool = False
+    blocked_label: str | None = None
+
+
+class ExamParentPreviewResponse(BaseModel):
+    """GET /api/v2/teacher/exams/{id}/parent-preview — gönderim YOK, salt okuma."""
+    exam_id: int
+    student_id: int
+    student_name: str
+    exam_title: str
+    exam_date: str | None = None
+    exam_date_tr: str = "—"
+    section_label: str = "—"
+
+    net: float = 0.0
+    net_text: str = "0,00"
+    correct: int = 0
+    wrong: int = 0
+    blank: int = 0
+    total_questions: int = 0
+
+    delta_direction: str | None = None      # up | down | flat | None
+    delta_text: str | None = None
+    prev_title: str | None = None
+    prev_net_text: str | None = None
+    prev_date_tr: str | None = None
+
+    subjects: list[ExamParentPreviewSubject] = []
+    #: Kural motorunun önerdiği cümleler — koç düzenler/siler/ekler.
+    narrative: list[str] = []
+
+    recipients: list[ExamParentPreviewRecipient] = []
+    #: Gerçekten gidecek veli sayısı (bastırılanlar hariç).
+    deliverable_count: int = 0
+    already_notified: bool = False
+    notified_at: str | None = None
+    #: Koçun düzenleme sınırları (UI aynı sayıyı gösterir).
+    max_lines: int = 12
+    max_line_length: int = 500

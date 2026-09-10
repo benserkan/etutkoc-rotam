@@ -114,7 +114,11 @@ from app.models import (
 from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
 from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import (
+    ExamNotifyParentsBody,
     ExamNotifyParentsResult,
+    ExamParentPreviewRecipient,
+    ExamParentPreviewResponse,
+    ExamParentPreviewSubject,
     TransitionPreviewResponse,
     ArchiveCandidateItem,
     ArchiveCandidatesResponse,
@@ -10408,16 +10412,170 @@ def teacher_transition_preview_v2(
 # ve soru-satırı detayları veliye GİTMEZ.
 
 
+#: Koçun düzenleyebileceği metnin sınırları — şema (UI) ile aynı sayılar.
+EXAM_NARRATIVE_MAX_LINES = 12
+EXAM_NARRATIVE_MAX_LEN = 500
+
+#: Bastırma sebebi → koça gösterilecek sade Türkçe.
+_EXAM_BLOCK_LABELS = {
+    "child_muted": "bu çocuk için bildirimler sessize alınmış",
+    "unsubscribed": "tüm bildirimleri kapatmış",
+    "pref:exam_result_enabled=False": "deneme sonucu bildirimini kapatmış",
+    "inactive": "hesabı pasif",
+}
+
+
+def _exam_notify_recipients(db: Session, student_id: int) -> list[dict]:
+    """Duyurunun gideceği veliler + gitmeyeceklerin SEBEBİ.
+
+    Bastırma kararı `notification_producer.suppression_reason` ile alınır —
+    yani gerçek gönderimle AYNI fonksiyon. Önizlemenin "gidecek" dediği veliye
+    gönderim anında gitmemesi yapısal olarak mümkün değil.
+    """
+    from app.models import NotificationChannel, NotificationKind, ParentStudentLink
+    from app.services.notification_producer import suppression_reason
+
+    links = (
+        db.query(ParentStudentLink)
+        .filter(ParentStudentLink.student_id == student_id)
+        .all()
+    )
+    out: list[dict] = []
+    for link in links:
+        parent = db.get(User, link.parent_id)
+        if parent is None:
+            continue
+        reason: str | None = None
+        if not parent.is_active:
+            reason = "inactive"
+        else:
+            reason = suppression_reason(
+                db,
+                parent_id=parent.id,
+                student_id=student_id,
+                kind=NotificationKind.EXAM_RESULT,
+                channel=NotificationChannel.EMAIL,
+            )
+        out.append({
+            "parent_id": parent.id,
+            "name": parent.full_name,
+            "blocked": reason is not None,
+            "blocked_label": (
+                _EXAM_BLOCK_LABELS.get(reason, reason) if reason else None
+            ),
+        })
+    return out
+
+
+def _clean_narrative(lines: list[str] | None) -> list[str] | None:
+    """Koçun düzenlediği cümleler: boşları at, uzunluğu ve satır sayısını sınırla.
+
+    None → düzenleme yok (kural motorunun önerisi gider).
+    [] → koç tüm yorumları sildi; mail yalnız sayılarla gider (geçerli seçim).
+    """
+    if lines is None:
+        return None
+    cleaned: list[str] = []
+    for raw in lines:
+        text = " ".join(str(raw or "").split())
+        if not text:
+            continue
+        cleaned.append(text[:EXAM_NARRATIVE_MAX_LEN])
+        if len(cleaned) >= EXAM_NARRATIVE_MAX_LINES:
+            break
+    return cleaned
+
+
+@router.get(
+    "/exams/{exam_id}/parent-preview",
+    response_model=ExamParentPreviewResponse,
+)
+def teacher_exam_parent_preview_v2(
+    exam_id: int,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Veliye gidecek deneme e-postasının İÇERİĞİ — gönderim YOK, salt okuma.
+
+    KOÇ İSTEĞİ (2026-09-10): "gönderim aşamasında mail içeriği önizlenmeli ve
+    düzenlenebilmeli; bazı ifadeleri kaldırmak isteyebilirim." Bu uç kural
+    motorunun önerdiği cümleleri + sayıları + alıcı velileri döndürür; koç
+    düzenleyip POST /notify-parents gövdesiyle gönderir.
+    """
+    from app.services.exam_parent_summary import (
+        build_parent_exam_summary,
+        format_tr_date,
+    )
+
+    exam = _get_owned_exam(db, exam_id, user.id)
+    student = db.get(User, exam.student_id)
+    if student is None:
+        raise _validation_error("student_not_found", "Öğrenci bulunamadı.")
+
+    summary = build_parent_exam_summary(db, exam)
+    recipients = _exam_notify_recipients(db, student.id)
+
+    return ExamParentPreviewResponse(
+        exam_id=exam.id,
+        student_id=student.id,
+        student_name=student.full_name,
+        exam_title=exam.title,
+        exam_date=summary.get("exam_date"),
+        exam_date_tr=format_tr_date(summary.get("exam_date")),
+        section_label=summary.get("section_label") or "—",
+        net=float(summary.get("net") or 0.0),
+        net_text=summary.get("net_text") or "0,00",
+        correct=int(summary.get("correct") or 0),
+        wrong=int(summary.get("wrong") or 0),
+        blank=int(summary.get("blank") or 0),
+        total_questions=int(summary.get("total_questions") or 0),
+        delta_direction=summary.get("delta_direction"),
+        delta_text=summary.get("delta_text"),
+        prev_title=summary.get("prev_title"),
+        prev_net_text=summary.get("prev_net_text"),
+        prev_date_tr=(
+            format_tr_date(summary.get("prev_date"))
+            if summary.get("prev_date") else None
+        ),
+        subjects=[
+            ExamParentPreviewSubject(
+                name=s.get("name", "—"),
+                correct=int(s.get("correct", 0)),
+                wrong=int(s.get("wrong", 0)),
+                blank=int(s.get("blank", 0)),
+                net=float(s.get("net", 0.0)),
+                questions=int(s.get("questions", 0)),
+                unmatched=bool(s.get("unmatched", False)),
+            )
+            for s in summary.get("subjects", [])
+        ],
+        narrative=list(summary.get("narrative", [])),
+        recipients=[ExamParentPreviewRecipient(**r) for r in recipients],
+        deliverable_count=sum(1 for r in recipients if not r["blocked"]),
+        already_notified=exam.parent_notified_at is not None,
+        notified_at=(
+            exam.parent_notified_at.isoformat() if exam.parent_notified_at else None
+        ),
+        max_lines=EXAM_NARRATIVE_MAX_LINES,
+        max_line_length=EXAM_NARRATIVE_MAX_LEN,
+    )
+
+
 @router.post(
     "/exams/{exam_id}/notify-parents",
     response_model=MutationResponse[ExamNotifyParentsResult],
 )
 def teacher_notify_parents_exam_v2(
     exam_id: int,
+    body: ExamNotifyParentsBody | None = None,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Deneme sonucunu bağlı velilere e-posta ile duyur (deneme başına bir kez)."""
+    """Deneme sonucunu bağlı velilere e-posta ile duyur (deneme başına bir kez).
+
+    Gövde OPSİYONEL: koç önizlemede metni düzenlediyse `narrative` +
+    `include_subjects` gelir; gövdesiz istek eski davranışı korur.
+    """
     from app.models import NotificationStatus, ParentStudentLink
     from app.services.notification_producers import produce_exam_result
 
@@ -10425,6 +10583,9 @@ def teacher_notify_parents_exam_v2(
     student = db.get(User, exam.student_id)
     if student is None:
         raise _validation_error("student_not_found", "Öğrenci bulunamadı.")
+
+    narrative = _clean_narrative(body.narrative if body else None)
+    include_subjects = body.include_subjects if body else True
 
     if exam.parent_notified_at is not None:
         raise HTTPException(
@@ -10460,7 +10621,10 @@ def teacher_notify_parents_exam_v2(
         if parent is None or not parent.is_active:
             continue
         try:
-            logs = produce_exam_result(db, parent=parent, student=student, exam=exam)
+            logs = produce_exam_result(
+                db, parent=parent, student=student, exam=exam,
+                narrative=narrative, include_subjects=include_subjects,
+            )
             # DİKKAT: enqueue_notification, veli tercihi kapalıyken de satır
             # yazar (status=SUPPRESSED, denetim izi). Bunu "gönderildi" saymak
             # koça YALAN söylemek olur — yalnız gerçekten kuyruğa gireni say.

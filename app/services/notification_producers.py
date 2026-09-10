@@ -791,6 +791,8 @@ def produce_exam_result(
     parent: User,
     student: User,
     exam,
+    narrative: list[str] | None = None,
+    include_subjects: bool = True,
 ) -> list[NotificationLog]:
     """Koç "Veliye duyur" düğmesine bastı — deneme sonucu e-postası.
 
@@ -800,6 +802,12 @@ def produce_exam_result(
 
     Koça özel notlar ve soru-satırı detayları PAYLAŞILMAZ; yalnız net, D/Y/B,
     ders kırılımı ve konuşma dilinde kısa yorum.
+
+    KOÇ DÜZENLEMESİ (2026-09-10): `narrative` verilirse kural motorunun
+    ürettiği cümleler yerine KOÇUN düzenlediği metin gider (boş liste =
+    yorumsuz, yalnız sayılar). `include_subjects=False` ders kırılımı
+    tablosunu çıkarır. İkisi de verilmezse davranış eskisiyle birebir aynı —
+    mobil/eski istemciler etkilenmez.
     """
     from app.services.exam_parent_summary import (
         build_parent_exam_summary,
@@ -807,6 +815,10 @@ def produce_exam_result(
     )
 
     summary = build_parent_exam_summary(db, exam)
+    if narrative is not None:
+        summary["narrative"] = narrative
+    if not include_subjects:
+        summary["subjects"] = []
     payload: dict[str, Any] = {
         "__template": "parent_exam_result",
         "student_id": student.id,

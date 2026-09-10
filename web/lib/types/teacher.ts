@@ -2404,3 +2404,63 @@ export interface ExamNotifyParentsResult {
   notified_at?: string | null;
   message: string;
 }
+
+/** Koçun önizlemede düzenlediği içerik (ikisi de opsiyonel). */
+export interface ExamNotifyParentsBody {
+  /** undefined = kural motorunun önerisi · [] = yorumsuz (yalnız sayılar) */
+  narrative?: string[];
+  include_subjects?: boolean;
+}
+
+export interface ExamParentPreviewSubject {
+  name: string;
+  correct: number;
+  wrong: number;
+  blank: number;
+  net: number;
+  questions: number;
+  /** Müfredata bağlanmamış satır — koç uyarılır */
+  unmatched: boolean;
+}
+
+export interface ExamParentPreviewRecipient {
+  parent_id: number;
+  name: string;
+  /** true → bu veliye GİTMEZ */
+  blocked: boolean;
+  blocked_label: string | null;
+}
+
+/** GET /api/v2/teacher/exams/{id}/parent-preview — gönderim YOK, salt okuma */
+export interface ExamParentPreviewResponse {
+  exam_id: number;
+  student_id: number;
+  student_name: string;
+  exam_title: string;
+  exam_date: string | null;
+  exam_date_tr: string;
+  section_label: string;
+
+  net: number;
+  net_text: string;
+  correct: number;
+  wrong: number;
+  blank: number;
+  total_questions: number;
+
+  delta_direction: string | null;
+  delta_text: string | null;
+  prev_title: string | null;
+  prev_net_text: string | null;
+  prev_date_tr: string | null;
+
+  subjects: ExamParentPreviewSubject[];
+  narrative: string[];
+
+  recipients: ExamParentPreviewRecipient[];
+  deliverable_count: number;
+  already_notified: boolean;
+  notified_at: string | null;
+  max_lines: number;
+  max_line_length: number;
+}

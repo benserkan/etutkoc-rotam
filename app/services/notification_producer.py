@@ -116,6 +116,77 @@ def _next_active_time(pref: ParentNotificationPref, now: datetime) -> datetime:
     return target
 
 
+def suppression_reason(
+    db: Session,
+    *,
+    parent_id: int,
+    student_id: int | None,
+    kind: NotificationKind,
+    channel: NotificationChannel,
+    pref: "ParentNotificationPref | None" = None,
+) -> str | None:
+    """Bu bildirim BASTIRILIR mı? Bastırılırsa sebebi (log.error değeri), yoksa None.
+
+    TEK MERKEZ (2026-09-10): `enqueue_notification` bu fonksiyonu kullanır;
+    gönderim ÖNCESİ önizleme uçları da (örn. deneme duyurusu) aynı fonksiyonu
+    çağırır. Böylece "önizlemede gidecek dedi ama gitmedi" çelişkisi yapısal
+    olarak imkânsız — kural tek yerde değişir.
+
+    Salt okuma: hiçbir satır yazmaz.
+    """
+    if kind in _BYPASS_PREF_KINDS:
+        return None
+
+    if pref is None:
+        pref = (
+            db.query(ParentNotificationPref)
+            .filter(ParentNotificationPref.parent_id == parent_id)
+            .first()
+        )
+
+    # 0) Çocuk-bazlı sustur (parent_student_link.muted)
+    if student_id is not None:
+        link = (
+            db.query(ParentStudentLink)
+            .filter(
+                ParentStudentLink.parent_id == parent_id,
+                ParentStudentLink.student_id == student_id,
+            )
+            .first()
+        )
+        if link and link.muted:
+            return "child_muted"
+
+    # 1) Genel unsubscribe
+    if pref and pref.unsubscribed_at is not None:
+        return "unsubscribed"
+
+    # 2) Tür + kanal bazlı tercih kapalı
+    # E-posta için *_enabled (default=True), WhatsApp için *_wa_enabled (default=False).
+    # SMS kanalı yalnız OTP'de kullanıldığı için pref kontrolünden geçmez (bypass).
+    if pref:
+        if channel == NotificationChannel.EMAIL:
+            field = _KIND_TO_PREF_FIELD.get(kind)
+            default_enabled = True
+        elif channel == NotificationChannel.WHATSAPP:
+            field = _KIND_TO_PREF_FIELD_WA.get(kind)
+            default_enabled = False
+        else:
+            field = None
+            default_enabled = True
+        if field is not None and not getattr(pref, field, default_enabled):
+            return f"pref:{field}=False"
+
+    # 3) WhatsApp kanalı için telefon doğrulama kontrolü.
+    # P1 (2026-05-30): tek doğruluk kaynağı User.phone + User.phone_verified_at.
+    if channel == NotificationChannel.WHATSAPP:
+        parent_user = db.query(User).filter(User.id == parent_id).first()
+        if not parent_user or not parent_user.phone or not parent_user.phone_verified_at:
+            return "phone_not_verified"
+
+    return None
+
+
 def enqueue_notification(
     db: Session,
     *,
@@ -141,84 +212,23 @@ def enqueue_notification(
 
     now = datetime.now(timezone.utc)
 
-    # 0) Çocuk-bazlı sustur (parent_student_link.muted) — INVITATION/OTP hariç
-    #    sistem mesajları zaten student_id'siz gönderiliyor, bu kontrol noop olur.
-    if student_id is not None and kind not in _BYPASS_PREF_KINDS:
-        link = (
-            db.query(ParentStudentLink)
-            .filter(
-                ParentStudentLink.parent_id == parent_id,
-                ParentStudentLink.student_id == student_id,
-            )
-            .first()
-        )
-        if link and link.muted:
-            log = NotificationLog(
-                parent_id=parent_id, student_id=student_id, kind=kind, channel=channel,
-                status=NotificationStatus.SUPPRESSED,
-                subject=subject, payload_json=_safe_json(payload),
-                error="child_muted",
-            )
-            db.add(log)
-            db.flush()
-            return log
-
-    # 1) Genel unsubscribe? → SUPPRESSED (INVITATION/OTP hariç)
-    if (
-        pref and pref.unsubscribed_at is not None
-        and kind not in _BYPASS_PREF_KINDS
-    ):
+    # Bastırma kuralları TEK MERKEZDE (`suppression_reason`) — önizleme uçları
+    # da aynı fonksiyonu çağırır, böylece "önizleme gidecek dedi ama gitmedi"
+    # çelişkisi doğamaz.
+    reason = suppression_reason(
+        db, parent_id=parent_id, student_id=student_id,
+        kind=kind, channel=channel, pref=pref,
+    )
+    if reason is not None:
         log = NotificationLog(
             parent_id=parent_id, student_id=student_id, kind=kind, channel=channel,
             status=NotificationStatus.SUPPRESSED,
             subject=subject, payload_json=_safe_json(payload),
-            error="unsubscribed",
+            error=reason,
         )
         db.add(log)
         db.flush()
         return log
-
-    # 2) Tür + kanal bazlı pref kapalı → SUPPRESSED
-    # E-posta için *_enabled (default=True), WhatsApp için *_wa_enabled (default=False).
-    # SMS kanalı yalnız OTP'de kullanıldığı için pref kontrolünden geçmez (bypass).
-    if pref and kind not in _BYPASS_PREF_KINDS:
-        if channel == NotificationChannel.EMAIL:
-            field = _KIND_TO_PREF_FIELD.get(kind)
-            default_enabled = True
-        elif channel == NotificationChannel.WHATSAPP:
-            field = _KIND_TO_PREF_FIELD_WA.get(kind)
-            default_enabled = False
-        else:
-            field = None
-            default_enabled = True
-        if field is not None and not getattr(pref, field, default_enabled):
-            log = NotificationLog(
-                parent_id=parent_id, student_id=student_id, kind=kind, channel=channel,
-                status=NotificationStatus.SUPPRESSED,
-                subject=subject, payload_json=_safe_json(payload),
-                error=f"pref:{field}=False",
-            )
-            db.add(log)
-            db.flush()
-            return log
-
-    # 3) WhatsApp kanalı için telefon doğrulama kontrolü.
-    # P1 (2026-05-30): tek doğruluk kaynağı User.phone + User.phone_verified_at.
-    # Eski pref.whatsapp_phone artık kullanılmıyor (veri P1 migration'da User'a
-    # taşındı). Geriye uyum için pref.whatsapp_phone hâlâ dolu olabilir ama
-    # bakmıyoruz; User üzerinden doğrulamayı kontrol ederiz.
-    if channel == NotificationChannel.WHATSAPP and kind not in _BYPASS_PREF_KINDS:
-        parent_user = db.query(User).filter(User.id == parent_id).first()
-        if not parent_user or not parent_user.phone or not parent_user.phone_verified_at:
-            log = NotificationLog(
-                parent_id=parent_id, student_id=student_id, kind=kind, channel=channel,
-                status=NotificationStatus.SUPPRESSED,
-                subject=subject, payload_json=_safe_json(payload),
-                error="phone_not_verified",
-            )
-            db.add(log)
-            db.flush()
-            return log
 
     # 4) Sessiz saat → scheduled_at ileriye al
     scheduled = now

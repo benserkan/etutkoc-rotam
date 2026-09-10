@@ -70,6 +70,9 @@ from app.models import (
 from app.models.book import BookType
 from app.services.security import hash_password
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from lib_live_contrast import measure  # noqa: E402
+
 WEB = "http://localhost:3000"
 PFX = f"lsm_{secrets.token_hex(3)}"
 PWD_PLAIN = "SubjMix!2345"
@@ -437,54 +440,19 @@ def main() -> int:
             page.wait_for_timeout(900)
             dark_txt = page.query_selector(
                 'section:has-text("Haftanın Ders Dengesi")').inner_text()
-            low_contrast = page.evaluate(
-                """() => {
-                  const parse = (c) => (c.match(/[\\d.]+/g) || []).map(Number);
-                  const lum = ([r, g, b]) => {
-                    const f = (v) => {
-                      v /= 255;
-                      return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
-                    };
-                    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
-                  };
-                  const bgOf = (el) => {
-                    let n = el;
-                    while (n) {
-                      const c = getComputedStyle(n).backgroundColor;
-                      const p = parse(c);
-                      if (p.length >= 3 && (p[3] === undefined || p[3] > 0.5)) return p;
-                      n = n.parentElement;
-                    }
-                    return [0, 0, 0];
-                  };
-                  // Kapsam YALNIZ bu işin iki yüzeyi: ders dengesi şeridi +
-                  // müfredat kaynak satırları. (Hafta ızgarasının kasıtlı soluk
-                  // metinleri sayılmasın.)
-                  const scope = [
-                    ...document.querySelectorAll(
-                      '[data-section="week:subject-mix"], '
-                      + '[data-section="week:curriculum"] li li'),
-                  ];
-                  let bad = 0;
-                  scope.forEach((root) =>
-                    root.querySelectorAll('*').forEach((el) => {
-                      if (el.children.length || !el.textContent.trim()) return;
-                      const st = getComputedStyle(el);
-                      const fg = parse(st.color);
-                      if (fg.length < 3) return;
-                      const l1 = lum(fg), l2 = lum(bgOf(el));
-                      const ratio =
-                        (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-                      if (ratio < 2.5) bad++;
-                    }),
-                  );
-                  return bad;
-                }"""
-            )
+            # Kontrast ÖLÇÜMÜ paylaşılan modülden (2026-09-10): eski satır-içi
+            # ölçüm Chrome'un `lab(...)` renklerini RGB sanıp yanlış sonuç
+            # veriyordu — piksel tabanlı doğru ölçüme taşındı.
+            low_contrast = measure(
+                page,
+                '[data-section="week:subject-mix"], '
+                '[data-section="week:curriculum"] li li',
+                min_ratio=3.0,
+            )["bad"]
             page.screenshot(path=os.path.join(SHOT_DIR, "week_dark.png"),
                             full_page=True)
             check(
-                "11. koyu temada okunamayan metin yok (kontrast ≥ 2.5)",
+                "11. koyu temada okunamayan metin yok (kontrast ≥ 3.0 / WCAG AA)",
                 "Haftanın Ders Dengesi" in dark_txt and low_contrast == 0,
                 f"düşük kontrastlı öğe={low_contrast}",
             )

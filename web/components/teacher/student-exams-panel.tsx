@@ -34,12 +34,12 @@ import {
   PeriodSwitcher,
 } from "@/components/shared/period-switcher";
 import { ExamTopicAnalysis } from "@/components/shared/exam-topic-analysis";
+import { ExamParentAnnounceDialog } from "@/components/teacher/exam-parent-announce-dialog";
 
 import { getTeacherStudentExams, teacherKeys } from "@/lib/api/teacher";
 import {
   useCreateExam,
   useDeleteExam,
-  useNotifyParentsExam,
   useUpdateExam,
 } from "@/lib/hooks/use-teacher-mutations";
 import type {
@@ -380,8 +380,10 @@ function ExamRow({
   const [open, setOpen] = React.useState(false);
   const [editOpen, setEditOpen] = React.useState(false);
   const [importEditOpen, setImportEditOpen] = React.useState(false);
+  // Veliye duyur: window.confirm YERİNE önizle-düzenle-gönder modalı
+  // (koç isteği 2026-09-10) — koç neyin gideceğini görmeden onaylamasın.
+  const [announceOpen, setAnnounceOpen] = React.useState(false);
   const del = useDeleteExam();
-  const notifyMut = useNotifyParentsExam(studentId);
   const hasSubjects = row.subjects.length > 0;
 
   function onDelete() {
@@ -483,29 +485,11 @@ function ExamRow({
                 <Button
                   variant="ghost"
                   size="sm"
-                  disabled={notifyMut.isPending}
-                  onClick={() => {
-                    if (
-                      !window.confirm(
-                        `"${row.title}" sonucunu veliye e-posta ile duyurmak istiyor musunuz?
-
-` +
-                          "Net, ders kırılımı ve bir önceki denemeye göre değişim paylaşılır. " +
-                          "Koça özel notlar ve soru-satırı detayları gönderilmez.",
-                      )
-                    ) {
-                      return;
-                    }
-                    notifyMut.mutate({ examId: row.id });
-                  }}
+                  onClick={() => setAnnounceOpen(true)}
                   aria-label="Sonucu veliye duyur"
-                  title="Sonucu veliye e-posta ile duyur"
+                  title="Veliye gidecek maili önizle, düzenle ve gönder"
                 >
-                  {notifyMut.isPending ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden />
-                  ) : (
-                    <Mail className="size-4 text-teal-600" aria-hidden />
-                  )}
+                  <Mail className="size-4 text-teal-600" aria-hidden />
                 </Button>
               )}
               <Button
@@ -538,6 +522,17 @@ function ExamRow({
             studentId={studentId}
             editExamId={row.id}
           />
+
+          {/* Veliye duyur — önizle + düzenle + gönder. Yalnız açıkken mount
+              edilir ki önizleme sorgusu her satır için boşuna koşmasın. */}
+          {announceOpen ? (
+            <ExamParentAnnounceDialog
+              examId={row.id}
+              studentId={studentId}
+              open={announceOpen}
+              onOpenChange={setAnnounceOpen}
+            />
+          ) : null}
 
           <Dialog open={editOpen} onOpenChange={setEditOpen}>
             <DialogContent className="max-w-lg">
