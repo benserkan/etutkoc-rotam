@@ -85,6 +85,38 @@ koç tarafından kaldırılma ihtiyacı hissedilebilir."
   18 (`_wilson_lower` ortak, oraya DOKUNULMADI) · teacher_exams 18 · parent 20.
   **KURAL: veliye/koça gösterilen oran ile karar verilen oran AYNI paydayı
   kullanmalı; "en X ders" gibi karşılaştırma cümleleri en az 2 adayla kurulur.**
+- **DEVAMI 2 — MAİLE NET FIRSATI + GEÇMİŞ KARŞILAŞTIRMA (aynı gün, commit
+  `6849f41`, migration YOK):** koç: "net fırsatı tablosunu mail şablonuna uygun
+  yerleştir + hangi konulardan geldiğine dair yorum olsun" · "geçmiş denemeleri
+  de ders bazlı tablo hâlinde ekle, karşılaştırma fırsatı olsun". Maile İKİ
+  bölüm eklendi (mevcut başlık/tablo/renk düzenine oturur):
+  · **"Önceki denemelerle karşılaştırma"** — ders bazlı net tablosu; sütunlar
+    eskiden yeniye, son sütun bu deneme (vurgulu), satırda ▲/▼ trend, altta
+    "Toplam net". **KIYAS AYNI TÜR İÇİNDE** (TYT ile AYT yan yana = veli düşüş
+    sanar, 2026-07-17 tuzağı). Veri yoksa hücre "—" (uydurulmaz); tek deneme
+    varsa bölüm hiç görünmez. `MAX_HISTORY_EXAMS=4` (mail 580px).
+  · **"Nerede net kazanabilir?"** — konu · ders + "+X net" + "Hepsi kapanırsa
+    +Y net/deneme". Kaynak **koç panelindeki tabloyla AYNI servis**
+    (`exam_topic_analysis`) → sayılar ayrışamaz; veliye en büyük 4 satır
+    (`MAX_PARENT_OPPORTUNITIES`), dil "kayıp" değil "kazanç".
+  · **Yorum cümlesi:** "Son N denemesine bakınca en çok kazanç şu konulardan
+    gelebilir: … deneme başına yaklaşık X net daha çıkarabilir." Kapsamı
+    açıkça söyler ("son N deneme") — üstteki odak cümlesi BU denemeye dayanır,
+    veli iki listeyi karıştırmasın.
+  · **Koç kontrolü:** modalda iki bölüm de görünür + ayrı ayrı kapatılabilir
+    (`include_history` / `include_opportunities`); gövdesiz POST hepsini açık
+    gönderir (mobil/eski istemci etkilenmez).
+  · **BİLİNÇLİ KARAR:** net fırsatı listesine **alan (track) filtresi
+    UYGULANMAZ** — koç paneliyle birebir kalsın diye. Odak cümlesi ("ağırlık
+    vereceğiz") bir VAAT'tir, alan filtreli kalır; fırsat listesi TESPİT'tir ve
+    TYT'de her ders puan getirir. Senaryo 33 bu kararı kilitler.
+  · smoke 26→**33** · `live_exam_parent_announce` 11→**14** · mail HTML'i
+    gerçek şablonla render edilip görsel doğrulandı. Prod (Elif #34):
+    Paragraf +5,00 · Şiir +4,25 · Fonksiyonlar +3,50 · Bilim Felsefesi +3,00 →
+    "Hepsi kapanırsa +15,75 net/deneme" — panelle birebir. Karşılaştırma
+    tablosu o türde tek deneme olduğu için (doğru şekilde) çıkmadı.
+  **KURAL: veliye giden tablo ile koç panelindeki tablo AYNI servisten
+  beslenir; mail sürümü yalnız KISALTIR (satır sayısı), hesabı değiştirmez.**
 
 ---
 
