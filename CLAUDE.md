@@ -6,6 +6,59 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## DENEME DUYURUSU — ÖNİZLE / DÜZENLE / GÖNDER — CANLI (2026-09-10, commit `a97b6ae`, migration YOK)
+
+**Tetikleyici (koç, ekran görüntüsü):** deneme sonucu veliye gönderilirken
+`window.confirm` çıkıyordu — koç **neyin gideceğini görmeden** onaylıyordu.
+"Mail içeriği önizlenmeli (modal), düzenlenebilmeli; kullanılan bazı ifadeler
+koç tarafından kaldırılma ihtiyacı hissedilebilir."
+
+- **YENİ `components/teacher/exam-parent-announce-dialog.tsx`:** zarf düğmesi
+  mailin GERÇEK içeriğini modalda gösterir — net şeridi + kıyas satırı + koç
+  yorumu + ders tablosu + **alıcı veliler**. Koç yorum cümlelerini tek tek
+  düzenler, **istemediğini siler** (asıl istek), kendi cümlesini ekler, ders
+  tablosunu checkbox'la çıkarır, "Sıfırla" ile sistem önerisine döner →
+  **"N veliye gönder"**.
+- **BİLİNÇLİ SINIR:** net / D-Y-B / ders sayıları **ÖLÇÜM** — mailden
+  düzenlenemez (koç düzeltecekse denemenin kendisini düzenler; veliye giden
+  sayı panelle ayrışamaz). Modal bunu tek satırla söyler.
+- **Backend:** `GET /teacher/exams/{id}/parent-preview` (salt okuma, gönderim
+  YOK) · `POST /notify-parents` artık **opsiyonel gövde** alır
+  (`narrative` + `include_subjects`) — **gövdesiz istek eski davranış**, mobil/
+  eski istemci etkilenmez · `produce_exam_result(narrative=, include_subjects=)`.
+  Doğrulama: boş satır atılır · satır 500 karaktere kesilir · en fazla 12 satır ·
+  `narrative=[]` geçerli seçim (yorumsuz, yalnız sayılar). Jinja autoescape
+  açık → koçun metni HTML enjekte edemez.
+- **BASTIRMA KURALI TEK MERKEZE ALINDI** (`notification_producer.suppression_reason`):
+  `enqueue_notification`'ın 4 bastırma dalı (child_muted · unsubscribed · pref
+  kapalı · WA telefon) salt-okuma tek fonksiyona çıkarıldı; **enqueue onu
+  kullanıyor, önizleme de**. "Önizleme gidecek dedi ama gitmedi" çelişkisi
+  YAPISAL olarak imkânsız; önizleme her veli için sebebi sade Türkçe gösterir
+  ("deneme sonucu bildirimini kapatmış"). **KURAL: yeni bastırma kuralı
+  yalnız `suppression_reason`'a eklenir.**
+- **Test:** `test_api_v2_exam_notify_parents` 14→**22** (15-23). **AYIRT
+  EDİCİ:** override yok sayılınca 17/18/19/20 kırmızı. YENİ
+  `scripts/live_exam_parent_announce.py` **11/11** (gerçek tarayıcı: confirm
+  değil modal · içerik · alıcılar · **salt okuma** [mail sayısı değişmiyor] ·
+  cümle sil/düzenle/ekle · tablo çıkar · giden mailde koçun metni + silinen
+  cümle YOK · "Duyuruldu" · koyu tema). Regresyon: parent 20 ·
+  parent_wa_channel 14 · comm_log 28 · teacher_exams 18 · student_email_fallback
+  17 · parent_weekly_report 14 · weekly_plan · trial_notifications ·
+  run_gorev_checks 82/82; tsc + eslint (tam) temiz.
+- **ÖLÇÜM ARACI DÜZELTMESİ — YENİ `scripts/lib_live_contrast.py` (tek merkez):**
+  canlı testlerdeki kontrast ölçümü Chrome'un **`lab(...)`** renklerini RGB
+  sanıp parse ediyordu → ekranda okunan metne "okunmuyor" diyordu (yanlış
+  kırmızı; canvas `fillStyle` geri okuması da aynı `lab()` stringini döndürür).
+  Renk artık **1x1 canvas'a ÇİZİLİP `getImageData` ile gerçek sRGB baytları**
+  okunuyor + yarı saydam zeminler sırayla kompozit ediliyor.
+  `live_subject_mix.py` de bu modüle bağlandı (11/11 doğru ölçümle yeşil).
+  **KURAL: canlı testte kontrast ölçümü `lib_live_contrast.measure()` ile
+  yapılır — satır içi renk parse etme yasak.**
+- Deploy: web+worker+next rebuild (Plausible-stop'lu); healthz/site 200, yeni
+  uç anon 401. Mobil BİLİNÇLİ yok (duyuru koç yüzeyi web — PARITY).
+
+---
+
 ## HAFTANIN DERS DENGESİ ŞERİDİ + MÜFREDATTA KAYNAK SEÇİMİ — CANLI (2026-09-09, commit `ada0c27`, migration YOK)
 
 **Tetikleyici (koç, iki istek):** (1) "programı hazırlarken ders bazında (TYT ve
