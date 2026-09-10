@@ -512,6 +512,44 @@ def build_parent_exam_summary(db: Session, exam: ExamResult) -> dict:
     }
 
 
+def build_email_context(
+    db: Session,
+    exam: ExamResult,
+    *,
+    narrative: list[str] | None = None,
+    include_subjects: bool = True,
+    include_history: bool = True,
+    include_opportunities: bool = True,
+) -> dict:
+    """Deneme sonucu mailinin ŞABLON BAĞLAMI — tek kaynak.
+
+    Hem gerçek e-posta (`produce_exam_result`) hem koçun "PDF olarak indir"
+    çıktısı bu fonksiyondan beslenir; ikisi ayrışamaz. Veliye özel alanlar
+    (unsubscribe_token) çağıranda eklenir.
+
+    Koç düzenlemesi burada uygulanır: `narrative` verilirse kural motorunun
+    cümleleri yerine koçun metni gider; `include_*` bayrakları ilgili bölümü
+    tamamen çıkarır (şablon `{% if %}` ile zaten atlar).
+    """
+    summary = build_parent_exam_summary(db, exam)
+    if narrative is not None:
+        summary["narrative"] = narrative
+    if not include_subjects:
+        summary["subjects"] = []
+    if not include_history:
+        summary["history"] = {"exams": [], "rows": [], "has_data": False}
+    if not include_opportunities:
+        summary["opportunities"] = []
+    return {
+        "__template": "parent_exam_result",
+        "student_id": exam.student_id,
+        "student_name": (exam.student.full_name if exam.student else ""),
+        **summary,
+        "exam_date_tr": format_tr_date(summary.get("exam_date")),
+        "prev_date_tr": format_tr_date(summary.get("prev_date")),
+    }
+
+
 def _section_label(exam: ExamResult) -> str:
     from app.models.curriculum import EXAM_SECTION_LABELS
 

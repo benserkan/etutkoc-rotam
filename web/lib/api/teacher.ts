@@ -860,3 +860,26 @@ export function getExamParentPreview(
     `/api/v2/teacher/exams/${examId}/parent-preview`,
   );
 }
+
+/** Veliye gidecek mailin YAZDIRILABİLİR hâli (koç PDF'e kaydeder).
+ *
+ * Gövde = modaldaki güncel düzenleme; çıktı ekrandakiyle birebir. Gönderim
+ * YAPMAZ. HTML string döner — çağıran onu bir iframe'e yazıp print() eder.
+ */
+export async function getExamParentPreviewHtml(
+  examId: number,
+  body?: ExamNotifyParentsBody,
+): Promise<string> {
+  // eslint-disable-next-line lgs/no-bare-fetch -- HTML/text yanıt; api() JSON sarmalayıcısı uyumsuz
+  const res = await fetch(
+    `/api/v2/teacher/exams/${examId}/parent-preview.html`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body ?? {}),
+      credentials: "same-origin",
+    },
+  );
+  if (!res.ok) throw new Error("preview_html_failed");
+  return res.text();
+}

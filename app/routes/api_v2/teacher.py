@@ -58,11 +58,13 @@ import calendar
 import json
 import logging
 import secrets
+from html import escape
 import string as _string_mod
 from datetime import date, datetime, timedelta, timezone
 from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi.responses import HTMLResponse
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
@@ -10584,6 +10586,85 @@ def teacher_exam_parent_preview_v2(
         max_lines=EXAM_NARRATIVE_MAX_LINES,
         max_line_length=EXAM_NARRATIVE_MAX_LEN,
     )
+
+
+#: Yazdırma sayfasına eklenen yardımcı başlık — ekranda görünür, ÇIKTIDA yok.
+_PRINT_HELPER = """
+<div class="rotam-print-hint">
+  <b>PDF olarak kaydedin.</b> Açılan yazdırma penceresinde
+  <b>Hedef</b> olarak <b>&quot;PDF olarak kaydet&quot;</b> seçin.
+  Kaydettiğiniz dosyayı WhatsApp'tan veliyle paylaşabilirsiniz.
+</div>
+<style>
+  .rotam-print-hint {
+    max-width: 580px; margin: 0 auto 14px; padding: 10px 14px;
+    border: 1px solid #99f6e4; background: #f0fdfa; border-radius: 10px;
+    font: 13px/1.5 'Segoe UI', Arial, sans-serif; color: #0f766e;
+  }
+  @media print {
+    .rotam-print-hint { display: none !important; }
+    /* Arka plan renkleri ve tablo tonları çıktıda da bassın */
+    body { background: #fff !important; }
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
+  @page { margin: 12mm; }
+</style>
+<script>
+  // Sayfa açılır açılmaz yazdırma penceresi — koç tek tık uzağında olsun.
+  window.addEventListener('load', function () { setTimeout(function () {
+    try { window.print(); } catch (e) {}
+  }, 350); });
+</script>
+"""
+
+
+@router.post("/exams/{exam_id}/parent-preview.html", response_class=HTMLResponse)
+def teacher_exam_parent_preview_html_v2(
+    exam_id: int,
+    body: ExamNotifyParentsBody | None = None,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+):
+    """Veliye gidecek mailin YAZDIRILABİLİR hâli — koç PDF'e kaydeder.
+
+    KOÇ İSTEĞİ (2026-09-10): "açılan modalda PDF olarak indir seçeneği de
+    olsun; böylece WhatsApp uygulamasından da gönderilebilir olur."
+
+    Gövde = modaldaki güncel düzenleme (narrative + include_* bayrakları), yani
+    çıktı koçun ekranda gördüğüyle birebir. İçerik GERÇEK MAİL ŞABLONUNDAN
+    üretilir (`build_email_context` + `parent_exam_result.html`) → PDF ile
+    e-posta ayrışamaz. Hiçbir bildirim GÖNDERİLMEZ; salt okuma.
+    """
+    from app.services.email_service import _render
+    from app.services.exam_parent_summary import build_email_context
+
+    exam = _get_owned_exam(db, exam_id, user.id)
+    student = db.get(User, exam.student_id)
+    if student is None:
+        raise _validation_error("student_not_found", "Öğrenci bulunamadı.")
+
+    ctx = build_email_context(
+        db, exam,
+        narrative=_clean_narrative(body.narrative if body else None),
+        include_subjects=(body.include_subjects if body else True),
+        include_history=(body.include_history if body else True),
+        include_opportunities=(body.include_opportunities if body else True),
+    )
+    # Veliye özel alan yok: bu çıktı koçun elinde, abonelik linki anlamsız.
+    ctx["unsubscribe_token"] = ""
+    _subject, html, _text = _render("parent_exam_result", ctx)
+
+    # Kaydedilen dosyanın adı tarayıcıda <title>'dan gelir.
+    title = f"{student.full_name} - {exam.title} - deneme sonucu"
+    if "<head>" in html:
+        html = html.replace(
+            "<head>", f"<head><title>{escape(title)}</title>", 1,
+        )
+    if "<body" in html:
+        idx = html.index("<body")
+        close = html.index(">", idx) + 1
+        html = html[:close] + _PRINT_HELPER + html[close:]
+    return HTMLResponse(content=html)
 
 
 @router.post(

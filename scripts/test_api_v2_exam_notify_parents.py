@@ -55,6 +55,13 @@ Senaryolar:
   33. Net fırsatı alan filtresi UYGULAMAZ (koç paneliyle birebir) — bilinçli
   34. Tek denemede karşılaştırma tablosu YOK (kıyas edecek şey yok)
   35. Koç iki bölümü de kapatabilir (include_history / include_opportunities)
+
+  PDF/YAZDIRMA ÇIKTISI (2026-09-10, koç: "modalda PDF olarak indir seçeneği
+  de olsun; böylece WhatsApp uygulamasından da gönderilebilir olur"):
+  36. Yazdırılabilir HTML mailin GERÇEK şablonundan üretilir (aynı içerik)
+  37. Koçun düzenlemesi çıktıya birebir yansır (metin + kapatılan bölümler)
+  38. Çıktı üretmek HİÇBİR bildirim göndermez (salt okuma)
+  39. Sahiplik: başka koçun denemesi → 404
 """
 from __future__ import annotations
 
@@ -663,6 +670,57 @@ def main() -> int:
             and ph.get("net_text") == "75,00",
             f"opp={ph.get('opportunities')} hist={(ph.get('history') or {}).get('has_data')}",
         )
+
+        # ---- 36-39. YAZDIRILABİLİR (PDF) ÇIKTI
+        logs_pdf_before = _log_count(s["parent_id"])
+        rp = c.post(
+            f"/api/v2/teacher/exams/{s['weak']}/parent-preview.html", json={},
+        )
+        html = rp.text if rp.status_code == 200 else ""
+        check(
+            "36. yazdırılabilir çıktı GERÇEK mail şablonundan üretilir "
+            "(net şeridi + yorum + yazdırma yardımcısı)",
+            rp.status_code == 200
+            and "text/html" in rp.headers.get("content-type", "")
+            and "10,50" in html                       # net şeridi
+            and "Bu deneme ne anlatıyor?" in html      # şablon başlığı
+            and "PDF olarak kaydet" in html            # yazdırma yardımcısı
+            and "window.print()" in html,
+            f"status={rp.status_code} len={len(html)}",
+        )
+
+        rp2 = c.post(
+            f"/api/v2/teacher/exams/{s['weak']}/parent-preview.html",
+            json={
+                "narrative": ["Koçun kendi cümlesi."],
+                "include_subjects": False,
+                "include_history": False,
+                "include_opportunities": False,
+            },
+        )
+        html2 = rp2.text if rp2.status_code == 200 else ""
+        check(
+            "37. koçun düzenlemesi çıktıya birebir yansır "
+            "(metin girer · kapatılan bölümler ÇIKMAZ)",
+            rp2.status_code == 200
+            and "Koçun kendi cümlesi." in html2
+            and "Ders bazında" not in html2
+            and "Önceki denemelerle karşılaştırma" not in html2
+            and "Nerede net kazanabilir" not in html2
+            and "10,50" in html2,                      # sayılar durur
+            f"status={rp2.status_code} len={len(html2)}",
+        )
+        check(
+            "38. yazdırılabilir çıktı GÖNDERİM YAPMAZ (salt okuma)",
+            _log_count(s["parent_id"]) == logs_pdf_before,
+            f"{logs_pdf_before} -> {_log_count(s['parent_id'])}",
+        )
+        r39 = c.post(
+            f"/api/v2/teacher/exams/{s['foreign_exam']}/parent-preview.html",
+            json={},
+        )
+        check("39. başka koçun denemesinin çıktısı → 404",
+              r39.status_code == 404, f"{r39.status_code}")
 
         # ---- 21. TERCİH KAPALIYKEN önizleme bunu SÖYLER (koç boşuna beklemesin)
         #      Bastırma kararı gerçek gönderimle AYNI fonksiyondan gelir

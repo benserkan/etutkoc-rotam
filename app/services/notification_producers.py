@@ -811,29 +811,23 @@ def produce_exam_result(
     tablosunu çıkarır. İkisi de verilmezse davranış eskisiyle birebir aynı —
     mobil/eski istemciler etkilenmez.
     """
-    from app.services.exam_parent_summary import (
-        build_parent_exam_summary,
-        format_tr_date,
-    )
+    from app.services.exam_parent_summary import build_email_context
 
-    summary = build_parent_exam_summary(db, exam)
-    if narrative is not None:
-        summary["narrative"] = narrative
-    if not include_subjects:
-        summary["subjects"] = []
-    if not include_history:
-        summary["history"] = {"exams": [], "rows": [], "has_data": False}
-    if not include_opportunities:
-        summary["opportunities"] = []
+    # Mail gövdesi TEK KAYNAKTAN: koçun "PDF olarak indir" çıktısı da aynı
+    # fonksiyonu kullanır → veliye giden mail ile paylaşılan PDF ayrışamaz.
     payload: dict[str, Any] = {
-        "__template": "parent_exam_result",
+        **build_email_context(
+            db, exam,
+            narrative=narrative,
+            include_subjects=include_subjects,
+            include_history=include_history,
+            include_opportunities=include_opportunities,
+        ),
         "student_id": student.id,
         "student_name": student.full_name,
-        **summary,
-        "exam_date_tr": format_tr_date(summary.get("exam_date")),
-        "prev_date_tr": format_tr_date(summary.get("prev_date")),
         "unsubscribe_token": _unsub_token(db, parent.id),
     }
+    summary = payload
 
     return [
         enqueue_notification(

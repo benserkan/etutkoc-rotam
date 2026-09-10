@@ -29,12 +29,17 @@ import {
   Mail,
   MailX,
   Plus,
+  Printer,
   RotateCcw,
   Send,
   Trash2,
 } from "lucide-react";
 
-import { getExamParentPreview, teacherKeys } from "@/lib/api/teacher";
+import {
+  getExamParentPreview,
+  getExamParentPreviewHtml,
+  teacherKeys,
+} from "@/lib/api/teacher";
 import type { ExamParentPreviewResponse } from "@/lib/types/teacher";
 import { useNotifyParentsExam } from "@/lib/hooks/use-teacher-mutations";
 import { Button } from "@/components/ui/button";
@@ -47,6 +52,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 const DELTA_TONE: Record<string, string> = {
   up: "text-emerald-700 dark:text-emerald-300",
@@ -93,6 +99,7 @@ export function ExamParentAnnounceDialog({
   // Geçmişle karşılaştırma + net fırsatı bölümleri (koç isteği 2026-09-10)
   const [includeHistory, setIncludeHistory] = React.useState(true);
   const [includeOpportunities, setIncludeOpportunities] = React.useState(true);
+  const [printing, setPrinting] = React.useState(false);
 
   if (data && seededFor !== data.exam_id) {
     setSeededFor(data.exam_id);
@@ -123,6 +130,16 @@ export function ExamParentAnnounceDialog({
     if (lines.length >= maxLines) return;
     setLines([...lines, ""]);
   }
+  /** Gönderim ve PDF çıktısı AYNI gövdeyi kullanır — ikisi ayrışamaz. */
+  function currentBody() {
+    return {
+      narrative: lines.map((l) => l.trim()).filter(Boolean),
+      include_subjects: includeSubjects,
+      include_history: includeHistory,
+      include_opportunities: includeOpportunities,
+    };
+  }
+
   function reset() {
     setLines(data?.narrative ?? []);
     setIncludeSubjects(true);
@@ -130,18 +147,49 @@ export function ExamParentAnnounceDialog({
     setIncludeOpportunities(true);
   }
 
+  /** Modaldaki güncel içerikle mailin yazdırılabilir hâlini aç.
+   *
+   * Gizli iframe'e yazılır ve print() çağrılır → tarayıcının yazdırma
+   * penceresinde "PDF olarak kaydet" ile dosya elde edilir (WhatsApp'tan
+   * paylaşmak için). PDF kütüphanesi eklemedik: çıktı gerçek mail
+   * şablonundan üretildiği için mail ile PDF ayrışamıyor ve sunucuda ek
+   * bağımlılık/yük oluşmuyor.
+   */
+  async function downloadPdf() {
+    if (printing) return;
+    setPrinting(true);
+    try {
+      const html = await getExamParentPreviewHtml(examId, currentBody());
+      const frame = document.createElement("iframe");
+      frame.setAttribute("aria-hidden", "true");
+      frame.style.cssText =
+        "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+      document.body.appendChild(frame);
+      const doc = frame.contentDocument;
+      if (!doc) throw new Error("no_frame");
+      doc.open();
+      doc.write(html);
+      doc.close();
+      // Yazdırma penceresi kapanınca iframe'i topla (sayfada iz bırakmasın).
+      window.setTimeout(() => {
+        try {
+          frame.contentWindow?.focus();
+        } catch {
+          /* yoksay */
+        }
+        window.setTimeout(() => frame.remove(), 60_000);
+      }, 400);
+    } catch {
+      toast.error("Yazdırma önizlemesi hazırlanamadı.");
+    } finally {
+      setPrinting(false);
+    }
+  }
+
   function send() {
     const cleaned = lines.map((l) => l.trim()).filter(Boolean);
     notifyMut.mutate(
-      {
-        examId,
-        body: {
-          narrative: cleaned,
-          include_subjects: includeSubjects,
-          include_history: includeHistory,
-          include_opportunities: includeOpportunities,
-        },
-      },
+      { examId, body: { ...currentBody(), narrative: cleaned } },
       { onSuccess: () => onOpenChange(false) },
     );
   }
@@ -569,7 +617,23 @@ export function ExamParentAnnounceDialog({
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="gap-2 sm:justify-between">
+          {/* PDF: mailin aynısını yazdır → WhatsApp'tan paylaşılabilir dosya */}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={downloadPdf}
+            disabled={printing || !data}
+            title="Mailin aynısını yazdır — 'PDF olarak kaydet' ile dosya elde edip WhatsApp'tan paylaşabilirsiniz"
+            className="sm:mr-auto"
+          >
+            {printing ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <Printer className="size-4" aria-hidden />
+            )}
+            PDF olarak indir
+          </Button>
           <Button
             type="button"
             variant="outline"

@@ -24,6 +24,7 @@ Senaryolar:
   12. "Nerede net kazanabilir?" tablosu modalda + maile giden metinde
   13. Geçmiş denemelerle karşılaştırma tablosu (aynı tür, trend oku)
   14. İki bölüm de checkbox'la çıkarılabilir
+  15. "PDF olarak indir" → yazdırma açılır, çıktı KOÇUN düzenlemesini taşır
 """
 from __future__ import annotations
 
@@ -384,6 +385,65 @@ def main() -> int:
                   mtext2[-200:])
 
             page.screenshot(path=os.path.join(SHOT_DIR, "ann_edited.png"))
+
+            # ---- 15. "PDF olarak indir" — yazdırma penceresi + içerik
+            #      window.print() headless'ta diyalog açmaz; çağrıldığını
+            #      yakalamak için stub'larız (buton gerçekten tetikliyor mu).
+            page.evaluate(
+                """() => {
+                  window.__printed = 0;
+                  const orig = window.print;
+                  window.print = function () { window.__printed++; };
+                  window.__origPrint = orig;
+                  // iframe icindeki print de sayilsin
+                  const obs = new MutationObserver((muts) => {
+                    muts.forEach((m) => m.addedNodes.forEach((n) => {
+                      if (n.tagName === 'IFRAME' && n.contentWindow) {
+                        try {
+                          n.contentWindow.print = function () {
+                            window.__printed++;
+                          };
+                        } catch (e) {}
+                      }
+                    }));
+                  });
+                  obs.observe(document.body, { childList: true });
+                }"""
+            )
+            mails_before_pdf = mail_count(ids["parent"])
+            page.click('[role="dialog"] button:has-text("PDF olarak indir")')
+            page.wait_for_timeout(3000)
+            printed = page.evaluate("() => window.__printed || 0")
+            frame_html = page.evaluate(
+                """() => {
+                  const f = [...document.querySelectorAll('iframe')].pop();
+                  return f && f.contentDocument
+                    ? f.contentDocument.documentElement.innerHTML
+                    : '';
+                }"""
+            )
+            check(
+                "15a. 'PDF olarak indir' → yazdırma tetiklenir + çıktı mailin "
+                "aynısı (net şeridi + koçun cümlesi)",
+                printed >= 1
+                and "56,25" in frame_html
+                and edited_first in frame_html,
+                f"printed={printed} len={len(frame_html)}",
+            )
+            check(
+                "15b. çıktı koçun düzenlemesini taşır: silinen cümle YOK, "
+                "kapatılan ders tablosu YOK",
+                removed_text not in frame_html
+                and "Ders bazında" not in frame_html
+                and "Nerede net kazanabilir" in frame_html,
+                frame_html[:200],
+            )
+            check(
+                "15c. PDF çıktısı GÖNDERİM YAPMAZ",
+                mail_count(ids["parent"]) == mails_before_pdf,
+                f"{mails_before_pdf} -> {mail_count(ids['parent'])}",
+            )
+            page.evaluate("() => { if (window.__origPrint) window.print = window.__origPrint; }")
 
             # ---- 11. Koyu tema kontrastı (modal açıkken)
             page.evaluate("() => document.documentElement.classList.add('dark')")
