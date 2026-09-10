@@ -117,6 +117,32 @@ koç tarafından kaldırılma ihtiyacı hissedilebilir."
     tablosu o türde tek deneme olduğu için (doğru şekilde) çıkmadı.
   **KURAL: veliye giden tablo ile koç panelindeki tablo AYNI servisten
   beslenir; mail sürümü yalnız KISALTIR (satır sayısı), hesabı değiştirmez.**
+- **DEVAMI 3 — "PDF OLARAK İNDİR" (aynı gün, commit `5a552c5`, migration YOK):**
+  koç: "modalda PDF olarak indir seçeneği de olsun; böylece WhatsApp
+  uygulamasından da gönderilebilir olur." Akış: buton → mailin yazdırılabilir
+  hâli **gizli iframe**'e yazılır + `window.print()` → koç "PDF olarak kaydet"
+  der → dosya iner → WhatsApp'tan paylaşır. Sayfada (çıktıda GÖRÜNMEYEN) bant
+  bunu anlatır.
+  **PDF KÜTÜPHANESİ EKLENMEDİ — bilinçli:** (a) çıktı GERÇEK mail şablonundan
+  üretiliyor (`build_email_context` + `parent_exam_result.html`) → veliye giden
+  mail ile paylaşılan PDF ayrışamaz; WeasyPrint/wkhtmltopdf ikinci render yolu
+  demekti. (b) imaja pango/cairo/Chromium ~80MB + kurulum riski (VPS 3.7GB,
+  Next build zaten OOM sınırında). (c) Tarayıcının yazdırma motoru vektörel,
+  metni seçilebilir, Türkçe sorunsuz PDF üretir. (d) Sistemin mevcut deseni
+  zaten bu (haftalık koç/veli raporu "koç yazdırır → PDF'ler → paylaşır").
+  **Uç:** `POST /teacher/exams/{id}/parent-preview.html` — gövde modaldaki
+  güncel düzenleme, çıktı ekrandakiyle birebir, gönderim YOK; `<title>`
+  öğrenci+deneme adını taşır → kaydedilen dosya adı anlamlı. Yazdırma stili:
+  `print-color-adjust: exact` (tablo tonları bassın) + `@page 12mm`.
+  **Mail gövdesi ortak helper'a çıkarıldı** (`exam_parent_summary.
+  build_email_context`); `produce_exam_result` de onu kullanır. Frontend'de
+  gönderim ve PDF **aynı gövdeyi** kullanır (`currentBody()`) → koçun gördüğü,
+  gönderdiği ve PDF'lediği içerik ayrışamaz.
+  smoke 33→**37** (36 gerçek şablon · 37 düzenleme birebir yansır · 38 gönderim
+  yok · 39 sahiplik) · `live_exam_parent_announce` 14→**17** (15a print
+  tetiklenir + çıktı mailin aynısı · 15b silinen cümle/kapatılan tablo yok ·
+  15c gönderim yok). Çıktının gerçek PDF hâli Chrome yazdırma motoruyla
+  üretilip görsel doğrulandı.
 
 ---
 
