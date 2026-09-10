@@ -44,6 +44,17 @@ Senaryolar:
   26. Tek aday kalırsa "en rahat" DENMEZ (karşılaştırma iddiası, tek dersle olmaz)
   27. Hiçbir derste yarıyı geçemediyse "en rahat" DENMEZ
   28. Soru sayısı farkı adil: 20 soruluk %80 ile 40 soruluk %80'de büyük olan kazanır
+
+  NET FIRSATI + GEÇMİŞ KARŞILAŞTIRMA (2026-09-10, koç: "net fırsatı tablosunu
+  maile koy + hangi konulardan geldiğine dair yorum olsun" · "geçmiş
+  denemeleri de ders bazlı tablo hâlinde ekle, karşılaştırma fırsatı olsun"):
+  29. Net fırsatı tablosu maile girer + kazanç hesabı panelle AYNI
+  30. Fırsatın hangi konulardan geldiğini anlatan YORUM cümlesi var
+  31. Geçmiş karşılaştırma tablosu: aynı tür · eskiden yeniye · trend oku
+  32. Karşılaştırma AYNI TÜR içinde (TYT tablosuna AYT denemesi girmez)
+  33. Net fırsatı alan filtresi UYGULAMAZ (koç paneliyle birebir) — bilinçli
+  34. Tek denemede karşılaştırma tablosu YOK (kıyas edecek şey yok)
+  35. Koç iki bölümü de kapatabilir (include_history / include_opportunities)
 """
 from __future__ import annotations
 
@@ -154,8 +165,15 @@ def seed() -> dict:
             '"unmatched":true}]'
         )
         # ÖNCEKİ TYT denemesi (kıyas kaynağı) + güncel TYT
+        # Karşılaştırma tablosu için önceki denemenin de ders netleri olmalı.
+        # Matematik 12,50 → 15,50 (artış), Türkçe 36,00 → 35,00 (düşüş).
+        prev_nets = (
+            '[{"name":"TYT Türkçe","correct":37,"wrong":4,"blank":0,"net":36.0},'
+            '{"name":"TYT Matematik","correct":17,"wrong":18,"blank":5,"net":12.5},'
+            '{"name":"TYT Coğrafya","correct":4,"wrong":1,"blank":0,"net":3.75}]'
+        )
         prev = mk(st.id, "Önceki TYT Denemesi", date(2026, 8, 20),
-                  ExamSection.TYT, 58, 20, 42, 53.0)
+                  ExamSection.TYT, 58, 20, 42, 53.0, prev_nets)
         cur = mk(st.id, "ÜçDörtBeş TYT Son Düzlük", date(2026, 9, 2),
                  ExamSection.TYT, 58, 22, 40, 52.5, nets)
         # İçe aktarılmış denemenin soru satırları — konu düzeyi dilin kaynağı.
@@ -179,10 +197,15 @@ def seed() -> dict:
                     tp = Topic(subject_id=sub.id, name=tname, order=0)
                     db.add(tp)
                     db.flush()
-                db.add(ExamResultQuestion(
-                    exam_result_id=cur.id, subject_id=sub.id, topic_id=tp.id,
-                    result="yanlis",
-                ))
+                # NET FIRSATI için: konu başına 2 yanlış (tek soru "fırsat"
+                # sayılmaz — _MIN_TOPIC_QUESTIONS=2) + ÖNCEKİ denemeye de
+                # satır ki analiz 2 denemelik BİRİKİME dayansın.
+                for target in (cur, prev):
+                    for _ in range(2):
+                        db.add(ExamResultQuestion(
+                            exam_result_id=target.id, subject_id=sub.id,
+                            topic_id=tp.id, result="yanlis",
+                        ))
         db.flush()
 
         # Düzenleme senaryoları için ayrı denemeler (her duyuru tek seferlik).
@@ -386,18 +409,27 @@ def main() -> int:
               f"{narr[:220]}")
 
         # ---- 13. ALAN: sayısal öğrenciye Coğrafya odak olarak önerilmez
-        check("13. alan-dışı ders (Coğrafya) odak cümlesine GİRMEZ, tabloda var",
-              "Coğrafya" not in narr
+        # ODAK cümlesi = koçun vaadi ("takıldı" / "ağırlık vereceğiz").
+        # NET FIRSATI cümlesi ayrı bir TESPİT ve alan filtresi uygulamaz
+        # (koç paneliyle birebir; senaryo 33). İkisini karıştırmamak için
+        # kontrol cümle bazında yapılır.
+        focus_lines = " ".join(
+            ln for ln in p.get("narrative", [])
+            if "takıldı" in ln or "ağırlık vereceğiz" in ln
+        )
+        check("13. alan-dışı ders (Coğrafya) ODAK cümlesine GİRMEZ, tabloda var",
+              "Coğrafya" not in focus_lines
               and any("Coğrafya" in (x.get("name") or "")
                       for x in p.get("subjects", [])),
-              f"{narr[:240]}")
+              f"{focus_lines[:240]}")
 
         # ---- 14. KONU DÜZEYİ: gerçek konu adları geçmeli
         check("14. konu düzeyi dil: 'şu konularda takıldı' + konu adları",
-              "konularda takıldı" in narr
-              and "Fonksiyonlar" in narr and "Yaş Problemleri" in narr
-              and "Nüfus" not in narr,
-              f"{narr[:240]}")
+              "konularda takıldı" in focus_lines
+              and "Fonksiyonlar" in focus_lines
+              and "Yaş Problemleri" in focus_lines
+              and "Nüfus" not in focus_lines,
+              f"{focus_lines[:240]}")
 
         # ---- 7. kıyas AYNI TÜR içinde (AYT karışmadı)
         check("7. karşılaştırma AYNI TÜR içinde (AYT ile TYT kıyaslanmadı)",
@@ -548,6 +580,88 @@ def main() -> int:
             "20 soruluk Fen'i geçer)",
             "En rahat olduğu bölüm Matematik (32 doğru / 40 soru)" in sz,
             sz[:260],
+        )
+
+        # ---- 29-35. NET FIRSATI + GEÇMİŞ KARŞILAŞTIRMA
+        pv_cur = c.get(f"/api/v2/teacher/exams/{s['cur']}/parent-preview").json()
+        opps = pv_cur.get("opportunities", [])
+        # Her konuda 4 yanlış (2 deneme × 2) · TYT cezası 4 → (4×1,25)/2 = 2,50
+        check(
+            "29. net fırsatı tablosu maile girer + kazanç panelle AYNI hesap "
+            "(4 yanlış · 2 deneme → +2,50/deneme)",
+            len(opps) == 4
+            and all(o["gain_text"] == "2,50" for o in opps)
+            and pv_cur.get("opportunity_total_text") == "10,00"
+            and pv_cur.get("opportunity_exam_count") == 2,
+            f"{[(o['subject'], o['topic'], o['gain_text']) for o in opps]} "
+            f"total={pv_cur.get('opportunity_total_text')}",
+        )
+
+        opp_line = next(
+            (ln for ln in pv_cur.get("narrative", []) if "kazanç" in ln), ""
+        )
+        check(
+            "30. fırsatın HANGİ konulardan geldiğini anlatan yorum cümlesi",
+            "Son 2 denemesine bakınca" in opp_line
+            and "Fonksiyonlar" in opp_line
+            and "10,00 net" in opp_line,
+            opp_line[:240],
+        )
+
+        hist = pv_cur.get("history") or {}
+        hrows = {r["subject"]: r for r in hist.get("rows", [])}
+        check(
+            "31. geçmiş tablo: aynı tür · eskiden yeniye · trend oku doğru "
+            "(Matematik 12,50→15,50 ▲ · Türkçe 36,00→35,00 ▼)",
+            hist.get("has_data") is True
+            and [e["date_tr"] for e in hist.get("exams", [])]
+                == ["20.08.2026", "02.09.2026"]
+            and hist["exams"][-1]["is_current"] is True
+            and hrows["Matematik"]["nets"] == ["12,50", "15,50"]
+            and hrows["Matematik"]["direction"] == "up"
+            and hrows["Türkçe"]["direction"] == "down"
+            and hist.get("totals") == ["53,00", "52,50"],
+            f"{hist.get('exams')} {list(hrows)}",
+        )
+        check(
+            "32. karşılaştırmaya BAŞKA TÜR girmez (AYT denemesi TYT tablosunda yok)"
+            " · veri olmayan hücre uydurulmaz",
+            all(
+                "AYT" not in (e.get("title") or "")
+                for e in hist.get("exams", [])
+            )
+            and hrows["Din Kültürü"]["nets"][0] is None,
+            f"{[e.get('title') for e in hist.get('exams', [])]}",
+        )
+        check(
+            "33. net fırsatı ALAN filtresi uygulamaz (koç paneliyle birebir): "
+            "sayısal öğrencide Coğrafya konusu da listede",
+            any(o["subject"] == "Coğrafya" for o in opps),
+            f"{[o['subject'] for o in opps]}",
+        )
+
+        # Tek denemede kıyas edecek şey yok → tablo boş (AYT: tek deneme)
+        pv_ayt = c.get(f"/api/v2/teacher/exams/{s['ayt']}/parent-preview").json()
+        check(
+            "34. tek denemede karşılaştırma tablosu YOK",
+            not (pv_ayt.get("history") or {}).get("has_data"),
+            f"{(pv_ayt.get('history') or {}).get('exams')}",
+        )
+
+        # ---- 35. koç iki bölümü de kapatabilir
+        r = c.post(
+            f"/api/v2/teacher/exams/{s['elif']}/notify-parents",
+            json={"include_history": False, "include_opportunities": False},
+        )
+        ph = last_payload(s["parent_id"])
+        check(
+            "35. include_history/include_opportunities=false → iki bölüm de "
+            "maile GİRMEZ (sayılar durur)",
+            r.status_code == 200
+            and ph.get("opportunities") == []
+            and not (ph.get("history") or {}).get("has_data")
+            and ph.get("net_text") == "75,00",
+            f"opp={ph.get('opportunities')} hist={(ph.get('history') or {}).get('has_data')}",
         )
 
         # ---- 21. TERCİH KAPALIYKEN önizleme bunu SÖYLER (koç boşuna beklemesin)

@@ -2816,6 +2816,10 @@ class ExamNotifyParentsBody(BaseModel):
     narrative: list[str] | None = None
     #: Ders kırılımı tablosu maile girsin mi.
     include_subjects: bool = True
+    #: Geçmiş denemelerle karşılaştırma tablosu (aynı tür, son 4 deneme).
+    include_history: bool = True
+    #: "Nerede net kazanabilir?" — net fırsatı tablosu.
+    include_opportunities: bool = True
 
 
 class ExamParentPreviewSubject(BaseModel):
@@ -2827,6 +2831,38 @@ class ExamParentPreviewSubject(BaseModel):
     questions: int
     #: Müfredata bağlanmamış satır (ham belge başlığı) — koç uyarılır.
     unmatched: bool = False
+
+
+class ExamParentPreviewOpportunity(BaseModel):
+    """Bir konu kapanırsa deneme başına kazanılacak net."""
+    subject: str
+    topic: str
+    gain: float
+    gain_text: str
+    wrong: int = 0
+    blank: int = 0
+
+
+class ExamParentPreviewHistoryExam(BaseModel):
+    title: str
+    date_tr: str
+    net_text: str
+    is_current: bool = False
+
+
+class ExamParentPreviewHistoryRow(BaseModel):
+    subject: str
+    #: Sütun başına net (sırayla); veri yoksa None → mailde "—".
+    nets: list[str | None] = []
+    #: up | down | flat | None — son iki dolu hücrenin karşılaştırması.
+    direction: str | None = None
+
+
+class ExamParentPreviewHistory(BaseModel):
+    exams: list[ExamParentPreviewHistoryExam] = []
+    rows: list[ExamParentPreviewHistoryRow] = []
+    totals: list[str] = []
+    has_data: bool = False
 
 
 class ExamParentPreviewRecipient(BaseModel):
@@ -2863,6 +2899,13 @@ class ExamParentPreviewResponse(BaseModel):
     subjects: list[ExamParentPreviewSubject] = []
     #: Kural motorunun önerdiği cümleler — koç düzenler/siler/ekler.
     narrative: list[str] = []
+
+    #: "Nerede net kazanabilir?" — koç panelindeki tabloyla AYNI servis.
+    opportunities: list[ExamParentPreviewOpportunity] = []
+    opportunity_total_text: str | None = None
+    opportunity_exam_count: int = 0
+    #: Geçmiş denemelerle karşılaştırma (aynı tür; <2 deneme varsa boş).
+    history: ExamParentPreviewHistory | None = None
 
     recipients: list[ExamParentPreviewRecipient] = []
     #: Gerçekten gidecek veli sayısı (bastırılanlar hariç).

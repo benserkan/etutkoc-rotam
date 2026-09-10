@@ -90,11 +90,16 @@ export function ExamParentAnnounceDialog({
   const [draft, setDraft] = React.useState<string[] | null>(null);
   const [seededFor, setSeededFor] = React.useState<number | null>(null);
   const [includeSubjects, setIncludeSubjects] = React.useState(true);
+  // Geçmişle karşılaştırma + net fırsatı bölümleri (koç isteği 2026-09-10)
+  const [includeHistory, setIncludeHistory] = React.useState(true);
+  const [includeOpportunities, setIncludeOpportunities] = React.useState(true);
 
   if (data && seededFor !== data.exam_id) {
     setSeededFor(data.exam_id);
     setDraft(data.narrative);
     setIncludeSubjects(true);
+    setIncludeHistory(true);
+    setIncludeOpportunities(true);
   }
 
   const lines = draft ?? data?.narrative ?? [];
@@ -102,7 +107,8 @@ export function ExamParentAnnounceDialog({
   const maxLen = data?.max_line_length ?? 500;
   const edited =
     data != null &&
-    (JSON.stringify(lines) !== JSON.stringify(data.narrative) || !includeSubjects);
+    (JSON.stringify(lines) !== JSON.stringify(data.narrative) ||
+      !includeSubjects || !includeHistory || !includeOpportunities);
 
   function setLine(i: number, value: string) {
     setLines(lines.map((l, idx) => (idx === i ? value.slice(0, maxLen) : l)));
@@ -120,6 +126,8 @@ export function ExamParentAnnounceDialog({
   function reset() {
     setLines(data?.narrative ?? []);
     setIncludeSubjects(true);
+    setIncludeHistory(true);
+    setIncludeOpportunities(true);
   }
 
   function send() {
@@ -127,7 +135,12 @@ export function ExamParentAnnounceDialog({
     notifyMut.mutate(
       {
         examId,
-        body: { narrative: cleaned, include_subjects: includeSubjects },
+        body: {
+          narrative: cleaned,
+          include_subjects: includeSubjects,
+          include_history: includeHistory,
+          include_opportunities: includeOpportunities,
+        },
       },
       { onSuccess: () => onOpenChange(false) },
     );
@@ -354,6 +367,155 @@ export function ExamParentAnnounceDialog({
                     </table>
                   ) : null}
                 </div>
+
+                {/* Geçmiş denemelerle karşılaştırma — aynı tür, eskiden yeniye
+                    (koç isteği 2026-09-10: "önceki denemelerle karşılaştırma
+                    fırsatı olsun") */}
+                {data.history?.has_data ? (
+                  <div className="mt-3">
+                    <label className="flex cursor-pointer items-center gap-2 text-[12.5px] font-semibold text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={includeHistory}
+                        onChange={(e) => setIncludeHistory(e.target.checked)}
+                        className="size-3.5 accent-teal-600"
+                      />
+                      Önceki denemelerle karşılaştırmayı da gönder
+                    </label>
+                    {includeHistory ? (
+                      <div className="mt-1.5 overflow-x-auto">
+                        <table className="w-full text-[11.5px]">
+                          <thead>
+                            <tr className="text-[10px] text-muted-foreground">
+                              <th className="py-0.5 text-left font-medium">Ders</th>
+                              {data.history.exams.map((e, i) => (
+                                <th
+                                  key={i}
+                                  className={cn(
+                                    "whitespace-nowrap py-0.5 text-right font-medium",
+                                    e.is_current &&
+                                      "text-teal-700 dark:text-teal-300",
+                                  )}
+                                  title={e.title}
+                                >
+                                  {e.date_tr.slice(0, 5)}
+                                  {e.is_current ? " *" : ""}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {data.history.rows.map((r, i) => (
+                              <tr key={i} className="border-t border-border/60">
+                                <td className="py-1 pr-1 text-foreground">
+                                  <span className="whitespace-normal break-words">
+                                    {r.subject}
+                                  </span>
+                                  {r.direction === "up" ? (
+                                    <span className="ml-1 text-[10px] text-emerald-700 dark:text-emerald-300">
+                                      &#9650;
+                                    </span>
+                                  ) : r.direction === "down" ? (
+                                    <span className="ml-1 text-[10px] text-amber-700 dark:text-amber-300">
+                                      &#9660;
+                                    </span>
+                                  ) : null}
+                                </td>
+                                {r.nets.map((n, j) => (
+                                  <td
+                                    key={j}
+                                    className={cn(
+                                      "whitespace-nowrap py-1 text-right tabular-nums",
+                                      j === r.nets.length - 1
+                                        ? "font-semibold text-foreground"
+                                        : "text-muted-foreground",
+                                    )}
+                                  >
+                                    {n ?? "-"}
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                            <tr className="border-t-2 border-border">
+                              <td className="py-1 font-semibold text-foreground">
+                                Toplam net
+                              </td>
+                              {data.history.totals.map((t, j) => (
+                                <td
+                                  key={j}
+                                  className={cn(
+                                    "py-1 text-right font-semibold tabular-nums",
+                                    j === (data.history?.totals.length ?? 0) - 1
+                                      ? "text-teal-700 dark:text-teal-300"
+                                      : "text-muted-foreground",
+                                  )}
+                                >
+                                  {t}
+                                </td>
+                              ))}
+                            </tr>
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : null}
+                  </div>
+                ) : null}
+
+                {/* Net fırsatı — koç panelindeki tabloyla AYNI servis */}
+                {data.opportunities.length > 0 ? (
+                  <div className="mt-3">
+                    <label className="flex cursor-pointer items-center gap-2 text-[12.5px] font-semibold text-foreground">
+                      <input
+                        type="checkbox"
+                        checked={includeOpportunities}
+                        onChange={(e) =>
+                          setIncludeOpportunities(e.target.checked)
+                        }
+                        className="size-3.5 accent-teal-600"
+                      />
+                      &quot;Nerede net kazanabilir?&quot; tablosunu da gönder
+                    </label>
+                    {includeOpportunities ? (
+                      <ul className="mt-1.5 space-y-0.5">
+                        {data.opportunities.map((o, i) => (
+                          <li
+                            key={i}
+                            className="flex items-baseline justify-between gap-2 border-t border-border/60 py-1 text-[11.5px]"
+                          >
+                            <span className="min-w-0 whitespace-normal break-words text-foreground">
+                              {o.topic}
+                              <span className="text-muted-foreground">
+                                {" - "}
+                                {o.subject}
+                              </span>
+                            </span>
+                            <span className="shrink-0 whitespace-nowrap font-semibold tabular-nums text-emerald-700 dark:text-emerald-300">
+                              +{o.gain_text}
+                              <span className="font-normal text-muted-foreground">
+                                {" "}
+                                net
+                              </span>
+                            </span>
+                          </li>
+                        ))}
+                        {data.opportunity_total_text ? (
+                          <li className="flex items-baseline justify-between gap-2 border-t-2 border-border py-1 text-[11.5px]">
+                            <span className="font-semibold text-foreground">
+                              Hepsi kapanırsa
+                            </span>
+                            <span className="shrink-0 whitespace-nowrap font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+                              +{data.opportunity_total_text}
+                              <span className="font-normal text-muted-foreground">
+                                {" "}
+                                net/deneme
+                              </span>
+                            </span>
+                          </li>
+                        ) : null}
+                      </ul>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
 
               <p className="mt-2 flex items-start gap-1.5 text-[11px] text-muted-foreground">

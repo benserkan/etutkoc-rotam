@@ -21,6 +21,9 @@ Senaryolar:
    9. "Gönder" → veliye giden mail KOÇUN metnini taşır, silinen cümle YOKTUR
   10. Gönderim sonrası satır "Duyuruldu" olur (mükerrer engeli)
   11. Koyu temada modal okunur (kontrast ölçümü)
+  12. "Nerede net kazanabilir?" tablosu modalda + maile giden metinde
+  13. Geçmiş denemelerle karşılaştırma tablosu (aynı tür, trend oku)
+  14. İki bölüm de checkbox'la çıkarılabilir
 """
 from __future__ import annotations
 
@@ -43,6 +46,8 @@ from datetime import date
 from sqlalchemy import delete as sa_delete
 
 from app.database import SessionLocal
+from app.models.curriculum import Subject, Topic
+from app.models.exam_result import ExamResultQuestion
 from app.models import (
     ExamResult,
     ExamSection,
@@ -114,6 +119,36 @@ def seed() -> dict:
         )
         db.add(cur)
         db.flush()
+
+        # NET FIRSATI + GECMIS KARSILASTIRMA icin: onceki denemeye de ders
+        # netleri, iki denemeye de konu bagli soru satirlari.
+        prev.subject_nets = (
+            '[{"name":"TYT Türkçe","correct":33,"wrong":6,"blank":1,"net":31.5},'
+            '{"name":"TYT Matematik","correct":17,"wrong":18,"blank":5,"net":12.5}]'
+        )
+        for sname, tname in (
+            ("TYT Matematik", "Fonksiyonlar"),
+            ("TYT Türkçe", "Paragrafta Anlam"),
+        ):
+            sub = db.query(Subject).filter(Subject.name == sname).first()
+            if sub is None:
+                sub = Subject(name=sname, teacher_id=None)
+                db.add(sub)
+                db.flush()
+            tp = (db.query(Topic)
+                  .filter(Topic.subject_id == sub.id, Topic.name == tname)
+                  .first())
+            if tp is None:
+                tp = Topic(subject_id=sub.id, name=tname, order=0)
+                db.add(tp)
+                db.flush()
+            for target in (cur, prev):
+                for _ in range(2):
+                    db.add(ExamResultQuestion(
+                        exam_result_id=target.id, subject_id=sub.id,
+                        topic_id=tp.id, result="yanlis",
+                    ))
+        db.flush()
         db.commit()
         return {
             "coach": coach.id, "student": st.id, "parent": parent.id,
@@ -130,6 +165,11 @@ def cleanup(ids: dict) -> None:
             ParentNotificationPref.parent_id.in_(uids)))
         db.execute(sa_delete(ParentStudentLink).where(
             ParentStudentLink.parent_id.in_(uids)))
+        exam_ids = [r[0] for r in db.query(ExamResult.id)
+                    .filter(ExamResult.student_id.in_(uids)).all()]
+        if exam_ids:
+            db.execute(sa_delete(ExamResultQuestion)
+                       .where(ExamResultQuestion.exam_result_id.in_(exam_ids)))
         db.execute(sa_delete(ExamResult).where(ExamResult.student_id.in_(uids)))
         db.execute(sa_delete(User).where(User.id.in_(uids)))
         db.commit()
@@ -245,6 +285,22 @@ def main() -> int:
                   f"{before} → {mail_count(ids['parent'])}")
 
             page.screenshot(path=os.path.join(SHOT_DIR, "ann_preview.png"))
+            # Modal uzun: alt bolumler (karsilastirma + firsat) icin ikinci kare
+            page.evaluate(
+                """() => {
+                  const d = document.querySelector('[role="dialog"]');
+                  if (d) d.scrollTop = d.scrollHeight;
+                }"""
+            )
+            page.wait_for_timeout(600)
+            page.screenshot(path=os.path.join(SHOT_DIR, "ann_preview_bottom.png"))
+            page.evaluate(
+                """() => {
+                  const d = document.querySelector('[role="dialog"]');
+                  if (d) d.scrollTop = 0;
+                }"""
+            )
+            page.wait_for_timeout(400)
 
             areas = page.query_selector_all('[role="dialog"] textarea')
             n_before = len(areas)
@@ -279,8 +335,48 @@ def main() -> int:
                   len(areas) == n_before and areas[0].input_value() == edited_first,
                   f"n={len(areas)} ilk={areas[0].input_value()[:50]}")
 
+            # ---- 12/13. Net fırsatı + geçmiş karşılaştırma modalda
+            mtext_pre = page.query_selector('[role="dialog"]').inner_text()
+            check(
+                "12. 'Nerede net kazanabilir?' tablosu modalda "
+                "(konu + kazanç + toplam)",
+                "Nerede net kazanabilir" in mtext_pre
+                and "Fonksiyonlar" in mtext_pre
+                and "Hepsi kapanırsa" in mtext_pre
+                and "+5,00" in mtext_pre,
+                mtext_pre[-420:],
+            )
+            check(
+                "13. geçmiş karşılaştırma tablosu modalda "
+                "(iki sütun + toplam net satırı)",
+                "Önceki denemelerle karşılaştırma" in mtext_pre
+                and "Toplam net" in mtext_pre
+                and "20.08" in mtext_pre and "05.09" in mtext_pre,
+                mtext_pre[-420:],
+            )
+
+            # ---- 14. İki bölüm de kapatılabilir
+            page.uncheck(
+                '[role="dialog"] label:has-text("Önceki denemelerle") input')
+            page.uncheck(
+                '[role="dialog"] label:has-text("Nerede net kazanabilir") input')
+            page.wait_for_timeout(600)
+            mtext_off = page.query_selector('[role="dialog"]').inner_text()
+            check(
+                "14. iki bölüm de checkbox'la çıkarılır (önizlemeden düşer)",
+                "Toplam net" not in mtext_off and "Hepsi kapanırsa" not in mtext_off,
+                mtext_off[-300:],
+            )
+            # geri aç — gönderim testinde ikisi de gitsin
+            page.check(
+                '[role="dialog"] label:has-text("Önceki denemelerle") input')
+            page.check(
+                '[role="dialog"] label:has-text("Nerede net kazanabilir") input')
+            page.wait_for_timeout(500)
+
             # ---- 8. Ders tablosunu çıkar
-            page.uncheck('[role="dialog"] input[type="checkbox"]')
+            page.uncheck(
+                '[role="dialog"] label:has-text("Ders bazında") input')
             page.wait_for_timeout(500)
             mtext2 = page.query_selector('[role="dialog"]').inner_text()
             check("8. ders tablosu checkbox'la çıkarılır (önizlemeden de düşer)",
@@ -305,14 +401,16 @@ def main() -> int:
             payload = last_mail(ids["parent"])
             narr = payload.get("narrative", [])
             check(
-                "9. giden mail KOÇUN metnini taşır — silinen cümle YOK, "
-                "eklenen cümle VAR, ders tablosu boş",
+                "9. giden mail: KOÇUN metni + silinen cümle YOK + ders tablosu boş "
+                "AMA net fırsatı ve karşılaştırma tabloları VAR",
                 mail_count(ids["parent"]) == before + 1
                 and narr and narr[0] == edited_first
                 and own_line in narr
                 and removed_text not in narr
                 and payload.get("subjects") == []
-                and payload.get("net_text") == "56,25",
+                and payload.get("net_text") == "56,25"
+                and len(payload.get("opportunities") or []) >= 2
+                and (payload.get("history") or {}).get("has_data") is True,
                 f"narr={narr} subj={payload.get('subjects')}",
             )
 

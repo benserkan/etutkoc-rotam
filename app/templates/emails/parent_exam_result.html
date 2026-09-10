@@ -93,6 +93,90 @@ Subject: ETÜTKOÇ Rotam · {{ student_name }} · {{ exam_title }} sonucu
     </table>
     {% endif %}
 
+    {# --- GEÇMİŞ DENEMELERLE KARŞILAŞTIRMA (koç isteği 2026-09-10) ---
+       Yalnız AYNI TÜRDEKİ denemeler yan yana gelir; TYT ile AYT kıyası
+       veliyi yanıltır. En az 2 deneme yoksa bölüm hiç görünmez. #}
+    {% if history and history.has_data %}
+    <h3 style="font-size: 14px; color: #0f172a; margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+      Önceki denemelerle karşılaştırma
+    </h3>
+    <p style="margin: 0 0 8px; font-size: 11.5px; color: #64748b; line-height: 1.5;">
+      Aynı türdeki son {{ history.exams|length }} denemenin ders bazlı netleri.
+      Soldan sağa doğru zaman ilerliyor.
+    </p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+      <tr style="color: #64748b; font-size: 10.5px;">
+        <td style="padding: 4px 6px;">Ders</td>
+        {% for c in history.exams %}
+        <td style="padding: 4px 6px; text-align: right; {% if c.is_current %}color: #0f766e; font-weight: 700;{% endif %}">
+          {{ c.date_tr[:5] }}{% if c.is_current %}<br><span style="font-size: 9px;">bu deneme</span>{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% for r in history.rows %}
+      <tr>
+        <td style="padding: 6px; border-top: 1px solid #f1f5f9;">
+          {{ r.subject }}
+          {% if r.direction == "up" %}<span style="color: #059669; font-size: 10px;">&#9650;</span>
+          {% elif r.direction == "down" %}<span style="color: #b45309; font-size: 10px;">&#9660;</span>{% endif %}
+        </td>
+        {% for n in r.nets %}
+        <td style="padding: 6px; border-top: 1px solid #f1f5f9; text-align: right; {% if loop.last %}font-weight: 700; color: #0f172a;{% else %}color: #64748b;{% endif %}">
+          {% if n %}{{ n }}{% else %}&mdash;{% endif %}
+        </td>
+        {% endfor %}
+      </tr>
+      {% endfor %}
+      <tr>
+        <td style="padding: 7px 6px; border-top: 2px solid #e2e8f0; font-weight: 700;">Toplam net</td>
+        {% for t in history.totals %}
+        <td style="padding: 7px 6px; border-top: 2px solid #e2e8f0; text-align: right; font-weight: 700; {% if loop.last %}color: #0f766e;{% else %}color: #475569;{% endif %}">
+          {{ t }}
+        </td>
+        {% endfor %}
+      </tr>
+    </table>
+    {% endif %}
+
+    {# --- NET FIRSATI: bu konular kapanırsa deneme başına kazanç ---
+       Koç panelindeki tabloyla AYNI servisten gelir. Yalnız içe aktarılmış
+       (soru satırlı) denemede dolar. #}
+    {% if opportunities %}
+    <h3 style="font-size: 14px; color: #0f172a; margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid #e2e8f0;">
+      Nerede net kazanabilir?
+    </h3>
+    <p style="margin: 0 0 10px; font-size: 11.5px; color: #64748b; line-height: 1.5;">
+      {% if opportunity_exam_count > 1 %}Son {{ opportunity_exam_count }} denemesinde{% else %}Bu denemede{% endif %}
+      en çok soru kaybettiği konular. Bunlar kapandığında deneme başına
+      kazanabileceği net karşılarında yazıyor.
+    </p>
+    <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+      {% for o in opportunities %}
+      <tr>
+        <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9;">
+          <span style="color: #0f172a;">{{ o.topic }}</span>
+          <span style="color: #94a3b8; font-size: 11px;"> &middot; {{ o.subject }}</span>
+        </td>
+        <td style="padding: 7px 6px; border-top: 1px solid #f1f5f9; text-align: right; white-space: nowrap;">
+          <span style="color: #047857; font-weight: 700;">+{{ o.gain_text }}</span>
+          <span style="color: #94a3b8; font-size: 10.5px;"> net</span>
+        </td>
+      </tr>
+      {% endfor %}
+      {% if opportunity_total_text %}
+      <tr>
+        <td style="padding: 8px 6px; border-top: 2px solid #e2e8f0; font-weight: 700; color: #0f172a;">
+          Hepsi kapanırsa
+        </td>
+        <td style="padding: 8px 6px; border-top: 2px solid #e2e8f0; text-align: right; white-space: nowrap;">
+          <span style="color: #047857; font-weight: 800; font-size: 14px;">+{{ opportunity_total_text }}</span>
+          <span style="color: #64748b; font-size: 10.5px;"> net/deneme</span>
+        </td>
+      </tr>
+      {% endif %}
+    </table>
+    {% endif %}
+
     <p style="margin: 18px 0 0; font-size: 12.5px; color: #475569; line-height: 1.6;">
       Konu konu hangi soruların doğru, hangilerinin yanlış olduğunu ve
       önceki denemelerle gelişim grafiğini Rotam'dan görebilirsiniz.

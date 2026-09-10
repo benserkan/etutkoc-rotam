@@ -116,6 +116,10 @@ from app.routes.api_v2.schemas.common import MutationResponse
 from app.routes.api_v2.schemas.teacher import (
     ExamNotifyParentsBody,
     ExamNotifyParentsResult,
+    ExamParentPreviewHistory,
+    ExamParentPreviewHistoryExam,
+    ExamParentPreviewHistoryRow,
+    ExamParentPreviewOpportunity,
     ExamParentPreviewRecipient,
     ExamParentPreviewResponse,
     ExamParentPreviewSubject,
@@ -10550,6 +10554,27 @@ def teacher_exam_parent_preview_v2(
             for s in summary.get("subjects", [])
         ],
         narrative=list(summary.get("narrative", [])),
+        opportunities=[
+            ExamParentPreviewOpportunity(**o)
+            for o in summary.get("opportunities", [])
+        ],
+        opportunity_total_text=summary.get("opportunity_total_text"),
+        opportunity_exam_count=int(summary.get("opportunity_exam_count") or 0),
+        history=(
+            ExamParentPreviewHistory(
+                exams=[
+                    ExamParentPreviewHistoryExam(**c)
+                    for c in summary["history"].get("exams", [])
+                ],
+                rows=[
+                    ExamParentPreviewHistoryRow(**r)
+                    for r in summary["history"].get("rows", [])
+                ],
+                totals=list(summary["history"].get("totals", [])),
+                has_data=bool(summary["history"].get("has_data")),
+            )
+            if summary.get("history") else None
+        ),
         recipients=[ExamParentPreviewRecipient(**r) for r in recipients],
         deliverable_count=sum(1 for r in recipients if not r["blocked"]),
         already_notified=exam.parent_notified_at is not None,
@@ -10586,6 +10611,8 @@ def teacher_notify_parents_exam_v2(
 
     narrative = _clean_narrative(body.narrative if body else None)
     include_subjects = body.include_subjects if body else True
+    include_history = body.include_history if body else True
+    include_opportunities = body.include_opportunities if body else True
 
     if exam.parent_notified_at is not None:
         raise HTTPException(
@@ -10624,6 +10651,8 @@ def teacher_notify_parents_exam_v2(
             logs = produce_exam_result(
                 db, parent=parent, student=student, exam=exam,
                 narrative=narrative, include_subjects=include_subjects,
+                include_history=include_history,
+                include_opportunities=include_opportunities,
             )
             # DİKKAT: enqueue_notification, veli tercihi kapalıyken de satır
             # yazar (status=SUPPRESSED, denetim izi). Bunu "gönderildi" saymak

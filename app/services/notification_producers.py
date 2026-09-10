@@ -793,6 +793,8 @@ def produce_exam_result(
     exam,
     narrative: list[str] | None = None,
     include_subjects: bool = True,
+    include_history: bool = True,
+    include_opportunities: bool = True,
 ) -> list[NotificationLog]:
     """Koç "Veliye duyur" düğmesine bastı — deneme sonucu e-postası.
 
@@ -819,6 +821,10 @@ def produce_exam_result(
         summary["narrative"] = narrative
     if not include_subjects:
         summary["subjects"] = []
+    if not include_history:
+        summary["history"] = {"exams": [], "rows": [], "has_data": False}
+    if not include_opportunities:
+        summary["opportunities"] = []
     payload: dict[str, Any] = {
         "__template": "parent_exam_result",
         "student_id": student.id,

@@ -2410,6 +2410,42 @@ export interface ExamNotifyParentsBody {
   /** undefined = kural motorunun önerisi · [] = yorumsuz (yalnız sayılar) */
   narrative?: string[];
   include_subjects?: boolean;
+  /** Geçmiş denemelerle karşılaştırma tablosu */
+  include_history?: boolean;
+  /** "Nerede net kazanabilir?" — net fırsatı tablosu */
+  include_opportunities?: boolean;
+}
+
+/** Bir konu kapanırsa deneme başına kazanılacak net. */
+export interface ExamParentPreviewOpportunity {
+  subject: string;
+  topic: string;
+  gain: number;
+  gain_text: string;
+  wrong: number;
+  blank: number;
+}
+
+export interface ExamParentPreviewHistoryExam {
+  title: string;
+  date_tr: string;
+  net_text: string;
+  is_current: boolean;
+}
+
+export interface ExamParentPreviewHistoryRow {
+  subject: string;
+  /** Sütun başına net; veri yoksa null → "—" */
+  nets: (string | null)[];
+  /** up | down | flat | null */
+  direction: string | null;
+}
+
+export interface ExamParentPreviewHistory {
+  exams: ExamParentPreviewHistoryExam[];
+  rows: ExamParentPreviewHistoryRow[];
+  totals: string[];
+  has_data: boolean;
 }
 
 export interface ExamParentPreviewSubject {
@@ -2456,6 +2492,11 @@ export interface ExamParentPreviewResponse {
 
   subjects: ExamParentPreviewSubject[];
   narrative: string[];
+
+  opportunities: ExamParentPreviewOpportunity[];
+  opportunity_total_text: string | null;
+  opportunity_exam_count: number;
+  history: ExamParentPreviewHistory | null;
 
   recipients: ExamParentPreviewRecipient[];
   deliverable_count: number;
