@@ -56,6 +56,35 @@ koç tarafından kaldırılma ihtiyacı hissedilebilir."
   yapılır — satır içi renk parse etme yasak.**
 - Deploy: web+worker+next rebuild (Plausible-stop'lu); healthz/site 200, yeni
   uç anon 401. Mobil BİLİNÇLİ yok (duyuru koç yüzeyi web — PARITY).
+- **DEVAMI — "EN RAHAT OLDUĞU BÖLÜM" MANTIK DÜZELTMESİ (aynı gün, commit
+  `2203c10`, migration YOK):** koç önizlemede cümleyi okuyunca yakaladı:
+  "en rahat bölüm Matematik çıkmış ama Fen 15/20 — formül doğru mu? doğru
+  sayısı / soru sayısına mı bakılıyor? 20 soruluk Sosyal ile 40 soruluk
+  Türkçe nasıl kıyaslanıyor?" **Elif #34 (11/SAYISAL) · ÇAP Maarif:**
+  Fen 15/5/0 · Mat 26/8/6 · Sosyal 16/4/5 · TDE 25/11/4. **ÜÇ KUSUR:**
+  1. **Oran temeli tutarsız** — `doğru/(doğru+yanlış)` ile hesaplanıyordu
+     (boş HARİÇ) ama cümlede "26 doğru / **40 soru**" yazıyordu; veli %65
+     okurken sistem %76'ya göre karar veriyordu → 15/20 (%75) yapılan Fen
+     kaybediyordu. **Oran artık doğru / TOPLAM SORU** (boş dahil): gösterilen
+     sayı ile karar aynı temele oturur + boş bırakmak da "yapamadı"dır.
+  2. **Alan filtresi Maarif adlarını tanımıyor** — `_TRACK_CORE` yalnız
+     TYT/AYT adlarıyla yazılmıştı; okul/Maarif birleşik adları ("Fen
+     Bilimleri" = SAYISAL'ın belkemiği, "Türk Dili ve Edebiyatı" = Türkçe)
+     eleniyor, geriye TEK ders kalıyordu. Birleşik adlar 4 alana da eklendi.
+  3. **Karşılaştırmasız üstünlük iddiası** — tek aday kalınca sistem onu
+     doğrudan "en rahat" ilan ediyordu → `MIN_SUBJECTS_FOR_COMPARISON=2` +
+     `MIN_BEST_ACCURACY=0.50` (hiçbir derste yarıyı geçemediyse cümle yok).
+  **Wilson alt sınırı KORUNDU** (koçun 2. sorusunun yanıtı: 20 vs 40 soru ham
+  oranla değil Wilson ile kıyaslanır — 5/5 %100 → 0.57, 36/40 %90 → 0.77; bu
+  kısım zaten doğruydu). **Prod sonucu:** "En rahat olduğu bölüm **Fen
+  Bilimleri** (15 doğru / 20 soru)"; en-zayıf cümlesi kurulmadı (fark 0.06 <
+  0.15). Bonus: alias düzeltmesiyle odak cümlesine TDE de girdi ("Şiir").
+  smoke 22→**26** (24/25 Elif birebir · 26 tek aday · 27 yarıyı geçemeyen ·
+  28 aynı %80'de büyük örneklem kazanır). **AYIRT EDİCİ:** eski formül geri
+  konunca 24/25 tam olarak sahadaki cümleyi üretiyor. Regresyon: topic_board
+  18 (`_wilson_lower` ortak, oraya DOKUNULMADI) · teacher_exams 18 · parent 20.
+  **KURAL: veliye/koça gösterilen oran ile karar verilen oran AYNI paydayı
+  kullanmalı; "en X ders" gibi karşılaştırma cümleleri en az 2 adayla kurulur.**
 
 ---
 
