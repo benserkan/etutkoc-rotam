@@ -143,6 +143,32 @@ koç tarafından kaldırılma ihtiyacı hissedilebilir."
   tetiklenir + çıktı mailin aynısı · 15b silinen cümle/kapatılan tablo yok ·
   15c gönderim yok). Çıktının gerçek PDF hâli Chrome yazdırma motoruyla
   üretilip görsel doğrulandı.
+- **DEVAMI 4 — DUYURU SONRASI ERİŞİM (aynı gün, commit `4f208c6`, migration YOK):**
+  koç: **"duyurulduktan sonra pdf dosyasına ulaşamıyorum."** İKİ kusur birden:
+  (1) duyurudan sonra zarf düğmesi **tıklanamaz `<span>` rozete** dönüyordu →
+  modal bir daha açılamıyordu; (2) açılsa bile önizleme **kural motorunun TAZE
+  metnini** üretirdi, koçun o gün gönderdiğini değil → PDF, veliye giden
+  mailden farklı olurdu.
+  **Çözüm:** `build_email_context` payload'a `exam_id` yazar;
+  `_sent_exam_payload(db, exam)` duyurulmuş denemenin **NotificationLog
+  payload'ından** gönderilen gövdeyi çözer (eski kayıtlar başlık+tarih ile —
+  prod'daki 3 duyurunun ÜÇÜ de bu fallback'le bulundu). GET `/parent-preview`
+  duyurulmuşsa narrative/subjects/history/opportunities'i oradan verir +
+  `is_sent_snapshot=True`; POST `/parent-preview.html` duyurulmuşsa gövdedeki
+  yeni düzenlemeyi **YOK SAYAR** ve gönderileni basar.
+  **UI:** rozet artık buton; modal salt-okuma moduna geçer (başlık "Veliye
+  gönderilen mail", cümleler readOnly, sil/ekle/sıfırla gizli, checkbox'lar
+  kilitli ve gönderilen hâli yansıtır, **"Gönder" render EDİLMEZ**, "Kapat" +
+  "PDF olarak indir" kalır).
+  **CANLI TESTİN YAKALADIĞI GERÇEK BUG:** gönderim sonrası
+  `examParentPreview` cache'i invalidate edilmiyordu → modal gönderim ÖNCESİ
+  veriyi gösteriyordu. Mutation artık o anahtarı da bayatlatır; taslak
+  tohumlama anahtarı `exam_id:is_sent_snapshot` oldu.
+  **UI DERSİ:** `hidden={...}` prop'u öğeyi DOM'da BIRAKIR (test
+  `query_selector` ile bulur, ekran okuyucu da görebilir) → gerçekten
+  olmaması gereken kontrol **koşullu render** ile çıkarılır.
+  smoke 37→**39** (40/41; snapshot çözücü kapatılınca kırmızı) ·
+  `live_exam_parent_announce` 17→**21** (16a-d).
 
 ---
 
