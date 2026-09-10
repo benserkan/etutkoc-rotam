@@ -474,13 +474,19 @@ function ExamRow({
               ) : null}
               {/* Veliye duyur — duyurulduysa düğme "Duyuruldu"ya döner (2026-09-05) */}
               {row.parent_notified_at ? (
-                <span
-                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-1 text-[11px] font-medium text-emerald-800 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300"
-                  title={`Veliye duyuruldu · ${formatTRDate(row.parent_notified_at.slice(0, 10))}`}
+                /* Duyurulmuş olsa da TIKLANABİLİR: koç gönderdiği maili
+                   yeniden görüntüleyip PDF olarak indirebilmeli (saha
+                   bulgusu 2026-09-10: "duyurulduktan sonra PDF'e
+                   ulaşamıyorum"). Tekrar gönderim modalda kapalı. */
+                <button
+                  type="button"
+                  onClick={() => setAnnounceOpen(true)}
+                  className="inline-flex items-center gap-1 rounded border border-emerald-300 bg-emerald-50 px-1.5 py-1 text-[11px] font-medium text-emerald-800 hover:bg-emerald-100 dark:border-emerald-500/40 dark:bg-emerald-500/10 dark:text-emerald-300 dark:hover:bg-emerald-500/20"
+                  title={`Veliye duyuruldu · ${formatTRDate(row.parent_notified_at.slice(0, 10))} — gönderilen maili gör / PDF olarak indir`}
                 >
                   <MailCheck className="size-3.5" aria-hidden />
                   Duyuruldu
-                </span>
+                </button>
               ) : (
                 <Button
                   variant="ghost"

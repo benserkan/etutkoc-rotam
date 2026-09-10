@@ -2502,6 +2502,8 @@ export interface ExamParentPreviewResponse {
   deliverable_count: number;
   already_notified: boolean;
   notified_at: string | null;
+  /** true → içerik veliye GİDEN mailden okundu (kural motorunun tazesi değil) */
+  is_sent_snapshot: boolean;
   max_lines: number;
   max_line_length: number;
 }

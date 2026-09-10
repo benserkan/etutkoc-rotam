@@ -2207,9 +2207,14 @@ export function useNotifyParentsExam(studentId: number) {
     { examId: number; body?: ExamNotifyParentsBody }
   >({
     mutationFn: ({ examId, body }) => notifyParentsExam(examId, body),
-    onSuccess: (res) => {
+    onSuccess: (res, vars) => {
       applyInvalidate(qc, res.invalidate);
       qc.invalidateQueries({ queryKey: teacherKeys.studentExams(studentId) });
+      // Önizleme artık GÖNDERİLEN içeriği döndürür (duyuru sonrası koç maili
+      // yeniden açıp PDF'leyebilsin) → bayat cache eski metni gösterirdi.
+      qc.invalidateQueries({
+        queryKey: teacherKeys.examParentPreview(vars.examId),
+      });
       const d = res.data;
       if (d && d.queued > 0) {
         toast.success(d.message);

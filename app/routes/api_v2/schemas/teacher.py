@@ -2912,6 +2912,8 @@ class ExamParentPreviewResponse(BaseModel):
     deliverable_count: int = 0
     already_notified: bool = False
     notified_at: str | None = None
+    #: True → içerik veliye GİDEN mailden okundu (kural motorunun tazesi değil).
+    is_sent_snapshot: bool = False
     #: Koçun düzenleme sınırları (UI aynı sayıyı gösterir).
     max_lines: int = 12
     max_line_length: int = 500

@@ -10473,6 +10473,50 @@ def _exam_notify_recipients(db: Session, student_id: int) -> list[dict]:
     return out
 
 
+def _sent_exam_payload(db: Session, exam) -> dict | None:
+    """Duyurulmuş denemede VELİYE GİDEN mail gövdesi (NotificationLog payload'ı).
+
+    SAHA (koç 2026-09-10): "duyurulduktan sonra PDF dosyasına ulaşamıyorum."
+    Duyuru sonrası önizleme/PDF, kural motorunun metnini değil KOÇUN GÖNDERDİĞİ
+    metni göstermeli — aksi halde veliye giden mail ile paylaşılan PDF ayrışır.
+
+    Eşleşme payload'daki `exam_id` ile; o alan eklenmeden önce gönderilmiş
+    kayıtlar için başlık + tarih ile geriye dönük eşleşir.
+    """
+    import json as _json
+
+    from app.models import NotificationKind, NotificationLog
+
+    rows = (
+        db.query(NotificationLog)
+        .filter(
+            NotificationLog.student_id == exam.student_id,
+            NotificationLog.kind == NotificationKind.EXAM_RESULT,
+        )
+        .order_by(NotificationLog.id.desc())
+        .limit(40)
+        .all()
+    )
+    exam_date_iso = exam.exam_date.isoformat() if exam.exam_date else None
+    for log in rows:
+        try:
+            payload = _json.loads(log.payload_json or "{}")
+        except (ValueError, TypeError):
+            continue
+        if not isinstance(payload, dict):
+            continue
+        if payload.get("exam_id") == exam.id:
+            return payload
+        # Geriye uyum: exam_id alanı olmayan eski kayıtlar
+        if (
+            payload.get("exam_id") is None
+            and payload.get("exam_title") == exam.title
+            and payload.get("exam_date") == exam_date_iso
+        ):
+            return payload
+    return None
+
+
 def _clean_narrative(lines: list[str] | None) -> list[str] | None:
     """Koçun düzenlediği cümleler: boşları at, uzunluğu ve satır sayısını sınırla.
 
@@ -10519,6 +10563,14 @@ def teacher_exam_parent_preview_v2(
         raise _validation_error("student_not_found", "Öğrenci bulunamadı.")
 
     summary = build_parent_exam_summary(db, exam)
+    # Duyuru YAPILMIŞSA önizleme, kural motorunun taze metnini değil KOÇUN
+    # GÖNDERDİĞİ içeriği gösterir (koç maili sonradan PDF'leyebilsin).
+    sent = _sent_exam_payload(db, exam) if exam.parent_notified_at else None
+    if sent:
+        for key in ("narrative", "subjects", "opportunities", "history",
+                    "opportunity_total_text", "opportunity_exam_count"):
+            if key in sent:
+                summary[key] = sent[key]
     recipients = _exam_notify_recipients(db, student.id)
 
     return ExamParentPreviewResponse(
@@ -10580,6 +10632,7 @@ def teacher_exam_parent_preview_v2(
         recipients=[ExamParentPreviewRecipient(**r) for r in recipients],
         deliverable_count=sum(1 for r in recipients if not r["blocked"]),
         already_notified=exam.parent_notified_at is not None,
+        is_sent_snapshot=bool(sent),
         notified_at=(
             exam.parent_notified_at.isoformat() if exam.parent_notified_at else None
         ),
@@ -10643,13 +10696,20 @@ def teacher_exam_parent_preview_html_v2(
     if student is None:
         raise _validation_error("student_not_found", "Öğrenci bulunamadı.")
 
-    ctx = build_email_context(
-        db, exam,
-        narrative=_clean_narrative(body.narrative if body else None),
-        include_subjects=(body.include_subjects if body else True),
-        include_history=(body.include_history if body else True),
-        include_opportunities=(body.include_opportunities if body else True),
-    )
+    # Duyuru YAPILMIŞSA çıktı, veliye GERÇEKTEN giden gövdedir — gövdedeki
+    # düzenleme yok sayılır. Aksi halde koç, gönderdiğinden farklı bir PDF
+    # paylaşabilirdi.
+    sent = _sent_exam_payload(db, exam) if exam.parent_notified_at else None
+    if sent:
+        ctx = dict(sent)
+    else:
+        ctx = build_email_context(
+            db, exam,
+            narrative=_clean_narrative(body.narrative if body else None),
+            include_subjects=(body.include_subjects if body else True),
+            include_history=(body.include_history if body else True),
+            include_opportunities=(body.include_opportunities if body else True),
+        )
     # Veliye özel alan yok: bu çıktı koçun elinde, abonelik linki anlamsız.
     ctx["unsubscribe_token"] = ""
     _subject, html, _text = _render("parent_exam_result", ctx)

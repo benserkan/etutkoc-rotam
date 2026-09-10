@@ -542,6 +542,9 @@ def build_email_context(
         summary["opportunities"] = []
     return {
         "__template": "parent_exam_result",
+        # Gönderilen mailin HANGİ denemeye ait olduğu — duyuru sonrası
+        # "gönderdiğim içeriği göster/PDF'le" akışı bunu kullanır.
+        "exam_id": exam.id,
         "student_id": exam.student_id,
         "student_name": (exam.student.full_name if exam.student else ""),
         **summary,

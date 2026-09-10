@@ -94,21 +94,33 @@ export function ExamParentAnnounceDialog({
   // korunur (effect'te setState React Compiler kuralına takılır → tohumlama
   // render sırasında "hangi exam için yüklendi" işaretiyle yapılır).
   const [draft, setDraft] = React.useState<string[] | null>(null);
-  const [seededFor, setSeededFor] = React.useState<number | null>(null);
+  // Tohumlama anahtarı exam + "gönderilmiş mi" — duyurudan sonra yanıt
+  // GÖNDERİLEN metne döner, taslak yeniden tohumlanmalı.
+  const [seededFor, setSeededFor] = React.useState<string | null>(null);
   const [includeSubjects, setIncludeSubjects] = React.useState(true);
   // Geçmişle karşılaştırma + net fırsatı bölümleri (koç isteği 2026-09-10)
   const [includeHistory, setIncludeHistory] = React.useState(true);
   const [includeOpportunities, setIncludeOpportunities] = React.useState(true);
   const [printing, setPrinting] = React.useState(false);
 
-  if (data && seededFor !== data.exam_id) {
-    setSeededFor(data.exam_id);
+  const seedKey = data ? `${data.exam_id}:${data.is_sent_snapshot}` : null;
+  if (data && seedKey && seededFor !== seedKey) {
+    setSeededFor(seedKey);
     setDraft(data.narrative);
-    setIncludeSubjects(true);
-    setIncludeHistory(true);
-    setIncludeOpportunities(true);
+    // Gönderilmiş mailde bölümler yanıttaki içerikten türetilir (koç o gün
+    // neyi kapattıysa önizleme de öyle görünsün).
+    setIncludeSubjects(!data.already_notified || data.subjects.length > 0);
+    setIncludeHistory(
+      !data.already_notified || Boolean(data.history?.has_data),
+    );
+    setIncludeOpportunities(
+      !data.already_notified || data.opportunities.length > 0,
+    );
   }
 
+  // Duyurulmuş deneme: içerik veliye GİDEN mailden okunur, düzenlenmez —
+  // koç yalnız görüntüler ve PDF'ler.
+  const sentMode = Boolean(data?.already_notified);
   const lines = draft ?? data?.narrative ?? [];
   const maxLines = data?.max_lines ?? 12;
   const maxLen = data?.max_line_length ?? 500;
@@ -204,11 +216,14 @@ export function ExamParentAnnounceDialog({
         <DialogHeader>
           <DialogTitle className="inline-flex items-center gap-2">
             <Mail className="size-5 text-teal-600" aria-hidden />
-            Veliye duyur — önizle ve düzenle
+            {sentMode
+              ? "Veliye gönderilen mail"
+              : "Veliye duyur — önizle ve düzenle"}
           </DialogTitle>
           <DialogDescription>
-            Aşağıdaki içerik bağlı velilere e-posta olarak gidecek. Yorum
-            cümlelerini düzenleyebilir, istemediklerinizi silebilirsiniz.
+            {sentMode
+              ? "Bu içerik veliye gönderildi. Aşağıdaki hâliyle PDF olarak indirip WhatsApp'tan paylaşabilirsiniz."
+              : "Aşağıdaki içerik bağlı velilere e-posta olarak gidecek. Yorum cümlelerini düzenleyebilir, istemediklerinizi silebilirsiniz."}
           </DialogDescription>
         </DialogHeader>
 
@@ -227,7 +242,13 @@ export function ExamParentAnnounceDialog({
               <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
                 <AlertTriangle className="mt-0.5 size-4 shrink-0" aria-hidden />
                 <span>
-                  Bu denemenin duyurusu daha önce yapıldı — tekrar gönderilemez.
+                  Bu deneme{data.notified_at
+                    ? ` ${data.notified_at.slice(8, 10)}.${data.notified_at.slice(5, 7)}.${data.notified_at.slice(0, 4)} tarihinde`
+                    : ""}{" "}
+                  veliye duyuruldu — tekrar gönderilemez.{" "}
+                  {data.is_sent_snapshot
+                    ? "Aşağıdaki içerik o gün gönderilen mailin aynısıdır."
+                    : ""}
                 </span>
               </div>
             ) : null}
@@ -291,7 +312,7 @@ export function ExamParentAnnounceDialog({
                     <p className="text-[12.5px] font-semibold text-foreground">
                       Bu deneme ne anlatıyor?
                     </p>
-                    <div className="flex items-center gap-1">
+                    <div className={cn("flex items-center gap-1", sentMode && "hidden")}>
                       {edited ? (
                         <Button
                           type="button"
@@ -335,6 +356,7 @@ export function ExamParentAnnounceDialog({
                         <li key={i} className="flex items-start gap-1.5">
                           <textarea
                             value={line}
+                            readOnly={sentMode}
                             onChange={(e) => setLine(i, e.target.value)}
                             rows={Math.min(4, Math.ceil((line.length || 1) / 70))}
                             maxLength={maxLen}
@@ -346,7 +368,10 @@ export function ExamParentAnnounceDialog({
                             type="button"
                             variant="ghost"
                             size="sm"
-                            className="mt-0.5 h-7 shrink-0 px-1.5 text-muted-foreground hover:text-rose-600"
+                            className={cn(
+                              "mt-0.5 h-7 shrink-0 px-1.5 text-muted-foreground hover:text-rose-600",
+                              sentMode && "hidden",
+                            )}
                             onClick={() => removeLine(i)}
                             aria-label={`${i + 1}. cümleyi kaldır`}
                             title="Bu cümleyi maile koyma"
@@ -365,6 +390,7 @@ export function ExamParentAnnounceDialog({
                     <input
                       type="checkbox"
                       checked={includeSubjects}
+                      disabled={sentMode}
                       onChange={(e) => setIncludeSubjects(e.target.checked)}
                       className="size-3.5 accent-teal-600"
                     />
@@ -425,6 +451,7 @@ export function ExamParentAnnounceDialog({
                       <input
                         type="checkbox"
                         checked={includeHistory}
+                        disabled={sentMode}
                         onChange={(e) => setIncludeHistory(e.target.checked)}
                         className="size-3.5 accent-teal-600"
                       />
@@ -516,6 +543,7 @@ export function ExamParentAnnounceDialog({
                       <input
                         type="checkbox"
                         checked={includeOpportunities}
+                        disabled={sentMode}
                         onChange={(e) =>
                           setIncludeOpportunities(e.target.checked)
                         }
@@ -639,8 +667,9 @@ export function ExamParentAnnounceDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Vazgeç
+            {sentMode ? "Kapat" : "Vazgeç"}
           </Button>
+          {sentMode ? null : (
           <Button
             type="button"
             onClick={send}
@@ -666,6 +695,7 @@ export function ExamParentAnnounceDialog({
               ? `${data.deliverable_count} veliye gönder`
               : "Gönder"}
           </Button>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

@@ -62,6 +62,13 @@ Senaryolar:
   37. Koçun düzenlemesi çıktıya birebir yansır (metin + kapatılan bölümler)
   38. Çıktı üretmek HİÇBİR bildirim göndermez (salt okuma)
   39. Sahiplik: başka koçun denemesi → 404
+
+  DUYURU SONRASI ERİŞİM (2026-09-10, koç: "duyurulduktan sonra PDF
+  dosyasına ulaşamıyorum"):
+  40. Duyurulmuş denemede önizleme, KOÇUN GÖNDERDİĞİ içeriği gösterir
+      (kural motorunun tazesini değil) + is_sent_snapshot=True
+  41. Duyuru sonrası PDF çıktısı da GÖNDERİLEN gövdeden üretilir —
+      gövdedeki yeni düzenleme yok sayılır (mail ile PDF ayrışamaz)
 """
 from __future__ import annotations
 
@@ -721,6 +728,42 @@ def main() -> int:
         )
         check("39. başka koçun denemesinin çıktısı → 404",
               r39.status_code == 404, f"{r39.status_code}")
+
+        # ---- 40/41. DUYURU SONRASI: gönderilen içeriğe ulaşılabilir mi?
+        #      `edited` denemesi senaryo 17'de KOÇUN metniyle duyurulmuştu.
+        pv_sent = c.get(
+            f"/api/v2/teacher/exams/{s['edited']}/parent-preview").json()
+        check(
+            "40. duyurulmuş denemede önizleme KOÇUN GÖNDERDİĞİ içeriği gösterir "
+            "(kural motorunun tazesini değil)",
+            pv_sent.get("already_notified") is True
+            and pv_sent.get("is_sent_snapshot") is True
+            and pv_sent.get("narrative") == [
+                "Merhaba, Emir bu denemede 45 net çıkardı.",
+                "Görüşmemizde ayrıntısını konuşacağız.",
+            ]
+            and pv_sent.get("subjects") == [],   # koç o gün tabloyu kapatmıştı
+            f"snapshot={pv_sent.get('is_sent_snapshot')} "
+            f"narr={pv_sent.get('narrative')}",
+        )
+
+        rp_sent = c.post(
+            f"/api/v2/teacher/exams/{s['edited']}/parent-preview.html",
+            # Koç şimdi başka bir metin göndermeye çalışsa bile GÖNDERİLEN
+            # içerik basılmalı — veliye giden mail ile PDF ayrışamaz.
+            json={"narrative": ["Sonradan yazılan cümle."],
+                  "include_subjects": True},
+        )
+        html_sent = rp_sent.text if rp_sent.status_code == 200 else ""
+        check(
+            "41. duyuru sonrası PDF çıktısı GÖNDERİLEN gövdeden üretilir "
+            "(sonradan yazılan metin ÇIKMAZ)",
+            rp_sent.status_code == 200
+            and "Merhaba, Emir bu denemede 45 net çıkardı." in html_sent
+            and "Sonradan yazılan cümle." not in html_sent
+            and "Ders bazında" not in html_sent,   # o gün kapatılmıştı
+            f"status={rp_sent.status_code} len={len(html_sent)}",
+        )
 
         # ---- 21. TERCİH KAPALIYKEN önizleme bunu SÖYLER (koç boşuna beklemesin)
         #      Bastırma kararı gerçek gönderimle AYNI fonksiyondan gelir

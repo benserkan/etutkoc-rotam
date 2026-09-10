@@ -25,6 +25,9 @@ Senaryolar:
   13. Geçmiş denemelerle karşılaştırma tablosu (aynı tür, trend oku)
   14. İki bölüm de checkbox'la çıkarılabilir
   15. "PDF olarak indir" → yazdırma açılır, çıktı KOÇUN düzenlemesini taşır
+  16. DUYURU SONRASI: "Duyuruldu" rozeti tıklanabilir; gönderilen mail
+      açılır (salt okuma) ve PDF olarak indirilebilir — koç şikâyeti:
+      "duyurulduktan sonra pdf dosyasına ulaşamıyorum"
 """
 from __future__ import annotations
 
@@ -482,6 +485,65 @@ def main() -> int:
                   body[:200])
             page.screenshot(path=os.path.join(SHOT_DIR, "ann_sent.png"),
                             full_page=True)
+
+            # ---- 16. DUYURU SONRASI ERİŞİM (koçun asıl şikâyeti)
+            badge = page.query_selector('button:has-text("Duyuruldu")')
+            check("16a. 'Duyuruldu' rozeti TIKLANABİLİR (buton)",
+                  badge is not None, "rozet buton değil")
+            if badge is not None:
+                badge.click()
+                page.wait_for_timeout(2500)
+                dlg = page.query_selector('[role="dialog"]')
+                dtext = dlg.inner_text() if dlg else ""
+                # Cümleler textarea içinde: inner_text onları TAŞIMAZ,
+                # değerler input_value() ile okunur.
+                sent_lines = [
+                    a.input_value()
+                    for a in page.query_selector_all('[role="dialog"] textarea')
+                ]
+                check(
+                    "16b. gönderilen mail açılır: KOÇUN metni + 'gönderildi' "
+                    "uyarısı + tekrar gönder butonu YOK",
+                    dlg is not None
+                    and "Veliye gönderilen mail" in dtext
+                    and edited_first in sent_lines
+                    and own_line in sent_lines
+                    and removed_text not in sent_lines
+                    and page.query_selector(
+                        '[role="dialog"] button:has-text("veliye gönder")') is None,
+                    f"{sent_lines} || {dtext[:120]}",
+                )
+                # PDF butonu burada da çalışmalı
+                # 15a'da kurulan gözlemci hâlâ aktif; iframe print'ini AYNI
+                # sayaca yazıyor → ikinci sayaç yerine artışa bakılır.
+                printed_before = page.evaluate("() => window.__printed || 0")
+                pdf_btn = page.query_selector(
+                    '[role="dialog"] button:has-text("PDF olarak indir")')
+                check("16c. duyuru sonrası da 'PDF olarak indir' butonu var",
+                      pdf_btn is not None, "buton yok")
+                if pdf_btn is not None:
+                    pdf_btn.click()
+                    page.wait_for_timeout(3000)
+                    printed2 = (
+                        page.evaluate("() => window.__printed || 0") - printed_before
+                    )
+                    frame2 = page.evaluate(
+                        """() => {
+                          const f = [...document.querySelectorAll('iframe')].pop();
+                          return f && f.contentDocument
+                            ? f.contentDocument.documentElement.innerHTML
+                            : '';
+                        }"""
+                    )
+                    check(
+                        "16d. duyuru sonrası PDF çıktısı GÖNDERİLEN maildir "
+                        "(koçun metni · silinen cümle yok)",
+                        printed2 >= 1
+                        and edited_first in frame2
+                        and removed_text not in frame2,
+                        f"printed={printed2} len={len(frame2)}",
+                    )
+                page.screenshot(path=os.path.join(SHOT_DIR, "ann_sent_modal.png"))
             b.close()
     finally:
         cleanup(ids)
