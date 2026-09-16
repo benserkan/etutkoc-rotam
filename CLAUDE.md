@@ -11,6 +11,15 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 **Deploy:** web+worker+next rebuild (Plausible-stop'lu); healthz/site 200 ·
 mobil **OTA grubu `bc40930f`** (runtime 1.0.0, android+ios — açık test
 kurulumlarına sonraki açılışta iner; yeni AAB da bu JS'i içerir).
+**ANDROID AAB — Google Play AÇIK TEST için (2026-09-16):** EAS build
+`e987bdcd` FINISHED, **versionCode 16** (vc15'ten otomatik), runtime 1.0.0,
+lock dosyası 28 Tem'dekiyle aynı (npm 10.9.3 uyumlu) → ilk denemede temiz.
+Artefakt: `https://expo.dev/artifacts/eas/Ty0hgRegQbZ3aK7n9QxLX0bQEcJnVPjCdnCCIWd975w.aab`
+(EAS artefaktları ~30 gün sonra silinir; gerekirse `eas build:list`).
+**KULLANICI:** Play Console → Test → Açık test → Yeni sürüm → bu AAB.
+**DERS:** arka plan poll döngüsü (sleep 60 × 40) "bellek düşük" gerekçesiyle
+öldürüldü (dev-sunucu dersinin tekrarı) → uzun bekleme için `Monitor`
+aracı ya da foreground tek `eas build:view` kontrolü kullanılır.
 **Prod onarımı uygulandı:** `backfill_task_title_links --apply` → **26 başlık**
 (Taha'nın 7'si + aynı bug'ın 4 başka kurbanı [Aydın Kimya · Biyotik ·
 Polinom fasikülü · Limit Paragraf] + 15 demo "Görev" placeholder'ı) +
