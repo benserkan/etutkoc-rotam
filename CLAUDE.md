@@ -6,7 +6,17 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
-## MOBİL PROGRAM — GÖREV DETAYI + VİDEO LİNKİ + "HAFTAYA YAY" BAŞLIK BUG'I — (2026-09-16, migration YOK)
+## MOBİL PROGRAM — GÖREV DETAYI + VİDEO LİNKİ + "HAFTAYA YAY" BAŞLIK BUG'I — CANLI (2026-09-16, commit `d9e4866`, migration YOK)
+
+**Deploy:** web+worker+next rebuild (Plausible-stop'lu); healthz/site 200 ·
+mobil **OTA grubu `bc40930f`** (runtime 1.0.0, android+ios — açık test
+kurulumlarına sonraki açılışta iner; yeni AAB da bu JS'i içerir).
+**Prod onarımı uygulandı:** `backfill_task_title_links --apply` → **26 başlık**
+(Taha'nın 7'si + aynı bug'ın 4 başka kurbanı [Aydın Kimya · Biyotik ·
+Polinom fasikülü · Limit Paragraf] + 15 demo "Görev" placeholder'ı) +
+**104 video linki** notes→kolon; ikinci koşu 0/0 (idempotent). Taha 2841–2846
++ 2868 başlıkları artık kalemleriyle birebir ("Kesişen Kuvvetler: 3 test ·
+Tork ve Denge: 1 test").
 
 **Tetikleyici (koç, mobil ekran görüntüsü — Emir/Taha programı):** (1) koç
 mobilde öğrencinin programındaki görevlere **tıklayamıyordu** (detay yok);
