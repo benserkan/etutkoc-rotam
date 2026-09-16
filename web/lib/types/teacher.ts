@@ -375,6 +375,8 @@ export interface TeacherTask {
   order: number;
   is_draft: boolean;
   notes: string | null;
+  // Etkin bağlantı (video vb.) — kolon > notes içindeki URL (2026-09-16)
+  link_url?: string | null;
   items: TeacherTaskItem[];
   planned_count: number;
   completed_count: number;
@@ -948,6 +950,8 @@ export interface TaskCreateBody {
   // true/false: açık değer.
   is_draft?: boolean | null;
   notes?: string | null;
+  // Video/etkinlik bağlantısı — verilmezse backend notes içindeki URL'i alır
+  link_url?: string | null;
   items: TaskItemBody[];
   work_block_id?: number | null;    // opsiyonel serbest iş bloğu bağı (Katman 3)
 }
@@ -979,6 +983,8 @@ export interface TaskPatchBody {
   order?: number | null;
   is_draft?: boolean | null;
   notes?: string | null;
+  // undefined = değişmez · "" = bağlantıyı kaldır · "https://…" = ayarla
+  link_url?: string | null;
 }
 
 // Müfredat ilerleme (Faz 1)

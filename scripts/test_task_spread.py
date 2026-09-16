@@ -16,6 +16,9 @@ Senaryolar (14):
   12. Yabancı öğretmenin görevi → 404
   13. Kaynak gün listede → sessizce atlanır (kendi üstüne kopya yok)
   14. invalidate prefix'leri hafta+gün anahtarlarını taşır
+  15. BAŞLIK (2026-09-16, Taha #84 sahası): sıradaki bölüme geçen / kısmi
+      kopyanın başlığı KENDİ kalemlerinden üretilir (kaynak "Vektörler: 4 test"
+      kopyalanmaz); kaynakla birebir kopya koçun başlığını korur
 """
 from __future__ import annotations
 
@@ -208,6 +211,31 @@ def main() -> int:
                   f"{[(k, v.reserved_count) for k, v in progs.items()]}")
             check("4. kopyalar taslak", all(t.is_draft for t in new_tasks),
                   f"{[(t.id, t.is_draft) for t in new_tasks]}")
+            # ---- 15: başlık kalemleri yansıtır (kaynak etiketi kopyalanmaz)
+            sec_label = {sid: f"Bölüm {i}" for i, sid in enumerate(ids["secs"], start=1)}
+            src_sig = [(ids["secs"][0], 2)]
+            bad: list[str] = []
+            kept_ok = True
+            for t in new_tasks:
+                sig = [(bi.book_section_id, bi.planned_count) for bi in t.book_items]
+                if sig == src_sig:
+                    # Birebir kopya: tek-kalemli görev başlığı her zaman otomatik
+                    # ("Kitap — Bölüm: N test", 2026-05-25 kuralı) → kaynak bölümü taşır.
+                    if "Bölüm 1: 2 test" not in (t.title or ""):
+                        kept_ok = False
+                    continue
+                for bi in t.book_items:
+                    if sec_label[bi.book_section_id] not in (t.title or ""):
+                        bad.append(f"{t.date}: '{t.title}' ≠ {sig}")
+                if "Bölüm 1: 2 test" in (t.title or "") and sig != src_sig:
+                    bad.append(f"{t.date}: kaynak etiketi kopyalanmış '{t.title}'")
+            check("15a. sapan kopyaların başlığı kendi bölümlerini taşır", not bad, "; ".join(bad)[:300])
+            multi_titles = [t.title for t in multi]
+            check("15b. çok kalemli kopya başlığı iki bölümü de sayar ('Bölüm 1: 1 test · Bölüm 2: 1 test')",
+                  any("Bölüm 1: 1 test" in x and "Bölüm 2: 1 test" in x for x in multi_titles),
+                  str(multi_titles)[:300])
+            check("15c. kaynakla birebir kopya kaynak bölümünü/sayısını taşır ('Bölüm 1: 2 test')", kept_ok,
+                  str([(t.date.isoformat(), t.title) for t in new_tasks])[:300])
 
         # ---- 5: mükerrer
         r = client.post(f"/api/v2/teacher/tasks/{ids['src1']}/spread",

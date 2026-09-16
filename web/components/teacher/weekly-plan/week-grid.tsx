@@ -68,9 +68,13 @@ function taskUnit(t: TeacherTask): string {
 // bildirimi 2026-09-03: "345 TYT-AYT Geometri ..." görünüyor, konu görünmüyor).
 // Kaynak adı + kapasite tooltip'e alındı.
 function taskLabel(t: TeacherTask): string {
-  const first = t.items.find((it) => it.book_id != null) ?? t.items[0];
+  const bookItems = t.items.filter((it) => it.book_id != null);
+  const first = bookItems[0] ?? t.items[0];
   if (first?.book_id) {
-    return first.section_label || first.topic_name || first.book_name;
+    const base = first.section_label || first.topic_name || first.book_name;
+    // Çok kalemli görev (haftaya yay sıradaki bölüme geçti): ilk bölüm tek
+    // başına yanıltır → "+N" ile diğer bölümler de olduğunu söyle (tooltip listeler).
+    return bookItems.length > 1 ? `${base} +${bookItems.length - 1}` : base;
   }
   // Etkinlik: başlık "{Ders} · {içerik}" → içerik kısmını göster.
   const sep = t.title.indexOf(" · ");

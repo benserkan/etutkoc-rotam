@@ -50,9 +50,12 @@ function taskUnit(t: StudentTask): string {
 }
 
 function taskLabel(t: StudentTask): string {
-  const first = t.items.find((it) => it.book_id != null) ?? t.items[0];
+  const bookItems = t.items.filter((it) => it.book_id != null);
+  const first = bookItems[0] ?? t.items[0];
   if (first?.book_id) {
-    return first.book_name + (first.section_label ? ` · ${first.section_label}` : "");
+    const base = first.book_name + (first.section_label ? ` · ${first.section_label}` : "");
+    // Çok kalemli görev: yalnız ilk bölüm yanıltır → "+N" (kart tüm kalemleri listeler)
+    return bookItems.length > 1 ? `${base} +${bookItems.length - 1}` : base;
   }
   // Etkinlik: başlık "{Ders} · {içerik}" → içerik kısmını göster.
   const sep = t.title.indexOf(" · ");

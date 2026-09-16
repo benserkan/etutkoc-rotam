@@ -6,6 +6,79 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## MOBİL PROGRAM — GÖREV DETAYI + VİDEO LİNKİ + "HAFTAYA YAY" BAŞLIK BUG'I — (2026-09-16, migration YOK)
+
+**Tetikleyici (koç, mobil ekran görüntüsü — Emir/Taha programı):** (1) koç
+mobilde öğrencinin programındaki görevlere **tıklayamıyordu** (detay yok);
+video görevi "etkinlik" diye görünüyor, linke ulaşılamıyordu; (2) öğrenci
+mobilde de aynısı — "Videoyu izle" ile YouTube'da açılmalı; (3) öğrenci göreve
+dokununca kaynak kitap · konu · test sayısını görmeli; (4) **"haftaya yay"
+sıradaki bölüme geçince görev etiketi hâlâ "Vektörler" diyordu** (Taha #84).
+- **TEŞHİS (prod salt-okuma):** Taha'nın 2841–2846 + 2868 = **7 görev**
+  başlığı "…— Vektörler: 4 test" ama kalemler Kesişen Kuvvetler / Tork ve
+  Denge / Basit Makineler / Sarmal Test… Kök neden `teacher_spread_task_v2`
+  kopyaya `title=task.title` veriyordu; `_create_task_with_items` yalnız
+  TEK-kalemli görevde başlığı yeniden üretir → çok kalemli (kısmi + sıradaki
+  bölüm) kopyalar kaynak etiketiyle kalıyordu. Ayrıca kalem ekle (`/items`) ve
+  sayı değiştir (`/items/{id}`) uçları da başlığı tazelemiyordu. Mobil/web
+  ızgara etiketleri de yalnız İLK kalemin bölümünü basıyordu (ikinci bölüm
+  görünmez).
+- **VİDEO LİNKİ KÖK NEDEN:** `Task.link_url` kolonu vardı ama **v2 API hiç
+  doldurmuyor/serialize etmiyordu**; web formu URL'i `notes`'un son satırına
+  gömüyordu → öğrenci/koç yüzeylerinde tıklanacak bağlantı hiç yoktu.
+- **YENİ TEK MERKEZLER:** `app/services/task_titles.py` (başlık üretimi:
+  tek kalem "Kitap — Bölüm: N test" · aynı kitaptan çok kalem "Kitap — A: n
+  test · B: m test" · `is_auto_title` koçun elle yazdığı başlığı korur ·
+  `refresh_auto_title`) + `app/services/task_links.py` (`effective_link_url`
+  = kolon > notes içindeki URL · `normalize_link` yalnız http/https, şemasız
+  girişe https:// · `strip_urls` gösterim). **KURAL: görev başlığı türetilmiş
+  veridir — kalemleri değiştiren her uç `task_titles.refresh_auto_title`
+  çağırır; bağlantı yalnız `task_links` üzerinden okunur/yazılır.**
+- **Backend:** spread → kalemler kaynaktan sapınca başlık kalemlerden
+  (`_compose_items_title`), birebir kopya koçun başlığını korur; `link_url`
+  kopyaya taşınır · `TaskCreateBody.link_url` + `TaskPatchBody.link_url`
+  ("" = kaldır) · create: açık alan yoksa notes'taki URL kolona yazılır ·
+  PATCH notes: kolon boşsa önce notes'taki URL kolona taşınır (koç notu
+  düzenlerken link kaybolmaz) · single-item patch artık `link_url`'i yalnız
+  gönderilince değiştirir (eskisi her düzenlemede siliyordu) · `TeacherTask`
+  + `StudentTask` şemalarına `link_url` (additive) · kalem ekle / sayı
+  değiştir → başlık tazeleme.
+- **Web:** VideoForm `link_url` gönderir (notes temiz) · koç satırında dolgulu
+  **"Videoyu izle"** düğmesi + URL'siz not · EditTaskDialog'a bağlantı alanı
+  (test dışı tipler) · öğrenci kartında "Videoyu izle" · tip rozeti "Video
+  dersi" · Hafta Izgarası + öğrenci ızgarası çok kalemli görevde **"+N"**.
+  `web/lib/task-links.ts` (stripUrls/linkButtonLabel).
+- **Mobil (JS-only → OTA):** YENİ `lib/task-display.ts` (etiket "Video
+  dersi/Özet/Tekrar/Etkinlik" · `taskLabel` çok kalemli: "Kitap · A 3 · B 1"
+  [compact "+N"] · `openTaskLink`) · koç: satıra dokun → YENİ
+  `teacher/task-detail-sheet.tsx` (ders · tip · durum · tarih/periyot ·
+  **her kalem: kitap · bölüm · müfredat konusu · N/M test · D/Y/B · bölümde
+  kalan** · not · "Videoyu izle" · sil; düzenleme web'de) + satırda play
+  ikonu · koç görev ekleme: video tipinde **"Video bağlantısı" zorunlu** ·
+  öğrenci Bugün: satırda **"Videoyu izle" çipi doğrudan linki açar** (karta
+  girmeden) + görev sheet'inde kaynak/bölüm/konu/planlanan bloğu + izle
+  düğmesi + "Videoyu izledin mi?" metni.
+- **Test:** `test_task_spread` 16→**19** (15a sapan kopya kendi bölümlerini
+  taşır · 15b iki bölümü de sayar · 15c birebir kopya) · YENİ
+  `test_api_v2_task_link_url.py` **15/15** (URL notes'ta → çıkarılır+kolon
+  dolar · açık alan · javascript: 422 · eski kayıt koç/öğrenci/hafta
+  görünümünde link · not düzenlemesi linki koparmaz · "" kaldırır · şemasız
+  normalize · kalem 2→3 başlık "3 test" · ikinci bölüm başlığa girer · elle
+  başlık korunur). Regresyon: weekly_plan · teacher_read 12 · student_read
+  11 · student_mutations 12 · task_templates 11 · carryover_http 17 ·
+  itemless 10; web tsc+eslint temiz; mobil eslint temiz (tsc'deki 6 hata
+  `app/preview/*` — ÖNCEDEN var, `blank` mock alanı).
+- **Prod onarımı:** `scripts/backfill_task_title_links.py` (dry-run varsayılan;
+  `--titles` yalnız otomatik biçimli başlıkları kalemlerden yeniden üretir,
+  elle başlığa dokunmaz; `--links` notes'taki URL'i kolona taşır + notes'tan
+  ayıklar; idempotent).
+- **BİLİNEN SINIR (koça söylendi):** "haftaya yay → sıradaki bölüm" kitabın
+  bölüm SIRASINI izler; Bilgi Sarmal'da Simülasyon/Sarmal/ÖSYM Tipi karma
+  testleri de sırada olduğundan devam kopyalarına girebilir — başlık artık
+  bunu açıkça söyler; istenirse "yalnız konu testleri" filtresi ayrı iş.
+
+---
+
 ## DENEME DUYURUSU — ÖNİZLE / DÜZENLE / GÖNDER — CANLI (2026-09-10, commit `a97b6ae`, migration YOK)
 
 **Tetikleyici (koç, ekran görüntüsü):** deneme sonucu veliye gönderilirken

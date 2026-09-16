@@ -29,6 +29,8 @@ export interface StudentTask {
   status: TaskStatus;
   date: string;
   period: "morning" | "noon" | "evening" | null;
+  // Video/etkinlik bağlantısı — "Videoyu izle" doğrudan açar (2026-09-16)
+  link_url?: string | null;
   items: StudentTaskItem[];
   planned_count: number;
   completed_count: number;

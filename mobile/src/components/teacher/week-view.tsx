@@ -3,6 +3,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, RefreshControl, ScrollView, Text, View } from "react-native";
 
 import type { TeacherSuggestionInline, TeacherTaskRow, TeacherWeekDay, TeacherWeekResponse } from "@/lib/teacher";
+import { activityLabel, taskLabel as displayLabel } from "@/lib/task-display";
 import { cn } from "@/lib/utils";
 
 export interface SuggestionHandlers {
@@ -20,12 +21,10 @@ function shortDate(iso: string): string {
 }
 
 const DENEME = new Set(["brans_denemesi", "genel_deneme"]);
+// Çok kalemli görevde (haftaya yay sıradaki bölüme geçmiş) yalnız ilk bölümü
+// yazmak yanıltıyordu → "+N"; detay sayfası tüm bölümleri listeler.
 function taskLabel(t: TeacherTaskRow): string {
-  const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
-  if (it?.book_id) return it.book_name + (it.section_label ? ` · ${it.section_label}` : "");
-  const sep = t.title.indexOf(" · ");
-  if (sep > 0) return t.title.substring(sep + 3);
-  return t.title || "Görev";
+  return displayLabel(t.items, t.title, { compact: true });
 }
 function taskUnit(t: TeacherTaskRow): string {
   const it = t.items.find((x) => x.book_id != null) ?? t.items[0];
@@ -42,11 +41,12 @@ function taskDone(t: TeacherTaskRow): boolean {
   return t.status === "completed" || (t.planned_count > 0 && t.pct >= 1);
 }
 
-function TaskRow({ t, onDelete }: { t: TeacherTaskRow; onDelete?: (id: number) => void }) {
+function TaskRow({ t, onDelete, onOpen }: { t: TeacherTaskRow; onDelete?: (id: number) => void; onOpen?: (t: TeacherTaskRow) => void }) {
   const done = taskDone(t);
   const unit = taskUnit(t);
   return (
     <Pressable
+      onPress={onOpen ? () => onOpen(t) : undefined}
       onLongPress={
         onDelete
           ? () =>
@@ -60,12 +60,14 @@ function TaskRow({ t, onDelete }: { t: TeacherTaskRow; onDelete?: (id: number) =
     >
       <View className={cn("size-2 rounded-full", done ? "bg-emerald-500" : t.completed_count > 0 ? "bg-amber-400" : "bg-slate-300")} />
       <Text className="flex-1 text-[13px] text-slate-800" numberOfLines={1}>{taskLabel(t)}</Text>
+      {t.link_url ? <Ionicons name="play-circle" size={14} color="#0e7490" /> : null}
       {t.is_draft ? <Text className="text-[10px] font-semibold text-amber-600">taslak</Text> : null}
       {unit ? (
         <Text className="text-[11px] text-slate-400">{t.completed_count}/{t.planned_count} {unit}</Text>
       ) : (
-        <Text className="text-[11px] text-slate-400">etkinlik</Text>
+        <Text className="text-[11px] text-slate-400">{activityLabel(t.type)}</Text>
       )}
+      {onOpen ? <Ionicons name="chevron-forward" size={14} color="#cbd5e1" /> : null}
     </Pressable>
   );
 }
@@ -156,7 +158,7 @@ function SuggestionsPanel({ day, h }: { day: TeacherWeekDay; h: SuggestionHandle
   );
 }
 
-function DayCard({ day, onAdd, onDelete, sugg }: { day: TeacherWeekDay; onAdd: (date: string) => void; onDelete?: (id: number) => void; sugg?: SuggestionHandlers }) {
+function DayCard({ day, onAdd, onDelete, onOpen, sugg }: { day: TeacherWeekDay; onAdd: (date: string) => void; onDelete?: (id: number) => void; onOpen?: (t: TeacherTaskRow) => void; sugg?: SuggestionHandlers }) {
   const pct = Math.round(day.pct * 100);
   return (
     <View className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -175,7 +177,7 @@ function DayCard({ day, onAdd, onDelete, sugg }: { day: TeacherWeekDay; onAdd: (
       {day.tasks.length > 0 ? (
         <View className="mt-3 gap-1.5">
           {day.tasks.map((t) => (
-            <TaskRow key={t.id} t={t} onDelete={onDelete} />
+            <TaskRow key={t.id} t={t} onDelete={onDelete} onOpen={onOpen} />
           ))}
         </View>
       ) : (
@@ -202,6 +204,7 @@ export function TeacherWeekView({
   onThisWeek,
   onAddTask,
   onDeleteTask,
+  onOpenTask,
   sugg,
   refreshing = false,
   onRefresh,
@@ -212,6 +215,7 @@ export function TeacherWeekView({
   onThisWeek: () => void;
   onAddTask: (date: string) => void;
   onDeleteTask?: (id: number) => void;
+  onOpenTask?: (t: TeacherTaskRow) => void;
   sugg?: SuggestionHandlers;
   refreshing?: boolean;
   onRefresh?: () => void;
@@ -240,9 +244,11 @@ export function TeacherWeekView({
       </View>
 
       {week.days.map((d) => (
-        <DayCard key={d.date} day={d} onAdd={onAddTask} onDelete={onDeleteTask} sugg={sugg} />
+        <DayCard key={d.date} day={d} onAdd={onAddTask} onDelete={onDeleteTask} onOpen={onOpenTask} sugg={sugg} />
       ))}
-      <Text className="px-2 pb-2 text-center text-[11px] text-slate-400">Bir görevi silmek için basılı tut.</Text>
+      <Text className="px-2 pb-2 text-center text-[11px] text-slate-400">
+        Detay için göreve dokun · silmek için basılı tut.
+      </Text>
     </ScrollView>
   );
 }

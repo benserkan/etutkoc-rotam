@@ -21,6 +21,7 @@ import {
   Check,
   ChevronRight,
   Clock,
+  ExternalLink,
   FileEdit,
   GripVertical,
   Layers,
@@ -34,6 +35,7 @@ import {
   Sunrise,
   Trash2,
 } from "lucide-react";
+import { linkButtonLabel, stripUrls } from "@/lib/task-links";
 
 import {
   getStudentBookSections,
@@ -91,7 +93,7 @@ const TR_MONTHS = [
 
 const TASK_TYPE_LABELS: Record<string, string> = {
   test: "Test",
-  video: "Video",
+  video: "Video dersi",
   ozet: "Özet",
   tekrar: "Tekrar",
   other: "Diğer",
@@ -1087,6 +1089,9 @@ function SortableTaskRow({
   // TEST rozeti gösterilmez: görevlerin %78'i test, her satırda yazmak bilgi
   // değil gürültü. Diğer tipler (video/deneme/blok/diğer) rozetini taşır.
   const showTypeBadge = isBlock || isDeneme || task.type !== "test";
+  // Not gösterimi: URL kolona taşındı (link_url) — notes'ta kalan eski URL
+  // iki kez görünmesin diye ayıklanır.
+  const displayNotes = stripUrls(task.notes);
 
   return (
     <div
@@ -1226,9 +1231,21 @@ function SortableTaskRow({
             ))}
           </div>
         ) : null}
-        {task.notes ? (
+        {task.link_url ? (
+          <a
+            href={task.link_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-1 inline-flex items-center gap-1 rounded-md bg-cyan-600 px-2 py-0.5 text-[11px] font-semibold text-white hover:bg-cyan-700"
+            title={task.link_url}
+          >
+            <ExternalLink className="size-3" aria-hidden />
+            {linkButtonLabel(task.type)}
+          </a>
+        ) : null}
+        {displayNotes ? (
           <div className="mt-1 text-xs text-muted-foreground italic truncate max-w-xl border-l-2 border-border pl-2">
-            {task.notes}
+            {displayNotes}
           </div>
         ) : null}
       </div>
@@ -1713,6 +1730,8 @@ function TaskQuickEditForm({
   );
   const [isDraft, setIsDraft] = React.useState(task.is_draft);
   const [notes, setNotes] = React.useState(task.notes ?? "");
+  const [linkUrl, setLinkUrl] = React.useState(task.link_url ?? "");
+  const showLinkField = task.type !== "test";
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -1743,6 +1762,11 @@ function TaskQuickEditForm({
           notes:
             trimmedNotes !== (task.notes ?? "")
               ? trimmedNotes || null
+              : undefined,
+          // "" → bağlantıyı kaldır; değişmediyse gönderme (backend: undefined = koru)
+          link_url:
+            showLinkField && linkUrl.trim() !== (task.link_url ?? "")
+              ? linkUrl.trim()
               : undefined,
         },
       },
@@ -1842,6 +1866,24 @@ function TaskQuickEditForm({
           </label>
         </div>
       </div>
+      {showLinkField ? (
+        <div className="space-y-1">
+          <label
+            htmlFor={`edit-link-${task.id}`}
+            className="text-[11px] uppercase tracking-wider text-muted-foreground font-medium"
+          >
+            {task.type === "video" ? "Video bağlantısı" : "Bağlantı (opsiyonel)"}
+          </label>
+          <input
+            id={`edit-link-${task.id}`}
+            type="url"
+            value={linkUrl}
+            onChange={(e) => setLinkUrl(e.target.value)}
+            placeholder="https://youtube.com/watch?v=..."
+            className="w-full px-2.5 py-1.5 border border-input bg-background rounded-md text-sm font-mono focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      ) : null}
       <div className="space-y-1">
         <label
           htmlFor={`edit-notes-${task.id}`}

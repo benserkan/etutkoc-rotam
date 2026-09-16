@@ -288,9 +288,16 @@ export interface TeacherTaskItemRow {
   book_name: string;
   book_type: string | null;
   subject_name: string | null;
+  section_id?: number | null;
   section_label: string | null;
+  topic_name?: string | null;
   planned_count: number;
   completed_count: number;
+  // Bölümde kalan kapasite + öğrencinin girdiği D/Y/B (detay sayfası)
+  section_remaining?: number;
+  correct_count?: number | null;
+  wrong_count?: number | null;
+  blank_count?: number | null;
 }
 export interface TeacherTaskRow {
   id: number;
@@ -298,13 +305,20 @@ export interface TeacherTaskRow {
   type: string;
   status: string;
   title: string;
+  scheduled_hour?: string | null;
   period: string | null;
   is_draft: boolean;
+  notes?: string | null;
+  // Video/etkinlik bağlantısı — "Videoyu izle" (2026-09-16)
+  link_url?: string | null;
   items: TeacherTaskItemRow[];
   planned_count: number;
   completed_count: number;
   pct: number;
   solved_count: number | null;
+  has_pending_request?: boolean;
+  work_block_title?: string | null;
+  work_block_unit?: string | null;
 }
 // Kural-tabanlı öneri (AI DEĞİL): koçun geçmiş planları + öğrencinin atanmış
 // kitap/bölümleri + geride kalma + tekrar zorluğundan türetilir. Uydurma yok.
@@ -369,6 +383,9 @@ export interface TaskCreateBody {
   type?: string; // test | video | ozet | tekrar | other
   title: string;
   period?: string | null;
+  notes?: string | null;
+  // Video bağlantısı (video tipinde zorunlu tutulur — öğrenci "Videoyu izle" ile açar)
+  link_url?: string | null;
   items: TaskItemBody[];
 }
 export function getTeacherStudentWeek(id: number, start?: string): Promise<TeacherWeekResponse> {

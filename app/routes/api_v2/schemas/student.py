@@ -95,6 +95,9 @@ class StudentTask(BaseModel):
     date: str                      # "YYYY-MM-DD"
     scheduled_hour: str | None     # "HH:MM" veya None
     period: str | None = None      # "morning"|"noon"|"evening"|None (M6)
+    # Video/etkinlik bağlantısı — öğrenci "Videoyu izle" ile doğrudan açar
+    # (2026-09-16). Kolon > notes içindeki URL.
+    link_url: str | None = None
     items: list[StudentTaskItem]
     planned_count: int             # sum(items.planned)
     completed_count: int           # sum(items.completed)

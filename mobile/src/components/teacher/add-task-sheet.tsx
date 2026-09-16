@@ -53,6 +53,8 @@ export function AddTaskSheet({
   const [actType, setActType] = React.useState("video");
   const [actSubject, setActSubject] = React.useState<SubjectBrief | null>(null);
   const [actTitle, setActTitle] = React.useState("");
+  // Video bağlantısı — öğrenci "Videoyu izle" ile doğrudan açar (video tipinde zorunlu)
+  const [actLink, setActLink] = React.useState("");
 
   // Sheet her açıldığında baştan başla.
   const visRef = React.useRef(visible);
@@ -60,7 +62,7 @@ export function AddTaskSheet({
     visRef.current = visible;
     if (visible) {
       setStep("type"); setBook(null); setSection(null); setCount("");
-      setActType("video"); setActSubject(null); setActTitle("");
+      setActType("video"); setActSubject(null); setActTitle(""); setActLink("");
     }
   }
 
@@ -83,12 +85,16 @@ export function AddTaskSheet({
       items: [{ book_id: book.book_id, section_id: section.section_id, planned_count: n }],
     });
   }
+  const isVideoAct = actType === "video";
+  const activityReady = !!actTitle.trim() && (!isVideoAct || !!actLink.trim());
+
   function submitActivity() {
     const detail = actTitle.trim();
-    if (!detail) return;
+    if (!activityReady) return;
     // #5 — ders seçiliyse "{Ders} · {detay}" (editör/ızgara ders grubuna girer).
     const title = actSubject ? `${actSubject.name} · ${detail}` : detail;
-    onSubmit({ date: date!, type: actType, title, items: [] });
+    const link = actLink.trim();
+    onSubmit({ date: date!, type: actType, title, items: [], link_url: link || undefined });
   }
 
   return (
@@ -272,10 +278,27 @@ export function AddTaskSheet({
               ) : null}
             </View>
 
+            {isVideoAct ? (
+              <View className="gap-1">
+                <Text className="text-xs font-medium text-slate-600">Video bağlantısı</Text>
+                <TextInput
+                  value={actLink}
+                  onChangeText={setActLink}
+                  placeholder="https://youtube.com/watch?v=…"
+                  placeholderTextColor="#94a3b8"
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                  keyboardType="url"
+                  className="rounded-xl border border-slate-300 bg-white px-3 py-2.5 text-base text-slate-900"
+                />
+                <Text className="text-[11px] text-slate-400">Öğrenci programda &quot;Videoyu izle&quot; ile doğrudan açar.</Text>
+              </View>
+            ) : null}
+
             <Pressable
               onPress={submitActivity}
-              disabled={busy || !actTitle.trim()}
-              className={cn("items-center rounded-xl py-3.5", busy || !actTitle.trim() ? "bg-brand-700/40" : "bg-brand-700 active:bg-brand-800")}
+              disabled={busy || !activityReady}
+              className={cn("items-center rounded-xl py-3.5", busy || !activityReady ? "bg-brand-700/40" : "bg-brand-700 active:bg-brand-800")}
             >
               <Text className="text-base font-semibold text-white">{busy ? "Ekleniyor…" : "Programa ekle"}</Text>
             </Pressable>

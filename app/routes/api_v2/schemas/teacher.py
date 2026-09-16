@@ -362,6 +362,9 @@ class TeacherTask(BaseModel):
     order: int
     is_draft: bool
     notes: str | None
+    # Etkin bağlantı: kolon > notes içindeki URL (task_links.effective_link_url).
+    # Video görevinde "Videoyu izle" düğmesi bundan beslenir.
+    link_url: str | None = None
     items: list[TeacherTaskItem]
     planned_count: int              # sum(items.planned_count)
     completed_count: int            # sum(items.completed_count)
@@ -821,6 +824,9 @@ class TaskCreateBody(BaseModel):
     period: str | None = None          # "morning"|"noon"|"evening"|None (M6)
     is_draft: bool | None = None
     notes: str | None = None
+    # Video/etkinlik bağlantısı (2026-09-16). Verilmezse notes içindeki ilk
+    # http(s) URL alınır (eski istemci sözleşmesi — URL notes'a gömülüydü).
+    link_url: str | None = None
     items: list[TaskItemBody]        # ≥1
     # Opsiyonel serbest iş bloğu bağı (Katman 3) — verilirse görev bu bloğa
     # sayılır (blok "dağıtılan" = bağlı görevlerin planlananı).
@@ -1132,6 +1138,8 @@ class TaskPatchBody(BaseModel):
     order: int | None = None
     is_draft: bool | None = None
     notes: str | None = None
+    # None = değişmez · "" = bağlantıyı kaldır · "https://…" = ayarla
+    link_url: str | None = None
 
 
 class TaskItemPatchBody(BaseModel):

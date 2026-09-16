@@ -107,6 +107,7 @@ from app.routes.api_v2.schemas.student import (
     StudentWeekResponse,
 )
 from app.services.analytics import student_snapshot
+from app.services.task_links import effective_link_url
 from app.services.request_service import (
     RequestError,
     create_add_request,
@@ -270,6 +271,7 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
         date=task.date.isoformat(),
         scheduled_hour=sched_hour_str,
         period=task.period,
+        link_url=effective_link_url(task),
         items=items,
         planned_count=planned,
         completed_count=completed,

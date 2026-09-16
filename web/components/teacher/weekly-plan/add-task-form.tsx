@@ -1095,11 +1095,8 @@ function VideoForm({
     const title = trimmedNotes
       ? `${subjectName} · ${trimmedNotes}`
       : `${subjectName} · video`;
-    // Video URL'i notes alanına eklenir (mevcut backend kontrat — kitapsız tip
-    // için ayrı URL alanı yok; URL açıklamayla birlikte saklanır).
-    const fullNotes = trimmedNotes
-      ? `${trimmedNotes}\n${linkUrl.trim()}`
-      : linkUrl.trim();
+    // Video URL'i ayrı alanda gider (link_url, 2026-09-16); notes yalnız
+    // açıklama taşır. Öğrenci/koç yüzeyleri "Videoyu izle" düğmesini bundan kurar.
     create.mutate(
       {
         body: {
@@ -1108,7 +1105,8 @@ function VideoForm({
           title,
           scheduled_hour: scheduledHour,
           period: period,
-          notes: fullNotes,
+          notes: trimmedNotes || null,
+          link_url: linkUrl.trim(),
           items: [],
         },
       },

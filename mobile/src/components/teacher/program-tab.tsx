@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ActivityIndicator, Pressable, Text, View } from "react-native";
 
 import { AddTaskSheet } from "@/components/teacher/add-task-sheet";
+import { TaskDetailSheet } from "@/components/teacher/task-detail-sheet";
 import { TeacherWeekView } from "@/components/teacher/week-view";
 import { DemoHint } from "@/components/demos/demo-hint";
 import {
@@ -17,12 +18,15 @@ import {
   teacherMiscKeys,
   type TaskCreateBody,
   type TeacherSuggestionInline,
+  type TeacherTaskRow,
 } from "@/lib/teacher";
 
 export function ProgramTab({ studentId }: { studentId: number }) {
   const qc = useQueryClient();
   const [start, setStart] = React.useState<string | undefined>(undefined);
   const [addDate, setAddDate] = React.useState<string | null>(null);
+  // Satıra dokununca görev detayı (salt-okuma + sil + video linki)
+  const [openTask, setOpenTask] = React.useState<TeacherTaskRow | null>(null);
 
   const weekQ = useQuery({
     queryKey: teacherMiscKeys.week(studentId, start),
@@ -109,6 +113,7 @@ export function ProgramTab({ studentId }: { studentId: number }) {
         onThisWeek={() => setStart(undefined)}
         onAddTask={(date) => setAddDate(date)}
         onDeleteTask={(id) => delMut.mutate(id)}
+        onOpenTask={setOpenTask}
         sugg={{
           onAccept: (date, s) => acceptMut.mutate({ date, s }),
           onReject: (date, s) => rejectMut.mutate({ date, s }),
@@ -127,6 +132,14 @@ export function ProgramTab({ studentId }: { studentId: number }) {
         busy={addMut.isPending}
         onClose={() => setAddDate(null)}
         onSubmit={(body) => addMut.mutate(body)}
+      />
+      <TaskDetailSheet
+        task={openTask}
+        onClose={() => setOpenTask(null)}
+        onDelete={(id) => {
+          setOpenTask(null);
+          delMut.mutate(id);
+        }}
       />
     </View>
   );

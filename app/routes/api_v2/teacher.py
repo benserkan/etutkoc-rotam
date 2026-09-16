@@ -340,7 +340,8 @@ from app.services.risk_analysis import (
     filter_at_risk,
     get_active_mutes,
 )
-from app.services import task_picker, task_quantity, topic_board, topic_closure
+from app.services import task_picker, task_quantity, task_titles, topic_board, topic_closure
+from app.services.task_links import effective_link_url, extract_url, normalize_link
 from app.services.task_service import (
     ReservationError,
     release_item,
@@ -3502,6 +3503,7 @@ def _build_teacher_task(db: Session, task: Task) -> TeacherTask:
         order=task.order,
         is_draft=bool(task.is_draft),
         notes=task.notes,
+        link_url=effective_link_url(task),
         items=items_out,
         planned_count=planned,
         completed_count=completed,
@@ -3723,11 +3725,36 @@ def _compose_single_item_title(book: Book, section: BookSection, planned_count: 
     """Tek kitap-kalemli görev başlığı — 'Kitap — Bölüm: N test/deneme'.
 
     Hem oluşturma (_create_task_with_items) hem tek-kalem düzenleme paylaşır →
-    yeni görev de düzenlenmiş görevle aynı okunur başlığı taşır (placeholder yok)."""
-    unit_word = "deneme" if book.type and book.type.value in (
-        "brans_denemesi", "genel_deneme",
-    ) else "test"
-    return f"{book.name} — {section.label}: {planned_count} {unit_word}"
+    yeni görev de düzenlenmiş görevle aynı okunur başlığı taşır (placeholder yok).
+    Biçim TEK MERKEZDE: app.services.task_titles."""
+    return task_titles.compose_single(book, section, planned_count)
+
+
+def _compose_items_title(db: Session, items: list) -> str | None:
+    """Kalem gövdelerinden (TaskItemBody) başlık üret — haftaya yay sıradaki
+    bölüme geçince kaynak başlığı ("Vektörler: 4 test") kopyalanmasın diye.
+    Kitaplı kalem yoksa None."""
+    entries = []
+    for it in items:
+        if it.book_id is None or it.section_id is None:
+            continue
+        book = db.get(Book, it.book_id)
+        section = db.get(BookSection, it.section_id)
+        if book is None or section is None:
+            continue
+        entries.append((book, section, it.planned_count))
+    return task_titles.compose_entries(entries)
+
+
+def _invalid_link_http() -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+        detail={
+            "error": "validation",
+            "code": "invalid_link_url",
+            "message": "Bağlantı http:// veya https:// ile başlamalı.",
+        },
+    )
 
 
 def _ensure_topic_accessible(db: Session, topic_id: int | None, student: User) -> None:
@@ -3835,6 +3862,14 @@ def _create_task_with_items(
     else:
         is_draft_value = bool(raw_is_draft)
     published_at = None if is_draft_value else datetime.now(timezone.utc)
+    # Video/etkinlik bağlantısı: açık alan > notes içindeki URL (eski web
+    # formu URL'i notes'a gömüyordu — o kayıtlar da link kazanır).
+    try:
+        link_url = normalize_link(getattr(payload, "link_url", None))
+    except ValueError:
+        raise _invalid_link_http()
+    if link_url is None:
+        link_url = extract_url(getattr(payload, "notes", None))
     task = Task(
         student_id=student.id,
         date=d,
@@ -3847,6 +3882,7 @@ def _create_task_with_items(
         is_draft=is_draft_value,
         published_at=published_at,
         notes=(payload.notes or None),
+        link_url=link_url,
         work_block_id=work_block_id,
     )
     db.add(task)
@@ -5053,7 +5089,16 @@ def teacher_patch_task_v2(
     if body.is_draft is not None:
         task.is_draft = bool(body.is_draft)
     if body.notes is not None:
+        # Eski kayıt: URL yalnız notes'taysa koç notu düzenlerken link
+        # kaybolmasın — önce kolona taşı.
+        if not task.link_url:
+            task.link_url = extract_url(task.notes)
         task.notes = body.notes.strip() or None
+    if body.link_url is not None:
+        try:
+            task.link_url = normalize_link(body.link_url)
+        except ValueError:
+            raise _invalid_link_http()
 
     db.flush()
     db.commit()
@@ -5235,13 +5280,31 @@ def teacher_spread_task_v2(
                 exhausted_from = ds
             continue
 
+        # Başlık: kalemler kaynaktan SAPTIYSA (bölüm bitti → sıradaki bölüm,
+        # ya da kısmi tahsis) kaynak başlığını kopyalama — kalemlerden üret.
+        # Aksi hâlde "Vektörler: 4 test" yazan görevin içinde Tork ve Denge
+        # testleri durur (Taha #84, 2026-09). Birebir aynıysa koçun başlığı
+        # (elle yazılmış olabilir) korunur.
+        src_sig = [
+            (it.book_id, it.book_section_id, it.planned_count or 0)
+            for it in src_items if it.book_id is not None
+        ]
+        new_sig = [
+            (it.book_id, it.section_id, it.planned_count)
+            for it in items if it.book_id is not None
+        ]
+        copy_title = task.title
+        if has_book_items and new_sig != src_sig:
+            copy_title = _compose_items_title(db, items) or task.title
+
         payload = TaskCreateBody(
             date=ds,
             type=task.type.value,
-            title=task.title,
+            title=copy_title,
             period=(body.period or None) if body.period is not None else task.period,
             is_draft=True,
             notes=task.notes,
+            link_url=task.link_url,
             items=items,
             work_block_id=task.work_block_id,
         )
@@ -5367,6 +5430,10 @@ def teacher_add_task_item_v2(
         planned_count=body.planned_count,
         completed_count=0,
     ))
+    db.flush()
+    db.refresh(task)
+    # Görev çok kalemli oldu → otomatik başlık artık tüm bölümleri saysın.
+    task_titles.refresh_auto_title(task)
     db.commit()
     db.refresh(task)
     return MutationResponse[TeacherTask](
@@ -5571,6 +5638,10 @@ def teacher_patch_task_item_v2(
         raise _reservation_to_http(e)
 
     item.planned_count = body.planned_count
+    # Otomatik başlık ("Bölüm: N test") sayıyı taşır → tazele; koçun elle
+    # yazdığı başlığa dokunulmaz (task_titles.refresh_auto_title).
+    db.flush()
+    task_titles.refresh_auto_title(task)
     db.commit()
     db.refresh(task)
     return MutationResponse[TeacherTask](
@@ -5713,7 +5784,13 @@ def teacher_patch_task_single_item_v2(
     task.scheduled_hour = new_sched
     task.period = body.period if body.period in ("morning", "noon", "evening") else None
     task.notes = (body.notes or "").strip() or None
-    task.link_url = (body.link_url or "").strip() or None
+    # Bağlantı yalnız açıkça gönderildiyse değişir (None = koru; eski sürüm
+    # her düzenlemede sessizce siliyordu).
+    if body.link_url is not None:
+        try:
+            task.link_url = normalize_link(body.link_url)
+        except ValueError:
+            raise _invalid_link_http()
 
     # Başlığı otomatik üret (oluşturma ile paylaşılan helper — book.type'a göre
     # "test" / "deneme")

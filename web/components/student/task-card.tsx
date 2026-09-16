@@ -16,7 +16,9 @@ import {
   SlidersHorizontal,
   Trash2,
   MessageCircle,
+  ExternalLink,
 } from "lucide-react";
+import { linkButtonLabel } from "@/lib/task-links";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -100,6 +102,18 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
               {task.title || "—"}
             </h3>
             <TypeBadge type={task.type} />
+            {task.link_url ? (
+              <a
+                href={task.link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-full bg-cyan-600 px-2.5 py-0.5 text-[11px] font-semibold text-white hover:bg-cyan-700"
+                title={task.link_url}
+              >
+                <ExternalLink className="size-3" aria-hidden="true" />
+                {linkButtonLabel(task.type)}
+              </a>
+            ) : null}
             {task.scheduled_hour ? (
               <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="size-3" aria-hidden="true" />
@@ -514,7 +528,7 @@ function TypeBadge({ type }: { type: StudentTask["type"] }) {
 
 const TASK_TYPE_LABEL: Record<StudentTask["type"], string> = {
   test: "Test",
-  video: "Video",
+  video: "Video dersi",
   ozet: "Özet",
   tekrar: "Tekrar",
   other: "Diğer",

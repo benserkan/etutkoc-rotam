@@ -7,6 +7,7 @@ import { DayNoteCard } from "@/components/student/day-note-card";
 import { NextAppointmentBanner } from "@/components/student/next-appointment-banner";
 import { DemoHint } from "@/components/demos/demo-hint";
 import type { StudentDayResponse, StudentTask } from "@/lib/student";
+import { activityLabel, linkButtonLabel, openTaskLink, taskLabel as displayLabel } from "@/lib/task-display";
 import { QuickAccessStrip } from "@/components/quick-access-strip";
 
 const TR_DAYS = ["Pazar", "Pazartesi", "Salı", "Çarşamba", "Perşembe", "Cuma", "Cumartesi"];
@@ -40,14 +41,10 @@ function taskUnit(t: StudentTask): string {
 function isActivity(t: StudentTask): boolean {
   return t.planned_count <= 0 && t.items.every((it) => (it.planned ?? 0) <= 0);
 }
+// Çok kalemli görevde tüm bölümler yazılır ("Kitap · Bölüm A 3 · Bölüm B 1") —
+// yalnız ilk bölüm "Vektörler" deyip içinde Tork testi taşımasın (Taha sahası).
 function taskLabel(t: StudentTask): string {
-  const first = t.items.find((it) => it.book_id != null) ?? t.items[0];
-  if (first?.book_id) {
-    return first.book_name + (first.section_label ? ` · ${first.section_label}` : "");
-  }
-  const sep = t.title.indexOf(" · ");
-  if (sep > 0 && sep < t.title.length - 3) return t.title.substring(sep + 3);
-  return t.title || "Görev";
+  return displayLabel(t.items, t.title);
 }
 function subjectOf(t: StudentTask): string | null {
   const it = t.items.find((x) => x.subject_id != null);
@@ -195,11 +192,23 @@ export function TodayView({
                     <Text className="mt-0.5 text-xs text-slate-500">
                       {isActivity(t)
                         ? (t.solved_count ?? 0) > 0
-                          ? `Etkinlik · ${t.solved_count} soru`
-                          : "Etkinlik"
+                          ? `${activityLabel(t.type)} · ${t.solved_count} soru`
+                          : activityLabel(t.type)
                         : `${t.completed_count}/${t.planned_count} ${taskUnit(t)}`}
                     </Text>
                   </View>
+                  {/* Video/bağlantı: karta değil doğrudan linke gider (YouTube vb.) */}
+                  {t.link_url && !blocked ? (
+                    <Pressable
+                      onPress={() => void openTaskLink(t.link_url!)}
+                      hitSlop={6}
+                      accessibilityLabel={linkButtonLabel(t.type)}
+                      className="flex-row items-center gap-1 rounded-full bg-brand-700 px-2.5 py-1.5 active:bg-brand-800"
+                    >
+                      <Ionicons name="play" size={12} color="#fff" />
+                      <Text className="text-[11px] font-semibold text-white">{linkButtonLabel(t.type)}</Text>
+                    </Pressable>
+                  ) : null}
                   {!blocked ? (
                     <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
                   ) : null}

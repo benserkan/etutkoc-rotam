@@ -50,6 +50,8 @@ export interface StudentTask {
   date: string;                    // "YYYY-MM-DD"
   scheduled_hour: string | null;   // "HH:MM" veya null
   period: TaskPeriod | null;       // M6 — opsiyonel periyot
+  // Video/etkinlik bağlantısı — "Videoyu izle" (2026-09-16)
+  link_url?: string | null;
   items: StudentTaskItem[];
   planned_count: number;
   completed_count: number;

@@ -9,7 +9,45 @@ import {
   View,
 } from "react-native";
 
+import { Ionicons } from "@expo/vector-icons";
+
 import type { CanRequestMatrix, StudentTask } from "@/lib/student";
+import { activityLabel, linkButtonLabel, openTaskLink, taskLabel as displayLabel } from "@/lib/task-display";
+
+const DENEME_TYPES = new Set(["brans_denemesi", "genel_deneme"]);
+
+function DetailRow({ label, value }: { label: string; value: string }) {
+  return (
+    <View className="flex-row gap-2">
+      <Text className="w-20 text-xs text-slate-400">{label}</Text>
+      <Text className="flex-1 text-[13px] text-slate-800">{value}</Text>
+    </View>
+  );
+}
+
+/** Görev detayı — kaynak kitap · bölüm · müfredat konusu · planlanan sayı
+ * (öğrenci "merak ettiği göreve tıklayıp ne olduğunu görsün"). */
+function TaskDetails({ task }: { task: StudentTask }) {
+  const bookItems = task.items.filter((it) => it.book_id != null);
+  if (bookItems.length === 0) return null;
+  return (
+    <View className="gap-2 rounded-xl bg-slate-50 p-3">
+      {bookItems.map((it) => {
+        const unit = it.book_type && DENEME_TYPES.has(it.book_type) ? "deneme" : "test";
+        return (
+          <View key={it.id} className="gap-0.5">
+            <DetailRow label="Kaynak" value={it.book_name} />
+            {it.section_label ? <DetailRow label="Bölüm" value={it.section_label} /> : null}
+            {it.topic_name && it.topic_name !== it.section_label ? (
+              <DetailRow label="Konu" value={it.topic_name} />
+            ) : null}
+            <DetailRow label="Planlanan" value={`${it.planned} ${unit}`} />
+          </View>
+        );
+      })}
+    </View>
+  );
+}
 
 export type RequestKind = "question" | "change" | "remove";
 export interface RequestPayload {
@@ -155,11 +193,9 @@ export function TaskSheetContent({
   const isDone = task.status === "completed";
 
   const subject = task.items.find((i) => i.subject_id != null)?.subject_name ?? null;
-  const bookItem = task.items.find((it) => it.book_id != null);
-  const title = bookItem
-    ? bookItem.book_name + (bookItem.section_label ? ` · ${bookItem.section_label}` : "")
-    : (task.title.includes(" · ") ? task.title.split(" · ").slice(1).join(" · ") : task.title) ||
-      "Görev";
+  // Çok kalemli görevde tüm bölümler başlıkta (yalnız ilk bölüm yanıltır)
+  const title = displayLabel(task.items, task.title);
+  const isVideo = task.type === "video";
 
   function setRow(itemId: number, patch: Partial<Row>) {
     setRows((rs) => rs.map((r) => (r.itemId === itemId ? { ...r, ...patch } : r)));
@@ -198,13 +234,34 @@ export function TaskSheetContent({
         {subject ? (
           <Text className="text-[11px] font-bold uppercase tracking-wide text-brand-700">{subject}</Text>
         ) : null}
-        <Text className="text-lg font-bold text-slate-900">{title}</Text>
+        <View className="flex-row flex-wrap items-center gap-2">
+          <Text className="text-lg font-bold text-slate-900">{title}</Text>
+          {task.type !== "test" ? (
+            <View className="rounded-full bg-violet-600 px-2 py-0.5">
+              <Text className="text-[10px] font-semibold text-white">{activityLabel(task.type)}</Text>
+            </View>
+          ) : null}
+        </View>
       </View>
+
+      {task.link_url ? (
+        <Pressable
+          onPress={() => void openTaskLink(task.link_url!)}
+          className="flex-row items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 active:bg-brand-800"
+        >
+          <Ionicons name={isVideo ? "play-circle" : "open-outline"} size={18} color="#fff" />
+          <Text className="text-[15px] font-semibold text-white">{linkButtonLabel(task.type)}</Text>
+        </Pressable>
+      ) : null}
+
+      <TaskDetails task={task} />
 
       {isActivity ? (
         <View className="gap-3">
           <Text className="text-sm text-slate-600">
-            Bu etkinliği tamamladın mı? İstersen çözdüğün soru sayısını da gir.
+            {isVideo
+              ? "Videoyu izledin mi? İzlediysen işaretle; çözdüğün soru varsa sayısını da gir."
+              : "Bu etkinliği tamamladın mı? İstersen çözdüğün soru sayısını da gir."}
           </Text>
           <NumField label="Çözdüğün soru (varsa)" value={solved} onChangeText={setSolved} />
           {isDone ? (
