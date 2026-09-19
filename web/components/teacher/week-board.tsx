@@ -262,6 +262,8 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
         openBooks={openBooks}
         setOpenBooks={setOpenBooks}
         onOpenBookGrid={setGridBookId}
+        studentId={studentId}
+        dayDate={openDate ?? data.days[0]?.date ?? ""}
       />
     ),
   };

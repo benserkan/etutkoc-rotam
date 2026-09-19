@@ -30,6 +30,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import re
 import secrets
 from datetime import date, timedelta
 
@@ -149,6 +150,7 @@ def seed() -> dict:
             "coach": coach.id, "student": st.id, "subject": subj.id,
             "book": book.id, "exam": ex.id, "t_free": t_free.id,
             "email": f"{PFX}_t@test.invalid",
+            "subject_name": subj.name, "book_name": book.name,
         }
 
 
@@ -272,16 +274,75 @@ def main() -> int:
                 caution is not None,
             )
 
-            # ---- 7. +3 test
+            # ---- 7. +3 test (varsayılan adet P3'ten: koçun alışkanlığı yok → 3)
             before = _tasks(ids["student"])
-            plus = page.query_selector('button:has-text("+3 test")')
+            plus = page.query_selector('[data-section="week:curriculum"] button:has-text("+3 test")')
             check("7a. '+3 test' düğmesi var", plus is not None)
+            def _kalan() -> int | None:
+                # Açık konu detayındaki "Kalan / N test" satırı (dt/dd ayrı satır)
+                m = re.search(r"Kalan\s+(\d+) test",
+                              page.query_selector('[data-section="week:curriculum"]').inner_text())
+                return int(m.group(1)) if m else None
+            kalan_before = _kalan()   # seed: 12 test − 6 çözülmüş = 6
             if plus:
                 plus.click()
                 page.wait_for_timeout(2500)
                 check("7b. '+3 test' → görev oluştu",
                       _tasks(ids["student"]) == before + 1,
                       f"{before} → {_tasks(ids['student'])}")
+                # SAHA (2026-09-19): sayfa YENİLENMEDEN kalan azalmalı
+                # (görev mutation'ı topic-board'u bayatlatır).
+                check("7c. panel sayfa yenilenmeden güncellendi (kalan 3 azaldı)",
+                      kalan_before is not None and _kalan() == kalan_before - 3,
+                      f"{kalan_before} → {_kalan()}")
+            # ---- 7d. adet değiştirilebilir: stepper +1 → düğme "+4 test"
+            inc = page.query_selector('[data-section="week:curriculum"] button[aria-label="Bir artır"]')
+            check("7d. adet seçici (−/+) konu detayında", inc is not None)
+            if inc:
+                inc.click()
+                page.wait_for_timeout(300)
+                check("7e. +1 → kaynak düğmesi '+4 test' olur (3 tık korunur)",
+                      page.query_selector('[data-section="week:curriculum"] button:has-text("+4 test")') is not None)
+                page.query_selector('[data-section="week:curriculum"] button[aria-label="Bir azalt"]').click()
+                page.wait_for_timeout(200)
+
+            # ---- 10. Kaynak Durumu: ünite satırından "+N" ile görev + anlık ⏳
+            res = page.query_selector('[data-section="week:resources"]')
+            if res is None:
+                rb = page.query_selector('[data-rail="week:resources"]')
+                if rb:
+                    rb.click()
+                    page.wait_for_timeout(800)
+                    res = page.query_selector('[data-section="week:resources"]')
+            check("10a. Kaynak Durumu paneli", res is not None)
+            if res is not None:
+                subj_btn = page.query_selector(
+                    f'[data-section="week:resources"] button:has-text("{ids["subject_name"]}")')
+                if subj_btn:
+                    subj_btn.click()
+                    page.wait_for_timeout(900)
+                book_btn = page.query_selector(
+                    f'[data-section="week:resources"] button:has-text("{ids["book_name"]}")')
+                if book_btn:
+                    book_btn.click()
+                    page.wait_for_timeout(600)
+                row_btn = page.query_selector(
+                    '[data-section="week:resources"] button[title*="Yaş Bölümü"]')
+                check("10b. ünite satırında '+N' görev düğmesi", row_btn is not None)
+                res_txt = page.query_selector('[data-section="week:resources"]').inner_text()
+                check("10c. satırda rezerv ⏳3 (board'dan yazılan görev anında yansıdı)",
+                      "⏳3" in res_txt, res_txt[:200].replace("\n", " | "))
+                if row_btn:
+                    before10 = _tasks(ids["student"])
+                    row_btn.click()
+                    page.wait_for_timeout(2500)
+                    check("10d. '+3' → görev oluştu", _tasks(ids["student"]) == before10 + 1)
+                    res_txt = page.query_selector('[data-section="week:resources"]').inner_text()
+                    check("10e. Kaynak Durumu sayfa yenilenmeden güncellendi (⏳6)",
+                          "⏳6" in res_txt, res_txt[:200].replace("\n", " | "))
+                    check("10f. Müfredat panosu da aynı anda güncellendi (kalan 3 daha azaldı)",
+                          kalan_before is not None and _kalan() == kalan_before - 6,
+                          f"{kalan_before} → {_kalan()}")
 
             # ---- 8. Kaynaksız konu
             free = page.query_selector('[data-section="week:curriculum"] button:has-text("Kaynaksız Konu")')
@@ -293,7 +354,8 @@ def main() -> int:
                 before = _tasks(ids["student"])
                 # DİKKAT: 'Kaynaksız Konu' satır butonu da "Kaynaksız" içerir;
                 # has-text ilkini yakalayıp detayı kapatıyordu. Tam eşleşme şart.
-                btn = page.query_selector('button:text-is("Kaynaksız ver")')
+                # 2026-09-19: etiket "Kaynaksız ver (N)" — adet değişken; title ile seç
+                btn = page.query_selector('button[title^="Kitapsız, konuya bağlı"]')
                 if btn:
                     btn.click()
                     page.wait_for_timeout(2500)

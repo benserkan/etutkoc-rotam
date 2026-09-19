@@ -30,7 +30,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { getTopicBoard, teacherKeys } from "@/lib/api/teacher";
+import { getTaskQuantity, getTopicBoard, teacherKeys } from "@/lib/api/teacher";
+import { QtyStepper } from "./qty-stepper";
 import {
   useCloseTopic,
   useCreateTask,
@@ -105,6 +106,29 @@ export function CurriculumBoard({
     (subjectId === ""
       ? subjects[0]
       : subjects.find((s) => s.subject_id === subjectId)) ?? subjects[0];
+
+  // GÖREV ADEDİ (2026-09-19): sabit "+3" yerine koçun bu dersteki alışkanlığı
+  // (P3 task-quantity) varsayılan; koç isterse −/+ ile değiştirir. Ders
+  // değişince öğrenilmiş varsayılana döner (override derse bağlı tutulur).
+  const activeSubjectId = active?.subject_id ?? null;
+  const qtyQ = useQuery({
+    queryKey: teacherKeys.taskQuantity(studentId, activeSubjectId),
+    queryFn: () => getTaskQuantity(studentId, activeSubjectId),
+    enabled: activeSubjectId !== null,
+    staleTime: 5 * 60_000,
+  });
+  const [qtyOverride, setQtyOverride] = React.useState<{
+    subjectId: number | null;
+    value: number;
+  } | null>(null);
+  const count =
+    qtyOverride && qtyOverride.subjectId === activeSubjectId
+      ? qtyOverride.value
+      : (qtyQ.data?.quantity ?? 3);
+  const qtyHint =
+    qtyOverride && qtyOverride.subjectId === activeSubjectId
+      ? null
+      : (qtyQ.data?.reason ?? null);
 
   /**
    * Görev yaz. `src` verilmezse kaynaksız (konuya bağlı, kitapsız) kalem.
@@ -297,6 +321,16 @@ export function CurriculumBoard({
                           ) : null}
                         </dl>
 
+                        {t.closed ? null : (
+                          <QtyStepper
+                            value={count}
+                            onChange={(v) =>
+                              setQtyOverride({ subjectId: activeSubjectId, value: v })
+                            }
+                            hint={qtyHint}
+                          />
+                        )}
+
                         {/* KAYNAK SEÇİMİ (2026-09-09): "+3 test" hangi kitaba
                             yazıyor sorusunun cevabı. Her kaynak kendi satırında,
                             kendi butonuyla — koç görerek seçer, tık sayısı aynı
@@ -353,14 +387,14 @@ export function CurriculumBoard({
                                     variant="outline"
                                     className="h-7 shrink-0 px-2 text-[11px]"
                                     disabled={create.isPending}
-                                    onClick={() => assign(t, 3, s)}
+                                    onClick={() => assign(t, count, s)}
                                     title={
                                       s.full
-                                        ? `${s.book_name} — kapasite dolu, yine de 3 test yaz (uyarı verilir)`
-                                        : `${s.book_name} — bu kaynaktan 3 test yaz`
+                                        ? `${s.book_name} — kapasite dolu, yine de ${count} test yaz (uyarı verilir)`
+                                        : `${s.book_name} — bu kaynaktan ${count} test yaz`
                                     }
                                   >
-                                    +3 test
+                                    +{count} test
                                   </Button>
                                 </li>
                               ))}
@@ -393,10 +427,11 @@ export function CurriculumBoard({
                                 variant="outline"
                                 className="h-7 px-2 text-[11px]"
                                 disabled={create.isPending}
-                                onClick={() => assign(t, 3, null)}
+                                onClick={() => assign(t, count, null)}
+                                title={`Kitapsız, konuya bağlı ${count} test`}
                               >
                                 <Zap className="mr-1 h-3 w-3" />
-                                Kaynaksız ver
+                                Kaynaksız ver ({count})
                               </Button>
                               <Button
                                 size="sm"

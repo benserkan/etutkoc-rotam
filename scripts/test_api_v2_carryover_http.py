@@ -119,6 +119,11 @@ def main() -> int:
         )
         check("6. carry 200 + created=1", r.status_code == 200
               and r.json().get("data", {}).get("created_tasks") == 1, r.text[:160])
+        inv6 = (r.json().get("invalidate") or []) if r.status_code == 200 else []
+        need6 = ["sidebar", "topic-board", "section-stats", "books", "week"]
+        miss6 = [k for k in need6 if not any(x.endswith(f":{k}") for x in inv6)]
+        check("6b. devret yanıtı kapasite yüzeylerini bayatlatır (sidebar/topic-board/…)",
+              not miss6, f"eksik={miss6}")
         with SessionLocal() as db:
             src = db.get(Task, ids["t_video"])
             check("7. kaynak video carried_at işaretlendi (kayıt durur)", src.carried_at is not None)

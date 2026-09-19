@@ -344,6 +344,12 @@ def _invalidate_assignments(
 ) -> list[str]:
     keys = _invalidate_book(teacher_id, book_id)
     for sid in student_ids:
+        # Kitap ata/kaldır öğrencinin TÜM kapasite yüzeylerini değiştirir
+        # (Kaynak Durumu, Müfredat panosu, sıradaki üniteler, kalan sayaçları).
+        # Öğrenci önekinin tamamı bayatlatılır — prefix eşleşmesi hepsini kapsar
+        # (saha 2026-09-19: kütüphaneden atanan Eyüp B kitabı hafta panelinin
+        # Müfredat'ında sayfa yenilenmeden görünmüyordu).
+        keys.append(f"teacher:{teacher_id}:students:{sid}")
         keys.append(f"teacher:{teacher_id}:students:{sid}:books")
     return keys
 

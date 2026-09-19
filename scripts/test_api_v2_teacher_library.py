@@ -390,6 +390,12 @@ def main() -> int:
         )
         check("12. PATCH /assignments mevcut korundu",
               ok, f"status={r.status_code} assigned={data.get('assigned_count')} removed={data.get('removed_count')}")
+        # 2026-09-19: kitap ata/kaldır → öğrencinin TÜM kapasite yüzeyleri bayatlar
+        # (Kaynak Durumu / Müfredat panosu / sıradaki üniteler) — öğrenci öneki.
+        from app.routes.api_v2.library import _invalidate_assignments as _ia
+        _keys = _ia(seed["teacher_id"], book_a_id, [seed["student_id"]])
+        check("12b. atama invalidate listesi öğrenci önekini taşır (panel/sidebar yenilenir)",
+              f"teacher:{seed['teacher_id']}:students:{seed['student_id']}" in _keys, str(_keys))
         # Şimdi boş liste gönder → rezerv var, silinemez, skipped'a düşer
         r2 = client.patch(
             f"/api/v2/teacher/library/books/{book_a_id}/assignments",

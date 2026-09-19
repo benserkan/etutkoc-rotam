@@ -886,6 +886,14 @@ export interface BoardSubjectOption {
   has_source: boolean;
 }
 
+/** GET /teacher/students/{id}/task-quantity — koçun bu derste tipik verdiği adet (P3). */
+export interface TaskQuantityResponse {
+  quantity: number;
+  source: "student" | "coach" | "default" | string;
+  sample_size: number;
+  reason: string;
+}
+
 export interface TopicBoardResponse {
   subjects: BoardSubjectItem[];
   subject_options: BoardSubjectOption[];

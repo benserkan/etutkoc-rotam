@@ -473,7 +473,7 @@ def main() -> int:
         inv = created.get("invalidate", []) or []
         sid_s = str(seed["student_id"])
         need = ["section-stats", "book-sections", "book-grid", "next-units",
-                "curriculum", "books"]
+                "curriculum", "books", "sidebar", "topic-board"]
         missing = [
             k for k in need
             if not any(x.endswith(f":students:{sid_s}:{k}") for x in inv)

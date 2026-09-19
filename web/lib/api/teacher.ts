@@ -32,6 +32,7 @@ import type {
   SectionOptionsResponse,
   TaskPickerResponse,
   TopicBoardResponse,
+  TaskQuantityResponse,
   SectionStatsResponse,
   SidebarResponse,
   SubjectListResponse,
@@ -144,6 +145,11 @@ export const teacherKeys = {
     [
       "teacher", "me", "students", String(id), "topic-board",
       subjectId === "" ? "" : String(subjectId),
+    ] as const,
+  taskQuantity: (id: number, subjectId: number | null) =>
+    [
+      "teacher", "me", "students", String(id), "task-quantity",
+      subjectId === null ? "" : String(subjectId),
     ] as const,
   studentBooksBySubject: (id: number, subjectId: number | null) =>
     [
@@ -613,6 +619,19 @@ export function getTaskPicker(
   const qs = buildQuery({ q: q.trim() });
   return api<TaskPickerResponse>(
     `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/task-picker${qs}`,
+  );
+}
+
+/** P3 öğrenilmiş görev adedi — "+N test" butonlarının varsayılanı. */
+export function getTaskQuantity(
+  studentId: number,
+  subjectId: number | null,
+): Promise<TaskQuantityResponse> {
+  const qs = buildQuery({
+    subject_id: subjectId !== null ? String(subjectId) : "",
+  });
+  return api<TaskQuantityResponse>(
+    `/api/v2/teacher/students/${encodeURIComponent(String(studentId))}/task-quantity${qs}`,
   );
 }
 

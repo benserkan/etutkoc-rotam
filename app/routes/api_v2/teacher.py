@@ -3572,6 +3572,28 @@ def _load_day_tasks_for_student(
     return tasks
 
 
+def _capacity_invalidate(teacher_id: int, sid: int) -> list[str]:
+    """KAPASİTE YÜZEYLERİ — rezervi/atamayı değiştiren HER mutation bunları
+    bayatlatır (görev ekle/sil/düzenle/yay/devret + kitap ata/kaldır/arşivle).
+    Bir yüzey listede yoksa koç yanlış "kalan" görür (2026-09-03) ya da panel
+    sayfa yenilenene kadar eski sayıyı gösterir (2026-09-19: müfredat panosu
+    "+3 test" sonrası, Kaynak Durumu devret sonrası güncellenmiyordu).
+      section-stats · book-sections · book-grid · next-units · curriculum ·
+      books · sidebar (Kaynak Durumu) · topic-board (Müfredat panosu)
+    """
+    base = f"teacher:{teacher_id}:students:{sid}"
+    return [
+        f"{base}:section-stats",
+        f"{base}:book-sections",
+        f"{base}:book-grid",
+        f"{base}:next-units",
+        f"{base}:curriculum",
+        f"{base}:books",
+        f"{base}:sidebar",
+        f"{base}:topic-board",
+    ]
+
+
 def _invalidate_for_task(task: Task, teacher_id: int) -> list[str]:
     """Mutation invalidate listesi — hem öğretmen hem öğrenci tarafını günceller."""
     date_iso = task.date.isoformat()
@@ -3594,12 +3616,7 @@ def _invalidate_for_task(task: Task, teacher_id: int) -> list[str]:
         #   next-units     → "Sıradaki üniteler" paneli (kalan kapasite)
         #   curriculum     → müfredat paneli (işlenen/rezerv)
         #   books          → öğrenci kitapları paneli (bölüm ilerlemesi)
-        f"teacher:{teacher_id}:students:{sid}:section-stats",
-        f"teacher:{teacher_id}:students:{sid}:book-sections",
-        f"teacher:{teacher_id}:students:{sid}:book-grid",
-        f"teacher:{teacher_id}:students:{sid}:next-units",
-        f"teacher:{teacher_id}:students:{sid}:curriculum",
-        f"teacher:{teacher_id}:students:{sid}:books",
+        *_capacity_invalidate(teacher_id, sid),
         # Kaynak Durumu sidebar'ı: kitap/section rezerv sayıları değiştiyse
         # yenilensin (görev ekle/sil/düzenle hepsinde geçerli)
         f"teacher:{teacher_id}:dashboard",
@@ -4825,6 +4842,11 @@ def teacher_carryover_v2(
         invalidate=[
             f"teacher:{user.id}:students:{student.id}:week",
             f"teacher:{user.id}:students:{student.id}:day",
+            f"teacher:{user.id}:students:{student.id}:summary",
+            f"teacher:{user.id}:students:{student.id}:work-blocks",
+            # Devret rezerv YENİDEN kurar → Kaynak Durumu / Müfredat / kalan
+            # sayaçları yenilenmeli (saha 2026-09-19: Sıvılar/Gazlar eski kaldı)
+            *_capacity_invalidate(user.id, student.id),
         ],
     )
 
