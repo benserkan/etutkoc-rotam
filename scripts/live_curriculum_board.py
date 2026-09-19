@@ -274,10 +274,14 @@ def main() -> int:
                 caution is not None,
             )
 
-            # ---- 7. +3 test (varsayılan adet P3'ten: koçun alışkanlığı yok → 3)
+            # ---- 7. "test ver" → satır altında "Kaç test?" şeridi → çip (varsayılan
+            #         P3'ten: koçun alışkanlığı yok → 3 vurgulu)
             before = _tasks(ids["student"])
-            plus = page.query_selector('[data-section="week:curriculum"] button:has-text("+3 test")')
-            check("7a. '+3 test' düğmesi var", plus is not None)
+            plus = page.query_selector('[data-section="week:curriculum"] button:has-text("test ver")')
+            check("7a. kaynak satırında 'test ver' düğmesi var", plus is not None)
+            def _pick(n: int) -> None:
+                page.wait_for_selector('[data-testid="assign-count-chooser"]', timeout=3000)
+                page.click(f'[data-testid="assign-count-chooser"] button:text-is("{n}")')
             def _kalan() -> int | None:
                 # Açık konu detayındaki "Kalan / N test" satırı (dt/dd ayrı satır)
                 m = re.search(r"Kalan\s+(\d+) test",
@@ -286,8 +290,15 @@ def main() -> int:
             kalan_before = _kalan()   # seed: 12 test − 6 çözülmüş = 6
             if plus:
                 plus.click()
+                page.wait_for_timeout(500)
+                chooser = page.query_selector('[data-testid="assign-count-chooser"]')
+                pressed = page.query_selector('[data-testid="assign-count-chooser"] button[aria-pressed="true"]')
+                check("7b1. şerit satırın altında açıldı, varsayılan çip 3 vurgulu",
+                      chooser is not None and pressed is not None and pressed.inner_text().strip() == "3",
+                      pressed.inner_text() if pressed else "yok")
+                _pick(3)
                 page.wait_for_timeout(2500)
-                check("7b. '+3 test' → görev oluştu",
+                check("7b. çip 3 → görev oluştu (konu → test ver → çip = 3 tık)",
                       _tasks(ids["student"]) == before + 1,
                       f"{before} → {_tasks(ids['student'])}")
                 # SAHA (2026-09-19): sayfa YENİLENMEDEN kalan azalmalı
@@ -295,16 +306,21 @@ def main() -> int:
                 check("7c. panel sayfa yenilenmeden güncellendi (kalan 3 azaldı)",
                       kalan_before is not None and _kalan() == kalan_before - 3,
                       f"{kalan_before} → {_kalan()}")
-            # ---- 7d. adet değiştirilebilir: stepper +1 → düğme "+4 test"
-            inc = page.query_selector('[data-section="week:curriculum"] button[aria-label="Bir artır"]')
-            check("7d. adet seçici (−/+) konu detayında", inc is not None)
-            if inc:
-                inc.click()
-                page.wait_for_timeout(300)
-                check("7e. +1 → kaynak düğmesi '+4 test' olur (3 tık korunur)",
-                      page.query_selector('[data-section="week:curriculum"] button:has-text("+4 test")') is not None)
-                page.query_selector('[data-section="week:curriculum"] button[aria-label="Bir azalt"]').click()
-                page.wait_for_timeout(200)
+                check("7c2. şerit kapandı", page.query_selector('[data-testid="assign-count-chooser"]') is None)
+                # ---- 7d/7e. farklı adet: aynı satır → çip 2 → 2 testlik görev
+                page.query_selector('[data-section="week:curriculum"] button:has-text("test ver")').click()
+                _pick(2)
+                page.wait_for_timeout(2500)
+                with SessionLocal() as db:
+                    last = (db.query(TaskBookItem).join(Task, Task.id == TaskBookItem.task_id)
+                            .filter(Task.student_id == ids["student"])
+                            .order_by(Task.id.desc()).first())
+                check("7d. çip 2 → 2 testlik görev (adet değişken, yukarı çıkmadan)",
+                      _tasks(ids["student"]) == before + 2 and last is not None and last.planned_count == 2,
+                      f"planned={getattr(last, 'planned_count', None)}")
+                check("7e. kalan toplam 5 azaldı (yenileme yok)",
+                      kalan_before is not None and _kalan() == kalan_before - 5,
+                      f"{kalan_before} → {_kalan()}")
 
             # ---- 10. Kaynak Durumu: ünite satırından "+N" ile görev + anlık ⏳
             res = page.query_selector('[data-section="week:resources"]')
@@ -330,18 +346,26 @@ def main() -> int:
                     '[data-section="week:resources"] button[title*="Yaş Bölümü"]')
                 check("10b. ünite satırında '+N' görev düğmesi", row_btn is not None)
                 res_txt = page.query_selector('[data-section="week:resources"]').inner_text()
-                check("10c. satırda rezerv ⏳3 (board'dan yazılan görev anında yansıdı)",
-                      "⏳3" in res_txt, res_txt[:200].replace("\n", " | "))
+                check("10c. satırda rezerv ⏳5 (board'dan yazılan 3+2 anında yansıdı)",
+                      "⏳5" in res_txt, res_txt[:200].replace("\n", " | "))
                 if row_btn:
                     before10 = _tasks(ids["student"])
                     row_btn.click()
+                    page.wait_for_timeout(400)
+                    check("10d1. '+' → şerit satırın altında (Kaç test? çipleri)",
+                          page.query_selector('[data-section="week:resources"] [data-testid="assign-count-chooser"]') is not None)
+                    os.makedirs(".shots", exist_ok=True)
+                    page.query_selector('[data-section="week:resources"]').screenshot(
+                        path=".shots/resources_chooser.png")
+                    _pick(3)
                     page.wait_for_timeout(2500)
-                    check("10d. '+3' → görev oluştu", _tasks(ids["student"]) == before10 + 1)
+                    check("10d. çip 3 → görev oluştu", _tasks(ids["student"]) == before10 + 1)
                     res_txt = page.query_selector('[data-section="week:resources"]').inner_text()
-                    check("10e. Kaynak Durumu sayfa yenilenmeden güncellendi (⏳6)",
-                          "⏳6" in res_txt, res_txt[:200].replace("\n", " | "))
-                    check("10f. Müfredat panosu da aynı anda güncellendi (kalan 3 daha azaldı)",
-                          kalan_before is not None and _kalan() == kalan_before - 6,
+                    check("10e. Kaynak Durumu sayfa yenilenmeden güncellendi (⏳8)",
+                          "⏳8" in res_txt, res_txt[:200].replace("\n", " | "))
+                    # kapasite 6 iken 8 rezerv → kalan 0'da durur (aşım uyarıyla yazılır)
+                    check("10f. Müfredat panosu da aynı anda güncellendi (kalan 0'a indi)",
+                          kalan_before is not None and _kalan() == max(0, kalan_before - 8),
                           f"{kalan_before} → {_kalan()}")
 
             # ---- 8. Kaynaksız konu
@@ -358,6 +382,7 @@ def main() -> int:
                 btn = page.query_selector('button[title^="Kitapsız, konuya bağlı"]')
                 if btn:
                     btn.click()
+                    _pick(3)          # şerit → varsayılan çip
                     page.wait_for_timeout(2500)
                 ok = _sourceless_ok(ids["student"], ids["t_free"])
                 check("8b. 'Kaynaksız' → konuya bağlı kitapsız görev oluştu",

@@ -24,6 +24,7 @@ import {
   ChevronRight,
   ListChecks,
   Loader2,
+  Plus,
   RotateCcw,
   TriangleAlert,
   Zap,
@@ -31,7 +32,7 @@ import {
 
 import { Button } from "@/components/ui/button";
 import { getTaskQuantity, getTopicBoard, teacherKeys } from "@/lib/api/teacher";
-import { QtyStepper } from "./qty-stepper";
+import { AssignCountChooser } from "./assign-count-chooser";
 import {
   useCloseTopic,
   useCreateTask,
@@ -107,9 +108,10 @@ export function CurriculumBoard({
       ? subjects[0]
       : subjects.find((s) => s.subject_id === subjectId)) ?? subjects[0];
 
-  // GÖREV ADEDİ (2026-09-19): sabit "+3" yerine koçun bu dersteki alışkanlığı
-  // (P3 task-quantity) varsayılan; koç isterse −/+ ile değiştirir. Ders
-  // değişince öğrenilmiş varsayılana döner (override derse bağlı tutulur).
+  // GÖREV ADEDİ (2026-09-19): sabit "+3" yerine "test ver" → satırın altında
+  // "Kaç test?" şeridi (1-5 + başka); koçun bu dersteki alışkanlığı (P3
+  // task-quantity) vurgulu gelir. Koç ilk denemede ayrı stepper'ı reddetti
+  // ("yukarı çık sayıyı değiştir aşağı in ata işlevsel değil").
   const activeSubjectId = active?.subject_id ?? null;
   const qtyQ = useQuery({
     queryKey: teacherKeys.taskQuantity(studentId, activeSubjectId),
@@ -117,18 +119,14 @@ export function CurriculumBoard({
     enabled: activeSubjectId !== null,
     staleTime: 5 * 60_000,
   });
-  const [qtyOverride, setQtyOverride] = React.useState<{
-    subjectId: number | null;
-    value: number;
+  const defaultCount = qtyQ.data?.quantity ?? 3;
+  const qtyHint = qtyQ.data?.reason ?? null;
+  // Açık seçim şeridi: hangi konu + hangi kaynak (null = kaynaksız). Tek şerit
+  // açık olur; çipe tıklamak görevi yazar ve şeridi kapatır.
+  const [chooser, setChooser] = React.useState<{
+    topicId: number;
+    sectionId: number | null;
   } | null>(null);
-  const count =
-    qtyOverride && qtyOverride.subjectId === activeSubjectId
-      ? qtyOverride.value
-      : (qtyQ.data?.quantity ?? 3);
-  const qtyHint =
-    qtyOverride && qtyOverride.subjectId === activeSubjectId
-      ? null
-      : (qtyQ.data?.reason ?? null);
 
   /**
    * Görev yaz. `src` verilmezse kaynaksız (konuya bağlı, kitapsız) kalem.
@@ -321,16 +319,6 @@ export function CurriculumBoard({
                           ) : null}
                         </dl>
 
-                        {t.closed ? null : (
-                          <QtyStepper
-                            value={count}
-                            onChange={(v) =>
-                              setQtyOverride({ subjectId: activeSubjectId, value: v })
-                            }
-                            hint={qtyHint}
-                          />
-                        )}
-
                         {/* KAYNAK SEÇİMİ (2026-09-09): "+3 test" hangi kitaba
                             yazıyor sorusunun cevabı. Her kaynak kendi satırında,
                             kendi butonuyla — koç görerek seçer, tık sayısı aynı
@@ -348,7 +336,7 @@ export function CurriculumBoard({
                                 <li
                                   key={s.section_id}
                                   className={cn(
-                                    "flex items-center gap-1.5 rounded-md border px-1.5 py-1",
+                                    "flex flex-wrap items-center gap-1.5 rounded-md border px-1.5 py-1",
                                     s.recommended && t.sources.length > 1
                                       ? "border-cyan-300 bg-cyan-50/60 dark:border-cyan-500/40 dark:bg-cyan-500/10"
                                       : "border-border bg-background",
@@ -387,15 +375,41 @@ export function CurriculumBoard({
                                     variant="outline"
                                     className="h-7 shrink-0 px-2 text-[11px]"
                                     disabled={create.isPending}
-                                    onClick={() => assign(t, count, s)}
+                                    aria-expanded={
+                                      chooser?.topicId === t.topic_id &&
+                                      chooser?.sectionId === s.section_id
+                                    }
+                                    onClick={() =>
+                                      setChooser((c) =>
+                                        c && c.topicId === t.topic_id && c.sectionId === s.section_id
+                                          ? null
+                                          : { topicId: t.topic_id, sectionId: s.section_id },
+                                      )
+                                    }
                                     title={
                                       s.full
-                                        ? `${s.book_name} — kapasite dolu, yine de ${count} test yaz (uyarı verilir)`
-                                        : `${s.book_name} — bu kaynaktan ${count} test yaz`
+                                        ? `${s.book_name} — kapasite dolu, yine de görev yaz (uyarı verilir)`
+                                        : `${s.book_name} — bu kaynaktan görev yaz`
                                     }
                                   >
-                                    +{count} test
+                                    <Plus className="mr-0.5 h-3 w-3" aria-hidden />
+                                    test ver
                                   </Button>
+                                  {chooser?.topicId === t.topic_id &&
+                                  chooser?.sectionId === s.section_id ? (
+                                    <AssignCountChooser
+                                      className="basis-full"
+                                      defaultCount={defaultCount}
+                                      hint={qtyHint}
+                                      remaining={s.remaining}
+                                      pending={create.isPending}
+                                      onPick={(n) => {
+                                        assign(t, n, s);
+                                        setChooser(null);
+                                      }}
+                                      onClose={() => setChooser(null)}
+                                    />
+                                  ) : null}
                                 </li>
                               ))}
                             </ul>
@@ -427,12 +441,34 @@ export function CurriculumBoard({
                                 variant="outline"
                                 className="h-7 px-2 text-[11px]"
                                 disabled={create.isPending}
-                                onClick={() => assign(t, count, null)}
-                                title={`Kitapsız, konuya bağlı ${count} test`}
+                                aria-expanded={
+                                  chooser?.topicId === t.topic_id && chooser?.sectionId === null
+                                }
+                                onClick={() =>
+                                  setChooser((c) =>
+                                    c && c.topicId === t.topic_id && c.sectionId === null
+                                      ? null
+                                      : { topicId: t.topic_id, sectionId: null },
+                                  )
+                                }
+                                title="Kitapsız, konuya bağlı görev"
                               >
                                 <Zap className="mr-1 h-3 w-3" />
-                                Kaynaksız ver ({count})
+                                Kaynaksız ver
                               </Button>
+                              {chooser?.topicId === t.topic_id && chooser?.sectionId === null ? (
+                                <AssignCountChooser
+                                  className="basis-full"
+                                  defaultCount={defaultCount}
+                                  hint={qtyHint}
+                                  pending={create.isPending}
+                                  onPick={(n) => {
+                                    assign(t, n, null);
+                                    setChooser(null);
+                                  }}
+                                  onClose={() => setChooser(null)}
+                                />
+                              ) : null}
                               <Button
                                 size="sm"
                                 className="h-7 bg-emerald-600 px-2 text-[11px] text-white hover:bg-emerald-700"

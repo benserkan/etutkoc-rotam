@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronRight, Grid3x3, Library, Loader2, Plus } from "lucide-react";
 
 import { PinnableSection } from "./pinnable-section";
-import { QtyStepper } from "./qty-stepper";
+import { AssignCountChooser } from "./assign-count-chooser";
 
 import { getTaskQuantity, teacherKeys } from "@/lib/api/teacher";
 import { useCreateTask } from "@/lib/hooks/use-teacher-mutations";
@@ -221,8 +221,8 @@ function SubjectRow({
     enabled: ctx !== null && isOpen,
     staleTime: 5 * 60_000,
   });
-  const [qtyOverride, setQtyOverride] = React.useState<number | null>(null);
-  const count = qtyOverride ?? qtyQ.data?.quantity ?? 3;
+  const defaultCount = qtyQ.data?.quantity ?? 3;
+  const qtyHint = qtyQ.data?.reason ?? null;
   const pctDone = total > 0 ? Math.round((100 * completed) / total) : 0;
   const pctRes = total > 0 ? Math.round((100 * reserved) / total) : 0;
   return (
@@ -268,14 +268,6 @@ function SubjectRow({
 
       {isOpen ? (
         <div className="px-4 pb-3 pt-1 space-y-1.5 bg-muted/30">
-          {ctx ? (
-            <QtyStepper
-              value={count}
-              onChange={setQtyOverride}
-              hint={qtyOverride === null ? (qtyQ.data?.reason ?? null) : null}
-              className="pb-0.5"
-            />
-          ) : null}
           {subject.books.map((b) => (
             <BookRow
               key={b.id}
@@ -286,7 +278,8 @@ function SubjectRow({
                 onOpenBookGrid ? () => onOpenBookGrid(b.id) : undefined
               }
               ctx={ctx}
-              count={count}
+              defaultCount={defaultCount}
+              qtyHint={qtyHint}
             />
           ))}
         </div>
@@ -301,14 +294,16 @@ function BookRow({
   onToggle,
   onOpenGrid,
   ctx,
-  count,
+  defaultCount,
+  qtyHint,
 }: {
   book: SidebarBook;
   isOpen: boolean;
   onToggle: () => void;
   onOpenGrid?: () => void;
   ctx: AssignCtx | null;
-  count: number;
+  defaultCount: number;
+  qtyHint: string | null;
 }) {
   const pctDone = book.total > 0 ? Math.round((100 * book.completed) / book.total) : 0;
   const pctRes = book.total > 0 ? Math.round((100 * book.reserved) / book.total) : 0;
@@ -384,7 +379,8 @@ function BookRow({
                 section={sec}
                 book={book}
                 ctx={ctx}
-                count={count}
+                defaultCount={defaultCount}
+                qtyHint={qtyHint}
                 unitWord={unitWord}
               />
             ))
@@ -399,16 +395,22 @@ function SectionRow({
   section,
   book,
   ctx,
-  count,
+  defaultCount,
+  qtyHint,
   unitWord,
 }: {
   section: SidebarSection;
   book: SidebarBook;
   ctx: AssignCtx | null;
-  count: number;
+  defaultCount: number;
+  qtyHint: string | null;
   unitWord: string;
 }) {
   const full = section.remaining <= 0;
+  // Seçim şeridi satırın ALTINDA açılır (KOÇ 2026-09-19: "yukarı çık sayıyı
+  // değiştir aşağı in ata" işlevsel değildi; sayı satırda gösterilmez, "+" tek).
+  const [open, setOpen] = React.useState(false);
+  const close = React.useCallback(() => setOpen(false), []);
   return (
     <li className="px-3 py-1.5 text-[11px]">
       <div className="flex items-center justify-between gap-2">
@@ -429,30 +431,46 @@ function SectionRow({
           <span className="text-muted-foreground/60"> / {section.total}</span>
         </span>
         {ctx ? (
-          /* KOÇ (2026-09-19): üniteye tıkla → seçili adet kadar görev, aktif güne.
+          /* KOÇ (2026-09-19): "+" → satırın altında "Kaç test?" şeridi → çip = görev.
              Kapasite dolu satırda da yazılır (P1: engel değil uyarı). */
           <button
             type="button"
             disabled={ctx.pending}
-            onClick={() => ctx.assign(book, section, count)}
+            aria-expanded={open}
+            aria-label={`${section.label}: ${unitWord} ver`}
+            onClick={() => setOpen((v) => !v)}
             title={
               full
-                ? `${book.name} — ${section.label}: kapasite dolu, yine de ${count} ${unitWord} yaz (uyarı verilir)`
-                : `${book.name} — ${section.label}: bu güne ${count} ${unitWord} yaz`
+                ? `${book.name} — ${section.label}: kapasite dolu, yine de ${unitWord} yaz (uyarı verilir)`
+                : `${book.name} — ${section.label}: bu güne ${unitWord} ver`
             }
             className={cn(
-              "inline-flex h-6 shrink-0 items-center gap-0.5 rounded border px-1.5 text-[10.5px] font-semibold tabular-nums transition",
-              full
-                ? "border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/10"
-                : "border-border text-foreground hover:bg-muted",
-              "disabled:opacity-50",
+              "inline-flex size-6 shrink-0 items-center justify-center rounded border transition disabled:opacity-50",
+              open
+                ? "border-cyan-500 bg-cyan-600 text-white"
+                : full
+                  ? "border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-500/40 dark:text-amber-300 dark:hover:bg-amber-500/10"
+                  : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
             )}
           >
-            <Plus className="size-3" aria-hidden />
-            {count}
+            <Plus className="size-3.5" aria-hidden />
           </button>
         ) : null}
       </div>
+      {ctx && open ? (
+        <AssignCountChooser
+          defaultCount={defaultCount}
+          hint={qtyHint}
+          remaining={section.remaining}
+          unit={unitWord}
+          pending={ctx.pending}
+          onPick={(n) => {
+            ctx.assign(book, section, n);
+            setOpen(false);
+          }}
+          onClose={close}
+        />
+      ) : null}
     </li>
   );
 }
