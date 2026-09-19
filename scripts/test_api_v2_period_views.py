@@ -99,11 +99,25 @@ def seed() -> dict:
                        teacher_id=other.id, grade_level=9)
         parent = User(email=f"{PFX}_p@test.invalid", password_hash=hash_password(PWD),
                       full_name="Dönem Veli", role=UserRole.PARENT, is_active=True)
+        # BUGÜN açılan öğrenci + tek dönem (bugün) + dönemden ÖNCEKİ tarihli deneme
+        # (saha: koç geçmiş denemeyi PDF'ten aktardı, varsayılan listede kayboldu)
+        late = User(email=f"{PFX}_s4@test.invalid", password_hash=hash_password(PWD),
+                    full_name="Geç Kayıt", role=UserRole.STUDENT, is_active=True,
+                    teacher_id=coach.id, grade_level=8)
         opened = datetime(2026, 4, 15, tzinfo=timezone.utc)
         for u in (st, plain, foreign):
             u.created_at = opened
-        db.add_all([st, plain, foreign, parent])
+        db.add_all([st, plain, foreign, parent, late])
         db.flush()
+        db.execute(sa_delete(StudentGradePeriod).where(
+            StudentGradePeriod.student_id == late.id))
+        db.add(StudentGradePeriod(
+            student_id=late.id, grade_level=8, is_graduate=False,
+            curriculum_model="lgs", started_on=date.today()))
+        db.add(ExamResult(student_id=late.id, title="Eski Tarihli Deneme",
+                          exam_date=date(2026, 8, 17), section=ExamSection.LGS,
+                          total_correct=75, total_wrong=0, total_blank=15, net=75.0,
+                          created_by_id=coach.id))
         db.add(ParentStudentLink(parent_id=parent.id, student_id=st.id))
 
         # --- iki dönem
@@ -171,14 +185,14 @@ def seed() -> dict:
         return {
             "coach_id": coach.id, "other_id": other.id, "student_id": st.id,
             "plain_id": plain.id, "foreign_id": foreign.id, "parent_id": parent.id,
-            "subject_id": subj.id, "book_id": book.id,
+            "late_id": late.id, "subject_id": subj.id, "book_id": book.id,
         }
 
 
 def cleanup(s: dict) -> None:
     with SessionLocal() as db:
         ids = [s["coach_id"], s["other_id"], s["student_id"], s["plain_id"],
-               s["foreign_id"], s["parent_id"]]
+               s["foreign_id"], s["parent_id"], s["late_id"]]
         tids = [t.id for t in db.query(Task).filter(Task.student_id.in_(ids)).all()]
         if tids:
             db.execute(sa_delete(TaskBookItem).where(TaskBookItem.task_id.in_(tids)))
@@ -317,6 +331,22 @@ def main() -> int:
               and ptp_all["overall"]["tests_solved"] == 14,
               f"{ptp['overall']['tests_solved']} / "
               f"{ptp_all['overall']['tests_solved']}")
+
+        # ---- 14. SAHA: bugün açılan öğrenci + dönemden ÖNCEKİ tarihli deneme
+        # (öğrenci 163, 2026-09-19) → en eski dönem geriye AÇIK, deneme
+        # varsayılan görünümde KAYBOLMAZ; filtre yine uygulanmış sayılır.
+        lt = c.get(f"/api/v2/teacher/students/{s['late_id']}/exams").json()
+        lmeta = lt.get("period") or {}
+        check("14a. ilk dönem başlangıcından önceki deneme varsayılanda GÖRÜNÜR",
+              titles(lt) == ["Eski Tarihli Deneme"], f"{titles(lt)}")
+        check("14b. en eski dönem penceresi geriye açık (applied + started_on yok)",
+              lmeta.get("applied") is True and lmeta.get("started_on") is None,
+              f"{lmeta}")
+        lan = c.get(
+            f"/api/v2/teacher/students/{s['late_id']}/exam-topic-analysis").json()
+        check("14c. analiz de aynı pencereyi kullanır (applied)",
+              (lan.get("period") or {}).get("applied") is True,
+              f"{lan.get('period')}")
 
         # ---- 13. sahiplik
         r1 = c.get(f"/api/v2/teacher/students/{s['foreign_id']}/exams")

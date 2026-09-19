@@ -501,9 +501,20 @@ def resolve_window(
     if period is None:
         # Dönem kaydı yok → filtre uygulanmaz (eski davranış birebir korunur).
         return PeriodWindow(None, None, None, False, "all")
-    return PeriodWindow(
-        period, period.started_on, period.ended_on, True, str(period.id)
+    # En ESKİ dönem geriye AÇIKTIR: başlangıcından önceki tarihli kayıt
+    # (koçun geçmişe dönük girdiği deneme/görev) hiçbir döneme düşmeyip
+    # KAYBOLMASIN — `period_for_date`'in "tüm dönemlerden önce → en eski
+    # döneme say" kuralının pencere karşılığı. Saha vakası: bugün açılan
+    # öğrenciye 17 Ağustos tarihli deneme aktarıldı, dönem bugün başladığı
+    # için varsayılan listede görünmüyordu.
+    oldest = (
+        db.query(StudentGradePeriod.id)
+        .filter(StudentGradePeriod.student_id == student_id)
+        .order_by(StudentGradePeriod.started_on.asc(), StudentGradePeriod.id.asc())
+        .first()
     )
+    start = None if (oldest is not None and oldest[0] == period.id) else period.started_on
+    return PeriodWindow(period, start, period.ended_on, True, str(period.id))
 
 
 def period_label(p: StudentGradePeriod) -> str:
