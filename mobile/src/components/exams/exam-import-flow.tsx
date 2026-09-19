@@ -21,9 +21,23 @@ import {
   pickExamPdf,
   type ExamImportConfirmResult,
   type ExamImportDraft,
+  type ImportDuplicate,
   type PickedPdf,
 } from "@/lib/exam-import";
 import { cn } from "@/lib/utils";
+
+function fmtDate(iso: string): string {
+  const d = new Date(iso);
+  return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString("tr-TR");
+}
+
+/** 409 duplicate_exam zarfındaki `details` bloğunu çıkarır (sunucu tek merkez). */
+function duplicateFromError(e: unknown): ImportDuplicate | null {
+  if (!(e instanceof ApiError)) return null;
+  const data = e.data as { details?: unknown; detail?: { details?: unknown } } | null;
+  const det = (data?.details ?? data?.detail?.details ?? null) as ImportDuplicate | null;
+  return det && typeof det.exam_id === "number" ? det : null;
+}
 
 /**
  * Deneme PDF içe aktarma — MOBİL SADELEŞTİRİLMİŞ akış (Faz 4).
@@ -102,7 +116,11 @@ export function ExamImportFlow({
   const [title, setTitle] = React.useState("");
   const [examDate, setExamDate] = React.useState("");
   const [section, setSection] = React.useState("");
-  const [needForce, setNeedForce] = React.useState(false);
+  // Mükerrer durumu (sunucu karar verir): exact → yalnız "yerine yaz"; likely → koç seçer.
+  const [dup, setDup] = React.useState<ImportDuplicate | null>(null);
+  // Analiz adımında yakalanan "aynı PDF" (Gemini'ye gidilmedi, kredi yok).
+  const [analyzeDup, setAnalyzeDup] = React.useState<ImportDuplicate | null>(null);
+  const [replaced, setReplaced] = React.useState(false);
   const [result, setResult] = React.useState<ExamImportConfirmResult | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [pickerMissing, setPickerMissing] = React.useState(false);
@@ -117,7 +135,9 @@ export function ExamImportFlow({
     setTitle("");
     setExamDate("");
     setSection("");
-    setNeedForce(false);
+    setDup(null);
+    setAnalyzeDup(null);
+    setReplaced(false);
     setResult(null);
     setError(null);
     setPickerMissing(false);
@@ -179,11 +199,19 @@ export function ExamImportFlow({
       setTitle(autoTitle(d.title, d, firstPart));
       setExamDate(d.exam_date ?? "");
       setSection(d.parts[0]?.section ?? d.section);
+      setDup(d.duplicate ?? null);
+      setAnalyzeDup(null);
       setStep("preview");
     } catch (e) {
       // Koç yüzeyinde paket/kredi kapısı → Paketim (IAP) yönlendirmesi.
       // Öğrenci yüzeyinde (studentId null) kapı koça aittir — yalnız mesaj.
       const code = e instanceof ApiError ? e.code : null;
+      if (code === "duplicate_exam") {
+        // Aynı PDF daha önce aktarılmış — belge okunmadı, kredi harcanmadı.
+        setAnalyzeDup(duplicateFromError(e));
+        setStep("pick");
+        return;
+      }
       if (studentId != null && handleCoachAiGateError(code)) {
         setStep("pick");
         return;
@@ -201,7 +229,7 @@ export function ExamImportFlow({
     setTitle(autoTitle(draft.title, draft, part));
   }
 
-  async function save(force: boolean) {
+  async function save(mode: "normal" | "force" | "replace") {
     if (!draft) return;
     if (!title.trim() || !examDate) {
       setError("Deneme adı ve tarihi zorunlu.");
@@ -218,7 +246,8 @@ export function ExamImportFlow({
           scope: draft.scope,
           grade_hint: draft.grade_hint,
           score_info: draft.score_info,
-          force,
+          force: mode === "force",
+          replace_exam_id: mode === "replace" ? (dup?.exam_id ?? null) : null,
           rows: activeRows
             .filter((r) => r.result != null)
             .map((r) => ({
@@ -236,6 +265,7 @@ export function ExamImportFlow({
         studentId,
       );
       setResult(res.data);
+      setReplaced(mode === "replace");
       setStep("done");
       if (studentId != null) {
         qc.invalidateQueries({ queryKey: ["teacher", "student", studentId, "exams"] });
@@ -244,7 +274,8 @@ export function ExamImportFlow({
       }
     } catch (e) {
       if (e instanceof ApiError && e.code === "duplicate_exam") {
-        setNeedForce(true);
+        // Sunucu karar verdi: exact → yalnız "yerine yaz"; likely → koç seçer.
+        setDup(duplicateFromError(e) ?? dup);
         setStep("preview");
         return;
       }
@@ -287,6 +318,16 @@ export function ExamImportFlow({
           {error ? (
             <View className="rounded-xl border border-rose-200 bg-rose-50 p-3">
               <Text className="text-xs text-rose-800">{error}</Text>
+            </View>
+          ) : null}
+          {step === "pick" && analyzeDup ? (
+            <View className="rounded-xl border border-rose-200 bg-rose-50 p-3">
+              <Text className="text-xs text-rose-900">
+                <Text className="font-semibold">Bu PDF zaten aktarılmış: </Text>
+                {analyzeDup.title} ({fmtDate(analyzeDup.exam_date)}). Belge yeniden
+                okunmadı, kredi harcanmadı. Kayıt deneme listesinde duruyor; satırlarını
+                web panelinden düzeltebilirsin. Başka bir belge için farklı dosya seç.
+              </Text>
             </View>
           ) : null}
 
@@ -492,13 +533,25 @@ export function ExamImportFlow({
                 ) : null}
               </View>
 
-              {needForce || draft.duplicate_exam_id ? (
-                <View className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                  <Text className="text-xs text-amber-900">
-                    Bu deneme (aynı ad + tarih) daha önce kaydedilmiş görünüyor.
-                    Yeniden kaydedersen iki ayrı kayıt oluşur.
-                  </Text>
-                </View>
+              {dup ? (
+                dup.level === "exact" ? (
+                  <View className="rounded-xl border border-rose-200 bg-rose-50 p-3">
+                    <Text className="text-xs text-rose-900">
+                      <Text className="font-semibold">Bu deneme zaten kayıtlı: </Text>
+                      {dup.reason_label} ({dup.title}, {fmtDate(dup.exam_date)}). İkinci bir
+                      kayıt açılmaz; analiz iki kez saymasın. Bu okumayı mevcut kaydın
+                      yerine yazabilirsin.
+                    </Text>
+                  </View>
+                ) : (
+                  <View className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                    <Text className="text-xs text-amber-900">
+                      <Text className="font-semibold">Bu deneme kayıtlı olabilir: </Text>
+                      {dup.reason_label} ({dup.title}, {fmtDate(dup.exam_date)}). Aynı
+                      denemeyse yerine yaz; gerçekten farklıysa ayrı kaydet.
+                    </Text>
+                  </View>
+                )
               ) : null}
               {failing.map((c) => (
                 <View key={c.code} className="rounded-xl border border-rose-200 bg-rose-50 p-3">
@@ -560,7 +613,9 @@ export function ExamImportFlow({
           {step === "done" && result ? (
             <View className="items-center gap-3 py-6">
               <Ionicons name="checkmark-circle" size={48} color="#10b981" />
-              <Text className="text-lg font-bold text-slate-900">Deneme kaydedildi</Text>
+              <Text className="text-lg font-bold text-slate-900">
+                {replaced ? "Deneme güncellendi (yerine yazıldı)" : "Deneme kaydedildi"}
+              </Text>
               <Text className="text-center text-sm text-slate-500">
                 {result.title} · {result.section_label}
               </Text>
@@ -613,27 +668,38 @@ export function ExamImportFlow({
                 <Text className="text-rose-600">{tally.yanlis}Y</Text>{" "}
                 {tally.bos}B
               </Text>
-              <Pressable
-                onPress={() => void save(needForce)}
-                disabled={step === "saving" || missingResults > 0}
-                className={cn(
-                  "flex-row items-center gap-2 rounded-xl px-5 py-3",
-                  missingResults > 0
-                    ? "bg-slate-300"
-                    : needForce
-                      ? "bg-amber-600 active:bg-amber-700"
-                      : "bg-brand-700 active:bg-brand-800",
-                )}
-              >
-                {step === "saving" ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <Ionicons name="checkmark" size={16} color="#fff" />
-                )}
-                <Text className="font-semibold text-white">
-                  {needForce ? "Yine de kaydet" : "Kontrol ettim, kaydet"}
-                </Text>
-              </Pressable>
+              <View className="flex-row items-center gap-2">
+                {dup?.level === "likely" ? (
+                  <Pressable
+                    onPress={() => void save("force")}
+                    disabled={step === "saving" || missingResults > 0}
+                    className="rounded-xl border border-slate-300 bg-white px-3 py-3 active:bg-slate-100"
+                  >
+                    <Text className="text-xs font-semibold text-slate-700">Ayrı kaydet</Text>
+                  </Pressable>
+                ) : null}
+                <Pressable
+                  onPress={() => void save(dup ? "replace" : "normal")}
+                  disabled={step === "saving" || missingResults > 0}
+                  className={cn(
+                    "flex-row items-center gap-2 rounded-xl px-5 py-3",
+                    missingResults > 0
+                      ? "bg-slate-300"
+                      : dup
+                        ? "bg-amber-600 active:bg-amber-700"
+                        : "bg-brand-700 active:bg-brand-800",
+                  )}
+                >
+                  {step === "saving" ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Ionicons name={dup ? "refresh" : "checkmark"} size={16} color="#fff" />
+                  )}
+                  <Text className="font-semibold text-white">
+                    {dup ? "Yerine yaz" : "Kontrol ettim, kaydet"}
+                  </Text>
+                </Pressable>
+              </View>
             </View>
           </View>
         ) : step === "done" ? (

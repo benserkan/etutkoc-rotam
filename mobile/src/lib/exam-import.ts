@@ -71,9 +71,21 @@ export interface ExamImportDraft {
   suspect_count: number;
   match_stats: { alias: number; auto: number; ai: number; none: number };
   duplicate_exam_id: number | null;
+  /** Mükerrer tespiti (sunucu tek merkez): exact → kayıt açılmaz (yerine yaz);
+   *  likely → uyarı, koç yerine yazar ya da ayrı kaydeder. */
+  duplicate: ImportDuplicate | null;
   score_info: Record<string, unknown> | null;
   section_choices: SectionChoice[];
   credits_charged: number;
+}
+export interface ImportDuplicate {
+  exam_id: number;
+  level: "exact" | "likely";
+  reason: "same_file" | "same_answers" | "near_answers" | "same_title_date" | "near_title_date";
+  reason_label: string;
+  title: string;
+  exam_date: string;
+  similarity: number;
 }
 export interface ExamImportConfirmResult {
   exam_id: number;
@@ -276,7 +288,10 @@ export interface ConfirmPayload {
   scope?: string | null;
   grade_hint?: number | null;
   score_info?: Record<string, unknown> | null;
+  /** "likely" mükerrere rağmen ayrı kaydet (exact'te sunucu yok sayar). */
   force?: boolean;
+  /** Mevcut kaydın yerine yaz — yeni kayıt açılmaz. */
+  replace_exam_id?: number | null;
   rows: {
     subject_raw: string | null;
     question_no: number | null;

@@ -98,6 +98,9 @@ class ExamResult(Base):
     )
     import_pdf_content_type: Mapped[str | None] = mapped_column(String(100), nullable=True)
     import_pdf_size: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # Belge parmak izi (SHA-256, hex) — aynı PDF ikinci kez yüklenince daha
+    # Gemini'ye gitmeden yakalanır (mükerrer koruması katman 1, 2026-09-19).
+    import_pdf_sha256: Mapped[str | None] = mapped_column(String(64), nullable=True)
     # Belge kanıt olarak saklanır (support_attachments deseni) — deferred:
     # liste/detay sorgularında yüklenmez.
     import_pdf_data: Mapped[bytes | None] = deferred(

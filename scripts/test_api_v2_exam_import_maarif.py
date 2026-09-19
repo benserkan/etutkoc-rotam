@@ -221,11 +221,14 @@ def main() -> int:
         r = ct.post("/api/v2/auth/login",
                     json={"email": f"{PFX}-t@t.invalid", "password": PASSWORD})
         assert r.status_code == 200, r.text[:200]
-        pdf_file = ("karne.pdf", PDF, "application/pdf")
+        # Her istekte FARKLI dosya baytlari: mukerrer korumasi ayni PDF'i (SHA-256)
+        # analiz adiminda durdurur; eski senaryolar tek dosyayi tekrar kullaniyordu.
+        def fresh_pdf():
+            return ("karne.pdf", PDF + secrets.token_bytes(8), "application/pdf")
         base = f"/api/v2/teacher/students/{ids['s11']}/exams/import-analyze"
 
         # --- 1) TESPİT: başlıkta "Maarif ... Birinci Basamak" ---
-        r = ct.post(base, files={"file": pdf_file})
+        r = ct.post(base, files={"file": fresh_pdf()})
         d = r.json() if r.status_code == 200 else {}
         check("1a. Maarif belgesi tanındı (universe=maarif, section=maarif_1)",
               r.status_code == 200 and d.get("universe") == "maarif"
@@ -261,7 +264,7 @@ def main() -> int:
               "Sosyal Bilimler" in gnames and "Tarih" not in gnames, str(gnames))
 
         # --- 5) BEYAN: maarif_11 seçilirse 11. sınıf konusu aday olur ---
-        r = ct.post(base, files={"file": pdf_file},
+        r = ct.post(base, files={"file": fresh_pdf()},
                     data={"declared_section": "maarif_11", "declared_grade": "11"})
         d2 = r.json() if r.status_code == 200 else {}
         rows2 = {x["topic_raw"]: x for x in d2.get("rows", [])}
@@ -276,7 +279,7 @@ def main() -> int:
         read_behavior["read"] = build_maarif_read(
             f"{PFX} Maarif Model Deneme", grade_hint=9)
         r = ct.post(f"/api/v2/teacher/students/{ids['s9']}/exams/import-analyze",
-                    files={"file": pdf_file})
+                    files={"file": fresh_pdf()})
         d3 = r.json() if r.status_code == 200 else {}
         check("6a. 9. sınıf + basamak yazmayan başlık → Maarif 9. Sınıf",
               d3.get("section") == "maarif_9", str(d3.get("section")))
@@ -284,14 +287,14 @@ def main() -> int:
         # --- 7) İKİNCİ BASAMAK başlığı ---
         read_behavior["read"] = build_maarif_read(
             f"{PFX} Maarif Model İkinci Basamak Sınavı", grade_hint=12)
-        r = ct.post(base, files={"file": pdf_file})
+        r = ct.post(base, files={"file": fresh_pdf()})
         d4 = r.json() if r.status_code == 200 else {}
         check("7a. 'İkinci Basamak' → maarif_2",
               d4.get("section") == "maarif_2", str(d4.get("section")))
 
         # --- 8) YAPI İMZASI: başlıkta 'maarif' yok, yapı Maarif ---
         read_behavior["read"] = build_structure_read()
-        r = ct.post(base, files={"file": pdf_file})
+        r = ct.post(base, files={"file": fresh_pdf()})
         d5 = r.json() if r.status_code == 200 else {}
         check("8a. TDE + birleşik dersler + 125 soru → maarif (kelimesiz)",
               d5.get("universe") == "maarif", str(d5)[:160])
@@ -300,7 +303,7 @@ def main() -> int:
 
         # --- 9) REGRESYON: saf TYT belgesi TYT kalmalı ---
         read_behavior["read"] = build_pure_tyt_read()
-        r = ct.post(base, files={"file": pdf_file})
+        r = ct.post(base, files={"file": fresh_pdf()})
         d6 = r.json() if r.status_code == 200 else {}
         check("9a. klasik TYT belgesi hâlâ TYT (Maarif kuralları sızmadı)",
               d6.get("universe") == "tyt" and d6.get("section") == "tyt",
@@ -309,7 +312,7 @@ def main() -> int:
         # --- 10) KAYIT: net cezası 4 + section + birleşik ders kırılımı ---
         read_behavior["read"] = build_maarif_read(
             f"{PFX} ÇAP Maarif Model Birinci Basamak Sınavı")
-        r = ct.post(base, files={"file": pdf_file})
+        r = ct.post(base, files={"file": fresh_pdf()})
         draft = r.json()
         conf_rows = [
             {k: x[k] for k in ("subject_raw", "question_no", "topic_raw", "topic_id",
@@ -323,7 +326,7 @@ def main() -> int:
             "rows": conf_rows,
         }
         r = ct.post(f"/api/v2/teacher/students/{ids['s11']}/exams/import-confirm",
-                    data={"payload": json.dumps(payload)}, files={"file": pdf_file})
+                    data={"payload": json.dumps(payload)}, files={"file": fresh_pdf()})
         dc = r.json().get("data", {}) if r.status_code == 200 else {}
         # 2 doğru, 2 yanlış, 1 boş → net = 2 - 2/4 = 1.5 (YKS cezası)
         check("10a. confirm 200 + net = D − Y/4 (Maarif cezası TYT ile aynı)",
@@ -355,13 +358,13 @@ def main() -> int:
         read_behavior["read"]["questions"][1]["topic"] = "Zzz Bilinmeyen Kazanım"
         ai_label_map.clear()
         ai_label_map["Zzz Bilinmeyen Kazanım"] = ids["tarih10"]   # grup DIŞI
-        r = ct.post(base, files={"file": pdf_file})
+        r = ct.post(base, files={"file": fresh_pdf()})
         rows11 = {x["topic_raw"]: x for x in (r.json().get("rows") or [])}
         check("11a. 'Fen Bilimleri' → Tarih konusu AI önerisi REDDEDİLDİ",
               rows11.get("Zzz Bilinmeyen Kazanım", {}).get("topic_id") is None,
               str(rows11.get("Zzz Bilinmeyen Kazanım"))[:200])
         ai_label_map["Zzz Bilinmeyen Kazanım"] = ids["fizik10"]   # grup İÇİ
-        r = ct.post(base, files={"file": pdf_file})
+        r = ct.post(base, files={"file": fresh_pdf()})
         rows12 = {x["topic_raw"]: x for x in (r.json().get("rows") or [])}
         check("11b. aynı satıra grup İÇİ (Fizik) öneri KABUL edildi",
               rows12.get("Zzz Bilinmeyen Kazanım", {}).get("topic_id") == ids["fizik10"],

@@ -433,20 +433,23 @@ def main() -> int:
                           (cfs, f"{PFX}-sf@t.invalid"), (cns, f"{PFX}-sn@t.invalid")):
             cli.post("/api/v2/auth/login", json={"email": mail, "password": PASSWORD})
 
-        pdf_file = ("deneme.pdf", PDF, "application/pdf")
+        # Her istekte FARKLI dosya baytlari: mukerrer korumasi ayni PDF'i (SHA-256)
+        # analiz adiminda durdurur; eski senaryolar tek dosyayi tekrar kullaniyordu.
+        def fresh_pdf():
+            return ("deneme.pdf", PDF + secrets.token_bytes(8), "application/pdf")
 
         # 1) anon 401
-        r = anon.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        r = anon.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
         check("1. anonim → 401", r.status_code == 401, r.text[:100])
 
         # 2) ücretsiz koçun öğrencisi → 403 plan_upgrade_required
-        r = cfs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        r = cfs.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
         check("2. koç ücretsiz pakette → 403 plan_upgrade_required",
               r.status_code == 403
               and r.json()["detail"]["code"] == "plan_upgrade_required", r.text[:120])
 
         # 3) rıza vermemiş koçun öğrencisi → 403 consent_required
-        r = cns.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        r = cns.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
         check("3. koç rızasız → 403 consent_required",
               r.status_code == 403
               and r.json()["detail"]["code"] == "consent_required", r.text[:120])
@@ -460,7 +463,7 @@ def main() -> int:
 
         # 5) yabancı öğrenci → 404 (koç yolunda sızıntı yok)
         r = ct.post(f"/api/v2/teacher/students/{ids['free_student']}/exams/import-analyze",
-                    files={"file": pdf_file})
+                    files={"file": fresh_pdf()})
         check("5. yabancı öğrenci → 404", r.status_code == 404, r.text[:120])
 
         # --- 6) MUTLU YOL: analiz (öğrenci tetikler, kredi KOÇTAN) ---
@@ -469,7 +472,7 @@ def main() -> int:
             "Paragrafta Yardımcı Düşü": ids["paragraf"],
             "Zzz Gizemli Konu": 999_999,   # uydurma id — düşürülmeli
         })
-        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
         check("6. analiz 200 + TYT tespiti",
               r.status_code == 200 and r.json()["universe"] == "tyt"
               and r.json()["section"] == "tyt" and r.json()["scope"] == "full",
@@ -570,7 +573,7 @@ def main() -> int:
             "rows": conf_rows,
         }
         r = cs.post("/api/v2/student/exams/import-confirm",
-                    data={"payload": json.dumps(payload)}, files={"file": pdf_file})
+                    data={"payload": json.dumps(payload)}, files={"file": fresh_pdf()})
         d = r.json().get("data", {}) if r.status_code == 200 else {}
         check("16a. confirm 200 + net doğru (7D 3Y 2B → 6.25)",
               r.status_code == 200 and d.get("net") == 6.25
@@ -605,15 +608,25 @@ def main() -> int:
 
         # 17) mükerrer: aynı ad+tarih → 409; force → 200
         r = cs.post("/api/v2/student/exams/import-confirm",
-                    data={"payload": json.dumps(payload)}, files={"file": pdf_file})
+                    data={"payload": json.dumps(payload)}, files={"file": fresh_pdf()})
         check("17a. mükerrer deneme → 409 duplicate_exam",
               r.status_code == 409
               and r.json()["detail"]["code"] == "duplicate_exam", r.text[:150])
+        # 2026-09-19: aynı cevap dizisi = KESİN mükerrer → force GEÇERSİZ;
+        # tek yol "yerine yaz" (aynı kayıt güncellenir, ikinci kayıt açılmaz).
         r = cs.post("/api/v2/student/exams/import-confirm",
                     data={"payload": json.dumps({**payload, "force": True})},
-                    files={"file": pdf_file})
-        check("17b. force=True → yine de kaydeder", r.status_code == 200, r.text[:150])
-        force_exam_id = r.json().get("data", {}).get("exam_id")
+                    files={"file": fresh_pdf()})
+        check("17b. exact mükerrerde force GEÇERSİZ → yine 409",
+              r.status_code == 409
+              and r.json()["detail"]["code"] == "duplicate_exam"
+              and r.json()["detail"]["details"]["level"] == "exact", r.text[:150])
+        r = cs.post("/api/v2/student/exams/import-confirm",
+                    data={"payload": json.dumps({**payload, "replace_exam_id": exam_id})},
+                    files={"file": fresh_pdf()})
+        check("17c. replace_exam_id → 200, AYNI kayıt (id değişmez)",
+              r.status_code == 200
+              and r.json().get("data", {}).get("exam_id") == exam_id, r.text[:150])
 
         # 18) ÖĞRENEN SÖZLÜK: alias'lar yazıldı (AI→ai, elle→coach)
         with SessionLocal() as db:
@@ -632,7 +645,7 @@ def main() -> int:
 
         # 19) ikinci analiz: sözlük çözer, AI'ya HİÇ gidilmez
         before = gem_calls["label_match"]
-        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
         d2 = r.json() if r.status_code == 200 else {}
         rows2 = {(x["subject_raw"], x["question_no"]): x for x in d2.get("rows", [])}
         islem2 = rows2.get(("Matematik", 4), {})
@@ -656,11 +669,14 @@ def main() -> int:
             if rr["topic_raw"] == "Zzz Gizemli Konu":
                 rr["topic_id"] = ids["temel"]
                 rr["manually_edited"] = False   # ai kaynaklı gibi
+        # farklı bir deneme olsun: son cevap değişik (aynı cevap dizisi = mükerrer)
+        conf3[0]["student_answer"] = "Z"
+        conf3[0]["result"] = "yanlis"
         r = cs.post("/api/v2/student/exams/import-confirm",
                     data={"payload": json.dumps(
                         {**payload, "title": payload["title"] + " B",
                          "rows": conf3})},
-                    files={"file": pdf_file})
+                    files={"file": fresh_pdf()})
         with SessionLocal() as db:
             a_zzz = db.query(ExamTopicAlias).filter(
                 ExamTopicAlias.scope == "tyt",
@@ -668,7 +684,8 @@ def main() -> int:
             check("20. AI, koç düzeltmesini SÖZLÜKTE ezemedi (coach kalır)",
                   r.status_code == 200 and a_zzz is not None
                   and a_zzz.topic_id == ids["rasyonel"]
-                  and a_zzz.source == "coach", f"zzz={a_zzz}")
+                  and a_zzz.source == "coach",
+                  f"status={r.status_code} body={r.text[:160]} zzz={a_zzz} rasyonel={ids['rasyonel']}")
         exam3_id = r.json().get("data", {}).get("exam_id")
 
         # 21) evren-dışı topic_id enjeksiyonu → düşürülür (kayıt topic'siz)
@@ -677,11 +694,13 @@ def main() -> int:
                           if rr["subject_raw"] == "TYT-TÜRKÇE"
                           and rr["question_no"] == 1)
         inj_target["topic_id"] = 999_999
+        inj_rows[1]["student_answer"] = "Z"    # aynı cevap dizisi = mükerrer olmasın
+        inj_rows[1]["result"] = "yanlis"        # (20'den de farklı satır)
         r = cs.post("/api/v2/student/exams/import-confirm",
                     data={"payload": json.dumps(
                         {**payload, "title": payload["title"] + " C",
                          "rows": inj_rows})},
-                    files={"file": pdf_file})
+                    files={"file": fresh_pdf()})
         inj_ok = False
         if r.status_code == 200:
             inj_exam_id = r.json()["data"]["exam_id"]
@@ -699,7 +718,7 @@ def main() -> int:
         r = cs.post("/api/v2/student/exams/import-confirm",
                     data={"payload": json.dumps(
                         {**payload, "title": payload["title"] + " D", "rows": bad})},
-                    files={"file": pdf_file})
+                    files={"file": fresh_pdf()})
         check("22. geçersiz sonuç → 422 invalid_result",
               r.status_code == 422
               and r.json()["detail"]["code"] == "invalid_result", r.text[:150])
@@ -708,7 +727,7 @@ def main() -> int:
         read_behavior["read"] = build_lgs_read()
         ai_label_map.clear()
         r = ct.post(f"/api/v2/teacher/students/{ids['lgs_student']}/exams/import-analyze",
-                    files={"file": pdf_file})
+                    files={"file": fresh_pdf()})
         dl = r.json() if r.status_code == 200 else {}
         check("23a. LGS tespiti (8. sınıf + anahtar kelime)",
               r.status_code == 200 and dl.get("universe") == "lgs"
@@ -734,7 +753,7 @@ def main() -> int:
                      for x in dl.get("rows", [])],
         }
         r = ct.post(f"/api/v2/teacher/students/{ids['lgs_student']}/exams/import-confirm",
-                    data={"payload": json.dumps(lgs_payload)}, files={"file": pdf_file})
+                    data={"payload": json.dumps(lgs_payload)}, files={"file": fresh_pdf()})
         dnet = r.json().get("data", {}).get("net") if r.status_code == 200 else None
         check("23d. LGS net cezası /3 (4D 1Y → 3.67)",
               r.status_code == 200 and dnet == 3.67, r.text[:200])
@@ -749,7 +768,7 @@ def main() -> int:
         # --- 25) BİRLEŞİK TG BELGESİ (TYT+AYT tek PDF) — gerçek ÖZDEBİR vakası ---
         read_behavior["read"] = build_combined_read()
         ai_label_map.clear()
-        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
         dcm = r.json() if r.status_code == 200 else {}
         pmap = {p["part"]: p for p in dcm.get("parts", [])}
         check("25a. iki oturum ayrıştı (tyt 5 + ayt 9)",
@@ -807,7 +826,7 @@ def main() -> int:
             if x["subject_raw"] == "Matematik" and x["question_no"] == 2:
                 x["topic_id"] = None
         r = cs.post("/api/v2/student/exams/import-confirm",
-                    data={"payload": json.dumps(p25)}, files={"file": pdf_file})
+                    data={"payload": json.dumps(p25)}, files={"file": fresh_pdf()})
         d25 = r.json().get("data", {}) if r.status_code == 200 else {}
         check("25f. yalnız AYT oturumu kaydedildi (ayt_say · 9 soru · net 3.5)",
               r.status_code == 200 and d25.get("section") == "ayt_say"
@@ -820,7 +839,7 @@ def main() -> int:
         # DEĞİL → servis siler, belge TEK AYT oturumu olarak işlenir.
         read_behavior["read"] = build_phantom_parts_read()
         ai_label_map.clear()
-        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": pdf_file})
+        r = cs.post("/api/v2/student/exams/import-analyze", files={"file": fresh_pdf()})
         d26 = r.json() if r.status_code == 200 else {}
         parts26 = d26.get("parts", [])
         check("26a. hayalet oturum bölünmesi YOK (tek oturum, part=None)",
@@ -925,7 +944,7 @@ def main() -> int:
         ai_label_map["Zamir"] = ids["sozcuk"]
         r = ct.post(
             f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
-            files={"file": pdf_file})
+            files={"file": fresh_pdf()})
         d28 = r.json() if r.status_code == 200 else {}
         rows28 = d28.get("rows", [])
         by_no28 = {x["question_no"]: x for x in rows28}
@@ -958,7 +977,7 @@ def main() -> int:
         }
         r = ct.post(
             f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-confirm",
-            data={"payload": json.dumps(p28)}, files={"file": pdf_file})
+            data={"payload": json.dumps(p28)}, files={"file": fresh_pdf()})
         d28c = r.json().get("data", {}) if r.status_code == 200 else {}
         check("28f. confirm karma havuzu KABUL etti (Maarif id düşmedi · net 1.75)",
               r.status_code == 200 and d28c.get("matched_topic_count") == 4
@@ -972,7 +991,7 @@ def main() -> int:
         ai_label_map["Zamir"] = ids["sozcuk"]
         r = ct.post(
             f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
-            files={"file": pdf_file})
+            files={"file": fresh_pdf()})
         d29 = r.json() if r.status_code == 200 else {}
         rows29 = d29.get("rows", [])
         check("29a. ÇİFT SAYIM YOK: 4 satır (8 değil) + şüpheli 0",
@@ -998,7 +1017,7 @@ def main() -> int:
         ai_label_map.clear()
         r = ct.post(
             f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
-            files={"file": pdf_file})
+            files={"file": fresh_pdf()})
         d29c = r.json() if r.status_code == 200 else {}
         check("29c. TDE adı + kw'siz okul belgesi AYT sanılmadı (tespit TYT)",
               r.status_code == 200 and d29c.get("universe") == "tyt",
@@ -1014,7 +1033,7 @@ def main() -> int:
         r = ct.post(
             f"/api/v2/teacher/students/{ids['m10_student']}/exams/import-analyze",
             data={"declared_section": "tyt", "declared_grade": "10"},
-            files={"file": pdf_file})
+            files={"file": fresh_pdf()})
         d30 = r.json() if r.status_code == 200 else {}
         m30 = next((x for x in d30.get("rows", [])
                     if x["question_no"] == 2), {})
@@ -1029,7 +1048,7 @@ def main() -> int:
         r = ct.post(
             f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
             data={"declared_section": "lgs"},
-            files={"file": pdf_file})
+            files={"file": fresh_pdf()})
         d30b = r.json() if r.status_code == 200 else {}
         mism = next((c for c in d30b.get("checks", [])
                      if c["code"] == "declared_mismatch"), None)
@@ -1066,7 +1085,7 @@ def main() -> int:
                 UsageEvent.actor_user_id == ids["coach"]).count()
         r = ct.post(
             f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
-            files={"file": pdf_file})
+            files={"file": fresh_pdf()})
         body31 = r.json() if r.status_code == 422 else {}
         with SessionLocal() as db31:
             used_after = db31.query(UsageEvent).filter(
@@ -1084,7 +1103,7 @@ def main() -> int:
         ai_label_map.clear()
         r = ct.post(
             f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
-            files={"file": pdf_file})
+            files={"file": fresh_pdf()})
         d31b = r.json() if r.status_code == 200 else {}
         mis31b = next((c for c in d31b.get("checks", [])
                        if c["code"] == "reads_misaligned"), None)
@@ -1101,7 +1120,7 @@ def main() -> int:
         ai_label_map.clear()
         r = ct.post(
             f"/api/v2/teacher/students/{ids['student']}/exams/import-analyze",
-            files={"file": pdf_file})
+            files={"file": fresh_pdf()})
         d31c = r.json() if r.status_code == 200 else {}
         mis31c = next((c for c in d31c.get("checks", [])
                        if c["code"] == "reads_misaligned"), None)

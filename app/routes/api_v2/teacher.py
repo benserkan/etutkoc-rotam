@@ -1478,6 +1478,19 @@ def teacher_create_exam_v2(
     """
     student = _get_owned_student(db, student_id, user.id)
     f = _validate_and_compute_exam(body)
+    # Mükerrer koruması (elle giriş): aynı ad + aynı/yakın tarih → uyarı;
+    # koç bilinçli "yine de kaydet" (force) diyebilir. PDF akışıyla aynı merkez.
+    if not body.force:
+        from app.services import exam_duplicate
+
+        dup = exam_duplicate.find_duplicate(
+            db, student.id, section=f["section"],
+            title=f["title"], exam_date=f["exam_date"],
+        )
+        if dup is not None:
+            raise HTTPException(status_code=409, detail={
+                "error": "conflict", "code": "duplicate_exam",
+                "message": dup.message(), "details": dup.as_details()})
     exam = ExamResult(
         student_id=student.id,
         created_by_id=user.id,

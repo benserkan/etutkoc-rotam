@@ -1972,6 +1972,8 @@ export interface ExamCreateBody {
   total_blank?: number;
   subjects?: ExamSubjectInput[];
   note?: string | null;
+  /** Mükerrer uyarısına (aynı ad + aynı/yakın tarih) rağmen kaydet. */
+  force?: boolean;
 }
 
 export interface ExamSubjectRow {

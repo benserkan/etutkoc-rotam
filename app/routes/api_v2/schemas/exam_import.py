@@ -74,6 +74,19 @@ class TopicChoice(BaseModel):
     subject_name: str
 
 
+class ImportDuplicate(BaseModel):
+    """Mükerrer tespiti (exam_duplicate TEK MERKEZ). level: exact → kayıt
+    açılmaz (zorlama yok; yol: yerine yaz / listedeki kaydı düzelt);
+    likely → uyarı, koç yerine yazar ya da ayrı kaydeder (force)."""
+    exam_id: int
+    level: str                             # exact | likely
+    reason: str                            # same_file|same_answers|near_answers|same_title_date|near_title_date
+    reason_label: str
+    title: str
+    exam_date: str
+    similarity: float
+
+
 class ExamImportDraft(BaseModel):
     """analyze çıktısı — önizleme ekranının tamamı."""
     title: str | None
@@ -90,7 +103,8 @@ class ExamImportDraft(BaseModel):
     checks: list[ImportCheck]
     suspect_count: int
     match_stats: ImportMatchStats
-    duplicate_exam_id: int | None
+    duplicate_exam_id: int | None          # geriye uyum — duplicate.exam_id ile aynı
+    duplicate: ImportDuplicate | None = None
     score_info: dict[str, Any] | None
     topic_choices: list[TopicChoice]       # konu düzeltme seçicisi adayları
     section_choices: list[SectionChoice]   # tür seçici (düşük güvende öne çıkar)
@@ -117,7 +131,8 @@ class ExamImportConfirmBody(BaseModel):
     scope: str | None = None
     grade_hint: int | None = None
     note: str | None = Field(default=None, max_length=500)
-    force: bool = False                    # mükerrer uyarısına rağmen kaydet
+    force: bool = False                    # "likely" mükerrere rağmen AYRI kaydet (exact'te geçersiz)
+    replace_exam_id: int | None = None     # mevcut kaydın YERİNE yaz (yeni kayıt açılmaz)
     score_info: dict[str, Any] | None = None
     rows: list[ConfirmRow]
 

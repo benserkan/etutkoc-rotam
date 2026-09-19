@@ -60,7 +60,7 @@ from app.models import (
     compute_net,
     section_penalty,
 )
-from app.services import ai_exam_import, gemini
+from app.services import ai_exam_import, exam_duplicate, gemini
 from app.services.curriculum_mapping import _label_key, _topic_key, normalize
 
 logger = logging.getLogger(__name__)
@@ -120,11 +120,12 @@ _SUBJECT_GROUPS: dict[str, tuple[str, ...]] = {
 class ExamImportError(Exception):
     """Servis hatası — router HTTP koduna çevirir."""
 
-    def __init__(self, status: int, code: str, message: str):
+    def __init__(self, status: int, code: str, message: str, details: dict | None = None):
         super().__init__(message)
         self.status = status
         self.code = code
         self.message = message
+        self.details = details
 
 
 # ============================================================================
@@ -1418,20 +1419,17 @@ def analyze(
             ),
         })
 
-    # mükerrer uyarısı (ad+tarih)
-    dup_id = None
+    # mükerrer tespiti — üç katman (belge parmak izi ROUTER'da, Gemini'den
+    # önce; burada içerik + ad/tarih). Önizleme koça durumu baştan söyler.
     exam_date = _parse_date(merged.get("exam_date"))
-    if merged.get("exam_title") and exam_date:
-        dup = (
-            db.query(ExamResult.id)
-            .filter(
-                ExamResult.student_id == student.id,
-                ExamResult.title == merged["exam_title"][:200],
-                ExamResult.exam_date == exam_date,
-            )
-            .first()
-        )
-        dup_id = dup[0] if dup else None
+    dup_match = exam_duplicate.find_duplicate(
+        db, student.id,
+        section=first_det["section"],
+        rows=all_rows,
+        title=(merged.get("exam_title") or "")[:200] or None,
+        exam_date=exam_date,
+    )
+    dup_id = dup_match.exam_id if dup_match else None
 
     # NOT: burada commit YOK — router, kredi bağlamıyla (consume_credits)
     # birlikte commit eder (alias hit_count artışları da onunla kalıcılaşır).
@@ -1457,6 +1455,7 @@ def analyze(
         "suspect_count": suspect_count,
         "match_stats": stats_total,
         "duplicate_exam_id": dup_id,
+        "duplicate": dup_match.as_details() if dup_match else None,
         "score_info": merged.get("score_info"),
         "topic_choices": topic_choices,
     }
@@ -1595,25 +1594,36 @@ def confirm(
       rastgele id enjekte edilemez).
     - Öğrenen sözlük güncellenir: koç düzeltmesi AI eşleşmesini ezer; tersi ezemez.
     """
-    prep = _prepare_confirm(db, student, payload)
-
-    # mükerrer koruması
-    if not payload.get("force"):
-        dup = (
-            db.query(ExamResult.id)
-            .filter(
-                ExamResult.student_id == student.id,
-                ExamResult.title == prep["title"],
-                ExamResult.exam_date == prep["exam_date"],
-            )
+    # --- "Yerine yaz": koç bilinçli olarak mevcut kaydı bu okumayla GÜNCELLER
+    # (yeni kayıt açılmaz → analiz iki kez saymaz). Kayıt öğrencinin olmalı.
+    replace_id = payload.get("replace_exam_id")
+    if replace_id:
+        target = (
+            db.query(ExamResult)
+            .filter(ExamResult.id == int(replace_id), ExamResult.student_id == student.id)
             .first()
         )
-        if dup:
-            raise ExamImportError(
-                409, "duplicate_exam",
-                "Bu deneme zaten kayıtlı görünüyor (aynı ad + tarih). "
-                "Yine de kaydetmek için onayla.",
-            )
+        if target is None:
+            raise ExamImportError(404, "replace_target_not_found",
+                                  "Yerine yazılacak deneme bulunamadı.")
+        return update_imported(
+            db, student, target, payload, actor=actor,
+            pdf_bytes=pdf_bytes, content_type=content_type,
+        )
+
+    prep = _prepare_confirm(db, student, payload)
+
+    # --- mükerrer koruması (üç katman; exam_duplicate TEK MERKEZ)
+    #   exact  → kayıt AÇILMAZ, zorlama yok (yol: yerine yaz / listedeki kaydı düzelt)
+    #   likely → uyarı; koç force ile "ayrı kaydet" diyebilir
+    pdf_sha = exam_duplicate.pdf_sha256(pdf_bytes)
+    dup = exam_duplicate.find_duplicate(
+        db, student.id,
+        section=prep["section"], rows=prep["rows_in"],
+        title=prep["title"], exam_date=prep["exam_date"], pdf_sha=pdf_sha,
+    )
+    if dup is not None and (dup.level == exam_duplicate.LEVEL_EXACT or not payload.get("force")):
+        raise ExamImportError(409, "duplicate_exam", dup.message(), dup.as_details())
 
     rows_in = prep["rows_in"]
     meta = {
@@ -1641,6 +1651,7 @@ def confirm(
         import_source="pdf_import",
         import_pdf_content_type=content_type if pdf_bytes else None,
         import_pdf_size=len(pdf_bytes) if pdf_bytes else None,
+        import_pdf_sha256=pdf_sha,
         import_pdf_data=pdf_bytes,
         analysis_meta=json.dumps(meta, ensure_ascii=False),
     )
@@ -1663,13 +1674,16 @@ def update_imported(
     payload: dict,
     *,
     actor: User,
+    pdf_bytes: bytes | None = None,
+    content_type: str | None = None,
 ) -> ExamResult:
     """İçe aktarılmış denemenin satırlarını GÜNCELLE (düzelt + yeniden kaydet).
 
     Koç düzeltme akışı: kayıtlı satırlar build_edit_draft ile önizleme olarak
     açılır → düzeltilir → buraya gelir. Toplamlar/net/ders kırılımı satırlardan
-    yeniden hesaplanır; soru satırları YERİNE yazılır; sözlük öğrenir. PDF
-    kanıtına dokunulmaz; kredi düşmez; mükerrer kontrolü yok (aynı kayıt).
+    yeniden hesaplanır; soru satırları YERİNE yazılır; sözlük öğrenir. Kredi
+    düşmez; mükerrer kontrolü yok (aynı kayıt). PDF kanıtı yalnız "yerine yaz"
+    yolunda (pdf_bytes verilince) yenilenir — düzeltme akışında dokunulmaz.
     """
     if exam.import_source != "pdf_import":
         raise ExamImportError(
@@ -1677,6 +1691,11 @@ def update_imported(
             "Satır düzenleme yalnız PDF'ten aktarılan denemelerde kullanılabilir.")
     prep = _prepare_confirm(db, student, payload)
     rows_in = prep["rows_in"]
+    if pdf_bytes:
+        exam.import_pdf_data = pdf_bytes
+        exam.import_pdf_size = len(pdf_bytes)
+        exam.import_pdf_content_type = content_type
+        exam.import_pdf_sha256 = exam_duplicate.pdf_sha256(pdf_bytes)
 
     try:
         meta = json.loads(exam.analysis_meta) if exam.analysis_meta else {}

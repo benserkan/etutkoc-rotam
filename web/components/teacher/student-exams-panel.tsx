@@ -647,6 +647,9 @@ function ExamForm({
   );
   const [note, setNote] = React.useState(editRow?.note ?? "");
   const [error, setError] = React.useState<string | null>(null);
+  // Mükerrer uyarısı (aynı ad + aynı/yakın tarih): sunucu 409 döner, koç
+  // bilinçli "yine de kaydet" derse force ile tekrar gönderilir.
+  const [dupWarn, setDupWarn] = React.useState<string | null>(null);
 
   // Canlı net önizlemesi
   const previewNet = React.useMemo(() => {
@@ -728,8 +731,36 @@ function ExamForm({
     if (editRow) {
       update.mutate({ examId: editRow.id, body }, { onSuccess: () => onDone() });
     } else {
-      create.mutate({ body }, { onSuccess: () => onDone() });
+      setDupWarn(null);
+      create.mutate(
+        { body },
+        {
+          onSuccess: () => onDone(),
+          onError: (err) => {
+            if (err.status === 409 && err.detail?.code === "duplicate_exam") {
+              setDupWarn(err.message);
+            }
+          },
+        },
+      );
     }
+  }
+
+  function submitForce() {
+    // Aynı gövdeyi force ile yeniden gönder (koç kararı: ayrı deneme)
+    const t = title.trim();
+    const base = { title: t, exam_date: examDate, section, note: note.trim() || null, force: true };
+    const body: ExamCreateBody =
+      mode === "total"
+        ? { ...base, total_correct: Number(correct) || 0, total_wrong: Number(wrong) || 0, total_blank: Number(blank) || 0 }
+        : {
+            ...base,
+            subjects: subjects
+              .map((s) => ({ name: s.name.trim(), correct: Number(s.correct) || 0, wrong: Number(s.wrong) || 0, blank: Number(s.blank) || 0 }))
+              .filter((s) => s.name.length > 0),
+          };
+    setDupWarn(null);
+    create.mutate({ body }, { onSuccess: () => onDone() });
   }
 
   return (
@@ -923,6 +954,28 @@ function ExamForm({
         <p className="text-sm text-destructive" role="alert">
           {error}
         </p>
+      ) : null}
+
+      {dupWarn ? (
+        <div
+          role="alert"
+          className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200"
+        >
+          <p>
+            <b>Mükerrer olabilir:</b> {dupWarn} Aynı denemeyse kaydetme; listedeki
+            kaydı düzenle. Gerçekten ayrı bir denemeyse yine de kaydedebilirsin.
+          </p>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="mt-2"
+            disabled={busy}
+            onClick={submitForce}
+          >
+            Ayrı deneme olarak yine de kaydet
+          </Button>
+        </div>
       ) : null}
 
       <div className="flex items-center justify-end gap-2 pt-1">

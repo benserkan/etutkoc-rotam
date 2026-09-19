@@ -2074,6 +2074,7 @@ class ExamCreateBody(BaseModel):
     total_blank: int = 0
     subjects: list[ExamSubjectInput] = []
     note: str | None = None
+    force: bool = False  # mükerrer uyarısına (aynı ad + tarih) rağmen kaydet
 
 
 class ExamSubjectRow(BaseModel):

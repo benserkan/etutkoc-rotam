@@ -43,6 +43,7 @@ from app.services import exam_import_service as svc
 from app.services import exam_topic_analysis
 from app.services import wrong_question_service
 from app.services.ai_book_template import AIInvalidResponse, AIServiceUnavailable
+from app.services import exam_duplicate
 from app.services.credits import CreditBlocked, CreditOwner, KIND_CREDITS, consume_credits
 from app.services.plans import ai_premium_allowed
 
@@ -159,9 +160,11 @@ def _read_pdf_upload(file: UploadFile | None) -> bytes:
 
 
 def _svc_error(e: svc.ExamImportError) -> HTTPException:
-    kind = {409: "conflict", 422: "validation"}.get(e.status, "error")
-    return HTTPException(status_code=e.status, detail={
-        "error": kind, "code": e.code, "message": e.message})
+    kind = {404: "not_found", 409: "conflict", 422: "validation"}.get(e.status, "error")
+    detail: dict = {"error": kind, "code": e.code, "message": e.message}
+    if getattr(e, "details", None):
+        detail["details"] = e.details
+    return HTTPException(status_code=e.status, detail=detail)
 
 
 def _section_choices() -> list[SectionChoice]:
@@ -174,6 +177,16 @@ def _run_analyze(
     declared_section: str | None = None, declared_grade: int | None = None,
 ) -> ExamImportDraft:
     """Çift okuma + normalizasyon; kredi koçun havuzundan (tek seferde 6)."""
+    # Mükerrer katman 1 — belge parmak izi: aynı PDF daha önce bu öğrenciye
+    # aktarıldıysa Gemini'ye GİTMEDEN dur (kredi harcanmaz, 3-5 dk beklenmez).
+    # Zorlama yok; yol: listedeki kaydı düzelt ya da önce onu sil.
+    prior = exam_duplicate.find_by_pdf(db, student.id, exam_duplicate.pdf_sha256(pdf_bytes))
+    if prior is not None:
+        m = exam_duplicate.DuplicateMatch(
+            exam_duplicate.LEVEL_EXACT, "same_file", prior.id, prior.title,
+            prior.exam_date.isoformat(), 1.0,
+        )
+        raise _svc_error(svc.ExamImportError(409, "duplicate_exam", m.message(), m.as_details()))
     try:
         with consume_credits(
             db, owner=CreditOwner.for_user(coach), kind=UsageKind.AI_EXAM_IMPORT,

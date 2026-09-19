@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   FileUp,
   Loader2,
+  RefreshCw,
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
@@ -35,6 +36,7 @@ import type {
   ExamImportConfirmResult,
   ExamImportDraft,
   ImportDraftRow,
+  ImportDuplicate,
   ImportResultValue,
 } from "@/lib/types/exam-import";
 import { cn } from "@/lib/utils";
@@ -201,7 +203,12 @@ function ImportFlow({
   // kaydedilir; koç ikinci oturum için tekrar "kaydet" yapar (analiz tek, kredi tek).
   const [selectedPart, setSelectedPart] = React.useState<string | null>(null);
   const [result, setResult] = React.useState<ExamImportConfirmResult | null>(null);
-  const [needForce, setNeedForce] = React.useState(false);
+  // Mükerrer durumu (sunucu TEK MERKEZ karar verir): önizlemede taslaktan ya da
+  // kayıt anındaki 409'dan gelir. exact → "yerine yaz" tek yol; likely → koç seçer.
+  const [dup, setDup] = React.useState<ImportDuplicate | null>(null);
+  // Analiz adımında yakalanan "aynı PDF" (Gemini'ye gidilmedi, kredi yok).
+  const [analyzeDup, setAnalyzeDup] = React.useState<ImportDuplicate | null>(null);
+  const [replaced, setReplaced] = React.useState(false);
   const fileRef = React.useRef<HTMLInputElement>(null);
 
   const multi = (draft?.parts.length ?? 0) > 1;
@@ -224,11 +231,13 @@ function ImportFlow({
     setTitleTouched(false);
     setExamDate(d.exam_date ?? "");
     setSection(d.parts[0]?.section ?? d.section);
+    setDup(d.duplicate ?? null);
     setStep("preview");
   }
 
   async function analyze(f: File) {
     setFile(f);
+    setAnalyzeDup(null);
     setStep("analyzing");
     const decl = {
       declaredSection: declSection || null,
@@ -241,6 +250,12 @@ function ImportFlow({
         : await studentAnalyzeExamPdf(f, decl);
       applyDraft(d);
     } catch (e) {
+      if (e instanceof ApiError && e.detail?.code === "duplicate_exam") {
+        // Aynı PDF daha önce aktarılmış — Gemini'ye gidilmedi, kredi harcanmadı.
+        setAnalyzeDup((e.detail.details as unknown as ImportDuplicate) ?? null);
+        setStep("pick");
+        return;
+      }
       const msg = e instanceof ApiError ? e.message : "Belge analiz edilemedi.";
       toast.error("Analiz başarısız", { description: msg });
       setStep("pick");
@@ -285,7 +300,9 @@ function ImportFlow({
     [rows, multi, selectedPart],
   );
 
-  async function save(force: boolean) {
+  type SaveMode = "normal" | "force" | "replace";
+
+  async function save(mode: SaveMode) {
     if (!draft) return;
     const missing = activeRows.filter((r) => r.result == null).length;
     if (missing > 0) {
@@ -306,7 +323,8 @@ function ImportFlow({
       scope: draft.scope,
       grade_hint: draft.grade_hint,
       score_info: draft.score_info,
-      force,
+      force: mode === "force",
+      replace_exam_id: mode === "replace" ? (dup?.exam_id ?? null) : null,
       rows: activeRows.map((r): ConfirmRow => ({
         subject_raw: r.subject_raw,
         question_no: r.question_no,
@@ -327,10 +345,12 @@ function ImportFlow({
           : await studentConfirmExamImport(body, file);
       applyInvalidate(qc, res.invalidate);
       setResult(res.data);
+      setReplaced(mode === "replace");
       setStep("done");
     } catch (e) {
       if (e instanceof ApiError && e.detail?.code === "duplicate_exam") {
-        setNeedForce(true);
+        // Sunucu karar verdi: exact → yalnız "yerine yaz"; likely → koç seçer.
+        setDup((e.detail.details as unknown as ImportDuplicate) ?? dup);
         setStep("preview");
         return;
       }
@@ -373,6 +393,7 @@ function ImportFlow({
             <PickStep
               fileRef={fileRef}
               onPick={(f) => void analyze(f)}
+              analyzeDup={analyzeDup}
               declGrade={declGrade}
               declSection={declSection}
               onDeclGrade={(v) => {
@@ -415,7 +436,7 @@ function ImportFlow({
               title={title}
               examDate={examDate}
               section={section}
-              needForce={needForce}
+              dup={dup}
               onTitle={(v) => { setTitle(v); setTitleTouched(true); }}
               onDate={setExamDate}
               onSection={setSection}
@@ -425,7 +446,7 @@ function ImportFlow({
           ) : null}
 
           {step === "done" && result ? (
-            <DoneStep result={result} updated={editMode} studentId={studentId} />
+            <DoneStep result={result} updated={editMode || replaced} studentId={studentId} />
           ) : null}
         </div>
 
@@ -444,22 +465,51 @@ function ImportFlow({
                   </span>
                 ) : null}
               </div>
-              <div className="ml-auto flex gap-2">
+              <div className="ml-auto flex flex-wrap gap-2">
                 <Button variant="outline" onClick={onClose} disabled={step === "saving"}>
                   Vazgeç
                 </Button>
-                <Button
-                  onClick={() => void save(needForce)}
-                  disabled={step === "saving"}
-                  className={cn("gap-1.5", needForce && "bg-amber-600 hover:bg-amber-700")}
-                >
-                  {step === "saving" ? (
-                    <Loader2 className="size-4 animate-spin" aria-hidden />
-                  ) : (
-                    <CheckCircle2 className="size-4" aria-hidden />
-                  )}
-                  {needForce ? "Yine de kaydet (mükerrer)" : "Kontrol ettim, kaydet"}
-                </Button>
+                {dup && !editMode ? (
+                  <>
+                    {/* Mükerrer: exact → yalnız "yerine yaz" (zorlama YOK);
+                        likely → koç "yerine yaz" ya da "ayrı kaydet" seçer. */}
+                    <Button
+                      onClick={() => void save("replace")}
+                      disabled={step === "saving"}
+                      className="gap-1.5 bg-amber-600 hover:bg-amber-700"
+                    >
+                      {step === "saving" ? (
+                        <Loader2 className="size-4 animate-spin" aria-hidden />
+                      ) : (
+                        <RefreshCw className="size-4" aria-hidden />
+                      )}
+                      Var olanın yerine yaz
+                    </Button>
+                    {dup.level === "likely" ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => void save("force")}
+                        disabled={step === "saving"}
+                        className="gap-1.5"
+                      >
+                        Ayrı deneme olarak kaydet
+                      </Button>
+                    ) : null}
+                  </>
+                ) : (
+                  <Button
+                    onClick={() => void save("normal")}
+                    disabled={step === "saving"}
+                    className="gap-1.5"
+                  >
+                    {step === "saving" ? (
+                      <Loader2 className="size-4 animate-spin" aria-hidden />
+                    ) : (
+                      <CheckCircle2 className="size-4" aria-hidden />
+                    )}
+                    Kontrol ettim, kaydet
+                  </Button>
+                )}
               </div>
             </div>
           ) : step === "done" ? (
@@ -483,6 +533,7 @@ function ImportFlow({
 function PickStep({
   fileRef,
   onPick,
+  analyzeDup,
   declGrade,
   declSection,
   onDeclGrade,
@@ -490,6 +541,7 @@ function PickStep({
 }: {
   fileRef: React.RefObject<HTMLInputElement | null>;
   onPick: (f: File) => void;
+  analyzeDup: ImportDuplicate | null;
   declGrade: string;
   declSection: string;
   onDeclGrade: (v: string) => void;
@@ -498,6 +550,16 @@ function PickStep({
   const sectionChoices = sectionChoicesFor(declGrade);
   return (
     <div className="space-y-4">
+      {analyzeDup ? (
+        <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+          <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
+          <b>Bu PDF zaten aktarılmış:</b> <i>{analyzeDup.title}</i> (
+          {new Date(analyzeDup.exam_date).toLocaleDateString("tr-TR")}). Belge yeniden
+          okunmadı, kredi harcanmadı. Kayıt deneme listesinde duruyor; satırlarını
+          düzeltmek için oradaki &quot;Satırları düzelt&quot;i kullan. Başka bir belge
+          yüklemek istiyorsan farklı bir dosya seç.
+        </div>
+      ) : null}
       {/* BEYAN ESAS: sınıf + tür seçilirse tespit bekçiye döner (çelişkide uyarır) */}
       <div className="rounded-md border border-border bg-muted/30 p-3">
         <p className="mb-2 text-xs font-medium text-foreground">
@@ -581,7 +643,7 @@ function PreviewStep({
   title,
   examDate,
   section,
-  needForce,
+  dup,
   onTitle,
   onDate,
   onSection,
@@ -595,7 +657,7 @@ function PreviewStep({
   title: string;
   examDate: string;
   section: string;
-  needForce: boolean;
+  dup: ImportDuplicate | null;
   onTitle: (v: string) => void;
   onDate: (v: string) => void;
   onSection: (v: string) => void;
@@ -697,11 +759,24 @@ function PreviewStep({
       ) : null}
 
       {/* Mükerrer / kontrol uyarıları */}
-      {needForce || draft.duplicate_exam_id ? (
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-          Bu deneme (aynı ad + tarih) daha önce kaydedilmiş görünüyor.
-          Yeniden kaydedersen <b>iki ayrı kayıt</b> oluşur.
-        </div>
+      {dup ? (
+        dup.level === "exact" ? (
+          <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900 dark:border-rose-500/30 dark:bg-rose-500/10 dark:text-rose-200">
+            <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
+            <b>Bu deneme zaten kayıtlı:</b> {dup.reason_label} —{" "}
+            <i>{dup.title}</i> ({new Date(dup.exam_date).toLocaleDateString("tr-TR")}).
+            İkinci bir kayıt açılmaz; analiz iki kez saymasın. Bu okumayı mevcut
+            kaydın <b>yerine yazabilirsin</b> ya da listeden o kaydı düzeltebilirsin.
+          </div>
+        ) : (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            <AlertTriangle className="mr-1 inline size-3.5" aria-hidden />
+            <b>Bu deneme kayıtlı olabilir:</b> {dup.reason_label} —{" "}
+            <i>{dup.title}</i> ({new Date(dup.exam_date).toLocaleDateString("tr-TR")}
+            {dup.reason === "near_answers" ? `, cevapların %${Math.round(dup.similarity * 100)}'i aynı` : ""}).
+            Aynı denemeyse <b>yerine yaz</b>; gerçekten farklı bir denemeyse ayrı kaydet.
+          </div>
+        )
       ) : null}
       {failing.map((c) => (
         <div

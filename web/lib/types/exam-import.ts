@@ -82,10 +82,28 @@ export interface ExamImportDraft {
   suspect_count: number;
   match_stats: ImportMatchStats;
   duplicate_exam_id: number | null;
+  /** Mükerrer tespiti (exam_duplicate TEK MERKEZ): exact → kayıt açılmaz
+   *  (yol: yerine yaz); likely → uyarı, koç yerine yazar ya da ayrı kaydeder. */
+  duplicate: ImportDuplicate | null;
   score_info: Record<string, unknown> | null;
   topic_choices: TopicChoice[];
   section_choices: SectionChoice[];
   credits_charged: number;
+}
+
+export interface ImportDuplicate {
+  exam_id: number;
+  level: "exact" | "likely";
+  reason:
+    | "same_file"
+    | "same_answers"
+    | "near_answers"
+    | "same_title_date"
+    | "near_title_date";
+  reason_label: string;
+  title: string;
+  exam_date: string;
+  similarity: number;
 }
 
 export interface ConfirmRow {
@@ -107,7 +125,10 @@ export interface ExamImportConfirmBody {
   scope?: string | null;
   grade_hint?: number | null;
   note?: string | null;
+  /** "likely" mükerrere rağmen AYRI kaydet (exact'te sunucu yok sayar). */
   force?: boolean;
+  /** Mevcut kaydın YERİNE yaz — yeni kayıt açılmaz, analiz iki kez saymaz. */
+  replace_exam_id?: number | null;
   score_info?: Record<string, unknown> | null;
   rows: ConfirmRow[];
 }
