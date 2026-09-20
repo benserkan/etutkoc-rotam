@@ -9,7 +9,8 @@ Koç görevi SİLDİ → silme completed'ı geri almadığından Hücre Zarı'nd
 Senaryolar:
   1. Varsayılan silme çözülenleri KORUR (eski davranış — gerçekten çözülen test)
   2. ÇIKMAZIN ÇÖZÜMÜ: görevi silinmiş sahipsiz 'çözüldü' elle 0'a düşürülebilir
-  3. Canlı görevin tuttuğu çözülenler elle DÜŞÜRÜLEMEZ (kurum metrik koruması)
+  3. Öğrenci çözmediği testi işaretlemiş: koç panelden gerçek sayıyı yazar →
+     fark görevden geri alınır (görev silinmez, kısmi/bekliyor olur) + uyarı
   4. revert_completed=true → çözülenler de geri alınır, rezerv de sıfırlanır
   5. revert sonrası bölüm kapasitesi tam geri döner (yeniden atanabilir)
   6. Kısmi tamamlanmış görevde revert: çözülen + bekleyen rezerv birlikte iade
@@ -175,10 +176,27 @@ def main() -> int:
               r.status_code == 200 and counters(sb, s["a"]) == (0, 0),
               f"{r.status_code} {r.text[:200]} {counters(sb, s['a'])}")
 
+        # 3. SAHA-2: öğrenci 3 işaretlemiş ama 1 çözmüş → koç panelden 1 yazar
+        r = set_abs(s["b"], 1)
+        with SessionLocal() as db:
+            tb = db.get(Task, s["t_b"])
+            it = tb.book_items[0]
+            t_state = (tb.status, it.completed_count, tb.completed_at)
+        warns = (r.json().get("warnings") or []) if r.status_code == 200 else []
+        check("3a. panelden 3→1: sayaç çözüldü 1, fark rezerve döndü (2)",
+              r.status_code == 200 and counters(sb, s["b"]) == (2, 1),
+              f"{r.status_code} {r.text[:200]} {counters(sb, s['b'])}")
+        check("3b. görev SİLİNMEDİ: kısmi (1/3) olarak yeniden açıldı",
+              t_state[0] == TaskStatus.PARTIAL and t_state[1] == 1 and t_state[2] is None,
+              f"{t_state}")
+        check("3c. koça hangi görevin düzeltildiği bildirildi (warnings)",
+              len(warns) == 1 and "3→1" in warns[0], f"{warns}")
         r = set_abs(s["b"], 0)
-        check("3. canlı görevle çözülen kısım elle DÜŞÜRÜLEMEZ (422)",
-              r.status_code == 422 and counters(sb, s["b"]) == (0, 3),
-              f"{r.status_code} {counters(sb, s['b'])}")
+        with SessionLocal() as db:
+            st_b = db.get(Task, s["t_b"]).status
+        check("3d. 1→0: görev tamamen 'bekliyor'a döndü, rezerv 3",
+              r.status_code == 200 and counters(sb, s["b"]) == (3, 0)
+              and st_b == TaskStatus.PENDING, f"{counters(sb, s['b'])} {st_b}")
 
         r = c.delete(f"/api/v2/teacher/tasks/{s['t_c']}?revert_completed=true")
         check("4. revert_completed: çözülenler geri alındı, rezerv 0",

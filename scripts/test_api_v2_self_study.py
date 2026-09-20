@@ -165,13 +165,16 @@ try:
     db.add(TaskBookItem(task_id=_t.id, book_id=book.id, book_section_id=sec1.id,
                         planned_count=5, completed_count=5))
     sp1 = sp_for(sec1.id); sp1.completed_count += 5; db.commit()
-    try:
-        teacher_set_section_completed_v2(stu.id, sb.id, sec1.id,
-                                         SectionCompletedBaselineBody(completed_count=2), coach, db)
-        check("10. görev kısmı azaltılamaz -> 422", False, "exception bekleniyordu")
-    except HTTPException as ex:
-        check("10. görev kısmı azaltılamaz -> 422 manual_reduce_exceeds",
-              ex.status_code == 422 and ex.detail.get("code") == "manual_reduce_exceeds")
+    # 8 -> 2: elle 3 düşer + kalan 3 GÖREVDEN geri alınır (2026-09-20: öğrenci
+    # çözmediğini işaretlediyse koç gerçek sayıyı yazar; görev yeniden açılır).
+    teacher_set_section_completed_v2(stu.id, sb.id, sec1.id,
+                                     SectionCompletedBaselineBody(completed_count=2), coach, db)
+    db.refresh(_t)
+    check("10. azalış göreve uzandı: completed=2, manual=0, görev 5->2 kısmi",
+          sp_for(sec1.id).completed_count == 2 and sp_for(sec1.id).manual_count == 0
+          and _t.book_items[0].completed_count == 2 and _t.status == TaskStatus.PARTIAL,
+          f"sp={sp_for(sec1.id).completed_count}/{sp_for(sec1.id).manual_count} "
+          f"item={_t.book_items[0].completed_count} {_t.status}")
     # sınır aşımı hâlâ 422 (rezerv korunur): sec2 max 25
     try:
         teacher_set_section_completed_v2(stu.id, sb.id, sec2.id,
@@ -267,7 +270,7 @@ try:
 
     # ---- 10) Öğrenci listesi + seçenekler ----
     slst = student_self_study_list_v2(user=stu, db=db)
-    check("23. öğrenci kendi listesini görür", len(slst.items) >= 3)
+    check("23. öğrenci kendi listesini görür", len(slst.items) >= 2, f"got {len(slst.items)}")  # sc.10 sec1'in son elle kaydını tüketir
     opts = student_self_study_options_v2(user=stu, db=db)
     ob = next((b for b in opts.books if b.student_book_id == sb.id), None)
     osec2 = next((s for s in ob.sections if s.section_id == sec2.id), None) if ob else None

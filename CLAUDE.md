@@ -33,6 +33,18 @@ yanlış görevi SİLDİ — ama Hücre Zarı'nda 3 test "çözüldü" kaldı.
   görevsiz sayaç şişirerek "görevle çözülmüş"ü taklit ediyordu = tam da artık
   düşürülebilir olan sahipsiz durum) · phase2 17 · baseline 7 · reconcile 7 ·
   book_grid 17 · weekly_plan 15 · teacher_read 12; tsc+eslint temiz.
+- **DEVAMI (aynı gün) — "öğrenci 3 işaretledi ama 1 çözmüş":** koç bunu Kaynak/
+  Kitaplar panelinde fark ediyor; eski yol = o güne gidip görevi bulup sonuç
+  rozetinden düzeltmek (ya da silmek). Artık panelde **"Çözülmüş test" alanına
+  gerçek sayı yazılır**: azalış önce elle/sahipsiz kısımdan, yetmezse
+  `_reopen_from_tasks` ile EN YENİ görev kaleminden geri alınır
+  (`task_service.set_item_completion` — TEK MERKEZ; completed → rezerve döner,
+  görev SİLİNMEZ, PARTIAL/PENDING olur → öğrencinin borcu programda görünür).
+  Yanıt `warnings` ile hangi görevin düzeltildiğini söyler ("18.09 görevi 3→1"),
+  audit `reopened_tasks` taşır, öğrenci öneki bayatlatılır (hafta/gün/kapasite).
+  Panelde kaydetmeden önce amber ipucu. `manual_reduce_exceeds` 422'si fiilen
+  emekli (koç aynı işlemi görev rozetinden zaten yapabiliyordu — yeni yetki
+  YOK; azaltma metrikleri şişirmez). wrong_topic_delete **9/9** · self_study 25.
 - **KURAL:** "çözüldü" sayacını koruyan guard, korunan şeyi GERÇEK kaynaktan
   (canlı görev kalemi) ölçer — türetilmiş bir sayaçtan (manual_count) değil;
   yoksa kaynak silinince kalıcı kilit doğar.

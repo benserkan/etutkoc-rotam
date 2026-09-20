@@ -1145,7 +1145,8 @@ export function useSetSectionCompleted(studentId: number) {
     onError: (err) => showError(err, "Bölüm işaretlenemedi"),
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
-      toast.success("Bölüm güncellendi");
+      // Azaltma görevlere uzandıysa hangi görevin yeniden açıldığı uyarıda gelir.
+      showWarnings(res, "Bölüm güncellendi");
     },
   });
 }

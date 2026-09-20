@@ -7098,8 +7098,9 @@ def teacher_set_section_completed_v2(
     """Bir bölümü 'öğrenci zaten çözmüş' olarak işaretle (geçmiş yıl baseline).
 
     Artık İZLİ (self_study_service): artış → koç kaydı olarak saklanır; azalış
-    yalnız elle/bağımsız girilen (manual) kısımdan düşülür — görevle çözülenler
-    buradan azaltılamaz. Kalan (test − rezerv − tamam) düşer → programda bir
+    önce elle/sahipsiz kısımdan, yetmezse en yeni görev kalemlerinden geri alınır
+    (öğrenci çözmediği testi işaretlemişse koç gerçek sayıyı buraya yazar; yeniden
+    açılan görevler `warnings` ile bildirilir + audit'e yazılır). Kalan (test − rezerv − tamam) düşer → programda bir
     daha atanmaz. Üst sınır = test_count − reserved_count (aktif rezerv korunur).
     """
     from app.services import self_study_service as ss_svc
@@ -7135,10 +7136,11 @@ def teacher_set_section_completed_v2(
         .first()
     )
     prev_completed = int(sp_row.completed_count) if sp_row else 0
+    reopened: list[dict] = []
     try:
         ss_svc.set_absolute_completed(
             db, student=student, sb=sb, section=section,
-            actor=user, target=body.completed_count,
+            actor=user, target=body.completed_count, reopened=reopened,
         )
     except ss_svc.SelfStudyError as e:
         raise HTTPException(
@@ -7161,16 +7163,30 @@ def teacher_set_section_completed_v2(
                 "section_id": section_id,
                 "from": prev_completed,
                 "to": body.completed_count,
+                "reopened_tasks": reopened,
             },
             autocommit=False,
         )
     db.commit()
     db.refresh(sb)
+    invalidate = _invalidate_for_students(user.id, student.id) + [
+        f"teacher:{user.id}:students:{student.id}:books",
+    ]
+    warnings: list[str] = []
+    if reopened:
+        # Görevler yeniden açıldı → program/gün/kapasite yüzeylerinin tamamı
+        # (öğrenci öneki prefix eşleşmesiyle hepsini kapsar).
+        invalidate.append(f"teacher:{user.id}:students:{student.id}")
+        for r in reopened:
+            d = date.fromisoformat(r["date"]).strftime("%d.%m")
+            warnings.append(
+                f"{d} görevi {r['from']}→{r['to']} çözüldü olarak düzeltildi "
+                f"(kalan testler öğrencinin programında yeniden bekliyor)"
+            )
     return MutationResponse[StudentBookListItem](
         data=_student_book_summary(db, sb),
-        invalidate=_invalidate_for_students(user.id, student.id) + [
-            f"teacher:{user.id}:students:{student.id}:books",
-        ],
+        invalidate=invalidate,
+        warnings=warnings,
     )
 
 

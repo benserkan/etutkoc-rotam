@@ -783,6 +783,13 @@ function SectionRow({
             >
               İptal
             </button>
+            {val < s.completed_count - s.manual_count ? (
+              <p className="basis-full text-[11px] text-amber-700 dark:text-amber-300">
+                Öğrenci çözmediği testi işaretlediyse gerçek sayıyı yaz: fark en
+                yeni görevden geri alınır, o testler öğrencinin programında
+                yeniden &quot;bekliyor&quot; olur (görevi silmen gerekmez).
+              </p>
+            ) : null}
           </div>
         ) : (
           <button

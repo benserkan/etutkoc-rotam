@@ -230,6 +230,55 @@ def delete_entry(db: Session, entry: SelfStudyEntry) -> int:
     return reverted
 
 
+def _reopen_from_tasks(
+    db: Session,
+    *,
+    student: User,
+    section: BookSection,
+    count: int,
+    reopened: list[dict] | None,
+) -> None:
+    """`count` kadar 'çözüldü'yü görev kalemlerinden geri al (en yeni görevden
+    geriye). Sayaç muhasebesi task_service.set_item_completion'da (TEK MERKEZ);
+    görev durumu kalem toplamlarından yeniden değerlendirilir."""
+    from app.models import TaskStatus
+    from app.services.task_service import set_item_completion
+
+    items = (
+        db.query(TaskBookItem)
+        .join(Task, Task.id == TaskBookItem.task_id)
+        .filter(
+            Task.student_id == student.id,
+            TaskBookItem.book_section_id == section.id,
+            TaskBookItem.completed_count > 0,
+        )
+        .order_by(Task.date.desc(), Task.id.desc(), TaskBookItem.id.desc())
+        .all()
+    )
+    left = count
+    for it in items:
+        if left <= 0:
+            break
+        take = min(int(it.completed_count), left)
+        before = int(it.completed_count)
+        set_item_completion(db, it, before - take)
+        left -= take
+        task = it.task
+        total_planned = sum(i.planned_count for i in task.book_items)
+        total_done = sum(i.completed_count for i in task.book_items)
+        if total_done == 0:
+            task.status = TaskStatus.PENDING
+            task.completed_at = None
+        elif total_done < total_planned:
+            task.status = TaskStatus.PARTIAL
+            task.completed_at = None
+        if reopened is not None:
+            reopened.append({
+                "task_id": task.id, "date": task.date.isoformat(),
+                "from": before, "to": before - take,
+            })
+
+
 def set_absolute_completed(
     db: Session,
     *,
@@ -239,12 +288,14 @@ def set_absolute_completed(
     actor: User,
     target: int,
     note: str | None = None,
+    reopened: list[dict] | None = None,
 ) -> SectionProgress:
     """Eski "toplam çözülmüş = N" mutlak girişi (kitap paneli inline alanı).
 
-    Artık izli: artış → koç kaydı (anında onaylı); azalış → yalnız MANUAL
-    kısımdan düşülür (en yeni kayıtlardan geriye doğru). Görevle çözülen kısım
-    buradan azaltılamaz (422 manual_reduce_exceeds).
+    Artık izli: artış → koç kaydı (anında onaylı); azalış → önce elle/sahipsiz
+    kısımdan (en yeni kayıtlardan geriye), yetmezse görev kalemlerinden geri
+    alınır (`_reopen_from_tasks`; etkilenen görevler `reopened` listesine yazılır
+    → uç koça hangi görevin yeniden açıldığını söyler).
     """
     sp = get_or_create_progress(db, sb.id, section.id)
     max_allowed = max(0, int(section.test_count or 0) - int(sp.reserved_count or 0))
@@ -292,13 +343,21 @@ def set_absolute_completed(
             int(sp.manual_count or 0), int(sp.completed_count or 0) - task_held
         )
         if reduce > reducible:
-            raise SelfStudyError(
-                "manual_reduce_exceeds",
-                f"En fazla {reducible} test azaltılabilir — kalan {task_held} test "
-                f"programdaki görevlerle çözülmüş; onlar ilgili görev üzerinden "
-                f"düzeltilir (görevde tamamlamayı geri al ya da görevi silerken "
-                f"'çözülenleri geri al').",
+            # Fazlası CANLI görevlerde "çözüldü" işaretli: öğrenci çözmediği testi
+            # işaretlemiş. Koç gerçek sayıyı buraya yazar; fark EN YENİ görevden
+            # geriye doğru görev kalemlerinden geri alınır (kalem rezerve döner →
+            # görev "kısmi/bekliyor" olur, öğrencinin borcu görünür kalır). Koç
+            # bunu görev satırındaki sonuç rozetinden zaten yapabiliyordu; burası
+            # aynı işlemin kaynak panelinden kısa yolu.
+            _reopen_from_tasks(
+                db, student=student, section=section,
+                count=reduce - reducible, reopened=reopened,
             )
+            reduce = reducible
+            db.flush()
+            db.refresh(sp)
+        if reduce <= 0:
+            return sp
         remaining = reduce
         entries = (
             db.query(SelfStudyEntry)
