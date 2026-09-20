@@ -6,6 +6,44 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## YANLIŞ KONUYA GİRİLEN TAMAMLANMIŞ GÖREV — geri alma yolları (2026-09-20, commit `c4569f3`, migration YOK, CANLI)
+
+**Tetikleyici (koç, Emir #113 · 3D TYT Biyoloji):** görevler "Hücre Zarında
+Gerçekleşen Olaylar"a girildi, öğrenci aslında "Hücre Organelleri"ni çözüp
+görevi tamamladı. Koç Organeller'i bağımsız çalışmayla 7/7 işaretledi (doğru),
+yanlış görevi SİLDİ — ama Hücre Zarı'nda 3 test "çözüldü" kaldı.
+- **TEŞHİS (kod + prod salt okuma):** `release_task_items` BİLİNÇLİ olarak
+  yalnız `planned − completed` rezervini iade eder ("completed kısmı çözüldüye
+  sayılır, geri alınmaz" — silme, öğrencinin gerçekten çözdüğü testi yok
+  etmemeli). Sorun ÇIKMAZDI: görev silinince (a) tamamlama geri alınamaz (görev
+  yok), (b) elle düşürme `set_absolute_completed` 422 `manual_reduce_exceeds`
+  verir (guard `manual_count`'a bakıyordu = 0), (c) sayaç onarımı baseline'ı
+  korur. Koçun hiçbir düzeltme eli yoktu.
+- **Düzeltme:** (1) `DELETE /teacher/tasks/{id}?revert_completed=true` →
+  `uncomplete_task` + `release_task_items` (çözülenler de geri alınır; varsayılan
+  DEĞİŞMEDİ). (2) `set_absolute_completed` korunan kısmı **CANLI görev
+  kalemlerinin toplamından** ölçer (`reducible = max(manual, completed −
+  Σ canlı kalem completed)`) → görevi silinmiş "sahipsiz çözüldü" kitap
+  panelindeki "çözülmüş test" alanından düşürülebilir; canlı görevle çözülen
+  kısım hâlâ korunur (kurum metrik koruması bozulmadı). (3) UI: 3 silme noktası
+  (gün kartı · gün panosu · ızgara sağ tık) görevde çözülmüş test varsa
+  "çözülenleri de geri al" sorar (`confirmTaskDelete` / ızgarada onay kutusu).
+- **Test:** YENİ `test_api_v2_wrong_topic_delete.py` **6/6** · `self_study`
+  25/25 (senaryo 10 gerçek görev kalemiyle yeni sözleşmeye çekildi — eskiden
+  görevsiz sayaç şişirerek "görevle çözülmüş"ü taklit ediyordu = tam da artık
+  düşürülebilir olan sahipsiz durum) · phase2 17 · baseline 7 · reconcile 7 ·
+  book_grid 17 · weekly_plan 15 · teacher_read 12; tsc+eslint temiz.
+- **KURAL:** "çözüldü" sayacını koruyan guard, korunan şeyi GERÇEK kaynaktan
+  (canlı görev kalemi) ölçer — türetilmiş bir sayaçtan (manual_count) değil;
+  yoksa kaynak silinince kalıcı kilit doğar.
+- **AÇIK SORU (koça soruldu):** katalogda (prod id=121) "Hücre Zarında…" s.57,
+  "Hücre Organelleri" s.71 — yani katalog sırası koçun söylediğinin TERSİ
+  (seed 232 sayfalık PDF'ten font imzasıyla, içindekiler 28/28 teyitli).
+  Basılı kitapta sıra farklıysa (baskı farkı) katalog + Book 374 bölüm sırası
+  düzeltilir.
+
+---
+
 ## HAFTA PANELİ — KAPASİTE YÜZEYLERİ ANLIK + DEĞİŞKEN "+N TEST" + KAYNAK DURUMU'NDAN GÖREV (2026-09-19, commit `2530fb2`, migration YOK, CANLI)
 
 **Tetikleyici (koç, ekran görüntüleri — Emir #113):** (1) Müfredat'tan "+3
