@@ -15,7 +15,7 @@ from fastapi import BackgroundTasks, HTTPException
 from app.database import SessionLocal
 from app.models import (
     Book, BookSection, BookType, SectionProgress, SelfStudyEntry, StudentBook,
-    Subject, User, UserRole,
+    Subject, Task, TaskBookItem, TaskStatus, TaskType, User, UserRole,
 )
 from app.routes.api_v2.schemas.self_study import (
     SelfStudyCreateBody, SelfStudyCreateItem, SelfStudyReviewBody,
@@ -57,6 +57,10 @@ def clean():
     uids = [u.id for u in users]
     if uids:
         db.query(SelfStudyEntry).filter(SelfStudyEntry.student_id.in_(uids)).delete(synchronize_session=False)
+        _tids = [t.id for t in db.query(Task).filter(Task.student_id.in_(uids)).all()]
+        if _tids:
+            db.query(TaskBookItem).filter(TaskBookItem.task_id.in_(_tids)).delete(synchronize_session=False)
+            db.query(Task).filter(Task.id.in_(_tids)).delete(synchronize_session=False)
         for u in users:
             for b in db.query(Book).filter(Book.teacher_id == u.id).all():
                 sbids = [sb.id for sb in db.query(StudentBook).filter(StudentBook.book_id == b.id).all()]
@@ -152,6 +156,14 @@ try:
     check("9. mutlak azalış: completed=3, manual=3",
           sp_for(sec1.id).completed_count == 3 and sp_for(sec1.id).manual_count == 3)
     # sec1: görevle çözülmüş 5 simüle et (manual dışı) -> 3+5=8; 8->2 azaltma =6 > manual 3 -> 422
+    # (2026-09-20: korunan kısım CANLI görev kaleminden ölçülür — gerçek görev kur;
+    #  görevsiz şişirilen sayaç artık "sahipsiz"dir ve bilinçli olarak düşürülebilir.)
+    from datetime import date as _date
+    _t = Task(student_id=stu.id, date=_date.today(), type=TaskType.TEST,
+              title="Gorevle cozulen", status=TaskStatus.COMPLETED, is_draft=False)
+    db.add(_t); db.flush()
+    db.add(TaskBookItem(task_id=_t.id, book_id=book.id, book_section_id=sec1.id,
+                        planned_count=5, completed_count=5))
     sp1 = sp_for(sec1.id); sp1.completed_count += 5; db.commit()
     try:
         teacher_set_section_completed_v2(stu.id, sb.id, sec1.id,

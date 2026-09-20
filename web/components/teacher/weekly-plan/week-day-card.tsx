@@ -48,6 +48,7 @@ import {
   useReorderTasks,
 } from "@/lib/hooks/use-weekly-plan-mutations";
 import {
+  confirmTaskDelete,
   useDeleteTask,
   usePatchTask,
   usePatchTaskSingleItem,
@@ -1281,14 +1282,12 @@ function SortableTaskRow({
         <button
           type="button"
           onClick={() => {
-            if (
-              !window.confirm(
-                "Görev silinsin mi? Rezerv edilen testler iade edilecek.",
-              )
-            ) {
-              return;
-            }
-            deleteMut.mutate({ taskId: task.id });
+            const ok = confirmTaskDelete(task);
+            if (!ok) return;
+            deleteMut.mutate({
+              taskId: task.id,
+              revertCompleted: ok.revertCompleted,
+            });
           }}
           disabled={deleteMut.isPending}
           className="inline-flex items-center gap-1 px-1.5 py-1 rounded text-muted-foreground hover:text-destructive hover:bg-muted transition"

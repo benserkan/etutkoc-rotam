@@ -14,6 +14,7 @@ import {
 import { toast } from "sonner";
 
 import {
+  taskSolvedTests,
   useDeleteTask,
   useMoveTaskDate,
   useSpreadTask,
@@ -320,6 +321,7 @@ export function WeekGrid({
     taskId: number;
     label: string;
     date: string;
+    solved: number;
     canMove: boolean;
     x: number;
     y: number;
@@ -334,7 +336,9 @@ export function WeekGrid({
     taskId: number;
     label: string;
     date: string;
+    solved: number;
   } | null>(null);
+  const [revertSolved, setRevertSolved] = React.useState(false);
   const delMut = useDeleteTask(studentId, confirmDel?.date ?? "");
 
   // ESC → açık menüyü / bekleyen hedef seçimini iptal et
@@ -616,6 +620,7 @@ export function WeekGrid({
                                   taskId: t.id,
                                   label: taskLabel(t),
                                   date: dd,
+                                  solved: taskSolvedTests(t),
                                   canMove: t.scheduled_hour == null,
                                   x,
                                   y,
@@ -737,7 +742,9 @@ export function WeekGrid({
                 taskId: menu.taskId,
                 label: menu.label,
                 date: menu.date,
+                solved: menu.solved,
               });
+              setRevertSolved(false);
               setMenu(null);
             }}
             className="w-full text-left px-2 py-1.5 rounded text-sm text-rose-700 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-500/10 inline-flex items-center gap-2"
@@ -759,6 +766,22 @@ export function WeekGrid({
               <b className="text-foreground">{confirmDel.label}</b> görevi
               silinecek. Kitaptan ayrılan test kapasitesi geri iade edilir.
             </p>
+            {confirmDel.solved > 0 ? (
+              <label className="mt-3 flex items-start gap-2 rounded-md border border-amber-300 bg-amber-50 p-2 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+                <input
+                  type="checkbox"
+                  className="mt-0.5"
+                  checked={revertSolved}
+                  onChange={(e) => setRevertSolved(e.target.checked)}
+                />
+                <span>
+                  Bu görevde <b>{confirmDel.solved} test</b> çözüldü işaretli.
+                  Görev yanlış konuya girildiyse işaretle: çözülenler de geri
+                  alınır (kitapta tekrar &quot;çözülmedi&quot; olur). İşaretlemezsen
+                  çözüldü olarak kalır.
+                </span>
+              </label>
+            ) : null}
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
@@ -772,7 +795,10 @@ export function WeekGrid({
                 disabled={delMut.isPending}
                 onClick={() =>
                   delMut.mutate(
-                    { taskId: confirmDel.taskId },
+                    {
+                      taskId: confirmDel.taskId,
+                      revertCompleted: confirmDel.solved > 0 && revertSolved,
+                    },
                     {
                       onSuccess: () => {
                         toast.success("Görev silindi");

@@ -6,6 +6,140 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## HAFTA PANELİ — KAPASİTE YÜZEYLERİ ANLIK + DEĞİŞKEN "+N TEST" + KAYNAK DURUMU'NDAN GÖREV (2026-09-19, commit `2530fb2`, migration YOK, CANLI)
+
+**Tetikleyici (koç, ekran görüntüleri — Emir #113):** (1) Müfredat'tan "+3
+test" sonrası kalan sayısı sayfa yenilenmeden değişmiyordu; (2) kütüphaneden
+atanan Eyüp B TYT Mat panelde görünmüyordu; (3) devret ile verilen Sıvılar/
+Gazlar sonrası Kaynak Durumu eski sayıları gösteriyordu; (4) "haftaya yay"
+sonrası da aynı; (5) "+3 test" sabit — bazen 2 gerekiyor; (6) Kaynak Durumu
+ünitesine tıklayıp görev vermek istiyor; (7) iki yüzeyin test sayıları tutarlı mı?
+- **TEŞHİS (kod + prod salt okuma):** veri TUTARLI — iki yüzey de
+  `SectionProgress`'ten okur (Orijinal Üslü 8/8 dolu · 345 10/10 dolu · Eyüp B
+  0/8; "9 bölüm bağlı değil · 23 test" = Orijinal'in 6 ÖSYM'de Çıkmış + Problem
+  Denemeleri + 2. Dereceden [TYT taksonomisinde yok] + 345 "Tanım ve Formül" —
+  bilinçli eşsiz, sayı doğru). Sorun tamamen CACHE BAYATLATMA: (a)
+  `_invalidate_for_task` listesinde `topic-board` YOKTU (görev ekle/sil/
+  düzenle/yay hepsi); (b) devret ucu yalnız `week`+`day` bayatlatıyordu; (c)
+  kütüphane `PATCH /books/{id}/assignments` yalnız `books`.
+- **Düzeltme — TEK MERKEZ `teacher._capacity_invalidate(tid, sid)`:**
+  section-stats · book-sections · book-grid · next-units · curriculum · books
+  · **sidebar** · **topic-board**. `_invalidate_for_task` bunu kullanır (yay
+  dahil), devret + summary/work-blocks ekler, kütüphane atama öğrenci ÖNEKİNİ
+  (`teacher:{tid}:students:{sid}` — prefix eşleşmesi hepsini kapsar) ekler.
+  **KURAL: rezervi/atamayı değiştiren yeni uç `_capacity_invalidate`
+  kullanır; liste elle kopyalanmaz.**
+- **Görev adedi — "Kaç test?" şeridi (ikinci tasarım, koç onaylı yön):**
+  İLK deneme (ayrı −/+ stepper + satırlarda "+3") REDDEDİLDİ: "o kadar sayı
+  var ki +3 anlaşılmıyor; yukarı çık 2 yap aşağı in ata — işlevsel değil".
+  YENİ `weekly-plan/assign-count-chooser.tsx`: satırdaki düğme ("test ver" /
+  Kaynak Durumu'nda yalnız "+" simgesi) → **tam o satırın altında** çipler
+  1-5 + "başka" kutusu; koçun bu dersteki alışkanlığı (P3 `task-quantity`,
+  `getTaskQuantity` + `teacherKeys.taskQuantity` ilk kez web'e bağlandı)
+  vurgulu gelir; **çipe tıklamak görevi yazar** (konu → test ver → çip = 3
+  tık). Kapasiteyi aşan çip sarı (P1 uyarı, engel değil). Esc/×/dışarı
+  tıklama kapatır (mousedown — context-menu dersi); portal yok, satır altına
+  akar. Satırlarda sayı gösterilmez; "Kaynaksız ver" aynı şeridi açar.
+  **KURAL: adet seçimi her zaman eylemin yanında, ayrı bir "ayar alanında"
+  değil.**
+- **Kaynak Durumu'ndan görev:** `ResourceSidebar` opsiyonel `studentId`+
+  `dayDate` (koç hafta paneli verir; öğrenci gün ekranı vermez → salt okuma).
+  Her ünite satırında "+" → şerit → aktif güne o kitap/bölümden görev
+  (`allow_over_capacity` dolu satırda uyarı). Ünite adı KIRPILMAZ (sarar).
+  Görsel kanıt `.shots/resources_chooser.png` (canlı test çeker).
+- **Test:** weekly_plan 15 (invalidate sözleşmesi + sidebar/topic-board) ·
+  carryover_http 18 (6b devret kapasite yüzeyleri) · library 25 (12b atama
+  öğrenci öneki) · `live_curriculum_board` 11→**27** (7b1 varsayılan çip
+  vurgulu · 7b çip 3 → görev + 7c kalan −3 yenilemesiz · 7d çip 2 → 2
+  testlik görev · 10c Kaynak Durumu ⏳5 anında · 10d1 şerit satır altında ·
+  10e ⏳8 · 10f kalan 0). Regresyon: topic_board 18 ·
+  task_spread · live_section_pins · live_subject_mix · live_task_quick_add ·
+  live_day_card_redesign; tsc+eslint temiz. Mobil BİLİNÇLİ yok (hafta planı
+  web — PARITY).
+
+---
+
+## DENEME MÜKERRER KORUMASI — 3 katmanlı parmak izi + "yerine yaz" (2026-09-19, commit `67a52cf`, migration `y0z3c6d7c11y`, CANLI)
+
+**Tetikleyici (koç, öğrenci #163):** aynı karne PDF'i iki kez aktarıldı → iki
+kayıt, konu×deneme analizi ikisini de saydı. Eski koruma yalnız "aynı ad +
+tarih" bakıyor + kayıt anında (Gemini SONRASI) çalışıyor + "yine de kaydet"
+ile geçiliyordu; elle girişte hiç yoktu. Kullanıcı onaylı plan:
+- **TEK MERKEZ `app/services/exam_duplicate.py`** (kredisiz, AI'sız):
+  (1) **belge parmak izi** — `exam_results.import_pdf_sha256`; aynı PDF
+  `_run_analyze`'da Gemini'den ÖNCE 409 (kredi harcanmaz, 3-5 dk beklenmez);
+  (2) **içerik parmak izi** — aynı öğrenci + tür + soru sayısı + soru soru aynı
+  (öğrenci cevabı, sonuç) → **exact**; ≥%95 → **likely** (`NEAR_ANSWER_RATIO`);
+  (3) **ad + tarih** — `normalize_title` (Türkçe İ/ı, noktalama) eşit + aynı
+  tarih ya da ±3 gün (`NEAR_DATE_DAYS`) → likely.
+- **KARAR KURALI:** exact → kayıt AÇILMAZ, `force` YOK SAYILIR; tek yol
+  `replace_exam_id` (mevcut kayıt `update_imported` ile bu okumayla güncellenir,
+  PDF kanıtı + parmak izi yenilenir — yeni kayıt açılmaz). likely → 409 uyarı;
+  koç "yerine yaz" ya da `force` ile "ayrı kaydet". 409 zarfı `details`
+  (exam_id/level/reason/reason_label/title/exam_date/similarity) taşır; taslak
+  da `duplicate` alanıyla önizlemede baştan söyler. Elle giriş
+  (`teacher_create_exam_v2`) aynı merkez, `ExamCreateBody.force`.
+  **Meşru tekrar engellenmez:** aynı deneme gerçekten ikinci kez çözüldüyse
+  cevaplar ve tarih farklı → hiçbir katman yakalamaz (6c testi).
+- **UI:** web diyalog — analiz adımında "Bu PDF zaten aktarılmış" (rose, kredi
+  yok); önizlemede exact rose bant + yalnız **"Var olanın yerine yaz"**; likely
+  amber + "yerine yaz" / "Ayrı deneme olarak kaydet". Manuel formda 409 →
+  amber uyarı + "Ayrı deneme olarak yine de kaydet". Mobil aynı akış (JS-only →
+  OTA). `DoneStep` "Deneme güncellendi" (replace).
+- **Test:** YENİ `test_api_v2_exam_duplicate_guard.py` **22/22** (aynı PDF →
+  Gemini öncesi 409 + UsageEvent artmaz · yeniden tarama → exact + force
+  geçersiz + replace id aynı/sayı 1/sha yenilenir + yabancı hedef 404 · 39/40 →
+  likely %97,5 + force ayrı kayıt · ad+tarih likely · elle giriş 409/±2 gün
+  409/10 gün serbest/force 200 · başka öğrenci serbest · normalize/imza birimi).
+  **Eski testler yeni sözleşmeye:** `exam_import` 75→**76** (17b exact'te force
+  409 + 17c replace; tüm senaryolar `fresh_pdf()` — istek başına farklı bayt,
+  yoksa aynı-PDF katmanı her analizi durdurur; 20/21 satır cevabı değiştirildi)
+  · `exam_import_maarif` 22 (11a önceden 409 {} ile YANLIŞ GEÇİYORDU — fresh_pdf
+  ile gerçek doğrulama) · teacher_exams 19 · wrong_bridge 11 · topic_analysis 10.
+- **Betikler:** `backfill_exam_pdf_sha.py` (dry-run varsayılan, `--apply`;
+  PDF kanıtı saklı olduğundan geriye dönük özet) · `scan_exam_duplicates.py`
+  (SALT OKUMA rapor: kesin/olası çiftler; silme koça).
+- **Prod (2026-09-19):** yedek `pre_examdup_20260919_1623.dump` · web+worker+
+  next rebuild · backfill 13 kayda parmak izi (28'inde PDF verisi yok — eski
+  elle/kanıtsız kayıtlar; ikinci koşu 0) · **tarama 2 KESİN çift:** #163
+  Zeynep (#154↔#155, aynı PDF — bugünkü vaka) + **#129 Çınar Erdem (#110
+  25.04 ↔ #111 23.05 "8.SINIF SÜREÇ İZLEME-4", soru soru aynı cevaplar, tarih
+  farklı → aynı karne ikinci kez yüklenmiş)**. Silme koça bırakıldı.
+- **KURAL:** deneme yazan her yol (PDF onay, yerine yaz, elle giriş, ileride
+  mobil/öğrenci yolları) `exam_duplicate.find_duplicate`'ten geçer; "aynı
+  şey mi" kararı UI'da değil sunucuda verilir; exact'te zorlama düğmesi
+  render EDİLMEZ.
+
+---
+
+## DÖNEM PENCERESİ — "PDF'ten aktardım, listede yok" (2026-09-19, commit `146a021`, migration YOK, CANLI)
+
+**Tetikleyici (koç, öğrenci #163):** deneme PDF'ten iki kez aktarıldı, sonuç
+listesinde görünmedi. **Teşhis (prod salt-okuma + log):** her iki
+`import-confirm` 200 (ikincisi 409 mükerrer → zorlama) → kayıt VARDI (#154 +
+#155, aynı deneme). Öğrenci o gün açılmış, lazy backfill ilk dönemi **bugün**
+başlatmış; deneme tarihi **17 Ağustos** → P3 "bu dönem" varsayılanı
+(`resolve_window.start`) denemeyi gizliyordu. `period_for_date` "tüm
+dönemlerden önce → en eski döneme say" diyordu ama pencere bunu YAPMIYORDU
+(2026-09-04 "geçmişe dönük kayıt boşluğu" onarımı yalnız backfill anında
+çalışıyor; dönem açıldıktan SONRA girilen eski tarihli veri kapsanmıyordu).
+- **Düzeltme (tek merkez):** `resolve_window` — çözülen dönem öğrencinin EN
+  ESKİ dönemiyse `start=None` (geriye açık). 9 dönem-duyarlı yüzey (koç/
+  öğrenci/veli deneme listesi + konu performansı + konu analizi + analitik
+  deneme bloğu) birlikte düzeldi; meta `started_on=None` = "başlangıçtan beri".
+- **Test:** `test_api_v2_period_views` 13→**16** (14a-c: bugün açılan öğrenci +
+  dönem öncesi deneme). **AYIRT EDİCİ:** fix'siz 14a boş liste (sahadaki hata
+  birebir), 14b started_on dolu. Regresyon: teacher_exams 19 · topic_analysis
+  10 · grade_periods 15 · parent 20 · transition_preview 9.
+- **Prod:** web+worker rebuild; #163 `repair_first_start` → dönem başlangıcı
+  2026-08-17. **Mükerrer deneme #154/#155 (aynı PDF, ikinci zorlama) DURUYOR —
+  silme koça bırakıldı** (çöp simgesi; hangisi kalırsa kalsın, içerik aynı).
+- **KURAL:** dönem penceresini kullanan her filtre `resolve_window` üzerinden
+  geçer; en eski dönem daima geriye açıktır. Yeni dönem-duyarlı uç eklerken
+  `win.start` None olabilir varsayılır.
+
+---
+
 ## MOBİL PROGRAM — GÖREV DETAYI + VİDEO LİNKİ + "HAFTAYA YAY" BAŞLIK BUG'I — CANLI (2026-09-16, commit `d9e4866`, migration YOK)
 
 **Deploy:** web+worker+next rebuild (Plausible-stop'lu); healthz/site 200 ·
@@ -20,6 +154,18 @@ Artefakt: `https://expo.dev/artifacts/eas/Ty0hgRegQbZ3aK7n9QxLX0bQEcJnVPjCdnCCIW
 **DERS:** arka plan poll döngüsü (sleep 60 × 40) "bellek düşük" gerekçesiyle
 öldürüldü (dev-sunucu dersinin tekrarı) → uzun bekleme için `Monitor`
 aracı ya da foreground tek `eas build:view` kontrolü kullanılır.
+**DERS (Claude Code, Windows — panodan ekran görüntüsü):** görüntü yapıştırma
+kısayolu Windows/WSL'de **Alt+V**'dir, Ctrl+V DEĞİL (binary'de `de = windows||
+wsl ? "alt+v" : "ctrl+v"`; Ctrl+V terminalin metin yapıştırmasına bırakılır).
+Claude Code görüntüyü `powershell -Sta ... Clipboard::GetImage()` ile
+`%TEMP%\claude_cli_latest_screenshot.png`'e yazar → `powershell` PATH'te
+bulunmalı. Bu makinede **Makine PATH'i bozuk** (System32/WindowsPowerShell
+yok; kullanıcı PATH'inin kopyasıyla ezilmiş) → kullanıcı PATH'ine 4 standart
+dizin eklendi (yedek `C:\Users\serkan\path-backup-20260916.txt`); yeni
+terminal sekmesi gerekir. Snipping Tool ekran görüntülerini
+`%USERPROFILE%\Pictures\Screenshots`'a da kaydeder — Alt+V olmazsa o dosya
+`Read` ile doğrudan okunur. Windows Terminal Ctrl+V unbind denemesi geri alındı
+(gereksizdi).
 **Prod onarımı uygulandı:** `backfill_task_title_links --apply` → **26 başlık**
 (Taha'nın 7'si + aynı bug'ın 4 başka kurbanı [Aydın Kimya · Biyotik ·
 Polinom fasikülü · Limit Paragraf] + 15 demo "Görev" placeholder'ı) +
@@ -2204,6 +2350,16 @@ katalog. Rakip DB kazıma hukuken/teknik reddedildi. **Tasarım:
     ("MATEMATİK" eşleşmiyor) → Türkçe metin içeren betikler **Write ile dosyaya**
     yazılır, argümanlar runner .py içinden verilir (PowerShell ANSI tuzağının
     heredoc hâli).
+- **3D TYT BİYOLOJİ — CANLI (2026-09-17, commit `318c40e`, prod id=121 · dev
+  id=50): 26 bölüm · 112 test · 22/26 eşli.** Dijital PDF (232 s, metin
+  katmanlı) → **Gemini'siz font imzası**: başlangıç sayfasında 26pt test no +
+  13pt "BÖLÜM NN" + 9pt italik "Konu - N"; her test 2 sayfa (224/112 = 2,0);
+  ofset 0; içindekiler 28/28 başlangıç birebir; 8 zincir (6 bölüm + 2
+  Tümevarım) boşluksuz. 3D TYT deseni Fizik'le aynı (bölüm sayacı + bölüm
+  sonu Bire Bir ÖSYM + Tümevarım I/II). Eşleşmesiz 4 satır bilinçli:
+  TÜMEVARIM I-II + iki konulu bölümlerin Bire Bir ÖSYM'si (Yaşam Bilimi ·
+  Ekosistem+Güncel — AI ikincisini "Ekosistem"e bağlamıştı, dev+prod'da elle
+  NULL). Tek-konulu bölümlerin Bire Bir'i konusuna bağlı.
 - **SIRADA (kullanıcı):** ProFizik son içindekiler sayfası fotoğrafı (09-10
   üniteleri) · 3D klasöründe bekleyen: AYT Biyoloji · AYT Kimya · TYT-AYT
   Paragraf · 2025 AYT Mat[eski baskı, muhtemel atla] → koç sihirbazında canlı

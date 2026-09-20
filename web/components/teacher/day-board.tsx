@@ -14,6 +14,7 @@ import {
 import {
   useApplyTaskTemplate,
   useCreateTask,
+  confirmTaskDelete,
   useDeleteTask,
   usePatchTask,
   usePatchTaskItem,
@@ -420,10 +421,9 @@ function TaskCardEditable({
   const saveTplMut = useTaskTemplateFromTask();
 
   function onDelete() {
-    if (!window.confirm(`"${task.title}" görevini silmek istiyor musunuz?`)) {
-      return;
-    }
-    deleteMut.mutate({ taskId: task.id });
+    const ok = confirmTaskDelete(task);
+    if (!ok) return;
+    deleteMut.mutate({ taskId: task.id, revertCompleted: ok.revertCompleted });
   }
 
   function onSaveTemplate() {

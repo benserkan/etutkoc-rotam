@@ -349,6 +349,7 @@ from app.services.task_service import (
     remaining_for,
     reserve_item,
     set_item_completion as svc_set_item_completion,
+    uncomplete_task as svc_uncomplete_task,
 )
 
 
@@ -5385,10 +5386,15 @@ def teacher_spread_task_v2(
 )
 def teacher_delete_task_v2(
     task_id: int,
+    revert_completed: bool = Query(False),
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
     """Görevi sil — `planned - completed` kadar rezervi iade et.
+
+    `revert_completed=true`: görevde çözüldü işaretli testler de kitap
+    sayacından GERİ ALINIR (yanlış konuya/bölüme girilen görev). Varsayılan
+    False — silme, öğrencinin çözdüğü testi "çözülmedi" yapmaz.
 
     Hata 2: bu görev devret listesinden taşınmışsa (carried_from_task_id),
     silinince kaynak görevin carried_at'i temizlenir → kaynak tekrar
@@ -5397,6 +5403,9 @@ def teacher_delete_task_v2(
     invalidate = _invalidate_for_task(task, user.id)
     src_id = task.carried_from_task_id
     try:
+        if revert_completed:
+            # completed → reserved'e döner; ardından release tamamını iade eder.
+            svc_uncomplete_task(db, task)
         release_task_items(db, task.student_id, list(task.book_items))
     except ReservationError as e:
         db.rollback()

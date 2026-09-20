@@ -577,17 +577,60 @@ export function useMoveTaskDate() {
   });
 }
 
+/** Görevin kitaba "çözüldü" yazılmış test sayısı (kitapsız kalemler hariç). */
+export function taskSolvedTests(task: {
+  items: { book_id: number | null; completed_count: number }[];
+}): number {
+  return task.items.reduce(
+    (n, it) => n + (it.book_id != null ? it.completed_count || 0 : 0),
+    0,
+  );
+}
+
+/**
+ * Silme onayı (window.confirm'li yüzeyler). Görevde çözülmüş test varsa ikinci
+ * soru: çözülenler kitapta kalsın mı, geri mi alınsın?
+ * null → vazgeçildi.
+ */
+export function confirmTaskDelete(
+  task: { title: string; items: { book_id: number | null; completed_count: number }[] },
+): { revertCompleted: boolean } | null {
+  if (
+    !window.confirm(
+      `"${task.title}" görevi silinsin mi? Rezerv edilen testler iade edilir.`,
+    )
+  ) {
+    return null;
+  }
+  const solved = taskSolvedTests(task);
+  if (solved <= 0) return { revertCompleted: false };
+  const revert = window.confirm(
+    `Bu görevde ${solved} test "çözüldü" işaretli.
+
+` +
+      `TAMAM → çözülenler de GERİ ALINSIN (görev yanlış konuya girildiyse; ` +
+      `kitapta bu ${solved} test tekrar "çözülmedi" olur).
+` +
+      `İPTAL → çözüldü olarak KALSIN (öğrenci bu testleri gerçekten çözdü).`,
+  );
+  return { revertCompleted: revert };
+}
+
 export function useDeleteTask(studentId: number, dateIso: string) {
   const qc = useQueryClient();
   return useMutation<
     MutationResponse<{ deleted: boolean; task_id: number }>,
     ApiError,
-    { taskId: number },
+    { taskId: number; revertCompleted?: boolean },
     DayCacheCtx
   >({
-    mutationFn: ({ taskId }) =>
+    // revertCompleted: görevde çözüldü işaretli testleri kitap sayacından da
+    // geri al (yanlış konuya girilen görev). Varsayılan: çözülenler korunur.
+    mutationFn: ({ taskId, revertCompleted }) =>
       api<MutationResponse<{ deleted: boolean; task_id: number }>>(
-        `/api/v2/teacher/tasks/${taskId}`,
+        `/api/v2/teacher/tasks/${taskId}${
+          revertCompleted ? "?revert_completed=true" : ""
+        }`,
         { method: "DELETE" },
       ),
     onMutate: async ({ taskId }) => {

@@ -17,6 +17,7 @@ from __future__ import annotations
 import logging
 from datetime import date, datetime, timezone
 
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.models import (
@@ -29,6 +30,8 @@ from app.models import (
     SectionProgress,
     SelfStudyEntry,
     StudentBook,
+    Task,
+    TaskBookItem,
     User,
 )
 
@@ -270,11 +273,31 @@ def set_absolute_completed(
         _apply(db, entry, sp, section)
     elif delta < 0:
         reduce = -delta
-        if reduce > int(sp.manual_count or 0):
+        # Azaltılabilir kısım = CANLI görev kalemlerinin tutmadığı her şey:
+        # elle girilen + "sahipsiz" kısım (görevi sonradan silinmiş çözümler —
+        # silme completed'ı geri almaz; görev artık olmadığından düzeltilecek
+        # başka yer de yoktur). Yalnız manual_count'a bakmak bu kısmı kalıcı
+        # kilitliyordu (2026-09-20 saha vakası: yanlış konuya girilen görev).
+        task_held = int(
+            db.query(func.coalesce(func.sum(TaskBookItem.completed_count), 0))
+            .join(Task, Task.id == TaskBookItem.task_id)
+            .filter(
+                Task.student_id == student.id,
+                TaskBookItem.book_section_id == section.id,
+            )
+            .scalar()
+            or 0
+        )
+        reducible = max(
+            int(sp.manual_count or 0), int(sp.completed_count or 0) - task_held
+        )
+        if reduce > reducible:
             raise SelfStudyError(
                 "manual_reduce_exceeds",
-                f"Yalnız elle/bağımsız girilen kısım azaltılabilir (elle girilen: "
-                f"{sp.manual_count}). Görevle çözülenler ilgili görev üzerinden düzeltilir.",
+                f"En fazla {reducible} test azaltılabilir — kalan {task_held} test "
+                f"programdaki görevlerle çözülmüş; onlar ilgili görev üzerinden "
+                f"düzeltilir (görevde tamamlamayı geri al ya da görevi silerken "
+                f"'çözülenleri geri al').",
             )
         remaining = reduce
         entries = (
@@ -299,7 +322,7 @@ def set_absolute_completed(
         # Kalan (remaining>0) = backfill'den gelen, kayıtsız eski elle kısım —
         # manual_count guard'ı yeterli, doğrudan düşülür.
         sp.completed_count = int(sp.completed_count or 0) - reduce
-        sp.manual_count = int(sp.manual_count or 0) - reduce
+        sp.manual_count = max(0, int(sp.manual_count or 0) - reduce)
     return sp
 
 
