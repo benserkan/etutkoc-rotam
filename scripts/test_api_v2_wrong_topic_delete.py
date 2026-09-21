@@ -96,13 +96,13 @@ def seed() -> dict:
         db.add(book)
         db.flush()
         secs = [BookSection(book_id=book.id, label=f"Bölüm {i}", test_count=7, order=i)
-                for i in (1, 2, 3, 4, 5, 6)]
+                for i in (1, 2, 3, 4, 5, 6, 7)]
         db.add_all(secs)
         db.flush()
         sb = StudentBook(student_id=st.id, book_id=book.id)
         db.add(sb)
         db.flush()
-        a, b, c_, d, e, f = secs
+        a, b, c_, d, e, f, g = secs
         done = TaskStatus.COMPLETED
         t_a = _task(db, st, book, a, today - timedelta(days=2), 3, 3, done)
         t_b = _task(db, st, book, b, today - timedelta(days=2), 3, 3, done)
@@ -114,6 +114,10 @@ def seed() -> dict:
         t_d = _task(db, st, book, d, today, 4, 1, TaskStatus.PENDING)
         db.add(SectionProgress(student_book_id=sb.id, book_section_id=d.id,
                                reserved_count=3, completed_count=1))
+        # REZERV: gelecekte 3 testlik bekleyen görev (sarı koltuklar)
+        t_g = _task(db, st, book, g, today + timedelta(days=1), 3, 0, TaskStatus.PENDING)
+        db.add(SectionProgress(student_book_id=sb.id, book_section_id=g.id,
+                               reserved_count=3, completed_count=0))
         # SAHA-3 (Direnç): GEÇMİŞ haftada 2/2 'çözdüm' işaretli ama çözülmemiş
         t_e = _task(db, st, book, e, today - timedelta(days=20), 2, 2, done)
         db.add(SectionProgress(student_book_id=sb.id, book_section_id=e.id,
@@ -122,7 +126,7 @@ def seed() -> dict:
         db.add(SectionProgress(student_book_id=sb.id, book_section_id=f.id,
                                reserved_count=0, completed_count=3, manual_count=3))
         db.commit()
-        return {"e": e.id, "f": f.id, "t_e": t_e.id, "coach_id": coach.id, "student_id": st.id, "book_id": book.id,
+        return {"g": g.id, "t_g": t_g.id, "e": e.id, "f": f.id, "t_e": t_e.id, "coach_id": coach.id, "student_id": st.id, "book_id": book.id,
                 "subject_id": subj.id, "sb_id": sb.id,
                 "a": a.id, "b": b.id, "c": c_.id, "d": d.id,
                 "t_a": t_a.id, "t_b": t_b.id, "t_c": t_c.id, "t_d": t_d.id}
@@ -260,6 +264,52 @@ def main() -> int:
                    f"/sections/{s['e']}/revert-completed",
                    json={"task_id": None, "count": 1})
         check("12. yabancı öğrenci 404", r.status_code == 404, f"{r.status_code}")
+
+        # 13-16. SARI KOLTUK: rezervi ızgaradan kaldır
+        def grid_release(sec, task_id, count):
+            return c.post(
+                f"/api/v2/teacher/students/{sid}/books/{s['book_id']}"
+                f"/sections/{sec}/release-reserved",
+                json={"task_id": task_id, "count": count})
+
+        r = grid_release(s["g"], s["t_g"], 1)
+        with SessionLocal() as db:
+            tg = db.get(Task, s["t_g"])
+            pg_ = tg.book_items[0].planned_count if tg else None
+            title_g = tg.title if tg else None
+        check("13. 1 rezerv kaldırıldı: görev 3→2 test, sayaç rezerv 2",
+              r.status_code == 200 and pg_ == 2 and counters(sb, s["g"]) == (2, 0)
+              and r.json()["data"]["task_deleted"] is False,
+              f"{r.status_code} {r.text[:200]} planned={pg_} {counters(sb, s['g'])}")
+        r = grid_release(s["g"], s["t_g"], 9)
+        with SessionLocal() as db:
+            gone = db.get(Task, s["t_g"]) is None
+        check("14. kalan rezervin tümü kaldırıldı → görev programdan SİLİNDİ, rezerv 0",
+              r.status_code == 200 and r.json()["data"]["released"] == 2
+              and r.json()["data"]["task_deleted"] is True and gone
+              and counters(sb, s["g"]) == (0, 0),
+              f"{r.status_code} {r.text[:200]} gone={gone} {counters(sb, s['g'])}")
+        # t_e: geçmiş hafta, rezervi ZATEN serbest (ölü rezerv) → sayaç değişmemeli
+        r = grid_release(s["e"], s["t_e"], 1)
+        with SessionLocal() as db:
+            pe = db.get(Task, s["t_e"]).book_items[0].planned_count
+        check("15. rezervi zaten serbest kalem: görev 2→1, sayaç ÇİFT İADE edilmedi",
+              r.status_code == 200 and pe == 1 and counters(sb, s["e"]) == (0, 0),
+              f"{r.status_code} planned={pe} {counters(sb, s['e'])}")
+        r = grid_release(s["a"], s["t_c"], 1)
+        check("15b. bekleyeni olmayan/olmayan görev → 404/422",
+              r.status_code in (404, 422), f"{r.status_code}")
+        r = grid_release(s["b"], s["t_b"], 1)
+        with SessionLocal() as db:
+            tb2 = db.get(Task, s["t_b"])
+            pb2 = tb2.book_items[0].planned_count if tb2 else None
+            rel_b = tb2.book_items[0].reservation_released_at is not None
+        # t_b geçmiş haftaya düşerse (haftanın günü) rezervi ölü diye serbesttir
+        exp_res = 0 if rel_b else 2
+        check("16. yalnız bekleyen düşer (t_b 0/3 → 0/2), sayaç tutarlı",
+              r.status_code == 200 and pb2 == 2
+              and counters(sb, s["b"]) == (exp_res, 0),
+              f"{r.status_code} {counters(sb, s['b'])}")
     finally:
         cleanup(s)
 

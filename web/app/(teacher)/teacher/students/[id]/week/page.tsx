@@ -38,6 +38,10 @@ export default async function TeacherStudentWeekPage({
   if (!Number.isInteger(numericId) || numericId <= 0) notFound();
   const start = firstStr(sp.start);
   const programId = firstStr(sp.program_id);
+  // Koltuk ızgarasından "o günün programında göster" → görevi ızgarada vurgula
+  const taskParam = Number(firstStr(sp.task));
+  const focusTaskId =
+    Number.isInteger(taskParam) && taskParam > 0 ? taskParam : null;
   const qsParts: string[] = [];
   if (start) qsParts.push(`start=${encodeURIComponent(start)}`);
   if (programId) qsParts.push(`program_id=${encodeURIComponent(programId)}`);
@@ -55,6 +59,8 @@ export default async function TeacherStudentWeekPage({
 
   return (
     <WeekBoard
+      key={`${start ?? ""}:${programId ?? ""}:${focusTaskId ?? ""}`}
+      focusTaskId={focusTaskId}
       studentId={numericId}
       initial={data}
       initialStart={start ?? data.start_date}

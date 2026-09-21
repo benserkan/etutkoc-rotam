@@ -9,6 +9,7 @@ import {
   archiveStudentBooks,
   notifyParentsExam,
   reconcileBookCounters,
+  releaseGridReserved,
   revertGridCompleted,
   type GridRevertResult,
   teacherKeys,
@@ -2196,6 +2197,32 @@ export function useRevertGridCompleted(studentId: number) {
       });
     },
     onError: (e) => showError(e, "Geri alınamadı"),
+  });
+}
+
+/** Koltuk ızgarasından rezervi kaldır — görevin bekleyen testleri iade edilir. */
+export function useReleaseGridReserved(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<{ released: number; task_deleted: boolean; task_date: string }>,
+    ApiError,
+    { bookId: number; sectionId: number; taskId: number; count: number }
+  >({
+    mutationFn: ({ bookId, sectionId, taskId, count }) =>
+      releaseGridReserved(studentId, bookId, sectionId, {
+        task_id: taskId,
+        count,
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const d = res.data;
+      toast.success(`${d?.released ?? 0} test rezervden çıkarıldı`, {
+        description: d?.task_deleted
+          ? "Görevde başka test kalmadığı için görev programdan silindi."
+          : "Görev programda kalan testleriyle duruyor.",
+      });
+    },
+    onError: (e) => showError(e, "Rezerv kaldırılamadı"),
   });
 }
 

@@ -832,6 +832,21 @@ export async function revertGridCompleted(
   );
 }
 
+/** Koltuk ızgarası: sarı koltuktan rezervi kaldır (kalem/görev boşalırsa silinir). */
+export async function releaseGridReserved(
+  studentId: number,
+  bookId: number,
+  sectionId: number,
+  body: { task_id: number; count: number },
+): Promise<
+  MutationResponse<{ released: number; task_deleted: boolean; task_date: string }>
+> {
+  return api(
+    `/api/v2/teacher/students/${studentId}/books/${bookId}/sections/${sectionId}/release-reserved`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
 /** P2/P3 — öğrencinin sınıf dönemleri (görev/deneme sayılı). */
 export function getGradePeriods(
   studentId: number,

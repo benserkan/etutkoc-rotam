@@ -7404,6 +7404,106 @@ def teacher_grid_revert_completed_v2(
     )
 
 
+# ---------------------- POST .../sections/{section_id}/release-reserved ----------------------
+
+
+class GridReleaseBody(BaseModel):
+    """Koltuk ızgarasından rezervi kaldır (sarı koltuk)."""
+    task_id: int
+    count: int = Field(1, ge=1, le=500)
+
+
+@router.post(
+    "/students/{student_id}/books/{book_id}/sections/{section_id}/release-reserved",
+    response_model=MutationResponse[dict],
+)
+def teacher_grid_release_reserved_v2(
+    student_id: int,
+    book_id: int,
+    section_id: int,
+    body: GridReleaseBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+    request: Request = None,
+):
+    """Sarı (rezerv) koltuktan görevin bekleyen testlerini kaldır.
+
+    Kalemin `planned_count`'u düşer, rezerv iade edilir (mevcut kalem-düzenleme
+    ucuyla aynı muhasebe: `release_item`). Kalemde hiç test kalmazsa kalem,
+    görevde hiç kalem kalmazsa GÖREV silinir (devret kaynağı geri açılır —
+    görev silme ucuyla aynı kural). Çözülmüş kısma dokunulmaz.
+    """
+    from app.models import AuditAction
+    from app.services.audit import log_action
+
+    student = _get_owned_student(db, student_id, user.id)
+    task = _get_owned_task(db, body.task_id, user.id)
+    item = next(
+        (i for i in task.book_items
+         if i.book_section_id == section_id and i.book_id == book_id
+         and (i.planned_count - (i.completed_count or 0)) > 0),
+        None,
+    )
+    if task.student_id != student.id or item is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"error": "validation", "code": "nothing_to_release",
+                    "message": "Bu görevde bu bölüm için bekleyen (rezerv) test yok."},
+        )
+    pending = int(item.planned_count) - int(item.completed_count or 0)
+    released = min(body.count, pending)
+    invalidate = _invalidate_for_task(task, user.id)
+    try:
+        # Ölü rezerv zaten serbest bırakıldıysa sayaçta yok → tekrar iade ETME.
+        if item.reservation_released_at is None:
+            release_item(
+                db, student_id=student.id, book_id=item.book_id,
+                section_id=item.book_section_id, count=released,
+            )
+    except ReservationError as e:
+        db.rollback()
+        raise _reservation_to_http(e)
+
+    item.planned_count = int(item.planned_count) - released
+    task_deleted = False
+    task_date = task.date.isoformat()
+    if item.planned_count <= 0:
+        task.book_items.remove(item)
+        db.delete(item)
+    db.flush()
+    if not task.book_items:
+        src_id = task.carried_from_task_id
+        if src_id is not None:
+            src = db.query(Task).filter(
+                Task.id == src_id, Task.student_id == student.id).first()
+            if src is not None and src.carried_at is not None:
+                src.carried_at = None
+        db.delete(task)
+        task_deleted = True
+    else:
+        task_titles.refresh_auto_title(task)
+        total_planned = sum(i.planned_count for i in task.book_items)
+        total_done = sum(i.completed_count or 0 for i in task.book_items)
+        if total_done > 0 and total_done >= total_planned:
+            task.status = TaskStatus.COMPLETED
+            task.completed_at = task.completed_at or datetime.now(timezone.utc)
+
+    log_action(
+        db, action=AuditAction.USER_UPDATE, actor_id=user.id,
+        target_type="user", target_id=student.id, request=request,
+        details={"op": "grid_release_reserved", "book_id": book_id,
+                 "section_id": section_id, "task_id": body.task_id,
+                 "released": released, "task_deleted": task_deleted},
+        autocommit=False,
+    )
+    db.commit()
+    return MutationResponse[dict](
+        data={"released": released, "task_deleted": task_deleted,
+              "task_date": task_date},
+        invalidate=invalidate + [f"teacher:{user.id}:students:{student.id}"],
+    )
+
+
 # ---------------------- GET /students/{id}/books/{book_id}/grid (cinema-seat) ----------------------
 
 

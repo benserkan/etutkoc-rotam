@@ -96,8 +96,19 @@ def seed() -> dict:
                             planned_count=2, completed_count=2))
         db.add(SectionProgress(student_book_id=sb.id, book_section_id=sec.id,
                                reserved_count=0, completed_count=2))
+        # bu hafta: 2 testlik BEKLEYEN görev (sarı koltuklar) — bugün
+        t2 = Task(student_id=st.id, date=today, type=TaskType.TEST,
+                  title="Direnç: 2 test (bekleyen)", status=TaskStatus.PENDING,
+                  is_draft=False)
+        db.add(t2)
+        db.flush()
+        db.add(TaskBookItem(task_id=t2.id, book_id=book.id, book_section_id=sec.id,
+                            planned_count=2, completed_count=0))
+        sp_row = db.query(SectionProgress).filter_by(
+            student_book_id=sb.id, book_section_id=sec.id).one()
+        sp_row.reserved_count = 2
         db.commit()
-        return {"coach_id": coach.id, "student_id": st.id, "book_id": book.id,
+        return {"task2": t2.id, "coach_id": coach.id, "student_id": st.id, "book_id": book.id,
                 "subject_id": subj.id, "sb_id": sb.id, "sec": sec.id, "task": t.id,
                 "email": coach.email}
 
@@ -120,7 +131,7 @@ def cleanup(s: dict) -> None:
 
 
 GREEN = '[role="dialog"] button.bg-emerald-500'
-AMBER = '[role="dialog"] a.bg-amber-400'
+AMBER = '[role="dialog"] button.bg-amber-400'
 STRIP = '[data-section="book-grid:revert-strip"]'
 
 
@@ -142,7 +153,7 @@ def main() -> int:
             pg.goto(f"{BASE}/teacher/students/{sid}/week", wait_until="networkidle")
             pg.wait_for_timeout(2500)
 
-            pg.get_by_text("Grv Fizik", exact=False).first.click()  # ders satırını aç
+            pg.locator("aside").get_by_text("Grv Fizik", exact=False).first.click()  # sağ panelde ders satırını aç
             pg.wait_for_timeout(800)
             pg.click('button[aria-label="Sinema-koltuğu görünümü"]', timeout=8000)
             pg.wait_for_selector(GREEN, timeout=15000)
@@ -181,13 +192,58 @@ def main() -> int:
             chk("6. 1 test geri alındı: yeşil 2 → 1, şerit kapandı",
                 pg.locator(GREEN).count() == 1 and pg.locator(STRIP).count() == 0,
                 f"yeşil={pg.locator(GREEN).count()}")
-            chk("7. geçmiş hafta: sarı (rezerv) koltuk KALMADI — test atanabilir",
-                pg.locator(AMBER).count() == 0, f"sarı={pg.locator(AMBER).count()}")
+            chk("7. geçmiş hafta: dönen rezerv serbest — sarı yalnız bu haftanın 2 koltuğu",
+                pg.locator(AMBER).count() == 2, f"sarı={pg.locator(AMBER).count()}")
             with SessionLocal() as db:
                 t = db.get(Task, s["task"])
                 chk("8. görev SİLİNMEDİ: kısmi (1/2)",
                     t is not None and t.status == TaskStatus.PARTIAL
                     and t.book_items[0].completed_count == 1)
+
+            # --- SARI koltuk: rezervden çıkar ---
+            pg.locator(AMBER).first.click()
+            pg.wait_for_selector(STRIP, timeout=5000)
+            chk("9. sarıya tıkla → şerit (sayfa değişmedi) + 'rezervden çıkar'",
+                "/week" in pg.url
+                and pg.locator(STRIP).get_by_text("1 test rezervden çıkar").count() == 1)
+            pg.screenshot(path=".shots/grid_release_strip.png")
+            pg.locator(STRIP).get_by_text("1 test rezervden çıkar").click()
+            pg.wait_for_timeout(2500)
+            chk("10. 1 rezerv kaldırıldı: sarı 2 → 1",
+                pg.locator(AMBER).count() == 1, f"sarı={pg.locator(AMBER).count()}")
+            with SessionLocal() as db:
+                t2 = db.get(Task, s["task2"])
+                chk("11. görev duruyor, 2 → 1 test",
+                    t2 is not None and t2.book_items[0].planned_count == 1)
+
+            # --- 'O günün programında göster' → ızgarada vurgulu görev ---
+            pg.locator(AMBER).first.click()
+            pg.wait_for_selector(STRIP, timeout=5000)
+            pg.locator(STRIP).get_by_text("O günün programında göster").click()
+            pg.wait_for_timeout(4000)
+            chk("12. URL görevi taşıyor (?task=)", f"task={s['task2']}" in pg.url, pg.url)
+            hl = pg.locator('li[data-highlight="1"]')
+            chk("13. hafta ızgarasında TAM 1 görev işaretli", hl.count() == 1,
+                f"{hl.count()}")
+            info = pg.evaluate(
+                """() => {
+                  const el = document.querySelector('li[data-highlight="1"]');
+                  if (!el) return null;
+                  const cs = getComputedStyle(el);
+                  const span = el.querySelector('span');
+                  return { bg: cs.backgroundColor, fg: getComputedStyle(span).color,
+                           text: el.textContent };
+                }""")
+            chk("14. işaret DOLGULU ayrı renk + beyaz metin",
+                info is not None and info["bg"] not in ("rgba(0, 0, 0, 0)", "transparent")
+                and "Direnç" in (info["text"] or ""), f"{info}")
+            chk("15. 'işaretli görev' notu + günün editörü açık (BUGÜN)",
+                pg.locator('[data-section="week-grid:highlight-note"]').count() == 1)
+            pg.screenshot(path=".shots/grid_highlight_week.png")
+            pg.get_by_text("İşareti kaldır").click()
+            pg.wait_for_timeout(500)
+            chk("16. 'İşareti kaldır' → vurgu gider",
+                pg.locator('li[data-highlight="1"]').count() == 0)
             b.close()
     finally:
         cleanup(s)

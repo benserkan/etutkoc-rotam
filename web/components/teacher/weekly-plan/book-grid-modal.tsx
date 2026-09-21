@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   useReconcileBookCounters,
+  useReleaseGridReserved,
   useRevertGridCompleted,
 } from "@/lib/hooks/use-teacher-mutations";
 import { cn } from "@/lib/utils";
@@ -49,8 +50,10 @@ interface Props {
  *   - amber   → rezerv (RESERVED, görev atanmış ama henüz yapılmadı)
  *   - slate   → boş (FREE)
  *
- * Rezerv karesi tıklanınca o görevin haftalık planı sayfasına gider. ÇÖZÜLDÜ
- * karesi tıklanınca bölümün ALTINDA tek satırlık şerit açılır (2026-09-21):
+ * ÇÖZÜLDÜ ve REZERV karesi tıklanınca bölümün ALTINDA tek satırlık şerit açılır
+ * (2026-09-21) — yeşilde "çözülmedi olarak geri al", sarıda "rezervden çıkar";
+ * ikisinde de "o günün programı" (hafta ızgarasında görev VURGULANIR: ?task=).
+ * Yeşil:
  * "çözülmedi olarak geri al" (öğrenci çözmediği testi işaretlemişse — seansta
  * kaynağa bakınca görülür) + o günün programına git. Koltuklar yer değiştirmez,
  * ek sütun/buton yok → ızgara sıkışmaz.
@@ -109,6 +112,7 @@ function Body({
   if (q.isLoading) {
     return (
       <div className="flex items-center gap-2 px-5 py-8 text-sm text-muted-foreground">
+        <DialogTitle className="sr-only">Kitap detayı yükleniyor</DialogTitle>
         <Loader2 className="size-4 animate-spin" aria-hidden /> Yükleniyor…
       </div>
     );
@@ -116,6 +120,7 @@ function Body({
   if (q.error || !q.data) {
     return (
       <div className="px-5 py-8 text-sm text-rose-600">
+        <DialogTitle className="sr-only">Kitap detayı</DialogTitle>
         Kitap detayı yüklenemedi.
       </div>
     );
@@ -238,8 +243,8 @@ function Body({
         <Legend tone="amber" label="rezervde (görev atanmış)" />
         <Legend tone="slate" label="henüz boş" />
         <span className="ml-auto italic">
-          Her kutu bir {unitWord} · üzerine gel → tarih · yeşile tıkla → geri
-          al / güne git
+          Her kutu bir {unitWord} · üzerine gel → tarih · yeşile/sarıya tıkla
+          → geri al · rezervden çıkar · güne git
         </span>
       </footer>
     </>
@@ -276,13 +281,13 @@ function SectionGrid({
     selectedNumber === null
       ? null
       : (section.cells.find(
-          (c) => c.number === selectedNumber && c.state === "DONE",
+          (c) => c.number === selectedNumber && c.state !== "FREE",
         ) ?? null);
-  // Aynı görevin bu bölümdeki çözülmüş koltuk sayısı ("görevin tümünü geri al")
+  // Aynı görevin bu bölümdeki AYNI durumdaki koltuk sayısı ("tümünü …")
   const sameTaskDone = selectedCell
     ? section.cells.filter(
         (c) =>
-          c.state === "DONE" &&
+          c.state === selectedCell.state &&
           (c.task_id ?? null) === (selectedCell.task_id ?? null),
       ).length
     : 0;
@@ -323,9 +328,7 @@ function SectionGrid({
           <Cell
             key={cell.number}
             cell={cell}
-            studentId={studentId}
             unitWord={unitWord}
-            onClose={onClose}
             selected={selectedNumber === cell.number}
             onSelect={() =>
               onSelect(selectedNumber === cell.number ? null : cell.number)
@@ -351,16 +354,12 @@ function SectionGrid({
 
 function Cell({
   cell,
-  studentId,
   unitWord,
-  onClose,
   selected,
   onSelect,
 }: {
   cell: BookCell;
-  studentId: number;
   unitWord: string;
-  onClose: () => void;
   selected: boolean;
   onSelect: () => void;
 }) {
@@ -393,22 +392,18 @@ function Cell({
       />
     );
   }
-  // RESERVED — o günün programına götürür
-  const tone = "bg-amber-400 hover:ring-amber-600";
-  const verb = "rezerve (henüz çözülmedi)";
-  const dateLabel = cell.task_date ?? "—";
-  const href = cell.task_date
-    ? `/teacher/students/${studentId}/week?start=${encodeURIComponent(cell.task_date)}`
-    : `/teacher/students/${studentId}/week`;
+  // Sarı koltuk = buton: tıkla → bölüm altında şerit (rezervden çıkar / güne git)
   return (
-    <Link
-      href={href}
-      onClick={onClose}
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
       className={cn(
-        "aspect-square rounded-sm hover:scale-125 hover:ring-2 transition-transform block",
-        tone,
+        "aspect-square rounded-sm bg-amber-400 hover:scale-125 hover:ring-2 hover:ring-amber-600 transition-transform block",
+        selected &&
+          "ring-2 ring-offset-1 ring-offset-background ring-foreground scale-110",
       )}
-      title={`${unitWord.charAt(0).toUpperCase()}${unitWord.slice(1)} ${cell.number} · ${dateLabel} tarihinde ${verb} → o günün programına git`}
+      title={`${Unit} ${cell.number} · ${cell.task_date ?? "—"} tarihli görevde rezerve (henüz çözülmedi) — tıkla: rezervden çıkar / güne git`}
     />
   );
 }
@@ -433,14 +428,29 @@ function RevertStrip({
   onClose: () => void;
   onDismiss: () => void;
 }) {
-  const mut = useRevertGridCompleted(studentId);
+  const revertMut = useRevertGridCompleted(studentId);
+  const releaseMut = useReleaseGridReserved(studentId);
+  const isReserved = cell.state === "RESERVED";
+  const mut = isReserved ? releaseMut : revertMut;
   const taskId = cell.task_id ?? null;
   // "2026-09-01" → "01.09.2026"
   const dateTr = cell.task_date
     ? cell.task_date.split("-").reverse().join(".")
     : null;
-  const run = (count: number) =>
-    mut.mutate({ bookId, sectionId, taskId, count }, { onSuccess: onDismiss });
+  const run = (count: number) => {
+    if (isReserved) {
+      if (taskId === null) return;
+      releaseMut.mutate(
+        { bookId, sectionId, taskId, count },
+        { onSuccess: onDismiss },
+      );
+    } else {
+      revertMut.mutate(
+        { bookId, sectionId, taskId, count },
+        { onSuccess: onDismiss },
+      );
+    }
+  };
   return (
     <div
       data-section="book-grid:revert-strip"
@@ -448,7 +458,15 @@ function RevertStrip({
     >
       <div className="flex items-start justify-between gap-2">
         <p className="text-foreground">
-          {cell.task_date ? (
+          {isReserved ? (
+            <>
+              <b>{dateTr}</b> tarihli görevde bekliyor (rezerv)
+              {sameTaskDone > 1
+                ? ` — bu görevden ${sameTaskDone} ${unitWord}`
+                : ""}
+              .
+            </>
+          ) : cell.task_date ? (
             <>
               <b>{dateTr}</b> tarihli görevde çözüldü işaretlenmiş
               {sameTaskDone > 1
@@ -460,8 +478,9 @@ function RevertStrip({
             <>Göreve bağlı değil — önceden çözülmüş olarak işlenmiş.</>
           )}{" "}
           <span className="text-muted-foreground">
-            Öğrenci aslında çözmediyse geri al: görev silinmez, geri alınan{" "}
-            {unitWord} yeniden atanabilir olur.
+            {isReserved
+              ? `Rezervden çıkarırsan görevin ${unitWord} sayısı düşer; görevde başka ${unitWord} kalmazsa görev programdan silinir.`
+              : `Öğrenci aslında çözmediyse geri al: görev silinmez, geri alınan ${unitWord} yeniden atanabilir olur.`}
           </span>
         </p>
         <button
@@ -485,7 +504,7 @@ function RevertStrip({
           ) : (
             <Undo2 className="size-3" aria-hidden />
           )}
-          1 {unitWord} geri al
+          {isReserved ? `1 ${unitWord} rezervden çıkar` : `1 ${unitWord} geri al`}
         </button>
         {sameTaskDone > 1 ? (
           <button
@@ -494,17 +513,21 @@ function RevertStrip({
             onClick={() => run(sameTaskDone)}
             className="inline-flex items-center gap-1.5 rounded-md border border-rose-300 px-2.5 py-1 font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/40 dark:text-rose-300 dark:hover:bg-rose-500/10"
           >
-            {cell.task_date ? "Bu görevin tümünü" : "Hepsini"} geri al (
-            {sameTaskDone} {unitWord})
+            {isReserved
+              ? "Bu görevin tüm rezervini kaldır"
+              : cell.task_date
+                ? "Bu görevin tümünü geri al"
+                : "Hepsini geri al"}{" "}
+            ({sameTaskDone} {unitWord})
           </button>
         ) : null}
         {cell.task_date ? (
           <Link
-            href={`/teacher/students/${studentId}/week?start=${encodeURIComponent(cell.task_date)}`}
+            href={`/teacher/students/${studentId}/week?start=${encodeURIComponent(cell.task_date)}${taskId !== null ? `&task=${taskId}` : ""}`}
             onClick={onClose}
             className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground hover:underline"
           >
-            O günün programı
+            O günün programında göster
             <ArrowRight className="size-3" aria-hidden />
           </Link>
         ) : null}

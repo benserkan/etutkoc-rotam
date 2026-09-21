@@ -219,13 +219,16 @@ function SubjGroupBlock({
   dayDate,
   onDragState,
   onContext,
+  highlightTaskId,
 }: {
   g: SubjGroup;
   dayDate: string;
+  highlightTaskId?: number | null;
   onDragState?: (dragging: boolean) => void;
   onContext?: (t: TeacherTask, dayDate: string, x: number, y: number) => void;
 }) {
   const tone = toneForKey(g.key, g.name);
+  const scrolledRef = React.useRef(false);
   return (
     <div>
       <div className="flex items-center gap-1 leading-tight">
@@ -237,9 +240,21 @@ function SubjGroupBlock({
       <ul className="mt-0.5 space-y-px">
         {g.tasks.map((t) => {
           const mk = MARK[gorevState(t)];
+          const hl = highlightTaskId === t.id;
           return (
             <li
               key={t.id}
+              data-highlight={hl ? "1" : undefined}
+              ref={
+                hl
+                  ? (el) => {
+                      // yalnız İLK görünüşte kaydır (her render'da değil)
+                      if (!el || scrolledRef.current) return;
+                      scrolledRef.current = true;
+                      el.scrollIntoView({ block: "center", behavior: "smooth" });
+                    }
+                  : undefined
+              }
               draggable={t.scheduled_hour == null}
               onDragStart={(e) => {
                 e.dataTransfer.setData(
@@ -259,6 +274,10 @@ function SubjGroupBlock({
               className={cn(
                 "flex items-start gap-1 text-[10px] leading-snug",
                 t.scheduled_hour == null && "cursor-grab active:cursor-grabbing",
+                // Koltuk ızgarasından gelinen görev: DOLGULU ayrı renk (küçük
+                // öğede ton+dark çifti yerine dolgu — kontrast kuralı)
+                hl &&
+                  "rounded bg-fuchsia-600 px-1 py-0.5 ring-2 ring-fuchsia-300 [&_*]:!text-white",
               )}
               title={taskTooltip(
                 t,
@@ -271,7 +290,13 @@ function SubjGroupBlock({
                 {mk.ch}
               </span>
               <span className="min-w-0 flex-1 text-foreground/90">
-                <span className="truncate inline-block max-w-full align-bottom">
+                {/* işaretli görevde ad KIRPILMAZ — koç aradığı görevi tam okusun */}
+                <span
+                  className={cn(
+                    "max-w-full align-bottom",
+                    hl ? "break-words" : "truncate inline-block",
+                  )}
+                >
                   {taskLabel(t)}
                 </span>
                 {isActivity(t) ? (
@@ -300,12 +325,16 @@ export function WeekGrid({
   subjects,
   openDate,
   onOpenDay,
+  highlightTaskId = null,
+  onClearHighlight,
 }: {
   studentId: number;
   days: TeacherStudentWeekDay[];
   subjects: SubjectRef[];
   openDate: string | null;
   onOpenDay: (date: string) => void;
+  highlightTaskId?: number | null;
+  onClearHighlight?: () => void;
 }) {
   const [collapsed, setCollapsed] = React.useState(false);
   // Surukle-tasi / Ctrl+kopyala (2026-08-12) — cip suruklenirken ipucu + hedef halkasi
@@ -614,6 +643,7 @@ export function WeekGrid({
                               key={g.key}
                               g={g}
                               dayDate={day.date}
+                              highlightTaskId={highlightTaskId}
                               onDragState={setDragging}
                               onContext={(t, dd, x, y) =>
                                 setMenu({
@@ -656,6 +686,27 @@ export function WeekGrid({
                 className="shrink-0 rounded border border-amber-400 px-2 py-0.5 text-[11px] hover:bg-amber-100 dark:hover:bg-amber-500/20"
               >
                 Vazgeç (ESC)
+              </button>
+            </div>
+          ) : null}
+          {highlightTaskId !== null ? (
+            <div
+              data-section="week-grid:highlight-note"
+              className="mx-4 mb-2 flex flex-wrap items-center gap-2 text-[11px]"
+            >
+              <span className="rounded bg-fuchsia-600 px-1.5 py-0.5 font-medium text-white">
+                işaretli görev
+              </span>
+              <span className="text-muted-foreground">
+                Kitap koltuğundan geldiğin görev yukarıda bu renkle gösteriliyor;
+                günü aşağıda açık.
+              </span>
+              <button
+                type="button"
+                onClick={onClearHighlight}
+                className="rounded border border-border px-1.5 py-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              >
+                İşareti kaldır
               </button>
             </div>
           ) : null}

@@ -65,6 +65,26 @@ yanlış görevi SİLDİ — ama Hücre Zarı'nda 3 test "çözüldü" kaldı.
   sabit · yeşil 2→1 · sarı kalmadı · görev kısmi). **TEST DERSİ:** hafta
   sayfasında Kaynak Durumu ders satırı KAPALI gelir — ızgara düğmesine
   ulaşmadan önce ders satırına tıkla.
+- **DEVAMI 3 (2026-09-21) — SARI KOLTUKTAN REZERV KALDIR + IZGARADA GÖREVİ
+  İŞARETLE:** koç: "rezervde de silme yapabilelim; 'o günün programı' dediğimde
+  haftalık ızgarada o görev farklı renkle görünsün." (a) Sarı koltuk da BUTON →
+  aynı şerit, "1 test rezervden çıkar" / "Bu görevin tüm rezervini kaldır (N)".
+  Uç `POST .../sections/{sec}/release-reserved` {task_id, count}: kalem
+  `planned_count` düşer + `release_item` (kalem zaten released ise sayaç ÇİFT
+  İADE edilmez); kalem boşalırsa silinir, görevde kalem kalmazsa GÖREV silinir
+  (devret kaynağı `carried_at` geri açılır — görev silme ucuyla aynı kural);
+  otomatik başlık tazelenir; çözülmüş kısma dokunulmaz. (b) Şeritteki link
+  `/week?start=DATE&task=ID`; `page.tsx` `focusTaskId` okur + WeekBoard'u
+  **key ile yeniden kurar** (aynı rotada searchParams değişince `openDate`
+  state'i bayat kalıyordu); o görevin GÜNÜ açılır, WeekGrid satırı **dolgulu
+  fuşya + beyaz metin** (küçük öğede dolgu kuralı), adı KIRPILMAZ, ilk
+  görünüşte bir kez `scrollIntoView`; altında "işaretli görev … İşareti kaldır"
+  notu. Modalın yükleme/hata durumuna sr-only `DialogTitle` (dev "1 Issue").
+  wrong_topic_delete **20/20** · `live_grid_revert.py` **16/16**.
+  **TEST DERSLERİ:** (1) "N gün önce" tohumlu beklenti haftanın gününe göre
+  ölü-rezerv sınırının öbür yanına düşebilir → beklentiyi `reservation_
+  released_at`'ten türet; (2) canlı testte ders adı metni hafta ızgarasında da
+  geçer → seçiciyi `aside`'a daralt.
 - **KURAL:** "çözüldü" sayacını koruyan guard, korunan şeyi GERÇEK kaynaktan
   (canlı görev kalemi) ölçer — türetilmiş bir sayaçtan (manual_count) değil;
   yoksa kaynak silinince kalıcı kilit doğar.

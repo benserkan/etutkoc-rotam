@@ -107,9 +107,16 @@ interface Props {
   studentId: number;
   initial: TeacherStudentWeekResponse;
   initialStart: string;
+  /** Koltuk ızgarasından gelindi: bu görevin günü açılır + ızgarada vurgulanır. */
+  focusTaskId?: number | null;
 }
 
-export function WeekBoard({ studentId, initial, initialStart }: Props) {
+export function WeekBoard({
+  studentId,
+  initial,
+  initialStart,
+  focusTaskId = null,
+}: Props) {
   const startDate = initial.start_date;
   const weekQ = useQuery<TeacherStudentWeekResponse>({
     queryKey: teacherKeys.studentWeek(studentId, startDate),
@@ -142,8 +149,20 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
   // Single-open accordion: aynı anda yalnızca bir gün açık (Jinja'da bu yoktu;
   // kullanıcı talebi 2026-05-19). Default: bugüne denk gelen gün.
   const todayDay = data.days.find((d) => d.is_today);
+  const focusDay =
+    focusTaskId !== null
+      ? data.days.find((d) => d.tasks.some((t) => t.id === focusTaskId))
+      : undefined;
   const [openDate, setOpenDate] = React.useState<string | null>(
-    todayDay ? todayDay.date : data.days[0]?.date ?? null,
+    focusDay
+      ? focusDay.date
+      : todayDay
+        ? todayDay.date
+        : (data.days[0]?.date ?? null),
+  );
+  // Vurgu oturum içi kapatılabilir (× ile); URL'deki ?task= yeniden gelince döner.
+  const [highlightTaskId, setHighlightTaskId] = React.useState<number | null>(
+    focusDay ? focusTaskId : null,
   );
   // Gün FİHRİSTİ (2026-09-03 koç geri bildirimi): 7 gün kartı alt alta
   // açıldığında içerik o kadar uzuyordu ki günler arası geçiş uzun kaydırma
@@ -437,6 +456,8 @@ export function WeekBoard({ studentId, initial, initialStart }: Props) {
       ) : null}
 
       <WeekGrid
+        highlightTaskId={highlightTaskId}
+        onClearHighlight={() => setHighlightTaskId(null)}
         studentId={studentId}
         days={data.days}
         subjects={subjectsForGrouping}
