@@ -96,13 +96,13 @@ def seed() -> dict:
         db.add(book)
         db.flush()
         secs = [BookSection(book_id=book.id, label=f"Bölüm {i}", test_count=7, order=i)
-                for i in (1, 2, 3, 4)]
+                for i in (1, 2, 3, 4, 5, 6)]
         db.add_all(secs)
         db.flush()
         sb = StudentBook(student_id=st.id, book_id=book.id)
         db.add(sb)
         db.flush()
-        a, b, c_, d = secs
+        a, b, c_, d, e, f = secs
         done = TaskStatus.COMPLETED
         t_a = _task(db, st, book, a, today - timedelta(days=2), 3, 3, done)
         t_b = _task(db, st, book, b, today - timedelta(days=2), 3, 3, done)
@@ -114,8 +114,15 @@ def seed() -> dict:
         t_d = _task(db, st, book, d, today, 4, 1, TaskStatus.PENDING)
         db.add(SectionProgress(student_book_id=sb.id, book_section_id=d.id,
                                reserved_count=3, completed_count=1))
+        # SAHA-3 (Direnç): GEÇMİŞ haftada 2/2 'çözdüm' işaretli ama çözülmemiş
+        t_e = _task(db, st, book, e, today - timedelta(days=20), 2, 2, done)
+        db.add(SectionProgress(student_book_id=sb.id, book_section_id=e.id,
+                               reserved_count=0, completed_count=2))
+        # göreve bağlı olmayan 'önceden çözülmüş' (baseline) 3 test
+        db.add(SectionProgress(student_book_id=sb.id, book_section_id=f.id,
+                               reserved_count=0, completed_count=3, manual_count=3))
         db.commit()
-        return {"coach_id": coach.id, "student_id": st.id, "book_id": book.id,
+        return {"e": e.id, "f": f.id, "t_e": t_e.id, "coach_id": coach.id, "student_id": st.id, "book_id": book.id,
                 "subject_id": subj.id, "sb_id": sb.id,
                 "a": a.id, "b": b.id, "c": c_.id, "d": d.id,
                 "t_a": t_a.id, "t_b": t_b.id, "t_c": t_c.id, "t_d": t_d.id}
@@ -215,6 +222,44 @@ def main() -> int:
         check("6. kısmi görevde revert: çözülen 1 + bekleyen 3 birlikte iade",
               r.status_code == 200 and counters(sb, s["d"]) == (0, 0),
               f"{r.status_code} {counters(sb, s['d'])}")
+
+        # 7-10. KOLTUK IZGARASI: yeşil koltuktan geri al (geçmiş hafta görevi)
+        def grid_revert(sec, task_id, count):
+            return c.post(
+                f"/api/v2/teacher/students/{sid}/books/{s['book_id']}"
+                f"/sections/{sec}/revert-completed",
+                json={"task_id": task_id, "count": count})
+
+        r = grid_revert(s["e"], s["t_e"], 1)
+        with SessionLocal() as db:
+            te = db.get(Task, s["t_e"])
+            st_e, it_e = te.status, te.book_items[0].completed_count
+        d_ = r.json().get("data", {}) if r.status_code == 200 else {}
+        check("7. ızgara: 1 test geri alındı — görev SİLİNMEDİ, kısmi (1/2)",
+              r.status_code == 200 and d_.get("reverted") == 1
+              and st_e == TaskStatus.PARTIAL and it_e == 1,
+              f"{r.status_code} {r.text[:200]} {st_e} {it_e}")
+        check("8. geçmiş hafta: dönen rezerv ANINDA serbest → atanabilir 6/7",
+              counters(sb, s["e"]) == (0, 1) and d_.get("section_remaining") == 6,
+              f"{counters(sb, s['e'])} {d_}")
+        r = grid_revert(s["e"], s["t_e"], 5)
+        with SessionLocal() as db:
+            st_e2 = db.get(Task, s["t_e"]).status
+        check("9. kalan da geri alındı (count kırpılır): bekliyor, 7/7 atanabilir",
+              r.status_code == 200 and r.json()["data"]["reverted"] == 1
+              and st_e2 == TaskStatus.PENDING and counters(sb, s["e"]) == (0, 0),
+              f"{r.status_code} {st_e2} {counters(sb, s['e'])}")
+        r = grid_revert(s["e"], s["t_e"], 1)
+        check("10. geri alınacak bir şey yok → 422 nothing_to_revert",
+              r.status_code == 422, f"{r.status_code}")
+        r = grid_revert(s["f"], None, 1)
+        check("11. göreve bağlı olmayan koltuk (önceden çözülmüş) da geri alınır",
+              r.status_code == 200 and counters(sb, s["f"]) == (0, 2),
+              f"{r.status_code} {r.text[:160]} {counters(sb, s['f'])}")
+        r = c.post(f"/api/v2/teacher/students/999999/books/{s['book_id']}"
+                   f"/sections/{s['e']}/revert-completed",
+                   json={"task_id": None, "count": 1})
+        check("12. yabancı öğrenci 404", r.status_code == 404, f"{r.status_code}")
     finally:
         cleanup(s)
 

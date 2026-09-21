@@ -9,6 +9,8 @@ import {
   archiveStudentBooks,
   notifyParentsExam,
   reconcileBookCounters,
+  revertGridCompleted,
+  type GridRevertResult,
   teacherKeys,
 } from "@/lib/api/teacher";
 import type {
@@ -2173,6 +2175,30 @@ export function useWrapLegacyTasks(studentId: number) {
  * Kitap ızgarasındaki sayaç uyumsuzluğunu onar (ölü rezervi serbest bırakır).
  * Koç geri bildirimi 2026-09-03: uyarı görünüyordu ama düzeltme yolu yoktu.
  */
+/** Koltuk ızgarasından "çözüldü"yü geri al — görev silinmez, kısmi/bekliyor olur. */
+export function useRevertGridCompleted(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<GridRevertResult>,
+    ApiError,
+    { bookId: number; sectionId: number; taskId: number | null; count: number }
+  >({
+    mutationFn: ({ bookId, sectionId, taskId, count }) =>
+      revertGridCompleted(studentId, bookId, sectionId, {
+        task_id: taskId,
+        count,
+      }),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      const d = res.data;
+      toast.success(`${d?.reverted ?? 0} test "çözülmedi" olarak geri alındı`, {
+        description: `Bu bölümde atanabilir: ${d?.section_remaining ?? 0} test`,
+      });
+    },
+    onError: (e) => showError(e, "Geri alınamadı"),
+  });
+}
+
 export function useReconcileBookCounters(studentId: number) {
   const qc = useQueryClient();
   return useMutation<

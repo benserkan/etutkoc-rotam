@@ -45,6 +45,26 @@ yanlış görevi SİLDİ — ama Hücre Zarı'nda 3 test "çözüldü" kaldı.
   Panelde kaydetmeden önce amber ipucu. `manual_reduce_exceeds` 422'si fiilen
   emekli (koç aynı işlemi görev rozetinden zaten yapabiliyordu — yeni yetki
   YOK; azaltma metrikleri şişirmez). wrong_topic_delete **9/9** · self_study 25.
+- **DEVAMI 2 (2026-09-21) — KOLTUK IZGARASINDAN GERİ AL:** koç seansta
+  kaynağa bakıp öğrencinin "çözdüm" dediği testleri çözmediğini görüyor (Emir ·
+  Direnç 2 test, konu geçmiş haftada). Koç önerisi: yeşil koltuktan iptal, ama
+  **sıkışmadan**. `book-grid-modal`: yeşil koltuk artık Link değil BUTON → o
+  bölümün ALTINDA tek şerit (`RevertStrip`, assign-count-chooser deseni —
+  satır altına akar, portal/ek sütun yok): "1 test geri al" · "Bu görevin
+  tümünü geri al (N test)" · "O günün programı →" · ×. Sarı (rezerv) koltuk
+  eskisi gibi güne götürür. Uç `POST /students/{sid}/books/{bid}/sections/
+  {sec}/revert-completed` {task_id|null, count}: görev SİLİNMEZ
+  (`set_item_completion` → PARTIAL/PENDING, iz kalır); göreve bağlı olmayan
+  (önceden çözülmüş) koltukta `set_absolute_completed`; **geçmiş hafta
+  görevinde dönen rezerv aynı istekte serbest bırakılır**
+  (`_reconcile_dead_reservations`) → testler anında yeniden atanabilir, sarı
+  koltuk kalmaz. Audit `op=grid_revert_completed`. Modalın eski Radix
+  "Description eksik" uyarısı da susturuldu (dev'de "1 Issue" rozeti).
+  wrong_topic_delete **15/15** · YENİ `live_grid_revert.py` **8/8** (gerçek
+  tarayıcı: şerit koltukların altında · yatay taşma/kırpma yok · koltuk sayısı
+  sabit · yeşil 2→1 · sarı kalmadı · görev kısmi). **TEST DERSİ:** hafta
+  sayfasında Kaynak Durumu ders satırı KAPALI gelir — ızgara düğmesine
+  ulaşmadan önce ders satırına tıkla.
 - **KURAL:** "çözüldü" sayacını koruyan guard, korunan şeyi GERÇEK kaynaktan
   (canlı görev kalemi) ölçer — türetilmiş bir sayaçtan (manual_count) değil;
   yoksa kaynak silinince kalıcı kilit doğar.

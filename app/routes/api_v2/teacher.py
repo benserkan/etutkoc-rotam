@@ -65,6 +65,7 @@ from typing import Literal
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
 from fastapi.responses import HTMLResponse
+from pydantic import BaseModel, Field
 from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
@@ -7256,6 +7257,149 @@ def teacher_reconcile_book_counters_v2(
             f"teacher:{user.id}:students:{student_id}:section-stats",
             f"teacher:{user.id}:students:{student_id}:book-sections",
             f"teacher:{user.id}:students:{student_id}:week",
+        ],
+    )
+
+
+# ---------------------- POST .../sections/{section_id}/revert-completed ----------------------
+
+
+class GridRevertBody(BaseModel):
+    """Koltuk ızgarasından 'çözüldü'yü geri al.
+
+    task_id: yeşil koltuğun bağlı olduğu görev (None = göreve bağlı olmayan
+    'önceden çözülmüş' koltuk). count: geri alınacak test sayısı.
+    """
+    task_id: int | None = None
+    count: int = Field(1, ge=1, le=500)
+
+
+@router.post(
+    "/students/{student_id}/books/{book_id}/sections/{section_id}/revert-completed",
+    response_model=MutationResponse[dict],
+)
+def teacher_grid_revert_completed_v2(
+    student_id: int,
+    book_id: int,
+    section_id: int,
+    body: GridRevertBody,
+    user: User = Depends(_require_teacher),
+    db: Session = Depends(get_db),
+    request: Request = None,
+):
+    """Öğrenci çözmediği testi 'çözdüm' işaretlemiş (seansta kaynağa bakınca
+    görülür) → koç koltuk ızgarasında yeşil koltuğa tıklayıp geri alır.
+
+    Görev SİLİNMEZ: kalemin çözüleni düşer, görev kısmi/bekliyor olur (iz kalır).
+    Sayaç muhasebesi `task_service.set_item_completion`'da (TEK MERKEZ). Görev
+    geçmiş bir haftadaysa dönen rezerv 'ölü'dür → aynı istekte serbest bırakılır
+    (`_reconcile_dead_reservations`) ki testler hemen yeniden atanabilsin.
+    """
+    from app.models import AuditAction
+    from app.services import self_study_service as ss_svc
+    from app.services.audit import log_action
+
+    student = _get_owned_student(db, student_id, user.id)
+    sb = (
+        db.query(StudentBook)
+        .filter(StudentBook.student_id == student.id, StudentBook.book_id == book_id)
+        .first()
+    )
+    section = (
+        db.query(BookSection)
+        .filter(BookSection.id == section_id, BookSection.book_id == book_id)
+        .first()
+    )
+    if not sb or not section:
+        raise HTTPException(
+            status_code=404,
+            detail={"error": "not_found", "code": "section_not_found",
+                    "message": "Kitap/bölüm bu öğrencide bulunamadı."},
+        )
+
+    reverted = 0
+    task_status: str | None = None
+    task_date: str | None = None
+    if body.task_id is not None:
+        task = _get_owned_task(db, body.task_id, user.id)
+        item = next(
+            (i for i in task.book_items
+             if i.book_section_id == section_id and (i.completed_count or 0) > 0),
+            None,
+        )
+        if task.student_id != student.id or item is None:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={"error": "validation", "code": "nothing_to_revert",
+                        "message": "Bu görevde bu bölüm için geri alınacak çözülmüş test yok."},
+            )
+        reverted = min(body.count, int(item.completed_count))
+        try:
+            svc_set_item_completion(db, item, int(item.completed_count) - reverted)
+        except ReservationError as e:
+            db.rollback()
+            raise _reservation_to_http(e)
+        total_planned = sum(i.planned_count for i in task.book_items)
+        total_done = sum(i.completed_count for i in task.book_items)
+        if total_done == 0:
+            task.status = TaskStatus.PENDING
+            task.completed_at = None
+        elif total_done < total_planned:
+            task.status = TaskStatus.PARTIAL
+            task.completed_at = None
+        task_status = task.status.value
+        task_date = task.date.isoformat()
+    else:
+        sp = (
+            db.query(SectionProgress)
+            .filter(SectionProgress.student_book_id == sb.id,
+                    SectionProgress.book_section_id == section_id)
+            .first()
+        )
+        cur = int(sp.completed_count) if sp else 0
+        reverted = min(body.count, cur)
+        if reverted <= 0:
+            raise HTTPException(
+                status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+                detail={"error": "validation", "code": "nothing_to_revert",
+                        "message": "Bu bölümde geri alınacak çözülmüş test yok."},
+            )
+        ss_svc.set_absolute_completed(
+            db, student=student, sb=sb, section=section, actor=user,
+            target=cur - reverted,
+        )
+
+    log_action(
+        db, action=AuditAction.SELF_STUDY_UPDATE, actor_id=user.id,
+        target_type="user", target_id=student.id, request=request,
+        details={"op": "grid_revert_completed", "book_id": book_id,
+                 "section_id": section_id, "task_id": body.task_id,
+                 "reverted": reverted},
+        autocommit=False,
+    )
+    db.commit()
+
+    # Geçmiş haftanın görevine dönen rezerv ölüdür → hemen serbest bırak.
+    from app.routes.api_v2.weekly_plan import _reconcile_dead_reservations
+
+    _reconcile_dead_reservations(db, student.id)
+    sp = (
+        db.query(SectionProgress)
+        .filter(SectionProgress.student_book_id == sb.id,
+                SectionProgress.book_section_id == section_id)
+        .first()
+    )
+    remaining = max(
+        0,
+        int(section.test_count or 0)
+        - (int(sp.reserved_count) if sp else 0)
+        - (int(sp.completed_count) if sp else 0),
+    )
+    return MutationResponse[dict](
+        data={"reverted": reverted, "task_status": task_status,
+              "task_date": task_date, "section_remaining": remaining},
+        invalidate=_capacity_invalidate(user.id, student.id) + [
+            f"teacher:{user.id}:students:{student.id}",
         ],
     )
 

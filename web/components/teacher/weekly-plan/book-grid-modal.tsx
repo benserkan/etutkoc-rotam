@@ -3,7 +3,15 @@
 import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { AlertTriangle, BookOpen, Loader2, Wrench } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  BookOpen,
+  Loader2,
+  Undo2,
+  Wrench,
+  X,
+} from "lucide-react";
 
 import {
   getTeacherStudentBookGrid,
@@ -20,7 +28,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useReconcileBookCounters } from "@/lib/hooks/use-teacher-mutations";
+import {
+  useReconcileBookCounters,
+  useRevertGridCompleted,
+} from "@/lib/hooks/use-teacher-mutations";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -38,8 +49,11 @@ interface Props {
  *   - amber   → rezerv (RESERVED, görev atanmış ama henüz yapılmadı)
  *   - slate   → boş (FREE)
  *
- * Çözüldü/Rezerv kareleri tıklanınca o görevin haftalık planı sayfasına gider
- * (start={task_date}). Modal kapanır.
+ * Rezerv karesi tıklanınca o görevin haftalık planı sayfasına gider. ÇÖZÜLDÜ
+ * karesi tıklanınca bölümün ALTINDA tek satırlık şerit açılır (2026-09-21):
+ * "çözülmedi olarak geri al" (öğrenci çözmediği testi işaretlemişse — seansta
+ * kaynağa bakınca görülür) + o günün programına git. Koltuklar yer değiştirmez,
+ * ek sütun/buton yok → ızgara sıkışmaz.
  *
  * Drift uyarısı: stored counter (section_progress) ile slot-bazlı sayım farklı
  * ise üstte amber uyarı görünür — Jinja'daki davranış aynen.
@@ -52,7 +66,10 @@ export function BookGridModal({
 }: Props) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden">
+      <DialogContent
+        className="max-w-3xl p-0 overflow-hidden"
+        aria-describedby={undefined}
+      >
         {open && bookId !== null ? (
           <Body
             studentId={studentId}
@@ -78,6 +95,11 @@ function Body({
   // takılı kalınca o bölüme yeni test atanamıyordu, onarım yalnız SSH ile
   // yapılabiliyordu.
   const reconcile = useReconcileBookCounters(studentId);
+  // Seçili yeşil koltuk — şerit o bölümün altında açılır (aynı anda tek seçim).
+  const [sel, setSel] = React.useState<{
+    sectionId: number;
+    number: number;
+  } | null>(null);
   const q = useQuery<BookGridResponse>({
     queryKey: teacherKeys.studentBookGrid(studentId, bookId),
     queryFn: () => getTeacherStudentBookGrid(studentId, bookId),
@@ -195,8 +217,17 @@ function Body({
               key={sec.section_id}
               section={sec}
               studentId={studentId}
+              bookId={bookId}
               unitWord={unitWord}
               onClose={onClose}
+              selectedNumber={
+                sel?.sectionId === sec.section_id ? sel.number : null
+              }
+              onSelect={(n) =>
+                setSel(
+                  n === null ? null : { sectionId: sec.section_id, number: n },
+                )
+              }
             />
           ))
         )}
@@ -207,8 +238,8 @@ function Body({
         <Legend tone="amber" label="rezervde (görev atanmış)" />
         <Legend tone="slate" label="henüz boş" />
         <span className="ml-auto italic">
-          Her kutu bir {unitWord} · üzerine gel → tarih · tıkla → o günün
-          programı
+          Her kutu bir {unitWord} · üzerine gel → tarih · yeşile tıkla → geri
+          al / güne git
         </span>
       </footer>
     </>
@@ -218,13 +249,19 @@ function Body({
 function SectionGrid({
   section,
   studentId,
+  bookId,
   unitWord,
   onClose,
+  selectedNumber,
+  onSelect,
 }: {
   section: BookSectionGrid;
   studentId: number;
+  bookId: number;
   unitWord: string;
   onClose: () => void;
+  selectedNumber: number | null;
+  onSelect: (n: number | null) => void;
 }) {
   // Slot-bazlı yeniden say (drift-proof, Jinja gibi)
   let comp = 0;
@@ -235,6 +272,20 @@ function SectionGrid({
   }
   const remaining = Math.max(0, section.test_count - comp - res);
   const secDrift = section.completed !== comp || section.reserved !== res;
+  const selectedCell =
+    selectedNumber === null
+      ? null
+      : (section.cells.find(
+          (c) => c.number === selectedNumber && c.state === "DONE",
+        ) ?? null);
+  // Aynı görevin bu bölümdeki çözülmüş koltuk sayısı ("görevin tümünü geri al")
+  const sameTaskDone = selectedCell
+    ? section.cells.filter(
+        (c) =>
+          c.state === "DONE" &&
+          (c.task_id ?? null) === (selectedCell.task_id ?? null),
+      ).length
+    : 0;
 
   return (
     <section>
@@ -275,9 +326,25 @@ function SectionGrid({
             studentId={studentId}
             unitWord={unitWord}
             onClose={onClose}
+            selected={selectedNumber === cell.number}
+            onSelect={() =>
+              onSelect(selectedNumber === cell.number ? null : cell.number)
+            }
           />
         ))}
       </div>
+      {selectedCell ? (
+        <RevertStrip
+          cell={selectedCell}
+          sameTaskDone={sameTaskDone}
+          studentId={studentId}
+          bookId={bookId}
+          sectionId={section.section_id}
+          unitWord={unitWord}
+          onClose={onClose}
+          onDismiss={() => onSelect(null)}
+        />
+      ) : null}
     </section>
   );
 }
@@ -287,12 +354,37 @@ function Cell({
   studentId,
   unitWord,
   onClose,
+  selected,
+  onSelect,
 }: {
   cell: BookCell;
   studentId: number;
   unitWord: string;
   onClose: () => void;
+  selected: boolean;
+  onSelect: () => void;
 }) {
+  const Unit = `${unitWord.charAt(0).toUpperCase()}${unitWord.slice(1)}`;
+  if (cell.state === "DONE") {
+    // Yeşil koltuk = buton: tıkla → bölüm altında şerit (geri al / güne git)
+    return (
+      <button
+        type="button"
+        onClick={onSelect}
+        aria-pressed={selected}
+        className={cn(
+          "aspect-square rounded-sm bg-emerald-500 hover:scale-125 hover:ring-2 hover:ring-emerald-700 transition-transform block",
+          selected &&
+            "ring-2 ring-offset-1 ring-offset-background ring-foreground scale-110",
+        )}
+        title={
+          cell.task_date
+            ? `${Unit} ${cell.number} · ${cell.task_date} tarihinde çözüldü işaretlendi — tıkla: geri al / güne git`
+            : `${Unit} ${cell.number}: önceden çözülmüş (göreve bağlı değil) — tıkla: geri al`
+        }
+      />
+    );
+  }
   if (cell.state === "FREE") {
     return (
       <div
@@ -301,24 +393,9 @@ function Cell({
       />
     );
   }
-  // Görevsiz DONE = baseline ("öğrenci zaten çözmüştü" girişi) — link yok
-  if (cell.state === "DONE" && !cell.task_date) {
-    return (
-      <div
-        className="aspect-square rounded-sm bg-emerald-500 hover:scale-110 transition-transform"
-        title={`${unitWord.charAt(0).toUpperCase()}${unitWord.slice(1)} ${cell.number}: önceden çözülmüş (sisteme işlendi, göreve bağlı değil)`}
-      />
-    );
-  }
-  // DONE veya RESERVED — tıklanabilir
-  const tone =
-    cell.state === "DONE"
-      ? "bg-emerald-500 hover:ring-emerald-700"
-      : "bg-amber-400 hover:ring-amber-600";
-  const verb =
-    cell.state === "DONE"
-      ? "çözüldü"
-      : "rezerve (henüz çözülmedi)";
+  // RESERVED — o günün programına götürür
+  const tone = "bg-amber-400 hover:ring-amber-600";
+  const verb = "rezerve (henüz çözülmedi)";
   const dateLabel = cell.task_date ?? "—";
   const href = cell.task_date
     ? `/teacher/students/${studentId}/week?start=${encodeURIComponent(cell.task_date)}`
@@ -333,6 +410,106 @@ function Cell({
       )}
       title={`${unitWord.charAt(0).toUpperCase()}${unitWord.slice(1)} ${cell.number} · ${dateLabel} tarihinde ${verb} → o günün programına git`}
     />
+  );
+}
+
+/** Seçili yeşil koltuk için bölüm altı şerit — koltuk düzenini bozmaz. */
+function RevertStrip({
+  cell,
+  sameTaskDone,
+  studentId,
+  bookId,
+  sectionId,
+  unitWord,
+  onClose,
+  onDismiss,
+}: {
+  cell: BookCell;
+  sameTaskDone: number;
+  studentId: number;
+  bookId: number;
+  sectionId: number;
+  unitWord: string;
+  onClose: () => void;
+  onDismiss: () => void;
+}) {
+  const mut = useRevertGridCompleted(studentId);
+  const taskId = cell.task_id ?? null;
+  // "2026-09-01" → "01.09.2026"
+  const dateTr = cell.task_date
+    ? cell.task_date.split("-").reverse().join(".")
+    : null;
+  const run = (count: number) =>
+    mut.mutate({ bookId, sectionId, taskId, count }, { onSuccess: onDismiss });
+  return (
+    <div
+      data-section="book-grid:revert-strip"
+      className="mt-2 rounded-md border border-border bg-muted/40 px-3 py-2 text-xs"
+    >
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-foreground">
+          {cell.task_date ? (
+            <>
+              <b>{dateTr}</b> tarihli görevde çözüldü işaretlenmiş
+              {sameTaskDone > 1
+                ? ` (bu görevden ${sameTaskDone} ${unitWord})`
+                : ""}
+              .
+            </>
+          ) : (
+            <>Göreve bağlı değil — önceden çözülmüş olarak işlenmiş.</>
+          )}{" "}
+          <span className="text-muted-foreground">
+            Öğrenci aslında çözmediyse geri al: görev silinmez, geri alınan{" "}
+            {unitWord} yeniden atanabilir olur.
+          </span>
+        </p>
+        <button
+          type="button"
+          onClick={onDismiss}
+          aria-label="Kapat"
+          className="shrink-0 rounded p-0.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <X className="size-3.5" aria-hidden />
+        </button>
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <button
+          type="button"
+          disabled={mut.isPending}
+          onClick={() => run(1)}
+          className="inline-flex items-center gap-1.5 rounded-md bg-rose-600 px-2.5 py-1 font-medium text-white hover:bg-rose-700 disabled:opacity-50"
+        >
+          {mut.isPending ? (
+            <Loader2 className="size-3 animate-spin" aria-hidden />
+          ) : (
+            <Undo2 className="size-3" aria-hidden />
+          )}
+          1 {unitWord} geri al
+        </button>
+        {sameTaskDone > 1 ? (
+          <button
+            type="button"
+            disabled={mut.isPending}
+            onClick={() => run(sameTaskDone)}
+            className="inline-flex items-center gap-1.5 rounded-md border border-rose-300 px-2.5 py-1 font-medium text-rose-700 hover:bg-rose-50 disabled:opacity-50 dark:border-rose-500/40 dark:text-rose-300 dark:hover:bg-rose-500/10"
+          >
+            {cell.task_date ? "Bu görevin tümünü" : "Hepsini"} geri al (
+            {sameTaskDone} {unitWord})
+          </button>
+        ) : null}
+        {cell.task_date ? (
+          <Link
+            href={`/teacher/students/${studentId}/week?start=${encodeURIComponent(cell.task_date)}`}
+            onClick={onClose}
+            className="ml-auto inline-flex items-center gap-1 text-muted-foreground hover:text-foreground hover:underline"
+          >
+            O günün programı
+            <ArrowRight className="size-3" aria-hidden />
+          </Link>
+        ) : null}
+      </div>
+    </div>
   );
 }
 

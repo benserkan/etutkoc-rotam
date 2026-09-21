@@ -812,6 +812,26 @@ export async function reconcileBookCounters(
   );
 }
 
+export interface GridRevertResult {
+  reverted: number;
+  task_status: string | null;
+  task_date: string | null;
+  section_remaining: number;
+}
+
+/** Koltuk ızgarası: yanlış işaretlenmiş "çözüldü"yü geri al (görev silinmez). */
+export async function revertGridCompleted(
+  studentId: number,
+  bookId: number,
+  sectionId: number,
+  body: { task_id: number | null; count: number },
+): Promise<MutationResponse<GridRevertResult>> {
+  return api(
+    `/api/v2/teacher/students/${studentId}/books/${bookId}/sections/${sectionId}/revert-completed`,
+    { method: "POST", body: JSON.stringify(body) },
+  );
+}
+
 /** P2/P3 — öğrencinin sınıf dönemleri (görev/deneme sayılı). */
 export function getGradePeriods(
   studentId: number,
