@@ -1,0 +1,139 @@
+{
+ "name": "Fenomen 8 Kurumsal Matematik Fasikülleri (1-2-3. Fasikül)",
+ "publisher": "Fenomen Okul (Kurmay Yayın Grubu)",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "fasikul",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Pozitif Tam Sayının Çarpanları",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Asal Çarpanlara Ayırma",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 12
+  },
+  {
+   "label": "En Büyük Ortak Bölen (EBOB)",
+   "test_count": 2,
+   "source": "toc_image",
+   "page": 22
+  },
+  {
+   "label": "En Küçük Ortak Kat (EKOK)",
+   "test_count": 2,
+   "source": "toc_image",
+   "page": 30
+  },
+  {
+   "label": "EBOB ve EKOK Problemleri",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 38
+  },
+  {
+   "label": "Aralarında Asal Sayılar",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 54
+  },
+  {
+   "label": "Üslü İfadeler (Negatif Üs)",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Üslü İfadelerde Çarpma İşlemi",
+   "test_count": 2,
+   "source": "toc_image",
+   "page": 16
+  },
+  {
+   "label": "Üslü İfadelerde Bölme İşlemi",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 25
+  },
+  {
+   "label": "Ondalık Sayılarda Çözümleme",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 41
+  },
+  {
+   "label": "Bilimsel Gösterim",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 53
+  },
+  {
+   "label": "Tamkare Doğal Sayılar",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Tamkare Sayıların Karekökleri (Karekök Alma İşlemi)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 9
+  },
+  {
+   "label": "Kareköklü İfadelerde Yaklaşık Değer Bulma",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 14
+  },
+  {
+   "label": "Kareköklü İfadelerde Sıralama",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 26
+  },
+  {
+   "label": "Kareköklü İfadelerle Çarpma İşlemi",
+   "test_count": 2,
+   "source": "toc_image",
+   "page": 34
+  },
+  {
+   "label": "Kareköklü İfadelerle Bölme İşlemi",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 42
+  },
+  {
+   "label": "Kareköklü İfadelerle Toplama ve Çıkarma İşlemi",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 53
+  },
+  {
+   "label": "Ondalık Gösterimlerin Karekökleri ve Gerçek Sayılar",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 69
+  },
+  {
+   "label": "Veri Analizi",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 79
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (fenomen matematik fasikülleri.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "3 fasikül: 1. Çarpanlar ve Katlar, 2. Üslü İfadeler, 3. Kareköklü İfadeler ve Veri Analizi. Kapak: 587 soru, Mayıs 2025.",
+  "Sayfa numaraları her fasikülde 1'den başlar. 3. fasikül üst kısmında numaralar fotoğrafta bir satır kaymış; başlık→etkinlik→test düzenine göre yorumlandı (test sayıları etkilenmez).",
+  "Toplam 60 test (1. fas. 19, 2. fas. 16, 3. fas. 25). Etkinlikler sayılmadı."
+ ]
+}

@@ -1,0 +1,60 @@
+{
+ "name": "8. Sınıf Formula 1 Serisi Paragraf Soru Bankası",
+ "publisher": "Son Viraj Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "2020 LGS Çıkmış ve Benzer Sorular",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 5
+  },
+  {
+   "label": "2021 LGS Çıkmış ve Benzer Sorular",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 55
+  },
+  {
+   "label": "2022 LGS Çıkmış ve Benzer Sorular",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 91
+  },
+  {
+   "label": "2023 LGS Çıkmış ve Benzer Sorular",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 129
+  },
+  {
+   "label": "2024 LGS Çıkmış ve Benzer Sorular",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 153
+  },
+  {
+   "label": "2025 LGS Çıkmış ve Benzer Sorular",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 179
+  },
+  {
+   "label": "Muhtemel Sorular",
+   "test_count": 9,
+   "source": "toc_image",
+   "page": 205
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (formüla bir paragraf soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Toplam 39 test. Test başı sayfa değişken: 2020 8 sayfa; 2021-2022, 2024-2025 ve Muhtemel 6; 2023 çıkmış 4.",
+  "Paragraf Sözlüğü s.259 (test değil), Cevap Anahtarı s.270."
+ ]
+}

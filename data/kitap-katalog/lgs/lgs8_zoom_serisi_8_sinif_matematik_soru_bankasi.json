@@ -1,0 +1,92 @@
+{
+ "name": "Zoom Serisi 8. Sınıf Matematik Soru Bankası",
+ "publisher": "Günay Yayınları",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Çarpanlar ve Katlar",
+   "test_count": 16,
+   "source": "toc_image",
+   "page": 7
+  },
+  {
+   "label": "Üslü İfadeler",
+   "test_count": 20,
+   "source": "toc_image",
+   "page": 39
+  },
+  {
+   "label": "Kareköklü İfadeler",
+   "test_count": 22,
+   "source": "toc_image",
+   "page": 81
+  },
+  {
+   "label": "Veri Analizi",
+   "test_count": 9,
+   "source": "toc_image",
+   "page": 125
+  },
+  {
+   "label": "Basit Olayların Olma Olasılığı",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 145
+  },
+  {
+   "label": "Cebirsel İfadeler ve Özdeşlikler",
+   "test_count": 14,
+   "source": "toc_image",
+   "page": 165
+  },
+  {
+   "label": "Doğrusal Denklemler",
+   "test_count": 25,
+   "source": "toc_image",
+   "page": 195
+  },
+  {
+   "label": "Eşitsizlikler",
+   "test_count": 8,
+   "source": "toc_image",
+   "page": 245
+  },
+  {
+   "label": "Üçgenler",
+   "test_count": 16,
+   "source": "toc_image",
+   "page": 263
+  },
+  {
+   "label": "Eşlik ve Benzerlik",
+   "test_count": 7,
+   "source": "toc_image",
+   "page": 295
+  },
+  {
+   "label": "Dönüşüm Geometrisi",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 311
+  },
+  {
+   "label": "Geometrik Cisimler",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 323
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (zoom matematik soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Tüm testler 2 sayfa.",
+  "İçindekilerdeki elle yazılmış hafta notları ('1. Haftaya cuma', '2. Hafta', 'yarıyıl tatili') yok sayıldı.",
+  "Cevap Anahtarı sayfa numarası fotoğrafta kesik; son satır page_end = 342 (SZ-3 s.341 + 1).",
+  "Kitap 'Güncellenmiş Yeni Baskı', 'Öğretmen Kitabıdır'."
+ ]
+}

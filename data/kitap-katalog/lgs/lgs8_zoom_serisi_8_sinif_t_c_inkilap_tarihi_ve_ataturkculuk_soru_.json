@@ -1,0 +1,62 @@
+{
+ "name": "Zoom Serisi 8. Sınıf T.C. İnkılap Tarihi ve Atatürkçülük Soru Bankası",
+ "publisher": "Günay Yayınları",
+ "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Bir Kahraman Doğuyor",
+   "test_count": 14,
+   "source": "toc_image",
+   "page": 5
+  },
+  {
+   "label": "Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar",
+   "test_count": 26,
+   "source": "toc_image",
+   "page": 37
+  },
+  {
+   "label": "Millî Bir Destan: Ya İstiklal Ya Ölüm",
+   "test_count": 22,
+   "source": "toc_image",
+   "page": 97
+  },
+  {
+   "label": "Atatürkçülük ve Çağdaşlaşan Türkiye",
+   "test_count": 22,
+   "source": "toc_image",
+   "page": 147
+  },
+  {
+   "label": "Demokratikleşme Çabaları",
+   "test_count": 8,
+   "source": "toc_image",
+   "page": 197
+  },
+  {
+   "label": "Atatürk Dönemi Türk Dış Politikası",
+   "test_count": 11,
+   "source": "toc_image",
+   "page": 215
+  },
+  {
+   "label": "Atatürk'ün Ölümü ve Sonrası",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 243
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (zoom inkılap soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Her Kavrama testi tek bir alt konuya bağlı (örn. 'Mustafa Kemal'in Askerlik Hayatı - 1'); satırlar ünite düzeyinde tutuldu.",
+  "Kavrama/Tarama 2 sayfa, Sınırları Zorlayan 4 sayfa, Zoom Sınav Modu 3-4 sayfa.",
+  "7. ünite ve Cevap Anahtarı sayfa numaraları fotoğrafta eğik; CA ≈ s.269 okundu (page_end 268).",
+  "5-7. ünite sağ sütun sayfa numaraları fotoğrafta satırlara göre kaymış görünüyor; test sayıları etkilenmez, page_start/end yaklaşık."
+ ]
+}

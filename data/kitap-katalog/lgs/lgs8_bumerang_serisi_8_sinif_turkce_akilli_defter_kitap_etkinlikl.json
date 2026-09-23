@@ -1,0 +1,98 @@
+{
+ "name": "Bumerang Serisi 8. Sınıf Türkçe Akıllı Defter Kitap (Etkinlikli)",
+ "publisher": "Günay Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "konu_anlatimli",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Sözcükte Anlam",
+   "test_count": 8,
+   "source": "toc_image",
+   "page": 5
+  },
+  {
+   "label": "Söz Varlığımız",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 41
+  },
+  {
+   "label": "Cümlede Anlam",
+   "test_count": 11,
+   "source": "toc_image",
+   "page": 57
+  },
+  {
+   "label": "Paragrafta Anlam",
+   "test_count": 17,
+   "source": "toc_image",
+   "page": 99
+  },
+  {
+   "label": "Sözel Mantık ve Muhakeme, Görsel Okuma, Grafik ve Tablo Yorumlama",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 159
+  },
+  {
+   "label": "Metin Türleri ve Söz Sanatları",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 179
+  },
+  {
+   "label": "Fiilimsiler",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 195
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 223
+  },
+  {
+   "label": "Fiilde Çatı Özellikleri",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 249
+  },
+  {
+   "label": "Cümle Çeşitleri",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 265
+  },
+  {
+   "label": "Yazım Kuralları",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Anlatım Bozuklukları",
+   "test_count": 7,
+   "source": "toc_image",
+   "page": null
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (bumerang akıllı defter türkçe.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Satırlar 13 'Bölüm' başlığı; tüm test satırları okunuyor → exact.",
+  "11-13. bölümlerin sayfa numaraları fotoğrafta sağ kenardan kesik → page_start/page_end null. Cevap Anahtarı s.364.",
+  "Kapak: Öğretmen kitabıdır, Çek-Kopar. Yazarlar: Berna Gülgönül, Suna Delibaş Ekici, Süleyman Sakcı.",
+  "Toplam 90 test."
+ ]
+}

@@ -1,0 +1,62 @@
+{
+ "name": "Zoom Serisi 8. Sınıf Fen Bilimleri Soru Bankası",
+ "publisher": "Günay Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimler ve İklim",
+   "test_count": 8,
+   "source": "toc_image",
+   "page": 7
+  },
+  {
+   "label": "DNA ve Genetik Kod",
+   "test_count": 16,
+   "source": "toc_image",
+   "page": 37
+  },
+  {
+   "label": "Basınç",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 93
+  },
+  {
+   "label": "Madde ve Endüstri",
+   "test_count": 18,
+   "source": "toc_image",
+   "page": 129
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 12,
+   "source": "toc_image",
+   "page": 189
+  },
+  {
+   "label": "Enerji Dönüşümleri ve Çevre Bilimi",
+   "test_count": 15,
+   "source": "toc_image",
+   "page": 229
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektrik Enerjisi",
+   "test_count": 11,
+   "source": "toc_image",
+   "page": 281
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (zoom fen bilimleri soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Sayfa gözlemi karışık: Kavrama testleri 4 sayfa, Tarama testleri 2 sayfa, Sınırları Zorlayan 4 sayfa (baskın değer 4 yazıldı).",
+  "page_end = sonraki ünitenin ilk test sayfası − 1 (ünite kapak sayfaları dahil olabilir).",
+  "Cevap Anahtarı s.319.",
+  "Kapakta 'Öğretmen Kitabıdır' ibaresi."
+ ]
+}

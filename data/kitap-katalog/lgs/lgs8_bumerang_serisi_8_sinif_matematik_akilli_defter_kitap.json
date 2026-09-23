@@ -1,0 +1,91 @@
+{
+ "name": "Bumerang Serisi 8. Sınıf Matematik Akıllı Defter Kitap",
+ "publisher": "Günay Yayınları",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "konu_anlatimli",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Çarpanlar ve Katlar",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 5
+  },
+  {
+   "label": "Üslü İfadeler",
+   "test_count": 13,
+   "source": "toc_image",
+   "page": 45
+  },
+  {
+   "label": "Kareköklü İfadeler",
+   "test_count": 14,
+   "source": "toc_image",
+   "page": 91
+  },
+  {
+   "label": "Veri Analizi",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 143
+  },
+  {
+   "label": "Basit Olayların Olma Olasılığı",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 161
+  },
+  {
+   "label": "Cebirsel İfadeler ve Özdeşlikler",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 185
+  },
+  {
+   "label": "Doğrusal Denklemler",
+   "test_count": 13,
+   "source": "toc_image",
+   "page": 219
+  },
+  {
+   "label": "Eşitsizlikler",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 269
+  },
+  {
+   "label": "Üçgenler",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 289
+  },
+  {
+   "label": "Eşlik ve Benzerlik",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 335
+  },
+  {
+   "label": "Dönüşüm Geometrisi",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 349
+  },
+  {
+   "label": "Geometrik Cisimler",
+   "test_count": 9,
+   "source": "toc_image",
+   "page": 365
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (bumerang akıllı defter matemqtik.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Akıllı defter (konu anlatımı + test) → konu_anlatimli. Kapak: Öğretmen kitabıdır.",
+  "Satırlar içindekilerdeki mavi başlıklar; Kavratan/Bumerang/Beceri testlerinin hepsi sayıldı, her test 2 sayfa. Cevap Anahtarı s.399.",
+  "Toplam 107 test. Yazarlar: Raşit Güzel, Ramazan Akkuş."
+ ]
+}

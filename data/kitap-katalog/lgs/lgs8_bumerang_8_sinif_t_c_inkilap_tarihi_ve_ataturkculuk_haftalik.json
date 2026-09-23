@@ -1,0 +1,211 @@
+{
+ "name": "Bumerang 8. Sınıf T.C. İnkılap Tarihi ve Atatürkçülük Haftalık Denemeler",
+ "publisher": "Günay Yayınları",
+ "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+ "curriculum_model": "lgs",
+ "type": "brans_denemesi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Deneme 1 — Avrupa'daki Gelişmeler ve Osmanlı Devleti",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 2 — Mustafa Kemal'in Çocukluk Dönemi ve Öğrenim Hayatı, Fikir Hayatı",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 3 — Mustafa Kemal'in Askerlik Hayatı",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 4 — Birinci Üniteyi Kapsayan Sarmal Deneme",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 5 — I. Dünya Savaşı'nın Nedenleri",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 6 — I. Dünya Savaşı'nda Osmanlı Devleti",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 7 — Mondros Ateşkes Antlaşması ve İşgaller, Kuvâyımillîye ve Cemiyetler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 8 — Millî Mücadele'nin Hazırlık Dönemi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 9 — Misakımillî'nin Kabulü ve Büyük Millet Meclisinin Açılması",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 10 — Büyük Millet Meclisine Karşı Çıkan İsyanlar, Sevr Antlaşması",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 11 — İlk İki Üniteyi Kapsayan Sarmal Deneme",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 12 — Millî Mücadele'de Doğu ve Güney Cepheleri",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 13 — Millî Mücadele'de Batı Cephesi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 14 — Maarif Kongresi, Başkomutanlık Yasası ve Tekâlif-i Millîye Emirleri",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 15 — Sakarya Meydan Savaşı'ndan Mudanya'ya Mustafa Kemal",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 16 — Lozan Barış Antlaşması, Millî Mücadele'nin Sanata ve Edebiyata Yansımaları",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 17 — İlk Üç Üniteyi Kapsayan Sarmal Deneme",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 18 — Atatürk İlkeleri",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 19 — Siyasal Alanda Yapılan İnkılaplar",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 20 — Hukuk Alanında ve Eğitim-Kültür Alanında Yapılan İnkılaplar",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 21 — Toplumsal ve Ekonomik Alanda Yapılan İnkılaplar",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 22 — Atatürk ve Sağlık, Cumhuriyetin Türk Milletine Kazandırdıkları, Atatürk İlke ve İnkılaplarını Oluşturan Temel Esaslar",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 23 — İlk Dört Üniteyi Kapsayan Sarmal Deneme",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 24 — Atatürk Dönemi'nde Demokratikleşme Yolunda Atılan Adımlar",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 25 — Mustafa Kemal'e Suikast Girişimi, Türkiye Cumhuriyeti'ne Yönelik Tehditler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 26 — İlk Beş Üniteyi Kapsayan Sarmal Deneme",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 27 — Atatürk Dönemi Türk Dış Politikasının Temel İlke ve Amaçları",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 28 — Atatürk Dönemi Türk Dış Politikasında Yaşanan Gelişmeler, Hatay'ın Türkiye'ye Katılması",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 29 — İlk Altı Üniteyi Kapsayan Sarmal Deneme",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 30 — Atatürk'ün Ölümü ve Ölümünün Yansımaları, Atatürk'ün Eserleri",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 31 — Atatürk'ün II. Dünya Savaşı Öncesi Tespitleri, II. Dünya Savaşı ve Türkiye'ye Etkileri, Çok Partili Hayata Geçiş",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 32 — Genel Deneme",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (deneme bumerang inkılap.pdf); içindekiler türü E_deneme_list — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Kapak: 32 hafta, 320 soru → deneme başına 10 soru (kapak toplamından türetildi; deneme bazında yazmıyor, etikete eklenmedi).",
+  "Sarmal denemeler: 4, 11, 17, 23, 26, 29; 32 = Genel Deneme.",
+  "Yazarlar: Fatih Uğurlu, Emre Tezcan. ISBN 978-625-7150-61-3."
+ ]
+}

@@ -1,0 +1,37 @@
+{
+ "name": "Fenomen 8 Görsel, Grafik, Tablo Okuma ve Sözel Mantık Soru Bankası",
+ "publisher": "Fenomen Okul",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Görsel Okuma",
+   "test_count": 11,
+   "source": "toc_image",
+   "page": 3
+  },
+  {
+   "label": "Grafik - Tablo Yorumlama",
+   "test_count": 19,
+   "source": "toc_image",
+   "page": 47
+  },
+  {
+   "label": "Sözel Mantık - Muhakeme",
+   "test_count": 20,
+   "source": "toc_image",
+   "page": 161
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (fenomen görsel grafik soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Kapak adı kitabevi etiketiyle kısmen örtülü ('GÖRSEL, GRAFİK TABLO OKUMA VE SÖZEL MANTIK SORU BANKASI' görünen kısımlardan).",
+  "Test başı sayfa: 1. bölüm 4, 2. bölüm 6, 3. bölüm çoğunlukla 4 (Test 5→6 arası 3).",
+  "Cevap anahtarı s.239. Toplam 50 test."
+ ]
+}

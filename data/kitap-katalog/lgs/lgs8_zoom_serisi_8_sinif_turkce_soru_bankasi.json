@@ -1,0 +1,97 @@
+{
+ "name": "Zoom Serisi 8. Sınıf Türkçe Soru Bankası",
+ "publisher": "Günay Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Sözcükte Anlam",
+   "test_count": 9,
+   "source": "toc_image",
+   "page": 5
+  },
+  {
+   "label": "Söz Varlığımız",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 31
+  },
+  {
+   "label": "Cümlede Anlam",
+   "test_count": 14,
+   "source": "toc_image",
+   "page": 47
+  },
+  {
+   "label": "Paragrafta Anlam",
+   "test_count": 22,
+   "source": "toc_image",
+   "page": 87
+  },
+  {
+   "label": "Sözel Mantık ve Muhakeme, Görsel Okuma, Grafik ve Tablo Yorumu",
+   "test_count": 7,
+   "source": "toc_image",
+   "page": 149
+  },
+  {
+   "label": "Söz Sanatları ve Metin Türleri",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 171
+  },
+  {
+   "label": "Fiilimsiler",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 185
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 201
+  },
+  {
+   "label": "Fiillerin Çatı Özellikleri",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 217
+  },
+  {
+   "label": "Cümle Türleri",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 231
+  },
+  {
+   "label": "Yazım Kuralları",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 249
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 265
+  },
+  {
+   "label": "Anlatım Bozuklukları",
+   "test_count": 6,
+   "source": "toc_image",
+   "page": 283
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (zoom türkçe soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Satırlar 13 bölüm düzeyinde; her Kavrama testinin kendi alt konusu var (örn. 'Kavrama Testi 1 - Gerçek ve Mecaz Anlamlı Sözcükler') — istenirse alt konu düzeyine inilebilir.",
+  "Kavrama 2 sayfa; Tarama ve Sınırları Zorlayan 4 sayfa.",
+  "Cevap Anahtarı s.301."
+ ]
+}

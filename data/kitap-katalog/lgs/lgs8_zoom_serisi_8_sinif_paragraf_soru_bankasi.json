@@ -1,0 +1,164 @@
+{
+ "name": "Zoom Serisi 8. Sınıf Paragraf Soru Bankası",
+ "publisher": "Günay Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Paragrafta Konu",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 7
+  },
+  {
+   "label": "Şiirde Konu, Tema, Ana Duygu",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 13
+  },
+  {
+   "label": "Paragrafta Başlık ve Anahtar Sözcükler",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 19
+  },
+  {
+   "label": "Metnin Yazılış Amacı, Duyular ve Duygular",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 25
+  },
+  {
+   "label": "1. Bölüm 1. Kısım Tarama Testleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 31
+  },
+  {
+   "label": "Paragrafta Ana Düşünce",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 45
+  },
+  {
+   "label": "Paragrafta Yardımcı Düşünce",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 51
+  },
+  {
+   "label": "Metinde Soru-Cevap İlişkisi",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 57
+  },
+  {
+   "label": "1. Bölüm 2. Kısım Tarama Testleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 63
+  },
+  {
+   "label": "Anlatım Biçimleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 77
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 83
+  },
+  {
+   "label": "Hikâye Unsurları ve Anlatıcı Türleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 89
+  },
+  {
+   "label": "1. Bölüm 3. Kısım Tarama Testleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 95
+  },
+  {
+   "label": "Paragrafta Dil ve Anlatım",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 109
+  },
+  {
+   "label": "Paragrafta Yapı",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 115
+  },
+  {
+   "label": "1. Bölüm 4. Kısım Tarama Testleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 121
+  },
+  {
+   "label": "1. Bölüm 5. Kısım Sınırları Zorlayan Sorular",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 135
+  },
+  {
+   "label": "Görsel Okuma",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 177
+  },
+  {
+   "label": "Sözel Mantık ve Muhakeme",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 183
+  },
+  {
+   "label": "2. Bölüm 1. Kısım Tarama Testleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 189
+  },
+  {
+   "label": "Grafik Yorumlama",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 203
+  },
+  {
+   "label": "Tablo Yorumlama",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 209
+  },
+  {
+   "label": "2. Bölüm 2. Kısım Tarama Testleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 215
+  },
+  {
+   "label": "2. Bölüm 3. Kısım Sınırları Zorlayan Sorular",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 229
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (zoom paragraf soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Temel Beceri Testleri 2 sayfa; Tarama ve Sınırları Zorlayan 4 sayfa.",
+  "Her kısmın başındaki 'Kelime Hazinesine Zoom'la' (1 sayfa) test değil, sayılmadı.",
+  "Kapakta '739 Soru' ibaresi var.",
+  "Cevap Anahtarı s.269."
+ ]
+}

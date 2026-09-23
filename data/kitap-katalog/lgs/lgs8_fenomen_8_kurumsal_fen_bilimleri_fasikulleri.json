@@ -1,0 +1,356 @@
+{
+ "name": "Fenomen 8 Kurumsal Fen Bilimleri Fasikülleri",
+ "publisher": "Fenomen Okul (Kurmay Yayın Grubu)",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "fasikul",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimlerin Oluşumu",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Birim Yüzeye Düşen Enerji",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 13
+  },
+  {
+   "label": "Gölge Boyu",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 23
+  },
+  {
+   "label": "Yarım Kürelerde Aydınlanan Alanlar",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 33
+  },
+  {
+   "label": "Hava Olayları",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 47
+  },
+  {
+   "label": "İklim ve Hava Olayları",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 59
+  },
+  {
+   "label": "Mevsimler ve İklim — Ünite Değerlendirme Testi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 72
+  },
+  {
+   "label": "Nükleotid, Gen, DNA ve Kromozom İlişkisi",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "DNA'nın Kendini Eşlemesi",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 11
+  },
+  {
+   "label": "Kalıtım",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 23
+  },
+  {
+   "label": "Tek Karakter Çaprazlamaları",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 33
+  },
+  {
+   "label": "Cinsiyet Kalıtımı",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 45
+  },
+  {
+   "label": "Mutasyon",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 57
+  },
+  {
+   "label": "Modifikasyon",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 67
+  },
+  {
+   "label": "Adaptasyon",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 79
+  },
+  {
+   "label": "Biyoteknoloji",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 91
+  },
+  {
+   "label": "DNA ve Genetik Kod — Ünite Değerlendirme Testi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 104
+  },
+  {
+   "label": "Katı Basıncı",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Sıvı Basıncı",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 13
+  },
+  {
+   "label": "Pascal Prensibi",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 25
+  },
+  {
+   "label": "Açık Hava Basıncı",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 37
+  },
+  {
+   "label": "Günlük Yaşamda Basınç",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 47
+  },
+  {
+   "label": "Basınç — Ünite Değerlendirme Testi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 59
+  },
+  {
+   "label": "Periyodik Sistem",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Elementlerin Sınıflandırılması: Metal, Ametal, Yarı Metal",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 11
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişim",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 23
+  },
+  {
+   "label": "Kimyasal Tepkimeler",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 33
+  },
+  {
+   "label": "Asit ve Bazların Genel Özellikleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 45
+  },
+  {
+   "label": "Asit ve Baz Ayıraçları",
+   "test_count": 4,
+   "source": "toc_image",
+   "page": 55
+  },
+  {
+   "label": "Isı",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 69
+  },
+  {
+   "label": "Hâl Değişimi",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 81
+  },
+  {
+   "label": "Isınma - Soğuma Grafikleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 95
+  },
+  {
+   "label": "Günlük Yaşamda Hâl Değişimi Olayları",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 105
+  },
+  {
+   "label": "Kimya Endüstrisi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 115
+  },
+  {
+   "label": "Madde ve Endüstri — Ünite Değerlendirme Testi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 119
+  },
+  {
+   "label": "Temel Kavramlar (Basit Makineler)",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Makaralar",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 11
+  },
+  {
+   "label": "Kaldıraç",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 25
+  },
+  {
+   "label": "Eğik Düzlem",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 37
+  },
+  {
+   "label": "Çıkrık",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 49
+  },
+  {
+   "label": "Dişli, Kasnak ve Bileşik Makine",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 59
+  },
+  {
+   "label": "Basit Makineler — Ünite Değerlendirme Testi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 72
+  },
+  {
+   "label": "Besin Zinciri ve Enerji Akışı",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Enerji Dönüşümleri ve Çevre Bilimi",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 13
+  },
+  {
+   "label": "Fotosentez",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 25
+  },
+  {
+   "label": "Hücresel Solunum",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 40
+  },
+  {
+   "label": "Madde Döngüleri ve Çevre Sorunları",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 52
+  },
+  {
+   "label": "Küresel İklim Değişikliği",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 62
+  },
+  {
+   "label": "Enerji Dönüşümleri ve Çevre Bilimi — Ünite Değerlendirme Testi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 73
+  },
+  {
+   "label": "Elektrik Yükleri",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 1
+  },
+  {
+   "label": "Elektriklenme",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 9
+  },
+  {
+   "label": "Dokunma ile Elektriklenme",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 17
+  },
+  {
+   "label": "Etki ile Elektriklenme",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 25
+  },
+  {
+   "label": "Elektrik Yüklü Cisimler ve Topraklanma",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 33
+  },
+  {
+   "label": "Elektrik Enerjisinin Dönüşümü",
+   "test_count": 3,
+   "source": "toc_image",
+   "page": 47
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektrik Enerjisi — Ünite Değerlendirme Testi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": 57
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (fenomen fen bilimleri fasikülleri.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Kapak: 'Toplam 7 fasikül', 1622 soru; Mayıs 2025, Şenol Nardal. PDF 8 sayfa = genel kapak + 7 fasikülün künye/içindekiler sayfası; 7 fasikülün hepsi okundu.",
+  "Toplam 163 test (156 konu testi + 7 ünite değerlendirme testi; fasikül başına 21/33/18/34/19/19/19).",
+  "4., 5., 7. fasikülde sayfa numaraları fotoğrafta bir satır kaymış görünüyor; başlık → Test 1 (+4 sayfa) düzenine göre yorumlandı. Test sayıları etkilenmez.",
+  "Biyoteknoloji: Test 2 s.97, Test 3 s.100 (içindekilerde böyle)."
+ ]
+}

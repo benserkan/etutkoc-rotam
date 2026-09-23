@@ -1,0 +1,211 @@
+{
+ "name": "Bumerang 8. Sınıf Türkçe Haftalık Denemeler",
+ "publisher": "Günay Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "brans_denemesi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Deneme 1",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 2",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 3",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 4",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 5",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 6",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 7",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 8",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 9",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 10",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 11",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 12",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 13",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 14",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 15",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 16",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 17",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 18",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 19",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 20",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 21",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 22",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 23",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 24",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 25",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 26",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 27",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 28",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 29",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 30",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 31",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 32",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (deneme bumerang türkçe.pdf); içindekiler türü E_deneme_list — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Tablo 32 sütun × konu satırı (soru sayıları). Sütun 1 ve 2 toplamı 20 → deneme başına muhtemelen 20 soru (tümü doğrulanmadı, etikete eklenmedi).",
+  "Her denemede anlam bilgisi + dil bilgisi karışık; dil bilgisi odağı: 1-8 Fiilimsi, 9-20 Cümlenin Ögeleri, 17-20 Fiillerde Çatı, 21-32 Cümle Türleri, 27-32 Anlatım Bozukluğu.",
+  "Kapaktaki hafta bilgisi etiket altında. Yazarlar: Pınar Cüce, Buket Demirel, Alparslan Demirbilek. ISBN 978-625-7150-60-6."
+ ]
+}

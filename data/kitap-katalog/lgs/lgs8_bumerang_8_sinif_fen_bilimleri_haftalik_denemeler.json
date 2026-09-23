@@ -1,0 +1,211 @@
+{
+ "name": "Bumerang 8. Sınıf Fen Bilimleri Haftalık Denemeler",
+ "publisher": "Günay Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "brans_denemesi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Deneme 1 — Mevsimlerin Oluşumu (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 2 — İklim ve Hava Hareketleri (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 3 — 1. Ünite karma (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 4 — DNA ve Genetik Kod (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 5 — Kalıtım (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 6 — Mutasyon ve Modifikasyon (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 7 — Adaptasyon (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 8 — Biyoteknoloji (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 9 — 1-2. Ünite karma (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 10 — Basınç–Katı (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 11 — Basınç–Sıvı (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 12 — Basınç–Gaz (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 13 — 1-3. Ünite karma (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 14 — Periyodik Sistem (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 15 — Fiziksel ve Kimyasal Değişimler + Kimyasal Tepkimeler (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 16 — Asitler ve Bazlar (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 17 — Maddenin Isı ile Etkileşimi (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 18 — Maddenin Isı ile Etkileşimi + Türkiye'de Kimya Endüstrisi (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 19 — 1-4. Ünite karma (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 20 — Basit Makineler–Kaldıraç (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 21 — Basit Makineler–Makara (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 22 — Basit Makineler–Eğik Düzlem (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 23 — Basit Makineler–Çıkrık, Dişli, Kasnak, Bileşik Makineler (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 24 — 1-5. Ünite karma",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 25 — Besin Zinciri ve Enerji Akışı (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 26 — Enerji Dönüşümleri (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 27 — Madde Döngüleri ve Çevre Sorunları + Sürdürülebilir Kalkınma (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 28 — 1-6. Ünite karma",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 29 — Elektrik Yükleri ve Elektriklenme (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 30 — Elektrik Yüklü Cisimler (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 31 — Elektrik Enerjisinin Dönüşümü (20 soru)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 32 — Genel karma (1-7. Ünite)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (deneme bumerang fen.pdf); içindekiler türü E_deneme_list — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Kapak: 32 hafta. Tablo 'Ünitelere göre soru sayıları'; kırmızı sütunlar (3, 9, 13, 19, 24, 28, 32) karma/sarmal denemeler.",
+  "Tek konulu sütunlarda 20 yazıyor; 3, 9, 13, 19 karma sütun toplamları 20 kontrol edildi. 24/28/32 toplamları tek tek doğrulanmadı (etikete soru yazılmadı).",
+  "Yazarlar: Murat Üstündağ, Mahmut Mıcık, Ersin Eroğlu, Cihan Kaplan. ISBN 978-625-7150-59-0."
+ ]
+}

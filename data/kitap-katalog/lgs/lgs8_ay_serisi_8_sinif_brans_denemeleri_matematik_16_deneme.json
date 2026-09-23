@@ -1,0 +1,114 @@
+{
+ "name": "Ay Serisi 8. Sınıf Branş Denemeleri Matematik (16 Deneme)",
+ "publisher": "Ay Serisi (Günay Yayınları)",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "brans_denemesi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Deneme 1",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 2",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 3",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 4",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 5",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 6",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 7",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 8",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 9",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 10",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 11",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 12",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 13",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 14",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 15",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 16",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (ay serisi matemaitk branş denemesi.pdf); içindekiler türü E_deneme_list — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Kapakta '16 Deneme' + tabloda 1.–16. Deneme; her deneme 2 haftanın konularını kapsar. Soru sayısı yazmıyor.",
+  "ISBN 978-625-6218-44-4. Yazar: Raşit Güzel."
+ ]
+}

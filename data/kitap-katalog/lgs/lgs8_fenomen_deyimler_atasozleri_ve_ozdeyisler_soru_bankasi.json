@@ -1,0 +1,42 @@
+{
+ "name": "Fenomen Deyimler, Atasözleri ve Özdeyişler Soru Bankası",
+ "publisher": "Fenomen Okul",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Deyimler",
+   "test_count": 20,
+   "source": "toc_image",
+   "page": 5
+  },
+  {
+   "label": "Atasözleri",
+   "test_count": 20,
+   "source": "toc_image",
+   "page": 87
+  },
+  {
+   "label": "Özdeyişler ve Kalıplaşmış İfadeler",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 169
+  },
+  {
+   "label": "Deyimler - Atasözleri - Özdeyişler - Kalıplaşmış İfadeler (Karma)",
+   "test_count": 5,
+   "source": "toc_image",
+   "page": 189
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (fenomen deyimler ata sözleri soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Kapak: 590 soru, 'Ortaokullar için' (sınıf belirtilmemiş), yazar Gülten Erdoğan.",
+  "Cevap anahtarı s.208. Toplam 50 test."
+ ]
+}

@@ -1,0 +1,61 @@
+{
+ "name": "Bumerang Serisi 8. Sınıf Fen Bilimleri (Etkinlikli Kitap)",
+ "publisher": "Günay Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "konu_anlatimli",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimler ve İklim",
+   "test_count": 8,
+   "source": "toc_image",
+   "page": 5
+  },
+  {
+   "label": "DNA ve Genetik Kod",
+   "test_count": 17,
+   "source": "toc_image",
+   "page": 53
+  },
+  {
+   "label": "Basınç",
+   "test_count": 11,
+   "source": "toc_image",
+   "page": 133
+  },
+  {
+   "label": "Madde ve Endüstri",
+   "test_count": 20,
+   "source": "toc_image",
+   "page": 189
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 10,
+   "source": "toc_image",
+   "page": 283
+  },
+  {
+   "label": "Enerji Dönüşümleri ve Çevre Bilimi",
+   "test_count": 13,
+   "source": "toc_image",
+   "page": 339
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektrik Enerjisi",
+   "test_count": 8,
+   "source": "toc_image",
+   "page": 397
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (bumerang fen bilimleri soru bankası.pdf); içindekiler türü A_test_listed — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Etkinlikler ve Kazanımlar sayılmadı. Kavratan/Bumerang testleri ~3 sayfa, Beceri Temelli ~4 sayfa.",
+  "Cevap Anahtarı s.441. Kapak: Güncellenmiş Yeni Baskı, Öğretmen kitabıdır; yazarlar Murat Üstündağ, Mahmut Mıcık, Ersin Eroğlu.",
+  "Toplam 87 test."
+ ]
+}

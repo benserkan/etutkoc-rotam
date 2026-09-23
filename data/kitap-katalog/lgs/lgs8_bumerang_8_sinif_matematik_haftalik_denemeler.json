@@ -1,0 +1,211 @@
+{
+ "name": "Bumerang 8. Sınıf Matematik Haftalık Denemeler",
+ "publisher": "Günay Yayınları",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "brans_denemesi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Deneme 1 — Çarpanlar ve Katlar",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 2 — Üslü İfadeler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 3 — Üslü İfadeler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 4 — 1. Ünite karma (Çarpanlar ve Katlar, Üslü İfadeler)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 5 — Kareköklü İfadeler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 6 — Kareköklü İfadeler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 7 — Kareköklü İfadeler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 8 — Kareköklü İfadeler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 9 — Veri Analizi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 10 — 1-2. Ünite karma",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 11 — Basit Olayların Olma Olasılığı",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 12 — Cebirsel İfadeler ve Özdeşlikler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 13 — Cebirsel İfadeler ve Özdeşlikler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 14 — 1-3. Ünite karma",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 15 — Doğrusal Denklemler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 16 — Doğrusal Denklemler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 17 — Doğrusal Denklemler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 18 — Doğrusal Denklemler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 19 — Eşitsizlikler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 20 — 1-4. Ünite karma",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 21 — Üçgenler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 22 — Üçgenler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 23 — Üçgenler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 24 — Eşlik ve Benzerlik",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 25 — 1-5. Ünite karma",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 26 — Dönüşüm Geometrisi",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 27 — Geometrik Cisimler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 28 — Geometrik Cisimler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 29 — Geometrik Cisimler",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 30 — Genel (tüm üniteler)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 31 — Genel (tüm üniteler)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  },
+  {
+   "label": "Deneme 32 — Genel (tüm üniteler)",
+   "test_count": 1,
+   "source": "toc_image",
+   "page": null
+  }
+ ],
+ "warnings": [],
+ "notes": [
+  "Kaynak: yalnız kapak + içindekiler fotoğrafı (deneme bumerang metemtik.pdf); içindekiler türü E_deneme_list — test sayıları içindekilerde tek tek listelenen testlerden birebir sayıldı.",
+  "Tablo 'Deneme Konu Kapsamı' (renkli hücre; soru sayısı yazmıyor). Turuncu sütunlar (4, 10, 14, 20, 25) kümülatif karma; kırmızı 30-32 tüm üniteler.",
+  "Kapaktaki hafta/soru bilgisi etiket altında kalmış.",
+  "Yazarlar: Raşit Güzel, Ramazan Akkuş, Serkan Ercan. ISBN 978-625-7150-58-3."
+ ]
+}
