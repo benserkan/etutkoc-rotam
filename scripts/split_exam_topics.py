@@ -71,6 +71,14 @@ KARMA = {
 }
 
 
+# 2026-09-23'te eklenen konular (alt konular + Tarih/Din eksikleri).
+NEW_TOPICS = {name for rules in KARMA.values() for name, _ in rules} | {
+    "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)",
+    "Din ve İslam", "Gönül Coğrafyamız", "Ahlaki Tutum ve Davranışlar",
+    "Kur'an'da Bazı Kavramlar", "İslam ve Bilim",
+}
+
+
 def _split_target(label: str | None, karma_name: str, by_name: dict[str, Topic]) -> Topic | None:
     """(Karma) konuya bağlı etiketi alt konuya çevir — ilk uyan kural."""
     rules = KARMA.get(karma_name)
@@ -127,9 +135,11 @@ class Pool:
             # AI'ın daha özel seçimi ("Doğruda Açılar") korunur.
             cand = home_map.get(head) or (
                 self.uni[head][0] if len(self.uni.get(head) or []) == 1 else None)
-            if cand is not None and not cand.name.endswith("(Karma)"):
-                hit = cand
-            elif cand is not None and current is None:
+            # Mevcut eşleme varsa ünite başı onu YALNIZ bugün eklenen bir konuya
+            # çevirebilir (AI o konuyu daha önce seçemezdi); aksi hâlde AI'ın
+            # daha özel seçimi korunur ("Sayma ve Olasılık / Sıralama ve Seçme"
+            # → Permütasyon kalır, Olasılık'a çekilmez).
+            if cand is not None and (current is None or cand.name in NEW_TOPICS):
                 hit = cand
         return hit
 
