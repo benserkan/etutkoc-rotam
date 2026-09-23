@@ -60,9 +60,24 @@ SÖZLÜĞE yazılıp her karnede tekrarlanıyordu. Ayrıca Paragraf (104 soru) v
   Prod: **343 kitap bölümü + 194 şablon bölümü + 39 sözlük + 232 soru**,
   netler birebir, ikinci koşu 0. Yedek `pre_kimbio_20260923_0954.dump`.
   test_exam_topic_unit_label 13/13.
+- **DEVAMI 2 — TYT Fizik + Coğrafya + Ekosistem (aynı gün):** Fizik: Madde
+  Özellikleri (Özkütle · Dayanıklılık · Adezyon-Kohezyon) · Hareket-Kuvvet
+  (Hareket · Newton Yasaları · Kuvvet ve Sürtünme) · İş-Güç-Enerji (İş ve Güç ·
+  Mekanik Enerji · Enerji Kaynakları) · Isı-Sıcaklık (İç Enerji · Isı
+  Alışverişi-Hal Değişimi · Genleşme · Yayılma Yolları) · Elektrik (Akım-Ohm ·
+  Devreler · Enerji-Güç) · Basınç · Kaldırma Kuvveti · Dalgalar (Yay · Su · Ses
+  · Deprem) · Optik (Aydınlanma-Gölge · Düzlem/Küresel Ayna · Kırılma ·
+  Mercekler · Renkler). Coğrafya: İklim (Atmosfer · İklim Tipleri · Türkiye'nin
+  İklimi) · Yerin Şekillenmesi (İç · Dış Kuvvetler). Biyoloji Ekosistem (Yapı ·
+  Madde-Enerji Akışı · Madde Döngüleri). Prod: 75 bölüm + 141 şablon + 28
+  sözlük + 147 soru, netler birebir. Yedek `pre_fizcog_20260923_1010.dump`.
+  **Yakalanan kural hatası:** `_deterministic_match` ön-ek kuralı TEK
+  kelimelik genel etiketi ("Enerji") o kelimeyle başlayan tek alt konuya
+  ("Enerji Kaynakları") bağlıyordu → ön-ek artık en az 2 kelime ister.
+  "manyetik" geçen etiket Elektrik alt konularına taşınmaz. Test 14/14.
 - **Kalan (bilinçli):** İkinci Dereceden Denklemler TYT'de yok (1 soru
-  eşleşmedi); Fizik, Coğrafya (İklim), Ekosistem alt konuları tek başlıkta
-  (istenirse aynı desenle bölünür).
+  eşleşmedi); Güncel Çevre Sorunları etiketleri hep birleşik (bölünmedi);
+  Fizik Bilimine Giriş / Elektrostatik / Manyetizma küçük, tek başlık.
 
 ---
 
