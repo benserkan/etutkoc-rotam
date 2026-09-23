@@ -190,6 +190,17 @@ EXAM_TOPIC_RENAMES: dict[str, dict[str, str]] = {
         "Canlıların Sınıflandırılması": "Canlıların Sınıflandırılması (Karma)",
         "Hücre Bölünmeleri (Mitoz-Mayoz)": "Hücre Bölünmeleri (Karma)",
         "Kalıtımın Genel İlkeleri": "Kalıtımın Genel İlkeleri (Karma)",
+        "Ekosistem Ekolojisi": "Ekosistem Ekolojisi (Karma)",
+    },
+    "TYT Fizik": {
+        n: f"{n} (Karma)" for n in (
+            "Madde ve Özellikleri", "Hareket ve Kuvvet", "İş, Güç ve Enerji",
+            "Isı ve Sıcaklık", "Elektrik", "Basınç ve Kaldırma Kuvveti",
+            "Dalgalar", "Optik")
+    },
+    "TYT Coğrafya": {
+        "İklim Bilgisi": "İklim Bilgisi (Karma)",
+        "Yerin Şekillenmesi (İç-Dış Kuvvetler)": "Yerin Şekillenmesi (Karma)",
     },
 }
 

@@ -135,6 +135,73 @@ KARMA = {
         ("Mutasyon, Modifikasyon ve Varyasyon", ("mutasyon", "modifikasyon",
                                                   "varyasyon", "mitokondriyal")),
     ],
+    "Ekosistem Ekolojisi (Karma)": [
+        ("Ekosistemin Yapısı", ("cansiz", "bilesen")),
+        ("Madde ve Enerji Akışı", ("enerji akis", "besin zincir", "besin ag")),
+        ("Madde Döngüleri", ("dongu",)),
+    ],
+    # --- TYT Fizik ---
+    "Madde ve Özellikleri (Karma)": [
+        ("Kütle, Hacim ve Özkütle", ("ozkutle", "kutle hacim")),
+        ("Dayanıklılık", ("dayanik",)),
+        ("Adezyon, Kohezyon ve Kılcallık", ("adezyon", "kohezyon", "yuzey gerilim",
+                                            "kilcal")),
+    ],
+    "Hareket ve Kuvvet (Karma)": [
+        ("Hareket", ("ivme", "dogrusal", "hareket kavram", "temel hareket",
+                     "boyutlu", "konum")),
+        ("Newton'un Hareket Yasaları", ("newton", "eylemsiz", "etki tepki", "dinamik")),
+        ("Kuvvet ve Sürtünme", ("surtunme", "kuvvetin ozellik", "kuvvet cesit")),
+    ],
+    "İş, Güç ve Enerji (Karma)": [
+        ("Mekanik Enerji ve Korunumu", ("korunum", "mekanik enerji", "kinetik",
+                                        "potansiyel enerji")),
+        ("Enerji Kaynakları", ("kaynak",)),
+        ("İş ve Güç", ("is ", "guc ")),
+    ],
+    "Isı ve Sıcaklık (Karma)": [
+        ("Isı, Sıcaklık ve İç Enerji", ("termometre", "ic enerji")),
+        ("Isı Alışverişi ve Hal Değişimi", ("alis veris", "isil denge", "hal degisim")),
+        ("Genleşme", ("genlesme",)),
+        ("Isının Yayılma Yolları", ("yayilma", "iletim")),
+    ],
+    "Elektrik (Karma)": [
+        ("Elektrik Akımı ve Ohm Yasası", ("akim", "ohm", "potansiyel")),
+        ("Elektrik Devreleri", ("devre", "direnc", "baglan", "lamba")),
+        ("Elektrik Enerjisi ve Güç", ("enerji", "guc")),
+    ],
+    "Basınç ve Kaldırma Kuvveti (Karma)": [
+        ("Basınç", ("basinc", "akiskan")),
+        ("Kaldırma Kuvveti", ("kaldirma",)),
+    ],
+    "Dalgalar (Karma)": [
+        ("Yay Dalgaları", ("yay",)),
+        ("Su Dalgaları", ("su dalga",)),
+        ("Ses Dalgaları", ("ses",)),
+        ("Deprem Dalgaları", ("deprem",)),
+    ],
+    "Optik (Karma)": [
+        ("Aydınlanma ve Gölge", ("aydinlanma", "golge", "isik akisi")),
+        ("Düzlem Aynalar", ("duzlem",)),
+        ("Küresel Aynalar", ("kuresel",)),
+        ("Işığın Kırılması", ("kirilma",)),
+        ("Mercekler", ("mercek",)),
+        ("Renkler", ("renk",)),
+    ],
+    # --- TYT Coğrafya ---
+    "İklim Bilgisi (Karma)": [
+        ("Atmosfer ve Hava Olayları", ("atmosfer", "hava olay", "ruzgar", "nem",
+                                       "yagis", "basinc")),
+        ("İklim Tipleri ve Bitki Örtüsü", ("iklim tip",)),
+        ("Türkiye'nin İklimi ve Bitki Örtüsü", ("turkiye nin iklim",
+                                                "turkiyenin iklim")),
+    ],
+    "Yerin Şekillenmesi (Karma)": [
+        ("Dış Kuvvetler", ("dis kuvvet", "akarsu", "ruzgar", "buzul", "karst",
+                           "dalga", "erozyon", "ayrisma", "vadi")),
+        ("İç Kuvvetler", ("ic kuvvet", "deprem", "volkan", "kivrilma", "kirilma",
+                          "tektonik", "levha")),
+    ],
 }
 
 # Ünite geneli olduğunu söyleyen etiketler Karma'da kalır.
@@ -169,6 +236,10 @@ def _split_target(label: str | None, karma_name: str, by_name: dict[str, Topic])
         return None
     if any(f" {w}" in key for w in KARMA_KEEP.get(karma_name, ())):
         return None
+    # Etiket bir alt konunun adıyla BİREBİR aynıysa ("Hareket", "Basınç") o.
+    exact = [n for n, _ in rules if _topic_key(n) == key.strip()]
+    if exact:
+        return by_name.get(exact[0])
     hits = {name for name, words in rules if any(f" {w}" in key for w in words)}
     if len(hits) != 1:
         return None

@@ -110,6 +110,7 @@ _ALIAS: dict[str, str] = {
     # "Paragraf (Karma)"ya düşer). Eski adın biçim farkları:
     "hucre bolunmeleri mitoz mayoz": "hucre bolunmeleri",
     "hucre organeller": "hucre organelleri",
+    "yerin sekillenmesi ic dis kuvvetler": "yerin sekillenmesi",
     # NOT: yalın "esitsizlikler" alias'ı BİLİNÇLİ YOK — Maarif/AYT'de birebir
     # "Eşitsizlikler" konusu var; alias exact eşleşmeyi bozardı (2026-08-11 taraması).
 }
