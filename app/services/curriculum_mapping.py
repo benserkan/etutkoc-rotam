@@ -105,12 +105,11 @@ _ALIAS: dict[str, str] = {
     "asal aralarinda asal sayilar": "asal sayilar",
     "tek cift sayilar isaret incelemesi": "tek cift sayilar",
     "merkezi egilim yayilim olculeri grafik turleri": "veri istatistik",
-    # Alt konulara bölünen geniş başlıklar (2026-09-23) "(Karma)" adını aldı;
-    # karne/kitaptaki yalın "Paragraf" / "Üçgenler" hâlâ onlara eşleşsin diye
-    # iki taraf da aynı anahtara iner.
-    "paragraf karma": "paragraf",
-    "ucgenler karma": "ucgenler",
-    "cokgenler dortgenler karma": "cokgenler dortgenler",
+    # Alt konulara bölünen geniş başlıklar (2026-09-23) "(Karma)" adını aldı
+    # (sondaki "karma" _canon_from_norm'da atılır → yalın "Paragraf" hâlâ
+    # "Paragraf (Karma)"ya düşer). Eski adın biçim farkları:
+    "hucre bolunmeleri mitoz mayoz": "hucre bolunmeleri",
+    "hucre organeller": "hucre organelleri",
     # NOT: yalın "esitsizlikler" alias'ı BİLİNÇLİ YOK — Maarif/AYT'de birebir
     # "Eşitsizlikler" konusu var; alias exact eşleşmeyi bozardı (2026-08-11 taraması).
 }
@@ -120,7 +119,10 @@ def _canon_from_norm(norm: str) -> str:
     """Normalize edilmiş dizeden eşleştirme anahtarı: bağlaç at + alias uygula."""
     if not norm:
         return ""
-    key = " ".join(t for t in norm.split() if t not in _STOPWORDS)
+    toks = [t for t in norm.split() if t not in _STOPWORDS]
+    if len(toks) > 1 and toks[-1] == "karma":
+        toks = toks[:-1]  # "Paragraf (Karma)" ≡ "Paragraf"
+    key = " ".join(toks)
     return _ALIAS.get(key, key)
 
 

@@ -58,7 +58,7 @@ KARMA = {
         ("Dik Üçgen ve Pisagor", ("dik ucgen", "dik ozel", "ozel ucgen", "pisagor",
                                   "trigonom")),
         ("İkizkenar ve Eşkenar Üçgen", ("ikizkenar", "eskenar ucgen")),
-        ("Üçgende Açılar", ("ucgende aci", "ucgende acilar", "ucgende aci ")),
+        ("Üçgende Açılar", ("ucgende aci ", "ucgende acilar")),
     ],
     "Çokgenler ve Dörtgenler (Karma)": [
         ("Paralelkenar", ("paralelkenar",)),
@@ -68,30 +68,111 @@ KARMA = {
         ("Yamuk", ("yamuk",)),
         ("Çokgenler", ("cokgen",)),
     ],
+    # --- TYT Kimya ---
+    "Atom ve Periyodik Sistem (Karma)": [
+        ("Periyodik Sistem", ("periyodik", "elementlerin")),
+        ("Atom Modelleri ve Atomun Yapısı", ("atom",)),
+    ],
+    "Kimyasal Türler Arası Etkileşimler (Karma)": [
+        ("Güçlü Etkileşimler (Kimyasal Bağlar)", ("guclu", "iyonik", "kovalent",
+                                                  "metalik", "adlandir")),
+        ("Zayıf Etkileşimler", ("zayif",)),
+        ("Fiziksel ve Kimyasal Değişimler", ("fiziksel",)),
+    ],
+    "Maddenin Halleri (Karma)": [
+        ("Gazlar", ("gaz", "graham", "atmosfer")),
+        ("Sıvılar", ("sivi",)),
+        ("Katılar", ("kati",)),
+        ("Hal Değişimleri", ("hal degisim",)),
+    ],
+    "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar (Karma)": [
+        ("Kimyanın Temel Kanunları", ("kutlenin korunumu", "sabit oran", "katli oran",
+                                      "temel kanun", "temel yasa")),
+        ("Mol Kavramı", ("mol", "akb", "bagil atom", "atom kutlesi",
+                         "formul bulma", "hacim madde miktari")),
+        ("Kimyasal Tepkimeler ve Hesaplamalar", ("tepkime", "denklem", "stokiyometr",
+                                                 "artan madde", "verim", "safsiz",
+                                                 "saflik", "yanma",
+                                                 "kimyasal hesaplama")),
+    ],
+    "Karışımlar (Karma)": [
+        ("Karışımların Sınıflandırılması", ("sinifland", "homojen", "heterojen")),
+        ("Çözünme ve Derişim", ("cozun", "derisim", "cozelti", "koligatif")),
+        ("Ayırma ve Saflaştırma", ("ayirma", "ayrilma", "saflastir")),
+    ],
+    # --- TYT Biyoloji ---
+    "Canlıların Temel Bileşenleri (Karma)": [
+        ("Enzimler", ("enzim",)),
+        ("İnorganik Bileşikler", ("inorganik",)),
+        ("Organik Bileşikler", ("organik", "karbonhidrat", "lipit", "yaglar",
+                                "protein", "vitamin", "nukleik", "atp", "hormon")),
+    ],
+    "Hücre (Karma)": [
+        ("Hücre Zarı ve Madde Geçişleri", ("hucre zar", "zarindan", "zarinda",
+                                           "difuzyon", "osmoz", "aktif tasima",
+                                           "endositoz", "ekzositoz", "madde gecis",
+                                           "madde tasin")),
+        ("Hücre Organelleri", ("organel", "sitoplazma", "ribozom", "golgi",
+                               "cekirdek", "mitokondri", "sentrozom",
+                               "hucrenin yapisi", "hucre iskelet")),
+    ],
+    "Canlıların Sınıflandırılması (Karma)": [
+        ("Bakteriler ve Arkeler", ("bakteri", "arke")),
+        ("Protista, Bitki ve Mantarlar", ("protista", "bitki", "mantar")),
+        ("Hayvanlar Âlemi", ("hayvan",)),
+        ("Virüsler", ("virus",)),
+    ],
+    "Hücre Bölünmeleri (Karma)": [
+        ("Mitoz ve Eşeysiz Üreme", ("mitoz", "eseysiz")),
+        ("Mayoz ve Eşeyli Üreme", ("mayoz", "eseyli")),
+    ],
+    "Kalıtımın Genel İlkeleri (Karma)": [
+        ("Mendel Genetiği ve Çaprazlamalar", ("mendel", "caprazlama", "gamet",
+                                              "kalitima giris")),
+        ("Kan Grupları ve Çok Alellilik", ("kan grup", "cok alel", "es baskin")),
+        ("Eşeye Bağlı Kalıtım ve Soyağaçları", ("eseye bagli", "soyagac",
+                                                 "ayrilmama")),
+        ("Mutasyon, Modifikasyon ve Varyasyon", ("mutasyon", "modifikasyon",
+                                                  "varyasyon", "mitokondriyal")),
+    ],
 }
 
+# Ünite geneli olduğunu söyleyen etiketler Karma'da kalır.
+KARMA_KEEP = {
+    "Canlıların Sınıflandırılması (Karma)": ("canli alem", "alemleri"),
+}
 
-# 2026-09-23'te eklenen konular (alt konular + Tarih/Din eksikleri).
+# 2026-09-23'te eklenen konular (alt konular + Tarih/Din/Biyoloji eksikleri).
 NEW_TOPICS = {name for rules in KARMA.values() for name, _ in rules} | {
     "Uluslararası İlişkilerde Denge Stratejisi (1774-1914)",
     "Din ve İslam", "Gönül Coğrafyamız", "Ahlaki Tutum ve Davranışlar",
     "Kur'an'da Bazı Kavramlar", "İslam ve Bilim",
+    "Fotosentez ve Kemosentez", "Hücresel Solunum ve Fermantasyon", "Sindirim",
 }
 
 
 def _split_target(label: str | None, karma_name: str, by_name: dict[str, Topic]) -> Topic | None:
-    """(Karma) konuya bağlı etiketi alt konuya çevir — ilk uyan kural."""
+    """(Karma) konuya bağlı etiketi alt konuya çevir.
+
+    Belirsizde None: etiket ünitenin tam adını taşıyorsa (ünite geneli), ünite
+    geneli anahtar sözcüğü varsa ya da BİRDEN FAZLA alt konuyu anıyorsa
+    ("Mitoz ve Mayoz", "Eşeyli ve Eşeysiz Üreme") Karma'da kalır.
+    """
     rules = KARMA.get(karma_name)
     if not rules:
         return None
     _, tail = _label_parts(label)
     key = f" {tail or _label_key(label)} "
-    if karma_name.startswith("Çokgenler") and "cokgen" in key and "dortgen" in key:
-        return None  # "Çokgenler ve Dörtgenler" genel başlığı
-    for name, words in rules:
-        if any(f" {w}" in key for w in words):
-            return by_name.get(name)
-    return None
+    base = _topic_key(karma_name.replace("(Karma)", "")).split()
+    toks = set(key.split())
+    if len(base) > 1 and all(b in toks for b in base):
+        return None
+    if any(f" {w}" in key for w in KARMA_KEEP.get(karma_name, ())):
+        return None
+    hits = {name for name, words in rules if any(f" {w}" in key for w in words)}
+    if len(hits) != 1:
+        return None
+    return by_name.get(next(iter(hits)))
 
 
 class Pool:

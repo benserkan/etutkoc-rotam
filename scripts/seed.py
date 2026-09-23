@@ -176,6 +176,21 @@ EXAM_TOPIC_RENAMES: dict[str, dict[str, str]] = {
         "Üçgenler": "Üçgenler (Karma)",
         "Çokgenler ve Dörtgenler": "Çokgenler ve Dörtgenler (Karma)",
     },
+    "TYT Kimya": {
+        "Atom ve Periyodik Sistem": "Atom ve Periyodik Sistem (Karma)",
+        "Kimyasal Türler Arası Etkileşimler": "Kimyasal Türler Arası Etkileşimler (Karma)",
+        "Maddenin Halleri": "Maddenin Halleri (Karma)",
+        "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar":
+            "Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar (Karma)",
+        "Karışımlar": "Karışımlar (Karma)",
+    },
+    "TYT Biyoloji": {
+        "Canlıların Temel Bileşenleri": "Canlıların Temel Bileşenleri (Karma)",
+        "Hücre ve Organelleri": "Hücre (Karma)",
+        "Canlıların Sınıflandırılması": "Canlıların Sınıflandırılması (Karma)",
+        "Hücre Bölünmeleri (Mitoz-Mayoz)": "Hücre Bölünmeleri (Karma)",
+        "Kalıtımın Genel İlkeleri": "Kalıtımın Genel İlkeleri (Karma)",
+    },
 }
 
 

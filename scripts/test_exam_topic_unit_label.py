@@ -96,6 +96,22 @@ def main() -> int:
         r = run("Din ve İslam", "Sosyal Bilimler")
         check("8. eklenen Din ünitesi birebir",
               r.get("topic_id") == by[("TYT Din Kültürü ve Ahlak Bilgisi", "Din ve İslam")].id, str(r))
+        def tid(subj: str, name: str) -> int | None:
+            t = by.get((subj, name))
+            return t.id if t else None
+
+        r = run("Kimyanın Temel Kanunları ve Kimyasal Hesaplamalar / Mol Kavramı", "Fen Bilimleri")
+        check("10. Kimya alt konusu (Mol Kavramı)",
+              r.get("topic_id") == tid("TYT Kimya", "Mol Kavramı"), str(r))
+        r = run("Hücre / Hücre ve Organeller", "Fen Bilimleri")
+        check("11. 'Hücre ve Organeller' → Hücre Organelleri (Karma değil)",
+              r.get("topic_id") == tid("TYT Biyoloji", "Hücre Organelleri"), str(r))
+        r = run("Hücresel Solunum", "Biyoloji")
+        check("12. Enerji konusu eklendi (Hücresel Solunum, Ortak Özellikler'e değil)",
+              r.get("topic_id") == tid("TYT Biyoloji", "Hücresel Solunum ve Fermantasyon"), str(r))
+        r = run("Kalıtımın Genel İlkeleri / Kalıtım", "Fen Bilimleri")
+        check("13. ünite geneli etiket → Kalıtımın Genel İlkeleri (Karma)",
+              r.get("topic_id") == tid("TYT Biyoloji", "Kalıtımın Genel İlkeleri (Karma)"), str(r))
         r = run("Problemler / Yaş Problemleri")
         check("9. ayraçlı sıradan etiket bozulmadı (Yaş Problemleri)",
               (r.get("topic_name") or "") == "Yaş Problemleri", str(r))

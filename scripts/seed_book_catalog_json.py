@@ -77,11 +77,16 @@ def main() -> int:
             db.flush()
             print(f"--reset: eski kayıt (id={existing.id}) silindi.")
 
-        subj = (
-            db.query(Subject)
-            .filter(Subject.name == data["subject"], Subject.is_builtin.is_(True))
-            .first()
+        q = db.query(Subject).filter(
+            Subject.name == data["subject"], Subject.is_builtin.is_(True)
         )
+        # Aynı ders adı farklı müfredatlarda ayrı kayıt (LGS/Maarif/Klasik
+        # "Matematik") → JSON curriculum_model verirse ona daralt.
+        if data.get("curriculum_model"):
+            from app.models import CurriculumModel
+
+            q = q.filter(Subject.curriculum_model == CurriculumModel(data["curriculum_model"]))
+        subj = q.order_by(Subject.id).first()
         if subj is None:
             print(f"HATA: builtin '{data['subject']}' dersi yok.")
             return 1
