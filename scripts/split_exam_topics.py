@@ -207,6 +207,7 @@ KARMA = {
 # Ünite geneli olduğunu söyleyen etiketler Karma'da kalır.
 KARMA_KEEP = {
     "Canlıların Sınıflandırılması (Karma)": ("canli alem", "alemleri"),
+    "Elektrik (Karma)": ("manyetik", "manyetizma"),
 }
 
 # 2026-09-23'te eklenen konular (alt konular + Tarih/Din/Biyoloji eksikleri).

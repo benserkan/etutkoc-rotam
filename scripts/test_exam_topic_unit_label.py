@@ -112,6 +112,9 @@ def main() -> int:
         r = run("Kalıtımın Genel İlkeleri / Kalıtım", "Fen Bilimleri")
         check("13. ünite geneli etiket → Kalıtımın Genel İlkeleri (Karma)",
               r.get("topic_id") == tid("TYT Biyoloji", "Kalıtımın Genel İlkeleri (Karma)"), str(r))
+        r = run("Enerji", "Fizik")
+        check("14. tek kelimelik genel 'Enerji' ön-ekle 'Enerji Kaynakları'na BAĞLANMAZ",
+              r.get("topic_id") != tid("TYT Fizik", "Enerji Kaynakları"), str(r))
         r = run("Problemler / Yaş Problemleri")
         check("9. ayraçlı sıradan etiket bozulmadı (Yaş Problemleri)",
               (r.get("topic_name") or "") == "Yaş Problemleri", str(r))

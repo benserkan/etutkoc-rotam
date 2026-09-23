@@ -446,8 +446,10 @@ def _deterministic_match(
     hit = home_map.get(label_key)
     if hit is not None:
         return hit
-    # Kesik etiket ("paragrafta yardimci dusu"): home dersinde TEK ön-ek adayı
-    if len(label_key) >= 6:
+    # Kesik etiket ("paragrafta yardimci dusu"): home dersinde TEK ön-ek adayı.
+    # Tek kelimelik GENEL etiket ("Enerji") ön-ekle bağlanmaz — o kelimeyle
+    # başlayan tek alt konuya ("Enerji Kaynakları") yanlışlıkla düşerdi.
+    if len(label_key) >= 6 and " " in label_key:
         pref = [t for k, t in home_map.items() if k.startswith(label_key)]
         if len(pref) == 1:
             return pref[0]
