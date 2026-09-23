@@ -459,6 +459,24 @@ def _deterministic_match(
     return None
 
 
+def _label_parts(raw: str | None) -> tuple[str, str]:
+    """"Ünite / Konu" biçimli etiketin (baş, kuyruk) eşleştirme anahtarları.
+
+    Deneme analiz sistemleri konuyu üst başlıkla birlikte yazar ("Denklemler ve
+    Eşitsizlikler / Oran - Orantı"). Etiket BÜTÜN olarak aranınca resmi listede
+    bulunamıyor, AI önekteki sözcüğe kanıp yanlış konu seçiyordu (Emir #113:
+    Oran-Orantı → Basit Eşitsizlikler). Asıl konu KUYRUKTA; baş yalnız kuyruk
+    eşleşmezse ünite adı resmi konuyla birebir aynıysa kullanılır.
+    Ayraç yoksa ("", "").
+    """
+    text = str(raw or "")
+    if "/" not in text:
+        return "", ""
+    head, _, tail = text.rpartition("/")
+    head = head.split("/")[-1]
+    return _label_key(head), _label_key(tail)
+
+
 # Parti başına etiket sayısı. 40: 125 soruluk karnede parti sayısını 5'ten 3'e
 # indirir (aday konu listesi zaten her partide tekrar gönderiliyor — az parti =
 # az tekrar = hızlı). Partiler ayrıca PARALEL çalışır.
@@ -583,13 +601,31 @@ def normalize_topics(
             stats["none"] += 1
             continue
 
-        # Katman 0 — öğrenen sözlük
-        alias = _alias_lookup(db, universe, home_sid, lkey)
-        if alias is not None and alias.topic_id in {t.id for t in topics}:
-            tp = next(t for t in topics if t.id == alias.topic_id)
+        head_key, tail_key = _label_parts(row.get("topic_raw"))
+        if tail_key == lkey:
+            tail_key = ""
+        topic_ids = {t.id for t in topics}
+
+        def _alias_hit(key: str, *, coach_only: bool = False):
+            if not key:
+                return None
+            a = _alias_lookup(db, universe, home_sid, key)
+            if a is None or a.topic_id not in topic_ids:
+                return None
+            if coach_only and a.source != ALIAS_SOURCE_COACH:
+                return None
+            return a
+
+        def _use_alias(a) -> None:
+            tp = next(t for t in topics if t.id == a.topic_id)
             _assign_topic(row, tp, subj_by_id, source="alias")
-            alias.hit_count = (alias.hit_count or 0) + 1
+            a.hit_count = (a.hit_count or 0) + 1
             stats["alias"] += 1
+
+        # Katman 0 — öğrenen sözlük. Koçun elle düzelttiği kayıt her şeyi ezer.
+        alias = _alias_hit(lkey, coach_only=bool(tail_key))
+        if alias is not None:
+            _use_alias(alias)
             continue
 
         # Katman 1 — deterministik (birebir + ön-ek + evren-tekil)
@@ -602,13 +638,37 @@ def normalize_topics(
             for gsid in resolve_subject_group(row.get("subject_raw"), by_key):
                 for gk, gt in home_maps.get(gsid, {}).items():
                     home_map.setdefault(gk, gt)
+        # "Ünite / Konu": önce KUYRUK (asıl konu) — sözlük, sonra birebir.
+        # Bütün etiket için AI'ın öğrendiği kayıt ancak kuyruk sonuçsuzsa
+        # kullanılır; yoksa geçmişte yanlış öğrenilmiş bir eşleme kuyruğun
+        # kesin karşılığını ezerdi.
+        if tail_key:
+            alias = _alias_hit(tail_key)
+            if alias is not None:
+                _use_alias(alias)
+                continue
+            det = _deterministic_match(tail_key, home_map, universe_map)
+            if det is not None:
+                _assign_topic(row, det, subj_by_id, source="auto")
+                stats["auto"] += 1
+                continue
+            alias = _alias_hit(lkey)
+            if alias is not None:
+                _use_alias(alias)
+                continue
         det = _deterministic_match(lkey, home_map, universe_map)
         if det is not None:
             _assign_topic(row, det, subj_by_id, source="auto")
             stats["auto"] += 1
             continue
 
-        # Katman 2'ye aday (etiket düzeyinde tekilleştirilir)
+        # Katman 2'ye aday (etiket düzeyinde tekilleştirilir). Ünite başı SON
+        # ÇARE olarak saklanır — AI'dan önce kullanılırsa "Üçgenler / Doğruda
+        # Açılar" gibi özel eşlemeleri üst başlığa ezerdi.
+        if head_key:
+            row["_head_topic"] = home_map.get(head_key) or (
+                (universe_map.get(head_key) or [None])[0]
+                if len(universe_map.get(head_key) or []) == 1 else None)
         ai_pending.setdefault((home_sid, lkey), []).append(idx)
 
     if use_ai and ai_pending:
@@ -659,7 +719,11 @@ def normalize_topics(
                         "(%s → %s)", rows[idxs[0]].get("subject_raw"), tp.name)
                     tp = None
             for ridx in idxs:
-                if tp is not None:
+                head_tp = rows[ridx].get("_head_topic") if tp is None else None
+                if head_tp is not None:
+                    _assign_topic(rows[ridx], head_tp, subj_by_id, source="auto")
+                    stats["auto"] += 1
+                elif tp is not None:
                     _assign_topic(rows[ridx], tp, subj_by_id, source="ai")
                     stats["ai"] += 1
                 else:
@@ -670,6 +734,11 @@ def normalize_topics(
     else:
         for (_sid, _lk), idxs in ai_pending.items():
             for ridx in idxs:
+                head_tp = rows[ridx].get("_head_topic")
+                if head_tp is not None:
+                    _assign_topic(rows[ridx], head_tp, subj_by_id, source="auto")
+                    stats["auto"] += 1
+                    continue
                 rows[ridx]["topic_id"] = None
                 rows[ridx]["topic_name"] = None
                 rows[ridx]["topic_source"] = "none"

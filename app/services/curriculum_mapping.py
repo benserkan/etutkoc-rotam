@@ -105,6 +105,12 @@ _ALIAS: dict[str, str] = {
     "asal aralarinda asal sayilar": "asal sayilar",
     "tek cift sayilar isaret incelemesi": "tek cift sayilar",
     "merkezi egilim yayilim olculeri grafik turleri": "veri istatistik",
+    # Alt konulara bölünen geniş başlıklar (2026-09-23) "(Karma)" adını aldı;
+    # karne/kitaptaki yalın "Paragraf" / "Üçgenler" hâlâ onlara eşleşsin diye
+    # iki taraf da aynı anahtara iner.
+    "paragraf karma": "paragraf",
+    "ucgenler karma": "ucgenler",
+    "cokgenler dortgenler karma": "cokgenler dortgenler",
     # NOT: yalın "esitsizlikler" alias'ı BİLİNÇLİ YOK — Maarif/AYT'de birebir
     # "Eşitsizlikler" konusu var; alias exact eşleşmeyi bozardı (2026-08-11 taraması).
 }

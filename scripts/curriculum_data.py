@@ -1130,7 +1130,13 @@ EXAM_CURRICULUM: dict[str, dict] = {
         "min_grade": 9, "max_grade": 12, "exam_section": "TYT",
         "curriculum_model": None, "available_for_graduate": True,
         "topics": [
-            ("Sözcükte Anlam", 9), ("Cümlede Anlam", 9), ("Paragraf", 9),
+            # Paragraf 2026-09-23'te üçe bölündü (koç: hangi paragraf
+            # becerisinde zorlandığı analizde görünmüyordu — Emir #113'ün 104
+            # paragraf sorusu tek başlıktaydı). Eski "Paragraf" = "(Karma)".
+            ("Sözcükte Anlam", 9), ("Cümlede Anlam", 9),
+            ("Paragrafta Ana Düşünce", 9),
+            ("Paragrafta Yardımcı Düşünce", 9), ("Paragrafta Yapı", 9),
+            ("Paragraf (Karma)", 9),
             ("Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları", 9),
             ("Ses Bilgisi", 9), ("Yazım Kuralları", 9), ("Noktalama İşaretleri", 9),
             ("Sözcükte Yapı (Ekler)", 9), ("Sözcük Türleri", 10),
@@ -1143,10 +1149,19 @@ EXAM_CURRICULUM: dict[str, dict] = {
         "min_grade": 9, "max_grade": 12, "exam_section": "TYT",
         "curriculum_model": None, "available_for_graduate": True,
         "topics": [
+            # Üçgenler + Dörtgenler 2026-09-23'te alt konulara bölündü (karne ve
+            # soru bankaları bu incelikte; eski geniş başlıklar "(Karma)").
             ("Temel Geometrik Kavramlar ve Doğruda Açılar", 9),
-            ("Üçgenler", 9), ("Üçgende Açı-Kenar Bağıntıları", 9),
+            ("Üçgende Açılar", 9), ("Dik Üçgen ve Pisagor", 9),
+            ("İkizkenar ve Eşkenar Üçgen", 9),
+            ("Üçgende Açı-Kenar Bağıntıları", 9),
+            ("Üçgende Açıortay ve Kenarortay", 9),
             ("Üçgende Eşlik ve Benzerlik", 9), ("Üçgende Alan", 9),
-            ("Çokgenler ve Dörtgenler", 10), ("Çember ve Daire", 11),
+            ("Üçgenler (Karma)", 9),
+            ("Çokgenler", 10), ("Paralelkenar", 10),
+            ("Eşkenar Dörtgen ve Deltoid", 10), ("Dikdörtgen", 10),
+            ("Kare", 10), ("Yamuk", 10),
+            ("Çokgenler ve Dörtgenler (Karma)", 10), ("Çember ve Daire", 11),
             ("Analitik Geometri", 11),
             ("Katı Cisimler (Prizma, Piramit, Koni, Küre, Silindir)", 10),
             ("Dönüşüm Geometrisi", 10),
@@ -1198,6 +1213,7 @@ EXAM_CURRICULUM: dict[str, dict] = {
             ("Dünya Gücü Osmanlı Devleti", 10),
             ("Osmanlı Kültür ve Medeniyeti", 10),
             ("Değişen Dünya Dengeleri Karşısında Osmanlı", 11),
+            ("Uluslararası İlişkilerde Denge Stratejisi (1774-1914)", 11),
             ("XX. Yüzyıl Başlarında Osmanlı Devleti", 12),
             ("Milli Mücadele", 12), ("Atatürkçülük ve Türk İnkılabı", 12),
         ],
@@ -1232,12 +1248,20 @@ EXAM_CURRICULUM: dict[str, dict] = {
         "min_grade": 9, "max_grade": 12, "exam_section": "TYT",
         "curriculum_model": None, "available_for_graduate": True,
         "topics": [
-            ("Bilgi ve İnanç", 9), ("İslam ve İbadet", 9),
-            ("Gençlik ve Değerler", 9), ("Allah-İnsan İlişkisi", 10),
+            # MEB DKAB 9-12 ünitelerinin eksikleri 2026-09-23'te eklendi
+            # (Din ve İslam, Gönül Coğrafyamız, Ahlaki Tutum ve Davranışlar,
+            # Kur'an'da Bazı Kavramlar, İslam ve Bilim) — karnelerde vardı,
+            # listede olmadığı için komşu üniteye yapıştırılıyordu.
+            ("Bilgi ve İnanç", 9), ("Din ve İslam", 9), ("İslam ve İbadet", 9),
+            ("Gençlik ve Değerler", 9), ("Gönül Coğrafyamız", 9),
+            ("Allah-İnsan İlişkisi", 10),
             ("Hz. Muhammed ve Gençlik", 10), ("Din ve Hayat", 10),
+            ("Ahlaki Tutum ve Davranışlar", 10),
             ("İslam Düşüncesinde Yorumlar", 11),
-            ("Kur'an'a Göre Hz. Muhammed", 11), ("İnançla İlgili Meseleler", 11),
-            ("Dünya ve Ahiret", 12), ("Yaşayan Dinler", 12),
+            ("Kur'an'a Göre Hz. Muhammed", 11),
+            ("Kur'an'da Bazı Kavramlar", 11), ("İnançla İlgili Meseleler", 11),
+            ("Dünya ve Ahiret", 12), ("İslam ve Bilim", 12),
+            ("Yaşayan Dinler", 12),
         ],
     },
     # ------------------------------- AYT -------------------------------
@@ -1307,7 +1331,10 @@ EXAM_CURRICULUM: dict[str, dict] = {
             # anlam/paragraf/dil bilgisi sorar; bu konular listede yokken
             # satırlar eşleşmeden kalıyordu (Elvin TM: %50). Adlar TYT Türkçe
             # ile AYNI (yayınevi dili) → deterministik birebir eşleşir.
-            ("Sözcükte Anlam", 9), ("Cümlede Anlam", 9), ("Paragraf", 9),
+            ("Sözcükte Anlam", 9), ("Cümlede Anlam", 9),
+            ("Paragrafta Ana Düşünce", 9),
+            ("Paragrafta Yardımcı Düşünce", 9), ("Paragrafta Yapı", 9),
+            ("Paragraf (Karma)", 9),
             ("Anlatım Biçimleri ve Düşünceyi Geliştirme Yolları", 9),
             ("Ses Bilgisi", 9), ("Yazım Kuralları", 9),
             ("Noktalama İşaretleri", 9), ("Sözcükte Yapı (Ekler)", 9),

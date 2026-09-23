@@ -165,6 +165,20 @@ def seed_curriculum(db: Session, *, only_model: str | None = None) -> dict[str, 
     return counts
 
 
+# Alt konulara bölünen geniş başlıklar YENİDEN ADLANDIRILIR (silinmez): mevcut
+# kitap bölümü / deneme sorusu / sözlük bağları aynı konu satırında (id) kalır,
+# yalnız adı "(Karma)" olur. Alt konulara taşıma ayrı betikle yapılır
+# (scripts/split_exam_topics.py). İdempotent: yeni ad varsa dokunulmaz.
+EXAM_TOPIC_RENAMES: dict[str, dict[str, str]] = {
+    "TYT Türkçe": {"Paragraf": "Paragraf (Karma)"},
+    "AYT Edebiyat": {"Paragraf": "Paragraf (Karma)"},
+    "TYT Geometri": {
+        "Üçgenler": "Üçgenler (Karma)",
+        "Çokgenler ve Dörtgenler": "Çokgenler ve Dörtgenler (Karma)",
+    },
+}
+
+
 def seed_exam_curriculum(db: Session) -> int:
     """Sınav-bazlı kanonik taksonomi (TYT/AYT) — model-bağımsız, idempotent.
 
@@ -203,6 +217,17 @@ def seed_exam_curriculum(db: Session) -> int:
             subject.max_grade_level = spec.get("max_grade")
             subject.available_for_graduate = spec.get("available_for_graduate", False)
             subject.exam_section = exam_section_enum
+
+        renames = EXAM_TOPIC_RENAMES.get(subject_name) or {}
+        if renames:
+            names_now = {t.name for t in subject.topics}
+            for t in subject.topics:
+                new_name = renames.get(t.name)
+                if new_name and new_name not in names_now:
+                    print(f"    ~ {subject_name}: {t.name} → {new_name}")
+                    t.name = new_name
+                    names_now.add(new_name)
+            db.flush()
 
         existing = {(t.name, t.grade_level): t for t in subject.topics}
         for topic_order, (topic_name, topic_grade) in enumerate(spec.get("topics", [])):

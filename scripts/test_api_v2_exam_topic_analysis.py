@@ -103,7 +103,7 @@ def main() -> int:
         ids = {
             "coach": coach.id, "other": other.id, "student": student.id,
             "rasyonel": topic_id(db, "TYT Matematik", "Rasyonel Sayılar"),
-            "paragraf": topic_id(db, "TYT Türkçe", "Paragraf"),
+            "paragraf": topic_id(db, "TYT Türkçe", "Paragraf (Karma)"),
             "temel": topic_id(db, "TYT Matematik", "Temel Kavramlar"),
             "trig": topic_id(db, "AYT Matematik", "Trigonometri"),
         }

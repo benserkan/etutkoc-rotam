@@ -356,7 +356,10 @@ def main() -> int:
             "tekcift": topic_id(db, "TYT Matematik", "Tek ve Çift Sayılar"),
             "birinci": topic_id(db, "TYT Matematik", "Birinci Dereceden Denklemler"),
             "ucgen_alan": topic_id(db, "TYT Geometri", "Üçgende Alan"),
-            "paragraf": topic_id(db, "TYT Türkçe", "Paragraf"),
+            "paragraf": topic_id(db, "TYT Türkçe", "Paragraf (Karma)"),
+            # 2026-09-23 Paragraf üçe bölündü: kesik "Paragrafta Yardımcı Düşü"
+            # artık AI'sız, ön-ek kuralıyla alt konuya iner.
+            "paragraf_yd": topic_id(db, "TYT Türkçe", "Paragrafta Yardımcı Düşünce"),
             "trigonometri": topic_id(db, "AYT Matematik", "Trigonometri"),
             "limit": topic_id(db, "AYT Matematik", "Limit ve Süreklilik"),
             "m_safsiir": maarif_topic_id(db, "Türk Dili ve Edebiyatı", "Saf Şiir"),
@@ -510,8 +513,9 @@ def main() -> int:
               row("Matematik", 6).get("topic_id") is None
               and row("Matematik", 6).get("topic_source") == "none",
               str(row("Matematik", 6))[:160])
-        check("9c. kesik Türkçe etiketi AI ile Paragraf'a eşlendi",
-              row("TYT-TÜRKÇE", 2).get("topic_id") == ids["paragraf"],
+        check("9c. kesik Türkçe etiketi AI'sız 'Paragrafta Yardımcı Düşünce'ye eşlendi",
+              row("TYT-TÜRKÇE", 2).get("topic_id") == ids["paragraf_yd"]
+              and row("TYT-TÜRKÇE", 2).get("topic_source") == "auto",
               str(row("TYT-TÜRKÇE", 2))[:160])
 
         # 10) çift okuma uyuşmazlığı → şüpheli
@@ -584,7 +588,7 @@ def main() -> int:
               str(d)[:200])
         check("16c. yanlış konu id'leri (YSA köprüsü verisi) doğru",
               sorted(d.get("wrong_topic_ids", [])) == sorted(
-                  [ids["paragraf"], ids["tekcift"], ids["ucgen_alan"]]),
+                  [ids["paragraf_yd"], ids["tekcift"], ids["ucgen_alan"]]),
               str(d.get("wrong_topic_ids")))
         exam_id = d.get("exam_id")
 
