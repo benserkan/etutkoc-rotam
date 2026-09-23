@@ -42,8 +42,26 @@ SÖZLÜĞE yazılıp her karnede tekrarlanıyordu. Ayrıca Paragraf (104 soru) v
   taxonomy 20 · mapping 18 · mapping_v2 13 · topic_analysis 10 · wrong_bridge
   11 · maarif 22 · teacher_exams 19 · topic_board 18 · progress 22.
   Yedek `pre_topicsplit_20260923_0941.dump`.
+- **DEVAMI — TYT Kimya + Biyoloji (aynı gün, commit `c539326`):** Kimya:
+  Atom/Periyodik (Atom Modelleri · Periyodik Sistem) · Türler Arası Etkileşimler
+  (Güçlü/Kimyasal Bağlar · Zayıf · Fiziksel-Kimyasal Değişimler) · Maddenin
+  Halleri (Gazlar · Sıvılar · Katılar · Hal Değişimleri) · Temel Kanunlar ve
+  Hesaplamalar (Temel Kanunlar · Mol Kavramı · Tepkimeler ve Hesaplamalar) ·
+  Karışımlar (Sınıflandırma · Çözünme ve Derişim · Ayırma). Biyoloji: Temel
+  Bileşenler (İnorganik · Organik · Enzimler) · Hücre (Organeller · Zar ve Madde
+  Geçişleri; eski "Hücre ve Organelleri" → "Hücre (Karma)") · Sınıflandırma
+  (Bakteri-Arke · Protista-Bitki-Mantar · Hayvanlar · Virüsler) · Hücre
+  Bölünmeleri (Mitoz-Eşeysiz · Mayoz-Eşeyli) · Kalıtım (Mendel · Kan Grupları ·
+  Eşeye Bağlı-Soyağacı · Mutasyon-Varyasyon) + **Maarif 10 Enerji konuları**
+  (Fotosentez · Hücresel Solunum · Sindirim) — 10. sınıf GİS karnelerindeki
+  52+16+9 soru "Canlıların Ortak Özellikleri"/"Ekosistem"e yapıştırılmıştı.
+  Canon artık sondaki "karma"yı GENEL atar. Betik: birden fazla alt konu anan
+  etiket ("Mitoz ve Mayoz") ya da ünite adını taşıyan etiket Karma'da kalır.
+  Prod: **343 kitap bölümü + 194 şablon bölümü + 39 sözlük + 232 soru**,
+  netler birebir, ikinci koşu 0. Yedek `pre_kimbio_20260923_0954.dump`.
+  test_exam_topic_unit_label 13/13.
 - **Kalan (bilinçli):** İkinci Dereceden Denklemler TYT'de yok (1 soru
-  eşleşmedi); Kimya mol/tepkime, Mitoz/Mayoz, İklim alt konuları tek başlıkta
+  eşleşmedi); Fizik, Coğrafya (İklim), Ekosistem alt konuları tek başlıkta
   (istenirse aynı desenle bölünür).
 
 ---
