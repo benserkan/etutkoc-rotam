@@ -99,10 +99,22 @@ sınıf) için 45 kitap; elde tam PDF YOK, yalnız kapak + içindekiler telefon 
   Seeder'a `curriculum_model` filtresi (aynı adlı LGS/Maarif/Klasik "Matematik").
 - **Yiğit (#2) kayıtları çapraz kontrol:** kısmi/toplam düzeyinde (Mozaik İnkılap 22,
   Bumerang Fen deneme 27 vs içindekiler 32) — referans DAİMA içindekiler.
-- **BEKLEYEN 25 kitap:** B türü (Ankara ×2, Mozaik ×5, Benim Hocam [kapak 133 test],
-  Eker Din, Paragrafın Yıldızı, Ulti Fen) · Ay Serisi ×6 (D) · MEB çalışma kitabı ×4 ·
-  PSH (765 soru, birim kararı) · kapaktan ibaret ×3 (Yanıt mantık, Çanta deneme,
-  Fenomen KTD).
+- **Kalan 25 kitap TAHMİNLE yüklendi (commit `c8cef4f`, prod id 144-169, kullanıcı
+  kuralları):** sayfa aralığı ÷2 (Ankara/Mozaik/Ulti/Eker/Paragrafın Yıldızı) ·
+  Benim Hocam kapak toplamı 133 sayfa oranıyla dağıtıldı · Mozaik Paragraf 10'da On/
+  Final 3 s./test · PSH soru÷10 · Ay Serisi (SB + fasikül) her konu 5 test · MEB çalışma
+  kitabı konu×10 + yıllık çıkmış 20 soruluk derste 2 / 10 soruluk derste 1; sözel kitap
+  derse göre 3 kitap · Çanta 52 / Fenomen KTD 40 deneme (kapaktan). Her kayıtta
+  "TAHMİNİ" uyarısı. Üreteç `scripts/lgs_toc_estimates_build.py`.
+- **Cafer → Zeynep kurulumu (2026-09-23, prod):** `scripts/assign_catalog_books.py`
+  (UI "katalogdan ekle + ata" akışının idempotent karşılığı, dry-run varsayılan) →
+  **47 kitap** Cafer'in kütüphanesine kopyalandı + Zeynep'e atandı (Türkçe 15 · Fen 11 ·
+  Mat 11 · İnkılap 7 · Din 2 · İngilizce 1; ~4.200 test). Yedek
+  `pre_cafer_books_20260923_1159.dump`. Yanıt Mantık-Görsel Okuma BÖLÜMSÜZ (PDF'te yalnız
+  kapak) — koç bölümleri elle ekler.
+- **DERS:** paralel bir oturum prod'a deploy edince konteyner yenilendi, `docker cp` ile
+  koyduğum dosyalar silindi (DB kayıtları kalıcı) → uzun prod betiklerinden önce
+  `docker exec mkdir -p` + kopyayı yeniden yap.
 
 ## YANLIŞ KONUYA GİRİLEN TAMAMLANMIŞ GÖREV — geri alma yolları (2026-09-20, commit `c4569f3`, migration YOK, CANLI)
 
