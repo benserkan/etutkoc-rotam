@@ -1,0 +1,281 @@
+{
+ "name": "Mozaik 8. Sınıf Türkçe Beceri Temelli Yeni Nesil Soru Bankası",
+ "publisher": "Mozaik Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "İsim-Fiil",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sıfat-Fiil",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Zarf-Fiil",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fiilimsiler — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözcükte Anlam Özellikleri",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözcükler Arası Anlam İlişkileri",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Söz Öbekleri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözcükte Anlam — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatımına Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Anlam İlişkileri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Kavramlar ve Duygular",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümle Yorumlama",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Anlam — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atasözü",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deyimler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atasözleri ve Deyimler — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ana Fikir",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Konu-Başlık",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yardımcı Düşünce",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragrafta Yapı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metin Karşılaştırma",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragraf — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatım Teknikleri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragrafta Anlatım — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Görsel Yorumlama ve Grafik Okuma",
+   "test_count": 9,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Görsel Yorumlama ve Grafik Okuma — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözel Yetenek",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözel Yetenek ve Akıl Yürütme — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metin Türü",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metin Türü — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Söz Sanatları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Söz Sanatları — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlenin Temel Ögeleri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlenin Yardımcı Ögeleri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Vurgu",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlenin Ögeleri — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Nesne - Yüklem İlişkisi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Özne - Yüklem İlişkisi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fiilde Çatı — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yüklemin Türüne Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yüklemin Yerine Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlamlarına Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yapısına Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümle Türleri — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatım Bozukluğu",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatım Bozukluğu — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Büyük Harflerin, Sayıların, Birleşik Harflerin Yazımı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bazı Kelime ve Eklerin Yazımı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yazımı Karıştırılan Sözcükler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yazım Kuralları ve Noktalama İşaretleri — Konu Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (mozaik türkçe soru bankası.pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi. Numaralı değerlendirme sınavları 1'er test (içindekilerde listeli).",
+  "Karma: konu satırları B, Konu Değerlendirme Sınavları A (her biri 1, exact) — toplam 15 sınav",
+  "6 bölüm, 15 alt başlık; Yanıt Anahtarı s.253"
+ ],
+ "no_map": false
+}

@@ -1,0 +1,231 @@
+{
+ "name": "Mozaik 8. Sınıf Fen Bilimleri Deney ve Yaşam Temelli Soru Bankası",
+ "publisher": "Mozaik Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimlerin Oluşumu",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İklim ve Hava Hareketleri",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mevsimlerin Oluşumu - İklim ve Hava Hareketleri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Ünite Değerlendirme Soruları",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "DNA ve Genetik Kod",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kalıtım",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mutasyon ve Modifikasyon",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Adaptasyon",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Biyoteknoloji",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Soruları",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Katı Basıncı",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sıvı Basıncı",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Gaz Basıncı",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basıncın Günlük Yaşam ve Teknolojideki Uygulamaları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "3. Ünite Değerlendirme Soruları",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Periyodik Sistem",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kimyasal Tepkimeler",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Asitler ve Bazlar",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Maddenin Isı ile Etkileşimi",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hâl Değişim Grafikleri",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Türkiye'de Kimya Endüstrisi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Soruları - 1",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Soruları - 2",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Makaralar",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kaldıraçlar",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eğik Düzlem",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Çıkrık - Kasnak - Dişli Çark",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bileşik Makineler",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "5. Ünite Değerlendirme Soruları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Besin Zinciri ve Enerji Akışı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fotosentez",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Solunum",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fotosentez - Solunum",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Madde Döngüleri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Küresel Çevre Sorunları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sürdürülebilir Kalkınma",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "6. Ünite Değerlendirme Soruları",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektriklenme",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Yüklü Cisimler",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Enerjisinin Dönüşümü",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "7. Ünite Değerlendirme Soruları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (mozaik fen bilimleri soru bankası.pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi. Numaralı değerlendirme sınavları 1'er test (içindekilerde listeli).",
+  "7 ünite: Mevsimler ve İklim · DNA ve Genetik Kod · Basınç · Madde ve Endüstri · Basit Makineler · Enerji Dönüşümleri ve Çevre Bilimi · Elektrik Yükleri ve Elektrik Enerjisi",
+  "Cevap anahtarı s.286"
+ ],
+ "no_map": false
+}

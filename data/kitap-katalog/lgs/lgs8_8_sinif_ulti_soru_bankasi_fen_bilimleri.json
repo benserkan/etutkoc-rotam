@@ -1,0 +1,57 @@
+{
+ "name": "8. Sınıf Ulti Soru Bankası Fen Bilimleri",
+ "publisher": "Ulti Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimler ve İklim",
+   "test_count": 17,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "DNA ve Genetik Kod",
+   "test_count": 27,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basınç",
+   "test_count": 15,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Madde ve Endüstri",
+   "test_count": 29,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basit Makineler",
+   "test_count": 19,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Enerji Dönüşümleri ve Çevre Bilimi",
+   "test_count": 19,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektrik Enerjisi",
+   "test_count": 13,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (ulti fen bilimleri soru bankası.pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi. Numaralı değerlendirme sınavları 1'er test (içindekilerde listeli).",
+  "Ünite başlangıç sayfaları ünite kapağını da içerebilir; tahminler üst sınırdır.",
+  "Cevap Anahtarı s.283.",
+  "Kapakta 'Hücrelenmiş Konu Testleri' ibaresi var — gerçek yapı konu bazlı testler olabilir."
+ ],
+ "no_map": false
+}

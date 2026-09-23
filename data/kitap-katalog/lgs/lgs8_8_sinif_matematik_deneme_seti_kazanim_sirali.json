@@ -1,0 +1,282 @@
+{
+ "name": "8. Sınıf Matematik Deneme Seti (Kazanım Sıralı)",
+ "publisher": "Çanta Yayıncılık",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "brans_denemesi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mini Kazanım Denemesi 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 3",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 4",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 5",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 6",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 7",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 8",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 9",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 10",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 11",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 12",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 13",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 14",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 15",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 16",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 17",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 18",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 19",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 20",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 21",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 22",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 23",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 24",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 25",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 26",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 27",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 28",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 29",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 30",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 31",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 32",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 33",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 34",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 35",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 36",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 37",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 38",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 39",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mini Kazanım Denemesi 40",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sarmal Deneme 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sarmal Deneme 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sarmal Deneme 3",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sarmal Deneme 4",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sarmal Deneme 5",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sarmal Deneme 6",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Genel Deneme 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Genel Deneme 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Genel Deneme 3",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Genel Deneme 4",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Genel Deneme 5",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Genel Deneme 6",
+   "test_count": 1,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (çanta matematik deneme.pdf). Yalnız kapak: 40 mini kazanım + 6 sarmal + 6 genel deneme (kullanıcı onayı).",
+  "PDF tek sayfa: yalnız kapak (kitapevi etiketi üzerinde).",
+  "Kapak sayıları basılı metinden okundu; mini denemelerin kazanım adları bilinmiyor.",
+  "Kapakta 'Öğretmen Örneğidir' ibaresi."
+ ],
+ "no_map": true
+}

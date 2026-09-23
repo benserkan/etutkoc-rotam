@@ -1,0 +1,182 @@
+{
+ "name": "Ay Serisi 8. Sınıf Matematik (Ders İşleme Fasikülleri)",
+ "publisher": "Ay Serisi (Günay Yayınları)",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "fasikul",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Çarpanlar ve Katlar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ebob, Ekok ve Aralarında Asal Sayılar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Tam Sayıların Kuvveti ve Temel Kurallar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ondalık Gösterimleri Çözümleme ve Çok Büyük Çok Küçük Sayılar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bilimsel Gösterim ve Tam Kare Pozitif Sayılar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yaklaşık Değer",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kareköklü İfadelerle Dört İşlem",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kareköklü İfadeyi Doğal Sayı Yapma",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ondalıklı Sayıların Karekökü",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Gerçek Sayılar, Çizgi ve Sütun Grafikleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Daire Grafiği ve Grafik Dönüşümleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Olası Durumlar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Olasılık Hesabı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cebirsel İfadelerle Çarpma",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Önemli Özdeşlikler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Çarpanlara Ayırma",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bir Bilinmeyen Denklemler ve Koordinat Sistemi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrusal İlişkiler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrusal Denklemlerin Grafiği",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrusal İlişkilerin Grafiği",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrunun Eğimi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eşitsizlik Cümleleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eşitsizlikleri Sayı Doğrusunda Gösterme ve Eşitsizlikleri Çözümü",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üçgenin Yardımcı Elemanı ve Üçgen Eşitsizliği",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üçgenlerde Açı Kenar İlişkisi ve Üçgen Çizimi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Pisagor Bağıntısı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eş ve Benzer Şekiller",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Öteleme Dönüşümü",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yansıma Dönüşümü",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Prizma ve Silindirin Temel Elemanları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Silindirin Alan ve Hacim Bağıntısı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Piramit ve Koninin Temel Elemanları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (ay serisi matemaitk fasikül.pdf). İçindekiler yerine 32 haftalık plan tablosu var (sayfa yok); her konu 5 test kabul edildi (kullanıcı kararı).",
+  "Kapak: 'Ders İşleme Fasikülleri — Ay Ay toplam 8 fasikül'; ortak kapak + plan tablosu, tek kitap olarak işlendi.",
+  "Ünite adları tabloda: Çarpanlar ve Katlar · Üslü İfadeler · Kareköklü İfadeler · Veri Analizi · Basit Olayların Olma Olasılığı · Cebirsel İfadeler ve Özdeşlikler · Doğrusal Denklemler · Eşitsizlikler · Üçgenler · Dönüşüm Geometrisi · Geometrik Cisimler (1.–6. Ünite numaralı). 32 haftanın her biri farklı konu.",
+  "ISBN 978-625-8331-90-5."
+ ],
+ "no_map": false
+}

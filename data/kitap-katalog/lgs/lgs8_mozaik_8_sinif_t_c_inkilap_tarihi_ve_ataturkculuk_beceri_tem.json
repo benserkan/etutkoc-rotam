@@ -1,0 +1,293 @@
+{
+ "name": "Mozaik 8. Sınıf T.C. İnkılap Tarihi ve Atatürkçülük Beceri Temelli Yeni Nesil Soru Bankası",
+ "publisher": "Mozaik Yayınları",
+ "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Avrupa'daki Gelişmeler ve Osmanlı Devleti",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal'in Çocukluk Dönemi ve Öğrenim Hayatı",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal'in Fikir Hayatını Etkileyen Olaylar ve Kişiler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal'in Askerlik Hayatı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Ünite Değerlendirme Sınavı - 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Ünite Değerlendirme Sınavı - 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "I. Dünya Savaşına Yol Açan Gelişmeler",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Osmanlı Devleti'nin Son Savaşı: I. Dünya Savaşı",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İşgal Yıllarında Anadolu: Mondros Ateşkes Antlaşması",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cemiyetler ve Kuvâimillîye",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İstiklal Yolculuğu",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bir Milletin Yemini: Misakımillî",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Büyük Millet Meclisine Karşı Çıkan Ayaklanmalar",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sevr Barış Antlaşması",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Sınavı - 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Sınavı - 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Ünite Değerlendirme Sınavı - 3",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğu ve Güney Cepheleri",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Batı Cephesi",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Maarif Kongresi",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Başkomutanlık Yasası ve Tekalif-i Milliye Emirleri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Direnişten Dirilişe: Sakarya'dan Büyük Taarruza",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Türkiye'nin Tapu Senedi: Lozan Barış Antlaşması",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Millî Mücadele'nin Sanata ve Edebiyata Yansımaları",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "3. Ünite Değerlendirme Sınavı - 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "3. Ünite Değerlendirme Sınavı - 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atatürk İlkeleri",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Siyasal Alanda Yapılan İnkılaplar",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hukuk Alanında Yapılan İnkılaplar",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eğitim ve Kültür Alanında Yapılan İnkılaplar",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Toplumsal Alanda Yapılan İnkılaplar",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ekonomik Alanda Yapılan İnkılaplar",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atatürk ve Sağlık",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İlelebet Cumhuriyet",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atatürk İlke ve İnkılaplarını Oluşturan Temel Esaslar",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Sınavı - 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Sınavı - 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Sınavı - 3",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "4. Ünite Değerlendirme Sınavı - 4",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Demokratikleşme Yolunda Atılan Adımlar",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal'e Suikast Girişimi",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Türkiye Cumhuriyeti'ne Yönelik Tehditler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "5. Ünite Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Türk Dış Politikasının Temel İlkeleri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Dış Politikada Yaşanan Gelişmeler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Misakımillî'nin Son Zaferi: Hatay",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "6. Ünite Değerlendirme Sınavı - 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "6. Ünite Değerlendirme Sınavı - 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atatürk'ün Vefatı ve Yankıları",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İnsan Eserleriyle Yaşar",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yeniden Sarsılan Dünya",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "II. Dünya Savaşı ve Savaşın Türkiye'ye Etkileri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Demokrasi Yolunda Güçlü Adımlar",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "7. Ünite Değerlendirme Sınavı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (mozaik inkılap soru bankası.pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi. Numaralı değerlendirme sınavları 1'er test (içindekilerde listeli).",
+  "Karma: konu satırları B (sayfa), Ünite Değerlendirme Sınavları A (her biri 1 test, exact) — toplam 15 sınav",
+  "Ünite değerlendirme sınavı son satırlarının aralığı ünite kapak sayfalarını da içerebilir",
+  "7 ünite: Bir Kahraman Doğuyor · Millî Uyanış · Millî Bir Destan: Ya İstiklal Ya Ölüm · Atatürkçülük ve Çağdaşlaşan Türkiye · Demokratikleşme Çabaları · Atatürk Dönemi Türk Dış Politikası · Atatürk'ün Ölümü ve Sonrası",
+  "Cevap anahtarı s.221"
+ ],
+ "no_map": false
+}

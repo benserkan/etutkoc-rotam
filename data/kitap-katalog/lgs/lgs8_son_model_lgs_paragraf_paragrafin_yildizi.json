@@ -1,0 +1,138 @@
+{
+ "name": "Son Model LGS Paragraf \"Paragrafın Yıldızı\"",
+ "publisher": "Model Eğitim Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Konu",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Başlık, Anahtar Kelime",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ana Fikir",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Şiirde Tema ve Duygular",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragrafta Yardımcı Fikir",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm Değerlendirme Testi (1. Metnin Anlam Yönü)",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatım Biçimleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hikâye Unsurları",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatıcı Türleri ve Kahramanın Özellikleri",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metnin Dil ve Anlatım Özellikleri",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metin Karşılaştırma",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metin Türleri ve Medya Metinleri",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm Değerlendirme Testi (2. Metnin Anlatım Yönü)",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metin Oluşturma - Metin Tamamlama - Metnin Bölümleri",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metnin Akışını Bozan Cümle - Yer Değiştirme - Metni İkiye Bölme",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragrafta Soru Cevap",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm Değerlendirme Testi (3. Metnin Yapı Yönü)",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözel Mantık ve Muhakeme",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Görsel Okuma",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Grafik Okuma ve Tablo Yorumlama",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm Değerlendirme Testi (4. Yeni Nesil Sorular)",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragraf Denemeleri (5 deneme)",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (paragrafın yıldızı paragraf soru bankası.pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi. Paragraf Denemeleri (40 sayfa) ≈ 8 sayfa/deneme → 5.",
+  "İçindekiler 5 bölüm altında 23 satır: 1. Metnin Anlam Yönü, 2. Metnin Anlatım Yönü, 3. Metnin Yapı Yönü, 4. Yeni Nesil Sorular, 5. Paragraf Denemeleri.",
+  "Kitapta 'Bölüm Değrelendirme Testi' dizgi hatalı basılmış; etiket düzeltildi ve ait olduğu bölüm parantezle eklendi.",
+  "Cevap Anahtarı s.263 → son satırın bitişi 262.",
+  "Kapakta test türleri: Antrenman Testi, Performans Testi, Güç Testi (gövde görülmeden dağılım bilinmez)."
+ ],
+ "no_map": false
+}

@@ -1,0 +1,177 @@
+{
+ "name": "Ay Serisi 8. Sınıf T.C. İnkılap Tarihi ve Atatürkçülük (Ders İşleme Fasikülleri)",
+ "publisher": "Ay Serisi (Günay Yayınları)",
+ "subject": "T.C. İnkılap Tarihi ve Atatürkçülük",
+ "curriculum_model": "lgs",
+ "type": "fasikul",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Avrupa'daki Gelişmeler ve Osmanlı Devleti",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal'in Ailesi ve Öğrenim Hayatı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal'in Fikir Hayatını Etkileyen Olaylar ve Kişiler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal'in Askerlik Hayatı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Birinci Dünya Savaşı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Birinci Dünya Savaşı'nda Osmanlı Devleti",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mondros Ateşkes Antlaşması",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Millî Mücadele Hazırlık Dönemi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Son Osmanlı Mebusan Meclisi ve Misakımillî'nin Kabulü",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Büyük Millet Meclisine Karşı Çıkarılan Ayaklanmalar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sevr Antlaşması",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Millî Mücadele Dönemi Doğu ve Güney Cephesi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Batı Cephesi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Savaşa Rağmen Maarif (Eğitim) Kongresi – Tekâlif-i Milliye Emirleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sakarya'dan Mudanya'ya",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Lozan Barış Antlaşması",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sanat ve Edebiyat Eserlerinde Millî Mücadele",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atatürk İlkeleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Siyasi Alandaki Gelişmeler – Hukuk Alanındaki Gelişmeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eğitim ve Kültür Alanındaki Gelişmeler – Toplumsal Alandaki Gelişmeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ekonomi Alanındaki Gelişmeler – Sağlık Alanındaki Gelişmeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cumhuriyetin Sağladığı Kazanımlar ve Atatürk'ün Gösterdiği Hedefler – Atatürk İlke ve İnkılaplarının Temel Esasları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Demokratikleşme Yolunda Atılan Adımlar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal'e Suikast Girişimi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Türkiye Cumhuriyeti'ne Yönelik Tehditler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atatürk Dönemi Türk Dış Politikasının Temel İlkeleri ve Amaçları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atatürk Dönemi Türk Dış Politikasında Yaşanan Gelişmeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hatay'ın Türkiye'ye Katılması",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mustafa Kemal Atatürk'ün Ölümü – Atatürk'ün Eserleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atatürk ve İkinci Dünya Savaşı – II. Dünya Savaşı'nın Türkiye'ye Etkileri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Türkiye'de Çok Partili Siyasi Hayata Geçiş",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (ay serisi inkılap fasikül.pdf). İçindekiler yerine 32 haftalık plan tablosu var (sayfa yok); her konu 5 test kabul edildi (kullanıcı kararı).",
+  "Kapak: 'Ders İşleme Fasikülleri — Ay Ay toplam 8 fasikül'; PDF'te ortak kapak + plan tablosu, tek kitap olarak işlendi.",
+  "7 ünite: Bir Kahraman Doğuyor · Millî Uyanış: Bağımsızlık Yolunda Atılan Adımlar · Millî Bir Destan: Ya İstiklal Ya Ölüm! · Atatürkçülük ve Çağdaşlaşan Türkiye · Demokratikleşme Çabaları · Atatürk Dönemi Türk Dış Politikası · Atatürk'ün Ölümü ve Sonrası. 8.–9. hafta 'Millî Mücadele Hazırlık Dönemi' tek satırda (weeks=2).",
+  "Tablo büyük harfle basılı; etiketler Türkçe başlık düzenine çevrildi. ISBN 978-625-8331-88-2."
+ ],
+ "no_map": false
+}

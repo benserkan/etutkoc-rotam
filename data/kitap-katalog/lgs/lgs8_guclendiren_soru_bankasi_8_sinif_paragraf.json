@@ -1,0 +1,93 @@
+{
+ "name": "Güçlendiren Soru Bankası 8. Sınıf Paragraf",
+ "publisher": "Ankara Yayıncılık",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Görsel Okuma, Grafik Yorumu, İnfografik Yorumu, Yaratıcı ve Analitik Düşünme, Sözel, Mantıksal Muhakeme ve Akıl Yürütme",
+   "test_count": 64,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözcüğün Anlam Özellikleri (Testler)",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözcükte Anlam İlişkileri (Testler)",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Söz Gruplarında Anlam (Testler)",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözcükte Anlam — Bölüm Değerlendirme (Testler)",
+   "test_count": 9,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Anlam İlişkileri (Testler)",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatımına Göre Cümleler (Testler)",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Çeşitli Duygu ve Düşünce Bildiren Cümleler (Testler)",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümle Tamamlama - Cümle Oluşturma - Konu (Testler)",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Anlam — Bölüm Değerlendirme (Testler)",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragrafın Anlam Yönü (Testler)",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragrafın Yapı Yönü (Testler)",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragrafın Dil ve Anlatım Yönü (Testler)",
+   "test_count": 11,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Parçada Anlam — Bölüm Değerlendirme (Testler)",
+   "test_count": 6,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (ankara yayıncılık güçlendiren soru bankası paragraf.pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi. Konu anlatımı satırları katalog dışı.",
+  "İçindekilerde test sayısı yok; yalnız başlangıç sayfaları. Son satırın sonu = Cevap Anahtarı (s.327) − 1.",
+  "3. Bölüm sayfa numaraları fotoğraf eğikliği nedeniyle bir satır yukarı kaymış görünüyor; 9 başlık ↔ 9 numara (185…223) sırayla eşlendi.",
+  "Bölümler: 1. Görsel Okuma…, 2. Sözcükte Anlam, 3. Cümlede Anlam, 4. Parçada Anlam (Paragrafta Anlam). Aynı adlı 'Bölüm Değerlendirme (Testler)' satırları bölüm adıyla ayrıştırıldı.",
+  "Kapaktaki kitapçı etiketi 'Soru Bankası' yazısını kısmen örtüyor. Yazar: Eren Akyüz."
+ ],
+ "no_map": false
+}

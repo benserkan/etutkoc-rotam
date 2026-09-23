@@ -1,0 +1,147 @@
+{
+ "name": "Ay Serisi 8. Sınıf Fen Bilimleri (Ders İşleme Fasikülleri)",
+ "publisher": "Ay Serisi (Günay Yayınları)",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "fasikul",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimlerin Oluşumu",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İklim ve Hava Hareketleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "DNA ve Genetik Kod",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kalıtım",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mutasyon ve Modifikasyon–Adaptasyon (Çevreye Uyum)",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Biyoteknoloji",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Katı Basıncı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sıvı Basıncı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Gaz Basıncı ve Basıncın Günlük Hayattaki Uygulamaları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Periyodik Sistem",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler–Kimyasal Tepkimeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Asitler ve Bazlar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Maddenin Isı ile Etkileşimi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Maddenin Isı ile Etkileşimi–Türkiye'de Kimya Endüstrisi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basit Makineler–Kaldıraçlar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basit Makineler–Makaralar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basit Makineler–Eğik Düzlem, Çıkrık, Dişli Çark, Bileşik Makineler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Besin Zinciri ve Enerji Akışı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Enerji Dönüşümleri–Fotosentez",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Enerji Dönüşümleri–Solunum",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Madde Döngüleri ve Çevre Sorunları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sürdürülebilir Kalkınma",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektriklenme",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Yüklü Cisimler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Enerjisinin Dönüşümü",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (ay serisi fen bilimlkeri fasikül.pdf). İçindekiler yerine 32 haftalık plan tablosu var (sayfa yok); her konu 5 test kabul edildi (kullanıcı kararı).",
+  "Kapak: 'Ders İşleme Fasikülleri — Ay Ay toplam 8 fasikül' (her ay 1 fasikül); PDF'te yalnız ortak kapak + plan tablosu var, tek kitap olarak işlendi.",
+  "Kapakta içerik: Konu Anlatımı, Etkinlik, Beceri Uygulamaları, Kavratan Testler, Beceri Temelli Testler.",
+  "Plan tablosu Fen Bilimleri Soru Bankası (i=2) ile birebir aynı 32 hafta. ISBN 978-625-8331-91-2."
+ ],
+ "no_map": false
+}

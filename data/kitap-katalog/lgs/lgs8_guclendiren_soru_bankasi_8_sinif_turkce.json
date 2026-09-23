@@ -1,0 +1,272 @@
+{
+ "name": "Güçlendiren Soru Bankası 8. Sınıf Türkçe",
+ "publisher": "Ankara Yayıncılık",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "İsim-Fiil (Ad-Eylem)",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sıfat-Fiil (Ortaç)",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Zarf-Fiil (Ulaç/Bağ-Fiil)",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fiilimsi (Eylemsi)",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Çok Anlamlılık, Gerçek, Mecaz ve Terim Anlam",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözcükler Arası Anlam İlişkileri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İkilemeler ve Kalıplaşmamış Söz Grupları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Atasözü, Deyim ve Özdeyiş",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Söz Sanatları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözcükte Anlam",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümle Yorumlama",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Öznel ve Nesnel Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Amaç-Sonuç, Neden-Sonuç, Koşul-Sonuç Cümleleri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Karşılaştırma, Benzetme, Örneklendirme, Tanım ve Varsayım Cümleleri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Kavramlar ve Duygular",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Anlam",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ana Fikir, Ana Duygu",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Konu, Başlık, Soru",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yardımcı Düşünce",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Paragrafta Yapı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metin Karşılaştırma",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatım Biçimleri, Metnin Anlatıcısı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Düşünceyi Geliştirme Yolları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hikâye Unsurları, Metnin Dil ve Anlatımı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Parçada Anlam",
+   "test_count": 9,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlenin Temel Ögeleri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlenin Yardımcı Ögeleri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlede Vurgu ve Ara Söz",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümlenin Ögeleri",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sözel Mantık ve Muhakeme",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Görsel Tablo ve Grafik Okuma",
+   "test_count": 13,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Özne-Yüklem İlişkisi",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Nesne-Yüklem İlişkisi",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fiilde (Eylemde) Çatı",
+   "test_count": 7,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yüklemin Türüne Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yüklemin Yerine Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlamına Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yapısına Göre Cümleler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cümle Türleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Anlatım Bozuklukları",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Büyük Harflerin Yazımı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sayıların ve Kısaltmaların Yazımı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "De, Mi, Ki'nin Yazımı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İkilemelerin, Pekiştirmelerin ve Birleşik Sözcüklerin Yazımı",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yazımı Karıştırılan Sözcükler, Ses Olayları ile İlgili Yanlışlıklar",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Yazım Kuralları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Noktalama İşaretleri",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hikâye Edici Metin Türleri",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bilgilendirici Metinler",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Metin Türleri",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (ankara yayıncılık güçlendiren soru bankası türkçe.pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi.",
+  "İçindekilerde test sayısı yok; yalnız başlangıç sayfaları. Son satırın sonu = Cevap Anahtarı (s.301) − 1.",
+  "Üniteler: Fiilimsi (Eylemsi) · Sözcükte Anlam · Cümlede Anlam · Parçada Anlam · Cümlenin Ögeleri · Sözel Mantık ve Muhakeme · Görsel Tablo ve Grafik Okuma · Fiilde (Eylemde) Çatı · Cümle Türleri · Anlatım Bozuklukları · Yazım Kuralları · Noktalama İşaretleri · Metin Türleri.",
+  "'Karşılaştırma, Benzetme, … Varsayım Cümleleri' içindekilerde iki satıra bölünmüş tek başlık (s.77). Yazar: Eren Akyüz."
+ ],
+ "no_map": false
+}

@@ -1,0 +1,102 @@
+{
+ "name": "MEB LGS Çalışma Kitabı (Çıkmış Sorular ve Örnek Sorular) — Türkçe",
+ "publisher": "MEB (Ölçme, Değerlendirme ve Sınav Hizmetleri Genel Müdürlüğü)",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Erdemler",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Millî Mücadele ve Atatürk",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bilim ve Teknoloji",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Birey ve Toplum",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Zaman ve Mekân",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Millî Kültürümüz",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğa ve Evren",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Vatandaşlık",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2018-2019 LGS Çıkmış Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2019-2020 LGS Çıkmış Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2020-2021 LGS Çıkmış Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2021-2022 LGS Çıkmış Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2022-2023 LGS Çıkmış Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2023-2024 LGS Çıkmış Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2024-2025 LGS Çıkmış Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2025-2026 LGS Çıkmış Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (lgs çıkmış sorular türkçe.pdf). Kitap MEB çalışma kitabı; üniteler test numarası taşımıyor → her müfredat konusu 10 test (kullanıcı kararı). LGS'de her ders için yıllık çıkmış sorular: 20 soruluk derslerde 2, 10 soruluk derslerde 1 test (10 soru/test).",
+  "LGS'de çıkmış sorular + MEB örnek soruları kitabı (çıkmış sorular kitabı → soru_bankasi)",
+  "Yıl satırları (Merkezî Sınav Soruları) birer yılın sınav bölümüdür; est_tests_2pp yalnız sayfa tahminidir — gerçekte her yıl 1 sınav",
+  "Tema cevap anahtarı s.228; s.286 ara sayfa (2022-2023 cevap s.285, 2023-2024 başlangıç s.287)"
+ ],
+ "no_map": false
+}

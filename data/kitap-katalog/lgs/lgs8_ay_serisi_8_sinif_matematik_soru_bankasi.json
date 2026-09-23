@@ -1,0 +1,87 @@
+{
+ "name": "Ay Serisi 8. Sınıf Matematik Soru Bankası",
+ "publisher": "Ay Serisi (Günay Yayınları markası)",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Çarpanlar ve Katlar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üslü İfadeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üslü İfadeler ve Kareköklü İfadeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kareköklü İfadeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kareköklü İfadeler ve Veri Analizi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Veri Analizi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basit Olayların Olma Olasılığı",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cebirsel İfadeler ve Özdeşlikler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrusal Denklemler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eşitsizlikler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üçgenler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Dönüşüm Geometrisi",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Geometrik Cisimler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (ay serisi matemaitk soru bankası.pdf). İçindekiler yerine 32 haftalık plan tablosu var (sayfa yok); her konu 5 test kabul edildi (kullanıcı kararı).",
+  "Kapakta 'AY AY FASİKÜL' ibaresi var; PDF'te tek kapak.",
+  "Satırlar tablonun ÜNİTELER sütunundan; ardışık haftalar birleştirildi (toplam 32 hafta). Haftalık alt konular KONULAR sütununda.",
+  "Yazarlar: Raşit Güzel, Gülfer Çelikkan Avcıoğlu. ISBN 978-625-6218-43-7."
+ ],
+ "no_map": false
+}

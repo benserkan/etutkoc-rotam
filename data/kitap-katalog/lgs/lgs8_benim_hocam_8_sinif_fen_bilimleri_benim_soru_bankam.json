@@ -1,0 +1,162 @@
+{
+ "name": "Benim Hocam 8. Sınıf Fen Bilimleri Benim Soru Bankam",
+ "publisher": "Benim Hocam Yayınları",
+ "subject": "Fen Bilimleri",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Mevsimlerin Oluşumu",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İklim ve Hava Hareketleri",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "DNA ve Genetik Kod",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kalıtım",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Mutasyon ve Modifikasyon",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Adaptasyon",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Biyoteknoloji",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Katılarda Basınç",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sıvılarda Basınç",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sıvı ve Gaz Basıncı",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Periyodik Sistem",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fiziksel ve Kimyasal Değişimler",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kimyasal Tepkimeler",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Asitler ve Bazlar",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Maddenin Isı ile Etkileşimi",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Türkiye'de Kimya Endüstrisi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Makaralar",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kaldıraçlar",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eğik Düzlem",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Dişli Çarklar ve Kasnaklar",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Besin Zinciri",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Fotosentez",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Solunum",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Madde Döngüleri",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Çevre Sorunları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Yükleri ve Elektriklenme",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Yüklü Cisimler",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Elektrik Enerjisinin Dönüşümü",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (benim hocam fen bilimleri soru banaksı.pdf). Kapakta toplam 133 test yazıyor; konulara sayfa aralığı oranında dağıtıldı (toplam birebir, konu dağılımı TAHMİN).",
+  "İçindekiler sayfa ARALIĞI veriyor (başlangıç-bitiş basılı); test adedi yok.",
+  "Cevap Anahtarı s.287-288. Kapak: 'Öğretmenimize özel hazırlanmıştır'. Elle tikler/karalamalar yok sayıldı.",
+  "713/133 ≈ 5,4 soru/test — testler kısa olabilir; 2 sayfa varsayımı zayıf."
+ ],
+ "no_map": false
+}

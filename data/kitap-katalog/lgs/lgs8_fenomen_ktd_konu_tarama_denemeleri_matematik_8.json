@@ -1,0 +1,222 @@
+{
+ "name": "Fenomen KTD Konu Tarama Denemeleri Matematik 8",
+ "publisher": "Fenomen Okul",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "brans_denemesi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Deneme 1",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 2",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 3",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 4",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 5",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 6",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 7",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 8",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 9",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 10",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 11",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 12",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 13",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 14",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 15",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 16",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 17",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 18",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 19",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 20",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 21",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 22",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 23",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 24",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 25",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 26",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 27",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 28",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 29",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 30",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 31",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 32",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 33",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 34",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 35",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 36",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 37",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 38",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 39",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme 40",
+   "test_count": 1,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (fenomen metematik konu tarama denemeleri.pdf). Yalnız kapak: '40 deneme' (kullanıcı onayı).",
+  "Yazarlar: Soner Koca, Salih Aytan (üçüncüsü etiketle örtülü).",
+  "800 soru / 40 deneme = 20 soru/deneme (türetilmiş; etikete yazılmadı).",
+  "Aslında X_no_toc; kapakta deneme sayısı basılı olduğu için E listesi estimate olarak verildi."
+ ],
+ "no_map": true
+}

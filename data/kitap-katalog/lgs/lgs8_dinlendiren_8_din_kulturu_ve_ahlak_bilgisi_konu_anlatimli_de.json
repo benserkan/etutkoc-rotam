@@ -1,0 +1,138 @@
+{
+ "name": "Dinlendiren 8 Din Kültürü ve Ahlak Bilgisi Konu Anlatımlı Defter",
+ "publisher": "Eker Test",
+ "subject": "Din Kültürü ve Ahlak Bilgisi",
+ "curriculum_model": "lgs",
+ "type": "konu_anlatimli",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Kader ve Kaza İnancı",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İnsan İradesi ve Kader",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kader ile İlgili Kavramlar",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Ünite Deneme Testleri",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İslâm'ın Paylaşma ve Yardımlaşmaya Verdiği Önem",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Zekât ve Sadaka İbadeti",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Zekât ve Sadakanın Bireysel ve Toplumsal Faydaları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Ünite Deneme Testleri",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Din, Birey ve Toplum",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Dinin Temel Gayesi",
+   "test_count": 10,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "3. Ünite Deneme Testleri",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav) Doğruluğu ve Güvenilir Kişiliği",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav) Merhameti ve Affedici Oluşu",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav) İstişareye Önem Vermesi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav) Davasında Cesaret ve Kararlılığı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav) Hakkı Gözetmedeki Hassasiyeti",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Hz. Muhammed'in (sav) İnsanlara Değer Vermesi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "4. Ünite Deneme Testleri",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İslâm Dininin Temel Kaynakları",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kur'an-ı Kerim'in Ana Konuları",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kur'an-ı Kerim'in Temel Özellikleri",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "5. Ünite Deneme Testleri",
+   "test_count": 8,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Deneme Sınavları",
+   "test_count": 5,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (eker test dinlendiren din kültürü konu anlatımlı defter .pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi. 'Bir Peygamber/Ayet/Sure Tanıyorum' okuma sayfaları test sayılmadı; Deneme Sınavları 5 (içindekilerde yazıyor).",
+  "Kapak: 1067 soru; 'Açık uçlu yazılılar ve yorum ağırlıklı sorularla güncellendi'. 5 ünite.",
+  "Neler Öğrendik / Kavram Öğreniyorum / Yazılı Sınava Hazırlık / Ünite Bulmaca satırları test sayılmadı, katalog satırı yapılmadı (yalnız sayfa aralığı hesabında kullanıldı).",
+  "Deneme Sınavları: içindekilerde '5 Adet' yazıyor → exact 5.",
+  "Cevap anahtarları s.292."
+ ],
+ "no_map": false
+}

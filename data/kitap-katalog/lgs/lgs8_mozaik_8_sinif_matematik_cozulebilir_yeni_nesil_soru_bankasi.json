@@ -1,0 +1,271 @@
+{
+ "name": "Mozaik 8. Sınıf Matematik Çözülebilir Yeni Nesil Soru Bankası",
+ "publisher": "Mozaik Yayınları",
+ "subject": "Matematik",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Pozitif Tam Sayıların Pozitif Tam Sayı Çarpanları",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "EBOB-EKOK",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Aralarında Asal Sayılar",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Çarpanlar ve Katlar — Konu Değerlendirme Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Tam Sayıların Tam Sayı Kuvvetleri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üslü İfadelerle İlgili Temel Kurallar",
+   "test_count": 6,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Sayıların Ondalık Gösterimlerini Çözümleme",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Çok Büyük ve Çok Küçük Sayılar - Bilimsel Gösterim",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üslü İfadeler — Konu Değerlendirme Soruları",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Tamkare Sayıların Karekökünü Alma",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Tamkare Olmayan Sayıların Karekökü - Kareköklü İfadeleri Kök Dışına Çıkarma - Kök İçine Alma",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kareköklü İfadelerde Çarpma ve Bölme İşlemleri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kareköklü İfadelerde Toplama ve Çıkarma İşlemleri",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kareköklü İfadeyi Bir Sayıyla Çarparak Doğal Sayı Yapma - Ondalık Gösterimlerin Karekökleri - Gerçek Sayılar",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Kareköklü İfadeler — Konu Değerlendirme Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Çizgi ve Sütun Grafikleri",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Grafikler Arası Dönüşümler",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Veri Analizi — Konu Değerlendirme Soruları",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Olasılıkla İlgili Temel Kavramlar",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basit Bir Olayın Olma Olasılığı",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basit Olayların Olma Olasılığı — Konu Değerlendirme Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Basit Cebirsel İfadeler ve Cebirsel İfadelerin Çarpımı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Özdeşlikler",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cebirsel İfadeleri Çarpanlara Ayırma",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Cebirsel İfadeler ve Özdeşlikler — Konu Değerlendirme Soruları",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Birinci Dereceden Bir Bilinmeyenli Denklemler",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Koordinat Sistemi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "İki Değişkenin Doğrusal İlişkisi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrusal Denklem Grafiği",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrusal İlişkiyi Yorumlama",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrunun Eğimi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Doğrusal Denklemler — Konu Değerlendirme Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Birinci Dereceden Bir Bilinmeyenli Eşitsizlikler - Sayı Doğrusunda Gösterme",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Birinci Dereceden Bir Bilinmeyenli Eşitsizlikleri Çözme",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eşitsizlikler — Konu Değerlendirme Soruları",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üçgenlerde Kenarortay, Açıortay ve Yükseklik",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üçgen Eşitsizliği",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üçgende Açı - Kenar Bağıntısı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üçgen Çizimi",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Pisagor Bağıntısı",
+   "test_count": 4,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Üçgenler — Konu Değerlendirme Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eşlik Kavramı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Benzerlik Kavramı",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Eşlik ve Benzerlik — Konu Değerlendirme Soruları",
+   "test_count": 3,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Öteleme - Yansıma",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Ötelemeli Yansıma",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Dönüşüm Geometrisi — Konu Değerlendirme Soruları",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Dik Prizmalar ve Silindir",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Dik Dairesel Silindirin Yüzey Alanı ve Hacmi",
+   "test_count": 2,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Dik Piramit ve Koni",
+   "test_count": 1,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (mozaik matemaitk soru bankası.pdf). İçindekilerde yalnız konu + başlangıç sayfası var; test sayısı sayfa aralığından (1 test ≈ 2 sayfa) TAHMİN edildi. Numaralı değerlendirme sınavları 1'er test (içindekilerde listeli).",
+  "6 ünite, 12 alt konu başlığı; Geometrik Cisimler bölümünde Konu Değerlendirme satırı yok",
+  "Dik Piramit ve Koni s.253-254 (2 sayfa, sınır cevap anahtarı s.255'ten)"
+ ],
+ "no_map": false
+}

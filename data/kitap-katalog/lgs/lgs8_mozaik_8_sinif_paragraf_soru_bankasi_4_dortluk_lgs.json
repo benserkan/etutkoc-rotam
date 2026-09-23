@@ -1,0 +1,142 @@
+{
+ "name": "Mozaik 8. Sınıf Paragraf Soru Bankası (4 Dörtlük LGS)",
+ "publisher": "Mozaik Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "1. Bölüm — Konu",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Ana Düşünce",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Yardımcı Düşünce",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Başlık ve Anahtar Sözcük",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Metinde Soru Cevap - Metin Tamamlama",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Metin Oluşturma - Metin Bölme",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Paragrafta Akışı Bozan Cümle",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Dil ve Anlatım",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Metinde Karakter",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Metin Karşılaştırma",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Hikâye Unsurları",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Anlatım Biçimleri, Anlatım Özellikleri, Anlatıcı Türü",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Düşünceyi Geliştirme Yolları",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Şiirde Duygu",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — Beceri Temelli Sorular",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "1. Bölüm — 10'da On Testleri",
+   "test_count": 14,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Bölüm — Görsel Düşünme",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Bölüm — Görsel Okuma",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Bölüm — Grafik ve Tablo Okuma",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Bölüm — Görsel Yorumlama",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Bölüm — Akıl Yürütme",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Bölüm — Sözel Mantık",
+   "test_count": 1,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "2. Bölüm — 10'da On Testleri",
+   "test_count": 20,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Final Testleri",
+   "test_count": 10,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (mozaik paragraf sru bankası.pdf). Kavrama testleri içindekilerde listeli (1'er); 10'da On ve Final testleri 3 sayfa/test (Kavrama testinde gözlenen) ile TAHMİN.",
+  "Karma: 21 konu satırı A (her konuda 1 Kavrama Testi, exact); 10'da On + Final satırları B (sayfa tahmini)",
+  "Kavrama Testi konu sayfasından sonra başlar ve 3 sayfa sürer (ör. 8-10) → pages_per_test_observed=3",
+  "İlk konu satırının kitaptaki adı yalnız 'Konu'; Cevap Anahtarları s.223"
+ ],
+ "no_map": false
+}

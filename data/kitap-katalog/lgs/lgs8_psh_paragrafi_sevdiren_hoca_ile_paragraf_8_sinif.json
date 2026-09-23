@@ -1,0 +1,52 @@
+{
+ "name": "PSH Paragrafı Sevdiren Hoca ile Paragraf 8. Sınıf",
+ "publisher": "Paragrafı Sevdiren Hoca Yayınları",
+ "subject": "Türkçe",
+ "curriculum_model": "lgs",
+ "type": "soru_bankasi",
+ "target_grade_min": 8,
+ "target_grade_max": 8,
+ "target_graduate": false,
+ "sections": [
+  {
+   "label": "Bölüm 1 Öğren — Temel Soru Tipleri (102 soru)",
+   "test_count": 11,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm 1 Öğren — Adım Adım Konu Testleri (162 soru)",
+   "test_count": 17,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm 1 Öğren — Bağlam Temelli Sorular (43 soru)",
+   "test_count": 5,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm 2 — Odaklan (200 soru)",
+   "test_count": 20,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm 3 — Hızlan (120 soru)",
+   "test_count": 12,
+   "source": "toc_estimate"
+  },
+  {
+   "label": "Bölüm 4 — Çözümle (136 soru)",
+   "test_count": 14,
+   "source": "toc_estimate"
+  }
+ ],
+ "warnings": [
+  "TAHMİNİ test sayısı — kitabın gövdesi görülmedi; koç kendi kopyasında düzeltebilir."
+ ],
+ "notes": [
+  "Kaynak: kapak + içindekiler fotoğrafı (paragrafı devdiren hoca paragraf soru bankası.pdf). Bölümler soru sayısıyla verilmiş; 1 test = 10 soru kabul edildi (kullanıcı kararı).",
+  "Bölüm 1 = 307 soru = 102+162+43 (alt kırılım birebir tutarlı); Bölüm 1 s.7'de başlıyor, ilk alt bölüm s.9",
+  "Bölüm 4 başlangıç sayfası fotoğrafta kenardan kısmen kesik ('201' okunuyor); son sayfa içindekilerde yok",
+  "Kapaktaki 'Arı Kitabevi' etiketi satıcı etiketi; yazar Hamza Kaya"
+ ],
+ "no_map": false
+}
