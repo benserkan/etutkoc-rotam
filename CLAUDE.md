@@ -6,6 +6,48 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## DENEME KONU NORMALİZASYONU — "Ünite / Konu" + Paragraf/Geometri alt konuları (2026-09-23, commit `492decf`+2, migration YOK, CANLI)
+
+**Tetikleyici (koç, Emir #113 · 4 karne / 480 soru):** koçun kendi deneme
+analiz sistemi konuyu "Ünite / Konu" biçiminde yazıyor ("Denklemler ve
+Eşitsizlikler / Oran - Orantı"); Rotam etiketi bütün arayıp bulamayınca AI'a
+soruyor, AI önekteki sözcüğe kanıp Basit Eşitsizlikler'i seçiyor ve bu
+SÖZLÜĞE yazılıp her karnede tekrarlanıyordu. Ayrıca Paragraf (104 soru) ve
+Üçgen/Dörtgen alt konuları tek başlığa eziliyordu; TYT Tarih 1774-1914 ve
+5 Din ünitesi listede yoktu.
+- **Kod (`normalize_topics`):** ayraçlı etikette sıra = koç sözlük kaydı
+  (bütün) → KUYRUK sözlük → kuyruk birebir/ön-ek → bütünün AI sözlük kaydı →
+  bütün birebir → AI → **ünite başı SON ÇARE** (AI'dan önce olursa "Üçgenler /
+  Doğruda Açılar" üst başlığa eziliyordu). `_label_parts` helper.
+- **Taksonomi:** TYT Türkçe + AYT Edebiyat Paragraf → Ana Düşünce / Yardımcı
+  Düşünce / Yapı · TYT Geometri Üçgenler → Açılar / Dik Üçgen-Pisagor /
+  İkizkenar-Eşkenar / Açıortay-Kenarortay; Dörtgenler → Çokgenler /
+  Paralelkenar / Eşkenar Dörtgen-Deltoid / Dikdörtgen / Kare / Yamuk · eski
+  geniş başlıklar **"(Karma)"** adını aldı (`seed.EXAM_TOPIC_RENAMES`, id
+  korunur, idempotent) + `curriculum_mapping._ALIAS` "karma" eşanlamı (yalın
+  "Paragraf" hâlâ Karma'ya düşer) · TYT Tarih "Uluslararası İlişkilerde Denge
+  Stratejisi (1774-1914)" · TYT Din: Din ve İslam, Gönül Coğrafyamız, Ahlaki
+  Tutum ve Davranışlar, Kur'an'da Bazı Kavramlar, İslam ve Bilim.
+- **Geriye dönük:** `scripts/split_exam_topics.py` (dry-run varsayılan,
+  idempotent; koç kaydı/elle düzeltilmiş soru DOKUNULMAZ; ünite başı mevcut
+  eşlemeyi yalnız bugün eklenen konuya çevirebilir). Prod: **64 kitap bölümü
+  + 55 katalog şablon bölümü + 51 sözlük + 580 deneme sorusu** (31 deneme)
+  taşındı, ikinci koşu 0. Emir'in 2 elle düzeltilmiş Din satırı hedefli
+  çevrildi. Toplam netler birebir aynı.
+- **Yan bulgu:** `rebuild_subject_nets` `unmatched` bayrağını yazmıyordu →
+  "müfredata bağlanmadı" rozeti düşüyordu; kayıtla aynı kurala çekildi, 40
+  içe aktarım yeniden kuruldu.
+- **Test:** YENİ `test_exam_topic_unit_label.py` 9/9 · exam_import 76/76 (9c/16c
+  yeni sözleşme: kesik "Paragrafta Yardımcı Düşü" AI'sız alt konuya) ·
+  taxonomy 20 · mapping 18 · mapping_v2 13 · topic_analysis 10 · wrong_bridge
+  11 · maarif 22 · teacher_exams 19 · topic_board 18 · progress 22.
+  Yedek `pre_topicsplit_20260923_0941.dump`.
+- **Kalan (bilinçli):** İkinci Dereceden Denklemler TYT'de yok (1 soru
+  eşleşmedi); Kimya mol/tepkime, Mitoz/Mayoz, İklim alt konuları tek başlıkta
+  (istenirse aynı desenle bölünür).
+
+---
+
 ## YANLIŞ KONUYA GİRİLEN TAMAMLANMIŞ GÖREV — geri alma yolları (2026-09-20, commit `c4569f3`, migration YOK, CANLI)
 
 **Tetikleyici (koç, Emir #113 · 3D TYT Biyoloji):** görevler "Hücre Zarında
