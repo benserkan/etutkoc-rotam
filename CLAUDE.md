@@ -66,6 +66,29 @@ SÖZLÜĞE yazılıp her karnede tekrarlanıyordu. Ayrıca Paragraf (104 soru) v
 
 ---
 
+## LGS 8 KİTAPLARI — YALNIZ İÇİNDEKİLER FOTOĞRAFINDAN KATALOG (2026-09-23, commit `b4e8661`, migration YOK, CANLI)
+
+**Tetikleyici:** Cafer SET (#162, bağımsız koç) · öğrencisi Zeynep Ela Set (#163, 8.
+sınıf) için 45 kitap; elde tam PDF YOK, yalnız kapak + içindekiler telefon fotoğrafı
+(`D:\ÖĞRENCİ KOÇLUĞU\ÖĞRENCİLER\Cafer Set\kaynaklar`, metin katmanı yok).
+- **Pilot (5 paralel ajan, görerek okuma):** içindekiler 5 türe ayrılıyor —
+  A test-listeli (birebir) · B konu+sayfa (tahmin; iç sayfa fotoğrafıyla kalibre) ·
+  C soru sayılı (birim kararı) · D ay/hafta plan tablosu (Ay Serisi; sayfa yok) ·
+  X kapaktan ibaret. Pilot çıktıları scratchpad'de (`pilot/out/<i>.json`).
+- **Yüklenen 20 kitap (prod id 122-141, verified, 1401 test):** Zoom (Fen 90 ·
+  İnkılap 113 [Sınav Modu dahil] · Mat 163 · Paragraf 86 · Türkçe 98) · Bumerang
+  akıllı defter (Mat 107 · Türkçe 90 · Fen 87 · İnkılap 45) + 4 haftalık deneme (32'şer)
+  · Fenomen (Fen fasikül 163 · Mat fasikül 1-3 60 · Deyimler 50 · Görsel-Grafik 50) ·
+  Ay Serisi branş deneme Fen/Mat (16'şar) · Formula 1 Paragraf 39.
+  `scripts/lgs_toc_to_catalog.py` (yalnız tümü exact kitap dönüşür) → `data/kitap-katalog/lgs/`.
+  Seeder'a `curriculum_model` filtresi (aynı adlı LGS/Maarif/Klasik "Matematik").
+- **Yiğit (#2) kayıtları çapraz kontrol:** kısmi/toplam düzeyinde (Mozaik İnkılap 22,
+  Bumerang Fen deneme 27 vs içindekiler 32) — referans DAİMA içindekiler.
+- **BEKLEYEN 25 kitap:** B türü (Ankara ×2, Mozaik ×5, Benim Hocam [kapak 133 test],
+  Eker Din, Paragrafın Yıldızı, Ulti Fen) · Ay Serisi ×6 (D) · MEB çalışma kitabı ×4 ·
+  PSH (765 soru, birim kararı) · kapaktan ibaret ×3 (Yanıt mantık, Çanta deneme,
+  Fenomen KTD).
+
 ## YANLIŞ KONUYA GİRİLEN TAMAMLANMIŞ GÖREV — geri alma yolları (2026-09-20, commit `c4569f3`, migration YOK, CANLI)
 
 **Tetikleyici (koç, Emir #113 · 3D TYT Biyoloji):** görevler "Hücre Zarında
