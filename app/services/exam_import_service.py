@@ -1839,11 +1839,17 @@ def rebuild_subject_nets(db: Session, exam: ExamResult, student: User) -> bool:
     for q in sorted(exam.questions, key=lambda x: x.id):
         tp = topic_by_id.get(q.topic_id) if q.topic_id else None
         sid = tp.subject_id if tp is not None else q.subject_id
-        gname = (subj_by_id[sid].name if sid in subj_by_id else None) \
+        matched = sid in subj_by_id
+        gname = (subj_by_id[sid].name if matched else None) \
             or ((q.subject_name_raw or "").strip() or "Diğer")
         gname = _display_name(gname, display_map)
+        # `unmatched` bayrağı kayıt (_prepare_confirm) ile AYNI kural — yoksa
+        # yeniden kurulum "müfredata bağlanmadı" rozetini sessizce düşürürdü.
         g = groups.setdefault(gname, {"name": gname, "correct": 0,
-                                      "wrong": 0, "blank": 0})
+                                      "wrong": 0, "blank": 0,
+                                      "unmatched": True})
+        if matched:
+            g["unmatched"] = False
         if q.result == EQ_RESULT_DOGRU:
             g["correct"] += 1
         elif q.result == EQ_RESULT_YANLIS:
