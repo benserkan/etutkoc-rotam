@@ -1,0 +1,24 @@
+{
+ "name": "Paraf Konsept TYT Mor Paragraf Soru Kütüphanesi",
+ "publisher": "Paraf Yayınları",
+ "subject": "TYT Türkçe",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Deterministik metin-katmanı taraması (2026-09-24, Gemini'siz): her sayfanın üst bandında 'TEST - N' + bölüm adı; her test 2 sayfa (190 sayfa / 95 test).",
+  "İçindekiler 7 bölüm başlangıç sayfası gövdeyle birebir (3/27/69/81/127/137/183); bölüm başına test zincirleri 1..N boşluksuz.",
+  "Kitapta üç ayrı 'Bir Paragrafa Bağlı Sorular' bölümü var (3, 5, 7) — satırlar bölüm numarasıyla ayrıştırıldı.",
+  "Bölüm kapak sayfaları teste sayılmadı."
+ ],
+ "sections": [
+  {"label": "Paragrafta Anlatım Teknikleri", "test_count": 11, "source": "scan"},
+  {"label": "Paragrafta Konu - Ana Düşünce", "test_count": 20, "source": "scan"},
+  {"label": "Bir Paragrafa Bağlı Sorular (Bölüm 3)", "test_count": 5, "source": "scan"},
+  {"label": "Paragrafın Yapısı", "test_count": 22, "source": "scan"},
+  {"label": "Bir Paragrafa Bağlı Sorular (Bölüm 5)", "test_count": 4, "source": "scan"},
+  {"label": "Paragrafta Yardımcı Düşünceler", "test_count": 22, "source": "scan"},
+  {"label": "Bir Paragrafa Bağlı Sorular (Bölüm 7)", "test_count": 11, "source": "scan"}
+ ]
+}
