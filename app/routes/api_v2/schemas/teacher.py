@@ -1077,6 +1077,8 @@ class CarryoverCandidate(BaseModel):
     section_items: list[CarryoverSectionItem] = []
     itemless_items: list[CarryoverItemlessItem] = []
     total_remaining: int
+    notes: str | None = None         # koç notu (URL'ler ayıklanmış)
+    link_url: str | None = None      # video/kaynak bağlantısı
 
 
 class CarryoverCandidatesResponse(BaseModel):

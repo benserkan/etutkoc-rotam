@@ -4728,6 +4728,8 @@ def teacher_carryover_candidates_v2(
                 section_items=[CarryoverSectionItem(**si) for si in r["section_items"]],
                 itemless_items=[CarryoverItemlessItem(**il) for il in r["itemless_items"]],
                 total_remaining=r["total_remaining"],
+                notes=r.get("notes"),
+                link_url=r.get("link_url"),
             )
             for r in rows
         ],

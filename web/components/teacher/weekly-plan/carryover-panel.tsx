@@ -10,6 +10,7 @@ import {
   Boxes,
   X,
   GripVertical,
+  ExternalLink,
 } from "lucide-react";
 
 import {
@@ -72,6 +73,7 @@ export function CarryoverPanel({
   const candidates = React.useMemo(() => q.data?.candidates ?? [], [q.data]);
   const mode = q.data?.mode ?? "plan";
   const [addFor, setAddFor] = React.useState<CarryoverCandidate | null>(null);
+  const [detailFor, setDetailFor] = React.useState<CarryoverCandidate | null>(null);
 
   if (q.isLoading || candidates.length === 0) return null;
 
@@ -136,26 +138,37 @@ export function CarryoverPanel({
                       aria-hidden
                     />
                   ) : null}
-                  <span className="min-w-0 flex-1">
-                    <span className="flex items-center gap-1 font-medium text-slate-900">
+                  {/* Metin KIRPILMAZ (sarar); karta tıklayınca ayrıntı penceresi */}
+                  <button
+                    type="button"
+                    onClick={() => setDetailFor(c)}
+                    title={cardTooltip(c)}
+                    className="min-w-0 flex-1 rounded text-left outline-none hover:opacity-80 focus-visible:ring-2 focus-visible:ring-amber-400"
+                  >
+                    <span className="flex items-start gap-1 font-medium text-slate-900">
                       {c.is_block ? (
-                        <Boxes className="size-3 text-violet-500" aria-hidden />
+                        <Boxes className="mt-0.5 size-3 shrink-0 text-violet-500" aria-hidden />
                       ) : null}
-                      <span className="truncate">{c.title}</span>
+                      <span className="break-words">{c.title}</span>
                     </span>
                     {c.section_items.map((si) => (
-                      <span key={si.section_id} className="block truncate text-slate-600">
+                      <span key={si.section_id} className="block break-words text-slate-600">
                         {si.book_name} · {si.section_label} ·{" "}
                         <span className="font-semibold text-amber-800">{si.remaining} test</span>
                       </span>
                     ))}
-                    {c.itemless_items.map((il, i) => (
-                      <span key={i} className="block truncate text-slate-600">
-                        {il.label} · {il.count} test
-                      </span>
-                    ))}
-                    <span className="text-slate-400">{fmtDate(c.task_date)}</span>
-                  </span>
+                    {c.itemless_items
+                      .filter((il) => il.label !== c.title)
+                      .map((il, i) => (
+                        <span key={i} className="block break-words text-slate-600">
+                          {il.label} · {il.count} soru
+                        </span>
+                      ))}
+                    <span className="text-slate-500">
+                      {fmtDate(c.task_date)} ·{" "}
+                      <span className="underline decoration-dotted">ayrıntı</span>
+                    </span>
+                  </button>
                   {!isBrowse ? (
                     <button
                       type="button"
@@ -172,6 +185,16 @@ export function CarryoverPanel({
           </ul>
       </div>
 
+      <CarryoverDetailDialog
+        candidate={detailFor}
+        canAdd={!isBrowse}
+        onClose={() => setDetailFor(null)}
+        onAdd={(c) => {
+          setDetailFor(null);
+          setAddFor(c);
+        }}
+      />
+
       {/* Hedef gün + periyot seçim modalı */}
       <AddToDayDialog
         candidate={addFor}
@@ -187,6 +210,154 @@ export function CarryoverPanel({
         }}
       />
     </PinnableSection>
+  );
+}
+
+const TYPE_LABELS: Record<string, string> = {
+  test: "Test",
+  video: "Video dersi",
+  summary: "Özet",
+  review: "Tekrar",
+  other: "Etkinlik / deneme",
+};
+
+const PERIOD_LABELS: Record<string, string> = {
+  morning: "Sabah",
+  noon: "Öğle",
+  evening: "Akşam",
+};
+
+function fmtLongDate(iso: string): string {
+  const d = new Date(`${iso}T12:00:00`);
+  return Number.isNaN(d.getTime())
+    ? iso
+    : d.toLocaleDateString("tr-TR", { day: "numeric", month: "long", weekday: "long" });
+}
+
+/** Üzerine gelince görünen tam metin (tarayıcı ipucu). */
+function cardTooltip(c: CarryoverCandidate): string {
+  const lines = [c.title];
+  for (const si of c.section_items) {
+    lines.push(`${si.book_name} · ${si.section_label} · ${si.remaining} test`);
+  }
+  for (const il of c.itemless_items) {
+    if (il.label !== c.title) lines.push(`${il.label} · ${il.count} soru`);
+  }
+  if (c.notes) lines.push(`Not: ${c.notes}`);
+  return lines.join("\n");
+}
+
+/** Devret kartının ayrıntısı — tam başlık, yapılmayan kalemler, not, bağlantı. */
+function CarryoverDetailDialog({
+  candidate,
+  canAdd,
+  onClose,
+  onAdd,
+}: {
+  candidate: CarryoverCandidate | null;
+  canAdd: boolean;
+  onClose: () => void;
+  onAdd: (c: CarryoverCandidate) => void;
+}) {
+  const c = candidate;
+  const itemCls =
+    "rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200";
+  return (
+    <Dialog open={c !== null} onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="break-words pr-6 text-base leading-snug">
+            {c?.title ?? "Görev"}
+          </DialogTitle>
+        </DialogHeader>
+        {c ? (
+          <div className="space-y-3 text-sm">
+            <dl className="grid grid-cols-[96px_1fr] gap-x-3 gap-y-1 text-xs">
+              <dt className="text-muted-foreground">Tür</dt>
+              <dd className="text-foreground">
+                {c.is_block ? "Serbest blok" : (TYPE_LABELS[c.type] ?? c.type)}
+              </dd>
+              <dt className="text-muted-foreground">Planlanan gün</dt>
+              <dd className="text-foreground">{fmtLongDate(c.task_date)}</dd>
+              {c.period ? (
+                <>
+                  <dt className="text-muted-foreground">Periyot</dt>
+                  <dd className="text-foreground">{PERIOD_LABELS[c.period] ?? c.period}</dd>
+                </>
+              ) : null}
+            </dl>
+
+            {c.section_items.length > 0 || c.itemless_items.length > 0 ? (
+              <div>
+                <p className="mb-1 text-xs font-semibold text-foreground">Yapılmayan kısım</p>
+                <ul className="space-y-1">
+                  {c.section_items.map((si) => (
+                    <li key={si.section_id} className={itemCls}>
+                      <span className="block break-words font-medium">{si.book_name}</span>
+                      <span className="block break-words">
+                        {si.section_label} ·{" "}
+                        <span className="font-semibold">{si.remaining} test</span>
+                      </span>
+                    </li>
+                  ))}
+                  {c.itemless_items.map((il, i) => (
+                    <li key={i} className={itemCls}>
+                      <span className="break-words">{il.label}</span> ·{" "}
+                      <span className="font-semibold">{il.count} soru</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">
+                Etkinlik görevi — soru sayısı yok, yapıldı/yapılmadı olarak izlenir.
+              </p>
+            )}
+
+            {c.notes ? (
+              <div>
+                <p className="mb-1 text-xs font-semibold text-foreground">Not</p>
+                <p className="whitespace-pre-wrap break-words rounded-md bg-muted/60 px-2.5 py-1.5 text-xs text-foreground">
+                  {c.notes}
+                </p>
+              </div>
+            ) : null}
+
+            {c.link_url ? (
+              <a
+                href={c.link_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 text-xs font-medium text-cyan-700 underline hover:text-cyan-800 dark:text-cyan-300"
+              >
+                <ExternalLink className="size-3.5 shrink-0" aria-hidden />
+                Bağlantıyı aç
+              </a>
+            ) : null}
+
+            <div className="flex justify-end gap-2 pt-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="rounded-md border border-border px-3 py-1.5 text-sm hover:bg-muted/50"
+              >
+                Kapat
+              </button>
+              {canAdd ? (
+                <button
+                  type="button"
+                  onClick={() => onAdd(c)}
+                  className="inline-flex items-center gap-1 rounded-md bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white hover:bg-amber-700"
+                >
+                  <Plus className="size-3.5" aria-hidden />
+                  Bir güne ekle
+                </button>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -236,7 +407,7 @@ function AddToDayDialog({
           <DialogTitle className="text-base">Hangi güne eklensin?</DialogTitle>
         </DialogHeader>
         {candidate ? (
-          <p className="-mt-1 truncate text-xs text-muted-foreground">{candidate.title}</p>
+          <p className="-mt-1 break-words text-xs text-muted-foreground">{candidate.title}</p>
         ) : null}
 
         <div className="space-y-3">

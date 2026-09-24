@@ -1123,6 +1123,8 @@ export interface CarryoverCandidate {
   section_items: CarryoverSectionItem[];
   itemless_items: CarryoverItemlessItem[];
   total_remaining: number;
+  notes?: string | null;
+  link_url?: string | null;
 }
 
 export interface CarryoverCandidatesResponse {

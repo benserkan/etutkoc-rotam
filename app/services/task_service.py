@@ -236,23 +236,53 @@ def reconcile_past_reservations(
     return {"released_tests": released_tests, "released_items": released_items}
 
 
+def _dead_reserve_cutoff(
+    db: Session, student_id: int, *, today: date, this_monday: date,
+) -> date:
+    """Bu tarihten ÖNCEKİ yapılmamış görevlerin rezervi 'ölü' sayılır.
+
+    - Bugünü kapsayan program varsa → onun başlangıcı (içindeki telafi korunur).
+    - Yoksa → max(bu Pazartesi, son BİTMİŞ programın bitişi + 1 gün).
+      Program haftası Pazartesi'ye hizalı değilse (Emir #113: Perşembe–Çarşamba)
+      eski kural yalnız Pazartesi'ye kadar temizliyordu; program 23 Eylül'de
+      bitse bile 21–23 Eylül rezervi koç yeni hafta açana ya da hafta sayfasına
+      girene kadar kilitli kalıyordu. Biten programın günleri artık ertesi sabah
+      serbest kalır; programsız öğrencide takvim haftası yine korunur.
+    """
+    from datetime import timedelta as _td
+
+    from app.models import WeeklyProgram
+    from app.services.weekly_program_service import get_active_program
+
+    active = get_active_program(db, student_id=student_id, today=today)
+    if active is not None:
+        return active.start_date
+    last_end = (
+        db.query(WeeklyProgram.end_date)
+        .filter(WeeklyProgram.student_id == student_id, WeeklyProgram.end_date < today)
+        .order_by(WeeklyProgram.end_date.desc())
+        .limit(1)
+        .scalar()
+    )
+    if last_end is not None:
+        return max(this_monday, last_end + _td(days=1))
+    return this_monday
+
+
 def reconcile_all_active_reservations(
     db: Session, *, today: date | None = None,
 ) -> dict:
     """Günlük cron: rezervli HER öğrencide 'ölü rezervi' otomatik serbest bırak.
 
     Koç yeni program/görev-ekle/devret yapmasa bile (yaz tatili veya program-arası
-    boşluk) ölü rezerv birikmesin. Her öğrenci için cutoff = aktif program start
-    (varsa) yoksa BU HAFTANIN Pazartesi'si — `create_program` ile AYNI mantık
-    (cari hafta korunur, yalnız geçmiş haftalar serbest kalır). Yalnız
+    boşluk) ölü rezerv birikmesin. Her öğrenci için cutoff = `_dead_reserve_cutoff`
+    (aktif program start; yoksa max(bu Pazartesi, son biten program bitişi+1)). Yalnız
     `reserved_count>0` olan öğrenciler taranır (verimli). reconcile idempotent +
     release-only → tekrar çalışması güvenli.
 
     Returns: {students_scanned, students_released, released_tests, released_items}.
     """
     from datetime import timedelta as _td
-
-    from app.services.weekly_program_service import get_active_program
 
     if today is None:
         today = date.today()
@@ -271,8 +301,7 @@ def reconcile_all_active_reservations(
     released_items = 0
     students_released = 0
     for sid in student_ids:
-        active = get_active_program(db, student_id=sid, today=today)
-        cutoff = active.start_date if active else this_monday
+        cutoff = _dead_reserve_cutoff(db, sid, today=today, this_monday=this_monday)
         res = reconcile_past_reservations(db, student_id=sid, cutoff_date=cutoff)
         if res["released_items"] > 0:
             students_released += 1
@@ -323,6 +352,8 @@ def list_carryover_candidates(
     iade edildi, kitapta 'çözülmedi' görünür. `True` (browse modu, geçmiş program
     BİLGİ AMAÇLI): TÜM tipler (test dahil) listelenir.
     """
+    from app.services import task_links as _task_links
+
     q = (
         db.query(Task)
         .options(
@@ -395,6 +426,9 @@ def list_carryover_candidates(
             "section_items": section_items,
             "itemless_items": itemless,
             "total_remaining": total_remaining,
+            # Ayrıntı penceresi için (devret kartı tıklanınca): koç notu + bağlantı.
+            "notes": _task_links.strip_urls(t.notes),
+            "link_url": _task_links.effective_link_url(t),
         })
     return out
 
