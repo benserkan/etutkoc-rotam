@@ -24,7 +24,7 @@ from __future__ import annotations
 from collections import defaultdict
 from dataclasses import dataclass
 
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models import (
     Book,
@@ -61,8 +61,8 @@ def compute_fixes(
     Hiçbir şey yazmaz — çağıran `apply_fixes` ile uygular.
     """
     q = db.query(StudentBook).options(
-        joinedload(StudentBook.book).joinedload(Book.sections),
-        joinedload(StudentBook.section_progress),
+        joinedload(StudentBook.book).selectinload(Book.sections),
+        selectinload(StudentBook.section_progress),
     )
     if student_id is not None:
         q = q.filter(StudentBook.student_id == student_id)

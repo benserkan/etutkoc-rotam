@@ -50,7 +50,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile, status
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.deps import get_db
 from app.services import curriculum_mapping as cm
@@ -176,10 +176,13 @@ def _get_owned_book(db: Session, book_id: int, teacher_id: int) -> Book:
         db.query(Book)
         .options(
             joinedload(Book.subject),
-            joinedload(Book.sections).joinedload(BookSection.topic),
-            joinedload(Book.student_books).joinedload(StudentBook.student),
-            joinedload(Book.student_books)
-            .joinedload(StudentBook.section_progress),
+            # Koleksiyonlar selectinload: bölümler × öğrenci × ilerleme tek
+            # sorguda join edilirse satırlar çarpılır (kartezyen) — büyük
+            # katalog kitaplarında saniyeler sürüyordu.
+            selectinload(Book.sections).joinedload(BookSection.topic),
+            selectinload(Book.student_books).joinedload(StudentBook.student),
+            selectinload(Book.student_books)
+            .selectinload(StudentBook.section_progress),
         )
         .filter(Book.id == book_id, Book.teacher_id == teacher_id)
         .first()

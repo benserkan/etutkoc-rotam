@@ -20,7 +20,7 @@ from datetime import date, datetime, timedelta, timezone
 from typing import Iterable, Literal
 
 from sqlalchemy import func
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.models import (
     AcademicYear,
@@ -370,8 +370,8 @@ def inventory_totals(
     sbs = (
         db.query(StudentBook)
         .options(
-            joinedload(StudentBook.book).joinedload(Book.sections),
-            joinedload(StudentBook.section_progress),
+            joinedload(StudentBook.book).selectinload(Book.sections),
+            selectinload(StudentBook.section_progress),
         )
         .filter(
             StudentBook.student_id == student_id,
@@ -659,8 +659,8 @@ def subject_breakdown(
         db.query(StudentBook)
         .options(
             joinedload(StudentBook.book).joinedload(Book.subject),
-            joinedload(StudentBook.book).joinedload(Book.sections),
-            joinedload(StudentBook.section_progress),
+            joinedload(StudentBook.book).selectinload(Book.sections),
+            selectinload(StudentBook.section_progress),
         )
         .filter(
             StudentBook.student_id == student_id,

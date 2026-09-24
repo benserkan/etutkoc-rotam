@@ -27,7 +27,7 @@ import logging
 from datetime import date, datetime, timedelta, timezone
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.deps import get_db
 from app.models import (
@@ -682,8 +682,8 @@ def _build_sidebar(
         db.query(StudentBook)
         .options(
             joinedload(StudentBook.book).joinedload(Book.subject),
-            joinedload(StudentBook.book).joinedload(Book.sections).joinedload(BookSection.topic),
-            joinedload(StudentBook.section_progress),
+            joinedload(StudentBook.book).selectinload(Book.sections).joinedload(BookSection.topic),
+            selectinload(StudentBook.section_progress),
         )
         .filter(
             StudentBook.student_id == student_id,
@@ -901,8 +901,8 @@ def book_sections(
     sb = (
         db.query(StudentBook)
         .options(
-            joinedload(StudentBook.book).joinedload(Book.sections).joinedload(BookSection.topic),
-            joinedload(StudentBook.section_progress),
+            joinedload(StudentBook.book).selectinload(Book.sections).joinedload(BookSection.topic),
+            selectinload(StudentBook.section_progress),
         )
         .filter(StudentBook.student_id == student.id, StudentBook.book_id == book_id)
         .first()
@@ -951,7 +951,7 @@ def section_stats(
         raise _not_found("section_not_found", "Bölüm bulunamadı.")
     sb = (
         db.query(StudentBook)
-        .options(joinedload(StudentBook.section_progress))
+        .options(selectinload(StudentBook.section_progress))
         .filter(
             StudentBook.student_id == student.id,
             StudentBook.book_id == sec.book_id,

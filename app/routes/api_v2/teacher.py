@@ -67,7 +67,7 @@ from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, R
 from fastapi.responses import HTMLResponse
 from pydantic import BaseModel, Field
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.deps import get_db
 from app.models import (
@@ -7536,8 +7536,8 @@ def teacher_student_book_grid_v2(
         db.query(StudentBook)
         .options(
             joinedload(StudentBook.book).joinedload(Book.subject),
-            joinedload(StudentBook.book).joinedload(Book.sections).joinedload(BookSection.topic),
-            joinedload(StudentBook.section_progress),
+            joinedload(StudentBook.book).selectinload(Book.sections).joinedload(BookSection.topic),
+            selectinload(StudentBook.section_progress),
         )
         .filter(StudentBook.student_id == student.id, StudentBook.book_id == book_id)
         .first()

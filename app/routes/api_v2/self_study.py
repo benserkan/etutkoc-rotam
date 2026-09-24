@@ -12,7 +12,7 @@ Sahiplik dışı her şey 404 (varlık sızıntısı yok). Veli erişemez.
 from __future__ import annotations
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.database import SessionLocal
 from app.deps import get_db
@@ -414,8 +414,8 @@ def student_self_study_options_v2(
         db.query(StudentBook)
         .options(
             joinedload(StudentBook.book).joinedload(Book.subject),
-            joinedload(StudentBook.book).joinedload(Book.sections),
-            joinedload(StudentBook.section_progress),
+            joinedload(StudentBook.book).selectinload(Book.sections),
+            selectinload(StudentBook.section_progress),
         )
         .filter(
             StudentBook.student_id == user.id,
