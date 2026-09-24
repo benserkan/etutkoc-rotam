@@ -5914,6 +5914,17 @@ faz 2) · aday = görev düzeyi tüm tipler · blok bağımsız taşıma · carr
   `draggable` (native HTML5 DnD), her gün kartı drop hedefi → görevi o güne taşır
   (carry). Mevcut dnd-kit gün-içi sıralamasına DOKUNMAZ (ayrı event sistemi). Geçmiş
   gün drop kabul etmez; drop'ta gün amber ring. Mobil 'Ekle' modalıyla (DnD masaüstü).
+- **2026-09-24 (commit `eaa6fef`):** (a) günlük ölü-rezerv cron'u program
+  yoksa `max(bu Pazartesi, son biten program bitişi+1)` sınırını kullanır
+  (`task_service._dead_reserve_cutoff`) — Pazartesi'ye hizalı olmayan program
+  haftalarında (Emir: Perşembe–Çarşamba) biten haftanın rezervi ertesi sabah
+  düşer, koç yeni hafta açmayı beklemez. `test_dead_reserve_cutoff_program` 6/6.
+  (b) Devret kartı metni kırpılmaz (sarar) + üzerine gelince tam metin +
+  tıklayınca ayrıntı penceresi (tür/gün/periyot/yapılmayan kalemler/not/bağlantı/
+  "Bir güne ekle"); adaylara `notes` + `link_url` eklendi.
+  **Kavram:** plan modunda (yeni hafta) yalnız blok/etkinlik/kitapsız deneme
+  listelenir; düz test görevleri rezervi iade edildiği için listede yok, kitaptan
+  yeniden atanır. Geçmiş hafta (browse) tümünü bilgi amaçlı gösterir.
 - **Migration head = `o8p1s4t5s77n`.**
 
 ---
