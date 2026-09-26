@@ -166,8 +166,9 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
   satır) — kaynak bilgisi olmadan; F2-1 deploy sonrası YENİDEN kurulacak.
   **Bulunan hata:** başlıktan ders çözümü aynı adlı 5 dersi (başka koçlarınki)
   alıyordu → ad başına tek ders (öğrencinin kitap dersi > sistem > bu koç).
-- **F2-1 — KİTABA BAĞLI RUTİN + SATIR KAYNAĞI — KOD-TAMAM (2026-09-26, migration
-  `c4d7g0h1g55c` YERELDE, COMMIT/DEPLOY BEKLİYOR):**
+- **F2-1 — KİTABA BAĞLI RUTİN + SATIR KAYNAĞI — CANLI (2026-09-26, commit
+  `204c944` + fix `f295b08`, migration `c4d7g0h1g55c` prod head; yedek
+  `pre_skelroutine_20260926_1357.dump`):**
   - Tetikleyici (koç): düzenleyicide üç "TYT Matematik" satırından hangisinin
     rutin (problemler) olduğu okunmuyordu; Türkçe'de de aynı.
   - Migration (additive): `weekly_skeleton_slots` + `book_id` (FK SET NULL) +
@@ -196,10 +197,22 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
   - Test: YENİ `test_api_v2_skeleton_routine.py` **16/16** · YENİ
     `live_skeleton_routine.py` **11/11** · skeleton smoke 27/27 ·
     live_weekly_skeleton 14/14 · tsc + eslint temiz.
-  - **SIRADA:** commit + deploy (web+worker+next; migration start.sh ile) →
-    Taha + Zeynep iskeletlerini aynı haftalardan YENİDEN kur (kaynaklı) →
-    2. adım: dönemli iskelet (yaz / okul) · 3. adım (düşük öncelik): okul/
-    dershane ders programı.
+  - **Canlı doğrulama sonrası fix (`f295b08`):** aynı gün aynı kitaptan iki
+    satır aynı ilk çipi öneriyordu (Taha Aydın Kimya ×2, Zeynep Orijinal Mat ×2)
+    → önceki hayaletin ilk çipi sonrakinde sona atılır; smoke **17/17** (11.
+    senaryo). Zeynep'te Orijinal Mat'ın iki ipliği (Fonksiyon · Yaş Problemleri)
+    artık iki satıra dağılıyor.
+  - **Prod iskeletleri YENİDEN kuruldu (kaynaklı):** Taha 47 satır (14 rutin:
+    "Bilgi Sarmal Problemler 2 Karma Test" + "345 Sıfır Risk Paragraf 2 Test"
+    her gün, etkinlik rutini) · Zeynep Ela 51 satır (7 rutin: "Mor Yayınları 3
+    Test Paragraf"). Konu kitapları kaynaklı ama rutin değil. 03.10 haftası
+    hayaletleri hatasız hesaplandı (Taha 47 · Zeynep 51).
+  - **Koç yapacak:** 345 Sıfır Risk'i Taha'nın kitaplığına ekle + Orijinal AYT
+    Logaritma fasikülünü yükle + Bilgi Sarmal Problemler taramasını kontrol et →
+    ardından ilgili satırı düzenleyicide kitaba bağla (etkinlik rutini kitaplı
+    rutine döner, testler ölçüme girer).
+  - **SIRADA:** 2. adım: dönemli iskelet (yaz / okul) · 3. adım (düşük öncelik):
+    okul/dershane ders programı · 2-3 hafta sonra kabul raporu.
 
 ---
 
