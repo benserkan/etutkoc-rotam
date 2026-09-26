@@ -724,6 +724,9 @@ def build_ghosts(
             ]
             unfilled.sort(key=lambda s: (s.position, s.id))
             k = 0
+            # Aynı gün aynı derste önceki hayaletlerin İLK çipleri: sonraki
+            # hayalette sona atılır (aynı kitaptan iki satır aynı konuyu önermesin).
+            shown_first: set[int] = set()
             for s in unfilled:
                 fallback_q = s.default_count or _default_quantity(db, ctx, subj)
                 chips: list[dict] = []
@@ -737,6 +740,12 @@ def build_ghosts(
                     )
                     if not s.book_id:
                         k += 1
+                    if shown_first and len(chips) > 1:
+                        chips.sort(key=lambda c: c["section_id"] in shown_first)
+                        for i, c in enumerate(chips, start=1):
+                            c["rank"] = i
+                    if chips:
+                        shown_first.add(chips[0]["section_id"])
                 ghosts.append({
                     "slot_id": s.id,
                     "date": d.isoformat(),

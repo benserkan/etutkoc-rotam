@@ -316,6 +316,18 @@ def main() -> int:
                 and (t9.period.value if hasattr(t9.period, "value") else t9.period) == "evening"
         check("9. etiketli satır → etkinlik görevi (periyot satırdan)", ok9,
               f"{r9.status_code} {r9.text[:200]}")
+
+        # 11 — aynı gün aynı kitaptan iki satır aynı konuyu önermez
+        d11 = today + timedelta(days=3)  # rutin yazılmamış gün; konu geçmişi 7 günlük pencerede → ≥2 çip
+        two = [{"weekday": d11.weekday(), "period": None, "subject_id": ids["mat"],
+                "position": i, "is_routine": False, "default_count": None,
+                "book_id": ids["konu"]} for i in range(2)]
+        c.post(base, json={"slots": two})
+        g11 = c.get(f"{base}/ghosts", params={"start": d11.isoformat(),
+                                              "end": d11.isoformat()}).json()
+        firsts = [x["chips"][0]["section_id"] for x in g11["days"][0]["ghosts"] if x["chips"]]
+        check("11. aynı kitaptan iki satır: ilk çipler farklı",
+              len(firsts) == 2 and firsts[0] != firsts[1], str(firsts))
     finally:
         with SessionLocal() as db:
             if ids.get("st"):
