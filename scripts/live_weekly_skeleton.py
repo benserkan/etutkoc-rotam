@@ -218,7 +218,7 @@ def main() -> int:
             rows.nth(1).locator('select[aria-label="Ders"]').select_option(str(s["mat"]))
             rows.nth(1).locator('select[aria-label="Periyot"]').select_option("evening")
             rows.nth(2).locator('select[aria-label="Ders"]').select_option(str(s["fiz"]))
-            rows.nth(2).locator('input[type="checkbox"]').check()
+            rows.nth(2).locator('input[aria-label="Rutin"]').check()
             rows.nth(2).locator('input[type="number"]').fill("2")
             dlg.get_by_role("button", name="Kaydet").click()
             pg.wait_for_timeout(2500)

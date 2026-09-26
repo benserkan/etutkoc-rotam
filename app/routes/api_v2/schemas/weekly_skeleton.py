@@ -16,6 +16,8 @@ class SkeletonSlotIn(BaseModel):
     book_id: int | None = None
     label: str | None = Field(default=None, max_length=160)
     routine_mode: str | None = None
+    # F2-3 çapa: okulda/dershanede işlenen ders (sabit gün)
+    is_anchor: bool = False
 
 
 class SkeletonSlotOut(SkeletonSlotIn):
@@ -46,6 +48,13 @@ class SkeletonPeriodItem(BaseModel):
     source: str | None = None
 
 
+class CapacityItem(BaseModel):
+    weekday: int
+    learned: int | None = None     # geçmişten öğrenilen tipik test sayısı
+    override: int | None = None    # koçun elle düzeltmesi
+    effective: int | None = None   # kullanılan (düzeltme > öğrenilen)
+
+
 class SkeletonResponse(BaseModel):
     exists: bool
     id: int | None = None
@@ -54,6 +63,7 @@ class SkeletonResponse(BaseModel):
     valid_from: str | None = None
     valid_until: str | None = None
     periods: list[SkeletonPeriodItem] = []
+    capacity: list[CapacityItem] = []
     slots: list[SkeletonSlotOut] = []
     subjects: list[SkeletonSubjectOption] = []
     books: list[SkeletonBookOption] = []
@@ -62,6 +72,8 @@ class SkeletonResponse(BaseModel):
 class SkeletonSaveBody(BaseModel):
     skeleton_id: int | None = None   # None = bugün geçerli dönem
     name: str | None = None
+    # Hafta günü → test kapasitesi düzeltmesi (None = öğrenilen değere dön)
+    day_capacity: dict[int, int | None] | None = None
     slots: list[SkeletonSlotIn] = Field(default_factory=list, max_length=120)
 
 
@@ -133,6 +145,7 @@ class GhostCell(BaseModel):
     book_name: str | None = None
     label: str | None = None
     routine_mode: str | None = None
+    is_anchor: bool = False
     chips: list[GhostChip] = []
 
 
@@ -190,3 +203,59 @@ class GhostAcceptanceReport(BaseModel):
     acceptance_pct: int | None = None
     by_rank: dict[int, int] = {}
     by_kind: dict[str, int] = {}
+
+
+# ---------------------------------------------------------------- konuyu yay (F2-3)
+
+
+class SpreadItem(BaseModel):
+    section_id: int
+    section_label: str
+    book_id: int
+    book_name: str
+    count: int
+
+
+class SpreadDay(BaseModel):
+    date: str
+    capacity: int | None = None
+    planned: int = 0
+    anchor_reserve: int = 0
+    free: int | None = None
+    items: list[SpreadItem] = []
+
+
+class SpreadSkip(BaseModel):
+    date: str
+    capacity: int | None = None
+    planned: int = 0
+    anchor_reserve: int = 0
+    reason: str
+
+
+class SpreadPreview(BaseModel):
+    topic_id: int | None = None
+    section_id: int | None = None
+    subject_id: int | None = None
+    per_day: int
+    start: str
+    window_end: str | None = None
+    stop_reason: str | None = None
+    total_remaining: int = 0
+    leftover: int = 0
+    days: list[SpreadDay] = []
+    skipped: list[SpreadSkip] = []
+
+
+class SpreadApplyItem(BaseModel):
+    section_id: int
+    count: int = Field(ge=1, le=100)
+
+
+class SpreadApplyDay(BaseModel):
+    date: str
+    items: list[SpreadApplyItem] = Field(default_factory=list, max_length=12)
+
+
+class SpreadApplyBody(BaseModel):
+    days: list[SpreadApplyDay] = Field(default_factory=list, max_length=14)

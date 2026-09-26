@@ -27,6 +27,8 @@ export interface SkeletonSlotIn {
   label?: string | null;
   /** Kitaba bağlı rutinin ilerleme biçimi */
   routine_mode?: RoutineMode | null;
+  /** Okulda/dershanede işlenen ders (çapa) */
+  is_anchor?: boolean;
 }
 
 export type RoutineMode = "sirali" | "karma";
@@ -40,6 +42,13 @@ export interface SkeletonSlot extends SkeletonSlotIn {
   id: number;
   subject_name: string;
   book_name: string | null;
+}
+
+export interface CapacityItem {
+  weekday: number;
+  learned: number | null;
+  override: number | null;
+  effective: number | null;
 }
 
 /** F2-2 dönem: yalnız başlangıç taşır, bir sonraki dönem başlayana kadar geçerli */
@@ -61,6 +70,7 @@ export interface SkeletonResponse {
   valid_from: string | null;
   valid_until: string | null;
   periods: SkeletonTerm[];
+  capacity: CapacityItem[];
   slots: SkeletonSlot[];
   subjects: { id: number; name: string }[];
   books: { id: number; name: string; subject_id: number }[];
@@ -104,6 +114,7 @@ export interface GhostCell {
   book_name: string | null;
   label: string | null;
   routine_mode: RoutineMode | null;
+  is_anchor: boolean;
   chips: GhostChip[];
 }
 
@@ -167,7 +178,12 @@ export function useSaveSkeleton(studentId: number) {
   return useMutation<
     MutationResponse<SkeletonResponse>,
     ApiError,
-    { skeleton_id?: number | null; name?: string | null; slots: SkeletonSlotIn[] }
+    {
+      skeleton_id?: number | null;
+      name?: string | null;
+      slots: SkeletonSlotIn[];
+      day_capacity?: Record<string, number | null> | null;
+    }
   >({
     mutationFn: (body) =>
       api(base(studentId), { method: "POST", body: JSON.stringify(body) }),
@@ -343,3 +359,101 @@ export const SKELETON_PERIOD_LABELS: Record<string, string> = {
   noon: "Öğle",
   evening: "Akşam",
 };
+
+// ---------------------------------------------------------------- konuyu yay (F2-3)
+
+export interface SpreadItem {
+  section_id: number;
+  section_label: string;
+  book_id: number;
+  book_name: string;
+  count: number;
+}
+
+export interface SpreadDay {
+  date: string;
+  capacity: number | null;
+  planned: number;
+  anchor_reserve: number;
+  free: number | null;
+  items: SpreadItem[];
+}
+
+export interface SpreadSkip {
+  date: string;
+  capacity: number | null;
+  planned: number;
+  anchor_reserve: number;
+  reason: string;
+}
+
+export interface SpreadPreview {
+  topic_id: number | null;
+  section_id: number | null;
+  subject_id: number | null;
+  per_day: number;
+  start: string;
+  window_end: string | null;
+  stop_reason: string | null;
+  total_remaining: number;
+  leftover: number;
+  days: SpreadDay[];
+  skipped: SpreadSkip[];
+}
+
+export interface SpreadParams {
+  topicId: number | null;
+  sectionId: number | null;
+  start: string;
+  perDay: number;
+  /** Önizleme başlığı ("Kuvvet ve Hareket") */
+  title: string;
+}
+
+export function getSpreadPreview(
+  studentId: number,
+  p: { topicId: number | null; sectionId: number | null; start: string; perDay: number },
+): Promise<SpreadPreview> {
+  const q = new URLSearchParams({ start: p.start, per_day: String(p.perDay) });
+  if (p.topicId) q.set("topic_id", String(p.topicId));
+  else if (p.sectionId) q.set("section_id", String(p.sectionId));
+  return api<SpreadPreview>(`/api/v2/teacher/students/${studentId}/topic-spread?${q.toString()}`);
+}
+
+export function useApplySpread(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<GhostAcceptResult>,
+    ApiError,
+    { days: { date: string; items: { section_id: number; count: number }[] }[] }
+  >({
+    mutationFn: (body) =>
+      api(`/api/v2/teacher/students/${studentId}/topic-spread`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (e) => showErr(e, "Yayılamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      showWarnings(res, `${res.data.created} görev yazıldı`);
+    },
+  });
+}
+
+/** "Cuma 02.10" */
+export function dayLabel(iso: string): string {
+  const d = new Date(`${iso}T00:00:00`);
+  const wd = (d.getDay() + 6) % 7;
+  const [, m, dd] = iso.split("-");
+  return `${WEEKDAY_LABELS[wd]} ${dd}.${m}`;
+}
+
+/** ISO tarihe gün ekle ("YYYY-MM-DD"). */
+export function addDays(iso: string, n: number): string {
+  const d = new Date(`${iso}T00:00:00`);
+  d.setDate(d.getDate() + n);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}

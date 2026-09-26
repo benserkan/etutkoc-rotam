@@ -211,7 +211,7 @@ def main() -> int:
                 bookText: li.querySelector('select[aria-label="Kaynak kitap"]')?.selectedOptions[0]?.textContent || '',
                 label: li.querySelector('input[aria-label="Etkinlik adı"]')?.value || '',
                 mode: li.querySelector('select[aria-label="Rutin biçimi"]')?.value || '',
-                routine: li.querySelector('input[type="checkbox"]')?.checked || false,
+                routine: li.querySelector('input[aria-label="Rutin"]')?.checked || false,
             }))""")
             par_row = next((x for x in info if x["book"] == str(s["par"])), None)
             lab_row = next((x for x in info if x["label"]), None)

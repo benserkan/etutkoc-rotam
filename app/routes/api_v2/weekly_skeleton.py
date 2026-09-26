@@ -37,6 +37,8 @@ from app.routes.api_v2.schemas.weekly_skeleton import (
     SkeletonSaveBody,
     SkeletonSlotOut,
     SkeletonSubjectOption,
+    SpreadApplyBody,
+    SpreadPreview,
 )
 from app.routes.api_v2.teacher import (
     _create_task_with_items,
@@ -48,6 +50,7 @@ from app.routes.api_v2.teacher import (
     _validate_period,
 )
 from app.services import skeleton_suggest as sk
+from app.services import topic_spread
 from app.services.gorev_stats import is_test_book
 from app.services.task_service import ReservationError
 
@@ -141,13 +144,14 @@ def _build_response(
         valid_from=_iso(skel.valid_from),
         valid_until=_iso(sk.valid_until(skels, skel)),
         periods=_periods(skels),
+        capacity=topic_spread.capacity_table(db, student, skel),
         slots=[
             SkeletonSlotOut(
                 id=s.id, weekday=s.weekday, period=s.period, subject_id=s.subject_id,
                 subject_name=names.get(s.subject_id, "?"), position=s.position,
                 is_routine=s.is_routine, default_count=s.default_count,
                 book_id=s.book_id, book_name=book_names.get(s.book_id) if s.book_id else None,
-                label=s.label, routine_mode=s.routine_mode,
+                label=s.label, routine_mode=s.routine_mode, is_anchor=bool(s.is_anchor),
             )
             for s in sorted(skel.slots, key=lambda x: (x.weekday, x.position, x.id))
         ],
@@ -181,7 +185,7 @@ def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[d
             "subject_id": s.subject_id, "position": s.position if s.position else i,
             "is_routine": s.is_routine, "default_count": s.default_count,
             "book_id": s.book_id, "label": None if s.book_id else label,
-            "routine_mode": mode,
+            "routine_mode": mode, "is_anchor": bool(s.is_anchor),
         })
     return out
 
@@ -229,6 +233,8 @@ def save_skeleton(
     skel = sk.replace_slots(
         db, student=student, coach_id=user.id, slots=slots, name=body.name, skeleton=target,
     )
+    if body.day_capacity is not None:
+        topic_spread.set_capacity_overrides(skel, body.day_capacity)
     db.commit()
     return MutationResponse[SkeletonResponse](
         data=_build_response(db, student, user.id, skeleton_id=skel.id),
@@ -553,6 +559,91 @@ def ghost_action(
     db.commit()
     return MutationResponse[GhostAcceptResult](
         data=GhostAcceptResult(), invalidate=[_key(user.id, student.id)],
+    )
+
+
+# ---------------------------------------------------------------- konuyu yay (F2-3)
+
+
+@router.get("/students/{student_id}/topic-spread", response_model=SpreadPreview)
+def topic_spread_preview(
+    student_id: int, start: str = Query(...), per_day: int = Query(3, ge=1, le=50),
+    topic_id: int | None = Query(None), section_id: int | None = Query(None),
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    """Konunun kalan testlerini günlere yayma ÖNİZLEMESİ (yazmaz). Çapa günlerinin
+    payı önceden ayrılır; bir sonraki aynı dersin çapa gününden önce biter."""
+    student = _get_owned_student(db, student_id, user.id)
+    if topic_id is None and section_id is None:
+        raise _err(422, "topic_required", "Konu ya da bölüm seçilmeli.")
+    return topic_spread.plan_spread(
+        db, student=student, coach_id=user.id, start=_parse_iso_date(start),
+        per_day=per_day, topic_id=topic_id, section_id=section_id,
+    )
+
+
+@router.post("/students/{student_id}/topic-spread",
+             response_model=MutationResponse[GhostAcceptResult])
+def topic_spread_apply(
+    student_id: int, body: SpreadApplyBody,
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    """Önizlemede onaylanan (koçun düzelttiği) yaymayı yaz: gün × kitap başına
+    bir TEST görevi. İleri tarihli görevler taslak iner (akıllı varsayılan)."""
+    from collections import defaultdict as _dd
+
+    student = _get_owned_student(db, student_id, user.id)
+    assert_active_coaching(db, user)
+    owned_books = {
+        b for (b,) in db.query(StudentBook.book_id).filter(StudentBook.student_id == student.id)
+    }
+    today = date.today()
+    warnings: list[str] = []
+    tasks = []
+    try:
+        for day in body.days:
+            d = _parse_iso_date(day.date)
+            if d < today:
+                raise _err(422, "past_date", "Geçmiş güne yayılamaz.")
+            per_book: dict[int, list] = _dd(list)
+            for it in day.items:
+                sec = db.get(BookSection, it.section_id)
+                if sec is None or sec.book_id not in owned_books:
+                    raise _err(404, "section_not_found", "Bölüm bulunamadı.")
+                per_book[sec.book_id].append(TaskItemBody(
+                    book_id=sec.book_id, section_id=sec.id, planned_count=it.count,
+                    allow_over_capacity=True,
+                ))
+            for _book_id, items in per_book.items():
+                task = _create_task_with_items(
+                    db, student=student,
+                    payload=TaskCreateBody(date=d.isoformat(), type="test", title="Görev", items=items),
+                    overflow_out=warnings,
+                )
+                if len(items) > 1:
+                    from app.services.task_titles import refresh_auto_title
+
+                    db.flush()
+                    db.refresh(task)
+                    task.title = "Görev"
+                    refresh_auto_title(task)
+                db.flush()
+                tasks.append(task)
+    except ReservationError as e:
+        db.rollback()
+        raise _reservation_to_http(e)
+    except HTTPException:
+        db.rollback()
+        raise
+    db.commit()
+    inv: list[str] = [_key(user.id, student.id)]
+    for t in tasks:
+        for k in _invalidate_for_task(t, user.id):
+            if k not in inv:
+                inv.append(k)
+    return MutationResponse[GhostAcceptResult](
+        data=GhostAcceptResult(task_ids=[t.id for t in tasks], created=len(tasks)),
+        invalidate=inv, warnings=warnings,
     )
 
 

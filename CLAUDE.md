@@ -246,10 +246,71 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
     `live_skeleton_periods.py` **6/6** · skeleton 27/27 · routine 17/17 ·
     live_weekly_skeleton 14/14 · live_skeleton_routine 11/11 (gün kutusu seçicisi
     `data-testid="skeleton-day"`e çevrildi) · tsc + eslint temiz.
-  - **SIRADA:** commit + deploy → Taha için okul dönemini koç açar (mevcut
-    iskeleti "Okul dönemi" diye adlandırıp başlangıcını 14.09'a çekmek yeterli;
-    yaz iskeleti yok) · 3. adım (düşük öncelik): okul/dershane ders programı ·
-    2-3 hafta sonra kabul raporu.
+  - Deploy (commit `d61116c`): prod head `d5e8h1i2h66d`, yedek
+    `pre_skelperiods_20260926_1821.dump`; Taha/Zeynep hayaletleri hatasız (47/51).
+- **F2-3 — ÇAPA DERSİ + KONUYU YAY — KOD-TAMAM (2026-09-26, migration
+  `e6f9i2j3i77e` YERELDE, COMMIT/DEPLOY BEKLİYOR):**
+  - **Koç açıklaması (tasarımın temeli):** okul/dershane öğrencisinde günün ~1/4'ü
+    o gün okulda/dershanede İŞLENEN ders (sabit gün — ders programı değişmedikçe
+    her hafta aynı; Taha 12. sınıf okul+kurs, Zeynep Ela mezun+dershane), ~3/4'ü
+    o hafta işlenen konunun kalan testlerinin programda BOŞLUK nerede ise oraya
+    yayılması — gün seçiminin kalıbı YOK. Emir (mezun, kurssuz) çapasız: YKS
+    müfredatı + kitapta konu bitince sıradaki (mevcut iplik çipleri yeterli).
+    **Karar:** yayılan testlerin gününü TAHMİN etmeye çalışma; önizlemeli HESAP
+    aracı yap, koç onaylar/düzeltir.
+  - **Koç onaylı kurallar:** (1) birim KONU — kalan testler o konudaki tüm test
+    kitaplarından havuz; devam edilen kitap önce; günün hedef adedi bir kitapta
+    yetmezse aynı konudaki başka kitaptan tamamlanır (gün × kitap ayrı görev:
+    "Bilgi Sarmal — Oran Orantı: 2 test" · "345 — Oran Orantı: 1 test"); aynı
+    konu aynı güne birden çok kaynaktan girebilir (ilk "aynı gün iki kez yok"
+    önerim koç tarafından REDDEDİLDİ), yalnız o konu o gün zaten verilmişse gün
+    atlanır. (2) **ÇAPAYA ÖNCELİK:** gün boşluğu = kapasite − yazılı testler −
+    o günün henüz yazılmamış çapa derslerinin payı (Perşembe fiziğinin taşan
+    testleri Cuma'nın dershane dersinin yerini almaz). (3) yayma bir sonraki
+    AYNI DERSİN çapa gününden önce biter; sığmayan kısım önizlemede söylenir.
+    (4) kapasite geçmişten öğrenilir, koç iskelet penceresinden düzeltir.
+  - Migration (additive): `weekly_skeleton_slots.is_anchor` (bool, default
+    false) + `weekly_skeletons.day_capacity` (TEXT JSON, koç düzeltmeleri).
+  - YENİ `app/services/topic_spread.py`: `learned_capacity` (hafta günü →
+    yüklerin **%90'lık dilimi**, son 4 hafta + bu hafta, dönem başlangıcından
+    eskisi alınmaz) · `capacity_table` / `set_capacity_overrides` ·
+    `plan_spread` (havuz sıralaması `_rank_pool`; çapa payı `build_ghosts`'taki
+    çapa hayaletlerinden; bölüm verilirse konusu varsa havuz konuya genişler).
+  - Uçlar: GET `/students/{id}/topic-spread?topic_id|section_id&start&per_day`
+    (önizleme, yazmaz; günler + atlanan günler gerekçeli + leftover + pencere
+    sonu) · POST `/students/{id}/topic-spread` {days:[{date, items}]} (gün ×
+    kitap başına TEST görevi, ileri tarih taslak; geçmiş 422, yabancı bölüm 404)
+    · iskelet yanıtında `capacity[]` · kaydetmede `day_capacity` · satırda
+    `is_anchor` · hayalette `is_anchor`.
+  - Web: YENİ `weekly-plan/topic-spread.tsx` (`TopicSpreadProvider` week-board'u
+    sarar — hayalet satırı kabulde DOM'dan kalktığı için pencere sağlayıcıda
+    yaşar; önizleme: günde adet · gün gün kapasite/yazılı/dershane payı/boş ·
+    günü çıkar · adedi değiştir · "N güne M test yaz" · atlanan günler
+    gerekçeli · sığmayan uyarısı) · çapa hayaleti "dershane/okul dersi" rozeti +
+    "Bugün X dersinde hangi konu işlendi?" → konu seçilince bugüne yazılır ve
+    yayma penceresi KENDİLİĞİNDEN açılır (koç kararı); diğer hayaletlerde
+    kabulden sonra bildirimde "Konuyu yay" · düzenleyicide satırda "okul/
+    dershane dersi" kutusu + gün başlığında kapasite (öğrenilen değer
+    yer tutucu, boş = öğrenilen).
+  - **3c ÖLÇÜM (prod, salt okuma, `scripts/backtest_topic_spread.py`, Taha +
+    Zeynep + Emir, 130 konu bölümü):** koçun gerçek yayma günlerini tutturma —
+    kapasite medyan %46 (±1 %71, 118 test sığmadı) · %75'lik %59 · **%90'lık
+    %75 (±1 gün %85, 14 sığmadı, ~0 gün kayma)** · en yüksek gün %79 · kapasitesiz
+    %76. Koç günlere tipik günden fazla test koyabiliyor → %90'lık seçildi.
+    Zeynep tek başına %95 (11 bölüm, 1 hafta veri). Not: ölçüm geriye bakışlı
+    (günlerin "diğer" yükü sonradan eklenenleri de içerir), çapa payı canlıda
+    henüz girilmediği için ölçüme girmedi.
+  - Test: YENİ `test_api_v2_topic_spread.py` **9/9** (çapaya öncelik — payı
+    kapatınca kırmızı; dolu gün; sonraki aynı ders gününde durma; kitaplar arası
+    tamamlama; kitap başına görev + taslak; konu o gün var; leftover; kapalı
+    konu; doğrulama; öğrenilen kapasite) · YENİ `live_topic_spread.py` **7/7** ·
+    skeleton 27/27 · routine 17/17 · periods 10/10 · live_weekly_skeleton 14/14 ·
+    live_skeleton_routine 11/11 · live_skeleton_periods 6/6 (rutin kutusu artık
+    `aria-label="Rutin"` — satırda iki onay kutusu var) · tsc + eslint temiz.
+  - **SIRADA:** commit + deploy → koç Taha/Zeynep iskeletlerinde okul/dershane
+    derslerini "okul/dershane dersi" işaretler (ders programına bakarak) →
+    2-3 hafta sonra kabul raporu + `backtest_topic_spread.py` yeniden (çapa
+    payıyla).
 
 ---
 

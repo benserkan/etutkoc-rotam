@@ -23,6 +23,7 @@ import { CalendarCheck, Check, Loader2, PencilLine, Search, Sparkles, X } from "
 import { toast } from "sonner";
 
 import {
+  addDays,
   type GhostCell,
   type GhostChip,
   ROUTINE_MODE_LABELS,
@@ -34,6 +35,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { TaskQuickAdd } from "./task-quick-add";
+import { useTopicSpread } from "./topic-spread";
 
 // Dolgulu rozet tonları — beyaz metinle ≥4.5 kontrast için 600/700 tonları.
 const BADGE_FILL: Record<string, string> = {
@@ -97,6 +99,26 @@ export function GhostRow({
   const [countOverride, setCountOverride] = React.useState<number | null>(null);
   const accept = useAcceptGhost(studentId);
   const action = useGhostAction(studentId);
+  const spread = useTopicSpread();
+
+  /** Kabulden sonra: çapa satırında yayma önizlemesi HEMEN açılır (koç kararı);
+   *  diğer satırlarda bildirimde "Konuyu yay" düğmesi. */
+  function afterAccept(p: { topicId: number | null; sectionId: number | null; count: number; title: string }) {
+    const params = {
+      topicId: p.topicId,
+      sectionId: p.topicId ? null : p.sectionId,
+      start: addDays(ghost.date, 1),
+      perDay: p.count,
+      title: p.title,
+    };
+    if (ghost.is_anchor) {
+      spread.open(params);
+    } else {
+      toast.message("Kalan testleri sonraki günlere yaymak ister misin?", {
+        action: { label: "Konuyu yay", onClick: () => spread.open(params) },
+      });
+    }
+  }
   const boxRef = React.useRef<HTMLDivElement | null>(null);
 
   // Dışarı tıklama / Esc kapatır (mousedown — context-menu dersi).
@@ -131,15 +153,26 @@ export function GhostRow({
       return;
     }
     const n = countOverride ?? c.count;
-    accept.mutate({
-      slot_id: ghost.slot_id,
-      date: ghost.date,
-      section_id: c.section_id,
-      count: n,
-      chip_rank: c.rank,
-      chip_kind: c.kind,
-      chip_count: ghost.chips.length,
-    });
+    accept.mutate(
+      {
+        slot_id: ghost.slot_id,
+        date: ghost.date,
+        section_id: c.section_id,
+        count: n,
+        chip_rank: c.rank,
+        chip_kind: c.kind,
+        chip_count: ghost.chips.length,
+      },
+      {
+        onSuccess: () =>
+          afterAccept({
+            topicId: c.topic_id,
+            sectionId: c.section_id,
+            count: n,
+            title: c.topic_name ?? c.section_label,
+          }),
+      },
+    );
   }
 
   function writeActivity() {
@@ -197,6 +230,11 @@ export function GhostRow({
           <span className="rounded bg-slate-600 px-1.5 py-px text-[10px] font-semibold text-white">
             öneri
           </span>
+          {ghost.is_anchor ? (
+            <span className="rounded bg-indigo-700 px-1.5 py-px text-[10px] font-semibold text-white">
+              dershane/okul dersi
+            </span>
+          ) : null}
           {ghost.is_routine ? (
             <span className="rounded bg-emerald-700 px-1.5 py-px text-[10px] font-semibold text-white">
               rutin
@@ -230,6 +268,12 @@ export function GhostRow({
           className="mt-1 space-y-2 rounded-md border border-cyan-600/40 bg-card p-2.5 shadow-sm"
           data-testid="ghost-strip"
         >
+          {ghost.is_anchor ? (
+            <p className="text-[12.5px] font-medium text-foreground" data-testid="anchor-question">
+              Bugün {ghost.subject_name} dersinde hangi konu işlendi? Seçtiğin konu bugüne
+              yazılır, kalan testleri sonraki günlere yaymak için önizleme açılır.
+            </p>
+          ) : null}
           {!routineChip && ghost.chips.length > 0 ? (
             <div className="flex flex-wrap items-center gap-1.5 text-[11.5px]">
               <span className="text-muted-foreground">Adet:</span>
@@ -364,13 +408,24 @@ export function GhostRow({
                 autoOpen
                 onAfterAdd={() => setOpen(false)}
                 onSourcePick={({ section_id, count }) =>
-                  accept.mutate({
-                    slot_id: ghost.slot_id,
-                    date: ghost.date,
-                    section_id,
-                    count,
-                    chip_rank: null,
-                  })
+                  accept.mutate(
+                    {
+                      slot_id: ghost.slot_id,
+                      date: ghost.date,
+                      section_id,
+                      count,
+                      chip_rank: null,
+                    },
+                    {
+                      onSuccess: () =>
+                        afterAccept({
+                          topicId: null,
+                          sectionId: section_id,
+                          count,
+                          title: ghost.subject_name,
+                        }),
+                    },
+                  )
                 }
               />
             </div>

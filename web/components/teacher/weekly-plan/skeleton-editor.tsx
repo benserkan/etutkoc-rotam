@@ -61,7 +61,14 @@ function toRows(sk: SkeletonResponse | undefined): Row[] {
     book_id: s.book_id ?? null,
     label: s.label ?? null,
     routine_mode: s.routine_mode ?? null,
+    is_anchor: !!s.is_anchor,
   }));
+}
+
+function toCapDraft(sk: SkeletonResponse | undefined): Record<number, string> {
+  const out: Record<number, string> = {};
+  for (const c of sk?.capacity ?? []) out[c.weekday] = c.override == null ? "" : String(c.override);
+  return out;
 }
 
 export function SkeletonEditorDialog({
@@ -103,10 +110,13 @@ export function SkeletonEditorDialog({
     ? `${q.data.id ?? "yok"}:${JSON.stringify(q.data.slots.map((s) => s.id))}`
     : null;
   const [lastStamp, setLastStamp] = React.useState<string | null>(null);
+  const [capDraft, setCapDraft] = React.useState<Record<number, string>>({});
   if (dataStamp !== lastStamp) {
     setLastStamp(dataStamp);
     setRows(q.data ? toRows(q.data) : null);
+    setCapDraft(toCapDraft(q.data));
   }
+  const capacity = q.data?.capacity ?? [];
 
   const subjects = q.data?.subjects ?? [];
   const books = q.data?.books ?? [];
@@ -134,6 +144,7 @@ export function SkeletonEditorDialog({
         book_id: null,
         label: null,
         routine_mode: null,
+        is_anchor: false,
       },
     ]);
   }
@@ -149,9 +160,15 @@ export function SkeletonEditorDialog({
       book_id: r.book_id ?? null,
       label: r.book_id ? null : (r.label?.trim() || null),
       routine_mode: r.is_routine && r.book_id ? (r.routine_mode ?? "sirali") : null,
+      is_anchor: !!r.is_anchor,
     }));
+    const day_capacity: Record<string, number | null> = {};
+    for (let wd = 0; wd < 7; wd++) {
+      const v = (capDraft[wd] ?? "").trim();
+      day_capacity[String(wd)] = v === "" ? null : Math.max(0, Number(v) || 0);
+    }
     save.mutate(
-      { skeleton_id: q.data?.id ?? null, slots },
+      { skeleton_id: q.data?.id ?? null, slots, day_capacity },
       { onSuccess: () => onOpenChange(false) },
     );
   }
@@ -232,6 +249,31 @@ export function SkeletonEditorDialog({
                     <span className="text-[11px] text-muted-foreground">
                       {dayRows.length} satır
                     </span>
+                    <label
+                      className="inline-flex items-center gap-1 text-[11.5px] text-foreground"
+                      title="Bu güne sığan test sayısı: konu yayılırken boşluk buna göre hesaplanır. Boş = geçmişten öğrenilen."
+                    >
+                      kapasite
+                      <input
+                        type="number"
+                        min={0}
+                        max={200}
+                        value={capDraft[wd] ?? ""}
+                        placeholder={
+                          capacity[wd]?.learned != null ? String(capacity[wd]?.learned) : "—"
+                        }
+                        onChange={(e) => setCapDraft((p) => ({ ...p, [wd]: e.target.value }))}
+                        className="w-14 rounded border border-border bg-background px-1 py-0.5 text-[11.5px] text-foreground"
+                        aria-label={`${label} kapasitesi`}
+                        data-testid="capacity-input"
+                      />
+                      test
+                      {capacity[wd]?.learned != null ? (
+                        <span className="text-muted-foreground">
+                          (öğrenilen {capacity[wd]?.learned})
+                        </span>
+                      ) : null}
+                    </label>
                     <button
                       type="button"
                       onClick={() => add(wd)}
@@ -290,8 +332,21 @@ export function SkeletonEditorDialog({
                               type="checkbox"
                               checked={r.is_routine}
                               onChange={(e) => update(r.key, { is_routine: e.target.checked })}
+                              aria-label="Rutin"
                             />
                             rutin
+                          </label>
+                          <label
+                            className="inline-flex items-center gap-1 text-[12px] text-foreground"
+                            title="Bu ders o gün okulda/dershanede işleniyor: önerisi 'bugün hangi konu işlendi?' diye sorar; konu yayılırken bu günün payı önceden ayrılır."
+                          >
+                            <input
+                              type="checkbox"
+                              checked={!!r.is_anchor}
+                              onChange={(e) => update(r.key, { is_anchor: e.target.checked })}
+                              aria-label="Okul/dershane dersi"
+                            />
+                            okul/dershane dersi
                           </label>
                           <label className="inline-flex items-center gap-1 text-[12px] text-foreground">
                             adet

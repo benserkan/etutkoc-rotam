@@ -792,6 +792,7 @@ def build_ghosts(
                     "book_name": book_names.get(s.book_id) if s.book_id else None,
                     "label": s.label,
                     "routine_mode": s.routine_mode,
+                    "is_anchor": bool(s.is_anchor),
                     "chips": chips,
                 })
         ghosts.sort(key=lambda g: (PERIOD_ORDER.get(g["period"], 3), g["position"]))
@@ -931,9 +932,11 @@ def create_period(
             sk_.slots.append(WeeklySkeletonSlot(
                 weekday=s.weekday, period=s.period, subject_id=s.subject_id, position=s.position,
                 is_routine=s.is_routine, default_count=s.default_count, book_id=s.book_id,
-                label=s.label, routine_mode=s.routine_mode,
+                label=s.label, routine_mode=s.routine_mode, is_anchor=s.is_anchor,
             ))
         db.flush()
+    if copy_from is not None and copy_from.day_capacity:
+        sk_.day_capacity = copy_from.day_capacity
     return sk_
 
 
@@ -976,7 +979,7 @@ def replace_slots(
             subject_id=int(s["subject_id"]), position=int(s.get("position", i)),
             is_routine=bool(s.get("is_routine")), default_count=s.get("default_count"),
             book_id=s.get("book_id"), label=(s.get("label") or None),
-            routine_mode=s.get("routine_mode"),
+            routine_mode=s.get("routine_mode"), is_anchor=bool(s.get("is_anchor")),
         ))
     db.flush()
     return sk

@@ -25,6 +25,7 @@ from sqlalchemy import (
     Index,
     Integer,
     String,
+    Text,
     func,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -58,6 +59,9 @@ class WeeklySkeleton(Base):
     # Dönem başlangıcı: bir gün için geçerli iskelet = valid_from ≤ gün olanların
     # en yenisi; bir sonraki dönem başlayana kadar geçerli. NULL = en baştan beri.
     valid_from: Mapped[date | None] = mapped_column(Date, nullable=True)
+    # F2-3: koçun ELLE düzelttiği gün kapasiteleri (JSON {"0": 20, …} — hafta günü →
+    # test). Boş gün = geçmişten öğrenilen değer (services/topic_spread).
+    day_capacity: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
@@ -101,6 +105,9 @@ class WeeklySkeletonSlot(Base):
     label: Mapped[str | None] = mapped_column(String(160), nullable=True)
     # Kitaba bağlı rutinde ilerleme biçimi: 'sirali' | 'karma' (bkz. ROUTINE_MODES)
     routine_mode: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    # F2-3 ÇAPA: okulda/dershanede İŞLENEN ders (sabit gün). Önerisi "bugün hangi
+    # konu işlendi?" sorar; konu yayılırken çapa günlerinin payı önceden ayrılır.
+    is_anchor: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     skeleton: Mapped["WeeklySkeleton"] = relationship("WeeklySkeleton", back_populates="slots")
 

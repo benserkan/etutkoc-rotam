@@ -79,6 +79,7 @@ import { NextUnitsPanel } from "./weekly-plan/next-units-panel";
 import { SubjectMix } from "./weekly-plan/subject-mix";
 import { WeekGrid } from "./weekly-plan/week-grid";
 import { SkeletonEditorDialog } from "./weekly-plan/skeleton-editor";
+import { TopicSpreadProvider } from "./weekly-plan/topic-spread";
 import {
   getGhosts,
   type GhostCell,
@@ -319,6 +320,7 @@ export function WeekBoard({
   const unlinkedLatest = data.unlinked_latest;
 
   return (
+    <TopicSpreadProvider studentId={studentId}>
     <div className="space-y-6">
       {/* WP3 — Eski görevler banner (mevcut öğrencilerin geçişi için tek tık) */}
       {unlinkedTaskCount > 0 ? (
@@ -869,6 +871,7 @@ export function WeekBoard({
         onOpenChange={setAnnounceOpen}
       />
     </div>
+    </TopicSpreadProvider>
   );
 }
 
