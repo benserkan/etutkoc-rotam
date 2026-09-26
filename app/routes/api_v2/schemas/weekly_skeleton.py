@@ -35,16 +35,32 @@ class SkeletonBookOption(BaseModel):
     subject_id: int
 
 
+class SkeletonPeriodItem(BaseModel):
+    """F2-2 dönem: yalnız başlangıç tarihi taşır, bir sonraki dönem başlayana kadar geçerli."""
+    id: int
+    name: str
+    valid_from: str | None = None   # None = en baştan beri
+    valid_until: str | None = None  # None = açık uçlu (güncel ya da ileride)
+    slot_count: int
+    is_current: bool                # bugün geçerli dönem
+    source: str | None = None
+
+
 class SkeletonResponse(BaseModel):
     exists: bool
+    id: int | None = None
     name: str | None = None
     source: str | None = None
+    valid_from: str | None = None
+    valid_until: str | None = None
+    periods: list[SkeletonPeriodItem] = []
     slots: list[SkeletonSlotOut] = []
     subjects: list[SkeletonSubjectOption] = []
     books: list[SkeletonBookOption] = []
 
 
 class SkeletonSaveBody(BaseModel):
+    skeleton_id: int | None = None   # None = bugün geçerli dönem
     name: str | None = None
     slots: list[SkeletonSlotIn] = Field(default_factory=list, max_length=120)
 
@@ -52,6 +68,27 @@ class SkeletonSaveBody(BaseModel):
 class SkeletonFromWeekBody(BaseModel):
     start: str
     end: str
+    # replace: seçili (ya da bugün geçerli) dönemin satırlarını değiştir ·
+    # new: bu haftanın başından YENİ DÖNEM başlat (eski dönem silinmez)
+    mode: str = "replace"
+    skeleton_id: int | None = None
+    name: str | None = Field(default=None, max_length=120)
+
+
+class SkeletonDeleteBody(BaseModel):
+    skeleton_id: int | None = None
+
+
+class PeriodCreateBody(BaseModel):
+    valid_from: str
+    name: str | None = Field(default=None, max_length=120)
+    copy_from_id: int | None = None   # verilirse o dönemin satırları kopyalanır
+
+
+class PeriodUpdateBody(BaseModel):
+    name: str | None = Field(default=None, max_length=120)
+    valid_from: str | None = None
+    clear_start: bool = False         # başlangıcı kaldır ("en baştan beri")
 
 
 class ChipBadge(BaseModel):

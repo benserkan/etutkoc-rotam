@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Body, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 
 from app.deps import get_db
@@ -27,7 +27,11 @@ from app.routes.api_v2.schemas.weekly_skeleton import (
     GhostActionBody,
     GhostRoutineBody,
     GhostsResponse,
+    PeriodCreateBody,
+    PeriodUpdateBody,
     SkeletonBookOption,
+    SkeletonDeleteBody,
+    SkeletonPeriodItem,
     SkeletonFromWeekBody,
     SkeletonResponse,
     SkeletonSaveBody,
@@ -86,18 +90,40 @@ def _book_options(db: Session, student: User) -> list[Book]:
     return sorted((b for b in books if is_test_book(b)), key=lambda b: b.name)
 
 
-def _build_response(db: Session, student: User, coach_id: int) -> SkeletonResponse:
+def _iso(d: date | None) -> str | None:
+    return d.isoformat() if d else None
+
+
+def _periods(skels) -> list[SkeletonPeriodItem]:
+    today_sk = sk.skeleton_for_date(skels, date.today())
+    return [
+        SkeletonPeriodItem(
+            id=x.id, name=x.name, valid_from=_iso(x.valid_from),
+            valid_until=_iso(sk.valid_until(skels, x)), slot_count=len(x.slots),
+            is_current=today_sk is not None and today_sk.id == x.id, source=x.source,
+        )
+        for x in skels
+    ]
+
+
+def _build_response(
+    db: Session, student: User, coach_id: int, skeleton_id: int | None = None,
+    at: date | None = None,
+) -> SkeletonResponse:
+    """skeleton_id verilirse o dönem, yoksa `at` (varsayılan bugün) günü geçerli dönem."""
     options = _subject_options(db, student, coach_id)
     names = {s.id: s.name for s in options}
     book_opts = _book_options(db, student)
     books = [SkeletonBookOption(id=b.id, name=b.name, subject_id=b.subject_id) for b in book_opts]
     book_names = {b.id: b.name for b in book_opts}
-    skel = sk.get_skeleton(db, student.id)
+    skels = sk.list_skeletons(db, student.id)
+    skel = sk.get_skeleton(db, student.id, at=at, skeleton_id=skeleton_id)
     if skel is None:
         return SkeletonResponse(
             exists=False,
             subjects=[SkeletonSubjectOption(id=s.id, name=s.name) for s in options],
             books=books,
+            periods=_periods(skels),
         )
     missing_books = {s.book_id for s in skel.slots if s.book_id} - set(book_names)
     if missing_books:
@@ -109,8 +135,12 @@ def _build_response(db: Session, student: User, coach_id: int) -> SkeletonRespon
             names[s.id] = s.name
     return SkeletonResponse(
         exists=True,
+        id=skel.id,
         name=skel.name,
         source=skel.source,
+        valid_from=_iso(skel.valid_from),
+        valid_until=_iso(sk.valid_until(skels, skel)),
+        periods=_periods(skels),
         slots=[
             SkeletonSlotOut(
                 id=s.id, weekday=s.weekday, period=s.period, subject_id=s.subject_id,
@@ -159,10 +189,33 @@ def _validated_slots(db: Session, student: User, coach_id: int, slots) -> list[d
 # ---------------------------------------------------------------- iskelet
 
 
+def _owned_skeleton(db: Session, student: User, skeleton_id: int | None):
+    if skeleton_id is None:
+        return None
+    skel = sk.get_skeleton(db, student.id, skeleton_id=skeleton_id)
+    if skel is None:
+        raise _err(404, "skeleton_not_found", "Dönem bulunamadı.")
+    return skel
+
+
+def _period_conflict(e: Exception) -> HTTPException:
+    return _err(409, "period_start_taken", str(e))
+
+
 @router.get("/students/{student_id}/skeleton", response_model=SkeletonResponse)
-def get_skeleton(student_id: int, user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
+def get_skeleton(
+    student_id: int, skeleton_id: int | None = Query(None), at: str | None = Query(None),
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    """Varsayılan: bugün geçerli dönem. skeleton_id ile belirli dönem, at ile o
+    günün dönemi. Yanıt tüm dönemlerin listesini (periods) de taşır."""
     student = _get_owned_student(db, student_id, user.id)
-    return _build_response(db, student, user.id)
+    if skeleton_id is not None:
+        _owned_skeleton(db, student, skeleton_id)
+    return _build_response(
+        db, student, user.id, skeleton_id=skeleton_id,
+        at=_parse_iso_date(at) if at else None,
+    )
 
 
 @router.post("/students/{student_id}/skeleton", response_model=MutationResponse[SkeletonResponse])
@@ -171,11 +224,15 @@ def save_skeleton(
     user: User = Depends(_require_teacher), db: Session = Depends(get_db),
 ):
     student = _get_owned_student(db, student_id, user.id)
+    target = _owned_skeleton(db, student, body.skeleton_id)
     slots = _validated_slots(db, student, user.id, body.slots)
-    sk.replace_slots(db, student=student, coach_id=user.id, slots=slots, name=body.name)
+    skel = sk.replace_slots(
+        db, student=student, coach_id=user.id, slots=slots, name=body.name, skeleton=target,
+    )
     db.commit()
     return MutationResponse[SkeletonResponse](
-        data=_build_response(db, student, user.id), invalidate=[_key(user.id, student.id)],
+        data=_build_response(db, student, user.id, skeleton_id=skel.id),
+        invalidate=[_key(user.id, student.id)],
     )
 
 
@@ -184,31 +241,104 @@ def skeleton_from_week(
     student_id: int, body: SkeletonFromWeekBody,
     user: User = Depends(_require_teacher), db: Session = Depends(get_db),
 ):
-    """Bir haftanın (≤14 gün) görevlerinden iskelet üret — mevcut iskeleti değiştirir."""
+    """Bir haftanın (≤14 gün) görevlerinden iskelet. mode=replace: seçili (yoksa
+    bugün geçerli) dönemin satırlarını değiştirir · mode=new: haftanın ilk
+    gününden YENİ DÖNEM başlatır (önceki dönem silinmez, bir gün önce biter)."""
     student = _get_owned_student(db, student_id, user.id)
     start = _parse_iso_date(body.start)
     end = _parse_iso_date(body.end)
     if end < start:
         raise _err(422, "bad_range", "Bitiş tarihi başlangıçtan önce olamaz.")
+    if body.mode not in ("replace", "new"):
+        raise _err(422, "bad_mode", "Geçersiz seçim.")
+    target = _owned_skeleton(db, student, body.skeleton_id)
     slots = sk.slots_from_tasks(db, student=student, coach_id=user.id, start=start, end=end)
     if not slots:
         raise _err(422, "empty_week", "Bu tarih aralığında iskelet çıkarılacak görev yok.")
-    sk.replace_slots(db, student=student, coach_id=user.id, slots=slots, source="from_week")
+    try:
+        if body.mode == "new":
+            target = sk.create_period(
+                db, student=student, coach_id=user.id, valid_from=start, name=body.name,
+                source="from_week",
+            )
+        skel = sk.replace_slots(
+            db, student=student, coach_id=user.id, slots=slots, source="from_week",
+            skeleton=target, name=body.name if body.mode == "replace" else None,
+        )
+    except sk.PeriodConflict as e:
+        db.rollback()
+        raise _period_conflict(e)
     db.commit()
     return MutationResponse[SkeletonResponse](
-        data=_build_response(db, student, user.id), invalidate=[_key(user.id, student.id)],
+        data=_build_response(db, student, user.id, skeleton_id=skel.id),
+        invalidate=[_key(user.id, student.id)],
     )
 
 
 @router.post("/students/{student_id}/skeleton/delete", response_model=MutationResponse[SkeletonResponse])
-def delete_skeleton(student_id: int, user: User = Depends(_require_teacher), db: Session = Depends(get_db)):
+def delete_skeleton(
+    student_id: int, body: SkeletonDeleteBody | None = Body(None),
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    """Bir dönemi sil (gövdesiz: bugün geçerli dönem). Görevlere dokunulmaz."""
     student = _get_owned_student(db, student_id, user.id)
-    skel = sk.get_skeleton(db, student.id)
+    sid_ = body.skeleton_id if body else None
+    skel = _owned_skeleton(db, student, sid_) if sid_ else sk.get_skeleton(db, student.id)
     if skel is not None:
         db.delete(skel)
         db.commit()
     return MutationResponse[SkeletonResponse](
         data=_build_response(db, student, user.id), invalidate=[_key(user.id, student.id)],
+    )
+
+
+@router.post("/students/{student_id}/skeleton/periods",
+             response_model=MutationResponse[SkeletonResponse])
+def create_period(
+    student_id: int, body: PeriodCreateBody,
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    """Yeni dönem: boş ya da başka bir dönemin kopyası (yarıyıl tatilinde yaz
+    iskeletini yeniden kullanmak gibi)."""
+    student = _get_owned_student(db, student_id, user.id)
+    src = _owned_skeleton(db, student, body.copy_from_id)
+    try:
+        skel = sk.create_period(
+            db, student=student, coach_id=user.id, valid_from=_parse_iso_date(body.valid_from),
+            name=body.name, copy_from=src,
+        )
+    except sk.PeriodConflict as e:
+        db.rollback()
+        raise _period_conflict(e)
+    db.commit()
+    return MutationResponse[SkeletonResponse](
+        data=_build_response(db, student, user.id, skeleton_id=skel.id),
+        invalidate=[_key(user.id, student.id)],
+    )
+
+
+@router.post("/students/{student_id}/skeleton/periods/{skeleton_id}",
+             response_model=MutationResponse[SkeletonResponse])
+def update_period(
+    student_id: int, skeleton_id: int, body: PeriodUpdateBody,
+    user: User = Depends(_require_teacher), db: Session = Depends(get_db),
+):
+    """Dönem adını ya da başlangıcını değiştir."""
+    student = _get_owned_student(db, student_id, user.id)
+    skel = _owned_skeleton(db, student, skeleton_id)
+    try:
+        sk.update_period(
+            db, student=student, skeleton=skel, name=body.name,
+            valid_from=_parse_iso_date(body.valid_from) if body.valid_from else None,
+            clear_start=body.clear_start,
+        )
+    except sk.PeriodConflict as e:
+        db.rollback()
+        raise _period_conflict(e)
+    db.commit()
+    return MutationResponse[SkeletonResponse](
+        data=_build_response(db, student, user.id, skeleton_id=skel.id),
+        invalidate=[_key(user.id, student.id)],
     )
 
 

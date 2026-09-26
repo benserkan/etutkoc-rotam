@@ -208,7 +208,7 @@ def main() -> int:
             dlg = pg.locator('[role="dialog"]')
             dlg.wait_for(timeout=10000)
             chk("1. İskelet düzenleyicisi açıldı", dlg.count() == 1)
-            day_box = dlg.locator("div.rounded-md.border").nth(wd)
+            day_box = dlg.locator('[data-testid="skeleton-day"]').nth(wd)
             for _ in range(3):
                 day_box.get_by_role("button", name="Satır ekle").click()
                 pg.wait_for_timeout(150)

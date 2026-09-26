@@ -211,8 +211,45 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
     Logaritma fasikülünü yükle + Bilgi Sarmal Problemler taramasını kontrol et →
     ardından ilgili satırı düzenleyicide kitaba bağla (etkinlik rutini kitaplı
     rutine döner, testler ölçüme girer).
-  - **SIRADA:** 2. adım: dönemli iskelet (yaz / okul) · 3. adım (düşük öncelik):
-    okul/dershane ders programı · 2-3 hafta sonra kabul raporu.
+- **Video Sepeti prod düzeltmesi (2026-09-26, commit `e025ecf`, CANLI):** Cafer SET
+  (öğrenci #163) liste getiremedi (import 503) — prod'da YouTube anahtarı YOKTU.
+  Anahtar prod `system_secrets`'e taşındı (değeri yazdırılmadan; prod'dan YouTube
+  isteği doğrulandı). Koça gösterilen "süper admin AI Ayarları" mesajı (koçu
+  AI ile ilgisiz, erişemediği yere yönlendiriyordu) koça göre yazıldı; bağlantı
+  yokken "Getir" kapalı. video_basket 62/62.
+- **F2-2 — DÖNEMLİ İSKELET — CANLI (2026-09-26, migration `d5e8h1i2h66d`
+  prod head):**
+  - Tetikleyici: Taha okul başlayınca ritim değişti (yaz iskeleti okula taşınmaz).
+  - Migration: `weekly_skeletons.student_id` UNIQUE kaldırıldı (PG adı
+    `weekly_skeletons_student_id_key`, prod'da doğrulandı; SQLite yolu tablo
+    yeniden kurulur + koç indeksi yeniden eklenir) + `valid_from` (DATE null) +
+    indeks (student_id, valid_from). Downgrade: bir öğrencide >1 dönem varsa
+    veri kaybını önlemek için BİLİNÇLİ hata. Yerelde down/up sınandı.
+  - Model: dönem yalnız BAŞLANGIÇ taşır; bir gün için geçerli = valid_from ≤ gün
+    olanların en yenisi (NULL = en baştan); bitiş = sonraki dönemin başı − 1.
+  - Servis: `list_skeletons` · `skeleton_for_date` · `valid_until` ·
+    `get_skeleton(at=, skeleton_id=)` · `create_period` (boş / kopya) ·
+    `update_period` · `PeriodConflict` (aynı başlangıç) · `build_ghosts` HER GÜN
+    o günün döneminden (dönem değişen hafta bölünür) · `replace_slots(skeleton=)`.
+  - Uçlar: GET skeleton `?skeleton_id=` / `?at=` + yanıtta `periods[]` (ad ·
+    başlangıç · hesaplı bitiş · satır sayısı · bugün mü) · kaydet `skeleton_id` ·
+    from-week `mode=replace|new` (+ad) · delete `{skeleton_id}` · POST
+    `/skeleton/periods` {valid_from, name, copy_from_id} · POST
+    `/skeleton/periods/{id}` {name, valid_from, clear_start} · 409
+    `period_start_taken` · olmayan dönem 404.
+  - Web: düzenleyicide **Dönemler şeridi** (çip: ad · aralık · satır · "bugün";
+    tıkla → o dönem düzenlenir) · "Yeni dönem" (bu haftanın görevlerinden /
+    seçili dönemin kopyası / boş + başlangıç) · "Dönemi düzenle" (ad + başlangıç,
+    boş = baştan) · "Dönemi sil" · "Bu haftayı iskelet yap" seçili dönemi değiştirir.
+    Tip adı `SkeletonTerm` (SkeletonPeriod sabah/öğle/akşam için zaten vardı).
+  - Test: YENİ `test_api_v2_skeleton_periods.py` **10/10** · YENİ
+    `live_skeleton_periods.py` **6/6** · skeleton 27/27 · routine 17/17 ·
+    live_weekly_skeleton 14/14 · live_skeleton_routine 11/11 (gün kutusu seçicisi
+    `data-testid="skeleton-day"`e çevrildi) · tsc + eslint temiz.
+  - **SIRADA:** commit + deploy → Taha için okul dönemini koç açar (mevcut
+    iskeleti "Okul dönemi" diye adlandırıp başlangıcını 14.09'a çekmek yeterli;
+    yaz iskeleti yok) · 3. adım (düşük öncelik): okul/dershane ders programı ·
+    2-3 hafta sonra kabul raporu.
 
 ---
 

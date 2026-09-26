@@ -11,7 +11,7 @@
 
 import * as React from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Plus, Trash2, Wand2 } from "lucide-react";
+import { CalendarRange, Copy, Loader2, Pencil, Plus, Trash2, Wand2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -22,11 +22,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 import {
   ROUTINE_MODE_LABELS,
   type RoutineMode,
   getSkeleton,
   getSkeletonAcceptance,
+  fmtDay,
+  periodRange,
+  type SkeletonTerm,
+  useCreatePeriod,
+  useUpdatePeriod,
   type GhostAcceptanceReport,
   type SkeletonPeriod,
   type SkeletonResponse,
@@ -71,9 +77,11 @@ export function SkeletonEditorDialog({
   weekStart: string;
   weekEnd: string;
 }) {
+  // F2-2: düzenlenen dönem (null = bugün geçerli dönem)
+  const [selectedId, setSelectedId] = React.useState<number | null>(null);
   const q = useQuery<SkeletonResponse>({
-    queryKey: skeletonKeys.skeleton(studentId),
-    queryFn: () => getSkeleton(studentId),
+    queryKey: skeletonKeys.skeleton(studentId, selectedId),
+    queryFn: () => getSkeleton(studentId, selectedId),
     enabled: open,
   });
   const accQ = useQuery<GhostAcceptanceReport>({
@@ -91,7 +99,9 @@ export function SkeletonEditorDialog({
   const [rows, setRows] = React.useState<Row[] | null>(null);
   // Sunucu verisi değişince (ilk yükleme / "bu haftadan" sonrası) taslağı
   // yeniden kur — render sırasında türetme (effect'te setState yok).
-  const dataStamp = q.data ? JSON.stringify(q.data.slots.map((s) => s.id)) : null;
+  const dataStamp = q.data
+    ? `${q.data.id ?? "yok"}:${JSON.stringify(q.data.slots.map((s) => s.id))}`
+    : null;
   const [lastStamp, setLastStamp] = React.useState<string | null>(null);
   if (dataStamp !== lastStamp) {
     setLastStamp(dataStamp);
@@ -140,7 +150,10 @@ export function SkeletonEditorDialog({
       label: r.book_id ? null : (r.label?.trim() || null),
       routine_mode: r.is_routine && r.book_id ? (r.routine_mode ?? "sirali") : null,
     }));
-    save.mutate({ slots }, { onSuccess: () => onOpenChange(false) });
+    save.mutate(
+      { skeleton_id: q.data?.id ?? null, slots },
+      { onSuccess: () => onOpenChange(false) },
+    );
   }
 
   const exists = q.data?.exists ?? false;
@@ -158,6 +171,15 @@ export function SkeletonEditorDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <PeriodStrip
+          studentId={studentId}
+          periods={q.data?.periods ?? []}
+          activeId={q.data?.id ?? null}
+          weekStart={weekStart}
+          weekEnd={weekEnd}
+          onSelect={setSelectedId}
+        />
+
         <div className="flex flex-wrap items-center gap-2">
           <Button
             type="button"
@@ -167,11 +189,18 @@ export function SkeletonEditorDialog({
             onClick={() => {
               if (
                 exists &&
-                !window.confirm("Mevcut iskelet bu haftanın görevleriyle değiştirilsin mi?")
+                !window.confirm(
+                  `"${q.data?.name ?? "Bu dönem"}" satırları bu haftanın görevleriyle değiştirilsin mi? (Yeni bir dönem başlatmak için yukarıdaki "Yeni dönem"i kullan.)`,
+                )
               ) {
                 return;
               }
-              fromWeek.mutate({ start: weekStart, end: weekEnd });
+              fromWeek.mutate({
+                start: weekStart,
+                end: weekEnd,
+                mode: "replace",
+                skeleton_id: q.data?.id ?? null,
+              });
             }}
           >
             {fromWeek.isPending ? (
@@ -197,7 +226,7 @@ export function SkeletonEditorDialog({
             {WEEKDAY_LABELS.map((label, wd) => {
               const dayRows = list.filter((r) => r.weekday === wd);
               return (
-                <div key={wd} className="rounded-md border border-border">
+                <div key={wd} className="rounded-md border border-border" data-testid="skeleton-day">
                   <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5">
                     <span className="text-[13px] font-semibold text-foreground">{label}</span>
                     <span className="text-[11px] text-muted-foreground">
@@ -317,12 +346,19 @@ export function SkeletonEditorDialog({
               className="sm:mr-auto text-rose-700 dark:text-rose-300"
               disabled={del.isPending}
               onClick={() => {
-                if (window.confirm("İskelet silinsin mi? Görevlere dokunulmaz.")) {
-                  del.mutate(undefined, { onSuccess: () => onOpenChange(false) });
+                if (
+                  window.confirm(
+                    `"${q.data?.name ?? "Bu dönem"}" dönemi silinsin mi? Görevlere dokunulmaz; bu dönemin günleri önceki döneme döner.`,
+                  )
+                ) {
+                  del.mutate(
+                    { skeleton_id: q.data?.id ?? null },
+                    { onSuccess: () => setSelectedId(null) },
+                  );
                 }
               }}
             >
-              İskeleti sil
+              Dönemi sil
             </Button>
           ) : null}
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
@@ -435,5 +471,259 @@ function SourceLine({
         </select>
       ) : null}
     </div>
+  );
+}
+
+/**
+ * F2-2 dönem şeridi: her dönem yalnız başlangıç taşır, bir sonraki dönem
+ * başlayana kadar geçerli (Yaz · Okul dönemi · Yarıyıl tatili). Seçilen dönem
+ * düzenlenir; "bugün" rozeti o gün geçerli olanı gösterir.
+ */
+function PeriodStrip({
+  studentId,
+  periods,
+  activeId,
+  weekStart,
+  weekEnd,
+  onSelect,
+}: {
+  studentId: number;
+  periods: SkeletonTerm[];
+  activeId: number | null;
+  weekStart: string;
+  weekEnd: string;
+  onSelect: (id: number | null) => void;
+}) {
+  const [mode, setMode] = React.useState<null | "new" | "edit">(null);
+  const active = periods.find((p) => p.id === activeId) ?? null;
+
+  return (
+    <div className="space-y-2 rounded-md border border-border bg-muted/30 p-2.5" data-testid="period-strip">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <CalendarRange className="size-3.5 text-muted-foreground" aria-hidden />
+        <span className="text-[12px] font-semibold text-foreground">Dönemler</span>
+        {periods.length === 0 ? (
+          <span className="text-[12px] text-muted-foreground">henüz yok — ilk kaydettiğin iskelet ilk dönem olur</span>
+        ) : null}
+        {periods.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => {
+              onSelect(p.id);
+              setMode(null);
+            }}
+            data-testid="period-chip"
+            className={cn(
+              "rounded-md border px-2 py-1 text-left text-[12px]",
+              p.id === activeId
+                ? "border-cyan-700 bg-cyan-700 text-white"
+                : "border-border bg-background text-foreground hover:bg-muted",
+            )}
+          >
+            <span className="font-semibold">{p.name}</span>
+            <span className={p.id === activeId ? "text-white/85" : "text-muted-foreground"}>
+              {" "}· {periodRange(p)} · {p.slot_count} satır
+            </span>
+            {p.is_current ? (
+              <span
+                className={cn(
+                  "ml-1 rounded px-1 text-[10px] font-semibold",
+                  p.id === activeId ? "bg-white text-cyan-900" : "bg-emerald-700 text-white",
+                )}
+              >
+                bugün
+              </span>
+            ) : null}
+          </button>
+        ))}
+        <span className="ml-auto flex gap-1">
+          {active ? (
+            <button
+              type="button"
+              onClick={() => setMode(mode === "edit" ? null : "edit")}
+              className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300"
+            >
+              <Pencil className="size-3" aria-hidden /> Dönemi düzenle
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setMode(mode === "new" ? null : "new")}
+            className="inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300"
+          >
+            <Plus className="size-3" aria-hidden /> Yeni dönem
+          </button>
+        </span>
+      </div>
+      {mode === "new" ? (
+        <NewPeriodForm
+          studentId={studentId}
+          source={active}
+          weekStart={weekStart}
+          weekEnd={weekEnd}
+          onDone={(id) => {
+            setMode(null);
+            onSelect(id);
+          }}
+        />
+      ) : null}
+      {mode === "edit" && active ? (
+        <EditPeriodForm
+          key={active.id}
+          studentId={studentId}
+          period={active}
+          onDone={() => setMode(null)}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+type NewSource = "week" | "copy" | "empty";
+
+function NewPeriodForm({
+  studentId,
+  source,
+  weekStart,
+  weekEnd,
+  onDone,
+}: {
+  studentId: number;
+  source: SkeletonTerm | null;
+  weekStart: string;
+  weekEnd: string;
+  onDone: (id: number | null) => void;
+}) {
+  const [name, setName] = React.useState("");
+  const [kind, setKind] = React.useState<NewSource>("week");
+  const [start, setStart] = React.useState(weekStart);
+  const create = useCreatePeriod(studentId);
+  const fromWeek = useSkeletonFromWeek(studentId);
+  const busy = create.isPending || fromWeek.isPending;
+
+  function submit(e: React.FormEvent) {
+    e.preventDefault();
+    const nm = name.trim() || null;
+    if (kind === "week") {
+      fromWeek.mutate(
+        { start: weekStart, end: weekEnd, mode: "new", name: nm },
+        { onSuccess: (res) => onDone(res.data.id) },
+      );
+    } else {
+      create.mutate(
+        { valid_from: start, name: nm, copy_from_id: kind === "copy" ? source?.id ?? null : null },
+        { onSuccess: (res) => onDone(res.data.id) },
+      );
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="space-y-2 rounded-md border border-border bg-background p-2.5" data-testid="new-period-form">
+      <div className="flex flex-wrap items-center gap-2 text-[12.5px] text-foreground">
+        <input
+          type="text"
+          value={name}
+          maxLength={120}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Dönem adı (ör. Okul dönemi, Yarıyıl tatili)"
+          className="min-w-56 flex-1 rounded border border-border bg-background px-2 py-1 text-[12.5px] text-foreground"
+          aria-label="Dönem adı"
+        />
+      </div>
+      <div className="flex flex-col gap-1 text-[12.5px] text-foreground">
+        <label className="inline-flex items-center gap-2">
+          <input type="radio" checked={kind === "week"} onChange={() => setKind("week")} />
+          Bu haftanın görevlerinden — {fmtDay(weekStart)} tarihinden başlar
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input
+            type="radio"
+            checked={kind === "copy"}
+            onChange={() => setKind("copy")}
+            disabled={!source}
+          />
+          {source ? `"${source.name}" döneminin kopyası` : "Kopya (önce bir dönem seç)"}
+        </label>
+        <label className="inline-flex items-center gap-2">
+          <input type="radio" checked={kind === "empty"} onChange={() => setKind("empty")} />
+          Boş dönem
+        </label>
+        {kind !== "week" ? (
+          <label className="inline-flex items-center gap-2 pl-6">
+            Başlangıç
+            <input
+              type="date"
+              value={start}
+              onChange={(e) => setStart(e.target.value)}
+              className="rounded border border-border bg-background px-1.5 py-0.5 text-[12.5px] text-foreground"
+              aria-label="Dönem başlangıcı"
+            />
+          </label>
+        ) : null}
+      </div>
+      <p className="text-[11.5px] text-muted-foreground">
+        Önceki dönem silinmez; yeni dönem başlayınca bir gün önce biter.
+      </p>
+      <Button type="submit" size="sm" disabled={busy || (kind !== "week" && !start)}>
+        {busy ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
+        Dönemi başlat
+      </Button>
+    </form>
+  );
+}
+
+function EditPeriodForm({
+  studentId,
+  period,
+  onDone,
+}: {
+  studentId: number;
+  period: SkeletonTerm;
+  onDone: () => void;
+}) {
+  const [name, setName] = React.useState(period.name);
+  const [start, setStart] = React.useState(period.valid_from ?? "");
+  const upd = useUpdatePeriod(studentId);
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        upd.mutate(
+          {
+            skeleton_id: period.id,
+            name: name.trim() || null,
+            valid_from: start || null,
+            clear_start: !start,
+          },
+          { onSuccess: onDone },
+        );
+      }}
+      className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-background p-2.5 text-[12.5px] text-foreground"
+      data-testid="edit-period-form"
+    >
+      <input
+        type="text"
+        value={name}
+        maxLength={120}
+        onChange={(e) => setName(e.target.value)}
+        className="min-w-48 flex-1 rounded border border-border bg-background px-2 py-1 text-[12.5px] text-foreground"
+        aria-label="Dönem adı"
+      />
+      <label className="inline-flex items-center gap-1">
+        Başlangıç
+        <input
+          type="date"
+          value={start}
+          onChange={(e) => setStart(e.target.value)}
+          className="rounded border border-border bg-background px-1.5 py-0.5 text-[12.5px] text-foreground"
+          aria-label="Dönem başlangıcı"
+        />
+      </label>
+      <span className="text-[11.5px] text-muted-foreground">boş = en baştan beri</span>
+      <Button type="submit" size="sm" disabled={upd.isPending}>
+        Kaydet
+      </Button>
+    </form>
   );
 }

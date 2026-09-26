@@ -42,10 +42,25 @@ export interface SkeletonSlot extends SkeletonSlotIn {
   book_name: string | null;
 }
 
+/** F2-2 dönem: yalnız başlangıç taşır, bir sonraki dönem başlayana kadar geçerli */
+export interface SkeletonTerm {
+  id: number;
+  name: string;
+  valid_from: string | null;
+  valid_until: string | null;
+  slot_count: number;
+  is_current: boolean;
+  source: string | null;
+}
+
 export interface SkeletonResponse {
   exists: boolean;
+  id: number | null;
   name: string | null;
   source: string | null;
+  valid_from: string | null;
+  valid_until: string | null;
+  periods: SkeletonTerm[];
   slots: SkeletonSlot[];
   subjects: { id: number; name: string }[];
   books: { id: number; name: string; subject_id: number }[];
@@ -114,16 +129,17 @@ export interface GhostAcceptanceReport {
 
 export const skeletonKeys = {
   acceptance: (days: number) => ["teacher", "me", "skeleton-acceptance", days] as const,
-  skeleton: (studentId: number) =>
-    ["teacher", "me", "students", String(studentId), "skeleton"] as const,
+  skeleton: (studentId: number, skeletonId?: number | null) =>
+    ["teacher", "me", "students", String(studentId), "skeleton", "one", skeletonId ?? "current"] as const,
   ghosts: (studentId: number, start: string, end: string) =>
     ["teacher", "me", "students", String(studentId), "skeleton", "ghosts", start, end] as const,
 };
 
 const base = (sid: number) => `/api/v2/teacher/students/${sid}/skeleton`;
 
-export function getSkeleton(studentId: number): Promise<SkeletonResponse> {
-  return api<SkeletonResponse>(base(studentId));
+export function getSkeleton(studentId: number, skeletonId?: number | null): Promise<SkeletonResponse> {
+  const q = skeletonId ? `?skeleton_id=${skeletonId}` : "";
+  return api<SkeletonResponse>(`${base(studentId)}${q}`);
 }
 
 export function getGhosts(studentId: number, start: string, end: string): Promise<GhostsResponse> {
@@ -151,7 +167,7 @@ export function useSaveSkeleton(studentId: number) {
   return useMutation<
     MutationResponse<SkeletonResponse>,
     ApiError,
-    { name?: string | null; slots: SkeletonSlotIn[] }
+    { skeleton_id?: number | null; name?: string | null; slots: SkeletonSlotIn[] }
   >({
     mutationFn: (body) =>
       api(base(studentId), { method: "POST", body: JSON.stringify(body) }),
@@ -165,14 +181,24 @@ export function useSaveSkeleton(studentId: number) {
 
 export function useSkeletonFromWeek(studentId: number) {
   const qc = useQueryClient();
-  return useMutation<MutationResponse<SkeletonResponse>, ApiError, { start: string; end: string }>({
+  return useMutation<
+    MutationResponse<SkeletonResponse>,
+    ApiError,
+    {
+      start: string;
+      end: string;
+      mode?: "replace" | "new";
+      skeleton_id?: number | null;
+      name?: string | null;
+    }
+  >({
     mutationFn: (body) =>
       api(`${base(studentId)}/from-week`, { method: "POST", body: JSON.stringify(body) }),
     onError: (e) => showErr(e, "Bu hafta iskelete çevrilemedi"),
-    onSuccess: (res) => {
+    onSuccess: (res, vars) => {
       applyInvalidate(qc, res.invalidate);
-      toast.success("Bu hafta iskelet yapıldı", {
-        description: `${res.data.slots.length} satır — düzenleyebilirsin.`,
+      toast.success(vars.mode === "new" ? "Yeni dönem başladı" : "Bu hafta iskelet yapıldı", {
+        description: `${res.data.name ?? ""} · ${res.data.slots.length} satır — düzenleyebilirsin.`,
       });
     },
   });
@@ -180,14 +206,67 @@ export function useSkeletonFromWeek(studentId: number) {
 
 export function useDeleteSkeleton(studentId: number) {
   const qc = useQueryClient();
-  return useMutation<MutationResponse<SkeletonResponse>, ApiError, void>({
-    mutationFn: () => api(`${base(studentId)}/delete`, { method: "POST" }),
-    onError: (e) => showErr(e, "İskelet silinemedi"),
+  return useMutation<MutationResponse<SkeletonResponse>, ApiError, { skeleton_id?: number | null }>({
+    mutationFn: (body) =>
+      api(`${base(studentId)}/delete`, { method: "POST", body: JSON.stringify(body ?? {}) }),
+    onError: (e) => showErr(e, "Dönem silinemedi"),
     onSuccess: (res) => {
       applyInvalidate(qc, res.invalidate);
-      toast.success("İskelet silindi");
+      toast.success("Dönem silindi");
     },
   });
+}
+
+/** Yeni dönem: boş ya da başka bir dönemin kopyası. */
+export function useCreatePeriod(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<SkeletonResponse>,
+    ApiError,
+    { valid_from: string; name?: string | null; copy_from_id?: number | null }
+  >({
+    mutationFn: (body) =>
+      api(`${base(studentId)}/periods`, { method: "POST", body: JSON.stringify(body) }),
+    onError: (e) => showErr(e, "Dönem açılamadı"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Yeni dönem açıldı", { description: res.data.name ?? undefined });
+    },
+  });
+}
+
+/** Dönem adı / başlangıcı. */
+export function useUpdatePeriod(studentId: number) {
+  const qc = useQueryClient();
+  return useMutation<
+    MutationResponse<SkeletonResponse>,
+    ApiError,
+    { skeleton_id: number; name?: string | null; valid_from?: string | null; clear_start?: boolean }
+  >({
+    mutationFn: ({ skeleton_id, ...body }) =>
+      api(`${base(studentId)}/periods/${skeleton_id}`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      }),
+    onError: (e) => showErr(e, "Dönem güncellenemedi"),
+    onSuccess: (res) => {
+      applyInvalidate(qc, res.invalidate);
+      toast.success("Dönem güncellendi");
+    },
+  });
+}
+
+/** "01.07.2026" biçimi (dönem şeridi). */
+export function fmtDay(iso: string | null): string {
+  if (!iso) return "";
+  const [y, m, d] = iso.split("-");
+  return `${d}.${m}.${y}`;
+}
+
+export function periodRange(p: { valid_from: string | null; valid_until: string | null }): string {
+  const a = p.valid_from ? fmtDay(p.valid_from) : "baştan";
+  const b = p.valid_until ? fmtDay(p.valid_until) : "süresiz";
+  return `${a} – ${b}`;
 }
 
 export interface GhostAcceptBody {

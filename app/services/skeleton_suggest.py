@@ -616,13 +616,45 @@ def _routine_chip(ctx: _Ctx, slot: WeeklySkeletonSlot, d: date, fallback_q: int)
 # ---------------------------------------------------------------- hayaletler
 
 
-def get_skeleton(db: Session, student_id: int) -> WeeklySkeleton | None:
-    return (
+def list_skeletons(db: Session, student_id: int) -> list[WeeklySkeleton]:
+    """Öğrencinin dönem iskeletleri, başlangıca göre eskiden yeniye (NULL = en baş)."""
+    rows = (
         db.query(WeeklySkeleton)
         .options(joinedload(WeeklySkeleton.slots))
         .filter(WeeklySkeleton.student_id == student_id)
-        .first()
+        .all()
     )
+    return sorted(rows, key=lambda x: (x.valid_from or date.min, x.id))
+
+
+def skeleton_for_date(skels: list[WeeklySkeleton], d: date) -> WeeklySkeleton | None:
+    """O gün geçerli dönem: valid_from ≤ d olanların en yenisi."""
+    cur = None
+    for sk_ in skels:
+        if (sk_.valid_from or date.min) <= d:
+            cur = sk_
+    return cur
+
+
+def valid_until(skels: list[WeeklySkeleton], sk_: WeeklySkeleton) -> date | None:
+    """Dönemin son günü = bir sonraki dönemin başlangıcından bir gün önce."""
+    nxt = [x for x in skels if (x.valid_from or date.min) > (sk_.valid_from or date.min)]
+    if not nxt:
+        return None
+    return min(x.valid_from for x in nxt) - timedelta(days=1)
+
+
+def get_skeleton(
+    db: Session, student_id: int, at: date | None = None, skeleton_id: int | None = None,
+) -> WeeklySkeleton | None:
+    """skeleton_id verilirse o dönem (öğrenciye aitse); yoksa `at` (varsayılan
+    bugün) günü geçerli dönem. Hiç geçerli yoksa (hepsi ileride başlıyorsa) ilki."""
+    skels = list_skeletons(db, student_id)
+    if skeleton_id is not None:
+        return next((x for x in skels if x.id == skeleton_id), None)
+    if not skels:
+        return None
+    return skeleton_for_date(skels, at or date.today()) or skels[0]
 
 
 def _match_by_source(
@@ -680,9 +712,9 @@ def build_ghosts(
     today: date | None = None,
 ) -> dict:
     today = today or date.today()
-    sk = get_skeleton(db, student.id)
-    if sk is None or not sk.slots:
-        return {"has_skeleton": sk is not None, "days": []}
+    skels = list_skeletons(db, student.id)
+    if not skels or not any(x.slots for x in skels):
+        return {"has_skeleton": bool(skels), "days": []}
     start = max(start, today)
     if end < start:
         return {"has_skeleton": True, "days": []}
@@ -699,7 +731,7 @@ def build_ghosts(
         )
     }
 
-    slot_books = {s.book_id for s in sk.slots if s.book_id}
+    slot_books = {s.book_id for x in skels for s in x.slots if s.book_id}
     book_names = (
         {int(i): n for i, n in db.query(Book.id, Book.name).filter(Book.id.in_(slot_books))}
         if slot_books else {}
@@ -707,7 +739,9 @@ def build_ghosts(
     days = []
     d = start
     while d <= end:
-        wd = [s for s in sk.slots if s.weekday == d.weekday()]
+        # F2-2: her gün O GÜN geçerli dönemin iskeletinden (dönem değişen hafta bölünür)
+        cur = skeleton_for_date(skels, d)
+        wd = [s for s in (cur.slots if cur else []) if s.weekday == d.weekday()]
         by_subj: dict[int, list[WeeklySkeletonSlot]] = defaultdict(list)
         for s in sorted(wd, key=lambda x: (x.position, x.id)):
             by_subj[s.subject_id].append(s)
@@ -868,11 +902,63 @@ def slots_from_tasks(
     return out
 
 
+class PeriodConflict(Exception):
+    """Aynı başlangıç tarihli ikinci dönem."""
+
+
+def _check_start_free(skels: list[WeeklySkeleton], valid_from: date | None, except_id: int | None):
+    for x in skels:
+        if x.id != except_id and (x.valid_from or date.min) == (valid_from or date.min):
+            raise PeriodConflict(
+                f"Bu tarihte başlayan bir dönem zaten var ({x.name})."
+            )
+
+
+def create_period(
+    db: Session, *, student: User, coach_id: int, valid_from: date, name: str | None = None,
+    source: str = "manual", copy_from: WeeklySkeleton | None = None,
+) -> WeeklySkeleton:
+    """Yeni dönem iskeleti (boş ya da başka bir dönemin kopyası)."""
+    _check_start_free(list_skeletons(db, student.id), valid_from, None)
+    sk_ = WeeklySkeleton(
+        student_id=student.id, coach_id=coach_id, valid_from=valid_from, source=source,
+        name=(name or f"{valid_from.strftime('%d.%m.%Y')} dönemi").strip()[:120],
+    )
+    db.add(sk_)
+    db.flush()
+    if copy_from is not None:
+        for s in copy_from.slots:
+            sk_.slots.append(WeeklySkeletonSlot(
+                weekday=s.weekday, period=s.period, subject_id=s.subject_id, position=s.position,
+                is_routine=s.is_routine, default_count=s.default_count, book_id=s.book_id,
+                label=s.label, routine_mode=s.routine_mode,
+            ))
+        db.flush()
+    return sk_
+
+
+def update_period(
+    db: Session, *, student: User, skeleton: WeeklySkeleton, name: str | None = None,
+    valid_from: date | None = None, clear_start: bool = False,
+) -> WeeklySkeleton:
+    if name is not None and name.strip():
+        skeleton.name = name.strip()[:120]
+    if valid_from is not None or clear_start:
+        new_start = None if clear_start else valid_from
+        _check_start_free(list_skeletons(db, student.id), new_start, skeleton.id)
+        skeleton.valid_from = new_start
+    db.flush()
+    return skeleton
+
+
 def replace_slots(
     db: Session, *, student: User, coach_id: int, slots: list[dict],
     name: str | None = None, source: str = "manual",
+    skeleton: WeeklySkeleton | None = None,
 ) -> WeeklySkeleton:
-    sk = get_skeleton(db, student.id)
+    """Bir dönemin satırlarını değiştir. skeleton verilmezse BUGÜN geçerli dönem
+    (hiç yoksa başlangıçsız ilk dönem açılır)."""
+    sk = skeleton or get_skeleton(db, student.id)
     if sk is None:
         sk = WeeklySkeleton(student_id=student.id, coach_id=coach_id)
         db.add(sk)

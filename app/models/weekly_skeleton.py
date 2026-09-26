@@ -46,15 +46,18 @@ class WeeklySkeleton(Base):
     __tablename__ = "weekly_skeletons"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    # Öğrenci başına TEK etkin iskelet.
+    # F2-2: öğrencinin BİRDEN ÇOK dönem iskeleti olabilir (Yaz · Okul …).
     student_id: Mapped[int] = mapped_column(
-        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, unique=True
+        ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True
     )
     coach_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id", ondelete="SET NULL"), nullable=True, index=True
     )
     name: Mapped[str] = mapped_column(String(120), nullable=False, default="Haftalık iskelet")
     source: Mapped[str] = mapped_column(String(16), nullable=False, default="manual")
+    # Dönem başlangıcı: bir gün için geçerli iskelet = valid_from ≤ gün olanların
+    # en yenisi; bir sonraki dönem başlayana kadar geçerli. NULL = en baştan beri.
+    valid_from: Mapped[date | None] = mapped_column(Date, nullable=True)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
