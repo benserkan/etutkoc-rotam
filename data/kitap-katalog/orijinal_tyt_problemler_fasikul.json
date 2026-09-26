@@ -57,7 +57,8 @@
   {
    "label": "Periyodik Problemler, Grafik Problemleri ve Sayısal Mantık",
    "test_count": 7,
-   "source": "scan"
+   "source": "scan",
+   "topic": "Sayısal Yetenek Problemleri"
   },
   {
    "label": "ÖSYM Tarzı Problem Denemeleri (11 deneme)",
