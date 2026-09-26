@@ -112,6 +112,24 @@ def main() -> int:
                 s.topic_id = None  # deterministik auto-map da geri alınır
         else:
             ai_n = svc.ai_map_sections(db, entry)
+        # JSON'da bölüm başına açık "topic" (konu adı) verilmişse otomatik eşlemeyi EZER
+        # ("" / null → bilinçli eşsiz). Konu aynı builtin derste aranır; bulunamazsa hata.
+        from app.models import Topic
+
+        by_label = {s["label"]: s for s in sections}
+        for es in entry.sections:
+            js = by_label.get(es.label)
+            if js is None or "topic" not in js:
+                continue
+            if not js["topic"]:
+                es.topic_id = None
+                continue
+            t = db.query(Topic).filter(Topic.subject_id == subj.id, Topic.name == js["topic"]).first()
+            if t is None:
+                print(f"HATA: '{js['topic']}' konusu {subj.name} dersinde yok.")
+                db.rollback()
+                return 1
+            es.topic_id = t.id
         db.commit()
         db.refresh(entry)
         mapped = sum(1 for s in entry.sections if s.topic_id is not None)

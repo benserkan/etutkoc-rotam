@@ -1,0 +1,96 @@
+{
+ "name": "Orijinal AYT İntegral Fasikülü",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "fasikul",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Taranmış PDF (161 s., 2027 baskısı). Yapı: 1. ayraç içindekileri (alt başlık + sayfa). Test sayısı GÖZ SAYIMI (2026-09-26): üst bant + alt şeritteki cevap anahtarı/cevap satırı kontak föyde incelendi; birim = cevap kutusuyla biten blok.",
+  "Orijinal fasikül kuralı (2026-08-29): Kazanım Testi + ÖSYM Tarzı Test + 'Bir de Orijinal'den Dinle' + 'ÖSYM Tarzı Çözümlü Örnekler' (bu kitapta ayrı sayfalı soru blokları, kendi cevap satırıyla) + Tarama Testi sayıldı. 1. Bölüm 7K+6D+8Ç+10Ö · 2. Bölüm 3K+2D+4Ç+7Ö · 3. Bölüm 18 tarama.",
+  "Son sayfa 'ÖSYM'de Çıkmış Sorular' (tek sayfa) ve 'İntegral Bilgi Notları' sayılmadı."
+ ],
+ "sections": [
+  {
+   "label": "İntegral · Diferansiyel Kavramı – Belirsiz İntegral",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "İntegral"
+  },
+  {
+   "label": "İntegral · İntegral Alma Kuralları",
+   "test_count": 7,
+   "source": "scan",
+   "topic": "İntegral"
+  },
+  {
+   "label": "İntegral · Değişken Değiştirme",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "İntegral"
+  },
+  {
+   "label": "İntegral · Belirli İntegral",
+   "test_count": 10,
+   "source": "scan",
+   "topic": "İntegral"
+  },
+  {
+   "label": "İntegral · Parçalı ve Mutlak Değerli Fonksiyonların İntegrali",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "İntegral"
+  },
+  {
+   "label": "Belirli İntegral · Riemann Toplamları",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "İntegral"
+  },
+  {
+   "label": "Belirli İntegral · Belirli İntegral ile Alan Hesabı",
+   "test_count": 13,
+   "source": "scan",
+   "topic": "İntegral"
+  },
+  {
+   "label": "İntegral · ÖSYM Tarzı Tarama Testleri",
+   "test_count": 18,
+   "source": "scan",
+   "topic": "İntegral"
+  }
+ ],
+ "meta": {
+  "dividers": [
+   {
+    "pdf_idx": 74,
+    "bolum_no": 2,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "Riemann Toplamları",
+      "page": null
+     },
+     {
+      "label": "Belirli İntegral Alan Hesabı",
+      "page": null
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 122,
+    "bolum_no": 3,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "ÖSYM Tarzı Tarama Testleri",
+      "page": null
+     }
+    ],
+    "is_divider": true
+   }
+  ]
+ }
+}

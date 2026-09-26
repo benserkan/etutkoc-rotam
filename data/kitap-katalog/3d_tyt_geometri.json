@@ -1,0 +1,290 @@
+{
+ "name": "3D TYT Geometri Soru Bankası",
+ "publisher": "3D Yayınları",
+ "subject": "TYT Geometri",
+ "type": "soru_bankasi",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Taranmış PDF (304 s.) — yapı içindekiler sayfasından (sayfa numaralı), test sayısı = bölüm sayfa aralığı ÷ 2 (her test 2 sayfa, konu anlatımı yok; ofset −1).",
+  "Gövde doğrulaması (2026-09-26, Gemini'siz, kontak-föy göz teyidi): her satırın ilk ve son testindeki 'BÖLÜM 0X Test NN' bandı hesapla birebir; bölüm sayaçları 1–50 / 1–35 / 1–17 / 1–8 / 1–11 boşluksuz; Tümevarım I–V serileri 3/5/6/7/7.",
+  "Bire Bir ÖSYM satırları bölüm sayacında sürer (1 test, 2 sayfa); hangi konuların ardından geldiği etikette parantezle yazıldı. Tümevarım satırları kümülatif karma."
+ ],
+ "sections": [
+  {
+   "label": "Düzlemde Açı",
+   "test_count": 3,
+   "source": "scan",
+   "page": 7
+  },
+  {
+   "label": "Üçgende Açı",
+   "test_count": 5,
+   "source": "scan",
+   "page": 13,
+   "topic": "Üçgende Açılar"
+  },
+  {
+   "label": "Bire Bir ÖSYM (Üçgende Açı)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 23
+  },
+  {
+   "label": "Dik Üçgen ve Trigonometri",
+   "test_count": 6,
+   "source": "scan",
+   "page": 25
+  },
+  {
+   "label": "Bire Bir ÖSYM (Dik Üçgen ve Trigonometri)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 37
+  },
+  {
+   "label": "Üçgende Açı - Kenar Bağıntıları",
+   "test_count": 4,
+   "source": "scan",
+   "page": 39
+  },
+  {
+   "label": "İkizkenar Üçgen",
+   "test_count": 3,
+   "source": "scan",
+   "page": 47,
+   "topic": "İkizkenar ve Eşkenar Üçgen"
+  },
+  {
+   "label": "Eşkenar Üçgen",
+   "test_count": 3,
+   "source": "scan",
+   "page": 53,
+   "topic": "İkizkenar ve Eşkenar Üçgen"
+  },
+  {
+   "label": "Bire Bir ÖSYM (Açı-Kenar, İkizkenar, Eşkenar)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 59
+  },
+  {
+   "label": "Üçgende Açıortay",
+   "test_count": 3,
+   "source": "scan",
+   "page": 61
+  },
+  {
+   "label": "Üçgende Kenarortay",
+   "test_count": 3,
+   "source": "scan",
+   "page": 67
+  },
+  {
+   "label": "Üçgende Merkezler",
+   "test_count": 1,
+   "source": "scan",
+   "page": 73
+  },
+  {
+   "label": "Bire Bir ÖSYM (Açıortay, Kenarortay, Merkezler)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 75
+  },
+  {
+   "label": "Üçgende Benzerlik",
+   "test_count": 7,
+   "source": "scan",
+   "page": 77
+  },
+  {
+   "label": "Bire Bir ÖSYM (Üçgende Benzerlik)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 91
+  },
+  {
+   "label": "Üçgende Alan",
+   "test_count": 6,
+   "source": "scan",
+   "page": 93
+  },
+  {
+   "label": "Bire Bir ÖSYM (Üçgende Alan)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 105
+  },
+  {
+   "label": "Tümevarım - I",
+   "test_count": 3,
+   "source": "scan",
+   "page": 107,
+   "topic": null
+  },
+  {
+   "label": "Çokgenler",
+   "test_count": 4,
+   "source": "scan",
+   "page": 113
+  },
+  {
+   "label": "Dörtgenler",
+   "test_count": 3,
+   "source": "scan",
+   "page": 121,
+   "topic": "Çokgenler ve Dörtgenler (Karma)"
+  },
+  {
+   "label": "Yamuk",
+   "test_count": 6,
+   "source": "scan",
+   "page": 127
+  },
+  {
+   "label": "Paralelkenar",
+   "test_count": 5,
+   "source": "scan",
+   "page": 139
+  },
+  {
+   "label": "Eşkenar Dörtgen",
+   "test_count": 4,
+   "source": "scan",
+   "page": 149,
+   "topic": "Eşkenar Dörtgen ve Deltoid"
+  },
+  {
+   "label": "Bire Bir ÖSYM (Çokgenler - Eşkenar Dörtgen)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 157
+  },
+  {
+   "label": "Dikdörtgen",
+   "test_count": 4,
+   "source": "scan",
+   "page": 159
+  },
+  {
+   "label": "Kare",
+   "test_count": 5,
+   "source": "scan",
+   "page": 167
+  },
+  {
+   "label": "Deltoid ve Dörtgenlerin Sınıflandırılması",
+   "test_count": 2,
+   "source": "scan",
+   "page": 177
+  },
+  {
+   "label": "Bire Bir ÖSYM (Dikdörtgen, Kare, Deltoid)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 181
+  },
+  {
+   "label": "Tümevarım - II",
+   "test_count": 5,
+   "source": "scan",
+   "page": 183,
+   "topic": null
+  },
+  {
+   "label": "Çemberde Açılar",
+   "test_count": 4,
+   "source": "scan",
+   "page": 193
+  },
+  {
+   "label": "Bire Bir ÖSYM (Çemberde Açılar)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 201
+  },
+  {
+   "label": "Çemberde Uzunluk",
+   "test_count": 6,
+   "source": "scan",
+   "page": 203
+  },
+  {
+   "label": "Bire Bir ÖSYM (Çemberde Uzunluk)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 215
+  },
+  {
+   "label": "Dairede Alan",
+   "test_count": 4,
+   "source": "scan",
+   "page": 217
+  },
+  {
+   "label": "Bire Bir ÖSYM (Dairede Alan)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 225
+  },
+  {
+   "label": "Tümevarım - III",
+   "test_count": 6,
+   "source": "scan",
+   "page": 227,
+   "topic": null
+  },
+  {
+   "label": "Katı Cisimler",
+   "test_count": 6,
+   "source": "scan",
+   "page": 239
+  },
+  {
+   "label": "Bire Bir ÖSYM (Katı Cisimler)",
+   "test_count": 2,
+   "source": "scan",
+   "page": 251
+  },
+  {
+   "label": "Tümevarım - IV",
+   "test_count": 7,
+   "source": "scan",
+   "page": 255,
+   "topic": null
+  },
+  {
+   "label": "Noktanın Analitik İncelenmesi",
+   "test_count": 3,
+   "source": "scan",
+   "page": 269
+  },
+  {
+   "label": "Bire Bir ÖSYM (Noktanın Analitik İncelenmesi)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 275
+  },
+  {
+   "label": "Doğrunun Analitik İncelenmesi",
+   "test_count": 6,
+   "source": "scan",
+   "page": 277
+  },
+  {
+   "label": "Bire Bir ÖSYM (Doğrunun Analitik İncelenmesi)",
+   "test_count": 1,
+   "source": "scan",
+   "page": 289
+  },
+  {
+   "label": "Tümevarım - V",
+   "test_count": 7,
+   "source": "scan",
+   "page": 291,
+   "topic": null
+  }
+ ]
+}

@@ -1,0 +1,100 @@
+{
+ "name": "Orijinal AYT Trigonometri Fasikülü",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "fasikul",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Taranmış PDF (209 s., 2027 baskısı). Yapı: içindekiler (9 bölüm, alt başlık + sayfa). Test sayısı GÖZ SAYIMI (2026-09-26): üst bant + alt şeritteki cevap anahtarı kontak föyde incelendi; birim = cevap kutusuyla biten blok (1-2 sayfa).",
+  "Sayılan: Kazanım Testi · ÖSYM Tarzı Test · 'Bir de Orijinal'den Dinle' (Orijinal fasikül kuralı) · Tarama. Konu anlatımı içindeki 'ÖSYM Tarzı' örnek bantları (cevap kutusu yok) sayılmadı.",
+  "Tarama testleri 5. bölüm sonunda (1–3), 7. bölüm sonunda (1–5) ve 9. bölüm sonunda (1–10)."
+ ],
+ "sections": [
+  {
+   "label": "1. Bölüm · Açı Ölçü Birimleri",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "2. Bölüm · Dik Üçgende Trigonometrik Oranlar",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "3. Bölüm · Trigonometrik Fonksiyonlar",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "4. Bölüm · Trigonometrik Özdeşlikler ve Sadeleştirmeler",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "5. Bölüm · İşaretler – Sıralama ve İndirgeme Bağıntıları",
+   "test_count": 7,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "5. Bölüm · Tarama Testleri (1–3)",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "6. Bölüm · Trigonometrik Teoremler (Kosinüs ve Sinüs Teoremleri)",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "7. Bölüm · Periyot ve Grafikler",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "7. Bölüm · Ters Trigonometrik Fonksiyonlar",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "7. Bölüm · Tarama Testleri (1–5)",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "8. Bölüm · Toplam ve Fark Formülleri",
+   "test_count": 6,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "8. Bölüm · Yarım Açı Formülleri",
+   "test_count": 7,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "9. Bölüm · Trigonometrik Denklemler",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Trigonometri"
+  },
+  {
+   "label": "9. Bölüm · Tarama Testleri (1–10)",
+   "test_count": 10,
+   "source": "scan",
+   "topic": "Trigonometri"
+  }
+ ]
+}

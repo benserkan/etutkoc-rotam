@@ -89,6 +89,8 @@ def band_cat(b: str | None) -> str | None:
         return "x_cevap"
     if "dinle" in s:
         return "x_dinle"
+    if "cozumlu ornek" in s and "osym" in s:
+        return "x_cozumlu"
     if "cozumlu" in s or "ornek" in s or "bilgi notu" in s or "cozum" in s or s.startswith("soru"):
         return "x_ornek"
     if "tarama" in s:
@@ -104,7 +106,8 @@ def band_cat(b: str | None) -> str | None:
 
 CAT_TR = {"kazanim": "Kazanım Testi", "osym_test": "ÖSYM Tarzı Test", "tarama": "ÖSYM Tarzı Tarama Testi",
           "test": "Test", "dinle": "Bir de Orijinal'den Dinle", "x_dinle": "Bir de Orijinal'den Dinle",
-          "x_ornek": "Örnek/Çözümlü örnek"}
+          "x_ornek": "Örnek/Çözümlü örnek",
+          "cozumlu_ornek": "ÖSYM Tarzı Çözümlü Örnekler", "x_cozumlu": "ÖSYM Tarzı Çözümlü Örnekler"}
 
 _TR_LOWER = str.maketrans("IİÇĞÖŞÜ", "ıiçğöşü")
 _TR_UPPER = str.maketrans("ıiçğöşü", "IİÇĞÖŞÜ")
@@ -142,10 +145,18 @@ def find_dividers(doc) -> list[int]:
 
 def read_divider(doc, idx: int) -> dict:
     parts = [_img_part(doc[idx].get_pixmap(dpi=80)), gemini.text_part(DIVIDER_PROMPT)]
-    try:
-        data = _gen(parts, timeout=90)
-    except Exception:  # noqa: BLE001
-        data = _gen(parts, timeout=90)
+    data = None
+    for attempt in range(3):
+        try:
+            data = _gen(parts, timeout=90)
+            if isinstance(data, dict):
+                break
+        except Exception as e:  # noqa: BLE001
+            if attempt == 2:
+                print(f"  ⚠ ayraç adayı PDF s.{idx+1} okunamadı ({e}) — ayraç sayılmadı")
+        data = None
+    if not isinstance(data, dict):
+        return {"pdf_idx": idx, "bolum_no": None, "bolum_adi": None, "items": [], "is_divider": False}
     items = []
     for it in data.get("items") or []:
         if isinstance(it, dict) and it.get("label"):
@@ -205,13 +216,16 @@ def bolum_index(h: str | None, idx: int, dividers: list[dict], bolum_ranges) -> 
     return None
 
 
-def units_from_scan(scan: dict[int, dict], dividers, bolum_ranges, include_dinle: bool) -> list[dict]:
+def units_from_scan(scan: dict[int, dict], dividers, bolum_ranges, include_dinle: bool,
+                    include_cozumlu: bool = False) -> list[dict]:
     units: list[dict] = []
     for idx in sorted(scan):
         v = scan[idx]
         cat = band_cat(v.get("b"))
         if cat == "x_dinle" and include_dinle:
             cat = "dinle"
+        if cat == "x_cozumlu" and include_cozumlu:
+            cat = "cozumlu_ornek"
         if cat is None or cat.startswith("x_"):
             continue
         bi = bolum_index(v.get("h"), idx, dividers, bolum_ranges)
@@ -328,6 +342,8 @@ def main() -> int:
     ap.add_argument("--grade-max", type=int, default=None)
     ap.add_argument("--graduate", action="store_true")
     ap.add_argument("--include-dinle", action="store_true", help="'Bir de Orijinal'den Dinle' soru setlerini de test say")
+    ap.add_argument("--include-cozumlu", action="store_true",
+                    help="'ÖSYM Tarzı Çözümlü Örnekler' bloklarını da test say (Orijinal fasikül kuralı, 2026-08-29)")
     ap.add_argument("--from-raw", default=None, help="önceki koşunun .raw.json'u — Gemini çağrılmaz")
     ap.add_argument("--out", default=None)
     args = ap.parse_args()
@@ -376,8 +392,8 @@ def main() -> int:
             f1, f2 = pool.submit(scan_once, doc, pages), pool.submit(scan_once, doc, pages)
             s1, s2 = f1.result(), f2.result()
 
-    u1 = units_from_scan(s1, dividers, bolum_ranges, args.include_dinle)
-    u2 = units_from_scan(s2, dividers, bolum_ranges, args.include_dinle)
+    u1 = units_from_scan(s1, dividers, bolum_ranges, args.include_dinle, args.include_cozumlu)
+    u2 = units_from_scan(s2, dividers, bolum_ranges, args.include_dinle, args.include_cozumlu)
     units = merge_passes(u1, u2)
 
     print("\nBölüm bazında (geçiş1 / geçiş2 / BİRLEŞİM):")
@@ -386,7 +402,7 @@ def main() -> int:
         b = sum(1 for u in u2 if u["bolum_i"] == bi)
         m = sum(1 for u in units if u["bolum_i"] == bi)
         only = sum(1 for u in units if u["bolum_i"] == bi and u.get("only"))
-        print(f"  {d['bolum_adi']:<34} {a:>3} / {b:>3} → {m:>3}   (tek geçişte görülen: {only})")
+        print(f"  {(d['bolum_adi'] or '?'):<34} {a:>3} / {b:>3} → {m:>3}   (tek geçişte görülen: {only})")
 
     sections, zero, warnings = build_groups(dividers, units, offset)
 

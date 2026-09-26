@@ -1,0 +1,261 @@
+{
+ "name": "Orijinal AYT Analitik Geometri Fasikülü",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Geometri",
+ "type": "fasikul",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Taranmış PDF (193 s., 2027 baskısı). Yapı: bölüm ayraçlarındaki alt başlıklar + test sayısı GÖZ SAYIMI (2026-09-26): üst bant (Kazanım Test N / ÖSYM Tarzı Test N) + alt şeritteki CEVAP ANAHTARI kutusu kontak föyde tek tek incelendi; test = cevap anahtarıyla biten blok (çoğu 2, bazısı 3 sayfa).",
+  "Bölüm sayımları: Dik Koordinat Düzlemi 3K+7Ö · Doğrunun Analitik İncelenmesi 7K+15Ö · Dönüşümler 9K+7Ö · Çemberin Analitik İncelenmesi 4K+3Ö. Kazanım numarası alt-grupta yeniden başlar, ÖSYM Tarzı sayacı bölüm boyunca sürer.",
+  "Kitap sonu 'Deneme 1–16': her biri tek sayfa, 4 soruluk karma mini deneme (kendi cevap anahtarı var) — toplam 64 soru, soru hacmine göre 4 deneme = 1 test normalize edildi (Sıfır Risk / Twins birim-kararı deseni).",
+  "Araç (fasikul_structure.py) 2 test eksik saymış ve denemeleri atlamıştı (Dönüşümler 15→16, Çember 6→7); satır sayıları göz sayımından."
+ ],
+ "sections": [
+  {
+   "label": "Dik Koordinat Düzlemi · Dik Koordinat Sistemi – Geometrik Şekillerin Analitik Yorumu",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Analitik Geometri (Doğru)"
+  },
+  {
+   "label": "Dik Koordinat Düzlemi · İki Nokta Arasındaki Uzaklık – Üçgenin Ağırlık Merkezi",
+   "test_count": 6,
+   "source": "scan",
+   "topic": "Analitik Geometri (Doğru)"
+  },
+  {
+   "label": "Doğrunun Analitik İncelenmesi · Eğim Açısı ve Eğim",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Analitik Geometri (Doğru)"
+  },
+  {
+   "label": "Doğrunun Analitik İncelenmesi · Doğru Denklemleri – Geometrik Yer",
+   "test_count": 19,
+   "source": "scan",
+   "topic": "Analitik Geometri (Doğru)"
+  },
+  {
+   "label": "Dönüşümler · Öteleme Dönüşümü",
+   "test_count": 2,
+   "source": "scan",
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Dönüşümler · Dönme Dönüşümü",
+   "test_count": 2,
+   "source": "scan",
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Dönüşümler · Yansıma (Simetri) Dönüşümü",
+   "test_count": 12,
+   "source": "scan",
+   "topic": "Dönüşüm Geometrisi"
+  },
+  {
+   "label": "Çemberin Analitik İncelenmesi · Çemberin Standart ve Genel Denklemi",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Çemberin Analitik İncelenmesi"
+  },
+  {
+   "label": "Çemberin Analitik İncelenmesi · Doğru ile Çemberin Durumu – Geometrik Yer",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Çemberin Analitik İncelenmesi"
+  },
+  {
+   "label": "Karma Denemeler (Deneme 1–16 · 4'er soru; 4 deneme = 1 test)",
+   "test_count": 4,
+   "source": "scan",
+   "topic": null
+  }
+ ],
+ "meta": {
+  "dividers": [
+   {
+    "pdf_idx": 3,
+    "bolum_no": 1,
+    "bolum_adi": "DİK KOORDİNAT DÜZLEMİ",
+    "items": [
+     {
+      "label": "DİK KOORDİNAT SİSTEMİ",
+      "page": 4
+     },
+     {
+      "label": "GEOMETRİK ŞEKİLLERİN ANALİTİK YORUMU",
+      "page": 7
+     },
+     {
+      "label": "İKİ NOKTA ARASINDAKİ UZAKLIK",
+      "page": 16
+     },
+     {
+      "label": "BİR DOĞRU PARÇASININ ORTA NOKTASININ KOORDİNATLARI",
+      "page": 17
+     },
+     {
+      "label": "BİR DOĞRU PARÇASINI BELİRLİ ORANDA BÖLEN NOKTANIN KOORDİNATLARI",
+      "page": 18
+     },
+     {
+      "label": "PARALELKENAR KURALI",
+      "page": 19
+     },
+     {
+      "label": "KÖŞE KOORDİNATLARI BİLİNEN ÜÇGENİN AĞIRLIK MERKEZİNİN KOORDİNATLARI",
+      "page": 20
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 33,
+    "bolum_no": 2,
+    "bolum_adi": "DOĞRUNUN ANALİTİK İNCELENMESİ",
+    "items": [
+     {
+      "label": "BİR DOĞRUNUN EĞİM AÇISI - BİR DOĞRUNUN EĞİMİ",
+      "page": 34
+     },
+     {
+      "label": "DENKLEMİ VERİLEN DOĞRUNUN EĞİMİ",
+      "page": 35
+     },
+     {
+      "label": "İKİ NOKTANIN BİLİNEN DOĞRUNUN EĞİMİ",
+      "page": 36
+     },
+     {
+      "label": "EĞİMİ VE BİR NOKTASI BİLİNEN DOĞRUNUN DENKLEMİ - İKİ NOKTASI BİLİNEN DOĞRUNUN DENKLEMİ",
+      "page": 43
+     },
+     {
+      "label": "EKSENLERİ KESTİĞİ NOKTALARI BİLİNEN DOĞRUNUN DENKLEMİ - EKSENLERE PARALEL DOĞRULAR",
+      "page": 44
+     },
+     {
+      "label": "BAŞLANGIÇ NOKTASINDAN GEÇEN DOĞRULAR",
+      "page": 45
+     },
+     {
+      "label": "DOĞRU ÜZERİNDEKİ NOKTALAR - DOĞRULARIN KESİM NOKTASI",
+      "page": 46
+     },
+     {
+      "label": "BİRBİRİNE DİK DOĞRULAR",
+      "page": 47
+     },
+     {
+      "label": "BİRBİRİNE PARALEL DOĞRULAR",
+      "page": 48
+     },
+     {
+      "label": "DOĞRUNUN GRAFİĞİ",
+      "page": 49
+     },
+     {
+      "label": "İKİ DOĞRUNUN BİRBİRİNE GÖRE DURUMU",
+      "page": 50
+     },
+     {
+      "label": "BİR NOKTANIN BİR DOĞRUYA UZAKLIĞI",
+      "page": 51
+     },
+     {
+      "label": "EŞİTSİZLİK",
+      "page": 52
+     },
+     {
+      "label": "GEOMETRİK YER",
+      "page": 54
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 94,
+    "bolum_no": 3,
+    "bolum_adi": "DÖNÜŞÜMLER",
+    "items": [
+     {
+      "label": "ÖTELEME DÖNÜŞÜMÜ",
+      "page": 95
+     },
+     {
+      "label": "DÖNME DÖNÜŞÜMÜ",
+      "page": 104
+     },
+     {
+      "label": "KOORDİNAT DÜZLEMİNDE DÖNME DÖNÜŞÜMÜ",
+      "page": 105
+     },
+     {
+      "label": "YANSIMA (SİMETRİ) DÖNÜŞÜMÜ",
+      "page": 115
+     },
+     {
+      "label": "NOKTANIN NOKTAYA GÖRE SİMETRİSİ",
+      "page": 116
+     },
+     {
+      "label": "NOKTANIN EKSENLERE VE ORİJİNE GÖRE SİMETRİSİ",
+      "page": 118
+     },
+     {
+      "label": "NOKTANIN y = x VE y = -x DOĞRULARINA GÖRE SİMETRİSİ",
+      "page": 119
+     },
+     {
+      "label": "NOKTANIN x = k VE y = k DOĞRULARINA GÖRE SİMETRİSİ",
+      "page": 120
+     },
+     {
+      "label": "NOKTANIN DOĞRUYA GÖRE SİMETRİSİ",
+      "page": 121
+     },
+     {
+      "label": "BİR DOĞRUNUN BİR NOKTAYA GÖRE SİMETRİSİ",
+      "page": 123
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 150,
+    "bolum_no": 4,
+    "bolum_adi": "ÇEMBERİN ANALİTİK İNCELENMESİ",
+    "items": [
+     {
+      "label": "ÇEMBERİN STANDART DENKLEMİ",
+      "page": 151
+     },
+     {
+      "label": "EKSENLERE TEĞET ÇEMBERLER",
+      "page": 152
+     },
+     {
+      "label": "ÇEMBERİN GENEL DENKLEMİ",
+      "page": 156
+     },
+     {
+      "label": "DOĞRU İLE ÇEMBERİN DURUMU",
+      "page": 163
+     },
+     {
+      "label": "İKİ ÇEMBERİN DURUMLARI",
+      "page": 165
+     },
+     {
+      "label": "GEOMETRİK YER KAVRAMI",
+      "page": 169
+     }
+    ],
+    "is_divider": true
+   }
+  ]
+ }
+}

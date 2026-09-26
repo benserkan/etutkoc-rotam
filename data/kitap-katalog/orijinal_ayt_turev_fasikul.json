@@ -1,0 +1,112 @@
+{
+ "name": "Orijinal AYT Türev Fasikülü",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "fasikul",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Taranmış PDF (193 s., 2027 baskısı). Yapı: 1. ayraç içindekileri (alt başlık + sayfa). Test sayısı GÖZ SAYIMI (2026-09-26): üst bant + alt şeritteki cevap anahtarı kontak föyde incelendi; birim = cevap kutusuyla biten blok (çoğu 2 sayfa).",
+  "Sayılan: Kazanım Testi · ÖSYM Tarzı Test · 'ÖSYM Tarzı Örnekler' (kendi cevap satırı olan soru bloğu — Orijinal fasikül kuralı) · Tarama. Konu sayfalarındaki örnek cevap satırları sayılmadı.",
+  "'ÖSYM'de Çıkmış Sorular' 8 sayfa, tek cevap anahtarı, 36 soru → soru hacmine göre 3 test."
+ ],
+ "sections": [
+  {
+   "label": "Türev · Ortalama ve Anlık Değişim Oranı – Türev Tanımı",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev · Sabit Fonksiyonun Türevi – Toplam ve Farkın Türevi",
+   "test_count": 2,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev · Çarpım ve Bölümün Türevi",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev · [f(x)]ⁿ Biçimindeki Fonksiyonların Türevi",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev · Bileşke Fonksiyonun Türevi",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev · İkinci Türev – Türev-Süreklilik İlişkisi",
+   "test_count": 1,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev · Mutlak Değer ve Parçalı Fonksiyonların Türevi",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev · ÖSYM Tarzı Tarama Testleri (1–5)",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Geometrik Yorumu · Teğet-Normal Denklemi – Rolle Teoremi",
+   "test_count": 6,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Uygulamaları · Artan-Azalan Fonksiyonlar",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Uygulamaları · Ekstremum Noktaları",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Uygulamaları · Türevin Geometrik Yorumu Tarama Testleri (1–5)",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Uygulamaları · Maksimum ve Minimum Problemleri",
+   "test_count": 6,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türevin Uygulamaları · Polinom Fonksiyon Grafikleri",
+   "test_count": 2,
+   "source": "scan",
+   "topic": "Fonksiyon Grafikleri ve Uygulamaları"
+  },
+  {
+   "label": "Türev · ÖSYM Tarzı Tarama Testleri (1–14)",
+   "test_count": 14,
+   "source": "scan",
+   "topic": "Türev"
+  },
+  {
+   "label": "Türev · ÖSYM'de Çıkmış Sorular (36 soru)",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Türev"
+  }
+ ]
+}

@@ -1,0 +1,69 @@
+{
+ "name": "Orijinal TYT Problemler Fasikülü",
+ "publisher": "Orijinal Yayınları",
+ "subject": "TYT Matematik",
+ "type": "fasikul",
+ "target_grade_min": 9,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Deterministik metin-katmanı taraması (2026-09-26, Gemini'siz): üst banttaki 12pt 'KAZANIM TESTİ - N' / 'ÖSYM TARZI TEST - N' serileri; 9 konu bölümünde numara zinciri 1..N boşluksuz (kazanım + ÖSYM tarzı tek sayaçta akar). Her test 2 sayfa (İşçi Test 4 tek sayfa).",
+  "10. bölüm 'ÖSYM Tarzı Deneme 1..11' (3'er sayfa, karma) — ayrı satır, her deneme 1 test sayıldı.",
+  "Kazanım örnekleri (çözümlü örnek/konu anlatımı), bölüm ayraçları ve son 'Etkinlik Sayfası' teste sayılmadı.",
+  "Aynı kitabın çözümsüz taraması (2026_Orijinal_Yayınları_Problemler_Fasikülü_Çözümsüz.pdf, 209 s., +1 kapak) gözle karşılaştırıldı — içerik birebir; ayrı kayıt açılmadı."
+ ],
+ "sections": [
+  {
+   "label": "Oran - Orantı",
+   "test_count": 7,
+   "source": "scan"
+  },
+  {
+   "label": "Sayı Problemleri",
+   "test_count": 11,
+   "source": "scan"
+  },
+  {
+   "label": "Kesir Problemleri",
+   "test_count": 5,
+   "source": "scan"
+  },
+  {
+   "label": "Yaş Problemleri",
+   "test_count": 5,
+   "source": "scan"
+  },
+  {
+   "label": "İşçi Problemleri",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Yüzde, Kâr - Zarar Problemleri",
+   "test_count": 10,
+   "source": "scan",
+   "topic": "Yüzde Problemleri"
+  },
+  {
+   "label": "Karışım Problemleri",
+   "test_count": 4,
+   "source": "scan"
+  },
+  {
+   "label": "Hareket Problemleri",
+   "test_count": 8,
+   "source": "scan"
+  },
+  {
+   "label": "Periyodik Problemler, Grafik Problemleri ve Sayısal Mantık",
+   "test_count": 7,
+   "source": "scan"
+  },
+  {
+   "label": "ÖSYM Tarzı Problem Denemeleri (11 deneme)",
+   "test_count": 11,
+   "source": "scan",
+   "topic": null
+  }
+ ]
+}

@@ -1,0 +1,216 @@
+{
+ "name": "Orijinal AYT Logaritma ve Diziler Fasikülü",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "fasikul",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Taranmış PDF (145 s., 2027 baskısı). Yapı: bölüm ayraçlarındaki alt başlıklar (Gemini okuması) + test sayısı GÖZ SAYIMI (2026-09-26): her sayfanın üst bandı + alt şeridindeki CEVAP ANAHTARI kutusu kontak föyde incelendi; test = cevap anahtarıyla biten 1-2 sayfalık blok.",
+  "Sayılan: Kazanım Testi · ÖSYM Tarzı Test · ÖSYM Tarzı Tarama Testi. 2027 baskısında 'ÖSYM Tarzı Çözümlü Örnekler' konu anlatımı içindeki yarım sayfalık çözümlü örneklerdir (soru bloğu değil) — test SAYILMADI; ayrıca bu bant bazı ÖSYM tarzı testlerin 2. sayfasına baskı hatasıyla basılmış (s.22/31), içerikten doğrulandı.",
+  "Araç (fasikul_structure.py) çift okuması iki sayfada da bant basılan testleri iki kez saymıştı (Diziler 8 → gerçek 6 kazanım); satır sayıları göz sayımından."
+ ],
+ "sections": [
+  {
+   "label": "Logaritma · Üstel Fonksiyon – Logaritmik Fonksiyon",
+   "test_count": 1,
+   "source": "scan",
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Logaritma · Logaritma Fonksiyonunun Tanım Kümesi, Özellikleri ve Tersi",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Logaritma · Taban Değiştirme Kuralı",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Logaritma · Üstel ve Logaritmik Fonksiyonların Grafikleri",
+   "test_count": 2,
+   "source": "scan",
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Logaritma · Üstel Denklemler – Logaritmik Denklemler",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Logaritma · Üstel ve Logaritmik Eşitsizlikler",
+   "test_count": 2,
+   "source": "scan",
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Logaritma · Günlük Yaşamda Logaritma",
+   "test_count": 1,
+   "source": "scan",
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Logaritma · ÖSYM Tarzı Tarama Testleri",
+   "test_count": 13,
+   "source": "scan",
+   "topic": "Logaritma ve Üstel Fonksiyonlar"
+  },
+  {
+   "label": "Diziler · Diziler – Bir Dizinin Kısmi Toplamı",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Diziler"
+  },
+  {
+   "label": "Diziler · Aritmetik Dizi",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Diziler"
+  },
+  {
+   "label": "Diziler · Geometrik Dizi – Toplam Sembolü",
+   "test_count": 3,
+   "source": "scan",
+   "topic": "Diziler"
+  },
+  {
+   "label": "Diziler · ÖSYM Tarzı Tarama Testleri",
+   "test_count": 9,
+   "source": "scan",
+   "topic": "Diziler"
+  }
+ ],
+ "meta": {
+  "dividers": [
+   {
+    "pdf_idx": 3,
+    "bolum_no": 1,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "Üstel Fonksiyon",
+      "page": 4
+     },
+     {
+      "label": "Logaritmik Fonksiyon",
+      "page": 8
+     },
+     {
+      "label": "Logaritma Fonksiyonunun Tanım Kümesi",
+      "page": 9
+     },
+     {
+      "label": "Logaritma Fonksiyonunun Özellikleri",
+      "page": 10
+     },
+     {
+      "label": "Logaritma Fonksiyonunun Tersi/",
+      "page": 11
+     },
+     {
+      "label": "Taban Değiştirme Kuralı",
+      "page": 23
+     },
+     {
+      "label": "Üstel ve Logaritmik Fonksiyonların Grafikleri",
+      "page": 32
+     },
+     {
+      "label": "Üstel Denklemler",
+      "page": 38
+     },
+     {
+      "label": "Logaritmik Denklemler",
+      "page": 39
+     },
+     {
+      "label": "Üstel ve Logaritmik Eşitsizlikler",
+      "page": 50
+     },
+     {
+      "label": "Günlük Yaşamda Logaritma",
+      "page": 59
+     },
+     {
+      "label": "ÖSYM Tarzı Tarama Testleri",
+      "page": 61
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 87,
+    "bolum_no": 2,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "Diziler",
+      "page": 88
+     },
+     {
+      "label": "Sonlu Dizi",
+      "page": 91
+     },
+     {
+      "label": "Sabit Dizi",
+      "page": 92
+     },
+     {
+      "label": "Eşit Diziler",
+      "page": 93
+     },
+     {
+      "label": "Dizilerde İşlemler",
+      "page": 94
+     },
+     {
+      "label": "Dizilerin Grafiği",
+      "page": 94
+     },
+     {
+      "label": "İndirgemeli Dizi",
+      "page": 95
+     },
+     {
+      "label": "Bir Dizinin Kısmi Toplamı",
+      "page": 95
+     },
+     {
+      "label": "Aritmetik Dizi",
+      "page": 104
+     },
+     {
+      "label": "Aritmetik Dizinin Özellikleri",
+      "page": 105
+     },
+     {
+      "label": "Geometrik Dizi",
+      "page": 115
+     },
+     {
+      "label": "Geometrik Dizinin Özellikleri",
+      "page": 116
+     },
+     {
+      "label": "Özel Diziler",
+      "page": 118
+     },
+     {
+      "label": "Toplam Sembolü",
+      "page": 119
+     },
+     {
+      "label": "ÖSYM Tarzı Tarama Testleri",
+      "page": 127
+     }
+    ],
+    "is_divider": true
+   }
+  ]
+ }
+}

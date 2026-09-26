@@ -1,0 +1,96 @@
+{
+ "name": "Orijinal AYT Limit ve Süreklilik Fasikülü",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "fasikul",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Taranmış PDF (129 s., 2027 baskısı). Yapı: 1. ayraç içindekileri (alt başlık + sayfa). Test sayısı GÖZ SAYIMI (2026-09-26): üst bant (Kazanım Test N / ÖSYM Tarzı Örnekler / ÖSYM Tarzı Test N / Tarama Test N) + alt şeritteki cevap anahtarı kontak föyde incelendi; birim = cevap kutusuyla biten blok (çoğu 2 sayfa).",
+  "'ÖSYM Tarzı Örnekler' blokları kendi cevap satırı olan soru bloğu — Orijinal fasikül kuralıyla (çözümlü örnek) 1'er test sayıldı. Konu anlatımı sayfalarındaki örnek cevap satırları sayılmadı.",
+  "1. bölüm sonunda ayrıca 'ÖSYM Tarzı Tarama Test 1–4' var; 3. bölüm 'Tarama 1–10' + 'ÖSYM'de Çıkmış Sorular' (4 sayfa, tek cevap anahtarı, 16 soru → 1 test)."
+ ],
+ "sections": [
+  {
+   "label": "Limit · Limit Kavramı ve Sağdan-Soldan Limit",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit · Limitin Özellikleri ve Teoremi",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit · Parçalı Fonksiyonların Limiti",
+   "test_count": 6,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit · Bileşke Fonksiyonların Limiti",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit · Limitte Belirsizlik Durumu",
+   "test_count": 5,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit · Trigonometrik Fonksiyonlarda Limit ve 0/0 Belirsizliği",
+   "test_count": 2,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit · ÖSYM Tarzı Tarama Testleri (1–4)",
+   "test_count": 4,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Süreklilik",
+   "test_count": 6,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit ve Süreklilik · ÖSYM Tarzı Tarama Testleri (1–10)",
+   "test_count": 10,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  },
+  {
+   "label": "Limit ve Süreklilik · ÖSYM'de Çıkmış Sorular",
+   "test_count": 1,
+   "source": "scan",
+   "topic": "Limit ve Süreklilik"
+  }
+ ],
+ "meta": {
+  "dividers": [
+   {
+    "pdf_idx": 104,
+    "bolum_no": 3,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "ÖSYM TARZI TARAMA TESTLERİ",
+      "page": 105
+     },
+     {
+      "label": "ÇIKMIŞ SINAV SORULARI",
+      "page": 125
+     }
+    ],
+    "is_divider": true
+   }
+  ]
+ }
+}

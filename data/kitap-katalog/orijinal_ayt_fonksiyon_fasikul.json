@@ -1,0 +1,154 @@
+{
+ "name": "Orijinal AYT Fonksiyon Fasikülü",
+ "publisher": "Orijinal Yayınları",
+ "subject": "AYT Matematik",
+ "type": "fasikul",
+ "target_grade_min": 11,
+ "target_grade_max": 12,
+ "target_graduate": true,
+ "notes": [
+  "Taranmış PDF (145 s., 2027 baskısı). Bu baskıda test bandı yok — testler doğrudan '1.' ile başlar ve CEVAP ANAHTARI kutusuyla biter. Test sayısı GÖZ SAYIMI (2026-09-26): her sayfanın alt şeridindeki cevap anahtarı kontak föyde sayıldı (turuncu = kazanım, mavi = ÖSYM tarzı).",
+  "Bölüm ayraçlarında bölüm adı yok, yalnız alt başlıklar var — satır etiketi alt başlık aralığıyla yazıldı.",
+  "Kitap sonu 'TYT Prova 1–10 / AYT Prova 1–10': 10 sayfa, sayfa başı 2 soru (20 soru) — soru hacmine göre 2 test normalize edildi."
+ ],
+ "sections": [
+  {
+   "label": "1. Bölüm · Fonksiyon Kavramı – Görüntü Kümesi Bulma (Fonksiyon Çeşitleri dahil)",
+   "test_count": 12,
+   "source": "scan",
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "2. Bölüm · Bileşke İşlemi – Bir Fonksiyonun Tersi – Grafik Okuma",
+   "test_count": 8,
+   "source": "scan",
+   "topic": "Fonksiyonlar"
+  },
+  {
+   "label": "3. Bölüm · En Geniş Tanım Kümesi – Artan/Azalan – Maksimum/Minimum – Ortalama Değişim Hızı",
+   "test_count": 6,
+   "source": "scan",
+   "topic": "Fonksiyon Grafikleri ve Uygulamaları"
+  },
+  {
+   "label": "4. Bölüm · Fonksiyon Grafiğinin Çizimi – Dönüşümler (Öteleme, Simetri)",
+   "test_count": 14,
+   "source": "scan",
+   "topic": "Fonksiyon Grafikleri ve Uygulamaları"
+  },
+  {
+   "label": "TYT–AYT Prova 1–10 (sayfa başı 2 soru; 5 sayfa = 1 test)",
+   "test_count": 2,
+   "source": "scan",
+   "topic": null
+  }
+ ],
+ "meta": {
+  "dividers": [
+   {
+    "pdf_idx": 3,
+    "bolum_no": 1,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "Fonksiyon Kavramı",
+      "page": null
+     },
+     {
+      "label": "Fonksiyonun Grafiği",
+      "page": null
+     },
+     {
+      "label": "Grafiği Verilen Fonksiyonun Tanımı ve Görüntü Kümesini Bulma",
+      "page": null
+     },
+     {
+      "label": "Fonksiyon Sayısı",
+      "page": null
+     },
+     {
+      "label": "Fonksiyonda Değer Bulma",
+      "page": null
+     },
+     {
+      "label": "Görüntü Kümesi Bulma",
+      "page": null
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 52,
+    "bolum_no": 2,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "Fonsiyonda Bileşke İşlemi",
+      "page": null
+     },
+     {
+      "label": "Bir Fonksiyonun Tersi",
+      "page": null
+     },
+     {
+      "label": "Fonsiyonda Grafik Okuma",
+      "page": null
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 78,
+    "bolum_no": 3,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "Bir Fonksiyonun En Geniş Tanım ve Görüntü Kümesini Bulma",
+      "page": null
+     },
+     {
+      "label": "Artan ve Azalan Fonksiyonlar",
+      "page": null
+     },
+     {
+      "label": "Fonksiyonun Pozitif ve Negatif Olduğu Aralıklar",
+      "page": null
+     },
+     {
+      "label": "Bir Fonksiyonun Maksimum ve Minimum Değerleri",
+      "page": null
+     },
+     {
+      "label": "Fonsiyondan Ortalama Değişim Hızı",
+      "page": null
+     }
+    ],
+    "is_divider": true
+   },
+   {
+    "pdf_idx": 94,
+    "bolum_no": 4,
+    "bolum_adi": "BÖLÜM",
+    "items": [
+     {
+      "label": "Fonksiyon Grafiğinin Çizimi",
+      "page": null
+     },
+     {
+      "label": "Fonksiyonların Dönüşümleri",
+      "page": null
+     },
+     {
+      "label": "Öteleme",
+      "page": null
+     },
+     {
+      "label": "Simetri",
+      "page": null
+     }
+    ],
+    "is_divider": true
+   }
+  ]
+ }
+}
