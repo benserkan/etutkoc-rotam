@@ -149,10 +149,57 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
     `backtest_skeleton_chips.py` prod'da yeniden koşulup canlı kabulle kıyaslanır.
     F2 adayları: okul/dershane programından iskelet · sınıf şablonları · iplik
     sabitleme (TYT Mat 1. çip) · rozete göre sıralama (backtest ile).
-- **Commit/deploy bekleyen (bu oturumdan):** Video Sepeti tüm paketleri
-  (migration `z1a4d7e8d22z` + `a2b5e8f9e33a`, mobil OTA dahil) + iki ölçüm
-  betiği (`backtest_skeleton.py`, `backtest_threads.py`) + Haftalık İskelet F1a+F1b
-  (migration `b3c6f9g0f44b`) — hepsi commit'siz. Deploy'da web+worker+next rebuild.
+- **CANLI (2026-09-26, commit `a90dc51`):** Video Sepeti + İskelet F1a/F1b/F1c
+  deploy edildi (yedek `pre_skeleton_20260926_0751.dump`, prod head `b3c6f9g0f44b`).
+- **CANLI veri analizi (2026-09-26, salt okuma, `scripts/analyze_student_rhythm.py`):**
+  Taha (#84, 12. sınıf): okul başlayınca ritim değişti — yazın Sabah/Öğle/Akşam,
+  okul haftasında (26.09) periyot YOK; hafta içi ~6 görev, hafta sonu ~10, Salı
+  yalnız 3 rutin. Gün×ders kararlılığı yazın %60-82, okula geçişte %37 → yaz
+  iskeleti okula taşınmaz. Çipler Taha'da 1. çip %54 · tümü %80 · adet %79.
+  Zeynep Ela Aydın (#164, mezun/dershane): 1 hafta veri, günler dengeli (6-9),
+  TYT Mat her gün iki kitaptan paralel. **Ortak bulgu:** günlük rutinler serbest
+  metin etkinlik olarak giriliyor (haftada ~30-40 test ölçüm dışı). KOÇ AÇIKLAMASI:
+  Zeynep'in paragrafı KARIŞIK (her gün farklı bölümlerden birer test) → bilinçli
+  elle; Taha'nın Bilgi Sarmal Problemler taraması kontrol edilecek, 345 Sıfır Risk
+  kitaplığa eklenecek, Orijinal AYT Logaritma fasikülü yüklenecek (koç yapacak).
+  İki öğrenciye prod'da iskelet kuruldu (26.09 / 24.09 haftalarından; 47 / 50
+  satır) — kaynak bilgisi olmadan; F2-1 deploy sonrası YENİDEN kurulacak.
+  **Bulunan hata:** başlıktan ders çözümü aynı adlı 5 dersi (başka koçlarınki)
+  alıyordu → ad başına tek ders (öğrencinin kitap dersi > sistem > bu koç).
+- **F2-1 — KİTABA BAĞLI RUTİN + SATIR KAYNAĞI — KOD-TAMAM (2026-09-26, migration
+  `c4d7g0h1g55c` YERELDE, COMMIT/DEPLOY BEKLİYOR):**
+  - Tetikleyici (koç): düzenleyicide üç "TYT Matematik" satırından hangisinin
+    rutin (problemler) olduğu okunmuyordu; Türkçe'de de aynı.
+  - Migration (additive): `weekly_skeleton_slots` + `book_id` (FK SET NULL) +
+    `label` (160) + `routine_mode` ('sirali' | 'karma').
+  - `slots_from_tasks`: her satır KAYNAĞINI taşır (kitaba bağlı görev → kitap;
+    serbest metin → başlık, "Ders · " öneki atılır). Aynı kaynak ≥4 gün
+    (`ROUTINE_MIN_DAYS`) → rutin + adet = en sık günlük adet; kitapta bir günde
+    aynı kitabın ≥2 bölümünden birer test → 'karma', yoksa 'sirali'. **Konu
+    kitabı her gün kullanılsa da rutin DEĞİL** (`_is_drill_book`: bölümlerin
+    çoğu konuya bağlı değilse alıştırma kitabı) — konu ipliği bilgili çiplerini korur.
+  - Rutin çipi (`routine_items`): sirali = kalınan bölümden sırayla, bölüm biterse
+    taşar · karma = kalınan bölümün SONRAKİNDEN her bölümden birer test, dönen
+    halka. "Kalınan yer" = en yeni görevin o kitaptaki SON kalemi (kalem sırasıyla —
+    başa sarmada doğru). Kapatılmış konu/bitmiş bölüm/o gün verilmiş bölüm atlanır.
+  - Eşleştirme: kaynaklı satır önce KENDİ kaynağının göreviyle eşleşir (rutin
+    görevi konu satırını doldurmaz); konu satırında çiplerde satırın kitabı önde.
+  - Uçlar: kabul `items` (çok kalemli, başlık kalemlerden) + `as_activity`
+    (kitapsız satır → "Ders · etiket" etkinlik görevi, periyot satırdan) ·
+    accept-routine `end` → date..end her gün SIRAYLA (ertesi gün kaldığı yerden) ·
+    iskelet yanıtı `books` (öğrencinin test kitapları) · doğrulama 422
+    (book_not_allowed / book_subject_mismatch / bad_routine_mode).
+  - Web: düzenleyicide satır altında **Kaynak** satırı (kitap seçici · kitap yoksa
+    serbest metin · rutin+kitapta "sırayla / karışık") · hayalet satırı kaynağını
+    ve "rutin · karışık" rozetini yazar · rutin çipi bölüm listesiyle · kitapsız
+    satırda "Etkinlik olarak yaz" · gün kartında **"Haftanın rutinleri"**.
+  - Test: YENİ `test_api_v2_skeleton_routine.py` **16/16** · YENİ
+    `live_skeleton_routine.py` **11/11** · skeleton smoke 27/27 ·
+    live_weekly_skeleton 14/14 · tsc + eslint temiz.
+  - **SIRADA:** commit + deploy (web+worker+next; migration start.sh ile) →
+    Taha + Zeynep iskeletlerini aynı haftalardan YENİDEN kur (kaynaklı) →
+    2. adım: dönemli iskelet (yaz / okul) · 3. adım (düşük öncelik): okul/
+    dershane ders programı.
 
 ---
 

@@ -21,11 +21,25 @@ export interface SkeletonSlotIn {
   position: number;
   is_routine: boolean;
   default_count: number | null;
+  /** Satırın kaynağı: kitap (rutin kitabı / konu satırında öncelikli kitap) */
+  book_id?: number | null;
+  /** Kitapsız (serbest metinli) görevden gelen satırın adı */
+  label?: string | null;
+  /** Kitaba bağlı rutinin ilerleme biçimi */
+  routine_mode?: RoutineMode | null;
 }
+
+export type RoutineMode = "sirali" | "karma";
+
+export const ROUTINE_MODE_LABELS: Record<RoutineMode, string> = {
+  sirali: "sırayla",
+  karma: "karışık",
+};
 
 export interface SkeletonSlot extends SkeletonSlotIn {
   id: number;
   subject_name: string;
+  book_name: string | null;
 }
 
 export interface SkeletonResponse {
@@ -34,6 +48,7 @@ export interface SkeletonResponse {
   source: string | null;
   slots: SkeletonSlot[];
   subjects: { id: number; name: string }[];
+  books: { id: number; name: string; subject_id: number }[];
 }
 
 export interface ChipBadge {
@@ -42,7 +57,7 @@ export interface ChipBadge {
   tone: string; // rose | amber | violet | emerald | slate | cyan …
 }
 
-export type ChipKind = "thread" | "next" | "new" | "weak";
+export type ChipKind = "thread" | "next" | "new" | "weak" | "routine";
 
 export interface GhostChip {
   rank: number;
@@ -58,6 +73,8 @@ export interface GhostChip {
   total: number;
   reason: string;
   badges: ChipBadge[];
+  /** Rutin çipi birden çok bölümü kapsayabilir */
+  items?: { section_id: number; section_label: string; count: number }[] | null;
 }
 
 export interface GhostCell {
@@ -68,6 +85,10 @@ export interface GhostCell {
   period: SkeletonPeriod | null;
   position: number;
   is_routine: boolean;
+  book_id: number | null;
+  book_name: string | null;
+  label: string | null;
+  routine_mode: RoutineMode | null;
   chips: GhostChip[];
 }
 
@@ -172,8 +193,10 @@ export function useDeleteSkeleton(studentId: number) {
 export interface GhostAcceptBody {
   slot_id: number;
   date: string;
-  section_id: number;
-  count: number;
+  section_id?: number | null;
+  count?: number;
+  items?: { section_id: number; count: number }[] | null;
+  as_activity?: boolean;
   chip_rank?: number | null;
   chip_kind?: string | null;
   chip_count?: number | null;
@@ -194,7 +217,11 @@ export function useAcceptGhost(studentId: number) {
 
 export function useAcceptRoutine(studentId: number) {
   const qc = useQueryClient();
-  return useMutation<MutationResponse<GhostAcceptResult>, ApiError, { date: string }>({
+  return useMutation<
+    MutationResponse<GhostAcceptResult>,
+    ApiError,
+    { date: string; end?: string }
+  >({
     mutationFn: (body) =>
       api(`${base(studentId)}/ghosts/accept-routine`, {
         method: "POST",

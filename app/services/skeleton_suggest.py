@@ -52,6 +52,9 @@ log = logging.getLogger(__name__)
 
 THREAD_WINDOW_DAYS = 7
 MAX_RANGE_DAYS = 14
+# "Bu haftayı iskelet yap": aynı kaynak (kitap ya da serbest metin başlığı)
+# haftanın en az bu kadar gününde varsa satır RUTİN işaretlenir.
+ROUTINE_MIN_DAYS = 4
 WEAK_MIN_EXAM_WRONG = 2
 # Ders başına en çok kaç 'yeni konu' çipi (her biri FARKLI kitaptan). F1c
 # backtest'iyle seçilir (scripts/backtest_skeleton_chips.py --new-chips N).
@@ -103,6 +106,9 @@ class _Ctx:
     forgotten: set[int]
     perf: dict[int, dict]
     quantity_cache: dict[int, int] = field(default_factory=dict)
+    # F2-1: o günün görevleri KAYNAKLARIYLA (iskelet satırı eşleştirme + çıkarım):
+    # tarih → [{task_id, subjects, period, book_ids, label, planned, sections}]
+    day_items: dict[date, list[dict]] = field(default_factory=dict)
 
     def open_(self, s: _Sec) -> bool:
         return s.remaining > 0 and not (s.topic_id and s.topic_id in self.closed)
@@ -175,6 +181,21 @@ def _task_subjects(t: Task, secs: dict[int, _Sec], book_subj: dict[int, int],
     return out
 
 
+def _activity_label(t: Task) -> str | None:
+    """Kitapsız (serbest metinli) görevin koça görünen adı: başlığın "Ders · "
+    öneki atılmış hâli ("345 Sıfır Risk Paragraf 2 Test")."""
+    if any(it.book_id for it in t.book_items):
+        return None
+    title = (t.title or "").strip()
+    if " · " in title:
+        title = title.split(" · ", 1)[1].strip()
+    return title[:160] or None
+
+
+def _norm_label(v: str | None) -> str:
+    return " ".join((v or "").lower().split())
+
+
 def _load_ctx(db: Session, *, student: User, coach_id: int, start: date, end: date) -> _Ctx:
     secs = _load_sections(db, student.id)
     by_book: dict[int, list[_Sec]] = defaultdict(list)
@@ -186,9 +207,30 @@ def _load_ctx(db: Session, *, student: User, coach_id: int, start: date, end: da
         books_by_subject[lst[0].subject_id].append(bid)
 
     subject_names = _subject_name_index(db, student, coach_id)
-    name_to_ids: dict[str, list[int]] = defaultdict(list)
+    # Başlıktan ("TYT Matematik · …") ders çözümü: aynı adda BİRDEN ÇOK ders
+    # kaydı olabilir (canlıda 5 ayrı "TYT Matematik": sistem + başka koçlarınki).
+    # Ad başına TEK ders seçilir: öğrencinin kitaplarındaki ders > sistem dersi >
+    # bu koçun dersi. Başka koçun dersi asla seçilmez (iskelete sızmasın).
+    own_subjects = set(books_by_subject)
+    meta = {
+        int(i): (tid, cm)
+        for i, tid, cm in db.query(Subject.id, Subject.teacher_id, Subject.curriculum_model)
+    }
+    best: dict[str, tuple[int, int]] = {}
     for i, n in subject_names.items():
-        name_to_ids[(n or "").strip().lower()].append(i)
+        tid, _cm = meta.get(i, (None, None))
+        if i in own_subjects:
+            rank = 0
+        elif tid is None:
+            rank = 1
+        elif tid == coach_id:
+            rank = 2
+        else:
+            continue
+        key = (n or "").strip().lower()
+        if key not in best or rank < best[key][0]:
+            best[key] = (rank, i)
+    name_to_ids: dict[str, list[int]] = {k: [v[1]] for k, v in best.items()}
 
     tasks = (
         db.query(Task)
@@ -214,10 +256,25 @@ def _load_ctx(db: Session, *, student: User, coach_id: int, start: date, end: da
     history: dict[int, list] = defaultdict(list)
     day_tasks: dict[date, dict[int, list]] = defaultdict(lambda: defaultdict(list))
     day_sections: dict[date, dict[int, set]] = defaultdict(lambda: defaultdict(set))
-    for t in tasks:
+    day_items: dict[date, list[dict]] = defaultdict(list)
+    for t in sorted(tasks, key=lambda x: (x.date, x.id)):
         subs = _task_subjects(t, secs, book_subj, topic_subj, name_to_ids)
         for s in subs:
             day_tasks[t.date][s].append(t.period)
+        tsecs = [
+            (it.book_section_id, int(it.planned_count or 0))
+            for it in sorted(t.book_items, key=lambda x: x.id)
+            if it.book_section_id and it.book_section_id in secs
+        ]
+        day_items[t.date].append({
+            "task_id": t.id,
+            "subjects": subs,
+            "period": t.period,
+            "book_ids": [secs[sid].book_id for sid, _n in tsecs],
+            "label": _activity_label(t),
+            "planned": sum(n for _sid, n in tsecs),
+            "sections": tsecs,
+        })
         for it in t.book_items:
             if it.book_section_id and it.book_section_id in secs:
                 sec = secs[it.book_section_id]
@@ -265,6 +322,7 @@ def _load_ctx(db: Session, *, student: User, coach_id: int, start: date, end: da
         topic_names=topic_names, subject_names=subject_names,
         history=dict(history), day_tasks=day_tasks, day_sections=day_sections,
         exam_wrong=exam_wrong, open_wrong=open_wrong, forgotten=forgotten, perf=perf,
+        day_items=dict(day_items),
     )
 
 
@@ -351,7 +409,7 @@ def _continuation_reason(d: date, last: date, rem: int) -> str:
 
 def build_chips(
     db: Session, ctx: _Ctx, *, subject_id: int, d: date, rotate: int = 0,
-    default_count: int | None = None,
+    default_count: int | None = None, prefer_book: int | None = None,
 ) -> list[dict]:
     """Bir hayalet hücrenin çipleri (sıra = ölçülen iplik modeli)."""
     taken_secs = set(ctx.day_sections.get(d, {}).get(subject_id, set()))
@@ -407,7 +465,10 @@ def build_chips(
         key=lambda b: ctx.by_book[b][0].book_name if ctx.by_book.get(b) else "",
     )
     new_added = 0
-    for b in recent_books + others:
+    book_order = recent_books + others
+    if prefer_book in book_order:
+        book_order = [prefer_book] + [b for b in book_order if b != prefer_book]
+    for b in book_order:
         cand = next(
             (
                 c for c in ctx.by_book.get(b, [])
@@ -447,9 +508,109 @@ def build_chips(
         chips.append(_chip(ctx, srcs[0], "weak", f"tekrar — denemede {n} yanlış", fallback_q))
         break
 
+    if prefer_book is not None:
+        # Satırın kaynağı olan kitabın çipleri öne (sıra içi korunur).
+        chips.sort(key=lambda c: c["book_id"] != prefer_book)
     for i, c in enumerate(chips, start=1):
         c["rank"] = i
     return chips
+
+
+def _last_used_in_book(ctx: _Ctx, book_id: int, d: date) -> _Sec | None:
+    """Rutin kitabında en son hangi bölümde kalındı (d günü dahil, iplik penceresi).
+    En yeni görevin o kitaptaki SON kalemi (kalem sırasıyla) — karışık rutin
+    başa sardığında (…4 · 5 · 1) doğru yer 1'dir, en büyük sıra numarası değil."""
+    best = None
+    for dd, items in ctx.day_items.items():
+        if dd > d:
+            continue
+        for it in items:
+            last = None
+            for sid, _n in it["sections"]:
+                sec = ctx.secs.get(sid)
+                if sec is not None and sec.book_id == book_id:
+                    last = sec
+            if last is not None and (best is None or (dd, it["task_id"]) > best[0]):
+                best = ((dd, it["task_id"]), last)
+    return best[1] if best else None
+
+
+def routine_items(
+    ctx: _Ctx, *, book_id: int, mode: str | None, count: int, d: date,
+) -> list[tuple[_Sec, int]]:
+    """Kitaba bağlı rutinin o günkü kalemleri.
+
+    sirali: kalınan bölümden (testi varsa) başlayıp sırayla doldurur, bölüm
+            biterse sıradakine taşar.
+    karma:  kalınan bölümün SONRAKİNDEN başlayıp her bölümden birer test alır,
+            bölümler arasında döner (paragraf: Sözcükte Anlam 1 · Cümlede
+            Anlam 1 · …). Kapatılmış konu ve testi bitmiş bölüm atlanır; o gün
+            zaten verilmiş bölüm tekrar verilmez.
+    """
+    taken = {
+        sid for subj in ctx.day_sections.get(d, {}).values() for sid in subj
+    }
+    book = ctx.by_book.get(book_id, [])
+    opens = [s for s in book if ctx.open_(s) and s.id not in taken]
+    if not opens or count <= 0:
+        return []
+    last = _last_used_in_book(ctx, book_id, d)
+    if mode == "karma":
+        start = 0
+        if last is not None:
+            start = next((i for i, s in enumerate(opens) if s.order > last.order), 0)
+        ring = opens[start:] + opens[:start]
+        left = {s.id: s.remaining for s in ring}
+        got: dict[int, int] = {}
+        need = count
+        while need > 0 and any(left[s.id] > 0 for s in ring):
+            for s in ring:
+                if need == 0:
+                    break
+                if left[s.id] > 0:
+                    got[s.id] = got.get(s.id, 0) + 1
+                    left[s.id] -= 1
+                    need -= 1
+        return [(s, got[s.id]) for s in ring if s.id in got]
+    # sirali
+    start = 0
+    if last is not None:
+        start = next((i for i, s in enumerate(opens) if s.order >= last.order), 0)
+    out: list[tuple[_Sec, int]] = []
+    need = count
+    for s in opens[start:] + opens[:start]:
+        if need == 0:
+            break
+        n = min(s.remaining, need)
+        if n > 0:
+            out.append((s, n))
+            need -= n
+    return out
+
+
+def _routine_chip(ctx: _Ctx, slot: WeeklySkeletonSlot, d: date, fallback_q: int) -> dict | None:
+    items = routine_items(
+        ctx, book_id=slot.book_id, mode=slot.routine_mode,
+        count=slot.default_count or fallback_q, d=d,
+    )
+    if not items:
+        return None
+    first = items[0][0]
+    total = sum(n for _s, n in items)
+    reason = (
+        f"rutin · karışık: {len(items)} farklı bölüm"
+        if slot.routine_mode == "karma"
+        else "rutin · kitapta sırayla"
+        + (f" ({first.label} bitince {items[-1][0].label})" if len(items) > 1 else "")
+    )
+    chip = _chip(ctx, first, "routine", reason, total)
+    chip["count"] = total
+    chip["badges"] = []
+    chip["items"] = [
+        {"section_id": s.id, "section_label": s.label, "count": n} for s, n in items
+    ]
+    chip["rank"] = 1
+    return chip
 
 
 # ---------------------------------------------------------------- hayaletler
@@ -462,6 +623,28 @@ def get_skeleton(db: Session, student_id: int) -> WeeklySkeleton | None:
         .filter(WeeklySkeleton.student_id == student_id)
         .first()
     )
+
+
+def _match_by_source(
+    slots: list[WeeklySkeletonSlot], items: list[dict],
+) -> tuple[list[WeeklySkeletonSlot], list[dict]]:
+    """Kaynaklı satır (kitap/etiket) önce KENDİ kaynağının göreviyle eşleşir —
+    aynı derste üç satırdan hangisinin dolu olduğu doğru bilinsin (rutin
+    problemler satırı, konu satırının göreviyle 'dolmuş' sayılmasın)."""
+    pool = list(items)
+    rest: list[WeeklySkeletonSlot] = []
+    for s in slots:
+        hit = None
+        if s.book_id:
+            hit = next((it for it in pool if s.book_id in it["book_ids"]), None)
+        elif s.label:
+            key = _norm_label(s.label)
+            hit = next((it for it in pool if _norm_label(it["label"]) == key), None)
+        if hit is not None:
+            pool.remove(hit)
+        else:
+            rest.append(s)
+    return rest, pool
 
 
 def _unfilled_slots(
@@ -516,6 +699,11 @@ def build_ghosts(
         )
     }
 
+    slot_books = {s.book_id for s in sk.slots if s.book_id}
+    book_names = (
+        {int(i): n for i, n in db.query(Book.id, Book.name).filter(Book.id.in_(slot_books))}
+        if slot_books else {}
+    )
     days = []
     d = start
     while d <= end:
@@ -525,9 +713,30 @@ def build_ghosts(
             by_subj[s.subject_id].append(s)
         ghosts = []
         for subj, slots in by_subj.items():
-            periods = ctx.day_tasks.get(d, {}).get(subj, [])
-            unfilled = [s for s in _unfilled_slots(slots, periods) if (s.id, d) not in dismissed]
-            for k, s in enumerate(unfilled):
+            items = [it for it in ctx.day_items.get(d, []) if subj in it["subjects"]]
+            # 1) kaynaklı satırlar kendi kaynağıyla; 2) kalan satırlar kalan
+            #    görevlerle periyot kuralına göre (kaynaksız satırlar önce).
+            rest, pool = _match_by_source(slots, items)
+            rest.sort(key=lambda s: (bool(s.book_id or s.label), s.position, s.id))
+            unfilled = [
+                s for s in _unfilled_slots(rest, [it["period"] for it in pool])
+                if (s.id, d) not in dismissed
+            ]
+            unfilled.sort(key=lambda s: (s.position, s.id))
+            k = 0
+            for s in unfilled:
+                fallback_q = s.default_count or _default_quantity(db, ctx, subj)
+                chips: list[dict] = []
+                if s.is_routine and s.book_id:
+                    rc = _routine_chip(ctx, s, d, fallback_q)
+                    chips = [rc] if rc else []
+                if not chips and not (s.is_routine and s.label and not s.book_id):
+                    chips = build_chips(
+                        db, ctx, subject_id=subj, d=d, rotate=0 if s.book_id else k,
+                        default_count=s.default_count, prefer_book=s.book_id,
+                    )
+                    if not s.book_id:
+                        k += 1
                 ghosts.append({
                     "slot_id": s.id,
                     "date": d.isoformat(),
@@ -536,10 +745,11 @@ def build_ghosts(
                     "period": s.period,
                     "position": s.position,
                     "is_routine": bool(s.is_routine),
-                    "chips": build_chips(
-                        db, ctx, subject_id=subj, d=d, rotate=k,
-                        default_count=s.default_count,
-                    ),
+                    "book_id": s.book_id,
+                    "book_name": book_names.get(s.book_id) if s.book_id else None,
+                    "label": s.label,
+                    "routine_mode": s.routine_mode,
+                    "chips": chips,
                 })
         ghosts.sort(key=lambda g: (PERIOD_ORDER.get(g["period"], 3), g["position"]))
         days.append({"date": d.isoformat(), "ghosts": ghosts})
@@ -559,32 +769,92 @@ def find_ghost(db: Session, *, student: User, coach_id: int, slot_id: int, d: da
 # ---------------------------------------------------------------- iskelet kurma
 
 
+def _is_drill_book(ctx: _Ctx, book_id: int) -> bool:
+    """Alıştırma (rutin) kitabı mı: bölümlerinin çoğu müfredat konusuna BAĞLI
+    DEĞİL (paragraf / karma test / deneme tarzı). Konu sıralı soru bankası değil."""
+    secs = ctx.by_book.get(book_id, [])
+    if not secs:
+        return False
+    return sum(1 for x in secs if not x.topic_id) * 2 >= len(secs)
+
+
 def slots_from_tasks(
     db: Session, *, student: User, coach_id: int, start: date, end: date,
 ) -> list[dict]:
-    """Bir haftanın görevlerinden iskelet satırları (gün + periyot + ders; aynı
-    günde aynı derse iki görev → iki satır). Aralık 7 günü aşarsa her hafta
-    günü için İLK tarih esas alınır."""
+    """Bir haftanın görevlerinden iskelet satırları.
+
+    Her görev bir satır (gün + periyot + ders) ve KAYNAĞINI taşır: kitaba bağlı
+    görevde kitap, serbest metinli görevde başlık (label). Aynı kaynak haftanın
+    en az ROUTINE_MIN_DAYS gününde varsa satır RUTİN işaretlenir (kitapta
+    yalnız alıştırma kitabıysa — konu kitabı her gün kullanılsa da konu
+    ipliğidir); adet o kaynağın en sık günlük adedi. Kitaba bağlı rutinde bir günde aynı kitabın
+    ≥2 bölümünden birer test verildiyse biçim 'karma', yoksa 'sirali'.
+    Aralık 7 günü aşarsa her hafta günü için İLK tarih esas alınır."""
+    from collections import Counter
+
     end = min(end, start + timedelta(days=MAX_RANGE_DAYS - 1))
     ctx = _load_ctx(db, student=student, coach_id=coach_id, start=start, end=end)
+
+    def src(it: dict) -> tuple:
+        if it["book_ids"]:
+            return ("b", it["book_ids"][0])
+        if it["label"]:
+            return ("l", _norm_label(it["label"]))
+        return ("s", None)
+
+    days_of: dict[tuple, set] = defaultdict(set)
+    counts: dict[tuple, Counter] = defaultdict(Counter)
+    karma_votes: dict[tuple, list[bool]] = defaultdict(list)
+    d = start
+    while d <= end:
+        for it in ctx.day_items.get(d, []):
+            for subj in it["subjects"]:
+                key = (subj, src(it))
+                days_of[key].add(d)
+                if it["planned"]:
+                    counts[key][it["planned"]] += 1
+                if key[1][0] == "b":
+                    karma_votes[key].append(
+                        len(it["sections"]) >= 2 and all(n == 1 for _s, n in it["sections"])
+                    )
+        d += timedelta(days=1)
+
     seen_weekdays: set[int] = set()
     out: list[dict] = []
     d = start
     while d <= end:
         wd = d.weekday()
-        if wd not in seen_weekdays:
-            per_subj = ctx.day_tasks.get(d, {})
-            if per_subj:
-                seen_weekdays.add(wd)
-            pos = 0
-            items = []
-            for subj, periods in per_subj.items():
-                for p in periods:
-                    items.append((PERIOD_ORDER.get(p, 3), subj, p))
-            for _po, subj, p in sorted(items, key=lambda x: (x[0], ctx.subject_names.get(x[1], ""))):
-                out.append({"weekday": wd, "period": p, "subject_id": subj, "position": pos,
-                            "is_routine": False, "default_count": None})
-                pos += 1
+        items = ctx.day_items.get(d, [])
+        if wd not in seen_weekdays and items:
+            seen_weekdays.add(wd)
+            rows = []
+            for it in items:
+                for subj in it["subjects"]:
+                    key = (subj, src(it))
+                    routine = key[1][0] != "s" and len(days_of[key]) >= ROUTINE_MIN_DAYS
+                    if routine and key[1][0] == "b" and not _is_drill_book(ctx, key[1][1]):
+                        # Konu kitabı her gün kullanılsa da RUTİN değil, konu ipliğidir
+                        # (Orijinal Mat: Temel Kavramlar → Oran-Orantı → …); rutin
+                        # işaretlenirse bilgili konu çiplerini kaybeder. Koç isterse
+                        # düzenleyicide elle rutin yapar.
+                        routine = False
+                    book_id = it["book_ids"][0] if it["book_ids"] else None
+                    mode = None
+                    if routine and book_id:
+                        votes = karma_votes[key]
+                        mode = "karma" if votes and sum(votes) * 2 > len(votes) else "sirali"
+                    dc = counts[key].most_common(1)[0][0] if routine and counts[key] else None
+                    rows.append((
+                        PERIOD_ORDER.get(it["period"], 3),
+                        ctx.subject_names.get(subj, ""), it["task_id"],
+                        {"weekday": wd, "period": it["period"], "subject_id": subj,
+                         "is_routine": routine, "default_count": dc,
+                         "book_id": book_id, "label": None if book_id else it["label"],
+                         "routine_mode": mode},
+                    ))
+            for pos, (_po, _n, _t, row) in enumerate(sorted(rows, key=lambda r: r[:3])):
+                row["position"] = pos
+                out.append(row)
         d += timedelta(days=1)
     return out
 
@@ -610,6 +880,8 @@ def replace_slots(
             weekday=int(s["weekday"]), period=s.get("period"),
             subject_id=int(s["subject_id"]), position=int(s.get("position", i)),
             is_routine=bool(s.get("is_routine")), default_count=s.get("default_count"),
+            book_id=s.get("book_id"), label=(s.get("label") or None),
+            routine_mode=s.get("routine_mode"),
         ))
     db.flush()
     return sk

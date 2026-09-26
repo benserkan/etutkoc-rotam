@@ -23,6 +23,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  ROUTINE_MODE_LABELS,
+  type RoutineMode,
   getSkeleton,
   getSkeletonAcceptance,
   type GhostAcceptanceReport,
@@ -50,6 +52,9 @@ function toRows(sk: SkeletonResponse | undefined): Row[] {
     position: s.position,
     is_routine: s.is_routine,
     default_count: s.default_count,
+    book_id: s.book_id ?? null,
+    label: s.label ?? null,
+    routine_mode: s.routine_mode ?? null,
   }));
 }
 
@@ -94,6 +99,7 @@ export function SkeletonEditorDialog({
   }
 
   const subjects = q.data?.subjects ?? [];
+  const books = q.data?.books ?? [];
   const list = rows ?? [];
 
   function update(key: string, patch: Partial<Row>) {
@@ -115,6 +121,9 @@ export function SkeletonEditorDialog({
         position: (prev ?? []).filter((r) => r.weekday === weekday).length,
         is_routine: false,
         default_count: null,
+        book_id: null,
+        label: null,
+        routine_mode: null,
       },
     ]);
   }
@@ -127,6 +136,9 @@ export function SkeletonEditorDialog({
       position: i,
       is_routine: r.is_routine,
       default_count: r.default_count,
+      book_id: r.book_id ?? null,
+      label: r.book_id ? null : (r.label?.trim() || null),
+      routine_mode: r.is_routine && r.book_id ? (r.routine_mode ?? "sirali") : null,
     }));
     save.mutate({ slots }, { onSuccess: () => onOpenChange(false) });
   }
@@ -207,12 +219,19 @@ export function SkeletonEditorDialog({
                       {dayRows.map((r) => (
                         <li
                           key={r.key}
-                          className="flex flex-wrap items-center gap-2 px-3 py-1.5"
+                          className="space-y-1.5 px-3 py-1.5"
                           data-testid="skeleton-row"
                         >
+                          <div className="flex flex-wrap items-center gap-2">
                           <select
                             value={r.subject_id}
-                            onChange={(e) => update(r.key, { subject_id: Number(e.target.value) })}
+                            onChange={(e) => {
+                              const sid = Number(e.target.value);
+                              const keep = books.some(
+                                (b) => b.id === r.book_id && b.subject_id === sid,
+                              );
+                              update(r.key, { subject_id: sid, book_id: keep ? r.book_id : null });
+                            }}
                             className="min-w-40 flex-1 rounded border border-border bg-background px-2 py-1 text-[13px] text-foreground"
                             aria-label="Ders"
                           >
@@ -269,6 +288,12 @@ export function SkeletonEditorDialog({
                           >
                             <Trash2 className="size-3.5" aria-hidden />
                           </button>
+                          </div>
+                          <SourceLine
+                            row={r}
+                            books={books.filter((b) => b.subject_id === r.subject_id)}
+                            onChange={(patch) => update(r.key, patch)}
+                          />
                         </li>
                       ))}
                     </ul>
@@ -345,6 +370,69 @@ function AcceptanceLine({ report }: { report: GhostAcceptanceReport | undefined 
           {" "}
           — kabullerin {top1}&apos;i 1. çipten{kinds ? ` · ${kinds}` : ""}
         </span>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Satırın KAYNAĞI (F2-1): aynı derste birden çok satır varken hangisinin
+ * hangi iş olduğu buradan okunur. Kitap seçilirse rutin o kitapta ilerler
+ * (sırayla / karışık); konu satırında çiplerde önce o kitap gelir. Kitap
+ * yoksa serbest metin adı — rutinse "etkinlik olarak" aynen yazılır.
+ */
+function SourceLine({
+  row,
+  books,
+  onChange,
+}: {
+  row: Row;
+  books: { id: number; name: string }[];
+  onChange: (patch: Partial<Row>) => void;
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2 pl-1 text-[12px] text-foreground">
+      <span className="text-muted-foreground">Kaynak:</span>
+      <select
+        value={row.book_id ?? ""}
+        onChange={(e) =>
+          onChange({ book_id: e.target.value ? Number(e.target.value) : null })
+        }
+        className="min-w-48 flex-1 rounded border border-border bg-background px-2 py-1 text-[12.5px] text-foreground"
+        aria-label="Kaynak kitap"
+      >
+        <option value="">Kitap yok{row.label ? "" : " (herhangi bir kaynak)"}</option>
+        {books.map((b) => (
+          <option key={b.id} value={b.id}>
+            {b.name}
+          </option>
+        ))}
+      </select>
+      {row.book_id ? null : (
+        <input
+          type="text"
+          value={row.label ?? ""}
+          maxLength={160}
+          placeholder="ya da serbest metin (ör. 345 Sıfır Risk Paragraf 2 Test)"
+          onChange={(e) => onChange({ label: e.target.value })}
+          className="min-w-56 flex-1 rounded border border-border bg-background px-2 py-1 text-[12.5px] text-foreground"
+          aria-label="Etkinlik adı"
+        />
+      )}
+      {row.is_routine && row.book_id ? (
+        <select
+          value={row.routine_mode ?? "sirali"}
+          onChange={(e) => onChange({ routine_mode: e.target.value as RoutineMode })}
+          className="rounded border border-border bg-background px-2 py-1 text-[12.5px] text-foreground"
+          aria-label="Rutin biçimi"
+          title="Sırayla: kitapta kalınan yerden devam. Karışık: her gün farklı bölümlerden birer test."
+        >
+          {(Object.keys(ROUTINE_MODE_LABELS) as RoutineMode[]).map((m) => (
+            <option key={m} value={m}>
+              {m === "karma" ? "karışık — her gün farklı bölümlerden birer test" : "sırayla — kaldığı yerden"}
+            </option>
+          ))}
+        </select>
       ) : null}
     </div>
   );

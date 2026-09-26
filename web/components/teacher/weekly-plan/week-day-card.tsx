@@ -298,7 +298,12 @@ export function WeekDayCard({
       />
 
       {!day.is_past && ghosts.length > 0 ? (
-        <DayGhostRows studentId={studentId} date={day.date} ghosts={ghosts} />
+        <DayGhostRows
+          studentId={studentId}
+          date={day.date}
+          ghosts={ghosts}
+          weekEnd={weekDays?.[weekDays.length - 1]?.date}
+        />
       ) : null}
 
       <div className="px-5 py-3 border-t border-border border-l-[3px] border-l-sky-400/70 bg-sky-500/[0.04]">

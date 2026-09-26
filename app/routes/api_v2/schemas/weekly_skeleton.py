@@ -11,16 +11,28 @@ class SkeletonSlotIn(BaseModel):
     position: int = 0
     is_routine: bool = False
     default_count: int | None = Field(default=None, ge=1, le=100)
+    # F2-1 kaynak: kitap (rutin kitabı / konu satırında öncelikli kitap) ya da
+    # kitapsız görevin başlığı (label). routine_mode: sirali | karma
+    book_id: int | None = None
+    label: str | None = Field(default=None, max_length=160)
+    routine_mode: str | None = None
 
 
 class SkeletonSlotOut(SkeletonSlotIn):
     id: int
     subject_name: str
+    book_name: str | None = None
 
 
 class SkeletonSubjectOption(BaseModel):
     id: int
     name: str
+
+
+class SkeletonBookOption(BaseModel):
+    id: int
+    name: str
+    subject_id: int
 
 
 class SkeletonResponse(BaseModel):
@@ -29,6 +41,7 @@ class SkeletonResponse(BaseModel):
     source: str | None = None
     slots: list[SkeletonSlotOut] = []
     subjects: list[SkeletonSubjectOption] = []
+    books: list[SkeletonBookOption] = []
 
 
 class SkeletonSaveBody(BaseModel):
@@ -47,6 +60,12 @@ class ChipBadge(BaseModel):
     tone: str
 
 
+class ChipItem(BaseModel):
+    section_id: int
+    section_label: str
+    count: int
+
+
 class GhostChip(BaseModel):
     rank: int
     kind: str                                 # thread|next|new|weak
@@ -61,6 +80,8 @@ class GhostChip(BaseModel):
     total: int
     reason: str
     badges: list[ChipBadge] = []
+    # Kitaba bağlı rutin çipi birden çok bölümü kapsayabilir (karışık/sıralı taşma)
+    items: list[ChipItem] | None = None
 
 
 class GhostCell(BaseModel):
@@ -71,6 +92,10 @@ class GhostCell(BaseModel):
     period: str | None = None
     position: int
     is_routine: bool
+    book_id: int | None = None
+    book_name: str | None = None
+    label: str | None = None
+    routine_mode: str | None = None
     chips: list[GhostChip] = []
 
 
@@ -84,11 +109,20 @@ class GhostsResponse(BaseModel):
     days: list[GhostDay] = []
 
 
+class AcceptItem(BaseModel):
+    section_id: int
+    count: int = Field(ge=1, le=100)
+
+
 class GhostAcceptBody(BaseModel):
     slot_id: int
     date: str
-    section_id: int
-    count: int = Field(ge=1, le=100)
+    section_id: int | None = None
+    count: int = Field(default=1, ge=1, le=100)
+    # Çok kalemli (rutin) çip — verilirse section_id/count yok sayılır
+    items: list[AcceptItem] | None = Field(default=None, max_length=12)
+    # Kitapsız satır: etiketiyle ETKİNLİK görevi yaz ("345 Sıfır Risk Paragraf 2 Test")
+    as_activity: bool = False
     chip_rank: int | None = None              # None = çip dışı seçim ("başka konu")
     chip_kind: str | None = None
     chip_count: int | None = None
@@ -102,6 +136,8 @@ class GhostActionBody(BaseModel):
 
 class GhostRoutineBody(BaseModel):
     date: str
+    # Verilirse date..end arası tüm günlerin rutinleri sırayla yazılır (≤14 gün)
+    end: str | None = None
 
 
 class GhostAcceptResult(BaseModel):

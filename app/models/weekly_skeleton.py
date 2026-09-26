@@ -35,7 +35,11 @@ SKELETON_SOURCES = ("from_week", "manual")
 # Hayalet üzerindeki koç eylemi.
 GHOST_ACTIONS = ("accepted", "other", "dismissed")
 # Kabul edilen çipin türü: iplik devamı / kitapta sıradaki / yeni konu / zayıf konu tekrarı.
-CHIP_KINDS = ("thread", "next", "new", "weak")
+CHIP_KINDS = ("thread", "next", "new", "weak", "routine", "activity")
+# Kitaba bağlı rutinin ilerleme biçimi:
+#   sirali — günlük adet kitapta sırayla alınır, bölüm biterse sıradakine taşar
+#   karma  — her gün FARKLI bölümlerden birer test, bölümler arasında döner
+ROUTINE_MODES = ("sirali", "karma")
 
 
 class WeeklySkeleton(Base):
@@ -85,6 +89,15 @@ class WeeklySkeletonSlot(Base):
     # Rutin: her gün aynı iş (paragraf/problem) — konu seçimi önemsiz, toplu onaylanabilir.
     is_routine: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
     default_count: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    # F2-1: satırın KAYNAĞI. Rutinde rutinin kitabı; konu satırında çiplerde önce
+    # bu kitabın ipliği. Kitapsız (serbest metinli) görevden gelen satırda
+    # label = görev başlığı → aynı derste birden çok satırın hangisi olduğu okunur.
+    book_id: Mapped[int | None] = mapped_column(
+        ForeignKey("books.id", ondelete="SET NULL"), nullable=True
+    )
+    label: Mapped[str | None] = mapped_column(String(160), nullable=True)
+    # Kitaba bağlı rutinde ilerleme biçimi: 'sirali' | 'karma' (bkz. ROUTINE_MODES)
+    routine_mode: Mapped[str | None] = mapped_column(String(16), nullable=True)
 
     skeleton: Mapped["WeeklySkeleton"] = relationship("WeeklySkeleton", back_populates="slots")
 
