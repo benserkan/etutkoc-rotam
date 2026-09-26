@@ -133,7 +133,8 @@ def _get(path: str, params: dict) -> dict:
     if not key:
         raise YouTubeError(
             "not_configured",
-            "YouTube anahtarı tanımlı değil. Süper admin → AI Ayarları'ndan girilmeli.",
+            "Video Sepeti şu an kullanılamıyor: YouTube bağlantısı henüz kurulmamış. "
+            "Platform yöneticisi bağlantıyı tamamlayınca liste getirebilirsiniz.",
         )
     try:
         r = httpx.get(f"{API_BASE}/{path}", params={**params, "key": key}, timeout=_TIMEOUT)
@@ -151,7 +152,11 @@ def _get(path: str, params: dict) -> dict:
         if "quota" in reason.lower():
             raise YouTubeError("quota", "Günlük YouTube kotası doldu; yarın tekrar deneyin.")
         logger.warning("YouTube 403: %s", r.text[:300])
-        raise YouTubeError("not_configured", "YouTube anahtarı bu isteğe yetkili değil (API kısıtını kontrol edin).")
+        raise YouTubeError(
+            "not_configured",
+            "Video Sepeti şu an YouTube'a bağlanamıyor. Platform yöneticisi bağlantıyı "
+            "kontrol ediyor; biraz sonra tekrar deneyin.",
+        )
     if r.status_code >= 400:
         logger.warning("YouTube %s: %s", r.status_code, r.text[:300])
         raise YouTubeError("unavailable", "YouTube isteği reddedildi.")

@@ -295,8 +295,8 @@ function ImportForm({
     >
       {!configured ? (
         <p className="rounded-md border border-amber-200 bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
-          YouTube anahtarı henüz tanımlı değil — süper admin AI Ayarları&apos;ndan girilince
-          liste alınabilir.
+          Video Sepeti şu an kullanılamıyor: YouTube bağlantısı henüz kurulmamış. Platform
+          yöneticisi bağlantıyı tamamlayınca liste getirebilirsin.
         </p>
       ) : null}
       <input
@@ -321,7 +321,7 @@ function ImportForm({
         </select>
         <button
           type="submit"
-          disabled={imp.isPending || !url.trim()}
+          disabled={imp.isPending || !url.trim() || !configured}
           className="inline-flex shrink-0 items-center gap-1 rounded-md bg-cyan-700 px-3 py-1.5 text-sm font-medium text-white hover:bg-cyan-800 disabled:opacity-50"
         >
           {imp.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
