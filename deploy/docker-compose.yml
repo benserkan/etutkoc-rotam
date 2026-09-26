@@ -88,6 +88,7 @@ services:
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}              # virgülle çoklu: ilk=ücretli, kalan=ücretsiz
       GEMINI_PAID_API_KEY: ${GEMINI_PAID_API_KEY:-}    # açıkça ücretli (öncelikli)
       GEMINI_FREE_API_KEYS: ${GEMINI_FREE_API_KEYS:-}  # virgülle ayrılmış ücretsiz key'ler
+      YOUTUBE_API_KEY: ${YOUTUBE_API_KEY:-}  # Video Sepeti (panelden de girilir)
       GEMINI_PAID_MODEL: ${GEMINI_PAID_MODEL:-gemini-2.5-pro}
       GEMINI_FREE_MODEL: ${GEMINI_FREE_MODEL:-gemini-2.5-flash}
       # ---- Google OAuth (randevu sistemi — koçun kendi hesabından Meet linki) ----

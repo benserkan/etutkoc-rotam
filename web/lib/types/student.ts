@@ -52,6 +52,8 @@ export interface StudentTask {
   period: TaskPeriod | null;       // M6 — opsiyonel periyot
   // Video/etkinlik bağlantısı — "Videoyu izle" (2026-09-16)
   link_url?: string | null;
+  // Video Sepeti'nden konan videolar (çoklu link)
+  videos?: { id: number; youtube_id: string; title: string; url: string; duration_min: number | null; role: string }[];
   items: StudentTaskItem[];
   planned_count: number;
   completed_count: number;

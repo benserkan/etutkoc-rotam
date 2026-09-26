@@ -50,7 +50,7 @@ from app.models import (
 )
 from app.models.focus import PomodoroKind
 from app.routes.api_v2.dependencies import get_current_user_v2, _auth_error
-from app.routes.api_v2.schemas.common import MutationResponse
+from app.routes.api_v2.schemas.common import task_video_refs, MutationResponse
 from app.routes.api_v2.schemas.student import (
     DOW_KEYS,
     AddRequestBody,
@@ -272,6 +272,7 @@ def _build_task(db: Session, task: Task, today: date) -> StudentTask:
         scheduled_hour=sched_hour_str,
         period=task.period,
         link_url=effective_link_url(task),
+        videos=task_video_refs(task),
         items=items,
         planned_count=planned,
         completed_count=completed,

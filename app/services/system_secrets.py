@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 
 # Şifreli (maskeli gösterilen) anahtar adları
-SECRET_NAMES = ("gemini_paid_api_key", "gemini_free_api_key")
+SECRET_NAMES = ("gemini_paid_api_key", "gemini_free_api_key", "youtube_api_key")
 # Düz (panelde açık gösterilen) ayar adları
 CONFIG_NAMES = ("gemini_paid_model", "gemini_free_model")
 
@@ -173,6 +173,11 @@ def get_gemini_model(*, paid: bool) -> str:
     return _resolve_raw(name) or MODEL_DEFAULTS[name]
 
 
+def get_youtube_api_key() -> str | None:
+    """YouTube Data API v3 anahtarı (Video Sepeti). DB (süper admin) → env YOUTUBE_API_KEY."""
+    return _resolve_raw("youtube_api_key")
+
+
 # ---------------------------- Süper admin durum ----------------------------
 
 
@@ -202,5 +207,12 @@ def ai_settings_status(db: Session) -> list[dict]:
         val = _resolve_raw(name) or MODEL_DEFAULTS[name]
         src = "db" if get_db_value(db, name) else ("env" if _settings_attr(name) else "default")
         out.append({"name": name, "kind": "config", "label": lbl, "is_set": True, "source": src, "value": val})
+
+    yt_db = get_db_value(db, "youtube_api_key")
+    yt = get_youtube_api_key()
+    out.append({"name": "youtube_api_key", "kind": "secret",
+                "label": "YouTube Data API anahtarı (Video Sepeti)",
+                "is_set": bool(yt), "source": "db" if yt_db else ("env" if yt else "none"),
+                "value": mask(yt)})
 
     return out

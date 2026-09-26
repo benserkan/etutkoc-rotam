@@ -80,6 +80,8 @@ class Settings(BaseSettings):
     gemini_free_api_keys: str = ""          # virgülle ayrılmış 0..N ücretsiz key
     gemini_paid_model: str = "gemini-2.5-pro"
     gemini_free_model: str = "gemini-2.5-flash"
+    # YouTube Data API v3 (Video Sepeti — oynatma listesi/video bilgisi). Panelden de girilir.
+    youtube_api_key: str = ""
 
     # Google OAuth (randevu sistemi — koçun KENDİ hesabından Meet linki üretimi).
     # Boşsa "Google ile bağlan" yüzeyleri GİZLİ; link alanı (elle yapıştırma)

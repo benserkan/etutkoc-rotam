@@ -23,6 +23,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from app.routes.api_v2.schemas.period import PeriodFilterMeta
+from app.routes.api_v2.schemas.common import TaskVideoRef  # noqa: F401
 
 
 # =============================================================================
@@ -365,6 +366,8 @@ class TeacherTask(BaseModel):
     # Etkin bağlantı: kolon > notes içindeki URL (task_links.effective_link_url).
     # Video görevinde "Videoyu izle" düğmesi bundan beslenir.
     link_url: str | None = None
+    # Video Sepeti'nden konan videolar (çoklu link). Boşsa link_url tek bağlantıdır.
+    videos: list["TaskVideoRef"] = []
     items: list[TeacherTaskItem]
     planned_count: int              # sum(items.planned_count)
     completed_count: int            # sum(items.completed_count)

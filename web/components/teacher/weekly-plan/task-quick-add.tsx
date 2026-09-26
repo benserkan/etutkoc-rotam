@@ -71,15 +71,27 @@ export function TaskQuickAdd({
   dayDate,
   period,
   onAfterAdd,
+  initialQuery = "",
+  autoOpen = false,
+  onSourcePick,
 }: {
   studentId: number;
   dayDate: string;
   period: TaskPeriod | null;
   onAfterAdd: () => void;
+  /** Kutu açılırken arama önceden dolu gelir (iskelet hayaleti: ders adı). */
+  initialQuery?: string;
+  autoOpen?: boolean;
+  /**
+   * Verilirse kaynaklı seçim görev YAZMAZ, çağırana devredilir (iskelet
+   * hayaletinin "başka konu" yolu — kabul oranı ölçümüne "other" olarak
+   * girsin diye ghosts/accept ucundan yazılır). Kaynaksız seçim normal akar.
+   */
+  onSourcePick?: (p: { section_id: number; count: number }) => void;
 }) {
-  const [open, setOpen] = React.useState(false);
-  const [q, setQ] = React.useState("");
-  const [debounced, setDebounced] = React.useState("");
+  const [open, setOpen] = React.useState(autoOpen);
+  const [q, setQ] = React.useState(initialQuery);
+  const [debounced, setDebounced] = React.useState(initialQuery);
   const [picked, setPicked] = React.useState<Picked | null>(null);
   const [count, setCount] = React.useState("");
   const create = useCreateTask(studentId);
@@ -136,6 +148,12 @@ export function TaskQuickAdd({
     const n = Number(count);
     if (!Number.isFinite(n) || n < 1) return;
     const { topic, source } = picked;
+    if (source && onSourcePick) {
+      onSourcePick({ section_id: source.section_id, count: n });
+      setPicked(null);
+      setCount("");
+      return;
+    }
     const title = source
       ? `${source.book_name} — ${source.section_label}: ${n} test`
       : `${topic.topic_name} — ${n} test`;

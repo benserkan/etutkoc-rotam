@@ -36,6 +36,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { linkButtonLabel, stripUrls } from "@/lib/task-links";
+import { TaskVideoLinks } from "@/components/shared/task-video-links";
+import { useUnplaceVideo } from "@/lib/api/video-basket";
 
 import {
   getStudentBookSections,
@@ -84,6 +86,8 @@ import {
 } from "@/lib/subject-match";
 
 import { AddTaskForm } from "./add-task-form";
+import { DayGhostRows } from "./skeleton-ghosts";
+import type { GhostCell } from "@/lib/api/weekly-skeleton";
 import { InlineSuggestions } from "./inline-suggestions";
 import { TaskItemResultBadge } from "./task-item-result-badge";
 
@@ -131,6 +135,8 @@ interface Props {
   onCarryoverDrop?: (period: TaskPeriod | null, taskId: number) => void;
   // "Haftaya yay" dialoğu için haftanın günleri (rutin görev — 2026-08-12)
   weekDays?: TeacherStudentWeekDay[];
+  /** İskelet hayaletleri (F1b) — görev değil, öneri satırları. */
+  ghosts?: GhostCell[];
 }
 
 export function WeekDayCard({
@@ -138,6 +144,7 @@ export function WeekDayCard({
   day,
   subjects,
   weekDays,
+  ghosts = [],
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- parent kontratı için tutuluyor
   focusedSubjectId,
   onFocusSubject,
@@ -289,6 +296,10 @@ export function WeekDayCard({
         onCarryoverDrop={onCarryoverDrop}
         onFocusSubject={onFocusSubject}
       />
+
+      {!day.is_past && ghosts.length > 0 ? (
+        <DayGhostRows studentId={studentId} date={day.date} ghosts={ghosts} />
+      ) : null}
 
       <div className="px-5 py-3 border-t border-border border-l-[3px] border-l-sky-400/70 bg-sky-500/[0.04]">
         <div
@@ -974,6 +985,7 @@ function SortableTaskRow({
   weekDays?: TeacherStudentWeekDay[];
 }) {
   const deleteMut = useDeleteTask(studentId, dayDate);
+  const unplaceVideo = useUnplaceVideo();
   const [editOpen, setEditOpen] = React.useState(false);
   const [spreadOpen, setSpreadOpen] = React.useState(false);
   const hourBound = task.scheduled_hour !== null;
@@ -1232,7 +1244,7 @@ function SortableTaskRow({
             ))}
           </div>
         ) : null}
-        {task.link_url ? (
+        {task.link_url && (task.videos?.length ?? 0) < 2 ? (
           <a
             href={task.link_url}
             target="_blank"
@@ -1244,6 +1256,20 @@ function SortableTaskRow({
             {linkButtonLabel(task.type)}
           </a>
         ) : null}
+        <TaskVideoLinks
+          videos={task.videos ?? []}
+          collapsible
+          removingId={unplaceVideo.isPending ? unplaceVideo.variables?.itemId ?? null : null}
+          onRemove={
+            task.status === "completed"
+              ? undefined
+              : (v) => {
+                  if (window.confirm(`"${v.title}" bu görevden çıkarılsın mı? Video sepete döner, başka bir güne verebilirsin.`)) {
+                    unplaceVideo.mutate({ itemId: v.id });
+                  }
+                }
+          }
+        />
         {displayNotes ? (
           <div className="mt-1 text-xs text-muted-foreground italic truncate max-w-xl border-l-2 border-border pl-2">
             {displayNotes}

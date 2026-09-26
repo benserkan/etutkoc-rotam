@@ -3,7 +3,7 @@
 Senaryolar:
    1. Anonim GET → 401
    2. Teacher GET → 403
-   3. Super GET → 4 item (2 secret key + 2 model)
+   3. Super GET → 5 item (2 Gemini key + 2 model + YouTube key)
    4. POST geçersiz ad → 400 invalid_setting
    5. POST boş value → 400 empty_value
    6. POST gemini_paid_api_key → kind=secret, source=db, maskeli (düz değer dönmez)
@@ -113,7 +113,7 @@ def main():
         sc = _login(SUPER_EMAIL)
         r = sc.get(URL)
         names = {it["name"] for it in r.json().get("items", [])}
-        check("3. Super GET → 4 item", r.status_code == 200 and names == set(NAMES), f"status={r.status_code} {names}")
+        check("3. Super GET → 5 item (+youtube)", r.status_code == 200 and names == set(NAMES) | {"youtube_api_key"}, f"status={r.status_code} {names}")
 
         r = sc.post(URL, json={"name": "bad_name", "value": "x"})
         check("4. geçersiz ad → 400", r.status_code == 400 and r.json()["detail"]["code"] == "invalid_setting", f"status={r.status_code}")

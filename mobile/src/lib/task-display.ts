@@ -9,6 +9,16 @@ import { Alert, Linking } from "react-native";
  * içermek gibi). Buradaki etiketler her iki rolde de aynı kuralla üretilir.
  */
 
+/** Video Sepeti'nden göreve konmuş video (backend TaskVideoRef). */
+export interface TaskVideoRef {
+  id: number;
+  youtube_id: string;
+  title: string;
+  url: string;
+  duration_min: number | null;
+  role: string;
+}
+
 export const TASK_TYPE_LABEL: Record<string, string> = {
   test: "Test",
   video: "Video dersi",

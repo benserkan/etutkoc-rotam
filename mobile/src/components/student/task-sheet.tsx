@@ -11,6 +11,7 @@ import {
 
 import { Ionicons } from "@expo/vector-icons";
 
+import { TaskVideoList } from "@/components/ui/task-video-list";
 import type { CanRequestMatrix, StudentTask } from "@/lib/student";
 import { activityLabel, linkButtonLabel, openTaskLink, taskLabel as displayLabel } from "@/lib/task-display";
 
@@ -244,7 +245,8 @@ export function TaskSheetContent({
         </View>
       </View>
 
-      {task.link_url ? (
+      <TaskVideoList videos={task.videos} />
+      {task.link_url && (task.videos?.length ?? 0) < 2 ? (
         <Pressable
           onPress={() => void openTaskLink(task.link_url!)}
           className="flex-row items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 active:bg-brand-800"
@@ -260,7 +262,7 @@ export function TaskSheetContent({
         <View className="gap-3">
           <Text className="text-sm text-slate-600">
             {isVideo
-              ? "Videoyu izledin mi? İzlediysen işaretle; çözdüğün soru varsa sayısını da gir."
+              ? (task.videos?.length ?? 0) > 1 ? "Videoların hepsini izledin mi? İzlediysen işaretle; çözdüğün soru varsa sayısını da gir." : "Videoyu izledin mi? İzlediysen işaretle; çözdüğün soru varsa sayısını da gir."
               : "Bu etkinliği tamamladın mı? İstersen çözdüğün soru sayısını da gir."}
           </Text>
           <NumField label="Çözdüğün soru (varsa)" value={solved} onChangeText={setSolved} />

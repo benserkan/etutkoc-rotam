@@ -55,3 +55,22 @@ class Page(BaseModel, Generic[T]):
     page: int = 1
     page_size: int = 25
     has_next: bool = False
+
+
+class TaskVideoRef(BaseModel):
+    """Video Sepeti'nden göreve konmuş video (çok linkli video görevi)."""
+    id: int
+    youtube_id: str
+    title: str
+    url: str
+    duration_min: int | None = None
+    role: str = "anlatim"
+
+
+def task_video_refs(task) -> list[TaskVideoRef]:
+    """Görevin sepet videoları (sıra korunur). Sepetsiz görev → []."""
+    return [
+        TaskVideoRef(id=v.id, youtube_id=v.youtube_id, title=v.title, url=v.url,
+                     duration_min=v.duration_min, role=v.role)
+        for v in (getattr(task, "basket_videos", None) or [])
+    ]

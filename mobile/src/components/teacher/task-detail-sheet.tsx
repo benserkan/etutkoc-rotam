@@ -2,6 +2,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { Alert, Pressable, Text, View } from "react-native";
 
 import { FormSheet } from "@/components/ui/form-sheet";
+import { TaskVideoList } from "@/components/ui/task-video-list";
 import type { TeacherTaskRow } from "@/lib/teacher";
 import { activityLabel, linkButtonLabel, openTaskLink, stripUrls, taskLabel } from "@/lib/task-display";
 import { cn } from "@/lib/utils";
@@ -90,7 +91,8 @@ export function TaskDetailSheet({
           </View>
         </View>
 
-        {t.link_url ? (
+        <TaskVideoList videos={t.videos} />
+        {t.link_url && (t.videos?.length ?? 0) < 2 ? (
           <Pressable
             onPress={() => void openTaskLink(t.link_url!)}
             className="flex-row items-center justify-center gap-2 rounded-xl bg-brand-700 py-3 active:bg-brand-800"

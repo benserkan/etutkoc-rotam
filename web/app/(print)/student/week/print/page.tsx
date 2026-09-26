@@ -1,4 +1,5 @@
 import { apiServer } from "@/lib/api-server";
+import { PrintVideoList } from "@/components/shared/print-video-list";
 import { ApiError } from "@/lib/api";
 import type { StudentWeekResponse, StudentWeekDay, StudentTask } from "@/lib/types/student";
 import type { MyAccountResponse } from "@/lib/types/me";
@@ -339,6 +340,7 @@ function TaskRow({ task }: { task: StudentTask }) {
             {" "}{task.completed_count}/{task.planned_count} {taskUnit(task)}
           </span>
         )}
+        <PrintVideoList videos={task.videos} />
       </span>
     </li>
   );

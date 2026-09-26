@@ -1,3 +1,4 @@
+import type { TaskVideoRef } from "@/lib/task-display";
 import { apiRequest } from "./api";
 import type { ExamRow, ExamSummary } from "./student";
 
@@ -311,6 +312,7 @@ export interface TeacherTaskRow {
   notes?: string | null;
   // Video/etkinlik bağlantısı — "Videoyu izle" (2026-09-16)
   link_url?: string | null;
+  videos?: TaskVideoRef[];
   items: TeacherTaskItemRow[];
   planned_count: number;
   completed_count: number;

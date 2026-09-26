@@ -19,6 +19,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { linkButtonLabel } from "@/lib/task-links";
+import { TaskVideoLinks } from "@/components/shared/task-video-links";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -102,7 +103,7 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
               {task.title || "—"}
             </h3>
             <TypeBadge type={task.type} />
-            {task.link_url ? (
+            {task.link_url && (task.videos?.length ?? 0) < 2 ? (
               <a
                 href={task.link_url}
                 target="_blank"
@@ -123,6 +124,7 @@ export function TaskCard({ task, dateIso, onOpenComm }: Props) {
             {task.has_pending_request ? <PendingBadge /> : null}
             {blocked ? <FutureLockedBadge /> : null}
           </div>
+          <TaskVideoLinks videos={task.videos ?? []} />
           <p className="text-xs text-muted-foreground mt-1 tabular-nums">
             {task.completed_count} / {task.planned_count} tamam ·{" "}
             {Math.round(task.pct * 100)}%

@@ -28,6 +28,10 @@ import {
   subjectToneIndex,
   type SubjectRef,
 } from "@/lib/subject-match";
+import { usePlaceVideos, VIDEO_MIME, type VideoDragPayload } from "@/lib/api/video-basket";
+import type { GhostCell } from "@/lib/api/weekly-skeleton";
+
+import { GridGhostCells } from "./skeleton-ghosts";
 
 /**
  * Hafta Izgarası (Katman 2) — 7 günü YAN YANA, hep görünür tek bakış.
@@ -79,8 +83,19 @@ function taskLabel(t: TeacherTask): string {
   }
   // Etkinlik: başlık "{Ders} · {içerik}" → içerik kısmını göster.
   const sep = t.title.indexOf(" · ");
-  if (sep > 0 && sep < t.title.length - 3) return t.title.substring(sep + 3);
-  return t.title || "—";
+  let label = sep > 0 && sep < t.title.length - 3 ? t.title.substring(sep + 3) : t.title || "—";
+  // Video Sepeti görevi: "— 3 video (65 dk)" eki dar hücrede konuyu kırpıyordu →
+  // ekten arındır, video sayısı kısa işaretle (süre gün rozetinde, detay tooltip'te).
+  const nv = t.videos?.length ?? 0;
+  if (nv > 0) label = label.replace(/\s—\s\d+ video.*$/, "");
+  return label;
+}
+
+/** Video görevi mi? Izgarada dolgulu "▶" rozetiyle ayrışır (test/etkinlikten). */
+function videoBadge(t: TeacherTask): number {
+  const nv = t.videos?.length ?? 0;
+  if (nv > 0) return nv;
+  return t.type === "video" ? 1 : 0;
 }
 
 // Hover detayı: kaynak + bölüm + ilerleme + o bölümde KALAN kapasite.
@@ -103,6 +118,9 @@ function taskTooltip(t: TeacherTask, dragHint: string): string {
     } else if (it.planned_count > 0) {
       lines.push(`${it.book_name || "Deneme"} — ${it.completed_count}/${it.planned_count}`);
     }
+  }
+  for (const v of t.videos ?? []) {
+    lines.push(`▶ ${v.title}${v.duration_min ? ` (${v.duration_min} dk)` : ""}`);
   }
   if ((t.solved_count ?? 0) > 0) lines.push(`Çözülen: ${t.solved_count} soru`);
   if (t.scheduled_hour != null) lines.push(`Saat: ${t.scheduled_hour}`);
@@ -214,6 +232,15 @@ function shortDate(iso: string): string {
 
 const GRID_TASK_MIME = "text/x-week-grid-task";
 
+// Video Sepeti: günün video toplamı bu dakikayı geçince rozet amber olur
+// (sınır DEĞİL, yalnız uyarı — koç kararı 2026-09-25).
+const VIDEO_WARN_MIN = 60;
+function dayVideoMinutes(tasks: TeacherTask[]): number {
+  let m = 0;
+  for (const t of tasks) for (const v of t.videos ?? []) m += v.duration_min ?? 0;
+  return m;
+}
+
 function SubjGroupBlock({
   g,
   dayDate,
@@ -294,9 +321,17 @@ function SubjGroupBlock({
                 <span
                   className={cn(
                     "max-w-full align-bottom",
-                    hl ? "break-words" : "truncate inline-block",
+                    hl || (t.videos?.length ?? 0) > 0 ? "break-words" : "truncate inline-block",
                   )}
                 >
+                  {videoBadge(t) > 0 ? (
+                    <span
+                      className="mr-0.5 inline-block rounded bg-rose-600 px-1 text-[9px] font-bold leading-[14px] text-white"
+                      title="Video görevi"
+                    >
+                      ▶{videoBadge(t) > 1 ? ` ${videoBadge(t)}` : ""}
+                    </span>
+                  ) : null}
                   {taskLabel(t)}
                 </span>
                 {isActivity(t) ? (
@@ -327,10 +362,13 @@ export function WeekGrid({
   onOpenDay,
   highlightTaskId = null,
   onClearHighlight,
+  ghostsByDate,
 }: {
   studentId: number;
   days: TeacherStudentWeekDay[];
   subjects: SubjectRef[];
+  /** İskelet hayaletleri (F1b) — kesikli "öneri" satırları. */
+  ghostsByDate?: Map<string, GhostCell[]>;
   openDate: string | null;
   onOpenDay: (date: string) => void;
   highlightTaskId?: number | null;
@@ -342,6 +380,7 @@ export function WeekGrid({
   const [dragOverDate, setDragOverDate] = React.useState<string | null>(null);
   const moveMut = useMoveTaskDate();
   const spreadMut = useSpreadTask();
+  const placeVideos = usePlaceVideos(studentId);
 
   // --- Sağ tık menüsü (koç isteği 2026-09-03): sürükle-bırakın klavye/fare
   // dostu alternatifi. Taşı/Kopyala seçilince ızgara "hedef gün seç" moduna
@@ -441,6 +480,29 @@ export function WeekGrid({
 
   const handleDrop = React.useCallback(
     (e: React.DragEvent, targetDate: string, period?: "morning" | "noon" | "evening" | "") => {
+      const vraw = e.dataTransfer.getData(VIDEO_MIME);
+      if (vraw) {
+        e.preventDefault();
+        e.stopPropagation();
+        setDragOverDate(null);
+        let vp: VideoDragPayload;
+        try {
+          vp = JSON.parse(vraw);
+        } catch {
+          return;
+        }
+        if (days.find((d) => d.date === targetDate)?.is_past) {
+          toast.warning("Geçmiş güne video konamaz.");
+          return;
+        }
+        if (!vp.itemIds?.length) return;
+        placeVideos.mutate({
+          item_ids: vp.itemIds,
+          date: targetDate,
+          ...(period ? { period } : {}),
+        });
+        return;
+      }
       const raw = e.dataTransfer.getData(GRID_TASK_MIME);
       if (!raw) return;
       e.preventDefault();
@@ -500,7 +562,7 @@ export function WeekGrid({
         { onSuccess: () => toast.success("Görev taşındı") },
       );
     },
-    [days, moveMut, spreadMut],
+    [days, moveMut, spreadMut, placeVideos],
   );
 
   const totalTasks = days.reduce((a, d) => a + d.tasks.length, 0);
@@ -550,9 +612,11 @@ export function WeekGrid({
                     onOpenDay(day.date);
                   }}
                   onDragOver={(e) => {
-                    if (!e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
+                    const isVideo = e.dataTransfer.types.includes(VIDEO_MIME);
+                    if (!isVideo && !e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
+                    if (isVideo && day.is_past) return;
                     e.preventDefault();
-                    e.dataTransfer.dropEffect = e.ctrlKey || e.metaKey ? "copy" : "move";
+                    e.dataTransfer.dropEffect = isVideo || e.ctrlKey || e.metaKey ? "copy" : "move";
                     setDragOverDate(day.date);
                   }}
                   onDragLeave={() =>
@@ -601,9 +665,11 @@ export function WeekGrid({
 
                   <div className="px-1.5 py-1.5 space-y-1.5 flex-1">
                     {day.tasks.length === 0 ? (
-                      <p className="text-[10px] italic text-muted-foreground/60">
-                        boş
-                      </p>
+                      (ghostsByDate?.get(day.date)?.length ?? 0) > 0 ? null : (
+                        <p className="text-[10px] italic text-muted-foreground/60">
+                          boş
+                        </p>
+                      )
                     ) : (
                       sections.map((sec) => (
                         <div
@@ -612,10 +678,12 @@ export function WeekGrid({
                           onDragOver={
                             sec.pkey
                               ? (e) => {
-                                  if (!e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
+                                  const isVideo = e.dataTransfer.types.includes(VIDEO_MIME);
+                                  if (!isVideo && !e.dataTransfer.types.includes(GRID_TASK_MIME)) return;
+                                  if (isVideo && day.is_past) return;
                                   e.preventDefault();
                                   e.dataTransfer.dropEffect =
-                                    e.ctrlKey || e.metaKey ? "copy" : "move";
+                                    isVideo || e.ctrlKey || e.metaKey ? "copy" : "move";
                                   setDragOverDate(day.date);
                                 }
                               : undefined
@@ -663,9 +731,36 @@ export function WeekGrid({
                     )}
                   </div>
 
+                  {(ghostsByDate?.get(day.date)?.length ?? 0) > 0 ? (
+                    <div className="px-1.5 pb-1.5">
+                      <GridGhostCells ghosts={ghostsByDate?.get(day.date) ?? []} />
+                    </div>
+                  ) : null}
+
                   {day.tasks.length > 0 ? (
-                    <div className="px-2 py-0.5 border-t border-border/50 text-[9px] text-muted-foreground tabular-nums">
-                      {doneCount}/{day.tasks.length} tamam
+                    <div className="flex items-center gap-1 px-2 py-0.5 border-t border-border/50 text-[9px] text-muted-foreground tabular-nums">
+                      <span>{doneCount}/{day.tasks.length} tamam</span>
+                      {(() => {
+                        const vmin = dayVideoMinutes(day.tasks);
+                        if (vmin <= 0) return null;
+                        return (
+                          <span
+                            className={cn(
+                              "ml-auto rounded px-1 font-semibold",
+                              vmin > VIDEO_WARN_MIN
+                                ? "bg-amber-500 text-white"
+                                : "text-cyan-800 dark:text-cyan-300",
+                            )}
+                            title={
+                              vmin > VIDEO_WARN_MIN
+                                ? `Bu günün video toplamı ${vmin} dk — ${VIDEO_WARN_MIN} dk'yı geçti`
+                                : `Bu günün video toplamı ${vmin} dk`
+                            }
+                          >
+                            ▶ {vmin} dk
+                          </span>
+                        );
+                      })()}
                     </div>
                   ) : null}
                 </button>

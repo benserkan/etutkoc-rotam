@@ -116,6 +116,13 @@ class Task(Base):
     work_block: Mapped["CoachWorkBlock | None"] = relationship(
         "CoachWorkBlock", back_populates="tasks", foreign_keys=[work_block_id]
     )
+    # Video Sepeti'nden bu göreve konmuş videolar (çok linkli video görevi).
+    # Görev silinince ORM task_id'yi NULL'lar (+ PG FK SET NULL) → videolar
+    # sepete döner. passive_deletes YOK: dev SQLite FK zorlamaz, ORM yapmalı.
+    basket_videos = relationship(
+        "VideoBasketItem", back_populates="task", lazy="selectin",
+        order_by="VideoBasketItem.order",
+    )
 
     def __repr__(self) -> str:
         return f"<Task {self.date} {self.title}>"

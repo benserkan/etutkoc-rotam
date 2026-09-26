@@ -16,6 +16,8 @@ from typing import Literal
 
 from pydantic import BaseModel
 
+from app.routes.api_v2.schemas.common import TaskVideoRef  # noqa: F401
+
 # Deneme (ExamResult) modelleri koç şemasıyla ORTAK — öğrenci salt-okuma görür.
 from app.routes.api_v2.schemas.teacher import ExamListSummary, ExamResultRow
 from app.routes.api_v2.schemas.period import PeriodFilterMeta
@@ -98,6 +100,8 @@ class StudentTask(BaseModel):
     # Video/etkinlik bağlantısı — öğrenci "Videoyu izle" ile doğrudan açar
     # (2026-09-16). Kolon > notes içindeki URL.
     link_url: str | None = None
+    # Video Sepeti'nden konan videolar (çoklu link). Boşsa link_url tek bağlantıdır.
+    videos: list["TaskVideoRef"] = []
     items: list[StudentTaskItem]
     planned_count: int             # sum(items.planned)
     completed_count: int           # sum(items.completed)

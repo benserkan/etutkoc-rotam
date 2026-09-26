@@ -337,6 +337,8 @@ from app.models.wrong_question import (
     WrongQuestionImage,
 )
 from app.models.task_template import TaskTemplate, TaskTemplateItem
+from app.models.video_basket import VideoBasketItem, VideoSource
+from app.models.weekly_skeleton import SkeletonGhostAction, WeeklySkeleton, WeeklySkeletonSlot
 from app.models.warning_state import WarningState
 from app.models.moment_event import MomentEvent
 from app.models.panel_behavior import PanelRouteStat, PanelVisitEvent
@@ -623,6 +625,11 @@ __all__ = [
     "UserGuideState",
     "TaskTemplate",
     "TaskTemplateItem",
+    "VideoBasketItem",
+    "VideoSource",
+    "WeeklySkeleton",
+    "WeeklySkeletonSlot",
+    "SkeletonGhostAction",
     "SUPPORT_AUDIENCE_SUPER_ADMIN",
     "SUPPORT_AUDIENCE_INSTITUTION_ADMIN",
     "SUPPORT_AUDIENCE_TEACHER",

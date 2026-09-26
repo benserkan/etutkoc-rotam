@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Clock,
   FileEdit,
+  LayoutTemplate,
   Loader2,
   Megaphone,
   PanelLeftClose,
@@ -77,7 +78,15 @@ import { CurriculumBoard } from "./weekly-plan/curriculum-board";
 import { NextUnitsPanel } from "./weekly-plan/next-units-panel";
 import { SubjectMix } from "./weekly-plan/subject-mix";
 import { WeekGrid } from "./weekly-plan/week-grid";
+import { SkeletonEditorDialog } from "./weekly-plan/skeleton-editor";
+import {
+  getGhosts,
+  type GhostCell,
+  type GhostsResponse,
+  skeletonKeys,
+} from "@/lib/api/weekly-skeleton";
 import { WorkBlockPanel } from "./weekly-plan/work-block-panel";
+import { VideoBasketFloat } from "./weekly-plan/video-basket-float";
 import {
   useSectionOrder,
   useSectionPref,
@@ -148,6 +157,22 @@ export function WeekBoard({
 
   // Single-open accordion: aynı anda yalnızca bir gün açık (Jinja'da bu yoktu;
   // kullanıcı talebi 2026-05-19). Default: bugüne denk gelen gün.
+  // Haftalık İskelet (F1b) — hayalet hücreler. CANLI yeniden hesap: görev
+  // ekle/sil/taşı yanıtı "skeleton" önekini bayatlatır → çipler tazelenir.
+  const ghostStart = data.days[0]?.date ?? data.start_date;
+  const ghostEnd = data.days[data.days.length - 1]?.date ?? data.end_date;
+  const ghostsQ = useQuery<GhostsResponse>({
+    queryKey: skeletonKeys.ghosts(studentId, ghostStart, ghostEnd),
+    queryFn: () => getGhosts(studentId, ghostStart, ghostEnd),
+    staleTime: 15_000,
+  });
+  const ghostsByDate = React.useMemo(() => {
+    const m = new Map<string, GhostCell[]>();
+    for (const d of ghostsQ.data?.days ?? []) m.set(d.date, d.ghosts);
+    return m;
+  }, [ghostsQ.data]);
+  const hasSkeleton = ghostsQ.data?.has_skeleton ?? false;
+
   const todayDay = data.days.find((d) => d.is_today);
   const focusDay =
     focusTaskId !== null
@@ -207,6 +232,7 @@ export function WeekBoard({
   const [newProgramOpen, setNewProgramOpen] = React.useState(false);
   // Veliye duyur — gönderim öncesi önizleme modalı
   const [announceOpen, setAnnounceOpen] = React.useState(false);
+  const [skeletonOpen, setSkeletonOpen] = React.useState(false);
   const [programsDropdownOpen, setProgramsDropdownOpen] = React.useState(false);
   // Sağ panel (Kaynak Durumu / Serbest Bloklar / Devret) katlanabilir: görev
   // eklerken gün kartı ~360px daha genişler — form alanları sıkışmasın
@@ -386,6 +412,15 @@ export function WeekBoard({
               }}
             />
           ) : null}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setSkeletonOpen(true)}
+            title="Her hafta tekrar eden ders yerleşimi — boş günlere öneri düşürür"
+          >
+            <LayoutTemplate className="size-4" aria-hidden />
+            {hasSkeleton ? "İskelet" : "İskelet oluştur"}
+          </Button>
           <Link
             href={`/teacher/students/${studentId}/program/print${
               currentProgramId
@@ -461,6 +496,7 @@ export function WeekBoard({
         studentId={studentId}
         days={data.days}
         subjects={subjectsForGrouping}
+        ghostsByDate={ghostsByDate}
         openDate={openDate}
         onOpenDay={(date) => {
           setOpenDate(date);
@@ -697,6 +733,7 @@ export function WeekBoard({
                   weekStartDate={data.start_date}
                   day={selectedDay}
                   weekDays={data.days}
+                  ghosts={ghostsByDate.get(selectedDay.date) ?? []}
                   subjects={subjectsForGrouping}
                   focusedSubjectId={focusedSubjectId}
                   onFocusSubject={setFocusedSubjectId}
@@ -779,6 +816,8 @@ export function WeekBoard({
         </aside>
       </div>
 
+      <VideoBasketFloat studentId={studentId} subjects={subjectsForGrouping} />
+
       <BookGridModal
         open={gridBookId !== null}
         onOpenChange={(o) => {
@@ -804,6 +843,14 @@ export function WeekBoard({
           onClose={() => setDeleteTarget(null)}
         />
       ) : null}
+
+      <SkeletonEditorDialog
+        studentId={studentId}
+        open={skeletonOpen}
+        onOpenChange={setSkeletonOpen}
+        weekStart={ghostStart}
+        weekEnd={ghostEnd}
+      />
 
       {/* WP3 — Yeni program dialog */}
       <NewProgramDialog

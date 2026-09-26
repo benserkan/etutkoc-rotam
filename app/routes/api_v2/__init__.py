@@ -51,6 +51,8 @@ from app.routes.api_v2 import guides as v2_guides
 from app.routes.api_v2 import settings as v2_settings
 from app.routes.api_v2 import exam_import as v2_exam_import
 from app.routes.api_v2 import self_study as v2_self_study
+from app.routes.api_v2 import video_basket as v2_video_basket
+from app.routes.api_v2 import weekly_skeleton as v2_weekly_skeleton
 from app.routes.api_v2 import student as v2_student
 from app.routes.api_v2 import support as v2_support
 from app.routes.api_v2 import surveys as v2_surveys
@@ -93,6 +95,8 @@ router.include_router(v2_surveys.router)
 router.include_router(v2_wrong_questions.router)
 router.include_router(v2_exam_import.router)
 router.include_router(v2_self_study.router)
+router.include_router(v2_video_basket.router)
+router.include_router(v2_weekly_skeleton.router)
 router.include_router(v2_appointments.router)
 router.include_router(v2_coaching_reports.router)
 router.include_router(v2_testimonials_public.router)

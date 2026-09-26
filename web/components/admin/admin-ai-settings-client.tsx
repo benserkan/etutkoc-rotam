@@ -85,6 +85,16 @@ export function AdminAiSettingsClient({ initial }: { initial: AiSettingsResponse
         <ModelCard item={get("gemini_free_model")!} placeholder="gemini-2.5-flash" />
       ) : null}
 
+      {get("youtube_api_key") ? (
+        <div className="space-y-1">
+          <SecretCard item={get("youtube_api_key")!} placeholder="AIza... (YouTube Data API v3)" />
+          <p className="px-1 text-[11px] text-muted-foreground">
+            Video Sepeti oynatma listesi/video bilgilerini (başlık, süre) bu anahtarla okur.
+            Google Cloud Console → YouTube Data API v3 → anahtarı yalnız bu API ile sınırla.
+          </p>
+        </div>
+      ) : null}
+
       <p className="text-[11px] text-muted-foreground">
         Çoklu ücretsiz anahtar için sunucu <code>.env</code> içinde{" "}
         <code>GEMINI_FREE_API_KEYS</code> (virgülle) kullanılabilir; kota dolunca sıradakine geçer.

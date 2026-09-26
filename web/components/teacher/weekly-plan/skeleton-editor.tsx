@@ -1,0 +1,351 @@
+"use client";
+
+/**
+ * Haftalık İskelet düzenleyicisi (F1b).
+ *
+ * İskelet TARİHE değil HAFTA GÜNÜNE bağlı: "Pazartesi sabah Matematik"
+ * satırı her haftanın Pazartesi'sine hayalet olarak düşer (Perşembe–Çarşamba
+ * programında da sorunsuz). "Bu haftayı iskelet yap" mevcut haftanın
+ * görevlerinden satırları çıkarır; koç burada düzeltir.
+ */
+
+import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2, Plus, Trash2, Wand2 } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  getSkeleton,
+  getSkeletonAcceptance,
+  type GhostAcceptanceReport,
+  type SkeletonPeriod,
+  type SkeletonResponse,
+  type SkeletonSlotIn,
+  skeletonKeys,
+  useDeleteSkeleton,
+  useSaveSkeleton,
+  useSkeletonFromWeek,
+  WEEKDAY_LABELS,
+} from "@/lib/api/weekly-skeleton";
+
+type Row = SkeletonSlotIn & { key: string };
+
+let _seq = 0;
+const nextKey = () => `r${++_seq}`;
+
+function toRows(sk: SkeletonResponse | undefined): Row[] {
+  return (sk?.slots ?? []).map((s) => ({
+    key: nextKey(),
+    weekday: s.weekday,
+    period: s.period,
+    subject_id: s.subject_id,
+    position: s.position,
+    is_routine: s.is_routine,
+    default_count: s.default_count,
+  }));
+}
+
+export function SkeletonEditorDialog({
+  studentId,
+  open,
+  onOpenChange,
+  weekStart,
+  weekEnd,
+}: {
+  studentId: number;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  weekStart: string;
+  weekEnd: string;
+}) {
+  const q = useQuery<SkeletonResponse>({
+    queryKey: skeletonKeys.skeleton(studentId),
+    queryFn: () => getSkeleton(studentId),
+    enabled: open,
+  });
+  const accQ = useQuery<GhostAcceptanceReport>({
+    queryKey: skeletonKeys.acceptance(30),
+    queryFn: () => getSkeletonAcceptance(30),
+    enabled: open,
+    // Pencere her açılışta taze: hayalet kabul/kaldırma bu anahtarı bayatlatmaz
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+  const save = useSaveSkeleton(studentId);
+  const fromWeek = useSkeletonFromWeek(studentId);
+  const del = useDeleteSkeleton(studentId);
+
+  const [rows, setRows] = React.useState<Row[] | null>(null);
+  // Sunucu verisi değişince (ilk yükleme / "bu haftadan" sonrası) taslağı
+  // yeniden kur — render sırasında türetme (effect'te setState yok).
+  const dataStamp = q.data ? JSON.stringify(q.data.slots.map((s) => s.id)) : null;
+  const [lastStamp, setLastStamp] = React.useState<string | null>(null);
+  if (dataStamp !== lastStamp) {
+    setLastStamp(dataStamp);
+    setRows(q.data ? toRows(q.data) : null);
+  }
+
+  const subjects = q.data?.subjects ?? [];
+  const list = rows ?? [];
+
+  function update(key: string, patch: Partial<Row>) {
+    setRows((prev) => (prev ?? []).map((r) => (r.key === key ? { ...r, ...patch } : r)));
+  }
+  function remove(key: string) {
+    setRows((prev) => (prev ?? []).filter((r) => r.key !== key));
+  }
+  function add(weekday: number) {
+    const first = subjects[0];
+    if (!first) return;
+    setRows((prev) => [
+      ...(prev ?? []),
+      {
+        key: nextKey(),
+        weekday,
+        period: null,
+        subject_id: first.id,
+        position: (prev ?? []).filter((r) => r.weekday === weekday).length,
+        is_routine: false,
+        default_count: null,
+      },
+    ]);
+  }
+
+  function submit() {
+    const slots: SkeletonSlotIn[] = list.map((r, i) => ({
+      weekday: r.weekday,
+      period: r.period,
+      subject_id: r.subject_id,
+      position: i,
+      is_routine: r.is_routine,
+      default_count: r.default_count,
+    }));
+    save.mutate({ slots }, { onSuccess: () => onOpenChange(false) });
+  }
+
+  const exists = q.data?.exists ?? false;
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Haftalık iskelet</DialogTitle>
+          <DialogDescription>
+            Her hafta tekrar eden ders yerleşimi. Satırı dolmamış güne kesikli
+            &ldquo;öneri&rdquo; düşer; öneri görev değildir, kaynak ayırmaz — tıklayıp konusunu
+            seçince görev olur. Rutin satırlar (paragraf, problem) gün kartında tek
+            tuşla onaylanabilir.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="flex flex-wrap items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={fromWeek.isPending}
+            onClick={() => {
+              if (
+                exists &&
+                !window.confirm("Mevcut iskelet bu haftanın görevleriyle değiştirilsin mi?")
+              ) {
+                return;
+              }
+              fromWeek.mutate({ start: weekStart, end: weekEnd });
+            }}
+          >
+            {fromWeek.isPending ? (
+              <Loader2 className="size-3.5 animate-spin" aria-hidden />
+            ) : (
+              <Wand2 className="size-3.5" aria-hidden />
+            )}
+            Bu haftayı iskelet yap
+          </Button>
+          <span className="text-[12px] text-muted-foreground">
+            Görüntülenen haftanın görevlerinden gün + periyot + ders satırları çıkarılır.
+          </span>
+        </div>
+
+        <AcceptanceLine report={accQ.data} />
+
+        {q.isLoading || rows == null ? (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            <Loader2 className="mx-auto size-4 animate-spin" aria-hidden />
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {WEEKDAY_LABELS.map((label, wd) => {
+              const dayRows = list.filter((r) => r.weekday === wd);
+              return (
+                <div key={wd} className="rounded-md border border-border">
+                  <div className="flex items-center gap-2 border-b border-border bg-muted/40 px-3 py-1.5">
+                    <span className="text-[13px] font-semibold text-foreground">{label}</span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {dayRows.length} satır
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => add(wd)}
+                      disabled={subjects.length === 0}
+                      className="ml-auto inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[12px] text-cyan-800 hover:bg-cyan-500/10 dark:text-cyan-300"
+                    >
+                      <Plus className="size-3" aria-hidden /> Satır ekle
+                    </button>
+                  </div>
+                  {dayRows.length === 0 ? (
+                    <p className="px-3 py-2 text-[12px] italic text-muted-foreground">boş gün</p>
+                  ) : (
+                    <ul className="divide-y divide-border">
+                      {dayRows.map((r) => (
+                        <li
+                          key={r.key}
+                          className="flex flex-wrap items-center gap-2 px-3 py-1.5"
+                          data-testid="skeleton-row"
+                        >
+                          <select
+                            value={r.subject_id}
+                            onChange={(e) => update(r.key, { subject_id: Number(e.target.value) })}
+                            className="min-w-40 flex-1 rounded border border-border bg-background px-2 py-1 text-[13px] text-foreground"
+                            aria-label="Ders"
+                          >
+                            {subjects.map((s) => (
+                              <option key={s.id} value={s.id}>
+                                {s.name}
+                              </option>
+                            ))}
+                          </select>
+                          <select
+                            value={r.period ?? ""}
+                            onChange={(e) =>
+                              update(r.key, {
+                                period: (e.target.value || null) as SkeletonPeriod | null,
+                              })
+                            }
+                            className="rounded border border-border bg-background px-2 py-1 text-[13px] text-foreground"
+                            aria-label="Periyot"
+                          >
+                            <option value="">Periyotsuz</option>
+                            <option value="morning">Sabah</option>
+                            <option value="noon">Öğle</option>
+                            <option value="evening">Akşam</option>
+                          </select>
+                          <label className="inline-flex items-center gap-1 text-[12px] text-foreground">
+                            <input
+                              type="checkbox"
+                              checked={r.is_routine}
+                              onChange={(e) => update(r.key, { is_routine: e.target.checked })}
+                            />
+                            rutin
+                          </label>
+                          <label className="inline-flex items-center gap-1 text-[12px] text-foreground">
+                            adet
+                            <input
+                              type="number"
+                              min={1}
+                              max={100}
+                              value={r.default_count ?? ""}
+                              placeholder="oto"
+                              onChange={(e) =>
+                                update(r.key, {
+                                  default_count: e.target.value ? Number(e.target.value) : null,
+                                })
+                              }
+                              className="w-16 rounded border border-border bg-background px-1.5 py-1 text-[13px] text-foreground"
+                            />
+                          </label>
+                          <button
+                            type="button"
+                            onClick={() => remove(r.key)}
+                            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                            aria-label="Satırı sil"
+                          >
+                            <Trash2 className="size-3.5" aria-hidden />
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              );
+            })}
+            {subjects.length === 0 ? (
+              <p className="text-[12px] text-amber-800 dark:text-amber-200">
+                Öğrencinin ders listesi boş — önce kitap ata.
+              </p>
+            ) : null}
+          </div>
+        )}
+
+        <DialogFooter className="gap-2">
+          {exists ? (
+            <Button
+              type="button"
+              variant="outline"
+              className="sm:mr-auto text-rose-700 dark:text-rose-300"
+              disabled={del.isPending}
+              onClick={() => {
+                if (window.confirm("İskelet silinsin mi? Görevlere dokunulmaz.")) {
+                  del.mutate(undefined, { onSuccess: () => onOpenChange(false) });
+                }
+              }}
+            >
+              İskeleti sil
+            </Button>
+          ) : null}
+          <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            Vazgeç
+          </Button>
+          <Button type="button" onClick={submit} disabled={save.isPending || rows == null}>
+            {save.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : null}
+            Kaydet
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const KIND_TR: Record<string, string> = {
+  thread: "devam",
+  next: "sıradaki",
+  new: "yeni konu",
+  weak: "tekrar",
+};
+
+/**
+ * Önerilerin işe yarıyor mu? Son 30 günde koçun (tüm öğrencileri) hayaletlerde
+ * ne yaptığı: çipten kabul · başka konu · kaldırma. Hedef: çiplerin ≥%60'ı kabul.
+ */
+function AcceptanceLine({ report }: { report: GhostAcceptanceReport | undefined }) {
+  if (!report || report.actions === 0) return null;
+  const top1 = report.by_rank["1"] ?? 0;
+  const kinds = Object.entries(report.by_kind)
+    .filter(([, n]) => n > 0)
+    .map(([k, n]) => `${KIND_TR[k] ?? k} ${n}`)
+    .join(" · ");
+  return (
+    <div
+      className="rounded-md border border-border bg-muted/40 px-3 py-2 text-[12px] text-foreground"
+      data-testid="skeleton-acceptance"
+    >
+      <span className="font-semibold">Son 30 gün, tüm öğrencilerin: </span>
+      {report.actions} öneri işlendi · çipten kabul{" "}
+      <b>%{report.acceptance_pct ?? 0}</b> ({report.accepted}) · başka konu {report.other} ·
+      kaldırılan {report.dismissed}
+      {report.accepted > 0 ? (
+        <span className="text-muted-foreground">
+          {" "}
+          — kabullerin {top1}&apos;i 1. çipten{kinds ? ` · ${kinds}` : ""}
+        </span>
+      ) : null}
+    </div>
+  );
+}

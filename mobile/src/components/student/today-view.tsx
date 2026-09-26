@@ -200,13 +200,15 @@ export function TodayView({
                   {/* Video/bağlantı: karta değil doğrudan linke gider (YouTube vb.) */}
                   {t.link_url && !blocked ? (
                     <Pressable
-                      onPress={() => void openTaskLink(t.link_url!)}
+                      onPress={() => ((t.videos?.length ?? 0) > 1 ? onOpenTask(t) : void openTaskLink(t.link_url!))}
                       hitSlop={6}
                       accessibilityLabel={linkButtonLabel(t.type)}
                       className="flex-row items-center gap-1 rounded-full bg-brand-700 px-2.5 py-1.5 active:bg-brand-800"
                     >
                       <Ionicons name="play" size={12} color="#fff" />
-                      <Text className="text-[11px] font-semibold text-white">{linkButtonLabel(t.type)}</Text>
+                      <Text className="text-[11px] font-semibold text-white">
+                        {(t.videos?.length ?? 0) > 1 ? `${t.videos!.length} video` : linkButtonLabel(t.type)}
+                      </Text>
                     </Pressable>
                   ) : null}
                   {!blocked ? (

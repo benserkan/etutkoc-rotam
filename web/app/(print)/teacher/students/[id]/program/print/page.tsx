@@ -1,4 +1,5 @@
 import { apiServer } from "@/lib/api-server";
+import { PrintVideoList } from "@/components/shared/print-video-list";
 import { ApiError } from "@/lib/api";
 import type {
   TeacherStudentDetailResponse,
@@ -396,6 +397,7 @@ function TaskRow({ task }: { task: TeacherTask }) {
             {" "}{task.completed_count}/{task.planned_count} {taskUnit(task)}
           </span>
         )}
+        <PrintVideoList videos={task.videos} />
         {hasDY ? (
           <span className="tabular-nums">
             {" "}· <span className="font-semibold text-emerald-700">D{correct}</span>{" "}

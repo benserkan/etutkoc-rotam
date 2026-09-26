@@ -115,7 +115,7 @@ from app.models import (
     compute_net,
 )
 from app.routes.api_v2.dependencies import _auth_error, assert_active_coaching, get_current_user_v2
-from app.routes.api_v2.schemas.common import MutationResponse
+from app.routes.api_v2.schemas.common import task_video_refs, MutationResponse
 from app.routes.api_v2.schemas.teacher import (
     ExamNotifyParentsBody,
     ExamNotifyParentsResult,
@@ -3519,6 +3519,7 @@ def _build_teacher_task(db: Session, task: Task) -> TeacherTask:
         is_draft=bool(task.is_draft),
         notes=task.notes,
         link_url=effective_link_url(task),
+        videos=task_video_refs(task),
         items=items_out,
         planned_count=planned,
         completed_count=completed,
@@ -3608,6 +3609,11 @@ def _invalidate_for_task(task: Task, teacher_id: int) -> list[str]:
         f"teacher:{teacher_id}:students:{sid}:sidebar",
         # Serbest iş blokları: bağlı görev ekle/sil/düzenle → dağıtılan/kalan değişir
         f"teacher:{teacher_id}:students:{sid}:work-blocks",
+        # Haftalık İskelet: görev eklenince/silinince hayalet hücreler ve CANLI
+        # çipler (yarının ipliği) değişir.
+        f"teacher:{teacher_id}:students:{sid}:skeleton",
+        # Video Sepeti: video görevi silinince/taşınınca videolar sepete döner
+        f"teacher:{teacher_id}:students:{sid}:video-basket",
         # KAPASİTE YÜZEYLERİ — görev ekle/sil/düzenle rezervi değiştirir; bu
         # sorgular bayatlarsa koç "kalan test"i YANLIŞ görür (saha bug'ı
         # 2026-09-03: Salı'ya 3 test atandı, Çarşamba formunda kalan hâlâ eski

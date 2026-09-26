@@ -6,6 +6,259 @@ Sohbet bitince son durumu buraya yaz; bir sonraki sohbet buradan devam eder.
 
 ---
 
+## HAFTALIK İSKELET (kalıptan program) — F1a+F1b KOD-TAMAM (2026-09-25, migration `b3c6f9g0f44b` yerelde, COMMIT/DEPLOY BEKLİYOR)
+
+**Koç ihtiyacı:** her yeni program boş ızgarayla başlıyor; oysa ders yerleşimi
+(okul/dershane programı, günlük paragraf/problem rutini) haftadan haftaya büyük
+ölçüde aynı. **Onaylı kararlar:** (1) öneriler HAYALET hücre (görev değil, rezerv
+tutmaz; onayla göreve döner), (2) konu kuralı = geçen haftanın devamı → aynı
+kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölçüm.
+- **`scripts/backtest_skeleton.py`** (SALT OKUMA; `--student N --weeks 16`) prod'da
+  koşuldu (9 öğrenci, 898 test kalemi, 16 hafta). Sonuçlar:
+  - Ders yerleşimi: geçen haftadan iskelet → isabet %53 · kapsama %58 (Emir
+    %69/%72); son 3 hafta çoğunluğu benzer (%57); periyot dahil %29 (periyot
+    tutarsız girildiği için); günün ders listesi birebir aynı yalnız %3.
+  - Konu, "tek son konu" kuralı: %48 doğru (Kimya/Geometri/Fizik/Biyoloji %78-88,
+    TYT Mat %6-16). **KÖK NEDEN:** TYT Mat'ta her gün İKİ PARALEL İPLİK var —
+    konu ipliği (Üslü→Köklü→Çarpanlara) + problem ipliği (Yüzde→Karışım→Hız→…),
+    her biri 3-4 gün aynı konuda. Tek-imleç iki ipliği karıştırıyor.
+  - **İPLİK modeli** (son 7 günde açık bölümler, her biri kendi kitabında
+    devam/sonraki): gerçek kalem aday kümesinde **%75** (Emir %78, TYT Mat
+    %65-89), ortalama 3,1 aday. "Slot kitabı hatırlar" varyantı işe YARAMADI (%42).
+  - Test sayısı (dersteki en sık adet): birebir %57 · ±1 %89.
+- **İPLİK MODELİ tam ölçümü — `scripts/backtest_threads.py`** (SALT OKUMA; prod,
+  8 öğrenci, 898 görev): ANLIK çip (koç hücreye tıkladığı an, önceki günler
+  dahil) doğru konu 1. çipte %52 · ilk 2 %64 · ilk 3 %70 · tümünde %75 (ort. 3
+  çip); + "yeni konu aç" (kitapta sıradaki başlanmamış konu) çipiyle **%79**.
+  HAFTA BAŞI donmuş durum (şimdiki+sıradaki bölüm) yalnız %58 — AYT Fizik/Kimya
+  %19-20'ye düşüyor → **çipler hafta boyunca CANLI yeniden hesaplanmalı** (koç
+  Pazartesi'yi onaylayınca Salı'nın çipleri güncellenir). Kaçan 228 görev: 132
+  kitap sırası dışı yeni konu (koçun serbest seçimi) · 55 eski konuya dönüş · 41
+  sıradaki yeni konu. Test sayısı: ipliğin son adedi birebir %61 · ±1 %89. TYT
+  Mat'ta 1. çip yalnız %25 (iki iplik yarışıyor → sıralama iyileştirilebilir).
+- **F1 PLANI ONAYLANDI (2026-09-25).** Aşağıdaki plan + altındaki F1a kaydı.
+  Kullanıcı şartı: **"çip körü körüne değil, bilgiyle seçilsin"** (denemede
+  yanlış vb.). Plan özeti:
+  - **Migration (additive, yerelde uygulandı):** `weekly_skeletons` (öğrenci başına
+    etkin iskelet) · `weekly_skeleton_slots` (hafta günü + periyot? + ders +
+    sıra + rutin mi + varsayılan adet?) · `skeleton_ghost_actions` (kabul/
+    başka konu/kaldır + kaçıncı çip + bölüm + görev → hem "bu hafta kaldırıldı"
+    hafızası hem KABUL ORANI ölçümü). İskelet TARİHE değil HAFTA GÜNÜNE bağlı
+    (Emir Perşembe–Çarşamba haftası sorunsuz). Hayalet tabloda tutulmaz,
+    hesaplanır, rezerv YAPMAZ.
+  - **Hayalet kuralları:** yalnız bugün+ileri program günleri; o gün+periyotta
+    dersin görevi varsa kaybolur; aynı derste iki satır → iki hayalet. Toplu
+    "onayla" YALNIZ rutin satırlarda (konu satırlarında bilinçli yok).
+  - **Çipler:** sıra = ölçülen iplik modeli (son 7 gün iplikleri yakınlığa göre
+    → devam / kitapta sıradaki) + "yeni konu aç"; CANLI yeniden hesap; kapalı
+    konu asla çip olmaz; adet = ipliğin son adedi, yoksa P3 alışkanlığı.
+  - **Çipte bilgi (kullanıcı isteği):** gerekçe satırı ("dünün devamı · 3 test
+    kaldı") + en çok 3 dolgulu rozet, öncelik: denemede N yanlış (90g) · arşivde
+    N açık yanlış · unutuluyor (deneme konu analizi) · görevde %X doğru (D/Y
+    yoksa yok) · son 1 test/kitapta bitti · kapatmaya hazır/önce bak. Fazlası
+    "ayrıntı"da; veri `topic_board` ile AYNI kaynaktan. **Rozetler F1'de sırayı
+    DEĞİŞTİRMEZ** (ölçülen isabeti bozmasın; sonra backtest ile denenir). İplik
+    dışı zayıf konu için en sonda ayrı renkte "Tekrar: X (denemede N yanlış)"
+    çipi (55 "eski konuya dönüş" kaçağını hedefler, ayrıca ölçülür).
+  - **UI (web):** ızgarada kesikli "öneri" hücresi; gün kartında hayalet satır →
+    tıkla → satır altında çip şeridi (assign-count-chooser deseni) → çip =
+    görev (2 tık); "başka adet", "başka konu" (P4 kutusu ön-seçili), × kaldır;
+    "Bu haftayı iskelet yap" + düzenleme penceresi. Görevler TASLAK iner.
+    Mobil yok (PARITY).
+  - **Sunucu:** yeni `skeleton_suggest.py` + uçlar (iskelet oku/kaydet/haftadan/
+    sil · hayaletler+çipler · kabul [`_create_task_with_items`, P1 uyarı] ·
+    kaldır); invalidate `_capacity_invalidate` + hafta + hayaletler.
+  - **Ölçüm hedefi:** çiplerin ≥%60'ı kabul; 2-3 hafta sonra rapor; backtest
+    betiği F1 koduyla aynı hesaba bağlanır.
+  - **Sıra:** F1a backend+testler → F1b web+canlı test → F1c kabul raporu.
+    **F2'ye kalan:** okul/dershane programından iskelet · sınıf şablonları ·
+    iplik sabitleme (TYT Mat 1. çip %25) · rozete göre sıralama.
+- **F1a — BACKEND KOD-TAMAM (2026-09-25):**
+  - **Migration `b3c6f9g0f44b`** (← a2b5e8f9e33a, additive, downgrade'li,
+    YEREL uygulandı; prod'a deploy'da): 3 tablo (model `app/models/weekly_skeleton.py`).
+  - **`app/services/skeleton_suggest.py`** (TEK MERKEZ): bölüm evreni (arşivsiz
+    test kitapları, kalan = test − çözülen − rezerv) · görevin dersi = kalem
+    kitabı → kalem konusu → başlık öneki · hayalet eşleştirme (periyotlu satır
+    önce aynı periyodu, periyotsuz satır herhangi görevi alır) · iplik çipleri
+    (son 7 gün, en yeni önde; aynı gün birden fazla görevde görev id'si yeni
+    olan önde) + `advance` (kalan varsa aynı bölüm, yoksa kitapta sıradaki açık
+    konulu bölüm) · aynı gün aynı derste k. hayalet çipleri k kaydırılır ·
+    "yeni konu" + "tekrar" (denemede ≥2 yanlış) çipi · adet = satırın varsayılanı
+    > ipliğin son adedi > P3 alışkanlığı (kalana kırpılır) · rozetler topic_board
+    yardımcılarıyla (`_exam_wrong_counts/_open_wrong_counts/_readiness`) +
+    unutulan konu + görev doğruluğu (≥2 test) · `slots_from_tasks` (haftadan
+    iskelet) · `acceptance_report`.
+  - **Uçlar** `api_v2/weekly_skeleton.py` (prefix /teacher, sahiplik 404):
+    GET/POST `/students/{id}/skeleton` · POST `.../skeleton/from-week` {start,end ≤14g}
+    · POST `.../skeleton/delete` · GET `.../skeleton/ghosts?start=&end=` · POST
+    `.../ghosts/accept` {slot_id,date,section_id,count,chip_rank?,chip_kind?,chip_count?}
+    (TEST görevi, periyot iskeletten, `allow_over_capacity`; chip_rank yoksa
+    "other" loglanır) · POST `.../ghosts/accept-routine` {date} · POST
+    `.../ghosts/action` {dismissed|restore} · GET `/teacher/skeleton/acceptance`.
+    `_invalidate_for_task`'a `teacher:{tid}:students:{sid}:skeleton` eklendi
+    (görev ekle/sil/taşı → hayaletler + yarının çipleri tazelenir).
+  - **Test `scripts/test_api_v2_weekly_skeleton.py` 27/27** (iki satır iki
+    hayalet · geçmiş gün yok · thread/next/new/weak sırası · kapalı konu yok ·
+    rozet sayısı panoyla aynı · hayalet rezerv tutmaz · kabul → görev+periyot+
+    rezerv · CANLI: ertesi gün kalan 4 + "devamı" · 422'ler · kaldır/geri getir ·
+    rapor · from-week · 404). Regresyon: topic_board 18 · weekly_plan 15 ·
+    teacher_read 12 · video_basket 62 · run_gorev_checks 82/82.
+- **F1b — WEB KOD-TAMAM (2026-09-25, migration YOK):**
+  - `lib/api/weekly-skeleton.ts` (tipler + fetcher + `skeletonKeys` →
+    `["teacher","me","students",id,"skeleton",…]`; görev ekle/sil/taşı yanıtındaki
+    skeleton öneki hayaletleri CANLI tazeler) + 6 mutation hook.
+  - `weekly-plan/skeleton-ghosts.tsx`: `DayGhostRows` (gün kartında "İskeletten
+    öneriler", periyot etiketli, "Rutinleri onayla (N)") · `GhostRow` (kesikli
+    satır → TAM ALTINDA çip şeridi: Adet önerilen/1-5 · çip = tür [devam/sıradaki/
+    yeni konu/tekrar] + bölüm + kitap + "N test" [kapasite aşımı amber] + gerekçe +
+    ≤3 DOLGULU rozet; × kaldır + toast "Geri al"; "Başka konu seç" = TaskQuickAdd
+    ders adıyla ön-dolu, kaynaklı seçim `onSourcePick` ile ghosts/accept'ten yazılır
+    → kabul raporuna chip_rank=null "other" girer) · `GridGhostCells` (Hafta
+    Izgarası'nda kesikli "öneri").
+  - `weekly-plan/skeleton-editor.tsx`: 7 gün × satır (ders · periyot · rutin ·
+    adet) + "Bu haftayı iskelet yap" + İskeleti sil. `week-board` başlığında
+    "İskelet oluştur / İskelet" düğmesi; ghosts sorgusu board'da (görüntülenen
+    günlerin aralığı) → ızgara + seçili gün kartına dağıtılır.
+  - `task-quick-add` +`initialQuery`/`autoOpen`/`onSourcePick` (geriye uyumlu).
+  - Test: YENİ `scripts/live_weekly_skeleton.py` **13/13** (düzenleyiciden 3 satır
+    → ızgara 3 öneri → gün kartı 3 hayalet · ilk çip "devam / dünün devamı" · rozet
+    "denemede 2 yanlış" · şerit satırın altında · ellipsis/taşma 0 · çip → görev +
+    periyot · hayalet 3→2 yenilemesiz · × → dismissed · rutin onay → Fizik 2 test ·
+    koyu tema kontrast). tsc + eslint temiz. **TEST DERSİ:** yeni koç hesabında Rehber
+    karşılama penceresi sayfayı örter → "Daha sonra" ile kapat. Dev backend
+    reload'suz → yeni router sonrası `run_dev_patched` yeniden başlatıldı.
+- **F1c (ölçüm altyapısı) — KOD-TAMAM (2026-09-26, migration YOK):**
+  - YENİ `scripts/backtest_skeleton_chips.py` (SALT OKUMA): geçmişi gün gün
+    oynatıp her test kaleminde ÜRÜNÜN GERÇEK `build_chips`'ini çağırır (o anki
+    bölüm ilerlemesi = o ana kadar verilen testler; iplik = son 7 gün; kapatma
+    ve deneme yanlışı tarihe göre). Ölçüm artık prototip kopyası değil ürün kodu.
+    `--new-chips N` deneme bayrağı.
+  - **Prod ölçümü (7 öğrenci, 852 kalem, 16 hafta):** ürün 1. çip %50 · ilk 3
+    %71 · tüm çipler %74 (prototip %52/%70/%79) → 5 puanlık açık "yeni konu"
+    çipindeydi (ürün ders başına tek kitaptan 1 yeni konu veriyordu). Yeni sabit
+    `skeleton_suggest.NEW_TOPIC_CHIPS` (farklı kitaplardan) **1→2**: tüm çipler
+    **%77**, ilk 3 %73, ort. çip 3,3→4,2; 3 ek kazanç getirmedi. Adet (isabet eden
+    çipte) birebir %69 · ±1 %89. Kaçan 224 kalemin 156'sı kitap sırası dışı yeni
+    konu (koçun serbest seçimi — "başka konu" yolu), 68'i eski konuya dönüş.
+    Ölçüm için dosyalar canlı konteynere GEÇİCİ kopyalandı, sonra silindi.
+  - Kabul raporu iskelet penceresinde (`AcceptanceLine`: son 30 gün, koçun tüm
+    öğrencileri — işlenen öneri · çipten kabul % · başka konu · kaldırılan · 1. çip
+    payı · tür kırılımı; pencere her açılışta taze çeker).
+  - Test: skeleton smoke 27/27 · `live_weekly_skeleton.py` **14/14** (11. rapor).
+  - **SIRADA:** deploy sonrası 2-3 hafta gerçek kullanım → rapor ≥%60 kabul mü;
+    `backtest_skeleton_chips.py` prod'da yeniden koşulup canlı kabulle kıyaslanır.
+    F2 adayları: okul/dershane programından iskelet · sınıf şablonları · iplik
+    sabitleme (TYT Mat 1. çip) · rozete göre sıralama (backtest ile).
+- **Commit/deploy bekleyen (bu oturumdan):** Video Sepeti tüm paketleri
+  (migration `z1a4d7e8d22z` + `a2b5e8f9e33a`, mobil OTA dahil) + iki ölçüm
+  betiği (`backtest_skeleton.py`, `backtest_threads.py`) + Haftalık İskelet F1a+F1b
+  (migration `b3c6f9g0f44b`) — hepsi commit'siz. Deploy'da web+worker+next rebuild.
+
+---
+
+## VİDEO SEPETİ — oynatma listesi → konu grupları → ızgaraya sürükle (2026-09-25, Faz 1 KOD-TAMAM, migration `z1a4d7e8d22z`, DEPLOY BEKLİYOR)
+
+**Tetikleyici (koç):** video görevlerini tek tek link kopyalayıp girmek çok
+zaman alıyor. Kararlar: günlük sınır YOK, gün video toplamı >60 dk → UYARI ·
+aynı gün + aynı konu → TEK görev çok video · sepet öğrenci başına + başka
+öğrenciye kopyala · soru çözümü/checkpoint dahil ama ayrı renk.
+- **Migration `z1a4d7e8d22z`** (← y0z3c6d7c11y, additive): `video_basket_items`
+  (öğrenci · youtube_id · başlık · süre · liste · ders/konu · group_key/label ·
+  rol anlatim|soru|tekrar|diger · order · **task_id** SET NULL). Programa konan
+  video görevi = `task_id` bağlı kayıtlar (ayrı link tablosu yok); görev silinince
+  video sepete döner; "izlendi" = görev COMPLETED. `Task.basket_videos`.
+- **`youtube_service.py`**: URL çözümleme (liste/video/youtu.be/shorts; listeli
+  video linki → tüm liste; RD mix → tek video) + playlistItems sayfalama (≤300) +
+  videos.list süre. Anahtar `system_secrets.get_youtube_api_key` (panel "AI
+  Ayarları" → YouTube kartı; env `YOUTUBE_API_KEY`, compose web'e eklendi).
+  Hata kodları: not_configured 503 · bad_url 422 · not_found 404 · quota 429.
+- **`video_segmentation.py`** (algoritma): rol anahtar sözcükten → başlık
+  öğrencinin o dersteki LEAF konularıyla eşleşir (konu adının TÜM sözcükleri
+  başlıkta; en uzun kazanır; eşit = belirsiz) → konusuz soru/tekrar (checkpoint)
+  ÖNCEKİ konuya katılır → konusuz anlatım temizlenmiş etiketle kendi grubunu açar
+  → (ops.) tek Gemini çağrısı kapalı listeden konu bağlar → aynı konu birleşir.
+- **Uçlar** `api_v2/video_basket.py` (prefix /teacher): GET/POST import/place/
+  reorder/copy/groups/groups-delete + items patch/delete/unplace. Place: taşınan
+  video eski görevinden çıkar, son video çıkınca görev silinir; izlenen video 409.
+  Görev başlığı otomatik "Ders · Konu — N video (X dk)" (elle başlık korunur).
+  `TeacherTask`/`StudentTask.videos` (ortak `TaskVideoRef`). `_invalidate_for_task`
+  sepet anahtarını da bayatlatır.
+- **Web:** `video-basket-float.tsx` — YÜZEN pencere (fixed, kaydırmada yerinde;
+  yan panel ızgaranın altında kaldığı için şeride konmadı). Link + ders → Getir;
+  grup başlığı (tüm bekleyenler) ya da tek video ızgaradaki güne sürüklenir
+  (`VIDEO_MIME`), rol seçici renkli, yeniden adlandır / kopyala / sil / programdan
+  çıkar. Izgara: gün alt bilgisinde "▶ N dk" (>60 amber), video görevi etiketi
+  "Konu ▶3" (kırpılmaz). Gün kartı + öğrenci kartı: çok videoda numaralı link
+  listesi (`shared/task-video-links.tsx`, soru çözümü rozetli).
+- **Test:** `test_api_v2_video_basket.py` **44/44** (YouTube taklit) ·
+  `live_video_basket.py` **13/13** (gerçek tarayıcı sürükle-bırak). Regresyon:
+  teacher_read 12 · student_read 11 · weekly_plan 15 · task_link_url 15 ·
+  student_mutations 12 · admin_ai_settings 11 (5 kalem sözleşmesi); tsc+eslint temiz.
+- **Yerel test düzeltmesi (aynı gün):** 177 videoluk AYT Fizik kampı listesinde
+  import sunucuda BİTTİ ama Next vekili "socket hang up" ile koptu → koç
+  "beklenmeyen hata" gördü. Kök neden: AI konu bağlama `gemini.generate` zincirinde
+  (pro→flash→ücretsiz) her denemede 45 sn bekliyordu. Düzeltme: AI adımı toplam
+  **25 sn** bütçe (thread + `prefer_fast`, 20 sn/çağrı; aşarsa gruplar AI'sız
+  kalır) · deterministik eşleştirme güçlendi: konu adı varyantlara bölünür
+  (parantez içi / virgül / "ve" alternatifleri), Türkçe ek atma (`_stem`), eşit
+  adayda sürmekte olan grubun konusu seçilir, başlığın 2.+ parçasındaki **bölüm
+  etiketi** ("| Atışlar |", "| Basit Makineler |"; listede %40'tan sık geçen kamp
+  adı elenir) alt başlıkları birleştirir → AI'sız 115 grup → 53 (9 konu eşli);
+  uçtan uca :3000 üzerinden 26 sn, 37 grup. Frontend: import hatasında sepet
+  anında + 8 sn + 25 sn yeniden çekilir, kopuk bağlantıda "yanıt gecikti" uyarısı.
+  **Bilinen sınır:** tek kelimelik eşleşme bazen komşu konuya kayar ("Net Kuvvet…"
+  → Kuvvet-Tork) — öneri; koç sepette düzeltir.
+- **KAYITLI LİSTELER (aynı gün, koç: "yeni liste eskisine karıştı; aranan
+  linkler sonraki günlerde ulaşılabilir olsun; düzenle/sil"):** migration
+  **`a2b5e8f9e33a`** (← z1a4d7e8d22z, additive): `video_sources` (koç başına
+  tekil `source_key` pl:/v: · url · başlık · koçun kendi adı `label` · ders ·
+  video sayısı · son kullanım) + `video_basket_items.source_id` (SET NULL;
+  backfill playlist_id'den). Getir = listeyi kaydeder/tazeler; **tekrar kontrolü
+  LİSTE İÇİNDE** (başka listede de olan video yeni listeyi eksik bırakmaz);
+  `source_id` ile linksiz yeniden getir (listeye sonradan eklenenler gelir).
+  Uçlar: GET `/teacher/video-sources` · POST `/{id}` (ad/ders; 0=ders kaldır) ·
+  POST `/{id}/delete` {student_id, remove_waiting} (programdakiler ASLA silinmez,
+  kalanlar listesiz olur). Panel: **"Gösterilen liste" seçici** (varsayılan en
+  son getirilen; "Listesiz / tek videolar" + "Tüm listeler") + katlanır
+  **"Kayıtlı listelerim"** (Göster · yeniden getir · YouTube · düzenle · sil
+  onayı + bekleyenleri kaldır kutusu). Kopya liste bağını taşır. Test:
+  video_basket **62/62** · YENİ `live_video_sources.py` **10/10** ·
+  live_video_basket 13 · weekly_plan 15; tsc+eslint temiz. **Head =
+  `a2b5e8f9e33a`.**
+- **Sadeleştirme (aynı gün, koç: "gün kartında video listesi çok uzuyor;
+  ızgarada video görevi normal görev gibi duruyor"):** gün kartında çok videolu
+  görev tek dolgulu özet satırı ("3 video · 65 dk · 1 soru çözümü ▾") → tıkla
+  numaralı liste açılır (`TaskVideoLinks collapsible`; öğrenci kartı açık kalır);
+  gereksiz "N videonun ilkini izle" düğmesi kaldırıldı (tek videoda "Videoyu
+  izle" kalır). Izgarada " ▶3" metin eki yerine dolgulu kırmızı **▶ 3** rozeti
+  (`videoBadge`; tek video/tip=video → ▶). live_video_basket **18/18**.
+- **Durum renkleri + görevden tek video çıkarma (aynı gün):** sepet panelinde
+  her video ÖĞRENCİYE GÖRE 4 durumla renklenir (frontend türetimi, backend
+  `status`+`task_date`'ten): Verilmedi (tonsuz) · Programda (bugün/ileri, mavi)
+  · Verildi-izlenmedi (geçmiş gün + görev tamamlanmamış, amber) · İzlendi
+  (yeşil); satır zemini + sol şerit + dolgulu rozet (tarihli), lejant, grup
+  başlığında durum sayıları. Varsayılan filtre artık TÜMÜ ("Yalnız verilmeyen
+  videolar" kutusu). Gün kartında açılan video listesinde her satırda **×**
+  → onay → `unplace` (video sepete döner, görev başlığı/süresi yenilenir, son
+  video çıkınca görev silinir; tamamlanmış görevde düğme yok). YENİ
+  `live_video_states.py` **10/10** · live_video_basket **21/21** ·
+  live_video_sources 10/10.
+- **Öğrenci ekranı + çıktılar (aynı gün, koç: "öğrenci tıklayınca izleyebiliyor
+  mu, çıktıda nasıl görünüyor"):** web öğrenci kartı zaten her videoyu ayrı
+  link (yeni sekme) gösteriyordu; çok videoda tekrar eden "Videoyu izle" (yalnız
+  ilk video) düğmesi gizlendi. **İki yazdırma çıktısı** (koç program + öğrenci
+  hafta) yalnız görev başlığını basıyordu → `shared/print-video-list.tsx`
+  videoları numaralı + dk + "(soru çözümü)" ile listeler. **Mobil** yalnız ilk
+  videoyu açıyordu → YENİ `components/ui/task-video-list.tsx` (her video
+  dokunulabilir satır, YouTube açar) öğrenci görev sayfası + koç görev detayı;
+  Bugün satırındaki çip çok videoda "3 video" der ve görevi açar (JS-only →
+  OTA gerekir). YENİ `live_video_student_print.py` **7/7** (YouTube isteği
+  test içinde yakalanır — bu ağ YouTube'u engelliyor).
+- **SIRADA (Faz 2+):** hoca/kanal kataloğu · YouTube aramasıyla otomatik keşif ·
+  koç tercih öğrenimi · grup konusunu panelden seçme (uç hazır: topic_id).
+
+---
+
 ## DENEME KONU NORMALİZASYONU — "Ünite / Konu" + Paragraf/Geometri alt konuları (2026-09-23, commit `492decf`+2, migration YOK, CANLI)
 
 **Tetikleyici (koç, Emir #113 · 4 karne / 480 soru):** koçun kendi deneme

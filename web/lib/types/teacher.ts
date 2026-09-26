@@ -377,6 +377,8 @@ export interface TeacherTask {
   notes: string | null;
   // Etkin bağlantı (video vb.) — kolon > notes içindeki URL (2026-09-16)
   link_url?: string | null;
+  // Video Sepeti'nden konan videolar (çoklu link) — boşsa link_url tek bağlantı
+  videos?: TaskVideoRef[];
   items: TeacherTaskItem[];
   planned_count: number;
   completed_count: number;
@@ -2524,4 +2526,14 @@ export interface ExamParentPreviewResponse {
   is_sent_snapshot: boolean;
   max_lines: number;
   max_line_length: number;
+}
+
+/** Göreve bağlı video (Video Sepeti). */
+export interface TaskVideoRef {
+  id: number;
+  youtube_id: string;
+  title: string;
+  url: string;
+  duration_min: number | null;
+  role: string;
 }

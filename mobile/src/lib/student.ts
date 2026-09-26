@@ -1,3 +1,4 @@
+import type { TaskVideoRef } from "@/lib/task-display";
 import { apiRequest } from "./api";
 
 // ETÜTKOÇ /api/v2/student — web tipleriyle aynı (yalnız mobilde kullanılan alt küme).
@@ -31,6 +32,8 @@ export interface StudentTask {
   period: "morning" | "noon" | "evening" | null;
   // Video/etkinlik bağlantısı — "Videoyu izle" doğrudan açar (2026-09-16)
   link_url?: string | null;
+  // Çok videolu görev (Video Sepeti) — her video ayrı link
+  videos?: TaskVideoRef[];
   items: StudentTaskItem[];
   planned_count: number;
   completed_count: number;
