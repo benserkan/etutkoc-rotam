@@ -8,12 +8,18 @@ import {
   AlertTriangle,
   Archive,
   ArchiveRestore,
+  ArrowRight,
+  BookOpen,
   ChevronRight,
+  Copy,
   ExternalLink,
+  Library,
   Loader2,
   Lock,
   Plus,
+  Search,
   Trash2,
+  X,
 } from "lucide-react";
 
 import {
@@ -51,6 +57,7 @@ import type {
   StudentBookListItem,
   StudentBookListResponse,
   StudentBookSectionProgressRow,
+  TeacherBookListItem,
   TeacherBookListResponse,
   TeacherStudentDetailResponse,
 } from "@/lib/types/teacher";
@@ -61,7 +68,6 @@ import type {
 } from "@/lib/types/library";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -74,49 +80,168 @@ interface Props {
   studentId: number;
 }
 
-// Sabit pastel paleti — subject_id stable hash → ton; her ders aynı tonu alır
-const SUBJECT_TONES: Array<{
-  border: string;
-  ring: string;
-  dot: string;
-  text: string;
-}> = [
-  { border: "border-l-indigo-500",  ring: "ring-indigo-500/10",  dot: "bg-indigo-500",  text: "text-indigo-600 dark:text-indigo-400" },
-  { border: "border-l-emerald-500", ring: "ring-emerald-500/10", dot: "bg-emerald-500", text: "text-emerald-600 dark:text-emerald-400" },
-  { border: "border-l-amber-500",   ring: "ring-amber-500/10",   dot: "bg-amber-500",   text: "text-amber-600 dark:text-amber-400" },
-  { border: "border-l-rose-500",    ring: "ring-rose-500/10",    dot: "bg-rose-500",    text: "text-rose-600 dark:text-rose-400" },
-  { border: "border-l-violet-500",  ring: "ring-violet-500/10",  dot: "bg-violet-500",  text: "text-violet-600 dark:text-violet-400" },
-  { border: "border-l-cyan-500",    ring: "ring-cyan-500/10",    dot: "bg-cyan-500",    text: "text-cyan-600 dark:text-cyan-400" },
-  { border: "border-l-fuchsia-500", ring: "ring-fuchsia-500/10", dot: "bg-fuchsia-500", text: "text-fuchsia-600 dark:text-fuchsia-400" },
-  { border: "border-l-sky-500",     ring: "ring-sky-500/10",     dot: "bg-sky-500",     text: "text-sky-600 dark:text-sky-400" },
-];
+/* ============================================================ Ortak parçalar */
 
-function subjectTone(subjectId: number) {
-  return SUBJECT_TONES[Math.abs(subjectId) % SUBJECT_TONES.length];
+// Ders tonu — subject_id stable hash → her ders hep aynı renk.
+const SUBJECT_DOTS = [
+  "bg-indigo-500",
+  "bg-emerald-500",
+  "bg-amber-500",
+  "bg-rose-500",
+  "bg-violet-500",
+  "bg-cyan-500",
+  "bg-fuchsia-500",
+  "bg-sky-500",
+];
+function subjectDot(subjectId: number) {
+  return SUBJECT_DOTS[Math.abs(subjectId) % SUBJECT_DOTS.length];
+}
+
+// Kaynak rozeti — küçük öğede dolgulu (koyu zemin + beyaz metin) kuralı.
+const SOURCE_BADGE: Record<string, { label: string; cls: string; hint: string }> = {
+  catalog: {
+    label: "Katalogdan",
+    cls: "bg-cyan-700 text-white",
+    hint: "Ortak Kitap Kataloğu'ndaki doğrulanmış yapıdan oluşturuldu (birebir test sayıları).",
+  },
+  template: {
+    label: "Şablondan",
+    cls: "bg-violet-600 text-white",
+    hint: "Senin kitap şablonlarından birinden oluşturuldu.",
+  },
+  manual: {
+    label: "Elle oluşturuldu",
+    cls: "bg-slate-600 text-white",
+    hint: "Üniteleri ve test sayıları elle girildi.",
+  },
+};
+
+function SourceBadge({ kind }: { kind?: string | null }) {
+  const b = kind ? SOURCE_BADGE[kind] : null;
+  if (!b) return null;
+  return (
+    <span
+      data-testid="book-source-badge"
+      title={b.hint}
+      className={cn("inline-flex rounded-full px-2 py-0.5 text-[11px] font-semibold", b.cls)}
+    >
+      {b.label}
+    </span>
+  );
+}
+
+function TypeBadge({ label }: { label?: string | null }) {
+  if (!label) return null;
+  return (
+    <span className="inline-flex rounded-full bg-slate-200 px-2 py-0.5 text-[11px] font-medium text-slate-800 dark:bg-slate-700 dark:text-slate-100">
+      {label}
+    </span>
+  );
+}
+
+function Ring({ pct, size = 92 }: { pct: number; size?: number }) {
+  const r = (size - 10) / 2;
+  const c = 2 * Math.PI * r;
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden className="shrink-0">
+      <circle cx={size / 2} cy={size / 2} r={r} strokeWidth={9} className="fill-none stroke-slate-200 dark:stroke-slate-700" />
+      <circle
+        cx={size / 2}
+        cy={size / 2}
+        r={r}
+        strokeWidth={9}
+        strokeLinecap="round"
+        strokeDasharray={`${(c * Math.min(100, pct)) / 100} ${c}`}
+        transform={`rotate(-90 ${size / 2} ${size / 2})`}
+        className="fill-none stroke-emerald-500"
+      />
+      <text x="50%" y="50%" dominantBaseline="central" textAnchor="middle" className="fill-foreground text-[19px] font-bold">
+        %{pct}
+      </text>
+    </svg>
+  );
+}
+
+function ProgressBar({
+  done,
+  reserved,
+  total,
+  className,
+}: {
+  done: number;
+  reserved: number;
+  total: number;
+  className?: string;
+}) {
+  const d = total > 0 ? Math.min(100, (100 * done) / total) : 0;
+  const r = total > 0 ? Math.min(100 - d, (100 * reserved) / total) : 0;
+  return (
+    <div
+      className={cn("flex h-2 w-full overflow-hidden rounded-full bg-muted", className)}
+      role="progressbar"
+      aria-valuenow={Math.round(d + r)}
+      aria-valuemin={0}
+      aria-valuemax={100}
+    >
+      <div className="h-full bg-emerald-500 transition-[width]" style={{ width: `${d}%` }} />
+      <div className="h-full bg-amber-500 transition-[width]" style={{ width: `${r}%` }} />
+    </div>
+  );
+}
+
+function Legend({ done, reserved, remaining, unit = "test" }: { done: number; reserved: number; remaining: number; unit?: string }) {
+  return (
+    <div className="flex flex-wrap gap-x-3 gap-y-1 text-[12px] text-muted-foreground">
+      <span className="inline-flex items-center gap-1">
+        <span className="size-2.5 rounded-sm bg-emerald-500" aria-hidden />
+        Çözüldü <strong className="tabular-nums text-foreground">{done}</strong>
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <span className="size-2.5 rounded-sm bg-amber-500" aria-hidden />
+        Programda (rezerv) <strong className="tabular-nums text-foreground">{reserved}</strong>
+      </span>
+      <span className="inline-flex items-center gap-1">
+        <span className="size-2.5 rounded-sm bg-muted-foreground/30" aria-hidden />
+        Atanabilir <strong className="tabular-nums text-foreground">{remaining}</strong> {unit}
+      </span>
+    </div>
+  );
+}
+
+function isDenemeType(t: string) {
+  return t === "brans_denemesi" || t === "genel_deneme";
 }
 
 interface SubjectGroup {
   subject_id: number;
   subject_name: string;
   items: StudentBookListItem[];
+  total: number;
+  done: number;
+  reserved: number;
 }
 
 function groupBySubject(items: StudentBookListItem[]): SubjectGroup[] {
   const map = new Map<number, SubjectGroup>();
   for (const it of items) {
-    const g = map.get(it.subject_id);
-    if (g) g.items.push(it);
-    else
-      map.set(it.subject_id, {
-        subject_id: it.subject_id,
-        subject_name: it.subject_name,
-        items: [it],
-      });
+    let g = map.get(it.subject_id);
+    if (!g) {
+      g = { subject_id: it.subject_id, subject_name: it.subject_name, items: [], total: 0, done: 0, reserved: 0 };
+      map.set(it.subject_id, g);
+    }
+    g.items.push(it);
+    g.total += it.section_total_tests;
+    g.done += it.section_completed_total;
+    g.reserved += it.section_reserved_total;
   }
-  return Array.from(map.values()).sort((a, b) =>
-    a.subject_name.localeCompare(b.subject_name, "tr"),
-  );
+  return Array.from(map.values()).sort((a, b) => a.subject_name.localeCompare(b.subject_name, "tr"));
 }
+
+function trLower(s: string) {
+  return s.toLocaleLowerCase("tr-TR");
+}
+
+/* ============================================================ Panel */
 
 export function StudentBooksPanel({ studentId }: Props) {
   const router = useRouter();
@@ -134,55 +259,56 @@ export function StudentBooksPanel({ studentId }: Props) {
   });
   const archivedCount = booksQ.data?.archived_count ?? 0;
   const [assignOpen, setAssignOpen] = React.useState(false);
+  const [query, setQuery] = React.useState("");
   const data = booksQ.data;
   const allItems = React.useMemo(() => data?.items ?? [], [data]);
-  const assignedIds = React.useMemo(
-    () => new Set(allItems.map((b) => b.book_id)),
-    [allItems],
-  );
+  const assignedIds = React.useMemo(() => new Set(allItems.map((b) => b.book_id)), [allItems]);
   const groups = React.useMemo(() => groupBySubject(allItems), [allItems]);
 
-  const visibleGroups =
-    activeSubjectId !== null
-      ? groups.filter((g) => g.subject_id === activeSubjectId)
-      : groups;
-  const visibleCount = visibleGroups.reduce((s, g) => s + g.items.length, 0);
+  const totals = React.useMemo(() => {
+    const active = allItems.filter((b) => !b.is_archived && !isDenemeType(b.book_type));
+    const total = active.reduce((s, b) => s + b.section_total_tests, 0);
+    const done = active.reduce((s, b) => s + b.section_completed_total, 0);
+    const reserved = active.reduce((s, b) => s + b.section_reserved_total, 0);
+    const finished = active.filter((b) => b.section_total_tests > 0 && b.section_completed_total >= b.section_total_tests).length;
+    const denemeBooks = allItems.filter((b) => !b.is_archived && isDenemeType(b.book_type)).length;
+    return { total, done, reserved, remaining: Math.max(0, total - done - reserved), finished, denemeBooks, count: active.length };
+  }, [allItems]);
+
+  const q = trLower(query.trim());
+  const visibleGroups = groups
+    .filter((g) => activeSubjectId === null || g.subject_id === activeSubjectId)
+    .map((g) => ({
+      ...g,
+      items: q
+        ? g.items.filter((b) => trLower(`${b.book_name} ${b.publisher ?? ""}`).includes(q))
+        : g.items,
+    }))
+    .filter((g) => g.items.length > 0);
 
   function setSubjectFilter(subjectId: number | null) {
     const sp = new URLSearchParams(searchParams.toString());
     if (subjectId === null) sp.delete("subject_id");
     else sp.set("subject_id", String(subjectId));
     const qs = sp.toString();
-    router.replace(qs ? `${pathname}?${qs}#books` : `${pathname}#books`, {
-      scroll: false,
-    });
+    router.replace(qs ? `${pathname}?${qs}#books` : `${pathname}#books`, { scroll: false });
   }
 
+  const pct = totals.total > 0 ? Math.round((100 * totals.done) / totals.total) : 0;
+  const loading = booksQ.isLoading && !data;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-section="books-panel">
+      {/* ---- Başlık + eylemler */}
       <div className="flex flex-wrap items-end justify-between gap-3">
-        <div className="space-y-0.5">
-          <h3 className="text-base font-medium">Kitap envanteri</h3>
-          <p className="text-xs text-muted-foreground">
-            {booksQ.isLoading && !data
-              ? "Yükleniyor…"
-              : `${allItems.length} kitap · ${groups.length} ders`}
-            {activeSubjectId !== null && allItems.length !== visibleCount ? (
-              <>
-                {" · "}
-                <span className="text-foreground">
-                  Filtrede {visibleCount}
-                </span>
-              </>
-            ) : null}
-            {booksQ.isFetching && !booksQ.isLoading ? (
-              <span className="ml-2 text-muted-foreground/70">
-                · güncelleniyor…
-              </span>
-            ) : null}
+        <div className="min-w-0 space-y-0.5">
+          <h3 className="text-base font-semibold text-foreground">Kaynaklar</h3>
+          <p className="text-[13px] text-muted-foreground">
+            Öğrencinin kitapları, her kitapta ne kadar ilerlediği ve programa verilebilecek kalan test.
+            {booksQ.isFetching && !booksQ.isLoading ? " · güncelleniyor…" : ""}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {archivedCount > 0 || showArchived ? (
             <Button
               size="sm"
@@ -191,12 +317,10 @@ export function StudentBooksPanel({ studentId }: Props) {
               title="Arşivlenen kitaplar gizlenir; kayıt ve görev geçmişi durur."
             >
               <Archive className="size-4" aria-hidden />
-              {showArchived
-                ? "Arşivi gizle"
-                : `Arşivlenenler (${archivedCount})`}
+              {showArchived ? "Arşivi gizle" : `Arşivlenenler (${archivedCount})`}
             </Button>
           ) : null}
-          <Button size="sm" onClick={() => setAssignOpen(true)}>
+          <Button size="sm" onClick={() => setAssignOpen(true)} data-testid="open-assign">
             <Plus className="size-4" aria-hidden />
             Kitap ata
           </Button>
@@ -205,54 +329,111 @@ export function StudentBooksPanel({ studentId }: Props) {
 
       <ArchiveSuggestionBand studentId={studentId} />
 
-      {groups.length > 1 ? (
-        <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          <FilterChip
-            active={activeSubjectId === null}
-            onClick={() => setSubjectFilter(null)}
-            label={`Tümü (${allItems.length})`}
-          />
-          {groups.map((g) => {
-            const tone = subjectTone(g.subject_id);
-            return (
-              <FilterChip
-                key={g.subject_id}
-                active={activeSubjectId === g.subject_id}
-                onClick={() => setSubjectFilter(g.subject_id)}
-                label={`${g.subject_name} (${g.items.length})`}
-                dotClassName={tone.dot}
-              />
-            );
-          })}
+      {/* ---- Özet */}
+      {loading ? (
+        <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">Yükleniyor…</div>
+      ) : allItems.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+          <Library className="mx-auto size-8 text-muted-foreground" aria-hidden />
+          <p className="mt-2 text-sm font-medium text-foreground">Bu öğrenciye henüz kitap atanmamış</p>
+          <p className="mt-1 text-[13px] text-muted-foreground">
+            Kütüphanendeki kitaplardan seç ya da hazır bir kitap setini uygula.
+          </p>
+          <Button size="sm" className="mt-3" onClick={() => setAssignOpen(true)}>
+            <Plus className="size-4" aria-hidden />
+            Kitap ata
+          </Button>
         </div>
-      ) : null}
-
-      <SelfStudyCard studentId={studentId} books={allItems} />
-
-      {booksQ.isLoading && !data ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Yükleniyor…
-          </CardContent>
-        </Card>
-      ) : visibleGroups.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            {allItems.length === 0
-              ? "Bu öğrenciye henüz kitap atanmamış."
-              : "Bu filtrede kitap yok."}
-          </CardContent>
-        </Card>
       ) : (
-        <div className="space-y-6">
-          {visibleGroups.map((g) => (
-            <SubjectGroupSection key={g.subject_id} group={g} studentId={studentId} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-3 xl:grid-cols-[1fr_minmax(280px,400px)]">
+            <div className="rounded-xl border border-border bg-card p-4" data-testid="books-overview">
+              <div className="flex flex-wrap items-center gap-4">
+                <Ring pct={pct} />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <p className="text-sm font-semibold text-foreground">Soru bankası ilerlemesi</p>
+                  <p className="text-[13px] text-muted-foreground">
+                    <strong className="text-foreground">{totals.count}</strong> kitap ·{" "}
+                    <strong className="text-foreground">{groups.length}</strong> ders ·{" "}
+                    <strong className="text-foreground tabular-nums">{totals.total}</strong> test ·{" "}
+                    <strong className="text-foreground">{totals.finished}</strong> kitap bitti
+                    {totals.denemeBooks > 0 ? ` · ${totals.denemeBooks} deneme kitabı ayrı sayılır` : ""}
+                  </p>
+                  <ProgressBar done={totals.done} reserved={totals.reserved} total={totals.total} className="h-2.5" />
+                  <Legend done={totals.done} reserved={totals.reserved} remaining={totals.remaining} />
+                </div>
+              </div>
+            </div>
+            <SelfStudyCard studentId={studentId} books={allItems} />
+          </div>
+
+          {/* ---- Ders listesi + kitaplar */}
+          <div className="grid gap-4 lg:grid-cols-[260px_1fr]">
+            <nav className="space-y-2" aria-label="Dersler">
+              <SubjectButton
+                active={activeSubjectId === null}
+                onClick={() => setSubjectFilter(null)}
+                name="Tüm dersler"
+                count={allItems.length}
+                done={totals.done}
+                reserved={totals.reserved}
+                total={totals.total}
+              />
+              {groups.map((g) => (
+                <SubjectButton
+                  key={g.subject_id}
+                  active={activeSubjectId === g.subject_id}
+                  onClick={() => setSubjectFilter(g.subject_id)}
+                  name={g.subject_name}
+                  count={g.items.length}
+                  done={g.done}
+                  reserved={g.reserved}
+                  total={g.total}
+                  dot={subjectDot(g.subject_id)}
+                />
+              ))}
+            </nav>
+
+            <div className="min-w-0 space-y-4">
+              {allItems.length > 4 ? (
+                <label className="relative block">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+                  <input
+                    value={query}
+                    onChange={(e) => setQuery(e.target.value)}
+                    placeholder="Kitap adı veya yayınevi ara…"
+                    aria-label="Öğrencinin kitaplarında ara"
+                    className="h-9 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  />
+                </label>
+              ) : null}
+              {visibleGroups.length === 0 ? (
+                <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
+                  Bu filtrede kitap yok.
+                </div>
+              ) : (
+                visibleGroups.map((g) => (
+                  <section key={g.subject_id} className="space-y-2">
+                    <header className="flex items-center gap-2">
+                      <span className={cn("inline-block size-2.5 rounded-full", subjectDot(g.subject_id))} aria-hidden />
+                      <h4 className="text-sm font-semibold text-foreground">{g.subject_name}</h4>
+                      <span className="text-xs text-muted-foreground">· {g.items.length} kitap</span>
+                    </header>
+                    <div className="grid gap-3 2xl:grid-cols-2">
+                      {g.items.map((b) => (
+                        <BookCard key={b.student_book_id} book={b} studentId={studentId} />
+                      ))}
+                    </div>
+                  </section>
+                ))
+              )}
+            </div>
+          </div>
+        </>
       )}
 
       <Dialog open={assignOpen} onOpenChange={setAssignOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="flex max-h-[90vh] w-[calc(100vw-2rem)] max-w-5xl flex-col gap-3 overflow-hidden p-5">
           <DialogHeader>
             <DialogTitle>Kitap ata</DialogTitle>
           </DialogHeader>
@@ -267,302 +448,141 @@ export function StudentBooksPanel({ studentId }: Props) {
   );
 }
 
-function SelfStudyCard({
-  studentId,
-  books,
-}: {
-  studentId: number;
-  books: StudentBookListItem[];
-}) {
-  const listQ = useQuery<SelfStudyListResponse>({
-    queryKey: selfStudyKeys.teacherList("me", studentId),
-    queryFn: () => getTeacherSelfStudy(studentId),
-    staleTime: 30_000,
-  });
-  const create = useCoachSelfStudyCreate(studentId);
-  const review = useReviewSelfStudy();
-  const del = useDeleteSelfStudyEntry();
-  const [dialogOpen, setDialogOpen] = React.useState(false);
-
-  const items = listQ.data?.items ?? [];
-  const pending = items.filter((i) => i.status === "pending");
-  const settled = items.filter((i) => i.status !== "pending");
-
-  const optionBooks: SelfStudyOptionBook[] = React.useMemo(
-    () =>
-      books.map((b) => ({
-        student_book_id: b.student_book_id,
-        book_id: b.book_id,
-        book_name: b.book_name,
-        subject_name: b.subject_name,
-        book_type_label: b.book_type_label_tr,
-        sections: b.sections.map((s) => ({
-          section_id: s.section_id,
-          label: s.label,
-          test_count: s.test_count,
-          completed_count: s.completed_count,
-          reserved_count: s.reserved_count,
-          remaining: Math.max(
-            0,
-            s.test_count - s.completed_count - s.reserved_count,
-          ),
-        })),
-      })),
-    [books],
-  );
-
-  const busy = review.isPending || del.isPending;
-
-  return (
-    <Card className="border-l-4 border-l-cyan-500 ring-1 ring-inset ring-cyan-500/10">
-      <CardContent className="p-4 space-y-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div className="space-y-0.5 min-w-0">
-            <p className="font-medium">Bağımsız çalışma</p>
-            <p className="text-xs text-muted-foreground">
-              Tatilde/program dışında çözülen testleri işle — kayıtlar izli
-              tutulur, kitap ilerlemesi ve öneriler güncellenir.
-            </p>
-          </div>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setDialogOpen(true)}
-            disabled={books.length === 0}
-          >
-            <Plus className="size-4" aria-hidden />
-            Bağımsız çalışma girişi
-          </Button>
-        </div>
-
-        {pending.length > 0 ? (
-          <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2">
-            <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
-              Öğrenci beyanı — onayını bekliyor ({pending.length})
-            </p>
-            <ul className="divide-y divide-border/60">
-              {pending.map((it) => (
-                <SelfStudyEntryRow
-                  key={it.id}
-                  item={it}
-                  isBusy={busy}
-                  onApprove={() =>
-                    review.mutate({ entryId: it.id, body: { approve: true } })
-                  }
-                  onReject={() => {
-                    if (
-                      window.confirm(
-                        "Bu beyanı reddetmek istiyor musun? İlerlemeye işlenmez.",
-                      )
-                    ) {
-                      review.mutate({ entryId: it.id, body: { approve: false } });
-                    }
-                  }}
-                />
-              ))}
-            </ul>
-          </div>
-        ) : null}
-
-        {settled.length > 0 ? (
-          <details className="group">
-            <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground inline-flex items-center gap-1 list-none [&::-webkit-details-marker]:hidden">
-              <ChevronRight
-                className="size-3 transition-transform group-open:rotate-90"
-                aria-hidden
-              />
-              Geçmiş kayıtlar ({settled.length})
-            </summary>
-            <ul className="mt-1 divide-y divide-border">
-              {settled.slice(0, 15).map((it) => (
-                <SelfStudyEntryRow
-                  key={it.id}
-                  item={it}
-                  isBusy={busy}
-                  onDelete={() => {
-                    if (
-                      window.confirm(
-                        it.status === "approved"
-                          ? `Bu kaydı silmek ilerlemeden ${it.applied_count} testi geri alır. Devam?`
-                          : "Bu kayıt silinsin mi?",
-                      )
-                    ) {
-                      del.mutate({ entryId: it.id });
-                    }
-                  }}
-                />
-              ))}
-            </ul>
-          </details>
-        ) : null}
-
-        <SelfStudyEntryDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
-          books={optionBooks}
-          mode="coach"
-          isPending={create.isPending}
-          onSubmit={(body) =>
-            create.mutate(body, { onSuccess: () => setDialogOpen(false) })
-          }
-        />
-      </CardContent>
-    </Card>
-  );
-}
-
-function FilterChip({
+function SubjectButton({
   active,
   onClick,
-  label,
-  dotClassName,
+  name,
+  count,
+  done,
+  reserved,
+  total,
+  dot,
 }: {
   active: boolean;
   onClick: () => void;
-  label: string;
-  dotClassName?: string;
+  name: string;
+  count: number;
+  done: number;
+  reserved: number;
+  total: number;
+  dot?: string;
 }) {
+  const pct = total > 0 ? Math.round((100 * done) / total) : 0;
   return (
     <button
       type="button"
       onClick={onClick}
+      aria-pressed={active}
+      data-testid="books-subject"
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 border transition-colors",
+        "w-full rounded-xl border p-3 text-left transition",
         active
-          ? "border-foreground bg-foreground text-background"
-          : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+          ? "border-cyan-600 bg-cyan-50 ring-1 ring-cyan-600 dark:bg-cyan-500/10"
+          : "border-border bg-card hover:border-cyan-400 hover:bg-muted/40",
       )}
     >
-      {dotClassName ? (
-        <span
-          className={cn("inline-block size-1.5 rounded-full", dotClassName)}
-          aria-hidden
-        />
-      ) : null}
-      {label}
+      <div className="flex items-start justify-between gap-2">
+        <span className={cn("inline-flex items-start gap-1.5 text-sm font-semibold", active ? "text-cyan-950 dark:text-cyan-100" : "text-foreground")}>
+          {dot ? <span className={cn("mt-1.5 inline-block size-2 shrink-0 rounded-full", dot)} aria-hidden /> : null}
+          <span>{name}</span>
+        </span>
+        <span className={cn("shrink-0 text-sm font-bold tabular-nums", active ? "text-cyan-900 dark:text-cyan-100" : "text-foreground")}>
+          %{pct}
+        </span>
+      </div>
+      <ProgressBar done={done} reserved={reserved} total={total} className="mt-2 h-1.5" />
+      <p className={cn("mt-1.5 text-[12px]", active ? "text-cyan-900 dark:text-cyan-200" : "text-muted-foreground")}>
+        {count} kitap · <span className="tabular-nums">{Math.max(0, total - done - reserved)}</span> test atanabilir
+      </p>
     </button>
   );
 }
 
-function SubjectGroupSection({
-  group,
-  studentId,
-}: {
-  group: SubjectGroup;
-  studentId: number;
-}) {
-  const tone = subjectTone(group.subject_id);
-  return (
-    <section className="space-y-3">
-      <header className="flex items-center gap-2">
-        <span className={cn("inline-block size-2 rounded-full", tone.dot)} aria-hidden />
-        <h4 className={cn("text-sm font-medium uppercase tracking-wide", tone.text)}>
-          {group.subject_name}
-        </h4>
-        <span className="text-xs text-muted-foreground">· {group.items.length} kitap</span>
-      </header>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-        {group.items.map((b) => (
-          <BookCard key={b.student_book_id} book={b} studentId={studentId} />
-        ))}
-      </div>
-    </section>
-  );
-}
+/* ============================================================ Kitap kartı */
 
-function BookCard({
-  book,
-  studentId,
-}: {
-  book: StudentBookListItem;
-  studentId: number;
-}) {
-  const tone = subjectTone(book.subject_id);
+function BookCard({ book, studentId }: { book: StudentBookListItem; studentId: number }) {
   const mut = useUnassignBook(studentId);
   const archiveMut = useArchiveBooks(studentId);
   const isArchived = Boolean(book.is_archived);
+  const isDeneme = isDenemeType(book.book_type);
+  const unit = isDeneme ? "deneme" : "test";
 
   const total = book.section_total_tests;
   const done = book.section_completed_total;
   const reserved = book.section_reserved_total;
   const remaining = Math.max(0, total - done - reserved);
-  const pctDone = total > 0 ? Math.round((100 * done) / total) : 0;
-  const pctReserved = total > 0 ? Math.round((100 * reserved) / total) : 0;
-  const isDeneme =
-    book.book_type === "brans_denemesi" || book.book_type === "genel_deneme";
-  const breakdownLabel = isDeneme ? "Deneme kırılımı" : "Ünite kırılımı";
+  const pct = total > 0 ? Math.round((100 * done) / total) : 0;
+  const finished = total > 0 && done >= total;
+  const next = book.sections.find((s) => s.test_count - s.completed_count - s.reserved_count > 0);
+  const [open, setOpen] = React.useState(false);
 
   function onRemove() {
-    if (
-      !window.confirm(
-        `"${book.book_name}" atamasını kaldırmak istiyor musunuz? Aktif rezerv varsa engellenir.`,
-      )
-    ) {
-      return;
-    }
+    if (!window.confirm(`"${book.book_name}" atamasını kaldırmak istiyor musunuz? Aktif rezerv varsa engellenir.`)) return;
     mut.mutate({ bookId: book.book_id });
   }
 
   return (
-    <Card
+    <article
+      data-testid="book-card"
       className={cn(
-        "border-l-4 ring-1 ring-inset",
-        tone.border,
-        tone.ring,
-        isArchived && "bg-slate-50/70 dark:bg-slate-500/5",
+        "rounded-xl border border-border bg-card p-4",
+        isArchived && "bg-slate-50 dark:bg-slate-500/5",
       )}
     >
-      <CardContent className="p-4 space-y-3">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2 min-w-0">
-              <p className="font-medium truncate">{book.book_name}</p>
-              {isArchived ? (
-                <span className="shrink-0 rounded-full bg-slate-200 px-2 py-0.5 text-[10px] font-medium text-slate-700 dark:bg-slate-500/20 dark:text-slate-200">
-                  Arşivde
-                </span>
-              ) : null}
-            </div>
-            <p className="text-xs text-muted-foreground truncate">
-              {book.publisher ?? "—"} · {book.book_type_label_tr}
-            </p>
-          </div>
-          <div className="text-right shrink-0">
-            <p className="font-semibold tabular-nums">
-              {remaining}
-              <span className="text-muted-foreground"> / </span>
-              {total}
-            </p>
-            <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              kalan / toplam
-            </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1 space-y-1">
+          <p className="break-words font-semibold leading-snug text-foreground">{book.book_name}</p>
+          <div className="flex flex-wrap items-center gap-1.5">
+            <TypeBadge label={book.book_type_label_tr} />
+            <SourceBadge kind={book.source_kind} />
+            {finished ? (
+              <span className="inline-flex rounded-full bg-emerald-600 px-2 py-0.5 text-[11px] font-semibold text-white">Bitti</span>
+            ) : null}
+            {isArchived ? (
+              <span className="inline-flex rounded-full bg-slate-500 px-2 py-0.5 text-[11px] font-semibold text-white">Arşivde</span>
+            ) : null}
+            {book.publisher ? <span className="text-[12px] text-muted-foreground">{book.publisher}</span> : null}
           </div>
         </div>
+        <div className="shrink-0 text-right">
+          <p className="text-xl font-bold tabular-nums text-foreground">%{pct}</p>
+          <p className="text-[11px] text-muted-foreground">{done}/{total} {unit}</p>
+        </div>
+      </div>
 
-        <ProgressBar
-          pctDone={pctDone}
-          pctReserved={pctReserved}
-        />
+      <ProgressBar done={done} reserved={reserved} total={total} className="mt-3" />
+      <div className="mt-2">
+        <Legend done={done} reserved={reserved} remaining={remaining} unit={unit} />
+      </div>
 
-        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-          <Chip dotColor="bg-emerald-500" label="Çözüldü" value={done} />
-          <Chip dotColor="bg-amber-500" label="Rezerv" value={reserved} />
-          <Chip dotColor="bg-muted-foreground/40" label="Kalan" value={remaining} />
-          <span className="ml-auto text-muted-foreground tabular-nums">
-            %{pctDone}
+      {total === 0 ? (
+        <p className="mt-2 flex items-start gap-1.5 rounded-lg bg-amber-100 px-3 py-2 text-[12px] text-amber-900 dark:bg-amber-500/15 dark:text-amber-100">
+          <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+          Bu kitapta bölüm/test yok — programa görev verilemez. Kütüphanede bölümlerini ekle.
+        </p>
+      ) : next && !isArchived ? (
+        <p className="mt-2 flex items-start gap-1.5 text-[12.5px] text-muted-foreground">
+          <ArrowRight className="mt-0.5 size-3.5 shrink-0 text-cyan-700 dark:text-cyan-300" aria-hidden />
+          <span>
+            Sıradaki: <strong className="text-foreground">{next.label}</strong> ·{" "}
+            {next.test_count - next.completed_count - next.reserved_count} {unit} atanabilir
           </span>
-        </div>
+        </p>
+      ) : null}
 
-        {book.sections.length > 0 ? (
-          <details className="group">
-            <summary className="text-xs text-muted-foreground cursor-pointer hover:text-foreground inline-flex items-center gap-1 list-none [&::-webkit-details-marker]:hidden">
-              <ChevronRight
-                className="size-3 transition-transform group-open:rotate-90"
-                aria-hidden
-              />
-              {breakdownLabel} ({book.sections.length})
-            </summary>
-            <ul className="mt-2 divide-y divide-border border-t border-border">
+      {book.sections.length > 0 ? (
+        <div className="mt-2">
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={open}
+            className="inline-flex items-center gap-1 text-[12.5px] font-medium text-cyan-800 hover:underline dark:text-cyan-300"
+          >
+            <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} aria-hidden />
+            {isDeneme ? "Denemeler" : "Üniteler"} ({book.sections.length})
+          </button>
+          {open ? (
+            <ul className="mt-2 divide-y divide-border rounded-lg border border-border">
               {book.sections.map((s) => (
                 <SectionRow
                   key={s.section_id}
@@ -573,109 +593,49 @@ function BookCard({
                 />
               ))}
             </ul>
-          </details>
-        ) : null}
-
-        <div className="flex items-center justify-end pt-1 -mb-1">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRemove}
-            disabled={mut.isPending}
-            aria-label="Atamayı kaldır"
-            className={cn(
-              "h-7 text-xs",
-              book.has_reservations ? "opacity-70" : "",
-            )}
-            title={
-              book.has_reservations
-                ? "Aktif rezerv var — silmek için önce görevleri tamamla/sil."
-                : "Atamayı kaldır"
-            }
-          >
-            {mut.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-            ) : (
-              <Trash2 className="size-3.5" aria-hidden />
-            )}
-            Kaldır
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs"
-            disabled={archiveMut.isPending}
-            onClick={() =>
-              archiveMut.mutate({
-                bookIds: [book.book_id],
-                archived: !isArchived,
-              })
-            }
-            title={
-              isArchived
-                ? "Kitabı yeniden kullanıma aç"
-                : "Kitabı arşive al — kayıt ve görev geçmişi korunur, kütüphaneden gizlenir."
-            }
-          >
-            {archiveMut.isPending ? (
-              <Loader2 className="size-3.5 animate-spin" aria-hidden />
-            ) : isArchived ? (
-              <ArchiveRestore className="size-3.5" aria-hidden />
-            ) : (
-              <Archive className="size-3.5" aria-hidden />
-            )}
-            {isArchived ? "Arşivden çıkar" : "Arşivle"}
-          </Button>
+          ) : null}
         </div>
-      </CardContent>
-    </Card>
-  );
-}
+      ) : null}
 
-function ProgressBar({
-  pctDone,
-  pctReserved,
-}: {
-  pctDone: number;
-  pctReserved: number;
-}) {
-  const doneWidth = Math.min(100, Math.max(0, pctDone));
-  const reservedWidth = Math.min(100 - doneWidth, Math.max(0, pctReserved));
-  return (
-    <div
-      className="h-2 w-full rounded-full bg-muted overflow-hidden flex"
-      role="progressbar"
-      aria-valuenow={doneWidth + reservedWidth}
-      aria-valuemin={0}
-      aria-valuemax={100}
-    >
-      <div
-        className="h-full bg-emerald-500 transition-[width]"
-        style={{ width: `${doneWidth}%` }}
-      />
-      <div
-        className="h-full bg-amber-500 transition-[width]"
-        style={{ width: `${reservedWidth}%` }}
-      />
-    </div>
-  );
-}
-
-function Chip({
-  dotColor,
-  label,
-  value,
-}: {
-  dotColor: string;
-  label: string;
-  value: number;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1 text-muted-foreground">
-      <span className={cn("inline-block size-1.5 rounded-full", dotColor)} aria-hidden />
-      <span>{label}</span>
-      <span className="tabular-nums text-foreground">{value}</span>
-    </span>
+      <div className="mt-2 flex flex-wrap items-center justify-end gap-1 border-t border-border pt-2">
+        <Link
+          href={`/teacher/library/books/${book.book_id}`}
+          className="inline-flex h-7 items-center gap-1 rounded-md px-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+        >
+          <BookOpen className="size-3.5" aria-hidden />
+          Kitabı aç
+        </Link>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 text-xs"
+          disabled={archiveMut.isPending}
+          onClick={() => archiveMut.mutate({ bookIds: [book.book_id], archived: !isArchived })}
+          title={isArchived ? "Kitabı yeniden kullanıma aç" : "Kitabı arşive al — kayıt ve görev geçmişi korunur, kütüphaneden gizlenir."}
+        >
+          {archiveMut.isPending ? (
+            <Loader2 className="size-3.5 animate-spin" aria-hidden />
+          ) : isArchived ? (
+            <ArchiveRestore className="size-3.5" aria-hidden />
+          ) : (
+            <Archive className="size-3.5" aria-hidden />
+          )}
+          {isArchived ? "Arşivden çıkar" : "Arşivle"}
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={onRemove}
+          disabled={mut.isPending}
+          aria-label="Atamayı kaldır"
+          className={cn("h-7 text-xs", book.has_reservations ? "opacity-70" : "")}
+          title={book.has_reservations ? "Aktif rezerv var — silmek için önce görevleri tamamla/sil." : "Atamayı kaldır"}
+        >
+          {mut.isPending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Trash2 className="size-3.5" aria-hidden />}
+          Kaldır
+        </Button>
+      </div>
+    </article>
   );
 }
 
@@ -708,102 +668,207 @@ function SectionRow({
   }
 
   return (
-    <li
-      className={cn(
-        "py-1.5 text-xs",
-        dim && "opacity-60",
-      )}
-    >
+    <li className={cn("px-3 py-2 text-[12.5px]", dim && "opacity-60")} data-testid="book-section">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="truncate">{s.label}</p>
-          {!isDeneme && s.topic_name ? (
-            <p className="text-muted-foreground truncate">{s.topic_name}</p>
+          <p className="break-words text-foreground">{s.label}</p>
+          {!isDeneme && s.topic_name && s.topic_name !== s.label ? (
+            <p className="break-words text-[11.5px] text-muted-foreground">Müfredat: {s.topic_name}</p>
           ) : null}
         </div>
-        <div className="shrink-0 tabular-nums text-right space-x-1">
-          <span>
-            {remaining}
-            <span className="text-muted-foreground">/{s.test_count}</span>
-            <span className="text-muted-foreground"> kalan</span>
-          </span>
-          {s.reserved_count > 0 ? (
-            <span className="text-amber-600 dark:text-amber-400">
-              ({s.reserved_count} rezerv)
-            </span>
-          ) : null}
-          {s.completed_count > 0 ? (
-            <span className="text-emerald-600 dark:text-emerald-400">
-              ({s.completed_count} çöz.)
-            </span>
-          ) : null}
-          {s.manual_count > 0 ? (
-            <span
-              className="text-cyan-600 dark:text-cyan-400"
-              title="Görev dışı — elle/bağımsız çalışma girişiyle işlendi"
-            >
-              ({s.manual_count} bağımsız)
-            </span>
-          ) : null}
+        <div className="shrink-0 text-right tabular-nums">
+          <span className="font-semibold text-foreground">{s.completed_count}</span>
+          <span className="text-muted-foreground">/{s.test_count} çözüldü</span>
         </div>
       </div>
-
-      {/* "Öğrenci bunu zaten çözmüştü" — geçmiş yıl baseline işaretleme */}
-      {!dim ? (
-        editing ? (
-          <div className="mt-1.5 flex flex-wrap items-center gap-1.5 rounded-md bg-muted/50 px-2 py-1.5">
-            <span className="text-[11px] text-muted-foreground">Çözülmüş {unit}:</span>
-            <input
-              type="number"
-              min={0}
-              max={maxAllowed}
-              value={val}
-              onChange={(e) => setVal(Number(e.target.value) || 0)}
-              className="h-7 w-16 rounded border border-input bg-background px-1.5 text-xs tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-            <button
-              type="button"
-              onClick={() => setVal(maxAllowed)}
-              className="rounded border border-border px-1.5 py-0.5 text-[11px] hover:bg-background"
-            >
-              Tümü ({maxAllowed})
-            </button>
-            <button
-              type="button"
-              onClick={save}
-              disabled={mut.isPending}
-              className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
-            >
-              Kaydet
-            </button>
-            <button
-              type="button"
-              onClick={() => { setVal(s.completed_count); setEditing(false); }}
-              className="rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-background"
-            >
-              İptal
-            </button>
-            {val < s.completed_count - s.manual_count ? (
-              <p className="basis-full text-[11px] text-amber-700 dark:text-amber-300">
-                Öğrenci çözmediği testi işaretlediyse gerçek sayıyı yaz: fark en
-                yeni görevden geri alınır, o testler öğrencinin programında
-                yeniden &quot;bekliyor&quot; olur (görevi silmen gerekmez).
-              </p>
-            ) : null}
-          </div>
-        ) : (
+      <ProgressBar done={s.completed_count} reserved={s.reserved_count} total={s.test_count} className="mt-1.5 h-1.5" />
+      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11.5px] text-muted-foreground">
+        {s.reserved_count > 0 ? <span>{s.reserved_count} programda</span> : null}
+        <span>{remaining} {unit} atanabilir</span>
+        {s.manual_count > 0 ? (
+          <span title="Görev dışı — elle/bağımsız çalışma girişiyle işlendi">{s.manual_count} bağımsız çalışma</span>
+        ) : null}
+        {!dim && !editing ? (
           <button
             type="button"
-            onClick={() => { setVal(s.completed_count); setEditing(true); }}
-            className="mt-1 text-[11px] text-cyan-700 hover:underline dark:text-cyan-400"
+            onClick={() => {
+              setVal(s.completed_count);
+              setEditing(true);
+            }}
+            className="ml-auto text-cyan-800 hover:underline dark:text-cyan-300"
           >
             {s.completed_count > 0 ? "Çözülen sayısını düzenle" : "Öğrenci bunu zaten çözmüştü"}
           </button>
-        )
+        ) : null}
+      </div>
+
+      {editing ? (
+        <div className="mt-1.5 flex flex-wrap items-center gap-1.5 rounded-md bg-muted/60 px-2 py-1.5">
+          <span className="text-[11px] text-muted-foreground">Çözülmüş {unit}:</span>
+          <input
+            type="number"
+            min={0}
+            max={maxAllowed}
+            value={val}
+            onChange={(e) => setVal(Number(e.target.value) || 0)}
+            className="h-7 w-16 rounded border border-input bg-background px-1.5 text-xs tabular-nums focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          />
+          <button
+            type="button"
+            onClick={() => setVal(maxAllowed)}
+            className="rounded border border-border px-1.5 py-0.5 text-[11px] hover:bg-background"
+          >
+            Tümü ({maxAllowed})
+          </button>
+          <button
+            type="button"
+            onClick={save}
+            disabled={mut.isPending}
+            className="rounded bg-emerald-600 px-2 py-0.5 text-[11px] font-medium text-white hover:bg-emerald-700 disabled:opacity-60"
+          >
+            Kaydet
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setVal(s.completed_count);
+              setEditing(false);
+            }}
+            className="rounded px-1.5 py-0.5 text-[11px] text-muted-foreground hover:bg-background"
+          >
+            İptal
+          </button>
+          {val < s.completed_count - s.manual_count ? (
+            <p className="basis-full text-[11px] text-amber-800 dark:text-amber-200">
+              Öğrenci çözmediği testi işaretlediyse gerçek sayıyı yaz: fark en yeni görevden geri alınır, o
+              testler öğrencinin programında yeniden &quot;bekliyor&quot; olur (görevi silmen gerekmez).
+            </p>
+          ) : null}
+        </div>
       ) : null}
     </li>
   );
 }
+
+/* ============================================================ Bağımsız çalışma */
+
+function SelfStudyCard({ studentId, books }: { studentId: number; books: StudentBookListItem[] }) {
+  const listQ = useQuery<SelfStudyListResponse>({
+    queryKey: selfStudyKeys.teacherList("me", studentId),
+    queryFn: () => getTeacherSelfStudy(studentId),
+    staleTime: 30_000,
+  });
+  const create = useCoachSelfStudyCreate(studentId);
+  const review = useReviewSelfStudy();
+  const del = useDeleteSelfStudyEntry();
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+
+  const items = listQ.data?.items ?? [];
+  const pending = items.filter((i) => i.status === "pending");
+  const settled = items.filter((i) => i.status !== "pending");
+
+  const optionBooks: SelfStudyOptionBook[] = React.useMemo(
+    () =>
+      books.map((b) => ({
+        student_book_id: b.student_book_id,
+        book_id: b.book_id,
+        book_name: b.book_name,
+        subject_name: b.subject_name,
+        book_type_label: b.book_type_label_tr,
+        sections: b.sections.map((s) => ({
+          section_id: s.section_id,
+          label: s.label,
+          test_count: s.test_count,
+          completed_count: s.completed_count,
+          reserved_count: s.reserved_count,
+          remaining: Math.max(0, s.test_count - s.completed_count - s.reserved_count),
+        })),
+      })),
+    [books],
+  );
+
+  const busy = review.isPending || del.isPending;
+
+  return (
+    <div className="rounded-xl border border-border bg-card p-4">
+      <div className="flex flex-wrap items-start justify-between gap-2">
+        <div className="min-w-0 flex-1 space-y-0.5">
+          <p className="text-sm font-semibold text-foreground">Bağımsız çalışma</p>
+          <p className="text-[12.5px] text-muted-foreground">
+            Program dışında çözülen testleri işle — kayıtlar izli tutulur, kitap ilerlemesi güncellenir.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={() => setDialogOpen(true)} disabled={books.length === 0}>
+          <Plus className="size-4" aria-hidden />
+          Giriş yap
+        </Button>
+      </div>
+
+      {pending.length > 0 ? (
+        <div className="mt-3 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2">
+          <p className="text-xs font-medium text-amber-800 dark:text-amber-200">
+            Öğrenci beyanı — onayını bekliyor ({pending.length})
+          </p>
+          <ul className="divide-y divide-border/60">
+            {pending.map((it) => (
+              <SelfStudyEntryRow
+                key={it.id}
+                item={it}
+                isBusy={busy}
+                onApprove={() => review.mutate({ entryId: it.id, body: { approve: true } })}
+                onReject={() => {
+                  if (window.confirm("Bu beyanı reddetmek istiyor musun? İlerlemeye işlenmez.")) {
+                    review.mutate({ entryId: it.id, body: { approve: false } });
+                  }
+                }}
+              />
+            ))}
+          </ul>
+        </div>
+      ) : null}
+
+      {settled.length > 0 ? (
+        <details className="group mt-2">
+          <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-xs text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+            <ChevronRight className="size-3 transition-transform group-open:rotate-90" aria-hidden />
+            Geçmiş kayıtlar ({settled.length})
+          </summary>
+          <ul className="mt-1 divide-y divide-border">
+            {settled.slice(0, 15).map((it) => (
+              <SelfStudyEntryRow
+                key={it.id}
+                item={it}
+                isBusy={busy}
+                onDelete={() => {
+                  if (
+                    window.confirm(
+                      it.status === "approved"
+                        ? `Bu kaydı silmek ilerlemeden ${it.applied_count} testi geri alır. Devam?`
+                        : "Bu kayıt silinsin mi?",
+                    )
+                  ) {
+                    del.mutate({ entryId: it.id });
+                  }
+                }}
+              />
+            ))}
+          </ul>
+        </details>
+      ) : null}
+
+      <SelfStudyEntryDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        books={optionBooks}
+        mode="coach"
+        isPending={create.isPending}
+        onSubmit={(body) => create.mutate(body, { onSuccess: () => setDialogOpen(false) })}
+      />
+    </div>
+  );
+}
+
+/* ============================================================ Kitap atama */
 
 type AssignTab = "manual" | "set";
 
@@ -818,45 +883,25 @@ function AssignBookSurface({
 }) {
   const [tab, setTab] = React.useState<AssignTab>("manual");
   return (
-    <div className="space-y-3">
-      <div
-        role="tablist"
-        aria-label="Atama kaynağı"
-        className="flex items-center gap-1 border-b border-border"
-      >
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div role="tablist" aria-label="Atama kaynağı" className="flex items-center gap-1 border-b border-border">
         <TabButton active={tab === "manual"} onClick={() => setTab("manual")}>
-          Tek tek seç
+          Kütüphanemden seç
         </TabButton>
         <TabButton active={tab === "set"} onClick={() => setTab("set")}>
           Set&apos;ten uygula
         </TabButton>
       </div>
       {tab === "manual" ? (
-        <ManualAssignForm
-          studentId={studentId}
-          alreadyAssignedIds={alreadyAssignedIds}
-          onDone={onDone}
-        />
+        <ManualAssignForm studentId={studentId} alreadyAssignedIds={alreadyAssignedIds} onDone={onDone} />
       ) : (
-        <SetApplyForm
-          studentId={studentId}
-          alreadyAssignedIds={alreadyAssignedIds}
-          onDone={onDone}
-        />
+        <SetApplyForm studentId={studentId} alreadyAssignedIds={alreadyAssignedIds} onDone={onDone} />
       )}
     </div>
   );
 }
 
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+function TabButton({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button
       type="button"
@@ -864,16 +909,22 @@ function TabButton({
       aria-selected={active}
       onClick={onClick}
       className={cn(
-        "px-3 py-2 -mb-px text-sm border-b-2 transition-colors",
-        active
-          ? "border-foreground font-medium"
-          : "border-transparent text-muted-foreground hover:text-foreground",
+        "-mb-px border-b-2 px-3 py-2 text-sm transition-colors",
+        active ? "border-foreground font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground",
       )}
     >
       {children}
     </button>
   );
 }
+
+type SourceFilter = "all" | "catalog" | "template" | "manual";
+const SOURCE_FILTERS: Array<{ key: SourceFilter; label: string }> = [
+  { key: "all", label: "Tümü" },
+  { key: "catalog", label: "Katalogdan" },
+  { key: "template", label: "Şablondan" },
+  { key: "manual", label: "Elle oluşturuldu" },
+];
 
 function ManualAssignForm({
   studentId,
@@ -885,17 +936,53 @@ function ManualAssignForm({
   onDone: () => void;
 }) {
   const teacherBooksQ = useQuery<TeacherBookListResponse>({
-    queryKey: teacherKeys.books(),
-    queryFn: () => getTeacherBooks(),
+    queryKey: [...teacherKeys.books(), "for", studentId],
+    queryFn: () => getTeacherBooks(studentId),
     staleTime: 60_000,
   });
   const single = useAssignBook(studentId);
   const bulk = useBulkAssignBooks(studentId);
 
   const [selected, setSelected] = React.useState<Set<number>>(new Set());
+  const [query, setQuery] = React.useState("");
+  const [subject, setSubject] = React.useState<number | "all">("all");
+  const [source, setSource] = React.useState<SourceFilter>("all");
+  const [onlyFitting, setOnlyFitting] = React.useState(true);
 
-  const allBooks = teacherBooksQ.data?.items ?? [];
-  const candidates = allBooks.filter((b) => !alreadyAssignedIds.has(b.id));
+  const allBooks = React.useMemo(() => teacherBooksQ.data?.items ?? [], [teacherBooksQ.data]);
+  const candidates = React.useMemo(() => allBooks.filter((b) => !alreadyAssignedIds.has(b.id)), [allBooks, alreadyAssignedIds]);
+  const assignedCount = allBooks.length - candidates.length;
+
+  const subjects = React.useMemo(() => {
+    const m = new Map<number, { id: number; name: string; n: number }>();
+    for (const b of candidates) {
+      const e = m.get(b.subject_id) ?? { id: b.subject_id, name: b.subject_name ?? "Diğer", n: 0 };
+      e.n += 1;
+      m.set(b.subject_id, e);
+    }
+    return Array.from(m.values()).sort((a, b) => a.name.localeCompare(b.name, "tr"));
+  }, [candidates]);
+
+  const q = trLower(query.trim());
+  const base = candidates.filter(
+    (b) =>
+      (subject === "all" || b.subject_id === subject) &&
+      (source === "all" || (b.source_kind ?? "manual") === source) &&
+      (!q || trLower(`${b.name} ${b.publisher ?? ""} ${b.subject_name ?? ""}`).includes(q)),
+  );
+  const hiddenUnfit = onlyFitting ? base.filter((b) => b.fits_student === false).length : 0;
+  const filtered = onlyFitting ? base.filter((b) => b.fits_student !== false) : base;
+
+  const grouped = React.useMemo(() => {
+    const m = new Map<string, TeacherBookListItem[]>();
+    for (const b of filtered) {
+      const k = b.subject_name ?? "Diğer";
+      const arr = m.get(k) ?? [];
+      arr.push(b);
+      m.set(k, arr);
+    }
+    return Array.from(m.entries()).sort((a, b) => a[0].localeCompare(b[0], "tr"));
+  }, [filtered]);
 
   function toggle(id: number) {
     setSelected((prev) => {
@@ -911,61 +998,202 @@ function ManualAssignForm({
     if (selected.size === 0) return;
     if (selected.size === 1) {
       const [only] = selected;
-      single.mutate(
-        { body: { book_id: only } },
-        { onSuccess: () => onDone() },
-      );
+      single.mutate({ body: { book_id: only } }, { onSuccess: () => onDone() });
       return;
     }
-    bulk.mutate(
-      { body: { book_ids: Array.from(selected) } },
-      { onSuccess: () => onDone() },
-    );
+    bulk.mutate({ body: { book_ids: Array.from(selected) } }, { onSuccess: () => onDone() });
   }
 
   const isPending = single.isPending || bulk.isPending;
+  const selectedBooks = allBooks.filter((b) => selected.has(b.id));
 
   return (
-    <form onSubmit={submit} className="space-y-3">
-      {teacherBooksQ.isLoading ? (
-        <p className="text-sm text-muted-foreground">Kitap listesi yükleniyor…</p>
-      ) : candidates.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Atayabileceğin başka kitap yok. Önce kitap oluştur.
-        </p>
-      ) : (
-        <ul className="max-h-[50vh] overflow-y-auto divide-y divide-border border border-border rounded-md">
-          {candidates.map((b) => (
-            <li key={b.id} className="px-3 py-2 flex items-center gap-3 text-sm">
-              <input
-                type="checkbox"
-                checked={selected.has(b.id)}
-                onChange={() => toggle(b.id)}
-                aria-label={b.name}
-              />
-              <span className="flex-1 min-w-0">
-                <span className="font-medium truncate block">{b.name}</span>
-                <span className="text-xs text-muted-foreground truncate block">
-                  {b.subject_name ?? "—"} · {b.section_count} bölüm
-                </span>
-              </span>
-            </li>
+    <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col gap-3" data-testid="assign-manual">
+      {/* ---- Arama + filtreler */}
+      <div className="space-y-2">
+        <div className="flex flex-wrap gap-2">
+          <label className="relative min-w-[220px] flex-1">
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
+            <input
+              autoFocus
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Kitap adı, yayınevi veya ders ara…"
+              aria-label="Kitap ara"
+              data-testid="assign-search"
+              className="h-10 w-full rounded-lg border border-input bg-background pl-9 pr-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            />
+          </label>
+          <select
+            value={subject === "all" ? "" : String(subject)}
+            onChange={(e) => setSubject(e.target.value ? Number(e.target.value) : "all")}
+            aria-label="Ders"
+            className="h-10 min-w-[180px] rounded-lg border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="">Tüm dersler ({candidates.length})</option>
+            {subjects.map((s) => (
+              <option key={s.id} value={s.id}>
+                {s.name} ({s.n})
+              </option>
+            ))}
+          </select>
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {SOURCE_FILTERS.map((f) => (
+            <button
+              key={f.key}
+              type="button"
+              onClick={() => setSource(f.key)}
+              aria-pressed={source === f.key}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs transition-colors",
+                source === f.key
+                  ? "border-cyan-700 bg-cyan-700 font-semibold text-white"
+                  : "border-border text-muted-foreground hover:bg-muted hover:text-foreground",
+              )}
+            >
+              {f.label}
+            </button>
           ))}
-        </ul>
-      )}
-      <div className="flex items-center justify-end gap-2 pt-2">
-        <Button type="button" variant="ghost" onClick={onDone} disabled={isPending}>
-          İptal
-        </Button>
-        <Button type="submit" disabled={isPending || selected.size === 0}>
-          {isPending ? (
-            <Loader2 className="size-4 animate-spin" aria-hidden />
+          <label className="ml-auto inline-flex cursor-pointer items-center gap-1.5 text-xs text-foreground">
+            <input type="checkbox" checked={onlyFitting} onChange={(e) => setOnlyFitting(e.target.checked)} />
+            Yalnız öğrencinin sınıfına uygun
+          </label>
+        </div>
+      </div>
+
+      {/* ---- Liste */}
+      <div className="min-h-[240px] flex-1 overflow-y-auto rounded-lg border border-border">
+        {teacherBooksQ.isLoading ? (
+          <p className="p-4 text-sm text-muted-foreground">Kitap listesi yükleniyor…</p>
+        ) : candidates.length === 0 ? (
+          <div className="p-6 text-center text-sm text-muted-foreground">
+            Atayabileceğin başka kitap yok.{" "}
+            <Link href="/teacher/library/new" className="font-medium text-cyan-800 underline dark:text-cyan-300">
+              Kütüphaneye kitap ekle →
+            </Link>
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="p-6 text-center text-sm text-muted-foreground">Bu aramaya uyan kitap yok.</p>
+        ) : (
+          grouped.map(([subjectName, books]) => (
+            <div key={subjectName}>
+              <p className="sticky top-0 z-10 border-b border-border bg-muted px-3 py-1.5 text-xs font-semibold text-foreground">
+                {subjectName} <span className="font-normal text-muted-foreground">· {books.length} kitap</span>
+              </p>
+              <ul className="divide-y divide-border">
+                {books.map((b) => (
+                  <AssignRow key={b.id} book={b} checked={selected.has(b.id)} onToggle={() => toggle(b.id)} />
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* ---- Alt bilgi + seçim */}
+      <div className="space-y-2 border-t border-border pt-3">
+        <p className="text-[12px] text-muted-foreground">
+          {filtered.length} kitap listeleniyor
+          {hiddenUnfit > 0 ? ` · sınıfa uygun olmayan ${hiddenUnfit} kitap gizli` : ""}
+          {assignedCount > 0 ? ` · ${assignedCount} kitap zaten atalı` : ""}
+        </p>
+        {selectedBooks.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5" data-testid="assign-selected">
+            {selectedBooks.map((b) => (
+              <span
+                key={b.id}
+                className="inline-flex items-center gap-1 rounded-full bg-cyan-700 py-0.5 pl-2.5 pr-1 text-[12px] font-medium text-white"
+              >
+                {b.name}
+                <button
+                  type="button"
+                  onClick={() => toggle(b.id)}
+                  aria-label={`${b.name} seçimini kaldır`}
+                  className="rounded-full p-0.5 hover:bg-cyan-800"
+                >
+                  <X className="size-3" aria-hidden />
+                </button>
+              </span>
+            ))}
+          </div>
+        ) : null}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {selected.size > 0 ? (
+            <Button type="button" variant="ghost" size="sm" onClick={() => setSelected(new Set())} disabled={isPending}>
+              Seçimi temizle
+            </Button>
           ) : null}
-          {selected.size > 0 ? `${selected.size} kitap ata` : "Ata"}
-        </Button>
+          <Button type="button" variant="outline" onClick={onDone} disabled={isPending}>
+            İptal
+          </Button>
+          <Button type="submit" disabled={isPending || selected.size === 0} data-testid="assign-submit">
+            {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+            {selected.size > 0 ? `${selected.size} kitabı ata` : "Kitap seç"}
+          </Button>
+        </div>
       </div>
     </form>
   );
+}
+
+function AssignRow({ book: b, checked, onToggle }: { book: TeacherBookListItem; checked: boolean; onToggle: () => void }) {
+  const empty = b.section_count === 0;
+  const dup = (b.same_name_count ?? 1) > 1;
+  return (
+    <li data-testid="assign-row">
+      <label
+        className={cn(
+          "flex cursor-pointer items-start gap-3 px-3 py-2.5 transition-colors",
+          checked ? "bg-cyan-50 dark:bg-cyan-500/10" : "hover:bg-muted/50",
+        )}
+      >
+        <input type="checkbox" checked={checked} onChange={onToggle} aria-label={b.name} className="mt-1 size-4 shrink-0" />
+        <span className="min-w-0 flex-1 space-y-1">
+          <span className="flex flex-wrap items-center gap-1.5">
+            <span className={cn("break-words text-sm font-semibold", checked ? "text-cyan-950 dark:text-cyan-50" : "text-foreground")}>
+              {b.name}
+            </span>
+            <SourceBadge kind={b.source_kind} />
+            <TypeBadge label={b.type_label} />
+            {b.fits_student === false ? (
+              <span className="inline-flex rounded-full bg-amber-500 px-2 py-0.5 text-[11px] font-semibold text-white">
+                Başka sınıf için
+              </span>
+            ) : null}
+          </span>
+          <span className={cn("block text-[12px]", checked ? "text-cyan-900 dark:text-cyan-100" : "text-muted-foreground")}>
+            {[
+              b.publisher,
+              `${b.section_count} bölüm`,
+              `${b.total_tests ?? 0} test`,
+              b.grade_label,
+              (b.assigned_student_count ?? 0) > 0 ? `${b.assigned_student_count} öğrencide` : "henüz kimsede yok",
+            ]
+              .filter(Boolean)
+              .join(" · ")}
+          </span>
+          {empty ? (
+            <span className="flex items-start gap-1 text-[12px] text-amber-800 dark:text-amber-200">
+              <AlertTriangle className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+              Bölümü yok — atanırsa programa görev verilemez.
+            </span>
+          ) : null}
+          {dup ? (
+            <span className="flex items-start gap-1 text-[12px] text-muted-foreground">
+              <Copy className="mt-0.5 size-3.5 shrink-0" aria-hidden />
+              Aynı adla {b.same_name_count} kitabın var{b.created_at ? ` · bu kayıt ${formatDate(b.created_at)}` : ""}
+            </span>
+          ) : null}
+        </span>
+      </label>
+    </li>
+  );
+}
+
+function formatDate(iso: string) {
+  const [y, m, d] = iso.split("-");
+  return d && m && y ? `${d}.${m}.${y}` : iso;
 }
 
 function SetApplyForm({
@@ -1000,9 +1228,8 @@ function SetApplyForm({
   const [lastDetailKey, setLastDetailKey] = React.useState<string>("");
   const detail = setDetailQ.data;
 
-  // Set değişince ya da yeni detay gelince: zaten atanmamış kitapları otomatik seç.
-  // (React.useEffect yerine render-zamanı state karşılaştırması — book-set-detail-client
-  // ile aynı kalıp; ref kullanımı yerine ESLint güvenli.)
+  // Set değişince ya da yeni detay gelince: zaten atanmamış kitapları otomatik seç
+  // (render-zamanı state karşılaştırması — effect'siz, ESLint güvenli).
   if (detail) {
     const detailKey = `${detail.id}:${detail.items.length}`;
     if (detailKey !== lastDetailKey) {
@@ -1030,18 +1257,11 @@ function SetApplyForm({
   function submit(e: React.FormEvent) {
     e.preventDefault();
     if (selected.size === 0) return;
-    bulk.mutate(
-      { body: { book_ids: Array.from(selected) } },
-      { onSuccess: () => onDone() },
-    );
+    bulk.mutate({ body: { book_ids: Array.from(selected) } }, { onSuccess: () => onDone() });
   }
 
-  const sets = React.useMemo(
-    () => setsQ.data?.items ?? [],
-    [setsQ.data],
-  );
+  const sets = React.useMemo(() => setsQ.data?.items ?? [], [setsQ.data]);
 
-  // Setleri öğrencinin sınıfına göre Önerilen / Diğer şeklinde böl
   const studentGrade = studentQ.data?.student.grade_level ?? null;
   const studentIsGraduate = studentQ.data?.student.is_graduate ?? false;
   const { recommended, others } = React.useMemo(() => {
@@ -1054,22 +1274,12 @@ function SetApplyForm({
     return { recommended: rec, others: oth };
   }, [sets, studentGrade, studentIsGraduate]);
 
-  // Seçili setin uyum durumu — uyarı banner için
-  const selectedSet = selectedSetId !== null
-    ? sets.find((s) => s.id === selectedSetId) ?? null
-    : null;
-  const isMismatch =
-    selectedSet !== null &&
-    !setRecommendedForStudent(selectedSet, studentGrade, studentIsGraduate);
-
-  const studentLevelLabel = studentIsGraduate
-    ? "Mezun"
-    : studentGrade !== null
-      ? `${studentGrade}. sınıf`
-      : "Sınıf belirsiz";
+  const selectedSet = selectedSetId !== null ? sets.find((s) => s.id === selectedSetId) ?? null : null;
+  const isMismatch = selectedSet !== null && !setRecommendedForStudent(selectedSet, studentGrade, studentIsGraduate);
+  const studentLevelLabel = studentIsGraduate ? "Mezun" : studentGrade !== null ? `${studentGrade}. sınıf` : "Sınıf belirsiz";
 
   return (
-    <form onSubmit={submit} className="space-y-3">
+    <form onSubmit={submit} className="flex min-h-0 flex-1 flex-col gap-3">
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <label htmlFor="set-picker" className="text-muted-foreground">
           Set:
@@ -1077,13 +1287,8 @@ function SetApplyForm({
         <select
           id="set-picker"
           value={selectedSetId === null ? "" : String(selectedSetId)}
-          onChange={(e) =>
-            setSelectedSetId(e.target.value ? Number(e.target.value) : null)
-          }
-          className={cn(
-            "h-9 flex-1 min-w-[200px] rounded-md border border-input bg-background px-2 text-sm",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
-          )}
+          onChange={(e) => setSelectedSetId(e.target.value ? Number(e.target.value) : null)}
+          className="h-10 min-w-[200px] flex-1 rounded-lg border border-input bg-background px-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <option value="">— Set seç —</option>
           {recommended.length > 0 ? (
@@ -1107,115 +1312,82 @@ function SetApplyForm({
         </select>
         <Link
           href="/teacher/library/book-sets"
-          className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1"
+          className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground"
         >
           Setleri yönet <ExternalLink className="size-3" aria-hidden />
         </Link>
       </div>
 
       {isMismatch && selectedSet ? (
-        <div className="rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs flex items-start gap-2">
-          <AlertTriangle
-            className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5"
-            aria-hidden
-          />
+        <div className="flex items-start gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs">
+          <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
           <div>
-            <p className="font-medium text-amber-700 dark:text-amber-300">
-              Bu set öğrencinin sınıfı için önerilen değil.
-            </p>
-            <p className="text-muted-foreground mt-0.5">
-              Set hedefi: <strong>{selectedSet.target_grade_label_tr}</strong>{" "}
-              · Öğrenci: <strong>{studentLevelLabel}</strong>. Yine de
-              atayabilirsin — sadece bir hatırlatma.
+            <p className="font-medium text-amber-800 dark:text-amber-200">Bu set öğrencinin sınıfı için önerilen değil.</p>
+            <p className="mt-0.5 text-muted-foreground">
+              Set hedefi: <strong>{selectedSet.target_grade_label_tr}</strong> · Öğrenci:{" "}
+              <strong>{studentLevelLabel}</strong>. Yine de atayabilirsin — sadece bir hatırlatma.
             </p>
           </div>
         </div>
       ) : null}
 
-      {sets.length === 0 && !setsQ.isLoading ? (
-        <p className="text-sm text-muted-foreground py-6 text-center">
-          Henüz kitap setiniz yok.{" "}
-          <Link
-            href="/teacher/library/book-sets"
-            className="underline hover:no-underline"
-          >
-            Set oluştur →
-          </Link>
-        </p>
-      ) : selectedSetId === null ? (
-        <p className="text-sm text-muted-foreground py-6 text-center">
-          Yukarıdan bir set seç; içindeki kitaplar listelenir.
-        </p>
-      ) : setDetailQ.isLoading || !detail ? (
-        <p className="text-sm text-muted-foreground py-6 text-center">
-          Yükleniyor…
-        </p>
-      ) : detail.items.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-6 text-center">
-          Bu set boş.
-        </p>
-      ) : (
-        <>
-          {detail.notes ? (
-            <p className="text-xs text-muted-foreground italic">{detail.notes}</p>
-          ) : null}
-          <ul className="max-h-[45vh] overflow-y-auto divide-y divide-border border border-border rounded-md">
-            {detail.items.map((it) => {
-              const locked = alreadyAssignedIds.has(it.book_id);
-              return (
-                <li
-                  key={it.book_id}
-                  className={cn(
-                    "px-3 py-2 flex items-center gap-3 text-sm",
-                    locked && "opacity-60",
-                  )}
-                >
-                  <input
-                    type="checkbox"
-                    checked={selected.has(it.book_id)}
-                    onChange={() => toggle(it.book_id, locked)}
-                    disabled={locked}
-                    aria-label={it.book_name}
-                  />
-                  <span className="flex-1 min-w-0">
-                    <span className="font-medium truncate block">
-                      {it.book_name}
+      <div className="min-h-[200px] flex-1 overflow-y-auto rounded-lg border border-border">
+        {sets.length === 0 && !setsQ.isLoading ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            Henüz kitap setiniz yok.{" "}
+            <Link href="/teacher/library/book-sets" className="underline hover:no-underline">
+              Set oluştur →
+            </Link>
+          </p>
+        ) : selectedSetId === null ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Yukarıdan bir set seç; içindeki kitaplar listelenir.</p>
+        ) : setDetailQ.isLoading || !detail ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Yükleniyor…</p>
+        ) : detail.items.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">Bu set boş.</p>
+        ) : (
+          <>
+            {detail.notes ? <p className="border-b border-border px-3 py-2 text-xs italic text-muted-foreground">{detail.notes}</p> : null}
+            <ul className="divide-y divide-border">
+              {detail.items.map((it) => {
+                const locked = alreadyAssignedIds.has(it.book_id);
+                return (
+                  <li key={it.book_id} className={cn("flex items-start gap-3 px-3 py-2 text-sm", locked && "opacity-60")}>
+                    <input
+                      type="checkbox"
+                      checked={selected.has(it.book_id)}
+                      onChange={() => toggle(it.book_id, locked)}
+                      disabled={locked}
+                      aria-label={it.book_name}
+                      className="mt-1"
+                    />
+                    <span className="min-w-0 flex-1">
+                      <span className="block break-words font-medium text-foreground">{it.book_name}</span>
+                      <span className="block text-xs text-muted-foreground">{it.subject_name ?? "—"}</span>
                     </span>
-                    <span className="text-xs text-muted-foreground truncate block">
-                      {it.subject_name ?? "—"}
-                    </span>
-                  </span>
-                  {locked ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-muted-foreground shrink-0">
-                      <Lock className="size-3" aria-hidden />
-                      zaten atalı
-                    </span>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </>
-      )}
+                    {locked ? (
+                      <span className="inline-flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                        <Lock className="size-3" aria-hidden />
+                        zaten atalı
+                      </span>
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          </>
+        )}
+      </div>
 
-      <div className="flex items-center justify-between gap-2 pt-2 border-t border-border">
-        <p className="text-xs text-muted-foreground">
-          Set kaydı değişmez — sadece bu öğrenciye atama yapılır.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+        <p className="text-xs text-muted-foreground">Set kaydı değişmez — sadece bu öğrenciye atama yapılır.</p>
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={onDone}
-            disabled={bulk.isPending}
-          >
+          <Button type="button" variant="outline" onClick={onDone} disabled={bulk.isPending}>
             İptal
           </Button>
           <Button type="submit" disabled={bulk.isPending || selected.size === 0}>
-            {bulk.isPending ? (
-              <Loader2 className="size-4 animate-spin" aria-hidden />
-            ) : null}
-            {selected.size > 0 ? `${selected.size} kitap ata` : "Ata"}
+            {bulk.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
+            {selected.size > 0 ? `${selected.size} kitabı ata` : "Kitap seç"}
           </Button>
         </div>
       </div>
@@ -1223,12 +1395,11 @@ function SetApplyForm({
   );
 }
 
+/* ============================================================ Arşiv önerisi */
+
 /**
- * P4 — "Geçen dönemden kalan kitaplar" bandı.
- *
- * Sınır P2'den gelir (güncel dönemin başlangıcı). Körü körüne arşivleme YOK:
- * koç hangi kitabı arşivleyeceğini tek tek seçer — yaz tekrarı için tutmak
- * isteyebilir. Dönem yoksa veya aday kalmadıysa bant hiç render edilmez.
+ * P4 — "Geçen dönemden kalan kitaplar" bandı. Koç hangi kitabı arşivleyeceğini
+ * tek tek seçer (yaz tekrarı için tutmak isteyebilir). Aday yoksa render olmaz.
  */
 function ArchiveSuggestionBand({ studentId }: { studentId: number }) {
   const q = useQuery<ArchiveCandidatesResponse>({
@@ -1244,23 +1415,18 @@ function ArchiveSuggestionBand({ studentId }: { studentId: number }) {
   if (candidates.length === 0) return null;
 
   function toggle(id: number) {
-    setPicked((prev) =>
-      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
-    );
+    setPicked((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
   }
 
   return (
     <>
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
+      <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="min-w-0">
-            <p className="font-medium text-amber-900 dark:text-amber-200">
-              Geçen dönemden {candidates.length} kitap duruyor
-            </p>
-            <p className="text-xs text-amber-800/90 dark:text-amber-300/90">
-              {q.data?.period_label ? `${q.data.period_label} ` : ""}dönemi
-              başlamadan atanmıştı. Arşivlemek kütüphaneyi sadeleştirir; kayıt
-              ve görev geçmişi silinmez, istediğinde geri alırsın.
+          <div className="min-w-0 flex-1">
+            <p className="font-medium text-amber-900 dark:text-amber-200">Geçen dönemden {candidates.length} kitap duruyor</p>
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              {q.data?.period_label ? `${q.data.period_label} ` : ""}dönemi başlamadan atanmıştı. Arşivlemek listeyi
+              sadeleştirir; kayıt ve görev geçmişi silinmez, istediğinde geri alırsın.
             </p>
           </div>
           <Button
@@ -1284,35 +1450,22 @@ function ArchiveSuggestionBand({ studentId }: { studentId: number }) {
             <DialogTitle>Geçen dönemin kitaplarını arşivle</DialogTitle>
           </DialogHeader>
           <p className="text-xs text-muted-foreground">
-            Arşivlenen kitap kütüphaneden, görev kaynak seçicisinden ve müfredat
-            kapsamasından gizlenir. Geçmiş görevler, çözülmüş test sayıları ve
-            analizler olduğu gibi kalır. Yaz tekrarı için tutmak istediğin
+            Arşivlenen kitap kütüphaneden, görev kaynak seçicisinden ve müfredat kapsamasından gizlenir. Geçmiş
+            görevler, çözülmüş test sayıları ve analizler olduğu gibi kalır. Yaz tekrarı için tutmak istediğin
             kitabın işaretini kaldır.
           </p>
           <div className="max-h-72 space-y-1.5 overflow-y-auto">
             {candidates.map((cd) => (
-              <label
-                key={cd.book_id}
-                className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm hover:bg-muted/50"
-              >
-                <input
-                  type="checkbox"
-                  className="mt-0.5"
-                  checked={picked.includes(cd.book_id)}
-                  onChange={() => toggle(cd.book_id)}
-                />
+              <label key={cd.book_id} className="flex cursor-pointer items-start gap-2 rounded-md border p-2 text-sm hover:bg-muted/50">
+                <input type="checkbox" className="mt-0.5" checked={picked.includes(cd.book_id)} onChange={() => toggle(cd.book_id)} />
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate font-medium">
-                    {cd.book_name}
-                  </span>
+                  <span className="block break-words font-medium">{cd.book_name}</span>
                   <span className="block text-xs text-muted-foreground">
                     {cd.subject_name ?? "—"}
                     {cd.assigned_on ? ` · ${cd.assigned_on} tarihinde atandı` : ""}
                     {" · "}
                     {cd.completed_tests}/{cd.total_tests} test çözülmüş
-                    {cd.reserved_tests > 0
-                      ? ` · ${cd.reserved_tests} rezerv`
-                      : ""}
+                    {cd.reserved_tests > 0 ? ` · ${cd.reserved_tests} rezerv` : ""}
                   </span>
                 </span>
               </label>
@@ -1325,18 +1478,9 @@ function ArchiveSuggestionBand({ studentId }: { studentId: number }) {
             <Button
               size="sm"
               disabled={picked.length === 0 || archiveMut.isPending}
-              onClick={() =>
-                archiveMut.mutate(
-                  { bookIds: picked, archived: true },
-                  { onSuccess: () => setOpen(false) },
-                )
-              }
+              onClick={() => archiveMut.mutate({ bookIds: picked, archived: true }, { onSuccess: () => setOpen(false) })}
             >
-              {archiveMut.isPending ? (
-                <Loader2 className="size-4 animate-spin" aria-hidden />
-              ) : (
-                <Archive className="size-4" aria-hidden />
-              )}
+              {archiveMut.isPending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Archive className="size-4" aria-hidden />}
               {picked.length} kitabı arşivle
             </Button>
           </div>

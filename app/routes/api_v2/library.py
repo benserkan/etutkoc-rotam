@@ -559,6 +559,10 @@ def library_book_create_v2(
         target_grade_min=g_min,
         target_grade_max=g_max,
         target_graduate=bool(body.target_graduate),
+        source_kind=(
+            ("catalog" if template.is_catalog else "template") if template else "manual"
+        ),
+        source_template_id=(template.id if template else None),
     )
     db.add(book)
     db.flush()

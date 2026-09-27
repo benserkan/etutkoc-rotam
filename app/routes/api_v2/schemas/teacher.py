@@ -1395,6 +1395,8 @@ class StudentBookListItem(BaseModel):
     has_reservations: bool                  # silme bloklanır mı?
     is_archived: bool = False               # P4 soft arşiv
     archived_on: str | None = None
+    source_kind: str | None = None          # catalog | template | manual | None
+    source_label: str | None = None
     sections: list[StudentBookSectionProgressRow]
 
 
@@ -1487,6 +1489,17 @@ class TeacherBookListItem(BaseModel):
     subject_id: int
     subject_name: str | None
     section_count: int
+    # 2026-09-27 atama penceresi zenginleştirmesi (additive)
+    type_label: str | None = None
+    publisher: str | None = None
+    total_tests: int = 0
+    source_kind: str | None = None           # catalog | template | manual | None
+    source_label: str | None = None          # "Katalogdan" / "Şablondan" / "Elle oluşturuldu"
+    assigned_student_count: int = 0          # bu kitabın atandığı aktif öğrenci
+    grade_label: str | None = None           # "9-10. sınıf · mezun"
+    fits_student: bool | None = None         # ?student_id verildiyse sınıfa uygun mu
+    created_at: str | None = None            # YYYY-MM-DD
+    same_name_count: int = 1                 # aynı adla kaç kitabın var
 
 
 class TeacherBookListResponse(BaseModel):

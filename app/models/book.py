@@ -23,6 +23,15 @@ class BookType(str, enum.Enum):
     GENEL_DENEME = "genel_deneme"
 
 
+BOOK_SOURCE_CATALOG = "catalog"
+BOOK_SOURCE_TEMPLATE = "template"
+BOOK_SOURCE_MANUAL = "manual"
+BOOK_SOURCE_LABELS: dict[str, str] = {
+    BOOK_SOURCE_CATALOG: "Katalogdan",
+    BOOK_SOURCE_TEMPLATE: "Şablondan",
+    BOOK_SOURCE_MANUAL: "Elle oluşturuldu",
+}
+
 BOOK_TYPE_LABELS: dict[BookType, str] = {
     BookType.SORU_BANKASI: "Soru Bankası",
     BookType.FASIKUL: "Fasikül",
@@ -54,6 +63,12 @@ class Book(Base):
     target_grade_max: Mapped[int | None] = mapped_column(Integer, nullable=True)
     # Mezun YKS hazırlığında da kullanılabilir mi (genelde 12. sınıf kitapları).
     target_graduate: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+
+    # Kaynak (2026-09-27): 'catalog' | 'template' | 'manual'; NULL = eski kayıt.
+    source_kind: Mapped[str | None] = mapped_column(String(16), nullable=True)
+    source_template_id: Mapped[int | None] = mapped_column(
+        ForeignKey("book_templates.id", ondelete="SET NULL"), nullable=True
+    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), nullable=False

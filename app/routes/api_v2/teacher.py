@@ -3252,10 +3252,20 @@ def teacher_delete_payment_v2(
 
 @router.get("/books", response_model=TeacherBookListResponse)
 def teacher_books_v2(
+    student_id: int | None = None,
     user: User = Depends(_require_teacher),
     db: Session = Depends(get_db),
 ):
-    """Öğretmenin sahip olduğu tüm kitaplar — kitap atama modalında listeye doldurulur."""
+    """Öğretmenin sahip olduğu tüm kitaplar — kitap atama penceresi.
+
+    `student_id` verilirse her kitap için `fits_student` (öğrencinin sınıfına
+    uygun mu) doldurulur. Kaynak (katalog/şablon/elle), yayınevi, toplam test,
+    kaç öğrencide kullanıldığı ve aynı adlı kitap sayısı koçun benzer
+    kitapları ayırt edebilmesi için döner.
+    """
+    from app.models.book import BOOK_SOURCE_LABELS, BOOK_TYPE_LABELS
+    from app.services.book_catalog import normalized_key
+
     books = (
         db.query(Book)
         .options(joinedload(Book.subject), joinedload(Book.sections))
@@ -3263,6 +3273,38 @@ def teacher_books_v2(
         .order_by(Book.name)
         .all()
     )
+    student = None
+    if student_id is not None:
+        student = db.get(User, student_id)
+        if student is None or student.teacher_id != user.id:
+            student = None
+    usage = dict(
+        db.query(StudentBook.book_id, func.count(StudentBook.id))
+        .join(User, User.id == StudentBook.student_id)
+        .filter(
+            StudentBook.book_id.in_([b.id for b in books] or [0]),
+            StudentBook.archived_at.is_(None),
+            User.is_active.is_(True),
+        )
+        .group_by(StudentBook.book_id)
+        .all()
+    )
+    name_counts: dict[str, int] = {}
+    for b in books:
+        k = normalized_key(b.name)
+        name_counts[k] = name_counts.get(k, 0) + 1
+
+    def grade_label(b: Book) -> str | None:
+        parts = []
+        lo, hi = b.target_grade_min, b.target_grade_max
+        if lo is not None or hi is not None:
+            lo = lo if lo is not None else hi
+            hi = hi if hi is not None else lo
+            parts.append(f"{lo}. sınıf" if lo == hi else f"{lo}-{hi}. sınıf")
+        if b.target_graduate:
+            parts.append("mezun")
+        return " · ".join(parts) or None
+
     items = [
         TeacherBookListItem(
             id=b.id,
@@ -3271,6 +3313,19 @@ def teacher_books_v2(
             subject_id=b.subject_id,
             subject_name=b.subject.name if b.subject else None,
             section_count=len(b.sections),
+            type_label=BOOK_TYPE_LABELS.get(b.type) if b.type else None,
+            publisher=b.publisher,
+            total_tests=sum(s.test_count or 0 for s in b.sections),
+            source_kind=b.source_kind,
+            source_label=BOOK_SOURCE_LABELS.get(b.source_kind) if b.source_kind else None,
+            assigned_student_count=int(usage.get(b.id, 0)),
+            grade_label=grade_label(b),
+            fits_student=(
+                b.targets_grade(student.grade_level, is_graduate=bool(student.is_graduate))
+                if student is not None else None
+            ),
+            created_at=b.created_at.date().isoformat() if b.created_at else None,
+            same_name_count=name_counts.get(normalized_key(b.name), 1),
         )
         for b in books
     ]
@@ -6999,7 +7054,7 @@ def teacher_delete_student_v2(
 def _student_book_summary(
     db: Session, sb: StudentBook,
 ) -> StudentBookListItem:
-    from app.models.book import BOOK_TYPE_LABELS
+    from app.models.book import BOOK_SOURCE_LABELS, BOOK_TYPE_LABELS
 
     book = sb.book
     sections = (
@@ -7057,6 +7112,8 @@ def _student_book_summary(
         has_reservations=(reserved_total > 0),
         is_archived=sb.archived_at is not None,
         archived_on=sb.archived_at.date().isoformat() if sb.archived_at else None,
+        source_kind=(book.source_kind if book else None),
+        source_label=(BOOK_SOURCE_LABELS.get(book.source_kind) if book and book.source_kind else None),
         sections=section_rows,
     )
 

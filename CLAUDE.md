@@ -397,6 +397,39 @@ kitabın sonraki konulu bölümü → müfredat, (3) önce geriye dönük ölç�
     weekly_report 21 · mapping_v2 13; tsc + eslint temiz. Mobil müfredat sekmesi
     aynı uçtan beslenir → durum değişikliği OTA'sız yansır.
 
+- **KAYNAKLAR SEKMESİ + KİTAP ATA PENCERESİ YENİ TASARIM — CANLI (2026-09-27,
+  migration `g8h1k4l5k99g`):**
+  - Tetikleyici (koç, Emir #113): Kitaplar sekmesi eski/dağınık; "Kitap ata"
+    penceresi dar, araması yok, hangi kitabın katalogdan/şablondan/elle geldiği
+    belli değil (aynı adlı iki "345 AYT Fizik" ayırt edilemiyordu).
+  - Migration (additive): `books.source_kind` ('catalog'|'template'|'manual',
+    NULL = eski kayıt) + `books.source_template_id` (FK book_templates SET NULL).
+    Oluşturma noktaları kaynağı yazar: `library_book_create_v2` (katalog kaydı →
+    catalog, kişisel şablon → template, yok → manual) · assign_catalog_books ·
+    demo_universe. `BOOK_SOURCE_LABELS` (Katalogdan / Şablondan / Elle oluşturuldu).
+  - Geriye dönük: `scripts/backfill_book_source.py` (dry-run varsayılan, `--apply`,
+    idempotent; ad + bölüm örtüşmesiyle; koçun katalog KATKISININ kaynağı olan
+    kitap elle sayılır). Dev: 171 kitap → 160 elle · 6 katalog · 5 şablon.
+  - API (additive): GET `/teacher/books?student_id=` → type_label, publisher,
+    total_tests, source_kind/label, assigned_student_count, grade_label,
+    fits_student (öğrencinin sınıfına uygun mu), created_at, same_name_count ·
+    öğrenci kitap satırına source_kind/label.
+  - Web `student-books-panel.tsx` yeniden yazıldı: "Kaynaklar" başlığı · özet
+    kartı (halka % + çözüldü/programda/atanabilir yığın bar, deneme kitapları ayrı)
+    + Bağımsız çalışma kartı yan yana · solda ders kartları (%, bar, atanabilir
+    test) · sağda kitap kartları (ad KIRPILMAZ, tür + dolgulu kaynak rozeti,
+    "Sıradaki: ünite · N test atanabilir", bölümsüz kitap uyarısı, açılır üniteler
+    satır başına bar, Kitabı aç / Arşivle / Kaldır) · 4+ kitapta arama.
+    Atama penceresi max-w-5xl: arama (Türkçe harf duyarsız) + ders seçici +
+    kaynak çipleri + "Yalnız öğrencinin sınıfına uygun" (varsayılan açık, gizli
+    sayı söylenir) · ders başlıklı liste · satırda yayınevi/bölüm/test/sınıf/kaç
+    öğrencide · "Aynı adla N kitabın var · bu kayıt GG.AA.YYYY" · "Bölümü yok"
+    uyarısı · seçim çipleri + sabit alt çubuk. Set'ten uygula sekmesi korundu.
+  - Test: YENİ `test_api_v2_book_source.py` **14/14** · YENİ
+    `live_books_panel.py` **20/20** (kırpma/taşma, koyu tema, 390px) ·
+    teacher_library 25 · book_catalog 28 · book_archive 14 · self_study 25 ·
+    teacher_read 12 · student_read 11 · book_set_apply 12 · tenant 29; tsc+eslint temiz.
+
 ---
 
 ## VİDEO SEPETİ — oynatma listesi → konu grupları → ızgaraya sürükle (2026-09-25, Faz 1 KOD-TAMAM, migration `z1a4d7e8d22z`, DEPLOY BEKLİYOR)

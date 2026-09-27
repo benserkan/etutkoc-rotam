@@ -584,8 +584,14 @@ export function getTeacherRequest(id: number): Promise<TeacherRequestDetail> {
   );
 }
 
-export function getTeacherBooks(): Promise<TeacherBookListResponse> {
-  return api<TeacherBookListResponse>("/api/v2/teacher/books");
+export function getTeacherBooks(
+  studentId?: number,
+): Promise<TeacherBookListResponse> {
+  return api<TeacherBookListResponse>(
+    studentId
+      ? `/api/v2/teacher/books?student_id=${encodeURIComponent(String(studentId))}`
+      : "/api/v2/teacher/books",
+  );
 }
 
 // =============================================================================

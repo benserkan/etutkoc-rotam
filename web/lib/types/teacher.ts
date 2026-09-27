@@ -1306,6 +1306,8 @@ export interface StudentBookListItem {
   /** P4 soft arşiv — kayıt silinmez, yalnız ileriye dönük yüzeylerde gizlenir. */
   is_archived?: boolean;
   archived_on?: string | null;
+  source_kind?: string | null;
+  source_label?: string | null;
   sections: StudentBookSectionProgressRow[];
 }
 
@@ -1404,6 +1406,17 @@ export interface TeacherBookListItem {
   subject_id: number;
   subject_name: string | null;
   section_count: number;
+  type_label?: string | null;
+  publisher?: string | null;
+  total_tests?: number;
+  /** "catalog" | "template" | "manual" | null (eski kayıt) */
+  source_kind?: string | null;
+  source_label?: string | null;
+  assigned_student_count?: number;
+  grade_label?: string | null;
+  fits_student?: boolean | null;
+  created_at?: string | null;
+  same_name_count?: number;
 }
 
 export interface TeacherBookListResponse {

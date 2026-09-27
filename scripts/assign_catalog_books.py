@@ -73,6 +73,7 @@ def main() -> int:
                     publisher=tpl.publisher, type=tpl.type,
                     target_grade_min=tpl.target_grade_min, target_grade_max=tpl.target_grade_max,
                     target_graduate=bool(tpl.target_graduate),
+                    source_kind="catalog", source_template_id=tpl.id,
                 )
                 db.add(book)
                 db.flush()
@@ -100,7 +101,7 @@ def main() -> int:
             if book is None:
                 book = Book(teacher_id=coach.id, subject_id=subj.id, name=d["name"],
                             publisher=d.get("publisher"), type=BookType(d.get("type", "soru_bankasi")),
-                            target_grade_min=8, target_grade_max=8)
+                            target_grade_min=8, target_grade_max=8, source_kind="manual")
                 db.add(book)
                 db.flush()
                 created += 1

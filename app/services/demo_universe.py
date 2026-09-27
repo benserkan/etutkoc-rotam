@@ -325,7 +325,8 @@ def build_universe(db: Session, plan: UniversePlan, *,
                  type=tpl.type or BookType.SORU_BANKASI, publisher=tpl.publisher,
                  target_grade_min=tpl.target_grade_min,
                  target_grade_max=tpl.target_grade_max,
-                 target_graduate=tpl.target_graduate)
+                 target_graduate=tpl.target_graduate,
+                 source_kind="catalog", source_template_id=tpl.id)
         db.add(b)
         db.flush()
         for i, ts in enumerate(sorted(tpl.sections or [],
@@ -339,7 +340,7 @@ def build_universe(db: Session, plan: UniversePlan, *,
     def manual_book(coach, name, subject, sections, grade=8) -> Book:
         b = Book(name=name, subject_id=subject.id, teacher_id=coach.id,
                  type=BookType.SORU_BANKASI, target_grade_min=grade,
-                 target_grade_max=grade)
+                 target_grade_max=grade, source_kind="manual")
         db.add(b)
         db.flush()
         for i, (label, cnt) in enumerate(sections, start=1):
